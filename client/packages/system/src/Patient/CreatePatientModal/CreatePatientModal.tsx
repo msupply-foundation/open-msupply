@@ -53,9 +53,9 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({
     onClose: () => setOpen(false),
   });
   const navigate = useNavigate();
-  const { patient, setNewPatient } = useCreatePatientStore();
+  const { patient, setNewPatient, updatePatient } = useCreatePatientStore();
   const t = useTranslation('patients');
-
+  console.log('patient', patient);
   const patientSteps = [
     {
       description: '',
@@ -82,7 +82,11 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({
 
   useEffect(() => {
     if (open) showDialog();
-    else hideDialog();
+    else {
+      hideDialog();
+      onChangeTab(Tabs.Form);
+      setNewPatient(undefined);
+    }
   }, [open]);
 
   useEffect(() => {
@@ -102,7 +106,7 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({
         currentTab === Tabs.SearchResults ? (
           <DialogButton
             variant="ok"
-            disabled={patient === undefined}
+            disabled={!patient?.canCreate}
             onClick={() => {
               hideDialog();
               if (patient) {
@@ -116,7 +120,10 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({
         currentTab !== Tabs.SearchResults ? (
           <DialogButton
             variant="next"
-            onClick={() => onChangeTab(Tabs.SearchResults)}
+            onClick={() => {
+              updatePatient({ canSearch: true });
+              onChangeTab(Tabs.SearchResults);
+            }}
           />
         ) : undefined
       }

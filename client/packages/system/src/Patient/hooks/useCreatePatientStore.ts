@@ -7,6 +7,8 @@ export interface CreateNewPatient {
   firstName?: string;
   lastName?: string;
   dob?: Date;
+  canSearch?: boolean;
+  canCreate?: boolean;
 }
 
 interface CreateNewPatientState {
@@ -27,6 +29,6 @@ export const useCreatePatientStore = create<CreateNewPatientState>(set => ({
     })),
   updatePatient: patch =>
     set(state => ({
-      patient: { ...(state.patient as CreateNewPatient), patch },
+      patient: { ...(state.patient as CreateNewPatient), ...patch },
     })),
 }));
