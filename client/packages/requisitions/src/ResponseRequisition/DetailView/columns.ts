@@ -11,7 +11,7 @@ export const useResponseColumns = () => {
   const {
     updateSortQuery,
     queryParams: { sortBy },
-  } = useUrlQueryParams({ initialSortKey: 'itemName' });
+  } = useUrlQueryParams({ initialSort: 'itemName' });
   const columns = useColumns<ResponseLineFragment>(
     [
       getCommentPopoverColumn(),
