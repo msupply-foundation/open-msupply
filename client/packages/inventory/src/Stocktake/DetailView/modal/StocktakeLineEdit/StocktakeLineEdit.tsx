@@ -80,9 +80,6 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
   };
 
   const hasValidBatches = draftLines.length > 0;
-  // .some(
-  //   line => line.countThisLine && line.countedNumberOfPacks !== undefined
-  // );
 
   return (
     <TableProvider
