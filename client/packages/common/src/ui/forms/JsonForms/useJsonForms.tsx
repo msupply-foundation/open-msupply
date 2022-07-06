@@ -169,7 +169,7 @@ export const useJsonForms = (
 
   // user createDoc if there is one
   useEffect(() => {
-    if (createDoc !== undefined) {
+    if (createDoc) {
       setData(createDoc.data);
       setDocumentRegistry(createDoc.documentRegistry);
       setIsDirty(true);
