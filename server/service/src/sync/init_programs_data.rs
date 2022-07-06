@@ -1,29 +1,34 @@
 use std::sync::Arc;
 
 use crate::{
-    document::patient::{
-        patient_schema::{
-            Address, ContactDetails, Family, Gender, Patient, Person, SocioEconomics,
-        },
-        PatientService, PatientServiceTrait, UpdatePatient, PATIENT_TYPE,
-    },
+    document::patient::{PatientService, PatientServiceTrait, UpdatePatient, PATIENT_TYPE},
     service_provider::ServiceProvider,
 };
 use repository::{
     DocumentContext, DocumentRegistryRow, DocumentRegistryRowRepository, EqualFilter, FormSchema,
     FormSchemaRowRepository, RepositoryError, StoreFilter, StoreRepository,
 };
-use serde_json::json;
+use serde::{Deserialize, Serialize};
 use util::uuid::uuid;
 
-const PATIENT_SCHEMA: &'static str = std::include_str!("./program_schemas/patient.json");
+schemafy::schemafy!("src/sync/program_schemas/patient.json");
 
+const PATIENT_SCHEMA: &'static str = std::include_str!("./program_schemas/patient.json");
 const PATIENT_UI_SCHEMA: &'static str =
-    std::include_str!("./program_schemas//patient_uiSchema.json");
+    std::include_str!("./program_schemas/patient_ui_schema.json");
+
+const PROGRAM_SCHEMA: &'static str = std::include_str!("./program_schemas/program.json");
+const PROGRAM_UI_SCHEMA: &'static str =
+    std::include_str!("./program_schemas/program_ui_schema.json");
+
+const ENCOUNTER_SCHEMA: &'static str = std::include_str!("./program_schemas/encounter.json");
+const ENCOUNTER_UI_SCHEMA: &'static str =
+    std::include_str!("./program_schemas/encounter_ui_schema.json");
 
 fn person_1() -> Person {
     Person {
         id: Some("person1".to_string()),
+        national_id: Some("id34568".to_string()),
         first_name: Some("Tom".to_string()),
         last_name: Some("Smith".to_string()),
         addresses: vec![],
@@ -43,6 +48,7 @@ fn person_1() -> Person {
 fn person_2() -> Person {
     Person {
         id: Some("person2".to_string()),
+        national_id: Some("id41325".to_string()),
         first_name: Some("Eli".to_string()),
         last_name: Some("Bond".to_string()),
         addresses: vec![],
@@ -62,6 +68,7 @@ fn person_2() -> Person {
 fn person_3() -> Person {
     Person {
         id: Some("person3".to_string()),
+        national_id: Some("id12245".to_string()),
         first_name: Some("Heidi".to_string()),
         last_name: Some("Tomalla".to_string()),
         addresses: vec![],
@@ -80,32 +87,33 @@ fn person_3() -> Person {
 
 fn patient_1() -> Patient {
     let address = Address {
+        key: "home".to_string(),
+        description: Some("Home address".to_string()),
         address_1: Some("Anzac Av 1".to_string()),
-        address_2: Some("Auckland".to_string()),
+        address_2: Some("1055 Auckland".to_string()),
         city: None,
         country: Some("NZ".to_string()),
-        description: None,
-        district: None,
-        key: "primary".to_string(),
+        district: Some("Auckland".to_string()),
         region: None,
         zip_code: None,
     };
     let contact_details = ContactDetails {
-        description: None,
-        email: Some("myemail".to_string()),
-        key: "key".to_string(),
-        mobile: Some("45678".to_string()),
-        phone: None,
+        key: "work".to_string(),
+        description: Some("Work contact".to_string()),
+        mobile: Some("022235678".to_string()),
+        phone: Some("095425378".to_string()),
+        email: Some("myemail@work.com".to_string()),
         website: Some("mywebsite.com".to_string()),
     };
     Patient {
         id: "patient1".to_string(),
+        national_id: Some("id12345".to_string()),
         addresses: vec![address.clone()],
         contact_details: vec![contact_details.clone()],
         date_of_birth: Some("2000-03-04".to_string()),
         date_of_birth_is_estimated: None,
         family: Some(Family {
-            marital_status: Some("single".to_string()),
+            marital_status: Some(MaritalStatus::Married),
             caregiver: Some(person_1()),
             mother: Some(person_2()),
             next_of_kin: Some(person_3()),
@@ -120,42 +128,45 @@ fn patient_1() -> Patient {
             literate: None,
             occupation: None,
         },
+        birthorder: None,
+        hand: None,
     }
 }
 
 fn patient_2() -> Patient {
     let address = Address {
+        key: "home".to_string(),
+        description: Some("Home address".to_string()),
         address_1: Some("Queen St 55".to_string()),
-        address_2: Some("Auckland".to_string()),
+        address_2: Some("1052 Auckland".to_string()),
         city: None,
         country: Some("NZ".to_string()),
-        description: None,
-        district: None,
-        key: "primary".to_string(),
+        district: Some("Auckland".to_string()),
         region: None,
         zip_code: None,
     };
     let contact_details = ContactDetails {
         description: None,
         email: Some("cook@mail.com".to_string()),
-        key: "key".to_string(),
-        mobile: Some("1245678".to_string()),
-        phone: None,
+        key: "private".to_string(),
+        mobile: Some("021245678".to_string()),
+        phone: Some("092425678".to_string()),
         website: Some("cook.com".to_string()),
     };
     Patient {
         id: "patient2".to_string(),
+        national_id: Some("id88345".to_string()),
         addresses: vec![address.clone()],
         contact_details: vec![contact_details.clone()],
         date_of_birth: Some("1990-11-10".to_string()),
         date_of_birth_is_estimated: None,
         family: Some(Family {
-            marital_status: Some("single".to_string()),
+            marital_status: Some(MaritalStatus::Single),
             caregiver: Some(person_2()),
             mother: Some(person_3()),
             next_of_kin: Some(person_1()),
         }),
-        first_name: Some("James".to_string()),
+        first_name: Some("Andy".to_string()),
         last_name: Some("Cook".to_string()),
         gender: Some(Gender::Male),
         health_center: None,
@@ -165,6 +176,8 @@ fn patient_2() -> Patient {
             literate: None,
             occupation: None,
         },
+        birthorder: None,
+        hand: None,
     }
 }
 
@@ -198,8 +211,8 @@ pub fn init_program_data(
     FormSchemaRowRepository::new(connection).upsert_one(&FormSchema {
         id: program_schema_id.clone(),
         r#type: "JsonForms".to_string(),
-        json_schema: json!({}),
-        ui_schema: json!({}),
+        json_schema: serde_json::from_str(PROGRAM_SCHEMA).unwrap(),
+        ui_schema: serde_json::from_str(PROGRAM_UI_SCHEMA).unwrap(),
     })?;
     DocumentRegistryRowRepository::new(connection).upsert_one(&DocumentRegistryRow {
         id: placeholder_program_id.clone(),
@@ -215,8 +228,8 @@ pub fn init_program_data(
     FormSchemaRowRepository::new(connection).upsert_one(&FormSchema {
         id: encounter_schema_id.clone(),
         r#type: "JsonForms".to_string(),
-        json_schema: json!({}),
-        ui_schema: json!({}),
+        json_schema: serde_json::from_str(ENCOUNTER_SCHEMA).unwrap(),
+        ui_schema: serde_json::from_str(ENCOUNTER_UI_SCHEMA).unwrap(),
     })?;
     DocumentRegistryRowRepository::new(connection).upsert_one(&DocumentRegistryRow {
         id: uuid(),

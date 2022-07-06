@@ -1,6 +1,5 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "type": "object",
   "definitions": {
     "Address": {
       "properties": {
@@ -76,8 +75,8 @@
           "$ref": "#/definitions/Person"
         },
         "maritalStatus": {
-          "description": "125680007 Marital Status",
-          "type": "string"
+          "$ref": "#/definitions/MaritalStatus",
+          "description": "125680007 Marital Status"
         },
         "mother": {
           "$ref": "#/definitions/Person",
@@ -114,6 +113,17 @@
       },
       "type": "object"
     },
+    "MaritalStatus": {
+      "enum": [
+        "Single",
+        "Married",
+        "Divorced",
+        "Widowed",
+        "Separated",
+        "RegisteredPartnership"
+      ],
+      "type": "string"
+    },
     "Patient": {
       "properties": {
         "addresses": {
@@ -137,6 +147,15 @@
           "description": "Date of birth is estimated",
           "type": "boolean"
         },
+        "hand": {
+          "description": "Left or right handed",
+          "type": "string",
+          "enum": ["Left", "Right"]
+        },
+        "birthorder": {
+          "description": "Birth order",
+          "type": "string"
+        },
         "family": {
           "$ref": "#/definitions/Family"
         },
@@ -159,29 +178,16 @@
           "description": "184096005 Patient Surname",
           "type": "string"
         },
+        "nationalId": {
+          "description": "Patient id",
+          "type": "string"
+        },
         "passportNumber": {
           "description": "1601000122107 Passport Number",
           "type": "string"
         },
         "socioEconomics": {
           "$ref": "#/definitions/SocioEconomics"
-        },
-        "testingArray": {
-          "description": "An array without referenced definitions",
-          "type": "array",
-          "items": {
-            "additionalProperties": false,
-            "properties": {
-              "field1": {
-                "description": "First item",
-                "type": "string"
-              },
-              "field2": {
-                "description": "Second item",
-                "type": "string"
-              }
-            }
-          }
         }
       },
       "required": ["addresses", "contactDetails", "id", "socioEconomics"],
@@ -218,11 +224,15 @@
           "description": "394744001 Gender unspecified"
         },
         "id": {
-          "description": "Patient Code",
+          "description": "mSupply Patient id",
           "type": "string"
         },
         "lastName": {
           "description": "184096005 Patient Surname",
+          "type": "string"
+        },
+        "nationalId": {
+          "description": "Patient id",
           "type": "string"
         },
         "passportNumber": {
@@ -253,6 +263,7 @@
       "type": "object"
     }
   },
+  "type": "object",
   "allOf": [
     {
       "$ref": "#/definitions/Patient"

@@ -1,0 +1,17 @@
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "Label",
+      "text": "Program",
+      "variant": "h1"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/enrolmentDatetime",
+      "options": {
+        "readonly": true
+      }
+    }
+  ]
+}
