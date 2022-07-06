@@ -93,7 +93,7 @@ export const ContentArea: FC<ContentAreaProps> = ({
   onRowClick,
 }) => {
   const t = useTranslation('inventory');
-  const { isGrouped, toggleIsGrouped } = useIsGrouped('inboundShipment');
+  const { isGrouped, toggleIsGrouped } = useIsGrouped('stocktake');
   const { rows, onChangeSortBy, sortBy } = useStocktake.line.rows(isGrouped);
   const columns = useStocktakeColumns({ onChangeSortBy, sortBy });
   const isDisabled = useStocktake.utils.isDisabled();
