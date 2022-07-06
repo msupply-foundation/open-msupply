@@ -144,10 +144,9 @@ mod test {
 
     use crate::InvoiceMutations;
 
-    type InsertLineMethod =
-        dyn Fn(&str, ServiceInput) -> Result<Invoice, ServiceError> + Sync + Send;
+    type InsertMethod = dyn Fn(&str, ServiceInput) -> Result<Invoice, ServiceError> + Sync + Send;
 
-    pub struct TestService(pub Box<InsertLineMethod>);
+    pub struct TestService(pub Box<InsertMethod>);
 
     impl InvoiceServiceTrait for TestService {
         fn insert_inbound_shipment(
