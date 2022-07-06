@@ -25,8 +25,7 @@ enum Tabs {
 }
 
 interface CreatePatientModal {
-  open: boolean;
-  setOpen: (open: boolean) => void;
+  onClose: () => void;
 }
 
 const newPatient = (
@@ -38,10 +37,7 @@ const newPatient = (
   };
 };
 
-export const CreatePatientModal: FC<CreatePatientModal> = ({
-  open,
-  setOpen,
-}) => {
+export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
   const { data: documentRegistryResponse } = useDocument.get.documentRegistry(
     DocumentRegistryNodeContext.Patient
   );
@@ -50,7 +46,7 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({
   >();
   const { currentTab, onChangeTab } = useTabs(Tabs.Form);
   const { Modal, showDialog, hideDialog } = useDialog({
-    onClose: () => setOpen(false),
+    onClose,
   });
   const navigate = useNavigate();
   const { patient, setNewPatient, updatePatient } = useCreatePatientStore();
@@ -62,7 +58,6 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({
   };
 
   const onOk = () => {
-    hideDialog();
     if (patient) {
       navigate(patient.id);
     }
@@ -106,18 +101,18 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({
   }, [documentRegistryResponse]);
 
   useEffect(() => {
-    if (open) showDialog();
-    else {
+    // always show the dialog when we are mounted
+    showDialog();
+    // clean up when we are unmounting
+    return () => {
       hideDialog();
       onChangeTab(Tabs.Form);
       setNewPatient(undefined);
-    }
-  }, [open]);
+    };
+  }, []);
 
   useEffect(() => {
     setNewPatient(documentRegistry ? newPatient(documentRegistry) : undefined);
-    // clear old patient
-    return () => setNewPatient(undefined);
   }, [documentRegistry]);
 
   if (documentRegistry === undefined) {
@@ -141,9 +136,7 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({
           <DialogButton variant="next" onClick={onNext} />
         ) : undefined
       }
-      cancelButton={
-        <DialogButton variant="cancel" onClick={() => setOpen(false)} />
-      }
+      cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       slideAnimation={false}
     >
       <DetailContainer>
