@@ -67,6 +67,7 @@ fn check_can_change_status_to_allocated(
         return Ok(());
     };
 
+    // Status sequence for outbound shipment: New, Allocated, Picked, Shipped
     if let Some(new_status) = status_option {
         if new_status == InvoiceRowStatus::New {
             return Ok(());
