@@ -45,20 +45,20 @@ const Circle: FC<StepIconProps> = ({ active, completed, icon }) => {
   const theme = useTheme();
   const colors = {
     borderColor: theme.palette.gray.pale,
-    backgroundColor: theme.palette.gray.pale,
-    color: theme.palette.gray.pale,
+    backgroundColor: '#fff',
+    color: theme.palette.secondary.light,
   };
 
   // If the step is completed, then everything is light.
   if (completed) {
     colors.backgroundColor = theme.palette.secondary.light;
     colors.borderColor = theme.palette.secondary.light;
-    colors.color = theme.palette.secondary.light;
+    colors.color = '#fff';
   }
 
-  // If the step is active, the center of the circle is white
   if (active) {
-    colors.backgroundColor = 'white';
+    colors.backgroundColor = '#fff';
+    colors.color = theme.palette.secondary.dark;
   }
 
   const style = {
