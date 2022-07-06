@@ -12,7 +12,7 @@ import { useCreatePatientStore } from '../hooks';
 import { PatientFragment } from '../api/operations.generated';
 
 export const PatientResultsTab: FC<PatientPanel> = ({ patient, value }) => {
-  const { mutateAsync, isLoading, data } = usePatient.utils.search();
+  const { mutate, isLoading, data } = usePatient.utils.search();
   const { updatePatient } = useCreatePatientStore();
   const t = useTranslation('patients');
 
@@ -34,7 +34,7 @@ export const PatientResultsTab: FC<PatientPanel> = ({ patient, value }) => {
   useEffect(() => {
     if (!isLoading && !!patient && !data && !!patient.canSearch) {
       const { firstName, lastName } = patient;
-      mutateAsync({ firstName, lastName });
+      mutate({ firstName, lastName });
     }
   }, [patient, isLoading, data]);
 
