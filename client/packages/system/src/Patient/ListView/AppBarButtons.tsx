@@ -53,7 +53,7 @@ export const AppBarButtons: FC<{ sortBy: SortBy<PatientRowFragment> }> = ({
         </LoadingButton>
       </Grid>
 
-      <CreatePatientModal open={open} setOpen={setOpen} />
+      {open ? <CreatePatientModal onClose={() => setOpen(false)} /> : null}
     </AppBarButtonsPortal>
   );
 };
