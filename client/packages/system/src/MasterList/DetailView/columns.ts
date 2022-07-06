@@ -5,7 +5,7 @@ export const useMasterListColumns = () => {
   const {
     updateSortQuery,
     queryParams: { sortBy },
-  } = useUrlQueryParams({ initialSortKey: 'itemName' });
+  } = useUrlQueryParams({ initialSort: 'itemName' });
   const columns = useColumns<MasterListLineFragment>(
     [
       [

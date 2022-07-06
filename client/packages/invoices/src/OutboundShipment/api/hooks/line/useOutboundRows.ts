@@ -8,7 +8,7 @@ export const useOutboundRows = (isGrouped = true) => {
   const {
     queryParams: { sortBy },
     updateSortQuery: onChangeSortBy,
-  } = useUrlQueryParams({ initialSortKey: 'itemName' });
+  } = useUrlQueryParams({ initialSort: 'itemName' });
   const { data: lines } = useOutboundLines();
   const { data: items } = useOutboundItems();
   const columns = useOutboundColumns({
