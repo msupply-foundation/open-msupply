@@ -14,7 +14,7 @@ import { BasicSpinner, useRegisterActions } from '@openmsupply-client/common';
 import { TableProps } from './types';
 import { DataRow } from './components/DataRow/DataRow';
 import { PaginationRow } from './columns/PaginationRow';
-import { HeaderCell, HeaderRow } from './components/Header';
+import { ColumnPicker, HeaderCell, HeaderRow } from './components/Header';
 import { RecordWithId } from '@common/types';
 import { useTranslation } from '@common/intl';
 import { useTableStore } from './context';
@@ -129,6 +129,7 @@ export const DataTableComponent = <T extends RecordWithId>({
                 key={String(column.key)}
               />
             ))}
+            <ColumnPicker columns={columns} />
           </HeaderRow>
         </TableHead>
         <TableBody>
