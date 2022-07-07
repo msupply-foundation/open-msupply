@@ -56,6 +56,8 @@ fn check_invoice_exists(
     Ok(result?)
 }
 
+// If status is changed to allocated and above, return error if there are
+// unallocated lines with quantity above 0, zero quantity unallocated lines will be deleted
 fn check_can_change_status_to_allocated(
     connection: &StorageConnection,
     invoice_row: &InvoiceRow,
@@ -65,6 +67,7 @@ fn check_can_change_status_to_allocated(
         return Ok(());
     };
 
+    // Status sequence for outbound shipment: New, Allocated, Picked, Shipped
     if let Some(new_status) = status_option {
         if new_status == InvoiceRowStatus::New {
             return Ok(());
@@ -74,12 +77,8 @@ fn check_can_change_status_to_allocated(
         let unallocated_lines = repository.query_by_filter(
             InvoiceLineFilter::new()
                 .invoice_id(EqualFilter::equal_to(&invoice_row.id))
-                .r#type(EqualFilter {
-                    equal_to: Some(InvoiceLineRowType::UnallocatedStock),
-                    not_equal_to: None,
-                    equal_any: None,
-                    not_equal_all: None,
-                }),
+                .r#type(InvoiceLineRowType::UnallocatedStock.equal_to())
+                .number_of_packs(EqualFilter::not_equal_to_i32(0)),
         )?;
 
         if unallocated_lines.len() > 0 {
