@@ -1,4 +1,4 @@
-use crate::u32_to_i32;
+use crate::{invoice::common::total_after_tax, u32_to_i32};
 use repository::{
     InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow,
 };
@@ -82,11 +82,7 @@ fn generate_line(
         } else {
             sell_price_per_pack * number_of_packs as f64
         },
-        total_after_tax: if tax.is_some() {
-            total_before_tax.unwrap() * (f64::from(1) + tax.unwrap() / 100.0)
-        } else {
-            total_before_tax.unwrap_or(sell_price_per_pack * number_of_packs as f64)
-        },
+        total_after_tax: total_after_tax(total_before_tax, tax),
         tax,
         note,
     }
