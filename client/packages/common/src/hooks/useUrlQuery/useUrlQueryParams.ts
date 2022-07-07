@@ -27,7 +27,7 @@ export const useUrlQueryParams = ({
     '/pagination/rowsperpage',
     DEFAULT_RECORDS_PER_PAGE
   );
-  const rowsPerPage = storedRowsPerPage || DEFAULT_RECORDS_PER_PAGE;
+  const rowsPerPage = storedRowsPerPage ?? DEFAULT_RECORDS_PER_PAGE;
 
   useEffect(() => {
     if (!initialSort) return;
