@@ -14,16 +14,18 @@ import { BasicSpinner, useRegisterActions } from '@openmsupply-client/common';
 import { TableProps } from './types';
 import { DataRow } from './components/DataRow/DataRow';
 import { PaginationRow } from './columns/PaginationRow';
-import { HeaderCell, HeaderRow } from './components/Header';
+import { ColumnPicker, HeaderCell, HeaderRow } from './components/Header';
 import { RecordWithId } from '@common/types';
 import { useTranslation } from '@common/intl';
 import { useTableStore } from './context';
 
 export const DataTableComponent = <T extends RecordWithId>({
+  key,
   ExpandContent,
   columns,
   data = [],
   dense = false,
+  enableColumnSelection,
   isDisabled = false,
   isError = false,
   isLoading = false,
@@ -36,6 +38,7 @@ export const DataTableComponent = <T extends RecordWithId>({
   const t = useTranslation('common');
   const { setRows, setDisabledRows, setFocus } = useTableStore();
   const [clickFocusedRow, setClickFocusedRow] = useState(false);
+  const [displayColumns, setDisplayColumns] = useState(columns);
   useRegisterActions([
     {
       id: 'table:focus-down',
@@ -122,13 +125,20 @@ export const DataTableComponent = <T extends RecordWithId>({
           }}
         >
           <HeaderRow dense={dense}>
-            {columns.map(column => (
+            {displayColumns.map(column => (
               <HeaderCell
                 dense={dense}
                 column={column}
                 key={String(column.key)}
               />
             ))}
+            {!!enableColumnSelection && (
+              <ColumnPicker
+                columns={columns}
+                onChange={setDisplayColumns}
+                tableKey={key}
+              />
+            )}
           </HeaderRow>
         </TableHead>
         <TableBody>
@@ -138,7 +148,7 @@ export const DataTableComponent = <T extends RecordWithId>({
               rows={data}
               ExpandContent={ExpandContent}
               rowIndex={idx}
-              columns={columns}
+              columns={displayColumns}
               onClick={onRowClick ? onRowClick : undefined}
               rowData={row}
               rowKey={String(idx)}

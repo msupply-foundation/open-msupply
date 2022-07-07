@@ -10,13 +10,13 @@ export const DEFAULT_RECORDS_PER_PAGE = 20;
 
 interface UrlQueryParams {
   filterKey?: string;
-  initialSortKey?: string;
+  initialSort?: { key: string; dir: 'desc' | 'asc' };
   filterCondition?: string;
 }
 
 export const useUrlQueryParams = ({
   filterKey,
-  initialSortKey,
+  initialSort,
   filterCondition = 'like',
 }: UrlQueryParams = {}) => {
   // do not coerce the filter parameter if the user enters a numeric value
@@ -30,12 +30,14 @@ export const useUrlQueryParams = ({
   const rowsPerPage = storedRowsPerPage || DEFAULT_RECORDS_PER_PAGE;
 
   useEffect(() => {
-    if (!initialSortKey) return;
+    if (!initialSort) return;
+
     // Don't want to override existing sort
     if (!!urlQuery['sort']) return;
 
-    updateQuery({ sort: initialSortKey });
-  }, [initialSortKey]);
+    const { key: sort, dir } = initialSort;
+    updateQuery({ sort, dir });
+  }, [initialSort]);
 
   const updateSortQuery = (column: Column<any>) => {
     const currentSort = urlQuery['sort'];
@@ -77,7 +79,7 @@ export const useUrlQueryParams = ({
     offset: urlQuery.page ? (urlQuery.page - 1) * rowsPerPage : 0,
     first: rowsPerPage,
     sortBy: {
-      key: urlQuery.sort ?? initialSortKey,
+      key: urlQuery.sort ?? initialSort,
       direction: urlQuery.dir ?? 'asc',
       isDesc: urlQuery.dir === 'desc',
     },

@@ -23,6 +23,7 @@ export type LocalStorageRecord = {
   '/mru/credentials': AuthenticationCredentials;
   '/auth/error': AuthError | undefined;
   '/pagination/rowsperpage': number;
+  '/columns/hidden': Record<string, string[]> | undefined;
 };
 
 export type LocalStorageKey = keyof LocalStorageRecord;
