@@ -55,6 +55,7 @@ export const ContentArea: FC<ContentAreaProps> = React.memo(
           ExpandContent={Expando}
           columns={columns}
           data={rows}
+          hiddenColumnKey="inbound-detail"
           noDataElement={
             <NothingHere
               body={t('error.no-inbound-items')}

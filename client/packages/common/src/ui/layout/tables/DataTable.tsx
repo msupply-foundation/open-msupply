@@ -24,6 +24,7 @@ export const DataTableComponent = <T extends RecordWithId>({
   columns,
   data = [],
   dense = false,
+  hiddenColumnKey,
   isDisabled = false,
   isError = false,
   isLoading = false,
@@ -130,7 +131,13 @@ export const DataTableComponent = <T extends RecordWithId>({
                 key={String(column.key)}
               />
             ))}
-            <ColumnPicker columns={columns} onChange={setDisplayColumns} />
+            {!!hiddenColumnKey && (
+              <ColumnPicker
+                columns={columns}
+                onChange={setDisplayColumns}
+                columnKey={hiddenColumnKey}
+              />
+            )}
           </HeaderRow>
         </TableHead>
         <TableBody>
