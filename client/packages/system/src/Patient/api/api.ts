@@ -81,7 +81,11 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
         input,
       });
 
-      return result?.patientSearch;
+      if (result.patientSearch.__typename === 'PatientSearchConnector') {
+        return result.patientSearch.nodes;
+      }
+
+      throw new Error('Could not search for patients');
     },
   },
   insertPatient: async (
