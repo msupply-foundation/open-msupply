@@ -34,7 +34,7 @@ export type PatientSearchQueryVariables = Types.Exact<{
 }>;
 
 
-export type PatientSearchQuery = { __typename: 'FullQuery', patientSearch: Array<{ __typename: 'PatientSearchNode', score: number, patient: { __typename: 'PatientNode', address1?: string | null, address2?: string | null, code: string, country?: string | null, dateOfBirth?: string | null, email?: string | null, firstName?: string | null, lastName?: string | null, gender?: Types.GenderType | null, id: string, name: string, phone?: string | null, website?: string | null, document?: { __typename: 'DocumentNode', id: string, name: string, type: string } | null } }> };
+export type PatientSearchQuery = { __typename: 'FullQuery', patientSearch: { __typename: 'PatientSearchConnector', totalCount: number, nodes: Array<{ __typename: 'PatientSearchNode', score: number, patient: { __typename: 'PatientNode', address1?: string | null, address2?: string | null, code: string, country?: string | null, dateOfBirth?: string | null, email?: string | null, firstName?: string | null, lastName?: string | null, gender?: Types.GenderType | null, id: string, name: string, phone?: string | null, website?: string | null, document?: { __typename: 'DocumentNode', id: string, name: string, type: string } | null } }> } };
 
 export type InsertPatientMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -125,9 +125,15 @@ export const PatientByIdDocument = gql`
 export const PatientSearchDocument = gql`
     query patientSearch($input: PatientSearchInput!, $storeId: String!) {
   patientSearch(input: $input, storeId: $storeId) {
-    score
-    patient {
-      ...Patient
+    ... on PatientSearchConnector {
+      __typename
+      nodes {
+        score
+        patient {
+          ...Patient
+        }
+      }
+      totalCount
     }
   }
 }
