@@ -1,5 +1,7 @@
 use repository::{InvoiceLineRow, ItemRow};
 
+use crate::invoice::common::total_after_tax;
+
 use super::{UpdateOutboundShipmentServiceLine, UpdateOutboundShipmentServiceLineError};
 
 pub fn generate(
@@ -30,7 +32,7 @@ pub fn generate(
         None
     };
 
-    let mut update_line = existing_line.clone();
+    let mut update_line = existing_line;
 
     if let Some(item_name) = updated_item_name {
         update_line.item_name = item_name;
@@ -53,8 +55,7 @@ pub fn generate(
         update_line.note = Some(note);
     }
 
-    update_line.total_after_tax =
-        update_line.total_before_tax * (f64::from(1) + update_line.tax.unwrap_or_default() / 100.0);
+    update_line.total_after_tax = total_after_tax(update_line.total_before_tax, update_line.tax);
 
     Ok(update_line)
 }
