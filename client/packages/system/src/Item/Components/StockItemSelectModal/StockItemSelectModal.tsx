@@ -9,14 +9,21 @@ import {
   AutocompleteMultiList,
 } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
-import { useStockItemsWithStats } from '../../api';
-import { ItemRowWithStatsFragment } from '../../api/operations.generated';
+import { useStockItemsWithStockLines } from '../../api';
+import {
+  ItemRowWithStatsFragment,
+  StockLineFragment,
+} from '../../api/operations.generated';
 
+export type ItemWithStockLines = {
+  itemId: string;
+  stockLines?: StockLineFragment[];
+};
 interface StockItemSelectModalProps {
   extraFilter?: (item: ItemRowWithStatsFragment) => boolean;
   isOpen: boolean;
   onClose: () => void;
-  onChange: (itemIds?: string[]) => Promise<any>;
+  onChange: (items?: ItemWithStockLines[]) => Promise<any>;
 }
 
 const renderOption: AutocompleteOptionRenderer<ItemRowWithStatsFragment> = (
@@ -55,11 +62,19 @@ export const StockItemSelectModal = ({
 }: StockItemSelectModalProps) => {
   const { Modal } = useDialog({ isOpen, onClose });
   const t = useTranslation('inventory');
-  const { data, isLoading } = useStockItemsWithStats();
+  const { data, isLoading } = useStockItemsWithStockLines();
   const [saving, setSaving] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-
-  const onChangeSelectedIds = (ids: string[]) => setSelectedIds(ids);
+  const [selectedItems, setSelectedItems] = useState<ItemWithStockLines[]>([]);
+  const onChangeSelectedItems = (ids: string[]) => {
+    const items =
+      data?.nodes
+        .filter(item => ids.includes(item.id))
+        .map(item => ({
+          itemId: item.id,
+          stockLines: item.availableBatches?.nodes ?? [],
+        })) ?? [];
+    setSelectedItems(items);
+  };
 
   const options = extraFilter
     ? data?.nodes?.filter(extraFilter) ?? []
@@ -80,7 +95,7 @@ export const StockItemSelectModal = ({
           variant="ok"
           onClick={async () => {
             setSaving(true);
-            await onChange(selectedIds);
+            await onChange(selectedItems);
             setSaving(false);
             onClose();
           }}
@@ -94,7 +109,7 @@ export const StockItemSelectModal = ({
             filterProperties={['name', 'code']}
             getOptionLabel={option => `${option.code} ${option.name}`}
             isLoading={isLoading}
-            onChange={onChangeSelectedIds}
+            onChange={onChangeSelectedItems}
             options={options}
             renderOption={renderOption}
           />
