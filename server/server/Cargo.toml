@@ -47,12 +47,12 @@ mime_guess = "2.0.4"
 local-ip-address = { version = "0.4.4",  optional = true }
 simple-dns = "0.4.6"
 simple-mdns = "0.3.9"
+machine-uid = "0.2.0"
 
 [dev-dependencies]
 actix-rt = "2.6.0"
 assert-json-diff = "2.0.1"
 httpmock = "0.6"
-rand = "0.8.5"
 
 [features]
 default = ["sqlite", "dep:local-ip-address"]

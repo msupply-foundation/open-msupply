@@ -44,6 +44,7 @@ pub enum Permission {
     InboundShipmentMutate,
     // reporting
     Report,
+    LogQuery,
     // document
     Document,
     // patients

@@ -1,13 +1,15 @@
-use repository::{Invoice, InvoiceRowRepository};
+use repository::{Invoice, InvoiceRowRepository, LogRow, LogType};
 use repository::{RepositoryError, TransactionError};
 
 pub mod generate;
 pub mod validate;
 
 use generate::generate;
+use util::uuid::uuid;
 use validate::validate;
 
 use crate::invoice::query::get_invoice;
+use crate::log::log_entry;
 use crate::service_provider::ServiceContext;
 
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -54,6 +56,18 @@ pub fn insert_outbound_shipment(
                 .ok_or(OutError::NewlyCreatedInvoiceDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
+
+    log_entry(
+        &ctx.connection,
+        &LogRow {
+            id: uuid(),
+            r#type: LogType::InvoiceCreated,
+            user_id: Some(user_id.to_string()),
+            store_id: Some(invoice.invoice_row.store_id.clone()),
+            record_id: Some(invoice.invoice_row.id.clone()),
+            datetime: invoice.invoice_row.created_datetime.clone(),
+        },
+    )?;
 
     Ok(invoice)
 }

@@ -1,12 +1,10 @@
+extern crate machine_uid;
 use crate::{
     certs::Certificates, configuration::get_or_create_token_secret, cors::cors_policy,
     serve_frontend::config_server_frontend, static_files::config_static_files,
 };
 
-use self::{
-    middleware::{compress as compress_middleware, logger as logger_middleware},
-    sync::Synchroniser,
-};
+use self::middleware::{compress as compress_middleware, logger as logger_middleware};
 use graphql_core::loader::{get_loaders, LoaderRegistry};
 
 use graphql::{config as graphql_config, config_stage0};
@@ -17,16 +15,16 @@ use service::{
     auth_data::AuthData,
     service_provider::ServiceProvider,
     settings::{is_develop, ServerSettings, Settings},
+    sync::Synchroniser,
     token_bucket::TokenBucket,
 };
 
 use actix_web::{web::Data, App, HttpServer};
 use std::{
-    ops::DerefMut,
+    ops::{DerefMut, Deref},
     sync::{Arc, RwLock},
 };
 use tokio::sync::{oneshot, Mutex};
-use util::uuid::uuid;
 
 pub mod certs;
 pub mod configuration;
@@ -35,8 +33,6 @@ pub mod environment;
 pub mod middleware;
 mod serve_frontend;
 pub mod static_files;
-pub mod sync;
-pub mod test_utils;
 
 // Only import discovery for non android features (otherwise build for android targets would fail due to local-ip-address)
 #[cfg(not(target_os = "android"))]
@@ -88,7 +84,7 @@ async fn run_stage0(
     {
         service_provider
             .app_data_service
-            .set_hardware_id(uuid().to_ascii_uppercase())?;
+            .set_hardware_id(machine_uid::get().expect("Failed to query OS for hardware id"))?;
     }
 
     let service_provider_data = Data::new(service_provider);
@@ -201,7 +197,8 @@ async fn run_server(
 
     let restart_switch = Data::new(restart_switch);
 
-    let mut synchroniser = Synchroniser::new(sync_settings, service_provider_data.clone()).unwrap();
+    let mut synchroniser =
+        Synchroniser::new(sync_settings, service_provider_data.deref().clone()).unwrap();
     // Do the initial pull before doing anything else
     match synchroniser.initial_pull().await {
         Ok(_) => {}

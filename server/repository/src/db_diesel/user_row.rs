@@ -1,6 +1,6 @@
 use super::{user_row::user_account::dsl as user_account_dsl, StorageConnection, User};
 
-use crate::repository_error::RepositoryError;
+use crate::{lower, repository_error::RepositoryError};
 
 use diesel::prelude::*;
 
@@ -59,8 +59,9 @@ impl<'a> UserAccountRowRepository<'a> {
         username: &str,
     ) -> Result<Option<UserAccountRow>, RepositoryError> {
         let result: Result<UserAccountRow, diesel::result::Error> = user_account_dsl::user_account
-            .filter(user_account_dsl::username.eq(username))
+            .filter(lower(user_account_dsl::username).eq(lower(username)))
             .first(&self.connection.connection);
+
         match result {
             Ok(row) => Ok(Some(row)),
             Err(err) => match err {

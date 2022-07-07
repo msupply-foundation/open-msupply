@@ -1,10 +1,6 @@
-use actix_web::web::Data;
-use repository::{
-    DocumentContext, DocumentRegistryRow, DocumentRegistryRowRepository, EqualFilter, FormSchema,
-    FormSchemaRowRepository, RepositoryError, StoreFilter, StoreRepository,
-};
-use serde_json::json;
-use service::{
+use std::sync::Arc;
+
+use crate::{
     document::patient::{
         patient_schema::{
             Address, ContactDetails, Family, Gender, Patient, Person, SocioEconomics,
@@ -13,6 +9,11 @@ use service::{
     },
     service_provider::ServiceProvider,
 };
+use repository::{
+    DocumentContext, DocumentRegistryRow, DocumentRegistryRowRepository, EqualFilter, FormSchema,
+    FormSchemaRowRepository, RepositoryError, StoreFilter, StoreRepository,
+};
+use serde_json::json;
 use util::uuid::uuid;
 
 const PATIENT_SCHEMA: &'static str = std::include_str!("./program_schemas/patient.json");
@@ -168,7 +169,7 @@ fn patient_2() -> Patient {
 }
 
 pub fn init_program_data(
-    service_provider: &Data<ServiceProvider>,
+    service_provider: &Arc<ServiceProvider>,
     site_id: u32,
 ) -> Result<(), RepositoryError> {
     let ctx = service_provider.context().unwrap();
