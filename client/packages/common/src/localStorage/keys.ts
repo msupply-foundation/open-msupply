@@ -22,6 +22,7 @@ export type LocalStorageRecord = {
   '/theme/logo': string;
   '/mru/credentials': AuthenticationCredentials;
   '/auth/error': AuthError | undefined;
+  '/pagination/rowsperpage': number;
 };
 
 export type LocalStorageKey = keyof LocalStorageRecord;
