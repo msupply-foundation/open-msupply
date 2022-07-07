@@ -7,7 +7,7 @@ use crate::db_diesel::{DBBackendConnection, StorageConnectionManager};
 #[cfg(not(feature = "postgres"))]
 const SQLITE_LOCKWAIT_MS: u32 = 5000;
 
-#[cfg(not(feature = "postgres"))]
+#[cfg(all(not(feature = "postgres"), not(feature = "memory")))]
 const SQLITE_WAL_PRAGMA: &str = "PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL;";
 
 #[derive(serde::Deserialize, Clone)]
