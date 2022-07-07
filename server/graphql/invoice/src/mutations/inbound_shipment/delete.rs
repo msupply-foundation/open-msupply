@@ -130,10 +130,9 @@ mod test {
 
     use crate::InvoiceMutations;
 
-    type DeleteLineMethod =
-        dyn Fn(&str, ServiceInput) -> Result<String, ServiceError> + Sync + Send;
+    type DeleteMethod = dyn Fn(&str, ServiceInput) -> Result<String, ServiceError> + Sync + Send;
 
-    pub struct TestService(pub Box<DeleteLineMethod>);
+    pub struct TestService(pub Box<DeleteMethod>);
 
     impl InvoiceServiceTrait for TestService {
         fn delete_inbound_shipment(
@@ -309,7 +308,7 @@ mod test {
         let (_, connection, connection_manager, settings) = setup_graphl_test(
             EmptyMutation,
             InvoiceMutations,
-            "test_graphql_delete_inbound)shipment_success",
+            "test_graphql_delete_inbound_shipment_success",
             MockDataInserts::all(),
         )
         .await;
