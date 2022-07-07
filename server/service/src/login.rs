@@ -4,9 +4,11 @@ use std::{
 };
 
 use bcrypt::BcryptError;
+use chrono::Utc;
 use log::info;
 use repository::{
-    Permission, RepositoryError, UserAccountRow, UserPermissionRow, UserStoreJoinRow,
+    LogRow, LogType, Permission, RepositoryError, UserAccountRow, UserPermissionRow,
+    UserStoreJoinRow,
 };
 use reqwest::{ClientBuilder, Url};
 use serde::{Deserialize, Serialize};
@@ -20,6 +22,7 @@ use crate::{
         permissions::{map_api_permissions, Permissions},
     },
     auth_data::AuthData,
+    log::log_entry,
     service_provider::{ServiceContext, ServiceProvider},
     settings::is_develop,
     token::{JWTIssuingError, TokenPair, TokenService},
@@ -100,16 +103,13 @@ impl LoginService {
         auth_data: &AuthData,
         input: LoginInput,
     ) -> Result<TokenPair, LoginError> {
+        let mut username = input.username.clone();
         match LoginService::fetch_user_from_central(&input).await {
             Ok(user_info) => {
                 let service_ctx = service_provider.context()?;
-                LoginService::update_user(
-                    &service_ctx,
-                    &input.username,
-                    &input.password,
-                    user_info,
-                )
-                .map_err(|e| LoginError::UpdateUserError(e))?;
+                username = user_info.user.name.clone();
+                LoginService::update_user(&service_ctx, &input.password, user_info)
+                    .map_err(|e| LoginError::UpdateUserError(e))?;
             }
             Err(err) => match err {
                 FetchUserError::Unauthenticated => return Err(LoginError::LoginFailure),
@@ -119,7 +119,7 @@ impl LoginService {
         };
         let service_ctx = service_provider.context()?;
         let user_service = UserAccountService::new(&service_ctx.connection);
-        let user_account = match user_service.verify_password(&input.username, &input.password) {
+        let user_account = match user_service.verify_password(&username, &input.password) {
             Ok(user) => user,
             Err(err) => {
                 return Err(match err {
@@ -132,6 +132,18 @@ impl LoginService {
                 });
             }
         };
+
+        log_entry(
+            &service_ctx.connection,
+            &LogRow {
+                id: uuid(),
+                r#type: LogType::UserLoggedIn,
+                user_id: Some(user_account.id.clone()),
+                store_id: None,
+                record_id: None,
+                datetime: Utc::now().naive_utc(),
+            },
+        )?;
 
         let mut token_service = TokenService::new(
             &auth_data.token_bucket,
@@ -212,14 +224,13 @@ impl LoginService {
 
     pub fn update_user(
         service_ctx: &ServiceContext,
-        username: &str,
         password: &str,
         user_info: LoginUserInfoV4,
     ) -> Result<(), UpdateUserError> {
         // convert user_info to internal format
         let user = UserAccountRow {
             id: user_info.user.id,
-            username: username.to_string(),
+            username: user_info.user.name.to_string(),
             hashed_password: UserAccountService::hash_password(&password)
                 .map_err(UpdateUserError::PasswordHashError)?,
             email: match user_info.user.e_mail.as_str() {
@@ -340,6 +351,9 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permission> {
             // reports
             Permissions::ViewReports => {
                 output.insert(Permission::Report);
+            }
+            Permissions::ViewLog => {
+                output.insert(Permission::LogQuery);
             }
             // patient
             Permissions::EditPatientDetails => {

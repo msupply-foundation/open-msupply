@@ -1,15 +1,19 @@
+use chrono::Utc;
 use repository::{
-    Invoice, InvoiceLine, InvoiceRowRepository, InvoiceRowStatus, RepositoryError,
-    StockLineRowRepository, TransactionError,
+    Invoice, InvoiceLine, InvoiceLineRowRepository, InvoiceRowRepository, InvoiceRowStatus, LogRow,
+    LogType, RepositoryError, StockLineRowRepository, TransactionError,
 };
 
 pub mod generate;
 pub mod validate;
 
 use generate::generate;
+use util::uuid::uuid;
 use validate::validate;
 
+use crate::invoice::outbound_shipment::update::generate::GenerateResult;
 use crate::invoice::query::get_invoice;
+use crate::log::log_entry;
 use crate::service_provider::ServiceContext;
 use crate::sync_processor::{process_records, Record};
 #[derive(Clone, Debug, PartialEq)]
@@ -37,6 +41,7 @@ pub enum UpdateOutboundShipmentError {
     InvoiceDoesNotExists,
     InvoiceIsNotEditable,
     NotAnOutboundShipment,
+    // Error applies to unallocated lines with above zero quantity
     CanOnlyChangeToAllocatedWhenNoUnallocatedLines(Vec<InvoiceLine>),
     // Name validation
     OtherPartyNotACustomer,
@@ -60,14 +65,24 @@ pub fn update_outbound_shipment(
         .connection
         .transaction_sync(|connection| {
             let (invoice, other_party_option) = validate(connection, store_id, &patch)?;
-            let (stock_lines_option, update_invoice) =
-                generate(invoice, other_party_option, patch, connection)?;
+            let GenerateResult {
+                batches_to_update,
+                update_invoice,
+                unallocated_lines_to_trim,
+            } = generate(invoice, other_party_option, patch.clone(), connection)?;
 
             InvoiceRowRepository::new(connection).upsert_one(&update_invoice)?;
-            if let Some(stock_lines) = stock_lines_option {
+            if let Some(stock_lines) = batches_to_update {
                 let repository = StockLineRowRepository::new(connection);
                 for stock_line in stock_lines {
                     repository.upsert_one(&stock_line)?;
+                }
+            }
+
+            if let Some(lines) = unallocated_lines_to_trim {
+                let repository = InvoiceLineRowRepository::new(connection);
+                for line in lines {
+                    repository.delete(&line.id)?;
                 }
             }
 
@@ -85,6 +100,24 @@ pub fn update_outbound_shipment(
             vec![Record::InvoiceRow(invoice.invoice_row.clone())],
         )
     );
+
+    if let Some(status) = patch.status {
+        log_entry(
+            &ctx.connection,
+            &LogRow {
+                id: uuid(),
+                r#type: match status {
+                    UpdateOutboundShipmentStatus::Allocated => LogType::InvoiceStatusAllocated,
+                    UpdateOutboundShipmentStatus::Picked => LogType::InvoiceStatusPicked,
+                    UpdateOutboundShipmentStatus::Shipped => LogType::InvoiceStatusShipped,
+                },
+                user_id: invoice.invoice_row.user_id.clone(),
+                store_id: Some(invoice.invoice_row.store_id.clone()),
+                record_id: Some(invoice.invoice_row.id.clone()),
+                datetime: Utc::now().naive_utc(),
+            },
+        )?;
+    }
 
     Ok(invoice)
 }
@@ -140,14 +173,21 @@ impl UpdateOutboundShipment {
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{mock_name_a, mock_outbound_shipment_a, mock_store_a, MockData, MockDataInserts},
+        mock::{
+            mock_item_a, mock_name_a, mock_outbound_shipment_a, mock_store_a, MockData,
+            MockDataInserts,
+        },
         test_db::setup_all_with_data,
-        InvoiceRow, InvoiceRowRepository, InvoiceRowType, NameRow, NameStoreJoinRow,
+        InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRow,
+        InvoiceRowRepository, InvoiceRowType, NameRow, NameStoreJoinRow,
     };
     use util::{inline_edit, inline_init};
 
     use crate::{
-        invoice::outbound_shipment::UpdateOutboundShipment, service_provider::ServiceProvider,
+        invoice::outbound_shipment::{
+            update::UpdateOutboundShipmentStatus, UpdateOutboundShipment,
+        },
+        service_provider::ServiceProvider,
     };
 
     use super::UpdateOutboundShipmentError;
@@ -229,6 +269,61 @@ mod test {
         );
 
         // TODO add not Other error (only other party related atm)
+    }
+
+    #[actix_rt::test]
+    async fn update_outbound_shipment_success_trim_unallocated_line() {
+        fn invoice() -> InvoiceRow {
+            inline_init(|r: &mut InvoiceRow| {
+                r.id = "invoice".to_string();
+                r.name_id = mock_name_a().id;
+                r.store_id = mock_store_a().id;
+                r.r#type = InvoiceRowType::OutboundShipment;
+            })
+        }
+
+        fn invoice_line() -> InvoiceLineRow {
+            inline_init(|r: &mut InvoiceLineRow| {
+                r.id = "invoice_line".to_string();
+                r.invoice_id = invoice().id;
+                r.item_id = mock_item_a().id;
+                r.r#type = InvoiceLineRowType::UnallocatedStock;
+                r.pack_size = 1;
+                r.number_of_packs = 0;
+            })
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "update_outbound_shipment_success_trim_unallocated_line",
+            MockDataInserts::all(),
+            inline_init(|r: &mut MockData| {
+                r.invoices = vec![invoice()];
+                r.invoice_lines = vec![invoice_line()];
+            }),
+        )
+        .await;
+
+        assert_eq!(
+            InvoiceLineRowRepository::new(&connection).find_one_by_id_option(&invoice_line().id),
+            Ok(Some(invoice_line()))
+        );
+
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let context = service_provider.context().unwrap();
+        let service = service_provider.invoice_service;
+
+        let update = inline_init(|r: &mut UpdateOutboundShipment| {
+            r.id = invoice().id;
+            r.status = Some(UpdateOutboundShipmentStatus::Picked);
+        });
+        let result = service.update_outbound_shipment(&context, &mock_store_a().id, update);
+
+        assert!(matches!(result, Ok(_)), "Not Ok(_) {:#?}", result);
+
+        assert_eq!(
+            InvoiceLineRowRepository::new(&connection).find_one_by_id_option(&invoice_line().id),
+            Ok(None)
+        );
     }
 
     #[actix_rt::test]

@@ -106,6 +106,7 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
           <Grid container>
             <ModalLabel label={t('label.issue')} />
             <NonNegativeIntegerInput
+              autoFocus
               value={quantity}
               onChange={value => {
                 onChangeQuantity(

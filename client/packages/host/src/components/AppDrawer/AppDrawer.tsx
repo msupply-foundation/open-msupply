@@ -8,7 +8,7 @@ import {
   ExternalNavLink,
   List,
   PowerIcon,
-  RadioIcon,
+  // RadioIcon,
   // ReportsIcon,
   SettingsIcon,
   Theme,
@@ -217,11 +217,11 @@ export const AppDrawer: React.FC = () => {
       <LowerListContainer>
         <List>
           {drawer.isOpen && <StyledDivider color="drawerDivider" />}
-          <AppNavLink
+          {/* <AppNavLink
             to={AppRoute.Sync}
             icon={<RadioIcon fontSize="small" color="primary" />}
             text={t('sync')}
-          />
+          /> */}
           <ExternalNavLink
             to={docsUrl}
             icon={<BookIcon fontSize="small" color="primary" />}

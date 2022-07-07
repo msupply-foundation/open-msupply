@@ -1,4 +1,5 @@
 use crate::{
+    log::log_entry,
     requisition::common::check_requisition_exists,
     requisition_line::request_requisition_line::{
         delete_request_requisition_line, DeleteRequestRequisitionLine,
@@ -6,11 +7,13 @@ use crate::{
     },
     service_provider::ServiceContext,
 };
+use chrono::Utc;
 use repository::{
     requisition_row::{RequisitionRowStatus, RequisitionRowType},
-    EqualFilter, RepositoryError, RequisitionLineFilter, RequisitionLineRepository,
-    RequisitionRowRepository, StorageConnection,
+    EqualFilter, LogRow, LogType, RepositoryError, RequisitionLineFilter,
+    RequisitionLineRepository, RequisitionRowRepository, StorageConnection,
 };
+use util::uuid::uuid;
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct DeleteRequestRequisition {
@@ -66,11 +69,23 @@ pub fn delete_request_requisition(
             // End TODO
 
             match RequisitionRowRepository::new(&connection).delete(&input.id) {
-                Ok(_) => Ok(input.id),
+                Ok(_) => Ok(input.id.clone()),
                 Err(error) => Err(OutError::DatabaseError(error)),
             }
         })
         .map_err(|error| error.to_inner_error())?;
+
+    log_entry(
+        &ctx.connection,
+        &LogRow {
+            id: uuid(),
+            r#type: LogType::RequisitionDeleted,
+            user_id: None, //TODO
+            store_id: Some(store_id.to_string()),
+            record_id: Some(input.id),
+            datetime: Utc::now().naive_utc(),
+        },
+    )?;
 
     Ok(requisition_id)
 }

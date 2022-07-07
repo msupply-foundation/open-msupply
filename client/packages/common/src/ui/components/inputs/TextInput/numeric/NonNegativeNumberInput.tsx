@@ -20,22 +20,20 @@ export const NonNegativeNumberInput = React.forwardRef(
       ...rest
     }: NonNegativeNumberProps,
     ref: ForwardedRef<HTMLDivElement>
-  ) => {
-    return (
-      <NumericTextInput
-        ref={ref}
-        type="number"
-        InputProps={{
-          sx: { ...sx, '& .MuiInput-input': { textAlign: 'right' } },
-        }}
-        onChange={e => {
-          const newValue = NumUtils.parseString(e.target.value, 0, max);
-          onChange(newValue);
-        }}
-        disabled={disabled}
-        value={value}
-        {...rest}
-      />
-    );
-  }
+  ) => (
+    <NumericTextInput
+      ref={ref}
+      type="number"
+      InputProps={{
+        sx: { ...sx, '& .MuiInput-input': { textAlign: 'right' } },
+      }}
+      onChange={e => {
+        const newValue = NumUtils.parseString(e.target.value, 0, max);
+        onChange(newValue);
+      }}
+      disabled={disabled}
+      value={value}
+      {...rest}
+    />
+  )
 );

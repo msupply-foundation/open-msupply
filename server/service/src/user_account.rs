@@ -227,6 +227,11 @@ mod user_account_test {
         // should be able to verify correct username and password
         service.verify_password(username, password).unwrap();
 
+        // should be able to verify with uppercase(username) and correct password
+        service
+            .verify_password(&username.to_uppercase(), password)
+            .unwrap();
+
         // should fail to verify wrong password
         let err = service.verify_password(username, "wrong").unwrap_err();
         assert!(matches!(err, VerifyPasswordError::InvalidCredentials));

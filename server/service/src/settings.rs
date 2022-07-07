@@ -1,5 +1,6 @@
-use crate::sync_settings::SyncSettings;
 use repository::database_settings::DatabaseSettings;
+
+use crate::sync::settings::SyncSettings;
 
 #[derive(serde::Deserialize, Clone)]
 pub struct Settings {

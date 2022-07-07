@@ -106,9 +106,7 @@ const outboundParsers = {
       totalAfterTax: get.stockLineTotal(line),
     };
   },
-  toDeleteLine: (line: {
-    id: string;
-  }): DeleteOutboundShipmentLineInput => ({
+  toDeleteLine: (line: { id: string }): DeleteOutboundShipmentLineInput => ({
     id: line.id,
   }),
   toInsertPlaceholder: (
@@ -420,5 +418,33 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
         toBePicked: result?.invoiceCounts?.outbound.toBePicked ?? 0,
       };
     },
+  },
+  addFromMasterList: async ({
+    outboundShipmentId,
+    masterListId,
+  }: {
+    outboundShipmentId: string;
+    masterListId: string;
+  }) => {
+    const result = await sdk.addToShipmentFromMasterList({
+      outboundShipmentId,
+      masterListId,
+      storeId,
+    });
+
+    if (
+      result.addToShipmentFromMasterList.__typename === 'InvoiceLineConnector'
+    ) {
+      return result.addToShipmentFromMasterList;
+    }
+
+    if (
+      result.addToShipmentFromMasterList.__typename ===
+      'AddToShipmentFromMasterListError'
+    ) {
+      throw new Error(result.addToShipmentFromMasterList.error.__typename);
+    }
+
+    throw new Error('Could not add from master list');
   },
 });

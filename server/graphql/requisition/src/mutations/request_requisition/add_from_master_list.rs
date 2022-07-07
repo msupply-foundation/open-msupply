@@ -204,7 +204,7 @@ mod test {
           }
         "#;
 
-        // RequisitionDoesNotExist
+        // RecordDoesNotExist
         let test_service = TestService(Box::new(|_, _| Err(ServiceError::RequisitionDoesNotExist)));
 
         let expected = json!({
@@ -224,7 +224,7 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        // CannotEditRequisition
+        // CannotEditRecord
         let test_service = TestService(Box::new(|_, _| Err(ServiceError::CannotEditRequisition)));
 
         let expected = json!({
