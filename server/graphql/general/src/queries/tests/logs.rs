@@ -22,7 +22,7 @@ mod graphql {
                     nodes {
                         datetime
                         id
-                        logType
+                        type
                         recordId
                         storeId
                     }
@@ -36,21 +36,21 @@ mod graphql {
                     {
                         "datetime": "2020-01-01T00:00:00",
                         "id": "log_a",
-                        "logType": "USER_LOGGED_IN",
+                        "type": "USER_LOGGED_IN",
                         "recordId": null,
                         "storeId": null,
                     },
                     {
                         "datetime": "2020-01-01T00:00:00",
                         "id": "log_b",
-                        "logType": "INVOICE_CREATED",
+                        "type": "INVOICE_CREATED",
                         "recordId": "outbound_shipment_a",
                         "storeId": "store_a",
                     },
                     {
                         "datetime": "2020-01-01T00:00:00",
                         "id": "log_c",
-                        "logType": "INVOICE_STATUS_ALLOCATED",
+                        "type": "INVOICE_STATUS_ALLOCATED",
                         "recordId": "inbound_shipment_a",
                         "storeId": "store_b",
                     },
@@ -77,7 +77,7 @@ mod graphql {
                     nodes {
                         datetime
                         id
-                        logType
+                        type
                         recordId
                         store {
                             id
@@ -93,7 +93,7 @@ mod graphql {
 
         let variables = json!({
             "logFilter": {
-                "logType": {
+                "type": {
                     "equalTo": "INVOICE_CREATED"
                 }
             }
@@ -104,7 +104,7 @@ mod graphql {
                 "nodes": [
                     {
                         "id": "log_b",
-                        "logType": "INVOICE_CREATED",
+                        "type": "INVOICE_CREATED",
                         "recordId": "outbound_shipment_a",
                         "datetime": "2020-01-01T00:00:00",
                         "store": {
