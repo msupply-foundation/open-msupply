@@ -73,9 +73,15 @@ query patientById($storeId: String!, $nameId: String!) {
 
 query patientSearch($input: PatientSearchInput!, $storeId: String!) {
   patientSearch(input: $input, storeId: $storeId) {
-    score
-    patient {
-      ...Patient
+    ... on PatientSearchConnector {
+      __typename
+      nodes {
+        score
+        patient {
+          ...Patient
+        }
+      }
+      totalCount
     }
   }
 }
