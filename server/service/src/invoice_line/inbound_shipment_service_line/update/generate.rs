@@ -32,7 +32,7 @@ pub fn generate(
         None
     };
 
-    let mut update_line = existing_line.clone();
+    let mut update_line = existing_line;
 
     if let Some(item_name) = updated_item_name {
         update_line.item_name = item_name;
