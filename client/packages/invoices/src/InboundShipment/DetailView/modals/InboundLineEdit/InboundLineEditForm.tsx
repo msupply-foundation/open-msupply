@@ -33,6 +33,7 @@ export const InboundLineEditForm: FC<InboundLineEditProps> = ({
         <Grid item flex={1}>
           <StockItemSearchInput
             autoFocus={!item}
+            openOnFocus={!item}
             disabled={disabled}
             currentItemId={item?.id}
             onChange={newItem => newItem && onChangeItem(newItem)}

@@ -15,6 +15,7 @@ import {
   Theme,
   useTheme,
   useTableStore,
+  CellProps,
 } from '@openmsupply-client/common';
 import { getLocationInputColumn } from '@openmsupply-client/system';
 import { DraftStocktakeLine } from './utils';
@@ -80,6 +81,13 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
   const theme = useTheme();
   useDisableStocktakeRows(batches);
 
+  const PackSizeCell = (props: CellProps<DraftStocktakeLine>) => (
+    <PositiveNumberInputCell
+      {...props}
+      isDisabled={!!props.rowData.stockLine}
+    />
+  );
+
   const columns = useColumns<DraftStocktakeLine>([
     getCountThisLineColumn(update, theme),
     getBatchColumn(update, theme),
@@ -93,7 +101,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
       key: 'packSize',
       label: 'label.pack-size',
       width: 125,
-      Cell: PositiveNumberInputCell,
+      Cell: PackSizeCell,
       setter: patch => update({ ...patch, countThisLine: true }),
     },
     {

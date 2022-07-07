@@ -22,6 +22,7 @@ export type LocalStorageRecord = {
   '/theme/logo': string;
   '/mru/credentials': AuthenticationCredentials;
   '/auth/error': AuthError | undefined;
+  '/pagination/rowsperpage': number;
   '/columns/hidden': Record<string, string[]> | undefined;
 };
 
