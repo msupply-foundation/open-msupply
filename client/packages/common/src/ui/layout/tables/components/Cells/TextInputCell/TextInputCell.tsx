@@ -11,6 +11,7 @@ export const TextInputCell = <T extends RecordWithId>({
   isDisabled = false,
   rowIndex,
   columnIndex,
+  autocompleteName,
 }: CellProps<T>): React.ReactElement<CellProps<T>> => {
   const [buffer, setBuffer] = useBufferState(
     column.accessor({ rowData, rows })
@@ -18,9 +19,13 @@ export const TextInputCell = <T extends RecordWithId>({
   const updater = useDebounceCallback(column.setter, [column.setter], 500);
   const { maxLength } = column;
   const autoFocus = rowIndex === 0 && columnIndex === 0;
+  const autocompleteProps = autocompleteName
+    ? { autoComplete: 'on', name: autocompleteName }
+    : {};
 
   return (
     <BasicTextInput
+      {...autocompleteProps}
       disabled={isDisabled}
       autoFocus={autoFocus}
       InputProps={maxLength ? { inputProps: { maxLength } } : undefined}
