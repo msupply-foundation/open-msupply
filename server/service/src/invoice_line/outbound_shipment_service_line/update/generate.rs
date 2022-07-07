@@ -1,5 +1,7 @@
 use repository::{InvoiceLineRow, ItemRow};
 
+use crate::invoice::common::total_after_tax;
+
 use super::{UpdateOutboundShipmentServiceLine, UpdateOutboundShipmentServiceLineError};
 
 pub fn generate(
@@ -8,7 +10,6 @@ pub fn generate(
         item_id: input_item_id,
         name: input_name,
         total_before_tax: input_total_before_tax,
-        total_after_tax: input_total_after_tax,
         tax: input_tax,
         note: input_note,
     }: UpdateOutboundShipmentServiceLine,
@@ -42,12 +43,8 @@ pub fn generate(
         update_line.item_id = input_item_id;
     }
 
-    if let Some(total_after_tax) = input_total_before_tax {
-        update_line.total_before_tax = total_after_tax;
-    }
-
-    if let Some(total_after_tax) = input_total_after_tax {
-        update_line.total_after_tax = total_after_tax;
+    if let Some(total_before_tax) = input_total_before_tax {
+        update_line.total_before_tax = total_before_tax;
     }
 
     if let Some(tax) = input_tax {
@@ -57,6 +54,8 @@ pub fn generate(
     if let Some(note) = input_note {
         update_line.note = Some(note);
     }
+
+    update_line.total_after_tax = total_after_tax(update_line.total_before_tax, update_line.tax);
 
     Ok(update_line)
 }
@@ -86,7 +85,6 @@ mod outbound_shipment_service_line_update_test {
                 item_id: None,
                 name: None,
                 total_before_tax: None,
-                total_after_tax: None,
                 tax: None,
                 note: None,
             },
@@ -103,7 +101,6 @@ mod outbound_shipment_service_line_update_test {
                 item_id: None,
                 name: Some("input name".to_string()),
                 total_before_tax: None,
-                total_after_tax: None,
                 tax: None,
                 note: None,
             },
@@ -120,7 +117,6 @@ mod outbound_shipment_service_line_update_test {
                 item_id: Some(item2.id.to_owned()),
                 name: Some("input name 2".to_string()),
                 total_before_tax: None,
-                total_after_tax: None,
                 tax: None,
                 note: None,
             },
@@ -137,7 +133,6 @@ mod outbound_shipment_service_line_update_test {
                 item_id: Some(item2.id.to_owned()),
                 name: None,
                 total_before_tax: None,
-                total_after_tax: None,
                 tax: None,
                 note: None,
             },

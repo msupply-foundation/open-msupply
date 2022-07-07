@@ -1,4 +1,4 @@
-use crate::u32_to_i32;
+use crate::{invoice::common::total_after_tax, u32_to_i32};
 use repository::{
     InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow,
 };
@@ -44,7 +44,6 @@ fn generate_line(
         stock_line_id,
         number_of_packs,
         total_before_tax,
-        total_after_tax,
         tax,
     }: InsertOutboundShipmentLine,
     ItemRow {
@@ -79,7 +78,7 @@ fn generate_line(
         item_code,
         stock_line_id: Some(stock_line_id),
         total_before_tax,
-        total_after_tax,
+        total_after_tax: total_after_tax(total_before_tax, tax),
         tax,
         note,
     }

@@ -1,4 +1,4 @@
-use crate::u32_to_i32;
+use crate::{invoice::common::total_after_tax, u32_to_i32};
 use repository::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow};
 
 use super::{BatchPair, UpdateOutboundShipmentLine, UpdateOutboundShipmentLineError};
@@ -77,7 +77,6 @@ fn generate_line(
         invoice_id,
         number_of_packs,
         total_before_tax,
-        total_after_tax,
         tax,
         r#type,
         ..
@@ -115,7 +114,7 @@ fn generate_line(
         item_code,
         stock_line_id: Some(stock_line_id),
         total_before_tax,
-        total_after_tax,
+        total_after_tax: total_after_tax(total_before_tax, tax),
         tax,
         r#type,
         note,
@@ -126,9 +125,6 @@ fn generate_line(
     }
     if let Some(total_before_tax) = input.total_before_tax {
         update_line.total_before_tax = total_before_tax;
-    }
-    if let Some(total_after_tax) = input.total_after_tax {
-        update_line.total_after_tax = total_after_tax;
     }
     if let Some(tax) = input.tax {
         update_line.tax = tax.percentage;

@@ -20,7 +20,6 @@ pub struct UpdateOutboundShipmentLine {
     pub stock_line_id: Option<String>,
     pub number_of_packs: Option<u32>,
     pub total_before_tax: Option<f64>,
-    pub total_after_tax: Option<f64>,
     pub tax: Option<ShipmentTaxUpdate>,
 }
 

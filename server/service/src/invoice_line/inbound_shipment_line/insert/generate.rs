@@ -1,5 +1,7 @@
 use crate::{
-    invoice::common::generate_invoice_user_id_update, invoice_line::generate_batch, u32_to_i32,
+    invoice::common::{generate_invoice_user_id_update, total_after_tax},
+    invoice_line::generate_batch,
+    u32_to_i32,
 };
 use repository::{
     InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow,
@@ -43,7 +45,6 @@ fn generate_line(
         number_of_packs,
         location_id,
         total_before_tax,
-        total_after_tax,
         tax,
     }: InsertInboundShipmentLine,
     ItemRow {
@@ -68,7 +69,7 @@ fn generate_line(
         item_code,
         stock_line_id: None,
         total_before_tax,
-        total_after_tax,
+        total_after_tax: total_after_tax(total_before_tax, tax),
         tax,
         note: None,
     }
