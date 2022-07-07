@@ -277,7 +277,7 @@ mod repository_test {
         }
     }
 
-    use std::{convert::TryInto, time::SystemTime};
+    use std::convert::TryInto;
 
     use crate::{
         mock::{
@@ -293,20 +293,19 @@ mod repository_test {
         requisition_row::RequisitionRowStatus,
         test_db, CentralSyncBufferRepository, ChangelogAction, ChangelogRow,
         ChangelogRowRepository, ChangelogTableName, InvoiceLineRepository,
-        InvoiceLineRowRepository, InvoiceRowRepository, ItemRow, ItemRowRepository,
-        KeyValueStoreRepository, KeyValueType, LogRowRepository, MasterListFilter,
-        MasterListLineFilter, MasterListLineRepository, MasterListLineRowRepository,
-        MasterListNameJoinRepository, MasterListRepository, MasterListRowRepository,
-        NameRowRepository, NumberRowRepository, NumberRowType, OutboundShipmentRowRepository,
-        RepositoryError, RequisitionFilter, RequisitionLineFilter, RequisitionLineRepository,
-        RequisitionLineRowRepository, RequisitionRepository, RequisitionRowRepository,
-        StockLineFilter, StockLineRepository, StockLineRowRepository, StoreRowRepository,
-        TransactionError, UserAccountRowRepository,
+        InvoiceLineRowRepository, InvoiceRowRepository, ItemRowRepository, KeyValueStoreRepository,
+        KeyValueType, LogRowRepository, MasterListFilter, MasterListLineFilter,
+        MasterListLineRepository, MasterListLineRowRepository, MasterListNameJoinRepository,
+        MasterListRepository, MasterListRowRepository, NameRowRepository, NumberRowRepository,
+        NumberRowType, OutboundShipmentRowRepository, RequisitionFilter, RequisitionLineFilter,
+        RequisitionLineRepository, RequisitionLineRowRepository, RequisitionRepository,
+        RequisitionRowRepository, StockLineFilter, StockLineRepository, StockLineRowRepository,
+        StoreRowRepository, UserAccountRowRepository,
     };
     use crate::{DateFilter, EqualFilter, SimpleStringFilter};
     use chrono::Duration;
     use diesel::{sql_query, sql_types::Text, RunQueryDsl};
-    use util::{inline_edit, inline_init};
+    use util::inline_edit;
 
     #[actix_rt::test]
     async fn test_name_repository() {
@@ -1197,6 +1196,10 @@ mod repository_test {
     #[cfg(not(feature = "memory"))]
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn test_tx_deadlock() {
+        use crate::{ItemRow, RepositoryError, TransactionError};
+        use std::time::SystemTime;
+        use util::inline_init;
+
         let (_, _, connection_manager, _) =
             test_db::setup_all("tx_deadlock", MockDataInserts::none()).await;
 
