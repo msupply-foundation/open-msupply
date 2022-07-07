@@ -117,6 +117,7 @@ export const ContentArea: FC<ContentAreaProps> = ({
         ExpandContent={Expando}
         columns={columns}
         data={rows}
+        key="stocktake-detail"
         noDataElement={
           <NothingHere
             body={t('error.no-stocktake-items')}
