@@ -55,6 +55,7 @@ pub struct InvoiceLineFilter {
     pub r#type: Option<EqualFilter<InvoiceLineRowType>>,
     pub location_id: Option<EqualFilter<String>>,
     pub requisition_id: Option<EqualFilter<String>>,
+    pub number_of_packs: Option<EqualFilter<i32>>,
 }
 
 impl InvoiceLineFilter {
@@ -66,6 +67,7 @@ impl InvoiceLineFilter {
             item_id: None,
             location_id: None,
             requisition_id: None,
+            number_of_packs: None,
         }
     }
 
@@ -96,6 +98,11 @@ impl InvoiceLineFilter {
 
     pub fn requisition_id(mut self, filter: EqualFilter<String>) -> Self {
         self.requisition_id = Some(filter);
+        self
+    }
+
+    pub fn number_of_packs(mut self, filter: EqualFilter<i32>) -> Self {
+        self.number_of_packs = Some(filter);
         self
     }
 }
@@ -170,12 +177,23 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
         .into_boxed();
 
     if let Some(f) = filter {
-        apply_equal_filter!(query, f.id, invoice_line_dsl::id);
-        apply_equal_filter!(query, f.requisition_id, invoice_dsl::requisition_id);
-        apply_equal_filter!(query, f.invoice_id, invoice_line_dsl::invoice_id);
-        apply_equal_filter!(query, f.location_id, invoice_line_dsl::location_id);
-        apply_equal_filter!(query, f.item_id, invoice_line_dsl::item_id);
-        apply_equal_filter!(query, f.r#type, invoice_line_dsl::type_);
+        let InvoiceLineFilter {
+            id,
+            invoice_id,
+            item_id,
+            r#type,
+            location_id,
+            requisition_id,
+            number_of_packs,
+        } = f;
+
+        apply_equal_filter!(query, id, invoice_line_dsl::id);
+        apply_equal_filter!(query, requisition_id, invoice_dsl::requisition_id);
+        apply_equal_filter!(query, invoice_id, invoice_line_dsl::invoice_id);
+        apply_equal_filter!(query, location_id, invoice_line_dsl::location_id);
+        apply_equal_filter!(query, item_id, invoice_line_dsl::item_id);
+        apply_equal_filter!(query, r#type, invoice_line_dsl::type_);
+        apply_equal_filter!(query, number_of_packs, invoice_line_dsl::number_of_packs);
     }
 
     query
