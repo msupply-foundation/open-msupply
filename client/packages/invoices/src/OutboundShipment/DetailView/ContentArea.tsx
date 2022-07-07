@@ -139,6 +139,7 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
         ExpandContent={Expand}
         columns={columns}
         data={rows}
+        hiddenColumnKey="outbound-detail"
         noDataElement={
           <NothingHere
             body={t('error.no-outbound-items')}

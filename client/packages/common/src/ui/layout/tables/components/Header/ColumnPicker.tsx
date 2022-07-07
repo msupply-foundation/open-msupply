@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import {
   IconButton,
   Tooltip,
@@ -12,25 +12,35 @@ import {
   Column,
   ColumnsIcon,
   RecordWithId,
+  useLocalStorage,
 } from '@openmsupply-client/common';
 import { LocaleKey, useTranslation } from '@common/intl';
 
 interface ColumnPickerProps<T extends RecordWithId> {
+  columnKey: string;
   columns: Column<T>[];
   onChange: (columns: Column<T>[]) => void;
 }
 
 export const ColumnPicker = <T extends RecordWithId>({
+  columnKey,
   columns,
   onChange,
 }: ColumnPickerProps<T>) => {
   const t = useTranslation('common');
+  const [hiddenColumns, setHiddenColumns] = useLocalStorage('/columns/hidden');
   const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(
     null
   );
-  const [hiddenColumns, setHiddenColumns] = useState<string[]>([]);
+
+  const open = Boolean(anchorEl);
+  const id = open ? 'simple-popover' : undefined;
+
+  const getHiddenColumns = () =>
+    hiddenColumns ? hiddenColumns[columnKey] ?? [] : [];
+
   const isVisible = (column: Column<T>) =>
-    !hiddenColumns.includes(String(column.key));
+    !getHiddenColumns()?.includes(String(column.key));
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
@@ -40,14 +50,13 @@ export const ColumnPicker = <T extends RecordWithId>({
     setAnchorEl(null);
   };
 
-  const open = Boolean(anchorEl);
-  const id = open ? 'simple-popover' : undefined;
   const toggleColumn = (column: Column<T>) => {
+    const hidden = getHiddenColumns();
     const updatedColumns = isVisible(column)
-      ? [...hiddenColumns, String(column.key)]
-      : hiddenColumns.filter(key => key !== column.key);
+      ? [...hidden, String(column.key)]
+      : hidden.filter(key => key !== column.key);
 
-    setHiddenColumns(updatedColumns);
+    setHiddenColumns({ ...hiddenColumns, [columnKey]: updatedColumns });
   };
 
   useEffect(() => onChange(columns.filter(isVisible)), [hiddenColumns]);
@@ -56,7 +65,12 @@ export const ColumnPicker = <T extends RecordWithId>({
     <>
       <Tooltip title={t('table.show-columns')}>
         <IconButton onClick={handleClick} aria-describedby={id}>
-          <ColumnsIcon sx={{ color: 'secondary.main' }} />
+          <ColumnsIcon
+            sx={{
+              color:
+                getHiddenColumns().length > 0 ? 'secondary.main' : undefined,
+            }}
+          />
         </IconButton>
       </Tooltip>
       <Popover
