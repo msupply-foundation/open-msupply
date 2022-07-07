@@ -95,7 +95,12 @@ export const OutboundLineEditTable: React.FC<OutboundLineEditTableProps> = ({
         }}
       >
         {!!orderedRows.length && (
-          <DataTable columns={columns} data={orderedRows} dense />
+          <DataTable
+            key="outbound-line-edit"
+            columns={columns}
+            data={orderedRows}
+            dense
+          />
         )}
         {placeholderRow ? (
           <PlaceholderRow line={placeholderRow} onChange={onChange} />
