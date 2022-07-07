@@ -5,6 +5,7 @@ edition = "2018"
 
 [lib]
 path = "src/lib.rs"
+doctest = false
 
 [dependencies]
 
