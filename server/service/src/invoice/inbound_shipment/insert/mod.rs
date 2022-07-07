@@ -12,7 +12,7 @@ use generate::generate;
 use util::uuid::uuid;
 use validate::validate;
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct InsertInboundShipment {
     pub id: String,
     pub other_party_id: String,
