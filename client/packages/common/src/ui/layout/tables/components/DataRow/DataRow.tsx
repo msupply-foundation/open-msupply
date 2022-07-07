@@ -102,6 +102,7 @@ export const DataRow = <T extends RecordWithId>({
                   rowKey={rowKey}
                   columnIndex={columnIndex}
                   rowIndex={rowIndex}
+                  autocompleteName={column.autocompleteProvider?.(rowData)}
                 />
               </TableCell>
             );

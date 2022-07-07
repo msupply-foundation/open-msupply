@@ -37,6 +37,7 @@ const getBatchColumn = (
     maxWidth: 150,
     maxLength: 50,
     Cell: TextInputCell,
+    autocompleteProvider: data => `inboundshipment${data.item.id}`,
     setter: updateDraftLine,
     backgroundColor: alpha(theme.palette.background.menu, 0.4),
   },

@@ -12,6 +12,7 @@ export interface CellProps<T extends RecordWithId> {
   columnIndex: number;
   rowIndex: number;
   isDisabled?: boolean;
+  autocompleteName?: string;
 }
 
 export interface HeaderProps<T extends RecordWithId> {
@@ -88,6 +89,8 @@ export interface Column<T extends RecordWithId> {
   order?: number;
 
   setter: ColumnDataSetter<T>;
+
+  autocompleteProvider?: (rowDataValue: T) => string;
 }
 
 export interface ColumnDefinition<T extends RecordWithId>
