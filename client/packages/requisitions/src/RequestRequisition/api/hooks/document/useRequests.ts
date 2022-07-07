@@ -4,7 +4,7 @@ import { useRequestApi } from '../utils/useRequestApi';
 export const useRequests = (options?: { enabled: boolean }) => {
   const { queryParams } = useUrlQueryParams({
     filterKey: 'otherPartyName',
-    initialSort: { sort: 'createdDatetime', dir: 'desc' },
+    initialSort: { key: 'createdDatetime', dir: 'desc' },
   });
   const api = useRequestApi();
 

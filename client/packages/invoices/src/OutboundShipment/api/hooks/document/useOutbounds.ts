@@ -4,7 +4,7 @@ import { useOutboundApi } from './../utils/useOutboundApi';
 export const useOutbounds = () => {
   const { queryParams } = useUrlQueryParams({
     filterKey: 'otherPartyName',
-    initialSort: { sort: 'createdDatetime', dir: 'desc' },
+    initialSort: { key: 'createdDatetime', dir: 'desc' },
   });
   const api = useOutboundApi();
 
