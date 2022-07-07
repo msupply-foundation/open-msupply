@@ -135,11 +135,12 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
         </Box>
       )}
       <DataTable
+        key="outbound-detail"
         onRowClick={onRowClick}
         ExpandContent={Expand}
         columns={columns}
         data={rows}
-        hiddenColumnKey="outbound-detail"
+        enableColumnSelection
         noDataElement={
           <NothingHere
             body={t('error.no-outbound-items')}

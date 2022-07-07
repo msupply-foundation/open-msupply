@@ -51,11 +51,12 @@ export const ContentArea: FC<ContentAreaProps> = React.memo(
           </Box>
         )}
         <DataTable
+          key="inbound-detail"
           onRowClick={onRowClick}
           ExpandContent={Expando}
           columns={columns}
           data={rows}
-          hiddenColumnKey="inbound-detail"
+          enableColumnSelection
           noDataElement={
             <NothingHere
               body={t('error.no-inbound-items')}

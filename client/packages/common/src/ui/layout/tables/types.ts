@@ -20,8 +20,8 @@ export interface TableProps<T extends RecordWithId> {
   data?: T[];
   dense?: boolean;
   ExpandContent?: FC<{ rowData: T }>;
-  // specify a key to enable the option to hide columns
-  hiddenColumnKey?: string;
+  enableColumnSelection?: boolean;
+  key: string;
   isDisabled?: boolean;
   isError?: boolean;
   isLoading?: boolean;

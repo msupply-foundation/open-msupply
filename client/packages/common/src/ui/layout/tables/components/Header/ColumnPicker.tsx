@@ -17,18 +17,19 @@ import {
 import { LocaleKey, useTranslation } from '@common/intl';
 
 interface ColumnPickerProps<T extends RecordWithId> {
-  columnKey: string;
   columns: Column<T>[];
+  tableKey: string;
   onChange: (columns: Column<T>[]) => void;
 }
 
 export const ColumnPicker = <T extends RecordWithId>({
-  columnKey,
+  tableKey,
   columns,
   onChange,
 }: ColumnPickerProps<T>) => {
   const t = useTranslation('common');
-  const [hiddenColumns, setHiddenColumns] = useLocalStorage('/columns/hidden');
+  const [hiddenColumnsConfig, setHiddenColumnsConfig] =
+    useLocalStorage('/columns/hidden');
   const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(
     null
   );
@@ -36,8 +37,7 @@ export const ColumnPicker = <T extends RecordWithId>({
   const open = Boolean(anchorEl);
   const id = open ? 'simple-popover' : undefined;
 
-  const getHiddenColumns = () =>
-    hiddenColumns ? hiddenColumns[columnKey] ?? [] : [];
+  const getHiddenColumns = () => hiddenColumnsConfig?.[tableKey] ?? [];
 
   const isVisible = (column: Column<T>) =>
     !getHiddenColumns()?.includes(String(column.key));
@@ -56,10 +56,13 @@ export const ColumnPicker = <T extends RecordWithId>({
       ? [...hidden, String(column.key)]
       : hidden.filter(key => key !== column.key);
 
-    setHiddenColumns({ ...hiddenColumns, [columnKey]: updatedColumns });
+    setHiddenColumnsConfig({
+      ...hiddenColumnsConfig,
+      [tableKey]: updatedColumns,
+    });
   };
 
-  useEffect(() => onChange(columns.filter(isVisible)), [hiddenColumns]);
+  useEffect(() => onChange(columns.filter(isVisible)), [hiddenColumnsConfig]);
 
   return (
     <>
