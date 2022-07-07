@@ -10,7 +10,7 @@ const RECORDS_PER_PAGE = 20;
 
 interface UrlQueryParams {
   filterKey?: string;
-  initialSort?: string | { sort: string; dir: 'desc' | 'asc' };
+  initialSort?: { key: string; dir: 'desc' | 'asc' };
   filterCondition?: string;
 }
 
@@ -30,11 +30,8 @@ export const useUrlQueryParams = ({
     // Don't want to override existing sort
     if (!!urlQuery['sort']) return;
 
-    if (typeof initialSort === 'object') {
-      updateQuery(initialSort);
-    } else {
-      updateQuery({ sort: initialSort });
-    }
+    const { key: sort, dir } = initialSort;
+    updateQuery({ sort, dir });
   }, [initialSort]);
 
   const updateSortQuery = (column: Column<any>) => {
