@@ -74,6 +74,7 @@ export const InboundListView: FC = () => {
       <AppBarButtons sortBy={sortBy} modalController={modalController} />
 
       <DataTable
+        key="inbound-line-list"
         pagination={{ ...pagination, total: data?.totalCount }}
         onChangePage={updatePaginationQuery}
         columns={columns}

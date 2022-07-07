@@ -114,6 +114,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
 
   return (
     <DataTable
+      key="stocktake-batch"
       isDisabled={isDisabled}
       columns={columns}
       data={batches}
@@ -153,6 +154,7 @@ export const PricingTable: FC<StocktakeLineEditTableProps> = ({
 
   return (
     <DataTable
+      key="stocktake-pricing"
       isDisabled={isDisabled}
       columns={columns}
       data={batches}
@@ -183,6 +185,7 @@ export const LocationTable: FC<StocktakeLineEditTableProps> = ({
 
   return (
     <DataTable
+      key="stocktake-location"
       isDisabled={isDisabled}
       columns={columns}
       data={batches}
