@@ -1,6 +1,6 @@
 use chrono::Utc;
 
-use repository::Name;
+use repository::{EqualFilter, InvoiceLineFilter, InvoiceLineRepository, Name, RepositoryError};
 use repository::{
     InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus,
     StockLineRow, StockLineRowRepository, StorageConnection,
@@ -8,7 +8,13 @@ use repository::{
 
 use super::{UpdateOutboundShipment, UpdateOutboundShipmentError, UpdateOutboundShipmentStatus};
 
-pub fn generate(
+pub(crate) struct GenerateResult {
+    pub(crate) batches_to_update: Option<Vec<StockLineRow>>,
+    pub(crate) update_invoice: InvoiceRow,
+    pub(crate) unallocated_lines_to_trim: Option<Vec<InvoiceLineRow>>,
+}
+
+pub(crate) fn generate(
     existing_invoice: InvoiceRow,
     other_party_option: Option<Name>,
     UpdateOutboundShipment {
@@ -22,9 +28,9 @@ pub fn generate(
         transport_reference: input_transport_reference,
     }: UpdateOutboundShipment,
     connection: &StorageConnection,
-) -> Result<(Option<Vec<StockLineRow>>, InvoiceRow), UpdateOutboundShipmentError> {
+) -> Result<GenerateResult, UpdateOutboundShipmentError> {
     let should_create_batches = should_update_batches(&existing_invoice, &input_status);
-    let mut update_invoice = existing_invoice;
+    let mut update_invoice = existing_invoice.clone();
 
     set_new_status_datetime(&mut update_invoice, &input_status);
 
@@ -36,7 +42,7 @@ pub fn generate(
     update_invoice.transport_reference =
         input_transport_reference.or(update_invoice.transport_reference);
 
-    if let Some(status) = input_status {
+    if let Some(status) = input_status.clone() {
         update_invoice.status = status.full_status().into()
     }
 
@@ -45,17 +51,24 @@ pub fn generate(
         update_invoice.name_id = other_party.name_row.id;
     }
 
-    if !should_create_batches {
-        Ok((None, update_invoice))
+    let batches_to_update = if should_create_batches {
+        Some(generate_batches(&update_invoice.id, connection)?)
     } else {
-        Ok((
-            Some(generate_batches(&update_invoice.id, connection)?),
-            update_invoice,
-        ))
-    }
+        None
+    };
+
+    Ok(GenerateResult {
+        batches_to_update,
+        unallocated_lines_to_trim: unallocated_lines_to_trim(
+            connection,
+            &existing_invoice,
+            &input_status,
+        )?,
+        update_invoice,
+    })
 }
 
-pub fn should_update_batches(
+fn should_update_batches(
     invoice: &InvoiceRow,
     status: &Option<UpdateOutboundShipmentStatus>,
 ) -> bool {
@@ -68,6 +81,43 @@ pub fn should_update_batches(
     } else {
         false
     }
+}
+
+// If status changed to allocated and above, remove unallocated lines
+fn unallocated_lines_to_trim(
+    connection: &StorageConnection,
+    invoice: &InvoiceRow,
+    status: &Option<UpdateOutboundShipmentStatus>,
+) -> Result<Option<Vec<InvoiceLineRow>>, RepositoryError> {
+    // Status sequence for outbound shipment: New, Allocated, Picked, Shipped
+    if invoice.status != InvoiceRowStatus::New {
+        return Ok(None);
+    }
+
+    let new_invoice_status = match UpdateOutboundShipmentStatus::full_status_option(status) {
+        Some(new_invoice_status) => new_invoice_status,
+        None => return Ok(None),
+    };
+
+    if new_invoice_status == InvoiceRowStatus::New {
+        return Ok(None);
+    }
+
+    // If new invoice status is not new and previous invoice status is new
+    // add all unallocated lines to be deleted
+
+    let lines = InvoiceLineRepository::new(connection).query_by_filter(
+        InvoiceLineFilter::new()
+            .invoice_id(EqualFilter::equal_to(&invoice.id))
+            .r#type(InvoiceLineRowType::UnallocatedStock.equal_to()),
+    )?;
+
+    if lines.is_empty() {
+        return Ok(None);
+    }
+
+    let invoice_line_rows = lines.into_iter().map(|l| l.invoice_line_row).collect();
+    return Ok(Some(invoice_line_rows));
 }
 
 fn set_new_status_datetime(
@@ -99,7 +149,7 @@ fn set_new_status_datetime(
 }
 
 // Returns a list of stock lines that need to be updated
-pub fn generate_batches(
+fn generate_batches(
     id: &str,
     connection: &StorageConnection,
 ) -> Result<Vec<StockLineRow>, UpdateOutboundShipmentError> {
