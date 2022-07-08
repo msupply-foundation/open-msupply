@@ -1,9 +1,9 @@
 import React, { FC } from 'react';
 import { Box, Typography, Pagination, TablePagination } from '@mui/material';
-import { useTableStore } from '../../context';
 import { useTranslation } from '@common/intl';
-import { useLocalStorage } from 'packages/common/src/localStorage';
+import { useLocalStorage } from '@openmsupply-client/common';
 import { DEFAULT_RECORDS_PER_PAGE } from '@common/hooks';
+import { useTableStore } from '../../context';
 
 interface PaginationRowProps {
   offset: number;

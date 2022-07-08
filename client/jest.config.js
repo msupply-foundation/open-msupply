@@ -16,6 +16,7 @@ module.exports = {
       prefix: '<rootDir>/',
     }),
     '.+\\.(gif)$': 'jest-transform-stub',
+    '@awesome-cordova-plugins/printer': '<rootDir>/__mocks__/printer.ts',
   },
   transformIgnorePatterns: ['/node_modules/(?!uuid)'],
 };
