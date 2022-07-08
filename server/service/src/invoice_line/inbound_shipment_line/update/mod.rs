@@ -11,7 +11,7 @@ mod validate;
 use generate::generate;
 use validate::validate;
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct UpdateInboundShipmentLine {
     pub id: String,
     pub item_id: Option<String>,
