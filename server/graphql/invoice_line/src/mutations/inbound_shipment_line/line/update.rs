@@ -440,7 +440,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_update_inbound_line_success() {
-        let (mock_data, connection, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphl_test(
             EmptyMutation,
             InvoiceLineMutations,
             "test_graphql_update_inbound_line_success",
