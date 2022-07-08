@@ -21,13 +21,13 @@ use validate::validate;
 
 use self::generate::LineAndStockLine;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum UpdateInboundShipmentStatus {
     Delivered,
     Verified,
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct UpdateInboundShipment {
     pub id: String,
     pub other_party_id: Option<String>,
