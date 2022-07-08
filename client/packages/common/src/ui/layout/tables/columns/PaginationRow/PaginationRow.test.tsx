@@ -6,65 +6,65 @@ import { TestingProvider } from '../../../../../utils';
 import { createQueryParamsStore } from '@common/hooks';
 
 describe('PaginationRow', () => {
-  // it('Renders a string : Showing X-Y of Z', () => {
-  //   const offset = 0;
-  //   const first = 20;
-  //   const total = 40;
+  it('Renders a string : Showing X-Y of Z', () => {
+    const offset = 0;
+    const first = 20;
+    const total = 40;
 
-  //   const { getByText } = render(
-  //     <TestingProvider>
-  //       <TableProvider
-  //         createStore={createTableStore}
-  //         queryParamsStore={createQueryParamsStore({
-  //           initialSortBy: { key: 'id' },
-  //         })}
-  //       >
-  //         <PaginationRow
-  //           page={0}
-  //           offset={offset}
-  //           total={total}
-  //           first={first}
-  //           onChange={jest.fn()}
-  //         />
-  //       </TableProvider>
-  //     </TestingProvider>
-  //   );
+    const { getByText } = render(
+      <TestingProvider>
+        <TableProvider
+          createStore={createTableStore}
+          queryParamsStore={createQueryParamsStore({
+            initialSortBy: { key: 'id' },
+          })}
+        >
+          <PaginationRow
+            page={0}
+            offset={offset}
+            total={total}
+            first={first}
+            onChange={jest.fn()}
+          />
+        </TableProvider>
+      </TestingProvider>
+    );
 
-  //   const node1 = getByText(/showing/i);
-  //   const node2 = getByText(`${offset + 1}-${first + offset}`);
-  //   const node3 = getByText(/of/i);
-  //   const node4 = getByText(`${total}`);
+    const node1 = getByText(/showing/i);
+    const node2 = getByText(`${offset + 1}-${first + offset}`);
+    const node3 = getByText(/of/i);
+    const node4 = getByText(`${total}`);
 
-  //   expect(node1).toBeInTheDocument();
-  //   expect(node2).toBeInTheDocument();
-  //   expect(node3).toBeInTheDocument();
-  //   expect(node4).toBeInTheDocument();
-  // });
+    expect(node1).toBeInTheDocument();
+    expect(node2).toBeInTheDocument();
+    expect(node3).toBeInTheDocument();
+    expect(node4).toBeInTheDocument();
+  });
 
-  // it('Renders at least one page button', () => {
-  //   const { getByRole } = render(
-  //     <TestingProvider>
-  //       <TableProvider
-  //         createStore={createTableStore}
-  //         queryParamsStore={createQueryParamsStore({
-  //           initialSortBy: { key: 'id' },
-  //         })}
-  //       >
-  //         <PaginationRow
-  //           page={0}
-  //           offset={1}
-  //           total={1}
-  //           first={1}
-  //           onChange={jest.fn()}
-  //         />
-  //       </TableProvider>
-  //     </TestingProvider>
-  //   );
+  it('Renders at least one page button', () => {
+    const { getByRole } = render(
+      <TestingProvider>
+        <TableProvider
+          createStore={createTableStore}
+          queryParamsStore={createQueryParamsStore({
+            initialSortBy: { key: 'id' },
+          })}
+        >
+          <PaginationRow
+            page={0}
+            offset={1}
+            total={1}
+            first={20}
+            onChange={jest.fn()}
+          />
+        </TableProvider>
+      </TestingProvider>
+    );
 
-  //   const node = getByRole('button', { name: 'page 1' });
+    const node = getByRole('button', { name: 'page 1' });
 
-  //   expect(node).toBeInTheDocument();
-  // });
+    expect(node).toBeInTheDocument();
+  });
 
   it('Renders the first 5 pages and the last page', () => {
     const offset = 0;
