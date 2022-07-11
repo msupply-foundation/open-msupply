@@ -1,4 +1,6 @@
+#[cfg(not(target_os = "android"))]
 extern crate machine_uid;
+
 use crate::{
     certs::Certificates, configuration::get_or_create_token_secret, cors::cors_policy,
     serve_frontend::config_server_frontend, static_files::config_static_files,
@@ -87,11 +89,10 @@ async fn run_stage0(
 
         #[cfg(target_os = "android")]
         let machine_uid = config_settings
-                .server
-                .machine_uid
-                .clone()
-                .unwrap_or("".to_string(),
-        };
+            .server
+            .machine_uid
+            .clone()
+            .unwrap_or("".to_string());
 
         service_provider
             .app_data_service
