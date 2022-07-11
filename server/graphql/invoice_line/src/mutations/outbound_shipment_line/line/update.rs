@@ -1,6 +1,6 @@
 use async_graphql::*;
 
-use graphql_core::generic_inputs::PriceInput;
+use graphql_core::generic_inputs::{PriceInput, TaxInput};
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::{
     simple_generic_errors::{CannotEditInvoice, ForeignKey, ForeignKeyError, RecordNotFound},
@@ -13,6 +13,7 @@ use service::auth::{Resource, ResourceAccessRequest};
 use service::invoice_line::outbound_shipment_line::{
     UpdateOutboundShipmentLine as ServiceInput, UpdateOutboundShipmentLineError as ServiceError,
 };
+use service::invoice_line::ShipmentTaxUpdate;
 
 use super::{
     LocationIsOnHold, LocationNotFound, NotEnoughStockForReduction,
@@ -27,7 +28,7 @@ pub struct UpdateInput {
     stock_line_id: Option<String>,
     number_of_packs: Option<u32>,
     total_before_tax: Option<PriceInput>,
-    tax: Option<PriceInput>,
+    tax: Option<TaxInput>,
 }
 
 pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<UpdateResponse> {
@@ -105,7 +106,11 @@ impl UpdateInput {
             number_of_packs,
             total_before_tax: total_before_tax
                 .and_then(|total_before_tax| total_before_tax.total_before_tax),
-            tax: tax.and_then(|tax| tax.percentage),
+            tax: tax.and_then(|tax| {
+                Some(ShipmentTaxUpdate {
+                    percentage: tax.percentage,
+                })
+            }),
         }
     }
 }

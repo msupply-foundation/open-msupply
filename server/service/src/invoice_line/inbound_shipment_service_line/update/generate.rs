@@ -48,7 +48,7 @@ pub fn generate(
     }
 
     if let Some(tax) = input_tax {
-        update_line.tax = Some(tax);
+        update_line.tax = tax.percentage;
     }
 
     update_line.total_after_tax = total_after_tax(update_line.total_before_tax, update_line.tax);

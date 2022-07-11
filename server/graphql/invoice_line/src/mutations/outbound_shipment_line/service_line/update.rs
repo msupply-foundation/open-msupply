@@ -1,6 +1,6 @@
 use async_graphql::*;
 
-use graphql_core::generic_inputs::PriceInput;
+use graphql_core::generic_inputs::{PriceInput, TaxInput};
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::{
     simple_generic_errors::{CannotEditInvoice, ForeignKey, ForeignKeyError, RecordNotFound},
@@ -14,6 +14,7 @@ use service::invoice_line::outbound_shipment_service_line::{
     UpdateOutboundShipmentServiceLine as ServiceInput,
     UpdateOutboundShipmentServiceLineError as ServiceError,
 };
+use service::invoice_line::ShipmentTaxUpdate;
 
 #[derive(InputObject)]
 #[graphql(name = "UpdateOutboundShipmentServiceLineInput")]
@@ -22,7 +23,7 @@ pub struct UpdateInput {
     item_id: Option<String>,
     name: Option<String>,
     total_before_tax: Option<PriceInput>,
-    tax: Option<PriceInput>,
+    tax: Option<TaxInput>,
     note: Option<String>,
 }
 
@@ -95,7 +96,11 @@ impl UpdateInput {
             name,
             total_before_tax: total_before_tax
                 .and_then(|total_before_tax| total_before_tax.total_before_tax),
-            tax: tax.and_then(|tax| tax.percentage),
+            tax: tax.and_then(|tax| {
+                Some(ShipmentTaxUpdate {
+                    percentage: tax.percentage,
+                })
+            }),
             note,
         }
     }
@@ -147,7 +152,7 @@ mod test {
             outbound_shipment_service_line::{
                 UpdateOutboundShipmentServiceLine, UpdateOutboundShipmentServiceLineError,
             },
-            InvoiceLineServiceTrait,
+            InvoiceLineServiceTrait, ShipmentTaxUpdate,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };
@@ -363,7 +368,9 @@ mod test {
                     item_id: Some("item_id".to_string()),
                     name: Some("some name".to_string()),
                     total_before_tax: Some(0.1),
-                    tax: Some(10.0),
+                    tax: Some(ShipmentTaxUpdate {
+                        percentage: Some(10.0),
+                    }),
                     note: Some("note".to_string())
                 }
             );

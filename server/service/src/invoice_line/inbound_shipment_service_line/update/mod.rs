@@ -1,6 +1,7 @@
 mod generate;
 mod validate;
 
+use crate::invoice_line::ShipmentTaxUpdate;
 use generate::generate;
 use repository::{InvoiceLine, InvoiceLineRowRepository, RepositoryError};
 use validate::validate;
@@ -12,7 +13,7 @@ pub struct UpdateInboundShipmentServiceLine {
     pub item_id: Option<String>,
     pub name: Option<String>,
     pub total_before_tax: Option<f64>,
-    pub tax: Option<f64>,
+    pub tax: Option<ShipmentTaxUpdate>,
     pub note: Option<String>,
 }
 
@@ -87,7 +88,9 @@ mod test {
     use util::{inline_edit, inline_init};
 
     use crate::{
-        invoice_line::inbound_shipment_service_line::UpdateInboundShipmentServiceLine,
+        invoice_line::{
+            inbound_shipment_service_line::UpdateInboundShipmentServiceLine, ShipmentTaxUpdate,
+        },
         service_provider::ServiceProvider,
     };
 
@@ -232,7 +235,9 @@ mod test {
                     item_id: Some(mock_item_service_item().id),
                     name: Some("modified name".to_string()),
                     total_before_tax: Some(1.0),
-                    tax: Some(10.0),
+                    tax: Some(ShipmentTaxUpdate {
+                        percentage: Some(10.0),
+                    }),
                     note: Some("note".to_string()),
                 },
             )
