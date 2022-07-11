@@ -74,9 +74,15 @@ fn generate_line(
         },
         total_after_tax: total_after_tax(
             total_before_tax.unwrap_or(cost_price_per_pack * number_of_packs as f64),
-            tax,
+            match tax.clone() {
+                Some(tax) => tax.percentage,
+                None => Some(0.0),
+            },
         ),
-        tax,
+        tax: match tax {
+            Some(tax) => tax.percentage,
+            None => Some(0.0),
+        },
         note: None,
     }
 }
