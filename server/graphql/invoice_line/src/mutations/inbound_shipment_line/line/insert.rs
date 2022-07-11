@@ -12,6 +12,7 @@ use service::auth::{Resource, ResourceAccessRequest};
 use service::invoice_line::inbound_shipment_line::{
     InsertInboundShipmentLine as ServiceInput, InsertInboundShipmentLineError as ServiceError,
 };
+use service::invoice_line::ShipmentTaxUpdate;
 
 #[derive(InputObject)]
 #[graphql(name = "InsertInboundShipmentLineInput")]
@@ -105,7 +106,11 @@ impl InsertInput {
             number_of_packs,
             total_before_tax: total_before_tax
                 .and_then(|total_before_tax| total_before_tax.total_before_tax),
-            tax: tax.and_then(|tax| tax.percentage),
+            tax: tax.and_then(|tax| {
+                Some(ShipmentTaxUpdate {
+                    percentage: tax.percentage,
+                })
+            }),
         }
     }
 }

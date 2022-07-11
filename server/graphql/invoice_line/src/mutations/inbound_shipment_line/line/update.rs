@@ -10,6 +10,7 @@ use graphql_types::types::InvoiceLineNode;
 
 use repository::InvoiceLine;
 use service::auth::{Resource, ResourceAccessRequest};
+use service::invoice_line::ShipmentTaxUpdate;
 use service::invoice_line::inbound_shipment_line::{
     UpdateInboundShipmentLine as ServiceInput, UpdateInboundShipmentLineError as ServiceError,
 };
@@ -109,7 +110,11 @@ impl UpdateInput {
             number_of_packs,
             total_before_tax: total_before_tax
                 .and_then(|total_before_tax| total_before_tax.total_before_tax),
-            tax: tax.and_then(|tax| tax.percentage),
+            tax: tax.and_then(|tax| {
+                Some(ShipmentTaxUpdate {
+                    percentage: tax.percentage,
+                })
+            }),
         }
     }
 }

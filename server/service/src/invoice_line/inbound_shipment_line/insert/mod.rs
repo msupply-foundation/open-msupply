@@ -1,4 +1,8 @@
-use crate::{invoice_line::query::get_invoice_line, service_provider::ServiceContext, WithDBError};
+use crate::{
+    invoice_line::{query::get_invoice_line, ShipmentTaxUpdate},
+    service_provider::ServiceContext,
+    WithDBError,
+};
 use chrono::NaiveDate;
 use repository::{
     InvoiceLine, InvoiceLineRowRepository, InvoiceRowRepository, RepositoryError,
@@ -24,7 +28,7 @@ pub struct InsertInboundShipmentLine {
     pub expiry_date: Option<NaiveDate>,
     pub number_of_packs: u32,
     pub total_before_tax: Option<f64>,
-    pub tax: Option<f64>,
+    pub tax: Option<ShipmentTaxUpdate>,
 }
 
 type OutError = InsertInboundShipmentLineError;

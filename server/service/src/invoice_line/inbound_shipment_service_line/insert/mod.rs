@@ -5,7 +5,11 @@ use generate::generate;
 use repository::{InvoiceLine, InvoiceLineRowRepository, RepositoryError};
 use validate::validate;
 
-use crate::{invoice_line::query::get_invoice_line, service_provider::ServiceContext, WithDBError};
+use crate::{
+    invoice_line::{query::get_invoice_line, ShipmentTaxUpdate},
+    service_provider::ServiceContext,
+    WithDBError,
+};
 
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct InsertInboundShipmentServiceLine {
@@ -14,7 +18,7 @@ pub struct InsertInboundShipmentServiceLine {
     pub item_id: Option<String>,
     pub name: Option<String>,
     pub total_before_tax: f64,
-    pub tax: Option<f64>,
+    pub tax: Option<ShipmentTaxUpdate>,
     pub note: Option<String>,
 }
 
@@ -87,7 +91,9 @@ mod test {
     use util::{constants::DEFAULT_SERVICE_ITEM_CODE, inline_edit, inline_init};
 
     use crate::{
-        invoice_line::inbound_shipment_service_line::InsertInboundShipmentServiceLine,
+        invoice_line::{
+            inbound_shipment_service_line::InsertInboundShipmentServiceLine, ShipmentTaxUpdate,
+        },
         service_provider::ServiceProvider,
     };
 
@@ -237,7 +243,9 @@ mod test {
                     item_id: Some(mock_item_service_item().id),
                     name: Some("modified name".to_string()),
                     total_before_tax: 0.3,
-                    tax: Some(0.1),
+                    tax: Some(ShipmentTaxUpdate {
+                        percentage: Some(10.0),
+                    }),
                     note: Some("note".to_string()),
                 },
             )

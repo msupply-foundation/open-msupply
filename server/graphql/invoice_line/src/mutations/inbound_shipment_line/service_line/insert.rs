@@ -14,6 +14,7 @@ use service::invoice_line::inbound_shipment_service_line::{
     InsertInboundShipmentServiceLine as ServiceInput,
     InsertInboundShipmentServiceLineError as ServiceError,
 };
+use service::invoice_line::ShipmentTaxUpdate;
 
 #[derive(InputObject)]
 #[graphql(name = "InsertInboundShipmentServiceLineInput")]
@@ -96,7 +97,11 @@ impl InsertInput {
             item_id,
             name,
             total_before_tax,
-            tax: tax.and_then(|tax| tax.percentage),
+            tax: tax.and_then(|tax| {
+                Some(ShipmentTaxUpdate {
+                    percentage: tax.percentage,
+                })
+            }),
             note,
         }
     }
@@ -146,7 +151,7 @@ mod test {
             inbound_shipment_service_line::{
                 InsertInboundShipmentServiceLine, InsertInboundShipmentServiceLineError,
             },
-            InvoiceLineServiceTrait,
+            InvoiceLineServiceTrait, ShipmentTaxUpdate,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };
@@ -346,7 +351,9 @@ mod test {
                     name: Some("some name".to_string()),
                     total_before_tax: 0.1,
                     // TODO why is this different from update ?
-                    tax: Some(10.0),
+                    tax: Some(ShipmentTaxUpdate {
+                        percentage: Some(10.0)
+                    }),
                     note: Some("note".to_string())
                 }
             );
@@ -363,7 +370,7 @@ mod test {
             "name": "some name",
             "totalBeforeTax": 0.1,
             "tax": {
-                "percentage": 10
+                "percentage": 10.0
             },
             "note": "note"
           },

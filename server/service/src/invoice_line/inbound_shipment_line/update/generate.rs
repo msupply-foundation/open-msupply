@@ -101,11 +101,11 @@ fn generate_line(
             * number_of_packs.unwrap_or(i32_to_u32(update_line.number_of_packs)) as f64;
     }
 
-    update_line.total_after_tax = total_after_tax(update_line.total_before_tax, update_line.tax);
-
     if let Some(tax) = tax {
-        update_line.tax = Some(tax);
+        update_line.tax = tax.percentage;
     }
+
+    update_line.total_after_tax = total_after_tax(update_line.total_before_tax, update_line.tax);
 
     update_line
 }
