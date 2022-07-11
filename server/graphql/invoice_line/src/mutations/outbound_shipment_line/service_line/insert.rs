@@ -1,6 +1,6 @@
 use async_graphql::*;
 
-use graphql_core::generic_inputs::PriceInput;
+use graphql_core::generic_inputs::TaxInput;
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::{
     simple_generic_errors::{CannotEditInvoice, ForeignKey, ForeignKeyError},
@@ -23,7 +23,7 @@ pub struct InsertInput {
     pub item_id: Option<String>,
     name: Option<String>,
     total_before_tax: f64,
-    tax: Option<PriceInput>,
+    tax: Option<TaxInput>,
     note: Option<String>,
 }
 

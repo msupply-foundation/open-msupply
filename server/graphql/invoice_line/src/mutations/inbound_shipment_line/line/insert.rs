@@ -1,7 +1,7 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 
-use graphql_core::generic_inputs::PriceInput;
+use graphql_core::generic_inputs::{PriceInput, TaxInput};
 use graphql_core::simple_generic_errors::{CannotEditInvoice, ForeignKey, ForeignKeyError};
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
@@ -27,7 +27,7 @@ pub struct InsertInput {
     pub expiry_date: Option<NaiveDate>,
     pub number_of_packs: u32,
     pub total_before_tax: Option<PriceInput>,
-    pub tax: Option<PriceInput>,
+    pub tax: Option<TaxInput>,
 }
 
 #[derive(SimpleObject)]

@@ -1,6 +1,6 @@
 use async_graphql::*;
 use chrono::NaiveDate;
-use graphql_core::generic_inputs::PriceInput;
+use graphql_core::generic_inputs::{PriceInput, TaxInput};
 use graphql_core::simple_generic_errors::{
     CannotEditInvoice, ForeignKey, ForeignKeyError, NotAnInboundShipment, RecordNotFound,
 };
@@ -29,7 +29,7 @@ pub struct UpdateInput {
     pub expiry_date: Option<NaiveDate>,
     pub number_of_packs: Option<u32>,
     pub total_before_tax: Option<PriceInput>,
-    pub tax: Option<PriceInput>,
+    pub tax: Option<TaxInput>,
 }
 
 #[derive(SimpleObject)]
