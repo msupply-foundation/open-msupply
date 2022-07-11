@@ -21,7 +21,7 @@ use service::{
 
 use actix_web::{web::Data, App, HttpServer};
 use std::{
-    ops::{DerefMut, Deref},
+    ops::{Deref, DerefMut},
     sync::{Arc, RwLock},
 };
 use tokio::sync::{oneshot, Mutex};
@@ -82,9 +82,18 @@ async fn run_stage0(
         .get_hardware_id()?
         .is_empty()
     {
+        let machine_uid = match machine_uid::get() {
+            Ok(uid) => uid,
+            Err(e) => config_settings
+                .server
+                .machine_uid
+                .clone()
+                .unwrap_or("".to_string()),
+        };
+
         service_provider
             .app_data_service
-            .set_hardware_id(machine_uid::get().expect("Failed to query OS for hardware id"))?;
+            .set_hardware_id(machine_uid)?;
     }
 
     let service_provider_data = Data::new(service_provider);
