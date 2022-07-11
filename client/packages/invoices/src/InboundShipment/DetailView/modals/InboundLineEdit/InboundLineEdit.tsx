@@ -181,7 +181,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
         {isLoading ? (
           <BasicSpinner messageKey="saving" />
         ) : (
-          <>
+          <form autoComplete="on">
             <InboundLineEditForm
               disabled={mode === ModalMode.Update}
               item={currentItem}
@@ -284,7 +284,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
             ) : (
               <Box sx={{ height: isMediumScreen ? 400 : 500 }} />
             )}
-          </>
+          </form>
         )}
       </Modal>
     </TableProvider>
