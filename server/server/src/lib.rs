@@ -82,13 +82,15 @@ async fn run_stage0(
         .get_hardware_id()?
         .is_empty()
     {
-        let machine_uid = match machine_uid::get() {
-            Ok(uid) => uid,
-            Err(e) => config_settings
+        #[cfg(not(target_os = "android"))]
+        let machine_uid = machine_uid::get().expect("Failed to query OS for hardware id");
+
+        #[cfg(target_os = "android")]
+        let machine_uid = config_settings
                 .server
                 .machine_uid
                 .clone()
-                .unwrap_or("".to_string()),
+                .unwrap_or("".to_string(),
         };
 
         service_provider
