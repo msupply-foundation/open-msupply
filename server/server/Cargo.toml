@@ -23,7 +23,8 @@ util = { path = "../util" }
 
 machine-uid = { version = "0.2.0", optional = true }
 
-# OpenSSL is currently only used indirectly by external crates. For the Android build we need to useactix-cors = "0.6.1"
+# OpenSSL is currently only used indirectly by external crates. For the Android build we need to use actix-cors = "0.6.1"
+actix-cors = "0.6.1"
 actix-web = { version = "4.0.1", features = ["rustls"] }
 actix-files = "0.6.0"
 # the "openssl/vendored" feature to make the cross compilation work, i.e. to avoid linking against
