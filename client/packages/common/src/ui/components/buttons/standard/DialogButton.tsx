@@ -59,6 +59,7 @@ export const DialogButton: React.FC<DialogButtonProps> = ({
       Icon={icon}
       variant={buttonVariant}
       label={t(labelKey)}
+      tabIndex={variant === 'cancel' ? 1 : 0}
       sx={
         disabled
           ? {
