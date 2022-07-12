@@ -112,8 +112,13 @@ pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageCon
     let connection_manager =
         ConnectionManager::<DBBackendConnection>::new(&settings.connection_string());
 
+    // Note: the build() call isn't failing when you have an incorrect server or database name
+    // which is why the connect() call is made
     match connection_manager.connect() {
         Ok(_conn) => {
+            // the min_idle is a workaround to get pg running reliably on windows.
+            // if you don't require it any more, swap the pool creation lines out for this one:
+            // let pool = Pool::new(connection_manager).expect("Failed to connect to database");
             let pool = Pool::builder()
                 .min_idle(Some(0))
                 .build(connection_manager)
