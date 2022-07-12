@@ -1,7 +1,8 @@
-use diesel::r2d2::{ConnectionManager, Pool};
-use serde;
-
 use crate::db_diesel::{DBBackendConnection, StorageConnectionManager};
+use diesel::connection::SimpleConnection;
+use diesel::r2d2::{ConnectionManager, ManageConnection, Pool};
+use log::info;
+use serde;
 
 //WAIT up to 5 SECONDS for lock in SQLITE (https://www.sqlite.org/c3ref/busy_timeout.html)
 #[cfg(not(feature = "postgres"))]
@@ -111,7 +112,43 @@ impl diesel::r2d2::CustomizeConnection<diesel::SqliteConnection, diesel::r2d2::E
 pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageConnectionManager {
     let connection_manager =
         ConnectionManager::<DBBackendConnection>::new(&settings.connection_string());
-    let pool = Pool::new(connection_manager).expect("Failed to connect to database");
+
+    // Check the database connection, and attempt to create the database if required
+    // Note: the build() call isn't failing when you have an incorrect server or database name
+    // so we need to explicitly call connect() to test the connection
+    if let Err(e) = connection_manager.connect() {
+        if e.to_string()
+            .contains(format!("database \"{}\" does not exist", &settings.database_name).as_str())
+        {
+            info!(
+                "Database {} does not exist. Attempting to create it.",
+                &settings.database_name
+            );
+            let root_connection_manager = ConnectionManager::<DBBackendConnection>::new(
+                &settings.connection_string_without_db(),
+            );
+
+            match root_connection_manager.connect() {
+                Ok(root_connection) => {
+                    root_connection
+                        .batch_execute(&format!("CREATE DATABASE \"{}\";", &settings.database_name))
+                        .expect("Failed to create database");
+                }
+                Err(e) => {
+                    panic!("Failed to connect to postgres root: {}", e);
+                }
+            }
+        } else {
+            panic!("Failed to connect to database: {}", e);
+        }
+    }
+    // the min_idle is a workaround to get pg running reliably on windows.
+    // if you don't require it any more, swap the pool creation lines out for this one:
+    // let pool = Pool::new(connection_manager).expect("Failed to connect to database");
+    let pool = Pool::builder()
+        .min_idle(Some(0))
+        .build(connection_manager)
+        .expect("Failed to connect to database");
     StorageConnectionManager::new(pool)
 }
 
