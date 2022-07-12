@@ -1,7 +1,7 @@
-use diesel::r2d2::{ConnectionManager, Pool};
-use serde;
-
 use crate::db_diesel::{DBBackendConnection, StorageConnectionManager};
+use diesel::connection::SimpleConnection;
+use diesel::r2d2::{ConnectionManager, ManageConnection, Pool};
+use serde;
 
 //WAIT up to 5 SECONDS for lock in SQLITE (https://www.sqlite.org/c3ref/busy_timeout.html)
 #[cfg(not(feature = "postgres"))]
@@ -111,8 +111,47 @@ impl diesel::r2d2::CustomizeConnection<diesel::SqliteConnection, diesel::r2d2::E
 pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageConnectionManager {
     let connection_manager =
         ConnectionManager::<DBBackendConnection>::new(&settings.connection_string());
-    let pool = Pool::new(connection_manager).expect("Failed to connect to database");
-    StorageConnectionManager::new(pool)
+
+    match connection_manager.connect() {
+        Ok(_conn) => {
+            let pool = Pool::builder()
+                .min_idle(Some(0))
+                .build(connection_manager)
+                .expect("Failed to connect to database");
+            StorageConnectionManager::new(pool)
+        }
+        Err(e) => {
+            if e.to_string().contains(
+                format!("database \"{}\" does not exist", &settings.database_name).as_str(),
+            ) {
+                let root_connection_manager = ConnectionManager::<DBBackendConnection>::new(
+                    &settings.connection_string_without_db(),
+                );
+
+                match root_connection_manager.connect() {
+                    Ok(root_connection) => {
+                        root_connection
+                            .batch_execute(&format!(
+                                "CREATE DATABASE \"{}\";",
+                                &settings.database_name
+                            ))
+                            .expect("Failed to create database");
+
+                        let pool = Pool::builder()
+                            .min_idle(Some(0))
+                            .build(connection_manager)
+                            .expect("Failed to connect to database");
+                        StorageConnectionManager::new(pool)
+                    }
+                    Err(e) => {
+                        panic!("Failed to connect to postgres root: {}", e);
+                    }
+                }
+            } else {
+                panic!("Failed to connect to database: {}", e);
+            }
+        }
+    }
 }
 
 // feature sqlite
