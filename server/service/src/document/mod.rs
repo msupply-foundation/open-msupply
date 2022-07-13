@@ -5,6 +5,7 @@ pub mod form_schema_service;
 mod merge;
 mod object_array_merge;
 pub mod patient;
+pub mod program;
 pub mod raw_document;
 mod topological_sort;
 mod update_trigger;
