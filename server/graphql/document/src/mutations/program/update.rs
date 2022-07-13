@@ -5,13 +5,16 @@ use graphql_core::{
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    document::patient::{UpdatePatient, UpdatePatientError},
+    document::program::{UpsertProgram, UpsertProgramError},
 };
 
-use crate::queries::PatientNode;
+use crate::types::document::DocumentNode;
 
 #[derive(InputObject)]
-pub struct UpdatePatientInput {
+pub struct UpdateProgramInput {
+    /// The program type
+    pub r#type: String,
+    pub patient_id: String,
     /// Patient document data
     pub data: serde_json::Value,
     /// The schema id used for the patient data
@@ -20,19 +23,19 @@ pub struct UpdatePatientInput {
 }
 
 #[derive(Union)]
-pub enum UpdatePatientResponse {
-    Response(PatientNode),
+pub enum UpdateProgramResponse {
+    Response(DocumentNode),
 }
 
-pub fn update_patient(
+pub fn update_program(
     ctx: &Context<'_>,
     store_id: String,
-    input: UpdatePatientInput,
-) -> Result<UpdatePatientResponse> {
+    input: UpdateProgramInput,
+) -> Result<UpdateProgramResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutatePatient,
+            resource: Resource::MutateProgram,
             store_id: Some(store_id.clone()),
         },
     )?;
@@ -40,41 +43,40 @@ pub fn update_patient(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
 
-    match service_provider.patient_service.update_patient(
+    match service_provider.program_service.upsert_program(
         &service_context,
         service_provider,
         store_id.clone(),
         &user.user_id,
-        UpdatePatient {
+        UpsertProgram {
             data: input.data,
             schema_id: input.schema_id,
             parent: Some(input.parent),
+            patient_id: input.patient_id,
+            r#type: input.r#type,
         },
     ) {
-        Ok(patient) => Ok(UpdatePatientResponse::Response(PatientNode {
-            store_id,
-            patient,
-        })),
+        Ok(document) => Ok(UpdateProgramResponse::Response(DocumentNode { document })),
         Err(error) => {
             let formatted_error = format!("{:#?}", error);
             let std_err = match error {
-                UpdatePatientError::InvalidDataSchema(_) => {
+                UpsertProgramError::InvalidPatientId => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
-                UpdatePatientError::InternalError(_) => {
+                UpsertProgramError::InvalidParentId => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
+                }
+                UpsertProgramError::ProgramExists => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
+                }
+                UpsertProgramError::InvalidDataSchema(_) => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
+                }
+                UpsertProgramError::InternalError(_) => {
                     StandardGraphqlError::InternalError(formatted_error)
                 }
-                UpdatePatientError::DatabaseError(_) => {
+                UpsertProgramError::DatabaseError(_) => {
                     StandardGraphqlError::InternalError(formatted_error)
-                }
-                UpdatePatientError::InvalidPatientId => {
-                    StandardGraphqlError::BadUserInput(formatted_error)
-                }
-                UpdatePatientError::PatientExists => {
-                    StandardGraphqlError::BadUserInput(formatted_error)
-                }
-                UpdatePatientError::InvalidParentId => {
-                    StandardGraphqlError::BadUserInput(formatted_error)
                 }
             };
             Err(std_err.extend())
