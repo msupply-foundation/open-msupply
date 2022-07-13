@@ -39,7 +39,7 @@ pub fn get_stock_evolution_for_item(
     reference_datetime: NaiveDateTime,
     reference_stock_on_hand: u32,
     expected_delivery_date: NaiveDate,
-    suggested_quantity: u32,
+    requested_quantity: u32,
     average_monthly_consumption: f64,
     options: StockEvolutionOptions,
 ) -> Result<StockEvolutionResult, RepositoryError> {
@@ -65,7 +65,7 @@ pub fn get_stock_evolution_for_item(
         projected_stock: calculate_projected_stock_evolution(
             reference_stock_on_hand,
             average_monthly_consumption,
-            suggested_quantity,
+            requested_quantity,
             expected_delivery_date,
             points.projected_points,
         ),
@@ -166,7 +166,7 @@ fn calculate_historic_stock_evolution(
 fn calculate_projected_stock_evolution(
     reference_stock_on_hand: u32,
     average_monthly_consumption: f64,
-    suggested_quantity: u32,
+    requested_quantity: u32,
     expected_delivery_date: NaiveDate,
     projected_points: Vec<NaiveDate>,
 ) -> Vec<StockEvolution> {
@@ -175,7 +175,7 @@ fn calculate_projected_stock_evolution(
     let mut running_stock_on_hand = reference_stock_on_hand as f64;
     for reference_date in projected_points.into_iter() {
         if reference_date == expected_delivery_date {
-            running_stock_on_hand += suggested_quantity as f64;
+            running_stock_on_hand += requested_quantity as f64;
         }
         running_stock_on_hand -= average_daily_consumption;
 
