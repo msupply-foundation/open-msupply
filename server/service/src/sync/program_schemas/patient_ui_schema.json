@@ -1,0 +1,211 @@
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "Label",
+      "text": "${firstName} ${lastName}",
+      "variant": "h1"
+    },
+    {
+      "type": "HorizontalLayout",
+      "elements": [
+        {
+          "type": "VerticalLayout",
+          "elements": [
+            {
+              "type": "Group",
+              "label": "Patient Information",
+              "elements": [
+                {
+                  "type": "Control",
+                  "scope": "#/properties/id",
+                  "options": {
+                    "readonly": true
+                  }
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/properties/nationalId"
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/properties/firstName",
+                  "label": "First Name"
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/properties/lastName",
+                  "label": "Last Name"
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/properties/gender"
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/properties/dateOfBirth"
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/properties/hand"
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/properties/birthorder"
+                }
+              ]
+            },
+            {
+              "type": "Group",
+              "label": "Contact Information",
+              "elements": [
+                {
+                  "type": "Control",
+                  "scope": "#/properties/contactDetails",
+                  "label": "Contacts",
+                  "itemLabel": "${index}: ${key}",
+                  "defaultNewItem": {
+                    "key": "Default data",
+                    "description": "New item defaults can be provided!"
+                  },
+                  "options": {
+                    "detail": {
+                      "type": "VerticalLayout",
+                      "elements": [
+                        {
+                          "type": "Control",
+                          "scope": "/properties/key"
+                        },
+                        {
+                          "type": "Control",
+                          "scope": "/properties/description"
+                        },
+                        {
+                          "type": "Control",
+                          "scope": "/properties/phone"
+                        },
+                        {
+                          "type": "Control",
+                          "scope": "/properties/mobile"
+                        },
+                        {
+                          "type": "Control",
+                          "scope": "/properties/email"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/properties/addresses",
+                  "itemLabel": "Address ${index}",
+                  "options": {
+                    "detail": {
+                      "type": "VerticalLayout",
+                      "elements": [
+                        {
+                          "type": "Control",
+                          "scope": "/properties/key"
+                        },
+                        {
+                          "type": "Control",
+                          "scope": "/properties/description"
+                        },
+                        {
+                          "type": "Control",
+                          "scope": "/properties/address1"
+                        },
+                        {
+                          "type": "Control",
+                          "scope": "/properties/address2"
+                        },
+                        {
+                          "type": "Control",
+                          "scope": "/properties/district"
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "VerticalLayout",
+          "elements": [
+            {
+              "type": "Group",
+              "label": "Family Information",
+              "elements": [
+                {
+                  "type": "Control",
+                  "scope": "#/properties/family/properties/maritalStatus"
+                },
+                {
+                  "type": "Group",
+                  "label": "Mother",
+                  "elements": [
+                    {
+                      "type": "Control",
+                      "scope": "#/properties/family/properties/mother/properties/firstName"
+                    },
+                    {
+                      "type": "Control",
+                      "scope": "#/properties/family/properties/mother/properties/lastName"
+                    },
+                    {
+                      "type": "Control",
+                      "scope": "#/properties/family/properties/mother/properties/contactDetails",
+                      "label": "Contact",
+                      "options": {
+                        "detail": "GENERATED"
+                      }
+                    },
+                    {
+                      "type": "Control",
+                      "scope": "#/properties/family/properties/mother/properties/addresses",
+                      "options": {
+                        "detail": "GENERATED"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "Group",
+                  "label": "Next of kin",
+                  "elements": [
+                    {
+                      "type": "Control",
+                      "scope": "#/properties/family/properties/nextOfKin/properties/firstName"
+                    },
+                    {
+                      "type": "Control",
+                      "scope": "#/properties/family/properties/nextOfKin/properties/lastName"
+                    },
+                    {
+                      "type": "Control",
+                      "scope": "#/properties/family/properties/nextOfKin/properties/contactDetails",
+                      "label": "Contact",
+                      "options": {
+                        "detail": "GENERATED"
+                      }
+                    },
+                    {
+                      "type": "Control",
+                      "scope": "#/properties/family/properties/nextOfKin/properties/addresses",
+                      "options": {
+                        "detail": "GENERATED"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
