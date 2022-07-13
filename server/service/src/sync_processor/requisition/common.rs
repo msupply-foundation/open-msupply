@@ -71,6 +71,11 @@ pub fn generate_linked_requisition(
 
     let name_id = record_for_processing.source_name.id.clone();
 
+    let source_comment = match source_requisition.comment.clone() {
+        Some(comment) => format!(" ({})", comment),
+        None => String::new(),
+    };
+
     let result = RequisitionRow {
         id: uuid(),
         requisition_number: next_number(
@@ -93,7 +98,10 @@ pub fn generate_linked_requisition(
         sent_datetime: None,
         finalised_datetime: None,
         colour: None,
-        comment: None,
+        comment: Some(format!(
+            "From request requisition {}{}",
+            source_requisition.requisition_number, source_comment
+        )),
     };
 
     Ok(result)
@@ -122,7 +130,7 @@ fn generate_linked_requisition_lines(
             snapshot_datetime: source_line.requisition_line_row.snapshot_datetime,
             // Default
             supply_quantity: 0,
-            comment: None,
+            comment: source_line.requisition_line_row.comment,
         });
     }
 
