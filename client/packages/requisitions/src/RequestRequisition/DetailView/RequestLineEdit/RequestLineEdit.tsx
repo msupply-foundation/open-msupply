@@ -53,15 +53,19 @@ export const RequestLineEdit = ({
   };
 
   const onCancel = () => {
-    deletePreviousLine();
+    if (mode === ModalMode.Create) {
+      deletePreviousLine();
+    }
     onClose();
   };
 
   useEffect(() => {
+    // isCreated is true when the line exists only locally i.e. not saved to server
     if (!!draft?.isCreated) {
       save();
+    } else {
+      if (!!draft?.id) setPreviousItemLineId(draft.id);
     }
-    if (!!draft?.id) setPreviousItemLineId(draft.id);
   }, [draft]);
 
   return (
