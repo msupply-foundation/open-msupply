@@ -240,44 +240,7 @@ pub mod test {
             .upsert_one(&schema)
             .unwrap();
 
-        let address = Address {
-            address_1: Some("firstaddressline".to_string()),
-            address_2: Some("secondaddressline".to_string()),
-            city: None,
-            country: Some("mycountry".to_string()),
-            description: None,
-            district: None,
-            key: "key".to_string(),
-            region: None,
-            zip_code: None,
-        };
-        let contact_details = ContactDetails {
-            description: None,
-            email: Some("myemail".to_string()),
-            key: "key".to_string(),
-            mobile: Some("45678".to_string()),
-            phone: None,
-            website: Some("mywebsite".to_string()),
-        };
-        let patient = Patient {
-            id: "testid".to_string(),
-            national_id: Some("national_id".to_string()),
-            addresses: vec![address.clone()],
-            contact_details: vec![contact_details.clone()],
-            date_of_birth: Some("2000-03-04".to_string()),
-            date_of_birth_is_estimated: None,
-            family: None,
-            first_name: Some("firstname".to_string()),
-            last_name: Some("lastname".to_string()),
-            gender: Some(Gender::TransgenderFemale),
-            health_center: None,
-            passport_number: None,
-            socio_economics: SocioEconomics {
-                education: None,
-                literate: None,
-                occupation: None,
-            },
-        };
+        let patient = mock_patient_1();
 
         let service = &service_provider.patient_service;
         let err = service
