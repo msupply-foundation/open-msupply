@@ -72,6 +72,8 @@ pub enum Resource {
     // patient
     QueryPatient,
     MutatePatient,
+    // patient program
+    MutateProgram,
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
@@ -254,6 +256,13 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     );
     map.insert(
         Resource::MutatePatient,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(Permission::PatientMutate),
+        ]),
+    );
+    map.insert(
+        Resource::MutateProgram,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasPermission(Permission::PatientMutate),
