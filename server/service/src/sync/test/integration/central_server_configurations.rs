@@ -5,17 +5,27 @@ use reqwest::{Client, Url};
 use serde_json::json;
 use util::{hash::sha256, uuid::uuid};
 
-use crate::sync::{settings::SyncSettings, SyncApiV5, SyncConnectionError, SyncCredentials};
+use crate::sync::{
+    api::{SyncApiError, SyncApiV5},
+    settings::SyncSettings,
+    SyncCredentials,
+};
 
 impl SyncApiV5 {
     pub(crate) async fn upsert_central_records(
         &self,
         value: &serde_json::Value,
-    ) -> Result<(), SyncConnectionError> {
-        self.create_post("/sync/v5/test/upsert", value)?
-            .send()
-            .await?
-            .error_for_status()?;
+    ) -> Result<(), SyncApiError> {
+        self.do_post("/sync/v5/test/upsert", value).await?;
+
+        Ok(())
+    }
+
+    pub(crate) async fn delete_central_records(
+        &self,
+        value: &serde_json::Value,
+    ) -> Result<(), SyncApiError> {
+        self.do_post("/sync/v5/test/delete", value).await?;
 
         Ok(())
     }
@@ -60,6 +70,18 @@ impl ConfigureCentralServer {
         }
     }
 
+    pub(crate) async fn upsert_records(&self, records: serde_json::Value) -> anyhow::Result<()> {
+        Ok(self.api.upsert_central_records(&records).await?)
+    }
+
+    pub(crate) async fn delete_records(&self, records: serde_json::Value) -> anyhow::Result<()> {
+        Ok(self.api.delete_central_records(&records).await?)
+    }
+
+    pub(crate) async fn create_sync_site(&self) -> anyhow::Result<CreateSyncSiteResult> {
+        self.create_sync_site_with_extra_data(|_| json!({})).await
+    }
+
     pub(crate) async fn create_sync_site_with_extra_data<F>(
         &self,
         // Before site is inserted and linked to store
@@ -98,8 +120,8 @@ pub(crate) struct NewSiteProperties {
     pub(crate) store_id: String,
     pub(crate) name_id: String,
     pref_id: String,
-    site_uuid: String,
-    site_id: u16,
+    pub(crate) site_uuid: String,
+    pub(crate) site_id: u16,
     password_sha256: String,
 }
 
