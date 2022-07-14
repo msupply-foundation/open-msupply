@@ -1,49 +1,22 @@
-use crate::sync::{sync_api_v5::CentralSyncBatchV5, SyncApiV5, SyncConnectionError};
-use chrono::Utc;
+use super::api::{ParsingV5RecordError, SyncApiError, SyncApiV5};
+use crate::sync::api::CentralSyncBatchV5;
 use log::info;
 use repository::{
-    KeyValueStoreRepository, KeyValueType, RepositoryError, StorageConnection, SyncBufferAction,
-    SyncBufferRow, SyncBufferRowRepository,
+    KeyValueStoreRepository, KeyValueType, RepositoryError, StorageConnection, SyncBufferRow,
+    SyncBufferRowRepository,
 };
 use thiserror::Error;
 
-use super::sync_api_v5::CentralSyncRecordV5;
-
 #[derive(Error, Debug)]
 pub(crate) enum CentralSyncError {
-    #[error("Api error while pulling remote records: {0:?}")]
-    PullError(SyncConnectionError),
+    #[error("Api error while pulling central records: {0:?}")]
+    PullError(SyncApiError),
     #[error("Failed to save sync buffer or cursor {0:?}")]
     SaveSyncBufferOrCursorsError(RepositoryError),
-    #[error("Failed to save sync buffer or cursor {0:?}")]
+    #[error("{0}")]
     ParsingV5RecordError(ParsingV5RecordError),
 }
 
-#[derive(Error, Debug)]
-#[error("{source:?} {record:?}")]
-pub(crate) struct ParsingV5RecordError {
-    source: serde_json::Error,
-    record: serde_json::Value,
-}
-impl CentralSyncRecordV5 {
-    pub(crate) fn to_sync_buffer_row(self) -> Result<SyncBufferRow, ParsingV5RecordError> {
-        let data = self.data;
-        let result = SyncBufferRow {
-            table_name: self.table_name,
-            record_id: self.record_id,
-            data: serde_json::to_string(&data).map_err(|e| ParsingV5RecordError {
-                source: e,
-                record: data.clone(),
-            })?,
-            received_datetime: Utc::now().naive_utc(),
-            integration_datetime: None,
-            integration_error: None,
-            action: SyncBufferAction::Upsert,
-        };
-
-        Ok(result)
-    }
-}
 pub(crate) struct CentralDataSynchroniser {
     pub(crate) sync_api_v5: SyncApiV5,
 }
@@ -78,7 +51,8 @@ impl CentralDataSynchroniser {
             for sync_record in sync_batch.data {
                 let cursor = sync_record.id.clone();
                 let buffer_row = sync_record
-                    .to_sync_buffer_row()
+                    .record
+                    .to_buffer_row()
                     .map_err(CentralSyncError::ParsingV5RecordError)?;
 
                 insert_one_and_update_cursor(connection, &buffer_row, cursor)
