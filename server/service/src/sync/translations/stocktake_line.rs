@@ -140,7 +140,6 @@ impl SyncTranslation for StocktakeLineTranslation {
 
         Ok(Some(vec![PushUpsertRecord {
             sync_id: changelog.id,
-            store_id: None,
             table_name,
             record_id: id,
             data: serde_json::to_value(&legacy_row)?,

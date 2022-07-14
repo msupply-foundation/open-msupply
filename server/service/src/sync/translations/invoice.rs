@@ -280,7 +280,7 @@ impl SyncTranslation for InvoiceTranslation {
             ID: id.clone(),
             user_id,
             name_ID: name_id,
-            store_ID: store_id.clone(),
+            store_ID: store_id,
             invoice_num: invoice_number,
             _type,
             status: legacy_status,
@@ -313,7 +313,6 @@ impl SyncTranslation for InvoiceTranslation {
 
         Ok(Some(vec![PushUpsertRecord {
             sync_id: changelog.id,
-            store_id: Some(store_id),
             table_name,
             record_id: id,
             data: serde_json::to_value(&legacy_row)?,

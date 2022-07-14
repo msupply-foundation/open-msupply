@@ -29,6 +29,7 @@ pub struct LegacyStockLineRow {
     pub quantity: i32,
     pub cost_price: f64,
     pub sell_price: f64,
+    #[serde(deserialize_with = "empty_str_as_option")]
     pub note: Option<String>,
 }
 
@@ -96,7 +97,7 @@ impl SyncTranslation for StockLineTranslation {
 
         let legacy_row = LegacyStockLineRow {
             ID: id.clone(),
-            store_ID: store_id.clone(),
+            store_ID: store_id,
             item_ID: item_id,
             batch,
             expiry_date,
@@ -112,7 +113,6 @@ impl SyncTranslation for StockLineTranslation {
 
         Ok(Some(vec![PushUpsertRecord {
             sync_id: changelog.id,
-            store_id: Some(store_id),
             table_name,
             record_id: id,
             data: serde_json::to_value(&legacy_row)?,
