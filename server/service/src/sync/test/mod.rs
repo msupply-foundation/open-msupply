@@ -137,128 +137,127 @@ macro_rules! check_delete_record_by_id_option {
         )
     }};
 }
-
 pub(crate) async fn check_records_against_database(
     con: &StorageConnection,
-    records: Vec<TestSyncPullRecord>,
+    records: IntegrationRecords,
 ) {
-    for record in records {
-        let translated_record = match record.translated_record {
+    for upsert in records.upserts {
+        use PullUpsertRecord::*;
+        match upsert {
+            Number(comparison_record) => {
+                assert_eq!(
+                    NumberRowRepository::new(&con)
+                        .find_one_by_type_and_store(
+                            &comparison_record.r#type,
+                            &comparison_record.store_id
+                        )
+                        .unwrap()
+                        .expect(&format!("Number not found: {}", &comparison_record.id)),
+                    comparison_record
+                )
+            }
+            Location(record) => {
+                check_record_by_id!(LocationRowRepository, con, record, "Location");
+            }
+            StockLine(record) => {
+                check_record_by_option_id!(StockLineRowRepository, con, record, "StockLine");
+            }
+            Name(record) => {
+                check_record_by_id!(NameRowRepository, con, record, "Name");
+            }
+            NameStoreJoin(record) => {
+                check_record_by_id!(NameStoreJoinRepository, con, record, "NameStoreJoin");
+            }
+            Invoice(record) => {
+                check_record_by_option_id!(InvoiceRowRepository, con, record, "Invoice");
+            }
+            InvoiceLine(record) => {
+                check_record_by_option_id!(InvoiceLineRowRepository, con, record, "InvoiceLine");
+            }
+            Stocktake(record) => {
+                check_record_by_id!(StocktakeRowRepository, con, record, "Stocktake");
+            }
+            StocktakeLine(record) => {
+                check_record_by_id!(StocktakeLineRowRepository, con, record, "StocktakeLine");
+            }
+            Requisition(record) => {
+                check_record_by_id!(RequisitionRowRepository, con, record, "Requisition");
+            }
+            RequisitionLine(record) => {
+                check_record_by_id!(RequisitionLineRowRepository, con, record, "RequisitionLine");
+            }
+            Unit(record) => {
+                check_record_by_option_id!(UnitRowRepository, con, record, "Unit");
+            }
+            Item(record) => check_record_by_id!(ItemRowRepository, con, record, "Item"),
+            Store(record) => check_record_by_id!(StoreRowRepository, con, record, "Store"),
+            MasterList(record) => {
+                check_record_by_option_id!(MasterListRowRepository, con, record, "Masterlist")
+            }
+
+            MasterListLine(record) => {
+                check_record_by_option_id!(
+                    MasterListLineRowRepository,
+                    con,
+                    record,
+                    "MaseterListLine"
+                )
+            }
+
+            MasterListNameJoin(record) => check_record_by_option_id!(
+                MasterListNameJoinRepository,
+                con,
+                record,
+                "MasterListNameJoin"
+            ),
+
+            Report(record) => check_record_by_id!(ReportRowRepository, con, record, "Report"),
+        }
+    }
+
+    for delete in records.deletes {
+        use PullDeleteRecordTable::*;
+        let id = delete.id;
+        match delete.table {
+            Name => {
+                check_delete_record_by_id!(NameRowRepository, con, id)
+            }
+            Unit => {
+                check_delete_record_by_id_option!(UnitRowRepository, con, id)
+            }
+            Item => check_delete_record_by_id!(ItemRowRepository, con, id),
+            Store => check_delete_record_by_id!(StoreRowRepository, con, id),
+            MasterList => check_delete_record_by_id_option!(MasterListRowRepository, con, id),
+            MasterListLine => {
+                check_delete_record_by_id_option!(MasterListLineRowRepository, con, id)
+            }
+            MasterListNameJoin => {
+                check_delete_record_by_id_option!(MasterListNameJoinRepository, con, id)
+            }
+            Report => check_delete_record_by_id!(ReportRowRepository, con, id),
+            NameStoreJoin => check_delete_record_by_id!(ReportRowRepository, con, id),
+            Invoice => check_delete_record_by_id_option!(MasterListNameJoinRepository, con, id),
+            InvoiceLine => {
+                check_delete_record_by_id_option!(MasterListNameJoinRepository, con, id)
+            }
+            Requisition => check_delete_record_by_id!(ReportRowRepository, con, id),
+            RequisitionLine => check_delete_record_by_id!(ReportRowRepository, con, id),
+            Location => check_delete_record_by_id!(LocationRowRepository, con, id),
+            StockLine => check_delete_record_by_id_option!(StockLineRowRepository, con, id),
+            Stocktake => check_delete_record_by_id!(StocktakeRowRepository, con, id),
+            StocktakeLine => check_delete_record_by_id!(StocktakeLineRowRepository, con, id),
+        }
+    }
+}
+pub(crate) async fn check_test_records_against_database(
+    con: &StorageConnection,
+    test_records: Vec<TestSyncPullRecord>,
+) {
+    for test_record in test_records {
+        let translated_record = match test_record.translated_record {
             Some(translated_record) => translated_record,
             None => continue,
         };
-        for upsert in translated_record.upserts {
-            use PullUpsertRecord::*;
-            match upsert {
-                Number(comparison_record) => {
-                    assert_eq!(
-                        NumberRowRepository::new(&con)
-                            .find_one_by_type_and_store(
-                                &comparison_record.r#type,
-                                &comparison_record.store_id
-                            )
-                            .unwrap()
-                            .expect(&format!("Number not found: {}", &comparison_record.id)),
-                        comparison_record
-                    )
-                }
-                Location(record) => {
-                    check_record_by_id!(LocationRowRepository, con, record, "Location");
-                }
-                StockLine(record) => {
-                    check_record_by_option_id!(StockLineRowRepository, con, record, "StockLine");
-                }
-                Name(record) => {
-                    check_record_by_id!(NameRowRepository, con, record, "Name");
-                }
-                NameStoreJoin(record) => {
-                    check_record_by_id!(NameStoreJoinRepository, con, record, "NameStoreJoin");
-                }
-                Invoice(record) => {
-                    check_record_by_option_id!(InvoiceRowRepository, con, record, "Invoice");
-                }
-                InvoiceLine(record) => {
-                    check_record_by_option_id!(
-                        InvoiceLineRowRepository,
-                        con,
-                        record,
-                        "InvoiceLine"
-                    );
-                }
-                Stocktake(record) => {
-                    check_record_by_id!(StocktakeRowRepository, con, record, "Stocktake");
-                }
-                StocktakeLine(record) => {
-                    check_record_by_id!(StocktakeLineRowRepository, con, record, "StocktakeLine");
-                }
-                Requisition(record) => {
-                    check_record_by_id!(RequisitionRowRepository, con, record, "Requisition");
-                }
-                RequisitionLine(record) => {
-                    check_record_by_id!(
-                        RequisitionLineRowRepository,
-                        con,
-                        record,
-                        "RequisitionLine"
-                    );
-                }
-                Unit(record) => {
-                    check_record_by_option_id!(UnitRowRepository, con, record, "Unit");
-                }
-                Item(record) => check_record_by_id!(ItemRowRepository, con, record, "Item"),
-                Store(record) => check_record_by_id!(StoreRowRepository, con, record, "Store"),
-                MasterList(record) => {
-                    check_record_by_option_id!(MasterListRowRepository, con, record, "Masterlist")
-                }
-
-                MasterListLine(record) => {
-                    check_record_by_option_id!(
-                        MasterListLineRowRepository,
-                        con,
-                        record,
-                        "MaseterListLine"
-                    )
-                }
-
-                MasterListNameJoin(record) => check_record_by_option_id!(
-                    MasterListNameJoinRepository,
-                    con,
-                    record,
-                    "MasterListNameJoin"
-                ),
-
-                Report(record) => check_record_by_id!(ReportRowRepository, con, record, "Report"),
-            }
-        }
-
-        for delete in translated_record.deletes {
-            use PullDeleteRecordTable::*;
-            let id = delete.id;
-            match delete.table {
-                Name => {
-                    check_delete_record_by_id!(NameRowRepository, con, id)
-                }
-                Unit => {
-                    check_delete_record_by_id_option!(UnitRowRepository, con, id)
-                }
-                Item => check_delete_record_by_id!(ItemRowRepository, con, id),
-                Store => check_delete_record_by_id!(StoreRowRepository, con, id),
-                MasterList => check_delete_record_by_id_option!(MasterListRowRepository, con, id),
-                MasterListLine => {
-                    check_delete_record_by_id_option!(MasterListLineRowRepository, con, id)
-                }
-                MasterListNameJoin => {
-                    check_delete_record_by_id_option!(MasterListNameJoinRepository, con, id)
-                }
-                Report => check_delete_record_by_id!(ReportRowRepository, con, id),
-                NameStoreJoin => check_delete_record_by_id!(ReportRowRepository, con, id),
-                Invoice => check_delete_record_by_id_option!(MasterListNameJoinRepository, con, id),
-                InvoiceLine => {
-                    check_delete_record_by_id_option!(MasterListNameJoinRepository, con, id)
-                }
-                Requisition => check_delete_record_by_id!(ReportRowRepository, con, id),
-                RequisitionLine => check_delete_record_by_id!(ReportRowRepository, con, id),
-            }
-        }
+        check_records_against_database(con, translated_record).await;
     }
 }
