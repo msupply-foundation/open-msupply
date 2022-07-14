@@ -173,7 +173,7 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn delete_inbound_shipment_success() {
+    async fn delete_outbound_shipment_success() {
         let (_, connection, connection_manager, _) =
             setup_all("delete_outbound_shipment_success", MockDataInserts::all()).await;
 
