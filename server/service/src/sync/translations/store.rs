@@ -38,11 +38,10 @@ impl SyncTranslation for StoreTranslation {
         // HIS -> Hospital Information System (no name_id)
         // SM -> Supervisor Store
         // DRG -> Drug Registration (name_id exists but no name with that id)
-        match &data.code[..] {
-            "HIS" => return Ok(None),
-            "DRG" => return Ok(None),
-            "SM" => return Ok(None),
-            _ => {}
+        // TODO: Ideally we want another state, `Ignored`
+        // (i.e. return type) Translation Not Matches, Translation Ignored (with message ?) and Translated records
+        if let "HIS" | "DRG" | "SM" = &data.code[..] {
+            return Ok(None);
         }
 
         // ignore stores without name
