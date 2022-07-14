@@ -319,6 +319,8 @@ fn create_jwt_pair(
 
 #[cfg(test)]
 mod user_account_test {
+    use util::assert_matches;
+
     use crate::token_bucket::TokenBucket;
 
     use super::*;
@@ -346,13 +348,13 @@ mod user_account_test {
         let err = bucket_validating_service
             .verify_token(&token_pair.refresh, Some(0))
             .unwrap_err();
-        assert!(matches!(err, JWTValidationError::NotAnApiToken));
+        assert_matches!(err, JWTValidationError::NotAnApiToken);
 
         // should fail to refresh token refresh with api token
         let err = bucket_validating_service
             .refresh_token(&token_pair.token, 60, 120, Some(0))
             .unwrap_err();
-        assert!(matches!(err, JWTRefreshError::NotARefreshToken));
+        assert_matches!(err, JWTRefreshError::NotARefreshToken);
 
         // should succeed to refresh token
         let token_pair = bucket_validating_service
@@ -369,11 +371,11 @@ mod user_account_test {
         let err = bucket_validating_service
             .verify_token(&token_pair.token, Some(0))
             .unwrap_err();
-        assert!(matches!(err, JWTValidationError::TokenInvalidated));
+        assert_matches!(err, JWTValidationError::TokenInvalidated);
         let err = bucket_validating_service
             .refresh_token(&token_pair.refresh, 60, 120, Some(0))
             .unwrap_err();
-        assert!(matches!(err, JWTRefreshError::TokenInvalided));
+        assert_matches!(err, JWTRefreshError::TokenInvalided);
 
         //Check that tokens are still considered valid without them being in the bucket when validate_token_bucket=false
         let claims = bucket_not_validating_service
@@ -402,10 +404,10 @@ mod user_account_test {
         let err = bucket_validating_service
             .verify_token(&token_pair.token, Some(0))
             .unwrap_err();
-        assert!(matches!(err, JWTValidationError::ExpiredSignature));
+        assert_matches!(err, JWTValidationError::ExpiredSignature);
         let err = bucket_validating_service
             .refresh_token(&token_pair.refresh, 1, 1, Some(0))
             .unwrap_err();
-        assert!(matches!(err, JWTRefreshError::ExpiredSignature));
+        assert_matches!(err, JWTRefreshError::ExpiredSignature);
     }
 }
