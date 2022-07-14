@@ -35,6 +35,11 @@ fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
     sync_record.table_name == LegacyTableName::ITEM
 }
 
+pub(crate) fn ordered_simple_json(text: &str) -> Result<String, serde_json::Error> {
+    let json: serde_json::Value = serde_json::from_str(&text)?;
+    serde_json::to_string(&json)
+}
+
 pub(crate) struct ItemTranslation {}
 impl SyncTranslation for ItemTranslation {
     fn try_translate_pull_upsert(
@@ -53,7 +58,7 @@ impl SyncTranslation for ItemTranslation {
             code: data.code,
             unit_id: None,
             r#type: to_item_type(data.type_of),
-            legacy_record: sync_record.data.clone(),
+            legacy_record: ordered_simple_json(&sync_record.data)?,
         };
 
         if data.unit_ID != "" {
