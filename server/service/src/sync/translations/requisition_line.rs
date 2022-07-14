@@ -132,8 +132,6 @@ impl SyncTranslation for RequisitionLineTranslation {
 
         Ok(Some(vec![PushUpsertRecord {
             sync_id: changelog.id,
-            // TODO:
-            store_id: None,
             table_name,
             record_id: id,
             data: serde_json::to_value(&legacy_row)?,

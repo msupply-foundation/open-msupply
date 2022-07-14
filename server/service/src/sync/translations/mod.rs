@@ -123,6 +123,14 @@ pub(crate) enum PullDeleteRecordTable {
     InvoiceLine,
     Requisition,
     RequisitionLine,
+    #[cfg(test)]
+    Location,
+    #[cfg(test)]
+    StockLine,
+    #[cfg(test)]
+    Stocktake,
+    #[cfg(test)]
+    StocktakeLine,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -161,21 +169,15 @@ impl IntegrationRecords {
         }
     }
 
-    pub(crate) fn is_empty(&self) -> bool {
-        self.upserts.is_empty() && self.deletes.is_empty()
-    }
-
     pub(crate) fn join(self, other: IntegrationRecords) -> IntegrationRecords {
         IntegrationRecords {
-            upserts: vec![self.upserts, other.upserts]
-                .into_iter()
-                .flatten()
-                .collect(),
-            deletes: vec![self.deletes, other.deletes]
-                .into_iter()
-                .flatten()
-                .collect(),
+            upserts: vec![self.upserts, other.upserts].concat(),
+            deletes: vec![self.deletes, other.deletes].concat(),
         }
+    }
+
+    pub(crate) fn is_empty(&self) -> bool {
+        self.upserts.is_empty() && self.deletes.is_empty()
     }
 }
 
@@ -208,7 +210,6 @@ pub(crate) trait SyncTranslation {
 #[derive(Debug)]
 pub(crate) struct PushUpsertRecord {
     pub(crate) sync_id: i64,
-    pub(crate) store_id: Option<String>,
     /// The translated table name
     pub(crate) table_name: &'static str,
     pub(crate) record_id: String,
