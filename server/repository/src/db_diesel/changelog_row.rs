@@ -67,17 +67,32 @@ impl<'a> ChangelogRowRepository<'a> {
 
     /// # Arguments:
     /// * earliest the first cursor to be included in the returned
-    /// * count the number of entries to be returned
+    /// * limit the number of entries to be returned
     pub fn changelogs(
         &self,
         earliest: u64,
-        count: u32,
+        limit: u32,
     ) -> Result<Vec<ChangelogRow>, RepositoryError> {
+        let final_query = changelog_deduped_dsl::changelog_deduped
+            .filter(changelog_deduped_dsl::id.ge(earliest.try_into().unwrap_or(0)))
+            .limit(limit.into());
+
+        // // Debug diesel query
+        // println!(
+        //     "{}",
+        //     diesel::debug_query::<crate::DBType, _>(&final_query).to_string()
+        // );
+
+        let result = final_query.load(&self.connection.connection)?;
+        Ok(result)
+    }
+
+    pub fn count(&self, earliest: u64) -> Result<u64, RepositoryError> {
         let result = changelog_deduped_dsl::changelog_deduped
             .filter(changelog_deduped_dsl::id.ge(earliest.try_into().unwrap_or(0)))
-            .limit(count.into())
-            .load(&self.connection.connection)?;
-        Ok(result)
+            .count()
+            .get_result::<i64>(&self.connection.connection)?;
+        Ok(result as u64)
     }
 
     pub fn latest_changelog(&self) -> Result<Option<ChangelogRow>, RepositoryError> {

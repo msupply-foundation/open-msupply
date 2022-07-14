@@ -9,14 +9,17 @@ use reqwest::{Client, Url};
 use std::time::Duration;
 
 use super::{
+    api::SyncApiV5,
     central_data_synchroniser::CentralDataSynchroniser,
     remote_data_synchroniser::{RemoteDataSynchroniser, RemoteSyncState},
     settings::SyncSettings,
-    sync_api_v3::SyncApiV3,
     sync_buffer::SyncBuffer,
     translation_and_integration::{TranslationAndIntegration, TranslationAndIntegrationResults},
-    SyncApiV5, SyncCredentials,
+    SyncCredentials,
 };
+
+const INTEGRATION_POLL_PERIOD_SECONDS: u64 = 1;
+const INTEGRATION_TIMEOUT_SECONDS: u64 = 15;
 
 pub struct Synchroniser {
     settings: SyncSettings,
@@ -69,13 +72,10 @@ impl Synchroniser {
             client.clone(),
             &hardware_id,
         );
-        let sync_api_v3 = SyncApiV3::new(url, credentials, client, &hardware_id)?;
         Ok(Synchroniser {
             remote: RemoteDataSynchroniser {
                 sync_api_v5: sync_api_v5.clone(),
-                sync_api_v3,
                 site_id: settings.site_id,
-                central_server_site_id: settings.central_server_site_id,
             },
             settings,
             service_provider,
@@ -126,11 +126,14 @@ impl Synchroniser {
         // only push if initialised
         if is_initialised {
             self.remote.push(&ctx.connection).await?;
+            self.remote
+                .wait_for_integration(INTEGRATION_POLL_PERIOD_SECONDS, INTEGRATION_TIMEOUT_SECONDS)
+                .await?;
         }
 
-        self.remote.pull(&ctx.connection).await?;
-
         self.central.pull(&ctx.connection).await?;
+
+        self.remote.pull(&ctx.connection).await?;
 
         let (upserts, deletes) = integrate_and_translate_sync_buffer(&ctx.connection)?;
         info!("Upsert Integration result: {:?}", upserts);
@@ -180,7 +183,7 @@ pub fn integrate_and_translate_sync_buffer(
 #[cfg(test)]
 mod tests {
     use repository::{mock::MockDataInserts, test_db::setup_all};
-    use util::inline_init;
+    use util::{assert_matches, inline_init};
 
     use super::*;
 
@@ -203,14 +206,11 @@ mod tests {
 
         // First check that synch fails (due to wrong url)
 
-        assert!(matches!(s.sync().await, Err(_)), "sync should have failed");
+        assert_matches!(s.sync().await, Err(_));
 
         // Check that disabling return Ok(())
         service.disable_sync(&ctx).unwrap();
 
-        assert!(
-            matches!(s.sync().await, Ok(_)),
-            "sync should succeeded with early return"
-        );
+        assert_matches!(s.sync().await, Ok(_));
     }
 }
