@@ -199,7 +199,7 @@ mod user_account_test {
         EqualFilter, Permission, UserFilter, UserPermissionFilter, UserPermissionRepository,
         UserRepository,
     };
-    use util::inline_edit;
+    use util::{assert_matches, inline_edit};
 
     use crate::service_provider::ServiceProvider;
 
@@ -229,15 +229,11 @@ mod user_account_test {
 
         // should fail to verify wrong password
         let err = service.verify_password(username, "wrong").unwrap_err();
-        assert!(matches!(err, VerifyPasswordError::InvalidCredentials));
+        assert_matches!(err, VerifyPasswordError::InvalidCredentials);
 
         // should fail to find invalid user
         let err = service.verify_password("invalid", password).unwrap_err();
-        assert!(
-            matches!(err, VerifyPasswordError::UsernameDoesNotExist),
-            "{:?}",
-            err
-        );
+        assert_matches!(err, VerifyPasswordError::UsernameDoesNotExist);
     }
 
     #[actix_rt::test]

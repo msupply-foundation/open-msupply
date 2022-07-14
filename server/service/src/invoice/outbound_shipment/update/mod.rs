@@ -144,7 +144,7 @@ mod test {
         test_db::setup_all_with_data,
         InvoiceRow, InvoiceRowRepository, InvoiceRowType, NameRow, NameStoreJoinRow,
     };
-    use util::{inline_edit, inline_init};
+    use util::{assert_matches, inline_edit, inline_init};
 
     use crate::{
         invoice::outbound_shipment::UpdateOutboundShipment, service_provider::ServiceProvider,
@@ -288,7 +288,7 @@ mod test {
 
         let result = service.update_outbound_shipment(&context, "store_a", get_update());
 
-        assert!(matches!(result, Ok(_)), "Not Ok(_) {:#?}", result);
+        assert_matches!(result, Ok(_));
 
         let updated_record = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&invoice().id)
