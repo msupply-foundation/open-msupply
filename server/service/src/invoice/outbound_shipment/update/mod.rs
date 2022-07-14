@@ -92,13 +92,13 @@ pub fn update_outbound_shipment(
         .map_err(|error| error.to_inner_error())?;
 
     // TODO use change log (and maybe ask sync porcessor actor to retrigger here)
-    // println!(
-    //     "{:#?}",
-    //     process_records(
-    //         &ctx.connection,
-    //         vec![Record::InvoiceRow(invoice.invoice_row.clone())],
-    //     )
-    // );
+    println!(
+        "{:#?}",
+        process_records(
+            &ctx.connection,
+            vec![Record::InvoiceRow(invoice.invoice_row.clone())],
+        )
+    );
 
     if let Some(status) = patch.status {
         log_entry(
