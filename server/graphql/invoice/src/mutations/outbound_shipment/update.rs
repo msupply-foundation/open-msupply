@@ -89,7 +89,7 @@ pub fn map_response(from: Result<Invoice, ServiceError>) -> Result<UpdateRespons
 #[derive(Interface)]
 #[graphql(field(name = "description", type = "String"))]
 pub enum UpdateErrorInterface {
-    InvoiceDoesNotExists(RecordNotFound),
+    InvoiceDoesNotExist(RecordNotFound),
     CannotReverseInvoiceStatus(CannotReverseInvoiceStatus),
     CannotChangeStatusOfInvoiceOnHold(CannotChangeStatusOfInvoiceOnHold),
     InvoiceIsNotEditable(InvoiceIsNotEditable),
@@ -131,10 +131,8 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
 
     let graphql_error = match error {
         // Structured Errors
-        ServiceError::InvoiceDoesNotExists => {
-            return Ok(UpdateErrorInterface::InvoiceDoesNotExists(
-                RecordNotFound {},
-            ))
+        ServiceError::InvoiceDoesNotExist => {
+            return Ok(UpdateErrorInterface::InvoiceDoesNotExist(RecordNotFound {}))
         }
         ServiceError::CannotReverseInvoiceStatus => {
             return Ok(UpdateErrorInterface::CannotReverseInvoiceStatus(
@@ -176,7 +174,6 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::InvoiceLineHasNoStockLine(_) => InternalError(formatted_error),
-        ServiceError::UpdatedInvoicenDoesNotExist => InternalError(formatted_error),
     };
 
     Err(graphql_error.extend())

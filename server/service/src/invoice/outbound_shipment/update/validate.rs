@@ -51,7 +51,7 @@ fn check_invoice_exists(
     let result = InvoiceRowRepository::new(connection).find_one_by_id(id);
 
     if let Err(RepositoryError::NotFound) = &result {
-        return Err(UpdateOutboundShipmentError::InvoiceDoesNotExists);
+        return Err(UpdateOutboundShipmentError::InvoiceDoesNotExist);
     }
     Ok(result?)
 }
