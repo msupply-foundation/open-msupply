@@ -44,34 +44,4 @@ mod tests {
     async fn integration_sync_remote_requisition() {
         test_remote_sync_record("requisition", &RequisitionRecordTester).await;
     }
-
-    #[actix_rt::test]
-    async fn integration_sync_remote_number1() {
-        test_remote_sync_record("number1", &NumberRecordTester).await;
-    }
-
-    #[actix_rt::test]
-    async fn integration_sync_remote_location2() {
-        test_remote_sync_record("location2", &LocationRecordTester).await;
-    }
-
-    #[actix_rt::test]
-    async fn integration_sync_remote_stock_line3() {
-        test_remote_sync_record("stock_line3", &StockLineRecordTester).await;
-    }
-
-    #[actix_rt::test]
-    async fn integration_sync_remote_stocktake4() {
-        test_remote_sync_record("stocktake4", &StockLineRecordTester).await;
-    }
-
-    #[actix_rt::test]
-    async fn integration_sync_remote_invoice5() {
-        test_remote_sync_record("invoice5", &InvoiceRecordTester).await;
-    }
-
-    #[actix_rt::test]
-    async fn integration_sync_remote_requisition6() {
-        test_remote_sync_record("requisition6", &RequisitionRecordTester).await;
-    }
 }
