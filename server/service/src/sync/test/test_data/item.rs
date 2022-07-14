@@ -1,6 +1,8 @@
 use crate::sync::{
     test::TestSyncPullRecord,
-    translations::{LegacyTableName, PullUpsertRecord, PullDeleteRecordTable},
+    translations::{
+        item::ordered_simple_json, LegacyTableName, PullDeleteRecordTable, PullUpsertRecord,
+    },
 };
 use repository::{ItemRow, ItemRowType};
 
@@ -12,7 +14,7 @@ const ITEM_1: (&'static str, &'static str) = (
     "start_of_year_date": "0000-00-00",
     "manufacture_method": "",
     "default_pack_size": 1,
-    "dose_picture": "[object Picture]",
+    "dose_picture": "data:image/png;base64,",
     "atc_category": "",
     "medication_purpose": "",
     "instructions": "",
@@ -91,7 +93,7 @@ const ITEM_2: (&'static str, &'static str) = (
     "start_of_year_date": "0000-00-00",
     "manufacture_method": "",
     "default_pack_size": 1,
-    "dose_picture": "[object Picture]",
+    "dose_picture": "data:image/png;base64,",
     "atc_category": "",
     "medication_purpose": "",
     "instructions": "",
@@ -166,26 +168,26 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
     vec![
         TestSyncPullRecord::new_pull_upsert(
             LegacyTableName::ITEM,
-            ITEM_1,
+            (ITEM_1.0, &ordered_simple_json(ITEM_1.1).unwrap()),
             PullUpsertRecord::Item(ItemRow {
                 id: ITEM_1.0.to_owned(),
                 name: "Non stock items".to_owned(),
                 code: "NSI".to_owned(),
                 unit_id: None,
                 r#type: ItemRowType::NonStock,
-                legacy_record: ITEM_1.1.to_owned(),
+                legacy_record: ordered_simple_json(ITEM_1.1).unwrap(),
             }),
         ),
         TestSyncPullRecord::new_pull_upsert(
             LegacyTableName::ITEM,
-            ITEM_2,
+            (ITEM_2.0, &ordered_simple_json(ITEM_2.1).unwrap()),
             PullUpsertRecord::Item(ItemRow {
                 id: ITEM_2.0.to_owned(),
                 name: "Non stock items 2".to_owned(),
                 code: "NSI".to_owned(),
                 unit_id: Some("A02C91EB6C77400BA783C4CD7C565F29".to_owned()),
                 r#type: ItemRowType::Stock,
-                legacy_record: ITEM_2.1.to_owned(),
+                legacy_record: ordered_simple_json(ITEM_2.1).unwrap(),
             }),
         ),
     ]
