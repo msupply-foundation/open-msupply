@@ -181,7 +181,7 @@ mod test {
         assert_eq!(
             service.insert_inbound_shipment_line(
                 &context,
-                &"new store id".to_string(),
+                &mock_store_a().id,
                 &mock_user_account_a().id,
                 inline_init(|r: &mut InsertInboundShipmentLine| {
                     r.id = "new invoice line id".to_string();
