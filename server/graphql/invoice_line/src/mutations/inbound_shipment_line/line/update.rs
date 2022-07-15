@@ -148,7 +148,6 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         ServiceError::LocationDoesNotExist => BadUserInput(formatted_error),
         ServiceError::ItemNotFound => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
-        ServiceError::UpdatedLineDoesNotExist => InternalError(formatted_error),
     };
 
     Err(graphql_error.extend())
@@ -415,18 +414,6 @@ mod test {
                 RepositoryError::UniqueViolation("row already exists".to_string()),
             ))
         }));
-        let expected_message = "Internal error";
-        assert_standard_graphql_error!(
-            &settings,
-            &mutation,
-            &Some(empty_variables()),
-            &expected_message,
-            None,
-            Some(service_provider(test_service, &connection_manager))
-        );
-
-        //UpdateLineDoesNotExist
-        let test_service = TestService(Box::new(|_| Err(ServiceError::UpdatedLineDoesNotExist)));
         let expected_message = "Internal error";
         assert_standard_graphql_error!(
             &settings,

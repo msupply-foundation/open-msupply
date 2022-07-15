@@ -133,7 +133,6 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         ServiceError::NotThisInvoiceLine(_) => BadUserInput(formatted_error),
         ServiceError::NotAServiceItem => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
-        ServiceError::UpdatedLineDoesNotExist => InternalError(formatted_error),
     };
 
     Err(graphql_error.extend())
@@ -318,18 +317,6 @@ mod test {
         // NotAServiceItem
         let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotAServiceItem)));
         let expected_message = "Bad user input";
-        assert_standard_graphql_error!(
-            &settings,
-            &mutation,
-            &variables,
-            &expected_message,
-            None,
-            Some(service_provider(test_service, &connection_manager))
-        );
-
-        // UpdatedLineDoesNotExist
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::UpdatedLineDoesNotExist)));
-        let expected_message = "Internal error";
         assert_standard_graphql_error!(
             &settings,
             &mutation,
