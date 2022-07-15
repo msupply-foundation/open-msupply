@@ -71,6 +71,7 @@ where
 
         if error_string.contains("Site record locked preventing authentication update")
             || error_string.contains("connection closed before message completed")
+            || error_string.contains("os error 54")
         {
             retries += 1;
 
