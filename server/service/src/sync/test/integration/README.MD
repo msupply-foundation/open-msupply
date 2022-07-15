@@ -92,3 +92,8 @@ For each step:
 * As per normal tests, you should be testing both databases
 * When tests fail, you can uncomment `util::init_logger(util::LogLevel::Warn);`, in `test_remote_sync_record` and `test_central_sync_record` methods;
 * Sometimes central server seems to get overloaded and returns 'connection closed before message completed' or 'Site record locked preventing authentication update' for that reason 'with_retry' was added
+
+Full test including integration can be run with:
+```bash
+SYNC_SITE_PASSWORD="pass" SYNC_SITE_NAME="demo" SYNC_URL="http://localhost:2048" NEW_SITE_PASSWORD="pass" cargo test  --features integration_test && SYNC_SITE_PASSWORD="pass" SYNC_SITE_NAME="demo" SYNC_URL="http://localhost:2048" NEW_SITE_PASSWORD="pass" cargo test --features integration_test,postgres 
+```
