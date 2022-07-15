@@ -53,7 +53,7 @@ trait SyncRecordTester {
 // Sometime central server returns unexpected errors
 // this seems to happen when it's `overloaded` (when multiple requests are fired up at once)
 // ingore these errors in integration tests
-const NUMBER_OF_RETRIES: u32 = 3;
+const NUMBER_OF_RETRIES: u32 = 5;
 async fn with_retry<T, E, F, Fut>(f: F) -> Result<T, E>
 where
     F: Fn() -> Fut,
