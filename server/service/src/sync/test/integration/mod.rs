@@ -3,8 +3,9 @@ mod central_server_configurations;
 mod errors;
 mod remote;
 
-use std::time::Duration;
+use std::{error::Error, future::Future};
 
+use self::central_server_configurations::NewSiteProperties;
 use crate::{
     service_provider::ServiceProvider,
     sync::{
@@ -14,10 +15,7 @@ use crate::{
     },
 };
 use actix_web::web::Data;
-use rand::{thread_rng, Rng};
 use repository::{mock::MockDataInserts, test_db::setup_all, StorageConnection};
-
-use self::central_server_configurations::NewSiteProperties;
 
 async fn init_db(sync_settings: &SyncSettings, step: &str) -> (StorageConnection, Synchroniser) {
     let (_, connection, connection_manager, _) = setup_all(
@@ -52,7 +50,35 @@ trait SyncRecordTester {
     fn test_step_data(&self, new_site_properties: &NewSiteProperties) -> Vec<TestStepData>;
 }
 
-async fn random_timeout() {
-    let duration = Duration::from_millis(thread_rng().gen_range(10..1000));
-    tokio::time::sleep(duration).await;
+// Sometime central server returns unexpected errors
+// this seems to happen when it's `overloaded` (when multiple requests are fired up at once)
+// ingore these errors in integration tests
+const NUMBER_OF_RETRIES: u32 = 3;
+async fn with_retry<T, E, F, Fut>(f: F) -> Result<T, E>
+where
+    F: Fn() -> Fut,
+    Fut: Future<Output = Result<T, E>>,
+    E: Error,
+{
+    let mut retries = 0;
+    loop {
+        let error = match f().await {
+            Ok(result) => return Ok(result),
+            Err(error) => error,
+        };
+
+        let error_string = format!("{}", error);
+
+        if error_string.contains("Site record locked preventing authentication update")
+            || error_string.contains("connection closed before message completed")
+        {
+            retries += 1;
+
+            if retries >= NUMBER_OF_RETRIES {
+                return Err(error);
+            }
+        } else {
+            return Err(error);
+        }
+    }
 }

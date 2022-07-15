@@ -10,7 +10,7 @@ use crate::sync::test::{
     check_records_against_database,
     integration::{
         central_server_configurations::{ConfigureCentralServer, CreateSyncSiteResult},
-        init_db, random_timeout,
+        init_db,
     },
 };
 
@@ -23,7 +23,6 @@ use super::SyncRecordTester;
 /// Check that pulled data matches previously upserted data
 async fn test_remote_sync_record(identifier: &str, tester: &dyn SyncRecordTester) {
     // util::init_logger(util::LogLevel::Info);
-    random_timeout().await;
     println!("test_remote_sync_record_{}_init", identifier);
 
     let central_server_configurations = ConfigureCentralServer::from_env();
@@ -42,8 +41,8 @@ async fn test_remote_sync_record(identifier: &str, tester: &dyn SyncRecordTester
     let mut previous_synchroniser = synchroniser;
 
     for (index, step_data) in steps_data.into_iter().enumerate() {
-        let identifier = format!("{}_step_{}", identifier, index + 1);
-        println!("test_remote_sync_record_{}", identifier);
+        let inner_identifier = format!("{}_step_{}", identifier, index + 1);
+        println!("test_remote_sync_record_{}", inner_identifier);
 
         central_server_configurations
             .upsert_records(step_data.central_upsert)
@@ -65,7 +64,7 @@ async fn test_remote_sync_record(identifier: &str, tester: &dyn SyncRecordTester
         // Push integrated changes
         previous_synchroniser.sync().await.unwrap();
         // Re initialise
-        let (connection, synchroniser) = init_db(&sync_settings, &identifier).await;
+        let (connection, synchroniser) = init_db(&sync_settings, &inner_identifier).await;
         previous_connection = connection;
         previous_synchroniser = synchroniser;
         previous_synchroniser.sync().await.unwrap();
