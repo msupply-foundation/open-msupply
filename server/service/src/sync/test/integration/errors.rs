@@ -13,7 +13,6 @@ mod tests {
         service_provider::ServiceProvider,
         sync::{
             api::{SyncApiError, SyncErrorV5},
-            central_data_synchroniser::CentralSyncError,
             settings::SyncSettings,
             synchroniser::Synchroniser,
             test::integration::central_server_configurations::{
@@ -51,7 +50,7 @@ mod tests {
         Synchroniser::new(settings.clone(), Data::new(service_provider)).unwrap()
     }
     #[actix_rt::test]
-    async fn sync_integration_test_parsed_error() {
+    async fn integration_sync_parsed_error() {
         let CreateSyncSiteResult { sync_settings, .. } = ConfigureCentralServer::from_env()
             .create_sync_site()
             .await
@@ -76,17 +75,19 @@ mod tests {
             Err(e) => e,
         };
 
+        println!("{}", error);
+
         assert_matches!(
-            error.downcast_ref::<CentralSyncError>(),
-            Some(CentralSyncError::PullError(SyncApiError::MappedError {
+            error.downcast_ref::<SyncApiError>(),
+            Some(SyncApiError::MappedError {
                 source: SyncErrorV5::ParsedError { .. },
                 status: StatusCode::UNAUTHORIZED,
-            }))
+            })
         );
     }
 
     #[actix_rt::test]
-    async fn sync_integration_not_parsed_error() {
+    async fn integration_sync_not_parsed_error() {
         let central_config = ConfigureCentralServer::from_env();
 
         // Should result in an error in non standard format
