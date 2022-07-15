@@ -1,6 +1,3 @@
-
-TODO link form main
-
 # Sync Integration Tests
 
 # How to run
