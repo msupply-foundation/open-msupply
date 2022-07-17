@@ -4,7 +4,7 @@ use crate::service_provider::ServiceContext;
 use crate::service_provider::ServiceProvider;
 
 pub use self::upsert::*;
-mod program_schema;
+pub mod program_schema;
 mod upsert;
 pub trait ProgramServiceTrait: Sync + Send {
     fn upsert_program(
