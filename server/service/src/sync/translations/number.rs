@@ -1,15 +1,11 @@
+use super::{
+    IntegrationRecords, LegacyTableName, PullUpsertRecord, PushUpsertRecord, SyncTranslation,
+};
 use repository::{
     ChangelogRow, ChangelogTableName, NumberRow, NumberRowRepository, NumberRowType,
     StorageConnection, SyncBufferRow,
 };
-
 use serde::{Deserialize, Serialize};
-
-use super::{
-    pull::{IntegrationRecord, IntegrationUpsertRecord, RemotePullTranslation},
-    push::{PushUpsertRecord, RemotePushUpsertTranslation},
-    TRANSLATION_RECORD_NUMBER,
-};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize, PartialEq)]
@@ -21,14 +17,14 @@ pub struct LegacyNumberRow {
     pub store_id: String,
 }
 
-pub struct NumberTranslation {}
-impl RemotePullTranslation for NumberTranslation {
+pub(crate) struct NumberTranslation {}
+impl SyncTranslation for NumberTranslation {
     fn try_translate_pull(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecord>, anyhow::Error> {
-        let table_name = TRANSLATION_RECORD_NUMBER;
+    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
+        let table_name = LegacyTableName::NUMBER;
 
         if sync_record.table_name != table_name {
             return Ok(None);
@@ -40,18 +36,19 @@ impl RemotePullTranslation for NumberTranslation {
             Some(type_and_store) => type_and_store,
             None => return Ok(None),
         };
-        Ok(Some(IntegrationRecord::from_upsert(
-            IntegrationUpsertRecord::Number(NumberRow {
-                id: data.ID.to_string(),
-                value: data.value,
-                store_id: type_and_store.1,
-                r#type: type_and_store.0,
-            }),
+
+        let result = NumberRow {
+            id: data.ID.to_string(),
+            value: data.value,
+            store_id: type_and_store.1,
+            r#type: type_and_store.0,
+        };
+
+        Ok(Some(IntegrationRecords::from_upsert(
+            PullUpsertRecord::Number(result),
         )))
     }
-}
 
-impl RemotePushUpsertTranslation for NumberTranslation {
     fn try_translate_push(
         &self,
         connection: &StorageConnection,
@@ -60,7 +57,7 @@ impl RemotePushUpsertTranslation for NumberTranslation {
         if changelog.table_name != ChangelogTableName::Number {
             return Ok(None);
         }
-        let table_name = TRANSLATION_RECORD_NUMBER;
+        let table_name = LegacyTableName::NUMBER;
 
         let NumberRow {
             id,
@@ -126,23 +123,22 @@ fn to_number_name(number_type: &NumberRowType, store_id: &str) -> Option<String>
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::sync::translation_remote::{
-        pull::RemotePullTranslation, test_data::number::get_test_number_records,
-    };
     use repository::{mock::MockDataInserts, test_db::setup_all};
 
     #[actix_rt::test]
     async fn test_number_translation() {
-        let (_, connection, _, _) =
-            setup_all("test_number_translation", MockDataInserts::all()).await;
-
+        use crate::sync::test::test_data::number as test_data;
         let translator = NumberTranslation {};
-        for record in get_test_number_records() {
-            let translation_result = translator
-                .try_translate_pull(&connection, &record.remote_sync_buffer_row)
-                .expect(&format!("{:#?}", &record.remote_sync_buffer_row));
 
-            assert_eq!(translation_result, record.translated_record,);
+        let (_, connection, _, _) =
+            setup_all("test_number_translation", MockDataInserts::none()).await;
+
+        for record in test_data::test_pull_records() {
+            let translation_result = translator
+                .try_translate_pull(&connection, &record.sync_buffer_row)
+                .unwrap();
+
+            assert_eq!(translation_result, record.translated_record);
         }
     }
 }
