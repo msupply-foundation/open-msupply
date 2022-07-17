@@ -246,24 +246,6 @@ mod repository_test {
                 email: None,
             }
         }
-
-        pub fn central_sync_buffer_row_a() -> CentralSyncBufferRow {
-            CentralSyncBufferRow {
-                id: 1,
-                table_name: "store".to_string(),
-                record_id: "store_a".to_string(),
-                data: r#"{ "ID": "store_a" }"#.to_string(),
-            }
-        }
-
-        pub fn central_sync_buffer_row_b() -> CentralSyncBufferRow {
-            CentralSyncBufferRow {
-                id: 2,
-                table_name: "store".to_string(),
-                record_id: "store_b".to_string(),
-                data: r#"{ "ID": "store_b" }"#.to_string(),
-            }
-        }
     }
 
     use std::{convert::TryInto, time::SystemTime};
@@ -280,16 +262,16 @@ mod repository_test {
             mock_test_master_list_store1, MockDataInserts,
         },
         requisition_row::RequisitionRowStatus,
-        test_db, CentralSyncBufferRepository, ChangelogAction, ChangelogRow,
-        ChangelogRowRepository, ChangelogTableName, InvoiceLineRepository,
-        InvoiceLineRowRepository, InvoiceRowRepository, ItemRow, ItemRowRepository,
-        KeyValueStoreRepository, KeyValueType, MasterListFilter, MasterListLineFilter,
-        MasterListLineRepository, MasterListLineRowRepository, MasterListNameJoinRepository,
-        MasterListRepository, MasterListRowRepository, NameRowRepository, NumberRowRepository,
-        NumberRowType, OutboundShipmentRowRepository, RepositoryError, RequisitionFilter,
-        RequisitionLineFilter, RequisitionLineRepository, RequisitionLineRowRepository,
-        RequisitionRepository, RequisitionRowRepository, StockLineFilter, StockLineRepository,
-        StockLineRowRepository, StoreRowRepository, TransactionError, UserAccountRowRepository,
+        test_db, ChangelogAction, ChangelogRow, ChangelogRowRepository, ChangelogTableName,
+        InvoiceLineRepository, InvoiceLineRowRepository, InvoiceRowRepository, ItemRow,
+        ItemRowRepository, KeyValueStoreRepository, KeyValueType, MasterListFilter,
+        MasterListLineFilter, MasterListLineRepository, MasterListLineRowRepository,
+        MasterListNameJoinRepository, MasterListRepository, MasterListRowRepository,
+        NameRowRepository, NumberRowRepository, NumberRowType, OutboundShipmentRowRepository,
+        RepositoryError, RequisitionFilter, RequisitionLineFilter, RequisitionLineRepository,
+        RequisitionLineRowRepository, RequisitionRepository, RequisitionRowRepository,
+        StockLineFilter, StockLineRepository, StockLineRowRepository, StoreRowRepository,
+        TransactionError, UserAccountRowRepository,
     };
     use crate::{DateFilter, EqualFilter, SimpleStringFilter};
     use chrono::Duration;
@@ -712,29 +694,6 @@ mod repository_test {
     }
 
     #[actix_rt::test]
-    async fn test_central_sync_buffer() {
-        let settings = test_db::get_test_db_settings("omsupply-database-central-sync_buffer");
-        let connection_manager = test_db::setup(&settings).await;
-        let connection = connection_manager.connection().unwrap();
-
-        let repo = CentralSyncBufferRepository::new(&connection);
-        let central_sync_buffer_row_a = data::central_sync_buffer_row_a();
-        let central_sync_buffer_row_b = data::central_sync_buffer_row_b();
-
-        // `insert_one` inserts some sync entries
-        repo.insert_one(&central_sync_buffer_row_a).await.unwrap();
-        repo.insert_one(&central_sync_buffer_row_b).await.unwrap();
-
-        // `remove_all` removes all buffered records.
-        repo.remove_all().await.unwrap();
-        let result = repo
-            .get_sync_entries(&central_sync_buffer_row_a.table_name)
-            .await
-            .unwrap();
-        assert!(result.is_empty());
-    }
-
-    #[actix_rt::test]
     async fn test_number() {
         let (_, connection, _, _) = test_db::setup_all("test_number", MockDataInserts::all()).await;
 
@@ -1097,12 +1056,7 @@ mod repository_test {
                     .requisition_id(EqualFilter::equal_to(
                         &mock_draft_request_requisition_line().requisition_id,
                     ))
-                    .requested_quantity(EqualFilter {
-                        equal_to: Some(99),
-                        not_equal_to: None,
-                        equal_any: None,
-                        not_equal_all: None,
-                    }),
+                    .requested_quantity(EqualFilter::equal_to_i32(99)),
             )
             .unwrap();
 

@@ -1,10 +1,10 @@
 use chrono::NaiveDate;
 use repository::{
     requisition_row::{RequisitionRowStatus, RequisitionRowType},
-    ChangelogAction, ChangelogRow, ChangelogTableName, RemoteSyncBufferAction, RemoteSyncBufferRow,
-    RequisitionRow,
+    ChangelogAction, ChangelogRow, ChangelogTableName, RequisitionRow, SyncBufferRow,
 };
 use serde_json::json;
+use util::inline_init;
 
 use crate::sync::translation_remote::{
     pull::{IntegrationRecord, IntegrationUpsertRecord},
@@ -70,13 +70,11 @@ fn requisition_request_pull_record() -> TestSyncRecord {
             }),
         )),
         identifier: "Requisition request",
-        remote_sync_buffer_row: RemoteSyncBufferRow {
-            id: "Requisition_10".to_string(),
-            table_name: TRANSLATION_RECORD_REQUISITION.to_string(),
-            record_id: REQUISITION_REQUEST.0.to_string(),
-            data: REQUISITION_REQUEST.1.to_string(),
-            action: RemoteSyncBufferAction::Update,
-        },
+        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+            r.table_name = TRANSLATION_RECORD_REQUISITION.to_string();
+            r.record_id = REQUISITION_REQUEST.0.to_string();
+            r.data = REQUISITION_REQUEST.1.to_string();
+        }),
     }
 }
 fn requisition_request_push_record() -> TestSyncPushRecord {
@@ -169,13 +167,11 @@ fn requisition_response_pull_record() -> TestSyncRecord {
             }),
         )),
         identifier: "Requisition response",
-        remote_sync_buffer_row: RemoteSyncBufferRow {
-            id: "Requisition_20".to_string(),
-            table_name: TRANSLATION_RECORD_REQUISITION.to_string(),
-            record_id: REQUISITION_RESPONSE.0.to_string(),
-            data: REQUISITION_RESPONSE.1.to_string(),
-            action: RemoteSyncBufferAction::Update,
-        },
+        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+            r.table_name = TRANSLATION_RECORD_REQUISITION.to_string();
+            r.record_id = REQUISITION_RESPONSE.0.to_string();
+            r.data = REQUISITION_RESPONSE.1.to_string();
+        }),
     }
 }
 fn requisition_response_push_record() -> TestSyncPushRecord {
@@ -275,13 +271,11 @@ fn requisition_om_fields_pull_record() -> TestSyncRecord {
             }),
         )),
         identifier: "Requisition om_fields",
-        remote_sync_buffer_row: RemoteSyncBufferRow {
-            id: "Requisition_30".to_string(),
-            table_name: TRANSLATION_RECORD_REQUISITION.to_string(),
-            record_id: REQUISITION_OM_FIELDS.0.to_string(),
-            data: REQUISITION_OM_FIELDS.1.to_string(),
-            action: RemoteSyncBufferAction::Update,
-        },
+        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+            r.table_name = TRANSLATION_RECORD_REQUISITION.to_string();
+            r.record_id = REQUISITION_OM_FIELDS.0.to_string();
+            r.data = REQUISITION_OM_FIELDS.1.to_string();
+        }),
     }
 }
 fn requisition_om_fields_push_record() -> TestSyncPushRecord {

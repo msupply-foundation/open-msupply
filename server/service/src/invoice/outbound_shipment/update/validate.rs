@@ -74,12 +74,7 @@ fn check_can_change_status_to_allocated(
         let unallocated_lines = repository.query_by_filter(
             InvoiceLineFilter::new()
                 .invoice_id(EqualFilter::equal_to(&invoice_row.id))
-                .r#type(EqualFilter {
-                    equal_to: Some(InvoiceLineRowType::UnallocatedStock),
-                    not_equal_to: None,
-                    equal_any: None,
-                    not_equal_all: None,
-                }),
+                .r#type(InvoiceLineRowType::UnallocatedStock.equal_to()),
         )?;
 
         if unallocated_lines.len() > 0 {

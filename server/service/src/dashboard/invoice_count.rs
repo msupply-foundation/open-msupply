@@ -1,8 +1,8 @@
 use chrono::{DateTime, Datelike, FixedOffset, NaiveDate, NaiveDateTime, TimeZone, Utc, Weekday};
+use repository::{DatetimeFilter, EqualFilter};
 use repository::{
     InvoiceFilter, InvoiceRepository, InvoiceRowStatus, InvoiceRowType, RepositoryError,
 };
-use repository::{DatetimeFilter, EqualFilter};
 
 use crate::service_provider::ServiceContext;
 
@@ -91,11 +91,8 @@ fn invoices_count(
     earliest: Option<NaiveDateTime>,
     store_id: &str,
 ) -> Result<i64, RepositoryError> {
-    let mut datetime_filter = DatetimeFilter {
-        equal_to: None,
-        before_or_equal_to: None,
-        after_or_equal_to: Some(oldest),
-    };
+    let mut datetime_filter = DatetimeFilter::after_or_equal_to(oldest);
+
     if let Some(earliest) = earliest {
         datetime_filter.before_or_equal_to = Some(earliest);
     }

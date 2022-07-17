@@ -1,5 +1,5 @@
 use crate::sync::translation_central::test_data::{TestSyncDataRecord, TestSyncRecord};
-use repository::{CentralSyncBufferRow, StoreRow};
+use repository::{StoreRow, SyncBufferRow};
 use util::inline_init;
 
 const STORE_1: (&'static str, &'static str) = (
@@ -48,9 +48,9 @@ const STORE_1: (&'static str, &'static str) = (
 );
 
 const STORE_2: (&'static str, &'static str) = (
-    "9EDD3F83C3D64C22A3CC9C98CF4967C4",
+    "9EDD3F83C3D64C22A3CC9C98CF4967C5",
     r#"{
-    "ID": "9EDD3F83C3D64C22A3CC9C98CF4967C4",
+    "ID": "9EDD3F83C3D64C22A3CC9C98CF4967C5",
     "name": "Drug Registration",
     "code": "DRG",
     "name_ID": "9A3F71AA4C6D48649ADBC4B2966C5B9D",
@@ -194,42 +194,38 @@ pub fn get_test_store_records() -> Vec<TestSyncRecord> {
                 s.site_id = 1;
             }))),
             identifier: "General",
-            central_sync_buffer_row: CentralSyncBufferRow {
-                id: 10,
-                table_name: RECORD_TYPE.to_owned(),
-                record_id: STORE_1.0.to_owned(),
-                data: STORE_1.1.to_owned(),
-            },
+            central_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+                r.table_name = RECORD_TYPE.to_owned();
+                r.record_id = STORE_1.0.to_owned();
+                r.data = STORE_1.1.to_owned();
+            }),
         },
         TestSyncRecord {
             translated_record: TestSyncDataRecord::Store(None),
             identifier: "Drug Registration",
-            central_sync_buffer_row: CentralSyncBufferRow {
-                id: 11,
-                table_name: RECORD_TYPE.to_owned(),
-                record_id: STORE_2.0.to_owned(),
-                data: STORE_2.1.to_owned(),
-            },
+            central_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+                r.table_name = RECORD_TYPE.to_owned();
+                r.record_id = STORE_2.0.to_owned();
+                r.data = STORE_2.1.to_owned();
+            }),
         },
         TestSyncRecord {
             translated_record: TestSyncDataRecord::Store(None),
             identifier: "Supervisor- All stores",
-            central_sync_buffer_row: CentralSyncBufferRow {
-                id: 12,
-                table_name: RECORD_TYPE.to_owned(),
-                record_id: STORE_3.0.to_owned(),
-                data: STORE_3.1.to_owned(),
-            },
+            central_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+                r.table_name = RECORD_TYPE.to_owned();
+                r.record_id = STORE_3.0.to_owned();
+                r.data = STORE_3.1.to_owned();
+            }),
         },
         TestSyncRecord {
             translated_record: TestSyncDataRecord::Store(None),
             identifier: "Hospital Info System",
-            central_sync_buffer_row: CentralSyncBufferRow {
-                id: 13,
-                table_name: RECORD_TYPE.to_owned(),
-                record_id: STORE_4.0.to_owned(),
-                data: STORE_4.1.to_owned(),
-            },
+            central_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+                r.table_name = RECORD_TYPE.to_owned();
+                r.record_id = STORE_4.0.to_owned();
+                r.data = STORE_4.1.to_owned();
+            }),
         },
     ]
 }

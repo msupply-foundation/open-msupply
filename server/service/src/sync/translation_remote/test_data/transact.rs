@@ -1,9 +1,10 @@
 use chrono::{Duration, NaiveDate, NaiveTime};
 use repository::{
     ChangelogAction, ChangelogRow, ChangelogTableName, InvoiceRow, InvoiceRowStatus,
-    InvoiceRowType, RemoteSyncBufferAction, RemoteSyncBufferRow,
+    InvoiceRowType, SyncBufferRow,
 };
 use serde_json::json;
+use util::inline_init;
 
 use crate::sync::translation_remote::{
     invoice::{LegacyTransactRow, LegacyTransactStatus, LegacyTransactType, TransactMode},
@@ -121,13 +122,11 @@ fn transact_1_pull_record() -> TestSyncRecord {
             }),
         )),
         identifier: "Transact 1",
-        remote_sync_buffer_row: RemoteSyncBufferRow {
-            id: "Transact_10".to_string(),
-            table_name: TRANSLATION_RECORD_TRANSACT.to_string(),
-            record_id: TRANSACT_1.0.to_string(),
-            data: TRANSACT_1.1.to_string(),
-            action: RemoteSyncBufferAction::Update,
-        },
+        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+            r.table_name = TRANSLATION_RECORD_TRANSACT.to_string();
+            r.record_id = TRANSACT_1.0.to_string();
+            r.data = TRANSACT_1.1.to_string();
+        }),
     }
 }
 fn transact_1_push_record() -> TestSyncPushRecord {
@@ -280,13 +279,11 @@ fn transact_2_pull_record() -> TestSyncRecord {
             }),
         )),
         identifier: "Transact 2",
-        remote_sync_buffer_row: RemoteSyncBufferRow {
-            id: "Transact_20".to_string(),
-            table_name: TRANSLATION_RECORD_TRANSACT.to_string(),
-            record_id: TRANSACT_2.0.to_string(),
-            data: TRANSACT_2.1.to_string(),
-            action: RemoteSyncBufferAction::Update,
-        },
+        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+            r.table_name = TRANSLATION_RECORD_TRANSACT.to_string();
+            r.record_id = TRANSACT_2.0.to_string();
+            r.data = TRANSACT_2.1.to_string();
+        }),
     }
 }
 fn transact_2_push_record() -> TestSyncPushRecord {
@@ -448,13 +445,11 @@ fn transact_om_fields_pull_record() -> TestSyncRecord {
             }),
         )),
         identifier: "Transact om fields",
-        remote_sync_buffer_row: RemoteSyncBufferRow {
-            id: "Transact_30".to_string(),
-            table_name: TRANSLATION_RECORD_TRANSACT.to_string(),
-            record_id: TRANSACT_OM_FIELDS.0.to_string(),
-            data: TRANSACT_OM_FIELDS.1.to_string(),
-            action: RemoteSyncBufferAction::Update,
-        },
+        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+            r.table_name = TRANSLATION_RECORD_TRANSACT.to_string();
+            r.record_id = TRANSACT_OM_FIELDS.0.to_string();
+            r.data = TRANSACT_OM_FIELDS.1.to_string();
+        }),
     }
 }
 fn transact_om_fields_push_record() -> TestSyncPushRecord {

@@ -1,6 +1,6 @@
 use repository::{
-    ChangelogRow, ChangelogTableName, Gender, NameRow, NameRowRepository, RemoteSyncBufferRow,
-    StorageConnection,
+    ChangelogRow, ChangelogTableName, Gender, NameRow, NameRowRepository, StorageConnection,
+    SyncBufferRow,
 };
 
 use crate::sync::translation_central::{translate_name, LegacyNameRow, LegacyNameType};
@@ -16,7 +16,7 @@ impl RemotePullTranslation for NameTranslation {
     fn try_translate_pull(
         &self,
         _: &StorageConnection,
-        sync_record: &RemoteSyncBufferRow,
+        sync_record: &SyncBufferRow,
     ) -> Result<Option<super::pull::IntegrationRecord>, anyhow::Error> {
         if sync_record.table_name != TRANSLATION_RECORD_NAME {
             return Ok(None);

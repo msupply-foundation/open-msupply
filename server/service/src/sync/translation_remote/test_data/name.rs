@@ -1,9 +1,9 @@
 use chrono::NaiveDate;
 use repository::{
-    ChangelogAction, ChangelogRow, ChangelogTableName, Gender, NameRow, RemoteSyncBufferAction,
-    RemoteSyncBufferRow,
+    ChangelogAction, ChangelogRow, ChangelogTableName, Gender, NameRow, SyncBufferRow,
 };
 use serde_json::json;
+use util::inline_init;
 
 use crate::sync::{
     translation_central::{LegacyNameRow, LegacyNameType},
@@ -139,13 +139,11 @@ fn name_1_pull_record() -> TestSyncRecord {
             }),
         )),
         identifier: "Name 1",
-        remote_sync_buffer_row: RemoteSyncBufferRow {
-            id: "name_1".to_string(),
-            table_name: TRANSLATION_RECORD_NAME.to_string(),
-            record_id: NAME_1.0.to_string(),
-            data: NAME_1.1.to_string(),
-            action: RemoteSyncBufferAction::Update,
-        },
+        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+            r.table_name = TRANSLATION_RECORD_NAME.to_string();
+            r.record_id = NAME_1.0.to_string();
+            r.data = NAME_1.1.to_string();
+        }),
     }
 }
 fn name_1_push_record() -> TestSyncPushRecord {

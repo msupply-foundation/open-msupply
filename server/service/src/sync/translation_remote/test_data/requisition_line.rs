@@ -1,10 +1,9 @@
 use chrono::NaiveDate;
 use repository::{
-    RemoteSyncBufferAction, RemoteSyncBufferRow,
-    ChangelogAction, ChangelogRow, ChangelogTableName, RequisitionLineRow,
+    ChangelogAction, ChangelogRow, ChangelogTableName, RequisitionLineRow, SyncBufferRow,
 };
 use serde_json::json;
-use util::constants::NUMBER_OF_DAYS_IN_A_MONTH;
+use util::{constants::NUMBER_OF_DAYS_IN_A_MONTH, inline_init};
 
 use crate::sync::translation_remote::{
     pull::{IntegrationRecord, IntegrationUpsertRecord},
@@ -66,13 +65,11 @@ fn requisition_line_request_pull_record() -> TestSyncRecord {
             }),
         )),
         identifier: "Requisition line 1",
-        remote_sync_buffer_row: RemoteSyncBufferRow {
-            id: "Requisition_line_10".to_string(),
-            table_name: TRANSLATION_RECORD_REQUISITION_LINE.to_string(),
-            record_id: REQUISITION_LINE_1.0.to_string(),
-            data: REQUISITION_LINE_1.1.to_string(),
-            action: RemoteSyncBufferAction::Update,
-        },
+        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+            r.table_name = TRANSLATION_RECORD_REQUISITION_LINE.to_string();
+            r.record_id = REQUISITION_LINE_1.0.to_string();
+            r.data = REQUISITION_LINE_1.1.to_string();
+        }),
     }
 }
 fn requisition_line_request_push_record() -> TestSyncPushRecord {
@@ -151,13 +148,11 @@ fn requisition_line_om_fields_pull_record() -> TestSyncRecord {
             }),
         )),
         identifier: "Requisition line om fields",
-        remote_sync_buffer_row: RemoteSyncBufferRow {
-            id: "Requisition_line_20".to_string(),
-            table_name: TRANSLATION_RECORD_REQUISITION_LINE.to_string(),
-            record_id: REQUISITION_LINE_OM_FIELD.0.to_string(),
-            data: REQUISITION_LINE_OM_FIELD.1.to_string(),
-            action: RemoteSyncBufferAction::Update,
-        },
+        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+            r.table_name = TRANSLATION_RECORD_REQUISITION_LINE.to_string();
+            r.record_id = REQUISITION_LINE_OM_FIELD.0.to_string();
+            r.data = REQUISITION_LINE_OM_FIELD.1.to_string();
+        }),
     }
 }
 fn requisition_line_om_fields_push_record() -> TestSyncPushRecord {

@@ -28,6 +28,7 @@ pub struct EqualFilter<T> {
     pub not_equal_to: Option<T>,
     pub equal_any: Option<Vec<T>>,
     pub not_equal_all: Option<Vec<T>>,
+    pub is_null: Option<bool>,
 }
 
 impl EqualFilter<i64> {
@@ -37,6 +38,7 @@ impl EqualFilter<i64> {
             not_equal_to: None,
             equal_any: None,
             not_equal_all: None,
+            is_null: None,
         }
     }
 }
@@ -48,6 +50,7 @@ impl EqualFilter<i32> {
             not_equal_to: None,
             equal_any: None,
             not_equal_all: None,
+            is_null: None,
         }
     }
 }
@@ -59,6 +62,7 @@ impl EqualFilter<String> {
             not_equal_to: None,
             equal_any: None,
             not_equal_all: None,
+            is_null: None,
         }
     }
 
@@ -68,6 +72,7 @@ impl EqualFilter<String> {
             not_equal_to: Some(value.to_owned()),
             equal_any: None,
             not_equal_all: None,
+            is_null: None,
         }
     }
 
@@ -77,6 +82,7 @@ impl EqualFilter<String> {
             not_equal_to: None,
             equal_any: Some(value),
             not_equal_all: None,
+            is_null: None,
         }
     }
 
@@ -86,6 +92,17 @@ impl EqualFilter<String> {
             not_equal_to: None,
             equal_any: None,
             not_equal_all: Some(value),
+            is_null: None,
+        }
+    }
+
+    pub fn is_null(value: bool) -> Self {
+        EqualFilter {
+            equal_to: None,
+            not_equal_to: None,
+            equal_any: None,
+            not_equal_all: None,
+            is_null: Some(value),
         }
     }
 }
@@ -95,6 +112,7 @@ pub struct DatetimeFilter {
     pub equal_to: Option<NaiveDateTime>,
     pub before_or_equal_to: Option<NaiveDateTime>,
     pub after_or_equal_to: Option<NaiveDateTime>,
+    pub is_null: Option<bool>,
 }
 
 impl DatetimeFilter {
@@ -103,6 +121,7 @@ impl DatetimeFilter {
             equal_to: None,
             after_or_equal_to: Some(from),
             before_or_equal_to: Some(to),
+            is_null: None,
         }
     }
 
@@ -111,6 +130,7 @@ impl DatetimeFilter {
             equal_to: Some(value.to_owned()),
             after_or_equal_to: None,
             before_or_equal_to: None,
+            is_null: None,
         }
     }
 
@@ -119,6 +139,7 @@ impl DatetimeFilter {
             equal_to: None,
             after_or_equal_to: Some(value.to_owned()),
             before_or_equal_to: None,
+            is_null: None,
         }
     }
 
@@ -127,6 +148,16 @@ impl DatetimeFilter {
             equal_to: None,
             after_or_equal_to: None,
             before_or_equal_to: Some(value),
+            is_null: None,
+        }
+    }
+
+    pub fn is_null(value: bool) -> Self {
+        DatetimeFilter {
+            equal_to: None,
+            after_or_equal_to: None,
+            before_or_equal_to: None,
+            is_null: Some(value),
         }
     }
 }

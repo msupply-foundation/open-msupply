@@ -1,8 +1,9 @@
+use chrono::Utc;
 use log::info;
 use repository::{
-    ChangelogRow, ChangelogRowRepository, KeyValueStoreRepository, KeyValueType,
-    RemoteSyncBufferAction, RemoteSyncBufferRepository, RemoteSyncBufferRow, RepositoryError,
-    StorageConnection,
+    ChangelogRow, ChangelogRowRepository, EqualFilter, KeyValueStoreRepository, KeyValueType,
+    RepositoryError, StorageConnection, SyncBufferAction, SyncBufferFilter, SyncBufferRepository,
+    SyncBufferRow, SyncBufferRowRepository,
 };
 use thiserror::Error;
 
@@ -136,7 +137,7 @@ impl RemoteDataSynchroniser {
                 let sync_ids: Vec<String> =
                     data.iter().map(|record| record.sync_id.clone()).collect();
 
-                let _ = RemoteSyncBufferRepository::new(connection)
+                let _ = SyncBufferRowRepository::new(connection)
                     .upsert_many(&remote_sync_batch_records_to_buffer_rows(data)?);
 
                 info!("Acknowledging remote sync records...");
@@ -153,13 +154,13 @@ impl RemoteDataSynchroniser {
     }
 
     pub fn do_integrate_records(connection: &StorageConnection) -> anyhow::Result<()> {
-        let remote_sync_buffer_repository = RemoteSyncBufferRepository::new(&connection);
-
-        let mut records: Vec<RemoteSyncBufferRow> = Vec::new();
+        let mut records: Vec<SyncBufferRow> = Vec::new();
         for table_name in REMOTE_TRANSLATION_RECORDS {
             info!("Querying remote sync buffer for {} records", table_name);
 
-            let mut buffer_rows = remote_sync_buffer_repository.get_sync_entries(table_name)?;
+            let mut buffer_rows = SyncBufferRepository::new(&connection).query_by_filter(
+                SyncBufferFilter::new().table_name(EqualFilter::equal_to(table_name)),
+            )?;
 
             info!(
                 "Found {} {} records in remote sync buffer",
@@ -175,7 +176,7 @@ impl RemoteDataSynchroniser {
         info!("Successfully Imported remote sync buffer records",);
 
         info!("Clearing remote sync buffer");
-        remote_sync_buffer_repository.remove_all()?;
+        SyncBufferRowRepository::new(&connection).remove_all()?;
         info!("Successfully cleared remote sync buffer");
 
         Ok(())
@@ -252,28 +253,30 @@ pub fn translate_changelogs_to_push_records(
 }
 
 impl RemoteSyncActionV5 {
-    fn to_row_action(&self) -> RemoteSyncBufferAction {
+    fn to_row_action(&self) -> SyncBufferAction {
         match self {
-            RemoteSyncActionV5::Create => RemoteSyncBufferAction::Create,
-            RemoteSyncActionV5::Update => RemoteSyncBufferAction::Update,
-            RemoteSyncActionV5::Delete => RemoteSyncBufferAction::Delete,
-            RemoteSyncActionV5::Merge => RemoteSyncBufferAction::Merge,
+            RemoteSyncActionV5::Create => SyncBufferAction::Upsert,
+            RemoteSyncActionV5::Update => SyncBufferAction::Upsert,
+            RemoteSyncActionV5::Delete => SyncBufferAction::Delete,
+            RemoteSyncActionV5::Merge => SyncBufferAction::Merge,
         }
     }
 }
 
 pub fn remote_sync_batch_records_to_buffer_rows(
     records: Vec<RemoteSyncRecordV5>,
-) -> Result<Vec<RemoteSyncBufferRow>, serde_json::Error> {
-    let remote_sync_records: Result<Vec<RemoteSyncBufferRow>, serde_json::Error> = records
+) -> Result<Vec<SyncBufferRow>, serde_json::Error> {
+    let remote_sync_records: Result<Vec<SyncBufferRow>, serde_json::Error> = records
         .into_iter()
         .map(|record| {
-            Ok(RemoteSyncBufferRow {
-                id: record.sync_id,
+            Ok(SyncBufferRow {
                 table_name: record.table,
                 record_id: record.record_id,
                 action: record.action.to_row_action(),
                 data: serde_json::to_string(&record.data)?,
+                received_datetime: Utc::now().naive_utc(),
+                integration_datetime: None,
+                integration_error: None,
             })
         })
         .collect();
@@ -338,8 +341,6 @@ impl<'a> RemoteSyncState<'a> {
 
 #[cfg(test)]
 mod tests {
-    use std::env;
-
     use crate::sync::translation_remote::{
         table_name_to_central,
         test_data::{
@@ -347,18 +348,17 @@ mod tests {
             get_all_remote_pull_test_records, get_all_remote_push_test_records,
         },
     };
-    use repository::{mock::MockDataInserts, test_db, RemoteSyncBufferRepository};
+    use repository::{mock::MockDataInserts, test_db, SyncBufferRowRepository};
 
     use super::{translate_changelogs_to_push_records, RemoteDataSynchroniser};
 
     #[actix_rt::test]
     async fn test_integrate_remote_records() {
-        if env::var("RUST_LOG").is_err() {
-            // Default rust log level to info
-            env::set_var("RUST_LOG", "warn");
-        }
-
-        env_logger::init();
+        // if std::env::var("RUST_LOG").is_err() {
+        //     // Default rust log level to info
+        //     std::env::set_var("RUST_LOG", "warn");
+        // }
+        // std::env_logger::init();
 
         let (_, connection, _, _) = test_db::setup_all(
             "omsupply-database-integrate_remote_records",
@@ -369,7 +369,7 @@ mod tests {
         // use test records with cursors that are out of order
         let test_records = get_all_remote_pull_test_records();
         let buffer_rows = extract_sync_buffer_rows(&test_records);
-        RemoteSyncBufferRepository::new(&connection)
+        SyncBufferRowRepository::new(&connection)
             .upsert_many(&buffer_rows)
             .expect("Failed to insert remote sync records into sync buffer");
 
