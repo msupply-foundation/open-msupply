@@ -13,8 +13,8 @@ pub(crate) struct TestSyncPullRecord {
     /// Expected result for the imported data
     pub(crate) translated_record: Option<IntegrationRecords>,
     /// Row as stored in the remote sync buffer
-    pub sync_buffer_row: SyncBufferRow,
-    pub extra_data: Option<MockData>,
+    pub(crate) sync_buffer_row: SyncBufferRow,
+    pub(crate) extra_data: Option<MockData>,
 }
 
 impl TestSyncPullRecord {
