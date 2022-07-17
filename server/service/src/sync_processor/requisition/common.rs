@@ -71,7 +71,7 @@ pub fn generate_linked_requisition(
 
     let name_id = record_for_processing.source_name.id.clone();
 
-    let source_comment = match source_requisition.comment.clone() {
+    let source_comment = match &source_requisition.comment {
         Some(comment) => format!(" ({})", comment),
         None => String::new(),
     };
