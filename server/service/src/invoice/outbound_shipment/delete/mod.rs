@@ -28,7 +28,7 @@ pub fn delete_outbound_shipment(
     let invoice_id = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(&id, &connection)?;
+            validate(&id, store_id, &connection)?;
 
             // TODO https://github.com/openmsupply/remote-server/issues/839
             let lines = InvoiceLineRepository::new(&connection)
