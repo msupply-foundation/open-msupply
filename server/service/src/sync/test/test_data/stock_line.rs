@@ -1,13 +1,10 @@
 use chrono::NaiveDate;
-use repository::{ChangelogAction, ChangelogRow, ChangelogTableName, StockLineRow, SyncBufferRow};
+use repository::{ChangelogAction, ChangelogRow, ChangelogTableName, StockLineRow};
 use serde_json::json;
-use util::inline_init;
 
-use crate::sync::translation_remote::{
-    pull::{IntegrationRecord, IntegrationUpsertRecord},
-    stock_line::LegacyStockLineRow,
-    test_data::TestSyncRecord,
-    TRANSLATION_RECORD_ITEM_LINE,
+use crate::sync::{
+    test::TestSyncPullRecord,
+    translations::{stock_line::LegacyStockLineRow, LegacyTableName, PullUpsertRecord},
 };
 
 use super::TestSyncPushRecord;
@@ -55,32 +52,26 @@ const ITEM_LINE_1: (&'static str, &'static str) = (
       "weight_per_pack": 0
     }"#,
 );
-fn item_line_1_pull_record() -> TestSyncRecord {
-    TestSyncRecord {
-        translated_record: Some(IntegrationRecord::from_upsert(
-            IntegrationUpsertRecord::StockLine(StockLineRow {
-                id: ITEM_LINE_1.0.to_string(),
-                store_id: "store_a".to_string(),
-                item_id: "item_a".to_string(),
-                location_id: None,
-                batch: Some("stocktake_1".to_string()),
-                pack_size: 1,
-                cost_price_per_pack: 5.0,
-                sell_price_per_pack: 10.0,
-                available_number_of_packs: 694,
-                total_number_of_packs: 694,
-                expiry_date: Some(NaiveDate::from_ymd(2022, 2, 17)),
-                on_hold: false,
-                note: Some("test note".to_string()),
-            }),
-        )),
-        identifier: "Stock line 1",
-        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-            r.table_name = TRANSLATION_RECORD_ITEM_LINE.to_string();
-            r.record_id = ITEM_LINE_1.0.to_string();
-            r.data = ITEM_LINE_1.1.to_string();
+fn item_line_1_pull_record() -> TestSyncPullRecord {
+    TestSyncPullRecord::new_pull_upsert(
+        LegacyTableName::ITEM_LINE,
+        ITEM_LINE_1,
+        PullUpsertRecord::StockLine(StockLineRow {
+            id: ITEM_LINE_1.0.to_string(),
+            store_id: "store_a".to_string(),
+            item_id: "item_a".to_string(),
+            location_id: None,
+            batch: Some("stocktake_1".to_string()),
+            pack_size: 1,
+            cost_price_per_pack: 5.0,
+            sell_price_per_pack: 10.0,
+            available_number_of_packs: 694,
+            total_number_of_packs: 694,
+            expiry_date: Some(NaiveDate::from_ymd(2022, 2, 17)),
+            on_hold: false,
+            note: Some("test note".to_string()),
         }),
-    }
+    )
 }
 fn item_line_1_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
@@ -151,32 +142,26 @@ const ITEM_LINE_2: (&'static str, &'static str) = (
       "weight_per_pack": 0
   }"#,
 );
-fn item_line_2_pull_record() -> TestSyncRecord {
-    TestSyncRecord {
-        translated_record: Some(IntegrationRecord::from_upsert(
-            IntegrationUpsertRecord::StockLine(StockLineRow {
-                id: ITEM_LINE_2.0.to_string(),
-                store_id: "store_a".to_string(),
-                item_id: "item_b".to_string(),
-                location_id: None,
-                batch: Some("none".to_string()),
-                pack_size: 1,
-                cost_price_per_pack: 0.0,
-                sell_price_per_pack: 0.0,
-                available_number_of_packs: -1000,
-                total_number_of_packs: -1001,
-                expiry_date: None,
-                on_hold: false,
-                note: Some("".to_string()),
-            }),
-        )),
-        identifier: "Stock line 2",
-        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-            r.table_name = TRANSLATION_RECORD_ITEM_LINE.to_string();
-            r.record_id = ITEM_LINE_2.0.to_string();
-            r.data = ITEM_LINE_2.1.to_string();
+fn item_line_2_pull_record() -> TestSyncPullRecord {
+    TestSyncPullRecord::new_pull_upsert(
+        LegacyTableName::ITEM_LINE,
+        ITEM_LINE_2,
+        PullUpsertRecord::StockLine(StockLineRow {
+            id: ITEM_LINE_2.0.to_string(),
+            store_id: "store_a".to_string(),
+            item_id: "item_b".to_string(),
+            location_id: None,
+            batch: Some("none".to_string()),
+            pack_size: 1,
+            cost_price_per_pack: 0.0,
+            sell_price_per_pack: 0.0,
+            available_number_of_packs: -1000,
+            total_number_of_packs: -1001,
+            expiry_date: None,
+            on_hold: false,
+            note: Some("".to_string()),
         }),
-    }
+    )
 }
 fn item_line_2_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
@@ -204,12 +189,10 @@ fn item_line_2_push_record() -> TestSyncPushRecord {
     }
 }
 
-#[allow(dead_code)]
-pub fn get_test_stock_line_records() -> Vec<TestSyncRecord> {
+pub(crate) fn test_pull_records() -> Vec<TestSyncPullRecord> {
     vec![item_line_1_pull_record(), item_line_2_pull_record()]
 }
 
-#[allow(dead_code)]
-pub fn get_test_push_stock_line_records() -> Vec<TestSyncPushRecord> {
+pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
     vec![item_line_1_push_record(), item_line_2_push_record()]
 }

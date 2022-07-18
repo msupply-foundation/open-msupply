@@ -1,11 +1,13 @@
-use crate::sync::translation_central::test_data::{TestSyncDataRecord, TestSyncRecord};
-use repository::{ItemRow, ItemRowType, SyncBufferRow};
-use util::inline_init;
+use crate::sync::{
+    test::TestSyncPullRecord,
+    translations::{LegacyTableName, PullUpsertRecord},
+};
+use repository::{ItemRow, ItemRowType};
 
 const ITEM_1: (&'static str, &'static str) = (
-    "8F252B5884B74888AAB73A0D42C09E7F",
+    "8F252B5884B74888AAB73A0D42C09E7A",
     r#"{
-    "ID": "8F252B5884B74888AAB73A0D42C09E7F",
+    "ID": "8F252B5884B74888AAB73A0D42C09E7A",
     "item_name": "Non stock items",
     "start_of_year_date": "0000-00-00",
     "manufacture_method": "",
@@ -81,7 +83,7 @@ const ITEM_1: (&'static str, &'static str) = (
 }"#,
 );
 
-const ITEM_1_UPSERT: (&'static str, &'static str) = (
+const ITEM_2: (&'static str, &'static str) = (
     "8F252B5884B74888AAB73A0D42C09E7F",
     r#"{
     "ID": "8F252B5884B74888AAB73A0D42C09E7F",
@@ -160,43 +162,31 @@ const ITEM_1_UPSERT: (&'static str, &'static str) = (
 }"#,
 );
 
-#[allow(dead_code)]
-const RECORD_TYPE: &'static str = "item";
-#[allow(dead_code)]
-pub fn get_test_item_records() -> Vec<TestSyncRecord> {
-    vec![TestSyncRecord {
-        translated_record: TestSyncDataRecord::Item(Some(ItemRow {
-            id: ITEM_1.0.to_owned(),
-            name: "Non stock items".to_owned(),
-            code: "NSI".to_owned(),
-            unit_id: None,
-            r#type: ItemRowType::NonStock,
-            legacy_record: ITEM_1.1.to_owned(),
-        })),
-        identifier: "Non stock items",
-        central_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-            r.table_name = RECORD_TYPE.to_owned();
-            r.record_id = ITEM_1.0.to_owned();
-            r.data = ITEM_1.1.to_owned();
-        }),
-    }]
-}
-#[allow(dead_code)]
-pub fn get_test_item_upsert_records() -> Vec<TestSyncRecord> {
-    vec![TestSyncRecord {
-        translated_record: TestSyncDataRecord::Item(Some(ItemRow {
-            id: ITEM_1_UPSERT.0.to_owned(),
-            name: "Non stock items 2".to_owned(),
-            code: "NSI".to_owned(),
-            unit_id: Some("A02C91EB6C77400BA783C4CD7C565F29".to_owned()),
-            r#type: ItemRowType::Stock,
-            legacy_record: ITEM_1_UPSERT.1.to_owned(),
-        })),
-        identifier: "Non stock items 2",
-        central_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-            r.table_name = RECORD_TYPE.to_owned();
-            r.record_id = ITEM_1_UPSERT.0.to_owned();
-            r.data = ITEM_1_UPSERT.1.to_owned();
-        }),
-    }]
+pub(crate) fn test_pull_records() -> Vec<TestSyncPullRecord> {
+    vec![
+        TestSyncPullRecord::new_pull_upsert(
+            LegacyTableName::ITEM,
+            ITEM_1,
+            PullUpsertRecord::Item(ItemRow {
+                id: ITEM_1.0.to_owned(),
+                name: "Non stock items".to_owned(),
+                code: "NSI".to_owned(),
+                unit_id: None,
+                r#type: ItemRowType::NonStock,
+                legacy_record: ITEM_1.1.to_owned(),
+            }),
+        ),
+        TestSyncPullRecord::new_pull_upsert(
+            LegacyTableName::ITEM,
+            ITEM_2,
+            PullUpsertRecord::Item(ItemRow {
+                id: ITEM_2.0.to_owned(),
+                name: "Non stock items 2".to_owned(),
+                code: "NSI".to_owned(),
+                unit_id: Some("A02C91EB6C77400BA783C4CD7C565F29".to_owned()),
+                r#type: ItemRowType::Stock,
+                legacy_record: ITEM_2.1.to_owned(),
+            }),
+        ),
+    ]
 }

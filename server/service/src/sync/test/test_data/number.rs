@@ -4,11 +4,9 @@ use repository::{
 use serde_json::json;
 use util::inline_init;
 
-use crate::sync::translation_remote::{
-    number::LegacyNumberRow,
-    pull::{IntegrationRecord, IntegrationUpsertRecord},
-    test_data::{TestSyncPushRecord, TestSyncRecord},
-    TRANSLATION_RECORD_NUMBER,
+use crate::sync::{
+    test::{TestSyncPullRecord, TestSyncPushRecord},
+    translations::{number::LegacyNumberRow, LegacyTableName, PullUpsertRecord},
 };
 
 // store_remote_pull is a dummy store added in test_remote_pull.rs
@@ -22,23 +20,17 @@ const NUMBER_STOCK_TAKE: (&'static str, &'static str) = (
     }
     "#,
 );
-fn number_stock_take_pull_record() -> TestSyncRecord {
-    TestSyncRecord {
-        translated_record: Some(IntegrationRecord::from_upsert(
-            IntegrationUpsertRecord::Number(NumberRow {
-                id: NUMBER_STOCK_TAKE.0.to_string(),
-                value: 1,
-                store_id: "store_remote_pull".to_string(),
-                r#type: NumberRowType::Stocktake,
-            }),
-        )),
-        identifier: "Stocktake",
-        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-            r.table_name = TRANSLATION_RECORD_NUMBER.to_string();
-            r.record_id = NUMBER_STOCK_TAKE.0.to_string();
-            r.data = NUMBER_STOCK_TAKE.1.to_string();
+fn number_stock_take_pull_record() -> TestSyncPullRecord {
+    TestSyncPullRecord::new_pull_upsert(
+        LegacyTableName::NUMBER,
+        NUMBER_STOCK_TAKE,
+        PullUpsertRecord::Number(NumberRow {
+            id: NUMBER_STOCK_TAKE.0.to_string(),
+            value: 1,
+            store_id: "store_remote_pull".to_string(),
+            r#type: NumberRowType::Stocktake,
         }),
-    }
+    )
 }
 fn number_stock_take_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
@@ -66,23 +58,17 @@ const NUMBER_INVENTORY_ADJUSTMENT: (&'static str, &'static str) = (
       "store_ID": "store_remote_pull"
     }"#,
 );
-fn number_inv_adjustment_pull_record() -> TestSyncRecord {
-    TestSyncRecord {
-        translated_record: Some(IntegrationRecord::from_upsert(
-            IntegrationUpsertRecord::Number(NumberRow {
-                id: NUMBER_INVENTORY_ADJUSTMENT.0.to_string(),
-                value: 2,
-                store_id: "store_remote_pull".to_string(),
-                r#type: NumberRowType::InventoryAdjustment,
-            }),
-        )),
-        identifier: "Inventory adjustment",
-        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-            r.table_name = TRANSLATION_RECORD_NUMBER.to_string();
-            r.record_id = NUMBER_INVENTORY_ADJUSTMENT.0.to_string();
-            r.data = NUMBER_INVENTORY_ADJUSTMENT.1.to_string();
+fn number_inv_adjustment_pull_record() -> TestSyncPullRecord {
+    TestSyncPullRecord::new_pull_upsert(
+        LegacyTableName::NUMBER,
+        NUMBER_INVENTORY_ADJUSTMENT,
+        PullUpsertRecord::Number(NumberRow {
+            id: NUMBER_INVENTORY_ADJUSTMENT.0.to_string(),
+            value: 2,
+            store_id: "store_remote_pull".to_string(),
+            r#type: NumberRowType::InventoryAdjustment,
         }),
-    }
+    )
 }
 fn number_inv_adjustment_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
@@ -110,23 +96,17 @@ const CUSTOMER_INVOICE_ADJUSTMENT: (&'static str, &'static str) = (
       "store_ID": "store_remote_pull"
     }"#,
 );
-fn number_customer_invoice_pull_record() -> TestSyncRecord {
-    TestSyncRecord {
-        translated_record: Some(IntegrationRecord::from_upsert(
-            IntegrationUpsertRecord::Number(NumberRow {
-                id: CUSTOMER_INVOICE_ADJUSTMENT.0.to_string(),
-                value: 8,
-                store_id: "store_remote_pull".to_string(),
-                r#type: NumberRowType::OutboundShipment,
-            }),
-        )),
-        identifier: "Customer invoice",
-        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-            r.table_name = TRANSLATION_RECORD_NUMBER.to_string();
-            r.record_id = CUSTOMER_INVOICE_ADJUSTMENT.0.to_string();
-            r.data = CUSTOMER_INVOICE_ADJUSTMENT.1.to_string();
+fn number_customer_invoice_pull_record() -> TestSyncPullRecord {
+    TestSyncPullRecord::new_pull_upsert(
+        LegacyTableName::NUMBER,
+        CUSTOMER_INVOICE_ADJUSTMENT,
+        PullUpsertRecord::Number(NumberRow {
+            id: CUSTOMER_INVOICE_ADJUSTMENT.0.to_string(),
+            value: 8,
+            store_id: "store_remote_pull".to_string(),
+            r#type: NumberRowType::OutboundShipment,
         }),
-    }
+    )
 }
 fn number_customer_invoice_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
@@ -155,13 +135,12 @@ const PURCHASE_ORDER: (&'static str, &'static str) = (
     }"#,
 );
 
-fn number_purchase_order_pull_record() -> TestSyncRecord {
-    TestSyncRecord {
+fn number_purchase_order_pull_record() -> TestSyncPullRecord {
+    TestSyncPullRecord {
         // None on translation record means this record is ignored (don't want to integrate purchase order numbers yet)
         translated_record: None,
-        identifier: "Purchase order",
-        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-            r.table_name = TRANSLATION_RECORD_NUMBER.to_string();
+        sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+            r.table_name = LegacyTableName::NUMBER.to_string();
             r.record_id = PURCHASE_ORDER.0.to_string();
             r.data = PURCHASE_ORDER.1.to_string();
         }),
@@ -177,23 +156,17 @@ const SUPPLIER_INVOICE: (&'static str, &'static str) = (
       "store_ID": "store_remote_pull"
     }"#,
 );
-fn number_supplier_invoice_pull_record() -> TestSyncRecord {
-    TestSyncRecord {
-        translated_record: Some(IntegrationRecord::from_upsert(
-            IntegrationUpsertRecord::Number(NumberRow {
-                id: SUPPLIER_INVOICE.0.to_string(),
-                value: 3,
-                store_id: "store_remote_pull".to_string(),
-                r#type: NumberRowType::InboundShipment,
-            }),
-        )),
-        identifier: "Supplier invoice",
-        remote_sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-            r.table_name = TRANSLATION_RECORD_NUMBER.to_string();
-            r.record_id = SUPPLIER_INVOICE.0.to_string();
-            r.data = SUPPLIER_INVOICE.1.to_string();
+fn number_supplier_invoice_pull_record() -> TestSyncPullRecord {
+    TestSyncPullRecord::new_pull_upsert(
+        LegacyTableName::NUMBER,
+        SUPPLIER_INVOICE,
+        PullUpsertRecord::Number(NumberRow {
+            id: SUPPLIER_INVOICE.0.to_string(),
+            value: 3,
+            store_id: "store_remote_pull".to_string(),
+            r#type: NumberRowType::InboundShipment,
         }),
-    }
+    )
 }
 fn number_supplier_invoice_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
@@ -212,8 +185,7 @@ fn number_supplier_invoice_push_record() -> TestSyncPushRecord {
     }
 }
 
-#[allow(dead_code)]
-pub fn get_test_number_records() -> Vec<TestSyncRecord> {
+pub(crate) fn test_pull_records() -> Vec<TestSyncPullRecord> {
     vec![
         number_stock_take_pull_record(),
         number_inv_adjustment_pull_record(),
@@ -223,8 +195,7 @@ pub fn get_test_number_records() -> Vec<TestSyncRecord> {
     ]
 }
 
-#[allow(dead_code)]
-pub fn get_test_push_number_records() -> Vec<TestSyncPushRecord> {
+pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
     vec![
         number_stock_take_push_record(),
         number_inv_adjustment_push_record(),
