@@ -108,7 +108,6 @@ impl Synchroniser {
             return Ok(());
         }
 
-        // Send initialisation if not initialised
         let remote_sync_state = RemoteSyncState::new(&ctx.connection);
         // Remote data was initialised
         let is_initialised = remote_sync_state.initial_remote_data_synced()?;
