@@ -65,12 +65,11 @@ impl<'a> ChangelogRowRepository<'a> {
         ChangelogRowRepository { connection }
     }
 
-    /// # Arguments:
-    /// * earliest the first cursor to be included in the returned
-    /// * limit the number of entries to be returned
     pub fn changelogs(
         &self,
+        // Earliest the first cursor to be included in the returned
         earliest: u64,
+        // Limit the number of entries to be returned
         limit: u32,
     ) -> Result<Vec<ChangelogRow>, RepositoryError> {
         let final_query = changelog_deduped_dsl::changelog_deduped
