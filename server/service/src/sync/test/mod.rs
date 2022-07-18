@@ -14,6 +14,7 @@ pub(crate) struct TestSyncPullRecord {
     pub(crate) translated_record: Option<IntegrationRecords>,
     /// Row as stored in the remote sync buffer
     pub(crate) sync_buffer_row: SyncBufferRow,
+    // Extra data that translation test relies on
     pub(crate) extra_data: Option<MockData>,
 }
 
