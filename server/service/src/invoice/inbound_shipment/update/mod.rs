@@ -160,7 +160,7 @@ mod test {
         mock::{
             mock_inbound_shipment_a, mock_inbound_shipment_b, mock_inbound_shipment_c,
             mock_inbound_shipment_e, mock_name_a, mock_name_linked_to_store_join,
-            mock_name_not_linked_to_store_join, mock_outbound_shipment_c, mock_store_a,
+            mock_name_not_linked_to_store_join, mock_outbound_shipment_e, mock_store_a,
             mock_store_linked_to_name, mock_user_account_a, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
@@ -236,24 +236,24 @@ mod test {
                 &mock_store_a().id,
                 "n/a",
                 inline_init(|r: &mut UpdateInboundShipment| {
-                    r.id = mock_outbound_shipment_c().id.clone();
+                    r.id = mock_outbound_shipment_e().id.clone();
                     r.other_party_id = Some(mock_name_a().id.clone());
                 })
             ),
             Err(ServiceError::NotAnInboundShipment)
         );
         //NotThisStoreInvoice
-        // assert_eq!(
-        //     service.update_inbound_shipment(
-        //         &context,
-        //         "store_b",
-        //         "n/a",
-        //         inline_init(|r: &mut UpdateInboundShipment| {
-        //             r.id = mock_inbound_shipment_c().id.clone();
-        //         })
-        //     ),
-        //     Err(ServiceError::NotThisStoreInvoice)
-        // );
+        assert_eq!(
+            service.update_inbound_shipment(
+                &context,
+                "store_b",
+                "n/a",
+                inline_init(|r: &mut UpdateInboundShipment| {
+                    r.id = mock_inbound_shipment_c().id.clone();
+                })
+            ),
+            Err(ServiceError::NotThisStoreInvoice)
+        );
         //CannotEditFinalised
         assert_eq!(
             service.update_inbound_shipment(
