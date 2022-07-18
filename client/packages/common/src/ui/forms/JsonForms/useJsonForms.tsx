@@ -89,7 +89,7 @@ export type SavedDocument = {
   type: string;
 };
 
-export type SaveDocumentMuation = (
+export type SaveDocumentMutation = (
   jsonData: unknown,
   formSchemaId: string,
   parent?: string
@@ -98,7 +98,7 @@ export type SaveDocumentMuation = (
 interface JsonFormOptions {
   showButtonPanel?: boolean;
   onCancel?: () => void;
-  handleSave?: SaveDocumentMuation;
+  handleSave?: SaveDocumentMutation;
   saveConfirmationMessage?: string;
   cancelConfirmationMessage?: string;
   saveSuccessMessage?: string;
