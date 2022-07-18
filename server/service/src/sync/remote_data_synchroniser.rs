@@ -125,7 +125,7 @@ impl RemoteDataSynchroniser {
     pub(crate) async fn push(&self, connection: &StorageConnection) -> Result<(), anyhow::Error> {
         let changelog = ChangelogRowRepository::new(connection);
 
-        const BATCH_SIZE: u32 = 1000;
+        const BATCH_SIZE: u32 = 1024;
         let state = RemoteSyncState::new(connection);
         loop {
             // TODO inside transaction
