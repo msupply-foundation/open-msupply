@@ -144,6 +144,7 @@ fn number_purchase_order_pull_record() -> TestSyncPullRecord {
             r.record_id = PURCHASE_ORDER.0.to_string();
             r.data = PURCHASE_ORDER.1.to_string();
         }),
+        extra_data: None,
     }
 }
 

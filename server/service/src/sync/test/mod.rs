@@ -4,7 +4,7 @@ pub(crate) mod test_data;
 
 use super::translations::{IntegrationRecords, PullDeleteRecordTable};
 use crate::sync::translations::PullUpsertRecord;
-use repository::*;
+use repository::{mock::MockData, *};
 use util::inline_init;
 
 #[derive(Clone)]
@@ -13,6 +13,7 @@ pub(crate) struct TestSyncPullRecord {
     pub(crate) translated_record: Option<IntegrationRecords>,
     /// Row as stored in the remote sync buffer
     pub sync_buffer_row: SyncBufferRow,
+    pub extra_data: Option<MockData>,
 }
 
 impl TestSyncPullRecord {
@@ -30,6 +31,7 @@ impl TestSyncPullRecord {
                 r.data = id_and_data.1.to_owned();
                 r.action = SyncBufferAction::Upsert;
             }),
+            extra_data: None,
         }
     }
 
@@ -46,6 +48,13 @@ impl TestSyncPullRecord {
                 r.data = "{}".to_string();
                 r.action = SyncBufferAction::Delete;
             }),
+            extra_data: None,
+        }
+    }
+
+    pub(crate) async fn insert_extra_data(&self, connection: &StorageConnection) {
+        if let Some(data) = &self.extra_data {
+            data.insert(connection).await;
         }
     }
 }
@@ -67,6 +76,15 @@ pub(crate) fn extract_sync_buffer_rows(records: &Vec<TestSyncPullRecord>) -> Vec
         .into_iter()
         .map(|test_record| test_record.sync_buffer_row.clone())
         .collect()
+}
+
+pub(crate) async fn insert_all_extra_data(
+    records: &Vec<TestSyncPullRecord>,
+    connection: &StorageConnection,
+) {
+    for record in records {
+        record.insert_extra_data(connection).await
+    }
 }
 
 macro_rules! check_record_by_id {

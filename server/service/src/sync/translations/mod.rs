@@ -11,6 +11,7 @@ pub(crate) mod number;
 pub(crate) mod report;
 pub(crate) mod requisition;
 pub(crate) mod requisition_line;
+pub(crate) mod special;
 pub(crate) mod stock_line;
 pub(crate) mod stocktake;
 pub(crate) mod stocktake_line;
@@ -47,6 +48,8 @@ pub(crate) fn all_translators() -> SyncTanslators {
         Box::new(requisition_line::RequisitionLineTranslation {}),
         // Remote-Central (site specific)
         Box::new(name_store_join::NameStoreJoinTranslation {}),
+        // Special translations
+        Box::new(special::NameToNameStoreJoinTranslation {}),
     ]
 }
 #[allow(non_snake_case)]
@@ -129,9 +132,21 @@ pub(crate) struct IntegrationRecords {
 }
 
 impl IntegrationRecords {
+    pub(crate) fn new() -> IntegrationRecords {
+        IntegrationRecords {
+            upserts: Vec::new(),
+            deletes: Vec::new(),
+        }
+    }
     pub(crate) fn from_upsert(r: PullUpsertRecord) -> IntegrationRecords {
         IntegrationRecords {
             upserts: vec![r],
+            deletes: Vec::new(),
+        }
+    }
+    pub(crate) fn from_upserts(rows: Vec<PullUpsertRecord>) -> IntegrationRecords {
+        IntegrationRecords {
+            upserts: rows,
             deletes: Vec::new(),
         }
     }
@@ -143,6 +158,23 @@ impl IntegrationRecords {
                 id: id.to_owned(),
                 table,
             }],
+        }
+    }
+
+    pub(crate) fn is_empty(&self) -> bool {
+        self.upserts.is_empty() && self.deletes.is_empty()
+    }
+
+    pub(crate) fn join(self, other: IntegrationRecords) -> IntegrationRecords {
+        IntegrationRecords {
+            upserts: vec![self.upserts, other.upserts]
+                .into_iter()
+                .flatten()
+                .collect(),
+            deletes: vec![self.deletes, other.deletes]
+                .into_iter()
+                .flatten()
+                .collect(),
         }
     }
 }

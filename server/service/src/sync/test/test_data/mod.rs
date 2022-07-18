@@ -13,6 +13,7 @@ pub(crate) mod number;
 pub(crate) mod report;
 pub(crate) mod requisition;
 pub(crate) mod requisition_line;
+pub(crate) mod special;
 pub(crate) mod stock_line;
 pub(crate) mod stocktake;
 pub(crate) mod stocktake_line;
@@ -39,6 +40,7 @@ pub(crate) fn get_all_pull_upsert_test_records() -> Vec<TestSyncPullRecord> {
     test_records.append(&mut invoice_line::test_pull_upsert_records());
     test_records.append(&mut invoice::test_pull_upsert_records());
     test_records.append(&mut unit::test_pull_upsert_records());
+    test_records.append(&mut special::name_to_name_store_join::test_pull_upsert_records());
 
     test_records
 }

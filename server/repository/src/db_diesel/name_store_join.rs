@@ -3,9 +3,11 @@ use super::{
     StorageConnection,
 };
 
-use crate::repository_error::RepositoryError;
+use crate::{
+    diesel_macros::apply_equal_filter, repository_error::RepositoryError, DBType, EqualFilter,
+};
 
-use diesel::prelude::*;
+use diesel::{dsl::IntoBoxed, prelude::*};
 
 table! {
     name_store_join (id) {
@@ -29,6 +31,11 @@ pub struct NameStoreJoinRow {
 
 joinable!(name_store_join -> store (store_id));
 joinable!(name_store_join -> name (name_id));
+
+#[derive(Clone, Default)]
+pub struct NameStoreJoinFilter {
+    pub name_id: Option<EqualFilter<String>>,
+}
 
 pub struct NameStoreJoinRepository<'a> {
     connection: &'a StorageConnection,
@@ -70,5 +77,48 @@ impl<'a> NameStoreJoinRepository<'a> {
         diesel::delete(name_store_join_dsl::name_store_join.filter(name_store_join_dsl::id.eq(id)))
             .execute(&self.connection.connection)?;
         Ok(())
+    }
+
+    pub fn query_by_filter(
+        &self,
+        filter: NameStoreJoinFilter,
+    ) -> Result<Vec<NameStoreJoinRow>, RepositoryError> {
+        self.query(Some(filter))
+    }
+
+    pub fn query(
+        &self,
+        filter: Option<NameStoreJoinFilter>,
+    ) -> Result<Vec<NameStoreJoinRow>, RepositoryError> {
+        let query = create_filtered_query(filter);
+
+        let result = query.load::<NameStoreJoinRow>(&self.connection.connection)?;
+
+        Ok(result)
+    }
+}
+
+type BoxedNameStoreJoinQuery = IntoBoxed<'static, name_store_join::table, DBType>;
+
+fn create_filtered_query<'a>(filter: Option<NameStoreJoinFilter>) -> BoxedNameStoreJoinQuery {
+    let mut query = name_store_join_dsl::name_store_join.into_boxed();
+
+    if let Some(f) = filter {
+        let NameStoreJoinFilter { name_id } = f;
+
+        apply_equal_filter!(query, name_id, name_store_join_dsl::name_id);
+    }
+
+    query
+}
+
+impl NameStoreJoinFilter {
+    pub fn new() -> NameStoreJoinFilter {
+        NameStoreJoinFilter::default()
+    }
+
+    pub fn name_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.name_id = Some(filter);
+        self
     }
 }

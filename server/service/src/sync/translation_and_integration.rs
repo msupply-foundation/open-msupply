@@ -34,19 +34,15 @@ impl<'a> TranslationAndIntegration<'a> {
         }
     }
 
+    // Go through each translator, adding translations to result, if no translators matched return None
     fn translate_sync_record(
         &self,
         sync_record: &SyncBufferRow,
         translators: &SyncTanslators,
     ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        let mut translators_iter = translators.iter();
+        let mut translation_results = IntegrationRecords::new();
 
-        let result = loop {
-            let translator = match translators_iter.next() {
-                Some(translator) => translator,
-                None => break None,
-            };
-
+        for translator in translators.iter() {
             let translation_result = match sync_record.action {
                 SyncBufferAction::Upsert => {
                     translator.try_translate_pull_upsert(self.connection, &sync_record)?
@@ -57,12 +53,16 @@ impl<'a> TranslationAndIntegration<'a> {
                 SyncBufferAction::Merge => return Err(anyhow::anyhow!("Merge not implemented")),
             };
 
-            if let Some(records) = translation_result {
-                break Some(records);
+            if let Some(translation_result) = translation_result {
+                translation_results = translation_results.join(translation_result);
             }
-        };
+        }
 
-        Ok(result)
+        if translation_results.is_empty() {
+            Ok(None)
+        } else {
+            Ok(Some(translation_results))
+        }
     }
 
     pub(crate) fn translate_and_integrate_sync_records(
