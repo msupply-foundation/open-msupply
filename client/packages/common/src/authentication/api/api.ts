@@ -14,7 +14,8 @@ export interface RefreshResponse {
   token: string;
 }
 const authTokenGuard = (
-  authTokenQuery: AuthTokenQuery
+  authTokenQuery: AuthTokenQuery,
+  t: TypedTFunction<LocaleKey>
 ): AuthenticationResponse => {
   if (authTokenQuery?.authToken?.__typename === 'AuthToken') {
     return { token: authTokenQuery.authToken.token };
@@ -34,7 +35,7 @@ const authTokenGuard = (
 
   return {
     token: '',
-    error: { message: 'Error communicating with the server' },
+    error: { message: t('error.authentication-error') },
   };
 };
 
@@ -62,7 +63,7 @@ export const getAuthQueries = (sdk: Sdk, t: TypedTFunction<LocaleKey>) => ({
           username,
           password,
         });
-        return authTokenGuard(result);
+        return authTokenGuard(result, t);
       } catch (e) {
         const error = e as Error;
         if ('message' in error) {
