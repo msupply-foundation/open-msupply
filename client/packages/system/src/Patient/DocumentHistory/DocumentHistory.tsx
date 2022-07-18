@@ -6,22 +6,15 @@ import {
 } from '@mui/material';
 import { ChevronDownIcon } from '@common/icons';
 import { DocumentNode } from 'packages/common/src/types/schema';
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC } from 'react';
 import ReactDiffViewer from 'react-diff-viewer';
 import { usePatient } from '../api';
-import { Box } from 'packages/common/src';
+import { BasicSpinner, Box } from 'packages/common/src';
 
 export const DocumentHistory: FC<{ documentName: string }> = ({
   documentName,
 }) => {
-  const [history, setHistory] = useState([] as DocumentNode[]);
-
-  const { data: docHistory } = usePatient.document.history(documentName);
-  useEffect(() => {
-    if (docHistory) {
-      setHistory(docHistory);
-    }
-  }, [docHistory]);
+  const { data: history } = usePatient.document.history(documentName);
 
   const findFirstParent = (
     head: DocumentNode,
@@ -42,6 +35,7 @@ export const DocumentHistory: FC<{ documentName: string }> = ({
     return JSON.stringify(clone, undefined, 2);
   };
 
+  if (history === undefined) return <BasicSpinner />;
   return (
     <div>
       {history.map((h, i) => (
