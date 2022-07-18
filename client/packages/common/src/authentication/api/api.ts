@@ -1,3 +1,4 @@
+import { LocaleKey, TypedTFunction } from '../..';
 import { Sdk, AuthTokenQuery, RefreshTokenQuery } from './operations.generated';
 
 export type AuthenticationError = {
@@ -47,7 +48,7 @@ const refreshTokenGuard = (
   return { token: '' };
 };
 
-export const getAuthQueries = (sdk: Sdk) => ({
+export const getAuthQueries = (sdk: Sdk, t: TypedTFunction<LocaleKey>) => ({
   get: {
     authToken: async ({
       username,
@@ -63,9 +64,15 @@ export const getAuthQueries = (sdk: Sdk) => ({
         });
         return authTokenGuard(result);
       } catch (e) {
+        const error = e as Error;
+        if ('message' in error) {
+          console.error(error.message);
+        }
         return {
           token: '',
-          error: { message: 'Error communicating with the server' },
+          error: {
+            message: t('error.authentication-error'),
+          },
         };
       }
     },
