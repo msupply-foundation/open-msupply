@@ -4,6 +4,7 @@ import {
   InsertPatientInput,
   UpdatePatientInput,
   FilterBy,
+  DocumentNode,
   PatientSearchInput,
 } from '@openmsupply-client/common';
 import {
@@ -72,6 +73,13 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
       });
 
       return result?.patients;
+    },
+    documentHistory: async (documentName: string): Promise<DocumentNode[]> => {
+      const result = await sdk.getDocumentHistory({
+        storeId,
+        name: documentName,
+      });
+      return result.documentHistory.nodes;
     },
     search: async (
       input: PatientSearchInput
