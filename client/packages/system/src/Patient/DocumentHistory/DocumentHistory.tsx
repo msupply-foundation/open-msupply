@@ -9,7 +9,7 @@ import { DocumentNode } from 'packages/common/src/types/schema';
 import React, { FC } from 'react';
 import ReactDiffViewer from 'react-diff-viewer';
 import { usePatient } from '../api';
-import { BasicSpinner, Box } from 'packages/common/src';
+import { BasicSpinner, Box, useFormatDateTime } from 'packages/common/src';
 
 export const DocumentHistory: FC<{ documentName: string }> = ({
   documentName,
@@ -34,6 +34,7 @@ export const DocumentHistory: FC<{ documentName: string }> = ({
     delete clone['__typename'];
     return JSON.stringify(clone, undefined, 2);
   };
+  const datetimeFormat = useFormatDateTime();
 
   if (history === undefined) return <BasicSpinner />;
   return (
@@ -52,11 +53,7 @@ export const DocumentHistory: FC<{ documentName: string }> = ({
                 '.MuiAccordionSummary-content': {
                   margin: '5px !important',
                 },
-                '.Mui-expanded': {
-                  marginBottom: '0 !important',
-                },
               }}
-              style={{ margin: 0, minHeight: 0 }}
             >
               <Box display="flex" flexDirection="column" gap={0.2}>
                 <Typography
@@ -75,7 +72,7 @@ export const DocumentHistory: FC<{ documentName: string }> = ({
                     whiteSpace: 'nowrap',
                   }}
                 >
-                  {h.timestamp}
+                  {datetimeFormat.customDate(h.timestamp, 'P pp')}
                 </Typography>
               </Box>
             </AccordionSummary>
