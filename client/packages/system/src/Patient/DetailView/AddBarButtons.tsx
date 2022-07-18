@@ -32,7 +32,7 @@ export const AppBarButtons: FC = ({}) => {
           Icon={<ClockIcon />}
           label={'History'}
           disabled={doc === undefined}
-          onClick={() => showDialog()}
+          onClick={showDialog}
         />
       </Grid>
       <Modal
