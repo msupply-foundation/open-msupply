@@ -7,6 +7,7 @@ export const usePatientApi = () => {
   const keys = {
     base: () => ['patient'] as const,
     detail: (id: string) => [...keys.base(), storeId, id] as const,
+    history: (id: string) => [...keys.base(), 'history', storeId, id] as const,
     list: () => [...keys.base(), storeId, 'list'] as const,
     paramList: (params: ListParams) => [...keys.list(), params] as const,
     sortedList: (sortBy: SortBy<PatientRowFragment>) =>
