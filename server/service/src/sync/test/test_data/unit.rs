@@ -2,7 +2,7 @@ use repository::UnitRow;
 
 use crate::sync::{
     test::TestSyncPullRecord,
-    translations::{LegacyTableName, PullUpsertRecord},
+    translations::{LegacyTableName, PullDeleteRecordTable, PullUpsertRecord},
 };
 
 const UNIT_1: (&'static str, &'static str) = (
@@ -35,7 +35,7 @@ const UNIT_3: (&'static str, &'static str) = (
     }"#,
 );
 
-pub(crate) fn test_pull_records() -> Vec<TestSyncPullRecord> {
+pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
     vec![
         TestSyncPullRecord::new_pull_upsert(
             LegacyTableName::UNIT,
@@ -68,4 +68,12 @@ pub(crate) fn test_pull_records() -> Vec<TestSyncPullRecord> {
             }),
         ),
     ]
+}
+
+pub(crate) fn test_pull_delete_records() -> Vec<TestSyncPullRecord> {
+    vec![TestSyncPullRecord::new_pull_delete(
+        LegacyTableName::UNIT,
+        UNIT_1.0,
+        PullDeleteRecordTable::Unit,
+    )]
 }

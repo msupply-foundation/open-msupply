@@ -34,7 +34,7 @@ pub struct LegacyStockLineRow {
 
 pub(crate) struct StockLineTranslation {}
 impl SyncTranslation for StockLineTranslation {
-    fn try_translate_pull(
+    fn try_translate_pull_upsert(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
@@ -133,9 +133,9 @@ mod tests {
         let (_, connection, _, _) =
             setup_all("test_stock_line_translation", MockDataInserts::none()).await;
 
-        for record in test_data::test_pull_records() {
+        for record in test_data::test_pull_upsert_records() {
             let translation_result = translator
-                .try_translate_pull(&connection, &record.sync_buffer_row)
+                .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

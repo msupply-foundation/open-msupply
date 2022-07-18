@@ -4,7 +4,7 @@ use crate::{
 };
 use actix_web::web::Data;
 use log::{info, warn};
-use repository::{StorageConnection, SyncBufferAction};
+use repository::{RepositoryError, StorageConnection, SyncBufferAction};
 use reqwest::{Client, Url};
 use std::time::Duration;
 
@@ -133,8 +133,8 @@ impl Synchroniser {
         self.central.pull(&ctx.connection).await?;
 
         let (upserts, deletes) = integrate_and_translate_sync_buffer(&ctx.connection)?;
-        info!("Upsert Integration result: {:#?}", upserts);
-        info!("Delete Integration result: {:#?}", deletes);
+        info!("Upsert Integration result: {:?}", upserts);
+        info!("Delete Integration result: {:?}", deletes);
 
         if !is_initialised {
             self.remote.set_initialised(&ctx.connection)?;
@@ -151,22 +151,30 @@ pub fn integrate_and_translate_sync_buffer(
     TranslationAndIntegrationResults,
     TranslationAndIntegrationResults,
 )> {
-    let sync_buffer = SyncBuffer::new(connection);
-    let translation_and_integration = TranslationAndIntegration::new(connection, &sync_buffer);
+    // Integration is done inside of transaction, to make sure all records are available at the same time
+    // and maintain logical data integrity
+    let result = connection
+        .transaction_sync(|connection| {
+            let sync_buffer = SyncBuffer::new(connection);
+            let translation_and_integration =
+                TranslationAndIntegration::new(connection, &sync_buffer);
+            // Translate and integrate upserts (ordered by referencial database constraints)
+            let upsert_sync_buffer_records =
+                sync_buffer.get_ordered_sync_buffer_records(SyncBufferAction::Upsert)?;
+            let upsert_integration_result = translation_and_integration
+                .translate_and_integrate_sync_records(upsert_sync_buffer_records)?;
 
-    // Translate and integrate upserts (ordered by referencial database constraints)
-    let upsert_sync_buffer_records =
-        sync_buffer.get_ordered_sync_buffer_records(SyncBufferAction::Upsert)?;
-    let upsert_integration_result = translation_and_integration
-        .translate_and_integrate_sync_records(upsert_sync_buffer_records)?;
+            // Translate and integrate delete (ordered by referencial database constraints, in reverse)
+            let delete_sync_buffer_records =
+                sync_buffer.get_ordered_sync_buffer_records(SyncBufferAction::Delete)?;
+            let delete_integration_result = translation_and_integration
+                .translate_and_integrate_sync_records(delete_sync_buffer_records)?;
 
-    // Translate and integrate delete (ordered by referencial database constraints, in reverse)
-    let delete_sync_buffer_records =
-        sync_buffer.get_ordered_sync_buffer_records(SyncBufferAction::Delete)?;
-    let delete_integration_result = translation_and_integration
-        .translate_and_integrate_sync_records(delete_sync_buffer_records)?;
+            Ok((upsert_integration_result, delete_integration_result))
+        })
+        .map_err::<RepositoryError, _>(|e| e.to_inner_error())?;
 
-    Ok((upsert_integration_result, delete_integration_result))
+    Ok(result)
 }
 
 #[cfg(test)]

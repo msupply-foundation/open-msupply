@@ -1,6 +1,6 @@
 use crate::sync::{
     test::TestSyncPullRecord,
-    translations::{LegacyTableName, PullUpsertRecord},
+    translations::{LegacyTableName, PullDeleteRecordTable, PullUpsertRecord},
 };
 use chrono::NaiveDate;
 use repository::{Gender, NameRow, NameType};
@@ -511,6 +511,14 @@ fn name_4() -> TestSyncPullRecord {
     )
 }
 
-pub(crate) fn test_pull_records() -> Vec<TestSyncPullRecord> {
+pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
     vec![name_1(), name_2(), name_3(), name_4()]
+}
+
+pub(crate) fn test_pull_delete_records() -> Vec<TestSyncPullRecord> {
+    vec![TestSyncPullRecord::new_pull_delete(
+        LegacyTableName::NAME,
+        NAME_4.0,
+        PullDeleteRecordTable::Name,
+    )]
 }

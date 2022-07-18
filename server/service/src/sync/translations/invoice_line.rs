@@ -67,7 +67,7 @@ pub struct LegacyTransLineRow {
 
 pub(crate) struct InvoiceLineTranslation {}
 impl SyncTranslation for InvoiceLineTranslation {
-    fn try_translate_pull(
+    fn try_translate_pull_upsert(
         &self,
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
@@ -242,9 +242,9 @@ mod tests {
         )
         .await;
 
-        for record in test_data::test_pull_records() {
+        for record in test_data::test_pull_upsert_records() {
             let translation_result = translator
-                .try_translate_pull(&connection, &record.sync_buffer_row)
+                .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

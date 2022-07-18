@@ -14,23 +14,25 @@ use crate::sync::{
 use super::{
     sync_api_v3::SyncApiV3,
     sync_api_v5::{RemoteSyncActionV5, RemoteSyncBatchV5},
-    SyncApiV5,
+    SyncApiV5, SyncConnectionError,
 };
 
 #[derive(Error, Debug)]
-#[error("{msg}: {source}")]
-pub struct RemoteSyncError {
-    msg: &'static str,
-    source: anyhow::Error,
-}
-
-impl From<RepositoryError> for RemoteSyncError {
-    fn from(err: RepositoryError) -> Self {
-        RemoteSyncError {
-            msg: "Internal DB error",
-            source: anyhow::Error::from(err),
-        }
-    }
+#[error("Failed to send initialisation request: {0:?}")]
+pub(crate) struct PostInitialisationError(SyncConnectionError);
+#[derive(Error, Debug)]
+#[error("Failed to set initialised state: {0:?}")]
+pub(crate) struct SetInitialisedError(RepositoryError);
+#[derive(Error, Debug)]
+pub(crate) enum RemotPullError {
+    #[error("Api error while pulling remote records: {0:?}")]
+    PullError(SyncConnectionError),
+    #[error("Failed to acknowledge sync records: {0:?}")]
+    AcknowledgedError(SyncConnectionError),
+    #[error("Failed to save sync buffer rows {0:?}")]
+    SaveSyncBufferError(RepositoryError),
+    #[error("Failed to parse V5 remote record into sync buffer row: {0:?}")]
+    ParsingV5RecordError(ParsingV5RecordError),
 }
 
 pub struct RemoteDataSynchroniser {
@@ -40,18 +42,14 @@ pub struct RemoteDataSynchroniser {
     pub central_server_site_id: u32,
 }
 
-#[allow(unused_assignments)]
 impl RemoteDataSynchroniser {
     /// Request initialisation
-    pub async fn request_initialisation(&self) -> Result<(), RemoteSyncError> {
+    pub(crate) async fn request_initialisation(&self) -> Result<(), PostInitialisationError> {
         info!("Initialising remote sync records...");
         self.sync_api_v5
             .post_initialise()
             .await
-            .map_err(|error| RemoteSyncError {
-                msg: "Failed to post sync queue initialisation request to the central server",
-                source: anyhow::Error::from(error),
-            })?;
+            .map_err(PostInitialisationError)?;
 
         info!("Initialised remote sync records");
 
@@ -59,23 +57,33 @@ impl RemoteDataSynchroniser {
     }
 
     /// Request initialisation
-    pub fn set_initialised(&self, connection: &StorageConnection) -> Result<(), RepositoryError> {
+    pub(crate) fn set_initialised(
+        &self,
+        connection: &StorageConnection,
+    ) -> Result<(), SetInitialisedError> {
         let remote_sync_state = RemoteSyncState::new(&connection);
         // Update push cursor after initial sync, i.e. set it to the end of the just received data
         // so we only push new data to the central server
         let cursor = ChangelogRowRepository::new(connection)
-            .latest_changelog()?
+            .latest_changelog()
+            .map_err(SetInitialisedError)?
             .map(|row| row.id)
             .unwrap_or(0) as u32;
-        remote_sync_state.update_push_cursor(cursor + 1)?;
+        remote_sync_state
+            .update_push_cursor(cursor + 1)
+            .map_err(SetInitialisedError)?;
 
-        remote_sync_state.set_site_id(self.site_id as i32)?;
-        remote_sync_state.set_initial_remote_data_synced()?;
+        remote_sync_state
+            .set_site_id(self.site_id as i32)
+            .map_err(SetInitialisedError)?;
+        remote_sync_state
+            .set_initial_remote_data_synced()
+            .map_err(SetInitialisedError)?;
         Ok(())
     }
 
     /// Pull all records from the central server
-    pub(crate) async fn pull(&self, connection: &StorageConnection) -> Result<(), anyhow::Error> {
+    pub(crate) async fn pull(&self, connection: &StorageConnection) -> Result<(), RemotPullError> {
         // Arbitrary batch size TODO: should come from settings
         const BATCH_SIZE: u32 = 500;
         let sync_buffer_repository = SyncBufferRowRepository::new(connection);
@@ -83,11 +91,17 @@ impl RemoteDataSynchroniser {
         loop {
             info!("Pulling remote sync records...");
 
-            let sync_batch = self.sync_api_v5.get_queued_records(BATCH_SIZE).await?;
+            let sync_batch = self
+                .sync_api_v5
+                .get_queued_records(BATCH_SIZE)
+                .await
+                .map_err(RemotPullError::PullError)?;
 
             let total_queue_length = sync_batch.queue_length;
             let sync_ids = sync_batch.extract_sync_ids();
-            let sync_buffer_rows = sync_batch.to_sync_buffer_rows()?;
+            let sync_buffer_rows = sync_batch
+                .to_sync_buffer_rows()
+                .map_err(RemotPullError::ParsingV5RecordError)?;
 
             let number_of_pulled_records = sync_buffer_rows.len() as u32;
 
@@ -98,10 +112,15 @@ impl RemoteDataSynchroniser {
             );
 
             if number_of_pulled_records > 0 {
-                sync_buffer_repository.upsert_many(&sync_buffer_rows)?;
+                sync_buffer_repository
+                    .upsert_many(&sync_buffer_rows)
+                    .map_err(RemotPullError::SaveSyncBufferError)?;
 
                 info!("Acknowledging remote sync records...");
-                self.sync_api_v5.post_acknowledge_records(sync_ids).await?;
+                self.sync_api_v5
+                    .post_acknowledge_records(sync_ids)
+                    .await
+                    .map_err(RemotPullError::AcknowledgedError)?;
                 info!("Acknowledged remote sync records");
             } else {
                 break;
@@ -191,20 +210,30 @@ impl RemoteSyncActionV5 {
     }
 }
 
+#[derive(Error, Debug)]
+#[error("{source:?} {record:?}")]
+pub(crate) struct ParsingV5RecordError {
+    source: serde_json::Error,
+    record: Option<serde_json::Value>,
+}
 impl RemoteSyncBatchV5 {
     fn extract_sync_ids(&self) -> Vec<String> {
         self.data.iter().map(|r| r.sync_id.clone()).collect()
     }
 
-    fn to_sync_buffer_rows(self) -> Result<Vec<SyncBufferRow>, serde_json::Error> {
+    fn to_sync_buffer_rows(self) -> Result<Vec<SyncBufferRow>, ParsingV5RecordError> {
         self.data
             .into_iter()
             .map(|record| {
+                let data = record.data;
                 Ok(SyncBufferRow {
                     table_name: record.table,
                     record_id: record.record_id,
                     action: record.action.to_row_action(),
-                    data: serde_json::to_string(&record.data)?,
+                    data: serde_json::to_string(&data).map_err(|e| ParsingV5RecordError {
+                        source: e,
+                        record: data.clone(),
+                    })?,
                     received_datetime: Utc::now().naive_utc(),
                     integration_datetime: None,
                     integration_error: None,

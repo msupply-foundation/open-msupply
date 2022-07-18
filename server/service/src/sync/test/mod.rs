@@ -2,7 +2,7 @@
 mod pull_and_push;
 pub(crate) mod test_data;
 
-use super::translations::IntegrationRecords;
+use super::translations::{IntegrationRecords, PullDeleteRecordTable};
 use crate::sync::translations::PullUpsertRecord;
 use repository::*;
 use util::inline_init;
@@ -28,6 +28,23 @@ impl TestSyncPullRecord {
                 r.table_name = table_name.to_owned();
                 r.record_id = id_and_data.0.to_owned();
                 r.data = id_and_data.1.to_owned();
+                r.action = SyncBufferAction::Upsert;
+            }),
+        }
+    }
+
+    fn new_pull_delete(
+        table_name: &str,
+        id: &str,
+        result_table: PullDeleteRecordTable,
+    ) -> TestSyncPullRecord {
+        TestSyncPullRecord {
+            translated_record: Some(IntegrationRecords::from_delete(id, result_table)),
+            sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+                r.table_name = table_name.to_owned();
+                r.record_id = id.to_string();
+                r.data = "{}".to_string();
+                r.action = SyncBufferAction::Delete;
             }),
         }
     }
@@ -67,17 +84,52 @@ macro_rules! check_record_by_id {
     }};
 }
 
+macro_rules! check_record_by_option_id {
+    ($repository:ident, $connection:ident, $comparison_record:ident, $record_string:expr) => {{
+        assert_eq!(
+            $repository::new(&$connection)
+                .find_one_by_id_option(&$comparison_record.id)
+                .unwrap()
+                .expect(&format!(
+                    "{} row not found: {}",
+                    $record_string, $comparison_record.id
+                )),
+            $comparison_record
+        )
+    }};
+}
+
+macro_rules! check_delete_record_by_id {
+    ($repository:ident, $connection:ident, $id:ident) => {{
+        assert_eq!(
+            $repository::new(&$connection).find_one_by_id(&$id).unwrap(),
+            None
+        )
+    }};
+}
+
+macro_rules! check_delete_record_by_id_option {
+    ($repository:ident, $connection:ident, $id:ident) => {{
+        assert_eq!(
+            $repository::new(&$connection)
+                .find_one_by_id_option(&$id)
+                .unwrap(),
+            None
+        )
+    }};
+}
+
 pub(crate) async fn check_records_against_database(
     con: &StorageConnection,
     records: Vec<TestSyncPullRecord>,
 ) {
-    use PullUpsertRecord::*;
     for record in records {
         let translated_record = match record.translated_record {
             Some(translated_record) => translated_record,
             None => continue,
         };
         for upsert in translated_record.upserts {
+            use PullUpsertRecord::*;
             match upsert {
                 Number(comparison_record) => {
                     assert_eq!(
@@ -95,12 +147,7 @@ pub(crate) async fn check_records_against_database(
                     check_record_by_id!(LocationRowRepository, con, record, "Location");
                 }
                 StockLine(record) => {
-                    assert_eq!(
-                        StockLineRowRepository::new(&con)
-                            .find_one_by_id(&record.id)
-                            .expect(&format!("StockLine row not found: {}", record.id)),
-                        record
-                    )
+                    check_record_by_option_id!(StockLineRowRepository, con, record, "StockLine");
                 }
                 Name(record) => {
                     check_record_by_id!(NameRowRepository, con, record, "Name");
@@ -109,20 +156,15 @@ pub(crate) async fn check_records_against_database(
                     check_record_by_id!(NameStoreJoinRepository, con, record, "NameStoreJoin");
                 }
                 Invoice(record) => {
-                    assert_eq!(
-                        InvoiceRowRepository::new(&con)
-                            .find_one_by_id(&record.id)
-                            .expect(&format!("Invoice row not found: {}", record.id)),
-                        record
-                    )
+                    check_record_by_option_id!(InvoiceRowRepository, con, record, "Invoice");
                 }
                 InvoiceLine(record) => {
-                    assert_eq!(
-                        InvoiceLineRowRepository::new(&con)
-                            .find_one_by_id(&record.id)
-                            .expect(&format!("InvoiceLine row not found: {}", record.id)),
-                        record
-                    )
+                    check_record_by_option_id!(
+                        InvoiceLineRowRepository,
+                        con,
+                        record,
+                        "InvoiceLine"
+                    );
                 }
                 Stocktake(record) => {
                     check_record_by_id!(StocktakeRowRepository, con, record, "Stocktake");
@@ -142,42 +184,59 @@ pub(crate) async fn check_records_against_database(
                     );
                 }
                 Unit(record) => {
-                    assert_eq!(
-                        UnitRowRepository::new(&con)
-                            .find_one_by_id(&record.id)
-                            .await
-                            .expect(&format!("Unit row not found: {}", record.id)),
-                        record
-                    )
+                    check_record_by_option_id!(UnitRowRepository, con, record, "Unit");
                 }
                 Item(record) => check_record_by_id!(ItemRowRepository, con, record, "Item"),
                 Store(record) => check_record_by_id!(StoreRowRepository, con, record, "Store"),
                 MasterList(record) => {
-                    assert_eq!(
-                        MasterListRowRepository::new(&con)
-                            .find_one_by_id(&record.id)
-                            .await
-                            .expect(&format!("MasterList row not found: {}", record.id)),
-                        record
-                    )
+                    check_record_by_option_id!(MasterListRowRepository, con, record, "Masterlist")
                 }
+
                 MasterListLine(record) => {
-                    assert_eq!(
-                        MasterListLineRowRepository::new(&con)
-                            .find_one_by_id(&record.id)
-                            .await
-                            .expect(&format!("MasterListLine row not found: {}", record.id)),
-                        record
+                    check_record_by_option_id!(
+                        MasterListLineRowRepository,
+                        con,
+                        record,
+                        "MaseterListLine"
                     )
                 }
-                MasterListNameJoin(record) => assert_eq!(
-                    MasterListNameJoinRepository::new(&con)
-                        .find_one_by_id(&record.id)
-                        .await
-                        .expect(&format!("MasterList row not found: {}", record.id)),
-                    record
+
+                MasterListNameJoin(record) => check_record_by_option_id!(
+                    MasterListNameJoinRepository,
+                    con,
+                    record,
+                    "MasterListNameJoin"
                 ),
+
                 Report(record) => check_record_by_id!(ReportRowRepository, con, record, "Report"),
+            }
+        }
+
+        for delete in translated_record.deletes {
+            use PullDeleteRecordTable::*;
+            let id = delete.id;
+            match delete.table {
+                Name => {
+                    check_delete_record_by_id!(NameRowRepository, con, id)
+                }
+                Unit => {
+                    check_delete_record_by_id_option!(UnitRowRepository, con, id)
+                }
+                Item => check_delete_record_by_id!(ItemRowRepository, con, id),
+                Store => check_delete_record_by_id!(StoreRowRepository, con, id),
+                MasterList => check_delete_record_by_id_option!(MasterListRowRepository, con, id),
+                MasterListLine => {
+                    check_delete_record_by_id_option!(MasterListLineRowRepository, con, id)
+                }
+                MasterListNameJoin => {
+                    check_delete_record_by_id_option!(MasterListNameJoinRepository, con, id)
+                }
+                Report => check_delete_record_by_id!(ReportRowRepository, con, id),
+                NameStoreJoin => todo!(),
+                Invoice => todo!(),
+                InvoiceLine => todo!(),
+                Requisition => todo!(),
+                RequisitionLine => todo!(),
             }
         }
     }

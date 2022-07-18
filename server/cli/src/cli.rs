@@ -22,11 +22,11 @@ use service::{
     token_bucket::TokenBucket,
 };
 use std::{
-    env, fs,
+    fs,
     path::{Path, PathBuf},
     sync::{Arc, RwLock},
 };
-use util::inline_init;
+use util::{init_logger, inline_init, LogLevel};
 
 const DATA_EXPORT_FOLDER: &'static str = "data";
 
@@ -130,8 +130,7 @@ async fn initialise_from_central(settings: Settings, users: &str) -> StorageConn
 
 #[tokio::main]
 async fn main() {
-    env::set_var("RUST_LOG", "info");
-    env_logger::init();
+    init_logger(LogLevel::Info);
 
     let args = Args::parse();
 

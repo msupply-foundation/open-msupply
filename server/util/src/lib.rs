@@ -3,6 +3,9 @@ pub mod hash;
 pub mod timezone;
 pub mod uuid;
 
+mod logger;
+pub use logger::*;
+
 mod inline_init;
 pub use inline_init::*;
 

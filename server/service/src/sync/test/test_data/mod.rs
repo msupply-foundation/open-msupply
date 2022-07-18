@@ -19,26 +19,41 @@ pub(crate) mod trans_line;
 pub(crate) mod transact;
 pub(crate) mod unit;
 
-pub(crate) fn get_all_pull_test_records() -> Vec<TestSyncPullRecord> {
+pub(crate) fn get_all_pull_upsert_test_records() -> Vec<TestSyncPullRecord> {
     let mut test_records = Vec::new();
-    test_records.append(&mut item::test_pull_records());
-    test_records.append(&mut location::test_pull_records());
-    test_records.append(&mut master_list_line::test_pull_records());
-    test_records.append(&mut master_list_name_join::test_pull_records());
-    test_records.append(&mut master_list::test_pull_records());
-    test_records.append(&mut name_store_join::test_pull_records());
-    test_records.append(&mut name::test_pull_records());
-    test_records.append(&mut number::test_pull_records());
-    test_records.append(&mut report::test_pull_records());
-    test_records.append(&mut requisition_line::test_pull_records());
-    test_records.append(&mut requisition::test_pull_records());
-    test_records.append(&mut stock_line::test_pull_records());
-    test_records.append(&mut stocktake_line::test_pull_records());
-    test_records.append(&mut stocktake::test_pull_records());
-    test_records.append(&mut store::test_pull_records());
-    test_records.append(&mut trans_line::test_pull_records());
-    test_records.append(&mut transact::test_pull_records());
-    test_records.append(&mut unit::test_pull_records());
+    test_records.append(&mut item::test_pull_upsert_records());
+    test_records.append(&mut location::test_pull_upsert_records());
+    test_records.append(&mut master_list_line::test_pull_upsert_records());
+    test_records.append(&mut master_list_name_join::test_pull_upsert_records());
+    test_records.append(&mut master_list::test_pull_upsert_records());
+    test_records.append(&mut name_store_join::test_pull_upsert_records());
+    test_records.append(&mut name::test_pull_upsert_records());
+    test_records.append(&mut number::test_pull_upsert_records());
+    test_records.append(&mut report::test_pull_upsert_records());
+    test_records.append(&mut requisition_line::test_pull_upsert_records());
+    test_records.append(&mut requisition::test_pull_upsert_records());
+    test_records.append(&mut stock_line::test_pull_upsert_records());
+    test_records.append(&mut stocktake_line::test_pull_upsert_records());
+    test_records.append(&mut stocktake::test_pull_upsert_records());
+    test_records.append(&mut store::test_pull_upsert_records());
+    test_records.append(&mut trans_line::test_pull_upsert_records());
+    test_records.append(&mut transact::test_pull_upsert_records());
+    test_records.append(&mut unit::test_pull_upsert_records());
+
+    test_records
+}
+
+pub(crate) fn get_all_pull_delete_test_records() -> Vec<TestSyncPullRecord> {
+    let mut test_records = Vec::new();
+    test_records.append(&mut unit::test_pull_delete_records());
+    test_records.append(&mut item::test_pull_delete_records());
+    test_records.append(&mut master_list_line::test_pull_delete_records());
+    test_records.append(&mut master_list_name_join::test_pull_delete_records());
+    test_records.append(&mut master_list::test_pull_delete_records());
+    test_records.append(&mut name::test_pull_delete_records());
+    test_records.append(&mut report::test_pull_delete_records());
+    test_records.append(&mut store::test_pull_delete_records());
+    test_records.append(&mut unit::test_pull_delete_records());
 
     test_records
 }
