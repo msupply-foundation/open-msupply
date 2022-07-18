@@ -7,7 +7,7 @@ import {
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
 import { useCreatePatientStore } from '../hooks';
-import { AppBarButtons } from './AddBarButtons';
+import { AppBarButtons } from './AppBarButtons';
 
 const useUpsertPatient = (): SaveDocumentMuation => {
   const { mutateAsync: insertPatient } = usePatient.document.insert();
