@@ -232,11 +232,13 @@ pub(crate) async fn check_records_against_database(
                     check_delete_record_by_id_option!(MasterListNameJoinRepository, con, id)
                 }
                 Report => check_delete_record_by_id!(ReportRowRepository, con, id),
-                NameStoreJoin => todo!(),
-                Invoice => todo!(),
-                InvoiceLine => todo!(),
-                Requisition => todo!(),
-                RequisitionLine => todo!(),
+                NameStoreJoin => check_delete_record_by_id!(ReportRowRepository, con, id),
+                Invoice => check_delete_record_by_id_option!(MasterListNameJoinRepository, con, id),
+                InvoiceLine => {
+                    check_delete_record_by_id_option!(MasterListNameJoinRepository, con, id)
+                }
+                Requisition => check_delete_record_by_id!(ReportRowRepository, con, id),
+                RequisitionLine => check_delete_record_by_id!(ReportRowRepository, con, id),
             }
         }
     }

@@ -2,7 +2,9 @@ use repository::{NameRowRepository, NameStoreJoinRow, StorageConnection, SyncBuf
 
 use serde::{Deserialize, Serialize};
 
-use super::{IntegrationRecords, LegacyTableName, PullUpsertRecord, SyncTranslation};
+use super::{
+    IntegrationRecords, LegacyTableName, PullDeleteRecordTable, PullUpsertRecord, SyncTranslation,
+};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
@@ -16,20 +18,19 @@ pub struct LegacyNameStoreJoinRow {
     pub name_is_supplier: Option<bool>,
 }
 
+fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
+    sync_record.table_name == LegacyTableName::NAME_STORE_JOIN
+}
 pub(crate) struct NameStoreJoinTranslation {}
 impl SyncTranslation for NameStoreJoinTranslation {
-    // DELETE H ERE TOO
     fn try_translate_pull_upsert(
         &self,
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        let table_name = LegacyTableName::NAME_STORE_JOIN;
-
-        if sync_record.table_name != table_name {
+        if !match_pull_table(sync_record) {
             return Ok(None);
         }
-
         let data = serde_json::from_str::<LegacyNameStoreJoinRow>(&sync_record.data)?;
 
         let name = match NameRowRepository::new(connection).find_one_by_id(&data.name_ID)? {
@@ -55,6 +56,22 @@ impl SyncTranslation for NameStoreJoinTranslation {
             PullUpsertRecord::NameStoreJoin(result),
         )))
     }
+
+    fn try_translate_pull_delete(
+        &self,
+        _: &StorageConnection,
+        sync_record: &SyncBufferRow,
+    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
+        // TODO is it possible for name store join to be set inactive ? Rather then being deleted ?
+        let result = match_pull_table(sync_record).then(|| {
+            IntegrationRecords::from_delete(
+                &sync_record.record_id,
+                PullDeleteRecordTable::NameStoreJoin,
+            )
+        });
+
+        Ok(result)
+    }
 }
 
 #[cfg(test)]
@@ -76,6 +93,14 @@ mod tests {
         for record in test_data::test_pull_upsert_records() {
             let translation_result = translator
                 .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
+                .unwrap();
+
+            assert_eq!(translation_result, record.translated_record);
+        }
+
+        for record in test_data::test_pull_delete_records() {
+            let translation_result = translator
+                .try_translate_pull_delete(&connection, &record.sync_buffer_row)
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

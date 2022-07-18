@@ -39,6 +39,7 @@ fn get_timestamp_fields() -> Vec<TableAndFieldName> {
     .collect()
 }
 
+#[cfg(test)]
 #[cfg(feature = "postgres")]
 fn get_exclude_timestamp_fields() -> Vec<TableAndFieldName> {
     vec![

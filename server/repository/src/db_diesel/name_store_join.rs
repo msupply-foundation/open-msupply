@@ -65,4 +65,10 @@ impl<'a> NameStoreJoinRepository<'a> {
             .optional()?;
         Ok(result)
     }
+
+    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(name_store_join_dsl::name_store_join.filter(name_store_join_dsl::id.eq(id)))
+            .execute(&self.connection.connection)?;
+        Ok(())
+    }
 }
