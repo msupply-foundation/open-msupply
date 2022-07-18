@@ -31,7 +31,7 @@ pub fn insert_patient(
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutateLocation,
+            resource: Resource::MutatePatient,
             store_id: Some(store_id.clone()),
         },
     )?;
