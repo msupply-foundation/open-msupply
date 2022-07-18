@@ -165,7 +165,7 @@ fn validate(
 }
 
 #[cfg(test)]
-mod test {
+pub mod test {
     use repository::{
         mock::{mock_form_schema_empty, MockDataInserts},
         test_db::setup_all,
@@ -175,30 +175,14 @@ mod test {
 
     use crate::{
         document::patient::patient_schema::{
-            Address, ContactDetails, Gender, Patient, SocioEconomics,
+            Address, ContactDetails, Gender, Patient, SchemaPatient, SocioEconomics,
         },
         service_provider::ServiceProvider,
     };
 
     use super::UpdatePatientError;
 
-    #[actix_rt::test]
-    async fn test_patient_update() {
-        let (_, _, connection_manager, _) = setup_all(
-            "test_patient_update",
-            MockDataInserts::none().names().stores().form_schemas(),
-        )
-        .await;
-
-        let service_provider = ServiceProvider::new(connection_manager, "");
-        let ctx = service_provider.context().unwrap();
-
-        // dummy schema
-        let schema = mock_form_schema_empty();
-        FormSchemaRowRepository::new(&ctx.connection)
-            .upsert_one(&schema)
-            .unwrap();
-
+    pub fn mock_patient_1() -> SchemaPatient {
         let address = Address {
             address_1: Some("firstaddressline".to_string()),
             address_2: Some("secondaddressline".to_string()),
@@ -218,8 +202,9 @@ mod test {
             phone: None,
             website: Some("mywebsite".to_string()),
         };
-        let patient = Patient {
+        Patient {
             id: "testid".to_string(),
+            national_id: Some("national_id".to_string()),
             addresses: vec![address.clone()],
             contact_details: vec![contact_details.clone()],
             date_of_birth: Some("2000-03-04".to_string()),
@@ -235,7 +220,27 @@ mod test {
                 literate: None,
                 occupation: None,
             },
-        };
+        }
+    }
+
+    #[actix_rt::test]
+    async fn test_patient_update() {
+        let (_, _, connection_manager, _) = setup_all(
+            "test_patient_update",
+            MockDataInserts::none().names().stores().form_schemas(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "");
+        let ctx = service_provider.context().unwrap();
+
+        // dummy schema
+        let schema = mock_form_schema_empty();
+        FormSchemaRowRepository::new(&ctx.connection)
+            .upsert_one(&schema)
+            .unwrap();
+
+        let patient = mock_patient_1();
 
         let service = &service_provider.patient_service;
         let err = service

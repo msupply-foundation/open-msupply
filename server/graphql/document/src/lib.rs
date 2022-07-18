@@ -6,6 +6,12 @@ use mutations::patient::insert::*;
 use mutations::patient::update::update_patient;
 use mutations::patient::update::UpdatePatientInput;
 use mutations::patient::update::UpdatePatientResponse;
+use mutations::program::insert::insert_program;
+use mutations::program::insert::InsertProgramInput;
+use mutations::program::insert::InsertProgramResponse;
+use mutations::program::update::update_program;
+use mutations::program::update::UpdateProgramInput;
+use mutations::program::update::UpdateProgramResponse;
 use mutations::update_document::*;
 use types::document::DocumentNode;
 use types::json_schema::FormSchemaNode;
@@ -141,5 +147,26 @@ impl DocumentMutations {
         input: UpdatePatientInput,
     ) -> Result<UpdatePatientResponse> {
         update_patient(ctx, store_id, input)
+    }
+
+    /// Enrols a patient into a program by adding a program document to the patient's documents.
+    /// Every patient can only have one program document of each program type.
+    pub async fn insert_program(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: InsertProgramInput,
+    ) -> Result<InsertProgramResponse> {
+        insert_program(ctx, store_id, input)
+    }
+
+    /// Updates an existing program document belonging to a patient.
+    pub async fn update_program(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: UpdateProgramInput,
+    ) -> Result<UpdateProgramResponse> {
+        update_program(ctx, store_id, input)
     }
 }

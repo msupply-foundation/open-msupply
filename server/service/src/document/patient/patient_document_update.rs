@@ -145,6 +145,7 @@ mod test {
         };
         let patient = Patient {
             id: "testid".to_string(),
+            national_id: None,
             addresses: vec![address.clone()],
             contact_details: vec![contact_details.clone()],
             date_of_birth: Some("2000-03-04".to_string()),
