@@ -163,7 +163,7 @@ impl RemoteDataSynchroniser {
                 (true, 0) => break,
                 (false, 0) => {
                     return Err(anyhow::anyhow!(
-                        "Total remaining set to server is 0 but integration not started"
+                        "Total remaining sent to server is 0 but integration not started"
                     ))
                 }
                 _ => continue,
