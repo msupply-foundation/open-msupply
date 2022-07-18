@@ -38,14 +38,7 @@ export const AppBarButtons: FC = ({}) => {
       <Modal
         title=""
         sx={{ maxWidth: '90%', minHeight: '95%' }}
-        okButton={
-          <DialogButton
-            variant="ok"
-            onClick={() => {
-              hideDialog();
-            }}
-          />
-        }
+        okButton={<DialogButton variant="ok" onClick={hideDialog} />}
         slideAnimation={false}
       >
         <DetailContainer>
