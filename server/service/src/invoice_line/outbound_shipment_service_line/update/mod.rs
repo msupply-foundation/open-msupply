@@ -37,7 +37,7 @@ pub fn update_outbound_shipment_service_line(
 
             get_invoice_line(ctx, &updated_line.id)
                 .map_err(|error| OutError::DatabaseError(error))?
-                .ok_or(OutError::UpdatedLineDoesNotExist)
+                .ok_or(OutError::LineDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
 
@@ -55,7 +55,6 @@ pub enum UpdateOutboundShipmentServiceLineError {
     ItemNotFound,
     NotAServiceItem,
     // Internal
-    UpdatedLineDoesNotExist,
     DatabaseError(RepositoryError),
 }
 

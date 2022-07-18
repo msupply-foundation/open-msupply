@@ -178,7 +178,6 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         ServiceError::ItemDoesNotMatchStockLine => BadUserInput(formatted_error),
         ServiceError::NotThisInvoiceLine(_) => BadUserInput(formatted_error),
         ServiceError::LineDoesNotReferenceStockLine => BadUserInput(formatted_error),
-        ServiceError::UpdatedLineDoesNotExist => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 
@@ -536,18 +535,6 @@ mod test {
             Err(ServiceError::LineDoesNotReferenceStockLine)
         }));
         let expected_message = "Bad user input";
-        assert_standard_graphql_error!(
-            &settings,
-            &mutation,
-            &Some(empty_variables()),
-            &expected_message,
-            None,
-            Some(service_provider(test_service, &connection_manager))
-        );
-
-        //UpdatedLineDoesNotExist
-        let test_service = TestService(Box::new(|_| Err(ServiceError::UpdatedLineDoesNotExist)));
-        let expected_message = "Internal error";
         assert_standard_graphql_error!(
             &settings,
             &mutation,
