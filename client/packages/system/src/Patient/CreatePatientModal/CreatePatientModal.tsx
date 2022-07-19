@@ -39,8 +39,7 @@ const newPatient = (
 
 export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
   const { data: documentRegistryResponse } = useDocument.get.documentRegistry(
-    DocumentRegistryNodeContext.Patient,
-    open
+    DocumentRegistryNodeContext.Patient
   );
   const [documentRegistry, setDocumentRegistry] = useState<
     DocumentRegistryFragment | undefined
