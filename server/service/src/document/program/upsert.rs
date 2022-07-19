@@ -45,7 +45,6 @@ pub fn upsert_program(
             validate(ctx, service_provider, &store_id, &input)?;
             let doc = generate(user_id, input)?;
 
-            // Updating the document will trigger an update in the patient (names) table
             let result = service_provider
                 .document_service
                 .update_document(ctx, &store_id, doc)

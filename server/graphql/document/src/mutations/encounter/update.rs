@@ -16,6 +16,7 @@ pub struct UpdateEncounterInput {
     pub data: serde_json::Value,
     /// The schema id used for the counter data
     pub schema_id: String,
+    /// The document id of the encounter document which should be updated
     pub parent: String,
 }
 
