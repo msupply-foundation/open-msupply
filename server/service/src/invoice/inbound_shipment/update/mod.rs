@@ -67,7 +67,7 @@ pub fn update_inbound_shipment(
 
             get_invoice(ctx, None, &update_invoice.id)
                 .map_err(|error| OutError::DatabaseError(error))?
-                .ok_or(OutError::InvoiceDoesNotExist)
+                .ok_or(OutError::UpdatedInvoiceDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
 
@@ -114,6 +114,7 @@ pub enum UpdateInboundShipmentError {
     OtherPartyNotASupplier,
     // Internal
     DatabaseError(RepositoryError),
+    UpdatedInvoiceDoesNotExist,
 }
 
 impl From<RepositoryError> for UpdateInboundShipmentError {
