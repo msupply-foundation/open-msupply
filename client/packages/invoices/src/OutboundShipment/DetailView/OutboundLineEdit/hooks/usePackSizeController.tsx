@@ -94,13 +94,16 @@ export const usePackSizeController = (lines: DraftOutboundLine[]) => {
       (packSize.isPlaceholder && packSize.hasAllocated) ||
       // - is a placeholder and is the only line.
       (packSize.isPlaceholder && packSizes.length === 1) ||
-      // Is not on hold, expired has available stock and is not a placeholder..
+      // Is not on hold, has available stock and is not a placeholder..
       (!packSize.isPlaceholder &&
         !packSize.isOnHold &&
         packSize.hasAvailableStock)
   );
+  // filter out expired, non-placeholder lines.
   const validPackSizes = ArrayUtils.uniqBy(
-    allPackSizes.filter(({ isExpired }) => !isExpired),
+    allPackSizes.filter(
+      ({ isExpired, isPlaceholder }) => !isExpired || isPlaceholder
+    ),
     'packSize'
   );
 
