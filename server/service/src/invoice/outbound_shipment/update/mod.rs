@@ -261,7 +261,8 @@ mod test {
                 &context,
                 &mock_store_a().id,
                 inline_init(|r: &mut UpdateOutboundShipment| {
-                    r.id = mock_outbound_shipment_b().id
+                    r.id = mock_outbound_shipment_b().id;
+                    r.status = Some(UpdateOutboundShipmentStatus::Shipped);
                 })
             ),
             Err(ServiceError::InvoiceIsNotEditable)
