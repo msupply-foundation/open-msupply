@@ -35,7 +35,8 @@ Only data that needs to be present on central server site is a new sync site:
 * Change user permissions to allow `Add/edit sync sites`
 * In preferences
   * Register
-  * Turn on both checkboxes in Syncrhonisation (under General)
+  * Turn on both checkboxes in Synchronisation (under General)
+`
   * Under server check `Start web server ..`, change port from 0 and `Start Web Server`
 * In Synchronisation window add site and add store to that site
 
