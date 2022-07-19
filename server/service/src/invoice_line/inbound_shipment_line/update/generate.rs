@@ -1,5 +1,4 @@
 use crate::{
-    i32_to_u32,
     invoice::common::{generate_invoice_user_id_update, total_after_tax},
     invoice_line::inbound_shipment_line::generate_batch,
     u32_to_i32,
@@ -96,9 +95,8 @@ fn generate_line(
     if let Some(total_before_tax) = total_before_tax {
         update_line.total_before_tax = total_before_tax;
     } else {
-        update_line.total_before_tax = cost_price_per_pack
-            .unwrap_or(update_line.cost_price_per_pack)
-            * number_of_packs.unwrap_or(i32_to_u32(update_line.number_of_packs)) as f64;
+        update_line.total_before_tax =
+            update_line.cost_price_per_pack * update_line.number_of_packs as f64;
     }
 
     if let Some(tax) = tax {

@@ -20,17 +20,8 @@ pub fn generate(
         id,
         invoice_id,
         total_before_tax,
-        total_after_tax: total_after_tax(
-            total_before_tax,
-            match tax.clone() {
-                Some(tax) => tax.percentage,
-                None => Some(0.0),
-            },
-        ),
-        tax: match tax {
-            Some(tax) => tax.percentage,
-            None => Some(0.0),
-        },
+        total_after_tax: total_after_tax(total_before_tax, tax),
+        tax,
         note,
         item_code: item.code,
         item_id: item.id,

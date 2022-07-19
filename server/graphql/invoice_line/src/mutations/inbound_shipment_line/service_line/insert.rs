@@ -1,6 +1,5 @@
 use async_graphql::*;
 
-use graphql_core::generic_inputs::TaxInput;
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::{
     simple_generic_errors::{CannotEditInvoice, ForeignKey, ForeignKeyError},
@@ -14,7 +13,6 @@ use service::invoice_line::inbound_shipment_service_line::{
     InsertInboundShipmentServiceLine as ServiceInput,
     InsertInboundShipmentServiceLineError as ServiceError,
 };
-use service::invoice_line::ShipmentTaxUpdate;
 
 #[derive(InputObject)]
 #[graphql(name = "InsertInboundShipmentServiceLineInput")]
@@ -24,7 +22,7 @@ pub struct InsertInput {
     pub item_id: Option<String>,
     name: Option<String>,
     total_before_tax: f64,
-    tax: Option<TaxInput>,
+    tax: Option<f64>,
     note: Option<String>,
 }
 
@@ -97,11 +95,7 @@ impl InsertInput {
             item_id,
             name,
             total_before_tax,
-            tax: tax.and_then(|tax| {
-                Some(ShipmentTaxUpdate {
-                    percentage: tax.percentage,
-                })
-            }),
+            tax,
             note,
         }
     }
@@ -151,7 +145,7 @@ mod test {
             inbound_shipment_service_line::{
                 InsertInboundShipmentServiceLine, InsertInboundShipmentServiceLineError,
             },
-            InvoiceLineServiceTrait, ShipmentTaxUpdate,
+            InvoiceLineServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };
@@ -351,9 +345,7 @@ mod test {
                     name: Some("some name".to_string()),
                     total_before_tax: 0.1,
                     // TODO why is this different from update ?
-                    tax: Some(ShipmentTaxUpdate {
-                        percentage: Some(10.0)
-                    }),
+                    tax: Some(10.0),
                     note: Some("note".to_string())
                 }
             );

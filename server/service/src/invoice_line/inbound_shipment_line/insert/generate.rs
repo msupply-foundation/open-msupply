@@ -68,21 +68,12 @@ fn generate_line(
         item_name,
         item_code,
         stock_line_id: None,
-        total_before_tax: match total_before_tax {
-            Some(total_before_tax) => total_before_tax,
-            None => cost_price_per_pack * number_of_packs as f64,
-        },
+        total_before_tax: total_before_tax.unwrap_or(cost_price_per_pack * number_of_packs as f64),
         total_after_tax: total_after_tax(
             total_before_tax.unwrap_or(cost_price_per_pack * number_of_packs as f64),
-            match tax.clone() {
-                Some(tax) => tax.percentage,
-                None => Some(0.0),
-            },
+            tax,
         ),
-        tax: match tax {
-            Some(tax) => tax.percentage,
-            None => Some(0.0),
-        },
+        tax,
         note: None,
     }
 }

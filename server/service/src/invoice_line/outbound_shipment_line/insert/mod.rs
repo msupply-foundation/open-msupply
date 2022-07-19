@@ -1,8 +1,4 @@
-use crate::{
-    invoice_line::{query::get_invoice_line, ShipmentTaxUpdate},
-    service_provider::ServiceContext,
-    WithDBError,
-};
+use crate::{invoice_line::query::get_invoice_line, service_provider::ServiceContext, WithDBError};
 use repository::{InvoiceLine, InvoiceLineRowRepository, RepositoryError, StockLineRowRepository};
 
 mod generate;
@@ -18,7 +14,7 @@ pub struct InsertOutboundShipmentLine {
     pub stock_line_id: String,
     pub number_of_packs: u32,
     pub total_before_tax: Option<f64>,
-    pub tax: Option<ShipmentTaxUpdate>,
+    pub tax: Option<f64>,
 }
 
 type OutError = InsertOutboundShipmentLineError;
