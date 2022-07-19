@@ -1,6 +1,5 @@
 use async_graphql::*;
 
-use graphql_core::generic_inputs::{PriceInput, TaxInput};
 use graphql_core::simple_generic_errors::{CannotEditInvoice, ForeignKey, ForeignKeyError};
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
@@ -8,7 +7,6 @@ use graphql_types::types::InvoiceLineNode;
 
 use repository::InvoiceLine;
 use service::auth::{Resource, ResourceAccessRequest};
-use service::invoice_line::ShipmentTaxUpdate;
 use service::invoice_line::outbound_shipment_line::{
     InsertOutboundShipmentLine as ServiceInput, InsertOutboundShipmentLineError as ServiceError,
 };
@@ -26,8 +24,8 @@ pub struct InsertInput {
     pub item_id: String,
     pub stock_line_id: String,
     pub number_of_packs: u32,
-    pub total_before_tax: Option<PriceInput>,
-    pub tax: Option<TaxInput>,
+    pub total_before_tax: Option<f64>,
+    pub tax: Option<f64>,
 }
 
 #[derive(SimpleObject)]
@@ -104,13 +102,8 @@ impl InsertInput {
             item_id,
             stock_line_id,
             number_of_packs,
-            total_before_tax: total_before_tax
-                .and_then(|total_before_tax| total_before_tax.total_before_tax),
-            tax: tax.and_then(|tax| {
-                Some(ShipmentTaxUpdate {
-                    percentage: tax.percentage,
-                })
-            }),
+            total_before_tax,
+            tax,
         }
     }
 }

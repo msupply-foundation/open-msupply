@@ -1945,9 +1945,6 @@ type SyncSettingsNode {
 input TaxInput {
   percentage: Float
 }
-input PriceInput {
-  total_before_tax: Float!
-}
 type TokenExpired implements RefreshTokenErrorInterface {
   description: String!
 }
