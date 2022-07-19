@@ -5,11 +5,19 @@ use repository::{
 };
 use util::{inline_edit, uuid::uuid};
 
-use super::remote_sync_integration_test::SyncRecordTester;
+use super::{
+    central_server_configurations::NewSiteProperties,
+    remote_sync_integration_test::SyncRecordTester,
+};
 
 pub struct StockLineRecordTester {}
 impl SyncRecordTester<Vec<StockLineRow>> for StockLineRecordTester {
-    fn insert(&self, connection: &StorageConnection, store_id: &str) -> Vec<StockLineRow> {
+    fn insert(
+        &self,
+        connection: &StorageConnection,
+        new_site_properties: &NewSiteProperties,
+    ) -> Vec<StockLineRow> {
+        let store_id = &new_site_properties.store_id;
         // create test location
         let location = LocationRow {
             id: uuid(),
@@ -51,6 +59,7 @@ impl SyncRecordTester<Vec<StockLineRow>> for StockLineRecordTester {
     fn mutate(
         &self,
         connection: &StorageConnection,
+        _: &NewSiteProperties,
         rows: &Vec<StockLineRow>,
     ) -> Vec<StockLineRow> {
         let repo = StockLineRowRepository::new(&connection);
