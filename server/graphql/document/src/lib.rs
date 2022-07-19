@@ -1,5 +1,11 @@
 use async_graphql::*;
 use graphql_core::pagination::PaginationInput;
+use mutations::encounter::insert::insert_encounter;
+use mutations::encounter::insert::InsertEncounterInput;
+use mutations::encounter::insert::InsertEncounterResponse;
+use mutations::encounter::update::update_encounter;
+use mutations::encounter::update::UpdateEncounterInput;
+use mutations::encounter::update::UpdateEncounterResponse;
 use mutations::insert_document_registry::*;
 use mutations::insert_form_schema::*;
 use mutations::patient::insert::*;
@@ -168,5 +174,23 @@ impl DocumentMutations {
         input: UpdateProgramInput,
     ) -> Result<UpdateProgramResponse> {
         update_program(ctx, store_id, input)
+    }
+
+    pub async fn insert_encounter(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: InsertEncounterInput,
+    ) -> Result<InsertEncounterResponse> {
+        insert_encounter(ctx, store_id, input)
+    }
+
+    pub async fn update_encounter(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: UpdateEncounterInput,
+    ) -> Result<UpdateEncounterResponse> {
+        update_encounter(ctx, store_id, input)
     }
 }
