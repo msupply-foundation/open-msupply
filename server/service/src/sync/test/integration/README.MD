@@ -52,7 +52,9 @@ If you've set configurations in rust analyzer, can use inlay hint play and debug
 
 # How do they work 
 
-There is a common `SyncRecordTester` trait with `test_step_data` method, which is a vector of TestData, one array element for each step. `TestData` is composed of upserts and deletes of central data and IntegrationRecords. 
+There is a common `SyncRecordTester` trait with a `test_step_data` method returning a vector of TestData.
+Each TestData struct contains the test data required for the various testing steps.
+`TestData` is composed of upserts and deletes of central data and IntegrationRecords. 
 
 We have the ability to update and delete central data records directly on the server (for test purposes, see syncV5API_test_upsert/delete in mSupply). Two endpoints are used for this `sync/v5/test/upsert` and `sync/v5/test/delete`
 
