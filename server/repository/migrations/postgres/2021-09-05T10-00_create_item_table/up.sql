@@ -7,7 +7,7 @@ CREATE TABLE item
     code TEXT NOT NULL,
     unit_id TEXT REFERENCES unit(id),
     type TEXT NOT NULL,
-    default_pack_size INTEGER NULL,
+    default_pack_size INTEGER NOT NULL,
     -- TODO, this is temporary, remove
     legacy_record TEXT NOT NULL
 )
