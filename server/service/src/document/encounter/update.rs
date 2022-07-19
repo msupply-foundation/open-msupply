@@ -35,7 +35,6 @@ pub fn update_encounter(
             let existing = validate(ctx, &input)?;
             let doc = generate(user_id, input, existing)?;
 
-            // Updating the document will trigger an update in the patient (names) table
             let result = service_provider
                 .document_service
                 .update_document(ctx, &store_id, doc)
@@ -83,6 +82,10 @@ fn generate(
 fn validate_encounter_schema(
     input: &UpdateEncounter,
 ) -> Result<SchemaEncounter, serde_json::Error> {
+    // Check that we can parse the data into a default encounter object, i.e. that it's following
+    // the default encounter JSON schema.
+    // If the encounter data uses a derived encounter schema, the derived schema is validated in the
+    // document service.
     serde_json::from_value(input.data.clone())
 }
 
