@@ -10,7 +10,9 @@ export type StockLineFragment = { __typename: 'StockLineNode', availableNumberOf
 
 export type ItemRowFragment = { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null };
 
-export type ItemRowWithStatsFragment = { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null } };
+export type ItemWithPackSizeFragment = { __typename: 'ItemNode', defaultPackSize: number, id: string, code: string, name: string, unitName?: string | null };
+
+export type ItemRowWithStatsFragment = { __typename: 'ItemNode', defaultPackSize: number, id: string, code: string, name: string, unitName?: string | null, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null } };
 
 export type ItemFragment = { __typename: 'ItemNode', id: string, code: string, name: string, atcCategory: string, ddd: string, defaultPackSize: number, doses: number, isVaccine: boolean, isVisible: boolean, margin: number, msupplyUniversalCode: string, msupplyUniversalName: string, outerPackSize: number, strength: string, type: Types.ItemNodeType, unitName?: string | null, volumePerOuterPack: number, volumePerPack: number, weight: number, availableBatches: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, note?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, location?: { __typename: 'LocationNode', code: string, id: string, name: string, onHold: boolean } | null }> }, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null } };
 
@@ -46,7 +48,7 @@ export type ItemsWithStatsQueryVariables = Types.Exact<{
 }>;
 
 
-export type ItemsWithStatsQuery = { __typename: 'FullQuery', items: { __typename: 'ItemConnector', nodes: Array<{ __typename: 'ItemNode', code: string, id: string, isVisible: boolean, name: string, unitName?: string | null, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null } }> } };
+export type ItemsWithStatsQuery = { __typename: 'FullQuery', items: { __typename: 'ItemConnector', nodes: Array<{ __typename: 'ItemNode', code: string, id: string, isVisible: boolean, name: string, unitName?: string | null, defaultPackSize: number, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null } }> } };
 
 export type ItemByIdQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -74,9 +76,15 @@ export const ItemRowFragmentDoc = gql`
   unitName
 }
     `;
+export const ItemWithPackSizeFragmentDoc = gql`
+    fragment ItemWithPackSize on ItemNode {
+  ...ItemRow
+  defaultPackSize
+}
+    ${ItemRowFragmentDoc}`;
 export const ItemRowWithStatsFragmentDoc = gql`
     fragment ItemRowWithStats on ItemNode {
-  ...ItemRow
+  ...ItemWithPackSize
   stats(storeId: $storeId) {
     __typename
     averageMonthlyConsumption
@@ -84,7 +92,7 @@ export const ItemRowWithStatsFragmentDoc = gql`
     availableMonthsOfStockOnHand
   }
 }
-    ${ItemRowFragmentDoc}`;
+    ${ItemWithPackSizeFragmentDoc}`;
 export const StockLineFragmentDoc = gql`
     fragment StockLine on StockLineNode {
   availableNumberOfPacks
@@ -193,6 +201,7 @@ export const ItemsWithStatsDocument = gql`
         isVisible
         name
         unitName
+        defaultPackSize
         stats(storeId: $storeId) {
           __typename
           averageMonthlyConsumption

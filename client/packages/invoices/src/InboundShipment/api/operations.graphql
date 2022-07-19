@@ -20,6 +20,7 @@ fragment InboundLine on InvoiceLineNode {
     name
     code
     unitName
+    defaultPackSize
   }
 
   location {
