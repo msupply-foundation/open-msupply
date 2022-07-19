@@ -1,45 +1,36 @@
-use chrono::Utc;
+use std::time::{Duration, SystemTime};
+
+use super::api::*;
+use crate::sync::translations::{translate_changelog, PushRecord};
 use log::info;
 use repository::{
     ChangelogRow, ChangelogRowRepository, KeyValueStoreRepository, KeyValueType, RepositoryError,
-    StorageConnection, SyncBufferAction, SyncBufferRow, SyncBufferRowRepository,
+    StorageConnection, SyncBufferRowRepository,
 };
+use serde_json::json;
 use thiserror::Error;
-
-use crate::sync::{
-    sync_api_v3::{RemotePostRecordV3, SyncTypeV3},
-    translations::{translate_changelog, PushRecord},
-};
-
-use super::{
-    sync_api_v3::SyncApiV3,
-    sync_api_v5::{RemoteSyncActionV5, RemoteSyncBatchV5},
-    SyncApiV5, SyncConnectionError,
-};
 
 #[derive(Error, Debug)]
 #[error("Failed to send initialisation request: {0:?}")]
-pub(crate) struct PostInitialisationError(SyncConnectionError);
+pub(crate) struct PostInitialisationError(pub(crate) SyncApiError);
 #[derive(Error, Debug)]
 #[error("Failed to set initialised state: {0:?}")]
 pub(crate) struct SetInitialisedError(RepositoryError);
 #[derive(Error, Debug)]
 pub(crate) enum RemotPullError {
     #[error("Api error while pulling remote records: {0:?}")]
-    PullError(SyncConnectionError),
+    PullError(SyncApiError),
     #[error("Failed to acknowledge sync records: {0:?}")]
-    AcknowledgedError(SyncConnectionError),
+    AcknowledgedError(SyncApiError),
     #[error("Failed to save sync buffer rows {0:?}")]
     SaveSyncBufferError(RepositoryError),
-    #[error("Failed to parse V5 remote record into sync buffer row: {0:?}")]
+    #[error("{0}")]
     ParsingV5RecordError(ParsingV5RecordError),
 }
 
 pub struct RemoteDataSynchroniser {
-    pub sync_api_v5: SyncApiV5,
-    pub sync_api_v3: SyncApiV3,
-    pub site_id: u32,
-    pub central_server_site_id: u32,
+    pub(crate) sync_api_v5: SyncApiV5,
+    pub(crate) site_id: u32,
 }
 
 impl RemoteDataSynchroniser {
@@ -103,7 +94,7 @@ impl RemoteDataSynchroniser {
                 .to_sync_buffer_rows()
                 .map_err(RemotPullError::ParsingV5RecordError)?;
 
-            let number_of_pulled_records = sync_buffer_rows.len() as u32;
+            let number_of_pulled_records = sync_buffer_rows.len() as u64;
 
             info!(
                 "Pulled {} remote sync records ({} remaining)",
@@ -118,7 +109,7 @@ impl RemoteDataSynchroniser {
 
                 info!("Acknowledging remote sync records...");
                 self.sync_api_v5
-                    .post_acknowledge_records(sync_ids)
+                    .post_acknowledged_records(sync_ids)
                     .await
                     .map_err(RemotPullError::AcknowledgedError)?;
                 info!("Acknowledged remote sync records");
@@ -131,117 +122,129 @@ impl RemoteDataSynchroniser {
     }
 
     // Push all records in change log to central server
-    pub async fn push(&self, connection: &StorageConnection) -> Result<(), anyhow::Error> {
+    pub(crate) async fn push(&self, connection: &StorageConnection) -> Result<(), anyhow::Error> {
         let changelog = ChangelogRowRepository::new(connection);
 
         const BATCH_SIZE: u32 = 1000;
         let state = RemoteSyncState::new(connection);
         loop {
+            // TODO inside transaction
             info!("Remote push: Check changelog...");
             let cursor = state.get_push_cursor()?;
             let changelogs = changelog.changelogs(cursor as u64, BATCH_SIZE)?;
-            if changelogs.is_empty() {
-                break;
-            }
+            let change_logs_total = changelog.count(cursor as u64)?;
+            let total_remaining_after_push = change_logs_total - changelogs.len() as u64;
+            let last_pushed_cursor = changelogs.last().map(|log| log.id);
+
             info!(
                 "Remote push: Translate {} changelogs to push records...",
                 changelogs.len()
             );
-            let last_changelog_id = changelogs.last().map(|log| log.id).unwrap_or(cursor as i64);
-            let records = translate_changelogs_to_push_records(connection, changelogs)?;
 
-            self.sync_api_v3
-                .post_queued_records(self.site_id, self.central_server_site_id, &records)
+            let records = translate_changelogs_to_push_records(connection, changelogs)?;
+            let records_len = records.len();
+
+            let response = self
+                .sync_api_v5
+                .post_queued_records(total_remaining_after_push, records)
                 .await?;
 
-            state.update_push_cursor(last_changelog_id as u32 + 1)?;
             info!(
                 "Remote push: {} records pushed to central server",
-                records.len()
+                records_len
             );
+
+            // Update cursor only if record for that cursor has been pushed/processed
+            if let Some(last_pushed_cursor_id) = last_pushed_cursor {
+                state.update_push_cursor(last_pushed_cursor_id as u32 + 1)?;
+            };
+
+            match (response.integration_started, total_remaining_after_push) {
+                (true, 0) => break,
+                (false, 0) => {
+                    return Err(anyhow::anyhow!(
+                        "Total remaining sent to server is 0 but integration not started"
+                    ))
+                }
+                _ => continue,
+            };
+        }
+
+        Ok(())
+    }
+
+    // Await integration
+    pub(crate) async fn wait_for_integration(
+        &self,
+        poll_period_seconds: u64,
+        timeout_seconds: u64,
+    ) -> Result<(), anyhow::Error> {
+        let start = SystemTime::now();
+        let poll_period = Duration::from_secs(poll_period_seconds);
+        let timeout = Duration::from_secs(timeout_seconds);
+        info!("Awaiting central server integration...");
+        loop {
+            tokio::time::sleep(poll_period).await;
+
+            let response = self.sync_api_v5.get_site_status().await?;
+
+            if response.code == SiteStatusCodeV5::Idle {
+                info!("Central server integration finished");
+                break;
+            }
+
+            let elapsed = start.elapsed().unwrap_or(timeout);
+
+            if elapsed >= timeout {
+                return Err(anyhow::anyhow!("Integration timeout reached"));
+            }
         }
 
         Ok(())
     }
 }
 
-pub fn translate_changelogs_to_push_records(
+pub(crate) fn translate_changelogs_to_push_records(
     connection: &StorageConnection,
     changelogs: Vec<ChangelogRow>,
-) -> Result<Vec<RemotePostRecordV3>, anyhow::Error> {
+) -> Result<Vec<RemoteSyncRecordV5>, anyhow::Error> {
     let mut out_records: Vec<PushRecord> = Vec::new();
     for changelog in changelogs {
         translate_changelog(connection, &changelog, &mut out_records)?;
     }
 
     info!("Remote push: Send records to central server...");
-    let records: Vec<RemotePostRecordV3> = out_records
+    let records: Vec<RemoteSyncRecordV5> = out_records
         .into_iter()
         .map(|record| match record {
-            PushRecord::Upsert(record) => RemotePostRecordV3 {
-                sync_id: format!("{}", record.sync_id),
-                sync_type: SyncTypeV3::Update,
-                store_id: record.store_id,
-                record_type: record.table_name.to_string(),
-                record_id: record.record_id.clone(),
-                data: Some(record.data),
+            PushRecord::Upsert(record) => RemoteSyncRecordV5 {
+                sync_id: record.sync_id.to_string(),
+                record: CommonSyncRecordV5 {
+                    table_name: record.table_name.to_string(),
+                    record_id: record.record_id,
+                    action: SyncActionV5::Update,
+                    data: record.data,
+                },
             },
-            PushRecord::Delete(record) => RemotePostRecordV3 {
-                sync_id: format!("{}", record.sync_id),
-                sync_type: SyncTypeV3::Delete,
-                store_id: None,
-                record_type: record.table_name.to_string(),
-                record_id: record.record_id.clone(),
-                data: None,
+            PushRecord::Delete(record) => RemoteSyncRecordV5 {
+                sync_id: record.sync_id.to_string(),
+                record: CommonSyncRecordV5 {
+                    table_name: record.table_name.to_string(),
+                    record_id: record.record_id,
+                    action: SyncActionV5::Delete,
+                    data: json!({}),
+                },
             },
         })
         .collect();
     Ok(records)
 }
 
-impl RemoteSyncActionV5 {
-    fn to_row_action(&self) -> SyncBufferAction {
-        match self {
-            RemoteSyncActionV5::Create => SyncBufferAction::Upsert,
-            RemoteSyncActionV5::Update => SyncBufferAction::Upsert,
-            RemoteSyncActionV5::Delete => SyncBufferAction::Delete,
-            RemoteSyncActionV5::Merge => SyncBufferAction::Merge,
-        }
-    }
-}
-
-#[derive(Error, Debug)]
-#[error("{source:?} {record:?}")]
-pub(crate) struct ParsingV5RecordError {
-    source: serde_json::Error,
-    record: Option<serde_json::Value>,
-}
-impl RemoteSyncBatchV5 {
-    fn extract_sync_ids(&self) -> Vec<String> {
-        self.data.iter().map(|r| r.sync_id.clone()).collect()
-    }
-
-    fn to_sync_buffer_rows(self) -> Result<Vec<SyncBufferRow>, ParsingV5RecordError> {
-        self.data
-            .into_iter()
-            .map(|record| {
-                let data = record.data;
-                Ok(SyncBufferRow {
-                    table_name: record.table,
-                    record_id: record.record_id,
-                    action: record.action.to_row_action(),
-                    data: serde_json::to_string(&data).map_err(|e| ParsingV5RecordError {
-                        source: e,
-                        record: data.clone(),
-                    })?,
-                    received_datetime: Utc::now().naive_utc(),
-                    integration_datetime: None,
-                    integration_error: None,
-                })
-            })
-            .collect()
-    }
-}
+// sync_type: SyncTypeV3::Update,
+// store_id: record.store_id,
+// record_type: record.table_name.to_string(),
+// record_id: record.record_id.clone(),
+// data: Some(record.data),
 
 // This struct is only for updating values related to sync state, avoid using logic within associated methods
 pub struct RemoteSyncState<'a> {
