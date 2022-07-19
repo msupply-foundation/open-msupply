@@ -248,18 +248,25 @@ mod test {
             encounter_datetime: Utc::now().to_rfc3339(),
             status: None,
         };
-        service
+        let result = service
             .update_encounter(
                 &ctx,
                 &service_provider,
                 "store_a".to_string(),
                 "user",
                 UpdateEncounter {
-                    data: serde_json::to_value(encounter).unwrap(),
+                    data: serde_json::to_value(encounter.clone()).unwrap(),
                     schema_id: schema.id.clone(),
                     parent: initial_encounter.id.clone(),
                 },
             )
             .unwrap();
+        let found = service_provider
+            .document_service
+            .get_document(&ctx, "store_a", &result.name)
+            .unwrap()
+            .unwrap();
+        assert_eq!(found.parent_ids, vec![initial_encounter.id]);
+        assert_eq!(found.data, serde_json::to_value(encounter.clone()).unwrap());
     }
 }

@@ -256,7 +256,7 @@ mod test {
             status: None,
         };
         let program_type = "ProgramType".to_string();
-        service
+        let result = service
             .insert_encounter(
                 &ctx,
                 &service_provider,
@@ -271,5 +271,12 @@ mod test {
                 },
             )
             .unwrap();
+        let found = service_provider
+            .document_service
+            .get_document(&ctx, "store_a", &result.name)
+            .unwrap()
+            .unwrap();
+        assert!(found.parent_ids.is_empty());
+        assert_eq!(found.data, serde_json::to_value(encounter.clone()).unwrap());
     }
 }
