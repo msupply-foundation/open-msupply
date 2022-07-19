@@ -1,5 +1,5 @@
 import { ItemLike } from './types';
-import { ItemRowFragment } from './api';
+import { ItemRowFragment, ItemWithPackSizeFragment } from './api';
 
 export const toItemRow = (line: ItemLike): ItemRowFragment => ({
   __typename: 'ItemNode',
@@ -9,4 +9,11 @@ export const toItemRow = (line: ItemLike): ItemRowFragment => ({
   unitName:
     ('lines' in line ? line.lines[0]?.item?.unitName : line.item?.unitName) ??
     '',
+});
+
+export const toItemWithPackSize = (
+  line: ItemLike
+): ItemWithPackSizeFragment => ({
+  ...toItemRow(line),
+  defaultPackSize: 1,
 });
