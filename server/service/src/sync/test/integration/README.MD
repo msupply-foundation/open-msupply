@@ -60,7 +60,8 @@ We have the ability to update and delete central data records directly on the se
 
 Central and remote tests use SyncRecordTester implementations to do integration tests.
 
-Test sync site is created for each test (using the same `upsert` cental data endpoint above), this is where NEW_SITE_PASSWORD env var is used. See `central_server_configurations.rs` comment for site creation info
+A test sync site is created for each test (using the same `upsert` cental data endpoint above), this is where NEW_SITE_PASSWORD env var is used.
+See `central_server_configurations.rs` comment for site creation info
 
 ## Central
 
