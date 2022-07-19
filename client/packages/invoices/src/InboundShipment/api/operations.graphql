@@ -127,6 +127,7 @@ fragment InboundRow on InvoiceNode {
   otherPartyName
   status
   colour
+  theirReference
   pricing {
     __typename
     totalAfterTax
