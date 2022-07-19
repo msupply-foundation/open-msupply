@@ -5,37 +5,38 @@ use graphql_core::{
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    document::program::{UpsertProgram, UpsertProgramError},
+    document::encounter::{InsertEncounter, InsertEncounterError},
 };
 
 use crate::types::document::DocumentNode;
 
 #[derive(InputObject)]
-pub struct UpdateProgramInput {
-    /// The program type
+pub struct InsertEncounterInput {
+    /// The encounter type
     pub r#type: String,
     pub patient_id: String,
-    /// Program document data
+    /// Encounter document data
     pub data: serde_json::Value,
-    /// The schema id used for the program data
+    /// The schema id used for the encounter data
     pub schema_id: String,
-    pub parent: String,
+    /// The program type
+    pub program_type: String,
 }
 
 #[derive(Union)]
-pub enum UpdateProgramResponse {
+pub enum InsertEncounterResponse {
     Response(DocumentNode),
 }
 
-pub fn update_program(
+pub fn insert_encounter(
     ctx: &Context<'_>,
     store_id: String,
-    input: UpdateProgramInput,
-) -> Result<UpdateProgramResponse> {
+    input: InsertEncounterInput,
+) -> Result<InsertEncounterResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutateProgram,
+            resource: Resource::MutateEncounter,
             store_id: Some(store_id.clone()),
         },
     )?;
@@ -43,39 +44,33 @@ pub fn update_program(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
 
-    match service_provider.program_service.upsert_program(
+    match service_provider.encounter_service.insert_encounter(
         &service_context,
         service_provider,
         store_id.clone(),
         &user.user_id,
-        UpsertProgram {
+        InsertEncounter {
             data: input.data,
             schema_id: input.schema_id,
-            parent: Some(input.parent),
             patient_id: input.patient_id,
+            program_type: input.program_type,
             r#type: input.r#type,
         },
     ) {
-        Ok(document) => Ok(UpdateProgramResponse::Response(DocumentNode { document })),
+        Ok(document) => Ok(InsertEncounterResponse::Response(DocumentNode { document })),
         Err(error) => {
             let formatted_error = format!("{:#?}", error);
             let std_err = match error {
-                UpsertProgramError::InvalidPatientId => {
+                InsertEncounterError::InvalidPatientOrProgram => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
-                UpsertProgramError::InvalidParentId => {
+                InsertEncounterError::InvalidDataSchema(_) => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
-                UpsertProgramError::ProgramExists => {
-                    StandardGraphqlError::BadUserInput(formatted_error)
-                }
-                UpsertProgramError::InvalidDataSchema(_) => {
-                    StandardGraphqlError::BadUserInput(formatted_error)
-                }
-                UpsertProgramError::InternalError(_) => {
+                InsertEncounterError::InternalError(_) => {
                     StandardGraphqlError::InternalError(formatted_error)
                 }
-                UpsertProgramError::DatabaseError(_) => {
+                InsertEncounterError::DatabaseError(_) => {
                     StandardGraphqlError::InternalError(formatted_error)
                 }
             };

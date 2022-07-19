@@ -13,6 +13,7 @@ use crate::{
     document::{
         document_registry::{DocumentRegistryService, DocumentRegistryServiceTrait},
         document_service::{DocumentService, DocumentServiceTrait},
+        encounter::{EncounterService, EncounterServiceTrait},
         form_schema_service::{FormSchemaService, FormSchemaServiceTrait},
         patient::{PatientService, PatientServiceTrait},
         program::{ProgramService, ProgramServiceTrait},
@@ -62,6 +63,7 @@ pub struct ServiceProvider {
     pub form_schema_service: Box<dyn FormSchemaServiceTrait>,
     pub patient_service: Box<dyn PatientServiceTrait>,
     pub program_service: Box<dyn ProgramServiceTrait>,
+    pub encounter_service: Box<dyn EncounterServiceTrait>,
 
     // Settings
     pub settings: Box<dyn SettingsServiceTrait>,
@@ -96,6 +98,7 @@ impl ServiceProvider {
             form_schema_service: Box::new(FormSchemaService {}),
             patient_service: Box::new(PatientService {}),
             program_service: Box::new(ProgramService {}),
+            encounter_service: Box::new(EncounterService {}),
             settings: Box::new(SettingsService {}),
             app_data_service: Box::new(AppDataService::new(app_data_folder)),
         }

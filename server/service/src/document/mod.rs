@@ -1,6 +1,7 @@
 mod common_ancestor;
 pub mod document_registry;
 pub mod document_service;
+pub mod encounter;
 pub mod form_schema_service;
 mod merge;
 mod object_array_merge;

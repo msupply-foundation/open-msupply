@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "Encounter": {
+      "properties": {
+        "encounterDatetime": {
+          "description": "Encounter date and time",
+          "format": "date-time",
+          "type": "string"
+        },
+        "status": {
+          "enum": ["Scheduled", "Done", "Canceled"],
+          "type": "string"
+        }
+      },
+      "required": ["encounterDatetime"],
+      "type": "object"
+    }
+  },
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "#/definitions/Encounter"
+    }
+  ]
+}
