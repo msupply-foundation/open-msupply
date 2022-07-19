@@ -16,7 +16,7 @@ Either with cli or rust analyzer settings:
 
 ## 2 `env vars` for sync credentials
 
-The following enviromental variables shoudl be provided for sync integration test:
+The following environment variables should be provided for sync integration test:
 
 SYNC_SITE_PASSWORD
 SYNC_SITE_NAME
