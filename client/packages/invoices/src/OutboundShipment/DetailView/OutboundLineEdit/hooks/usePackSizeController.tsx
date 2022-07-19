@@ -88,28 +88,27 @@ export const usePackSizeController = (lines: DraftOutboundLine[]) => {
   // - is not on hold.
   // - is not expired.
   // - has some available stock.
+  const allPackSizes = packSizes.filter(
+    packSize =>
+      // - is a placeholder and has allocated stock.
+      (packSize.isPlaceholder && packSize.hasAllocated) ||
+      // - is a placeholder and is the only line.
+      (packSize.isPlaceholder && packSizes.length === 1) ||
+      // Is not on hold, expired has available stock and is not a placeholder..
+      (!packSize.isPlaceholder &&
+        !packSize.isOnHold &&
+        packSize.hasAvailableStock)
+  );
   const validPackSizes = ArrayUtils.uniqBy(
-    packSizes.filter(
-      packSize =>
-        // - is a placeholder and has allocated stock.
-        (packSize.isPlaceholder && packSize.hasAllocated) ||
-        // - is a placeholder and is the only line.
-        (packSize.isPlaceholder && packSizes.length === 1) ||
-        // Is not on hold, expired has available stock and is not a placeholder..
-        (!packSize.isPlaceholder &&
-          !packSize.isOnHold &&
-          !packSize.isExpired &&
-          packSize.hasAvailableStock)
-    ),
+    allPackSizes.filter(({ isExpired }) => !isExpired),
     'packSize'
   );
 
   // Add the any option when:
   // - There are multiple valid pack sizes to choose from.
-  // - There is an expired line.
+  // - There is an expired line with a different pack size.
   // - There are no valid options (i.e. there are no stock lines, only a placeholder).
-  const hasExpiredLine = packSizes.some(({ isExpired }) => isExpired);
-  if (validPackSizes.length !== 1 || hasExpiredLine) {
+  if (ArrayUtils.uniqBy(allPackSizes, 'packSize').length !== 1) {
     validPackSizes.unshift(createAnyOption(t)());
   }
 
