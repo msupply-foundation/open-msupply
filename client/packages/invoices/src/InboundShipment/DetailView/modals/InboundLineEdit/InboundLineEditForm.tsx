@@ -6,16 +6,15 @@ import {
   useTranslation,
   BasicTextInput,
 } from '@openmsupply-client/common';
-import {
-  ItemWithPackSizeFragment,
-  StockItemSearchInput,
-} from '@openmsupply-client/system';
-import { useInbound } from '../../../api';
+import { StockItemSearchInput } from '@openmsupply-client/system';
+import { InboundLineFragment, useInbound } from '../../../api';
+
+type InboundLineItem = InboundLineFragment['item'];
 
 interface InboundLineEditProps {
-  item: ItemWithPackSizeFragment | null;
+  item: InboundLineItem | null;
   disabled: boolean;
-  onChangeItem: (item: ItemWithPackSizeFragment) => void;
+  onChangeItem: (item: InboundLineItem) => void;
 }
 
 export const InboundLineEditForm: FC<InboundLineEditProps> = ({

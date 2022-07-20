@@ -23,16 +23,16 @@ import {
   createQueryParamsStore,
   useKeyboardHeightAdjustment,
 } from '@openmsupply-client/common';
-import { ItemWithPackSizeFragment } from '@openmsupply-client/system';
 import { InboundLineEditPanel } from './InboundLineEditPanel';
 import { QuantityTable, PricingTable, LocationTable } from './TabTables';
 import { InboundLineEditForm } from './InboundLineEditForm';
-import { useInbound } from '../../../api';
+import { InboundLineFragment, useInbound } from '../../../api';
 import { DraftInboundLine } from '../../../../types';
 import { CreateDraft } from '../utils';
 
+type InboundLineItem = InboundLineFragment['item'];
 interface InboundLineEditProps {
-  item: ItemWithPackSizeFragment | null;
+  item: InboundLineItem | null;
   mode: ModalMode | null;
   isOpen: boolean;
   onClose: () => void;
@@ -45,7 +45,7 @@ enum Tabs {
   Location = 'Location',
 }
 
-const useDraftInboundLines = (item: ItemWithPackSizeFragment | null) => {
+const useDraftInboundLines = (item: InboundLineItem | null) => {
   const { data: lines } = useInbound.lines.list(item?.id ?? '');
   const { id } = useInbound.document.fields('id');
   const { mutateAsync, isLoading } = useInbound.lines.save();
@@ -116,8 +116,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
 }) => {
   const t = useTranslation('replenishment');
   const { error } = useNotification();
-  const [currentItem, setCurrentItem] =
-    useState<ItemWithPackSizeFragment | null>(item);
+  const [currentItem, setCurrentItem] = useState<InboundLineItem | null>(item);
   const { next: nextItem, disabled: nextDisabled } = useInbound.document.next(
     currentItem?.id ?? ''
   );
