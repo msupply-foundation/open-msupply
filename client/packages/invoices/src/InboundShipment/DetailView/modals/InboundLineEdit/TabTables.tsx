@@ -80,7 +80,7 @@ export const QuantityTableComponent: FC<TableProps> = ({
       ],
     ],
     {},
-    [updateDraftLine]
+    [updateDraftLine, lines]
   );
 
   return (
@@ -128,7 +128,7 @@ export const PricingTableComponent: FC<TableProps> = ({
       ],
     ],
     {},
-    [updateDraftLine]
+    [updateDraftLine, lines]
   );
 
   return (
@@ -158,7 +158,7 @@ export const LocationTableComponent: FC<TableProps> = ({
       [getLocationInputColumn(), { setter: updateDraftLine }],
     ],
     {},
-    [updateDraftLine]
+    [updateDraftLine, lines]
   );
 
   return (
