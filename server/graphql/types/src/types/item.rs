@@ -113,8 +113,8 @@ impl ItemNode {
         self.legacy_bool("is_vaccine")
     }
 
-    pub async fn default_pack_size(&self) -> i64 {
-        self.legacy_i64("default_pack_size")
+    pub async fn default_pack_size(&self) -> i32 {
+        self.row().default_pack_size
     }
 
     pub async fn outer_pack_size(&self) -> i64 {

@@ -42,7 +42,8 @@ export type ColumnKey =
   | 'monthlyConsumption'
   | 'requestedQuantity'
   | 'supplyQuantity'
-  | 'stockOnHand';
+  | 'stockOnHand'
+  | 'theirReference';
 
 const getColumnLookup = <T extends RecordWithId>(): Record<
   ColumnKey,
@@ -246,6 +247,11 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     key: 'availableStockOnHand',
     width: 100,
     align: ColumnAlign.Right,
+  },
+  theirReference: {
+    label: 'label.reference',
+    key: 'theirReference',
+    width: 100,
   },
 });
 
