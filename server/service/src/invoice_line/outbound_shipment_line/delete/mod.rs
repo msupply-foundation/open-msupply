@@ -55,7 +55,7 @@ pub enum DeleteOutboundShipmentLineError {
     InvoiceDoesNotExist,
     NotAnOutboundShipment,
     NotThisStoreInvoice,
-    CannotEditFinalised,
+    CannotEditInvoice,
     NotThisInvoiceLine(String),
 }
 
@@ -118,7 +118,7 @@ mod test {
             Err(ServiceError::LineDoesNotExist)
         );
 
-        //NotAnOutboundShipment
+        // NotAnOutboundShipment
         assert_eq!(
             service.delete_outbound_shipment_line(
                 &context,
@@ -130,7 +130,7 @@ mod test {
             Err(ServiceError::NotAnOutboundShipment)
         );
 
-        //CannotEditFinalised
+        // CannotEditInvoice
         assert_eq!(
             service.delete_outbound_shipment_line(
                 &context,
@@ -139,7 +139,7 @@ mod test {
                     id: mock_outbound_shipment_b_invoice_lines()[1].id.clone(),
                 },
             ),
-            Err(ServiceError::CannotEditFinalised)
+            Err(ServiceError::CannotEditInvoice)
         );
 
         //TODO DatabaseError, NotThisStoreInvoice

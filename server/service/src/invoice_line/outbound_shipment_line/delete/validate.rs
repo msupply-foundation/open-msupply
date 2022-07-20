@@ -3,9 +3,7 @@ use crate::{
         check_invoice_exists, check_invoice_is_editable, check_invoice_type,
         validate::InvoiceIsNotEditable, InvoiceDoesNotExist, WrongInvoiceRowType,
     },
-    invoice_line::validate::{
-        check_line_exists, LineDoesNotExist, NotInvoiceLine,
-    },
+    invoice_line::validate::{check_line_exists, LineDoesNotExist, NotInvoiceLine},
 };
 use repository::{InvoiceLineRow, InvoiceRowType, StorageConnection};
 
@@ -38,7 +36,7 @@ impl From<WrongInvoiceRowType> for DeleteOutboundShipmentLineError {
 
 impl From<InvoiceIsNotEditable> for DeleteOutboundShipmentLineError {
     fn from(_: InvoiceIsNotEditable) -> Self {
-        DeleteOutboundShipmentLineError::CannotEditFinalised
+        DeleteOutboundShipmentLineError::CannotEditInvoice
     }
 }
 
