@@ -125,6 +125,8 @@ fn generate_line(
     }
     if let Some(total_before_tax) = input.total_before_tax {
         update_line.total_before_tax = total_before_tax;
+    } else {
+        update_line.total_before_tax = sell_price_per_pack * number_of_packs as f64;
     }
     if let Some(tax) = input.tax {
         update_line.tax = tax.percentage;

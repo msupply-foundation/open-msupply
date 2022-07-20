@@ -237,7 +237,7 @@ mod test {
                     item_id: Some(mock_item_service_item().id),
                     name: Some("modified name".to_string()),
                     total_before_tax: 0.3,
-                    tax: Some(0.1),
+                    tax: Some(10.0),
                     note: Some("note".to_string()),
                 },
             )

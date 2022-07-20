@@ -1,6 +1,5 @@
 use async_graphql::*;
 
-use graphql_core::generic_inputs::TaxUpdate;
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::{
     simple_generic_errors::{CannotEditInvoice, ForeignKey, ForeignKeyError},
@@ -23,7 +22,7 @@ pub struct InsertInput {
     pub item_id: Option<String>,
     name: Option<String>,
     total_before_tax: f64,
-    tax: Option<TaxUpdate>,
+    tax: Option<f64>,
     note: Option<String>,
 }
 
@@ -96,7 +95,7 @@ impl InsertInput {
             item_id,
             name,
             total_before_tax,
-            tax: tax.and_then(|tax| tax.percentage),
+            tax,
             note,
         }
     }
@@ -363,7 +362,7 @@ mod test {
             "name": "some name",
             "totalBeforeTax": 0.1,
             "tax": {
-                "percentage": 10
+                "percentage": 10.0
             },
             "note": "note"
           },

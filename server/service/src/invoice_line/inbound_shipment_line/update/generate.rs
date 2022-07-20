@@ -66,6 +66,8 @@ fn generate_line(
         location_id,
         id: _,
         item_id: _,
+        total_before_tax,
+        tax,
     }: UpdateInboundShipmentLine,
     current_line: InvoiceLineRow,
     new_item_option: Option<ItemRow>,
@@ -88,6 +90,17 @@ fn generate_line(
         update_line.item_id = item.id;
         update_line.item_code = item.code;
         update_line.item_name = item.name;
+    }
+
+    if let Some(total_before_tax) = total_before_tax {
+        update_line.total_before_tax = total_before_tax;
+    } else {
+        update_line.total_before_tax =
+            update_line.cost_price_per_pack * update_line.number_of_packs as f64;
+    }
+
+    if let Some(tax) = tax {
+        update_line.tax = tax.percentage;
     }
 
     update_line.total_after_tax = total_after_tax(update_line.total_before_tax, update_line.tax);
