@@ -74,8 +74,7 @@ const useDraftInboundLines = (item: ItemRowFragment | null) => {
     if (item) {
       const newLine = CreateDraft.stockInLine({ item, invoiceId: id });
       setIsDirty(true);
-      setDraftLines([]);
-      setTimeout(() => setDraftLines([...draftLines, newLine]), 10);
+      setDraftLines([...draftLines, newLine]);
     }
   };
 
@@ -123,12 +122,23 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
   );
   const isMediumScreen = useIsMediumScreen();
   const [currentTab, setCurrentTab] = useState<Tabs>(Tabs.Batch);
+  const [isAdding, setIsAdding] = useState(false);
   const { Modal } = useDialog({ isOpen, onClose });
   const height = useKeyboardHeightAdjustment(600);
   const { draftLines, addDraftLine, updateDraftLine, isLoading, saveLines } =
     useDraftInboundLines(currentItem);
   const okNextDisabled =
     (mode === ModalMode.Update && nextDisabled) || !currentItem;
+
+  const onAdd = () => {
+    setIsAdding(true);
+    addDraftLine();
+  };
+
+  useEffect(() => {
+    if (isAdding) setIsAdding(false);
+  }, [isAdding]);
+
   useEffect(() => {
     setCurrentItem(item);
   }, [item]);
@@ -193,7 +203,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
               <TabContext value={currentTab}>
                 <TabKeybindings
                   tabs={[Tabs.Batch, Tabs.Pricing, Tabs.Location]}
-                  onAdd={addDraftLine}
+                  onAdd={onAdd}
                   setCurrentTab={setCurrentTab}
                   dependencies={[draftLines]}
                 />
@@ -228,47 +238,50 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
                       disabled={isDisabled}
                       color="primary"
                       variant="outlined"
-                      onClick={addDraftLine}
+                      onClick={onAdd}
                       label={`${t('label.add-batch')} (+)`}
                       Icon={<PlusCircleIcon />}
                     />
                   </Box>
                 </Box>
+                {isAdding ? (
+                  <Box style={{ height: 415 }} />
+                ) : (
+                  <TableContainer
+                    sx={{
+                      height: isMediumScreen ? 300 : 400,
+                      marginTop: 2,
+                      borderWidth: 1,
+                      borderStyle: 'solid',
+                      borderColor: 'divider',
+                      borderRadius: '20px',
+                    }}
+                  >
+                    <InboundLineEditPanel value={Tabs.Batch}>
+                      <QuantityTable
+                        isDisabled={isDisabled}
+                        lines={draftLines}
+                        updateDraftLine={updateDraftLine}
+                      />
+                    </InboundLineEditPanel>
 
-                <TableContainer
-                  sx={{
-                    height: isMediumScreen ? 300 : 400,
-                    marginTop: 2,
-                    borderWidth: 1,
-                    borderStyle: 'solid',
-                    borderColor: 'divider',
-                    borderRadius: '20px',
-                  }}
-                >
-                  <InboundLineEditPanel value={Tabs.Batch}>
-                    <QuantityTable
-                      isDisabled={isDisabled}
-                      lines={draftLines}
-                      updateDraftLine={updateDraftLine}
-                    />
-                  </InboundLineEditPanel>
+                    <InboundLineEditPanel value={Tabs.Pricing}>
+                      <PricingTable
+                        isDisabled={isDisabled}
+                        lines={draftLines}
+                        updateDraftLine={updateDraftLine}
+                      />
+                    </InboundLineEditPanel>
 
-                  <InboundLineEditPanel value={Tabs.Pricing}>
-                    <PricingTable
-                      isDisabled={isDisabled}
-                      lines={draftLines}
-                      updateDraftLine={updateDraftLine}
-                    />
-                  </InboundLineEditPanel>
-
-                  <InboundLineEditPanel value={Tabs.Location}>
-                    <LocationTable
-                      isDisabled={isDisabled}
-                      lines={draftLines}
-                      updateDraftLine={updateDraftLine}
-                    />
-                  </InboundLineEditPanel>
-                </TableContainer>
+                    <InboundLineEditPanel value={Tabs.Location}>
+                      <LocationTable
+                        isDisabled={isDisabled}
+                        lines={draftLines}
+                        updateDraftLine={updateDraftLine}
+                      />
+                    </InboundLineEditPanel>
+                  </TableContainer>
+                )}
               </TabContext>
             ) : (
               <Box sx={{ height: isMediumScreen ? 400 : 500 }} />
