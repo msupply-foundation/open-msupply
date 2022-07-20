@@ -22,13 +22,13 @@ type OutError = InsertOutboundShipmentLineError;
 
 pub fn insert_outbound_shipment_line(
     ctx: &ServiceContext,
-    _store_id: &str,
+    store_id: &str,
     input: InsertOutboundShipmentLine,
 ) -> Result<InvoiceLine, OutError> {
     let new_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let (item, invoice, batch) = validate(&input, &connection)?;
+            let (item, invoice, batch) = validate(&input, store_id, &connection)?;
             let (new_line, update_batch) = generate(input, item, batch, invoice)?;
             InvoiceLineRowRepository::new(&connection).upsert_one(&new_line)?;
             StockLineRowRepository::new(&connection).upsert_one(&update_batch)?;

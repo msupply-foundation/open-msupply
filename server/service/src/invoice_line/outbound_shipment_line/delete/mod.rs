@@ -16,13 +16,13 @@ type OutError = DeleteOutboundShipmentLineError;
 
 pub fn delete_outbound_shipment_line(
     ctx: &ServiceContext,
-    _store_id: &str,
+    store_id: &str,
     input: DeleteOutboundShipmentLine,
 ) -> Result<String, OutError> {
     let line_id = ctx
         .connection
         .transaction_sync(|connection| {
-            let line = validate(&input, &connection)?;
+            let line = validate(&input, store_id, &connection)?;
             let stock_line_id_option = line.stock_line_id.clone();
 
             InvoiceLineRowRepository::new(&connection).delete(&line.id)?;
