@@ -46,6 +46,10 @@ export const TabLayout: FC<TabLayoutProps> = ({
     addDraftLine();
   };
 
+  // The updateDraftLine function is being memoized on first render in the DataTable
+  // therefore when you add a batch, the update function is working with the array
+  // which exists when the table is first rendered, and doesn't update
+  // using the `isAdding` flag is a clumsy way to force a re-render of the table
   useEffect(() => {
     if (isAdding) setIsAdding(false);
   }, [isAdding]);
