@@ -19,7 +19,7 @@ import { RecordWithId } from '@common/types';
 import { useTranslation } from '@common/intl';
 import { useTableStore } from './context';
 
-export const DataTableComponent = <T extends RecordWithId>({
+const DataTableComponent = <T extends RecordWithId>({
   key,
   ExpandContent,
   columns,

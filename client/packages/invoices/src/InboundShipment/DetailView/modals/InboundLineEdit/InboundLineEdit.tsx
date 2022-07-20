@@ -74,7 +74,8 @@ const useDraftInboundLines = (item: ItemRowFragment | null) => {
     if (item) {
       const newLine = CreateDraft.stockInLine({ item, invoiceId: id });
       setIsDirty(true);
-      setDraftLines([...draftLines, newLine]);
+      setDraftLines([]);
+      setTimeout(() => setDraftLines([...draftLines, newLine]), 10);
     }
   };
 
@@ -244,11 +245,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
                     borderRadius: '20px',
                   }}
                 >
-                  <InboundLineEditPanel
-                    value={Tabs.Batch}
-                    lines={draftLines}
-                    updateDraftLine={updateDraftLine}
-                  >
+                  <InboundLineEditPanel value={Tabs.Batch}>
                     <QuantityTable
                       isDisabled={isDisabled}
                       lines={draftLines}
@@ -256,11 +253,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
                     />
                   </InboundLineEditPanel>
 
-                  <InboundLineEditPanel
-                    value={Tabs.Pricing}
-                    lines={draftLines}
-                    updateDraftLine={updateDraftLine}
-                  >
+                  <InboundLineEditPanel value={Tabs.Pricing}>
                     <PricingTable
                       isDisabled={isDisabled}
                       lines={draftLines}
@@ -268,11 +261,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
                     />
                   </InboundLineEditPanel>
 
-                  <InboundLineEditPanel
-                    value={Tabs.Location}
-                    lines={draftLines}
-                    updateDraftLine={updateDraftLine}
-                  >
+                  <InboundLineEditPanel value={Tabs.Location}>
                     <LocationTable
                       isDisabled={isDisabled}
                       lines={draftLines}
