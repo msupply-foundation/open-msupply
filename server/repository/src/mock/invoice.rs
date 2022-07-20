@@ -67,7 +67,7 @@ pub fn mock_outbound_shipment_d() -> InvoiceRow {
 
 pub fn mock_outbound_shipment_e() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
-        r.id = String::from("outbound_shipment_d");
+        r.id = String::from("outbound_shipment_e");
         r.name_id = String::from("name_store_a");
         r.store_id = String::from("store_a");
         r.invoice_number = 9;
