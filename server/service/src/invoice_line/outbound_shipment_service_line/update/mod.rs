@@ -91,9 +91,7 @@ mod test {
     use util::{inline_edit, inline_init};
 
     use crate::{
-        invoice_line::{
-            outbound_shipment_service_line::UpdateOutboundShipmentServiceLine, ShipmentTaxUpdate,
-        },
+        invoice_line::{outbound_shipment_service_line::UpdateOutboundShipmentServiceLine, ShipmentTaxUpdate},
         service_provider::ServiceProvider,
     };
 

@@ -1,15 +1,12 @@
 mod generate;
 mod validate;
 
+use crate::invoice_line::ShipmentTaxUpdate;
 use generate::generate;
 use repository::{InvoiceLine, InvoiceLineRowRepository, RepositoryError};
 use validate::validate;
 
-use crate::{
-    invoice_line::{query::get_invoice_line, ShipmentTaxUpdate},
-    service_provider::ServiceContext,
-    WithDBError,
-};
+use crate::{invoice_line::query::get_invoice_line, service_provider::ServiceContext, WithDBError};
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct UpdateInboundShipmentServiceLine {
     pub id: String,

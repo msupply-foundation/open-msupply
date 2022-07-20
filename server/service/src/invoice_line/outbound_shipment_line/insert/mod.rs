@@ -13,7 +13,7 @@ pub struct InsertOutboundShipmentLine {
     pub item_id: String,
     pub stock_line_id: String,
     pub number_of_packs: u32,
-    pub total_before_tax: f64,
+    pub total_before_tax: Option<f64>,
     pub tax: Option<f64>,
 }
 
