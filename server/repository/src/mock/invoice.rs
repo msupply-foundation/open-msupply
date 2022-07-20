@@ -142,6 +142,22 @@ pub fn mock_new_outbound_shipment_no_lines() -> InvoiceRow {
     })
 }
 
+pub fn mock_outbound_shipment_on_hold() -> InvoiceRow {
+    inline_init(|r: &mut InvoiceRow| {
+        r.id = String::from("outbound_shipment_on_hold");
+        r.name_id = String::from("name_store_a");
+        r.store_id = String::from("store_a");
+        r.invoice_number = 10;
+        r.on_hold = true;
+        r.r#type = InvoiceRowType::OutboundShipment;
+        r.status = InvoiceRowStatus::Allocated;
+        r.comment = Some("Sort comment test Ba".to_owned());
+        r.their_reference = Some(String::from(""));
+        r.created_datetime = NaiveDate::from_ymd(1970, 1, 7).and_hms_milli(15, 30, 0, 0);
+        r.allocated_datetime = Some(NaiveDate::from_ymd(1970, 1, 7).and_hms_milli(15, 30, 0, 0));
+    })
+}
+
 pub fn mock_inbound_shipment_a() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
         r.id = String::from("inbound_shipment_a");
@@ -273,6 +289,7 @@ pub fn mock_outbound_shipments() -> Vec<InvoiceRow> {
         mock_outbound_shipment_picked(),
         mock_outbound_shipment_no_lines(),
         mock_new_outbound_shipment_no_lines(),
+        mock_outbound_shipment_on_hold(),
     ]
 }
 
