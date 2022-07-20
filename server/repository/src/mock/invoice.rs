@@ -70,14 +70,12 @@ pub fn mock_outbound_shipment_e() -> InvoiceRow {
         r.id = String::from("outbound_shipment_e");
         r.name_id = String::from("name_store_a");
         r.store_id = String::from("store_a");
-        r.invoice_number = 9;
+        r.invoice_number = 3;
         r.r#type = InvoiceRowType::OutboundShipment;
         r.status = InvoiceRowStatus::New;
-        r.comment = Some("Sort comment test ba".to_owned());
+        r.comment = Some("Sort comment test aB".to_owned());
         r.their_reference = Some(String::from(""));
         r.created_datetime = NaiveDate::from_ymd(1970, 1, 2).and_hms_milli(15, 30, 0, 0);
-        r.picked_datetime = Some(NaiveDate::from_ymd(1970, 1, 2).and_hms_milli(15, 30, 0, 0));
-        r.allocated_datetime = Some(NaiveDate::from_ymd(1970, 1, 2).and_hms_milli(15, 30, 0, 0));
     })
 }
 

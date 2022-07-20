@@ -123,7 +123,7 @@ mod test {
     use repository::{
         mock::{
             mock_inbound_shipment_c, mock_outbound_shipment_b, mock_outbound_shipment_c,
-            mock_store_a, MockDataInserts,
+            mock_store_a, mock_store_c, MockDataInserts,
         },
         test_db::setup_all,
         InvoiceRowRepository,
@@ -153,7 +153,7 @@ mod test {
         assert_eq!(
             service.delete_outbound_shipment(
                 &context,
-                &mock_store_a().id,
+                &mock_store_c().id,
                 mock_outbound_shipment_b().id
             ),
             Err(ServiceError::CannotEditFinalised)
@@ -169,7 +169,17 @@ mod test {
             Err(ServiceError::NotAnOutboundShipment)
         );
 
-        //TODO Database, NotThisStoreInvoice, LineDeleteErrors
+        //NotThisStoreInvoice
+        assert_eq!(
+            service.delete_outbound_shipment(
+                &context,
+                &mock_store_a().id,
+                mock_outbound_shipment_b().id
+            ),
+            Err(ServiceError::NotThisStoreInvoice)
+        );
+
+        //TODO DatabaseError, LineDeleteErrors
     }
 
     #[actix_rt::test]
@@ -182,7 +192,7 @@ mod test {
         let service = service_provider.invoice_service;
 
         let invoice_id = service
-            .delete_outbound_shipment(&context, &mock_store_a().id, mock_outbound_shipment_c().id)
+            .delete_outbound_shipment(&context, &mock_store_c().id, mock_outbound_shipment_c().id)
             .unwrap();
 
         //test entry has been deleted
