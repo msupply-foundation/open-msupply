@@ -28,14 +28,14 @@ type OutError = UpdateInboundShipmentLineError;
 
 pub fn update_inbound_shipment_line(
     ctx: &ServiceContext,
-    _store_id: &str,
+    store_id: &str,
     user_id: &str,
     input: UpdateInboundShipmentLine,
 ) -> Result<InvoiceLine, OutError> {
     let updated_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let (line, item, invoice) = validate(&input, &connection)?;
+            let (line, item, invoice) = validate(&input, store_id, &connection)?;
 
             let (invoice_row_option, updated_line, upsert_batch_option, delete_batch_id_option) =
                 generate(user_id, input, line, item, invoice);
@@ -104,8 +104,8 @@ mod test {
     use repository::{
         mock::{
             mock_inbound_shipment_a_invoice_lines, mock_inbound_shipment_b_invoice_lines,
-            mock_inbound_shipment_c_invoice_lines, mock_item_a, mock_store_a, mock_user_account_a,
-            MockDataInserts,
+            mock_inbound_shipment_c_invoice_lines, mock_inbound_shipment_not_linked_to_store_lines,
+            mock_item_a, mock_store_a, mock_user_account_a, MockDataInserts,
         },
         test_db::setup_all,
         InvoiceLineRowRepository,
@@ -206,7 +206,7 @@ mod test {
             Err(ServiceError::NumberOfPacksBelowOne)
         );
 
-        //CannotEditFinalised
+        // CannotEditFinalised
         assert_eq!(
             service.update_inbound_shipment_line(
                 &context,
@@ -222,7 +222,7 @@ mod test {
             Err(ServiceError::CannotEditFinalised)
         );
 
-        //BatchIsReserved
+        // BatchIsReserved
         assert_eq!(
             service.update_inbound_shipment_line(
                 &context,
@@ -236,6 +236,24 @@ mod test {
                 }),
             ),
             Err(ServiceError::BatchIsReserved)
+        );
+
+        // NotThisStoreInvoice
+        assert_eq!(
+            service.update_inbound_shipment_line(
+                &context,
+                &mock_store_a().id,
+                &mock_user_account_a().id,
+                inline_init(|r: &mut UpdateInboundShipmentLine| {
+                    r.id = mock_inbound_shipment_not_linked_to_store_lines()[0]
+                        .id
+                        .clone();
+                    r.item_id = Some(mock_item_a().id.clone());
+                    r.pack_size = Some(1);
+                    r.number_of_packs = Some(1);
+                }),
+            ),
+            Err(ServiceError::NotThisStoreInvoice)
         );
 
         //TODO: DatabaseError

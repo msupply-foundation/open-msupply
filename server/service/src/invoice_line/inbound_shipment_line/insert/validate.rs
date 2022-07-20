@@ -35,7 +35,6 @@ pub fn validate(
     check_invoice_type(&invoice, InvoiceRowType::InboundShipment)?;
     check_invoice_is_editable(&invoice)?;
 
-    // TODO: InvoiceDoesNotBelongToCurrentStore
     // TODO: StockLineDoesNotBelongToCurrentStore
     // TODO: LocationDoesNotBelongToCurrentStore
 
