@@ -213,7 +213,7 @@ mod graphql {
         mock_new_invoice_with_unallocated_line, mock_store_linked_to_name,
     };
     use repository::mock::{mock_name_store_c, MockDataInserts};
-    use repository::{InvoiceLineRowRepository, InvoiceRowRepository};
+    use repository::InvoiceRowRepository;
     use serde_json::json;
 
     use crate::{InvoiceMutations, InvoiceQueries};
@@ -446,9 +446,6 @@ mod graphql {
         );
 
         // test DRAFT to CONFIRMED
-        let invoice_lines = InvoiceLineRowRepository::new(&connection)
-            .find_many_by_invoice_id("outbound_shipment_c")
-            .unwrap();
         let variables = Some(json!({
           "input": {
             "id": "outbound_shipment_c",
@@ -468,7 +465,6 @@ mod graphql {
         // test DRAFT to FINALISED (while setting onHold to true)
         let full_invoice = mock_data["base"].full_invoices.get("draft_ci_a").unwrap();
         let invoice_id = full_invoice.invoice.id.clone();
-        let invoice_lines = full_invoice.get_lines();
         let variables = Some(json!({
           "input": {
             "id": invoice_id,
