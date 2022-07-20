@@ -320,8 +320,7 @@ mod test {
             Err(ServiceError::OtherPartyNotASupplier)
         );
 
-        // TODO NotThisStoreInvoice, CannotReverseInvoiceStatus,
-        // UpdateInvoiceDoesNotExist, DatabaseError
+        // TODO CannotReverseInvoiceStatus,UpdateInvoiceDoesNotExist, DatabaseError
     }
 
     #[actix_rt::test]
