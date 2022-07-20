@@ -75,7 +75,7 @@ pub fn get_requisition_line_chart(
         item_id,
         available_stock_on_hand,
         average_monthly_consumption,
-        suggested_quantity,
+        requested_quantity,
         ..
     } = requisition_line.requisition_line_row;
 
@@ -103,7 +103,7 @@ pub fn get_requisition_line_chart(
         *requisition_line_datetime,
         available_stock_on_hand as u32,
         *expected_delivery_date,
-        suggested_quantity as u32,
+        requested_quantity as u32,
         average_monthly_consumption as f64,
         stock_evolution_options,
     )?;

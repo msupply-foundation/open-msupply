@@ -59,7 +59,7 @@ pub fn insert_inbound_shipment_line(
     Ok(new_line)
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum InsertInboundShipmentLineError {
     LineAlreadyExists,
     DatabaseError(RepositoryError),
@@ -89,5 +89,215 @@ where
             WithDBError::DatabaseError(error) => error.into(),
             WithDBError::Error(error) => error.into(),
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use repository::{
+        mock::{
+            mock_inbound_shipment_a_invoice_lines, mock_inbound_shipment_c_invoice_lines,
+            mock_item_a, mock_outbound_shipment_c_invoice_lines, mock_store_a, mock_user_account_a,
+            MockDataInserts,
+        },
+        test_db::setup_all,
+        InvoiceLineRowRepository,
+    };
+    use util::{inline_edit, inline_init};
+
+    use crate::{
+        invoice_line::inbound_shipment_line::{
+            insert::InsertInboundShipmentLine, InsertInboundShipmentLineError as ServiceError,
+        },
+        service_provider::ServiceProvider,
+    };
+
+    #[actix_rt::test]
+    async fn insert_inbound_shipment_line_errors() {
+        let (_, _, connection_manager, _) = setup_all(
+            "insert_inbound_shipment_line_errors",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let context = service_provider.context().unwrap();
+        let service = service_provider.invoice_line_service;
+
+        // LineAlreadyExists
+        assert_eq!(
+            service.insert_inbound_shipment_line(
+                &context,
+                &mock_store_a().id,
+                &mock_user_account_a().id,
+                inline_init(|r: &mut InsertInboundShipmentLine| {
+                    r.id = mock_inbound_shipment_a_invoice_lines()[0].id.clone();
+                    r.invoice_id = mock_inbound_shipment_c_invoice_lines()[0]
+                        .invoice_id
+                        .clone();
+                }),
+            ),
+            Err(ServiceError::LineAlreadyExists)
+        );
+
+        // InvoiceDoesNotExist
+        assert_eq!(
+            service.insert_inbound_shipment_line(
+                &context,
+                &mock_store_a().id,
+                &mock_user_account_a().id,
+                inline_init(|r: &mut InsertInboundShipmentLine| {
+                    r.id = "new invoice line id".to_string();
+                    r.invoice_id = "new invoice id".to_string();
+                    r.item_id = mock_item_a().id.clone();
+                    r.pack_size = 1;
+                    r.number_of_packs = 1;
+                }),
+            ),
+            Err(ServiceError::InvoiceDoesNotExist)
+        );
+
+        // NotAnInboundShipment
+        assert_eq!(
+            service.insert_inbound_shipment_line(
+                &context,
+                &mock_store_a().id,
+                &mock_user_account_a().id,
+                inline_init(|r: &mut InsertInboundShipmentLine| {
+                    r.id = "new invoice line id".to_string();
+                    r.invoice_id = mock_outbound_shipment_c_invoice_lines()[0]
+                        .invoice_id
+                        .clone();
+                    r.item_id = mock_item_a().id.clone();
+                    r.pack_size = 1;
+                    r.number_of_packs = 1;
+                }),
+            ),
+            Err(ServiceError::NotAnInboundShipment)
+        );
+
+        // LocationDoesNotExist
+        assert_eq!(
+            service.insert_inbound_shipment_line(
+                &context,
+                &mock_store_a().id,
+                &mock_user_account_a().id,
+                inline_init(|r: &mut InsertInboundShipmentLine| {
+                    r.id = "new invoice line id".to_string();
+                    r.invoice_id = mock_inbound_shipment_c_invoice_lines()[0]
+                        .invoice_id
+                        .clone();
+                    r.location_id = Some("invalid".to_string());
+                    r.item_id = mock_item_a().id.clone();
+                    r.pack_size = 1;
+                    r.number_of_packs = 1;
+                }),
+            ),
+            Err(ServiceError::LocationDoesNotExist)
+        );
+
+        // ItemNotFound
+        assert_eq!(
+            service.insert_inbound_shipment_line(
+                &context,
+                &mock_store_a().id,
+                &mock_user_account_a().id,
+                inline_init(|r: &mut InsertInboundShipmentLine| {
+                    r.id = "new invoice line id".to_string();
+                    r.invoice_id = mock_inbound_shipment_c_invoice_lines()[0]
+                        .invoice_id
+                        .clone();
+                    r.item_id = "invalid".to_string();
+                    r.pack_size = 1;
+                    r.number_of_packs = 1;
+                }),
+            ),
+            Err(ServiceError::ItemNotFound)
+        );
+
+        // PackSizeBelowOne
+        assert_eq!(
+            service.insert_inbound_shipment_line(
+                &context,
+                &mock_store_a().id,
+                &mock_user_account_a().id,
+                inline_init(|r: &mut InsertInboundShipmentLine| {
+                    r.id = "new invoice line id".to_string();
+                    r.invoice_id = mock_inbound_shipment_c_invoice_lines()[0]
+                        .invoice_id
+                        .clone();
+                    r.item_id = mock_item_a().id.clone();
+                    r.pack_size = 0;
+                    r.number_of_packs = 1;
+                }),
+            ),
+            Err(ServiceError::PackSizeBelowOne)
+        );
+
+        // NumberOfPacksBelowOne
+        assert_eq!(
+            service.insert_inbound_shipment_line(
+                &context,
+                &mock_store_a().id,
+                &mock_user_account_a().id,
+                inline_init(|r: &mut InsertInboundShipmentLine| {
+                    r.id = "new invoice line id".to_string();
+                    r.invoice_id = mock_inbound_shipment_c_invoice_lines()[0]
+                        .invoice_id
+                        .clone();
+                    r.item_id = mock_item_a().id.clone();
+                    r.pack_size = 1;
+                    r.number_of_packs = 0;
+                }),
+            ),
+            Err(ServiceError::NumberOfPacksBelowOne)
+        );
+
+        //TODO DatabaseError, NewlyCreatedLineDoesNotExist
+    }
+
+    #[actix_rt::test]
+    async fn insert_inbound_shipment_line_success() {
+        let (_, connection, connection_manager, _) = setup_all(
+            "insert_inbound_shipment_line_success",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let context = service_provider.context().unwrap();
+        let service = service_provider.invoice_line_service;
+
+        service
+            .insert_inbound_shipment_line(
+                &context,
+                &mock_store_a().id,
+                &mock_user_account_a().id,
+                inline_init(|r: &mut InsertInboundShipmentLine| {
+                    r.id = "new invoice line id".to_string();
+                    r.invoice_id = mock_inbound_shipment_c_invoice_lines()[0]
+                        .invoice_id
+                        .clone();
+                    r.item_id = mock_item_a().id.clone();
+                    r.pack_size = 1;
+                    r.number_of_packs = 1;
+                }),
+            )
+            .unwrap();
+
+        let inbound_line = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id("new invoice line id")
+            .unwrap();
+
+        assert_eq!(
+            inbound_line,
+            inline_edit(&inbound_line, |mut u| {
+                u.id = "new invoice line id".to_string();
+                u.item_id = mock_item_a().id.clone();
+                u.pack_size = 1;
+                u.number_of_packs = 1;
+                u
+            })
+        );
     }
 }
