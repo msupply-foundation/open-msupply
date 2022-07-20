@@ -113,8 +113,8 @@ pub enum UpdateInboundShipmentError {
     OtherPartyNotVisible,
     OtherPartyNotASupplier,
     // Internal
-    UpdatedInvoiceDoesNotExist,
     DatabaseError(RepositoryError),
+    UpdatedInvoiceDoesNotExist,
 }
 
 impl From<RepositoryError> for UpdateInboundShipmentError {
