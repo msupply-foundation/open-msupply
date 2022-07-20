@@ -1,7 +1,8 @@
 use crate::{
     invoice::{
-        check_invoice_exists, check_invoice_is_editable, check_invoice_type,
-        validate::InvoiceIsNotEditable, InvoiceDoesNotExist, WrongInvoiceRowType,
+        check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store,
+        validate::InvoiceIsNotEditable, InvoiceDoesNotExist, NotThisStoreInvoice,
+        WrongInvoiceRowType,
     },
     invoice_line::{
         check_location_exists,
@@ -19,6 +20,7 @@ use super::{InsertInboundShipmentLine, InsertInboundShipmentLineError};
 
 pub fn validate(
     input: &InsertInboundShipmentLine,
+    store_id: &str,
     connection: &StorageConnection,
 ) -> Result<(ItemRow, InvoiceRow), InsertInboundShipmentLineError> {
     check_line_does_not_exists(&input.id, connection)?;
@@ -29,6 +31,7 @@ pub fn validate(
     check_location_exists(&input.location_id, connection)?;
 
     let invoice = check_invoice_exists(&input.invoice_id, connection)?;
+    check_store(&invoice, store_id)?;
     check_invoice_type(&invoice, InvoiceRowType::InboundShipment)?;
     check_invoice_is_editable(&invoice)?;
 
@@ -84,5 +87,11 @@ impl From<InvoiceIsNotEditable> for InsertInboundShipmentLineError {
 impl From<InvoiceDoesNotExist> for InsertInboundShipmentLineError {
     fn from(_: InvoiceDoesNotExist) -> Self {
         InsertInboundShipmentLineError::InvoiceDoesNotExist
+    }
+}
+
+impl From<NotThisStoreInvoice> for InsertInboundShipmentLineError {
+    fn from(_: NotThisStoreInvoice) -> Self {
+        InsertInboundShipmentLineError::NotThisStoreInvoice
     }
 }
