@@ -1,12 +1,12 @@
 import { useEffect } from 'react';
 import { useUrlQuery } from './useUrlQuery';
-import { Column } from '@openmsupply-client/common';
+import { Column, useLocalStorage } from '@openmsupply-client/common';
 import { FilterController } from '../useQueryParams';
 
 // This hook uses the state of the url query parameters (from useUrlQuery hook)
 // to provide query parameters and update methods to tables.
 
-const RECORDS_PER_PAGE = 20;
+export const DEFAULT_RECORDS_PER_PAGE = 20;
 
 interface UrlQueryParams {
   filterKey?: string;
@@ -23,6 +23,11 @@ export const useUrlQueryParams = ({
   // if this is parsed as numeric, the query param changes filter=0300 to filter=300
   // which then does not match against codes, as the filter is usually a 'startsWith'
   const { urlQuery, updateQuery } = useUrlQuery({ skipParse: ['filter'] });
+  const [storedRowsPerPage] = useLocalStorage(
+    '/pagination/rowsperpage',
+    DEFAULT_RECORDS_PER_PAGE
+  );
+  const rowsPerPage = storedRowsPerPage ?? DEFAULT_RECORDS_PER_PAGE;
 
   useEffect(() => {
     if (!initialSort) return;
@@ -71,8 +76,8 @@ export const useUrlQueryParams = ({
   };
   const queryParams = {
     page: urlQuery.page ? urlQuery.page - 1 : 0,
-    offset: urlQuery.page ? (urlQuery.page - 1) * RECORDS_PER_PAGE : 0,
-    first: RECORDS_PER_PAGE,
+    offset: urlQuery.page ? (urlQuery.page - 1) * rowsPerPage : 0,
+    first: rowsPerPage,
     sortBy: {
       key: urlQuery.sort ?? initialSort,
       direction: urlQuery.dir ?? 'asc',

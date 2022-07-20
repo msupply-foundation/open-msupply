@@ -109,3 +109,117 @@ where
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use repository::{
+        mock::{
+            mock_inbound_shipment_a, mock_inbound_shipment_b, mock_inbound_shipment_e,
+            mock_outbound_shipment_c, mock_store_a, mock_user_account_a, MockDataInserts,
+        },
+        test_db::setup_all,
+        InvoiceRowRepository,
+    };
+
+    use crate::{
+        invoice::inbound_shipment::{
+            DeleteInboundShipment, DeleteInboundShipmentError as ServiceError,
+        },
+        invoice_line::inbound_shipment_line::DeleteInboundShipmentLineError,
+        service_provider::ServiceProvider,
+    };
+
+    #[actix_rt::test]
+    async fn delete_inbound_shipment_errors() {
+        let (_, _, connection_manager, _) =
+            setup_all("delete_inbound_shipment_errors", MockDataInserts::all()).await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let context = service_provider.context().unwrap();
+        let service = service_provider.invoice_service;
+
+        // InvoiceDoesNotExist
+        assert_eq!(
+            service.delete_inbound_shipment(
+                &context,
+                &mock_store_a().id,
+                &mock_user_account_a().id,
+                DeleteInboundShipment {
+                    id: "invalid".to_owned(),
+                },
+            ),
+            Err(ServiceError::InvoiceDoesNotExist)
+        );
+
+        //CannotEditFinalised
+        assert_eq!(
+            service.delete_inbound_shipment(
+                &context,
+                &mock_store_a().id,
+                &mock_user_account_a().id,
+                DeleteInboundShipment {
+                    id: mock_inbound_shipment_b().id.clone(),
+                },
+            ),
+            Err(ServiceError::CannotEditFinalised)
+        );
+
+        //NotAnInboundShipment
+        assert_eq!(
+            service.delete_inbound_shipment(
+                &context,
+                &mock_store_a().id,
+                &mock_user_account_a().id,
+                DeleteInboundShipment {
+                    id: mock_outbound_shipment_c().id.clone(),
+                },
+            ),
+            Err(ServiceError::NotAnInboundShipment)
+        );
+
+        //LineDeleteError
+        assert_eq!(
+            service.delete_inbound_shipment(
+                &context,
+                &mock_store_a().id,
+                &mock_user_account_a().id,
+                DeleteInboundShipment {
+                    id: mock_inbound_shipment_a().id.clone(),
+                },
+            ),
+            Err(ServiceError::LineDeleteError {
+                line_id: "inbound_shipment_a_line_a".to_string(),
+                error: DeleteInboundShipmentLineError::BatchIsReserved
+            })
+        );
+    }
+
+    #[actix_rt::test]
+    async fn delete_inbound_shipment_success() {
+        let (_, connection, connection_manager, _) =
+            setup_all("delete_inbound_shipment_success", MockDataInserts::all()).await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let context = service_provider.context().unwrap();
+        let service = service_provider.invoice_service;
+
+        let invoice_id = service
+            .delete_inbound_shipment(
+                &context,
+                &mock_store_a().id,
+                &mock_user_account_a().id,
+                DeleteInboundShipment {
+                    id: mock_inbound_shipment_e().id,
+                },
+            )
+            .unwrap();
+
+        //test entry has been deleted
+        assert_eq!(
+            InvoiceRowRepository::new(&connection)
+                .find_one_by_id_option(&invoice_id)
+                .unwrap(),
+            None
+        );
+    }
+}

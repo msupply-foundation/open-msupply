@@ -67,5 +67,6 @@
   "select-store": "Select store",
   "select-report": "Select Template",
   "error.server-not-found": "Problem finding local omSupply server",
+  "error.authentication-error": "The server has returned an error",
   "store-details": "Store code: {{code}}"
 }

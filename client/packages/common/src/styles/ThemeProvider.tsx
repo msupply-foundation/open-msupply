@@ -6,7 +6,7 @@ import rtlPlugin from 'stylis-plugin-rtl';
 import { useAppTheme } from './useAppTheme';
 import { RTLProvider } from './RTLProvider';
 import AdapterDateFns from '@mui/lab/AdapterDateFns';
-import LocalizationProvider from '@mui/lab/LocalizationProvider';
+import { LocalizationProvider } from '@mui/x-date-pickers';
 import { PropsWithChildrenOnly } from '@common/types';
 
 /**

@@ -21,13 +21,13 @@ use validate::validate;
 
 use self::generate::LineAndStockLine;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum UpdateInboundShipmentStatus {
     Delivered,
     Verified,
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct UpdateInboundShipment {
     pub id: String,
     pub other_party_id: Option<String>,
@@ -113,8 +113,8 @@ pub enum UpdateInboundShipmentError {
     OtherPartyNotVisible,
     OtherPartyNotASupplier,
     // Internal
-    UpdatedInvoiceDoesNotExist,
     DatabaseError(RepositoryError),
+    UpdatedInvoiceDoesNotExist,
 }
 
 impl From<RepositoryError> for UpdateInboundShipmentError {
@@ -155,17 +155,24 @@ impl UpdateInboundShipment {
 
 #[cfg(test)]
 mod test {
+    use chrono::{Duration, Utc};
     use repository::{
         mock::{
-            mock_inbound_shipment_a, mock_store_a, mock_user_account_a, MockData, MockDataInserts,
+            mock_inbound_shipment_a, mock_inbound_shipment_b, mock_inbound_shipment_c,
+            mock_inbound_shipment_e, mock_name_a, mock_name_linked_to_store_join,
+            mock_name_not_linked_to_store_join, mock_outbound_shipment_c, mock_store_a,
+            mock_store_linked_to_name, mock_user_account_a, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
-        InvoiceRowRepository, NameRow, NameStoreJoinRow,
+        EqualFilter, InvoiceLineFilter, InvoiceRowRepository, InvoiceRowStatus, NameRow,
+        NameStoreJoinRow, StockLineRowRepository,
     };
     use util::{inline_edit, inline_init};
 
     use crate::{
-        invoice::inbound_shipment::UpdateInboundShipment, service_provider::ServiceProvider,
+        invoice::inbound_shipment::{UpdateInboundShipment, UpdateInboundShipmentStatus},
+        invoice_line::query::get_invoice_lines,
+        service_provider::ServiceProvider,
     };
 
     use super::UpdateInboundShipmentError;
@@ -209,6 +216,70 @@ mod test {
         let context = service_provider.context().unwrap();
         let service = service_provider.invoice_service;
 
+        //InvoiceDoesNotExist
+        assert_eq!(
+            service.update_inbound_shipment(
+                &context,
+                &mock_store_a().id,
+                "n/a",
+                inline_init(|r: &mut UpdateInboundShipment| {
+                    r.id = "invalid".to_string();
+                    r.other_party_id = Some(mock_name_a().id.clone());
+                })
+            ),
+            Err(ServiceError::InvoiceDoesNotExist)
+        );
+        //NotAnInboundShipment
+        assert_eq!(
+            service.update_inbound_shipment(
+                &context,
+                &mock_store_a().id,
+                "n/a",
+                inline_init(|r: &mut UpdateInboundShipment| {
+                    r.id = mock_outbound_shipment_c().id.clone();
+                    r.other_party_id = Some(mock_name_a().id.clone());
+                })
+            ),
+            Err(ServiceError::NotAnInboundShipment)
+        );
+        //NotThisStoreInvoice
+        // assert_eq!(
+        //     service.update_inbound_shipment(
+        //         &context,
+        //         "store_b",
+        //         "n/a",
+        //         inline_init(|r: &mut UpdateInboundShipment| {
+        //             r.id = mock_inbound_shipment_c().id.clone();
+        //         })
+        //     ),
+        //     Err(ServiceError::NotThisStoreInvoice)
+        // );
+        //CannotEditFinalised
+        assert_eq!(
+            service.update_inbound_shipment(
+                &context,
+                &mock_store_a().id,
+                "n/a",
+                inline_init(|r: &mut UpdateInboundShipment| {
+                    r.id = mock_inbound_shipment_b().id.clone();
+                    r.comment = Some("comment update".to_string());
+                })
+            ),
+            Err(ServiceError::CannotEditFinalised)
+        );
+        //CannotChangeStatusOfInvoiceOnHold
+        assert_eq!(
+            service.update_inbound_shipment(
+                &context,
+                &mock_store_a().id,
+                "n/a",
+                inline_init(|r: &mut UpdateInboundShipment| {
+                    r.id = mock_inbound_shipment_e().id.clone();
+                    r.status = Some(UpdateInboundShipmentStatus::Delivered);
+                })
+            ),
+            Err(ServiceError::CannotChangeStatusOfInvoiceOnHold)
+        );
         // OtherPartyDoesNotExist
         assert_eq!(
             service.update_inbound_shipment(
@@ -249,7 +320,8 @@ mod test {
             Err(ServiceError::OtherPartyNotASupplier)
         );
 
-        // TODO add not Other error (only other party related atm)
+        // TODO NotThisStoreInvoice, CannotReverseInvoiceStatus,
+        // UpdateInvoiceDoesNotExist, DatabaseError
     }
 
     #[actix_rt::test]
@@ -282,6 +354,8 @@ mod test {
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider.context().unwrap();
         let service = service_provider.invoice_service;
+        let now = Utc::now().naive_utc();
+        let end_time = now.checked_add_signed(Duration::seconds(10)).unwrap();
 
         // Success
         service
@@ -307,8 +381,113 @@ mod test {
                 u.user_id = Some(mock_user_account_a().id);
                 u
             })
-        )
+        );
 
-        // TODO validate other field
+        //Test Confirmed
+        service
+            .update_inbound_shipment(
+                &context,
+                &mock_store_a().id,
+                &mock_user_account_a().id,
+                inline_init(|r: &mut UpdateInboundShipment| {
+                    r.id = mock_inbound_shipment_c().id;
+                    r.other_party_id = Some(supplier().id);
+                    r.status = Some(UpdateInboundShipmentStatus::Delivered);
+                }),
+            )
+            .unwrap();
+
+        let invoice = InvoiceRowRepository::new(&connection)
+            .find_one_by_id(&mock_inbound_shipment_c().id)
+            .unwrap();
+
+        assert_eq!(invoice.verified_datetime, None);
+        assert!(invoice.delivered_datetime.unwrap() > now);
+        assert!(invoice.delivered_datetime.unwrap() < end_time);
+
+        let filter = InvoiceLineFilter::new().invoice_id(EqualFilter::equal_any(vec![invoice.id]));
+        let invoice_lines = get_invoice_lines(&context, Some(filter)).unwrap();
+
+        for lines in invoice_lines.clone() {
+            let stock_line_id = lines.invoice_line_row.stock_line_id.clone().unwrap();
+            let stock_line = StockLineRowRepository::new(&connection)
+                .find_one_by_id(&stock_line_id)
+                .unwrap();
+            assert_eq!(lines.invoice_line_row.stock_line_id, Some(stock_line.id));
+        }
+
+        //Test success name_store_id linked to store
+        service
+            .update_inbound_shipment(
+                &context,
+                &mock_store_a().id,
+                &mock_user_account_a().id,
+                inline_init(|r: &mut UpdateInboundShipment| {
+                    r.id = mock_inbound_shipment_a().id;
+                    r.other_party_id = Some(mock_name_linked_to_store_join().name_id.clone());
+                }),
+            )
+            .unwrap();
+
+        let invoice = InvoiceRowRepository::new(&connection)
+            .find_one_by_id(&mock_inbound_shipment_a().id)
+            .unwrap();
+
+        assert_eq!(
+            invoice,
+            inline_edit(&invoice, |mut u| {
+                u.name_store_id = Some(mock_store_linked_to_name().id.clone());
+                u
+            })
+        );
+
+        //Test success name_store_id, not linked to store
+        service
+            .update_inbound_shipment(
+                &context,
+                &mock_store_a().id,
+                &mock_user_account_a().id,
+                inline_init(|r: &mut UpdateInboundShipment| {
+                    r.id = mock_inbound_shipment_a().id;
+                    r.other_party_id = Some(mock_name_not_linked_to_store_join().name_id.clone());
+                }),
+            )
+            .unwrap();
+
+        let invoice = InvoiceRowRepository::new(&connection)
+            .find_one_by_id(&mock_inbound_shipment_a().id)
+            .unwrap();
+
+        assert_eq!(invoice.name_store_id, None);
+
+        //Test Finalised (while setting invoice status onHold to true)
+        service
+            .update_inbound_shipment(
+                &context,
+                &mock_store_a().id,
+                &mock_user_account_a().id,
+                inline_init(|r: &mut UpdateInboundShipment| {
+                    r.id = mock_inbound_shipment_a().id;
+                    r.other_party_id = Some(supplier().id);
+                    r.status = Some(UpdateInboundShipmentStatus::Verified);
+                    r.on_hold = Some(true);
+                }),
+            )
+            .unwrap();
+
+        let invoice = InvoiceRowRepository::new(&connection)
+            .find_one_by_id(&mock_inbound_shipment_a().id)
+            .unwrap();
+
+        assert!(invoice.verified_datetime.unwrap() > now);
+        assert!(invoice.verified_datetime.unwrap() < end_time);
+        assert_eq!(
+            invoice,
+            inline_edit(&invoice, |mut u| {
+                u.status = InvoiceRowStatus::Verified;
+                u.on_hold = true;
+                u
+            })
+        );
     }
 }
