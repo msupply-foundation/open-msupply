@@ -47,7 +47,7 @@ pub fn update_outbound_shipment_line(
 
             get_invoice_line(ctx, &update_line.id)
                 .map_err(|error| OutError::DatabaseError(error))?
-                .ok_or(OutError::LineDoesNotExist)
+                .ok_or(OutError::UpdatedLineDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
     Ok(updated_line)
@@ -104,6 +104,7 @@ pub enum UpdateOutboundShipmentLineError {
     LocationNotFound,
     LineDoesNotReferenceStockLine,
     BatchIsOnHold,
+    UpdatedLineDoesNotExist,
     StockLineAlreadyExistsInInvoice(String),
     ReductionBelowZero {
         stock_line_id: String,
