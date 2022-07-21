@@ -65,7 +65,7 @@ export type AddToShipmentFromMasterListErrorInterface = {
 
 export type AddToShipmentFromMasterListInput = {
   masterListId: Scalars['String'];
-  outboundShipmentId: Scalars['String'];
+  shipmentId: Scalars['String'];
 };
 
 export type AddToShipmentFromMasterListResponse = AddToShipmentFromMasterListError | InvoiceLineConnector;
@@ -654,8 +654,9 @@ export type FullMutation = {
   __typename: 'FullMutation';
   /** Add requisition lines from master item master list */
   addFromMasterList: AddFromMasterListResponse;
+  addToInboundShipmentFromMasterList: AddToShipmentFromMasterListResponse;
   /** Add invoice lines from master item master list */
-  addToShipmentFromMasterList: AddToShipmentFromMasterListResponse;
+  addToOutboundShipmentFromMasterList: AddToShipmentFromMasterListResponse;
   allocateOutboundShipmentUnallocatedLine: AllocateOutboundShipmentUnallocatedLineResponse;
   batchInboundShipment: BatchInboundShipmentResponse;
   batchOutboundShipment: BatchOutboundShipmentResponse;
@@ -720,7 +721,13 @@ export type FullMutationAddFromMasterListArgs = {
 };
 
 
-export type FullMutationAddToShipmentFromMasterListArgs = {
+export type FullMutationAddToInboundShipmentFromMasterListArgs = {
+  input: AddToShipmentFromMasterListInput;
+  storeId: Scalars['String'];
+};
+
+
+export type FullMutationAddToOutboundShipmentFromMasterListArgs = {
   input: AddToShipmentFromMasterListInput;
   storeId: Scalars['String'];
 };
