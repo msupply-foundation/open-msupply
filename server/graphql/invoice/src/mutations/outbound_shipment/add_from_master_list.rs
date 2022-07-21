@@ -89,8 +89,13 @@ mod test {
     };
     use serde_json::json;
     use service::{
-        common::AddToShipmentFromMasterListInput as ServiceInput,
-        invoice::InvoiceServiceTrait,
+        invoice::{
+            common::{
+                AddToShipmentFromMasterListError as ServiceError,
+                AddToShipmentFromMasterListInput as ServiceInput,
+            },
+            InvoiceServiceTrait,
+        },
         service_provider::{ServiceContext, ServiceProvider},
     };
 
@@ -100,7 +105,7 @@ mod test {
     pub struct TestService(pub Box<DeleteLineMethod>);
 
     impl InvoiceServiceTrait for TestService {
-        fn add_from_master_list(
+        fn add_to_outbound_shipment_from_master_list(
             &self,
             _: &ServiceContext,
             store_id: &str,
@@ -122,7 +127,7 @@ mod test {
     fn empty_variables() -> serde_json::Value {
         json!({
           "input": {
-            "outboundShipmentId": "n/a",
+            "shipmentId": "n/a",
             "masterListId": "n/a",
           },
           "storeId": "n/a"
@@ -140,7 +145,7 @@ mod test {
         .await;
 
         let mutation = r#"
-        mutation ($input: AddToOutboundShipmentFromMasterListInput!, $storeId: String) {
+        mutation ($input: AddToShipmentFromMasterListInput!, $storeId: String) {
             addToOutboundShipmentFromMasterList(storeId: $storeId, input: $input) {
               ... on AddToShipmentFromMasterListError {
                 error {
@@ -250,7 +255,7 @@ mod test {
 
         let mutation = r#"
         mutation ($storeId: String, $input: AddToShipmentFromMasterListInput!) {
-            addToShipmentFromMasterList(storeId: $storeId, input: $input) {
+            addToOutboundShipmentFromMasterList(storeId: $storeId, input: $input) {
                 ... on InvoiceLineConnector{
                   nodes {
                     id
@@ -266,7 +271,7 @@ mod test {
             assert_eq!(
                 input,
                 ServiceInput {
-                    outbound_shipment_id: "id input".to_string(),
+                    shipment_id: "id input".to_string(),
                     master_list_id: "master list id input".to_string(),
                 }
             );
@@ -279,14 +284,14 @@ mod test {
 
         let variables = json!({
           "input": {
-            "outboundShipmentId": "id input",
+            "shipmentId": "id input",
             "masterListId": "master list id input"
           },
           "storeId": "store_a"
         });
 
         let expected = json!({
-            "addToShipmentFromMasterList": {
+            "addToOutboundShipmentFromMasterList": {
               "nodes": [
                 {
                   "id": mock_outbound_shipment_line_a().id
