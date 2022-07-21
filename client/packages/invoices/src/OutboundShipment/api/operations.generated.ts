@@ -89,14 +89,14 @@ export type DeleteOutboundShipmentLinesMutationVariables = Types.Exact<{
 
 export type DeleteOutboundShipmentLinesMutation = { __typename: 'FullMutation', batchOutboundShipment: { __typename: 'BatchOutboundShipmentResponse', deleteOutboundShipmentLines?: Array<{ __typename: 'DeleteOutboundShipmentLineResponseWithId', id: string, response: { __typename: 'DeleteOutboundShipmentLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null } };
 
-export type AddToShipmentFromMasterListMutationVariables = Types.Exact<{
+export type AddToOutboundShipmentFromMasterListMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
-  outboundShipmentId: Types.Scalars['String'];
+  shipmentId: Types.Scalars['String'];
   masterListId: Types.Scalars['String'];
 }>;
 
 
-export type AddToShipmentFromMasterListMutation = { __typename: 'FullMutation', addToShipmentFromMasterList: { __typename: 'AddToShipmentFromMasterListError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'MasterListNotFoundForThisName', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'InvoiceLineConnector', totalCount: number } };
+export type AddToOutboundShipmentFromMasterListMutation = { __typename: 'FullMutation', addToOutboundShipmentFromMasterList: { __typename: 'AddToShipmentFromMasterListError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'MasterListNotFoundForThisName', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'InvoiceLineConnector', totalCount: number } };
 
 export const PartialStockLineFragmentDoc = gql`
     fragment PartialStockLine on StockLineNode {
@@ -821,10 +821,10 @@ export const DeleteOutboundShipmentLinesDocument = gql`
   }
 }
     `;
-export const AddToShipmentFromMasterListDocument = gql`
-    mutation addToShipmentFromMasterList($storeId: String!, $outboundShipmentId: String!, $masterListId: String!) {
-  addToShipmentFromMasterList(
-    input: {outboundShipmentId: $outboundShipmentId, masterListId: $masterListId}
+export const AddToOutboundShipmentFromMasterListDocument = gql`
+    mutation addToOutboundShipmentFromMasterList($storeId: String!, $shipmentId: String!, $masterListId: String!) {
+  addToOutboundShipmentFromMasterList(
+    input: {shipmentId: $shipmentId, masterListId: $masterListId}
     storeId: $storeId
   ) {
     ... on AddToShipmentFromMasterListError {
@@ -887,8 +887,8 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     deleteOutboundShipmentLines(variables: DeleteOutboundShipmentLinesMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DeleteOutboundShipmentLinesMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<DeleteOutboundShipmentLinesMutation>(DeleteOutboundShipmentLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteOutboundShipmentLines', 'mutation');
     },
-    addToShipmentFromMasterList(variables: AddToShipmentFromMasterListMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<AddToShipmentFromMasterListMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<AddToShipmentFromMasterListMutation>(AddToShipmentFromMasterListDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'addToShipmentFromMasterList', 'mutation');
+    addToOutboundShipmentFromMasterList(variables: AddToOutboundShipmentFromMasterListMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<AddToOutboundShipmentFromMasterListMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<AddToOutboundShipmentFromMasterListMutation>(AddToOutboundShipmentFromMasterListDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'addToOutboundShipmentFromMasterList', 'mutation');
     }
   };
 }
@@ -1051,15 +1051,15 @@ export const mockDeleteOutboundShipmentLinesMutation = (resolver: ResponseResolv
  * @param resolver a function that accepts a captured request and may return a mocked response.
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
- * mockAddToShipmentFromMasterListMutation((req, res, ctx) => {
- *   const { storeId, outboundShipmentId, masterListId } = req.variables;
+ * mockAddToOutboundShipmentFromMasterListMutation((req, res, ctx) => {
+ *   const { storeId, shipmentId, masterListId } = req.variables;
  *   return res(
- *     ctx.data({ addToShipmentFromMasterList })
+ *     ctx.data({ addToOutboundShipmentFromMasterList })
  *   )
  * })
  */
-export const mockAddToShipmentFromMasterListMutation = (resolver: ResponseResolver<GraphQLRequest<AddToShipmentFromMasterListMutationVariables>, GraphQLContext<AddToShipmentFromMasterListMutation>, any>) =>
-  graphql.mutation<AddToShipmentFromMasterListMutation, AddToShipmentFromMasterListMutationVariables>(
-    'addToShipmentFromMasterList',
+export const mockAddToOutboundShipmentFromMasterListMutation = (resolver: ResponseResolver<GraphQLRequest<AddToOutboundShipmentFromMasterListMutationVariables>, GraphQLContext<AddToOutboundShipmentFromMasterListMutation>, any>) =>
+  graphql.mutation<AddToOutboundShipmentFromMasterListMutation, AddToOutboundShipmentFromMasterListMutationVariables>(
+    'addToOutboundShipmentFromMasterList',
     resolver
   )

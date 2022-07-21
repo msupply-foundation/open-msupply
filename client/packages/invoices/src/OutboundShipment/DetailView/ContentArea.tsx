@@ -57,7 +57,7 @@ const Expand: FC<{
   }
 };
 
-export const useHighlightPlaceholderRows = (
+const useHighlightPlaceholderRows = (
   rows: OutboundLineFragment[] | OutboundItem[] | undefined
 ) => {
   const { setRowStyles } = useRowStyle();

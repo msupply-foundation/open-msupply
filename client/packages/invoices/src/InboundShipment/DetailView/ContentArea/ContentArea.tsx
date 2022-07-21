@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect } from 'react';
 import {
   DataTable,
   useTranslation,
@@ -6,6 +6,9 @@ import {
   Switch,
   MiniTable,
   NothingHere,
+  AppSxProp,
+  useRowStyle,
+  InvoiceLineNodeType,
 } from '@openmsupply-client/common';
 import { InboundItem } from '../../../types';
 import { useInbound, InboundLineFragment } from '../../api';
@@ -29,12 +32,59 @@ const Expando = ({
   }
 };
 
+export const useHighlightPlaceholderRows = (
+  rows: InboundLineFragment[] | InboundItem[] | undefined
+) => {
+  const { setRowStyles } = useRowStyle();
+
+  useEffect(() => {
+    if (!rows) return;
+    const placeholders = [];
+
+    // This is a verbose .filter() on `rows` to find the placeholder lines.
+    // There is an issue with using `filter()` on a type which is
+    // A[] | B[]
+    // https://github.com/microsoft/TypeScript/issues/44373
+    for (const row of rows) {
+      if ('type' in row) {
+        if (
+          row.type === InvoiceLineNodeType.StockIn &&
+          row.numberOfPacks === 0
+        ) {
+          placeholders.push(row.id);
+        }
+      } else {
+        const hasPlaceholder = row.lines.some(
+          line => line.type === InvoiceLineNodeType.UnallocatedStock
+        );
+        if (hasPlaceholder) {
+          // Add both the OutboundItem and the individual lines, as
+          // this will cause the item to be highlighted as well as the
+          // lines within the expansion when grouped.
+          row.lines.forEach(line => {
+            if (line.type === InvoiceLineNodeType.UnallocatedStock) {
+              placeholders.push(line.id);
+            }
+          });
+          placeholders.push(row.id);
+        }
+      }
+    }
+
+    const style: AppSxProp = {
+      color: theme => theme.palette.secondary.light,
+    };
+    setRowStyles(placeholders, style);
+  }, [rows, setRowStyles]);
+};
+
 export const ContentArea: FC<ContentAreaProps> = React.memo(
   ({ onAddItem, onRowClick }) => {
     const t = useTranslation('replenishment');
     const isDisabled = useInbound.utils.isDisabled();
     const { columns, rows, isGrouped, toggleIsGrouped } =
       useInbound.lines.rows();
+    useHighlightPlaceholderRows(rows);
 
     return (
       <Box flexDirection="column" display="flex" flex={1}>
