@@ -1,28 +1,37 @@
 use chrono::Utc;
 
-use repository::Name;
+use repository::{
+    EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowType, Name,
+    RepositoryError,
+};
 use repository::{
     InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceRowStatus, StockLineRow,
     StorageConnection,
 };
 use util::uuid::uuid;
 
-use super::{UpdateInboundShipment, UpdateInboundShipmentError};
+use super::{UpdateInboundShipment, UpdateInboundShipmentError, UpdateInboundShipmentStatus};
 
 pub struct LineAndStockLine {
     pub stock_line: StockLineRow,
     pub line: InvoiceLineRow,
 }
 
-pub fn generate(
+pub(crate) struct GenerateResult {
+    pub(crate) batches_to_update: Option<Vec<LineAndStockLine>>,
+    pub(crate) update_invoice: InvoiceRow,
+    pub(crate) unallocated_lines_to_trim: Option<Vec<InvoiceLineRow>>,
+}
+
+pub(crate) fn generate(
     connection: &StorageConnection,
     user_id: &str,
     existing_invoice: InvoiceRow,
     other_party_option: Option<Name>,
     patch: UpdateInboundShipment,
-) -> Result<(Option<Vec<LineAndStockLine>>, InvoiceRow), UpdateInboundShipmentError> {
+) -> Result<GenerateResult, UpdateInboundShipmentError> {
     let should_create_batches = should_create_batches(&existing_invoice, &patch);
-    let mut update_invoice = existing_invoice;
+    let mut update_invoice = existing_invoice.clone();
 
     set_new_status_datetime(&mut update_invoice, &patch);
 
@@ -32,7 +41,7 @@ pub fn generate(
     update_invoice.on_hold = patch.on_hold.unwrap_or(update_invoice.on_hold);
     update_invoice.colour = patch.colour.or(update_invoice.colour);
 
-    if let Some(status) = patch.status {
+    if let Some(status) = patch.status.clone() {
         update_invoice.status = status.full_status().into()
     }
 
@@ -41,18 +50,25 @@ pub fn generate(
         update_invoice.name_id = other_party.name_row.id;
     }
 
-    if !should_create_batches {
-        Ok((None, update_invoice))
+    let batches_to_update = if should_create_batches {
+        Some(generate_lines_and_stock_lines(
+            connection,
+            &update_invoice.store_id,
+            &update_invoice.id,
+        )?)
     } else {
-        Ok((
-            Some(generate_lines_and_stock_lines(
-                connection,
-                &update_invoice.store_id,
-                &update_invoice.id,
-            )?),
-            update_invoice,
-        ))
-    }
+        None
+    };
+
+    Ok(GenerateResult {
+        batches_to_update,
+        unallocated_lines_to_trim: unallocated_lines_to_trim(
+            connection,
+            &existing_invoice,
+            &patch.status,
+        )?,
+        update_invoice,
+    })
 }
 
 pub fn should_create_batches(invoice: &InvoiceRow, patch: &UpdateInboundShipment) -> bool {
@@ -65,6 +81,44 @@ pub fn should_create_batches(invoice: &InvoiceRow, patch: &UpdateInboundShipment
     } else {
         false
     }
+}
+
+// If status changed to Picked and above, remove unallocated lines
+fn unallocated_lines_to_trim(
+    connection: &StorageConnection,
+    invoice: &InvoiceRow,
+    status: &Option<UpdateInboundShipmentStatus>,
+) -> Result<Option<Vec<InvoiceLineRow>>, RepositoryError> {
+    // Status sequence for inbound shipment: New, Picked, Shipped, Delivered, Verified
+    if invoice.status != InvoiceRowStatus::New {
+        return Ok(None);
+    }
+
+    let new_invoice_status = match status {
+        Some(new_status) => new_status.full_status(),
+        None => return Ok(None),
+    };
+
+    if new_invoice_status == InvoiceRowStatus::New {
+        return Ok(None);
+    }
+
+    // If new invoice status is not new and previous invoice status is new
+    // add all unallocated lines to be deleted
+
+    let lines = InvoiceLineRepository::new(connection).query_by_filter(
+        InvoiceLineFilter::new()
+            .invoice_id(EqualFilter::equal_to(&invoice.id))
+            .r#type(InvoiceLineRowType::StockIn.equal_to())
+            .number_of_packs(EqualFilter::equal_to_i32(0)),
+    )?;
+
+    if lines.is_empty() {
+        return Ok(None);
+    }
+
+    let invoice_line_rows = lines.into_iter().map(|l| l.invoice_line_row).collect();
+    return Ok(Some(invoice_line_rows));
 }
 
 fn set_new_status_datetime(invoice: &mut InvoiceRow, patch: &UpdateInboundShipment) {
