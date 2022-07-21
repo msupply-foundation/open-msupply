@@ -104,7 +104,7 @@ mod test {
     use crate::{
         document::{
             patient::{
-                patient_schema::{Address, ContactDetails, Gender, Patient, SocioEconomics},
+                patient_schema::{ContactDetails, Gender, Patient, SocioEconomics},
                 PatientFilter, PATIENT_TYPE,
             },
             raw_document::RawDocument,
@@ -145,6 +145,7 @@ mod test {
             contact_details: vec![contact_details.clone()],
             date_of_birth: Some("2000-03-04".to_string()),
             date_of_birth_is_estimated: None,
+            birth_place: None,
             family: None,
             first_name: Some("firstname".to_string()),
             last_name: Some("lastname".to_string()),
@@ -156,6 +157,7 @@ mod test {
                 literate: None,
                 occupation: None,
             },
+            allergies: None,
         };
         service
             .update_document(
@@ -199,9 +201,9 @@ mod test {
         assert_eq!(found_patient.name_row.phone, contact_details.mobile);
         assert_eq!(found_patient.name_row.email, contact_details.email);
         assert_eq!(found_patient.name_row.website, contact_details.website);
-        assert_eq!(found_patient.name_row.address1, address.address_1);
-        assert_eq!(found_patient.name_row.address2, address.address_2);
-        assert_eq!(found_patient.name_row.country, address.country);
+        assert_eq!(found_patient.name_row.address1, contact_details.address_1);
+        assert_eq!(found_patient.name_row.address2, contact_details.address_2);
+        assert_eq!(found_patient.name_row.country, contact_details.country);
 
         // test additional fields (custom schemas are allowed to have additional fields)
         let mut patient = serde_json::to_value(patient.clone()).unwrap();
