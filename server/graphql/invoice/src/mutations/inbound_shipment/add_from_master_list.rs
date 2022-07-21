@@ -83,15 +83,18 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
     };
     use repository::{
-        mock::{
-            mock_new_outbound_shipment_no_lines, mock_outbound_shipment_line_a, MockDataInserts,
-        },
+        mock::{mock_inbound_shipment_line_a, mock_new_inbound_shipment_no_lines, MockDataInserts},
         InvoiceLine, StorageConnectionManager,
     };
     use serde_json::json;
     use service::{
-        common::AddToShipmentFromMasterListInput as ServiceInput,
-        invoice::InvoiceServiceTrait,
+        invoice::{
+            common::{
+                AddToShipmentFromMasterListError as ServiceError,
+                AddToShipmentFromMasterListInput as ServiceInput,
+            },
+            InvoiceServiceTrait,
+        },
         service_provider::{ServiceContext, ServiceProvider},
     };
 
@@ -101,7 +104,7 @@ mod test {
     pub struct TestService(pub Box<DeleteLineMethod>);
 
     impl InvoiceServiceTrait for TestService {
-        fn add_from_master_list(
+        fn add_to_inbound_shipment_from_master_list(
             &self,
             _: &ServiceContext,
             store_id: &str,
@@ -123,7 +126,7 @@ mod test {
     fn empty_variables() -> serde_json::Value {
         json!({
           "input": {
-            "outboundShipmentId": "n/a",
+            "shipmentId": "n/a",
             "masterListId": "n/a",
           },
           "storeId": "n/a"
@@ -141,8 +144,8 @@ mod test {
         .await;
 
         let mutation = r#"
-        mutation ($input: AddToOutboundShipmentFromMasterListInput!, $storeId: String) {
-            addToOutboundShipmentFromMasterList(storeId: $storeId, input: $input) {
+        mutation ($input: AddToShipmentFromMasterListInput!, $storeId: String) {
+            addToInboundShipmentFromMasterList(storeId: $storeId, input: $input) {
               ... on AddToShipmentFromMasterListError {
                 error {
                   __typename
@@ -156,7 +159,7 @@ mod test {
         let test_service = TestService(Box::new(|_, _| Err(ServiceError::ShipmentDoesNotExist)));
 
         let expected = json!({
-            "addToOutboundShipmentFromMasterList": {
+            "addToInboundShipmentFromMasterList": {
               "error": {
                 "__typename": "RecordNotFound"
               }
@@ -176,7 +179,7 @@ mod test {
         let test_service = TestService(Box::new(|_, _| Err(ServiceError::CannotEditShipment)));
 
         let expected = json!({
-            "addToOutboundShipmentFromMasterList": {
+            "addToInboundShipmentFromMasterList": {
               "error": {
                 "__typename": "CannotEditInvoice"
               }
@@ -198,7 +201,7 @@ mod test {
         }));
 
         let expected = json!({
-            "addToOutboundShipmentFromMasterList": {
+            "addToInboundShipmentFromMasterList": {
               "error": {
                 "__typename": "MasterListNotFoundForThisName"
               }
@@ -226,8 +229,8 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        // NotAnOutboundShipment
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotAnOutboundShipment)));
+        // NotAnInboundShipment
+        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotAnInboundShipment)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -251,7 +254,7 @@ mod test {
 
         let mutation = r#"
         mutation ($storeId: String, $input: AddToShipmentFromMasterListInput!) {
-            addToShipmentFromMasterList(storeId: $storeId, input: $input) {
+            addToInboundShipmentFromMasterList(storeId: $storeId, input: $input) {
                 ... on InvoiceLineConnector{
                   nodes {
                     id
@@ -272,25 +275,25 @@ mod test {
                 }
             );
             Ok(vec![InvoiceLine {
-                invoice_line_row: mock_outbound_shipment_line_a(),
-                invoice_row: mock_new_outbound_shipment_no_lines(),
+                invoice_line_row: mock_inbound_shipment_line_a(),
+                invoice_row: mock_new_inbound_shipment_no_lines(),
                 location_row_option: None,
             }])
         }));
 
         let variables = json!({
           "input": {
-            "outboundShipmentId": "id input",
+            "shipmentId": "id input",
             "masterListId": "master list id input"
           },
           "storeId": "store_a"
         });
 
         let expected = json!({
-            "addToShipmentFromMasterList": {
+            "addToInboundShipmentFromMasterList": {
               "nodes": [
                 {
-                  "id": mock_outbound_shipment_line_a().id
+                  "id": mock_inbound_shipment_line_a().id
                 }
               ]
             }

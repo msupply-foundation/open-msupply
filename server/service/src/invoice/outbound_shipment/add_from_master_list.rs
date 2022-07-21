@@ -105,6 +105,10 @@ fn generate(
 
 #[cfg(test)]
 mod test {
+    use crate::invoice::common::{
+        AddToShipmentFromMasterListError as ServiceError,
+        AddToShipmentFromMasterListInput as ServiceInput,
+    };
     use crate::service_provider::ServiceProvider;
     use repository::{
         mock::{
@@ -130,7 +134,7 @@ mod test {
 
         // RecordDoesNotExist
         assert_eq!(
-            service.add_from_master_list(
+            service.add_to_outbound_shipment_from_master_list(
                 &context,
                 "store_a",
                 ServiceInput {
@@ -143,7 +147,7 @@ mod test {
 
         // NotThisStore
         assert_eq!(
-            service.add_from_master_list(
+            service.add_to_outbound_shipment_from_master_list(
                 &context,
                 "store_b",
                 ServiceInput {
@@ -156,7 +160,7 @@ mod test {
 
         // CannotEditRecord
         assert_eq!(
-            service.add_from_master_list(
+            service.add_to_outbound_shipment_from_master_list(
                 &context,
                 "store_c",
                 ServiceInput {
@@ -169,7 +173,7 @@ mod test {
 
         // RecordIsIncorrectType
         assert_eq!(
-            service.add_from_master_list(
+            service.add_to_outbound_shipment_from_master_list(
                 &context,
                 "store_a",
                 ServiceInput {
@@ -182,7 +186,7 @@ mod test {
 
         // MasterListNotFoundForThisName
         assert_eq!(
-            service.add_from_master_list(
+            service.add_to_outbound_shipment_from_master_list(
                 &context,
                 "store_c",
                 ServiceInput {
@@ -255,7 +259,7 @@ mod test {
         let service = service_provider.invoice_service;
 
         let result: Vec<repository::InvoiceLineRow> = service
-            .add_from_master_list(
+            .add_to_outbound_shipment_from_master_list(
                 &context,
                 "store_c",
                 ServiceInput {

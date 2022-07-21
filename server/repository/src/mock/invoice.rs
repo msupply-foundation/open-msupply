@@ -262,6 +262,23 @@ pub fn mock_outbound_shipment_line_a() -> InvoiceLineRow {
     })
 }
 
+pub fn mock_inbound_shipment_line_a() -> InvoiceLineRow {
+    inline_init(|r: &mut InvoiceLineRow| {
+        r.id = String::from("inbound_shipment_line_a");
+        r.invoice_id = String::from("inbound_shipment_c");
+        r.item_id = String::from("item_a");
+        r.item_name = String::from("Item A");
+        r.item_code = String::from("a");
+        r.pack_size = 1;
+        r.cost_price_per_pack = 0.0;
+        r.sell_price_per_pack = 0.0;
+        r.total_before_tax = 0.0;
+        r.total_after_tax = 0.0;
+        r.r#type = InvoiceLineRowType::StockIn;
+        r.number_of_packs = 0;
+    })
+}
+
 pub fn mock_outbound_shipments() -> Vec<InvoiceRow> {
     vec![
         mock_outbound_shipment_a(),
@@ -277,7 +294,10 @@ pub fn mock_outbound_shipments() -> Vec<InvoiceRow> {
 }
 
 pub fn mock_outbound_shipment_lines() -> Vec<InvoiceLineRow> {
-    vec![mock_outbound_shipment_line_a()]
+    vec![
+        mock_outbound_shipment_line_a(),
+        mock_inbound_shipment_line_a(),
+    ]
 }
 
 pub fn mock_inbound_shipments() -> Vec<InvoiceRow> {
