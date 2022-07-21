@@ -22,6 +22,8 @@ pub struct ServerSettings {
     pub cors_origins: Vec<String>,
     /// Directory where the server stores its data, e.g. sqlite DB file or certs
     pub base_dir: Option<String>,
+    /// Option to set the machine id of the device for an OS that isn't supported by machine_uid
+    pub machine_uid: Option<String>,
 }
 
 impl ServerSettings {
