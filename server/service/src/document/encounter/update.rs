@@ -169,6 +169,7 @@ mod test {
             .unwrap();
         let program = SchemaProgram {
             enrolment_datetime: Utc::now().to_rfc3339(),
+            patient_id: None,
         };
         let program_type = "ProgramType".to_string();
         service_provider

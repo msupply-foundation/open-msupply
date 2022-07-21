@@ -175,7 +175,7 @@ pub mod test {
 
     use crate::{
         document::patient::patient_schema::{
-            Address, ContactDetails, Gender, Patient, SchemaPatient, SocioEconomics,
+            ContactDetails, Gender, Patient, SchemaPatient, SocioEconomics,
         },
         service_provider::ServiceProvider,
     };
@@ -183,32 +183,27 @@ pub mod test {
     use super::UpdatePatientError;
 
     pub fn mock_patient_1() -> SchemaPatient {
-        let address = Address {
+        let contact_details = ContactDetails {
+            description: None,
+            email: Some("myemail".to_string()),
+            mobile: Some("45678".to_string()),
+            phone: None,
+            website: Some("mywebsite".to_string()),
             address_1: Some("firstaddressline".to_string()),
             address_2: Some("secondaddressline".to_string()),
             city: None,
             country: Some("mycountry".to_string()),
-            description: None,
             district: None,
-            key: "key".to_string(),
             region: None,
             zip_code: None,
         };
-        let contact_details = ContactDetails {
-            description: None,
-            email: Some("myemail".to_string()),
-            key: "key".to_string(),
-            mobile: Some("45678".to_string()),
-            phone: None,
-            website: Some("mywebsite".to_string()),
-        };
         Patient {
             id: "testid".to_string(),
-            national_id: Some("national_id".to_string()),
-            addresses: vec![address.clone()],
+            code: Some("national_id".to_string()),
             contact_details: vec![contact_details.clone()],
             date_of_birth: Some("2000-03-04".to_string()),
             date_of_birth_is_estimated: None,
+            birth_place: None,
             family: None,
             first_name: Some("firstname".to_string()),
             last_name: Some("lastname".to_string()),
@@ -220,6 +215,7 @@ pub mod test {
                 literate: None,
                 occupation: None,
             },
+            allergies: None,
         }
     }
 
