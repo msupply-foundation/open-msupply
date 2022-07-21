@@ -61,6 +61,7 @@ export const PatientResultsTab: FC<PatientPanel> = ({ patient, value }) => {
       )}
       <DataTable
         dense
+        key="create-patient-duplicates"
         data={data?.map(node => node.patient)}
         columns={columns}
         noDataMessage={t('messages.no-matching-patients')}

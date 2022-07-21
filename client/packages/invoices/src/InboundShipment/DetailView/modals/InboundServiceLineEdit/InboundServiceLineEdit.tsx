@@ -81,6 +81,7 @@ const InboundServiceLineEditComponent = ({
             })}
           >
             <DataTable
+              key="inbound-detail-service-line"
               columns={columns}
               data={lines.filter(({ isDeleted }) => !isDeleted)}
               dense
