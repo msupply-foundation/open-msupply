@@ -23,7 +23,7 @@ pub fn add_from_master_list(
     validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutateOutboundShipment,
+            resource: Resource::MutateInboundShipment,
             store_id: Some(store_id.to_string()),
         },
     )?;
@@ -67,7 +67,7 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
         }
         // Standard Graphql Errors
         ServiceError::NotThisStoreShipment => BadUserInput(formatted_error),
-        ServiceError::NotAnOutboundShipment => BadUserInput(formatted_error),
+        ServiceError::NotAnInboundShipment => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         _ => BadUserInput(formatted_error),
     };
