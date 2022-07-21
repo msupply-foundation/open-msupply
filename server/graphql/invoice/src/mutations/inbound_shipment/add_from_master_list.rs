@@ -1,5 +1,6 @@
 use crate::mutations::{
     AddFromMasterListResponse, AddToShipmentFromMasterListInput, DeleteError, DeleteErrorInterface,
+    MasterListNotFoundForThisName,
 };
 use async_graphql::*;
 use graphql_core::{
@@ -12,7 +13,7 @@ use graphql_types::types::InvoiceLineConnector;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     invoice::common::{
-        AddToShipmentFromMasterListError as ServiceError    
+        AddToShipmentFromMasterListError as ServiceError,
     },
 };
 
@@ -64,7 +65,7 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
         }
         ServiceError::MasterListNotFoundForThisName => {
             return Ok(DeleteErrorInterface::MasterListNotFoundForThisName(
-                crate::mutations::MasterListNotFoundForThisName {},
+                MasterListNotFoundForThisName {},
             ))
         }
         // Standard Graphql Errors
@@ -268,7 +269,7 @@ mod test {
             assert_eq!(
                 input,
                 ServiceInput {
-                    outbound_shipment_id: "id input".to_string(),
+                    shipment_id: "id input".to_string(),
                     master_list_id: "master list id input".to_string(),
                 }
             );

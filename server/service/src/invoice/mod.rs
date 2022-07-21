@@ -136,8 +136,8 @@ pub trait InvoiceServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         store_id: &str,
-        input: AddFromMasterList,
-    ) -> Result<Vec<InvoiceLine>, AddToShipmentFromMasterListError> {
+        input: common::AddToShipmentFromMasterListInput,
+    ) -> Result<Vec<InvoiceLine>, common::AddToShipmentFromMasterListError> {
         add_from_master_list(ctx, store_id, input)
     }
 }
