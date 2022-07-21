@@ -327,6 +327,7 @@ mod test {
                 invoice_line_row: mock_outbound_shipment_line_a(),
                 invoice_row: mock_new_outbound_shipment_no_lines(),
                 location_row_option: None,
+                stock_line_option: None,
             }])
         }));
 
