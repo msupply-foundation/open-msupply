@@ -232,21 +232,6 @@ pub fn mock_inbound_shipment_e() -> InvoiceRow {
     })
 }
 
-pub fn mock_inbound_shipment_not_linked_to_store() -> InvoiceRow {
-    inline_init(|r: &mut InvoiceRow| {
-        r.id = String::from("inbound_shipment_not_linked_to_store");
-        r.name_id = String::from("name_store_c");
-        r.store_id = String::from("store_c");
-        r.invoice_number = 7;
-        r.r#type = InvoiceRowType::InboundShipment;
-        r.status = InvoiceRowStatus::New;
-        r.on_hold = true;
-        r.comment = Some("Sort comment test".to_owned());
-        r.their_reference = Some(String::from(""));
-        r.created_datetime = NaiveDate::from_ymd(1970, 1, 4).and_hms_milli(21, 30, 0, 0);
-    })
-}
-
 pub fn mock_empty_draft_inbound_shipment() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
         r.id = String::from("empty_draft_inbound_shipment");
@@ -317,7 +302,6 @@ pub fn mock_inbound_shipments() -> Vec<InvoiceRow> {
         mock_inbound_shipment_c(),
         mock_inbound_shipment_d(),
         mock_inbound_shipment_e(),
-        mock_inbound_shipment_not_linked_to_store(),
         mock_empty_draft_inbound_shipment(),
         mock_unique_number_inbound_shipment(),
     ]

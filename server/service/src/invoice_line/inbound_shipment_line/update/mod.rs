@@ -104,8 +104,8 @@ mod test {
     use repository::{
         mock::{
             mock_inbound_shipment_a_invoice_lines, mock_inbound_shipment_b_invoice_lines,
-            mock_inbound_shipment_c_invoice_lines, mock_inbound_shipment_not_linked_to_store_lines,
-            mock_item_a, mock_store_a, mock_user_account_a, MockDataInserts,
+            mock_inbound_shipment_c_invoice_lines, mock_item_a, mock_store_a, mock_store_b,
+            mock_user_account_a, MockDataInserts,
         },
         test_db::setup_all,
         InvoiceLineRowRepository,
@@ -242,12 +242,10 @@ mod test {
         assert_eq!(
             service.update_inbound_shipment_line(
                 &context,
-                &mock_store_a().id,
+                &mock_store_b().id,
                 &mock_user_account_a().id,
                 inline_init(|r: &mut UpdateInboundShipmentLine| {
-                    r.id = mock_inbound_shipment_not_linked_to_store_lines()[0]
-                        .id
-                        .clone();
+                    r.id = mock_inbound_shipment_a_invoice_lines()[0].id.clone();
                     r.item_id = Some(mock_item_a().id.clone());
                     r.pack_size = Some(1);
                     r.number_of_packs = Some(1);

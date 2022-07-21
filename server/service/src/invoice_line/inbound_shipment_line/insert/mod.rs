@@ -97,9 +97,9 @@ where
 mod test {
     use repository::{
         mock::{
-            mock_inbound_shipment_a_invoice_lines, mock_inbound_shipment_c_invoice_lines,
-            mock_inbound_shipment_not_linked_to_store, mock_item_a, mock_outbound_shipment_e,
-            mock_store_a, mock_user_account_a, MockDataInserts,
+            mock_inbound_shipment_a_invoice_lines, mock_inbound_shipment_c,
+            mock_inbound_shipment_c_invoice_lines, mock_item_a, mock_outbound_shipment_e,
+            mock_store_a, mock_store_b, mock_user_account_a, MockDataInserts,
         },
         test_db::setup_all,
         InvoiceLineRowRepository,
@@ -256,11 +256,11 @@ mod test {
         assert_eq!(
             service.insert_inbound_shipment_line(
                 &context,
-                &mock_store_a().id,
+                &mock_store_b().id,
                 &mock_user_account_a().id,
                 inline_init(|r: &mut InsertInboundShipmentLine| {
                     r.id = "new invoice line id".to_string();
-                    r.invoice_id = mock_inbound_shipment_not_linked_to_store().id;
+                    r.invoice_id = mock_inbound_shipment_c().id.clone();
                     r.item_id = mock_item_a().id.clone();
                     r.pack_size = 1;
                     r.number_of_packs = 1;

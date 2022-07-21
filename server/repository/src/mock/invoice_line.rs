@@ -370,31 +370,6 @@ pub fn mock_inbound_shipment_d_invoice_lines() -> Vec<InvoiceLineRow> {
     ]
 }
 
-pub fn mock_inbound_shipment_not_linked_to_store_lines() -> Vec<InvoiceLineRow> {
-    let mock_inbound_shipment_e_invoice_line_a: InvoiceLineRow = InvoiceLineRow {
-        id: String::from("inbound_shipment_not_linked_to_store_lines"),
-        invoice_id: String::from("inbound_shipment_not_linked_to_store"),
-        item_id: String::from("item_a"),
-        location_id: None,
-        item_name: String::from("Item A"),
-        item_code: String::from("item_a_code"),
-        stock_line_id: Some(String::from("stock_line_si_d_siline_a")),
-        batch: Some(String::from("item_a_si_d_siline_a")),
-        expiry_date: None,
-        pack_size: 1,
-        cost_price_per_pack: 2.0,
-        sell_price_per_pack: 18.0,
-        total_before_tax: 14.0,
-        total_after_tax: 14.0,
-        tax: None,
-        r#type: InvoiceLineRowType::StockIn,
-        number_of_packs: 7,
-        note: None,
-    };
-
-    vec![mock_inbound_shipment_e_invoice_line_a]
-}
-
 pub fn mock_outbound_shipment_invoice_lines() -> Vec<InvoiceLineRow> {
     let mut mock_outbound_shipment_invoice_lines = Vec::new();
 
@@ -413,7 +388,6 @@ pub fn mock_inbound_shipment_invoice_lines() -> Vec<InvoiceLineRow> {
     mock_inbound_shipment_invoice_lines.extend(mock_inbound_shipment_b_invoice_lines());
     mock_inbound_shipment_invoice_lines.extend(mock_inbound_shipment_c_invoice_lines());
     mock_inbound_shipment_invoice_lines.extend(mock_inbound_shipment_d_invoice_lines());
-    mock_inbound_shipment_invoice_lines.extend(mock_inbound_shipment_not_linked_to_store_lines());
 
     mock_inbound_shipment_invoice_lines
 }
