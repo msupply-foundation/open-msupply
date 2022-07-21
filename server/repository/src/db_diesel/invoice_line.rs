@@ -3,11 +3,13 @@ use super::{
     invoice_line_row::{invoice_line, invoice_line::dsl as invoice_line_dsl},
     invoice_row::{invoice, invoice::dsl as invoice_dsl},
     location_row::{location, location::dsl as location_dsl},
+    stock_line_row::{stock_line, stock_line::dsl as stock_line_dsl},
     DBType, InvoiceLineRow, InvoiceLineRowType, InvoiceRow, LocationRow, StorageConnection,
 };
 
 use crate::{
     diesel_macros::apply_equal_filter, repository_error::RepositoryError, EqualFilter, Pagination,
+    StockLineRow,
 };
 
 use diesel::{
@@ -46,6 +48,7 @@ pub struct InvoiceLine {
     pub invoice_line_row: InvoiceLineRow,
     pub invoice_row: InvoiceRow,
     pub location_row_option: Option<LocationRow>,
+    pub stock_line_option: Option<StockLineRow>,
 }
 
 pub struct InvoiceLineFilter {
@@ -107,7 +110,12 @@ impl InvoiceLineFilter {
     }
 }
 
-type InvoiceLineJoin = (InvoiceLineRow, InvoiceRow, Option<LocationRow>);
+type InvoiceLineJoin = (
+    InvoiceLineRow,
+    InvoiceRow,
+    Option<LocationRow>,
+    Option<StockLineRow>,
+);
 
 pub struct InvoiceLineRepository<'a> {
     connection: &'a StorageConnection,
@@ -166,7 +174,10 @@ impl<'a> InvoiceLineRepository<'a> {
 
 type BoxedInvoiceLineQuery = IntoBoxed<
     'static,
-    LeftJoin<InnerJoin<invoice_line::table, invoice::table>, location::table>,
+    LeftJoin<
+        LeftJoin<InnerJoin<invoice_line::table, invoice::table>, location::table>,
+        stock_line::table,
+    >,
     DBType,
 >;
 
@@ -174,6 +185,7 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
     let mut query = invoice_line_dsl::invoice_line
         .inner_join(invoice_dsl::invoice)
         .left_join(location_dsl::location)
+        .left_join(stock_line_dsl::stock_line)
         .into_boxed();
 
     if let Some(f) = filter {
@@ -199,11 +211,14 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
     query
 }
 
-fn to_domain((invoice_line_row, invoice_row, location_row_option): InvoiceLineJoin) -> InvoiceLine {
+fn to_domain(
+    (invoice_line_row, invoice_row, location_row_option, stock_line_option): InvoiceLineJoin,
+) -> InvoiceLine {
     InvoiceLine {
         invoice_line_row,
         invoice_row,
         location_row_option,
+        stock_line_option,
     }
 }
 
