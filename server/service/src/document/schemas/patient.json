@@ -18,18 +18,11 @@
         "country": {
           "type": "string"
         },
-        "description": {
-          "description": "Clemens e.g. home, work, work2 etc",
-          "type": "string"
-        },
         "district": {
           "type": "string"
         },
-        "key": {
-          "description": "Unique contact detail identifier",
-          "type": "string"
-        },
         "region": {
+          "description": "Region or province",
           "type": "string"
         },
         "zipCode": {
@@ -37,21 +30,46 @@
           "type": "string"
         }
       },
-      "required": ["key"],
+      "type": "object"
+    },
+    "Allergies": {
+      "properties": {
+        "drugs": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": ["drugs"],
       "type": "object"
     },
     "ContactDetails": {
       "properties": {
+        "address1": {
+          "description": "184097001 Patient Address",
+          "type": "string"
+        },
+        "address2": {
+          "description": "Second address line",
+          "type": "string"
+        },
+        "city": {
+          "description": "433178008 City of residence",
+          "type": "string"
+        },
+        "country": {
+          "type": "string"
+        },
         "description": {
           "description": "Clemens e.g. home, work, etc",
           "type": "string"
         },
-        "email": {
-          "description": "424966008 Patient - email address",
+        "district": {
           "type": "string"
         },
-        "key": {
-          "description": "Unique contact detail identifier",
+        "email": {
+          "description": "424966008 Patient - email address",
           "type": "string"
         },
         "mobile": {
@@ -62,11 +80,18 @@
           "description": "429697006 Patient home telephone number",
           "type": "string"
         },
+        "region": {
+          "description": "Region or province",
+          "type": "string"
+        },
         "website": {
+          "type": "string"
+        },
+        "zipCode": {
+          "description": "184102003 Patient zip code",
           "type": "string"
         }
       },
-      "required": ["key"],
       "type": "object"
     },
     "Family": {
@@ -126,11 +151,16 @@
     },
     "Patient": {
       "properties": {
-        "addresses": {
-          "items": {
-            "$ref": "#/definitions/Address"
-          },
-          "type": "array"
+        "allergies": {
+          "$ref": "#/definitions/Allergies"
+        },
+        "birthPlace": {
+          "$ref": "#/definitions/Address",
+          "description": "Place of birth"
+        },
+        "code": {
+          "description": "Patient code, e.g. national id or other patient identifier",
+          "type": "string"
         },
         "contactDetails": {
           "items": {
@@ -169,10 +199,6 @@
           "description": "184096005 Patient Surname",
           "type": "string"
         },
-        "nationalId": {
-          "description": "Patient id",
-          "type": "string"
-        },
         "passportNumber": {
           "description": "1601000122107 Passport Number",
           "type": "string"
@@ -181,16 +207,18 @@
           "$ref": "#/definitions/SocioEconomics"
         }
       },
-      "required": ["addresses", "contactDetails", "id", "socioEconomics"],
+      "required": ["contactDetails", "id", "socioEconomics"],
       "type": "object"
     },
     "Person": {
       "properties": {
-        "addresses": {
-          "items": {
-            "$ref": "#/definitions/Address"
-          },
-          "type": "array"
+        "birthPlace": {
+          "$ref": "#/definitions/Address",
+          "description": "Place of birth"
+        },
+        "code": {
+          "description": "Patient code, e.g. national id or other patient identifier",
+          "type": "string"
         },
         "contactDetails": {
           "items": {
@@ -222,10 +250,6 @@
           "description": "184096005 Patient Surname",
           "type": "string"
         },
-        "nationalId": {
-          "description": "Patient id",
-          "type": "string"
-        },
         "passportNumber": {
           "description": "1601000122107 Passport Number",
           "type": "string"
@@ -234,7 +258,7 @@
           "$ref": "#/definitions/SocioEconomics"
         }
       },
-      "required": ["addresses", "contactDetails", "socioEconomics"],
+      "required": ["contactDetails", "socioEconomics"],
       "type": "object"
     },
     "SocioEconomics": {

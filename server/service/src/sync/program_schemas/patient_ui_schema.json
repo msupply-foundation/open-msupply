@@ -25,7 +25,8 @@
                 },
                 {
                   "type": "Control",
-                  "scope": "#/properties/nationalId"
+                  "label": "NUIC",
+                  "scope": "#/properties/code"
                 },
                 {
                   "type": "Control",
@@ -47,11 +48,26 @@
                 },
                 {
                   "type": "Control",
-                  "scope": "#/properties/hand"
+                  "label": "DOB Estimated",
+                  "scope": "#/properties/dateOfBirthIsEstimated"
                 },
                 {
                   "type": "Control",
-                  "scope": "#/properties/birthorder"
+                  "label": "Birth District",
+                  "scope": "#/properties/birthPlace/properties/district"
+                },
+                {
+                  "type": "Control",
+                  "label": "Birth Province",
+                  "scope": "#/properties/birthPlace/properties/region"
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/properties/birthOrder"
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/properties/hand"
                 }
               ]
             },
@@ -62,23 +78,26 @@
                 {
                   "type": "Control",
                   "scope": "#/properties/contactDetails",
-                  "label": "Contacts",
-                  "itemLabel": "${index}: ${key}",
-                  "defaultNewItem": {
-                    "key": "Default data",
-                    "description": "New item defaults can be provided!"
-                  },
+                  "itemLabel": "Contact ${index}:",
                   "options": {
                     "detail": {
                       "type": "VerticalLayout",
                       "elements": [
                         {
                           "type": "Control",
-                          "scope": "/properties/key"
+                          "scope": "/properties/description"
                         },
                         {
                           "type": "Control",
-                          "scope": "/properties/description"
+                          "scope": "/properties/address1"
+                        },
+                        {
+                          "type": "Control",
+                          "scope": "/properties/address2"
+                        },
+                        {
+                          "type": "Control",
+                          "scope": "/properties/district"
                         },
                         {
                           "type": "Control",
@@ -95,38 +114,6 @@
                       ]
                     }
                   }
-                },
-                {
-                  "type": "Control",
-                  "scope": "#/properties/addresses",
-                  "itemLabel": "Address ${index}",
-                  "options": {
-                    "detail": {
-                      "type": "VerticalLayout",
-                      "elements": [
-                        {
-                          "type": "Control",
-                          "scope": "/properties/key"
-                        },
-                        {
-                          "type": "Control",
-                          "scope": "/properties/description"
-                        },
-                        {
-                          "type": "Control",
-                          "scope": "/properties/address1"
-                        },
-                        {
-                          "type": "Control",
-                          "scope": "/properties/address2"
-                        },
-                        {
-                          "type": "Control",
-                          "scope": "/properties/district"
-                        }
-                      ]
-                    }
-                  }
                 }
               ]
             }
@@ -137,12 +124,36 @@
           "elements": [
             {
               "type": "Group",
-              "label": "Family Information",
+              "label": "Demographics",
               "elements": [
                 {
                   "type": "Control",
                   "scope": "#/properties/family/properties/maritalStatus"
                 },
+                {
+                  "type": "Control",
+                  "scope": "#/properties/socioEconomics/properties/education"
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/properties/socioEconomics/properties/occupation"
+                }
+              ]
+            },
+            {
+              "type": "Group",
+              "label": "Allergies",
+              "elements": [
+                {
+                  "type": "Control",
+                  "scope": "#/properties/allergies/properties/drugs"
+                }
+              ]
+            },
+            {
+              "type": "Group",
+              "label": "Family Information",
+              "elements": [
                 {
                   "type": "Group",
                   "label": "Mother",
@@ -160,14 +171,23 @@
                       "scope": "#/properties/family/properties/mother/properties/contactDetails",
                       "label": "Contact",
                       "options": {
-                        "detail": "GENERATED"
-                      }
-                    },
-                    {
-                      "type": "Control",
-                      "scope": "#/properties/family/properties/mother/properties/addresses",
-                      "options": {
-                        "detail": "GENERATED"
+                        "detail": {
+                          "type": "VerticalLayout",
+                          "elements": [
+                            {
+                              "type": "Control",
+                              "scope": "/properties/phone"
+                            },
+                            {
+                              "type": "Control",
+                              "scope": "/properties/mobile"
+                            },
+                            {
+                              "type": "Control",
+                              "scope": "/properties/email"
+                            }
+                          ]
+                        }
                       }
                     }
                   ]
@@ -189,14 +209,23 @@
                       "scope": "#/properties/family/properties/nextOfKin/properties/contactDetails",
                       "label": "Contact",
                       "options": {
-                        "detail": "GENERATED"
-                      }
-                    },
-                    {
-                      "type": "Control",
-                      "scope": "#/properties/family/properties/nextOfKin/properties/addresses",
-                      "options": {
-                        "detail": "GENERATED"
+                        "detail": {
+                          "type": "VerticalLayout",
+                          "elements": [
+                            {
+                              "type": "Control",
+                              "scope": "/properties/phone"
+                            },
+                            {
+                              "type": "Control",
+                              "scope": "/properties/mobile"
+                            },
+                            {
+                              "type": "Control",
+                              "scope": "/properties/email"
+                            }
+                          ]
+                        }
                       }
                     }
                   ]

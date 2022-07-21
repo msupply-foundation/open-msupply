@@ -26,7 +26,7 @@ pub fn patient_document_updated(
         })?),
         None => None,
     };
-    let address = patient.addresses.get(0);
+    let address = patient.contact_details.get(0);
     let name_repo = NameRowRepository::new(con);
     let existing_name = name_repo.find_one_by_id(&patient.id)?;
     name_repo.upsert_one(&NameRow {
@@ -124,29 +124,24 @@ mod test {
         let ctx = service_provider.context().unwrap();
 
         let service = service_provider.document_service;
-        let address = Address {
+
+        let contact_details = ContactDetails {
+            description: None,
+            email: Some("myemail".to_string()),
+            mobile: Some("45678".to_string()),
+            phone: None,
+            website: Some("mywebsite".to_string()),
             address_1: Some("firstaddressline".to_string()),
             address_2: Some("secondaddressline".to_string()),
             city: None,
             country: Some("mycountry".to_string()),
-            description: None,
             district: None,
-            key: "key".to_string(),
             region: None,
             zip_code: None,
         };
-        let contact_details = ContactDetails {
-            description: None,
-            email: Some("myemail".to_string()),
-            key: "key".to_string(),
-            mobile: Some("45678".to_string()),
-            phone: None,
-            website: Some("mywebsite".to_string()),
-        };
         let patient = Patient {
             id: "testid".to_string(),
-            national_id: None,
-            addresses: vec![address.clone()],
+            code: None,
             contact_details: vec![contact_details.clone()],
             date_of_birth: Some("2000-03-04".to_string()),
             date_of_birth_is_estimated: None,

@@ -7,6 +7,10 @@
           "description": "Enrolment date and time",
           "format": "date-time",
           "type": "string"
+        },
+        "patientId": {
+          "description": "Program specific patient id.",
+          "type": "string"
         }
       },
       "required": ["enrolmentDatetime"],
