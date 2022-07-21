@@ -17,6 +17,7 @@ import { ChevronsDownIcon } from './ChevronsDown';
 import { CircleIcon } from './Circle';
 import { ClockIcon } from './Clock';
 import { CloseIcon } from './Close';
+import { ColumnsIcon } from './Columns';
 import { CopyIcon } from './Copy';
 import { CustomersIcon } from './Customers';
 import { DashboardIcon } from './Dashboard';
@@ -94,6 +95,7 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <CircleIcon {...args} />, name: 'Circle' },
     { icon: <ClockIcon {...args} />, name: 'Clock' },
     { icon: <CloseIcon {...args} />, name: 'Close' },
+    { icon: <ColumnsIcon {...args} />, name: 'Columns' },
     { icon: <CopyIcon {...args} />, name: 'Copy' },
     { icon: <CustomersIcon {...args} />, name: 'Customers' },
     { icon: <DashboardIcon {...args} />, name: 'Dashboard' },

@@ -10,31 +10,9 @@ export type Scalars = {
   Boolean: boolean;
   Int: number;
   Float: number;
-  /**
-   * Implement the DateTime<Utc> scalar
-   *
-   * The input/output is a string in RFC3339 format.
-   */
   DateTime: string;
-  /** A scalar that can represent any JSON value. */
   JSON: any;
-  /**
-   * ISO 8601 calendar date without timezone.
-   * Format: %Y-%m-%d
-   *
-   * # Examples
-   *
-   * * `1994-11-13`
-   * * `2000-02-24`
-   */
   NaiveDate: string;
-  /**
-   * ISO 8601 combined date and time without timezone.
-   *
-   * # Examples
-   *
-   * * `2015-07-01T08:59:60.123`,
-   */
   NaiveDateTime: string;
 };
 
@@ -792,6 +770,7 @@ export type FullMutation = {
   deleteStocktake: DeleteStocktakeResponse;
   deleteStocktakeLine: DeleteStocktakeLineResponse;
   insertDocumentRegistry: InsertDocumentResponse;
+  insertEncounter: InsertEncounterResponse;
   insertFormSchema: InsertFormSchemaResponse;
   insertInboundShipment: InsertInboundShipmentResponse;
   insertInboundShipmentLine: InsertInboundShipmentLineResponse;
@@ -802,6 +781,11 @@ export type FullMutation = {
   insertOutboundShipmentServiceLine: InsertOutboundShipmentServiceLineResponse;
   insertOutboundShipmentUnallocatedLine: InsertOutboundShipmentUnallocatedLineResponse;
   insertPatient: InsertPatientResponse;
+  /**
+   * Enrols a patient into a program by adding a program document to the patient's documents.
+   * Every patient can only have one program document of each program type.
+   */
+  insertProgram: InsertProgramResponse;
   insertRequestRequisition: InsertRequestRequisitionResponse;
   insertRequestRequisitionLine: InsertRequestRequisitionLineResponse;
   insertStocktake: InsertStocktakeResponse;
@@ -809,6 +793,7 @@ export type FullMutation = {
   /** Set supply quantity to requested quantity */
   supplyRequestedQuantity: SupplyRequestedQuantityResponse;
   updateDocument: UpdateDocumentResponse;
+  updateEncounter: UpdateEncounterResponse;
   updateInboundShipment: UpdateInboundShipmentResponse;
   updateInboundShipmentLine: UpdateInboundShipmentLineResponse;
   updateInboundShipmentServiceLine: UpdateInboundShipmentServiceLineResponse;
@@ -818,6 +803,8 @@ export type FullMutation = {
   updateOutboundShipmentServiceLine: UpdateOutboundShipmentServiceLineResponse;
   updateOutboundShipmentUnallocatedLine: UpdateOutboundShipmentUnallocatedLineResponse;
   updatePatient: UpdatePatientResponse;
+  /** Updates an existing program document belonging to a patient. */
+  updateProgram: UpdateProgramResponse;
   updateRequestRequisition: UpdateRequestRequisitionResponse;
   updateRequestRequisitionLine: UpdateRequestRequisitionLineResponse;
   updateResponseRequisition: UpdateResponseRequisitionResponse;
@@ -955,6 +942,12 @@ export type FullMutationInsertDocumentRegistryArgs = {
 };
 
 
+export type FullMutationInsertEncounterArgs = {
+  input: InsertEncounterInput;
+  storeId: Scalars['String'];
+};
+
+
 export type FullMutationInsertFormSchemaArgs = {
   input: InsertFormSchemaInput;
 };
@@ -1014,6 +1007,12 @@ export type FullMutationInsertPatientArgs = {
 };
 
 
+export type FullMutationInsertProgramArgs = {
+  input: InsertProgramInput;
+  storeId: Scalars['String'];
+};
+
+
 export type FullMutationInsertRequestRequisitionArgs = {
   input: InsertRequestRequisitionInput;
   storeId: Scalars['String'];
@@ -1046,6 +1045,12 @@ export type FullMutationSupplyRequestedQuantityArgs = {
 
 export type FullMutationUpdateDocumentArgs = {
   input: UpdateDocumentInput;
+  storeId: Scalars['String'];
+};
+
+
+export type FullMutationUpdateEncounterArgs = {
+  input: UpdateEncounterInput;
   storeId: Scalars['String'];
 };
 
@@ -1100,6 +1105,12 @@ export type FullMutationUpdateOutboundShipmentUnallocatedLineArgs = {
 
 export type FullMutationUpdatePatientArgs = {
   input: UpdatePatientInput;
+  storeId: Scalars['String'];
+};
+
+
+export type FullMutationUpdateProgramArgs = {
+  input: UpdateProgramInput;
   storeId: Scalars['String'];
 };
 
@@ -1471,6 +1482,20 @@ export type InsertDocumentRegistryInput = {
 
 export type InsertDocumentResponse = DocumentRegistryNode;
 
+export type InsertEncounterInput = {
+  /** Encounter document data */
+  data: Scalars['JSON'];
+  patientId: Scalars['String'];
+  /** The program type */
+  programType: Scalars['String'];
+  /** The schema id used for the encounter data */
+  schemaId: Scalars['String'];
+  /** The encounter type */
+  type: Scalars['String'];
+};
+
+export type InsertEncounterResponse = DocumentNode;
+
 export type InsertErrorInterface = {
   description: Scalars['String'];
 };
@@ -1701,6 +1726,18 @@ export type InsertPatientInput = {
 };
 
 export type InsertPatientResponse = PatientNode;
+
+export type InsertProgramInput = {
+  /** Program document data */
+  data: Scalars['JSON'];
+  patientId: Scalars['String'];
+  /** The schema id used for the program data */
+  schemaId: Scalars['String'];
+  /** The program type */
+  type: Scalars['String'];
+};
+
+export type InsertProgramResponse = DocumentNode;
 
 export type InsertRequestRequisitionError = {
   __typename: 'InsertRequestRequisitionError';
@@ -3234,6 +3271,17 @@ export type UpdateDocumentInput = {
 
 export type UpdateDocumentResponse = DocumentNode | UpdateDocumentError;
 
+export type UpdateEncounterInput = {
+  /** Encounter document data */
+  data: Scalars['JSON'];
+  /** The document id of the encounter document which should be updated */
+  parent: Scalars['String'];
+  /** The schema id used for the counter data */
+  schemaId: Scalars['String'];
+};
+
+export type UpdateEncounterResponse = DocumentNode;
+
 export type UpdateErrorInterface = {
   description: Scalars['String'];
 };
@@ -3469,6 +3517,19 @@ export type UpdatePatientInput = {
 };
 
 export type UpdatePatientResponse = PatientNode;
+
+export type UpdateProgramInput = {
+  /** Program document data */
+  data: Scalars['JSON'];
+  parent: Scalars['String'];
+  patientId: Scalars['String'];
+  /** The schema id used for the program data */
+  schemaId: Scalars['String'];
+  /** The program type */
+  type: Scalars['String'];
+};
+
+export type UpdateProgramResponse = DocumentNode;
 
 export type UpdateRequestRequisitionError = {
   __typename: 'UpdateRequestRequisitionError';

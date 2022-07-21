@@ -27,6 +27,7 @@ export const useRequest = {
   line: {
     chartData: Lines.useRequestLineChartData,
     delete: Lines.useDeleteRequestLines,
+    deleteLine: Lines.useDeleteRequestLine,
     list: Lines.useRequestLines,
     save: Lines.useSaveRequestLines,
   },

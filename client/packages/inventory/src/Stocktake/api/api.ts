@@ -17,7 +17,7 @@ import {
   StocktakeLineFragment,
 } from './operations.generated';
 import { DraftStocktakeLine } from './../DetailView/modal/StocktakeLineEdit';
-import { StockLineFragment } from 'packages/system/src';
+import { StockLineFragment } from '@openmsupply-client/system';
 
 export type ListParams = {
   first: number;

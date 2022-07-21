@@ -21,7 +21,7 @@ const StockListComponent: FC = () => {
     updatePaginationQuery,
     updateSortQuery,
     queryParams: { sortBy, page, first, offset },
-  } = useUrlQueryParams({ initialSortKey: 'itemName' });
+  } = useUrlQueryParams({ initialSort: { key: 'itemName', dir: 'asc' } });
   const pagination = { page, first, offset };
   const t = useTranslation('inventory');
   const filterString = String(urlQuery.filter ?? '');
@@ -63,6 +63,7 @@ const StockListComponent: FC = () => {
         filterString={urlQuery.filter ?? ''}
       />
       <DataTable
+        key="stock-list"
         pagination={{ ...pagination, total: filteredSortedData.length }}
         columns={columns}
         data={filteredSortedData.slice(

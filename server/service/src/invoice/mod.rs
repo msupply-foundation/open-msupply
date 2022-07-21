@@ -81,7 +81,7 @@ pub trait InvoiceServiceTrait: Sync + Send {
         user_id: &str,
         input: DeleteInboundShipment,
     ) -> Result<String, DeleteInboundShipmentError> {
-        delete_inbound_shipment(ctx, user_id, store_id, input)
+        delete_inbound_shipment(ctx, store_id, user_id, input)
     }
 
     fn insert_outbound_shipment(
