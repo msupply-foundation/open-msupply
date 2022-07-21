@@ -83,7 +83,7 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
     };
     use repository::{
-        mock::{mock_inbound_shipment_line_a, mock_new_inbound_shipment_no_lines, MockDataInserts},
+        mock::{mock_empty_draft_inbound_shipment, mock_inbound_shipment_line_a, MockDataInserts},
         InvoiceLine, StorageConnectionManager,
     };
     use serde_json::json;
@@ -138,7 +138,7 @@ mod test {
         let (_, _, connection_manager, settings) = setup_graphl_test(
             EmptyMutation,
             InvoiceMutations,
-            "test_graphql_add_from_master_list_structured_errors",
+            "test_graphql_add_is_from_master_list_structured_errors",
             MockDataInserts::all(),
         )
         .await;
@@ -247,7 +247,7 @@ mod test {
         let (_, _, connection_manager, settings) = setup_graphl_test(
             EmptyMutation,
             InvoiceMutations,
-            "test_graphql_add_from_master_list_success",
+            "test_graphql_add_is_from_master_list_success",
             MockDataInserts::all(),
         )
         .await;
@@ -276,7 +276,7 @@ mod test {
             );
             Ok(vec![InvoiceLine {
                 invoice_line_row: mock_inbound_shipment_line_a(),
-                invoice_row: mock_new_inbound_shipment_no_lines(),
+                invoice_row: mock_empty_draft_inbound_shipment(),
                 location_row_option: None,
             }])
         }));

@@ -139,7 +139,7 @@ mod test {
         let (_, _, connection_manager, settings) = setup_graphl_test(
             EmptyMutation,
             InvoiceMutations,
-            "test_graphql_add_from_master_list_structured_errors",
+            "test_graphql_add_os_from_master_list_structured_errors",
             MockDataInserts::all(),
         )
         .await;
@@ -248,7 +248,7 @@ mod test {
         let (_, _, connection_manager, settings) = setup_graphl_test(
             EmptyMutation,
             InvoiceMutations,
-            "test_graphql_add_from_master_list_success",
+            "test_graphql_add_os_from_master_list_success",
             MockDataInserts::all(),
         )
         .await;
