@@ -132,13 +132,22 @@ pub trait InvoiceServiceTrait: Sync + Send {
         batch_outbound_shipment(ctx, store_id, user_id, input)
     }
 
-    fn add_from_master_list(
+    fn add_to_outbound_shipment_from_master_list(
         &self,
         ctx: &ServiceContext,
         store_id: &str,
         input: common::AddToShipmentFromMasterListInput,
     ) -> Result<Vec<InvoiceLine>, common::AddToShipmentFromMasterListError> {
-        add_from_master_list(ctx, store_id, input)
+        outbound_shipment::add_from_master_list(ctx, store_id, input)
+    }
+
+    fn add_to_inbound_shipment_from_master_list(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+        input: common::AddToShipmentFromMasterListInput,
+    ) -> Result<Vec<InvoiceLine>, common::AddToShipmentFromMasterListError> {
+        inbound_shipment::add_from_master_list(ctx, store_id, input)
     }
 }
 

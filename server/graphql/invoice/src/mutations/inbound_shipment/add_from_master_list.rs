@@ -12,9 +12,7 @@ use graphql_core::{
 use graphql_types::types::InvoiceLineConnector;
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    invoice::common::{
-        AddToShipmentFromMasterListError as ServiceError,
-    },
+    invoice::common::AddToShipmentFromMasterListError as ServiceError,
 };
 
 pub fn add_from_master_list(
@@ -33,11 +31,10 @@ pub fn add_from_master_list(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
 
-    let response = match service_provider.invoice_service.add_from_master_list(
-        &service_context,
-        store_id,
-        input.to_domain(),
-    ) {
+    let response = match service_provider
+        .invoice_service
+        .add_to_inbound_shipment_from_master_list(&service_context, store_id, input.to_domain())
+    {
         Ok(invoice_lines) => {
             AddFromMasterListResponse::Response(InvoiceLineConnector::from_vec(invoice_lines))
         }
@@ -72,6 +69,7 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
         ServiceError::NotThisStoreShipment => BadUserInput(formatted_error),
         ServiceError::NotAnOutboundShipment => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
+        _ => BadUserInput(formatted_error),
     };
 
     Err(graphql_error.extend())
@@ -92,9 +90,9 @@ mod test {
     };
     use serde_json::json;
     use service::{
+        common::AddToShipmentFromMasterListInput as ServiceInput,
         invoice::InvoiceServiceTrait,
         service_provider::{ServiceContext, ServiceProvider},
-        common::AddToShipmentFromMasterListInput as ServiceInput,
     };
 
     type DeleteLineMethod =

@@ -1,3 +1,4 @@
+use crate::invoice::common::AddToShipmentFromMasterListError as ServiceError;
 use repository::{
     EqualFilter, InvoiceRow, MasterList, MasterListFilter, MasterListRepository, RepositoryError,
     StorageConnection,
@@ -31,6 +32,7 @@ pub enum AddToShipmentFromMasterListError {
     CannotEditShipment,
     MasterListNotFoundForThisName,
     NotAnOutboundShipment,
+    NotAnInboundShipment,
     DatabaseError(RepositoryError),
 }
 
@@ -45,4 +47,10 @@ pub fn check_master_list_for_name(
             .exists_for_name_id(EqualFilter::equal_to(name_id)),
     )?;
     Ok(rows.pop())
+}
+
+impl From<RepositoryError> for ServiceError {
+    fn from(error: RepositoryError) -> Self {
+        ServiceError::DatabaseError(error)
+    }
 }

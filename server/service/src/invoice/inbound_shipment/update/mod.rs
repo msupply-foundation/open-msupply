@@ -15,6 +15,7 @@ use repository::{
 mod generate;
 mod validate;
 
+use crate::invoice::inbound_shipment::update::generate::GenerateResult;
 use generate::generate;
 use util::uuid::uuid;
 use validate::validate;
@@ -50,18 +51,28 @@ pub fn update_inbound_shipment(
         .connection
         .transaction_sync(|connection| {
             let (invoice, other_party) = validate(connection, store_id, &patch)?;
-            let (lines_and_invoice_lines_option, update_invoice) =
-                generate(connection, user_id, invoice, other_party, patch.clone())?;
+            let GenerateResult {
+                batches_to_update,
+                update_invoice,
+                unallocated_lines_to_trim,
+            } = generate(connection, user_id, invoice, other_party, patch.clone())?;
 
             InvoiceRowRepository::new(connection).upsert_one(&update_invoice)?;
 
-            if let Some(lines_and_invoice_lines) = lines_and_invoice_lines_option {
+            if let Some(lines_and_invoice_lines) = batches_to_update {
                 let stock_line_repository = StockLineRowRepository::new(connection);
                 let invoice_line_respository = InvoiceLineRowRepository::new(connection);
 
                 for LineAndStockLine { line, stock_line } in lines_and_invoice_lines.into_iter() {
                     stock_line_repository.upsert_one(&stock_line)?;
                     invoice_line_respository.upsert_one(&line)?;
+                }
+            }
+
+            if let Some(lines) = unallocated_lines_to_trim {
+                let repository = InvoiceLineRowRepository::new(connection);
+                for line in lines {
+                    repository.delete(&line.id)?;
                 }
             }
 

@@ -62,8 +62,8 @@ fn validate(
         return Err(ServiceError::CannotEditShipment);
     }
 
-    if invoice_row.r#type != InvoiceRowType::OutboundShipment {
-        return Err(ServiceError::NotAnOutboundShipment);
+    if invoice_row.r#type != InvoiceRowType::InboundShipment {
+        return Err(ServiceError::NotAnInboundShipment);
     }
 
     check_master_list_for_name(connection, &invoice_row.name_id, &input.master_list_id)?
