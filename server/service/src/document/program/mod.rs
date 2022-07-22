@@ -1,11 +1,14 @@
 use repository::Document;
+use repository::Program;
 
 use crate::service_provider::ServiceContext;
 use crate::service_provider::ServiceProvider;
 
 pub use self::upsert::*;
 pub mod program_schema;
+mod program_updated;
 mod upsert;
+
 pub trait ProgramServiceTrait: Sync + Send {
     fn upsert_program(
         &self,
@@ -14,7 +17,7 @@ pub trait ProgramServiceTrait: Sync + Send {
         store_id: String,
         user_id: &str,
         input: UpsertProgram,
-    ) -> Result<Document, UpsertProgramError> {
+    ) -> Result<(Program, Document), UpsertProgramError> {
         upsert_program(ctx, service_provider, store_id, user_id, input)
     }
 }
