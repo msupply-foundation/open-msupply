@@ -13,7 +13,6 @@ use super::{
     merge::{three_way_merge, two_way_merge, TakeLatestConflictSolver},
     raw_document::RawDocument,
     topological_sort::{extract_tree, topo_sort},
-    update_trigger::document_updated,
 };
 
 #[derive(Debug, PartialEq)]
@@ -103,10 +102,7 @@ pub trait DocumentServiceTrait: Sync + Send {
                 }
 
                 match insert_document(con, store_id, doc) {
-                    Ok(doc) => {
-                        document_updated(con, store_id, &doc)?;
-                        Ok(doc)
-                    }
+                    Ok(doc) => Ok(doc),
                     Err(err) => match err {
                         DocumentInsertError::MergeRequired(ref merged_doc) => {
                             // check that the merged document has a valid schema
