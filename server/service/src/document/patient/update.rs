@@ -7,8 +7,8 @@ use crate::{
 };
 
 use super::{
-    patient_doc_name, patient_document_update::patient_document_updated,
-    patient_schema::SchemaPatient, Patient, PatientFilter, PATIENT_TYPE,
+    patient_doc_name, patient_schema::SchemaPatient, patient_updated::patient_document_updated,
+    Patient, PatientFilter, PATIENT_TYPE,
 };
 
 #[derive(PartialEq, Debug)]
