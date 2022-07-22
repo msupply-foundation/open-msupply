@@ -2,7 +2,9 @@ use async_graphql::*;
 use chrono::{DateTime, Utc};
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    document::{document_service::DocumentInsertError, raw_document::RawDocument},
+    document::{
+        document_service::DocumentInsertError, patient::PATIENT_TYPE, raw_document::RawDocument,
+    },
 };
 
 use graphql_core::{
@@ -70,6 +72,8 @@ pub fn update_document(
     let service_provider = ctx.service_provider();
     let context = service_provider.context()?;
 
+    validate_document_type(&input)?;
+
     let response = match service_provider.document_service.update_document(
         &context,
         store_id,
@@ -81,6 +85,18 @@ pub fn update_document(
         }),
     };
     Ok(response)
+}
+
+/// Check that the document is allowed to be updated through this endpoint or if a special endpoint
+/// should be used
+fn validate_document_type(input: &UpdateDocumentInput) -> Result<()> {
+    if input.r#type == PATIENT_TYPE {
+        return Err(StandardGraphqlError::BadUserInput(
+            "Patient need to be update through the patient endpoint".to_string(),
+        )
+        .extend());
+    }
+    Ok(())
 }
 
 fn map_error(error: DocumentInsertError) -> Result<UpdateDocumentErrorInterface> {
@@ -133,5 +149,54 @@ fn input_to_raw_document(
         r#type,
         data,
         schema_id,
+    }
+}
+
+#[cfg(test)]
+mod graphql {
+    use graphql_core::assert_standard_graphql_error;
+    use graphql_core::test_helpers::setup_graphl_test;
+
+    use repository::mock::MockDataInserts;
+    use serde_json::json;
+
+    use crate::{DocumentMutations, DocumentQueries};
+
+    #[actix_rt::test]
+    async fn test_patient_update_not_allowed() {
+        let (_, _, _, settings) = setup_graphl_test(
+            DocumentQueries,
+            DocumentMutations,
+            "test_patient_update_not_allowed",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+
+        let query = r#"mutation MyMutation($data: JSON!, $storeId: String!) {
+            updateDocument(input: {
+                name: \"test_doc\", parents: [], author: \"me\", timestamp: \"2022-07-21T22:34:45.963Z\",
+                data: $data, type: \"Patient\" }, storeId: $storeId) {
+              ... on DocumentNode {
+                id
+                name
+                type
+              }
+            }
+          }"#;
+
+        let variables = Some(json!({
+            "storeId": "store_a",
+            "data": { "some": "data" }
+        }));
+
+        let expected_message = "Bad user input";
+        assert_standard_graphql_error!(
+            &settings,
+            &query,
+            &variables,
+            &expected_message,
+            None,
+            None
+        );
     }
 }

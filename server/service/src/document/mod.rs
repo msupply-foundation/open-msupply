@@ -9,4 +9,3 @@ pub mod patient;
 pub mod program;
 pub mod raw_document;
 mod topological_sort;
-mod update_trigger;
