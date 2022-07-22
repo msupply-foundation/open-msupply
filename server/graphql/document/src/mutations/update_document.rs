@@ -1,5 +1,9 @@
 use async_graphql::*;
 use chrono::{DateTime, Utc};
+use repository::{
+    DocumentContext, DocumentRegistryFilter, DocumentRegistryRepository, EqualFilter,
+    StorageConnection,
+};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     document::{
@@ -72,7 +76,7 @@ pub fn update_document(
     let service_provider = ctx.service_provider();
     let context = service_provider.context()?;
 
-    validate_document_type(&input)?;
+    validate_document_type(&context.connection, &input)?;
 
     let response = match service_provider.document_service.update_document(
         &context,
@@ -89,12 +93,36 @@ pub fn update_document(
 
 /// Check that the document is allowed to be updated through this endpoint or if a special endpoint
 /// should be used
-fn validate_document_type(input: &UpdateDocumentInput) -> Result<()> {
+fn validate_document_type(
+    connection: &StorageConnection,
+    input: &UpdateDocumentInput,
+) -> Result<()> {
     if input.r#type == PATIENT_TYPE {
         return Err(StandardGraphqlError::BadUserInput(
-            "Patient need to be update through the patient endpoint".to_string(),
+            "Patients need to be update through the matching endpoint".to_string(),
         )
         .extend());
+    }
+
+    let entries = DocumentRegistryRepository::new(connection).query_by_filter(
+        DocumentRegistryFilter::new().document_type(EqualFilter::equal_to(&input.r#type)),
+    )?;
+    for entry in entries {
+        match entry.context {
+            DocumentContext::Program => {
+                return Err(StandardGraphqlError::BadUserInput(
+                    "Programs need to be update through the matching endpoint".to_string(),
+                )
+                .extend())
+            }
+            DocumentContext::Encounter => {
+                return Err(StandardGraphqlError::BadUserInput(
+                    "Encounters need to be update through the matching endpoint".to_string(),
+                )
+                .extend())
+            }
+            _ => {}
+        }
     }
     Ok(())
 }
@@ -157,7 +185,11 @@ mod graphql {
     use graphql_core::assert_standard_graphql_error;
     use graphql_core::test_helpers::setup_graphl_test;
 
-    use repository::mock::MockDataInserts;
+    use repository::{
+        mock::{mock_form_schema_empty, MockDataInserts},
+        DocumentContext, DocumentRegistryRow, DocumentRegistryRowRepository,
+        FormSchemaRowRepository,
+    };
     use serde_json::json;
 
     use crate::{DocumentMutations, DocumentQueries};
@@ -195,7 +227,113 @@ mod graphql {
             &query,
             &variables,
             &expected_message,
-            None,
+            Some(json!({ "details": "Patients need to be update through the matching endpoint" })),
+            None
+        );
+    }
+
+    #[actix_rt::test]
+    async fn test_program_update_not_allowed() {
+        let (_, con, _, settings) = setup_graphl_test(
+            DocumentQueries,
+            DocumentMutations,
+            "test_program_update_not_allowed",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+
+        let schema = mock_form_schema_empty();
+        FormSchemaRowRepository::new(&con)
+            .upsert_one(&schema)
+            .unwrap();
+        DocumentRegistryRowRepository::new(&con)
+            .upsert_one(&DocumentRegistryRow {
+                id: "someid".to_string(),
+                document_type: "TestProgram".to_string(),
+                context: DocumentContext::Program,
+                name: None,
+                parent_id: None,
+                form_schema_id: Some(schema.id),
+            })
+            .unwrap();
+        let query = r#"mutation MyMutation($data: JSON!, $storeId: String!) {
+            updateDocument(input: {
+                name: \"test_doc\", parents: [], author: \"me\", timestamp: \"2022-07-21T22:34:45.963Z\",
+                data: $data, type: \"TestProgram\" }, storeId: $storeId) {
+              ... on DocumentNode {
+                id
+                name
+                type
+              }
+            }
+          }"#;
+
+        let variables = Some(json!({
+            "storeId": "store_a",
+            "data": { "some": "data" }
+        }));
+
+        let expected_message = "Bad user input";
+        assert_standard_graphql_error!(
+            &settings,
+            &query,
+            &variables,
+            &expected_message,
+            Some(json!({ "details": "Programs need to be update through the matching endpoint" })),
+            None
+        );
+    }
+
+    #[actix_rt::test]
+    async fn test_encounter_update_not_allowed() {
+        let (_, con, _, settings) = setup_graphl_test(
+            DocumentQueries,
+            DocumentMutations,
+            "test_encounter_update_not_allowed",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+
+        let schema = mock_form_schema_empty();
+        FormSchemaRowRepository::new(&con)
+            .upsert_one(&schema)
+            .unwrap();
+        DocumentRegistryRowRepository::new(&con)
+            .upsert_one(&DocumentRegistryRow {
+                id: "someid".to_string(),
+                document_type: "TestEncounter".to_string(),
+                context: DocumentContext::Encounter,
+                name: None,
+                parent_id: None,
+                form_schema_id: Some(schema.id),
+            })
+            .unwrap();
+        let query = r#"mutation MyMutation($data: JSON!, $storeId: String!) {
+            updateDocument(input: {
+                name: \"test_doc\", parents: [], author: \"me\", timestamp: \"2022-07-21T22:34:45.963Z\",
+                data: $data, type: \"TestEncounter\" }, storeId: $storeId) {
+              ... on DocumentNode {
+                id
+                name
+                type
+              }
+            }
+          }"#;
+
+        let variables = Some(json!({
+            "storeId": "store_a",
+            "data": { "some": "data" }
+        }));
+
+        let expected_message = "Bad user input";
+        assert_standard_graphql_error!(
+            &settings,
+            &query,
+            &variables,
+            &expected_message,
+            Some(
+                json!({ "details": "Encounters need to be update through the matching endpoint" })
+            ),
             None
         );
     }
