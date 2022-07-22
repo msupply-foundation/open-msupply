@@ -16,7 +16,7 @@ import { InboundItem } from './../../../types';
 import { InboundLineFragment } from '../../api';
 
 const isDefaultPlaceholderRow = (row: InboundLineFragment) =>
-  row.type === InvoiceLineNodeType.StockIn && !row.numberOfPacks;
+  row.type === InvoiceLineNodeType.StockIn && row.numberOfPacks === 0;
 
 const getPackSize = (row: InboundLineFragment) =>
   isDefaultPlaceholderRow(row) ? '' : row.packSize;
