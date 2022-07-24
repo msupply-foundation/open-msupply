@@ -104,6 +104,15 @@ impl DocumentQueries {
     ) -> Result<PatientSearchResponse> {
         patient_search(ctx, store_id, input)
     }
+
+    pub async fn programs(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        filter: Option<ProgramFilterInput>,
+    ) -> Result<ProgramResponse> {
+        programs(ctx, store_id, filter)
+    }
 }
 
 #[derive(Default, Clone)]

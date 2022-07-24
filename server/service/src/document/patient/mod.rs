@@ -48,15 +48,6 @@ pub trait PatientServiceTrait: Sync + Send {
         get_patients(ctx, store_id, pagination, filter, sort)
     }
 
-    fn get_patient_programs(
-        &self,
-        ctx: &ServiceContext,
-        store_id: &str,
-        patient_id: &str,
-    ) -> Result<Vec<Document>, RepositoryError> {
-        get_patient_programs(ctx, store_id, patient_id)
-    }
-
     fn get_patient_program_encounters(
         &self,
         ctx: &ServiceContext,
