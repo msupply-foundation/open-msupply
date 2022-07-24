@@ -125,9 +125,14 @@ fn generate_line(
     }
     if let Some(total_before_tax) = input.total_before_tax {
         update_line.total_before_tax = total_before_tax;
+    } else if let Some(number_of_packs) = input.number_of_packs {
+        update_line.total_before_tax = update_line.sell_price_per_pack * number_of_packs as f64;
+    } else if let (Some(_stockline_id), Some(_item_id)) = (input.stock_line_id, input.item_id) {
+        update_line.total_before_tax = sell_price_per_pack * number_of_packs as f64;
     } else {
         update_line.total_before_tax = sell_price_per_pack * number_of_packs as f64;
     }
+
     if let Some(tax) = input.tax {
         update_line.tax = tax.percentage;
     }
