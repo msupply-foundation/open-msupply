@@ -94,9 +94,14 @@ fn generate_line(
 
     if let Some(total_before_tax) = total_before_tax {
         update_line.total_before_tax = total_before_tax;
-    } else {
-        update_line.total_before_tax =
-            update_line.cost_price_per_pack * update_line.number_of_packs as f64;
+    } else if let Some(number_of_packs) = number_of_packs {
+        update_line.total_before_tax = update_line.cost_price_per_pack * number_of_packs as f64;
+    } else if let Some(cost_price_per_pack) = cost_price_per_pack {
+        update_line.total_before_tax = cost_price_per_pack * update_line.number_of_packs as f64;
+    } else if let (Some(number_of_packs), Some(cost_price_per_pack)) =
+        (number_of_packs, cost_price_per_pack)
+    {
+        update_line.total_before_tax = cost_price_per_pack * number_of_packs as f64;
     }
 
     if let Some(tax) = tax {
