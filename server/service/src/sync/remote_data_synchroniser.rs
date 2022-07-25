@@ -17,6 +17,9 @@ pub(crate) struct PostInitialisationError(pub(crate) SyncApiError);
 #[error("Failed to set initialised state: {0:?}")]
 pub(crate) struct SetInitialisedError(RepositoryError);
 #[derive(Error, Debug)]
+#[error("Failed to set site info: {0:?}")]
+pub(crate) struct SetSiteInfoError(RepositoryError);
+#[derive(Error, Debug)]
 pub(crate) enum RemotePullError {
     #[error("Api error while pulling remote records: {0:?}")]
     PullError(SyncApiError),
@@ -30,7 +33,6 @@ pub(crate) enum RemotePullError {
 
 pub struct RemoteDataSynchroniser {
     pub(crate) sync_api_v5: SyncApiV5,
-    pub(crate) site_id: u32,
 }
 
 impl RemoteDataSynchroniser {
@@ -63,13 +65,30 @@ impl RemoteDataSynchroniser {
         remote_sync_state
             .update_push_cursor(cursor + 1)
             .map_err(SetInitialisedError)?;
-
-        remote_sync_state
-            .set_site_id(self.site_id as i32)
-            .map_err(SetInitialisedError)?;
         remote_sync_state
             .set_initial_remote_data_synced()
             .map_err(SetInitialisedError)?;
+        Ok(())
+    }
+
+    pub(crate) fn set_site_info(
+        &self,
+        connection: &StorageConnection,
+        site_info: &SiteInfoV5,
+    ) -> Result<(), SetSiteInfoError> {
+        let remote_sync_state = RemoteSyncState::new(&connection);
+        remote_sync_state
+            .set_site_uuid(site_info.id.clone())
+            .map_err(SetSiteInfoError)?;
+        remote_sync_state
+            .set_site_id(site_info.site_id)
+            .map_err(SetSiteInfoError)?;
+        remote_sync_state
+            .set_site_code(site_info.code.clone())
+            .map_err(SetSiteInfoError)?;
+        remote_sync_state
+            .set_site_name(site_info.name.clone())
+            .map_err(SetSiteInfoError)?;
         Ok(())
     }
 
@@ -286,6 +305,21 @@ impl<'a> RemoteSyncState<'a> {
     pub fn set_site_id(&self, site_id: i32) -> Result<(), RepositoryError> {
         self.key_value_store
             .set_i32(KeyValueType::SettingsSyncSiteId, Some(site_id))
+    }
+
+    pub fn set_site_uuid(&self, uuid: String) -> Result<(), RepositoryError> {
+        self.key_value_store
+            .set_string(KeyValueType::SettingsSyncSiteId, Some(uuid))
+    }
+
+    pub fn set_site_code(&self, code: String) -> Result<(), RepositoryError> {
+        self.key_value_store
+            .set_string(KeyValueType::SettingsSyncSiteId, Some(code))
+    }
+
+    pub fn set_site_name(&self, name: String) -> Result<(), RepositoryError> {
+        self.key_value_store
+            .set_string(KeyValueType::SettingsSyncSiteId, Some(name))
     }
 
     pub fn get_push_cursor(&self) -> Result<u32, RepositoryError> {
