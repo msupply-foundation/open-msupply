@@ -120,9 +120,11 @@ fn generate(
 
 #[cfg(test)]
 mod test {
-    use crate::invoice::common::AddToShipmentFromMasterListInput as ServiceInput;
+    use crate::invoice::{
+        common::AddToShipmentFromMasterListInput as ServiceInput,
+        outbound_shipment::AddToOutboundShipmentFromMasterListError as ServiceError,
+    };
     use crate::service_provider::ServiceProvider;
-    use create::invoice::outbound_shipment::AddToOutboundShipmentFromMasterListError as ServiceError;
     use repository::{
         mock::{
             common::FullMockMasterList, mock_inbound_shipment_c, mock_item_a, mock_item_b,

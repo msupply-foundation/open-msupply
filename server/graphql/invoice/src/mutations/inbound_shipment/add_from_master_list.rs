@@ -109,7 +109,8 @@ mod test {
     use service::{
         invoice::{
             common::AddToShipmentFromMasterListInput as ServiceInput,
-            inbound_shipment::AddToShipmentFromMasterListError, InvoiceServiceTrait,
+            inbound_shipment::AddToInboundShipmentFromMasterListError as ServiceError,
+            InvoiceServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };
@@ -162,7 +163,7 @@ mod test {
         let mutation = r#"
         mutation ($input: AddToShipmentFromMasterListInput!, $storeId: String) {
             addToInboundShipmentFromMasterList(storeId: $storeId, input: $input) {
-              ... on AddToShipmentFromMasterListError {
+              ... on AddToInboundShipmentFromMasterListError {
                 error {
                   __typename
                 }
@@ -211,15 +212,15 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        // MasterListNotFoundForThisName
+        // MasterListNotFoundForThisStore
         let test_service = TestService(Box::new(|_, _| {
-            Err(ServiceError::MasterListNotFoundForThisName)
+            Err(ServiceError::MasterListNotFoundForThisStore)
         }));
 
         let expected = json!({
             "addToInboundShipmentFromMasterList": {
               "error": {
-                "__typename": "MasterListNotFoundForThisName"
+                "__typename": "MasterListNotFoundForThisStore"
               }
             }
           }
@@ -264,7 +265,7 @@ mod test {
             EmptyMutation,
             InvoiceMutations,
             "test_graphql_add_is_from_master_list_success",
-            MockDataInserts::none(),
+            MockDataInserts::all(),
         )
         .await;
 

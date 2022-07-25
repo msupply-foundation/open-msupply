@@ -118,7 +118,7 @@ mod test {
     use service::{
         invoice::{
             common::AddToShipmentFromMasterListInput as ServiceInput,
-            outbound_shipment::AddToShipmentFromMasterListError as ServiceError,
+            outbound_shipment::AddToOutboundShipmentFromMasterListError as ServiceError,
             InvoiceServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
@@ -172,7 +172,7 @@ mod test {
         let mutation = r#"
         mutation ($input: AddToShipmentFromMasterListInput!, $storeId: String) {
             addToOutboundShipmentFromMasterList(storeId: $storeId, input: $input) {
-              ... on AddToShipmentFromMasterListError {
+              ... on AddToOutboundShipmentFromMasterListError {
                 error {
                   __typename
                 }

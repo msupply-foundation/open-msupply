@@ -192,7 +192,7 @@ mod test {
             Err(ServiceError::NotAnInboundShipment)
         );
 
-        // MasterListNotFoundForThisName
+        // MasterListNotFoundForThisStore
         assert_eq!(
             service.add_to_inbound_shipment_from_master_list(
                 &context,
@@ -202,7 +202,7 @@ mod test {
                     master_list_id: mock_test_not_store_a_master_list().master_list.id
                 },
             ),
-            Err(ServiceError::MasterListNotFoundForThisName)
+            Err(ServiceError::MasterListNotFoundForThisStore)
         );
     }
 
