@@ -7,7 +7,8 @@ use crate::{
 };
 
 use super::{
-    patient_doc_name, patient_schema::SchemaPatient, Patient, PatientFilter, PATIENT_TYPE,
+    patient_doc_name, patient_document_update::patient_document_updated,
+    patient_schema::SchemaPatient, Patient, PatientFilter, PATIENT_TYPE,
 };
 
 #[derive(PartialEq, Debug)]
@@ -38,7 +39,9 @@ pub fn update_patient(
         .connection
         .transaction_sync(|_| {
             let patient = validate(ctx, service_provider, &store_id, &input)?;
+            let patient_id = patient.id.clone();
             let doc = generate(user_id, &patient, input)?;
+            let doc_timestamp = doc.timestamp.clone();
 
             // Updating the document will trigger an update in the patient (names) table
             service_provider
@@ -57,13 +60,16 @@ pub fn update_patient(
                     _ => UpdatePatientError::InternalError(format!("{:?}", err)),
                 })?;
 
+            // update the names table
+            patient_document_updated(&ctx.connection, &store_id, &doc_timestamp, patient)?;
+
             let patient = service_provider
                 .patient_service
                 .get_patients(
                     ctx,
                     &store_id,
                     None,
-                    Some(PatientFilter::new().id(EqualFilter::equal_to(&patient.id))),
+                    Some(PatientFilter::new().id(EqualFilter::equal_to(&patient_id))),
                     None,
                 )
                 .map_err(|err| UpdatePatientError::DatabaseError(err))?
