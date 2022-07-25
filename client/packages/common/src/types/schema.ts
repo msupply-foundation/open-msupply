@@ -28,6 +28,14 @@ export type Scalars = {
    * * `2000-02-24`
    */
   NaiveDate: string;
+  /**
+   * ISO 8601 combined date and time without timezone.
+   *
+   * # Examples
+   *
+   * * `2015-07-01T08:59:60.123`,
+   */
+  NaiveDateTime: string;
 };
 
 export type AddFromMasterListError = {
@@ -579,6 +587,12 @@ export type EqualFilterItemTypeInput = {
   notEqualTo?: InputMaybe<ItemNodeType>;
 };
 
+export type EqualFilterLogTypeInput = {
+  equalAny?: InputMaybe<Array<LogNodeType>>;
+  equalTo?: InputMaybe<LogNodeType>;
+  notEqualTo?: InputMaybe<LogNodeType>;
+};
+
 export type EqualFilterNumberInput = {
   equalAny?: InputMaybe<Array<Scalars['Int']>>;
   equalTo?: InputMaybe<Scalars['Int']>;
@@ -1009,6 +1023,7 @@ export type FullQuery = {
   /** Query omSupply "locations" entries */
   locations: LocationsResponse;
   logout: LogoutResponse;
+  logs: LogResponse;
   /** Query omSupply "master_lists" entries */
   masterLists: MasterListsResponse;
   me: UserResponse;
@@ -1096,6 +1111,13 @@ export type FullQueryLocationsArgs = {
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<LocationSortInput>>;
   storeId: Scalars['String'];
+};
+
+
+export type FullQueryLogsArgs = {
+  filter?: InputMaybe<LogFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<LogSortInput>>;
 };
 
 
@@ -1912,6 +1934,68 @@ export type LocationSortInput = {
 };
 
 export type LocationsResponse = LocationConnector;
+
+export type LogConnector = {
+  __typename: 'LogConnector';
+  nodes: Array<LogNode>;
+  totalCount: Scalars['Int'];
+};
+
+export type LogFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  recordId?: InputMaybe<EqualFilterStringInput>;
+  storeId?: InputMaybe<EqualFilterStringInput>;
+  type?: InputMaybe<EqualFilterLogTypeInput>;
+  userId?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type LogNode = {
+  __typename: 'LogNode';
+  datetime: Scalars['NaiveDateTime'];
+  id: Scalars['String'];
+  recordId?: Maybe<Scalars['String']>;
+  store?: Maybe<StoreNode>;
+  storeId?: Maybe<Scalars['String']>;
+  type: LogNodeType;
+  user?: Maybe<UserNode>;
+};
+
+export enum LogNodeType {
+  InvoiceCreated = 'INVOICE_CREATED',
+  InvoiceDeleted = 'INVOICE_DELETED',
+  InvoiceStatusAllocated = 'INVOICE_STATUS_ALLOCATED',
+  InvoiceStatusDelivered = 'INVOICE_STATUS_DELIVERED',
+  InvoiceStatusPicked = 'INVOICE_STATUS_PICKED',
+  InvoiceStatusShipped = 'INVOICE_STATUS_SHIPPED',
+  InvoiceStatusVerified = 'INVOICE_STATUS_VERIFIED',
+  RequisitionCreated = 'REQUISITION_CREATED',
+  RequisitionDeleted = 'REQUISITION_DELETED',
+  RequisitionStatusFinalised = 'REQUISITION_STATUS_FINALISED',
+  RequisitionStatusSent = 'REQUISITION_STATUS_SENT',
+  StocktakeCreated = 'STOCKTAKE_CREATED',
+  StocktakeDeleted = 'STOCKTAKE_DELETED',
+  StocktakeStatusFinalised = 'STOCKTAKE_STATUS_FINALISED',
+  UserLoggedIn = 'USER_LOGGED_IN'
+}
+
+export type LogResponse = LogConnector;
+
+export enum LogSortFieldInput {
+  Id = 'id',
+  LogType = 'logType',
+  RecordId = 'recordId',
+  UserId = 'userId'
+}
+
+export type LogSortInput = {
+  /**
+   * Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']>;
+  /** Sort query result by `key` */
+  key: LogSortFieldInput;
+};
 
 export type Logout = {
   __typename: 'Logout';

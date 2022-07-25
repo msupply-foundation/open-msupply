@@ -21,6 +21,7 @@ pub struct LegacyItemRow {
     code: String,
     unit_ID: String,
     type_of: LegacyItemType,
+    default_pack_size: i32,
 }
 
 fn to_item_type(type_of: LegacyItemType) -> ItemRowType {
@@ -49,6 +50,7 @@ impl CentralPushTranslation for ItemTranslation {
             name: data.item_name,
             code: data.code,
             unit_id: None,
+            default_pack_size: data.default_pack_size,
             r#type: to_item_type(data.type_of),
             legacy_record: sync_record.data.clone(),
         };

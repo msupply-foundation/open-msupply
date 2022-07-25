@@ -11,7 +11,7 @@ import {
   createQueryParamsStore,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { toItemRow, ItemRowFragment } from '@openmsupply-client/system';
+import { toItemWithPackSize } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
@@ -21,17 +21,19 @@ import { InboundLineEdit } from './modals/InboundLineEdit';
 import { InboundItem } from '../../types';
 import { useInbound, InboundLineFragment } from '../api';
 
+type InboundLineItem = InboundLineFragment['item'];
+
 export const DetailView: FC = () => {
   const { data, isLoading } = useInbound.document.get();
   const isDisabled = useInbound.utils.isDisabled();
   const { onOpen, onClose, mode, entity, isOpen } =
-    useEditModal<ItemRowFragment>();
+    useEditModal<InboundLineItem>();
   const navigate = useNavigate();
   const t = useTranslation('replenishment');
 
   const onRowClick = React.useCallback(
     (line: InboundItem | InboundLineFragment) => {
-      onOpen(toItemRow(line));
+      onOpen(toItemWithPackSize(line));
     },
     [onOpen]
   );
