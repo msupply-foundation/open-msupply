@@ -102,8 +102,8 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
     };
     use repository::{
-        mock::{mock_empty_draft_inbound_shipment, mock_inbound_shipment_line_a, MockDataInserts},
-        InvoiceLine, StorageConnectionManager,
+        mock::{mock_empty_draft_inbound_shipment, MockDataInserts},
+        InvoiceLine, InvoiceLineRow, InvoiceLineRowType, StorageConnectionManager,
     };
     use serde_json::json;
     use service::{
@@ -114,6 +114,7 @@ mod test {
         },
         service_provider::{ServiceContext, ServiceProvider},
     };
+    use util::inline_init;
 
     type DeleteLineMethod =
         dyn Fn(&str, ServiceInput) -> Result<Vec<InvoiceLine>, ServiceError> + Sync + Send;
@@ -292,7 +293,20 @@ mod test {
                 }
             );
             Ok(vec![InvoiceLine {
-                invoice_line_row: mock_inbound_shipment_line_a(),
+                invoice_line_row: inline_init(|r: &mut InvoiceLineRow| {
+                    r.id = String::from("inbound_shipment_line_a");
+                    r.invoice_id = String::from("inbound_shipment_c");
+                    r.item_id = String::from("item_a");
+                    r.item_name = String::from("Item A");
+                    r.item_code = String::from("a");
+                    r.pack_size = 1;
+                    r.cost_price_per_pack = 0.0;
+                    r.sell_price_per_pack = 0.0;
+                    r.total_before_tax = 0.0;
+                    r.total_after_tax = 0.0;
+                    r.r#type = InvoiceLineRowType::StockIn;
+                    r.number_of_packs = 0;
+                }),
                 invoice_row: mock_empty_draft_inbound_shipment(),
                 location_row_option: None,
             }])
@@ -310,7 +324,7 @@ mod test {
             "addToInboundShipmentFromMasterList": {
               "nodes": [
                 {
-                  "id": mock_inbound_shipment_line_a().id
+                  "id": "inbound_shipment_line_a"
                 }
               ]
             }

@@ -78,7 +78,7 @@ fn validate(
         return Err(InError::NotAnInboundShipment);
     }
 
-    check_master_list_for_store(connection, &invoice_row.name_id, &input.master_list_id)?
+    check_master_list_for_store(connection, &invoice_row.store_id, &input.master_list_id)?
         .ok_or(InError::MasterListNotFoundForThisStore)?;
 
     Ok(invoice_row)
@@ -124,7 +124,8 @@ mod test {
         mock::{
             common::FullMockMasterList, mock_empty_draft_inbound_shipment, mock_inbound_shipment_a,
             mock_inbound_shipment_c, mock_item_a, mock_item_b, mock_item_c, mock_item_d,
-            mock_outbound_shipment_c, mock_test_not_store_a_master_list, MockData, MockDataInserts,
+            mock_name_store_a, mock_outbound_shipment_c, mock_test_not_store_a_master_list,
+            MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
         MasterListLineRow, MasterListNameJoinRow, MasterListRow,
@@ -226,7 +227,7 @@ mod test {
                 joins: vec![MasterListNameJoinRow {
                     id: join1,
                     master_list_id: id.clone(),
-                    name_id: mock_empty_draft_inbound_shipment().name_id,
+                    name_id: mock_name_store_a().id,
                 }],
                 lines: vec![
                     MasterListLineRow {
