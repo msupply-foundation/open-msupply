@@ -84,7 +84,6 @@ impl<'a> ProgramRepository<'a> {
     }
 
     pub fn count(&self, filter: Option<ProgramFilter>) -> Result<i64, RepositoryError> {
-        // TODO (beyond M1), check that store_id matches current store
         let query = create_filtered_query(filter);
 
         Ok(query.count().get_result(&self.connection.connection)?)
@@ -94,7 +93,6 @@ impl<'a> ProgramRepository<'a> {
         self.query(Pagination::new(), Some(filter), None)
     }
 
-    /// Gets all invoices
     pub fn query(
         &self,
         pagination: Pagination,
