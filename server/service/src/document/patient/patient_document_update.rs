@@ -1,38 +1,37 @@
-use chrono::NaiveDate;
+use chrono::{DateTime, NaiveDate, Utc};
 use repository::{
-    Document, EqualFilter, Gender, NameFilter, NameRepository, NameRow, NameRowRepository,
+    EqualFilter, Gender, NameFilter, NameRepository, NameRow, NameRowRepository,
     NameStoreJoinRepository, NameStoreJoinRow, NameType, StorageConnection,
 };
 use std::str::FromStr;
 use util::uuid::uuid;
 
-use crate::document::document_service::DocumentInsertError;
-
-use super::patient_schema::{SchemaGender, SchemaPatient};
+use super::{
+    patient_schema::{SchemaGender, SchemaPatient},
+    UpdatePatientError,
+};
 
 /// Callback called when the document has been updated
 pub fn patient_document_updated(
     con: &StorageConnection,
     store_id: &str,
-    doc: &Document,
-) -> Result<(), DocumentInsertError> {
-    let patient: SchemaPatient = serde_json::from_value(doc.data.clone()).map_err(|err| {
-        DocumentInsertError::InternalError(format!("Invalid patient data: {}", err))
-    })?;
+    update_timestamp: &DateTime<Utc>,
+    patient: SchemaPatient,
+) -> Result<(), UpdatePatientError> {
     let contact = patient.contact_details.get(0);
     let date_of_birth = match patient.date_of_birth {
         Some(date_of_birth) => Some(NaiveDate::from_str(&date_of_birth).map_err(|err| {
-            DocumentInsertError::InternalError(format!("Invalid date of birth format: {}", err))
+            UpdatePatientError::InternalError(format!("Invalid date of birth format: {}", err))
         })?),
         None => None,
     };
-    let address = patient.addresses.get(0);
+    let address = patient.contact_details.get(0);
     let name_repo = NameRowRepository::new(con);
     let existing_name = name_repo.find_one_by_id(&patient.id)?;
     name_repo.upsert_one(&NameRow {
         id: patient.id.clone(),
         name: patient_name(&patient.first_name, &patient.last_name),
-        code: "program_patient".to_string(),
+        code: patient.code.unwrap_or("".to_string()),
         r#type: NameType::Patient,
         is_customer: true,
         is_supplier: false,
@@ -62,7 +61,7 @@ pub fn patient_document_updated(
         created_datetime: existing_name
             .as_ref()
             .and_then(|n| n.created_datetime.clone())
-            .or(Some(doc.timestamp.naive_utc())), // assume there is no earlier doc version
+            .or(Some(update_timestamp.naive_utc())), // assume there is no earlier doc version
     })?;
     let name_repo = NameRepository::new(con);
     let name = name_repo.query_one(
@@ -98,16 +97,16 @@ fn patient_name(first: &Option<String>, last: &Option<String>) -> String {
 
 #[cfg(test)]
 mod test {
-    use chrono::Utc;
-    use repository::{mock::MockDataInserts, test_db::setup_all, EqualFilter};
+    use repository::{
+        mock::{mock_form_schema_empty, MockDataInserts},
+        test_db::setup_all,
+        EqualFilter, FormSchemaRowRepository,
+    };
 
     use crate::{
-        document::{
-            patient::{
-                patient_schema::{Address, ContactDetails, Gender, Patient, SocioEconomics},
-                PatientFilter, PATIENT_TYPE,
-            },
-            raw_document::RawDocument,
+        document::patient::{
+            patient_schema::{ContactDetails, Gender, Patient, SocioEconomics},
+            PatientFilter, UpdatePatient,
         },
         service_provider::ServiceProvider,
     };
@@ -123,33 +122,35 @@ mod test {
         let service_provider = ServiceProvider::new(connection_manager, "");
         let ctx = service_provider.context().unwrap();
 
-        let service = service_provider.document_service;
-        let address = Address {
+        let service = &service_provider.patient_service;
+
+        // dummy schema
+        let schema = mock_form_schema_empty();
+        FormSchemaRowRepository::new(&ctx.connection)
+            .upsert_one(&schema)
+            .unwrap();
+
+        let contact_details = ContactDetails {
+            description: None,
+            email: Some("myemail".to_string()),
+            mobile: Some("45678".to_string()),
+            phone: None,
+            website: Some("mywebsite".to_string()),
             address_1: Some("firstaddressline".to_string()),
             address_2: Some("secondaddressline".to_string()),
             city: None,
             country: Some("mycountry".to_string()),
-            description: None,
             district: None,
-            key: "key".to_string(),
             region: None,
             zip_code: None,
         };
-        let contact_details = ContactDetails {
-            description: None,
-            email: Some("myemail".to_string()),
-            key: "key".to_string(),
-            mobile: Some("45678".to_string()),
-            phone: None,
-            website: Some("mywebsite".to_string()),
-        };
         let patient = Patient {
-            id: "testid".to_string(),
-            national_id: None,
-            addresses: vec![address.clone()],
+            id: "patient1".to_string(),
+            code: None,
             contact_details: vec![contact_details.clone()],
             date_of_birth: Some("2000-03-04".to_string()),
             date_of_birth_is_estimated: None,
+            birth_place: None,
             family: None,
             first_name: Some("firstname".to_string()),
             last_name: Some("lastname".to_string()),
@@ -161,26 +162,24 @@ mod test {
                 literate: None,
                 occupation: None,
             },
+            allergies: None,
         };
+
         service
-            .update_document(
+            .update_patient(
                 &ctx,
-                "store_a",
-                RawDocument {
-                    name: "test/doc".to_string(),
-                    parents: vec![],
-                    author: "some_user".to_string(),
-                    timestamp: Utc::now(),
-                    r#type: PATIENT_TYPE.to_string(),
+                &service_provider,
+                "store_a".to_string(),
+                "user",
+                UpdatePatient {
                     data: serde_json::to_value(patient.clone()).unwrap(),
-                    // TODO add and use patient id schema
-                    schema_id: None,
+                    schema_id: schema.id.clone(),
+                    parent: None,
                 },
             )
             .unwrap();
 
-        let found_patient = service_provider
-            .patient_service
+        let found_patient = service
             .get_patients(
                 &ctx,
                 "store_a",
@@ -204,31 +203,29 @@ mod test {
         assert_eq!(found_patient.name_row.phone, contact_details.mobile);
         assert_eq!(found_patient.name_row.email, contact_details.email);
         assert_eq!(found_patient.name_row.website, contact_details.website);
-        assert_eq!(found_patient.name_row.address1, address.address_1);
-        assert_eq!(found_patient.name_row.address2, address.address_2);
-        assert_eq!(found_patient.name_row.country, address.country);
+        assert_eq!(found_patient.name_row.address1, contact_details.address_1);
+        assert_eq!(found_patient.name_row.address2, contact_details.address_2);
+        assert_eq!(found_patient.name_row.country, contact_details.country);
 
         // test additional fields (custom schemas are allowed to have additional fields)
         let mut patient = serde_json::to_value(patient.clone()).unwrap();
         let obj = patient.as_object_mut().unwrap();
+        obj["id"] = serde_json::Value::String("patient2".to_string());
         obj.insert(
             "customData".to_string(),
             serde_json::Value::String("additionalValue".to_string()),
         );
         assert!(patient.get("customData").is_some());
         service
-            .update_document(
+            .update_patient(
                 &ctx,
-                "store_a",
-                RawDocument {
-                    name: "test/doc2".to_string(),
-                    parents: vec![],
-                    author: "some_user".to_string(),
-                    timestamp: Utc::now(),
-                    r#type: PATIENT_TYPE.to_string(),
+                &service_provider,
+                "store_a".to_string(),
+                "user",
+                UpdatePatient {
                     data: patient,
-                    // TODO add and use patient id schema
-                    schema_id: None,
+                    schema_id: schema.id,
+                    parent: None,
                 },
             )
             .unwrap();

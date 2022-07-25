@@ -7,7 +7,8 @@ use crate::{
 };
 
 use super::{
-    patient_doc_name, patient_schema::SchemaPatient, Patient, PatientFilter, PATIENT_TYPE,
+    patient_doc_name, patient_document_update::patient_document_updated,
+    patient_schema::SchemaPatient, Patient, PatientFilter, PATIENT_TYPE,
 };
 
 #[derive(PartialEq, Debug)]
@@ -38,7 +39,9 @@ pub fn update_patient(
         .connection
         .transaction_sync(|_| {
             let patient = validate(ctx, service_provider, &store_id, &input)?;
+            let patient_id = patient.id.clone();
             let doc = generate(user_id, &patient, input)?;
+            let doc_timestamp = doc.timestamp.clone();
 
             // Updating the document will trigger an update in the patient (names) table
             service_provider
@@ -57,13 +60,16 @@ pub fn update_patient(
                     _ => UpdatePatientError::InternalError(format!("{:?}", err)),
                 })?;
 
+            // update the names table
+            patient_document_updated(&ctx.connection, &store_id, &doc_timestamp, patient)?;
+
             let patient = service_provider
                 .patient_service
                 .get_patients(
                     ctx,
                     &store_id,
                     None,
-                    Some(PatientFilter::new().id(EqualFilter::equal_to(&patient.id))),
+                    Some(PatientFilter::new().id(EqualFilter::equal_to(&patient_id))),
                     None,
                 )
                 .map_err(|err| UpdatePatientError::DatabaseError(err))?
@@ -175,7 +181,7 @@ pub mod test {
 
     use crate::{
         document::patient::patient_schema::{
-            Address, ContactDetails, Gender, Patient, SchemaPatient, SocioEconomics,
+            ContactDetails, Gender, Patient, SchemaPatient, SocioEconomics,
         },
         service_provider::ServiceProvider,
     };
@@ -183,32 +189,27 @@ pub mod test {
     use super::UpdatePatientError;
 
     pub fn mock_patient_1() -> SchemaPatient {
-        let address = Address {
+        let contact_details = ContactDetails {
+            description: None,
+            email: Some("myemail".to_string()),
+            mobile: Some("45678".to_string()),
+            phone: None,
+            website: Some("mywebsite".to_string()),
             address_1: Some("firstaddressline".to_string()),
             address_2: Some("secondaddressline".to_string()),
             city: None,
             country: Some("mycountry".to_string()),
-            description: None,
             district: None,
-            key: "key".to_string(),
             region: None,
             zip_code: None,
         };
-        let contact_details = ContactDetails {
-            description: None,
-            email: Some("myemail".to_string()),
-            key: "key".to_string(),
-            mobile: Some("45678".to_string()),
-            phone: None,
-            website: Some("mywebsite".to_string()),
-        };
         Patient {
             id: "testid".to_string(),
-            national_id: Some("national_id".to_string()),
-            addresses: vec![address.clone()],
+            code: Some("national_id".to_string()),
             contact_details: vec![contact_details.clone()],
             date_of_birth: Some("2000-03-04".to_string()),
             date_of_birth_is_estimated: None,
+            birth_place: None,
             family: None,
             first_name: Some("firstname".to_string()),
             last_name: Some("lastname".to_string()),
@@ -220,6 +221,7 @@ pub mod test {
                 literate: None,
                 occupation: None,
             },
+            allergies: None,
         }
     }
 
