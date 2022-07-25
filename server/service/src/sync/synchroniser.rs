@@ -75,7 +75,6 @@ impl Synchroniser {
         Ok(Synchroniser {
             remote: RemoteDataSynchroniser {
                 sync_api_v5: sync_api_v5.clone(),
-                site_id: settings.site_id,
             },
             settings,
             service_provider,
@@ -122,8 +121,6 @@ impl Synchroniser {
 
         // Check site authorisation and update site information
 
-
-
         // First push before pulling, this avoids records being pulled from central server
         // and overwritting existing records waiting to be pulled
 
@@ -144,6 +141,8 @@ impl Synchroniser {
         info!("Delete Integration result: {:?}", deletes);
 
         if !is_initialised {
+            let site_info = self.remote.sync_api_v5.get_site_info().await?;
+            self.remote.set_site_info(&ctx.connection, &site_info)?;
             self.remote.set_initialised(&ctx.connection)?;
         }
 
