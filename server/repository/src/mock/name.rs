@@ -31,7 +31,7 @@ pub fn mock_name_store_c() -> NameRow {
 pub fn mock_name_store_e() -> NameRow {
     inline_init(|r: &mut NameRow| {
         r.id = String::from("name_store_e");
-        r.name = String::from("Store C");
+        r.name = String::from("Store E");
         r.code = String::from("code");
         r.is_supplier = true;
     })
