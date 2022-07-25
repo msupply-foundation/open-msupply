@@ -1,7 +1,6 @@
 use crate::db_diesel::{DBBackendConnection, StorageConnectionManager};
 use diesel::connection::SimpleConnection;
-use diesel::r2d2::{ConnectionManager, ManageConnection, Pool};
-use log::info;
+use diesel::r2d2::{ConnectionManager, Pool};
 use serde;
 
 //WAIT up to 5 SECONDS for lock in SQLITE (https://www.sqlite.org/c3ref/busy_timeout.html)
@@ -93,7 +92,6 @@ impl diesel::r2d2::CustomizeConnection<diesel::SqliteConnection, diesel::r2d2::E
 {
     //TODO: make relevant sqlite customisation settings configurable at runtime.
     fn on_acquire(&self, conn: &mut diesel::SqliteConnection) -> Result<(), diesel::r2d2::Error> {
-        use diesel::connection::SimpleConnection;
         //Set busy_timeout first as setting WAL can generate busy during a write
         if let Some(d) = self.busy_timeout_ms {
             conn.batch_execute(&format!("PRAGMA busy_timeout = {};", d))
@@ -110,6 +108,7 @@ impl diesel::r2d2::CustomizeConnection<diesel::SqliteConnection, diesel::r2d2::E
 // feature postgres
 #[cfg(feature = "postgres")]
 pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageConnectionManager {
+    use diesel::r2d2::ManageConnection;
     let connection_manager =
         ConnectionManager::<DBBackendConnection>::new(&settings.connection_string());
 
@@ -117,6 +116,7 @@ pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageCon
     // Note: the build() call isn't failing when you have an incorrect server or database name
     // so we need to explicitly call connect() to test the connection
     if let Err(e) = connection_manager.connect() {
+        use log::info;
         if e.to_string()
             .contains(format!("database \"{}\" does not exist", &settings.database_name).as_str())
         {

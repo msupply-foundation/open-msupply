@@ -568,4 +568,156 @@ mod test {
 
         assert_stock_line_totals(&invoice_lines, &expected_stock_line_totals);
     }
+
+    #[actix_rt::test]
+    async fn update_outbound_shipment_check_stock_adjustments() {
+        fn invoice() -> InvoiceRow {
+            inline_init(|r: &mut InvoiceRow| {
+                r.id = "invoice".to_string();
+                r.name_id = mock_name_a().id;
+                r.store_id = mock_store_a().id;
+                r.r#type = InvoiceRowType::OutboundShipment;
+            })
+        }
+
+        fn stock_line() -> StockLineRow {
+            inline_init(|r: &mut StockLineRow| {
+                r.id = "stock_line".to_string();
+                r.store_id = mock_store_a().id;
+                r.available_number_of_packs = 8;
+                r.total_number_of_packs = 10;
+                r.pack_size = 1;
+                r.item_id = mock_item_a().id;
+            })
+        }
+
+        fn invoice_line() -> InvoiceLineRow {
+            inline_init(|r: &mut InvoiceLineRow| {
+                r.id = "invoice_line".to_string();
+                r.invoice_id = invoice().id;
+                r.stock_line_id = Some(stock_line().id);
+                r.number_of_packs = 2;
+                r.item_id = mock_item_a().id;
+                r.r#type = InvoiceLineRowType::StockOut;
+            })
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "update_outbound_shipment_check_stock_adjustments",
+            MockDataInserts::none().units().items().names().stores(),
+            inline_init(|r: &mut MockData| {
+                r.invoices = vec![invoice()];
+                r.stock_lines = vec![stock_line()];
+                r.invoice_lines = vec![invoice_line()];
+            }),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let context = service_provider.context().unwrap();
+        let service = service_provider.invoice_service;
+
+        // Change to PICKED
+        let result = service.update_outbound_shipment(
+            &context,
+            &mock_store_a().id,
+            inline_init(|r: &mut UpdateOutboundShipment| {
+                r.id = invoice().id;
+                r.status = Some(UpdateOutboundShipmentStatus::Picked);
+            }),
+        );
+
+        assert!(matches!(result, Ok(_)), "Not Ok(_) {:#?}", result);
+
+        let stock_line_repo = StockLineRowRepository::new(&connection);
+
+        // Stock line total_number_of_packs should have been reduced
+        let new_stock_line = inline_edit(&stock_line(), |mut u| {
+            u.total_number_of_packs = 8;
+            u
+        });
+        assert_eq!(
+            stock_line_repo.find_one_by_id(&new_stock_line.id).unwrap(),
+            new_stock_line
+        );
+
+        // Try changing to shipped again to PICKED
+        let result = service.update_outbound_shipment(
+            &context,
+            &mock_store_a().id,
+            inline_init(|r: &mut UpdateOutboundShipment| {
+                r.id = invoice().id;
+                r.status = Some(UpdateOutboundShipmentStatus::Picked);
+            }),
+        );
+
+        assert!(matches!(result, Ok(_)), "Not Ok(_) {:#?}", result);
+
+        let stock_line_repo = StockLineRowRepository::new(&connection);
+
+        // Stock line should not have changed
+        assert_eq!(
+            stock_line_repo.find_one_by_id(&new_stock_line.id).unwrap(),
+            new_stock_line
+        );
+
+        // Change to SHIPPED
+        let result = service.update_outbound_shipment(
+            &context,
+            &mock_store_a().id,
+            inline_init(|r: &mut UpdateOutboundShipment| {
+                r.id = invoice().id;
+                r.status = Some(UpdateOutboundShipmentStatus::Shipped);
+            }),
+        );
+
+        assert!(matches!(result, Ok(_)), "Not Ok(_) {:#?}", result);
+
+        let stock_line_repo = StockLineRowRepository::new(&connection);
+        // Stock line should not have changed
+        assert_eq!(
+            stock_line_repo.find_one_by_id(&new_stock_line.id).unwrap(),
+            new_stock_line
+        );
+
+        // Check again, going straight to SHIPPED
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "update_outbound_shipment_check_stock_adjustments2",
+            MockDataInserts::none().units().items().names().stores(),
+            inline_init(|r: &mut MockData| {
+                r.invoices = vec![invoice()];
+                r.stock_lines = vec![stock_line()];
+                r.invoice_lines = vec![invoice_line()];
+            }),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let context = service_provider.context().unwrap();
+        let service = service_provider.invoice_service;
+
+        // Change to SHIPPED
+        let result = service.update_outbound_shipment(
+            &context,
+            &mock_store_a().id,
+            inline_init(|r: &mut UpdateOutboundShipment| {
+                r.id = invoice().id;
+                r.status = Some(UpdateOutboundShipmentStatus::Shipped);
+            }),
+        );
+
+        assert!(matches!(result, Ok(_)), "Not Ok(_) {:#?}", result);
+
+        let stock_line_repo = StockLineRowRepository::new(&connection);
+
+        // Stock line total_number_of_packs should have been reduced
+        assert_eq!(
+            stock_line_repo.find_one_by_id(&stock_line().id).unwrap(),
+            inline_edit(&stock_line(), |mut u| {
+                u.total_number_of_packs = 8;
+                u
+            })
+        );
+    }
 }
