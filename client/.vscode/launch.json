@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug app (chrome)",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:3003",
+      "sourceMapPathOverrides": {
+        "webpack://@openmsupply-client/host/..": "${workspaceRoot}/packages"
+      }
+    }
+  ]
+}
