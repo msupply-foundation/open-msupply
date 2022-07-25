@@ -117,8 +117,12 @@ impl Synchroniser {
         // Request initialisation from server
         if !is_sync_queue_initialised {
             self.remote.request_initialisation().await?;
-            remote_sync_state.set_sync_queue_initalised()?;
+            remote_sync_state.set_sync_queue_initialised()?;
         }
+
+        // Check site authorisation and update site information
+
+
 
         // First push before pulling, this avoids records being pulled from central server
         // and overwritting existing records waiting to be pulled
