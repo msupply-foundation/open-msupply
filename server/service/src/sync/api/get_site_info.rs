@@ -7,7 +7,7 @@ pub(crate) struct SiteInfoV5 {
     #[serde(rename = "Id")]
     pub(crate) id: String,
     #[serde(rename = "site_Id")]
-    pub(crate) site_id: i32,
+    pub(crate) site_id: u32,
     pub(crate) name: String,    
     pub(crate) code: String,    
 }
