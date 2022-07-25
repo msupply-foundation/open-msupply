@@ -265,7 +265,7 @@ impl<'a> RemoteSyncState<'a> {
         Ok(value.unwrap_or(false))
     }
 
-    pub fn set_sync_queue_initalised(&self) -> Result<(), RepositoryError> {
+    pub fn set_sync_queue_initialised(&self) -> Result<(), RepositoryError> {
         self.key_value_store
             .set_bool(KeyValueType::RemoteSyncInitilisationStarted, Some(true))
     }
