@@ -1,7 +1,4 @@
-use crate::mutations::{
-    AddFromMasterListResponse, AddToShipmentFromMasterListInput, DeleteError, DeleteErrorInterface,
-    MasterListNotFoundForThisName,
-};
+use crate::mutations::AddToShipmentFromMasterListInput;
 use async_graphql::*;
 use graphql_core::{
     simple_generic_errors::{CannotEditInvoice, RecordNotFound},
@@ -9,11 +6,34 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
+use graphql_general::MasterListNotFoundForThisStore;
 use graphql_types::types::InvoiceLineConnector;
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    invoice::common::AddToShipmentFromMasterListError as ServiceError,
+    invoice::inbound_shipment::AddToInboundShipmentFromMasterListError as ServiceError,
 };
+
+#[derive(Interface)]
+#[graphql(name = "AddToInboundShipmentFromMasterListErrorInterface")]
+#[graphql(field(name = "description", type = "String"))]
+pub enum DeleteErrorInterface {
+    RecordNotFound(RecordNotFound),
+    MasterListNotFoundForThisStore(MasterListNotFoundForThisStore),
+    CannotEditInvoice(CannotEditInvoice),
+}
+
+#[derive(SimpleObject)]
+#[graphql(name = "AddToInboundShipmentFromMasterListError")]
+pub struct DeleteError {
+    pub error: DeleteErrorInterface,
+}
+
+#[derive(Union)]
+#[graphql(name = "AddToInboundShipmentFromMasterListResponse")]
+pub enum AddFromMasterListResponse {
+    Error(DeleteError),
+    Response(InvoiceLineConnector),
+}
 
 pub fn add_from_master_list(
     ctx: &Context<'_>,
@@ -60,16 +80,15 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
                 CannotEditInvoice {},
             ))
         }
-        ServiceError::MasterListNotFoundForThisName => {
-            return Ok(DeleteErrorInterface::MasterListNotFoundForThisName(
-                MasterListNotFoundForThisName {},
+        ServiceError::MasterListNotFoundForThisStore => {
+            return Ok(DeleteErrorInterface::MasterListNotFoundForThisStore(
+                MasterListNotFoundForThisStore {},
             ))
         }
         // Standard Graphql Errors
         ServiceError::NotThisStoreShipment => BadUserInput(formatted_error),
         ServiceError::NotAnInboundShipment => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
-        _ => BadUserInput(formatted_error),
     };
 
     Err(graphql_error.extend())
@@ -89,11 +108,8 @@ mod test {
     use serde_json::json;
     use service::{
         invoice::{
-            common::{
-                AddToShipmentFromMasterListError as ServiceError,
-                AddToShipmentFromMasterListInput as ServiceInput,
-            },
-            InvoiceServiceTrait,
+            common::AddToShipmentFromMasterListInput as ServiceInput,
+            inbound_shipment::AddToShipmentFromMasterListError, InvoiceServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };
@@ -248,7 +264,7 @@ mod test {
             EmptyMutation,
             InvoiceMutations,
             "test_graphql_add_is_from_master_list_success",
-            MockDataInserts::all(),
+            MockDataInserts::none(),
         )
         .await;
 

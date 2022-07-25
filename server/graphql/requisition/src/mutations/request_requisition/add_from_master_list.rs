@@ -5,6 +5,7 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
+use graphql_general::MasterListNotFoundForThisStore;
 use graphql_types::types::RequisitionLineConnector;
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -112,14 +113,6 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
     };
 
     Err(graphql_error.extend())
-}
-
-pub struct MasterListNotFoundForThisStore;
-#[Object]
-impl MasterListNotFoundForThisStore {
-    pub async fn description(&self) -> &'static str {
-        "Master list for this store is not found (might not be visible in this store)"
-    }
 }
 
 #[cfg(test)]
