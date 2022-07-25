@@ -1,7 +1,4 @@
-use crate::invoice::common::{
-    AddToShipmentFromMasterListError as ServiceError,
-    AddToShipmentFromMasterListInput as ServiceInput,
-};
+use crate::invoice::common::AddToShipmentFromMasterListInput as ServiceInput;
 use crate::invoice::{check_invoice_exists, common::check_master_list_for_name};
 use crate::service_provider::ServiceContext;
 use crate::sync_processor::invoice::common::get_lines_for_invoice;
@@ -14,11 +11,29 @@ use repository::{
 
 use super::generate_unallocated_invoice_lines;
 
+#[derive(Debug, PartialEq)]
+pub enum AddToOutboundShipmentFromMasterListError {
+    ShipmentDoesNotExist,
+    NotThisStoreShipment,
+    CannotEditShipment,
+    MasterListNotFoundForThisName,
+    NotAnOutboundShipment,
+    DatabaseError(RepositoryError),
+}
+
+type OutError = AddToOutboundShipmentFromMasterListError;
+
+impl From<RepositoryError> for AddToOutboundShipmentFromMasterListError {
+    fn from(error: RepositoryError) -> Self {
+        AddToOutboundShipmentFromMasterListError::DatabaseError(error)
+    }
+}
+
 pub fn add_from_master_list(
     ctx: &ServiceContext,
     store_id: &str,
     input: ServiceInput,
-) -> Result<Vec<InvoiceLine>, ServiceError> {
+) -> Result<Vec<InvoiceLine>, OutError> {
     let invoice_lines = ctx
         .connection
         .transaction_sync(|connection| {
@@ -35,7 +50,7 @@ pub fn add_from_master_list(
                 InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&input.shipment_id)),
             ) {
                 Ok(lines) => Ok(lines),
-                Err(error) => Err(ServiceError::DatabaseError(error)),
+                Err(error) => Err(OutError::DatabaseError(error)),
             }
         })
         .map_err(|error| error.to_inner_error())?;
@@ -46,28 +61,28 @@ fn validate(
     connection: &StorageConnection,
     store_id: &str,
     input: &ServiceInput,
-) -> Result<InvoiceRow, ServiceError> {
+) -> Result<InvoiceRow, OutError> {
     let invoice_row = match check_invoice_exists(&input.shipment_id, connection) {
         Ok(row) => row,
-        Err(_error) => return Err(ServiceError::ShipmentDoesNotExist),
+        Err(_error) => return Err(OutError::ShipmentDoesNotExist),
     };
 
     if invoice_row.store_id != store_id {
-        return Err(ServiceError::NotThisStoreShipment);
+        return Err(OutError::NotThisStoreShipment);
     }
     if invoice_row.status == InvoiceRowStatus::Shipped
         || invoice_row.status == InvoiceRowStatus::Delivered
         || invoice_row.status == InvoiceRowStatus::Verified
     {
-        return Err(ServiceError::CannotEditShipment);
+        return Err(OutError::CannotEditShipment);
     }
 
     if invoice_row.r#type != InvoiceRowType::OutboundShipment {
-        return Err(ServiceError::NotAnOutboundShipment);
+        return Err(OutError::NotAnOutboundShipment);
     }
 
     check_master_list_for_name(connection, &invoice_row.name_id, &input.master_list_id)?
-        .ok_or(ServiceError::MasterListNotFoundForThisName)?;
+        .ok_or(OutError::MasterListNotFoundForThisName)?;
 
     Ok(invoice_row)
 }
@@ -105,11 +120,9 @@ fn generate(
 
 #[cfg(test)]
 mod test {
-    use crate::invoice::common::{
-        AddToShipmentFromMasterListError as ServiceError,
-        AddToShipmentFromMasterListInput as ServiceInput,
-    };
+    use crate::invoice::common::AddToShipmentFromMasterListInput as ServiceInput;
     use crate::service_provider::ServiceProvider;
+    use create::invoice::outbound_shipment::AddToOutboundShipmentFromMasterListError as ServiceError;
     use repository::{
         mock::{
             common::FullMockMasterList, mock_inbound_shipment_c, mock_item_a, mock_item_b,
