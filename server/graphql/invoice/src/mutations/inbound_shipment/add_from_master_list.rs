@@ -157,7 +157,7 @@ mod test {
             EmptyMutation,
             InvoiceMutations,
             "test_graphql_add_is_from_master_list_structured_errors",
-            MockDataInserts::all(),
+            MockDataInserts::none(),
         )
         .await;
 
@@ -266,7 +266,7 @@ mod test {
             EmptyMutation,
             InvoiceMutations,
             "test_graphql_add_is_from_master_list_success",
-            MockDataInserts::all(),
+            MockDataInserts::none(),
         )
         .await;
 
