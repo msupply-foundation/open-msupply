@@ -85,6 +85,7 @@ fn generate_line(
     update_line.number_of_packs = number_of_packs
         .map(u32_to_i32)
         .unwrap_or(update_line.number_of_packs);
+    update_line.tax = tax.map(|tax| tax.percentage).unwrap_or(update_line.tax);
 
     if let Some(item) = new_item_option {
         update_line.item_id = item.id;
@@ -102,10 +103,6 @@ fn generate_line(
         (number_of_packs, cost_price_per_pack)
     {
         update_line.total_before_tax = cost_price_per_pack * number_of_packs as f64;
-    }
-
-    if let Some(tax) = tax {
-        update_line.tax = tax.percentage;
     }
 
     update_line.total_after_tax = total_after_tax(update_line.total_before_tax, update_line.tax);
