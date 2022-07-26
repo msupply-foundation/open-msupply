@@ -49,6 +49,24 @@ impl RemoteDataSynchroniser {
         Ok(())
     }
 
+    /// Request site info and persist it
+    pub(crate) async fn request_site_info(
+        &self,
+        connection: &StorageConnection,
+    ) -> Result<(), PostInitialisationError> {
+        info!("Requesting site info");
+        let site_info = self
+            .sync_api_v5
+            .get_site_info()
+            .await
+            .map_err(PostInitialisationError)?;
+
+        self.set_site_info(&connection, &site_info).unwrap();
+
+        info!("Received site info");
+        Ok(())
+    }
+
     /// Request initialisation
     pub(crate) fn set_initialised(
         &self,
