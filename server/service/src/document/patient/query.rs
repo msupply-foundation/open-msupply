@@ -8,7 +8,7 @@ use crate::{
     get_default_pagination_unlimited, i64_to_u32, service_provider::ServiceContext, ListResult,
 };
 
-use super::{patient_program_doc_name, patient_program_encounter_doc_name};
+use super::patient_program_encounter_doc_name;
 
 #[derive(Clone, Default)]
 pub struct PatientFilter {
@@ -89,20 +89,6 @@ pub fn get_patients(
         rows,
         count: i64_to_u32(repository.count(store_id, filter)?),
     })
-}
-
-pub fn get_patient_programs(
-    ctx: &ServiceContext,
-    store_id: &str,
-    patient_id: &str,
-) -> Result<Vec<Document>, RepositoryError> {
-    DocumentRepository::new(&ctx.connection).query(Some(
-        DocumentFilter::new()
-            .name(StringFilter::starts_with(&patient_program_doc_name(
-                patient_id, "",
-            )))
-            .store_id(EqualFilter::equal_to(store_id)),
-    ))
 }
 
 pub fn get_patient_program_encounters(

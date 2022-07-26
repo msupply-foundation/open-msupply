@@ -8,8 +8,8 @@ use crate::ListResult;
 pub use self::query::*;
 mod query;
 pub use self::update::*;
-pub mod patient_document_update;
 pub mod patient_schema;
+pub mod patient_updated;
 mod update;
 pub use self::search::*;
 mod search;
@@ -46,15 +46,6 @@ pub trait PatientServiceTrait: Sync + Send {
         sort: Option<PatientSort>,
     ) -> Result<ListResult<Patient>, RepositoryError> {
         get_patients(ctx, store_id, pagination, filter, sort)
-    }
-
-    fn get_patient_programs(
-        &self,
-        ctx: &ServiceContext,
-        store_id: &str,
-        patient_id: &str,
-    ) -> Result<Vec<Document>, RepositoryError> {
-        get_patient_programs(ctx, store_id, patient_id)
     }
 
     fn get_patient_program_encounters(

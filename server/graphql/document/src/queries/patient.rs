@@ -10,7 +10,7 @@ use graphql_core::pagination::PaginationInput;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 use graphql_general::{EqualFilterGenderInput, GenderInput};
 use graphql_types::types::GenderType;
-use repository::{DateFilter, EqualFilter, PaginationOption, SimpleStringFilter};
+use repository::{DateFilter, EqualFilter, PaginationOption, ProgramFilter, SimpleStringFilter};
 use service::auth::{Resource, ResourceAccessRequest};
 use service::document::patient::{
     patient_doc_name, Patient, PatientFilter, PatientSort, PatientSortField,
@@ -105,15 +105,19 @@ impl PatientNode {
         let context = ctx.service_provider().context()?;
         let entries = ctx
             .service_provider()
-            .patient_service
-            .get_patient_programs(&context, &self.store_id, &self.patient.name_row.id)?;
+            .program_service
+            .get_patient_programs(
+                &context,
+                Some(
+                    ProgramFilter::new()
+                        .patient_id(EqualFilter::equal_to(&self.patient.name_row.id)),
+                ),
+            )?;
         Ok(entries
             .into_iter()
-            .map(|document| ProgramNode {
+            .map(|program_row| ProgramNode {
                 store_id: self.store_id.clone(),
-                patient_id: self.patient.name_row.id.clone(),
-                program: document.r#type.clone(),
-                document_node: DocumentNode { document },
+                program_row,
             })
             .collect())
     }
