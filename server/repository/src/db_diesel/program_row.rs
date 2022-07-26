@@ -26,7 +26,7 @@ pub struct ProgramRow {
     pub r#type: String,
     /// The program document name
     pub name: String,
-    /// The patient this program belong to
+    /// The patient this program belongs to
     pub patient_id: String,
     /// Time when the patient has been enrolled to this program
     pub enrolment_datetime: NaiveDateTime,
