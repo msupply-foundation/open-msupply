@@ -5,7 +5,7 @@ use super::*;
 #[derive(Debug, PartialEq, Deserialize)]
 pub(crate) struct SiteInfoV5 {
     pub(crate) id: String,
-    #[serde(rename = "siteId")] // TODO Camelcase the api
+    #[serde(rename = "siteId")]
     pub(crate) site_id: i32,
     pub(crate) name: String,    
     pub(crate) code: String,    
