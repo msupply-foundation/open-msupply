@@ -226,11 +226,13 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
   },
   update: async (
     patch: RecordPatch<InboundFragment> | RecordPatch<InboundRowFragment>
-  ) =>
-    sdk.updateInboundShipment({
+  ) => {
+    console.log('update', patch);
+    return sdk.updateInboundShipment({
       input: inboundParsers.toUpdate(patch),
       storeId,
-    }),
+    });
+  },
   deleteLines: async (lines: { id: string }[]) => {
     return sdk.deleteInboundShipmentLines({
       storeId,
