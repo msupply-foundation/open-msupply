@@ -31,7 +31,7 @@ import {
   FORM_LABEL_COLUMN_WIDTH,
   FORM_INPUT_COLUMN_WIDTH,
 } from '../styleConstants';
-import { JsonData } from '../useJsonForms';
+import { JsonData } from '../JsonForm';
 
 interface UISchemaWithCustomProps extends ControlElement {
   defaultNewItem?: JsonData;
