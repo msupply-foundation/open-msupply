@@ -7,8 +7,8 @@ pub(crate) struct SiteInfoV5 {
     pub(crate) id: String,
     #[serde(rename = "siteId")]
     pub(crate) site_id: i32,
-    pub(crate) name: String,    
-    pub(crate) code: String,    
+    pub(crate) name: String,
+    pub(crate) code: String,
 }
 
 impl SyncApiV5 {
@@ -50,5 +50,15 @@ mod test {
         mock.assert();
 
         assert_matches!(result, Ok(_));
+
+        assert_eq!(
+            result.unwrap(),
+            SiteInfoV5 {
+                id: "abc123".to_string(),
+                site_id: 123,
+                code: "s123".to_string(),
+                name: "Site 123".to_string()
+            }
+        );
     }
 }
