@@ -65,6 +65,7 @@ fragment Inbound on InvoiceNode {
   otherPartyName
   status
   theirReference
+  transportReference
   type
   linkedShipment {
     __typename
