@@ -99,7 +99,7 @@ fn validate_document_type(
 ) -> Result<()> {
     if input.r#type == PATIENT_TYPE {
         return Err(StandardGraphqlError::BadUserInput(
-            "Patients need to be update through the matching endpoint".to_string(),
+            "Patients need to be updated through the matching endpoint".to_string(),
         )
         .extend());
     }
