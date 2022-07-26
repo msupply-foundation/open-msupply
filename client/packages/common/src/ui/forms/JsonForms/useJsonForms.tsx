@@ -145,10 +145,11 @@ export const useJsonForms = (
   const navigate = useNavigate();
 
   // fetch document (only if there is as document name)
-  const { data: databaseResponse, isLoading } = useDocument.get.document(
-    documentName ?? '',
-    !!documentName
-  );
+  const {
+    data: databaseResponse,
+    isLoading,
+    isError,
+  } = useDocument.get.document(documentName ?? '', !!documentName);
   useEffect(() => {
     if (!databaseResponse) return;
 
@@ -270,45 +271,48 @@ export const useJsonForms = (
     </Box>
   );
 
-  const JsonForm = !!data ? (
-    <Box
-      id="document-display"
-      display="flex"
-      flexDirection="column"
-      justifyContent="flex-start"
-      alignItems="center"
-      width="100%"
-      gap={2}
-      paddingX={10}
-    >
-      <ScrollFix />
-      {isLoading ? (
-        <BasicSpinner />
-      ) : (
-        <FormComponent
-          data={data}
-          jsonSchema={documentRegistry.jsonSchema}
-          uiSchema={documentRegistry.uiSchema}
-          setData={updateData}
-          setError={setError}
-          renderers={renderers}
-        />
-      )}
-      {showButtonPanel && <ButtonPanel />}
-    </Box>
-  ) : (
-    <Box
-      display="flex"
-      flexDirection="column"
-      justifyContent="center"
-      alignItems="center"
-      width="100%"
-      gap={2}
-    >
-      <UnhappyMan />
-      <Typography color="error">{t('error.unable-to-load-data')}</Typography>
-    </Box>
-  );
+  const JsonForm =
+    //  isLoading || !!data ? (
+    isError ? (
+      <Box
+        display="flex"
+        flexDirection="column"
+        justifyContent="center"
+        alignItems="center"
+        width="100%"
+        gap={2}
+      >
+        <UnhappyMan />
+        <Typography color="error">{t('error.unable-to-load-data')}</Typography>
+      </Box>
+    ) : (
+      <Box
+        id="document-display"
+        display="flex"
+        flexDirection="column"
+        justifyContent={!data ? 'flex-end' : 'flex-start'}
+        alignItems="center"
+        width="100%"
+        gap={2}
+        paddingX={10}
+      >
+        <ScrollFix />
+        {isLoading || !data ? (
+          <BasicSpinner />
+        ) : (
+          <FormComponent
+            data={data}
+            jsonSchema={documentRegistry.jsonSchema}
+            uiSchema={documentRegistry.uiSchema}
+            setData={updateData}
+            setError={setError}
+            renderers={renderers}
+          />
+        )}
+        {showButtonPanel && <ButtonPanel />}
+      </Box>
+      // ) : (
+    );
 
   return {
     JsonForm,
