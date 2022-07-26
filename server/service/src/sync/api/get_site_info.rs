@@ -4,9 +4,8 @@ use super::*;
 
 #[derive(Debug, PartialEq, Deserialize)]
 pub(crate) struct SiteInfoV5 {
-    #[serde(rename = "Id")]
     pub(crate) id: String,
-    #[serde(rename = "site_Id")]
+    #[serde(rename = "siteId")] // TODO Camelcase the api
     pub(crate) site_id: i32,
     pub(crate) name: String,    
     pub(crate) code: String,    
@@ -38,8 +37,8 @@ mod test {
             when.method(GET).path("/sync/v5/site");
             then.status(200).body(
                 r#"{
-                    "Id": "abc123",
-                    "site_Id": 123,
+                    "id": "abc123",
+                    "siteId": 123,
                     "code": "s123",
                     "name": "Site 123"
             }"#,
