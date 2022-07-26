@@ -2,6 +2,7 @@ mod central;
 mod central_server_configurations;
 mod errors;
 mod remote;
+mod site_info;
 
 use std::{error::Error, future::Future};
 

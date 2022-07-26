@@ -83,12 +83,6 @@ impl RemoteDataSynchroniser {
         remote_sync_state
             .set_site_id(site_info.site_id)
             .map_err(SetSiteInfoError)?;
-        remote_sync_state
-            .set_site_code(site_info.code.clone())
-            .map_err(SetSiteInfoError)?;
-        remote_sync_state
-            .set_site_name(site_info.name.clone())
-            .map_err(SetSiteInfoError)?;
         Ok(())
     }
 
@@ -309,17 +303,7 @@ impl<'a> RemoteSyncState<'a> {
 
     pub fn set_site_uuid(&self, uuid: String) -> Result<(), RepositoryError> {
         self.key_value_store
-            .set_string(KeyValueType::SettingsSyncSiteId, Some(uuid))
-    }
-
-    pub fn set_site_code(&self, code: String) -> Result<(), RepositoryError> {
-        self.key_value_store
-            .set_string(KeyValueType::SettingsSyncSiteId, Some(code))
-    }
-
-    pub fn set_site_name(&self, name: String) -> Result<(), RepositoryError> {
-        self.key_value_store
-            .set_string(KeyValueType::SettingsSyncSiteId, Some(name))
+            .set_string(KeyValueType::SettingsSyncSiteUuid, Some(uuid))
     }
 
     pub fn get_push_cursor(&self) -> Result<u32, RepositoryError> {
