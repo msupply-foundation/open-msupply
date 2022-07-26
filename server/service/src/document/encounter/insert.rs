@@ -10,7 +10,10 @@ use crate::{
     service_provider::{ServiceContext, ServiceProvider},
 };
 
-use super::encounter_schema::SchemaEncounter;
+use super::{
+    encounter_schema::SchemaEncounter,
+    encounter_updated::{encounter_updated, EncounterTableUpdateError},
+};
 
 #[derive(PartialEq, Debug)]
 pub enum InsertEncounterError {
@@ -23,7 +26,7 @@ pub enum InsertEncounterError {
 pub struct InsertEncounter {
     pub patient_id: String,
     /// The program type
-    pub program_type: String,
+    pub program: String,
     pub r#type: String,
     pub data: serde_json::Value,
     pub schema_id: String,
@@ -39,8 +42,20 @@ pub fn insert_encounter(
     let patient = ctx
         .connection
         .transaction_sync(|_| {
-            validate(ctx, &store_id, &input)?;
+            let encounter = validate(ctx, &store_id, &input)?;
+            let patient_id = input.patient_id.clone();
+            let program = input.program.clone();
             let doc = generate(user_id, input)?;
+
+            encounter_updated(&ctx.connection, &patient_id, &program, &doc.name, encounter)
+                .map_err(|err| match err {
+                    EncounterTableUpdateError::RepositoryError(err) => {
+                        InsertEncounterError::DatabaseError(err)
+                    }
+                    EncounterTableUpdateError::InternalError(err) => {
+                        InsertEncounterError::InternalError(err)
+                    }
+                })?;
 
             // Updating the document will trigger an update in the patient (names) table
             let result = service_provider
@@ -106,16 +121,16 @@ fn validate(
     ctx: &ServiceContext,
     store_id: &str,
     input: &InsertEncounter,
-) -> Result<(), InsertEncounterError> {
-    if !validate_patient_program_exists(ctx, store_id, &input.patient_id, &input.program_type)? {
+) -> Result<SchemaEncounter, InsertEncounterError> {
+    if !validate_patient_program_exists(ctx, store_id, &input.patient_id, &input.program)? {
         return Err(InsertEncounterError::InvalidPatientOrProgram);
     }
 
-    validate_encounter_schema(input).map_err(|err| {
+    let encounter = validate_encounter_schema(input).map_err(|err| {
         InsertEncounterError::InvalidDataSchema(vec![format!("Invalid program data: {}", err)])
     })?;
 
-    Ok(())
+    Ok(encounter)
 }
 
 #[cfg(test)]
@@ -124,7 +139,7 @@ mod test {
     use repository::{
         mock::{mock_form_schema_empty, MockDataInserts},
         test_db::setup_all,
-        FormSchemaRowRepository,
+        EncounterFilter, EncounterRepository, EqualFilter, FormSchemaRowRepository,
     };
     use serde_json::json;
 
@@ -208,7 +223,7 @@ mod test {
                     schema_id: schema.id.clone(),
                     patient_id: "some_id".to_string(),
                     r#type: "SomeType".to_string(),
-                    program_type: program_type.clone(),
+                    program: program_type.clone(),
                 },
             )
             .err()
@@ -225,7 +240,7 @@ mod test {
                     schema_id: schema.id.clone(),
                     patient_id: patient.id.clone(),
                     r#type: "SomeType".to_string(),
-                    program_type: "invalid".to_string(),
+                    program: "invalid".to_string(),
                 },
             )
             .err()
@@ -244,7 +259,7 @@ mod test {
                     schema_id: schema.id.clone(),
                     patient_id: patient.id.clone(),
                     r#type: "SomeType".to_string(),
-                    program_type: program_type.clone(),
+                    program: program_type.clone(),
                 },
             )
             .err()
@@ -254,7 +269,7 @@ mod test {
         // success insert
         let encounter = SchemaEncounter {
             encounter_datetime: Utc::now().to_rfc3339(),
-            status: None,
+            status: "Scheduled".to_string(),
         };
         let program_type = "ProgramType".to_string();
         let result = service
@@ -268,7 +283,7 @@ mod test {
                     schema_id: schema.id.clone(),
                     patient_id: patient.id.clone(),
                     r#type: program_type.clone(),
-                    program_type: program_type.clone(),
+                    program: program_type.clone(),
                 },
             )
             .unwrap();
@@ -279,5 +294,11 @@ mod test {
             .unwrap();
         assert!(found.parent_ids.is_empty());
         assert_eq!(found.data, serde_json::to_value(encounter.clone()).unwrap());
+        // check that encounter table has been updated
+        let row = EncounterRepository::new(&ctx.connection)
+            .query_by_filter(EncounterFilter::new().name(EqualFilter::equal_to(&found.name)))
+            .unwrap()
+            .pop();
+        assert!(row.is_some());
     }
 }
