@@ -1,5 +1,5 @@
 use chrono::Utc;
-use repository::{Document, DocumentRepository, RepositoryError, TransactionError};
+use repository::{Document, DocumentRepository, Program, RepositoryError, TransactionError};
 
 use crate::{
     document::{
@@ -10,7 +10,7 @@ use crate::{
     service_provider::{ServiceContext, ServiceProvider},
 };
 
-use super::program_schema::SchemaProgram;
+use super::{program_schema::SchemaProgram, program_updated::program_updated};
 
 #[derive(PartialEq, Debug)]
 pub enum UpsertProgramError {
@@ -38,14 +38,15 @@ pub fn upsert_program(
     store_id: String,
     user_id: &str,
     input: UpsertProgram,
-) -> Result<Document, UpsertProgramError> {
+) -> Result<(Program, Document), UpsertProgramError> {
     let patient = ctx
         .connection
         .transaction_sync(|_| {
-            validate(ctx, service_provider, &store_id, &input)?;
+            let patient_id = input.patient_id.clone();
+            let schema_program = validate(ctx, service_provider, &store_id, &input)?;
             let doc = generate(user_id, input)?;
 
-            let result = service_provider
+            let document = service_provider
                 .document_service
                 .update_document(ctx, &store_id, doc)
                 .map_err(|err| match err {
@@ -60,8 +61,8 @@ pub fn upsert_program(
                     }
                     _ => UpsertProgramError::InternalError(format!("{:?}", err)),
                 })?;
-
-            Ok(result)
+            let program = program_updated(&ctx.connection, &patient_id, &document, schema_program)?;
+            Ok((program, document))
         })
         .map_err(|err: TransactionError<UpsertProgramError>| err.to_inner_error())?;
     Ok(patient)
@@ -129,12 +130,12 @@ fn validate(
     service_provider: &ServiceProvider,
     store_id: &str,
     input: &UpsertProgram,
-) -> Result<(), UpsertProgramError> {
+) -> Result<SchemaProgram, UpsertProgramError> {
     if !validate_patient_exists(ctx, store_id, &input.patient_id)? {
         return Err(UpsertProgramError::InvalidPatientId);
     }
 
-    validate_program_schema(input).map_err(|err| {
+    let program = validate_program_schema(input).map_err(|err| {
         UpsertProgramError::InvalidDataSchema(vec![format!("Invalid program data: {}", err)])
     })?;
 
@@ -157,16 +158,16 @@ fn validate(
         }
     }
 
-    Ok(())
+    Ok(program)
 }
 
 #[cfg(test)]
 mod test {
-    use chrono::Utc;
+    use chrono::{DateTime, Utc};
     use repository::{
         mock::{mock_form_schema_empty, MockDataInserts},
         test_db::setup_all,
-        DocumentRepository, FormSchemaRowRepository,
+        DocumentRepository, FormSchemaRowRepository, ProgramRepository,
     };
     use serde_json::json;
 
@@ -254,7 +255,7 @@ mod test {
         // success insert
         let program = SchemaProgram {
             enrolment_datetime: Utc::now().to_rfc3339(),
-            patient_id: None,
+            patient_id: Some("patient id 1".to_string()),
         };
         let program_type = "ProgramType".to_string();
         service
@@ -336,5 +337,16 @@ mod test {
                 },
             )
             .unwrap();
+        // Test program has been written to the programs table
+        let found_program = ProgramRepository::new(&ctx.connection)
+            .find_one_by_type_and_patient(&program_type, &patient.id)
+            .unwrap()
+            .unwrap();
+        assert_eq!(program_type, found_program.r#type);
+        assert_eq!(
+            program.enrolment_datetime,
+            DateTime::<Utc>::from_utc(found_program.enrolment_datetime, Utc).to_rfc3339()
+        );
+        assert_eq!(program.patient_id, found_program.program_patient_id);
     }
 }
