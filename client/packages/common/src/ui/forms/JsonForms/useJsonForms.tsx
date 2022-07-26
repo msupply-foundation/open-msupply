@@ -1,5 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from '@openmsupply-client/common';
+import {
+  Typography,
+  UnhappyMan,
+  useNavigate,
+} from '@openmsupply-client/common';
 import {
   Box,
   DialogButton,
@@ -250,13 +254,14 @@ export const useJsonForms = (
           else onCancel();
         }}
         isLoading={saving}
-        disabled={error !== false}
+        disabled={error !== false || isLoading}
         color="secondary"
       >
         {t('button.save')}
       </LoadingButton>
       <DialogButton
         variant="cancel"
+        disabled={isLoading}
         onClick={() => {
           if (isDirty) showCancelConfirmation();
           else onCancel();
@@ -265,34 +270,48 @@ export const useJsonForms = (
     </Box>
   );
 
+  const JsonForm = !!data ? (
+    <Box
+      id="document-display"
+      display="flex"
+      flexDirection="column"
+      justifyContent="flex-start"
+      alignItems="center"
+      width="100%"
+      gap={2}
+      paddingX={10}
+    >
+      <ScrollFix />
+      {isLoading ? (
+        <BasicSpinner />
+      ) : (
+        <FormComponent
+          data={data}
+          jsonSchema={documentRegistry.jsonSchema}
+          uiSchema={documentRegistry.uiSchema}
+          setData={updateData}
+          setError={setError}
+          renderers={renderers}
+        />
+      )}
+      {showButtonPanel && <ButtonPanel />}
+    </Box>
+  ) : (
+    <Box
+      display="flex"
+      flexDirection="column"
+      justifyContent="center"
+      alignItems="center"
+      width="100%"
+      gap={2}
+    >
+      <UnhappyMan />
+      <Typography color="error">{t('error.unable-to-load-data')}</Typography>
+    </Box>
+  );
+
   return {
-    JsonForm: (
-      <Box
-        id="document-display"
-        display="flex"
-        flexDirection="column"
-        justifyContent="flex-start"
-        alignItems="center"
-        width="100%"
-        gap={2}
-        paddingX={10}
-      >
-        <ScrollFix />
-        {isLoading || !data ? (
-          <BasicSpinner />
-        ) : (
-          <FormComponent
-            data={data}
-            jsonSchema={documentRegistry.jsonSchema}
-            uiSchema={documentRegistry.uiSchema}
-            setData={updateData}
-            setError={setError}
-            renderers={renderers}
-          />
-        )}
-        {showButtonPanel && !isLoading && <ButtonPanel />}
-      </Box>
-    ),
+    JsonForm,
     saveData,
     loading: isLoading,
     error,
