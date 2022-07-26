@@ -119,8 +119,6 @@ impl Synchroniser {
             remote_sync_state.set_sync_queue_initialised()?;
         }
 
-        // Check site authorisation and update site information
-
         // First push before pulling, this avoids records being pulled from central server
         // and overwritting existing records waiting to be pulled
 
