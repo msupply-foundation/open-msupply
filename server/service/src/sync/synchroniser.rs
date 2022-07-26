@@ -141,8 +141,7 @@ impl Synchroniser {
         info!("Delete Integration result: {:?}", deletes);
 
         if !is_initialised {
-            let site_info = self.remote.sync_api_v5.get_site_info().await?;
-            self.remote.set_site_info(&ctx.connection, &site_info)?;
+            self.remote.request_site_info(&ctx.connection).await?;
             self.remote.set_initialised(&ctx.connection)?;
         }
 
