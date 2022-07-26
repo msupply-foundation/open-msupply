@@ -111,13 +111,13 @@ fn validate_document_type(
         match entry.context {
             DocumentContext::Program => {
                 return Err(StandardGraphqlError::BadUserInput(
-                    "Programs need to be update through the matching endpoint".to_string(),
+                    "Programs need to be updated through the matching endpoint".to_string(),
                 )
                 .extend())
             }
             DocumentContext::Encounter => {
                 return Err(StandardGraphqlError::BadUserInput(
-                    "Encounters need to be update through the matching endpoint".to_string(),
+                    "Encounters need to be updated through the matching endpoint".to_string(),
                 )
                 .extend())
             }
@@ -227,7 +227,7 @@ mod graphql {
             &query,
             &variables,
             &expected_message,
-            Some(json!({ "details": "Patients need to be update through the matching endpoint" })),
+            Some(json!({ "details": "Patients need to be updated through the matching endpoint" })),
             None
         );
     }
@@ -279,7 +279,7 @@ mod graphql {
             &query,
             &variables,
             &expected_message,
-            Some(json!({ "details": "Programs need to be update through the matching endpoint" })),
+            Some(json!({ "details": "Programs need to be updated through the matching endpoint" })),
             None
         );
     }
@@ -332,7 +332,7 @@ mod graphql {
             &variables,
             &expected_message,
             Some(
-                json!({ "details": "Encounters need to be update through the matching endpoint" })
+                json!({ "details": "Encounters need to be updated through the matching endpoint" })
             ),
             None
         );
