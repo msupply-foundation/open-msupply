@@ -96,7 +96,10 @@ impl SyncRecordTester for UnitAndItemTester {
         item_row3.legacy_record = serde_json::to_string(&item_json3).unwrap();
 
         result.push(TestStepData {
-            central_upsert:   json!({ "item": [item_json1,item_json2,item_json3], "unit": [unit_json1, unit_json2] }),
+            central_upsert: json!({
+                "item": [item_json1, item_json2, item_json3],
+                "unit": [unit_json1, unit_json2]
+            }),
             central_delete: json!({}),
             integration_records: IntegrationRecords::from_upserts(vec![
                 PullUpsertRecord::Unit(unit_row1.clone()),
