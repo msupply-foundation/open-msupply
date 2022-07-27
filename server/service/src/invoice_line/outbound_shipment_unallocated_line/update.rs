@@ -19,6 +19,7 @@ pub enum UpdateOutboundShipmentUnallocatedLineError {
     DatabaseError(RepositoryError),
     LineIsNotUnallocatedLine,
     //TODO NotThisStoreInvoice,
+    UpdatedLineDoesNotExist,
 }
 
 type OutError = UpdateOutboundShipmentUnallocatedLineError;
@@ -37,7 +38,7 @@ pub fn update_outbound_shipment_unallocated_line(
 
             get_invoice_line(ctx, &updated_line.id)
                 .map_err(|error| OutError::DatabaseError(error))?
-                .ok_or(OutError::LineDoesNotExist)
+                .ok_or(OutError::UpdatedLineDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
     Ok(line)

@@ -85,7 +85,7 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
         ServiceError::LineDoesNotExist => {
             return Ok(DeleteErrorInterface::RecordNotFound(RecordNotFound {}))
         }
-        ServiceError::CannotEditFinalised => {
+        ServiceError::CannotEditInvoice => {
             return Ok(DeleteErrorInterface::CannotEditInvoice(
                 CannotEditInvoice {},
             ))
@@ -202,7 +202,7 @@ mod test {
         );
 
         //CannotEditInvoice
-        let test_service = TestService(Box::new(|_| Err(ServiceError::CannotEditFinalised)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::CannotEditInvoice)));
 
         let expected = json!({
             "deleteOutboundShipmentLine": {
