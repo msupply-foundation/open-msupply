@@ -15,10 +15,12 @@ pub struct ProgramNode {
 
 #[Object]
 impl ProgramNode {
+    /// The program type
     pub async fn r#type(&self) -> &str {
         &self.program_row.r#type
     }
 
+    /// The program document name
     pub async fn name(&self) -> &str {
         &self.program_row.name
     }

@@ -1,7 +1,10 @@
 use repository::Document;
+use repository::Pagination;
 use repository::Program;
 use repository::ProgramFilter;
+use repository::ProgramSortField;
 use repository::RepositoryError;
+use repository::Sort;
 
 use crate::service_provider::ServiceContext;
 use crate::service_provider::ServiceProvider;
@@ -29,9 +32,11 @@ pub trait ProgramServiceTrait: Sync + Send {
     fn get_patient_programs(
         &self,
         ctx: &ServiceContext,
+        pagination: Pagination,
+        sort: Option<Sort<ProgramSortField>>,
         filter: Option<ProgramFilter>,
     ) -> Result<Vec<Program>, RepositoryError> {
-        get_patient_programs(ctx, filter)
+        get_patient_programs(ctx, pagination, sort, filter)
     }
 }
 

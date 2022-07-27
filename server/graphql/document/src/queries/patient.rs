@@ -10,7 +10,9 @@ use graphql_core::pagination::PaginationInput;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 use graphql_general::{EqualFilterGenderInput, GenderInput};
 use graphql_types::types::GenderType;
-use repository::{DateFilter, EqualFilter, PaginationOption, ProgramFilter, SimpleStringFilter};
+use repository::{
+    DateFilter, EqualFilter, Pagination, PaginationOption, ProgramFilter, SimpleStringFilter,
+};
 use service::auth::{Resource, ResourceAccessRequest};
 use service::document::patient::{
     patient_doc_name, Patient, PatientFilter, PatientSort, PatientSortField,
@@ -108,6 +110,8 @@ impl PatientNode {
             .program_service
             .get_patient_programs(
                 &context,
+                Pagination::all(),
+                None,
                 Some(
                     ProgramFilter::new()
                         .patient_id(EqualFilter::equal_to(&self.patient.name_row.id)),
