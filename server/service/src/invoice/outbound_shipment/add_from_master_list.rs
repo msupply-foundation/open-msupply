@@ -261,7 +261,7 @@ mod test {
         }
 
         let (_, _, connection_manager, _) = setup_all_with_data(
-            "add_from_master_list_success",
+            "os_add_from_master_list_success",
             MockDataInserts::all(),
             inline_init(|r: &mut MockData| {
                 r.full_master_lists = vec![master_list()];
