@@ -13,7 +13,6 @@ mod tests {
 
     #[actix_rt::test]
     async fn integration_sync_central_name_and_store_and_name_store_join() {
-        // util::init_logger(util::LogLevel::Warn);
         test_central_sync_record(
             "name_and_store_and_name_store_join",
             &NameAndStoreAndNameStoreJoinTester,
@@ -23,13 +22,11 @@ mod tests {
 
     #[actix_rt::test]
     async fn integration_sync_central_master_list() {
-        // util::init_logger(util::LogLevel::Warn);
         test_central_sync_record("master_list", &MasterListTester).await;
     }
 
     #[actix_rt::test]
     async fn integration_sync_central_report() {
-        // util::init_logger(util::LogLevel::Warn);
         test_central_sync_record("report", &ReportTester).await;
     }
 }

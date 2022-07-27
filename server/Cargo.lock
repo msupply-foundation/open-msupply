@@ -4830,6 +4830,7 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "env_logger 0.8.4",
+ "serde_json",
  "sha2",
  "uuid",
 ]

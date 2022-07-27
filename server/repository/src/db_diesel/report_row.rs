@@ -49,6 +49,19 @@ pub struct ReportRow {
     pub comment: Option<String>,
 }
 
+impl Default for ReportRow {
+    fn default() -> Self {
+        Self {
+            id: Default::default(),
+            name: Default::default(),
+            r#type: ReportType::OmSupply,
+            template: Default::default(),
+            context: ReportContext::InboundShipment,
+            comment: Default::default(),
+        }
+    }
+}
+
 pub struct ReportRowRepository<'a> {
     connection: &'a StorageConnection,
 }

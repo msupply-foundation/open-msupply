@@ -189,11 +189,7 @@ cargo test --features postgres
 
 - To run sync integration test
 
-Uncomment test attribute, and read description in method comment
-
-https://github.com/openmsupply/open-msupply/blob/e6dc29f1ace2fd22abc5e9a17e368a9d871a6f45/server/server/src/sync/integration_tests/remote_sync_integration_test.rs#L130-L131
-
-See test_remote_syncing in remote_sync_integration_test
+See [Sync Integration Tests](/service/sync/test/integration/README.md)
 
 ## Building docs
 

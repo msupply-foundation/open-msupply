@@ -32,6 +32,7 @@ joinable!(stock_line -> store (store_id));
 joinable!(stock_line -> location (location_id));
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
+#[changeset_options(treat_none_as_null = "true")]
 #[table_name = "stock_line"]
 pub struct StockLineRow {
     pub id: String,

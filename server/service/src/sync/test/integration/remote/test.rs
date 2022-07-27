@@ -1,12 +1,3 @@
-// To run this test, you'll need to run central server with a data file with at least one sync site, credentials for which need to be
-// passed through with enviromental variable (TODO specify which branch)
-
-// SYNC_SITE_PASSWORD="pass" SYNC_SITE_ID="2" SYNC_SITE_NAME="demo" SYNC_URL="http://localhost:2048" NEW_SITE_PASSWORD="pass" cargo test sync_integration_test  --features integration_test
-
-// OR in VSCODE settings if using rust analyzer (and Run Tests|Debug actions as inlay hints):
-// "rust-analyzer.runnableEnv": { "SYNC_URL": "http://localhost:2048", "SYNC_SITE_NAME": "demo","SYNC_SITE_PASSWORD": "pass", "NEW_SITE_PASSWORD": "pass"}
-// "rust-analyzer.cargo.features": ["integration_test"]
-
 #[cfg(test)]
 mod tests {
     use crate::sync::test::integration::remote::{

@@ -159,7 +159,7 @@ fn item_line_2_pull_record() -> TestSyncPullRecord {
             total_number_of_packs: -1001,
             expiry_date: None,
             on_hold: false,
-            note: Some("".to_string()),
+            note: None,
         }),
     )
 }
@@ -184,7 +184,7 @@ fn item_line_2_push_record() -> TestSyncPushRecord {
             quantity: -1001,
             cost_price: 0.0,
             sell_price: 0.0,
-            note: Some("".to_string())
+            note: None,
         }),
     }
 }

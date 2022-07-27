@@ -352,6 +352,7 @@ mod test {
         mock::MockDataInserts, test_db::setup_all, EqualFilter, UserFilter, UserPermissionFilter,
         UserPermissionRepository, UserRepository,
     };
+    use util::assert_matches;
 
     use crate::{
         apis::login_v4::LoginResponseV4,
@@ -443,11 +444,7 @@ mod test {
             )
             .await;
 
-            assert!(
-                matches!(result, Err(LoginError::LoginFailure)),
-                "expected login failure, got {:#?}",
-                result
-            );
+            assert_matches!(result, Err(LoginError::LoginFailure));
         }
         // Old password should still work in offline mode or if central return an error
         {
@@ -471,11 +468,7 @@ mod test {
             )
             .await;
 
-            assert!(
-                matches!(result, Ok(_)),
-                "expected Ok token pair, got {:#?}",
-                result
-            );
+            assert_matches!(result, Ok(_));
         }
         // If server password has changed, and trying to login with old password, return LoginError::LoginFailure
         {
@@ -499,11 +492,7 @@ mod test {
             )
             .await;
 
-            assert!(
-                matches!(result, Err(LoginError::LoginFailure)),
-                "expected login failure, got {:#?}",
-                result
-            );
+            assert_matches!(result, Err(LoginError::LoginFailure));
         }
         // If central server is not accessible after trying to login with old password, make sure old password does not work
         // Issue #1101 in remote-server: Extra login protection when user password has changed
