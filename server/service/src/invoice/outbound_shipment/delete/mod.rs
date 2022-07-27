@@ -28,7 +28,7 @@ pub fn delete_outbound_shipment(
     let invoice_id = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(&id, &connection)?;
+            validate(&id, store_id, &connection)?;
 
             // TODO https://github.com/openmsupply/remote-server/issues/839
             let lines = InvoiceLineRepository::new(&connection)
@@ -115,5 +115,92 @@ where
             WithDBError::DatabaseError(error) => error.into(),
             WithDBError::Error(error) => error.into(),
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use repository::{
+        mock::{
+            mock_inbound_shipment_c, mock_outbound_shipment_b, mock_outbound_shipment_c,
+            mock_store_a, mock_store_c, MockDataInserts,
+        },
+        test_db::setup_all,
+        InvoiceRowRepository,
+    };
+
+    use crate::{
+        invoice::outbound_shipment::DeleteOutboundShipmentError as ServiceError,
+        service_provider::ServiceProvider,
+    };
+
+    #[actix_rt::test]
+    async fn delete_outbound_shipment_errors() {
+        let (_, _, connection_manager, _) =
+            setup_all("delete_outbound_shipment_errors", MockDataInserts::all()).await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let context = service_provider.context().unwrap();
+        let service = service_provider.invoice_service;
+
+        // InvoiceDoesNotExist
+        assert_eq!(
+            service.delete_outbound_shipment(&context, &mock_store_a().id, "invalid".to_string()),
+            Err(ServiceError::InvoiceDoesNotExist)
+        );
+
+        //CannotEditFinalised
+        assert_eq!(
+            service.delete_outbound_shipment(
+                &context,
+                &mock_store_c().id,
+                mock_outbound_shipment_b().id
+            ),
+            Err(ServiceError::CannotEditFinalised)
+        );
+
+        //NotAnOutboundShipment
+        assert_eq!(
+            service.delete_outbound_shipment(
+                &context,
+                &mock_store_a().id,
+                mock_inbound_shipment_c().id
+            ),
+            Err(ServiceError::NotAnOutboundShipment)
+        );
+
+        //NotThisStoreInvoice
+        assert_eq!(
+            service.delete_outbound_shipment(
+                &context,
+                &mock_store_a().id,
+                mock_outbound_shipment_b().id
+            ),
+            Err(ServiceError::NotThisStoreInvoice)
+        );
+
+        //TODO DatabaseError, LineDeleteErrors
+    }
+
+    #[actix_rt::test]
+    async fn delete_outbound_shipment_success() {
+        let (_, connection, connection_manager, _) =
+            setup_all("delete_outbound_shipment_success", MockDataInserts::all()).await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let context = service_provider.context().unwrap();
+        let service = service_provider.invoice_service;
+
+        let invoice_id = service
+            .delete_outbound_shipment(&context, &mock_store_c().id, mock_outbound_shipment_c().id)
+            .unwrap();
+
+        //test entry has been deleted
+        assert_eq!(
+            InvoiceRowRepository::new(&connection)
+                .find_one_by_id_option(&invoice_id)
+                .unwrap(),
+            None
+        );
     }
 }

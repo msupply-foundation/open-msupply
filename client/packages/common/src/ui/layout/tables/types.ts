@@ -20,6 +20,8 @@ export interface TableProps<T extends RecordWithId> {
   data?: T[];
   dense?: boolean;
   ExpandContent?: FC<{ rowData: T }>;
+  enableColumnSelection?: boolean;
+  key: string;
   isDisabled?: boolean;
   isError?: boolean;
   isLoading?: boolean;

@@ -956,7 +956,7 @@ mod test {
                     input: inline_init(|input: &mut UpdateOutboundShipment| {
                         input.id = "id12".to_string()
                     }),
-                    result: Err(UpdateOutboundShipmentError::InvoiceDoesNotExists {}),
+                    result: Err(UpdateOutboundShipmentError::InvoiceDoesNotExist {}),
                 }],
                 delete_shipment: vec![InputWithResult {
                     input: "id13".to_string(),

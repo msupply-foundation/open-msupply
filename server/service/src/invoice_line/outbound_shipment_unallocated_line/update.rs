@@ -1,4 +1,5 @@
 use crate::{
+    invoice::{check_invoice_exists_option, check_store, NotThisStoreInvoice},
     invoice_line::{query::get_invoice_line, validate::check_line_exists_option},
     service_provider::ServiceContext,
     u32_to_i32,
@@ -16,9 +17,10 @@ pub struct UpdateOutboundShipmentUnallocatedLine {
 #[derive(Clone, Debug, PartialEq)]
 pub enum UpdateOutboundShipmentUnallocatedLineError {
     LineDoesNotExist,
+    InvoiceDoesNotExist,
     DatabaseError(RepositoryError),
     LineIsNotUnallocatedLine,
-    //TODO NotThisStoreInvoice,
+    NotThisStoreInvoice,
     UpdatedLineDoesNotExist,
 }
 
@@ -26,13 +28,13 @@ type OutError = UpdateOutboundShipmentUnallocatedLineError;
 
 pub fn update_outbound_shipment_unallocated_line(
     ctx: &ServiceContext,
-    _store_id: &str,
+    store_id: &str,
     input: UpdateOutboundShipmentUnallocatedLine,
 ) -> Result<InvoiceLine, OutError> {
     let line = ctx
         .connection
         .transaction_sync(|connection| {
-            let line_row = validate(connection, &input)?;
+            let line_row = validate(connection, store_id, &input)?;
             let updated_line = generate(input, line_row)?;
             InvoiceLineRowRepository::new(&connection).upsert_one(&updated_line)?;
 
@@ -46,6 +48,7 @@ pub fn update_outbound_shipment_unallocated_line(
 
 fn validate(
     connection: &StorageConnection,
+    store_id: &str,
     input: &UpdateOutboundShipmentUnallocatedLine,
 ) -> Result<InvoiceLineRow, OutError> {
     let invoice_line =
@@ -54,6 +57,10 @@ fn validate(
     if invoice_line.r#type != InvoiceLineRowType::UnallocatedStock {
         return Err(OutError::LineIsNotUnallocatedLine);
     }
+
+    let invoice_row = check_invoice_exists_option(&invoice_line.invoice_id, connection)?
+        .ok_or(OutError::InvoiceDoesNotExist)?;
+    check_store(&invoice_row, store_id)?;
 
     Ok(invoice_line)
 }
@@ -76,9 +83,14 @@ impl From<RepositoryError> for UpdateOutboundShipmentUnallocatedLineError {
     }
 }
 
+impl From<NotThisStoreInvoice> for UpdateOutboundShipmentUnallocatedLineError {
+    fn from(_: NotThisStoreInvoice) -> Self {
+        UpdateOutboundShipmentUnallocatedLineError::NotThisStoreInvoice
+    }
+}
+
 #[cfg(test)]
 mod test_update {
-
     use repository::{
         mock::{mock_outbound_shipment_a_invoice_lines, mock_unallocated_line, MockDataInserts},
         test_db::setup_all,
@@ -127,6 +139,19 @@ mod test_update {
             ),
             Err(ServiceError::LineIsNotUnallocatedLine)
         );
+
+        // NotThisStoreInvoice
+        assert_eq!(
+            service.update_outbound_shipment_unallocated_line(
+                &context,
+                "store_b",
+                UpdateOutboundShipmentUnallocatedLine {
+                    id: mock_unallocated_line().id,
+                    quantity: 0
+                },
+            ),
+            Err(ServiceError::NotThisStoreInvoice)
+        );
     }
 
     #[actix_rt::test]
@@ -144,7 +169,7 @@ mod test_update {
         let result = service
             .update_outbound_shipment_unallocated_line(
                 &context,
-                "store_a",
+                "store_c",
                 UpdateOutboundShipmentUnallocatedLine {
                     id: line_to_update.id.clone(),
                     quantity: 20,

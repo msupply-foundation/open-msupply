@@ -9,6 +9,7 @@ import {
   Column,
   ArrayUtils,
   useCurrency,
+  InvoiceLineNodeType,
 } from '@openmsupply-client/common';
 import { OutboundItem } from '../../types';
 import { OutboundLineFragment } from '../api/operations.generated';
@@ -25,6 +26,18 @@ const expansionColumn = getRowExpandColumn<
 const notePopoverColumn = getNotePopoverColumn<
   OutboundLineFragment | OutboundItem
 >();
+
+const isDefaultPlaceholderRow = (row: OutboundLineFragment) =>
+  row.type === InvoiceLineNodeType.UnallocatedStock && !row.numberOfPacks;
+
+const getPackSize = (row: OutboundLineFragment) =>
+  isDefaultPlaceholderRow(row) ? '' : row.packSize;
+
+const getNumberOfPacks = (row: OutboundLineFragment) =>
+  isDefaultPlaceholderRow(row) ? '' : row.numberOfPacks;
+
+const getUnitQuantity = (row: OutboundLineFragment) =>
+  isDefaultPlaceholderRow(row) ? '' : row.packSize * row.numberOfPacks;
 
 export const useOutboundColumns = ({
   sortBy,
@@ -224,7 +237,7 @@ export const useOutboundColumns = ({
                 return '';
               }
             } else {
-              return row.numberOfPacks;
+              return getNumberOfPacks(row);
             }
           },
           accessor: ({ rowData }) => {
@@ -244,7 +257,7 @@ export const useOutboundColumns = ({
                 return '';
               }
             } else {
-              return rowData.numberOfPacks;
+              return getNumberOfPacks(rowData);
             }
           },
         },
@@ -259,7 +272,7 @@ export const useOutboundColumns = ({
                 ArrayUtils.ifTheSameElseDefault(lines, 'packSize', '') ?? ''
               );
             } else {
-              return row.packSize ?? '';
+              return getPackSize(row) ?? '';
             }
           },
           accessor: ({ rowData }) => {
@@ -267,7 +280,7 @@ export const useOutboundColumns = ({
               const { lines } = rowData;
               return ArrayUtils.ifTheSameElseDefault(lines, 'packSize', '');
             } else {
-              return rowData.packSize;
+              return getPackSize(rowData);
             }
           },
         },
@@ -280,7 +293,7 @@ export const useOutboundColumns = ({
               const { lines } = rowData;
               return ArrayUtils.getUnitQuantity(lines);
             } else {
-              return rowData.packSize * rowData.numberOfPacks;
+              return getUnitQuantity(rowData);
             }
           },
           getSortValue: rowData => {
@@ -288,7 +301,7 @@ export const useOutboundColumns = ({
               const { lines } = rowData;
               return ArrayUtils.getUnitQuantity(lines);
             } else {
-              return rowData.packSize * rowData.numberOfPacks;
+              return getUnitQuantity(rowData);
             }
           },
         },
@@ -307,6 +320,7 @@ export const useOutboundColumns = ({
               )
             ).format();
           } else {
+            if (isDefaultPlaceholderRow(rowData)) return '';
             return c(
               (rowData.sellPricePerPack ?? 0) / rowData.packSize
             ).format();
@@ -342,6 +356,8 @@ export const useOutboundColumns = ({
               )
             ).format();
           } else {
+            if (isDefaultPlaceholderRow(rowData)) return '';
+
             const x = c(
               rowData.sellPricePerPack * rowData.numberOfPacks
             ).format();

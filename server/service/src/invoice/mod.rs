@@ -81,7 +81,7 @@ pub trait InvoiceServiceTrait: Sync + Send {
         user_id: &str,
         input: DeleteInboundShipment,
     ) -> Result<String, DeleteInboundShipmentError> {
-        delete_inbound_shipment(ctx, user_id, store_id, input)
+        delete_inbound_shipment(ctx, store_id, user_id, input)
     }
 
     fn insert_outbound_shipment(
@@ -132,13 +132,22 @@ pub trait InvoiceServiceTrait: Sync + Send {
         batch_outbound_shipment(ctx, store_id, user_id, input)
     }
 
-    fn add_from_master_list(
+    fn add_to_outbound_shipment_from_master_list(
         &self,
         ctx: &ServiceContext,
         store_id: &str,
-        input: AddFromMasterList,
-    ) -> Result<Vec<InvoiceLine>, AddToShipmentFromMasterListError> {
-        add_from_master_list(ctx, store_id, input)
+        input: common::AddToShipmentFromMasterListInput,
+    ) -> Result<Vec<InvoiceLine>, outbound_shipment::AddToOutboundShipmentFromMasterListError> {
+        outbound_shipment::add_from_master_list(ctx, store_id, input)
+    }
+
+    fn add_to_inbound_shipment_from_master_list(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+        input: common::AddToShipmentFromMasterListInput,
+    ) -> Result<Vec<InvoiceLine>, inbound_shipment::AddToInboundShipmentFromMasterListError> {
+        inbound_shipment::add_from_master_list(ctx, store_id, input)
     }
 }
 

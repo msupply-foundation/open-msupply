@@ -38,9 +38,10 @@ pub struct UpdateOutboundShipment {
 pub enum UpdateOutboundShipmentError {
     CannotReverseInvoiceStatus,
     CannotChangeStatusOfInvoiceOnHold,
-    InvoiceDoesNotExists,
+    InvoiceDoesNotExist,
     InvoiceIsNotEditable,
     NotAnOutboundShipment,
+    NotThisStoreInvoice,
     // Error applies to unallocated lines with above zero quantity
     CanOnlyChangeToAllocatedWhenNoUnallocatedLines(Vec<InvoiceLine>),
     // Name validation
@@ -48,7 +49,7 @@ pub enum UpdateOutboundShipmentError {
     OtherPartyNotVisible,
     OtherPartyDoesNotExist,
     // Internal
-    UpdatedInvoicenDoesNotExist,
+    UpdatedInvoiceDoesNotExist,
     DatabaseError(RepositoryError),
     /// Holds the id of the invalid invoice line
     InvoiceLineHasNoStockLine(String),
@@ -88,7 +89,7 @@ pub fn update_outbound_shipment(
 
             get_invoice(ctx, None, &update_invoice.id)
                 .map_err(|error| OutError::DatabaseError(error))?
-                .ok_or(OutError::UpdatedInvoicenDoesNotExist)
+                .ok_or(OutError::UpdatedInvoiceDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
 
@@ -172,14 +173,18 @@ impl UpdateOutboundShipment {
 
 #[cfg(test)]
 mod test {
+    use chrono::NaiveDate;
     use repository::{
         mock::{
-            mock_item_a, mock_name_a, mock_outbound_shipment_a, mock_store_a, MockData,
+            mock_inbound_shipment_a, mock_item_a, mock_name_a, mock_outbound_shipment_a,
+            mock_outbound_shipment_b, mock_outbound_shipment_c, mock_outbound_shipment_on_hold,
+            mock_outbound_shipment_picked, mock_store_a, mock_store_b, mock_store_c, MockData,
             MockDataInserts,
         },
         test_db::setup_all_with_data,
         InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRow,
-        InvoiceRowRepository, InvoiceRowType, NameRow, NameStoreJoinRow,
+        InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType, NameRow, NameStoreJoinRow,
+        StockLineRow, StockLineRowRepository,
     };
     use util::{inline_edit, inline_init};
 
@@ -212,8 +217,33 @@ mod test {
             inline_init(|r: &mut NameStoreJoinRow| {
                 r.id = "not_a_customer_join".to_string();
                 r.name_id = not_a_customer().id;
-                r.store_id = mock_store_a().id;
+                r.store_id = mock_store_b().id;
                 r.name_is_customer = false;
+            })
+        }
+
+        fn outbound_shipment_no_stock() -> InvoiceRow {
+            inline_init(|r: &mut InvoiceRow| {
+                r.id = String::from("outbound_shipment_no_stock");
+                r.name_id = String::from("name_store_a");
+                r.store_id = String::from("store_a");
+                r.r#type = InvoiceRowType::OutboundShipment;
+                r.status = InvoiceRowStatus::Allocated;
+                r.created_datetime = NaiveDate::from_ymd(1970, 1, 7).and_hms_milli(15, 30, 0, 0);
+                r.allocated_datetime =
+                    Some(NaiveDate::from_ymd(1970, 1, 7).and_hms_milli(15, 30, 0, 0));
+            })
+        }
+
+        fn invoice_line_no_stock() -> InvoiceLineRow {
+            inline_init(|r: &mut InvoiceLineRow| {
+                r.id = String::from("outbound_shipment_no_stock_line_a");
+                r.invoice_id = String::from("outbound_shipment_no_stock");
+                r.item_id = String::from("item_a");
+                r.item_name = String::from("Item A");
+                r.item_code = String::from("item_a_code");
+                r.batch = None;
+                r.r#type = InvoiceLineRowType::StockOut;
             })
         }
 
@@ -223,6 +253,8 @@ mod test {
             inline_init(|r: &mut MockData| {
                 r.names = vec![not_visible(), not_a_customer()];
                 r.name_store_joins = vec![not_a_customer_join()];
+                r.invoices = vec![outbound_shipment_no_stock()];
+                r.invoice_lines = vec![invoice_line_no_stock()];
             }),
         )
         .await;
@@ -231,11 +263,55 @@ mod test {
         let context = service_provider.context().unwrap();
         let service = service_provider.invoice_service;
 
-        // OtherPartyDoesNotExist
+        // CannotReverseInvoiceStatus
+        assert_eq!(
+            service.update_outbound_shipment(
+                &context,
+                &mock_store_c().id,
+                inline_init(|r: &mut UpdateOutboundShipment| {
+                    r.id = mock_outbound_shipment_picked().id;
+                    r.status = Some(UpdateOutboundShipmentStatus::Allocated);
+                })
+            ),
+            Err(ServiceError::CannotReverseInvoiceStatus)
+        );
+        // InvoiceDoesNotExist
         assert_eq!(
             service.update_outbound_shipment(
                 &context,
                 &mock_store_a().id,
+                inline_init(|r: &mut UpdateOutboundShipment| { r.id = "invalid".to_string() })
+            ),
+            Err(ServiceError::InvoiceDoesNotExist)
+        );
+        // InvoiceIsNotEditable
+        assert_eq!(
+            service.update_outbound_shipment(
+                &context,
+                &mock_store_c().id,
+                inline_init(|r: &mut UpdateOutboundShipment| {
+                    r.id = mock_outbound_shipment_b().id;
+                    r.status = Some(UpdateOutboundShipmentStatus::Shipped);
+                })
+            ),
+            Err(ServiceError::InvoiceIsNotEditable)
+        );
+        // NotAnOutboundShipment
+        assert_eq!(
+            service.update_outbound_shipment(
+                &context,
+                &mock_store_a().id,
+                inline_init(|r: &mut UpdateOutboundShipment| {
+                    r.id = mock_inbound_shipment_a().id
+                })
+            ),
+            Err(ServiceError::NotAnOutboundShipment)
+        );
+        // OtherPartyDoesNotExist
+        assert_eq!(
+            service.update_outbound_shipment(
+                &context,
+                &mock_store_b().id,
                 inline_init(|r: &mut UpdateOutboundShipment| {
                     r.id = mock_outbound_shipment_a().id;
                     r.other_party_id = Some("invalid".to_string());
@@ -247,7 +323,7 @@ mod test {
         assert_eq!(
             service.update_outbound_shipment(
                 &context,
-                &mock_store_a().id,
+                &mock_store_b().id,
                 inline_init(|r: &mut UpdateOutboundShipment| {
                     r.id = mock_outbound_shipment_a().id;
                     r.other_party_id = Some(not_visible().id);
@@ -259,7 +335,7 @@ mod test {
         assert_eq!(
             service.update_outbound_shipment(
                 &context,
-                &mock_store_a().id,
+                &mock_store_b().id,
                 inline_init(|r: &mut UpdateOutboundShipment| {
                     r.id = mock_outbound_shipment_a().id;
                     r.other_party_id = Some(not_a_customer().id);
@@ -267,8 +343,46 @@ mod test {
             ),
             Err(ServiceError::OtherPartyNotACustomer)
         );
+        // InvoiceLineHasNoStockLine
+        assert_eq!(
+            service.update_outbound_shipment(
+                &context,
+                &mock_store_a().id,
+                inline_init(|r: &mut UpdateOutboundShipment| {
+                    r.id = outbound_shipment_no_stock().id;
+                    r.status = Some(UpdateOutboundShipmentStatus::Picked);
+                })
+            ),
+            Err(ServiceError::InvoiceLineHasNoStockLine(
+                invoice_line_no_stock().id.clone()
+            ))
+        );
+        // CannotChangeStatusOfInvoiceOnHold
+        assert_eq!(
+            service.update_outbound_shipment(
+                &context,
+                &mock_store_a().id,
+                inline_init(|r: &mut UpdateOutboundShipment| {
+                    r.id = mock_outbound_shipment_on_hold().id;
+                    r.status = Some(UpdateOutboundShipmentStatus::Picked);
+                })
+            ),
+            Err(ServiceError::CannotChangeStatusOfInvoiceOnHold)
+        );
+        // NotThisStoreInvoice
+        assert_eq!(
+            service.update_outbound_shipment(
+                &context,
+                &mock_store_a().id,
+                inline_init(|r: &mut UpdateOutboundShipment| {
+                    r.id = mock_outbound_shipment_c().id;
+                    r.status = Some(UpdateOutboundShipmentStatus::Picked);
+                })
+            ),
+            Err(ServiceError::NotThisStoreInvoice)
+        );
 
-        // TODO add not Other error (only other party related atm)
+        // TODO CanOnlyChangeToAllocatedWhenNoUnallocatedLines, DatabaseError
     }
 
     #[actix_rt::test]
@@ -408,6 +522,214 @@ mod test {
                 u.their_reference = their_reference;
                 u.colour = colour;
                 u.transport_reference = transport_reference;
+                u
+            })
+        );
+
+        // helpers to compare totals
+        let stock_lines_for_invoice_lines = |invoice_lines: &Vec<InvoiceLineRow>| {
+            let stock_line_ids: Vec<String> = invoice_lines
+                .iter()
+                .filter_map(|invoice| invoice.stock_line_id.to_owned())
+                .collect();
+            StockLineRowRepository::new(&connection)
+                .find_many_by_ids(&stock_line_ids)
+                .unwrap()
+        };
+        // calculates the expected stock line total for every invoice line row
+        let expected_stock_line_totals = |invoice_lines: &Vec<InvoiceLineRow>| {
+            let stock_lines = stock_lines_for_invoice_lines(invoice_lines);
+            let expected_stock_line_totals: Vec<(StockLineRow, i32)> = stock_lines
+                .into_iter()
+                .map(|line| {
+                    let invoice_line = invoice_lines
+                        .iter()
+                        .find(|il| il.stock_line_id.clone().unwrap() == line.id)
+                        .unwrap();
+                    let expected_total = line.total_number_of_packs - invoice_line.number_of_packs;
+                    (line, expected_total)
+                })
+                .collect();
+            expected_stock_line_totals
+        };
+        let assert_stock_line_totals =
+            |invoice_lines: &Vec<InvoiceLineRow>, expected: &Vec<(StockLineRow, i32)>| {
+                let stock_lines = stock_lines_for_invoice_lines(invoice_lines);
+                for line in stock_lines {
+                    let expected = expected.iter().find(|l| l.0.id == line.id).unwrap();
+                    assert_eq!(line.total_number_of_packs, expected.1);
+                }
+            };
+
+        let invoice = InvoiceRowRepository::new(&connection)
+            .find_one_by_id(&mock_outbound_shipment_c().id)
+            .unwrap();
+        let invoice_lines = InvoiceLineRowRepository::new(&connection)
+            .find_many_by_invoice_id(&invoice.id)
+            .unwrap();
+        let expected_stock_line_totals = expected_stock_line_totals(&invoice_lines);
+
+        service
+            .update_outbound_shipment(
+                &context,
+                "store_c",
+                inline_init(|r: &mut UpdateOutboundShipment| {
+                    r.id = mock_outbound_shipment_c().id;
+                    r.status = Some(UpdateOutboundShipmentStatus::Picked);
+                }),
+            )
+            .unwrap();
+
+        assert_stock_line_totals(&invoice_lines, &expected_stock_line_totals);
+    }
+
+    #[actix_rt::test]
+    async fn update_outbound_shipment_check_stock_adjustments() {
+        fn invoice() -> InvoiceRow {
+            inline_init(|r: &mut InvoiceRow| {
+                r.id = "invoice".to_string();
+                r.name_id = mock_name_a().id;
+                r.store_id = mock_store_a().id;
+                r.r#type = InvoiceRowType::OutboundShipment;
+            })
+        }
+
+        fn stock_line() -> StockLineRow {
+            inline_init(|r: &mut StockLineRow| {
+                r.id = "stock_line".to_string();
+                r.store_id = mock_store_a().id;
+                r.available_number_of_packs = 8;
+                r.total_number_of_packs = 10;
+                r.pack_size = 1;
+                r.item_id = mock_item_a().id;
+            })
+        }
+
+        fn invoice_line() -> InvoiceLineRow {
+            inline_init(|r: &mut InvoiceLineRow| {
+                r.id = "invoice_line".to_string();
+                r.invoice_id = invoice().id;
+                r.stock_line_id = Some(stock_line().id);
+                r.number_of_packs = 2;
+                r.item_id = mock_item_a().id;
+                r.r#type = InvoiceLineRowType::StockOut;
+            })
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "update_outbound_shipment_check_stock_adjustments",
+            MockDataInserts::none().units().items().names().stores(),
+            inline_init(|r: &mut MockData| {
+                r.invoices = vec![invoice()];
+                r.stock_lines = vec![stock_line()];
+                r.invoice_lines = vec![invoice_line()];
+            }),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let context = service_provider.context().unwrap();
+        let service = service_provider.invoice_service;
+
+        // Change to PICKED
+        let result = service.update_outbound_shipment(
+            &context,
+            &mock_store_a().id,
+            inline_init(|r: &mut UpdateOutboundShipment| {
+                r.id = invoice().id;
+                r.status = Some(UpdateOutboundShipmentStatus::Picked);
+            }),
+        );
+
+        assert!(matches!(result, Ok(_)), "Not Ok(_) {:#?}", result);
+
+        let stock_line_repo = StockLineRowRepository::new(&connection);
+
+        // Stock line total_number_of_packs should have been reduced
+        let new_stock_line = inline_edit(&stock_line(), |mut u| {
+            u.total_number_of_packs = 8;
+            u
+        });
+        assert_eq!(
+            stock_line_repo.find_one_by_id(&new_stock_line.id).unwrap(),
+            new_stock_line
+        );
+
+        // Try changing to shipped again to PICKED
+        let result = service.update_outbound_shipment(
+            &context,
+            &mock_store_a().id,
+            inline_init(|r: &mut UpdateOutboundShipment| {
+                r.id = invoice().id;
+                r.status = Some(UpdateOutboundShipmentStatus::Picked);
+            }),
+        );
+
+        assert!(matches!(result, Ok(_)), "Not Ok(_) {:#?}", result);
+
+        let stock_line_repo = StockLineRowRepository::new(&connection);
+
+        // Stock line should not have changed
+        assert_eq!(
+            stock_line_repo.find_one_by_id(&new_stock_line.id).unwrap(),
+            new_stock_line
+        );
+
+        // Change to SHIPPED
+        let result = service.update_outbound_shipment(
+            &context,
+            &mock_store_a().id,
+            inline_init(|r: &mut UpdateOutboundShipment| {
+                r.id = invoice().id;
+                r.status = Some(UpdateOutboundShipmentStatus::Shipped);
+            }),
+        );
+
+        assert!(matches!(result, Ok(_)), "Not Ok(_) {:#?}", result);
+
+        let stock_line_repo = StockLineRowRepository::new(&connection);
+        // Stock line should not have changed
+        assert_eq!(
+            stock_line_repo.find_one_by_id(&new_stock_line.id).unwrap(),
+            new_stock_line
+        );
+
+        // Check again, going straight to SHIPPED
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "update_outbound_shipment_check_stock_adjustments2",
+            MockDataInserts::none().units().items().names().stores(),
+            inline_init(|r: &mut MockData| {
+                r.invoices = vec![invoice()];
+                r.stock_lines = vec![stock_line()];
+                r.invoice_lines = vec![invoice_line()];
+            }),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let context = service_provider.context().unwrap();
+        let service = service_provider.invoice_service;
+
+        // Change to SHIPPED
+        let result = service.update_outbound_shipment(
+            &context,
+            &mock_store_a().id,
+            inline_init(|r: &mut UpdateOutboundShipment| {
+                r.id = invoice().id;
+                r.status = Some(UpdateOutboundShipmentStatus::Shipped);
+            }),
+        );
+
+        assert!(matches!(result, Ok(_)), "Not Ok(_) {:#?}", result);
+
+        let stock_line_repo = StockLineRowRepository::new(&connection);
+
+        // Stock line total_number_of_packs should have been reduced
+        assert_eq!(
+            stock_line_repo.find_one_by_id(&stock_line().id).unwrap(),
+            inline_edit(&stock_line(), |mut u| {
+                u.total_number_of_packs = 8;
                 u
             })
         );

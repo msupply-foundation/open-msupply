@@ -1,5 +1,6 @@
 use crate::invoice::{
-    check_invoice_is_editable, check_invoice_status, InvoiceIsNotEditable, InvoiceRowStatusError,
+    check_invoice_is_editable, check_invoice_status, check_store, InvoiceIsNotEditable,
+    InvoiceRowStatusError, NotThisStoreInvoice,
 };
 use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
 use repository::EqualFilter;
@@ -17,7 +18,7 @@ pub fn validate(
 ) -> Result<(InvoiceRow, Option<Name>), UpdateOutboundShipmentError> {
     use UpdateOutboundShipmentError::*;
     let invoice = check_invoice_exists(&patch.id, connection)?;
-    // TODO check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
+    check_store(&invoice, store_id)?;
     check_invoice_type(&invoice)?;
     check_invoice_is_editable(&invoice)?;
     check_invoice_status(&invoice, patch.full_status(), &patch.on_hold)?;
@@ -51,7 +52,7 @@ fn check_invoice_exists(
     let result = InvoiceRowRepository::new(connection).find_one_by_id(id);
 
     if let Err(RepositoryError::NotFound) = &result {
-        return Err(UpdateOutboundShipmentError::InvoiceDoesNotExists);
+        return Err(UpdateOutboundShipmentError::InvoiceDoesNotExist);
     }
     Ok(result?)
 }
@@ -116,5 +117,11 @@ impl From<InvoiceRowStatusError> for UpdateOutboundShipmentError {
             }
             InvoiceRowStatusError::CannotReverseInvoiceStatus => CannotReverseInvoiceStatus,
         }
+    }
+}
+
+impl From<NotThisStoreInvoice> for UpdateOutboundShipmentError {
+    fn from(_: NotThisStoreInvoice) -> Self {
+        UpdateOutboundShipmentError::NotThisStoreInvoice
     }
 }

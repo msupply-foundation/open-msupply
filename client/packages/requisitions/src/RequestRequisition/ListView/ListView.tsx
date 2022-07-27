@@ -78,6 +78,7 @@ export const RequestRequisitionListView: FC = () => {
       <AppBarButtons sortBy={sortBy} modalController={modalController} />
 
       <DataTable
+        key="internal-order-list"
         pagination={{ ...pagination, total: data?.totalCount }}
         onChangePage={updatePaginationQuery}
         columns={columns}

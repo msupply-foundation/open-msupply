@@ -82,11 +82,12 @@ export const QuantityTableComponent: FC<TableProps> = ({
       ],
     ],
     {},
-    [updateDraftLine]
+    [updateDraftLine, lines]
   );
 
   return (
     <DataTable
+      key="inbound-line-quantity"
       isDisabled={isDisabled}
       columns={columns}
       data={lines}
@@ -129,11 +130,12 @@ export const PricingTableComponent: FC<TableProps> = ({
       ],
     ],
     {},
-    [updateDraftLine]
+    [updateDraftLine, lines]
   );
 
   return (
     <DataTable
+      key="inbound-line-pricing"
       isDisabled={isDisabled}
       columns={columns}
       data={lines}
@@ -158,7 +160,7 @@ export const LocationTableComponent: FC<TableProps> = ({
       [getLocationInputColumn(), { setter: updateDraftLine }],
     ],
     {},
-    [updateDraftLine]
+    [updateDraftLine, lines]
   );
 
   return (
@@ -169,7 +171,13 @@ export const LocationTableComponent: FC<TableProps> = ({
         })
       }
     >
-      <DataTable columns={columns} data={lines} dense isDisabled={isDisabled} />
+      <DataTable
+        key="inbound-line-location"
+        columns={columns}
+        data={lines}
+        dense
+        isDisabled={isDisabled}
+      />
     </QueryParamsProvider>
   );
 };

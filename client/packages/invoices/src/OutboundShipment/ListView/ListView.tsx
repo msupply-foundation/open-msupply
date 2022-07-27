@@ -83,6 +83,7 @@ export const OutboundShipmentListViewComponent: FC = () => {
       <AppBarButtons sortBy={sortBy} modalController={modalController} />
 
       <DataTable
+        key="outbound-list"
         pagination={{ ...pagination, total: data?.totalCount }}
         onChangePage={updatePaginationQuery}
         columns={columns}
