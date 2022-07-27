@@ -9,7 +9,7 @@ use util::uuid::uuid;
 use super::{central_server_configurations::ConfigureCentralServer, SyncRecordTester};
 use crate::sync::test::{
     check_records_against_database,
-    integration::{central_server_configurations::CreateSyncSiteResult, init_db, random_timeout},
+    integration::{central_server_configurations::CreateSyncSiteResult, init_db},
 };
 
 fn small_uuid() -> String {
@@ -22,8 +22,7 @@ fn small_uuid() -> String {
 /// Do update for each step and re-initialise and check against the step data
 
 async fn test_central_sync_record(identifier: &str, tester: &dyn SyncRecordTester) {
-    // util::init_logger(util::LogLevel::Warn);
-    random_timeout().await;
+    // util::init_logger(util::LogLevel::Info);
     // Without re-initialisation
     println!("test_central_sync_record_{}_init", identifier);
 
@@ -42,11 +41,6 @@ async fn test_central_sync_record(identifier: &str, tester: &dyn SyncRecordTeste
 
     for (index, step_data) in steps_data.into_iter().enumerate() {
         println!("test_central_sync_record_{}_step{}", identifier, index + 1);
-
-        // println!(
-        //     "upsert {}",
-        //     serde_json::to_string_pretty(&step_data.central_upsert).unwrap()
-        // );
 
         central_server_configurations
             .upsert_records(step_data.central_upsert)
@@ -77,12 +71,8 @@ async fn test_central_sync_record(identifier: &str, tester: &dyn SyncRecordTeste
 
     let steps_data = tester.test_step_data(&new_site_properties);
     for (index, step_data) in steps_data.into_iter().enumerate() {
-        println!("test_central_sync_record_{}_step{}", identifier, index + 1);
-
-        // println!(
-        //     "upsert {}",
-        //     serde_json::to_string_pretty(&step_data.central_upsert).unwrap()
-        // );
+        let inner_identifier = format!("{}_step_{}", identifier, index + 1);
+        println!("test_central_sync_record_{}", inner_identifier);
 
         central_server_configurations
             .upsert_records(step_data.central_upsert)
@@ -94,7 +84,7 @@ async fn test_central_sync_record(identifier: &str, tester: &dyn SyncRecordTeste
             .await
             .expect("Problem deleting central data");
 
-        let (connection, _) = init_db(&sync_settings, &identifier).await;
+        let (connection, synchroniser) = init_db(&sync_settings, &inner_identifier).await;
         synchroniser.sync().await.unwrap();
         check_records_against_database(&connection, step_data.integration_records).await;
     }

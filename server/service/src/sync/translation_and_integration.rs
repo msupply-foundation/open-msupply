@@ -82,7 +82,10 @@ impl<'a> TranslationAndIntegration<'a> {
                     self.sync_buffer
                         .record_integration_error(&sync_record, &translation_error)?;
                     result.insert_error(&sync_record.table_name);
-                    warn!("{:?} {:?}", translation_error, sync_record);
+                    warn!(
+                        "{:?} {:?} {:?}",
+                        translation_error, sync_record.record_id, sync_record.table_name
+                    );
                     // Next sync_record
                     continue;
                 }
@@ -96,7 +99,10 @@ impl<'a> TranslationAndIntegration<'a> {
                     self.sync_buffer
                         .record_integration_error(&sync_record, &error)?;
                     result.insert_error(&sync_record.table_name);
-                    warn!("{:?} {:?}", error, sync_record);
+                    warn!(
+                        "{:?} {:?} {:?}",
+                        error, sync_record.record_id, sync_record.table_name
+                    );
                     // Next sync_record
                     continue;
                 }
@@ -116,7 +122,10 @@ impl<'a> TranslationAndIntegration<'a> {
                     self.sync_buffer
                         .record_integration_error(&sync_record, &error)?;
                     result.insert_error(&sync_record.table_name);
-                    warn!("{:?} {:?} {:?}", error, sync_record, integration_records);
+                    warn!(
+                        "{:?} {:?} {:?}",
+                        error, sync_record.record_id, sync_record.table_name
+                    );
                 }
             }
         }
@@ -190,6 +199,14 @@ impl PullDeleteRecord {
             InvoiceLine => InvoiceLineRowRepository::new(con).delete(id),
             Requisition => RequisitionRowRepository::new(con).delete(id),
             RequisitionLine => RequisitionLineRowRepository::new(con).delete(id),
+            #[cfg(test)]
+            Location => LocationRowRepository::new(con).delete(id),
+            #[cfg(test)]
+            StockLine => StockLineRowRepository::new(con).delete(id),
+            #[cfg(test)]
+            Stocktake => StocktakeRowRepository::new(con).delete(id),
+            #[cfg(test)]
+            StocktakeLine => StocktakeLineRowRepository::new(con).delete(id),
         }
     }
 }
@@ -221,7 +238,7 @@ mod test {
     use repository::{
         mock::MockDataInserts, test_db, ItemRow, ItemRowRepository, UnitRow, UnitRowRepository,
     };
-    use util::inline_init;
+    use util::{assert_matches, inline_init};
 
     use crate::sync::translations::{IntegrationRecords, PullUpsertRecord};
 
@@ -261,15 +278,15 @@ mod test {
             .unwrap();
 
         // Record should exist
-        assert!(matches!(
+        assert_matches!(
             UnitRowRepository::new(&connection).find_one_by_id_option("unit"),
             Ok(Some(_))
-        ));
+        );
 
         // Record should not exist
-        assert!(matches!(
+        assert_matches!(
             ItemRowRepository::new(&connection).find_one_by_id("item"),
             Ok(None)
-        ));
+        );
     }
 }

@@ -144,7 +144,7 @@ mod test {
         test_db::{setup_all, setup_all_with_data},
         RequisitionLineRowRepository,
     };
-    use util::{inline_edit, inline_init};
+    use util::{assert_matches, inline_edit, inline_init};
 
     use crate::{
         requisition_line::request_requisition_line::{
@@ -320,7 +320,7 @@ mod test {
             }),
         );
 
-        assert!(matches!(result, Ok(_)), "{:#?}", result);
+        assert_matches!(result, Ok(_));
 
         // TODO test suggested = 0 (where MOS is above MIN_MOS)
     }

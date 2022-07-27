@@ -54,6 +54,7 @@ impl Default for InvoiceLineRowType {
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
+#[changeset_options(treat_none_as_null = "true")]
 #[table_name = "invoice_line"]
 pub struct InvoiceLineRow {
     pub id: String,
