@@ -371,7 +371,6 @@ mod test {
               "__typename": "ItemNode",
               "atcCategory": "",
               "ddd": "0.1",
-              "defaultPackSize": 1,
               "doses": 11,
               "isVaccine": true,
               "margin": 0.3,
@@ -394,7 +393,6 @@ mod test {
                msupplyUniversalName
                doses
                isVaccine
-               defaultPackSize
                outerPackSize
                volumePerPack
                volumePerOuterPack
