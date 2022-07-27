@@ -33,7 +33,7 @@ export const issueStock = (
     ({ id }) => id === idToIssue
   );
   const foundRow = draftOutboundLines[foundRowIdx];
-  if (!foundRow) return [];
+  if (!foundRow) return draftOutboundLines;
 
   const newDraftOutboundLines = [...draftOutboundLines];
   newDraftOutboundLines[foundRowIdx] = {
@@ -173,6 +173,7 @@ const allocateToBatches = ({
     newDraftOutboundLines[draftOutboundLineIdx] = {
       ...draftOutboundLine,
       numberOfPacks: allocatedNumberOfPacks,
+      isUpdated: true,
     };
   });
   return toAllocate;
@@ -209,6 +210,7 @@ const allocatedAdditionalStock = ({
 
     toAllocate -= allocatedNumberOfPacks * draftOutboundLine.packSize;
     draftOutboundLine.numberOfPacks = allocatedNumberOfPacks;
+    draftOutboundLine.isUpdated = true;
   });
   return toAllocate;
 };
@@ -253,6 +255,7 @@ const reduceBatchAllocation = ({
       newDraftOutboundLines[draftOutboundLineIdx] = {
         ...draftOutboundLine,
         numberOfPacks: numberOfPacks,
+        isUpdated: true,
       };
     });
   return Math.abs(toAllocate);

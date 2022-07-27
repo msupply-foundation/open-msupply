@@ -56,6 +56,7 @@ export const InboundListView: FC = () => {
       'createdDatetime',
       'allocatedDatetime',
       ['comment', { width: '100%' }],
+      'theirReference',
       [
         'totalAfterTax',
         {
@@ -90,6 +91,7 @@ export const InboundListView: FC = () => {
             onCreate={modalController.toggleOn}
           />
         }
+        enableColumnSelection
       />
     </>
   );

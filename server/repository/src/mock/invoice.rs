@@ -65,6 +65,20 @@ pub fn mock_outbound_shipment_d() -> InvoiceRow {
     })
 }
 
+pub fn mock_outbound_shipment_e() -> InvoiceRow {
+    inline_init(|r: &mut InvoiceRow| {
+        r.id = String::from("outbound_shipment_e");
+        r.name_id = String::from("name_store_a");
+        r.store_id = String::from("store_a");
+        r.invoice_number = 3;
+        r.r#type = InvoiceRowType::OutboundShipment;
+        r.status = InvoiceRowStatus::New;
+        r.comment = Some("Sort comment test aB".to_owned());
+        r.their_reference = Some(String::from(""));
+        r.created_datetime = NaiveDate::from_ymd(1970, 1, 2).and_hms_milli(15, 30, 0, 0);
+    })
+}
+
 // Added for CI update
 pub fn mock_outbound_shipment_picked() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
@@ -123,6 +137,17 @@ pub fn mock_new_outbound_shipment_no_lines() -> InvoiceRow {
         r.store_id = String::from("store_c");
         r.r#type = InvoiceRowType::OutboundShipment;
         r.status = InvoiceRowStatus::New;
+    })
+}
+
+pub fn mock_new_outbound_shipment_no_stockline() -> InvoiceRow {
+    inline_init(|r: &mut InvoiceRow| {
+        r.id = String::from("mock_new_outbound_shipment_no_stockline");
+        r.name_id = String::from("name_store_a");
+        r.store_id = String::from("store_c");
+        r.r#type = InvoiceRowType::OutboundShipment;
+        r.status = InvoiceRowStatus::New;
+        r.created_datetime = NaiveDate::from_ymd(1970, 1, 6).and_hms_milli(15, 30, 0, 0);
     })
 }
 
@@ -268,10 +293,12 @@ pub fn mock_outbound_shipments() -> Vec<InvoiceRow> {
         mock_outbound_shipment_b(),
         mock_outbound_shipment_c(),
         mock_outbound_shipment_d(),
+        mock_outbound_shipment_e(),
         mock_outbound_shipment_shipped(),
         mock_outbound_shipment_picked(),
         mock_outbound_shipment_no_lines(),
         mock_new_outbound_shipment_no_lines(),
+        mock_new_outbound_shipment_no_stockline(),
         mock_outbound_shipment_on_hold(),
     ]
 }

@@ -34,7 +34,7 @@ pub fn delete_inbound_shipment(
     let invoice_id = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(connection, &input)?;
+            validate(connection, &input, store_id)?;
 
             // TODO https://github.com/openmsupply/remote-server/issues/839
             let lines = InvoiceLineRepository::new(&connection).query_by_filter(
@@ -114,8 +114,9 @@ where
 mod test {
     use repository::{
         mock::{
-            mock_inbound_shipment_a, mock_inbound_shipment_b, mock_inbound_shipment_e,
-            mock_outbound_shipment_c, mock_store_a, mock_user_account_a, MockDataInserts,
+            mock_inbound_shipment_a, mock_inbound_shipment_b, mock_inbound_shipment_c,
+            mock_inbound_shipment_e, mock_outbound_shipment_e, mock_store_a, mock_store_b,
+            mock_user_account_a, MockDataInserts,
         },
         test_db::setup_all,
         InvoiceRowRepository,
@@ -151,7 +152,7 @@ mod test {
             Err(ServiceError::InvoiceDoesNotExist)
         );
 
-        //CannotEditFinalised
+        // CannotEditFinalised
         assert_eq!(
             service.delete_inbound_shipment(
                 &context,
@@ -164,20 +165,20 @@ mod test {
             Err(ServiceError::CannotEditFinalised)
         );
 
-        //NotAnInboundShipment
+        // NotAnInboundShipment
         assert_eq!(
             service.delete_inbound_shipment(
                 &context,
                 &mock_store_a().id,
                 &mock_user_account_a().id,
                 DeleteInboundShipment {
-                    id: mock_outbound_shipment_c().id.clone(),
+                    id: mock_outbound_shipment_e().id.clone(),
                 },
             ),
             Err(ServiceError::NotAnInboundShipment)
         );
 
-        //LineDeleteError
+        // LineDeleteError
         assert_eq!(
             service.delete_inbound_shipment(
                 &context,
@@ -191,6 +192,19 @@ mod test {
                 line_id: "inbound_shipment_a_line_a".to_string(),
                 error: DeleteInboundShipmentLineError::BatchIsReserved
             })
+        );
+
+        // NotThisStoreInvoice
+        assert_eq!(
+            service.delete_inbound_shipment(
+                &context,
+                &mock_store_b().id,
+                &mock_user_account_a().id,
+                DeleteInboundShipment {
+                    id: mock_inbound_shipment_c().id.clone(),
+                },
+            ),
+            Err(ServiceError::NotThisStoreInvoice)
         );
     }
 

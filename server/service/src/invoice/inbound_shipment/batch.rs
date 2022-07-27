@@ -251,7 +251,7 @@ mod test {
 
         // Test rollback
         let result = service
-            .batch_inbound_shipment(&context, "store_a", "n/a", input.clone())
+            .batch_inbound_shipment(&context, "store_c", "n/a", input.clone())
             .unwrap();
 
         assert_eq!(
