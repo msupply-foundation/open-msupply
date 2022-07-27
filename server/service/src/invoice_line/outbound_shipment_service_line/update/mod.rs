@@ -25,13 +25,13 @@ type OutError = UpdateOutboundShipmentServiceLineError;
 
 pub fn update_outbound_shipment_service_line(
     ctx: &ServiceContext,
-    _store_id: &str,
+    store_id: &str,
     input: UpdateOutboundShipmentServiceLine,
 ) -> Result<InvoiceLine, OutError> {
     let updated_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let (existing_line, _, item) = validate(&input, &connection)?;
+            let (existing_line, _, item) = validate(&input, store_id, &connection)?;
             let updated_line = generate(input, existing_line, item)?;
             InvoiceLineRowRepository::new(&connection).upsert_one(&updated_line)?;
 
@@ -49,7 +49,7 @@ pub enum UpdateOutboundShipmentServiceLineError {
     LineDoesNotExist,
     InvoiceDoesNotExist,
     NotAnOutboundShipment,
-    // NotThisStoreInvoice,
+    NotThisStoreInvoice,
     NotThisInvoiceLine(String),
     CannotEditInvoice,
     ItemNotFound,
@@ -174,6 +174,19 @@ mod test {
                 }),
             ),
             Err(ServiceError::NotAServiceItem)
+        );
+
+        // NotThisStoreInvoice
+        assert_eq!(
+            service.update_outbound_shipment_service_line(
+                &context,
+                "store_c",
+                inline_init(|r: &mut UpdateOutboundShipmentServiceLine| {
+                    r.id = mock_draft_outbound_service_line().id;
+                    r.item_id = Some(mock_item_service_item().id)
+                }),
+            ),
+            Err(ServiceError::NotThisStoreInvoice)
         );
     }
 

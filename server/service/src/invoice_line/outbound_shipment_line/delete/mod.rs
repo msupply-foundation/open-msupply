@@ -16,13 +16,13 @@ type OutError = DeleteOutboundShipmentLineError;
 
 pub fn delete_outbound_shipment_line(
     ctx: &ServiceContext,
-    _store_id: &str,
+    store_id: &str,
     input: DeleteOutboundShipmentLine,
 ) -> Result<String, OutError> {
     let line_id = ctx
         .connection
         .transaction_sync(|connection| {
-            let line = validate(&input, &connection)?;
+            let line = validate(&input, store_id, &connection)?;
             let stock_line_id_option = line.stock_line_id.clone();
 
             InvoiceLineRowRepository::new(&connection).delete(&line.id)?;
@@ -82,7 +82,8 @@ mod test {
     use repository::{
         mock::{
             mock_inbound_shipment_a_invoice_lines, mock_outbound_shipment_a_invoice_lines,
-            mock_outbound_shipment_b_invoice_lines, mock_store_a, MockDataInserts,
+            mock_outbound_shipment_b_invoice_lines, mock_store_a, mock_store_b, mock_store_c,
+            MockDataInserts,
         },
         test_db::setup_all,
         InvoiceLineRowRepository,
@@ -134,7 +135,7 @@ mod test {
         assert_eq!(
             service.delete_outbound_shipment_line(
                 &context,
-                &mock_store_a().id,
+                &mock_store_c().id,
                 DeleteOutboundShipmentLine {
                     id: mock_outbound_shipment_b_invoice_lines()[1].id.clone(),
                 },
@@ -160,7 +161,7 @@ mod test {
         let invoice_line_id = service
             .delete_outbound_shipment_line(
                 &context,
-                &mock_store_a().id,
+                &mock_store_b().id,
                 DeleteOutboundShipmentLine {
                     id: mock_outbound_shipment_a_invoice_lines()[0].id.clone(),
                 },

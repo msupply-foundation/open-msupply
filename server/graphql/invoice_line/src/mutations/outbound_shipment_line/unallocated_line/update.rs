@@ -1,6 +1,6 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::RecordNotFound,
+    simple_generic_errors::{ForeignKey, ForeignKeyError, RecordNotFound},
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
@@ -26,6 +26,7 @@ pub struct UpdateInput {
 #[graphql(field(name = "description", type = "String"))]
 pub enum UpdateErrorInterface {
     RecordNotFound(RecordNotFound),
+    ForeignKeyError(ForeignKeyError),
 }
 
 #[derive(SimpleObject)]
@@ -92,8 +93,16 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         ServiceError::LineDoesNotExist => {
             return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound {}))
         }
+        ServiceError::InvoiceDoesNotExist => {
+            //TODO: Change all to std error or update check_line_exists_option
+            //https://github.com/openmsupply/open-msupply/pull/366#discussion_r930574975
+            return Ok(UpdateErrorInterface::ForeignKeyError(ForeignKeyError(
+                ForeignKey::InvoiceId,
+            )));
+        }
         // Standard Graphql Errors
         ServiceError::LineIsNotUnallocatedLine => BadUserInput(formatted_error),
+        ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::UpdatedLineDoesNotExist => InternalError(formatted_error),
     };

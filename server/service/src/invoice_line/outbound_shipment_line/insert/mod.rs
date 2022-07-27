@@ -22,13 +22,13 @@ type OutError = InsertOutboundShipmentLineError;
 
 pub fn insert_outbound_shipment_line(
     ctx: &ServiceContext,
-    _store_id: &str,
+    store_id: &str,
     input: InsertOutboundShipmentLine,
 ) -> Result<InvoiceLine, OutError> {
     let new_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let (item, invoice, batch) = validate(&input, &connection)?;
+            let (item, invoice, batch) = validate(&input, store_id, &connection)?;
             let (new_line, update_batch) = generate(input, item, batch, invoice)?;
             InvoiceLineRowRepository::new(&connection).upsert_one(&new_line)?;
             StockLineRowRepository::new(&connection).upsert_one(&update_batch)?;
@@ -84,7 +84,7 @@ mod test {
         mock::{
             mock_item_a, mock_item_b, mock_item_b_lines, mock_outbound_shipment_a_invoice_lines,
             mock_stock_line_a, mock_stock_line_location_is_on_hold, mock_stock_line_on_hold,
-            mock_stock_line_si_d, mock_store_a, MockDataInserts,
+            mock_stock_line_si_d, mock_store_a, mock_store_b, MockDataInserts,
         },
         test_db::setup_all,
         InvoiceLineRowRepository,
@@ -192,7 +192,7 @@ mod test {
         assert_eq!(
             service.insert_outbound_shipment_line(
                 &context,
-                &mock_store_a().id,
+                &mock_store_b().id,
                 inline_init(|r: &mut InsertOutboundShipmentLine| {
                     r.id = "new outbound line id".to_string();
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
@@ -228,7 +228,7 @@ mod test {
         assert_eq!(
             service.insert_outbound_shipment_line(
                 &context,
-                &mock_store_a().id,
+                &mock_store_b().id,
                 inline_init(|r: &mut InsertOutboundShipmentLine| {
                     r.id = "new outbound line id".to_string();
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
@@ -246,7 +246,7 @@ mod test {
         assert_eq!(
             service.insert_outbound_shipment_line(
                 &context,
-                &mock_store_a().id,
+                &mock_store_b().id,
                 inline_init(|r: &mut InsertOutboundShipmentLine| {
                     r.id = "new outbound line id".to_string();
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
@@ -266,7 +266,7 @@ mod test {
         assert_eq!(
             service.insert_outbound_shipment_line(
                 &context,
-                &mock_store_a().id,
+                &mock_store_b().id,
                 inline_init(|r: &mut InsertOutboundShipmentLine| {
                     r.id = "new outbound line id".to_string();
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
@@ -300,7 +300,7 @@ mod test {
         service
             .insert_outbound_shipment_line(
                 &context,
-                &mock_store_a().id,
+                &mock_store_b().id,
                 inline_init(|r: &mut InsertOutboundShipmentLine| {
                     r.id = "new outbound line id".to_string();
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
