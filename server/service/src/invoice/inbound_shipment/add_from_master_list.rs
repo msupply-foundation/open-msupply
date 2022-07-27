@@ -135,7 +135,7 @@ mod test {
     #[actix_rt::test]
     async fn add_from_master_list_errors() {
         let (_, _, connection_manager, _) =
-            setup_all("add_from_master_list_errors", MockDataInserts::all()).await;
+            setup_all("is_add_from_master_list_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider.context().unwrap();
