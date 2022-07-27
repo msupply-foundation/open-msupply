@@ -2,8 +2,8 @@ import React, { FC } from 'react';
 import { Routes, Route, RouteBuilder } from '@openmsupply-client/common';
 import { PatientListView } from '../ListView';
 import { PatientDetailView } from '../DetailView';
-import { ProgramListView } from '../../ProgramEnrollment';
-import { ProgramDetailView } from '../../ProgramEnrollment/DetailView';
+import { ProgramListView } from '../../ProgramEnrolment';
+import { ProgramDetailView } from '../../ProgramEnrolment/DetailView';
 
 const singlePatientRoute = RouteBuilder.create(':patientId').build();
 const patientProgramEnrolmentRoute = RouteBuilder.create(':patientId')
