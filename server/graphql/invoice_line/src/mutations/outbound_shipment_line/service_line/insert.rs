@@ -362,9 +362,7 @@ mod test {
             "itemId": "item_id",
             "name": "some name",
             "totalBeforeTax": 0.1,
-            "tax": {
-                "percentage": 10
-            },
+            "tax": 10,
             "note": "note"
           },
           "storeId": "store_a"
