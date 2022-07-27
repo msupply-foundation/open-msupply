@@ -31,7 +31,7 @@ pub(crate) fn encounter_updated(
     let status = match encounter.status.as_str() {
         "Scheduled" => EncounterStatus::Scheduled,
         "Ongoing" => EncounterStatus::Ongoing,
-        "Done" => EncounterStatus::Done,
+        "Finished" => EncounterStatus::Finished,
         "Canceled" => EncounterStatus::Canceled,
         "Missed" => EncounterStatus::Missed,
         value => {

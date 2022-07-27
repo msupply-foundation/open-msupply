@@ -7,7 +7,7 @@ CREATE TABLE encounter (
     status TEXT CHECK (status IN (
         'SCHEDULED',
         'ONGOING',
-        'DONE',
+        'FINISHED',
         'CANCELED',
         'MISSED'
     )) NOT NULL

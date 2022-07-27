@@ -21,7 +21,7 @@ pub struct EncounterNode {
 pub enum EncounterNodeStatus {
     Scheduled,
     Ongoing,
-    Done,
+    Finished,
     Canceled,
     Missed,
 }
@@ -31,9 +31,19 @@ impl EncounterNodeStatus {
         match self {
             EncounterNodeStatus::Scheduled => EncounterStatus::Scheduled,
             EncounterNodeStatus::Ongoing => EncounterStatus::Ongoing,
-            EncounterNodeStatus::Done => EncounterStatus::Done,
+            EncounterNodeStatus::Finished => EncounterStatus::Finished,
             EncounterNodeStatus::Canceled => EncounterStatus::Canceled,
             EncounterNodeStatus::Missed => EncounterStatus::Missed,
+        }
+    }
+
+    pub fn from_domain(status: &EncounterStatus) -> EncounterNodeStatus {
+        match status {
+            EncounterStatus::Scheduled => EncounterNodeStatus::Scheduled,
+            EncounterStatus::Ongoing => EncounterNodeStatus::Ongoing,
+            EncounterStatus::Finished => EncounterNodeStatus::Finished,
+            EncounterStatus::Canceled => EncounterNodeStatus::Canceled,
+            EncounterStatus::Missed => EncounterNodeStatus::Missed,
         }
     }
 }
@@ -53,13 +63,7 @@ impl EncounterNode {
     }
 
     pub async fn status(&self) -> EncounterNodeStatus {
-        match self.status {
-            EncounterStatus::Scheduled => EncounterNodeStatus::Scheduled,
-            EncounterStatus::Ongoing => EncounterNodeStatus::Ongoing,
-            EncounterStatus::Done => EncounterNodeStatus::Done,
-            EncounterStatus::Canceled => EncounterNodeStatus::Canceled,
-            EncounterStatus::Missed => EncounterNodeStatus::Missed,
-        }
+        EncounterNodeStatus::from_domain(&self.status)
     }
 
     /// The encounter document
