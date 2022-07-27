@@ -18,6 +18,22 @@ export type ProgramsQueryVariables = Types.Exact<{
 
 export type ProgramsQuery = { __typename: 'FullQuery', programs: { __typename: 'ProgramConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramNode', type: string, programPatientId?: string | null, patientId: string, name: string, enrolmentDatetime: string, document: { __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, author: string, timestamp: string, type: string, data: any, documentRegistry?: { __typename: 'DocumentRegistryNode', uiSchemaType: string, documentType: string, context: Types.DocumentRegistryNodeContext, formSchemaId: string, jsonSchema: any, uiSchema: any } | null } }> } };
 
+export type InsertProgramMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String'];
+  input: Types.InsertProgramInput;
+}>;
+
+
+export type InsertProgramMutation = { __typename: 'FullMutation', insertProgram: { __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, author: string, timestamp: string, type: string, data: any, documentRegistry?: { __typename: 'DocumentRegistryNode', uiSchemaType: string, documentType: string, context: Types.DocumentRegistryNodeContext, formSchemaId: string, jsonSchema: any, uiSchema: any } | null } };
+
+export type UpdateProgramMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String'];
+  input: Types.UpdateProgramInput;
+}>;
+
+
+export type UpdateProgramMutation = { __typename: 'FullMutation', updateProgram: { __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, author: string, timestamp: string, type: string, data: any, documentRegistry?: { __typename: 'DocumentRegistryNode', uiSchemaType: string, documentType: string, context: Types.DocumentRegistryNodeContext, formSchemaId: string, jsonSchema: any, uiSchema: any } | null } };
+
 export const DocumentFragmentDoc = gql`
     fragment Document on DocumentNode {
   id
@@ -61,6 +77,26 @@ export const ProgramsDocument = gql`
   }
 }
     ${ProgramFragmentDoc}`;
+export const InsertProgramDocument = gql`
+    mutation insertProgram($storeId: String!, $input: InsertProgramInput!) {
+  insertProgram(storeId: $storeId, input: $input) {
+    ... on DocumentNode {
+      __typename
+      ...Document
+    }
+  }
+}
+    ${DocumentFragmentDoc}`;
+export const UpdateProgramDocument = gql`
+    mutation updateProgram($storeId: String!, $input: UpdateProgramInput!) {
+  updateProgram(storeId: $storeId, input: $input) {
+    ... on DocumentNode {
+      __typename
+      ...Document
+    }
+  }
+}
+    ${DocumentFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -71,6 +107,12 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
   return {
     programs(variables: ProgramsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ProgramsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ProgramsQuery>(ProgramsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'programs', 'query');
+    },
+    insertProgram(variables: InsertProgramMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InsertProgramMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertProgramMutation>(InsertProgramDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertProgram', 'mutation');
+    },
+    updateProgram(variables: UpdateProgramMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateProgramMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateProgramMutation>(UpdateProgramDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateProgram', 'mutation');
     }
   };
 }
@@ -90,5 +132,39 @@ export type Sdk = ReturnType<typeof getSdk>;
 export const mockProgramsQuery = (resolver: ResponseResolver<GraphQLRequest<ProgramsQueryVariables>, GraphQLContext<ProgramsQuery>, any>) =>
   graphql.query<ProgramsQuery, ProgramsQueryVariables>(
     'programs',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockInsertProgramMutation((req, res, ctx) => {
+ *   const { storeId, input } = req.variables;
+ *   return res(
+ *     ctx.data({ insertProgram })
+ *   )
+ * })
+ */
+export const mockInsertProgramMutation = (resolver: ResponseResolver<GraphQLRequest<InsertProgramMutationVariables>, GraphQLContext<InsertProgramMutation>, any>) =>
+  graphql.mutation<InsertProgramMutation, InsertProgramMutationVariables>(
+    'insertProgram',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockUpdateProgramMutation((req, res, ctx) => {
+ *   const { storeId, input } = req.variables;
+ *   return res(
+ *     ctx.data({ updateProgram })
+ *   )
+ * })
+ */
+export const mockUpdateProgramMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateProgramMutationVariables>, GraphQLContext<UpdateProgramMutation>, any>) =>
+  graphql.mutation<UpdateProgramMutation, UpdateProgramMutationVariables>(
+    'updateProgram',
     resolver
   )

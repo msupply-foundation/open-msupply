@@ -17,7 +17,6 @@ fragment Document on DocumentNode {
 }
 
 fragment Program on ProgramNode {
-  id
   type
   programPatientId
   patientId
@@ -44,6 +43,24 @@ query programs(
         ...Program
       }
       totalCount
+    }
+  }
+}
+
+mutation insertProgram($storeId: String!, $input: InsertProgramInput!) {
+  insertProgram(storeId: $storeId, input: $input) {
+    ... on DocumentNode {
+      __typename
+      ...Document
+    }
+  }
+}
+
+mutation updateProgram($storeId: String!, $input: UpdateProgramInput!) {
+  updateProgram(storeId: $storeId, input: $input) {
+    ... on DocumentNode {
+      __typename
+      ...Document
     }
   }
 }
