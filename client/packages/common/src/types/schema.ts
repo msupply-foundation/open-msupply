@@ -620,11 +620,39 @@ export type DocumentRegistrySortInput = {
 
 export type DocumentResponse = DocumentConnector;
 
+export type EncounterConnector = {
+  __typename: 'EncounterConnector';
+  nodes: Array<EncounterNode>;
+  totalCount: Scalars['Int'];
+};
+
+export type EncounterFilterInput = {
+  encounterDatetime?: InputMaybe<DatetimeFilterInput>;
+  name?: InputMaybe<EqualFilterStringInput>;
+  patientId?: InputMaybe<EqualFilterStringInput>;
+  program?: InputMaybe<EqualFilterStringInput>;
+  status?: InputMaybe<EqualFilterEncounterStatusInput>;
+};
+
 export type EncounterNode = {
   __typename: 'EncounterNode';
   /** The encounter document */
   document: DocumentNode;
+  name: Scalars['String'];
+  patientId: Scalars['String'];
+  program: Scalars['String'];
+  status: EncounterNodeStatus;
 };
+
+export enum EncounterNodeStatus {
+  Canceled = 'CANCELED',
+  Done = 'DONE',
+  Missed = 'MISSED',
+  Ongoing = 'ONGOING',
+  Scheduled = 'SCHEDULED'
+}
+
+export type EncounterResponse = EncounterConnector;
 
 export type EqualFilterBigNumberInput = {
   equalAny?: InputMaybe<Array<Scalars['Int']>>;
@@ -636,6 +664,12 @@ export type EqualFilterDocumentRegistryContextInput = {
   equalAny?: InputMaybe<Array<DocumentRegistryNodeContext>>;
   equalTo?: InputMaybe<DocumentRegistryNodeContext>;
   notEqualTo?: InputMaybe<DocumentRegistryNodeContext>;
+};
+
+export type EqualFilterEncounterStatusInput = {
+  equalAny?: InputMaybe<Array<EncounterNodeStatus>>;
+  equalTo?: InputMaybe<EncounterNodeStatus>;
+  notEqualTo?: InputMaybe<EncounterNodeStatus>;
 };
 
 export type EqualFilterGenderInput = {
@@ -1173,6 +1207,7 @@ export type FullQuery = {
   documentHistory: DocumentHistoryResponse;
   documentRegistries: DocumentRegistryResponse;
   documents: DocumentResponse;
+  encounters: EncounterResponse;
   formSchema?: Maybe<FormSchemaNode>;
   invoice: InvoiceResponse;
   invoiceByNumber: InvoiceResponse;
@@ -1201,6 +1236,7 @@ export type FullQuery = {
    */
   printReport: PrintReportResponse;
   printReportDefinition: PrintReportResponse;
+  programs: ProgramResponse;
   /**
    * Retrieves a new auth bearer and refresh token
    * The refresh token is returned as a cookie
@@ -1254,6 +1290,12 @@ export type FullQueryDocumentRegistriesArgs = {
 
 export type FullQueryDocumentsArgs = {
   filter?: InputMaybe<DocumentFilterInput>;
+  storeId: Scalars['String'];
+};
+
+
+export type FullQueryEncountersArgs = {
+  filter?: InputMaybe<EncounterFilterInput>;
   storeId: Scalars['String'];
 };
 
@@ -1361,6 +1403,13 @@ export type FullQueryPrintReportDefinitionArgs = {
   dataId: Scalars['String'];
   name?: InputMaybe<Scalars['String']>;
   report: Scalars['JSON'];
+  storeId: Scalars['String'];
+};
+
+
+export type FullQueryProgramsArgs = {
+  filter?: InputMaybe<ProgramFilterInput>;
+  sort?: InputMaybe<ProgramSortInput>;
   storeId: Scalars['String'];
 };
 
@@ -2657,12 +2706,49 @@ export type PrintReportNode = {
 
 export type PrintReportResponse = PrintReportError | PrintReportNode;
 
+export type ProgramConnector = {
+  __typename: 'ProgramConnector';
+  nodes: Array<ProgramNode>;
+  totalCount: Scalars['Int'];
+};
+
+export type ProgramFilterInput = {
+  enrolmentDatetime?: InputMaybe<DatetimeFilterInput>;
+  patientId?: InputMaybe<EqualFilterStringInput>;
+  programPatientId?: InputMaybe<EqualFilterStringInput>;
+  type?: InputMaybe<EqualFilterStringInput>;
+};
+
 export type ProgramNode = {
   __typename: 'ProgramNode';
   /** The encounter document */
   document: DocumentNode;
   /** The program document */
   encounters: Array<EncounterNode>;
+  enrolmentDatetime: Scalars['DateTime'];
+  name: Scalars['String'];
+  patientId: Scalars['String'];
+  programPatientId?: Maybe<Scalars['String']>;
+  type: Scalars['String'];
+};
+
+export type ProgramResponse = ProgramConnector;
+
+export enum ProgramSortFieldInput {
+  EnrolmentDatetime = 'enrolmentDatetime',
+  PatientId = 'patientId',
+  ProgramPatientId = 'programPatientId',
+  Type = 'type'
+}
+
+export type ProgramSortInput = {
+  /**
+   * Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']>;
+  /** Sort query result by `key` */
+  key: ProgramSortFieldInput;
 };
 
 export type RawDocumentNode = {
