@@ -102,6 +102,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         ServiceError::LineIsNotUnallocatedLine => BadUserInput(formatted_error),
         ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
+        ServiceError::UpdatedLineDoesNotExist => InternalError(formatted_error),
     };
 
     Err(graphql_error.extend())
@@ -268,6 +269,7 @@ mod graphql {
                 invoice_line_row: mock_outbound_shipment_a_invoice_lines()[0].clone(),
                 invoice_row: mock_outbound_shipment_a(),
                 location_row_option: None,
+                stock_line_option: None,
             }
         }
 

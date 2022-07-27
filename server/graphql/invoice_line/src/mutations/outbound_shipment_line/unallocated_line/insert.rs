@@ -401,6 +401,7 @@ mod graphql {
                 invoice_line_row: mock_outbound_shipment_a_invoice_lines()[0].clone(),
                 invoice_row: mock_outbound_shipment_a(),
                 location_row_option: None,
+                stock_line_option: None,
             }
         }
 
