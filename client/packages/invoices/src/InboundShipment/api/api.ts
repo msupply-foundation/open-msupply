@@ -55,6 +55,9 @@ const inboundParsers = {
       case 'invoiceNumber': {
         return InvoiceSortFieldInput.InvoiceNumber;
       }
+      case 'theirReference': {
+        return InvoiceSortFieldInput.TheirReference;
+      }
       case 'status':
       default: {
         return InvoiceSortFieldInput.Status;
@@ -105,9 +108,7 @@ const inboundParsers = {
     numberOfPacks: line.numberOfPacks,
     locationId: line.location?.id,
   }),
-  toDeleteLine: (line: {
-    id: string;
-  }): DeleteInboundShipmentLineInput => {
+  toDeleteLine: (line: { id: string }): DeleteInboundShipmentLineInput => {
     return { id: line.id };
   },
   toInsertServiceCharge: (line: DraftInboundLine) => ({

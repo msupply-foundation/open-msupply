@@ -83,6 +83,9 @@ pub fn generate_linked_invoice(
     let requisition_id =
         get_request_requisition_id_from_inbound_shipment(connection, &source_invoice)?;
 
+    // TODO: have translation and/or customisable strings for these
+    let default_comment = "Stock transfer".to_string();
+    let default_reference = format!("From invoice number: {}", source_invoice.invoice_number);
     let result = InvoiceRow {
         id: uuid(),
         invoice_number: next_number(connection, &NumberRowType::InboundShipment, &store_id)?,
@@ -92,7 +95,10 @@ pub fn generate_linked_invoice(
         status,
         requisition_id,
         name_store_id: Some(source_invoice.store_id.clone()),
-        their_reference: source_invoice.their_reference.clone(),
+        their_reference: Some(match &source_invoice.their_reference {
+            Some(reference) => format!("{} ({})", default_reference, reference),
+            None => default_reference,
+        }),
         linked_invoice_id: Some(source_invoice.id.clone()),
         created_datetime: Utc::now().naive_utc(),
         picked_datetime: source_invoice.picked_datetime,
@@ -101,7 +107,10 @@ pub fn generate_linked_invoice(
         // Default
         colour: None,
         user_id: None,
-        comment: None,
+        comment: Some(match &source_invoice.comment {
+            Some(comment) => format!("{} ({})", default_comment, comment),
+            None => default_comment,
+        }),
         on_hold: false,
         allocated_datetime: None,
         delivered_datetime: None,

@@ -11,6 +11,7 @@ table! {
         name -> Text,
         code -> Text,
         unit_id -> Nullable<Text>,
+        default_pack_size -> Integer,
         #[sql_name = "type"] type_ -> crate::db_diesel::item_row::ItemRowTypeMapping,
         // TODO, this is temporary, remove
         legacy_record -> Text,
@@ -42,6 +43,7 @@ pub struct ItemRow {
     pub name: String,
     pub code: String,
     pub unit_id: Option<String>,
+    pub default_pack_size: i32,
     #[column_name = "type_"]
     pub r#type: ItemRowType,
     // TODO, this is temporary, remove
@@ -55,6 +57,7 @@ impl Default for ItemRow {
             name: Default::default(),
             code: Default::default(),
             unit_id: Default::default(),
+            default_pack_size: Default::default(),
             r#type: ItemRowType::Stock,
             legacy_record: Default::default(),
         }

@@ -45,10 +45,7 @@ export const useUrlQueryParams = ({
     if (sort !== currentSort) {
       updateQuery({ sort, dir: '', page: '' });
     } else {
-      const dir =
-        column.sortBy?.direction === 'asc' || !column.sortBy?.direction
-          ? 'desc'
-          : '';
+      const dir = column.sortBy?.direction === 'desc' ? '' : 'desc';
       updateQuery({ dir });
     }
   };

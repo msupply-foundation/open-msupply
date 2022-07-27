@@ -5,6 +5,7 @@ use repository::{
     ItemRowType, RepositoryError, StorageConnection,
 };
 
+use crate::invoice::{check_store, NotThisStoreInvoice};
 use crate::invoice_line::query::get_invoice_line;
 use crate::{
     invoice::check_invoice_exists_option,
@@ -26,7 +27,7 @@ pub enum InsertOutboundShipmentUnallocatedLineError {
     DatabaseError(RepositoryError),
     InvoiceDoesNotExist,
     NotAnOutboundShipment,
-    //NotThisStoreInvoice,
+    NotThisStoreInvoice,
     CanOnlyAddLinesToNewOutboundShipment,
     ItemNotFound,
     NotAStockItem,
@@ -38,13 +39,13 @@ type OutError = InsertOutboundShipmentUnallocatedLineError;
 
 pub fn insert_outbound_shipment_unallocated_line(
     ctx: &ServiceContext,
-    _store_id: &str,
+    store_id: &str,
     input: InsertOutboundShipmentUnallocatedLine,
 ) -> Result<InvoiceLine, OutError> {
     let line = ctx
         .connection
         .transaction_sync(|connection| {
-            let item_row = validate(connection, &input)?;
+            let item_row = validate(connection, store_id, &input)?;
             let new_line = generate(input, item_row)?;
             InvoiceLineRowRepository::new(&connection).upsert_one(&new_line)?;
 
@@ -58,6 +59,7 @@ pub fn insert_outbound_shipment_unallocated_line(
 
 fn validate(
     connection: &StorageConnection,
+    store_id: &str,
     input: &InsertOutboundShipmentUnallocatedLine,
 ) -> Result<ItemRow, OutError> {
     if !check_line_does_not_exists_new(connection, &input.id)? {
@@ -73,8 +75,7 @@ fn validate(
 
     let invoice_row = check_invoice_exists_option(&input.invoice_id, connection)?
         .ok_or(OutError::InvoiceDoesNotExist)?;
-    // TODO:
-    // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
+    check_store(&invoice_row, store_id)?;
 
     if invoice_row.r#type != InvoiceRowType::OutboundShipment {
         return Err(OutError::NotAnOutboundShipment);
@@ -149,6 +150,12 @@ pub fn check_unallocated_line_does_not_exist(
 impl From<RepositoryError> for InsertOutboundShipmentUnallocatedLineError {
     fn from(error: RepositoryError) -> Self {
         InsertOutboundShipmentUnallocatedLineError::DatabaseError(error)
+    }
+}
+
+impl From<NotThisStoreInvoice> for InsertOutboundShipmentUnallocatedLineError {
+    fn from(_: NotThisStoreInvoice) -> Self {
+        InsertOutboundShipmentUnallocatedLineError::NotThisStoreInvoice
     }
 }
 
@@ -278,7 +285,7 @@ mod test_insert {
         assert_eq!(
             service.insert_outbound_shipment_unallocated_line(
                 &context,
-                "store_a",
+                "store_c",
                 InsertOutboundShipmentUnallocatedLine {
                     id: new_line_id.clone(),
                     invoice_id: new_outbound_shipment.id.clone(),
@@ -287,6 +294,20 @@ mod test_insert {
                 },
             ),
             Err(ServiceError::UnallocatedLineForItemAlreadyExistsInInvoice)
+        );
+        // NotThisStoreInvoice
+        assert_eq!(
+            service.insert_outbound_shipment_unallocated_line(
+                &context,
+                "store_b",
+                InsertOutboundShipmentUnallocatedLine {
+                    id: "new unallocated line id".to_owned(),
+                    invoice_id: mock_new_invoice_with_unallocated_line().id.clone(),
+                    item_id: existing_invoice_line.item_id.clone(),
+                    quantity: 0
+                },
+            ),
+            Err(ServiceError::NotThisStoreInvoice)
         );
     }
 
@@ -310,7 +331,7 @@ mod test_insert {
         let result = service
             .insert_outbound_shipment_unallocated_line(
                 &context,
-                "store_a",
+                "store_c",
                 InsertOutboundShipmentUnallocatedLine {
                     id: "new_line".to_owned(),
                     invoice_id: invoice_id.clone(),

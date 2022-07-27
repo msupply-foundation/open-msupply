@@ -22,13 +22,13 @@ type OutError = InsertInboundShipmentServiceLineError;
 
 pub fn insert_inbound_shipment_service_line(
     ctx: &ServiceContext,
-    _store_id: &str,
+    store_id: &str,
     input: InsertInboundShipmentServiceLine,
 ) -> Result<InvoiceLine, OutError> {
     let new_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let (item_row, _) = validate(&input, &connection)?;
+            let (item_row, _) = validate(&input, store_id, &connection)?;
             let new_line = generate(input, item_row)?;
             InvoiceLineRowRepository::new(&connection).upsert_one(&new_line)?;
             get_invoice_line(ctx, &new_line.id)
@@ -44,7 +44,7 @@ pub enum InsertInboundShipmentServiceLineError {
     LineAlreadyExists,
     InvoiceDoesNotExist,
     NotAnInboundShipment,
-    //NotThisStoreInvoice,
+    NotThisStoreInvoice,
     CannotEditInvoice,
     ItemNotFound,
     NotAServiceItem,
@@ -135,7 +135,7 @@ mod test {
         assert_eq!(
             service.insert_inbound_shipment_service_line(
                 &context,
-                "store_a",
+                "store_c",
                 inline_init(|r: &mut InsertInboundShipmentServiceLine| {
                     r.invoice_id = mock_outbound_shipment_c().id;
                 }),
@@ -179,6 +179,20 @@ mod test {
                 }),
             ),
             Err(ServiceError::NotAServiceItem)
+        );
+
+        // NotThisStoreInvoice
+        assert_eq!(
+            service.insert_inbound_shipment_service_line(
+                &context,
+                "store_c",
+                inline_init(|r: &mut InsertInboundShipmentServiceLine| {
+                    r.invoice_id = mock_draft_inbound_shipment_with_service_lines().id;
+                    r.item_id = Some(mock_item_service_item().id);
+                    r.note = Some("abc".to_string());
+                }),
+            ),
+            Err(ServiceError::NotThisStoreInvoice)
         );
     }
 
