@@ -9,9 +9,11 @@ import {
   useFormatDateTime,
   ColumnAlign,
   useUrlQueryParams,
+  useNavigate,
 } from '@openmsupply-client/common';
 import { useProgramEnrolment } from '../api/hooks';
 import { ProgramFragment } from '../api/operations.generated';
+import { AppBarButtons } from './AppBarButtons';
 
 type ProgramFragmentWithId = { id: string } & ProgramFragment;
 
@@ -55,9 +57,11 @@ const ProgramListComponent: FC = () => {
     { onChangeSortBy: updateSortQuery, sortBy },
     [sortBy]
   );
+  const navigate = useNavigate();
 
   return (
     <>
+      <AppBarButtons />
       <DataTable
         key="program-enrolment-list"
         pagination={{ ...pagination, total: data?.totalCount }}
@@ -66,6 +70,11 @@ const ProgramListComponent: FC = () => {
         data={dataWithId}
         isLoading={isLoading}
         isError={isError}
+        onRowClick={row => {
+          navigate(
+            `${row.type}?doc=${row.document.name}&patientId=${row.patientId}&type=${row.type}`
+          );
+        }}
         noDataElement={<NothingHere />}
       />
     </>

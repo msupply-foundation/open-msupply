@@ -646,7 +646,7 @@ export type EncounterNode = {
 
 export enum EncounterNodeStatus {
   Canceled = 'CANCELED',
-  Done = 'DONE',
+  Finished = 'FINISHED',
   Missed = 'MISSED',
   Ongoing = 'ONGOING',
   Scheduled = 'SCHEDULED'
@@ -2726,9 +2726,11 @@ export type ProgramNode = {
   /** The program document */
   encounters: Array<EncounterNode>;
   enrolmentDatetime: Scalars['DateTime'];
+  /** The program document name */
   name: Scalars['String'];
   patientId: Scalars['String'];
   programPatientId?: Maybe<Scalars['String']>;
+  /** The program type */
   type: Scalars['String'];
 };
 
