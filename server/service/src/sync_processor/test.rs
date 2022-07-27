@@ -163,7 +163,7 @@ mod test_update {
         assert_eq!(new_invoice.status, InvoiceRowStatus::Picked);
         assert_eq!(
             new_invoice.their_reference,
-            Some("some reference".to_string())
+            Some("From invoice number: 20 (some reference)".to_string())
         );
         assert!(
             new_invoice.created_datetime >= before_processor
