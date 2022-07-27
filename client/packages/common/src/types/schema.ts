@@ -10,31 +10,9 @@ export type Scalars = {
   Boolean: boolean;
   Int: number;
   Float: number;
-  /**
-   * Implement the DateTime<Utc> scalar
-   *
-   * The input/output is a string in RFC3339 format.
-   */
   DateTime: string;
-  /** A scalar that can represent any JSON value. */
   JSON: any;
-  /**
-   * ISO 8601 calendar date without timezone.
-   * Format: %Y-%m-%d
-   *
-   * # Examples
-   *
-   * * `1994-11-13`
-   * * `2000-02-24`
-   */
   NaiveDate: string;
-  /**
-   * ISO 8601 combined date and time without timezone.
-   *
-   * # Examples
-   *
-   * * `2015-07-01T08:59:60.123`,
-   */
   NaiveDateTime: string;
 };
 
