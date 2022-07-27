@@ -2,8 +2,10 @@ import {
   SortBy,
   FilterBy,
   ProgramSortFieldInput,
+  InsertProgramInput,
+  UpdateProgramInput,
 } from '@openmsupply-client/common';
-import { ProgramFragment, Sdk } from './operations.generated';
+import { DocumentFragment, ProgramFragment, Sdk } from './operations.generated';
 
 export type ListParams = {
   first?: number;
@@ -30,5 +32,35 @@ export const getProgramEnrolmentQueries = (sdk: Sdk, storeId: string) => ({
 
       return result?.programs;
     },
+  },
+
+  insertProgram: async (
+    input: InsertProgramInput
+  ): Promise<DocumentFragment> => {
+    const result = await sdk.insertProgram({
+      storeId,
+      input,
+    });
+
+    if (result.insertProgram.__typename === 'DocumentNode') {
+      return result.insertProgram;
+    }
+
+    throw new Error('Could not insert patient');
+  },
+
+  updateProgram: async (
+    input: UpdateProgramInput
+  ): Promise<DocumentFragment> => {
+    const result = await sdk.updateProgram({
+      storeId,
+      input,
+    });
+
+    if (result.updateProgram.__typename === 'DocumentNode') {
+      return result.updateProgram;
+    }
+
+    throw new Error('Could not update patient');
   },
 });
