@@ -122,6 +122,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         ServiceError::LineAlreadyExists => BadUserInput(formatted_error),
         ServiceError::ItemNotFound => BadUserInput(formatted_error),
         ServiceError::NotAServiceItem => BadUserInput(formatted_error),
+        ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::NewlyCreatedLineDoesNotExist => InternalError(formatted_error),
         ServiceError::CannotFindDefaultServiceItem => InternalError(formatted_error),

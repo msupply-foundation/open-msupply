@@ -22,13 +22,13 @@ type OutError = InsertOutboundShipmentServiceLineError;
 
 pub fn insert_outbound_shipment_service_line(
     ctx: &ServiceContext,
-    _store_id: &str,
+    store_id: &str,
     input: InsertOutboundShipmentServiceLine,
 ) -> Result<InvoiceLine, OutError> {
     let new_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let (item_row, _) = validate(&input, &connection)?;
+            let (item_row, _) = validate(&input, store_id, &connection)?;
             let new_line = generate(input, item_row)?;
             InvoiceLineRowRepository::new(&connection).upsert_one(&new_line)?;
             get_invoice_line(ctx, &new_line.id)
@@ -44,7 +44,7 @@ pub enum InsertOutboundShipmentServiceLineError {
     LineAlreadyExists,
     InvoiceDoesNotExist,
     NotAnOutboundShipment,
-    //NotThisStoreInvoice,
+    NotThisStoreInvoice,
     CannotEditInvoice,
     ItemNotFound,
     NotAServiceItem,
@@ -148,7 +148,7 @@ mod test {
         assert_eq!(
             service.insert_outbound_shipment_service_line(
                 &context,
-                "store_a",
+                "store_c",
                 inline_init(|r: &mut InsertOutboundShipmentServiceLine| {
                     r.invoice_id = mock_outbound_shipment_shipped().id;
                 }),
@@ -199,7 +199,7 @@ mod test {
         service
             .insert_outbound_shipment_service_line(
                 &context,
-                "store_a",
+                "store_c",
                 inline_init(|r: &mut InsertOutboundShipmentServiceLine| {
                     r.id = "new_line_id".to_string();
                     r.invoice_id = mock_full_draft_outbound_shipment_a().invoice.id;
@@ -232,7 +232,7 @@ mod test {
         service
             .insert_outbound_shipment_service_line(
                 &context,
-                "store_a",
+                "store_c",
                 InsertOutboundShipmentServiceLine {
                     id: "new_line2_id".to_string(),
                     invoice_id: mock_full_draft_outbound_shipment_a().invoice.id,

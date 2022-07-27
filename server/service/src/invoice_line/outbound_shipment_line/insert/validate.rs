@@ -1,7 +1,7 @@
 use crate::{
     invoice::{
-        check_invoice_exists, check_invoice_is_editable, check_invoice_type, InvoiceDoesNotExist,
-        InvoiceIsNotEditable, WrongInvoiceRowType,
+        check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store,
+        InvoiceDoesNotExist, InvoiceIsNotEditable, NotThisStoreInvoice, WrongInvoiceRowType,
     },
     invoice_line::{
         check_batch_exists, check_batch_on_hold, check_item_matches_batch, check_location_on_hold,
@@ -21,6 +21,7 @@ use super::{InsertOutboundShipmentLine, InsertOutboundShipmentLineError};
 
 pub fn validate(
     input: &InsertOutboundShipmentLine,
+    store_id: &str,
     connection: &StorageConnection,
 ) -> Result<(ItemRow, InvoiceRow, StockLineRow), InsertOutboundShipmentLineError> {
     check_line_does_not_exists(&input.id, connection)?;
@@ -29,13 +30,13 @@ pub fn validate(
     let item = check_item(&input.item_id, connection)?;
     check_item_matches_batch(&batch, &item)?;
     let invoice = check_invoice_exists(&input.invoice_id, connection)?;
+    check_store(&invoice, store_id)?;
     check_unique_stock_line(
         &input.id,
         &invoice.id,
         Some(input.stock_line_id.to_string()),
         connection,
     )?;
-    // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
     check_invoice_type(&invoice, InvoiceRowType::OutboundShipment)?;
     check_invoice_is_editable(&invoice)?;
 
@@ -126,5 +127,11 @@ impl From<InvoiceIsNotEditable> for InsertOutboundShipmentLineError {
 impl From<InvoiceDoesNotExist> for InsertOutboundShipmentLineError {
     fn from(_: InvoiceDoesNotExist) -> Self {
         InsertOutboundShipmentLineError::InvoiceDoesNotExist
+    }
+}
+
+impl From<NotThisStoreInvoice> for InsertOutboundShipmentLineError {
+    fn from(_: NotThisStoreInvoice) -> Self {
+        InsertOutboundShipmentLineError::NotThisStoreInvoice
     }
 }

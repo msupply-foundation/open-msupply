@@ -21,19 +21,19 @@ type OutError = UpdateInboundShipmentServiceLineError;
 
 pub fn update_inbound_shipment_service_line(
     ctx: &ServiceContext,
-    _store_id: &str,
+    store_id: &str,
     input: UpdateInboundShipmentServiceLine,
 ) -> Result<InvoiceLine, OutError> {
     let updated_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let (existing_line, _, item) = validate(&input, &connection)?;
+            let (existing_line, _, item) = validate(&input, store_id, &connection)?;
             let updated_line = generate(input, existing_line, item)?;
             InvoiceLineRowRepository::new(&connection).upsert_one(&updated_line)?;
 
             get_invoice_line(ctx, &updated_line.id)
                 .map_err(|error| OutError::DatabaseError(error))?
-                .ok_or(OutError::LineDoesNotExist)
+                .ok_or(OutError::UpdatedLineDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
 
@@ -45,12 +45,13 @@ pub enum UpdateInboundShipmentServiceLineError {
     LineDoesNotExist,
     InvoiceDoesNotExist,
     NotAnInboundShipment,
-    // NotThisStoreInvoice,
+    NotThisStoreInvoice,
     NotThisInvoiceLine(String),
     CannotEditInvoice,
     ItemNotFound,
     NotAServiceItem,
     // Internal
+    UpdatedLineDoesNotExist,
     DatabaseError(RepositoryError),
 }
 
@@ -74,7 +75,6 @@ where
 
 #[cfg(test)]
 mod test {
-
     use repository::{
         mock::{
             mock_default_service_item, mock_draft_inbound_service_line,
@@ -169,6 +169,19 @@ mod test {
                 }),
             ),
             Err(ServiceError::NotAServiceItem)
+        );
+
+        // NotThisStoreInvoice
+        assert_eq!(
+            service.update_inbound_shipment_service_line(
+                &context,
+                "store_c",
+                inline_init(|r: &mut UpdateInboundShipmentServiceLine| {
+                    r.id = mock_draft_inbound_service_line().id;
+                    r.item_id = Some(mock_item_service_item().id)
+                }),
+            ),
+            Err(ServiceError::NotThisStoreInvoice)
         );
     }
 
