@@ -10,29 +10,18 @@ import {
   DetailContainer,
   Box,
   Typography,
-  EditIcon,
 } from '@openmsupply-client/common';
-import { DocumentHistory } from '../DocumentHistory';
-import { useNavigate } from 'react-router-dom';
+import { DocumentHistory } from '../../Patient';
 
 export const AppBarButtons: FC = ({}) => {
   const {
     urlQuery: { doc },
   } = useUrlQuery();
   const { Modal, showDialog, hideDialog } = useDialog();
-  const navigate = useNavigate();
 
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
-        <ButtonWithIcon
-          Icon={<EditIcon />}
-          label={'Programs'}
-          onClick={() => {
-            navigate(`programs`);
-          }}
-        />
-
         <ButtonWithIcon
           Icon={<ClockIcon />}
           label={'History'}
