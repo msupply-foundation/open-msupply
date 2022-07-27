@@ -138,7 +138,7 @@ mod test {
             mock_outbound_shipment_a_invoice_lines, mock_outbound_shipment_b_invoice_lines,
             mock_outbound_shipment_c_invoice_lines, mock_outbound_shipment_no_stock_line,
             mock_stock_line_a, mock_stock_line_location_is_on_hold, mock_stock_line_on_hold,
-            mock_store_a, MockDataInserts,
+            mock_store_a, mock_store_b, mock_store_c, MockDataInserts,
         },
         test_db::setup_all,
         InvoiceLineRowRepository,
@@ -192,7 +192,7 @@ mod test {
         assert_eq!(
             service.update_outbound_shipment_line(
                 &context,
-                &mock_store_a().id,
+                &mock_store_c().id,
                 inline_init(|r: &mut UpdateOutboundShipmentLine| {
                     r.id = mock_outbound_shipment_b_invoice_lines()[0].id.clone();
                 }),
@@ -204,7 +204,7 @@ mod test {
         assert_eq!(
             service.update_outbound_shipment_line(
                 &context,
-                &mock_store_a().id,
+                &mock_store_b().id,
                 inline_init(|r: &mut UpdateOutboundShipmentLine| {
                     r.id = mock_outbound_shipment_a_invoice_lines()[0].id.clone();
                     r.item_id = Some("invalid".to_string());
@@ -217,7 +217,7 @@ mod test {
         assert_eq!(
             service.update_outbound_shipment_line(
                 &context,
-                &mock_store_a().id,
+                &mock_store_b().id,
                 inline_init(|r: &mut UpdateOutboundShipmentLine| {
                     r.id = mock_outbound_shipment_a_invoice_lines()[0].id.clone();
                     r.stock_line_id = Some("invalid".to_string());
@@ -230,7 +230,7 @@ mod test {
         assert_eq!(
             service.update_outbound_shipment_line(
                 &context,
-                &mock_store_a().id,
+                &mock_store_b().id,
                 inline_init(|r: &mut UpdateOutboundShipmentLine| {
                     r.id = mock_outbound_shipment_a_invoice_lines()[0].id.clone();
                     r.number_of_packs = Some(0);
@@ -243,7 +243,7 @@ mod test {
         assert_eq!(
             service.update_outbound_shipment_line(
                 &context,
-                &mock_store_a().id,
+                &mock_store_b().id,
                 inline_init(|r: &mut UpdateOutboundShipmentLine| {
                     r.id = mock_outbound_shipment_a_invoice_lines()[0].id.clone();
                     r.item_id = Some(mock_item_b().id.clone());
@@ -257,7 +257,7 @@ mod test {
         assert_eq!(
             service.update_outbound_shipment_line(
                 &context,
-                &mock_store_a().id,
+                &mock_store_b().id,
                 inline_init(|r: &mut UpdateOutboundShipmentLine| {
                     r.id = mock_outbound_shipment_a_invoice_lines()[0].id.clone();
                     r.item_id = Some(mock_stock_line_location_is_on_hold()[0].item_id.clone());
@@ -271,7 +271,7 @@ mod test {
         assert_eq!(
             service.update_outbound_shipment_line(
                 &context,
-                &mock_store_a().id,
+                &mock_store_c().id,
                 inline_init(|r: &mut UpdateOutboundShipmentLine| {
                     r.id = mock_outbound_shipment_no_stock_line()[0].id.clone();
                 }),
@@ -283,7 +283,7 @@ mod test {
         assert_eq!(
             service.update_outbound_shipment_line(
                 &context,
-                &mock_store_a().id,
+                &mock_store_b().id,
                 inline_init(|r: &mut UpdateOutboundShipmentLine| {
                     r.id = mock_outbound_shipment_a_invoice_lines()[0].id.clone();
                     r.stock_line_id = Some(mock_stock_line_on_hold()[0].id.clone());
@@ -297,7 +297,7 @@ mod test {
         assert_eq!(
             service.update_outbound_shipment_line(
                 &context,
-                &mock_store_a().id,
+                &mock_store_b().id,
                 inline_init(|r: &mut UpdateOutboundShipmentLine| {
                     r.id = mock_outbound_shipment_a_invoice_lines()[0].id.clone();
                     r.number_of_packs = Some(100);
@@ -316,7 +316,7 @@ mod test {
         assert_eq!(
             service.update_outbound_shipment_line(
                 &context,
-                &mock_store_a().id,
+                &mock_store_b().id,
                 inline_init(|r: &mut UpdateOutboundShipmentLine| {
                     r.id = mock_outbound_shipment_a_invoice_lines()[0].id.clone();
                     r.stock_line_id = Some(mock_item_b_lines()[0].id.clone());
@@ -345,7 +345,7 @@ mod test {
         service
             .update_outbound_shipment_line(
                 &context,
-                &mock_store_a().id,
+                &mock_store_c().id,
                 inline_init(|r: &mut UpdateOutboundShipmentLine| {
                     r.id = mock_outbound_shipment_c_invoice_lines()[0].id.clone();
                     r.number_of_packs = Some(3);
