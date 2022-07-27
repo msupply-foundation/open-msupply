@@ -75,7 +75,7 @@ pub fn get_requisition_line_chart(
         item_id,
         available_stock_on_hand,
         average_monthly_consumption,
-        suggested_quantity,
+        requested_quantity,
         ..
     } = requisition_line.requisition_line_row;
 
@@ -103,7 +103,7 @@ pub fn get_requisition_line_chart(
         *requisition_line_datetime,
         available_stock_on_hand as u32,
         *expected_delivery_date,
-        suggested_quantity as u32,
+        requested_quantity as u32,
         average_monthly_consumption as f64,
         stock_evolution_options,
     )?;
@@ -446,7 +446,7 @@ mod test {
                 r.snapshot_datetime = Some(NaiveDate::from_ymd(2021, 1, 2).and_hms(12, 10, 11));
                 r.average_monthly_consumption = 25 * NUMBER_OF_DAYS_IN_A_MONTH as i32;
                 r.available_stock_on_hand = 30;
-                r.suggested_quantity = 100;
+                r.requested_quantity = 100;
             })
         }
 

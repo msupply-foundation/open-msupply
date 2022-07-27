@@ -23,7 +23,7 @@ pub fn mock_new_invoice_with_unallocated_line() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
         r.id = "unallocated_line_new_invoice".to_owned();
         r.name_id = "name_store_a".to_owned();
-        r.store_id = "store_a".to_owned();
+        r.store_id = "store_c".to_owned();
         r.invoice_number = 1;
         r.r#type = InvoiceRowType::OutboundShipment;
         r.status = InvoiceRowStatus::New;

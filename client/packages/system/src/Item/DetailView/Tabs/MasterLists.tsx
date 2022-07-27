@@ -23,7 +23,9 @@ const MasterListsTable = () => {
 
   if (isLoading) return <BasicSpinner />;
 
-  return <DataTable data={data?.nodes} columns={columns} />;
+  return (
+    <DataTable key="master-list-detail" data={data?.nodes} columns={columns} />
+  );
 };
 
 export const MasterListsTab = () => (
