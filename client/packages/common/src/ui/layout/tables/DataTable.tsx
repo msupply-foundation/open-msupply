@@ -39,6 +39,10 @@ export const DataTableComponent = <T extends RecordWithId>({
   const { setRows, setDisabledRows, setFocus } = useTableStore();
   const [clickFocusedRow, setClickFocusedRow] = useState(false);
   const [displayColumns, setDisplayColumns] = useState(columns);
+  const columnsToDisplay = columns.filter(c =>
+    displayColumns.map(({ key }) => key).includes(c.key)
+  );
+
   useRegisterActions([
     {
       id: 'table:focus-down',
@@ -125,7 +129,7 @@ export const DataTableComponent = <T extends RecordWithId>({
           }}
         >
           <HeaderRow dense={dense}>
-            {displayColumns.map(column => (
+            {columnsToDisplay.map(column => (
               <HeaderCell
                 dense={dense}
                 column={column}
@@ -148,7 +152,7 @@ export const DataTableComponent = <T extends RecordWithId>({
               rows={data}
               ExpandContent={ExpandContent}
               rowIndex={idx}
-              columns={displayColumns}
+              columns={columnsToDisplay}
               onClick={onRowClick ? onRowClick : undefined}
               rowData={row}
               rowKey={String(idx)}
