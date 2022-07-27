@@ -93,17 +93,13 @@ fn generate_line(
         update_line.item_name = item.name;
     }
 
-    if let Some(total_before_tax) = total_before_tax {
-        update_line.total_before_tax = total_before_tax;
-    } else if let (Some(number_of_packs), Some(cost_price_per_pack)) =
-        (number_of_packs, cost_price_per_pack)
-    {
-        update_line.total_before_tax = cost_price_per_pack * number_of_packs as f64;
-    } else if let Some(number_of_packs) = number_of_packs {
-        update_line.total_before_tax = update_line.cost_price_per_pack * number_of_packs as f64;
-    } else if let Some(cost_price_per_pack) = cost_price_per_pack {
-        update_line.total_before_tax = cost_price_per_pack * update_line.number_of_packs as f64;
-    }
+    update_line.total_before_tax = if let Some(total_before_tax) = total_before_tax {
+        total_before_tax
+    } else if number_of_packs.is_some() || cost_price_per_pack.is_some() {
+        update_line.cost_price_per_pack * update_line.number_of_packs as f64
+    } else {
+        update_line.cost_price_per_pack * update_line.number_of_packs as f64
+    };
 
     update_line.total_after_tax = total_after_tax(update_line.total_before_tax, update_line.tax);
 
