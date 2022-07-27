@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC, useState } from 'react';
 import { useIsMediumScreen } from '@common/hooks';
 import {
   TabContext,
@@ -37,22 +37,8 @@ export const TabLayout: FC<TabLayoutProps> = ({
   updateDraftLine,
 }) => {
   const [currentTab, setCurrentTab] = useState<Tabs>(Tabs.Batch);
-  const [isAdding, setIsAdding] = useState(false);
   const isMediumScreen = useIsMediumScreen();
   const t = useTranslation('replenishment');
-
-  const onAdd = () => {
-    setIsAdding(true);
-    addDraftLine();
-  };
-
-  // The updateDraftLine function is being memoized on first render in the DataTable
-  // therefore when you add a batch, the update function is working with the array
-  // which exists when the table is first rendered, and doesn't update
-  // using the `isAdding` flag is a clumsy way to force a re-render of the table
-  useEffect(() => {
-    if (isAdding) setIsAdding(false);
-  }, [isAdding]);
 
   if (draftLines.length === 0)
     return <Box sx={{ height: isMediumScreen ? 400 : 500 }} />;
@@ -61,7 +47,7 @@ export const TabLayout: FC<TabLayoutProps> = ({
     <TabContext value={currentTab}>
       <TabKeybindings
         tabs={[Tabs.Batch, Tabs.Pricing, Tabs.Location]}
-        onAdd={onAdd}
+        onAdd={addDraftLine}
         setCurrentTab={setCurrentTab}
         dependencies={[draftLines]}
       />
@@ -96,50 +82,46 @@ export const TabLayout: FC<TabLayoutProps> = ({
             disabled={isDisabled}
             color="primary"
             variant="outlined"
-            onClick={onAdd}
+            onClick={addDraftLine}
             label={`${t('label.add-batch')} (+)`}
             Icon={<PlusCircleIcon />}
           />
         </Box>
       </Box>
-      {isAdding ? (
-        <Box style={{ height: 415 }} />
-      ) : (
-        <TableContainer
-          sx={{
-            height: isMediumScreen ? 300 : 400,
-            marginTop: 2,
-            borderWidth: 1,
-            borderStyle: 'solid',
-            borderColor: 'divider',
-            borderRadius: '20px',
-          }}
-        >
-          <InboundLineEditPanel value={Tabs.Batch}>
-            <QuantityTable
-              isDisabled={isDisabled}
-              lines={draftLines}
-              updateDraftLine={updateDraftLine}
-            />
-          </InboundLineEditPanel>
+      <TableContainer
+        sx={{
+          height: isMediumScreen ? 300 : 400,
+          marginTop: 2,
+          borderWidth: 1,
+          borderStyle: 'solid',
+          borderColor: 'divider',
+          borderRadius: '20px',
+        }}
+      >
+        <InboundLineEditPanel value={Tabs.Batch}>
+          <QuantityTable
+            isDisabled={isDisabled}
+            lines={draftLines}
+            updateDraftLine={updateDraftLine}
+          />
+        </InboundLineEditPanel>
 
-          <InboundLineEditPanel value={Tabs.Pricing}>
-            <PricingTable
-              isDisabled={isDisabled}
-              lines={draftLines}
-              updateDraftLine={updateDraftLine}
-            />
-          </InboundLineEditPanel>
+        <InboundLineEditPanel value={Tabs.Pricing}>
+          <PricingTable
+            isDisabled={isDisabled}
+            lines={draftLines}
+            updateDraftLine={updateDraftLine}
+          />
+        </InboundLineEditPanel>
 
-          <InboundLineEditPanel value={Tabs.Location}>
-            <LocationTable
-              isDisabled={isDisabled}
-              lines={draftLines}
-              updateDraftLine={updateDraftLine}
-            />
-          </InboundLineEditPanel>
-        </TableContainer>
-      )}
+        <InboundLineEditPanel value={Tabs.Location}>
+          <LocationTable
+            isDisabled={isDisabled}
+            lines={draftLines}
+            updateDraftLine={updateDraftLine}
+          />
+        </InboundLineEditPanel>
+      </TableContainer>
     </TabContext>
   );
 };
