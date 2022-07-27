@@ -20,6 +20,7 @@ fragment InboundLine on InvoiceLineNode {
     name
     code
     unitName
+    defaultPackSize
   }
 
   location {
@@ -64,6 +65,7 @@ fragment Inbound on InvoiceNode {
   otherPartyName
   status
   theirReference
+  transportReference
   type
   linkedShipment {
     __typename
@@ -127,6 +129,7 @@ fragment InboundRow on InvoiceNode {
   otherPartyName
   status
   colour
+  theirReference
   pricing {
     __typename
     totalAfterTax

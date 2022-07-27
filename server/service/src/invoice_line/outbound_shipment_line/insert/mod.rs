@@ -21,13 +21,13 @@ type OutError = InsertOutboundShipmentLineError;
 
 pub fn insert_outbound_shipment_line(
     ctx: &ServiceContext,
-    _store_id: &str,
+    store_id: &str,
     input: InsertOutboundShipmentLine,
 ) -> Result<InvoiceLine, OutError> {
     let new_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let (item, invoice, batch) = validate(&input, &connection)?;
+            let (item, invoice, batch) = validate(&input, store_id, &connection)?;
             let (new_line, update_batch) = generate(input, item, batch, invoice)?;
             InvoiceLineRowRepository::new(&connection).upsert_one(&new_line)?;
             StockLineRowRepository::new(&connection).upsert_one(&update_batch)?;
@@ -74,5 +74,259 @@ where
             WithDBError::DatabaseError(error) => error.into(),
             WithDBError::Error(error) => error.into(),
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use repository::{
+        mock::{
+            mock_item_a, mock_item_b, mock_item_b_lines, mock_outbound_shipment_a_invoice_lines,
+            mock_stock_line_a, mock_stock_line_location_is_on_hold, mock_stock_line_on_hold,
+            mock_stock_line_si_d, mock_store_a, mock_store_b, MockDataInserts,
+        },
+        test_db::setup_all,
+        InvoiceLineRowRepository,
+    };
+    use util::{inline_edit, inline_init};
+
+    use crate::{
+        invoice_line::outbound_shipment_line::{
+            insert::InsertOutboundShipmentLine, InsertOutboundShipmentLineError as ServiceError,
+        },
+        service_provider::ServiceProvider,
+    };
+
+    #[actix_rt::test]
+    async fn insert_outbound_shipment_line_errors() {
+        let (_, _, connection_manager, _) = setup_all(
+            "insert_outbound_shipment_line_errors",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let context = service_provider.context().unwrap();
+        let service = service_provider.invoice_line_service;
+
+        // LineAlreadyExists
+        assert_eq!(
+            service.insert_outbound_shipment_line(
+                &context,
+                &mock_store_a().id,
+                inline_init(|r: &mut InsertOutboundShipmentLine| {
+                    r.id = mock_outbound_shipment_a_invoice_lines()[0].id.clone();
+                    r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
+                        .invoice_id
+                        .clone();
+                }),
+            ),
+            Err(ServiceError::LineAlreadyExists)
+        );
+
+        // ItemNotFound
+        assert_eq!(
+            service.insert_outbound_shipment_line(
+                &context,
+                &mock_store_a().id,
+                inline_init(|r: &mut InsertOutboundShipmentLine| {
+                    r.id = "new outbound shipment line id".to_string();
+                    r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
+                        .invoice_id
+                        .clone();
+                    r.number_of_packs = 1;
+                    r.stock_line_id = mock_item_b_lines()[0].id.clone();
+                }),
+            ),
+            Err(ServiceError::ItemNotFound)
+        );
+
+        // InvoiceDoesNotExist
+        assert_eq!(
+            service.insert_outbound_shipment_line(
+                &context,
+                &mock_store_a().id,
+                inline_init(|r: &mut InsertOutboundShipmentLine| {
+                    r.id = "new outbound shipment line id".to_string();
+                    r.invoice_id = "new invoice id".to_string();
+                    r.item_id = mock_item_b_lines()[0].item_id.clone();
+                    r.number_of_packs = 1;
+                    r.stock_line_id = mock_item_b_lines()[0].id.clone();
+                }),
+            ),
+            Err(ServiceError::InvoiceDoesNotExist)
+        );
+
+        // StockLineNotFound
+        assert_eq!(
+            service.insert_outbound_shipment_line(
+                &context,
+                &mock_store_a().id,
+                inline_init(|r: &mut InsertOutboundShipmentLine| {
+                    r.id = "new outbound line id".to_string();
+                    r.invoice_id = "invalid".to_string();
+                    r.number_of_packs = 1;
+                }),
+            ),
+            Err(ServiceError::StockLineNotFound)
+        );
+
+        // NumberOfPacksBelowOne
+        assert_eq!(
+            service.insert_outbound_shipment_line(
+                &context,
+                &mock_store_a().id,
+                inline_init(|r: &mut InsertOutboundShipmentLine| {
+                    r.id = "new outbound line id".to_string();
+                    r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
+                        .invoice_id
+                        .clone();
+                    r.number_of_packs = 0;
+                }),
+            ),
+            Err(ServiceError::NumberOfPacksBelowOne)
+        );
+
+        // LocationIsOnHold
+        assert_eq!(
+            service.insert_outbound_shipment_line(
+                &context,
+                &mock_store_b().id,
+                inline_init(|r: &mut InsertOutboundShipmentLine| {
+                    r.id = "new outbound line id".to_string();
+                    r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
+                        .invoice_id
+                        .clone();
+                    r.number_of_packs = 1;
+                    r.stock_line_id = mock_stock_line_location_is_on_hold()[0].id.clone();
+                    r.item_id = mock_stock_line_location_is_on_hold()[0].item_id.clone();
+                }),
+            ),
+            Err(ServiceError::LocationIsOnHold)
+        );
+
+        // ItemDoesNotMatchStockLine
+        assert_eq!(
+            service.insert_outbound_shipment_line(
+                &context,
+                &mock_store_a().id,
+                inline_init(|r: &mut InsertOutboundShipmentLine| {
+                    r.id = "new outbound line id".to_string();
+                    r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
+                        .invoice_id
+                        .clone();
+                    r.number_of_packs = 1;
+                    r.stock_line_id = mock_stock_line_a().id.clone();
+                    r.item_id = mock_item_b().id.clone();
+                }),
+            ),
+            Err(ServiceError::ItemDoesNotMatchStockLine)
+        );
+
+        // BatchIsOnHold
+        assert_eq!(
+            service.insert_outbound_shipment_line(
+                &context,
+                &mock_store_b().id,
+                inline_init(|r: &mut InsertOutboundShipmentLine| {
+                    r.id = "new outbound line id".to_string();
+                    r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
+                        .invoice_id
+                        .clone();
+                    r.number_of_packs = 1;
+                    r.stock_line_id = mock_stock_line_on_hold()[0].id.clone();
+                    r.item_id = mock_stock_line_on_hold()[0].item_id.clone();
+                }),
+            ),
+            Err(ServiceError::BatchIsOnHold)
+        );
+
+        //StockLineAlreadyExistsInInvoice
+        assert_eq!(
+            service.insert_outbound_shipment_line(
+                &context,
+                &mock_store_b().id,
+                inline_init(|r: &mut InsertOutboundShipmentLine| {
+                    r.id = "new outbound line id".to_string();
+                    r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
+                        .invoice_id
+                        .clone();
+                    r.number_of_packs = 40;
+                    r.stock_line_id = mock_stock_line_a().id.clone();
+                    r.item_id = mock_stock_line_a().item_id.clone();
+                }),
+            ),
+            Err(ServiceError::StockLineAlreadyExistsInInvoice(
+                mock_outbound_shipment_a_invoice_lines()[0].id.clone()
+            ))
+        );
+
+        // ReductionBelowZero
+        assert_eq!(
+            service.insert_outbound_shipment_line(
+                &context,
+                &mock_store_b().id,
+                inline_init(|r: &mut InsertOutboundShipmentLine| {
+                    r.id = "new outbound line id".to_string();
+                    r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
+                        .invoice_id
+                        .clone();
+                    r.number_of_packs = 8;
+                    r.stock_line_id = mock_stock_line_si_d()[0].id.clone();
+                    r.item_id = mock_stock_line_a().item_id.clone();
+                }),
+            ),
+            Err(ServiceError::ReductionBelowZero {
+                stock_line_id: mock_stock_line_si_d()[0].id.clone(),
+            })
+        );
+
+        //TODO: DatabaseError, NotThisStoreInvoice, NewlyCreatedLineDoesNotExist
+    }
+
+    #[actix_rt::test]
+    async fn insert_outbound_shipment_line_success() {
+        let (_, connection, connection_manager, _) = setup_all(
+            "insert_outbound_shipment_line_success",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let context = service_provider.context().unwrap();
+        let service = service_provider.invoice_line_service;
+
+        service
+            .insert_outbound_shipment_line(
+                &context,
+                &mock_store_b().id,
+                inline_init(|r: &mut InsertOutboundShipmentLine| {
+                    r.id = "new outbound line id".to_string();
+                    r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
+                        .invoice_id
+                        .clone();
+                    r.stock_line_id = mock_stock_line_si_d()[0].id.clone();
+                    r.item_id = mock_stock_line_si_d()[0].item_id.clone();
+                    r.number_of_packs = 1;
+                    r.total_before_tax = 1.0;
+                    r.total_after_tax = 2.0;
+                }),
+            )
+            .unwrap();
+
+        let outbound_line = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id("new outbound line id")
+            .unwrap();
+
+        assert_eq!(
+            outbound_line,
+            inline_edit(&outbound_line, |mut u| {
+                u.id = "new outbound line id".to_string();
+                u.item_id = mock_item_a().id.clone();
+                u.pack_size = 1;
+                u.number_of_packs = 1;
+                u
+            })
+        );
     }
 }

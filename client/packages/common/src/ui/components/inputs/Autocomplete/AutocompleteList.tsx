@@ -80,12 +80,14 @@ export const AutocompleteList = <T,>({
       noOptionsText={noOptionsText}
       onChange={onChange}
       sx={{
-        '& .MuiAutocomplete-listbox': {
-          minHeight: height ? `${height}` : 'auto',
-          maxHeight: height ? `${height}` : 'auto',
-        },
         '& .MuiAutocomplete-inputRoot': {
           width: width ? `${width}px` : 'auto',
+        },
+      }}
+      ListboxProps={{
+        style: {
+          minHeight: height ? `${height}` : 'auto',
+          maxHeight: height ? `${height}` : 'auto',
         },
       }}
       renderInput={
