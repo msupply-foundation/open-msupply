@@ -147,7 +147,19 @@ mod test {
             Err(ServiceError::CannotEditInvoice)
         );
 
-        //TODO DatabaseError, NotThisStoreInvoice
+        // NotThisStoreInvoice
+        assert_eq!(
+            service.delete_outbound_shipment_line(
+                &context,
+                &mock_store_a().id,
+                DeleteOutboundShipmentLine {
+                    id: mock_outbound_shipment_c_invoice_lines()[0].id.clone()
+                }
+            ),
+            Err(ServiceError::NotThisStoreInvoice)
+        );
+
+        //TODO DatabaseError
     }
 
     #[actix_rt::test]
