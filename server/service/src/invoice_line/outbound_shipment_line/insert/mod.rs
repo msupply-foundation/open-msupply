@@ -308,8 +308,7 @@ mod test {
                     r.stock_line_id = mock_stock_line_si_d()[0].id.clone();
                     r.item_id = mock_stock_line_si_d()[0].item_id.clone();
                     r.number_of_packs = 1;
-                    r.total_before_tax = 1.0;
-                    r.total_after_tax = 2.0;
+                    r.total_before_tax = Some(1.0);
                 }),
             )
             .unwrap();

@@ -217,7 +217,6 @@ mod test {
             "packSize": 0,
             "sellPricePerPack": 0,
             "totalBeforeTax": 0,
-            "totalAfterTax": 0,
           }
         })
     }
@@ -434,8 +433,7 @@ mod test {
                     sell_price_per_pack: 2.2,
                     expiry_date: Some(NaiveDate::from_ymd(2022, 01, 01)),
                     number_of_packs: 1,
-                    total_before_tax: 1.1,
-                    total_after_tax: 2.2,
+                    total_before_tax: Some(1.1),
                     tax: Some(5.0)
                 }
             );
@@ -460,10 +458,7 @@ mod test {
                 "expiryDate": "2022-01-01",
                 "numberOfPacks": 1,
                 "totalBeforeTax": 1.1,
-                "totalAfterTax": 2.2,
-                "tax": {
-                    "percentage": 5.0
-                }
+                "tax": 5.0
             },
             "storeId": "store_a"
         });
