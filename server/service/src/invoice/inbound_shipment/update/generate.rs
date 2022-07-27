@@ -83,7 +83,7 @@ pub fn should_create_batches(invoice: &InvoiceRow, patch: &UpdateInboundShipment
     }
 }
 
-// If status changed to Picked and above, remove unallocated lines
+// If status changed to Delivered and above, remove unallocated lines
 fn unallocated_lines_to_trim(
     connection: &StorageConnection,
     invoice: &InvoiceRow,
@@ -175,24 +175,24 @@ pub fn generate_lines_and_stock_lines(
             number_of_packs,
             note,
         }: InvoiceLineRow = invoice_lines;
-
-        let stock_line = StockLineRow {
-            id: stock_line_id,
-            item_id,
-            store_id: store_id.to_string(),
-            location_id,
-            batch,
-            pack_size,
-            cost_price_per_pack,
-            sell_price_per_pack,
-            available_number_of_packs: number_of_packs,
-            total_number_of_packs: number_of_packs,
-            expiry_date,
-            on_hold: false,
-            note,
-        };
-
-        result.push(LineAndStockLine { line, stock_line });
+        if number_of_packs > 0 {
+            let stock_line = StockLineRow {
+                id: stock_line_id,
+                item_id,
+                store_id: store_id.to_string(),
+                location_id,
+                batch,
+                pack_size,
+                cost_price_per_pack,
+                sell_price_per_pack,
+                available_number_of_packs: number_of_packs,
+                total_number_of_packs: number_of_packs,
+                expiry_date,
+                on_hold: false,
+                note,
+            };
+            result.push(LineAndStockLine { line, stock_line });
+        }
     }
     Ok(result)
 }
