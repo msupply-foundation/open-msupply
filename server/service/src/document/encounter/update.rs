@@ -287,7 +287,7 @@ mod test {
         // success update
         let encounter = SchemaEncounter {
             encounter_datetime: Utc::now().to_rfc3339(),
-            status: "Done".to_string(),
+            status: "Finished".to_string(),
         };
         let result = service
             .update_encounter(
@@ -315,6 +315,6 @@ mod test {
             .unwrap()
             .pop()
             .unwrap();
-        assert_eq!(row.status, EncounterStatus::Done);
+        assert_eq!(row.status, EncounterStatus::Finished);
     }
 }
