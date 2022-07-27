@@ -1,7 +1,4 @@
-use crate::mutations::{
-    AddFromMasterListResponse, AddToShipmentFromMasterListInput, DeleteError, DeleteErrorInterface,
-    MasterListNotFoundForThisName,
-};
+use crate::mutations::AddToShipmentFromMasterListInput;
 use async_graphql::*;
 use graphql_core::{
     simple_generic_errors::{CannotEditInvoice, RecordNotFound},
@@ -9,11 +6,34 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
+use graphql_general::MasterListNotFoundForThisStore;
 use graphql_types::types::InvoiceLineConnector;
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    invoice::common::AddToShipmentFromMasterListError as ServiceError,
+    invoice::inbound_shipment::AddToInboundShipmentFromMasterListError as ServiceError,
 };
+
+#[derive(Interface)]
+#[graphql(name = "AddToInboundShipmentFromMasterListErrorInterface")]
+#[graphql(field(name = "description", type = "String"))]
+pub enum DeleteErrorInterface {
+    RecordNotFound(RecordNotFound),
+    MasterListNotFoundForThisStore(MasterListNotFoundForThisStore),
+    CannotEditInvoice(CannotEditInvoice),
+}
+
+#[derive(SimpleObject)]
+#[graphql(name = "AddToInboundShipmentFromMasterListError")]
+pub struct DeleteError {
+    pub error: DeleteErrorInterface,
+}
+
+#[derive(Union)]
+#[graphql(name = "AddToInboundShipmentFromMasterListResponse")]
+pub enum AddFromMasterListResponse {
+    Error(DeleteError),
+    Response(InvoiceLineConnector),
+}
 
 pub fn add_from_master_list(
     ctx: &Context<'_>,
@@ -60,16 +80,15 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
                 CannotEditInvoice {},
             ))
         }
-        ServiceError::MasterListNotFoundForThisName => {
-            return Ok(DeleteErrorInterface::MasterListNotFoundForThisName(
-                MasterListNotFoundForThisName {},
+        ServiceError::MasterListNotFoundForThisStore => {
+            return Ok(DeleteErrorInterface::MasterListNotFoundForThisStore(
+                MasterListNotFoundForThisStore {},
             ))
         }
         // Standard Graphql Errors
         ServiceError::NotThisStoreShipment => BadUserInput(formatted_error),
         ServiceError::NotAnInboundShipment => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
-        _ => BadUserInput(formatted_error),
     };
 
     Err(graphql_error.extend())
@@ -83,20 +102,19 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
     };
     use repository::{
-        mock::{mock_empty_draft_inbound_shipment, mock_inbound_shipment_line_a, MockDataInserts},
-        InvoiceLine, StorageConnectionManager,
+        mock::{mock_empty_draft_inbound_shipment, MockDataInserts},
+        InvoiceLine, InvoiceLineRow, InvoiceLineRowType, StorageConnectionManager,
     };
     use serde_json::json;
     use service::{
         invoice::{
-            common::{
-                AddToShipmentFromMasterListError as ServiceError,
-                AddToShipmentFromMasterListInput as ServiceInput,
-            },
+            common::AddToShipmentFromMasterListInput as ServiceInput,
+            inbound_shipment::AddToInboundShipmentFromMasterListError as ServiceError,
             InvoiceServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };
+    use util::inline_init;
 
     type DeleteLineMethod =
         dyn Fn(&str, ServiceInput) -> Result<Vec<InvoiceLine>, ServiceError> + Sync + Send;
@@ -139,14 +157,14 @@ mod test {
             EmptyMutation,
             InvoiceMutations,
             "test_graphql_add_is_from_master_list_structured_errors",
-            MockDataInserts::all(),
+            MockDataInserts::none(),
         )
         .await;
 
         let mutation = r#"
         mutation ($input: AddToShipmentFromMasterListInput!, $storeId: String) {
             addToInboundShipmentFromMasterList(storeId: $storeId, input: $input) {
-              ... on AddToShipmentFromMasterListError {
+              ... on AddToInboundShipmentFromMasterListError {
                 error {
                   __typename
                 }
@@ -195,15 +213,15 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        // MasterListNotFoundForThisName
+        // MasterListNotFoundForThisStore
         let test_service = TestService(Box::new(|_, _| {
-            Err(ServiceError::MasterListNotFoundForThisName)
+            Err(ServiceError::MasterListNotFoundForThisStore)
         }));
 
         let expected = json!({
             "addToInboundShipmentFromMasterList": {
               "error": {
-                "__typename": "MasterListNotFoundForThisName"
+                "__typename": "MasterListNotFoundForThisStore"
               }
             }
           }
@@ -248,7 +266,7 @@ mod test {
             EmptyMutation,
             InvoiceMutations,
             "test_graphql_add_is_from_master_list_success",
-            MockDataInserts::all(),
+            MockDataInserts::none(),
         )
         .await;
 
@@ -275,7 +293,12 @@ mod test {
                 }
             );
             Ok(vec![InvoiceLine {
-                invoice_line_row: mock_inbound_shipment_line_a(),
+                invoice_line_row: inline_init(|r: &mut InvoiceLineRow| {
+                    r.id = String::from("inbound_shipment_line_a");
+                    r.invoice_id = String::from("inbound_shipment_c");
+                    r.item_id = String::from("item_a");
+                    r.r#type = InvoiceLineRowType::StockIn;
+                }),
                 invoice_row: mock_empty_draft_inbound_shipment(),
                 location_row_option: None,
             }])
@@ -293,7 +316,7 @@ mod test {
             "addToInboundShipmentFromMasterList": {
               "nodes": [
                 {
-                  "id": mock_inbound_shipment_line_a().id
+                  "id": "inbound_shipment_line_a"
                 }
               ]
             }

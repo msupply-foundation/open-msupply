@@ -1,7 +1,7 @@
 use async_graphql::*;
 use graphql_core::pagination::PaginationInput;
 use graphql_types::types::*;
-use mutations::{AddFromMasterListResponse, AddToShipmentFromMasterListInput};
+use mutations::AddToShipmentFromMasterListInput;
 
 mod invoice_queries;
 use self::invoice_queries::*;
@@ -114,7 +114,7 @@ impl InvoiceMutations {
         ctx: &Context<'_>,
         store_id: String,
         input: AddToShipmentFromMasterListInput,
-    ) -> Result<AddFromMasterListResponse> {
+    ) -> Result<outbound_shipment::AddFromMasterListResponse> {
         outbound_shipment::add_from_master_list(ctx, &store_id, input)
     }
 
@@ -123,7 +123,7 @@ impl InvoiceMutations {
         ctx: &Context<'_>,
         store_id: String,
         input: AddToShipmentFromMasterListInput,
-    ) -> Result<AddFromMasterListResponse> {
+    ) -> Result<inbound_shipment::AddFromMasterListResponse> {
         inbound_shipment::add_from_master_list(ctx, &store_id, input)
     }
 }
