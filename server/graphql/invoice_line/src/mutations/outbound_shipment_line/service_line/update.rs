@@ -134,6 +134,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         ServiceError::NotAServiceItem => BadUserInput(formatted_error),
         ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
+        ServiceError::UpdatedLineDoesNotExist => InternalError(formatted_error),
     };
 
     Err(graphql_error.extend())

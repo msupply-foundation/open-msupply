@@ -58,7 +58,7 @@ pub fn update_inbound_shipment_line(
 
             get_invoice_line(ctx, &updated_line.id)
                 .map_err(|error| OutError::DatabaseError(error))?
-                .ok_or(OutError::LineDoesNotExist)
+                .ok_or(OutError::UpdatedLineDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
 
@@ -78,6 +78,7 @@ pub enum UpdateInboundShipmentLineError {
     PackSizeBelowOne,
     NumberOfPacksBelowOne,
     BatchIsReserved,
+    UpdatedLineDoesNotExist,
     NotThisInvoiceLine(String),
 }
 
