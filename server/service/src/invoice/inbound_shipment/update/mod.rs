@@ -54,7 +54,7 @@ pub fn update_inbound_shipment(
             let GenerateResult {
                 batches_to_update,
                 update_invoice,
-                unallocated_lines_to_trim,
+                empty_lines_to_trim,
             } = generate(connection, user_id, invoice, other_party, patch.clone())?;
 
             InvoiceRowRepository::new(connection).upsert_one(&update_invoice)?;
@@ -69,7 +69,7 @@ pub fn update_inbound_shipment(
                 }
             }
 
-            if let Some(lines) = unallocated_lines_to_trim {
+            if let Some(lines) = empty_lines_to_trim {
                 let repository = InvoiceLineRowRepository::new(connection);
                 for line in lines {
                     repository.delete(&line.id)?;

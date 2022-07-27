@@ -316,7 +316,7 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
 
     if (
       result.addToInboundShipmentFromMasterList.__typename ===
-      'AddToShipmentFromMasterListError'
+      'AddToInboundShipmentFromMasterListError'
     ) {
       throw new Error(
         result.addToInboundShipmentFromMasterList.error.__typename

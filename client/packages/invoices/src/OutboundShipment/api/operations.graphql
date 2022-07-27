@@ -749,7 +749,7 @@ mutation addToOutboundShipmentFromMasterList(
     input: { shipmentId: $shipmentId, masterListId: $masterListId }
     storeId: $storeId
   ) {
-    ... on AddToShipmentFromMasterListError {
+    ... on AddToOutboundShipmentFromMasterListError {
       __typename
       error {
         ... on MasterListNotFoundForThisName {
