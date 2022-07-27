@@ -478,6 +478,7 @@ mod test {
                 invoice_row: mock_inbound_shipment_c(),
                 invoice_line_row: mock_inbound_shipment_c_invoice_lines()[0].clone(),
                 location_row_option: Some(mock_location_1()),
+                stock_line_option: None,
             })
         }));
 
