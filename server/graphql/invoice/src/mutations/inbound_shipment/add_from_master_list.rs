@@ -297,15 +297,7 @@ mod test {
                     r.id = String::from("inbound_shipment_line_a");
                     r.invoice_id = String::from("inbound_shipment_c");
                     r.item_id = String::from("item_a");
-                    r.item_name = String::from("Item A");
-                    r.item_code = String::from("a");
-                    r.pack_size = 1;
-                    r.cost_price_per_pack = 0.0;
-                    r.sell_price_per_pack = 0.0;
-                    r.total_before_tax = 0.0;
-                    r.total_after_tax = 0.0;
                     r.r#type = InvoiceLineRowType::StockIn;
-                    r.number_of_packs = 0;
                 }),
                 invoice_row: mock_empty_draft_inbound_shipment(),
                 location_row_option: None,
