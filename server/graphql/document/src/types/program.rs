@@ -4,7 +4,7 @@ use graphql_core::{
     loader::{DocumentLoader, DocumentLoaderInput},
     ContextExt,
 };
-use repository::ProgramRow;
+use repository::{EncounterFilter, EqualFilter, ProgramRow};
 
 use super::{document::DocumentNode, encounter::EncounterNode};
 
@@ -57,19 +57,23 @@ impl ProgramNode {
         let context = ctx.service_provider().context()?;
         let entries = ctx
             .service_provider()
-            .patient_service
+            .encounter_service
             .get_patient_program_encounters(
                 &context,
-                &self.store_id,
-                &self.program_row.patient_id,
-                &self.program_row.r#type,
+                Some(
+                    EncounterFilter::new()
+                        .patient_id(EqualFilter::equal_to(&self.program_row.patient_id))
+                        .program(EqualFilter::equal_to(&self.program_row.r#type)),
+                ),
             )?;
         Ok(entries
             .into_iter()
-            .map(|document| EncounterNode {
+            .map(|row| EncounterNode {
                 patient_id: self.program_row.patient_id.clone(),
                 program: self.program_row.r#type.clone(),
-                document_node: DocumentNode { document },
+                store_id: self.store_id.clone(),
+                name: row.name,
+                status: row.status,
             })
             .collect())
     }

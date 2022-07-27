@@ -1,4 +1,3 @@
-use repository::Document;
 use repository::{PaginationOption, RepositoryError};
 
 use crate::service_provider::ServiceContext;
@@ -46,16 +45,6 @@ pub trait PatientServiceTrait: Sync + Send {
         sort: Option<PatientSort>,
     ) -> Result<ListResult<Patient>, RepositoryError> {
         get_patients(ctx, store_id, pagination, filter, sort)
-    }
-
-    fn get_patient_program_encounters(
-        &self,
-        ctx: &ServiceContext,
-        store_id: &str,
-        patient_id: &str,
-        program: &str,
-    ) -> Result<Vec<Document>, RepositoryError> {
-        get_patient_program_encounters(ctx, store_id, patient_id, program)
     }
 
     fn update_patient(

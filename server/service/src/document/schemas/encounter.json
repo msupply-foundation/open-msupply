@@ -9,11 +9,11 @@
           "type": "string"
         },
         "status": {
-          "enum": ["Scheduled", "Done", "Canceled"],
+          "enum": ["Scheduled", "Ongoing", "Done", "Canceled", "Missed"],
           "type": "string"
         }
       },
-      "required": ["encounterDatetime"],
+      "required": ["encounterDatetime", "status"],
       "type": "object"
     }
   },
