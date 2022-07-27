@@ -58,21 +58,23 @@ const useDraftInboundLines = (item: InboundLineItem | null) => {
     if (item) {
       const newLine = CreateDraft.stockInLine({ item, invoiceId: id });
       setIsDirty(true);
-      setDraftLines([...draftLines, newLine]);
+      setDraftLines(draftLines => [...draftLines, newLine]);
     }
   };
 
   const updateDraftLine = useCallback(
     (patch: Partial<DraftInboundLine> & { id: string }) => {
-      const batch = draftLines.find(line => line.id === patch.id);
+      setDraftLines(draftLines => {
+        const batch = draftLines.find(line => line.id === patch.id);
 
-      if (batch) {
+        if (!batch) return draftLines;
+
         const newBatch = { ...batch, ...patch, isUpdated: true };
         const index = draftLines.indexOf(batch);
         draftLines[index] = newBatch;
         setIsDirty(true);
-        setDraftLines([...draftLines]);
-      }
+        return [...draftLines];
+      });
     },
     [draftLines, setDraftLines]
   );
