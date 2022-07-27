@@ -94,9 +94,11 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
             return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound {}))
         }
         ServiceError::InvoiceDoesNotExist => {
+            //TODO: Change all to std error or update check_line_exists_option
+            //https://github.com/openmsupply/open-msupply/pull/366#discussion_r930574975
             return Ok(UpdateErrorInterface::ForeignKeyError(ForeignKeyError(
                 ForeignKey::InvoiceId,
-            )))
+            )));
         }
         // Standard Graphql Errors
         ServiceError::LineIsNotUnallocatedLine => BadUserInput(formatted_error),
