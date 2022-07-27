@@ -181,7 +181,11 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
         {isLoading ? (
           <BasicSpinner messageKey="saving" />
         ) : (
-          <form autoComplete="on">
+          <form
+            autoComplete={
+              'on' /* Required for previously entered batches to be remembered and suggested in future shipments */
+            }
+          >
             <InboundLineEditForm
               disabled={mode === ModalMode.Update}
               item={currentItem}

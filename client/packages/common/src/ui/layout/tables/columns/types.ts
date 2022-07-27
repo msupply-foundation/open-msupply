@@ -12,6 +12,7 @@ export interface CellProps<T extends RecordWithId> {
   columnIndex: number;
   rowIndex: number;
   isDisabled?: boolean;
+  // Unique name for browser autocomplete (to remember previously entered values for that name)
   autocompleteName?: string;
 }
 
@@ -89,7 +90,8 @@ export interface Column<T extends RecordWithId> {
   order?: number;
 
   setter: ColumnDataSetter<T>;
-
+  // When using browser autocomplete in tables, row data needs to be used to set autocompleteName
+  // to a value that's related to row data (like item id)
   autocompleteProvider?: (rowDataValue: T) => string;
 }
 
