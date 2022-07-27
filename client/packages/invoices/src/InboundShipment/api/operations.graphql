@@ -618,10 +618,10 @@ mutation addToInboundShipmentFromMasterList(
     input: { shipmentId: $shipmentId, masterListId: $masterListId }
     storeId: $storeId
   ) {
-    ... on AddToShipmentFromMasterListError {
+    ... on AddToInboundShipmentFromMasterListError {
       __typename
       error {
-        ... on MasterListNotFoundForThisName {
+        ... on MasterListNotFoundForThisStore {
           __typename
           description
         }

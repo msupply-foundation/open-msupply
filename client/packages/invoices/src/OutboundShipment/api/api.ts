@@ -441,7 +441,7 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
 
     if (
       result.addToOutboundShipmentFromMasterList.__typename ===
-      'AddToShipmentFromMasterListError'
+      'AddToOutboundShipmentFromMasterListError'
     ) {
       throw new Error(
         result.addToOutboundShipmentFromMasterList.error.__typename

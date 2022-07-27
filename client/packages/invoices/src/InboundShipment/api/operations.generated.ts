@@ -94,7 +94,7 @@ export type AddToInboundShipmentFromMasterListMutationVariables = Types.Exact<{
 }>;
 
 
-export type AddToInboundShipmentFromMasterListMutation = { __typename: 'FullMutation', addToInboundShipmentFromMasterList: { __typename: 'AddToShipmentFromMasterListError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'MasterListNotFoundForThisName', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'InvoiceLineConnector', totalCount: number } };
+export type AddToInboundShipmentFromMasterListMutation = { __typename: 'FullMutation', addToInboundShipmentFromMasterList: { __typename: 'AddToInboundShipmentFromMasterListError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'MasterListNotFoundForThisStore', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'InvoiceLineConnector', totalCount: number } };
 
 export const InboundLineFragmentDoc = gql`
     fragment InboundLine on InvoiceLineNode {
@@ -692,10 +692,10 @@ export const AddToInboundShipmentFromMasterListDocument = gql`
     input: {shipmentId: $shipmentId, masterListId: $masterListId}
     storeId: $storeId
   ) {
-    ... on AddToShipmentFromMasterListError {
+    ... on AddToInboundShipmentFromMasterListError {
       __typename
       error {
-        ... on MasterListNotFoundForThisName {
+        ... on MasterListNotFoundForThisStore {
           __typename
           description
         }
