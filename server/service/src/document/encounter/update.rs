@@ -1,16 +1,23 @@
 use chrono::Utc;
-use repository::{Document, DocumentRepository, RepositoryError, TransactionError};
+use repository::{
+    Document, DocumentRepository, EncounterFilter, EncounterRepository, EncounterRow, EqualFilter,
+    RepositoryError, TransactionError,
+};
 
 use crate::{
     document::{document_service::DocumentInsertError, raw_document::RawDocument},
     service_provider::{ServiceContext, ServiceProvider},
 };
 
-use super::encounter_schema::SchemaEncounter;
+use super::{
+    encounter_schema::SchemaEncounter,
+    encounter_updated::{encounter_updated, EncounterTableUpdateError},
+};
 
 #[derive(PartialEq, Debug)]
 pub enum UpdateEncounterError {
     InvalidParentId,
+    EncounterRowNotFound,
     InvalidDataSchema(Vec<String>),
     InternalError(String),
     DatabaseError(RepositoryError),
@@ -32,7 +39,24 @@ pub fn update_encounter(
     let patient = ctx
         .connection
         .transaction_sync(|_| {
-            let existing = validate(ctx, &input)?;
+            let (existing, encounter, encounter_row) = validate(ctx, &input)?;
+
+            encounter_updated(
+                &ctx.connection,
+                &encounter_row.patient_id,
+                &encounter_row.program,
+                &existing.name,
+                encounter,
+            )
+            .map_err(|err| match err {
+                EncounterTableUpdateError::RepositoryError(err) => {
+                    UpdateEncounterError::DatabaseError(err)
+                }
+                EncounterTableUpdateError::InternalError(err) => {
+                    UpdateEncounterError::InternalError(err)
+                }
+            })?;
+
             let doc = generate(user_id, input, existing)?;
 
             let result = service_provider
@@ -97,11 +121,21 @@ fn validate_parent(
     Ok(parent_doc)
 }
 
+fn validate_exiting_encounter(
+    ctx: &ServiceContext,
+    name: &str,
+) -> Result<Option<EncounterRow>, RepositoryError> {
+    let result = EncounterRepository::new(&ctx.connection)
+        .query_by_filter(EncounterFilter::new().name(EqualFilter::equal_to(name)))?
+        .pop();
+    Ok(result)
+}
+
 fn validate(
     ctx: &ServiceContext,
     input: &UpdateEncounter,
-) -> Result<Document, UpdateEncounterError> {
-    validate_encounter_schema(input).map_err(|err| {
+) -> Result<(Document, SchemaEncounter, EncounterRow), UpdateEncounterError> {
+    let encounter = validate_encounter_schema(input).map_err(|err| {
         UpdateEncounterError::InvalidDataSchema(vec![format!("Invalid program data: {}", err)])
     })?;
 
@@ -110,7 +144,12 @@ fn validate(
         None => return Err(UpdateEncounterError::InvalidParentId),
     };
 
-    Ok(doc)
+    let encounter_row = match validate_exiting_encounter(ctx, &doc.name)? {
+        Some(row) => row,
+        None => return Err(UpdateEncounterError::EncounterRowNotFound),
+    };
+
+    Ok((doc, encounter, encounter_row))
 }
 
 #[cfg(test)]
@@ -119,6 +158,7 @@ mod test {
     use repository::{
         mock::{mock_form_schema_empty, MockDataInserts},
         test_db::setup_all,
+        EncounterFilter, EncounterRepository, EncounterStatus, EqualFilter,
         FormSchemaRowRepository,
     };
     use serde_json::json;
@@ -191,7 +231,7 @@ mod test {
         let service = &service_provider.encounter_service;
         let encounter = SchemaEncounter {
             encounter_datetime: Utc::now().to_rfc3339(),
-            status: None,
+            status: "Scheduled".to_string(),
         };
         let program_type = "ProgramType".to_string();
         let initial_encounter = service
@@ -204,8 +244,8 @@ mod test {
                     data: serde_json::to_value(encounter.clone()).unwrap(),
                     schema_id: schema.id.clone(),
                     patient_id: patient.id.clone(),
-                    r#type: program_type.clone(),
-                    program_type: program_type.clone(),
+                    r#type: "TestEncounterType".to_string(),
+                    program: program_type.clone(),
                 },
             )
             .unwrap();
@@ -247,7 +287,7 @@ mod test {
         // success update
         let encounter = SchemaEncounter {
             encounter_datetime: Utc::now().to_rfc3339(),
-            status: None,
+            status: "Finished".to_string(),
         };
         let result = service
             .update_encounter(
@@ -269,5 +309,12 @@ mod test {
             .unwrap();
         assert_eq!(found.parent_ids, vec![initial_encounter.id]);
         assert_eq!(found.data, serde_json::to_value(encounter.clone()).unwrap());
+        // check that encounter table has been updated
+        let row = EncounterRepository::new(&ctx.connection)
+            .query_by_filter(EncounterFilter::new().name(EqualFilter::equal_to(&found.name)))
+            .unwrap()
+            .pop()
+            .unwrap();
+        assert_eq!(row.status, EncounterStatus::Finished);
     }
 }

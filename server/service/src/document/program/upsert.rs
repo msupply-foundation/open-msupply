@@ -163,7 +163,7 @@ fn validate(
 
 #[cfg(test)]
 mod test {
-    use chrono::{DateTime, Utc};
+    use chrono::{DateTime, Timelike, Utc};
     use repository::{
         mock::{mock_form_schema_empty, MockDataInserts},
         test_db::setup_all,
@@ -254,7 +254,8 @@ mod test {
 
         // success insert
         let program = SchemaProgram {
-            enrolment_datetime: Utc::now().to_rfc3339(),
+            // reduce now() precision to avoid Postgres problems
+            enrolment_datetime: Utc::now().with_nanosecond(0).unwrap().to_rfc3339(),
             patient_id: Some("patient id 1".to_string()),
         };
         let program_type = "ProgramType".to_string();

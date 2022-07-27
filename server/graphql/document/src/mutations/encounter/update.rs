@@ -59,6 +59,9 @@ pub fn update_encounter(
                 UpdateEncounterError::InvalidParentId => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
+                UpdateEncounterError::EncounterRowNotFound => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
+                }
                 UpdateEncounterError::InvalidDataSchema(_) => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }

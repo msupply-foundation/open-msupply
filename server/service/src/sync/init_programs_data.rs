@@ -2,6 +2,10 @@ use std::sync::Arc;
 
 use crate::{
     document::{
+        encounter::{
+            encounter_schema::SchemaEncounter, EncounterService, EncounterServiceTrait,
+            InsertEncounter,
+        },
         patient::{PatientService, PatientServiceTrait, UpdatePatient, PATIENT_TYPE},
         program::{
             program_schema::SchemaProgram, ProgramService, ProgramServiceTrait, UpsertProgram,
@@ -209,6 +213,13 @@ fn program_2() -> SchemaProgram {
     }
 }
 
+fn encounter_1() -> SchemaEncounter {
+    SchemaEncounter {
+        encounter_datetime: Utc::now().to_rfc3339(),
+        status: "Scheduled".to_string(),
+    }
+}
+
 pub fn init_program_data(
     service_provider: &Arc<ServiceProvider>,
     site_id: u32,
@@ -265,7 +276,7 @@ pub fn init_program_data(
         context: DocumentContext::Encounter,
         name: Some("Placeholder encounter 1".to_string()),
         parent_id: Some(placeholder_program_id),
-        form_schema_id: Some(encounter_schema_id),
+        form_schema_id: Some(encounter_schema_id.clone()),
     })?;
 
     // patients
@@ -333,6 +344,24 @@ pub fn init_program_data(
                 data: serde_json::to_value(program_2()).unwrap(),
                 schema_id: program_schema_id,
                 parent: None,
+            },
+        )
+        .unwrap();
+
+    // encounter
+    let service = EncounterService {};
+    service
+        .insert_encounter(
+            &ctx,
+            &service_provider,
+            store_id.clone(),
+            "no user",
+            InsertEncounter {
+                patient_id: patient_1().id,
+                r#type: "TestEncounter1".to_string(),
+                data: serde_json::to_value(encounter_1()).unwrap(),
+                schema_id: encounter_schema_id.clone(),
+                program: "TestProgram1".to_string(),
             },
         )
         .unwrap();

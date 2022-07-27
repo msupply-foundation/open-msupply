@@ -53,7 +53,7 @@ pub fn insert_encounter(
             data: input.data,
             schema_id: input.schema_id,
             patient_id: input.patient_id,
-            program_type: input.program_type,
+            program: input.program_type,
             r#type: input.r#type,
         },
     ) {

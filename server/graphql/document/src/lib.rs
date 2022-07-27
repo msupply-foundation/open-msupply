@@ -113,6 +113,15 @@ impl DocumentQueries {
     ) -> Result<ProgramResponse> {
         programs(ctx, store_id, filter)
     }
+
+    pub async fn encounters(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        filter: Option<EncounterFilterInput>,
+    ) -> Result<EncounterResponse> {
+        encounters(ctx, store_id, filter)
+    }
 }
 
 #[derive(Default, Clone)]
