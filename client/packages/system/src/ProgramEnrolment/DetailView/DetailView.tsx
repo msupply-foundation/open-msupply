@@ -45,12 +45,10 @@ export const ProgramDetailView: FC = () => {
   const handleSave = useUpsertProgramEnrolment(patientId, type);
   const { JsonForm, loading } = useJsonForms(doc, { handleSave });
 
-  if (loading) return <DetailViewSkeleton  />;
+  if (loading) return <DetailViewSkeleton />;
 
   return (
-    <React.Suspense
-      fallback={<DetailViewSkeleton hasGroupBy={true} hasHold={true} />}
-    >
+    <React.Suspense fallback={<DetailViewSkeleton />}>
       <AppBarButtons />
       {JsonForm}
     </React.Suspense>
