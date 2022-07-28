@@ -61,6 +61,6 @@ export const getProgramEnrolmentQueries = (sdk: Sdk, storeId: string) => ({
       return result.updateProgram;
     }
 
-    throw new Error('Could not update patient');
+    throw new Error('Could not update program');
   },
 });
