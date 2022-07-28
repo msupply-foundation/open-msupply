@@ -48,7 +48,7 @@ const ProgramListComponent: FC = () => {
         key: 'enrolmentDatetime',
         label: 'label.enrolment-datetime',
         align: ColumnAlign.Right,
-        width: 160,
+        width: 175,
         formatter: dateString =>
           dateString ? localisedDate((dateString as string) || '') : '',
       },
