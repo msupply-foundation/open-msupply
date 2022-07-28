@@ -1,8 +1,8 @@
 import { useQuery, useUrlQueryParams } from '@openmsupply-client/common';
-import { usePatientEnrolmentApi } from '../utils/useProgramEnrolmentApi';
+import { useProgramEnrolmentApi } from '../utils/useProgramEnrolmentApi';
 
 export const useProgramEnrolments = () => {
-  const api = usePatientEnrolmentApi();
+  const api = useProgramEnrolmentApi();
   const { queryParams } = useUrlQueryParams({
     initialSort: { key: 'type', dir: 'asc' },
   });
