@@ -294,7 +294,7 @@ export const useJsonForms = (
       </Box>
     ),
     saveData,
-    loading: isLoading,
+    isLoading,
     error,
   };
 };

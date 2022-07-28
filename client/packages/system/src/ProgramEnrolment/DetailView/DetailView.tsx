@@ -43,9 +43,9 @@ export const ProgramDetailView: FC = () => {
   } = useUrlQuery();
 
   const handleSave = useUpsertProgramEnrolment(patientId, type);
-  const { JsonForm, loading } = useJsonForms(doc, { handleSave });
+  const { JsonForm, isLoading } = useJsonForms(doc, { handleSave });
 
-  if (loading) return <DetailViewSkeleton />;
+  if (isLoading) return <DetailViewSkeleton />;
 
   return (
     <React.Suspense fallback={<DetailViewSkeleton />}>
