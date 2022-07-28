@@ -46,7 +46,7 @@ export const getProgramEnrolmentQueries = (sdk: Sdk, storeId: string) => ({
       return result.insertProgram;
     }
 
-    throw new Error('Could not insert patient');
+    throw new Error('Could not insert program');
   },
 
   updateProgram: async (
