@@ -199,7 +199,7 @@ export const useJsonForms = (
       </JsonForm>
     ),
     saveData,
-    loading: isLoading,
+    isLoading,
     error,
   };
 };

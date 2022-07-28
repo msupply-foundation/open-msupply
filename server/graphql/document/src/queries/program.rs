@@ -4,7 +4,9 @@ use graphql_core::{
     standard_graphql_error::validate_auth,
     ContextExt,
 };
-use repository::{DatetimeFilter, EqualFilter, ProgramFilter};
+use repository::{
+    DatetimeFilter, EqualFilter, Pagination, ProgramFilter, ProgramSort, ProgramSortField,
+};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     usize_to_u32,
@@ -21,6 +23,24 @@ pub struct ProgramConnector {
 #[derive(Union)]
 pub enum ProgramResponse {
     Response(ProgramConnector),
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(rename_items = "camelCase")]
+pub enum ProgramSortFieldInput {
+    Type,
+    PatientId,
+    EnrolmentDatetime,
+    ProgramPatientId,
+}
+
+#[derive(InputObject)]
+pub struct ProgramSortInput {
+    /// Sort query result by `key`
+    key: ProgramSortFieldInput,
+    /// Sort query result is sorted descending or ascending (if not provided the default is
+    /// ascending)
+    desc: Option<bool>,
 }
 
 #[derive(InputObject, Clone)]
@@ -42,6 +62,7 @@ fn to_domain_filter(f: ProgramFilterInput) -> ProgramFilter {
 pub fn programs(
     ctx: &Context<'_>,
     store_id: String,
+    sort: Option<ProgramSortInput>,
     filter: Option<ProgramFilterInput>,
 ) -> Result<ProgramResponse> {
     validate_auth(
@@ -57,7 +78,12 @@ pub fn programs(
 
     let nodes: Vec<ProgramNode> = service_provider
         .program_service
-        .get_patient_programs(&context, filter.map(to_domain_filter))?
+        .get_patient_programs(
+            &context,
+            Pagination::all(),
+            sort.map(ProgramSortInput::to_domain),
+            filter.map(to_domain_filter),
+        )?
         .into_iter()
         .map(|program_row| ProgramNode {
             store_id: store_id.clone(),
@@ -69,4 +95,20 @@ pub fn programs(
         total_count: usize_to_u32(nodes.len()),
         nodes,
     }))
+}
+
+impl ProgramSortInput {
+    pub fn to_domain(self) -> ProgramSort {
+        let key = match self.key {
+            ProgramSortFieldInput::Type => ProgramSortField::Type,
+            ProgramSortFieldInput::PatientId => ProgramSortField::PatientId,
+            ProgramSortFieldInput::EnrolmentDatetime => ProgramSortField::EnrolmentDatetime,
+            ProgramSortFieldInput::ProgramPatientId => ProgramSortField::ProgramPatientId,
+        };
+
+        ProgramSort {
+            key,
+            desc: self.desc,
+        }
+    }
 }
