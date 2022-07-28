@@ -178,8 +178,6 @@ mod test {
             ),
             Err(ServiceError::NotThisStoreInvoice)
         );
-
-        //TODO DatabaseError, LineDeleteErrors
     }
 
     #[actix_rt::test]

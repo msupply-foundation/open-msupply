@@ -269,7 +269,7 @@ mod test {
             Err(ServiceError::NotThisStoreInvoice)
         );
 
-        //TODO DatabaseError, NewlyCreatedLineDoesNotExist
+        //TODO NewlyCreatedLineDoesNotExist
     }
 
     #[actix_rt::test]
