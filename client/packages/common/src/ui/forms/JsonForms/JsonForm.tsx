@@ -23,6 +23,8 @@ import {
   Label,
   dateTester,
   Date,
+  dateOfBirthTester,
+  DateOfBirth,
   arrayTester,
   Array,
 } from './components';
@@ -96,6 +98,7 @@ const renderers = [
   { tester: groupTester, renderer: Group },
   { tester: labelTester, renderer: Label },
   { tester: dateTester, renderer: Date },
+  { tester: dateOfBirthTester, renderer: DateOfBirth },
   { tester: arrayTester, renderer: Array },
 ];
 

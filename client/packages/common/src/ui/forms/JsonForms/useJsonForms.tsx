@@ -15,6 +15,7 @@ import { useDocument } from './api';
 import { DocumentRegistryFragment } from './api/operations.generated';
 import { JsonData, JsonForm } from './JsonForm';
 import { AppRoute } from '@openmsupply-client/config';
+import { isEqual } from 'lodash';
 
 export type SavedDocument = {
   id: string;
@@ -117,7 +118,7 @@ export const useJsonForms = (
   };
 
   const updateData = (newData: JsonData) => {
-    setIsDirty(isDirty === undefined ? false : true);
+    setIsDirty(!isEqual(data, newData));
     setData(newData);
   };
 
@@ -199,7 +200,7 @@ export const useJsonForms = (
       </JsonForm>
     ),
     saveData,
-    loading: isLoading,
+    isLoading,
     error,
   };
 };

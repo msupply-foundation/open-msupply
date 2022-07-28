@@ -9,12 +9,14 @@ import {
 export const stringTester = rankWith(3, schemaTypeIs('string'));
 
 const UIComponent = (props: ControlProps) => {
-  const { data, handleChange, label, path } = props;
+  const { data, handleChange, label, path, description, errors } = props;
   const [localData, setLocalData] = useState<string>(data);
   const onChange = useDebounceCallback(
     (value: string) => handleChange(path, value),
     [path]
   );
+  const error = !!errors;
+
   return (
     <DetailInputWithLabelRow
       label={label}
@@ -26,7 +28,12 @@ const UIComponent = (props: ControlProps) => {
           onChange(e.target.value);
         },
         disabled: !props.enabled,
-        error: !!props.errors,
+        placeholder: description,
+        error,
+        helperText: errors,
+        FormHelperTextProps: error
+          ? { sx: { color: 'error.main' } }
+          : undefined,
       }}
     />
   );

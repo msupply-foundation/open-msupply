@@ -68,6 +68,7 @@
   "info.server-restarting": "Server restarting...",
   "label.actions": "Actions",
   "label.address": "Address",
+  "label.age": "Age",
   "label.allocated": "Allocated",
   "label.already-issued": "Issued",
   "label.amc": "AMC",
