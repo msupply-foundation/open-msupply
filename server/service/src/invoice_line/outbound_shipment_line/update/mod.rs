@@ -366,7 +366,7 @@ mod test {
         let service = service_provider.invoice_line_service;
         let invoice_service = service_provider.invoice_service;
 
-        // New line on New Outbound invoice
+        // New line on new outbound invoice
         let previous_available_number_of_packs = StockLineRowRepository::new(&connection)
             .find_one_by_id(
                 &mock_outbound_shipment_c_invoice_lines()[0]
