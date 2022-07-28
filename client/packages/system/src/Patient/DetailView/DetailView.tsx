@@ -60,12 +60,10 @@ export const PatientDetailView: FC = () => {
 
   const { JsonForm, isLoading } = useJsonForms(doc, { handleSave }, createDoc);
 
-  if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
+  if (isLoading) return <DetailViewSkeleton />;
 
   return (
-    <React.Suspense
-      fallback={<DetailViewSkeleton hasGroupBy={true} hasHold={true} />}
-    >
+    <React.Suspense fallback={<DetailViewSkeleton />}>
       <AppBarButtons />
 
       {JsonForm}
