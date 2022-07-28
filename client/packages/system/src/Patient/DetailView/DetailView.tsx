@@ -58,9 +58,9 @@ export const PatientDetailView: FC = () => {
 
   const handleSave = useUpsertPatient();
 
-  const { JsonForm, loading } = useJsonForms(doc, { handleSave }, createDoc);
+  const { JsonForm, isLoading } = useJsonForms(doc, { handleSave }, createDoc);
 
-  if (loading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
+  if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
   return (
     <React.Suspense
