@@ -139,7 +139,9 @@ impl Synchroniser {
         info!("Delete Integration result: {:?}", deletes);
 
         if !is_initialised {
-            self.remote.request_site_info(&ctx.connection).await?;
+            self.remote
+                .request_and_set_site_info(&ctx.connection)
+                .await?;
             self.remote.set_initialised(&ctx.connection)?;
         }
 
