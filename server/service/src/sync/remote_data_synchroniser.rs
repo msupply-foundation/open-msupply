@@ -17,9 +17,6 @@ pub(crate) struct PostInitialisationError(pub(crate) SyncApiError);
 #[error("Failed to set initialised state: {0:?}")]
 pub(crate) struct SetInitialisedError(RepositoryError);
 #[derive(Error, Debug)]
-#[error("Failed to set site info: {0:?}")]
-pub(crate) struct SetSiteInfoError(RepositoryError);
-#[derive(Error, Debug)]
 pub(crate) enum RemotePullError {
     #[error("Api error while pulling remote records: {0:?}")]
     PullError(SyncApiError),
@@ -29,6 +26,13 @@ pub(crate) enum RemotePullError {
     SaveSyncBufferError(RepositoryError),
     #[error("{0}")]
     ParsingV5RecordError(ParsingV5RecordError),
+}
+#[derive(Error, Debug)]
+pub(crate) enum RequestAndSetSiteInfoError {
+    #[error("Api error while requesting site info: {0:?}")]
+    RequestSiteInfoError(SyncApiError),
+    #[error("Failed to set site info: {0:?}")]
+    SetSiteInfoError(RepositoryError),
 }
 
 pub struct RemoteDataSynchroniser {
@@ -50,21 +54,32 @@ impl RemoteDataSynchroniser {
     }
 
     /// Request site info and persist it
-    pub(crate) async fn request_site_info(
+    pub(crate) async fn request_and_set_site_info(
         &self,
         connection: &StorageConnection,
-    ) -> Result<(), PostInitialisationError> {
+    ) -> Result<(), RequestAndSetSiteInfoError> {
         info!("Requesting site info");
         let site_info = self
             .sync_api_v5
             .get_site_info()
             .await
-            .map_err(PostInitialisationError)?;
+            .map_err(RequestAndSetSiteInfoError::RequestSiteInfoError)?;
 
-        self.set_site_info(&connection, &site_info).unwrap();
+        self.set_site_info(&connection, site_info)
+            .map_err(RequestAndSetSiteInfoError::SetSiteInfoError)?;
 
         info!("Received site info");
         Ok(())
+    }
+
+    pub(crate) fn set_site_info(
+        &self,
+        connection: &StorageConnection,
+        site_info: SiteInfoV5,
+    ) -> Result<(), RepositoryError> {
+        let remote_sync_state = RemoteSyncState::new(&connection);
+        remote_sync_state.set_site_uuid(site_info.id)?;
+        remote_sync_state.set_site_id(site_info.site_id)
     }
 
     /// Request initialisation
@@ -86,21 +101,6 @@ impl RemoteDataSynchroniser {
         remote_sync_state
             .set_initial_remote_data_synced()
             .map_err(SetInitialisedError)?;
-        Ok(())
-    }
-
-    pub(crate) fn set_site_info(
-        &self,
-        connection: &StorageConnection,
-        site_info: &SiteInfoV5,
-    ) -> Result<(), SetSiteInfoError> {
-        let remote_sync_state = RemoteSyncState::new(&connection);
-        remote_sync_state
-            .set_site_uuid(site_info.id.clone())
-            .map_err(SetSiteInfoError)?;
-        remote_sync_state
-            .set_site_id(site_info.site_id)
-            .map_err(SetSiteInfoError)?;
         Ok(())
     }
 
