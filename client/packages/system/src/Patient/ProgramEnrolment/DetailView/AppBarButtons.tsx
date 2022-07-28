@@ -11,7 +11,7 @@ import {
   Box,
   Typography,
 } from '@openmsupply-client/common';
-import { DocumentHistory } from '../../Patient';
+import { DocumentHistory } from '../..';
 
 export const AppBarButtons: FC = ({}) => {
   const {
