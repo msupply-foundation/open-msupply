@@ -11,8 +11,7 @@ import {
   useUrlQueryParams,
   useNavigate,
 } from '@openmsupply-client/common';
-import { useProgramEnrolment } from '../api/hooks';
-import { ProgramFragment } from '../api/operations.generated';
+import { ProgramFragment, useProgramEnrolment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 
 type ProgramFragmentWithId = { id: string } & ProgramFragment;
