@@ -54,7 +54,7 @@ const PatientListComponent: FC = () => {
         key: 'dateOfBirth',
         label: 'label.date-of-birth',
         align: ColumnAlign.Right,
-        width: 160,
+        width: 175,
         formatter: dateString =>
           dateString ? localisedDate((dateString as string) || '') : '',
       },

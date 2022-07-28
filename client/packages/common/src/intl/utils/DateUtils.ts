@@ -14,6 +14,8 @@ import {
   format,
   parseISO,
   fromUnixTime,
+  startOfToday,
+  startOfDay,
 } from 'date-fns';
 import { enGB, enUS, fr, ar } from 'date-fns/locale';
 
@@ -49,7 +51,7 @@ export const DateUtils = {
   isBefore,
   isEqual,
   isValid,
-  age: (date: Date) => differenceInYears(Date.now(), date),
+  age: (date: Date) => differenceInYears(startOfToday(), startOfDay(date)),
 };
 
 export const useFormatDateTime = () => {

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { rankWith, ControlProps, scopeEndsWith } from '@jsonforms/core';
+import { rankWith, ControlProps, uiTypeIs } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { FormLabel, Box } from '@mui/material';
 import {
@@ -14,7 +14,7 @@ import {
   FORM_INPUT_COLUMN_WIDTH,
 } from '../styleConstants';
 
-export const dateOfBirthTester = rankWith(6, scopeEndsWith('dateOfBirth'));
+export const dateOfBirthTester = rankWith(4, uiTypeIs('DateOfBirthControl'));
 
 const UIComponent = (props: ControlProps) => {
   const { data, handleChange, label, path } = props;
