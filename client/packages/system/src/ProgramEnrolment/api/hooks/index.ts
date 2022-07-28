@@ -3,7 +3,7 @@ import { Utils } from './utils';
 
 export const useProgramEnrolment = {
   utils: {
-    api: Utils.usePatientEnrolmentApi,
+    api: Utils.useProgramEnrolmentApi,
   },
 
   document: {

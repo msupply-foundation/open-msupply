@@ -1,5 +1,5 @@
-import { usePatientEnrolmentApi } from './useProgramEnrolmentApi';
+import { useProgramEnrolmentApi } from './useProgramEnrolmentApi';
 
 export const Utils = {
-  usePatientEnrolmentApi: usePatientEnrolmentApi,
+  useProgramEnrolmentApi: useProgramEnrolmentApi,
 };
