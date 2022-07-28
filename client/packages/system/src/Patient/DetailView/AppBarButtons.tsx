@@ -14,6 +14,7 @@ import {
 } from '@openmsupply-client/common';
 import { DocumentHistory } from '../DocumentHistory';
 import { useNavigate } from 'react-router-dom';
+import { AppRoute } from 'packages/config/src';
 
 export const AppBarButtons: FC = ({}) => {
   const {
@@ -29,7 +30,7 @@ export const AppBarButtons: FC = ({}) => {
           Icon={<EditIcon />}
           label={'Programs'}
           onClick={() => {
-            navigate(`programs`);
+            navigate(AppRoute.Programs);
           }}
         />
 
