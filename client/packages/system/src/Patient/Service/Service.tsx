@@ -4,13 +4,14 @@ import { PatientListView } from '../ListView';
 import { PatientDetailView } from '../DetailView';
 import { ProgramListView } from '../../ProgramEnrolment';
 import { ProgramDetailView } from '../../ProgramEnrolment/DetailView';
+import { AppRoute } from 'packages/config/src';
 
 const singlePatientRoute = RouteBuilder.create(':patientId').build();
 const patientProgramEnrolmentRoute = RouteBuilder.create(':patientId')
-  .addPart('programs')
+  .addPart(AppRoute.Programs)
   .build();
 const singleProgramEnrolmentRoute = RouteBuilder.create(':patientId')
-  .addPart('programs')
+  .addPart(AppRoute.Programs)
   .addPart(':programType')
   .build();
 
