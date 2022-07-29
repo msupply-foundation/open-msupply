@@ -32,7 +32,7 @@ const Expando = ({
   }
 };
 
-export const useHighlightPlaceholderRows = (
+const useHighlightPlaceholderRows = (
   rows: InboundLineFragment[] | InboundItem[] | undefined
 ) => {
   const { setRowStyles } = useRowStyle();
