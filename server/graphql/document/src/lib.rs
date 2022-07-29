@@ -109,9 +109,10 @@ impl DocumentQueries {
         &self,
         ctx: &Context<'_>,
         store_id: String,
+        sort: Option<ProgramSortInput>,
         filter: Option<ProgramFilterInput>,
     ) -> Result<ProgramResponse> {
-        programs(ctx, store_id, filter)
+        programs(ctx, store_id, sort, filter)
     }
 
     pub async fn encounters(
