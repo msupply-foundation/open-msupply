@@ -198,7 +198,7 @@ mod test {
             Err(ServiceError::OtherPartyNotASupplier)
         );
 
-        // TODO Database Error + NewlyCreatedInvoiceDoesNotExist
+        // NewlyCreatedInvoiceDoesNotExist
     }
 
     #[actix_rt::test]
