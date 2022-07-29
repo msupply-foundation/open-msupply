@@ -35,6 +35,7 @@ const UIComponent = (props: ControlProps) => {
       </Box>
       <Box flex={1} flexBasis={FORM_INPUT_COLUMN_WIDTH}>
         <Switch
+          labelPlacement="end"
           onChange={(_, checked) => {
             setLocalData(checked);
             onChange(checked);
