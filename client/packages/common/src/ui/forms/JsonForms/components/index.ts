@@ -4,3 +4,4 @@ export * from './Text';
 export * from './Select';
 export * from './Date';
 export * from './Array';
+export * from './Boolean';
