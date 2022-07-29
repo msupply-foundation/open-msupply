@@ -138,6 +138,11 @@ impl PatientFilter {
         self
     }
 
+    pub fn code(mut self, filter: SimpleStringFilter) -> Self {
+        self.code = Some(filter);
+        self
+    }
+
     pub fn first_name(mut self, filter: SimpleStringFilter) -> Self {
         self.first_name = Some(filter);
         self
