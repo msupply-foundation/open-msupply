@@ -1,12 +1,30 @@
 import { DocumentRegistryFragment } from '@openmsupply-client/common';
 import create from 'zustand';
 
+// Copied from the schema definition
+export enum Gender {
+  /** 703118005 Feminine gender */
+  Female = 'Female',
+  /** 703117000 Masculine gender*/
+  Male = 'Male',
+  /** 407379008 transgendered transsexual, female-to-male*/
+  TransgenderMale = 'TransgenderMale',
+  /** 407378000 Surgically transgendered transsexual, male-to-female*/
+  TransgenderFemale = 'TransgenderFemale',
+  /** 394743007 Gender unknown*/
+  Unknown = 'Unknown',
+  /** 772004004 Non-binary gender*/
+  NonBinary = 'NonBinary',
+}
+
 export interface CreateNewPatient {
   documentRegistry: DocumentRegistryFragment;
   id: string;
+  code?: string;
   firstName?: string;
   lastName?: string;
-  dob?: Date;
+  dateOfBirth?: string;
+  gender?: Gender;
   canSearch?: boolean;
   canCreate?: boolean;
 }

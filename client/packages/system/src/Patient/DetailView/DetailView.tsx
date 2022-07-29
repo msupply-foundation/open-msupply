@@ -46,8 +46,11 @@ export const PatientDetailView: FC = () => {
         documentRegistry: patient.documentRegistry,
         data: {
           id: patient.id,
+          code: patient.code,
           firstName: patient.firstName,
           lastName: patient.lastName,
+          gender: patient.gender,
+          dateOfBirth: patient.dateOfBirth,
           addresses: [],
           contactDetails: [],
           socioEconomics: {},
