@@ -140,6 +140,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         ServiceError::NotAnOutboundShipment => BadUserInput(formatted_error),
         ServiceError::ItemNotFound => BadUserInput(formatted_error),
         ServiceError::NotAStockItem => BadUserInput(formatted_error),
+        ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
         ServiceError::NewlyCreatedLineDoesNotExist => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };

@@ -1,15 +1,7 @@
 import React, { FC, useCallback, useState, useEffect } from 'react';
 import {
   Divider,
-  TableContainer,
-  TabContext,
-  TabList,
-  Tab,
   useTranslation,
-  useIsMediumScreen,
-  ButtonWithIcon,
-  PlusCircleIcon,
-  Box,
   BasicSpinner,
   DialogButton,
   useDialog,
@@ -19,16 +11,14 @@ import {
   useConfirmOnLeaving,
   TableProvider,
   createTableStore,
-  TabKeybindings,
   createQueryParamsStore,
   useKeyboardHeightAdjustment,
 } from '@openmsupply-client/common';
-import { InboundLineEditPanel } from './InboundLineEditPanel';
-import { QuantityTable, PricingTable, LocationTable } from './TabTables';
 import { InboundLineEditForm } from './InboundLineEditForm';
 import { InboundLineFragment, useInbound } from '../../../api';
 import { DraftInboundLine } from '../../../../types';
 import { CreateDraft } from '../utils';
+import { TabLayout } from './TabLayout';
 
 type InboundLineItem = InboundLineFragment['item'];
 interface InboundLineEditProps {
@@ -37,12 +27,6 @@ interface InboundLineEditProps {
   isOpen: boolean;
   onClose: () => void;
   isDisabled?: boolean;
-}
-
-enum Tabs {
-  Batch = 'Batch',
-  Pricing = 'Pricing',
-  Location = 'Location',
 }
 
 const useDraftInboundLines = (item: InboundLineItem | null) => {
@@ -74,21 +58,23 @@ const useDraftInboundLines = (item: InboundLineItem | null) => {
     if (item) {
       const newLine = CreateDraft.stockInLine({ item, invoiceId: id });
       setIsDirty(true);
-      setDraftLines([...draftLines, newLine]);
+      setDraftLines(draftLines => [...draftLines, newLine]);
     }
   };
 
   const updateDraftLine = useCallback(
     (patch: Partial<DraftInboundLine> & { id: string }) => {
-      const batch = draftLines.find(line => line.id === patch.id);
+      setDraftLines(draftLines => {
+        const batch = draftLines.find(line => line.id === patch.id);
 
-      if (batch) {
+        if (!batch) return draftLines;
+
         const newBatch = { ...batch, ...patch, isUpdated: true };
         const index = draftLines.indexOf(batch);
         draftLines[index] = newBatch;
         setIsDirty(true);
-        setDraftLines([...draftLines]);
-      }
+        return [...draftLines];
+      });
     },
     [draftLines, setDraftLines]
   );
@@ -120,14 +106,13 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
   const { next: nextItem, disabled: nextDisabled } = useInbound.document.next(
     currentItem?.id ?? ''
   );
-  const isMediumScreen = useIsMediumScreen();
-  const [currentTab, setCurrentTab] = useState<Tabs>(Tabs.Batch);
   const { Modal } = useDialog({ isOpen, onClose });
   const height = useKeyboardHeightAdjustment(600);
   const { draftLines, addDraftLine, updateDraftLine, isLoading, saveLines } =
     useDraftInboundLines(currentItem);
   const okNextDisabled =
     (mode === ModalMode.Update && nextDisabled) || !currentItem;
+
   useEffect(() => {
     setCurrentItem(item);
   }, [item]);
@@ -181,110 +166,24 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
         {isLoading ? (
           <BasicSpinner messageKey="saving" />
         ) : (
-          <>
+          <form
+            autoComplete={
+              'on' /* Required for previously entered batches to be remembered and suggested in future shipments */
+            }
+          >
             <InboundLineEditForm
               disabled={mode === ModalMode.Update}
               item={currentItem}
               onChangeItem={setCurrentItem}
             />
             <Divider margin={5} />
-            {draftLines.length > 0 ? (
-              <TabContext value={currentTab}>
-                <TabKeybindings
-                  tabs={[Tabs.Batch, Tabs.Pricing, Tabs.Location]}
-                  onAdd={addDraftLine}
-                  setCurrentTab={setCurrentTab}
-                  dependencies={[draftLines]}
-                />
-
-                <Box flex={1} display="flex" justifyContent="space-between">
-                  <Box flex={1} />
-                  <Box flex={1}>
-                    <TabList
-                      value={currentTab}
-                      centered
-                      onChange={(_, v) => setCurrentTab(v)}
-                    >
-                      <Tab
-                        value={Tabs.Batch}
-                        label={`${t('label.quantities')} (Ctrl+1)`}
-                        tabIndex={-1}
-                      />
-                      <Tab
-                        value={Tabs.Pricing}
-                        label={`${t('label.pricing')} (Ctrl+2)`}
-                        tabIndex={-1}
-                      />
-                      <Tab
-                        value={Tabs.Location}
-                        label={`${t('label.location')} (Ctrl+3)`}
-                        tabIndex={-1}
-                      />
-                    </TabList>
-                  </Box>
-                  <Box flex={1} justifyContent="flex-end" display="flex">
-                    <ButtonWithIcon
-                      disabled={isDisabled}
-                      color="primary"
-                      variant="outlined"
-                      onClick={addDraftLine}
-                      label={`${t('label.add-batch')} (+)`}
-                      Icon={<PlusCircleIcon />}
-                    />
-                  </Box>
-                </Box>
-
-                <TableContainer
-                  sx={{
-                    height: isMediumScreen ? 300 : 400,
-                    marginTop: 2,
-                    borderWidth: 1,
-                    borderStyle: 'solid',
-                    borderColor: 'divider',
-                    borderRadius: '20px',
-                  }}
-                >
-                  <InboundLineEditPanel
-                    value={Tabs.Batch}
-                    lines={draftLines}
-                    updateDraftLine={updateDraftLine}
-                  >
-                    <QuantityTable
-                      isDisabled={isDisabled}
-                      lines={draftLines}
-                      updateDraftLine={updateDraftLine}
-                    />
-                  </InboundLineEditPanel>
-
-                  <InboundLineEditPanel
-                    value={Tabs.Pricing}
-                    lines={draftLines}
-                    updateDraftLine={updateDraftLine}
-                  >
-                    <PricingTable
-                      isDisabled={isDisabled}
-                      lines={draftLines}
-                      updateDraftLine={updateDraftLine}
-                    />
-                  </InboundLineEditPanel>
-
-                  <InboundLineEditPanel
-                    value={Tabs.Location}
-                    lines={draftLines}
-                    updateDraftLine={updateDraftLine}
-                  >
-                    <LocationTable
-                      isDisabled={isDisabled}
-                      lines={draftLines}
-                      updateDraftLine={updateDraftLine}
-                    />
-                  </InboundLineEditPanel>
-                </TableContainer>
-              </TabContext>
-            ) : (
-              <Box sx={{ height: isMediumScreen ? 400 : 500 }} />
-            )}
-          </>
+            <TabLayout
+              draftLines={draftLines}
+              addDraftLine={addDraftLine}
+              updateDraftLine={updateDraftLine}
+              isDisabled={isDisabled}
+            />
+          </form>
         )}
       </Modal>
     </TableProvider>

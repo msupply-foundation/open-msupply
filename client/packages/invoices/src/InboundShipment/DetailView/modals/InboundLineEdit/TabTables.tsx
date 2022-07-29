@@ -39,6 +39,8 @@ const getBatchColumn = (
     Cell: TextInputCell,
     setter: updateDraftLine,
     backgroundColor: alpha(theme.palette.background.menu, 0.4),
+    // Remember previously entered batches for this item and suggest them in future shipments
+    autocompleteProvider: data => `inboundshipment${data.item.id}`,
   },
 ];
 const getExpiryColumn = (
@@ -80,7 +82,7 @@ export const QuantityTableComponent: FC<TableProps> = ({
       ],
     ],
     {},
-    [updateDraftLine]
+    [updateDraftLine, lines]
   );
 
   return (
@@ -128,7 +130,7 @@ export const PricingTableComponent: FC<TableProps> = ({
       ],
     ],
     {},
-    [updateDraftLine]
+    [updateDraftLine, lines]
   );
 
   return (
@@ -158,7 +160,7 @@ export const LocationTableComponent: FC<TableProps> = ({
       [getLocationInputColumn(), { setter: updateDraftLine }],
     ],
     {},
-    [updateDraftLine]
+    [updateDraftLine, lines]
   );
 
   return (

@@ -97,7 +97,7 @@ const StyledDrawer = styled(Box, {
 })<{ isOpen: boolean }>(({ isOpen, theme }) => ({
   display: 'flex',
   flexDirection: 'column',
-  height: '100vh',
+  height: '100%',
   borderRadius: '0 8px 8px 0',
   overflow: 'hidden',
   boxShadow: theme.shadows[7],

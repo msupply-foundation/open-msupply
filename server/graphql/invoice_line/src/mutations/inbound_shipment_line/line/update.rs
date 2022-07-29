@@ -148,6 +148,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         ServiceError::LocationDoesNotExist => BadUserInput(formatted_error),
         ServiceError::ItemNotFound => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
+        ServiceError::UpdatedLineDoesNotExist => InternalError(formatted_error),
     };
 
     Err(graphql_error.extend())
@@ -465,6 +466,7 @@ mod test {
                 invoice_row: mock_inbound_shipment_c(),
                 invoice_line_row: mock_inbound_shipment_c_invoice_lines()[0].clone(),
                 location_row_option: Some(mock_location_1()),
+                stock_line_option: None,
             })
         }));
 
