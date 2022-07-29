@@ -301,6 +301,7 @@ mod test {
                 }),
                 invoice_row: mock_empty_draft_inbound_shipment(),
                 location_row_option: None,
+                stock_line_option: None,
             }])
         }));
 
