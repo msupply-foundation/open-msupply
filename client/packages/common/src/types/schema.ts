@@ -2633,8 +2633,10 @@ export type PatientSearchConnector = {
 };
 
 export type PatientSearchInput = {
+  code?: InputMaybe<Scalars['String']>;
   dateOfBirth?: InputMaybe<Scalars['NaiveDate']>;
   firstName?: InputMaybe<Scalars['String']>;
+  gender?: InputMaybe<GenderInput>;
   lastName?: InputMaybe<Scalars['String']>;
 };
 

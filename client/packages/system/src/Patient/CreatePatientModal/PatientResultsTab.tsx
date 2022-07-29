@@ -2,13 +2,14 @@ import React, { FC, useEffect } from 'react';
 import {
   BasicSpinner,
   DataTable,
+  GenderInput,
   Typography,
   useColumns,
   useTranslation,
 } from '@openmsupply-client/common';
 import { PatientPanel } from './PatientPanel';
 import { usePatient } from '../api';
-import { useCreatePatientStore } from '../hooks';
+import { Gender, useCreatePatientStore } from '../hooks';
 import { PatientFragment } from '../api/operations.generated';
 
 export const PatientResultsTab: FC<PatientPanel> = ({ patient, value }) => {
@@ -33,8 +34,16 @@ export const PatientResultsTab: FC<PatientPanel> = ({ patient, value }) => {
 
   useEffect(() => {
     if (!isLoading && !!patient && !data && !!patient.canSearch) {
-      const { firstName, lastName } = patient;
-      mutate({ firstName, lastName });
+      const { code, firstName, lastName, dateOfBirth, gender } = patient;
+      mutate({
+        code,
+        firstName,
+        lastName,
+        dateOfBirth,
+        gender: gender
+          ? ((GenderInput as Record<Gender, string>)[gender] as GenderInput)
+          : undefined,
+      });
     }
   }, [patient, isLoading, data]);
 
