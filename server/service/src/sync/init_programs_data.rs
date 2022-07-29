@@ -255,9 +255,17 @@ pub fn init_program_data(
     })?;
     DocumentRegistryRowRepository::new(connection).upsert_one(&DocumentRegistryRow {
         id: placeholder_program_id.clone(),
-        document_type: "PlaceholderProgram1".to_string(),
+        document_type: "TestProgram1".to_string(),
         context: DocumentContext::Program,
         name: Some("Placeholder program 1".to_string()),
+        parent_id: None,
+        form_schema_id: Some(program_schema_id.clone()),
+    })?;
+    DocumentRegistryRowRepository::new(connection).upsert_one(&DocumentRegistryRow {
+        id: uuid(),
+        document_type: "TestProgram2".to_string(),
+        context: DocumentContext::Program,
+        name: Some("Placeholder program 2".to_string()),
         parent_id: None,
         form_schema_id: Some(program_schema_id.clone()),
     })?;

@@ -1,0 +1,66 @@
+fragment Document on DocumentNode {
+  id
+  name
+  parents
+  author
+  timestamp
+  type
+  data
+  documentRegistry {
+    uiSchemaType
+    documentType
+    context
+    formSchemaId
+    jsonSchema
+    uiSchema
+  }
+}
+
+fragment Program on ProgramNode {
+  type
+  programPatientId
+  patientId
+  name
+  enrolmentDatetime
+  document {
+    ...Document
+  }
+}
+
+query programs(
+  $storeId: String!
+  $key: ProgramSortFieldInput
+  $desc: Boolean
+  $filter: ProgramFilterInput
+) {
+  programs(
+    storeId: $storeId
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+  ) {
+    ... on ProgramConnector {
+      nodes {
+        ...Program
+      }
+      totalCount
+    }
+  }
+}
+
+mutation insertProgram($storeId: String!, $input: InsertProgramInput!) {
+  insertProgram(storeId: $storeId, input: $input) {
+    ... on DocumentNode {
+      __typename
+      ...Document
+    }
+  }
+}
+
+mutation updateProgram($storeId: String!, $input: UpdateProgramInput!) {
+  updateProgram(storeId: $storeId, input: $input) {
+    ... on DocumentNode {
+      __typename
+      ...Document
+    }
+  }
+}
