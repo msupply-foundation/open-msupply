@@ -294,6 +294,37 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
 
     return result;
   },
+  addFromMasterList: async ({
+    shipmentId,
+    masterListId,
+  }: {
+    shipmentId: string;
+    masterListId: string;
+  }) => {
+    const result = await sdk.addToInboundShipmentFromMasterList({
+      shipmentId,
+      masterListId,
+      storeId,
+    });
+
+    if (
+      result.addToInboundShipmentFromMasterList.__typename ===
+      'InvoiceLineConnector'
+    ) {
+      return result.addToInboundShipmentFromMasterList;
+    }
+
+    if (
+      result.addToInboundShipmentFromMasterList.__typename ===
+      'AddToInboundShipmentFromMasterListError'
+    ) {
+      throw new Error(
+        result.addToInboundShipmentFromMasterList.error.__typename
+      );
+    }
+
+    throw new Error('Could not add from master list');
+  },
   dashboard: {
     shipmentCount: async (): Promise<{
       today: number;

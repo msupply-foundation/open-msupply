@@ -172,6 +172,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         // Standard Graphql Errors
         ServiceError::NotAnOutboundShipment => BadUserInput(formatted_error),
         ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::InvoiceLineHasNoStockLine(_) => InternalError(formatted_error),
         ServiceError::UpdatedInvoiceDoesNotExist => InternalError(formatted_error),
@@ -205,14 +206,13 @@ impl UpdateOutboundShipmentStatusInput {
 
 #[cfg(test)]
 mod graphql {
-
     use graphql_core::test_helpers::setup_graphl_test;
     use graphql_core::{assert_graphql_query, assert_standard_graphql_error};
     use repository::mock::{
-        mock_name_linked_to_store, mock_name_not_linked_to_store,
-        mock_new_invoice_with_unallocated_line, mock_store_linked_to_name,
+        mock_name_linked_to_store_a, mock_name_store_join_e,
+        mock_new_invoice_with_unallocated_line, mock_store_linked_to_name_a,
     };
-    use repository::mock::{mock_name_store_c, MockDataInserts};
+    use repository::mock::{mock_name_not_linked_to_store_a, MockDataInserts};
     use repository::InvoiceRowRepository;
     use serde_json::json;
 
@@ -229,7 +229,7 @@ mod graphql {
         .await;
 
         let query = r#"mutation DeleteOutboundShipment($input: UpdateOutboundShipmentInput!) {
-            updateOutboundShipment(input: $input, storeId: \"store_a\") {
+            updateOutboundShipment(input: $input, storeId: \"store_c\") {
                 ... on UpdateOutboundShipmentError {
                   error {
                     __typename
@@ -311,11 +311,11 @@ mod graphql {
             None
         );
         // OtherPartyNotACustomer
-        let other_party_supplier = mock_name_store_c();
+        let other_party_supplier = mock_name_store_join_e();
         let variables = Some(json!({
           "input": {
-            "id": "outbound_shipment_a",
-            "otherPartyId": other_party_supplier.id
+            "id": "outbound_shipment_c",
+            "otherPartyId": other_party_supplier.name_id
           }
         }));
         let expected = json!({
@@ -381,14 +381,14 @@ mod graphql {
         let variables = Some(json!({
           "input": {
             "id": "outbound_shipment_c",
-            "otherPartyId": mock_name_linked_to_store().id,
+            "otherPartyId": mock_name_linked_to_store_a().id,
           }
         }));
         let expected = json!({
             "updateOutboundShipment": {
               "id": "outbound_shipment_c",
               "otherPartyStore": {
-                "id": mock_store_linked_to_name().id
+                "id": mock_store_linked_to_name_a().id,
               }
             }
           }
@@ -402,14 +402,14 @@ mod graphql {
 
         assert_eq!(
             new_invoice.name_store_id,
-            Some(mock_store_linked_to_name().id)
+            Some(mock_store_linked_to_name_a().id)
         );
 
         // Test Success name_store_id, not linked to store
         let variables = Some(json!({
           "input": {
             "id": "outbound_shipment_c",
-            "otherPartyId": mock_name_not_linked_to_store().id,
+            "otherPartyId": mock_name_not_linked_to_store_a().id,
           }
         }));
         let expected = json!({

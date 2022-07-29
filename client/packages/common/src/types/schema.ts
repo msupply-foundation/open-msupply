@@ -10,31 +10,9 @@ export type Scalars = {
   Boolean: boolean;
   Int: number;
   Float: number;
-  /**
-   * Implement the DateTime<Utc> scalar
-   *
-   * The input/output is a string in RFC3339 format.
-   */
   DateTime: string;
-  /** A scalar that can represent any JSON value. */
   JSON: any;
-  /**
-   * ISO 8601 calendar date without timezone.
-   * Format: %Y-%m-%d
-   *
-   * # Examples
-   *
-   * * `1994-11-13`
-   * * `2000-02-24`
-   */
   NaiveDate: string;
-  /**
-   * ISO 8601 combined date and time without timezone.
-   *
-   * # Examples
-   *
-   * * `2015-07-01T08:59:60.123`,
-   */
   NaiveDateTime: string;
 };
 
@@ -54,21 +32,32 @@ export type AddFromMasterListInput = {
 
 export type AddFromMasterListResponse = AddFromMasterListError | RequisitionLineConnector;
 
-export type AddToShipmentFromMasterListError = {
-  __typename: 'AddToShipmentFromMasterListError';
-  error: AddToShipmentFromMasterListErrorInterface;
+export type AddToInboundShipmentFromMasterListError = {
+  __typename: 'AddToInboundShipmentFromMasterListError';
+  error: AddToInboundShipmentFromMasterListErrorInterface;
 };
 
-export type AddToShipmentFromMasterListErrorInterface = {
+export type AddToInboundShipmentFromMasterListErrorInterface = {
   description: Scalars['String'];
 };
 
-export type AddToShipmentFromMasterListInput = {
-  masterListId: Scalars['String'];
-  outboundShipmentId: Scalars['String'];
+export type AddToInboundShipmentFromMasterListResponse = AddToInboundShipmentFromMasterListError | InvoiceLineConnector;
+
+export type AddToOutboundShipmentFromMasterListError = {
+  __typename: 'AddToOutboundShipmentFromMasterListError';
+  error: AddToOutboundShipmentFromMasterListErrorInterface;
 };
 
-export type AddToShipmentFromMasterListResponse = AddToShipmentFromMasterListError | InvoiceLineConnector;
+export type AddToOutboundShipmentFromMasterListErrorInterface = {
+  description: Scalars['String'];
+};
+
+export type AddToOutboundShipmentFromMasterListResponse = AddToOutboundShipmentFromMasterListError | InvoiceLineConnector;
+
+export type AddToShipmentFromMasterListInput = {
+  masterListId: Scalars['String'];
+  shipmentId: Scalars['String'];
+};
 
 export type AllocateOutboundShipmentUnallocatedLineError = {
   __typename: 'AllocateOutboundShipmentUnallocatedLineError';
@@ -241,7 +230,7 @@ export type CannotDeleteRequisitionWithLines = DeleteRequestRequisitionErrorInte
   description: Scalars['String'];
 };
 
-export type CannotEditInvoice = AddToShipmentFromMasterListErrorInterface & DeleteErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertInboundShipmentLineErrorInterface & InsertInboundShipmentServiceLineErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & {
+export type CannotEditInvoice = AddToInboundShipmentFromMasterListErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & DeleteErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertInboundShipmentLineErrorInterface & InsertInboundShipmentServiceLineErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & {
   __typename: 'CannotEditInvoice';
   description: Scalars['String'];
 };
@@ -654,8 +643,9 @@ export type FullMutation = {
   __typename: 'FullMutation';
   /** Add requisition lines from master item master list */
   addFromMasterList: AddFromMasterListResponse;
+  addToInboundShipmentFromMasterList: AddToInboundShipmentFromMasterListResponse;
   /** Add invoice lines from master item master list */
-  addToShipmentFromMasterList: AddToShipmentFromMasterListResponse;
+  addToOutboundShipmentFromMasterList: AddToOutboundShipmentFromMasterListResponse;
   allocateOutboundShipmentUnallocatedLine: AllocateOutboundShipmentUnallocatedLineResponse;
   batchInboundShipment: BatchInboundShipmentResponse;
   batchOutboundShipment: BatchOutboundShipmentResponse;
@@ -720,7 +710,13 @@ export type FullMutationAddFromMasterListArgs = {
 };
 
 
-export type FullMutationAddToShipmentFromMasterListArgs = {
+export type FullMutationAddToInboundShipmentFromMasterListArgs = {
+  input: AddToShipmentFromMasterListInput;
+  storeId: Scalars['String'];
+};
+
+
+export type FullMutationAddToOutboundShipmentFromMasterListArgs = {
   input: AddToShipmentFromMasterListInput;
   storeId: Scalars['String'];
 };
@@ -2043,12 +2039,12 @@ export type MasterListNode = {
   name: Scalars['String'];
 };
 
-export type MasterListNotFoundForThisName = AddToShipmentFromMasterListErrorInterface & {
+export type MasterListNotFoundForThisName = AddToOutboundShipmentFromMasterListErrorInterface & {
   __typename: 'MasterListNotFoundForThisName';
   description: Scalars['String'];
 };
 
-export type MasterListNotFoundForThisStore = AddFromMasterListErrorInterface & {
+export type MasterListNotFoundForThisStore = AddFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & {
   __typename: 'MasterListNotFoundForThisStore';
   description: Scalars['String'];
 };
@@ -2278,7 +2274,7 @@ export type RecordBelongsToAnotherStore = DeleteLocationErrorInterface & UpdateL
   description: Scalars['String'];
 };
 
-export type RecordNotFound = AddFromMasterListErrorInterface & AddToShipmentFromMasterListErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & NodeErrorInterface & RequisitionLineChartErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateLocationErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UseSuggestedQuantityErrorInterface & {
+export type RecordNotFound = AddFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & NodeErrorInterface & RequisitionLineChartErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateLocationErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UseSuggestedQuantityErrorInterface & {
   __typename: 'RecordNotFound';
   description: Scalars['String'];
 };

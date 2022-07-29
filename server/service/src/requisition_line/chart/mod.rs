@@ -446,7 +446,7 @@ mod test {
                 r.snapshot_datetime = Some(NaiveDate::from_ymd(2021, 1, 2).and_hms(12, 10, 11));
                 r.average_monthly_consumption = 25 * NUMBER_OF_DAYS_IN_A_MONTH as i32;
                 r.available_stock_on_hand = 30;
-                r.suggested_quantity = 100;
+                r.requested_quantity = 100;
             })
         }
 
