@@ -31,7 +31,7 @@ export const useInboundShipmentColumns = () => {
   const {
     updateSortQuery,
     queryParams: { sortBy },
-  } = useUrlQueryParams();
+  } = useUrlQueryParams({ initialSort: { key: 'itemName', dir: 'asc' } });
   const { c } = useCurrency();
   const getSellPrice = (row: InboundLineFragment) =>
     isDefaultPlaceholderRow(row) ? '' : c(row.sellPricePerPack).format();
