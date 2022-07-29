@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { rankWith, isBooleanControl, ControlProps } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { FormLabel, Box } from '@mui/material';
-import { Switch, useDebounceCallback } from '@openmsupply-client/common';
+import { Switch } from '@openmsupply-client/common';
 import {
   FORM_LABEL_COLUMN_WIDTH,
   FORM_INPUT_COLUMN_WIDTH,
@@ -12,11 +12,7 @@ export const booleanTester = rankWith(4, isBooleanControl);
 
 const UIComponent = (props: ControlProps) => {
   const { data, handleChange, label, path } = props;
-  const [localData, setLocalData] = useState<boolean | undefined>(data);
-  const onChange = useDebounceCallback(
-    (value: boolean) => handleChange(path, value),
-    [path]
-  );
+
   return (
     <Box
       display="flex"
@@ -37,11 +33,10 @@ const UIComponent = (props: ControlProps) => {
         <Switch
           labelPlacement="end"
           onChange={(_, checked) => {
-            setLocalData(checked);
-            onChange(checked);
+            handleChange(path, checked);
           }}
-          value={localData}
-          checked={localData}
+          value={data}
+          checked={data}
         />
       </Box>
     </Box>
