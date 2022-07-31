@@ -45,7 +45,7 @@ export const ConfirmationModal = ({
           </Grid>
         </Grid>
         <Grid item>
-          <Typography>{message}</Typography>
+          <Typography style={{ whiteSpace: 'pre-line' }}>{message}</Typography>
         </Grid>
         <Grid
           container
