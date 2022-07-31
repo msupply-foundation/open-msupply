@@ -114,7 +114,7 @@ mod test_update {
         let context = service_provider.context().unwrap();
         let service = service_provider.invoice_line_service;
 
-        // Line Does not Exist
+        // LineDoesNotExist
         assert_eq!(
             service.update_outbound_shipment_unallocated_line(
                 &context,
