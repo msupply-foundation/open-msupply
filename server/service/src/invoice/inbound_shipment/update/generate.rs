@@ -20,7 +20,7 @@ pub struct LineAndStockLine {
 pub(crate) struct GenerateResult {
     pub(crate) batches_to_update: Option<Vec<LineAndStockLine>>,
     pub(crate) update_invoice: InvoiceRow,
-    pub(crate) unallocated_lines_to_trim: Option<Vec<InvoiceLineRow>>,
+    pub(crate) empty_lines_to_trim: Option<Vec<InvoiceLineRow>>,
 }
 
 pub(crate) fn generate(
@@ -62,11 +62,7 @@ pub(crate) fn generate(
 
     Ok(GenerateResult {
         batches_to_update,
-        unallocated_lines_to_trim: unallocated_lines_to_trim(
-            connection,
-            &existing_invoice,
-            &patch.status,
-        )?,
+        empty_lines_to_trim: empty_lines_to_trim(connection, &existing_invoice, &patch.status)?,
         update_invoice,
     })
 }
@@ -83,8 +79,8 @@ pub fn should_create_batches(invoice: &InvoiceRow, patch: &UpdateInboundShipment
     }
 }
 
-// If status changed to Delivered and above, remove unallocated lines
-fn unallocated_lines_to_trim(
+// If status changed to Delivered and above, remove empty lines
+fn empty_lines_to_trim(
     connection: &StorageConnection,
     invoice: &InvoiceRow,
     status: &Option<UpdateInboundShipmentStatus>,
@@ -104,7 +100,7 @@ fn unallocated_lines_to_trim(
     }
 
     // If new invoice status is not new and previous invoice status is new
-    // add all unallocated lines to be deleted
+    // add all empty lines to be deleted
 
     let lines = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
