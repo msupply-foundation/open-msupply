@@ -382,7 +382,7 @@ mod test {
             Err(ServiceError::NotThisStoreInvoice)
         );
 
-        // TODO CanOnlyChangeToAllocatedWhenNoUnallocatedLines, DatabaseError
+        // TODO CanOnlyChangeToAllocatedWhenNoUnallocatedLines
     }
 
     #[actix_rt::test]

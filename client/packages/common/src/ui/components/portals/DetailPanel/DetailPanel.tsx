@@ -42,7 +42,7 @@ const StyledDrawer = styled(Box, {
 })<{ isOpen: boolean }>(({ isOpen, theme }) => ({
   backgroundColor: theme.palette.background.menu,
   borderRadius: 8,
-  height: '100vh',
+  height: '100%',
   overflow: 'hidden',
   zIndex: theme.zIndex.drawer,
   boxShadow: theme.shadows[7],

@@ -6,17 +6,17 @@ import {
   useNotification,
 } from '@openmsupply-client/common';
 import { MasterListRowFragment } from '@openmsupply-client/system';
-import { useOutboundFields } from '../document/useOutboundFields';
-import { useOutboundApi } from './useOutboundApi';
+import { useInboundFields } from '../document/useInboundFields';
+import { useInboundApi } from './useInboundApi';
 
 export const useAddFromMasterList = () => {
   const { error } = useNotification();
   const queryClient = useQueryClient();
-  const { id: shipmentId, invoiceNumber } = useOutboundFields([
+  const { id: shipmentId, invoiceNumber } = useInboundFields([
     'id',
     'invoiceNumber',
   ]);
-  const api = useOutboundApi();
+  const api = useInboundApi();
   const mutationState = useMutation(api.addFromMasterList, {
     onSettled: () =>
       queryClient.invalidateQueries(api.keys.detail(String(invoiceNumber))),

@@ -202,7 +202,7 @@ mod test {
             Err(ServiceError::OtherPartyNotACustomer)
         );
 
-        // TODO NewlyCreatedInvoiceDoesNotExist, DatabaseError
+        // TODO NewlyCreatedInvoiceDoesNotExist
     }
 
     #[actix_rt::test]

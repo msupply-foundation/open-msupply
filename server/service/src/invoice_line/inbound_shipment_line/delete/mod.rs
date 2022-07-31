@@ -193,7 +193,7 @@ mod test {
             Err(ServiceError::NotThisStoreInvoice)
         );
 
-        //TODO DatabaseError, InvoiceDoesNotExist, NotThisInvoiceLine
+        //TODO InvoiceDoesNotExist, NotThisInvoiceLine
     }
 
     #[actix_rt::test]
