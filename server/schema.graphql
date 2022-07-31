@@ -788,7 +788,7 @@ input InsertInboundShipmentLineInput {
   expiryDate: NaiveDate
   numberOfPacks: Int!
   totalBeforeTax: Float!
-  tax: TaxInput
+  tax: Float
 }
 union InsertInboundShipmentLineResponse = InsertInboundShipmentLineError | InvoiceLineNode
 type InsertInboundShipmentLineResponseWithId {
@@ -812,7 +812,7 @@ input InsertInboundShipmentServiceLineInput {
   itemId: String
   name: String
   totalBeforeTax: Float!
-  tax: TaxInput
+  tax: Float
   note: String
 }
 union InsertInboundShipmentServiceLineResponse =
@@ -865,7 +865,7 @@ input InsertOutboundShipmentLineInput {
   stockLineId: String!
   numberOfPacks: Int!
   totalBeforeTax: Float!
-  tax: TaxInput
+  tax: Float
 }
 union InsertOutboundShipmentLineResponse = InsertOutboundShipmentLineError | InvoiceLineNode
 type InsertOutboundShipmentLineResponseWithId {
@@ -889,7 +889,7 @@ input InsertOutboundShipmentServiceLineInput {
   itemId: String
   name: String
   totalBeforeTax: Float!
-  tax: TaxInput
+  tax: Float
   note: String
 }
 union InsertOutboundShipmentServiceLineResponse =
