@@ -5,3 +5,4 @@ export * from './Select';
 export * from './Date';
 export * from './DateOfBirth';
 export * from './Array';
+export * from './Boolean';
