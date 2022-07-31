@@ -1,7 +1,9 @@
 import { IntlUtils } from '@common/intl';
 import {
+  addYears,
   isValid,
   differenceInMonths,
+  differenceInYears,
   isPast,
   isThisWeek,
   isToday,
@@ -12,6 +14,8 @@ import {
   format,
   parseISO,
   fromUnixTime,
+  startOfToday,
+  startOfDay,
 } from 'date-fns';
 import { enGB, enUS, fr, ar } from 'date-fns/locale';
 
@@ -29,6 +33,7 @@ const dateInputHandler = (date: Date | string | number): Date => {
 };
 
 export const DateUtils = {
+  addYears,
   getDateOrNull: (date: string | null): Date | null => {
     if (!date) return null;
     const maybeDate = new Date(date);
@@ -45,6 +50,8 @@ export const DateUtils = {
   isAfter,
   isBefore,
   isEqual,
+  isValid,
+  age: (date: Date) => differenceInYears(startOfToday(), startOfDay(date)),
 };
 
 export const useFormatDateTime = () => {
@@ -66,7 +73,6 @@ export const useFormatDateTime = () => {
     date: Date | string | number,
     formatString: string
   ): string => format(dateInputHandler(date), formatString, { locale });
-  // Add more date/time formatters as required
 
   return { localisedDate, dayMonthShort, customDate };
 };
