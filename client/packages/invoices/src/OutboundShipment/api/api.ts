@@ -91,7 +91,7 @@ const outboundParsers = {
       numberOfPacks: line.numberOfPacks,
       stockLineId: line.stockLine?.id ?? '',
       invoiceId: line.invoiceId,
-      tax: { percentage: 0 },
+      tax: 0.0,
       totalBeforeTax: get.stockLineSubtotal(line),
     };
   },
@@ -128,7 +128,7 @@ const outboundParsers = {
     id: line.id,
     invoiceId: line.invoiceId,
     itemId: line.item.id,
-    tax: { percentage: line.taxPercentage },
+    tax: 0.0,
     totalBeforeTax: line.totalBeforeTax,
     note: line.note,
   }),
