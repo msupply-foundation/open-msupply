@@ -1,6 +1,7 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
+use graphql_general::GenderInput;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     document::patient::PatientSearch,
@@ -11,9 +12,11 @@ use super::PatientNode;
 
 #[derive(InputObject, Clone)]
 pub struct PatientSearchInput {
+    code: Option<String>,
     first_name: Option<String>,
     last_name: Option<String>,
     date_of_birth: Option<NaiveDate>,
+    gender: Option<GenderInput>,
 }
 
 pub struct PatientSearchNode {
@@ -87,9 +90,11 @@ pub fn patient_search(
 impl PatientSearchInput {
     fn to_domain(self) -> PatientSearch {
         PatientSearch {
+            code: self.code,
             first_name: self.first_name,
             last_name: self.last_name,
             date_of_birth: self.date_of_birth,
+            gender: self.gender.map(|g| g.to_domain()),
         }
     }
 }
