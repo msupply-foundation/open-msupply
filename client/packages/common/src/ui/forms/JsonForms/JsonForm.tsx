@@ -13,6 +13,8 @@ import {
 } from '@jsonforms/core';
 import { materialRenderers } from '@jsonforms/material-renderers';
 import {
+  BooleanField,
+  booleanTester,
   stringTester,
   TextField,
   selectTester,
@@ -93,6 +95,7 @@ const FormComponent = ({
 const renderers = [
   // We should be able to remove materialRenderers once we are sure we have custom components to cover all cases.
   ...materialRenderers,
+  { tester: booleanTester, renderer: BooleanField },
   { tester: stringTester, renderer: TextField },
   { tester: selectTester, renderer: Selector },
   { tester: groupTester, renderer: Group },
