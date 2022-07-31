@@ -116,6 +116,7 @@
   "label.enrolment-datetime": "Enrolment Date",
   "label.forecast-quantity": "Suggested Quantity",
   "label.hold": "Hold",
+  "label.id": "Id",
   "label.in-store": "In store",
   "label.invoice-number": "Number",
   "label.issue": "Issue",
