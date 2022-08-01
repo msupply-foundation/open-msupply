@@ -2617,6 +2617,7 @@ export type PatientNode = {
   firstName?: Maybe<Scalars['String']>;
   gender?: Maybe<GenderType>;
   id: Scalars['String'];
+  isDeceased: Scalars['Boolean'];
   lastName?: Maybe<Scalars['String']>;
   name: Scalars['String'];
   phone?: Maybe<Scalars['String']>;
