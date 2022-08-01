@@ -16,6 +16,9 @@ export const dateTester = rankWith(5, isDateControl);
 const UIComponent = (props: ControlProps) => {
   const { data, handleChange, label, path } = props;
   const dateFormatter = useFormatDateTime().customDate;
+  if (!props.visible) {
+    return null;
+  }
   return (
     <Box
       display="flex"
@@ -34,7 +37,8 @@ const UIComponent = (props: ControlProps) => {
       </Box>
       <Box flex={1} flexBasis={FORM_INPUT_COLUMN_WIDTH}>
         <BaseDatePickerInput
-          value={data}
+          // undefined is displayed as "now" and null as unset
+          value={data ?? null}
           onChange={e => {
             if (e) handleChange(path, dateFormatter(e, 'yyyy-MM-dd'));
           }}
