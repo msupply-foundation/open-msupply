@@ -1,5 +1,5 @@
 use crate::{
-    number::next_number,
+    number::invoice_next_number,
     sync_processor::{ProcessRecordError, RecordForProcessing},
 };
 use chrono::Utc;
@@ -7,7 +7,7 @@ use repository::EqualFilter;
 use repository::{
     InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow, InvoiceLineRowRepository,
     InvoiceLineRowType, InvoiceRow, InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType,
-    NumberRowType, RepositoryError, RequisitionFilter, RequisitionRepository, StorageConnection,
+    RepositoryError, RequisitionFilter, RequisitionRepository, StorageConnection,
 };
 use util::uuid::uuid;
 
@@ -88,7 +88,11 @@ pub fn generate_linked_invoice(
     let default_reference = format!("From invoice number: {}", source_invoice.invoice_number);
     let result = InvoiceRow {
         id: uuid(),
-        invoice_number: next_number(connection, &NumberRowType::InboundShipment, &store_id)?,
+        invoice_number: invoice_next_number(
+            connection,
+            &InvoiceRowType::InboundShipment,
+            &store_id,
+        )?,
         r#type: InvoiceRowType::InboundShipment,
         name_id,
         store_id,

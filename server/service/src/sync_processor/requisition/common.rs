@@ -1,5 +1,5 @@
 use crate::{
-    number::next_number,
+    number::requisition_next_number,
     requisition::common::get_lines_for_requisition,
     sync_processor::{ProcessRecordError, RecordForProcessing},
 };
@@ -7,8 +7,7 @@ use chrono::Utc;
 
 use repository::{
     requisition_row::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
-    NumberRowType, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRowRepository,
-    StorageConnection,
+    RequisitionLineRow, RequisitionLineRowRepository, RequisitionRowRepository, StorageConnection,
 };
 use util::uuid::uuid;
 
@@ -78,9 +77,9 @@ pub fn generate_linked_requisition(
 
     let result = RequisitionRow {
         id: uuid(),
-        requisition_number: next_number(
+        requisition_number: requisition_next_number(
             connection,
-            &NumberRowType::ResponseRequisition,
+            &RequisitionRowType::Response,
             &store_id,
         )?,
         name_id,
