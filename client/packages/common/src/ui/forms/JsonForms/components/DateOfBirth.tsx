@@ -54,6 +54,9 @@ const UIComponent = (props: ControlProps) => {
     setAge(DateUtils.age(dob));
   }, [data]);
 
+  if (!props.visible) {
+    return null;
+  }
   return (
     <Box
       display="flex"
@@ -78,7 +81,8 @@ const UIComponent = (props: ControlProps) => {
         gap={2}
       >
         <BaseDatePickerInput
-          value={dob}
+          // undefined is displayed as "now" and null as unset
+          value={dob ?? null}
           onChange={onChangeDoB}
           inputFormat="dd/MM/yyyy"
           InputProps={{ style: { width: 135 } }}
