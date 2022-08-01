@@ -222,6 +222,8 @@ pub mod test {
                 occupation: None,
             },
             allergies: None,
+            is_deceased: false,
+            date_of_dead: None,
         }
     }
 

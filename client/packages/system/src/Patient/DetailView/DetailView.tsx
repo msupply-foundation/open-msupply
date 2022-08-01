@@ -54,6 +54,7 @@ export const PatientDetailView: FC = () => {
           addresses: [],
           contactDetails: [],
           socioEconomics: {},
+          isDeceased: false,
         },
       };
     } else return undefined;
