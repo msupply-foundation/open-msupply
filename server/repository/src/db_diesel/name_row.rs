@@ -35,6 +35,7 @@ table! {
         is_donor -> Bool,
         on_hold -> Bool,
         created_datetime -> Nullable<Timestamp>,
+        is_deceased -> Bool,
     }
 }
 
@@ -123,6 +124,8 @@ pub struct NameRow {
     pub on_hold: bool,
 
     pub created_datetime: Option<NaiveDateTime>,
+
+    pub is_deceased: bool,
 }
 
 pub struct NameRowRepository<'a> {
