@@ -116,12 +116,12 @@
     },
     "Gender": {
       "enum": [
-        "Female",
-        "Male",
-        "TransgenderMale",
-        "TransgenderFemale",
-        "Unknown",
-        "NonBinary"
+        "FEMALE",
+        "MALE",
+        "TRANSGENDER_MALE",
+        "TRANSGENDER_FEMALE",
+        "UNKNOWN",
+        "NON_BINARY"
       ],
       "type": "string"
     },
@@ -140,12 +140,12 @@
     },
     "MaritalStatus": {
       "enum": [
-        "Single",
-        "Married",
-        "Divorced",
-        "Widowed",
-        "Separated",
-        "RegisteredPartnership"
+        "SINGLE",
+        "MARRIED",
+        "DIVORCED",
+        "WIDOWED",
+        "SEPARATED",
+        "REGISTERED_PARTNERSHIP"
       ],
       "type": "string"
     },

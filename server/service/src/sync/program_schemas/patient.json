@@ -116,17 +116,17 @@
     },
     "Gender": {
       "enum": [
-        "Female",
-        "Male",
-        "TransgenderMale",
-        "TransgenderFemale",
-        "Unknown",
-        "NonBinary"
+        "FEMALE",
+        "MALE",
+        "TRANSGENDER_MALE",
+        "TRANSGENDER_FEMALE",
+        "UNKNOWN",
+        "NON_BINARY"
       ],
       "type": "string"
     },
     "Handiness": {
-      "enum": ["Left", "Right"],
+      "enum": ["LEFT", "RIGHT"],
       "type": "string"
     },
     "HealthCenter": {
@@ -144,12 +144,12 @@
     },
     "MaritalStatus": {
       "enum": [
-        "Single",
-        "Married",
-        "Divorced",
-        "Widowed",
-        "Separated",
-        "RegisteredPartnership"
+        "SINGLE",
+        "MARRIED",
+        "DIVORCED",
+        "WIDOWED",
+        "SEPARATED",
+        "REGISTERED_PARTNERSHIP"
       ],
       "type": "string"
     },
