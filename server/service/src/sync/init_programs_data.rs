@@ -53,7 +53,7 @@ fn person_1() -> Person {
             occupation: None,
         },
         is_deceased: false,
-        date_of_dead: None,
+        date_of_death: None,
     }
 }
 
@@ -75,7 +75,7 @@ fn person_2() -> Person {
             occupation: None,
         },
         is_deceased: false,
-        date_of_dead: None,
+        date_of_death: None,
     }
 }
 
@@ -97,7 +97,7 @@ fn person_3() -> Person {
             occupation: None,
         },
         is_deceased: false,
-        date_of_dead: None,
+        date_of_death: None,
     }
 }
 
@@ -151,7 +151,7 @@ fn patient_1() -> Patient {
         birth_order: None,
         hand: None,
         is_deceased: false,
-        date_of_dead: None,
+        date_of_death: None,
     }
 }
 
@@ -205,7 +205,7 @@ fn patient_2() -> Patient {
         birth_order: None,
         hand: None,
         is_deceased: false,
-        date_of_dead: None,
+        date_of_death: None,
     }
 }
 
