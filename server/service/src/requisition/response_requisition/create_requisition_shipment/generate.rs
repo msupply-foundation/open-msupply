@@ -1,12 +1,12 @@
 use super::OutError;
 use crate::{
-    number::next_number, requisition::requisition_supply_status::RequisitionLineSupplyStatus,
-    validate::get_other_party,
+    number::invoice_next_number,
+    requisition::requisition_supply_status::RequisitionLineSupplyStatus, validate::get_other_party,
 };
 use chrono::Utc;
 use repository::{
     InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
-    ItemRowRepository, NumberRowType, RequisitionRow, StorageConnection,
+    ItemRowRepository, RequisitionRow, StorageConnection,
 };
 use util::uuid::uuid;
 
@@ -26,7 +26,11 @@ pub fn generate(
         name_id: requisition_row.name_id,
         name_store_id: other_party.store_id().map(|id| id.to_string()),
         store_id: store_id.to_owned(),
-        invoice_number: next_number(connection, &NumberRowType::OutboundShipment, &store_id)?,
+        invoice_number: invoice_next_number(
+            connection,
+            &InvoiceRowType::OutboundShipment,
+            &store_id,
+        )?,
         r#type: InvoiceRowType::OutboundShipment,
         status: InvoiceRowStatus::New,
         created_datetime: Utc::now().naive_utc(),

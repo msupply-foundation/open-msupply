@@ -1,6 +1,6 @@
 use crate::{
     log::log_entry,
-    number::next_number,
+    number::requisition_next_number,
     requisition::{common::check_requisition_exists, query::get_requisition},
     service_provider::ServiceContext,
     validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
@@ -8,8 +8,7 @@ use crate::{
 use chrono::{NaiveDate, Utc};
 use repository::{
     requisition_row::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
-    LogRow, LogType, NumberRowType, RepositoryError, Requisition, RequisitionRowRepository,
-    StorageConnection,
+    LogRow, LogType, RepositoryError, Requisition, RequisitionRowRepository, StorageConnection,
 };
 use util::uuid::uuid;
 
@@ -126,7 +125,11 @@ fn generate(
     let result = RequisitionRow {
         id,
         user_id: Some(user_id.to_string()),
-        requisition_number: next_number(connection, &NumberRowType::RequestRequisition, &store_id)?,
+        requisition_number: requisition_next_number(
+            connection,
+            &RequisitionRowType::Request,
+            &store_id,
+        )?,
         name_id: other_party_id,
         store_id: store_id.to_owned(),
         r#type: RequisitionRowType::Request,
