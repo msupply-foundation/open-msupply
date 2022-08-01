@@ -156,6 +156,7 @@ pub fn translate_name(data: LegacyNameRow) -> NameRow {
             None
         },
         created_datetime: data.created_date.map(|date| date.and_hms(0, 0, 0)),
+        is_deceased: false,
         /*
         gender: data.om_gender.or(if data.female {
             Some(Gender::Female)
