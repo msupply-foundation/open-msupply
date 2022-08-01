@@ -16,6 +16,9 @@ export const dateTester = rankWith(5, isDateControl);
 const UIComponent = (props: ControlProps) => {
   const { data, handleChange, label, path } = props;
   const dateFormatter = useFormatDateTime().customDate;
+  if (!props.visible) {
+    return null;
+  }
   return (
     <Box
       display="flex"

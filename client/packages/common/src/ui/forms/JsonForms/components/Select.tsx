@@ -20,6 +20,9 @@ const UIComponent = (props: ControlProps) => {
       }))
     : [];
 
+  if (!props.visible) {
+    return null;
+  }
   return (
     <Box
       display="flex"
