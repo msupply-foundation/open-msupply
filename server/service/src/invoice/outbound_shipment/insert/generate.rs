@@ -2,10 +2,10 @@ use chrono::Utc;
 
 use repository::Name;
 use repository::{
-    InvoiceRow, InvoiceRowStatus, InvoiceRowType, NumberRowType, RepositoryError, StorageConnection,
+    InvoiceRow, InvoiceRowStatus, InvoiceRowType, RepositoryError, StorageConnection,
 };
 
-use crate::number::next_number;
+use crate::number::invoice_next_number;
 
 use super::InsertOutboundShipment;
 
@@ -25,7 +25,11 @@ pub fn generate(
         r#type: InvoiceRowType::OutboundShipment,
         comment: input.comment,
         their_reference: input.their_reference,
-        invoice_number: next_number(connection, &NumberRowType::OutboundShipment, store_id)?,
+        invoice_number: invoice_next_number(
+            connection,
+            &InvoiceRowType::OutboundShipment,
+            store_id,
+        )?,
         name_store_id: other_party.store_id().map(|id| id.to_string()),
         store_id: store_id.to_string(),
         created_datetime: current_datetime,
