@@ -2,27 +2,25 @@ use log::{info, warn};
 use repository::{
     InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, LocationRow,
     LocationRowRepository, NameRow, NameRowRepository, NameStoreJoinRepository, NameStoreJoinRow,
-    NumberRow, NumberRowRepository, RemoteSyncBufferRow, RepositoryError, RequisitionLineRow,
-    RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, StockLineRow,
-    StockLineRowRepository, StocktakeLineRow, StocktakeLineRowRepository, StocktakeRow,
-    StocktakeRowRepository, StorageConnection, TransactionError,
+    RemoteSyncBufferRow, RepositoryError, RequisitionLineRow, RequisitionLineRowRepository,
+    RequisitionRow, RequisitionRowRepository, StockLineRow, StockLineRowRepository,
+    StocktakeLineRow, StocktakeLineRowRepository, StocktakeRow, StocktakeRowRepository,
+    StorageConnection, TransactionError,
 };
 
 use crate::sync::{
     translation_remote::{
         invoice::InvoiceTranslation, invoice_line::InvoiceLineTranslation,
         location::LocationTranslation, name::NameTranslation,
-        name_store_join::NameStoreJoinTranslation, number::NumberTranslation,
-        requisition::RequisitionTranslation, requisition_line::RequisitionLineTranslation,
-        stock_line::StockLineTranslation, stocktake::StocktakeTranslation,
-        stocktake_line::StocktakeLineTranslation,
+        name_store_join::NameStoreJoinTranslation, requisition::RequisitionTranslation,
+        requisition_line::RequisitionLineTranslation, stock_line::StockLineTranslation,
+        stocktake::StocktakeTranslation, stocktake_line::StocktakeLineTranslation,
     },
     SyncImportError, SyncTranslationError,
 };
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum IntegrationUpsertRecord {
-    Number(NumberRow),
     Location(LocationRow),
     StockLine(StockLineRow),
     Name(NameRow),
@@ -87,7 +85,6 @@ fn do_translation(
     records: &mut IntegrationRecord,
 ) -> Result<(), SyncTranslationError> {
     let translations: Vec<Box<dyn RemotePullTranslation>> = vec![
-        Box::new(NumberTranslation {}),
         Box::new(LocationTranslation {}),
         Box::new(StockLineTranslation {}),
         Box::new(NameTranslation {}),
@@ -126,7 +123,6 @@ fn integrate_record(
     con: &StorageConnection,
 ) -> Result<(), RepositoryError> {
     match &record {
-        IntegrationUpsertRecord::Number(record) => NumberRowRepository::new(con).upsert_one(record),
         IntegrationUpsertRecord::Location(record) => {
             LocationRowRepository::new(con).upsert_one(record)
         }

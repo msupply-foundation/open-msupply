@@ -4,10 +4,10 @@ use repository::{ChangelogAction, ChangelogRow, StorageConnection};
 use crate::sync::{
     translation_remote::{
         invoice::InvoiceTranslation, invoice_line::InvoiceLineTranslation,
-        location::LocationTranslation, name::NameTranslation, number::NumberTranslation,
-        requisition::RequisitionTranslation, requisition_line::RequisitionLineTranslation,
-        stock_line::StockLineTranslation, stocktake::StocktakeTranslation,
-        stocktake_line::StocktakeLineTranslation, table_name_to_central,
+        location::LocationTranslation, name::NameTranslation, requisition::RequisitionTranslation,
+        requisition_line::RequisitionLineTranslation, stock_line::StockLineTranslation,
+        stocktake::StocktakeTranslation, stocktake_line::StocktakeLineTranslation,
+        table_name_to_central,
     },
     SyncTranslationError,
 };
@@ -51,7 +51,6 @@ pub fn translate_changelog(
     match changelog.row_action {
         ChangelogAction::Upsert => {
             let translations: Vec<Box<dyn RemotePushUpsertTranslation>> = vec![
-                Box::new(NumberTranslation {}),
                 Box::new(LocationTranslation {}),
                 Box::new(StockLineTranslation {}),
                 Box::new(NameTranslation {}),

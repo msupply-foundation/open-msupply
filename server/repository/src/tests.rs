@@ -282,9 +282,8 @@ mod repository_test {
     use crate::{
         mock::{
             mock_draft_request_requisition_line, mock_draft_request_requisition_line2,
-            mock_inbound_shipment_number_store_a, mock_master_list_master_list_line_filter_test,
-            mock_name_a, mock_name_b, mock_name_store_a, mock_name_store_b,
-            mock_outbound_shipment_number_store_a, mock_request_draft_requisition,
+            mock_master_list_master_list_line_filter_test, mock_name_a, mock_name_b,
+            mock_name_store_a, mock_name_store_b, mock_request_draft_requisition,
             mock_request_draft_requisition2, mock_test_master_list_name1,
             mock_test_master_list_name2, mock_test_master_list_name_filter1,
             mock_test_master_list_name_filter2, mock_test_master_list_name_filter3,
@@ -296,8 +295,8 @@ mod repository_test {
         InvoiceLineRowRepository, InvoiceRowRepository, ItemRowRepository, KeyValueStoreRepository,
         KeyValueType, LogRowRepository, MasterListFilter, MasterListLineFilter,
         MasterListLineRepository, MasterListLineRowRepository, MasterListNameJoinRepository,
-        MasterListRepository, MasterListRowRepository, NameRowRepository, NumberRowRepository,
-        NumberRowType, OutboundShipmentRowRepository, RequisitionFilter, RequisitionLineFilter,
+        MasterListRepository, MasterListRowRepository, NameRowRepository,
+        OutboundShipmentRowRepository, RequisitionFilter, RequisitionLineFilter,
         RequisitionLineRepository, RequisitionLineRowRepository, RequisitionRepository,
         RequisitionRowRepository, StockLineFilter, StockLineRepository, StockLineRowRepository,
         StoreRowRepository, UserAccountRowRepository,
@@ -743,32 +742,6 @@ mod repository_test {
             .await
             .unwrap();
         assert!(result.is_empty());
-    }
-
-    #[actix_rt::test]
-    async fn test_number() {
-        let (_, connection, _, _) = test_db::setup_all("test_number", MockDataInserts::all()).await;
-
-        let repo = NumberRowRepository::new(&connection);
-
-        let inbound_shipment_store_a_number = mock_inbound_shipment_number_store_a();
-        let outbound_shipment_store_b_number = mock_outbound_shipment_number_store_a();
-
-        let result = repo
-            .find_one_by_type_and_store(&NumberRowType::InboundShipment, "store_a")
-            .unwrap();
-        assert_eq!(result, Some(inbound_shipment_store_a_number));
-
-        let result = repo
-            .find_one_by_type_and_store(&NumberRowType::OutboundShipment, "store_a")
-            .unwrap();
-        assert_eq!(result, Some(outbound_shipment_store_b_number));
-
-        // Test not existing
-        let result = repo
-            .find_one_by_type_and_store(&NumberRowType::OutboundShipment, "store_b")
-            .unwrap();
-        assert_eq!(result, None);
     }
 
     #[actix_rt::test]

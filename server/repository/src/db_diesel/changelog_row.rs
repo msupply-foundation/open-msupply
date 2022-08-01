@@ -35,7 +35,6 @@ pub enum ChangelogAction {
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "snake_case"]
 pub enum ChangelogTableName {
-    Number,
     Location,
     StockLine,
     Name,

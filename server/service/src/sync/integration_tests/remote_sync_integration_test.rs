@@ -1,4 +1,3 @@
-use rand::{thread_rng, Rng};
 use repository::StorageConnection;
 
 pub trait SyncRecordTester<T> {
@@ -8,13 +7,6 @@ pub trait SyncRecordTester<T> {
     fn mutate(&self, connection: &StorageConnection, rows: &T) -> T;
     /// validates that the expected row(s) are in the local DB
     fn validate(&self, connection: &StorageConnection, rows: &T);
-}
-
-pub fn gen_i64() -> i64 {
-    let mut rng = thread_rng();
-    let number: f64 = rng.gen();
-    let number = (999999.0 * number) as i64;
-    number
 }
 
 #[cfg(test)]
@@ -32,9 +24,8 @@ mod remote_sync_integration_tests {
     use crate::sync::{
         integration_tests::{
             invoice::InvoiceRecordTester, location::LocationSyncRecordTester,
-            name::NameSyncRecordTester, number::NumberSyncRecordTester,
-            requisition::RequisitionRecordTester, stock_line::StockLineRecordTester,
-            stocktake::StocktakeRecordTester,
+            name::NameSyncRecordTester, requisition::RequisitionRecordTester,
+            stock_line::StockLineRecordTester, stocktake::StocktakeRecordTester,
         },
         Synchroniser,
     };
@@ -141,10 +132,6 @@ mod remote_sync_integration_tests {
             central_server_site_id: 1,
             site_id: 7,
         };
-
-        println!("number...");
-        let number_tester = NumberSyncRecordTester {};
-        test_sync_record(&sync_settings, &number_tester).await;
 
         println!("name...");
         let name_tester = NameSyncRecordTester {};

@@ -5,7 +5,6 @@ mod invoice_line;
 mod location;
 mod name;
 mod name_store_join;
-mod number;
 mod requisition;
 mod requisition_line;
 mod stock_line;
@@ -18,7 +17,6 @@ pub mod push;
 #[cfg(test)]
 pub mod test_data;
 
-pub const TRANSLATION_RECORD_NUMBER: &'static str = "number";
 pub const TRANSLATION_RECORD_LOCATION: &'static str = "Location";
 /// stock line
 pub const TRANSLATION_RECORD_ITEM_LINE: &'static str = "item_line";
@@ -34,7 +32,6 @@ pub const TRANSLATION_RECORD_REQUISITION_LINE: &'static str = "requisition_line"
 /// Returns a list of records that can be translated. The list is topologically sorted, i.e. items
 /// at the beginning of the list don't rely on later items to be translated first.
 pub const REMOTE_TRANSLATION_RECORDS: &[&str] = &[
-    TRANSLATION_RECORD_NUMBER,
     TRANSLATION_RECORD_LOCATION,
     TRANSLATION_RECORD_ITEM_LINE,
     TRANSLATION_RECORD_NAME,
@@ -49,7 +46,6 @@ pub const REMOTE_TRANSLATION_RECORDS: &[&str] = &[
 
 pub fn table_name_to_central(table: &ChangelogTableName) -> &'static str {
     match table {
-        ChangelogTableName::Number => TRANSLATION_RECORD_NUMBER,
         ChangelogTableName::Location => TRANSLATION_RECORD_LOCATION,
         ChangelogTableName::StockLine => TRANSLATION_RECORD_ITEM_LINE,
         ChangelogTableName::Name => TRANSLATION_RECORD_NAME,

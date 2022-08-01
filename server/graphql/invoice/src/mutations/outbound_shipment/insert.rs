@@ -128,8 +128,8 @@ mod graphql {
     use graphql_core::test_helpers::setup_graphl_test;
     use graphql_core::{assert_graphql_query, assert_standard_graphql_error};
     use repository::mock::{
-        mock_name_linked_to_store, mock_name_not_linked_to_store, mock_name_store_b,
-        mock_outbound_shipment_number_store_a, mock_store_linked_to_name,
+        mock_invoice3_linked_to_requisition, mock_name_linked_to_store,
+        mock_name_not_linked_to_store, mock_name_store_b, mock_store_linked_to_name,
     };
     use repository::mock::{mock_name_store_c, MockDataInserts};
     use repository::InvoiceRowRepository;
@@ -151,7 +151,7 @@ mod graphql {
         let other_party_supplier = &mock_name_store_c();
         let other_party_customer = &mock_name_store_b();
 
-        let starting_invoice_number = mock_outbound_shipment_number_store_a().value;
+        let starting_invoice_number = mock_invoice3_linked_to_requisition().invoice.invoice_number;
 
         let query = r#"mutation InsertOutboundShipment($input: InsertOutboundShipmentInput!) {
             insertOutboundShipment(input: $input, storeId: \"store_a\") {
