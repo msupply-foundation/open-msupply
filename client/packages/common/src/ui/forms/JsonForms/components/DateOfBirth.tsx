@@ -54,6 +54,9 @@ const UIComponent = (props: ControlProps) => {
     setAge(DateUtils.age(dob));
   }, [data]);
 
+  if (!props.visible) {
+    return null;
+  }
   return (
     <Box
       display="flex"

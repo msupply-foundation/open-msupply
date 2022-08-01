@@ -19,6 +19,9 @@ const UIComponent = (props: LayoutProps) => {
     uischema: uischema,
     renderers: renderers,
   };
+  if (!props.visible) {
+    return null;
+  }
   return (
     <Box
       sx={{
