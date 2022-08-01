@@ -230,7 +230,6 @@ mod test {
             "numberOfPacks": 0,
             "stockLineId": "n/a",
             "totalBeforeTax": 0,
-            "totalAfterTax": 0,
           }
         })
     }
@@ -570,8 +569,7 @@ mod test {
                     item_id: "item input".to_string(),
                     stock_line_id: "stock line input".to_string(),
                     number_of_packs: 1,
-                    total_before_tax: 1.1,
-                    total_after_tax: 2.2,
+                    total_before_tax: Some(1.1),
                     tax: Some(5.0)
                 }
             );
@@ -591,10 +589,7 @@ mod test {
                 "stockLineId": "stock line input",
                 "numberOfPacks": 1,
                 "totalBeforeTax": 1.1,
-                "totalAfterTax": 2.2,
-                "tax": {
-                    "percentage": 5.0
-                }
+                "tax": 5.0
             },
             "storeId": "store_a"
         });

@@ -270,7 +270,7 @@ mod test {
                 u.item_id = mock_item_service_item().id;
                 u.item_name = "modified name".to_string();
                 u.total_before_tax = 0.3;
-                u.tax = Some(0.1);
+                u.tax = Some(10.0);
                 u.note = Some("note".to_string());
                 u
             })

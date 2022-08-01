@@ -346,7 +346,7 @@ mod test {
                     name: Some("some name".to_string()),
                     total_before_tax: 0.1,
                     // TODO why is this different from update ?
-                    tax: Some(10.0),
+                    tax: Some(5.0),
                     note: Some("note".to_string())
                 }
             );
@@ -362,9 +362,7 @@ mod test {
             "itemId": "item_id",
             "name": "some name",
             "totalBeforeTax": 0.1,
-            "tax": {
-                "percentage": 10.0
-            },
+            "tax": 5.0,
             "note": "note"
           },
           "storeId": "store_a"

@@ -241,7 +241,6 @@ mod test {
             "stockLineId": "n/a",
             "numberOfPacks": 0,
             "totalBeforeTax": 0,
-            "totalAfterTax": 0,
             "tax": {
               "percentage": 0
             }
@@ -589,7 +588,6 @@ mod test {
                     stock_line_id: Some("stock_line_id input".to_string()),
                     number_of_packs: Some(1),
                     total_before_tax: Some(1.0),
-                    total_after_tax: Some(1.0),
                     tax: Some(ShipmentTaxUpdate {
                         percentage: Some(1.0),
                     })
@@ -610,7 +608,6 @@ mod test {
             "stockLineId": "stock_line_id input",
             "numberOfPacks": 1,
             "totalBeforeTax": 1.0,
-            "totalAfterTax": 1.0,
             "tax": {
               "percentage": 1.0
             }

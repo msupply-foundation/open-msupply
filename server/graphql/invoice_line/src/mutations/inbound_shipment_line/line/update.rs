@@ -472,6 +472,8 @@ mod test {
                     sell_price_per_pack: Some(1.0),
                     expiry_date: Some(NaiveDate::from_ymd(2022, 01, 01)),
                     number_of_packs: Some(1),
+                    total_before_tax: None,
+                    tax: None,
                 }
             );
             Ok(InvoiceLine {

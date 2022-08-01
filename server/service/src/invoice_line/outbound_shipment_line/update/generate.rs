@@ -123,11 +123,17 @@ fn generate_line(
     if let Some(number_of_packs) = input.number_of_packs {
         update_line.number_of_packs = u32_to_i32(number_of_packs);
     }
-    if let Some(total_before_tax) = input.total_before_tax {
-        update_line.total_before_tax = total_before_tax;
+
+    update_line.total_before_tax = if let Some(total_before_tax) = input.total_before_tax {
+        total_before_tax
+    } else if let Some(number_of_packs) = input.number_of_packs {
+        update_line.sell_price_per_pack * number_of_packs as f64
+    } else if input.stock_line_id.is_some() || input.item_id.is_some() {
+        sell_price_per_pack * number_of_packs as f64
     } else {
-        update_line.total_before_tax = sell_price_per_pack * number_of_packs as f64;
-    }
+        update_line.total_before_tax
+    };
+
     if let Some(tax) = input.tax {
         update_line.tax = tax.percentage;
     }
