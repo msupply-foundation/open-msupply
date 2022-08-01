@@ -1,9 +1,7 @@
-use repository::requisition_row::RequisitionRowType;
 use repository::{
-    InvoiceRowRepository, InvoiceRowType, NumberRow, NumberRowRepository, NumberRowType,
-    RepositoryError, RequisitionRowRepository, StocktakeRowRepository, StorageConnection,
+    requisition_row::RequisitionRowType, InvoiceRowRepository, InvoiceRowType, RepositoryError,
+    RequisitionRowRepository, StocktakeRowRepository, StorageConnection,
 };
-use util::uuid::uuid;
 
 pub fn invoice_next_number(
     connection: &StorageConnection,
@@ -64,76 +62,80 @@ pub fn stocktake_next_number(
     Ok(next_number)
 }
 
-pub fn next_number(
-    connection: &StorageConnection,
-    r#type: &NumberRowType,
-    store_id: &str,
-) -> Result<i64, RepositoryError> {
-    // Should be done in transaction
-    let next_number = connection.transaction_sync(|connection_tx| {
-        let repo = NumberRowRepository::new(&connection_tx);
+#[cfg(test)]
+mod test {
+    use repository::{
+        mock::{
+            mock_outbound_shipment_a, mock_requisition_for_number_test, mock_stocktake_no_line_a,
+            mock_store_a, mock_store_b, mock_store_c, mock_unique_number_inbound_shipment,
+            MockDataInserts,
+        },
+        requisition_row::RequisitionRowType,
+        test_db::setup_all,
+        InvoiceRowType,
+    };
 
-        let updated_number_row = match repo.find_one_by_type_and_store(r#type, store_id)? {
-            Some(mut row) => {
-                // update existing counter
-                row.value = row.value + 1;
-                repo.upsert_one(&row)?;
-                row
-            }
-            None => {
-                // insert new counter
-                let row = NumberRow {
-                    id: uuid(),
-                    value: 1,
-                    r#type: r#type.clone(),
-                    store_id: store_id.to_owned(),
-                };
-                repo.upsert_one(&row)?;
-                row
-            }
-        };
-        Ok(updated_number_row.value)
-    })?;
-    Ok(next_number)
+    use super::{invoice_next_number, requisition_next_number, stocktake_next_number};
+
+    #[actix_rt::test]
+    async fn test_number_service() {
+        let (_, connection, _, _) = setup_all("test_number_service", MockDataInserts::all()).await;
+
+        let inbound_shipment = mock_unique_number_inbound_shipment();
+        let outbound_shipment = mock_outbound_shipment_a();
+        let request_requisition = mock_requisition_for_number_test();
+        let stocktake = mock_stocktake_no_line_a();
+
+        // Test existing
+        let result = invoice_next_number(
+            &connection,
+            &InvoiceRowType::InboundShipment,
+            &mock_store_a().id,
+        )
+        .unwrap();
+        assert_eq!(result, inbound_shipment.invoice_number + 1);
+
+        let result = invoice_next_number(
+            &connection,
+            &InvoiceRowType::OutboundShipment,
+            &mock_store_b().id,
+        )
+        .unwrap();
+        assert_eq!(result, outbound_shipment.invoice_number + 1);
+
+        let result = requisition_next_number(
+            &connection,
+            &RequisitionRowType::Request,
+            &mock_store_a().id,
+        )
+        .unwrap();
+        assert_eq!(result, request_requisition.requisition_number + 1);
+
+        let result = stocktake_next_number(&connection, &mock_store_a().id).unwrap();
+        assert_eq!(result, stocktake.stocktake_number + 1);
+
+        // Test new
+        let result = invoice_next_number(
+            &connection,
+            &InvoiceRowType::InboundShipment,
+            &mock_store_b().id,
+        )
+        .unwrap();
+        assert_eq!(result, 1);
+
+        let result =
+            invoice_next_number(&connection, &InvoiceRowType::OutboundShipment, "store_e").unwrap();
+        assert_eq!(result, 1);
+
+        let result = requisition_next_number(
+            &connection,
+            &RequisitionRowType::Request,
+            &mock_store_b().id,
+        )
+        .unwrap();
+        assert_eq!(result, 1);
+
+        let result = stocktake_next_number(&connection, &mock_store_c().id).unwrap();
+        assert_eq!(result, 1);
+    }
 }
-
-// #[cfg(test)]
-// mod test {
-//     use repository::{
-//         mock::{
-//             mock_inbound_shipment_number_store_a, mock_outbound_shipment_number_store_a,
-//             MockDataInserts,
-//         },
-//         test_db::setup_all,
-//         NumberRowType,
-//     };
-
-//     use crate::number::next_number;
-
-//     #[actix_rt::test]
-//     async fn test_number_service() {
-//         let (_, connection, _, _) = setup_all("test_number_service", MockDataInserts::all()).await;
-
-//         let inbound_shipment_store_a_number = mock_inbound_shipment_number_store_a();
-//         let outbound_shipment_store_b_number = mock_outbound_shipment_number_store_a();
-
-//         // Test existing
-
-//         let result = next_number(&connection, &NumberRowType::InboundShipment, "store_a").unwrap();
-//         assert_eq!(result, inbound_shipment_store_a_number.value + 1);
-
-//         let result = next_number(&connection, &NumberRowType::InboundShipment, "store_a").unwrap();
-//         assert_eq!(result, inbound_shipment_store_a_number.value + 2);
-
-//         let result = next_number(&connection, &NumberRowType::OutboundShipment, "store_a").unwrap();
-//         assert_eq!(result, outbound_shipment_store_b_number.value + 1);
-
-//         // Test new
-
-//         let result = next_number(&connection, &NumberRowType::OutboundShipment, "store_b").unwrap();
-//         assert_eq!(result, 1);
-
-//         let result = next_number(&connection, &NumberRowType::OutboundShipment, "store_b").unwrap();
-//         assert_eq!(result, 2);
-//     }
-// }
