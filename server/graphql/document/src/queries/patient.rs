@@ -84,6 +84,10 @@ impl PatientNode {
         self.patient.name_row.website.clone()
     }
 
+    pub async fn is_deceased(&self) -> bool {
+        self.patient.name_row.is_deceased
+    }
+
     pub async fn document(&self, ctx: &Context<'_>) -> Result<Option<DocumentNode>> {
         let loader = ctx.get_loader::<DataLoader<DocumentLoader>>();
 
