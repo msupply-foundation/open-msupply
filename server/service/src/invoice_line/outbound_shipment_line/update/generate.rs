@@ -131,7 +131,7 @@ fn generate_line(
     } else if input.stock_line_id.is_some() || input.item_id.is_some() {
         sell_price_per_pack * number_of_packs as f64
     } else {
-        sell_price_per_pack * number_of_packs as f64
+        update_line.total_before_tax
     };
 
     if let Some(tax) = input.tax {
