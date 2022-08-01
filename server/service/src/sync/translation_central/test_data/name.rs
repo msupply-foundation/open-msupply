@@ -409,6 +409,7 @@ pub fn get_test_name_records() -> Vec<TestSyncRecord> {
                 address1: Some("address1".to_string()),
                 address2: Some("address2".to_string()),
                 created_datetime: Some(NaiveDate::from_ymd(2022, 02, 10).and_hms(0, 0, 0)),
+                is_deceased: false,
             })),
             identifier: "General",
             central_sync_buffer_row: CentralSyncBufferRow {
@@ -443,6 +444,7 @@ pub fn get_test_name_records() -> Vec<TestSyncRecord> {
                 is_donor: false,
                 on_hold: false,
                 created_datetime: None,
+                is_deceased: false,
             })),
             identifier: "Birch Store",
             central_sync_buffer_row: CentralSyncBufferRow {
@@ -477,6 +479,7 @@ pub fn get_test_name_records() -> Vec<TestSyncRecord> {
                 is_donor: false,
                 on_hold: false,
                 created_datetime: None,
+                is_deceased: false,
             })),
             identifier: "Birch Store 2",
             central_sync_buffer_row: CentralSyncBufferRow {
@@ -515,6 +518,7 @@ pub fn get_test_name_upsert_records() -> Vec<TestSyncRecord> {
             is_donor: false,
             on_hold: false,
             created_datetime: None,
+            is_deceased: false,
         })),
         identifier: "General2",
         central_sync_buffer_row: CentralSyncBufferRow {

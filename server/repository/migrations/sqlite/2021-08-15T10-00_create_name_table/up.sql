@@ -44,5 +44,6 @@ CREATE TABLE name (
     is_manufacturer BOOLEAN,
     is_donor BOOLEAN,
     on_hold BOOLEAN,
-    created_datetime TIMESTAMP
+    created_datetime TIMESTAMP,
+    is_deceased BOOLEAN
 )

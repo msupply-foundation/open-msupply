@@ -17,6 +17,9 @@ const UIComponent = (props: ControlProps) => {
   );
   const error = !!errors;
 
+  if (!props.visible) {
+    return null;
+  }
   return (
     <DetailInputWithLabelRow
       label={label}

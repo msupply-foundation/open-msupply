@@ -44,6 +44,9 @@ const UIComponent = (props: LayoutPropsExtended) => {
     data,
   } = props;
   const variantStyles = variants[variant];
+  if (!props.visible) {
+    return null;
+  }
   return (
     <Typography sx={{ ...variantStyles, ...sx } as SxProps}>
       {RegexUtils.formatTemplateString(text ?? '', data, '')}

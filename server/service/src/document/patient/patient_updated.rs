@@ -62,6 +62,7 @@ pub fn patient_document_updated(
             .as_ref()
             .and_then(|n| n.created_datetime.clone())
             .or(Some(update_timestamp.naive_utc())), // assume there is no earlier doc version
+        is_deceased: patient.is_deceased,
     })?;
     let name_repo = NameRepository::new(con);
     let name = name_repo.query_one(
@@ -163,6 +164,8 @@ mod test {
                 occupation: None,
             },
             allergies: None,
+            is_deceased: false,
+            date_of_death: None,
         };
 
         service
