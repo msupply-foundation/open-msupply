@@ -1,12 +1,12 @@
 use chrono::{NaiveDate, Utc};
 use repository::{
-    EqualFilter, LogRow, LogType, NumberRowType, RepositoryError, Stocktake, StocktakeFilter,
-    StocktakeRepository, StocktakeRow, StocktakeRowRepository, StocktakeStatus, StorageConnection,
+    EqualFilter, LogRow, LogType, RepositoryError, Stocktake, StocktakeFilter, StocktakeRepository,
+    StocktakeRow, StocktakeRowRepository, StocktakeStatus, StorageConnection,
 };
 use util::uuid::uuid;
 
 use crate::{
-    log::log_entry, number::next_number, service_provider::ServiceContext,
+    log::log_entry, number::stocktake_next_number, service_provider::ServiceContext,
     validate::check_store_exists,
 };
 
@@ -64,7 +64,7 @@ fn generate(
         is_locked,
     }: InsertStocktake,
 ) -> Result<StocktakeRow, RepositoryError> {
-    let stocktake_number = next_number(connection, &NumberRowType::Stocktake, store_id)?;
+    let stocktake_number = stocktake_next_number(connection, store_id)?;
 
     Ok(StocktakeRow {
         id,

@@ -1,7 +1,7 @@
 use repository::requisition_row::RequisitionRowType;
 use repository::{
     InvoiceRowRepository, InvoiceRowType, NumberRow, NumberRowRepository, NumberRowType,
-    RepositoryError, RequisitionRowRepository, StorageConnection,
+    RepositoryError, RequisitionRowRepository, StocktakeRowRepository, StorageConnection,
 };
 use util::uuid::uuid;
 
@@ -34,6 +34,25 @@ pub fn requisition_next_number(
         let repo = RequisitionRowRepository::new(&connection_tx);
 
         let next_number = match repo.max_number_by_type_and_store(r#type, store_id)? {
+            Some(mut number) => {
+                number += 1;
+                number
+            }
+            None => 1,
+        };
+        Ok(next_number)
+    })?;
+    Ok(next_number)
+}
+
+pub fn stocktake_next_number(
+    connection: &StorageConnection,
+    store_id: &str,
+) -> Result<i64, RepositoryError> {
+    let next_number = connection.transaction_sync(|connection_tx| {
+        let repo = StocktakeRowRepository::new(&connection_tx);
+
+        let next_number = match repo.max_number_by_type_and_store(store_id)? {
             Some(mut number) => {
                 number += 1;
                 number

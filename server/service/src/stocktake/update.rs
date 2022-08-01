@@ -2,15 +2,15 @@ use chrono::{NaiveDate, Utc};
 use repository::{
     EqualFilter, InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRow,
     InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType, ItemRowRepository, LogRow, LogType,
-    NameRowRepository, NumberRowType, RepositoryError, StockLineRow, StockLineRowRepository,
-    Stocktake, StocktakeLine, StocktakeLineFilter, StocktakeLineRepository, StocktakeLineRow,
+    NameRowRepository, RepositoryError, StockLineRow, StockLineRowRepository, Stocktake,
+    StocktakeLine, StocktakeLineFilter, StocktakeLineRepository, StocktakeLineRow,
     StocktakeLineRowRepository, StocktakeRow, StocktakeRowRepository, StocktakeStatus,
     StorageConnection,
 };
 use util::{constants::INVENTORY_ADJUSTMENT_NAME_CODE, inline_edit, uuid::uuid};
 
 use crate::{
-    log::log_entry, number::next_number, service_provider::ServiceContext,
+    log::log_entry, number::stocktake_next_number, service_provider::ServiceContext,
     stocktake::query::get_stocktake, validate::check_store_id_matches,
 };
 
@@ -361,7 +361,7 @@ fn generate(
         user_id: Some(user_id.to_string()),
         name_id: invad_name.id,
         store_id: store_id.to_string(),
-        invoice_number: next_number(connection, &NumberRowType::InventoryAdjustment, store_id)?,
+        invoice_number: stocktake_next_number(connection, store_id)?,
         name_store_id: None,
         r#type: InvoiceRowType::InventoryAdjustment,
         status: InvoiceRowStatus::Verified,
@@ -441,8 +441,7 @@ pub fn update_stocktake(
             }
             StocktakeRowRepository::new(connection).upsert_one(&result.stocktake)?;
 
-            if existing.status != result.stocktake.status
-            {
+            if existing.status != result.stocktake.status {
                 log_entry(
                     &ctx.connection,
                     &LogRow {
