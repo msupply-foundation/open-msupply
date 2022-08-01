@@ -165,7 +165,7 @@ mod test {
             },
             allergies: None,
             is_deceased: false,
-            date_of_dead: None,
+            date_of_death: None,
         };
 
         service

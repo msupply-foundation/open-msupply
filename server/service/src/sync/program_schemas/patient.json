@@ -178,7 +178,7 @@
           "description": "Date of birth is estimated",
           "type": "boolean"
         },
-        "dateOfDead": {
+        "dateOfDeath": {
           "description": "Date of death",
           "format": "date",
           "type": "string"
@@ -262,7 +262,7 @@
           "description": "Date of birth is estimated",
           "type": "boolean"
         },
-        "dateOfDead": {
+        "dateOfDeath": {
           "description": "Date of death",
           "format": "date",
           "type": "string"
