@@ -71,7 +71,8 @@ export const PatientFormTab: FC<PatientPanel> = ({ patient, value }) => {
           label={t('label.date-of-birth')}
           Input={
             <BaseDatePickerInput
-              value={patient?.dateOfBirth}
+              // undefined is displayed as "now" and null as unset
+              value={patient?.dateOfBirth ?? null}
               onChange={event => {
                 if (event)
                   updatePatient({
