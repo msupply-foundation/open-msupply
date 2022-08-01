@@ -65,23 +65,14 @@ impl RemoteDataSynchroniser {
             .await
             .map_err(RequestAndSetSiteInfoError::RequestSiteInfoError)?;
 
-        self.set_site_info(&connection, site_info)
-            .map_err(RequestAndSetSiteInfoError::SetSiteInfoError)?;
+        let remote_sync_state = RemoteSyncState::new(&connection);
+        remote_sync_state.set_site_uuid(site_info.id).map_err(RequestAndSetSiteInfoError::SetSiteInfoError)?;
+        remote_sync_state.set_site_id(site_info.site_id).map_err(RequestAndSetSiteInfoError::SetSiteInfoError)?;
 
         info!("Received site info");
         Ok(())
     }
-
-    pub(crate) fn set_site_info(
-        &self,
-        connection: &StorageConnection,
-        site_info: SiteInfoV5,
-    ) -> Result<(), RepositoryError> {
-        let remote_sync_state = RemoteSyncState::new(&connection);
-        remote_sync_state.set_site_uuid(site_info.id)?;
-        remote_sync_state.set_site_id(site_info.site_id)
-    }
-
+    
     /// Request initialisation
     pub(crate) fn set_initialised(
         &self,
