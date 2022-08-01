@@ -80,6 +80,7 @@ export const PatientFormTab: FC<PatientPanel> = ({ patient, value }) => {
                   });
               }}
               inputFormat="dd/MM/yyyy"
+              disableFuture
             />
           }
         />
