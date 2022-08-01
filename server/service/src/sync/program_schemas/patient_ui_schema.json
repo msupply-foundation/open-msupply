@@ -218,6 +218,29 @@
                   ]
                 }
               ]
+            },
+            {
+              "type": "Group",
+              "label": "Death",
+              "elements": [
+                {
+                  "type": "Control",
+                  "scope": "#/properties/isDeceased"
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/properties/dateOfDead",
+                  "rule": {
+                    "effect": "HIDE",
+                    "condition": {
+                      "scope": "#/properties/isDeceased",
+                      "schema": {
+                        "const": false
+                      }
+                    }
+                  }
+                }
+              ]
             }
           ]
         }
