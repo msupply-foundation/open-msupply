@@ -1,4 +1,4 @@
-import React, { FC, useMemo, useState } from 'react';
+import React, { FC, useEffect, useMemo, useState } from 'react';
 import {
   AppBarTabsPortal,
   Box,
@@ -9,15 +9,13 @@ import {
   TabList,
   useJsonForms,
   useTranslation,
-  useUrlQuery,
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
-import { useCreatePatientStore, usePatientModalStore } from '../hooks';
+import { usePatientCreateStore, usePatientStore } from '../hooks';
 import { AppBarButtons } from './AppBarButtons';
 import { PatientSummary } from './PatientSummary';
 import { PatientTab } from './PatientTab';
-import { ProgramListView } from './ProgramEnrolment';
-import { PatientModal } from '.';
+import { ProgramDetailModal, ProgramListView } from './ProgramEnrolment';
 
 enum Tabs {
   Details = 'Details',
@@ -48,13 +46,12 @@ const useUpsertPatient = (): SaveDocumentMutation => {
 };
 
 export const PatientDetailView: FC = () => {
-  const {
-    urlQuery: { doc },
-  } = useUrlQuery();
-  const { patient } = useCreatePatientStore();
+  const { documentName, setDocumentName } = usePatientStore();
+  const { patient } = usePatientCreateStore();
   const [currentTab, setCurrentTab] = useState<Tabs>(Tabs.Details);
   const t = useTranslation('patients');
-  const { current } = usePatientModalStore();
+  const patientId = usePatient.utils.id();
+  const { data: currentPatient } = usePatient.document.get(patientId);
 
   // we have to memo createDoc to avoid an infinite render loop
   const createDoc = useMemo(() => {
@@ -77,14 +74,23 @@ export const PatientDetailView: FC = () => {
   }, [patient]);
 
   const handleSave = useUpsertPatient();
+  const { JsonForm, isLoading } = useJsonForms(
+    documentName,
+    { handleSave },
+    createDoc
+  );
 
-  const { JsonForm, isLoading } = useJsonForms(doc, { handleSave }, createDoc);
+  useEffect(() => {
+    if (!documentName && currentPatient) {
+      setDocumentName(currentPatient?.document?.name);
+    }
+  }, [currentPatient]);
 
   if (isLoading) return <DetailViewSkeleton />;
 
   return (
     <React.Suspense fallback={<DetailViewSkeleton />}>
-      {current === PatientModal.Program && <div>Program Modal</div>}
+      <ProgramDetailModal />
       <AppBarButtons />
       <PatientSummary />
       <TabContext value={currentTab}>

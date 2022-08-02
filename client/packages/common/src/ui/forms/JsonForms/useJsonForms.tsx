@@ -186,6 +186,10 @@ export const useJsonForms = (
     }
   }, [createDoc]);
 
+  useEffect(() => {
+    setDocumentName(docName);
+  }, [docName]);
+
   return {
     JsonForm: (
       <JsonForm
