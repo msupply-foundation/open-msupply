@@ -12,10 +12,12 @@ import {
   useUrlQuery,
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
-import { useCreatePatientStore } from '../hooks';
+import { useCreatePatientStore, usePatientModalStore } from '../hooks';
 import { AppBarButtons } from './AppBarButtons';
 import { PatientSummary } from './PatientSummary';
 import { PatientTab } from './PatientTab';
+import { ProgramListView } from './ProgramEnrolment';
+import { PatientModal } from '.';
 
 enum Tabs {
   Details = 'Details',
@@ -52,6 +54,7 @@ export const PatientDetailView: FC = () => {
   const { patient } = useCreatePatientStore();
   const [currentTab, setCurrentTab] = useState<Tabs>(Tabs.Details);
   const t = useTranslation('patients');
+  const { current } = usePatientModalStore();
 
   // we have to memo createDoc to avoid an infinite render loop
   const createDoc = useMemo(() => {
@@ -81,6 +84,7 @@ export const PatientDetailView: FC = () => {
 
   return (
     <React.Suspense fallback={<DetailViewSkeleton />}>
+      {current === PatientModal.Program && <div>Program Modal</div>}
       <AppBarButtons />
       <PatientSummary />
       <TabContext value={currentTab}>
@@ -111,7 +115,12 @@ export const PatientDetailView: FC = () => {
             </TabList>
           </Box>
         </AppBarTabsPortal>
-        <PatientTab value={Tabs.Details}>{JsonForm}</PatientTab>
+        <PatientTab value={Tabs.Details} padding={3}>
+          {JsonForm}
+        </PatientTab>
+        <PatientTab value={Tabs.Programs}>
+          <ProgramListView />
+        </PatientTab>
       </TabContext>
     </React.Suspense>
   );

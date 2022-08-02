@@ -1,5 +1,8 @@
 {
   "button.new-patient": "New Patient",
+  "button.add-encounter": "Add Encounter",
+  "button.add-prescription": "Add Prescription",
+  "button.add-program": "Add Program",
   "filename.patients": "patients",
   "label.date-of-birth": "DOB (Age)",
   "label.details": "Details",

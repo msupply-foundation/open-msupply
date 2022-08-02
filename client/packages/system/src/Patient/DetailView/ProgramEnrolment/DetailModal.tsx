@@ -5,8 +5,7 @@ import {
   useJsonForms,
   useUrlQuery,
 } from '@openmsupply-client/common';
-import { useProgramEnrolment } from '../api/hooks';
-import { AppBarButtons } from './AppBarButtons';
+import { useProgramEnrolment } from './api/hooks';
 
 const useUpsertProgramEnrolment = (
   patientId: string,
@@ -49,7 +48,6 @@ export const ProgramDetailView: FC = () => {
 
   return (
     <React.Suspense fallback={<DetailViewSkeleton />}>
-      <AppBarButtons />
       {JsonForm}
     </React.Suspense>
   );
