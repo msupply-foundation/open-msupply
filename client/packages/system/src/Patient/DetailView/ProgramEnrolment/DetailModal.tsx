@@ -45,7 +45,10 @@ export const ProgramDetailModal: FC = () => {
 
   const { current, documentName, documentType, reset } = usePatientModalStore();
   const handleSave = useUpsertProgramEnrolment(patientId, documentType || '');
-  const { JsonForm, isLoading } = useJsonForms(documentName, { handleSave });
+  const { JsonForm, isLoading } = useJsonForms(documentName, {
+    handleSave,
+    showButtonPanel: false,
+  });
 
   const { Modal } = useDialog({
     isOpen: current === PatientModal.Program,
