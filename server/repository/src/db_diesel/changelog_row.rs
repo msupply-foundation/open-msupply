@@ -65,11 +65,15 @@ impl<'a> ChangelogRowRepository<'a> {
         ChangelogRowRepository { connection }
     }
 
+    /// Returns changelog rows order by operation sequence in asc order
+    ///
+    /// # Arguments
+    ///
+    /// * `earliest` - Starting cursor (first returned changelogs may be ahead in sequence from starting cursor)
+    /// * `limit` - Maximum number of entries to be returned
     pub fn changelogs(
         &self,
-        // Earliest the first cursor to be included in the returned
         earliest: u64,
-        // Limit the number of entries to be returned
         limit: u32,
     ) -> Result<Vec<ChangelogRow>, RepositoryError> {
         let final_query = changelog_deduped_dsl::changelog_deduped
