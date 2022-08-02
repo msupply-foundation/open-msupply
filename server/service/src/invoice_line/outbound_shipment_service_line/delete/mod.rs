@@ -11,13 +11,13 @@ type OutError = DeleteOutboundShipmentServiceLineError;
 
 pub fn delete_outbound_shipment_service_line(
     ctx: &ServiceContext,
-    _store_id: &str,
+    store_id: &str,
     input: DeleteOutboundShipmentLine,
 ) -> Result<String, OutError> {
     let line_id = ctx
         .connection
         .transaction_sync(|connection| {
-            let line = validate(&input, &connection)?;
+            let line = validate(&input, store_id, &connection)?;
             InvoiceLineRowRepository::new(&connection).delete(&line.id)?;
 
             Ok(line.id) as Result<String, OutError>
@@ -33,6 +33,7 @@ pub enum DeleteOutboundShipmentServiceLineError {
     NotAnOutboundShipment,
     CannotEditInvoice,
     NotThisInvoiceLine(String),
+    NotThisStoreInvoice,
     // Internal
     DatabaseError(RepositoryError),
 }
@@ -122,6 +123,18 @@ mod test {
                 }),
             ),
             Err(ServiceError::CannotEditInvoice)
+        );
+
+        // NotThisStoreInvoice
+        assert_eq!(
+            service.delete_outbound_shipment_service_line(
+                &context,
+                "store_c",
+                inline_init(|r: &mut DeleteOutboundShipmentLine| {
+                    r.id = mock_draft_outbound_service_line().id;
+                }),
+            ),
+            Err(ServiceError::NotThisStoreInvoice)
         );
     }
 

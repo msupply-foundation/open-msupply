@@ -4,8 +4,8 @@ use repository::{
 
 use crate::{
     invoice::{
-        check_invoice_exists, check_invoice_is_editable, check_invoice_type, InvoiceDoesNotExist,
-        InvoiceIsNotEditable, WrongInvoiceRowType,
+        check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store,
+        InvoiceDoesNotExist, InvoiceIsNotEditable, NotThisStoreInvoice, WrongInvoiceRowType,
     },
     invoice_line::validate::{
         check_item, check_line_exists, ItemNotFound, LineDoesNotExist, NotInvoiceLine,
@@ -16,6 +16,7 @@ use super::{UpdateInboundShipmentServiceLine, UpdateInboundShipmentServiceLineEr
 
 pub fn validate(
     input: &UpdateInboundShipmentServiceLine,
+    store_id: &str,
     connection: &StorageConnection,
 ) -> Result<(InvoiceLineRow, InvoiceRow, ItemRow), UpdateInboundShipmentServiceLineError> {
     let line = check_line_exists(&input.id, connection)?;
@@ -30,7 +31,7 @@ pub fn validate(
         return Err(UpdateInboundShipmentServiceLineError::NotAServiceItem);
     }
 
-    // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
+    check_store(&invoice, store_id)?;
     check_invoice_type(&invoice, InvoiceRowType::InboundShipment)?;
     check_invoice_is_editable(&invoice)?;
 
@@ -70,5 +71,11 @@ impl From<InvoiceIsNotEditable> for UpdateInboundShipmentServiceLineError {
 impl From<ItemNotFound> for UpdateInboundShipmentServiceLineError {
     fn from(_: ItemNotFound) -> Self {
         UpdateInboundShipmentServiceLineError::ItemNotFound
+    }
+}
+
+impl From<NotThisStoreInvoice> for UpdateInboundShipmentServiceLineError {
+    fn from(_: NotThisStoreInvoice) -> Self {
+        UpdateInboundShipmentServiceLineError::NotThisStoreInvoice
     }
 }

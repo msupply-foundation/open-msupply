@@ -6,3 +6,6 @@ pub use self::insert::*;
 
 pub mod update;
 pub use self::update::*;
+
+pub mod add_from_master_list;
+pub use add_from_master_list::*;

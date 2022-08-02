@@ -1,6 +1,6 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::RecordNotFound,
+    simple_generic_errors::{ForeignKey, ForeignKeyError, RecordNotFound},
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
@@ -24,6 +24,7 @@ pub struct DeleteInput {
 #[graphql(field(name = "description", type = "String"))]
 pub enum DeleteErrorInterface {
     RecordNotFound(RecordNotFound),
+    ForeignKeyError(ForeignKeyError),
 }
 
 #[derive(SimpleObject)]
@@ -89,8 +90,14 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
         ServiceError::LineDoesNotExist => {
             return Ok(DeleteErrorInterface::RecordNotFound(RecordNotFound {}))
         }
+        ServiceError::InvoiceDoesNotExist => {
+            return Ok(DeleteErrorInterface::ForeignKeyError(ForeignKeyError(
+                ForeignKey::InvoiceId,
+            )))
+        }
         // Standard Graphql Errors
         ServiceError::LineIsNotUnallocatedLine => BadUserInput(formatted_error),
+        ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 

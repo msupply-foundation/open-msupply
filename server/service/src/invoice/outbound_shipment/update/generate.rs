@@ -2,8 +2,8 @@ use chrono::Utc;
 
 use repository::{EqualFilter, InvoiceLineFilter, InvoiceLineRepository, Name, RepositoryError};
 use repository::{
-    InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus,
-    StockLineRow, StockLineRowRepository, StorageConnection,
+    InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, StockLineRow,
+    StorageConnection,
 };
 
 use super::{UpdateOutboundShipment, UpdateOutboundShipmentError, UpdateOutboundShipmentStatus};
@@ -29,7 +29,8 @@ pub(crate) fn generate(
     }: UpdateOutboundShipment,
     connection: &StorageConnection,
 ) -> Result<GenerateResult, UpdateOutboundShipmentError> {
-    let should_create_batches = should_update_batches(&existing_invoice, &input_status);
+    let should_update_batches_total_number_of_packs =
+        should_update_batches_total_number_of_packs(&existing_invoice, &input_status);
     let mut update_invoice = existing_invoice.clone();
 
     set_new_status_datetime(&mut update_invoice, &input_status);
@@ -51,8 +52,11 @@ pub(crate) fn generate(
         update_invoice.name_id = other_party.name_row.id;
     }
 
-    let batches_to_update = if should_create_batches {
-        Some(generate_batches(&update_invoice.id, connection)?)
+    let batches_to_update = if should_update_batches_total_number_of_packs {
+        Some(generate_batches_total_number_of_packs_update(
+            &update_invoice.id,
+            connection,
+        )?)
     } else {
         None
     };
@@ -68,7 +72,7 @@ pub(crate) fn generate(
     })
 }
 
-fn should_update_batches(
+fn should_update_batches_total_number_of_packs(
     invoice: &InvoiceRow,
     status: &Option<UpdateOutboundShipmentStatus>,
 ) -> bool {
@@ -77,7 +81,7 @@ fn should_update_batches(
         let new_invoice_status_index = new_invoice_status.index();
 
         new_invoice_status_index >= InvoiceRowStatus::Picked.index()
-            && invoice_status_index < new_invoice_status_index
+            && invoice_status_index < InvoiceRowStatus::Picked.index()
     } else {
         false
     }
@@ -149,41 +153,25 @@ fn set_new_status_datetime(
 }
 
 // Returns a list of stock lines that need to be updated
-fn generate_batches(
-    id: &str,
+fn generate_batches_total_number_of_packs_update(
+    invoice_id: &str,
     connection: &StorageConnection,
 ) -> Result<Vec<StockLineRow>, UpdateOutboundShipmentError> {
-    // TODO use InvoiceLineRepository (when r#type is available, use equal_any vs ||)
-    let invoice_lines: Vec<InvoiceLineRow> = InvoiceLineRowRepository::new(connection)
-        .find_many_by_invoice_id(id)?
-        .into_iter()
-        .filter(|line| {
-            line.r#type == InvoiceLineRowType::StockIn
-                || line.r#type == InvoiceLineRowType::StockOut
-        })
-        .collect();
-
-    let stock_line_ids = invoice_lines
-        .iter()
-        .filter_map(|line| line.stock_line_id.clone())
-        .collect::<Vec<String>>();
-    let stock_lines = StockLineRowRepository::new(connection).find_many_by_ids(&stock_line_ids)?;
+    let invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
+        InvoiceLineFilter::new()
+            .invoice_id(EqualFilter::equal_to(invoice_id))
+            .r#type(InvoiceLineRowType::StockOut.equal_to()),
+    )?;
 
     let mut result = Vec::new();
     for invoice_line in invoice_lines {
-        let stock_line_id = invoice_line.stock_line_id.ok_or(
-            UpdateOutboundShipmentError::InvoiceLineHasNoStockLine(invoice_line.id.to_owned()),
+        let invoice_line_row = invoice_line.invoice_line_row;
+        let mut stock_line = invoice_line.stock_line_option.ok_or(
+            UpdateOutboundShipmentError::InvoiceLineHasNoStockLine(invoice_line_row.id.to_owned()),
         )?;
-        let mut stock_line = stock_lines
-            .iter()
-            .find(|stock_line| stock_line_id == stock_line.id)
-            .ok_or(UpdateOutboundShipmentError::InvoiceLineHasNoStockLine(
-                invoice_line.id.to_owned(),
-            ))?
-            .clone();
 
         stock_line.total_number_of_packs =
-            stock_line.total_number_of_packs - invoice_line.number_of_packs;
+            stock_line.total_number_of_packs - invoice_line_row.number_of_packs;
         result.push(stock_line);
     }
     Ok(result)
