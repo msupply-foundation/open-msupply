@@ -4,6 +4,16 @@ extern crate serde_json;
 
 use serde::{Deserialize, Serialize};
 
-schemafy::schemafy!("src/document/schemas/program.json");
+schemafy::schemafy!("src/document/schemas/program_enrolment.json");
 
-pub type SchemaProgram = Program;
+pub type SchemaProgramEnrolment = ProgramEnrolment;
+
+impl Default for SchemaProgramEnrolment {
+    fn default() -> Self {
+        Self {
+            enrolment_datetime: Default::default(),
+            enrolment_patient_id: Default::default(),
+            status: Default::default(),
+        }
+    }
+}

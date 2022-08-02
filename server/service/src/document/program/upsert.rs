@@ -10,7 +10,7 @@ use crate::{
     service_provider::{ServiceContext, ServiceProvider},
 };
 
-use super::{program_schema::SchemaProgram, program_updated::program_updated};
+use super::{program_schema::SchemaProgramEnrolment, program_updated::program_updated};
 
 #[derive(PartialEq, Debug)]
 pub enum UpsertProgramError {
@@ -86,7 +86,9 @@ fn generate(user_id: &str, input: UpsertProgram) -> Result<RawDocument, Reposito
     })
 }
 
-fn validate_program_schema(input: &UpsertProgram) -> Result<SchemaProgram, serde_json::Error> {
+fn validate_program_schema(
+    input: &UpsertProgram,
+) -> Result<SchemaProgramEnrolment, serde_json::Error> {
     // Check that we can parse the data into a default Program object, i.e. that it's following the
     // default program JSON schema.
     // If the program data uses a derived program schema, the derived schema is validated in the
@@ -130,7 +132,7 @@ fn validate(
     service_provider: &ServiceProvider,
     store_id: &str,
     input: &UpsertProgram,
-) -> Result<SchemaProgram, UpsertProgramError> {
+) -> Result<SchemaProgramEnrolment, UpsertProgramError> {
     if !validate_patient_exists(ctx, store_id, &input.patient_id)? {
         return Err(UpsertProgramError::InvalidPatientId);
     }
@@ -170,11 +172,12 @@ mod test {
         DocumentRepository, FormSchemaRowRepository, ProgramRepository,
     };
     use serde_json::json;
+    use util::inline_init;
 
     use crate::{
         document::{
             patient::{patient_program_doc_name, test::mock_patient_1, UpdatePatient},
-            program::{program_schema::SchemaProgram, UpsertProgram},
+            program::{program_schema::SchemaProgramEnrolment, UpsertProgram},
         },
         service_provider::ServiceProvider,
     };
@@ -253,11 +256,11 @@ mod test {
         matches!(err, UpsertProgramError::InvalidDataSchema(_));
 
         // success insert
-        let program = SchemaProgram {
-            // reduce now() precision to avoid Postgres problems
-            enrolment_datetime: Utc::now().with_nanosecond(0).unwrap().to_rfc3339(),
-            patient_id: Some("patient id 1".to_string()),
-        };
+
+        let program = inline_init(|v: &mut SchemaProgramEnrolment| {
+            v.enrolment_datetime = Utc::now().with_nanosecond(0).unwrap().to_rfc3339();
+            v.enrolment_patient_id = Some("patient id 1".to_string());
+        });
         let program_type = "ProgramType".to_string();
         service
             .upsert_program(
@@ -348,6 +351,9 @@ mod test {
             program.enrolment_datetime,
             DateTime::<Utc>::from_utc(found_program.enrolment_datetime, Utc).to_rfc3339()
         );
-        assert_eq!(program.patient_id, found_program.program_patient_id);
+        assert_eq!(
+            program.enrolment_patient_id,
+            found_program.program_patient_id
+        );
     }
 }
