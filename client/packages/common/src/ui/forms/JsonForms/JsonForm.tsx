@@ -31,6 +31,8 @@ import {
   Array,
   FirstItemArray,
   firstItemArrayTester,
+  idGeneratorTester,
+  IdGenerator,
 } from './components';
 
 export type JsonData = {
@@ -106,6 +108,7 @@ const renderers = [
   { tester: dateOfBirthTester, renderer: DateOfBirth },
   { tester: arrayTester, renderer: Array },
   { tester: firstItemArrayTester, renderer: FirstItemArray },
+  { tester: idGeneratorTester, renderer: IdGenerator },
 ];
 
 export const JsonForm: FC<PropsWithChildren<JsonFormProps>> = ({
