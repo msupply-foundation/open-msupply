@@ -16,6 +16,7 @@ import {
 import { usePatient, PatientRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 import { Toolbar } from './Toolbar';
+import { usePatientStore } from '../hooks';
 
 const PatientListComponent: FC = () => {
   const {
@@ -24,6 +25,7 @@ const PatientListComponent: FC = () => {
     filter,
     queryParams: { sortBy, page, first, offset },
   } = useUrlQueryParams();
+  const { setDocumentName } = usePatientStore();
   const { data, isError, isLoading } = usePatient.document.list();
   const pagination = { page, first, offset };
   const t = useTranslation('patients');
@@ -76,8 +78,12 @@ const PatientListComponent: FC = () => {
         isLoading={isLoading}
         isError={isError}
         onRowClick={row => {
-          if (!row.id || !row.document?.name || !row.document?.type) alert();
-          else navigate(`${row.id}?doc=${row.document.name}`);
+          if (!row.id || !row.document?.name || !row.document?.type) {
+            alert();
+            return;
+          }
+          setDocumentName(row.document.name);
+          navigate(String(row.id));
         }}
         noDataElement={<NothingHere />}
       />

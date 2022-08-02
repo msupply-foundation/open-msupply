@@ -39,7 +39,7 @@ interface CreateNewPatientState {
  * Stores temporary information for creating a new patient, e.g. to carry data over from the
  * create patient modal.
  */
-export const useCreatePatientStore = create<CreateNewPatientState>(set => ({
+export const usePatientCreateStore = create<CreateNewPatientState>(set => ({
   patient: undefined,
   setNewPatient: update =>
     set(() => ({
@@ -49,7 +49,7 @@ export const useCreatePatientStore = create<CreateNewPatientState>(set => ({
     set(state => {
       if (!state.patient) {
         console.error(
-          'useCreatePatientStore: updatePatient() can only be used after a patient is set using setNewPatient()'
+          'usePatientCreateStore: updatePatient() can only be used after a patient is set using setNewPatient()'
         );
         return state;
       }

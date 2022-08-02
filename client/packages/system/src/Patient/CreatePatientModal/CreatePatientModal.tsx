@@ -17,7 +17,7 @@ import {
 } from '@openmsupply-client/common';
 import { PatientFormTab } from './PatientFormTab';
 import { PatientResultsTab } from './PatientResultsTab';
-import { CreateNewPatient, useCreatePatientStore } from '../hooks';
+import { CreateNewPatient, usePatientCreateStore } from '../hooks';
 
 enum Tabs {
   Form = 'Form',
@@ -49,7 +49,7 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
     onClose,
   });
   const navigate = useNavigate();
-  const { patient, setNewPatient, updatePatient } = useCreatePatientStore();
+  const { patient, setNewPatient, updatePatient } = usePatientCreateStore();
   const t = useTranslation('patients');
 
   const onNext = () => {
