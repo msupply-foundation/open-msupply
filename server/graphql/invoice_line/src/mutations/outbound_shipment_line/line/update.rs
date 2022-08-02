@@ -179,6 +179,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         ServiceError::NotThisInvoiceLine(_) => BadUserInput(formatted_error),
         ServiceError::LineDoesNotReferenceStockLine => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
+        ServiceError::UpdatedLineDoesNotExist => InternalError(formatted_error),
     };
 
     Err(graphql_error.extend())
@@ -601,6 +602,7 @@ mod test {
                 invoice_row: mock_outbound_shipment_c(),
                 invoice_line_row: mock_outbound_shipment_c_invoice_lines()[0].clone(),
                 location_row_option: Some(mock_location_1()),
+                stock_line_option: None,
             })
         }));
 
