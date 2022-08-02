@@ -11,8 +11,7 @@ import {
   useUrlQueryParams,
   useNavigate,
 } from '@openmsupply-client/common';
-import { ProgramFragment, useProgramEnrolment } from '../api';
-import { AppBarButtons } from './AppBarButtons';
+import { ProgramFragment, useProgramEnrolment } from './api';
 
 type ProgramFragmentWithId = { id: string } & ProgramFragment;
 
@@ -59,24 +58,21 @@ const ProgramListComponent: FC = () => {
   const navigate = useNavigate();
 
   return (
-    <>
-      <AppBarButtons />
-      <DataTable
-        key="program-enrolment-list"
-        pagination={{ ...pagination, total: data?.totalCount }}
-        onChangePage={updatePaginationQuery}
-        columns={columns}
-        data={dataWithId}
-        isLoading={isLoading}
-        isError={isError}
-        onRowClick={row => {
-          navigate(
-            `${row.type}?doc=${row.document.name}&patientId=${row.patientId}&type=${row.type}`
-          );
-        }}
-        noDataElement={<NothingHere />}
-      />
-    </>
+    <DataTable
+      key="program-enrolment-list"
+      pagination={{ ...pagination, total: data?.totalCount }}
+      onChangePage={updatePaginationQuery}
+      columns={columns}
+      data={dataWithId}
+      isLoading={isLoading}
+      isError={isError}
+      onRowClick={row => {
+        navigate(
+          `${row.type}?doc=${row.document.name}&patientId=${row.patientId}&type=${row.type}`
+        );
+      }}
+      noDataElement={<NothingHere />}
+    />
   );
 };
 
