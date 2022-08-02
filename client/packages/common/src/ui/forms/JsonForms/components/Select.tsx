@@ -45,6 +45,8 @@ const UIComponent = (props: ControlProps) => {
           options={options}
           value={data}
           onChange={e => handleChange(path, e.target.value)}
+          error={!!props.errors}
+          helperText={props.errors}
         />
       </Box>
     </Box>

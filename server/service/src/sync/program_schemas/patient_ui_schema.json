@@ -229,7 +229,7 @@
                 },
                 {
                   "type": "Control",
-                  "scope": "#/properties/dateOfDead",
+                  "scope": "#/properties/dateOfDeath",
                   "rule": {
                     "effect": "HIDE",
                     "condition": {
