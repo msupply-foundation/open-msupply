@@ -4,6 +4,7 @@ import { Utils } from './utils';
 export const usePatient = {
   utils: {
     api: Utils.usePatientApi,
+    id: Utils.usePatientId,
     search: Utils.usePatientSearch,
   },
   document: {
