@@ -1,7 +1,10 @@
 {
   "button.new-patient": "New Patient",
   "filename.patients": "patients",
+  "label.date-of-birth": "DOB (Age)",
+  "label.gender": "Gender",
   "label.patient-details": "Patient Details",
+  "label.patient-id": "Patient ID",
   "label.search-results": "Search results",
   "messages.no-matching-patients": "No matching patients! 😁",
   "messages.no-patient-record": "Can't access detailed information for this patient.",

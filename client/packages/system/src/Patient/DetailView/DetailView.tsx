@@ -8,6 +8,7 @@ import {
 import { usePatient } from '../api';
 import { useCreatePatientStore } from '../hooks';
 import { AppBarButtons } from './AppBarButtons';
+import { PatientSummary } from './PatientSummary';
 
 const useUpsertPatient = (): SaveDocumentMutation => {
   const { mutateAsync: insertPatient } = usePatient.document.insert();
@@ -36,7 +37,6 @@ export const PatientDetailView: FC = () => {
   const {
     urlQuery: { doc },
   } = useUrlQuery();
-
   const { patient } = useCreatePatientStore();
 
   // we have to memo createDoc to avoid an infinite render loop
@@ -68,7 +68,7 @@ export const PatientDetailView: FC = () => {
   return (
     <React.Suspense fallback={<DetailViewSkeleton />}>
       <AppBarButtons />
-
+      <PatientSummary />
       {JsonForm}
     </React.Suspense>
   );
