@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect } from 'react';
 import {
   AppBarContentPortal,
   Box,
@@ -9,8 +9,10 @@ import {
   useFormatDateTime,
   DateUtils,
   Formatter,
+  useBreadcrumbs,
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
+import { AppRoute } from '@openmsupply-client/config';
 
 const SummaryRow = ({ label, value }: { label: LocaleKey; value: string }) => {
   const t = useTranslation('patients');
@@ -28,25 +30,33 @@ const SummaryRow = ({ label, value }: { label: LocaleKey; value: string }) => {
 
 export const PatientSummary: FC = () => {
   const patientId = usePatient.utils.id();
-  const { data } = usePatient.document.get(patientId);
+  const { data: patient } = usePatient.document.get(patientId);
   const { localisedDate } = useFormatDateTime();
+  const { setSuffix } = useBreadcrumbs([AppRoute.Patients]);
   const formatDateOfBirth = (dateOfBirth: string | null) => {
     const dob = DateUtils.getDateOrNull(dateOfBirth);
 
     return !dob ? '' : `${localisedDate(dob)} (${DateUtils.age(dob)})`;
   };
+  useEffect(() => {
+    if (patient)
+      setSuffix(`${patient?.firstName} ${patient?.lastName}`.trimStart());
+  }, [patient]);
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
       <Stack>
-        <SummaryRow label="label.patient-id" value={String(data?.id ?? '')} />
+        <SummaryRow
+          label="label.patient-id"
+          value={String(patient?.id ?? '')}
+        />
         <SummaryRow
           label="label.gender"
-          value={Formatter.sentenceCase(String(data?.gender ?? ''))}
+          value={Formatter.sentenceCase(String(patient?.gender ?? ''))}
         />
         <SummaryRow
           label="label.date-of-birth"
-          value={formatDateOfBirth(data?.dateOfBirth ?? null)}
+          value={formatDateOfBirth(patient?.dateOfBirth ?? null)}
         />
       </Stack>
     </AppBarContentPortal>
