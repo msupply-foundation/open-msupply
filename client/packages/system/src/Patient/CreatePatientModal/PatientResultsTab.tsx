@@ -12,7 +12,7 @@ import { usePatient } from '../api';
 import { Gender, useCreatePatientStore } from '../hooks';
 import { PatientFragment } from '../api/operations.generated';
 
-function genderToGenderInput(gender: Gender): GenderInput {
+const genderToGenderInput = (gender: Gender): GenderInput => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const exhaustiveCheck = (_: never): GenderInput => {
     return GenderInput.Male; // never returned
@@ -33,7 +33,7 @@ function genderToGenderInput(gender: Gender): GenderInput {
     default:
       return exhaustiveCheck(gender);
   }
-}
+};
 
 export const PatientResultsTab: FC<PatientPanel> = ({ patient, value }) => {
   const { mutate, isLoading, data } = usePatient.utils.search();
