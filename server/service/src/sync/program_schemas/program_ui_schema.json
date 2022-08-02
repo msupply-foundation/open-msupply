@@ -3,7 +3,7 @@
   "elements": [
     {
       "type": "Label",
-      "text": "Program",
+      "text": "Program Enrolment",
       "variant": "h1"
     },
     {
@@ -12,6 +12,14 @@
       "options": {
         "readonly": true
       }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/enrolmentPatientId"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/status"
     }
   ]
 }

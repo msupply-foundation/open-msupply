@@ -142,12 +142,13 @@ mod test {
         EncounterFilter, EncounterRepository, EqualFilter, FormSchemaRowRepository,
     };
     use serde_json::json;
+    use util::inline_init;
 
     use crate::{
         document::{
             encounter::{encounter_schema::SchemaEncounter, InsertEncounter},
             patient::{test::mock_patient_1, UpdatePatient},
-            program::{program_schema::SchemaProgram, UpsertProgram},
+            program::{program_schema::SchemaProgramEnrolment, UpsertProgram},
         },
         service_provider::ServiceProvider,
     };
@@ -187,10 +188,9 @@ mod test {
                 },
             )
             .unwrap();
-        let program = SchemaProgram {
-            enrolment_datetime: Utc::now().to_rfc3339(),
-            patient_id: None,
-        };
+        let program = inline_init(|v: &mut SchemaProgramEnrolment| {
+            v.enrolment_datetime = Utc::now().to_rfc3339();
+        });
         let program_type = "ProgramType".to_string();
         service_provider
             .program_service

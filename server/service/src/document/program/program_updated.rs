@@ -4,14 +4,14 @@ use repository::{
 };
 use util::uuid::uuid;
 
-use super::{program_schema::SchemaProgram, UpsertProgramError};
+use super::{program_schema::SchemaProgramEnrolment, UpsertProgramError};
 
 /// Callback called when the document has been updated
 pub(crate) fn program_updated(
     con: &StorageConnection,
     patient_id: &str,
     document: &Document,
-    program: SchemaProgram,
+    program: SchemaProgramEnrolment,
 ) -> Result<ProgramRow, UpsertProgramError> {
     let enrolment_datetime = DateTime::parse_from_rfc3339(&program.enrolment_datetime)
         .map_err(|err| {
@@ -31,7 +31,7 @@ pub(crate) fn program_updated(
         name: document.name.clone(),
         patient_id: patient_id.to_string(),
         enrolment_datetime: enrolment_datetime,
-        program_patient_id: program.patient_id,
+        program_patient_id: program.enrolment_patient_id,
     };
     ProgramRowRepository::new(con).upsert_one(&program_row)?;
 
