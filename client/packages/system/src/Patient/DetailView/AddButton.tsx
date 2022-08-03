@@ -5,13 +5,11 @@ import {
   SplitButtonOption,
   PlusCircleIcon,
 } from '@openmsupply-client/common';
-// import { usePatient } from '../api';
 import { usePatientModalStore } from '../hooks';
 import { PatientModal } from '.';
 
 export const AddButton = () => {
   const t = useTranslation('patients');
-  const isDisabled = false; // TODO: usePatient.utils.isDisabled();
   const { setCurrent } = usePatientModalStore();
   const options = [
     {
@@ -38,7 +36,6 @@ export const AddButton = () => {
   return (
     <SplitButton
       color="primary"
-      isDisabled={isDisabled}
       options={options}
       selectedOption={selectedOption}
       onSelectOption={setSelectedOption}
