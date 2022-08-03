@@ -161,6 +161,109 @@ mod document_service_test {
     use super::*;
 
     #[actix_rt::test]
+    async fn test_document_updates() {
+        let (_, _, connection_manager, _) = setup_all(
+            "test_document_updates",
+            MockDataInserts::none().form_schemas(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "");
+        let context = service_provider.context().unwrap();
+        let service = service_provider.document_service;
+
+        let doc_name = "test/doc2";
+        // successfully insert a document
+        let v1 = service
+            .update_document(
+                &context,
+                RawDocument {
+                    name: doc_name.to_string(),
+                    parents: vec![],
+                    author: "me".to_string(),
+                    timestamp: DateTime::<Utc>::from_utc(
+                        NaiveDateTime::from_timestamp(5000, 0),
+                        Utc,
+                    ),
+                    r#type: "test_data".to_string(),
+                    data: json!({
+                      "version": 1,
+                    }),
+                    schema_id: None,
+                },
+            )
+            .unwrap();
+        let found = service.get_document(&context, doc_name).unwrap().unwrap();
+        assert_eq!(found, v1);
+
+        // invalid parents
+        let result = service.update_document(
+            &context,
+            RawDocument {
+                name: doc_name.to_string(),
+                parents: vec!["invalid".to_string()],
+                author: "me".to_string(),
+                timestamp: DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(6000, 0), Utc),
+                r#type: "test_data".to_string(),
+                data: json!({
+                  "version": 2,
+                }),
+                schema_id: None,
+            },
+        );
+        assert!(matches!(result, Err(DocumentInsertError::InvalidParent(_))));
+
+        // successfully update a document
+        let v2 = service
+            .update_document(
+                &context,
+                RawDocument {
+                    name: doc_name.to_string(),
+                    parents: vec![v1.id.clone()],
+                    author: "me".to_string(),
+                    timestamp: DateTime::<Utc>::from_utc(
+                        NaiveDateTime::from_timestamp(6000, 0),
+                        Utc,
+                    ),
+                    r#type: "test_data".to_string(),
+                    data: json!({
+                      "version": 2,
+                    }),
+                    schema_id: None,
+                },
+            )
+            .unwrap();
+        assert_eq!(v2.parent_ids[0], v1.id);
+        let found = service.get_document(&context, doc_name).unwrap().unwrap();
+        assert_eq!(found, v2);
+        assert_eq!(found.data["version"], 2);
+
+        // add some noise
+        service
+            .update_document(
+                &context,
+                RawDocument {
+                    name: "test/noise".to_string(),
+                    parents: vec![],
+                    author: "me".to_string(),
+                    timestamp: DateTime::<Utc>::from_utc(
+                        NaiveDateTime::from_timestamp(8000, 0),
+                        Utc,
+                    ),
+                    r#type: "test_data2".to_string(),
+                    data: json!({
+                      "version": 1,
+                    }),
+                    schema_id: None,
+                },
+            )
+            .unwrap();
+        // should still find the correct document
+        let found = service.get_document(&context, doc_name).unwrap().unwrap();
+        assert_eq!(found.id, v2.id);
+    }
+
+    #[actix_rt::test]
     async fn test_document_schema_validation() {
         let (_, _, connection_manager, _) = setup_all(
             "document_schema_validation",

@@ -81,7 +81,7 @@ pub struct LatestDocumentRow {
     pub schema_id: Option<String>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Document {
     /// The document data hash
     pub id: String,
