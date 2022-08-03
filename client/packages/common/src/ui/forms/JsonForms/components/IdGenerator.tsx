@@ -6,7 +6,11 @@ import {
   uiTypeIs,
 } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import { BasicTextInput, Box } from '@openmsupply-client/common';
+import {
+  BasicTextInput,
+  Box,
+  useTranslation,
+} from '@openmsupply-client/common';
 import { Button, FormLabel } from '@mui/material';
 import {
   FORM_LABEL_COLUMN_WIDTH,
@@ -52,7 +56,10 @@ const validateFields = (
   }
 };
 
-const generateId = (options: GeneratorOptions, data: Record<string, unknown>): string => {
+const generateId = (
+  options: GeneratorOptions,
+  data: Record<string, unknown>
+): string => {
   let output = '';
   for (const part of options.parts ?? []) {
     const field = extractField(data, part.field);
@@ -82,29 +89,28 @@ const generateId = (options: GeneratorOptions, data: Record<string, unknown>): s
 };
 
 const UIComponent = (props: ControlProps) => {
-  const { label } = props;
-  const options = props.uischema.options as GeneratorOptions | undefined;
+  const { label, path, data, visible, handleChange, uischema } = props;
+  const t = useTranslation('common');
+  const options = uischema.options as GeneratorOptions | undefined;
   const generate = useCallback(() => {
     if (!options) {
       return;
     }
     const id = generateId(options, props.data);
-    const path = composePaths(props.path, options?.targetField);
-    props.handleChange(path, id);
-  }, [options, props.path, props.data]);
+    const fullPath = composePaths(path, options?.targetField);
+    handleChange(fullPath, id);
+  }, [options, path, data, handleChange]);
 
-  const value = options?.targetField
-    ? props.data[options?.targetField]
-    : undefined;
+  const value = options?.targetField ? data[options?.targetField] : undefined;
 
   const error = useMemo(() => {
     if (!options) {
       return;
     }
-    return validateFields(options, props.data);
-  }, [options, props.data, value]);
+    return validateFields(options, data);
+  }, [options, data, value]);
 
-  if (!props.visible) {
+  if (!visible) {
     return null;
   }
   return (
@@ -134,7 +140,7 @@ const UIComponent = (props: ControlProps) => {
 
         <Box flex={0}>
           <Button disabled={!!error} onClick={generate} variant="outlined">
-            Generate
+            {t('label.generate')}
           </Button>
         </Box>
       </Box>
