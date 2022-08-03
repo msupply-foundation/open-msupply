@@ -40,7 +40,7 @@ const extractField = (
 
 const validateFields = (
   options: GeneratorOptions,
-  data: any
+  data: Record<string, unknown>
 ): string | undefined => {
   for (const part of options.parts ?? []) {
     const field = extractField(data, part.field);
