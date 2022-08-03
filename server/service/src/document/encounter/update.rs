@@ -32,7 +32,6 @@ pub struct UpdateEncounter {
 pub fn update_encounter(
     ctx: &ServiceContext,
     service_provider: &ServiceProvider,
-    store_id: String,
     user_id: &str,
     input: UpdateEncounter,
 ) -> Result<Document, UpdateEncounterError> {
@@ -61,7 +60,7 @@ pub fn update_encounter(
 
             let result = service_provider
                 .document_service
-                .update_document(ctx, &store_id, doc)
+                .update_document(ctx, doc)
                 .map_err(|err| match err {
                     DocumentInsertError::InvalidDataSchema(err) => {
                         UpdateEncounterError::InvalidDataSchema(err)
@@ -199,7 +198,7 @@ mod test {
             .update_patient(
                 &ctx,
                 &service_provider,
-                "store_a".to_string(),
+                "store_a",
                 &patient.id,
                 UpdatePatient {
                     data: serde_json::to_value(&patient).unwrap(),
@@ -217,7 +216,6 @@ mod test {
             .upsert_program(
                 &ctx,
                 &service_provider,
-                "store_a".to_string(),
                 "user",
                 UpsertProgram {
                     data: serde_json::to_value(program.clone()).unwrap(),
@@ -238,7 +236,6 @@ mod test {
             .insert_encounter(
                 &ctx,
                 &service_provider,
-                "store_a".to_string(),
                 "user",
                 InsertEncounter {
                     data: serde_json::to_value(encounter.clone()).unwrap(),
@@ -255,7 +252,6 @@ mod test {
             .update_encounter(
                 &ctx,
                 &service_provider,
-                "store_a".to_string(),
                 "user",
                 UpdateEncounter {
                     data: json!({"enrolment_datetime": true}),
@@ -272,7 +268,6 @@ mod test {
             .update_encounter(
                 &ctx,
                 &service_provider,
-                "store_a".to_string(),
                 "user",
                 UpdateEncounter {
                     data: json!({"encounter_datetime": true}),
@@ -293,7 +288,6 @@ mod test {
             .update_encounter(
                 &ctx,
                 &service_provider,
-                "store_a".to_string(),
                 "user",
                 UpdateEncounter {
                     data: serde_json::to_value(encounter.clone()).unwrap(),
@@ -304,7 +298,7 @@ mod test {
             .unwrap();
         let found = service_provider
             .document_service
-            .get_document(&ctx, "store_a", &result.name)
+            .get_document(&ctx, &result.name)
             .unwrap()
             .unwrap();
         assert_eq!(found.parent_ids, vec![initial_encounter.id]);

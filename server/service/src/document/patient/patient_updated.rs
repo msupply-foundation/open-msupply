@@ -172,7 +172,7 @@ mod test {
             .update_patient(
                 &ctx,
                 &service_provider,
-                "store_a".to_string(),
+                "store_a",
                 "user",
                 UpdatePatient {
                     data: serde_json::to_value(patient.clone()).unwrap(),
@@ -223,7 +223,7 @@ mod test {
             .update_patient(
                 &ctx,
                 &service_provider,
-                "store_a".to_string(),
+                "store_a",
                 "user",
                 UpdatePatient {
                     data: patient,

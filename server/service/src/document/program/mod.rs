@@ -22,11 +22,10 @@ pub trait ProgramServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         service_provider: &ServiceProvider,
-        store_id: String,
         user_id: &str,
         input: UpsertProgram,
     ) -> Result<(Program, Document), UpsertProgramError> {
-        upsert_program(ctx, service_provider, store_id, user_id, input)
+        upsert_program(ctx, service_provider, user_id, input)
     }
 
     fn get_patient_programs(

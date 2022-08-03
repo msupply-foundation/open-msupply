@@ -36,7 +36,7 @@ pub fn update_program(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::MutateProgram,
-            store_id: Some(store_id.clone()),
+            store_id: Some(store_id),
         },
     )?;
 
@@ -46,7 +46,6 @@ pub fn update_program(
     match service_provider.program_service.upsert_program(
         &service_context,
         service_provider,
-        store_id.clone(),
         &user.user_id,
         UpsertProgram {
             data: input.data,

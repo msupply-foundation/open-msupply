@@ -62,14 +62,14 @@ pub enum UpdateDocumentResponse {
 
 pub fn update_document(
     ctx: &Context<'_>,
-    store_id: &str,
+    store_id: String,
     input: UpdateDocumentInput,
 ) -> Result<UpdateDocumentResponse> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::MutateDocument,
-            store_id: Some(store_id.to_string()),
+            store_id: Some(store_id),
         },
     )?;
 
@@ -78,11 +78,10 @@ pub fn update_document(
 
     validate_document_type(&context.connection, &input)?;
 
-    let response = match service_provider.document_service.update_document(
-        &context,
-        store_id,
-        input_to_raw_document(input),
-    ) {
+    let response = match service_provider
+        .document_service
+        .update_document(&context, input_to_raw_document(input))
+    {
         Ok(document) => UpdateDocumentResponse::Response(DocumentNode { document }),
         Err(error) => UpdateDocumentResponse::Error(UpdateDocumentError {
             error: map_error(error)?,
@@ -131,12 +130,6 @@ fn map_error(error: DocumentInsertError) -> Result<UpdateDocumentErrorInterface>
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
-        // Structured Errors
-        DocumentInsertError::MergeRequired(auto_merge) => {
-            return Ok(UpdateDocumentErrorInterface::MergeRequired(
-                MergeRequiredError(auto_merge),
-            ))
-        }
         // Standard Graphql Errors
         DocumentInsertError::DatabaseError(_) => {
             StandardGraphqlError::InternalError(formatted_error)
@@ -144,13 +137,13 @@ fn map_error(error: DocumentInsertError) -> Result<UpdateDocumentErrorInterface>
         DocumentInsertError::InvalidDataSchema(_) => {
             StandardGraphqlError::BadUserInput(formatted_error)
         }
-        DocumentInsertError::InvalidDocumentHistory => {
-            StandardGraphqlError::InternalError(formatted_error)
-        }
         DocumentInsertError::InternalError(_) => {
             StandardGraphqlError::InternalError(formatted_error)
         }
         DocumentInsertError::SchemaDoesNotExist => {
+            StandardGraphqlError::BadUserInput(formatted_error)
+        }
+        DocumentInsertError::InvalidParent(_) => {
             StandardGraphqlError::BadUserInput(formatted_error)
         }
     };

@@ -1,7 +1,7 @@
 use async_graphql::*;
 use graphql_core::generic_filters::EqualFilterStringInput;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
-use repository::{DocumentFilter, EqualFilter, StringFilter};
+use repository::{DocumentFilter, StringFilter};
 use service::auth::{Resource, ResourceAccessRequest};
 use service::usize_to_u32;
 
@@ -14,12 +14,10 @@ pub enum DocumentResponse {
 
 #[derive(InputObject, Clone)]
 pub struct DocumentFilterInput {
-    pub store_id: Option<EqualFilterStringInput>,
     pub name: Option<EqualFilterStringInput>,
 }
 fn to_domain_filter(f: DocumentFilterInput) -> DocumentFilter {
     DocumentFilter {
-        store_id: f.store_id.map(EqualFilter::from),
         name: f.name.map(|f| repository::StringFilter {
             equal_to: f.equal_to,
             not_equal_to: f.not_equal_to,
@@ -37,7 +35,7 @@ pub fn document(ctx: &Context<'_>, store_id: String, name: String) -> Result<Opt
         ctx,
         &ResourceAccessRequest {
             resource: Resource::QueryDocument,
-            store_id: Some(store_id.to_string()),
+            store_id: Some(store_id),
         },
     )?;
 
@@ -48,7 +46,6 @@ pub fn document(ctx: &Context<'_>, store_id: String, name: String) -> Result<Opt
         .document_service
         .get_documents(
             &context,
-            &store_id,
             Some(DocumentFilter::new().name(StringFilter::equal_to(&name))),
         )?
         .into_iter()
@@ -67,7 +64,7 @@ pub fn documents(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::QueryDocument,
-            store_id: Some(store_id.to_string()),
+            store_id: Some(store_id),
         },
     )?;
 
@@ -76,7 +73,7 @@ pub fn documents(
 
     let nodes: Vec<DocumentNode> = service_provider
         .document_service
-        .get_documents(&context, &store_id, filter.map(to_domain_filter))?
+        .get_documents(&context, filter.map(to_domain_filter))?
         .into_iter()
         .map(|document| DocumentNode { document })
         .collect();

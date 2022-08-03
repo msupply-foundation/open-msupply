@@ -1,1 +1,3 @@
 DROP TABLE IF EXISTS document CASCADE;
+
+DROP VIEW IF EXISTS latest_document CASCADE;
