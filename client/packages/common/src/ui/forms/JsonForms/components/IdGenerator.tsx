@@ -52,7 +52,7 @@ const validateFields = (
   }
 };
 
-const generateId = (options: GeneratorOptions, data: any): string => {
+const generateId = (options: GeneratorOptions, data: Record<string, unknown>): string => {
   let output = '';
   for (const part of options.parts ?? []) {
     const field = extractField(data, part.field);
