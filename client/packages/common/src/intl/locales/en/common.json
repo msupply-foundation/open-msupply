@@ -112,6 +112,7 @@
   "label.first-name": "First name",
   "label.last-name": "Last name",
   "label.gender": "Gender",
+  "label.generate": "Generate",
   "label.enrolment-program": "Program",
   "label.enrolment-patient-id": "Enrolment Patient Id",
   "label.enrolment-datetime": "Enrolment Date",
