@@ -258,6 +258,7 @@ impl<'a> RemoteSyncState<'a> {
         }
     }
 
+    /// Initalisation request was sent and successfull processed
     pub fn sync_queue_initalised(&self) -> Result<bool, RepositoryError> {
         let value = self
             .key_value_store
@@ -270,6 +271,7 @@ impl<'a> RemoteSyncState<'a> {
             .set_bool(KeyValueType::RemoteSyncInitilisationStarted, Some(true))
     }
 
+    /// Remote data was initialised
     pub fn initial_remote_data_synced(&self) -> Result<bool, RepositoryError> {
         let value = self
             .key_value_store
