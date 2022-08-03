@@ -21,22 +21,20 @@ pub trait EncounterServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         service_provider: &ServiceProvider,
-        store_id: String,
         user_id: &str,
         input: InsertEncounter,
     ) -> Result<Document, InsertEncounterError> {
-        insert_encounter(ctx, service_provider, store_id, user_id, input)
+        insert_encounter(ctx, service_provider, user_id, input)
     }
 
     fn update_encounter(
         &self,
         ctx: &ServiceContext,
         service_provider: &ServiceProvider,
-        store_id: String,
         user_id: &str,
         input: UpdateEncounter,
     ) -> Result<Document, UpdateEncounterError> {
-        update_encounter(ctx, service_provider, store_id, user_id, input)
+        update_encounter(ctx, service_provider, user_id, input)
     }
 
     fn get_patient_program_encounters(

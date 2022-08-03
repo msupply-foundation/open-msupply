@@ -42,7 +42,7 @@ pub fn insert_patient(
     match service_provider.patient_service.update_patient(
         &service_context,
         service_provider,
-        store_id.clone(),
+        &store_id,
         &user.user_id,
         UpdatePatient {
             data: input.data,

@@ -35,7 +35,6 @@ pub struct UpsertProgram {
 pub fn upsert_program(
     ctx: &ServiceContext,
     service_provider: &ServiceProvider,
-    store_id: String,
     user_id: &str,
     input: UpsertProgram,
 ) -> Result<(Program, Document), UpsertProgramError> {
@@ -43,12 +42,12 @@ pub fn upsert_program(
         .connection
         .transaction_sync(|_| {
             let patient_id = input.patient_id.clone();
-            let schema_program = validate(ctx, service_provider, &store_id, &input)?;
+            let schema_program = validate(ctx, service_provider, &input)?;
             let doc = generate(user_id, input)?;
 
             let document = service_provider
                 .document_service
-                .update_document(ctx, &store_id, doc)
+                .update_document(ctx, doc)
                 .map_err(|err| match err {
                     DocumentInsertError::InvalidDataSchema(err) => {
                         UpsertProgramError::InvalidDataSchema(err)
@@ -103,37 +102,32 @@ fn validate_parent(ctx: &ServiceContext, parent: &str) -> Result<bool, Repositor
 
 fn validate_patient_exists(
     ctx: &ServiceContext,
-    store_id: &str,
     patient_id: &str,
 ) -> Result<bool, RepositoryError> {
     let doc_name = patient_doc_name(patient_id);
-    let document =
-        DocumentRepository::new(&ctx.connection).find_one_by_name(store_id, &doc_name)?;
+    let document = DocumentRepository::new(&ctx.connection).find_one_by_name(&doc_name)?;
     Ok(document.is_some())
 }
 
 fn validate_program_not_exists(
     ctx: &ServiceContext,
     service_provider: &ServiceProvider,
-    store_id: &str,
     patient_id: &str,
     program: &str,
 ) -> Result<bool, RepositoryError> {
     let patient_name = patient_program_doc_name(patient_id, program);
-    let existing_document =
-        service_provider
-            .document_service
-            .get_document(ctx, store_id, &patient_name)?;
+    let existing_document = service_provider
+        .document_service
+        .get_document(ctx, &patient_name)?;
     Ok(existing_document.is_none())
 }
 
 fn validate(
     ctx: &ServiceContext,
     service_provider: &ServiceProvider,
-    store_id: &str,
     input: &UpsertProgram,
 ) -> Result<SchemaProgramEnrolment, UpsertProgramError> {
-    if !validate_patient_exists(ctx, store_id, &input.patient_id)? {
+    if !validate_patient_exists(ctx, &input.patient_id)? {
         return Err(UpsertProgramError::InvalidPatientId);
     }
 
@@ -146,7 +140,6 @@ fn validate(
             if !validate_program_not_exists(
                 ctx,
                 service_provider,
-                store_id,
                 &input.patient_id,
                 &input.r#type,
             )? {
@@ -207,7 +200,6 @@ mod test {
             .upsert_program(
                 &ctx,
                 &service_provider,
-                "store_a".to_string(),
                 "user",
                 UpsertProgram {
                     data: json!({"enrolment_datetime": true}),
@@ -227,7 +219,7 @@ mod test {
             .update_patient(
                 &ctx,
                 &service_provider,
-                "store_a".to_string(),
+                "store_a",
                 &patient.id,
                 UpdatePatient {
                     data: serde_json::to_value(&patient).unwrap(),
@@ -241,7 +233,6 @@ mod test {
             .upsert_program(
                 &ctx,
                 &service_provider,
-                "store_a".to_string(),
                 "user",
                 UpsertProgram {
                     data: json!({"enrolment_datetime": true}),
@@ -266,7 +257,6 @@ mod test {
             .upsert_program(
                 &ctx,
                 &service_provider,
-                "store_a".to_string(),
                 "user",
                 UpsertProgram {
                     data: serde_json::to_value(program.clone()).unwrap(),
@@ -283,7 +273,6 @@ mod test {
                 .upsert_program(
                     &ctx,
                     &service_provider,
-                    "store_a".to_string(),
                     "user",
                     UpsertProgram {
                         patient_id: patient.id.clone(),
@@ -303,7 +292,6 @@ mod test {
                 .upsert_program(
                     &ctx,
                     &service_provider,
-                    "store_a".to_string(),
                     "user",
                     UpsertProgram {
                         patient_id: patient.id.clone(),
@@ -320,17 +308,13 @@ mod test {
 
         // success update
         let v0 = DocumentRepository::new(&ctx.connection)
-            .find_one_by_name(
-                "store_a",
-                &patient_program_doc_name(&patient.id, &program_type),
-            )
+            .find_one_by_name(&patient_program_doc_name(&patient.id, &program_type))
             .unwrap()
             .unwrap();
         service
             .upsert_program(
                 &ctx,
                 &service_provider,
-                "store_a".to_string(),
                 "user",
                 UpsertProgram {
                     patient_id: patient.id.clone(),

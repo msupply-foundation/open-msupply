@@ -31,14 +31,14 @@ pub struct UpdatePatient {
 pub fn update_patient(
     ctx: &ServiceContext,
     service_provider: &ServiceProvider,
-    store_id: String,
+    store_id: &str,
     user_id: &str,
     input: UpdatePatient,
 ) -> Result<Patient, UpdatePatientError> {
     let patient = ctx
         .connection
         .transaction_sync(|_| {
-            let patient = validate(ctx, service_provider, &store_id, &input)?;
+            let patient = validate(ctx, service_provider, &input)?;
             let patient_id = patient.id.clone();
             let doc = generate(user_id, &patient, input)?;
             let doc_timestamp = doc.timestamp.clone();
@@ -46,7 +46,7 @@ pub fn update_patient(
             // Updating the document will trigger an update in the patient (names) table
             service_provider
                 .document_service
-                .update_document(ctx, &store_id, doc)
+                .update_document(ctx, doc)
                 .map_err(|err| match err {
                     DocumentInsertError::InvalidDataSchema(err) => {
                         UpdatePatientError::InvalidDataSchema(err)
@@ -61,13 +61,13 @@ pub fn update_patient(
                 })?;
 
             // update the names table
-            patient_document_updated(&ctx.connection, &store_id, &doc_timestamp, patient)?;
+            patient_document_updated(&ctx.connection, store_id, &doc_timestamp, patient)?;
 
             let patient = service_provider
                 .patient_service
                 .get_patients(
                     ctx,
-                    &store_id,
+                    store_id,
                     None,
                     Some(PatientFilter::new().id(EqualFilter::equal_to(&patient_id))),
                     None,
@@ -127,14 +127,12 @@ fn validate_patient_id(patient: &SchemaPatient) -> bool {
 fn validate_patient_not_exists(
     ctx: &ServiceContext,
     service_provider: &ServiceProvider,
-    store_id: &str,
     id: &str,
 ) -> Result<bool, RepositoryError> {
     let patient_name = patient_doc_name(id);
-    let existing_document =
-        service_provider
-            .document_service
-            .get_document(ctx, store_id, &patient_name)?;
+    let existing_document = service_provider
+        .document_service
+        .get_document(ctx, &patient_name)?;
     Ok(existing_document.is_none())
 }
 
@@ -146,7 +144,6 @@ fn validate_parent(ctx: &ServiceContext, parent: &str) -> Result<bool, Repositor
 fn validate(
     ctx: &ServiceContext,
     service_provider: &ServiceProvider,
-    store_id: &str,
     input: &UpdatePatient,
 ) -> Result<SchemaPatient, UpdatePatientError> {
     let patient = validate_patient_schema(input)?;
@@ -156,7 +153,7 @@ fn validate(
 
     match input.parent.clone() {
         None => {
-            if !validate_patient_not_exists(ctx, service_provider, store_id, &patient.id)? {
+            if !validate_patient_not_exists(ctx, service_provider, &patient.id)? {
                 return Err(UpdatePatientError::PatientExists);
             }
         }
@@ -251,7 +248,7 @@ pub mod test {
             .update_patient(
                 &ctx,
                 &service_provider,
-                "store_a".to_string(),
+                "store_a",
                 "user",
                 super::UpdatePatient {
                     data: json!({"invalid": true}),
@@ -269,7 +266,7 @@ pub mod test {
             .update_patient(
                 &ctx,
                 &service_provider,
-                "store_a".to_string(),
+                "store_a",
                 "user",
                 super::UpdatePatient {
                     data: serde_json::to_value(patient.clone()).unwrap(),
@@ -284,7 +281,7 @@ pub mod test {
                 .update_patient(
                     &ctx,
                     &service_provider,
-                    "store_a".to_string(),
+                    "store_a",
                     "user",
                     super::UpdatePatient {
                         data: serde_json::to_value(patient.clone()).unwrap(),
@@ -302,7 +299,7 @@ pub mod test {
                 .update_patient(
                     &ctx,
                     &service_provider,
-                    "store_a".to_string(),
+                    "store_a",
                     "user",
                     super::UpdatePatient {
                         data: serde_json::to_value(patient.clone()).unwrap(),
@@ -317,14 +314,14 @@ pub mod test {
 
         // success update
         let v0 = DocumentRepository::new(&ctx.connection)
-            .find_one_by_name("store_a", "patients/testid")
+            .find_one_by_name("patients/testid")
             .unwrap()
             .unwrap();
         service
             .update_patient(
                 &ctx,
                 &service_provider,
-                "store_a".to_string(),
+                "store_a",
                 "user",
                 super::UpdatePatient {
                     data: serde_json::to_value(patient.clone()).unwrap(),

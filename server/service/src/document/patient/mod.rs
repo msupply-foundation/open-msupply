@@ -51,7 +51,7 @@ pub trait PatientServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         service_provider: &ServiceProvider,
-        store_id: String,
+        store_id: &str,
         user_id: &str,
         input: UpdatePatient,
     ) -> Result<Patient, UpdatePatientError> {
@@ -62,7 +62,7 @@ pub trait PatientServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         service_provider: &ServiceProvider,
-        store_id: String,
+        store_id: &str,
         input: PatientSearch,
     ) -> Result<Vec<PatientSearchResult>, RepositoryError> {
         patient_search(ctx, service_provider, store_id, input)
