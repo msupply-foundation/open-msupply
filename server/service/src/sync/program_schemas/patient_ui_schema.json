@@ -24,9 +24,52 @@
                   }
                 },
                 {
-                  "type": "Control",
+                  "type": "IdGeneratorControl",
                   "label": "NUIC",
-                  "scope": "#/properties/code"
+                  "scope": "#/",
+                  "options": {
+                    "targetField": "code",
+                    "parts": [
+                      {
+                        "field": "lastName",
+                        "firstNChars": 2,
+                        "toUpperCase": true
+                      },
+                      {
+                        "field": ["birthPlace", "district"],
+                        "firstNChars": 2,
+                        "toUpperCase": true
+                      },
+                      {
+                        "field": "hand",
+                        "enumMapping": {
+                          "LEFT": "L",
+                          "RIGHT": "R"
+                        }
+                      },
+                      {
+                        "field": "birthOrder",
+                        "firstNChars": 2,
+                        "toUpperCase": true
+                      },
+                      {
+                        "field": "gender",
+                        "enumMapping": {
+                          "MALE": "1",
+                          "FEMALE": "2",
+                          "TRANSGENDER_MALE": "3",
+                          "TRANSGENDER_FEMALE": "3",
+                          "UNKNOWN": "3",
+                          "NON_BINARY": "3"
+                        }
+                      },
+                      {
+                        "field": "firstName",
+                        "lastNChars": 2,
+                        "toUpperCase": true
+                      }
+                    ]
+                  }
                 },
                 {
                   "type": "Control",
