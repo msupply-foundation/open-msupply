@@ -65,6 +65,7 @@ fragment Inbound on InvoiceNode {
   otherPartyName
   status
   theirReference
+  transportReference
   type
   linkedShipment {
     __typename
@@ -605,6 +606,39 @@ mutation upsertInboundShipment(
           id
         }
       }
+    }
+  }
+}
+mutation addToInboundShipmentFromMasterList(
+  $storeId: String!
+  $shipmentId: String!
+  $masterListId: String!
+) {
+  addToInboundShipmentFromMasterList(
+    input: { shipmentId: $shipmentId, masterListId: $masterListId }
+    storeId: $storeId
+  ) {
+    ... on AddToInboundShipmentFromMasterListError {
+      __typename
+      error {
+        ... on MasterListNotFoundForThisStore {
+          __typename
+          description
+        }
+        ... on CannotEditInvoice {
+          __typename
+          description
+        }
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+        description
+      }
+    }
+    ... on InvoiceLineConnector {
+      __typename
+      totalCount
     }
   }
 }

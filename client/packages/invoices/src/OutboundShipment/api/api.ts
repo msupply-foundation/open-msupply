@@ -420,29 +420,32 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
     },
   },
   addFromMasterList: async ({
-    outboundShipmentId,
+    shipmentId,
     masterListId,
   }: {
-    outboundShipmentId: string;
+    shipmentId: string;
     masterListId: string;
   }) => {
-    const result = await sdk.addToShipmentFromMasterList({
-      outboundShipmentId,
+    const result = await sdk.addToOutboundShipmentFromMasterList({
+      shipmentId,
       masterListId,
       storeId,
     });
 
     if (
-      result.addToShipmentFromMasterList.__typename === 'InvoiceLineConnector'
+      result.addToOutboundShipmentFromMasterList.__typename ===
+      'InvoiceLineConnector'
     ) {
-      return result.addToShipmentFromMasterList;
+      return result.addToOutboundShipmentFromMasterList;
     }
 
     if (
-      result.addToShipmentFromMasterList.__typename ===
-      'AddToShipmentFromMasterListError'
+      result.addToOutboundShipmentFromMasterList.__typename ===
+      'AddToOutboundShipmentFromMasterListError'
     ) {
-      throw new Error(result.addToShipmentFromMasterList.error.__typename);
+      throw new Error(
+        result.addToOutboundShipmentFromMasterList.error.__typename
+      );
     }
 
     throw new Error('Could not add from master list');

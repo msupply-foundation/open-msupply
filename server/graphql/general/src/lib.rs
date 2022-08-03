@@ -211,3 +211,11 @@ impl ServerAdminStage0Mutations {
         update_server_settings(ctx, input, true)
     }
 }
+
+pub struct MasterListNotFoundForThisStore;
+#[Object]
+impl MasterListNotFoundForThisStore {
+    pub async fn description(&self) -> &'static str {
+        "Master list not found (might not be visible to this store)"
+    }
+}

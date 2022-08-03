@@ -15,6 +15,7 @@ use repository::{
 mod generate;
 mod validate;
 
+use crate::invoice::inbound_shipment::update::generate::GenerateResult;
 use generate::generate;
 use util::uuid::uuid;
 use validate::validate;
@@ -50,18 +51,28 @@ pub fn update_inbound_shipment(
         .connection
         .transaction_sync(|connection| {
             let (invoice, other_party) = validate(connection, store_id, &patch)?;
-            let (lines_and_invoice_lines_option, update_invoice) =
-                generate(connection, user_id, invoice, other_party, patch.clone())?;
+            let GenerateResult {
+                batches_to_update,
+                update_invoice,
+                empty_lines_to_trim,
+            } = generate(connection, user_id, invoice, other_party, patch.clone())?;
 
             InvoiceRowRepository::new(connection).upsert_one(&update_invoice)?;
 
-            if let Some(lines_and_invoice_lines) = lines_and_invoice_lines_option {
+            if let Some(lines_and_invoice_lines) = batches_to_update {
                 let stock_line_repository = StockLineRowRepository::new(connection);
                 let invoice_line_respository = InvoiceLineRowRepository::new(connection);
 
                 for LineAndStockLine { line, stock_line } in lines_and_invoice_lines.into_iter() {
                     stock_line_repository.upsert_one(&stock_line)?;
                     invoice_line_respository.upsert_one(&line)?;
+                }
+            }
+
+            if let Some(lines) = empty_lines_to_trim {
+                let repository = InvoiceLineRowRepository::new(connection);
+                for line in lines {
+                    repository.delete(&line.id)?;
                 }
             }
 
@@ -160,7 +171,7 @@ mod test {
         mock::{
             mock_inbound_shipment_a, mock_inbound_shipment_b, mock_inbound_shipment_c,
             mock_inbound_shipment_e, mock_name_a, mock_name_linked_to_store_join,
-            mock_name_not_linked_to_store_join, mock_outbound_shipment_c, mock_store_a,
+            mock_name_not_linked_to_store_join, mock_outbound_shipment_e, mock_store_a,
             mock_store_linked_to_name, mock_user_account_a, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
@@ -236,24 +247,24 @@ mod test {
                 &mock_store_a().id,
                 "n/a",
                 inline_init(|r: &mut UpdateInboundShipment| {
-                    r.id = mock_outbound_shipment_c().id.clone();
+                    r.id = mock_outbound_shipment_e().id.clone();
                     r.other_party_id = Some(mock_name_a().id.clone());
                 })
             ),
             Err(ServiceError::NotAnInboundShipment)
         );
         //NotThisStoreInvoice
-        // assert_eq!(
-        //     service.update_inbound_shipment(
-        //         &context,
-        //         "store_b",
-        //         "n/a",
-        //         inline_init(|r: &mut UpdateInboundShipment| {
-        //             r.id = mock_inbound_shipment_c().id.clone();
-        //         })
-        //     ),
-        //     Err(ServiceError::NotThisStoreInvoice)
-        // );
+        assert_eq!(
+            service.update_inbound_shipment(
+                &context,
+                "store_b",
+                "n/a",
+                inline_init(|r: &mut UpdateInboundShipment| {
+                    r.id = mock_inbound_shipment_c().id.clone();
+                })
+            ),
+            Err(ServiceError::NotThisStoreInvoice)
+        );
         //CannotEditFinalised
         assert_eq!(
             service.update_inbound_shipment(
@@ -320,8 +331,7 @@ mod test {
             Err(ServiceError::OtherPartyNotASupplier)
         );
 
-        // TODO NotThisStoreInvoice, CannotReverseInvoiceStatus,
-        // UpdateInvoiceDoesNotExist, DatabaseError
+        // TODO CannotReverseInvoiceStatus,UpdateInvoiceDoesNotExist
     }
 
     #[actix_rt::test]

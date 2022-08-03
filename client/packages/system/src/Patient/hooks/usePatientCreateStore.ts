@@ -4,17 +4,17 @@ import create from 'zustand';
 // Copied from the schema definition
 export enum Gender {
   /** 703118005 Feminine gender */
-  Female = 'Female',
+  FEMALE = 'FEMALE',
   /** 703117000 Masculine gender*/
-  Male = 'Male',
+  MALE = 'MALE',
   /** 407379008 transgendered transsexual, female-to-male*/
-  TransgenderMale = 'TransgenderMale',
+  TRANSGENDER_MALE = 'TRANSGENDER_MALE',
   /** 407378000 Surgically transgendered transsexual, male-to-female*/
-  TransgenderFemale = 'TransgenderFemale',
+  TRANSGENDER_FEMALE = 'TRANSGENDER_FEMALE',
   /** 394743007 Gender unknown*/
-  Unknown = 'Unknown',
+  UNKNOWN = 'UNKNOWN',
   /** 772004004 Non-binary gender*/
-  NonBinary = 'NonBinary',
+  NON_BINARY = 'NON_BINARY',
 }
 
 export interface CreateNewPatient {

@@ -116,12 +116,12 @@
     },
     "Gender": {
       "enum": [
-        "Female",
-        "Male",
-        "TransgenderMale",
-        "TransgenderFemale",
-        "Unknown",
-        "NonBinary"
+        "FEMALE",
+        "MALE",
+        "TRANSGENDER_MALE",
+        "TRANSGENDER_FEMALE",
+        "UNKNOWN",
+        "NON_BINARY"
       ],
       "type": "string"
     },
@@ -140,12 +140,12 @@
     },
     "MaritalStatus": {
       "enum": [
-        "Single",
-        "Married",
-        "Divorced",
-        "Widowed",
-        "Separated",
-        "RegisteredPartnership"
+        "SINGLE",
+        "MARRIED",
+        "DIVORCED",
+        "WIDOWED",
+        "SEPARATED",
+        "REGISTERED_PARTNERSHIP"
       ],
       "type": "string"
     },
@@ -177,6 +177,11 @@
           "description": "Date of birth is estimated",
           "type": "boolean"
         },
+        "dateOfDeath": {
+          "description": "Date of death",
+          "format": "date",
+          "type": "string"
+        },
         "family": {
           "$ref": "#/definitions/Family"
         },
@@ -195,6 +200,10 @@
           "description": "Medical record number\n\n398225001",
           "type": "string"
         },
+        "isDeceased": {
+          "description": "Person is deceased",
+          "type": "boolean"
+        },
         "lastName": {
           "description": "184096005 Patient Surname",
           "type": "string"
@@ -207,7 +216,7 @@
           "$ref": "#/definitions/SocioEconomics"
         }
       },
-      "required": ["contactDetails", "id", "socioEconomics"],
+      "required": ["contactDetails", "id", "isDeceased", "socioEconomics"],
       "type": "object"
     },
     "Person": {
@@ -235,6 +244,11 @@
           "description": "Date of birth is estimated",
           "type": "boolean"
         },
+        "dateOfDeath": {
+          "description": "Date of death",
+          "format": "date",
+          "type": "string"
+        },
         "firstName": {
           "type": "string"
         },
@@ -245,6 +259,10 @@
         "id": {
           "description": "mSupply Patient id",
           "type": "string"
+        },
+        "isDeceased": {
+          "description": "Person is deceased",
+          "type": "boolean"
         },
         "lastName": {
           "description": "184096005 Patient Surname",
@@ -258,7 +276,7 @@
           "$ref": "#/definitions/SocioEconomics"
         }
       },
-      "required": ["contactDetails", "socioEconomics"],
+      "required": ["isDeceased", "contactDetails", "socioEconomics"],
       "type": "object"
     },
     "SocioEconomics": {

@@ -13,6 +13,9 @@ export const booleanTester = rankWith(4, isBooleanControl);
 const UIComponent = (props: ControlProps) => {
   const { data, handleChange, label, path } = props;
 
+  if (!props.visible) {
+    return null;
+  }
   return (
     <Box
       display="flex"
