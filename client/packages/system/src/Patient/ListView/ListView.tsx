@@ -55,10 +55,14 @@ const PatientListComponent: FC = () => {
       {
         key: 'dateOfBirth',
         label: 'label.date-of-birth',
-        align: ColumnAlign.Right,
         width: 175,
         formatter: dateString =>
           dateString ? localisedDate((dateString as string) || '') : '',
+      },
+      {
+        key: 'isDeceased',
+        label: 'label.deceased',
+        align: ColumnAlign.Right,
       },
     ],
     { onChangeSortBy: updateSortQuery, sortBy },

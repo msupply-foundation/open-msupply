@@ -68,25 +68,14 @@
                 {
                   "type": "Control",
                   "scope": "#/properties/hand"
-                }
-              ]
-            },
-            {
-              "type": "Group",
-              "label": "Contact Information",
-              "elements": [
+                },
                 {
-                  "type": "Control",
+                  "type": "FirstItemArrayControl",
                   "scope": "#/properties/contactDetails",
-                  "itemLabel": "Contact ${index}:",
                   "options": {
                     "detail": {
                       "type": "VerticalLayout",
                       "elements": [
-                        {
-                          "type": "Control",
-                          "scope": "/properties/description"
-                        },
                         {
                           "type": "Control",
                           "scope": "/properties/address1"
@@ -167,9 +156,8 @@
                       "scope": "#/properties/family/properties/mother/properties/lastName"
                     },
                     {
-                      "type": "Control",
+                      "type": "FirstItemArrayControl",
                       "scope": "#/properties/family/properties/mother/properties/contactDetails",
-                      "label": "Contact",
                       "options": {
                         "detail": {
                           "type": "VerticalLayout",
@@ -205,9 +193,8 @@
                       "scope": "#/properties/family/properties/nextOfKin/properties/lastName"
                     },
                     {
-                      "type": "Control",
+                      "type": "FirstItemArrayControl",
                       "scope": "#/properties/family/properties/nextOfKin/properties/contactDetails",
-                      "label": "Contact",
                       "options": {
                         "detail": {
                           "type": "VerticalLayout",
@@ -229,6 +216,29 @@
                       }
                     }
                   ]
+                }
+              ]
+            },
+            {
+              "type": "Group",
+              "label": "Death",
+              "elements": [
+                {
+                  "type": "Control",
+                  "scope": "#/properties/isDeceased"
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/properties/dateOfDeath",
+                  "rule": {
+                    "effect": "HIDE",
+                    "condition": {
+                      "scope": "#/properties/isDeceased",
+                      "schema": {
+                        "const": false
+                      }
+                    }
+                  }
                 }
               ]
             }

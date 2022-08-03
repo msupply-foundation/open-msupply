@@ -76,6 +76,9 @@ const ArrayComponent = (props: ArrayControlCustomProps) => {
     [uischemas, schema, uischema.scope, path, uischema, rootSchema]
   );
 
+  if (!props.visible) {
+    return null;
+  }
   return (
     <Box display="flex" flexDirection="column" gap={0.5} marginTop={2}>
       <Box display="flex" width="100%" gap={2} alignItems="center">

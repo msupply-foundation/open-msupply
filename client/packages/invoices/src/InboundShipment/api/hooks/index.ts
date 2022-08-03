@@ -26,6 +26,7 @@ export const useInbound = {
     save: Lines.useSaveInboundLines,
   },
   utils: {
+    addFromMasterList: Utils.useAddFromMasterList,
     api: Utils.useInboundApi,
     isDisabled: Utils.useIsInboundDisabled,
     isStatusChangeDisabled: Utils.useIsStatusChangeDisabled,

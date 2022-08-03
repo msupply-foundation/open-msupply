@@ -11,6 +11,7 @@ export const TextInputCell = <T extends RecordWithId>({
   isDisabled = false,
   rowIndex,
   columnIndex,
+  autocompleteName,
 }: CellProps<T>): React.ReactElement<CellProps<T>> => {
   const [buffer, setBuffer] = useBufferState(
     column.accessor({ rowData, rows })
@@ -18,6 +19,12 @@ export const TextInputCell = <T extends RecordWithId>({
   const updater = useDebounceCallback(column.setter, [column.setter], 500);
   const { maxLength } = column;
   const autoFocus = rowIndex === 0 && columnIndex === 0;
+  // This enables browser autocomplete for suggesting previously enetered input
+  // (input needs to be wrapped in form with autoComplete="on", doesn't quite work in firefox)
+  // see https://github.com/openmsupply/open-msupply/pull/305
+  const autocompleteProps = autocompleteName
+    ? { autoComplete: 'on', name: autocompleteName }
+    : {};
 
   return (
     <BasicTextInput
@@ -30,6 +37,7 @@ export const TextInputCell = <T extends RecordWithId>({
         setBuffer(newValue);
         updater({ ...rowData, [column.key]: newValue });
       }}
+      {...autocompleteProps}
     />
   );
 };

@@ -12,6 +12,7 @@ fragment PatientRow on PatientNode {
     name
     type
   }
+  isDeceased
 }
 
 fragment Patient on PatientNode {
@@ -33,6 +34,7 @@ fragment Patient on PatientNode {
   name
   phone
   website
+  isDeceased
 }
 
 query patients(

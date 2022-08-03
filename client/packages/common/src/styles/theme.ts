@@ -208,6 +208,7 @@ export const themeOptions = {
     login: { color: '#fafafa' },
   },
 };
+
 export const createTheme = (themeOptions: ThemeOptions) => {
   const theme = createMuiTheme(themeOptions);
 
@@ -219,4 +220,3 @@ export const createTheme = (themeOptions: ThemeOptions) => {
     '0 8px 16px 0 rgba(96, 97, 112, 0.16), 0 2px 4px 0 rgba(40, 41, 61, 0.04)';
   return theme;
 };
-// export default theme;
