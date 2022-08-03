@@ -133,7 +133,7 @@ const UIComponent = (props: ControlProps) => {
         <BasicTextInput disabled={true} value={value} />
 
         <Box flex={0}>
-          <Button disabled={!!error} onClick={generate}>
+          <Button disabled={!!error} onClick={generate} variant="outlined">
             Generate
           </Button>
         </Box>
