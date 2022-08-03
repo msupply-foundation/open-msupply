@@ -9,10 +9,10 @@ import {
   useFormatDateTime,
   ColumnAlign,
   useUrlQueryParams,
-  useNavigate,
 } from '@openmsupply-client/common';
-import { ProgramFragment, useProgramEnrolment } from '../api';
-import { AppBarButtons } from './AppBarButtons';
+import { ProgramFragment, useProgramEnrolment } from './api';
+import { usePatientModalStore } from '../../hooks';
+import { PatientModal } from '..';
 
 type ProgramFragmentWithId = { id: string } & ProgramFragment;
 
@@ -33,6 +33,8 @@ const ProgramListComponent: FC = () => {
   );
   const pagination = { page, first, offset };
   const { localisedDate } = useFormatDateTime();
+  const { setCurrent, setDocumentName, setDocumentType } =
+    usePatientModalStore();
 
   const columns = useColumns<ProgramFragmentWithId>(
     [
@@ -56,27 +58,23 @@ const ProgramListComponent: FC = () => {
     { onChangeSortBy: updateSortQuery, sortBy },
     [sortBy]
   );
-  const navigate = useNavigate();
 
   return (
-    <>
-      <AppBarButtons />
-      <DataTable
-        key="program-enrolment-list"
-        pagination={{ ...pagination, total: data?.totalCount }}
-        onChangePage={updatePaginationQuery}
-        columns={columns}
-        data={dataWithId}
-        isLoading={isLoading}
-        isError={isError}
-        onRowClick={row => {
-          navigate(
-            `${row.type}?doc=${row.document.name}&patientId=${row.patientId}&type=${row.type}`
-          );
-        }}
-        noDataElement={<NothingHere />}
-      />
-    </>
+    <DataTable
+      key="program-enrolment-list"
+      pagination={{ ...pagination, total: data?.totalCount }}
+      onChangePage={updatePaginationQuery}
+      columns={columns}
+      data={dataWithId}
+      isLoading={isLoading}
+      isError={isError}
+      onRowClick={row => {
+        setDocumentType(row.type);
+        setDocumentName(row.document.name);
+        setCurrent(PatientModal.Program);
+      }}
+      noDataElement={<NothingHere />}
+    />
   );
 };
 

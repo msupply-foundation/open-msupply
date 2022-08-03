@@ -2,12 +2,14 @@ import React, { FC, PropsWithChildren } from 'react';
 import { Box, styled, TabPanel } from '@openmsupply-client/common';
 
 interface PatientTabProps {
+  padding?: number;
   value: string;
 }
 
 const StyledTabPanel = styled(TabPanel)({
   height: '100%',
   flex: 1,
+  padding: 0,
 });
 
 const StyledTabContainer = styled(Box)(({ theme }) => ({
@@ -17,10 +19,11 @@ const StyledTabContainer = styled(Box)(({ theme }) => ({
 }));
 
 export const PatientTab: FC<PropsWithChildren<PatientTabProps>> = ({
-  value,
   children,
+  padding,
+  value,
 }) => (
-  <StyledTabPanel value={value}>
+  <StyledTabPanel value={value} sx={{ padding }}>
     <StyledTabContainer>{children}</StyledTabContainer>
   </StyledTabPanel>
 );

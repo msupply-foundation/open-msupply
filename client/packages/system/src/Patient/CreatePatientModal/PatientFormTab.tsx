@@ -8,11 +8,11 @@ import {
   useFormatDateTime,
   useTranslation,
 } from '@openmsupply-client/common';
-import { Gender, useCreatePatientStore } from '../hooks';
+import { Gender, usePatientCreateStore } from '../hooks';
 import { PatientPanel } from './PatientPanel';
 
 export const PatientFormTab: FC<PatientPanel> = ({ patient, value }) => {
-  const { updatePatient } = useCreatePatientStore();
+  const { updatePatient } = usePatientCreateStore();
   const t = useTranslation('patients');
 
   const genderOptions = useMemo(

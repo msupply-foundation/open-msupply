@@ -9,7 +9,7 @@ import {
 } from '@openmsupply-client/common';
 import { PatientPanel } from './PatientPanel';
 import { usePatient } from '../api';
-import { Gender, useCreatePatientStore } from '../hooks';
+import { Gender, usePatientCreateStore } from '../hooks';
 import { PatientFragment } from '../api/operations.generated';
 
 const genderToGenderInput = (gender: Gender): GenderInput => {
@@ -37,7 +37,7 @@ const genderToGenderInput = (gender: Gender): GenderInput => {
 
 export const PatientResultsTab: FC<PatientPanel> = ({ patient, value }) => {
   const { mutate, isLoading, data } = usePatient.utils.search();
-  const { updatePatient } = useCreatePatientStore();
+  const { updatePatient } = usePatientCreateStore();
   const t = useTranslation('patients');
 
   const columns = useColumns<PatientFragment>([
