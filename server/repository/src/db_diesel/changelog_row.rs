@@ -65,9 +65,12 @@ impl<'a> ChangelogRowRepository<'a> {
         ChangelogRowRepository { connection }
     }
 
-    /// # Arguments:
-    /// * earliest the first cursor to be included in the returned
-    /// * limit the number of entries to be returned
+    /// Returns changelog rows order by operation sequence in asc order
+    ///
+    /// # Arguments
+    ///
+    /// * `earliest` - Starting cursor (first returned changelogs may be ahead in sequence from starting cursor)
+    /// * `limit` - Maximum number of entries to be returned
     pub fn changelogs(
         &self,
         earliest: u64,

@@ -17,7 +17,7 @@ pub(crate) struct PostInitialisationError(pub(crate) SyncApiError);
 #[error("Failed to set initialised state: {0:?}")]
 pub(crate) struct SetInitialisedError(RepositoryError);
 #[derive(Error, Debug)]
-pub(crate) enum RemotPullError {
+pub(crate) enum RemotePullError {
     #[error("Api error while pulling remote records: {0:?}")]
     PullError(SyncApiError),
     #[error("Failed to acknowledge sync records: {0:?}")]
@@ -74,7 +74,7 @@ impl RemoteDataSynchroniser {
     }
 
     /// Pull all records from the central server
-    pub(crate) async fn pull(&self, connection: &StorageConnection) -> Result<(), RemotPullError> {
+    pub(crate) async fn pull(&self, connection: &StorageConnection) -> Result<(), RemotePullError> {
         // Arbitrary batch size TODO: should come from settings
         const BATCH_SIZE: u32 = 500;
         let sync_buffer_repository = SyncBufferRowRepository::new(connection);
@@ -86,13 +86,13 @@ impl RemoteDataSynchroniser {
                 .sync_api_v5
                 .get_queued_records(BATCH_SIZE)
                 .await
-                .map_err(RemotPullError::PullError)?;
+                .map_err(RemotePullError::PullError)?;
 
             let total_queue_length = sync_batch.queue_length;
             let sync_ids = sync_batch.extract_sync_ids();
             let sync_buffer_rows = sync_batch
                 .to_sync_buffer_rows()
-                .map_err(RemotPullError::ParsingV5RecordError)?;
+                .map_err(RemotePullError::ParsingV5RecordError)?;
 
             let number_of_pulled_records = sync_buffer_rows.len() as u64;
 
@@ -105,13 +105,13 @@ impl RemoteDataSynchroniser {
             if number_of_pulled_records > 0 {
                 sync_buffer_repository
                     .upsert_many(&sync_buffer_rows)
-                    .map_err(RemotPullError::SaveSyncBufferError)?;
+                    .map_err(RemotePullError::SaveSyncBufferError)?;
 
                 info!("Acknowledging remote sync records...");
                 self.sync_api_v5
                     .post_acknowledged_records(sync_ids)
                     .await
-                    .map_err(RemotPullError::AcknowledgedError)?;
+                    .map_err(RemotePullError::AcknowledgedError)?;
                 info!("Acknowledged remote sync records");
             } else {
                 break;
@@ -125,7 +125,7 @@ impl RemoteDataSynchroniser {
     pub(crate) async fn push(&self, connection: &StorageConnection) -> Result<(), anyhow::Error> {
         let changelog = ChangelogRowRepository::new(connection);
 
-        const BATCH_SIZE: u32 = 1000;
+        const BATCH_SIZE: u32 = 1024;
         let state = RemoteSyncState::new(connection);
         loop {
             // TODO inside transaction
@@ -258,6 +258,7 @@ impl<'a> RemoteSyncState<'a> {
         }
     }
 
+    /// Initalisation request was sent and successfull processed
     pub fn sync_queue_initalised(&self) -> Result<bool, RepositoryError> {
         let value = self
             .key_value_store
@@ -270,6 +271,7 @@ impl<'a> RemoteSyncState<'a> {
             .set_bool(KeyValueType::RemoteSyncInitilisationStarted, Some(true))
     }
 
+    /// Remote data was initialised
     pub fn initial_remote_data_synced(&self) -> Result<bool, RepositoryError> {
         let value = self
             .key_value_store

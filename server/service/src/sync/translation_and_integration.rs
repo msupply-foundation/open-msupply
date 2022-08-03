@@ -116,7 +116,7 @@ impl<'a> TranslationAndIntegration<'a> {
                         .record_successfull_integration(&sync_record)?;
                     result.insert_success(&sync_record.table_name)
                 }
-                // Record database_error in sync buffer and in resul
+                // Record database_error in sync buffer and in result
                 Err(database_error) => {
                     let error = anyhow::anyhow!("{:?}", database_error);
                     self.sync_buffer

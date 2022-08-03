@@ -24,10 +24,12 @@ fn generate_headers(hardware_id: &str) -> HeaderMap {
         HeaderName::from_static("msupply-site-uuid"),
         format!("{}", hardware_id).parse().unwrap(),
     );
+    // TODO get version from version system
     headers.insert(
         HeaderName::from_static("app-version"),
         "1.0".parse().unwrap(),
     );
+    // TODO omSupply ? And maybe seperate header for app-os etc..
     headers.insert(
         HeaderName::from_static("app-name"),
         "remote_server".parse().unwrap(),
