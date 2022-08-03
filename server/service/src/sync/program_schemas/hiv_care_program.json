@@ -1,0 +1,323 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "Address": {
+      "properties": {
+        "address1": {
+          "description": "184097001 Patient Address",
+          "type": "string"
+        },
+        "address2": {
+          "description": "Second address line",
+          "type": "string"
+        },
+        "city": {
+          "description": "433178008 City of residence",
+          "type": "string"
+        },
+        "country": {
+          "type": "string"
+        },
+        "district": {
+          "type": "string"
+        },
+        "region": {
+          "description": "Region or province",
+          "type": "string"
+        },
+        "zipCode": {
+          "description": "184102003 Patient zip code",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ContactDetails": {
+      "properties": {
+        "address1": {
+          "description": "184097001 Patient Address",
+          "type": "string"
+        },
+        "address2": {
+          "description": "Second address line",
+          "type": "string"
+        },
+        "city": {
+          "description": "433178008 City of residence",
+          "type": "string"
+        },
+        "country": {
+          "type": "string"
+        },
+        "description": {
+          "description": "Clemens e.g. home, work, etc",
+          "type": "string"
+        },
+        "district": {
+          "type": "string"
+        },
+        "email": {
+          "description": "424966008 Patient - email address",
+          "type": "string"
+        },
+        "mobile": {
+          "description": "428481002 Patient mobile telephone number",
+          "type": "string"
+        },
+        "phone": {
+          "description": "429697006 Patient home telephone number",
+          "type": "string"
+        },
+        "region": {
+          "description": "Region or province",
+          "type": "string"
+        },
+        "website": {
+          "type": "string"
+        },
+        "zipCode": {
+          "description": "184102003 Patient zip code",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "Gender": {
+      "enum": [
+        "FEMALE",
+        "MALE",
+        "TRANSGENDER_MALE",
+        "TRANSGENDER_FEMALE",
+        "UNKNOWN",
+        "NON_BINARY"
+      ],
+      "type": "string"
+    },
+    "HIVCareProgramEnrolment": {
+      "properties": {
+        "enrolmentDatetime": {
+          "description": "Enrolment date and time",
+          "format": "date-time",
+          "type": "string"
+        },
+        "enrolmentPatientId": {
+          "description": "Program enrolment specific patient id.",
+          "type": "string"
+        },
+        "hivConfirmationDate": {
+          "format": "date",
+          "type": "string"
+        },
+        "hivTestType": {
+          "$ref": "#/definitions/HIVTestType"
+        },
+        "mother": {
+          "properties": {
+            "clinic": {
+              "type": "string"
+            },
+            "note": {
+              "type": "string"
+            },
+            "patientId": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "partnerHivStatus": {
+          "$ref": "#/definitions/HIVStatus"
+        },
+        "priorART": {
+          "enum": [
+            "TRANSFER_IN_WITH_RECORDS",
+            "TRANSFER_IN_WITHOUT_RECORDS",
+            "PPTCT_PROPHYLAXIS",
+            "PEP",
+            "PrEP"
+          ],
+          "type": "string"
+        },
+        "referredFrom": {
+          "enum": [
+            "HCT_OTHER_PICT",
+            "INDEX",
+            "LABOUR",
+            "POST_NATAL",
+            "TB",
+            "COMMUNITY",
+            "TRANSFER_IN",
+            "STI",
+            "ANC",
+            "EXPOSED_INFANT_WELL_BABY_CLINIC",
+            "IN_PATIENT"
+          ],
+          "type": "string"
+        },
+        "riskGroup": {
+          "$ref": "#/definitions/HIVRiscGroup"
+        },
+        "status": {
+          "$ref": "#/definitions/ProgramEnrolmentStatus",
+          "description": "Current status of the program enrolment"
+        },
+        "treatmentSupporter": {
+          "$ref": "#/definitions/Person"
+        }
+      },
+      "required": ["enrolmentDatetime", "hivTestType"],
+      "type": "object"
+    },
+    "HIVRiscGroup": {
+      "enum": [
+        "SEX_WORKERS",
+        "MEN_SEX_WITH_MEN",
+        "INJECTING_DRUG_USER",
+        "PRISONER",
+        "SEX_WORKER_CLIENT",
+        "TRANSGENDER_WOMEN",
+        "SLUM_SWELLER"
+      ],
+      "type": "string"
+    },
+    "HIVStatus": {
+      "enum": ["POSITIVE", "NEGATIVE", "UNKNOWN"],
+      "type": "string"
+    },
+    "HIVTestType": {
+      "enum": ["PCR", "ANTIBODY"],
+      "type": "string"
+    },
+    "Note": {
+      "properties": {
+        "authorId": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "properties": {
+            "length": {
+              "type": "number"
+            }
+          },
+          "required": ["length"],
+          "type": "object"
+        },
+        "created": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Datetime when the note has been created",
+          "format": "date-time",
+          "properties": {
+            "length": {
+              "type": "number"
+            }
+          },
+          "required": ["length"],
+          "type": "object"
+        },
+        "text": {
+          "type": "string"
+        }
+      },
+      "required": ["text", "created", "authorId"],
+      "type": "object"
+    },
+    "Person": {
+      "properties": {
+        "birthPlace": {
+          "$ref": "#/definitions/Address",
+          "description": "Place of birth"
+        },
+        "code": {
+          "description": "Patient code, e.g. national id or other patient identifier",
+          "type": "string"
+        },
+        "code2": {
+          "description": "Secondary patient code, e.g. another type of health id",
+          "type": "string"
+        },
+        "contactDetails": {
+          "items": {
+            "$ref": "#/definitions/ContactDetails"
+          },
+          "type": "array"
+        },
+        "dateOfBirth": {
+          "description": "184099003 Date of birth",
+          "format": "date",
+          "type": "string"
+        },
+        "dateOfBirthIsEstimated": {
+          "description": "Date of birth is estimated",
+          "type": "boolean"
+        },
+        "dateOfDeath": {
+          "description": "Date of death",
+          "format": "date",
+          "type": "string"
+        },
+        "firstName": {
+          "type": "string"
+        },
+        "gender": {
+          "$ref": "#/definitions/Gender",
+          "description": "394744001 Gender unspecified"
+        },
+        "id": {
+          "description": "mSupply Patient id",
+          "type": "string"
+        },
+        "isDeceased": {
+          "description": "Person is deceased",
+          "type": "boolean"
+        },
+        "lastName": {
+          "description": "184096005 Patient Surname",
+          "type": "string"
+        },
+        "notes": {
+          "items": {
+            "$ref": "#/definitions/Note"
+          },
+          "type": "array"
+        },
+        "passportNumber": {
+          "description": "1601000122107 Passport Number",
+          "type": "string"
+        },
+        "socioEconomics": {
+          "$ref": "#/definitions/SocioEconomics"
+        }
+      },
+      "required": ["isDeceased", "contactDetails", "socioEconomics", "notes"],
+      "type": "object"
+    },
+    "ProgramEnrolmentStatus": {
+      "enum": ["ACTIVE", "OPTED_OUT", "TRANSFERRED_OUT", "PAUSED"],
+      "type": "string"
+    },
+    "SocioEconomics": {
+      "properties": {
+        "education": {
+          "description": "224293004 Education received in the past",
+          "type": "string"
+        },
+        "literate": {
+          "type": "string"
+        },
+        "occupation": {
+          "description": "14679004 Occupation",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "#/definitions/HIVCareProgramEnrolment"
+    }
+  ]
+}

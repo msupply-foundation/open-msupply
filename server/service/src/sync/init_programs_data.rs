@@ -8,7 +8,8 @@ use crate::{
         },
         patient::{PatientService, PatientServiceTrait, UpdatePatient, PATIENT_TYPE},
         program::{
-            program_schema::SchemaProgram, ProgramService, ProgramServiceTrait, UpsertProgram,
+            program_schema::{ProgramEnrolmentStatus, SchemaProgramEnrolment},
+            ProgramService, ProgramServiceTrait, UpsertProgram,
         },
     },
     service_provider::ServiceProvider,
@@ -23,13 +24,23 @@ use util::uuid::uuid;
 
 schemafy::schemafy!("src/sync/program_schemas/patient.json");
 
+mod hiv_care_program {
+    use serde::{Deserialize, Serialize};
+    schemafy::schemafy!("src/sync/program_schemas/hiv_care_program.json");
+}
+
 const PATIENT_SCHEMA: &'static str = std::include_str!("./program_schemas/patient.json");
 const PATIENT_UI_SCHEMA: &'static str =
     std::include_str!("./program_schemas/patient_ui_schema.json");
 
-const PROGRAM_SCHEMA: &'static str = std::include_str!("./program_schemas/program.json");
+const PROGRAM_SCHEMA: &'static str = std::include_str!("./program_schemas/program_enrolment.json");
 const PROGRAM_UI_SCHEMA: &'static str =
     std::include_str!("./program_schemas/program_ui_schema.json");
+
+const HIV_CARE_PROGRAM_SCHEMA: &'static str =
+    std::include_str!("./program_schemas/hiv_care_program.json");
+const HIV_CARE_PROGRAM_UI_SCHEMA: &'static str =
+    std::include_str!("./program_schemas/hiv_care_program_ui_schema.json");
 
 const ENCOUNTER_SCHEMA: &'static str = std::include_str!("./program_schemas/encounter.json");
 const ENCOUNTER_UI_SCHEMA: &'static str =
@@ -209,17 +220,27 @@ fn patient_2() -> Patient {
     }
 }
 
-fn program_1() -> SchemaProgram {
-    SchemaProgram {
+fn program_1() -> SchemaProgramEnrolment {
+    SchemaProgramEnrolment {
         enrolment_datetime: Utc::now().to_rfc3339(),
-        patient_id: Some("programpatientid1".to_string()),
+        enrolment_patient_id: Some("programpatientid1".to_string()),
+        status: Some(ProgramEnrolmentStatus::Active),
     }
 }
 
-fn program_2() -> SchemaProgram {
-    SchemaProgram {
+fn program_2() -> hiv_care_program::HivcareProgramEnrolment {
+    hiv_care_program::HivcareProgramEnrolment {
         enrolment_datetime: Utc::now().to_rfc3339(),
-        patient_id: Some("programpatientid2".to_string()),
+        enrolment_patient_id: Some("STR0001".to_string()),
+        status: Some(hiv_care_program::ProgramEnrolmentStatus::Active),
+        hiv_confirmation_date: None,
+        hiv_test_type: hiv_care_program::HivtestType::Antibody,
+        mother: None,
+        partner_hiv_status: None,
+        prior_art: None,
+        referred_from: None,
+        risk_group: None,
+        treatment_supporter: None,
     }
 }
 
@@ -271,13 +292,21 @@ pub fn init_program_data(
         parent_id: None,
         form_schema_id: Some(program_schema_id.clone()),
     })?;
+    // hiv care program
+    let hiv_care_program_schema_id = uuid();
+    FormSchemaRowRepository::new(connection).upsert_one(&FormSchema {
+        id: hiv_care_program_schema_id.clone(),
+        r#type: "JsonForms".to_string(),
+        json_schema: serde_json::from_str(HIV_CARE_PROGRAM_SCHEMA).unwrap(),
+        ui_schema: serde_json::from_str(HIV_CARE_PROGRAM_UI_SCHEMA).unwrap(),
+    })?;
     DocumentRegistryRowRepository::new(connection).upsert_one(&DocumentRegistryRow {
         id: uuid(),
-        document_type: "TestProgram2".to_string(),
+        document_type: "HIVCareProgramEnrolment".to_string(),
         context: DocumentContext::Program,
-        name: Some("Placeholder program 2".to_string()),
+        name: Some("HIV Care Program".to_string()),
         parent_id: None,
-        form_schema_id: Some(program_schema_id.clone()),
+        form_schema_id: Some(hiv_care_program_schema_id.clone()),
     })?;
 
     // encounter
@@ -350,6 +379,7 @@ pub fn init_program_data(
             },
         )
         .unwrap();
+    // hiv care program
     service
         .upsert_program(
             &ctx,
@@ -358,9 +388,9 @@ pub fn init_program_data(
             "no user",
             UpsertProgram {
                 patient_id: patient_1().id,
-                r#type: "TestProgram2".to_string(),
+                r#type: "HIVCareProgramEnrolment".to_string(),
                 data: serde_json::to_value(program_2()).unwrap(),
-                schema_id: program_schema_id,
+                schema_id: hiv_care_program_schema_id,
                 parent: None,
             },
         )
