@@ -31,4 +31,9 @@ export const Formatter = {
     const date = dateString ? new Date(dateString) : null;
     return date && isValid(date) ? format(date, "yyyy-MM-dd' 'HH:mm:ss") : '';
   },
+  sentenceCase: (str: string): string =>
+    str
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' '),
 };

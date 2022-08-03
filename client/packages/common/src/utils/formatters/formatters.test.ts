@@ -52,4 +52,12 @@ describe('Formatter', () => {
     expect(Formatter.tax(12, false)).toBe('12.00%');
     expect(Formatter.tax(12.5)).toBe('(12.50%)');
   });
+
+  it('sentenceCase', () => {
+    expect(Formatter.sentenceCase('hello world')).toBe('Hello World');
+    expect(Formatter.sentenceCase('SHOUTY')).toBe('Shouty');
+    expect(Formatter.sentenceCase('SHOUTY CASE IS BEST')).toBe(
+      'Shouty Case Is Best'
+    );
+  });
 });
