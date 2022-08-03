@@ -1,5 +1,6 @@
 import { zustand } from '@openmsupply-client/common';
 
+// stores the `documentName` for the currently viewed patient document
 interface PatientStoreState {
   documentName: string | undefined;
   setDocumentName: (documentName: string | undefined) => void;
