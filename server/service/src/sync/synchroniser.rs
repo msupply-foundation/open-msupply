@@ -108,9 +108,8 @@ impl Synchroniser {
             return Ok(());
         }
 
-        // Send initialisation if not initialise
         let remote_sync_state = RemoteSyncState::new(&ctx.connection);
-        // Remoate data was initialised
+        // Remote data was initialised
         let is_initialised = remote_sync_state.initial_remote_data_synced()?;
         // Initialisation request was sent and successfully processed
         let is_sync_queue_initialised = remote_sync_state.sync_queue_initalised()?;
@@ -123,7 +122,8 @@ impl Synchroniser {
 
         // First push before pulling, this avoids records being pulled from central server
         // and overwritting existing records waiting to be pulled
-        // only push if initialised
+
+        // Only push if initialised (site data was initialised on central and successfully pulled)
         if is_initialised {
             self.remote.push(&ctx.connection).await?;
             self.remote
