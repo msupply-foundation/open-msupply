@@ -2,13 +2,14 @@ import React, { FC } from 'react';
 import {
   DataTable,
   useColumns,
-  NothingHere,
   ColumnFormat,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { useLog, LogRowFragment } from '../api';
 
 export const LogList: FC<{ recordId: string }> = ({ recordId }) => {
   const { data, isError, isLoading } = useLog.document.listByRecord(recordId);
+  const t = useTranslation();
   const columns = useColumns<LogRowFragment>([
     { key: 'datetime', label: 'label.date', format: ColumnFormat.Date },
     {
@@ -26,7 +27,7 @@ export const LogList: FC<{ recordId: string }> = ({ recordId }) => {
       data={data?.nodes}
       isLoading={isLoading}
       isError={isError}
-      noDataElement={<NothingHere />}
+      noDataMessage={t('messages.no-log-entries')}
     />
   );
 };
