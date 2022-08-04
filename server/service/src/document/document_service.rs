@@ -10,10 +10,10 @@ use super::raw_document::RawDocument;
 
 #[derive(Debug, PartialEq)]
 pub enum DocumentInsertError {
-    SchemaDoesNotExist,
     InvalidParent(String),
     /// Input document doesn't match the provided json schema
     InvalidDataSchema(Vec<String>),
+    DataSchemaDoesNotExist,
     DatabaseError(RepositoryError),
     InternalError(String),
 }
@@ -102,7 +102,7 @@ fn json_validator(
     let schema_repo = FormSchemaRowRepository::new(connection);
     let schema = schema_repo
         .find_one_by_id(&schema_id)?
-        .ok_or(DocumentInsertError::SchemaDoesNotExist)?;
+        .ok_or(DocumentInsertError::DataSchemaDoesNotExist)?;
     let compiled = match JSONSchema::compile(&schema.json_schema) {
         Ok(v) => Ok(v),
         Err(err) => Err(DocumentInsertError::InternalError(format!(

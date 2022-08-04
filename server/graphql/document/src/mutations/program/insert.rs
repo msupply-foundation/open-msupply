@@ -70,6 +70,9 @@ pub fn insert_program(
                 UpsertProgramError::InvalidDataSchema(_) => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
+                UpsertProgramError::DataSchemaDoesNotExist => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
+                }
                 UpsertProgramError::InternalError(_) => {
                     StandardGraphqlError::InternalError(formatted_error)
                 }

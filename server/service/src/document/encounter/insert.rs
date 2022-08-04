@@ -19,6 +19,7 @@ use super::{
 pub enum InsertEncounterError {
     InvalidPatientOrProgram,
     InvalidDataSchema(Vec<String>),
+    DataSchemaDoesNotExist,
     InternalError(String),
     DatabaseError(RepositoryError),
 }
@@ -70,7 +71,12 @@ pub fn insert_encounter(
                     DocumentInsertError::InternalError(err) => {
                         InsertEncounterError::InternalError(err)
                     }
-                    _ => InsertEncounterError::InternalError(format!("{:?}", err)),
+                    DocumentInsertError::DataSchemaDoesNotExist => {
+                        InsertEncounterError::DataSchemaDoesNotExist
+                    }
+                    DocumentInsertError::InvalidParent(err) => {
+                        InsertEncounterError::InternalError(err)
+                    }
                 })?;
 
             Ok(result)

@@ -19,6 +19,7 @@ pub enum UpsertProgramError {
     /// Each patient can only be enrolled in a program once
     ProgramExists,
     InvalidDataSchema(Vec<String>),
+    DataSchemaDoesNotExist,
     InternalError(String),
     DatabaseError(RepositoryError),
 }
@@ -58,7 +59,10 @@ pub fn upsert_program(
                     DocumentInsertError::InternalError(err) => {
                         UpsertProgramError::InternalError(err)
                     }
-                    _ => UpsertProgramError::InternalError(format!("{:?}", err)),
+                    DocumentInsertError::DataSchemaDoesNotExist => {
+                        UpsertProgramError::DataSchemaDoesNotExist
+                    }
+                    DocumentInsertError::InvalidParent(_) => UpsertProgramError::InvalidParentId,
                 })?;
             let program = program_updated(&ctx.connection, &patient_id, &document, schema_program)?;
             Ok((program, document))
@@ -93,11 +97,6 @@ fn validate_program_schema(
     // If the program data uses a derived program schema, the derived schema is validated in the
     // document service.
     serde_json::from_value(input.data.clone())
-}
-
-fn validate_parent(ctx: &ServiceContext, parent: &str) -> Result<bool, RepositoryError> {
-    let parent_doc = DocumentRepository::new(&ctx.connection).find_one_by_id(parent)?;
-    Ok(parent_doc.is_some())
 }
 
 fn validate_patient_exists(
@@ -135,21 +134,9 @@ fn validate(
         UpsertProgramError::InvalidDataSchema(vec![format!("Invalid program data: {}", err)])
     })?;
 
-    match input.parent.clone() {
-        None => {
-            if !validate_program_not_exists(
-                ctx,
-                service_provider,
-                &input.patient_id,
-                &input.r#type,
-            )? {
-                return Err(UpsertProgramError::ProgramExists);
-            }
-        }
-        Some(parent) => {
-            if !validate_parent(ctx, &parent)? {
-                return Err(UpsertProgramError::InvalidParentId);
-            }
+    if input.parent.is_none() {
+        if !validate_program_not_exists(ctx, service_provider, &input.patient_id, &input.r#type)? {
+            return Err(UpsertProgramError::ProgramExists);
         }
     }
 

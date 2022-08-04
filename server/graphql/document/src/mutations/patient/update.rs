@@ -61,6 +61,9 @@ pub fn update_patient(
                 UpdatePatientError::InvalidDataSchema(_) => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
+                UpdatePatientError::DataSchemaDoesNotExist => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
+                }
                 UpdatePatientError::InternalError(_) => {
                     StandardGraphqlError::InternalError(formatted_error)
                 }
