@@ -27,10 +27,16 @@ pub(crate) enum RemotePullError {
     #[error("{0}")]
     ParsingV5RecordError(ParsingV5RecordError),
 }
+#[derive(Error, Debug)]
+pub(crate) enum RequestAndSetSiteInfoError {
+    #[error("Api error while requesting site info: {0:?}")]
+    RequestSiteInfoError(SyncApiError),
+    #[error("Failed to set site info: {0:?}")]
+    SetSiteInfoError(RepositoryError),
+}
 
 pub struct RemoteDataSynchroniser {
     pub(crate) sync_api_v5: SyncApiV5,
-    pub(crate) site_id: u32,
 }
 
 impl RemoteDataSynchroniser {
@@ -44,6 +50,30 @@ impl RemoteDataSynchroniser {
 
         info!("Initialised remote sync records");
 
+        Ok(())
+    }
+
+    /// Request site info and persist it
+    pub(crate) async fn request_and_set_site_info(
+        &self,
+        connection: &StorageConnection,
+    ) -> Result<(), RequestAndSetSiteInfoError> {
+        info!("Requesting site info");
+        let site_info = self
+            .sync_api_v5
+            .get_site_info()
+            .await
+            .map_err(RequestAndSetSiteInfoError::RequestSiteInfoError)?;
+
+        let remote_sync_state = RemoteSyncState::new(&connection);
+        remote_sync_state
+            .set_site_uuid(site_info.id)
+            .map_err(RequestAndSetSiteInfoError::SetSiteInfoError)?;
+        remote_sync_state
+            .set_site_id(site_info.site_id)
+            .map_err(RequestAndSetSiteInfoError::SetSiteInfoError)?;
+
+        info!("Received site info");
         Ok(())
     }
 
@@ -62,10 +92,6 @@ impl RemoteDataSynchroniser {
             .unwrap_or(0) as u32;
         remote_sync_state
             .update_push_cursor(cursor + 1)
-            .map_err(SetInitialisedError)?;
-
-        remote_sync_state
-            .set_site_id(self.site_id as i32)
             .map_err(SetInitialisedError)?;
         remote_sync_state
             .set_initial_remote_data_synced()
@@ -266,7 +292,7 @@ impl<'a> RemoteSyncState<'a> {
         Ok(value.unwrap_or(false))
     }
 
-    pub fn set_sync_queue_initalised(&self) -> Result<(), RepositoryError> {
+    pub fn set_sync_queue_initialised(&self) -> Result<(), RepositoryError> {
         self.key_value_store
             .set_bool(KeyValueType::RemoteSyncInitilisationStarted, Some(true))
     }
@@ -288,6 +314,11 @@ impl<'a> RemoteSyncState<'a> {
     pub fn set_site_id(&self, site_id: i32) -> Result<(), RepositoryError> {
         self.key_value_store
             .set_i32(KeyValueType::SettingsSyncSiteId, Some(site_id))
+    }
+
+    pub fn set_site_uuid(&self, uuid: String) -> Result<(), RepositoryError> {
+        self.key_value_store
+            .set_string(KeyValueType::SettingsSyncSiteUuid, Some(uuid))
     }
 
     pub fn get_push_cursor(&self) -> Result<u32, RepositoryError> {

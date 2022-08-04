@@ -101,7 +101,7 @@ pub(crate) struct NewSiteProperties {
     pub(crate) store_id: String,
     pub(crate) name_id: String,
     pub(crate) site_uuid: String,
-    pub(crate) site_id: u16,
+    pub(crate) site_id: i32,
     password_sha256: String,
 }
 
@@ -111,7 +111,7 @@ impl NewSiteProperties {
             store_id: uuid(),
             name_id: uuid(),
             // TODO max that can be used ?
-            site_id: thread_rng().gen::<u16>(),
+            site_id: thread_rng().gen::<i32>(),
             site_uuid: uuid(),
             password_sha256: sha256(password),
         }
