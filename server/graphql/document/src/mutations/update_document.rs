@@ -140,7 +140,7 @@ fn map_error(error: DocumentInsertError) -> Result<UpdateDocumentErrorInterface>
         DocumentInsertError::InternalError(_) => {
             StandardGraphqlError::InternalError(formatted_error)
         }
-        DocumentInsertError::SchemaDoesNotExist => {
+        DocumentInsertError::DataSchemaDoesNotExist => {
             StandardGraphqlError::BadUserInput(formatted_error)
         }
         DocumentInsertError::InvalidParent(_) => {

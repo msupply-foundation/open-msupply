@@ -66,6 +66,9 @@ pub fn insert_encounter(
                 InsertEncounterError::InvalidDataSchema(_) => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
+                InsertEncounterError::DataSchemaDoesNotExist => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
+                }
                 InsertEncounterError::InternalError(_) => {
                     StandardGraphqlError::InternalError(formatted_error)
                 }

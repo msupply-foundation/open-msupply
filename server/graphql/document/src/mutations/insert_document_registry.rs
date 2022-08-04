@@ -57,7 +57,7 @@ pub fn insert_document_registry(
                 InsertDocRegistryError::InvalidParent => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
-                InsertDocRegistryError::SchemaDoesNotExist => {
+                InsertDocRegistryError::DataSchemaDoesNotExist => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
                 InsertDocRegistryError::InternalError(_) => {

@@ -19,6 +19,7 @@ pub enum UpdateEncounterError {
     InvalidParentId,
     EncounterRowNotFound,
     InvalidDataSchema(Vec<String>),
+    DataSchemaDoesNotExist,
     InternalError(String),
     DatabaseError(RepositoryError),
 }
@@ -71,7 +72,10 @@ pub fn update_encounter(
                     DocumentInsertError::InternalError(err) => {
                         UpdateEncounterError::InternalError(err)
                     }
-                    _ => UpdateEncounterError::InternalError(format!("{:?}", err)),
+                    DocumentInsertError::DataSchemaDoesNotExist => {
+                        UpdateEncounterError::DataSchemaDoesNotExist
+                    }
+                    DocumentInsertError::InvalidParent(_) => UpdateEncounterError::InvalidParentId,
                 })?;
 
             Ok(result)
@@ -112,14 +116,6 @@ fn validate_encounter_schema(
     serde_json::from_value(input.data.clone())
 }
 
-fn validate_parent(
-    ctx: &ServiceContext,
-    parent: &str,
-) -> Result<Option<Document>, RepositoryError> {
-    let parent_doc = DocumentRepository::new(&ctx.connection).find_one_by_id(parent)?;
-    Ok(parent_doc)
-}
-
 fn validate_exiting_encounter(
     ctx: &ServiceContext,
     name: &str,
@@ -128,6 +124,14 @@ fn validate_exiting_encounter(
         .query_by_filter(EncounterFilter::new().name(EqualFilter::equal_to(name)))?
         .pop();
     Ok(result)
+}
+
+fn validate_parent(
+    ctx: &ServiceContext,
+    parent: &str,
+) -> Result<Option<Document>, RepositoryError> {
+    let parent_doc = DocumentRepository::new(&ctx.connection).find_one_by_id(parent)?;
+    Ok(parent_doc)
 }
 
 fn validate(

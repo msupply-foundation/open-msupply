@@ -1,5 +1,5 @@
 use chrono::Utc;
-use repository::{DocumentRepository, EqualFilter, RepositoryError, TransactionError};
+use repository::{EqualFilter, RepositoryError, TransactionError};
 
 use crate::{
     document::{document_service::DocumentInsertError, raw_document::RawDocument},
@@ -17,6 +17,7 @@ pub enum UpdatePatientError {
     InvalidParentId,
     PatientExists,
     InvalidDataSchema(Vec<String>),
+    DataSchemaDoesNotExist,
     InternalError(String),
     DatabaseError(RepositoryError),
 }
@@ -57,7 +58,10 @@ pub fn update_patient(
                     DocumentInsertError::InternalError(err) => {
                         UpdatePatientError::InternalError(err)
                     }
-                    _ => UpdatePatientError::InternalError(format!("{:?}", err)),
+                    DocumentInsertError::DataSchemaDoesNotExist => {
+                        UpdatePatientError::DataSchemaDoesNotExist
+                    }
+                    DocumentInsertError::InvalidParent(_) => UpdatePatientError::InvalidParentId,
                 })?;
 
             // update the names table
@@ -136,11 +140,6 @@ fn validate_patient_not_exists(
     Ok(existing_document.is_none())
 }
 
-fn validate_parent(ctx: &ServiceContext, parent: &str) -> Result<bool, RepositoryError> {
-    let parent_doc = DocumentRepository::new(&ctx.connection).find_one_by_id(parent)?;
-    Ok(parent_doc.is_some())
-}
-
 fn validate(
     ctx: &ServiceContext,
     service_provider: &ServiceProvider,
@@ -151,19 +150,11 @@ fn validate(
         return Err(UpdatePatientError::InvalidPatientId);
     }
 
-    match input.parent.clone() {
-        None => {
-            if !validate_patient_not_exists(ctx, service_provider, &patient.id)? {
-                return Err(UpdatePatientError::PatientExists);
-            }
-        }
-        Some(parent) => {
-            if !validate_parent(ctx, &parent)? {
-                return Err(UpdatePatientError::InvalidParentId);
-            }
+    if input.parent.is_none() {
+        if !validate_patient_not_exists(ctx, service_provider, &patient.id)? {
+            return Err(UpdatePatientError::PatientExists);
         }
     }
-
     Ok(patient)
 }
 

@@ -64,6 +64,9 @@ pub fn update_encounter(
                 UpdateEncounterError::InvalidDataSchema(_) => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
+                UpdateEncounterError::DataSchemaDoesNotExist => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
+                }
                 UpdateEncounterError::InternalError(_) => {
                     StandardGraphqlError::InternalError(formatted_error)
                 }
