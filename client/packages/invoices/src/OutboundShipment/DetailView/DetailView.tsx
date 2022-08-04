@@ -16,7 +16,11 @@ import {
   Tab,
   DetailTab,
 } from '@openmsupply-client/common';
-import { toItemRow, ItemRowFragment } from '@openmsupply-client/system';
+import {
+  toItemRow,
+  ItemRowFragment,
+  LogList,
+} from '@openmsupply-client/system';
 import { ContentArea } from './ContentArea';
 import { OutboundLineEdit } from './OutboundLineEdit';
 import { OutboundItem } from '../../types';
@@ -105,6 +109,9 @@ export const DetailView: FC = () => {
                 onRowClick={!isDisabled ? onRowClick : null}
                 onAddItem={onOpen}
               />
+            </DetailTab>
+            <DetailTab value={Tabs.Log}>
+              <LogList recordId={data?.id} />
             </DetailTab>
           </TabContext>
 
