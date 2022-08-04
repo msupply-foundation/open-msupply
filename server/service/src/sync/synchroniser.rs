@@ -75,7 +75,6 @@ impl Synchroniser {
         Ok(Synchroniser {
             remote: RemoteDataSynchroniser {
                 sync_api_v5: sync_api_v5.clone(),
-                site_id: settings.site_id,
             },
             settings,
             service_provider,
@@ -117,7 +116,7 @@ impl Synchroniser {
         // Request initialisation from server
         if !is_sync_queue_initialised {
             self.remote.request_initialisation().await?;
-            remote_sync_state.set_sync_queue_initalised()?;
+            remote_sync_state.set_sync_queue_initialised()?;
         }
 
         // First push before pulling, this avoids records being pulled from central server
@@ -140,6 +139,9 @@ impl Synchroniser {
         info!("Delete Integration result: {:?}", deletes);
 
         if !is_initialised {
+            self.remote
+                .request_and_set_site_info(&ctx.connection)
+                .await?;
             self.remote.set_initialised(&ctx.connection)?;
         }
 

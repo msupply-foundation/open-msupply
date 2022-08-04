@@ -4,6 +4,7 @@ mod error;
 mod get_central_records;
 mod get_queued_records;
 mod get_site_status;
+mod get_site_info;
 mod post_acknowledged_records;
 mod post_initialise;
 mod post_queued_records;
