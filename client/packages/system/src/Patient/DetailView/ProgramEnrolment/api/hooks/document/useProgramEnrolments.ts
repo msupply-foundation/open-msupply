@@ -1,4 +1,8 @@
-import { useQuery, useUrlQueryParams } from '@openmsupply-client/common';
+import {
+  useParams,
+  useQuery,
+  useUrlQueryParams,
+} from '@openmsupply-client/common';
 import { useProgramEnrolmentApi } from '../utils/useProgramEnrolmentApi';
 
 export const useProgramEnrolments = () => {
@@ -6,9 +10,12 @@ export const useProgramEnrolments = () => {
   const { queryParams } = useUrlQueryParams({
     initialSort: { key: 'type', dir: 'asc' },
   });
+  const { patientId } = useParams();
+  const params = {
+    ...queryParams,
+    filterBy: { patientId: { equalTo: patientId } },
+  };
   return {
-    ...useQuery(api.keys.paramList(queryParams), () =>
-      api.get.list(queryParams)
-    ),
+    ...useQuery(api.keys.paramList(params), () => api.get.list(params)),
   };
 };
