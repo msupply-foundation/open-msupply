@@ -47,3 +47,18 @@ export const getDocumentRegistryQueries = (sdk: Sdk) => ({
     },
   },
 });
+
+export const getAllocateNumberMutations = (sdk: Sdk, storeId: string) => ({
+  allocateNumber: async (numberName: string): Promise<number> => {
+    const result = await sdk.allocateNumber({
+      storeId,
+      numberName,
+    });
+    const numberNode = result?.allocateNumber;
+
+    if (numberNode?.__typename === 'NumberNode') {
+      return numberNode.number;
+    }
+    throw new Error('Error allocation a new number');
+  },
+});

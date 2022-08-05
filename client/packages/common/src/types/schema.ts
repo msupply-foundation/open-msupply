@@ -59,6 +59,12 @@ export type AddToShipmentFromMasterListInput = {
   shipmentId: Scalars['String'];
 };
 
+export type AllocateNumberInput = {
+  numberName: Scalars['String'];
+};
+
+export type AllocateNumberResponse = NumberNode;
+
 export type AllocateOutboundShipmentUnallocatedLineError = {
   __typename: 'AllocateOutboundShipmentUnallocatedLineError';
   error: AllocateOutboundShipmentUnallocatedLineErrorInterface;
@@ -770,7 +776,7 @@ export enum ForeignKey {
   StockLineId = 'stockLineId'
 }
 
-export type ForeignKeyError = DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertInboundShipmentLineErrorInterface & InsertInboundShipmentServiceLineErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & InsertOutboundShipmentUnallocatedLineErrorInterface & InsertRequestRequisitionLineErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionLineErrorInterface & {
+export type ForeignKeyError = DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & InsertInboundShipmentLineErrorInterface & InsertInboundShipmentServiceLineErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & InsertOutboundShipmentUnallocatedLineErrorInterface & InsertRequestRequisitionLineErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionLineErrorInterface & {
   __typename: 'ForeignKeyError';
   description: Scalars['String'];
   key: ForeignKey;
@@ -791,6 +797,7 @@ export type FullMutation = {
   addToInboundShipmentFromMasterList: AddToInboundShipmentFromMasterListResponse;
   /** Add invoice lines from master item master list */
   addToOutboundShipmentFromMasterList: AddToOutboundShipmentFromMasterListResponse;
+  allocateNumber: AllocateNumberResponse;
   allocateOutboundShipmentUnallocatedLine: AllocateOutboundShipmentUnallocatedLineResponse;
   batchInboundShipment: BatchInboundShipmentResponse;
   batchOutboundShipment: BatchOutboundShipmentResponse;
@@ -877,6 +884,12 @@ export type FullMutationAddToInboundShipmentFromMasterListArgs = {
 
 export type FullMutationAddToOutboundShipmentFromMasterListArgs = {
   input: AddToShipmentFromMasterListInput;
+  storeId: Scalars['String'];
+};
+
+
+export type FullMutationAllocateNumberArgs = {
+  input: AllocateNumberInput;
   storeId: Scalars['String'];
 };
 
@@ -2567,6 +2580,11 @@ export type NotEnoughStockForReduction = InsertOutboundShipmentLineErrorInterfac
 export type NothingRemainingToSupply = CreateRequisitionShipmentErrorInterface & {
   __typename: 'NothingRemainingToSupply';
   description: Scalars['String'];
+};
+
+export type NumberNode = {
+  __typename: 'NumberNode';
+  number: Scalars['Int'];
 };
 
 export type OtherPartyNotACustomer = InsertErrorInterface & UpdateErrorInterface & {
