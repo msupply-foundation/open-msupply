@@ -3,6 +3,8 @@ import {
   DocumentRegistryFragment,
   Typography,
   UnhappyMan,
+  useAuthContext,
+  UserStoreNodeFragment,
 } from '@openmsupply-client/common';
 import { Box, useTranslation, BasicSpinner } from '@openmsupply-client/common';
 import { JsonForms } from '@jsonforms/react';
@@ -68,6 +70,15 @@ const ScrollFix = () => {
   return null;
 };
 
+/** Config data to pass to all json form controls */
+export type JsonFormsConfig = {
+  store?: UserStoreNodeFragment;
+  user?: {
+    id: string;
+    name: string;
+  };
+};
+
 const FormComponent = ({
   data,
   jsonSchema,
@@ -76,11 +87,18 @@ const FormComponent = ({
   setError,
   renderers,
 }: JsonFormsComponentProps) => {
+  const { user, store } = useAuthContext();
+  const config: JsonFormsConfig = {
+    store,
+    user,
+  };
+
   return (
     <JsonForms
       schema={jsonSchema}
       uischema={uiSchema}
       data={data}
+      config={config}
       renderers={renderers}
       // cells={materialCells}
       onChange={({ errors, data }) => {
