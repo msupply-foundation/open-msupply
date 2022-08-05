@@ -144,7 +144,7 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider.context("", "").unwrap();
         let service = service_provider.requisition_line_service;
 
         // RequisitionLineDoesNotExist
@@ -209,7 +209,7 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider.context("", "").unwrap();
         let service = service_provider.requisition_line_service;
 
         let test_line = mock_new_response_requisition_test().lines[0].clone();

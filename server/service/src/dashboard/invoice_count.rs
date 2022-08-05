@@ -1,8 +1,8 @@
 use chrono::{DateTime, Datelike, FixedOffset, NaiveDate, NaiveDateTime, TimeZone, Utc, Weekday};
+use repository::{DatetimeFilter, EqualFilter};
 use repository::{
     InvoiceFilter, InvoiceRepository, InvoiceRowStatus, InvoiceRowType, RepositoryError,
 };
-use repository::{DatetimeFilter, EqualFilter};
 
 use crate::service_provider::ServiceContext;
 
@@ -273,7 +273,11 @@ mod invoice_count_service_test {
             MockDataInserts::all(),
         )
         .await;
-        let ctx = ServiceContext { connection };
+        let ctx = ServiceContext {
+            connection,
+            user_id: "".to_string(),
+            store_id: "".to_string(),
+        };
         let service = InvoiceCountService {};
 
         // There are two invoices created at these times for store_a:

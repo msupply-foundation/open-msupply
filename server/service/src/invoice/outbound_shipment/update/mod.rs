@@ -260,7 +260,7 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider.context("", "").unwrap();
         let service = service_provider.invoice_service;
 
         // CannotReverseInvoiceStatus
@@ -423,7 +423,7 @@ mod test {
         );
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider.context("", "").unwrap();
         let service = service_provider.invoice_service;
 
         let update = inline_init(|r: &mut UpdateOutboundShipment| {
@@ -478,7 +478,7 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider.context("", "").unwrap();
         let service = service_provider.invoice_service;
 
         // Test all fields apart from status
@@ -628,7 +628,7 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider.context("", "").unwrap();
         let service = service_provider.invoice_service;
 
         // Change to PICKED
@@ -708,7 +708,7 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider.context("", "").unwrap();
         let service = service_provider.invoice_service;
 
         // Change to SHIPPED

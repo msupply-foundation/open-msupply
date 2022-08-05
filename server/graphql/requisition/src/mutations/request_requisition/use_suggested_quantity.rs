@@ -44,7 +44,7 @@ pub fn use_suggested_quantity(
     store_id: &str,
     input: UseSuggestedQuantityInput,
 ) -> Result<UseSuggestedQuantityResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::MutateRequisition,
@@ -53,7 +53,7 @@ pub fn use_suggested_quantity(
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context()?;
+    let service_context = service_provider.context(store_id, &user.user_id)?;
 
     let response = match service_provider.requisition_service.use_suggested_quantity(
         &service_context,

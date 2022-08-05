@@ -21,7 +21,7 @@ impl Loader<RequisitionAndItemId> for RequisitionLineSupplyStatusLoader {
         &self,
         requisition_and_item_id: &[RequisitionAndItemId],
     ) -> Result<HashMap<RequisitionAndItemId, Self::Value>, Self::Error> {
-        let service_context = self.service_provider.context()?;
+        let service_context = self.service_provider.context("", "")?;
 
         let (requisition_ids, _) = IdPair::extract_unique_ids(requisition_and_item_id);
 
@@ -59,7 +59,7 @@ impl Loader<String> for RequisitionLinesRemainingToSupplyLoader {
         &self,
         requisition_ids: &[String],
     ) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let service_context = self.service_provider.context()?;
+        let service_context = self.service_provider.context("", "")?;
 
         let requisition_supply_statuses = self
             .service_provider

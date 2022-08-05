@@ -54,6 +54,8 @@ pub struct ServiceProvider {
 
 pub struct ServiceContext {
     pub connection: StorageConnection,
+    pub user_id: String,
+    pub store_id: String,
 }
 
 impl ServiceProvider {
@@ -80,9 +82,15 @@ impl ServiceProvider {
     }
 
     /// Creates a new service context with a new DB connection
-    pub fn context(&self) -> Result<ServiceContext, RepositoryError> {
+    pub fn context(
+        &self,
+        store_id: &str,
+        user_id: &str,
+    ) -> Result<ServiceContext, RepositoryError> {
         Ok(ServiceContext {
             connection: self.connection()?,
+            user_id: user_id.to_string(),
+            store_id: store_id.to_string(),
         })
     }
 

@@ -17,7 +17,7 @@ pub fn insert_location(
     store_id: &str,
     input: InsertLocationInput,
 ) -> Result<InsertLocationResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::MutateLocation,
@@ -26,7 +26,7 @@ pub fn insert_location(
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context()?;
+    let service_context = service_provider.context(store_id, &user.user_id)?;
 
     match service_provider.location_service.insert_location(
         &service_context,

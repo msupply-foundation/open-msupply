@@ -162,7 +162,7 @@ async fn run_server(
         connection_manager.clone(),
         &config_settings.server.base_dir.clone().unwrap(),
     );
-    let service_context = service_provider.context().unwrap();
+    let service_context = service_provider.context("", "").unwrap();
     let service = &service_provider.settings;
 
     let db_settings = service.sync_settings(&service_context).unwrap();

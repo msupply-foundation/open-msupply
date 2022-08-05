@@ -127,7 +127,7 @@ mod stocktake_test {
             setup_all("delete_stocktake", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider.context("", "").unwrap();
         let service = service_provider.stocktake_service;
 
         // error: stock does not exist

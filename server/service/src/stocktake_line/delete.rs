@@ -93,7 +93,7 @@ mod stocktake_line_test {
             setup_all("delete_stocktake_line", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider.context("", "").unwrap();
         let service = service_provider.stocktake_line_service;
 
         // error: stocktake line does not exist

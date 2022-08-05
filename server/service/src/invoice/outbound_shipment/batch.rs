@@ -300,7 +300,7 @@ mod test {
             setup_all("batch_outbound_shipment_service", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider.context("", "").unwrap();
         let service = service_provider.invoice_service;
 
         let delete_shipment_input = mock_inbound_shipment_a().id;

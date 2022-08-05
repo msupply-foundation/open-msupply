@@ -23,7 +23,7 @@ pub fn me(ctx: &Context<'_>) -> Result<UserResponse> {
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_ctx = service_provider.context()?;
+    let service_ctx = service_provider.context("", &user.user_id)?;
     let user_service = UserAccountService::new(&service_ctx.connection);
     let user = match user_service.find_user(&user.user_id) {
         Ok(Some(user)) => user,

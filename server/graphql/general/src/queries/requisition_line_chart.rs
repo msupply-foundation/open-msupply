@@ -57,7 +57,7 @@ pub fn chart(
     consumption_options_input: Option<ConsumptionOptionsInput>,
     stock_evolution_options_input: Option<StockEvolutionOptionsInput>,
 ) -> Result<ChartResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::RequisitionChart,
@@ -66,7 +66,7 @@ pub fn chart(
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context()?;
+    let service_context = service_provider.context(store_id, &user.user_id)?;
 
     let result = match service_provider
         .requisition_line_service

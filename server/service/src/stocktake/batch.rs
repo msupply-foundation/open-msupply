@@ -133,7 +133,7 @@ mod test {
             setup_all("batch_stocktake_service", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider.context("", "").unwrap();
         let service = service_provider.stocktake_service;
 
         let delete_stocktake_input = mock_stocktake_finalised().id;
