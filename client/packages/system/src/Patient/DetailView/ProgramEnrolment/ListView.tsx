@@ -9,6 +9,7 @@ import {
   useFormatDateTime,
   ColumnAlign,
   useUrlQueryParams,
+  Box,
 } from '@openmsupply-client/common';
 import { ProgramFragment, useProgramEnrolment } from './api';
 import { usePatientModalStore } from '../../hooks';
@@ -73,7 +74,11 @@ const ProgramListComponent: FC = () => {
         setDocumentName(row.document.name);
         setCurrent(PatientModal.Program);
       }}
-      noDataElement={<NothingHere />}
+      noDataElement={
+        <Box width={'100%'} paddingTop="100">
+          <NothingHere />
+        </Box>
+      }
     />
   );
 };
