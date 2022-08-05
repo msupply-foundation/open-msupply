@@ -31,42 +31,64 @@
                     "targetField": "code",
                     "parts": [
                       {
+                        "type": "Field",
                         "field": "lastName",
-                        "firstNChars": 2,
-                        "toUpperCase": true
+                        "mutations": [
+                          { "firstNChars": 2 },
+                          { "toUpperCase": true }
+                        ]
                       },
                       {
+                        "type": "Field",
                         "field": ["birthPlace", "district"],
-                        "firstNChars": 2,
-                        "toUpperCase": true
+                        "mutations": [
+                          { "firstNChars": 2 },
+                          { "toUpperCase": true }
+                        ]
                       },
                       {
+                        "type": "Field",
                         "field": "hand",
-                        "enumMapping": {
-                          "LEFT": "L",
-                          "RIGHT": "R"
-                        }
+                        "mutations": [
+                          {
+                            "mapping": {
+                              "LEFT": "L",
+                              "RIGHT": "R"
+                            }
+                          }
+                        ]
                       },
                       {
+                        "type": "Field",
                         "field": "birthOrder",
-                        "firstNChars": 2,
-                        "toUpperCase": true
+                        "mutations": [
+                          { "firstNChars": 2 },
+                          { "toUpperCase": true }
+                        ]
                       },
                       {
+                        "type": "Field",
                         "field": "gender",
-                        "enumMapping": {
-                          "MALE": "1",
-                          "FEMALE": "2",
-                          "TRANSGENDER_MALE": "3",
-                          "TRANSGENDER_FEMALE": "3",
-                          "UNKNOWN": "3",
-                          "NON_BINARY": "3"
-                        }
+                        "mutations": [
+                          {
+                            "mapping": {
+                              "MALE": "1",
+                              "FEMALE": "2",
+                              "TRANSGENDER_MALE": "3",
+                              "TRANSGENDER_FEMALE": "3",
+                              "UNKNOWN": "3",
+                              "NON_BINARY": "3"
+                            }
+                          }
+                        ]
                       },
                       {
+                        "type": "Field",
                         "field": "firstName",
-                        "lastNChars": 2,
-                        "toUpperCase": true
+                        "mutations": [
+                          { "lastNChars": 2 },
+                          { "toUpperCase": true }
+                        ]
                       }
                     ]
                   }
@@ -83,7 +105,8 @@
                 },
                 {
                   "type": "Control",
-                  "scope": "#/properties/gender"
+                  "scope": "#/properties/gender",
+                  "label": "Sex"
                 },
                 {
                   "type": "DateOfBirthControl",
