@@ -21,7 +21,7 @@ impl Loader<String> for RequisitionsByIdLoader {
         &self,
         requisition_ids: &[String],
     ) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let service_context = self.service_provider.context()?;
+        let service_context = self.service_provider.context("", "")?;
 
         let filter = RequisitionFilter::new().id(EqualFilter::equal_any(
             requisition_ids.iter().map(String::clone).collect(),

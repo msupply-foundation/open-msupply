@@ -13,7 +13,7 @@ mod query {
             setup_all("test_location_service_pagination", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider.context("", "").unwrap();
         let service = service_provider.location_service;
 
         assert_eq!(
@@ -49,7 +49,7 @@ mod query {
             setup_all("test_location_single_record", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider.context("", "").unwrap();
         let service = service_provider.location_service;
 
         assert_eq!(
@@ -71,7 +71,7 @@ mod query {
             setup_all("test_location_filter", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider.context("", "").unwrap();
         let service = service_provider.location_service;
 
         let result = service
@@ -109,7 +109,7 @@ mod query {
             setup_all("test_location_sort", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider.context("", "").unwrap();
         let service = service_provider.location_service;
         // Test Name sort with default sort order
         let result = service

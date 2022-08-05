@@ -63,7 +63,7 @@ pub fn validate_auth(
     access_request: &ResourceAccessRequest,
 ) -> Result<ValidatedUser> {
     let service_provider = ctx.service_provider();
-    let service_ctx = service_provider.context()?;
+    let service_ctx = service_provider.context("", "")?;
 
     let result = service_provider.validation_service.validate(
         &service_ctx,

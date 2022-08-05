@@ -57,7 +57,7 @@ pub async fn print_report(
     data_id: String,
     format: Option<PrintFormat>,
 ) -> Result<PrintReportResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::Report,
@@ -66,7 +66,7 @@ pub async fn print_report(
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context()?;
+    let service_context = service_provider.context(&store_id, &user.user_id)?;
     let service = &service_provider.report_service;
 
     // get the required report
@@ -120,7 +120,7 @@ pub async fn print_report_definition(
     report: serde_json::Value,
     data_id: String,
 ) -> Result<PrintReportResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::Report,
@@ -129,7 +129,7 @@ pub async fn print_report_definition(
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context()?;
+    let service_context = service_provider.context(&store_id, &user.user_id)?;
     let service = &service_provider.report_service;
 
     // get the required report

@@ -190,7 +190,7 @@ mod test_insert {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider.context("", "").unwrap();
         let service = service_provider.requisition_service;
 
         // RequisitionAlreadyExists
@@ -270,7 +270,7 @@ mod test_insert {
             setup_all("insert_request_requisition_success", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider.context("", "").unwrap();
         let service = service_provider.requisition_service;
 
         let before_insert = Utc::now().naive_utc();

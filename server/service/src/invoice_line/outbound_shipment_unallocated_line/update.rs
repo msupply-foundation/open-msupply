@@ -111,7 +111,7 @@ mod test_update {
             setup_all("update_unallocated_line_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider.context("", "").unwrap();
         let service = service_provider.invoice_line_service;
 
         // LineDoesNotExist
@@ -161,7 +161,7 @@ mod test_update {
 
         let connection = connection_manager.connection().unwrap();
         let service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider.context("", "").unwrap();
         let service = service_provider.invoice_line_service;
 
         let mut line_to_update = mock_unallocated_line();

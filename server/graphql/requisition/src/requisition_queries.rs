@@ -85,7 +85,7 @@ pub enum RequisitionResponse {
 }
 
 pub fn get_requisition(ctx: &Context<'_>, store_id: &str, id: &str) -> Result<RequisitionResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::QueryRequisition,
@@ -94,7 +94,7 @@ pub fn get_requisition(ctx: &Context<'_>, store_id: &str, id: &str) -> Result<Re
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context()?;
+    let service_context = service_provider.context(store_id, &user.user_id)?;
 
     let requisition_option = service_provider.requisition_service.get_requisition(
         &service_context,
@@ -119,7 +119,7 @@ pub fn get_requisitions(
     filter: Option<RequisitionFilterInput>,
     sort: Option<Vec<RequisitionSortInput>>,
 ) -> Result<RequisitionsResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::QueryRequisition,
@@ -128,7 +128,7 @@ pub fn get_requisitions(
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context()?;
+    let service_context = service_provider.context(store_id, &user.user_id)?;
 
     let requisitions = service_provider
         .requisition_service
@@ -154,7 +154,7 @@ pub fn get_requisition_by_number(
     requisition_number: u32,
     r#type: RequisitionNodeType,
 ) -> Result<RequisitionResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::QueryRequisition,
@@ -163,7 +163,7 @@ pub fn get_requisition_by_number(
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context()?;
+    let service_context = service_provider.context(store_id, &user.user_id)?;
 
     let requisition_option = service_provider
         .requisition_service

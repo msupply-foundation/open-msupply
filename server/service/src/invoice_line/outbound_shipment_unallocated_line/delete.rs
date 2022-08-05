@@ -96,7 +96,7 @@ mod test_delete {
             setup_all("delete_unallocated_line_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider.context("", "").unwrap();
         let service = service_provider.invoice_line_service;
 
         // Line Does not Exist
@@ -143,7 +143,7 @@ mod test_delete {
 
         let connection = connection_manager.connection().unwrap();
         let service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider.context("", "").unwrap();
         let service = service_provider.invoice_line_service;
 
         let mut line_to_delete = mock_unallocated_line();

@@ -441,8 +441,7 @@ pub fn update_stocktake(
             }
             StocktakeRowRepository::new(connection).upsert_one(&result.stocktake)?;
 
-            if existing.status != result.stocktake.status
-            {
+            if existing.status != result.stocktake.status {
                 log_entry(
                     &ctx.connection,
                     &LogRow {
@@ -502,7 +501,7 @@ mod test {
             setup_all("update_stocktake", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider.context("", "").unwrap();
         let service = service_provider.stocktake_service;
 
         // error: InvalidStore

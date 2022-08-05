@@ -156,7 +156,7 @@ mod test {
             setup_all("batch_request_requisition_service", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider.context("", "").unwrap();
         let service = service_provider.requisition_service;
 
         let delete_requisition_input = inline_init(|input: &mut DeleteRequestRequisition| {

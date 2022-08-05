@@ -51,8 +51,7 @@ pub fn update_response_requisition(
             let updated_requisition = generate(user_id, requisition_row.clone(), input.clone());
             RequisitionRowRepository::new(&connection).upsert_one(&updated_requisition)?;
 
-            if requisition_row.status != updated_requisition.status
-            {
+            if requisition_row.status != updated_requisition.status {
                 log_entry(
                     &ctx.connection,
                     &LogRow {
@@ -172,7 +171,7 @@ mod test_update {
             setup_all("update_response_requisition_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider.context("", "").unwrap();
         let service = service_provider.requisition_service;
 
         // RequisitionDoesNotExist
@@ -253,7 +252,7 @@ mod test_update {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider.context("", "").unwrap();
         let service = service_provider.requisition_service;
 
         let before_update = Utc::now().naive_utc();

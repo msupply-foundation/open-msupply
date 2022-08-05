@@ -26,7 +26,7 @@ impl LocationQueries {
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
         sort: Option<Vec<LocationSortInput>>,
     ) -> Result<LocationsResponse> {
-        validate_auth(
+        let user = validate_auth(
             ctx,
             &ResourceAccessRequest {
                 resource: Resource::QueryLocation,
@@ -35,7 +35,7 @@ impl LocationQueries {
         )?;
 
         let service_provider = ctx.service_provider();
-        let service_context = service_provider.context()?;
+        let service_context = service_provider.context(&store_id, &user.user_id)?;
 
         // always filter by store_id
         let filter = filter
