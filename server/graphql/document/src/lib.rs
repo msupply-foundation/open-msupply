@@ -1,5 +1,8 @@
 use async_graphql::*;
 use graphql_core::pagination::PaginationInput;
+use mutations::allocate_number::allocate_number;
+use mutations::allocate_number::AllocateNumberInput;
+use mutations::allocate_number::AllocateNumberResponse;
 use mutations::encounter::insert::insert_encounter;
 use mutations::encounter::insert::InsertEncounterInput;
 use mutations::encounter::insert::InsertEncounterResponse;
@@ -211,5 +214,14 @@ impl DocumentMutations {
         input: UpdateEncounterInput,
     ) -> Result<UpdateEncounterResponse> {
         update_encounter(ctx, store_id, input)
+    }
+
+    pub async fn allocate_number(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: AllocateNumberInput,
+    ) -> Result<AllocateNumberResponse> {
+        allocate_number(ctx, store_id, input)
     }
 }
