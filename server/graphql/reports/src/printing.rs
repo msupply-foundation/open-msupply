@@ -70,7 +70,7 @@ pub async fn print_report(
     let service = &service_provider.report_service;
 
     // get the required report
-    let resolved_report = match service.resolve_report(&service_context, &store_id, &report_id) {
+    let resolved_report = match service.resolve_report(&service_context, &report_id) {
         Ok(resolved_report) => resolved_report,
         Err(err) => {
             return Ok(PrintReportResponse::Error(PrintReportError {
@@ -137,7 +137,6 @@ pub async fn print_report_definition(
         .map_err(|err| StandardGraphqlError::BadUserInput(format!("{}", err)).extend())?;
     let resolved_report = match service.resolve_report_definition(
         &service_context,
-        &store_id,
         name.unwrap_or("report".to_string()),
         report_definition,
     ) {
