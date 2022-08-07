@@ -32,6 +32,7 @@ import { useOutbound } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
 import { OutboundLineFragment } from '../api/operations.generated';
 
+const TAB_HEIGHT = '32px';
 enum Tabs {
   Details = 'Details',
   Log = 'Log',
@@ -85,8 +86,15 @@ export const DetailView: FC = () => {
               sx={{
                 display: 'flex',
                 flex: 1,
-                marginBottom: 1,
                 justifyContent: 'center',
+                '& .MuiTab-root': {
+                  minHeight: TAB_HEIGHT,
+                  maxHeight: TAB_HEIGHT,
+                },
+                '& .MuiTabs-root': {
+                  minHeight: TAB_HEIGHT,
+                  maxHeight: TAB_HEIGHT,
+                },
               }}
             >
               <Box flex={1}>
