@@ -345,7 +345,6 @@ mod test {
                     item_id: Some("item_id".to_string()),
                     name: Some("some name".to_string()),
                     total_before_tax: 0.1,
-                    // TODO why is this different from update ?
                     tax: Some(5.0),
                     note: Some("note".to_string())
                 }
