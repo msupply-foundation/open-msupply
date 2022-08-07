@@ -21,7 +21,8 @@ export const LogList: FC<{ recordId: string }> = ({ recordId }) => {
     {
       key: 'type',
       label: 'label.details',
-      accessor: ({ rowData }) => t(Formatter.logTypeTranslation(rowData.type)),
+      accessor: ({ rowData }) =>
+        t(Formatter.logTypeTranslation(rowData.type), rowData.type),
     },
   ]);
 
