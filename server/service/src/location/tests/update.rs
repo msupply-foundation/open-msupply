@@ -18,7 +18,7 @@ mod query {
         let connection = connection_manager.connection().unwrap();
         let location_repository = LocationRepository::new(&connection);
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("", "").unwrap();
+        let context = service_provider.context("store_a", "").unwrap();
         let service = service_provider.location_service;
 
         let locations_in_store = location_repository
@@ -33,7 +33,6 @@ mod query {
         assert_eq!(
             service.update_location(
                 &context,
-                "store_a",
                 UpdateLocation {
                     id: "invalid".to_owned(),
                     code: None,
@@ -48,7 +47,6 @@ mod query {
         assert_eq!(
             service.update_location(
                 &context,
-                "store_a",
                 UpdateLocation {
                     id: locations_not_in_store[0].location_row.id.clone(),
                     code: None,
@@ -63,7 +61,6 @@ mod query {
         assert_eq!(
             service.update_location(
                 &context,
-                "store_a",
                 UpdateLocation {
                     id: locations_in_store[0].location_row.id.clone(),
                     code: Some(locations_in_store[1].location_row.code.clone()),
@@ -82,7 +79,7 @@ mod query {
         let connection = connection_manager.connection().unwrap();
         let location_repository = LocationRepository::new(&connection);
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("", "").unwrap();
+        let context = service_provider.context("store_a", "").unwrap();
         let service = service_provider.location_service;
 
         let locations_in_store = location_repository
@@ -94,7 +91,6 @@ mod query {
         assert_eq!(
             service.update_location(
                 &context,
-                "store_a",
                 UpdateLocation {
                     id: location.location_row.id.clone(),
                     code: None,
@@ -123,7 +119,6 @@ mod query {
         assert_eq!(
             service.update_location(
                 &context,
-                "store_a",
                 UpdateLocation {
                     id: location.location_row.id.clone(),
                     code: Some(location.location_row.code.clone()),
