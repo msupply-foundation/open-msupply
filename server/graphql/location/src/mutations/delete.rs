@@ -27,11 +27,10 @@ pub fn delete_location(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id, &user.user_id)?;
 
-    match service_provider.location_service.delete_location(
-        &service_context,
-        store_id,
-        input.into(),
-    ) {
+    match service_provider
+        .location_service
+        .delete_location(&service_context, input.into())
+    {
         Ok(location_id) => Ok(DeleteLocationResponse::Response(DeleteResponse(
             location_id,
         ))),
@@ -148,7 +147,6 @@ mod test {
         fn delete_location(
             &self,
             _: &ServiceContext,
-            _: &str,
             input: DeleteLocation,
         ) -> Result<String, DeleteLocationError> {
             (self.0)(input)
