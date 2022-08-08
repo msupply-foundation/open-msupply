@@ -9,8 +9,9 @@ import {
   useNavigate,
   useTranslation,
   GlobalStyles,
+  DetailTabs,
 } from '@openmsupply-client/common';
-import { ItemRowFragment } from '@openmsupply-client/system';
+import { ItemRowFragment, LogList } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
@@ -39,6 +40,22 @@ export const DetailView: FC = () => {
 
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
+  const tabs = [
+    {
+      Component: (
+        <ContentArea
+          onRowClick={!isDisabled ? onRowClick : null}
+          onAddItem={() => onOpen()}
+        />
+      ),
+      value: 'Details',
+    },
+    {
+      Component: <LogList recordId={data?.id ?? ''} />,
+      value: 'Log',
+    },
+  ];
+
   return !!data ? (
     <TableProvider createStore={createTableStore}>
       <GlobalStyles
@@ -52,10 +69,8 @@ export const DetailView: FC = () => {
       <AppBarButtons onAddItem={() => onOpen()} />
       <Toolbar />
 
-      <ContentArea
-        onRowClick={!isDisabled ? onRowClick : null}
-        onAddItem={() => onOpen()}
-      />
+      <DetailTabs tabs={tabs} />
+
       <Footer />
       <SidePanel />
 

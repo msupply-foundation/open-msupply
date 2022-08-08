@@ -6,17 +6,27 @@ import {
   useTranslation,
   Formatter,
 } from '@openmsupply-client/common';
+import { useFormatDateTime } from '@common/intl';
+
 import { useLog, LogRowFragment } from '../api';
 
 export const LogList: FC<{ recordId: string }> = ({ recordId }) => {
   const { data, isError, isLoading } = useLog.document.listByRecord(recordId);
   const t = useTranslation();
+  const { localisedTime } = useFormatDateTime();
+
   const columns = useColumns<LogRowFragment>([
     {
       key: 'datetime',
       label: 'label.date',
       format: ColumnFormat.Date,
-      width: 200,
+      width: 150,
+    },
+    {
+      key: 'time',
+      label: 'label.time',
+      width: 150,
+      accessor: ({ rowData }) => localisedTime(rowData.datetime),
     },
     {
       key: 'username',
