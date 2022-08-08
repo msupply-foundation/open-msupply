@@ -26,6 +26,7 @@ const DataTableComponent = <T extends RecordWithId>({
   data = [],
   dense = false,
   enableColumnSelection,
+  generateRowTooltip = () => '',
   isDisabled = false,
   isError = false,
   isLoading = false,
@@ -101,7 +102,7 @@ const DataTableComponent = <T extends RecordWithId>({
     return (
       noDataElement || (
         <Box sx={{ padding: 2 }}>
-          <Typography variant="h6">
+          <Typography sx={{ color: 'gray.dark' }}>
             {noDataMessage || t('error.no-results')}
           </Typography>
         </Box>
@@ -158,6 +159,7 @@ const DataTableComponent = <T extends RecordWithId>({
               rowKey={String(idx)}
               dense={dense}
               keyboardActivated={clickFocusedRow}
+              generateRowTooltip={generateRowTooltip}
             />
           ))}
         </TableBody>

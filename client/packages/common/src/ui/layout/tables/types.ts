@@ -21,6 +21,7 @@ export interface TableProps<T extends RecordWithId> {
   dense?: boolean;
   ExpandContent?: FC<{ rowData: T }>;
   enableColumnSelection?: boolean;
+  generateRowTooltip?: (row: T) => string;
   key: string;
   isDisabled?: boolean;
   isError?: boolean;
