@@ -17,6 +17,7 @@ const StyledTabContainer = styled(Box)(({ theme }) => ({
   borderColor: theme.palette.divider,
   flexDirection: 'row',
   display: 'flex',
+  height: '100%',
 }));
 
 export const DetailTab: FC<PropsWithChildren<DetailTabProps>> = ({
