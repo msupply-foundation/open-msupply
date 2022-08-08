@@ -146,6 +146,8 @@ mod test {
         let context = service_provider
             .context(&mock_store_a().id, &mock_user_account_a().id)
             .unwrap();
+        let invalid_store_context = service_provider.context("invalid", "").unwrap();
+
         let service = service_provider.stocktake_service;
 
         // error: stocktake already exists
@@ -163,7 +165,7 @@ mod test {
         // error: store does not exist
         let error = service
             .insert_stocktake(
-                &context,
+                &invalid_store_context,
                 inline_init(|i: &mut InsertStocktake| i.id = "new_stocktake".to_string()),
             )
             .unwrap_err();

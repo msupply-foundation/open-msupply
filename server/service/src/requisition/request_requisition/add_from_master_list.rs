@@ -169,6 +169,7 @@ mod test {
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider.context("store_a", "").unwrap();
+        let store_b_context = service_provider.context("store_b", "").unwrap();
         let service = service_provider.requisition_service;
 
         // RequisitionDoesNotExist
@@ -186,7 +187,7 @@ mod test {
         // NotThisStoreRequisition
         assert_eq!(
             service.add_from_master_list(
-                &context,
+                &store_b_context,
                 AddFromMasterList {
                     request_requisition_id: mock_draft_request_requisition_for_update_test().id,
                     master_list_id: "n/a".to_owned()

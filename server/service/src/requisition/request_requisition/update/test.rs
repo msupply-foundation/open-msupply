@@ -57,6 +57,7 @@ mod test_update {
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider.context("store_a", "").unwrap();
+        let store_b_context = service_provider.context("store_b", "").unwrap();
         let service = service_provider.requisition_service;
 
         // RequisitionDoesNotExist
@@ -73,7 +74,7 @@ mod test_update {
         // NotThisStoreRequisition
         assert_eq!(
             service.update_request_requisition(
-                &context,
+                &store_b_context,
                 inline_init(|r: &mut UpdateRequestRequisition| {
                     r.id = mock_draft_request_requisition_for_update_test().id;
                 }),

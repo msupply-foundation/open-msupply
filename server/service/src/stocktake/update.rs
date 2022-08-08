@@ -500,13 +500,14 @@ mod test {
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider.context(&mock_store_a().id, "").unwrap();
+        let invalid_store_context = service_provider.context("invalid", "").unwrap();
         let service = service_provider.stocktake_service;
 
         // error: InvalidStore
         let existing_stocktake = mock_stocktake_a();
         let error = service
             .update_stocktake(
-                &context,
+                &invalid_store_context,
                 inline_init(|i: &mut UpdateStocktake| {
                     i.id = existing_stocktake.id.clone();
                 }),

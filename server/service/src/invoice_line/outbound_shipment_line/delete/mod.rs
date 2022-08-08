@@ -83,8 +83,7 @@ mod test {
         mock::{
             mock_inbound_shipment_a_invoice_lines, mock_outbound_shipment_a_invoice_lines,
             mock_outbound_shipment_b_invoice_lines, mock_outbound_shipment_c_invoice_lines,
-            mock_outbound_shipment_no_lines, mock_store_a, mock_store_b, mock_store_c, MockData,
-            MockDataInserts,
+            mock_outbound_shipment_no_lines, mock_store_c, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
         InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus,

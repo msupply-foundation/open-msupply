@@ -84,7 +84,7 @@ mod test {
             mock_item_a, mock_item_b, mock_item_b_lines, mock_outbound_shipment_a_invoice_lines,
             mock_outbound_shipment_c, mock_outbound_shipment_c_invoice_lines, mock_stock_line_a,
             mock_stock_line_location_is_on_hold, mock_stock_line_on_hold, mock_stock_line_si_d,
-            mock_store_a, mock_store_b, mock_store_c, MockDataInserts,
+            mock_store_b, mock_store_c, MockDataInserts,
         },
         test_db::setup_all,
         InvoiceLineRow, InvoiceLineRowRepository, StockLineRowRepository,
