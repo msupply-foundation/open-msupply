@@ -48,7 +48,7 @@ export const getDocumentRegistryQueries = (sdk: Sdk) => ({
   },
 });
 
-export const getAllocateNumberMutations = (sdk: Sdk, storeId: string) => ({
+export const getAllocateNumber = (sdk: Sdk, storeId: string) => ({
   allocateNumber: async (numberName: string): Promise<number> => {
     const result = await sdk.allocateNumber({
       storeId,
