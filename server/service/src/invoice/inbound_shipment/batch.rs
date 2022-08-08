@@ -96,8 +96,7 @@ pub fn batch_inbound_shipment(
             let continue_on_error = input.continue_on_error.unwrap_or(false);
             let mut results = BatchInboundShipmentResult::default();
 
-            let mutations_processor =
-                BatchMutationsProcessor::new(ctx, &ctx.store_id, &ctx.user_id);
+            let mutations_processor = BatchMutationsProcessor::new(ctx);
 
             // Insert Shipment
 
