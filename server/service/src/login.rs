@@ -116,7 +116,7 @@ impl LoginService {
                 FetchUserError::InternalError(_) => info!("{:?}", err),
             },
         };
-        let service_ctx = service_provider.context("", "")?;
+        let mut service_ctx = service_provider.context("", "")?;
         let user_service = UserAccountService::new(&service_ctx.connection);
         let user_account = match user_service.verify_password(&username, &input.password) {
             Ok(user) => user,
@@ -131,7 +131,7 @@ impl LoginService {
                 });
             }
         };
-        let service_ctx = service_provider.context("", &user_account.id.clone())?;
+        service_ctx = service_provider.context("", &user_account.id.clone())?;
 
         log_entry(
             &service_ctx,
