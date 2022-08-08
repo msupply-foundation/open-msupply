@@ -43,7 +43,7 @@ pub fn update_patient(
     match service_provider.patient_service.update_patient(
         &service_context,
         service_provider,
-        store_id.clone(),
+        &store_id,
         &user.user_id,
         UpdatePatient {
             data: input.data,
@@ -59,6 +59,9 @@ pub fn update_patient(
             let formatted_error = format!("{:#?}", error);
             let std_err = match error {
                 UpdatePatientError::InvalidDataSchema(_) => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
+                }
+                UpdatePatientError::DataSchemaDoesNotExist => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
                 UpdatePatientError::InternalError(_) => {

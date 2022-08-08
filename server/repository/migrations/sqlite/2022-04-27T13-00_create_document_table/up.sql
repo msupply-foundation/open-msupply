@@ -7,4 +7,14 @@ CREATE TABLE document (
     type TEXT NOT NULL,
     data TEXT NOT NULL,
     schema_id TEXT REFERENCES form_schema(id)
-)
+);
+
+CREATE VIEW latest_document AS
+SELECT d.*
+FROM (
+      SELECT name, MAX(timestamp) AS timestamp
+      FROM document
+      GROUP BY name
+) grouped
+INNER JOIN document d
+ON d.name = grouped.name AND d.timestamp = grouped.timestamp;

@@ -41,7 +41,6 @@ impl Loader<DocumentLoaderInput> for DocumentLoader {
         for (store_id, doc_names) in jobs {
             let result = self.service_provider.document_service.get_documents(
                 &ctx,
-                &store_id,
                 Some(
                     DocumentFilter::new()
                         .name(StringFilter::equal_any(doc_names.into_iter().collect())),

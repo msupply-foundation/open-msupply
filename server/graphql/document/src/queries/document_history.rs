@@ -23,7 +23,7 @@ pub fn document_history(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::QueryDocument,
-            store_id: Some(store_id.to_string()),
+            store_id: Some(store_id),
         },
     )?;
 
@@ -32,7 +32,7 @@ pub fn document_history(
 
     let documents = service_provider
         .document_service
-        .get_document_history(&context, &store_id, &document_name)
+        .get_document_history(&context, &document_name)
         .map_err(|err| {
             let formated_err = format! {"{:?}", err};
             let error = match err {

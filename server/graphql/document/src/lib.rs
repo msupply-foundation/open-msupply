@@ -139,7 +139,7 @@ impl DocumentMutations {
         store_id: String,
         input: UpdateDocumentInput,
     ) -> Result<UpdateDocumentResponse> {
-        update_document(ctx, &store_id, input)
+        update_document(ctx, store_id, input)
     }
 
     async fn insert_document_registry(

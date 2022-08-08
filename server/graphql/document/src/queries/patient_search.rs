@@ -59,7 +59,7 @@ pub fn patient_search(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::QueryPatient,
-            store_id: Some(store_id.to_string()),
+            store_id: Some(store_id.clone()),
         },
     )?;
 
@@ -68,12 +68,7 @@ pub fn patient_search(
 
     let result: Vec<PatientSearchNode> = service_provider
         .patient_service
-        .patient_search(
-            &context,
-            service_provider,
-            store_id.clone(),
-            input.to_domain(),
-        )?
+        .patient_search(&context, service_provider, &store_id, input.to_domain())?
         .into_iter()
         .map(|p| PatientSearchNode {
             patient: PatientNode {

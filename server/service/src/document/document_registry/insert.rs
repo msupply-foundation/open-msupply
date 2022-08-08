@@ -10,7 +10,7 @@ use crate::service_provider::ServiceContext;
 pub enum InsertDocRegistryError {
     OnlyOnePatientEntryAllowed,
     InvalidParent,
-    SchemaDoesNotExist,
+    DataSchemaDoesNotExist,
     InternalError(String),
     RepositoryError(RepositoryError),
 }
@@ -78,7 +78,7 @@ fn validate(
     }
 
     if !validate_schema_exits(ctx, input)? {
-        return Err(InsertDocRegistryError::SchemaDoesNotExist);
+        return Err(InsertDocRegistryError::DataSchemaDoesNotExist);
     }
 
     Ok(())
