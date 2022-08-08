@@ -66,6 +66,9 @@ export const useFormatDateTime = () => {
   const localisedDate = (date: Date | string | number): string =>
     format(dateInputHandler(date), 'P', { locale });
 
+  const localisedTime = (date: Date | string | number): string =>
+    format(dateInputHandler(date), 'p', { locale });
+
   const dayMonthShort = (date: Date | string | number): string =>
     format(dateInputHandler(date), 'dd MMM', { locale });
 
@@ -74,5 +77,5 @@ export const useFormatDateTime = () => {
     formatString: string
   ): string => format(dateInputHandler(date), formatString, { locale });
 
-  return { localisedDate, dayMonthShort, customDate };
+  return { localisedDate, localisedTime, dayMonthShort, customDate };
 };

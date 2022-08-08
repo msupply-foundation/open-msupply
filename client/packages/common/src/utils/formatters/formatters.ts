@@ -1,3 +1,4 @@
+import { LocaleKey } from '@common/intl';
 import format from 'date-fns/format';
 import isValid from 'date-fns/isValid';
 import Papa, { UnparseConfig, UnparseObject } from 'papaparse';
@@ -36,4 +37,6 @@ export const Formatter = {
       .split(' ')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
       .join(' '),
+  logTypeTranslation: (logType: string): LocaleKey =>
+    `log.${logType.toLowerCase().replace(/_/g, '-')}` as LocaleKey,
 };
