@@ -26,10 +26,7 @@ interface FirstItemArrayControlCustomProps extends ArrayControlProps {
   data: JsonData[];
 }
 
-export const firstItemArrayTester = rankWith(
-  10,
-  uiTypeIs('FirstItemArrayControl')
-);
+export const firstItemArrayTester = rankWith(10, uiTypeIs('FirstItemArray'));
 
 const FirstItemArrayComponent = (props: FirstItemArrayControlCustomProps) => {
   const {

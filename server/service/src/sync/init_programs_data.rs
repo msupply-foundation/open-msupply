@@ -67,7 +67,7 @@ fn person_1() -> Person {
         date_of_death: None,
         code_2: None,
         middle_name: None,
-        notes: Vec::new(),
+        notes: None,
     }
 }
 
@@ -92,7 +92,7 @@ fn person_2() -> Person {
         date_of_death: None,
         code_2: None,
         middle_name: None,
-        notes: Vec::new(),
+        notes: None,
     }
 }
 
@@ -117,7 +117,7 @@ fn person_3() -> Person {
         date_of_death: None,
         code_2: None,
         middle_name: None,
-        notes: Vec::new(),
+        notes: None,
     }
 }
 
@@ -174,7 +174,7 @@ fn patient_1() -> Patient {
         date_of_death: None,
         code_2: None,
         middle_name: None,
-        notes: Vec::new(),
+        notes: None,
     }
 }
 
@@ -231,7 +231,7 @@ fn patient_2() -> Patient {
         date_of_death: None,
         code_2: None,
         middle_name: None,
-        notes: Vec::new(),
+        notes: None,
     }
 }
 

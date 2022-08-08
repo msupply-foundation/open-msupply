@@ -14,7 +14,7 @@
       }
     },
     {
-      "type": "IdGeneratorControl",
+      "type": "IdGenerator",
       "label": "Enrolment Patient Id",
       "scope": "#/",
       "options": {
@@ -77,7 +77,7 @@
           "scope": "#/properties/treatmentSupporter/properties/lastName"
         },
         {
-          "type": "FirstItemArrayControl",
+          "type": "FirstItemArray",
           "scope": "#/properties/treatmentSupporter/properties/contactDetails",
           "options": {
             "detail": {
