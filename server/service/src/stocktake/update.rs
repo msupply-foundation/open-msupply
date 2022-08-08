@@ -401,22 +401,20 @@ fn generate(
 
 pub fn update_stocktake(
     ctx: &ServiceContext,
-    store_id: &str,
-    user_id: &str,
     input: UpdateStocktake,
 ) -> Result<Stocktake, UpdateStocktakeError> {
     let result = ctx
         .connection
         .transaction_sync(|connection| {
             let stocktake_id = input.id.clone();
-            let (existing, stocktake_lines) = validate(connection, store_id, &input)?;
+            let (existing, stocktake_lines) = validate(connection, &ctx.store_id, &input)?;
             let result = generate(
                 connection,
-                user_id,
+                &ctx.user_id,
                 input.clone(),
                 existing.clone(),
                 stocktake_lines,
-                store_id,
+                &ctx.store_id,
             )?;
 
             // write data to the DB
@@ -447,8 +445,8 @@ pub fn update_stocktake(
                     &LogRow {
                         id: uuid(),
                         r#type: LogType::StocktakeStatusFinalised,
-                        user_id: Some(user_id.to_string()),
-                        store_id: Some(store_id.to_string()),
+                        user_id: Some(ctx.user_id.clone()),
+                        store_id: Some(ctx.store_id.clone()),
                         record_id: Some(stocktake_id.to_string()),
                         datetime: Utc::now().naive_utc(),
                     },
@@ -501,7 +499,7 @@ mod test {
             setup_all("update_stocktake", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("", "").unwrap();
+        let context = service_provider.context(&mock_store_a().id, "").unwrap();
         let service = service_provider.stocktake_service;
 
         // error: InvalidStore
@@ -509,8 +507,6 @@ mod test {
         let error = service
             .update_stocktake(
                 &context,
-                "invalid",
-                "n/a",
                 inline_init(|i: &mut UpdateStocktake| {
                     i.id = existing_stocktake.id.clone();
                 }),
@@ -523,8 +519,6 @@ mod test {
         let error = service
             .update_stocktake(
                 &context,
-                &store_a.id,
-                "n/a",
                 inline_init(|i: &mut UpdateStocktake| {
                     i.id = "invalid".to_string();
                 }),
@@ -538,8 +532,6 @@ mod test {
         let error = service
             .update_stocktake(
                 &context,
-                &store_a.id,
-                "n/a",
                 inline_init(|i: &mut UpdateStocktake| {
                     i.id = stocktake.id;
                     i.comment = Some("Comment".to_string());
@@ -554,8 +546,6 @@ mod test {
         let error = service
             .update_stocktake(
                 &context,
-                &store_a.id,
-                "n/a",
                 inline_init(|i: &mut UpdateStocktake| {
                     i.id = stocktake.id;
                     i.comment = Some("Comment".to_string());
@@ -575,8 +565,6 @@ mod test {
         let error = service
             .update_stocktake(
                 &context,
-                &store_a.id,
-                "n/a",
                 inline_init(|i: &mut UpdateStocktake| {
                     i.id = stocktake.id;
                     i.comment = Some("Comment".to_string());
@@ -599,8 +587,6 @@ mod test {
         let error = service
             .update_stocktake(
                 &context,
-                &store_a.id,
-                "n/a",
                 inline_init(|i: &mut UpdateStocktake| {
                     i.id = stocktake.id;
                     i.comment = Some("Comment".to_string());
@@ -616,8 +602,6 @@ mod test {
         let result = service
             .update_stocktake(
                 &context,
-                &store_a.id,
-                "n/a",
                 inline_init(|i: &mut UpdateStocktake| {
                     i.id = stocktake.id;
                     i.status = Some(StocktakeStatus::Finalised);
@@ -637,8 +621,6 @@ mod test {
         let result = service
             .update_stocktake(
                 &context,
-                &store_a.id,
-                "n/a",
                 inline_init(|i: &mut UpdateStocktake| {
                     i.id = stocktake.id;
                     i.status = Some(StocktakeStatus::Finalised);
@@ -658,8 +640,6 @@ mod test {
         let result = service
             .update_stocktake(
                 &context,
-                &store_a.id,
-                "n/a",
                 inline_init(|i: &mut UpdateStocktake| {
                     i.id = stocktake.id;
                     i.status = Some(StocktakeStatus::Finalised);
@@ -678,8 +658,6 @@ mod test {
         let result = service
             .update_stocktake(
                 &context,
-                &store_a.id,
-                "n/a",
                 inline_init(|i: &mut UpdateStocktake| {
                     i.id = stocktake.id;
                     i.status = Some(StocktakeStatus::New);
@@ -694,8 +672,6 @@ mod test {
         service
             .update_stocktake(
                 &context,
-                &store_a.id,
-                "n/a",
                 inline_init(|i: &mut UpdateStocktake| {
                     i.id = stocktake.id.clone();
                     i.is_locked = Some(true);
@@ -722,8 +698,6 @@ mod test {
         service
             .update_stocktake(
                 &context,
-                &store_a.id,
-                "n/a",
                 inline_init(|i: &mut UpdateStocktake| {
                     i.id = stocktake.id.clone();
                     i.is_locked = Some(false);
@@ -749,8 +723,6 @@ mod test {
         let result = service
             .update_stocktake(
                 &context,
-                &store_a.id,
-                "n/a",
                 UpdateStocktake {
                     id: stocktake.id.clone(),
                     comment: Some("comment_1".to_string()),
@@ -779,8 +751,6 @@ mod test {
         let result = service
             .update_stocktake(
                 &context,
-                &store_a.id,
-                "n/a",
                 inline_init(|i: &mut UpdateStocktake| {
                     i.id = stocktake.id.clone();
                     i.status = Some(StocktakeStatus::Finalised);

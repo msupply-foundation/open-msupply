@@ -58,12 +58,11 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id, &user.user_id)?;
 
-    map_response(service_provider.invoice_service.update_inbound_shipment(
-        &service_context,
-        store_id,
-        &user.user_id,
-        input.to_domain(),
-    ))
+    map_response(
+        service_provider
+            .invoice_service
+            .update_inbound_shipment(&service_context, input.to_domain()),
+    )
 }
 
 #[derive(Interface)]
@@ -202,8 +201,6 @@ mod test {
         fn update_inbound_shipment(
             &self,
             _: &ServiceContext,
-            _: &str,
-            _: &str,
             input: ServiceInput,
         ) -> Result<Invoice, ServiceError> {
             self.0(input)

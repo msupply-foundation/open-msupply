@@ -31,17 +31,15 @@ type OutError = SupplyRequestedQuantityError;
 
 pub fn supply_requested_quantity(
     ctx: &ServiceContext,
-    store_id: &str,
-    user_id: &str,
     input: SupplyRequestedQuantity,
 ) -> Result<Vec<RequisitionLine>, OutError> {
     let requisition_lines = ctx
         .connection
         .transaction_sync(|connection| {
-            let requisition_row = validate(connection, store_id, &input)?;
+            let requisition_row = validate(connection, &ctx.store_id, &input)?;
             let (requisition_row_option, update_requisition_line_rows) = generate(
                 connection,
-                user_id,
+                &ctx.user_id,
                 requisition_row,
                 &input.response_requisition_id,
             )?;
@@ -154,15 +152,13 @@ mod test {
             setup_all("supply_requested_quantity_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("", "").unwrap();
+        let context = service_provider.context("store_a", "").unwrap();
         let service = service_provider.requisition_service;
 
         // RequisitionDoesNotExist
         assert_eq!(
             service.supply_requested_quantity(
                 &context,
-                "store_a",
-                "n/a",
                 SupplyRequestedQuantity {
                     response_requisition_id: "invalid".to_owned(),
                 }
@@ -174,8 +170,6 @@ mod test {
         assert_eq!(
             service.supply_requested_quantity(
                 &context,
-                "store_b",
-                "n/a",
                 SupplyRequestedQuantity {
                     response_requisition_id: mock_draft_response_requisition_for_update_test().id,
                 },
@@ -187,8 +181,6 @@ mod test {
         assert_eq!(
             service.supply_requested_quantity(
                 &context,
-                "store_a",
-                "/na",
                 SupplyRequestedQuantity {
                     response_requisition_id: mock_finalised_response_requisition().id,
                 },
@@ -200,8 +192,6 @@ mod test {
         assert_eq!(
             service.supply_requested_quantity(
                 &context,
-                "store_a",
-                "n/a",
                 SupplyRequestedQuantity {
                     response_requisition_id: mock_sent_request_requisition().id,
                 },
@@ -216,14 +206,14 @@ mod test {
             setup_all("supply_requested_quantity_success", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("", "").unwrap();
+        let context = service_provider
+            .context("store_a", &mock_user_account_b().id)
+            .unwrap();
         let service = service_provider.requisition_service;
 
         let result = service
             .supply_requested_quantity(
                 &context,
-                "store_a",
-                &mock_user_account_b().id,
                 SupplyRequestedQuantity {
                     response_requisition_id: mock_new_response_requisition_test().requisition.id,
                 },

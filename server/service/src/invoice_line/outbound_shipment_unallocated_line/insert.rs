@@ -39,13 +39,12 @@ type OutError = InsertOutboundShipmentUnallocatedLineError;
 
 pub fn insert_outbound_shipment_unallocated_line(
     ctx: &ServiceContext,
-    store_id: &str,
     input: InsertOutboundShipmentUnallocatedLine,
 ) -> Result<InvoiceLine, OutError> {
     let line = ctx
         .connection
         .transaction_sync(|connection| {
-            let item_row = validate(connection, store_id, &input)?;
+            let item_row = validate(connection, &ctx.store_id, &input)?;
             let new_line = generate(input, item_row)?;
             InvoiceLineRowRepository::new(&connection).upsert_one(&new_line)?;
 
@@ -185,7 +184,7 @@ mod test_insert {
             setup_all("insert_unallocated_line_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("", "").unwrap();
+        let context = service_provider.context("store_a", "").unwrap();
         let service = service_provider.invoice_line_service;
 
         let new_outbound_shipment = mock_new_invoice_with_unallocated_line();
@@ -197,7 +196,6 @@ mod test_insert {
         assert_eq!(
             service.insert_outbound_shipment_unallocated_line(
                 &context,
-                "store_a",
                 InsertOutboundShipmentUnallocatedLine {
                     id: existing_invoice_line.id.clone(),
                     invoice_id: "".to_owned(),
@@ -212,7 +210,6 @@ mod test_insert {
         assert_eq!(
             service.insert_outbound_shipment_unallocated_line(
                 &context,
-                "store_a",
                 InsertOutboundShipmentUnallocatedLine {
                     id: new_line_id.clone(),
                     invoice_id: "invalid".to_owned(),
@@ -227,7 +224,6 @@ mod test_insert {
         assert_eq!(
             service.insert_outbound_shipment_unallocated_line(
                 &context,
-                "store_a",
                 InsertOutboundShipmentUnallocatedLine {
                     id: new_line_id.clone(),
                     invoice_id: mock_inbound_shipment_a().id.clone(),
@@ -242,7 +238,6 @@ mod test_insert {
         assert_eq!(
             service.insert_outbound_shipment_unallocated_line(
                 &context,
-                "store_a",
                 InsertOutboundShipmentUnallocatedLine {
                     id: new_line_id.clone(),
                     invoice_id: mock_allocated_invoice().id.clone(),
@@ -257,7 +252,6 @@ mod test_insert {
         assert_eq!(
             service.insert_outbound_shipment_unallocated_line(
                 &context,
-                "store_a",
                 InsertOutboundShipmentUnallocatedLine {
                     id: new_line_id.clone(),
                     invoice_id: new_outbound_shipment.id.clone(),
@@ -271,7 +265,6 @@ mod test_insert {
         assert_eq!(
             service.insert_outbound_shipment_unallocated_line(
                 &context,
-                "store_a",
                 InsertOutboundShipmentUnallocatedLine {
                     id: new_line_id.clone(),
                     invoice_id: new_outbound_shipment.id.clone(),
@@ -285,7 +278,6 @@ mod test_insert {
         assert_eq!(
             service.insert_outbound_shipment_unallocated_line(
                 &context,
-                "store_c",
                 InsertOutboundShipmentUnallocatedLine {
                     id: new_line_id.clone(),
                     invoice_id: new_outbound_shipment.id.clone(),
@@ -299,7 +291,6 @@ mod test_insert {
         assert_eq!(
             service.insert_outbound_shipment_unallocated_line(
                 &context,
-                "store_b",
                 InsertOutboundShipmentUnallocatedLine {
                     id: "new unallocated line id".to_owned(),
                     invoice_id: mock_new_invoice_with_unallocated_line().id.clone(),
@@ -318,7 +309,7 @@ mod test_insert {
 
         let connection = connection_manager.connection().unwrap();
         let service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
-        let context = service_provider.context("", "").unwrap();
+        let context = service_provider.context("store_c", "").unwrap();
         let service = service_provider.invoice_line_service;
 
         // Successful insert
@@ -331,7 +322,6 @@ mod test_insert {
         let result = service
             .insert_outbound_shipment_unallocated_line(
                 &context,
-                "store_c",
                 InsertOutboundShipmentUnallocatedLine {
                     id: "new_line".to_owned(),
                     invoice_id: invoice_id.clone(),

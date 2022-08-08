@@ -85,15 +85,13 @@ fn generate(
 
 pub fn insert_stocktake(
     ctx: &ServiceContext,
-    store_id: &str,
-    user_id: &str,
     input: InsertStocktake,
 ) -> Result<Stocktake, InsertStocktakeError> {
     let result = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(connection, store_id, &input)?;
-            let new_stocktake = generate(connection, store_id, user_id, input)?;
+            validate(connection, &ctx.store_id, &input)?;
+            let new_stocktake = generate(connection, &ctx.store_id, &ctx.user_id, input)?;
             StocktakeRowRepository::new(&connection).upsert_one(&new_stocktake)?;
 
             let stocktake = get_stocktake(ctx, new_stocktake.id)?;
@@ -108,8 +106,8 @@ pub fn insert_stocktake(
         &LogRow {
             id: uuid(),
             r#type: LogType::StocktakeCreated,
-            user_id: Some(user_id.to_string()),
-            store_id: Some(store_id.to_string()),
+            user_id: Some(ctx.user_id.clone()),
+            store_id: Some(ctx.store_id.clone()),
             record_id: Some(result.id.clone()),
             datetime: result.created_datetime,
         },
@@ -145,7 +143,9 @@ mod test {
             setup_all("insert_stocktake", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("", "").unwrap();
+        let context = service_provider
+            .context(&mock_store_a().id, &mock_user_account_a().id)
+            .unwrap();
         let service = service_provider.stocktake_service;
 
         // error: stocktake already exists
@@ -154,8 +154,6 @@ mod test {
         let error = service
             .insert_stocktake(
                 &context,
-                &store_a.id,
-                "n/a",
                 inline_init(|i: &mut InsertStocktake| {
                     i.id = existing_stocktake.id;
                 }),
@@ -167,8 +165,6 @@ mod test {
         let error = service
             .insert_stocktake(
                 &context,
-                "invalid",
-                "n/a",
                 inline_init(|i: &mut InsertStocktake| i.id = "new_stocktake".to_string()),
             )
             .unwrap_err();
@@ -181,8 +177,6 @@ mod test {
         service
             .insert_stocktake(
                 &context,
-                &store_a.id,
-                &mock_user_account_a().id,
                 InsertStocktake {
                     id: "new_stocktake".to_string(),
                     comment: Some("comment".to_string()),

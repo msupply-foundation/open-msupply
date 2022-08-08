@@ -25,15 +25,13 @@ mod test_update {
             setup_all("create_requisition_shipment_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("", "").unwrap();
+        let context = service_provider.context("store_a", "").unwrap();
         let service = service_provider.requisition_service;
 
         // RequisitionDoesNotExist
         assert_eq!(
             service.create_requisition_shipment(
                 &context,
-                "store_a",
-                "/na",
                 CreateRequisitionShipment {
                     response_requisition_id: "invalid".to_owned(),
                 },
@@ -45,8 +43,6 @@ mod test_update {
         assert_eq!(
             service.create_requisition_shipment(
                 &context,
-                "store_b",
-                "/na",
                 CreateRequisitionShipment {
                     response_requisition_id: mock_draft_response_requisition_for_update_test().id,
                 },
@@ -58,8 +54,6 @@ mod test_update {
         assert_eq!(
             service.create_requisition_shipment(
                 &context,
-                "store_a",
-                "/na",
                 CreateRequisitionShipment {
                     response_requisition_id: mock_finalised_response_requisition().id,
                 },
@@ -71,8 +65,6 @@ mod test_update {
         assert_eq!(
             service.create_requisition_shipment(
                 &context,
-                "store_a",
-                "/na",
                 CreateRequisitionShipment {
                     response_requisition_id: mock_sent_request_requisition().id,
                 },
@@ -90,15 +82,13 @@ mod test_update {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("", "").unwrap();
+        let context = service_provider.context("store_a", "").unwrap();
         let service = service_provider.requisition_service;
 
         // Check existing invoice is accounted for
         let invoice = service
             .create_requisition_shipment(
                 &context,
-                "store_a",
-                "/na",
                 CreateRequisitionShipment {
                     response_requisition_id: mock_new_response_requisition_test().requisition.id,
                 },
@@ -131,8 +121,6 @@ mod test_update {
         assert_eq!(
             service.create_requisition_shipment(
                 &context,
-                "store_a",
-                "/na",
                 CreateRequisitionShipment {
                     response_requisition_id: mock_new_response_requisition_test().requisition.id,
                 },
@@ -145,8 +133,6 @@ mod test_update {
             .requisition_line_service
             .update_response_requisition_line(
                 &context,
-                "store_a",
-                "n/a",
                 inline_init(|r: &mut UpdateResponseRequisitionLine| {
                     r.id = mock_new_response_requisition_test().lines[0].id.clone();
                     r.supply_quantity = Some(100);
@@ -157,8 +143,6 @@ mod test_update {
         let invoice = service
             .create_requisition_shipment(
                 &context,
-                "store_a",
-                "/na",
                 CreateRequisitionShipment {
                     response_requisition_id: mock_new_response_requisition_test().requisition.id,
                 },

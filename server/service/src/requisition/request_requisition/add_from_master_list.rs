@@ -32,14 +32,13 @@ type OutError = AddFromMasterListError;
 
 pub fn add_from_master_list(
     ctx: &ServiceContext,
-    store_id: &str,
     input: AddFromMasterList,
 ) -> Result<Vec<RequisitionLine>, OutError> {
     let requisition_lines = ctx
         .connection
         .transaction_sync(|connection| {
-            let requisition_row = validate(connection, store_id, &input)?;
-            let new_requisition_line_rows = generate(ctx, store_id, requisition_row, &input)?;
+            let requisition_row = validate(connection, &ctx.store_id, &input)?;
+            let new_requisition_line_rows = generate(ctx, &ctx.store_id, requisition_row, &input)?;
 
             let requisition_line_row_repository = RequisitionLineRowRepository::new(&connection);
 
@@ -169,14 +168,13 @@ mod test {
             setup_all("add_from_master_list_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("", "").unwrap();
+        let context = service_provider.context("store_a", "").unwrap();
         let service = service_provider.requisition_service;
 
         // RequisitionDoesNotExist
         assert_eq!(
             service.add_from_master_list(
                 &context,
-                "store_a",
                 AddFromMasterList {
                     request_requisition_id: "invalid".to_owned(),
                     master_list_id: "n/a".to_owned()
@@ -189,7 +187,6 @@ mod test {
         assert_eq!(
             service.add_from_master_list(
                 &context,
-                "store_b",
                 AddFromMasterList {
                     request_requisition_id: mock_draft_request_requisition_for_update_test().id,
                     master_list_id: "n/a".to_owned()
@@ -202,7 +199,6 @@ mod test {
         assert_eq!(
             service.add_from_master_list(
                 &context,
-                "store_a",
                 AddFromMasterList {
                     request_requisition_id: mock_sent_request_requisition().id,
                     master_list_id: "n/a".to_owned()
@@ -215,7 +211,6 @@ mod test {
         assert_eq!(
             service.add_from_master_list(
                 &context,
-                "store_a",
                 AddFromMasterList {
                     request_requisition_id: mock_draft_response_requisition_for_update_test().id,
                     master_list_id: "n/a".to_owned()
@@ -228,7 +223,6 @@ mod test {
         assert_eq!(
             service.add_from_master_list(
                 &context,
-                "store_a",
                 AddFromMasterList {
                     request_requisition_id: mock_draft_request_requisition_for_update_test().id,
                     master_list_id: mock_test_not_store_a_master_list().master_list.id
@@ -289,13 +283,12 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("", "").unwrap();
+        let context = service_provider.context("store_a", "").unwrap();
         let service = service_provider.requisition_service;
 
         let result = service
             .add_from_master_list(
                 &context,
-                "store_a",
                 AddFromMasterList {
                     request_requisition_id: mock_request_draft_requisition_calculation_test()
                         .requisition

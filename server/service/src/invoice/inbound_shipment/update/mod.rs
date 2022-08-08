@@ -43,19 +43,23 @@ type OutError = UpdateInboundShipmentError;
 
 pub fn update_inbound_shipment(
     ctx: &ServiceContext,
-    store_id: &str,
-    user_id: &str,
     patch: UpdateInboundShipment,
 ) -> Result<Invoice, OutError> {
     let invoice = ctx
         .connection
         .transaction_sync(|connection| {
-            let (invoice, other_party) = validate(connection, store_id, &patch)?;
+            let (invoice, other_party) = validate(connection, &ctx.store_id, &patch)?;
             let GenerateResult {
                 batches_to_update,
                 update_invoice,
                 empty_lines_to_trim,
-            } = generate(connection, user_id, invoice, other_party, patch.clone())?;
+            } = generate(
+                connection,
+                &ctx.user_id,
+                invoice,
+                other_party,
+                patch.clone(),
+            )?;
 
             InvoiceRowRepository::new(connection).upsert_one(&update_invoice)?;
 
@@ -100,8 +104,8 @@ pub fn update_inbound_shipment(
                     UpdateInboundShipmentStatus::Delivered => LogType::InvoiceStatusDelivered,
                     UpdateInboundShipmentStatus::Verified => LogType::InvoiceStatusVerified,
                 },
-                user_id: invoice.invoice_row.user_id.clone(),
-                store_id: Some(invoice.invoice_row.store_id.clone()),
+                user_id: Some(ctx.user_id.clone()),
+                store_id: Some(ctx.store_id.clone()),
                 record_id: Some(invoice.invoice_row.id.clone()),
                 datetime: Utc::now().naive_utc(),
             },
@@ -224,15 +228,13 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("", "").unwrap();
+        let context = service_provider.context(&mock_store_a().id, "").unwrap();
         let service = service_provider.invoice_service;
 
         //InvoiceDoesNotExist
         assert_eq!(
             service.update_inbound_shipment(
                 &context,
-                &mock_store_a().id,
-                "n/a",
                 inline_init(|r: &mut UpdateInboundShipment| {
                     r.id = "invalid".to_string();
                     r.other_party_id = Some(mock_name_a().id.clone());
@@ -244,8 +246,6 @@ mod test {
         assert_eq!(
             service.update_inbound_shipment(
                 &context,
-                &mock_store_a().id,
-                "n/a",
                 inline_init(|r: &mut UpdateInboundShipment| {
                     r.id = mock_outbound_shipment_e().id.clone();
                     r.other_party_id = Some(mock_name_a().id.clone());
@@ -257,8 +257,6 @@ mod test {
         assert_eq!(
             service.update_inbound_shipment(
                 &context,
-                "store_b",
-                "n/a",
                 inline_init(|r: &mut UpdateInboundShipment| {
                     r.id = mock_inbound_shipment_c().id.clone();
                 })
@@ -269,8 +267,6 @@ mod test {
         assert_eq!(
             service.update_inbound_shipment(
                 &context,
-                &mock_store_a().id,
-                "n/a",
                 inline_init(|r: &mut UpdateInboundShipment| {
                     r.id = mock_inbound_shipment_b().id.clone();
                     r.comment = Some("comment update".to_string());
@@ -282,8 +278,6 @@ mod test {
         assert_eq!(
             service.update_inbound_shipment(
                 &context,
-                &mock_store_a().id,
-                "n/a",
                 inline_init(|r: &mut UpdateInboundShipment| {
                     r.id = mock_inbound_shipment_e().id.clone();
                     r.status = Some(UpdateInboundShipmentStatus::Delivered);
@@ -295,8 +289,6 @@ mod test {
         assert_eq!(
             service.update_inbound_shipment(
                 &context,
-                &mock_store_a().id,
-                "n/a",
                 inline_init(|r: &mut UpdateInboundShipment| {
                     r.id = mock_inbound_shipment_a().id;
                     r.other_party_id = Some("invalid".to_string());
@@ -308,8 +300,6 @@ mod test {
         assert_eq!(
             service.update_inbound_shipment(
                 &context,
-                &mock_store_a().id,
-                "n/a",
                 inline_init(|r: &mut UpdateInboundShipment| {
                     r.id = mock_inbound_shipment_a().id;
                     r.other_party_id = Some(not_visible().id);
@@ -321,8 +311,6 @@ mod test {
         assert_eq!(
             service.update_inbound_shipment(
                 &context,
-                &mock_store_a().id,
-                "n/a",
                 inline_init(|r: &mut UpdateInboundShipment| {
                     r.id = mock_inbound_shipment_a().id;
                     r.other_party_id = Some(not_a_supplier().id);
@@ -362,7 +350,9 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("", "").unwrap();
+        let context = service_provider
+            .context(&mock_store_a().id, &mock_user_account_a().id)
+            .unwrap();
         let service = service_provider.invoice_service;
         let now = Utc::now().naive_utc();
         let end_time = now.checked_add_signed(Duration::seconds(10)).unwrap();
@@ -371,8 +361,6 @@ mod test {
         service
             .update_inbound_shipment(
                 &context,
-                &mock_store_a().id,
-                &mock_user_account_a().id,
                 inline_init(|r: &mut UpdateInboundShipment| {
                     r.id = mock_inbound_shipment_a().id;
                     r.other_party_id = Some(supplier().id);
@@ -397,8 +385,6 @@ mod test {
         service
             .update_inbound_shipment(
                 &context,
-                &mock_store_a().id,
-                &mock_user_account_a().id,
                 inline_init(|r: &mut UpdateInboundShipment| {
                     r.id = mock_inbound_shipment_c().id;
                     r.other_party_id = Some(supplier().id);
@@ -430,8 +416,6 @@ mod test {
         service
             .update_inbound_shipment(
                 &context,
-                &mock_store_a().id,
-                &mock_user_account_a().id,
                 inline_init(|r: &mut UpdateInboundShipment| {
                     r.id = mock_inbound_shipment_a().id;
                     r.other_party_id = Some(mock_name_linked_to_store_join().name_id.clone());
@@ -455,8 +439,6 @@ mod test {
         service
             .update_inbound_shipment(
                 &context,
-                &mock_store_a().id,
-                &mock_user_account_a().id,
                 inline_init(|r: &mut UpdateInboundShipment| {
                     r.id = mock_inbound_shipment_a().id;
                     r.other_party_id = Some(mock_name_not_linked_to_store_join().name_id.clone());
@@ -474,8 +456,6 @@ mod test {
         service
             .update_inbound_shipment(
                 &context,
-                &mock_store_a().id,
-                &mock_user_account_a().id,
                 inline_init(|r: &mut UpdateInboundShipment| {
                     r.id = mock_inbound_shipment_a().id;
                     r.other_party_id = Some(supplier().id);

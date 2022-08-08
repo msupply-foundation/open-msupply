@@ -26,15 +26,14 @@ type OutError = InsertInboundShipmentError;
 
 pub fn insert_inbound_shipment(
     ctx: &ServiceContext,
-    store_id: &str,
-    user_id: &str,
     input: InsertInboundShipment,
 ) -> Result<Invoice, OutError> {
     let invoice = ctx
         .connection
         .transaction_sync(|connection| {
-            let other_party = validate(connection, store_id, &input)?;
-            let new_invoice = generate(connection, store_id, user_id, input, other_party)?;
+            let other_party = validate(connection, &ctx.store_id, &input)?;
+            let new_invoice =
+                generate(connection, &ctx.store_id, &ctx.user_id, input, other_party)?;
             InvoiceRowRepository::new(connection).upsert_one(&new_invoice)?;
             get_invoice(ctx, None, &new_invoice.id)
                 .map_err(|error| OutError::DatabaseError(error))?
@@ -47,8 +46,8 @@ pub fn insert_inbound_shipment(
         &LogRow {
             id: uuid(),
             r#type: LogType::InvoiceCreated,
-            user_id: Some(user_id.to_string()),
-            store_id: Some(invoice.invoice_row.store_id.clone()),
+            user_id: Some(ctx.user_id.clone()),
+            store_id: Some(ctx.store_id.clone()),
             record_id: Some(invoice.invoice_row.id.clone()),
             datetime: invoice.invoice_row.created_datetime.clone(),
         },
@@ -142,15 +141,13 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("", "").unwrap();
+        let context = service_provider.context(&mock_store_a().id, "").unwrap();
         let service = service_provider.invoice_service;
 
         //InvoiceAlreadyExists
         assert_eq!(
             service.insert_inbound_shipment(
                 &context,
-                &"",
-                "n/a",
                 inline_init(|r: &mut InsertInboundShipment| {
                     r.id = mock_inbound_shipment_c().id.clone();
                     r.other_party_id = mock_name_a().id.clone();
@@ -162,8 +159,6 @@ mod test {
         assert_eq!(
             service.insert_inbound_shipment(
                 &context,
-                &mock_store_a().id,
-                "n/a",
                 inline_init(|r: &mut InsertInboundShipment| {
                     r.id = "new_id".to_string();
                     r.other_party_id = "invalid".to_string();
@@ -175,8 +170,6 @@ mod test {
         assert_eq!(
             service.insert_inbound_shipment(
                 &context,
-                &mock_store_a().id,
-                "n/a",
                 inline_init(|r: &mut InsertInboundShipment| {
                     r.id = "new_id".to_string();
                     r.other_party_id = not_visible().id;
@@ -188,8 +181,6 @@ mod test {
         assert_eq!(
             service.insert_inbound_shipment(
                 &context,
-                &mock_store_a().id,
-                "n/a",
                 inline_init(|r: &mut InsertInboundShipment| {
                     r.id = "new_id".to_string();
                     r.other_party_id = not_a_supplier().id;
@@ -229,15 +220,15 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("", "").unwrap();
+        let context = service_provider
+            .context(&mock_store_a().id, &mock_user_account_a().id)
+            .unwrap();
         let service = service_provider.invoice_service;
 
         // Success
         service
             .insert_inbound_shipment(
                 &context,
-                &mock_store_a().id,
-                &mock_user_account_a().id,
                 inline_init(|r: &mut InsertInboundShipment| {
                     r.id = "new_id".to_string();
                     r.other_party_id = supplier().id;
@@ -262,8 +253,6 @@ mod test {
         service
             .insert_inbound_shipment(
                 &context,
-                &mock_store_a().id,
-                &mock_user_account_a().id,
                 inline_init(|r: &mut InsertInboundShipment| {
                     r.id = "test_on_hold".to_string();
                     r.other_party_id = supplier().id;
@@ -289,8 +278,6 @@ mod test {
         service
             .insert_inbound_shipment(
                 &context,
-                &mock_store_a().id,
-                &mock_user_account_a().id,
                 inline_init(|r: &mut InsertInboundShipment| {
                     r.id = "test_name_store_id_linked".to_string();
                     r.other_party_id = mock_name_linked_to_store_join().name_id.clone();
@@ -314,8 +301,6 @@ mod test {
         service
             .insert_inbound_shipment(
                 &context,
-                &mock_store_a().id,
-                &mock_user_account_a().id,
                 inline_init(|r: &mut InsertInboundShipment| {
                     r.id = "test_name_store_id_not_linked".to_string();
                     r.other_party_id = mock_name_not_linked_to_store().id.clone();

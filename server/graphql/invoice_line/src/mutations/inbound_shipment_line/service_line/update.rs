@@ -45,7 +45,7 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
     map_response(
         service_provider
             .invoice_line_service
-            .update_inbound_shipment_service_line(&service_context, store_id, input.to_domain()),
+            .update_inbound_shipment_service_line(&service_context, input.to_domain()),
     )
 }
 
@@ -164,8 +164,7 @@ mod test {
     type ServiceInput = UpdateInboundShipmentServiceLine;
     type ServiceError = UpdateInboundShipmentServiceLineError;
 
-    type UpdateLineMethod =
-        dyn Fn(&str, ServiceInput) -> Result<InvoiceLine, ServiceError> + Sync + Send;
+    type UpdateLineMethod = dyn Fn(ServiceInput) -> Result<InvoiceLine, ServiceError> + Sync + Send;
 
     pub struct TestService(pub Box<UpdateLineMethod>);
 
@@ -173,10 +172,9 @@ mod test {
         fn update_inbound_shipment_service_line(
             &self,
             _: &ServiceContext,
-            store_id: &str,
             input: ServiceInput,
         ) -> Result<InvoiceLine, ServiceError> {
-            self.0(store_id, input)
+            self.0(input)
         }
     }
 
@@ -219,7 +217,7 @@ mod test {
         }));
 
         // LineDoesNotExist
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::LineDoesNotExist)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::LineDoesNotExist)));
 
         let expected = json!({
             "updateInboundShipmentServiceLine": {
@@ -239,7 +237,7 @@ mod test {
         );
 
         // InvoiceDoesNotExist
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::InvoiceDoesNotExist)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::InvoiceDoesNotExist)));
 
         let expected = json!({
             "updateInboundShipmentServiceLine": {
@@ -259,7 +257,7 @@ mod test {
         );
 
         // CannotEditInvoice
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::CannotEditInvoice)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::CannotEditInvoice)));
 
         let expected = json!({
             "updateInboundShipmentServiceLine": {
@@ -279,7 +277,7 @@ mod test {
         );
 
         // NotAnInboundShipment
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotAnInboundShipment)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NotAnInboundShipment)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -291,7 +289,7 @@ mod test {
         );
 
         // ItemNotFound
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::ItemNotFound)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::ItemNotFound)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -303,7 +301,7 @@ mod test {
         );
 
         // NotThisInvoiceLine
-        let test_service = TestService(Box::new(|_, _| {
+        let test_service = TestService(Box::new(|_| {
             Err(ServiceError::NotThisInvoiceLine("id".to_string()))
         }));
         let expected_message = "Bad user input";
@@ -317,7 +315,7 @@ mod test {
         );
 
         // NotAServiceItem
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotAServiceItem)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NotAServiceItem)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -350,8 +348,8 @@ mod test {
         "#;
 
         // Success
-        let test_service = TestService(Box::new(|store_id, input| {
-            assert_eq!(store_id, "store_a");
+        let test_service = TestService(Box::new(|input| {
+            // assert_eq!(store_id, "store_a");
             assert_eq!(
                 input,
                 ServiceInput {

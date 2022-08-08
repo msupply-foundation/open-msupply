@@ -57,7 +57,7 @@ pub fn allocate(ctx: &Context<'_>, store_id: &str, line_id: String) -> Result<Al
     map_response(
         service_provider
             .invoice_line_service
-            .allocate_outbound_shipment_unallocated_line(&service_context, store_id, line_id),
+            .allocate_outbound_shipment_unallocated_line(&service_context, line_id),
     )
 }
 
@@ -149,7 +149,6 @@ mod graphql {
         fn allocate_outbound_shipment_unallocated_line(
             &self,
             _: &ServiceContext,
-            _: &str,
             input: String,
         ) -> Result<ServiceResult, ServiceError> {
             self.0(input)

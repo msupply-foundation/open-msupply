@@ -16,13 +16,12 @@ type OutError = DeleteOutboundShipmentLineError;
 
 pub fn delete_outbound_shipment_line(
     ctx: &ServiceContext,
-    store_id: &str,
     input: DeleteOutboundShipmentLine,
 ) -> Result<String, OutError> {
     let line_id = ctx
         .connection
         .transaction_sync(|connection| {
-            let line = validate(&input, store_id, &connection)?;
+            let line = validate(&input, &ctx.store_id, &connection)?;
             let stock_line_id_option = line.stock_line_id.clone();
 
             InvoiceLineRowRepository::new(&connection).delete(&line.id)?;
@@ -108,14 +107,13 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("", "").unwrap();
+        let context = service_provider.context(&mock_store_a().id, "").unwrap();
         let service = service_provider.invoice_line_service;
 
         // LineDoesNotExist
         assert_eq!(
             service.delete_outbound_shipment_line(
                 &context,
-                &mock_store_a().id,
                 DeleteOutboundShipmentLine {
                     id: "invalid".to_owned(),
                 },
@@ -127,7 +125,6 @@ mod test {
         assert_eq!(
             service.delete_outbound_shipment_line(
                 &context,
-                &mock_store_a().id,
                 DeleteOutboundShipmentLine {
                     id: mock_inbound_shipment_a_invoice_lines()[0].id.clone(),
                 },
@@ -139,7 +136,6 @@ mod test {
         assert_eq!(
             service.delete_outbound_shipment_line(
                 &context,
-                &mock_store_c().id,
                 DeleteOutboundShipmentLine {
                     id: mock_outbound_shipment_b_invoice_lines()[1].id.clone(),
                 },
@@ -151,7 +147,6 @@ mod test {
         assert_eq!(
             service.delete_outbound_shipment_line(
                 &context,
-                &mock_store_a().id,
                 DeleteOutboundShipmentLine {
                     id: mock_outbound_shipment_c_invoice_lines()[0].id.clone()
                 }
@@ -199,7 +194,7 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("", "").unwrap();
+        let context = service_provider.context(&mock_store_c().id, "").unwrap();
         let service = service_provider.invoice_line_service;
 
         // helpers to compare total
@@ -223,7 +218,6 @@ mod test {
         let invoice_line_id = service
             .delete_outbound_shipment_line(
                 &context,
-                &mock_store_b().id,
                 DeleteOutboundShipmentLine {
                     id: mock_outbound_shipment_a_invoice_lines()[0].id.clone(),
                 },
@@ -257,7 +251,6 @@ mod test {
         service
             .delete_outbound_shipment_line(
                 &context,
-                &mock_store_c().id,
                 DeleteOutboundShipmentLine {
                     id: mock_outbound_shipment_c_invoice_lines()[0].id.clone(),
                 },
@@ -285,7 +278,6 @@ mod test {
         service
             .delete_outbound_shipment_line(
                 &context,
-                &mock_store_c().id,
                 DeleteOutboundShipmentLine {
                     id: outbound_shipment_lines().id,
                 },

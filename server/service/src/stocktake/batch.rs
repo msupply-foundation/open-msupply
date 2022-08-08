@@ -48,8 +48,6 @@ pub struct BatchStocktakeResult {
 
 pub fn batch_stocktake(
     ctx: &ServiceContext,
-    store_id: &str,
-    user_id: &str,
     input: BatchStocktake,
 ) -> Result<BatchStocktakeResult, RepositoryError> {
     let result = ctx
@@ -58,7 +56,8 @@ pub fn batch_stocktake(
             let continue_on_error = input.continue_on_error.unwrap_or(false);
             let mut results = BatchStocktakeResult::default();
 
-            let mutations_processor = BatchMutationsProcessor::new(ctx, store_id, user_id);
+            let mutations_processor =
+                BatchMutationsProcessor::new(ctx, &ctx.store_id, &ctx.user_id);
 
             let (has_errors, result) = mutations_processor
                 .do_mutations_with_user_id(input.insert_stocktake, insert_stocktake);
@@ -133,7 +132,7 @@ mod test {
             setup_all("batch_stocktake_service", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("", "").unwrap();
+        let context = service_provider.context("store_a", "").unwrap();
         let service = service_provider.stocktake_service;
 
         let delete_stocktake_input = mock_stocktake_finalised().id;
@@ -155,9 +154,7 @@ mod test {
         };
 
         // Test rollback
-        let result = service
-            .batch_stocktake(&context, "store_a", "n/a", input.clone())
-            .unwrap();
+        let result = service.batch_stocktake(&context, input.clone()).unwrap();
 
         assert_eq!(
             result.delete_stocktake,
@@ -184,9 +181,7 @@ mod test {
         // Test no rollback
         input.continue_on_error = Some(true);
 
-        service
-            .batch_stocktake(&context, "store_a", "n/a", input)
-            .unwrap();
+        service.batch_stocktake(&context, input).unwrap();
 
         assert_ne!(
             StocktakeRowRepository::new(&connection)

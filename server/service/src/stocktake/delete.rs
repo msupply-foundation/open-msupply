@@ -61,19 +61,18 @@ fn validate(
 /// Returns the id of the deleted stocktake
 pub fn delete_stocktake(
     ctx: &ServiceContext,
-    store_id: &str,
     stocktake_id: String,
 ) -> Result<String, DeleteStocktakeError> {
     ctx.connection
         .transaction_sync(|connection| {
-            validate(connection, store_id, &stocktake_id)?;
+            validate(connection, &ctx.store_id, &stocktake_id)?;
 
             // TODO https://github.com/openmsupply/remote-server/issues/839
             let lines = StocktakeLineRepository::new(&connection).query_by_filter(
                 StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to(&stocktake_id)),
             )?;
             for line in lines {
-                delete_stocktake_line(ctx, store_id, line.line.id.clone()).map_err(|error| {
+                delete_stocktake_line(ctx, line.line.id.clone()).map_err(|error| {
                     DeleteStocktakeError::LineDeleteError {
                         line_id: line.line.id,
                         error,
@@ -93,7 +92,7 @@ pub fn delete_stocktake(
             id: uuid(),
             r#type: LogType::StocktakeDeleted,
             user_id: None, //TODO
-            store_id: Some(store_id.to_string()),
+            store_id: Some(ctx.store_id.clone()),
             record_id: Some(stocktake_id.clone()),
             datetime: Utc::now().naive_utc(),
         },
@@ -110,7 +109,6 @@ impl From<RepositoryError> for DeleteStocktakeError {
 
 #[cfg(test)]
 mod stocktake_test {
-
     use repository::{
         mock::{
             mock_locked_stocktake, mock_stocktake_finalised_without_lines,
@@ -127,27 +125,27 @@ mod stocktake_test {
             setup_all("delete_stocktake", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("", "").unwrap();
+        let context = service_provider.context("store_a", "").unwrap();
         let service = service_provider.stocktake_service;
 
         // error: stock does not exist
         let store_a = mock_stocktake_without_lines();
         let error = service
-            .delete_stocktake(&context, &store_a.id, "invalid".to_string())
+            .delete_stocktake(&context, "invalid".to_string())
             .unwrap_err();
         assert_eq!(error, DeleteStocktakeError::StocktakeDoesNotExist);
 
         // error: StocktakeIsLocked
         let store_a = mock_store_a();
         let error = service
-            .delete_stocktake(&context, &store_a.id, mock_locked_stocktake().id)
+            .delete_stocktake(&context, mock_locked_stocktake().id)
             .unwrap_err();
         assert_eq!(error, DeleteStocktakeError::StocktakeIsLocked);
 
         // error: invalid store
         let existing_stocktake = mock_stocktake_without_lines();
         let error = service
-            .delete_stocktake(&context, "invalid", existing_stocktake.id)
+            .delete_stocktake(&context, existing_stocktake.id)
             .unwrap_err();
         assert_eq!(error, DeleteStocktakeError::InvalidStore);
 
@@ -164,7 +162,7 @@ mod stocktake_test {
         let store_a = mock_store_a();
         let stocktake = mock_stocktake_finalised_without_lines();
         let error = service
-            .delete_stocktake(&context, &store_a.id, stocktake.id)
+            .delete_stocktake(&context, stocktake.id)
             .unwrap_err();
         assert_eq!(error, DeleteStocktakeError::CannotEditFinalised);
 
@@ -172,7 +170,7 @@ mod stocktake_test {
         let store_a = mock_store_a();
         let existing_stocktake = mock_stocktake_without_lines();
         let deleted_stocktake_id = service
-            .delete_stocktake(&context, &store_a.id, existing_stocktake.id.clone())
+            .delete_stocktake(&context, existing_stocktake.id.clone())
             .unwrap();
         assert_eq!(existing_stocktake.id, deleted_stocktake_id);
         assert_eq!(

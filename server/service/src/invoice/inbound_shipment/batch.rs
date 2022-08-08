@@ -88,8 +88,6 @@ pub struct BatchInboundShipmentResult {
 
 pub fn batch_inbound_shipment(
     ctx: &ServiceContext,
-    store_id: &str,
-    user_id: &str,
     input: BatchInboundShipment,
 ) -> Result<BatchInboundShipmentResult, RepositoryError> {
     let result = ctx
@@ -98,7 +96,8 @@ pub fn batch_inbound_shipment(
             let continue_on_error = input.continue_on_error.unwrap_or(false);
             let mut results = BatchInboundShipmentResult::default();
 
-            let mutations_processor = BatchMutationsProcessor::new(ctx, store_id, user_id);
+            let mutations_processor =
+                BatchMutationsProcessor::new(ctx, &ctx.store_id, &ctx.user_id);
 
             // Insert Shipment
 
@@ -218,7 +217,7 @@ mod test {
             setup_all("batch_inbound_shipment_service", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("", "").unwrap();
+        let context = service_provider.context("store_c", "").unwrap();
         let service = service_provider.invoice_service;
 
         let delete_shipment_input = inline_init(|input: &mut DeleteInboundShipment| {
@@ -251,7 +250,7 @@ mod test {
 
         // Test rollback
         let result = service
-            .batch_inbound_shipment(&context, "store_c", "n/a", input.clone())
+            .batch_inbound_shipment(&context, input.clone())
             .unwrap();
 
         assert_eq!(
@@ -279,9 +278,7 @@ mod test {
         // Test no rollback
         input.continue_on_error = Some(true);
 
-        service
-            .batch_inbound_shipment(&context, "store_a", "n/a", input)
-            .unwrap();
+        service.batch_inbound_shipment(&context, input).unwrap();
 
         assert_ne!(
             InvoiceRowRepository::new(&connection)

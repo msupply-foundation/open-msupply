@@ -46,12 +46,11 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id, &user.user_id)?;
 
-    map_response(service_provider.invoice_service.insert_inbound_shipment(
-        &service_context,
-        store_id,
-        &user.user_id,
-        input.to_domain(),
-    ))
+    map_response(
+        service_provider
+            .invoice_service
+            .insert_inbound_shipment(&service_context, input.to_domain()),
+    )
 }
 
 #[derive(Interface)]
@@ -144,7 +143,7 @@ mod test {
 
     use crate::InvoiceMutations;
 
-    type InsertMethod = dyn Fn(&str, ServiceInput) -> Result<Invoice, ServiceError> + Sync + Send;
+    type InsertMethod = dyn Fn(ServiceInput) -> Result<Invoice, ServiceError> + Sync + Send;
 
     pub struct TestService(pub Box<InsertMethod>);
 
@@ -152,11 +151,9 @@ mod test {
         fn insert_inbound_shipment(
             &self,
             _: &ServiceContext,
-            store_id: &str,
-            _: &str,
             input: ServiceInput,
         ) -> Result<Invoice, ServiceError> {
-            self.0(store_id, input)
+            self.0(input)
         }
     }
 
@@ -202,7 +199,7 @@ mod test {
         "#;
 
         // OtherPartyNotASupplier
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::OtherPartyNotASupplier)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::OtherPartyNotASupplier)));
 
         let expected = json!({
             "insertInboundShipment": {
@@ -222,7 +219,7 @@ mod test {
         );
 
         // OtherPartyNotVisible
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::OtherPartyNotVisible)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::OtherPartyNotVisible)));
 
         let expected = json!({
             "insertInboundShipment": {
@@ -242,7 +239,7 @@ mod test {
         );
 
         // InvoiceAlreadyExists
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::InvoiceAlreadyExists)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::InvoiceAlreadyExists)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -254,7 +251,7 @@ mod test {
         );
 
         //OtherPartyDoesNotExist
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::OtherPartyDoesNotExist)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::OtherPartyDoesNotExist)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -266,7 +263,7 @@ mod test {
         );
 
         //Database Error
-        let test_service = TestService(Box::new(|_, _| {
+        let test_service = TestService(Box::new(|_| {
             Err(ServiceError::DatabaseError(RepositoryError::NotFound))
         }));
         let expected_message = "Internal error";
@@ -280,7 +277,7 @@ mod test {
         );
 
         //NewlyCreatedInvoiceDoesNotExist
-        let test_service = TestService(Box::new(|_, _| {
+        let test_service = TestService(Box::new(|_| {
             Err(ServiceError::NewlyCreatedInvoiceDoesNotExist)
         }));
         let expected_message = "Internal error";
@@ -315,8 +312,8 @@ mod test {
         "#;
 
         // Success
-        let test_service = TestService(Box::new(|store_id, input| {
-            assert_eq!(store_id, "store_a");
+        let test_service = TestService(Box::new(|input| {
+            // assert_eq!(store_id, "store_a");
             assert_eq!(
                 input,
                 ServiceInput {

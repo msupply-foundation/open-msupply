@@ -63,7 +63,7 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
     map_response(
         service_provider
             .stocktake_line_service
-            .update_stocktake_line(&service_context, store_id, input.to_domain()),
+            .update_stocktake_line(&service_context, input.to_domain()),
     )
 }
 
@@ -153,11 +153,7 @@ mod test {
 
     use crate::StocktakeLineMutations;
 
-    type ServiceMethod = dyn Fn(
-            &ServiceContext,
-            &str,
-            UpdateStocktakeLine,
-        ) -> Result<StocktakeLine, UpdateStocktakeLineError>
+    type ServiceMethod = dyn Fn(&ServiceContext, UpdateStocktakeLine) -> Result<StocktakeLine, UpdateStocktakeLineError>
         + Sync
         + Send;
 
@@ -167,10 +163,9 @@ mod test {
         fn update_stocktake_line(
             &self,
             ctx: &ServiceContext,
-            store_id: &str,
             input: UpdateStocktakeLine,
         ) -> Result<StocktakeLine, UpdateStocktakeLineError> {
-            (self.0)(ctx, store_id, input)
+            (self.0)(ctx, input)
         }
     }
 
@@ -219,7 +214,7 @@ mod test {
         }));
 
         // Stocktake is locked mapping
-        let test_service = TestService(Box::new(|_, _, _| {
+        let test_service = TestService(Box::new(|_, _| {
             Err(UpdateStocktakeLineError::StocktakeIsLocked)
         }));
 
@@ -234,7 +229,7 @@ mod test {
         );
 
         // success
-        let test_service = TestService(Box::new(|_, _, _| {
+        let test_service = TestService(Box::new(|_, _| {
             Ok(StocktakeLine {
                 line: StocktakeLineRow {
                     id: "id1".to_string(),

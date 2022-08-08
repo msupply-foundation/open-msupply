@@ -1,7 +1,7 @@
 use self::{
     chart::{
-        get_requisition_line_chart, ConsumptionHistoryOptions, RequisitionLineChartError,
-        StockEvolutionOptions, ItemChart,
+        get_requisition_line_chart, ConsumptionHistoryOptions, ItemChart,
+        RequisitionLineChartError, StockEvolutionOptions,
     },
     query::get_requisition_lines,
     request_requisition_line::{
@@ -42,51 +42,44 @@ pub trait RequisitionLineServiceTrait: Sync + Send {
     fn insert_request_requisition_line(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
         input: InsertRequestRequisitionLine,
     ) -> Result<RequisitionLine, InsertRequestRequisitionLineError> {
-        insert_request_requisition_line(ctx, store_id, input)
+        insert_request_requisition_line(ctx, input)
     }
 
     fn update_request_requisition_line(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
         input: UpdateRequestRequisitionLine,
     ) -> Result<RequisitionLine, UpdateRequestRequisitionLineError> {
-        update_request_requisition_line(ctx, store_id, input)
+        update_request_requisition_line(ctx, input)
     }
 
     fn delete_request_requisition_line(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
         input: DeleteRequestRequisitionLine,
     ) -> Result<String, DeleteRequestRequisitionLineError> {
-        delete_request_requisition_line(ctx, store_id, input)
+        delete_request_requisition_line(ctx, input)
     }
 
     fn update_response_requisition_line(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
-        user_id: &str,
         input: UpdateResponseRequisitionLine,
     ) -> Result<RequisitionLine, UpdateResponseRequisitionLineError> {
-        update_response_requisition_line(ctx, store_id, user_id, input)
+        update_response_requisition_line(ctx, input)
     }
 
     fn get_requisition_line_chart(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
         requisition_line_id: &str,
         consumption_history_options: ConsumptionHistoryOptions,
         stock_evolution_options: StockEvolutionOptions,
     ) -> Result<ItemChart, RequisitionLineChartError> {
         get_requisition_line_chart(
             ctx,
-            store_id,
             requisition_line_id,
             consumption_history_options,
             stock_evolution_options,

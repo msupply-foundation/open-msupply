@@ -23,13 +23,12 @@ type OutError = InsertInboundShipmentServiceLineError;
 
 pub fn insert_inbound_shipment_service_line(
     ctx: &ServiceContext,
-    store_id: &str,
     input: InsertInboundShipmentServiceLine,
 ) -> Result<InvoiceLine, OutError> {
     let new_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let (item_row, _) = validate(&input, store_id, &connection)?;
+            let (item_row, _) = validate(&input, &ctx.store_id, &connection)?;
             let new_line = generate(input, item_row)?;
             InvoiceLineRowRepository::new(&connection).upsert_one(&new_line)?;
             get_invoice_line(ctx, &new_line.id)
@@ -105,14 +104,13 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("", "").unwrap();
+        let context = service_provider.context("store_a", "").unwrap();
         let service = service_provider.invoice_line_service;
 
         // LineAlreadyExists
         assert_eq!(
             service.insert_inbound_shipment_service_line(
                 &context,
-                "store_a",
                 inline_init(|r: &mut InsertInboundShipmentServiceLine| {
                     r.id = mock_draft_inbound_service_line().id
                 }),
@@ -124,7 +122,6 @@ mod test {
         assert_eq!(
             service.insert_inbound_shipment_service_line(
                 &context,
-                "store_a",
                 inline_init(|r: &mut InsertInboundShipmentServiceLine| {
                     r.invoice_id = "invalid".to_string();
                 }),
@@ -136,7 +133,6 @@ mod test {
         assert_eq!(
             service.insert_inbound_shipment_service_line(
                 &context,
-                "store_c",
                 inline_init(|r: &mut InsertInboundShipmentServiceLine| {
                     r.invoice_id = mock_outbound_shipment_c().id;
                 }),
@@ -148,7 +144,6 @@ mod test {
         assert_eq!(
             service.insert_inbound_shipment_service_line(
                 &context,
-                "store_a",
                 inline_init(|r: &mut InsertInboundShipmentServiceLine| {
                     r.invoice_id = mock_draft_inbound_verified_with_service_lines().id;
                 }),
@@ -160,7 +155,6 @@ mod test {
         assert_eq!(
             service.insert_inbound_shipment_service_line(
                 &context,
-                "store_a",
                 inline_init(|r: &mut InsertInboundShipmentServiceLine| {
                     r.invoice_id = mock_draft_inbound_shipment_with_service_lines().id;
                     r.item_id = Some("invalid".to_string())
@@ -173,7 +167,6 @@ mod test {
         assert_eq!(
             service.insert_inbound_shipment_service_line(
                 &context,
-                "store_a",
                 inline_init(|r: &mut InsertInboundShipmentServiceLine| {
                     r.invoice_id = mock_draft_inbound_shipment_with_service_lines().id;
                     r.item_id = Some(mock_item_a().id)
@@ -186,7 +179,6 @@ mod test {
         assert_eq!(
             service.insert_inbound_shipment_service_line(
                 &context,
-                "store_c",
                 inline_init(|r: &mut InsertInboundShipmentServiceLine| {
                     r.invoice_id = mock_draft_inbound_shipment_with_service_lines().id;
                     r.item_id = Some(mock_item_service_item().id);
@@ -206,14 +198,13 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("", "").unwrap();
+        let context = service_provider.context("store_a", "").unwrap();
         let service = service_provider.invoice_line_service;
 
         // Default service line
         service
             .insert_inbound_shipment_service_line(
                 &context,
-                "store_a",
                 inline_init(|r: &mut InsertInboundShipmentServiceLine| {
                     r.id = "new_line_id".to_string();
                     r.invoice_id = mock_draft_inbound_shipment_with_service_lines().id;
@@ -245,7 +236,6 @@ mod test {
         service
             .insert_inbound_shipment_service_line(
                 &context,
-                "store_a",
                 InsertInboundShipmentServiceLine {
                     id: "new_line2_id".to_string(),
                     invoice_id: mock_draft_inbound_shipment_with_service_lines().id,
