@@ -12,7 +12,12 @@ export const LogList: FC<{ recordId: string }> = ({ recordId }) => {
   const { data, isError, isLoading } = useLog.document.listByRecord(recordId);
   const t = useTranslation();
   const columns = useColumns<LogRowFragment>([
-    { key: 'datetime', label: 'label.date', format: ColumnFormat.Date },
+    {
+      key: 'datetime',
+      label: 'label.date',
+      format: ColumnFormat.Date,
+      width: 200,
+    },
     {
       key: 'username',
       label: 'label.user',
