@@ -60,3 +60,12 @@ query documentRegistries(
     }
   }
 }
+
+mutation allocateNumber($numberName: String!, $storeId: String!) {
+  allocateNumber(input: { numberName: $numberName }, storeId: $storeId) {
+    ... on NumberNode {
+      __typename
+      number
+    }
+  }
+}
