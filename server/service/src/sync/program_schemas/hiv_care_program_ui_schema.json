@@ -14,8 +14,23 @@
       }
     },
     {
-      "type": "Control",
-      "scope": "#/properties/enrolmentPatientId"
+      "type": "IdGeneratorControl",
+      "label": "Enrolment Patient Id",
+      "scope": "#/",
+      "options": {
+        "targetField": "enrolmentPatientId",
+        "parts": [
+          {
+            "type": "StoreName",
+            "mutations": [{ "firstNChars": 3 }, { "toUpperCase": true }]
+          },
+          {
+            "type": "Number",
+            "numberName": "HIVCare",
+            "mutations": [{ "padString": "0000" }]
+          }
+        ]
+      }
     },
     {
       "type": "Control",

@@ -24,6 +24,14 @@ export type DocumentRegistriesQueryVariables = Types.Exact<{
 
 export type DocumentRegistriesQuery = { __typename: 'FullQuery', documentRegistries: { __typename: 'DocumentRegistryConnector', nodes: Array<{ __typename: 'DocumentRegistryNode', context: Types.DocumentRegistryNodeContext, documentType: string, formSchemaId: string, id: string, jsonSchema: any, name?: string | null, parentId?: string | null, uiSchema: any, uiSchemaType: string }> } };
 
+export type AllocateNumberMutationVariables = Types.Exact<{
+  numberName: Types.Scalars['String'];
+  storeId: Types.Scalars['String'];
+}>;
+
+
+export type AllocateNumberMutation = { __typename: 'FullMutation', allocateNumber: { __typename: 'NumberNode', number: number } };
+
 export const DocumentFragmentDoc = gql`
     fragment Document on DocumentNode {
   id
@@ -88,6 +96,16 @@ export const DocumentRegistriesDocument = gql`
   }
 }
     `;
+export const AllocateNumberDocument = gql`
+    mutation allocateNumber($numberName: String!, $storeId: String!) {
+  allocateNumber(input: {numberName: $numberName}, storeId: $storeId) {
+    ... on NumberNode {
+      __typename
+      number
+    }
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -101,6 +119,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     documentRegistries(variables?: DocumentRegistriesQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DocumentRegistriesQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<DocumentRegistriesQuery>(DocumentRegistriesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'documentRegistries', 'query');
+    },
+    allocateNumber(variables: AllocateNumberMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<AllocateNumberMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<AllocateNumberMutation>(AllocateNumberDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'allocateNumber', 'mutation');
     }
   };
 }
@@ -137,5 +158,22 @@ export const mockDocumentByNameQuery = (resolver: ResponseResolver<GraphQLReques
 export const mockDocumentRegistriesQuery = (resolver: ResponseResolver<GraphQLRequest<DocumentRegistriesQueryVariables>, GraphQLContext<DocumentRegistriesQuery>, any>) =>
   graphql.query<DocumentRegistriesQuery, DocumentRegistriesQueryVariables>(
     'documentRegistries',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockAllocateNumberMutation((req, res, ctx) => {
+ *   const { numberName, storeId } = req.variables;
+ *   return res(
+ *     ctx.data({ allocateNumber })
+ *   )
+ * })
+ */
+export const mockAllocateNumberMutation = (resolver: ResponseResolver<GraphQLRequest<AllocateNumberMutationVariables>, GraphQLContext<AllocateNumberMutation>, any>) =>
+  graphql.mutation<AllocateNumberMutation, AllocateNumberMutationVariables>(
+    'allocateNumber',
     resolver
   )
