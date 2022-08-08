@@ -19,6 +19,7 @@ use super::{
 pub enum InsertEncounterError {
     InvalidPatientOrProgram,
     InvalidDataSchema(Vec<String>),
+    DataSchemaDoesNotExist,
     InternalError(String),
     DatabaseError(RepositoryError),
 }
@@ -35,14 +36,13 @@ pub struct InsertEncounter {
 pub fn insert_encounter(
     ctx: &ServiceContext,
     service_provider: &ServiceProvider,
-    store_id: String,
     user_id: &str,
     input: InsertEncounter,
 ) -> Result<Document, InsertEncounterError> {
     let patient = ctx
         .connection
         .transaction_sync(|_| {
-            let encounter = validate(ctx, &store_id, &input)?;
+            let encounter = validate(ctx, &input)?;
             let patient_id = input.patient_id.clone();
             let program = input.program.clone();
             let doc = generate(user_id, input)?;
@@ -60,7 +60,7 @@ pub fn insert_encounter(
             // Updating the document will trigger an update in the patient (names) table
             let result = service_provider
                 .document_service
-                .update_document(ctx, &store_id, doc)
+                .update_document(ctx, doc)
                 .map_err(|err| match err {
                     DocumentInsertError::InvalidDataSchema(err) => {
                         InsertEncounterError::InvalidDataSchema(err)
@@ -71,7 +71,12 @@ pub fn insert_encounter(
                     DocumentInsertError::InternalError(err) => {
                         InsertEncounterError::InternalError(err)
                     }
-                    _ => InsertEncounterError::InternalError(format!("{:?}", err)),
+                    DocumentInsertError::DataSchemaDoesNotExist => {
+                        InsertEncounterError::DataSchemaDoesNotExist
+                    }
+                    DocumentInsertError::InvalidParent(err) => {
+                        InsertEncounterError::InternalError(err)
+                    }
                 })?;
 
             Ok(result)
@@ -107,22 +112,19 @@ fn validate_encounter_schema(
 
 fn validate_patient_program_exists(
     ctx: &ServiceContext,
-    store_id: &str,
     patient_id: &str,
     program: &str,
 ) -> Result<bool, RepositoryError> {
     let doc_name = patient_program_doc_name(patient_id, program);
-    let document =
-        DocumentRepository::new(&ctx.connection).find_one_by_name(store_id, &doc_name)?;
+    let document = DocumentRepository::new(&ctx.connection).find_one_by_name(&doc_name)?;
     Ok(document.is_some())
 }
 
 fn validate(
     ctx: &ServiceContext,
-    store_id: &str,
     input: &InsertEncounter,
 ) -> Result<SchemaEncounter, InsertEncounterError> {
-    if !validate_patient_program_exists(ctx, store_id, &input.patient_id, &input.program)? {
+    if !validate_patient_program_exists(ctx, &input.patient_id, &input.program)? {
         return Err(InsertEncounterError::InvalidPatientOrProgram);
     }
 
@@ -179,7 +181,7 @@ mod test {
             .update_patient(
                 &ctx,
                 &service_provider,
-                "store_a".to_string(),
+                "store_a",
                 &patient.id,
                 UpdatePatient {
                     data: serde_json::to_value(&patient).unwrap(),
@@ -197,7 +199,6 @@ mod test {
             .upsert_program(
                 &ctx,
                 &service_provider,
-                "store_a".to_string(),
                 "user",
                 UpsertProgram {
                     data: serde_json::to_value(program.clone()).unwrap(),
@@ -216,7 +217,6 @@ mod test {
             .insert_encounter(
                 &ctx,
                 &service_provider,
-                "store_a".to_string(),
                 "user",
                 InsertEncounter {
                     data: json!({"enrolment_datetime":true}),
@@ -233,7 +233,6 @@ mod test {
             .insert_encounter(
                 &ctx,
                 &service_provider,
-                "store_a".to_string(),
                 "user",
                 InsertEncounter {
                     data: json!({"enrolment_datetime":true}),
@@ -252,7 +251,6 @@ mod test {
             .insert_encounter(
                 &ctx,
                 &service_provider,
-                "store_a".to_string(),
                 "user",
                 InsertEncounter {
                     data: json!({"encounter_datetime": true}),
@@ -276,7 +274,6 @@ mod test {
             .insert_encounter(
                 &ctx,
                 &service_provider,
-                "store_a".to_string(),
                 "user",
                 InsertEncounter {
                     data: serde_json::to_value(encounter.clone()).unwrap(),
@@ -289,7 +286,7 @@ mod test {
             .unwrap();
         let found = service_provider
             .document_service
-            .get_document(&ctx, "store_a", &result.name)
+            .get_document(&ctx, &result.name)
             .unwrap()
             .unwrap();
         assert!(found.parent_ids.is_empty());

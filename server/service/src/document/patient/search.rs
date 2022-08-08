@@ -23,7 +23,7 @@ pub struct PatientSearchResult {
 pub fn patient_search(
     ctx: &ServiceContext,
     service_provider: &ServiceProvider,
-    store_id: String,
+    store_id: &str,
     input: PatientSearch,
 ) -> Result<Vec<PatientSearchResult>, RepositoryError> {
     let mut filter = PatientFilter::new();
@@ -62,7 +62,7 @@ pub fn patient_search(
 
     let results: Vec<PatientSearchResult> = service_provider
         .patient_service
-        .get_patients(ctx, &store_id, None, Some(filter), None)?
+        .get_patients(ctx, store_id, None, Some(filter), None)?
         .rows
         .into_iter()
         .map(|patient| PatientSearchResult {

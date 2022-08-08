@@ -19,6 +19,7 @@ pub enum UpdateEncounterError {
     InvalidParentId,
     EncounterRowNotFound,
     InvalidDataSchema(Vec<String>),
+    DataSchemaDoesNotExist,
     InternalError(String),
     DatabaseError(RepositoryError),
 }
@@ -32,7 +33,6 @@ pub struct UpdateEncounter {
 pub fn update_encounter(
     ctx: &ServiceContext,
     service_provider: &ServiceProvider,
-    store_id: String,
     user_id: &str,
     input: UpdateEncounter,
 ) -> Result<Document, UpdateEncounterError> {
@@ -61,7 +61,7 @@ pub fn update_encounter(
 
             let result = service_provider
                 .document_service
-                .update_document(ctx, &store_id, doc)
+                .update_document(ctx, doc)
                 .map_err(|err| match err {
                     DocumentInsertError::InvalidDataSchema(err) => {
                         UpdateEncounterError::InvalidDataSchema(err)
@@ -72,7 +72,10 @@ pub fn update_encounter(
                     DocumentInsertError::InternalError(err) => {
                         UpdateEncounterError::InternalError(err)
                     }
-                    _ => UpdateEncounterError::InternalError(format!("{:?}", err)),
+                    DocumentInsertError::DataSchemaDoesNotExist => {
+                        UpdateEncounterError::DataSchemaDoesNotExist
+                    }
+                    DocumentInsertError::InvalidParent(_) => UpdateEncounterError::InvalidParentId,
                 })?;
 
             Ok(result)
@@ -113,14 +116,6 @@ fn validate_encounter_schema(
     serde_json::from_value(input.data.clone())
 }
 
-fn validate_parent(
-    ctx: &ServiceContext,
-    parent: &str,
-) -> Result<Option<Document>, RepositoryError> {
-    let parent_doc = DocumentRepository::new(&ctx.connection).find_one_by_id(parent)?;
-    Ok(parent_doc)
-}
-
 fn validate_exiting_encounter(
     ctx: &ServiceContext,
     name: &str,
@@ -129,6 +124,14 @@ fn validate_exiting_encounter(
         .query_by_filter(EncounterFilter::new().name(EqualFilter::equal_to(name)))?
         .pop();
     Ok(result)
+}
+
+fn validate_parent(
+    ctx: &ServiceContext,
+    parent: &str,
+) -> Result<Option<Document>, RepositoryError> {
+    let parent_doc = DocumentRepository::new(&ctx.connection).find_one_by_id(parent)?;
+    Ok(parent_doc)
 }
 
 fn validate(
@@ -199,7 +202,7 @@ mod test {
             .update_patient(
                 &ctx,
                 &service_provider,
-                "store_a".to_string(),
+                "store_a",
                 &patient.id,
                 UpdatePatient {
                     data: serde_json::to_value(&patient).unwrap(),
@@ -217,7 +220,6 @@ mod test {
             .upsert_program(
                 &ctx,
                 &service_provider,
-                "store_a".to_string(),
                 "user",
                 UpsertProgram {
                     data: serde_json::to_value(program.clone()).unwrap(),
@@ -238,7 +240,6 @@ mod test {
             .insert_encounter(
                 &ctx,
                 &service_provider,
-                "store_a".to_string(),
                 "user",
                 InsertEncounter {
                     data: serde_json::to_value(encounter.clone()).unwrap(),
@@ -255,7 +256,6 @@ mod test {
             .update_encounter(
                 &ctx,
                 &service_provider,
-                "store_a".to_string(),
                 "user",
                 UpdateEncounter {
                     data: json!({"enrolment_datetime": true}),
@@ -272,7 +272,6 @@ mod test {
             .update_encounter(
                 &ctx,
                 &service_provider,
-                "store_a".to_string(),
                 "user",
                 UpdateEncounter {
                     data: json!({"encounter_datetime": true}),
@@ -293,7 +292,6 @@ mod test {
             .update_encounter(
                 &ctx,
                 &service_provider,
-                "store_a".to_string(),
                 "user",
                 UpdateEncounter {
                     data: serde_json::to_value(encounter.clone()).unwrap(),
@@ -304,7 +302,7 @@ mod test {
             .unwrap();
         let found = service_provider
             .document_service
-            .get_document(&ctx, "store_a", &result.name)
+            .get_document(&ctx, &result.name)
             .unwrap()
             .unwrap();
         assert_eq!(found.parent_ids, vec![initial_encounter.id]);

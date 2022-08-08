@@ -353,7 +353,7 @@ pub fn init_program_data(
         .update_patient(
             &ctx,
             &service_provider,
-            store_id.clone(),
+            &store_id,
             "no user",
             UpdatePatient {
                 data: serde_json::to_value(patient_1()).unwrap(),
@@ -367,7 +367,7 @@ pub fn init_program_data(
         .update_patient(
             &ctx,
             &service_provider,
-            store_id.clone(),
+            &store_id,
             "no user",
             UpdatePatient {
                 data: serde_json::to_value(patient_2()).unwrap(),
@@ -383,7 +383,6 @@ pub fn init_program_data(
         .upsert_program(
             &ctx,
             &service_provider,
-            store_id.clone(),
             "no user",
             UpsertProgram {
                 patient_id: patient_1().id,
@@ -399,7 +398,6 @@ pub fn init_program_data(
         .upsert_program(
             &ctx,
             &service_provider,
-            store_id.clone(),
             "no user",
             UpsertProgram {
                 patient_id: patient_1().id,
@@ -417,7 +415,6 @@ pub fn init_program_data(
         .insert_encounter(
             &ctx,
             &service_provider,
-            store_id.clone(),
             "no user",
             InsertEncounter {
                 patient_id: patient_1().id,

@@ -37,7 +37,7 @@ pub fn insert_encounter(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::MutateEncounter,
-            store_id: Some(store_id.clone()),
+            store_id: Some(store_id),
         },
     )?;
 
@@ -47,7 +47,6 @@ pub fn insert_encounter(
     match service_provider.encounter_service.insert_encounter(
         &service_context,
         service_provider,
-        store_id.clone(),
         &user.user_id,
         InsertEncounter {
             data: input.data,
@@ -65,6 +64,9 @@ pub fn insert_encounter(
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
                 InsertEncounterError::InvalidDataSchema(_) => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
+                }
+                InsertEncounterError::DataSchemaDoesNotExist => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
                 InsertEncounterError::InternalError(_) => {

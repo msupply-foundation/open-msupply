@@ -34,7 +34,7 @@ pub fn update_encounter(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::MutateEncounter,
-            store_id: Some(store_id.clone()),
+            store_id: Some(store_id),
         },
     )?;
 
@@ -44,7 +44,6 @@ pub fn update_encounter(
     match service_provider.encounter_service.update_encounter(
         &service_context,
         service_provider,
-        store_id.clone(),
         &user.user_id,
         UpdateEncounter {
             data: input.data,
@@ -63,6 +62,9 @@ pub fn update_encounter(
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
                 UpdateEncounterError::InvalidDataSchema(_) => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
+                }
+                UpdateEncounterError::DataSchemaDoesNotExist => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
                 UpdateEncounterError::InternalError(_) => {

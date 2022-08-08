@@ -18,7 +18,7 @@ mod tests {
         let context = service_provider.context().unwrap();
         let service = service_provider.document_registry_service;
 
-        // InsertDocRegistryError::SchemaDoesNotExist
+        // InsertDocRegistryError::DataSchemaDoesNotExist
         assert_eq!(
             service.insert(
                 &context,
@@ -31,7 +31,7 @@ mod tests {
                     form_schema_id: "invalid".to_string(),
                 }
             ),
-            Err(InsertDocRegistryError::SchemaDoesNotExist)
+            Err(InsertDocRegistryError::DataSchemaDoesNotExist)
         );
 
         // InsertDocRegistryError::InvalidParent
