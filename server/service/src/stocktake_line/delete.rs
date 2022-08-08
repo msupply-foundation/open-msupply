@@ -115,7 +115,6 @@ mod stocktake_line_test {
         assert_eq!(error, DeleteStocktakeLineError::InvalidStore);
 
         // error CannotEditFinalised
-        let store_a = mock_store_a();
         let existing_line = mock_stocktake_line_finalised();
         let error = service
             .delete_stocktake_line(&context, existing_line.id)
@@ -123,7 +122,6 @@ mod stocktake_line_test {
         assert_eq!(error, DeleteStocktakeLineError::CannotEditFinalised);
 
         // error StocktakeIsLocked
-        let store_a = mock_store_a();
         let existing_line = mock_locked_stocktake_line();
         let error = service
             .delete_stocktake_line(&context, existing_line.id)
@@ -131,7 +129,6 @@ mod stocktake_line_test {
         assert_eq!(error, DeleteStocktakeLineError::StocktakeIsLocked);
 
         // success
-        let store_a = mock_store_a();
         let existing_line = mock_stocktake_line_a();
         let deleted_id = service
             .delete_stocktake_line(&context, existing_line.id.clone())

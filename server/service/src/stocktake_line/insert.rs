@@ -262,7 +262,6 @@ mod stocktake_line_test {
         let service = service_provider.stocktake_line_service;
 
         // error: StocktakeDoesNotExist,
-        let store_a = mock_store_a();
         let stock_line_a = mock_item_a_lines()[0].clone();
         let error = service
             .insert_stocktake_line(

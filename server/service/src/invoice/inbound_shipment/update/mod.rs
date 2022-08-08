@@ -176,7 +176,8 @@ mod test {
             mock_inbound_shipment_a, mock_inbound_shipment_b, mock_inbound_shipment_c,
             mock_inbound_shipment_e, mock_name_a, mock_name_linked_to_store_join,
             mock_name_not_linked_to_store_join, mock_outbound_shipment_e, mock_store_a,
-            mock_store_linked_to_name, mock_user_account_a, MockData, MockDataInserts,
+            mock_store_b, mock_store_linked_to_name, mock_user_account_a, MockData,
+            MockDataInserts,
         },
         test_db::setup_all_with_data,
         EqualFilter, InvoiceLineFilter, InvoiceRowRepository, InvoiceRowStatus, NameRow,
@@ -229,6 +230,7 @@ mod test {
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider.context(&mock_store_a().id, "").unwrap();
+        let store_b_context = service_provider.context(&mock_store_b().id, "").unwrap();
         let service = service_provider.invoice_service;
 
         //InvoiceDoesNotExist
@@ -256,7 +258,7 @@ mod test {
         //NotThisStoreInvoice
         assert_eq!(
             service.update_inbound_shipment(
-                &context,
+                &store_b_context,
                 inline_init(|r: &mut UpdateInboundShipment| {
                     r.id = mock_inbound_shipment_c().id.clone();
                 })

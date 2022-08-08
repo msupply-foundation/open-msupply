@@ -62,7 +62,7 @@ pub fn insert_outbound_shipment(
             id: uuid(),
             r#type: LogType::InvoiceCreated,
             user_id: Some(ctx.user_id.clone()),
-            store_id: Some(ctx.user_id.clone()),
+            store_id: Some(ctx.store_id.clone()),
             record_id: Some(invoice.invoice_row.id.clone()),
             datetime: invoice.invoice_row.created_datetime.clone(),
         },
@@ -96,8 +96,8 @@ mod test {
     use repository::{
         mock::{
             mock_name_linked_to_store_join, mock_name_not_linked_to_store,
-            mock_outbound_shipment_a, mock_store_a, mock_store_b, mock_store_linked_to_name,
-            mock_user_account_a, MockData, MockDataInserts,
+            mock_outbound_shipment_a, mock_store_a, mock_store_linked_to_name, mock_user_account_a,
+            MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
         InvoiceRowRepository, NameRow, NameStoreJoinRow,
