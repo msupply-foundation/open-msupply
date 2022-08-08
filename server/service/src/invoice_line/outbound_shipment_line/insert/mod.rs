@@ -109,6 +109,7 @@ mod test {
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider.context(&mock_store_b().id, "").unwrap();
+        let store_c_context = service_provider.context("store_c", "").unwrap();
         let service = service_provider.invoice_line_service;
 
         // LineAlreadyExists
@@ -276,7 +277,7 @@ mod test {
         // NotThisStoreInvoice
         assert_eq!(
             service.insert_outbound_shipment_line(
-                &context,
+                &store_c_context,
                 inline_init(|r: &mut InsertOutboundShipmentLine| {
                     r.id = "new outbound line id".to_string();
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]

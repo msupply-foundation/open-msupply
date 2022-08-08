@@ -107,13 +107,15 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context(&mock_store_a().id, "").unwrap();
+        let store_a_context = service_provider.context("store_a", "").unwrap();
+        let store_b_context = service_provider.context("store_b", "").unwrap();
+        let store_c_context = service_provider.context("store_c", "").unwrap();
         let service = service_provider.invoice_line_service;
 
         // LineDoesNotExist
         assert_eq!(
             service.delete_outbound_shipment_line(
-                &context,
+                &store_b_context,
                 DeleteOutboundShipmentLine {
                     id: "invalid".to_owned(),
                 },
@@ -124,7 +126,7 @@ mod test {
         // NotAnOutboundShipment
         assert_eq!(
             service.delete_outbound_shipment_line(
-                &context,
+                &store_a_context,
                 DeleteOutboundShipmentLine {
                     id: mock_inbound_shipment_a_invoice_lines()[0].id.clone(),
                 },
@@ -135,7 +137,7 @@ mod test {
         // CannotEditInvoice
         assert_eq!(
             service.delete_outbound_shipment_line(
-                &context,
+                &store_c_context,
                 DeleteOutboundShipmentLine {
                     id: mock_outbound_shipment_b_invoice_lines()[1].id.clone(),
                 },
@@ -146,7 +148,7 @@ mod test {
         // NotThisStoreInvoice
         assert_eq!(
             service.delete_outbound_shipment_line(
-                &context,
+                &store_b_context,
                 DeleteOutboundShipmentLine {
                     id: mock_outbound_shipment_c_invoice_lines()[0].id.clone()
                 }
@@ -194,7 +196,8 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context(&mock_store_c().id, "").unwrap();
+        let store_b_context = service_provider.context("store_b", "").unwrap();
+        let store_c_context = service_provider.context(&mock_store_c().id, "").unwrap();
         let service = service_provider.invoice_line_service;
 
         // helpers to compare total
@@ -217,7 +220,7 @@ mod test {
 
         let invoice_line_id = service
             .delete_outbound_shipment_line(
-                &context,
+                &store_b_context,
                 DeleteOutboundShipmentLine {
                     id: mock_outbound_shipment_a_invoice_lines()[0].id.clone(),
                 },
@@ -250,7 +253,7 @@ mod test {
 
         service
             .delete_outbound_shipment_line(
-                &context,
+                &store_c_context,
                 DeleteOutboundShipmentLine {
                     id: mock_outbound_shipment_c_invoice_lines()[0].id.clone(),
                 },
@@ -277,7 +280,7 @@ mod test {
 
         service
             .delete_outbound_shipment_line(
-                &context,
+                &store_c_context,
                 DeleteOutboundShipmentLine {
                     id: outbound_shipment_lines().id,
                 },
