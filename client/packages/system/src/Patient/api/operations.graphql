@@ -1,6 +1,7 @@
 fragment PatientRow on PatientNode {
   id
   code
+  code2
   firstName
   lastName
   name
@@ -19,6 +20,7 @@ fragment Patient on PatientNode {
   address1
   address2
   code
+  code2
   country
   dateOfBirth
   document {

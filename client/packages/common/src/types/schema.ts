@@ -770,7 +770,7 @@ export enum ForeignKey {
   StockLineId = 'stockLineId'
 }
 
-export type ForeignKeyError = DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertInboundShipmentLineErrorInterface & InsertInboundShipmentServiceLineErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & InsertOutboundShipmentUnallocatedLineErrorInterface & InsertRequestRequisitionLineErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionLineErrorInterface & {
+export type ForeignKeyError = DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & InsertInboundShipmentLineErrorInterface & InsertInboundShipmentServiceLineErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & InsertOutboundShipmentUnallocatedLineErrorInterface & InsertRequestRequisitionLineErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionLineErrorInterface & {
   __typename: 'ForeignKeyError';
   description: Scalars['String'];
   key: ForeignKey;
@@ -2464,6 +2464,8 @@ export type NameFilterInput = {
   lastName?: InputMaybe<SimpleStringFilterInput>;
   /** Filter by name */
   name?: InputMaybe<SimpleStringFilterInput>;
+  /** Filter by national health number */
+  nationalHealthNumber?: InputMaybe<SimpleStringFilterInput>;
   phone?: InputMaybe<SimpleStringFilterInput>;
   /** Code of the store if store is linked to name */
   storeCode?: InputMaybe<SimpleStringFilterInput>;
@@ -2613,6 +2615,7 @@ export type PatientFilterInput = {
   address1?: InputMaybe<SimpleStringFilterInput>;
   address2?: InputMaybe<SimpleStringFilterInput>;
   code?: InputMaybe<SimpleStringFilterInput>;
+  code2?: InputMaybe<SimpleStringFilterInput>;
   country?: InputMaybe<SimpleStringFilterInput>;
   dateOfBirth?: InputMaybe<DateFilterInput>;
   email?: InputMaybe<SimpleStringFilterInput>;
@@ -2628,6 +2631,7 @@ export type PatientNode = {
   address1?: Maybe<Scalars['String']>;
   address2?: Maybe<Scalars['String']>;
   code: Scalars['String'];
+  code2?: Maybe<Scalars['String']>;
   country?: Maybe<Scalars['String']>;
   dateOfBirth?: Maybe<Scalars['NaiveDate']>;
   document?: Maybe<DocumentNode>;
@@ -2652,7 +2656,10 @@ export type PatientSearchConnector = {
 };
 
 export type PatientSearchInput = {
+  /** Patient code */
   code?: InputMaybe<Scalars['String']>;
+  /** Secondary patient code */
+  code2?: InputMaybe<Scalars['String']>;
   dateOfBirth?: InputMaybe<Scalars['NaiveDate']>;
   firstName?: InputMaybe<Scalars['String']>;
   gender?: InputMaybe<GenderInput>;

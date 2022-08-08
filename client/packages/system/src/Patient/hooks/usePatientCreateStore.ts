@@ -21,6 +21,7 @@ export interface CreateNewPatient {
   documentRegistry: DocumentRegistryFragment;
   id: string;
   code?: string;
+  code2?: string;
   firstName?: string;
   lastName?: string;
   dateOfBirth?: string;
