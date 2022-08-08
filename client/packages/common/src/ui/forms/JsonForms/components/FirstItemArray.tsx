@@ -24,6 +24,9 @@ interface UISchemaWithCustomProps extends ControlElement {
 interface FirstItemArrayControlCustomProps extends ArrayControlProps {
   uischema: UISchemaWithCustomProps;
   data: JsonData[];
+  options?: {
+    showLabel?: boolean;
+  };
 }
 
 export const firstItemArrayTester = rankWith(10, uiTypeIs('FirstItemArray'));
@@ -38,6 +41,7 @@ const FirstItemArrayComponent = (props: FirstItemArrayControlCustomProps) => {
     label,
     rootSchema,
     renderers,
+    options,
   } = props;
 
   const childUiSchema = useMemo(
@@ -56,14 +60,16 @@ const FirstItemArrayComponent = (props: FirstItemArrayControlCustomProps) => {
 
   const childPath = composePaths(path, `${0}`);
   return (
-    <Box display="flex" flexDirection="column" gap={0.5} marginTop={2}>
-      <Box display="flex" width="100%" gap={2} alignItems="center">
-        <Box width={FORM_LABEL_COLUMN_WIDTH}>
-          <Typography sx={{ fontWeight: 'bold', textAlign: 'end' }}>
-            {label}:
-          </Typography>
+    <Box display="flex" flexDirection="column" gap={0.5}>
+      {options?.showLabel ? (
+        <Box display="flex" width="100%" gap={2} alignItems="center">
+          <Box width={FORM_LABEL_COLUMN_WIDTH}>
+            <Typography sx={{ fontWeight: 'bold', textAlign: 'end' }}>
+              {label}:
+            </Typography>
+          </Box>
         </Box>
-      </Box>
+      ) : null}
 
       <JsonFormsDispatch
         key={childPath}
