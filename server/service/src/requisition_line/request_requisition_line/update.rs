@@ -34,13 +34,12 @@ type OutError = UpdateRequestRequisitionLineError;
 
 pub fn update_request_requisition_line(
     ctx: &ServiceContext,
-    store_id: &str,
     input: UpdateRequestRequisitionLine,
 ) -> Result<RequisitionLine, OutError> {
     let requisition_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let requisition_row = validate(connection, store_id, &input)?;
+            let requisition_row = validate(connection, &ctx.store_id, &input)?;
             let updated_requisition_line_row = generate(requisition_row, input);
 
             RequisitionLineRowRepository::new(&connection)
@@ -133,14 +132,13 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("", "").unwrap();
+        let context = service_provider.context("store_a", "").unwrap();
         let service = service_provider.requisition_line_service;
 
         // RequisitionLineDoesNotExist
         assert_eq!(
             service.update_request_requisition_line(
                 &context,
-                "store_a",
                 inline_init(|r: &mut UpdateRequestRequisitionLine| {
                     r.id = "invalid".to_owned();
                 }),
@@ -152,7 +150,6 @@ mod test {
         assert_eq!(
             service.update_request_requisition_line(
                 &context,
-                "store_b",
                 inline_init(|r: &mut UpdateRequestRequisitionLine| {
                     r.id = mock_request_draft_requisition_calculation_test().lines[0]
                         .id
@@ -166,7 +163,6 @@ mod test {
         assert_eq!(
             service.update_request_requisition_line(
                 &context,
-                "store_a",
                 inline_init(|r: &mut UpdateRequestRequisitionLine| {
                     r.id = mock_sent_request_requisition_line().id;
                 }),
@@ -178,7 +174,6 @@ mod test {
         assert_eq!(
             service.update_request_requisition_line(
                 &context,
-                "store_a",
                 inline_init(|r: &mut UpdateRequestRequisitionLine| {
                     r.id = mock_draft_response_requisition_for_update_test_line().id;
                 }),
@@ -196,7 +191,7 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("", "").unwrap();
+        let context = service_provider.context("store_a", "").unwrap();
         let service = service_provider.requisition_line_service;
 
         let test_line = mock_request_draft_requisition_calculation_test().lines[0].clone();
@@ -204,7 +199,6 @@ mod test {
         service
             .update_request_requisition_line(
                 &context,
-                "store_a",
                 UpdateRequestRequisitionLine {
                     id: test_line.id.clone(),
                     requested_quantity: Some(99),

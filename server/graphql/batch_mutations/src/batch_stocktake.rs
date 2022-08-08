@@ -84,12 +84,9 @@ pub fn batch(ctx: &Context<'_>, store_id: &str, input: BatchInput) -> Result<Bat
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id, &user.user_id)?;
 
-    let response = service_provider.stocktake_service.batch_stocktake(
-        &service_context,
-        store_id,
-        &user.user_id,
-        input.to_domain(),
-    )?;
+    let response = service_provider
+        .stocktake_service
+        .batch_stocktake(&service_context, input.to_domain())?;
 
     Ok(BatchResponse::from_domain(response)?)
 }
@@ -279,8 +276,7 @@ mod test {
     type ServiceInput = BatchStocktake;
     type ServiceResult = BatchStocktakeResult;
 
-    type Method =
-        dyn Fn(&str, ServiceInput) -> Result<ServiceResult, RepositoryError> + Sync + Send;
+    type Method = dyn Fn(ServiceInput) -> Result<ServiceResult, RepositoryError> + Sync + Send;
 
     pub struct TestService(pub Box<Method>);
 
@@ -288,11 +284,9 @@ mod test {
         fn batch_stocktake(
             &self,
             _: &ServiceContext,
-            store_id: &str,
-            _: &str,
             input: ServiceInput,
         ) -> Result<ServiceResult, RepositoryError> {
-            self.0(store_id, input)
+            self.0(input)
         }
     }
 
@@ -445,7 +439,7 @@ mod test {
         ));
 
         // Structured Errors
-        let test_service = TestService(Box::new(|_, _| {
+        let test_service = TestService(Box::new(|_| {
             Ok(ServiceResult {
                 insert_stocktake: vec![],
                 insert_line: vec![InputWithResult {
@@ -484,7 +478,7 @@ mod test {
         );
 
         // Standard Error
-        let test_service = TestService(Box::new(|_, _| {
+        let test_service = TestService(Box::new(|_| {
             Ok(ServiceResult {
                 insert_stocktake: vec![],
                 insert_line: vec![InputWithResult {
@@ -534,7 +528,7 @@ mod test {
           }
         );
 
-        let test_service = TestService(Box::new(|_, _| {
+        let test_service = TestService(Box::new(|_| {
             Ok(ServiceResult {
                 insert_stocktake: vec![],
                 insert_line: vec![],

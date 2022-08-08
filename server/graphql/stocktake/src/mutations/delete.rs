@@ -47,11 +47,11 @@ pub fn delete(ctx: &Context<'_>, store_id: &str, input: DeleteInput) -> Result<D
 
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id, &user.user_id)?;
-    map_response(service_provider.stocktake_service.delete_stocktake(
-        &service_context,
-        store_id,
-        input.to_domain(),
-    ))
+    map_response(
+        service_provider
+            .stocktake_service
+            .delete_stocktake(&service_context, input.to_domain()),
+    )
 }
 
 pub fn map_response(from: Result<String, ServiceError>) -> Result<DeleteResponse> {
@@ -112,7 +112,7 @@ mod test {
     use crate::StocktakeMutations;
 
     type ServiceMethod =
-        dyn Fn(&ServiceContext, &str, &str) -> Result<String, DeleteStocktakeError> + Sync + Send;
+        dyn Fn(&ServiceContext, &str) -> Result<String, DeleteStocktakeError> + Sync + Send;
 
     pub struct TestService(pub Box<ServiceMethod>);
 
@@ -120,10 +120,9 @@ mod test {
         fn delete_stocktake(
             &self,
             ctx: &ServiceContext,
-            store_id: &str,
             stocktake_id: String,
         ) -> Result<String, DeleteStocktakeError> {
-            (self.0)(ctx, store_id, &stocktake_id)
+            (self.0)(ctx, &stocktake_id)
         }
     }
 
@@ -161,7 +160,7 @@ mod test {
         }));
 
         // Stocktake is locked mapping
-        let test_service = TestService(Box::new(|_, _, _| {
+        let test_service = TestService(Box::new(|_, _| {
             Err(DeleteStocktakeError::StocktakeIsLocked)
         }));
 
@@ -176,7 +175,7 @@ mod test {
         );
 
         // success
-        let test_service = TestService(Box::new(|_, _, _| Ok("id1".to_string())));
+        let test_service = TestService(Box::new(|_, _| Ok("id1".to_string())));
 
         let expected = json!({
             "deleteStocktake": {

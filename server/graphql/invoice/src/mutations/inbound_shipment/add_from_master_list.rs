@@ -53,7 +53,7 @@ pub fn add_from_master_list(
 
     let response = match service_provider
         .invoice_service
-        .add_to_inbound_shipment_from_master_list(&service_context, store_id, input.to_domain())
+        .add_to_inbound_shipment_from_master_list(&service_context, input.to_domain())
     {
         Ok(invoice_lines) => {
             AddFromMasterListResponse::Response(InvoiceLineConnector::from_vec(invoice_lines))
@@ -117,7 +117,7 @@ mod test {
     use util::inline_init;
 
     type DeleteLineMethod =
-        dyn Fn(&str, ServiceInput) -> Result<Vec<InvoiceLine>, ServiceError> + Sync + Send;
+        dyn Fn(ServiceInput) -> Result<Vec<InvoiceLine>, ServiceError> + Sync + Send;
 
     pub struct TestService(pub Box<DeleteLineMethod>);
 
@@ -125,10 +125,9 @@ mod test {
         fn add_to_inbound_shipment_from_master_list(
             &self,
             _: &ServiceContext,
-            store_id: &str,
             input: ServiceInput,
         ) -> Result<Vec<InvoiceLine>, ServiceError> {
-            self.0(store_id, input)
+            self.0(input)
         }
     }
 
@@ -174,7 +173,7 @@ mod test {
         "#;
 
         // InvoiceDoesNotExist
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::ShipmentDoesNotExist)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::ShipmentDoesNotExist)));
 
         let expected = json!({
             "addToInboundShipmentFromMasterList": {
@@ -194,7 +193,7 @@ mod test {
         );
 
         // CannotEditInvoice
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::CannotEditShipment)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::CannotEditShipment)));
 
         let expected = json!({
             "addToInboundShipmentFromMasterList": {
@@ -214,7 +213,7 @@ mod test {
         );
 
         // MasterListNotFoundForThisStore
-        let test_service = TestService(Box::new(|_, _| {
+        let test_service = TestService(Box::new(|_| {
             Err(ServiceError::MasterListNotFoundForThisStore)
         }));
 
@@ -236,7 +235,7 @@ mod test {
         );
 
         // NotThisStoreInvoice
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotThisStoreShipment)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NotThisStoreShipment)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -248,7 +247,7 @@ mod test {
         );
 
         // NotAnInboundShipment
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotAnInboundShipment)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NotAnInboundShipment)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -283,8 +282,8 @@ mod test {
         "#;
 
         // Success
-        let test_service = TestService(Box::new(|store_id, input| {
-            assert_eq!(store_id, "store_a");
+        let test_service = TestService(Box::new(|input| {
+            // assert_eq!(store_id, "store_a");
             assert_eq!(
                 input,
                 ServiceInput {

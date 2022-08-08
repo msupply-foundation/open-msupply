@@ -45,15 +45,13 @@ type OutError = InsertRequestRequisitionError;
 
 pub fn insert_request_requisition(
     ctx: &ServiceContext,
-    store_id: &str,
-    user_id: &str,
     input: InsertRequestRequisition,
 ) -> Result<Requisition, OutError> {
     let requisition = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(connection, store_id, &input)?;
-            let new_requisition = generate(connection, store_id, user_id, input)?;
+            validate(connection, &ctx.store_id, &input)?;
+            let new_requisition = generate(connection, &ctx.store_id, &ctx.user_id, input)?;
             RequisitionRowRepository::new(&connection).upsert_one(&new_requisition)?;
 
             get_requisition(ctx, None, &new_requisition.id)
@@ -67,8 +65,8 @@ pub fn insert_request_requisition(
         &LogRow {
             id: uuid(),
             r#type: LogType::RequisitionCreated,
-            user_id: Some(user_id.to_string()),
-            store_id: Some(store_id.to_string()),
+            user_id: Some(ctx.user_id.clone()),
+            store_id: Some(ctx.store_id.clone()),
             record_id: Some(requisition.requisition_row.id.to_string()),
             datetime: requisition.requisition_row.created_datetime,
         },
@@ -190,15 +188,13 @@ mod test_insert {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("", "").unwrap();
+        let context = service_provider.context("store_a", "").unwrap();
         let service = service_provider.requisition_service;
 
         // RequisitionAlreadyExists
         assert_eq!(
             service.insert_request_requisition(
                 &context,
-                "store_a",
-                "n/a",
                 inline_init(|r: &mut InsertRequestRequisition| {
                     r.id = mock_request_draft_requisition().id;
                 }),
@@ -211,8 +207,6 @@ mod test_insert {
         assert_eq!(
             service.insert_request_requisition(
                 &context,
-                "store_a",
-                "n/a",
                 inline_init(|r: &mut InsertRequestRequisition| {
                     r.id = "new_request_requisition".to_owned();
                     r.other_party_id = name_store_b.id.clone();
@@ -225,8 +219,6 @@ mod test_insert {
         assert_eq!(
             service.insert_request_requisition(
                 &context,
-                &mock_store_a().id,
-                "n/a",
                 inline_init(|r: &mut InsertRequestRequisition| {
                     r.id = "new_id".to_string();
                     r.other_party_id = not_visible().id;
@@ -239,8 +231,6 @@ mod test_insert {
         assert_eq!(
             service.insert_request_requisition(
                 &context,
-                "store_a",
-                "n/a",
                 inline_init(|r: &mut InsertRequestRequisition| {
                     r.id = "new_request_requisition".to_owned();
                     r.other_party_id = "invalid".to_owned();
@@ -253,8 +243,6 @@ mod test_insert {
         assert_eq!(
             service.insert_request_requisition(
                 &context,
-                "store_c",
-                "n/a",
                 inline_init(|r: &mut InsertRequestRequisition| {
                     r.id = "new_request_requisition".to_owned();
                     r.other_party_id = mock_name_a().id;
@@ -270,7 +258,9 @@ mod test_insert {
             setup_all("insert_request_requisition_success", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("", "").unwrap();
+        let context = service_provider
+            .context("store_a", &mock_user_account_a().id)
+            .unwrap();
         let service = service_provider.requisition_service;
 
         let before_insert = Utc::now().naive_utc();
@@ -278,8 +268,6 @@ mod test_insert {
         let result = service
             .insert_request_requisition(
                 &context,
-                "store_a",
-                &mock_user_account_a().id,
                 InsertRequestRequisition {
                     id: "new_request_requisition".to_owned(),
                     other_party_id: mock_name_store_c().id,

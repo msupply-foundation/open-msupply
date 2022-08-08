@@ -37,11 +37,11 @@ pub fn delete(ctx: &Context<'_>, store_id: &str, id: String) -> Result<DeleteRes
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id, &user.user_id)?;
 
-    map_response(service_provider.invoice_service.delete_outbound_shipment(
-        &service_context,
-        store_id,
-        id,
-    ))
+    map_response(
+        service_provider
+            .invoice_service
+            .delete_outbound_shipment(&service_context, id),
+    )
 }
 
 pub fn map_response(from: Result<String, ServiceError>) -> Result<DeleteResponse> {

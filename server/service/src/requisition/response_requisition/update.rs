@@ -40,15 +40,14 @@ type OutError = UpdateResponseRequisitionError;
 
 pub fn update_response_requisition(
     ctx: &ServiceContext,
-    store_id: &str,
-    user_id: &str,
     input: UpdateResponseRequisition,
 ) -> Result<Requisition, OutError> {
     let requisition = ctx
         .connection
         .transaction_sync(|connection| {
-            let requisition_row = validate(connection, store_id, &input)?;
-            let updated_requisition = generate(user_id, requisition_row.clone(), input.clone());
+            let requisition_row = validate(connection, &ctx.store_id, &input)?;
+            let updated_requisition =
+                generate(&ctx.user_id, requisition_row.clone(), input.clone());
             RequisitionRowRepository::new(&connection).upsert_one(&updated_requisition)?;
 
             if requisition_row.status != updated_requisition.status {
@@ -57,8 +56,8 @@ pub fn update_response_requisition(
                     &LogRow {
                         id: uuid(),
                         r#type: LogType::RequisitionStatusFinalised,
-                        user_id: Some(user_id.to_string()),
-                        store_id: Some(store_id.to_string()),
+                        user_id: Some(ctx.user_id.clone()),
+                        store_id: Some(ctx.store_id.clone()),
                         record_id: Some(updated_requisition.id.to_string()),
                         datetime: Utc::now().naive_utc(),
                     },
@@ -171,15 +170,13 @@ mod test_update {
             setup_all("update_response_requisition_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("", "").unwrap();
+        let context = service_provider.context("store_a", "").unwrap();
         let service = service_provider.requisition_service;
 
         // RequisitionDoesNotExist
         assert_eq!(
             service.update_response_requisition(
                 &context,
-                "store_a",
-                "n/a",
                 UpdateResponseRequisition {
                     id: "invalid".to_owned(),
                     colour: None,
@@ -195,8 +192,6 @@ mod test_update {
         assert_eq!(
             service.update_response_requisition(
                 &context,
-                "store_b",
-                "n/a",
                 UpdateResponseRequisition {
                     id: mock_draft_response_requisition_for_update_test().id,
                     colour: None,
@@ -212,8 +207,6 @@ mod test_update {
         assert_eq!(
             service.update_response_requisition(
                 &context,
-                "store_a",
-                "n/a",
                 UpdateResponseRequisition {
                     id: mock_finalised_response_requisition().id,
                     colour: None,
@@ -229,8 +222,6 @@ mod test_update {
         assert_eq!(
             service.update_response_requisition(
                 &context,
-                "store_a",
-                "n/a",
                 UpdateResponseRequisition {
                     id: mock_sent_request_requisition().id,
                     colour: None,
@@ -252,7 +243,9 @@ mod test_update {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("", "").unwrap();
+        let context = service_provider
+            .context("store_a", &mock_user_account_b().id)
+            .unwrap();
         let service = service_provider.requisition_service;
 
         let before_update = Utc::now().naive_utc();
@@ -260,8 +253,6 @@ mod test_update {
         let result = service
             .update_response_requisition(
                 &context,
-                "store_a",
-                &mock_user_account_b().id,
                 UpdateResponseRequisition {
                     id: mock_new_response_requisition().id,
                     colour: Some("new colour".to_owned()),

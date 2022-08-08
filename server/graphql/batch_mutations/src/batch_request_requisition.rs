@@ -89,7 +89,7 @@ pub fn batch(ctx: &Context<'_>, store_id: &str, input: BatchInput) -> Result<Bat
 
     let response = service_provider
         .requisition_service
-        .batch_request_requisition(&service_context, store_id, &user.user_id, input.to_domain())?;
+        .batch_request_requisition(&service_context, input.to_domain())?;
 
     Ok(BatchResponse::from_domain(response)?)
 }
@@ -300,8 +300,7 @@ mod test {
     type ServiceInput = BatchRequestRequisition;
     type ServiceResult = BatchRequestRequisitionResult;
 
-    type Method =
-        dyn Fn(&str, ServiceInput) -> Result<ServiceResult, RepositoryError> + Sync + Send;
+    type Method = dyn Fn(ServiceInput) -> Result<ServiceResult, RepositoryError> + Sync + Send;
 
     pub struct TestService(pub Box<Method>);
 
@@ -309,11 +308,9 @@ mod test {
         fn batch_request_requisition(
             &self,
             _: &ServiceContext,
-            store_id: &str,
-            _: &str,
             input: ServiceInput,
         ) -> Result<ServiceResult, RepositoryError> {
-            self.0(store_id, input)
+            self.0(input)
         }
     }
 
@@ -481,7 +478,7 @@ mod test {
         ));
 
         // Structured Errors
-        let test_service = TestService(Box::new(|_, _| {
+        let test_service = TestService(Box::new(|_| {
             Ok(ServiceResult {
                 insert_requisition: vec![InputWithResult {
                     input: inline_init(|input: &mut InsertRequestRequisition| {
@@ -531,7 +528,7 @@ mod test {
         );
 
         // Standard Error
-        let test_service = TestService(Box::new(|_, _| {
+        let test_service = TestService(Box::new(|_| {
             Ok(ServiceResult {
                 insert_requisition: vec![InputWithResult {
                     input: inline_init(|input: &mut InsertRequestRequisition| {
@@ -596,7 +593,7 @@ mod test {
           }
         );
 
-        let test_service = TestService(Box::new(|_, _| {
+        let test_service = TestService(Box::new(|_| {
             Ok(ServiceResult {
                 insert_requisition: vec![],
                 insert_line: vec![],

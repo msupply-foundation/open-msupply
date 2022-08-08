@@ -59,12 +59,7 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
     map_response(
         service_provider
             .invoice_line_service
-            .insert_inbound_shipment_line(
-                &service_context,
-                store_id,
-                &user.user_id,
-                input.to_domain(),
-            ),
+            .insert_inbound_shipment_line(&service_context, input.to_domain()),
     )
 }
 
@@ -192,8 +187,6 @@ mod test {
         fn insert_inbound_shipment_line(
             &self,
             _: &ServiceContext,
-            _: &str,
-            _: &str,
             input: ServiceInput,
         ) -> Result<InvoiceLine, ServiceError> {
             self.0(input)

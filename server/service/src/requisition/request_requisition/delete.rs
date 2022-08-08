@@ -39,13 +39,12 @@ type OutError = DeleteRequestRequisitionError;
 
 pub fn delete_request_requisition(
     ctx: &ServiceContext,
-    store_id: &str,
     input: DeleteRequestRequisition,
 ) -> Result<String, OutError> {
     let requisition_id = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(connection, store_id, &input)?;
+            validate(connection, &ctx.store_id, &input)?;
 
             // TODO https://github.com/openmsupply/remote-server/issues/839
             let lines = RequisitionLineRepository::new(&connection).query_by_filter(
@@ -54,7 +53,6 @@ pub fn delete_request_requisition(
             for line in lines {
                 delete_request_requisition_line(
                     ctx,
-                    store_id,
                     DeleteRequestRequisitionLine {
                         id: line.requisition_line_row.id.clone(),
                     },
@@ -81,7 +79,7 @@ pub fn delete_request_requisition(
             id: uuid(),
             r#type: LogType::RequisitionDeleted,
             user_id: None, //TODO
-            store_id: Some(store_id.to_string()),
+            store_id: Some(ctx.store_id.clone()),
             record_id: Some(input.id),
             datetime: Utc::now().naive_utc(),
         },
@@ -149,14 +147,13 @@ mod test_delete {
             setup_all("delete_request_requisition_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("", "").unwrap();
+        let context = service_provider.context("store_a", "").unwrap();
         let service = service_provider.requisition_service;
 
         // RequisitionDoesNotExist
         assert_eq!(
             service.delete_request_requisition(
                 &context,
-                "store_a",
                 DeleteRequestRequisition {
                     id: "invalid".to_owned(),
                 },
@@ -168,7 +165,6 @@ mod test_delete {
         assert_eq!(
             service.delete_request_requisition(
                 &context,
-                "store_b",
                 DeleteRequestRequisition {
                     id: mock_draft_request_requisition_for_update_test().id,
                 },
@@ -180,7 +176,6 @@ mod test_delete {
         assert_eq!(
             service.delete_request_requisition(
                 &context,
-                "store_a",
                 DeleteRequestRequisition {
                     id: mock_sent_request_requisition().id,
                 },
@@ -192,7 +187,6 @@ mod test_delete {
         assert_eq!(
             service.delete_request_requisition(
                 &context,
-                "store_a",
                 DeleteRequestRequisition {
                     id: mock_draft_response_requisition_for_update_test().id,
                 },
@@ -221,13 +215,12 @@ mod test_delete {
             setup_all("delete_request_requisition_success", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("", "").unwrap();
+        let context = service_provider.context("store_a", "").unwrap();
         let service = service_provider.requisition_service;
 
         let result = service
             .delete_request_requisition(
                 &context,
-                "store_a",
                 DeleteRequestRequisition {
                     id: mock_draft_request_requisition_for_update_test().id,
                 },

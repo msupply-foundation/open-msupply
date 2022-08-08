@@ -56,7 +56,7 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
 
     let response = match service_provider
         .invoice_line_service
-        .update_inbound_shipment_line(&service_context, store_id, &user.user_id, input.to_domain())
+        .update_inbound_shipment_line(&service_context, input.to_domain())
     {
         Ok(invoice_line) => UpdateResponse::Response(InvoiceLineNode::from_domain(invoice_line)),
         Err(error) => UpdateResponse::Error(UpdateError {
@@ -190,8 +190,6 @@ mod test {
         fn update_inbound_shipment_line(
             &self,
             _: &ServiceContext,
-            _: &str,
-            _: &str,
             input: ServiceInput,
         ) -> Result<InvoiceLine, ServiceError> {
             self.0(input)

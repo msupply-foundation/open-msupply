@@ -59,13 +59,12 @@ type OutError = UpdateOutboundShipmentError;
 
 pub fn update_outbound_shipment(
     ctx: &ServiceContext,
-    store_id: &str,
     patch: UpdateOutboundShipment,
 ) -> Result<Invoice, OutError> {
     let invoice = ctx
         .connection
         .transaction_sync(|connection| {
-            let (invoice, other_party_option) = validate(connection, store_id, &patch)?;
+            let (invoice, other_party_option) = validate(connection, &ctx.store_id, &patch)?;
             let GenerateResult {
                 batches_to_update,
                 update_invoice,
@@ -260,14 +259,13 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("", "").unwrap();
+        let context = service_provider.context(&mock_store_a().id, "").unwrap();
         let service = service_provider.invoice_service;
 
         // CannotReverseInvoiceStatus
         assert_eq!(
             service.update_outbound_shipment(
                 &context,
-                &mock_store_c().id,
                 inline_init(|r: &mut UpdateOutboundShipment| {
                     r.id = mock_outbound_shipment_picked().id;
                     r.status = Some(UpdateOutboundShipmentStatus::Allocated);
@@ -279,7 +277,6 @@ mod test {
         assert_eq!(
             service.update_outbound_shipment(
                 &context,
-                &mock_store_a().id,
                 inline_init(|r: &mut UpdateOutboundShipment| { r.id = "invalid".to_string() })
             ),
             Err(ServiceError::InvoiceDoesNotExist)
@@ -288,7 +285,6 @@ mod test {
         assert_eq!(
             service.update_outbound_shipment(
                 &context,
-                &mock_store_c().id,
                 inline_init(|r: &mut UpdateOutboundShipment| {
                     r.id = mock_outbound_shipment_b().id;
                     r.status = Some(UpdateOutboundShipmentStatus::Shipped);
@@ -300,7 +296,6 @@ mod test {
         assert_eq!(
             service.update_outbound_shipment(
                 &context,
-                &mock_store_a().id,
                 inline_init(|r: &mut UpdateOutboundShipment| {
                     r.id = mock_inbound_shipment_a().id
                 })
@@ -311,7 +306,6 @@ mod test {
         assert_eq!(
             service.update_outbound_shipment(
                 &context,
-                &mock_store_b().id,
                 inline_init(|r: &mut UpdateOutboundShipment| {
                     r.id = mock_outbound_shipment_a().id;
                     r.other_party_id = Some("invalid".to_string());
@@ -323,7 +317,6 @@ mod test {
         assert_eq!(
             service.update_outbound_shipment(
                 &context,
-                &mock_store_b().id,
                 inline_init(|r: &mut UpdateOutboundShipment| {
                     r.id = mock_outbound_shipment_a().id;
                     r.other_party_id = Some(not_visible().id);
@@ -335,7 +328,6 @@ mod test {
         assert_eq!(
             service.update_outbound_shipment(
                 &context,
-                &mock_store_b().id,
                 inline_init(|r: &mut UpdateOutboundShipment| {
                     r.id = mock_outbound_shipment_a().id;
                     r.other_party_id = Some(not_a_customer().id);
@@ -347,7 +339,6 @@ mod test {
         assert_eq!(
             service.update_outbound_shipment(
                 &context,
-                &mock_store_a().id,
                 inline_init(|r: &mut UpdateOutboundShipment| {
                     r.id = outbound_shipment_no_stock().id;
                     r.status = Some(UpdateOutboundShipmentStatus::Picked);
@@ -361,7 +352,6 @@ mod test {
         assert_eq!(
             service.update_outbound_shipment(
                 &context,
-                &mock_store_a().id,
                 inline_init(|r: &mut UpdateOutboundShipment| {
                     r.id = mock_outbound_shipment_on_hold().id;
                     r.status = Some(UpdateOutboundShipmentStatus::Picked);
@@ -373,7 +363,6 @@ mod test {
         assert_eq!(
             service.update_outbound_shipment(
                 &context,
-                &mock_store_a().id,
                 inline_init(|r: &mut UpdateOutboundShipment| {
                     r.id = mock_outbound_shipment_c().id;
                     r.status = Some(UpdateOutboundShipmentStatus::Picked);
@@ -423,14 +412,14 @@ mod test {
         );
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("", "").unwrap();
+        let context = service_provider.context(&mock_store_a().id, "").unwrap();
         let service = service_provider.invoice_service;
 
         let update = inline_init(|r: &mut UpdateOutboundShipment| {
             r.id = invoice().id;
             r.status = Some(UpdateOutboundShipmentStatus::Picked);
         });
-        let result = service.update_outbound_shipment(&context, &mock_store_a().id, update);
+        let result = service.update_outbound_shipment(&context, update);
 
         assert!(matches!(result, Ok(_)), "Not Ok(_) {:#?}", result);
 
@@ -478,7 +467,7 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("", "").unwrap();
+        let context = service_provider.context("store_a", "").unwrap();
         let service = service_provider.invoice_service;
 
         // Test all fields apart from status
@@ -495,7 +484,7 @@ mod test {
             }
         }
 
-        let result = service.update_outbound_shipment(&context, "store_a", get_update());
+        let result = service.update_outbound_shipment(&context, get_update());
 
         assert!(matches!(result, Ok(_)), "Not Ok(_) {:#?}", result);
 
@@ -572,7 +561,6 @@ mod test {
         service
             .update_outbound_shipment(
                 &context,
-                "store_c",
                 inline_init(|r: &mut UpdateOutboundShipment| {
                     r.id = mock_outbound_shipment_c().id;
                     r.status = Some(UpdateOutboundShipmentStatus::Picked);
@@ -628,13 +616,12 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("", "").unwrap();
+        let context = service_provider.context(&mock_store_a().id, "").unwrap();
         let service = service_provider.invoice_service;
 
         // Change to PICKED
         let result = service.update_outbound_shipment(
             &context,
-            &mock_store_a().id,
             inline_init(|r: &mut UpdateOutboundShipment| {
                 r.id = invoice().id;
                 r.status = Some(UpdateOutboundShipmentStatus::Picked);
@@ -658,7 +645,6 @@ mod test {
         // Try changing to shipped again to PICKED
         let result = service.update_outbound_shipment(
             &context,
-            &mock_store_a().id,
             inline_init(|r: &mut UpdateOutboundShipment| {
                 r.id = invoice().id;
                 r.status = Some(UpdateOutboundShipmentStatus::Picked);
@@ -678,7 +664,6 @@ mod test {
         // Change to SHIPPED
         let result = service.update_outbound_shipment(
             &context,
-            &mock_store_a().id,
             inline_init(|r: &mut UpdateOutboundShipment| {
                 r.id = invoice().id;
                 r.status = Some(UpdateOutboundShipmentStatus::Shipped);
@@ -714,7 +699,6 @@ mod test {
         // Change to SHIPPED
         let result = service.update_outbound_shipment(
             &context,
-            &mock_store_a().id,
             inline_init(|r: &mut UpdateOutboundShipment| {
                 r.id = invoice().id;
                 r.status = Some(UpdateOutboundShipmentStatus::Shipped);

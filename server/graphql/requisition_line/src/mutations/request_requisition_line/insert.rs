@@ -60,7 +60,7 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
     map_response(
         service_provider
             .requisition_line_service
-            .insert_request_requisition_line(&service_context, store_id, input.to_domain()),
+            .insert_request_requisition_line(&service_context, input.to_domain()),
     )
 }
 
@@ -165,7 +165,7 @@ mod test {
     use crate::RequisitionLineMutations;
 
     type InsertLineMethod =
-        dyn Fn(&str, ServiceInput) -> Result<RequisitionLine, ServiceError> + Sync + Send;
+        dyn Fn(ServiceInput) -> Result<RequisitionLine, ServiceError> + Sync + Send;
 
     pub struct TestService(pub Box<InsertLineMethod>);
 
@@ -173,10 +173,9 @@ mod test {
         fn insert_request_requisition_line(
             &self,
             _: &ServiceContext,
-            store_id: &str,
             input: ServiceInput,
         ) -> Result<RequisitionLine, ServiceError> {
-            self.0(store_id, input)
+            self.0(input)
         }
     }
 
@@ -223,7 +222,7 @@ mod test {
         "#;
 
         // RequisitionLineWithItemIdExists
-        let test_service = TestService(Box::new(|_, _| {
+        let test_service = TestService(Box::new(|_| {
             Err(ServiceError::ItemAlreadyExistInRequisition)
         }));
 
@@ -245,7 +244,7 @@ mod test {
         );
 
         // CannotEditRequisition
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::CannotEditRequisition)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::CannotEditRequisition)));
 
         let expected = json!({
             "insertRequestRequisitionLine": {
@@ -265,7 +264,7 @@ mod test {
         );
 
         // RequisitionDoesNotExist
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::RequisitionDoesNotExist)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::RequisitionDoesNotExist)));
 
         let expected = json!({
             "insertRequestRequisitionLine": {
@@ -285,7 +284,7 @@ mod test {
         );
 
         // RequisitionLineAlreadyExists
-        let test_service = TestService(Box::new(|_, _| {
+        let test_service = TestService(Box::new(|_| {
             Err(ServiceError::RequisitionLineAlreadyExists)
         }));
         let expected_message = "Bad user input";
@@ -299,7 +298,7 @@ mod test {
         );
 
         // NotThisStoreRequisition
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotThisStoreRequisition)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NotThisStoreRequisition)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -311,7 +310,7 @@ mod test {
         );
 
         // NotARequestRequisition
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotARequestRequisition)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NotARequestRequisition)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -323,7 +322,7 @@ mod test {
         );
 
         // ItemDoesNotExist
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::ItemDoesNotExist)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::ItemDoesNotExist)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -335,7 +334,7 @@ mod test {
         );
 
         // CannotFindItemStatusForRequisitionLine
-        let test_service = TestService(Box::new(|_, _| {
+        let test_service = TestService(Box::new(|_| {
             Err(ServiceError::CannotFindItemStatusForRequisitionLine)
         }));
         let expected_message = "Internal error";
@@ -349,7 +348,7 @@ mod test {
         );
 
         // NewlyCreatedRequisitionLineDoesNotExist
-        let test_service = TestService(Box::new(|_, _| {
+        let test_service = TestService(Box::new(|_| {
             Err(ServiceError::NewlyCreatedRequisitionLineDoesNotExist)
         }));
         let expected_message = "Internal error";
@@ -384,8 +383,8 @@ mod test {
         "#;
 
         // Success
-        let test_service = TestService(Box::new(|store_id, input| {
-            assert_eq!(store_id, "store_a");
+        let test_service = TestService(Box::new(|input| {
+            // assert_eq!(store_id, "store_a");
             assert_eq!(
                 input,
                 ServiceInput {

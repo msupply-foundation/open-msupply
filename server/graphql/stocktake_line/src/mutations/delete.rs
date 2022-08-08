@@ -50,7 +50,7 @@ pub fn delete(ctx: &Context<'_>, store_id: &str, input: DeleteInput) -> Result<D
     map_response(
         service_provider
             .stocktake_line_service
-            .delete_stocktake_line(&service_context, store_id, input.to_domain()),
+            .delete_stocktake_line(&service_context, input.to_domain()),
     )
 }
 
@@ -110,9 +110,8 @@ mod graphql {
 
     use crate::StocktakeLineMutations;
 
-    type ServiceMethod = dyn Fn(&ServiceContext, &str, &str) -> Result<String, DeleteStocktakeLineError>
-        + Sync
-        + Send;
+    type ServiceMethod =
+        dyn Fn(&ServiceContext, &str) -> Result<String, DeleteStocktakeLineError> + Sync + Send;
 
     pub struct TestService(pub Box<ServiceMethod>);
 
@@ -120,10 +119,9 @@ mod graphql {
         fn delete_stocktake_line(
             &self,
             ctx: &ServiceContext,
-            store_id: &str,
             stocktake_line_id: String,
         ) -> Result<String, DeleteStocktakeLineError> {
-            (self.0)(ctx, store_id, &stocktake_line_id)
+            (self.0)(ctx, &stocktake_line_id)
         }
     }
 
@@ -162,7 +160,7 @@ mod graphql {
         }));
 
         // Stocktake is locked mapping
-        let test_service = TestService(Box::new(|_, _, _| {
+        let test_service = TestService(Box::new(|_, _| {
             Err(DeleteStocktakeLineError::StocktakeIsLocked)
         }));
 
@@ -177,7 +175,7 @@ mod graphql {
         );
 
         // success
-        let test_service = TestService(Box::new(|_, _, _| Ok("id1".to_string())));
+        let test_service = TestService(Box::new(|_, _| Ok("id1".to_string())));
 
         let expected = json!({
             "deleteStocktakeLine": {

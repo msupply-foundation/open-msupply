@@ -27,14 +27,12 @@ type OutError = DeleteInboundShipmentError;
 
 pub fn delete_inbound_shipment(
     ctx: &ServiceContext,
-    store_id: &str,
-    user_id: &str,
     input: DeleteInboundShipment,
 ) -> Result<String, OutError> {
     let invoice_id = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(connection, &input, store_id)?;
+            validate(connection, &input, &ctx.store_id)?;
 
             // TODO https://github.com/openmsupply/remote-server/issues/839
             let lines = InvoiceLineRepository::new(&connection).query_by_filter(
@@ -43,8 +41,6 @@ pub fn delete_inbound_shipment(
             for line in lines {
                 delete_inbound_shipment_line(
                     ctx,
-                    store_id,
-                    user_id,
                     DeleteInboundShipmentLine {
                         id: line.invoice_line_row.id.clone(),
                     },
@@ -68,8 +64,8 @@ pub fn delete_inbound_shipment(
         &LogRow {
             id: uuid(),
             r#type: LogType::InvoiceDeleted,
-            user_id: Some(user_id.to_string()),
-            store_id: Some(store_id.to_string()),
+            user_id: Some(ctx.user_id.clone()),
+            store_id: Some(ctx.store_id.clone()),
             record_id: Some(input.id),
             datetime: Utc::now().naive_utc(),
         },
@@ -136,15 +132,15 @@ mod test {
             setup_all("delete_inbound_shipment_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("", "").unwrap();
+        let context = service_provider
+            .context(&mock_store_a().id, &mock_user_account_a().id)
+            .unwrap();
         let service = service_provider.invoice_service;
 
         // InvoiceDoesNotExist
         assert_eq!(
             service.delete_inbound_shipment(
                 &context,
-                &mock_store_a().id,
-                &mock_user_account_a().id,
                 DeleteInboundShipment {
                     id: "invalid".to_owned(),
                 },
@@ -156,8 +152,6 @@ mod test {
         assert_eq!(
             service.delete_inbound_shipment(
                 &context,
-                &mock_store_a().id,
-                &mock_user_account_a().id,
                 DeleteInboundShipment {
                     id: mock_inbound_shipment_b().id.clone(),
                 },
@@ -169,8 +163,6 @@ mod test {
         assert_eq!(
             service.delete_inbound_shipment(
                 &context,
-                &mock_store_a().id,
-                &mock_user_account_a().id,
                 DeleteInboundShipment {
                     id: mock_outbound_shipment_e().id.clone(),
                 },
@@ -182,8 +174,6 @@ mod test {
         assert_eq!(
             service.delete_inbound_shipment(
                 &context,
-                &mock_store_a().id,
-                &mock_user_account_a().id,
                 DeleteInboundShipment {
                     id: mock_inbound_shipment_a().id.clone(),
                 },
@@ -198,8 +188,6 @@ mod test {
         assert_eq!(
             service.delete_inbound_shipment(
                 &context,
-                &mock_store_b().id,
-                &mock_user_account_a().id,
                 DeleteInboundShipment {
                     id: mock_inbound_shipment_c().id.clone(),
                 },
@@ -214,14 +202,14 @@ mod test {
             setup_all("delete_inbound_shipment_success", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("", "").unwrap();
+        let context = service_provider
+            .context(&mock_store_a().id, &mock_user_account_a().id)
+            .unwrap();
         let service = service_provider.invoice_service;
 
         let invoice_id = service
             .delete_inbound_shipment(
                 &context,
-                &mock_store_a().id,
-                &mock_user_account_a().id,
                 DeleteInboundShipment {
                     id: mock_inbound_shipment_e().id,
                 },

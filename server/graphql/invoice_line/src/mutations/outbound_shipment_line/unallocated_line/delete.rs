@@ -62,11 +62,7 @@ pub fn delete(ctx: &Context<'_>, store_id: &str, input: DeleteInput) -> Result<D
     map_response(
         service_provider
             .invoice_line_service
-            .delete_outbound_shipment_unallocated_line(
-                &service_context,
-                store_id,
-                input.to_domain(),
-            ),
+            .delete_outbound_shipment_unallocated_line(&service_context, input.to_domain()),
     )
 }
 
@@ -134,7 +130,6 @@ mod graphql {
         fn delete_outbound_shipment_unallocated_line(
             &self,
             _: &ServiceContext,
-            _: &str,
             input: ServiceInput,
         ) -> Result<String, ServiceError> {
             self.0(input)

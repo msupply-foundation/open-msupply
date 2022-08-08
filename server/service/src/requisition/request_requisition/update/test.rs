@@ -56,14 +56,13 @@ mod test_update {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("", "").unwrap();
+        let context = service_provider.context("store_a", "").unwrap();
         let service = service_provider.requisition_service;
 
         // RequisitionDoesNotExist
         assert_eq!(
             service.update_request_requisition(
                 &context,
-                "store_a",
                 inline_init(|r: &mut UpdateRequestRequisition| {
                     r.id = "invalid".to_owned();
                 }),
@@ -75,7 +74,6 @@ mod test_update {
         assert_eq!(
             service.update_request_requisition(
                 &context,
-                "store_b",
                 inline_init(|r: &mut UpdateRequestRequisition| {
                     r.id = mock_draft_request_requisition_for_update_test().id;
                 }),
@@ -87,7 +85,6 @@ mod test_update {
         assert_eq!(
             service.update_request_requisition(
                 &context,
-                "store_a",
                 inline_init(|r: &mut UpdateRequestRequisition| {
                     r.id = mock_sent_request_requisition().id;
                 }),
@@ -99,7 +96,6 @@ mod test_update {
         assert_eq!(
             service.update_request_requisition(
                 &context,
-                "store_a",
                 inline_init(|r: &mut UpdateRequestRequisition| {
                     r.id = mock_draft_response_requisition_for_update_test().id;
                 }),
@@ -111,7 +107,6 @@ mod test_update {
         assert_eq!(
             service.update_request_requisition(
                 &context,
-                &mock_store_a().id,
                 inline_init(|r: &mut UpdateRequestRequisition| {
                     r.id = mock_draft_request_requisition_for_update_test().id;
                     r.other_party_id = Some("invalid".to_string());
@@ -123,7 +118,6 @@ mod test_update {
         assert_eq!(
             service.update_request_requisition(
                 &context,
-                &mock_store_a().id,
                 inline_init(|r: &mut UpdateRequestRequisition| {
                     r.id = mock_draft_request_requisition_for_update_test().id;
                     r.other_party_id = Some(not_visible().id);
@@ -135,7 +129,6 @@ mod test_update {
         assert_eq!(
             service.update_request_requisition(
                 &context,
-                &mock_store_a().id,
                 inline_init(|r: &mut UpdateRequestRequisition| {
                     r.id = mock_draft_request_requisition_for_update_test().id;
                     r.other_party_id = Some(not_a_supplier().id);
@@ -151,7 +144,7 @@ mod test_update {
             setup_all("update_request_requisition_success", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("", "").unwrap();
+        let context = service_provider.context("store_a", "").unwrap();
         let service = service_provider.requisition_service;
 
         let before_update = Utc::now().naive_utc();
@@ -160,7 +153,6 @@ mod test_update {
         let result = service
             .update_request_requisition(
                 &context,
-                "store_a",
                 UpdateRequestRequisition {
                     id: mock_draft_request_requisition_for_update_test().id,
                     colour: Some("new colour".to_owned()),
@@ -205,7 +197,6 @@ mod test_update {
         service
             .update_request_requisition(
                 &context,
-                "store_a",
                 inline_init(|r: &mut UpdateRequestRequisition| {
                     r.id = calculation_requisition.requisition.id.clone();
                     r.max_months_of_stock = Some(20.0);

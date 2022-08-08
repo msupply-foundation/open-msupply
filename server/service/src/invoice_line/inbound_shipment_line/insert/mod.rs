@@ -32,16 +32,14 @@ type OutError = InsertInboundShipmentLineError;
 
 pub fn insert_inbound_shipment_line(
     ctx: &ServiceContext,
-    store_id: &str,
-    user_id: &str,
     input: InsertInboundShipmentLine,
 ) -> Result<InvoiceLine, OutError> {
     let new_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let (item, invoice) = validate(&input, store_id, &connection)?;
+            let (item, invoice) = validate(&input, &ctx.store_id, &connection)?;
             let (invoice_row_option, new_line, new_batch_option) =
-                generate(user_id, input, item, invoice);
+                generate(&ctx.user_id, input, item, invoice);
 
             if let Some(new_batch) = new_batch_option {
                 StockLineRowRepository::new(&connection).upsert_one(&new_batch)?;
@@ -122,15 +120,15 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("", "").unwrap();
+        let context = service_provider
+            .context(&mock_store_a().id, &mock_user_account_a().id)
+            .unwrap();
         let service = service_provider.invoice_line_service;
 
         // LineAlreadyExists
         assert_eq!(
             service.insert_inbound_shipment_line(
                 &context,
-                &mock_store_a().id,
-                &mock_user_account_a().id,
                 inline_init(|r: &mut InsertInboundShipmentLine| {
                     r.id = mock_inbound_shipment_a_invoice_lines()[0].id.clone();
                     r.invoice_id = mock_inbound_shipment_c_invoice_lines()[0]
@@ -145,8 +143,6 @@ mod test {
         assert_eq!(
             service.insert_inbound_shipment_line(
                 &context,
-                &mock_store_a().id,
-                &mock_user_account_a().id,
                 inline_init(|r: &mut InsertInboundShipmentLine| {
                     r.id = "new invoice line id".to_string();
                     r.invoice_id = "new invoice id".to_string();
@@ -162,8 +158,6 @@ mod test {
         assert_eq!(
             service.insert_inbound_shipment_line(
                 &context,
-                &mock_store_a().id,
-                &mock_user_account_a().id,
                 inline_init(|r: &mut InsertInboundShipmentLine| {
                     r.id = "new invoice line id".to_string();
                     r.invoice_id = mock_outbound_shipment_e().id;
@@ -179,8 +173,6 @@ mod test {
         assert_eq!(
             service.insert_inbound_shipment_line(
                 &context,
-                &mock_store_a().id,
-                &mock_user_account_a().id,
                 inline_init(|r: &mut InsertInboundShipmentLine| {
                     r.id = "new invoice line id".to_string();
                     r.invoice_id = mock_inbound_shipment_c_invoice_lines()[0]
@@ -199,8 +191,6 @@ mod test {
         assert_eq!(
             service.insert_inbound_shipment_line(
                 &context,
-                &mock_store_a().id,
-                &mock_user_account_a().id,
                 inline_init(|r: &mut InsertInboundShipmentLine| {
                     r.id = "new invoice line id".to_string();
                     r.invoice_id = mock_inbound_shipment_c_invoice_lines()[0]
@@ -218,8 +208,6 @@ mod test {
         assert_eq!(
             service.insert_inbound_shipment_line(
                 &context,
-                &mock_store_a().id,
-                &mock_user_account_a().id,
                 inline_init(|r: &mut InsertInboundShipmentLine| {
                     r.id = "new invoice line id".to_string();
                     r.invoice_id = mock_inbound_shipment_c_invoice_lines()[0]
@@ -237,8 +225,6 @@ mod test {
         assert_eq!(
             service.insert_inbound_shipment_line(
                 &context,
-                &mock_store_a().id,
-                &mock_user_account_a().id,
                 inline_init(|r: &mut InsertInboundShipmentLine| {
                     r.id = "new invoice line id".to_string();
                     r.invoice_id = mock_inbound_shipment_c_invoice_lines()[0]
@@ -256,8 +242,6 @@ mod test {
         assert_eq!(
             service.insert_inbound_shipment_line(
                 &context,
-                &mock_store_b().id,
-                &mock_user_account_a().id,
                 inline_init(|r: &mut InsertInboundShipmentLine| {
                     r.id = "new invoice line id".to_string();
                     r.invoice_id = mock_inbound_shipment_c().id.clone();
@@ -281,14 +265,14 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("", "").unwrap();
+        let context = service_provider
+            .context(&mock_store_a().id, &mock_user_account_a().id)
+            .unwrap();
         let service = service_provider.invoice_line_service;
 
         service
             .insert_inbound_shipment_line(
                 &context,
-                &mock_store_a().id,
-                &mock_user_account_a().id,
                 inline_init(|r: &mut InsertInboundShipmentLine| {
                     r.id = "new invoice line id".to_string();
                     r.invoice_id = mock_inbound_shipment_c_invoice_lines()[0]

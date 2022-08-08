@@ -93,11 +93,7 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
     map_response(
         service_provider
             .invoice_line_service
-            .insert_outbound_shipment_unallocated_line(
-                &service_context,
-                store_id,
-                input.to_domain(),
-            ),
+            .insert_outbound_shipment_unallocated_line(&service_context, input.to_domain()),
     )
 }
 
@@ -179,7 +175,6 @@ mod graphql {
         fn insert_outbound_shipment_unallocated_line(
             &self,
             _: &ServiceContext,
-            _: &str,
             input: ServiceInput,
         ) -> Result<InvoiceLine, ServiceError> {
             self.0(input)

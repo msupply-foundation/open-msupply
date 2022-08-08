@@ -75,7 +75,7 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
     map_response(
         service_provider
             .requisition_service
-            .update_request_requisition(&service_context, store_id, input.to_domain()),
+            .update_request_requisition(&service_context, input.to_domain()),
     )
 }
 
@@ -188,8 +188,7 @@ mod test {
 
     use crate::RequisitionMutations;
 
-    type UpdateLineMethod =
-        dyn Fn(&str, ServiceInput) -> Result<Requisition, ServiceError> + Sync + Send;
+    type UpdateLineMethod = dyn Fn(ServiceInput) -> Result<Requisition, ServiceError> + Sync + Send;
 
     pub struct TestService(pub Box<UpdateLineMethod>);
 
@@ -197,10 +196,9 @@ mod test {
         fn update_request_requisition(
             &self,
             _: &ServiceContext,
-            store_id: &str,
             input: ServiceInput,
         ) -> Result<Requisition, ServiceError> {
-            self.0(store_id, input)
+            self.0(input)
         }
     }
 
@@ -245,7 +243,7 @@ mod test {
         "#;
 
         // RequisitionDoesNotExist
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::RequisitionDoesNotExist)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::RequisitionDoesNotExist)));
 
         let expected = json!({
             "updateRequestRequisition": {
@@ -265,7 +263,7 @@ mod test {
         );
 
         // CannotEditRequisition
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::CannotEditRequisition)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::CannotEditRequisition)));
 
         let expected = json!({
             "updateRequestRequisition": {
@@ -285,7 +283,7 @@ mod test {
         );
 
         // NotThisStoreRequisition
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotThisStoreRequisition)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NotThisStoreRequisition)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -297,7 +295,7 @@ mod test {
         );
 
         // NotARequestRequisition
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotARequestRequisition)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NotARequestRequisition)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -309,7 +307,7 @@ mod test {
         );
 
         // UpdatedRequisitionDoesNotExist
-        let test_service = TestService(Box::new(|_, _| {
+        let test_service = TestService(Box::new(|_| {
             Err(ServiceError::UpdatedRequisitionDoesNotExist)
         }));
         let expected_message = "Internal error";
@@ -323,7 +321,7 @@ mod test {
         );
 
         // OtherPartyNotASupplier
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::OtherPartyNotASupplier)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::OtherPartyNotASupplier)));
 
         let expected = json!({
             "updateRequestRequisition": {
@@ -343,7 +341,7 @@ mod test {
         );
 
         // OtherPartyDoesNotExist
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::OtherPartyDoesNotExist)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::OtherPartyDoesNotExist)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -355,7 +353,7 @@ mod test {
         );
 
         // OtherPartyIsNotAStore
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::OtherPartyIsNotAStore)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::OtherPartyIsNotAStore)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -388,8 +386,8 @@ mod test {
         "#;
 
         // Success
-        let test_service = TestService(Box::new(|store_id, input| {
-            assert_eq!(store_id, "store_a");
+        let test_service = TestService(Box::new(|input| {
+            // assert_eq!(store_id, "store_a");
             assert_eq!(
                 input,
                 ServiceInput {
