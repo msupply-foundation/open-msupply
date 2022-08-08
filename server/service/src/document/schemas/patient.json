@@ -149,6 +149,41 @@
       ],
       "type": "string"
     },
+    "Note": {
+      "properties": {
+        "authorId": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "properties": {
+            "length": {
+              "type": "number"
+            }
+          },
+          "required": ["length"],
+          "type": "object"
+        },
+        "created": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Datetime when the note has been created",
+          "format": "date-time",
+          "properties": {
+            "length": {
+              "type": "number"
+            }
+          },
+          "required": ["length"],
+          "type": "object"
+        },
+        "text": {
+          "type": "string"
+        }
+      },
+      "required": ["text", "created", "authorId"],
+      "type": "object"
+    },
     "Patient": {
       "properties": {
         "allergies": {
@@ -160,6 +195,10 @@
         },
         "code": {
           "description": "Patient code, e.g. national id or other patient identifier",
+          "type": "string"
+        },
+        "code2": {
+          "description": "Secondary patient code, e.g. another type of health id",
           "type": "string"
         },
         "contactDetails": {
@@ -208,6 +247,15 @@
           "description": "184096005 Patient Surname",
           "type": "string"
         },
+        "middleName": {
+          "type": "string"
+        },
+        "notes": {
+          "items": {
+            "$ref": "#/definitions/Note"
+          },
+          "type": "array"
+        },
         "passportNumber": {
           "description": "1601000122107 Passport Number",
           "type": "string"
@@ -216,7 +264,13 @@
           "$ref": "#/definitions/SocioEconomics"
         }
       },
-      "required": ["contactDetails", "id", "isDeceased", "socioEconomics"],
+      "required": [
+        "contactDetails",
+        "id",
+        "isDeceased",
+        "notes",
+        "socioEconomics"
+      ],
       "type": "object"
     },
     "Person": {
@@ -227,6 +281,10 @@
         },
         "code": {
           "description": "Patient code, e.g. national id or other patient identifier",
+          "type": "string"
+        },
+        "code2": {
+          "description": "Secondary patient code, e.g. another type of health id",
           "type": "string"
         },
         "contactDetails": {
@@ -268,6 +326,15 @@
           "description": "184096005 Patient Surname",
           "type": "string"
         },
+        "middleName": {
+          "type": "string"
+        },
+        "notes": {
+          "items": {
+            "$ref": "#/definitions/Note"
+          },
+          "type": "array"
+        },
         "passportNumber": {
           "description": "1601000122107 Passport Number",
           "type": "string"
@@ -276,7 +343,7 @@
           "$ref": "#/definitions/SocioEconomics"
         }
       },
-      "required": ["isDeceased", "contactDetails", "socioEconomics"],
+      "required": ["isDeceased", "contactDetails", "socioEconomics", "notes"],
       "type": "object"
     },
     "SocioEconomics": {
