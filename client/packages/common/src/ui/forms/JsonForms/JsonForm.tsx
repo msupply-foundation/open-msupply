@@ -36,6 +36,10 @@ import {
   idGeneratorTester,
   IdGenerator,
 } from './components';
+import {
+  AccordionGroup,
+  accordionGroupTester,
+} from './components/AccordionGroup';
 
 export type JsonData = {
   [key: string]: string | number | boolean | null | unknown | JsonData;
@@ -121,6 +125,7 @@ const renderers = [
   { tester: stringTester, renderer: TextField },
   { tester: selectTester, renderer: Selector },
   { tester: groupTester, renderer: Group },
+  { tester: accordionGroupTester, renderer: AccordionGroup },
   { tester: labelTester, renderer: Label },
   { tester: dateTester, renderer: Date },
   { tester: dateOfBirthTester, renderer: DateOfBirth },
