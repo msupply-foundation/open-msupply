@@ -10,10 +10,9 @@ use crate::{
 use chrono::Utc;
 use repository::{
     requisition_row::{RequisitionRowStatus, RequisitionRowType},
-    EqualFilter, LogRow, LogType, RepositoryError, RequisitionLineFilter,
-    RequisitionLineRepository, RequisitionRowRepository, StorageConnection,
+    EqualFilter, LogType, RepositoryError, RequisitionLineFilter, RequisitionLineRepository,
+    RequisitionRowRepository, StorageConnection,
 };
-use util::uuid::uuid;
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct DeleteRequestRequisition {
@@ -74,15 +73,10 @@ pub fn delete_request_requisition(
         .map_err(|error| error.to_inner_error())?;
 
     log_entry(
-        &ctx.connection,
-        &LogRow {
-            id: uuid(),
-            r#type: LogType::RequisitionDeleted,
-            user_id: None, //TODO
-            store_id: Some(ctx.store_id.clone()),
-            record_id: Some(input.id),
-            datetime: Utc::now().naive_utc(),
-        },
+        &ctx,
+        LogType::RequisitionDeleted,
+        Some(input.id),
+        Utc::now().naive_utc(),
     )?;
 
     Ok(requisition_id)

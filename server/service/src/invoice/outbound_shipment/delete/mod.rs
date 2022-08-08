@@ -1,12 +1,11 @@
 use chrono::Utc;
 use repository::{
     EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceRowRepository,
-    LogRow, LogType, RepositoryError, TransactionError,
+    LogType, RepositoryError, TransactionError,
 };
 
 pub mod validate;
 
-use util::uuid::uuid;
 use validate::validate;
 
 use crate::{
@@ -54,15 +53,10 @@ pub fn delete_outbound_shipment(
         .map_err(|error| error.to_inner_error())?;
 
     log_entry(
-        &ctx.connection,
-        &LogRow {
-            id: uuid(),
-            r#type: LogType::InvoiceDeleted,
-            user_id: None, //TODO
-            store_id: Some(ctx.store_id.clone()),
-            record_id: Some(id),
-            datetime: Utc::now().naive_utc(),
-        },
+        &ctx,
+        LogType::InvoiceDeleted,
+        Some(id),
+        Utc::now().naive_utc(),
     )?;
 
     Ok(invoice_id)

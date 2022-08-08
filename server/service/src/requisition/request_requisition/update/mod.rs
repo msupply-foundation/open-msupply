@@ -6,8 +6,7 @@ use crate::{
 };
 use chrono::{NaiveDate, Utc};
 use repository::{
-    LogRow, LogType, RepositoryError, Requisition, RequisitionLineRowRepository,
-    RequisitionRowRepository,
+    LogType, RepositoryError, Requisition, RequisitionLineRowRepository, RequisitionRowRepository,
 };
 
 mod generate;
@@ -15,7 +14,6 @@ mod test;
 mod validate;
 
 use generate::generate;
-use util::uuid::uuid;
 use validate::validate;
 
 #[derive(Debug, PartialEq, Clone)]
@@ -93,15 +91,10 @@ pub fn update_request_requisition(
 
     if input.status == Some(UpdateRequestRequistionStatus::Sent) {
         log_entry(
-            &ctx.connection,
-            &LogRow {
-                id: uuid(),
-                r#type: LogType::RequisitionStatusSent,
-                user_id: None,
-                store_id: Some(ctx.store_id.clone()),
-                record_id: Some(requisition.requisition_row.id.to_string()),
-                datetime: Utc::now().naive_utc(),
-            },
+            &ctx,
+            LogType::RequisitionStatusSent,
+            Some(requisition.requisition_row.id.to_string()),
+            Utc::now().naive_utc(),
         )?;
     }
 

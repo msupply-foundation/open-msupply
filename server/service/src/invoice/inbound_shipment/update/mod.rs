@@ -6,7 +6,7 @@ use crate::{
     WithDBError,
 };
 use chrono::Utc;
-use repository::{Invoice, LogRow, LogType};
+use repository::{Invoice, LogType};
 use repository::{
     InvoiceLineRowRepository, InvoiceRowRepository, InvoiceRowStatus, RepositoryError,
     StockLineRowRepository,
@@ -17,7 +17,6 @@ mod validate;
 
 use crate::invoice::inbound_shipment::update::generate::GenerateResult;
 use generate::generate;
-use util::uuid::uuid;
 use validate::validate;
 
 use self::generate::LineAndStockLine;
@@ -97,18 +96,13 @@ pub fn update_inbound_shipment(
 
     if let Some(status) = patch.status {
         log_entry(
-            &ctx.connection,
-            &LogRow {
-                id: uuid(),
-                r#type: match status {
-                    UpdateInboundShipmentStatus::Delivered => LogType::InvoiceStatusDelivered,
-                    UpdateInboundShipmentStatus::Verified => LogType::InvoiceStatusVerified,
-                },
-                user_id: Some(ctx.user_id.clone()),
-                store_id: Some(ctx.store_id.clone()),
-                record_id: Some(invoice.invoice_row.id.clone()),
-                datetime: Utc::now().naive_utc(),
+            &ctx,
+            match status {
+                UpdateInboundShipmentStatus::Delivered => LogType::InvoiceStatusDelivered,
+                UpdateInboundShipmentStatus::Verified => LogType::InvoiceStatusVerified,
             },
+            Some(invoice.invoice_row.id.clone()),
+            Utc::now().naive_utc(),
         )?;
     }
 

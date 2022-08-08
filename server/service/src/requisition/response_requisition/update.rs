@@ -7,9 +7,9 @@ use crate::{
 use chrono::Utc;
 use repository::{
     requisition_row::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
-    LogRow, LogType, RepositoryError, Requisition, RequisitionRowRepository, StorageConnection,
+    LogType, RepositoryError, Requisition, RequisitionRowRepository, StorageConnection,
 };
-use util::{inline_edit, uuid::uuid};
+use util::inline_edit;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum UpdateResponseRequstionStatus {
@@ -52,15 +52,10 @@ pub fn update_response_requisition(
 
             if requisition_row.status != updated_requisition.status {
                 log_entry(
-                    &ctx.connection,
-                    &LogRow {
-                        id: uuid(),
-                        r#type: LogType::RequisitionStatusFinalised,
-                        user_id: Some(ctx.user_id.clone()),
-                        store_id: Some(ctx.store_id.clone()),
-                        record_id: Some(updated_requisition.id.to_string()),
-                        datetime: Utc::now().naive_utc(),
-                    },
+                    &ctx,
+                    LogType::RequisitionStatusFinalised,
+                    Some(updated_requisition.id.to_string()),
+                    Utc::now().naive_utc(),
                 )?;
             }
 

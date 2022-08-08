@@ -1,9 +1,8 @@
 use chrono::Utc;
 use repository::{
-    EqualFilter, LogRow, LogType, RepositoryError, StocktakeLineFilter, StocktakeLineRepository,
+    EqualFilter, LogType, RepositoryError, StocktakeLineFilter, StocktakeLineRepository,
     StocktakeRowRepository, StorageConnection, TransactionError,
 };
-use util::uuid::uuid;
 
 use crate::{
     log::log_entry, service_provider::ServiceContext, stocktake_line::*,
@@ -87,15 +86,10 @@ pub fn delete_stocktake(
         .map_err(|error: TransactionError<DeleteStocktakeError>| error.to_inner_error())?;
 
     log_entry(
-        &ctx.connection,
-        &LogRow {
-            id: uuid(),
-            r#type: LogType::StocktakeDeleted,
-            user_id: None, //TODO
-            store_id: Some(ctx.store_id.clone()),
-            record_id: Some(stocktake_id.clone()),
-            datetime: Utc::now().naive_utc(),
-        },
+        &ctx,
+        LogType::StocktakeDeleted,
+        Some(stocktake_id.clone()),
+        Utc::now().naive_utc(),
     )?;
 
     Ok(stocktake_id.to_string())
