@@ -8,10 +8,9 @@ use crate::{
 use chrono::{NaiveDate, Utc};
 use repository::{
     requisition_row::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
-    LogRow, LogType, NumberRowType, RepositoryError, Requisition, RequisitionRowRepository,
+    LogType, NumberRowType, RepositoryError, Requisition, RequisitionRowRepository,
     StorageConnection,
 };
-use util::uuid::uuid;
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct InsertRequestRequisition {
@@ -61,15 +60,10 @@ pub fn insert_request_requisition(
         .map_err(|error| error.to_inner_error())?;
 
     log_entry(
-        &ctx.connection,
-        &LogRow {
-            id: uuid(),
-            r#type: LogType::RequisitionCreated,
-            user_id: Some(ctx.user_id.clone()),
-            store_id: Some(ctx.store_id.clone()),
-            record_id: Some(requisition.requisition_row.id.to_string()),
-            datetime: requisition.requisition_row.created_datetime,
-        },
+        &ctx,
+        LogType::RequisitionCreated,
+        Some(requisition.requisition_row.id.to_string()),
+        requisition.requisition_row.created_datetime,
     )?;
 
     Ok(requisition)

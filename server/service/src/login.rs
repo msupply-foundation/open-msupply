@@ -7,8 +7,7 @@ use bcrypt::BcryptError;
 use chrono::Utc;
 use log::info;
 use repository::{
-    LogRow, LogType, Permission, RepositoryError, UserAccountRow, UserPermissionRow,
-    UserStoreJoinRow,
+    LogType, Permission, RepositoryError, UserAccountRow, UserPermissionRow, UserStoreJoinRow,
 };
 use reqwest::{ClientBuilder, Url};
 use serde::{Deserialize, Serialize};
@@ -132,17 +131,13 @@ impl LoginService {
                 });
             }
         };
+        let service_ctx = service_provider.context("", &user_account.id.clone())?;
 
         log_entry(
-            &service_ctx.connection,
-            &LogRow {
-                id: uuid(),
-                r#type: LogType::UserLoggedIn,
-                user_id: Some(user_account.id.clone()),
-                store_id: None,
-                record_id: None,
-                datetime: Utc::now().naive_utc(),
-            },
+            &service_ctx,
+            LogType::UserLoggedIn,
+            None,
+            Utc::now().naive_utc(),
         )?;
 
         let mut token_service = TokenService::new(

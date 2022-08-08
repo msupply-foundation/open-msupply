@@ -1,7 +1,7 @@
 use chrono::{NaiveDate, Utc};
 use repository::{
     EqualFilter, InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRow,
-    InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType, ItemRowRepository, LogRow, LogType,
+    InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType, ItemRowRepository, LogType,
     NameRowRepository, NumberRowType, RepositoryError, StockLineRow, StockLineRowRepository,
     Stocktake, StocktakeLine, StocktakeLineFilter, StocktakeLineRepository, StocktakeLineRow,
     StocktakeLineRowRepository, StocktakeRow, StocktakeRowRepository, StocktakeStatus,
@@ -441,15 +441,10 @@ pub fn update_stocktake(
 
             if existing.status != result.stocktake.status {
                 log_entry(
-                    &ctx.connection,
-                    &LogRow {
-                        id: uuid(),
-                        r#type: LogType::StocktakeStatusFinalised,
-                        user_id: Some(ctx.user_id.clone()),
-                        store_id: Some(ctx.store_id.clone()),
-                        record_id: Some(stocktake_id.to_string()),
-                        datetime: Utc::now().naive_utc(),
-                    },
+                    &ctx,
+                    LogType::StocktakeStatusFinalised,
+                    Some(stocktake_id.to_string()),
+                    Utc::now().naive_utc(),
                 )?;
             }
 
