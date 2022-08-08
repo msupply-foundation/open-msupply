@@ -84,7 +84,10 @@ describe('allocateQuantities - standard behaviour.', () => {
       draftOutboundLines
     );
 
-    const expected = [{ ...lineOne, numberOfPacks: 3 }, placeholder];
+    const expected = [
+      { ...lineOne, numberOfPacks: 3, isUpdated: true },
+      placeholder,
+    ];
 
     expect(allocate(3, 1)).toEqual(expected);
   });
@@ -99,9 +102,9 @@ describe('allocateQuantities - standard behaviour.', () => {
       draftOutboundLines
     );
 
-    const lineOne = { ...one };
+    const lineOne = { ...one, isUpdated: true };
     lineOne.numberOfPacks = 1;
-    const lineTwo = { ...two };
+    const lineTwo = { ...two, isUpdated: true };
     lineTwo.numberOfPacks = 1;
 
     const expected = [lineOne, lineTwo, placeholder];
@@ -121,7 +124,7 @@ describe('Allocate quantities - placeholder row behaviour', () => {
       draftOutboundLines
     );
 
-    const lineOne = { ...one };
+    const lineOne = { ...one, isUpdated: true };
     lineOne.numberOfPacks = 1;
     const placeholderLine = { ...placeholder, numberOfPacks: 9 };
 
@@ -140,9 +143,9 @@ describe('Allocate quantities - placeholder row behaviour', () => {
       draftOutboundLines
     );
 
-    const lineOne = { ...one };
+    const lineOne = { ...one, isUpdated: true };
     lineOne.numberOfPacks = 1;
-    const lineTwo = { ...two };
+    const lineTwo = { ...two, isUpdated: true };
     lineTwo.numberOfPacks = 1;
     const placeholderLine = { ...placeholder };
     placeholderLine.numberOfPacks = 1;
@@ -160,7 +163,7 @@ describe('Allocate quantities - placeholder row behaviour', () => {
       const draftOutboundLines = [one, placeholder];
       const allocate = allocateQuantities(status, draftOutboundLines);
 
-      const lineOne = { ...one };
+      const lineOne = { ...one, isUpdated: true };
       lineOne.numberOfPacks = 1;
       const placeholderLine = getPlaceholder();
 
@@ -200,7 +203,7 @@ describe('Allocate quantities - differing pack size behaviour', () => {
       draftOutboundLines
     );
 
-    const lineOne = { ...one };
+    const lineOne = { ...one, isUpdated: true };
     lineOne.numberOfPacks = 1;
     const lineTwo = { ...two };
     const placeholderLine = { ...placeholder };
@@ -221,7 +224,7 @@ describe('Allocate quantities - differing pack size behaviour', () => {
       draftOutboundLines
     );
 
-    const lineOne = { ...one };
+    const lineOne = { ...one, isUpdated: true };
     lineOne.numberOfPacks = 1;
     const lineTwo = { ...two };
     const placeholderLine = { ...placeholder };
@@ -232,8 +235,8 @@ describe('Allocate quantities - differing pack size behaviour', () => {
     expect(allocate(3, 1)).toEqual(expected);
 
     allocate = allocateQuantities(InvoiceNodeStatus.New, expected);
-    const lineOneAfterChange = { ...one };
-    const lineTwoAfterChange = { ...two };
+    const lineOneAfterChange = { ...one, isUpdated: true };
+    const lineTwoAfterChange = { ...two, isUpdated: true };
     lineOneAfterChange.numberOfPacks = 0;
     lineTwoAfterChange.numberOfPacks = 1;
     const placeholderAfterChange = { ...placeholder };
@@ -258,7 +261,7 @@ describe('Allocating quantities - behaviour when mixing placeholders and pack si
       draftOutboundLines
     );
 
-    const lineOne = { ...one };
+    const lineOne = { ...one, isUpdated: true };
     lineOne.numberOfPacks = 1;
     const placeholderLine = { ...placeholder };
     placeholderLine.numberOfPacks = 9;
@@ -276,7 +279,7 @@ describe('Allocating quantities - behaviour when mixing placeholders and pack si
       draftOutboundLines
     );
 
-    const lineOne = { ...one };
+    const lineOne = { ...one, isUpdated: true };
     lineOne.numberOfPacks = 1;
     // The total number of units being allocated is 20. The line with a pack size of two has 1 pack available.
     // So, 18 units should be assigned to the placeholder - the 9 remaining packs * the pack size of two.
@@ -320,8 +323,12 @@ describe('Allocated quantities - expiry date behaviour', () => {
       draftOutboundLines
     );
 
-    const expiringLast = { ...expiringLastLine };
-    const expiringFirst = { ...expiringFirstLine, numberOfPacks: 10 };
+    const expiringLast = { ...expiringLastLine, isUpdated: true };
+    const expiringFirst = {
+      ...expiringFirstLine,
+      numberOfPacks: 10,
+      isUpdated: true,
+    };
 
     expect(allocate(10, 1)).toEqual([expiringLast, expiringFirst, placeholder]);
   });
@@ -337,8 +344,16 @@ describe('Allocated quantities - expiry date behaviour', () => {
       draftOutboundLines
     );
 
-    const expiringLast = { ...expiringLastLine, numberOfPacks: 5 };
-    const expiringFirst = { ...expiringFirstLine, numberOfPacks: 10 };
+    const expiringLast = {
+      ...expiringLastLine,
+      numberOfPacks: 5,
+      isUpdated: true,
+    };
+    const expiringFirst = {
+      ...expiringFirstLine,
+      numberOfPacks: 10,
+      isUpdated: true,
+    };
 
     expect(allocate(15, 1)).toEqual([expiringLast, expiringFirst, placeholder]);
   });
@@ -377,7 +392,11 @@ describe('Allocated quantities - behaviour for expired lines', () => {
       draftOutboundLines
     );
 
-    const expiringLast = { ...expiringLastLine, numberOfPacks: 10 };
+    const expiringLast = {
+      ...expiringLastLine,
+      numberOfPacks: 10,
+      isUpdated: true,
+    };
     const expired = { ...expiredLine, numberOfPacks: 0 };
 
     expect(allocate(10, 1)).toEqual([expiringLast, expired, placeholder]);
@@ -461,9 +480,9 @@ describe('Allocated quantities - coping with over-allocation', () => {
       draftOutboundLines
     );
 
-    const line1 = { ...Line1, numberOfPacks: 2 };
-    const line2 = { ...Line2, numberOfPacks: 0 };
-    const line3 = { ...Line3, numberOfPacks: 1 };
+    const line1 = { ...Line1, numberOfPacks: 2, isUpdated: true };
+    const line2 = { ...Line2, numberOfPacks: 0, isUpdated: true };
+    const line3 = { ...Line3, numberOfPacks: 1, isUpdated: true };
     const line4 = { ...Line4, numberOfPacks: 0 };
 
     expect(allocate(12, null)).toEqual([
@@ -489,9 +508,9 @@ describe('Allocated quantities - coping with over-allocation', () => {
       draftOutboundLines
     );
 
-    const line1 = { ...Line1, numberOfPacks: 2 };
-    const line2 = { ...Line2, numberOfPacks: 0 };
-    const line3 = { ...Line3, numberOfPacks: 1 };
+    const line1 = { ...Line1, numberOfPacks: 2, isUpdated: true };
+    const line2 = { ...Line2, numberOfPacks: 0, isUpdated: true };
+    const line3 = { ...Line3, numberOfPacks: 1, isUpdated: true };
     const line4 = { ...Line4, numberOfPacks: 0, packSize: 10 };
 
     expect(allocate(12, null)).toEqual([
@@ -511,16 +530,26 @@ describe('Allocated quantities - coping with over-allocation', () => {
       draftOutboundLines
     );
 
-    const line1 = { ...Line3, numberOfPacks: 1 };
-    const line2 = { ...Line4, numberOfPacks: 2 };
+    const line1 = { ...Line3, numberOfPacks: 1, isUpdated: true };
+    const line2 = { ...Line4, numberOfPacks: 2, isUpdated: true };
 
     expect(allocate(12, null)).toEqual([line1, line2, placeholder]);
   });
 
   it('reduces large pack size lines, allocating to other lines', () => {
-    const line1 = { ...Line1, packSize: 12, availableNumberOfPacks: 40 };
-    const line2 = { ...Line2, availableNumberOfPacks: 100 };
-    const line3 = { ...Line3, packSize: 1, availableNumberOfPacks: 100 };
+    const line1 = {
+      ...Line1,
+      packSize: 12,
+      availableNumberOfPacks: 40,
+      isUpdated: true,
+    };
+    const line2 = { ...Line2, availableNumberOfPacks: 100, isUpdated: true };
+    const line3 = {
+      ...Line3,
+      packSize: 1,
+      availableNumberOfPacks: 100,
+      isUpdated: true,
+    };
     const line4 = { ...Line4 };
 
     const draftOutboundLines = [
@@ -540,7 +569,7 @@ describe('Allocated quantities - coping with over-allocation', () => {
       { ...line1, numberOfPacks: 5 },
       { ...line2, numberOfPacks: 1 },
       line3,
-      line4,
+      { ...line4, isUpdated: true },
       placeholder,
     ]);
   });
