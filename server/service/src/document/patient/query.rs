@@ -11,6 +11,7 @@ use crate::{
 pub struct PatientFilter {
     pub id: Option<EqualFilter<String>>,
     pub code: Option<SimpleStringFilter>,
+    pub code_2: Option<SimpleStringFilter>,
     pub first_name: Option<SimpleStringFilter>,
     pub last_name: Option<SimpleStringFilter>,
     pub gender: Option<EqualFilter<Gender>>,
@@ -93,6 +94,7 @@ impl PatientFilter {
         let PatientFilter {
             id,
             code,
+            code_2,
             first_name,
             last_name,
             gender,
@@ -108,6 +110,7 @@ impl PatientFilter {
             id: id.map(EqualFilter::from),
             name: None,
             code,
+            national_health_number: code_2,
             is_customer: None,
             is_supplier: None,
             is_store: None,
@@ -140,6 +143,11 @@ impl PatientFilter {
 
     pub fn code(mut self, filter: SimpleStringFilter) -> Self {
         self.code = Some(filter);
+        self
+    }
+
+    pub fn code_2(mut self, filter: SimpleStringFilter) -> Self {
+        self.code_2 = Some(filter);
         self
     }
 

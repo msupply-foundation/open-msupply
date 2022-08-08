@@ -178,11 +178,10 @@ pub mod test {
         DocumentRepository, FormSchemaRowRepository,
     };
     use serde_json::json;
+    use util::inline_init;
 
     use crate::{
-        document::patient::patient_schema::{
-            ContactDetails, Gender, Patient, SchemaPatient, SocioEconomics,
-        },
+        document::patient::patient_schema::{ContactDetails, Gender, SchemaPatient},
         service_provider::ServiceProvider,
     };
 
@@ -203,28 +202,15 @@ pub mod test {
             region: None,
             zip_code: None,
         };
-        Patient {
-            id: "testid".to_string(),
-            code: Some("national_id".to_string()),
-            contact_details: vec![contact_details.clone()],
-            date_of_birth: Some("2000-03-04".to_string()),
-            date_of_birth_is_estimated: None,
-            birth_place: None,
-            family: None,
-            first_name: Some("firstname".to_string()),
-            last_name: Some("lastname".to_string()),
-            gender: Some(Gender::TransgenderFemale),
-            health_center: None,
-            passport_number: None,
-            socio_economics: SocioEconomics {
-                education: None,
-                literate: None,
-                occupation: None,
-            },
-            allergies: None,
-            is_deceased: false,
-            date_of_death: None,
-        }
+        inline_init(|p: &mut SchemaPatient| {
+            p.id = "testid".to_string();
+            p.code = Some("national_id".to_string());
+            p.contact_details = vec![contact_details.clone()];
+            p.date_of_birth = Some("2000-03-04".to_string());
+            p.first_name = Some("firstname".to_string());
+            p.last_name = Some("lastname".to_string());
+            p.gender = Some(Gender::TransgenderFemale);
+        })
     }
 
     #[actix_rt::test]

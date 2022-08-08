@@ -115,6 +115,9 @@ mod graphql {
             "code": {
                 "equalTo": "code equal to"
             },
+            "nationalHealthNumber": {
+              "equalTo": "national_health_number equal to"
+            },
             "isCustomer": true,
             "isSupplier": false,
             "isStore": true,
@@ -186,6 +189,7 @@ mod graphql {
                 id,
                 name,
                 code,
+                national_health_number,
                 is_customer,
                 is_supplier,
                 is_store,
@@ -207,6 +211,12 @@ mod graphql {
             assert_eq!(id, Some(EqualFilter::not_equal_to("id_not_equal_to")));
             assert_eq!(name, Some(SimpleStringFilter::like("name like")));
             assert_eq!(code, Some(SimpleStringFilter::equal_to("code equal to")));
+            assert_eq!(
+                national_health_number,
+                Some(SimpleStringFilter::equal_to(
+                    "national_health_number equal to"
+                ))
+            );
             assert_eq!(is_customer, Some(true));
             assert_eq!(is_supplier, Some(false));
             assert_eq!(is_store, Some(true));

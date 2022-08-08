@@ -41,6 +41,18 @@ export const PatientFormTab: FC<PatientPanel> = ({ patient, value }) => {
           }
         />
         <InputWithLabelRow
+          label={t('label.id2')}
+          Input={
+            <BufferedTextInput
+              size="small"
+              sx={{ width: 250 }}
+              value={patient?.code2 ?? ''}
+              onChange={event => updatePatient({ code2: event.target.value })}
+              autoFocus
+            />
+          }
+        />
+        <InputWithLabelRow
           label={t('label.first-name')}
           Input={
             <BufferedTextInput

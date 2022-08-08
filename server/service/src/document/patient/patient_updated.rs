@@ -63,6 +63,7 @@ pub fn patient_document_updated(
             .and_then(|n| n.created_datetime.clone())
             .or(Some(update_timestamp.naive_utc())), // assume there is no earlier doc version
         is_deceased: patient.is_deceased,
+        national_health_number: patient.code_2,
     })?;
     let name_repo = NameRepository::new(con);
     let name = name_repo.query_one(
@@ -103,10 +104,11 @@ mod test {
         test_db::setup_all,
         EqualFilter, FormSchemaRowRepository,
     };
+    use util::inline_init;
 
     use crate::{
         document::patient::{
-            patient_schema::{ContactDetails, Gender, Patient, SocioEconomics},
+            patient_schema::{ContactDetails, Gender, SchemaPatient},
             PatientFilter, UpdatePatient,
         },
         service_provider::ServiceProvider,
@@ -145,28 +147,14 @@ mod test {
             region: None,
             zip_code: None,
         };
-        let patient = Patient {
-            id: "patient1".to_string(),
-            code: None,
-            contact_details: vec![contact_details.clone()],
-            date_of_birth: Some("2000-03-04".to_string()),
-            date_of_birth_is_estimated: None,
-            birth_place: None,
-            family: None,
-            first_name: Some("firstname".to_string()),
-            last_name: Some("lastname".to_string()),
-            gender: Some(Gender::TransgenderFemale),
-            health_center: None,
-            passport_number: None,
-            socio_economics: SocioEconomics {
-                education: None,
-                literate: None,
-                occupation: None,
-            },
-            allergies: None,
-            is_deceased: false,
-            date_of_death: None,
-        };
+        let patient = inline_init(|p: &mut SchemaPatient| {
+            p.id = "patient1".to_string();
+            p.contact_details = vec![contact_details.clone()];
+            p.date_of_birth = Some("2000-03-04".to_string());
+            p.first_name = Some("firstname".to_string());
+            p.last_name = Some("lastname".to_string());
+            p.gender = Some(Gender::TransgenderFemale);
+        });
 
         service
             .update_patient(

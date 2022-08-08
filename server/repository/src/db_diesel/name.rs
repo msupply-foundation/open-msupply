@@ -32,6 +32,7 @@ pub struct NameFilter {
     pub id: Option<EqualFilter<String>>,
     pub name: Option<SimpleStringFilter>,
     pub code: Option<SimpleStringFilter>,
+    pub national_health_number: Option<SimpleStringFilter>,
     pub is_customer: Option<bool>,
     pub is_supplier: Option<bool>,
     pub is_store: Option<bool>,
@@ -193,6 +194,7 @@ fn create_filtered_query(store_id: String, filter: Option<NameFilter>) -> BoxedN
             id,
             name,
             code,
+            national_health_number,
             is_customer,
             is_supplier,
             is_store,
@@ -213,6 +215,11 @@ fn create_filtered_query(store_id: String, filter: Option<NameFilter>) -> BoxedN
 
         apply_equal_filter!(query, id, name_dsl::id);
         apply_simple_string_filter!(query, code, name_dsl::code);
+        apply_simple_string_filter!(
+            query,
+            national_health_number,
+            name_dsl::national_health_number
+        );
         apply_simple_string_filter!(query, name, name_dsl::name_);
         apply_simple_string_filter!(query, store_code, store_dsl::code);
         apply_equal_filter!(query, r#type, name_dsl::type_);
@@ -273,6 +280,11 @@ impl NameFilter {
 
     pub fn code(mut self, filter: SimpleStringFilter) -> Self {
         self.code = Some(filter);
+        self
+    }
+
+    pub fn national_health_number(mut self, filter: SimpleStringFilter) -> Self {
+        self.national_health_number = Some(filter);
         self
     }
 
