@@ -20,7 +20,7 @@ import {
 } from '../styleConstants';
 import { JsonFormsConfig } from '../JsonForm';
 
-export const idGeneratorTester = rankWith(4, uiTypeIs('IdGeneratorControl'));
+export const idGeneratorTester = rankWith(10, uiTypeIs('IdGenerator'));
 
 type GeneratorOptions = {
   targetField: string;
