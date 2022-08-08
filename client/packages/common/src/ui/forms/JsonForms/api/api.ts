@@ -59,6 +59,6 @@ export const getAllocateNumberMutations = (sdk: Sdk, storeId: string) => ({
     if (numberNode?.__typename === 'NumberNode') {
       return numberNode.number;
     }
-    throw new Error('Error allocation a new number');
+    throw new Error('Error allocating a new number');
   },
 });
