@@ -81,7 +81,7 @@ const ArrayComponent = (props: ArrayControlCustomProps) => {
   }
   return (
     <Box display="flex" flexDirection="column" gap={0.5} marginTop={2}>
-      <Box display="flex" width="100%" gap={2} alignItems="center">
+      <Box display="flex" width="100%" alignItems="center">
         <Box width={FORM_LABEL_COLUMN_WIDTH}>
           <Typography sx={{ fontWeight: 'bold', textAlign: 'end' }}>
             {label}:
