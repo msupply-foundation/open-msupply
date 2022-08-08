@@ -65,6 +65,7 @@ impl RemotePushUpsertTranslation for NameTranslation {
             on_hold,
             created_datetime,
             is_deceased: _,
+            national_health_number: _,
         } = NameRowRepository::new(connection)
             .find_one_by_id(&changelog.row_id)?
             .ok_or(anyhow::Error::msg(format!(

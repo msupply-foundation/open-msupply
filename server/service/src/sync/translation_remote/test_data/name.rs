@@ -137,6 +137,7 @@ fn name_1_pull_record() -> TestSyncRecord {
                 on_hold: false,
                 created_datetime: Some(NaiveDate::from_ymd(2022, 05, 22).and_hms(0, 0, 0)),
                 is_deceased: false,
+                national_health_number: None,
             }),
         )),
         identifier: "Name 1",

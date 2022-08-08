@@ -30,9 +30,9 @@ impl SyncRecordTester<Vec<NameRow>> for NameSyncRecordTester {
             is_manufacturer: false,
             is_donor: false,
             on_hold: false,
-            // TODO test hms once mSupply support it
             created_datetime: Some(NaiveDate::from_ymd(2022, 05, 20).and_hms(0, 0, 0)),
             is_deceased: false,
+            national_health_number: None,
         }];
         let repo = NameRowRepository::new(connection);
         for row in &rows {
