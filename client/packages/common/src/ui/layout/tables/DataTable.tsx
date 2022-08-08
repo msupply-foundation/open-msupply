@@ -101,7 +101,7 @@ const DataTableComponent = <T extends RecordWithId>({
     return (
       noDataElement || (
         <Box sx={{ padding: 2 }}>
-          <Typography variant="h6">
+          <Typography sx={{ color: 'gray.dark' }}>
             {noDataMessage || t('error.no-results')}
           </Typography>
         </Box>
