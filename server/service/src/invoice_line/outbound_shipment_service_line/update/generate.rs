@@ -1,6 +1,6 @@
 use repository::{InvoiceLineRow, ItemRow};
 
-use crate::invoice::common::total_after_tax;
+use crate::invoice::common::calculate_total_after_tax;
 
 use super::{UpdateOutboundShipmentServiceLine, UpdateOutboundShipmentServiceLineError};
 
@@ -55,7 +55,8 @@ pub fn generate(
         update_line.note = Some(note);
     }
 
-    update_line.total_after_tax = total_after_tax(update_line.total_before_tax, update_line.tax);
+    update_line.total_after_tax =
+        calculate_total_after_tax(update_line.total_before_tax, update_line.tax);
 
     Ok(update_line)
 }

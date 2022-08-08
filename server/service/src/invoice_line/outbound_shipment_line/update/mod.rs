@@ -388,7 +388,7 @@ mod test {
                 inline_init(|r: &mut UpdateOutboundShipmentLine| {
                     r.id = mock_outbound_shipment_c_invoice_lines()[0].id.clone();
                     r.number_of_packs = Some(2);
-                    r.total_before_tax = Some(10.99);
+                    r.total_before_tax = Some(18.00);
                 }),
             )
             .unwrap();
@@ -400,12 +400,16 @@ mod test {
             + previous_line.number_of_packs
             - outbound_line.number_of_packs;
 
+        println!("{:?}", outbound_line);
+        println!("{:?}", mock_outbound_shipment_c_invoice_lines()[0]);
+
         assert_eq!(
             outbound_line,
             inline_edit(&mock_outbound_shipment_c_invoice_lines()[0], |mut u| {
                 u.id = mock_outbound_shipment_c_invoice_lines()[0].id.clone();
                 u.number_of_packs = 2;
-                u.total_before_tax = 10.99;
+                u.total_before_tax = 18.00;
+                u.total_after_tax = 18.00;
                 u
             })
         );
