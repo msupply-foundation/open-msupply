@@ -138,7 +138,7 @@ mod test {
             mock_outbound_shipment_c, mock_outbound_shipment_c_invoice_lines,
             mock_outbound_shipment_no_stock_line, mock_stock_line_a, mock_stock_line_b,
             mock_stock_line_location_is_on_hold, mock_stock_line_on_hold, mock_store_a,
-            mock_store_b, mock_store_c, MockDataInserts,
+            mock_store_c, MockDataInserts,
         },
         test_db::setup_all,
         InvoiceLineRow, InvoiceLineRowRepository, StockLineRowRepository,
@@ -350,7 +350,8 @@ mod test {
         };
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context(&mock_store_c().id, "").unwrap();
+        let store_b_context = service_provider.context("store_b", "").unwrap();
+        let store_c_context = service_provider.context(&mock_store_c().id, "").unwrap();
         let service = service_provider.invoice_line_service;
         let invoice_service = service_provider.invoice_service;
 
@@ -372,7 +373,7 @@ mod test {
 
         service
             .update_outbound_shipment_line(
-                &context,
+                &store_c_context,
                 inline_init(|r: &mut UpdateOutboundShipmentLine| {
                     r.id = mock_outbound_shipment_c_invoice_lines()[0].id.clone();
                     r.number_of_packs = Some(2);
@@ -422,7 +423,7 @@ mod test {
 
         invoice_service
             .update_outbound_shipment(
-                &context,
+                &store_c_context,
                 inline_init(|r: &mut UpdateOutboundShipment| {
                     r.id = mock_outbound_shipment_c().id;
                     r.status = Some(UpdateOutboundShipmentStatus::Allocated)
@@ -431,7 +432,7 @@ mod test {
             .unwrap();
         service
             .update_outbound_shipment_line(
-                &context,
+                &store_c_context,
                 inline_init(|r: &mut UpdateOutboundShipmentLine| {
                     r.id = mock_outbound_shipment_c_invoice_lines()[0].id.clone();
                     r.stock_line_id = Some(mock_stock_line_b().id.clone());
@@ -472,7 +473,7 @@ mod test {
 
         service
             .update_outbound_shipment_line(
-                &context,
+                &store_b_context,
                 inline_init(|r: &mut UpdateOutboundShipmentLine| {
                     r.id = mock_outbound_shipment_a_invoice_lines()[0].id.clone();
                     r.number_of_packs = Some(15);

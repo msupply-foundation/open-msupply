@@ -163,7 +163,7 @@ mod test_insert {
     use repository::{
         mock::{
             mock_name_a, mock_name_store_b, mock_name_store_c, mock_request_draft_requisition,
-            mock_store_a, mock_user_account_a, MockData, MockDataInserts,
+            mock_user_account_a, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
         NameRow, RequisitionRowRepository,

@@ -104,6 +104,7 @@ mod test {
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider.context("store_a", "").unwrap();
+        let store_b_context = service_provider.context("store_b", "").unwrap();
         let service = service_provider.requisition_line_service;
 
         // RequisitionLineDoesNotExist
@@ -120,7 +121,7 @@ mod test {
         // NotThisStoreRequisition
         assert_eq!(
             service.delete_request_requisition_line(
-                &context,
+                &store_b_context,
                 DeleteRequestRequisitionLine {
                     id: mock_request_draft_requisition_calculation_test().lines[0]
                         .id

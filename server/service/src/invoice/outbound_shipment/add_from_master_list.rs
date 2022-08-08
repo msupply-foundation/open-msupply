@@ -144,6 +144,7 @@ mod test {
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider.context("store_a", "").unwrap();
+        let store_c_context = service_provider.context("store_c", "").unwrap();
         let service = service_provider.invoice_service;
 
         // RecordDoesNotExist
@@ -173,7 +174,7 @@ mod test {
         // CannotEditRecord
         assert_eq!(
             service.add_to_outbound_shipment_from_master_list(
-                &context,
+                &store_c_context,
                 ServiceInput {
                     shipment_id: mock_outbound_shipment_shipped().id,
                     master_list_id: "n/a".to_owned()
@@ -197,7 +198,7 @@ mod test {
         // MasterListNotFoundForThisName
         assert_eq!(
             service.add_to_outbound_shipment_from_master_list(
-                &context,
+                &store_c_context,
                 ServiceInput {
                     shipment_id: mock_outbound_shipment_c().id,
                     master_list_id: mock_test_not_store_a_master_list().master_list.id

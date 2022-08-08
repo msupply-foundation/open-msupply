@@ -153,6 +153,7 @@ mod test {
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider.context("store_a", "").unwrap();
+        let store_b_context = service_provider.context("store_b", "").unwrap();
         let service = service_provider.requisition_service;
 
         // RequisitionDoesNotExist
@@ -169,7 +170,7 @@ mod test {
         // NotThisStoreRequisition
         assert_eq!(
             service.supply_requested_quantity(
-                &context,
+                &store_b_context,
                 SupplyRequestedQuantity {
                     response_requisition_id: mock_draft_response_requisition_for_update_test().id,
                 },

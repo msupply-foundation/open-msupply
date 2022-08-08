@@ -184,6 +184,7 @@ mod test {
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider.context("store_a", "").unwrap();
+        let store_b_context = service_provider.context("store_b", "").unwrap();
         let service = service_provider.requisition_line_service;
 
         // RequisitionLineDoesNotExist
@@ -202,7 +203,7 @@ mod test {
         // RequisitionLineDoesNotBelongToCurrentStore
         assert_eq!(
             service.get_requisition_line_chart(
-                &context,
+                &store_b_context,
                 &test_line.id,
                 ConsumptionHistoryOptions::default(),
                 StockEvolutionOptions::default(),

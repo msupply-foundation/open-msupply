@@ -77,7 +77,7 @@ mod stocktake_line_test {
     use repository::{
         mock::{
             mock_locked_stocktake_line, mock_stocktake_line_a, mock_stocktake_line_finalised,
-            mock_store_a, mock_store_b, MockDataInserts,
+            mock_store_a, MockDataInserts,
         },
         test_db::setup_all,
     };
@@ -93,6 +93,7 @@ mod stocktake_line_test {
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider.context(&mock_store_a().id, "").unwrap();
+        let invalid_store_context = service_provider.context("invalid", "").unwrap();
         let service = service_provider.stocktake_line_service;
 
         // error: stocktake line does not exist
@@ -104,13 +105,13 @@ mod stocktake_line_test {
         // error: invalid store
         let existing_line = mock_stocktake_line_a();
         let error = service
-            .delete_stocktake_line(&context, existing_line.id)
+            .delete_stocktake_line(&invalid_store_context, existing_line.id)
             .unwrap_err();
         assert_eq!(error, DeleteStocktakeLineError::InvalidStore);
         // error: invalid store
         let existing_line = mock_stocktake_line_a();
         let error = service
-            .delete_stocktake_line(&context, existing_line.id)
+            .delete_stocktake_line(&invalid_store_context, existing_line.id)
             .unwrap_err();
         assert_eq!(error, DeleteStocktakeLineError::InvalidStore);
 
