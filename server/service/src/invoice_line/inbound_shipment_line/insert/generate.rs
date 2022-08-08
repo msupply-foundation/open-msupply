@@ -1,5 +1,5 @@
 use crate::{
-    invoice::common::{generate_invoice_user_id_update, total_after_tax},
+    invoice::common::{calculate_total_after_tax, generate_invoice_user_id_update},
     invoice_line::generate_batch,
     u32_to_i32,
 };
@@ -54,7 +54,7 @@ fn generate_line(
     }: ItemRow,
 ) -> InvoiceLineRow {
     let total_before_tax = total_before_tax.unwrap_or(cost_price_per_pack * number_of_packs as f64);
-    let total_after_tax = total_after_tax(total_before_tax, tax);
+    let total_after_tax = calculate_total_after_tax(total_before_tax, tax);
 
     InvoiceLineRow {
         id,

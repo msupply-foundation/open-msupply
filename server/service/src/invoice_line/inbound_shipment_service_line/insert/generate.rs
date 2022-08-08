@@ -1,6 +1,6 @@
 use repository::{InvoiceLineRow, InvoiceLineRowType, ItemRow};
 
-use crate::invoice::common::total_after_tax;
+use crate::invoice::common::calculate_total_after_tax;
 
 use super::{InsertInboundShipmentServiceLine, InsertInboundShipmentServiceLineError};
 
@@ -20,7 +20,7 @@ pub fn generate(
         id,
         invoice_id,
         total_before_tax,
-        total_after_tax: total_after_tax(total_before_tax, tax),
+        total_after_tax: calculate_total_after_tax(total_before_tax, tax),
         tax,
         note,
         item_code: item.code,

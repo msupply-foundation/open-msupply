@@ -18,7 +18,7 @@ pub fn generate_invoice_user_id_update(
     })
 }
 
-pub fn total_after_tax(total_before_tax: f64, tax: Option<f64>) -> f64 {
+pub fn calculate_total_after_tax(total_before_tax: f64, tax: Option<f64>) -> f64 {
     match tax {
         Some(tax) => total_before_tax * (1.0 + tax / 100.0),
         None => total_before_tax,
