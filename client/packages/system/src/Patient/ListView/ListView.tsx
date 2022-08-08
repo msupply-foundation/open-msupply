@@ -39,7 +39,8 @@ const PatientListComponent: FC = () => {
 
   const columns = useColumns<PatientRowFragment>(
     [
-      { key: 'code', label: 'label.code' },
+      { key: 'code', label: 'label.id' },
+      { key: 'code2', label: 'label.id2' },
       {
         key: 'firstName',
         label: 'label.first-name',
