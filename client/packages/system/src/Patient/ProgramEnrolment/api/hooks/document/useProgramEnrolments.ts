@@ -1,5 +1,5 @@
 import { useQuery, useUrlQueryParams } from '@openmsupply-client/common';
-import { usePatient } from '../../../../../api';
+import { usePatient } from '../../../../api';
 import { useProgramEnrolmentApi } from '../utils/useProgramEnrolmentApi';
 
 export const useProgramEnrolments = () => {

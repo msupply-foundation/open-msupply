@@ -11,8 +11,8 @@ import {
   useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { ProgramFragment, useProgramEnrolment } from './api';
-import { usePatientModalStore } from '../../hooks';
-import { PatientModal } from '..';
+import { usePatientModalStore } from '../hooks';
+import { PatientModal } from '../DetailView';
 
 type ProgramFragmentWithId = { id: string } & ProgramFragment;
 
