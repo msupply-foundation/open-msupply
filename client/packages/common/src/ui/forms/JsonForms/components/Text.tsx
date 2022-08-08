@@ -5,6 +5,7 @@ import {
   DetailInputWithLabelRow,
   useDebounceCallback,
 } from '@openmsupply-client/common';
+import { FORM_LABEL_WIDTH } from '../styleConstants';
 
 export const stringTester = rankWith(3, schemaTypeIs('string'));
 
@@ -38,6 +39,7 @@ const UIComponent = (props: ControlProps) => {
           ? { sx: { color: 'error.main' } }
           : undefined,
       }}
+      labelWidthPercentage={FORM_LABEL_WIDTH}
     />
   );
 };

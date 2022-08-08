@@ -66,15 +66,10 @@ const UIComponent = (props: ControlProps) => {
       style={{ minWidth: 300 }}
       marginTop={1}
     >
-      <Box
-        flex={1}
-        style={{ textAlign: 'end' }}
-        flexBasis={FORM_LABEL_COLUMN_WIDTH}
-      >
+      <Box style={{ textAlign: 'end' }} flexBasis={FORM_LABEL_COLUMN_WIDTH}>
         <FormLabel sx={{ fontWeight: 'bold' }}>{label}:</FormLabel>
       </Box>
       <Box
-        flex={1}
         flexBasis={FORM_INPUT_COLUMN_WIDTH}
         display="flex"
         alignItems="center"
