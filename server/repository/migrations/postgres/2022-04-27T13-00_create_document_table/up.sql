@@ -12,7 +12,7 @@ CREATE TABLE document (
 CREATE VIEW latest_document AS
 SELECT d.*
 FROM (
-      SELECT name, MAX(timestamp) timestamp
+      SELECT name, MAX(timestamp) AS timestamp
       FROM document
       GROUP BY name
 ) grouped
