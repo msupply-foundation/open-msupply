@@ -515,7 +515,6 @@ mod test {
         assert_eq!(error, UpdateStocktakeError::InvalidStore);
 
         // error: StocktakeDoesNotExist
-        let store_a = mock_store_a();
         let error = service
             .update_stocktake(
                 &context,
@@ -527,7 +526,6 @@ mod test {
         assert_eq!(error, UpdateStocktakeError::StocktakeDoesNotExist);
 
         // error: CannotEditFinalised
-        let store_a = mock_store_a();
         let stocktake = mock_stocktake_finalised_without_lines();
         let error = service
             .update_stocktake(
@@ -541,7 +539,6 @@ mod test {
         assert_eq!(error, UpdateStocktakeError::CannotEditFinalised);
 
         // error: StocktakeIsLocked
-        let store_a = mock_store_a();
         let stocktake = mock_locked_stocktake();
         let error = service
             .update_stocktake(
@@ -555,7 +552,6 @@ mod test {
         assert_eq!(error, UpdateStocktakeError::StocktakeIsLocked);
 
         // error: SnapshotCountCurrentCountMismatch
-        let store_a = mock_store_a();
         let mut stock_line = mock_stock_line_a();
         stock_line.total_number_of_packs = 5;
         StockLineRowRepository::new(&context.connection)
@@ -582,7 +578,6 @@ mod test {
         );
 
         // error: NoLines
-        let store_a = mock_store_a();
         let stocktake = mock_stocktake_no_lines();
         let error = service
             .update_stocktake(
@@ -597,7 +592,6 @@ mod test {
         assert_eq!(error, UpdateStocktakeError::NoLines);
 
         // success surplus should result in StockIn shipment line
-        let store_a = mock_store_a();
         let stocktake = mock_stocktake_stock_surplus();
         let result = service
             .update_stocktake(
@@ -616,7 +610,6 @@ mod test {
         assert_eq!(shipment.r#type, InvoiceLineRowType::StockIn);
 
         // success deficit should result in StockOut shipment line
-        let store_a = mock_store_a();
         let stocktake = mock_stocktake_stock_deficit();
         let result = service
             .update_stocktake(
@@ -635,7 +628,6 @@ mod test {
         assert_eq!(shipment.r#type, InvoiceLineRowType::StockOut);
 
         // success: no count change should not generate shipment line
-        let store_a = mock_store_a();
         let stocktake = mock_stocktake_no_count_change();
         let result = service
             .update_stocktake(
@@ -653,7 +645,6 @@ mod test {
         assert_eq!(shipment_lines, None);
 
         // success: no changes (not finalised)
-        let store_a = mock_store_a();
         let stocktake = mock_stocktake_a();
         let result = service
             .update_stocktake(
@@ -667,7 +658,6 @@ mod test {
         assert_eq!(result, mock_stocktake_a());
 
         // success: Edit and lock
-        let store_a = mock_store_a();
         let stocktake = mock_stocktake_a();
         service
             .update_stocktake(
@@ -693,7 +683,6 @@ mod test {
         );
 
         // success: Edit and un-lock
-        let store_a = mock_store_a();
         let stocktake = mock_stocktake_a();
         service
             .update_stocktake(
@@ -718,7 +707,6 @@ mod test {
             })
         );
         // success: all changes (not finalised)
-        let store_a = mock_store_a();
         let stocktake = mock_stocktake_full_edit();
         let result = service
             .update_stocktake(
@@ -746,7 +734,6 @@ mod test {
         );
 
         // success: new stock line
-        let store_a = mock_store_a();
         let stocktake = mock_stocktake_new_stock_line();
         let result = service
             .update_stocktake(

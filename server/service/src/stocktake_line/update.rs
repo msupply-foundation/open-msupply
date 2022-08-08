@@ -172,7 +172,6 @@ mod stocktake_line_test {
         let service = service_provider.stocktake_line_service;
 
         // error: StocktakeLineDoesNotExist
-        let store_a = mock_store_a();
         let error = service
             .update_stocktake_line(
                 &context,
@@ -196,7 +195,6 @@ mod stocktake_line_test {
         assert_eq!(error, UpdateStocktakeLineError::InvalidStore);
 
         // error: LocationDoesNotExist
-        let store_a = mock_store_a();
         let stocktake_line_a = mock_stocktake_line_a();
         let error = service
             .update_stocktake_line(
@@ -210,7 +208,6 @@ mod stocktake_line_test {
         assert_eq!(error, UpdateStocktakeLineError::LocationDoesNotExist);
 
         // error CannotEditFinalised
-        let store_a = mock_store_a();
         let stocktake_line_a = mock_stocktake_line_finalised();
         let error = service
             .update_stocktake_line(
@@ -226,7 +223,6 @@ mod stocktake_line_test {
         assert_eq!(error, UpdateStocktakeLineError::CannotEditFinalised);
 
         // error StocktakeIsLocked
-        let store_a = mock_store_a();
         let stocktake_line_a = mock_locked_stocktake_line();
         let error = service
             .update_stocktake_line(
@@ -239,7 +235,6 @@ mod stocktake_line_test {
         assert_eq!(error, UpdateStocktakeLineError::StocktakeIsLocked);
 
         // error CannotEditFinalised
-        let store_a = mock_store_a();
         let stocktake_line_a = mock_stocktake_line_finalised();
         let error = service
             .update_stocktake_line(
@@ -255,7 +250,6 @@ mod stocktake_line_test {
         assert_eq!(error, UpdateStocktakeLineError::CannotEditFinalised);
 
         // success: no update
-        let store_a = mock_store_a();
         let stocktake_line_a = mock_stocktake_line_a();
         let result = service
             .update_stocktake_line(
@@ -268,7 +262,6 @@ mod stocktake_line_test {
         assert_eq!(result.line, stocktake_line_a);
 
         // success: full update
-        let store_a = mock_store_a();
         let stocktake_line_a = mock_stocktake_line_a();
         let location = mock_locations()[0].clone();
         let result = service

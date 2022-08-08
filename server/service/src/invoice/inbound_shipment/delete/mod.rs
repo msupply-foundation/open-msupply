@@ -135,6 +135,9 @@ mod test {
         let context = service_provider
             .context(&mock_store_a().id, &mock_user_account_a().id)
             .unwrap();
+        let store_b_context = service_provider
+            .context(&mock_store_b().id, &mock_user_account_a().id)
+            .unwrap();
         let service = service_provider.invoice_service;
 
         // InvoiceDoesNotExist
@@ -187,7 +190,7 @@ mod test {
         // NotThisStoreInvoice
         assert_eq!(
             service.delete_inbound_shipment(
-                &context,
+                &store_b_context,
                 DeleteInboundShipment {
                     id: mock_inbound_shipment_c().id.clone(),
                 },

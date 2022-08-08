@@ -129,14 +129,12 @@ mod stocktake_test {
         let service = service_provider.stocktake_service;
 
         // error: stock does not exist
-        let store_a = mock_stocktake_without_lines();
         let error = service
             .delete_stocktake(&context, "invalid".to_string())
             .unwrap_err();
         assert_eq!(error, DeleteStocktakeError::StocktakeDoesNotExist);
 
         // error: StocktakeIsLocked
-        let store_a = mock_store_a();
         let error = service
             .delete_stocktake(&context, mock_locked_stocktake().id)
             .unwrap_err();
@@ -159,7 +157,6 @@ mod stocktake_test {
         // assert_eq!(error, DeleteStocktakeError::StocktakeLinesExist);
 
         // error: CannotEditFinalised
-        let store_a = mock_store_a();
         let stocktake = mock_stocktake_finalised_without_lines();
         let error = service
             .delete_stocktake(&context, stocktake.id)
@@ -167,7 +164,6 @@ mod stocktake_test {
         assert_eq!(error, DeleteStocktakeError::CannotEditFinalised);
 
         // success
-        let store_a = mock_store_a();
         let existing_stocktake = mock_stocktake_without_lines();
         let deleted_stocktake_id = service
             .delete_stocktake(&context, existing_stocktake.id.clone())

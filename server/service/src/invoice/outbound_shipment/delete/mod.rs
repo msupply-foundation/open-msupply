@@ -138,6 +138,7 @@ mod test {
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider.context(&mock_store_a().id, "").unwrap();
+        let store_c_context = service_provider.context(&mock_store_c().id, "").unwrap();
         let service = service_provider.invoice_service;
 
         // InvoiceDoesNotExist
@@ -148,7 +149,7 @@ mod test {
 
         //CannotEditFinalised
         assert_eq!(
-            service.delete_outbound_shipment(&context, mock_outbound_shipment_b().id),
+            service.delete_outbound_shipment(&store_c_context, mock_outbound_shipment_b().id),
             Err(ServiceError::CannotEditFinalised)
         );
 

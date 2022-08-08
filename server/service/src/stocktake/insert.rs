@@ -149,7 +149,6 @@ mod test {
         let service = service_provider.stocktake_service;
 
         // error: stocktake already exists
-        let store_a = mock_store_a();
         let existing_stocktake = mock_stocktake_a();
         let error = service
             .insert_stocktake(
@@ -173,7 +172,6 @@ mod test {
         // success
         let before_insert = Utc::now().naive_utc();
 
-        let store_a = mock_store_a();
         service
             .insert_stocktake(
                 &context,
@@ -204,7 +202,7 @@ mod test {
                 i.stocktake_date = Some(NaiveDate::from_ymd(2020, 01, 02));
                 i.is_locked = true;
                 i.status = StocktakeStatus::New;
-                i.store_id = store_a.id;
+                i.store_id = mock_store_a().id;
                 i
             }),
         );
