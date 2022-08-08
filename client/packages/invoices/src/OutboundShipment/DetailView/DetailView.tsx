@@ -1,6 +1,5 @@
-import React, { FC, useCallback, useState } from 'react';
+import React, { FC, useCallback } from 'react';
 import {
-  AppBarTabsPortal,
   TableProvider,
   createTableStore,
   useEditModal,
@@ -10,11 +9,7 @@ import {
   RouteBuilder,
   useTranslation,
   createQueryParamsStore,
-  TabContext,
-  TabList,
-  Box,
-  Tab,
-  DetailTab,
+  DetailTabs,
 } from '@openmsupply-client/common';
 import {
   toItemRow,
@@ -32,12 +27,6 @@ import { useOutbound } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
 import { OutboundLineFragment } from '../api/operations.generated';
 
-const TAB_HEIGHT = '32px';
-enum Tabs {
-  Details = 'Details',
-  Log = 'Log',
-}
-
 export const DetailView: FC = () => {
   const isDisabled = useOutbound.utils.isDisabled();
   const { entity, mode, onOpen, onClose, isOpen } =
@@ -45,7 +34,6 @@ export const DetailView: FC = () => {
   const { data, isLoading } = useOutbound.document.get();
   const t = useTranslation('distribution');
   const navigate = useNavigate();
-  const [currentTab, setCurrentTab] = useState<Tabs>(Tabs.Details);
   const onRowClick = useCallback(
     (item: OutboundLineFragment | OutboundItem) => {
       onOpen(toItemRow(item));
@@ -54,6 +42,22 @@ export const DetailView: FC = () => {
   );
 
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
+
+  const tabs = [
+    {
+      Component: (
+        <ContentArea
+          onRowClick={!isDisabled ? onRowClick : null}
+          onAddItem={onOpen}
+        />
+      ),
+      value: 'Details',
+    },
+    {
+      Component: <LogList recordId={data?.id ?? ''} />,
+      value: 'Log',
+    },
+  ];
 
   return (
     <React.Suspense
@@ -81,48 +85,7 @@ export const DetailView: FC = () => {
           )}
 
           <Toolbar />
-          <TabContext value={currentTab}>
-            <AppBarTabsPortal
-              sx={{
-                display: 'flex',
-                flex: 1,
-                justifyContent: 'center',
-                '& .MuiTab-root': {
-                  minHeight: TAB_HEIGHT,
-                  maxHeight: TAB_HEIGHT,
-                },
-                '& .MuiTabs-root': {
-                  minHeight: TAB_HEIGHT,
-                  maxHeight: TAB_HEIGHT,
-                },
-              }}
-            >
-              <Box flex={1}>
-                <TabList
-                  value={currentTab}
-                  centered
-                  onChange={(_, v) => setCurrentTab(v)}
-                >
-                  <Tab
-                    value={Tabs.Details}
-                    label={t('label.details')}
-                    tabIndex={-1}
-                  />
-                  <Tab value={Tabs.Log} label={t('label.log')} tabIndex={-1} />
-                </TabList>
-              </Box>
-            </AppBarTabsPortal>
-            <DetailTab value={Tabs.Details}>
-              <ContentArea
-                onRowClick={!isDisabled ? onRowClick : null}
-                onAddItem={onOpen}
-              />
-            </DetailTab>
-            <DetailTab value={Tabs.Log}>
-              <LogList recordId={data?.id} />
-            </DetailTab>
-          </TabContext>
-
+          <DetailTabs tabs={tabs} />
           <Footer />
           <SidePanel />
         </TableProvider>
