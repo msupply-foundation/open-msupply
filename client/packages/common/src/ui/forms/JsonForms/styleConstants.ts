@@ -1,4 +1,3 @@
-// These two together should add to 100%
-export const FORM_LABEL_COLUMN_WIDTH = '40%';
-export const FORM_INPUT_COLUMN_WIDTH = '60%';
-export const GROUP_MAX_WIDTH = 500;
+export const FORM_LABEL_WIDTH = 25;
+export const FORM_LABEL_COLUMN_WIDTH = `${FORM_LABEL_WIDTH}%`;
+export const FORM_INPUT_COLUMN_WIDTH = `${100 - FORM_LABEL_WIDTH}%`;

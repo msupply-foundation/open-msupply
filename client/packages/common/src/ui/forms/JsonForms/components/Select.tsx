@@ -32,14 +32,10 @@ const UIComponent = (props: ControlProps) => {
       style={{ minWidth: 300 }}
       marginTop={0.5}
     >
-      <Box
-        flex={1}
-        style={{ textAlign: 'end' }}
-        flexBasis={FORM_LABEL_COLUMN_WIDTH}
-      >
+      <Box style={{ textAlign: 'end' }} flexBasis={FORM_LABEL_COLUMN_WIDTH}>
         <FormLabel sx={{ fontWeight: 'bold' }}>{label}:</FormLabel>
       </Box>
-      <Box flex={1} flexBasis={FORM_INPUT_COLUMN_WIDTH}>
+      <Box flexBasis={FORM_INPUT_COLUMN_WIDTH}>
         <Select
           sx={{ minWidth: 100 }}
           options={options}
