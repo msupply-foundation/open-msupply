@@ -26,6 +26,7 @@ const DataTableComponent = <T extends RecordWithId>({
   data = [],
   dense = false,
   enableColumnSelection,
+  generateRowTooltip = () => '',
   isDisabled = false,
   isError = false,
   isLoading = false,
@@ -158,6 +159,7 @@ const DataTableComponent = <T extends RecordWithId>({
               rowKey={String(idx)}
               dense={dense}
               keyboardActivated={clickFocusedRow}
+              generateRowTooltip={generateRowTooltip}
             />
           ))}
         </TableBody>
