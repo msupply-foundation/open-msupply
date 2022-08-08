@@ -24,11 +24,16 @@
                   }
                 },
                 {
+                  "type": "Control",
+                  "scope": "#/properties/code",
+                  "label": "National Health Id"
+                },
+                {
                   "type": "IdGeneratorControl",
                   "label": "NUIC",
                   "scope": "#/",
                   "options": {
-                    "targetField": "code",
+                    "targetField": "code2",
                     "parts": [
                       {
                         "field": "lastName",

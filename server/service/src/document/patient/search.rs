@@ -7,6 +7,7 @@ use super::{Patient, PatientFilter};
 
 pub struct PatientSearch {
     pub code: Option<String>,
+    pub code_2: Option<String>,
     pub first_name: Option<String>,
     pub last_name: Option<String>,
     pub date_of_birth: Option<NaiveDate>,
@@ -28,13 +29,18 @@ pub fn patient_search(
     let mut filter = PatientFilter::new();
     let PatientSearch {
         code,
+        code_2,
         first_name,
         last_name,
         date_of_birth,
         gender,
     } = input;
+
     if let Some(code) = code {
         filter = filter.code(SimpleStringFilter::equal_to(&code));
+    }
+    if let Some(code_2) = code_2 {
+        filter = filter.code_2(SimpleStringFilter::equal_to(&code_2));
     }
     if let Some(first_name) = first_name {
         filter = filter.first_name(SimpleStringFilter::equal_to(&first_name));
@@ -64,5 +70,6 @@ pub fn patient_search(
             score: 1.0,
         })
         .collect();
+
     Ok(results)
 }

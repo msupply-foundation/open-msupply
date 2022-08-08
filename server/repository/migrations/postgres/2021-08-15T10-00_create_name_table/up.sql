@@ -49,5 +49,6 @@ CREATE TABLE name (
     is_donor BOOLEAN,
     on_hold BOOLEAN,
     created_datetime TIMESTAMP,
-    is_deceased BOOLEAN
+    is_deceased BOOLEAN,
+    national_health_number TEXT
 )

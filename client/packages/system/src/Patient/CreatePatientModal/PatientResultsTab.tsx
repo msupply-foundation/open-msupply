@@ -5,6 +5,7 @@ import {
   GenderInput,
   Typography,
   useColumns,
+  useNavigate,
   useTranslation,
 } from '@openmsupply-client/common';
 import { PatientPanel } from './PatientPanel';
@@ -39,11 +40,16 @@ export const PatientResultsTab: FC<PatientPanel> = ({ patient, value }) => {
   const { mutate, isLoading, data } = usePatient.utils.search();
   const { updatePatient } = usePatientCreateStore();
   const t = useTranslation('patients');
+  const navigate = useNavigate();
 
   const columns = useColumns<PatientFragment>([
     {
       key: 'code',
       label: 'label.id',
+    },
+    {
+      key: 'code2',
+      label: 'label.id2',
     },
     {
       key: 'firstName',
@@ -61,13 +67,18 @@ export const PatientResultsTab: FC<PatientPanel> = ({ patient, value }) => {
       key: 'gender',
       label: 'label.gender',
     },
+    {
+      key: 'isDeceased',
+      label: 'label.deceased',
+    },
   ]);
 
   useEffect(() => {
     if (!isLoading && !!patient && !data && !!patient.canSearch) {
-      const { code, firstName, lastName, dateOfBirth, gender } = patient;
+      const { code, code2, firstName, lastName, dateOfBirth, gender } = patient;
       mutate({
         code,
+        code2,
         firstName,
         lastName,
         dateOfBirth,
@@ -103,6 +114,9 @@ export const PatientResultsTab: FC<PatientPanel> = ({ patient, value }) => {
         data={data?.map(node => node.patient)}
         columns={columns}
         noDataMessage={t('messages.no-matching-patients')}
+        onRowClick={row => {
+          navigate(String(row.id));
+        }}
       />
     </PatientPanel>
   );

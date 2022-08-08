@@ -12,7 +12,10 @@ use super::PatientNode;
 
 #[derive(InputObject, Clone)]
 pub struct PatientSearchInput {
+    /// Patient code
     code: Option<String>,
+    /// Secondary patient code
+    code_2: Option<String>,
     first_name: Option<String>,
     last_name: Option<String>,
     date_of_birth: Option<NaiveDate>,
@@ -91,6 +94,7 @@ impl PatientSearchInput {
     fn to_domain(self) -> PatientSearch {
         PatientSearch {
             code: self.code,
+            code_2: self.code_2,
             first_name: self.first_name,
             last_name: self.last_name,
             date_of_birth: self.date_of_birth,

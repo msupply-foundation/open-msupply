@@ -84,6 +84,8 @@ pub struct NameFilterInput {
     pub name: Option<SimpleStringFilterInput>,
     /// Filter by code
     pub code: Option<SimpleStringFilterInput>,
+    /// Filter by national health number
+    pub national_health_number: Option<SimpleStringFilterInput>,
     /// Filter by customer property
     pub is_customer: Option<bool>,
     /// Filter by supplier property
@@ -164,6 +166,7 @@ impl NameFilterInput {
             id,
             name,
             code,
+            national_health_number,
             is_customer,
             is_supplier,
             is_store,
@@ -186,6 +189,7 @@ impl NameFilterInput {
             id: id.map(EqualFilter::from),
             name: name.map(SimpleStringFilter::from),
             code: code.map(SimpleStringFilter::from),
+            national_health_number: national_health_number.map(SimpleStringFilter::from),
             store_code: store_code.map(SimpleStringFilter::from),
             is_customer,
             is_supplier,

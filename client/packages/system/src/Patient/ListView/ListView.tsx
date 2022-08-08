@@ -12,6 +12,7 @@ import {
   useAlertModal,
   useTranslation,
   useUrlQueryParams,
+  ReadOnlyCheckboxCell,
 } from '@openmsupply-client/common';
 import { usePatient, PatientRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -39,7 +40,8 @@ const PatientListComponent: FC = () => {
 
   const columns = useColumns<PatientRowFragment>(
     [
-      { key: 'code', label: 'label.code' },
+      { key: 'code', label: 'label.id' },
+      { key: 'code2', label: 'label.id2' },
       {
         key: 'firstName',
         label: 'label.first-name',
@@ -63,6 +65,7 @@ const PatientListComponent: FC = () => {
         key: 'isDeceased',
         label: 'label.deceased',
         align: ColumnAlign.Right,
+        Cell: ReadOnlyCheckboxCell,
       },
     ],
     { onChangeSortBy: updateSortQuery, sortBy },
