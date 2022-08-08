@@ -103,7 +103,8 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("store_a", "").unwrap();
+        let store_a_context = service_provider.context("store_a", "").unwrap();
+        let store_c_context = service_provider.context("store_c", "").unwrap();
         let service = service_provider.invoice_line_service;
 
         let draft_shipment = mock_full_draft_outbound_shipment_a();
@@ -111,7 +112,7 @@ mod test {
         // LineAlreadyExists
         assert_eq!(
             service.insert_outbound_shipment_service_line(
-                &context,
+                &store_c_context,
                 inline_init(|r: &mut InsertOutboundShipmentServiceLine| {
                     r.id = draft_shipment.lines[0].line.id.clone();
                 }),
@@ -122,7 +123,7 @@ mod test {
         // InvoiceDoesNotExist
         assert_eq!(
             service.insert_outbound_shipment_service_line(
-                &context,
+                &store_a_context,
                 inline_init(|r: &mut InsertOutboundShipmentServiceLine| {
                     r.invoice_id = "invalid".to_string();
                 }),
@@ -133,7 +134,7 @@ mod test {
         // NotAnOutboundShipment
         assert_eq!(
             service.insert_outbound_shipment_service_line(
-                &context,
+                &store_a_context,
                 inline_init(|r: &mut InsertOutboundShipmentServiceLine| {
                     r.invoice_id = mock_inbound_shipment_c().id;
                 }),
@@ -144,7 +145,7 @@ mod test {
         // CannotEditInvoice
         assert_eq!(
             service.insert_outbound_shipment_service_line(
-                &context,
+                &store_c_context,
                 inline_init(|r: &mut InsertOutboundShipmentServiceLine| {
                     r.invoice_id = mock_outbound_shipment_shipped().id;
                 }),
@@ -155,7 +156,7 @@ mod test {
         // ItemNotFound
         assert_eq!(
             service.insert_outbound_shipment_service_line(
-                &context,
+                &store_c_context,
                 inline_init(|r: &mut InsertOutboundShipmentServiceLine| {
                     r.invoice_id = draft_shipment.invoice.id.clone();
                     r.item_id = Some("invalid".to_string())
@@ -167,7 +168,7 @@ mod test {
         // NotAServiceItem
         assert_eq!(
             service.insert_outbound_shipment_service_line(
-                &context,
+                &store_c_context,
                 inline_init(|r: &mut InsertOutboundShipmentServiceLine| {
                     r.invoice_id = draft_shipment.invoice.id.clone();
                     r.item_id = Some(mock_item_a().id)

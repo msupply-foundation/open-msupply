@@ -86,6 +86,7 @@ mod test {
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider.context("store_a", "").unwrap();
+        let store_b_context = service_provider.context("store_b", "").unwrap();
         let service = service_provider.invoice_line_service;
 
         // LineDoesNotExist
@@ -124,7 +125,7 @@ mod test {
         // NotThisStoreInvoice
         assert_eq!(
             service.delete_inbound_shipment_service_line(
-                &context,
+                &store_b_context,
                 inline_init(|r: &mut DeleteInboundShipmentLine| {
                     r.id = mock_draft_inbound_service_line().id;
                 }),

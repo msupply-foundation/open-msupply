@@ -185,6 +185,7 @@ mod test_insert {
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider.context("store_a", "").unwrap();
+        let store_c_context = service_provider.context("store_c", "").unwrap();
         let service = service_provider.invoice_line_service;
 
         let new_outbound_shipment = mock_new_invoice_with_unallocated_line();
@@ -277,7 +278,7 @@ mod test_insert {
         // UnallocatedLineForItemAlreadyExistsInInvoice
         assert_eq!(
             service.insert_outbound_shipment_unallocated_line(
-                &context,
+                &store_c_context,
                 InsertOutboundShipmentUnallocatedLine {
                     id: new_line_id.clone(),
                     invoice_id: new_outbound_shipment.id.clone(),

@@ -162,13 +162,15 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context(&mock_store_a().id, "").unwrap();
+        let store_a_context = service_provider.context(&mock_store_a().id, "").unwrap();
+        let store_b_context = service_provider.context("store_b", "").unwrap();
+        let store_c_context = service_provider.context("store_c", "").unwrap();
         let service = service_provider.invoice_line_service;
 
         // LineDoesNotExist
         assert_eq!(
             service.update_outbound_shipment_line(
-                &context,
+                &store_a_context,
                 inline_init(|r: &mut UpdateOutboundShipmentLine| {
                     r.id = "invalid".to_string();
                 }),
@@ -179,7 +181,7 @@ mod test {
         // NotAnOutboundShipment
         assert_eq!(
             service.update_outbound_shipment_line(
-                &context,
+                &store_a_context,
                 inline_init(|r: &mut UpdateOutboundShipmentLine| {
                     r.id = mock_inbound_shipment_a_invoice_lines()[0].id.clone();
                 }),
@@ -190,7 +192,7 @@ mod test {
         // CannotEditFinalised
         assert_eq!(
             service.update_outbound_shipment_line(
-                &context,
+                &store_c_context,
                 inline_init(|r: &mut UpdateOutboundShipmentLine| {
                     r.id = mock_outbound_shipment_b_invoice_lines()[0].id.clone();
                 }),
@@ -201,7 +203,7 @@ mod test {
         // ItemNotFound
         assert_eq!(
             service.update_outbound_shipment_line(
-                &context,
+                &store_b_context,
                 inline_init(|r: &mut UpdateOutboundShipmentLine| {
                     r.id = mock_outbound_shipment_a_invoice_lines()[0].id.clone();
                     r.item_id = Some("invalid".to_string());
@@ -213,7 +215,7 @@ mod test {
         // StockLineNotFound
         assert_eq!(
             service.update_outbound_shipment_line(
-                &context,
+                &store_b_context,
                 inline_init(|r: &mut UpdateOutboundShipmentLine| {
                     r.id = mock_outbound_shipment_a_invoice_lines()[0].id.clone();
                     r.stock_line_id = Some("invalid".to_string());
@@ -225,7 +227,7 @@ mod test {
         // NumberOfPacksBelowOne
         assert_eq!(
             service.update_outbound_shipment_line(
-                &context,
+                &store_b_context,
                 inline_init(|r: &mut UpdateOutboundShipmentLine| {
                     r.id = mock_outbound_shipment_a_invoice_lines()[0].id.clone();
                     r.number_of_packs = Some(0);
@@ -237,7 +239,7 @@ mod test {
         // ItemDoesNotMatchStockLine
         assert_eq!(
             service.update_outbound_shipment_line(
-                &context,
+                &store_b_context,
                 inline_init(|r: &mut UpdateOutboundShipmentLine| {
                     r.id = mock_outbound_shipment_a_invoice_lines()[0].id.clone();
                     r.item_id = Some(mock_item_b().id.clone());
@@ -250,7 +252,7 @@ mod test {
         // LocationIsOnHold
         assert_eq!(
             service.update_outbound_shipment_line(
-                &context,
+                &store_b_context,
                 inline_init(|r: &mut UpdateOutboundShipmentLine| {
                     r.id = mock_outbound_shipment_a_invoice_lines()[0].id.clone();
                     r.item_id = Some(mock_stock_line_location_is_on_hold()[0].item_id.clone());
@@ -263,7 +265,7 @@ mod test {
         // LineDoesNotReferenceStockLine
         assert_eq!(
             service.update_outbound_shipment_line(
-                &context,
+                &store_c_context,
                 inline_init(|r: &mut UpdateOutboundShipmentLine| {
                     r.id = mock_outbound_shipment_no_stock_line()[0].id.clone();
                 }),
@@ -274,7 +276,7 @@ mod test {
         // BatchIsOnHold
         assert_eq!(
             service.update_outbound_shipment_line(
-                &context,
+                &store_b_context,
                 inline_init(|r: &mut UpdateOutboundShipmentLine| {
                     r.id = mock_outbound_shipment_a_invoice_lines()[0].id.clone();
                     r.stock_line_id = Some(mock_stock_line_on_hold()[0].id.clone());
@@ -287,7 +289,7 @@ mod test {
         // ReductionBelowZero
         assert_eq!(
             service.update_outbound_shipment_line(
-                &context,
+                &store_b_context,
                 inline_init(|r: &mut UpdateOutboundShipmentLine| {
                     r.id = mock_outbound_shipment_a_invoice_lines()[0].id.clone();
                     r.number_of_packs = Some(100);
@@ -305,7 +307,7 @@ mod test {
         // StockLineAlreadyExistsInInvoice
         assert_eq!(
             service.update_outbound_shipment_line(
-                &context,
+                &store_b_context,
                 inline_init(|r: &mut UpdateOutboundShipmentLine| {
                     r.id = mock_outbound_shipment_a_invoice_lines()[0].id.clone();
                     r.stock_line_id = Some(mock_item_b_lines()[0].id.clone());
@@ -319,7 +321,7 @@ mod test {
         // NotThisStoreInvoice
         assert_eq!(
             service.update_outbound_shipment_line(
-                &context,
+                &store_a_context,
                 inline_init(|r: &mut UpdateOutboundShipmentLine| {
                     r.id = mock_outbound_shipment_a_invoice_lines()[0].id.clone();
                     r.number_of_packs = Some(10);

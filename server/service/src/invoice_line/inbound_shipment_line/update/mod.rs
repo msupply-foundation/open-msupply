@@ -130,6 +130,9 @@ mod test {
         let context = service_provider
             .context(&mock_store_a().id, &mock_user_account_a().id)
             .unwrap();
+        let store_b_context = service_provider
+            .context(&mock_store_b().id, &mock_user_account_a().id)
+            .unwrap();
         let service = service_provider.invoice_line_service;
 
         // LineDoesNotExist
@@ -228,7 +231,7 @@ mod test {
         // NotThisStoreInvoice
         assert_eq!(
             service.update_inbound_shipment_line(
-                &context,
+                &store_b_context,
                 inline_init(|r: &mut UpdateInboundShipmentLine| {
                     r.id = mock_inbound_shipment_a_invoice_lines()[0].id.clone();
                     r.item_id = Some(mock_item_a().id.clone());
