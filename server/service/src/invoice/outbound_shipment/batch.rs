@@ -143,8 +143,7 @@ pub fn batch_outbound_shipment(
             let continue_on_error = input.continue_on_error.unwrap_or(false);
             let mut results = BatchOutboundShipmentResult::default();
 
-            let mutations_processor =
-                BatchMutationsProcessor::new(ctx, &ctx.store_id, &ctx.user_id);
+            let mutations_processor = BatchMutationsProcessor::new(ctx);
             // Insert Shipment
 
             let (has_errors, result) = mutations_processor

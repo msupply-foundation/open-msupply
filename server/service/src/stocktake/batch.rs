@@ -56,8 +56,7 @@ pub fn batch_stocktake(
             let continue_on_error = input.continue_on_error.unwrap_or(false);
             let mut results = BatchStocktakeResult::default();
 
-            let mutations_processor =
-                BatchMutationsProcessor::new(ctx, &ctx.store_id, &ctx.user_id);
+            let mutations_processor = BatchMutationsProcessor::new(ctx);
 
             let (has_errors, result) = mutations_processor
                 .do_mutations_with_user_id(input.insert_stocktake, insert_stocktake);

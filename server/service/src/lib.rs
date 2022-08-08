@@ -107,21 +107,11 @@ pub struct DoMutationResult<T> {
 
 pub struct BatchMutationsProcessor<'a> {
     ctx: &'a ServiceContext,
-    store_id: &'a str,
-    user_id: &'a str,
 }
 
 impl<'a> BatchMutationsProcessor<'a> {
-    pub fn new(
-        ctx: &'a ServiceContext,
-        store_id: &'a str,
-        user_id: &'a str,
-    ) -> BatchMutationsProcessor<'a> {
-        BatchMutationsProcessor {
-            ctx,
-            store_id,
-            user_id,
-        }
+    pub fn new(ctx: &'a ServiceContext) -> BatchMutationsProcessor<'a> {
+        BatchMutationsProcessor { ctx }
     }
 
     pub fn do_mutations<I, R, E, M>(
