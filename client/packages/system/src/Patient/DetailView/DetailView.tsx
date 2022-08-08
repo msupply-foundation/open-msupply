@@ -15,7 +15,7 @@ import { usePatientCreateStore, usePatientStore } from '../hooks';
 import { AppBarButtons } from './AppBarButtons';
 import { PatientSummary } from './PatientSummary';
 import { PatientTab } from './PatientTab';
-import { ProgramDetailModal, ProgramListView } from './ProgramEnrolment';
+import { ProgramDetailModal, ProgramListView } from '../ProgramEnrolment';
 
 enum Tabs {
   Details = 'Details',
