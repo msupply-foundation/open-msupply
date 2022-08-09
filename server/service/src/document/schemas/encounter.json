@@ -3,17 +3,42 @@
   "definitions": {
     "Encounter": {
       "properties": {
-        "encounterDatetime": {
-          "description": "Encounter date and time",
+        "endDatetime": {
+          "description": "Encounter end date and time",
+          "format": "date-time",
+          "type": "string"
+        },
+        "practitioner": {
+          "$ref": "#/definitions/Practitioner"
+        },
+        "startDatetime": {
+          "description": "Encounter start date and time",
           "format": "date-time",
           "type": "string"
         },
         "status": {
-          "enum": ["Scheduled", "Ongoing", "Done", "Canceled", "Missed"],
+          "$ref": "#/definitions/EncounterStatus"
+        }
+      },
+      "required": ["startDatetime"],
+      "type": "object"
+    },
+    "EncounterStatus": {
+      "enum": ["SCHEDULED", "DONE", "CANCELED"],
+      "type": "string"
+    },
+    "Practitioner": {
+      "properties": {
+        "firstName": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "lastName": {
           "type": "string"
         }
       },
-      "required": ["encounterDatetime", "status"],
       "type": "object"
     }
   },

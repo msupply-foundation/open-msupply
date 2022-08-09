@@ -5,7 +5,9 @@ use repository::{
 };
 use util::uuid::uuid;
 
-use super::encounter_schema::SchemaEncounter;
+use crate::document::raw_document::RawDocument;
+
+use super::encounter_schema::{self, SchemaEncounter};
 
 pub(crate) enum EncounterTableUpdateError {
     RepositoryError(RepositoryError),
@@ -17,10 +19,10 @@ pub(crate) fn encounter_updated(
     con: &StorageConnection,
     patient_id: &str,
     program: &str,
-    doc_name: &str,
+    doc: &RawDocument,
     encounter: SchemaEncounter,
 ) -> Result<EncounterRow, EncounterTableUpdateError> {
-    let encounter_datetime = DateTime::parse_from_rfc3339(&encounter.encounter_datetime)
+    let start_datetime = DateTime::parse_from_rfc3339(&encounter.start_datetime)
         .map_err(|err| {
             EncounterTableUpdateError::InternalError(format!(
                 "Invalid encounter datetime format: {}",
@@ -28,20 +30,28 @@ pub(crate) fn encounter_updated(
             ))
         })?
         .naive_utc();
-    let status = match encounter.status.as_str() {
-        "Scheduled" => EncounterStatus::Scheduled,
-        "Ongoing" => EncounterStatus::Ongoing,
-        "Finished" => EncounterStatus::Finished,
-        "Canceled" => EncounterStatus::Canceled,
-        "Missed" => EncounterStatus::Missed,
-        value => {
-            // This assumes that the enum values are validated correctly previously and we are
-            // suppose to only receive known enum values
-            return Err(EncounterTableUpdateError::InternalError(format!(
-                "Can't handle encounter enum value: {}",
-                value
-            )));
-        }
+    let end_datetime = if let Some(end_datetime) = encounter.end_datetime {
+        Some(
+            DateTime::parse_from_rfc3339(&end_datetime)
+                .map_err(|err| {
+                    EncounterTableUpdateError::InternalError(format!(
+                        "Invalid encounter datetime format: {}",
+                        err
+                    ))
+                })?
+                .naive_utc(),
+        )
+    } else {
+        None
+    };
+    let status = if let Some(status) = encounter.status {
+        Some(match status {
+            encounter_schema::EncounterStatus::Scheduled => EncounterStatus::Scheduled,
+            encounter_schema::EncounterStatus::Done => EncounterStatus::Done,
+            encounter_schema::EncounterStatus::Canceled => EncounterStatus::Canceled,
+        })
+    } else {
+        None
     };
 
     let repo = EncounterRepository::new(con);
@@ -59,10 +69,12 @@ pub(crate) fn encounter_updated(
     };
     let row = EncounterRow {
         id,
+        r#type: doc.r#type.clone(),
+        name: doc.name.clone(),
         patient_id: patient_id.to_string(),
         program: program.to_string(),
-        name: doc_name.to_string(),
-        encounter_datetime: encounter_datetime,
+        start_datetime,
+        end_datetime,
         status,
     };
     EncounterRowRepository::new(con)

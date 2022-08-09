@@ -1,4 +1,5 @@
 {
+  "$ref": "#/definitions/HIVCareProgramEnrolment",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
     "Address": {
@@ -165,7 +166,7 @@
           "$ref": "#/definitions/Person"
         }
       },
-      "required": ["enrolmentDatetime", "hivTestType"],
+      "required": ["enrolmentDatetime"],
       "type": "object"
     },
     "HIVRiscGroup": {
@@ -276,6 +277,9 @@
           "description": "184096005 Patient Surname",
           "type": "string"
         },
+        "middleName": {
+          "type": "string"
+        },
         "notes": {
           "items": {
             "$ref": "#/definitions/Note"
@@ -290,7 +294,7 @@
           "$ref": "#/definitions/SocioEconomics"
         }
       },
-      "required": ["isDeceased", "contactDetails", "socioEconomics", "notes"],
+      "required": ["isDeceased", "contactDetails", "socioEconomics"],
       "type": "object"
     },
     "ProgramEnrolmentStatus": {
@@ -313,11 +317,5 @@
       },
       "type": "object"
     }
-  },
-  "type": "object",
-  "allOf": [
-    {
-      "$ref": "#/definitions/HIVCareProgramEnrolment"
-    }
-  ]
+  }
 }
