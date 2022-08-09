@@ -41,11 +41,13 @@ pub fn update_encounter(
         .transaction_sync(|_| {
             let (existing, encounter, encounter_row) = validate(ctx, &input)?;
 
+            let doc = generate(user_id, input, existing)?;
+
             encounter_updated(
                 &ctx.connection,
                 &encounter_row.patient_id,
                 &encounter_row.program,
-                &existing.name,
+                &doc,
                 encounter,
             )
             .map_err(|err| match err {
@@ -56,8 +58,6 @@ pub fn update_encounter(
                     UpdateEncounterError::InternalError(err)
                 }
             })?;
-
-            let doc = generate(user_id, input, existing)?;
 
             let result = service_provider
                 .document_service
@@ -161,15 +161,17 @@ mod test {
     use repository::{
         mock::{mock_form_schema_empty, MockDataInserts},
         test_db::setup_all,
-        EncounterFilter, EncounterRepository, EncounterStatus, EqualFilter,
-        FormSchemaRowRepository,
+        EncounterFilter, EncounterRepository, EqualFilter, FormSchemaRowRepository,
     };
     use serde_json::json;
     use util::inline_init;
 
     use crate::{
         document::{
-            encounter::{encounter_schema::SchemaEncounter, InsertEncounter, UpdateEncounter},
+            encounter::{
+                encounter_schema::{EncounterStatus, SchemaEncounter},
+                InsertEncounter, UpdateEncounter,
+            },
             patient::{test::mock_patient_1, UpdatePatient},
             program::{program_schema::SchemaProgramEnrolment, UpsertProgram},
         },
@@ -231,10 +233,10 @@ mod test {
             )
             .unwrap();
         let service = &service_provider.encounter_service;
-        let encounter = SchemaEncounter {
-            encounter_datetime: Utc::now().to_rfc3339(),
-            status: "Scheduled".to_string(),
-        };
+        let encounter = inline_init(|e: &mut SchemaEncounter| {
+            e.start_datetime = Utc::now().to_rfc3339();
+            e.status = Some(EncounterStatus::Scheduled);
+        });
         let program_type = "ProgramType".to_string();
         let initial_encounter = service
             .insert_encounter(
@@ -284,10 +286,10 @@ mod test {
         matches!(err, UpdateEncounterError::InvalidDataSchema(_));
 
         // success update
-        let encounter = SchemaEncounter {
-            encounter_datetime: Utc::now().to_rfc3339(),
-            status: "Finished".to_string(),
-        };
+        let encounter = inline_init(|e: &mut SchemaEncounter| {
+            e.start_datetime = Utc::now().to_rfc3339();
+            e.status = Some(EncounterStatus::Done);
+        });
         let result = service
             .update_encounter(
                 &ctx,
@@ -313,6 +315,6 @@ mod test {
             .unwrap()
             .pop()
             .unwrap();
-        assert_eq!(row.status, EncounterStatus::Finished);
+        assert_eq!(row.status, Some(repository::EncounterStatus::Done));
     }
 }

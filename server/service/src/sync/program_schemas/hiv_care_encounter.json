@@ -1,0 +1,326 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "EncounterStatus": {
+      "enum": ["SCHEDULED", "DONE", "CANCELED"],
+      "type": "string"
+    },
+    "HIVCareEncounter": {
+      "properties": {
+        "arvMedication": {
+          "properties": {
+            "change": {
+              "enum": [
+                "Substitution of ART Regimen",
+                "Switching of ART regimen"
+              ],
+              "type": "string"
+            },
+            "initialWeight": {
+              "description": "Weight at start of antiretroviral treatment",
+              "type": "number"
+            },
+            "previousRegimen": {
+              "description": "Previous antiretroviral treatment regimen",
+              "type": "string"
+            },
+            "reasonFirstToSecondLine": {
+              "description": "Reasons for switch from first line treatment to second line treatment",
+              "type": "string"
+            },
+            "reasonSubstitutionWithinFirstLine": {
+              "description": "Reasons for substitution within first line treatment",
+              "type": "string"
+            },
+            "regimeStatus": {
+              "description": "Antiretroviral treatment status",
+              "enum": [
+                "No ARV",
+                "Start ARV",
+                "Continue ARV",
+                "Stop ARV",
+                "Recommenced ARV",
+                "ARV on Hold",
+                "Changes to ART Regimen"
+              ],
+              "type": "string"
+            },
+            "regimeType": {
+              "description": "Antiretroviral treatment line",
+              "enum": [
+                "First Line - Adult",
+                "First Line - Paeds 20-30kg",
+                "First Line - Paeds <20kg",
+                "Second Line - Adult",
+                "Second Line - Paeds 20-30kg",
+                "Second Line - Paeds <20kg"
+              ],
+              "type": "string"
+            },
+            "regimen": {
+              "description": "Antiretroviral treatment regimen",
+              "type": "string"
+            },
+            "stopReason": {
+              "description": "Reasons to stop antiretroviral treatment",
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "endDatetime": {
+          "description": "Encounter end date and time",
+          "format": "date-time",
+          "type": "string"
+        },
+        "familyPlanning": {
+          "properties": {
+            "contraception": {
+              "description": "13197004 Contraception",
+              "type": "boolean"
+            },
+            "pregnant": {
+              "description": "77386006 Pregnant",
+              "type": "boolean"
+            }
+          },
+          "type": "object"
+        },
+        "physicalExamination": {
+          "properties": {
+            "bloodPressure": {
+              "description": "75367002\tBlood pressure [mmHg]",
+              "type": "number"
+            },
+            "bodyMassIndex": {
+              "description": "60621009\tBody mass index (BMI)",
+              "type": "number"
+            },
+            "height": {
+              "description": "50373000\tBody height measure [m]",
+              "type": "number"
+            },
+            "midUpperArmCircumference": {
+              "description": "284473002\tMid upper arm circumference (MUAC) [cm]",
+              "type": "number"
+            },
+            "nutritionalStatus": {
+              "description": "366364004  nutritional status",
+              "enum": ["UNDER_NOURISHED", "WELL_NOURISHED", "OVERWEIGHT"],
+              "type": "string"
+            },
+            "opportunisticInfection": {
+              "items": {
+                "enum": [
+                  "411 - 1 - (1) Asymptomatic",
+                  "412 - 1 - (1) Persistent generalized lymphdenopathy (PGL)",
+                  "421 - 2 - (2) Moderate unexplained weight loss (<10% of presumed of measured body weight)",
+                  "424 - 2 - (4) Angular cheilitis",
+                  "425 - 2 - (4) Recurrent oral ulcerations (2 or more episodes in 6 months",
+                  "426 - 2 - (4) Papular pruritic eruptions",
+                  "427 - 2 - (4) Seborrhoeic dermatitis",
+                  "428 - 2 - (4) Fungal nail infections of fingers",
+                  "429 - 2 - (5) Herpes zoster (past or current episodes. in last 2 years)",
+                  "430 - 2 - (6) Recurrent respiratory tract infections (RTIs, sinusitis, bronchitis, otitis media, pharyngitis)",
+                  "431 - 3 - (7) Severe weight loss (> 10% of presumed or measuured body weight)",
+                  "432 - 3 - (8) Unexplained chronic diarrhoea for longer than one month",
+                  "433 - 3 - (9) Unexplained persistent fever (intermittent or constant for longer than one month)",
+                  "434 - 3 - (10) Oral candidiasis",
+                  "435 - 3 - (11) Oral hairy leukoplakia",
+                  "436 - 3 - (12) Pulmonary tuberculosis (TB) diagnosed in the last two years",
+                  "437 - 3 - Acute necrotizing ulcerative stomatitis, gingivitis or periodontitis",
+                  "439 - 3 - Unexplained aenemia (<8 g/dl), and or neutropenia (<500/mm3) and or thrombocytopenia (<50 000/mm3) for more...",
+                  "440 - 3 - Severe scabies (Norwegian scabies)",
+                  "441 - 4 - (14) HIV wasting syndrome",
+                  "442 - 4 - (15) Pneumocystis pneumonia",
+                  "443 - 4 - Reccurent severe or radiological bacterial pneumonia (2 or more episodes within one year)",
+                  "444 - 4 - (16) Central nervous system (CNS) toxoplasmosis",
+                  "445 - 4 - (17) Cryptosporidiosis (diahorea more than 1 month)",
+                  "446 - 4 - Extrapulmonary Cryptosporidiosis",
+                  "448 - 4 - (18) Cryptococcal meningitis or other extrapulmonary disease",
+                  "450 - 4 - (20) Herpes simplex infection (orolabial, genital or anorectal of more than one month's duuration)",
+                  "451 - 4 - (21) Progressive multifocal leukoencephalopathy (PML)",
+                  "452 - 4 - (22) Any disseminated mycosis (e.g. histoplasmosis, coccidiomycosis, peniciliosis)",
+                  "453 - 4 - (23) Candida of trachea, bronchi or lungs",
+                  "454 - 4 - (23) Oesophageal candidiasis",
+                  "455 - 4 - (24) Disseminated non-tuberculous mycobacteria infection",
+                  "457 - 4 - (25) Non-typhoidal salmonella septicaemia (2 or more episodes in one year)",
+                  "458 - 4 - (26) Extrapulmonary tuberculosis",
+                  "459 - 4 - (27) Lymphoma (cerebral or B cell non-Hodgkin)",
+                  "460 - 4 - (28) Kaposi's sarcoma",
+                  "461 - 4 -  (29) HIV encephalopathy",
+                  "462 - 4 - Invasive cervical carcinoma",
+                  "463 - 4 - Visceral leishmaniasis",
+                  "465 - 4 - Unexplained bilateral paralysis",
+                  "469 - 4 - Isosporiasis"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "symptoms": {
+              "description": "420721002 Acquired immunodeficiency syndrome-associated disorder (disorder)",
+              "items": {
+                "enum": [
+                  "Anaemia",
+                  "Abdominal Pain",
+                  "Burning/Numb/Tingling",
+                  "Cryptococcal Meningitis",
+                  "Dizzy",
+                  "anxiety",
+                  "nightmare",
+                  "depression",
+                  "neuritis",
+                  "Cough",
+                  "Diarrhoea",
+                  "Difficulty Breathing",
+                  "Dementia",
+                  "HIV Encephalopathy",
+                  "Fatigue",
+                  "Fat changes",
+                  "Fever",
+                  "Genital Ulcer Disease",
+                  "Headache",
+                  "Immune Reconstitution Inflammatory Syndrome",
+                  "Jaundice",
+                  "Kaposi's Sarcoma",
+                  "Lactic acidosis",
+                  "Molluscum",
+                  "Nausea",
+                  "Osephageal Candidiasis",
+                  "Pneumonia",
+                  "Pneumo Cystis Pneumonia",
+                  "Parotid Enlargement",
+                  "Pelvic Inflammatory Disease",
+                  "Papular Pruritic Eruptions",
+                  "Rash",
+                  "Thrush - oral / vaginal",
+                  "Urethral Discharge",
+                  "Ulcers - mouth or other",
+                  "Weight loss",
+                  "Herpes Zoster"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "weight": {
+              "description": "735395000\tCurrent body weight [kg]",
+              "type": "number"
+            }
+          },
+          "type": "object"
+        },
+        "practitioner": {
+          "$ref": "#/definitions/Practitioner"
+        },
+        "riskBehaviour": {
+          "properties": {
+            "accidentalNeedlePick": {
+              "description": "Have you received any of the following in the past 12 months ?: Accidental needle pick ?",
+              "type": "boolean"
+            },
+            "forcedSexWithoutConsent": {
+              "description": "Have you received any of the following in the past 12 months ?: Forced to have sex without consent ?",
+              "type": "boolean"
+            },
+            "injectedDrugsWithoutDoctorAdvice": {
+              "description": "Have you received any of the following in the past 12 months ?: Injected drugs without doctor's advice ?",
+              "type": "boolean"
+            },
+            "numberFemaleSexualPartners6Month": {
+              "description": "How many female sexual partners have you had in the last 6 months ?",
+              "type": "number"
+            },
+            "numberMaleSexualPartners6Month": {
+              "description": "How many male sexual partners have you had in the last 6 months ?",
+              "type": "number"
+            },
+            "prostitution": {
+              "description": "Have you received any of the following in the past 12 months ?: Sex in exchange for money/goods/services ?",
+              "type": "boolean"
+            },
+            "receicedBloodTransfusion": {
+              "description": "Have you received any of the following in the past 12 months ?: Received a blood transfusion ?",
+              "type": "boolean"
+            },
+            "riskGroup": {
+              "enum": ["GP", "HR", "MSM", "TG", "FSW", "MSW"],
+              "type": "string"
+            },
+            "sexWithSameSex": {
+              "description": "Have you received any of the following in the past 12 months ?: Had sex with someone of the same sex ?",
+              "type": "boolean"
+            },
+            "sexualTransmittedInfection": {
+              "description": "Have you received any of the following in the past 12 months ?: Sexually transmitted infection (STI)",
+              "type": "boolean"
+            },
+            "unprotectedAnalSex": {
+              "description": "Have you received any of the following in the past 12 months ?: Unprotected anal sex ?",
+              "type": "boolean"
+            },
+            "unprotectedVaginalSex": {
+              "description": "Have you received any of the following in the past 12 months ?: Unprotected vaginal sex ?",
+              "type": "boolean"
+            }
+          },
+          "type": "object"
+        },
+        "startDatetime": {
+          "description": "Encounter start date and time",
+          "format": "date-time",
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/EncounterStatus"
+        },
+        "tuberculosis": {
+          "properties": {
+            "status": {
+              "enum": [
+                "TB confirmed clinically",
+                "TB confirmed by sputum",
+                "TB confirmed by X-ray",
+                "Currently on INH prophylaxis (IPT)",
+                "Not suspected / no signs or symptoms",
+                "TB suspected and referred for evaluation",
+                "TB suspected and sputums sample sent or results recorded",
+                "Currently on TB treatment",
+                "Has completed TB treatment, no signs or symptoms",
+                "Has TB (code from old CTC form"
+              ],
+              "type": "string"
+            },
+            "tbScreening": {
+              "type": "boolean"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "required": ["startDatetime"],
+      "type": "object"
+    },
+    "Practitioner": {
+      "properties": {
+        "firstName": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "lastName": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "#/definitions/HIVCareEncounter"
+    }
+  ]
+}

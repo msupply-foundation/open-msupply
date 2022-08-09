@@ -2,14 +2,15 @@ use async_graphql::*;
 use graphql_core::{
     generic_filters::{DatetimeFilterInput, EqualFilterStringInput},
     map_filter,
-    standard_graphql_error::validate_auth,
+    pagination::PaginationInput,
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use repository::{DatetimeFilter, EncounterFilter, EqualFilter};
-use service::{
-    auth::{Resource, ResourceAccessRequest},
-    usize_to_u32,
+use repository::{
+    DatetimeFilter, EncounterFilter, EncounterSort, EncounterSortField, EqualFilter,
+    PaginationOption,
 };
+use service::auth::{Resource, ResourceAccessRequest};
 
 use crate::types::encounter::{EncounterNode, EncounterNodeStatus};
 
@@ -31,12 +32,33 @@ pub struct EqualFilterEncounterStatusInput {
     pub not_equal_to: Option<EncounterNodeStatus>,
 }
 
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(rename_items = "camelCase")]
+pub enum EncounterSortFieldInput {
+    Type,
+    PatientId,
+    Program,
+    StartDatetime,
+    EndDatetime,
+    Status,
+}
+
+#[derive(InputObject)]
+pub struct EncounterSortInput {
+    /// Sort query result by `key`
+    key: EncounterSortFieldInput,
+    /// Sort query result is sorted descending or ascending (if not provided the default is
+    /// ascending)
+    desc: Option<bool>,
+}
+
 #[derive(InputObject, Clone)]
 pub struct EncounterFilterInput {
     pub patient_id: Option<EqualFilterStringInput>,
     pub program: Option<EqualFilterStringInput>,
     pub name: Option<EqualFilterStringInput>,
-    pub encounter_datetime: Option<DatetimeFilterInput>,
+    pub start_datetime: Option<DatetimeFilterInput>,
+    pub end_datetime: Option<DatetimeFilterInput>,
     pub status: Option<EqualFilterEncounterStatusInput>,
 }
 
@@ -45,17 +67,20 @@ fn to_domain_filter(f: EncounterFilterInput) -> EncounterFilter {
         patient_id: f.patient_id.map(EqualFilter::from),
         program: f.program.map(EqualFilter::from),
         name: f.name.map(EqualFilter::from),
-        encounter_datetime: f.encounter_datetime.map(DatetimeFilter::from),
+        start_datetime: f.start_datetime.map(DatetimeFilter::from),
         status: f
             .status
             .map(|s| map_filter!(s, EncounterNodeStatus::to_domain)),
+        end_datetime: f.end_datetime.map(DatetimeFilter::from),
     }
 }
 
 pub fn encounters(
     ctx: &Context<'_>,
     store_id: String,
+    page: Option<PaginationInput>,
     filter: Option<EncounterFilterInput>,
+    sort: Option<EncounterSortInput>,
 ) -> Result<EncounterResponse> {
     validate_auth(
         ctx,
@@ -68,21 +93,44 @@ pub fn encounters(
     let service_provider = ctx.service_provider();
     let context = service_provider.context()?;
 
-    let nodes: Vec<EncounterNode> = service_provider
+    let result = service_provider
         .encounter_service
-        .get_patient_program_encounters(&context, filter.map(to_domain_filter))?
+        .get_patient_program_encounters(
+            &context,
+            page.map(PaginationOption::from),
+            filter.map(to_domain_filter),
+            sort.map(EncounterSortInput::to_domain),
+        )
+        .map_err(StandardGraphqlError::from_list_error)?;
+    let nodes = result
+        .rows
         .into_iter()
-        .map(|row| EncounterNode {
+        .map(|encounter_row| EncounterNode {
             store_id: store_id.clone(),
-            patient_id: row.patient_id,
-            program: row.program,
-            name: row.name,
-            status: row.status,
+            encounter_row,
         })
         .collect();
 
     Ok(EncounterResponse::Response(EncounterConnector {
-        total_count: usize_to_u32(nodes.len()),
+        total_count: result.count,
         nodes,
     }))
+}
+
+impl EncounterSortInput {
+    pub fn to_domain(self) -> EncounterSort {
+        let key = match self.key {
+            EncounterSortFieldInput::Type => EncounterSortField::Type,
+            EncounterSortFieldInput::PatientId => EncounterSortField::PatientId,
+            EncounterSortFieldInput::Program => EncounterSortField::Program,
+            EncounterSortFieldInput::StartDatetime => EncounterSortField::StartDatetime,
+            EncounterSortFieldInput::EndDatetime => EncounterSortField::EndDatetime,
+            EncounterSortFieldInput::Status => EncounterSortField::Status,
+        };
+
+        EncounterSort {
+            key,
+            desc: self.desc,
+        }
+    }
 }
