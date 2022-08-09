@@ -48,7 +48,7 @@ export const PatientSummary: FC = () => {
       <Stack>
         <SummaryRow
           label="label.patient-id"
-          value={String(patient?.id ?? '')}
+          value={String(patient?.code ?? '')}
         />
         <SummaryRow
           label="label.gender"
