@@ -145,10 +145,14 @@ const ArrayComponent = (props: ArrayControlCustomProps) => {
                   }}
                 >
                   {uischema?.itemLabel
-                    ? RegexUtils.formatTemplateString(uischema?.itemLabel, {
-                        ...child,
-                        index: index + 1,
-                      })
+                    ? RegexUtils.formatTemplateString(
+                        uischema?.itemLabel,
+                        {
+                          ...child,
+                          index: index + 1,
+                        },
+                        ''
+                      )
                     : index + 1}
                 </Typography>
               </Box>
