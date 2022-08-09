@@ -233,7 +233,7 @@ const UIComponent = (props: ControlProps) => {
         alignItems="center"
         gap={2}
       >
-        <BasicTextInput disabled={true} value={value} />
+        <BasicTextInput disabled={true} value={value} style={{ flex: 1 }} />
 
         <Box>
           <Button disabled={!!error} onClick={generate} variant="outlined">
