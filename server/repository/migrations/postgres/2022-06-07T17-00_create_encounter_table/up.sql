@@ -1,7 +1,7 @@
 CREATE TYPE encounter_status AS ENUM (
     'SCHEDULED',
     'DONE',
-    'CANCELED'
+    'CANCELLED'
 );
 
 CREATE TABLE encounter (

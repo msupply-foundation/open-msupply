@@ -48,7 +48,7 @@ pub(crate) fn encounter_updated(
         Some(match status {
             encounter_schema::EncounterStatus::Scheduled => EncounterStatus::Scheduled,
             encounter_schema::EncounterStatus::Done => EncounterStatus::Done,
-            encounter_schema::EncounterStatus::Canceled => EncounterStatus::Canceled,
+            encounter_schema::EncounterStatus::Cancelled => EncounterStatus::Cancelled,
         })
     } else {
         None

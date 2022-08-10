@@ -24,7 +24,7 @@
       "type": "object"
     },
     "EncounterStatus": {
-      "enum": ["SCHEDULED", "DONE", "CANCELED"],
+      "enum": ["SCHEDULED", "DONE", "CANCELLED"],
       "type": "string"
     },
     "Practitioner": {

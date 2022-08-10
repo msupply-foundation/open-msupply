@@ -9,6 +9,6 @@ CREATE TABLE encounter (
     status TEXT CHECK (status IN (
         'SCHEDULED',
         'DONE',
-        'CANCELED'
+        'CANCELLED'
     ))
 )
