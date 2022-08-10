@@ -16,7 +16,8 @@ pub struct EncounterFilter {
     pub patient_id: Option<EqualFilter<String>>,
     pub program: Option<EqualFilter<String>>,
     pub name: Option<EqualFilter<String>>,
-    pub encounter_datetime: Option<DatetimeFilter>,
+    pub start_datetime: Option<DatetimeFilter>,
+    pub end_datetime: Option<DatetimeFilter>,
     pub status: Option<EqualFilter<EncounterStatus>>,
 }
 
@@ -26,7 +27,8 @@ impl EncounterFilter {
             patient_id: None,
             program: None,
             name: None,
-            encounter_datetime: None,
+            start_datetime: None,
+            end_datetime: None,
             status: None,
         }
     }
@@ -46,8 +48,13 @@ impl EncounterFilter {
         self
     }
 
-    pub fn encounter_datetime(mut self, filter: DatetimeFilter) -> Self {
-        self.encounter_datetime = Some(filter);
+    pub fn start_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.start_datetime = Some(filter);
+        self
+    }
+
+    pub fn end_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.end_datetime = Some(filter);
         self
     }
 
@@ -58,9 +65,11 @@ impl EncounterFilter {
 }
 
 pub enum EncounterSortField {
+    Type,
     PatientId,
     Program,
-    EncounterDatetime,
+    StartDatetime,
+    EndDatetime,
     Status,
 }
 
@@ -78,14 +87,16 @@ fn create_filtered_query<'a>(filter: Option<EncounterFilter>) -> BoxedProgramQue
             patient_id,
             program,
             name,
-            encounter_datetime,
+            start_datetime,
+            end_datetime,
             status,
         } = f;
 
         apply_equal_filter!(query, patient_id, encounter_dsl::patient_id);
         apply_equal_filter!(query, program, encounter_dsl::program);
         apply_equal_filter!(query, name, encounter_dsl::name);
-        apply_date_time_filter!(query, encounter_datetime, encounter_dsl::encounter_datetime);
+        apply_date_time_filter!(query, start_datetime, encounter_dsl::start_datetime);
+        apply_date_time_filter!(query, end_datetime, encounter_dsl::end_datetime);
         apply_equal_filter!(query, status, encounter_dsl::status);
     }
     query
@@ -123,12 +134,18 @@ impl<'a> EncounterRepository<'a> {
 
         if let Some(sort) = sort {
             match sort.key {
+                EncounterSortField::Type => {
+                    apply_sort!(query, sort, encounter_dsl::type_)
+                }
                 EncounterSortField::PatientId => {
                     apply_sort!(query, sort, encounter_dsl::patient_id)
                 }
                 EncounterSortField::Program => apply_sort!(query, sort, encounter_dsl::program),
-                EncounterSortField::EncounterDatetime => {
-                    apply_sort!(query, sort, encounter_dsl::encounter_datetime)
+                EncounterSortField::StartDatetime => {
+                    apply_sort!(query, sort, encounter_dsl::start_datetime)
+                }
+                EncounterSortField::EndDatetime => {
+                    apply_sort!(query, sort, encounter_dsl::end_datetime)
                 }
                 EncounterSortField::Status => apply_sort!(query, sort, encounter_dsl::status),
             }

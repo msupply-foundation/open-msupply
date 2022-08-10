@@ -20,7 +20,7 @@ import {
 } from '../styleConstants';
 import { JsonFormsConfig } from '../JsonForm';
 
-export const idGeneratorTester = rankWith(4, uiTypeIs('IdGeneratorControl'));
+export const idGeneratorTester = rankWith(10, uiTypeIs('IdGenerator'));
 
 type GeneratorOptions = {
   targetField: string;
@@ -233,7 +233,7 @@ const UIComponent = (props: ControlProps) => {
         alignItems="center"
         gap={2}
       >
-        <BasicTextInput disabled={true} value={value} />
+        <BasicTextInput disabled={true} value={value} style={{ flex: 1 }} />
 
         <Box>
           <Button disabled={!!error} onClick={generate} variant="outlined">

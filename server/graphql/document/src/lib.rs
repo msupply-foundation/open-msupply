@@ -122,9 +122,11 @@ impl DocumentQueries {
         &self,
         ctx: &Context<'_>,
         store_id: String,
+        page: Option<PaginationInput>,
         filter: Option<EncounterFilterInput>,
+        sort: Option<EncounterSortInput>,
     ) -> Result<EncounterResponse> {
-        encounters(ctx, store_id, filter)
+        encounters(ctx, store_id, page, filter, sort)
     }
 }
 

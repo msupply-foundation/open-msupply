@@ -33,10 +33,13 @@ export const PatientSummary: FC = () => {
   const { data: patient } = usePatient.document.get(patientId);
   const { localisedDate } = useFormatDateTime();
   const { setSuffix } = useBreadcrumbs([AppRoute.Patients]);
+  const t = useTranslation('patients');
   const formatDateOfBirth = (dateOfBirth: string | null) => {
     const dob = DateUtils.getDateOrNull(dateOfBirth);
 
-    return !dob ? '' : `${localisedDate(dob)} (${DateUtils.age(dob)})`;
+    return !dob
+      ? ''
+      : `${localisedDate(dob)} (${t('label.age')}: ${DateUtils.age(dob)})`;
   };
   useEffect(() => {
     if (patient)
@@ -48,7 +51,7 @@ export const PatientSummary: FC = () => {
       <Stack>
         <SummaryRow
           label="label.patient-id"
-          value={String(patient?.id ?? '')}
+          value={String(patient?.code ?? '')}
         />
         <SummaryRow
           label="label.gender"

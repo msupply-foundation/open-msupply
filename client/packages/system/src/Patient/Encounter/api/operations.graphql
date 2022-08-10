@@ -1,0 +1,68 @@
+fragment Document on DocumentNode {
+  id
+  name
+  parents
+  author
+  timestamp
+  type
+  data
+  documentRegistry {
+    uiSchemaType
+    documentType
+    context
+    formSchemaId
+    jsonSchema
+    uiSchema
+  }
+}
+
+fragment Encounter on EncounterNode {
+  type
+  name
+  status
+  patientId
+  program
+  startDatetime
+  endDatetime
+  document {
+    ...Document
+  }
+}
+
+query encounters(
+  $storeId: String!
+  $key: EncounterSortFieldInput
+  $desc: Boolean
+  $filter: EncounterFilterInput
+) {
+  encounters(
+    storeId: $storeId
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+  ) {
+    ... on EncounterConnector {
+      nodes {
+        ...Encounter
+      }
+      totalCount
+    }
+  }
+}
+
+mutation insertEncounter($storeId: String!, $input: InsertEncounterInput!) {
+  insertEncounter(storeId: $storeId, input: $input) {
+    ... on DocumentNode {
+      __typename
+      ...Document
+    }
+  }
+}
+
+mutation updateEncounter($storeId: String!, $input: UpdateEncounterInput!) {
+  updateEncounter(storeId: $storeId, input: $input) {
+    ... on DocumentNode {
+      __typename
+      ...Document
+    }
+  }
+}
