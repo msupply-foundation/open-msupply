@@ -11,8 +11,8 @@ import {
   useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { ProgramFragment, useProgramEnrolment } from './api';
-import { usePatientModalStore } from '../../hooks';
-import { PatientModal } from '..';
+import { usePatientModalStore } from '../hooks';
+import { PatientModal } from '../DetailView';
 
 type ProgramFragmentWithId = { id: string } & ProgramFragment;
 
@@ -33,7 +33,7 @@ const ProgramListComponent: FC = () => {
   );
   const pagination = { page, first, offset };
   const { localisedDate } = useFormatDateTime();
-  const { setCurrent, setDocumentName, setDocumentType } =
+  const { setCurrent, setDocumentName, setDocumentType, setProgramType } =
     usePatientModalStore();
 
   const columns = useColumns<ProgramFragmentWithId>(
@@ -70,6 +70,7 @@ const ProgramListComponent: FC = () => {
       isError={isError}
       onRowClick={row => {
         setDocumentType(row.type);
+        setProgramType(row.type);
         setDocumentName(row.document.name);
         setCurrent(PatientModal.Program);
       }}

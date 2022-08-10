@@ -1,10 +1,13 @@
 use repository::Document;
 use repository::Encounter;
 use repository::EncounterFilter;
-use repository::RepositoryError;
+use repository::EncounterSort;
+use repository::PaginationOption;
 
 use crate::service_provider::ServiceContext;
 use crate::service_provider::ServiceProvider;
+use crate::ListError;
+use crate::ListResult;
 
 pub use self::insert::*;
 use self::query::get_patient_program_encounters;
@@ -40,9 +43,11 @@ pub trait EncounterServiceTrait: Sync + Send {
     fn get_patient_program_encounters(
         &self,
         ctx: &ServiceContext,
+        pagination: Option<PaginationOption>,
         filter: Option<EncounterFilter>,
-    ) -> Result<Vec<Encounter>, RepositoryError> {
-        get_patient_program_encounters(ctx, filter)
+        sort: Option<EncounterSort>,
+    ) -> Result<ListResult<Encounter>, ListError> {
+        get_patient_program_encounters(ctx, pagination, filter, sort)
     }
 }
 

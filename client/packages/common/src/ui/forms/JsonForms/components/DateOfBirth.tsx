@@ -14,7 +14,7 @@ import {
   FORM_INPUT_COLUMN_WIDTH,
 } from '../styleConstants';
 
-export const dateOfBirthTester = rankWith(4, uiTypeIs('DateOfBirthControl'));
+export const dateOfBirthTester = rankWith(10, uiTypeIs('DateOfBirth'));
 
 const UIComponent = (props: ControlProps) => {
   const { data, handleChange, label, path } = props;

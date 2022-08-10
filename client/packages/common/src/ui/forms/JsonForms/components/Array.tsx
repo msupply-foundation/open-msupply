@@ -81,7 +81,7 @@ const ArrayComponent = (props: ArrayControlCustomProps) => {
   }
   return (
     <Box display="flex" flexDirection="column" gap={0.5} marginTop={2}>
-      <Box display="flex" width="100%" gap={2} alignItems="center">
+      <Box display="flex" width="100%" alignItems="center">
         <Box width={FORM_LABEL_COLUMN_WIDTH}>
           <Typography sx={{ fontWeight: 'bold', textAlign: 'end' }}>
             {label}:
@@ -145,10 +145,14 @@ const ArrayComponent = (props: ArrayControlCustomProps) => {
                   }}
                 >
                   {uischema?.itemLabel
-                    ? RegexUtils.formatTemplateString(uischema?.itemLabel, {
-                        ...child,
-                        index: index + 1,
-                      })
+                    ? RegexUtils.formatTemplateString(
+                        uischema?.itemLabel,
+                        {
+                          ...child,
+                          index: index + 1,
+                        },
+                        ''
+                      )
                     : index + 1}
                 </Typography>
               </Box>

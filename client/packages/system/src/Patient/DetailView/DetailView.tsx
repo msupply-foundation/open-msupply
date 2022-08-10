@@ -1,15 +1,28 @@
-import React, { FC, useEffect, useMemo } from 'react';
+import React, { FC, useEffect, useMemo, useState } from 'react';
 import {
-  DetailTabs,
+  AppBarTabsPortal,
+  Box,
   DetailViewSkeleton,
   SaveDocumentMutation,
+  Tab,
+  TabContext,
+  TabList,
   useJsonForms,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
 import { usePatientCreateStore, usePatientStore } from '../hooks';
 import { AppBarButtons } from './AppBarButtons';
 import { PatientSummary } from './PatientSummary';
-import { ProgramDetailModal, ProgramListView } from './ProgramEnrolment';
+import { PatientTab } from './PatientTab';
+import { ProgramDetailModal, ProgramListView } from '../ProgramEnrolment';
+import { EncounterDetailModal, EncounterListView } from '../Encounter';
+
+enum Tabs {
+  Details = 'Details',
+  Programs = 'Programs',
+  Encounters = 'Encounters',
+}
 
 const useUpsertPatient = (): SaveDocumentMutation => {
   const { mutateAsync: insertPatient } = usePatient.document.insert();
@@ -37,6 +50,8 @@ const useUpsertPatient = (): SaveDocumentMutation => {
 export const PatientDetailView: FC = () => {
   const { documentName, setDocumentName } = usePatientStore();
   const { patient } = usePatientCreateStore();
+  const [currentTab, setCurrentTab] = useState<Tabs>(Tabs.Details);
+  const t = useTranslation('patients');
   const patientId = usePatient.utils.id();
   const { data: currentPatient } = usePatient.document.get(patientId);
 
@@ -76,23 +91,47 @@ export const PatientDetailView: FC = () => {
 
   if (isLoading) return <DetailViewSkeleton />;
 
-  const tabs = [
-    {
-      Component: JsonForm,
-      value: 'Details',
-    },
-    {
-      Component: <ProgramListView />,
-      value: 'Programs',
-    },
-  ];
-
   return (
     <React.Suspense fallback={<DetailViewSkeleton />}>
       <ProgramDetailModal />
+      <EncounterDetailModal />
       <AppBarButtons />
       <PatientSummary />
-      <DetailTabs tabs={tabs} />
+      <TabContext value={currentTab}>
+        <AppBarTabsPortal
+          sx={{
+            display: 'flex',
+            flex: 1,
+            marginBottom: 1,
+            justifyContent: 'center',
+          }}
+        >
+          <Box flex={1}>
+            <TabList
+              value={currentTab}
+              centered
+              onChange={(_, v) => setCurrentTab(v)}
+            >
+              <Tab
+                value={Tabs.Details}
+                label={t('label.details')}
+                tabIndex={-1}
+              />
+              <Tab value={Tabs.Programs} label={t('label.programs')} />
+              <Tab value={Tabs.Encounters} label={t('label.encounters')} />
+            </TabList>
+          </Box>
+        </AppBarTabsPortal>
+        <PatientTab value={Tabs.Details} padding={3}>
+          {JsonForm}
+        </PatientTab>
+        <PatientTab value={Tabs.Programs}>
+          <ProgramListView />
+        </PatientTab>
+        <PatientTab value={Tabs.Encounters}>
+          <EncounterListView />
+        </PatientTab>
+      </TabContext>
     </React.Suspense>
   );
 };
