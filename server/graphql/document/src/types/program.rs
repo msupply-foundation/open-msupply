@@ -2,6 +2,7 @@ use async_graphql::{dataloader::DataLoader, *};
 use chrono::{DateTime, Utc};
 use graphql_core::{
     loader::{DocumentLoader, DocumentLoaderInput},
+    standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
 use repository::{EncounterFilter, EqualFilter, ProgramRow};
@@ -62,20 +63,21 @@ impl ProgramNode {
             .encounter_service
             .get_patient_program_encounters(
                 &context,
+                None,
                 Some(
                     EncounterFilter::new()
                         .patient_id(EqualFilter::equal_to(&self.program_row.patient_id))
                         .program(EqualFilter::equal_to(&self.program_row.r#type)),
                 ),
-            )?;
+                None,
+            )
+            .map_err(StandardGraphqlError::from_list_error)?;
         Ok(entries
+            .rows
             .into_iter()
             .map(|row| EncounterNode {
-                patient_id: self.program_row.patient_id.clone(),
-                program: self.program_row.r#type.clone(),
                 store_id: self.store_id.clone(),
-                name: row.name,
-                status: row.status,
+                encounter_row: row,
             })
             .collect())
     }

@@ -6,52 +6,56 @@ import {
   useDialog,
   useJsonForms,
 } from '@openmsupply-client/common';
-import { useProgramEnrolment } from './api/hooks';
+import { useEncounter } from './api/hooks';
 import { usePatientModalStore } from '../hooks';
 import { PatientModal } from '../DetailView';
 import { usePatient } from '../api';
 
-const useUpsertProgramEnrolment = (
+const useUpsertEncounter = (
   patientId: string,
+  programType: string,
   type: string
 ): SaveDocumentMutation => {
-  const { mutateAsync: insertProgram } = useProgramEnrolment.document.insert();
-  const { mutateAsync: updateProgramEnrolment } =
-    useProgramEnrolment.document.update();
+  const { mutateAsync: insertEncounter } = useEncounter.document.insert();
+  const { mutateAsync: updateEncounter } = useEncounter.document.update();
   return async (jsonData: unknown, formSchemaId: string, parent?: string) => {
     if (parent === undefined) {
-      const result = await insertProgram({
+      const result = await insertEncounter({
         data: jsonData,
         schemaId: formSchemaId,
         patientId,
         type,
+        programType,
       });
       return result;
     } else {
-      const result = await updateProgramEnrolment({
+      const result = await updateEncounter({
         data: jsonData,
         parent,
         schemaId: formSchemaId,
-        patientId,
-        type,
       });
       return result;
     }
   };
 };
 
-export const ProgramDetailModal: FC = () => {
+export const EncounterDetailModal: FC = () => {
   const patientId = usePatient.utils.id();
 
-  const { current, documentName, documentType, reset } = usePatientModalStore();
-  const handleSave = useUpsertProgramEnrolment(patientId, documentType || '');
+  const { current, documentName, programType, documentType, reset } =
+    usePatientModalStore();
+  const handleSave = useUpsertEncounter(
+    patientId,
+    programType ?? '',
+    documentType ?? ''
+  );
   const { JsonForm, isLoading } = useJsonForms(documentName, {
     handleSave,
     showButtonPanel: false,
   });
 
   const { Modal } = useDialog({
-    isOpen: current === PatientModal.Program,
+    isOpen: current === PatientModal.Encounter,
     onClose: reset,
   });
 
@@ -72,7 +76,7 @@ export const ProgramDetailModal: FC = () => {
             JsonForm
           )
         ) : (
-          'Program enrolment form'
+          'Encounter form'
         )}
       </React.Suspense>
     </Modal>

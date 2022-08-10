@@ -16,10 +16,12 @@ import { AppBarButtons } from './AppBarButtons';
 import { PatientSummary } from './PatientSummary';
 import { PatientTab } from './PatientTab';
 import { ProgramDetailModal, ProgramListView } from '../ProgramEnrolment';
+import { EncounterDetailModal, EncounterListView } from '../Encounter';
 
 enum Tabs {
   Details = 'Details',
   Programs = 'Programs',
+  Encounters = 'Encounters',
 }
 
 const useUpsertPatient = (): SaveDocumentMutation => {
@@ -92,6 +94,7 @@ export const PatientDetailView: FC = () => {
   return (
     <React.Suspense fallback={<DetailViewSkeleton />}>
       <ProgramDetailModal />
+      <EncounterDetailModal />
       <AppBarButtons />
       <PatientSummary />
       <TabContext value={currentTab}>
@@ -114,11 +117,8 @@ export const PatientDetailView: FC = () => {
                 label={t('label.details')}
                 tabIndex={-1}
               />
-              <Tab
-                value={Tabs.Programs}
-                label={t('label.programs')}
-                tabIndex={-1}
-              />
+              <Tab value={Tabs.Programs} label={t('label.programs')} />
+              <Tab value={Tabs.Encounters} label={t('label.encounters')} />
             </TabList>
           </Box>
         </AppBarTabsPortal>
@@ -127,6 +127,9 @@ export const PatientDetailView: FC = () => {
         </PatientTab>
         <PatientTab value={Tabs.Programs}>
           <ProgramListView />
+        </PatientTab>
+        <PatientTab value={Tabs.Encounters}>
+          <EncounterListView />
         </PatientTab>
       </TabContext>
     </React.Suspense>

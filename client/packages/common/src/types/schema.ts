@@ -566,7 +566,6 @@ export type DocumentConnector = {
 
 export type DocumentFilterInput = {
   name?: InputMaybe<EqualFilterStringInput>;
-  storeId?: InputMaybe<EqualFilterStringInput>;
 };
 
 export type DocumentHistoryResponse = DocumentConnector;
@@ -644,10 +643,11 @@ export type EncounterConnector = {
 };
 
 export type EncounterFilterInput = {
-  encounterDatetime?: InputMaybe<DatetimeFilterInput>;
+  endDatetime?: InputMaybe<DatetimeFilterInput>;
   name?: InputMaybe<EqualFilterStringInput>;
   patientId?: InputMaybe<EqualFilterStringInput>;
   program?: InputMaybe<EqualFilterStringInput>;
+  startDatetime?: InputMaybe<DatetimeFilterInput>;
   status?: InputMaybe<EqualFilterEncounterStatusInput>;
 };
 
@@ -655,21 +655,41 @@ export type EncounterNode = {
   __typename: 'EncounterNode';
   /** The encounter document */
   document: DocumentNode;
+  endDatetime?: Maybe<Scalars['DateTime']>;
   name: Scalars['String'];
   patientId: Scalars['String'];
   program: Scalars['String'];
-  status: EncounterNodeStatus;
+  startDatetime: Scalars['DateTime'];
+  status?: Maybe<EncounterNodeStatus>;
+  type: Scalars['String'];
 };
 
 export enum EncounterNodeStatus {
   Canceled = 'CANCELED',
-  Finished = 'FINISHED',
-  Missed = 'MISSED',
-  Ongoing = 'ONGOING',
+  Done = 'DONE',
   Scheduled = 'SCHEDULED'
 }
 
 export type EncounterResponse = EncounterConnector;
+
+export enum EncounterSortFieldInput {
+  EndDatetime = 'endDatetime',
+  PatientId = 'patientId',
+  Program = 'program',
+  StartDatetime = 'startDatetime',
+  Status = 'status',
+  Type = 'type'
+}
+
+export type EncounterSortInput = {
+  /**
+   * Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']>;
+  /** Sort query result by `key` */
+  key: EncounterSortFieldInput;
+};
 
 export type EqualFilterBigNumberInput = {
   equalAny?: InputMaybe<Array<Scalars['Int']>>;
@@ -1327,6 +1347,8 @@ export type FullQueryDocumentsArgs = {
 
 export type FullQueryEncountersArgs = {
   filter?: InputMaybe<EncounterFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<EncounterSortInput>;
   storeId: Scalars['String'];
 };
 
