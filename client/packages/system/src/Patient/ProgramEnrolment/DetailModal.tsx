@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import {
-  DetailViewSkeleton,
+  BasicSpinner,
   DialogButton,
   SaveDocumentMutation,
   useDialog,
@@ -55,7 +55,7 @@ export const ProgramDetailModal: FC = () => {
     onClose: reset,
   });
 
-  if (isLoading) return <DetailViewSkeleton />;
+  if (isLoading) return <BasicSpinner />;
 
   return (
     <Modal
@@ -64,10 +64,10 @@ export const ProgramDetailModal: FC = () => {
       okButton={<DialogButton variant="ok" onClick={reset} />}
       width={1024}
     >
-      <React.Suspense fallback={<DetailViewSkeleton />}>
+      <React.Suspense fallback={<div />}>
         {documentName ? (
           isLoading ? (
-            <DetailViewSkeleton />
+            <BasicSpinner />
           ) : (
             JsonForm
           )
