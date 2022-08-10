@@ -120,6 +120,9 @@ export const isInboundDisabled = (inbound: InboundRowFragment): boolean => {
         inbound.status === InvoiceNodeStatus.Verified;
 };
 
+export const isInboundPlaceholderRow = (row: InboundLineFragment): boolean =>
+  row.type === InvoiceLineNodeType.StockIn && row.numberOfPacks === 0;
+
 export const useIsInboundStatusChangeDisabled = (
   inbound: InboundFragment
 ): boolean => {
