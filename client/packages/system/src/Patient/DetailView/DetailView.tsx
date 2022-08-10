@@ -117,16 +117,8 @@ export const PatientDetailView: FC = () => {
                 label={t('label.details')}
                 tabIndex={-1}
               />
-              <Tab
-                value={Tabs.Programs}
-                label={t('label.programs')}
-                tabIndex={-1}
-              />
-              <Tab
-                value={Tabs.Encounters}
-                label={t('label.encounters')}
-                tabIndex={-1}
-              />
+              <Tab value={Tabs.Programs} label={t('label.programs')} />
+              <Tab value={Tabs.Encounters} label={t('label.encounters')} />
             </TabList>
           </Box>
         </AppBarTabsPortal>
