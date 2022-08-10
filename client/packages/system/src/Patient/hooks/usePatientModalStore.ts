@@ -8,10 +8,12 @@ interface PatientModalState {
   current?: PatientModal;
   documentName?: string;
   documentType?: string;
+  programType?: string;
   reset: () => void;
   setCurrent: (current?: PatientModal) => void;
   setDocumentName: (documentName?: string) => void;
   setDocumentType: (documentType?: string) => void;
+  setProgramType: (documentType?: string) => void;
 }
 
 export const usePatientModalStore = zustand<PatientModalState>(set => ({
@@ -30,4 +32,6 @@ export const usePatientModalStore = zustand<PatientModalState>(set => ({
     set(state => ({ ...state, documentName })),
   setDocumentType: (documentType?: string) =>
     set(state => ({ ...state, documentType })),
+  setProgramType: (programType?: string) =>
+    set(state => ({ ...state, programType })),
 }));

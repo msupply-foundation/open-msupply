@@ -10,6 +10,7 @@
   "label.patient-details": "Patient Details",
   "label.patient-id": "Patient ID",
   "label.programs": "Programs",
+  "label.encounters": "Encounters",
   "label.search-results": "Search results",
   "messages.no-matching-patients": "No matching patients! 😁",
   "messages.no-patient-record": "Can't access detailed information for this patient.",
