@@ -192,7 +192,6 @@ pub trait ReportServiceTrait: Sync + Send {
       }}
 
       header {{
-        position: absolute;
         top: 0;
       }}
 

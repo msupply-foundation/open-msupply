@@ -63,6 +63,9 @@ query InvoiceQuery($storeId: String, $dataId: String) {
           itemCode
           itemId
           itemName
+          item {
+            unitName
+          }
           locationId
           locationName
           note
