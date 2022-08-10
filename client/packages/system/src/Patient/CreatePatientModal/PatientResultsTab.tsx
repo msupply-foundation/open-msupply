@@ -117,6 +117,9 @@ export const PatientResultsTab: FC<PatientPanel> = ({ patient, value }) => {
         onRowClick={row => {
           navigate(String(row.id));
         }}
+        generateRowTooltip={({ firstName, lastName }) =>
+          t('messages.click-to-view', { firstName, lastName })
+        }
       />
     </PatientPanel>
   );
