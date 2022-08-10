@@ -10,7 +10,7 @@ import { FORM_LABEL_WIDTH } from '../styleConstants';
 export const stringTester = rankWith(3, schemaTypeIs('string'));
 
 const UIComponent = (props: ControlProps) => {
-  const { data, handleChange, label, path, description, errors } = props;
+  const { data, handleChange, label, path, errors } = props;
   const [localData, setLocalData] = useState<string>(data);
   const onChange = useDebounceCallback(
     (value: string) => handleChange(path, value),
@@ -32,7 +32,6 @@ const UIComponent = (props: ControlProps) => {
           onChange(e.target.value);
         },
         disabled: !props.enabled,
-        placeholder: description,
         error,
         helperText: errors,
         FormHelperTextProps: error

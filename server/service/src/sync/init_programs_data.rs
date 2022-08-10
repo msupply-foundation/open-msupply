@@ -2,10 +2,7 @@ use std::sync::Arc;
 
 use crate::{
     document::{
-        encounter::{
-            encounter_schema::SchemaEncounter, EncounterService, EncounterServiceTrait,
-            InsertEncounter,
-        },
+        encounter::{EncounterService, EncounterServiceTrait, InsertEncounter},
         patient::{PatientService, PatientServiceTrait, UpdatePatient, PATIENT_TYPE},
         program::{
             program_schema::{ProgramEnrolmentStatus, SchemaProgramEnrolment},
@@ -20,13 +17,52 @@ use repository::{
     FormSchemaRowRepository, RepositoryError, StoreFilter, StoreRepository,
 };
 use serde::{Deserialize, Serialize};
-use util::uuid::uuid;
+use util::{inline_init, uuid::uuid};
 
 schemafy::schemafy!("src/sync/program_schemas/patient.json");
 
 mod hiv_care_program {
     use serde::{Deserialize, Serialize};
     schemafy::schemafy!("src/sync/program_schemas/hiv_care_program.json");
+
+    impl Default for HivcareProgramEnrolment {
+        fn default() -> Self {
+            Self {
+                enrolment_datetime: Default::default(),
+                enrolment_patient_id: Default::default(),
+                hiv_confirmation_date: Default::default(),
+                hiv_test_type: Default::default(),
+                mother: Default::default(),
+                partner_hiv_status: Default::default(),
+                prior_art: Default::default(),
+                referred_from: Default::default(),
+                risk_group: Default::default(),
+                status: Default::default(),
+                treatment_supporter: Default::default(),
+            }
+        }
+    }
+}
+
+mod hiv_care_encounter {
+    use serde::{Deserialize, Serialize};
+    schemafy::schemafy!("src/sync/program_schemas/hiv_care_encounter.json");
+
+    impl Default for HivcareEncounter {
+        fn default() -> Self {
+            Self {
+                arv_medication: Default::default(),
+                end_datetime: Default::default(),
+                family_planning: Default::default(),
+                physical_examination: Default::default(),
+                practitioner: Default::default(),
+                risk_behaviour: Default::default(),
+                start_datetime: Default::default(),
+                status: Default::default(),
+                tuberculosis: Default::default(),
+            }
+        }
+    }
 }
 
 const PATIENT_SCHEMA: &'static str = std::include_str!("./program_schemas/patient.json");
@@ -42,9 +78,10 @@ const HIV_CARE_PROGRAM_SCHEMA: &'static str =
 const HIV_CARE_PROGRAM_UI_SCHEMA: &'static str =
     std::include_str!("./program_schemas/hiv_care_program_ui_schema.json");
 
-const ENCOUNTER_SCHEMA: &'static str = std::include_str!("./program_schemas/encounter.json");
+const ENCOUNTER_SCHEMA: &'static str =
+    std::include_str!("./program_schemas/hiv_care_encounter.json");
 const ENCOUNTER_UI_SCHEMA: &'static str =
-    std::include_str!("./program_schemas/encounter_ui_schema.json");
+    std::include_str!("./program_schemas/hiv_care_encounter_ui_schema.json");
 
 fn person_1() -> Person {
     Person {
@@ -67,7 +104,7 @@ fn person_1() -> Person {
         date_of_death: None,
         code_2: None,
         middle_name: None,
-        notes: Vec::new(),
+        notes: None,
     }
 }
 
@@ -92,7 +129,7 @@ fn person_2() -> Person {
         date_of_death: None,
         code_2: None,
         middle_name: None,
-        notes: Vec::new(),
+        notes: None,
     }
 }
 
@@ -117,7 +154,7 @@ fn person_3() -> Person {
         date_of_death: None,
         code_2: None,
         middle_name: None,
-        notes: Vec::new(),
+        notes: None,
     }
 }
 
@@ -174,7 +211,7 @@ fn patient_1() -> Patient {
         date_of_death: None,
         code_2: None,
         middle_name: None,
-        notes: Vec::new(),
+        notes: None,
     }
 }
 
@@ -231,7 +268,7 @@ fn patient_2() -> Patient {
         date_of_death: None,
         code_2: None,
         middle_name: None,
-        notes: Vec::new(),
+        notes: None,
     }
 }
 
@@ -244,26 +281,20 @@ fn program_1() -> SchemaProgramEnrolment {
 }
 
 fn program_2() -> hiv_care_program::HivcareProgramEnrolment {
-    hiv_care_program::HivcareProgramEnrolment {
-        enrolment_datetime: Utc::now().to_rfc3339(),
-        enrolment_patient_id: Some("STR0001".to_string()),
-        status: Some(hiv_care_program::ProgramEnrolmentStatus::Active),
-        hiv_confirmation_date: None,
-        hiv_test_type: hiv_care_program::HivtestType::Antibody,
-        mother: None,
-        partner_hiv_status: None,
-        prior_art: None,
-        referred_from: None,
-        risk_group: None,
-        treatment_supporter: None,
-    }
+    inline_init(|p: &mut hiv_care_program::HivcareProgramEnrolment| {
+        p.enrolment_datetime = Utc::now().to_rfc3339();
+        p.enrolment_patient_id = Some("STR0001".to_string());
+        p.status = Some(hiv_care_program::ProgramEnrolmentStatus::Active);
+    })
 }
 
-fn encounter_1() -> SchemaEncounter {
-    SchemaEncounter {
-        encounter_datetime: Utc::now().to_rfc3339(),
-        status: "Scheduled".to_string(),
-    }
+fn encounter_1() -> hiv_care_encounter::HivcareEncounter {
+    inline_init(|e: &mut hiv_care_encounter::HivcareEncounter| {
+        e.status = Some(hiv_care_encounter::EncounterStatus::Scheduled);
+        e.start_datetime = Utc::now().to_rfc3339();
+        e.end_datetime = None;
+        e.practitioner = None;
+    })
 }
 
 pub fn init_program_data(
@@ -307,6 +338,7 @@ pub fn init_program_data(
         parent_id: None,
         form_schema_id: Some(program_schema_id.clone()),
     })?;
+
     // hiv care program
     let hiv_care_program_schema_id = uuid();
     FormSchemaRowRepository::new(connection).upsert_one(&FormSchema {
@@ -315,9 +347,10 @@ pub fn init_program_data(
         json_schema: serde_json::from_str(HIV_CARE_PROGRAM_SCHEMA).unwrap(),
         ui_schema: serde_json::from_str(HIV_CARE_PROGRAM_UI_SCHEMA).unwrap(),
     })?;
+    let hiv_care_program_id = uuid();
     DocumentRegistryRowRepository::new(connection).upsert_one(&DocumentRegistryRow {
-        id: uuid(),
-        document_type: "HIVCareProgramEnrolment".to_string(),
+        id: hiv_care_program_id.clone(),
+        document_type: "HIVCareProgram".to_string(),
         context: DocumentContext::Program,
         name: Some("HIV Care Program".to_string()),
         parent_id: None,
@@ -325,20 +358,20 @@ pub fn init_program_data(
     })?;
 
     // encounter
-    let encounter_schema_id = uuid();
+    let hiv_care_encounter_schema_id = uuid();
     FormSchemaRowRepository::new(connection).upsert_one(&FormSchema {
-        id: encounter_schema_id.clone(),
+        id: hiv_care_encounter_schema_id.clone(),
         r#type: "JsonForms".to_string(),
         json_schema: serde_json::from_str(ENCOUNTER_SCHEMA).unwrap(),
         ui_schema: serde_json::from_str(ENCOUNTER_UI_SCHEMA).unwrap(),
     })?;
     DocumentRegistryRowRepository::new(connection).upsert_one(&DocumentRegistryRow {
         id: uuid(),
-        document_type: "PlaceholderEncounter1".to_string(),
+        document_type: "HIVCareEncounter".to_string(),
         context: DocumentContext::Encounter,
-        name: Some("Placeholder encounter 1".to_string()),
-        parent_id: Some(placeholder_program_id),
-        form_schema_id: Some(encounter_schema_id.clone()),
+        name: Some("HIV Care Encounter".to_string()),
+        parent_id: Some(hiv_care_program_id.clone()),
+        form_schema_id: Some(hiv_care_encounter_schema_id.clone()),
     })?;
 
     // patients
@@ -401,7 +434,7 @@ pub fn init_program_data(
             "no user",
             UpsertProgram {
                 patient_id: patient_1().id,
-                r#type: "HIVCareProgramEnrolment".to_string(),
+                r#type: "HIVCareProgram".to_string(),
                 data: serde_json::to_value(program_2()).unwrap(),
                 schema_id: hiv_care_program_schema_id,
                 parent: None,
@@ -418,10 +451,10 @@ pub fn init_program_data(
             "no user",
             InsertEncounter {
                 patient_id: patient_1().id,
-                r#type: "TestEncounter1".to_string(),
+                r#type: "HIVCareEncounter".to_string(),
                 data: serde_json::to_value(encounter_1()).unwrap(),
-                schema_id: encounter_schema_id.clone(),
-                program: "TestProgram1".to_string(),
+                schema_id: hiv_care_encounter_schema_id.clone(),
+                program: "HIVCareProgram".to_string(),
             },
         )
         .unwrap();

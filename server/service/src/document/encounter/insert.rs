@@ -39,49 +39,49 @@ pub fn insert_encounter(
     user_id: &str,
     input: InsertEncounter,
 ) -> Result<Document, InsertEncounterError> {
-    let patient = ctx
-        .connection
-        .transaction_sync(|_| {
-            let encounter = validate(ctx, &input)?;
-            let patient_id = input.patient_id.clone();
-            let program = input.program.clone();
-            let doc = generate(user_id, input)?;
+    let patient =
+        ctx.connection
+            .transaction_sync(|_| {
+                let encounter = validate(ctx, &input)?;
+                let patient_id = input.patient_id.clone();
+                let program = input.program.clone();
+                let doc = generate(user_id, input)?;
 
-            encounter_updated(&ctx.connection, &patient_id, &program, &doc.name, encounter)
-                .map_err(|err| match err {
-                    EncounterTableUpdateError::RepositoryError(err) => {
-                        InsertEncounterError::DatabaseError(err)
-                    }
-                    EncounterTableUpdateError::InternalError(err) => {
-                        InsertEncounterError::InternalError(err)
-                    }
-                })?;
+                encounter_updated(&ctx.connection, &patient_id, &program, &doc, encounter)
+                    .map_err(|err| match err {
+                        EncounterTableUpdateError::RepositoryError(err) => {
+                            InsertEncounterError::DatabaseError(err)
+                        }
+                        EncounterTableUpdateError::InternalError(err) => {
+                            InsertEncounterError::InternalError(err)
+                        }
+                    })?;
 
-            // Updating the document will trigger an update in the patient (names) table
-            let result = service_provider
-                .document_service
-                .update_document(ctx, doc)
-                .map_err(|err| match err {
-                    DocumentInsertError::InvalidDataSchema(err) => {
-                        InsertEncounterError::InvalidDataSchema(err)
-                    }
-                    DocumentInsertError::DatabaseError(err) => {
-                        InsertEncounterError::DatabaseError(err)
-                    }
-                    DocumentInsertError::InternalError(err) => {
-                        InsertEncounterError::InternalError(err)
-                    }
-                    DocumentInsertError::DataSchemaDoesNotExist => {
-                        InsertEncounterError::DataSchemaDoesNotExist
-                    }
-                    DocumentInsertError::InvalidParent(err) => {
-                        InsertEncounterError::InternalError(err)
-                    }
-                })?;
+                // Updating the document will trigger an update in the patient (names) table
+                let result = service_provider
+                    .document_service
+                    .update_document(ctx, doc)
+                    .map_err(|err| match err {
+                        DocumentInsertError::InvalidDataSchema(err) => {
+                            InsertEncounterError::InvalidDataSchema(err)
+                        }
+                        DocumentInsertError::DatabaseError(err) => {
+                            InsertEncounterError::DatabaseError(err)
+                        }
+                        DocumentInsertError::InternalError(err) => {
+                            InsertEncounterError::InternalError(err)
+                        }
+                        DocumentInsertError::DataSchemaDoesNotExist => {
+                            InsertEncounterError::DataSchemaDoesNotExist
+                        }
+                        DocumentInsertError::InvalidParent(err) => {
+                            InsertEncounterError::InternalError(err)
+                        }
+                    })?;
 
-            Ok(result)
-        })
-        .map_err(|err: TransactionError<InsertEncounterError>| err.to_inner_error())?;
+                Ok(result)
+            })
+            .map_err(|err: TransactionError<InsertEncounterError>| err.to_inner_error())?;
     Ok(patient)
 }
 
@@ -148,7 +148,10 @@ mod test {
 
     use crate::{
         document::{
-            encounter::{encounter_schema::SchemaEncounter, InsertEncounter},
+            encounter::{
+                encounter_schema::{EncounterStatus, SchemaEncounter},
+                InsertEncounter,
+            },
             patient::{test::mock_patient_1, UpdatePatient},
             program::{program_schema::SchemaProgramEnrolment, UpsertProgram},
         },
@@ -265,10 +268,10 @@ mod test {
         matches!(err, InsertEncounterError::InvalidDataSchema(_));
 
         // success insert
-        let encounter = SchemaEncounter {
-            encounter_datetime: Utc::now().to_rfc3339(),
-            status: "Scheduled".to_string(),
-        };
+        let encounter = inline_init(|e: &mut SchemaEncounter| {
+            e.start_datetime = Utc::now().to_rfc3339();
+            e.status = Some(EncounterStatus::Scheduled);
+        });
         let program_type = "ProgramType".to_string();
         let result = service
             .insert_encounter(
