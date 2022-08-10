@@ -40,6 +40,8 @@ import {
   AccordionGroup,
   accordionGroupTester,
 } from './components/AccordionGroup';
+import { NumberField, numberTester } from './components/Number';
+import { DateTime, datetimeTester } from './components/DateTime';
 
 export type JsonData = {
   [key: string]: string | number | boolean | null | unknown | JsonData;
@@ -123,11 +125,13 @@ const renderers = [
   ...materialRenderers,
   { tester: booleanTester, renderer: BooleanField },
   { tester: stringTester, renderer: TextField },
+  { tester: numberTester, renderer: NumberField },
   { tester: selectTester, renderer: Selector },
   { tester: groupTester, renderer: Group },
   { tester: accordionGroupTester, renderer: AccordionGroup },
   { tester: labelTester, renderer: Label },
   { tester: dateTester, renderer: Date },
+  { tester: datetimeTester, renderer: DateTime },
   { tester: dateOfBirthTester, renderer: DateOfBirth },
   { tester: arrayTester, renderer: Array },
   { tester: firstItemArrayTester, renderer: FirstItemArray },
