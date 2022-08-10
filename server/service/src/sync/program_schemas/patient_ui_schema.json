@@ -2,11 +2,6 @@
   "type": "VerticalLayout",
   "elements": [
     {
-      "type": "Label",
-      "text": "${firstName} ${lastName}",
-      "variant": "h1"
-    },
-    {
       "type": "HorizontalLayout",
       "elements": [
         {
@@ -108,7 +103,8 @@
                 },
                 {
                   "type": "DateOfBirth",
-                  "scope": "#/properties/dateOfBirth"
+                  "label": "Date of Birth",
+                  "scope": "#"
                 },
                 {
                   "type": "Control",
