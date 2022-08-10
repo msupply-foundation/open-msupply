@@ -41,7 +41,7 @@ const UIComponent = (props: ControlProps) => {
   };
 
   const onChangeAge = (newAge: number) => {
-    const dob = DateUtils.addYears(new Date(), -newAge);
+    const dob = DateUtils.startOfYear(DateUtils.addYears(new Date(), -newAge));
     setDoB(dob);
     handleChange(path, dateFormatter(dob, 'yyyy-MM-dd'));
     setAge(newAge);
