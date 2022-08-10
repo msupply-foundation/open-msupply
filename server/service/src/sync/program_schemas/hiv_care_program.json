@@ -1,5 +1,4 @@
 {
-  "$ref": "#/definitions/HIVCareProgramEnrolment",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
     "Address": {
@@ -317,5 +316,11 @@
       },
       "type": "object"
     }
-  }
+  },
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "#/definitions/HIVCareProgramEnrolment"
+    }
+  ]
 }
