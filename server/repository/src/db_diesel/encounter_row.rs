@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 pub enum EncounterStatus {
     Scheduled,
     Done,
-    Canceled,
+    Cancelled,
 }
 
 table! {

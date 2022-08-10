@@ -19,7 +19,7 @@ pub struct EncounterNode {
 pub enum EncounterNodeStatus {
     Scheduled,
     Done,
-    Canceled,
+    Cancelled,
 }
 
 impl EncounterNodeStatus {
@@ -27,7 +27,7 @@ impl EncounterNodeStatus {
         match self {
             EncounterNodeStatus::Scheduled => EncounterStatus::Scheduled,
             EncounterNodeStatus::Done => EncounterStatus::Done,
-            EncounterNodeStatus::Canceled => EncounterStatus::Canceled,
+            EncounterNodeStatus::Cancelled => EncounterStatus::Cancelled,
         }
     }
 
@@ -35,7 +35,7 @@ impl EncounterNodeStatus {
         match status {
             EncounterStatus::Scheduled => EncounterNodeStatus::Scheduled,
             EncounterStatus::Done => EncounterNodeStatus::Done,
-            EncounterStatus::Canceled => EncounterNodeStatus::Canceled,
+            EncounterStatus::Cancelled => EncounterNodeStatus::Cancelled,
         }
     }
 }
