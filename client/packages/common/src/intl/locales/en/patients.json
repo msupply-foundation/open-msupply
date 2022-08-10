@@ -11,6 +11,7 @@
   "label.patient-id": "Patient ID",
   "label.programs": "Programs",
   "label.search-results": "Search results",
+  "messages.click-to-view": "Click to view the patient record for {{firstName}} {{lastName}}",
   "messages.no-matching-patients": "No matching patients! 😁",
   "messages.no-patient-record": "Can't access detailed information for this patient.",
   "messages.patients-found_one": "1 patient found",

@@ -28,11 +28,11 @@ export const useBreadcrumbs = (topLevelPaths: string[] = []) => {
   const location = useLocation();
   const state = useBreadcrumbState();
   const { urlParts, setUrlParts, setSuffix, suffix } = state;
+  const { pathname } = location;
 
   useEffect(() => {
-    const parts = location.pathname.split('/');
+    const parts = pathname.split('/');
     const urlParts: UrlPart[] = [];
-
     parts.reduce((fullPath, part, index) => {
       if (part === '') return '';
       const path = `${fullPath}/${part}`;
@@ -47,7 +47,7 @@ export const useBreadcrumbs = (topLevelPaths: string[] = []) => {
     }, '');
     setUrlParts(urlParts);
     setSuffix(undefined);
-  }, [location]);
+  }, [pathname]);
 
   const navigateUpOne = () => {
     if (urlParts.length < 2) return;
