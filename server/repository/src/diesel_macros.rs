@@ -109,7 +109,7 @@ macro_rules! apply_string_filter {
 /// ```
 /// if let Some(string_filter) = filter.comment {
 ///     if let Some(value) = equal_filter.equal_to {
-///         query = query.filterd(invoice_dsl::comment.eq(value));
+///         query = query.filter(invoice_dsl::comment.eq(value));
 ///     }
 ///
 ///     if let Some(value) = equal_filter.like {
