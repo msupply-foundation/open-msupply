@@ -19,6 +19,7 @@ import {
   FORM_INPUT_COLUMN_WIDTH,
 } from '../styleConstants';
 import { JsonFormsConfig } from '../JsonForm';
+import { get as extractProperty } from 'lodash';
 
 export const idGeneratorTester = rankWith(10, uiTypeIs('IdGenerator'));
 
@@ -83,16 +84,6 @@ type NumberPart = {
 
 type Part = FieldPart | StoreCodePart | StoreNamePart | NumberPart;
 
-const extractField = (
-  data: any,
-  field: string | string[]
-): unknown | undefined => {
-  const fields = typeof field === 'string' ? [field] : field;
-  return fields.reduce((prev, field) => {
-    return prev?.[field];
-  }, data);
-};
-
 const validateFields = (
   options: GeneratorOptions,
   data: Record<string, unknown>
@@ -101,7 +92,7 @@ const validateFields = (
     if (part.type !== 'Field') {
       continue;
     }
-    const field = extractField(data, part.field);
+    const field = extractProperty(data, part.field);
     const fieldName =
       typeof part.field === 'string' ? part.field : part.field.join('.');
     if (field === undefined || typeof field !== 'string' || field === '') {
@@ -138,7 +129,7 @@ const valueFromPart = async (
 ): Promise<string | undefined> => {
   switch (part.type) {
     case 'Field': {
-      const field = extractField(data, part.field);
+      const field = extractProperty(data, part.field);
       if (field === undefined || typeof field !== 'string') {
         return undefined;
       }
