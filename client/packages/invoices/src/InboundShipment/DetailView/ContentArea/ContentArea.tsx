@@ -8,11 +8,11 @@ import {
   NothingHere,
   AppSxProp,
   useRowStyle,
-  InvoiceLineNodeType,
 } from '@openmsupply-client/common';
 import { InboundItem } from '../../../types';
 import { useInbound, InboundLineFragment } from '../../api';
 import { useExpansionColumns } from './columns';
+import { isInboundPlaceholderRow } from '../../../utils';
 
 interface ContentAreaProps {
   onAddItem: () => void;
@@ -47,22 +47,17 @@ const useHighlightPlaceholderRows = (
     // https://github.com/microsoft/TypeScript/issues/44373
     for (const row of rows) {
       if ('type' in row) {
-        if (
-          row.type === InvoiceLineNodeType.StockIn &&
-          row.numberOfPacks === 0
-        ) {
+        if (isInboundPlaceholderRow(row)) {
           placeholders.push(row.id);
         }
       } else {
-        const hasPlaceholder = row.lines.some(
-          line => line.type === InvoiceLineNodeType.UnallocatedStock
-        );
+        const hasPlaceholder = row.lines.some(isInboundPlaceholderRow);
         if (hasPlaceholder) {
           // Add both the OutboundItem and the individual lines, as
           // this will cause the item to be highlighted as well as the
           // lines within the expansion when grouped.
           row.lines.forEach(line => {
-            if (line.type === InvoiceLineNodeType.UnallocatedStock) {
+            if (isInboundPlaceholderRow(line)) {
               placeholders.push(line.id);
             }
           });
