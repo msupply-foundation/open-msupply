@@ -77,7 +77,7 @@ const PatientListComponent: FC = () => {
       <Toolbar filter={filter} />
       <AppBarButtons sortBy={sortBy} />
       <DataTable
-        key="patient-list"
+        key="patients"
         pagination={{ ...pagination, total: data?.totalCount }}
         onChangePage={updatePaginationQuery}
         columns={columns}

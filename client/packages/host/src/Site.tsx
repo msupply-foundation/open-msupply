@@ -29,7 +29,7 @@ import {
   DistributionRouter,
   ReplenishmentRouter,
   InventoryRouter,
-  PatientRouter,
+  DispensaryRouter,
 } from './routers';
 import { RequireAuthentication } from './components/Navigation/RequireAuthentication';
 import { QueryErrorHandler } from './QueryErrorHandler';
@@ -124,20 +124,19 @@ export const Site: FC = () => {
                     .addWildCard()
                     .build()}
                   element={<Heading>messages</Heading>}
-                />                <Route
-                  path={RouteBuilder.create(AppRoute.Patients)
+                />{' '}
+                <Route
+                  path={RouteBuilder.create(AppRoute.Dispensary)
                     .addWildCard()
                     .build()}
-                  element={<PatientRouter/>}
+                  element={<DispensaryRouter />}
                 />
-
                 <Route
                   path={RouteBuilder.create(AppRoute.Admin)
                     .addWildCard()
                     .build()}
                   element={<Settings />}
                 />
-
                 <Route
                   path="/"
                   element={
