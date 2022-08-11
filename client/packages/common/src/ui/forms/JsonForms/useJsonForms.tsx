@@ -82,7 +82,12 @@ export const useJsonForms = (
 
   const {
     showButtonPanel = true,
-    onCancel = () => navigate(RouteBuilder.create(AppRoute.Patients).build()),
+    onCancel = () =>
+      navigate(
+        RouteBuilder.create(AppRoute.Dispensary)
+          .addPart(AppRoute.Patients)
+          .build()
+      ),
     saveConfirmationMessage = t('messages.confirm-save-generic'),
     cancelConfirmationMessage = t('messages.confirm-cancel-generic'),
     saveSuccessMessage = t('success.data-saved'),
