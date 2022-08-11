@@ -6,11 +6,12 @@ const PatientService = React.lazy(
   () => import('@openmsupply-client/system/src/Patient/Service')
 );
 
-const fullPatientsPath = RouteBuilder.create(AppRoute.Patients)
+const fullPatientsPath = RouteBuilder.create(AppRoute.Dispensary)
+  .addPart(AppRoute.Patients)
   .addWildCard()
   .build();
 
-export const PatientRouter: FC = () => {
+export const DispensaryRouter: FC = () => {
   const gotoPatients = useMatch(fullPatientsPath);
 
   if (gotoPatients) {
