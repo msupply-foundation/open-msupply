@@ -400,9 +400,6 @@ mod test {
             + previous_line.number_of_packs
             - outbound_line.number_of_packs;
 
-        println!("{:?}", outbound_line);
-        println!("{:?}", mock_outbound_shipment_c_invoice_lines()[0]);
-
         assert_eq!(
             outbound_line,
             inline_edit(&mock_outbound_shipment_c_invoice_lines()[0], |mut u| {
