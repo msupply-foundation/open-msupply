@@ -6,6 +6,8 @@ use crate::{RepositoryError, StringFilter};
 
 use chrono::{DateTime, NaiveDateTime, Utc};
 use diesel::prelude::*;
+use diesel_derive_enum::DbEnum;
+use serde::{Deserialize, Serialize};
 
 table! {
     document (id) {
@@ -17,6 +19,7 @@ table! {
         #[sql_name = "type"] type_ -> Text,
         data -> Text,
         schema_id -> Nullable<Text>,
+        status -> crate::db_diesel::document::DocumentStatusMapping,
     }
 }
 
@@ -30,12 +33,20 @@ table! {
         #[sql_name = "type"] type_ -> Text,
         data -> Text,
         schema_id -> Nullable<Text>,
+        status -> crate::db_diesel::document::DocumentStatusMapping,
     }
 }
 
 joinable!(document -> form_schema (schema_id));
 
 allow_tables_to_appear_in_same_query!(document, form_schema);
+
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+pub enum DocumentStatus {
+    Active,
+    Deleted,
+}
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
 #[table_name = "document"]
@@ -57,6 +68,8 @@ pub struct DocumentRow {
     pub data: String,
     /// JSON schema id containing the schema for the data
     pub schema_id: Option<String>,
+    // Soft deletion status
+    pub status: DocumentStatus,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
@@ -79,6 +92,8 @@ pub struct LatestDocumentRow {
     pub data: String,
     /// JSON schema id containing the schema for the data
     pub schema_id: Option<String>,
+    // Soft deletion status
+    pub status: DocumentStatus,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -98,6 +113,7 @@ pub struct Document {
     /// The actual document data
     pub data: serde_json::Value,
     pub schema_id: Option<String>,
+    pub status: DocumentStatus,
 }
 
 #[derive(Clone)]
@@ -212,6 +228,7 @@ fn document_from_row(row: DocumentRow) -> Result<Document, RepositoryError> {
         r#type: row.r#type,
         data,
         schema_id: row.schema_id,
+        status: row.status,
     };
 
     Ok(document)
@@ -238,6 +255,7 @@ fn latest_document_from_row(row: LatestDocumentRow) -> Result<Document, Reposito
         r#type: row.r#type,
         data,
         schema_id: row.schema_id,
+        status: row.status,
     };
 
     Ok(document)
@@ -262,5 +280,6 @@ fn row_from_document(doc: &Document) -> Result<DocumentRow, RepositoryError> {
         r#type: doc.r#type.to_owned(),
         data,
         schema_id: doc.schema_id.clone(),
+        status: doc.status.to_owned(),
     })
 }
