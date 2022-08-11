@@ -126,7 +126,7 @@ macro_rules! apply_simple_string_filter {
             }
 
             if let Some(value) = string_filter.insensitive_equal_to {
-                $query = $query.filter($dsl_field.like(value));
+                $query = $query.filter($dsl_field.like(value.replace("%", "")));
             }
 
             if let Some(value) = string_filter.like {
@@ -145,7 +145,7 @@ macro_rules! apply_simple_string_filter {
             }
 
             if let Some(value) = string_filter.insensitive_equal_to {
-                $query = $query.filter($dsl_field.ilike(value));
+                $query = $query.filter($dsl_field.ilike(value.replace("%", "")));
             }
 
             if let Some(value) = string_filter.like {
