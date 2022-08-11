@@ -1,6 +1,7 @@
 use crate::{
-    invoice::common::generate_invoice_user_id_update,
-    invoice_line::inbound_shipment_line::generate_batch, u32_to_i32,
+    invoice::common::{calculate_total_after_tax, generate_invoice_user_id_update},
+    invoice_line::inbound_shipment_line::generate_batch,
+    u32_to_i32,
 };
 use repository::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow};
 
@@ -65,6 +66,8 @@ fn generate_line(
         location_id,
         id: _,
         item_id: _,
+        total_before_tax,
+        tax,
     }: UpdateInboundShipmentLine,
     current_line: InvoiceLineRow,
     new_item_option: Option<ItemRow>,
@@ -82,6 +85,7 @@ fn generate_line(
     update_line.number_of_packs = number_of_packs
         .map(u32_to_i32)
         .unwrap_or(update_line.number_of_packs);
+    update_line.tax = tax.map(|tax| tax.percentage).unwrap_or(update_line.tax);
 
     if let Some(item) = new_item_option {
         update_line.item_id = item.id;
@@ -89,8 +93,16 @@ fn generate_line(
         update_line.item_name = item.name;
     }
 
+    update_line.total_before_tax = if let Some(total_before_tax) = total_before_tax {
+        total_before_tax
+    } else if number_of_packs.is_some() || cost_price_per_pack.is_some() {
+        update_line.cost_price_per_pack * update_line.number_of_packs as f64
+    } else {
+        update_line.total_before_tax
+    };
+
     update_line.total_after_tax =
-        update_line.cost_price_per_pack * update_line.number_of_packs as f64;
+        calculate_total_after_tax(update_line.total_before_tax, update_line.tax);
 
     update_line
 }
