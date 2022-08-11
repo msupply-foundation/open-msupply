@@ -7,6 +7,8 @@ use repository::{DateFilter, DatetimeFilter, EqualFilter, SimpleStringFilter};
 pub struct SimpleStringFilterInput {
     /// Search term must be an exact match (case sensitive)
     equal_to: Option<String>,
+    /// Search term must be an exact match, but case insensitive
+    insensitive_equal_to: Option<String>,
     /// Search term must be included in search candidate (case insensitive)
     like: Option<String>,
 }
@@ -15,6 +17,7 @@ impl From<SimpleStringFilterInput> for SimpleStringFilter {
     fn from(f: SimpleStringFilterInput) -> Self {
         SimpleStringFilter {
             equal_to: f.equal_to,
+            insensitive_equal_to: f.insensitive_equal_to,
             like: f.like,
         }
     }

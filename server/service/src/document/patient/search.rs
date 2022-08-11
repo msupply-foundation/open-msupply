@@ -43,10 +43,10 @@ pub fn patient_search(
         filter = filter.code_2(SimpleStringFilter::equal_to(&code_2));
     }
     if let Some(first_name) = first_name {
-        filter = filter.first_name(SimpleStringFilter::equal_to(&first_name));
+        filter = filter.first_name(SimpleStringFilter::insensitive_equal_to(&first_name));
     }
     if let Some(last_name) = last_name {
-        filter = filter.last_name(SimpleStringFilter::equal_to(&last_name));
+        filter = filter.last_name(SimpleStringFilter::insensitive_equal_to(&last_name));
     }
     if let Some(date_of_birth) = date_of_birth {
         filter = filter.date_of_birth(DateFilter::equal_to(date_of_birth));
