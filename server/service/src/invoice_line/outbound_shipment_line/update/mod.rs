@@ -20,7 +20,6 @@ pub struct UpdateOutboundShipmentLine {
     pub stock_line_id: Option<String>,
     pub number_of_packs: Option<u32>,
     pub total_before_tax: Option<f64>,
-    pub total_after_tax: Option<f64>,
     pub tax: Option<ShipmentTaxUpdate>,
 }
 
@@ -389,7 +388,7 @@ mod test {
                 inline_init(|r: &mut UpdateOutboundShipmentLine| {
                     r.id = mock_outbound_shipment_c_invoice_lines()[0].id.clone();
                     r.number_of_packs = Some(2);
-                    r.total_before_tax = Some(10.99);
+                    r.total_before_tax = Some(18.00);
                 }),
             )
             .unwrap();
@@ -406,7 +405,8 @@ mod test {
             inline_edit(&mock_outbound_shipment_c_invoice_lines()[0], |mut u| {
                 u.id = mock_outbound_shipment_c_invoice_lines()[0].id.clone();
                 u.number_of_packs = 2;
-                u.total_before_tax = 10.99;
+                u.total_before_tax = 18.00;
+                u.total_after_tax = 18.00;
                 u
             })
         );

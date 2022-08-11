@@ -1,7 +1,6 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 
-use graphql_core::generic_inputs::TaxUpdate;
 use graphql_core::simple_generic_errors::{CannotEditInvoice, ForeignKey, ForeignKeyError};
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
@@ -26,9 +25,8 @@ pub struct InsertInput {
     pub sell_price_per_pack: f64,
     pub expiry_date: Option<NaiveDate>,
     pub number_of_packs: u32,
-    pub total_before_tax: f64,
-    pub total_after_tax: f64,
-    pub tax: Option<TaxUpdate>,
+    pub total_before_tax: Option<f64>,
+    pub tax: Option<f64>,
 }
 
 #[derive(SimpleObject)]
@@ -90,7 +88,6 @@ impl InsertInput {
             cost_price_per_pack,
             number_of_packs,
             total_before_tax,
-            total_after_tax,
             tax,
         } = self;
 
@@ -106,8 +103,7 @@ impl InsertInput {
             cost_price_per_pack,
             number_of_packs,
             total_before_tax,
-            total_after_tax,
-            tax: tax.and_then(|tax| tax.percentage),
+            tax,
         }
     }
 }
@@ -221,7 +217,6 @@ mod test {
             "packSize": 0,
             "sellPricePerPack": 0,
             "totalBeforeTax": 0,
-            "totalAfterTax": 0,
           }
         })
     }
@@ -438,8 +433,7 @@ mod test {
                     sell_price_per_pack: 2.2,
                     expiry_date: Some(NaiveDate::from_ymd(2022, 01, 01)),
                     number_of_packs: 1,
-                    total_before_tax: 1.1,
-                    total_after_tax: 2.2,
+                    total_before_tax: Some(1.1),
                     tax: Some(5.0)
                 }
             );
@@ -464,10 +458,7 @@ mod test {
                 "expiryDate": "2022-01-01",
                 "numberOfPacks": 1,
                 "totalBeforeTax": 1.1,
-                "totalAfterTax": 2.2,
-                "tax": {
-                    "percentage": 5.0
-                }
+                "tax": 5.0
             },
             "storeId": "store_a"
         });
