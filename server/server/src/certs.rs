@@ -1,6 +1,7 @@
+use log::warn;
 use rcgen::generate_simple_self_signed;
 use rustls::ServerConfig;
-use service::settings::ServerSettings;
+use service::settings::{is_develop, ServerSettings};
 use std::{
     fmt::Display,
     io::{BufReader, Write},
@@ -84,10 +85,16 @@ impl Certificates {
                 Some(load_certs_rustls(cert_files).expect("Invalid self signed certificates"))
             }
             None => {
-                let base_dir = &settings.base_dir.clone().unwrap_or(".".to_string());
-                let cert_path = PathBuf::from(base_dir).join(CERTS_PATH);
-                let cert_files = Self::generate_certs(&cert_path);
-                Some(load_certs_rustls(cert_files).expect("Invalid self signed certificates"))
+                if is_develop() || settings.danger_allow_http {
+                    warn!("No certificates found: Run in HTTP development mode");
+                    None
+                } else {
+                    warn!("No certificates found: Generating self signed certificates");
+                    let base_dir = &settings.base_dir.clone().unwrap_or(".".to_string());
+                    let cert_path = PathBuf::from(base_dir).join(CERTS_PATH);
+                    let cert_files = Self::generate_certs(&cert_path);
+                    Some(load_certs_rustls(cert_files).expect("Invalid self signed certificates"))
+                }
             }
         };
 
