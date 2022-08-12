@@ -1,5 +1,5 @@
 use chrono::Utc;
-use repository::{EqualFilter, RepositoryError, TransactionError};
+use repository::{DocumentStatus, EqualFilter, RepositoryError, TransactionError};
 
 use crate::{
     document::{document_service::DocumentInsertError, raw_document::RawDocument},
@@ -107,6 +107,7 @@ fn generate(
         r#type: PATIENT_TYPE.to_string(),
         data: input.data,
         schema_id: Some(input.schema_id),
+        status: DocumentStatus::Active,
     })
 }
 

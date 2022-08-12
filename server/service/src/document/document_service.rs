@@ -153,6 +153,7 @@ mod document_service_test {
     use repository::{
         mock::{mock_form_schema_empty, mock_form_schema_simple, MockDataInserts},
         test_db::setup_all,
+        DocumentStatus,
     };
     use serde_json::json;
 
@@ -190,6 +191,7 @@ mod document_service_test {
                       "version": 1,
                     }),
                     schema_id: None,
+                    status: DocumentStatus::Active,
                 },
             )
             .unwrap();
@@ -209,6 +211,7 @@ mod document_service_test {
                   "version": 2,
                 }),
                 schema_id: None,
+                status: DocumentStatus::Active,
             },
         );
         assert!(matches!(result, Err(DocumentInsertError::InvalidParent(_))));
@@ -230,6 +233,7 @@ mod document_service_test {
                       "version": 2,
                     }),
                     schema_id: None,
+                    status: DocumentStatus::Active,
                 },
             )
             .unwrap();
@@ -255,6 +259,7 @@ mod document_service_test {
                       "version": 1,
                     }),
                     schema_id: None,
+                    status: DocumentStatus::Active,
                 },
             )
             .unwrap();
@@ -295,6 +300,7 @@ mod document_service_test {
                       "map": {},
                     }),
                     schema_id: Some(schema.id),
+                    status: DocumentStatus::Active,
                 },
             )
             .unwrap();
@@ -314,6 +320,7 @@ mod document_service_test {
                   "map": {},
                 }),
                 schema_id: Some(schema.id),
+                status: DocumentStatus::Active,
             },
         );
         assert!(matches!(
@@ -336,6 +343,7 @@ mod document_service_test {
                   "strValue": 9,
                 }),
                 schema_id: Some(schema.id),
+                status: DocumentStatus::Active,
             },
         );
         assert!(matches!(
@@ -362,6 +370,7 @@ mod document_service_test {
                       "strValue": "str",
                     }),
                     schema_id: Some(schema.id),
+                    status: DocumentStatus::Active,
                 },
             )
             .unwrap();
