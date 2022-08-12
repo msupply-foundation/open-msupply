@@ -49,9 +49,12 @@ export const EncounterDetailModal: FC = () => {
     programType ?? '',
     documentType ?? ''
   );
-  const { JsonForm, isLoading } = useJsonForms(documentName, {
-    handleSave,
-  });
+  const { JsonForm, saveData, isLoading, isDirty } = useJsonForms(
+    documentName,
+    {
+      handleSave,
+    }
+  );
 
   const { Modal } = useDialog({
     isOpen: current === PatientModal.Encounter,
@@ -64,7 +67,16 @@ export const EncounterDetailModal: FC = () => {
     <Modal
       title=""
       cancelButton={<DialogButton variant="cancel" onClick={reset} />}
-      okButton={<DialogButton variant="ok" onClick={reset} />}
+      okButton={
+        <DialogButton
+          variant="ok"
+          disabled={!isDirty}
+          onClick={async () => {
+            await saveData();
+            reset();
+          }}
+        />
+      }
       width={1024}
     >
       <React.Suspense fallback={<div />}>
