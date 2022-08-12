@@ -45,9 +45,12 @@ export const ProgramDetailModal: FC = () => {
 
   const { current, documentName, documentType, reset } = usePatientModalStore();
   const handleSave = useUpsertProgramEnrolment(patientId, documentType || '');
-  const { JsonForm, isLoading } = useJsonForms(documentName, {
-    handleSave,
-  });
+  const { JsonForm, isLoading, saveData, isDirty } = useJsonForms(
+    documentName,
+    {
+      handleSave,
+    }
+  );
 
   const { Modal } = useDialog({
     isOpen: current === PatientModal.Program,
@@ -60,7 +63,16 @@ export const ProgramDetailModal: FC = () => {
     <Modal
       title=""
       cancelButton={<DialogButton variant="cancel" onClick={reset} />}
-      okButton={<DialogButton variant="ok" onClick={reset} />}
+      okButton={
+        <DialogButton
+          variant="ok"
+          disabled={!isDirty}
+          onClick={async () => {
+            await saveData();
+            reset();
+          }}
+        />
+      }
       width={1024}
     >
       <React.Suspense fallback={<div />}>
