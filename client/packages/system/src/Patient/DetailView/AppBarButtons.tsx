@@ -6,20 +6,17 @@ import {
   ClockIcon,
   DialogButton,
   useDialog,
-  useUrlQuery,
   DetailContainer,
   Box,
   Typography,
 } from '@openmsupply-client/common';
 import { DocumentHistory } from '../DocumentHistory';
 import { AddButton } from './AddButton';
+import { usePatientStore } from '../hooks';
 
 export const AppBarButtons: FC = () => {
-  const {
-    urlQuery: { doc },
-  } = useUrlQuery();
   const { Modal, showDialog, hideDialog } = useDialog();
-
+  const { documentName } = usePatientStore();
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
@@ -27,7 +24,7 @@ export const AppBarButtons: FC = () => {
         <ButtonWithIcon
           Icon={<ClockIcon />}
           label={'History'}
-          disabled={doc === undefined}
+          disabled={documentName === undefined}
           onClick={showDialog}
         />
       </Grid>
@@ -47,7 +44,9 @@ export const AppBarButtons: FC = () => {
             <Typography sx={{ fontSize: 18, fontWeight: 700 }}>
               Document Edit History
             </Typography>
-            <DocumentHistory documentName={doc} />
+            {documentName ? (
+              <DocumentHistory documentName={documentName} />
+            ) : null}
           </Box>
         </DetailContainer>
       </Modal>
