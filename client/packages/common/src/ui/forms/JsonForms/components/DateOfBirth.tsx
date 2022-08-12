@@ -1,5 +1,10 @@
 import React, { useEffect } from 'react';
-import { rankWith, ControlProps, uiTypeIs } from '@jsonforms/core';
+import {
+  rankWith,
+  ControlProps,
+  uiTypeIs,
+  composePaths,
+} from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { FormLabel, Box } from '@mui/material';
 import {
@@ -19,10 +24,12 @@ export const dateOfBirthTester = rankWith(10, uiTypeIs('DateOfBirth'));
 const UIComponent = (props: ControlProps) => {
   const { data, handleChange, label, path } = props;
   const [age, setAge] = React.useState<number | string>('');
-  const [dob, setDoB] = React.useState<Date | null>(data);
+  const [dob, setDoB] = React.useState<Date | null>(null);
   const t = useTranslation('common');
   const dateFormatter = useFormatDateTime().customDate;
 
+  const dobPath = composePaths(path, 'dateOfBirth');
+  const estimatedPath = composePaths(path, 'dateOfBirthIsEstimated');
   const onChangeDoB = (dob: Date | null, keyBoardInputValue?: string) => {
     // dob is returned from the date picker, the keyBoardInputValue is the TextInput value
     // and will be populated if the user types in a date
@@ -37,19 +44,22 @@ const UIComponent = (props: ControlProps) => {
     }
     setAge(DateUtils.age(dateOfBirth));
     setDoB(dateOfBirth);
-    handleChange(path, dateFormatter(dateOfBirth, 'yyyy-MM-dd'));
+    handleChange(dobPath, dateFormatter(dateOfBirth, 'yyyy-MM-dd'));
+    handleChange(estimatedPath, false);
   };
 
   const onChangeAge = (newAge: number) => {
-    const dob = DateUtils.addYears(new Date(), -newAge);
+    const dob = DateUtils.startOfYear(DateUtils.addYears(new Date(), -newAge));
     setDoB(dob);
-    handleChange(path, dateFormatter(dob, 'yyyy-MM-dd'));
+    handleChange(dobPath, dateFormatter(dob, 'yyyy-MM-dd'));
+    handleChange(estimatedPath, true);
     setAge(newAge);
   };
 
   useEffect(() => {
     if (!data) return;
-    const dob = DateUtils.getDateOrNull(data);
+    const dob = DateUtils.getDateOrNull(data.dateOfBirth);
+    setDoB(dob);
     if (dob === null) return;
     setAge(DateUtils.age(dob));
   }, [data]);

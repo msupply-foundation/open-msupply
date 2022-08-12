@@ -11,7 +11,7 @@ import {
 export const booleanTester = rankWith(4, isBooleanControl);
 
 const UIComponent = (props: ControlProps) => {
-  const { data, handleChange, label, path } = props;
+  const { data, handleChange, label, path, enabled } = props;
 
   if (!props.visible) {
     return null;
@@ -36,6 +36,7 @@ const UIComponent = (props: ControlProps) => {
           }}
           value={data}
           checked={data}
+          disabled={!enabled}
         />
       </Box>
     </Box>
