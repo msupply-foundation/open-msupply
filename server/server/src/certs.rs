@@ -1,12 +1,11 @@
+use rcgen::generate_simple_self_signed;
+use rustls::ServerConfig;
+use service::settings::ServerSettings;
 use std::{
     fmt::Display,
-    io::{BufReader, ErrorKind},
+    io::{BufReader, Write},
     path::PathBuf,
 };
-
-use log::{error, warn};
-use rustls::ServerConfig;
-use service::settings::{is_develop, ServerSettings};
 
 #[derive(Debug)]
 pub struct CertFiles {
@@ -85,20 +84,35 @@ impl Certificates {
                 Some(load_certs_rustls(cert_files).expect("Invalid self signed certificates"))
             }
             None => {
-                if !is_develop() && !settings.danger_allow_http {
-                    error!("No certificates found");
-                    return Err(std::io::Error::new(
-                        ErrorKind::Other,
-                        "Certificate required",
-                    ));
-                }
-
-                warn!("No certificates found: Run in HTTP development mode");
-                None
+                let base_dir = &settings.base_dir.clone().unwrap_or(".".to_string());
+                let cert_path = PathBuf::from(base_dir).join(CERTS_PATH);
+                let cert_files = Self::generate_certs(&cert_path);
+                Some(load_certs_rustls(cert_files).expect("Invalid self signed certificates"))
             }
         };
 
         Ok(Certificates { config })
+    }
+
+    fn generate_certs(cert_dir: &PathBuf) -> CertFiles {
+        let subject_alt_names = vec!["localhost".to_string()];
+        let cert = generate_simple_self_signed(subject_alt_names).unwrap();
+
+        std::fs::create_dir_all(cert_dir).unwrap();
+        let key_file = cert_dir.join(PRIVATE_CERT_FILE);
+        let mut file = std::fs::File::create(&key_file).unwrap();
+        file.write_all(cert.serialize_private_key_pem().as_bytes())
+            .unwrap();
+
+        let cert_file = cert_dir.join(PUBLIC_CERT_FILE);
+        let mut file = std::fs::File::create(&cert_file).unwrap();
+        file.write_all(cert.serialize_pem().unwrap().as_bytes())
+            .unwrap();
+
+        CertFiles {
+            private_cert_file: key_file.to_string_lossy().to_string(),
+            public_cert_file: cert_file.to_string_lossy().to_string(),
+        }
     }
 
     pub fn config(&self) -> Option<ServerConfig> {
