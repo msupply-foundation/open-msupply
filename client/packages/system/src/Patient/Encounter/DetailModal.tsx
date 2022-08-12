@@ -51,7 +51,6 @@ export const EncounterDetailModal: FC = () => {
   );
   const { JsonForm, isLoading } = useJsonForms(documentName, {
     handleSave,
-    showButtonPanel: false,
   });
 
   const { Modal } = useDialog({

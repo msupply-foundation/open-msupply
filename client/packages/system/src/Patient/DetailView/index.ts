@@ -1,4 +1,4 @@
-export { PatientDetailView } from './DetailView';
+export { PatientView } from './DetailView';
 
 export enum PatientModal {
   Prescription = 'PRESCRIPTION',
