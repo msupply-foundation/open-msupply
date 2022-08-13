@@ -33,7 +33,9 @@ const AlertModal = ({
           </Typography>
         </Grid>
       </Grid>
-      <Grid item>{message}</Grid>
+      <Grid item style={{ whiteSpace: 'pre-line' }}>
+        {message}
+      </Grid>
       <Grid item display="flex" justifyContent="flex-end" flex={1}>
         <DialogButton variant="ok" onClick={onClick} autoFocus />
       </Grid>
