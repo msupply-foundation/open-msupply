@@ -120,24 +120,13 @@ const PatientDetailView: FC = () => {
     <>
       <Box style={{ position: 'absolute', bottom: 40, right: 30, zIndex: 100 }}>
         <Box gap={0.5} flexDirection="row" display="flex" alignItems="center">
-          {createDoc ? (
-            <DialogButton
-              variant="cancel"
-              disabled={!isDirty || isSaving}
-              onClick={() => {
-                showCancelConfirmation();
-              }}
-            />
-          ) : (
-            <LoadingButton
-              color="secondary"
-              disabled={!isDirty || isSaving}
-              isLoading={false}
-              onClick={() => showCancelConfirmation()}
-            >
-              {t('button.revert')}
-            </LoadingButton>
-          )}
+          <DialogButton
+            variant="cancel"
+            disabled={!isDirty || isSaving}
+            onClick={() => {
+              showCancelConfirmation();
+            }}
+          />
           <LoadingButton
             color="secondary"
             disabled={!isDirty}
