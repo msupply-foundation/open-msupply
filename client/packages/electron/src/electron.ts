@@ -13,14 +13,10 @@ const SERVICE_NAME = '_omsupply._tcp.local';
 const SERVICE_TYPE = 'TXT';
 
 class DiscoveryRunner {
-  isDiscovering: boolean;
   intervalHandle?: NodeJS.Timer;
 
-  constructor() {
-    this.isDiscovering = false;
-    this.intervalHandle = this.intervalHandle = setInterval(() => {
-      if (!this.isDiscovering) return;
-
+  start() {
+    this.intervalHandle = setInterval(() => {
       discovery.query({
         questions: [
           {
@@ -32,13 +28,8 @@ class DiscoveryRunner {
     }, QUERY_INTERVAL);
   }
 
-  start() {
-    this.isDiscovering = true;
-  }
-
   stop() {
     if (this.intervalHandle) clearInterval(this.intervalHandle);
-    this.isDiscovering = false;
     this.intervalHandle = undefined;
   }
 }
