@@ -8,24 +8,15 @@ import {
   ArrayUtils,
   useCurrency,
   useUrlQueryParams,
-  InvoiceLineNodeType,
   ColumnAlign,
 } from '@openmsupply-client/common';
 import { LocationRowFragment } from '@openmsupply-client/system';
 import { InboundItem } from './../../../types';
 import { InboundLineFragment } from '../../api';
-
-const isDefaultPlaceholderRow = (row: InboundLineFragment) =>
-  row.type === InvoiceLineNodeType.StockIn && row.numberOfPacks === 0;
-
-const getPackSize = (row: InboundLineFragment) =>
-  isDefaultPlaceholderRow(row) ? '' : row.packSize;
-
-const getNumberOfPacks = (row: InboundLineFragment) =>
-  isDefaultPlaceholderRow(row) ? '' : row.numberOfPacks;
+import { isInboundPlaceholderRow } from '../../../utils';
 
 const getUnitQuantity = (row: InboundLineFragment) =>
-  isDefaultPlaceholderRow(row) ? '' : row.packSize * row.numberOfPacks;
+  row.packSize * row.numberOfPacks;
 
 export const useInboundShipmentColumns = () => {
   const {
@@ -34,7 +25,7 @@ export const useInboundShipmentColumns = () => {
   } = useUrlQueryParams({ initialSort: { key: 'itemName', dir: 'asc' } });
   const { c } = useCurrency();
   const getSellPrice = (row: InboundLineFragment) =>
-    isDefaultPlaceholderRow(row) ? '' : c(row.sellPricePerPack).format();
+    isInboundPlaceholderRow(row) ? '' : c(row.sellPricePerPack).format();
 
   const columns = useColumns<InboundLineFragment | InboundItem>(
     [
@@ -202,8 +193,8 @@ export const useInboundShipmentColumns = () => {
           if ('lines' in rowData) {
             const { lines } = rowData;
             return ArrayUtils.ifTheSameElseDefault(
-              lines,
-              'sellPricePerPack',
+              lines.map(line => ({ sell: getSellPrice(line) })),
+              'sell',
               ''
             );
           } else {
@@ -229,7 +220,7 @@ export const useInboundShipmentColumns = () => {
               const { lines } = rowData;
               return ArrayUtils.ifTheSameElseDefault(lines, 'packSize', '');
             } else {
-              return getPackSize(rowData) ?? '';
+              return rowData.packSize ?? '';
             }
           },
           getSortValue: rowData => {
@@ -237,7 +228,7 @@ export const useInboundShipmentColumns = () => {
               const { lines } = rowData;
               return ArrayUtils.ifTheSameElseDefault(lines, 'packSize', '');
             } else {
-              return getPackSize(rowData) ?? '';
+              return rowData.packSize ?? '';
             }
           },
         },
@@ -271,7 +262,7 @@ export const useInboundShipmentColumns = () => {
               const { lines } = rowData;
               return ArrayUtils.getSum(lines, 'numberOfPacks');
             } else {
-              return getNumberOfPacks(rowData);
+              return rowData.numberOfPacks;
             }
           },
           getSortValue: rowData => {
@@ -279,7 +270,7 @@ export const useInboundShipmentColumns = () => {
               const { lines } = rowData;
               return ArrayUtils.getSum(lines, 'numberOfPacks');
             } else {
-              return getNumberOfPacks(rowData);
+              return rowData.numberOfPacks;
             }
           },
         },

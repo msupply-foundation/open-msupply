@@ -23,7 +23,7 @@ export const useUrlQuery = ({ skipParse = [] }: useUrlQueryProps = {}) => {
       else newQueryObject[key] = String(value);
     });
 
-    setSearchParams(newQueryObject);
+    setSearchParams(newQueryObject, { replace: true });
   };
 
   return {
