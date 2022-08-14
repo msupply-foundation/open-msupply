@@ -123,6 +123,10 @@ export const useJsonForms = (
     }
   }, [initialData, data, isSaving, isLoading]);
 
+  useEffect(() => {
+    setData(initialData);
+  }, [initialData]);
+
   return {
     JsonForm: (
       <JsonForm
