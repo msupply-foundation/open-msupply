@@ -47,9 +47,11 @@ export const useDocumentLoader = (
     isError,
   } = useDocument.get.document(docName ?? '', !!docName);
 
-  if (isError) {
-    setError(`Failed to load document ${docName}`);
-  }
+  useEffect(() => {
+    if (isError) {
+      setError(`Failed to load document ${docName}`);
+    }
+  }, [isError]);
   useEffect(() => {
     if (!databaseResponse) return;
 
