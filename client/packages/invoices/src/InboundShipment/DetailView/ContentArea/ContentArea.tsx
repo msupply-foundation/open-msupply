@@ -96,7 +96,7 @@ export const ContentArea: FC<ContentAreaProps> = React.memo(
           </Box>
         )}
         <DataTable
-          key="inbound-detail"
+          id="inbound-detail"
           onRowClick={onRowClick}
           ExpandContent={Expando}
           columns={columns}

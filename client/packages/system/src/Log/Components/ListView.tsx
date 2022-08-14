@@ -43,7 +43,7 @@ export const LogList: FC<{ recordId: string }> = ({ recordId }) => {
 
   return (
     <DataTable
-      key="name-list"
+      id="name-list"
       columns={columns}
       data={data?.nodes}
       isLoading={isLoading}

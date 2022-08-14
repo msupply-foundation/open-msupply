@@ -71,7 +71,7 @@ const EncounterListComponent: FC = () => {
 
   return (
     <DataTable
-      key="encounter-list"
+      id="encounter-list"
       pagination={{ ...pagination, total: data?.totalCount }}
       onChangePage={updatePaginationQuery}
       columns={columns}

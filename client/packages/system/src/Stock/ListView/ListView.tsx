@@ -63,7 +63,7 @@ const StockListComponent: FC = () => {
         filterString={urlQuery.filter ?? ''}
       />
       <DataTable
-        key="stock-list"
+        id="stock-list"
         pagination={{ ...pagination, total: filteredSortedData.length }}
         columns={columns}
         data={filteredSortedData.slice(

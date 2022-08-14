@@ -61,7 +61,7 @@ const ProgramListComponent: FC = () => {
 
   return (
     <DataTable
-      key="program-enrolment-list"
+      id="program-enrolment-list"
       pagination={{ ...pagination, total: data?.totalCount }}
       onChangePage={updatePaginationQuery}
       columns={columns}

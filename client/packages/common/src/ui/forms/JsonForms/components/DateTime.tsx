@@ -12,7 +12,7 @@ import {
   FORM_LABEL_COLUMN_WIDTH,
   FORM_INPUT_COLUMN_WIDTH,
 } from '../styleConstants';
-import { DateTimePicker, DateTimePickerProps } from '@mui/lab';
+import { DateTimePicker, DateTimePickerProps } from '@mui/x-date-pickers';
 
 const BaseDateTimePickerInput: FC<
   Omit<DateTimePickerProps<Date>, 'renderInput'>

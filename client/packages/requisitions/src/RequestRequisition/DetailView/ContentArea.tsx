@@ -20,7 +20,7 @@ export const ContentArea = ({ onAddItem, onRowClick }: ContentAreaProps) => {
 
   return (
     <DataTable
-      key="internal-order-detail"
+      id="internal-order-detail"
       onRowClick={onRowClick}
       columns={columns}
       data={lines}
