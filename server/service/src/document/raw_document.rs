@@ -77,7 +77,7 @@ mod document_id_test {
             status: DocumentStatus::Active,
         };
         let document = raw.clone().finalise().unwrap();
-        let expected_json_string = r#"{"author":"author","data":{"a":"avalue","b":0.3453333},"name":"name","parents":["p1"],"timestamp":"1970-01-01T00:00:01Z","type":"test"}"#;
+        let expected_json_string = r#"{"author":"author","data":{"a":"avalue","b":0.3453333},"name":"name","parents":["p1"],"status":"Active","timestamp":"1970-01-01T00:00:01Z","type":"test"}"#;
         let expected_id = sha256(expected_json_string);
         assert_eq!(document.id, expected_id);
     }
