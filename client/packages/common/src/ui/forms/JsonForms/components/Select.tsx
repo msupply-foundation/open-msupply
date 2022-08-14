@@ -39,7 +39,7 @@ const UIComponent = (props: ControlProps) => {
         <Select
           sx={{ minWidth: 100 }}
           options={options}
-          value={data}
+          value={data ?? ''}
           onChange={e => handleChange(path, e.target.value)}
           error={!!props.errors}
           helperText={props.errors}
