@@ -8,7 +8,7 @@ import {
 } from '@openmsupply-client/common';
 import { useEncounter } from './api/hooks';
 import { usePatientModalStore } from '../hooks';
-import { PatientModal } from '../DetailView';
+import { PatientModal } from '../PatientView';
 import { usePatient } from '../api';
 
 const useUpsertEncounter = (
