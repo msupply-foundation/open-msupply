@@ -183,7 +183,7 @@ pub async fn get_loaders(
     );
 
     let user_permission_loader = DataLoader::new(
-        PermissionByIdLoader {
+        PermissionByIdsLoader {
             connection_manager: connection_manager.clone(),
         },
         async_std::task::spawn,

@@ -1,19 +1,19 @@
 use async_graphql::{Enum, Object, SimpleObject};
-use repository::{Permission, UserPermission};
+use repository::{Permission, UserStorePermissions};
 use service::{usize_to_u32, ListResult};
 
 #[derive(PartialEq, Debug)]
-pub struct UserPermissionNode {
-    user_permission: UserPermission,
+pub struct UserStorePermissionNode {
+    user_store_permission: UserStorePermissions,
 }
 
 #[derive(SimpleObject)]
-pub struct UserPermissionConnector {
+pub struct UserStorePermissionConnector {
     total_count: u32,
-    nodes: Vec<UserPermissionNode>,
+    nodes: Vec<UserStorePermissionNode>,
 }
 
-#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
 pub enum UserPermissionNodePermission {
     ServerAdmin,
     StoreAccess,
@@ -32,23 +32,32 @@ pub enum UserPermissionNodePermission {
 }
 
 #[Object]
-impl UserPermissionNode {
-    pub async fn permission(&self) -> UserPermissionNodePermission {
-        UserPermissionNodePermission::from_domain(&self.row().permission)
+impl UserStorePermissionNode {
+    pub async fn permissions(&self) -> Vec<UserPermissionNodePermission> {
+        let mut permissions = Vec::new();
+        for permission in self.user_store_permission.permissions.clone() {
+            permissions.push(UserPermissionNodePermission::from_domain(
+                &permission.permission,
+            ));
+            println!("{:?}", permissions);
+        }
+        permissions
     }
 
-    pub async fn store_id(&self) -> &Option<String> {
-        &self.row().store_id
+    pub async fn store_id(&self) -> String {
+        self.row().store_row.id.clone()
     }
 }
 
-impl UserPermissionNode {
-    pub fn from_domain(user_permission: UserPermission) -> Self {
-        UserPermissionNode { user_permission }
+impl UserStorePermissionNode {
+    pub fn from_domain(user_store_permission: UserStorePermissions) -> Self {
+        UserStorePermissionNode {
+            user_store_permission,
+        }
     }
 
-    pub fn row(&self) -> &UserPermission {
-        &self.user_permission
+    pub fn row(&self) -> &UserStorePermissions {
+        &self.user_store_permission
     }
 }
 
@@ -104,24 +113,26 @@ impl UserPermissionNodePermission {
     }
 }
 
-impl UserPermissionConnector {
-    pub fn from_domain(permissions: ListResult<UserPermission>) -> UserPermissionConnector {
-        UserPermissionConnector {
+impl UserStorePermissionConnector {
+    pub fn from_domain(
+        permissions: ListResult<UserStorePermissions>,
+    ) -> UserStorePermissionConnector {
+        UserStorePermissionConnector {
             total_count: permissions.count,
             nodes: permissions
                 .rows
                 .into_iter()
-                .map(UserPermissionNode::from_domain)
+                .map(|row| UserStorePermissionNode::from_domain(row))
                 .collect(),
         }
     }
 
-    pub fn from_vec(permissions: Vec<UserPermission>) -> UserPermissionConnector {
-        UserPermissionConnector {
+    pub fn from_vec(permissions: Vec<UserStorePermissions>) -> UserStorePermissionConnector {
+        UserStorePermissionConnector {
             total_count: usize_to_u32(permissions.len()),
             nodes: permissions
                 .into_iter()
-                .map(UserPermissionNode::from_domain)
+                .map(|row| UserStorePermissionNode::from_domain(row))
                 .collect(),
         }
     }
