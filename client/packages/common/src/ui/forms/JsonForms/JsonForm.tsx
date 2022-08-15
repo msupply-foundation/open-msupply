@@ -1,6 +1,5 @@
 import React, { FC, PropsWithChildren, useEffect } from 'react';
 import {
-  DocumentRegistryFragment,
   Typography,
   UnhappyMan,
   useAuthContext,
@@ -47,15 +46,18 @@ export type JsonData = {
   [key: string]: string | number | boolean | null | unknown | JsonData;
 };
 
+export interface DocumentRegistry {
+  formSchemaId: string;
+  jsonSchema: JsonSchema;
+  uiSchema: UISchemaElement;
+}
+
 interface JsonFormProps {
   data?: JsonData;
-  documentRegistry: Pick<
-    DocumentRegistryFragment,
-    'formSchemaId' | 'jsonSchema' | 'uiSchema'
-  >;
+  documentRegistry?: DocumentRegistry;
   isError: boolean;
   isLoading: boolean;
-  setError: (error: string | false) => void;
+  setError?: (error: string | false) => void;
   updateData: (newData: JsonData) => void;
 }
 
@@ -64,7 +66,7 @@ interface JsonFormsComponentProps {
   jsonSchema: JsonSchema;
   uiSchema: UISchemaElement;
   setData: (data: JsonData) => void;
-  setError: (error: string | false) => void;
+  setError?: (error: string | false) => void;
   renderers: JsonFormsRendererRegistryEntry[];
 }
 
@@ -110,10 +112,10 @@ const FormComponent = ({
       onChange={({ errors, data }) => {
         setData(data);
         if (errors && errors.length) {
-          setError(errors?.map(({ message }) => message ?? '').join(', '));
+          setError?.(errors?.map(({ message }) => message ?? '').join(', '));
           console.warn('Errors: ', errors);
         } else {
-          setError(false);
+          setError?.(false);
         }
       }}
     />
@@ -149,7 +151,7 @@ export const JsonForm: FC<PropsWithChildren<JsonFormProps>> = ({
 }) => {
   const t = useTranslation('common');
 
-  if (isError)
+  if (isError || !documentRegistry)
     return (
       <Box
         display="flex"
