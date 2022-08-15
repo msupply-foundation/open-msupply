@@ -10,8 +10,6 @@
   "label.gender": "Gender",
   "label.patient-details": "Patient Details",
   "label.patient-id": "Patient ID",
-  "label.programs": "Programs",
-  "label.encounters": "Encounters",
   "label.search-results": "Search results",
   "messages.click-to-view": "Click to view the patient record for {{firstName}} {{lastName}}",
   "messages.no-matching-patients": "No matching patients! 😁",

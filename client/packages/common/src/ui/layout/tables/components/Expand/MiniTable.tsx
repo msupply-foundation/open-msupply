@@ -42,7 +42,7 @@ export const MiniTable = <T extends RecordWithId>({
             createQueryParamsStore<T>({ initialSortBy: { key: 'name' } })
           }
         >
-          <DataTable dense columns={columns} data={rows} key="mini-table" />
+          <DataTable dense columns={columns} data={rows} id="mini-table" />
         </TableProvider>
       </Box>
     </Box>
