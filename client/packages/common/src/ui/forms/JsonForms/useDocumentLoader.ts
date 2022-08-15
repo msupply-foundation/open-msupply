@@ -81,7 +81,7 @@ export const useDocumentLoader = (
     isLoading,
     error,
     documentId,
-    data: databaseResponse?.data,
+    data: createDoc?.data ?? databaseResponse?.data,
     documentRegistry,
   };
 };
