@@ -1,5 +1,5 @@
 import { zustand } from '@openmsupply-client/common';
-import { PatientModal } from '../DetailView';
+import { PatientModal } from '../PatientView';
 
 // the state of the various modals used in the patient detail area
 // `current` is the active / displayed modal - set to `undefined` to hide them all
