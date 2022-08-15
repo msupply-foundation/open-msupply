@@ -107,7 +107,6 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
     return () => {
       hideDialog();
       onChangeTab(Tabs.Form);
-      setNewPatient(undefined);
     };
   }, []);
 
@@ -136,7 +135,15 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
           <DialogButton variant="next" onClick={onNext} />
         ) : undefined
       }
-      cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
+      cancelButton={
+        <DialogButton
+          variant="cancel"
+          onClick={() => {
+            setNewPatient(undefined);
+            onClose();
+          }}
+        />
+      }
       slideAnimation={false}
     >
       <DetailContainer>

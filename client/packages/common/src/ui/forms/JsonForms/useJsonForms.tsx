@@ -1,21 +1,35 @@
 import React, { useEffect, useState } from 'react';
-import { RouteBuilder, useNavigate } from '@openmsupply-client/common';
 import {
-  Box,
-  DialogButton,
-  LoadingButton,
-  useConfirmationModal,
   useTranslation,
   useNotification,
   useConfirmOnLeaving,
 } from '@openmsupply-client/common';
-import { JsonSchema, UISchemaElement } from '@jsonforms/core';
-
-import { useDocument } from './api';
 import { DocumentRegistryFragment } from './api/operations.generated';
 import { JsonData, JsonForm } from './JsonForm';
-import { AppRoute } from '@openmsupply-client/config';
-import { isEqual } from 'lodash';
+import { useDocumentLoader } from './useDocumentLoader';
+import _ from 'lodash';
+
+// https://stackoverflow.com/questions/57874879/how-to-treat-missing-undefined-properties-as-equivalent-in-lodashs-isequalwit
+// TODO: handle undefined and empty string as equal? e.g. initial data is undefined and current data is ""
+const isEqualIgnoreUndefined = (
+  a: JsonData | undefined,
+  b: JsonData | undefined
+) => {
+  const comparisonFunc = (a: JsonData | undefined, b: JsonData | undefined) => {
+    if (_.isArray(a) || _.isArray(b)) return;
+    if (!_.isObject(a) || !_.isObject(b)) return;
+
+    if (!_.includes(a, undefined) && !_.includes(b, undefined)) return;
+
+    // Call recursively, after filtering all undefined properties
+    return _.isEqualWith(
+      _.omitBy(a, value => value === undefined),
+      _.omitBy(b, value => value === undefined),
+      comparisonFunc
+    );
+  };
+  return _.isEqualWith(a, b, comparisonFunc);
+};
 
 export type SavedDocument = {
   id: string;
@@ -30,12 +44,8 @@ export type SaveDocumentMutation = (
 ) => Promise<SavedDocument>;
 
 interface JsonFormOptions {
-  showButtonPanel?: boolean;
   onCancel?: () => void;
   handleSave?: SaveDocumentMutation;
-  saveConfirmationMessage?: string;
-  cancelConfirmationMessage?: string;
-  saveSuccessMessage?: string;
 }
 
 /**
@@ -51,53 +61,26 @@ export const useJsonForms = (
   options: JsonFormOptions = {},
   createDoc?: CreateDocument
 ) => {
+  const {
+    data: initialData,
+    isLoading,
+    documentId,
+    documentRegistry,
+    error,
+  } = useDocumentLoader(docName, createDoc);
+  // current modified data
   const [data, setData] = useState<JsonData | undefined>();
-  // the current document id (undefined if its a new document)
-  const [documentId, setDocumentId] = useState<string | undefined>();
-  // document name can change from the input parameter when creating a new document
-  const [documentName, setDocumentName] = useState<string | undefined>(docName);
-  const [documentRegistry, setDocumentRegistry] = useState<{
-    formSchemaId: string;
-    jsonSchema: JsonSchema;
-    uiSchema: UISchemaElement;
-  }>({
-    formSchemaId: '',
-    jsonSchema: {},
-    uiSchema: { type: 'VerticalLayout' },
-  });
-
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | false>(false);
+  const [isSaving, setSaving] = useState(false);
   const [isDirty, setIsDirty] = useState<boolean>();
   const t = useTranslation('common');
   const { success, error: errorNotification } = useNotification();
-  const navigate = useNavigate();
-
-  // fetch document (only if there is as document name)
-  const {
-    data: databaseResponse,
-    isLoading,
-    isError,
-  } = useDocument.get.document(documentName ?? '', !!documentName);
-
-  const {
-    showButtonPanel = true,
-    onCancel = () =>
-      navigate(
-        RouteBuilder.create(AppRoute.Dispensary)
-          .addPart(AppRoute.Patients)
-          .build()
-      ),
-    saveConfirmationMessage = t('messages.confirm-save-generic'),
-    cancelConfirmationMessage = t('messages.confirm-cancel-generic'),
-    saveSuccessMessage = t('success.data-saved'),
-  } = options;
 
   useConfirmOnLeaving(isDirty);
 
-  const saveData = async () => {
+  // returns the document name
+  const saveData = async (): Promise<string | undefined> => {
     if (data === undefined) {
-      return;
+      return undefined;
     }
     setSaving(true);
 
@@ -105,15 +88,13 @@ export const useJsonForms = (
     try {
       const result = await options.handleSave?.(
         data,
-        documentRegistry.formSchemaId,
+        documentRegistry?.formSchemaId ?? '',
         documentId
       );
 
-      setDocumentName(result?.name);
-      setIsDirty(false);
-
-      const successSnack = success(saveSuccessMessage);
+      const successSnack = success(t('success.data-saved'));
       successSnack();
+      return result?.name;
     } catch (err) {
       const errorSnack = errorNotification(t('error.problem-saving'));
       errorSnack();
@@ -122,94 +103,45 @@ export const useJsonForms = (
     }
   };
 
+  const revert = () => {
+    setData(initialData);
+  };
+
   const updateData = (newData: JsonData) => {
-    setIsDirty(!isEqual(data, newData));
     setData(newData);
   };
 
-  const showSaveConfirmation = useConfirmationModal({
-    onConfirm: saveData,
-    message: saveConfirmationMessage,
-    title: t('heading.are-you-sure'),
-  });
-
-  const showCancelConfirmation = useConfirmationModal({
-    onConfirm: onCancel,
-    message: cancelConfirmationMessage,
-    title: t('heading.are-you-sure'),
-  });
-
-  const ButtonPanel = () => (
-    <Box id="button-panel" paddingBottom={5} display="flex" gap={5}>
-      <LoadingButton
-        onClick={() => showSaveConfirmation()}
-        isLoading={saving}
-        disabled={error !== false || isLoading || !isDirty}
-        color="secondary"
-      >
-        {t('button.save')}
-      </LoadingButton>
-      <DialogButton
-        variant="cancel"
-        disabled={isLoading}
-        onClick={() => {
-          if (isDirty) showCancelConfirmation();
-          else onCancel();
-        }}
-      />
-    </Box>
-  );
+  useEffect(() => {
+    const dirty =
+      isSaving ||
+      isLoading ||
+      !!createDoc ||
+      !isEqualIgnoreUndefined(initialData, data);
+    setIsDirty(dirty);
+    if (data === undefined) {
+      setData(initialData);
+    }
+  }, [initialData, data, isSaving, isLoading]);
 
   useEffect(() => {
-    if (!databaseResponse) return;
-
-    const { data, documentRegistry } = databaseResponse;
-    if (!data) {
-      setError('No document data');
-    } else {
-      setData(data);
-      setDocumentId(databaseResponse.id);
-    }
-
-    if (!documentRegistry) {
-      setError('No document registry entry');
-    } else if (!documentRegistry.jsonSchema) {
-      setError('No Json Schema');
-    } else if (!documentRegistry.uiSchema) {
-      setError('No UI Schema');
-    } else {
-      setDocumentRegistry(documentRegistry);
-    }
-  }, [databaseResponse]);
-
-  // user createDoc if there is one
-  useEffect(() => {
-    if (createDoc) {
-      setData(createDoc.data);
-      setDocumentRegistry(createDoc.documentRegistry);
-      setIsDirty(true);
-    }
-  }, [createDoc]);
-
-  useEffect(() => {
-    setDocumentName(docName);
-  }, [docName]);
+    setData(initialData);
+  }, [initialData]);
 
   return {
     JsonForm: (
       <JsonForm
         data={data}
         documentRegistry={documentRegistry}
-        isError={isError}
+        isError={!!error}
         isLoading={isLoading}
-        setError={setError}
         updateData={updateData}
-      >
-        {showButtonPanel && <ButtonPanel />}
-      </JsonForm>
+      />
     ),
     saveData,
+    revert,
+    isSaving,
     isLoading,
+    isDirty: isDirty ?? false,
     error,
   };
 };

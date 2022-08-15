@@ -1,10 +1,18 @@
-import React, { FC, useEffect, useMemo } from 'react';
+import React, { FC, useCallback, useEffect, useMemo } from 'react';
 import {
   DetailTabs,
   DetailViewSkeleton,
+  DialogButton,
+  LoadingButton,
   SaveDocumentMutation,
+  useConfirmationModal,
   useJsonForms,
+  useNavigate,
+  RouteBuilder,
+  Box,
+  useTranslation,
 } from '@openmsupply-client/common';
+import { AppRoute } from '@openmsupply-client/config';
 import { usePatient } from '../api';
 import { usePatientCreateStore, usePatientStore } from '../hooks';
 import { AppBarButtons } from './AppBarButtons';
@@ -35,9 +43,11 @@ const useUpsertPatient = (): SaveDocumentMutation => {
   };
 };
 
-export const PatientDetailView: FC = () => {
+const PatientDetailView: FC = () => {
+  const t = useTranslation('patients');
+  const navigate = useNavigate();
   const { documentName, setDocumentName } = usePatientStore();
-  const { patient } = usePatientCreateStore();
+  const { patient, setNewPatient } = usePatientCreateStore();
   const patientId = usePatient.utils.id();
   const { data: currentPatient } = usePatient.document.get(patientId);
 
@@ -49,6 +59,7 @@ export const PatientDetailView: FC = () => {
         data: {
           id: patient.id,
           code: patient.code,
+          code2: patient.code2,
           firstName: patient.firstName,
           lastName: patient.lastName,
           gender: patient.gender,
@@ -63,11 +74,22 @@ export const PatientDetailView: FC = () => {
   }, [patient]);
 
   const handleSave = useUpsertPatient();
-  const { JsonForm, isLoading } = useJsonForms(
+  const { JsonForm, saveData, revert, isSaving, isDirty } = useJsonForms(
     documentName,
     { handleSave },
     createDoc
   );
+  useEffect(() => {
+    return () => setNewPatient(undefined);
+  }, []);
+  const save = useCallback(async () => {
+    const documentName = await saveData();
+    if (documentName) {
+      setDocumentName(documentName);
+      // patient has been created => unset the create request data
+      setNewPatient(undefined);
+    }
+  }, [saveData]);
 
   useEffect(() => {
     if (!documentName && currentPatient) {
@@ -75,11 +97,59 @@ export const PatientDetailView: FC = () => {
     }
   }, [currentPatient]);
 
-  if (isLoading) return <DetailViewSkeleton />;
+  const showSaveConfirmation = useConfirmationModal({
+    onConfirm: save,
+    message: t('messages.confirm-save-generic'),
+    title: t('heading.are-you-sure'),
+  });
 
+  const showCancelConfirmation = useConfirmationModal({
+    onConfirm: () => {
+      if (createDoc) {
+        setNewPatient(undefined);
+        navigate(
+          RouteBuilder.create(AppRoute.Dispensary)
+            .addPart(AppRoute.Patients)
+            .build()
+        );
+      } else {
+        revert();
+      }
+    },
+    message: t('messages.confirm-cancel-generic'),
+    title: t('heading.are-you-sure'),
+  });
+
+  return (
+    <>
+      <Box style={{ position: 'absolute', bottom: 40, right: 30, zIndex: 100 }}>
+        <Box gap={0.5} flexDirection="row" display="flex" alignItems="center">
+          <DialogButton
+            variant="cancel"
+            disabled={!isDirty || isSaving}
+            onClick={() => {
+              showCancelConfirmation();
+            }}
+          />
+          <LoadingButton
+            color="secondary"
+            disabled={!isDirty}
+            isLoading={isSaving}
+            onClick={() => showSaveConfirmation()}
+          >
+            {createDoc ? t('button.create') : t('button.save')}
+          </LoadingButton>
+        </Box>
+      </Box>
+      {JsonForm}
+    </>
+  );
+};
+
+export const PatientView: FC = () => {
   const tabs = [
     {
-      Component: JsonForm,
+      Component: <PatientDetailView />,
       value: 'Details',
     },
     {

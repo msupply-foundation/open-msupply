@@ -12,7 +12,7 @@ import {
 } from '@openmsupply-client/common';
 import { EncounterFragment, useEncounter } from './api';
 import { usePatientModalStore } from '../hooks';
-import { PatientModal } from '../DetailView';
+import { PatientModal } from '../PatientView';
 
 type EncounterFragmentWithId = { id: string } & EncounterFragment;
 
