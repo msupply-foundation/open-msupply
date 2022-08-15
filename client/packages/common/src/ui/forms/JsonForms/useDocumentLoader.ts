@@ -31,7 +31,6 @@ export const useDocumentLoader = (
   createDoc?: CreateDocument
 ): DocumentDataResponse => {
   const [error, setError] = useState<string | undefined>();
-  const [data, setData] = useState<JsonData | undefined>();
   // the current document id (undefined if its a new document)
   const [documentId, setDocumentId] = useState<string | undefined>();
   const [documentRegistry, setDocumentRegistry] = useState<DocumentRegistry>({
@@ -59,7 +58,6 @@ export const useDocumentLoader = (
     if (!data) {
       setError('No document data');
     } else {
-      setData(data);
       setDocumentId(databaseResponse.id);
     }
 
@@ -77,7 +75,6 @@ export const useDocumentLoader = (
   // user createDoc if there is one
   useEffect(() => {
     if (createDoc) {
-      setData(createDoc.data);
       setDocumentRegistry(createDoc.documentRegistry);
     }
   }, [createDoc]);
@@ -86,7 +83,7 @@ export const useDocumentLoader = (
     isLoading,
     error,
     documentId,
-    data,
+    data: createDoc?.data ?? databaseResponse?.data,
     documentRegistry,
   };
 };
