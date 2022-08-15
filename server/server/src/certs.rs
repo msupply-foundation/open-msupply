@@ -1,10 +1,10 @@
-use log::warn;
+use log::{error, warn};
 use rcgen::generate_simple_self_signed;
 use rustls::ServerConfig;
 use service::settings::{is_develop, ServerSettings};
 use std::{
     fmt::Display,
-    io::{BufReader, Write},
+    io::{BufReader, ErrorKind, Write},
     path::PathBuf,
 };
 
@@ -92,7 +92,17 @@ impl Certificates {
                     warn!("No certificates found: Generating self signed certificates");
                     let base_dir = &settings.base_dir.clone().unwrap_or(".".to_string());
                     let cert_path = PathBuf::from(base_dir).join(CERTS_PATH);
-                    let cert_files = Self::generate_certs(&cert_path);
+                    let cert_files = match Self::generate_certs(&cert_path) {
+                        Ok(cert_files) => cert_files,
+                        Err(e) => {
+                            warn!("Error generating self signed certificates: {}", e);
+                            error!("No certificates found");
+                            return Err(std::io::Error::new(
+                                ErrorKind::Other,
+                                "Certificate required",
+                            ));
+                        }
+                    };
                     Some(load_certs_rustls(cert_files).expect("Invalid self signed certificates"))
                 }
             }
@@ -101,25 +111,24 @@ impl Certificates {
         Ok(Certificates { config })
     }
 
-    fn generate_certs(cert_dir: &PathBuf) -> CertFiles {
+    fn generate_certs(cert_dir: &PathBuf) -> Result<CertFiles, anyhow::Error> {
         let subject_alt_names = vec!["localhost".to_string()];
-        let cert = generate_simple_self_signed(subject_alt_names).unwrap();
+        let cert = generate_simple_self_signed(subject_alt_names)?;
+        std::fs::create_dir_all(cert_dir)?;
 
-        std::fs::create_dir_all(cert_dir).unwrap();
         let key_file = cert_dir.join(PRIVATE_CERT_FILE);
-        let mut file = std::fs::File::create(&key_file).unwrap();
-        file.write_all(cert.serialize_private_key_pem().as_bytes())
-            .unwrap();
+        let mut file = std::fs::File::create(&key_file)?;
+        file.write_all(cert.serialize_private_key_pem().as_bytes())?;
 
         let cert_file = cert_dir.join(PUBLIC_CERT_FILE);
-        let mut file = std::fs::File::create(&cert_file).unwrap();
-        file.write_all(cert.serialize_pem().unwrap().as_bytes())
-            .unwrap();
+        let mut file = std::fs::File::create(&cert_file)?;
+        let public_cert_buffer = cert.serialize_pem()?;
+        file.write_all(public_cert_buffer.as_bytes())?;
 
-        CertFiles {
+        Ok(CertFiles {
             private_cert_file: key_file.to_string_lossy().to_string(),
             public_cert_file: cert_file.to_string_lossy().to_string(),
-        }
+        })
     }
 
     pub fn config(&self) -> Option<ServerConfig> {
