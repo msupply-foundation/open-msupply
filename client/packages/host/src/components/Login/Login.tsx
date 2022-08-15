@@ -11,6 +11,7 @@ import {
   ServerStatus,
   useElectronClient,
   frontEndHostDisplay,
+  useLocalStorage,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { useHost } from '../../api/hooks';
@@ -24,6 +25,7 @@ export const Login = () => {
   const { setPageTitle } = useHostContext();
   const { data } = useHost.utils.settings();
   const navigate = useNavigate();
+  const [, , removeError] = useLocalStorage('/auth/error');
 
   const passwordRef = React.useRef(null);
   const {
@@ -39,6 +41,7 @@ export const Login = () => {
 
   useEffect(() => {
     setPageTitle(`${t('app.login')} | ${t('app')} `);
+    removeError();
   }, []);
 
   useEffect(() => {
