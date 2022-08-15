@@ -62,16 +62,18 @@ pub struct EncounterFilterInput {
     pub status: Option<EqualFilterEncounterStatusInput>,
 }
 
-fn to_domain_filter(f: EncounterFilterInput) -> EncounterFilter {
-    EncounterFilter {
-        patient_id: f.patient_id.map(EqualFilter::from),
-        program: f.program.map(EqualFilter::from),
-        name: f.name.map(EqualFilter::from),
-        start_datetime: f.start_datetime.map(DatetimeFilter::from),
-        status: f
-            .status
-            .map(|s| map_filter!(s, EncounterNodeStatus::to_domain)),
-        end_datetime: f.end_datetime.map(DatetimeFilter::from),
+impl EncounterFilterInput {
+    pub fn to_domain_filter(self) -> EncounterFilter {
+        EncounterFilter {
+            patient_id: self.patient_id.map(EqualFilter::from),
+            program: self.program.map(EqualFilter::from),
+            name: self.name.map(EqualFilter::from),
+            start_datetime: self.start_datetime.map(DatetimeFilter::from),
+            status: self
+                .status
+                .map(|s| map_filter!(s, EncounterNodeStatus::to_domain)),
+            end_datetime: self.end_datetime.map(DatetimeFilter::from),
+        }
     }
 }
 
@@ -98,7 +100,7 @@ pub fn encounters(
         .get_patient_program_encounters(
             &context,
             page.map(PaginationOption::from),
-            filter.map(to_domain_filter),
+            filter.map(|f| f.to_domain_filter()),
             sort.map(EncounterSortInput::to_domain),
         )
         .map_err(StandardGraphqlError::from_list_error)?;
