@@ -1,7 +1,10 @@
+use crate::fast_log::Config;
+
 use actix_web::web::Data;
 use chrono::Utc;
 use clap::StructOpt;
 use cli::RefreshDatesRepository;
+use fast_log;
 use graphql::schema_builder;
 use log::info;
 use repository::{get_storage_connection_manager, test_db, RemoteSyncBufferRepository};
@@ -31,7 +34,7 @@ use service::{
     token_bucket::TokenBucket,
 };
 use std::{
-    env, fs,
+    fs,
     ops::Deref,
     path::{Path, PathBuf},
     sync::{Arc, RwLock},
@@ -99,9 +102,7 @@ struct InitialisationData {
 
 #[tokio::main]
 async fn main() {
-    env::set_var("RUST_LOG", "info");
-    env_logger::init();
-
+    fast_log::init(Config::new().console()).unwrap();
     let args = Args::parse();
 
     let settings: Settings =

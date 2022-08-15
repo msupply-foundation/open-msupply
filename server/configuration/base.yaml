@@ -14,3 +14,7 @@ database:
   username: "postgres"
   password: "password"
   database_name: "omsupply-database"
+logging:
+  destination: Console
+  level: Info
+
