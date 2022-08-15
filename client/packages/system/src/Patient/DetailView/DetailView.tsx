@@ -78,6 +78,9 @@ const PatientDetailView: FC = () => {
     { handleSave },
     createDoc
   );
+  useEffect(() => {
+    return () => setNewPatient(undefined);
+  }, []);
   const save = useCallback(async () => {
     const documentName = await saveData();
     if (documentName) {
