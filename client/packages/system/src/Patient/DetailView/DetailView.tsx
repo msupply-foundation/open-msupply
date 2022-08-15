@@ -59,6 +59,7 @@ const PatientDetailView: FC = () => {
         data: {
           id: patient.id,
           code: patient.code,
+          code2: patient.code2,
           firstName: patient.firstName,
           lastName: patient.lastName,
           gender: patient.gender,
