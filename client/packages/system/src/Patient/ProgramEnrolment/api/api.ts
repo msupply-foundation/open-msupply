@@ -29,22 +29,12 @@ export const getProgramEnrolmentQueries = (sdk: Sdk, storeId: string) => ({
     }> => {
       const result = await sdk.programs({
         storeId,
-        key:
-          (sortBy?.key as ProgramSortFieldInput) ??
-          ProgramSortFieldInput.EnrolmentDatetime,
+        key: sortBy?.key as ProgramSortFieldInput | undefined,
         desc: sortBy?.isDesc,
         filter: filterBy,
       });
 
-      return result
-        ? {
-            totalCount: result.programs.totalCount,
-            nodes: result.programs.nodes.map(node => ({
-              ...node,
-              id: node.name,
-            })),
-          }
-        : { nodes: [], totalCount: 0 };
+      return result?.programs;
     },
   },
   insertProgram: async (

@@ -12,7 +12,7 @@ export type ProgramFragment = { __typename: 'ProgramNode', type: string, program
 
 export type ProgramsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
-  key: Types.ProgramSortFieldInput;
+  key?: Types.InputMaybe<Types.ProgramSortFieldInput>;
   desc?: Types.InputMaybe<Types.Scalars['Boolean']>;
   filter?: Types.InputMaybe<Types.ProgramFilterInput>;
 }>;
@@ -85,7 +85,7 @@ export const ProgramFragmentDoc = gql`
 }
     ${DocumentFragmentDoc}`;
 export const ProgramsDocument = gql`
-    query programs($storeId: String!, $key: ProgramSortFieldInput!, $desc: Boolean, $filter: ProgramFilterInput) {
+    query programs($storeId: String!, $key: ProgramSortFieldInput, $desc: Boolean, $filter: ProgramFilterInput) {
   programs(storeId: $storeId, sort: {key: $key, desc: $desc}, filter: $filter) {
     ... on ProgramConnector {
       __typename

@@ -37,7 +37,7 @@ fragment Program on ProgramNode {
 
 query programs(
   $storeId: String!
-  $key: ProgramSortFieldInput!
+  $key: ProgramSortFieldInput
   $desc: Boolean
   $filter: ProgramFilterInput
 ) {
