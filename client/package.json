@@ -21,6 +21,7 @@
     "android:build:debug": "yarn build && npx cap copy && cd ./packages/android && ./gradlew assembleDebug",
     "android:build:release": "yarn build && npx cap copy && cd ./packages/android && ./gradlew assembleRelease",
     "electron:start": "lerna run --scope @openmsupply-client/electron start",
+    "electron:start-local": "ELECTRON_HOST=http://localhost:3003 lerna run --scope @openmsupply-client/electron start",
     "electron:build": "lerna run --scope @openmsupply-client/electron make",
     "i18n-unused-display": "i18n-unused display-unused",
     "i18n-unused-remove": "i18n-unused remove-unused",

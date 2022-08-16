@@ -4150,6 +4150,7 @@ dependencies = [
  "machine-uid",
  "mime_guess",
  "openssl",
+ "rcgen",
  "repository",
  "reqwest",
  "rust-embed",
