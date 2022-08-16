@@ -15,6 +15,7 @@ impl Default for SchemaEncounter {
             practitioner: Default::default(),
             start_datetime: Default::default(),
             status: Default::default(),
+            events: Default::default(),
         }
     }
 }

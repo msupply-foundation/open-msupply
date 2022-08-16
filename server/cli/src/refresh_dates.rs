@@ -19,6 +19,7 @@ fn get_timestamp_fields() -> Vec<TableAndFieldName> {
     vec![
         ("document", "timestamp"),
         ("program", "enrolment_datetime"),
+        ("program_event", "datetime"),
         ("encounter", "start_datetime"),
         ("encounter", "end_datetime"),
         ("name", "created_datetime"),
