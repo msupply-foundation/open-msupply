@@ -1,9 +1,11 @@
 import { useInsertProgramEnrolment } from './useInsertProgramEnrolment';
 import { useProgramEnrolments } from './useProgramEnrolments';
+import { useProgramEnrolmentsAll } from './useProgramEnrolmentsAll';
 import { useUpdateProgramEnrolment } from './useUpdateProgramEnrolment';
 
 export const Document = {
-  useProgramEnrolments: useProgramEnrolments,
-  useInsertProgramEnrolment: useInsertProgramEnrolment,
-  useUpdateProgramEnrolment: useUpdateProgramEnrolment,
+  useProgramEnrolments,
+  useProgramEnrolmentsAll,
+  useInsertProgramEnrolment,
+  useUpdateProgramEnrolment,
 };

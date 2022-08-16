@@ -13,7 +13,8 @@ import { usePatient } from '../api';
 
 export const AddButton = () => {
   const t = useTranslation('patients');
-  const { setCurrent, current } = usePatientModalStore();
+  const { current, setCurrent, setDocumentName, setDocumentType } =
+    usePatientModalStore();
   const { mutateAsync: enrol } = useProgramEnrolment.document.insert();
   const patientId = usePatient.utils.id();
   const options = [
@@ -53,12 +54,15 @@ export const AddButton = () => {
         onClose={() => setCurrent(undefined)}
         onChange={async program => {
           setCurrent(undefined);
-          await enrol({
+          const response = await enrol({
             data: program.document.data,
             patientId,
             schemaId: program.document.documentRegistry?.formSchemaId ?? '',
             type: program.type,
           });
+          setDocumentName(response.name);
+          setDocumentType(response.type);
+          setCurrent(PatientModal.Program);
         }}
       />
     </>

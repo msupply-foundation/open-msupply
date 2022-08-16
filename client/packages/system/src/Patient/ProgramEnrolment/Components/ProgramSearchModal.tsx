@@ -8,13 +8,15 @@ import {
 import { useProgramEnrolment, ProgramRowFragmentWithId } from '../api';
 import { filterByType, ProgramSearchProps } from '../utils';
 import { getProgramOptionRenderer } from './ProgramOptionRenderer';
+import { usePatient } from '../../api';
 
 const ProgramSearchComponent: FC<ProgramSearchProps> = ({
   open,
   onClose,
   onChange,
 }) => {
-  const { data, isLoading } = useProgramEnrolment.document.list();
+  const { data, isLoading } = useProgramEnrolment.document.listAll();
+  const patientId = usePatient.utils.id();
   const t = useTranslation('app');
   const ProgramOptionRenderer = getProgramOptionRenderer();
 
@@ -34,7 +36,7 @@ const ProgramSearchComponent: FC<ProgramSearchProps> = ({
       ) => {
         if (name && !(name instanceof Array)) onChange(name);
       }}
-      getOptionDisabled={option => !!option.programPatientId}
+      getOptionDisabled={option => option.patientId === patientId}
     />
   );
 };
