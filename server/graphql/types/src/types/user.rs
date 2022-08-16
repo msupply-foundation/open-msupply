@@ -2,13 +2,12 @@ use async_graphql::{
     dataloader::DataLoader, Context, ErrorExtensions, Object, Result, SimpleObject,
 };
 use graphql_core::{
-    loader::{NameRowLoader, PermissionByIdsLoader, PermissionByIdsLoaderInput},
-    standard_graphql_error::StandardGraphqlError,
-    ContextExt,
+    loader::NameRowLoader, standard_graphql_error::StandardGraphqlError, ContextExt,
 };
 use repository::{User, UserStore};
+use service::permission::{all_permissions, permission_by_store};
 
-use super::{UserStorePermissionConnector, UserStorePermissionNode};
+use super::UserStorePermissionConnector;
 
 pub struct UserStoreNode {
     user_store: UserStore,
@@ -94,17 +93,21 @@ impl UserNode {
         ctx: &Context<'_>,
         store_id: Option<String>,
     ) -> Result<UserStorePermissionConnector> {
-        let loader = ctx.get_loader::<DataLoader<PermissionByIdsLoader>>();
-        let result_option = loader
-            .load_one(PermissionByIdsLoaderInput::new(
-                &store_id.clone().unwrap_or_else(|| "".to_string()),
-                &self.user.user_row.id,
-            ))
-            .await?;
+        let service_provider = ctx.service_provider();
 
-        Ok(UserStorePermissionConnector::from_vec(
-            result_option.unwrap_or_else(Vec::new),
-        ))
+        let result = match store_id {
+            Some(store_id) => permission_by_store(
+                &service_provider.connection_manager,
+                &store_id,
+                &self.user.user_row.id.clone(),
+            ),
+            None => all_permissions(
+                &service_provider.connection_manager,
+                &self.user.user_row.id.clone(),
+            ),
+        }?;
+
+        Ok(UserStorePermissionConnector::from_vec(result))
     }
 }
 

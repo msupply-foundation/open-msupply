@@ -182,13 +182,6 @@ pub async fn get_loaders(
         async_std::task::spawn,
     );
 
-    let user_permission_loader = DataLoader::new(
-        PermissionByIdsLoader {
-            connection_manager: connection_manager.clone(),
-        },
-        async_std::task::spawn,
-    );
-
     loaders.insert(item_loader);
     loaders.insert(name_by_id_loader);
     loaders.insert(store_by_id_loader);
@@ -211,7 +204,6 @@ pub async fn get_loaders(
     loaders.insert(requisition_line_supply_status_loader);
     loaders.insert(requisition_lines_remaining_to_supply_loader);
     loaders.insert(name_row_loader);
-    loaders.insert(user_permission_loader);
 
     loaders
 }
