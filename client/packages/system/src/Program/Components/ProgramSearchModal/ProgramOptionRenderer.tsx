@@ -5,11 +5,10 @@ import {
   Typography,
   Box,
 } from '@openmsupply-client/common';
-import { ProgramRowFragmentWithId } from '../api';
+import { ProgramDocumentFragment } from '../../api';
 
 export const getProgramOptionRenderer =
-  (): AutocompleteOptionRenderer<ProgramRowFragmentWithId> =>
-  (props, program) =>
+  (): AutocompleteOptionRenderer<ProgramDocumentFragment> => (props, program) =>
     (
       <DefaultAutocompleteItemOption {...props}>
         <Box display="flex" alignItems="flex-end" gap={1} height={25}>
@@ -22,10 +21,10 @@ export const getProgramOptionRenderer =
                 whiteSpace: 'no-wrap',
               }}
             >
-              {program.type.substring(0, 3)}
+              {program?.name?.substring(0, 3)}
             </Typography>
           </Box>
-          <Typography>{program.type}</Typography>
+          <Typography>{program.name}</Typography>
         </Box>
       </DefaultAutocompleteItemOption>
     );

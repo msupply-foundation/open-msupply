@@ -7,7 +7,7 @@ import {
 } from '@openmsupply-client/common';
 import { usePatientModalStore } from '../hooks';
 import { PatientModal } from '.';
-import { ProgramSearchModal } from '../ProgramEnrolment/Components';
+import { ProgramSearchModal } from '../../Program/Components';
 import { useProgramEnrolment } from '../ProgramEnrolment/api';
 import { usePatient } from '../api';
 
@@ -55,10 +55,10 @@ export const AddButton = () => {
         onChange={async program => {
           setCurrent(undefined);
           const response = await enrol({
-            data: program.document.data,
+            data: program.jsonSchema,
             patientId,
-            schemaId: program.document.documentRegistry?.formSchemaId ?? '',
-            type: program.type,
+            schemaId: program.formSchemaId,
+            type: program.name ?? '',
           });
           setDocumentName(response.name);
           setDocumentType(response.type);

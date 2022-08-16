@@ -22,10 +22,6 @@ fragment ProgramRow on ProgramNode {
   patientId
   programPatientId
   type
-  schema {
-    jsonSchema
-    id
-  }
 }
 
 fragment Program on ProgramNode {

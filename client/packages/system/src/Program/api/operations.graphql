@@ -1,0 +1,22 @@
+fragment ProgramDocument on DocumentRegistryNode {
+  formSchemaId
+  jsonSchema
+  id
+  name
+}
+
+query programs($key: DocumentRegistrySortFieldInput!, $desc: Boolean) {
+  documentRegistries(
+    sort: { key: $key, desc: $desc }
+    filter: { context: { equalTo: PROGRAM } }
+  ) {
+    ... on DocumentRegistryConnector {
+      __typename
+      totalCount
+      nodes {
+        __typename
+        ...ProgramDocument
+      }
+    }
+  }
+}
