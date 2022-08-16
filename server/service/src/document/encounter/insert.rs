@@ -39,49 +39,56 @@ pub fn insert_encounter(
     user_id: &str,
     input: InsertEncounter,
 ) -> Result<Document, InsertEncounterError> {
-    let patient =
-        ctx.connection
-            .transaction_sync(|_| {
-                let encounter = validate(ctx, &input)?;
-                let patient_id = input.patient_id.clone();
-                let program = input.program.clone();
-                let doc = generate(user_id, input)?;
+    let patient = ctx
+        .connection
+        .transaction_sync(|_| {
+            let encounter = validate(ctx, &input)?;
+            let patient_id = input.patient_id.clone();
+            let program = input.program.clone();
+            let doc = generate(user_id, input)?;
 
-                encounter_updated(&ctx.connection, &patient_id, &program, &doc, encounter)
-                    .map_err(|err| match err {
-                        EncounterTableUpdateError::RepositoryError(err) => {
-                            InsertEncounterError::DatabaseError(err)
-                        }
-                        EncounterTableUpdateError::InternalError(err) => {
-                            InsertEncounterError::InternalError(err)
-                        }
-                    })?;
+            encounter_updated(
+                &ctx.connection,
+                &patient_id,
+                &program,
+                &doc.name,
+                &doc,
+                encounter,
+            )
+            .map_err(|err| match err {
+                EncounterTableUpdateError::RepositoryError(err) => {
+                    InsertEncounterError::DatabaseError(err)
+                }
+                EncounterTableUpdateError::InternalError(err) => {
+                    InsertEncounterError::InternalError(err)
+                }
+            })?;
 
-                // Updating the document will trigger an update in the patient (names) table
-                let result = service_provider
-                    .document_service
-                    .update_document(ctx, doc)
-                    .map_err(|err| match err {
-                        DocumentInsertError::InvalidDataSchema(err) => {
-                            InsertEncounterError::InvalidDataSchema(err)
-                        }
-                        DocumentInsertError::DatabaseError(err) => {
-                            InsertEncounterError::DatabaseError(err)
-                        }
-                        DocumentInsertError::InternalError(err) => {
-                            InsertEncounterError::InternalError(err)
-                        }
-                        DocumentInsertError::DataSchemaDoesNotExist => {
-                            InsertEncounterError::DataSchemaDoesNotExist
-                        }
-                        DocumentInsertError::InvalidParent(err) => {
-                            InsertEncounterError::InternalError(err)
-                        }
-                    })?;
+            // Updating the document will trigger an update in the patient (names) table
+            let result = service_provider
+                .document_service
+                .update_document(ctx, doc)
+                .map_err(|err| match err {
+                    DocumentInsertError::InvalidDataSchema(err) => {
+                        InsertEncounterError::InvalidDataSchema(err)
+                    }
+                    DocumentInsertError::DatabaseError(err) => {
+                        InsertEncounterError::DatabaseError(err)
+                    }
+                    DocumentInsertError::InternalError(err) => {
+                        InsertEncounterError::InternalError(err)
+                    }
+                    DocumentInsertError::DataSchemaDoesNotExist => {
+                        InsertEncounterError::DataSchemaDoesNotExist
+                    }
+                    DocumentInsertError::InvalidParent(err) => {
+                        InsertEncounterError::InternalError(err)
+                    }
+                })?;
 
-                Ok(result)
-            })
-            .map_err(|err: TransactionError<InsertEncounterError>| err.to_inner_error())?;
+            Ok(result)
+        })
+        .map_err(|err: TransactionError<InsertEncounterError>| err.to_inner_error())?;
     Ok(patient)
 }
 
