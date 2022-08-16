@@ -5,38 +5,38 @@ import {
   QueryParamsProvider,
   useTranslation,
 } from '@openmsupply-client/common';
-import { useProgramEnrolment, ProgramRowFragmentWithId } from '../api';
-import { filterByType, ProgramSearchProps } from '../utils';
+import { useProgram, ProgramDocumentFragment } from '../../api';
+import { filterByType, ProgramSearchProps } from '../../utils';
 import { getProgramOptionRenderer } from './ProgramOptionRenderer';
-import { usePatient } from '../../api';
+// import { usePatient } from '@openmsupply-client/system/src/Patient/api';
 
 const ProgramSearchComponent: FC<ProgramSearchProps> = ({
   open,
   onClose,
   onChange,
 }) => {
-  const { data, isLoading } = useProgramEnrolment.document.listAll();
-  const patientId = usePatient.utils.id();
+  const { data, isLoading } = useProgram.document.list();
+  // const patientId = usePatient.utils.id();
   const t = useTranslation('app');
   const ProgramOptionRenderer = getProgramOptionRenderer();
 
   return (
-    <ListSearch<ProgramRowFragmentWithId>
+    <ListSearch<ProgramDocumentFragment>
       loading={isLoading}
       open={open}
       options={data?.nodes ?? []}
       onClose={onClose}
       title={t('programs')}
       renderOption={ProgramOptionRenderer}
-      getOptionLabel={(option: ProgramRowFragmentWithId) => option.name}
+      getOptionLabel={(option: ProgramDocumentFragment) => option.name ?? ''}
       filterOptions={filterByType}
       onChange={(
         _,
-        name: ProgramRowFragmentWithId | ProgramRowFragmentWithId[] | null
+        name: ProgramDocumentFragment | ProgramDocumentFragment[] | null
       ) => {
         if (name && !(name instanceof Array)) onChange(name);
       }}
-      getOptionDisabled={option => option.patientId === patientId}
+      // getOptionDisabled={option => option.patientId === patientId}
     />
   );
 };
@@ -44,8 +44,8 @@ const ProgramSearchComponent: FC<ProgramSearchProps> = ({
 export const ProgramSearchModal: FC<ProgramSearchProps> = props => (
   <QueryParamsProvider
     createStore={() =>
-      createQueryParamsStore<ProgramRowFragmentWithId>({
-        initialSortBy: { key: 'name' },
+      createQueryParamsStore<ProgramDocumentFragment>({
+        initialSortBy: { key: 'documentType' },
       })
     }
   >
