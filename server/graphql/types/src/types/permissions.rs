@@ -39,7 +39,6 @@ impl UserStorePermissionNode {
             permissions.push(UserPermissionNodePermission::from_domain(
                 &permission.permission,
             ));
-            println!("{:?}", permissions);
         }
         permissions
     }
