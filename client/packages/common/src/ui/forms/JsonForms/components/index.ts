@@ -9,3 +9,4 @@ export * from './Array';
 export * from './FirstItemArray';
 export * from './Boolean';
 export * from './IdGenerator';
+export * from './EncounterLineChart';

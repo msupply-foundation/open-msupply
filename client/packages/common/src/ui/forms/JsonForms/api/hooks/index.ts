@@ -8,4 +8,5 @@ export const useDocument = {
     document: Document.useDocument,
     documentRegistry: Document.useDocumentRegistryByContext,
   },
+  encounterExtractFields: Document.useEncounterExtractFields,
 };

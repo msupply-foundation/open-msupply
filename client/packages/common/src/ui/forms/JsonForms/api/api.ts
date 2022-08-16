@@ -2,6 +2,7 @@ import { DocumentRegistryNodeContext } from '@common/types';
 import {
   DocumentFragment,
   DocumentRegistryFragment,
+  EncounterExtractFieldFragment,
   Sdk,
 } from './operations.generated';
 
@@ -16,6 +17,17 @@ export const getDocumentQueries = (sdk: Sdk, storeId: string) => ({
       }
       throw new Error('Error querying document');
     },
+  },
+  encounterExtractFields: async (
+    fields: string[]
+  ): Promise<EncounterExtractFieldFragment[]> => {
+    const result = await sdk.encounterExtractFields({ fields, storeId });
+    const data = result?.encounterExtractFields;
+
+    if (data?.__typename === 'EncounterExtractFieldConnector') {
+      return data.nodes;
+    }
+    throw new Error('Error querying document');
   },
 });
 
