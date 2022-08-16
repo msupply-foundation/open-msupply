@@ -8,6 +8,7 @@ export const useProgramEnrolment = {
 
   document: {
     list: Document.useProgramEnrolments,
+    listAll: Document.useProgramEnrolmentsAll,
     insert: Document.useInsertProgramEnrolment,
     update: Document.useUpdateProgramEnrolment,
   },

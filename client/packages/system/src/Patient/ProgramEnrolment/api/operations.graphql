@@ -22,8 +22,9 @@ fragment ProgramRow on ProgramNode {
   patientId
   programPatientId
   type
-  document {
-    ...Document
+  schema {
+    jsonSchema
+    id
   }
 }
 
