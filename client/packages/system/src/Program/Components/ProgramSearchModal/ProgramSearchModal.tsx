@@ -8,7 +8,6 @@ import {
 import { useProgram, ProgramDocumentFragment } from '../../api';
 import { filterByType, ProgramSearchProps } from '../../utils';
 import { getProgramOptionRenderer } from './ProgramOptionRenderer';
-// import { usePatient } from '@openmsupply-client/system/src/Patient/api';
 
 const ProgramSearchComponent: FC<ProgramSearchProps> = ({
   disabledPrograms = [],
@@ -17,7 +16,6 @@ const ProgramSearchComponent: FC<ProgramSearchProps> = ({
   onChange,
 }) => {
   const { data, isLoading } = useProgram.document.list();
-  // const patientId = usePatient.utils.id();
   const t = useTranslation('app');
   const ProgramOptionRenderer = getProgramOptionRenderer();
 
