@@ -4,7 +4,7 @@ import { GraphQLClient } from 'graphql-request';
 import * as Dom from 'graphql-request/dist/types.dom';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type ProgramDocumentFragment = { __typename: 'DocumentRegistryNode', formSchemaId: string, jsonSchema: any, id: string, name?: string | null };
+export type ProgramDocumentFragment = { __typename: 'DocumentRegistryNode', id: string, documentType: string, formSchemaId: string, jsonSchema: any, name?: string | null };
 
 export type ProgramsQueryVariables = Types.Exact<{
   key: Types.DocumentRegistrySortFieldInput;
@@ -12,13 +12,14 @@ export type ProgramsQueryVariables = Types.Exact<{
 }>;
 
 
-export type ProgramsQuery = { __typename: 'FullQuery', documentRegistries: { __typename: 'DocumentRegistryConnector', totalCount: number, nodes: Array<{ __typename: 'DocumentRegistryNode', formSchemaId: string, jsonSchema: any, id: string, name?: string | null }> } };
+export type ProgramsQuery = { __typename: 'FullQuery', documentRegistries: { __typename: 'DocumentRegistryConnector', totalCount: number, nodes: Array<{ __typename: 'DocumentRegistryNode', id: string, documentType: string, formSchemaId: string, jsonSchema: any, name?: string | null }> } };
 
 export const ProgramDocumentFragmentDoc = gql`
     fragment ProgramDocument on DocumentRegistryNode {
+  id
+  documentType
   formSchemaId
   jsonSchema
-  id
   name
 }
     `;

@@ -11,6 +11,7 @@ import { getProgramOptionRenderer } from './ProgramOptionRenderer';
 // import { usePatient } from '@openmsupply-client/system/src/Patient/api';
 
 const ProgramSearchComponent: FC<ProgramSearchProps> = ({
+  disabledPrograms = [],
   open,
   onClose,
   onChange,
@@ -36,7 +37,9 @@ const ProgramSearchComponent: FC<ProgramSearchProps> = ({
       ) => {
         if (name && !(name instanceof Array)) onChange(name);
       }}
-      // getOptionDisabled={option => option.patientId === patientId}
+      getOptionDisabled={option =>
+        disabledPrograms.includes(option.documentType ?? '')
+      }
     />
   );
 };

@@ -1,7 +1,8 @@
 fragment ProgramDocument on DocumentRegistryNode {
+  id
+  documentType
   formSchemaId
   jsonSchema
-  id
   name
 }
 

@@ -17,6 +17,7 @@ export const AddButton = () => {
     usePatientModalStore();
   const { mutateAsync: enrol } = useProgramEnrolment.document.insert();
   const patientId = usePatient.utils.id();
+  const { data } = useProgramEnrolment.document.list();
   const options = [
     {
       value: PatientModal.Prescription,
@@ -50,6 +51,7 @@ export const AddButton = () => {
         onClick={() => setCurrent(selectedOption?.value)}
       />
       <ProgramSearchModal
+        disabledPrograms={data?.nodes?.map(program => program.type)}
         open={current === PatientModal.ProgramSearch}
         onClose={() => setCurrent(undefined)}
         onChange={async program => {
