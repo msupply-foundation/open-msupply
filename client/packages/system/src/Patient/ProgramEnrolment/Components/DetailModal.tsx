@@ -1,6 +1,7 @@
 import React, { FC } from 'react';
 import {
   BasicSpinner,
+  Box,
   DialogButton,
   SaveDocumentMutation,
   useDialog,
@@ -76,15 +77,9 @@ export const ProgramDetailModal: FC = () => {
     >
       <React.Suspense fallback={<div />}>
         {isLoading ? (
-          <div
-            style={{
-              height: '100%',
-              backgroundColor: 'chartreuse',
-              display: 'flex',
-            }}
-          >
+          <Box display="flex">
             <BasicSpinner />
-          </div>
+          </Box>
         ) : (
           JsonForm
         )}
