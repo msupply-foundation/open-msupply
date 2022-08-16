@@ -9,6 +9,7 @@ import {
   useFormatDateTime,
   ColumnAlign,
   useUrlQueryParams,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { ProgramRowFragmentWithId, useProgramEnrolment } from '../api';
 import { usePatientModalStore } from '../../hooks';
@@ -23,6 +24,7 @@ const ProgramListComponent: FC = () => {
   const { data, isError, isLoading } = useProgramEnrolment.document.list();
   const pagination = { page, first, offset };
   const { localisedDate } = useFormatDateTime();
+  const t = useTranslation('patients');
   const { setCurrent, setDocument, setProgramType } = usePatientModalStore();
 
   const columns = useColumns<ProgramRowFragmentWithId>(
@@ -62,7 +64,13 @@ const ProgramListComponent: FC = () => {
         setProgramType(row.type);
         setCurrent(PatientModal.Program);
       }}
-      noDataElement={<NothingHere />}
+      noDataElement={
+        <NothingHere
+          onCreate={() => setCurrent(PatientModal.ProgramSearch)}
+          body={t('messages.no-programs')}
+          buttonText={t('button.add-program')}
+        />
+      }
     />
   );
 };
