@@ -4,6 +4,7 @@ use repository::{Document, DocumentRepository, RepositoryError, TransactionError
 use crate::{
     document::{
         document_service::DocumentInsertError,
+        is_latest_doc,
         patient::{patient_program_doc_name, patient_program_encounter_doc_name},
         raw_document::RawDocument,
     },
@@ -47,22 +48,26 @@ pub fn insert_encounter(
             let program = input.program.clone();
             let doc = generate(user_id, input)?;
 
-            encounter_updated(
-                &ctx.connection,
-                &patient_id,
-                &program,
-                &doc.name,
-                &doc,
-                encounter,
-            )
-            .map_err(|err| match err {
-                EncounterTableUpdateError::RepositoryError(err) => {
-                    InsertEncounterError::DatabaseError(err)
-                }
-                EncounterTableUpdateError::InternalError(err) => {
-                    InsertEncounterError::InternalError(err)
-                }
-            })?;
+            if is_latest_doc(ctx, service_provider, &doc)
+                .map_err(InsertEncounterError::DatabaseError)?
+            {
+                encounter_updated(
+                    ctx,
+                    service_provider,
+                    &patient_id,
+                    &program,
+                    &doc,
+                    encounter,
+                )
+                .map_err(|err| match err {
+                    EncounterTableUpdateError::RepositoryError(err) => {
+                        InsertEncounterError::DatabaseError(err)
+                    }
+                    EncounterTableUpdateError::InternalError(err) => {
+                        InsertEncounterError::InternalError(err)
+                    }
+                })?;
+            }
 
             // Updating the document will trigger an update in the patient (names) table
             let result = service_provider
