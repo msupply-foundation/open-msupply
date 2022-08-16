@@ -6,10 +6,10 @@ import {
   useDialog,
   useJsonForms,
 } from '@openmsupply-client/common';
-import { useProgramEnrolment } from './api/hooks';
-import { usePatientModalStore } from '../hooks';
-import { PatientModal } from '../PatientView';
-import { usePatient } from '../api';
+import { useProgramEnrolment } from '../api/hooks';
+import { usePatientModalStore } from '../../hooks';
+import { PatientModal } from '../../PatientView';
+import { usePatient } from '../../api';
 
 const useUpsertProgramEnrolment = (
   patientId: string,
