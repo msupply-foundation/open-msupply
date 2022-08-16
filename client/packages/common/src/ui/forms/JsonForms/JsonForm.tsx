@@ -34,6 +34,8 @@ import {
   firstItemArrayTester,
   idGeneratorTester,
   IdGenerator,
+  encounterLineChartTester,
+  EncounterLineChart,
 } from './components';
 import {
   AccordionGroup,
@@ -138,6 +140,7 @@ const renderers = [
   { tester: arrayTester, renderer: Array },
   { tester: firstItemArrayTester, renderer: FirstItemArray },
   { tester: idGeneratorTester, renderer: IdGenerator },
+  { tester: encounterLineChartTester, renderer: EncounterLineChart },
 ];
 
 export const JsonForm: FC<PropsWithChildren<JsonFormProps>> = ({

@@ -642,6 +642,24 @@ export type EncounterConnector = {
   totalCount: Scalars['Int'];
 };
 
+export type EncounterExtractFieldConnector = {
+  __typename: 'EncounterExtractFieldConnector';
+  nodes: Array<EncounterExtractFieldsNode>;
+  totalCount: Scalars['Int'];
+};
+
+export type EncounterExtractFieldResponse = EncounterExtractFieldConnector;
+
+export type EncounterExtractFieldsInput = {
+  fields: Array<Scalars['String']>;
+};
+
+export type EncounterExtractFieldsNode = {
+  __typename: 'EncounterExtractFieldsNode';
+  encounter: EncounterNode;
+  fields: Array<Scalars['JSON']>;
+};
+
 export type EncounterFilterInput = {
   endDatetime?: InputMaybe<DatetimeFilterInput>;
   name?: InputMaybe<EqualFilterStringInput>;
@@ -665,7 +683,7 @@ export type EncounterNode = {
 };
 
 export enum EncounterNodeStatus {
-  Canceled = 'CANCELED',
+  Cancelled = 'CANCELLED',
   Done = 'DONE',
   Scheduled = 'SCHEDULED'
 }
@@ -1258,6 +1276,7 @@ export type FullQuery = {
   documentHistory: DocumentHistoryResponse;
   documentRegistries: DocumentRegistryResponse;
   documents: DocumentResponse;
+  encounterExtractFields: EncounterExtractFieldResponse;
   encounters: EncounterResponse;
   formSchema?: Maybe<FormSchemaNode>;
   invoice: InvoiceResponse;
@@ -1341,6 +1360,15 @@ export type FullQueryDocumentRegistriesArgs = {
 
 export type FullQueryDocumentsArgs = {
   filter?: InputMaybe<DocumentFilterInput>;
+  storeId: Scalars['String'];
+};
+
+
+export type FullQueryEncounterExtractFieldsArgs = {
+  filter?: InputMaybe<EncounterFilterInput>;
+  input: EncounterExtractFieldsInput;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<EncounterSortInput>;
   storeId: Scalars['String'];
 };
 
@@ -3112,6 +3140,8 @@ export enum ServerStatus {
 export type SimpleStringFilterInput = {
   /** Search term must be an exact match (case sensitive) */
   equalTo?: InputMaybe<Scalars['String']>;
+  /** Search term must be an exact match, but case insensitive */
+  insensitiveEqualTo?: InputMaybe<Scalars['String']>;
   /** Search term must be included in search candidate (case insensitive) */
   like?: InputMaybe<Scalars['String']>;
 };
