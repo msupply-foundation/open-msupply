@@ -9,12 +9,17 @@ use crate::service_provider::ServiceProvider;
 use crate::ListError;
 use crate::ListResult;
 
+use self::extract_encounter_fields::encounter_extract_fields;
+use self::extract_encounter_fields::ExtractFieldInput;
+use self::extract_encounter_fields::ExtractFieldResult;
 pub use self::insert::*;
 use self::query::get_patient_program_encounters;
 pub use self::update::*;
 
 pub mod encounter_schema;
 mod encounter_updated;
+pub mod extract_encounter_fields;
+pub(crate) mod extract_fields;
 mod insert;
 mod query;
 mod update;
@@ -48,6 +53,17 @@ pub trait EncounterServiceTrait: Sync + Send {
         sort: Option<EncounterSort>,
     ) -> Result<ListResult<Encounter>, ListError> {
         get_patient_program_encounters(ctx, pagination, filter, sort)
+    }
+
+    fn extract_encounters_fields(
+        &self,
+        ctx: &ServiceContext,
+        input: ExtractFieldInput,
+        pagination: Option<PaginationOption>,
+        filter: Option<EncounterFilter>,
+        sort: Option<EncounterSort>,
+    ) -> Result<ListResult<ExtractFieldResult>, ListError> {
+        encounter_extract_fields(ctx, input, pagination, filter, sort)
     }
 }
 
