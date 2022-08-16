@@ -36,9 +36,7 @@ pub fn extract_fields(fields: &[String], data: &Value) -> Vec<Value> {
 mod document_service_test {
     use serde_json::Value;
 
-    use crate::document::extract_fields::extract_fields;
-
-    use super::extract_field;
+    use super::{extract_field, extract_fields};
 
     #[test]
     fn test_field_extraction() {
