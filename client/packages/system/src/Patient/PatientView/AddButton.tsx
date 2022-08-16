@@ -9,14 +9,10 @@ import { usePatientModalStore } from '../hooks';
 import { PatientModal } from '.';
 import { ProgramSearchModal } from '../../Program/Components';
 import { useProgramEnrolment } from '../ProgramEnrolment/api';
-import { usePatient } from '../api';
 
 export const AddButton = () => {
   const t = useTranslation('patients');
-  const { current, setCurrent, setDocumentName, setDocumentType } =
-    usePatientModalStore();
-  const { mutateAsync: enrol } = useProgramEnrolment.document.insert();
-  const patientId = usePatient.utils.id();
+  const { current, setCurrent, setDocument } = usePatientModalStore();
   const { data } = useProgramEnrolment.document.list();
   const options = [
     {
@@ -54,16 +50,10 @@ export const AddButton = () => {
         disabledPrograms={data?.nodes?.map(program => program.type)}
         open={current === PatientModal.ProgramSearch}
         onClose={() => setCurrent(undefined)}
-        onChange={async program => {
+        onChange={async documentRegistry => {
+          const createDocument = { data: {}, documentRegistry };
           setCurrent(undefined);
-          const response = await enrol({
-            data: program.jsonSchema,
-            patientId,
-            schemaId: program.formSchemaId,
-            type: program.name ?? '',
-          });
-          setDocumentName(response.name);
-          setDocumentType(response.type);
+          setDocument({ type: documentRegistry.documentType, createDocument });
           setCurrent(PatientModal.Program);
         }}
       />
