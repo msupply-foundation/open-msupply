@@ -37,6 +37,7 @@ export const getProgramEnrolmentQueries = (sdk: Sdk, storeId: string) => ({
       return result?.programs;
     },
   },
+
   insertProgram: async (
     input: InsertProgramInput
   ): Promise<DocumentFragment> => {
