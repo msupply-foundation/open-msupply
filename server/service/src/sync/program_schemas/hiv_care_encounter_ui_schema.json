@@ -23,6 +23,32 @@
       "scope": "#/properties/status"
     },
     {
+      "type": "EncounterLineChart",
+      "scope": "#",
+      "options": {
+        "values": [
+          {
+            "field": "physicalExamination.weight",
+            "label": "Weight",
+            "unit": "kg"
+          }
+        ]
+      }
+    },
+    {
+      "type": "EncounterLineChart",
+      "scope": "#",
+      "options": {
+        "values": [
+          {
+            "field": "physicalExamination.bloodPressure",
+            "label": "Blood Pressure",
+            "unit": "mmHg"
+          }
+        ]
+      }
+    },
+    {
       "type": "Control",
       "scope": "#/properties/physicalExamination"
     },
