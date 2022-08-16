@@ -19,6 +19,7 @@ pub(crate) fn encounter_updated(
     con: &StorageConnection,
     patient_id: &str,
     program: &str,
+    doc_name: &str,
     doc: &RawDocument,
     encounter: SchemaEncounter,
 ) -> Result<EncounterRow, EncounterTableUpdateError> {
@@ -56,11 +57,7 @@ pub(crate) fn encounter_updated(
 
     let repo = EncounterRepository::new(con);
     let row = repo
-        .query_by_filter(
-            EncounterFilter::new()
-                .patient_id(EqualFilter::equal_to(patient_id))
-                .program(EqualFilter::equal_to(program)),
-        )
+        .query_by_filter(EncounterFilter::new().name(EqualFilter::equal_to(doc_name)))
         .map_err(|err| EncounterTableUpdateError::RepositoryError(err))?
         .pop();
     let id = match row {

@@ -47,6 +47,7 @@ pub fn update_encounter(
                 &ctx.connection,
                 &encounter_row.patient_id,
                 &encounter_row.program,
+                &doc.name,
                 &doc,
                 encounter,
             )
