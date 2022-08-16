@@ -16,6 +16,17 @@ fragment Document on DocumentNode {
   }
 }
 
+fragment ProgramRow on ProgramNode {
+  enrolmentDatetime
+  name
+  patientId
+  programPatientId
+  type
+  document {
+    ...Document
+  }
+}
+
 fragment Program on ProgramNode {
   type
   programPatientId
@@ -29,7 +40,7 @@ fragment Program on ProgramNode {
 
 query programs(
   $storeId: String!
-  $key: ProgramSortFieldInput
+  $key: ProgramSortFieldInput!
   $desc: Boolean
   $filter: ProgramFilterInput
 ) {
@@ -39,6 +50,19 @@ query programs(
     filter: $filter
   ) {
     ... on ProgramConnector {
+      __typename
+      nodes {
+        ...ProgramRow
+      }
+      totalCount
+    }
+  }
+}
+
+query programById($storeId: String!, $programId: String!) {
+  programs(storeId: $storeId, filter: { id: { equalTo: $programId } }) {
+    ... on ProgramConnector {
+      __typename
       nodes {
         ...Program
       }

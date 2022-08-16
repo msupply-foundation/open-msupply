@@ -665,7 +665,7 @@ export type EncounterNode = {
 };
 
 export enum EncounterNodeStatus {
-  Canceled = 'CANCELED',
+  Cancelled = 'CANCELLED',
   Done = 'DONE',
   Scheduled = 'SCHEDULED'
 }
@@ -3112,6 +3112,8 @@ export enum ServerStatus {
 export type SimpleStringFilterInput = {
   /** Search term must be an exact match (case sensitive) */
   equalTo?: InputMaybe<Scalars['String']>;
+  /** Search term must be an exact match, but case insensitive */
+  insensitiveEqualTo?: InputMaybe<Scalars['String']>;
   /** Search term must be included in search candidate (case insensitive) */
   like?: InputMaybe<Scalars['String']>;
 };

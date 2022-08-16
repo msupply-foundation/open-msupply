@@ -1,2 +1,1 @@
-export * from './DetailModal';
-export * from './ListView';
+export * from './Components';
