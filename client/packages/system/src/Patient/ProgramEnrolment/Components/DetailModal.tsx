@@ -43,21 +43,20 @@ const useUpsertProgramEnrolment = (
 export const ProgramDetailModal: FC = () => {
   const patientId = usePatient.utils.id();
 
-  const { current, documentName, documentType, reset } = usePatientModalStore();
-  const handleSave = useUpsertProgramEnrolment(patientId, documentType || '');
+  const { current, document, reset } = usePatientModalStore();
+  const handleSave = useUpsertProgramEnrolment(patientId, document?.type || '');
   const { JsonForm, isLoading, saveData, isDirty } = useJsonForms(
-    documentName,
+    document?.name,
     {
       handleSave,
-    }
+    },
+    document?.createDocument
   );
 
   const { Modal } = useDialog({
     isOpen: current === PatientModal.Program,
     onClose: reset,
   });
-
-  if (isLoading) return <BasicSpinner />;
 
   return (
     <Modal
@@ -76,14 +75,18 @@ export const ProgramDetailModal: FC = () => {
       width={1024}
     >
       <React.Suspense fallback={<div />}>
-        {documentName ? (
-          isLoading ? (
+        {isLoading ? (
+          <div
+            style={{
+              height: '100%',
+              backgroundColor: 'chartreuse',
+              display: 'flex',
+            }}
+          >
             <BasicSpinner />
-          ) : (
-            JsonForm
-          )
+          </div>
         ) : (
-          'Program enrolment form'
+          JsonForm
         )}
       </React.Suspense>
     </Modal>

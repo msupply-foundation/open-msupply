@@ -23,8 +23,7 @@ const ProgramListComponent: FC = () => {
   const { data, isError, isLoading } = useProgramEnrolment.document.list();
   const pagination = { page, first, offset };
   const { localisedDate } = useFormatDateTime();
-  const { setCurrent, setDocumentName, setDocumentType, setProgramType } =
-    usePatientModalStore();
+  const { setCurrent, setDocument, setProgramType } = usePatientModalStore();
 
   const columns = useColumns<ProgramRowFragmentWithId>(
     [
@@ -59,9 +58,8 @@ const ProgramListComponent: FC = () => {
       isLoading={isLoading}
       isError={isError}
       onRowClick={row => {
-        setDocumentType(row.type);
+        setDocument({ type: row.type, name: row.name });
         setProgramType(row.type);
-        setDocumentName(row.document.name);
         setCurrent(PatientModal.Program);
       }}
       noDataElement={<NothingHere />}

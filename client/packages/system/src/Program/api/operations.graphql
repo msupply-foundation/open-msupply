@@ -4,6 +4,10 @@ fragment ProgramDocument on DocumentRegistryNode {
   formSchemaId
   jsonSchema
   name
+  context
+  parentId
+  uiSchema
+  uiSchemaType
 }
 
 query programs($key: DocumentRegistrySortFieldInput!, $desc: Boolean) {
@@ -17,6 +21,9 @@ query programs($key: DocumentRegistrySortFieldInput!, $desc: Boolean) {
       nodes {
         __typename
         ...ProgramDocument
+        children {
+          ...ProgramDocument
+        }
       }
     }
   }
