@@ -216,18 +216,6 @@ async fn run_server(
         Ok(_) => {}
         Err(err) => {
             error!("Failed to perform the initial sync: {}", err);
-            if !is_develop() {
-                warn!("Falling back to bootstrap mode");
-                return run_stage0(
-                    settings,
-                    off_switch,
-                    token_bucket,
-                    token_secret,
-                    connection_manager,
-                    certificates,
-                )
-                .await;
-            }
         }
     };
 
