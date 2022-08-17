@@ -1,5 +1,5 @@
-import { DocumentRegistryFragment } from '@openmsupply-client/common';
 import create from 'zustand';
+import { DocumentRegistryFragment } from '../JsonForms/api';
 
 // Copied from the schema definition
 export enum Gender {

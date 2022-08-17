@@ -12,12 +12,11 @@ import {
   useDialog,
   WizardStepper,
   useTranslation,
-  useDocument,
-  DocumentRegistryFragment,
 } from '@openmsupply-client/common';
 import { PatientFormTab } from './PatientFormTab';
 import { PatientResultsTab } from './PatientResultsTab';
 import { CreateNewPatient, usePatientCreateStore } from '../hooks';
+import { DocumentRegistryFragment, useDocument } from '../JsonForms/api';
 
 enum Tabs {
   Form = 'Form',
