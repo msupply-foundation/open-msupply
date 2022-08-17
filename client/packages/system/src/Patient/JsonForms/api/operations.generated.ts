@@ -32,6 +32,16 @@ export type AllocateNumberMutationVariables = Types.Exact<{
 
 export type AllocateNumberMutation = { __typename: 'FullMutation', allocateNumber: { __typename: 'NumberNode', number: number } };
 
+export type EncounterFieldsFragment = { __typename: 'EncounterFieldsNode', fields: Array<any>, encounter: { __typename: 'EncounterNode', name: string, startDatetime: string, endDatetime?: string | null } };
+
+export type EncounterFieldsQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String'];
+  fields?: Types.InputMaybe<Array<Types.Scalars['String']> | Types.Scalars['String']>;
+}>;
+
+
+export type EncounterFieldsQuery = { __typename: 'FullQuery', encounterFields: { __typename: 'EncounterFieldsConnector', nodes: Array<{ __typename: 'EncounterFieldsNode', fields: Array<any>, encounter: { __typename: 'EncounterNode', name: string, startDatetime: string, endDatetime?: string | null } }> } };
+
 export const DocumentFragmentDoc = gql`
     fragment Document on DocumentNode {
   id
@@ -63,6 +73,16 @@ export const DocumentRegistryFragmentDoc = gql`
   jsonSchema
   uiSchemaType
   uiSchema
+}
+    `;
+export const EncounterFieldsFragmentDoc = gql`
+    fragment EncounterFields on EncounterFieldsNode {
+  fields
+  encounter {
+    name
+    startDatetime
+    endDatetime
+  }
 }
     `;
 export const DocumentByNameDocument = gql`
@@ -106,6 +126,19 @@ export const AllocateNumberDocument = gql`
   }
 }
     `;
+export const EncounterFieldsDocument = gql`
+    query encounterFields($storeId: String!, $fields: [String!]) {
+  encounterFields(input: {fields: $fields}, storeId: $storeId) {
+    ... on EncounterFieldsConnector {
+      __typename
+      nodes {
+        __typename
+        ...EncounterFields
+      }
+    }
+  }
+}
+    ${EncounterFieldsFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -122,6 +155,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     allocateNumber(variables: AllocateNumberMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<AllocateNumberMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<AllocateNumberMutation>(AllocateNumberDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'allocateNumber', 'mutation');
+    },
+    encounterFields(variables: EncounterFieldsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<EncounterFieldsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<EncounterFieldsQuery>(EncounterFieldsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'encounterFields', 'query');
     }
   };
 }
@@ -175,5 +211,22 @@ export const mockDocumentRegistriesQuery = (resolver: ResponseResolver<GraphQLRe
 export const mockAllocateNumberMutation = (resolver: ResponseResolver<GraphQLRequest<AllocateNumberMutationVariables>, GraphQLContext<AllocateNumberMutation>, any>) =>
   graphql.mutation<AllocateNumberMutation, AllocateNumberMutationVariables>(
     'allocateNumber',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockEncounterFieldsQuery((req, res, ctx) => {
+ *   const { storeId, fields } = req.variables;
+ *   return res(
+ *     ctx.data({ encounterFields })
+ *   )
+ * })
+ */
+export const mockEncounterFieldsQuery = (resolver: ResponseResolver<GraphQLRequest<EncounterFieldsQueryVariables>, GraphQLContext<EncounterFieldsQuery>, any>) =>
+  graphql.query<EncounterFieldsQuery, EncounterFieldsQueryVariables>(
+    'encounterFields',
     resolver
   )

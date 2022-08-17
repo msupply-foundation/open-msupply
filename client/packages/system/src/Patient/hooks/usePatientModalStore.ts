@@ -1,4 +1,5 @@
-import { CreateDocument, zustand } from '@openmsupply-client/common';
+import { zustand } from '@openmsupply-client/common';
+import { CreateDocument } from '../JsonForms';
 import { PatientModal } from '../PatientView';
 
 interface PatientModalDocument {

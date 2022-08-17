@@ -69,3 +69,24 @@ mutation allocateNumber($numberName: String!, $storeId: String!) {
     }
   }
 }
+
+fragment EncounterFields on EncounterFieldsNode {
+  fields
+  encounter {
+    name
+    startDatetime
+    endDatetime
+  }
+}
+
+query encounterFields($storeId: String!, $fields: [String!]) {
+  encounterFields(input: { fields: $fields }, storeId: $storeId) {
+    ... on EncounterFieldsConnector {
+      __typename
+      nodes {
+        __typename
+        ...EncounterFields
+      }
+    }
+  }
+}

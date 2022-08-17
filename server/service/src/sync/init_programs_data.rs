@@ -11,13 +11,15 @@ use crate::{
     },
     service_provider::ServiceProvider,
 };
-use chrono::Utc;
+use chrono::{Duration, Utc};
 use repository::{
     DocumentContext, DocumentRegistryRow, DocumentRegistryRowRepository, EqualFilter, FormSchema,
     FormSchemaRowRepository, RepositoryError, StoreFilter, StoreRepository,
 };
 use serde::{Deserialize, Serialize};
 use util::{inline_init, uuid::uuid};
+
+use self::hiv_care_encounter::HivcareEncounterPhysicalExamination;
 
 schemafy::schemafy!("src/sync/program_schemas/patient.json");
 
@@ -291,9 +293,87 @@ fn program_2() -> hiv_care_program::HivcareProgramEnrolment {
 fn encounter_1() -> hiv_care_encounter::HivcareEncounter {
     inline_init(|e: &mut hiv_care_encounter::HivcareEncounter| {
         e.status = Some(hiv_care_encounter::EncounterStatus::Scheduled);
+        e.start_datetime = Utc::now()
+            .checked_sub_signed(Duration::weeks(5))
+            .unwrap()
+            .to_rfc3339();
+        e.end_datetime = None;
+        e.practitioner = None;
+        e.physical_examination = Some(inline_init(
+            |exam: &mut HivcareEncounterPhysicalExamination| {
+                exam.weight = Some(51.0);
+                exam.blood_pressure = Some(120.0);
+            },
+        ));
+    })
+}
+
+fn encounter_2() -> hiv_care_encounter::HivcareEncounter {
+    inline_init(|e: &mut hiv_care_encounter::HivcareEncounter| {
+        e.status = Some(hiv_care_encounter::EncounterStatus::Scheduled);
+        e.start_datetime = Utc::now()
+            .checked_sub_signed(Duration::weeks(4))
+            .unwrap()
+            .to_rfc3339();
+        e.end_datetime = None;
+        e.practitioner = None;
+        e.physical_examination = Some(inline_init(
+            |exam: &mut HivcareEncounterPhysicalExamination| {
+                exam.weight = Some(52.0);
+                exam.blood_pressure = Some(125.0);
+            },
+        ));
+    })
+}
+
+fn encounter_3() -> hiv_care_encounter::HivcareEncounter {
+    inline_init(|e: &mut hiv_care_encounter::HivcareEncounter| {
+        e.status = Some(hiv_care_encounter::EncounterStatus::Scheduled);
+        e.start_datetime = Utc::now()
+            .checked_sub_signed(Duration::weeks(3))
+            .unwrap()
+            .to_rfc3339();
+        e.end_datetime = None;
+        e.practitioner = None;
+        e.physical_examination = Some(inline_init(
+            |exam: &mut HivcareEncounterPhysicalExamination| {
+                exam.weight = Some(52.5);
+                exam.blood_pressure = Some(128.0);
+            },
+        ));
+    })
+}
+
+fn encounter_4() -> hiv_care_encounter::HivcareEncounter {
+    inline_init(|e: &mut hiv_care_encounter::HivcareEncounter| {
+        e.status = Some(hiv_care_encounter::EncounterStatus::Scheduled);
+        e.start_datetime = Utc::now()
+            .checked_sub_signed(Duration::weeks(1))
+            .unwrap()
+            .to_rfc3339();
+        e.end_datetime = None;
+        e.practitioner = None;
+        e.physical_examination = Some(inline_init(
+            |exam: &mut HivcareEncounterPhysicalExamination| {
+                exam.weight = Some(51.0);
+                exam.blood_pressure = Some(121.0);
+            },
+        ));
+    })
+}
+
+fn encounter_5() -> hiv_care_encounter::HivcareEncounter {
+    inline_init(|e: &mut hiv_care_encounter::HivcareEncounter| {
+        e.status = Some(hiv_care_encounter::EncounterStatus::Scheduled);
         e.start_datetime = Utc::now().to_rfc3339();
         e.end_datetime = None;
         e.practitioner = None;
+        e.physical_examination = Some(inline_init(
+            |exam: &mut HivcareEncounterPhysicalExamination| {
+                exam.weight = Some(54.0);
+                exam.blood_pressure = Some(118.0);
+            },
+        ));
     })
 }
 
@@ -453,6 +533,62 @@ pub fn init_program_data(
                 patient_id: patient_1().id,
                 r#type: "HIVCareEncounter".to_string(),
                 data: serde_json::to_value(encounter_1()).unwrap(),
+                schema_id: hiv_care_encounter_schema_id.clone(),
+                program: "HIVCareProgram".to_string(),
+            },
+        )
+        .unwrap();
+    service
+        .insert_encounter(
+            &ctx,
+            &service_provider,
+            "no user",
+            InsertEncounter {
+                patient_id: patient_1().id,
+                r#type: "HIVCareEncounter".to_string(),
+                data: serde_json::to_value(encounter_2()).unwrap(),
+                schema_id: hiv_care_encounter_schema_id.clone(),
+                program: "HIVCareProgram".to_string(),
+            },
+        )
+        .unwrap();
+    service
+        .insert_encounter(
+            &ctx,
+            &service_provider,
+            "no user",
+            InsertEncounter {
+                patient_id: patient_1().id,
+                r#type: "HIVCareEncounter".to_string(),
+                data: serde_json::to_value(encounter_3()).unwrap(),
+                schema_id: hiv_care_encounter_schema_id.clone(),
+                program: "HIVCareProgram".to_string(),
+            },
+        )
+        .unwrap();
+    service
+        .insert_encounter(
+            &ctx,
+            &service_provider,
+            "no user",
+            InsertEncounter {
+                patient_id: patient_1().id,
+                r#type: "HIVCareEncounter".to_string(),
+                data: serde_json::to_value(encounter_4()).unwrap(),
+                schema_id: hiv_care_encounter_schema_id.clone(),
+                program: "HIVCareProgram".to_string(),
+            },
+        )
+        .unwrap();
+    service
+        .insert_encounter(
+            &ctx,
+            &service_provider,
+            "no user",
+            InsertEncounter {
+                patient_id: patient_1().id,
+                r#type: "HIVCareEncounter".to_string(),
+                data: serde_json::to_value(encounter_5()).unwrap(),
                 schema_id: hiv_care_encounter_schema_id.clone(),
                 program: "HIVCareProgram".to_string(),
             },

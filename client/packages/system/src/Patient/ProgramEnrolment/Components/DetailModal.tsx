@@ -3,14 +3,13 @@ import {
   BasicSpinner,
   Box,
   DialogButton,
-  SaveDocumentMutation,
   useDialog,
-  useJsonForms,
 } from '@openmsupply-client/common';
 import { useProgramEnrolment } from '../api/hooks';
 import { usePatientModalStore } from '../../hooks';
 import { PatientModal } from '../../PatientView';
 import { usePatient } from '../../api';
+import { SaveDocumentMutation, useJsonForms } from '../../JsonForms';
 
 const useUpsertProgramEnrolment = (
   patientId: string,

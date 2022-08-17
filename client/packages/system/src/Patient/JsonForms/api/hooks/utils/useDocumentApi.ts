@@ -7,6 +7,8 @@ export const usePatientDocumentApi = () => {
   const keys = {
     base: () => ['patient'] as const,
     detail: (name: string) => [...keys.base(), storeId, name] as const,
+    encounterFields: (fields: string[]) =>
+      [...keys.base(), storeId, ...fields] as const,
   };
   const { client } = useGql();
   const queries = getDocumentQueries(getSdk(client), storeId);

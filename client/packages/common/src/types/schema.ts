@@ -642,6 +642,24 @@ export type EncounterConnector = {
   totalCount: Scalars['Int'];
 };
 
+export type EncounterFieldsConnector = {
+  __typename: 'EncounterFieldsConnector';
+  nodes: Array<EncounterFieldsNode>;
+  totalCount: Scalars['Int'];
+};
+
+export type EncounterFieldsInput = {
+  fields: Array<Scalars['String']>;
+};
+
+export type EncounterFieldsNode = {
+  __typename: 'EncounterFieldsNode';
+  encounter: EncounterNode;
+  fields: Array<Scalars['JSON']>;
+};
+
+export type EncounterFieldsResponse = EncounterFieldsConnector;
+
 export type EncounterFilterInput = {
   endDatetime?: InputMaybe<DatetimeFilterInput>;
   name?: InputMaybe<EqualFilterStringInput>;
@@ -1258,6 +1276,7 @@ export type FullQuery = {
   documentHistory: DocumentHistoryResponse;
   documentRegistries: DocumentRegistryResponse;
   documents: DocumentResponse;
+  encounterFields: EncounterFieldsResponse;
   encounters: EncounterResponse;
   formSchema?: Maybe<FormSchemaNode>;
   invoice: InvoiceResponse;
@@ -1341,6 +1360,15 @@ export type FullQueryDocumentRegistriesArgs = {
 
 export type FullQueryDocumentsArgs = {
   filter?: InputMaybe<DocumentFilterInput>;
+  storeId: Scalars['String'];
+};
+
+
+export type FullQueryEncounterFieldsArgs = {
+  filter?: InputMaybe<EncounterFilterInput>;
+  input: EncounterFieldsInput;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<EncounterSortInput>;
   storeId: Scalars['String'];
 };
 
