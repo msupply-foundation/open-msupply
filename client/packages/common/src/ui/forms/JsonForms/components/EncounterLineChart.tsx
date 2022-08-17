@@ -41,7 +41,7 @@ const DateTimeTooltip = (props: DateTimeTooltipProps) => {
   return (
     <Box padding={0.5} border={1} borderColor={'lightgray'}>
       <p>{`${localisedDateTime(props.label)}`}</p>
-      <p>{`${props.name}: ${props.payload[0].value} [${props.unit}]`}</p>
+      <p>{`${props.name}: ${props.payload[0].value} ${props.unit}`}</p>
     </Box>
   );
 };
