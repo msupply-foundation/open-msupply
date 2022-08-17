@@ -6,8 +6,15 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { useProgram, ProgramDocumentFragment } from '../../api';
-import { filterByType, ProgramSearchProps } from '../../utils';
+import { filterByName } from '../../utils';
 import { getProgramOptionRenderer } from './ProgramOptionRenderer';
+
+export interface ProgramSearchProps {
+  disabledPrograms?: string[];
+  open: boolean;
+  onClose: () => void;
+  onChange: (name: ProgramDocumentFragment) => void;
+}
 
 const ProgramSearchComponent: FC<ProgramSearchProps> = ({
   disabledPrograms = [],
@@ -28,7 +35,7 @@ const ProgramSearchComponent: FC<ProgramSearchProps> = ({
       title={t('programs')}
       renderOption={ProgramOptionRenderer}
       getOptionLabel={(option: ProgramDocumentFragment) => option.name ?? ''}
-      filterOptions={filterByType}
+      filterOptions={filterByName}
       onChange={(
         _,
         name: ProgramDocumentFragment | ProgramDocumentFragment[] | null

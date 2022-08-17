@@ -1,14 +1,7 @@
 import { FilterOptionsState, RegexUtils } from '@openmsupply-client/common';
 import { ProgramDocumentFragment } from './api';
 
-export interface ProgramSearchProps {
-  disabledPrograms?: string[];
-  open: boolean;
-  onClose: () => void;
-  onChange: (name: ProgramDocumentFragment) => void;
-}
-
-export const filterByType = (
+export const filterByName = (
   options: ProgramDocumentFragment[],
   state: FilterOptionsState<ProgramDocumentFragment>
 ) =>
