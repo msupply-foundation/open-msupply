@@ -15,7 +15,7 @@ import {
 import { DateTimePicker, DateTimePickerProps } from '@mui/x-date-pickers';
 
 const BaseDateTimePickerInput: FC<
-  Omit<DateTimePickerProps<Date>, 'renderInput'>
+  Omit<DateTimePickerProps<Date>, 'renderInput'> & { error: string }
 > = props => {
   return (
     <DateTimePicker
@@ -26,7 +26,14 @@ const BaseDateTimePickerInput: FC<
           variant: 'standard',
         };
         return (
-          <BasicTextInput disabled={!!props.disabled} {...textInputProps} />
+          <BasicTextInput
+            error={!!props.error}
+            helperText={props.error}
+            FormHelperTextProps={
+              !!props.error ? { sx: { color: 'error.main' } } : undefined
+            }
+            {...textInputProps}
+          />
         );
       }}
       {...props}
@@ -37,10 +44,12 @@ const BaseDateTimePickerInput: FC<
 export const datetimeTester = rankWith(5, isDateTimeControl);
 
 const UIComponent = (props: ControlProps) => {
+  const [error, setError] = React.useState('');
   const { data, handleChange, label, path } = props;
   if (!props.visible) {
     return null;
   }
+
   return (
     <Box
       display="flex"
@@ -58,9 +67,17 @@ const UIComponent = (props: ControlProps) => {
           // undefined is displayed as "now" and null as unset
           value={data ?? null}
           onChange={e => {
-            if (e) handleChange(path, e.toISOString());
+            try {
+              setError('');
+              if (e) handleChange(path, e.toISOString());
+            } catch (err) {
+              setError((err as Error).message);
+              console.error(err);
+            }
           }}
           inputFormat="dd/MM/yyyy hh:mm"
+          error={error || props.errors}
+          // readOnly={!!props.uischema.options?.['readonly']}
         />
       </Box>
     </Box>

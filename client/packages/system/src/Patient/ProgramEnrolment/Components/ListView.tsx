@@ -1,4 +1,4 @@
-import React, { FC, useMemo } from 'react';
+import React, { FC } from 'react';
 import {
   TableProvider,
   DataTable,
@@ -9,12 +9,11 @@ import {
   useFormatDateTime,
   ColumnAlign,
   useUrlQueryParams,
+  useTranslation,
 } from '@openmsupply-client/common';
-import { ProgramFragment, useProgramEnrolment } from './api';
-import { usePatientModalStore } from '../hooks';
-import { PatientModal } from '../PatientView';
-
-type ProgramFragmentWithId = { id: string } & ProgramFragment;
+import { ProgramRowFragmentWithId, useProgramEnrolment } from '../api';
+import { usePatientModalStore } from '../../hooks';
+import { PatientModal } from '../../PatientView';
 
 const ProgramListComponent: FC = () => {
   const {
@@ -23,20 +22,12 @@ const ProgramListComponent: FC = () => {
     queryParams: { sortBy, page, first, offset },
   } = useUrlQueryParams();
   const { data, isError, isLoading } = useProgramEnrolment.document.list();
-  const dataWithId: ProgramFragmentWithId[] | undefined = useMemo(
-    () =>
-      data?.nodes.map(node => ({
-        id: node.name,
-        ...node,
-      })),
-    [data]
-  );
   const pagination = { page, first, offset };
   const { localisedDate } = useFormatDateTime();
-  const { setCurrent, setDocumentName, setDocumentType, setProgramType } =
-    usePatientModalStore();
+  const t = useTranslation('patients');
+  const { setCurrent, setDocument, setProgramType } = usePatientModalStore();
 
-  const columns = useColumns<ProgramFragmentWithId>(
+  const columns = useColumns<ProgramRowFragmentWithId>(
     [
       {
         key: 'type',
@@ -65,16 +56,21 @@ const ProgramListComponent: FC = () => {
       pagination={{ ...pagination, total: data?.totalCount }}
       onChangePage={updatePaginationQuery}
       columns={columns}
-      data={dataWithId}
+      data={data?.nodes}
       isLoading={isLoading}
       isError={isError}
       onRowClick={row => {
-        setDocumentType(row.type);
+        setDocument({ type: row.type, name: row.name });
         setProgramType(row.type);
-        setDocumentName(row.document.name);
         setCurrent(PatientModal.Program);
       }}
-      noDataElement={<NothingHere />}
+      noDataElement={
+        <NothingHere
+          onCreate={() => setCurrent(PatientModal.ProgramSearch)}
+          body={t('messages.no-programs')}
+          buttonText={t('button.add-program')}
+        />
+      }
     />
   );
 };
@@ -82,7 +78,7 @@ const ProgramListComponent: FC = () => {
 export const ProgramListView: FC = () => (
   <TableProvider
     createStore={createTableStore}
-    queryParamsStore={createQueryParamsStore<ProgramFragmentWithId>({
+    queryParamsStore={createQueryParamsStore<ProgramRowFragmentWithId>({
       initialSortBy: { key: 'type' },
     })}
   >

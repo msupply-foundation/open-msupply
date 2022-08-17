@@ -41,15 +41,14 @@ const useUpsertEncounter = (
 export const EncounterDetailModal: FC = () => {
   const patientId = usePatient.utils.id();
 
-  const { current, documentName, programType, documentType, reset } =
-    usePatientModalStore();
+  const { current, document, programType, reset } = usePatientModalStore();
   const handleSave = useUpsertEncounter(
     patientId,
     programType ?? '',
-    documentType ?? ''
+    document?.type ?? ''
   );
   const { JsonForm, saveData, isLoading, isDirty } = useJsonForms(
-    documentName,
+    document?.name,
     {
       handleSave,
     }
@@ -79,7 +78,7 @@ export const EncounterDetailModal: FC = () => {
       width={1024}
     >
       <React.Suspense fallback={<div />}>
-        {documentName ? (
+        {document?.name ? (
           isLoading ? (
             <BasicSpinner />
           ) : (
