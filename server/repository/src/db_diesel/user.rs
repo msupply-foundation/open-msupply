@@ -36,12 +36,6 @@ impl User {
     }
 }
 
-#[derive(PartialEq, Debug, Clone, Default)]
-pub struct UserStorePermissions {
-    pub store_row: StoreRow,
-    pub permissions: Vec<UserPermissionRow>,
-}
-
 #[derive(Clone, Default)]
 pub struct UserFilter {
     pub id: Option<EqualFilter<String>>,

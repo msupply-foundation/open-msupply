@@ -1,9 +1,15 @@
 use std::collections::HashMap;
 
 use repository::{
-    EqualFilter, RepositoryError, StorageConnectionManager, StoreRowRepository,
-    UserPermissionFilter, UserPermissionRepository, UserStorePermissions,
+    EqualFilter, RepositoryError, StorageConnectionManager, StoreRow, StoreRowRepository,
+    UserPermissionFilter, UserPermissionRepository, UserPermissionRow,
 };
+
+#[derive(PartialEq, Debug, Clone)]
+pub struct UserStorePermissions {
+    pub store_row: StoreRow,
+    pub permissions: Vec<UserPermissionRow>,
+}
 
 pub fn permission_by_store(
     connection_manager: &StorageConnectionManager,
