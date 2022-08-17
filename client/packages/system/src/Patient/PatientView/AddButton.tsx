@@ -7,10 +7,13 @@ import {
 } from '@openmsupply-client/common';
 import { usePatientModalStore } from '../hooks';
 import { PatientModal } from '.';
+import { ProgramSearchModal } from '../../Program/Components';
+import { useProgramEnrolment } from '../ProgramEnrolment/api';
 
 export const AddButton = () => {
   const t = useTranslation('patients');
-  const { setCurrent } = usePatientModalStore();
+  const { current, setCurrent, setDocument } = usePatientModalStore();
+  const { data } = useProgramEnrolment.document.list();
   const options = [
     {
       value: PatientModal.Prescription,
@@ -18,7 +21,7 @@ export const AddButton = () => {
       isDisabled: false,
     },
     {
-      value: PatientModal.Program,
+      value: PatientModal.ProgramSearch,
       label: t('button.add-program'),
       isDisabled: false,
     },
@@ -34,13 +37,26 @@ export const AddButton = () => {
   >(options[1] as SplitButtonOption<PatientModal>);
 
   return (
-    <SplitButton
-      color="primary"
-      options={options}
-      selectedOption={selectedOption}
-      onSelectOption={setSelectedOption}
-      Icon={<PlusCircleIcon />}
-      onClick={() => setCurrent(selectedOption?.value)}
-    />
+    <>
+      <SplitButton
+        color="primary"
+        options={options}
+        selectedOption={selectedOption}
+        onSelectOption={setSelectedOption}
+        Icon={<PlusCircleIcon />}
+        onClick={() => setCurrent(selectedOption?.value)}
+      />
+      <ProgramSearchModal
+        disabledPrograms={data?.nodes?.map(program => program.type)}
+        open={current === PatientModal.ProgramSearch}
+        onClose={() => setCurrent(undefined)}
+        onChange={async documentRegistry => {
+          const createDocument = { data: {}, documentRegistry };
+          setCurrent(undefined);
+          setDocument({ type: documentRegistry.documentType, createDocument });
+          setCurrent(PatientModal.Program);
+        }}
+      />
+    </>
   );
 };

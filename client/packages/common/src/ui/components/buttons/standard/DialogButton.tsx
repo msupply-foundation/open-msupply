@@ -3,7 +3,7 @@ import { LocaleKey, useTranslation } from '@common/intl';
 import { ArrowRightIcon, CheckIcon, XCircleIcon } from '@common/icons';
 import { ButtonWithIcon } from './ButtonWithIcon';
 
-type DialogButtonVariant = 'cancel' | 'next' | 'ok';
+type DialogButtonVariant = 'cancel' | 'next' | 'ok' | 'create';
 
 interface DialogButtonProps {
   disabled?: boolean;
@@ -34,6 +34,12 @@ const getButtonProps = (
       return {
         icon: <CheckIcon />,
         labelKey: 'button.ok',
+        variant: 'contained',
+      };
+    case 'create':
+      return {
+        icon: <CheckIcon />,
+        labelKey: 'button.create',
         variant: 'contained',
       };
     case 'next':
