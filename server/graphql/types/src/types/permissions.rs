@@ -1,6 +1,6 @@
 use async_graphql::{Enum, Object, SimpleObject};
-use repository::{Permission, UserStorePermissions};
-use service::{usize_to_u32, ListResult};
+use repository::Permission;
+use service::{permission::UserStorePermissions, usize_to_u32, ListResult};
 
 #[derive(PartialEq, Debug)]
 pub struct UserStorePermissionNode {
