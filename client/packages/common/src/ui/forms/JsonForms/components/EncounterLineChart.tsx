@@ -10,9 +10,7 @@ import {
   XAxis,
   YAxis,
 } from '@openmsupply-client/common';
-
-import { CartesianGrid, Tooltip, TooltipProps } from 'recharts';
-import { Label } from 'recharts';
+import { CartesianGrid, Tooltip, TooltipProps, Label } from 'recharts';
 
 export const encounterLineChartTester = rankWith(
   4,
