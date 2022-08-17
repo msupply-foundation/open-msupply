@@ -4,9 +4,7 @@ import {
   DetailViewSkeleton,
   DialogButton,
   LoadingButton,
-  SaveDocumentMutation,
   useConfirmationModal,
-  useJsonForms,
   useNavigate,
   RouteBuilder,
   Box,
@@ -19,6 +17,7 @@ import { AppBarButtons } from './AppBarButtons';
 import { PatientSummary } from './PatientSummary';
 import { ProgramDetailModal, ProgramListView } from '../ProgramEnrolment';
 import { EncounterDetailModal, EncounterListView } from '../Encounter';
+import { SaveDocumentMutation, useJsonForms } from '../JsonForms';
 
 const useUpsertPatient = (): SaveDocumentMutation => {
   const { mutateAsync: insertPatient } = usePatient.document.insert();

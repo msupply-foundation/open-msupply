@@ -1,7 +1,17 @@
-import { DocumentRegistry, JsonData } from './JsonForm';
 import { useDocument } from './api';
 import { DocumentRegistryFragment } from './api/operations.generated';
 import { useEffect, useState } from 'react';
+import {
+  JsonData,
+  JsonSchema,
+  UISchemaElement,
+} from '@openmsupply-client/common';
+
+export interface DocumentRegistry {
+  formSchemaId: string;
+  jsonSchema: JsonSchema;
+  uiSchema: UISchemaElement;
+}
 
 /**
  * Information required to create a new document

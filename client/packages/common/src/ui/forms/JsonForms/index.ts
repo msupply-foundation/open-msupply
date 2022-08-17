@@ -1,2 +1,3 @@
-export * from './useJsonForms';
-export * from './api';
+export * from './JsonForm';
+export { JsonSchema, UISchemaElement } from '@jsonforms/core';
+export * from './styleConstants';

@@ -5,12 +5,12 @@ import { Box } from '@mui/material';
 import {
   Line,
   LineChart,
-  useDocument,
   useFormatDateTime,
   XAxis,
   YAxis,
 } from '@openmsupply-client/common';
 import { CartesianGrid, Tooltip, TooltipProps, Label } from 'recharts';
+import { useDocument } from '../api';
 
 export const encounterLineChartTester = rankWith(
   4,

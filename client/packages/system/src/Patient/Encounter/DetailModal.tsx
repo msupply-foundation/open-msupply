@@ -2,14 +2,13 @@ import React, { FC } from 'react';
 import {
   BasicSpinner,
   DialogButton,
-  SaveDocumentMutation,
   useDialog,
-  useJsonForms,
 } from '@openmsupply-client/common';
 import { useEncounter } from './api/hooks';
 import { usePatientModalStore } from '../hooks';
 import { PatientModal } from '../PatientView';
 import { usePatient } from '../api';
+import { SaveDocumentMutation, useJsonForms } from '../JsonForms';
 
 const useUpsertEncounter = (
   patientId: string,

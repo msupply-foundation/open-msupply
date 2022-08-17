@@ -3,11 +3,19 @@ import {
   useTranslation,
   useNotification,
   useConfirmOnLeaving,
+  JsonData,
+  JsonForm,
 } from '@openmsupply-client/common';
 import { DocumentRegistryFragment } from './api/operations.generated';
-import { JsonData, JsonForm } from './JsonForm';
 import { useDocumentLoader } from './useDocumentLoader';
 import _ from 'lodash';
+import { JsonFormsRendererRegistryEntry } from '@jsonforms/core';
+import {
+  EncounterLineChart,
+  encounterLineChartTester,
+} from './components/EncounterLineChart';
+import { DateOfBirth, dateOfBirthTester } from './components/DateOfBirth';
+import { IdGenerator, idGeneratorTester } from './components/IdGenerator';
 
 // https://stackoverflow.com/questions/57874879/how-to-treat-missing-undefined-properties-as-equivalent-in-lodashs-isequalwit
 // TODO: handle undefined and empty string as equal? e.g. initial data is undefined and current data is ""
@@ -55,6 +63,12 @@ export interface CreateDocument {
   data: JsonData;
   documentRegistry: DocumentRegistryFragment;
 }
+
+const additionalRenderers: JsonFormsRendererRegistryEntry[] = [
+  { tester: idGeneratorTester, renderer: IdGenerator },
+  { tester: dateOfBirthTester, renderer: DateOfBirth },
+  { tester: encounterLineChartTester, renderer: EncounterLineChart },
+];
 
 export const useJsonForms = (
   docName: string | undefined,
@@ -131,10 +145,12 @@ export const useJsonForms = (
     JsonForm: (
       <JsonForm
         data={data}
-        documentRegistry={documentRegistry}
+        jsonSchema={documentRegistry?.jsonSchema ?? {}}
+        uiSchema={documentRegistry?.uiSchema ?? { type: 'Control' }}
         isError={!!error}
         isLoading={isLoading}
         updateData={updateData}
+        additionalRenderers={additionalRenderers}
       />
     ),
     saveData,

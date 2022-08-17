@@ -9,17 +9,15 @@ import { withJsonFormsControlProps } from '@jsonforms/react';
 import {
   BasicTextInput,
   Box,
-  useDocument,
   useMutation,
   useTranslation,
-} from '@openmsupply-client/common';
-import { Button, FormLabel } from '@mui/material';
-import {
   FORM_LABEL_COLUMN_WIDTH,
   FORM_INPUT_COLUMN_WIDTH,
-} from '../styleConstants';
-import { JsonFormsConfig } from '../JsonForm';
+  JsonFormsConfig,
+} from '@openmsupply-client/common';
+import { Button, FormLabel } from '@mui/material';
 import { get as extractProperty } from 'lodash';
+import { useDocument } from '../api';
 
 export const idGeneratorTester = rankWith(10, uiTypeIs('IdGenerator'));
 
