@@ -129,16 +129,16 @@ impl DocumentQueries {
         encounters(ctx, store_id, page, filter, sort)
     }
 
-    pub async fn encounter_extract_fields(
+    pub async fn encounter_fields(
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input: EncounterExtractFieldsInput,
+        input: EncounterFieldsInput,
         page: Option<PaginationInput>,
         filter: Option<EncounterFilterInput>,
         sort: Option<EncounterSortInput>,
-    ) -> Result<EncounterExtractFieldResponse> {
-        encounter_extract_fields(ctx, store_id, input, page, filter, sort)
+    ) -> Result<EncounterFieldsResponse> {
+        encounter_fields(ctx, store_id, input, page, filter, sort)
     }
 }
 

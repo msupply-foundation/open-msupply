@@ -11,11 +11,11 @@ use crate::{
 
 use super::extract_fields::extract_fields;
 
-pub struct ExtractFieldInput {
+pub struct EncounterFields {
     pub fields: Vec<String>,
 }
 
-pub struct ExtractFieldResult {
+pub struct EncounterFieldsResult {
     pub row: Encounter,
     pub fields: Vec<serde_json::Value>,
 }
@@ -23,13 +23,13 @@ pub struct ExtractFieldResult {
 const MAX_LIMIT: u32 = 1000;
 const MIN_LIMIT: u32 = 1;
 
-pub(crate) fn encounter_extract_fields(
+pub(crate) fn encounter_fields(
     ctx: &ServiceContext,
-    input: ExtractFieldInput,
+    input: EncounterFields,
     pagination: Option<PaginationOption>,
     filter: Option<EncounterFilter>,
     sort: Option<EncounterSort>,
-) -> Result<ListResult<ExtractFieldResult>, ListError> {
+) -> Result<ListResult<EncounterFieldsResult>, ListError> {
     let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
     let repository = EncounterRepository::new(&ctx.connection);
     let encounters = repository.query(pagination, filter.clone(), sort)?;
@@ -52,12 +52,12 @@ pub(crate) fn encounter_extract_fields(
                 // should not happen:
                 None => return Err(RepositoryError::NotFound),
             };
-            Ok(ExtractFieldResult {
+            Ok(EncounterFieldsResult {
                 row,
                 fields: extract_fields(&input.fields, &doc.data),
             })
         })
-        .collect::<Result<Vec<ExtractFieldResult>, RepositoryError>>()?;
+        .collect::<Result<Vec<EncounterFieldsResult>, RepositoryError>>()?;
 
     Ok(ListResult {
         rows,

@@ -7,7 +7,7 @@ use graphql_core::{
 use repository::PaginationOption;
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    document::encounter::extract_encounter_fields::{ExtractFieldInput, ExtractFieldResult},
+    document::encounter::encounter_fields::{EncounterFields, EncounterFieldsResult},
 };
 
 use crate::types::encounter::EncounterNode;
@@ -15,48 +15,48 @@ use crate::types::encounter::EncounterNode;
 use super::{EncounterFilterInput, EncounterSortInput};
 
 #[derive(InputObject, Clone)]
-pub struct EncounterExtractFieldsInput {
+pub struct EncounterFieldsInput {
     pub fields: Vec<String>,
 }
 
-pub struct EncounterExtractFieldsNode {
+pub struct EncounterFieldsNode {
     pub store_id: String,
-    pub extract_result: ExtractFieldResult,
+    pub encounter_fields_result: EncounterFieldsResult,
 }
 
 #[derive(SimpleObject)]
-pub struct EncounterExtractFieldConnector {
+pub struct EncounterFieldsConnector {
     pub total_count: u32,
-    pub nodes: Vec<EncounterExtractFieldsNode>,
+    pub nodes: Vec<EncounterFieldsNode>,
 }
 
 #[derive(Union)]
-pub enum EncounterExtractFieldResponse {
-    Response(EncounterExtractFieldConnector),
+pub enum EncounterFieldsResponse {
+    Response(EncounterFieldsConnector),
 }
 
 #[Object]
-impl EncounterExtractFieldsNode {
+impl EncounterFieldsNode {
     pub async fn encounter(&self) -> EncounterNode {
         EncounterNode {
             store_id: self.store_id.clone(),
-            encounter_row: self.extract_result.row.clone(),
+            encounter_row: self.encounter_fields_result.row.clone(),
         }
     }
 
     pub async fn fields(&self) -> &Vec<serde_json::Value> {
-        &self.extract_result.fields
+        &self.encounter_fields_result.fields
     }
 }
 
-pub fn encounter_extract_fields(
+pub fn encounter_fields(
     ctx: &Context<'_>,
     store_id: String,
-    input: EncounterExtractFieldsInput,
+    input: EncounterFieldsInput,
     page: Option<PaginationInput>,
     filter: Option<EncounterFilterInput>,
     sort: Option<EncounterSortInput>,
-) -> Result<EncounterExtractFieldResponse> {
+) -> Result<EncounterFieldsResponse> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -70,9 +70,9 @@ pub fn encounter_extract_fields(
 
     let result = service_provider
         .encounter_service
-        .extract_encounters_fields(
+        .encounters_fields(
             &context,
-            ExtractFieldInput {
+            EncounterFields {
                 fields: input.fields,
             },
             page.map(PaginationOption::from),
@@ -84,14 +84,14 @@ pub fn encounter_extract_fields(
     let nodes = result
         .rows
         .into_iter()
-        .map(|extract_result| EncounterExtractFieldsNode {
+        .map(|encounter_fields| EncounterFieldsNode {
             store_id: store_id.clone(),
-            extract_result,
+            encounter_fields_result: encounter_fields,
         })
         .collect();
 
-    Ok(EncounterExtractFieldResponse::Response(
-        EncounterExtractFieldConnector {
+    Ok(EncounterFieldsResponse::Response(
+        EncounterFieldsConnector {
             total_count: result.count,
             nodes,
         },
