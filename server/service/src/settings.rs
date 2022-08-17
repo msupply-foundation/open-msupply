@@ -8,7 +8,7 @@ pub struct Settings {
     pub server: ServerSettings,
     pub database: DatabaseSettings,
     pub sync: Option<SyncSettings>,
-    pub logging: LoggingSettings,
+    pub logging: Option<LoggingSettings>,
 }
 
 #[derive(serde::Deserialize, Clone)]
@@ -40,7 +40,7 @@ pub fn is_develop() -> bool {
 }
 
 #[derive(serde::Deserialize, Clone)]
-pub enum LogDestination {
+pub enum LogMode {
     Console,
     File,
 }
@@ -71,7 +71,7 @@ impl From<Level> for LevelFilter {
 #[derive(serde::Deserialize, Clone)]
 pub struct LoggingSettings {
     /// Console (default) | File
-    pub destination: LogDestination,
+    pub mode: LogMode,
     ///  Off | Error | Warn | Info (default) | Debug | Trace
     pub level: Level,
     /// Max number of temp logfiles to retain
