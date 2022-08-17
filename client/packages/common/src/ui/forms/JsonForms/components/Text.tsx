@@ -52,6 +52,7 @@ const UIComponent = (props: ControlProps) => {
         FormHelperTextProps: error
           ? { sx: { color: 'error.main' } }
           : undefined,
+        required: props.required,
       }}
       labelWidthPercentage={FORM_LABEL_WIDTH}
     />
