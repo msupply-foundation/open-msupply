@@ -7,7 +7,7 @@ export const usePatientDocumentApi = () => {
   const keys = {
     base: () => ['patient'] as const,
     detail: (name: string) => [...keys.base(), storeId, name] as const,
-    encounterExtractFields: (fields: string[]) =>
+    encounterFields: (fields: string[]) =>
       [...keys.base(), storeId, ...fields] as const,
   };
   const { client } = useGql();

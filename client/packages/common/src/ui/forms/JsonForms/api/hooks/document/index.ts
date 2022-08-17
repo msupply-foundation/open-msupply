@@ -1,11 +1,11 @@
 import { useDocument } from './useDocument';
 import { useDocumentRegistryByContext } from './useDocumentRegistryByContext';
 import { useAllocateNumber } from './useAllocateNumber';
-import { useEncounterExtractFields } from './useEncounterExtractFields';
+import { useEncounterFields } from './useEncounterFields';
 
 export const Document = {
   useDocument,
   useDocumentRegistryByContext,
   useAllocateNumber,
-  useEncounterExtractFields,
+  useEncounterFields,
 };

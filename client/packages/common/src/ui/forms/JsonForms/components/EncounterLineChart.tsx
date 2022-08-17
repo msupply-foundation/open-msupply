@@ -53,21 +53,21 @@ const UIComponent = (props: ControlProps) => {
 
   const option = (props.uischema.options as Options | undefined)?.values?.[0];
   const [data, setData] = useState([] as DataType[]);
-  const { data: extractedData } = useDocument.encounterExtractFields(
+  const { data: encounterFields } = useDocument.encounterFields(
     [option?.field ?? ''],
     !!option
   );
 
   useEffect(() => {
     const data =
-      extractedData?.map(d => {
+      encounterFields?.map(d => {
         return {
           time: new Date(d.encounter.startDatetime).getTime() / 1000,
           y: d.fields[0],
         };
       }) ?? [];
     setData(data);
-  }, [extractedData]);
+  }, [encounterFields]);
 
   if (!props.visible || !option) {
     return null;
