@@ -5,12 +5,16 @@ import {
   InsertProgramInput,
   UpdateProgramInput,
 } from '@openmsupply-client/common';
-import { DocumentFragment, ProgramFragment, Sdk } from './operations.generated';
+import {
+  DocumentFragment,
+  ProgramRowFragment,
+  Sdk,
+} from './operations.generated';
 
 export type ListParams = {
   first?: number;
   offset?: number;
-  sortBy?: SortBy<ProgramFragment>;
+  sortBy?: SortBy<ProgramRowFragment>;
   filterBy?: FilterBy | null;
 };
 
@@ -20,7 +24,7 @@ export const getProgramEnrolmentQueries = (sdk: Sdk, storeId: string) => ({
       sortBy,
       filterBy,
     }: ListParams): Promise<{
-      nodes: ProgramFragment[];
+      nodes: ProgramRowFragment[];
       totalCount: number;
     }> => {
       const result = await sdk.programs({

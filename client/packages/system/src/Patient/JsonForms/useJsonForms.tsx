@@ -87,6 +87,7 @@ export const useJsonForms = (
   const [isSaving, setSaving] = useState(false);
   const [isDirty, setIsDirty] = useState<boolean>();
   const t = useTranslation('common');
+  const [validationError, setValidationError] = useState<string | false>(false);
   const { success, error: errorNotification } = useNotification();
 
   useConfirmOnLeaving(isDirty);
@@ -129,7 +130,10 @@ export const useJsonForms = (
     const dirty =
       isSaving ||
       isLoading ||
-      !!createDoc ||
+      // not sure why isDirty should be set if nothing has changed.. do we allow saving when the initial createDoc is presented?
+      // I've disabled, as this means that refreshing a page after rendering with createDoc set will prompt the user even
+      // when the modal is cancelled
+      // !!createDoc ||
       !isEqualIgnoreUndefined(initialData, data);
     setIsDirty(dirty);
     if (data === undefined) {
@@ -139,6 +143,7 @@ export const useJsonForms = (
 
   useEffect(() => {
     setData(initialData);
+    return () => setIsDirty(false);
   }, [initialData]);
 
   return {
@@ -149,6 +154,7 @@ export const useJsonForms = (
         uiSchema={documentRegistry?.uiSchema ?? { type: 'Control' }}
         isError={!!error}
         isLoading={isLoading}
+        setError={setValidationError}
         updateData={updateData}
         additionalRenderers={additionalRenderers}
       />
@@ -159,5 +165,6 @@ export const useJsonForms = (
     isLoading,
     isDirty: isDirty ?? false,
     error,
+    validationError,
   };
 };

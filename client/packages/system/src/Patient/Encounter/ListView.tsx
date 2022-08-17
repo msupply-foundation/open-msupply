@@ -33,8 +33,7 @@ const EncounterListComponent: FC = () => {
   );
   const pagination = { page, first, offset };
   const { localisedDateTime } = useFormatDateTime();
-  const { setCurrent, setDocumentName, setDocumentType, setProgramType } =
-    usePatientModalStore();
+  const { setCurrent, setDocument, setProgramType } = usePatientModalStore();
 
   const columns = useColumns<EncounterFragmentWithId>(
     [
@@ -79,9 +78,8 @@ const EncounterListComponent: FC = () => {
       isLoading={isLoading}
       isError={isError}
       onRowClick={row => {
-        setDocumentType(row.type);
+        setDocument({ type: row.type, name: row.name });
         setProgramType(row.program);
-        setDocumentName(row.document.name);
         setCurrent(PatientModal.Encounter);
       }}
       noDataElement={<NothingHere />}
