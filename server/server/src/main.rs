@@ -7,7 +7,7 @@ use fast_log::{
 };
 use log::LevelFilter;
 use server::{configuration, start_server};
-use service::settings::{LogDestination, LoggingSettings, Settings};
+use service::settings::{LogMode, LoggingSettings, Settings};
 use std::{env, fs::create_dir_all};
 use tokio::sync::oneshot;
 
@@ -15,7 +15,7 @@ use tokio::sync::oneshot;
 async fn main() -> std::io::Result<()> {
     let settings: Settings =
         configuration::get_configuration().expect("Failed to parse configuration settings");
-    logging_init(&settings.logging);
+    logging_init(settings.logging.clone());
 
     let (off_switch, off_switch_receiver) = oneshot::channel();
     let result = start_server(settings, off_switch_receiver).await;
@@ -24,13 +24,21 @@ async fn main() -> std::io::Result<()> {
     result
 }
 
-fn logging_init(settings: &LoggingSettings) {
+fn logging_init(settings: Option<LoggingSettings>) {
     let default_log_file = "remote_server.log".to_string();
     let default_log_dir = "log".to_string();
     let default_max_file_count = 5;
     let default_max_file_size = 10;
-    let config = match settings.destination {
-        LogDestination::File => {
+    let settings = settings.unwrap_or(LoggingSettings {
+        mode: LogMode::Console,
+        level: service::settings::Level::Info,
+        directory: None,
+        filename: None,
+        max_file_count: None,
+        max_file_size: None,
+    });
+    let config = match settings.mode {
+        LogMode::File => {
             // Note: the file_split will panic if the path separator isn't appended
             let log_dir = &format!(
                 "{}{}",
@@ -63,7 +71,7 @@ fn logging_init(settings: &LoggingSettings) {
                     LogPacker {},
                 )
         }
-        LogDestination::Console => Config::new().console(),
+        LogMode::Console => Config::new().console(),
     };
     fast_log::init(config.level(LevelFilter::from(settings.level.clone())))
         .expect("Unable to initialise logger");
