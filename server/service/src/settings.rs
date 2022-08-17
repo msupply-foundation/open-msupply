@@ -41,6 +41,7 @@ pub fn is_develop() -> bool {
 
 #[derive(serde::Deserialize, Clone)]
 pub enum LogMode {
+    All,
     Console,
     File,
 }
