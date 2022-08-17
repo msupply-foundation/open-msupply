@@ -642,23 +642,23 @@ export type EncounterConnector = {
   totalCount: Scalars['Int'];
 };
 
-export type EncounterExtractFieldConnector = {
-  __typename: 'EncounterExtractFieldConnector';
-  nodes: Array<EncounterExtractFieldsNode>;
+export type EncounterFieldsConnector = {
+  __typename: 'EncounterFieldsConnector';
+  nodes: Array<EncounterFieldsNode>;
   totalCount: Scalars['Int'];
 };
 
-export type EncounterExtractFieldResponse = EncounterExtractFieldConnector;
-
-export type EncounterExtractFieldsInput = {
+export type EncounterFieldsInput = {
   fields: Array<Scalars['String']>;
 };
 
-export type EncounterExtractFieldsNode = {
-  __typename: 'EncounterExtractFieldsNode';
+export type EncounterFieldsNode = {
+  __typename: 'EncounterFieldsNode';
   encounter: EncounterNode;
   fields: Array<Scalars['JSON']>;
 };
+
+export type EncounterFieldsResponse = EncounterFieldsConnector;
 
 export type EncounterFilterInput = {
   endDatetime?: InputMaybe<DatetimeFilterInput>;
@@ -1276,7 +1276,7 @@ export type FullQuery = {
   documentHistory: DocumentHistoryResponse;
   documentRegistries: DocumentRegistryResponse;
   documents: DocumentResponse;
-  encounterExtractFields: EncounterExtractFieldResponse;
+  encounterFields: EncounterFieldsResponse;
   encounters: EncounterResponse;
   formSchema?: Maybe<FormSchemaNode>;
   invoice: InvoiceResponse;
@@ -1364,9 +1364,9 @@ export type FullQueryDocumentsArgs = {
 };
 
 
-export type FullQueryEncounterExtractFieldsArgs = {
+export type FullQueryEncounterFieldsArgs = {
   filter?: InputMaybe<EncounterFilterInput>;
-  input: EncounterExtractFieldsInput;
+  input: EncounterFieldsInput;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<EncounterSortInput>;
   storeId: Scalars['String'];

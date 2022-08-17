@@ -70,7 +70,7 @@ mutation allocateNumber($numberName: String!, $storeId: String!) {
   }
 }
 
-fragment EncounterExtractField on EncounterExtractFieldsNode {
+fragment EncounterFields on EncounterFieldsNode {
   fields
   encounter {
     name
@@ -79,13 +79,13 @@ fragment EncounterExtractField on EncounterExtractFieldsNode {
   }
 }
 
-query encounterExtractFields($storeId: String!, $fields: [String!]) {
-  encounterExtractFields(input: { fields: $fields }, storeId: $storeId) {
-    ... on EncounterExtractFieldConnector {
+query encounterFields($storeId: String!, $fields: [String!]) {
+  encounterFields(input: { fields: $fields }, storeId: $storeId) {
+    ... on EncounterFieldsConnector {
       __typename
       nodes {
         __typename
-        ...EncounterExtractField
+        ...EncounterFields
       }
     }
   }
