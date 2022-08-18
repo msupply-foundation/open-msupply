@@ -16,9 +16,13 @@ export const useProgramEnrolments = () => {
   return {
     ...useQuery(api.keys.paramList(params), () =>
       api.get.list(params).then(programs => ({
-        nodes: programs.nodes.map(
-          node => ({ ...node, id: node.name } as ProgramRowFragmentWithId)
-        ),
+        nodes: programs.nodes.map(node => {
+          // only take the latest status event
+          const events = node.events
+            .filter(e => e.type === 'status' && e.name)
+            .slice(0, 1);
+          return { ...node, events, id: node.name } as ProgramRowFragmentWithId;
+        }),
         totalCount: programs.totalCount,
       }))
     ),

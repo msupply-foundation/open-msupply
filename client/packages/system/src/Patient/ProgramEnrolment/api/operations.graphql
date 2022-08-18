@@ -22,6 +22,11 @@ fragment ProgramRow on ProgramNode {
   patientId
   programPatientId
   type
+  events(filter: { datetime: { beforeOrEqualTo: $latestEventTime } }) {
+    datetime
+    name
+    type
+  }
 }
 
 fragment Program on ProgramNode {
@@ -40,6 +45,7 @@ query programs(
   $key: ProgramSortFieldInput
   $desc: Boolean
   $filter: ProgramFilterInput
+  $latestEventTime: String!
 ) {
   programs(
     storeId: $storeId

@@ -38,6 +38,11 @@ const ProgramListComponent: FC = () => {
         label: 'label.enrolment-patient-id',
       },
       {
+        key: 'events',
+        label: 'label.status',
+        formatter: events => (events as { name?: string }[])[0]?.name ?? '',
+      },
+      {
         key: 'enrolmentDatetime',
         label: 'label.enrolment-datetime',
         align: ColumnAlign.Right,
