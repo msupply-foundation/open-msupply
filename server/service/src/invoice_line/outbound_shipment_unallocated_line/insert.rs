@@ -184,11 +184,8 @@ mod test_insert {
             setup_all("insert_unallocated_line_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider
+        let mut context = service_provider
             .context(mock_store_a().id, "".to_string())
-            .unwrap();
-        let store_c_context = service_provider
-            .context(mock_store_c().id, "".to_string())
             .unwrap();
         let service = service_provider.invoice_line_service;
 
@@ -279,19 +276,6 @@ mod test_insert {
             ),
             Err(ServiceError::NotAStockItem)
         );
-        // UnallocatedLineForItemAlreadyExistsInInvoice
-        assert_eq!(
-            service.insert_outbound_shipment_unallocated_line(
-                &store_c_context,
-                InsertOutboundShipmentUnallocatedLine {
-                    id: new_line_id.clone(),
-                    invoice_id: new_outbound_shipment.id.clone(),
-                    item_id: existing_invoice_line.item_id.clone(),
-                    quantity: 0
-                },
-            ),
-            Err(ServiceError::UnallocatedLineForItemAlreadyExistsInInvoice)
-        );
         // NotThisStoreInvoice
         assert_eq!(
             service.insert_outbound_shipment_unallocated_line(
@@ -304,6 +288,20 @@ mod test_insert {
                 },
             ),
             Err(ServiceError::NotThisStoreInvoice)
+        );
+        // UnallocatedLineForItemAlreadyExistsInInvoice
+        context.store_id = mock_store_c().id;
+        assert_eq!(
+            service.insert_outbound_shipment_unallocated_line(
+                &context,
+                InsertOutboundShipmentUnallocatedLine {
+                    id: new_line_id.clone(),
+                    invoice_id: new_outbound_shipment.id.clone(),
+                    item_id: existing_invoice_line.item_id.clone(),
+                    quantity: 0
+                },
+            ),
+            Err(ServiceError::UnallocatedLineForItemAlreadyExistsInInvoice)
         );
     }
 

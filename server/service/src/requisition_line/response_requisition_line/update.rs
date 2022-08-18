@@ -144,11 +144,8 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider
+        let mut context = service_provider
             .context(mock_store_a().id, "".to_string())
-            .unwrap();
-        let store_b_context = service_provider
-            .context(mock_store_b().id, "".to_string())
             .unwrap();
         let service = service_provider.requisition_line_service;
 
@@ -161,17 +158,6 @@ mod test {
                 }),
             ),
             Err(ServiceError::RequisitionLineDoesNotExist)
-        );
-
-        // NotThisStoreRequisition
-        assert_eq!(
-            service.update_response_requisition_line(
-                &store_b_context,
-                inline_init(|r: &mut UpdateResponseRequisitionLine| {
-                    r.id = mock_new_response_requisition_test().lines[0].id.clone();
-                }),
-            ),
-            Err(ServiceError::NotThisStoreRequisition)
         );
 
         // CannotEditRequisition
@@ -194,6 +180,18 @@ mod test {
                 }),
             ),
             Err(ServiceError::NotAResponseRequisition)
+        );
+
+        // NotThisStoreRequisition
+        context.store_id = mock_store_b().id;
+        assert_eq!(
+            service.update_response_requisition_line(
+                &context,
+                inline_init(|r: &mut UpdateResponseRequisitionLine| {
+                    r.id = mock_new_response_requisition_test().lines[0].id.clone();
+                }),
+            ),
+            Err(ServiceError::NotThisStoreRequisition)
         );
     }
 

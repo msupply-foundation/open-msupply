@@ -104,31 +104,17 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let store_a_context = service_provider
+        let mut context = service_provider
             .context(mock_store_a().id, "".to_string())
-            .unwrap();
-        let store_c_context = service_provider
-            .context(mock_store_c().id, "".to_string())
             .unwrap();
         let service = service_provider.invoice_line_service;
 
         let draft_shipment = mock_full_draft_outbound_shipment_a();
 
-        // LineAlreadyExists
-        assert_eq!(
-            service.insert_outbound_shipment_service_line(
-                &store_c_context,
-                inline_init(|r: &mut InsertOutboundShipmentServiceLine| {
-                    r.id = draft_shipment.lines[0].line.id.clone();
-                }),
-            ),
-            Err(ServiceError::LineAlreadyExists)
-        );
-
         // InvoiceDoesNotExist
         assert_eq!(
             service.insert_outbound_shipment_service_line(
-                &store_a_context,
+                &context,
                 inline_init(|r: &mut InsertOutboundShipmentServiceLine| {
                     r.invoice_id = "invalid".to_string();
                 }),
@@ -139,7 +125,7 @@ mod test {
         // NotAnOutboundShipment
         assert_eq!(
             service.insert_outbound_shipment_service_line(
-                &store_a_context,
+                &context,
                 inline_init(|r: &mut InsertOutboundShipmentServiceLine| {
                     r.invoice_id = mock_inbound_shipment_c().id;
                 }),
@@ -147,10 +133,22 @@ mod test {
             Err(ServiceError::NotAnOutboundShipment)
         );
 
+        // LineAlreadyExists
+        context.store_id = mock_store_c().id;
+        assert_eq!(
+            service.insert_outbound_shipment_service_line(
+                &context,
+                inline_init(|r: &mut InsertOutboundShipmentServiceLine| {
+                    r.id = draft_shipment.lines[0].line.id.clone();
+                }),
+            ),
+            Err(ServiceError::LineAlreadyExists)
+        );
+
         // CannotEditInvoice
         assert_eq!(
             service.insert_outbound_shipment_service_line(
-                &store_c_context,
+                &context,
                 inline_init(|r: &mut InsertOutboundShipmentServiceLine| {
                     r.invoice_id = mock_outbound_shipment_shipped().id;
                 }),
@@ -161,7 +159,7 @@ mod test {
         // ItemNotFound
         assert_eq!(
             service.insert_outbound_shipment_service_line(
-                &store_c_context,
+                &context,
                 inline_init(|r: &mut InsertOutboundShipmentServiceLine| {
                     r.invoice_id = draft_shipment.invoice.id.clone();
                     r.item_id = Some("invalid".to_string())
@@ -173,7 +171,7 @@ mod test {
         // NotAServiceItem
         assert_eq!(
             service.insert_outbound_shipment_service_line(
-                &store_c_context,
+                &context,
                 inline_init(|r: &mut InsertOutboundShipmentServiceLine| {
                     r.invoice_id = draft_shipment.invoice.id.clone();
                     r.item_id = Some(mock_item_a().id)

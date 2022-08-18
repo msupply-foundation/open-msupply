@@ -126,11 +126,8 @@ mod test {
             setup_all("delete_inbound_shipment_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider
+        let mut context = service_provider
             .context(mock_store_a().id, mock_user_account_a().id)
-            .unwrap();
-        let store_b_context = service_provider
-            .context(mock_store_b().id, mock_user_account_a().id)
             .unwrap();
         let service = service_provider.invoice_service;
 
@@ -182,9 +179,10 @@ mod test {
         );
 
         // NotThisStoreInvoice
+        context.store_id = mock_store_b().id;
         assert_eq!(
             service.delete_inbound_shipment(
-                &store_b_context,
+                &context,
                 DeleteInboundShipment {
                     id: mock_inbound_shipment_c().id.clone(),
                 },

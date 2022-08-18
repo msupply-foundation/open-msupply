@@ -141,11 +141,8 @@ mod test_delete {
             setup_all("delete_request_requisition_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider
+        let mut context = service_provider
             .context(mock_store_a().id, "".to_string())
-            .unwrap();
-        let store_b_context = service_provider
-            .context(mock_store_b().id, "".to_string())
             .unwrap();
         let service = service_provider.requisition_service;
 
@@ -158,17 +155,6 @@ mod test_delete {
                 },
             ),
             Err(ServiceError::RequisitionDoesNotExist)
-        );
-
-        // NotThisStoreRequisition
-        assert_eq!(
-            service.delete_request_requisition(
-                &store_b_context,
-                DeleteRequestRequisition {
-                    id: mock_draft_request_requisition_for_update_test().id,
-                },
-            ),
-            Err(ServiceError::NotThisStoreRequisition)
         );
 
         // CannotEditRequisition
@@ -206,6 +192,18 @@ mod test_delete {
         //     ),
         //     Err(ServiceError::CannotDeleteRequisitionWithLines)
         // );
+
+        // NotThisStoreRequisition
+        context.store_id = mock_store_b().id;
+        assert_eq!(
+            service.delete_request_requisition(
+                &context,
+                DeleteRequestRequisition {
+                    id: mock_draft_request_requisition_for_update_test().id,
+                },
+            ),
+            Err(ServiceError::NotThisStoreRequisition)
+        );
     }
 
     #[actix_rt::test]

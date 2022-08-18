@@ -137,11 +137,8 @@ mod test {
             setup_all("insert_stocktake", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider
+        let mut context = service_provider
             .context(mock_store_a().id, mock_user_account_a().id)
-            .unwrap();
-        let invalid_store_context = service_provider
-            .context("invalid".to_string(), "".to_string())
             .unwrap();
 
         let service = service_provider.stocktake_service;
@@ -159,9 +156,10 @@ mod test {
         assert_eq!(error, InsertStocktakeError::StocktakeAlreadyExists);
 
         // error: store does not exist
+        context.store_id = "invalid".to_string();
         let error = service
             .insert_stocktake(
-                &invalid_store_context,
+                &context,
                 inline_init(|i: &mut InsertStocktake| i.id = "new_stocktake".to_string()),
             )
             .unwrap_err();
@@ -170,6 +168,7 @@ mod test {
         // success
         let before_insert = Utc::now().naive_utc();
 
+        context.store_id = mock_store_a().id;
         service
             .insert_stocktake(
                 &context,

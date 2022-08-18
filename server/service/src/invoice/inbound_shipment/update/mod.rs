@@ -223,11 +223,8 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider
+        let mut context = service_provider
             .context(mock_store_a().id, "".to_string())
-            .unwrap();
-        let store_b_context = service_provider
-            .context(mock_store_b().id, "".to_string())
             .unwrap();
         let service = service_provider.invoice_service;
 
@@ -252,16 +249,6 @@ mod test {
                 })
             ),
             Err(ServiceError::NotAnInboundShipment)
-        );
-        //NotThisStoreInvoice
-        assert_eq!(
-            service.update_inbound_shipment(
-                &store_b_context,
-                inline_init(|r: &mut UpdateInboundShipment| {
-                    r.id = mock_inbound_shipment_c().id.clone();
-                })
-            ),
-            Err(ServiceError::NotThisStoreInvoice)
         );
         //CannotEditFinalised
         assert_eq!(
@@ -318,7 +305,17 @@ mod test {
             ),
             Err(ServiceError::OtherPartyNotASupplier)
         );
-
+        //NotThisStoreInvoice
+        context.store_id = mock_store_b().id;
+        assert_eq!(
+            service.update_inbound_shipment(
+                &context,
+                inline_init(|r: &mut UpdateInboundShipment| {
+                    r.id = mock_inbound_shipment_c().id.clone();
+                })
+            ),
+            Err(ServiceError::NotThisStoreInvoice)
+        );
         // TODO CannotReverseInvoiceStatus,UpdateInvoiceDoesNotExist
     }
 
