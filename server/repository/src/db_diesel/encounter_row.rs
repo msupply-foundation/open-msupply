@@ -13,20 +13,20 @@ use serde::{Deserialize, Serialize};
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum EncounterStatus {
     Scheduled,
-    Ongoing,
-    Finished,
-    Canceled,
-    Missed,
+    Done,
+    Cancelled,
 }
 
 table! {
     encounter (id) {
         id -> Text,
+        #[sql_name = "type"] type_ -> Text,
+        name -> Text,
         patient_id -> Text,
         program -> Text,
-        name -> Text,
-        encounter_datetime -> Timestamp,
-        status -> crate::db_diesel::encounter_row::EncounterStatusMapping,
+        start_datetime -> Timestamp,
+        end_datetime -> Nullable<Timestamp>,
+        status -> Nullable<crate::db_diesel::encounter_row::EncounterStatusMapping>,
     }
 }
 
@@ -35,12 +35,16 @@ table! {
 #[table_name = "encounter"]
 pub struct EncounterRow {
     pub id: String,
-    pub patient_id: String,
-    pub program: String,
+    /// The type of the encounter, same as the matching encounter document type.
+    #[column_name = "type_"]
+    pub r#type: String,
     /// The encounter document name
     pub name: String,
-    pub encounter_datetime: NaiveDateTime,
-    pub status: EncounterStatus,
+    pub patient_id: String,
+    pub program: String,
+    pub start_datetime: NaiveDateTime,
+    pub end_datetime: Option<NaiveDateTime>,
+    pub status: Option<EncounterStatus>,
 }
 
 pub struct EncounterRowRepository<'a> {

@@ -22,7 +22,7 @@ export interface TableProps<T extends RecordWithId> {
   ExpandContent?: FC<{ rowData: T }>;
   enableColumnSelection?: boolean;
   generateRowTooltip?: (row: T) => string;
-  key: string;
+  id: string;
   isDisabled?: boolean;
   isError?: boolean;
   isLoading?: boolean;

@@ -1,3 +1,3 @@
-export const FORM_LABEL_WIDTH = 25;
+export const FORM_LABEL_WIDTH = 28;
 export const FORM_LABEL_COLUMN_WIDTH = `${FORM_LABEL_WIDTH}%`;
 export const FORM_INPUT_COLUMN_WIDTH = `${100 - FORM_LABEL_WIDTH}%`;

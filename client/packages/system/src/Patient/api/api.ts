@@ -26,9 +26,7 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
       const result = await sdk.patientById({ storeId, nameId });
       const { patients } = result;
       if (patients.__typename === 'PatientConnector') {
-        if (patients.nodes.length) {
-          return patients.nodes[0];
-        }
+        return patients.nodes[0];
       }
 
       throw new Error('Name not found');

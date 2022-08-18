@@ -1,23 +1,32 @@
 import { zustand } from '@openmsupply-client/common';
-import { PatientModal } from '../DetailView';
+import { CreateDocument } from '../JsonForms';
+import { PatientModal } from '../PatientView';
+
+interface PatientModalDocument {
+  name?: string;
+  type?: string;
+  createDocument?: CreateDocument;
+}
 
 // the state of the various modals used in the patient detail area
 // `current` is the active / displayed modal - set to `undefined` to hide them all
 // `documentName` and `documentType` define the JsonForm doc
 interface PatientModalState {
   current?: PatientModal;
+  document?: PatientModalDocument;
+  documentCreate?: CreateDocument;
   documentName?: string;
   documentType?: string;
+  programType?: string;
   reset: () => void;
   setCurrent: (current?: PatientModal) => void;
-  setDocumentName: (documentName?: string) => void;
-  setDocumentType: (documentType?: string) => void;
+  setDocument: (document: PatientModalDocument) => void;
+  setProgramType: (documentType?: string) => void;
 }
 
 export const usePatientModalStore = zustand<PatientModalState>(set => ({
   current: undefined,
-  documentName: undefined,
-  documentType: undefined,
+  document: undefined,
   reset: () =>
     set(state => ({
       ...state,
@@ -26,8 +35,8 @@ export const usePatientModalStore = zustand<PatientModalState>(set => ({
       documentType: undefined,
     })),
   setCurrent: (current?: PatientModal) => set(state => ({ ...state, current })),
-  setDocumentName: (documentName?: string) =>
-    set(state => ({ ...state, documentName })),
-  setDocumentType: (documentType?: string) =>
-    set(state => ({ ...state, documentType })),
+  setDocument: (document?: PatientModalDocument) =>
+    set(state => ({ ...state, document })),
+  setProgramType: (programType?: string) =>
+    set(state => ({ ...state, programType })),
 }));

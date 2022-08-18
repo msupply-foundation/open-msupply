@@ -12,5 +12,7 @@ pub mod program;
 pub use self::program::*;
 pub mod encounter;
 pub use self::encounter::*;
+pub mod encounter_fields;
+pub use self::encounter_fields::*;
 pub mod document_registry;
 pub use self::document_registry::*;

@@ -1,6 +1,5 @@
 import React, { FC, PropsWithChildren, useEffect } from 'react';
 import {
-  DocumentRegistryFragment,
   Typography,
   UnhappyMan,
   useAuthContext,
@@ -27,15 +26,17 @@ import {
   Label,
   dateTester,
   Date,
-  dateOfBirthTester,
-  DateOfBirth,
   arrayTester,
   Array,
   FirstItemArray,
   firstItemArrayTester,
-  idGeneratorTester,
-  IdGenerator,
 } from './components';
+import {
+  AccordionGroup,
+  accordionGroupTester,
+} from './components/AccordionGroup';
+import { NumberField, numberTester } from './components/Number';
+import { DateTime, datetimeTester } from './components/DateTime';
 
 export type JsonData = {
   [key: string]: string | number | boolean | null | unknown | JsonData;
@@ -43,14 +44,14 @@ export type JsonData = {
 
 interface JsonFormProps {
   data?: JsonData;
-  documentRegistry: Pick<
-    DocumentRegistryFragment,
-    'formSchemaId' | 'jsonSchema' | 'uiSchema'
-  >;
+  jsonSchema: JsonSchema;
+  uiSchema: UISchemaElement;
   isError: boolean;
   isLoading: boolean;
-  setError: (error: string | false) => void;
+  setError?: (error: string | false) => void;
   updateData: (newData: JsonData) => void;
+  /** Additional custom renders which will be added to the default renderers */
+  additionalRenderers?: JsonFormsRendererRegistryEntry[];
 }
 
 interface JsonFormsComponentProps {
@@ -58,7 +59,7 @@ interface JsonFormsComponentProps {
   jsonSchema: JsonSchema;
   uiSchema: UISchemaElement;
   setData: (data: JsonData) => void;
-  setError: (error: string | false) => void;
+  setError?: (error: string | false) => void;
   renderers: JsonFormsRendererRegistryEntry[];
 }
 
@@ -104,10 +105,10 @@ const FormComponent = ({
       onChange={({ errors, data }) => {
         setData(data);
         if (errors && errors.length) {
-          setError(errors?.map(({ message }) => message ?? '').join(', '));
+          setError?.(errors?.map(({ message }) => message ?? '').join(', '));
           console.warn('Errors: ', errors);
         } else {
-          setError(false);
+          setError?.(false);
         }
       }}
     />
@@ -115,28 +116,31 @@ const FormComponent = ({
 };
 
 const renderers = [
-  // We should be able to remove materialRenderers once we are sure we have custom components to cover all cases.
-  ...materialRenderers,
   { tester: booleanTester, renderer: BooleanField },
   { tester: stringTester, renderer: TextField },
+  { tester: numberTester, renderer: NumberField },
   { tester: selectTester, renderer: Selector },
   { tester: groupTester, renderer: Group },
+  { tester: accordionGroupTester, renderer: AccordionGroup },
   { tester: labelTester, renderer: Label },
   { tester: dateTester, renderer: Date },
-  { tester: dateOfBirthTester, renderer: DateOfBirth },
+  { tester: datetimeTester, renderer: DateTime },
   { tester: arrayTester, renderer: Array },
   { tester: firstItemArrayTester, renderer: FirstItemArray },
-  { tester: idGeneratorTester, renderer: IdGenerator },
+  // We should be able to remove materialRenderers once we are sure we have custom components to cover all cases.
+  ...materialRenderers,
 ];
 
 export const JsonForm: FC<PropsWithChildren<JsonFormProps>> = ({
   children,
   data,
-  documentRegistry,
+  jsonSchema,
+  uiSchema,
   isError,
   isLoading,
   setError,
   updateData,
+  additionalRenderers,
 }) => {
   const t = useTranslation('common');
 
@@ -172,11 +176,11 @@ export const JsonForm: FC<PropsWithChildren<JsonFormProps>> = ({
       ) : (
         <FormComponent
           data={data}
-          jsonSchema={documentRegistry.jsonSchema}
-          uiSchema={documentRegistry.uiSchema}
+          jsonSchema={jsonSchema}
+          uiSchema={uiSchema}
           setData={updateData}
           setError={setError}
-          renderers={renderers}
+          renderers={[...renderers, ...(additionalRenderers ?? [])]}
         />
       )}
       {children}

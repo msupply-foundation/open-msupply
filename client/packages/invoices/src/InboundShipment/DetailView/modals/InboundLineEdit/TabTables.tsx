@@ -87,7 +87,7 @@ export const QuantityTableComponent: FC<TableProps> = ({
 
   return (
     <DataTable
-      key="inbound-line-quantity"
+      id="inbound-line-quantity"
       isDisabled={isDisabled}
       columns={columns}
       data={lines}
@@ -135,7 +135,7 @@ export const PricingTableComponent: FC<TableProps> = ({
 
   return (
     <DataTable
-      key="inbound-line-pricing"
+      id="inbound-line-pricing"
       isDisabled={isDisabled}
       columns={columns}
       data={lines}
@@ -172,7 +172,7 @@ export const LocationTableComponent: FC<TableProps> = ({
       }
     >
       <DataTable
-        key="inbound-line-location"
+        id="inbound-line-location"
         columns={columns}
         data={lines}
         dense
