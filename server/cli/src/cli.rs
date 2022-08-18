@@ -250,7 +250,7 @@ async fn main() {
                 connection_manager.clone(),
                 &hardware_id,
             ));
-            let ctx = service_provider.context().unwrap();
+            let ctx = service_provider.basic_context().unwrap();
 
             let (_, import_file, users_file) = export_paths(&name);
 
@@ -329,7 +329,7 @@ async fn main() {
                 connection_manager.clone(),
                 &app_data_folder,
             ));
-            let ctx = service_provider.context().unwrap();
+            let ctx = service_provider.basic_context().unwrap();
             let service = &service_provider.settings;
             info!("Disabling sync");
             service.disable_sync(&ctx).unwrap();

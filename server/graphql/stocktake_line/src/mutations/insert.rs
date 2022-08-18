@@ -52,7 +52,7 @@ pub struct InsertError {
 }
 
 pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<InsertResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::MutateStocktake,
@@ -61,11 +61,11 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context()?;
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
     map_response(
         service_provider
             .stocktake_line_service
-            .insert_stocktake_line(&service_context, store_id, input.to_domain()),
+            .insert_stocktake_line(&service_context, input.to_domain()),
     )
 }
 
@@ -167,11 +167,7 @@ mod test {
 
     use crate::StocktakeLineMutations;
 
-    type ServiceMethod = dyn Fn(
-            &ServiceContext,
-            &str,
-            InsertStocktakeLine,
-        ) -> Result<StocktakeLine, InsertStocktakeLineError>
+    type ServiceMethod = dyn Fn(&ServiceContext, InsertStocktakeLine) -> Result<StocktakeLine, InsertStocktakeLineError>
         + Sync
         + Send;
 
@@ -181,10 +177,9 @@ mod test {
         fn insert_stocktake_line(
             &self,
             ctx: &ServiceContext,
-            store_id: &str,
             input: InsertStocktakeLine,
         ) -> Result<StocktakeLine, InsertStocktakeLineError> {
-            (self.0)(ctx, store_id, input)
+            (self.0)(ctx, input)
         }
     }
 
@@ -235,7 +230,7 @@ mod test {
         }));
 
         // Stocktake is locked mapping
-        let test_service = TestService(Box::new(|_, _, _| {
+        let test_service = TestService(Box::new(|_, _| {
             Err(InsertStocktakeLineError::StocktakeIsLocked)
         }));
 
@@ -250,7 +245,7 @@ mod test {
         );
 
         // success
-        let test_service = TestService(Box::new(|_, _, _| {
+        let test_service = TestService(Box::new(|_, _| {
             Ok(StocktakeLine {
                 line: StocktakeLineRow {
                     id: "id1".to_string(),

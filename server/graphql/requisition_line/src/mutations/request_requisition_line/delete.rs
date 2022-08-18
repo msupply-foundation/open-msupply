@@ -41,7 +41,7 @@ pub enum DeleteResponse {
 }
 
 pub fn delete(ctx: &Context<'_>, store_id: &str, input: DeleteInput) -> Result<DeleteResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::MutateRequisition,
@@ -50,12 +50,12 @@ pub fn delete(ctx: &Context<'_>, store_id: &str, input: DeleteInput) -> Result<D
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context()?;
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
     map_response(
         service_provider
             .requisition_line_service
-            .delete_request_requisition_line(&service_context, store_id, input.to_domain()),
+            .delete_request_requisition_line(&service_context, input.to_domain()),
     )
 }
 
@@ -122,8 +122,7 @@ mod test {
         service_provider::{ServiceContext, ServiceProvider},
     };
 
-    type DeleteLineMethod =
-        dyn Fn(&str, ServiceInput) -> Result<String, ServiceError> + Sync + Send;
+    type DeleteLineMethod = dyn Fn(ServiceInput) -> Result<String, ServiceError> + Sync + Send;
 
     pub struct TestService(pub Box<DeleteLineMethod>);
 
@@ -131,10 +130,9 @@ mod test {
         fn delete_request_requisition_line(
             &self,
             _: &ServiceContext,
-            store_id: &str,
             input: ServiceInput,
         ) -> Result<String, ServiceError> {
-            self.0(store_id, input)
+            self.0(input)
         }
     }
 
@@ -179,9 +177,8 @@ mod test {
         "#;
 
         // RecordNotFound
-        let test_service = TestService(Box::new(|_, _| {
-            Err(ServiceError::RequisitionLineDoesNotExist)
-        }));
+        let test_service =
+            TestService(Box::new(|_| Err(ServiceError::RequisitionLineDoesNotExist)));
 
         let expected = json!({
             "deleteRequestRequisitionLine": {
@@ -201,7 +198,7 @@ mod test {
         );
 
         // CannotEditRequisition
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::CannotEditRequisition)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::CannotEditRequisition)));
 
         let expected = json!({
             "deleteRequestRequisitionLine": {
@@ -221,7 +218,7 @@ mod test {
         );
 
         // NotThisStoreRequisition
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotThisStoreRequisition)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NotThisStoreRequisition)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -233,7 +230,7 @@ mod test {
         );
 
         // NotARequestRequisition
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotARequestRequisition)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NotARequestRequisition)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -245,7 +242,7 @@ mod test {
         );
 
         // RequisitionDoesNotExist
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::RequisitionDoesNotExist)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::RequisitionDoesNotExist)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -278,8 +275,7 @@ mod test {
         "#;
 
         // Success
-        let test_service = TestService(Box::new(|store_id, input| {
-            assert_eq!(store_id, "store_a");
+        let test_service = TestService(Box::new(|input| {
             assert_eq!(
                 input,
                 ServiceInput {
