@@ -4,21 +4,9 @@ import { GraphQLClient } from 'graphql-request';
 import * as Dom from 'graphql-request/dist/types.dom';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type DocumentFragment = { __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, author: string, timestamp: string, type: string, data: any, documentRegistry?: { __typename: 'DocumentRegistryNode', uiSchemaType: string, documentType: string, context: Types.DocumentRegistryNodeContext, formSchemaId: string, jsonSchema: any, uiSchema: any } | null };
-
-export type ProgramRowFragment = { __typename: 'ProgramNode', enrolmentDatetime: string, name: string, patientId: string, programPatientId?: string | null, type: string };
+export type ProgramEnrolmentDocumentFragment = { __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, author: string, timestamp: string, type: string, data: any, documentRegistry?: { __typename: 'DocumentRegistryNode', uiSchemaType: string, documentType: string, context: Types.DocumentRegistryNodeContext, formSchemaId: string, jsonSchema: any, uiSchema: any } | null };
 
 export type ProgramFragment = { __typename: 'ProgramNode', type: string, programPatientId?: string | null, patientId: string, name: string, enrolmentDatetime: string, document: { __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, author: string, timestamp: string, type: string, data: any, documentRegistry?: { __typename: 'DocumentRegistryNode', uiSchemaType: string, documentType: string, context: Types.DocumentRegistryNodeContext, formSchemaId: string, jsonSchema: any, uiSchema: any } | null } };
-
-export type ProgramsQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
-  key?: Types.InputMaybe<Types.ProgramSortFieldInput>;
-  desc?: Types.InputMaybe<Types.Scalars['Boolean']>;
-  filter?: Types.InputMaybe<Types.ProgramFilterInput>;
-}>;
-
-
-export type ProgramsQuery = { __typename: 'FullQuery', programs: { __typename: 'ProgramConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramNode', enrolmentDatetime: string, name: string, patientId: string, programPatientId?: string | null, type: string }> } };
 
 export type ProgramByIdQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -44,17 +32,8 @@ export type UpdateProgramMutationVariables = Types.Exact<{
 
 export type UpdateProgramMutation = { __typename: 'FullMutation', updateProgram: { __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, author: string, timestamp: string, type: string, data: any, documentRegistry?: { __typename: 'DocumentRegistryNode', uiSchemaType: string, documentType: string, context: Types.DocumentRegistryNodeContext, formSchemaId: string, jsonSchema: any, uiSchema: any } | null } };
 
-export const ProgramRowFragmentDoc = gql`
-    fragment ProgramRow on ProgramNode {
-  enrolmentDatetime
-  name
-  patientId
-  programPatientId
-  type
-}
-    `;
-export const DocumentFragmentDoc = gql`
-    fragment Document on DocumentNode {
+export const ProgramEnrolmentDocumentFragmentDoc = gql`
+    fragment ProgramEnrolmentDocument on DocumentNode {
   id
   name
   parents
@@ -80,23 +59,10 @@ export const ProgramFragmentDoc = gql`
   name
   enrolmentDatetime
   document {
-    ...Document
+    ...ProgramEnrolmentDocument
   }
 }
-    ${DocumentFragmentDoc}`;
-export const ProgramsDocument = gql`
-    query programs($storeId: String!, $key: ProgramSortFieldInput, $desc: Boolean, $filter: ProgramFilterInput) {
-  programs(storeId: $storeId, sort: {key: $key, desc: $desc}, filter: $filter) {
-    ... on ProgramConnector {
-      __typename
-      nodes {
-        ...ProgramRow
-      }
-      totalCount
-    }
-  }
-}
-    ${ProgramRowFragmentDoc}`;
+    ${ProgramEnrolmentDocumentFragmentDoc}`;
 export const ProgramByIdDocument = gql`
     query programById($storeId: String!, $programId: String!) {
   programs(storeId: $storeId, filter: {id: {equalTo: $programId}}) {
@@ -115,21 +81,21 @@ export const InsertProgramDocument = gql`
   insertProgram(storeId: $storeId, input: $input) {
     ... on DocumentNode {
       __typename
-      ...Document
+      ...ProgramEnrolmentDocument
     }
   }
 }
-    ${DocumentFragmentDoc}`;
+    ${ProgramEnrolmentDocumentFragmentDoc}`;
 export const UpdateProgramDocument = gql`
     mutation updateProgram($storeId: String!, $input: UpdateProgramInput!) {
   updateProgram(storeId: $storeId, input: $input) {
     ... on DocumentNode {
       __typename
-      ...Document
+      ...ProgramEnrolmentDocument
     }
   }
 }
-    ${DocumentFragmentDoc}`;
+    ${ProgramEnrolmentDocumentFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -138,9 +104,6 @@ const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationTy
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
-    programs(variables: ProgramsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ProgramsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ProgramsQuery>(ProgramsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'programs', 'query');
-    },
     programById(variables: ProgramByIdQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ProgramByIdQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ProgramByIdQuery>(ProgramByIdDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'programById', 'query');
     },
@@ -153,23 +116,6 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
   };
 }
 export type Sdk = ReturnType<typeof getSdk>;
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockProgramsQuery((req, res, ctx) => {
- *   const { storeId, key, desc, filter } = req.variables;
- *   return res(
- *     ctx.data({ programs })
- *   )
- * })
- */
-export const mockProgramsQuery = (resolver: ResponseResolver<GraphQLRequest<ProgramsQueryVariables>, GraphQLContext<ProgramsQuery>, any>) =>
-  graphql.query<ProgramsQuery, ProgramsQueryVariables>(
-    'programs',
-    resolver
-  )
 
 /**
  * @param resolver a function that accepts a captured request and may return a mocked response.
