@@ -133,11 +133,8 @@ mod test {
             setup_all("use_suggested_quantity_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider
+        let mut context = service_provider
             .context(mock_store_a().id, "".to_string())
-            .unwrap();
-        let store_b_context = service_provider
-            .context(mock_store_b().id, "".to_string())
             .unwrap();
         let service = service_provider.requisition_service;
 
@@ -150,17 +147,6 @@ mod test {
                 },
             ),
             Err(ServiceError::RequisitionDoesNotExist)
-        );
-
-        // NotThisStoreRequisition
-        assert_eq!(
-            service.use_suggested_quantity(
-                &store_b_context,
-                UseSuggestedQuantity {
-                    request_requisition_id: mock_draft_request_requisition_for_update_test().id,
-                },
-            ),
-            Err(ServiceError::NotThisStoreRequisition)
         );
 
         // CannotEditRequisition
@@ -183,6 +169,18 @@ mod test {
                 },
             ),
             Err(ServiceError::NotARequestRequisition)
+        );
+
+        // NotThisStoreRequisition
+        context.store_id = mock_store_b().id;
+        assert_eq!(
+            service.use_suggested_quantity(
+                &context,
+                UseSuggestedQuantity {
+                    request_requisition_id: mock_draft_request_requisition_for_update_test().id,
+                },
+            ),
+            Err(ServiceError::NotThisStoreRequisition)
         );
     }
 

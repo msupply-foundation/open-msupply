@@ -131,11 +131,8 @@ mod test {
             setup_all("delete_outbound_shipment_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider
+        let mut context = service_provider
             .context(mock_store_a().id, "".to_string())
-            .unwrap();
-        let store_c_context = service_provider
-            .context(mock_store_c().id, "".to_string())
             .unwrap();
         let service = service_provider.invoice_service;
 
@@ -143,12 +140,6 @@ mod test {
         assert_eq!(
             service.delete_outbound_shipment(&context, "invalid".to_string()),
             Err(ServiceError::InvoiceDoesNotExist)
-        );
-
-        //CannotEditFinalised
-        assert_eq!(
-            service.delete_outbound_shipment(&store_c_context, mock_outbound_shipment_b().id),
-            Err(ServiceError::CannotEditFinalised)
         );
 
         //NotAnOutboundShipment
@@ -161,6 +152,13 @@ mod test {
         assert_eq!(
             service.delete_outbound_shipment(&context, mock_outbound_shipment_b().id),
             Err(ServiceError::NotThisStoreInvoice)
+        );
+
+        //CannotEditFinalised
+        context.store_id = mock_store_c().id;
+        assert_eq!(
+            service.delete_outbound_shipment(&context, mock_outbound_shipment_b().id),
+            Err(ServiceError::CannotEditFinalised)
         );
     }
 

@@ -104,11 +104,8 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider
+        let mut context = service_provider
             .context(mock_store_a().id, "".to_string())
-            .unwrap();
-        let store_c_context = service_provider
-            .context(mock_store_c().id, "".to_string())
             .unwrap();
         let service = service_provider.invoice_line_service;
 
@@ -132,17 +129,6 @@ mod test {
                 }),
             ),
             Err(ServiceError::InvoiceDoesNotExist)
-        );
-
-        // NotAnInboundShipment
-        assert_eq!(
-            service.insert_inbound_shipment_service_line(
-                &store_c_context,
-                inline_init(|r: &mut InsertInboundShipmentServiceLine| {
-                    r.invoice_id = mock_outbound_shipment_c().id;
-                }),
-            ),
-            Err(ServiceError::NotAnInboundShipment)
         );
 
         // CannotEditInvoice
@@ -180,10 +166,22 @@ mod test {
             Err(ServiceError::NotAServiceItem)
         );
 
+        // NotAnInboundShipment
+        context.store_id = mock_store_c().id;
+        assert_eq!(
+            service.insert_inbound_shipment_service_line(
+                &context,
+                inline_init(|r: &mut InsertInboundShipmentServiceLine| {
+                    r.invoice_id = mock_outbound_shipment_c().id;
+                }),
+            ),
+            Err(ServiceError::NotAnInboundShipment)
+        );
+
         // NotThisStoreInvoice
         assert_eq!(
             service.insert_inbound_shipment_service_line(
-                &store_c_context,
+                &context,
                 inline_init(|r: &mut InsertInboundShipmentServiceLine| {
                     r.invoice_id = mock_draft_inbound_shipment_with_service_lines().id;
                     r.item_id = Some(mock_item_service_item().id);

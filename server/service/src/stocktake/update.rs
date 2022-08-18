@@ -494,10 +494,7 @@ mod test {
             setup_all("update_stocktake", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider
-            .context(mock_store_a().id, "".to_string())
-            .unwrap();
-        let invalid_store_context = service_provider
+        let mut context = service_provider
             .context("invalid".to_string(), "".to_string())
             .unwrap();
         let service = service_provider.stocktake_service;
@@ -506,7 +503,7 @@ mod test {
         let existing_stocktake = mock_stocktake_a();
         let error = service
             .update_stocktake(
-                &invalid_store_context,
+                &context,
                 inline_init(|i: &mut UpdateStocktake| {
                     i.id = existing_stocktake.id.clone();
                 }),
@@ -515,6 +512,7 @@ mod test {
         assert_eq!(error, UpdateStocktakeError::InvalidStore);
 
         // error: StocktakeDoesNotExist
+        context.store_id = mock_store_a().id;
         let error = service
             .update_stocktake(
                 &context,

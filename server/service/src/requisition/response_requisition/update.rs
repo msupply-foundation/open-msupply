@@ -165,11 +165,8 @@ mod test_update {
             setup_all("update_response_requisition_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider
+        let mut context = service_provider
             .context(mock_store_a().id, "".to_string())
-            .unwrap();
-        let store_b_context = service_provider
-            .context(mock_store_b().id, "".to_string())
             .unwrap();
         let service = service_provider.requisition_service;
 
@@ -186,21 +183,6 @@ mod test_update {
                 },
             ),
             Err(ServiceError::RequisitionDoesNotExist)
-        );
-
-        // NotThisStoreRequisition
-        assert_eq!(
-            service.update_response_requisition(
-                &store_b_context,
-                UpdateResponseRequisition {
-                    id: mock_draft_response_requisition_for_update_test().id,
-                    colour: None,
-                    status: None,
-                    their_reference: None,
-                    comment: None,
-                },
-            ),
-            Err(ServiceError::NotThisStoreRequisition)
         );
 
         // CannotEditRequisition
@@ -231,6 +213,22 @@ mod test_update {
                 },
             ),
             Err(ServiceError::NotAResponseRequisition)
+        );
+
+        // NotThisStoreRequisition
+        context.store_id = mock_store_b().id;
+        assert_eq!(
+            service.update_response_requisition(
+                &context,
+                UpdateResponseRequisition {
+                    id: mock_draft_response_requisition_for_update_test().id,
+                    colour: None,
+                    status: None,
+                    their_reference: None,
+                    comment: None,
+                },
+            ),
+            Err(ServiceError::NotThisStoreRequisition)
         );
     }
 

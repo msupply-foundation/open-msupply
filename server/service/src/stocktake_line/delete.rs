@@ -92,11 +92,8 @@ mod stocktake_line_test {
             setup_all("delete_stocktake_line", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider
+        let mut context = service_provider
             .context(mock_store_a().id, "".to_string())
-            .unwrap();
-        let invalid_store_context = service_provider
-            .context("invalid".to_string(), "".to_string())
             .unwrap();
         let service = service_provider.stocktake_line_service;
 
@@ -107,19 +104,21 @@ mod stocktake_line_test {
         assert_eq!(error, DeleteStocktakeLineError::StocktakeLineDoesNotExist);
 
         // error: invalid store
+        context.store_id = "invalid".to_string();
         let existing_line = mock_stocktake_line_a();
         let error = service
-            .delete_stocktake_line(&invalid_store_context, existing_line.id)
+            .delete_stocktake_line(&context, existing_line.id)
             .unwrap_err();
         assert_eq!(error, DeleteStocktakeLineError::InvalidStore);
         // error: invalid store
         let existing_line = mock_stocktake_line_a();
         let error = service
-            .delete_stocktake_line(&invalid_store_context, existing_line.id)
+            .delete_stocktake_line(&context, existing_line.id)
             .unwrap_err();
         assert_eq!(error, DeleteStocktakeLineError::InvalidStore);
 
         // error CannotEditFinalised
+        context.store_id = mock_store_a().id;
         let existing_line = mock_stocktake_line_finalised();
         let error = service
             .delete_stocktake_line(&context, existing_line.id)

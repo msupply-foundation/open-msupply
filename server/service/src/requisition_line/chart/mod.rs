@@ -184,11 +184,8 @@ mod test {
             setup_all("get_requisition_line_chart_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider
+        let mut context = service_provider
             .context(mock_store_a().id, "".to_string())
-            .unwrap();
-        let store_b_context = service_provider
-            .context(mock_store_b().id, "".to_string())
             .unwrap();
         let service = service_provider.requisition_line_service;
 
@@ -203,19 +200,6 @@ mod test {
             Err(ServiceError::RequisitionLineDoesNotExist)
         );
 
-        let test_line = mock_request_draft_requisition_calculation_test().lines[0].clone();
-
-        // RequisitionLineDoesNotBelongToCurrentStore
-        assert_eq!(
-            service.get_requisition_line_chart(
-                &store_b_context,
-                &test_line.id,
-                ConsumptionHistoryOptions::default(),
-                StockEvolutionOptions::default(),
-            ),
-            Err(ServiceError::RequisitionLineDoesNotBelongToCurrentStore)
-        );
-
         let test_line = mock_draft_response_requisition_for_update_test_line();
 
         // NotARequestRequisition
@@ -227,6 +211,18 @@ mod test {
                 StockEvolutionOptions::default(),
             ),
             Err(ServiceError::NotARequestRequisition)
+        );
+
+        // RequisitionLineDoesNotBelongToCurrentStore
+        context.store_id = mock_store_b().id;
+        assert_eq!(
+            service.get_requisition_line_chart(
+                &context,
+                &test_line.id,
+                ConsumptionHistoryOptions::default(),
+                StockEvolutionOptions::default(),
+            ),
+            Err(ServiceError::RequisitionLineDoesNotBelongToCurrentStore)
         );
     }
 

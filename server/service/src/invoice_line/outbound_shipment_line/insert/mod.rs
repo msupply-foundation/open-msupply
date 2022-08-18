@@ -108,11 +108,8 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider
+        let mut context = service_provider
             .context(mock_store_b().id, "".to_string())
-            .unwrap();
-        let store_c_context = service_provider
-            .context(mock_store_c().id, "".to_string())
             .unwrap();
         let service = service_provider.invoice_line_service;
 
@@ -279,9 +276,10 @@ mod test {
         );
 
         // NotThisStoreInvoice
+        context.store_id = mock_store_c().id;
         assert_eq!(
             service.insert_outbound_shipment_line(
-                &store_c_context,
+                &context,
                 inline_init(|r: &mut InsertOutboundShipmentLine| {
                     r.id = "new outbound line id".to_string();
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]

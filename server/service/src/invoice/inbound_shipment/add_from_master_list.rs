@@ -137,11 +137,8 @@ mod test {
             setup_all("is_add_from_master_list_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider
+        let mut context = service_provider
             .context(mock_store_a().id, "".to_string())
-            .unwrap();
-        let store_c_context = service_provider
-            .context(mock_store_c().id, "".to_string())
             .unwrap();
         let service = service_provider.invoice_service;
 
@@ -157,18 +154,6 @@ mod test {
             Err(ServiceError::ShipmentDoesNotExist)
         );
 
-        // NotThisStore
-        assert_eq!(
-            service.add_to_inbound_shipment_from_master_list(
-                &store_c_context,
-                ServiceInput {
-                    shipment_id: mock_inbound_shipment_c().id,
-                    master_list_id: "n/a".to_owned()
-                },
-            ),
-            Err(ServiceError::NotThisStoreShipment)
-        );
-
         // CannotEditRecord
         assert_eq!(
             service.add_to_inbound_shipment_from_master_list(
@@ -181,18 +166,6 @@ mod test {
             Err(ServiceError::CannotEditShipment)
         );
 
-        // RecordIsIncorrectType
-        assert_eq!(
-            service.add_to_inbound_shipment_from_master_list(
-                &store_c_context,
-                ServiceInput {
-                    shipment_id: mock_outbound_shipment_c().id,
-                    master_list_id: "n/a".to_owned()
-                },
-            ),
-            Err(ServiceError::NotAnInboundShipment)
-        );
-
         // MasterListNotFoundForThisStore
         assert_eq!(
             service.add_to_inbound_shipment_from_master_list(
@@ -203,6 +176,31 @@ mod test {
                 },
             ),
             Err(ServiceError::MasterListNotFoundForThisStore)
+        );
+
+        // NotThisStore
+        context.store_id = mock_store_c().id;
+        assert_eq!(
+            service.add_to_inbound_shipment_from_master_list(
+                &context,
+                ServiceInput {
+                    shipment_id: mock_inbound_shipment_c().id,
+                    master_list_id: "n/a".to_owned()
+                },
+            ),
+            Err(ServiceError::NotThisStoreShipment)
+        );
+
+        // RecordIsIncorrectType
+        assert_eq!(
+            service.add_to_inbound_shipment_from_master_list(
+                &context,
+                ServiceInput {
+                    shipment_id: mock_outbound_shipment_c().id,
+                    master_list_id: "n/a".to_owned()
+                },
+            ),
+            Err(ServiceError::NotAnInboundShipment)
         );
     }
 

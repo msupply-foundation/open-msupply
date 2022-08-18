@@ -169,11 +169,8 @@ mod test {
             setup_all("add_from_master_list_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider
+        let mut context = service_provider
             .context(mock_store_a().id, "".to_string())
-            .unwrap();
-        let store_b_context = service_provider
-            .context(mock_store_b().id, "".to_string())
             .unwrap();
         let service = service_provider.requisition_service;
 
@@ -187,18 +184,6 @@ mod test {
                 },
             ),
             Err(ServiceError::RequisitionDoesNotExist)
-        );
-
-        // NotThisStoreRequisition
-        assert_eq!(
-            service.add_from_master_list(
-                &store_b_context,
-                AddFromMasterList {
-                    request_requisition_id: mock_draft_request_requisition_for_update_test().id,
-                    master_list_id: "n/a".to_owned()
-                },
-            ),
-            Err(ServiceError::NotThisStoreRequisition)
         );
 
         // CannotEditRequisition
@@ -235,6 +220,19 @@ mod test {
                 },
             ),
             Err(ServiceError::MasterListNotFoundForThisStore)
+        );
+
+        context.store_id = mock_store_b().id;
+        // NotThisStoreRequisition
+        assert_eq!(
+            service.add_from_master_list(
+                &context,
+                AddFromMasterList {
+                    request_requisition_id: mock_draft_request_requisition_for_update_test().id,
+                    master_list_id: "n/a".to_owned()
+                },
+            ),
+            Err(ServiceError::NotThisStoreRequisition)
         );
     }
 

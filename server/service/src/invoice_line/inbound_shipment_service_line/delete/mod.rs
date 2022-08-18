@@ -85,11 +85,8 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider
+        let mut context = service_provider
             .context(mock_store_a().id, "".to_string())
-            .unwrap();
-        let store_b_context = service_provider
-            .context(mock_store_b().id, "".to_string())
             .unwrap();
         let service = service_provider.invoice_line_service;
 
@@ -127,9 +124,10 @@ mod test {
         );
 
         // NotThisStoreInvoice
+        context.store_id = mock_store_b().id;
         assert_eq!(
             service.delete_inbound_shipment_service_line(
-                &store_b_context,
+                &context,
                 inline_init(|r: &mut DeleteInboundShipmentLine| {
                     r.id = mock_draft_inbound_service_line().id;
                 }),

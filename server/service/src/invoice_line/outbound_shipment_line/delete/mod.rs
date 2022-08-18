@@ -107,21 +107,15 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let store_a_context = service_provider
-            .context(mock_store_a().id, "".to_string())
-            .unwrap();
-        let store_b_context = service_provider
+        let mut context = service_provider
             .context(mock_store_b().id, "".to_string())
-            .unwrap();
-        let store_c_context = service_provider
-            .context(mock_store_c().id, "".to_string())
             .unwrap();
         let service = service_provider.invoice_line_service;
 
         // LineDoesNotExist
         assert_eq!(
             service.delete_outbound_shipment_line(
-                &store_b_context,
+                &context,
                 DeleteOutboundShipmentLine {
                     id: "invalid".to_owned(),
                 },
@@ -129,10 +123,22 @@ mod test {
             Err(ServiceError::LineDoesNotExist)
         );
 
-        // NotAnOutboundShipment
+        // NotThisStoreInvoice
         assert_eq!(
             service.delete_outbound_shipment_line(
-                &store_a_context,
+                &context,
+                DeleteOutboundShipmentLine {
+                    id: mock_outbound_shipment_c_invoice_lines()[0].id.clone()
+                }
+            ),
+            Err(ServiceError::NotThisStoreInvoice)
+        );
+
+        // NotAnOutboundShipment
+        context.store_id = mock_store_a().id;
+        assert_eq!(
+            service.delete_outbound_shipment_line(
+                &context,
                 DeleteOutboundShipmentLine {
                     id: mock_inbound_shipment_a_invoice_lines()[0].id.clone(),
                 },
@@ -141,25 +147,15 @@ mod test {
         );
 
         // CannotEditInvoice
+        context.store_id = mock_store_c().id;
         assert_eq!(
             service.delete_outbound_shipment_line(
-                &store_c_context,
+                &context,
                 DeleteOutboundShipmentLine {
                     id: mock_outbound_shipment_b_invoice_lines()[1].id.clone(),
                 },
             ),
             Err(ServiceError::CannotEditInvoice)
-        );
-
-        // NotThisStoreInvoice
-        assert_eq!(
-            service.delete_outbound_shipment_line(
-                &store_b_context,
-                DeleteOutboundShipmentLine {
-                    id: mock_outbound_shipment_c_invoice_lines()[0].id.clone()
-                }
-            ),
-            Err(ServiceError::NotThisStoreInvoice)
         );
     }
 
@@ -202,11 +198,8 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let store_b_context = service_provider
+        let mut context = service_provider
             .context(mock_store_b().id, "".to_string())
-            .unwrap();
-        let store_c_context = service_provider
-            .context(mock_store_c().id, "".to_string())
             .unwrap();
         let service = service_provider.invoice_line_service;
 
@@ -230,7 +223,7 @@ mod test {
 
         let invoice_line_id = service
             .delete_outbound_shipment_line(
-                &store_b_context,
+                &context,
                 DeleteOutboundShipmentLine {
                     id: mock_outbound_shipment_a_invoice_lines()[0].id.clone(),
                 },
@@ -261,9 +254,10 @@ mod test {
         let expected_available_number_of_packs =
             stock_line.available_number_of_packs + invoice_line.number_of_packs;
 
+        context.store_id = mock_store_c().id;
         service
             .delete_outbound_shipment_line(
-                &store_c_context,
+                &context,
                 DeleteOutboundShipmentLine {
                     id: mock_outbound_shipment_c_invoice_lines()[0].id.clone(),
                 },
@@ -290,7 +284,7 @@ mod test {
 
         service
             .delete_outbound_shipment_line(
-                &store_c_context,
+                &context,
                 DeleteOutboundShipmentLine {
                     id: outbound_shipment_lines().id,
                 },

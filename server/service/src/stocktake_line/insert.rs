@@ -258,11 +258,8 @@ mod stocktake_line_test {
             setup_all("insert_stocktake_line", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider
+        let mut context = service_provider
             .context(mock_store_a().id, "".to_string())
-            .unwrap();
-        let invalid_store_context = service_provider
-            .context("invalid".to_string(), "".to_string())
             .unwrap();
         let service = service_provider.stocktake_line_service;
 
@@ -282,11 +279,12 @@ mod stocktake_line_test {
         assert_eq!(error, InsertStocktakeLineError::StocktakeDoesNotExist);
 
         // error: InvalidStore,
+        context.store_id = "invalid".to_string();
         let stocktake_a = mock_stocktake_a();
         let stock_line_a = mock_item_a_lines()[0].clone();
         let error = service
             .insert_stocktake_line(
-                &invalid_store_context,
+                &context,
                 inline_init(|r: &mut InsertStocktakeLine| {
                     r.id = uuid();
                     r.stocktake_id = stocktake_a.id;
@@ -300,6 +298,7 @@ mod stocktake_line_test {
         // error StockLineAlreadyExistsInStocktake
         let stocktake_a = mock_stocktake_a();
         let stock_line_a = mock_item_a_lines()[0].clone();
+        context.store_id = mock_store_a().id;
         let error = service
             .insert_stocktake_line(
                 &context,
