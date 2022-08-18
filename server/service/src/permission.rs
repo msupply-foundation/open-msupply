@@ -25,10 +25,13 @@ pub fn permission_by_store(
             .user_id(EqualFilter::equal_to(user_id))
             .store_id(EqualFilter::equal_to(store_id)),
     )?;
-    let store = store_repo.find_one_by_id(&store_id)?;
+    let store = match store_repo.find_one_by_id(&store_id)? {
+        Some(store) => store,
+        None => return Err(RepositoryError::NotFound),
+    };
 
     let user_store_permission = UserStorePermissions {
-        store_row: store.clone().unwrap_or_default(),
+        store_row: store,
         permissions: user_permissions.clone(),
     };
     Ok(vec![user_store_permission])
