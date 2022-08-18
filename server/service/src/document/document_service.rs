@@ -192,6 +192,7 @@ mod document_service_test {
                     }),
                     schema_id: None,
                     status: DocumentStatus::Active,
+                    comment: None,
                 },
             )
             .unwrap();
@@ -212,6 +213,7 @@ mod document_service_test {
                 }),
                 schema_id: None,
                 status: DocumentStatus::Active,
+                comment: None,
             },
         );
         assert!(matches!(result, Err(DocumentInsertError::InvalidParent(_))));
@@ -234,6 +236,7 @@ mod document_service_test {
                     }),
                     schema_id: None,
                     status: DocumentStatus::Active,
+                    comment: None,
                 },
             )
             .unwrap();
@@ -260,6 +263,7 @@ mod document_service_test {
                     }),
                     schema_id: None,
                     status: DocumentStatus::Active,
+                    comment: None,
                 },
             )
             .unwrap();
@@ -301,6 +305,7 @@ mod document_service_test {
                     }),
                     schema_id: Some(schema.id),
                     status: DocumentStatus::Active,
+                    comment: None,
                 },
             )
             .unwrap();
@@ -321,6 +326,7 @@ mod document_service_test {
                 }),
                 schema_id: Some(schema.id),
                 status: DocumentStatus::Active,
+                comment: None,
             },
         );
         assert!(matches!(
@@ -344,6 +350,7 @@ mod document_service_test {
                 }),
                 schema_id: Some(schema.id),
                 status: DocumentStatus::Active,
+                comment: None,
             },
         );
         assert!(matches!(
@@ -371,6 +378,7 @@ mod document_service_test {
                     }),
                     schema_id: Some(schema.id),
                     status: DocumentStatus::Active,
+                    comment: None,
                 },
             )
             .unwrap();

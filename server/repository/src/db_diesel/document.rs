@@ -20,6 +20,7 @@ table! {
         data -> Text,
         schema_id -> Nullable<Text>,
         status -> crate::db_diesel::document::DocumentStatusMapping,
+        comment -> Nullable<Text>,
     }
 }
 
@@ -34,6 +35,7 @@ table! {
         data -> Text,
         schema_id -> Nullable<Text>,
         status -> crate::db_diesel::document::DocumentStatusMapping,
+        comment -> Nullable<Text>,
     }
 }
 
@@ -70,6 +72,8 @@ pub struct DocumentRow {
     pub schema_id: Option<String>,
     // Soft deletion status
     pub status: DocumentStatus,
+    // Deletion comment
+    pub comment: Option<String>,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
@@ -94,6 +98,7 @@ pub struct LatestDocumentRow {
     pub schema_id: Option<String>,
     // Soft deletion status
     pub status: DocumentStatus,
+    pub comment: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -114,6 +119,7 @@ pub struct Document {
     pub data: serde_json::Value,
     pub schema_id: Option<String>,
     pub status: DocumentStatus,
+    pub comment: Option<String>,
 }
 
 #[derive(Clone)]
@@ -229,6 +235,7 @@ fn document_from_row(row: DocumentRow) -> Result<Document, RepositoryError> {
         data,
         schema_id: row.schema_id,
         status: row.status,
+        comment: row.comment,
     };
 
     Ok(document)
@@ -256,6 +263,7 @@ fn latest_document_from_row(row: LatestDocumentRow) -> Result<Document, Reposito
         data,
         schema_id: row.schema_id,
         status: row.status,
+        comment: row.comment,
     };
 
     Ok(document)
@@ -281,5 +289,6 @@ fn row_from_document(doc: &Document) -> Result<DocumentRow, RepositoryError> {
         data,
         schema_id: doc.schema_id.clone(),
         status: doc.status.to_owned(),
+        comment: doc.comment.to_owned(),
     })
 }

@@ -89,6 +89,7 @@ fn generate(user_id: &str, input: UpsertProgram) -> Result<RawDocument, Reposito
         data: input.data,
         schema_id: Some(input.schema_id),
         status: DocumentStatus::Active,
+        comment: None,
     })
 }
 

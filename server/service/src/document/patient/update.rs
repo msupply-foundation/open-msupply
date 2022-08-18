@@ -108,6 +108,7 @@ fn generate(
         data: input.data,
         schema_id: Some(input.schema_id),
         status: DocumentStatus::Active,
+        comment: None,
     })
 }
 
