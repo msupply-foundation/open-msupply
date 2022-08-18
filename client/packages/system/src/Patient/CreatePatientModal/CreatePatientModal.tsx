@@ -12,12 +12,11 @@ import {
   useDialog,
   WizardStepper,
   useTranslation,
-  useDocument,
-  DocumentRegistryFragment,
 } from '@openmsupply-client/common';
 import { PatientFormTab } from './PatientFormTab';
 import { PatientResultsTab } from './PatientResultsTab';
 import { CreateNewPatient, usePatientCreateStore } from '../hooks';
+import { DocumentRegistryFragment, useDocument } from '../JsonForms/api';
 
 enum Tabs {
   Form = 'Form',
@@ -107,7 +106,6 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
     return () => {
       hideDialog();
       onChangeTab(Tabs.Form);
-      setNewPatient(undefined);
     };
   }, []);
 
@@ -136,7 +134,15 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
           <DialogButton variant="next" onClick={onNext} />
         ) : undefined
       }
-      cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
+      cancelButton={
+        <DialogButton
+          variant="cancel"
+          onClick={() => {
+            setNewPatient(undefined);
+            onClose();
+          }}
+        />
+      }
       slideAnimation={false}
     >
       <DetailContainer>

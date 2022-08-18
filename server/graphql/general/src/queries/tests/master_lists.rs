@@ -208,6 +208,7 @@ mod graphql {
                         .code(SimpleStringFilter::equal_to("code_filter"))
                         .description(SimpleStringFilter {
                             equal_to: Some("description_filter_1".to_owned()),
+                            insensitive_equal_to: None,
                             like: Some("description_filter_2".to_owned()),
                         })
                         .exists_for_name(SimpleStringFilter::like("exists_for_name_filter"))

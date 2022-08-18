@@ -34,14 +34,15 @@
     },
     "Allergies": {
       "properties": {
-        "drugs": {
+        "drugAllergies": {
+          "description": "Allergy again struct",
           "items": {
-            "type": "string"
+            "$ref": "#/definitions/DrugAllergy"
           },
           "type": "array"
         }
       },
-      "required": ["drugs"],
+      "required": ["drugAllergies"],
       "type": "object"
     },
     "ContactDetails": {
@@ -89,6 +90,19 @@
         },
         "zipCode": {
           "description": "184102003 Patient zip code",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "DrugAllergy": {
+      "properties": {
+        "description": {
+          "description": "Description of the allergy",
+          "type": "string"
+        },
+        "drug": {
+          "description": "The drug name",
           "type": "string"
         }
       },
@@ -264,13 +278,7 @@
           "$ref": "#/definitions/SocioEconomics"
         }
       },
-      "required": [
-        "contactDetails",
-        "id",
-        "isDeceased",
-        "notes",
-        "socioEconomics"
-      ],
+      "required": ["contactDetails", "id", "isDeceased", "socioEconomics"],
       "type": "object"
     },
     "Person": {
@@ -343,7 +351,7 @@
           "$ref": "#/definitions/SocioEconomics"
         }
       },
-      "required": ["isDeceased", "contactDetails", "socioEconomics", "notes"],
+      "required": ["isDeceased", "contactDetails", "socioEconomics"],
       "type": "object"
     },
     "SocioEconomics": {

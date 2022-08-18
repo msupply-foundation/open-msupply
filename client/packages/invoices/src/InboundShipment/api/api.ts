@@ -90,7 +90,6 @@ const inboundParsers = {
         : null,
       packSize: line.packSize,
       numberOfPacks: line.numberOfPacks,
-      totalAfterTax: 0,
       totalBeforeTax: 0,
       invoiceId: line.invoiceId,
       locationId: line.location?.id,
@@ -117,20 +116,16 @@ const inboundParsers = {
     invoiceId: line.invoiceId,
     itemId: line.item.id,
     totalBeforeTax: line.totalBeforeTax,
-    totalAfterTax: line.totalBeforeTax,
     note: line.note,
   }),
   toUpdateServiceCharge: (line: DraftInboundLine) => ({
     id: line.id,
-    invoiceId: line.invoiceId,
     itemId: line.item.id,
     totalBeforeTax: line.totalBeforeTax,
-    totalAfterTax: line.totalBeforeTax,
     note: line.note,
   }),
   toDeleteServiceCharge: (line: DraftInboundLine) => ({
     id: line.id,
-    invoiceId: line.invoiceId,
   }),
 };
 
@@ -272,7 +267,7 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
           ({ type, isCreated, isDeleted }) =>
             type === InvoiceLineNodeType.Service && !isDeleted && isCreated
         )
-        .map(inboundParsers.toUpdateServiceCharge),
+        .map(inboundParsers.toInsertServiceCharge),
       updateInboundShipmentServiceLines: draftInboundLine
         .filter(
           ({ type, isUpdated, isCreated, isDeleted }) =>

@@ -1,0 +1,72 @@
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "Label",
+      "text": "Encounter",
+      "variant": "h1"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/startDatetime"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/endDatetime"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/practitioner"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/status"
+    },
+    {
+      "type": "EncounterLineChart",
+      "scope": "#",
+      "options": {
+        "values": [
+          {
+            "field": "physicalExamination.weight",
+            "label": "Weight",
+            "unit": "kg"
+          }
+        ]
+      }
+    },
+    {
+      "type": "EncounterLineChart",
+      "scope": "#",
+      "options": {
+        "values": [
+          {
+            "field": "physicalExamination.bloodPressure",
+            "label": "Blood Pressure",
+            "unit": "mmHg"
+          }
+        ]
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/physicalExamination"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/familyPlanning"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/arvMedication"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/riskBehaviour"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/tuberculosis"
+    }
+  ]
+}

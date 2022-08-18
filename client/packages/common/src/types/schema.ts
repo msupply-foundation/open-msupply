@@ -566,7 +566,6 @@ export type DocumentConnector = {
 
 export type DocumentFilterInput = {
   name?: InputMaybe<EqualFilterStringInput>;
-  storeId?: InputMaybe<EqualFilterStringInput>;
 };
 
 export type DocumentHistoryResponse = DocumentConnector;
@@ -643,11 +642,30 @@ export type EncounterConnector = {
   totalCount: Scalars['Int'];
 };
 
+export type EncounterFieldsConnector = {
+  __typename: 'EncounterFieldsConnector';
+  nodes: Array<EncounterFieldsNode>;
+  totalCount: Scalars['Int'];
+};
+
+export type EncounterFieldsInput = {
+  fields: Array<Scalars['String']>;
+};
+
+export type EncounterFieldsNode = {
+  __typename: 'EncounterFieldsNode';
+  encounter: EncounterNode;
+  fields: Array<Scalars['JSON']>;
+};
+
+export type EncounterFieldsResponse = EncounterFieldsConnector;
+
 export type EncounterFilterInput = {
-  encounterDatetime?: InputMaybe<DatetimeFilterInput>;
+  endDatetime?: InputMaybe<DatetimeFilterInput>;
   name?: InputMaybe<EqualFilterStringInput>;
   patientId?: InputMaybe<EqualFilterStringInput>;
   program?: InputMaybe<EqualFilterStringInput>;
+  startDatetime?: InputMaybe<DatetimeFilterInput>;
   status?: InputMaybe<EqualFilterEncounterStatusInput>;
 };
 
@@ -655,21 +673,41 @@ export type EncounterNode = {
   __typename: 'EncounterNode';
   /** The encounter document */
   document: DocumentNode;
+  endDatetime?: Maybe<Scalars['DateTime']>;
   name: Scalars['String'];
   patientId: Scalars['String'];
   program: Scalars['String'];
-  status: EncounterNodeStatus;
+  startDatetime: Scalars['DateTime'];
+  status?: Maybe<EncounterNodeStatus>;
+  type: Scalars['String'];
 };
 
 export enum EncounterNodeStatus {
-  Canceled = 'CANCELED',
-  Finished = 'FINISHED',
-  Missed = 'MISSED',
-  Ongoing = 'ONGOING',
+  Cancelled = 'CANCELLED',
+  Done = 'DONE',
   Scheduled = 'SCHEDULED'
 }
 
 export type EncounterResponse = EncounterConnector;
+
+export enum EncounterSortFieldInput {
+  EndDatetime = 'endDatetime',
+  PatientId = 'patientId',
+  Program = 'program',
+  StartDatetime = 'startDatetime',
+  Status = 'status',
+  Type = 'type'
+}
+
+export type EncounterSortInput = {
+  /**
+   * Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']>;
+  /** Sort query result by `key` */
+  key: EncounterSortFieldInput;
+};
 
 export type EqualFilterBigNumberInput = {
   equalAny?: InputMaybe<Array<Scalars['Int']>>;
@@ -1238,6 +1276,7 @@ export type FullQuery = {
   documentHistory: DocumentHistoryResponse;
   documentRegistries: DocumentRegistryResponse;
   documents: DocumentResponse;
+  encounterFields: EncounterFieldsResponse;
   encounters: EncounterResponse;
   formSchema?: Maybe<FormSchemaNode>;
   invoice: InvoiceResponse;
@@ -1325,8 +1364,19 @@ export type FullQueryDocumentsArgs = {
 };
 
 
+export type FullQueryEncounterFieldsArgs = {
+  filter?: InputMaybe<EncounterFilterInput>;
+  input: EncounterFieldsInput;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<EncounterSortInput>;
+  storeId: Scalars['String'];
+};
+
+
 export type FullQueryEncountersArgs = {
   filter?: InputMaybe<EncounterFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<EncounterSortInput>;
   storeId: Scalars['String'];
 };
 
@@ -1627,9 +1677,8 @@ export type InsertInboundShipmentLineInput = {
   numberOfPacks: Scalars['Int'];
   packSize: Scalars['Int'];
   sellPricePerPack: Scalars['Float'];
-  tax?: InputMaybe<TaxUpdate>;
-  totalAfterTax: Scalars['Float'];
-  totalBeforeTax: Scalars['Float'];
+  tax?: InputMaybe<Scalars['Float']>;
+  totalBeforeTax?: InputMaybe<Scalars['Float']>;
 };
 
 export type InsertInboundShipmentLineResponse = InsertInboundShipmentLineError | InvoiceLineNode;
@@ -1663,8 +1712,7 @@ export type InsertInboundShipmentServiceLineInput = {
   itemId?: InputMaybe<Scalars['String']>;
   name?: InputMaybe<Scalars['String']>;
   note?: InputMaybe<Scalars['String']>;
-  tax?: InputMaybe<TaxUpdate>;
-  totalAfterTax: Scalars['Float'];
+  tax?: InputMaybe<Scalars['Float']>;
   totalBeforeTax: Scalars['Float'];
 };
 
@@ -1725,9 +1773,8 @@ export type InsertOutboundShipmentLineInput = {
   itemId: Scalars['String'];
   numberOfPacks: Scalars['Int'];
   stockLineId: Scalars['String'];
-  tax?: InputMaybe<TaxUpdate>;
-  totalAfterTax: Scalars['Float'];
-  totalBeforeTax: Scalars['Float'];
+  tax?: InputMaybe<Scalars['Float']>;
+  totalBeforeTax?: InputMaybe<Scalars['Float']>;
 };
 
 export type InsertOutboundShipmentLineResponse = InsertOutboundShipmentLineError | InvoiceLineNode;
@@ -1761,8 +1808,7 @@ export type InsertOutboundShipmentServiceLineInput = {
   itemId?: InputMaybe<Scalars['String']>;
   name?: InputMaybe<Scalars['String']>;
   note?: InputMaybe<Scalars['String']>;
-  tax?: InputMaybe<TaxUpdate>;
-  totalAfterTax: Scalars['Float'];
+  tax?: InputMaybe<Scalars['Float']>;
   totalBeforeTax: Scalars['Float'];
 };
 
@@ -3094,6 +3140,8 @@ export enum ServerStatus {
 export type SimpleStringFilterInput = {
   /** Search term must be an exact match (case sensitive) */
   equalTo?: InputMaybe<Scalars['String']>;
+  /** Search term must be an exact match, but case insensitive */
+  insensitiveEqualTo?: InputMaybe<Scalars['String']>;
   /** Search term must be included in search candidate (case insensitive) */
   like?: InputMaybe<Scalars['String']>;
 };
@@ -3354,7 +3402,7 @@ export type SyncSettingsNode = {
   username: Scalars['String'];
 };
 
-export type TaxUpdate = {
+export type TaxInput = {
   /** Set or unset the tax value (in percentage) */
   percentage?: InputMaybe<Scalars['Float']>;
 };
@@ -3458,6 +3506,8 @@ export type UpdateInboundShipmentLineInput = {
   numberOfPacks?: InputMaybe<Scalars['Int']>;
   packSize?: InputMaybe<Scalars['Int']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']>;
+  tax?: InputMaybe<TaxInput>;
+  totalBeforeTax?: InputMaybe<Scalars['Float']>;
 };
 
 export type UpdateInboundShipmentLineResponse = InvoiceLineNode | UpdateInboundShipmentLineError;
@@ -3490,8 +3540,7 @@ export type UpdateInboundShipmentServiceLineInput = {
   itemId?: InputMaybe<Scalars['String']>;
   name?: InputMaybe<Scalars['String']>;
   note?: InputMaybe<Scalars['String']>;
-  tax?: InputMaybe<TaxUpdate>;
-  totalAfterTax?: InputMaybe<Scalars['Float']>;
+  tax?: InputMaybe<TaxInput>;
   totalBeforeTax?: InputMaybe<Scalars['Float']>;
 };
 
@@ -3566,8 +3615,7 @@ export type UpdateOutboundShipmentLineInput = {
   itemId?: InputMaybe<Scalars['String']>;
   numberOfPacks?: InputMaybe<Scalars['Int']>;
   stockLineId?: InputMaybe<Scalars['String']>;
-  tax?: InputMaybe<TaxUpdate>;
-  totalAfterTax?: InputMaybe<Scalars['Float']>;
+  tax?: InputMaybe<TaxInput>;
   totalBeforeTax?: InputMaybe<Scalars['Float']>;
 };
 
@@ -3601,8 +3649,7 @@ export type UpdateOutboundShipmentServiceLineInput = {
   itemId?: InputMaybe<Scalars['String']>;
   name?: InputMaybe<Scalars['String']>;
   note?: InputMaybe<Scalars['String']>;
-  tax?: InputMaybe<TaxUpdate>;
-  totalAfterTax?: InputMaybe<Scalars['Float']>;
+  tax?: InputMaybe<TaxInput>;
   totalBeforeTax?: InputMaybe<Scalars['Float']>;
 };
 

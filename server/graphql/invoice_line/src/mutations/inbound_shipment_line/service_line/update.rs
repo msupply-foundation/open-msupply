@@ -1,6 +1,6 @@
 use async_graphql::*;
 
-use graphql_core::generic_inputs::TaxUpdate;
+use graphql_core::generic_inputs::TaxInput;
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::{
     simple_generic_errors::{CannotEditInvoice, ForeignKey, ForeignKeyError, RecordNotFound},
@@ -10,13 +10,11 @@ use graphql_types::types::InvoiceLineNode;
 
 use repository::InvoiceLine;
 use service::auth::{Resource, ResourceAccessRequest};
-use service::invoice_line::{
-    inbound_shipment_service_line::{
-        UpdateInboundShipmentServiceLine as ServiceInput,
-        UpdateInboundShipmentServiceLineError as ServiceError,
-    },
-    ShipmentTaxUpdate,
+use service::invoice_line::inbound_shipment_service_line::{
+    UpdateInboundShipmentServiceLine as ServiceInput,
+    UpdateInboundShipmentServiceLineError as ServiceError,
 };
+use service::invoice_line::ShipmentTaxUpdate;
 
 #[derive(InputObject)]
 #[graphql(name = "UpdateInboundShipmentServiceLineInput")]
@@ -25,8 +23,7 @@ pub struct UpdateInput {
     item_id: Option<String>,
     name: Option<String>,
     total_before_tax: Option<f64>,
-    total_after_tax: Option<f64>,
-    tax: Option<TaxUpdate>,
+    tax: Option<TaxInput>,
     note: Option<String>,
 }
 
@@ -89,7 +86,6 @@ impl UpdateInput {
             item_id,
             name,
             total_before_tax,
-            total_after_tax,
             tax,
             note,
         } = self;
@@ -99,9 +95,10 @@ impl UpdateInput {
             item_id,
             name,
             total_before_tax,
-            total_after_tax,
-            tax: tax.map(|tax| ShipmentTaxUpdate {
-                percentage: tax.percentage,
+            tax: tax.and_then(|tax| {
+                Some(ShipmentTaxUpdate {
+                    percentage: tax.percentage,
+                })
             }),
             note,
         }
@@ -359,9 +356,8 @@ mod test {
                     item_id: Some("item_id".to_string()),
                     name: Some("some name".to_string()),
                     total_before_tax: Some(0.1),
-                    total_after_tax: Some(0.2),
                     tax: Some(ShipmentTaxUpdate {
-                        percentage: Some(10.0)
+                        percentage: Some(10.0),
                     }),
                     note: Some("note".to_string())
                 }
@@ -377,7 +373,6 @@ mod test {
             "itemId": "item_id",
             "name": "some name",
             "totalBeforeTax": 0.1,
-            "totalAfterTax": 0.2,
             "tax": {
                 "percentage": 10
             },

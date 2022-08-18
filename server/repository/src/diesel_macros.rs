@@ -109,7 +109,7 @@ macro_rules! apply_string_filter {
 /// ```
 /// if let Some(string_filter) = filter.comment {
 ///     if let Some(value) = equal_filter.equal_to {
-///         query = query.filterd(invoice_dsl::comment.eq(value));
+///         query = query.filter(invoice_dsl::comment.eq(value));
 ///     }
 ///
 ///     if let Some(value) = equal_filter.like {
@@ -125,6 +125,10 @@ macro_rules! apply_simple_string_filter {
                 $query = $query.filter($dsl_field.eq(value));
             }
 
+            if let Some(value) = string_filter.insensitive_equal_to {
+                $query = $query.filter($dsl_field.like(value.replace("%", "")));
+            }
+
             if let Some(value) = string_filter.like {
                 // in sqlite like is case insensitive (but on only works with ASCII chars)
                 $query = $query.filter($dsl_field.like(format!("%{}%", value)));
@@ -138,6 +142,10 @@ macro_rules! apply_simple_string_filter {
         if let Some(string_filter) = $filter_field {
             if let Some(value) = string_filter.equal_to {
                 $query = $query.filter($dsl_field.eq(value));
+            }
+
+            if let Some(value) = string_filter.insensitive_equal_to {
+                $query = $query.filter($dsl_field.ilike(value.replace("%", "")));
             }
 
             if let Some(value) = string_filter.like {

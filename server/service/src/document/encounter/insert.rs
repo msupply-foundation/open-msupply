@@ -47,15 +47,22 @@ pub fn insert_encounter(
             let program = input.program.clone();
             let doc = generate(user_id, input)?;
 
-            encounter_updated(&ctx.connection, &patient_id, &program, &doc.name, encounter)
-                .map_err(|err| match err {
-                    EncounterTableUpdateError::RepositoryError(err) => {
-                        InsertEncounterError::DatabaseError(err)
-                    }
-                    EncounterTableUpdateError::InternalError(err) => {
-                        InsertEncounterError::InternalError(err)
-                    }
-                })?;
+            encounter_updated(
+                &ctx.connection,
+                &patient_id,
+                &program,
+                &doc.name,
+                &doc,
+                encounter,
+            )
+            .map_err(|err| match err {
+                EncounterTableUpdateError::RepositoryError(err) => {
+                    InsertEncounterError::DatabaseError(err)
+                }
+                EncounterTableUpdateError::InternalError(err) => {
+                    InsertEncounterError::InternalError(err)
+                }
+            })?;
 
             // Updating the document will trigger an update in the patient (names) table
             let result = service_provider
@@ -149,7 +156,10 @@ mod test {
 
     use crate::{
         document::{
-            encounter::{encounter_schema::SchemaEncounter, InsertEncounter},
+            encounter::{
+                encounter_schema::{EncounterStatus, SchemaEncounter},
+                InsertEncounter,
+            },
             patient::{test::mock_patient_1, UpdatePatient},
             program::{program_schema::SchemaProgramEnrolment, UpsertProgram},
         },
@@ -266,10 +276,10 @@ mod test {
         matches!(err, InsertEncounterError::InvalidDataSchema(_));
 
         // success insert
-        let encounter = SchemaEncounter {
-            encounter_datetime: Utc::now().to_rfc3339(),
-            status: "Scheduled".to_string(),
-        };
+        let encounter = inline_init(|e: &mut SchemaEncounter| {
+            e.start_datetime = Utc::now().to_rfc3339();
+            e.status = Some(EncounterStatus::Scheduled);
+        });
         let program_type = "ProgramType".to_string();
         let result = service
             .insert_encounter(

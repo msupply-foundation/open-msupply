@@ -122,9 +122,23 @@ impl DocumentQueries {
         &self,
         ctx: &Context<'_>,
         store_id: String,
+        page: Option<PaginationInput>,
         filter: Option<EncounterFilterInput>,
+        sort: Option<EncounterSortInput>,
     ) -> Result<EncounterResponse> {
-        encounters(ctx, store_id, filter)
+        encounters(ctx, store_id, page, filter, sort)
+    }
+
+    pub async fn encounter_fields(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: EncounterFieldsInput,
+        page: Option<PaginationInput>,
+        filter: Option<EncounterFilterInput>,
+        sort: Option<EncounterSortInput>,
+    ) -> Result<EncounterFieldsResponse> {
+        encounter_fields(ctx, store_id, input, page, filter, sort)
     }
 }
 

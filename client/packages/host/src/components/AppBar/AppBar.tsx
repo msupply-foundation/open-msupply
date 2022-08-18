@@ -40,7 +40,7 @@ export const AppBar: React.FC = () => {
           <SectionIcon />
         </Box>
 
-        <Breadcrumbs topLevelPaths={[AppRoute.Patients]} />
+        <Breadcrumbs />
         <AppBarButtons />
       </Toolbar>
       <AppBarContent />

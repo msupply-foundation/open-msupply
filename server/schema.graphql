@@ -788,8 +788,7 @@ input InsertInboundShipmentLineInput {
   expiryDate: NaiveDate
   numberOfPacks: Int!
   totalBeforeTax: Float!
-  totalAfterTax: Float!
-  tax: TaxUpdate
+  tax: Float
 }
 union InsertInboundShipmentLineResponse = InsertInboundShipmentLineError | InvoiceLineNode
 type InsertInboundShipmentLineResponseWithId {
@@ -813,8 +812,7 @@ input InsertInboundShipmentServiceLineInput {
   itemId: String
   name: String
   totalBeforeTax: Float!
-  totalAfterTax: Float!
-  tax: TaxUpdate
+  tax: Float
   note: String
 }
 union InsertInboundShipmentServiceLineResponse =
@@ -867,8 +865,7 @@ input InsertOutboundShipmentLineInput {
   stockLineId: String!
   numberOfPacks: Int!
   totalBeforeTax: Float!
-  totalAfterTax: Float!
-  tax: TaxUpdate
+  tax: Float
 }
 union InsertOutboundShipmentLineResponse = InsertOutboundShipmentLineError | InvoiceLineNode
 type InsertOutboundShipmentLineResponseWithId {
@@ -892,8 +889,7 @@ input InsertOutboundShipmentServiceLineInput {
   itemId: String
   name: String
   totalBeforeTax: Float!
-  totalAfterTax: Float!
-  tax: TaxUpdate
+  tax: Float
   note: String
 }
 union InsertOutboundShipmentServiceLineResponse =
@@ -1946,10 +1942,7 @@ type SyncSettingsNode {
   centralServerSiteId: Int!
   siteId: Int!
 =}
-input TaxUpdate {
-  """
-  Set or unset the tax value (in percentage)
-  """
+input TaxInput {
   percentage: Float
 }
 type TokenExpired implements RefreshTokenErrorInterface {
@@ -2024,8 +2017,7 @@ input UpdateInboundShipmentServiceLineInput {
   itemId: String
   name: String
   totalBeforeTax: Float
-  totalAfterTax: Float
-  tax: TaxUpdate
+  tax: TaxInput
   note: String
 }
 union UpdateInboundShipmentServiceLineResponse =
@@ -2091,8 +2083,7 @@ input UpdateOutboundShipmentLineInput {
   stockLineId: String
   numberOfPacks: Int
   totalBeforeTax: Float
-  totalAfterTax: Float
-  tax: TaxUpdate
+  tax: TaxInput
 }
 union UpdateOutboundShipmentLineResponse = UpdateOutboundShipmentLineError | InvoiceLineNode
 type UpdateOutboundShipmentLineResponseWithId {
@@ -2115,8 +2106,7 @@ input UpdateOutboundShipmentServiceLineInput {
   itemId: String
   name: String
   totalBeforeTax: Float
-  totalAfterTax: Float
-  tax: TaxUpdate
+  tax: TaxInput
   note: String
 }
 union UpdateOutboundShipmentServiceLineResponse =

@@ -24,7 +24,7 @@ const MasterListsTable = () => {
   if (isLoading) return <BasicSpinner />;
 
   return (
-    <DataTable key="master-list-detail" data={data?.nodes} columns={columns} />
+    <DataTable id="master-list-detail" data={data?.nodes} columns={columns} />
   );
 };
 

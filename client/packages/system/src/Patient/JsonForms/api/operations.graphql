@@ -1,0 +1,92 @@
+fragment Document on DocumentNode {
+  id
+  name
+  parents
+  author
+  timestamp
+  type
+  data
+  documentRegistry {
+    uiSchemaType
+    documentType
+    context
+    formSchemaId
+    jsonSchema
+    uiSchema
+  }
+}
+
+query documentByName($name: String!, $storeId: String!) {
+  document(name: $name, storeId: $storeId) {
+    __typename
+    ... on DocumentNode {
+      ...Document
+    }
+  }
+}
+
+fragment DocumentRegistry on DocumentRegistryNode {
+  __typename
+  id
+  documentType
+  context
+  name
+  parentId
+  formSchemaId
+  jsonSchema
+  uiSchemaType
+  uiSchema
+}
+
+query documentRegistries(
+  $filter: DocumentRegistryFilterInput
+  $sort: DocumentRegistrySortInput
+) {
+  documentRegistries(filter: $filter, sort: $sort) {
+    ... on DocumentRegistryConnector {
+      __typename
+      nodes {
+        __typename
+        context
+        documentType
+        formSchemaId
+        id
+        jsonSchema
+        name
+        parentId
+        uiSchema
+        uiSchemaType
+      }
+    }
+  }
+}
+
+mutation allocateNumber($numberName: String!, $storeId: String!) {
+  allocateNumber(input: { numberName: $numberName }, storeId: $storeId) {
+    ... on NumberNode {
+      __typename
+      number
+    }
+  }
+}
+
+fragment EncounterFields on EncounterFieldsNode {
+  fields
+  encounter {
+    name
+    startDatetime
+    endDatetime
+  }
+}
+
+query encounterFields($storeId: String!, $fields: [String!]) {
+  encounterFields(input: { fields: $fields }, storeId: $storeId) {
+    ... on EncounterFieldsConnector {
+      __typename
+      nodes {
+        __typename
+        ...EncounterFields
+      }
+    }
+  }
+}

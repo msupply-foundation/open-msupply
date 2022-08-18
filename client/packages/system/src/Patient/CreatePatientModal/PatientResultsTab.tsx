@@ -38,7 +38,7 @@ const genderToGenderInput = (gender: Gender): GenderInput => {
 
 export const PatientResultsTab: FC<PatientPanel> = ({ patient, value }) => {
   const { mutate, isLoading, data } = usePatient.utils.search();
-  const { updatePatient } = usePatientCreateStore();
+  const { setNewPatient, updatePatient } = usePatientCreateStore();
   const t = useTranslation('patients');
   const navigate = useNavigate();
 
@@ -110,13 +110,17 @@ export const PatientResultsTab: FC<PatientPanel> = ({ patient, value }) => {
       )}
       <DataTable
         dense
-        key="create-patient-duplicates"
+        id="create-patient-duplicates"
         data={data?.map(node => node.patient)}
         columns={columns}
         noDataMessage={t('messages.no-matching-patients')}
         onRowClick={row => {
+          setNewPatient(undefined);
           navigate(String(row.id));
         }}
+        generateRowTooltip={({ firstName, lastName }) =>
+          t('messages.click-to-view', { firstName, lastName })
+        }
       />
     </PatientPanel>
   );

@@ -2,11 +2,6 @@
   "type": "VerticalLayout",
   "elements": [
     {
-      "type": "Label",
-      "text": "${firstName} ${lastName}",
-      "variant": "h1"
-    },
-    {
       "type": "HorizontalLayout",
       "elements": [
         {
@@ -18,18 +13,11 @@
               "elements": [
                 {
                   "type": "Control",
-                  "scope": "#/properties/id",
-                  "options": {
-                    "readonly": true
-                  }
-                },
-                {
-                  "type": "Control",
                   "scope": "#/properties/code",
                   "label": "National Health Id"
                 },
                 {
-                  "type": "IdGeneratorControl",
+                  "type": "IdGenerator",
                   "label": "NUIC",
                   "scope": "#/",
                   "options": {
@@ -114,8 +102,9 @@
                   "label": "Sex"
                 },
                 {
-                  "type": "DateOfBirthControl",
-                  "scope": "#/properties/dateOfBirth"
+                  "type": "DateOfBirth",
+                  "label": "Date of Birth",
+                  "scope": "#"
                 },
                 {
                   "type": "Control",
@@ -141,7 +130,7 @@
                   "scope": "#/properties/hand"
                 },
                 {
-                  "type": "FirstItemArrayControl",
+                  "type": "FirstItemArray",
                   "scope": "#/properties/contactDetails",
                   "options": {
                     "detail": {
@@ -201,21 +190,31 @@
               ]
             },
             {
-              "type": "Group",
-              "label": "Allergies",
-              "elements": [
-                {
-                  "type": "Control",
-                  "scope": "#/properties/allergies/properties/drugs"
+              "type": "Control",
+              "scope": "#/properties/allergies/properties/drugAllergies",
+              "itemLabel": "${index}: ${drug}",
+              "options": {
+                "detail": {
+                  "type": "VerticalLayout",
+                  "elements": [
+                    {
+                      "type": "Control",
+                      "scope": "/properties/drug"
+                    },
+                    {
+                      "type": "Control",
+                      "scope": "/properties/description"
+                    }
+                  ]
                 }
-              ]
+              }
             },
             {
               "type": "Group",
               "label": "Family Information",
               "elements": [
                 {
-                  "type": "Group",
+                  "type": "AccordionGroup",
                   "label": "Mother",
                   "elements": [
                     {
@@ -227,7 +226,7 @@
                       "scope": "#/properties/family/properties/mother/properties/lastName"
                     },
                     {
-                      "type": "FirstItemArrayControl",
+                      "type": "FirstItemArray",
                       "scope": "#/properties/family/properties/mother/properties/contactDetails",
                       "options": {
                         "detail": {
@@ -252,8 +251,8 @@
                   ]
                 },
                 {
-                  "type": "Group",
-                  "label": "Next of kin",
+                  "type": "AccordionGroup",
+                  "label": "Next of Kin",
                   "elements": [
                     {
                       "type": "Control",
@@ -264,7 +263,7 @@
                       "scope": "#/properties/family/properties/nextOfKin/properties/lastName"
                     },
                     {
-                      "type": "FirstItemArrayControl",
+                      "type": "FirstItemArray",
                       "scope": "#/properties/family/properties/nextOfKin/properties/contactDetails",
                       "options": {
                         "detail": {
