@@ -273,7 +273,6 @@ mod test {
 
         // Success
         let test_service = TestService(Box::new(|input| {
-            // assert_eq!(store_id, "store_a");
             assert_eq!(
                 input,
                 ServiceInput {
