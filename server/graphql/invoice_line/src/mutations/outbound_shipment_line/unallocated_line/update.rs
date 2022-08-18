@@ -51,7 +51,7 @@ impl UpdateInput {
 }
 
 pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<UpdateResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::MutateOutboundShipment,
@@ -60,16 +60,12 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context()?;
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
     map_response(
         service_provider
             .invoice_line_service
-            .update_outbound_shipment_unallocated_line(
-                &service_context,
-                store_id,
-                input.to_domain(),
-            ),
+            .update_outbound_shipment_unallocated_line(&service_context, input.to_domain()),
     )
 }
 
@@ -143,7 +139,6 @@ mod graphql {
         fn update_outbound_shipment_unallocated_line(
             &self,
             _: &ServiceContext,
-            _: &str,
             input: ServiceInput,
         ) -> Result<InvoiceLine, ServiceError> {
             self.0(input)

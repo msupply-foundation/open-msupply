@@ -25,13 +25,12 @@ pub struct UpdateLocation {
 
 pub fn update_location(
     ctx: &ServiceContext,
-    store_id: &str,
     input: UpdateLocation,
 ) -> Result<Location, UpdateLocationError> {
     let location = ctx
         .connection
         .transaction_sync(|connection| {
-            let location_row = validate(connection, store_id, &input)?;
+            let location_row = validate(connection, &ctx.store_id, &input)?;
             let updated_location_row = generate(input, location_row);
             LocationRowRepository::new(&connection).upsert_one(&updated_location_row)?;
 

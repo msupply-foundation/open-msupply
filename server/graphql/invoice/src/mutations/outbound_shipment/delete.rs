@@ -26,7 +26,7 @@ pub enum DeleteResponse {
 }
 
 pub fn delete(ctx: &Context<'_>, store_id: &str, id: String) -> Result<DeleteResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::MutateOutboundShipment,
@@ -35,13 +35,13 @@ pub fn delete(ctx: &Context<'_>, store_id: &str, id: String) -> Result<DeleteRes
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context()?;
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
-    map_response(service_provider.invoice_service.delete_outbound_shipment(
-        &service_context,
-        store_id,
-        id,
-    ))
+    map_response(
+        service_provider
+            .invoice_service
+            .delete_outbound_shipment(&service_context, id),
+    )
 }
 
 pub fn map_response(from: Result<String, ServiceError>) -> Result<DeleteResponse> {

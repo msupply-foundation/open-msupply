@@ -11,13 +11,12 @@ type OutError = DeleteOutboundShipmentServiceLineError;
 
 pub fn delete_outbound_shipment_service_line(
     ctx: &ServiceContext,
-    store_id: &str,
     input: DeleteOutboundShipmentLine,
 ) -> Result<String, OutError> {
     let line_id = ctx
         .connection
         .transaction_sync(|connection| {
-            let line = validate(&input, store_id, &connection)?;
+            let line = validate(&input, &ctx.store_id, &connection)?;
             InvoiceLineRowRepository::new(&connection).delete(&line.id)?;
 
             Ok(line.id) as Result<String, OutError>
@@ -61,7 +60,7 @@ mod test {
     use repository::{
         mock::{
             mock_draft_inbound_service_line, mock_draft_outbound_service_line,
-            mock_draft_outbound_shipped_service_line, MockDataInserts,
+            mock_draft_outbound_shipped_service_line, mock_store_a, mock_store_b, MockDataInserts,
         },
         test_db::setup_all,
         InvoiceLineRowRepository,
@@ -86,14 +85,15 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let mut context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_line_service;
 
         // LineDoesNotExist
         assert_eq!(
             service.delete_outbound_shipment_service_line(
                 &context,
-                "store_a",
                 inline_init(|r: &mut DeleteOutboundShipmentLine| {
                     r.id = "invalid".to_string();
                 }),
@@ -105,7 +105,6 @@ mod test {
         assert_eq!(
             service.delete_outbound_shipment_service_line(
                 &context,
-                "store_a",
                 inline_init(|r: &mut DeleteOutboundShipmentLine| {
                     r.id = mock_draft_inbound_service_line().id;
                 }),
@@ -117,7 +116,6 @@ mod test {
         assert_eq!(
             service.delete_outbound_shipment_service_line(
                 &context,
-                "store_a",
                 inline_init(|r: &mut DeleteOutboundShipmentLine| {
                     r.id = mock_draft_outbound_shipped_service_line().id;
                 }),
@@ -125,11 +123,11 @@ mod test {
             Err(ServiceError::CannotEditInvoice)
         );
 
+        context.store_id = mock_store_b().id;
         // NotThisStoreInvoice
         assert_eq!(
             service.delete_outbound_shipment_service_line(
                 &context,
-                "store_c",
                 inline_init(|r: &mut DeleteOutboundShipmentLine| {
                     r.id = mock_draft_outbound_service_line().id;
                 }),
@@ -147,13 +145,14 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_line_service;
 
         service
             .delete_outbound_shipment_service_line(
                 &context,
-                "store_a",
                 inline_init(|r: &mut DeleteOutboundShipmentLine| {
                     r.id = mock_draft_outbound_service_line().id;
                 }),

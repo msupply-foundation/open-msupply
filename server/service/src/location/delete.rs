@@ -25,13 +25,12 @@ pub struct DeleteLocation {
 
 pub fn delete_location(
     ctx: &ServiceContext,
-    store_id: &str,
     input: DeleteLocation,
 ) -> Result<String, DeleteLocationError> {
     let location_id = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(connection, store_id, &input)?;
+            validate(connection, &ctx.store_id, &input)?;
             match LocationRowRepository::new(&connection).delete(&input.id) {
                 Ok(_) => Ok(input.id),
                 Err(err) => Err(DeleteLocationError::from(err)),
