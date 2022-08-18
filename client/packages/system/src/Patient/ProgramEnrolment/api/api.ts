@@ -32,6 +32,7 @@ export const getProgramEnrolmentQueries = (sdk: Sdk, storeId: string) => ({
         key: sortBy?.key as ProgramSortFieldInput | undefined,
         desc: sortBy?.isDesc,
         filter: filterBy,
+        latestEventTime: new Date().toISOString(),
       });
 
       return result?.programs;

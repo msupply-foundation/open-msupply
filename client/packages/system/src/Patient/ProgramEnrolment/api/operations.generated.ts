@@ -6,7 +6,7 @@ import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type DocumentFragment = { __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, author: string, timestamp: string, type: string, data: any, documentRegistry?: { __typename: 'DocumentRegistryNode', uiSchemaType: string, documentType: string, context: Types.DocumentRegistryNodeContext, formSchemaId: string, jsonSchema: any, uiSchema: any } | null };
 
-export type ProgramRowFragment = { __typename: 'ProgramNode', enrolmentDatetime: string, name: string, patientId: string, programPatientId?: string | null, type: string };
+export type ProgramRowFragment = { __typename: 'ProgramNode', enrolmentDatetime: string, name: string, patientId: string, programPatientId?: string | null, type: string, events: Array<{ __typename: 'ProgramEventNode', datetime: string, name?: string | null, type: string }> };
 
 export type ProgramFragment = { __typename: 'ProgramNode', type: string, programPatientId?: string | null, patientId: string, name: string, enrolmentDatetime: string, document: { __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, author: string, timestamp: string, type: string, data: any, documentRegistry?: { __typename: 'DocumentRegistryNode', uiSchemaType: string, documentType: string, context: Types.DocumentRegistryNodeContext, formSchemaId: string, jsonSchema: any, uiSchema: any } | null } };
 
@@ -15,10 +15,11 @@ export type ProgramsQueryVariables = Types.Exact<{
   key?: Types.InputMaybe<Types.ProgramSortFieldInput>;
   desc?: Types.InputMaybe<Types.Scalars['Boolean']>;
   filter?: Types.InputMaybe<Types.ProgramFilterInput>;
+  latestEventTime: Types.Scalars['String'];
 }>;
 
 
-export type ProgramsQuery = { __typename: 'FullQuery', programs: { __typename: 'ProgramConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramNode', enrolmentDatetime: string, name: string, patientId: string, programPatientId?: string | null, type: string }> } };
+export type ProgramsQuery = { __typename: 'FullQuery', programs: { __typename: 'ProgramConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramNode', enrolmentDatetime: string, name: string, patientId: string, programPatientId?: string | null, type: string, events: Array<{ __typename: 'ProgramEventNode', datetime: string, name?: string | null, type: string }> }> } };
 
 export type ProgramByIdQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -51,6 +52,11 @@ export const ProgramRowFragmentDoc = gql`
   patientId
   programPatientId
   type
+  events(filter: {datetime: {beforeOrEqualTo: $latestEventTime}}) {
+    datetime
+    name
+    type
+  }
 }
     `;
 export const DocumentFragmentDoc = gql`
@@ -85,7 +91,7 @@ export const ProgramFragmentDoc = gql`
 }
     ${DocumentFragmentDoc}`;
 export const ProgramsDocument = gql`
-    query programs($storeId: String!, $key: ProgramSortFieldInput, $desc: Boolean, $filter: ProgramFilterInput) {
+    query programs($storeId: String!, $key: ProgramSortFieldInput, $desc: Boolean, $filter: ProgramFilterInput, $latestEventTime: String!) {
   programs(storeId: $storeId, sort: {key: $key, desc: $desc}, filter: $filter) {
     ... on ProgramConnector {
       __typename
@@ -159,7 +165,7 @@ export type Sdk = ReturnType<typeof getSdk>;
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockProgramsQuery((req, res, ctx) => {
- *   const { storeId, key, desc, filter } = req.variables;
+ *   const { storeId, key, desc, filter, latestEventTime } = req.variables;
  *   return res(
  *     ctx.data({ programs })
  *   )
