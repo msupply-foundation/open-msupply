@@ -79,7 +79,7 @@ mod test {
         mock::{
             mock_draft_inbound_service_line, mock_draft_inbound_shipment_with_service_lines,
             mock_draft_inbound_verified_with_service_lines, mock_item_a, mock_item_service_item,
-            mock_outbound_shipment_c, MockDataInserts,
+            mock_outbound_shipment_c, mock_store_a, mock_store_c, MockDataInserts,
         },
         test_db::setup_all,
         InvoiceLineRowRepository, ItemFilter, ItemRepository, SimpleStringFilter,
@@ -104,8 +104,12 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("store_a", "").unwrap();
-        let store_c_context = service_provider.context("store_c", "").unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let store_c_context = service_provider
+            .context(mock_store_c().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_line_service;
 
         // LineAlreadyExists
@@ -199,7 +203,9 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("store_a", "").unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_line_service;
 
         // Default service line

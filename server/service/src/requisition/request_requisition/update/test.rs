@@ -6,7 +6,7 @@ mod test_update {
             mock_draft_request_requisition_for_update_test,
             mock_draft_response_requisition_for_update_test, mock_name_store_c,
             mock_request_draft_requisition_calculation_test, mock_sent_request_requisition,
-            mock_store_a, MockData, MockDataInserts,
+            mock_store_a, mock_store_b, MockData, MockDataInserts,
         },
         requisition_row::RequisitionRowStatus,
         test_db::{setup_all, setup_all_with_data},
@@ -56,8 +56,12 @@ mod test_update {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("store_a", "").unwrap();
-        let store_b_context = service_provider.context("store_b", "").unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let store_b_context = service_provider
+            .context(mock_store_b().id, "".to_string())
+            .unwrap();
         let service = service_provider.requisition_service;
 
         // RequisitionDoesNotExist
@@ -145,7 +149,9 @@ mod test_update {
             setup_all("update_request_requisition_success", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("store_a", "").unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.requisition_service;
 
         let before_update = Utc::now().naive_utc();

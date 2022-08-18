@@ -611,7 +611,9 @@ mod report_service_test {
         .unwrap();
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("store_id", "").unwrap();
+        let context = service_provider
+            .context("store_id".to_string(), "".to_string())
+            .unwrap();
         let service = service_provider.report_service;
         let resolved_def = service.resolve_report(&context, "report_1").unwrap();
 

@@ -83,7 +83,7 @@ impl Synchroniser {
     pub async fn initial_pull(&self) -> anyhow::Result<()> {
         let ctx = self
             .service_provider
-            .context("", "")
+            .basic_context()
             .map_err(CentralSyncError::from_database_error)?;
         let service = &self.service_provider.settings;
 
@@ -109,7 +109,7 @@ impl Synchroniser {
     pub async fn sync(&self) -> anyhow::Result<()> {
         let ctx = self
             .service_provider
-            .context("", "")
+            .basic_context()
             .map_err(CentralSyncError::from_database_error)?;
         let service = &self.service_provider.settings;
 
@@ -168,7 +168,7 @@ mod tests {
 
         let service_provider =
             Arc::new(ServiceProvider::new(connection_manager.clone(), "app_data"));
-        let ctx = service_provider.context("", "").unwrap();
+        let ctx = service_provider.basic_context().unwrap();
         let service = &service_provider.settings;
         let s = Synchroniser::new(
             inline_init(|r: &mut SyncSettings| r.url = "http://0.0.0.0:0".to_string()),

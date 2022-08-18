@@ -143,8 +143,8 @@ mod test_update {
     use repository::{
         mock::{
             mock_draft_response_requisition_for_update_test, mock_finalised_response_requisition,
-            mock_new_response_requisition, mock_sent_request_requisition, mock_user_account_b,
-            MockDataInserts,
+            mock_new_response_requisition, mock_sent_request_requisition, mock_store_a,
+            mock_store_b, mock_user_account_b, MockDataInserts,
         },
         requisition_row::{RequisitionRow, RequisitionRowStatus},
         test_db::setup_all,
@@ -165,8 +165,12 @@ mod test_update {
             setup_all("update_response_requisition_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("store_a", "").unwrap();
-        let store_b_context = service_provider.context("store_b", "").unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let store_b_context = service_provider
+            .context(mock_store_b().id, "".to_string())
+            .unwrap();
         let service = service_provider.requisition_service;
 
         // RequisitionDoesNotExist
@@ -240,7 +244,7 @@ mod test_update {
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider
-            .context("store_a", &mock_user_account_b().id)
+            .context(mock_store_a().id, mock_user_account_b().id)
             .unwrap();
         let service = service_provider.requisition_service;
 

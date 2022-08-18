@@ -60,7 +60,7 @@ mod test {
     use repository::{
         mock::{
             mock_draft_inbound_service_line, mock_draft_outbound_service_line,
-            mock_draft_outbound_shipped_service_line, MockDataInserts,
+            mock_draft_outbound_shipped_service_line, mock_store_a, mock_store_b, MockDataInserts,
         },
         test_db::setup_all,
         InvoiceLineRowRepository,
@@ -85,8 +85,12 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("store_a", "").unwrap();
-        let store_b_context = service_provider.context("store_b", "").unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let store_b_context = service_provider
+            .context(mock_store_b().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_line_service;
 
         // LineDoesNotExist
@@ -143,7 +147,9 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("store_a", "").unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_line_service;
 
         service

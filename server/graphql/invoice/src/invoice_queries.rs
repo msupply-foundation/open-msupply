@@ -110,7 +110,7 @@ pub fn get_invoice(
 
     let service_provider = ctx.service_provider();
     let service_context =
-        service_provider.context(&store_id.clone().unwrap_or("".to_string()), &user.user_id)?;
+        service_provider.context(store_id.clone().unwrap_or("".to_string()), user.user_id)?;
     let invoice_service = &service_provider.invoice_service;
 
     let invoice_option = invoice_service.get_invoice(&service_context, store_id.as_deref(), id)?;
@@ -141,7 +141,7 @@ pub fn get_invoices(
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(&store_id, &user.user_id)?;
+    let service_context = service_provider.context(store_id.clone(), user.user_id)?;
 
     let invoices = service_provider
         .invoice_service
@@ -176,7 +176,7 @@ pub fn get_invoice_by_number(
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(&store_id, &user.user_id)?;
+    let service_context = service_provider.context(store_id.clone(), user.user_id)?;
     let invoice_service = &service_provider.invoice_service;
 
     let invoice_option = invoice_service.get_invoice_by_number(

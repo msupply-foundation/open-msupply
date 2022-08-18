@@ -128,8 +128,8 @@ mod test {
     use repository::{
         mock::{
             mock_draft_response_requisition_for_update_test, mock_finalised_response_requisition,
-            mock_new_response_requisition_test, mock_sent_request_requisition, mock_user_account_b,
-            MockDataInserts,
+            mock_new_response_requisition_test, mock_sent_request_requisition, mock_store_a,
+            mock_store_b, mock_user_account_b, MockDataInserts,
         },
         test_db::setup_all,
         RequisitionRowRepository,
@@ -152,8 +152,12 @@ mod test {
             setup_all("supply_requested_quantity_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("store_a", "").unwrap();
-        let store_b_context = service_provider.context("store_b", "").unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let store_b_context = service_provider
+            .context(mock_store_b().id, "".to_string())
+            .unwrap();
         let service = service_provider.requisition_service;
 
         // RequisitionDoesNotExist
@@ -208,7 +212,7 @@ mod test {
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider
-            .context("store_a", &mock_user_account_b().id)
+            .context(mock_store_a().id, mock_user_account_b().id)
             .unwrap();
         let service = service_provider.requisition_service;
 

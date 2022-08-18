@@ -223,8 +223,12 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context(&mock_store_a().id, "").unwrap();
-        let store_b_context = service_provider.context(&mock_store_b().id, "").unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let store_b_context = service_provider
+            .context(mock_store_b().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_service;
 
         //InvoiceDoesNotExist
@@ -347,7 +351,7 @@ mod test {
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider
-            .context(&mock_store_a().id, &mock_user_account_a().id)
+            .context(mock_store_a().id, mock_user_account_a().id)
             .unwrap();
         let service = service_provider.invoice_service;
         let now = Utc::now().naive_utc();

@@ -157,7 +157,7 @@ mod test_insert {
     use repository::{
         mock::{
             mock_name_a, mock_name_store_b, mock_name_store_c, mock_request_draft_requisition,
-            mock_user_account_a, MockData, MockDataInserts,
+            mock_store_a, mock_user_account_a, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
         NameRow, RequisitionRowRepository,
@@ -182,7 +182,9 @@ mod test_insert {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("store_a", "").unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.requisition_service;
 
         // RequisitionAlreadyExists
@@ -253,7 +255,7 @@ mod test_insert {
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider
-            .context("store_a", &mock_user_account_a().id)
+            .context(mock_store_a().id, mock_user_account_a().id)
             .unwrap();
         let service = service_provider.requisition_service;
 

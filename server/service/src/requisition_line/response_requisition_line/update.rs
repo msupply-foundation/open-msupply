@@ -120,7 +120,8 @@ mod test {
     use repository::{
         mock::{
             mock_finalised_request_requisition_line, mock_new_response_requisition_test,
-            mock_sent_request_requisition_line, mock_user_account_b, MockDataInserts,
+            mock_sent_request_requisition_line, mock_store_a, mock_store_b, mock_user_account_b,
+            MockDataInserts,
         },
         test_db::setup_all,
         RequisitionLineRowRepository, RequisitionRowRepository,
@@ -143,8 +144,12 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("store_a", "").unwrap();
-        let store_b_context = service_provider.context("store_b", "").unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let store_b_context = service_provider
+            .context(mock_store_b().id, "".to_string())
+            .unwrap();
         let service = service_provider.requisition_line_service;
 
         // RequisitionLineDoesNotExist
@@ -202,7 +207,7 @@ mod test {
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider
-            .context("store_a", &mock_user_account_b().id)
+            .context(mock_store_a().id, mock_user_account_b().id)
             .unwrap();
         let service = service_provider.requisition_line_service;
 

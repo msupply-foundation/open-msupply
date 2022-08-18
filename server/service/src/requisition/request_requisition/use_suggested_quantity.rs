@@ -112,7 +112,7 @@ mod test {
             mock_draft_request_requisition_for_update_test,
             mock_draft_response_requisition_for_update_test,
             mock_request_draft_requisition_calculation_test, mock_sent_request_requisition,
-            MockDataInserts,
+            mock_store_a, mock_store_b, MockDataInserts,
         },
         test_db::setup_all,
     };
@@ -133,8 +133,12 @@ mod test {
             setup_all("use_suggested_quantity_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("store_a", "").unwrap();
-        let store_b_context = service_provider.context("store_b", "").unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let store_b_context = service_provider
+            .context(mock_store_b().id, "".to_string())
+            .unwrap();
         let service = service_provider.requisition_service;
 
         // RequisitionDoesNotExist
@@ -188,7 +192,9 @@ mod test {
             setup_all("use_suggested_quantity_success", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("store_a", "").unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.requisition_service;
 
         let result = service

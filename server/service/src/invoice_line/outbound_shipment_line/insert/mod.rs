@@ -108,8 +108,12 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context(&mock_store_b().id, "").unwrap();
-        let store_c_context = service_provider.context("store_c", "").unwrap();
+        let context = service_provider
+            .context(mock_store_b().id, "".to_string())
+            .unwrap();
+        let store_c_context = service_provider
+            .context(mock_store_c().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_line_service;
 
         // LineAlreadyExists
@@ -311,7 +315,9 @@ mod test {
         };
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context(&mock_store_c().id, "").unwrap();
+        let context = service_provider
+            .context(mock_store_c().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_line_service;
         let invoice_service = service_provider.invoice_service;
 

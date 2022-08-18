@@ -83,7 +83,8 @@ mod test {
         mock::{
             mock_inbound_shipment_a_invoice_lines, mock_outbound_shipment_a_invoice_lines,
             mock_outbound_shipment_b_invoice_lines, mock_outbound_shipment_c_invoice_lines,
-            mock_outbound_shipment_no_lines, mock_store_c, MockData, MockDataInserts,
+            mock_outbound_shipment_no_lines, mock_store_a, mock_store_b, mock_store_c, MockData,
+            MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
         InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus,
@@ -106,9 +107,15 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let store_a_context = service_provider.context("store_a", "").unwrap();
-        let store_b_context = service_provider.context("store_b", "").unwrap();
-        let store_c_context = service_provider.context("store_c", "").unwrap();
+        let store_a_context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let store_b_context = service_provider
+            .context(mock_store_b().id, "".to_string())
+            .unwrap();
+        let store_c_context = service_provider
+            .context(mock_store_c().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_line_service;
 
         // LineDoesNotExist
@@ -195,8 +202,12 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let store_b_context = service_provider.context("store_b", "").unwrap();
-        let store_c_context = service_provider.context(&mock_store_c().id, "").unwrap();
+        let store_b_context = service_provider
+            .context(mock_store_b().id, "".to_string())
+            .unwrap();
+        let store_c_context = service_provider
+            .context(mock_store_c().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_line_service;
 
         // helpers to compare total

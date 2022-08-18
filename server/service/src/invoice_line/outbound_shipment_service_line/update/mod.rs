@@ -83,7 +83,7 @@ mod test {
         mock::{
             mock_default_service_item, mock_draft_inbound_service_line,
             mock_draft_outbound_service_line, mock_draft_outbound_shipped_service_line,
-            mock_item_a, mock_item_service_item, MockDataInserts,
+            mock_item_a, mock_item_service_item, mock_store_a, mock_store_c, MockDataInserts,
         },
         test_db::setup_all,
         InvoiceLineRowRepository,
@@ -110,8 +110,12 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let store_a_context = service_provider.context("store_a", "").unwrap();
-        let store_c_context = service_provider.context("store_c", "").unwrap();
+        let store_a_context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let store_c_context = service_provider
+            .context(mock_store_c().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_line_service;
 
         // LineDoesNotExist
@@ -193,7 +197,9 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("store_a", "").unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_line_service;
 
         // Service Item Changed

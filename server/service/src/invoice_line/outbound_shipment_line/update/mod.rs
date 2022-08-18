@@ -138,7 +138,7 @@ mod test {
             mock_outbound_shipment_c, mock_outbound_shipment_c_invoice_lines,
             mock_outbound_shipment_no_stock_line, mock_stock_line_a, mock_stock_line_b,
             mock_stock_line_location_is_on_hold, mock_stock_line_on_hold, mock_store_a,
-            mock_store_c, MockDataInserts,
+            mock_store_b, mock_store_c, MockDataInserts,
         },
         test_db::setup_all,
         InvoiceLineRow, InvoiceLineRowRepository, StockLineRowRepository,
@@ -162,9 +162,15 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let store_a_context = service_provider.context(&mock_store_a().id, "").unwrap();
-        let store_b_context = service_provider.context("store_b", "").unwrap();
-        let store_c_context = service_provider.context("store_c", "").unwrap();
+        let store_a_context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let store_b_context = service_provider
+            .context(mock_store_b().id, "".to_string())
+            .unwrap();
+        let store_c_context = service_provider
+            .context(mock_store_c().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_line_service;
 
         // LineDoesNotExist
@@ -350,8 +356,12 @@ mod test {
         };
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let store_b_context = service_provider.context("store_b", "").unwrap();
-        let store_c_context = service_provider.context(&mock_store_c().id, "").unwrap();
+        let store_b_context = service_provider
+            .context(mock_store_b().id, "".to_string())
+            .unwrap();
+        let store_c_context = service_provider
+            .context(mock_store_c().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_line_service;
         let invoice_service = service_provider.invoice_service;
 

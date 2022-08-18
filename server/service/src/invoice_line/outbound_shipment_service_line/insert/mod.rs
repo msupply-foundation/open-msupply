@@ -78,7 +78,8 @@ mod test {
     use repository::{
         mock::{
             mock_full_draft_outbound_shipment_a, mock_inbound_shipment_c, mock_item_a,
-            mock_item_service_item, mock_outbound_shipment_shipped, MockDataInserts,
+            mock_item_service_item, mock_outbound_shipment_shipped, mock_store_a, mock_store_c,
+            MockDataInserts,
         },
         test_db::setup_all,
         InvoiceLineRowRepository, ItemFilter, ItemRepository, SimpleStringFilter,
@@ -103,8 +104,12 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let store_a_context = service_provider.context("store_a", "").unwrap();
-        let store_c_context = service_provider.context("store_c", "").unwrap();
+        let store_a_context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let store_c_context = service_provider
+            .context(mock_store_c().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_line_service;
 
         let draft_shipment = mock_full_draft_outbound_shipment_a();
@@ -187,7 +192,9 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("store_c", "").unwrap();
+        let context = service_provider
+            .context(mock_store_c().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_line_service;
 
         // Default service line

@@ -1,5 +1,6 @@
 #[cfg(test)]
 mod query {
+    use repository::mock::mock_store_a;
     use repository::EqualFilter;
     use repository::{
         mock::MockDataInserts, test_db::setup_all, InvoiceLineFilter, InvoiceLineRepository,
@@ -22,7 +23,9 @@ mod query {
         let invoice_line_repository = InvoiceLineRepository::new(&connection);
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("store_a", "").unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.location_service;
 
         let locations_not_in_store = location_repository
@@ -101,7 +104,9 @@ mod query {
         let connection = connection_manager.connection().unwrap();
         let location_repository = LocationRepository::new(&connection);
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("store_a", "").unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.location_service;
 
         assert_eq!(

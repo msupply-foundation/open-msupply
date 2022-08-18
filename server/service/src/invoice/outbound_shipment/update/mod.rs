@@ -171,7 +171,8 @@ mod test {
         mock::{
             mock_inbound_shipment_a, mock_item_a, mock_name_a, mock_outbound_shipment_a,
             mock_outbound_shipment_b, mock_outbound_shipment_c, mock_outbound_shipment_on_hold,
-            mock_outbound_shipment_picked, mock_store_a, mock_store_b, MockData, MockDataInserts,
+            mock_outbound_shipment_picked, mock_store_a, mock_store_b, mock_store_c, MockData,
+            MockDataInserts,
         },
         test_db::setup_all_with_data,
         InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRow,
@@ -252,9 +253,15 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context(&mock_store_a().id, "").unwrap();
-        let store_b_context = service_provider.context("store_b", "").unwrap();
-        let store_c_context = service_provider.context("store_c", "").unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let store_b_context = service_provider
+            .context(mock_store_b().id, "".to_string())
+            .unwrap();
+        let store_c_context = service_provider
+            .context(mock_store_c().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_service;
 
         // CannotReverseInvoiceStatus
@@ -407,7 +414,9 @@ mod test {
         );
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context(&mock_store_a().id, "").unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_service;
 
         let update = inline_init(|r: &mut UpdateOutboundShipment| {
@@ -462,8 +471,12 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("store_a", "").unwrap();
-        let store_c_context = service_provider.context("store_c", "").unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let store_c_context = service_provider
+            .context(mock_store_c().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_service;
 
         // Test all fields apart from status
@@ -612,7 +625,9 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context(&mock_store_a().id, "").unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_service;
 
         // Change to PICKED
@@ -689,7 +704,9 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("store_a", "").unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_service;
 
         // Change to SHIPPED

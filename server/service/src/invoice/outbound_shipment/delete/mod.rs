@@ -131,8 +131,12 @@ mod test {
             setup_all("delete_outbound_shipment_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context(&mock_store_a().id, "").unwrap();
-        let store_c_context = service_provider.context(&mock_store_c().id, "").unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let store_c_context = service_provider
+            .context(mock_store_c().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_service;
 
         // InvoiceDoesNotExist
@@ -166,7 +170,9 @@ mod test {
             setup_all("delete_outbound_shipment_success", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context(&mock_store_c().id, "").unwrap();
+        let context = service_provider
+            .context(mock_store_c().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_service;
 
         let invoice_id = service

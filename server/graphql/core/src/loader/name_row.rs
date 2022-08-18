@@ -16,7 +16,7 @@ impl Loader<String> for NameRowLoader {
     type Error = RepositoryError;
 
     async fn load(&self, keys: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let service_context = self.service_provider.context("", "")?;
+        let service_context = self.service_provider.basic_context()?;
         let results = NameRowRepository::new(&service_context.connection).find_many_by_id(keys)?;
 
         Ok(results

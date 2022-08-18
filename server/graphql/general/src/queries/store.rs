@@ -64,7 +64,7 @@ pub fn get_store(ctx: &Context<'_>, id: &str) -> Result<StoreResponse> {
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context("", &user.user_id)?;
+    let service_context = service_provider.context("".to_string(), user.user_id)?;
     let service = &service_provider.general_service;
 
     let store_option = service.get_store(
@@ -97,7 +97,7 @@ pub fn stores(
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context("", &user.user_id)?;
+    let service_context = service_provider.context("".to_string(), user.user_id)?;
     let service = &service_provider.general_service;
 
     // TODO add auth validation and restrict returned stores according to the user's permissions

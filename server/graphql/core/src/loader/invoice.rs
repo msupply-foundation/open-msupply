@@ -24,7 +24,7 @@ impl Loader<String> for InvoiceByIdLoader {
         &self,
         invoice_ids: &[String],
     ) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let service_context = self.service_provider.context("", "")?;
+        let service_context = self.service_provider.basic_context()?;
 
         let filter = InvoiceFilter::new().id(EqualFilter::equal_any(
             invoice_ids.iter().map(String::clone).collect(),
@@ -84,7 +84,7 @@ impl Loader<String> for InvoiceByRequisitionIdLoader {
         &self,
         requisition_ids: &[String],
     ) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let service_context = self.service_provider.context("", "")?;
+        let service_context = self.service_provider.basic_context()?;
 
         let filter = InvoiceFilter::new().requisition_id(EqualFilter::equal_any(
             requisition_ids.iter().map(String::clone).collect(),

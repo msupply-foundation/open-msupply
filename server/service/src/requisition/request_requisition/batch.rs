@@ -131,7 +131,7 @@ mod test {
     use repository::{
         mock::{
             mock_draft_response_requisition_for_update_test, mock_item_a, mock_name_store_c,
-            MockDataInserts,
+            mock_store_a, MockDataInserts,
         },
         test_db::setup_all,
         RequisitionLineRowRepository, RequisitionRowRepository,
@@ -154,7 +154,9 @@ mod test {
             setup_all("batch_request_requisition_service", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("store_a", "").unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.requisition_service;
 
         let delete_requisition_input = inline_init(|input: &mut DeleteRequestRequisition| {

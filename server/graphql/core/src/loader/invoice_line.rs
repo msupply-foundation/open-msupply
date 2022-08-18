@@ -21,7 +21,7 @@ impl Loader<String> for InvoiceLineByInvoiceIdLoader {
         &self,
         invoice_ids: &[String],
     ) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let service_context = self.service_provider.context("", "")?;
+        let service_context = self.service_provider.basic_context()?;
 
         let filter = InvoiceLineFilter::new().invoice_id(EqualFilter::equal_any(
             invoice_ids.iter().map(String::clone).collect(),
@@ -56,7 +56,7 @@ impl Loader<RequisitionAndItemId> for InvoiceLineForRequisitionLine {
         &self,
         requisition_and_item_id: &[RequisitionAndItemId],
     ) -> Result<HashMap<RequisitionAndItemId, Self::Value>, Self::Error> {
-        let service_context = self.service_provider.context("", "")?;
+        let service_context = self.service_provider.basic_context()?;
 
         let (requisition_ids, item_ids) = IdPair::extract_unique_ids(requisition_and_item_id);
 

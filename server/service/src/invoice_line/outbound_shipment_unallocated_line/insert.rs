@@ -163,8 +163,8 @@ mod test_insert {
     use repository::{
         mock::{
             mock_allocated_invoice, mock_inbound_shipment_a, mock_item_service_item,
-            mock_new_invoice_with_unallocated_line, mock_unallocated_line, mock_unallocated_line2,
-            MockDataInserts,
+            mock_new_invoice_with_unallocated_line, mock_store_a, mock_store_c,
+            mock_unallocated_line, mock_unallocated_line2, MockDataInserts,
         },
         test_db::setup_all,
         InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, ItemRowRepository,
@@ -184,8 +184,12 @@ mod test_insert {
             setup_all("insert_unallocated_line_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("store_a", "").unwrap();
-        let store_c_context = service_provider.context("store_c", "").unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let store_c_context = service_provider
+            .context(mock_store_c().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_line_service;
 
         let new_outbound_shipment = mock_new_invoice_with_unallocated_line();
@@ -310,7 +314,9 @@ mod test_insert {
 
         let connection = connection_manager.connection().unwrap();
         let service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
-        let context = service_provider.context("store_c", "").unwrap();
+        let context = service_provider
+            .context(mock_store_c().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_line_service;
 
         // Successful insert

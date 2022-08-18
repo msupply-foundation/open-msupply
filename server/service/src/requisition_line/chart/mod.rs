@@ -165,7 +165,8 @@ mod test {
         db_diesel::requisition_row::RequisitionRowType,
         mock::{
             mock_draft_response_requisition_for_update_test_line, mock_item_a, mock_name_a,
-            mock_request_draft_requisition_calculation_test, MockData, MockDataInserts,
+            mock_request_draft_requisition_calculation_test, mock_store_a, mock_store_b, MockData,
+            MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
         InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowType, NameRow,
@@ -183,8 +184,12 @@ mod test {
             setup_all("get_requisition_line_chart_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("store_a", "").unwrap();
-        let store_b_context = service_provider.context("store_b", "").unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let store_b_context = service_provider
+            .context(mock_store_b().id, "".to_string())
+            .unwrap();
         let service = service_provider.requisition_line_service;
 
         // RequisitionLineDoesNotExist
@@ -360,7 +365,9 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context(&store().id, "").unwrap();
+        let context = service_provider
+            .context(store().id, "".to_string())
+            .unwrap();
         let service = service_provider.requisition_line_service;
 
         let result = service
@@ -546,7 +553,9 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context(&store().id, "").unwrap();
+        let context = service_provider
+            .context(store().id, "".to_string())
+            .unwrap();
         let service = service_provider.requisition_line_service;
 
         let result = service
