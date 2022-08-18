@@ -109,6 +109,7 @@ fn generate(user_id: &str, input: InsertEncounter) -> Result<RawDocument, Reposi
         data: input.data,
         schema_id: Some(input.schema_id),
         status: DocumentStatus::Active,
+        comment: None,
     })
 }
 

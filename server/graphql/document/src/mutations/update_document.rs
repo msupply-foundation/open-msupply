@@ -27,13 +27,6 @@ pub struct UpdateDocumentInput {
     pub r#type: String,
     pub data: serde_json::Value,
     pub schema_id: Option<String>,
-    pub status: UpdateDocumentStatusInput,
-}
-
-#[derive(Enum, Copy, Clone, PartialEq, Eq)]
-pub enum UpdateDocumentStatusInput {
-    Active,
-    Deleted,
 }
 
 pub struct MergeRequiredError(Option<RawDocument>);
@@ -167,7 +160,6 @@ fn input_to_raw_document(
         r#type,
         data,
         schema_id,
-        status,
     }: UpdateDocumentInput,
 ) -> RawDocument {
     RawDocument {
@@ -178,23 +170,8 @@ fn input_to_raw_document(
         r#type,
         data,
         schema_id,
-        status: UpdateDocumentStatusInput::to_domain(&status),
-    }
-}
-
-impl UpdateDocumentStatusInput {
-    pub fn from_domain(from: &DocumentStatus) -> UpdateDocumentStatusInput {
-        match from {
-            DocumentStatus::Active => UpdateDocumentStatusInput::Active,
-            DocumentStatus::Deleted => UpdateDocumentStatusInput::Deleted,
-        }
-    }
-
-    pub fn to_domain(&self) -> DocumentStatus {
-        match self {
-            UpdateDocumentStatusInput::Active => DocumentStatus::Active,
-            UpdateDocumentStatusInput::Deleted => DocumentStatus::Deleted,
-        }
+        status: DocumentStatus::Active,
+        comment: None,
     }
 }
 
@@ -225,7 +202,7 @@ mod graphql {
         let query = r#"mutation MyMutation($data: JSON!, $storeId: String!) {
             updateDocument(input: {
                 name: \"test_doc\", parents: [], author: \"me\", timestamp: \"2022-07-21T22:34:45.963Z\",
-                data: $data, type: \"Patient\", status: ACTIVE }, storeId: $storeId) {
+                data: $data, type: \"Patient\" }, storeId: $storeId) {
               ... on DocumentNode {
                 id
                 name
@@ -277,7 +254,7 @@ mod graphql {
         let query = r#"mutation MyMutation($data: JSON!, $storeId: String!) {
             updateDocument(input: {
                 name: \"test_doc\", parents: [], author: \"me\", timestamp: \"2022-07-21T22:34:45.963Z\",
-                data: $data, type: \"TestProgram\", status: ACTIVE }, storeId: $storeId) {
+                data: $data, type: \"TestProgram\" }, storeId: $storeId) {
               ... on DocumentNode {
                 id
                 name
@@ -329,7 +306,7 @@ mod graphql {
         let query = r#"mutation MyMutation($data: JSON!, $storeId: String!) {
             updateDocument(input: {
                 name: \"test_doc\", parents: [], author: \"me\", timestamp: \"2022-07-21T22:34:45.963Z\",
-                data: $data, type: \"TestEncounter\", status: ACTIVE }, storeId: $storeId) {
+                data: $data, type: \"TestEncounter\" }, storeId: $storeId) {
               ... on DocumentNode {
                 id
                 name
