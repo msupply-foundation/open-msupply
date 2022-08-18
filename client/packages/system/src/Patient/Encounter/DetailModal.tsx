@@ -68,7 +68,6 @@ export const EncounterDetailModal: FC = () => {
   const onChangeProgram = (program: ProgramRowFragmentWithId) => {
     setProgram(program);
     setProgramType(program.type);
-    // setDocument(mapRegistry(program.document?.documentRegistry || undefined));
   };
 
   return (
