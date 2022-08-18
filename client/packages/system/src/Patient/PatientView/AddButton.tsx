@@ -8,12 +8,12 @@ import {
 import { usePatientModalStore } from '../hooks';
 import { PatientModal } from '.';
 import { ProgramSearchModal } from '../../Program/Components';
-import { useProgramEnrolment } from '../ProgramEnrolment/api';
+import { usePatient } from '../api';
 
 export const AddButton = () => {
   const t = useTranslation('patients');
-  const { current, setCurrent, setDocument } = usePatientModalStore();
-  const { data } = useProgramEnrolment.document.list();
+  const { current, setCurrent, setDocument, reset } = usePatientModalStore();
+  const { data } = usePatient.document.programs();
   const options = [
     {
       value: PatientModal.Prescription,
@@ -36,6 +36,11 @@ export const AddButton = () => {
     SplitButtonOption<PatientModal>
   >(options[1] as SplitButtonOption<PatientModal>);
 
+  const onClick = () => {
+    reset();
+    setCurrent(selectedOption?.value);
+  };
+
   return (
     <>
       <SplitButton
@@ -44,7 +49,7 @@ export const AddButton = () => {
         selectedOption={selectedOption}
         onSelectOption={setSelectedOption}
         Icon={<PlusCircleIcon />}
-        onClick={() => setCurrent(selectedOption?.value)}
+        onClick={onClick}
       />
       <ProgramSearchModal
         disabledPrograms={data?.nodes?.map(program => program.type)}

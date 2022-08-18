@@ -1,21 +1,21 @@
 import { useQuery, useUrlQueryParams } from '@openmsupply-client/common';
 import { ProgramRowFragmentWithId } from '../..';
-import { usePatient } from '../../../../api';
-import { useProgramEnrolmentApi } from '../utils/useProgramEnrolmentApi';
+import { usePatientId } from '../utils/usePatientId';
+import { usePatientApi } from '../utils/usePatientApi';
 
-export const useProgramEnrolments = () => {
-  const api = useProgramEnrolmentApi();
+export const usePrograms = () => {
+  const api = usePatientApi();
   const { queryParams } = useUrlQueryParams({
     initialSort: { key: 'type', dir: 'asc' },
   });
-  const patientId = usePatient.utils.id();
+  const patientId = usePatientId();
   const params = {
     ...queryParams,
     filterBy: { patientId: { equalTo: patientId } },
   };
   return {
     ...useQuery(api.keys.paramList(params), () =>
-      api.get.list(params).then(programs => ({
+      api.get.programs(params).then(programs => ({
         nodes: programs.nodes.map(
           node => ({ ...node, id: node.name } as ProgramRowFragmentWithId)
         ),
