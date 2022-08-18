@@ -35,7 +35,7 @@ impl LocationQueries {
         )?;
 
         let service_provider = ctx.service_provider();
-        let service_context = service_provider.context(&store_id, &user.user_id)?;
+        let service_context = service_provider.context(store_id.clone(), user.user_id)?;
 
         // always filter by store_id
         let filter = filter

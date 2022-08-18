@@ -82,15 +82,23 @@ impl ServiceProvider {
     }
 
     /// Creates a new service context with a new DB connection
+    pub fn basic_context(&self) -> Result<ServiceContext, RepositoryError> {
+        Ok(ServiceContext {
+            connection: self.connection()?,
+            user_id: "".to_string(),
+            store_id: "".to_string(),
+        })
+    }
+
     pub fn context(
         &self,
-        store_id: &str,
-        user_id: &str,
+        store_id: String,
+        user_id: String,
     ) -> Result<ServiceContext, RepositoryError> {
         Ok(ServiceContext {
             connection: self.connection()?,
-            user_id: user_id.to_string(),
-            store_id: store_id.to_string(),
+            user_id: user_id,
+            store_id: store_id,
         })
     }
 

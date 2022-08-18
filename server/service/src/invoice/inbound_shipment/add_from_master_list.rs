@@ -123,8 +123,8 @@ mod test {
         mock::{
             common::FullMockMasterList, mock_empty_draft_inbound_shipment, mock_inbound_shipment_a,
             mock_inbound_shipment_c, mock_item_a, mock_item_b, mock_item_c, mock_item_d,
-            mock_name_store_a, mock_outbound_shipment_c, mock_test_not_store_a_master_list,
-            MockData, MockDataInserts,
+            mock_name_store_a, mock_outbound_shipment_c, mock_store_a, mock_store_c,
+            mock_test_not_store_a_master_list, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
         MasterListLineRow, MasterListNameJoinRow, MasterListRow,
@@ -137,8 +137,12 @@ mod test {
             setup_all("is_add_from_master_list_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("store_a", "").unwrap();
-        let store_c_context = service_provider.context("store_c", "").unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let store_c_context = service_provider
+            .context(mock_store_c().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_service;
 
         // RecordDoesNotExist
@@ -259,7 +263,9 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("store_a", "").unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_service;
 
         let result: Vec<repository::InvoiceLineRow> = service

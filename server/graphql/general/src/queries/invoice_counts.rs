@@ -20,7 +20,7 @@ fn do_invoice_count(
     store_id: &str,
 ) -> Result<i64> {
     let service_provider = ctx.service_provider();
-    let service_ctx = service_provider.context(store_id, "")?;
+    let service_ctx = service_provider.context(store_id.to_string(), "".to_string())?;
     let service = &service_provider.invoice_count_service;
     let count = service
         .invoices_count(
@@ -93,7 +93,7 @@ impl OutboundInvoiceCounts {
     /// Number of outbound shipments ready to be picked
     async fn to_be_picked(&self, ctx: &Context<'_>) -> Result<i64> {
         let service_provider = ctx.service_provider();
-        let service_ctx = service_provider.context("", "").map_err(|_| Error {
+        let service_ctx = service_provider.basic_context().map_err(|_| Error {
             message: "InternalError".to_string(),
             source: None,
             extensions: None,

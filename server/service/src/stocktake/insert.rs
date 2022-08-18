@@ -138,9 +138,11 @@ mod test {
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider
-            .context(&mock_store_a().id, &mock_user_account_a().id)
+            .context(mock_store_a().id, mock_user_account_a().id)
             .unwrap();
-        let invalid_store_context = service_provider.context("invalid", "").unwrap();
+        let invalid_store_context = service_provider
+            .context("invalid".to_string(), "".to_string())
+            .unwrap();
 
         let service = service_provider.stocktake_service;
 

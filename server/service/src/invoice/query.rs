@@ -73,7 +73,7 @@ mod test_query {
             setup_all("get_invoice_by_number", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("", "").unwrap();
+        let context = service_provider.basic_context().unwrap();
         let service = service_provider.invoice_service;
 
         // Not found

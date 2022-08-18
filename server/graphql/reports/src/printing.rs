@@ -66,7 +66,7 @@ pub async fn print_report(
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(&store_id, &user.user_id)?;
+    let service_context = service_provider.context(store_id.clone(), user.user_id)?;
     let service = &service_provider.report_service;
 
     // get the required report
@@ -129,7 +129,7 @@ pub async fn print_report_definition(
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(&store_id, &user.user_id)?;
+    let service_context = service_provider.context(store_id.clone(), user.user_id)?;
     let service = &service_provider.report_service;
 
     // get the required report

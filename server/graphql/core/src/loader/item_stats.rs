@@ -33,7 +33,7 @@ impl Loader<ItemStatsLoaderInput> for ItemsStatsForItemLoader {
         &self,
         loader_inputs: &[ItemStatsLoaderInput],
     ) -> Result<HashMap<ItemStatsLoaderInput, Self::Value>, Self::Error> {
-        let service_context = self.service_provider.context("", "")?;
+        let service_context = self.service_provider.basic_context()?;
 
         let (store_id, amc_lookback_months) = if let Some(loader_input) = loader_inputs.first() {
             (

@@ -276,7 +276,7 @@ mod test {
     use repository::{
         mock::{
             mock_inbound_shipment_a, mock_item_a, mock_name_store_b, mock_stock_line_a,
-            MockDataInserts,
+            mock_store_a, MockDataInserts,
         },
         test_db::setup_all,
         InvoiceLineRowRepository, InvoiceRowRepository,
@@ -298,7 +298,9 @@ mod test {
             setup_all("batch_outbound_shipment_service", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("store_a", "").unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_service;
 
         let delete_shipment_input = mock_inbound_shipment_a().id;

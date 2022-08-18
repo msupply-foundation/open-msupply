@@ -106,7 +106,7 @@ pub fn reports(
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(&store_id, &user.user_id)?;
+    let service_context = service_provider.context(store_id, user.user_id)?;
 
     let reports = service_provider
         .report_service

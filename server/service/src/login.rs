@@ -105,7 +105,8 @@ impl LoginService {
         let mut username = input.username.clone();
         match LoginService::fetch_user_from_central(&input).await {
             Ok(user_info) => {
-                let service_ctx = service_provider.context("", &user_info.user.id)?;
+                let service_ctx =
+                    service_provider.context("".to_string(), user_info.user.id.clone())?;
                 username = user_info.user.name.clone();
                 LoginService::update_user(&service_ctx, &input.password, user_info)
                     .map_err(|e| LoginError::UpdateUserError(e))?;
@@ -116,7 +117,7 @@ impl LoginService {
                 FetchUserError::InternalError(_) => info!("{:?}", err),
             },
         };
-        let mut service_ctx = service_provider.context("", "")?;
+        let mut service_ctx = service_provider.basic_context()?;
         let user_service = UserAccountService::new(&service_ctx.connection);
         let user_account = match user_service.verify_password(&username, &input.password) {
             Ok(user) => user,
@@ -131,7 +132,7 @@ impl LoginService {
                 });
             }
         };
-        service_ctx = service_provider.context("", &user_account.id.clone())?;
+        service_ctx.user_id = user_account.id.clone();
 
         log_entry(
             &service_ctx,
@@ -382,7 +383,9 @@ mod test {
         let (_, _, connection_manager, _) =
             setup_all("login_test", MockDataInserts::none().names().stores()).await;
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("", "").unwrap();
+        let context = service_provider
+            .context("".to_string(), "".to_string())
+            .unwrap();
 
         let auth_data = AuthData {
             auth_token_secret: "secret".to_string(),

@@ -89,7 +89,7 @@ pub fn stocktakes(
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_ctx = service_provider.context(store_id, &user.user_id)?;
+    let service_ctx = service_provider.context(store_id.to_string(), user.user_id)?;
     let service = &service_provider.stocktake_service;
 
     match service.get_stocktakes(
@@ -137,7 +137,7 @@ pub fn stocktake(ctx: &Context<'_>, store_id: &str, id: &str) -> Result<Stocktak
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_ctx = service_provider.context(store_id, &user.user_id)?;
+    let service_ctx = service_provider.context(store_id.to_string(), user.user_id)?;
     let service = &service_provider.stocktake_service;
 
     match service.get_stocktakes(
@@ -175,7 +175,7 @@ pub fn stocktake_by_number(
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_ctx = service_provider.context(store_id, &user.user_id)?;
+    let service_ctx = service_provider.context(store_id.to_string(), user.user_id)?;
     let service = &service_provider.stocktake_service;
 
     match service.get_stocktakes(

@@ -101,7 +101,7 @@ pub fn get_server_settings(ctx: &Context<'_>, stage0: bool) -> Result<ServerSett
     }
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context("", "")?;
+    let service_context = service_provider.basic_context()?;
     let service = &service_provider.settings;
 
     let sync_settings = match service.sync_settings(&service_context) {

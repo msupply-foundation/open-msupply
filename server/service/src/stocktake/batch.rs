@@ -114,7 +114,7 @@ pub fn batch_stocktake(
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{mock_item_a, mock_stocktake_finalised, MockDataInserts},
+        mock::{mock_item_a, mock_stocktake_finalised, mock_store_a, MockDataInserts},
         test_db::setup_all,
         StocktakeLineRowRepository, StocktakeRowRepository,
     };
@@ -131,7 +131,9 @@ mod test {
             setup_all("batch_stocktake_service", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("store_a", "").unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.stocktake_service;
 
         let delete_stocktake_input = mock_stocktake_finalised().id;

@@ -124,6 +124,7 @@ mod test {
         outbound_shipment::AddToOutboundShipmentFromMasterListError as ServiceError,
     };
     use crate::service_provider::ServiceProvider;
+    use repository::mock::{mock_store_a, mock_store_c};
     use repository::{
         mock::{
             common::FullMockMasterList, mock_inbound_shipment_c, mock_item_a, mock_item_b,
@@ -143,8 +144,12 @@ mod test {
             setup_all("os_add_from_master_list_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("store_a", "").unwrap();
-        let store_c_context = service_provider.context("store_c", "").unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let store_c_context = service_provider
+            .context(mock_store_c().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_service;
 
         // RecordDoesNotExist
@@ -265,7 +270,9 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("store_c", "").unwrap();
+        let context = service_provider
+            .context(mock_store_c().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_service;
 
         let result: Vec<repository::InvoiceLineRow> = service

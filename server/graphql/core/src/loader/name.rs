@@ -35,7 +35,7 @@ impl Loader<NameByIdLoaderInput> for NameByIdLoader {
         &self,
         ids_with_store_id: &[NameByIdLoaderInput],
     ) -> Result<HashMap<NameByIdLoaderInput, Self::Value>, Self::Error> {
-        let service_context = self.service_provider.context("", "")?;
+        let service_context = self.service_provider.basic_context()?;
 
         // store_id -> Vec of name_id
         let mut store_name_map = HashMap::<String, Vec<String>>::new();

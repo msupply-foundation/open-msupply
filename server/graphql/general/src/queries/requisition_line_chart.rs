@@ -66,7 +66,7 @@ pub fn chart(
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id, &user.user_id)?;
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
     let result = match service_provider
         .requisition_line_service

@@ -1,5 +1,6 @@
 #[cfg(test)]
 mod test_update {
+    use repository::mock::{mock_store_a, mock_store_b};
     use repository::EqualFilter;
     use repository::{
         mock::{
@@ -25,8 +26,12 @@ mod test_update {
             setup_all("create_requisition_shipment_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("store_a", "").unwrap();
-        let store_b_context = service_provider.context("store_b", "").unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let store_b_context = service_provider
+            .context(mock_store_b().id, "".to_string())
+            .unwrap();
         let service = service_provider.requisition_service;
 
         // RequisitionDoesNotExist
@@ -83,7 +88,9 @@ mod test_update {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("store_a", "").unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.requisition_service;
 
         // Check existing invoice is accounted for

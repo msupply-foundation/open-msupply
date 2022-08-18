@@ -121,10 +121,10 @@ mod test {
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider
-            .context(&mock_store_a().id, &mock_user_account_a().id)
+            .context(mock_store_a().id, mock_user_account_a().id)
             .unwrap();
         let store_b_context = service_provider
-            .context(&mock_store_b().id, &mock_user_account_a().id)
+            .context(mock_store_b().id, mock_user_account_a().id)
             .unwrap();
         let service = service_provider.invoice_line_service;
 
@@ -269,7 +269,7 @@ mod test {
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider
-            .context(&mock_store_a().id, &mock_user_account_a().id)
+            .context(mock_store_a().id, mock_user_account_a().id)
             .unwrap();
         let service = service_provider.invoice_line_service;
 

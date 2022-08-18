@@ -145,7 +145,8 @@ mod test {
             mock_draft_request_requisition_for_update_test,
             mock_draft_response_requisition_for_update_test, mock_item_a, mock_item_b, mock_item_c,
             mock_item_d, mock_name_store_a, mock_request_draft_requisition_calculation_test,
-            mock_sent_request_requisition, mock_test_not_store_a_master_list,
+            mock_sent_request_requisition, mock_store_a, mock_store_b,
+            mock_test_not_store_a_master_list,
             test_item_stats::{self},
             MockData, MockDataInserts,
         },
@@ -168,8 +169,12 @@ mod test {
             setup_all("add_from_master_list_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("store_a", "").unwrap();
-        let store_b_context = service_provider.context("store_b", "").unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let store_b_context = service_provider
+            .context(mock_store_b().id, "".to_string())
+            .unwrap();
         let service = service_provider.requisition_service;
 
         // RequisitionDoesNotExist
@@ -284,7 +289,9 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context("store_a", "").unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.requisition_service;
 
         let result = service

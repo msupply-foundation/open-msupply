@@ -494,8 +494,12 @@ mod test {
             setup_all("update_stocktake", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context(&mock_store_a().id, "").unwrap();
-        let invalid_store_context = service_provider.context("invalid", "").unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let invalid_store_context = service_provider
+            .context("invalid".to_string(), "".to_string())
+            .unwrap();
         let service = service_provider.stocktake_service;
 
         // error: InvalidStore
