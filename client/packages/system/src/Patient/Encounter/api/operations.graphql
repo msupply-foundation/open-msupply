@@ -1,10 +1,13 @@
 fragment EncounterDocumentRegistry on DocumentRegistryNode {
-  uiSchemaType
-  documentType
   context
+  documentType
   formSchemaId
+  id
   jsonSchema
+  name
+  parentId
   uiSchema
+  uiSchemaType
 }
 
 fragment EncounterDocument on DocumentNode {

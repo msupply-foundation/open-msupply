@@ -1,82 +1,86 @@
-import React, { FC, useState } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import {
+  AlertIcon,
   BasicSpinner,
+  Box,
   DialogButton,
+  InputWithLabelRow,
+  Stack,
+  Typography,
   useDialog,
 } from '@openmsupply-client/common';
+import { useTranslation } from '@common/intl';
 import { useEncounter } from './api/hooks';
 import { usePatientModalStore } from '../hooks';
 import { PatientModal } from '../PatientView';
 import { ProgramRowFragmentWithId, usePatient } from '../api';
-import { SaveDocumentMutation, useJsonForms } from '../JsonForms';
+import { CreateDocument, useJsonForms } from '../JsonForms';
 import { ProgramSearchInput } from '../Components';
-
-const useUpsertEncounter = (
-  patientId: string,
-  programType: string,
-  type: string
-): SaveDocumentMutation => {
-  const { mutateAsync: insertEncounter } = useEncounter.document.insert();
-  const { mutateAsync: updateEncounter } = useEncounter.document.update();
-  return async (jsonData: unknown, formSchemaId: string, parent?: string) => {
-    if (parent === undefined) {
-      const result = await insertEncounter({
-        data: jsonData,
-        schemaId: formSchemaId,
-        patientId,
-        type,
-        programType,
-      });
-      return result;
-    } else {
-      const result = await updateEncounter({
-        data: jsonData,
-        parent,
-        schemaId: formSchemaId,
-      });
-      return result;
-    }
-  };
-};
 
 export const EncounterDetailModal: FC = () => {
   const patientId = usePatient.utils.id();
-
-  const { current, document, programType, reset, setProgramType } =
-    usePatientModalStore();
-
+  const t = useTranslation('patients');
+  const { current, reset, document } = usePatientModalStore();
   const [program, setProgram] = useState<ProgramRowFragmentWithId | null>(null);
-  const handleSave = useUpsertEncounter(
-    patientId,
-    programType ?? '',
-    document?.type ?? ''
+  const [error, setError] = useState(false);
+  const { mutate: fetch, isLoading, data } = useEncounter.registry.byProgram();
+  const isCreate = !document?.name;
+  const [createDoc, setCreateDoc] = useState<CreateDocument | undefined>(
+    undefined
   );
-  const { JsonForm, saveData, isLoading, isDirty, validationError } =
-    useJsonForms(
-      document?.name,
-      {
-        handleSave,
-      },
-      document?.createDocument
-    );
+
+  const handleSave = useEncounter.document.upsert(
+    patientId,
+    program?.type ?? '',
+    createDoc?.documentRegistry?.documentType ?? ''
+  );
+  const { JsonForm, saveData, isDirty, validationError } = useJsonForms(
+    document?.name,
+    {
+      handleSave,
+    },
+    createDoc
+  );
+
+  const onClose = () => {
+    reset();
+    setProgram(null);
+    setCreateDoc(undefined);
+    setError(false);
+  };
 
   const { Modal } = useDialog({
     isOpen: current === PatientModal.Encounter,
-    onClose: reset,
+    onClose,
   });
 
   const onChangeProgram = (program: ProgramRowFragmentWithId) => {
     setProgram(program);
-    setProgramType(program.type);
+    setError(false);
+    fetch(program.document.documentRegistry?.id || '');
   };
+
+  useEffect(() => {
+    if (data && data?.totalCount > 0) {
+      const documentRegistry = data.nodes[0];
+      if (documentRegistry) {
+        setCreateDoc({ data: {}, documentRegistry });
+        setError(false);
+        return;
+      }
+    } else {
+      setError(true);
+    }
+    setCreateDoc(undefined);
+  }, [data]);
 
   return (
     <Modal
-      title=""
-      cancelButton={<DialogButton variant="cancel" onClick={reset} />}
+      title={t(isCreate ? 'label.new-encounter' : 'label.edit-encounter')}
+      cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       okButton={
         <DialogButton
-          variant="create"
+          variant={isCreate ? 'create' : 'ok'}
           disabled={!isDirty || !!validationError}
           onClick={async () => {
             await saveData();
@@ -84,12 +88,57 @@ export const EncounterDetailModal: FC = () => {
           }}
         />
       }
-      width={1024}
+      width={700}
     >
       <React.Suspense fallback={<div />}>
-        <ProgramSearchInput onChange={onChangeProgram} value={program} />
-        {!program ? null : isLoading ? <BasicSpinner /> : JsonForm}
+        <Stack alignItems="center">
+          {isCreate && (
+            <InputWithLabelRow
+              label={t('label.program')}
+              Input={
+                <ProgramSearchInput
+                  onChange={onChangeProgram}
+                  value={program}
+                />
+              }
+            />
+          )}
+          <RenderForm
+            Form={JsonForm}
+            isCreate={isCreate}
+            isError={error}
+            isLoading={isLoading}
+            isProgram={!!program}
+          />
+        </Stack>
       </React.Suspense>
     </Modal>
   );
+};
+
+const RenderForm = ({
+  Form,
+  isCreate,
+  isError,
+  isLoading,
+  isProgram,
+}: {
+  Form: React.ReactNode;
+  isCreate: boolean;
+  isError: boolean;
+  isLoading: boolean;
+  isProgram: boolean;
+}) => {
+  const t = useTranslation('common');
+  if (!isProgram && isCreate) return null;
+  if (isError)
+    return (
+      <Box display="flex" gap={1} padding={3}>
+        <AlertIcon color="error" />
+        <Typography color="error">{t('error.unable-to-load-data')}</Typography>
+      </Box>
+    );
+  if (isLoading) return <BasicSpinner />;
+
+  return <>{Form}</>;
 };

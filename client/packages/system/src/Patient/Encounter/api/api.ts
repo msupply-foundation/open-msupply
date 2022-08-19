@@ -7,6 +7,7 @@ import {
 } from '@openmsupply-client/common';
 import {
   EncounterDocumentFragment,
+  EncounterDocumentRegistryFragment,
   EncounterFragment,
   Sdk,
 } from './operations.generated';
@@ -35,6 +36,17 @@ export const getEncounterQueries = (sdk: Sdk, storeId: string) => ({
       });
 
       return result?.encounters;
+    },
+    registries: async ({
+      filterBy,
+    }: ListParams): Promise<{
+      nodes: EncounterDocumentRegistryFragment[];
+      totalCount: number;
+    }> => {
+      const result = await sdk.encounterDocumentRegistries({
+        filter: filterBy,
+      });
+      return result?.documentRegistries;
     },
   },
 
