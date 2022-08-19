@@ -31,6 +31,7 @@ impl From<RepositoryError> for DocumentHistoryError {
     }
 }
 
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct DocumentDelete {
     pub id: String,
     pub patient_id: String,
@@ -233,7 +234,7 @@ fn delete_document(
 mod document_service_test {
     use chrono::{DateTime, NaiveDateTime, Utc};
     use repository::{
-        mock::{mock_form_schema_empty, mock_form_schema_simple, MockDataInserts},
+        mock::{document_a, mock_form_schema_empty, mock_form_schema_simple, MockDataInserts},
         test_db::setup_all,
         DocumentStatus,
     };
@@ -464,5 +465,34 @@ mod document_service_test {
                 },
             )
             .unwrap();
+    }
+
+    #[actix_rt::test]
+    async fn test_document_deletion() {
+        let (_, _, connection_manager, _) =
+            setup_all("document_deletion", MockDataInserts::all()).await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "");
+        let context = service_provider.context().unwrap();
+
+        let service = service_provider.document_service;
+
+        service
+            .delete_document(
+                &context,
+                "",
+                DocumentDelete {
+                    id: document_a().id,
+                    patient_id: "patient1".to_string(),
+                    parent: "document_a".to_string(),
+                    comment: Some("Testing deletion".to_string()),
+                },
+            )
+            .unwrap();
+        let document = service
+            .get_document(&context, "patients/patient1/deleted")
+            .unwrap()
+            .unwrap();
+        assert_eq!(document.status, DocumentStatus::Deleted);
     }
 }
