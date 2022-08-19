@@ -20,6 +20,10 @@ pub fn patient_doc_name(patient_id: &str) -> String {
     format!("patients/{}", patient_id)
 }
 
+pub fn patient_deleted_doc_name(patient_id: &str) -> String {
+    format!("patients/{}/deleted", patient_id)
+}
+
 pub fn patient_program_doc_name(patient_id: &str, program: &str) -> String {
     format!("patients/{}/programs/{}", patient_id, program)
 }
