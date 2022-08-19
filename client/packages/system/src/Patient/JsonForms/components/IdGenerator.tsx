@@ -192,7 +192,9 @@ const UIComponent = (props: ControlProps) => {
     handleChange(fullPath, id);
   }, [options, path, data, handleChange]);
 
-  const value = options?.targetField ? data[options?.targetField] : undefined;
+  const value = options?.targetField
+    ? extractProperty(data, options.targetField)
+    : undefined;
 
   const error = useMemo(() => {
     if (!options) {
