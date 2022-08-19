@@ -1,12 +1,13 @@
+use chrono::Utc;
 use jsonschema::JSONSchema;
 use repository::{
-    Document, DocumentFilter, DocumentRepository, FormSchemaRowRepository, RepositoryError,
-    StorageConnection,
+    Document, DocumentFilter, DocumentRepository, DocumentStatus, FormSchemaRowRepository,
+    RepositoryError, StorageConnection,
 };
 
 use crate::service_provider::ServiceContext;
 
-use super::raw_document::RawDocument;
+use super::{patient::patient_deleted_doc_name, raw_document::RawDocument};
 
 #[derive(Debug, PartialEq)]
 pub enum DocumentInsertError {
@@ -27,6 +28,25 @@ pub enum DocumentHistoryError {
 impl From<RepositoryError> for DocumentHistoryError {
     fn from(err: RepositoryError) -> Self {
         DocumentHistoryError::DatabaseError(err)
+    }
+}
+
+pub struct DocumentDelete {
+    pub id: String,
+    pub patient_id: String,
+    pub parents: Vec<String>,
+    pub comment: Option<String>,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum DocumentDeleteError {
+    DatabaseError(RepositoryError),
+    InternalError(String),
+}
+
+impl From<RepositoryError> for DocumentDeleteError {
+    fn from(err: RepositoryError) -> Self {
+        DocumentDeleteError::DatabaseError(err)
     }
 }
 
@@ -78,6 +98,23 @@ pub trait DocumentServiceTrait: Sync + Send {
             })
             .map_err(|err| err.to_inner_error())?;
         Ok(document)
+    }
+
+    fn delete_document(
+        &self,
+        ctx: &ServiceContext,
+        user_id: &str,
+        doc: DocumentDelete,
+    ) -> Result<(), DocumentDeleteError> {
+        ctx.connection
+            .transaction_sync(|con| {
+                let current_document = validate_document(con, &doc.id)?;
+                let document = generate_deleted_document(doc, current_document, user_id)?;
+
+                delete_document(con, document)
+            })
+            .map_err(|err| err.to_inner_error())?;
+        Ok(())
     }
 }
 
@@ -134,6 +171,39 @@ fn validate_parents(
     Ok(None)
 }
 
+fn validate_document(
+    connection: &StorageConnection,
+    id: &str,
+) -> Result<Document, DocumentDeleteError> {
+    let doc = match DocumentRepository::new(connection).find_one_by_id(id)? {
+        Some(doc) => doc,
+        None => {
+            return Err(DocumentDeleteError::InternalError(format!(
+                "Document not found"
+            )))
+        }
+    };
+    Ok(doc)
+}
+
+fn generate_deleted_document(
+    input: DocumentDelete,
+    current_document: Document,
+    user_id: &str,
+) -> Result<RawDocument, DocumentDeleteError> {
+    Ok(RawDocument {
+        name: patient_deleted_doc_name(&input.patient_id),
+        parents: vec![],
+        author: user_id.to_string(),
+        timestamp: Utc::now(),
+        r#type: current_document.r#type,
+        data: serde_json::Value::Null,
+        schema_id: current_document.schema_id,
+        status: DocumentStatus::Deleted,
+        comment: input.comment,
+    })
+}
+
 /// Does a raw insert without schema validation
 fn insert_document(
     connection: &StorageConnection,
@@ -145,6 +215,18 @@ fn insert_document(
     let repo = DocumentRepository::new(connection);
     repo.insert(&doc)?;
     Ok(doc)
+}
+
+fn delete_document(
+    connection: &StorageConnection,
+    doc: RawDocument,
+) -> Result<(), DocumentDeleteError> {
+    let doc = doc
+        .finalise()
+        .map_err(|err| DocumentDeleteError::InternalError(err))?;
+    let repo = DocumentRepository::new(connection);
+    repo.insert(&doc)?;
+    Ok(())
 }
 
 #[cfg(test)]
