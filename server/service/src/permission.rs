@@ -11,42 +11,20 @@ pub struct UserStorePermissions {
     pub permissions: Vec<UserPermissionRow>,
 }
 
-pub fn permission_by_store(
+pub fn permissions(
     connection_manager: &StorageConnectionManager,
-    store_id: &str,
     user_id: &str,
+    store: Option<String>,
 ) -> Result<Vec<UserStorePermissions>, RepositoryError> {
     let connection = connection_manager.connection()?;
     let user_permission_repo = UserPermissionRepository::new(&connection);
     let store_repo = StoreRowRepository::new(&connection);
 
-    let user_permissions = user_permission_repo.query_by_filter(
-        UserPermissionFilter::new()
-            .user_id(EqualFilter::equal_to(user_id))
-            .store_id(EqualFilter::equal_to(store_id)),
-    )?;
-    let store = match store_repo.find_one_by_id(&store_id)? {
-        Some(store) => store,
-        None => return Err(RepositoryError::NotFound),
-    };
-
-    let user_store_permission = UserStorePermissions {
-        store_row: store,
-        permissions: user_permissions.clone(),
-    };
-    Ok(vec![user_store_permission])
-}
-
-pub fn all_permissions(
-    connection_manager: &StorageConnectionManager,
-    user_id: &str,
-) -> Result<Vec<UserStorePermissions>, RepositoryError> {
-    let connection = connection_manager.connection()?;
-    let user_permission_repo = UserPermissionRepository::new(&connection);
-    let store_repo = StoreRowRepository::new(&connection);
-
-    let permissions = user_permission_repo
-        .query_by_filter(UserPermissionFilter::new().user_id(EqualFilter::equal_to(user_id)))?;
+    let mut filter = UserPermissionFilter::new().user_id(EqualFilter::equal_to(user_id));
+    if let Some(store) = store {
+        filter = filter.store_id(EqualFilter::equal_to(&store))
+    }
+    let permissions = user_permission_repo.query_by_filter(filter)?;
 
     let mut permissions_by_store = HashMap::new();
     for permission in permissions {

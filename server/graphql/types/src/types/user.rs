@@ -5,7 +5,7 @@ use graphql_core::{
     loader::NameRowLoader, standard_graphql_error::StandardGraphqlError, ContextExt,
 };
 use repository::{User, UserStore};
-use service::permission::{all_permissions, permission_by_store};
+use service::permission::permissions;
 
 use super::UserStorePermissionConnector;
 
@@ -93,18 +93,15 @@ impl UserNode {
         ctx: &Context<'_>,
         store_id: Option<String>,
     ) -> Result<UserStorePermissionConnector> {
-        let service_provider = ctx.service_provider();
+        let service_provider = &ctx.service_provider().connection_manager;
 
         let result = match store_id {
-            Some(store_id) => permission_by_store(
-                &service_provider.connection_manager,
-                &store_id,
+            Some(store_id) => permissions(
+                service_provider,
                 &self.user.user_row.id.clone(),
+                Some(store_id),
             ),
-            None => all_permissions(
-                &service_provider.connection_manager,
-                &self.user.user_row.id.clone(),
-            ),
+            None => permissions(service_provider, &self.user.user_row.id.clone(), None),
         }?;
 
         Ok(UserStorePermissionConnector::from_vec(result))
