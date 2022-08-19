@@ -34,7 +34,7 @@ impl From<RepositoryError> for DocumentHistoryError {
 pub struct DocumentDelete {
     pub id: String,
     pub patient_id: String,
-    pub parents: Vec<String>,
+    pub parent: String,
     pub comment: Option<String>,
 }
 
@@ -193,7 +193,7 @@ fn generate_deleted_document(
 ) -> Result<RawDocument, DocumentDeleteError> {
     Ok(RawDocument {
         name: patient_deleted_doc_name(&input.patient_id),
-        parents: vec![],
+        parents: vec![input.parent],
         author: user_id.to_string(),
         timestamp: Utc::now(),
         r#type: current_document.r#type,
