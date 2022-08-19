@@ -34,13 +34,12 @@ pub enum UserPermissionNodePermission {
 #[Object]
 impl UserStorePermissionNode {
     pub async fn permissions(&self) -> Vec<UserPermissionNodePermission> {
-        let mut permissions = Vec::new();
-        for permission in self.user_store_permission.permissions.clone() {
-            permissions.push(UserPermissionNodePermission::from_domain(
-                &permission.permission,
-            ));
-        }
-        permissions
+        self.user_store_permission
+            .permissions
+            .clone()
+            .into_iter()
+            .map(|p| UserPermissionNodePermission::from_domain(&p.permission))
+            .collect()
     }
 
     pub async fn store_id(&self) -> String {
