@@ -42,6 +42,12 @@
               "description": "Weight at start of antiretroviral treatment",
               "type": "number"
             },
+            "numberOfDaysDispensed": {
+              "type": "number"
+            },
+            "pillCount": {
+              "type": "number"
+            },
             "previousRegimen": {
               "description": "Previous antiretroviral treatment regimen",
               "type": "string"
