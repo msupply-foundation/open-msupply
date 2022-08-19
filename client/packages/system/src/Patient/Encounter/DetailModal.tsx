@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useState } from 'react';
 import {
   BasicSpinner,
   DialogButton,
@@ -7,8 +7,9 @@ import {
 import { useEncounter } from './api/hooks';
 import { usePatientModalStore } from '../hooks';
 import { PatientModal } from '../PatientView';
-import { usePatient } from '../api';
+import { ProgramRowFragmentWithId, usePatient } from '../api';
 import { SaveDocumentMutation, useJsonForms } from '../JsonForms';
+import { ProgramSearchInput } from '../Components';
 
 const useUpsertEncounter = (
   patientId: string,
@@ -41,25 +42,33 @@ const useUpsertEncounter = (
 export const EncounterDetailModal: FC = () => {
   const patientId = usePatient.utils.id();
 
-  const { current, document, programType, reset } = usePatientModalStore();
+  const { current, document, programType, reset, setProgramType } =
+    usePatientModalStore();
+
+  const [program, setProgram] = useState<ProgramRowFragmentWithId | null>(null);
   const handleSave = useUpsertEncounter(
     patientId,
     programType ?? '',
     document?.type ?? ''
   );
-  const { JsonForm, saveData, isLoading, isDirty } = useJsonForms(
-    document?.name,
-    {
-      handleSave,
-    }
-  );
+  const { JsonForm, saveData, isLoading, isDirty, validationError } =
+    useJsonForms(
+      document?.name,
+      {
+        handleSave,
+      },
+      document?.createDocument
+    );
 
   const { Modal } = useDialog({
     isOpen: current === PatientModal.Encounter,
     onClose: reset,
   });
 
-  if (isLoading) return <BasicSpinner />;
+  const onChangeProgram = (program: ProgramRowFragmentWithId) => {
+    setProgram(program);
+    setProgramType(program.type);
+  };
 
   return (
     <Modal
@@ -67,8 +76,8 @@ export const EncounterDetailModal: FC = () => {
       cancelButton={<DialogButton variant="cancel" onClick={reset} />}
       okButton={
         <DialogButton
-          variant="ok"
-          disabled={!isDirty}
+          variant="create"
+          disabled={!isDirty || !!validationError}
           onClick={async () => {
             await saveData();
             reset();
@@ -78,15 +87,8 @@ export const EncounterDetailModal: FC = () => {
       width={1024}
     >
       <React.Suspense fallback={<div />}>
-        {document?.name ? (
-          isLoading ? (
-            <BasicSpinner />
-          ) : (
-            JsonForm
-          )
-        ) : (
-          'Encounter form'
-        )}
+        <ProgramSearchInput onChange={onChangeProgram} value={program} />
+        {!program ? null : isLoading ? <BasicSpinner /> : JsonForm}
       </React.Suspense>
     </Modal>
   );

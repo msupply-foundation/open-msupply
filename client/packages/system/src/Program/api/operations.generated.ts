@@ -6,6 +6,8 @@ import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type ProgramDocumentFragment = { __typename: 'DocumentRegistryNode', id: string, documentType: string, formSchemaId: string, jsonSchema: any, name?: string | null, context: Types.DocumentRegistryNodeContext, parentId?: string | null, uiSchema: any, uiSchemaType: string };
 
+export type ProgramDocumentRegistryFragment = { __typename: 'DocumentRegistryNode', id: string, documentType: string, formSchemaId: string, jsonSchema: any, name?: string | null, context: Types.DocumentRegistryNodeContext, parentId?: string | null, uiSchema: any, uiSchemaType: string, children: Array<{ __typename: 'DocumentRegistryNode', id: string, documentType: string, formSchemaId: string, jsonSchema: any, name?: string | null, context: Types.DocumentRegistryNodeContext, parentId?: string | null, uiSchema: any, uiSchemaType: string }> };
+
 export type ProgramsQueryVariables = Types.Exact<{
   key: Types.DocumentRegistrySortFieldInput;
   desc?: Types.InputMaybe<Types.Scalars['Boolean']>;
@@ -27,6 +29,14 @@ export const ProgramDocumentFragmentDoc = gql`
   uiSchemaType
 }
     `;
+export const ProgramDocumentRegistryFragmentDoc = gql`
+    fragment ProgramDocumentRegistry on DocumentRegistryNode {
+  ...ProgramDocument
+  children {
+    ...ProgramDocument
+  }
+}
+    ${ProgramDocumentFragmentDoc}`;
 export const ProgramsDocument = gql`
     query programs($key: DocumentRegistrySortFieldInput!, $desc: Boolean) {
   documentRegistries(
@@ -38,15 +48,12 @@ export const ProgramsDocument = gql`
       totalCount
       nodes {
         __typename
-        ...ProgramDocument
-        children {
-          ...ProgramDocument
-        }
+        ...ProgramDocumentRegistry
       }
     }
   }
 }
-    ${ProgramDocumentFragmentDoc}`;
+    ${ProgramDocumentRegistryFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 

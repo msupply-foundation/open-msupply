@@ -6,11 +6,20 @@ import {
   Box,
   CheckIcon,
 } from '@openmsupply-client/common';
-import { ProgramDocumentFragment } from '../../api';
+import { ProgramDocumentRegistryFragment } from '../api';
+import { ProgramRowFragmentWithId } from '../../Patient';
 
 export const getProgramOptionRenderer =
-  (): AutocompleteOptionRenderer<ProgramDocumentFragment> => (props, program) =>
-    (
+  (): AutocompleteOptionRenderer<
+    ProgramDocumentRegistryFragment | ProgramRowFragmentWithId
+  > =>
+  (props, program) => {
+    const name =
+      'document' in program
+        ? program?.document?.documentRegistry?.name
+        : program.name;
+
+    return (
       <DefaultAutocompleteItemOption {...props}>
         <Box display="flex" alignItems="flex-end" gap={1} height={25}>
           <Box display="flex" flexDirection="row" gap={1} width={110}>
@@ -25,10 +34,11 @@ export const getProgramOptionRenderer =
                 whiteSpace: 'no-wrap',
               }}
             >
-              {program?.name?.substring(0, 3)}
+              {name?.substring(0, 3)}
             </Typography>
           </Box>
-          <Typography>{program.name}</Typography>
+          <Typography>{name}</Typography>
         </Box>
       </DefaultAutocompleteItemOption>
     );
+  };

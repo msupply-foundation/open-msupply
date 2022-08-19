@@ -2,13 +2,14 @@ import {
   SortBy,
   FilterBy,
   DocumentRegistrySortFieldInput,
+  DocumentRegistryNode,
 } from '@openmsupply-client/common';
-import { ProgramDocumentFragment, Sdk } from './operations.generated';
+import { ProgramDocumentRegistryFragment, Sdk } from './operations.generated';
 
 export type ListParams = {
   first?: number;
   offset?: number;
-  sortBy?: SortBy<ProgramDocumentFragment>;
+  sortBy?: SortBy<DocumentRegistryNode>;
   filterBy?: FilterBy | null;
 };
 
@@ -17,7 +18,7 @@ export const getProgramQueries = (sdk: Sdk) => ({
     list: async ({
       sortBy,
     }: ListParams): Promise<{
-      nodes: ProgramDocumentFragment[];
+      nodes: ProgramDocumentRegistryFragment[];
       totalCount: number;
     }> => {
       const result = await sdk.programs({
