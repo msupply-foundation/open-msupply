@@ -1,6 +1,7 @@
 use std::{collections::HashMap, ops::Index};
 
 pub mod common;
+mod document;
 mod form_schema;
 mod full_invoice;
 mod full_master_list;
@@ -38,6 +39,7 @@ mod unit;
 mod user_account;
 
 use common::*;
+pub use document::*;
 pub use form_schema::*;
 pub use full_invoice::*;
 pub use full_master_list::*;
@@ -71,12 +73,12 @@ pub use test_unallocated_line::*;
 pub use user_account::*;
 
 use crate::{
-    FormSchema, FormSchemaRowRepository, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow,
-    ItemRow, LocationRow, LocationRowRepository, LogRow, LogRowRepository, NumberRow,
-    NumberRowRepository, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
-    RequisitionRowRepository, StockLineRowRepository, StocktakeLineRowRepository,
-    StocktakeRowRepository, UserAccountRow, UserAccountRowRepository, UserPermissionRow,
-    UserPermissionRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
+    Document, DocumentRepository, FormSchema, FormSchemaRowRepository, InvoiceLineRow,
+    InvoiceLineRowRepository, InvoiceRow, ItemRow, LocationRow, LocationRowRepository, LogRow,
+    LogRowRepository, NumberRow, NumberRowRepository, RequisitionLineRow,
+    RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, StockLineRowRepository,
+    StocktakeLineRowRepository, StocktakeRowRepository, UserAccountRow, UserAccountRowRepository,
+    UserPermissionRow, UserPermissionRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
 };
 
 use self::{log::mock_logs, unit::mock_units};
@@ -111,6 +113,7 @@ pub struct MockData {
     pub stocktake_lines: Vec<StocktakeLineRow>,
     pub logs: Vec<LogRow>,
     pub form_schemas: Vec<FormSchema>,
+    pub documents: Vec<Document>,
 }
 
 #[derive(Default)]
@@ -137,6 +140,7 @@ pub struct MockDataInserts {
     pub stocktake_lines: bool,
     pub logs: bool,
     pub form_schemas: bool,
+    pub documents: bool,
 }
 
 impl MockDataInserts {
@@ -164,6 +168,7 @@ impl MockDataInserts {
             stocktake_lines: true,
             logs: true,
             form_schemas: true,
+            documents: true,
         }
     }
 
@@ -260,6 +265,11 @@ impl MockDataInserts {
         self.form_schemas = true;
         self
     }
+
+    pub fn documents(mut self) -> Self {
+        self.documents = true;
+        self
+    }
 }
 
 #[derive(Default)]
@@ -319,6 +329,7 @@ fn all_mock_data() -> MockDataCollection {
             requisition_lines: vec![],
             logs: mock_logs(),
             form_schemas: mock_form_schemas(),
+            documents: mock_documents(),
         },
     );
     data.insert(
@@ -524,6 +535,13 @@ pub async fn insert_mock_data(
                 repo.upsert_one(row).unwrap();
             }
         }
+
+        if inserts.documents {
+            for row in &mock_data.documents {
+                let repo = DocumentRepository::new(connection);
+                repo.insert(row).unwrap();
+            }
+        }
     }
 
     mock_data
@@ -554,6 +572,7 @@ impl MockData {
             user_permissions: _,
             mut logs,
             mut form_schemas,
+            mut documents,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
@@ -576,6 +595,7 @@ impl MockData {
         self.stock_lines.append(&mut stock_lines);
         self.logs.append(&mut logs);
         self.form_schemas.append(&mut form_schemas);
+        self.documents.append(&mut documents);
 
         self
     }
