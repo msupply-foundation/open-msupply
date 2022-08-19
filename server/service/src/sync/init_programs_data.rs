@@ -328,16 +328,16 @@ fn encounter_2() -> hiv_care_encounter::HivcareEncounter {
                     .checked_add_signed(Duration::weeks(1))
                     .unwrap()
                     .to_rfc3339(),
-                group: Some("HivCareEncounterStatus".to_string()),
+                group: Some("HivCareEncounterDispensingStatus".to_string()),
                 type_: "status".to_string(),
                 name: Some("Interrupted".to_string()),
             },
             hiv_care_encounter::EncounterEvent {
                 datetime: time
-                    .checked_add_signed(Duration::weeks(5))
+                    .checked_add_signed(Duration::weeks(2))
                     .unwrap()
                     .to_rfc3339(),
-                group: Some("HivCareEncounterStatus".to_string()),
+                group: Some("HivCareEncounterDispensingStatus".to_string()),
                 type_: "status".to_string(),
                 name: Some("Lost".to_string()),
             },
