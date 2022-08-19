@@ -18,9 +18,8 @@ export const getProgramOptionRenderer =
       'document' in program
         ? program?.document?.documentRegistry?.name
         : program.name;
-
     return (
-      <DefaultAutocompleteItemOption {...props}>
+      <DefaultAutocompleteItemOption {...props} key={props.id}>
         <Box display="flex" alignItems="flex-end" gap={1} height={25}>
           <Box display="flex" flexDirection="row" gap={1} width={110}>
             <Box flex={0} style={{ height: 24, minWidth: 20 }}>
