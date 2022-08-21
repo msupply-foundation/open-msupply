@@ -35,7 +35,7 @@ impl Loader<DocumentLoaderInput> for DocumentLoader {
         &self,
         names: &[DocumentLoaderInput],
     ) -> Result<HashMap<DocumentLoaderInput, Self::Value>, Self::Error> {
-        let ctx = self.service_provider.context()?;
+        let ctx = self.service_provider.basic_context()?;
         let jobs = doc_names_by_store(names);
         let mut out = HashMap::new();
         for (store_id, doc_names) in jobs {
