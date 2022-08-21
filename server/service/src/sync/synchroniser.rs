@@ -9,7 +9,7 @@ use std::{sync::Arc, time::Duration};
 use super::{
     central_data_synchroniser::{CentralDataSynchroniser, CentralSyncError},
     get_sync_actors,
-    remote_data_synchroniser::{RemoteDataSynchroniser, RemoteSyncState},
+    remote_data_synchroniser::RemoteDataSynchroniser,
     settings::SyncSettings,
     SyncReceiverActor, SyncSenderActor,
 };
@@ -87,11 +87,6 @@ impl Synchroniser {
             .map_err(CentralSyncError::from_database_error)?;
         let service = &self.service_provider.settings;
 
-        let state = RemoteSyncState::new(&ctx.connection);
-        if state.initial_remote_data_synced()? {
-            return Ok(());
-        }
-
         if service
             .is_sync_disabled(&ctx)
             .map_err(CentralSyncError::from_database_error)?
@@ -106,7 +101,6 @@ impl Synchroniser {
             .await?;
 
         self.remote_data.initial_pull(&ctx.connection).await?;
-        state.set_initial_remote_data_synced()?;
 
         Ok(())
     }
