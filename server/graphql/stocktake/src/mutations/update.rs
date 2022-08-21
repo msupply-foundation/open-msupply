@@ -66,13 +66,12 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context()?;
-    map_response(service_provider.stocktake_service.update_stocktake(
-        &service_context,
-        store_id,
-        &user.user_id,
-        input.to_domain(),
-    ))
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    map_response(
+        service_provider
+            .stocktake_service
+            .update_stocktake(&service_context, input.to_domain()),
+    )
 }
 
 pub fn map_response(from: Result<Stocktake, ServiceError>) -> Result<UpdateResponse> {
@@ -156,7 +155,7 @@ mod graphql {
 
     use crate::StocktakeMutations;
 
-    type UpdateMethod = dyn Fn(&ServiceContext, &str, UpdateStocktake) -> Result<StocktakeRow, UpdateStocktakeError>
+    type UpdateMethod = dyn Fn(&ServiceContext, UpdateStocktake) -> Result<StocktakeRow, UpdateStocktakeError>
         + Sync
         + Send;
 
@@ -166,11 +165,9 @@ mod graphql {
         fn update_stocktake(
             &self,
             ctx: &ServiceContext,
-            store_id: &str,
-            _: &str,
             input: UpdateStocktake,
         ) -> Result<StocktakeRow, UpdateStocktakeError> {
-            (self.0)(ctx, store_id, input)
+            (self.0)(ctx, input)
         }
     }
 
@@ -214,7 +211,7 @@ mod graphql {
         }));
 
         // Stocktake is locked mapping
-        let test_service = TestService(Box::new(|_, _, _| {
+        let test_service = TestService(Box::new(|_, _| {
             Err(UpdateStocktakeError::StocktakeIsLocked)
         }));
 
@@ -236,7 +233,7 @@ mod graphql {
         );
 
         // SnapshotCountCurrentCountMismatch
-        let test_service = TestService(Box::new(|_, _, _| {
+        let test_service = TestService(Box::new(|_, _| {
             Err(UpdateStocktakeError::SnapshotCountCurrentCountMismatch(
                 vec![],
             ))
@@ -259,7 +256,7 @@ mod graphql {
         );
 
         // success
-        let test_service = TestService(Box::new(|_, _, _| {
+        let test_service = TestService(Box::new(|_, _| {
             Ok(StocktakeRow {
                 id: "id1".to_string(),
                 user_id: "".to_string(),

@@ -128,7 +128,7 @@ const outboundParsers = {
     id: line.id,
     invoiceId: line.invoiceId,
     itemId: line.item.id,
-    tax: 0.0,
+    tax: line.taxPercentage,
     totalBeforeTax: line.totalBeforeTax,
     note: line.note,
   }),

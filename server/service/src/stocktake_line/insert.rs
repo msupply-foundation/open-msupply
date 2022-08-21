@@ -211,13 +211,12 @@ fn generate(
 
 pub fn insert_stocktake_line(
     ctx: &ServiceContext,
-    store_id: &str,
     input: InsertStocktakeLine,
 ) -> Result<StocktakeLine, InsertStocktakeLineError> {
     let result = ctx
         .connection
         .transaction_sync(|connection| {
-            let (stock_line, item_id) = validate(connection, store_id, &input)?;
+            let (stock_line, item_id) = validate(connection, &ctx.store_id, &input)?;
             let new_stocktake_line = generate(stock_line, item_id, input);
             StocktakeLineRowRepository::new(&connection).upsert_one(&new_stocktake_line)?;
 
@@ -259,16 +258,16 @@ mod stocktake_line_test {
             setup_all("insert_stocktake_line", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let mut context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.stocktake_line_service;
 
         // error: StocktakeDoesNotExist,
-        let store_a = mock_store_a();
         let stock_line_a = mock_item_a_lines()[0].clone();
         let error = service
             .insert_stocktake_line(
                 &context,
-                &store_a.id,
                 inline_init(|r: &mut InsertStocktakeLine| {
                     r.id = uuid();
                     r.stocktake_id = "invalid".to_string();
@@ -280,12 +279,12 @@ mod stocktake_line_test {
         assert_eq!(error, InsertStocktakeLineError::StocktakeDoesNotExist);
 
         // error: InvalidStore,
+        context.store_id = "invalid".to_string();
         let stocktake_a = mock_stocktake_a();
         let stock_line_a = mock_item_a_lines()[0].clone();
         let error = service
             .insert_stocktake_line(
                 &context,
-                "invalid_store",
                 inline_init(|r: &mut InsertStocktakeLine| {
                     r.id = uuid();
                     r.stocktake_id = stocktake_a.id;
@@ -297,13 +296,12 @@ mod stocktake_line_test {
         assert_eq!(error, InsertStocktakeLineError::InvalidStore);
 
         // error StockLineAlreadyExistsInStocktake
-        let store_a = mock_store_a();
         let stocktake_a = mock_stocktake_a();
         let stock_line_a = mock_item_a_lines()[0].clone();
+        context.store_id = mock_store_a().id;
         let error = service
             .insert_stocktake_line(
                 &context,
-                &store_a.id,
                 inline_init(|r: &mut InsertStocktakeLine| {
                     r.id = uuid();
                     r.stocktake_id = stocktake_a.id;
@@ -318,13 +316,11 @@ mod stocktake_line_test {
         );
 
         // error LocationDoesNotExist
-        let store_a = mock_store_a();
         let stocktake_a = mock_stocktake_a();
         let stock_line = mock_new_stock_line_for_stocktake_a();
         let error = service
             .insert_stocktake_line(
                 &context,
-                &store_a.id,
                 inline_init(|r: &mut InsertStocktakeLine| {
                     r.id = uuid();
                     r.stocktake_id = stocktake_a.id;
@@ -337,14 +333,12 @@ mod stocktake_line_test {
         assert_eq!(error, InsertStocktakeLineError::LocationDoesNotExist);
 
         // error StocktakeLineAlreadyExists
-        let store_a = mock_store_a();
         let stocktake_a = mock_stocktake_a();
         let stocktake_line_a = mock_stocktake_line_a();
         let stock_line = mock_new_stock_line_for_stocktake_a();
         let error = service
             .insert_stocktake_line(
                 &context,
-                &store_a.id,
                 inline_init(|r: &mut InsertStocktakeLine| {
                     r.id = stocktake_line_a.id;
                     r.stocktake_id = stocktake_a.id;
@@ -356,13 +350,11 @@ mod stocktake_line_test {
         assert_eq!(error, InsertStocktakeLineError::StocktakeLineAlreadyExists);
 
         // error StocktakeIsLocked
-        let store_a = mock_store_a();
         let stocktake_a = mock_locked_stocktake();
 
         let error = service
             .insert_stocktake_line(
                 &context,
-                &store_a.id,
                 inline_init(|r: &mut InsertStocktakeLine| {
                     r.id = "n/a".to_string();
                     r.stocktake_id = stocktake_a.id;
@@ -372,13 +364,11 @@ mod stocktake_line_test {
         assert_eq!(error, InsertStocktakeLineError::StocktakeIsLocked);
 
         // check CannotEditFinalised
-        let store_a = mock_store_a();
         let stocktake_finalised = mock_stocktake_finalised();
         let stock_line = mock_new_stock_line_for_stocktake_a();
         let error = service
             .insert_stocktake_line(
                 &context,
-                &store_a.id,
                 inline_init(|r: &mut InsertStocktakeLine| {
                     r.id = uuid();
                     r.stocktake_id = stocktake_finalised.id;
@@ -390,13 +380,11 @@ mod stocktake_line_test {
         assert_eq!(error, InsertStocktakeLineError::CannotEditFinalised);
 
         // success with stock_line_id
-        let store_a = mock_store_a();
         let stocktake_a = mock_stocktake_a();
         let stock_line = mock_new_stock_line_for_stocktake_a();
         service
             .insert_stocktake_line(
                 &context,
-                &store_a.id,
                 inline_init(|r: &mut InsertStocktakeLine| {
                     r.id = uuid();
                     r.stocktake_id = stocktake_a.id;
@@ -407,13 +395,11 @@ mod stocktake_line_test {
             .unwrap();
 
         // success with item_id
-        let store_a = mock_store_a();
         let stocktake_a = mock_stocktake_a();
         let item_a = mock_item_a();
         service
             .insert_stocktake_line(
                 &context,
-                &store_a.id,
                 inline_init(|r: &mut InsertStocktakeLine| {
                     r.id = uuid();
                     r.stocktake_id = stocktake_a.id;
