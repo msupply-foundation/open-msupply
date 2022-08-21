@@ -339,7 +339,7 @@ fn encounter_2() -> hiv_care_encounter::HivcareEncounter {
                     .to_rfc3339(),
                 group: Some("HivCareEncounterDispensingStatus".to_string()),
                 type_: "status".to_string(),
-                name: Some("Lost".to_string()),
+                name: Some("Lost to follow up".to_string()),
             },
         ])
     })
