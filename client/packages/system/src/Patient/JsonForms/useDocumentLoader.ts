@@ -61,6 +61,7 @@ export const useDocumentLoader = (
       setError(`Failed to load document ${docName}`);
     }
   }, [isError]);
+
   useEffect(() => {
     if (!databaseResponse) return;
 

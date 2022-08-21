@@ -36,6 +36,12 @@ export const AddButton = () => {
     SplitButtonOption<PatientModal>
   >(options[1] as SplitButtonOption<PatientModal>);
 
+  const onSelectOption = (option: SplitButtonOption<PatientModal>) => {
+    setSelectedOption(option);
+    reset();
+    setCurrent(option?.value);
+  };
+
   const onClick = () => {
     reset();
     setCurrent(selectedOption?.value);
@@ -47,7 +53,7 @@ export const AddButton = () => {
         color="primary"
         options={options}
         selectedOption={selectedOption}
-        onSelectOption={setSelectedOption}
+        onSelectOption={onSelectOption}
         Icon={<PlusCircleIcon />}
         onClick={onClick}
       />

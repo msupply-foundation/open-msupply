@@ -41,6 +41,12 @@ fragment ProgramRow on ProgramNode {
   patientId
   programPatientId
   type
+  document {
+    documentRegistry {
+      id
+      name
+    }
+  }
 }
 
 fragment Patient on PatientNode {
