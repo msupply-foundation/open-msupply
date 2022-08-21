@@ -1,5 +1,6 @@
 #[cfg(test)]
 mod query {
+    use repository::mock::mock_store_a;
     use repository::EqualFilter;
     use repository::{
         mock::MockDataInserts, test_db::setup_all, Location, LocationFilter, LocationRepository,
@@ -19,7 +20,9 @@ mod query {
         let connection = connection_manager.connection().unwrap();
         let location_repository = LocationRepository::new(&connection);
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.location_service;
 
         let locations_in_store = location_repository
@@ -29,7 +32,6 @@ mod query {
         assert_eq!(
             service.insert_location(
                 &context,
-                "store_a",
                 InsertLocation {
                     id: mock_data["base"].locations[0].id.clone(),
                     code: "invalid".to_owned(),
@@ -43,7 +45,6 @@ mod query {
         assert_eq!(
             service.insert_location(
                 &context,
-                "store_a",
                 InsertLocation {
                     id: "new_id".to_owned(),
                     code: locations_in_store[0].location_row.code.clone(),
@@ -63,7 +64,9 @@ mod query {
         let connection = connection_manager.connection().unwrap();
         let location_repository = LocationRepository::new(&connection);
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.location_service;
 
         let result_location = Location {
@@ -79,7 +82,6 @@ mod query {
         assert_eq!(
             service.insert_location(
                 &context,
-                "store_a",
                 InsertLocation {
                     id: "new_id".to_owned(),
                     code: "new_code".to_owned(),
@@ -105,7 +107,6 @@ mod query {
         assert_eq!(
             service.insert_location(
                 &context,
-                "store_a",
                 InsertLocation {
                     id: "new_id2".to_owned(),
                     code: "store_b_location_code".to_owned(),

@@ -32,7 +32,7 @@ impl StockLineAlreadyExistsInInvoice {
 
     pub async fn line(&self, ctx: &Context<'_>) -> Result<InvoiceLineNode> {
         let service_provider = ctx.service_provider();
-        let service_context = service_provider.context()?;
+        let service_context = service_provider.basic_context()?;
 
         let invoice_line = service_provider
             .invoice_line_service
@@ -83,7 +83,7 @@ impl NotEnoughStockForReduction {
 
     pub async fn line(&self, ctx: &Context<'_>) -> Result<Option<InvoiceLineNode>> {
         let service_provider = ctx.service_provider();
-        let service_context = service_provider.context()?;
+        let service_context = service_provider.basic_context()?;
 
         let invoice_line_id = match &self.line_id {
             Some(invoice_line_id) => invoice_line_id.to_string(),

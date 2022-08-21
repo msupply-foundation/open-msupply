@@ -830,7 +830,9 @@ mod permission_validation_test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider
+            .context("".to_string(), user_id.to_string())
+            .unwrap();
         let permission_repo = UserPermissionRowRepository::new(&context.connection);
 
         let mut service = AuthService::new();
@@ -990,7 +992,7 @@ mod permission_validation_test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider.basic_context().unwrap();
 
         let auth_data = AuthData {
             auth_token_secret: "some secret".to_string(),

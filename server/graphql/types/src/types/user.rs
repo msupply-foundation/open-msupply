@@ -5,6 +5,9 @@ use graphql_core::{
     loader::NameRowLoader, standard_graphql_error::StandardGraphqlError, ContextExt,
 };
 use repository::{User, UserStore};
+use service::permission::permissions;
+
+use super::UserStorePermissionConnector;
 
 pub struct UserStoreNode {
     user_store: UserStore,
@@ -83,6 +86,25 @@ impl UserNode {
             total_count: nodes.len() as u32,
             nodes,
         }
+    }
+
+    pub async fn permissions(
+        &self,
+        ctx: &Context<'_>,
+        store_id: Option<String>,
+    ) -> Result<UserStorePermissionConnector> {
+        let service_provider = &ctx.service_provider().connection_manager;
+
+        let result = match store_id {
+            Some(store_id) => permissions(
+                service_provider,
+                &self.user.user_row.id.clone(),
+                Some(store_id),
+            ),
+            None => permissions(service_provider, &self.user.user_row.id.clone(), None),
+        }?;
+
+        Ok(UserStorePermissionConnector::from_vec(result))
     }
 }
 

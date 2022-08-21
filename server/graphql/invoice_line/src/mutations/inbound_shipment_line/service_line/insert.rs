@@ -40,7 +40,7 @@ pub enum InsertResponse {
 }
 
 pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<InsertResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::MutateInboundShipment,
@@ -49,12 +49,12 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context()?;
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
     map_response(
         service_provider
             .invoice_line_service
-            .insert_inbound_shipment_service_line(&service_context, store_id, input.to_domain()),
+            .insert_inbound_shipment_service_line(&service_context, input.to_domain()),
     )
 }
 
@@ -155,8 +155,7 @@ mod test {
     type ServiceInput = InsertInboundShipmentServiceLine;
     type ServiceError = InsertInboundShipmentServiceLineError;
 
-    type InsertLineMethod =
-        dyn Fn(&str, ServiceInput) -> Result<InvoiceLine, ServiceError> + Sync + Send;
+    type InsertLineMethod = dyn Fn(ServiceInput) -> Result<InvoiceLine, ServiceError> + Sync + Send;
 
     pub struct TestService(pub Box<InsertLineMethod>);
 
@@ -164,10 +163,9 @@ mod test {
         fn insert_inbound_shipment_service_line(
             &self,
             _: &ServiceContext,
-            store_id: &str,
             input: ServiceInput,
         ) -> Result<InvoiceLine, ServiceError> {
-            self.0(store_id, input)
+            self.0(input)
         }
     }
 
@@ -212,7 +210,7 @@ mod test {
         }));
 
         // InvoiceDoesNotExist
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::InvoiceDoesNotExist)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::InvoiceDoesNotExist)));
 
         let expected = json!({
             "insertInboundShipmentServiceLine": {
@@ -232,7 +230,7 @@ mod test {
         );
 
         // CannotEditInvoice
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::CannotEditInvoice)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::CannotEditInvoice)));
 
         let expected = json!({
             "insertInboundShipmentServiceLine": {
@@ -252,7 +250,7 @@ mod test {
         );
 
         // NotAnInboundShipment
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotAnInboundShipment)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NotAnInboundShipment)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -264,7 +262,7 @@ mod test {
         );
 
         // ItemNotFound
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::ItemNotFound)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::ItemNotFound)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -276,7 +274,7 @@ mod test {
         );
 
         // NotThisInvoiceLine
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::LineAlreadyExists)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::LineAlreadyExists)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -288,7 +286,7 @@ mod test {
         );
 
         // NotAServiceItem
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotAServiceItem)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NotAServiceItem)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -300,7 +298,7 @@ mod test {
         );
 
         // NewlyCreatedLineDoesNotExist
-        let test_service = TestService(Box::new(|_, _| {
+        let test_service = TestService(Box::new(|_| {
             Err(ServiceError::NewlyCreatedLineDoesNotExist)
         }));
         let expected_message = "Internal error";
@@ -335,8 +333,7 @@ mod test {
         "#;
 
         // Success
-        let test_service = TestService(Box::new(|store_id, input| {
-            assert_eq!(store_id, "store_a");
+        let test_service = TestService(Box::new(|input| {
             assert_eq!(
                 input,
                 ServiceInput {

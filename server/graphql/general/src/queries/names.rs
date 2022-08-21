@@ -132,7 +132,7 @@ pub fn get_names(
     filter: Option<NameFilterInput>,
     sort: Option<Vec<NameSortInput>>,
 ) -> Result<NamesResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::QueryName,
@@ -141,7 +141,7 @@ pub fn get_names(
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context()?;
+    let service_context = service_provider.context(store_id.clone(), user.user_id)?;
 
     let names = service_provider
         .general_service

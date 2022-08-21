@@ -97,7 +97,7 @@ pub fn reports(
     filter: Option<ReportFilterInput>,
     sort: Option<Vec<ReportSortInput>>,
 ) -> Result<ReportsResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::Report,
@@ -106,7 +106,7 @@ pub fn reports(
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context()?;
+    let service_context = service_provider.context(store_id, user.user_id)?;
 
     let reports = service_provider
         .report_service

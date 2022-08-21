@@ -18,14 +18,12 @@ type OutError = DeleteInboundShipmentLineError;
 
 pub fn delete_inbound_shipment_line(
     ctx: &ServiceContext,
-    store_id: &str,
-    user_id: &str,
     input: DeleteInboundShipmentLine,
 ) -> Result<String, OutError> {
     let line_id = ctx
         .connection
         .transaction_sync(|connection| {
-            let (invoice_row, line) = validate(&input, store_id, &connection)?;
+            let (invoice_row, line) = validate(&input, &ctx.store_id, &connection)?;
 
             let delete_batch_id_option = line.stock_line_id.clone();
 
@@ -35,7 +33,7 @@ pub fn delete_inbound_shipment_line(
                 StockLineRowRepository::new(&connection).delete(&id)?;
             }
 
-            if let Some(invoice_row) = generate_invoice_user_id_update(user_id, invoice_row) {
+            if let Some(invoice_row) = generate_invoice_user_id_update(&ctx.user_id, invoice_row) {
                 InvoiceRowRepository::new(&connection).upsert_one(&invoice_row)?;
             }
 
@@ -125,15 +123,15 @@ mod test {
         }
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let mut context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
         let service = service_provider.invoice_line_service;
 
         // LineDoesNotExist
         assert_eq!(
             service.delete_inbound_shipment_line(
                 &context,
-                &mock_store_a().id,
-                &mock_user_account_a().id,
                 DeleteInboundShipmentLine {
                     id: "invalid".to_owned(),
                 },
@@ -145,8 +143,6 @@ mod test {
         assert_eq!(
             service.delete_inbound_shipment_line(
                 &context,
-                &mock_store_a().id,
-                &mock_user_account_a().id,
                 DeleteInboundShipmentLine {
                     id: outbound_shipment_e_line().id.clone(),
                 },
@@ -158,8 +154,6 @@ mod test {
         assert_eq!(
             service.delete_inbound_shipment_line(
                 &context,
-                &mock_store_a().id,
-                &mock_user_account_a().id,
                 DeleteInboundShipmentLine {
                     id: mock_inbound_shipment_b_invoice_lines()[0].id.clone(),
                 },
@@ -171,8 +165,6 @@ mod test {
         assert_eq!(
             service.delete_inbound_shipment_line(
                 &context,
-                &mock_store_a().id,
-                &mock_user_account_a().id,
                 DeleteInboundShipmentLine {
                     id: mock_inbound_shipment_a_invoice_lines()[0].id.clone(),
                 },
@@ -181,11 +173,10 @@ mod test {
         );
 
         // NotThisStoreInvoice
+        context.store_id = mock_store_b().id;
         assert_eq!(
             service.delete_inbound_shipment_line(
                 &context,
-                &mock_store_b().id,
-                &mock_user_account_a().id,
                 DeleteInboundShipmentLine {
                     id: mock_inbound_shipment_a_invoice_lines()[0].id.clone()
                 },
@@ -205,14 +196,14 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
         let service = service_provider.invoice_line_service;
 
         let invoice_line_id = service
             .delete_inbound_shipment_line(
                 &context,
-                &mock_store_a().id,
-                &mock_user_account_a().id,
                 DeleteInboundShipmentLine {
                     id: mock_inbound_shipment_c_invoice_lines()[0].id.clone(),
                 },
