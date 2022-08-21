@@ -64,7 +64,7 @@ pub fn patient_search(
     )?;
 
     let service_provider = ctx.service_provider();
-    let context = service_provider.context()?;
+    let context = service_provider.basic_context()?;
 
     let result: Vec<PatientSearchNode> = service_provider
         .patient_service

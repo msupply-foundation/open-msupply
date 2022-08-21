@@ -57,7 +57,7 @@ impl ProgramNode {
     /// The program document
     pub async fn encounters(&self, ctx: &Context<'_>) -> Result<Vec<EncounterNode>> {
         // TODO use loader
-        let context = ctx.service_provider().context()?;
+        let context = ctx.service_provider().basic_context()?;
         let entries = ctx
             .service_provider()
             .encounter_service

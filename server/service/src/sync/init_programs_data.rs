@@ -1,3 +1,4 @@
+use crate::service_provider::ServiceContext;
 use std::sync::Arc;
 
 use crate::{
@@ -380,8 +381,8 @@ fn encounter_5() -> hiv_care_encounter::HivcareEncounter {
 pub fn init_program_data(
     service_provider: &Arc<ServiceProvider>,
     site_id: u32,
+    ctx: &ServiceContext,
 ) -> Result<(), RepositoryError> {
-    let ctx = service_provider.context().unwrap();
     let connection = &ctx.connection;
 
     // patient

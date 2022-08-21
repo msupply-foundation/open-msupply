@@ -38,7 +38,7 @@ pub fn insert_form_schema(
     )?;
 
     let service_provider = ctx.service_provider();
-    let context = service_provider.context()?;
+    let context = service_provider.basic_context()?;
 
     match service_provider.form_schema_service.insert(
         &context,

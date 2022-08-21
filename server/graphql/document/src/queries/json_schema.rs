@@ -16,7 +16,7 @@ pub fn form_schema(ctx: &Context<'_>, id: String) -> Result<Option<FormSchemaNod
     )?;
 
     let service_provider = ctx.service_provider();
-    let context = service_provider.context()?;
+    let context = service_provider.basic_context()?;
 
     let schema = service_provider
         .form_schema_service
