@@ -31,7 +31,7 @@ pub fn undelete_document(
     )?;
 
     let service_provider = ctx.service_provider();
-    let context = service_provider.context()?;
+    let context = service_provider.basic_context()?;
 
     let response = match service_provider.document_service.undelete_document(
         &context,
