@@ -1,9 +1,10 @@
 use async_graphql::{dataloader::DataLoader, *};
 use chrono::{DateTime, Utc};
 use graphql_core::{
-    loader::{DocumentLoader, DocumentLoaderInput},
+    loader::{DocumentLoader, DocumentLoaderInput, NameByIdLoader, NameByIdLoaderInput},
     ContextExt,
 };
+use graphql_types::types::name::NameNode;
 use repository::{EncounterRow, EncounterStatus};
 use serde::Serialize;
 
@@ -42,8 +43,27 @@ impl EncounterNodeStatus {
 
 #[Object]
 impl EncounterNode {
+    pub async fn id(&self) -> &str {
+        &self.encounter_row.id
+    }
+
     pub async fn patient_id(&self) -> &str {
         &self.encounter_row.patient_id
+    }
+
+    pub async fn patient(&self, ctx: &Context<'_>) -> Result<NameNode> {
+        let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
+
+        let result = loader
+            .load_one(NameByIdLoaderInput::new(
+                &self.store_id,
+                &self.encounter_row.patient_id,
+            ))
+            .await?
+            .map(NameNode::from_domain)
+            .ok_or(Error::new("Encounter without patient"))?;
+
+        Ok(result)
     }
 
     pub async fn program(&self) -> &str {

@@ -662,6 +662,7 @@ export type EncounterFieldsResponse = EncounterFieldsConnector;
 
 export type EncounterFilterInput = {
   endDatetime?: InputMaybe<DatetimeFilterInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
   name?: InputMaybe<EqualFilterStringInput>;
   patientId?: InputMaybe<EqualFilterStringInput>;
   program?: InputMaybe<EqualFilterStringInput>;
@@ -674,7 +675,9 @@ export type EncounterNode = {
   /** The encounter document */
   document: DocumentNode;
   endDatetime?: Maybe<Scalars['DateTime']>;
+  id: Scalars['String'];
   name: Scalars['String'];
+  patient: NameNode;
   patientId: Scalars['String'];
   program: Scalars['String'];
   startDatetime: Scalars['DateTime'];
