@@ -39,7 +39,7 @@ pub fn insert_document_registry(
     )?;
 
     let service_provider = ctx.service_provider();
-    let context = service_provider.context()?;
+    let context = service_provider.basic_context()?;
 
     let response = match service_provider
         .document_registry_service

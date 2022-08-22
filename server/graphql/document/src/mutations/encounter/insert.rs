@@ -42,7 +42,7 @@ pub fn insert_encounter(
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context()?;
+    let service_context = service_provider.basic_context()?;
 
     match service_provider.encounter_service.insert_encounter(
         &service_context,
