@@ -68,10 +68,10 @@ export const useElectronClient = (discover = false) => {
       startServerDiscovery();
     }
 
-    setTimeout(() => setTimedOut(true), DISCOVERY_TIMEOUT);
+    const timer = setTimeout(() => setTimedOut(true), DISCOVERY_TIMEOUT);
 
     if (serverDiscovered) {
-      serverDiscovered((_event, server) =>
+      serverDiscovered((_event, server) => {
         setState(state =>
           state.servers.some(
             s => frontEndHostUrl(s) === frontEndHostUrl(server)
@@ -82,9 +82,11 @@ export const useElectronClient = (discover = false) => {
                 servers: [...state.servers, server],
                 discoveryTimedOut: false,
               }
-        )
-      );
+        );
+        clearTimeout(timer);
+      });
     }
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(

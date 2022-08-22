@@ -27,16 +27,14 @@ mod test {
             setup_all("allocate_unallocated_line_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_line_service;
 
         // Line Does not Exist
         assert_eq!(
-            service.allocate_outbound_shipment_unallocated_line(
-                &context,
-                "store_a",
-                "invalid".to_string(),
-            ),
+            service.allocate_outbound_shipment_unallocated_line(&context, "invalid".to_string(),),
             Err(ServiceError::LineDoesNotExist)
         );
 
@@ -44,7 +42,6 @@ mod test {
         assert_eq!(
             service.allocate_outbound_shipment_unallocated_line(
                 &context,
-                "store_a",
                 mock_outbound_shipment_a_invoice_lines()[0].id.clone()
             ),
             Err(ServiceError::LineIsNotUnallocatedLine)
@@ -117,15 +114,13 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_line_service;
 
         let result = service
-            .allocate_outbound_shipment_unallocated_line(
-                &context,
-                &mock_store_a().id,
-                line().id.clone(),
-            )
+            .allocate_outbound_shipment_unallocated_line(&context, line().id.clone())
             .unwrap();
 
         assert_eq!(result.inserts.len(), 1);
@@ -221,15 +216,13 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_line_service;
 
         let result = service
-            .allocate_outbound_shipment_unallocated_line(
-                &context,
-                &mock_store_a().id,
-                line().id.clone(),
-            )
+            .allocate_outbound_shipment_unallocated_line(&context, line().id.clone())
             .unwrap();
 
         assert_eq!(result.inserts.len(), 3);
@@ -381,15 +374,13 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_line_service;
 
         let result = service
-            .allocate_outbound_shipment_unallocated_line(
-                &context,
-                &mock_store_a().id,
-                line().id.clone(),
-            )
+            .allocate_outbound_shipment_unallocated_line(&context, line().id.clone())
             .unwrap();
 
         assert_eq!(result.inserts.len(), 3);
@@ -526,15 +517,13 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_line_service;
 
         let result = service
-            .allocate_outbound_shipment_unallocated_line(
-                &context,
-                &mock_store_a().id,
-                line().id.clone(),
-            )
+            .allocate_outbound_shipment_unallocated_line(&context, line().id.clone())
             .unwrap();
 
         assert_eq!(result.inserts.len(), 1);
@@ -615,15 +604,13 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_line_service;
 
         let result = service
-            .allocate_outbound_shipment_unallocated_line(
-                &context,
-                &mock_store_a().id,
-                line().id.clone(),
-            )
+            .allocate_outbound_shipment_unallocated_line(&context, line().id.clone())
             .unwrap();
 
         assert_eq!(result.inserts.len(), 1);

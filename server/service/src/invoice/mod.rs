@@ -57,97 +57,83 @@ pub trait InvoiceServiceTrait: Sync + Send {
     fn insert_inbound_shipment(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
-        user_id: &str,
+
         input: InsertInboundShipment,
     ) -> Result<Invoice, InsertInboundShipmentError> {
-        insert_inbound_shipment(ctx, store_id, user_id, input)
+        insert_inbound_shipment(ctx, input)
     }
 
     fn update_inbound_shipment(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
-        user_id: &str,
         input: UpdateInboundShipment,
     ) -> Result<Invoice, UpdateInboundShipmentError> {
-        update_inbound_shipment(ctx, store_id, user_id, input)
+        update_inbound_shipment(ctx, input)
     }
 
     fn delete_inbound_shipment(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
-        user_id: &str,
+
         input: DeleteInboundShipment,
     ) -> Result<String, DeleteInboundShipmentError> {
-        delete_inbound_shipment(ctx, store_id, user_id, input)
+        delete_inbound_shipment(ctx, input)
     }
 
     fn insert_outbound_shipment(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
-        user_id: &str,
         input: InsertOutboundShipment,
     ) -> Result<Invoice, InsertOutboundShipmentError> {
-        insert_outbound_shipment(ctx, store_id, user_id, input)
+        insert_outbound_shipment(ctx, input)
     }
 
     fn update_outbound_shipment(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
         input: UpdateOutboundShipment,
     ) -> Result<Invoice, UpdateOutboundShipmentError> {
-        update_outbound_shipment(ctx, store_id, input)
+        update_outbound_shipment(ctx, input)
     }
 
     fn delete_outbound_shipment(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
         id: String,
     ) -> Result<String, DeleteOutboundShipmentError> {
-        delete_outbound_shipment(ctx, store_id, id)
+        delete_outbound_shipment(ctx, id)
     }
 
     fn batch_inbound_shipment(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
-        user_id: &str,
         input: BatchInboundShipment,
     ) -> Result<BatchInboundShipmentResult, RepositoryError> {
-        batch_inbound_shipment(ctx, store_id, user_id, input)
+        batch_inbound_shipment(ctx, input)
     }
 
     fn batch_outbound_shipment(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
-        user_id: &str,
         input: BatchOutboundShipment,
     ) -> Result<BatchOutboundShipmentResult, RepositoryError> {
-        batch_outbound_shipment(ctx, store_id, user_id, input)
+        batch_outbound_shipment(ctx, input)
     }
 
     fn add_to_outbound_shipment_from_master_list(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
         input: common::AddToShipmentFromMasterListInput,
     ) -> Result<Vec<InvoiceLine>, outbound_shipment::AddToOutboundShipmentFromMasterListError> {
-        outbound_shipment::add_from_master_list(ctx, store_id, input)
+        outbound_shipment::add_from_master_list(ctx, input)
     }
 
     fn add_to_inbound_shipment_from_master_list(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
         input: common::AddToShipmentFromMasterListInput,
     ) -> Result<Vec<InvoiceLine>, inbound_shipment::AddToInboundShipmentFromMasterListError> {
-        inbound_shipment::add_from_master_list(ctx, store_id, input)
+        inbound_shipment::add_from_master_list(ctx, input)
     }
 }
 

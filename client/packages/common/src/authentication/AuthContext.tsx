@@ -21,6 +21,7 @@ const TOKEN_CHECK_INTERVAL = 60 * 1000;
 export enum AuthError {
   NoStoreAssigned = 'NoStoreAssigned',
   PermissionDenied = 'Forbidden',
+  ServerError = 'ServerError',
   Unauthenticated = 'Unauthenticated',
   Timeout = 'Timeout',
 }
@@ -150,6 +151,8 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
   };
 
   const setLoginError = (isLoggedIn: boolean, hasValidStore: boolean) => {
+    if (LocalStorage.getItem('/auth/error') === AuthError.ServerError) return;
+
     switch (true) {
       case isLoggedIn && hasValidStore: {
         removeError();
@@ -184,6 +187,7 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
       case AuthError.NoStoreAssigned:
       case AuthError.Unauthenticated:
       case AuthError.Timeout:
+      case AuthError.ServerError:
         return true;
       default:
         return false;

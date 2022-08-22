@@ -1,12 +1,15 @@
-import { useQuery, useQueryParamsStore } from '@openmsupply-client/common';
+import { useQuery } from '@openmsupply-client/common';
+import { usePatient } from '../../../../Patient';
 import { useProgramApi } from '../utils/useProgramApi';
 
 export const usePrograms = () => {
   const api = useProgramApi();
-  const {
-    sort: { sortBy },
-  } = useQueryParamsStore();
+  const patientId = usePatient.utils.id();
+  const params = {
+    filterBy: { patientId: { equalTo: patientId } },
+  };
+
   return {
-    ...useQuery(api.keys.paramList({ sortBy }), () => api.get.list({ sortBy })),
+    ...useQuery(api.keys.paramList(params), () => api.get.list(params)),
   };
 };

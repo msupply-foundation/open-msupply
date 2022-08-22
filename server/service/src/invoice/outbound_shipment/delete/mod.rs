@@ -1,12 +1,11 @@
 use chrono::Utc;
 use repository::{
     EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceRowRepository,
-    LogRow, LogType, RepositoryError, TransactionError,
+    LogType, RepositoryError, TransactionError,
 };
 
 pub mod validate;
 
-use util::uuid::uuid;
 use validate::validate;
 
 use crate::{
@@ -22,22 +21,19 @@ type OutError = DeleteOutboundShipmentError;
 
 pub fn delete_outbound_shipment(
     ctx: &ServiceContext,
-    store_id: &str,
     id: String,
 ) -> Result<String, DeleteOutboundShipmentError> {
     let invoice_id = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(&id, store_id, &connection)?;
+            validate(&id, &ctx.store_id, &connection)?;
 
             // TODO https://github.com/openmsupply/remote-server/issues/839
             let lines = InvoiceLineRepository::new(&connection)
                 .query_by_filter(InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&id)))?;
             for line in lines {
                 delete_outbound_shipment_line(
-                    //TODO add user_id
                     ctx,
-                    store_id,
                     DeleteOutboundShipmentLine {
                         id: line.invoice_line_row.id.clone(),
                     },
@@ -57,15 +53,10 @@ pub fn delete_outbound_shipment(
         .map_err(|error| error.to_inner_error())?;
 
     log_entry(
-        &ctx.connection,
-        &LogRow {
-            id: uuid(),
-            r#type: LogType::InvoiceDeleted,
-            user_id: None, //TODO
-            store_id: Some(store_id.to_string()),
-            record_id: Some(id),
-            datetime: Utc::now().naive_utc(),
-        },
+        &ctx,
+        LogType::InvoiceDeleted,
+        Some(id),
+        Utc::now().naive_utc(),
     )?;
 
     Ok(invoice_id)
@@ -140,43 +131,34 @@ mod test {
             setup_all("delete_outbound_shipment_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let mut context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_service;
 
         // InvoiceDoesNotExist
         assert_eq!(
-            service.delete_outbound_shipment(&context, &mock_store_a().id, "invalid".to_string()),
+            service.delete_outbound_shipment(&context, "invalid".to_string()),
             Err(ServiceError::InvoiceDoesNotExist)
-        );
-
-        //CannotEditFinalised
-        assert_eq!(
-            service.delete_outbound_shipment(
-                &context,
-                &mock_store_c().id,
-                mock_outbound_shipment_b().id
-            ),
-            Err(ServiceError::CannotEditFinalised)
         );
 
         //NotAnOutboundShipment
         assert_eq!(
-            service.delete_outbound_shipment(
-                &context,
-                &mock_store_a().id,
-                mock_inbound_shipment_c().id
-            ),
+            service.delete_outbound_shipment(&context, mock_inbound_shipment_c().id),
             Err(ServiceError::NotAnOutboundShipment)
         );
 
         //NotThisStoreInvoice
         assert_eq!(
-            service.delete_outbound_shipment(
-                &context,
-                &mock_store_a().id,
-                mock_outbound_shipment_b().id
-            ),
+            service.delete_outbound_shipment(&context, mock_outbound_shipment_b().id),
             Err(ServiceError::NotThisStoreInvoice)
+        );
+
+        //CannotEditFinalised
+        context.store_id = mock_store_c().id;
+        assert_eq!(
+            service.delete_outbound_shipment(&context, mock_outbound_shipment_b().id),
+            Err(ServiceError::CannotEditFinalised)
         );
     }
 
@@ -186,11 +168,13 @@ mod test {
             setup_all("delete_outbound_shipment_success", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider
+            .context(mock_store_c().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_service;
 
         let invoice_id = service
-            .delete_outbound_shipment(&context, &mock_store_c().id, mock_outbound_shipment_c().id)
+            .delete_outbound_shipment(&context, mock_outbound_shipment_c().id)
             .unwrap();
 
         //test entry has been deleted

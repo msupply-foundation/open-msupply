@@ -1,4 +1,16 @@
-fragment Document on DocumentNode {
+fragment EncounterDocumentRegistry on DocumentRegistryNode {
+  context
+  documentType
+  formSchemaId
+  id
+  jsonSchema
+  name
+  parentId
+  uiSchema
+  uiSchemaType
+}
+
+fragment EncounterDocument on DocumentNode {
   id
   name
   parents
@@ -7,12 +19,7 @@ fragment Document on DocumentNode {
   type
   data
   documentRegistry {
-    uiSchemaType
-    documentType
-    context
-    formSchemaId
-    jsonSchema
-    uiSchema
+    ...EncounterDocumentRegistry
   }
 }
 
@@ -25,7 +32,7 @@ fragment Encounter on EncounterNode {
   startDatetime
   endDatetime
   document {
-    ...Document
+    ...EncounterDocument
   }
 }
 
@@ -49,11 +56,22 @@ query encounters(
   }
 }
 
+query encounterDocumentRegistries($filter: DocumentRegistryFilterInput) {
+  documentRegistries(filter: $filter) {
+    ... on DocumentRegistryConnector {
+      nodes {
+        ...EncounterDocumentRegistry
+      }
+      totalCount
+    }
+  }
+}
+
 mutation insertEncounter($storeId: String!, $input: InsertEncounterInput!) {
   insertEncounter(storeId: $storeId, input: $input) {
     ... on DocumentNode {
       __typename
-      ...Document
+      ...EncounterDocument
     }
   }
 }
@@ -62,7 +80,7 @@ mutation updateEncounter($storeId: String!, $input: UpdateEncounterInput!) {
   updateEncounter(storeId: $storeId, input: $input) {
     ... on DocumentNode {
       __typename
-      ...Document
+      ...EncounterDocument
     }
   }
 }
