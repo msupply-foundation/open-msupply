@@ -57,7 +57,7 @@ pub fn program_events(
     )?;
 
     let service_provider = ctx.service_provider();
-    let context = service_provider.context()?;
+    let context = service_provider.basic_context()?;
 
     let filter = filter
         .map(|f| f.to_domain())

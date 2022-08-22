@@ -123,7 +123,7 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "");
-        let ctx = service_provider.context().unwrap();
+        let ctx = service_provider.basic_context().unwrap();
 
         let service = &service_provider.patient_service;
 

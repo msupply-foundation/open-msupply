@@ -29,6 +29,8 @@ pub enum UserPermissionNodePermission {
     InboundShipmentMutate,
     Report,
     LogQuery,
+    PatientQuery,
+    PatientMutate,
 }
 
 #[Object]
@@ -82,6 +84,9 @@ impl UserPermissionNodePermission {
             }
             Permission::Report => UserPermissionNodePermission::Report,
             Permission::LogQuery => UserPermissionNodePermission::LogQuery,
+            Permission::Document => UserPermissionNodePermission::PatientQuery,
+            Permission::PatientQuery => UserPermissionNodePermission::PatientQuery,
+            Permission::PatientMutate => UserPermissionNodePermission::PatientMutate,
         }
     }
 
@@ -107,6 +112,8 @@ impl UserPermissionNodePermission {
             }
             UserPermissionNodePermission::Report => Permission::Report,
             UserPermissionNodePermission::LogQuery => Permission::LogQuery,
+            UserPermissionNodePermission::PatientQuery => Permission::PatientQuery,
+            UserPermissionNodePermission::PatientMutate => Permission::PatientMutate,
         }
     }
 }

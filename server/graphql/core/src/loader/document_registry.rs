@@ -19,7 +19,7 @@ impl Loader<String> for DocumentRegistryLoader {
         &self,
         document_types: &[String],
     ) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let ctx = self.service_provider.context()?;
+        let ctx = self.service_provider.basic_context()?;
 
         let entries = self
             .service_provider
@@ -48,7 +48,7 @@ impl Loader<String> for DocumentRegistryChildrenLoader {
         &self,
         document_ids: &[String],
     ) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let ctx = self.service_provider.context()?;
+        let ctx = self.service_provider.basic_context()?;
 
         let children = self
             .service_provider

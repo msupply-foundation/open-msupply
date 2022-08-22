@@ -28,7 +28,7 @@ pub fn document_history(
     )?;
 
     let service_provider = ctx.service_provider();
-    let context = service_provider.context()?;
+    let context = service_provider.basic_context()?;
 
     let documents = service_provider
         .document_service
