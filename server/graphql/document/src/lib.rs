@@ -24,6 +24,9 @@ use mutations::program::insert::InsertProgramResponse;
 use mutations::program::update::update_program;
 use mutations::program::update::UpdateProgramInput;
 use mutations::program::update::UpdateProgramResponse;
+use mutations::undelete_document::undelete_document;
+use mutations::undelete_document::UndeleteDocumentInput;
+use mutations::undelete_document::UndeleteDocumentResponse;
 use mutations::update_document::*;
 use types::document::DocumentNode;
 use types::json_schema::FormSchemaNode;
@@ -166,6 +169,15 @@ impl DocumentMutations {
         input: DeleteDocumentInput,
     ) -> Result<DeleteDocumentResponse> {
         delete_document(ctx, store_id, input)
+    }
+
+    async fn undelete_document(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: UndeleteDocumentInput,
+    ) -> Result<UndeleteDocumentResponse> {
+        undelete_document(ctx, store_id, input)
     }
 
     async fn insert_document_registry(
