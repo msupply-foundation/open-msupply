@@ -9,14 +9,12 @@ import {
   useFormatDateTime,
   useUrlQueryParams,
   ColumnAlign,
+  useNavigate,
+  RouteBuilder,
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
-import { usePatientModalStore } from '../hooks';
-import { PatientModal } from '../PatientView';
-import {
-  EncounterFragmentWithId,
-  EncounterRowFragmentWithId,
-} from '../../Encounter';
+import { EncounterFragmentWithId, EncounterRowFragment } from '../../Encounter';
+import { AppRoute } from 'packages/config/src';
 
 const EncounterListComponent: FC = () => {
   const {
@@ -27,9 +25,9 @@ const EncounterListComponent: FC = () => {
   const { data, isError, isLoading } = usePatient.document.encounters();
   const pagination = { page, first, offset };
   const { localisedDateTime } = useFormatDateTime();
-  const { setCurrent, setDocument, setProgramType } = usePatientModalStore();
+  const navigate = useNavigate();
 
-  const columns = useColumns<EncounterRowFragmentWithId>(
+  const columns = useColumns<EncounterRowFragment>(
     [
       {
         key: 'type',
@@ -72,9 +70,12 @@ const EncounterListComponent: FC = () => {
       isLoading={isLoading}
       isError={isError}
       onRowClick={row => {
-        setDocument({ type: row.type, name: row.name });
-        setProgramType(row.program);
-        setCurrent(PatientModal.Encounter);
+        navigate(
+          RouteBuilder.create(AppRoute.Dispensary)
+            .addPart(AppRoute.Encounter)
+            .addPart(row.id)
+            .build()
+        );
       }}
       noDataElement={<NothingHere />}
     />
@@ -85,7 +86,7 @@ export const EncounterListView: FC = () => (
   <TableProvider
     createStore={createTableStore}
     queryParamsStore={createQueryParamsStore<EncounterFragmentWithId>({
-      initialSortBy: { key: 'startDateTime' },
+      initialSortBy: { key: 'startDatetime' },
     })}
   >
     <EncounterListComponent />

@@ -9,6 +9,7 @@ import {
   EncounterDocumentFragment,
   EncounterDocumentRegistryFragment,
   EncounterFragment,
+  EncounterRowFragment,
   Sdk,
 } from './operations.generated';
 
@@ -25,7 +26,7 @@ export const getEncounterQueries = (sdk: Sdk, storeId: string) => ({
       sortBy,
       filterBy,
     }: ListParams): Promise<{
-      nodes: EncounterFragment[];
+      nodes: EncounterRowFragment[];
       totalCount: number;
     }> => {
       const result = await sdk.encounters({
@@ -48,12 +49,12 @@ export const getEncounterQueries = (sdk: Sdk, storeId: string) => ({
       });
       return result?.documentRegistries;
     },
-    byId: async (encounterId: string): Promise<EncounterDocumentFragment> => {
-      const result = await sdk.encounterByName({ encounterId, storeId });
-      const encounters = result?.documents;
+    byId: async (encounterId: string): Promise<EncounterFragment> => {
+      const result = await sdk.encounterById({ encounterId, storeId });
+      const encounters = result?.encounters;
 
       if (
-        encounters?.__typename === 'DocumentConnector' &&
+        encounters?.__typename === 'EncounterConnector' &&
         !!encounters.nodes[0]
       ) {
         return encounters.nodes[0];

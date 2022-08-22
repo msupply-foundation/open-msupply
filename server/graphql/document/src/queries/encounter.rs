@@ -54,6 +54,7 @@ pub struct EncounterSortInput {
 
 #[derive(InputObject, Clone)]
 pub struct EncounterFilterInput {
+    pub id: Option<EqualFilterStringInput>,
     pub patient_id: Option<EqualFilterStringInput>,
     pub program: Option<EqualFilterStringInput>,
     pub name: Option<EqualFilterStringInput>,
@@ -65,6 +66,7 @@ pub struct EncounterFilterInput {
 impl EncounterFilterInput {
     pub fn to_domain_filter(self) -> EncounterFilter {
         EncounterFilter {
+            id: self.id.map(EqualFilter::from),
             patient_id: self.patient_id.map(EqualFilter::from),
             program: self.program.map(EqualFilter::from),
             name: self.name.map(EqualFilter::from),

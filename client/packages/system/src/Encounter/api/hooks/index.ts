@@ -9,6 +9,7 @@ export const useEncounter = {
   },
 
   document: {
+    get: Document.useEncounter,
     list: Document.useEncounters,
     insert: Document.useInsertEncounter,
     update: Document.useUpdateEncounter,

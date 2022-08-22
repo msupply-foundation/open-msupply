@@ -14,7 +14,7 @@ import {
 import {
   useEncounter,
   EncounterFragmentWithId,
-  EncounterRowFragmentWithId,
+  EncounterRowFragment,
 } from '../api';
 
 const EncounterListComponent: FC = () => {
@@ -27,7 +27,7 @@ const EncounterListComponent: FC = () => {
   const pagination = { page, first, offset };
   const navigate = useNavigate();
   const { localisedDate, localisedTime } = useFormatDateTime();
-  const columns = useColumns<EncounterRowFragmentWithId>(
+  const columns = useColumns<EncounterRowFragment>(
     [
       {
         key: 'id',
@@ -66,7 +66,7 @@ const EncounterListComponent: FC = () => {
       {
         key: 'patient',
         label: 'label.patient',
-        accessor: ({ rowData }) => rowData?.patientId,
+        accessor: ({ rowData }) => rowData?.patient?.name,
       },
     ],
     { onChangeSortBy: updateSortQuery, sortBy },
@@ -84,7 +84,7 @@ const EncounterListComponent: FC = () => {
         isLoading={isLoading}
         isError={isError}
         onRowClick={row => {
-          navigate(encodeURIComponent(String(row.id)));
+          navigate(String(row.id));
         }}
         noDataElement={<NothingHere />}
       />
@@ -96,7 +96,7 @@ export const EncounterListView: FC = () => (
   <TableProvider
     createStore={createTableStore}
     queryParamsStore={createQueryParamsStore<EncounterFragmentWithId>({
-      initialSortBy: { key: 'startDateTime' },
+      initialSortBy: { key: 'startDatetime' },
     })}
   >
     <EncounterListComponent />
