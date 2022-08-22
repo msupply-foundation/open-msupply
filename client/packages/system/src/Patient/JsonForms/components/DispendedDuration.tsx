@@ -13,6 +13,7 @@ import {
   useDebounceCallback,
   NumericTextInput,
   NumUtils,
+  DateUtils,
 } from '@openmsupply-client/common';
 import { get as extractProperty } from 'lodash';
 
@@ -60,19 +61,17 @@ interface EncounterEvent {
   type: string;
 }
 
-const MINUTE = 60 * 1000;
-const DAY = 24 * 60 * MINUTE;
-
-const scheduleEvent = (
-  event: OptionEvent,
-  baseTime: number
-): EncounterEvent => {
-  const datetime =
-    baseTime +
-    (event.scheduleIn?.minutes ?? 0) * MINUTE +
-    (event.scheduleIn?.days ?? 0) * DAY;
+const scheduleEvent = (event: OptionEvent, baseTime: Date): EncounterEvent => {
+  const datetimePlusMin = DateUtils.addMinutes(
+    baseTime,
+    event.scheduleIn?.minutes ?? 0
+  );
+  const datetime = DateUtils.addDays(
+    datetimePlusMin,
+    event.scheduleIn?.days ?? 0
+  );
   return {
-    datetime: new Date(datetime).toISOString(),
+    datetime: datetime.toISOString(),
     group: event.group,
     name: event.name,
     type: event.type,
@@ -109,8 +108,8 @@ const UIComponent = (props: ControlProps) => {
         );
 
         const scheduleStartTime = options.scheduleEventsNow
-          ? Date.now()
-          : new Date(baseTimeField).getTime() + value * DAY;
+          ? new Date()
+          : DateUtils.addDays(baseTimeField, value);
         events = options.events.map(e => scheduleEvent(e, scheduleStartTime));
       }
 
