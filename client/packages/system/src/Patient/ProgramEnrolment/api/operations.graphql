@@ -1,4 +1,4 @@
-fragment Document on DocumentNode {
+fragment ProgramEnrolmentDocument on DocumentNode {
   id
   name
   parents
@@ -16,23 +16,6 @@ fragment Document on DocumentNode {
   }
 }
 
-fragment ProgramEvent on ProgramEventNode {
-  datetime
-  name
-  type
-}
-
-fragment ProgramRow on ProgramNode {
-  enrolmentDatetime
-  name
-  patientId
-  programPatientId
-  type
-  events(filter: { datetime: { beforeOrEqualTo: $latestEventTime } }) {
-    ...ProgramEvent
-  }
-}
-
 fragment Program on ProgramNode {
   type
   programPatientId
@@ -40,29 +23,7 @@ fragment Program on ProgramNode {
   name
   enrolmentDatetime
   document {
-    ...Document
-  }
-}
-
-query programs(
-  $storeId: String!
-  $key: ProgramSortFieldInput
-  $desc: Boolean
-  $filter: ProgramFilterInput
-  $latestEventTime: String!
-) {
-  programs(
-    storeId: $storeId
-    sort: { key: $key, desc: $desc }
-    filter: $filter
-  ) {
-    ... on ProgramConnector {
-      __typename
-      nodes {
-        ...ProgramRow
-      }
-      totalCount
-    }
+    ...ProgramEnrolmentDocument
   }
 }
 
@@ -82,7 +43,7 @@ mutation insertProgram($storeId: String!, $input: InsertProgramInput!) {
   insertProgram(storeId: $storeId, input: $input) {
     ... on DocumentNode {
       __typename
-      ...Document
+      ...ProgramEnrolmentDocument
     }
   }
 }
@@ -91,7 +52,7 @@ mutation updateProgram($storeId: String!, $input: UpdateProgramInput!) {
   updateProgram(storeId: $storeId, input: $input) {
     ... on DocumentNode {
       __typename
-      ...Document
+      ...ProgramEnrolmentDocument
     }
   }
 }

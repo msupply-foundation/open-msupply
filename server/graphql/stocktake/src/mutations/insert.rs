@@ -50,13 +50,12 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context()?;
-    map_response(service_provider.stocktake_service.insert_stocktake(
-        &service_context,
-        store_id,
-        &user.user_id,
-        input.to_domain(),
-    ))
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    map_response(
+        service_provider
+            .stocktake_service
+            .insert_stocktake(&service_context, input.to_domain()),
+    )
 }
 
 pub fn map_response(from: Result<Stocktake, ServiceError>) -> Result<InsertResponse> {
@@ -117,7 +116,7 @@ mod test {
 
     use crate::StocktakeMutations;
 
-    type ServiceMethod = dyn Fn(&ServiceContext, &str, InsertStocktake) -> Result<Stocktake, InsertStocktakeError>
+    type ServiceMethod = dyn Fn(&ServiceContext, InsertStocktake) -> Result<Stocktake, InsertStocktakeError>
         + Sync
         + Send;
 
@@ -127,11 +126,9 @@ mod test {
         fn insert_stocktake(
             &self,
             ctx: &ServiceContext,
-            store_id: &str,
-            _: &str,
             input: InsertStocktake,
         ) -> Result<Stocktake, InsertStocktakeError> {
-            (self.0)(ctx, store_id, input)
+            (self.0)(ctx, input)
         }
     }
 
@@ -163,7 +160,7 @@ mod test {
         }"#;
 
         // success
-        let test_service = TestService(Box::new(|_, _, input| {
+        let test_service = TestService(Box::new(|_, input| {
             assert_eq!(
                 input,
                 InsertStocktake {

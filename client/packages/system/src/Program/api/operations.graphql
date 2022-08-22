@@ -10,6 +10,13 @@ fragment ProgramDocument on DocumentRegistryNode {
   uiSchemaType
 }
 
+fragment ProgramDocumentRegistry on DocumentRegistryNode {
+  ...ProgramDocument
+  children {
+    ...ProgramDocument
+  }
+}
+
 query programs($key: DocumentRegistrySortFieldInput!, $desc: Boolean) {
   documentRegistries(
     sort: { key: $key, desc: $desc }
@@ -20,10 +27,7 @@ query programs($key: DocumentRegistrySortFieldInput!, $desc: Boolean) {
       totalCount
       nodes {
         __typename
-        ...ProgramDocument
-        children {
-          ...ProgramDocument
-        }
+        ...ProgramDocumentRegistry
       }
     }
   }

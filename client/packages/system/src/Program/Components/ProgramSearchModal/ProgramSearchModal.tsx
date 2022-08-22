@@ -5,15 +5,15 @@ import {
   QueryParamsProvider,
   useTranslation,
 } from '@openmsupply-client/common';
-import { useProgram, ProgramDocumentFragment } from '../../api';
+import { useProgram, ProgramDocumentRegistryFragment } from '../../api';
 import { filterByName } from '../../utils';
-import { getProgramOptionRenderer } from './ProgramOptionRenderer';
+import { getProgramOptionRenderer } from '../ProgramOptionRenderer';
 
-export interface ProgramSearchProps {
+interface ProgramSearchProps {
   disabledPrograms?: string[];
   open: boolean;
   onClose: () => void;
-  onChange: (name: ProgramDocumentFragment) => void;
+  onChange: (name: ProgramDocumentRegistryFragment) => void;
 }
 
 const ProgramSearchComponent: FC<ProgramSearchProps> = ({
@@ -27,18 +27,23 @@ const ProgramSearchComponent: FC<ProgramSearchProps> = ({
   const ProgramOptionRenderer = getProgramOptionRenderer();
 
   return (
-    <ListSearch<ProgramDocumentFragment>
+    <ListSearch<ProgramDocumentRegistryFragment>
       loading={isLoading}
       open={open}
       options={data?.nodes ?? []}
       onClose={onClose}
       title={t('programs')}
       renderOption={ProgramOptionRenderer}
-      getOptionLabel={(option: ProgramDocumentFragment) => option.name ?? ''}
+      getOptionLabel={(option: ProgramDocumentRegistryFragment) =>
+        option.name ?? ''
+      }
       filterOptions={filterByName}
       onChange={(
         _,
-        name: ProgramDocumentFragment | ProgramDocumentFragment[] | null
+        name:
+          | ProgramDocumentRegistryFragment
+          | ProgramDocumentRegistryFragment[]
+          | null
       ) => {
         if (name && !(name instanceof Array)) onChange(name);
       }}
@@ -52,7 +57,7 @@ const ProgramSearchComponent: FC<ProgramSearchProps> = ({
 export const ProgramSearchModal: FC<ProgramSearchProps> = props => (
   <QueryParamsProvider
     createStore={() =>
-      createQueryParamsStore<ProgramDocumentFragment>({
+      createQueryParamsStore<ProgramDocumentRegistryFragment>({
         initialSortBy: { key: 'documentType' },
       })
     }

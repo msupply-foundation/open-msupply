@@ -18,26 +18,22 @@ const useUpsertProgramEnrolment = (
   const { mutateAsync: insertProgram } = useProgramEnrolment.document.insert();
   const { mutateAsync: updateProgramEnrolment } =
     useProgramEnrolment.document.update();
-  return async (jsonData: unknown, formSchemaId: string, parent?: string) => {
-    if (parent === undefined) {
-      const result = await insertProgram({
-        data: jsonData,
-        schemaId: formSchemaId,
-        patientId,
-        type,
-      });
-      return result;
-    } else {
-      const result = await updateProgramEnrolment({
-        data: jsonData,
-        parent,
-        schemaId: formSchemaId,
-        patientId,
-        type,
-      });
-      return result;
-    }
-  };
+
+  return async (jsonData: unknown, formSchemaId: string, parent?: string) =>
+    parent === undefined
+      ? await insertProgram({
+          data: jsonData,
+          schemaId: formSchemaId,
+          patientId,
+          type,
+        })
+      : updateProgramEnrolment({
+          data: jsonData,
+          parent,
+          schemaId: formSchemaId,
+          patientId,
+          type,
+        });
 };
 
 export const ProgramDetailModal: FC = () => {

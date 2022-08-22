@@ -5,6 +5,7 @@
   "auth.unauthenticated-message": "You are not currently logged in. Click OK to return to the login screen.",
   "auth.no-store-assigned": "You are not assigned to any stores. Please login as a different user, or contact your administrator.",
   "auth.permission-denied": "Permission denied",
+  "auth.server-error": "The server has returned an error when fetching user details! \r\nUnable to continue, please contact support.",
   "auth.timeout-title": "Session Timed Out",
   "auth.timeout-message": "You have been logged out of your session due to inactivity. Click OK to return to the login screen.",
   "button.close-the-menu": "Close the menu",

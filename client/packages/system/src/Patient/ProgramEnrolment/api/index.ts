@@ -1,9 +1,8 @@
-import { ProgramRowFragment } from './operations.generated';
-
-export * from './hooks';
+import { ProgramRowFragment } from '../../api/operations.generated';
 export {
-  ProgramFragment,
   ProgramRowFragment,
   ProgramEventFragment,
-} from './operations.generated';
+} from '../../api/operations.generated';
+export * from './hooks';
+export { ProgramFragment } from './operations.generated';
 export type ProgramRowFragmentWithId = { id: string } & ProgramRowFragment;

@@ -121,13 +121,12 @@ fn generate(
 
 pub fn update_stocktake_line(
     ctx: &ServiceContext,
-    store_id: &str,
     input: UpdateStocktakeLine,
 ) -> Result<StocktakeLine, UpdateStocktakeLineError> {
     let result = ctx
         .connection
         .transaction_sync(|connection| {
-            let existing = validate(connection, store_id, &input)?;
+            let existing = validate(connection, &ctx.store_id, &input)?;
             let new_stocktake_line = generate(existing, input)?;
             StocktakeLineRowRepository::new(&connection).upsert_one(&new_stocktake_line)?;
 
@@ -169,15 +168,15 @@ mod stocktake_line_test {
             setup_all("update_stocktake_line", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let mut context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.stocktake_line_service;
 
         // error: StocktakeLineDoesNotExist
-        let store_a = mock_store_a();
         let error = service
             .update_stocktake_line(
                 &context,
-                &store_a.id,
                 inline_init(|r: &mut UpdateStocktakeLine| {
                     r.id = "invalid".to_string();
                 }),
@@ -186,11 +185,11 @@ mod stocktake_line_test {
         assert_eq!(error, UpdateStocktakeLineError::StocktakeLineDoesNotExist);
 
         // error: InvalidStore
+        context.store_id = "invalid".to_string();
         let stocktake_line_a = mock_stocktake_line_a();
         let error = service
             .update_stocktake_line(
                 &context,
-                "invalid",
                 inline_init(|r: &mut UpdateStocktakeLine| {
                     r.id = stocktake_line_a.id;
                 }),
@@ -199,12 +198,11 @@ mod stocktake_line_test {
         assert_eq!(error, UpdateStocktakeLineError::InvalidStore);
 
         // error: LocationDoesNotExist
-        let store_a = mock_store_a();
+        context.store_id = mock_store_a().id;
         let stocktake_line_a = mock_stocktake_line_a();
         let error = service
             .update_stocktake_line(
                 &context,
-                &store_a.id,
                 inline_init(|r: &mut UpdateStocktakeLine| {
                     r.id = stocktake_line_a.id;
                     r.location_id = Some("invalid".to_string());
@@ -214,12 +212,10 @@ mod stocktake_line_test {
         assert_eq!(error, UpdateStocktakeLineError::LocationDoesNotExist);
 
         // error CannotEditFinalised
-        let store_a = mock_store_a();
         let stocktake_line_a = mock_stocktake_line_finalised();
         let error = service
             .update_stocktake_line(
                 &context,
-                &store_a.id,
                 inline_init(|r: &mut UpdateStocktakeLine| {
                     r.id = stocktake_line_a.id;
                     r.comment = Some(
@@ -231,12 +227,10 @@ mod stocktake_line_test {
         assert_eq!(error, UpdateStocktakeLineError::CannotEditFinalised);
 
         // error StocktakeIsLocked
-        let store_a = mock_store_a();
         let stocktake_line_a = mock_locked_stocktake_line();
         let error = service
             .update_stocktake_line(
                 &context,
-                &store_a.id,
                 inline_init(|r: &mut UpdateStocktakeLine| {
                     r.id = stocktake_line_a.id;
                 }),
@@ -245,12 +239,10 @@ mod stocktake_line_test {
         assert_eq!(error, UpdateStocktakeLineError::StocktakeIsLocked);
 
         // error CannotEditFinalised
-        let store_a = mock_store_a();
         let stocktake_line_a = mock_stocktake_line_finalised();
         let error = service
             .update_stocktake_line(
                 &context,
-                &store_a.id,
                 inline_init(|r: &mut UpdateStocktakeLine| {
                     r.id = stocktake_line_a.id;
                     r.comment = Some(
@@ -262,12 +254,10 @@ mod stocktake_line_test {
         assert_eq!(error, UpdateStocktakeLineError::CannotEditFinalised);
 
         // success: no update
-        let store_a = mock_store_a();
         let stocktake_line_a = mock_stocktake_line_a();
         let result = service
             .update_stocktake_line(
                 &context,
-                &store_a.id,
                 inline_init(|r: &mut UpdateStocktakeLine| {
                     r.id = stocktake_line_a.id.clone();
                 }),
@@ -276,13 +266,11 @@ mod stocktake_line_test {
         assert_eq!(result.line, stocktake_line_a);
 
         // success: full update
-        let store_a = mock_store_a();
         let stocktake_line_a = mock_stocktake_line_a();
         let location = mock_locations()[0].clone();
         let result = service
             .update_stocktake_line(
                 &context,
-                &store_a.id,
                 inline_init(|r: &mut UpdateStocktakeLine| {
                     r.id = stocktake_line_a.id.clone();
                     r.location_id = Some(location.id.clone());

@@ -19,20 +19,20 @@ service = { path = "../service" }
 server = { path = "../server" }
 graphql = { path = "../graphql" }
 
-actix-web = { version= "4.0.1" } 
+actix-web = { version = "4.0.1" }
 serde = "1.0.126"
 serde_json = "1.0.66"
 clap = { version = "3.1.8", features = ["derive"] }
 diesel = { version = "1.4.7", default-features = false, features = ["chrono"] }
-chrono = { version = "0.4"}
-reqwest = { version = "0.11.10" } 
-tokio = { version = "1.17.0", features = ["macros" ] }
-env_logger = "0.8.3"
+chrono = { version = "0.4" }
+reqwest = { version = "0.11.10" }
+tokio = { version = "1.17.0", features = ["macros"] }
+fast_log = { version = "1.5" }
 log = "0.4.14"
 
 [dev-dependencies]
 actix-rt = "2.6.0"
-tokio = {version = "1.17.0", features=["time","rt-multi-thread","macros"]}
+tokio = { version = "1.17.0", features = ["time", "rt-multi-thread", "macros"] }
 
 [features]
 default = ["sqlite"]

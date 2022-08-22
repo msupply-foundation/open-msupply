@@ -4,6 +4,7 @@ import { usePatientsAll } from './usePatientsAll';
 import { useInsertPatient } from './useInsertPatient';
 import { useUpdatePatient } from './useUpdatePatient';
 import { useDocumentHistory } from './useDocumentHistory';
+import { usePrograms } from './usePrograms';
 
 export const Document = {
   usePatient,
@@ -12,4 +13,5 @@ export const Document = {
   useInsertPatient,
   useUpdatePatient,
   useDocumentHistory,
+  usePrograms,
 };

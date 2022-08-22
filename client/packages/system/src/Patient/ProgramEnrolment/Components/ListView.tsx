@@ -11,13 +11,10 @@ import {
   useUrlQueryParams,
   useTranslation,
 } from '@openmsupply-client/common';
-import {
-  ProgramRowFragmentWithId,
-  useProgramEnrolment,
-  ProgramEventFragment,
-} from '../api';
+import { ProgramEventFragment } from '../api';
 import { usePatientModalStore } from '../../hooks';
 import { PatientModal } from '../../PatientView';
+import { ProgramRowFragmentWithId, usePatient } from '../../api';
 
 const programEventCellValue = (events: ProgramEventFragment[]) => {
   // just take the name of the first event
@@ -30,7 +27,7 @@ const ProgramListComponent: FC = () => {
     updatePaginationQuery,
     queryParams: { sortBy, page, first, offset },
   } = useUrlQueryParams();
-  const { data, isError, isLoading } = useProgramEnrolment.document.list();
+  const { data, isError, isLoading } = usePatient.document.programs();
   const pagination = { page, first, offset };
   const { localisedDate } = useFormatDateTime();
   const t = useTranslation('patients');

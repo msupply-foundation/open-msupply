@@ -55,7 +55,7 @@ interface JsonFormProps {
 }
 
 interface JsonFormsComponentProps {
-  data: JsonData;
+  data?: JsonData;
   jsonSchema: JsonSchema;
   uiSchema: UISchemaElement;
   setData: (data: JsonData) => void;
@@ -94,7 +94,7 @@ const FormComponent = ({
     user,
   };
 
-  return (
+  return !data ? null : (
     <JsonForms
       schema={jsonSchema}
       uischema={uiSchema}
@@ -171,7 +171,7 @@ export const JsonForm: FC<PropsWithChildren<JsonFormProps>> = ({
       paddingX={10}
     >
       <ScrollFix />
-      {isLoading || !data ? (
+      {isLoading ? (
         <BasicSpinner inline />
       ) : (
         <FormComponent

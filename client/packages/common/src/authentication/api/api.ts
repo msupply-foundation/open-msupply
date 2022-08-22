@@ -1,4 +1,4 @@
-import { LocaleKey, TypedTFunction } from '../..';
+import { AuthError, LocaleKey, LocalStorage, TypedTFunction } from '../..';
 import { Sdk, AuthTokenQuery, RefreshTokenQuery } from './operations.generated';
 
 export type AuthenticationError = {
@@ -90,11 +90,19 @@ export const getAuthQueries = (sdk: Sdk, t: TypedTFunction<LocaleKey>) => ({
           }
         );
         return result.me;
-      } catch {}
+      } catch (e) {
+        console.error(e);
+        LocalStorage.setItem('/auth/error', AuthError.ServerError);
+      }
     },
     stores: () => async () => {
-      const result = await sdk.me();
-      return result?.me?.stores?.nodes;
+      try {
+        const result = await sdk.me();
+        return result?.me?.stores?.nodes;
+      } catch (e) {
+        console.error(e);
+        LocalStorage.setItem('/auth/error', AuthError.ServerError);
+      }
     },
   },
 });

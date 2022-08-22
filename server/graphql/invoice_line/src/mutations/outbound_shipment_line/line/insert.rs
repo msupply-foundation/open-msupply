@@ -42,7 +42,7 @@ pub enum InsertResponse {
 }
 
 pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<InsertResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::MutateOutboundShipment,
@@ -51,12 +51,12 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context()?;
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
     map_response(
         service_provider
             .invoice_line_service
-            .insert_outbound_shipment_line(&service_context, store_id, input.to_domain()),
+            .insert_outbound_shipment_line(&service_context, input.to_domain()),
     )
 }
 
@@ -204,7 +204,6 @@ mod test {
         fn insert_outbound_shipment_line(
             &self,
             _: &ServiceContext,
-            _: &str,
             input: ServiceInput,
         ) -> Result<InvoiceLine, ServiceError> {
             self.0(input)
