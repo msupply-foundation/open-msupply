@@ -107,7 +107,7 @@ impl Synchroniser {
 
         // TODO remove:
         if initial_sync {
-            init_program_data(&self.service_provider, self.remote_data.site_id)?;
+            init_program_data(&self.service_provider, self.remote_data.site_id, &ctx)?;
         }
         Ok(())
     }

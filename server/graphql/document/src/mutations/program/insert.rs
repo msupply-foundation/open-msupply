@@ -40,7 +40,7 @@ pub fn insert_program(
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context()?;
+    let service_context = service_provider.basic_context()?;
 
     match service_provider.program_service.upsert_program(
         &service_context,
