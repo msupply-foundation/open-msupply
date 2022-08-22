@@ -2,6 +2,8 @@ use chrono::{DateTime, NaiveDateTime, Utc};
 
 use crate::{Document, DocumentStatus};
 
+use super::mock_form_schema_simple;
+
 pub fn document_a() -> Document {
     Document {
         id: String::from("document_a"),
@@ -11,7 +13,7 @@ pub fn document_a() -> Document {
         timestamp: DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(6000, 0), Utc),
         r#type: String::from("testing_document"),
         schema_id: None,
-        data: serde_json::Value::Null,
+        data: mock_form_schema_simple().json_schema,
         status: DocumentStatus::Active,
         comment: None,
     }

@@ -573,7 +573,7 @@ mod document_service_test {
             setup_all("document_deletion", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "");
-        let context = service_provider.context().unwrap();
+        let context = service_provider.basic_context().unwrap();
 
         let service = service_provider.document_service;
 
@@ -594,5 +594,23 @@ mod document_service_test {
             .unwrap()
             .unwrap();
         assert_eq!(document.status, DocumentStatus::Deleted);
+        assert_eq!(document.data, serde_json::Value::Null);
+
+        service
+            .undelete_document(
+                &context,
+                "",
+                DocumentUndelete {
+                    id: document.id,
+                    parent: document_a().id,
+                },
+            )
+            .unwrap();
+        let undeleted_document = service
+            .get_document(&context, &document_a().name)
+            .unwrap()
+            .unwrap();
+        assert_eq!(undeleted_document.status, DocumentStatus::Active);
+        assert_eq!(undeleted_document.data, document_a().data);
     }
 }
