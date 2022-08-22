@@ -85,8 +85,10 @@ export const dispensedDurationTester = rankWith(
 
 const UIComponent = (props: ControlProps) => {
   const { data, handleChange, label, path, errors, uischema } = props;
-  const [localData, setLocalData] = useState<number>(data);
   const options = uischema.options as Options | undefined;
+  const [localData, setLocalData] = useState<number>(
+    options?.targetField ? extractProperty(data, options.targetField) : 0
+  );
   const [baseTime, setBaseTime] = useState<string | undefined>();
 
   const onChange = useDebounceCallback(
@@ -96,14 +98,14 @@ const UIComponent = (props: ControlProps) => {
         return;
       }
 
-      const fullPath = composePaths(
-        path,
-        extractProperty(data, options.targetField)
-      );
+      const fullPath = composePaths(path, options.targetField);
       handleChange(fullPath, value);
 
       let events: EncounterEvent[] = [];
-      if (value > 0 && baseTime) {
+      if (baseTime === undefined) {
+        throw Error('Unexpected error');
+      }
+      if (value > 0) {
         const scheduleStartTime = options.scheduleEventsNow
           ? new Date()
           : DateUtils.startOfDay(DateUtils.addDays(new Date(baseTime), value));
@@ -113,7 +115,7 @@ const UIComponent = (props: ControlProps) => {
       const eventsPath = composePaths(path, 'events');
       handleChange(eventsPath, events);
     },
-    [path, options]
+    [path, options, baseTime]
   );
   const error = !!errors;
 
