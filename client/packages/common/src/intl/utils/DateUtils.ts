@@ -57,6 +57,7 @@ export const DateUtils = {
   isEqual,
   isValid,
   age: (date: Date) => differenceInYears(startOfToday(), startOfDay(date)),
+  startOfDay,
   startOfYear,
 };
 
