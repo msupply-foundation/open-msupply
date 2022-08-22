@@ -41,14 +41,13 @@ pub fn delete(ctx: &Context<'_>, store_id: &str, input: DeleteInput) -> Result<D
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context()?;
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
-    map_response(service_provider.invoice_service.delete_inbound_shipment(
-        &service_context,
-        store_id,
-        &user.user_id,
-        input.to_domain(),
-    ))
+    map_response(
+        service_provider
+            .invoice_service
+            .delete_inbound_shipment(&service_context, input.to_domain()),
+    )
 }
 
 #[derive(Interface)]
@@ -130,7 +129,7 @@ mod test {
 
     use crate::InvoiceMutations;
 
-    type DeleteMethod = dyn Fn(&str, ServiceInput) -> Result<String, ServiceError> + Sync + Send;
+    type DeleteMethod = dyn Fn(ServiceInput) -> Result<String, ServiceError> + Sync + Send;
 
     pub struct TestService(pub Box<DeleteMethod>);
 
@@ -138,11 +137,9 @@ mod test {
         fn delete_inbound_shipment(
             &self,
             _: &ServiceContext,
-            store_id: &str,
-            _: &str,
             input: ServiceInput,
         ) -> Result<String, ServiceError> {
-            self.0(store_id, input)
+            self.0(input)
         }
     }
 
@@ -187,7 +184,7 @@ mod test {
         "#;
 
         // InvoiceDoesNotExist
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::InvoiceDoesNotExist)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::InvoiceDoesNotExist)));
 
         let expected = json!({
             "deleteInboundShipment": {
@@ -207,7 +204,7 @@ mod test {
         );
 
         //CannotEditInvoice
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::CannotEditFinalised)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::CannotEditFinalised)));
 
         let expected = json!({
             "deleteInboundShipment": {
@@ -226,9 +223,7 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        let test_service = TestService(Box::new(|_, _| {
-            Err(ServiceError::InvoiceLinesExists(vec![]))
-        }));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::InvoiceLinesExists(vec![]))));
 
         let expected = json!({
             "deleteInboundShipment": {
@@ -248,7 +243,7 @@ mod test {
         );
 
         //NotAnInboundShipment
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotAnInboundShipment)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NotAnInboundShipment)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -260,7 +255,7 @@ mod test {
         );
 
         //NotThisStoreInvoice
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotThisStoreInvoice)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NotThisStoreInvoice)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -272,7 +267,7 @@ mod test {
         );
 
         //DatabaseError
-        let test_service = TestService(Box::new(|_, _| {
+        let test_service = TestService(Box::new(|_| {
             Err(ServiceError::DatabaseError(RepositoryError::NotFound))
         }));
         let expected_message = "Internal error";
@@ -286,7 +281,7 @@ mod test {
         );
 
         //LineDeleteError
-        let test_service = TestService(Box::new(|_, _| {
+        let test_service = TestService(Box::new(|_| {
             Err(ServiceError::LineDeleteError {
                 line_id: "n/a".to_string(),
                 error: DeleteInboundShipmentLineError::LineDoesNotExist,
@@ -324,8 +319,7 @@ mod test {
         "#;
 
         // Success
-        let test_service = TestService(Box::new(|store_id, input| {
-            assert_eq!(store_id, "store_a");
+        let test_service = TestService(Box::new(|input| {
             assert_eq!(
                 input,
                 ServiceInput {

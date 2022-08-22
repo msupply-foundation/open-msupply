@@ -1,2 +1,2 @@
 export * from './hooks';
-export { ProgramDocumentFragment } from './operations.generated';
+export { ProgramDocumentRegistryFragment } from './operations.generated';

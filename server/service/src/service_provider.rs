@@ -17,6 +17,7 @@ use crate::{
         form_schema_service::{FormSchemaService, FormSchemaServiceTrait},
         patient::{PatientService, PatientServiceTrait},
         program::{ProgramService, ProgramServiceTrait},
+        program_event::{ProgramEventService, ProgramEventServiceTrait},
     },
     invoice::{InvoiceService, InvoiceServiceTrait},
     invoice_line::{InvoiceLineService, InvoiceLineServiceTrait},
@@ -64,6 +65,7 @@ pub struct ServiceProvider {
     pub patient_service: Box<dyn PatientServiceTrait>,
     pub program_service: Box<dyn ProgramServiceTrait>,
     pub encounter_service: Box<dyn EncounterServiceTrait>,
+    pub program_event_service: Box<dyn ProgramEventServiceTrait>,
 
     // Settings
     pub settings: Box<dyn SettingsServiceTrait>,
@@ -73,6 +75,8 @@ pub struct ServiceProvider {
 
 pub struct ServiceContext {
     pub connection: StorageConnection,
+    pub user_id: String,
+    pub store_id: String,
 }
 
 impl ServiceProvider {
@@ -98,6 +102,7 @@ impl ServiceProvider {
             form_schema_service: Box::new(FormSchemaService {}),
             patient_service: Box::new(PatientService {}),
             program_service: Box::new(ProgramService {}),
+            program_event_service: Box::new(ProgramEventService {}),
             encounter_service: Box::new(EncounterService {}),
             settings: Box::new(SettingsService {}),
             app_data_service: Box::new(AppDataService::new(app_data_folder)),
@@ -105,9 +110,23 @@ impl ServiceProvider {
     }
 
     /// Creates a new service context with a new DB connection
-    pub fn context(&self) -> Result<ServiceContext, RepositoryError> {
+    pub fn basic_context(&self) -> Result<ServiceContext, RepositoryError> {
         Ok(ServiceContext {
             connection: self.connection()?,
+            user_id: "".to_string(),
+            store_id: "".to_string(),
+        })
+    }
+
+    pub fn context(
+        &self,
+        store_id: String,
+        user_id: String,
+    ) -> Result<ServiceContext, RepositoryError> {
+        Ok(ServiceContext {
+            connection: self.connection()?,
+            user_id: user_id,
+            store_id: store_id,
         })
     }
 

@@ -1,3 +1,4 @@
+use crate::service_provider::ServiceContext;
 use std::sync::Arc;
 
 use crate::{
@@ -62,6 +63,7 @@ mod hiv_care_encounter {
                 start_datetime: Default::default(),
                 status: Default::default(),
                 tuberculosis: Default::default(),
+                events: Default::default(),
             }
         }
     }
@@ -309,12 +311,10 @@ fn encounter_1() -> hiv_care_encounter::HivcareEncounter {
 }
 
 fn encounter_2() -> hiv_care_encounter::HivcareEncounter {
+    let time = Utc::now().checked_sub_signed(Duration::weeks(4)).unwrap();
     inline_init(|e: &mut hiv_care_encounter::HivcareEncounter| {
         e.status = Some(hiv_care_encounter::EncounterStatus::Scheduled);
-        e.start_datetime = Utc::now()
-            .checked_sub_signed(Duration::weeks(4))
-            .unwrap()
-            .to_rfc3339();
+        e.start_datetime = time.to_rfc3339();
         e.end_datetime = None;
         e.practitioner = None;
         e.physical_examination = Some(inline_init(
@@ -323,6 +323,26 @@ fn encounter_2() -> hiv_care_encounter::HivcareEncounter {
                 exam.blood_pressure = Some(125.0);
             },
         ));
+        e.events = Some(vec![
+            hiv_care_encounter::EncounterEvent {
+                datetime: time
+                    .checked_add_signed(Duration::weeks(1))
+                    .unwrap()
+                    .to_rfc3339(),
+                group: Some("HivCareEncounterDispensingStatus".to_string()),
+                type_: "status".to_string(),
+                name: Some("Interrupted".to_string()),
+            },
+            hiv_care_encounter::EncounterEvent {
+                datetime: time
+                    .checked_add_signed(Duration::weeks(2))
+                    .unwrap()
+                    .to_rfc3339(),
+                group: Some("HivCareEncounterDispensingStatus".to_string()),
+                type_: "status".to_string(),
+                name: Some("Lost to follow up".to_string()),
+            },
+        ])
     })
 }
 
@@ -380,8 +400,8 @@ fn encounter_5() -> hiv_care_encounter::HivcareEncounter {
 pub fn init_program_data(
     service_provider: &Arc<ServiceProvider>,
     site_id: u32,
+    ctx: &ServiceContext,
 ) -> Result<(), RepositoryError> {
-    let ctx = service_provider.context().unwrap();
     let connection = &ctx.connection;
 
     // patient

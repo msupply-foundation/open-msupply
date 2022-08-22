@@ -39,7 +39,7 @@ pub fn update_encounter(
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context()?;
+    let service_context = service_provider.basic_context()?;
 
     match service_provider.encounter_service.update_encounter(
         &service_context,

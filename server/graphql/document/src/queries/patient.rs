@@ -112,7 +112,7 @@ impl PatientNode {
     }
 
     pub async fn programs(&self, ctx: &Context<'_>) -> Result<Vec<ProgramNode>> {
-        let context = ctx.service_provider().context()?;
+        let context = ctx.service_provider().basic_context()?;
         let entries = ctx
             .service_provider()
             .program_service
@@ -257,7 +257,7 @@ pub fn patients(
     )?;
 
     let service_provider = ctx.service_provider();
-    let context = service_provider.context()?;
+    let context = service_provider.basic_context()?;
 
     let patients = service_provider.patient_service.get_patients(
         &context,
@@ -295,7 +295,7 @@ pub fn patient(
     )?;
 
     let service_provider = ctx.service_provider();
-    let context = service_provider.context()?;
+    let context = service_provider.basic_context()?;
 
     let node = service_provider
         .patient_service

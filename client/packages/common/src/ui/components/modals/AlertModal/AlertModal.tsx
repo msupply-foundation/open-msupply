@@ -12,7 +12,7 @@ export interface AlertModalProps {
 // allowing you to use the modal in a declarative syntax
 // without creating multiple overlaying modals
 // Set the important prop only if this is a critical alert
-// which should only be superceded by other critical alerts
+// which should only be superseded by other critical alerts
 // Apart from the important / non-important distinction,
 // the latest caller wins, and will be displayed
 export const AlertModal: React.FC<AlertModalProps> = ({

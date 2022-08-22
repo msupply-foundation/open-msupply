@@ -1,9 +1,9 @@
 import { FilterOptionsState, RegexUtils } from '@openmsupply-client/common';
-import { ProgramDocumentFragment } from './api';
+import { ProgramDocumentRegistryFragment } from './api';
 
 export const filterByName = (
-  options: ProgramDocumentFragment[],
-  state: FilterOptionsState<ProgramDocumentFragment>
+  options: ProgramDocumentRegistryFragment[],
+  state: FilterOptionsState<ProgramDocumentRegistryFragment>
 ) =>
   options.filter(option =>
     RegexUtils.matchObjectProperties(state.inputValue, option, ['name'])

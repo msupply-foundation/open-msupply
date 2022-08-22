@@ -1,8 +1,12 @@
+use chrono::NaiveDateTime;
 use repository::{
-    Log, LogFilter, LogRepository, LogRow, LogRowRepository, LogSort, StorageConnection,
+    Log, LogFilter, LogRepository, LogRow, LogRowRepository, LogSort, LogType,
     StorageConnectionManager,
 };
 use repository::{PaginationOption, RepositoryError};
+use util::uuid::uuid;
+
+use crate::service_provider::ServiceContext;
 
 use super::{get_default_pagination, i64_to_u32, ListError, ListResult};
 
@@ -25,6 +29,28 @@ pub fn get_logs(
     })
 }
 
-pub fn log_entry(connection: &StorageConnection, log: &LogRow) -> Result<(), RepositoryError> {
-    Ok(LogRowRepository::new(&connection).insert_one(log)?)
+pub fn log_entry(
+    ctx: &ServiceContext,
+    log_type: LogType,
+    record_id: Option<String>,
+    datetime: NaiveDateTime,
+) -> Result<(), RepositoryError> {
+    let log = &LogRow {
+        id: uuid(),
+        r#type: log_type,
+        user_id: if ctx.user_id != "" {
+            Some(ctx.user_id.clone())
+        } else {
+            None
+        },
+        store_id: if ctx.store_id != "" {
+            Some(ctx.store_id.clone())
+        } else {
+            None
+        },
+        record_id,
+        datetime,
+    };
+
+    Ok(LogRowRepository::new(&ctx.connection).insert_one(log)?)
 }

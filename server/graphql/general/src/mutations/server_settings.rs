@@ -6,7 +6,8 @@ use graphql_core::{
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    settings_service::UpdateSettingsError, sync::settings::SyncSettings,
+    settings_service::UpdateSettingsError,
+    sync::settings::SyncSettings,
 };
 use util::hash::sha256;
 
@@ -52,7 +53,7 @@ pub fn update_server_settings(
     }
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context()?;
+    let service_context = service_provider.basic_context()?;
     let service = &service_provider.settings;
 
     match input.sync_settings {

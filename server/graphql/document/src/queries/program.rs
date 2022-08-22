@@ -74,7 +74,7 @@ pub fn programs(
     )?;
 
     let service_provider = ctx.service_provider();
-    let context = service_provider.context()?;
+    let context = service_provider.basic_context()?;
 
     let nodes: Vec<ProgramNode> = service_provider
         .program_service

@@ -1,11 +1,10 @@
 use chrono::Utc;
-use repository::{
-    Document, DocumentRepository, DocumentStatus, Program, RepositoryError, TransactionError,
-};
+use repository::{Document, DocumentRepository, DocumentStatus, RepositoryError, TransactionError};
 
 use crate::{
     document::{
         document_service::DocumentInsertError,
+        is_latest_doc,
         patient::{patient_doc_name, patient_program_doc_name},
         raw_document::RawDocument,
     },
@@ -40,13 +39,19 @@ pub fn upsert_program(
     service_provider: &ServiceProvider,
     user_id: &str,
     input: UpsertProgram,
-) -> Result<(Program, Document), UpsertProgramError> {
-    let patient = ctx
+) -> Result<Document, UpsertProgramError> {
+    let program_document = ctx
         .connection
         .transaction_sync(|_| {
             let patient_id = input.patient_id.clone();
             let schema_program = validate(ctx, service_provider, &input)?;
             let doc = generate(user_id, input)?;
+
+            if is_latest_doc(ctx, service_provider, &doc)
+                .map_err(UpsertProgramError::DatabaseError)?
+            {
+                program_updated(&ctx.connection, &patient_id, &doc, schema_program)?;
+            };
 
             let document = service_provider
                 .document_service
@@ -66,11 +71,10 @@ pub fn upsert_program(
                     }
                     DocumentInsertError::InvalidParent(_) => UpsertProgramError::InvalidParentId,
                 })?;
-            let program = program_updated(&ctx.connection, &patient_id, &document, schema_program)?;
-            Ok((program, document))
+            Ok(document)
         })
         .map_err(|err: TransactionError<UpsertProgramError>| err.to_inner_error())?;
-    Ok(patient)
+    Ok(program_document)
 }
 
 impl From<RepositoryError> for UpsertProgramError {
@@ -177,7 +181,7 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "");
-        let ctx = service_provider.context().unwrap();
+        let ctx = service_provider.basic_context().unwrap();
 
         // dummy schema
         let schema = mock_form_schema_empty();

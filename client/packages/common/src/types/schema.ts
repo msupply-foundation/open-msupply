@@ -1306,6 +1306,7 @@ export type FullQuery = {
    */
   printReport: PrintReportResponse;
   printReportDefinition: PrintReportResponse;
+  programEvents: ProgramEventResponse;
   programs: ProgramResponse;
   /**
    * Retrieves a new auth bearer and refresh token
@@ -1484,6 +1485,15 @@ export type FullQueryPrintReportDefinitionArgs = {
   dataId: Scalars['String'];
   name?: InputMaybe<Scalars['String']>;
   report: Scalars['JSON'];
+  storeId: Scalars['String'];
+};
+
+
+export type FullQueryProgramEventsArgs = {
+  filter?: InputMaybe<ProgramEventFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  patientId: Scalars['String'];
+  sort?: InputMaybe<ProgramEventSortInput>;
   storeId: Scalars['String'];
 };
 
@@ -2804,6 +2814,47 @@ export type ProgramConnector = {
   totalCount: Scalars['Int'];
 };
 
+export type ProgramEventConnector = {
+  __typename: 'ProgramEventConnector';
+  nodes: Array<ProgramEventNode>;
+  totalCount: Scalars['Int'];
+};
+
+export type ProgramEventFilterInput = {
+  context?: InputMaybe<EqualFilterStringInput>;
+  datetime?: InputMaybe<DatetimeFilterInput>;
+  group?: InputMaybe<EqualFilterStringInput>;
+  type?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type ProgramEventNode = {
+  __typename: 'ProgramEventNode';
+  context: Scalars['String'];
+  datetime: Scalars['DateTime'];
+  group?: Maybe<Scalars['String']>;
+  name?: Maybe<Scalars['String']>;
+  type: Scalars['String'];
+};
+
+export type ProgramEventResponse = ProgramEventConnector;
+
+export enum ProgramEventSortFieldInput {
+  Context = 'context',
+  Datetime = 'datetime',
+  Group = 'group',
+  Type = 'type'
+}
+
+export type ProgramEventSortInput = {
+  /**
+   * Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']>;
+  /** Sort query result by `key` */
+  key: ProgramEventSortFieldInput;
+};
+
 export type ProgramFilterInput = {
   enrolmentDatetime?: InputMaybe<DatetimeFilterInput>;
   patientId?: InputMaybe<EqualFilterStringInput>;
@@ -2818,12 +2869,18 @@ export type ProgramNode = {
   /** The program document */
   encounters: Array<EncounterNode>;
   enrolmentDatetime: Scalars['DateTime'];
+  events: Array<ProgramEventNode>;
   /** The program document name */
   name: Scalars['String'];
   patientId: Scalars['String'];
   programPatientId?: Maybe<Scalars['String']>;
   /** The program type */
   type: Scalars['String'];
+};
+
+
+export type ProgramNodeEventsArgs = {
+  filter?: InputMaybe<ProgramEventFilterInput>;
 };
 
 export type ProgramResponse = ProgramConnector;

@@ -133,6 +133,7 @@ pub mod android {
                     },
                     // sync settings need to be configured at runtime
                     sync: None,
+                    logging: None,
                 };
                 let _ = start_server(settings, off_switch_receiver).await;
             });

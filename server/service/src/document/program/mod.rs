@@ -24,7 +24,7 @@ pub trait ProgramServiceTrait: Sync + Send {
         service_provider: &ServiceProvider,
         user_id: &str,
         input: UpsertProgram,
-    ) -> Result<(Program, Document), UpsertProgramError> {
+    ) -> Result<Document, UpsertProgramError> {
         upsert_program(ctx, service_provider, user_id, input)
     }
 

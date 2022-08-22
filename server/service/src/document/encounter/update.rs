@@ -5,7 +5,7 @@ use repository::{
 };
 
 use crate::{
-    document::{document_service::DocumentInsertError, raw_document::RawDocument},
+    document::{document_service::DocumentInsertError, is_latest_doc, raw_document::RawDocument},
     service_provider::{ServiceContext, ServiceProvider},
 };
 
@@ -43,22 +43,26 @@ pub fn update_encounter(
 
             let doc = generate(user_id, input, existing)?;
 
-            encounter_updated(
-                &ctx.connection,
-                &encounter_row.patient_id,
-                &encounter_row.program,
-                &doc.name,
-                &doc,
-                encounter,
-            )
-            .map_err(|err| match err {
-                EncounterTableUpdateError::RepositoryError(err) => {
-                    UpdateEncounterError::DatabaseError(err)
-                }
-                EncounterTableUpdateError::InternalError(err) => {
-                    UpdateEncounterError::InternalError(err)
-                }
-            })?;
+            if is_latest_doc(ctx, service_provider, &doc)
+                .map_err(UpdateEncounterError::DatabaseError)?
+            {
+                encounter_updated(
+                    ctx,
+                    service_provider,
+                    &encounter_row.patient_id,
+                    &encounter_row.program,
+                    &doc,
+                    encounter,
+                )
+                .map_err(|err| match err {
+                    EncounterTableUpdateError::RepositoryError(err) => {
+                        UpdateEncounterError::DatabaseError(err)
+                    }
+                    EncounterTableUpdateError::InternalError(err) => {
+                        UpdateEncounterError::InternalError(err)
+                    }
+                })?;
+            }
 
             let result = service_provider
                 .document_service
@@ -192,7 +196,7 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "");
-        let ctx = service_provider.context().unwrap();
+        let ctx = service_provider.basic_context().unwrap();
 
         // dummy schema
         let schema = mock_form_schema_empty();

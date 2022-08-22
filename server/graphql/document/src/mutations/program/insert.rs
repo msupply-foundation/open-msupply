@@ -40,7 +40,7 @@ pub fn insert_program(
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context()?;
+    let service_context = service_provider.basic_context()?;
 
     match service_provider.program_service.upsert_program(
         &service_context,
@@ -54,7 +54,7 @@ pub fn insert_program(
             r#type: input.r#type,
         },
     ) {
-        Ok((_, document)) => Ok(InsertProgramResponse::Response(DocumentNode { document })),
+        Ok(document) => Ok(InsertProgramResponse::Response(DocumentNode { document })),
         Err(error) => {
             let formatted_error = format!("{:#?}", error);
             let std_err = match error {

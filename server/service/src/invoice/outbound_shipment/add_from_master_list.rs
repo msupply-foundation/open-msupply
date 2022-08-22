@@ -31,13 +31,12 @@ impl From<RepositoryError> for AddToOutboundShipmentFromMasterListError {
 
 pub fn add_from_master_list(
     ctx: &ServiceContext,
-    store_id: &str,
     input: ServiceInput,
 ) -> Result<Vec<InvoiceLine>, OutError> {
     let invoice_lines = ctx
         .connection
         .transaction_sync(|connection| {
-            let invoice_row = validate(connection, store_id, &input)?;
+            let invoice_row = validate(connection, &ctx.store_id, &input)?;
             let new_invoice_line_rows = generate(ctx, invoice_row, &input)?;
 
             let invoice_line_row_repository = InvoiceLineRowRepository::new(&connection);
@@ -125,6 +124,7 @@ mod test {
         outbound_shipment::AddToOutboundShipmentFromMasterListError as ServiceError,
     };
     use crate::service_provider::ServiceProvider;
+    use repository::mock::{mock_store_a, mock_store_c};
     use repository::{
         mock::{
             common::FullMockMasterList, mock_inbound_shipment_c, mock_item_a, mock_item_b,
@@ -144,14 +144,15 @@ mod test {
             setup_all("os_add_from_master_list_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let mut context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_service;
 
         // RecordDoesNotExist
         assert_eq!(
             service.add_to_outbound_shipment_from_master_list(
                 &context,
-                "store_a",
                 ServiceInput {
                     shipment_id: "invalid".to_owned(),
                     master_list_id: "n/a".to_owned()
@@ -164,7 +165,6 @@ mod test {
         assert_eq!(
             service.add_to_outbound_shipment_from_master_list(
                 &context,
-                "store_b",
                 ServiceInput {
                     shipment_id: mock_outbound_shipment_no_lines().id,
                     master_list_id: "n/a".to_owned()
@@ -173,24 +173,10 @@ mod test {
             Err(ServiceError::NotThisStoreShipment)
         );
 
-        // CannotEditRecord
-        assert_eq!(
-            service.add_to_outbound_shipment_from_master_list(
-                &context,
-                "store_c",
-                ServiceInput {
-                    shipment_id: mock_outbound_shipment_shipped().id,
-                    master_list_id: "n/a".to_owned()
-                },
-            ),
-            Err(ServiceError::CannotEditShipment)
-        );
-
         // RecordIsIncorrectType
         assert_eq!(
             service.add_to_outbound_shipment_from_master_list(
                 &context,
-                "store_a",
                 ServiceInput {
                     shipment_id: mock_inbound_shipment_c().id,
                     master_list_id: "n/a".to_owned()
@@ -199,11 +185,23 @@ mod test {
             Err(ServiceError::NotAnOutboundShipment)
         );
 
+        // CannotEditRecord
+        context.store_id = mock_store_c().id;
+        assert_eq!(
+            service.add_to_outbound_shipment_from_master_list(
+                &context,
+                ServiceInput {
+                    shipment_id: mock_outbound_shipment_shipped().id,
+                    master_list_id: "n/a".to_owned()
+                },
+            ),
+            Err(ServiceError::CannotEditShipment)
+        );
+
         // MasterListNotFoundForThisName
         assert_eq!(
             service.add_to_outbound_shipment_from_master_list(
                 &context,
-                "store_c",
                 ServiceInput {
                     shipment_id: mock_outbound_shipment_c().id,
                     master_list_id: mock_test_not_store_a_master_list().master_list.id
@@ -270,13 +268,14 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider
+            .context(mock_store_c().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_service;
 
         let result: Vec<repository::InvoiceLineRow> = service
             .add_to_outbound_shipment_from_master_list(
                 &context,
-                "store_c",
                 ServiceInput {
                     shipment_id: mock_new_outbound_shipment_no_lines().id,
                     master_list_id: master_list().master_list.id,

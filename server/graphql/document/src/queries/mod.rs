@@ -10,6 +10,8 @@ pub mod patient_search;
 pub use self::patient_search::*;
 pub mod program;
 pub use self::program::*;
+pub mod program_event;
+pub use self::program_event::*;
 pub mod encounter;
 pub use self::encounter::*;
 pub mod encounter_fields;
