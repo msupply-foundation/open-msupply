@@ -11,9 +11,18 @@ import {
   useUrlQueryParams,
   useTranslation,
 } from '@openmsupply-client/common';
-import { ProgramRowFragmentWithId, useProgramEnrolment } from '../api';
+import {
+  ProgramRowFragmentWithId,
+  useProgramEnrolment,
+  ProgramEventFragment,
+} from '../api';
 import { usePatientModalStore } from '../../hooks';
 import { PatientModal } from '../../PatientView';
+
+const programEventCellValue = (events: ProgramEventFragment[]) => {
+  // just take the name of the first event
+  return events[0]?.name ?? '';
+};
 
 const ProgramListComponent: FC = () => {
   const {
@@ -40,7 +49,8 @@ const ProgramListComponent: FC = () => {
       {
         key: 'events',
         label: 'label.status',
-        formatter: events => (events as { name?: string }[])[0]?.name ?? '',
+        formatter: events =>
+          programEventCellValue(events as ProgramEventFragment[]),
       },
       {
         key: 'enrolmentDatetime',

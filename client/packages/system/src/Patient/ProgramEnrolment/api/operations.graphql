@@ -16,6 +16,12 @@ fragment Document on DocumentNode {
   }
 }
 
+fragment ProgramEvent on ProgramEventNode {
+  datetime
+  name
+  type
+}
+
 fragment ProgramRow on ProgramNode {
   enrolmentDatetime
   name
@@ -23,9 +29,7 @@ fragment ProgramRow on ProgramNode {
   programPatientId
   type
   events(filter: { datetime: { beforeOrEqualTo: $latestEventTime } }) {
-    datetime
-    name
-    type
+    ...ProgramEvent
   }
 }
 

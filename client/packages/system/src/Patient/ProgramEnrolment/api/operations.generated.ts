@@ -6,6 +6,8 @@ import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type DocumentFragment = { __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, author: string, timestamp: string, type: string, data: any, documentRegistry?: { __typename: 'DocumentRegistryNode', uiSchemaType: string, documentType: string, context: Types.DocumentRegistryNodeContext, formSchemaId: string, jsonSchema: any, uiSchema: any } | null };
 
+export type ProgramEventFragment = { __typename: 'ProgramEventNode', datetime: string, name?: string | null, type: string };
+
 export type ProgramRowFragment = { __typename: 'ProgramNode', enrolmentDatetime: string, name: string, patientId: string, programPatientId?: string | null, type: string, events: Array<{ __typename: 'ProgramEventNode', datetime: string, name?: string | null, type: string }> };
 
 export type ProgramFragment = { __typename: 'ProgramNode', type: string, programPatientId?: string | null, patientId: string, name: string, enrolmentDatetime: string, document: { __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, author: string, timestamp: string, type: string, data: any, documentRegistry?: { __typename: 'DocumentRegistryNode', uiSchemaType: string, documentType: string, context: Types.DocumentRegistryNodeContext, formSchemaId: string, jsonSchema: any, uiSchema: any } | null } };
@@ -45,6 +47,13 @@ export type UpdateProgramMutationVariables = Types.Exact<{
 
 export type UpdateProgramMutation = { __typename: 'FullMutation', updateProgram: { __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, author: string, timestamp: string, type: string, data: any, documentRegistry?: { __typename: 'DocumentRegistryNode', uiSchemaType: string, documentType: string, context: Types.DocumentRegistryNodeContext, formSchemaId: string, jsonSchema: any, uiSchema: any } | null } };
 
+export const ProgramEventFragmentDoc = gql`
+    fragment ProgramEvent on ProgramEventNode {
+  datetime
+  name
+  type
+}
+    `;
 export const ProgramRowFragmentDoc = gql`
     fragment ProgramRow on ProgramNode {
   enrolmentDatetime
@@ -53,12 +62,10 @@ export const ProgramRowFragmentDoc = gql`
   programPatientId
   type
   events(filter: {datetime: {beforeOrEqualTo: $latestEventTime}}) {
-    datetime
-    name
-    type
+    ...ProgramEvent
   }
 }
-    `;
+    ${ProgramEventFragmentDoc}`;
 export const DocumentFragmentDoc = gql`
     fragment Document on DocumentNode {
   id
