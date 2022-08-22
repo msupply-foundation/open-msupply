@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   rankWith,
   ControlProps,
@@ -87,6 +87,8 @@ const UIComponent = (props: ControlProps) => {
   const { data, handleChange, label, path, errors, uischema } = props;
   const [localData, setLocalData] = useState<number>(data);
   const options = uischema.options as Options | undefined;
+  const [baseTime, setBaseTime] = useState<string | undefined>();
+
   const onChange = useDebounceCallback(
     (value: number) => {
       // update events
@@ -101,15 +103,10 @@ const UIComponent = (props: ControlProps) => {
       handleChange(fullPath, value);
 
       let events: EncounterEvent[] = [];
-      if (value > 0) {
-        const baseTimeField = extractProperty(
-          data,
-          options?.baseDatetimeField ?? ''
-        );
-
+      if (value > 0 && baseTime) {
         const scheduleStartTime = options.scheduleEventsNow
           ? new Date()
-          : DateUtils.addDays(baseTimeField, value);
+          : DateUtils.startOfDay(DateUtils.addDays(new Date(baseTime), value));
         events = options.events.map(e => scheduleEvent(e, scheduleStartTime));
       }
 
@@ -120,6 +117,9 @@ const UIComponent = (props: ControlProps) => {
   );
   const error = !!errors;
 
+  useEffect(() => {
+    setBaseTime(extractProperty(data, options?.baseDatetimeField ?? ''));
+  }, [data, options]);
   if (!props.visible) {
     return null;
   }
@@ -146,7 +146,7 @@ const UIComponent = (props: ControlProps) => {
             setLocalData(newValue);
             onChange(newValue);
           }}
-          disabled={!props.enabled}
+          disabled={!props.enabled || baseTime === undefined}
           error={error}
           helperText={errors}
           value={localData}
