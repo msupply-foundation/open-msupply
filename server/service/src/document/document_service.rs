@@ -51,6 +51,25 @@ impl From<RepositoryError> for DocumentDeleteError {
     }
 }
 
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct DocumentUndelete {
+    pub id: String,
+    pub parent: String,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum DocumentUndeleteError {
+    CannotUndeleteDocument,
+    DatabaseError(RepositoryError),
+    InternalError(String),
+}
+
+impl From<RepositoryError> for DocumentUndeleteError {
+    fn from(err: RepositoryError) -> Self {
+        DocumentUndeleteError::DatabaseError(err)
+    }
+}
+
 pub trait DocumentServiceTrait: Sync + Send {
     fn get_document(
         &self,
@@ -116,6 +135,24 @@ pub trait DocumentServiceTrait: Sync + Send {
             })
             .map_err(|err| err.to_inner_error())?;
         Ok(())
+    }
+
+    fn undelete_document(
+        &self,
+        ctx: &ServiceContext,
+        user_id: &str,
+        input: DocumentUndelete,
+    ) -> Result<Document, DocumentUndeleteError> {
+        let document = ctx
+            .connection
+            .transaction_sync(|con| {
+                let current_document = validate_document_status(con, &input.id)?;
+                let document = generate_undeleted_document(con, input, current_document, user_id)?;
+
+                undelete_document(con, document)
+            })
+            .map_err(|err| err.to_inner_error())?;
+        Ok(document)
     }
 }
 
@@ -187,6 +224,27 @@ fn validate_document(
     Ok(doc)
 }
 
+fn validate_document_status(
+    connection: &StorageConnection,
+    id: &str,
+) -> Result<Document, DocumentUndeleteError> {
+    let doc = match DocumentRepository::new(connection).find_one_by_id(id)? {
+        Some(doc) => {
+            if doc.status == DocumentStatus::Deleted {
+                doc
+            } else {
+                return Err(DocumentUndeleteError::CannotUndeleteDocument);
+            }
+        }
+        None => {
+            return Err(DocumentUndeleteError::InternalError(format!(
+                "Document not found"
+            )))
+        }
+    };
+    Ok(doc)
+}
+
 fn generate_deleted_document(
     input: DocumentDelete,
     current_document: Document,
@@ -202,6 +260,36 @@ fn generate_deleted_document(
         schema_id: current_document.schema_id,
         status: DocumentStatus::Deleted,
         comment: input.comment,
+    })
+}
+
+fn generate_undeleted_document(
+    connection: &StorageConnection,
+    input: DocumentUndelete,
+    current_document: Document,
+    user_id: &str,
+) -> Result<RawDocument, DocumentUndeleteError> {
+    let deleted_document_parent =
+        match DocumentRepository::new(connection).find_one_by_id(&input.parent) {
+            Ok(Some(doc)) => doc,
+            Ok(None) => {
+                return Err(DocumentUndeleteError::InternalError(format!(
+                    "Document not found"
+                )))
+            }
+            Err(err) => return Err(DocumentUndeleteError::DatabaseError(err)),
+        };
+
+    Ok(RawDocument {
+        name: deleted_document_parent.name,
+        parents: vec![current_document.id.clone()],
+        author: user_id.to_string(),
+        timestamp: Utc::now(),
+        r#type: current_document.r#type,
+        data: deleted_document_parent.data,
+        schema_id: current_document.schema_id,
+        status: DocumentStatus::Active,
+        comment: None,
     })
 }
 
@@ -228,6 +316,18 @@ fn delete_document(
     let repo = DocumentRepository::new(connection);
     repo.insert(&doc)?;
     Ok(())
+}
+
+fn undelete_document(
+    connection: &StorageConnection,
+    doc: RawDocument,
+) -> Result<Document, DocumentUndeleteError> {
+    let doc = doc
+        .finalise()
+        .map_err(|err| DocumentUndeleteError::InternalError(err))?;
+    let repo = DocumentRepository::new(connection);
+    repo.insert(&doc)?;
+    Ok(doc)
 }
 
 #[cfg(test)]
