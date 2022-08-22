@@ -16,9 +16,6 @@ export const Formatter = {
     if (date && isValid(date)) return format(date, "yyyy-MM-dd'T'HH:mm:ss");
     else return null;
   },
-  // startDatetime: "2022-07-16T10:42:02"
-  // 2022-07-15T22:42:02.201932+00:00
-
   expiryDate: (date?: Date | null): string | null => {
     if (date && isValid(date)) return format(date, 'MM/yyyy');
     else return null;
