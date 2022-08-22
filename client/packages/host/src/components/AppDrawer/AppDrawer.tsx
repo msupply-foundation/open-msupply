@@ -27,7 +27,7 @@ import {
   CatalogueNav,
   DistributionNav,
   InventoryNav,
-  PatientNav,
+  DispensaryNav,
   ReplenishmentNav,
 } from '../Navigation';
 import { AppDrawerIcon } from './AppDrawerIcon';
@@ -190,7 +190,7 @@ export const AppDrawer: React.FC = () => {
           <ReplenishmentNav />
           <CatalogueNav />
           <InventoryNav />
-          <PatientNav />
+          <DispensaryNav />
 
           {/* <AppNavLink
             to={AppRoute.Tools}

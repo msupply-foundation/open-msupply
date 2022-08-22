@@ -1,12 +1,10 @@
-import { useQuery } from '@openmsupply-client/common';
-import { usePatient } from '../../../../Patient';
+import { FilterBy, useQuery } from '@openmsupply-client/common';
 import { useProgramApi } from '../utils/useProgramApi';
 
-export const usePrograms = () => {
+export const usePrograms = (filterBy?: FilterBy) => {
   const api = useProgramApi();
-  const patientId = usePatient.utils.id();
   const params = {
-    filterBy: { patientId: { equalTo: patientId } },
+    filterBy,
   };
 
   return {
