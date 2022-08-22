@@ -74,7 +74,7 @@ pub fn update_document(
     )?;
 
     let service_provider = ctx.service_provider();
-    let context = service_provider.context()?;
+    let context = service_provider.basic_context()?;
 
     validate_document_type(&context.connection, &input)?;
 

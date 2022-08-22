@@ -16,6 +16,48 @@ fragment PatientRow on PatientNode {
   isDeceased
 }
 
+fragment PatientDocument on DocumentRegistryNode {
+  id
+  documentType
+  formSchemaId
+  jsonSchema
+  name
+  context
+  parentId
+  uiSchema
+  uiSchemaType
+}
+
+fragment PatientDocumentRegistry on DocumentRegistryNode {
+  ...PatientDocument
+  children {
+    ...PatientDocument
+  }
+}
+
+fragment ProgramEvent on ProgramEventNode {
+  datetime
+  name
+  type
+}
+
+fragment ProgramRow on ProgramNode {
+  enrolmentDatetime
+  name
+  patientId
+  programPatientId
+  type
+  document {
+    documentRegistry {
+      id
+      name
+    }
+  }
+  events(filter: { datetime: { beforeOrEqualTo: $latestEventTime } }) {
+    ...ProgramEvent
+  }
+}
+
 fragment Patient on PatientNode {
   address1
   address2
@@ -105,6 +147,28 @@ query getDocumentHistory($storeId: String!, $name: String!) {
         timestamp
         type
       }
+    }
+  }
+}
+
+query programs(
+  $storeId: String!
+  $key: ProgramSortFieldInput
+  $desc: Boolean
+  $filter: ProgramFilterInput
+  $latestEventTime: String!
+) {
+  programs(
+    storeId: $storeId
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+  ) {
+    ... on ProgramConnector {
+      __typename
+      nodes {
+        ...ProgramRow
+      }
+      totalCount
     }
   }
 }

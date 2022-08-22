@@ -1,7 +1,10 @@
+use crate::fast_log::Config;
+
 use actix_web::web::Data;
 use chrono::Utc;
 use clap::StructOpt;
 use cli::RefreshDatesRepository;
+use fast_log;
 use graphql::schema_builder;
 use log::info;
 use repository::{get_storage_connection_manager, test_db, RemoteSyncBufferRepository};
@@ -31,7 +34,7 @@ use service::{
     token_bucket::TokenBucket,
 };
 use std::{
-    env, fs,
+    fs,
     ops::Deref,
     path::{Path, PathBuf},
     sync::{Arc, RwLock},
@@ -99,9 +102,7 @@ struct InitialisationData {
 
 #[tokio::main]
 async fn main() {
-    env::set_var("RUST_LOG", "info");
-    env_logger::init();
-
+    fast_log::init(Config::new().console()).unwrap();
     let args = Args::parse();
 
     let settings: Settings =
@@ -249,7 +250,7 @@ async fn main() {
                 connection_manager.clone(),
                 &hardware_id,
             ));
-            let ctx = service_provider.context().unwrap();
+            let ctx = service_provider.basic_context().unwrap();
 
             let (_, import_file, users_file) = export_paths(&name);
 
@@ -328,7 +329,7 @@ async fn main() {
                 connection_manager.clone(),
                 &app_data_folder,
             ));
-            let ctx = service_provider.context().unwrap();
+            let ctx = service_provider.basic_context().unwrap();
             let service = &service_provider.settings;
             info!("Disabling sync");
             service.disable_sync(&ctx).unwrap();

@@ -30,6 +30,7 @@ use mutations::undelete_document::UndeleteDocumentResponse;
 use mutations::update_document::*;
 use types::document::DocumentNode;
 use types::json_schema::FormSchemaNode;
+use types::program::ProgramEventFilterInput;
 
 mod mutations;
 
@@ -122,6 +123,18 @@ impl DocumentQueries {
         filter: Option<ProgramFilterInput>,
     ) -> Result<ProgramResponse> {
         programs(ctx, store_id, sort, filter)
+    }
+
+    pub async fn program_events(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        patient_id: String,
+        page: Option<PaginationInput>,
+        sort: Option<ProgramEventSortInput>,
+        filter: Option<ProgramEventFilterInput>,
+    ) -> Result<ProgramEventResponse> {
+        program_events(ctx, store_id, patient_id, page, sort, filter)
     }
 
     pub async fn encounters(

@@ -2,7 +2,7 @@ use chrono::Utc;
 use repository::{DocumentStatus, EqualFilter, RepositoryError, TransactionError};
 
 use crate::{
-    document::{document_service::DocumentInsertError, raw_document::RawDocument},
+    document::{document_service::DocumentInsertError, is_latest_doc, raw_document::RawDocument},
     service_provider::{ServiceContext, ServiceProvider},
 };
 
@@ -43,6 +43,12 @@ pub fn update_patient(
             let patient_id = patient.id.clone();
             let doc = generate(user_id, &patient, input)?;
             let doc_timestamp = doc.timestamp.clone();
+            if is_latest_doc(ctx, service_provider, &doc)
+                .map_err(UpdatePatientError::DatabaseError)?
+            {
+                // update the names table
+                patient_document_updated(&ctx.connection, store_id, &doc_timestamp, patient)?;
+            }
 
             // Updating the document will trigger an update in the patient (names) table
             service_provider
@@ -63,9 +69,6 @@ pub fn update_patient(
                     }
                     DocumentInsertError::InvalidParent(_) => UpdatePatientError::InvalidParentId,
                 })?;
-
-            // update the names table
-            patient_document_updated(&ctx.connection, store_id, &doc_timestamp, patient)?;
 
             let patient = service_provider
                 .patient_service
@@ -212,7 +215,7 @@ pub mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "");
-        let ctx = service_provider.context().unwrap();
+        let ctx = service_provider.basic_context().unwrap();
 
         // dummy schema
         let schema = mock_form_schema_empty();

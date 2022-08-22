@@ -65,7 +65,7 @@ pub fn document_registries(
     )?;
 
     let service_provider = ctx.service_provider();
-    let context = service_provider.context()?;
+    let context = service_provider.basic_context()?;
 
     let entries = service_provider
         .document_registry_service

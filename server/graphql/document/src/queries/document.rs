@@ -40,7 +40,7 @@ pub fn document(ctx: &Context<'_>, store_id: String, name: String) -> Result<Opt
     )?;
 
     let service_provider = ctx.service_provider();
-    let context = service_provider.context()?;
+    let context = service_provider.basic_context()?;
 
     let node = service_provider
         .document_service
@@ -69,7 +69,7 @@ pub fn documents(
     )?;
 
     let service_provider = ctx.service_provider();
-    let context = service_provider.context()?;
+    let context = service_provider.basic_context()?;
 
     let nodes: Vec<DocumentNode> = service_provider
         .document_service

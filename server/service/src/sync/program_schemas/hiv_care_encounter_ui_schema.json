@@ -50,6 +50,40 @@
     },
     {
       "type": "Control",
+      "scope": "#/properties/arvMedication/properties/pillCount"
+    },
+    {
+      "type": "DispensedDuration",
+      "scope": "#",
+      "label": "Number Of Days Dispensed",
+      "options": {
+        "targetField": "numberOfDaysDispensed",
+        "baseDatetimeField": "startDatetime",
+        "scheduleEventsNow": true,
+        "events": [
+          {
+            "scheduleIn": {
+              "days": 0,
+              "minutes": 1
+            },
+            "name": "Interrupted",
+            "group": "HivCareEncounterDispensingStatus",
+            "type": "status"
+          },
+          {
+            "scheduleIn": {
+              "days": 0,
+              "minutes": 3
+            },
+            "name": "Lost to follow up",
+            "group": "HivCareEncounterDispensingStatus",
+            "type": "status"
+          }
+        ]
+      }
+    },
+    {
+      "type": "Control",
       "scope": "#/properties/physicalExamination"
     },
     {

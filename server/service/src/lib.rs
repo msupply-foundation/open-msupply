@@ -19,6 +19,7 @@ pub mod login;
 pub mod master_list;
 pub mod name;
 pub mod number;
+pub mod permission;
 pub mod report;
 pub mod requisition;
 pub mod requisition_line;
@@ -108,21 +109,11 @@ pub struct DoMutationResult<T> {
 
 pub struct BatchMutationsProcessor<'a> {
     ctx: &'a ServiceContext,
-    store_id: &'a str,
-    user_id: &'a str,
 }
 
 impl<'a> BatchMutationsProcessor<'a> {
-    pub fn new(
-        ctx: &'a ServiceContext,
-        store_id: &'a str,
-        user_id: &'a str,
-    ) -> BatchMutationsProcessor<'a> {
-        BatchMutationsProcessor {
-            ctx,
-            store_id,
-            user_id,
-        }
+    pub fn new(ctx: &'a ServiceContext) -> BatchMutationsProcessor<'a> {
+        BatchMutationsProcessor { ctx }
     }
 
     pub fn do_mutations<I, R, E, M>(
@@ -132,13 +123,13 @@ impl<'a> BatchMutationsProcessor<'a> {
     ) -> (bool, Vec<InputWithResult<I, Result<R, E>>>)
     where
         I: Clone,
-        M: Fn(&ServiceContext, &str, I) -> Result<R, E>,
+        M: Fn(&ServiceContext, I) -> Result<R, E>,
     {
         let mut has_errors = false;
         let mut result = vec![];
 
         for input in inputs.unwrap_or(vec![]) {
-            let mutation_result = mutation(self.ctx, self.store_id, input.clone());
+            let mutation_result = mutation(self.ctx, input.clone());
             has_errors = has_errors || mutation_result.is_err();
             result.push(InputWithResult {
                 input,
@@ -156,13 +147,13 @@ impl<'a> BatchMutationsProcessor<'a> {
     ) -> (bool, Vec<InputWithResult<I, Result<R, E>>>)
     where
         I: Clone,
-        M: Fn(&ServiceContext, &str, &str, I) -> Result<R, E>,
+        M: Fn(&ServiceContext, I) -> Result<R, E>,
     {
         let mut has_errors = false;
         let mut result = vec![];
 
         for input in inputs.unwrap_or(vec![]) {
-            let mutation_result = mutation(self.ctx, self.store_id, self.user_id, input.clone());
+            let mutation_result = mutation(self.ctx, input.clone());
             has_errors = has_errors || mutation_result.is_err();
             result.push(InputWithResult {
                 input,

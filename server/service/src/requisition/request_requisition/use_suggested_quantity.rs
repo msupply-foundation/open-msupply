@@ -28,13 +28,12 @@ type OutError = UseSuggestedQuantityError;
 
 pub fn use_suggested_quantity(
     ctx: &ServiceContext,
-    store_id: &str,
     input: UseSuggestedQuantity,
 ) -> Result<Vec<RequisitionLine>, OutError> {
     let requisition_lines = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(connection, store_id, &input)?;
+            validate(connection, &ctx.store_id, &input)?;
             let update_requisition_line_rows = generate(connection, &input.request_requisition_id)?;
 
             let requisition_line_row_repository = RequisitionLineRowRepository::new(&connection);
@@ -113,7 +112,7 @@ mod test {
             mock_draft_request_requisition_for_update_test,
             mock_draft_response_requisition_for_update_test,
             mock_request_draft_requisition_calculation_test, mock_sent_request_requisition,
-            MockDataInserts,
+            mock_store_a, mock_store_b, MockDataInserts,
         },
         test_db::setup_all,
     };
@@ -134,14 +133,15 @@ mod test {
             setup_all("use_suggested_quantity_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let mut context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.requisition_service;
 
         // RequisitionDoesNotExist
         assert_eq!(
             service.use_suggested_quantity(
                 &context,
-                "store_a",
                 UseSuggestedQuantity {
                     request_requisition_id: "invalid".to_owned(),
                 },
@@ -149,23 +149,10 @@ mod test {
             Err(ServiceError::RequisitionDoesNotExist)
         );
 
-        // NotThisStoreRequisition
-        assert_eq!(
-            service.use_suggested_quantity(
-                &context,
-                "store_b",
-                UseSuggestedQuantity {
-                    request_requisition_id: mock_draft_request_requisition_for_update_test().id,
-                },
-            ),
-            Err(ServiceError::NotThisStoreRequisition)
-        );
-
         // CannotEditRequisition
         assert_eq!(
             service.use_suggested_quantity(
                 &context,
-                "store_a",
                 UseSuggestedQuantity {
                     request_requisition_id: mock_sent_request_requisition().id,
                 },
@@ -177,12 +164,23 @@ mod test {
         assert_eq!(
             service.use_suggested_quantity(
                 &context,
-                "store_a",
                 UseSuggestedQuantity {
                     request_requisition_id: mock_draft_response_requisition_for_update_test().id,
                 },
             ),
             Err(ServiceError::NotARequestRequisition)
+        );
+
+        // NotThisStoreRequisition
+        context.store_id = mock_store_b().id;
+        assert_eq!(
+            service.use_suggested_quantity(
+                &context,
+                UseSuggestedQuantity {
+                    request_requisition_id: mock_draft_request_requisition_for_update_test().id,
+                },
+            ),
+            Err(ServiceError::NotThisStoreRequisition)
         );
     }
 
@@ -192,13 +190,14 @@ mod test {
             setup_all("use_suggested_quantity_success", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.requisition_service;
 
         let result = service
             .use_suggested_quantity(
                 &context,
-                "store_a",
                 UseSuggestedQuantity {
                     request_requisition_id: mock_request_draft_requisition_calculation_test()
                         .requisition

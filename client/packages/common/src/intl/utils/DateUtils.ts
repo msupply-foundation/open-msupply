@@ -1,5 +1,7 @@
 import { IntlUtils } from '@common/intl';
 import {
+  addMinutes,
+  addDays,
   addYears,
   isValid,
   differenceInMonths,
@@ -34,6 +36,8 @@ const dateInputHandler = (date: Date | string | number): Date => {
 };
 
 export const DateUtils = {
+  addMinutes,
+  addDays,
   addYears,
   getDateOrNull: (date: string | null): Date | null => {
     if (!date) return null;
@@ -53,6 +57,7 @@ export const DateUtils = {
   isEqual,
   isValid,
   age: (date: Date) => differenceInYears(startOfToday(), startOfDay(date)),
+  startOfDay,
   startOfYear,
 };
 

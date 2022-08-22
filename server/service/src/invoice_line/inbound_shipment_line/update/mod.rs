@@ -34,17 +34,15 @@ type OutError = UpdateInboundShipmentLineError;
 
 pub fn update_inbound_shipment_line(
     ctx: &ServiceContext,
-    store_id: &str,
-    user_id: &str,
     input: UpdateInboundShipmentLine,
 ) -> Result<InvoiceLine, OutError> {
     let updated_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let (line, item, invoice) = validate(&input, store_id, &connection)?;
+            let (line, item, invoice) = validate(&input, &ctx.store_id, &connection)?;
 
             let (invoice_row_option, updated_line, upsert_batch_option, delete_batch_id_option) =
-                generate(user_id, input, line, item, invoice);
+                generate(&ctx.user_id, input, line, item, invoice);
 
             let stock_line_respository = StockLineRowRepository::new(&connection);
 
@@ -135,15 +133,15 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let mut context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
         let service = service_provider.invoice_line_service;
 
         // LineDoesNotExist
         assert_eq!(
             service.update_inbound_shipment_line(
                 &context,
-                &mock_store_a().id,
-                &mock_user_account_a().id,
                 inline_init(|r: &mut UpdateInboundShipmentLine| {
                     r.id = "invalid".to_string();
                 }),
@@ -155,8 +153,6 @@ mod test {
         assert_eq!(
             service.update_inbound_shipment_line(
                 &context,
-                &mock_store_a().id,
-                &mock_user_account_a().id,
                 inline_init(|r: &mut UpdateInboundShipmentLine| {
                     r.id = mock_inbound_shipment_c_invoice_lines()[0].id.clone();
                     r.location_id = Some("invalid".to_string());
@@ -169,8 +165,6 @@ mod test {
         assert_eq!(
             service.update_inbound_shipment_line(
                 &context,
-                &mock_store_a().id,
-                &mock_user_account_a().id,
                 inline_init(|r: &mut UpdateInboundShipmentLine| {
                     r.id = mock_inbound_shipment_c_invoice_lines()[0].id.clone();
                     r.item_id = Some("invalid".to_string());
@@ -185,8 +179,6 @@ mod test {
         assert_eq!(
             service.update_inbound_shipment_line(
                 &context,
-                &mock_store_a().id,
-                &mock_user_account_a().id,
                 inline_init(|r: &mut UpdateInboundShipmentLine| {
                     r.id = mock_inbound_shipment_c_invoice_lines()[0].id.clone();
                     r.item_id = Some(mock_item_a().id.clone());
@@ -201,8 +193,6 @@ mod test {
         assert_eq!(
             service.update_inbound_shipment_line(
                 &context,
-                &mock_store_a().id,
-                &mock_user_account_a().id,
                 inline_init(|r: &mut UpdateInboundShipmentLine| {
                     r.id = mock_inbound_shipment_c_invoice_lines()[0].id.clone();
                     r.item_id = Some(mock_item_a().id.clone());
@@ -217,8 +207,6 @@ mod test {
         assert_eq!(
             service.update_inbound_shipment_line(
                 &context,
-                &mock_store_a().id,
-                &mock_user_account_a().id,
                 inline_init(|r: &mut UpdateInboundShipmentLine| {
                     r.id = mock_inbound_shipment_b_invoice_lines()[0].id.clone();
                     r.item_id = Some(mock_item_a().id.clone());
@@ -233,8 +221,6 @@ mod test {
         assert_eq!(
             service.update_inbound_shipment_line(
                 &context,
-                &mock_store_a().id,
-                &mock_user_account_a().id,
                 inline_init(|r: &mut UpdateInboundShipmentLine| {
                     r.id = mock_inbound_shipment_a_invoice_lines()[0].id.clone();
                     r.item_id = Some(mock_item_a().id.clone());
@@ -246,11 +232,10 @@ mod test {
         );
 
         // NotThisStoreInvoice
+        context.store_id = mock_store_b().id;
         assert_eq!(
             service.update_inbound_shipment_line(
                 &context,
-                &mock_store_b().id,
-                &mock_user_account_a().id,
                 inline_init(|r: &mut UpdateInboundShipmentLine| {
                     r.id = mock_inbound_shipment_a_invoice_lines()[0].id.clone();
                     r.item_id = Some(mock_item_a().id.clone());
@@ -271,14 +256,14 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
         let service = service_provider.invoice_line_service;
 
         service
             .update_inbound_shipment_line(
                 &context,
-                &mock_store_a().id,
-                &mock_user_account_a().id,
                 inline_init(|r: &mut UpdateInboundShipmentLine| {
                     r.id = mock_inbound_shipment_c_invoice_lines()[0].id.clone();
                     r.item_id = Some(mock_item_a().id.clone());

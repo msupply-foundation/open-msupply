@@ -95,6 +95,11 @@ const translateErrorMessage = (
         title: t('auth.alert-title'),
         message: t('auth.permission-denied'),
       };
+    case AuthError.ServerError:
+      return {
+        title: t('auth.alert-title'),
+        message: t('auth.server-error'),
+      };
     default:
       return undefined;
   }
