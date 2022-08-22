@@ -54,7 +54,7 @@ pub fn insert_program(
             r#type: input.r#type,
         },
     ) {
-        Ok((_, document)) => Ok(InsertProgramResponse::Response(DocumentNode { document })),
+        Ok(document) => Ok(InsertProgramResponse::Response(DocumentNode { document })),
         Err(error) => {
             let formatted_error = format!("{:#?}", error);
             let std_err = match error {

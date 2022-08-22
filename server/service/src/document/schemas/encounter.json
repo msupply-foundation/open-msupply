@@ -8,6 +8,12 @@
           "format": "date-time",
           "type": "string"
         },
+        "events": {
+          "items": {
+            "$ref": "#/definitions/EncounterEvent"
+          },
+          "type": "array"
+        },
         "practitioner": {
           "$ref": "#/definitions/Practitioner"
         },
@@ -21,6 +27,28 @@
         }
       },
       "required": ["startDatetime"],
+      "type": "object"
+    },
+    "EncounterEvent": {
+      "properties": {
+        "datetime": {
+          "description": "Time of the the event, can be in the future",
+          "format": "date-time",
+          "type": "string"
+        },
+        "group": {
+          "type": "string"
+        },
+        "name": {
+          "description": "Name of this specific event. There could be multiple events of the same type but with different names. For example, two event could have type 'status' and name \"Status name 1\" and \"Status name 2\"",
+          "type": "string"
+        },
+        "type": {
+          "description": "For example, encounter 'status'.",
+          "type": "string"
+        }
+      },
+      "required": ["datetime", "type"],
       "type": "object"
     },
     "EncounterStatus": {
