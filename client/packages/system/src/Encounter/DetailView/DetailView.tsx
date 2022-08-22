@@ -1,24 +1,31 @@
 import React, { FC, useEffect, useState } from 'react';
 import {
-  AlertIcon,
-  BasicSpinner,
+  useTranslation,
+  // useBreadcrumbs,
+  // DetailContainer,
+  // DetailInputWithLabelRow,
+  // DetailSection,
+  // Checkbox,
+  // Grid,
+  // useFormatDateTime,
+  Typography,
   Box,
+  BasicSpinner,
+  // MuiLink,
+  AlertIcon,
   DialogButton,
   InputWithLabelRow,
   Stack,
-  Typography,
   useDialog,
 } from '@openmsupply-client/common';
-import { useTranslation } from '@common/intl';
-import { useEncounter } from '../../Encounter';
-import { usePatientModalStore } from '../hooks';
-import { PatientModal } from '../PatientView';
-import { ProgramRowFragmentWithId, usePatient } from '../api';
-import { CreateDocument, useJsonForms } from '../JsonForms';
-import { ProgramSearchInput } from '../Components';
+import { useEncounter } from '../api';
+import { ProgramRowFragmentWithId } from '../../Patient';
+import { ProgramSearchInput } from '../../Patient/Components';
+import { usePatientModalStore } from '../../Patient/hooks';
+import { CreateDocument, useJsonForms } from '../../Patient/JsonForms';
+import { PatientModal } from '../../Patient/PatientView';
 
-export const EncounterDetailModal: FC = () => {
-  const patientId = usePatient.utils.id();
+export const DetailView: FC = () => {
   const t = useTranslation('patients');
   const { current, reset, document } = usePatientModalStore();
   const [program, setProgram] = useState<ProgramRowFragmentWithId | null>(null);
@@ -29,6 +36,7 @@ export const EncounterDetailModal: FC = () => {
     undefined
   );
 
+  const patientId = 'nothing-here';
   const handleSave = useEncounter.document.upsert(
     patientId,
     program?.type ?? '',

@@ -5,18 +5,17 @@ import {
   useColumns,
   createTableStore,
   NothingHere,
-  createQueryParamsStore,
-  useFormatDateTime,
   useUrlQueryParams,
+  useNavigate,
+  createQueryParamsStore,
   ColumnAlign,
+  useFormatDateTime,
 } from '@openmsupply-client/common';
-import { usePatient } from '../api';
-import { usePatientModalStore } from '../hooks';
-import { PatientModal } from '../PatientView';
 import {
+  useEncounter,
   EncounterFragmentWithId,
   EncounterRowFragmentWithId,
-} from '../../Encounter';
+} from '../api';
 
 const EncounterListComponent: FC = () => {
   const {
@@ -24,32 +23,39 @@ const EncounterListComponent: FC = () => {
     updatePaginationQuery,
     queryParams: { sortBy, page, first, offset },
   } = useUrlQueryParams();
-  const { data, isError, isLoading } = usePatient.document.encounters();
+  const { data, isError, isLoading } = useEncounter.document.list();
   const pagination = { page, first, offset };
-  const { localisedDateTime } = useFormatDateTime();
-  const { setCurrent, setDocument, setProgramType } = usePatientModalStore();
-
+  const navigate = useNavigate();
+  const { localisedDate, localisedTime } = useFormatDateTime();
   const columns = useColumns<EncounterRowFragmentWithId>(
     [
       {
-        key: 'type',
-        label: 'label.encounter-type',
+        key: 'id',
+        label: 'label.encounter-id',
       },
       {
         key: 'program',
         label: 'label.program',
+        accessor: ({ rowData }) => rowData?.document.documentRegistry?.name,
+      },
+      {
+        key: 'date',
+        label: 'label.date',
+        accessor: ({ rowData }) => rowData?.startDatetime,
+        formatter: dateString =>
+          dateString ? localisedDate((dateString as string) || '') : '',
       },
       {
         key: 'startDatetime',
         label: 'label.encounter-start',
         formatter: dateString =>
-          dateString ? localisedDateTime((dateString as string) || '') : '',
+          dateString ? localisedTime((dateString as string) || '') : '',
       },
       {
         key: 'endDatetime',
         label: 'label.encounter-end',
         formatter: dateString =>
-          dateString ? localisedDateTime((dateString as string) || '') : '',
+          dateString ? localisedTime((dateString as string) || '') : '',
       },
       {
         key: 'status',
@@ -57,27 +63,32 @@ const EncounterListComponent: FC = () => {
         align: ColumnAlign.Right,
         width: 175,
       },
+      {
+        key: 'patient',
+        label: 'label.patient',
+        accessor: ({ rowData }) => rowData?.patientId,
+      },
     ],
     { onChangeSortBy: updateSortQuery, sortBy },
     [sortBy]
   );
 
   return (
-    <DataTable
-      id="encounter-list"
-      pagination={{ ...pagination, total: data?.totalCount }}
-      onChangePage={updatePaginationQuery}
-      columns={columns}
-      data={data?.nodes}
-      isLoading={isLoading}
-      isError={isError}
-      onRowClick={row => {
-        setDocument({ type: row.type, name: row.name });
-        setProgramType(row.program);
-        setCurrent(PatientModal.Encounter);
-      }}
-      noDataElement={<NothingHere />}
-    />
+    <>
+      <DataTable
+        id="name-list"
+        pagination={{ ...pagination, total: data?.totalCount }}
+        onChangePage={updatePaginationQuery}
+        columns={columns}
+        data={data?.nodes}
+        isLoading={isLoading}
+        isError={isError}
+        onRowClick={row => {
+          navigate(encodeURIComponent(String(row.id)));
+        }}
+        noDataElement={<NothingHere />}
+      />
+    </>
   );
 };
 

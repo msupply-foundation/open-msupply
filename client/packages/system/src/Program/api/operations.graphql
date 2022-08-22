@@ -8,6 +8,8 @@ fragment ProgramDocument on DocumentRegistryNode {
   parentId
   uiSchema
   uiSchemaType
+  patientId
+  enrol
 }
 
 fragment ProgramDocumentRegistry on DocumentRegistryNode {

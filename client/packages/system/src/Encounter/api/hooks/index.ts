@@ -5,6 +5,7 @@ import { Utils } from './utils';
 export const useEncounter = {
   utils: {
     api: Utils.useEncounterApi,
+    id: Utils.useEncounterId,
   },
 
   document: {

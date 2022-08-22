@@ -48,6 +48,19 @@ export const getEncounterQueries = (sdk: Sdk, storeId: string) => ({
       });
       return result?.documentRegistries;
     },
+    byId: async (encounterId: string): Promise<EncounterDocumentFragment> => {
+      const result = await sdk.encounterByName({ encounterId, storeId });
+      const encounters = result?.documents;
+
+      if (
+        encounters?.__typename === 'DocumentConnector' &&
+        !!encounters.nodes[0]
+      ) {
+        return encounters.nodes[0];
+      } else {
+        throw new Error('Could not find encounter');
+      }
+    },
   },
 
   insertEncounter: async (
