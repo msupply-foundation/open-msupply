@@ -7,6 +7,7 @@
     "start-remote": "lerna run --scope @openmsupply-client/* --parallel start-remote",
     "start": "yarn start-remote",
     "build": "lerna run --scope @openmsupply-client/* build",
+    "build-dev": "lerna run --scope @openmsupply-client/* build-dev",
     "serve": "lerna run --scope @openmsupply-client/* --parallel serve",
     "clean": "lerna run --scope @openmsupply-client/* --parallel clean",
     "compile": "lerna run --scope @openmsupply-client/* --parallel tsc --since HEAD",
