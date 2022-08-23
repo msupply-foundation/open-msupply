@@ -13,6 +13,7 @@ import {
   useTranslation,
   LocaleKey,
   TypedTFunction,
+  DateUtils,
 } from '@openmsupply-client/common';
 import { EncounterFragment, useEncounter } from './api';
 import { usePatientModalStore } from '../hooks';
@@ -32,7 +33,7 @@ const effectiveStatus = (
     case EncounterNodeStatus.Done:
       return t('label.encounter-status-done');
     case EncounterNodeStatus.Scheduled:
-      if (new Date(encounter.startDatetime).getTime() < Date.now()) {
+      if (DateUtils.isBefore(new Date(encounter.startDatetime), Date.now())) {
         return t('label.encounter-status-missed');
       }
       return t('label.encounter-status-scheduled');
