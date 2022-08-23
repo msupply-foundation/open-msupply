@@ -1,7 +1,5 @@
 [profile.release]
 strip = true
-opt-level = "z"
-lto = true
 
 [workspace]
 
