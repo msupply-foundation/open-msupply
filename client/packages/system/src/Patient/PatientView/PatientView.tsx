@@ -12,12 +12,17 @@ import {
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { usePatient } from '../api';
-import { usePatientCreateStore, usePatientStore } from '../hooks';
+import {
+  usePatientCreateStore,
+  usePatientModalStore,
+  usePatientStore,
+} from '../hooks';
 import { AppBarButtons } from './AppBarButtons';
 import { PatientSummary } from './PatientSummary';
 import { ProgramDetailModal, ProgramListView } from '../ProgramEnrolment';
 import { EncounterDetailModal, EncounterListView } from '../Encounter';
 import { SaveDocumentMutation, useJsonForms } from '../JsonForms';
+import { PatientModal } from '.';
 
 const useUpsertPatient = (): SaveDocumentMutation => {
   const { mutateAsync: insertPatient } = usePatient.document.insert();
@@ -146,6 +151,7 @@ const PatientDetailView: FC = () => {
 };
 
 export const PatientView: FC = () => {
+  const { current } = usePatientModalStore();
   const tabs = [
     {
       Component: <PatientDetailView />,
@@ -161,10 +167,12 @@ export const PatientView: FC = () => {
     },
   ];
 
+  // Note: unmount modals when not used because they have some internal state that shouldn't be
+  // reused across calls.
   return (
     <React.Suspense fallback={<DetailViewSkeleton />}>
-      <ProgramDetailModal />
-      <EncounterDetailModal />
+      {current === PatientModal.Program ? <ProgramDetailModal /> : null}
+      {current === PatientModal.Encounter ? <EncounterDetailModal /> : null}
       <AppBarButtons />
       <PatientSummary />
       <DetailTabs tabs={tabs} />
