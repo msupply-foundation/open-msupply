@@ -37,8 +37,7 @@ const formatError = (objectVarName: string, error: ZodError): string => {
 
 export const useZodOptionsValidation = <T>(
   TypeDef: z.ZodType<T, z.ZodTypeDef, T>,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  options?: Record<string, any>
+    options?: Record<string, unknown>
 ): { errors?: string; options?: T } => {
   const [errors, setErrors] = useState<string | undefined>();
   const [parsedOptions, setOptions] = useState<T | undefined>();
