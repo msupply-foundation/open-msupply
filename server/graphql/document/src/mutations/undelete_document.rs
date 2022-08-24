@@ -43,7 +43,7 @@ pub fn undelete_document(
         Err(error) => {
             let formatted_error = format!("{:?}", error);
             let graphql_error = match error {
-                DocumentUndeleteError::DocumentDoesNotExist => {
+                DocumentUndeleteError::DocumentNotFound => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
                 DocumentUndeleteError::ParentDoesNotExist => {

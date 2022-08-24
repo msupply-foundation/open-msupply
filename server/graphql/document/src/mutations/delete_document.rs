@@ -44,7 +44,7 @@ pub fn delete_document(
         Err(error) => {
             let formatted_error = format!("{:?}", error);
             let graphql_error = match error {
-                DocumentDeleteError::DocumentDoesNotExist => {
+                DocumentDeleteError::DocumentNotFound => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
                 DocumentDeleteError::CannotDeleteDeletedDocument => {
