@@ -146,7 +146,7 @@ const UIComponent = (props: ControlProps) => {
     if (options) {
       setLocalData(extractProperty(data, options.targetField) ?? 0);
     }
-  }, [options]);
+  }, [data, options]);
   useEffect(() => {
     setBaseTime(extractProperty(data, options?.baseDatetimeField ?? ''));
   }, [data, options]);
