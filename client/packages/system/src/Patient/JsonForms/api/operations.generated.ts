@@ -128,7 +128,11 @@ export const AllocateNumberDocument = gql`
     `;
 export const EncounterFieldsDocument = gql`
     query encounterFields($storeId: String!, $fields: [String!]) {
-  encounterFields(input: {fields: $fields}, storeId: $storeId) {
+  encounterFields(
+    input: {fields: $fields}
+    storeId: $storeId
+    sort: {key: startDatetime}
+  ) {
     ... on EncounterFieldsConnector {
       __typename
       nodes {
