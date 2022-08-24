@@ -3,7 +3,7 @@ import { z, ZodError, ZodIssue } from 'zod';
 
 const formatMessage = (issue: ZodIssue): string => {
   switch (issue.code) {
-    case 'invalid_type': {
+    case ZodIssueCode.invalid_type: {
       return `${issue.expected} ${issue.message}`;
     }
     case 'invalid_union': {
