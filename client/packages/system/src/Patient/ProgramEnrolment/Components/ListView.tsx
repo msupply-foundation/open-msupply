@@ -31,7 +31,7 @@ const ProgramListComponent: FC = () => {
   const pagination = { page, first, offset };
   const { localisedDate } = useFormatDateTime();
   const t = useTranslation('patients');
-  const { setCurrent, setDocument, setProgramType } = usePatientModalStore();
+  const { setEditingModal, selectModal } = usePatientModalStore();
 
   const columns = useColumns<ProgramRowFragmentWithId>(
     [
@@ -72,13 +72,11 @@ const ProgramListComponent: FC = () => {
       isLoading={isLoading}
       isError={isError}
       onRowClick={row => {
-        setDocument({ type: row.type, name: row.name });
-        setProgramType(row.type);
-        setCurrent(PatientModal.Program);
+        setEditingModal(PatientModal.Program, row.type, row.name, row.type);
       }}
       noDataElement={
         <NothingHere
-          onCreate={() => setCurrent(PatientModal.ProgramSearch)}
+          onCreate={() => selectModal(PatientModal.ProgramSearch)}
           body={t('messages.no-programs')}
           buttonText={t('button.add-program')}
         />
