@@ -8,8 +8,6 @@ use service::document::document_service::{DocumentDelete, DocumentDeleteError};
 #[derive(InputObject)]
 pub struct DeleteDocumentInput {
     pub id: String,
-    pub patient_id: String,
-    pub parent: String,
     pub comment: Option<String>,
 }
 
@@ -39,8 +37,6 @@ pub fn delete_document(
         &user.user_id,
         DocumentDelete {
             id: input.id.clone(),
-            patient_id: input.patient_id.clone(),
-            parent: input.parent,
             comment: input.comment,
         },
     ) {
@@ -48,6 +44,12 @@ pub fn delete_document(
         Err(error) => {
             let formatted_error = format!("{:?}", error);
             let graphql_error = match error {
+                DocumentDeleteError::DocumentDoesNotExist => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
+                }
+                DocumentDeleteError::CannotDeleteDeletedDocument => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
+                }
                 DocumentDeleteError::InternalError(_) => {
                     StandardGraphqlError::InternalError(formatted_error)
                 }
