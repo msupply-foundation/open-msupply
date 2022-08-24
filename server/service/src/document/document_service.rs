@@ -39,7 +39,7 @@ pub struct DocumentDelete {
 
 #[derive(Debug, PartialEq)]
 pub enum DocumentDeleteError {
-    DocumentDoesNotExist,
+    DocumentNotFound,
     CannotDeleteDeletedDocument,
     DatabaseError(RepositoryError),
     InternalError(String),
@@ -58,7 +58,7 @@ pub struct DocumentUndelete {
 
 #[derive(Debug, PartialEq)]
 pub enum DocumentUndeleteError {
-    DocumentDoesNotExist,
+    DocumentNotFound,
     ParentDoesNotExist,
     CannotUndeleteActiveDocument,
     DatabaseError(RepositoryError),
@@ -223,7 +223,7 @@ fn validate_document_delete(
             }
         }
         None => {
-            return Err(DocumentDeleteError::DocumentDoesNotExist);
+            return Err(DocumentDeleteError::DocumentNotFound);
         }
     };
     Ok(doc)
@@ -242,7 +242,7 @@ fn validate_document_undelete(
             }
         }
         None => {
-            return Err(DocumentUndeleteError::DocumentDoesNotExist);
+            return Err(DocumentUndeleteError::DocumentNotFound);
         }
     };
     Ok(doc)
@@ -580,13 +580,27 @@ mod document_service_test {
 
         let service = service_provider.document_service;
 
+        // Delete document NotFound
+        let invalid_doc_deletion = service.delete_document(
+            &context,
+            "",
+            DocumentDelete {
+                id: "invalid".to_string(),
+                comment: None,
+            },
+        );
+        assert_eq!(
+            invalid_doc_deletion,
+            Err(DocumentDeleteError::DocumentNotFound)
+        );
+
+        // Delete document
         service
             .delete_document(
                 &context,
                 "",
                 DocumentDelete {
                     id: document_a().id,
-                    parent: "document_a".to_string(),
                     comment: Some("Testing deletion".to_string()),
                 },
             )
@@ -598,6 +612,7 @@ mod document_service_test {
         assert_eq!(document.status, DocumentStatus::Deleted);
         assert_eq!(document.data, serde_json::Value::Null);
 
+        // Undelete document
         service
             .undelete_document(&context, "", DocumentUndelete { id: document.id })
             .unwrap();
@@ -607,5 +622,18 @@ mod document_service_test {
             .unwrap();
         assert_eq!(undeleted_document.status, DocumentStatus::Active);
         assert_eq!(undeleted_document.data, document_a().data);
+
+        // Undelete an active document
+        let undelete_active_document = service.undelete_document(
+            &context,
+            "",
+            DocumentUndelete {
+                id: undeleted_document.id,
+            },
+        );
+        assert_eq!(
+            undelete_active_document,
+            Err(DocumentUndeleteError::CannotUndeleteActiveDocument)
+        );
     }
 }
