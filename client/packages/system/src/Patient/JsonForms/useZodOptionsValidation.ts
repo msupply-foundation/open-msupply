@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { z, ZodError, ZodIssue } from 'zod';
+import { z, ZodError, ZodIssue, ZodIssueCode } from 'zod';
 
 const formatMessage = (issue: ZodIssue): string => {
   switch (issue.code) {
@@ -37,7 +37,7 @@ const formatError = (objectVarName: string, error: ZodError): string => {
 
 export const useZodOptionsValidation = <T>(
   TypeDef: z.ZodType<T, z.ZodTypeDef, T>,
-    options?: Record<string, unknown>
+  options?: Record<string, unknown>
 ): { errors?: string; options?: T } => {
   const [errors, setErrors] = useState<string | undefined>();
   const [parsedOptions, setOptions] = useState<T | undefined>();
