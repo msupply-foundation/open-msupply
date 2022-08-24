@@ -132,7 +132,10 @@ pub trait DocumentServiceTrait: Sync + Send {
                 let current_document = validate_document_delete(con, &input.id)?;
                 let document = generate_deleted_document(input, current_document, user_id)?;
 
-                delete_document(con, document)
+                match DocumentRepository::new(con).insert(&document) {
+                    Ok(_) => Ok(()),
+                    Err(error) => Err(DocumentDeleteError::DatabaseError(error)),
+                }
             })
             .map_err(|err| err.to_inner_error())?;
         Ok(())
@@ -150,7 +153,10 @@ pub trait DocumentServiceTrait: Sync + Send {
                 let current_document = validate_document_undelete(con, &input.id)?;
                 let document = generate_undeleted_document(con, current_document, user_id)?;
 
-                undelete_document(con, document)
+                match DocumentRepository::new(con).insert(&document) {
+                    Ok(_) => Ok(document),
+                    Err(error) => Err(DocumentUndeleteError::DatabaseError(error)),
+                }
             })
             .map_err(|err| err.to_inner_error())?;
         Ok(document)
@@ -314,22 +320,6 @@ fn insert_document(
         .map_err(|err| DocumentInsertError::InternalError(err))?;
     let repo = DocumentRepository::new(connection);
     repo.insert(&doc)?;
-    Ok(doc)
-}
-
-fn delete_document(
-    connection: &StorageConnection,
-    doc: Document,
-) -> Result<(), DocumentDeleteError> {
-    DocumentRepository::new(connection).insert(&doc)?;
-    Ok(())
-}
-
-fn undelete_document(
-    connection: &StorageConnection,
-    doc: Document,
-) -> Result<Document, DocumentUndeleteError> {
-    DocumentRepository::new(connection).insert(&doc)?;
     Ok(doc)
 }
 
