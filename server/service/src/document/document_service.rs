@@ -7,7 +7,7 @@ use repository::{
 
 use crate::service_provider::ServiceContext;
 
-use super::{patient::patient_deleted_doc_name, raw_document::RawDocument};
+use super::raw_document::RawDocument;
 
 #[derive(Debug, PartialEq)]
 pub enum DocumentInsertError {
@@ -34,13 +34,13 @@ impl From<RepositoryError> for DocumentHistoryError {
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct DocumentDelete {
     pub id: String,
-    pub patient_id: String,
-    pub parent: String,
     pub comment: Option<String>,
 }
 
 #[derive(Debug, PartialEq)]
 pub enum DocumentDeleteError {
+    DocumentDoesNotExist,
+    CannotDeleteDeletedDocument,
     DatabaseError(RepositoryError),
     InternalError(String),
 }
@@ -54,12 +54,13 @@ impl From<RepositoryError> for DocumentDeleteError {
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct DocumentUndelete {
     pub id: String,
-    pub parent: String,
 }
 
 #[derive(Debug, PartialEq)]
 pub enum DocumentUndeleteError {
-    CannotUndeleteDocument,
+    DocumentDoesNotExist,
+    ParentDoesNotExist,
+    CannotUndeleteActiveDocument,
     DatabaseError(RepositoryError),
     InternalError(String),
 }
@@ -124,12 +125,12 @@ pub trait DocumentServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         user_id: &str,
-        doc: DocumentDelete,
+        input: DocumentDelete,
     ) -> Result<(), DocumentDeleteError> {
         ctx.connection
             .transaction_sync(|con| {
-                let current_document = validate_document(con, &doc.id)?;
-                let document = generate_deleted_document(doc, current_document, user_id)?;
+                let current_document = validate_document_delete(con, &input.id)?;
+                let document = generate_deleted_document(input, current_document, user_id)?;
 
                 delete_document(con, document)
             })
@@ -146,8 +147,8 @@ pub trait DocumentServiceTrait: Sync + Send {
         let document = ctx
             .connection
             .transaction_sync(|con| {
-                let current_document = validate_document_status(con, &input.id)?;
-                let document = generate_undeleted_document(con, input, current_document, user_id)?;
+                let current_document = validate_document_undelete(con, &input.id)?;
+                let document = generate_undeleted_document(con, current_document, user_id)?;
 
                 undelete_document(con, document)
             })
@@ -209,22 +210,26 @@ fn validate_parents(
     Ok(None)
 }
 
-fn validate_document(
+fn validate_document_delete(
     connection: &StorageConnection,
     id: &str,
 ) -> Result<Document, DocumentDeleteError> {
     let doc = match DocumentRepository::new(connection).find_one_by_id(id)? {
-        Some(doc) => doc,
+        Some(doc) => {
+            if doc.status == DocumentStatus::Active {
+                doc
+            } else {
+                return Err(DocumentDeleteError::CannotDeleteDeletedDocument);
+            }
+        }
         None => {
-            return Err(DocumentDeleteError::InternalError(format!(
-                "Document not found"
-            )))
+            return Err(DocumentDeleteError::DocumentDoesNotExist);
         }
     };
     Ok(doc)
 }
 
-fn validate_document_status(
+fn validate_document_undelete(
     connection: &StorageConnection,
     id: &str,
 ) -> Result<Document, DocumentUndeleteError> {
@@ -233,13 +238,11 @@ fn validate_document_status(
             if doc.status == DocumentStatus::Deleted {
                 doc
             } else {
-                return Err(DocumentUndeleteError::CannotUndeleteDocument);
+                return Err(DocumentUndeleteError::CannotUndeleteActiveDocument);
             }
         }
         None => {
-            return Err(DocumentUndeleteError::InternalError(format!(
-                "Document not found"
-            )))
+            return Err(DocumentUndeleteError::DocumentDoesNotExist);
         }
     };
     Ok(doc)
@@ -249,10 +252,10 @@ fn generate_deleted_document(
     input: DocumentDelete,
     current_document: Document,
     user_id: &str,
-) -> Result<RawDocument, DocumentDeleteError> {
-    Ok(RawDocument {
-        name: patient_deleted_doc_name(&input.patient_id),
-        parents: vec![input.parent],
+) -> Result<Document, DocumentDeleteError> {
+    let doc = RawDocument {
+        name: current_document.name,
+        parents: vec![current_document.id.clone()],
         author: user_id.to_string(),
         timestamp: Utc::now(),
         r#type: current_document.r#type,
@@ -260,37 +263,45 @@ fn generate_deleted_document(
         schema_id: current_document.schema_id,
         status: DocumentStatus::Deleted,
         comment: input.comment,
-    })
+    }
+    .finalise()
+    .map_err(|err| DocumentDeleteError::InternalError(err))?;
+
+    Ok(doc)
 }
 
 fn generate_undeleted_document(
     connection: &StorageConnection,
-    input: DocumentUndelete,
     current_document: Document,
     user_id: &str,
-) -> Result<RawDocument, DocumentUndeleteError> {
+) -> Result<Document, DocumentUndeleteError> {
+    let parent = match current_document.parent_ids.last() {
+        Some(parent) => parent,
+        None => "",
+    };
+
     let deleted_document_parent =
-        match DocumentRepository::new(connection).find_one_by_id(&input.parent) {
+        match DocumentRepository::new(connection).find_one_by_id(&parent.clone()) {
             Ok(Some(doc)) => doc,
-            Ok(None) => {
-                return Err(DocumentUndeleteError::InternalError(format!(
-                    "Document not found"
-                )))
-            }
+            Ok(None) => return Err(DocumentUndeleteError::ParentDoesNotExist),
             Err(err) => return Err(DocumentUndeleteError::DatabaseError(err)),
         };
 
-    Ok(RawDocument {
+    let undeleted_doc = RawDocument {
         name: deleted_document_parent.name,
         parents: vec![current_document.id.clone()],
         author: user_id.to_string(),
         timestamp: Utc::now(),
-        r#type: current_document.r#type,
+        r#type: deleted_document_parent.r#type,
         data: deleted_document_parent.data,
-        schema_id: current_document.schema_id,
+        schema_id: deleted_document_parent.schema_id,
         status: DocumentStatus::Active,
         comment: None,
-    })
+    }
+    .finalise()
+    .map_err(|err| DocumentUndeleteError::InternalError(err))?;
+
+    Ok(undeleted_doc)
 }
 
 /// Does a raw insert without schema validation
@@ -308,25 +319,17 @@ fn insert_document(
 
 fn delete_document(
     connection: &StorageConnection,
-    doc: RawDocument,
+    doc: Document,
 ) -> Result<(), DocumentDeleteError> {
-    let doc = doc
-        .finalise()
-        .map_err(|err| DocumentDeleteError::InternalError(err))?;
-    let repo = DocumentRepository::new(connection);
-    repo.insert(&doc)?;
+    DocumentRepository::new(connection).insert(&doc)?;
     Ok(())
 }
 
 fn undelete_document(
     connection: &StorageConnection,
-    doc: RawDocument,
+    doc: Document,
 ) -> Result<Document, DocumentUndeleteError> {
-    let doc = doc
-        .finalise()
-        .map_err(|err| DocumentUndeleteError::InternalError(err))?;
-    let repo = DocumentRepository::new(connection);
-    repo.insert(&doc)?;
+    DocumentRepository::new(connection).insert(&doc)?;
     Ok(doc)
 }
 
@@ -583,28 +586,20 @@ mod document_service_test {
                 "",
                 DocumentDelete {
                     id: document_a().id,
-                    patient_id: "patient1".to_string(),
                     parent: "document_a".to_string(),
                     comment: Some("Testing deletion".to_string()),
                 },
             )
             .unwrap();
         let document = service
-            .get_document(&context, "patients/patient1/deleted")
+            .get_document(&context, &document_a().name)
             .unwrap()
             .unwrap();
         assert_eq!(document.status, DocumentStatus::Deleted);
         assert_eq!(document.data, serde_json::Value::Null);
 
         service
-            .undelete_document(
-                &context,
-                "",
-                DocumentUndelete {
-                    id: document.id,
-                    parent: document_a().id,
-                },
-            )
+            .undelete_document(&context, "", DocumentUndelete { id: document.id })
             .unwrap();
         let undeleted_document = service
             .get_document(&context, &document_a().name)

@@ -9,7 +9,6 @@ use crate::types::document::DocumentNode;
 #[derive(InputObject)]
 pub struct UndeleteDocumentInput {
     pub id: String,
-    pub parent: String,
 }
 
 #[derive(Union)]
@@ -38,14 +37,19 @@ pub fn undelete_document(
         &user.user_id,
         DocumentUndelete {
             id: input.id.clone(),
-            parent: input.parent,
         },
     ) {
         Ok(document) => UndeleteDocumentResponse::Response(DocumentNode { document }),
         Err(error) => {
             let formatted_error = format!("{:?}", error);
             let graphql_error = match error {
-                DocumentUndeleteError::CannotUndeleteDocument => {
+                DocumentUndeleteError::DocumentDoesNotExist => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
+                }
+                DocumentUndeleteError::ParentDoesNotExist => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
+                }
+                DocumentUndeleteError::CannotUndeleteActiveDocument => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
                 DocumentUndeleteError::InternalError(_) => {
