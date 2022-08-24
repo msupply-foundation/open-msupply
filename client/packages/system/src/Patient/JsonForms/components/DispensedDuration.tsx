@@ -16,6 +16,8 @@ import {
   DateUtils,
 } from '@openmsupply-client/common';
 import { get as extractProperty } from 'lodash';
+import { z } from 'zod';
+import { useZodOptionsValidation } from '../useZodOptionsValidation';
 
 type OptionEvent = {
   scheduleIn: {
@@ -39,6 +41,27 @@ type Options = {
   scheduleEventsNow?: boolean;
   events: OptionEvent[];
 };
+
+const OptionEvent: z.ZodType<OptionEvent> = z
+  .object({
+    scheduleIn: z.object({
+      days: z.number().optional(),
+      minutes: z.number().optional(),
+    }),
+    name: z.string().optional(),
+    group: z.string().optional(),
+    type: z.string(),
+  })
+  .strict();
+
+const Options: z.ZodType<Options> = z
+  .object({
+    targetField: z.string(),
+    baseDatetimeField: z.string(),
+    scheduleEventsNow: z.boolean().optional(),
+    events: z.array(OptionEvent),
+  })
+  .strict();
 
 interface EncounterEvent {
   /**
@@ -84,13 +107,13 @@ export const dispensedDurationTester = rankWith(
 );
 
 const UIComponent = (props: ControlProps) => {
-  const { data, handleChange, label, path, errors, uischema } = props;
-  const options = uischema.options as Options | undefined;
-  const [localData, setLocalData] = useState<number>(
-    options?.targetField ? extractProperty(data, options.targetField) : 0
-  );
+  const { data, handleChange, label, path, uischema } = props;
+  const [localData, setLocalData] = useState<number>();
   const [baseTime, setBaseTime] = useState<string | undefined>();
-
+  const { errors, options } = useZodOptionsValidation(
+    Options,
+    uischema.options
+  );
   const onChange = useDebounceCallback(
     (value: number) => {
       // update events
@@ -119,6 +142,11 @@ const UIComponent = (props: ControlProps) => {
   );
   const error = !!errors;
 
+  useEffect(() => {
+    if (options) {
+      setLocalData(extractProperty(data, options.targetField) ?? 0);
+    }
+  }, [data, options]);
   useEffect(() => {
     setBaseTime(extractProperty(data, options?.baseDatetimeField ?? ''));
   }, [data, options]);

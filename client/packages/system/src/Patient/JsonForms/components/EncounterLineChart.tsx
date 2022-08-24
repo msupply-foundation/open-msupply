@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { rankWith, uiTypeIs, ControlProps } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import { Box } from '@mui/material';
+import { Box, FormLabel } from '@mui/material';
 import {
   Line,
   LineChart,
@@ -11,6 +11,8 @@ import {
 } from '@openmsupply-client/common';
 import { CartesianGrid, Tooltip, TooltipProps, Label } from 'recharts';
 import { useDocument } from '../api';
+import { z } from 'zod';
+import { useZodOptionsValidation } from '../useZodOptionsValidation';
 
 export const encounterLineChartTester = rankWith(
   4,
@@ -18,14 +20,28 @@ export const encounterLineChartTester = rankWith(
 );
 
 type Options = {
-  values?: ValueOption[];
+  values: ValueOption[];
 };
 
 type ValueOption = {
-  field?: string;
-  label?: string;
-  unit?: string;
+  field: string;
+  label: string;
+  unit: string;
 };
+
+const ValueOption: z.ZodType<ValueOption> = z
+  .object({
+    field: z.string(),
+    label: z.string(),
+    unit: z.string(),
+  })
+  .strict();
+
+const Options: z.ZodType<Options> = z
+  .object({
+    values: z.array(ValueOption),
+  })
+  .strict();
 
 type DateTimeTooltipProps = TooltipProps<string, string> & {
   name: string;
@@ -49,9 +65,15 @@ const DateTimeTooltip = (props: DateTimeTooltipProps) => {
 type DataType = { time: number; y: number };
 
 const UIComponent = (props: ControlProps) => {
+  const { visible, uischema } = props;
   const { dayMonthShort } = useFormatDateTime();
 
-  const option = (props.uischema.options as Options | undefined)?.values?.[0];
+  const { errors, options } = useZodOptionsValidation(
+    Options,
+    uischema.options
+  );
+  const option = options?.values[0];
+
   const [data, setData] = useState([] as DataType[]);
   const { data: encounterFields } = useDocument.encounterFields(
     [option?.field ?? ''],
@@ -69,7 +91,10 @@ const UIComponent = (props: ControlProps) => {
     setData(data);
   }, [encounterFields]);
 
-  if (!props.visible || !option) {
+  if (errors) {
+    return <FormLabel>EncounterLineChart: {errors}</FormLabel>;
+  }
+  if (!visible || !option) {
     return null;
   }
   return (
