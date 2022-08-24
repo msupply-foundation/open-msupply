@@ -19,7 +19,7 @@ import { IdGenerator, idGeneratorTester } from './components/IdGenerator';
 import {
   DispensedDuration,
   dispensedDurationTester,
-} from './components/DispendedDuration';
+} from './components/DispensedDuration';
 
 // https://stackoverflow.com/questions/57874879/how-to-treat-missing-undefined-properties-as-equivalent-in-lodashs-isequalwit
 // TODO: handle undefined and empty string as equal? e.g. initial data is undefined and current data is ""
