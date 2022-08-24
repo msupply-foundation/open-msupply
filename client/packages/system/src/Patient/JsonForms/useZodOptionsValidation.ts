@@ -9,11 +9,7 @@ const formatMessage = (issue: ZodIssue): string => {
     case 'invalid_union': {
       const messages = issue.unionErrors.map(it => {
         const issue = it.issues[0];
-        if (!issue) {
-          return '';
-        } else {
-          return formatMessage(issue);
-        }
+        return !issue ? '' : formatMessage(issue);
       });
       return `${messages.join(' OR ')}`;
     }
