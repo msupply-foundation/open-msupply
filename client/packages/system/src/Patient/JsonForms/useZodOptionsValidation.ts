@@ -6,7 +6,7 @@ const formatMessage = (issue: ZodIssue): string => {
     case ZodIssueCode.invalid_type: {
       return `${issue.expected} ${issue.message}`;
     }
-    case 'invalid_union': {
+    case ZodIssueCode.invalid_union: {
       const messages = issue.unionErrors.map(it => {
         const issue = it.issues[0];
         return !issue ? '' : formatMessage(issue);
