@@ -7,3 +7,4 @@ export * from './Date';
 export * from './Array';
 export * from './FirstItemArray';
 export * from './Boolean';
+export * from './CategorizationTabLayout';

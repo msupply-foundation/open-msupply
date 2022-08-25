@@ -1,72 +1,92 @@
 {
-  "type": "VerticalLayout",
+  "type": "Categorization",
   "elements": [
     {
-      "type": "Label",
-      "text": "Encounter",
-      "variant": "h1"
+      "type": "Category",
+      "label": "Physical Exam",
+      "options": { "icon": "stethoscope" },
+      "elements": [
+        {
+          "options": {
+            "values": [{ "field": "physicalExamination.weight", "label": "Weight", "unit": "kg" }]
+          },
+          "scope": "#",
+          "type": "EncounterLineChart"
+        },
+        {
+          "options": {
+            "values": [
+              {
+                "field": "physicalExamination.bloodPressure",
+                "label": "Blood Pressure",
+                "unit": "mmHg"
+              }
+            ]
+          },
+          "scope": "#",
+          "type": "EncounterLineChart"
+        },
+        { "scope": "#/properties/physicalExamination", "type": "Control" }
+      ]
     },
     {
-      "type": "Control",
-      "scope": "#/properties/startDatetime"
+      "type": "Category",
+      "label": "Laboratory",
+      "options": { "icon": "microscope" },
+      "elements": [
+        { "scope": "#/properties/arvMedication/properties/pillCount", "type": "Control" },
+        {
+          "label": "Number Of Days Dispensed",
+          "options": {
+            "baseDatetimeField": "startDatetime",
+            "events": [
+              {
+                "group": "HivCareEncounterDispensingStatus",
+                "name": "Interrupted",
+                "scheduleIn": { "days": 0, "minutes": 1 },
+                "type": "status"
+              },
+              {
+                "group": "HivCareEncounterDispensingStatus",
+                "name": "Lost to follow up",
+                "scheduleIn": { "days": 0, "minutes": 3 },
+                "type": "status"
+              }
+            ],
+            "scheduleEventsNow": true,
+            "targetField": "numberOfDaysDispensed"
+          },
+          "scope": "#",
+          "type": "DispensedDuration"
+        }
+      ]
     },
     {
-      "type": "Control",
-      "scope": "#/properties/endDatetime"
+      "type": "Category",
+      "label": "Family Planning",
+      "options": { "icon": "condom" },
+      "elements": [{ "scope": "#/properties/familyPlanning", "type": "Control" }]
     },
     {
-      "type": "Control",
-      "scope": "#/properties/practitioner"
+      "type": "Category",
+      "label": "Medication",
+      "options": { "icon": "medicine" },
+      "elements": [{ "scope": "#/properties/arvMedication", "type": "Control" }]
     },
     {
-      "type": "Control",
-      "scope": "#/properties/status"
+      "type": "Category",
+      "label": "Risk Beahaviour",
+      "options": { "icon": "document" },
+      "elements": [{ "scope": "#/properties/riskBehaviour", "type": "Control" }]
     },
     {
-      "type": "EncounterLineChart",
-      "scope": "#",
-      "options": {
-        "values": [
-          {
-            "field": "physicalExamination.weight",
-            "label": "Weight",
-            "unit": "kg"
-          }
-        ]
-      }
-    },
-    {
-      "type": "EncounterLineChart",
-      "scope": "#",
-      "options": {
-        "values": [
-          {
-            "field": "physicalExamination.bloodPressure",
-            "label": "Blood Pressure",
-            "unit": "mmHg"
-          }
-        ]
-      }
-    },
-    {
-      "type": "Control",
-      "scope": "#/properties/physicalExamination"
-    },
-    {
-      "type": "Control",
-      "scope": "#/properties/familyPlanning"
-    },
-    {
-      "type": "Control",
-      "scope": "#/properties/arvMedication"
-    },
-    {
-      "type": "Control",
-      "scope": "#/properties/riskBehaviour"
-    },
-    {
-      "type": "Control",
-      "scope": "#/properties/tuberculosis"
+      "type": "Category",
+      "label": "Tuberculosis",
+      "options": { "icon": "lungs" },
+      "elements": [{ "scope": "#/properties/tuberculosis", "type": "Control" }]
     }
-  ]
+  ],
+  "options": {
+    "variant": "tab"
+  }
 }
