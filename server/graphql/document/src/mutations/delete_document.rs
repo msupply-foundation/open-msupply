@@ -47,7 +47,7 @@ pub fn delete_document(
                 DocumentDeleteError::DocumentNotFound => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
-                DocumentDeleteError::CannotDeleteDeletedDocument => {
+                DocumentDeleteError::DocumentHasAlreadyBeenDeleted => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
                 DocumentDeleteError::InternalError(_) => {

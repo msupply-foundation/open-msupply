@@ -46,11 +46,11 @@ pub fn undelete_document(
                 DocumentUndeleteError::DocumentNotFound => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
-                DocumentUndeleteError::ParentDoesNotExist => {
-                    StandardGraphqlError::BadUserInput(formatted_error)
-                }
                 DocumentUndeleteError::CannotUndeleteActiveDocument => {
                     StandardGraphqlError::BadUserInput(formatted_error)
+                }
+                DocumentUndeleteError::ParentDoesNotExist => {
+                    StandardGraphqlError::InternalError(formatted_error)
                 }
                 DocumentUndeleteError::InternalError(_) => {
                     StandardGraphqlError::InternalError(formatted_error)

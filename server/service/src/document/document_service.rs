@@ -40,7 +40,7 @@ pub struct DocumentDelete {
 #[derive(Debug, PartialEq)]
 pub enum DocumentDeleteError {
     DocumentNotFound,
-    CannotDeleteDeletedDocument,
+    DocumentHasAlreadyBeenDeleted,
     DatabaseError(RepositoryError),
     InternalError(String),
 }
@@ -225,7 +225,7 @@ fn validate_document_delete(
             if doc.status == DocumentStatus::Active {
                 doc
             } else {
-                return Err(DocumentDeleteError::CannotDeleteDeletedDocument);
+                return Err(DocumentDeleteError::DocumentHasAlreadyBeenDeleted);
             }
         }
         None => {
@@ -601,6 +601,20 @@ mod document_service_test {
             .unwrap();
         assert_eq!(document.status, DocumentStatus::Deleted);
         assert_eq!(document.data, serde_json::Value::Null);
+
+        // Delete deleted document
+        let deleted_doc = service.delete_document(
+            &context,
+            "",
+            DocumentDelete {
+                id: document.id.clone(),
+                comment: None,
+            },
+        );
+        assert_eq!(
+            deleted_doc,
+            Err(DocumentDeleteError::DocumentHasAlreadyBeenDeleted)
+        );
 
         // Undelete document
         service
