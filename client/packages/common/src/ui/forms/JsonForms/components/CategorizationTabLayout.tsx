@@ -69,12 +69,10 @@ const UIComponent: FC<LayoutProps & AjvProps> = ({
   const [activeCategory, setActiveCategory] = useState<number | undefined>();
   const categorization = uischema as Categorization;
 
-  const categories = categorization.elements
-    .filter(
-      (category: Category | Categorization) =>
-        isVisible(category, data, '', ajv) && category.type === 'Category'
-    )
-    .map(category => category as Category);
+  const categories = categorization.elements.filter(
+    (category: Category | Categorization): category is Category =>
+      isVisible(category, data, '', ajv) && category.type === 'Category'
+  );
 
   const childProps: MaterialLayoutRendererProps = {
     elements:
