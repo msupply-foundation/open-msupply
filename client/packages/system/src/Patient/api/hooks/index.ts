@@ -9,6 +9,7 @@ export const usePatient = {
     search: Utils.usePatientSearch,
   },
   document: {
+    encounters: Document.useEncounters,
     get: Document.usePatient,
     list: Document.usePatients,
     listAll: Document.usePatientsAll,

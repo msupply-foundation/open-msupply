@@ -19,6 +19,7 @@ import {
   startOfToday,
   startOfDay,
   startOfYear,
+  formatRFC3339,
 } from 'date-fns';
 import { enGB, enUS, fr, ar } from 'date-fns/locale';
 
@@ -59,6 +60,7 @@ export const DateUtils = {
   age: (date: Date) => differenceInYears(startOfToday(), startOfDay(date)),
   startOfDay,
   startOfYear,
+  formatRFC3339,
 };
 
 export const useFormatDateTime = () => {

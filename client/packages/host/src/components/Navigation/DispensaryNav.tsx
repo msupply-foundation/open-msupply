@@ -10,7 +10,7 @@ import {
 import { AppRoute } from '@openmsupply-client/config';
 import { useNestedNav } from './useNestedNav';
 
-export const PatientNav: FC = () => {
+export const DispensaryNav: FC = () => {
   const { isActive } = useNestedNav(
     RouteBuilder.create(AppRoute.Dispensary).addWildCard().build()
   );
@@ -33,6 +33,13 @@ export const PatientNav: FC = () => {
               .addPart(AppRoute.Patients)
               .build()}
             text={t('patients')}
+          />
+          <AppNavLink
+            end
+            to={RouteBuilder.create(AppRoute.Dispensary)
+              .addPart(AppRoute.Encounter)
+              .build()}
+            text={t('encounter')}
           />
         </List>
       </Collapse>

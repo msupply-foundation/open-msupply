@@ -9,18 +9,20 @@ import {
   useFormatDateTime,
   useUrlQueryParams,
   ColumnAlign,
+  useNavigate,
+  RouteBuilder,
   EncounterNodeStatus,
   useTranslation,
   LocaleKey,
   TypedTFunction,
   DateUtils,
 } from '@openmsupply-client/common';
-import { EncounterFragment, useEncounter } from './api';
-import { usePatientModalStore } from '../hooks';
-import { PatientModal } from '../PatientView';
+import { usePatient } from '../api';
+import { AppRoute } from 'packages/config/src';
+import { EncounterRowFragment } from '../../Encounter';
 
 const effectiveStatus = (
-  encounter: EncounterFragment,
+  encounter: EncounterRowFragment,
   t: TypedTFunction<LocaleKey>
 ) => {
   const status = encounter.status;
@@ -47,18 +49,16 @@ const effectiveStatus = (
 };
 
 type EncounterFragmentExt = {
-  id: string;
   effectiveStatus: string;
-} & EncounterFragment;
+} & EncounterRowFragment;
 
 const useExtendEncounterFragment = (
-  nodes?: EncounterFragment[]
+  nodes?: EncounterRowFragment[]
 ): EncounterFragmentExt[] | undefined => {
   const t = useTranslation('common');
   return useMemo(
     () =>
       nodes?.map(node => ({
-        id: node.name,
         effectiveStatus: effectiveStatus(node, t),
         ...node,
       })),
@@ -72,12 +72,12 @@ const EncounterListComponent: FC = () => {
     updatePaginationQuery,
     queryParams: { sortBy, page, first, offset },
   } = useUrlQueryParams();
-  const { data, isError, isLoading } = useEncounter.document.list();
-  const dataWithId: EncounterFragmentExt[] | undefined =
+  const { data, isError, isLoading } = usePatient.document.encounters();
+  const dataExt: EncounterFragmentExt[] | undefined =
     useExtendEncounterFragment(data?.nodes);
   const pagination = { page, first, offset };
   const { localisedDateTime } = useFormatDateTime();
-  const { setCurrent, setDocument, setProgramType } = usePatientModalStore();
+  const navigate = useNavigate();
 
   const columns = useColumns<EncounterFragmentExt>(
     [
@@ -118,13 +118,16 @@ const EncounterListComponent: FC = () => {
       pagination={{ ...pagination, total: data?.totalCount }}
       onChangePage={updatePaginationQuery}
       columns={columns}
-      data={dataWithId}
+      data={dataExt}
       isLoading={isLoading}
       isError={isError}
       onRowClick={row => {
-        setDocument({ type: row.type, name: row.name });
-        setProgramType(row.program);
-        setCurrent(PatientModal.Encounter);
+        navigate(
+          RouteBuilder.create(AppRoute.Dispensary)
+            .addPart(AppRoute.Encounter)
+            .addPart(row.id)
+            .build()
+        );
       }}
       noDataElement={<NothingHere />}
     />
@@ -135,7 +138,7 @@ export const EncounterListView: FC = () => (
   <TableProvider
     createStore={createTableStore}
     queryParamsStore={createQueryParamsStore<EncounterFragmentExt>({
-      initialSortBy: { key: 'type' },
+      initialSortBy: { key: 'startDatetime' },
     })}
   >
     <EncounterListComponent />

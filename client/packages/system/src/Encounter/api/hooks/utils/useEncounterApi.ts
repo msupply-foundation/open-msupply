@@ -6,6 +6,7 @@ export const useEncounterApi = () => {
   const { storeId } = useAuthContext();
   const keys = {
     base: () => ['encounter'] as const,
+    detail: (id: string) => [...keys.base(), storeId, id] as const,
     list: () => [...keys.base(), storeId, 'list'] as const,
     paramList: (params: ListParams) => [...keys.list(), params] as const,
   };

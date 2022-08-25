@@ -10,7 +10,7 @@ import {
   useDialog,
 } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
-import { useEncounter } from './api/hooks';
+import { useEncounter } from '../../Encounter';
 import { usePatientModalStore } from '../hooks';
 import { PatientModal } from '../PatientView';
 import { ProgramRowFragmentWithId, usePatient } from '../api';

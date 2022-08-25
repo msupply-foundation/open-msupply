@@ -1,3 +1,24 @@
+fragment EncounterRow on EncounterNode {
+  id
+  document {
+    documentRegistry {
+      name
+    }
+  }
+  program
+  startDatetime
+  endDatetime
+  status
+  name
+  type
+  patient {
+    id
+    firstName
+    lastName
+    name
+  }
+}
+
 fragment EncounterDocumentRegistry on DocumentRegistryNode {
   context
   documentType
@@ -8,6 +29,9 @@ fragment EncounterDocumentRegistry on DocumentRegistryNode {
   parentId
   uiSchema
   uiSchemaType
+  children {
+    id
+  }
 }
 
 fragment EncounterDocument on DocumentNode {
@@ -27,7 +51,12 @@ fragment Encounter on EncounterNode {
   type
   name
   status
-  patientId
+  patient {
+    id
+    firstName
+    lastName
+    name
+  }
   program
   startDatetime
   endDatetime
@@ -49,7 +78,7 @@ query encounters(
   ) {
     ... on EncounterConnector {
       nodes {
-        ...Encounter
+        ...EncounterRow
       }
       totalCount
     }
@@ -61,6 +90,18 @@ query encounterDocumentRegistries($filter: DocumentRegistryFilterInput) {
     ... on DocumentRegistryConnector {
       nodes {
         ...EncounterDocumentRegistry
+      }
+      totalCount
+    }
+  }
+}
+
+query encounterById($storeId: String!, $encounterId: String!) {
+  encounters(storeId: $storeId, filter: { id: { equalTo: $encounterId } }) {
+    ... on EncounterConnector {
+      __typename
+      nodes {
+        ...Encounter
       }
       totalCount
     }
