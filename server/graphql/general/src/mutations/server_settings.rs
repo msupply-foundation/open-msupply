@@ -6,7 +6,8 @@ use graphql_core::{
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    settings_service::UpdateSettingsError, sync::settings::SyncSettings,
+    settings_service::UpdateSettingsError,
+    sync::settings::SyncSettings,
 };
 use util::hash::sha256;
 
@@ -27,7 +28,6 @@ pub struct UpdateSyncSettingsInput {
     /// Sync interval in sec
     pub interval_sec: u64,
     pub central_server_site_id: u32,
-    pub site_id: u32,
 }
 
 #[derive(InputObject)]
@@ -99,7 +99,6 @@ impl UpdateSyncSettingsInput {
             password_sha256: sha256(&self.password),
             interval_sec: self.interval_sec,
             central_server_site_id: self.central_server_site_id,
-            site_id: self.site_id,
         }
     }
 }

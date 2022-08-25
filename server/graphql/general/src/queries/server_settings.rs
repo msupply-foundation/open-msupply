@@ -43,10 +43,6 @@ impl SyncSettingsNode {
     pub async fn central_server_site_id(&self) -> u32 {
         self.settings.central_server_site_id
     }
-
-    pub async fn site_id(&self) -> u32 {
-        self.settings.site_id
-    }
 }
 
 #[derive(Debug)]

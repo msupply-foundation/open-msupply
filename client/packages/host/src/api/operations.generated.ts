@@ -4,7 +4,7 @@ import { GraphQLClient } from 'graphql-request';
 import * as Dom from 'graphql-request/dist/types.dom';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type SyncSettingsFragment = { __typename: 'SyncSettingsNode', centralServerSiteId: number, intervalSec: number, siteId: number, url: string, username: string };
+export type SyncSettingsFragment = { __typename: 'SyncSettingsNode', centralServerSiteId: number, intervalSec: number, url: string, username: string };
 
 export type ApiVersionQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
@@ -14,7 +14,7 @@ export type ApiVersionQuery = { __typename: 'FullQuery', apiVersion: string };
 export type ServerSettingsQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
 
-export type ServerSettingsQuery = { __typename: 'FullQuery', serverSettings: { __typename: 'ServerSettingsNode', status: Types.ServerStatus, syncSettingsDb?: { __typename: 'SyncSettingsNode', centralServerSiteId: number, intervalSec: number, siteId: number, url: string, username: string } | null, syncSettings?: { __typename: 'SyncSettingsNode', centralServerSiteId: number, intervalSec: number, siteId: number, url: string, username: string } | null } };
+export type ServerSettingsQuery = { __typename: 'FullQuery', serverSettings: { __typename: 'ServerSettingsNode', status: Types.ServerStatus, syncSettingsDb?: { __typename: 'SyncSettingsNode', centralServerSiteId: number, intervalSec: number, url: string, username: string } | null, syncSettings?: { __typename: 'SyncSettingsNode', centralServerSiteId: number, intervalSec: number, url: string, username: string } | null } };
 
 export type ServerRestartQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
@@ -33,7 +33,6 @@ export const SyncSettingsFragmentDoc = gql`
   __typename
   centralServerSiteId
   intervalSec
-  siteId
   url
   username
 }

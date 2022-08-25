@@ -18,14 +18,12 @@ interface InitialiseForm {
   error?: AuthenticationError;
   isLoading: boolean;
   password: string;
-  siteId?: number;
   username: string;
   url: string;
   setError: (error?: AuthenticationError) => void;
   setIsLoading: (isLoading: boolean) => void;
   setPassword: (password: string) => void;
   setUsername: (username: string) => void;
-  setSiteId: (siteId: number) => void;
   setUrl: (url: string) => void;
 }
 
@@ -35,14 +33,12 @@ const useInitialiseFormState = create<InitialiseForm>(set => ({
   password: '',
   username: '',
   url: 'https://',
-  siteId: undefined,
   setError: (error?: AuthenticationError) =>
     set(state => ({ ...state, error })),
   setIsLoading: (isLoading: boolean) => set(state => ({ ...state, isLoading })),
   setPassword: (password: string) => set(state => ({ ...state, password })),
   setUsername: (username: string) => set(state => ({ ...state, username })),
   setUrl: (url: string) => set(state => ({ ...state, url })),
-  setSiteId: (siteId: number) => set(state => ({ ...state, siteId })),
 }));
 
 export const useInitialiseForm = () => {
@@ -57,7 +53,6 @@ export const useInitialiseForm = () => {
     error,
     setError,
     url,
-    siteId,
   } = state;
   const [isPolling, setIsPolling] = useState(false);
   const [isBootstrap, setIsBootstrap] = useState(false);
@@ -75,7 +70,6 @@ export const useInitialiseForm = () => {
       centralServerSiteId: 1,
       intervalSec: 300,
       password,
-      siteId: siteId || 2,
       url,
       username,
     };
