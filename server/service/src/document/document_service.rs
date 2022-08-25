@@ -150,8 +150,8 @@ pub trait DocumentServiceTrait: Sync + Send {
         let document = ctx
             .connection
             .transaction_sync(|con| {
-                let current_document = validate_document_undelete(con, &input.id)?;
-                let document = generate_undeleted_document(con, current_document, user_id)?;
+                let parent_doc = validate_document_undelete(con, &input.id)?;
+                let document = generate_undeleted_document(&input.id, parent_doc, user_id)?;
 
                 match DocumentRepository::new(con).insert(&document) {
                     Ok(_) => Ok(document),
@@ -251,7 +251,20 @@ fn validate_document_undelete(
             return Err(DocumentUndeleteError::DocumentNotFound);
         }
     };
-    Ok(doc)
+
+    let parent = match doc.parent_ids.last() {
+        Some(parent) => parent,
+        None => "",
+    };
+
+    let deleted_document_parent =
+        match DocumentRepository::new(connection).find_one_by_id(&parent.clone()) {
+            Ok(Some(doc)) => doc,
+            Ok(None) => return Err(DocumentUndeleteError::ParentDoesNotExist),
+            Err(err) => return Err(DocumentUndeleteError::DatabaseError(err)),
+        };
+
+    Ok(deleted_document_parent)
 }
 
 fn generate_deleted_document(
@@ -277,25 +290,13 @@ fn generate_deleted_document(
 }
 
 fn generate_undeleted_document(
-    connection: &StorageConnection,
-    current_document: Document,
+    id: &str,
+    deleted_document_parent: Document,
     user_id: &str,
 ) -> Result<Document, DocumentUndeleteError> {
-    let parent = match current_document.parent_ids.last() {
-        Some(parent) => parent,
-        None => "",
-    };
-
-    let deleted_document_parent =
-        match DocumentRepository::new(connection).find_one_by_id(&parent.clone()) {
-            Ok(Some(doc)) => doc,
-            Ok(None) => return Err(DocumentUndeleteError::ParentDoesNotExist),
-            Err(err) => return Err(DocumentUndeleteError::DatabaseError(err)),
-        };
-
     let undeleted_doc = RawDocument {
         name: deleted_document_parent.name,
-        parents: vec![current_document.id.clone()],
+        parents: vec![id.to_string()],
         author: user_id.to_string(),
         timestamp: Utc::now(),
         r#type: deleted_document_parent.r#type,
