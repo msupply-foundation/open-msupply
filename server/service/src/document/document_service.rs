@@ -1,7 +1,8 @@
+use chrono::Utc;
 use jsonschema::JSONSchema;
 use repository::{
-    Document, DocumentFilter, DocumentRepository, FormSchemaRowRepository, RepositoryError,
-    StorageConnection,
+    Document, DocumentFilter, DocumentRepository, DocumentStatus, FormSchemaRowRepository,
+    RepositoryError, StorageConnection,
 };
 
 use crate::service_provider::ServiceContext;
@@ -27,6 +28,46 @@ pub enum DocumentHistoryError {
 impl From<RepositoryError> for DocumentHistoryError {
     fn from(err: RepositoryError) -> Self {
         DocumentHistoryError::DatabaseError(err)
+    }
+}
+
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct DocumentDelete {
+    pub id: String,
+    pub comment: Option<String>,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum DocumentDeleteError {
+    DocumentNotFound,
+    DocumentHasAlreadyBeenDeleted,
+    DatabaseError(RepositoryError),
+    InternalError(String),
+}
+
+impl From<RepositoryError> for DocumentDeleteError {
+    fn from(err: RepositoryError) -> Self {
+        DocumentDeleteError::DatabaseError(err)
+    }
+}
+
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct DocumentUndelete {
+    pub id: String,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum DocumentUndeleteError {
+    DocumentNotFound,
+    ParentDoesNotExist,
+    CannotUndeleteActiveDocument,
+    DatabaseError(RepositoryError),
+    InternalError(String),
+}
+
+impl From<RepositoryError> for DocumentUndeleteError {
+    fn from(err: RepositoryError) -> Self {
+        DocumentUndeleteError::DatabaseError(err)
     }
 }
 
@@ -75,6 +116,47 @@ pub trait DocumentServiceTrait: Sync + Send {
                 }
 
                 insert_document(con, doc)
+            })
+            .map_err(|err| err.to_inner_error())?;
+        Ok(document)
+    }
+
+    fn delete_document(
+        &self,
+        ctx: &ServiceContext,
+        user_id: &str,
+        input: DocumentDelete,
+    ) -> Result<(), DocumentDeleteError> {
+        ctx.connection
+            .transaction_sync(|con| {
+                let current_document = validate_document_delete(con, &input.id)?;
+                let document = generate_deleted_document(input, current_document, user_id)?;
+
+                match DocumentRepository::new(con).insert(&document) {
+                    Ok(_) => Ok(()),
+                    Err(error) => Err(DocumentDeleteError::DatabaseError(error)),
+                }
+            })
+            .map_err(|err| err.to_inner_error())?;
+        Ok(())
+    }
+
+    fn undelete_document(
+        &self,
+        ctx: &ServiceContext,
+        user_id: &str,
+        input: DocumentUndelete,
+    ) -> Result<Document, DocumentUndeleteError> {
+        let document = ctx
+            .connection
+            .transaction_sync(|con| {
+                let parent_doc = validate_document_undelete(con, &input.id)?;
+                let document = generate_undeleted_document(&input.id, parent_doc, user_id)?;
+
+                match DocumentRepository::new(con).insert(&document) {
+                    Ok(_) => Ok(document),
+                    Err(error) => Err(DocumentUndeleteError::DatabaseError(error)),
+                }
             })
             .map_err(|err| err.to_inner_error())?;
         Ok(document)
@@ -134,6 +216,101 @@ fn validate_parents(
     Ok(None)
 }
 
+fn validate_document_delete(
+    connection: &StorageConnection,
+    id: &str,
+) -> Result<Document, DocumentDeleteError> {
+    let doc = match DocumentRepository::new(connection).find_one_by_id(id)? {
+        Some(doc) => {
+            if doc.status == DocumentStatus::Active {
+                doc
+            } else {
+                return Err(DocumentDeleteError::DocumentHasAlreadyBeenDeleted);
+            }
+        }
+        None => {
+            return Err(DocumentDeleteError::DocumentNotFound);
+        }
+    };
+    Ok(doc)
+}
+
+fn validate_document_undelete(
+    connection: &StorageConnection,
+    id: &str,
+) -> Result<Document, DocumentUndeleteError> {
+    let doc = match DocumentRepository::new(connection).find_one_by_id(id)? {
+        Some(doc) => {
+            if doc.status == DocumentStatus::Deleted {
+                doc
+            } else {
+                return Err(DocumentUndeleteError::CannotUndeleteActiveDocument);
+            }
+        }
+        None => {
+            return Err(DocumentUndeleteError::DocumentNotFound);
+        }
+    };
+
+    let parent = match doc.parent_ids.last() {
+        Some(parent) => parent,
+        None => "",
+    };
+
+    let deleted_document_parent =
+        match DocumentRepository::new(connection).find_one_by_id(&parent.clone()) {
+            Ok(Some(doc)) => doc,
+            Ok(None) => return Err(DocumentUndeleteError::ParentDoesNotExist),
+            Err(err) => return Err(DocumentUndeleteError::DatabaseError(err)),
+        };
+
+    Ok(deleted_document_parent)
+}
+
+fn generate_deleted_document(
+    input: DocumentDelete,
+    current_document: Document,
+    user_id: &str,
+) -> Result<Document, DocumentDeleteError> {
+    let doc = RawDocument {
+        name: current_document.name,
+        parents: vec![current_document.id.clone()],
+        author: user_id.to_string(),
+        timestamp: Utc::now(),
+        r#type: current_document.r#type,
+        data: serde_json::Value::Null,
+        schema_id: current_document.schema_id,
+        status: DocumentStatus::Deleted,
+        comment: input.comment,
+    }
+    .finalise()
+    .map_err(|err| DocumentDeleteError::InternalError(err))?;
+
+    Ok(doc)
+}
+
+fn generate_undeleted_document(
+    id: &str,
+    deleted_document_parent: Document,
+    user_id: &str,
+) -> Result<Document, DocumentUndeleteError> {
+    let undeleted_doc = RawDocument {
+        name: deleted_document_parent.name,
+        parents: vec![id.to_string()],
+        author: user_id.to_string(),
+        timestamp: Utc::now(),
+        r#type: deleted_document_parent.r#type,
+        data: deleted_document_parent.data,
+        schema_id: deleted_document_parent.schema_id,
+        status: DocumentStatus::Active,
+        comment: None,
+    }
+    .finalise()
+    .map_err(|err| DocumentUndeleteError::InternalError(err))?;
+
+    Ok(undeleted_doc)
+}
+
 /// Does a raw insert without schema validation
 fn insert_document(
     connection: &StorageConnection,
@@ -151,8 +328,9 @@ fn insert_document(
 mod document_service_test {
     use chrono::{DateTime, NaiveDateTime, Utc};
     use repository::{
-        mock::{mock_form_schema_empty, mock_form_schema_simple, MockDataInserts},
+        mock::{document_a, mock_form_schema_empty, mock_form_schema_simple, MockDataInserts},
         test_db::setup_all,
+        DocumentStatus,
     };
     use serde_json::json;
 
@@ -190,6 +368,8 @@ mod document_service_test {
                       "version": 1,
                     }),
                     schema_id: None,
+                    status: DocumentStatus::Active,
+                    comment: None,
                 },
             )
             .unwrap();
@@ -209,6 +389,8 @@ mod document_service_test {
                   "version": 2,
                 }),
                 schema_id: None,
+                status: DocumentStatus::Active,
+                comment: None,
             },
         );
         assert!(matches!(result, Err(DocumentInsertError::InvalidParent(_))));
@@ -230,6 +412,8 @@ mod document_service_test {
                       "version": 2,
                     }),
                     schema_id: None,
+                    status: DocumentStatus::Active,
+                    comment: None,
                 },
             )
             .unwrap();
@@ -255,6 +439,8 @@ mod document_service_test {
                       "version": 1,
                     }),
                     schema_id: None,
+                    status: DocumentStatus::Active,
+                    comment: None,
                 },
             )
             .unwrap();
@@ -295,6 +481,8 @@ mod document_service_test {
                       "map": {},
                     }),
                     schema_id: Some(schema.id),
+                    status: DocumentStatus::Active,
+                    comment: None,
                 },
             )
             .unwrap();
@@ -314,6 +502,8 @@ mod document_service_test {
                   "map": {},
                 }),
                 schema_id: Some(schema.id),
+                status: DocumentStatus::Active,
+                comment: None,
             },
         );
         assert!(matches!(
@@ -336,6 +526,8 @@ mod document_service_test {
                   "strValue": 9,
                 }),
                 schema_id: Some(schema.id),
+                status: DocumentStatus::Active,
+                comment: None,
             },
         );
         assert!(matches!(
@@ -362,8 +554,91 @@ mod document_service_test {
                       "strValue": "str",
                     }),
                     schema_id: Some(schema.id),
+                    status: DocumentStatus::Active,
+                    comment: None,
                 },
             )
             .unwrap();
+    }
+
+    #[actix_rt::test]
+    async fn test_document_deletion() {
+        let (_, _, connection_manager, _) =
+            setup_all("document_deletion", MockDataInserts::all()).await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "");
+        let context = service_provider.basic_context().unwrap();
+
+        let service = service_provider.document_service;
+
+        // Delete document NotFound
+        let invalid_doc_deletion = service.delete_document(
+            &context,
+            "",
+            DocumentDelete {
+                id: "invalid".to_string(),
+                comment: None,
+            },
+        );
+        assert_eq!(
+            invalid_doc_deletion,
+            Err(DocumentDeleteError::DocumentNotFound)
+        );
+
+        // Delete document
+        service
+            .delete_document(
+                &context,
+                "",
+                DocumentDelete {
+                    id: document_a().id,
+                    comment: Some("Testing deletion".to_string()),
+                },
+            )
+            .unwrap();
+        let document = service
+            .get_document(&context, &document_a().name)
+            .unwrap()
+            .unwrap();
+        assert_eq!(document.status, DocumentStatus::Deleted);
+        assert_eq!(document.data, serde_json::Value::Null);
+
+        // Delete deleted document
+        let deleted_doc = service.delete_document(
+            &context,
+            "",
+            DocumentDelete {
+                id: document.id.clone(),
+                comment: None,
+            },
+        );
+        assert_eq!(
+            deleted_doc,
+            Err(DocumentDeleteError::DocumentHasAlreadyBeenDeleted)
+        );
+
+        // Undelete document
+        service
+            .undelete_document(&context, "", DocumentUndelete { id: document.id })
+            .unwrap();
+        let undeleted_document = service
+            .get_document(&context, &document_a().name)
+            .unwrap()
+            .unwrap();
+        assert_eq!(undeleted_document.status, DocumentStatus::Active);
+        assert_eq!(undeleted_document.data, document_a().data);
+
+        // Undelete an active document
+        let undelete_active_document = service.undelete_document(
+            &context,
+            "",
+            DocumentUndelete {
+                id: undeleted_document.id,
+            },
+        );
+        assert_eq!(
+            undelete_active_document,
+            Err(DocumentUndeleteError::CannotUndeleteActiveDocument)
+        );
     }
 }

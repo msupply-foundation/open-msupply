@@ -108,6 +108,8 @@ fn generate(
         r#type: existing.r#type,
         data: input.data,
         schema_id: Some(input.schema_id),
+        status: existing.status,
+        comment: None,
     })
 }
 
