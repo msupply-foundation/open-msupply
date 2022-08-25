@@ -44,6 +44,7 @@ mod test {
         });
 
         let result = create_api(&url, "", "").get_site_info().await;
+        println!("{:?}", result);
 
         mock.assert();
 

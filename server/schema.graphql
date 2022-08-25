@@ -1944,7 +1944,6 @@ type SyncSettingsNode {
   """
   intervalSec: Int!
   centralServerSiteId: Int!
-  siteId: Int!
 =}
 input TaxUpdate {
   """
@@ -2279,7 +2278,6 @@ input UpdateSyncSettingsInput {
   """
   intervalSec: Int!
   centralServerSiteId: Int!
-  siteId: Int!
 }
 type UseSuggestedQuantityError {
   error: UseSuggestedQuantityErrorInterface!
