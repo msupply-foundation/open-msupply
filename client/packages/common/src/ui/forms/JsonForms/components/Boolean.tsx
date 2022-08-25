@@ -34,7 +34,7 @@ const UIComponent = (props: ControlProps) => {
           onChange={(_, checked) => {
             handleChange(path, checked);
           }}
-          value={data}
+          value={data ?? ''}
           checked={data}
           disabled={!enabled}
         />

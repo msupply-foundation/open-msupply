@@ -6,6 +6,7 @@
       "label": "Physical Exam",
       "options": { "icon": "stethoscope" },
       "elements": [
+        { "scope": "#/properties/physicalExamination", "type": "Control" },
         {
           "options": {
             "values": [{ "field": "physicalExamination.weight", "label": "Weight", "unit": "kg" }]
@@ -25,8 +26,7 @@
           },
           "scope": "#",
           "type": "EncounterLineChart"
-        },
-        { "scope": "#/properties/physicalExamination", "type": "Control" }
+        }
       ]
     },
     {

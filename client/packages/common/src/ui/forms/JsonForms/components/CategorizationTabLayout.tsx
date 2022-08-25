@@ -93,15 +93,17 @@ const UIComponent: FC<LayoutProps & AjvProps> = ({
 
   return (
     <Grid
+      item
       display="flex"
-      container
-      padding={2}
       justifyContent="space-evenly"
+      alignContent="space-evenly"
+      flex={1}
       flexWrap="wrap"
       gap={2}
+      padding={2}
     >
       {categories.map((category: Category, idx: number) => (
-        <>
+        <Grid item key={category.label}>
           <Button
             variant="outlined"
             startIcon={<Icon className={`${category.options?.['icon']}`} />}
@@ -128,7 +130,7 @@ const UIComponent: FC<LayoutProps & AjvProps> = ({
           >
             <MaterialLayoutRenderer {...childProps} />
           </CategoryModal>
-        </>
+        </Grid>
       ))}
     </Grid>
   );
