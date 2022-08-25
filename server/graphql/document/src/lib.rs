@@ -3,6 +3,9 @@ use graphql_core::pagination::PaginationInput;
 use mutations::allocate_number::allocate_number;
 use mutations::allocate_number::AllocateNumberInput;
 use mutations::allocate_number::AllocateNumberResponse;
+use mutations::delete_document::delete_document;
+use mutations::delete_document::DeleteDocumentInput;
+use mutations::delete_document::DeleteDocumentResponse;
 use mutations::encounter::insert::insert_encounter;
 use mutations::encounter::insert::InsertEncounterInput;
 use mutations::encounter::insert::InsertEncounterResponse;
@@ -21,6 +24,9 @@ use mutations::program::insert::InsertProgramResponse;
 use mutations::program::update::update_program;
 use mutations::program::update::UpdateProgramInput;
 use mutations::program::update::UpdateProgramResponse;
+use mutations::undelete_document::undelete_document;
+use mutations::undelete_document::UndeleteDocumentInput;
+use mutations::undelete_document::UndeleteDocumentResponse;
 use mutations::update_document::*;
 use types::document::DocumentNode;
 use types::json_schema::FormSchemaNode;
@@ -167,6 +173,24 @@ impl DocumentMutations {
         input: UpdateDocumentInput,
     ) -> Result<UpdateDocumentResponse> {
         update_document(ctx, store_id, input)
+    }
+
+    async fn delete_document(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: DeleteDocumentInput,
+    ) -> Result<DeleteDocumentResponse> {
+        delete_document(ctx, store_id, input)
+    }
+
+    async fn undelete_document(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: UndeleteDocumentInput,
+    ) -> Result<UndeleteDocumentResponse> {
+        undelete_document(ctx, store_id, input)
     }
 
     async fn insert_document_registry(

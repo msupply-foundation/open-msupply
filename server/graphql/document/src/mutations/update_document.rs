@@ -1,8 +1,8 @@
 use async_graphql::*;
 use chrono::{DateTime, Utc};
 use repository::{
-    DocumentContext, DocumentRegistryFilter, DocumentRegistryRepository, EqualFilter,
-    StorageConnection,
+    DocumentContext, DocumentRegistryFilter, DocumentRegistryRepository, DocumentStatus,
+    EqualFilter, StorageConnection,
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -170,6 +170,8 @@ fn input_to_raw_document(
         r#type,
         data,
         schema_id,
+        status: DocumentStatus::Active,
+        comment: None,
     }
 }
 

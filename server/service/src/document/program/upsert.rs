@@ -1,5 +1,5 @@
 use chrono::Utc;
-use repository::{Document, DocumentRepository, RepositoryError, TransactionError};
+use repository::{Document, DocumentRepository, DocumentStatus, RepositoryError, TransactionError};
 
 use crate::{
     document::{
@@ -92,6 +92,8 @@ fn generate(user_id: &str, input: UpsertProgram) -> Result<RawDocument, Reposito
         r#type: input.r#type,
         data: input.data,
         schema_id: Some(input.schema_id),
+        status: DocumentStatus::Active,
+        comment: None,
     })
 }
 
