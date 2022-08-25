@@ -6,7 +6,9 @@ CREATE TABLE document (
     timestamp TIMESTAMP NOT NULL,
     type TEXT NOT NULL,
     data TEXT NOT NULL,
-    schema_id TEXT REFERENCES form_schema(id)
+    schema_id TEXT REFERENCES form_schema(id),
+    status TEXT NOT NULL,
+    comment TEXT
 );
 
 CREATE VIEW latest_document AS

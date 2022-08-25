@@ -55,7 +55,7 @@ pub fn update_program(
             r#type: input.r#type,
         },
     ) {
-        Ok((_, document)) => Ok(UpdateProgramResponse::Response(DocumentNode { document })),
+        Ok(document) => Ok(UpdateProgramResponse::Response(DocumentNode { document })),
         Err(error) => {
             let formatted_error = format!("{:#?}", error);
             let std_err = match error {

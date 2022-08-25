@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use repository::Document;
+use repository::{Document, DocumentStatus};
 use serde::{Deserialize, Serialize};
 use util::{canonical_json::canonical_json, hash::sha256};
 
@@ -15,6 +15,9 @@ pub struct RawDocument {
     pub data: serde_json::Value,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub schema_id: Option<String>,
+    pub status: DocumentStatus,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub comment: Option<String>,
 }
 
 impl RawDocument {
@@ -36,6 +39,8 @@ impl RawDocument {
             r#type,
             data,
             schema_id,
+            status,
+            comment,
         } = self;
         Ok(Document {
             id,
@@ -46,6 +51,8 @@ impl RawDocument {
             r#type,
             data,
             schema_id,
+            status,
+            comment,
         })
     }
 }
@@ -53,6 +60,7 @@ impl RawDocument {
 #[cfg(test)]
 mod document_id_test {
     use chrono::TimeZone;
+    use repository::DocumentStatus;
     use serde_json::*;
 
     use super::*;
@@ -70,9 +78,11 @@ mod document_id_test {
               "a": "avalue",
             }),
             schema_id: None,
+            status: DocumentStatus::Active,
+            comment: None,
         };
         let document = raw.finalise().unwrap();
-        let expected_json_string = r#"{"author":"author","data":{"a":"avalue","b":0.3453333},"name":"name","parents":["p1"],"timestamp":"1970-01-01T00:00:01Z","type":"test"}"#;
+        let expected_json_string = r#"{"author":"author","data":{"a":"avalue","b":0.3453333},"name":"name","parents":["p1"],"status":"Active","timestamp":"1970-01-01T00:00:01Z","type":"test"}"#;
         let expected_id = sha256(expected_json_string);
         assert_eq!(document.id, expected_id);
     }

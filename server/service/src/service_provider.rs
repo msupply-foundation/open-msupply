@@ -17,6 +17,7 @@ use crate::{
         form_schema_service::{FormSchemaService, FormSchemaServiceTrait},
         patient::{PatientService, PatientServiceTrait},
         program::{ProgramService, ProgramServiceTrait},
+        program_event::{ProgramEventService, ProgramEventServiceTrait},
     },
     invoice::{InvoiceService, InvoiceServiceTrait},
     invoice_line::{InvoiceLineService, InvoiceLineServiceTrait},
@@ -64,6 +65,7 @@ pub struct ServiceProvider {
     pub patient_service: Box<dyn PatientServiceTrait>,
     pub program_service: Box<dyn ProgramServiceTrait>,
     pub encounter_service: Box<dyn EncounterServiceTrait>,
+    pub program_event_service: Box<dyn ProgramEventServiceTrait>,
 
     // Settings
     pub settings: Box<dyn SettingsServiceTrait>,
@@ -100,6 +102,7 @@ impl ServiceProvider {
             form_schema_service: Box::new(FormSchemaService {}),
             patient_service: Box::new(PatientService {}),
             program_service: Box::new(ProgramService {}),
+            program_event_service: Box::new(ProgramEventService {}),
             encounter_service: Box::new(EncounterService {}),
             settings: Box::new(SettingsService {}),
             app_data_service: Box::new(AppDataService::new(app_data_folder)),

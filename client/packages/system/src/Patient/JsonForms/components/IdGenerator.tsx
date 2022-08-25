@@ -18,6 +18,8 @@ import {
 import { Button, FormLabel } from '@mui/material';
 import { get as extractProperty } from 'lodash';
 import { useDocument } from '../api';
+import { z } from 'zod';
+import { useZodOptionsValidation } from '../useZodOptionsValidation';
 
 export const idGeneratorTester = rankWith(10, uiTypeIs('IdGenerator'));
 
@@ -81,6 +83,44 @@ type NumberPart = {
 };
 
 type Part = FieldPart | StoreCodePart | StoreNamePart | NumberPart;
+
+const StringMutation: z.ZodType<StringMutation> = z
+  .object({
+    firstNChars: z.number().optional(),
+    lastNChars: z.number().optional(),
+    toUpperCase: z.boolean().optional(),
+    mapping: z.record(z.string()).optional(),
+    padString: z.string().optional(),
+  })
+  .strict();
+
+const Part: z.ZodType<Part> = z.discriminatedUnion('type', [
+  z.object({
+    type: z.literal('Field'),
+    field: z.union([z.string(), z.array(z.string())]),
+    mutations: z.array(StringMutation),
+  }),
+  z.object({
+    type: z.literal('StoreCode'),
+    mutations: z.array(StringMutation),
+  }),
+  z.object({
+    type: z.literal('StoreName'),
+    mutations: z.array(StringMutation),
+  }),
+  z.object({
+    type: z.literal('Number'),
+    numberName: z.string(),
+    mutations: z.array(StringMutation),
+  }),
+]);
+
+const GeneratorOptions: z.ZodType<GeneratorOptions> = z
+  .object({
+    targetField: z.string(),
+    parts: z.array(Part),
+  })
+  .strict();
 
 const validateFields = (
   options: GeneratorOptions,
@@ -172,11 +212,26 @@ const generateId = async (input: GenerateIdInput): Promise<string> => {
 const UIComponent = (props: ControlProps) => {
   const { label, path, data, visible, handleChange, uischema, config } = props;
   const t = useTranslation('common');
-  const options = uischema.options as GeneratorOptions | undefined;
   const { mutateAsync: mutateGenerateId } = useMutation(
     async (input: GenerateIdInput): Promise<string> => generateId(input)
   );
   const { mutateAsync: allocateNumber } = useDocument.utils.allocateNumber();
+
+  const { errors, options } = useZodOptionsValidation(
+    GeneratorOptions,
+    uischema.options
+  );
+
+  const value = options?.targetField
+    ? extractProperty(data, options.targetField)
+    : undefined;
+  const validationError = useMemo(() => {
+    if (!options) {
+      return;
+    }
+    return validateFields(options, data);
+  }, [options, data, value]);
+  const error = !!validationError || !!errors;
 
   const generate = useCallback(async () => {
     if (!options) {
@@ -191,15 +246,6 @@ const UIComponent = (props: ControlProps) => {
     const fullPath = composePaths(path, options?.targetField);
     handleChange(fullPath, id);
   }, [options, path, data, handleChange]);
-
-  const value = options?.targetField ? data[options?.targetField] : undefined;
-
-  const error = useMemo(() => {
-    if (!options) {
-      return;
-    }
-    return validateFields(options, data);
-  }, [options, data, value]);
 
   if (!visible) {
     return null;
@@ -222,10 +268,15 @@ const UIComponent = (props: ControlProps) => {
         alignItems="center"
         gap={2}
       >
-        <BasicTextInput disabled={true} value={value} style={{ flex: 1 }} />
+        <BasicTextInput
+          disabled={true}
+          value={value}
+          style={{ flex: 1 }}
+          helperText={errors}
+        />
 
         <Box>
-          <Button disabled={!!error} onClick={generate} variant="outlined">
+          <Button disabled={error} onClick={generate} variant="outlined">
             {t('label.generate')}
           </Button>
         </Box>
