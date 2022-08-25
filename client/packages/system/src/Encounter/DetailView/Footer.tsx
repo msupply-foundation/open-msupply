@@ -13,10 +13,11 @@ import { AppRoute } from 'packages/config/src';
 
 interface FooterProps {
   isDisabled: boolean;
+  onCancel: () => void;
   onSave: () => void;
 }
 
-export const Footer: FC<FooterProps> = ({ isDisabled, onSave }) => {
+export const Footer: FC<FooterProps> = ({ isDisabled, onCancel, onSave }) => {
   const t = useTranslation('common');
   const navigate = useNavigate();
 
@@ -35,13 +36,14 @@ export const Footer: FC<FooterProps> = ({ isDisabled, onSave }) => {
               variant="outlined"
               color="secondary"
               Icon={<XCircleIcon />}
-              onClick={() =>
+              onClick={() => {
+                onCancel();
                 navigate(
                   RouteBuilder.create(AppRoute.Dispensary)
                     .addPart(AppRoute.Encounter)
                     .build()
-                )
-              }
+                );
+              }}
               label={t('button.cancel')}
             />
             <ButtonWithIcon

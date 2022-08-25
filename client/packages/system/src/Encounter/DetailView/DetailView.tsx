@@ -24,12 +24,12 @@ export const DetailView: FC = () => {
     '',
     encounter?.document.documentRegistry?.documentType ?? ''
   );
-  const { JsonForm, saveData, isDirty, validationError } = useJsonForms(
+
+  const { JsonForm, saveData, isDirty, validationError, revert } = useJsonForms(
     encounter?.document?.name,
     {
       handleSave,
-    },
-    encounter?.document.data
+    }
   );
 
   const updateEncounter = useDebounceCallback(
@@ -65,7 +65,11 @@ export const DetailView: FC = () => {
           message={t('messages.click-to-return-to-encounters')}
         />
       )}
-      <Footer onSave={saveData} isDisabled={!isDirty || !!validationError} />
+      <Footer
+        onSave={saveData}
+        onCancel={revert}
+        isDisabled={!isDirty || !!validationError}
+      />
     </React.Suspense>
   );
 };
