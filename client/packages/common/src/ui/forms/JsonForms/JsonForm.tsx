@@ -30,6 +30,8 @@ import {
   Array,
   FirstItemArray,
   firstItemArrayTester,
+  CategorizationTabLayout,
+  categorizationTabLayoutTester,
 } from './components';
 import {
   AccordionGroup,
@@ -127,6 +129,7 @@ const renderers = [
   { tester: datetimeTester, renderer: DateTime },
   { tester: arrayTester, renderer: Array },
   { tester: firstItemArrayTester, renderer: FirstItemArray },
+  { tester: categorizationTabLayoutTester, renderer: CategorizationTabLayout },
   // We should be able to remove materialRenderers once we are sure we have custom components to cover all cases.
   ...materialRenderers,
 ];
