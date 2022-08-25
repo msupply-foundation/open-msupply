@@ -12,6 +12,7 @@ import { EncounterFragment, useEncounter } from '../api';
 import { useJsonForms } from '../../Patient/JsonForms';
 import { AppRoute } from '@openmsupply-client/config';
 import { Toolbar } from './Toolbar';
+import { Footer } from './Footer';
 
 export const DetailView: FC = () => {
   const t = useTranslation('patients');
@@ -23,12 +24,12 @@ export const DetailView: FC = () => {
     encounter?.program ?? '',
     encounter?.type ?? ''
   );
-  const { JsonForm /* saveData, isDirty, validationError */ } = useJsonForms(
+
+  const { JsonForm, saveData, isDirty, validationError, revert } = useJsonForms(
     encounter?.document?.name,
     {
       handleSave,
-    },
-    undefined
+    }
   );
 
   const updateEncounter = useDebounceCallback(
@@ -46,6 +47,7 @@ export const DetailView: FC = () => {
 
   return (
     <React.Suspense fallback={<DetailViewSkeleton />}>
+      <link rel="stylesheet" href="/medical-icons.css" media="all"></link>
       <Toolbar onChange={updateEncounter} />
       {encounter ? (
         JsonForm
@@ -63,6 +65,11 @@ export const DetailView: FC = () => {
           message={t('messages.click-to-return-to-encounters')}
         />
       )}
+      <Footer
+        onSave={saveData}
+        onCancel={revert}
+        isDisabled={!isDirty || !!validationError}
+      />
     </React.Suspense>
   );
 };
