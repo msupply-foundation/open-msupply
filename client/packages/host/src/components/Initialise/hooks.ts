@@ -67,7 +67,6 @@ export const useInitialiseForm = () => {
     setIsLoading(true);
     setIsBootstrap(false);
     const syncSettings = {
-      centralServerSiteId: 1,
       intervalSec: 300,
       password,
       url,

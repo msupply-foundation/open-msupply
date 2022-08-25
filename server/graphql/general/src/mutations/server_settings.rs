@@ -27,7 +27,6 @@ pub struct UpdateSyncSettingsInput {
     pub password: String,
     /// Sync interval in sec
     pub interval_sec: u64,
-    pub central_server_site_id: u32,
 }
 
 #[derive(InputObject)]
@@ -98,7 +97,6 @@ impl UpdateSyncSettingsInput {
             username: self.username,
             password_sha256: sha256(&self.password),
             interval_sec: self.interval_sec,
-            central_server_site_id: self.central_server_site_id,
         }
     }
 }

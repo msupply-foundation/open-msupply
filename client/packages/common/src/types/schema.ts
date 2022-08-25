@@ -2718,7 +2718,6 @@ export type SupplyRequestedQuantityResponse = RequisitionLineConnector | SupplyR
 
 export type SyncSettingsNode = {
   __typename: 'SyncSettingsNode';
-  centralServerSiteId: Scalars['Int'];
   /** How frequently central data is synced */
   intervalSec: Scalars['Int'];
   /** Central server url */
@@ -3143,7 +3142,6 @@ export type UpdateStocktakeResponseWithId = {
 };
 
 export type UpdateSyncSettingsInput = {
-  centralServerSiteId: Scalars['Int'];
   /** Sync interval in sec */
   intervalSec: Scalars['Int'];
   /** Plain text password */

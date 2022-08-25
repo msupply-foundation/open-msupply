@@ -1,6 +1,5 @@
 fragment SyncSettings on SyncSettingsNode {
   __typename
-  centralServerSiteId
   intervalSec
   url
   username

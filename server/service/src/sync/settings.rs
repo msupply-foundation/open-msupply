@@ -5,5 +5,4 @@ pub struct SyncSettings {
     pub password_sha256: String,
     /// sync interval in sec
     pub interval_sec: u64,
-    pub central_server_site_id: u32,
 }
