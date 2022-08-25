@@ -1,13 +1,18 @@
+use std::collections::HashMap;
+
 use chrono::DateTime;
 use repository::{
     EncounterFilter, EncounterRepository, EncounterRow, EncounterRowRepository, EncounterStatus,
-    EqualFilter, RepositoryError, StorageConnection,
+    EqualFilter, RepositoryError,
 };
 use util::uuid::uuid;
 
-use crate::document::raw_document::RawDocument;
+use crate::{
+    document::{program_event::ReplaceEventInput, raw_document::RawDocument},
+    service_provider::{ServiceContext, ServiceProvider},
+};
 
-use super::encounter_schema::{self, SchemaEncounter};
+use super::encounter_schema::{self, EncounterEvent, SchemaEncounter};
 
 pub(crate) enum EncounterTableUpdateError {
     RepositoryError(RepositoryError),
@@ -16,13 +21,15 @@ pub(crate) enum EncounterTableUpdateError {
 
 /// Callback called when the document has been updated
 pub(crate) fn encounter_updated(
-    con: &StorageConnection,
+    ctx: &ServiceContext,
+    service_provider: &ServiceProvider,
     patient_id: &str,
     program: &str,
-    doc_name: &str,
     doc: &RawDocument,
     encounter: SchemaEncounter,
-) -> Result<EncounterRow, EncounterTableUpdateError> {
+) -> Result<(), EncounterTableUpdateError> {
+    let con = &ctx.connection;
+
     let start_datetime = DateTime::parse_from_rfc3339(&encounter.start_datetime)
         .map_err(|err| {
             EncounterTableUpdateError::InternalError(format!(
@@ -55,9 +62,13 @@ pub(crate) fn encounter_updated(
         None
     };
 
+    if let Some(events) = encounter.events {
+        update_program_events(ctx, service_provider, patient_id, program, events)?;
+    }
+
     let repo = EncounterRepository::new(con);
     let row = repo
-        .query_by_filter(EncounterFilter::new().name(EqualFilter::equal_to(doc_name)))
+        .query_by_filter(EncounterFilter::new().name(EqualFilter::equal_to(&doc.name)))
         .map_err(|err| EncounterTableUpdateError::RepositoryError(err))?
         .pop();
     let id = match row {
@@ -78,5 +89,53 @@ pub(crate) fn encounter_updated(
         .upsert_one(&row)
         .map_err(|err| EncounterTableUpdateError::RepositoryError(err))?;
 
-    Ok(row)
+    Ok(())
+}
+
+fn update_program_events(
+    ctx: &ServiceContext,
+    service_provider: &ServiceProvider,
+    patient_id: &str,
+    program: &str,
+    events: Vec<EncounterEvent>,
+) -> Result<(), EncounterTableUpdateError> {
+    let mut grouped_events: HashMap<String, Vec<EncounterEvent>> = HashMap::new();
+    for event in events {
+        grouped_events
+            .entry(event.group.clone().unwrap_or("".to_string()))
+            .or_insert(vec![])
+            .push(event);
+    }
+
+    let service = &service_provider.program_event_service;
+    for (group, events) in grouped_events {
+        let replace_events = events
+            .into_iter()
+            .map(|event| {
+                let datetime = DateTime::parse_from_rfc3339(&event.datetime)
+                    .map_err(|err| {
+                        EncounterTableUpdateError::InternalError(format!(
+                            "Invalid encounter event datetime format: {}",
+                            err
+                        ))
+                    })?
+                    .naive_utc();
+                Ok(ReplaceEventInput {
+                    datetime: datetime,
+                    r#type: event.type_,
+                    name: event.name,
+                })
+            })
+            .collect::<Result<Vec<ReplaceEventInput>, EncounterTableUpdateError>>()?;
+        service
+            .replace_event_group(
+                ctx,
+                Some(patient_id.to_string()),
+                program,
+                &group,
+                replace_events,
+            )
+            .map_err(|err| EncounterTableUpdateError::RepositoryError(err))?;
+    }
+    Ok(())
 }

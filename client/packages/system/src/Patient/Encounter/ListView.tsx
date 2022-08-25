@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useMemo } from 'react';
 import {
   TableProvider,
   DataTable,
@@ -11,10 +11,60 @@ import {
   ColumnAlign,
   useNavigate,
   RouteBuilder,
+  EncounterNodeStatus,
+  useTranslation,
+  LocaleKey,
+  TypedTFunction,
+  DateUtils,
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
-import { EncounterFragmentWithId, EncounterRowFragment } from '../../Encounter';
 import { AppRoute } from 'packages/config/src';
+import { EncounterRowFragment } from '../../Encounter';
+
+const effectiveStatus = (
+  encounter: EncounterRowFragment,
+  t: TypedTFunction<LocaleKey>
+) => {
+  const status = encounter.status;
+  if (!status) {
+    return '';
+  }
+  switch (status) {
+    case EncounterNodeStatus.Cancelled:
+      return t('label.encounter-status-cancelled');
+    case EncounterNodeStatus.Done:
+      return t('label.encounter-status-done');
+    case EncounterNodeStatus.Scheduled:
+      if (DateUtils.isBefore(new Date(encounter.startDatetime), Date.now())) {
+        return t('label.encounter-status-missed');
+      }
+      return t('label.encounter-status-scheduled');
+    default:
+      ((_: never) => {
+        // exhaustive check
+        _;
+      })(status);
+  }
+  return '';
+};
+
+type EncounterFragmentExt = {
+  effectiveStatus: string;
+} & EncounterRowFragment;
+
+const useExtendEncounterFragment = (
+  nodes?: EncounterRowFragment[]
+): EncounterFragmentExt[] | undefined => {
+  const t = useTranslation('common');
+  return useMemo(
+    () =>
+      nodes?.map(node => ({
+        effectiveStatus: effectiveStatus(node, t),
+        ...node,
+      })),
+    [nodes]
+  );
+};
 
 const EncounterListComponent: FC = () => {
   const {
@@ -23,11 +73,13 @@ const EncounterListComponent: FC = () => {
     queryParams: { sortBy, page, first, offset },
   } = useUrlQueryParams();
   const { data, isError, isLoading } = usePatient.document.encounters();
+  const dataExt: EncounterFragmentExt[] | undefined =
+    useExtendEncounterFragment(data?.nodes);
   const pagination = { page, first, offset };
   const { localisedDateTime } = useFormatDateTime();
   const navigate = useNavigate();
 
-  const columns = useColumns<EncounterRowFragment>(
+  const columns = useColumns<EncounterFragmentExt>(
     [
       {
         key: 'type',
@@ -50,7 +102,7 @@ const EncounterListComponent: FC = () => {
           dateString ? localisedDateTime((dateString as string) || '') : '',
       },
       {
-        key: 'status',
+        key: 'effectiveStatus',
         label: 'label.status',
         align: ColumnAlign.Right,
         width: 175,
@@ -66,7 +118,7 @@ const EncounterListComponent: FC = () => {
       pagination={{ ...pagination, total: data?.totalCount }}
       onChangePage={updatePaginationQuery}
       columns={columns}
-      data={data?.nodes}
+      data={dataExt}
       isLoading={isLoading}
       isError={isError}
       onRowClick={row => {
@@ -85,7 +137,7 @@ const EncounterListComponent: FC = () => {
 export const EncounterListView: FC = () => (
   <TableProvider
     createStore={createTableStore}
-    queryParamsStore={createQueryParamsStore<EncounterFragmentWithId>({
+    queryParamsStore={createQueryParamsStore<EncounterFragmentExt>({
       initialSortBy: { key: 'startDatetime' },
     })}
   >

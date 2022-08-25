@@ -35,6 +35,12 @@ fragment PatientDocumentRegistry on DocumentRegistryNode {
   }
 }
 
+fragment ProgramEvent on ProgramEventNode {
+  datetime
+  name
+  type
+}
+
 fragment ProgramRow on ProgramNode {
   enrolmentDatetime
   name
@@ -46,6 +52,9 @@ fragment ProgramRow on ProgramNode {
       id
       name
     }
+  }
+  events(filter: { datetime: { beforeOrEqualTo: $latestEventTime } }) {
+    ...ProgramEvent
   }
 }
 
@@ -147,6 +156,7 @@ query programs(
   $key: ProgramSortFieldInput
   $desc: Boolean
   $filter: ProgramFilterInput
+  $latestEventTime: String!
 ) {
   programs(
     storeId: $storeId

@@ -9,7 +9,13 @@
         { "scope": "#/properties/physicalExamination", "type": "Control" },
         {
           "options": {
-            "values": [{ "field": "physicalExamination.weight", "label": "Weight", "unit": "kg" }]
+            "values": [
+              {
+                "field": "physicalExamination.weight",
+                "label": "Weight",
+                "unit": "kg"
+              }
+            ]
           },
           "scope": "#",
           "type": "EncounterLineChart"
@@ -34,7 +40,10 @@
       "label": "Laboratory",
       "options": { "icon": "microscope" },
       "elements": [
-        { "scope": "#/properties/arvMedication/properties/pillCount", "type": "Control" },
+        {
+          "scope": "#/properties/arvMedication/properties/pillCount",
+          "type": "Control"
+        },
         {
           "label": "Number Of Days Dispensed",
           "options": {
@@ -65,7 +74,9 @@
       "type": "Category",
       "label": "Family Planning",
       "options": { "icon": "condom" },
-      "elements": [{ "scope": "#/properties/familyPlanning", "type": "Control" }]
+      "elements": [
+        { "scope": "#/properties/familyPlanning", "type": "Control" }
+      ]
     },
     {
       "type": "Category",

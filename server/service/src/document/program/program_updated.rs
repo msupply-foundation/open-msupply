@@ -1,8 +1,8 @@
 use chrono::DateTime;
-use repository::{
-    Document, ProgramRepository, ProgramRow, ProgramRowRepository, StorageConnection,
-};
+use repository::{ProgramRepository, ProgramRow, ProgramRowRepository, StorageConnection};
 use util::uuid::uuid;
+
+use crate::document::raw_document::RawDocument;
 
 use super::{program_schema::SchemaProgramEnrolment, UpsertProgramError};
 
@@ -10,7 +10,7 @@ use super::{program_schema::SchemaProgramEnrolment, UpsertProgramError};
 pub(crate) fn program_updated(
     con: &StorageConnection,
     patient_id: &str,
-    document: &Document,
+    document: &RawDocument,
     program: SchemaProgramEnrolment,
 ) -> Result<ProgramRow, UpsertProgramError> {
     let enrolment_datetime = DateTime::parse_from_rfc3339(&program.enrolment_datetime)
