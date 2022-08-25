@@ -21,8 +21,8 @@ export const DetailView: FC = () => {
 
   const handleSave = useEncounter.document.upsert(
     encounter?.patient.id ?? '',
-    '',
-    encounter?.document.documentRegistry?.documentType ?? ''
+    encounter?.program ?? '',
+    encounter?.type ?? ''
   );
 
   const { JsonForm, saveData, isDirty, validationError, revert } = useJsonForms(
@@ -35,9 +35,9 @@ export const DetailView: FC = () => {
   const updateEncounter = useDebounceCallback(
     (patch: Partial<EncounterFragment>) =>
       handleSave?.(
-        { ...encounter, ...patch },
+        { ...encounter?.document.data, ...patch },
         encounter?.document?.documentRegistry?.formSchemaId ?? '',
-        encounter?.document.id ?? ''
+        encounter?.document.id
       ),
     [encounter],
     1000
