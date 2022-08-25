@@ -77,8 +77,7 @@ const isValid = (syncSettings: SyncSettings | null) => {
     !!syncSettings.url &&
     !!syncSettings.username &&
     !!syncSettings.password &&
-    !!syncSettings.intervalSec &&
-    !!syncSettings.centralServerSiteId
+    !!syncSettings.intervalSec 
   );
 };
 
@@ -146,17 +145,6 @@ const SyncSettingsForm = ({
           />
         }
       />
-      <Setting
-        title={t('label.settings-central-site-id')}
-        component={
-          <NumericSyncSetting
-            property="centralServerSiteId"
-            settings={settings}
-            disabled={isDisabled}
-            update={setSyncSettings}
-          />
-        }
-      />
       <Grid item justifyContent="flex-end" width="100%" display="flex">
         <LoadingButton
           isLoading={isSaving}
@@ -182,7 +170,6 @@ export const SyncSettings = ({}) => {
   const { success, info } = useNotification();
 
   const currentSettings = {
-    centralServerSiteId: data?.syncSettings?.centralServerSiteId || 1,
     intervalSec: data?.syncSettings?.intervalSec || 10,
     password: '',
     url: data?.syncSettings?.url || '',
