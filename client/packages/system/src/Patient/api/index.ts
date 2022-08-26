@@ -1,6 +1,15 @@
-import { PatientRowFragment, ProgramRowFragment } from './operations.generated';
+import {
+  PatientRowFragment,
+  ProgramEnrolmentRowFragment,
+} from './operations.generated';
 
-type ProgramRowFragmentWithId = { id: string } & ProgramRowFragment;
+type ProgramEnrolmentRowFragmentWithId = {
+  id: string;
+} & ProgramEnrolmentRowFragment;
 
 export * from './hooks';
-export { PatientRowFragment, ProgramRowFragment, ProgramRowFragmentWithId };
+export {
+  PatientRowFragment,
+  ProgramEnrolmentRowFragment,
+  ProgramEnrolmentRowFragmentWithId as ProgramRowFragmentWithId,
+};

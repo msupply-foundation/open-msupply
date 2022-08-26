@@ -41,7 +41,7 @@ fragment ProgramEvent on ProgramEventNode {
   type
 }
 
-fragment ProgramRow on ProgramNode {
+fragment ProgramEnrolmentRow on ProgramEnrolmentNode {
   enrolmentDatetime
   name
   patientId
@@ -151,22 +151,22 @@ query getDocumentHistory($storeId: String!, $name: String!) {
   }
 }
 
-query programs(
+query programEnrolments(
   $storeId: String!
-  $key: ProgramSortFieldInput
+  $key: ProgramEnrolmentSortFieldInput
   $desc: Boolean
-  $filter: ProgramFilterInput
+  $filter: ProgramEnrolmentFilterInput
   $latestEventTime: String!
 ) {
-  programs(
+  programEnrolments(
     storeId: $storeId
     sort: { key: $key, desc: $desc }
     filter: $filter
   ) {
-    ... on ProgramConnector {
+    ... on ProgramEnrolmentConnector {
       __typename
       nodes {
-        ...ProgramRow
+        ...ProgramEnrolmentRow
       }
       totalCount
     }

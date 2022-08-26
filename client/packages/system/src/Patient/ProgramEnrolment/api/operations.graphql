@@ -16,7 +16,7 @@ fragment ProgramEnrolmentDocument on DocumentNode {
   }
 }
 
-fragment Program on ProgramNode {
+fragment ProgramEnrolment on ProgramEnrolmentNode {
   type
   programPatientId
   patientId
@@ -27,20 +27,26 @@ fragment Program on ProgramNode {
   }
 }
 
-query programById($storeId: String!, $programId: String!) {
-  programs(storeId: $storeId, filter: { id: { equalTo: $programId } }) {
-    ... on ProgramConnector {
+query programEnrolmentById($storeId: String!, $programId: String!) {
+  programEnrolments(
+    storeId: $storeId
+    filter: { id: { equalTo: $programId } }
+  ) {
+    ... on ProgramEnrolmentConnector {
       __typename
       nodes {
-        ...Program
+        ...ProgramEnrolment
       }
       totalCount
     }
   }
 }
 
-mutation insertProgram($storeId: String!, $input: InsertProgramInput!) {
-  insertProgram(storeId: $storeId, input: $input) {
+mutation insertProgramEnrolment(
+  $storeId: String!
+  $input: InsertProgramEnrolmentInput!
+) {
+  insertProgramEnrolment(storeId: $storeId, input: $input) {
     ... on DocumentNode {
       __typename
       ...ProgramEnrolmentDocument
@@ -48,8 +54,11 @@ mutation insertProgram($storeId: String!, $input: InsertProgramInput!) {
   }
 }
 
-mutation updateProgram($storeId: String!, $input: UpdateProgramInput!) {
-  updateProgram(storeId: $storeId, input: $input) {
+mutation updateProgramEnrolment(
+  $storeId: String!
+  $input: UpdateProgramEnrolmentInput!
+) {
+  updateProgramEnrolment(storeId: $storeId, input: $input) {
     ... on DocumentNode {
       __typename
       ...ProgramEnrolmentDocument

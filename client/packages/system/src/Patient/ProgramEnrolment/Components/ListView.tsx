@@ -27,7 +27,7 @@ const ProgramListComponent: FC = () => {
     updatePaginationQuery,
     queryParams: { sortBy, page, first, offset },
   } = useUrlQueryParams();
-  const { data, isError, isLoading } = usePatient.document.programs();
+  const { data, isError, isLoading } = usePatient.document.programEnrolments();
   const pagination = { page, first, offset };
   const { localisedDate } = useFormatDateTime();
   const t = useTranslation('patients');
