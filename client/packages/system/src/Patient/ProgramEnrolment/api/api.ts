@@ -1,46 +1,46 @@
 import {
   SortBy,
   FilterBy,
-  InsertProgramInput,
-  UpdateProgramInput,
+  InsertProgramEnrolmentInput,
+  UpdateProgramEnrolmentInput,
 } from '@openmsupply-client/common';
-import { ProgramRowFragment } from '../../api';
+import { ProgramEnrolmentRowFragment } from '../../api';
 import { ProgramEnrolmentDocumentFragment, Sdk } from './operations.generated';
 
 export type ListParams = {
   first?: number;
   offset?: number;
-  sortBy?: SortBy<ProgramRowFragment>;
+  sortBy?: SortBy<ProgramEnrolmentRowFragment>;
   filterBy?: FilterBy | null;
 };
 
 export const getProgramEnrolmentQueries = (sdk: Sdk, storeId: string) => ({
-        latestEventTime: new Date().toISOString(),
-  insertProgram: async (
-    input: InsertProgramInput
+  latestEventTime: new Date().toISOString(),
+  insertProgramEnrolment: async (
+    input: InsertProgramEnrolmentInput
   ): Promise<ProgramEnrolmentDocumentFragment> => {
-    const result = await sdk.insertProgram({
+    const result = await sdk.insertProgramEnrolment({
       storeId,
       input,
     });
 
-    if (result.insertProgram.__typename === 'DocumentNode') {
-      return result.insertProgram;
+    if (result.insertProgramEnrolment.__typename === 'DocumentNode') {
+      return result.insertProgramEnrolment;
     }
 
     throw new Error('Could not insert program');
   },
 
-  updateProgram: async (
-    input: UpdateProgramInput
+  updateProgramEnrolment: async (
+    input: UpdateProgramEnrolmentInput
   ): Promise<ProgramEnrolmentDocumentFragment> => {
-    const result = await sdk.updateProgram({
+    const result = await sdk.updateProgramEnrolment({
       storeId,
       input,
     });
 
-    if (result.updateProgram.__typename === 'DocumentNode') {
-      return result.updateProgram;
+    if (result.updateProgramEnrolment.__typename === 'DocumentNode') {
+      return result.updateProgramEnrolment;
     }
 
     throw new Error('Could not update program');

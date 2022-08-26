@@ -15,7 +15,7 @@ import { usePatientModalStore } from '../hooks';
 import { PatientModal } from '../PatientView';
 import { ProgramRowFragmentWithId, usePatient } from '../api';
 import { CreateDocument, useJsonForms } from '../JsonForms';
-import { ProgramSearchInput } from '../Components';
+import { ProgramEnrolmentSearchInput } from '../Components';
 
 export const EncounterDetailModal: FC = () => {
   const patientId = usePatient.utils.id();
@@ -96,7 +96,7 @@ export const EncounterDetailModal: FC = () => {
             <InputWithLabelRow
               label={t('label.program')}
               Input={
-                <ProgramSearchInput
+                <ProgramEnrolmentSearchInput
                   onChange={onChangeProgram}
                   value={program}
                 />

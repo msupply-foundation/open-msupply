@@ -311,6 +311,13 @@ export type DatetimeFilterInput = {
   equalTo?: InputMaybe<Scalars['DateTime']>;
 };
 
+export type DeleteDocumentInput = {
+  comment?: InputMaybe<Scalars['String']>;
+  id: Scalars['String'];
+};
+
+export type DeleteDocumentResponse = DeleteResponse;
+
 export type DeleteErrorInterface = {
   description: Scalars['String'];
 };
@@ -851,6 +858,7 @@ export type FullMutation = {
    * lines quantity (placeholder and filled) for requisitionLine.item
    */
   createRequisitionShipment: CreateRequisitionShipmentResponse;
+  deleteDocument: DeleteDocumentResponse;
   deleteInboundShipment: DeleteInboundShipmentResponse;
   deleteInboundShipmentLine: DeleteInboundShipmentLineResponse;
   deleteInboundShipmentServiceLine: DeleteInboundShipmentServiceLineResponse;
@@ -879,13 +887,14 @@ export type FullMutation = {
    * Enrols a patient into a program by adding a program document to the patient's documents.
    * Every patient can only have one program document of each program type.
    */
-  insertProgram: InsertProgramResponse;
+  insertProgramEnrolment: InsertProgramEnrolmentResponse;
   insertRequestRequisition: InsertRequestRequisitionResponse;
   insertRequestRequisitionLine: InsertRequestRequisitionLineResponse;
   insertStocktake: InsertStocktakeResponse;
   insertStocktakeLine: InsertStocktakeLineResponse;
   /** Set supply quantity to requested quantity */
   supplyRequestedQuantity: SupplyRequestedQuantityResponse;
+  undeleteDocument: UndeleteDocumentResponse;
   updateDocument: UpdateDocumentResponse;
   updateEncounter: UpdateEncounterResponse;
   updateInboundShipment: UpdateInboundShipmentResponse;
@@ -898,7 +907,7 @@ export type FullMutation = {
   updateOutboundShipmentUnallocatedLine: UpdateOutboundShipmentUnallocatedLineResponse;
   updatePatient: UpdatePatientResponse;
   /** Updates an existing program document belonging to a patient. */
-  updateProgram: UpdateProgramResponse;
+  updateProgramEnrolment: UpdateProgramEnrolmentResponse;
   updateRequestRequisition: UpdateRequestRequisitionResponse;
   updateRequestRequisitionLine: UpdateRequestRequisitionLineResponse;
   updateResponseRequisition: UpdateResponseRequisitionResponse;
@@ -967,6 +976,12 @@ export type FullMutationBatchStocktakeArgs = {
 
 export type FullMutationCreateRequisitionShipmentArgs = {
   input: CreateRequisitionShipmentInput;
+  storeId: Scalars['String'];
+};
+
+
+export type FullMutationDeleteDocumentArgs = {
+  input: DeleteDocumentInput;
   storeId: Scalars['String'];
 };
 
@@ -1113,8 +1128,8 @@ export type FullMutationInsertPatientArgs = {
 };
 
 
-export type FullMutationInsertProgramArgs = {
-  input: InsertProgramInput;
+export type FullMutationInsertProgramEnrolmentArgs = {
+  input: InsertProgramEnrolmentInput;
   storeId: Scalars['String'];
 };
 
@@ -1145,6 +1160,12 @@ export type FullMutationInsertStocktakeLineArgs = {
 
 export type FullMutationSupplyRequestedQuantityArgs = {
   input: SupplyRequestedQuantityInput;
+  storeId: Scalars['String'];
+};
+
+
+export type FullMutationUndeleteDocumentArgs = {
+  input: UndeleteDocumentInput;
   storeId: Scalars['String'];
 };
 
@@ -1215,8 +1236,8 @@ export type FullMutationUpdatePatientArgs = {
 };
 
 
-export type FullMutationUpdateProgramArgs = {
-  input: UpdateProgramInput;
+export type FullMutationUpdateProgramEnrolmentArgs = {
+  input: UpdateProgramEnrolmentInput;
   storeId: Scalars['String'];
 };
 
@@ -1309,8 +1330,8 @@ export type FullQuery = {
    */
   printReport: PrintReportResponse;
   printReportDefinition: PrintReportResponse;
+  programEnrolments: ProgramEnrolmentResponse;
   programEvents: ProgramEventResponse;
-  programs: ProgramResponse;
   /**
    * Retrieves a new auth bearer and refresh token
    * The refresh token is returned as a cookie
@@ -1492,18 +1513,18 @@ export type FullQueryPrintReportDefinitionArgs = {
 };
 
 
+export type FullQueryProgramEnrolmentsArgs = {
+  filter?: InputMaybe<ProgramEnrolmentFilterInput>;
+  sort?: InputMaybe<ProgramEnrolmentSortInput>;
+  storeId: Scalars['String'];
+};
+
+
 export type FullQueryProgramEventsArgs = {
   filter?: InputMaybe<ProgramEventFilterInput>;
   page?: InputMaybe<PaginationInput>;
   patientId: Scalars['String'];
   sort?: InputMaybe<ProgramEventSortInput>;
-  storeId: Scalars['String'];
-};
-
-
-export type FullQueryProgramsArgs = {
-  filter?: InputMaybe<ProgramFilterInput>;
-  sort?: InputMaybe<ProgramSortInput>;
   storeId: Scalars['String'];
 };
 
@@ -1866,7 +1887,7 @@ export type InsertPatientInput = {
 
 export type InsertPatientResponse = PatientNode;
 
-export type InsertProgramInput = {
+export type InsertProgramEnrolmentInput = {
   /** Program document data */
   data: Scalars['JSON'];
   patientId: Scalars['String'];
@@ -1876,7 +1897,7 @@ export type InsertProgramInput = {
   type: Scalars['String'];
 };
 
-export type InsertProgramResponse = DocumentNode;
+export type InsertProgramEnrolmentResponse = DocumentNode;
 
 export type InsertRequestRequisitionError = {
   __typename: 'InsertRequestRequisitionError';
@@ -2720,7 +2741,7 @@ export type PatientNode = {
   lastName?: Maybe<Scalars['String']>;
   name: Scalars['String'];
   phone?: Maybe<Scalars['String']>;
-  programs: Array<ProgramNode>;
+  programEnrolments: Array<ProgramEnrolmentNode>;
   website?: Maybe<Scalars['String']>;
 };
 
@@ -2811,10 +2832,57 @@ export type PrintReportNode = {
 
 export type PrintReportResponse = PrintReportError | PrintReportNode;
 
-export type ProgramConnector = {
-  __typename: 'ProgramConnector';
-  nodes: Array<ProgramNode>;
+export type ProgramEnrolmentConnector = {
+  __typename: 'ProgramEnrolmentConnector';
+  nodes: Array<ProgramEnrolmentNode>;
   totalCount: Scalars['Int'];
+};
+
+export type ProgramEnrolmentFilterInput = {
+  enrolmentDatetime?: InputMaybe<DatetimeFilterInput>;
+  patientId?: InputMaybe<EqualFilterStringInput>;
+  programPatientId?: InputMaybe<EqualFilterStringInput>;
+  type?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type ProgramEnrolmentNode = {
+  __typename: 'ProgramEnrolmentNode';
+  /** The encounter document */
+  document: DocumentNode;
+  /** The program document */
+  encounters: Array<EncounterNode>;
+  enrolmentDatetime: Scalars['DateTime'];
+  events: Array<ProgramEventNode>;
+  /** The program document name */
+  name: Scalars['String'];
+  patientId: Scalars['String'];
+  programPatientId?: Maybe<Scalars['String']>;
+  /** The program type */
+  type: Scalars['String'];
+};
+
+
+export type ProgramEnrolmentNodeEventsArgs = {
+  filter?: InputMaybe<ProgramEventFilterInput>;
+};
+
+export type ProgramEnrolmentResponse = ProgramEnrolmentConnector;
+
+export enum ProgramEnrolmentSortFieldInput {
+  EnrolmentDatetime = 'enrolmentDatetime',
+  PatientId = 'patientId',
+  ProgramPatientId = 'programPatientId',
+  Type = 'type'
+}
+
+export type ProgramEnrolmentSortInput = {
+  /**
+   * Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']>;
+  /** Sort query result by `key` */
+  key: ProgramEnrolmentSortFieldInput;
 };
 
 export type ProgramEventConnector = {
@@ -2856,53 +2924,6 @@ export type ProgramEventSortInput = {
   desc?: InputMaybe<Scalars['Boolean']>;
   /** Sort query result by `key` */
   key: ProgramEventSortFieldInput;
-};
-
-export type ProgramFilterInput = {
-  enrolmentDatetime?: InputMaybe<DatetimeFilterInput>;
-  patientId?: InputMaybe<EqualFilterStringInput>;
-  programPatientId?: InputMaybe<EqualFilterStringInput>;
-  type?: InputMaybe<EqualFilterStringInput>;
-};
-
-export type ProgramNode = {
-  __typename: 'ProgramNode';
-  /** The encounter document */
-  document: DocumentNode;
-  /** The program document */
-  encounters: Array<EncounterNode>;
-  enrolmentDatetime: Scalars['DateTime'];
-  events: Array<ProgramEventNode>;
-  /** The program document name */
-  name: Scalars['String'];
-  patientId: Scalars['String'];
-  programPatientId?: Maybe<Scalars['String']>;
-  /** The program type */
-  type: Scalars['String'];
-};
-
-
-export type ProgramNodeEventsArgs = {
-  filter?: InputMaybe<ProgramEventFilterInput>;
-};
-
-export type ProgramResponse = ProgramConnector;
-
-export enum ProgramSortFieldInput {
-  EnrolmentDatetime = 'enrolmentDatetime',
-  PatientId = 'patientId',
-  ProgramPatientId = 'programPatientId',
-  Type = 'type'
-}
-
-export type ProgramSortInput = {
-  /**
-   * Sort query result is sorted descending or ascending (if not provided the default is
-   * ascending)
-   */
-  desc?: InputMaybe<Scalars['Boolean']>;
-  /** Sort query result by `key` */
-  key: ProgramSortFieldInput;
 };
 
 export type RawDocumentNode = {
@@ -3482,6 +3503,12 @@ export type UnallocatedLinesOnlyEditableInNewInvoice = InsertOutboundShipmentUna
   description: Scalars['String'];
 };
 
+export type UndeleteDocumentInput = {
+  id: Scalars['String'];
+};
+
+export type UndeleteDocumentResponse = DocumentNode;
+
 export enum UniqueValueKey {
   Code = 'code'
 }
@@ -3759,7 +3786,7 @@ export type UpdatePatientInput = {
 
 export type UpdatePatientResponse = PatientNode;
 
-export type UpdateProgramInput = {
+export type UpdateProgramEnrolmentInput = {
   /** Program document data */
   data: Scalars['JSON'];
   parent: Scalars['String'];
@@ -3770,7 +3797,7 @@ export type UpdateProgramInput = {
   type: Scalars['String'];
 };
 
-export type UpdateProgramResponse = DocumentNode;
+export type UpdateProgramEnrolmentResponse = DocumentNode;
 
 export type UpdateRequestRequisitionError = {
   __typename: 'UpdateRequestRequisitionError';

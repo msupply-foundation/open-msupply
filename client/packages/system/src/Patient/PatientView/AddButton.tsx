@@ -13,7 +13,7 @@ import { usePatient } from '../api';
 export const AddButton = () => {
   const t = useTranslation('patients');
   const { current, setCurrent, setDocument, reset } = usePatientModalStore();
-  const { data } = usePatient.document.programs();
+  const { data } = usePatient.document.programEnrolments();
   const options = [
     {
       value: PatientModal.Prescription,

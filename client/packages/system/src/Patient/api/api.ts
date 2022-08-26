@@ -6,13 +6,13 @@ import {
   FilterBy,
   DocumentNode,
   PatientSearchInput,
-  ProgramSortFieldInput,
+  ProgramEnrolmentSortFieldInput,
 } from '@openmsupply-client/common';
 import {
   Sdk,
   PatientRowFragment,
   PatientFragment,
-  ProgramRowFragment,
+  ProgramEnrolmentRowFragment,
 } from './operations.generated';
 
 export type ListParams = {
@@ -81,22 +81,22 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
       });
       return result.documentHistory.nodes;
     },
-    programs: async ({
+    programEnrolments: async ({
       sortBy,
       filterBy,
     }: ListParams): Promise<{
-      nodes: ProgramRowFragment[];
+      nodes: ProgramEnrolmentRowFragment[];
       totalCount: number;
     }> => {
-      const result = await sdk.programs({
+      const result = await sdk.programEnrolments({
         storeId,
-        key: sortBy?.key as ProgramSortFieldInput | undefined,
+        key: sortBy?.key as ProgramEnrolmentSortFieldInput | undefined,
         desc: sortBy?.isDesc,
         filter: filterBy,
         latestEventTime: new Date().toISOString(),
       });
 
-      return result?.programs;
+      return result?.programEnrolments;
     },
     search: async (
       input: PatientSearchInput
