@@ -167,7 +167,7 @@ mod test {
                 InsertEncounter,
             },
             patient::{test::mock_patient_1, UpdatePatient},
-            program::{program_schema::SchemaProgramEnrolment, UpsertProgram},
+            program::{program_schema::SchemaProgramEnrolment, UpsertProgramEnrolment},
         },
         service_provider::ServiceProvider,
     };
@@ -212,12 +212,12 @@ mod test {
         });
         let program_type = "ProgramType".to_string();
         service_provider
-            .program_service
-            .upsert_program(
+            .program_enrolment_service
+            .upsert_program_enrolment(
                 &ctx,
                 &service_provider,
                 "user",
-                UpsertProgram {
+                UpsertProgramEnrolment {
                     data: serde_json::to_value(program.clone()).unwrap(),
                     schema_id: schema.id.clone(),
                     parent: None,

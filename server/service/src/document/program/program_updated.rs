@@ -1,10 +1,13 @@
 use chrono::DateTime;
-use repository::{ProgramRepository, ProgramRow, ProgramRowRepository, StorageConnection};
+use repository::{
+    ProgramEnrolmentRepository, ProgramEnrolmentRow, ProgramEnrolmentRowRepository,
+    StorageConnection,
+};
 use util::uuid::uuid;
 
 use crate::document::raw_document::RawDocument;
 
-use super::{program_schema::SchemaProgramEnrolment, UpsertProgramError};
+use super::{program_schema::SchemaProgramEnrolment, UpsertProgramEnrolmentError};
 
 /// Callback called when the document has been updated
 pub(crate) fn program_updated(
@@ -12,20 +15,23 @@ pub(crate) fn program_updated(
     patient_id: &str,
     document: &RawDocument,
     program: SchemaProgramEnrolment,
-) -> Result<ProgramRow, UpsertProgramError> {
+) -> Result<ProgramEnrolmentRow, UpsertProgramEnrolmentError> {
     let enrolment_datetime = DateTime::parse_from_rfc3339(&program.enrolment_datetime)
         .map_err(|err| {
-            UpsertProgramError::InternalError(format!("Invalid enrolment datetime format: {}", err))
+            UpsertProgramEnrolmentError::InternalError(format!(
+                "Invalid enrolment datetime format: {}",
+                err
+            ))
         })?
         .naive_utc();
 
-    let repo = ProgramRepository::new(con);
+    let repo = ProgramEnrolmentRepository::new(con);
     let program_row = repo.find_one_by_type_and_patient(&document.r#type, patient_id)?;
     let id = match program_row {
         Some(program_row) => program_row.id,
         None => uuid(),
     };
-    let program_row = ProgramRow {
+    let program_row = ProgramEnrolmentRow {
         id,
         r#type: document.r#type.clone(),
         name: document.name.clone(),
@@ -33,7 +39,7 @@ pub(crate) fn program_updated(
         enrolment_datetime: enrolment_datetime,
         program_patient_id: program.enrolment_patient_id,
     };
-    ProgramRowRepository::new(con).upsert_one(&program_row)?;
+    ProgramEnrolmentRowRepository::new(con).upsert_one(&program_row)?;
 
     Ok(program_row)
 }
