@@ -1,0 +1,36 @@
+{
+  "type": "Categorization",
+  "elements": [
+    {
+      "type": "Category",
+      "label": "Family Planning",
+      "options": { "icon": "condom" },
+      "elements": [
+        { "scope": "#/properties/familyPlanning", "type": "Control" }
+      ]
+    },
+    {
+      "type": "Category",
+      "label": "Risk Beahaviour",
+      "options": { "icon": "document" },
+      "elements": [{ "scope": "#/properties/riskBehaviour", "type": "Control" }]
+    },
+    {
+      "type": "Category",
+      "label": "HIV Testing",
+      "options": { "icon": "stethoscope" },
+      "elements": [{ "scope": "#/properties/hivTesting", "type": "Control" }]
+    },
+    {
+      "type": "Category",
+      "label": "HIV Results",
+      "options": { "icon": "microscope" },
+      "elements": [
+        { "scope": "#/properties/hivTestingResult", "type": "Control" }
+      ]
+    }
+  ],
+  "options": {
+    "variant": "tab"
+  }
+}

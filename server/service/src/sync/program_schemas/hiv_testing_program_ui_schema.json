@@ -1,0 +1,60 @@
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "Label",
+      "text": "HIV Testing Program Enrolment",
+      "variant": "h1"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/enrolmentDatetime",
+      "options": {
+        "readonly": true
+      }
+    },
+    {
+      "type": "IdGenerator",
+      "label": "Enrolment Patient Id",
+      "scope": "#/",
+      "options": {
+        "targetField": "enrolmentPatientId",
+        "parts": [
+          {
+            "type": "StoreName",
+            "mutations": [{ "firstNChars": 3 }, { "toUpperCase": true }]
+          },
+          {
+            "type": "Number",
+            "numberName": "HIVCare",
+            "mutations": [{ "padString": "0000" }]
+          }
+        ]
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/status"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/referredFrom"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/hivTestType"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/riskGroup"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/partnerHivStatus"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/mother"
+    }
+  ]
+}

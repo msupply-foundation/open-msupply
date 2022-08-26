@@ -37,8 +37,8 @@
     },
     {
       "type": "Category",
-      "label": "Laboratory",
-      "options": { "icon": "microscope" },
+      "label": "Medication",
+      "options": { "icon": "medicine" },
       "elements": [
         {
           "scope": "#/properties/arvMedication/properties/pillCount",
@@ -67,7 +67,8 @@
           },
           "scope": "#",
           "type": "DispensedDuration"
-        }
+        },
+        { "scope": "#/properties/arvMedication", "type": "Control" }
       ]
     },
     {
@@ -77,18 +78,6 @@
       "elements": [
         { "scope": "#/properties/familyPlanning", "type": "Control" }
       ]
-    },
-    {
-      "type": "Category",
-      "label": "Medication",
-      "options": { "icon": "medicine" },
-      "elements": [{ "scope": "#/properties/arvMedication", "type": "Control" }]
-    },
-    {
-      "type": "Category",
-      "label": "Risk Beahaviour",
-      "options": { "icon": "document" },
-      "elements": [{ "scope": "#/properties/riskBehaviour", "type": "Control" }]
     },
     {
       "type": "Category",
