@@ -10,7 +10,6 @@ use diesel::{prelude::*, sql_query, sql_types::Text};
 
 use diesel::sql_types::BigInt;
 use diesel_derive_enum::DbEnum;
-use serde::Serialize;
 
 table! {
     number (id) {
@@ -21,9 +20,8 @@ table! {
     }
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum NumberRowType {
     InboundShipment,
     OutboundShipment,
