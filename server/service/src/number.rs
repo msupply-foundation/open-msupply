@@ -57,8 +57,8 @@ mod test {
         assert_eq!(result, 2);
     }
 
-    #[cfg(not(feature = "memory"))]
     #[actix_rt::test]
+    #[cfg(not(feature = "memory"))]
     async fn test_concurrent_next_number() {
         let (_, _, connection_manager, _) = test_db::setup_all(
             "test_concurrent_numbers",
