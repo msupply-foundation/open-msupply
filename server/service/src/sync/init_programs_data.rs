@@ -395,6 +395,7 @@ fn encounter_hiv_care_2() -> hiv_care_encounter::HivcareEncounter {
                 group: Some("HivCareEncounterDispensingStatus".to_string()),
                 type_: "status".to_string(),
                 name: Some("Interrupted".to_string()),
+                context: None,
             },
             hiv_care_encounter::EncounterEvent {
                 datetime: time
@@ -404,6 +405,7 @@ fn encounter_hiv_care_2() -> hiv_care_encounter::HivcareEncounter {
                 group: Some("HivCareEncounterDispensingStatus".to_string()),
                 type_: "status".to_string(),
                 name: Some("Lost to follow up".to_string()),
+                context: None,
             },
         ])
     })
