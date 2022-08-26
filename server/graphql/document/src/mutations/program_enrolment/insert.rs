@@ -5,13 +5,13 @@ use graphql_core::{
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    document::program::{UpsertProgram, UpsertProgramError},
+    document::program::{UpsertProgramEnrolment, UpsertProgramEnrolmentError},
 };
 
 use crate::types::document::DocumentNode;
 
 #[derive(InputObject)]
-pub struct UpdateProgramInput {
+pub struct InsertProgramEnrolmentInput {
     /// The program type
     pub r#type: String,
     pub patient_id: String,
@@ -19,19 +19,18 @@ pub struct UpdateProgramInput {
     pub data: serde_json::Value,
     /// The schema id used for the program data
     pub schema_id: String,
-    pub parent: String,
 }
 
 #[derive(Union)]
-pub enum UpdateProgramResponse {
+pub enum InsertProgramEnrolmentResponse {
     Response(DocumentNode),
 }
 
-pub fn update_program(
+pub fn insert_program_enrolment(
     ctx: &Context<'_>,
     store_id: String,
-    input: UpdateProgramInput,
-) -> Result<UpdateProgramResponse> {
+    input: InsertProgramEnrolmentInput,
+) -> Result<InsertProgramEnrolmentResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -43,41 +42,45 @@ pub fn update_program(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
 
-    match service_provider.program_service.upsert_program(
-        &service_context,
-        service_provider,
-        &user.user_id,
-        UpsertProgram {
-            data: input.data,
-            schema_id: input.schema_id,
-            parent: Some(input.parent),
-            patient_id: input.patient_id,
-            r#type: input.r#type,
-        },
-    ) {
-        Ok(document) => Ok(UpdateProgramResponse::Response(DocumentNode { document })),
+    match service_provider
+        .program_enrolment_service
+        .upsert_program_enrolment(
+            &service_context,
+            service_provider,
+            &user.user_id,
+            UpsertProgramEnrolment {
+                data: input.data,
+                schema_id: input.schema_id,
+                parent: None,
+                patient_id: input.patient_id,
+                r#type: input.r#type,
+            },
+        ) {
+        Ok(document) => Ok(InsertProgramEnrolmentResponse::Response(DocumentNode {
+            document,
+        })),
         Err(error) => {
             let formatted_error = format!("{:#?}", error);
             let std_err = match error {
-                UpsertProgramError::InvalidPatientId => {
+                UpsertProgramEnrolmentError::InvalidPatientId => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
-                UpsertProgramError::InvalidParentId => {
+                UpsertProgramEnrolmentError::InvalidParentId => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
-                UpsertProgramError::ProgramExists => {
+                UpsertProgramEnrolmentError::ProgramExists => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
-                UpsertProgramError::InvalidDataSchema(_) => {
+                UpsertProgramEnrolmentError::InvalidDataSchema(_) => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
-                UpsertProgramError::DataSchemaDoesNotExist => {
+                UpsertProgramEnrolmentError::DataSchemaDoesNotExist => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
-                UpsertProgramError::InternalError(_) => {
+                UpsertProgramEnrolmentError::InternalError(_) => {
                     StandardGraphqlError::InternalError(formatted_error)
                 }
-                UpsertProgramError::DatabaseError(_) => {
+                UpsertProgramEnrolmentError::DatabaseError(_) => {
                     StandardGraphqlError::InternalError(formatted_error)
                 }
             };

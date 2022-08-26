@@ -14,7 +14,7 @@ use crate::{
 use super::{program_schema::SchemaProgramEnrolment, program_updated::program_updated};
 
 #[derive(PartialEq, Debug)]
-pub enum UpsertProgramError {
+pub enum UpsertProgramEnrolmentError {
     InvalidPatientId,
     InvalidParentId,
     /// Each patient can only be enrolled in a program once
@@ -25,7 +25,7 @@ pub enum UpsertProgramError {
     DatabaseError(RepositoryError),
 }
 
-pub struct UpsertProgram {
+pub struct UpsertProgramEnrolment {
     pub patient_id: String,
     pub r#type: String,
     pub data: serde_json::Value,
@@ -34,12 +34,12 @@ pub struct UpsertProgram {
     pub parent: Option<String>,
 }
 
-pub fn upsert_program(
+pub fn upsert_program_enrolment(
     ctx: &ServiceContext,
     service_provider: &ServiceProvider,
     user_id: &str,
-    input: UpsertProgram,
-) -> Result<Document, UpsertProgramError> {
+    input: UpsertProgramEnrolment,
+) -> Result<Document, UpsertProgramEnrolmentError> {
     let program_document = ctx
         .connection
         .transaction_sync(|_| {
@@ -48,7 +48,7 @@ pub fn upsert_program(
             let doc = generate(user_id, input)?;
 
             if is_latest_doc(ctx, service_provider, &doc)
-                .map_err(UpsertProgramError::DatabaseError)?
+                .map_err(UpsertProgramEnrolmentError::DatabaseError)?
             {
                 program_updated(&ctx.connection, &patient_id, &doc, schema_program)?;
             };
@@ -58,32 +58,34 @@ pub fn upsert_program(
                 .update_document(ctx, doc)
                 .map_err(|err| match err {
                     DocumentInsertError::InvalidDataSchema(err) => {
-                        UpsertProgramError::InvalidDataSchema(err)
+                        UpsertProgramEnrolmentError::InvalidDataSchema(err)
                     }
                     DocumentInsertError::DatabaseError(err) => {
-                        UpsertProgramError::DatabaseError(err)
+                        UpsertProgramEnrolmentError::DatabaseError(err)
                     }
                     DocumentInsertError::InternalError(err) => {
-                        UpsertProgramError::InternalError(err)
+                        UpsertProgramEnrolmentError::InternalError(err)
                     }
                     DocumentInsertError::DataSchemaDoesNotExist => {
-                        UpsertProgramError::DataSchemaDoesNotExist
+                        UpsertProgramEnrolmentError::DataSchemaDoesNotExist
                     }
-                    DocumentInsertError::InvalidParent(_) => UpsertProgramError::InvalidParentId,
+                    DocumentInsertError::InvalidParent(_) => {
+                        UpsertProgramEnrolmentError::InvalidParentId
+                    }
                 })?;
             Ok(document)
         })
-        .map_err(|err: TransactionError<UpsertProgramError>| err.to_inner_error())?;
+        .map_err(|err: TransactionError<UpsertProgramEnrolmentError>| err.to_inner_error())?;
     Ok(program_document)
 }
 
-impl From<RepositoryError> for UpsertProgramError {
+impl From<RepositoryError> for UpsertProgramEnrolmentError {
     fn from(err: RepositoryError) -> Self {
-        UpsertProgramError::DatabaseError(err)
+        UpsertProgramEnrolmentError::DatabaseError(err)
     }
 }
 
-fn generate(user_id: &str, input: UpsertProgram) -> Result<RawDocument, RepositoryError> {
+fn generate(user_id: &str, input: UpsertProgramEnrolment) -> Result<RawDocument, RepositoryError> {
     Ok(RawDocument {
         name: patient_program_doc_name(&input.patient_id, &input.r#type),
         parents: input.parent.map(|p| vec![p]).unwrap_or(vec![]),
@@ -98,7 +100,7 @@ fn generate(user_id: &str, input: UpsertProgram) -> Result<RawDocument, Reposito
 }
 
 fn validate_program_schema(
-    input: &UpsertProgram,
+    input: &UpsertProgramEnrolment,
 ) -> Result<SchemaProgramEnrolment, serde_json::Error> {
     // Check that we can parse the data into a default Program object, i.e. that it's following the
     // default program JSON schema.
@@ -132,19 +134,22 @@ fn validate_program_not_exists(
 fn validate(
     ctx: &ServiceContext,
     service_provider: &ServiceProvider,
-    input: &UpsertProgram,
-) -> Result<SchemaProgramEnrolment, UpsertProgramError> {
+    input: &UpsertProgramEnrolment,
+) -> Result<SchemaProgramEnrolment, UpsertProgramEnrolmentError> {
     if !validate_patient_exists(ctx, &input.patient_id)? {
-        return Err(UpsertProgramError::InvalidPatientId);
+        return Err(UpsertProgramEnrolmentError::InvalidPatientId);
     }
 
     let program = validate_program_schema(input).map_err(|err| {
-        UpsertProgramError::InvalidDataSchema(vec![format!("Invalid program data: {}", err)])
+        UpsertProgramEnrolmentError::InvalidDataSchema(vec![format!(
+            "Invalid program data: {}",
+            err
+        )])
     })?;
 
     if input.parent.is_none() {
         if !validate_program_not_exists(ctx, service_provider, &input.patient_id, &input.r#type)? {
-            return Err(UpsertProgramError::ProgramExists);
+            return Err(UpsertProgramEnrolmentError::ProgramExists);
         }
     }
 
@@ -157,7 +162,7 @@ mod test {
     use repository::{
         mock::{mock_form_schema_empty, MockDataInserts},
         test_db::setup_all,
-        DocumentRepository, FormSchemaRowRepository, ProgramRepository,
+        DocumentRepository, FormSchemaRowRepository, ProgramEnrolmentRepository,
     };
     use serde_json::json;
     use util::inline_init;
@@ -165,12 +170,12 @@ mod test {
     use crate::{
         document::{
             patient::{patient_program_doc_name, test::mock_patient_1, UpdatePatient},
-            program::{program_schema::SchemaProgramEnrolment, UpsertProgram},
+            program::{program_schema::SchemaProgramEnrolment, UpsertProgramEnrolment},
         },
         service_provider::ServiceProvider,
     };
 
-    use super::UpsertProgramError;
+    use super::UpsertProgramEnrolmentError;
 
     #[actix_rt::test]
     async fn test_program_upsert() {
@@ -189,14 +194,14 @@ mod test {
             .upsert_one(&schema)
             .unwrap();
 
-        let service = &service_provider.program_service;
+        let service = &service_provider.program_enrolment_service;
         // InvalidPatientId
         let err = service
-            .upsert_program(
+            .upsert_program_enrolment(
                 &ctx,
                 &service_provider,
                 "user",
-                UpsertProgram {
+                UpsertProgramEnrolment {
                     data: json!({"enrolment_datetime": true}),
                     schema_id: schema.id.clone(),
                     parent: None,
@@ -206,7 +211,7 @@ mod test {
             )
             .err()
             .unwrap();
-        matches!(err, UpsertProgramError::InvalidPatientId);
+        matches!(err, UpsertProgramEnrolmentError::InvalidPatientId);
 
         let patient = mock_patient_1();
         service_provider
@@ -225,11 +230,11 @@ mod test {
             .unwrap();
         // InvalidDataSchema
         let err = service
-            .upsert_program(
+            .upsert_program_enrolment(
                 &ctx,
                 &service_provider,
                 "user",
-                UpsertProgram {
+                UpsertProgramEnrolment {
                     data: json!({"enrolment_datetime": true}),
                     schema_id: schema.id.clone(),
                     parent: None,
@@ -239,7 +244,7 @@ mod test {
             )
             .err()
             .unwrap();
-        matches!(err, UpsertProgramError::InvalidDataSchema(_));
+        matches!(err, UpsertProgramEnrolmentError::InvalidDataSchema(_));
 
         // success insert
 
@@ -249,11 +254,11 @@ mod test {
         });
         let program_type = "ProgramType".to_string();
         service
-            .upsert_program(
+            .upsert_program_enrolment(
                 &ctx,
                 &service_provider,
                 "user",
-                UpsertProgram {
+                UpsertProgramEnrolment {
                     data: serde_json::to_value(program.clone()).unwrap(),
                     schema_id: schema.id.clone(),
                     parent: None,
@@ -265,11 +270,11 @@ mod test {
 
         assert_eq!(
             service
-                .upsert_program(
+                .upsert_program_enrolment(
                     &ctx,
                     &service_provider,
                     "user",
-                    UpsertProgram {
+                    UpsertProgramEnrolment {
                         patient_id: patient.id.clone(),
                         r#type: program_type.clone(),
                         data: serde_json::to_value(program.clone()).unwrap(),
@@ -279,16 +284,16 @@ mod test {
                 )
                 .err()
                 .unwrap(),
-            UpsertProgramError::ProgramExists,
+            UpsertProgramEnrolmentError::ProgramExists,
         );
 
         assert_eq!(
             service
-                .upsert_program(
+                .upsert_program_enrolment(
                     &ctx,
                     &service_provider,
                     "user",
-                    UpsertProgram {
+                    UpsertProgramEnrolment {
                         patient_id: patient.id.clone(),
                         r#type: program_type.clone(),
                         data: serde_json::to_value(program.clone()).unwrap(),
@@ -298,7 +303,7 @@ mod test {
                 )
                 .err()
                 .unwrap(),
-            UpsertProgramError::InvalidParentId
+            UpsertProgramEnrolmentError::InvalidParentId
         );
 
         // success update
@@ -307,11 +312,11 @@ mod test {
             .unwrap()
             .unwrap();
         service
-            .upsert_program(
+            .upsert_program_enrolment(
                 &ctx,
                 &service_provider,
                 "user",
-                UpsertProgram {
+                UpsertProgramEnrolment {
                     patient_id: patient.id.clone(),
                     r#type: program_type.clone(),
                     data: serde_json::to_value(program.clone()).unwrap(),
@@ -321,7 +326,7 @@ mod test {
             )
             .unwrap();
         // Test program has been written to the programs table
-        let found_program = ProgramRepository::new(&ctx.connection)
+        let found_program = ProgramEnrolmentRepository::new(&ctx.connection)
             .find_one_by_type_and_patient(&program_type, &patient.id)
             .unwrap()
             .unwrap();

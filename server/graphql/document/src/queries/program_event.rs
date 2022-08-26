@@ -9,7 +9,7 @@ use repository::{
 };
 use service::auth::{Resource, ResourceAccessRequest};
 
-use crate::types::{program::ProgramEventFilterInput, program_event::ProgramEventNode};
+use crate::types::{program_enrolment::ProgramEventFilterInput, program_event::ProgramEventNode};
 
 #[derive(SimpleObject)]
 pub struct ProgramEventConnector {

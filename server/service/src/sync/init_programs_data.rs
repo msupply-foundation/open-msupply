@@ -7,7 +7,7 @@ use crate::{
         patient::{PatientService, PatientServiceTrait, UpdatePatient, PATIENT_TYPE},
         program::{
             program_schema::{ProgramEnrolmentStatus, SchemaProgramEnrolment},
-            ProgramService, ProgramServiceTrait, UpsertProgram,
+            ProgramEnrolmentService, ProgramEnrolmentServiceTrait, UpsertProgramEnrolment,
         },
     },
     service_provider::ServiceProvider,
@@ -603,13 +603,13 @@ pub fn init_program_data(
         .unwrap();
 
     // program
-    let service = ProgramService {};
+    let service = ProgramEnrolmentService {};
     service
-        .upsert_program(
+        .upsert_program_enrolment(
             &ctx,
             &service_provider,
             "no user",
-            UpsertProgram {
+            UpsertProgramEnrolment {
                 patient_id: patient_1().id,
                 r#type: "TestProgram1".to_string(),
                 data: serde_json::to_value(program_1()).unwrap(),
@@ -620,11 +620,11 @@ pub fn init_program_data(
         .unwrap();
     // hiv testing program
     service
-        .upsert_program(
+        .upsert_program_enrolment(
             &ctx,
             &service_provider,
             "no user",
-            UpsertProgram {
+            UpsertProgramEnrolment {
                 patient_id: patient_1().id,
                 r#type: "HIVTestingProgram".to_string(),
                 data: serde_json::to_value(program_hiv_testing()).unwrap(),
@@ -635,11 +635,11 @@ pub fn init_program_data(
         .unwrap();
     // hiv care program
     service
-        .upsert_program(
+        .upsert_program_enrolment(
             &ctx,
             &service_provider,
             "no user",
-            UpsertProgram {
+            UpsertProgramEnrolment {
                 patient_id: patient_1().id,
                 r#type: "HIVCareProgram".to_string(),
                 data: serde_json::to_value(program_hiv_care()).unwrap(),

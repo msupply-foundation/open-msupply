@@ -11,7 +11,8 @@ use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 use graphql_general::{EqualFilterGenderInput, GenderInput};
 use graphql_types::types::GenderType;
 use repository::{
-    DateFilter, EqualFilter, Pagination, PaginationOption, ProgramFilter, SimpleStringFilter,
+    DateFilter, EqualFilter, Pagination, PaginationOption, ProgramEnrolmentFilter,
+    SimpleStringFilter,
 };
 use service::auth::{Resource, ResourceAccessRequest};
 use service::document::patient::{
@@ -19,7 +20,7 @@ use service::document::patient::{
 };
 
 use crate::types::document::DocumentNode;
-use crate::types::program::ProgramNode;
+use crate::types::program_enrolment::ProgramEnrolmentNode;
 
 pub struct PatientNode {
     pub store_id: String,
@@ -111,23 +112,23 @@ impl PatientNode {
         Ok(result)
     }
 
-    pub async fn programs(&self, ctx: &Context<'_>) -> Result<Vec<ProgramNode>> {
+    pub async fn program_enrolments(&self, ctx: &Context<'_>) -> Result<Vec<ProgramEnrolmentNode>> {
         let context = ctx.service_provider().basic_context()?;
         let entries = ctx
             .service_provider()
-            .program_service
-            .get_patient_programs(
+            .program_enrolment_service
+            .get_patient_program_enrolments(
                 &context,
                 Pagination::all(),
                 None,
                 Some(
-                    ProgramFilter::new()
+                    ProgramEnrolmentFilter::new()
                         .patient_id(EqualFilter::equal_to(&self.patient.name_row.id)),
                 ),
             )?;
         Ok(entries
             .into_iter()
-            .map(|program_row| ProgramNode {
+            .map(|program_row| ProgramEnrolmentNode {
                 store_id: self.store_id.clone(),
                 program_row,
             })

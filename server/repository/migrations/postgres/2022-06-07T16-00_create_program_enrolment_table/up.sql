@@ -1,4 +1,4 @@
-CREATE TABLE program (
+CREATE TABLE program_enrolment (
     id TEXT NOT NULL PRIMARY KEY,
     type TEXT NOT NULL,
     name TEXT NOT NULL,

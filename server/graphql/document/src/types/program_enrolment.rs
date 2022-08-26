@@ -7,8 +7,8 @@ use graphql_core::{
     ContextExt,
 };
 use repository::{
-    DatetimeFilter, EncounterFilter, EqualFilter, ProgramEventFilter, ProgramEventSortField,
-    ProgramRow, Sort,
+    DatetimeFilter, EncounterFilter, EqualFilter, ProgramEnrolmentRow, ProgramEventFilter,
+    ProgramEventSortField, Sort,
 };
 
 use super::{document::DocumentNode, encounter::EncounterNode, program_event::ProgramEventNode};
@@ -33,13 +33,13 @@ impl ProgramEventFilterInput {
     }
 }
 
-pub struct ProgramNode {
+pub struct ProgramEnrolmentNode {
     pub store_id: String,
-    pub program_row: ProgramRow,
+    pub program_row: ProgramEnrolmentRow,
 }
 
 #[Object]
-impl ProgramNode {
+impl ProgramEnrolmentNode {
     /// The program type
     pub async fn r#type(&self) -> &str {
         &self.program_row.r#type
