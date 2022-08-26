@@ -17,6 +17,8 @@ pub fn next_number(
 
 #[cfg(test)]
 mod test {
+    use std::{collections::HashSet, env};
+
     use repository::{
         mock::{
             mock_inbound_shipment_number_store_a, mock_outbound_shipment_number_store_a,
@@ -27,6 +29,7 @@ mod test {
     };
 
     const TEST_SLEEP_TIME: u64 = 100;
+    const MAX_CONCURRENCY: u64 = 10;
 
     use crate::number::next_number;
 
@@ -129,5 +132,60 @@ mod test {
 
         println!("next_number (UPDATE) results : a={} b={}", a, b);
         assert!(a != b);
+    }
+
+    #[actix_rt::test]
+    async fn test_highly_concurrent_next_number() {
+        let (_, _, connection_manager, _) = test_db::setup_all(
+            "test_highly_concurrent_numbers",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+
+        if env::var("RUN_CONCURRENT_TESTS").is_err()
+            || env::var("RUN_CONCURRENT_TESTS").unwrap() != "true"
+        {
+            // To run this test use something like `RUN_CONCURRENT_TESTS=true cargo test --package service --lib -- number::test::test_highly_concurrent_next_number --exact --nocapture`
+
+            // Performance M1 Macbook Pro (postgres in docker)
+            // --features=memory 0.13s
+            // --features=postgres 0.62s
+            // --features=sqlite 0.14s
+
+            return;
+        }
+        /*
+        Test Scenario
+            Spawn lots of processes all trying get the next number for store_a concurrently.
+            This isn't intended to be run on every request, so it only runs when ENV: RUN_CONCURRENT_TESTS is set to true
+        */
+
+        //Create the first record to avoid issues with concurrent inserts (it's tested in test_concurrent_next_number if you need it)
+        let connection = connection_manager.connection().unwrap();
+        let _num = next_number(&connection, &NumberRowType::Stocktake, "store_a").unwrap();
+
+        //Do lots of next_numbering
+        let mut handles = vec![];
+        for _ in 0..MAX_CONCURRENCY {
+            let manager = connection_manager.clone();
+            let handle = std::thread::spawn(move || {
+                let connection = manager.connection().unwrap();
+                let result: Result<i64, TransactionError<RepositoryError>> = connection
+                    .transaction_sync(|connection| {
+                        let num = next_number(connection, &NumberRowType::Stocktake, "store_a")?;
+                        Ok(num)
+                    });
+                result.unwrap()
+            });
+            handles.push(handle);
+        }
+
+        let mut unique_numbers = HashSet::new();
+        for handle in handles {
+            let num = handle.join().unwrap();
+            println!("num: {}", num);
+            let new_value = unique_numbers.insert(num);
+            assert!(new_value);
+        }
     }
 }
