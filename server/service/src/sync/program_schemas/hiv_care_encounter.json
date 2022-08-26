@@ -20,12 +20,32 @@
           "type": "string"
         }
       },
-      "required": ["datetime", "type"],
+      "required": [
+        "datetime",
+        "type"
+      ],
       "type": "object"
     },
     "EncounterStatus": {
-      "enum": ["SCHEDULED", "DONE", "CANCELLED"],
+      "enum": [
+        "SCHEDULED",
+        "DONE",
+        "CANCELLED"
+      ],
       "type": "string"
+    },
+    "FamilyPlanning": {
+      "properties": {
+        "contraception": {
+          "description": "13197004 Contraception",
+          "type": "boolean"
+        },
+        "pregnant": {
+          "description": "77386006 Pregnant",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
     },
     "HIVCareEncounter": {
       "properties": {
@@ -108,17 +128,7 @@
           "type": "array"
         },
         "familyPlanning": {
-          "properties": {
-            "contraception": {
-              "description": "13197004 Contraception",
-              "type": "boolean"
-            },
-            "pregnant": {
-              "description": "77386006 Pregnant",
-              "type": "boolean"
-            }
-          },
-          "type": "object"
+          "$ref": "#/definitions/FamilyPlanning"
         },
         "physicalExamination": {
           "properties": {
@@ -140,7 +150,11 @@
             },
             "nutritionalStatus": {
               "description": "366364004  nutritional status",
-              "enum": ["UNDER_NOURISHED", "WELL_NOURISHED", "OVERWEIGHT"],
+              "enum": [
+                "UNDER_NOURISHED",
+                "WELL_NOURISHED",
+                "OVERWEIGHT"
+              ],
               "type": "string"
             },
             "opportunisticInfection": {
@@ -248,59 +262,6 @@
         "practitioner": {
           "$ref": "#/definitions/Practitioner"
         },
-        "riskBehaviour": {
-          "properties": {
-            "accidentalNeedlePick": {
-              "description": "Have you received any of the following in the past 12 months ?: Accidental needle pick ?",
-              "type": "boolean"
-            },
-            "forcedSexWithoutConsent": {
-              "description": "Have you received any of the following in the past 12 months ?: Forced to have sex without consent ?",
-              "type": "boolean"
-            },
-            "injectedDrugsWithoutDoctorAdvice": {
-              "description": "Have you received any of the following in the past 12 months ?: Injected drugs without doctor's advice ?",
-              "type": "boolean"
-            },
-            "numberFemaleSexualPartners6Month": {
-              "description": "How many female sexual partners have you had in the last 6 months ?",
-              "type": "number"
-            },
-            "numberMaleSexualPartners6Month": {
-              "description": "How many male sexual partners have you had in the last 6 months ?",
-              "type": "number"
-            },
-            "prostitution": {
-              "description": "Have you received any of the following in the past 12 months ?: Sex in exchange for money/goods/services ?",
-              "type": "boolean"
-            },
-            "receicedBloodTransfusion": {
-              "description": "Have you received any of the following in the past 12 months ?: Received a blood transfusion ?",
-              "type": "boolean"
-            },
-            "riskGroup": {
-              "enum": ["GP", "HR", "MSM", "TG", "FSW", "MSW"],
-              "type": "string"
-            },
-            "sexWithSameSex": {
-              "description": "Have you received any of the following in the past 12 months ?: Had sex with someone of the same sex ?",
-              "type": "boolean"
-            },
-            "sexualTransmittedInfection": {
-              "description": "Have you received any of the following in the past 12 months ?: Sexually transmitted infection (STI)",
-              "type": "boolean"
-            },
-            "unprotectedAnalSex": {
-              "description": "Have you received any of the following in the past 12 months ?: Unprotected anal sex ?",
-              "type": "boolean"
-            },
-            "unprotectedVaginalSex": {
-              "description": "Have you received any of the following in the past 12 months ?: Unprotected vaginal sex ?",
-              "type": "boolean"
-            }
-          },
-          "type": "object"
-        },
         "startDatetime": {
           "description": "Encounter start date and time",
           "format": "date-time",
@@ -333,7 +294,9 @@
           "type": "object"
         }
       },
-      "required": ["startDatetime"],
+      "required": [
+        "startDatetime"
+      ],
       "type": "object"
     },
     "Practitioner": {

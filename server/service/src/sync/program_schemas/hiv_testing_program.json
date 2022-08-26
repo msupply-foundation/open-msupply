@@ -1,0 +1,113 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "HIVRelation": {
+      "properties": {
+        "clinic": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "patientId": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "HIVRiscGroup": {
+      "enum": [
+        "SEX_WORKERS",
+        "MEN_SEX_WITH_MEN",
+        "INJECTING_DRUG_USER",
+        "PRISONER",
+        "SEX_WORKER_CLIENT",
+        "TRANSGENDER_WOMEN",
+        "SLUM_SWELLER"
+      ],
+      "type": "string"
+    },
+    "HIVStatus": {
+      "enum": [
+        "POSITIVE",
+        "NEGATIVE",
+        "UNKNOWN"
+      ],
+      "type": "string"
+    },
+    "HIVTestType": {
+      "enum": [
+        "PCR",
+        "ANTIBODY"
+      ],
+      "type": "string"
+    },
+    "HIVTestingProgramEnrolment": {
+      "properties": {
+        "enrolmentDatetime": {
+          "description": "Enrolment date and time",
+          "format": "date-time",
+          "type": "string"
+        },
+        "enrolmentPatientId": {
+          "description": "Program enrolment specific patient id.",
+          "type": "string"
+        },
+        "hivTestType": {
+          "$ref": "#/definitions/HIVTestType"
+        },
+        "mother": {
+          "$ref": "#/definitions/HIVRelation"
+        },
+        "partnerHivStatus": {
+          "$ref": "#/definitions/HIVStatus"
+        },
+        "referredFrom": {
+          "$ref": "#/definitions/ReferredFrom"
+        },
+        "riskGroup": {
+          "$ref": "#/definitions/HIVRiscGroup"
+        },
+        "status": {
+          "$ref": "#/definitions/ProgramEnrolmentStatus",
+          "description": "Current status of the program enrolment"
+        }
+      },
+      "required": [
+        "enrolmentDatetime"
+      ],
+      "type": "object"
+    },
+    "ProgramEnrolmentStatus": {
+      "enum": [
+        "ACTIVE",
+        "OPTED_OUT",
+        "TRANSFERRED_OUT",
+        "PAUSED"
+      ],
+      "type": "string"
+    },
+    "ReferredFrom": {
+      "enum": [
+        "HCT_OTHER_PICT",
+        "INDEX",
+        "LABOUR",
+        "POST_NATAL",
+        "TB",
+        "COMMUNITY",
+        "TRANSFER_IN",
+        "STI",
+        "ANC",
+        "EXPOSED_INFANT_WELL_BABY_CLINIC",
+        "IN_PATIENT"
+      ],
+      "type": "string"
+    }
+  },
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "#/definitions/HIVTestingProgramEnrolment"
+    }
+  ]
+}

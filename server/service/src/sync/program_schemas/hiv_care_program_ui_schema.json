@@ -38,7 +38,7 @@
     },
     {
       "type": "Control",
-      "scope": "#/properties/riskGroup"
+      "scope": "#/properties/priorART"
     },
     {
       "type": "Control",
@@ -50,11 +50,7 @@
     },
     {
       "type": "Control",
-      "scope": "#/properties/referredFrom"
-    },
-    {
-      "type": "Control",
-      "scope": "#/properties/priorART"
+      "scope": "#/properties/riskGroup"
     },
     {
       "type": "Control",
