@@ -1,7 +1,4 @@
-use repository::{
-    NumberRow, NumberRowRepository, NumberRowType, RepositoryError, StorageConnection,
-};
-use util::uuid::uuid;
+use repository::{NumberRowRepository, NumberRowType, RepositoryError, StorageConnection};
 
 pub fn next_number(
     connection: &StorageConnection,
@@ -11,28 +8,9 @@ pub fn next_number(
     // Should be done in transaction
     let next_number = connection.transaction_sync(|connection_tx| {
         let repo = NumberRowRepository::new(&connection_tx);
-        let current = repo.find_one_by_type_and_store(r#type, store_id)?;
-        //This should compile as a no-op in production code, only used during tests
-        let updated_number_row = match current {
-            Some(mut row) => {
-                // update existing counter
-                row.value = row.value + 1;
-                repo.upsert_one(&row)?;
-                row
-            }
-            None => {
-                // insert new counter
-                let row = NumberRow {
-                    id: uuid(),
-                    value: 1,
-                    r#type: r#type.clone(),
-                    store_id: store_id.to_owned(),
-                };
-                repo.upsert_one(&row)?;
-                row
-            }
-        };
-        Ok(updated_number_row.value)
+        let next_number = repo.get_next_number_for_type_and_store(r#type, store_id)?;
+
+        Ok(next_number.number)
     })?;
     Ok(next_number)
 }
@@ -79,6 +57,7 @@ mod test {
         assert_eq!(result, 2);
     }
 
+    #[cfg(not(feature = "memory"))]
     #[actix_rt::test]
     async fn test_concurrent_next_number() {
         let (_, _, connection_manager, _) = test_db::setup_all(
@@ -86,6 +65,13 @@ mod test {
             MockDataInserts::none().names().stores(),
         )
         .await;
+
+        // Note: this test is disabled when running tests using in 'memory' sqlite.
+        // When running in memory sqlite uses a shared cache and returns an SQLITE_LOCKED response when two threads try to write using the shared cache concurrently
+        // https://sqlite.org/rescode.html#locked
+        // We are relying on busy_timeout handler to manage the SQLITE_BUSY response code in this test and there's no equivelant available for shared cache connections (SQLITE_LOCKED).
+        // If we were to use shared cache in production, we'd probably need to use a mutex (or similar) to protect the database connection.
+
         /*
             Test Scenario
 
@@ -94,7 +80,7 @@ mod test {
             (Note: This test did fail with previous implementation of next number on postgres)
         */
 
-        //Part 1: Concurrent up date (first row) e.g. this will require an insert and an update for these processes...
+        //Part 1: Concurrent up date (first row) e.g. this will require an insert and an update for one these processes...
 
         let manager_a = connection_manager.clone();
         let process_a = std::thread::spawn(move || {
