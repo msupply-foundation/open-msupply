@@ -115,14 +115,15 @@ impl<'a> NumberRowRepository<'a> {
             Err(NotFound) => {
                 // 2. There was no record to update, so we need to insert a new one.
 
-                // We need to add an ON CONFLICT Clause for postgres just in case 2 threads insert at the same time (SQLite does need this it only allows a single write transaction at a time).
-                // Without this postgres will throw a unique constraint violation error and rollback the transaction, which is hard to recover from, instead we just check to see if it returned a value
+                // We need to add an ON CONFLICT Clause for postgres just in case 2 threads insert at the same time (SQLite <on disk> does not need this as it only allows a single write transaction at a time).
+                // Without this postgres will throw a unique constraint violation error and rollback the transaction, which is hard to recover from, instead we just ignore the error and check if it returned a value
+                // It's safe to use format here, as these inputs are not user controlled
                 let insert_query_str = format!(
                     r#"INSERT INTO number (id, value, store_id, type) VALUES ('{}', 1, $1, '{}') {} RETURNING value;"#,
                     uuid(),
                     r#type,
                     ON_CONFLICT_DO_NOTHING
-                ); //It's safe to use format here, as these inputs are not user controlled
+                );
 
                 let insert_query = sql_query(insert_query_str).bind::<Text, _>(store_id);
                 let insert_result =
@@ -131,7 +132,7 @@ impl<'a> NumberRowRepository<'a> {
                 match insert_result {
                     Ok(result) => Ok(result),
                     Err(NotFound) => {
-                        // 3. If we got here another thread inserted the record before we we able to (Nothing was returned for the insert)
+                        // 3. If we got here another thread inserted the record before we we able to (we know this because nothing was returned for the insert)
                         // We should now be able to do the same 'update returning' query as before to get our new number.
 
                         let update_query =
