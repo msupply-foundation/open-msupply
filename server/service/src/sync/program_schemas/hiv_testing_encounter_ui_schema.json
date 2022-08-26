@@ -19,7 +19,34 @@
       "type": "Category",
       "label": "HIV Testing",
       "options": { "icon": "stethoscope" },
-      "elements": [{ "scope": "#/properties/hivTesting", "type": "Control" }]
+      "elements": [
+        { "scope": "#/properties/hivTesting", "type": "Control" },
+        {
+          "type": "EventTrigger",
+          "scope": "#",
+          "options": {
+            "baseDatetimeField": "startDatetime",
+            "group": "PendingLabResults",
+            "trigger": [
+              {
+                "triggerField": "hivTesting.datetime",
+                "isNotFalsy": true
+              },
+              {
+                "triggerField": "hivTestingResult.datetime",
+                "isFalsy": true
+              }
+            ],
+            "events": [
+              {
+                "name": "Pending lab result",
+                "type": "status",
+                "context": "HIVTestingEncounter"
+              }
+            ]
+          }
+        }
+      ]
     },
     {
       "type": "Category",

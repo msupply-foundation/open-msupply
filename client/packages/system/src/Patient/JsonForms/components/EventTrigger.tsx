@@ -19,6 +19,7 @@ type OptionEvent = {
   };
   name?: string;
   type: string;
+  context?: string;
 };
 
 type EventTrigger = {
@@ -54,6 +55,7 @@ const OptionEvent: z.ZodType<OptionEvent> = z
       .optional(),
     name: z.string().optional(),
     type: z.string(),
+    context: z.string().optional(),
   })
   .strict();
 
@@ -93,12 +95,14 @@ interface EncounterEvent {
    * For example, encounter 'status'.
    */
   type: string;
+  context?: string;
 }
 
 const scheduleEvent = (
   event: OptionEvent,
   baseTime: Date,
-  group?: string
+  group?: string,
+  context?: string
 ): EncounterEvent => {
   const datetimePlusMin = DateUtils.addMinutes(
     baseTime,
@@ -113,10 +117,11 @@ const scheduleEvent = (
     group,
     name: event.name,
     type: event.type,
+    context,
   };
 };
 
-export const dispensedDurationTester = rankWith(10, uiTypeIs('EventTrigger'));
+export const eventTriggerTester = rankWith(10, uiTypeIs('EventTrigger'));
 
 const UIComponent = (props: ControlProps) => {
   const { data, handleChange, path, uischema } = props;
@@ -154,7 +159,9 @@ const UIComponent = (props: ControlProps) => {
     // Remove existing events for the group
     const events = existingEvents.filter(it => it.group !== options.group);
     for (const eventOption of options.events) {
-      events.push(scheduleEvent(eventOption, datetime, options.group));
+      events.push(
+        scheduleEvent(eventOption, datetime, options.group, eventOption.context)
+      );
     }
 
     const eventsPath = composePaths(path, 'events');
