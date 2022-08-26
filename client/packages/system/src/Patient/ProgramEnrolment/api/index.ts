@@ -1,8 +1,10 @@
-import { ProgramRowFragment } from '../../api/operations.generated';
+import { ProgramEnrolmentRowFragment } from '../../api/operations.generated';
 export {
-  ProgramRowFragment,
+  ProgramEnrolmentRowFragment,
   ProgramEventFragment,
 } from '../../api/operations.generated';
 export * from './hooks';
-export { ProgramFragment } from './operations.generated';
-export type ProgramRowFragmentWithId = { id: string } & ProgramRowFragment;
+export { ProgramEnrolmentFragment } from './operations.generated';
+export type ProgramEnrolmentRowFragmentWithId = {
+  id: string;
+} & ProgramEnrolmentRowFragment;

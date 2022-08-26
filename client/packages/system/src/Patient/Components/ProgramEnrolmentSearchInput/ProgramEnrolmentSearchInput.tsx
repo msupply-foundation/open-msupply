@@ -3,20 +3,17 @@ import { Autocomplete, useBufferState } from '@openmsupply-client/common';
 import { ProgramRowFragmentWithId, usePatient } from '../../api';
 import { getProgramOptionRenderer } from '../../../Program';
 
-interface ProgramSearchInputProps {
+interface ProgramEnrolmentSearchInputProps {
   onChange: (type: ProgramRowFragmentWithId) => void;
   width?: number;
   value: ProgramRowFragmentWithId | null;
   disabled?: boolean;
 }
 
-export const ProgramSearchInput: FC<ProgramSearchInputProps> = ({
-  onChange,
-  width = 250,
-  value,
-  disabled = false,
-}) => {
-  const { data, isLoading } = usePatient.document.programs();
+export const ProgramEnrolmentSearchInput: FC<
+  ProgramEnrolmentSearchInputProps
+> = ({ onChange, width = 250, value, disabled = false }) => {
+  const { data, isLoading } = usePatient.document.programEnrolments();
   const [buffer, setBuffer] = useBufferState(value);
   const ProgramOptionRenderer = getProgramOptionRenderer();
 

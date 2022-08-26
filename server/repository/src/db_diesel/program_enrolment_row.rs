@@ -6,7 +6,7 @@ use chrono::NaiveDateTime;
 use diesel::prelude::*;
 
 table! {
-    program (id) {
+    program_enrolment (id) {
         id -> Text,
         #[sql_name = "type"] type_ -> Text,
         name -> Text,
@@ -17,8 +17,8 @@ table! {
 }
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset)]
-#[table_name = "program"]
-pub struct ProgramRow {
+#[table_name = "program_enrolment"]
+pub struct ProgramEnrolmentRow {
     /// The row id
     pub id: String,
     /// The type of the program, same as the matching program document type.
@@ -34,28 +34,28 @@ pub struct ProgramRow {
     pub program_patient_id: Option<String>,
 }
 
-pub struct ProgramRowRepository<'a> {
+pub struct ProgramEnrolmentRowRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-impl<'a> ProgramRowRepository<'a> {
+impl<'a> ProgramEnrolmentRowRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
-        ProgramRowRepository { connection }
+        ProgramEnrolmentRowRepository { connection }
     }
 
-    pub fn find_one_by_id(&self, id: &str) -> Result<Option<ProgramRow>, RepositoryError> {
-        let result = program::dsl::program
-            .filter(program::dsl::id.eq(id))
+    pub fn find_one_by_id(&self, id: &str) -> Result<Option<ProgramEnrolmentRow>, RepositoryError> {
+        let result = program_enrolment::dsl::program_enrolment
+            .filter(program_enrolment::dsl::id.eq(id))
             .first(&self.connection.connection)
             .optional()?;
         Ok(result)
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &ProgramRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(program::dsl::program)
+    pub fn upsert_one(&self, row: &ProgramEnrolmentRow) -> Result<(), RepositoryError> {
+        diesel::insert_into(program_enrolment::dsl::program_enrolment)
             .values(row)
-            .on_conflict(program::dsl::id)
+            .on_conflict(program_enrolment::dsl::id)
             .do_update()
             .set(row)
             .execute(&self.connection.connection)?;
@@ -63,8 +63,8 @@ impl<'a> ProgramRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &ProgramRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(program::dsl::program)
+    pub fn upsert_one(&self, row: &ProgramEnrolmentRow) -> Result<(), RepositoryError> {
+        diesel::replace_into(program_enrolment::dsl::program_enrolment)
             .values(row)
             .execute(&self.connection.connection)?;
         Ok(())

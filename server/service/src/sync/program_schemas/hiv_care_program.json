@@ -112,18 +112,7 @@
           "$ref": "#/definitions/HIVTestType"
         },
         "mother": {
-          "properties": {
-            "clinic": {
-              "type": "string"
-            },
-            "note": {
-              "type": "string"
-            },
-            "patientId": {
-              "type": "string"
-            }
-          },
-          "type": "object"
+          "$ref": "#/definitions/HIVRelation"
         },
         "partnerHivStatus": {
           "$ref": "#/definitions/HIVStatus"
@@ -138,22 +127,6 @@
           ],
           "type": "string"
         },
-        "referredFrom": {
-          "enum": [
-            "HCT_OTHER_PICT",
-            "INDEX",
-            "LABOUR",
-            "POST_NATAL",
-            "TB",
-            "COMMUNITY",
-            "TRANSFER_IN",
-            "STI",
-            "ANC",
-            "EXPOSED_INFANT_WELL_BABY_CLINIC",
-            "IN_PATIENT"
-          ],
-          "type": "string"
-        },
         "riskGroup": {
           "$ref": "#/definitions/HIVRiscGroup"
         },
@@ -165,7 +138,23 @@
           "$ref": "#/definitions/Person"
         }
       },
-      "required": ["enrolmentDatetime"],
+      "required": [
+        "enrolmentDatetime"
+      ],
+      "type": "object"
+    },
+    "HIVRelation": {
+      "properties": {
+        "clinic": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "patientId": {
+          "type": "string"
+        }
+      },
       "type": "object"
     },
     "HIVRiscGroup": {
@@ -181,11 +170,18 @@
       "type": "string"
     },
     "HIVStatus": {
-      "enum": ["POSITIVE", "NEGATIVE", "UNKNOWN"],
+      "enum": [
+        "POSITIVE",
+        "NEGATIVE",
+        "UNKNOWN"
+      ],
       "type": "string"
     },
     "HIVTestType": {
-      "enum": ["PCR", "ANTIBODY"],
+      "enum": [
+        "PCR",
+        "ANTIBODY"
+      ],
       "type": "string"
     },
     "Note": {
@@ -199,7 +195,9 @@
               "type": "number"
             }
           },
-          "required": ["length"],
+          "required": [
+            "length"
+          ],
           "type": "object"
         },
         "created": {
@@ -213,14 +211,20 @@
               "type": "number"
             }
           },
-          "required": ["length"],
+          "required": [
+            "length"
+          ],
           "type": "object"
         },
         "text": {
           "type": "string"
         }
       },
-      "required": ["text", "created", "authorId"],
+      "required": [
+        "text",
+        "created",
+        "authorId"
+      ],
       "type": "object"
     },
     "Person": {
@@ -293,11 +297,20 @@
           "$ref": "#/definitions/SocioEconomics"
         }
       },
-      "required": ["isDeceased", "contactDetails", "socioEconomics"],
+      "required": [
+        "isDeceased",
+        "contactDetails",
+        "socioEconomics"
+      ],
       "type": "object"
     },
     "ProgramEnrolmentStatus": {
-      "enum": ["ACTIVE", "OPTED_OUT", "TRANSFERRED_OUT", "PAUSED"],
+      "enum": [
+        "ACTIVE",
+        "OPTED_OUT",
+        "TRANSFERRED_OUT",
+        "PAUSED"
+      ],
       "type": "string"
     },
     "SocioEconomics": {

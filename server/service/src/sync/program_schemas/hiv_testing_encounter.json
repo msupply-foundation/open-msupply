@@ -1,0 +1,218 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "EncounterEvent": {
+      "properties": {
+        "datetime": {
+          "description": "Time of the the event, can be in the future",
+          "format": "date-time",
+          "type": "string"
+        },
+        "group": {
+          "type": "string"
+        },
+        "name": {
+          "description": "Name of this specific event. There could be multiple events of the same type but with different names. For example, two event could have type 'status' and name \"Status name 1\" and \"Status name 2\"",
+          "type": "string"
+        },
+        "type": {
+          "description": "For example, encounter 'status'.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "datetime",
+        "type"
+      ],
+      "type": "object"
+    },
+    "EncounterStatus": {
+      "enum": [
+        "SCHEDULED",
+        "DONE",
+        "CANCELLED"
+      ],
+      "type": "string"
+    },
+    "FamilyPlanning": {
+      "properties": {
+        "contraception": {
+          "description": "13197004 Contraception",
+          "type": "boolean"
+        },
+        "pregnant": {
+          "description": "77386006 Pregnant",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "HIVStatus": {
+      "enum": [
+        "POSITIVE",
+        "NEGATIVE",
+        "UNKNOWN"
+      ],
+      "type": "string"
+    },
+    "HIVTestingEncounter": {
+      "properties": {
+        "endDatetime": {
+          "description": "Encounter end date and time",
+          "format": "date-time",
+          "type": "string"
+        },
+        "events": {
+          "items": {
+            "$ref": "#/definitions/EncounterEvent"
+          },
+          "type": "array"
+        },
+        "familyPlanning": {
+          "$ref": "#/definitions/FamilyPlanning"
+        },
+        "hivTesting": {
+          "properties": {
+            "datetime": {
+              "description": "Date of HIV Test done",
+              "format": "date-time",
+              "type": "string"
+            },
+            "type": {
+              "enum": [
+                "PCR",
+                "ANTIBODY"
+              ],
+              "type": "string"
+            }
+          },
+          "required": [
+            "datetime",
+            "type"
+          ],
+          "type": "object"
+        },
+        "hivTestingResult": {
+          "properties": {
+            "cd4Count": {
+              "description": "Last CD4 count",
+              "type": "number"
+            },
+            "datetime": {
+              "description": "Date of HIV Test done",
+              "format": "date-time",
+              "type": "string"
+            },
+            "result": {
+              "$ref": "#/definitions/HIVStatus"
+            },
+            "viralLoad": {
+              "description": "Last viral load",
+              "type": "number"
+            }
+          },
+          "required": [
+            "datetime",
+            "result"
+          ],
+          "type": "object"
+        },
+        "practitioner": {
+          "$ref": "#/definitions/Practitioner"
+        },
+        "riskBehaviour": {
+          "properties": {
+            "accidentalNeedlePick": {
+              "description": "Have you received any of the following in the past 12 months ?: Accidental needle pick ?",
+              "type": "boolean"
+            },
+            "forcedSexWithoutConsent": {
+              "description": "Have you received any of the following in the past 12 months ?: Forced to have sex without consent ?",
+              "type": "boolean"
+            },
+            "injectedDrugsWithoutDoctorAdvice": {
+              "description": "Have you received any of the following in the past 12 months ?: Injected drugs without doctor's advice ?",
+              "type": "boolean"
+            },
+            "numberFemaleSexualPartners6Month": {
+              "description": "How many female sexual partners have you had in the last 6 months ?",
+              "type": "number"
+            },
+            "numberMaleSexualPartners6Month": {
+              "description": "How many male sexual partners have you had in the last 6 months ?",
+              "type": "number"
+            },
+            "prostitution": {
+              "description": "Have you received any of the following in the past 12 months ?: Sex in exchange for money/goods/services ?",
+              "type": "boolean"
+            },
+            "receicedBloodTransfusion": {
+              "description": "Have you received any of the following in the past 12 months ?: Received a blood transfusion ?",
+              "type": "boolean"
+            },
+            "riskGroup": {
+              "enum": [
+                "GP",
+                "HR",
+                "MSM",
+                "TG",
+                "FSW",
+                "MSW"
+              ],
+              "type": "string"
+            },
+            "sexWithSameSex": {
+              "description": "Have you received any of the following in the past 12 months ?: Had sex with someone of the same sex ?",
+              "type": "boolean"
+            },
+            "sexualTransmittedInfection": {
+              "description": "Have you received any of the following in the past 12 months ?: Sexually transmitted infection (STI)",
+              "type": "boolean"
+            },
+            "unprotectedAnalSex": {
+              "description": "Have you received any of the following in the past 12 months ?: Unprotected anal sex ?",
+              "type": "boolean"
+            },
+            "unprotectedVaginalSex": {
+              "description": "Have you received any of the following in the past 12 months ?: Unprotected vaginal sex ?",
+              "type": "boolean"
+            }
+          },
+          "type": "object"
+        },
+        "startDatetime": {
+          "description": "Encounter start date and time",
+          "format": "date-time",
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/EncounterStatus"
+        }
+      },
+      "required": [
+        "startDatetime"
+      ],
+      "type": "object"
+    },
+    "Practitioner": {
+      "properties": {
+        "firstName": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "lastName": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "#/definitions/HIVTestingEncounter"
+    }
+  ]
+}

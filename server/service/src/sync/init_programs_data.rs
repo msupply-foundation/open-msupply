@@ -7,7 +7,7 @@ use crate::{
         patient::{PatientService, PatientServiceTrait, UpdatePatient, PATIENT_TYPE},
         program::{
             program_schema::{ProgramEnrolmentStatus, SchemaProgramEnrolment},
-            ProgramService, ProgramServiceTrait, UpsertProgram,
+            ProgramEnrolmentService, ProgramEnrolmentServiceTrait, UpsertProgramEnrolment,
         },
     },
     service_provider::ServiceProvider,
@@ -24,6 +24,26 @@ use self::hiv_care_encounter::HivcareEncounterPhysicalExamination;
 
 schemafy::schemafy!("src/sync/program_schemas/patient.json");
 
+mod hiv_testing_program {
+    use serde::{Deserialize, Serialize};
+    schemafy::schemafy!("src/sync/program_schemas/hiv_testing_program.json");
+
+    impl Default for HivtestingProgramEnrolment {
+        fn default() -> Self {
+            Self {
+                enrolment_datetime: Default::default(),
+                enrolment_patient_id: Default::default(),
+                hiv_test_type: Default::default(),
+                mother: Default::default(),
+                partner_hiv_status: Default::default(),
+                referred_from: Default::default(),
+                risk_group: Default::default(),
+                status: Default::default(),
+            }
+        }
+    }
+}
+
 mod hiv_care_program {
     use serde::{Deserialize, Serialize};
     schemafy::schemafy!("src/sync/program_schemas/hiv_care_program.json");
@@ -38,10 +58,30 @@ mod hiv_care_program {
                 mother: Default::default(),
                 partner_hiv_status: Default::default(),
                 prior_art: Default::default(),
-                referred_from: Default::default(),
                 risk_group: Default::default(),
                 status: Default::default(),
                 treatment_supporter: Default::default(),
+            }
+        }
+    }
+}
+
+mod hiv_testing_encounter {
+    use serde::{Deserialize, Serialize};
+    schemafy::schemafy!("src/sync/program_schemas/hiv_testing_encounter.json");
+
+    impl Default for HivtestingEncounter {
+        fn default() -> Self {
+            Self {
+                end_datetime: Default::default(),
+                family_planning: Default::default(),
+                practitioner: Default::default(),
+                risk_behaviour: Default::default(),
+                start_datetime: Default::default(),
+                status: Default::default(),
+                events: Default::default(),
+                hiv_testing: Default::default(),
+                hiv_testing_result: Default::default(),
             }
         }
     }
@@ -59,7 +99,6 @@ mod hiv_care_encounter {
                 family_planning: Default::default(),
                 physical_examination: Default::default(),
                 practitioner: Default::default(),
-                risk_behaviour: Default::default(),
                 start_datetime: Default::default(),
                 status: Default::default(),
                 tuberculosis: Default::default(),
@@ -77,14 +116,24 @@ const PROGRAM_SCHEMA: &'static str = std::include_str!("./program_schemas/progra
 const PROGRAM_UI_SCHEMA: &'static str =
     std::include_str!("./program_schemas/program_ui_schema.json");
 
+const HIV_TESTING_PROGRAM_SCHEMA: &'static str =
+    std::include_str!("./program_schemas/hiv_testing_program.json");
+const HIV_TESTING_PROGRAM_UI_SCHEMA: &'static str =
+    std::include_str!("./program_schemas/hiv_testing_program_ui_schema.json");
+
 const HIV_CARE_PROGRAM_SCHEMA: &'static str =
     std::include_str!("./program_schemas/hiv_care_program.json");
 const HIV_CARE_PROGRAM_UI_SCHEMA: &'static str =
     std::include_str!("./program_schemas/hiv_care_program_ui_schema.json");
 
-const ENCOUNTER_SCHEMA: &'static str =
+const HIV_TESTING_ENCOUNTER_SCHEMA: &'static str =
+    std::include_str!("./program_schemas/hiv_testing_encounter.json");
+const HIV_TESTING_ENCOUNTER_UI_SCHEMA: &'static str =
+    std::include_str!("./program_schemas/hiv_testing_encounter_ui_schema.json");
+
+const HIV_CARE_ENCOUNTER_SCHEMA: &'static str =
     std::include_str!("./program_schemas/hiv_care_encounter.json");
-const ENCOUNTER_UI_SCHEMA: &'static str =
+const HIV_CARE_ENCOUNTER_UI_SCHEMA: &'static str =
     std::include_str!("./program_schemas/hiv_care_encounter_ui_schema.json");
 
 fn person_1() -> Person {
@@ -284,7 +333,7 @@ fn program_1() -> SchemaProgramEnrolment {
     }
 }
 
-fn program_2() -> hiv_care_program::HivcareProgramEnrolment {
+fn program_hiv_care() -> hiv_care_program::HivcareProgramEnrolment {
     inline_init(|p: &mut hiv_care_program::HivcareProgramEnrolment| {
         p.enrolment_datetime = Utc::now().to_rfc3339();
         p.enrolment_patient_id = Some("STR0001".to_string());
@@ -292,15 +341,31 @@ fn program_2() -> hiv_care_program::HivcareProgramEnrolment {
     })
 }
 
-fn encounter_1() -> hiv_care_encounter::HivcareEncounter {
+fn program_hiv_testing() -> hiv_testing_program::HivtestingProgramEnrolment {
+    inline_init(|p: &mut hiv_testing_program::HivtestingProgramEnrolment| {
+        p.enrolment_datetime = Utc::now().to_rfc3339();
+        p.enrolment_patient_id = Some("STR0002".to_string());
+        p.status = Some(hiv_testing_program::ProgramEnrolmentStatus::Active);
+    })
+}
+
+fn encounter_hiv_testing_1() -> hiv_testing_encounter::HivtestingEncounter {
+    inline_init(|e: &mut hiv_testing_encounter::HivtestingEncounter| {
+        e.status = Some(hiv_testing_encounter::EncounterStatus::Scheduled);
+        e.start_datetime = Utc::now()
+            .checked_sub_signed(Duration::weeks(5))
+            .unwrap()
+            .to_rfc3339();
+    })
+}
+
+fn encounter_hiv_care_1() -> hiv_care_encounter::HivcareEncounter {
     inline_init(|e: &mut hiv_care_encounter::HivcareEncounter| {
         e.status = Some(hiv_care_encounter::EncounterStatus::Scheduled);
         e.start_datetime = Utc::now()
             .checked_sub_signed(Duration::weeks(5))
             .unwrap()
             .to_rfc3339();
-        e.end_datetime = None;
-        e.practitioner = None;
         e.physical_examination = Some(inline_init(
             |exam: &mut HivcareEncounterPhysicalExamination| {
                 exam.weight = Some(51.0);
@@ -310,13 +375,11 @@ fn encounter_1() -> hiv_care_encounter::HivcareEncounter {
     })
 }
 
-fn encounter_2() -> hiv_care_encounter::HivcareEncounter {
+fn encounter_hiv_care_2() -> hiv_care_encounter::HivcareEncounter {
     let time = Utc::now().checked_sub_signed(Duration::weeks(4)).unwrap();
     inline_init(|e: &mut hiv_care_encounter::HivcareEncounter| {
         e.status = Some(hiv_care_encounter::EncounterStatus::Scheduled);
         e.start_datetime = time.to_rfc3339();
-        e.end_datetime = None;
-        e.practitioner = None;
         e.physical_examination = Some(inline_init(
             |exam: &mut HivcareEncounterPhysicalExamination| {
                 exam.weight = Some(52.0);
@@ -346,15 +409,13 @@ fn encounter_2() -> hiv_care_encounter::HivcareEncounter {
     })
 }
 
-fn encounter_3() -> hiv_care_encounter::HivcareEncounter {
+fn encounter_hiv_care_3() -> hiv_care_encounter::HivcareEncounter {
     inline_init(|e: &mut hiv_care_encounter::HivcareEncounter| {
         e.status = Some(hiv_care_encounter::EncounterStatus::Scheduled);
         e.start_datetime = Utc::now()
             .checked_sub_signed(Duration::weeks(3))
             .unwrap()
             .to_rfc3339();
-        e.end_datetime = None;
-        e.practitioner = None;
         e.physical_examination = Some(inline_init(
             |exam: &mut HivcareEncounterPhysicalExamination| {
                 exam.weight = Some(52.5);
@@ -364,15 +425,13 @@ fn encounter_3() -> hiv_care_encounter::HivcareEncounter {
     })
 }
 
-fn encounter_4() -> hiv_care_encounter::HivcareEncounter {
+fn encounter_hiv_care_4() -> hiv_care_encounter::HivcareEncounter {
     inline_init(|e: &mut hiv_care_encounter::HivcareEncounter| {
         e.status = Some(hiv_care_encounter::EncounterStatus::Scheduled);
         e.start_datetime = Utc::now()
             .checked_sub_signed(Duration::weeks(1))
             .unwrap()
             .to_rfc3339();
-        e.end_datetime = None;
-        e.practitioner = None;
         e.physical_examination = Some(inline_init(
             |exam: &mut HivcareEncounterPhysicalExamination| {
                 exam.weight = Some(51.0);
@@ -382,12 +441,10 @@ fn encounter_4() -> hiv_care_encounter::HivcareEncounter {
     })
 }
 
-fn encounter_5() -> hiv_care_encounter::HivcareEncounter {
+fn encounter_hiv_care_5() -> hiv_care_encounter::HivcareEncounter {
     inline_init(|e: &mut hiv_care_encounter::HivcareEncounter| {
         e.status = Some(hiv_care_encounter::EncounterStatus::Scheduled);
         e.start_datetime = Utc::now().to_rfc3339();
-        e.end_datetime = None;
-        e.practitioner = None;
         e.physical_examination = Some(inline_init(
             |exam: &mut HivcareEncounterPhysicalExamination| {
                 exam.weight = Some(54.0);
@@ -439,6 +496,41 @@ pub fn init_program_data(
         form_schema_id: Some(program_schema_id.clone()),
     })?;
 
+    // hiv testing program
+    let hiv_testing_program_schema_id = uuid();
+    FormSchemaRowRepository::new(connection).upsert_one(&FormSchema {
+        id: hiv_testing_program_schema_id.clone(),
+        r#type: "JsonForms".to_string(),
+        json_schema: serde_json::from_str(HIV_TESTING_PROGRAM_SCHEMA).unwrap(),
+        ui_schema: serde_json::from_str(HIV_TESTING_PROGRAM_UI_SCHEMA).unwrap(),
+    })?;
+    let hiv_testing_program_id = uuid();
+    DocumentRegistryRowRepository::new(connection).upsert_one(&DocumentRegistryRow {
+        id: hiv_testing_program_id.clone(),
+        document_type: "HIVTestingProgram".to_string(),
+        context: DocumentContext::Program,
+        name: Some("HIV Testing Program".to_string()),
+        parent_id: None,
+        form_schema_id: Some(hiv_testing_program_schema_id.clone()),
+    })?;
+
+    // hiv testing encounter
+    let hiv_testing_encounter_schema_id = uuid();
+    FormSchemaRowRepository::new(connection).upsert_one(&FormSchema {
+        id: hiv_testing_encounter_schema_id.clone(),
+        r#type: "JsonForms".to_string(),
+        json_schema: serde_json::from_str(HIV_TESTING_ENCOUNTER_SCHEMA).unwrap(),
+        ui_schema: serde_json::from_str(HIV_TESTING_ENCOUNTER_UI_SCHEMA).unwrap(),
+    })?;
+    DocumentRegistryRowRepository::new(connection).upsert_one(&DocumentRegistryRow {
+        id: uuid(),
+        document_type: "HIVTestingEncounter".to_string(),
+        context: DocumentContext::Encounter,
+        name: Some("HIV Testing Encounter".to_string()),
+        parent_id: Some(hiv_testing_program_id.clone()),
+        form_schema_id: Some(hiv_testing_encounter_schema_id.clone()),
+    })?;
+
     // hiv care program
     let hiv_care_program_schema_id = uuid();
     FormSchemaRowRepository::new(connection).upsert_one(&FormSchema {
@@ -457,13 +549,13 @@ pub fn init_program_data(
         form_schema_id: Some(hiv_care_program_schema_id.clone()),
     })?;
 
-    // encounter
+    // hiv care encounter
     let hiv_care_encounter_schema_id = uuid();
     FormSchemaRowRepository::new(connection).upsert_one(&FormSchema {
         id: hiv_care_encounter_schema_id.clone(),
         r#type: "JsonForms".to_string(),
-        json_schema: serde_json::from_str(ENCOUNTER_SCHEMA).unwrap(),
-        ui_schema: serde_json::from_str(ENCOUNTER_UI_SCHEMA).unwrap(),
+        json_schema: serde_json::from_str(HIV_CARE_ENCOUNTER_SCHEMA).unwrap(),
+        ui_schema: serde_json::from_str(HIV_CARE_ENCOUNTER_UI_SCHEMA).unwrap(),
     })?;
     DocumentRegistryRowRepository::new(connection).upsert_one(&DocumentRegistryRow {
         id: uuid(),
@@ -511,13 +603,13 @@ pub fn init_program_data(
         .unwrap();
 
     // program
-    let service = ProgramService {};
+    let service = ProgramEnrolmentService {};
     service
-        .upsert_program(
+        .upsert_program_enrolment(
             &ctx,
             &service_provider,
             "no user",
-            UpsertProgram {
+            UpsertProgramEnrolment {
                 patient_id: patient_1().id,
                 r#type: "TestProgram1".to_string(),
                 data: serde_json::to_value(program_1()).unwrap(),
@@ -526,16 +618,31 @@ pub fn init_program_data(
             },
         )
         .unwrap();
-    // hiv care program
+    // hiv testing program
     service
-        .upsert_program(
+        .upsert_program_enrolment(
             &ctx,
             &service_provider,
             "no user",
-            UpsertProgram {
+            UpsertProgramEnrolment {
+                patient_id: patient_1().id,
+                r#type: "HIVTestingProgram".to_string(),
+                data: serde_json::to_value(program_hiv_testing()).unwrap(),
+                schema_id: hiv_testing_program_schema_id,
+                parent: None,
+            },
+        )
+        .unwrap();
+    // hiv care program
+    service
+        .upsert_program_enrolment(
+            &ctx,
+            &service_provider,
+            "no user",
+            UpsertProgramEnrolment {
                 patient_id: patient_1().id,
                 r#type: "HIVCareProgram".to_string(),
-                data: serde_json::to_value(program_2()).unwrap(),
+                data: serde_json::to_value(program_hiv_care()).unwrap(),
                 schema_id: hiv_care_program_schema_id,
                 parent: None,
             },
@@ -551,8 +658,22 @@ pub fn init_program_data(
             "no user",
             InsertEncounter {
                 patient_id: patient_1().id,
+                r#type: "HIVTestingEncounter".to_string(),
+                data: serde_json::to_value(encounter_hiv_testing_1()).unwrap(),
+                schema_id: hiv_testing_encounter_schema_id.clone(),
+                program: "HIVTestingProgram".to_string(),
+            },
+        )
+        .unwrap();
+    service
+        .insert_encounter(
+            &ctx,
+            &service_provider,
+            "no user",
+            InsertEncounter {
+                patient_id: patient_1().id,
                 r#type: "HIVCareEncounter".to_string(),
-                data: serde_json::to_value(encounter_1()).unwrap(),
+                data: serde_json::to_value(encounter_hiv_care_1()).unwrap(),
                 schema_id: hiv_care_encounter_schema_id.clone(),
                 program: "HIVCareProgram".to_string(),
             },
@@ -566,7 +687,7 @@ pub fn init_program_data(
             InsertEncounter {
                 patient_id: patient_1().id,
                 r#type: "HIVCareEncounter".to_string(),
-                data: serde_json::to_value(encounter_2()).unwrap(),
+                data: serde_json::to_value(encounter_hiv_care_2()).unwrap(),
                 schema_id: hiv_care_encounter_schema_id.clone(),
                 program: "HIVCareProgram".to_string(),
             },
@@ -580,7 +701,7 @@ pub fn init_program_data(
             InsertEncounter {
                 patient_id: patient_1().id,
                 r#type: "HIVCareEncounter".to_string(),
-                data: serde_json::to_value(encounter_3()).unwrap(),
+                data: serde_json::to_value(encounter_hiv_care_3()).unwrap(),
                 schema_id: hiv_care_encounter_schema_id.clone(),
                 program: "HIVCareProgram".to_string(),
             },
@@ -594,7 +715,7 @@ pub fn init_program_data(
             InsertEncounter {
                 patient_id: patient_1().id,
                 r#type: "HIVCareEncounter".to_string(),
-                data: serde_json::to_value(encounter_4()).unwrap(),
+                data: serde_json::to_value(encounter_hiv_care_4()).unwrap(),
                 schema_id: hiv_care_encounter_schema_id.clone(),
                 program: "HIVCareProgram".to_string(),
             },
@@ -608,7 +729,7 @@ pub fn init_program_data(
             InsertEncounter {
                 patient_id: patient_1().id,
                 r#type: "HIVCareEncounter".to_string(),
-                data: serde_json::to_value(encounter_5()).unwrap(),
+                data: serde_json::to_value(encounter_hiv_care_5()).unwrap(),
                 schema_id: hiv_care_encounter_schema_id.clone(),
                 program: "HIVCareProgram".to_string(),
             },

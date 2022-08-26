@@ -15,13 +15,14 @@ const useUpsertProgramEnrolment = (
   patientId: string,
   type: string
 ): SaveDocumentMutation => {
-  const { mutateAsync: insertProgram } = useProgramEnrolment.document.insert();
+  const { mutateAsync: insertProgramEnrolment } =
+    useProgramEnrolment.document.insert();
   const { mutateAsync: updateProgramEnrolment } =
     useProgramEnrolment.document.update();
 
   return async (jsonData: unknown, formSchemaId: string, parent?: string) =>
     parent === undefined
-      ? await insertProgram({
+      ? await insertProgramEnrolment({
           data: jsonData,
           schemaId: formSchemaId,
           patientId,

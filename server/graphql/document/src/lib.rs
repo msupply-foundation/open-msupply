@@ -18,19 +18,19 @@ use mutations::patient::insert::*;
 use mutations::patient::update::update_patient;
 use mutations::patient::update::UpdatePatientInput;
 use mutations::patient::update::UpdatePatientResponse;
-use mutations::program::insert::insert_program;
-use mutations::program::insert::InsertProgramInput;
-use mutations::program::insert::InsertProgramResponse;
-use mutations::program::update::update_program;
-use mutations::program::update::UpdateProgramInput;
-use mutations::program::update::UpdateProgramResponse;
+use mutations::program_enrolment::insert::insert_program_enrolment;
+use mutations::program_enrolment::insert::InsertProgramEnrolmentInput;
+use mutations::program_enrolment::insert::InsertProgramEnrolmentResponse;
+use mutations::program_enrolment::update::update_program_enrolment;
+use mutations::program_enrolment::update::UpdateProgramEnrolmentInput;
+use mutations::program_enrolment::update::UpdateProgramEnrolmentResponse;
 use mutations::undelete_document::undelete_document;
 use mutations::undelete_document::UndeleteDocumentInput;
 use mutations::undelete_document::UndeleteDocumentResponse;
 use mutations::update_document::*;
 use types::document::DocumentNode;
 use types::json_schema::FormSchemaNode;
-use types::program::ProgramEventFilterInput;
+use types::program_enrolment::ProgramEventFilterInput;
 
 mod mutations;
 
@@ -115,14 +115,14 @@ impl DocumentQueries {
         patient_search(ctx, store_id, input)
     }
 
-    pub async fn programs(
+    pub async fn program_enrolments(
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        sort: Option<ProgramSortInput>,
-        filter: Option<ProgramFilterInput>,
-    ) -> Result<ProgramResponse> {
-        programs(ctx, store_id, sort, filter)
+        sort: Option<ProgramEnrolmentSortInput>,
+        filter: Option<ProgramEnrolmentFilterInput>,
+    ) -> Result<ProgramEnrolmentResponse> {
+        program_enrolments(ctx, store_id, sort, filter)
     }
 
     pub async fn program_events(
@@ -230,23 +230,23 @@ impl DocumentMutations {
 
     /// Enrols a patient into a program by adding a program document to the patient's documents.
     /// Every patient can only have one program document of each program type.
-    pub async fn insert_program(
+    pub async fn insert_program_enrolment(
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input: InsertProgramInput,
-    ) -> Result<InsertProgramResponse> {
-        insert_program(ctx, store_id, input)
+        input: InsertProgramEnrolmentInput,
+    ) -> Result<InsertProgramEnrolmentResponse> {
+        insert_program_enrolment(ctx, store_id, input)
     }
 
     /// Updates an existing program document belonging to a patient.
-    pub async fn update_program(
+    pub async fn update_program_enrolment(
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input: UpdateProgramInput,
-    ) -> Result<UpdateProgramResponse> {
-        update_program(ctx, store_id, input)
+        input: UpdateProgramEnrolmentInput,
+    ) -> Result<UpdateProgramEnrolmentResponse> {
+        update_program_enrolment(ctx, store_id, input)
     }
 
     pub async fn insert_encounter(

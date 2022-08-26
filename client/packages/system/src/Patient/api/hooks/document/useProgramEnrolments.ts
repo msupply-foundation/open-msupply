@@ -3,7 +3,7 @@ import { ProgramRowFragmentWithId } from '../..';
 import { usePatientId } from '../utils/usePatientId';
 import { usePatientApi } from '../utils/usePatientApi';
 
-export const usePrograms = () => {
+export const useProgramEnrolments = () => {
   const api = usePatientApi();
   const { queryParams } = useUrlQueryParams({
     initialSort: { key: 'type', dir: 'asc' },
@@ -15,7 +15,7 @@ export const usePrograms = () => {
   };
   return {
     ...useQuery(api.keys.paramList(params), () =>
-      api.get.programs(params).then(programs => ({
+      api.get.programEnrolments(params).then(programs => ({
         nodes: programs.nodes.map(node => {
           // only take the latest status event
           const events = node.events
