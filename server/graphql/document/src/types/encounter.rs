@@ -12,7 +12,8 @@ use repository::{
 use serde::Serialize;
 
 use super::{
-    document::DocumentNode, program::ProgramEventFilterInput, program_event::ProgramEventNode,
+    document::DocumentNode, program_enrolment::ProgramEventFilterInput,
+    program_event::ProgramEventNode,
 };
 
 pub struct EncounterNode {
