@@ -1,6 +1,6 @@
 CREATE TYPE document_status AS ENUM (
     'ACTIVE',
-    'DELETED',
+    'DELETED'
 );
 
 CREATE TABLE document (
