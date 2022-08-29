@@ -20,6 +20,7 @@ use crate::{
     requisition::{RequisitionService, RequisitionServiceTrait},
     requisition_line::{RequisitionLineService, RequisitionLineServiceTrait},
     settings_service::{SettingsService, SettingsServiceTrait},
+    site_info::{SiteInfoService, SiteInfoTrait},
     stocktake::{StocktakeService, StocktakeServiceTrait},
     stocktake_line::{StocktakeLineService, StocktakeLineServiceTrait},
     store::{get_store, get_stores},
@@ -50,6 +51,7 @@ pub struct ServiceProvider {
     pub settings: Box<dyn SettingsServiceTrait>,
     // App Data Service
     pub app_data_service: Box<dyn AppDataServiceTrait>,
+    pub site_info: Box<dyn SiteInfoTrait>,
 }
 
 pub struct ServiceContext {
@@ -76,6 +78,7 @@ impl ServiceProvider {
             report_service: Box::new(ReportService {}),
             settings: Box::new(SettingsService {}),
             app_data_service: Box::new(AppDataService::new(app_data_folder)),
+            site_info: Box::new(SiteInfoService {}),
         }
     }
 
