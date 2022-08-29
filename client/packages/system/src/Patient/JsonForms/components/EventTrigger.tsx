@@ -11,6 +11,7 @@ import { useDebounceCallback, DateUtils } from '@openmsupply-client/common';
 import { get as extractProperty } from 'lodash';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../useZodOptionsValidation';
+import _ from 'lodash';
 
 type OptionEvent = {
   scheduleIn?: {
@@ -129,47 +130,60 @@ const UIComponent = (props: ControlProps) => {
     Options,
     uischema.options
   );
-  const trigger = useDebounceCallback(() => {
-    if (!options) {
-      return;
-    }
-
-    // evaluate the trigger
-    const trigger = options.trigger.every(t => {
-      const field = extractProperty(data, t.triggerField);
-      if (t.isFalsy && !field) {
-        return true;
-      } else if (t.isNotFalsy && !!field) {
-        return true;
+  const trigger = useDebounceCallback(
+    data => {
+      if (!options) {
+        return;
       }
-      return false;
-    });
-    if (!trigger) {
-      return;
-    }
 
-    const datetimeField: string = extractProperty(
-      data,
-      options.baseDatetimeField
-    );
-    const datetime = new Date(datetimeField);
+      // evaluate the trigger
+      const trigger = options.trigger.every(t => {
+        const field = extractProperty(data, t.triggerField);
+        if (t.isFalsy && !field) {
+          return true;
+        } else if (t.isNotFalsy && !!field) {
+          return true;
+        }
+        return false;
+      });
+      if (!trigger) {
+        return;
+      }
 
-    const existingEvents: EncounterEvent[] =
-      extractProperty(data, 'events') ?? [];
-    // Remove existing events for the group
-    const events = existingEvents.filter(it => it.group !== options.group);
-    for (const eventOption of options.events) {
-      events.push(
-        scheduleEvent(eventOption, datetime, options.group, eventOption.context)
+      const datetimeField: string = extractProperty(
+        data,
+        options.baseDatetimeField
       );
-    }
+      const datetime = new Date(datetimeField);
 
-    const eventsPath = composePaths(path, 'events');
-    handleChange(eventsPath, events);
-  }, [path, options]);
+      const existingEvents: EncounterEvent[] =
+        extractProperty(data, 'events') ?? [];
+      // Remove existing events for the group
+      const events = existingEvents.filter(it => it.group !== options.group);
+      for (const eventOption of options.events) {
+        events.push(
+          scheduleEvent(
+            eventOption,
+            datetime,
+            options.group,
+            eventOption.context
+          )
+        );
+      }
+
+      // Don't update the data if nothing has changed
+      if (_.isEqual(events, existingEvents)) {
+        return;
+      }
+
+      const eventsPath = composePaths(path, 'events');
+      handleChange(eventsPath, events);
+    },
+    [path, options]
+  );
 
   useEffect(() => {
-    trigger();
+    trigger(data);
   }, [data, options]);
 
   if (!!errors) {
