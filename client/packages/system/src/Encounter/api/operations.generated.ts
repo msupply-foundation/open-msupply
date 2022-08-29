@@ -4,7 +4,9 @@ import { GraphQLClient } from 'graphql-request';
 import * as Dom from 'graphql-request/dist/types.dom';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type EncounterRowFragment = { __typename: 'EncounterNode', id: string, program: string, startDatetime: string, endDatetime?: string | null, status?: Types.EncounterNodeStatus | null, name: string, type: string, document: { __typename: 'DocumentNode', documentRegistry?: { __typename: 'DocumentRegistryNode', name?: string | null } | null }, patient: { __typename: 'NameNode', id: string, firstName?: string | null, lastName?: string | null, name: string } };
+export type EncounterRowFragment = { __typename: 'EncounterNode', id: string, program: string, startDatetime: string, endDatetime?: string | null, status?: Types.EncounterNodeStatus | null, name: string, type: string, document: { __typename: 'DocumentNode', documentRegistry?: { __typename: 'DocumentRegistryNode', name?: string | null } | null }, patient: { __typename: 'NameNode', id: string, firstName?: string | null, lastName?: string | null, name: string }, events: Array<{ __typename: 'ProgramEventNode', datetime: string, name?: string | null, type: string }> };
+
+export type ProgramEventFragment = { __typename: 'ProgramEventNode', datetime: string, name?: string | null, type: string };
 
 export type EncounterDocumentRegistryFragment = { __typename: 'DocumentRegistryNode', context: Types.DocumentRegistryNodeContext, documentType: string, formSchemaId: string, id: string, jsonSchema: any, name?: string | null, parentId?: string | null, uiSchema: any, uiSchemaType: string, children: Array<{ __typename: 'DocumentRegistryNode', id: string }> };
 
@@ -17,10 +19,11 @@ export type EncountersQueryVariables = Types.Exact<{
   key?: Types.InputMaybe<Types.EncounterSortFieldInput>;
   desc?: Types.InputMaybe<Types.Scalars['Boolean']>;
   filter?: Types.InputMaybe<Types.EncounterFilterInput>;
+  latestEventTime: Types.Scalars['String'];
 }>;
 
 
-export type EncountersQuery = { __typename: 'FullQuery', encounters: { __typename: 'EncounterConnector', totalCount: number, nodes: Array<{ __typename: 'EncounterNode', id: string, program: string, startDatetime: string, endDatetime?: string | null, status?: Types.EncounterNodeStatus | null, name: string, type: string, document: { __typename: 'DocumentNode', documentRegistry?: { __typename: 'DocumentRegistryNode', name?: string | null } | null }, patient: { __typename: 'NameNode', id: string, firstName?: string | null, lastName?: string | null, name: string } }> } };
+export type EncountersQuery = { __typename: 'FullQuery', encounters: { __typename: 'EncounterConnector', totalCount: number, nodes: Array<{ __typename: 'EncounterNode', id: string, program: string, startDatetime: string, endDatetime?: string | null, status?: Types.EncounterNodeStatus | null, name: string, type: string, document: { __typename: 'DocumentNode', documentRegistry?: { __typename: 'DocumentRegistryNode', name?: string | null } | null }, patient: { __typename: 'NameNode', id: string, firstName?: string | null, lastName?: string | null, name: string }, events: Array<{ __typename: 'ProgramEventNode', datetime: string, name?: string | null, type: string }> }> } };
 
 export type EncounterDocumentRegistriesQueryVariables = Types.Exact<{
   filter?: Types.InputMaybe<Types.DocumentRegistryFilterInput>;
@@ -53,6 +56,13 @@ export type UpdateEncounterMutationVariables = Types.Exact<{
 
 export type UpdateEncounterMutation = { __typename: 'FullMutation', updateEncounter: { __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, author: string, timestamp: string, type: string, data: any, documentRegistry?: { __typename: 'DocumentRegistryNode', context: Types.DocumentRegistryNodeContext, documentType: string, formSchemaId: string, id: string, jsonSchema: any, name?: string | null, parentId?: string | null, uiSchema: any, uiSchemaType: string, children: Array<{ __typename: 'DocumentRegistryNode', id: string }> } | null } };
 
+export const ProgramEventFragmentDoc = gql`
+    fragment ProgramEvent on ProgramEventNode {
+  datetime
+  name
+  type
+}
+    `;
 export const EncounterRowFragmentDoc = gql`
     fragment EncounterRow on EncounterNode {
   id
@@ -73,8 +83,11 @@ export const EncounterRowFragmentDoc = gql`
     lastName
     name
   }
+  events(filter: {datetime: {beforeOrEqualTo: $latestEventTime}}) {
+    ...ProgramEvent
+  }
 }
-    `;
+    ${ProgramEventFragmentDoc}`;
 export const EncounterDocumentRegistryFragmentDoc = gql`
     fragment EncounterDocumentRegistry on DocumentRegistryNode {
   context
@@ -125,7 +138,7 @@ export const EncounterFragmentDoc = gql`
 }
     ${EncounterDocumentFragmentDoc}`;
 export const EncountersDocument = gql`
-    query encounters($storeId: String!, $key: EncounterSortFieldInput, $desc: Boolean, $filter: EncounterFilterInput) {
+    query encounters($storeId: String!, $key: EncounterSortFieldInput, $desc: Boolean, $filter: EncounterFilterInput, $latestEventTime: String!) {
   encounters(storeId: $storeId, sort: {key: $key, desc: $desc}, filter: $filter) {
     ... on EncounterConnector {
       nodes {
@@ -213,7 +226,7 @@ export type Sdk = ReturnType<typeof getSdk>;
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockEncountersQuery((req, res, ctx) => {
- *   const { storeId, key, desc, filter } = req.variables;
+ *   const { storeId, key, desc, filter, latestEventTime } = req.variables;
  *   return res(
  *     ctx.data({ encounters })
  *   )

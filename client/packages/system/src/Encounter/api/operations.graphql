@@ -17,6 +17,15 @@ fragment EncounterRow on EncounterNode {
     lastName
     name
   }
+  events(filter: { datetime: { beforeOrEqualTo: $latestEventTime } }) {
+    ...ProgramEvent
+  }
+}
+
+fragment ProgramEvent on ProgramEventNode {
+  datetime
+  name
+  type
 }
 
 fragment EncounterDocumentRegistry on DocumentRegistryNode {
@@ -70,6 +79,7 @@ query encounters(
   $key: EncounterSortFieldInput
   $desc: Boolean
   $filter: EncounterFilterInput
+  $latestEventTime: String!
 ) {
   encounters(
     storeId: $storeId

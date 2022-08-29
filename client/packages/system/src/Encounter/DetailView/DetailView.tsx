@@ -66,6 +66,7 @@ export const DetailView: FC = () => {
         />
       )}
       <Footer
+        documentName={encounter?.document?.name}
         onSave={saveData}
         onCancel={revert}
         isDisabled={!isDirty || !!validationError}
