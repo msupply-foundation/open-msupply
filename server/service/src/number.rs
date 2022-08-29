@@ -83,7 +83,7 @@ mod test {
             (Note: This test did fail with previous implementation of next number on postgres)
         */
 
-        //Part 1: Concurrent up date (first row) e.g. this will require an insert and an update for one these processes...
+        // Part 1: Concurrent up date (first row) e.g. this will require an insert and an update for one these processes...
 
         let manager_a = connection_manager.clone();
         let process_a = std::thread::spawn(move || {
