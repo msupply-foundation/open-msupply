@@ -27,7 +27,7 @@ type EventTrigger = {
   triggerField: string;
 
   isFalsy?: boolean;
-  isNotFalsy?: boolean;
+  isTruthy?: boolean;
 
   // Enable to support OR
   // or?: EventTrigger[];
@@ -64,7 +64,7 @@ const TriggerCondition: z.ZodType<EventTrigger> = z
   .object({
     triggerField: z.string(),
     isFalsy: z.boolean().optional(),
-    isNotFalsy: z.boolean().optional(),
+    isTruthy: z.boolean().optional(),
   })
   .strict();
 
@@ -141,7 +141,7 @@ const UIComponent = (props: ControlProps) => {
         const field = extractProperty(data, t.triggerField);
         if (t.isFalsy && !field) {
           return true;
-        } else if (t.isNotFalsy && !!field) {
+        } else if (t.isTruthy && !!field) {
           return true;
         }
         return false;
