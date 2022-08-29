@@ -2,6 +2,8 @@ name: Bundle size diff
 
 on:
   pull_request:
+    paths:
+      - "client/**"
 
 jobs:
   build-base:
@@ -14,18 +16,18 @@ jobs:
           ref: ${{ github.base_ref }}
 
       - name: Install dependencies
-        run: rm -rf node_modules && yarn install --frozen-lockfile
+        run: cd ./client && rm -rf node_modules && yarn install --frozen-lockfile
         env:
           NODE_AUTH_TOKEN: ${{secrets.TOKEN_REPO}}
 
       - name: Build
-        run: yarn build-dev
+        run: cd ./client && yarn build-dev
 
       - name: Upload base stats.json
         uses: actions/upload-artifact@v2
         with:
           name: base
-          path: ./packages/host/dist/stats.json
+          path: ./client/packages/host/dist/stats.json
           retention-days: 3
 
   build-pr:
@@ -36,18 +38,18 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Install dependencies
-        run: rm -rf node_modules && yarn install --frozen-lockfile
+        run: cd ./client && rm -rf node_modules && yarn install --frozen-lockfile
         env:
           NODE_AUTH_TOKEN: ${{secrets.TOKEN_REPO}}
 
       - name: Build
-        run: yarn build-dev
+        run: cd ./client && yarn build-dev
 
       - name: Upload base stats.json
         uses: actions/upload-artifact@v2
         with:
           name: pr
-          path: ./packages/host/dist/stats.json
+          path: ./client/packages/host/dist/stats.json
           retention-days: 3
 
   report:
@@ -75,13 +77,13 @@ jobs:
         id: get-diff
         uses: NejcZdovc/bundle-size-diff@v1
         with:
-          base_path: './base/stats.json'
-          pr_path: './pr/stats.json'
+          base_path: "./base/stats.json"
+          pr_path: "./pr/stats.json"
 
       - name: Comment
         uses: NejcZdovc/comment-pr@v1
         with:
-          file: 'comment.md'
+          file: "comment.md"
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
           OLD: ${{steps.get-diff.outputs.base_file_string}}
