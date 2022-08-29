@@ -83,7 +83,8 @@ mod test {
             (Note: This test did fail with previous implementation of next number on postgres)
         */
 
-        // Part 1: Concurrent up date (first row) e.g. this will require an insert and an update for one these processes...
+        // Part 1: Both threads will try to add a new number row (first time this number type has been used)
+        // This should result in 1 insert and 1 update.
 
         let manager_a = connection_manager.clone();
         let process_a = std::thread::spawn(move || {
@@ -120,7 +121,8 @@ mod test {
             result.unwrap()
         });
 
-        //Part 2: Concurrent up date both doing updates
+        // Part 2: Both threads will try to increment the value in the existing row
+        // This should result in 2 updates
         let manager_b = connection_manager.clone();
         let process_b = std::thread::spawn(move || {
             let connection = manager_b.connection().unwrap();
