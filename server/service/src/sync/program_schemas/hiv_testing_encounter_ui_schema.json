@@ -39,7 +39,7 @@
             ],
             "events": [
               {
-                "name": "Pending lab result",
+                "name": "Pending Lab Result",
                 "type": "status",
                 "context": "HIVTestingEncounter"
               }
@@ -53,7 +53,48 @@
       "label": "HIV Results",
       "options": { "icon": "microscope" },
       "elements": [
-        { "scope": "#/properties/hivTestingResult", "type": "Control" }
+        {
+          "type": "VerticalLayout",
+          "elements": [
+            {
+              "type": "Control",
+              "scope": "#/properties/hivTestingResult/properties/datetime"
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/hivTestingResult/properties/result"
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/hivTestingResult/properties/cd4Count"
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/hivTestingResult/properties/viralLoad"
+            }
+          ]
+        },
+        {
+          "type": "EventTrigger",
+          "scope": "#",
+          "options": {
+            "baseDatetimeField": "startDatetime",
+            "group": "PendingLabResults",
+            "trigger": [
+              {
+                "triggerField": "hivTestingResult.datetime",
+                "isNotFalsy": true
+              }
+            ],
+            "events": [
+              {
+                "name": "Lab Result",
+                "type": "status",
+                "context": "HIVTestingEncounter"
+              }
+            ]
+          }
+        }
       ]
     }
   ],
