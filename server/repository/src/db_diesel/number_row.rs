@@ -20,6 +20,12 @@ table! {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum NumberRowTypeError {
+    UnknownTypePrefix(String),
+    MissingTypePrefix,
+}
+
 #[derive(AsExpression, Debug, Clone, PartialEq, Eq)]
 pub enum NumberRowType {
     InboundShipment,
@@ -43,12 +49,6 @@ impl fmt::Display for NumberRowType {
             NumberRowType::Program(custom_string) => write!(f, "PROGRAM_{}", custom_string),
         }
     }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum NumberRowTypeError {
-    UnknownTypePrefix(String),
-    MissingTypePrefix,
 }
 
 impl TryFrom<String> for NumberRowType {
