@@ -166,13 +166,10 @@ impl<'a> NumberRowRepository<'a> {
                         // 3. If we got here another thread inserted the record before we we able to (we know this because nothing was returned for the insert)
                         // We should now be able to do the same 'update returning' query as before to get our new number.
 
-                        let update_query =
-                            sql_query(update_query_str.clone()).bind::<Text, _>(store_id);
-
-                        match update_query.get_result::<NextNumber>(&self.connection.connection) {
-                            Ok(result) => Ok(result),
-                            Err(e) => Err(RepositoryError::from(e)),
-                        }
+                        let result = sql_query(update_query_str.clone())
+                            .bind::<Text, _>(store_id)
+                            .get_result::<NextNumber>(&self.connection.connection)?;
+                        Ok(result)
                     }
                     Err(e) => Err(RepositoryError::from(e)),
                 }
