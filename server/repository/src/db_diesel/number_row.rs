@@ -216,3 +216,64 @@ impl<'a> NumberRowRepository<'a> {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod number_row_mapping_test {
+    use std::convert::TryFrom;
+
+    use crate::NumberRowType;
+
+    #[test]
+    fn test_number_row_type() {
+        // The purpose of this test is primarily to remind you to update both the to_string AND try_from functions if any new mappings are added to NumberRowType
+        // the try_from function uses a wild card match so theoretically could be missed if you add a new mapping
+
+        let number_row_type = NumberRowType::Program("TEST".to_string());
+        match number_row_type {
+            NumberRowType::InboundShipment => {
+                assert!(
+                    NumberRowType::try_from(NumberRowType::InboundShipment.to_string()).unwrap()
+                        == NumberRowType::InboundShipment
+                )
+            }
+            NumberRowType::OutboundShipment => {
+                assert!(
+                    NumberRowType::try_from(NumberRowType::OutboundShipment.to_string()).unwrap()
+                        == NumberRowType::OutboundShipment
+                )
+            }
+            NumberRowType::InventoryAdjustment => {
+                assert!(
+                    NumberRowType::try_from(NumberRowType::InventoryAdjustment.to_string())
+                        .unwrap()
+                        == NumberRowType::InventoryAdjustment
+                )
+            }
+            NumberRowType::RequestRequisition => {
+                assert!(
+                    NumberRowType::try_from(NumberRowType::RequestRequisition.to_string()).unwrap()
+                        == NumberRowType::RequestRequisition
+                )
+            }
+            NumberRowType::ResponseRequisition => {
+                assert!(
+                    NumberRowType::try_from(NumberRowType::ResponseRequisition.to_string())
+                        .unwrap()
+                        == NumberRowType::ResponseRequisition
+                )
+            }
+            NumberRowType::Stocktake => {
+                assert!(
+                    NumberRowType::try_from(NumberRowType::Stocktake.to_string()).unwrap()
+                        == NumberRowType::Stocktake
+                )
+            }
+            NumberRowType::Program(s) => {
+                assert!(
+                    NumberRowType::try_from(NumberRowType::Program(s.clone()).to_string()).unwrap()
+                        == NumberRowType::Program(s)
+                )
+            }
+        }
+    }
+}
