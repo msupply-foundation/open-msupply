@@ -30,7 +30,7 @@
             "trigger": [
               {
                 "triggerField": "hivTesting.datetime",
-                "isNotFalsy": true
+                "isTruthy": true
               },
               {
                 "triggerField": "hivTestingResult.datetime",
@@ -83,7 +83,7 @@
             "trigger": [
               {
                 "triggerField": "hivTestingResult.datetime",
-                "isNotFalsy": true
+                "isTruthy": true
               }
             ],
             "events": [
