@@ -148,12 +148,13 @@ impl<'a> NumberRowRepository<'a> {
                 // Without this postgres will throw a unique constraint violation error and rollback the transaction, which is hard to recover from, instead we just ignore the error and check if it returned a value
                 // It's safe to use format here, as these inputs are not user controlled
                 let insert_query_str = format!(
-                    r#"INSERT INTO number (id, value, store_id, type) VALUES ($1, 1, $2, $3) {} RETURNING value;"#,
+                    r#"INSERT INTO number (id, value, store_id, type) VALUES ($1, $2, $3, $4) {} RETURNING value;"#,
                     ON_CONFLICT_DO_NOTHING
                 );
 
                 let insert_query = sql_query(insert_query_str)
                     .bind::<Text, _>(uuid())
+                    .bind::<BigInt, _>(1)
                     .bind::<Text, _>(store_id)
                     .bind::<Text, _>(r#type.to_string());
 
@@ -224,7 +225,7 @@ mod number_row_mapping_test {
         // The purpose of this test is primarily to remind you to update both the to_string AND try_from functions if any new mappings are added to NumberRowType
         // the try_from function uses a wild card match so theoretically could be missed if you add a new mapping
 
-        let number_row_type = NumberRowType::Program("TEST".to_string());
+        let number_row_type = NumberRowType::Program("EXAMPLE_TEST".to_string());
         match number_row_type {
             NumberRowType::InboundShipment => {
                 assert!(
