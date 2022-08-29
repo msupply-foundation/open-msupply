@@ -126,20 +126,18 @@ impl<'a> NumberRowRepository<'a> {
     ) -> Result<NextNumber, RepositoryError> {
         // 1. First we try to just grab the next number from the database, in most cases this should work and be the fast.
 
-        // Note: Format string is used here because diesel does seems to support binding NumberRowType as a String or as it's own type.
-        // It's safe to use format here, as r#type is an enum with predefined values (No user input)
-        let update_query_str = format!(
-            r#"UPDATE number SET value = value+1 WHERE store_id = $1 and type = '{}' RETURNING value;"#,
-            r#type
-        );
-        let update_query = sql_query(update_query_str.clone()).bind::<Text, _>(store_id);
+        let update_query = sql_query( r#"UPDATE number SET value = value+1 WHERE store_id = $1 and type = $2 RETURNING value;"#)
+            .bind::<Text, _>(store_id)
+            .bind::<Text, _>(r#type.to_string());
 
         // Debug diesel query
         // println!(
         //     "{}",
         //     diesel::debug_query::<crate::DBType, _>(&update_query).to_string()
         // );
-        let update_result = update_query.get_result::<NextNumber>(&self.connection.connection);
+        let update_result = update_query
+            .clone()
+            .get_result::<NextNumber>(&self.connection.connection);
 
         match update_result {
             Ok(result) => Ok(result),
@@ -150,13 +148,15 @@ impl<'a> NumberRowRepository<'a> {
                 // Without this postgres will throw a unique constraint violation error and rollback the transaction, which is hard to recover from, instead we just ignore the error and check if it returned a value
                 // It's safe to use format here, as these inputs are not user controlled
                 let insert_query_str = format!(
-                    r#"INSERT INTO number (id, value, store_id, type) VALUES ('{}', 1, $1, '{}') {} RETURNING value;"#,
-                    uuid(),
-                    r#type,
+                    r#"INSERT INTO number (id, value, store_id, type) VALUES ($1, 1, $2, $3) {} RETURNING value;"#,
                     ON_CONFLICT_DO_NOTHING
                 );
 
-                let insert_query = sql_query(insert_query_str).bind::<Text, _>(store_id);
+                let insert_query = sql_query(insert_query_str)
+                    .bind::<Text, _>(uuid())
+                    .bind::<Text, _>(store_id)
+                    .bind::<Text, _>(r#type.to_string());
+
                 let insert_result =
                     insert_query.get_result::<NextNumber>(&self.connection.connection);
 
@@ -166,9 +166,8 @@ impl<'a> NumberRowRepository<'a> {
                         // 3. If we got here another thread inserted the record before we we able to (we know this because nothing was returned for the insert)
                         // We should now be able to do the same 'update returning' query as before to get our new number.
 
-                        let result = sql_query(update_query_str.clone())
-                            .bind::<Text, _>(store_id)
-                            .get_result::<NextNumber>(&self.connection.connection)?;
+                        let result =
+                            update_query.get_result::<NextNumber>(&self.connection.connection)?;
                         Ok(result)
                     }
                     Err(e) => Err(RepositoryError::from(e)),
