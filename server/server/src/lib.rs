@@ -152,6 +152,7 @@ async fn run_server(
     );
     let service_context = service_provider.context().unwrap();
     let service = &service_provider.settings;
+    let site_info_service = &service_provider.site_info;
 
     let db_settings = service.sync_settings(&service_context).unwrap();
     let sync_settings = db_settings.or(config_settings.sync.clone());
@@ -173,6 +174,7 @@ async fn run_server(
     // Final settings:
     let mut settings = config_settings;
     settings.sync = Some(sync_settings.clone());
+    let site_id = site_info_service.get_site_id(&service_provider).unwrap();
 
     let auth_data = auth_data(
         &settings.server,
@@ -203,7 +205,7 @@ async fn run_server(
         Ok(_) => {}
         Err(err) => {
             error!("Failed to perform the initial sync: {}", err);
-            if !is_develop() {
+            if !is_develop() || site_id.is_none() {
                 warn!("Falling back to bootstrap mode");
                 return run_stage0(
                     settings,
