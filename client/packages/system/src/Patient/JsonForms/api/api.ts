@@ -19,9 +19,10 @@ export const getDocumentQueries = (sdk: Sdk, storeId: string) => ({
     },
   },
   encounterFields: async (
+    patientId: string,
     fields: string[]
   ): Promise<EncounterFieldsFragment[]> => {
-    const result = await sdk.encounterFields({ fields, storeId });
+    const result = await sdk.encounterFields({ patientId, fields, storeId });
     const data = result?.encounterFields;
 
     if (data?.__typename === 'EncounterFieldsConnector') {

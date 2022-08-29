@@ -13,6 +13,7 @@ import { CartesianGrid, Tooltip, TooltipProps, Label } from 'recharts';
 import { useDocument } from '../api';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../useZodOptionsValidation';
+import { useEncounter } from '../../../Encounter/api/hooks';
 
 export const encounterLineChartTester = rankWith(
   4,
@@ -68,6 +69,8 @@ const UIComponent = (props: ControlProps) => {
   const { visible, uischema } = props;
   const { dayMonthShort } = useFormatDateTime();
 
+  const { data: encounter } = useEncounter.document.get();
+
   const { errors, options } = useZodOptionsValidation(
     Options,
     uischema.options
@@ -76,6 +79,7 @@ const UIComponent = (props: ControlProps) => {
 
   const [data, setData] = useState([] as DataType[]);
   const { data: encounterFields } = useDocument.encounterFields(
+    encounter?.patient.id ?? '',
     [option?.field ?? ''],
     !!option
   );
