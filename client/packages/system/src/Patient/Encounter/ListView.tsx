@@ -20,6 +20,7 @@ import {
 import { usePatient } from '../api';
 import { AppRoute } from 'packages/config/src';
 import { EncounterRowFragment } from '../../Encounter';
+import { ProgramEventFragment } from '../ProgramEnrolment/api';
 
 const effectiveStatus = (
   encounter: EncounterRowFragment,
@@ -66,6 +67,11 @@ const useExtendEncounterFragment = (
   );
 };
 
+const encounterEventCellValue = (events: ProgramEventFragment[]) => {
+  // just take the name of the first event
+  return events[0]?.name ?? '';
+};
+
 const EncounterListComponent: FC = () => {
   const {
     updateSortQuery,
@@ -100,6 +106,12 @@ const EncounterListComponent: FC = () => {
         label: 'label.encounter-end',
         formatter: dateString =>
           dateString ? localisedDateTime((dateString as string) || '') : '',
+      },
+      {
+        key: 'events',
+        label: 'label.label',
+        formatter: events =>
+          encounterEventCellValue((events as ProgramEventFragment[]) ?? []),
       },
       {
         key: 'effectiveStatus',
