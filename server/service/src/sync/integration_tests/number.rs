@@ -1,3 +1,5 @@
+use std::convert::TryFrom;
+
 use repository::{NumberRow, NumberRowRepository, NumberRowType, StorageConnection};
 use util::{inline_edit, uuid::uuid};
 
@@ -9,7 +11,7 @@ impl SyncRecordTester<Vec<NumberRow>> for NumberSyncRecordTester {
         let number_repo = NumberRowRepository::new(&connection);
 
         let mut row_0 = number_repo
-            .find_one_by_type_and_store(&NumberRowType::InboundShipment.to_string(), &store_id)
+            .find_one_by_type_and_store(&NumberRowType::InboundShipment, &store_id)
             .unwrap()
             .unwrap_or(NumberRow {
                 id: uuid(),
@@ -20,7 +22,7 @@ impl SyncRecordTester<Vec<NumberRow>> for NumberSyncRecordTester {
         row_0.value = gen_i64();
 
         let mut row_1 = number_repo
-            .find_one_by_type_and_store(&NumberRowType::OutboundShipment.to_string(), &store_id)
+            .find_one_by_type_and_store(&NumberRowType::OutboundShipment, &store_id)
             .unwrap()
             .unwrap_or(NumberRow {
                 id: uuid(),
@@ -31,7 +33,7 @@ impl SyncRecordTester<Vec<NumberRow>> for NumberSyncRecordTester {
         row_1.value = gen_i64();
 
         let mut row_2 = number_repo
-            .find_one_by_type_and_store(&NumberRowType::InventoryAdjustment.to_string(), &store_id)
+            .find_one_by_type_and_store(&NumberRowType::InventoryAdjustment, &store_id)
             .unwrap()
             .unwrap_or(NumberRow {
                 id: uuid(),
@@ -42,7 +44,7 @@ impl SyncRecordTester<Vec<NumberRow>> for NumberSyncRecordTester {
         row_2.value = gen_i64();
 
         let mut row_3 = number_repo
-            .find_one_by_type_and_store(&NumberRowType::RequestRequisition.to_string(), &store_id)
+            .find_one_by_type_and_store(&NumberRowType::RequestRequisition, &store_id)
             .unwrap()
             .unwrap_or(NumberRow {
                 id: uuid(),
@@ -53,7 +55,7 @@ impl SyncRecordTester<Vec<NumberRow>> for NumberSyncRecordTester {
         row_3.value = gen_i64();
 
         let mut row_4 = number_repo
-            .find_one_by_type_and_store(&NumberRowType::ResponseRequisition.to_string(), &store_id)
+            .find_one_by_type_and_store(&NumberRowType::ResponseRequisition, &store_id)
             .unwrap()
             .unwrap_or(NumberRow {
                 id: uuid(),
@@ -64,7 +66,7 @@ impl SyncRecordTester<Vec<NumberRow>> for NumberSyncRecordTester {
         row_4.value = gen_i64();
 
         let mut row_5 = number_repo
-            .find_one_by_type_and_store(&NumberRowType::Stocktake.to_string(), &store_id)
+            .find_one_by_type_and_store(&NumberRowType::Stocktake, &store_id)
             .unwrap()
             .unwrap_or(NumberRow {
                 id: uuid(),
@@ -100,11 +102,13 @@ impl SyncRecordTester<Vec<NumberRow>> for NumberSyncRecordTester {
     fn validate(&self, connection: &StorageConnection, rows: &Vec<NumberRow>) {
         for row_expected in rows {
             let number_repo = NumberRowRepository::new(&connection);
+            let row_type = match NumberRowType::try_from(row_expected.r#type.clone()) {
+                Ok(row_type) => row_type,
+                Err(_) => panic!("Invalid row type: {} -", row_expected.r#type),
+            };
+
             let row = number_repo
-                .find_one_by_type_and_store(
-                    &row_expected.r#type.to_string(),
-                    &row_expected.store_id,
-                )
+                .find_one_by_type_and_store(&row_type, &row_expected.store_id)
                 .unwrap()
                 .expect(&format!("Number row not found: {:?} ", row_expected));
             assert_eq!(row_expected, &row);

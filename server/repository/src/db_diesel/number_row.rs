@@ -180,12 +180,12 @@ impl<'a> NumberRowRepository<'a> {
 
     pub fn find_one_by_type_and_store(
         &self,
-        r#type: &String,
+        r#type: &NumberRowType,
         store_id: &str,
     ) -> Result<Option<NumberRow>, RepositoryError> {
         match number_dsl::number
             .filter(number_dsl::store_id.eq(store_id))
-            .filter(number_dsl::type_.eq(r#type))
+            .filter(number_dsl::type_.eq(r#type.to_string()))
             .first(&self.connection.connection)
         {
             Ok(row) => Ok(Some(row)),

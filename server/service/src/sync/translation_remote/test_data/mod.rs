@@ -1,7 +1,9 @@
+use std::convert::TryFrom;
+
 use repository::{
     ChangelogRow, InvoiceLineRowRepository, InvoiceRowRepository, LocationRowRepository,
-    NameRowRepository, NameStoreJoinRepository, NumberRowRepository, RemoteSyncBufferRow,
-    RepositoryError, RequisitionLineRowRepository, RequisitionRowRepository,
+    NameRowRepository, NameStoreJoinRepository, NumberRowRepository, NumberRowType,
+    RemoteSyncBufferRow, RepositoryError, RequisitionLineRowRepository, RequisitionRowRepository,
     StockLineRowRepository, StocktakeLineRowRepository, StocktakeRowRepository, StorageConnection,
 };
 
@@ -94,12 +96,14 @@ pub fn check_records_against_database(
         for upsert in translated_record.upserts {
             match upsert {
                 IntegrationUpsertRecord::Number(comparison_record) => {
+                    let row_type = match NumberRowType::try_from(comparison_record.r#type.clone()) {
+                        Ok(row_type) => row_type,
+                        Err(_) => panic!("Invalid row type: {}", comparison_record.r#type),
+                    };
+
                     assert_eq!(
                         NumberRowRepository::new(&connection)
-                            .find_one_by_type_and_store(
-                                &comparison_record.r#type.to_string(),
-                                &comparison_record.store_id
-                            )
+                            .find_one_by_type_and_store(&row_type, &comparison_record.store_id)
                             .unwrap()
                             .expect(&format!("Number not found: {}", &comparison_record.id)),
                         comparison_record
