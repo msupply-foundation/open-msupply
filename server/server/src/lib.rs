@@ -15,6 +15,7 @@ use service::{
     auth_data::AuthData,
     service_provider::ServiceProvider,
     settings::{is_develop, ServerSettings, Settings},
+    site_info::set_api_info,
     sync::synchroniser::Synchroniser,
     token_bucket::TokenBucket,
 };
@@ -155,7 +156,7 @@ async fn run_server(
     let site_info_service = &service_provider.site_info;
 
     let db_settings = service.sync_settings(&service_context).unwrap();
-    let sync_settings = db_settings.or(config_settings.sync.clone());
+    let sync_settings = db_settings.clone().or(config_settings.sync.clone());
     let sync_settings = match sync_settings {
         Some(sync_settings) => sync_settings,
         // No sync settings found, start in stage0 mode
@@ -171,6 +172,16 @@ async fn run_server(
             .await
         }
     };
+
+    if db_settings.is_none() && config_settings.sync.is_some() {
+        let remote =
+            set_api_info(&config_settings.sync.clone().unwrap(), &service_provider).unwrap();
+        let site_info = site_info_service.request_site_info(remote).await.unwrap();
+        site_info_service
+            .set_site_info(&service_context.connection, site_info)
+            .unwrap();
+    }
+
     // Final settings:
     let mut settings = config_settings;
     settings.sync = Some(sync_settings.clone());
