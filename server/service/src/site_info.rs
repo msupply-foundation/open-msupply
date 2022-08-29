@@ -25,16 +25,16 @@ pub struct SiteInfo {
 
 #[async_trait]
 pub trait SiteInfoTrait: Sync + Send {
-    async fn request_site_info(
-        &self,
-        remote: RemoteSync,
-    ) -> Result<SiteInfo, Box<dyn Error + Sync + Send + 'static>>;
+    async fn request_site_info(&self, remote: RemoteSync) -> Result<SiteInfo, Box<dyn Error>>;
     fn set_site_info(
         &self,
         connection: &StorageConnection,
         site_info: SiteInfo,
     ) -> Result<(), RepositoryError>;
-    fn get_site_id(&self, service_provider: &ServiceProvider) -> Result<i32, RepositoryError>;
+    fn get_site_id(
+        &self,
+        service_provider: &ServiceProvider,
+    ) -> Result<Option<i32>, RepositoryError>;
 }
 
 pub struct SiteInfoService {}
@@ -65,10 +65,7 @@ pub fn set_api_info(
 
 #[async_trait]
 impl SiteInfoTrait for SiteInfoService {
-    async fn request_site_info(
-        &self,
-        remote: RemoteSync,
-    ) -> Result<SiteInfo, Box<(dyn Error + Send + Sync + 'static)>> {
+    async fn request_site_info(&self, remote: RemoteSync) -> Result<SiteInfo, Box<(dyn Error)>> {
         let site_info = remote.remote.request_and_set_site_info().await?;
         Ok(SiteInfo {
             id: site_info.id,
@@ -87,14 +84,14 @@ impl SiteInfoTrait for SiteInfoService {
         Ok(())
     }
 
-    fn get_site_id(&self, service_provider: &ServiceProvider) -> Result<i32, RepositoryError> {
+    fn get_site_id(
+        &self,
+        service_provider: &ServiceProvider,
+    ) -> Result<Option<i32>, RepositoryError> {
         let connection = service_provider.connection()?;
-        let site_id = match KeyValueStoreRepository::new(&connection)
-            .get_i32(KeyValueType::SettingsSyncSiteId)
-        {
-            Ok(site_id) => site_id,
-            Err(_) => return Err(RepositoryError::NotFound),
-        };
-        Ok(site_id.unwrap_or(0))
+        let site_id =
+            KeyValueStoreRepository::new(&connection).get_i32(KeyValueType::SettingsSyncSiteId)?;
+
+        Ok(site_id)
     }
 }

@@ -7,6 +7,7 @@ use graphql_core::{
 use service::{
     auth::{Resource, ResourceAccessRequest},
     settings_service::UpdateSettingsError,
+    site_info::set_api_info,
     sync::settings::SyncSettings,
 };
 use util::hash::sha256;
@@ -35,7 +36,7 @@ pub struct UpdateServerSettingsInput {
     pub sync_settings: Option<UpdateSyncSettingsInput>,
 }
 
-pub fn update_server_settings(
+pub async fn update_server_settings(
     ctx: &Context<'_>,
     input: UpdateServerSettingsInput,
     stage0: bool,
@@ -53,6 +54,7 @@ pub fn update_server_settings(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
     let service = &service_provider.settings;
+    let site_info_service = &service_provider.site_info;
 
     match input.sync_settings {
         Some(sync_settings) => {
@@ -84,6 +86,17 @@ pub fn update_server_settings(
             return Err(graphql_error.extend());
         }
     };
+
+    let remote = set_api_info(&sync_settings.clone().unwrap(), service_provider)?;
+    let site_info = match site_info_service.request_site_info(remote).await {
+        Ok(site_info) => site_info,
+        Err(error) => {
+            let formatted_error = format!("{:#?}", error);
+            let graphql_error = StandardGraphqlError::InternalError(formatted_error);
+            return Err(graphql_error.extend());
+        }
+    };
+    site_info_service.set_site_info(&service_context.connection, site_info)?;
 
     Ok(UpdateServerSettingsResponse::Response(
         ServerSettingsNode::from_domain(sync_settings, stage0),

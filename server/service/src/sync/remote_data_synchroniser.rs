@@ -31,8 +31,6 @@ pub(crate) enum RemotePullError {
 pub(crate) enum RequestAndSetSiteInfoError {
     #[error("Api error while requesting site info: {0:?}")]
     RequestSiteInfoError(SyncApiError),
-    #[error("Failed to set site info: {0:?}")]
-    SetSiteInfoError(RepositoryError),
 }
 
 pub struct RemoteDataSynchroniser {
@@ -56,7 +54,6 @@ impl RemoteDataSynchroniser {
     /// Request site info and persist it
     pub(crate) async fn request_and_set_site_info(
         &self,
-        // connection: &StorageConnection,
     ) -> Result<SiteInfoV5, RequestAndSetSiteInfoError> {
         info!("Requesting site info");
         let site_info = self
