@@ -1,3 +1,4 @@
+use std::convert::TryFrom;
 use std::fmt;
 
 use super::{number_row::number::dsl as number_dsl, StorageConnection};
@@ -9,19 +10,17 @@ use diesel::result::Error::NotFound;
 use diesel::{prelude::*, sql_query, sql_types::Text};
 
 use diesel::sql_types::BigInt;
-use diesel_derive_enum::DbEnum;
 
 table! {
     number (id) {
         id -> Text,
         value -> BigInt,
         store_id -> Text,
-        #[sql_name = "type"] type_ -> crate::db_diesel::number_row::NumberRowTypeMapping,
+        #[sql_name = "type"] type_ -> Text,
     }
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
-#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+#[derive(AsExpression, Debug, Clone, PartialEq, Eq)]
 pub enum NumberRowType {
     InboundShipment,
     OutboundShipment,
@@ -29,6 +28,7 @@ pub enum NumberRowType {
     RequestRequisition,
     ResponseRequisition,
     Stocktake,
+    Program(String),
 }
 
 impl fmt::Display for NumberRowType {
@@ -40,6 +40,38 @@ impl fmt::Display for NumberRowType {
             NumberRowType::RequestRequisition => write!(f, "REQUEST_REQUISITION"),
             NumberRowType::ResponseRequisition => write!(f, "RESPONSE_REQUISITION"),
             NumberRowType::Stocktake => write!(f, "STOCKTAKE"),
+            NumberRowType::Program(custom_string) => write!(f, "PROGRAM_{}", custom_string),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum NumberRowTypeError {
+    UnknownTypePrefix(String),
+    MissingTypePrefix,
+}
+
+impl TryFrom<String> for NumberRowType {
+    type Error = NumberRowTypeError;
+
+    fn try_from(s: String) -> Result<Self, NumberRowTypeError> {
+        match s.as_str() {
+            "INBOUND_SHIPMENT" => Ok(NumberRowType::InboundShipment),
+            "OUTBOUND_SHIPMENT" => Ok(NumberRowType::OutboundShipment),
+            "INVENTORY_ADJUSTMENT" => Ok(NumberRowType::InventoryAdjustment),
+            "REQUEST_REQUISITION" => Ok(NumberRowType::RequestRequisition),
+            "RESPONSE_REQUISITION" => Ok(NumberRowType::ResponseRequisition),
+            "STOCKTAKE" => Ok(NumberRowType::Stocktake),
+            _ => match s.rsplit_once('_') {
+                Some((prefix, custom_string)) => {
+                    if prefix == "PROGRAM" {
+                        Ok(NumberRowType::Program(custom_string.to_string()))
+                    } else {
+                        Err(NumberRowTypeError::UnknownTypePrefix(prefix.to_string()))
+                    }
+                }
+                None => Err(NumberRowTypeError::MissingTypePrefix),
+            },
         }
     }
 }
@@ -53,9 +85,8 @@ pub struct NumberRow {
     pub store_id: String,
     // Table
     #[column_name = "type_"]
-    pub r#type: NumberRowType,
+    pub r#type: String,
 }
-
 pub struct NumberRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -152,7 +183,7 @@ impl<'a> NumberRowRepository<'a> {
 
     pub fn find_one_by_type_and_store(
         &self,
-        r#type: &NumberRowType,
+        r#type: &String,
         store_id: &str,
     ) -> Result<Option<NumberRow>, RepositoryError> {
         match number_dsl::number

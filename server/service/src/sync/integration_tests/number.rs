@@ -9,68 +9,68 @@ impl SyncRecordTester<Vec<NumberRow>> for NumberSyncRecordTester {
         let number_repo = NumberRowRepository::new(&connection);
 
         let mut row_0 = number_repo
-            .find_one_by_type_and_store(&NumberRowType::InboundShipment, &store_id)
+            .find_one_by_type_and_store(&NumberRowType::InboundShipment.to_string(), &store_id)
             .unwrap()
             .unwrap_or(NumberRow {
                 id: uuid(),
                 value: 0,
                 store_id: store_id.to_string(),
-                r#type: NumberRowType::InboundShipment,
+                r#type: NumberRowType::InboundShipment.to_string(),
             });
         row_0.value = gen_i64();
 
         let mut row_1 = number_repo
-            .find_one_by_type_and_store(&NumberRowType::OutboundShipment, &store_id)
+            .find_one_by_type_and_store(&NumberRowType::OutboundShipment.to_string(), &store_id)
             .unwrap()
             .unwrap_or(NumberRow {
                 id: uuid(),
                 value: 0,
                 store_id: store_id.to_string(),
-                r#type: NumberRowType::OutboundShipment,
+                r#type: NumberRowType::OutboundShipment.to_string(),
             });
         row_1.value = gen_i64();
 
         let mut row_2 = number_repo
-            .find_one_by_type_and_store(&NumberRowType::InventoryAdjustment, &store_id)
+            .find_one_by_type_and_store(&NumberRowType::InventoryAdjustment.to_string(), &store_id)
             .unwrap()
             .unwrap_or(NumberRow {
                 id: uuid(),
                 value: 0,
                 store_id: store_id.to_string(),
-                r#type: NumberRowType::InventoryAdjustment,
+                r#type: NumberRowType::InventoryAdjustment.to_string(),
             });
         row_2.value = gen_i64();
 
         let mut row_3 = number_repo
-            .find_one_by_type_and_store(&NumberRowType::RequestRequisition, &store_id)
+            .find_one_by_type_and_store(&NumberRowType::RequestRequisition.to_string(), &store_id)
             .unwrap()
             .unwrap_or(NumberRow {
                 id: uuid(),
                 value: 0,
                 store_id: store_id.to_string(),
-                r#type: NumberRowType::RequestRequisition,
+                r#type: NumberRowType::RequestRequisition.to_string(),
             });
         row_3.value = gen_i64();
 
         let mut row_4 = number_repo
-            .find_one_by_type_and_store(&NumberRowType::ResponseRequisition, &store_id)
+            .find_one_by_type_and_store(&NumberRowType::ResponseRequisition.to_string(), &store_id)
             .unwrap()
             .unwrap_or(NumberRow {
                 id: uuid(),
                 value: 0,
                 store_id: store_id.to_string(),
-                r#type: NumberRowType::ResponseRequisition,
+                r#type: NumberRowType::ResponseRequisition.to_string(),
             });
         row_4.value = gen_i64();
 
         let mut row_5 = number_repo
-            .find_one_by_type_and_store(&NumberRowType::Stocktake, &store_id)
+            .find_one_by_type_and_store(&NumberRowType::Stocktake.to_string(), &store_id)
             .unwrap()
             .unwrap_or(NumberRow {
                 id: uuid(),
                 value: 0,
                 store_id: store_id.to_string(),
-                r#type: NumberRowType::Stocktake,
+                r#type: NumberRowType::Stocktake.to_string(),
             });
         row_5.value = gen_i64();
 
@@ -101,7 +101,10 @@ impl SyncRecordTester<Vec<NumberRow>> for NumberSyncRecordTester {
         for row_expected in rows {
             let number_repo = NumberRowRepository::new(&connection);
             let row = number_repo
-                .find_one_by_type_and_store(&row_expected.r#type, &row_expected.store_id)
+                .find_one_by_type_and_store(
+                    &row_expected.r#type.to_string(),
+                    &row_expected.store_id,
+                )
                 .unwrap()
                 .expect(&format!("Number row not found: {:?} ", row_expected));
             assert_eq!(row_expected, &row);

@@ -755,18 +755,18 @@ mod repository_test {
         let outbound_shipment_store_b_number = mock_outbound_shipment_number_store_a();
 
         let result = repo
-            .find_one_by_type_and_store(&NumberRowType::InboundShipment, "store_a")
+            .find_one_by_type_and_store(&NumberRowType::InboundShipment.to_string(), "store_a")
             .unwrap();
         assert_eq!(result, Some(inbound_shipment_store_a_number));
 
         let result = repo
-            .find_one_by_type_and_store(&NumberRowType::OutboundShipment, "store_a")
+            .find_one_by_type_and_store(&NumberRowType::OutboundShipment.to_string(), "store_a")
             .unwrap();
         assert_eq!(result, Some(outbound_shipment_store_b_number));
 
         // Test not existing
         let result = repo
-            .find_one_by_type_and_store(&NumberRowType::OutboundShipment, "store_b")
+            .find_one_by_type_and_store(&NumberRowType::OutboundShipment.to_string(), "store_b")
             .unwrap();
         assert_eq!(result, None);
     }
