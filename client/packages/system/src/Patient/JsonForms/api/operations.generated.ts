@@ -36,6 +36,7 @@ export type EncounterFieldsFragment = { __typename: 'EncounterFieldsNode', field
 
 export type EncounterFieldsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
+  patientId: Types.Scalars['String'];
   fields?: Types.InputMaybe<Array<Types.Scalars['String']> | Types.Scalars['String']>;
 }>;
 
@@ -127,11 +128,12 @@ export const AllocateNumberDocument = gql`
 }
     `;
 export const EncounterFieldsDocument = gql`
-    query encounterFields($storeId: String!, $fields: [String!]) {
+    query encounterFields($storeId: String!, $patientId: String!, $fields: [String!]) {
   encounterFields(
     input: {fields: $fields}
     storeId: $storeId
     sort: {key: startDatetime}
+    filter: {patientId: {equalTo: $patientId}}
   ) {
     ... on EncounterFieldsConnector {
       __typename
@@ -223,7 +225,7 @@ export const mockAllocateNumberMutation = (resolver: ResponseResolver<GraphQLReq
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockEncounterFieldsQuery((req, res, ctx) => {
- *   const { storeId, fields } = req.variables;
+ *   const { storeId, patientId, fields } = req.variables;
  *   return res(
  *     ctx.data({ encounterFields })
  *   )

@@ -79,11 +79,16 @@ fragment EncounterFields on EncounterFieldsNode {
   }
 }
 
-query encounterFields($storeId: String!, $fields: [String!]) {
+query encounterFields(
+  $storeId: String!
+  $patientId: String!
+  $fields: [String!]
+) {
   encounterFields(
     input: { fields: $fields }
     storeId: $storeId
     sort: { key: startDatetime }
+    filter: { patientId: { equalTo: $patientId } }
   ) {
     ... on EncounterFieldsConnector {
       __typename
