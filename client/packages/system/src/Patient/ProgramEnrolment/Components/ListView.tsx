@@ -45,7 +45,7 @@ const ProgramListComponent: FC = () => {
       },
       {
         key: 'events',
-        label: 'label.status',
+        label: 'label.label',
         formatter: events =>
           programEventCellValue(events as ProgramEventFragment[]),
       },
