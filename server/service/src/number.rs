@@ -61,6 +61,47 @@ mod test {
     }
 
     #[actix_rt::test]
+    async fn test_number_service_for_programs() {
+        let (_, connection, _, _) = setup_all(
+            "test_number_service_for_programs",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+
+        let result = next_number(
+            &connection,
+            &NumberRowType::Program("PROGRAM_A".to_string()),
+            "store_a",
+        )
+        .unwrap();
+        assert_eq!(result, 1);
+
+        let result = next_number(
+            &connection,
+            &NumberRowType::Program("PROGRAM_A".to_string()),
+            "store_b",
+        )
+        .unwrap();
+        assert_eq!(result, 1);
+
+        let result = next_number(
+            &connection,
+            &NumberRowType::Program("PROGRAM_A".to_string()),
+            "store_a",
+        )
+        .unwrap();
+        assert_eq!(result, 2);
+
+        let result = next_number(
+            &connection,
+            &NumberRowType::Program("PROGRAM_B".to_string()),
+            "store_a",
+        )
+        .unwrap();
+        assert_eq!(result, 1);
+    }
+
+    #[actix_rt::test]
     #[cfg(not(feature = "memory"))]
     async fn test_concurrent_next_number() {
         let (_, _, connection_manager, _) = test_db::setup_all(

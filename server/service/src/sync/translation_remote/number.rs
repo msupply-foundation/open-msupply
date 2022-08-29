@@ -1,6 +1,8 @@
+use std::convert::TryFrom;
+
 use repository::{
-    RemoteSyncBufferRow, ChangelogRow, ChangelogTableName, NumberRow, NumberRowRepository,
-    NumberRowType, StorageConnection,
+    ChangelogRow, ChangelogTableName, NumberRow, NumberRowRepository, NumberRowType,
+    RemoteSyncBufferRow, StorageConnection,
 };
 
 use serde::{Deserialize, Serialize};
@@ -43,7 +45,7 @@ impl RemotePullTranslation for NumberTranslation {
                 id: data.ID.to_string(),
                 value: data.value,
                 store_id: type_and_store.1,
-                r#type: type_and_store.0,
+                r#type: type_and_store.0.to_string(),
             }),
         )))
     }
@@ -69,7 +71,12 @@ impl RemotePushUpsertTranslation for NumberTranslation {
             .find_one_by_id(&changelog.row_id)?
             .ok_or(anyhow::Error::msg("Number row not found"))?;
 
-        let name = match to_number_name(&r#type, &store_id) {
+        let number_type = match NumberRowType::try_from(r#type) {
+            Ok(number_type) => number_type,
+            Err(e) => return Err(anyhow::Error::msg(format!("Invalid number type {:?}", e))),
+        };
+
+        let name = match to_number_name(&number_type, &store_id) {
             Some(name) => name,
             None => return Ok(None),
         };
@@ -109,13 +116,16 @@ fn parse_number_name(value: String) -> Option<(NumberRowType, String)> {
 
 fn to_number_name(number_type: &NumberRowType, store_id: &str) -> Option<String> {
     let number_str = match number_type {
-        NumberRowType::InboundShipment => "supplier_invoice_number",
-        NumberRowType::OutboundShipment => "customer_invoice_number",
-        NumberRowType::InventoryAdjustment => "inventory_adjustment_serial_number",
-        NumberRowType::Stocktake => "stock_take_number",
+        NumberRowType::InboundShipment => "supplier_invoice_number".to_string(),
+        NumberRowType::OutboundShipment => "customer_invoice_number".to_string(),
+        NumberRowType::InventoryAdjustment => "inventory_adjustment_serial_number".to_string(),
+        NumberRowType::Stocktake => "stock_take_number".to_string(),
         // new for omSupply
-        NumberRowType::RequestRequisition => "request_requisition",
-        NumberRowType::ResponseRequisition => "response_requisition",
+        NumberRowType::RequestRequisition => "request_requisition".to_string(),
+        NumberRowType::ResponseRequisition => "response_requisition".to_string(),
+        NumberRowType::Program(s) => {
+            format!("program_{}", s)
+        }
     };
     Some(format!("{}_for_store_{}", number_str, store_id))
 }

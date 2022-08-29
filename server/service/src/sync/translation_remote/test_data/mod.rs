@@ -97,7 +97,7 @@ pub fn check_records_against_database(
                     assert_eq!(
                         NumberRowRepository::new(&connection)
                             .find_one_by_type_and_store(
-                                &comparison_record.r#type,
+                                &comparison_record.r#type.to_string(),
                                 &comparison_record.store_id
                             )
                             .unwrap()
