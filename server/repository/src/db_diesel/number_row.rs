@@ -62,7 +62,7 @@ impl TryFrom<String> for NumberRowType {
             "REQUEST_REQUISITION" => Ok(NumberRowType::RequestRequisition),
             "RESPONSE_REQUISITION" => Ok(NumberRowType::ResponseRequisition),
             "STOCKTAKE" => Ok(NumberRowType::Stocktake),
-            _ => match s.rsplit_once('_') {
+            _ => match s.split_once('_') {
                 Some((prefix, custom_string)) => {
                     if prefix == "PROGRAM" {
                         Ok(NumberRowType::Program(custom_string.to_string()))
