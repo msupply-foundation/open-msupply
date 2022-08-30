@@ -1897,7 +1897,7 @@ export type InsertProgramEnrolmentInput = {
   type: Scalars['String'];
 };
 
-export type InsertProgramEnrolmentResponse = DocumentNode;
+export type InsertProgramEnrolmentResponse = ProgramEnrolmentNode;
 
 export type InsertRequestRequisitionError = {
   __typename: 'InsertRequestRequisitionError';
@@ -3797,7 +3797,7 @@ export type UpdateProgramEnrolmentInput = {
   type: Scalars['String'];
 };
 
-export type UpdateProgramEnrolmentResponse = DocumentNode;
+export type UpdateProgramEnrolmentResponse = ProgramEnrolmentNode;
 
 export type UpdateRequestRequisitionError = {
   __typename: 'UpdateRequestRequisitionError';

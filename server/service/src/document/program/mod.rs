@@ -9,7 +9,8 @@ use repository::Sort;
 use crate::service_provider::ServiceContext;
 use crate::service_provider::ServiceProvider;
 
-use self::query::get_patient_program_enrolments;
+use self::query::program_enrolment;
+use self::query::program_enrolments;
 pub use self::upsert::*;
 
 pub mod program_schema;
@@ -28,14 +29,22 @@ pub trait ProgramEnrolmentServiceTrait: Sync + Send {
         upsert_program_enrolment(ctx, service_provider, user_id, input)
     }
 
-    fn get_patient_program_enrolments(
+    fn program_enrolment(
+        &self,
+        ctx: &ServiceContext,
+        filter: ProgramEnrolmentFilter,
+    ) -> Result<Option<ProgramEnrolment>, RepositoryError> {
+        program_enrolment(ctx, filter)
+    }
+
+    fn program_enrolments(
         &self,
         ctx: &ServiceContext,
         pagination: Pagination,
         sort: Option<Sort<ProgramEnrolmentSortField>>,
         filter: Option<ProgramEnrolmentFilter>,
     ) -> Result<Vec<ProgramEnrolment>, RepositoryError> {
-        get_patient_program_enrolments(ctx, pagination, sort, filter)
+        program_enrolments(ctx, pagination, sort, filter)
     }
 }
 
