@@ -8,8 +8,9 @@ import {
   createQueryParamsStore,
   useFormatDateTime,
   ColumnAlign,
-  useUrlQueryParams,
   useTranslation,
+  useQueryParamsStore,
+  ProgramEnrolmentSortFieldInput,
 } from '@openmsupply-client/common';
 import { ProgramEventFragment } from '../api';
 import { usePatientModalStore } from '../../hooks';
@@ -23,11 +24,14 @@ const programEventCellValue = (events: ProgramEventFragment[]) => {
 
 const ProgramListComponent: FC = () => {
   const {
-    updateSortQuery,
-    updatePaginationQuery,
-    queryParams: { sortBy, page, first, offset },
-  } = useUrlQueryParams();
-  const { data, isError, isLoading } = usePatient.document.programEnrolments();
+    sort: { sortBy, onChangeSortBy },
+    pagination: { page, first, offset, onChangePage },
+  } = useQueryParamsStore();
+
+  const { data, isError, isLoading } = usePatient.document.programEnrolments({
+    key: sortBy.key as ProgramEnrolmentSortFieldInput,
+    isDesc: sortBy.isDesc,
+  });
   const pagination = { page, first, offset };
   const { localisedDate } = useFormatDateTime();
   const t = useTranslation('patients');
@@ -48,6 +52,7 @@ const ProgramListComponent: FC = () => {
         label: 'label.label',
         formatter: events =>
           programEventCellValue(events as ProgramEventFragment[]),
+        sortable: false,
       },
       {
         key: 'enrolmentDatetime',
@@ -58,7 +63,7 @@ const ProgramListComponent: FC = () => {
           dateString ? localisedDate((dateString as string) || '') : '',
       },
     ],
-    { onChangeSortBy: updateSortQuery, sortBy },
+    { onChangeSortBy, sortBy },
     [sortBy]
   );
 
@@ -66,7 +71,7 @@ const ProgramListComponent: FC = () => {
     <DataTable
       id="program-enrolment-list"
       pagination={{ ...pagination, total: data?.totalCount }}
-      onChangePage={updatePaginationQuery}
+      onChangePage={onChangePage}
       columns={columns}
       data={data?.nodes}
       isLoading={isLoading}

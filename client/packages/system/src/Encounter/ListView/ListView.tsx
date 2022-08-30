@@ -5,11 +5,11 @@ import {
   useColumns,
   createTableStore,
   NothingHere,
-  useUrlQueryParams,
   useNavigate,
   createQueryParamsStore,
   ColumnAlign,
   useFormatDateTime,
+  useQueryParamsStore,
 } from '@openmsupply-client/common';
 import {
   useEncounter,
@@ -25,10 +25,9 @@ const encounterEventCellValue = (events: ProgramEventFragment[]) => {
 
 const EncounterListComponent: FC = () => {
   const {
-    updateSortQuery,
-    updatePaginationQuery,
-    queryParams: { sortBy, page, first, offset },
-  } = useUrlQueryParams();
+    sort: { sortBy, onChangeSortBy },
+    pagination: { page, first, offset, onChangePage },
+  } = useQueryParamsStore();
   const { data, isError, isLoading } = useEncounter.document.list();
   const pagination = { page, first, offset };
   const navigate = useNavigate();
@@ -38,18 +37,21 @@ const EncounterListComponent: FC = () => {
       {
         key: 'encounter-type',
         label: 'label.encounter-type',
+        sortable: false,
         accessor: ({ rowData }) => rowData?.document.documentRegistry?.name,
       },
       {
-        key: 'date',
+        key: 'startDatetime',
         label: 'label.date',
         accessor: ({ rowData }) => rowData?.startDatetime,
         formatter: dateString =>
           dateString ? localisedDate((dateString as string) || '') : '',
       },
       {
-        key: 'startDatetime',
+        key: 'startTime',
         label: 'label.encounter-start',
+        sortable: false,
+        accessor: ({ rowData }) => rowData?.startDatetime,
         formatter: dateString =>
           dateString ? localisedTime((dateString as string) || '') : '',
       },
@@ -60,7 +62,7 @@ const EncounterListComponent: FC = () => {
           dateString ? localisedTime((dateString as string) || '') : '',
       },
       {
-        key: 'patient',
+        key: 'patientId',
         label: 'label.patient',
         accessor: ({ rowData }) => rowData?.patient?.name,
       },
@@ -69,15 +71,17 @@ const EncounterListComponent: FC = () => {
         label: 'label.label',
         formatter: events =>
           encounterEventCellValue((events as ProgramEventFragment[]) ?? []),
+        sortable: false,
       },
       {
         key: 'status',
         label: 'label.status',
         align: ColumnAlign.Right,
         width: 175,
+        sortable: false,
       },
     ],
-    { onChangeSortBy: updateSortQuery, sortBy },
+    { onChangeSortBy, sortBy },
     [sortBy]
   );
 
@@ -86,7 +90,7 @@ const EncounterListComponent: FC = () => {
       <DataTable
         id="name-list"
         pagination={{ ...pagination, total: data?.totalCount }}
-        onChangePage={updatePaginationQuery}
+        onChangePage={onChangePage}
         columns={columns}
         data={data?.nodes}
         isLoading={isLoading}

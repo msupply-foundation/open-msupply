@@ -11,8 +11,8 @@ import {
   ColumnAlign,
   useAlertModal,
   useTranslation,
-  useUrlQueryParams,
   ReadOnlyCheckboxCell,
+  useQueryParamsStore,
 } from '@openmsupply-client/common';
 import { usePatient, PatientRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -21,11 +21,11 @@ import { usePatientStore } from '../hooks';
 
 const PatientListComponent: FC = () => {
   const {
-    updateSortQuery,
-    updatePaginationQuery,
+    sort: { sortBy, onChangeSortBy },
+    pagination: { page, first, offset, onChangePage },
     filter,
-    queryParams: { sortBy, page, first, offset },
-  } = useUrlQueryParams();
+  } = useQueryParamsStore();
+
   const { setDocumentName } = usePatientStore();
   const { data, isError, isLoading } = usePatient.document.list();
   const pagination = { page, first, offset };
@@ -68,7 +68,7 @@ const PatientListComponent: FC = () => {
         Cell: ReadOnlyCheckboxCell,
       },
     ],
-    { onChangeSortBy: updateSortQuery, sortBy },
+    { onChangeSortBy, sortBy },
     [sortBy]
   );
 
@@ -79,7 +79,7 @@ const PatientListComponent: FC = () => {
       <DataTable
         id="patients"
         pagination={{ ...pagination, total: data?.totalCount }}
-        onChangePage={updatePaginationQuery}
+        onChangePage={onChangePage}
         columns={columns}
         data={data?.nodes}
         isLoading={isLoading}
