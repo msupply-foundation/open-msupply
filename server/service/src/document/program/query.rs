@@ -5,7 +5,16 @@ use repository::{
 
 use crate::service_provider::ServiceContext;
 
-pub(crate) fn get_patient_program_enrolments(
+pub(crate) fn program_enrolment(
+    ctx: &ServiceContext,
+    filter: ProgramEnrolmentFilter,
+) -> Result<Option<ProgramEnrolment>, RepositoryError> {
+    Ok(ProgramEnrolmentRepository::new(&ctx.connection)
+        .query_by_filter(filter)?
+        .pop())
+}
+
+pub(crate) fn program_enrolments(
     ctx: &ServiceContext,
     pagination: Pagination,
     sort: Option<Sort<ProgramEnrolmentSortField>>,

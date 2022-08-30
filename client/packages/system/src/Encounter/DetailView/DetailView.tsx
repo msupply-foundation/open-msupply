@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect } from 'react';
 import {
   useTranslation,
   DetailViewSkeleton,
@@ -6,6 +6,8 @@ import {
   useNavigate,
   RouteBuilder,
   useDebounceCallback,
+  useBreadcrumbs,
+  useFormatDateTime,
 } from '@openmsupply-client/common';
 import { EncounterFragment, useEncounter } from '../api';
 
@@ -19,11 +21,22 @@ export const DetailView: FC = () => {
   const { data: encounter, isLoading } = useEncounter.document.get();
   const navigate = useNavigate();
 
-  const handleSave = useEncounter.document.upsert(
+  const dateFormat = useFormatDateTime();
+  const handleSave = useEncounter.document.upsertDocument(
     encounter?.patient.id ?? '',
     encounter?.program ?? '',
     encounter?.type ?? ''
   );
+
+  const { setSuffix } = useBreadcrumbs([AppRoute.Encounter]);
+  useEffect(() => {
+    if (encounter)
+      setSuffix(
+        `${
+          encounter.document.documentRegistry?.name
+        } - ${dateFormat.localisedDateTime(encounter.startDatetime)}`
+      );
+  }, [encounter]);
 
   const {
     JsonForm,

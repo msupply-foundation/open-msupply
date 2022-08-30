@@ -117,7 +117,7 @@ impl PatientNode {
         let entries = ctx
             .service_provider()
             .program_enrolment_service
-            .get_patient_program_enrolments(
+            .program_enrolments(
                 &context,
                 Pagination::all(),
                 None,

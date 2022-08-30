@@ -79,7 +79,7 @@ pub fn program_enrolments(
 
     let nodes: Vec<ProgramEnrolmentNode> = service_provider
         .program_enrolment_service
-        .get_patient_program_enrolments(
+        .program_enrolments(
             &context,
             Pagination::all(),
             sort.map(ProgramEnrolmentSortInput::to_domain),

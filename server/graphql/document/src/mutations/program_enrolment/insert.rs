@@ -3,12 +3,13 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
+use repository::{EqualFilter, ProgramEnrolmentFilter};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     document::program::{UpsertProgramEnrolment, UpsertProgramEnrolmentError},
 };
 
-use crate::types::document::DocumentNode;
+use crate::types::program_enrolment::ProgramEnrolmentNode;
 
 #[derive(InputObject)]
 pub struct InsertProgramEnrolmentInput {
@@ -23,7 +24,7 @@ pub struct InsertProgramEnrolmentInput {
 
 #[derive(Union)]
 pub enum InsertProgramEnrolmentResponse {
-    Response(DocumentNode),
+    Response(ProgramEnrolmentNode),
 }
 
 pub fn insert_program_enrolment(
@@ -35,14 +36,14 @@ pub fn insert_program_enrolment(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::MutateProgram,
-            store_id: Some(store_id),
+            store_id: Some(store_id.clone()),
         },
     )?;
 
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
 
-    match service_provider
+    let document = match service_provider
         .program_enrolment_service
         .upsert_program_enrolment(
             &service_context,
@@ -56,9 +57,7 @@ pub fn insert_program_enrolment(
                 r#type: input.r#type,
             },
         ) {
-        Ok(document) => Ok(InsertProgramEnrolmentResponse::Response(DocumentNode {
-            document,
-        })),
+        Ok(document) => document,
         Err(error) => {
             let formatted_error = format!("{:#?}", error);
             let std_err = match error {
@@ -84,7 +83,24 @@ pub fn insert_program_enrolment(
                     StandardGraphqlError::InternalError(formatted_error)
                 }
             };
-            Err(std_err.extend())
+            return Err(std_err.extend());
         }
-    }
+    };
+
+    let program_row = service_provider
+        .program_enrolment_service
+        .program_enrolment(
+            &service_context,
+            ProgramEnrolmentFilter::new().r#type(EqualFilter::equal_to(&document.r#type)),
+        )?
+        .ok_or(
+            StandardGraphqlError::InternalError("Program enrolment went missing".to_string())
+                .extend(),
+        )?;
+    Ok(InsertProgramEnrolmentResponse::Response(
+        ProgramEnrolmentNode {
+            store_id,
+            program_row,
+        },
+    ))
 }

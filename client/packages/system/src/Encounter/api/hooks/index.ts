@@ -14,6 +14,7 @@ export const useEncounter = {
     insert: Document.useInsertEncounter,
     update: Document.useUpdateEncounter,
     upsert: Document.useUpsertEncounter,
+    upsertDocument: Document.useUpsertEncounterDocument,
   },
 
   registry: {
