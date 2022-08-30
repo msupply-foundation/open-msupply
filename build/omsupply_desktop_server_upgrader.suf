@@ -4300,7 +4300,7 @@ g_HandleSystemReboot();
 <PostBuildProg/>
 <PostBuildCmdLine/>
 <PostBuildWait>0</PostBuildWait>
-<Filename>omSupply_Desktop_Server_Upgrader_v1.0.5.exe</Filename>
+<Filename>omSupply_Desktop_Server_Upgrader_replace with version.exe</Filename>
 <OutputFolder>C:\Program Files (x86)\Jenkins\jobs\omSupplyMain - installers\workspace\installers</OutputFolder>
 <SegmentSizeMode>0</SegmentSizeMode>
 <CustomSegSize>0</CustomSegSize>
