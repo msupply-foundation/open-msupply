@@ -209,6 +209,52 @@ fn number_supplier_invoice_push_record() -> TestSyncPushRecord {
     }
 }
 
+const PROGRAM_NUMBER: (&'static str, &'static str) = (
+    "bd7bd0c2-9e08-436d-aafb-48b48f89c8c9",
+    r#"{
+      "ID": "bd7bd0c2-9e08-436d-aafb-48b48f89c8c9",
+      "name": "PROGRAM_TEST_EXAMPLE_for_store_store_remote_pull",
+      "value": 3
+    }"#,
+);
+
+fn number_programs_pull_record() -> TestSyncRecord {
+    TestSyncRecord {
+        translated_record: Some(IntegrationRecord::from_upsert(
+            IntegrationUpsertRecord::Number(NumberRow {
+                id: PROGRAM_NUMBER.0.to_string(),
+                value: 3,
+                store_id: "store_remote_pull".to_string(),
+                r#type: NumberRowType::Program("TEST_EXAMPLE".to_string()).to_string(),
+            }),
+        )),
+        identifier: "Program Number",
+        remote_sync_buffer_row: RemoteSyncBufferRow {
+            id: "Number_60".to_string(),
+            table_name: TRANSLATION_RECORD_NUMBER.to_string(),
+            record_id: PROGRAM_NUMBER.0.to_string(),
+            data: PROGRAM_NUMBER.1.to_string(),
+            action: RemoteSyncBufferAction::Update,
+        },
+    }
+}
+
+fn number_programs_push_record() -> TestSyncPushRecord {
+    TestSyncPushRecord {
+        change_log: ChangelogRow {
+            id: 2,
+            table_name: ChangelogTableName::Number,
+            row_id: PROGRAM_NUMBER.0.to_string(),
+            row_action: ChangelogAction::Upsert,
+        },
+        push_data: json!(LegacyNumberRow {
+            ID: PROGRAM_NUMBER.0.to_string(),
+            name: "PROGRAM_TEST_EXAMPLE_for_store_store_remote_pull".to_string(),
+            value: 3,
+        }),
+    }
+}
+
 #[allow(dead_code)]
 pub fn get_test_number_records() -> Vec<TestSyncRecord> {
     vec![
@@ -217,6 +263,7 @@ pub fn get_test_number_records() -> Vec<TestSyncRecord> {
         number_customer_invoice_pull_record(),
         number_supplier_invoice_pull_record(),
         number_purchase_order_pull_record(),
+        number_programs_pull_record(),
     ]
 }
 
@@ -227,5 +274,6 @@ pub fn get_test_push_number_records() -> Vec<TestSyncPushRecord> {
         number_inv_adjustment_push_record(),
         number_customer_invoice_push_record(),
         number_supplier_invoice_push_record(),
+        number_programs_push_record(),
     ]
 }
