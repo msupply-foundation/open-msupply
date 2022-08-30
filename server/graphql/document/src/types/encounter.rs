@@ -2,13 +2,19 @@ use async_graphql::{dataloader::DataLoader, *};
 use chrono::{DateTime, Utc};
 use graphql_core::{
     loader::{DocumentLoader, DocumentLoaderInput, NameByIdLoader, NameByIdLoaderInput},
+    standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use graphql_types::types::name::NameNode;
-use repository::{EncounterRow, EncounterStatus};
+use graphql_types::types::NameNode;
+use repository::{
+    EncounterRow, EncounterStatus, EqualFilter, ProgramEventFilter, ProgramEventSortField, Sort,
+};
 use serde::Serialize;
 
-use super::document::DocumentNode;
+use super::{
+    document::DocumentNode, program_enrolment::ProgramEventFilterInput,
+    program_event::ProgramEventNode,
+};
 
 pub struct EncounterNode {
     pub store_id: String,
@@ -109,5 +115,37 @@ impl EncounterNode {
             .ok_or(Error::new("Program without document"))?;
 
         Ok(result)
+    }
+
+    pub async fn events(
+        &self,
+        ctx: &Context<'_>,
+        filter: Option<ProgramEventFilterInput>,
+    ) -> Result<Vec<ProgramEventNode>> {
+        // TODO use loader?
+        let context = ctx.service_provider().basic_context()?;
+        let filter = filter
+            .map(|f| f.to_domain())
+            .unwrap_or(ProgramEventFilter::new())
+            .name_id(EqualFilter::equal_to(&self.encounter_row.patient_id))
+            .context(EqualFilter::equal_to(&self.encounter_row.r#type));
+        let entries = ctx
+            .service_provider()
+            .program_event_service
+            .events(
+                &context,
+                None,
+                Some(filter),
+                Some(Sort {
+                    key: ProgramEventSortField::Datetime,
+                    desc: Some(true),
+                }),
+            )
+            .map_err(StandardGraphqlError::from_list_error)?;
+        Ok(entries
+            .rows
+            .into_iter()
+            .map(|row| ProgramEventNode { row })
+            .collect())
     }
 }

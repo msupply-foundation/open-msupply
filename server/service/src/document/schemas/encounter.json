@@ -31,6 +31,10 @@
     },
     "EncounterEvent": {
       "properties": {
+        "context": {
+          "description": "If not specified the program is used.",
+          "type": "string"
+        },
         "datetime": {
           "description": "Time of the the event, can be in the future",
           "format": "date-time",
