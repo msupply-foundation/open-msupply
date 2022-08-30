@@ -4,6 +4,7 @@
   "button.add-prescription": "Add Prescription",
   "button.add-program": "Add Program",
   "error.encounter-not-found": "Encounter not found.",
+  "error.encounter-not-created": "Unable to create encounter",
   "filename.patients": "patients",
   "label.date-of-birth": "Date of Birth",
   "label.age": "Age",
