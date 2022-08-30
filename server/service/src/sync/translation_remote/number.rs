@@ -108,15 +108,9 @@ fn parse_number_name(value: String) -> Option<(NumberRowType, String)> {
         // new for omSupply
         "request_requisition" => NumberRowType::RequestRequisition,
         "response_requisition" => NumberRowType::ResponseRequisition,
-        s => match s.split_once('_') {
-            Some((prefix, custom_string)) => {
-                if prefix == "PROGRAM" {
-                    NumberRowType::Program(custom_string.to_string())
-                } else {
-                    return None;
-                }
-            }
-            None => return None,
+        s => match NumberRowType::try_from(s.to_string()) {
+            Ok(number_type) => number_type,
+            Err(_) => return None,
         },
     };
     let store = split.next()?.to_string();
