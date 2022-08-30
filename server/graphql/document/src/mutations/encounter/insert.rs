@@ -3,12 +3,13 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
+use repository::{EncounterFilter, EqualFilter};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     document::encounter::{InsertEncounter, InsertEncounterError},
 };
 
-use crate::types::document::DocumentNode;
+use crate::types::encounter::EncounterNode;
 
 #[derive(InputObject)]
 pub struct InsertEncounterInput {
@@ -25,7 +26,7 @@ pub struct InsertEncounterInput {
 
 #[derive(Union)]
 pub enum InsertEncounterResponse {
-    Response(DocumentNode),
+    Response(EncounterNode),
 }
 
 pub fn insert_encounter(
@@ -37,14 +38,14 @@ pub fn insert_encounter(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::MutateEncounter,
-            store_id: Some(store_id),
+            store_id: Some(store_id.clone()),
         },
     )?;
 
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
 
-    match service_provider.encounter_service.insert_encounter(
+    let document = match service_provider.encounter_service.insert_encounter(
         &service_context,
         service_provider,
         &user.user_id,
@@ -56,7 +57,7 @@ pub fn insert_encounter(
             r#type: input.r#type,
         },
     ) {
-        Ok(document) => Ok(InsertEncounterResponse::Response(DocumentNode { document })),
+        Ok(document) => document,
         Err(error) => {
             let formatted_error = format!("{:#?}", error);
             let std_err = match error {
@@ -76,7 +77,22 @@ pub fn insert_encounter(
                     StandardGraphqlError::InternalError(formatted_error)
                 }
             };
-            Err(std_err.extend())
+            return Err(std_err.extend());
         }
-    }
+    };
+
+    let encounter_row = service_provider
+        .encounter_service
+        .encounter(
+            &service_context,
+            EncounterFilter::new().name(EqualFilter::equal_to(&document.name)),
+        )?
+        .ok_or(
+            StandardGraphqlError::InternalError("Encounter went missing".to_string()).extend(),
+        )?;
+
+    Ok(InsertEncounterResponse::Response(EncounterNode {
+        store_id,
+        encounter_row,
+    }))
 }

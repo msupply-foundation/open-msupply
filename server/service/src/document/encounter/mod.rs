@@ -3,6 +3,7 @@ use repository::Encounter;
 use repository::EncounterFilter;
 use repository::EncounterSort;
 use repository::PaginationOption;
+use repository::RepositoryError;
 
 use crate::service_provider::ServiceContext;
 use crate::service_provider::ServiceProvider;
@@ -13,7 +14,8 @@ use self::encounter_fields::encounter_fields;
 use self::encounter_fields::EncounterFields;
 use self::encounter_fields::EncounterFieldsResult;
 pub use self::insert::*;
-use self::query::get_patient_program_encounters;
+use self::query::encounter;
+use self::query::encounters;
 pub use self::update::*;
 
 pub mod encounter_fields;
@@ -45,14 +47,22 @@ pub trait EncounterServiceTrait: Sync + Send {
         update_encounter(ctx, service_provider, user_id, input)
     }
 
-    fn get_patient_program_encounters(
+    fn encounter(
+        &self,
+        ctx: &ServiceContext,
+        filter: EncounterFilter,
+    ) -> Result<Option<Encounter>, RepositoryError> {
+        encounter(ctx, filter)
+    }
+
+    fn encounters(
         &self,
         ctx: &ServiceContext,
         pagination: Option<PaginationOption>,
         filter: Option<EncounterFilter>,
         sort: Option<EncounterSort>,
     ) -> Result<ListResult<Encounter>, ListError> {
-        get_patient_program_encounters(ctx, pagination, filter, sort)
+        encounters(ctx, pagination, filter, sort)
     }
 
     fn encounters_fields(
