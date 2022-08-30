@@ -6,7 +6,6 @@ import {
   EncounterSortFieldInput,
 } from '@openmsupply-client/common';
 import {
-  EncounterDocumentFragment,
   EncounterDocumentRegistryFragment,
   EncounterFragment,
   EncounterRowFragment,
@@ -66,13 +65,13 @@ export const getEncounterQueries = (sdk: Sdk, storeId: string) => ({
 
   insertEncounter: async (
     input: InsertEncounterInput
-  ): Promise<EncounterDocumentFragment> => {
+  ): Promise<EncounterFragment> => {
     const result = await sdk.insertEncounter({
       storeId,
       input,
     });
 
-    if (result.insertEncounter.__typename === 'DocumentNode') {
+    if (result.insertEncounter.__typename === 'EncounterNode') {
       return result.insertEncounter;
     }
 
@@ -81,13 +80,13 @@ export const getEncounterQueries = (sdk: Sdk, storeId: string) => ({
 
   updateEncounter: async (
     input: UpdateEncounterInput
-  ): Promise<EncounterDocumentFragment> => {
+  ): Promise<EncounterFragment> => {
     const result = await sdk.updateEncounter({
       storeId,
       input,
     });
 
-    if (result.updateEncounter.__typename === 'DocumentNode') {
+    if (result.updateEncounter.__typename === 'EncounterNode') {
       return result.updateEncounter;
     }
 

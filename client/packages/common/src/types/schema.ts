@@ -1658,7 +1658,7 @@ export type InsertEncounterInput = {
   type: Scalars['String'];
 };
 
-export type InsertEncounterResponse = DocumentNode;
+export type InsertEncounterResponse = EncounterNode;
 
 export type InsertErrorInterface = {
   description: Scalars['String'];
@@ -3549,7 +3549,7 @@ export type UpdateEncounterInput = {
   schemaId: Scalars['String'];
 };
 
-export type UpdateEncounterResponse = DocumentNode;
+export type UpdateEncounterResponse = EncounterNode;
 
 export type UpdateErrorInterface = {
   description: Scalars['String'];
