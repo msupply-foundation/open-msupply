@@ -1,5 +1,6 @@
+# Replace [[xxx]] with valid values in their corresponding fields. See side comments for an example below.
 server:
-  port: 8000
+  port: [[omsupply_port]] # e.g. 8000
   # debug_no_access_control: true # enable this if you want to ignore API authorisation (dummy user will be used for all operations)
   # danger_allow_http: true # allow http in production mode
   cors_origins: [
@@ -10,7 +11,7 @@ server:
   base_dir: "app_data"
 database:
   host: "localhost"
-  port: 5432
-  username: "postgres"
-  password: "password"
-  database_name: "omsupply-database"
+  port: [[postgres_db_port]] # e.g. 5432
+  username: [[postgres_db_user]] # e.g. "postgres"
+  password: [[postgres_db_password]] # e.g. "password"
+  database_name: [[omsupply_db_name]] # e.g "omsupply-database"
