@@ -1,4 +1,4 @@
-import React, { FC, ReactNode } from 'react';
+import React, { FC, ReactNode, useEffect, useState } from 'react';
 import {
   AppBarContentPortal,
   Box,
@@ -19,10 +19,17 @@ interface ToolbarProps {
   onChange: (patch: Partial<EncounterFragment>) => void;
 }
 export const Toolbar: FC<ToolbarProps> = ({ onChange }) => {
-  const { data } = useEncounter.document.get();
+  const { data: encounter } = useEncounter.document.get();
+  const [startDatetime, setStartDatetime] = useState<string | undefined>();
+  const [endDatetime, setEndDatetime] = useState<string | undefined | null>();
   const t = useTranslation('patients');
+  useEffect(() => {
+    if (!encounter) return;
+    setStartDatetime(encounter.startDatetime);
+    setEndDatetime(encounter.endDatetime);
+  }, [encounter]);
 
-  if (!data) return null;
+  if (!encounter) return null;
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
@@ -37,21 +44,24 @@ export const Toolbar: FC<ToolbarProps> = ({ onChange }) => {
           <Box display="flex" flex={1} flexDirection="column" gap={0.5}>
             <Row
               label={t('label.patient')}
-              Input={<BasicTextInput disabled value={data?.patient.name} />}
+              Input={
+                <BasicTextInput disabled value={encounter?.patient.name} />
+              }
             />
             <Box display="flex" gap={1}>
               <Row
                 label={t('label.visit-date')}
                 Input={
                   <DatePickerInput
-                    value={DateUtils.getDateOrNull(data?.startDatetime)}
+                    value={DateUtils.getDateOrNull(startDatetime ?? null)}
                     onChange={date => {
                       const startDatetime = date
                         ? DateUtils.formatRFC3339(date)
                         : undefined;
+                      setStartDatetime(startDatetime);
                       onChange({
                         startDatetime,
-                        endDatetime: data?.endDatetime ?? undefined,
+                        endDatetime: endDatetime ?? undefined,
                       });
                     }}
                   />
@@ -62,14 +72,15 @@ export const Toolbar: FC<ToolbarProps> = ({ onChange }) => {
                 labelWidth="60px"
                 Input={
                   <TimePickerInput
-                    value={DateUtils.getDateOrNull(data?.startDatetime ?? null)}
+                    value={DateUtils.getDateOrNull(startDatetime ?? null)}
                     onChange={date => {
                       const startDatetime = date
                         ? DateUtils.formatRFC3339(date)
                         : undefined;
+                      setStartDatetime(startDatetime);
                       onChange({
                         startDatetime,
-                        endDatetime: data?.endDatetime ?? undefined,
+                        endDatetime: endDatetime ?? undefined,
                       });
                     }}
                   />
@@ -80,11 +91,12 @@ export const Toolbar: FC<ToolbarProps> = ({ onChange }) => {
                 labelWidth="60px"
                 Input={
                   <TimePickerInput
-                    value={DateUtils.getDateOrNull(data?.endDatetime ?? null)}
+                    value={DateUtils.getDateOrNull(endDatetime ?? null)}
                     onChange={date => {
                       const endDatetime = date
                         ? DateUtils.formatRFC3339(date)
                         : undefined;
+                      setEndDatetime(endDatetime);
                       onChange({ endDatetime });
                     }}
                   />
@@ -93,7 +105,7 @@ export const Toolbar: FC<ToolbarProps> = ({ onChange }) => {
             </Box>
             <Row
               label={t('label.program')}
-              Input={<BasicTextInput disabled value={data?.program} />}
+              Input={<BasicTextInput disabled value={encounter?.program} />}
             />
           </Box>
         </Grid>

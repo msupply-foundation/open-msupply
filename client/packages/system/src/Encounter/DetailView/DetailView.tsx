@@ -25,22 +25,25 @@ export const DetailView: FC = () => {
     encounter?.type ?? ''
   );
 
-  const { JsonForm, saveData, isDirty, validationError, revert } = useJsonForms(
-    encounter?.document?.name,
-    {
-      handleSave,
-    }
-  );
+  const {
+    JsonForm,
+    data,
+    setData,
+    saveData,
+    isDirty,
+    validationError,
+    revert,
+  } = useJsonForms(encounter?.document?.name, {
+    handleSave,
+  });
 
   const updateEncounter = useDebounceCallback(
     (patch: Partial<EncounterFragment>) =>
-      handleSave?.(
-        { ...encounter?.document.data, ...patch },
-        encounter?.document?.documentRegistry?.formSchemaId ?? '',
-        encounter?.document.id
-      ),
-    [encounter],
-    1000
+      setData({
+        ...data,
+        ...patch,
+      }),
+    [encounter, data, setData]
   );
 
   if (isLoading) return <DetailViewSkeleton />;
