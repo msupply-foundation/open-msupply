@@ -35,4 +35,5 @@ rand = "0.8.5"
 [features]
 default = ["sqlite"]
 sqlite = ["repository/sqlite"]
+memory = ["repository/sqlite"]
 postgres = ["repository/postgres"]
