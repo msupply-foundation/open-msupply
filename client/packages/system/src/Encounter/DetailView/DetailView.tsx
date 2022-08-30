@@ -43,7 +43,7 @@ export const DetailView: FC = () => {
         ...data,
         ...patch,
       }),
-    [encounter, data, setData]
+    [data, setData]
   );
 
   if (isLoading) return <DetailViewSkeleton />;
