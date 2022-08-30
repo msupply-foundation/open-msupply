@@ -682,6 +682,7 @@ export type EncounterNode = {
   /** The encounter document */
   document: DocumentNode;
   endDatetime?: Maybe<Scalars['DateTime']>;
+  events: Array<ProgramEventNode>;
   id: Scalars['String'];
   name: Scalars['String'];
   patient: NameNode;
@@ -690,6 +691,11 @@ export type EncounterNode = {
   startDatetime: Scalars['DateTime'];
   status?: Maybe<EncounterNodeStatus>;
   type: Scalars['String'];
+};
+
+
+export type EncounterNodeEventsArgs = {
+  filter?: InputMaybe<ProgramEventFilterInput>;
 };
 
 export enum EncounterNodeStatus {
