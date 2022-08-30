@@ -164,6 +164,8 @@ export const useJsonForms = (
         additionalRenderers={additionalRenderers}
       />
     ),
+    data,
+    setData,
     saveData,
     revert,
     isSaving,
