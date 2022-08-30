@@ -92,11 +92,11 @@ pub(crate) fn encounter_updated(
     Ok(())
 }
 
-fn update_program_events(
+fn replace_context_events(
     ctx: &ServiceContext,
     service_provider: &ServiceProvider,
     patient_id: &str,
-    program: &str,
+    context: &str,
     events: Vec<EncounterEvent>,
 ) -> Result<(), EncounterTableUpdateError> {
     let mut grouped_events: HashMap<String, Vec<EncounterEvent>> = HashMap::new();
@@ -131,11 +131,32 @@ fn update_program_events(
             .replace_event_group(
                 ctx,
                 Some(patient_id.to_string()),
-                program,
+                &context,
                 &group,
                 replace_events,
             )
             .map_err(|err| EncounterTableUpdateError::RepositoryError(err))?;
+    }
+    Ok(())
+}
+
+fn update_program_events(
+    ctx: &ServiceContext,
+    service_provider: &ServiceProvider,
+    patient_id: &str,
+    program: &str,
+    events: Vec<EncounterEvent>,
+) -> Result<(), EncounterTableUpdateError> {
+    let mut context_events: HashMap<String, Vec<EncounterEvent>> = HashMap::new();
+    for event in events {
+        context_events
+            .entry(event.context.clone().unwrap_or(program.to_string()))
+            .or_insert(vec![])
+            .push(event);
+    }
+
+    for (context, ctx_events) in context_events {
+        replace_context_events(ctx, service_provider, patient_id, &context, ctx_events)?;
     }
     Ok(())
 }

@@ -16,6 +16,12 @@ import {
   EncounterFragmentWithId,
   EncounterRowFragment,
 } from '../api';
+import { ProgramEventFragment } from '../api/operations.generated';
+
+const encounterEventCellValue = (events: ProgramEventFragment[]) => {
+  // just take the name of the first event
+  return events[0]?.name ?? '';
+};
 
 const EncounterListComponent: FC = () => {
   const {
@@ -30,12 +36,8 @@ const EncounterListComponent: FC = () => {
   const columns = useColumns<EncounterRowFragment>(
     [
       {
-        key: 'id',
-        label: 'label.encounter-id',
-      },
-      {
-        key: 'program',
-        label: 'label.program',
+        key: 'encounter-type',
+        label: 'label.encounter-type',
         accessor: ({ rowData }) => rowData?.document.documentRegistry?.name,
       },
       {
@@ -58,15 +60,21 @@ const EncounterListComponent: FC = () => {
           dateString ? localisedTime((dateString as string) || '') : '',
       },
       {
+        key: 'patient',
+        label: 'label.patient',
+        accessor: ({ rowData }) => rowData?.patient?.name,
+      },
+      {
+        key: 'events',
+        label: 'label.label',
+        formatter: events =>
+          encounterEventCellValue((events as ProgramEventFragment[]) ?? []),
+      },
+      {
         key: 'status',
         label: 'label.status',
         align: ColumnAlign.Right,
         width: 175,
-      },
-      {
-        key: 'patient',
-        label: 'label.patient',
-        accessor: ({ rowData }) => rowData?.patient?.name,
       },
     ],
     { onChangeSortBy: updateSortQuery, sortBy },

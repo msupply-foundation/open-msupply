@@ -34,6 +34,7 @@ export const getEncounterQueries = (sdk: Sdk, storeId: string) => ({
         key: sortBy?.key as EncounterSortFieldInput | undefined,
         desc: sortBy?.isDesc,
         filter: filterBy,
+        latestEventTime: new Date().toISOString(),
       });
 
       return result?.encounters;

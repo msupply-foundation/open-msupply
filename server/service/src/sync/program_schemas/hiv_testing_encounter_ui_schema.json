@@ -19,14 +19,82 @@
       "type": "Category",
       "label": "HIV Testing",
       "options": { "icon": "stethoscope" },
-      "elements": [{ "scope": "#/properties/hivTesting", "type": "Control" }]
+      "elements": [
+        { "scope": "#/properties/hivTesting", "type": "Control" },
+        {
+          "type": "EventTrigger",
+          "scope": "#",
+          "options": {
+            "baseDatetimeField": "startDatetime",
+            "group": "PendingLabResults",
+            "trigger": [
+              {
+                "triggerField": "hivTesting.datetime",
+                "isTruthy": true
+              },
+              {
+                "triggerField": "hivTestingResult.datetime",
+                "isFalsy": true
+              }
+            ],
+            "events": [
+              {
+                "name": "Pending Lab Result",
+                "type": "status",
+                "context": "HIVTestingEncounter"
+              }
+            ]
+          }
+        }
+      ]
     },
     {
       "type": "Category",
       "label": "HIV Results",
       "options": { "icon": "microscope" },
       "elements": [
-        { "scope": "#/properties/hivTestingResult", "type": "Control" }
+        {
+          "type": "VerticalLayout",
+          "elements": [
+            {
+              "type": "Control",
+              "scope": "#/properties/hivTestingResult/properties/datetime"
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/hivTestingResult/properties/result"
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/hivTestingResult/properties/cd4Count"
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/hivTestingResult/properties/viralLoad"
+            }
+          ]
+        },
+        {
+          "type": "EventTrigger",
+          "scope": "#",
+          "options": {
+            "baseDatetimeField": "startDatetime",
+            "group": "PendingLabResults",
+            "trigger": [
+              {
+                "triggerField": "hivTestingResult.datetime",
+                "isTruthy": true
+              }
+            ],
+            "events": [
+              {
+                "name": "Lab Result",
+                "type": "status",
+                "context": "HIVTestingEncounter"
+              }
+            ]
+          }
+        }
       ]
     }
   ],

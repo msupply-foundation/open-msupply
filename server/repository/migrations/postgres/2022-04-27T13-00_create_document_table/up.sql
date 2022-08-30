@@ -1,9 +1,11 @@
-CREATE TYPE document_status AS ENUM (
+CREATE TYPE document_status AS ENUM
+(
     'ACTIVE',
     'DELETED'
 );
 
-CREATE TABLE document (
+CREATE TABLE document
+(
     id TEXT NOT NULL PRIMARY KEY,
     name TEXT NOT NULL,
     parent_ids TEXT NOT NULL,
@@ -16,12 +18,13 @@ CREATE TABLE document (
     comment TEXT
 );
 
-CREATE VIEW latest_document AS
-SELECT d.*
-FROM (
+CREATE VIEW latest_document
+AS
+    SELECT d.*
+    FROM (
       SELECT name, MAX(timestamp) AS timestamp
-      FROM document
-      GROUP BY name
+        FROM document
+        GROUP BY name
 ) grouped
-INNER JOIN document d
-ON d.name = grouped.name AND d.timestamp = grouped.timestamp;
+        INNER JOIN document d
+        ON d.name = grouped.name AND d.timestamp = grouped.timestamp;
