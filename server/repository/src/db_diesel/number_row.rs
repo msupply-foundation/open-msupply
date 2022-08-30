@@ -1,3 +1,4 @@
+use std::convert::TryFrom;
 use std::fmt;
 
 use super::{number_row::number::dsl as number_dsl, StorageConnection};
@@ -9,19 +10,23 @@ use diesel::result::Error::NotFound;
 use diesel::{prelude::*, sql_query, sql_types::Text};
 
 use diesel::sql_types::BigInt;
-use diesel_derive_enum::DbEnum;
 
 table! {
     number (id) {
         id -> Text,
         value -> BigInt,
         store_id -> Text,
-        #[sql_name = "type"] type_ -> crate::db_diesel::number_row::NumberRowTypeMapping,
+        #[sql_name = "type"] type_ -> Text,
     }
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
-#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum NumberRowTypeError {
+    UnknownTypePrefix(String),
+    MissingTypePrefix,
+}
+
+#[derive(AsExpression, Debug, Clone, PartialEq, Eq)]
 pub enum NumberRowType {
     InboundShipment,
     OutboundShipment,
@@ -29,6 +34,7 @@ pub enum NumberRowType {
     RequestRequisition,
     ResponseRequisition,
     Stocktake,
+    Program(String),
 }
 
 impl fmt::Display for NumberRowType {
@@ -40,6 +46,32 @@ impl fmt::Display for NumberRowType {
             NumberRowType::RequestRequisition => write!(f, "REQUEST_REQUISITION"),
             NumberRowType::ResponseRequisition => write!(f, "RESPONSE_REQUISITION"),
             NumberRowType::Stocktake => write!(f, "STOCKTAKE"),
+            NumberRowType::Program(custom_string) => write!(f, "PROGRAM_{}", custom_string),
+        }
+    }
+}
+
+impl TryFrom<String> for NumberRowType {
+    type Error = NumberRowTypeError;
+
+    fn try_from(s: String) -> Result<Self, NumberRowTypeError> {
+        match s.as_str() {
+            "INBOUND_SHIPMENT" => Ok(NumberRowType::InboundShipment),
+            "OUTBOUND_SHIPMENT" => Ok(NumberRowType::OutboundShipment),
+            "INVENTORY_ADJUSTMENT" => Ok(NumberRowType::InventoryAdjustment),
+            "REQUEST_REQUISITION" => Ok(NumberRowType::RequestRequisition),
+            "RESPONSE_REQUISITION" => Ok(NumberRowType::ResponseRequisition),
+            "STOCKTAKE" => Ok(NumberRowType::Stocktake),
+            _ => match s.split_once('_') {
+                Some((prefix, custom_string)) => {
+                    if prefix == "PROGRAM" {
+                        Ok(NumberRowType::Program(custom_string.to_string()))
+                    } else {
+                        Err(NumberRowTypeError::UnknownTypePrefix(prefix.to_string()))
+                    }
+                }
+                None => Err(NumberRowTypeError::MissingTypePrefix),
+            },
         }
     }
 }
@@ -53,9 +85,8 @@ pub struct NumberRow {
     pub store_id: String,
     // Table
     #[column_name = "type_"]
-    pub r#type: NumberRowType,
+    pub r#type: String,
 }
-
 pub struct NumberRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -69,11 +100,14 @@ pub struct NextNumber {
 
 // feature sqlite
 #[cfg(not(feature = "postgres"))]
-const ON_CONFLICT_DO_NOTHING: &'static str = "";
+const NUMBER_INSERT_QUERY: &'static str =
+    "INSERT INTO number (id, value, store_id, type) VALUES ($1, $2, $3, $4) RETURNING value;";
 
 // feature postgres
+// We need to use the ON CONFLICT DO NOTHING Clause for postgres just in case 2 threads insert at the same time (SQLite <on disk> does not need this as it only allows a single write transaction at a time).
+// Without this postgres will throw a unique constraint violation error and rollback the transaction, which is hard to recover from, instead we just ignore the error and check if it returned a value
 #[cfg(feature = "postgres")]
-const ON_CONFLICT_DO_NOTHING: &'static str = "ON CONFLICT DO NOTHING";
+const NUMBER_INSERT_QUERY: &'static str = "INSERT INTO number (id, value, store_id, type) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING RETURNING value;";
 
 impl<'a> NumberRowRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
@@ -95,49 +129,38 @@ impl<'a> NumberRowRepository<'a> {
     ) -> Result<NextNumber, RepositoryError> {
         // 1. First we try to just grab the next number from the database, in most cases this should work and be the fast.
 
-        // Note: Format string is used here because diesel does seems to support binding NumberRowType as a String or as it's own type.
-        // It's safe to use format here, as r#type is an enum with predefined values (No user input)
-        let update_query_str = format!(
-            r#"UPDATE number SET value = value+1 WHERE store_id = $1 and type = '{}' RETURNING value;"#,
-            r#type
-        );
-        let update_query = sql_query(update_query_str.clone()).bind::<Text, _>(store_id);
+        let update_query = sql_query(r#"UPDATE number SET value = value+1 WHERE store_id = $1 and type = $2 RETURNING value;"#)
+            .bind::<Text, _>(store_id)
+            .bind::<Text, _>(r#type.to_string());
 
         // Debug diesel query
         // println!(
         //     "{}",
         //     diesel::debug_query::<crate::DBType, _>(&update_query).to_string()
         // );
-        let update_result = update_query.get_result::<NextNumber>(&self.connection.connection);
+        let update_result = update_query
+            .clone()
+            .get_result::<NextNumber>(&self.connection.connection);
 
         match update_result {
             Ok(result) => Ok(result),
             Err(NotFound) => {
                 // 2. There was no record to update, so we need to insert a new one.
 
-                // We need to add an ON CONFLICT Clause for postgres just in case 2 threads insert at the same time (SQLite <on disk> does not need this as it only allows a single write transaction at a time).
-                // Without this postgres will throw a unique constraint violation error and rollback the transaction, which is hard to recover from, instead we just ignore the error and check if it returned a value
-                // It's safe to use format here, as these inputs are not user controlled
-                let insert_query_str = format!(
-                    r#"INSERT INTO number (id, value, store_id, type) VALUES ('{}', 1, $1, '{}') {} RETURNING value;"#,
-                    uuid(),
-                    r#type,
-                    ON_CONFLICT_DO_NOTHING
-                );
+                let insert_query = sql_query(NUMBER_INSERT_QUERY)
+                    .bind::<Text, _>(uuid())
+                    .bind::<BigInt, _>(1)
+                    .bind::<Text, _>(store_id)
+                    .bind::<Text, _>(r#type.to_string());
 
-                let insert_query = sql_query(insert_query_str).bind::<Text, _>(store_id);
-                let insert_result =
-                    insert_query.get_result::<NextNumber>(&self.connection.connection);
-
-                match insert_result {
+                match insert_query.get_result::<NextNumber>(&self.connection.connection) {
                     Ok(result) => Ok(result),
                     Err(NotFound) => {
                         // 3. If we got here another thread inserted the record before we we able to (we know this because nothing was returned for the insert)
                         // We should now be able to do the same 'update returning' query as before to get our new number.
 
-                        let result = sql_query(update_query_str.clone())
-                            .bind::<Text, _>(store_id)
-                            .get_result::<NextNumber>(&self.connection.connection)?;
+                        let result =
+                            update_query.get_result::<NextNumber>(&self.connection.connection)?;
                         Ok(result)
                     }
                     Err(e) => Err(RepositoryError::from(e)),
@@ -154,7 +177,7 @@ impl<'a> NumberRowRepository<'a> {
     ) -> Result<Option<NumberRow>, RepositoryError> {
         match number_dsl::number
             .filter(number_dsl::store_id.eq(store_id))
-            .filter(number_dsl::type_.eq(r#type))
+            .filter(number_dsl::type_.eq(r#type.to_string()))
             .first(&self.connection.connection)
         {
             Ok(row) => Ok(Some(row)),
@@ -180,5 +203,66 @@ impl<'a> NumberRowRepository<'a> {
             .values(number_row)
             .execute(&self.connection.connection)?;
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod number_row_mapping_test {
+    use std::convert::TryFrom;
+
+    use crate::NumberRowType;
+
+    #[test]
+    fn test_number_row_type() {
+        // The purpose of this test is primarily to remind you to update both the to_string AND try_from functions if any new mappings are added to NumberRowType
+        // the try_from function uses a wild card match so theoretically could be missed if you add a new mapping
+
+        let number_row_type = NumberRowType::Program("EXAMPLE_TEST".to_string());
+        match number_row_type {
+            NumberRowType::InboundShipment => {
+                assert!(
+                    NumberRowType::try_from(NumberRowType::InboundShipment.to_string()).unwrap()
+                        == NumberRowType::InboundShipment
+                )
+            }
+            NumberRowType::OutboundShipment => {
+                assert!(
+                    NumberRowType::try_from(NumberRowType::OutboundShipment.to_string()).unwrap()
+                        == NumberRowType::OutboundShipment
+                )
+            }
+            NumberRowType::InventoryAdjustment => {
+                assert!(
+                    NumberRowType::try_from(NumberRowType::InventoryAdjustment.to_string())
+                        .unwrap()
+                        == NumberRowType::InventoryAdjustment
+                )
+            }
+            NumberRowType::RequestRequisition => {
+                assert!(
+                    NumberRowType::try_from(NumberRowType::RequestRequisition.to_string()).unwrap()
+                        == NumberRowType::RequestRequisition
+                )
+            }
+            NumberRowType::ResponseRequisition => {
+                assert!(
+                    NumberRowType::try_from(NumberRowType::ResponseRequisition.to_string())
+                        .unwrap()
+                        == NumberRowType::ResponseRequisition
+                )
+            }
+            NumberRowType::Stocktake => {
+                assert!(
+                    NumberRowType::try_from(NumberRowType::Stocktake.to_string()).unwrap()
+                        == NumberRowType::Stocktake
+                )
+            }
+            NumberRowType::Program(s) => {
+                assert!(
+                    NumberRowType::try_from(NumberRowType::Program(s.clone()).to_string()).unwrap()
+                        == NumberRowType::Program(s)
+                )
+            }
+        }
     }
 }
