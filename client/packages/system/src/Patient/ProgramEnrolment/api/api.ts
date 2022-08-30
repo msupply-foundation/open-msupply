@@ -24,8 +24,8 @@ export const getProgramEnrolmentQueries = (sdk: Sdk, storeId: string) => ({
       input,
     });
 
-    if (result.insertProgramEnrolment.__typename === 'DocumentNode') {
-      return result.insertProgramEnrolment;
+    if (result.insertProgramEnrolment.__typename === 'ProgramEnrolmentNode') {
+      return result.insertProgramEnrolment.document;
     }
 
     throw new Error('Could not insert program');
@@ -39,8 +39,8 @@ export const getProgramEnrolmentQueries = (sdk: Sdk, storeId: string) => ({
       input,
     });
 
-    if (result.updateProgramEnrolment.__typename === 'DocumentNode') {
-      return result.updateProgramEnrolment;
+    if (result.updateProgramEnrolment.__typename === 'ProgramEnrolmentNode') {
+      return result.updateProgramEnrolment.document;
     }
 
     throw new Error('Could not update program');

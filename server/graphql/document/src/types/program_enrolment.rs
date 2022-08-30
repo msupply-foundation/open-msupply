@@ -85,7 +85,7 @@ impl ProgramEnrolmentNode {
         let entries = ctx
             .service_provider()
             .encounter_service
-            .get_patient_program_encounters(
+            .encounters(
                 &context,
                 None,
                 Some(
