@@ -5,6 +5,7 @@ import {
   Box,
   DatePickerInput,
   DialogButton,
+  EncounterNodeStatus,
   InputWithLabelRow,
   RouteBuilder,
   Stack,
@@ -26,7 +27,10 @@ import {
 } from '../../Encounter/api/operations.generated';
 import { AppRoute } from 'packages/config/src';
 
-type Encounter = Pick<EncounterFragment, 'startDatetime' | 'endDatetime'>;
+type Encounter = Pick<
+  EncounterFragment,
+  'startDatetime' | 'endDatetime' | 'status'
+>;
 
 export const EncounterDetailModal: FC = () => {
   const patientId = usePatient.utils.id();
@@ -87,9 +91,17 @@ export const EncounterDetailModal: FC = () => {
   }, [registryData]);
 
   const setStartDatetime = (date: Date | null): void => {
-    const startDatetime = date ? DateUtils.formatRFC3339(date) : undefined;
-    if (!startDatetime) return;
-    setData({ ...data, startDatetime });
+    if (!date) return;
+
+    const startDatetime = DateUtils.formatRFC3339(date);
+
+    setData({
+      ...data,
+      startDatetime,
+      status: DateUtils.isFuture(date)
+        ? EncounterNodeStatus.Scheduled
+        : data?.status,
+    });
   };
 
   const setEndDatetime = (date: Date | null): void => {
