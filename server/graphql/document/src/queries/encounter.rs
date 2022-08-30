@@ -99,7 +99,7 @@ pub fn encounters(
 
     let result = service_provider
         .encounter_service
-        .get_patient_program_encounters(
+        .encounters(
             &context,
             page.map(PaginationOption::from),
             filter.map(|f| f.to_domain_filter()),
