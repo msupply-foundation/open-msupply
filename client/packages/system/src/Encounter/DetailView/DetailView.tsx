@@ -21,8 +21,8 @@ export const DetailView: FC = () => {
   const { data: encounter, isLoading } = useEncounter.document.get();
   const navigate = useNavigate();
 
-  const handleSave = useEncounter.document.upsert(
   const dateFormat = useFormatDateTime();
+  const handleSave = useEncounter.document.upsertDocument(
     encounter?.patient.id ?? '',
     encounter?.program ?? '',
     encounter?.type ?? ''
