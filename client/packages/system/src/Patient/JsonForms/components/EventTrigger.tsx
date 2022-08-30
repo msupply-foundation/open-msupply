@@ -101,18 +101,19 @@ interface EncounterEvent {
 
 const scheduleEvent = (
   event: OptionEvent,
-  baseTime: Date,
+  baseDatetime: Date,
   group?: string,
   context?: string
 ): EncounterEvent => {
-  const datetimePlusMin = DateUtils.addMinutes(
-    baseTime,
-    event.scheduleIn?.minutes ?? 0
-  );
-  const datetime = DateUtils.addDays(
-    datetimePlusMin,
+  const datetimeDays = DateUtils.addDays(
+    baseDatetime,
     event.scheduleIn?.days ?? 0
   );
+  const datetime = DateUtils.addMinutes(
+    datetimeDays,
+    event.scheduleIn?.minutes ?? 0
+  );
+
   return {
     datetime: datetime.toISOString(),
     group,
