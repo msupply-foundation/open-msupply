@@ -2,7 +2,10 @@ import { useInsertEncounter } from './useInsertEncounter';
 import { useEncounters } from './useEncounters';
 import { useEncounter } from './useEncounter';
 import { useUpdateEncounter } from './useUpdateEncounter';
-import { useUpsertEncounter } from './useUpsertEncounter';
+import {
+  useUpsertEncounter,
+  useUpsertEncounterDocument,
+} from './useUpsertEncounter';
 
 export const Document = {
   useEncounter,
@@ -10,4 +13,5 @@ export const Document = {
   useInsertEncounter,
   useUpdateEncounter,
   useUpsertEncounter,
+  useUpsertEncounterDocument,
 };

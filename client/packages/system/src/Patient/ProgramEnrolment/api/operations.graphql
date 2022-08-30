@@ -47,9 +47,9 @@ mutation insertProgramEnrolment(
   $input: InsertProgramEnrolmentInput!
 ) {
   insertProgramEnrolment(storeId: $storeId, input: $input) {
-    ... on DocumentNode {
+    ... on ProgramEnrolmentNode {
       __typename
-      ...ProgramEnrolmentDocument
+      ...ProgramEnrolment
     }
   }
 }
@@ -59,9 +59,9 @@ mutation updateProgramEnrolment(
   $input: UpdateProgramEnrolmentInput!
 ) {
   updateProgramEnrolment(storeId: $storeId, input: $input) {
-    ... on DocumentNode {
+    ... on ProgramEnrolmentNode {
       __typename
-      ...ProgramEnrolmentDocument
+      ...ProgramEnrolment
     }
   }
 }

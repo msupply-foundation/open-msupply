@@ -1664,7 +1664,7 @@ export type InsertEncounterInput = {
   type: Scalars['String'];
 };
 
-export type InsertEncounterResponse = DocumentNode;
+export type InsertEncounterResponse = EncounterNode;
 
 export type InsertErrorInterface = {
   description: Scalars['String'];
@@ -1903,7 +1903,7 @@ export type InsertProgramEnrolmentInput = {
   type: Scalars['String'];
 };
 
-export type InsertProgramEnrolmentResponse = DocumentNode;
+export type InsertProgramEnrolmentResponse = ProgramEnrolmentNode;
 
 export type InsertRequestRequisitionError = {
   __typename: 'InsertRequestRequisitionError';
@@ -3555,7 +3555,7 @@ export type UpdateEncounterInput = {
   schemaId: Scalars['String'];
 };
 
-export type UpdateEncounterResponse = DocumentNode;
+export type UpdateEncounterResponse = EncounterNode;
 
 export type UpdateErrorInterface = {
   description: Scalars['String'];
@@ -3803,7 +3803,7 @@ export type UpdateProgramEnrolmentInput = {
   type: Scalars['String'];
 };
 
-export type UpdateProgramEnrolmentResponse = DocumentNode;
+export type UpdateProgramEnrolmentResponse = ProgramEnrolmentNode;
 
 export type UpdateRequestRequisitionError = {
   __typename: 'UpdateRequestRequisitionError';

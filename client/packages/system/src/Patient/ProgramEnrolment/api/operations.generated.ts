@@ -22,7 +22,7 @@ export type InsertProgramEnrolmentMutationVariables = Types.Exact<{
 }>;
 
 
-export type InsertProgramEnrolmentMutation = { __typename: 'FullMutation', insertProgramEnrolment: { __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, author: string, timestamp: string, type: string, data: any, documentRegistry?: { __typename: 'DocumentRegistryNode', uiSchemaType: string, documentType: string, context: Types.DocumentRegistryNodeContext, formSchemaId: string, jsonSchema: any, uiSchema: any } | null } };
+export type InsertProgramEnrolmentMutation = { __typename: 'FullMutation', insertProgramEnrolment: { __typename: 'ProgramEnrolmentNode', type: string, programPatientId?: string | null, patientId: string, name: string, enrolmentDatetime: string, document: { __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, author: string, timestamp: string, type: string, data: any, documentRegistry?: { __typename: 'DocumentRegistryNode', uiSchemaType: string, documentType: string, context: Types.DocumentRegistryNodeContext, formSchemaId: string, jsonSchema: any, uiSchema: any } | null } } };
 
 export type UpdateProgramEnrolmentMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -30,7 +30,7 @@ export type UpdateProgramEnrolmentMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateProgramEnrolmentMutation = { __typename: 'FullMutation', updateProgramEnrolment: { __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, author: string, timestamp: string, type: string, data: any, documentRegistry?: { __typename: 'DocumentRegistryNode', uiSchemaType: string, documentType: string, context: Types.DocumentRegistryNodeContext, formSchemaId: string, jsonSchema: any, uiSchema: any } | null } };
+export type UpdateProgramEnrolmentMutation = { __typename: 'FullMutation', updateProgramEnrolment: { __typename: 'ProgramEnrolmentNode', type: string, programPatientId?: string | null, patientId: string, name: string, enrolmentDatetime: string, document: { __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, author: string, timestamp: string, type: string, data: any, documentRegistry?: { __typename: 'DocumentRegistryNode', uiSchemaType: string, documentType: string, context: Types.DocumentRegistryNodeContext, formSchemaId: string, jsonSchema: any, uiSchema: any } | null } } };
 
 export const ProgramEnrolmentDocumentFragmentDoc = gql`
     fragment ProgramEnrolmentDocument on DocumentNode {
@@ -79,23 +79,23 @@ export const ProgramEnrolmentByIdDocument = gql`
 export const InsertProgramEnrolmentDocument = gql`
     mutation insertProgramEnrolment($storeId: String!, $input: InsertProgramEnrolmentInput!) {
   insertProgramEnrolment(storeId: $storeId, input: $input) {
-    ... on DocumentNode {
+    ... on ProgramEnrolmentNode {
       __typename
-      ...ProgramEnrolmentDocument
+      ...ProgramEnrolment
     }
   }
 }
-    ${ProgramEnrolmentDocumentFragmentDoc}`;
+    ${ProgramEnrolmentFragmentDoc}`;
 export const UpdateProgramEnrolmentDocument = gql`
     mutation updateProgramEnrolment($storeId: String!, $input: UpdateProgramEnrolmentInput!) {
   updateProgramEnrolment(storeId: $storeId, input: $input) {
-    ... on DocumentNode {
+    ... on ProgramEnrolmentNode {
       __typename
-      ...ProgramEnrolmentDocument
+      ...ProgramEnrolment
     }
   }
 }
-    ${ProgramEnrolmentDocumentFragmentDoc}`;
+    ${ProgramEnrolmentFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 

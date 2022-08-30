@@ -57,6 +57,7 @@ fragment EncounterDocument on DocumentNode {
 }
 
 fragment Encounter on EncounterNode {
+  id
   type
   name
   status
@@ -120,18 +121,18 @@ query encounterById($storeId: String!, $encounterId: String!) {
 
 mutation insertEncounter($storeId: String!, $input: InsertEncounterInput!) {
   insertEncounter(storeId: $storeId, input: $input) {
-    ... on DocumentNode {
+    ... on EncounterNode {
       __typename
-      ...EncounterDocument
+      ...Encounter
     }
   }
 }
 
 mutation updateEncounter($storeId: String!, $input: UpdateEncounterInput!) {
   updateEncounter(storeId: $storeId, input: $input) {
-    ... on DocumentNode {
+    ... on EncounterNode {
       __typename
-      ...EncounterDocument
+      ...Encounter
     }
   }
 }
