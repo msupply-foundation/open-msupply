@@ -7,6 +7,7 @@ import {
   DocumentNode,
   PatientSearchInput,
   ProgramEnrolmentSortFieldInput,
+  SortRule,
 } from '@openmsupply-client/common';
 import {
   Sdk,
@@ -20,6 +21,11 @@ export type ListParams = {
   offset?: number;
   sortBy?: SortBy<PatientRowFragment>;
   filterBy?: FilterBy | null;
+};
+
+export type ProgramEnrolmentListParams = {
+  sortBy?: SortRule<ProgramEnrolmentSortFieldInput>;
+  filterBy?: FilterBy;
 };
 
 export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
@@ -84,13 +90,15 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
     programEnrolments: async ({
       sortBy,
       filterBy,
-    }: ListParams): Promise<{
+    }: ProgramEnrolmentListParams): Promise<{
       nodes: ProgramEnrolmentRowFragment[];
       totalCount: number;
     }> => {
       const result = await sdk.programEnrolments({
         storeId,
-        key: sortBy?.key as ProgramEnrolmentSortFieldInput | undefined,
+        key:
+          (sortBy?.key as ProgramEnrolmentSortFieldInput) ??
+          ProgramEnrolmentSortFieldInput.EnrolmentDatetime,
         desc: sortBy?.isDesc,
         filter: filterBy,
         latestEventTime: new Date().toISOString(),

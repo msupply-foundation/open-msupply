@@ -54,7 +54,7 @@ export type GetDocumentHistoryQuery = { __typename: 'FullQuery', documentHistory
 
 export type ProgramEnrolmentsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
-  key?: Types.InputMaybe<Types.ProgramEnrolmentSortFieldInput>;
+  key: Types.ProgramEnrolmentSortFieldInput;
   desc?: Types.InputMaybe<Types.Scalars['Boolean']>;
   filter?: Types.InputMaybe<Types.ProgramEnrolmentFilterInput>;
   latestEventTime: Types.Scalars['String'];
@@ -236,7 +236,7 @@ export const GetDocumentHistoryDocument = gql`
 }
     `;
 export const ProgramEnrolmentsDocument = gql`
-    query programEnrolments($storeId: String!, $key: ProgramEnrolmentSortFieldInput, $desc: Boolean, $filter: ProgramEnrolmentFilterInput, $latestEventTime: String!) {
+    query programEnrolments($storeId: String!, $key: ProgramEnrolmentSortFieldInput!, $desc: Boolean, $filter: ProgramEnrolmentFilterInput, $latestEventTime: String!) {
   programEnrolments(
     storeId: $storeId
     sort: {key: $key, desc: $desc}
