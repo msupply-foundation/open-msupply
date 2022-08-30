@@ -100,11 +100,14 @@ pub struct NextNumber {
 
 // feature sqlite
 #[cfg(not(feature = "postgres"))]
-const ON_CONFLICT_DO_NOTHING: &'static str = "";
+const NUMBER_INSERT_QUERY: &'static str =
+    "INSERT INTO number (id, value, store_id, type) VALUES ($1, $2, $3, $4) RETURNING value;";
 
 // feature postgres
+// We need to use the ON CONFLICT DO NOTHING Clause for postgres just in case 2 threads insert at the same time (SQLite <on disk> does not need this as it only allows a single write transaction at a time).
+// Without this postgres will throw a unique constraint violation error and rollback the transaction, which is hard to recover from, instead we just ignore the error and check if it returned a value
 #[cfg(feature = "postgres")]
-const ON_CONFLICT_DO_NOTHING: &'static str = "ON CONFLICT DO NOTHING";
+const NUMBER_INSERT_QUERY: &'static str = "INSERT INTO number (id, value, store_id, type) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING RETURNING value;";
 
 impl<'a> NumberRowRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
@@ -126,7 +129,7 @@ impl<'a> NumberRowRepository<'a> {
     ) -> Result<NextNumber, RepositoryError> {
         // 1. First we try to just grab the next number from the database, in most cases this should work and be the fast.
 
-        let update_query = sql_query( r#"UPDATE number SET value = value+1 WHERE store_id = $1 and type = $2 RETURNING value;"#)
+        let update_query = sql_query(r#"UPDATE number SET value = value+1 WHERE store_id = $1 and type = $2 RETURNING value;"#)
             .bind::<Text, _>(store_id)
             .bind::<Text, _>(r#type.to_string());
 
@@ -144,24 +147,13 @@ impl<'a> NumberRowRepository<'a> {
             Err(NotFound) => {
                 // 2. There was no record to update, so we need to insert a new one.
 
-                // We need to add an ON CONFLICT Clause for postgres just in case 2 threads insert at the same time (SQLite <on disk> does not need this as it only allows a single write transaction at a time).
-                // Without this postgres will throw a unique constraint violation error and rollback the transaction, which is hard to recover from, instead we just ignore the error and check if it returned a value
-                // It's safe to use format here, as these inputs are not user controlled
-                let insert_query_str = format!(
-                    r#"INSERT INTO number (id, value, store_id, type) VALUES ($1, $2, $3, $4) {} RETURNING value;"#,
-                    ON_CONFLICT_DO_NOTHING
-                );
-
-                let insert_query = sql_query(insert_query_str)
+                let insert_query = sql_query(NUMBER_INSERT_QUERY)
                     .bind::<Text, _>(uuid())
                     .bind::<BigInt, _>(1)
                     .bind::<Text, _>(store_id)
                     .bind::<Text, _>(r#type.to_string());
 
-                let insert_result =
-                    insert_query.get_result::<NextNumber>(&self.connection.connection);
-
-                match insert_result {
+                match insert_query.get_result::<NextNumber>(&self.connection.connection) {
                     Ok(result) => Ok(result),
                     Err(NotFound) => {
                         // 3. If we got here another thread inserted the record before we we able to (we know this because nothing was returned for the insert)
