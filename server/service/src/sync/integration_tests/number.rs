@@ -1,3 +1,5 @@
+use std::convert::TryFrom;
+
 use repository::{NumberRow, NumberRowRepository, NumberRowType, StorageConnection};
 use util::{inline_edit, uuid::uuid};
 
@@ -15,7 +17,7 @@ impl SyncRecordTester<Vec<NumberRow>> for NumberSyncRecordTester {
                 id: uuid(),
                 value: 0,
                 store_id: store_id.to_string(),
-                r#type: NumberRowType::InboundShipment,
+                r#type: NumberRowType::InboundShipment.to_string(),
             });
         row_0.value = gen_i64();
 
@@ -26,7 +28,7 @@ impl SyncRecordTester<Vec<NumberRow>> for NumberSyncRecordTester {
                 id: uuid(),
                 value: 0,
                 store_id: store_id.to_string(),
-                r#type: NumberRowType::OutboundShipment,
+                r#type: NumberRowType::OutboundShipment.to_string(),
             });
         row_1.value = gen_i64();
 
@@ -37,7 +39,7 @@ impl SyncRecordTester<Vec<NumberRow>> for NumberSyncRecordTester {
                 id: uuid(),
                 value: 0,
                 store_id: store_id.to_string(),
-                r#type: NumberRowType::InventoryAdjustment,
+                r#type: NumberRowType::InventoryAdjustment.to_string(),
             });
         row_2.value = gen_i64();
 
@@ -48,7 +50,7 @@ impl SyncRecordTester<Vec<NumberRow>> for NumberSyncRecordTester {
                 id: uuid(),
                 value: 0,
                 store_id: store_id.to_string(),
-                r#type: NumberRowType::RequestRequisition,
+                r#type: NumberRowType::RequestRequisition.to_string(),
             });
         row_3.value = gen_i64();
 
@@ -59,7 +61,7 @@ impl SyncRecordTester<Vec<NumberRow>> for NumberSyncRecordTester {
                 id: uuid(),
                 value: 0,
                 store_id: store_id.to_string(),
-                r#type: NumberRowType::ResponseRequisition,
+                r#type: NumberRowType::ResponseRequisition.to_string(),
             });
         row_4.value = gen_i64();
 
@@ -70,7 +72,7 @@ impl SyncRecordTester<Vec<NumberRow>> for NumberSyncRecordTester {
                 id: uuid(),
                 value: 0,
                 store_id: store_id.to_string(),
-                r#type: NumberRowType::Stocktake,
+                r#type: NumberRowType::Stocktake.to_string(),
             });
         row_5.value = gen_i64();
 
@@ -100,8 +102,13 @@ impl SyncRecordTester<Vec<NumberRow>> for NumberSyncRecordTester {
     fn validate(&self, connection: &StorageConnection, rows: &Vec<NumberRow>) {
         for row_expected in rows {
             let number_repo = NumberRowRepository::new(&connection);
+            let row_type = match NumberRowType::try_from(row_expected.r#type.clone()) {
+                Ok(row_type) => row_type,
+                Err(_) => panic!("Invalid row type: {} -", row_expected.r#type),
+            };
+
             let row = number_repo
-                .find_one_by_type_and_store(&row_expected.r#type, &row_expected.store_id)
+                .find_one_by_type_and_store(&row_type, &row_expected.store_id)
                 .unwrap()
                 .expect(&format!("Number row not found: {:?} ", row_expected));
             assert_eq!(row_expected, &row);
