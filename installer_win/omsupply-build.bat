@@ -16,11 +16,11 @@ copy "server\server\src\omSupply.ico" "build\omSupply.ico"
 xcopy "installer_win" "%installerWorkspace%\build" /e /h /c /i
 copy "version.txt" "%installerWorkspace%\version.txt"
 
-@cd "build"
+@cd "installer_win"
 start /b /wait omsupply-sqlite-build.bat
 
-@cd "build"
+@cd "installer_win"
 start /b /wait omsupply-postgres-build.bat
 
-@cd "build"
+@cd "installer_win"
 start /b /wait omsupply-desktop-build.bat
