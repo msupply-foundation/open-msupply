@@ -5,11 +5,11 @@ extern crate winres;
 fn main() {
     let mut res = winres::WindowsResource::new();
     res.set_icon("omSupply.ico");
+    // The winres crate compiles the icon into a Windows resource file and directs cargo to link it into the output binary
     res.compile().unwrap();
 }
 
-// Just to skip build error as the build dependencies for "winres" is being used for "windows" targeted
-// This way the build time for the unix based platform gets saved
+// Keep the unix build happy
 #[cfg(unix)]
 fn main() {
 }
