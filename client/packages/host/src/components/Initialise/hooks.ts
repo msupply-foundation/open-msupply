@@ -72,21 +72,20 @@ export const useInitialiseForm = () => {
       url,
       username,
     };
-
-    await update(syncSettings).catch(e => {
+    try {
+      await update(syncSettings);
+      await restart().catch(e => {
+          console.error(e);
+          setError({ message: 'Unable to restart the server' });
+          setIsLoading(false);
+      });
+      return;
+    } catch (e) {
       console.error(e);
       setError({ message: 'Unable to save settings' });
       setIsLoading(false);
-      return;
-    });
+    }
     setPassword('');
-
-    await restart().catch(e => {
-      console.error(e);
-      setError({ message: 'Unable to restart the server' });
-      setIsLoading(false);
-      return;
-    });
 
     setTimeout(() => {
       setIsPolling(true);
