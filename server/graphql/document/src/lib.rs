@@ -1,8 +1,8 @@
 use async_graphql::*;
 use graphql_core::pagination::PaginationInput;
-use mutations::allocate_number::allocate_number;
-use mutations::allocate_number::AllocateNumberInput;
-use mutations::allocate_number::AllocateNumberResponse;
+use mutations::allocate_number::allocate_program_number;
+use mutations::allocate_number::AllocateProgramNumberInput;
+use mutations::allocate_number::AllocateProgramNumberResponse;
 use mutations::delete_document::delete_document;
 use mutations::delete_document::DeleteDocumentInput;
 use mutations::delete_document::DeleteDocumentResponse;
@@ -267,12 +267,12 @@ impl DocumentMutations {
         update_encounter(ctx, store_id, input)
     }
 
-    pub async fn allocate_number(
+    pub async fn allocate_program_number(
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input: AllocateNumberInput,
-    ) -> Result<AllocateNumberResponse> {
-        allocate_number(ctx, store_id, input)
+        input: AllocateProgramNumberInput,
+    ) -> Result<AllocateProgramNumberResponse> {
+        allocate_program_number(ctx, store_id, input)
     }
 }
