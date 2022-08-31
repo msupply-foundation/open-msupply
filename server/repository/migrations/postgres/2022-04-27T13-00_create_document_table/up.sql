@@ -18,6 +18,8 @@ CREATE TABLE document
     comment TEXT
 );
 
+CREATE INDEX ix_document_name_unique ON document(name);
+
 CREATE VIEW latest_document
 AS
     SELECT d.*
