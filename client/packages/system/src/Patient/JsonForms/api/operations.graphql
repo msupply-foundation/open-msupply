@@ -61,8 +61,8 @@ query documentRegistries(
   }
 }
 
-mutation allocateNumber($numberName: String!, $storeId: String!) {
-  allocateNumber(input: { numberName: $numberName }, storeId: $storeId) {
+mutation allocateProgramNumber($numberName: String!, $storeId: String!) {
+  allocateProgramNumber(input: { numberName: $numberName }, storeId: $storeId) {
     ... on NumberNode {
       __typename
       number
