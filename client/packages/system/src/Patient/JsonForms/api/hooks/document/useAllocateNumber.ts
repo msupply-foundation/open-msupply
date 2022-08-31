@@ -3,5 +3,5 @@ import { useAllocateNumberApi } from '../utils/useAllocateNumberApi';
 
 export const useAllocateNumber = () => {
   const api = useAllocateNumberApi();
-  return useMutation(api.allocateNumber);
+  return useMutation(api.allocateProgramNumber);
 };

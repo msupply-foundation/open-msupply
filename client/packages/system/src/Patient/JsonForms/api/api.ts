@@ -61,13 +61,13 @@ export const getDocumentRegistryQueries = (sdk: Sdk) => ({
   },
 });
 
-export const getAllocateNumber = (sdk: Sdk, storeId: string) => ({
-  allocateNumber: async (numberName: string): Promise<number> => {
-    const result = await sdk.allocateNumber({
+export const getAllocateProgramNumber = (sdk: Sdk, storeId: string) => ({
+  allocateProgramNumber: async (numberName: string): Promise<number> => {
+    const result = await sdk.allocateProgramNumber({
       storeId,
       numberName,
     });
-    const numberNode = result?.allocateNumber;
+    const numberNode = result?.allocateProgramNumber;
 
     if (numberNode?.__typename === 'NumberNode') {
       return numberNode.number;

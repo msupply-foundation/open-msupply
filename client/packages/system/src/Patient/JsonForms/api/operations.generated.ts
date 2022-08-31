@@ -24,13 +24,13 @@ export type DocumentRegistriesQueryVariables = Types.Exact<{
 
 export type DocumentRegistriesQuery = { __typename: 'FullQuery', documentRegistries: { __typename: 'DocumentRegistryConnector', nodes: Array<{ __typename: 'DocumentRegistryNode', context: Types.DocumentRegistryNodeContext, documentType: string, formSchemaId: string, id: string, jsonSchema: any, name?: string | null, parentId?: string | null, uiSchema: any, uiSchemaType: string }> } };
 
-export type AllocateNumberMutationVariables = Types.Exact<{
+export type AllocateProgramNumberMutationVariables = Types.Exact<{
   numberName: Types.Scalars['String'];
   storeId: Types.Scalars['String'];
 }>;
 
 
-export type AllocateNumberMutation = { __typename: 'FullMutation', allocateNumber: { __typename: 'NumberNode', number: number } };
+export type AllocateProgramNumberMutation = { __typename: 'FullMutation', allocateProgramNumber: { __typename: 'NumberNode', number: number } };
 
 export type EncounterFieldsFragment = { __typename: 'EncounterFieldsNode', fields: Array<any>, encounter: { __typename: 'EncounterNode', name: string, startDatetime: string, endDatetime?: string | null } };
 
@@ -117,9 +117,9 @@ export const DocumentRegistriesDocument = gql`
   }
 }
     `;
-export const AllocateNumberDocument = gql`
-    mutation allocateNumber($numberName: String!, $storeId: String!) {
-  allocateNumber(input: {numberName: $numberName}, storeId: $storeId) {
+export const AllocateProgramNumberDocument = gql`
+    mutation allocateProgramNumber($numberName: String!, $storeId: String!) {
+  allocateProgramNumber(input: {numberName: $numberName}, storeId: $storeId) {
     ... on NumberNode {
       __typename
       number
@@ -159,8 +159,8 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     documentRegistries(variables?: DocumentRegistriesQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DocumentRegistriesQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<DocumentRegistriesQuery>(DocumentRegistriesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'documentRegistries', 'query');
     },
-    allocateNumber(variables: AllocateNumberMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<AllocateNumberMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<AllocateNumberMutation>(AllocateNumberDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'allocateNumber', 'mutation');
+    allocateProgramNumber(variables: AllocateProgramNumberMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<AllocateProgramNumberMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<AllocateProgramNumberMutation>(AllocateProgramNumberDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'allocateProgramNumber', 'mutation');
     },
     encounterFields(variables: EncounterFieldsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<EncounterFieldsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<EncounterFieldsQuery>(EncounterFieldsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'encounterFields', 'query');
@@ -207,16 +207,16 @@ export const mockDocumentRegistriesQuery = (resolver: ResponseResolver<GraphQLRe
  * @param resolver a function that accepts a captured request and may return a mocked response.
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
- * mockAllocateNumberMutation((req, res, ctx) => {
+ * mockAllocateProgramNumberMutation((req, res, ctx) => {
  *   const { numberName, storeId } = req.variables;
  *   return res(
- *     ctx.data({ allocateNumber })
+ *     ctx.data({ allocateProgramNumber })
  *   )
  * })
  */
-export const mockAllocateNumberMutation = (resolver: ResponseResolver<GraphQLRequest<AllocateNumberMutationVariables>, GraphQLContext<AllocateNumberMutation>, any>) =>
-  graphql.mutation<AllocateNumberMutation, AllocateNumberMutationVariables>(
-    'allocateNumber',
+export const mockAllocateProgramNumberMutation = (resolver: ResponseResolver<GraphQLRequest<AllocateProgramNumberMutationVariables>, GraphQLContext<AllocateProgramNumberMutation>, any>) =>
+  graphql.mutation<AllocateProgramNumberMutation, AllocateProgramNumberMutationVariables>(
+    'allocateProgramNumber',
     resolver
   )
 

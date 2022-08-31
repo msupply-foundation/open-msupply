@@ -59,12 +59,6 @@ export type AddToShipmentFromMasterListInput = {
   shipmentId: Scalars['String'];
 };
 
-export type AllocateNumberInput = {
-  numberName: Scalars['String'];
-};
-
-export type AllocateNumberResponse = NumberNode;
-
 export type AllocateOutboundShipmentUnallocatedLineError = {
   __typename: 'AllocateOutboundShipmentUnallocatedLineError';
   error: AllocateOutboundShipmentUnallocatedLineErrorInterface;
@@ -91,6 +85,12 @@ export type AllocateOutboundShipmentUnallocatedLineResponseWithId = {
   id: Scalars['String'];
   response: AllocateOutboundShipmentUnallocatedLineResponse;
 };
+
+export type AllocateProgramNumberInput = {
+  numberName: Scalars['String'];
+};
+
+export type AllocateProgramNumberResponse = NumberNode;
 
 export type AuthToken = {
   __typename: 'AuthToken';
@@ -851,8 +851,8 @@ export type FullMutation = {
   addToInboundShipmentFromMasterList: AddToInboundShipmentFromMasterListResponse;
   /** Add invoice lines from master item master list */
   addToOutboundShipmentFromMasterList: AddToOutboundShipmentFromMasterListResponse;
-  allocateNumber: AllocateNumberResponse;
   allocateOutboundShipmentUnallocatedLine: AllocateOutboundShipmentUnallocatedLineResponse;
+  allocateProgramNumber: AllocateProgramNumberResponse;
   batchInboundShipment: BatchInboundShipmentResponse;
   batchOutboundShipment: BatchOutboundShipmentResponse;
   batchRequestRequisition: BatchRequestRequisitionResponse;
@@ -944,14 +944,14 @@ export type FullMutationAddToOutboundShipmentFromMasterListArgs = {
 };
 
 
-export type FullMutationAllocateNumberArgs = {
-  input: AllocateNumberInput;
+export type FullMutationAllocateOutboundShipmentUnallocatedLineArgs = {
+  lineId: Scalars['String'];
   storeId: Scalars['String'];
 };
 
 
-export type FullMutationAllocateOutboundShipmentUnallocatedLineArgs = {
-  lineId: Scalars['String'];
+export type FullMutationAllocateProgramNumberArgs = {
+  input: AllocateProgramNumberInput;
   storeId: Scalars['String'];
 };
 
