@@ -16,7 +16,7 @@ use repository::{
 };
 use service::auth::{Resource, ResourceAccessRequest};
 use service::document::patient::{
-    patient_doc_name, Patient, PatientFilter, PatientSort, PatientSortField,
+    main_patient_doc_name, Patient, PatientFilter, PatientSort, PatientSortField,
 };
 
 use crate::types::document::DocumentNode;
@@ -104,7 +104,7 @@ impl PatientNode {
         let result = loader
             .load_one(DocumentLoaderInput {
                 store_id,
-                document_name: patient_doc_name(&self.patient.name_row.id),
+                document_name: main_patient_doc_name(&self.patient.name_row.id),
             })
             .await?
             .map(|document| DocumentNode { document });
