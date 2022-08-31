@@ -5,7 +5,7 @@ use crate::{
     document::{
         document_service::DocumentInsertError,
         is_latest_doc,
-        patient::{patient_program_doc_name, patient_program_encounter_doc_name},
+        patient::{patient_doc_name, patient_doc_name_with_id},
         raw_document::RawDocument,
     },
     service_provider::{ServiceContext, ServiceProvider},
@@ -106,7 +106,7 @@ impl From<RepositoryError> for InsertEncounterError {
 fn generate(user_id: &str, input: InsertEncounter) -> Result<RawDocument, RepositoryError> {
     let encounter_name = Utc::now().to_rfc3339();
     Ok(RawDocument {
-        name: patient_program_encounter_doc_name(&input.patient_id, &input.r#type, &encounter_name),
+        name: patient_doc_name_with_id(&input.patient_id, &input.r#type, &encounter_name),
         parents: vec![],
         author: user_id.to_string(),
         timestamp: Utc::now(),
@@ -129,7 +129,7 @@ fn validate_patient_program_exists(
     patient_id: &str,
     program: &str,
 ) -> Result<bool, RepositoryError> {
-    let doc_name = patient_program_doc_name(patient_id, program);
+    let doc_name = patient_doc_name(patient_id, program);
     let document = DocumentRepository::new(&ctx.connection).find_one_by_name(&doc_name)?;
     Ok(document.is_some())
 }

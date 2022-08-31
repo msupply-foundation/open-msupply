@@ -7,8 +7,8 @@ use crate::{
 };
 
 use super::{
-    patient_doc_name, patient_schema::SchemaPatient, patient_updated::patient_document_updated,
-    Patient, PatientFilter, PATIENT_TYPE,
+    main_patient_doc_name, patient_schema::SchemaPatient,
+    patient_updated::patient_document_updated, Patient, PatientFilter, PATIENT_TYPE,
 };
 
 #[derive(PartialEq, Debug)]
@@ -103,7 +103,7 @@ fn generate(
     input: UpdatePatient,
 ) -> Result<RawDocument, RepositoryError> {
     Ok(RawDocument {
-        name: patient_doc_name(&patient.id),
+        name: main_patient_doc_name(&patient.id),
         parents: input.parent.map(|p| vec![p]).unwrap_or(vec![]),
         author: user_id.to_string(),
         timestamp: Utc::now(),
@@ -138,7 +138,7 @@ fn validate_patient_not_exists(
     service_provider: &ServiceProvider,
     id: &str,
 ) -> Result<bool, RepositoryError> {
-    let patient_name = patient_doc_name(id);
+    let patient_name = main_patient_doc_name(id);
     let existing_document = service_provider
         .document_service
         .get_document(ctx, &patient_name)?;
