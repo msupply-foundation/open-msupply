@@ -1,4 +1,4 @@
-import React, { ComponentType, useMemo } from 'react';
+import React, { ComponentType, useMemo, useState } from 'react';
 import {
   rankWith,
   schemaTypeIs,
@@ -18,6 +18,7 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
+  FormLabel,
 } from '@mui/material';
 import {
   IconButton,
@@ -25,6 +26,8 @@ import {
   MinusCircleIcon,
   ChevronDownIcon,
   useTranslation,
+  Select,
+  ConfirmationModal,
 } from '@openmsupply-client/common';
 import { RegexUtils } from '@common/utils';
 import {
@@ -46,8 +49,105 @@ interface ArrayControlCustomProps extends ArrayControlProps {
 
 export const arrayTester = rankWith(5, schemaTypeIs('array'));
 
+const EnumArrayComponent = (props: ArrayControlCustomProps) => {
+  const t = useTranslation('common');
+  const { schema, path, data, addItem, removeItems, label } = props;
+  const [removeIndex, setRemoveIndex] = useState<number | undefined>();
+
+  const options = schema.enum
+    ? schema.enum
+        .filter(it => !(data ?? []).includes(it))
+        .map((option: string) => ({
+          label: option,
+          value: option,
+        }))
+    : [];
+
+  if (!props.visible) {
+    return null;
+  }
+
+  return (
+    <>
+      <Box
+        display="flex"
+        alignItems="center"
+        gap={2}
+        justifyContent="space-around"
+        style={{ minWidth: 300 }}
+        marginTop={0.5}
+      >
+        <Box style={{ textAlign: 'end' }} flexBasis={FORM_LABEL_COLUMN_WIDTH}>
+          <FormLabel sx={{ fontWeight: 'bold' }}>{label}:</FormLabel>
+        </Box>
+        <Box flexBasis={FORM_INPUT_COLUMN_WIDTH}>
+          <Select
+            sx={{ minWidth: 100 }}
+            options={options}
+            value={''}
+            placeholder={'Select'}
+            onChange={e => addItem(path, e.target.value)()}
+          />
+        </Box>
+      </Box>
+      {(data ? data : []).map((child, index) => {
+        return (
+          <Box
+            display="flex"
+            flexDirection="row"
+            key={index}
+            sx={{
+              '&:hover .array-remove-icon': { visibility: 'visible' },
+            }}
+            alignContent="start"
+          >
+            <Box flexBasis={FORM_LABEL_COLUMN_WIDTH}></Box>
+            <Typography
+              flexBasis={FORM_INPUT_COLUMN_WIDTH}
+              sx={{
+                textAlign: 'start',
+                alignSelf: 'center',
+                marginLeft: '2em',
+              }}
+              overflow={'hidden'}
+            >
+              {`${child}`}
+            </Typography>
+            <ConfirmationModal
+              open={removeIndex !== undefined}
+              onConfirm={() => {
+                if (removeIndex !== undefined) {
+                  removeItems(path, [removeIndex])();
+                  setRemoveIndex(undefined);
+                }
+              }}
+              onCancel={() => setRemoveIndex(undefined)}
+              title={t('label.remove')}
+              message={t('messages.confirm-remove-item')}
+            />
+            <IconButton
+              icon={<MinusCircleIcon />}
+              label={t('label.remove')}
+              color="primary"
+              className="array-remove-icon"
+              sx={{
+                position: 'relative',
+                visibility: 'hidden',
+                right: 0,
+              }}
+              onClick={() => setRemoveIndex(index)}
+            />
+          </Box>
+        );
+      })}
+    </>
+  );
+};
+
 const ArrayComponent = (props: ArrayControlCustomProps) => {
   const t = useTranslation('common');
+  const [removeIndex, setRemoveIndex] = useState<number | undefined>();
+
   const {
     uischema,
     uischemas,
@@ -78,6 +178,9 @@ const ArrayComponent = (props: ArrayControlCustomProps) => {
 
   if (!props.visible) {
     return null;
+  }
+  if (schema.enum && schema.type === 'string') {
+    return <EnumArrayComponent {...props} />;
   }
   return (
     <Box display="flex" flexDirection="column" gap={0.5} marginTop={2}>
@@ -129,13 +232,29 @@ const ArrayComponent = (props: ArrayControlCustomProps) => {
                 justifyContent="space-between"
                 alignItems="center"
               >
+                <ConfirmationModal
+                  open={removeIndex !== undefined}
+                  onConfirm={() => {
+                    if (removeIndex !== undefined) {
+                      removeItems(path, [removeIndex])();
+                      setRemoveIndex(undefined);
+                    }
+                  }}
+                  onCancel={() => setRemoveIndex(undefined)}
+                  title={t('label.remove')}
+                  message={t('messages.confirm-remove-item')}
+                />
                 <IconButton
                   icon={<MinusCircleIcon />}
                   label={t('label.remove')}
                   color="primary"
                   className="array-remove-icon"
                   sx={{ visibility: 'hidden' }}
-                  onClick={removeItems(path, [index])}
+                  onClick={e => {
+                    setRemoveIndex(index);
+                    // Don't toggle the accordion:
+                    e.stopPropagation();
+                  }}
                 />
                 <Typography
                   sx={{
