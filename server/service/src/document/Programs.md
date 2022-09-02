@@ -109,7 +109,7 @@ For example, there could be a UI schema for the full document and one that only 
 ## Document versioning
 
 Each edit of a document is stored as a new version.
-The `document.id` is the version id while `document.name` is the general document identifier to shared between all document versions.
+The `document.id` is the version id while `document.name` is the general document identifier shared between all document versions.
 TODO: rename `document.id` => `document.versionId` and `document.name` => `document.id`?
 
 # Customizable Program User Interface
