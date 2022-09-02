@@ -116,7 +116,7 @@ TODO: rename `document.id` => `document.versionId` and `document.name` => `docum
 
 One of the requirements of the programs module is to provide a customizable user interface to display and edit custom document types.
 To achieve this JSONForms UI schema files are used to define a customized UI.
-JSONForms give UI designer great flexibility on how document data is composed and displayed.
+JSONForms give UI designers great flexibility on how document data is composed and displayed.
 Furthermore, custom control can be created to implemented specialized UI elements such as graphs or controls to generate patient IDs.
 
 ## Event trigger Controls
