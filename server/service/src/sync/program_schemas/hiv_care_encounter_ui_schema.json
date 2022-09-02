@@ -6,32 +6,45 @@
       "label": "Physical Exam",
       "options": { "icon": "stethoscope" },
       "elements": [
-        { "scope": "#/properties/physicalExamination", "type": "Control" },
         {
-          "options": {
-            "values": [
-              {
-                "field": "physicalExamination.weight",
-                "label": "Weight",
-                "unit": "kg"
-              }
-            ]
-          },
-          "scope": "#",
-          "type": "EncounterLineChart"
-        },
-        {
-          "options": {
-            "values": [
-              {
-                "field": "physicalExamination.bloodPressure",
-                "label": "Blood Pressure",
-                "unit": "mmHg"
-              }
-            ]
-          },
-          "scope": "#",
-          "type": "EncounterLineChart"
+          "type": "HorizontalLayout",
+          "elements": [
+            {
+              "type": "Control",
+              "scope": "#/properties/physicalExamination"
+            },
+            {
+              "type": "HorizontalLayout",
+              "elements": [
+                {
+                  "type": "EncounterLineChart",
+                  "scope": "#",
+                  "options": {
+                    "values": [
+                      {
+                        "field": "physicalExamination.weight",
+                        "label": "Weight",
+                        "unit": "kg"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "type": "EncounterLineChart",
+                  "scope": "#",
+                  "options": {
+                    "values": [
+                      {
+                        "field": "physicalExamination.bloodPressure",
+                        "label": "Blood Pressure",
+                        "unit": "mmHg"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
         }
       ]
     },
