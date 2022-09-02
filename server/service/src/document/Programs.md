@@ -126,7 +126,7 @@ There some specialized controls which add events to the document data based on s
 ## None standard controls and options
 
 Specialized controls are located in `packages/system/src/Patient/JsonForms/components`.
-These component files also contain type information and js docs for the component options.
+These component files also contain type information and JS docs for the component options.
 
 ## Encounters data extraction
 
