@@ -13,14 +13,14 @@ mkdir "%installerWorkspace%\omSupply Desktop Server\server"
 xcopy "server\configuration" "%installerWorkspace%\omSupply Desktop Server\server\configuration" /e /h /c /i
 
 copy "server\server\src\omSupply.ico" "build\omSupply.ico"
-xcopy "installer_win" "%installerWorkspace%\build" /e /h /c /i
+xcopy "build" "%installerWorkspace%\build" /e /h /c /i
 copy "version.txt" "%installerWorkspace%\version.txt"
 
-@cd "installer_win"
+@cd "build\windows"
 start /b /wait omsupply-sqlite-build.bat
 
-@cd "installer_win"
+@cd "build\windows"
 start /b /wait omsupply-postgres-build.bat
 
-@cd "installer_win"
+@cd "build\windows"
 start /b /wait omsupply-desktop-build.bat

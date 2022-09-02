@@ -4237,11 +4237,11 @@ end
 <Name>On Post Install</Name>
 <Args/>
 <Script>dataSources = TextFile.ReadToString(SessionVar.Expand("%AppFolder%\\configuration\\base.yaml"));
-dataSources = String.Replace(dataSources, "[[omsupply_port]]", SessionVar.Get("%omsupply_port%"), true);
-dataSources = String.Replace(dataSources, "[[omsupply_db_name]]", SessionVar.Expand("\"%omsupply_db_name%\""), true);
-dataSources = String.Replace(dataSources, "[[postgres_db_port]]", SessionVar.Get("%postgres_db_port%"), true);
-dataSources = String.Replace(dataSources, "[[postgres_db_user]]", SessionVar.Expand("\"%postgres_db_user%\""), true);
-dataSources = String.Replace(dataSources, "[[postgres_db_password]]", SessionVar.Expand("\"%postgres_db_pass%\""), true);
+dataSources = String.Replace(dataSources, "8000", SessionVar.Get("%omsupply_port%"), true);
+dataSources = String.Replace(dataSources, "omsupply-database", SessionVar.Expand("\"%omsupply_db_name%\""), true);
+dataSources = String.Replace(dataSources, "5432", SessionVar.Get("%postgres_db_port%"), true);
+dataSources = String.Replace(dataSources, "postgres", SessionVar.Expand("\"%postgres_db_user%\""), true);
+dataSources = String.Replace(dataSources, "password", SessionVar.Expand("\"%postgres_db_pass%\""), true);
 TextFile.WriteFromString(SessionVar.Expand("%AppFolder%\\configuration\\base.yaml"), dataSources, false);
 
 -- Create settings.ini file to store current settings
