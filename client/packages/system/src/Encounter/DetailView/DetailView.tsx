@@ -18,7 +18,12 @@ import { Footer } from './Footer';
 
 export const DetailView: FC = () => {
   const t = useTranslation('patients');
-  const { data: encounter, isLoading } = useEncounter.document.get();
+  const id = useEncounter.utils.id;
+  const {
+    data: encounter,
+    isLoading,
+    mutate: fetchEncounter,
+  } = useEncounter.document.get();
   const navigate = useNavigate();
 
   const dateFormat = useFormatDateTime();
@@ -58,6 +63,8 @@ export const DetailView: FC = () => {
       }),
     [data, setData]
   );
+
+  useEffect(() => fetchEncounter(), [id]);
 
   if (isLoading) return <DetailViewSkeleton />;
 
