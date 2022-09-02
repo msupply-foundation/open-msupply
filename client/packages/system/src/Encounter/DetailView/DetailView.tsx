@@ -19,29 +19,22 @@ import { Footer } from './Footer';
 export const DetailView: FC = () => {
   const t = useTranslation('patients');
   const id = useEncounter.utils.id;
+  const navigate = useNavigate();
+  const { setSuffix } = useBreadcrumbs([AppRoute.Encounter]);
+  const dateFormat = useFormatDateTime();
+
   const {
     data: encounter,
-    isLoading,
     mutate: fetchEncounter,
+    isSuccess,
+    isError,
   } = useEncounter.document.get();
-  const navigate = useNavigate();
 
-  const dateFormat = useFormatDateTime();
   const handleSave = useEncounter.document.upsertDocument(
     encounter?.patient.id ?? '',
     encounter?.program ?? '',
     encounter?.type ?? ''
   );
-
-  const { setSuffix } = useBreadcrumbs([AppRoute.Encounter]);
-  useEffect(() => {
-    if (encounter)
-      setSuffix(
-        `${
-          encounter.document.documentRegistry?.name
-        } - ${dateFormat.localisedDateTime(encounter.startDatetime)}`
-      );
-  }, [encounter]);
 
   const {
     JsonForm,
@@ -70,7 +63,16 @@ export const DetailView: FC = () => {
   // if the id is invalid and a query is used
   useEffect(() => fetchEncounter(), [id]);
 
-  if (isLoading) return <DetailViewSkeleton />;
+  useEffect(() => {
+    if (encounter)
+      setSuffix(
+        `${
+          encounter.document.documentRegistry?.name
+        } - ${dateFormat.localisedDateTime(encounter.startDatetime)}`
+      );
+  }, [encounter]);
+
+  if (!isSuccess && !isError) return <DetailViewSkeleton />;
 
   return (
     <React.Suspense fallback={<DetailViewSkeleton />}>
