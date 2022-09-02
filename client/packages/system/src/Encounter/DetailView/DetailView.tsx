@@ -64,6 +64,10 @@ export const DetailView: FC = () => {
     [data, setData]
   );
 
+  // using a mutation to fetch rather than a query
+  // because the API does not error on invalid ids
+  // which results in an infinite re-render
+  // if the id is invalid and a query is used
   useEffect(() => fetchEncounter(), [id]);
 
   if (isLoading) return <DetailViewSkeleton />;
