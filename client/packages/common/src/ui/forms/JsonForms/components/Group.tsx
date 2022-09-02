@@ -3,7 +3,6 @@ import { rankWith, uiTypeIs, LayoutProps, GroupLayout } from '@jsonforms/core';
 import { withJsonFormsLayoutProps } from '@jsonforms/react';
 import { MaterialLayoutRenderer } from '@jsonforms/material-renderers';
 import { Box, Typography } from '@mui/material';
-import { FORM_LABEL_COLUMN_WIDTH } from '../styleConstants';
 
 export const groupTester = rankWith(4, uiTypeIs('Group'));
 
@@ -32,8 +31,9 @@ const UIComponent = (props: LayoutProps) => {
     >
       <Typography
         variant="subtitle1"
-        width={FORM_LABEL_COLUMN_WIDTH}
-        textAlign="right"
+        width={'100%'}
+        textAlign="left"
+        marginBottom={1}
       >
         <strong>{(uischema as GroupLayout).label}</strong>
       </Typography>

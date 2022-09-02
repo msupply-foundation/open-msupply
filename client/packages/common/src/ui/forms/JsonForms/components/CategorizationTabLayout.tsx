@@ -124,7 +124,7 @@ const UIComponent: FC<LayoutProps & AjvProps> = ({
             isOpen={activeCategory === idx}
             title={category.label}
             okButton={<DialogButton variant="ok" onClick={onClose} />}
-            width={800}
+            width={1100}
           >
             <MaterialLayoutRenderer {...childProps} />
           </CategoryModal>

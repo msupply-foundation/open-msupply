@@ -111,7 +111,7 @@ const UIComponent = (props: ControlProps) => {
       marginTop={0.5}
     >
       <LineChart
-        width={600}
+        width={500}
         height={250}
         data={data}
         margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
