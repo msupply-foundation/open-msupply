@@ -30,8 +30,8 @@ Events are stored in the document but are filled automatically (by the UI form c
 For example, an encounter is labeled depending on the entered data.
 Events are currently used for the following purposes:
 
-1. Based on the dispensed pill count encounter two events are scheduled in the future to change the status to "treatment interrupted" or to "lost"
-2. Based on encounter fields set or not set, an encounter is labeled "Pending Lab Report" or "Lap Report Received"
+1. Based on the dispensed pill count encounter, two events are scheduled in the future to change the status to "treatment interrupted" or "lost"
+2. Based on the encounter fields being set or not, an encounter is labeled as "Pending Lab Report" or "Lap Report Received"
 
 Program events have a context field which described where events belong to, e.g. events can be scheduled from a DemoEncounter but be in the DemoProgram context.
 Moreover, within a context events can be grouped.
