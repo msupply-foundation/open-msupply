@@ -24,9 +24,9 @@ This also means that the practitioner is responsible for inputting data correctl
 
 ## Program Events
 
-While practitioner are the main driver for entering data there are certain use-cases where data is set in a predefined way.
+While practitioners are the main driver for entering data there are certain use-cases where data is set in a predefined way.
 Currently this is done using program `events`.
-Events are stored in the document but are filled automatically, e.g. by the ui form controls while editing a form.
+Events are stored in the document but are filled automatically (by the UI form controls while editing a form).
 For example, an encounter is labeled depending on the entered data.
 Events are currently used for the following purposes:
 
