@@ -63,7 +63,7 @@ For example, all patient related documents can be organized using document names
 ## Document json schema
 
 Each document uses a JSON schema which describes the document's data shape.
-The backend validates that an updated document fulfills the specified schema and otherwise rejects the document.
+The backend validates that an updated document fulfils the specified schema, otherwise it rejects the document.
 
 ## Special predefined document types
 
