@@ -76,7 +76,7 @@ Note, that custom fields cannot be used in the generic part of the system but on
 To make common documents easier to access they are "cached" in dedicated auxiliary DB tables with common data fields exposed as DB columns.
 Note, the underlying documents could still contain more custom data than stored in these aux tables.
 A dedicated DB table is only need if there is common program related functionality that couldn't be implement easily or efficiently using raw json documents.
-For example, a patient DB table could be used to efficiently search for common patient information such as name or date of birth or address, or an encounter DB table could be used to manage an schedule encounter events.
+For example, a patient DB table could be used to efficiently search for common patient information such as name, date of birth or address, or an encounter DB table could be used to manage and schedule encounter events.
 
 ## Derive custom JSON schema from base schema
 
