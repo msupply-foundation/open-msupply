@@ -9,18 +9,18 @@ For example, there are currently three main document types:
 1. The `Patient` document records general patient information such as name, address or age.
    The Patient document is shared between all programs of a patient.
 2. The `Program Enrolment` document holds patient specific information about a single program the patient is enrolled in.
-3. `Program Encounter` documents record data about a patients visit at a doctor.
+3. The `Program Encounter` document records data about a patient's visit at a doctor.
    Each program encounter is associate with a single program and there is an encounter document for every visit.
 
-What data is stored in the documents is widely customizable and its possible to add new custom document types.
+Data stored in the documents is widely customizable and it is possible to add new custom document types.
 This makes the system customizable to fullfil the needs of different clients.
 For example, what data is recorded or how data is displayed and edited can be defined by the client.
 
 ## Practitioner driven data recording
 
 In general data recording is driven by the practitioner.
-For example, the practitioner has to explicitly change a patient's data rather than the patient data is indirectly updated based on some defined logic.
-This also means that the practitioner is responsible for inputting data correctly and no inadvertently side effects interfere with the practitioner's intentions.
+The practitioner has to explicitly change a patient's data instead of the patient's data being updated indirectly based on some defined logic.
+However, the program module can help the practitioner to enter data correctly, highlight errors or suggest potential actions.
 
 ## Program Events
 
@@ -37,9 +37,9 @@ Program events have a context field which describes where the events belong, e.g
 Moreover, events can be grouped within a context.
 This is useful when updating events since it makes it easier for the a UI control to replace the correct events.
 
-When updating a document (currently only encounters documents) the backend extract events from the document and put these events it into a `program_event` table.
+When updating a document (currently only encounter documents) the backend extracts events from the document and put these events into a `program_event` table.
 Events from previous encounter document versions are removed or replaced in this process.
-This table can, for example, be queried to find the currently active encounter or program status, i.e. querying the status events that are not scheduled in the future.
+This table can, for example, be used to find the current encounter status by querying the latest status event which is not scheduled in the future.
 
 # Documents
 
@@ -131,8 +131,8 @@ These component files also contain type information and JS docs for the componen
 ## Encounters data extraction
 
 The graph control needs to fetch data from multiple encounters.
-This is done through a fairly generic `encounterFields` endpoint which allows to extract an field from an encounter document.
-For example, it allows to fetch all `data.physicalExamination.weight` fields from all patient encounters (note, that the weight is a custom field).
+This is done through a fairly generic `encounterFields` endpoint which allows users to extract fields from an encounter document.
+For example, the `data.physicalExamination.weight` field can be fetched from all patient encounters (note, that the weight is a custom field).
 
 # Document access permissions [Draft]
 
