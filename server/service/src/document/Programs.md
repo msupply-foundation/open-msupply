@@ -97,7 +97,7 @@ For example:
 
 ## Document registry
 
-In general documents are related to other documents, e.g. an encounter document is related to a certain type of program enrolment document.
+In general, documents are related to other documents, e.g. an encounter document is related to a certain type of program enrolment document.
 These relations of document types are stored in the document registry.
 The document registry also stores the json schema for a document type.
 For example, when editing a new document of a certain type the document registry dictates which json schema the document data must follow.
