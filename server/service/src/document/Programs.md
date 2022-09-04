@@ -33,8 +33,8 @@ Events are currently used for the following purposes:
 1. Based on the dispensed pill count encounter, two events are scheduled in the future to change the status to "treatment interrupted" or "lost"
 2. Based on the encounter fields being set or not, an encounter is labeled as "Pending Lab Report" or "Lap Report Received"
 
-Program events have a context field which described where events belong to, e.g. events can be scheduled from a DemoEncounter but be in the DemoProgram context.
-Moreover, within a context events can be grouped.
+Program events have a context field which describes where the events belong, e.g. events can be scheduled from a DemoEncounter but be in the DemoProgram context.
+Moreover, events can be grouped within a context.
 This is useful when updating events since it makes it easier for the a UI control to replace the correct events.
 
 When updating a document (currently only encounters documents) the backend extract events from the document and put these events it into a `program_event` table.
