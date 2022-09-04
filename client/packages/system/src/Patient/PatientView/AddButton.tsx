@@ -61,7 +61,7 @@ export const AddButton = () => {
       <ProgramSearchModal
         disabledPrograms={data?.nodes?.map(program => program.type)}
         open={current === PatientModal.ProgramSearch}
-        onClose={() => reset()}
+        onClose={reset}
         onChange={async documentRegistry => {
           const createDocument = {
             data: { enrolmentDatetime: new Date().toISOString() },
