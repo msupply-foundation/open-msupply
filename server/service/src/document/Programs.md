@@ -48,7 +48,7 @@ Documents are identified by "file" names.
 Document names follow a certain schema which has various advantages:
 
 - Human readable unique names
-- No random part in the name needed which mean documents can be found without knowledge of a random document id
+- No random parts in the name needed which mean documents can be found without knowledge of a random document id
 - Core document system is generic, e.g. no knowledge about patients is needed but it's still possible to find all patient related documents.
 
 For example, all patient related documents can be organized using document names starting with a patient directory:
