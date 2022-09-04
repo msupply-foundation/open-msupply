@@ -20,7 +20,7 @@ For example, what data is recorded or how data is displayed and edited can be de
 
 In general data recording is driven by the practitioner.
 The practitioner has to explicitly change a patient's data instead of the patient's data being updated indirectly based on some defined logic.
-However, the program module can help the practitioner to enter data correctly, highlight errors or suggest potential actions.
+However, the program module can help the practitioner to enter data correctly by highlighting errors or suggesting potential actions.
 
 ## Program Events
 
