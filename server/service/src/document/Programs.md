@@ -67,8 +67,8 @@ The backend validates that an updated document fulfils the specified schema, oth
 
 ## Special predefined document types
 
-Having a completely untyped data structures is not very useful and some common document formats are needed to provide some common functionality, e.g. listing all patients and encounters or doing a simple report in a generic ways.
-For this reason document types such as Patient, Programs or Encounter have a predefined base type, i.e. they define a common data shape for the respective type.
+Having a completely untyped data structure is not very useful and some common document formats are needed to provide some common functionality, e.g. listing all patients and encounters or doing a simple report in a generic way.
+For this reason, document types such as Patient, Program or Encounter have a predefined base type, i.e. they define a common data shape for the respective type.
 However, clients are still able to extend these common document types.
 For example, an additional field can be added to a medical record.
 Note, that custom fields cannot be used in the generic part of the system but only in specialized views or reports.
