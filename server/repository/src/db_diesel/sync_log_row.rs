@@ -1,5 +1,6 @@
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
+use util::Defaults;
 
 use crate::RepositoryError;
 
@@ -26,6 +27,7 @@ table! {
         pull_remote_progress_done -> Nullable<Integer>,
         integration_start_datetime -> Nullable<Timestamp>,
         integration_done_datetime -> Nullable<Timestamp>,
+        error_message -> Nullable<Text>,
     }
 }
 
@@ -52,6 +54,34 @@ pub struct SyncLogRow {
     pub pull_remote_progress_done: Option<i32>,
     pub integration_start_datetime: Option<NaiveDateTime>,
     pub integration_done_datetime: Option<NaiveDateTime>,
+    pub error_message: Option<String>,
+}
+
+impl Default for SyncLogRow {
+    fn default() -> Self {
+        Self {
+            id: Default::default(),
+            started_datetime: Defaults::naive_date_time(),
+            done_endtime: Default::default(),
+            prepare_initial_start_datetime: Default::default(),
+            prepare_initial_done_datetime: Default::default(),
+            push_start_datetime: Default::default(),
+            push_done_datetime: Default::default(),
+            push_progress_start: Default::default(),
+            push_progress_done: Default::default(),
+            pull_central_start_datetime: Default::default(),
+            pull_central_done_datetime: Default::default(),
+            pull_central_progress_start: Default::default(),
+            pull_central_progress_done: Default::default(),
+            pull_remote_start_datetime: Default::default(),
+            pull_remote_done_datetime: Default::default(),
+            pull_remote_progress_start: Default::default(),
+            pull_remote_progress_done: Default::default(),
+            integration_start_datetime: Default::default(),
+            integration_done_datetime: Default::default(),
+            error_message: Default::default(),
+        }
+    }
 }
 
 pub struct SyncLogRowRepository<'a> {
