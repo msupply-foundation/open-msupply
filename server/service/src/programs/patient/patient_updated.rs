@@ -107,7 +107,7 @@ mod test {
     use util::inline_init;
 
     use crate::{
-        document::patient::{
+        programs::patient::{
             patient_schema::{ContactDetails, Gender, SchemaPatient},
             PatientFilter, UpdatePatient,
         },

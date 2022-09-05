@@ -4,7 +4,7 @@ extern crate serde_json;
 
 use serde::{Deserialize, Serialize};
 
-schemafy::schemafy!("src/document/schemas/program_enrolment.json");
+schemafy::schemafy!("src/programs/schemas/program_enrolment.json");
 
 pub type SchemaProgramEnrolment = ProgramEnrolment;
 

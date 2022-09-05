@@ -4,7 +4,7 @@ extern crate serde_json;
 
 use serde::{Deserialize, Serialize};
 
-schemafy::schemafy!("src/document/schemas/patient.json");
+schemafy::schemafy!("src/programs/schemas/patient.json");
 
 pub type SchemaPatient = Patient;
 pub type SchemaGender = Gender;

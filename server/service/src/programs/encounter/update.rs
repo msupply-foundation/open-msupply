@@ -174,13 +174,13 @@ mod test {
     use util::inline_init;
 
     use crate::{
-        document::{
+        programs::{
             encounter::{
                 encounter_schema::{EncounterStatus, SchemaEncounter},
                 InsertEncounter, UpdateEncounter,
             },
             patient::{test::mock_patient_1, UpdatePatient},
-            program::{program_schema::SchemaProgramEnrolment, UpsertProgramEnrolment},
+            program_enrolment::{program_schema::SchemaProgramEnrolment, UpsertProgramEnrolment},
         },
         service_provider::ServiceProvider,
     };

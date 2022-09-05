@@ -8,7 +8,8 @@ use repository::{
 use util::uuid::uuid;
 
 use crate::{
-    document::{program_event::ReplaceEventInput, raw_document::RawDocument},
+    document::raw_document::RawDocument,
+    programs::program_event::ReplaceEventInput,
     service_provider::{ServiceContext, ServiceProvider},
 };
 

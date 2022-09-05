@@ -4,7 +4,7 @@ extern crate serde_json;
 
 use serde::{Deserialize, Serialize};
 
-schemafy::schemafy!("src/document/schemas/encounter.json");
+schemafy::schemafy!("src/programs/schemas/encounter.json");
 
 pub type SchemaEncounter = Encounter;
 

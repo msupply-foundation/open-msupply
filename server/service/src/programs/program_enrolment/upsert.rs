@@ -2,16 +2,14 @@ use chrono::Utc;
 use repository::{Document, DocumentRepository, DocumentStatus, RepositoryError, TransactionError};
 
 use crate::{
-    document::{
-        document_service::DocumentInsertError,
-        is_latest_doc,
-        patient::{patient_doc_name, patient_program_doc_name},
-        raw_document::RawDocument,
-    },
+    document::{document_service::DocumentInsertError, is_latest_doc, raw_document::RawDocument},
+    programs::patient::{patient_doc_name, patient_program_doc_name},
     service_provider::{ServiceContext, ServiceProvider},
 };
 
-use super::{program_schema::SchemaProgramEnrolment, program_updated::program_updated};
+use super::{
+    program_enrolment_updated::program_enrolment_updated, program_schema::SchemaProgramEnrolment,
+};
 
 #[derive(PartialEq, Debug)]
 pub enum UpsertProgramEnrolmentError {
@@ -50,7 +48,7 @@ pub fn upsert_program_enrolment(
             if is_latest_doc(ctx, service_provider, &doc)
                 .map_err(UpsertProgramEnrolmentError::DatabaseError)?
             {
-                program_updated(&ctx.connection, &patient_id, &doc, schema_program)?;
+                program_enrolment_updated(&ctx.connection, &patient_id, &doc, schema_program)?;
             };
 
             let document = service_provider
@@ -168,9 +166,9 @@ mod test {
     use util::inline_init;
 
     use crate::{
-        document::{
+        programs::{
             patient::{patient_program_doc_name, test::mock_patient_1, UpdatePatient},
-            program::{program_schema::SchemaProgramEnrolment, UpsertProgramEnrolment},
+            program_enrolment::{program_schema::SchemaProgramEnrolment, UpsertProgramEnrolment},
         },
         service_provider::ServiceProvider,
     };

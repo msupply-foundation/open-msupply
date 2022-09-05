@@ -2,12 +2,8 @@ use chrono::Utc;
 use repository::{Document, DocumentRepository, DocumentStatus, RepositoryError, TransactionError};
 
 use crate::{
-    document::{
-        document_service::DocumentInsertError,
-        is_latest_doc,
-        patient::{patient_program_doc_name, patient_program_encounter_doc_name},
-        raw_document::RawDocument,
-    },
+    document::{document_service::DocumentInsertError, is_latest_doc, raw_document::RawDocument},
+    programs::patient::{patient_program_doc_name, patient_program_encounter_doc_name},
     service_provider::{ServiceContext, ServiceProvider},
 };
 
@@ -161,13 +157,13 @@ mod test {
     use util::inline_init;
 
     use crate::{
-        document::{
+        programs::{
             encounter::{
                 encounter_schema::{EncounterStatus, SchemaEncounter},
                 InsertEncounter,
             },
             patient::{test::mock_patient_1, UpdatePatient},
-            program::{program_schema::SchemaProgramEnrolment, UpsertProgramEnrolment},
+            program_enrolment::{program_schema::SchemaProgramEnrolment, UpsertProgramEnrolment},
         },
         service_provider::ServiceProvider,
     };
