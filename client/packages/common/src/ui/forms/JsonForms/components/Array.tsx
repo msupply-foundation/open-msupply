@@ -57,14 +57,23 @@ interface EnumArrayControlCustomProps extends ArrayControlProps {
 
 export const arrayTester = rankWith(5, schemaTypeIs('array'));
 
-const findIndexOfChanged = (base: string[], newList: string[]): number => {
-  for (let i = 0; i < base.length; i++) {
+// Finds the index where an item has been removed from newList.
+// It is assumed that the removal of an item is the only change between both lists.
+// Thus, length of newList must be one less than the length of the base list
+const findIndexOfRemoved = (base: string[], newList: string[]): number => {
+  if (base.length - 1 !== newList.length) {
+    throw Error(
+      'Unexpected list length, newList.length must be one less than base.length.'
+    );
+  }
+
+  for (let i = 0; i < newList.length; i++) {
     if (base[i] !== newList[i]) {
       return i;
     }
   }
-  if (base.length !== newList.length - 1) throw Error('Unexpected new list');
-  return newList.length - 1;
+  // last item must have been removed
+  return base.length - 1;
 };
 
 const EnumArrayComponent: FC<EnumArrayControlCustomProps> = ({
@@ -106,10 +115,10 @@ const EnumArrayComponent: FC<EnumArrayControlCustomProps> = ({
             options={schema.enum ?? []}
             renderInput={params => <TextField {...params} variant="standard" />}
             onChange={(_, value) => {
-              const index = findIndexOfChanged(data, value);
-              if (index >= data.length) {
-                addItem(path, value[index])();
+              if (value.length - 1 === data.length) {
+                addItem(path, value[value.length - 1])();
               } else {
+                const index = findIndexOfRemoved(data, value);
                 setRemoveIndex(index);
               }
             }}
