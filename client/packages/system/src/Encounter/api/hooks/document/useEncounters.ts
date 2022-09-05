@@ -1,22 +1,18 @@
 import {
   FilterBy,
   useQuery,
-  useQueryParamsStore,
+  useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { useEncounterApi } from '../utils/useEncounterApi';
 
 export const useEncounters = (filterBy?: FilterBy) => {
   const api = useEncounterApi();
-  const {
-    sort: { sortBy },
-    filter,
-    pagination,
-  } = useQueryParamsStore();
-
+  const { queryParams } = useUrlQueryParams({
+    initialSort: { key: 'startDatetime', dir: 'desc' },
+  });
   const params = {
-    sortBy,
-    filterBy: filterBy ?? filter.filterBy,
-    pagination: { offset: pagination.offset, first: pagination.first },
+    ...queryParams,
+    filterBy,
   };
   return {
     ...useQuery(api.keys.paramList(params), () => api.get.list(params)),

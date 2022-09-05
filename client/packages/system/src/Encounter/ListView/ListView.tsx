@@ -5,11 +5,11 @@ import {
   useColumns,
   createTableStore,
   NothingHere,
+  useUrlQueryParams,
   useNavigate,
   createQueryParamsStore,
   ColumnAlign,
   useFormatDateTime,
-  useQueryParamsStore,
 } from '@openmsupply-client/common';
 import {
   useEncounter,
@@ -25,9 +25,10 @@ const encounterEventCellValue = (events: ProgramEventFragment[]) => {
 
 const EncounterListComponent: FC = () => {
   const {
-    sort: { sortBy, onChangeSortBy },
-    pagination: { page, first, offset, onChangePage },
-  } = useQueryParamsStore();
+    updateSortQuery,
+    updatePaginationQuery,
+    queryParams: { sortBy, page, first, offset },
+  } = useUrlQueryParams();
   const { data, isError, isLoading } = useEncounter.document.list();
   const pagination = { page, first, offset };
   const navigate = useNavigate();
@@ -51,7 +52,6 @@ const EncounterListComponent: FC = () => {
         key: 'startTime',
         label: 'label.encounter-start',
         sortable: false,
-        accessor: ({ rowData }) => rowData?.startDatetime,
         formatter: dateString =>
           dateString ? localisedTime((dateString as string) || '') : '',
       },
@@ -69,19 +69,19 @@ const EncounterListComponent: FC = () => {
       {
         key: 'events',
         label: 'label.label',
+        sortable: false,
         formatter: events =>
           encounterEventCellValue((events as ProgramEventFragment[]) ?? []),
-        sortable: false,
       },
       {
         key: 'status',
         label: 'label.status',
+        sortable: false,
         align: ColumnAlign.Right,
         width: 175,
-        sortable: false,
       },
     ],
-    { onChangeSortBy, sortBy },
+    { onChangeSortBy: updateSortQuery, sortBy },
     [sortBy]
   );
 
@@ -90,7 +90,7 @@ const EncounterListComponent: FC = () => {
       <DataTable
         id="name-list"
         pagination={{ ...pagination, total: data?.totalCount }}
-        onChangePage={onChangePage}
+        onChangePage={updatePaginationQuery}
         columns={columns}
         data={data?.nodes}
         isLoading={isLoading}
