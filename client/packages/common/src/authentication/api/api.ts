@@ -95,6 +95,26 @@ export const getAuthQueries = (sdk: Sdk, t: TypedTFunction<LocaleKey>) => ({
         LocalStorage.setItem('/auth/error', AuthError.ServerError);
       }
     },
+    permissions: async ({
+      storeId,
+      token,
+    }: {
+      storeId: string;
+      token?: string;
+    }) => {
+      try {
+        const result = await sdk.permissions(
+          { storeId },
+          {
+            Authorization: `Bearer ${token}`,
+          }
+        );
+        return result?.me?.permissions;
+      } catch (e) {
+        console.error(e);
+        return { nodes: [] };
+      }
+    },
     stores: () => async () => {
       try {
         const result = await sdk.me();
