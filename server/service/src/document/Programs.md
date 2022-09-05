@@ -13,7 +13,7 @@ For example, there are currently three main document types:
    Each program encounter is associate with a single program and there is an encounter document for every visit.
 
 Data stored in the documents is highly customisable and it is possible to add new custom document types.
-This makes the system customizable to fullfil the needs of different clients.
+This makes the system customisable to fulfil the needs of different clients.
 For example, what data is recorded or how data is displayed and edited can be defined by the client.
 
 ## Practitioner driven data recording
