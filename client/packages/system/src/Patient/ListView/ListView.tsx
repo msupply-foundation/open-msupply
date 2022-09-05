@@ -66,6 +66,7 @@ const PatientListComponent: FC = () => {
         label: 'label.deceased',
         align: ColumnAlign.Right,
         Cell: ReadOnlyCheckboxCell,
+        sortable: false,
       },
     ],
     { onChangeSortBy: updateSortQuery, sortBy },

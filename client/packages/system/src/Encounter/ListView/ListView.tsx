@@ -38,18 +38,20 @@ const EncounterListComponent: FC = () => {
       {
         key: 'encounter-type',
         label: 'label.encounter-type',
+        sortable: false,
         accessor: ({ rowData }) => rowData?.document.documentRegistry?.name,
       },
       {
-        key: 'date',
+        key: 'startDatetime',
         label: 'label.date',
         accessor: ({ rowData }) => rowData?.startDatetime,
         formatter: dateString =>
           dateString ? localisedDate((dateString as string) || '') : '',
       },
       {
-        key: 'startDatetime',
+        key: 'startTime',
         label: 'label.encounter-start',
+        sortable: false,
         formatter: dateString =>
           dateString ? localisedTime((dateString as string) || '') : '',
       },
@@ -60,19 +62,21 @@ const EncounterListComponent: FC = () => {
           dateString ? localisedTime((dateString as string) || '') : '',
       },
       {
-        key: 'patient',
+        key: 'patientId',
         label: 'label.patient',
         accessor: ({ rowData }) => rowData?.patient?.name,
       },
       {
         key: 'events',
         label: 'label.label',
+        sortable: false,
         formatter: events =>
           encounterEventCellValue((events as ProgramEventFragment[]) ?? []),
       },
       {
         key: 'status',
         label: 'label.status',
+        sortable: false,
         align: ColumnAlign.Right,
         width: 175,
       },

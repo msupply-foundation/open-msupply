@@ -19,6 +19,7 @@ export type EncountersQueryVariables = Types.Exact<{
   key?: Types.InputMaybe<Types.EncounterSortFieldInput>;
   desc?: Types.InputMaybe<Types.Scalars['Boolean']>;
   filter?: Types.InputMaybe<Types.EncounterFilterInput>;
+  page?: Types.InputMaybe<Types.PaginationInput>;
   latestEventTime: Types.Scalars['String'];
 }>;
 
@@ -139,8 +140,13 @@ export const EncounterFragmentDoc = gql`
 }
     ${EncounterDocumentFragmentDoc}`;
 export const EncountersDocument = gql`
-    query encounters($storeId: String!, $key: EncounterSortFieldInput, $desc: Boolean, $filter: EncounterFilterInput, $latestEventTime: String!) {
-  encounters(storeId: $storeId, sort: {key: $key, desc: $desc}, filter: $filter) {
+    query encounters($storeId: String!, $key: EncounterSortFieldInput, $desc: Boolean, $filter: EncounterFilterInput, $page: PaginationInput, $latestEventTime: String!) {
+  encounters(
+    storeId: $storeId
+    sort: {key: $key, desc: $desc}
+    filter: $filter
+    page: $page
+  ) {
     ... on EncounterConnector {
       nodes {
         ...EncounterRow
@@ -227,7 +233,7 @@ export type Sdk = ReturnType<typeof getSdk>;
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockEncountersQuery((req, res, ctx) => {
- *   const { storeId, key, desc, filter, latestEventTime } = req.variables;
+ *   const { storeId, key, desc, filter, page, latestEventTime } = req.variables;
  *   return res(
  *     ctx.data({ encounters })
  *   )
