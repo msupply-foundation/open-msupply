@@ -31,7 +31,8 @@ const ProgramListComponent: FC = () => {
   const pagination = { page, first, offset };
   const { localisedDate } = useFormatDateTime();
   const t = useTranslation('patients');
-  const { setEditingModal, selectModal } = usePatientModalStore();
+  const { setEditModal: setEditingModal, setModal: selectModal } =
+    usePatientModalStore();
 
   const columns = useColumns<ProgramRowFragmentWithId>(
     [

@@ -35,7 +35,7 @@ type Encounter = Pick<
 export const EncounterDetailModal: FC = () => {
   const patientId = usePatient.utils.id();
   const t = useTranslation('patients');
-  const { current, selectModal } = usePatientModalStore();
+  const { current, setModal: selectModal } = usePatientModalStore();
   const [program, setProgram] = useState<ProgramRowFragmentWithId | null>(null);
   const [isError, setIsError] = useState(false);
   const {
