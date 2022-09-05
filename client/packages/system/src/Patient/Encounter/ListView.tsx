@@ -16,6 +16,7 @@ import {
   TypedTFunction,
   DateUtils,
   useQueryParamsStore,
+  EncounterSortFieldInput,
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
 import { AppRoute } from 'packages/config/src';
@@ -78,7 +79,10 @@ const EncounterListComponent: FC = () => {
     pagination: { page, first, offset, onChangePage },
   } = useQueryParamsStore();
 
-  const { data, isError, isLoading } = usePatient.document.encounters();
+  const { data, isError, isLoading } = usePatient.document.encounters({
+    key: sortBy.key as EncounterSortFieldInput,
+    isDesc: sortBy.isDesc,
+  });
   const dataExt: EncounterFragmentExt[] | undefined =
     useExtendEncounterFragment(data?.nodes);
   const pagination = { page, first, offset };

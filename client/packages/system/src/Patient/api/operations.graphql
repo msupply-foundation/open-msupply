@@ -190,3 +190,50 @@ mutation updatePatient($storeId: String!, $input: UpdatePatientInput!) {
     }
   }
 }
+
+fragment EncounterRow on EncounterNode {
+  id
+  document {
+    documentRegistry {
+      name
+    }
+  }
+  program
+  startDatetime
+  endDatetime
+  status
+  name
+  type
+  patient {
+    id
+    firstName
+    lastName
+    name
+  }
+  events(filter: { datetime: { beforeOrEqualTo: $latestEventTime } }) {
+    ...ProgramEvent
+  }
+}
+
+query encounters(
+  $storeId: String!
+  $key: EncounterSortFieldInput!
+  $desc: Boolean
+  $filter: EncounterFilterInput
+  $page: PaginationInput
+  $latestEventTime: String!
+) {
+  encounters(
+    storeId: $storeId
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+    page: $page
+  ) {
+    ... on EncounterConnector {
+      nodes {
+        ...EncounterRow
+      }
+      totalCount
+    }
+  }
+}
