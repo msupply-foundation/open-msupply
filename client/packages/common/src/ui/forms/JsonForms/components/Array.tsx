@@ -7,6 +7,7 @@ import {
   ControlElement,
   composePaths,
   createDefaultValue,
+  JsonSchema,
 } from '@jsonforms/core';
 import {
   withJsonFormsArrayControlProps,
@@ -47,9 +48,15 @@ interface ArrayControlCustomProps extends ArrayControlProps {
   data: JsonData[];
 }
 
+interface EnumArrayControlCustomProps extends ArrayControlProps {
+  uischema: UISchemaWithCustomProps;
+  removeItems: (path: string, toDelete: number[]) => () => void;
+  data: string[];
+}
+
 export const arrayTester = rankWith(5, schemaTypeIs('array'));
 
-const EnumArrayComponent: FC<ArrayControlCustomProps> = ({
+const EnumArrayComponent: FC<EnumArrayControlCustomProps> = ({
   data,
   label,
   path,
@@ -118,7 +125,7 @@ const EnumArrayComponent: FC<ArrayControlCustomProps> = ({
               }}
               overflow={'hidden'}
             >
-              {`${child}`}
+              {child}
             </Typography>
             <ConfirmationModal
               open={removeIndex !== undefined}
@@ -149,6 +156,13 @@ const EnumArrayComponent: FC<ArrayControlCustomProps> = ({
       })}
     </>
   );
+};
+
+const isStringEnum = (
+  schema: JsonSchema,
+  _data: JsonData[]
+): _data is string[] => {
+  return !!schema.enum && schema.type === 'string';
 };
 
 const ArrayComponent = (props: ArrayControlCustomProps) => {
@@ -186,8 +200,9 @@ const ArrayComponent = (props: ArrayControlCustomProps) => {
   if (!props.visible) {
     return null;
   }
-  if (schema.enum && schema.type === 'string') {
-    return <EnumArrayComponent {...props} />;
+
+  if (isStringEnum(schema, props.data)) {
+    return <EnumArrayComponent {...props} data={props.data} />;
   }
   return (
     <Box display="flex" flexDirection="column" gap={0.5} marginTop={2}>
@@ -274,7 +289,7 @@ const ArrayComponent = (props: ArrayControlCustomProps) => {
                     ? RegexUtils.formatTemplateString(
                         uischema?.itemLabel,
                         {
-                          ...child,
+                          ...(typeof child === 'object' ? child : {}),
                           index: index + 1,
                         },
                         ''
