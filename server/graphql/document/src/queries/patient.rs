@@ -201,6 +201,7 @@ impl PatientFilterInput {
 pub enum PatientSortFieldInput {
     Name,
     Code,
+    Code2,
     FirstName,
     LastName,
     Gender,
@@ -227,6 +228,7 @@ impl PatientSortInput {
             key: match self.key {
                 PatientSortFieldInput::Name => PatientSortField::Name,
                 PatientSortFieldInput::Code => PatientSortField::Code,
+                PatientSortFieldInput::Code2 => PatientSortField::Code2,
                 PatientSortFieldInput::FirstName => PatientSortField::FirstName,
                 PatientSortFieldInput::LastName => PatientSortField::LastName,
                 PatientSortFieldInput::Gender => PatientSortField::Gender,

@@ -27,6 +27,7 @@ pub struct PatientFilter {
 pub enum PatientSortField {
     Name,
     Code,
+    Code2,
     FirstName,
     LastName,
     Gender,
@@ -64,6 +65,7 @@ pub fn get_patients(
         key: match v.key {
             PatientSortField::Name => NameSortField::Name,
             PatientSortField::Code => NameSortField::Code,
+            PatientSortField::Code2 => NameSortField::NationalHealthNumber,
             PatientSortField::FirstName => NameSortField::FirstName,
             PatientSortField::LastName => NameSortField::LastName,
             PatientSortField::Gender => NameSortField::Gender,
