@@ -1,5 +1,6 @@
 import { useGql, useAuthContext, SortBy } from '@openmsupply-client/common';
 import {
+  EncounterListParams,
   getPatientQueries,
   ListParams,
   ProgramEnrolmentListParams,
@@ -18,6 +19,9 @@ export const usePatientApi = () => {
       [...keys.list(), params] as const,
     sortedList: (sortBy: SortBy<PatientRowFragment>) =>
       [...keys.list(), sortBy] as const,
+    listEncounter: () => [...keys.base(), storeId, 'listEncounter'] as const,
+    paramListEncounter: (params: EncounterListParams) =>
+      [...keys.listEncounter(), params] as const,
   };
   const { client } = useGql();
   const queries = getPatientQueries(getSdk(client), storeId);

@@ -8,12 +8,15 @@ import {
   PatientSearchInput,
   ProgramEnrolmentSortFieldInput,
   SortRule,
+  EncounterSortFieldInput,
+  PaginationInput,
 } from '@openmsupply-client/common';
 import {
   Sdk,
   PatientRowFragment,
   PatientFragment,
   ProgramEnrolmentRowFragment,
+  EncounterRowFragment,
 } from './operations.generated';
 
 export type ListParams = {
@@ -26,6 +29,14 @@ export type ListParams = {
 export type ProgramEnrolmentListParams = {
   sortBy?: SortRule<ProgramEnrolmentSortFieldInput>;
   filterBy?: FilterBy;
+};
+
+export type EncounterListParams = {
+  first?: number;
+  offset?: number;
+  sortBy: SortRule<EncounterSortFieldInput>;
+  filterBy?: FilterBy | null;
+  pagination?: PaginationInput;
 };
 
 export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
@@ -119,6 +130,25 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
       }
 
       throw new Error('Could not search for patients');
+    },
+    listEncounter: async ({
+      sortBy,
+      filterBy,
+      pagination,
+    }: EncounterListParams): Promise<{
+      nodes: EncounterRowFragment[];
+      totalCount: number;
+    }> => {
+      const result = await sdk.encounters({
+        storeId,
+        key: sortBy.key as EncounterSortFieldInput,
+        desc: sortBy.isDesc,
+        filter: filterBy,
+        page: pagination,
+        latestEventTime: new Date().toISOString(),
+      });
+
+      return result?.encounters;
     },
   },
   insertPatient: async (
