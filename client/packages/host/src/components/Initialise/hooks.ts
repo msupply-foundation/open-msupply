@@ -4,9 +4,11 @@ import { AppRoute } from '@openmsupply-client/config';
 import {
   AuthenticationError,
   AuthError,
+  LocaleKey,
   LocalStorage,
   ServerStatus,
   useNavigate,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { useHost } from '../../api/hooks';
 
@@ -61,6 +63,16 @@ export const useInitialiseForm = () => {
     refetchInterval: POLLING_INTERVAL,
     enabled: isPolling,
   });
+  const t = useTranslation('app');
+  const parseErrorMessage = (error: Error, defaultKey: LocaleKey) => {
+    const matches = /code: "([a-zA-Z_]+?)"/g.exec(error?.message);
+    const key =
+      matches && matches.length > 1
+        ? (`error.${matches[1]}` as LocaleKey)
+        : defaultKey;
+
+    return t(key);
+  };
 
   const onSave = async () => {
     setError();
@@ -75,14 +87,22 @@ export const useInitialiseForm = () => {
     try {
       await update(syncSettings);
       await restart().catch(e => {
-          console.error(e);
-          setError({ message: 'Unable to restart the server' });
-          setIsLoading(false);
+        console.error(e);
+        const message = parseErrorMessage(
+          e as Error,
+          'error.unable_to_restart_server'
+        );
+        setError({ message });
+        setIsLoading(false);
       });
       return;
     } catch (e) {
       console.error(e);
-      setError({ message: 'Unable to save settings' });
+      const message = parseErrorMessage(
+        e as Error,
+        'error.unable_to_save_settings'
+      );
+      setError({ message });
       setIsLoading(false);
     }
     setPassword('');
