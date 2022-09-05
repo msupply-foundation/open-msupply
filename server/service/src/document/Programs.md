@@ -136,7 +136,7 @@ For example, the `data.physicalExamination.weight` field can be fetched from all
 
 # Document access permissions [Draft]
 
-Permissions are currently not implement but here is the plan:
+Permissions are currently not implemented but here is the plan:
 
 Document access is restricted as follows:
 
