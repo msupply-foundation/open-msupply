@@ -35,7 +35,7 @@ type Encounter = Pick<
 export const EncounterDetailModal: FC = () => {
   const patientId = usePatient.utils.id();
   const t = useTranslation('patients');
-  const { current, setCurrent } = usePatientModalStore();
+  const { current, setModal: selectModal } = usePatientModalStore();
   const [program, setProgram] = useState<ProgramRowFragmentWithId | null>(null);
   const [isError, setIsError] = useState(false);
   const {
@@ -58,15 +58,16 @@ export const EncounterDetailModal: FC = () => {
   );
 
   const reset = () => {
-    setCurrent(undefined);
+    selectModal(undefined);
     setProgram(null);
     setDocumentRegistry(undefined);
     setData(undefined);
     setIsError(false);
   };
 
+  const isOpen = current === PatientModal.Encounter;
   const { Modal } = useDialog({
-    isOpen: current === PatientModal.Encounter,
+    isOpen,
     onClose: reset,
   });
 
@@ -109,6 +110,8 @@ export const EncounterDetailModal: FC = () => {
     if (endDatetime && data?.startDatetime) setData({ ...data, endDatetime });
   };
 
+  // Make sure we unmount if are not open to get into a clean state when remounting:
+  if (!isOpen) return null;
   return (
     <Modal
       title={t('label.new-encounter')}

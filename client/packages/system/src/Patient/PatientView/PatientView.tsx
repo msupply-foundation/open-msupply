@@ -161,6 +161,8 @@ export const PatientView: FC = () => {
     },
   ];
 
+  // Note: unmount modals when not used because they have some internal state that shouldn't be
+  // reused across calls.
   return (
     <React.Suspense fallback={<DetailViewSkeleton />}>
       <ProgramDetailModal />

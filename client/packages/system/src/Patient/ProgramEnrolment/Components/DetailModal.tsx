@@ -51,13 +51,16 @@ export const ProgramDetailModal: FC = () => {
       document?.createDocument
     );
 
+  const isOpen = current === PatientModal.Program;
   const { Modal } = useDialog({
-    isOpen: current === PatientModal.Program,
+    isOpen,
     onClose: reset,
   });
 
   const isCreating = document?.name === undefined;
 
+  // Make sure we unmount if are not open to get into a clean state when remounting:
+  if (!isOpen) return null;
   return (
     <Modal
       title=""
