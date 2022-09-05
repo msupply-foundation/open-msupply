@@ -1943,8 +1943,6 @@ type SyncSettingsNode {
   How frequently central data is synced
   """
   intervalSec: Int!
-  centralServerSiteId: Int!
-  siteId: Int!
 =}
 input TaxUpdate {
   """
@@ -2278,8 +2276,6 @@ input UpdateSyncSettingsInput {
   Sync interval in sec
   """
   intervalSec: Int!
-  centralServerSiteId: Int!
-  siteId: Int!
 }
 type UseSuggestedQuantityError {
   error: UseSuggestedQuantityErrorInterface!
