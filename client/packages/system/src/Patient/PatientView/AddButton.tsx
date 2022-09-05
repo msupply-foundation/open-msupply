@@ -12,8 +12,12 @@ import { usePatient } from '../api';
 
 export const AddButton = () => {
   const t = useTranslation('patients');
-  const { current, setCreationModal, selectModal, reset } =
-    usePatientModalStore();
+  const {
+    current,
+    setCreationModal,
+    setModal: selectModal,
+    reset,
+  } = usePatientModalStore();
   const { data } = usePatient.document.programEnrolments();
   const options = [
     {

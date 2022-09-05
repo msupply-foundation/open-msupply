@@ -19,9 +19,9 @@ interface PatientModalState {
   programType?: string;
   reset: () => void;
   /** Just set the modal, the modal has to figure out what to do by itself */
-  selectModal: (current?: PatientModal) => void;
+  setModal: (current?: PatientModal) => void;
   /** Modal state for editing an existing document */
-  setEditingModal: (
+  setEditModal: (
     current: PatientModal,
     documentType: string,
     documentName: string,
@@ -46,7 +46,7 @@ export const usePatientModalStore = zustand<PatientModalState>(set => ({
       document: undefined,
       programType: undefined,
     })),
-  selectModal: (current?: PatientModal) =>
+  setModal: (current?: PatientModal) =>
     set(state => ({
       ...state,
       document: undefined,
@@ -54,7 +54,7 @@ export const usePatientModalStore = zustand<PatientModalState>(set => ({
       current,
     })),
 
-  setEditingModal: (
+  setEditModal: (
     current: PatientModal,
     documentType: string,
     documentName: string,
