@@ -20,6 +20,8 @@ import {
   AccordionSummary,
   AccordionDetails,
   FormLabel,
+  TextField,
+  Autocomplete,
 } from '@mui/material';
 import {
   IconButton,
@@ -27,7 +29,6 @@ import {
   MinusCircleIcon,
   ChevronDownIcon,
   useTranslation,
-  Select,
   ConfirmationModal,
 } from '@openmsupply-client/common';
 import { RegexUtils } from '@common/utils';
@@ -45,7 +46,7 @@ interface UISchemaWithCustomProps extends ControlElement {
 interface ArrayControlCustomProps extends ArrayControlProps {
   uischema: UISchemaWithCustomProps;
   removeItems: (path: string, toDelete: number[]) => () => void;
-  data: JsonData[];
+  data: JsonData[] | undefined;
 }
 
 interface EnumArrayControlCustomProps extends ArrayControlProps {
@@ -55,6 +56,16 @@ interface EnumArrayControlCustomProps extends ArrayControlProps {
 }
 
 export const arrayTester = rankWith(5, schemaTypeIs('array'));
+
+const findIndexOfChanged = (base: string[], newList: string[]): number => {
+  for (let i = 0; i < base.length; i++) {
+    if (base[i] !== newList[i]) {
+      return i;
+    }
+  }
+  if (base.length !== newList.length - 1) throw Error('Unexpected new list');
+  return newList.length - 1;
+};
 
 const EnumArrayComponent: FC<EnumArrayControlCustomProps> = ({
   data,
@@ -67,15 +78,6 @@ const EnumArrayComponent: FC<EnumArrayControlCustomProps> = ({
 }) => {
   const t = useTranslation('common');
   const [removeIndex, setRemoveIndex] = useState<number | undefined>();
-
-  const options = schema.enum
-    ? schema.enum
-        .filter(it => !(data ?? []).includes(it))
-        .map((option: string) => ({
-          label: option,
-          value: option,
-        }))
-    : [];
 
   if (!visible) {
     return null;
@@ -91,69 +93,42 @@ const EnumArrayComponent: FC<EnumArrayControlCustomProps> = ({
         style={{ minWidth: 300 }}
         marginTop={0.5}
       >
-        <Box style={{ textAlign: 'end' }} flexBasis={FORM_LABEL_COLUMN_WIDTH}>
+        <Box
+          style={{ textAlign: 'end', alignSelf: 'start', paddingTop: 5 }}
+          flexBasis={FORM_LABEL_COLUMN_WIDTH}
+        >
           <FormLabel sx={{ fontWeight: 'bold' }}>{label}:</FormLabel>
         </Box>
         <Box flexBasis={FORM_INPUT_COLUMN_WIDTH}>
-          <Select
-            sx={{ minWidth: 100 }}
-            options={options}
-            value={''}
-            placeholder={'Select'}
-            onChange={e => addItem(path, e.target.value)()}
+          <Autocomplete
+            multiple
+            value={data}
+            options={schema.enum ?? []}
+            renderInput={params => <TextField {...params} variant="standard" />}
+            onChange={(_, value) => {
+              const index = findIndexOfChanged(data, value);
+              if (index >= data.length) {
+                addItem(path, value[index])();
+              } else {
+                setRemoveIndex(index);
+              }
+            }}
+            disableClearable={true}
           />
         </Box>
       </Box>
-      {(data ? data : []).map((child, index) => {
-        return (
-          <Box
-            display="flex"
-            flexDirection="row"
-            key={index}
-            sx={{
-              '&:hover .array-remove-icon': { visibility: 'visible' },
-            }}
-            alignContent="start"
-          >
-            <Box flexBasis={FORM_LABEL_COLUMN_WIDTH}></Box>
-            <Typography
-              flexBasis={FORM_INPUT_COLUMN_WIDTH}
-              sx={{
-                textAlign: 'start',
-                alignSelf: 'center',
-                marginLeft: '2em',
-              }}
-              overflow={'hidden'}
-            >
-              {child}
-            </Typography>
-            <ConfirmationModal
-              open={removeIndex !== undefined}
-              onConfirm={() => {
-                if (removeIndex !== undefined) {
-                  removeItems(path, [removeIndex])();
-                  setRemoveIndex(undefined);
-                }
-              }}
-              onCancel={() => setRemoveIndex(undefined)}
-              title={t('label.remove')}
-              message={t('messages.confirm-remove-item')}
-            />
-            <IconButton
-              icon={<MinusCircleIcon />}
-              label={t('label.remove')}
-              color="primary"
-              className="array-remove-icon"
-              sx={{
-                position: 'relative',
-                visibility: 'hidden',
-                right: 0,
-              }}
-              onClick={() => setRemoveIndex(index)}
-            />
-          </Box>
-        );
-      })}
+      <ConfirmationModal
+        open={removeIndex !== undefined}
+        onConfirm={() => {
+          if (removeIndex !== undefined) {
+            removeItems(path, [removeIndex])();
+            setRemoveIndex(undefined);
+          }
+        }}
+        onCancel={() => setRemoveIndex(undefined)}
+        title={t('label.remove')}
+        message={t('messages.confirm-remove-item')}
+      />
     </>
   );
 };
@@ -174,7 +149,7 @@ const ArrayComponent = (props: ArrayControlCustomProps) => {
     uischemas,
     schema,
     path,
-    data,
+    data: inputData,
     addItem,
     removeItems,
     enabled,
@@ -201,8 +176,9 @@ const ArrayComponent = (props: ArrayControlCustomProps) => {
     return null;
   }
 
-  if (isStringEnum(schema, props.data)) {
-    return <EnumArrayComponent {...props} data={props.data} />;
+  const data = inputData ?? [];
+  if (isStringEnum(schema, data)) {
+    return <EnumArrayComponent {...props} data={data} />;
   }
   return (
     <Box display="flex" flexDirection="column" gap={0.5} marginTop={2}>
@@ -224,7 +200,7 @@ const ArrayComponent = (props: ArrayControlCustomProps) => {
           />
         </Box>
       </Box>
-      {(data ? data : []).map((child, index) => {
+      {data.map((child, index) => {
         const childPath = composePaths(path, `${index}`);
         return (
           <Accordion
