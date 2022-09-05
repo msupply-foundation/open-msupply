@@ -65,8 +65,9 @@ export const EncounterDetailModal: FC = () => {
     setIsError(false);
   };
 
+  const isOpen = current === PatientModal.Encounter;
   const { Modal } = useDialog({
-    isOpen: current === PatientModal.Encounter,
+    isOpen,
     onClose: reset,
   });
 
@@ -109,6 +110,8 @@ export const EncounterDetailModal: FC = () => {
     if (endDatetime && data?.startDatetime) setData({ ...data, endDatetime });
   };
 
+  // Make sure we unmount if are not open to get into a clean state when remounting:
+  if (!isOpen) return null;
   return (
     <Modal
       title={t('label.new-encounter')}
