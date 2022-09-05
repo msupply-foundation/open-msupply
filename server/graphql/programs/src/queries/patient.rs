@@ -15,7 +15,7 @@ use repository::{
     SimpleStringFilter,
 };
 use service::auth::{Resource, ResourceAccessRequest};
-use service::document::patient::{
+use service::programs::patient::{
     patient_doc_name, Patient, PatientFilter, PatientSort, PatientSortField,
 };
 

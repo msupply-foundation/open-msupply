@@ -5,29 +5,30 @@ use graphql_core::{
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    document::patient::{UpdatePatient, UpdatePatientError},
+    programs::patient::{UpdatePatient, UpdatePatientError},
 };
 
 use crate::queries::PatientNode;
 
 #[derive(InputObject)]
-pub struct InsertPatientInput {
+pub struct UpdatePatientInput {
     /// Patient document data
     pub data: serde_json::Value,
     /// The schema id used for the patient data
     pub schema_id: String,
+    pub parent: String,
 }
 
 #[derive(Union)]
-pub enum InsertPatientResponse {
+pub enum UpdatePatientResponse {
     Response(PatientNode),
 }
 
-pub fn insert_patient(
+pub fn update_patient(
     ctx: &Context<'_>,
     store_id: String,
-    input: InsertPatientInput,
-) -> Result<InsertPatientResponse> {
+    input: UpdatePatientInput,
+) -> Result<UpdatePatientResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -47,10 +48,10 @@ pub fn insert_patient(
         UpdatePatient {
             data: input.data,
             schema_id: input.schema_id,
-            parent: None,
+            parent: Some(input.parent),
         },
     ) {
-        Ok(patient) => Ok(InsertPatientResponse::Response(PatientNode {
+        Ok(patient) => Ok(UpdatePatientResponse::Response(PatientNode {
             store_id,
             patient,
         })),

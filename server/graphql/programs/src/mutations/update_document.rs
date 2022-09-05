@@ -6,9 +6,8 @@ use repository::{
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    document::{
-        document_service::DocumentInsertError, patient::PATIENT_TYPE, raw_document::RawDocument,
-    },
+    document::{document_service::DocumentInsertError, raw_document::RawDocument},
+    programs::patient::PATIENT_TYPE,
 };
 
 use graphql_core::{
@@ -187,13 +186,13 @@ mod graphql {
     };
     use serde_json::json;
 
-    use crate::{DocumentMutations, DocumentQueries};
+    use crate::{ProgramsMutations, ProgramsQueries};
 
     #[actix_rt::test]
     async fn test_patient_update_not_allowed() {
         let (_, _, _, settings) = setup_graphl_test(
-            DocumentQueries,
-            DocumentMutations,
+            ProgramsQueries,
+            ProgramsMutations,
             "test_patient_update_not_allowed",
             MockDataInserts::none().names().stores(),
         )
@@ -230,8 +229,8 @@ mod graphql {
     #[actix_rt::test]
     async fn test_program_update_not_allowed() {
         let (_, con, _, settings) = setup_graphl_test(
-            DocumentQueries,
-            DocumentMutations,
+            ProgramsQueries,
+            ProgramsMutations,
             "test_program_update_not_allowed",
             MockDataInserts::none().names().stores(),
         )
@@ -282,8 +281,8 @@ mod graphql {
     #[actix_rt::test]
     async fn test_encounter_update_not_allowed() {
         let (_, con, _, settings) = setup_graphl_test(
-            DocumentQueries,
-            DocumentMutations,
+            ProgramsQueries,
+            ProgramsMutations,
             "test_encounter_update_not_allowed",
             MockDataInserts::none().names().stores(),
         )

@@ -16,7 +16,6 @@ use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
 use graphql_batch_mutations::BatchMutations;
 use graphql_core::loader::LoaderRegistry;
 use graphql_core::{auth_data_from_request, RequestUserData, SelfRequest};
-use graphql_document::{DocumentMutations, DocumentQueries};
 use graphql_general::{
     GeneralQueries, ServerAdminMutations, ServerAdminQueries, ServerAdminStage0Mutations,
     ServerAdminStage0Queries,
@@ -24,6 +23,7 @@ use graphql_general::{
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
 use graphql_invoice_line::InvoiceLineMutations;
 use graphql_location::{LocationMutations, LocationQueries};
+use graphql_programs::{ProgramsMutations, ProgramsQueries};
 use graphql_reports::ReportQueries;
 use graphql_requisition::{RequisitionMutations, RequisitionQueries};
 use graphql_requisition_line::RequisitionLineMutations;
@@ -46,7 +46,7 @@ pub struct FullQuery(
     pub RequisitionQueries,
     pub ReportQueries,
     pub ServerAdminQueries,
-    pub DocumentQueries,
+    pub ProgramsQueries,
 );
 
 #[derive(MergedObject, Default, Clone)]
@@ -60,7 +60,7 @@ pub struct FullMutation(
     pub RequisitionMutations,
     pub RequisitionLineMutations,
     pub ServerAdminMutations,
-    pub DocumentMutations,
+    pub ProgramsMutations,
 );
 
 pub type Schema = async_graphql::Schema<FullQuery, FullMutation, async_graphql::EmptySubscription>;
@@ -75,7 +75,7 @@ pub fn full_query() -> FullQuery {
         RequisitionQueries,
         ReportQueries,
         ServerAdminQueries,
-        DocumentQueries,
+        ProgramsQueries,
     )
 }
 
@@ -90,7 +90,7 @@ pub fn full_mutation() -> FullMutation {
         RequisitionMutations,
         RequisitionLineMutations,
         ServerAdminMutations,
-        DocumentMutations,
+        ProgramsMutations,
     )
 }
 

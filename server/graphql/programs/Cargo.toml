@@ -1,5 +1,5 @@
 [package]
-name = "graphql_document"
+name = "graphql_programs"
 version = "0.1.0"
 edition = "2018"
 

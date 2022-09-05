@@ -40,10 +40,10 @@ use self::queries::*;
 mod types;
 
 #[derive(Default, Clone)]
-pub struct DocumentQueries;
+pub struct ProgramsQueries;
 
 #[Object]
-impl DocumentQueries {
+impl ProgramsQueries {
     pub async fn documents(
         &self,
         ctx: &Context<'_>,
@@ -162,10 +162,10 @@ impl DocumentQueries {
 }
 
 #[derive(Default, Clone)]
-pub struct DocumentMutations;
+pub struct ProgramsMutations;
 
 #[Object]
-impl DocumentMutations {
+impl ProgramsMutations {
     async fn update_document(
         &self,
         ctx: &Context<'_>,

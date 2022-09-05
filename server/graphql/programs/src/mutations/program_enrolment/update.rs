@@ -6,7 +6,7 @@ use graphql_core::{
 use repository::{EqualFilter, ProgramEnrolmentFilter};
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    document::program::{UpsertProgramEnrolment, UpsertProgramEnrolmentError},
+    programs::program_enrolment::{UpsertProgramEnrolment, UpsertProgramEnrolmentError},
 };
 
 use crate::types::program_enrolment::ProgramEnrolmentNode;

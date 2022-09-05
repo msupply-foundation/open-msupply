@@ -7,7 +7,7 @@ use graphql_core::{
 use repository::PaginationOption;
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    document::encounter::encounter_fields::{EncounterFields, EncounterFieldsResult},
+    programs::encounter::encounter_fields::{EncounterFields, EncounterFieldsResult},
 };
 
 use crate::types::encounter::EncounterNode;
