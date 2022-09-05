@@ -43,7 +43,7 @@ const UIComponent = (props: ControlProps) => {
         <NumericTextInput
           type="number"
           InputProps={{
-            sx: { '& .MuiInput-input': { textAlign: 'right' } },
+            sx: { '& .MuiInput-input': { textAlign: 'right' }, minWidth: 100 },
           }}
           onChange={e => {
             const newValue = NumUtils.parseString(e.target.value);

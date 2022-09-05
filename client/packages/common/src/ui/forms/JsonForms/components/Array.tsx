@@ -1,4 +1,4 @@
-import React, { ComponentType, useMemo } from 'react';
+import React, { ComponentType, FC, useMemo, useState } from 'react';
 import {
   rankWith,
   schemaTypeIs,
@@ -7,6 +7,7 @@ import {
   ControlElement,
   composePaths,
   createDefaultValue,
+  JsonSchema,
 } from '@jsonforms/core';
 import {
   withJsonFormsArrayControlProps,
@@ -18,6 +19,9 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
+  FormLabel,
+  TextField,
+  Autocomplete,
 } from '@mui/material';
 import {
   IconButton,
@@ -25,6 +29,7 @@ import {
   MinusCircleIcon,
   ChevronDownIcon,
   useTranslation,
+  ConfirmationModal,
 } from '@openmsupply-client/common';
 import { RegexUtils } from '@common/utils';
 import {
@@ -41,19 +46,119 @@ interface UISchemaWithCustomProps extends ControlElement {
 interface ArrayControlCustomProps extends ArrayControlProps {
   uischema: UISchemaWithCustomProps;
   removeItems: (path: string, toDelete: number[]) => () => void;
-  data: JsonData[];
+  data: JsonData[] | undefined;
+}
+
+interface EnumArrayControlCustomProps extends ArrayControlProps {
+  uischema: UISchemaWithCustomProps;
+  removeItems: (path: string, toDelete: number[]) => () => void;
+  data: string[];
 }
 
 export const arrayTester = rankWith(5, schemaTypeIs('array'));
 
+// Finds the index where an item has been removed from newList.
+// It is assumed that the removal of an item is the only change between both lists.
+// Thus, length of newList must be one less than the length of the base list
+const findIndexOfRemoved = (base: string[], newList: string[]): number => {
+  if (base.length - 1 !== newList.length) {
+    throw Error(
+      'Unexpected list length, newList.length must be one less than base.length.'
+    );
+  }
+
+  for (let i = 0; i < newList.length; i++) {
+    if (base[i] !== newList[i]) {
+      return i;
+    }
+  }
+  // last item must have been removed
+  return base.length - 1;
+};
+
+const EnumArrayComponent: FC<EnumArrayControlCustomProps> = ({
+  data,
+  label,
+  path,
+  schema,
+  visible,
+  addItem,
+  removeItems,
+}) => {
+  const t = useTranslation('common');
+  const [removeIndex, setRemoveIndex] = useState<number | undefined>();
+
+  if (!visible) {
+    return null;
+  }
+
+  return (
+    <>
+      <Box
+        display="flex"
+        alignItems="center"
+        gap={2}
+        justifyContent="space-around"
+        style={{ minWidth: 300 }}
+        marginTop={0.5}
+      >
+        <Box
+          style={{ textAlign: 'end', alignSelf: 'start', paddingTop: 5 }}
+          flexBasis={FORM_LABEL_COLUMN_WIDTH}
+        >
+          <FormLabel sx={{ fontWeight: 'bold' }}>{label}:</FormLabel>
+        </Box>
+        <Box flexBasis={FORM_INPUT_COLUMN_WIDTH}>
+          <Autocomplete
+            multiple
+            value={data}
+            options={schema.enum ?? []}
+            renderInput={params => <TextField {...params} variant="standard" />}
+            onChange={(_, value) => {
+              if (value.length - 1 === data.length) {
+                addItem(path, value[value.length - 1])();
+              } else {
+                const index = findIndexOfRemoved(data, value);
+                setRemoveIndex(index);
+              }
+            }}
+            disableClearable={true}
+          />
+        </Box>
+      </Box>
+      <ConfirmationModal
+        open={removeIndex !== undefined}
+        onConfirm={() => {
+          if (removeIndex !== undefined) {
+            removeItems(path, [removeIndex])();
+            setRemoveIndex(undefined);
+          }
+        }}
+        onCancel={() => setRemoveIndex(undefined)}
+        title={t('label.remove')}
+        message={t('messages.confirm-remove-item')}
+      />
+    </>
+  );
+};
+
+const isStringEnum = (
+  schema: JsonSchema,
+  _data: JsonData[]
+): _data is string[] => {
+  return !!schema.enum && schema.type === 'string';
+};
+
 const ArrayComponent = (props: ArrayControlCustomProps) => {
   const t = useTranslation('common');
+  const [removeIndex, setRemoveIndex] = useState<number | undefined>();
+
   const {
     uischema,
     uischemas,
     schema,
     path,
-    data,
+    data: inputData,
     addItem,
     removeItems,
     enabled,
@@ -79,6 +184,11 @@ const ArrayComponent = (props: ArrayControlCustomProps) => {
   if (!props.visible) {
     return null;
   }
+
+  const data = inputData ?? [];
+  if (isStringEnum(schema, data)) {
+    return <EnumArrayComponent {...props} data={data} />;
+  }
   return (
     <Box display="flex" flexDirection="column" gap={0.5} marginTop={2}>
       <Box display="flex" width="100%" alignItems="center">
@@ -99,7 +209,7 @@ const ArrayComponent = (props: ArrayControlCustomProps) => {
           />
         </Box>
       </Box>
-      {(data ? data : []).map((child, index) => {
+      {data.map((child, index) => {
         const childPath = composePaths(path, `${index}`);
         return (
           <Accordion
@@ -129,13 +239,29 @@ const ArrayComponent = (props: ArrayControlCustomProps) => {
                 justifyContent="space-between"
                 alignItems="center"
               >
+                <ConfirmationModal
+                  open={removeIndex !== undefined}
+                  onConfirm={() => {
+                    if (removeIndex !== undefined) {
+                      removeItems(path, [removeIndex])();
+                      setRemoveIndex(undefined);
+                    }
+                  }}
+                  onCancel={() => setRemoveIndex(undefined)}
+                  title={t('label.remove')}
+                  message={t('messages.confirm-remove-item')}
+                />
                 <IconButton
                   icon={<MinusCircleIcon />}
                   label={t('label.remove')}
                   color="primary"
                   className="array-remove-icon"
                   sx={{ visibility: 'hidden' }}
-                  onClick={removeItems(path, [index])}
+                  onClick={e => {
+                    setRemoveIndex(index);
+                    // Don't toggle the accordion:
+                    e.stopPropagation();
+                  }}
                 />
                 <Typography
                   sx={{
@@ -148,7 +274,7 @@ const ArrayComponent = (props: ArrayControlCustomProps) => {
                     ? RegexUtils.formatTemplateString(
                         uischema?.itemLabel,
                         {
-                          ...child,
+                          ...(typeof child === 'object' ? child : {}),
                           index: index + 1,
                         },
                         ''

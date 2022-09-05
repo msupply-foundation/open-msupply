@@ -40,9 +40,14 @@ import {
 import { NumberField, numberTester } from './components/Number';
 import { DateTime, datetimeTester } from './components/DateTime';
 
-export type JsonData = {
-  [key: string]: string | number | boolean | null | unknown | JsonData;
-};
+export type JsonType = string | number | boolean | null | undefined;
+
+export type JsonData =
+  | {
+      [key: string]: JsonData;
+    }
+  | JsonType
+  | Array<JsonData>;
 
 interface JsonFormProps {
   data?: JsonData;
