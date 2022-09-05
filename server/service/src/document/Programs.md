@@ -12,7 +12,7 @@ For example, there are currently three main document types:
 3. The `Program Encounter` document records data about a patient's visit at a doctor.
    Each program encounter is associate with a single program and there is an encounter document for every visit.
 
-Data stored in the documents is widely customizable and it is possible to add new custom document types.
+Data stored in the documents is highly customisable and it is possible to add new custom document types.
 This makes the system customizable to fullfil the needs of different clients.
 For example, what data is recorded or how data is displayed and edited can be defined by the client.
 
