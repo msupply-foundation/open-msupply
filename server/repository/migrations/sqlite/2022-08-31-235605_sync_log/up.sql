@@ -21,5 +21,7 @@ CREATE TABLE sync_log (
     pull_remote_progress_done INTEGER,
 
     integration_start_datetime TIMESTAMP,
-    integration_done_datetime TIMESTAMP
+    integration_done_datetime TIMESTAMP,
+
+    error_message TEXT
 )
