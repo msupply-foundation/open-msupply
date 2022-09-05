@@ -1,4 +1,4 @@
-import React, { ComponentType, useMemo, useState } from 'react';
+import React, { ComponentType, FC, useMemo, useState } from 'react';
 import {
   rankWith,
   schemaTypeIs,
@@ -49,9 +49,16 @@ interface ArrayControlCustomProps extends ArrayControlProps {
 
 export const arrayTester = rankWith(5, schemaTypeIs('array'));
 
-const EnumArrayComponent = (props: ArrayControlCustomProps) => {
+const EnumArrayComponent: FC<ArrayControlCustomProps> = ({
+  data,
+  label,
+  path,
+  schema,
+  visible,
+  addItem,
+  removeItems,
+}) => {
   const t = useTranslation('common');
-  const { schema, path, data, addItem, removeItems, label } = props;
   const [removeIndex, setRemoveIndex] = useState<number | undefined>();
 
   const options = schema.enum
@@ -63,7 +70,7 @@ const EnumArrayComponent = (props: ArrayControlCustomProps) => {
         }))
     : [];
 
-  if (!props.visible) {
+  if (!visible) {
     return null;
   }
 
