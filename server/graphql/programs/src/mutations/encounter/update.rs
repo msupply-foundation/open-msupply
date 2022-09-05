@@ -6,7 +6,7 @@ use graphql_core::{
 use repository::{EncounterFilter, EqualFilter};
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    document::encounter::{UpdateEncounter, UpdateEncounterError},
+    programs::encounter::{UpdateEncounter, UpdateEncounterError},
 };
 
 use crate::types::encounter::EncounterNode;

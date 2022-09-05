@@ -4,7 +4,7 @@ use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 use graphql_general::GenderInput;
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    document::patient::PatientSearch,
+    programs::patient::PatientSearch,
     usize_to_u32,
 };
 
