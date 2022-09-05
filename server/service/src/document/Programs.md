@@ -81,8 +81,8 @@ For example, a patient DB table could be used to efficiently search for common p
 ## Derive custom JSON schema from base schema
 
 Common documents types have predefined commonly understood JSON schemas.
-To extend a base schema new fields can be added to the base schema in a backwards compatible way.
-Only adding new fields to a schema ensures that derived schemas still fullfil the base schema and thus can be handled generically.
+To extend a base schema new fields can be added to the base schema in a backwards-compatible way.
+Only adding new fields to a schema ensures that derived schemas still fulfil the base schema and thus can be handled generically.
 For example:
 
 ```json
