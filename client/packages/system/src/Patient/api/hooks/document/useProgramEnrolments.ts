@@ -22,7 +22,7 @@ export const useProgramEnrolments = (
     filterBy: { patientId: { equalTo: patientId } },
   };
   return {
-    ...useQuery(api.keys.enrolmentParmList(params), () =>
+    ...useQuery(api.keys.enrolmentParamList(params), () =>
       api.get.programEnrolments(params).then(programs => ({
         nodes: programs.nodes.map(node => {
           // only take the latest status event
