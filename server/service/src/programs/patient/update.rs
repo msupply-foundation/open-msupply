@@ -174,7 +174,7 @@ pub mod test {
     use util::inline_init;
 
     use crate::{
-        document::patient::patient_schema::{ContactDetails, Gender, SchemaPatient},
+        programs::patient::patient_schema::{ContactDetails, Gender, SchemaPatient},
         service_provider::ServiceProvider,
     };
 

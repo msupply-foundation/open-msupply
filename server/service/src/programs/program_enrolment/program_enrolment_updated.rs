@@ -10,7 +10,7 @@ use crate::document::raw_document::RawDocument;
 use super::{program_schema::SchemaProgramEnrolment, UpsertProgramEnrolmentError};
 
 /// Callback called when the document has been updated
-pub(crate) fn program_updated(
+pub(crate) fn program_enrolment_updated(
     con: &StorageConnection,
     patient_id: &str,
     document: &RawDocument,

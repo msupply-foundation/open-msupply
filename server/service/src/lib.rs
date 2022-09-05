@@ -20,6 +20,7 @@ pub mod master_list;
 pub mod name;
 pub mod number;
 pub mod permission;
+pub mod programs;
 pub mod report;
 pub mod requisition;
 pub mod requisition_line;
@@ -167,19 +168,18 @@ impl<'a> BatchMutationsProcessor<'a> {
 
 // Pagination helpers
 
-pub fn get_default_pagination_unlimited(
-    pagination_option: Option<PaginationOption>) -> Pagination {
-        match pagination_option {
-            Some(pagination) => Pagination {
-                offset: pagination.offset.unwrap_or(0),
-                limit:  pagination.limit.unwrap_or(DEFAULT_PAGINATION_LIMIT)
-            },
-            None => Pagination {
-                offset: 0,
-                limit: DEFAULT_PAGINATION_LIMIT,
-            },
-        }
+pub fn get_default_pagination_unlimited(pagination_option: Option<PaginationOption>) -> Pagination {
+    match pagination_option {
+        Some(pagination) => Pagination {
+            offset: pagination.offset.unwrap_or(0),
+            limit: pagination.limit.unwrap_or(DEFAULT_PAGINATION_LIMIT),
+        },
+        None => Pagination {
+            offset: 0,
+            limit: DEFAULT_PAGINATION_LIMIT,
+        },
     }
+}
 
 pub fn get_default_pagination(
     pagination_option: Option<PaginationOption>,
