@@ -71,7 +71,7 @@ Having a completely untyped data structure is not very useful and some common do
 For this reason, document types such as Patient, Program or Encounter have a predefined base type, i.e. they define a common data shape for the respective type.
 However, clients are still able to extend these common document types.
 For example, an additional field can be added to a medical record.
-Note, that custom fields cannot be used in the generic part of the system but only in specialized views or reports.
+Note, that custom fields cannot be used in the generic part of the system but only in specialised views or reports.
 
 To make common documents easier to access they are "cached" in dedicated auxiliary DB tables with common data fields exposed as DB columns.
 Note, the underlying documents could still contain more custom data than stored in these aux tables.
