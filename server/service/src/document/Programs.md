@@ -27,11 +27,11 @@ However, the program module can help the practitioner to enter data correctly by
 While practitioners are the main driver for entering data there are certain use-cases where data is set in a predefined way.
 Currently this is done using program `events`.
 Events are stored in the document but are filled automatically (by the UI form controls while editing a form).
-For example, an encounter is labeled depending on the entered data.
+For example, an encounter is labelled depending on the entered data.
 Events are currently used for the following purposes:
 
 1. Based on the dispensed pill count encounter, two events are scheduled in the future to change the status to "treatment interrupted" or "lost"
-2. Based on the encounter fields being set or not, an encounter is labeled as "Pending Lab Report" or "Lap Report Received"
+2. Based on the encounter fields being set or not, an encounter is labelled as "Pending Lab Report" or "Lap Report Received"
 
 Program events have a context field which describes where the events belong, e.g. events can be scheduled from a DemoEncounter but be in the DemoProgram context.
 Moreover, events can be grouped within a context.
@@ -64,6 +64,7 @@ For example, all patient related documents can be organized using document names
 
 Each document uses a JSON schema which describes the document's data shape.
 The backend validates that an updated document fulfils the specified schema, otherwise it rejects the document.
+JSON schema definitions are stored in the `form_schema` table and documents refer to the row id of the used schema definition.
 
 ## Special predefined document types
 
@@ -105,6 +106,7 @@ For example, when editing a new document of a certain type the document registry
 Furthermore, the document registry contains a ui schema which defines how a document should be displayed.
 Currently there is exactly one ui schema for each document type but in the future it might be necessary to support multiple ui schema depending on the context in which a document is shown.
 For example, there could be a UI schema for the full document and one that only gives a summary of the document.
+As JSON schemas, UI schemas are stored in the `form_schema` table.
 
 ## Document versioning
 
@@ -115,7 +117,7 @@ TODO: rename `document.id` => `document.versionId` and `document.name` => `docum
 # Customizable Program User Interface
 
 One of the requirements of the programs module is to provide a customizable user interface to display and edit custom document types.
-To achieve this JSONForms UI schema files are used to define a customized UI.
+To achieve this [JSONForms](https://jsonforms.io/docs) UI schema files are used to define a customized UI.
 JSONForms give UI designers great flexibility on how document data is composed and displayed.
 Furthermore, custom control can be created to implemented specialized UI elements such as graphs or controls to generate patient IDs.
 
@@ -125,8 +127,14 @@ There some specialized controls which add events to the document data based on s
 
 ## None standard controls and options
 
-Specialized controls are located in `/client/packages/system/src/Patient/JsonForms/components`.
+Specialized controls are located in `client/packages/system/src/Patient/JsonForms/components`.
 These component files also contain type information and JS docs for the component options.
+
+To create a new JSONForms control the following steps are required:
+
+1. Create a React component for the control
+2. Create a `tester` method which tests if the control is applicable for an entry in the UI schema
+3. The control and the tester need to be registered in `client/packages/system/src/Patient/JsonForms/useJsonForms.tsx`
 
 ## Encounters data extraction
 
