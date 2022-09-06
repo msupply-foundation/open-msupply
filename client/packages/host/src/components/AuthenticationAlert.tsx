@@ -18,14 +18,10 @@ export const AuthenticationAlert = () => {
   const { isOn, toggleOff, toggleOn } = useToggle();
   const t = useTranslation('app');
   const location = useLocation();
-  const [error, , removeItem] = useLocalStorage('/auth/error');
+  const [error, , removeError] = useLocalStorage('/auth/error');
 
   useEffect(() => {
-    if (!error) {
-      toggleOff();
-      return;
-    }
-    toggleOn();
+    if (!!error) toggleOn();
     return () => toggleOff();
   }, [error]);
 
@@ -49,7 +45,8 @@ export const AuthenticationAlert = () => {
     }
 
     if (error === AuthError.PermissionDenied) {
-      removeItem();
+      toggleOff();
+      setTimeout(removeError, 200);
       return;
     }
 
