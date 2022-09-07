@@ -36,7 +36,7 @@ export const useUrlQueryParams = ({
     if (!!urlQuery['sort']) return;
 
     const { key: sort, dir } = initialSort;
-    updateQuery({ sort, dir });
+    updateQuery({ sort, dir: dir === 'desc' ? 'desc' : '' });
   }, [initialSort]);
 
   const updateSortQuery = (column: Column<any>) => {
@@ -76,8 +76,8 @@ export const useUrlQueryParams = ({
     offset: urlQuery.page ? (urlQuery.page - 1) * rowsPerPage : 0,
     first: rowsPerPage,
     sortBy: {
-      key: urlQuery.sort ?? initialSort,
-      direction: urlQuery.dir ?? 'asc',
+      key: urlQuery.sort ?? initialSort?.key,
+      direction: urlQuery.dir ?? initialSort?.dir ?? 'asc',
       isDesc: urlQuery.dir === 'desc',
     },
     filterBy: filter.filterBy,

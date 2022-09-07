@@ -17,7 +17,7 @@ export const numberTester = rankWith(3, schemaTypeIs('number'));
 
 const UIComponent = (props: ControlProps) => {
   const { data, handleChange, label, path, errors } = props;
-  const [localData, setLocalData] = useState<number>(data);
+  const [localData, setLocalData] = useState<number | undefined>(data);
   const onChange = useDebounceCallback(
     (value: number) => handleChange(path, value),
     [path]
@@ -53,7 +53,7 @@ const UIComponent = (props: ControlProps) => {
           disabled={!props.enabled}
           error={error}
           helperText={errors}
-          value={localData}
+          value={localData ?? ''}
         />
       </Box>
     </Box>

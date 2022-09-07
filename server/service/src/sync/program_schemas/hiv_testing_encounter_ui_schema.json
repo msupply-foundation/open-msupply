@@ -6,21 +6,84 @@
       "label": "Family Planning",
       "options": { "icon": "condom" },
       "elements": [
-        { "scope": "#/properties/familyPlanning", "type": "Control" }
+        {
+          "type": "Control",
+          "scope": "#/properties/familyPlanning/properties/pregnant"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/familyPlanning/properties/contraception"
+        }
       ]
     },
     {
       "type": "Category",
-      "label": "Risk Beahaviour",
+      "label": "Risk Behaviour",
       "options": { "icon": "document" },
-      "elements": [{ "scope": "#/properties/riskBehaviour", "type": "Control" }]
+      "elements": [
+        {
+          "type": "Control",
+          "scope": "#/properties/riskBehaviour/properties/riskGroup"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/riskBehaviour/properties/receicedBloodTransfusion"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/riskBehaviour/properties/injectedDrugsWithoutDoctorAdvice"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/riskBehaviour/properties/accidentalNeedlePick"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/riskBehaviour/properties/sexualTransmittedInfection"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/riskBehaviour/properties/unprotectedVaginalSex"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/riskBehaviour/properties/unprotectedAnalSex"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/riskBehaviour/properties/prostitution"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/riskBehaviour/properties/sexWithSameSex"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/riskBehaviour/properties/forcedSexWithoutConsent"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/riskBehaviour/properties/numberMaleSexualPartners6Month"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/riskBehaviour/properties/numberFemaleSexualPartners6Month"
+        }
+      ]
     },
     {
       "type": "Category",
       "label": "HIV Testing",
       "options": { "icon": "stethoscope" },
       "elements": [
-        { "scope": "#/properties/hivTesting", "type": "Control" },
+        {
+          "type": "Control",
+          "scope": "#/properties/hivTesting/properties/datetime"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/hivTesting/properties/type"
+        },
         {
           "type": "EventTrigger",
           "scope": "#",

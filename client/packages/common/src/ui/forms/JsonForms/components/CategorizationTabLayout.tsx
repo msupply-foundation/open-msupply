@@ -12,16 +12,17 @@ import {
   uiTypeIs,
 } from '@jsonforms/core';
 import { withJsonFormsLayoutProps } from '@jsonforms/react';
-import { Button, Grid } from '@mui/material';
+import { Button, Grid, Hidden } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { DialogButton } from '../../../components/buttons';
 import { ModalProps, useDialog } from '@common/hooks';
 import {
   AjvProps,
-  MaterialLayoutRenderer,
   MaterialLayoutRendererProps,
+  renderLayoutElements,
   withAjvProps,
 } from '@jsonforms/material-renderers';
+import { isEmpty } from 'lodash';
 
 interface CategoryModalProps extends ModalProps {
   isOpen: boolean;
@@ -55,6 +56,44 @@ const Icon = styled('i')(({ theme }) => ({
   height: 50,
   width: 50,
 }));
+
+// Specialized layout render to fix some layout issues in the modal
+const CategoryLayoutRendererComponent = ({
+  visible,
+  elements,
+  schema,
+  path,
+  enabled,
+  direction,
+  renderers,
+  cells,
+}: MaterialLayoutRendererProps) => {
+  if (isEmpty(elements) || !schema || path === undefined) {
+    return null;
+  } else {
+    return (
+      <Hidden xsUp={!visible}>
+        <Grid
+          container
+          direction={direction}
+          spacing={direction === 'row' ? 2 : 0}
+          // this is changed compared to the default renderer:
+          flexWrap={'nowrap'}
+        >
+          {renderLayoutElements(
+            elements,
+            schema,
+            path,
+            enabled ?? true,
+            renderers,
+            cells
+          )}
+        </Grid>
+      </Hidden>
+    );
+  }
+};
+const CategoryLayoutRenderer = React.memo(CategoryLayoutRendererComponent);
 
 const UIComponent: FC<LayoutProps & AjvProps> = ({
   ajv,
@@ -126,7 +165,7 @@ const UIComponent: FC<LayoutProps & AjvProps> = ({
             okButton={<DialogButton variant="ok" onClick={onClose} />}
             width={1100}
           >
-            <MaterialLayoutRenderer {...childProps} />
+            <CategoryLayoutRenderer {...childProps} />
           </CategoryModal>
         </Grid>
       ))}
