@@ -23,7 +23,7 @@ use crate::{
     stocktake::{StocktakeService, StocktakeServiceTrait},
     stocktake_line::{StocktakeLineService, StocktakeLineServiceTrait},
     store::{get_store, get_stores},
-    ListError, ListResult,
+    ListError, ListResult, processors::ProcessorsTrigger,
 };
 
 pub struct ServiceProvider {
@@ -50,14 +50,32 @@ pub struct ServiceProvider {
     pub settings: Box<dyn SettingsServiceTrait>,
     // App Data Service
     pub app_data_service: Box<dyn AppDataServiceTrait>,
+    // Triggers
+    processors_trigger: ProcessorsTrigger,
 }
 
 pub struct ServiceContext {
     pub connection: StorageConnection,
+    pub(crate) processors_trigger: ProcessorsTrigger,
 }
 
 impl ServiceProvider {
+    // TODO we should really use `new` with processors_trigger, we constructs ServiceProvider manually in tests though
+    // and it would be a bit of refactor, ideally setup_all and setup_all_with_data will return an instance of ServiceProvider
+    // {make an issue}
     pub fn new(connection_manager: StorageConnectionManager, app_data_folder: &str) -> Self {
+        ServiceProvider::new_with_processors(
+            connection_manager,
+            app_data_folder,
+            ProcessorsTrigger::new_test(),
+        )
+    }
+
+    pub fn new_with_processors(
+        connection_manager: StorageConnectionManager,
+        app_data_folder: &str,
+        processors_trigger: ProcessorsTrigger,
+    ) -> Self {
         ServiceProvider {
             connection_manager: connection_manager.clone(),
             validation_service: Box::new(AuthService::new()),
@@ -76,6 +94,7 @@ impl ServiceProvider {
             report_service: Box::new(ReportService {}),
             settings: Box::new(SettingsService {}),
             app_data_service: Box::new(AppDataService::new(app_data_folder)),
+            processors_trigger,
         }
     }
 
@@ -83,12 +102,23 @@ impl ServiceProvider {
     pub fn context(&self) -> Result<ServiceContext, RepositoryError> {
         Ok(ServiceContext {
             connection: self.connection()?,
+            processors_trigger: self.processors_trigger.clone(),
         })
     }
 
     /// Establishes a new DB connection
     pub fn connection(&self) -> Result<StorageConnection, RepositoryError> {
         self.connection_manager.connection()
+    }
+}
+
+impl ServiceContext {
+    #[cfg(test)]
+    pub(crate) fn new_test(connection: StorageConnection) -> ServiceContext {
+        ServiceContext {
+            connection,
+            processors_trigger: ProcessorsTrigger::new_test(),
+        }
     }
 }
 
