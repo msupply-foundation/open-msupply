@@ -65,6 +65,7 @@ pub enum NameSortField {
     Address2,
     Country,
     Email,
+    NationalHealthNumber,
 }
 
 pub type NameSort = Sort<NameSortField>;
@@ -136,6 +137,9 @@ impl<'a> NameRepository<'a> {
                 NameSortField::Address2 => apply_sort_no_case!(query, sort, name_dsl::address2),
                 NameSortField::Country => apply_sort_no_case!(query, sort, name_dsl::country),
                 NameSortField::Email => apply_sort_no_case!(query, sort, name_dsl::email),
+                NameSortField::NationalHealthNumber => {
+                    apply_sort_no_case!(query, sort, name_dsl::national_health_number)
+                }
             }
         } else {
             query = query.order(name_dsl::id.asc())

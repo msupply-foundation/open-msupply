@@ -24,18 +24,11 @@
           "type": "string"
         }
       },
-      "required": [
-        "datetime",
-        "type"
-      ],
+      "required": ["datetime", "type"],
       "type": "object"
     },
     "EncounterStatus": {
-      "enum": [
-        "SCHEDULED",
-        "DONE",
-        "CANCELLED"
-      ],
+      "enum": ["SCHEDULED", "DONE", "CANCELLED"],
       "type": "string"
     },
     "FamilyPlanning": {
@@ -154,11 +147,7 @@
             },
             "nutritionalStatus": {
               "description": "366364004  nutritional status",
-              "enum": [
-                "UNDER_NOURISHED",
-                "WELL_NOURISHED",
-                "OVERWEIGHT"
-              ],
+              "enum": ["Under nourished", "Well nourished", "Overweight"],
               "type": "string"
             },
             "opportunisticInfection": {
@@ -200,7 +189,7 @@
                   "458 - 4 - (26) Extrapulmonary tuberculosis",
                   "459 - 4 - (27) Lymphoma (cerebral or B cell non-Hodgkin)",
                   "460 - 4 - (28) Kaposi's sarcoma",
-                  "461 - 4 -  (29) HIV encephalopathy",
+                  "461 - 4 - (29) HIV encephalopathy",
                   "462 - 4 - Invasive cervical carcinoma",
                   "463 - 4 - Visceral leishmaniasis",
                   "465 - 4 - Unexplained bilateral paralysis",
@@ -298,9 +287,7 @@
           "type": "object"
         }
       },
-      "required": [
-        "startDatetime"
-      ],
+      "required": ["startDatetime"],
       "type": "object"
     },
     "Practitioner": {

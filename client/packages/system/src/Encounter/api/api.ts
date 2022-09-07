@@ -4,6 +4,7 @@ import {
   InsertEncounterInput,
   UpdateEncounterInput,
   EncounterSortFieldInput,
+  PaginationInput,
 } from '@openmsupply-client/common';
 import {
   EncounterDocumentRegistryFragment,
@@ -17,6 +18,7 @@ export type ListParams = {
   offset?: number;
   sortBy?: SortBy<EncounterFragment>;
   filterBy?: FilterBy | null;
+  pagination?: PaginationInput;
 };
 
 export const getEncounterQueries = (sdk: Sdk, storeId: string) => ({
@@ -24,6 +26,7 @@ export const getEncounterQueries = (sdk: Sdk, storeId: string) => ({
     list: async ({
       sortBy,
       filterBy,
+      pagination,
     }: ListParams): Promise<{
       nodes: EncounterRowFragment[];
       totalCount: number;
@@ -33,6 +36,7 @@ export const getEncounterQueries = (sdk: Sdk, storeId: string) => ({
         key: sortBy?.key as EncounterSortFieldInput | undefined,
         desc: sortBy?.isDesc,
         filter: filterBy,
+        page: pagination,
         latestEventTime: new Date().toISOString(),
       });
 

@@ -7,7 +7,6 @@ import {
   NothingHere,
   createQueryParamsStore,
   useFormatDateTime,
-  useUrlQueryParams,
   ColumnAlign,
   useNavigate,
   RouteBuilder,
@@ -16,6 +15,8 @@ import {
   LocaleKey,
   TypedTFunction,
   DateUtils,
+  useQueryParamsStore,
+  EncounterSortFieldInput,
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
 import { AppRoute } from 'packages/config/src';
@@ -74,11 +75,14 @@ const encounterEventCellValue = (events: ProgramEventFragment[]) => {
 
 const EncounterListComponent: FC = () => {
   const {
-    updateSortQuery,
-    updatePaginationQuery,
-    queryParams: { sortBy, page, first, offset },
-  } = useUrlQueryParams();
-  const { data, isError, isLoading } = usePatient.document.encounters();
+    sort: { sortBy, onChangeSortBy },
+    pagination: { page, first, offset, onChangePage },
+  } = useQueryParamsStore();
+
+  const { data, isError, isLoading } = usePatient.document.encounters({
+    key: sortBy.key as EncounterSortFieldInput,
+    isDesc: sortBy.isDesc,
+  });
   const dataExt: EncounterFragmentExt[] | undefined =
     useExtendEncounterFragment(data?.nodes);
   const pagination = { page, first, offset };
@@ -112,15 +116,17 @@ const EncounterListComponent: FC = () => {
         label: 'label.label',
         formatter: events =>
           encounterEventCellValue((events as ProgramEventFragment[]) ?? []),
+        sortable: false,
       },
       {
         key: 'effectiveStatus',
         label: 'label.status',
         align: ColumnAlign.Right,
         width: 175,
+        sortable: false,
       },
     ],
-    { onChangeSortBy: updateSortQuery, sortBy },
+    { onChangeSortBy, sortBy },
     [sortBy]
   );
 
@@ -128,7 +134,7 @@ const EncounterListComponent: FC = () => {
     <DataTable
       id="encounter-list"
       pagination={{ ...pagination, total: data?.totalCount }}
-      onChangePage={updatePaginationQuery}
+      onChangePage={onChangePage}
       columns={columns}
       data={dataExt}
       isLoading={isLoading}
