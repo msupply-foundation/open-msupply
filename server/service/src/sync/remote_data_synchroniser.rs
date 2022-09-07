@@ -27,11 +27,6 @@ pub(crate) enum RemotePullError {
     #[error("{0}")]
     ParsingV5RecordError(ParsingV5RecordError),
 }
-#[derive(Error, Debug)]
-pub(crate) enum RequestAndSetSiteInfoError {
-    #[error("Api error while requesting site info: {0:?}")]
-    RequestSiteInfoError(SyncApiError),
-}
 
 pub struct RemoteDataSynchroniser {
     pub(crate) sync_api_v5: SyncApiV5,
@@ -49,21 +44,6 @@ impl RemoteDataSynchroniser {
         info!("Initialised remote sync records");
 
         Ok(())
-    }
-
-    /// Request site info and persist it
-    pub(crate) async fn request_and_set_site_info(
-        &self,
-    ) -> Result<SiteInfoV5, RequestAndSetSiteInfoError> {
-        info!("Requesting site info");
-        let site_info = self
-            .sync_api_v5
-            .get_site_info()
-            .await
-            .map_err(RequestAndSetSiteInfoError::RequestSiteInfoError)?;
-
-        info!("Received site info");
-        Ok(site_info)
     }
 
     /// Request initialisation
