@@ -1,28 +1,26 @@
 CREATE TABLE changelog (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    cursor INTEGER PRIMARY KEY AUTOINCREMENT,
     -- the table name where the change happend
-    table_name TEXT CHECK (table_name IN (
-        'number',
-        'location',
-        'stocktake',
-        'stock_line',
-        'name',
-        'name_store_join',
-        'invoice',
-        'invoice_line',
-        'stocktake',
-        'stocktake_line',
-        'requisition',
-        'requisition_line')) NOT NULL,
+    table_name TEXT NOT NULL,
     -- row id of the modified row
-    row_id TEXT NOT NULL,
+    record_id TEXT NOT NULL,
     -- Sqlite only fires INSERT when doing an upsert (it does a delete + insert) for this reason
     -- use UPSERT.
-    row_action TEXT CHECK (row_action IN ('UPSERT', 'DELETE')) NOT NULL
+    row_action TEXT NOT NULL,
+    -- TODO comment
+    name_id TEXT,
+    store_id TEXT
 );
 
 CREATE VIEW changelog_deduped AS
-SELECT max(id) id, table_name, row_id, row_action
-    FROM changelog
-    GROUP BY table_name, row_id
-    ORDER BY id;
+    SELECT t1.cursor,
+        t1.table_name,
+        t1.record_id,
+        t1.row_action,
+        t1.name_id,
+        t1.store_id
+    FROM changelog t1
+    WHERE t1.cursor = (SELECT max(t2.cursor) 
+                    from changelog t2
+                    where t2.record_id = t1.record_id)
+    ORDER BY t1.cursor;

@@ -124,10 +124,12 @@ fn transact_1_pull_record() -> TestSyncPullRecord {
 fn transact_1_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
         change_log: ChangelogRow {
-            id: 2,
+            cursor: 2,
             table_name: ChangelogTableName::Invoice,
-            row_id: TRANSACT_1.0.to_string(),
+            record_id: TRANSACT_1.0.to_string(),
             row_action: ChangelogAction::Upsert,
+            name_id: Some("name_store_a".to_string()),
+            store_id: Some("store_a".to_string()),
         },
         push_data: json!(LegacyTransactRow {
             ID: TRANSACT_1.0.to_string(),
@@ -275,10 +277,12 @@ fn transact_2_pull_record() -> TestSyncPullRecord {
 fn transact_2_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
         change_log: ChangelogRow {
-            id: 2,
+            cursor: 2,
             table_name: ChangelogTableName::Invoice,
-            row_id: TRANSACT_2.0.to_string(),
+            record_id: TRANSACT_2.0.to_string(),
             row_action: ChangelogAction::Upsert,
+            name_id: Some("name_store_b".to_string()),
+            store_id: Some("store_b".to_string()),
         },
         push_data: json!(LegacyTransactRow {
             ID: TRANSACT_2.0.to_string(),
@@ -435,10 +439,12 @@ fn transact_om_fields_pull_record() -> TestSyncPullRecord {
 fn transact_om_fields_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
         change_log: ChangelogRow {
-            id: 2,
+            cursor: 2,
             table_name: ChangelogTableName::Invoice,
-            row_id: TRANSACT_OM_FIELDS.0.to_string(),
+            record_id: TRANSACT_OM_FIELDS.0.to_string(),
             row_action: ChangelogAction::Upsert,
+            name_id: Some("name_store_b".to_string()),
+            store_id: Some("store_b".to_string()),
         },
         push_data: json!(LegacyTransactRow {
             ID: TRANSACT_OM_FIELDS.0.to_string(),

@@ -114,9 +114,9 @@ impl<'a> InvoiceLineRowRepository<'a> {
         Ok(())
     }
 
-    pub fn find_one_by_id(&self, row_id: &str) -> Result<InvoiceLineRow, RepositoryError> {
+    pub fn find_one_by_id(&self, record_id: &str) -> Result<InvoiceLineRow, RepositoryError> {
         let result = invoice_line
-            .filter(id.eq(row_id))
+            .filter(id.eq(record_id))
             .first(&self.connection.connection);
         result.map_err(|err| RepositoryError::from(err))
     }
