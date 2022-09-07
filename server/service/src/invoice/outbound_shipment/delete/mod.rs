@@ -53,6 +53,8 @@ pub fn delete_outbound_shipment(
             }
         })
         .map_err(|error| error.to_inner_error())?;
+
+    ctx.processors_trigger.trigger_shipment_transfers();
     Ok(invoice_id)
 }
 
