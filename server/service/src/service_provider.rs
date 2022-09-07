@@ -20,10 +20,10 @@ use crate::{
     requisition::{RequisitionService, RequisitionServiceTrait},
     requisition_line::{RequisitionLineService, RequisitionLineServiceTrait},
     settings_service::{SettingsService, SettingsServiceTrait},
-    site_info::{SiteInfoService, SiteInfoTrait},
     stocktake::{StocktakeService, StocktakeServiceTrait},
     stocktake_line::{StocktakeLineService, StocktakeLineServiceTrait},
     store::{get_store, get_stores},
+    sync::site_info::{SiteInfoService, SiteInfoTrait},
     ListError, ListResult,
 };
 
