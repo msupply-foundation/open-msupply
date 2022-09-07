@@ -33,11 +33,9 @@ mod hiv_testing_program {
             Self {
                 enrolment_datetime: Default::default(),
                 enrolment_patient_id: Default::default(),
-                hiv_test_type: Default::default(),
                 mother: Default::default(),
                 partner_hiv_status: Default::default(),
                 referred_from: Default::default(),
-                risk_group: Default::default(),
                 status: Default::default(),
             }
         }

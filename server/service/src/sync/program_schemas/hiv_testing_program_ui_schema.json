@@ -42,14 +42,6 @@
     },
     {
       "type": "Control",
-      "scope": "#/properties/hivTestType"
-    },
-    {
-      "type": "Control",
-      "scope": "#/properties/riskGroup"
-    },
-    {
-      "type": "Control",
       "scope": "#/properties/partnerHivStatus"
     },
     {

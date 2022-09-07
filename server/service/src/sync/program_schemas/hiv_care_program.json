@@ -128,7 +128,7 @@
           "type": "string"
         },
         "riskGroup": {
-          "$ref": "#/definitions/HIVRiscGroup"
+          "$ref": "#/definitions/HIVRiskGroup"
         },
         "status": {
           "$ref": "#/definitions/ProgramEnrolmentStatus",
@@ -138,9 +138,7 @@
           "$ref": "#/definitions/Person"
         }
       },
-      "required": [
-        "enrolmentDatetime"
-      ],
+      "required": ["enrolmentDatetime"],
       "type": "object"
     },
     "HIVRelation": {
@@ -157,31 +155,16 @@
       },
       "type": "object"
     },
-    "HIVRiscGroup": {
-      "enum": [
-        "SEX_WORKERS",
-        "MEN_SEX_WITH_MEN",
-        "INJECTING_DRUG_USER",
-        "PRISONER",
-        "SEX_WORKER_CLIENT",
-        "TRANSGENDER_WOMEN",
-        "SLUM_SWELLER"
-      ],
+    "HIVRiskGroup": {
+      "enum": ["GP", "HR", "MSM", "TG", "FSW", "MSW"],
       "type": "string"
     },
     "HIVStatus": {
-      "enum": [
-        "POSITIVE",
-        "NEGATIVE",
-        "UNKNOWN"
-      ],
+      "enum": ["POSITIVE", "NEGATIVE", "UNKNOWN"],
       "type": "string"
     },
     "HIVTestType": {
-      "enum": [
-        "PCR",
-        "ANTIBODY"
-      ],
+      "enum": ["PCR", "ANTIBODY"],
       "type": "string"
     },
     "Note": {
@@ -195,9 +178,7 @@
               "type": "number"
             }
           },
-          "required": [
-            "length"
-          ],
+          "required": ["length"],
           "type": "object"
         },
         "created": {
@@ -211,20 +192,14 @@
               "type": "number"
             }
           },
-          "required": [
-            "length"
-          ],
+          "required": ["length"],
           "type": "object"
         },
         "text": {
           "type": "string"
         }
       },
-      "required": [
-        "text",
-        "created",
-        "authorId"
-      ],
+      "required": ["text", "created", "authorId"],
       "type": "object"
     },
     "Person": {
@@ -297,20 +272,11 @@
           "$ref": "#/definitions/SocioEconomics"
         }
       },
-      "required": [
-        "isDeceased",
-        "contactDetails",
-        "socioEconomics"
-      ],
+      "required": ["isDeceased", "contactDetails", "socioEconomics"],
       "type": "object"
     },
     "ProgramEnrolmentStatus": {
-      "enum": [
-        "ACTIVE",
-        "OPTED_OUT",
-        "TRANSFERRED_OUT",
-        "PAUSED"
-      ],
+      "enum": ["ACTIVE", "OPTED_OUT", "TRANSFERRED_OUT", "PAUSED"],
       "type": "string"
     },
     "SocioEconomics": {
