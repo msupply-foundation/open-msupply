@@ -119,7 +119,7 @@ impl ConfigureCentralServer {
         &self,
         visible_name_ids: Vec<String>,
     ) -> anyhow::Result<SiteConfiguration> {
-        let result = self.api.create_sync_site(visible_name_ids).await?;
+        let result = with_retry(|| self.api.create_sync_site(visible_name_ids.clone())).await?;
 
         let new_site_properties = NewSiteProperties {
             store_id: result.store.id,
