@@ -100,7 +100,7 @@ const EnumArrayComponent: FC<EnumArrayControlCustomProps> = ({
         gap={2}
         justifyContent="space-around"
         style={{ minWidth: 300 }}
-        marginTop={0.5}
+        marginTop={1}
       >
         <Box
           style={{ textAlign: 'end', alignSelf: 'start', paddingTop: 5 }}

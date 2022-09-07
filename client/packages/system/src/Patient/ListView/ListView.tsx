@@ -6,7 +6,6 @@ import {
   useColumns,
   createTableStore,
   NothingHere,
-  createQueryParamsStore,
   useFormatDateTime,
   ColumnAlign,
   useAlertModal,
@@ -100,12 +99,7 @@ const PatientListComponent: FC = () => {
 };
 
 export const PatientListView: FC = () => (
-  <TableProvider
-    createStore={createTableStore}
-    queryParamsStore={createQueryParamsStore<PatientRowFragment>({
-      initialSortBy: { key: 'name' },
-    })}
-  >
+  <TableProvider createStore={createTableStore}>
     <PatientListComponent />
   </TableProvider>
 );
