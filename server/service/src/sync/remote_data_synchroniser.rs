@@ -202,7 +202,7 @@ impl RemoteDataSynchroniser {
             logger
                 .progress(
                     SyncStepProgress::PushRemote,
-                    records_len as u64,
+                    change_logs_total - records_len as u64,
                     change_logs_total,
                 )
                 .map_err(RemotePullError::SyncLoggerError)?;
