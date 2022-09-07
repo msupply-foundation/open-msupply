@@ -7,7 +7,6 @@ use graphql_core::{
 use service::{
     auth::{Resource, ResourceAccessRequest},
     settings_service::UpdateSettingsError,
-    site_info::set_api_info,
     sync::settings::SyncSettings,
 };
 use util::hash::sha256;
@@ -33,7 +32,7 @@ pub struct UpdateSyncSettingsInput {
 #[derive(InputObject)]
 #[graphql(name = "UpdateServerSettingsInput")]
 pub struct UpdateServerSettingsInput {
-    pub sync_settings: Option<UpdateSyncSettingsInput>,
+    pub sync_settings: UpdateSyncSettingsInput,
 }
 
 pub async fn update_server_settings(
@@ -53,53 +52,40 @@ pub async fn update_server_settings(
 
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context()?;
-    let service = &service_provider.settings;
-    let site_info_service = &service_provider.site_info;
 
-    match input.sync_settings {
-        Some(sync_settings) => {
-            match service.update_sync_settings(&service_context, &sync_settings.to_domain()) {
-                Ok(sync_settings) => sync_settings,
-                Err(error) => {
-                    let formatted_error = format!("{:#?}", error);
-                    let graphql_error = match error {
-                        UpdateSettingsError::RepositoryError(_) => {
-                            StandardGraphqlError::InternalError(formatted_error)
-                        }
-                        UpdateSettingsError::InvalidSettings(_) => {
-                            StandardGraphqlError::BadUserInput(formatted_error)
-                        }
-                    };
-                    return Err(graphql_error.extend());
-                }
-            };
-        }
-        None => {}
+    let sync_settings = input.sync_settings.to_domain();
+
+    if let Err(error) = service_provider
+        .site_info
+        .request_and_set_site_info(&service_provider, &sync_settings)
+        .await
+    {
+        let formatted_error = format!("{:#?}", error);
+        let graphql_error = StandardGraphqlError::InternalError(formatted_error);
+        return Err(graphql_error.extend());
     };
 
-    // get current settings
-    let sync_settings = match service.sync_settings(&service_context) {
+    match service_provider
+        .settings
+        .update_sync_settings(&service_context, &sync_settings)
+    {
         Ok(sync_settings) => sync_settings,
         Err(error) => {
             let formatted_error = format!("{:#?}", error);
-            let graphql_error = StandardGraphqlError::InternalError(formatted_error);
+            let graphql_error = match error {
+                UpdateSettingsError::RepositoryError(_) => {
+                    StandardGraphqlError::InternalError(formatted_error)
+                }
+                UpdateSettingsError::InvalidSettings(_) => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
+                }
+            };
             return Err(graphql_error.extend());
         }
     };
-
-    let remote = set_api_info(&sync_settings.clone().unwrap(), service_provider)?;
-    let site_info = match site_info_service.request_site_info(remote).await {
-        Ok(site_info) => site_info,
-        Err(error) => {
-            let formatted_error = format!("{:#?}", error);
-            let graphql_error = StandardGraphqlError::InternalError(formatted_error);
-            return Err(graphql_error.extend());
-        }
-    };
-    site_info_service.set_site_info(&service_context.connection, site_info)?;
 
     Ok(UpdateServerSettingsResponse::Response(
-        ServerSettingsNode::from_domain(sync_settings, stage0),
+        ServerSettingsNode::from_domain(Some(sync_settings), stage0),
     ))
 }
 
