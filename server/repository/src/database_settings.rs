@@ -142,13 +142,7 @@ pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageCon
             panic!("Failed to connect to database: {}", e);
         }
     }
-    // the min_idle is a workaround to get pg running reliably on windows.
-    // if you don't require it any more, swap the pool creation lines out for this one:
-    // let pool = Pool::new(connection_manager).expect("Failed to connect to database");
-    let pool = Pool::builder()
-        .min_idle(Some(0))
-        .build(connection_manager)
-        .expect("Failed to connect to database");
+    let pool = Pool::new(connection_manager).expect("Failed to connect to database");
     StorageConnectionManager::new(pool)
 }
 
