@@ -20,7 +20,7 @@ pub struct GeneralQueries;
 impl GeneralQueries {
     #[allow(non_snake_case)]
     pub async fn apiVersion(&self) -> String {
-        "1.0.0-RC6".to_string()
+        env!("CARGO_PKG_VERSION").to_string()
     }
 
     /// Retrieves a new auth bearer and refresh token

@@ -1984,7 +1984,7 @@ dependencies = [
 
 [[package]]
 name = "graphql_general"
-version = "0.1.0"
+version = "1.0.0-alpha.6"
 dependencies = [
  "actix-rt",
  "actix-web",
@@ -4129,7 +4129,7 @@ dependencies = [
 
 [[package]]
 name = "server"
-version = "0.1.0"
+version = "1.0.0-alpha.6"
 dependencies = [
  "actix-cors",
  "actix-files",
