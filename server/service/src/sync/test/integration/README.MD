@@ -21,10 +21,9 @@ The following environment variables should be provided for sync integration test
 SYNC_SITE_PASSWORD
 SYNC_SITE_NAME
 SYNC_URL
-NEW_SITE_PASSWORD
 
 As `1`, can provide via cli or rust analyzer:
-`"rust-analyzer.runnableEnv": { "SYNC_URL": "http://localhost:2048", "SYNC_SITE_NAME": "demo","SYNC_SITE_PASSWORD": "pass", "NEW_SITE_PASSWORD": "pass"}`
+`"rust-analyzer.runnableEnv": { "SYNC_URL": "http://localhost:2048", "SYNC_SITE_NAME": "demo","SYNC_SITE_PASSWORD": "pass" }`
 
 ## 3 `central server`
 
@@ -44,7 +43,7 @@ Only data that needs to be present on central server site is a new sync site:
 
 ## 4 `run tests` 
 
-Via cli: `SYNC_SITE_PASSWORD="pass" SYNC_SITE_NAME="demo" SYNC_URL="http://localhost:2048" NEW_SITE_PASSWORD="pass" cargo test integration_sync  --features integration_test`
+Via cli: `SYNC_SITE_PASSWORD="pass" SYNC_SITE_NAME="demo" SYNC_URL="http://localhost:2048" cargo test integration_sync  --features integration_test`
 
 If you've set configurations in rust analyzer, can use inlay hint play and debug buttons in:
 * integration/remote/test
@@ -60,7 +59,7 @@ We have the ability to update and delete central data records directly on the se
 
 Central and remote tests use SyncRecordTester implementations to do integration tests.
 
-A test sync site is created for each test (using the same `upsert` cental data endpoint above), this is where NEW_SITE_PASSWORD env var is used.
+A test sync site is created for each test 
 See `central_server_configurations.rs` comment for site creation info
 
 ## Central
@@ -99,5 +98,5 @@ For each step:
 
 Full test including integration can be run with:
 ```bash
-SYNC_SITE_PASSWORD="pass" SYNC_SITE_NAME="demo" SYNC_URL="http://localhost:2048" NEW_SITE_PASSWORD="pass" cargo test  --features integration_test && SYNC_SITE_PASSWORD="pass" SYNC_SITE_NAME="demo" SYNC_URL="http://localhost:2048" NEW_SITE_PASSWORD="pass" cargo test --features integration_test,postgres 
+SYNC_SITE_PASSWORD="pass" SYNC_SITE_NAME="demo" SYNC_URL="http://localhost:2048" cargo test  --features integration_test && SYNC_SITE_PASSWORD="pass" SYNC_SITE_NAME="demo" SYNC_URL="http://localhost:2048" cargo test --features integration_test,postgres 
 ```
