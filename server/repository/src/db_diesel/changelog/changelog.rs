@@ -116,7 +116,6 @@ impl<'a> ChangelogRepository<'a> {
         Ok(result as u64)
     }
 
-    // TODO we only really want to know the cursor, so just max ?
     pub fn latest_changelog(&self) -> Result<u64, RepositoryError> {
         let result = changelog::dsl::changelog
             .select(diesel::dsl::max(changelog::dsl::cursor))
