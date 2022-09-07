@@ -1,6 +1,7 @@
 use chrono::NaiveDate;
 use repository::{ChangelogAction, ChangelogRow, ChangelogTableName, StockLineRow};
 use serde_json::json;
+use util::inline_init;
 
 use crate::sync::{
     test::TestSyncPullRecord,
@@ -75,12 +76,12 @@ fn item_line_1_pull_record() -> TestSyncPullRecord {
 }
 fn item_line_1_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
-        change_log: ChangelogRow {
-            id: 2,
-            table_name: ChangelogTableName::StockLine,
-            row_id: ITEM_LINE_1.0.to_string(),
-            row_action: ChangelogAction::Upsert,
-        },
+        change_log: inline_init(|r: &mut ChangelogRow| {
+            r.cursor = 2;
+            r.table_name = ChangelogTableName::StockLine;
+            r.record_id = ITEM_LINE_1.0.to_string();
+            r.row_action = ChangelogAction::Upsert;
+        }),
         push_data: json!(LegacyStockLineRow {
             ID: ITEM_LINE_1.0.to_string(),
             store_ID: "store_a".to_string(),
@@ -165,12 +166,12 @@ fn item_line_2_pull_record() -> TestSyncPullRecord {
 }
 fn item_line_2_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
-        change_log: ChangelogRow {
-            id: 2,
-            table_name: ChangelogTableName::StockLine,
-            row_id: ITEM_LINE_2.0.to_string(),
-            row_action: ChangelogAction::Upsert,
-        },
+        change_log: inline_init(|r: &mut ChangelogRow| {
+            r.cursor = 2;
+            r.table_name = ChangelogTableName::StockLine;
+            r.record_id = ITEM_LINE_2.0.to_string();
+            r.row_action = ChangelogAction::Upsert;
+        }),
         push_data: json!(LegacyStockLineRow {
             ID: ITEM_LINE_2.0.to_string(),
             store_ID: "store_a".to_string(),

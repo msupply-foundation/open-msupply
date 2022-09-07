@@ -1,10 +1,14 @@
 use crate::sync::translations::{
-    requisition_line::LegacyRequisitionLineRow, LegacyTableName, PullUpsertRecord, PullDeleteRecordTable,
+    requisition_line::LegacyRequisitionLineRow, LegacyTableName, PullDeleteRecordTable,
+    PullUpsertRecord,
 };
 
 use super::{TestSyncPullRecord, TestSyncPushRecord};
 use chrono::NaiveDate;
-use repository::{ChangelogAction, ChangelogRow, ChangelogTableName, RequisitionLineRow};
+use repository::{
+    mock::mock_request_draft_requisition2, ChangelogAction, ChangelogRow, ChangelogTableName,
+    RequisitionLineRow,
+};
 use serde_json::json;
 use util::constants::NUMBER_OF_DAYS_IN_A_MONTH;
 
@@ -64,10 +68,12 @@ fn requisition_line_request_pull_record() -> TestSyncPullRecord {
 fn requisition_line_request_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
         change_log: ChangelogRow {
-            id: 2,
+            cursor: 2,
             table_name: ChangelogTableName::RequisitionLine,
-            row_id: REQUISITION_LINE_1.0.to_string(),
+            record_id: REQUISITION_LINE_1.0.to_string(),
             row_action: ChangelogAction::Upsert,
+            name_id: Some(mock_request_draft_requisition2().name_id),
+            store_id: Some(mock_request_draft_requisition2().store_id),
         },
         push_data: json!(LegacyRequisitionLineRow {
             ID: REQUISITION_LINE_1.0.to_string(),
@@ -141,10 +147,12 @@ fn requisition_line_om_fields_pull_record() -> TestSyncPullRecord {
 fn requisition_line_om_fields_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
         change_log: ChangelogRow {
-            id: 3,
+            cursor: 3,
             table_name: ChangelogTableName::RequisitionLine,
-            row_id: REQUISITION_LINE_OM_FIELD.0.to_string(),
+            record_id: REQUISITION_LINE_OM_FIELD.0.to_string(),
             row_action: ChangelogAction::Upsert,
+            name_id: Some(mock_request_draft_requisition2().name_id),
+            store_id: Some(mock_request_draft_requisition2().store_id),
         },
         push_data: json!(LegacyRequisitionLineRow {
             ID: REQUISITION_LINE_OM_FIELD.0.to_string(),

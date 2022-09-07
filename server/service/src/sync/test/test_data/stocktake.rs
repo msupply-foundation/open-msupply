@@ -10,6 +10,7 @@ use repository::{
     ChangelogAction, ChangelogRow, ChangelogTableName, StocktakeRow, StocktakeStatus,
 };
 use serde_json::json;
+use util::inline_init;
 
 use super::TestSyncPushRecord;
 
@@ -57,12 +58,12 @@ fn stocktake_pull_record() -> TestSyncPullRecord {
 }
 fn stocktake_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
-        change_log: ChangelogRow {
-            id: 2,
-            table_name: ChangelogTableName::Stocktake,
-            row_id: STOCKTAKE_1.0.to_string(),
-            row_action: ChangelogAction::Upsert,
-        },
+        change_log: inline_init(|r: &mut ChangelogRow| {
+            r.cursor = 2;
+            r.table_name = ChangelogTableName::Stocktake;
+            r.record_id = STOCKTAKE_1.0.to_string();
+            r.row_action = ChangelogAction::Upsert;
+        }),
         push_data: json!(LegacyStocktakeRow {
             ID: STOCKTAKE_1.0.to_string(),
             user_id: "".to_string(),
@@ -130,12 +131,12 @@ fn stocktake_om_field_pull_record() -> TestSyncPullRecord {
 }
 fn stocktake_om_field_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
-        change_log: ChangelogRow {
-            id: 2,
-            table_name: ChangelogTableName::Stocktake,
-            row_id: STOCKTAKE_OM_FIELD.0.to_string(),
-            row_action: ChangelogAction::Upsert,
-        },
+        change_log: inline_init(|r: &mut ChangelogRow| {
+            r.cursor = 2;
+            r.table_name = ChangelogTableName::Stocktake;
+            r.record_id = STOCKTAKE_OM_FIELD.0.to_string();
+            r.row_action = ChangelogAction::Upsert;
+        }),
         push_data: json!(LegacyStocktakeRow {
             ID: STOCKTAKE_OM_FIELD.0.to_string(),
             user_id: "".to_string(),

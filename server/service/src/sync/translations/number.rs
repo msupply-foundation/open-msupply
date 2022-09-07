@@ -65,7 +65,7 @@ impl SyncTranslation for NumberTranslation {
             store_id,
             r#type,
         } = NumberRowRepository::new(connection)
-            .find_one_by_id(&changelog.row_id)?
+            .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg("Number row not found"))?;
 
         let name = match to_number_name(&r#type, &store_id) {
@@ -80,7 +80,7 @@ impl SyncTranslation for NumberTranslation {
         };
 
         Ok(Some(vec![PushUpsertRecord {
-            sync_id: changelog.id,
+            sync_id: changelog.cursor,
             table_name,
             record_id: id,
             data: serde_json::to_value(&legacy_row)?,
