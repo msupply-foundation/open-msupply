@@ -157,6 +157,17 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
     return !!stores && stores?.length > 0 ? stores?.[0] : undefined;
   };
 
+  const getUserPermissions = async (
+    token?: string,
+    store?: UserStoreNodeFragment
+  ): Promise<UserPermissionNodePermission[]> => {
+    const permissions = await getPermissions({
+      storeId: store?.id || '',
+      token,
+    });
+    return permissions?.nodes?.[0]?.permissions || [];
+  };
+
   const setLoginError = (isLoggedIn: boolean, hasValidStore: boolean) => {
     if (LocalStorage.getItem('/auth/error') === AuthError.ServerError) return;
 
@@ -205,10 +216,7 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
     const { token, error } = await mutateAsync({ username, password });
     setHeader('Authorization', `Bearer ${token}`);
     const store = await getStore(token);
-    const permissions = await getPermissions({
-      storeId: store?.id || '',
-      token,
-    });
+    const permissions = await getUserPermissions(token, store);
     setSkipRequest(skipNoStoreRequests);
     const authCookie = {
       store,
@@ -216,7 +224,7 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
       user: {
         id: '',
         name: username,
-        permissions: permissions?.nodes?.[0]?.permissions || [],
+        permissions,
       },
     };
 
@@ -245,14 +253,11 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
       username: mostRecentlyUsedCredentials?.username ?? '',
       store,
     });
-    const permissions = await getPermissions({
-      storeId: store?.id || '',
-      token: cookie?.token,
-    });
+    const permissions = await getUserPermissions(cookie?.token, store);
     const user = {
       id: cookie.user?.id ?? '',
       name: cookie.user?.name ?? '',
-      permissions: permissions?.nodes?.[0]?.permissions || [],
+      permissions,
     };
     const newCookie = { ...cookie, store, user };
     setAuthCookie(newCookie);
