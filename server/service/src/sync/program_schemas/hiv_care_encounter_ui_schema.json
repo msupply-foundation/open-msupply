@@ -10,8 +10,41 @@
           "type": "HorizontalLayout",
           "elements": [
             {
-              "type": "Control",
-              "scope": "#/properties/physicalExamination"
+              "type": "VerticalLayout",
+              "elements": [
+                {
+                  "type": "Control",
+                  "scope": "#/properties/physicalExamination/properties/height"
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/properties/physicalExamination/properties/midUpperArmCircumference"
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/properties/physicalExamination/properties/weight"
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/properties/physicalExamination/properties/bloodPressure"
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/properties/physicalExamination/properties/bodyMassIndex"
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/properties/physicalExamination/properties/nutritionalStatus"
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/properties/physicalExamination/properties/symptoms"
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/properties/physicalExamination/properties/opportunisticInfection"
+                }
+              ]
             },
             {
               "type": "HorizontalLayout",
@@ -54,6 +87,22 @@
       "options": { "icon": "medicine" },
       "elements": [
         {
+          "scope": "#/properties/arvMedication/properties/regimen",
+          "type": "Control"
+        },
+        {
+          "scope": "#/properties/arvMedication/properties/regimeType",
+          "type": "Control"
+        },
+        {
+          "scope": "#/properties/arvMedication/properties/regimeStatus",
+          "type": "Control"
+        },
+        {
+          "scope": "#/properties/arvMedication/properties/change",
+          "type": "Control"
+        },
+        {
           "scope": "#/properties/arvMedication/properties/pillCount",
           "type": "Control"
         },
@@ -81,7 +130,26 @@
           "scope": "#",
           "type": "DispensedDuration"
         },
-        { "scope": "#/properties/arvMedication", "type": "Control" }
+        {
+          "scope": "#/properties/arvMedication/properties/previousRegimen",
+          "type": "Control"
+        },
+        {
+          "scope": "#/properties/arvMedication/properties/reasonSubstitutionWithinFirstLine",
+          "type": "Control"
+        },
+        {
+          "scope": "#/properties/arvMedication/properties/reasonFirstToSecondLine",
+          "type": "Control"
+        },
+        {
+          "scope": "#/properties/arvMedication/properties/stopReason",
+          "type": "Control"
+        },
+        {
+          "scope": "#/properties/arvMedication/properties/initialWeight",
+          "type": "Control"
+        }
       ]
     },
     {
@@ -89,14 +157,30 @@
       "label": "Family Planning",
       "options": { "icon": "condom" },
       "elements": [
-        { "scope": "#/properties/familyPlanning", "type": "Control" }
+        {
+          "type": "Control",
+          "scope": "#/properties/familyPlanning/properties/pregnant"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/familyPlanning/properties/contraception"
+        }
       ]
     },
     {
       "type": "Category",
       "label": "Tuberculosis",
       "options": { "icon": "lungs" },
-      "elements": [{ "scope": "#/properties/tuberculosis", "type": "Control" }]
+      "elements": [
+        {
+          "type": "Control",
+          "scope": "#/properties/tuberculosis/properties/tbScreening"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/tuberculosis/properties/status"
+        }
+      ]
     }
   ],
   "options": {
