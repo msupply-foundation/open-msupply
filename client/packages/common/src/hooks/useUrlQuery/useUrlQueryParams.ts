@@ -76,8 +76,8 @@ export const useUrlQueryParams = ({
     offset: urlQuery.page ? (urlQuery.page - 1) * rowsPerPage : 0,
     first: rowsPerPage,
     sortBy: {
-      key: urlQuery.sort ?? initialSort,
-      direction: urlQuery.dir ?? 'asc',
+      key: urlQuery.sort ?? initialSort?.key,
+      direction: urlQuery.dir ?? initialSort?.dir ?? 'asc',
       isDesc: urlQuery.dir === 'desc',
     },
     filterBy: filter.filterBy,
