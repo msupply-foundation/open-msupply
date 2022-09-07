@@ -12,7 +12,12 @@ import { usePatient } from '../api';
 
 export const AddButton = () => {
   const t = useTranslation('patients');
-  const { current, setCurrent, setDocument, reset } = usePatientModalStore();
+  const {
+    current,
+    setCreationModal,
+    setModal: selectModal,
+    reset,
+  } = usePatientModalStore();
   const { data } = usePatient.document.programEnrolments();
   const options = [
     {
@@ -39,12 +44,12 @@ export const AddButton = () => {
   const onSelectOption = (option: SplitButtonOption<PatientModal>) => {
     setSelectedOption(option);
     reset();
-    setCurrent(option?.value);
+    selectModal(option?.value);
   };
 
   const onClick = () => {
     reset();
-    setCurrent(selectedOption?.value);
+    selectModal(selectedOption?.value);
   };
 
   return (
@@ -60,12 +65,18 @@ export const AddButton = () => {
       <ProgramSearchModal
         disabledPrograms={data?.nodes?.map(program => program.type)}
         open={current === PatientModal.ProgramSearch}
-        onClose={() => setCurrent(undefined)}
+        onClose={reset}
         onChange={async documentRegistry => {
-          const createDocument = { data: {}, documentRegistry };
-          setCurrent(undefined);
-          setDocument({ type: documentRegistry.documentType, createDocument });
-          setCurrent(PatientModal.Program);
+          const createDocument = {
+            data: { enrolmentDatetime: new Date().toISOString() },
+            documentRegistry,
+          };
+          setCreationModal(
+            PatientModal.Program,
+            documentRegistry.documentType,
+            createDocument,
+            documentRegistry.documentType
+          );
         }}
       />
     </>

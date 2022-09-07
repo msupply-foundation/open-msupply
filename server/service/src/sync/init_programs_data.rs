@@ -2,10 +2,10 @@ use crate::service_provider::ServiceContext;
 use std::sync::Arc;
 
 use crate::{
-    document::{
+    programs::{
         encounter::{EncounterService, EncounterServiceTrait, InsertEncounter},
         patient::{PatientService, PatientServiceTrait, UpdatePatient, PATIENT_TYPE},
-        program::{
+        program_enrolment::{
             program_schema::{ProgramEnrolmentStatus, SchemaProgramEnrolment},
             ProgramEnrolmentService, ProgramEnrolmentServiceTrait, UpsertProgramEnrolment,
         },

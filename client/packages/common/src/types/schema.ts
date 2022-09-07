@@ -2782,6 +2782,7 @@ export enum PatientSortFieldInput {
   Address1 = 'address1',
   Address2 = 'address2',
   Code = 'code',
+  Code2 = 'code2',
   Country = 'country',
   DateOfBirth = 'dateOfBirth',
   Email = 'email',

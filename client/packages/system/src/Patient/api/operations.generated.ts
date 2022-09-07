@@ -54,7 +54,7 @@ export type GetDocumentHistoryQuery = { __typename: 'FullQuery', documentHistory
 
 export type ProgramEnrolmentsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
-  key?: Types.InputMaybe<Types.ProgramEnrolmentSortFieldInput>;
+  key: Types.ProgramEnrolmentSortFieldInput;
   desc?: Types.InputMaybe<Types.Scalars['Boolean']>;
   filter?: Types.InputMaybe<Types.ProgramEnrolmentFilterInput>;
   latestEventTime: Types.Scalars['String'];
@@ -78,6 +78,20 @@ export type UpdatePatientMutationVariables = Types.Exact<{
 
 
 export type UpdatePatientMutation = { __typename: 'FullMutation', updatePatient: { __typename: 'PatientNode', id: string, code: string, code2?: string | null, firstName?: string | null, lastName?: string | null, name: string, dateOfBirth?: string | null, gender?: Types.GenderType | null, email?: string | null, isDeceased: boolean, document?: { __typename: 'DocumentNode', id: string, name: string, type: string } | null } };
+
+export type EncounterRowFragment = { __typename: 'EncounterNode', id: string, program: string, startDatetime: string, endDatetime?: string | null, status?: Types.EncounterNodeStatus | null, name: string, type: string, document: { __typename: 'DocumentNode', documentRegistry?: { __typename: 'DocumentRegistryNode', name?: string | null } | null }, patient: { __typename: 'NameNode', id: string, firstName?: string | null, lastName?: string | null, name: string }, events: Array<{ __typename: 'ProgramEventNode', datetime: string, name?: string | null, type: string }> };
+
+export type EncountersQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String'];
+  key: Types.EncounterSortFieldInput;
+  desc?: Types.InputMaybe<Types.Scalars['Boolean']>;
+  filter?: Types.InputMaybe<Types.EncounterFilterInput>;
+  page?: Types.InputMaybe<Types.PaginationInput>;
+  latestEventTime: Types.Scalars['String'];
+}>;
+
+
+export type EncountersQuery = { __typename: 'FullQuery', encounters: { __typename: 'EncounterConnector', totalCount: number, nodes: Array<{ __typename: 'EncounterNode', id: string, program: string, startDatetime: string, endDatetime?: string | null, status?: Types.EncounterNodeStatus | null, name: string, type: string, document: { __typename: 'DocumentNode', documentRegistry?: { __typename: 'DocumentRegistryNode', name?: string | null } | null }, patient: { __typename: 'NameNode', id: string, firstName?: string | null, lastName?: string | null, name: string }, events: Array<{ __typename: 'ProgramEventNode', datetime: string, name?: string | null, type: string }> }> } };
 
 export const PatientRowFragmentDoc = gql`
     fragment PatientRow on PatientNode {
@@ -168,6 +182,31 @@ export const PatientFragmentDoc = gql`
   isDeceased
 }
     `;
+export const EncounterRowFragmentDoc = gql`
+    fragment EncounterRow on EncounterNode {
+  id
+  document {
+    documentRegistry {
+      name
+    }
+  }
+  program
+  startDatetime
+  endDatetime
+  status
+  name
+  type
+  patient {
+    id
+    firstName
+    lastName
+    name
+  }
+  events(filter: {datetime: {beforeOrEqualTo: $latestEventTime}}) {
+    ...ProgramEvent
+  }
+}
+    ${ProgramEventFragmentDoc}`;
 export const PatientsDocument = gql`
     query patients($storeId: String!, $key: PatientSortFieldInput!, $desc: Boolean, $first: Int, $offset: Int, $filter: PatientFilterInput) {
   patients(
@@ -236,7 +275,7 @@ export const GetDocumentHistoryDocument = gql`
 }
     `;
 export const ProgramEnrolmentsDocument = gql`
-    query programEnrolments($storeId: String!, $key: ProgramEnrolmentSortFieldInput, $desc: Boolean, $filter: ProgramEnrolmentFilterInput, $latestEventTime: String!) {
+    query programEnrolments($storeId: String!, $key: ProgramEnrolmentSortFieldInput!, $desc: Boolean, $filter: ProgramEnrolmentFilterInput, $latestEventTime: String!) {
   programEnrolments(
     storeId: $storeId
     sort: {key: $key, desc: $desc}
@@ -272,6 +311,23 @@ export const UpdatePatientDocument = gql`
   }
 }
     ${PatientRowFragmentDoc}`;
+export const EncountersDocument = gql`
+    query encounters($storeId: String!, $key: EncounterSortFieldInput!, $desc: Boolean, $filter: EncounterFilterInput, $page: PaginationInput, $latestEventTime: String!) {
+  encounters(
+    storeId: $storeId
+    sort: {key: $key, desc: $desc}
+    filter: $filter
+    page: $page
+  ) {
+    ... on EncounterConnector {
+      nodes {
+        ...EncounterRow
+      }
+      totalCount
+    }
+  }
+}
+    ${EncounterRowFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -300,6 +356,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     updatePatient(variables: UpdatePatientMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdatePatientMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpdatePatientMutation>(UpdatePatientDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updatePatient', 'mutation');
+    },
+    encounters(variables: EncountersQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<EncountersQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<EncountersQuery>(EncountersDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'encounters', 'query');
     }
   };
 }
@@ -421,5 +480,22 @@ export const mockInsertPatientMutation = (resolver: ResponseResolver<GraphQLRequ
 export const mockUpdatePatientMutation = (resolver: ResponseResolver<GraphQLRequest<UpdatePatientMutationVariables>, GraphQLContext<UpdatePatientMutation>, any>) =>
   graphql.mutation<UpdatePatientMutation, UpdatePatientMutationVariables>(
     'updatePatient',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockEncountersQuery((req, res, ctx) => {
+ *   const { storeId, key, desc, filter, page, latestEventTime } = req.variables;
+ *   return res(
+ *     ctx.data({ encounters })
+ *   )
+ * })
+ */
+export const mockEncountersQuery = (resolver: ResponseResolver<GraphQLRequest<EncountersQueryVariables>, GraphQLContext<EncountersQuery>, any>) =>
+  graphql.query<EncountersQuery, EncountersQueryVariables>(
+    'encounters',
     resolver
   )

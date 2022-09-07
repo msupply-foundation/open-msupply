@@ -80,12 +80,14 @@ query encounters(
   $key: EncounterSortFieldInput
   $desc: Boolean
   $filter: EncounterFilterInput
+  $page: PaginationInput
   $latestEventTime: String!
 ) {
   encounters(
     storeId: $storeId
     sort: { key: $key, desc: $desc }
     filter: $filter
+    page: $page
   ) {
     ... on EncounterConnector {
       nodes {
