@@ -18,12 +18,5 @@ pub(crate) use get_site_status::*;
 
 #[cfg(test)]
 fn create_api(url: &str, username: &str, password: &str) -> SyncApiV5 {
-    use reqwest::{Client, Url};
-
-    use super::SyncCredentials;
-
-    let url = Url::parse(url).unwrap();
-    let credentials = SyncCredentials::from_plain(username, password);
-    let client = Client::new();
-    SyncApiV5::new(url, credentials, client, "hardware_id")
+    SyncApiV5::new_test(url, username, password, "hardware_id")
 }
