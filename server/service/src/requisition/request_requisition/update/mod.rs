@@ -6,8 +6,7 @@ use crate::{
 };
 use chrono::{NaiveDate, Utc};
 use repository::{
-    LogRow, LogType, RepositoryError, Requisition, RequisitionLineRowRepository,
-    RequisitionRowRepository,
+    LogType, RepositoryError, Requisition, RequisitionLineRowRepository, RequisitionRowRepository,
 };
 
 mod generate;
@@ -15,7 +14,6 @@ mod test;
 mod validate;
 
 use generate::generate;
-use util::uuid::uuid;
 use validate::validate;
 
 #[derive(Debug, PartialEq, Clone)]
@@ -59,14 +57,13 @@ type OutError = UpdateRequestRequisitionError;
 
 pub fn update_request_requisition(
     ctx: &ServiceContext,
-    store_id: &str,
     input: UpdateRequestRequisition,
     //TODO add user_id
 ) -> Result<Requisition, OutError> {
     let requisition = ctx
         .connection
         .transaction_sync(|connection| {
-            let requisition_row = validate(connection, store_id, &input)?;
+            let requisition_row = validate(connection, &ctx.store_id, &input)?;
             let (updated_requisition, update_requisition_line_rows) =
                 generate(connection, requisition_row, input.clone())?;
             RequisitionRowRepository::new(&connection).upsert_one(&updated_requisition)?;
@@ -94,15 +91,10 @@ pub fn update_request_requisition(
 
     if input.status == Some(UpdateRequestRequistionStatus::Sent) {
         log_entry(
-            &ctx.connection,
-            &LogRow {
-                id: uuid(),
-                r#type: LogType::RequisitionStatusSent,
-                user_id: None,
-                store_id: Some(store_id.to_string()),
-                record_id: Some(requisition.requisition_row.id.to_string()),
-                datetime: Utc::now().naive_utc(),
-            },
+            &ctx,
+            LogType::RequisitionStatusSent,
+            Some(requisition.requisition_row.id.to_string()),
+            Utc::now().naive_utc(),
         )?;
     }
 

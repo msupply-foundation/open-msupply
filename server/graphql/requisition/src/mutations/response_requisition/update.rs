@@ -61,11 +61,11 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context()?;
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
     let response = match service_provider
         .requisition_service
-        .update_response_requisition(&service_context, store_id, &user.user_id, input.to_domain())
+        .update_response_requisition(&service_context, input.to_domain())
     {
         Ok(requisition) => UpdateResponse::Response(RequisitionNode::from_domain(requisition)),
         Err(error) => UpdateResponse::Error(UpdateError {
@@ -153,8 +153,7 @@ mod test {
         service_provider::{ServiceContext, ServiceProvider},
     };
 
-    type UpdateLineMethod =
-        dyn Fn(&str, ServiceInput) -> Result<Requisition, ServiceError> + Sync + Send;
+    type UpdateLineMethod = dyn Fn(ServiceInput) -> Result<Requisition, ServiceError> + Sync + Send;
 
     pub struct TestService(pub Box<UpdateLineMethod>);
 
@@ -162,11 +161,9 @@ mod test {
         fn update_response_requisition(
             &self,
             _: &ServiceContext,
-            store_id: &str,
-            _: &str,
             input: ServiceInput,
         ) -> Result<Requisition, ServiceError> {
-            self.0(store_id, input)
+            self.0(input)
         }
     }
 
@@ -211,7 +208,7 @@ mod test {
         "#;
 
         // RequisitionDoesNotExist
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::RequisitionDoesNotExist)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::RequisitionDoesNotExist)));
 
         let expected = json!({
             "updateResponseRequisition": {
@@ -231,7 +228,7 @@ mod test {
         );
 
         // CannotEditRequisition
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::CannotEditRequisition)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::CannotEditRequisition)));
 
         let expected = json!({
             "updateResponseRequisition": {
@@ -251,7 +248,7 @@ mod test {
         );
 
         // NotThisStoreRequisition
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotThisStoreRequisition)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NotThisStoreRequisition)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -263,7 +260,7 @@ mod test {
         );
 
         // NotAResponseRequisition
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotAResponseRequisition)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NotAResponseRequisition)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -275,7 +272,7 @@ mod test {
         );
 
         // UpdatedRequisitionDoesNotExist
-        let test_service = TestService(Box::new(|_, _| {
+        let test_service = TestService(Box::new(|_| {
             Err(ServiceError::UpdatedRequisitionDoesNotExist)
         }));
         let expected_message = "Internal error";
@@ -310,8 +307,7 @@ mod test {
         "#;
 
         // Success
-        let test_service = TestService(Box::new(|store_id, input| {
-            assert_eq!(store_id, "store_a");
+        let test_service = TestService(Box::new(|input| {
             assert_eq!(
                 input,
                 ServiceInput {

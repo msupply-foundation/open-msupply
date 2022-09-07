@@ -17,7 +17,7 @@ use service::{
     auth_data::AuthData,
     service_provider::ServiceProvider,
     settings::{is_develop, ServerSettings, Settings},
-    sync::Synchroniser,
+    sync::{remote_data_synchroniser::RemoteSyncState, Synchroniser},
     token_bucket::TokenBucket,
 };
 
@@ -162,7 +162,7 @@ async fn run_server(
         connection_manager.clone(),
         &config_settings.server.base_dir.clone().unwrap(),
     );
-    let service_context = service_provider.context().unwrap();
+    let service_context = service_provider.basic_context().unwrap();
     let service = &service_provider.settings;
 
     let db_settings = service.sync_settings(&service_context).unwrap();
@@ -212,24 +212,33 @@ async fn run_server(
     let mut synchroniser =
         Synchroniser::new(sync_settings, service_provider_data.deref().clone()).unwrap();
     // Do the initial pull before doing anything else
-    match synchroniser.initial_pull().await {
-        Ok(_) => {}
-        Err(err) => {
-            error!("Failed to perform the initial sync: {}", err);
-            if !is_develop() {
-                warn!("Falling back to bootstrap mode");
-                return run_stage0(
-                    settings,
-                    off_switch,
-                    token_bucket,
-                    token_secret,
-                    connection_manager,
-                    certificates,
-                )
-                .await;
+    let connection = get_storage_connection_manager(&settings.database)
+        .connection()
+        .unwrap();
+
+    let state = RemoteSyncState::new(&connection);
+    if state.initial_remote_data_synced().unwrap_or(false) {
+        {}
+    } else {
+        match synchroniser.initial_pull().await {
+            Ok(_) => {}
+            Err(err) => {
+                error!("Failed to perform the initial sync: {}", err);
+                if !is_develop() {
+                    warn!("Falling back to bootstrap mode");
+                    return run_stage0(
+                        settings,
+                        off_switch,
+                        token_bucket,
+                        token_secret,
+                        connection_manager,
+                        certificates,
+                    )
+                    .await;
+                }
             }
-        }
-    };
+        };
+    }
 
     let closure_settings = settings.clone();
 

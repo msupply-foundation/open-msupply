@@ -40,28 +40,25 @@ pub trait StocktakeLineServiceTrait: Sync + Send {
     fn insert_stocktake_line(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
         input: InsertStocktakeLine,
     ) -> Result<StocktakeLine, InsertStocktakeLineError> {
-        insert_stocktake_line(ctx, store_id, input)
+        insert_stocktake_line(ctx, input)
     }
 
     fn update_stocktake_line(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
         input: UpdateStocktakeLine,
     ) -> Result<StocktakeLine, UpdateStocktakeLineError> {
-        update_stocktake_line(ctx, store_id, input)
+        update_stocktake_line(ctx, input)
     }
 
     fn delete_stocktake_line(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
         stocktake_line_id: String,
     ) -> Result<String, DeleteStocktakeLineError> {
-        delete_stocktake_line(ctx, store_id, stocktake_line_id)
+        delete_stocktake_line(ctx, stocktake_line_id)
     }
 }
 

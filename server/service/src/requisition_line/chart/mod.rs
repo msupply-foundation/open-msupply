@@ -43,13 +43,12 @@ pub struct ItemChart {
 
 pub fn get_requisition_line_chart(
     ctx: &ServiceContext,
-    store_id: &str,
     requisition_line_id: &str,
     consumption_history_options: ConsumptionHistoryOptions,
     stock_evolution_options: StockEvolutionOptions,
 ) -> Result<ItemChart, OutError> {
     // Validate
-    let requisition_line = validate(&ctx.connection, store_id, requisition_line_id)?;
+    let requisition_line = validate(&ctx.connection, &ctx.store_id, requisition_line_id)?;
 
     let suggested_quantity_calculation =
         SuggestedQuantityCalculation::from_requisition_line(&requisition_line);
@@ -81,7 +80,7 @@ pub fn get_requisition_line_chart(
 
     let mut consumption_history = get_historic_consumption_for_item(
         &ctx.connection,
-        store_id,
+        &ctx.store_id,
         &item_id,
         requisition_line_datetime.date(),
         consumption_history_options,
@@ -98,7 +97,7 @@ pub fn get_requisition_line_chart(
         mut historic_stock,
     } = get_stock_evolution_for_item(
         &ctx.connection,
-        store_id,
+        &ctx.store_id,
         &item_id,
         *requisition_line_datetime,
         available_stock_on_hand as u32,
@@ -166,7 +165,7 @@ mod test {
         db_diesel::requisition_row::RequisitionRowType,
         mock::{
             mock_draft_response_requisition_for_update_test_line, mock_item_a, mock_name_a,
-            mock_request_draft_requisition_calculation_test, MockData, MockDataInserts,
+            mock_store_a, mock_store_b, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
         InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowType, NameRow,
@@ -184,33 +183,20 @@ mod test {
             setup_all("get_requisition_line_chart_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let mut context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.requisition_line_service;
 
         // RequisitionLineDoesNotExist
         assert_eq!(
             service.get_requisition_line_chart(
                 &context,
-                "store_a",
                 "n/a",
                 ConsumptionHistoryOptions::default(),
                 StockEvolutionOptions::default(),
             ),
             Err(ServiceError::RequisitionLineDoesNotExist)
-        );
-
-        let test_line = mock_request_draft_requisition_calculation_test().lines[0].clone();
-
-        // RequisitionLineDoesNotBelongToCurrentStore
-        assert_eq!(
-            service.get_requisition_line_chart(
-                &context,
-                "store_b",
-                &test_line.id,
-                ConsumptionHistoryOptions::default(),
-                StockEvolutionOptions::default(),
-            ),
-            Err(ServiceError::RequisitionLineDoesNotBelongToCurrentStore)
         );
 
         let test_line = mock_draft_response_requisition_for_update_test_line();
@@ -219,12 +205,23 @@ mod test {
         assert_eq!(
             service.get_requisition_line_chart(
                 &context,
-                "store_a",
                 &test_line.id,
                 ConsumptionHistoryOptions::default(),
                 StockEvolutionOptions::default(),
             ),
             Err(ServiceError::NotARequestRequisition)
+        );
+
+        // RequisitionLineDoesNotBelongToCurrentStore
+        context.store_id = mock_store_b().id;
+        assert_eq!(
+            service.get_requisition_line_chart(
+                &context,
+                &test_line.id,
+                ConsumptionHistoryOptions::default(),
+                StockEvolutionOptions::default(),
+            ),
+            Err(ServiceError::RequisitionLineDoesNotBelongToCurrentStore)
         );
     }
 
@@ -363,13 +360,14 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider
+            .context(store().id, "".to_string())
+            .unwrap();
         let service = service_provider.requisition_line_service;
 
         let result = service
             .get_requisition_line_chart(
                 &context,
-                &store().id,
                 &requisition_line().id,
                 ConsumptionHistoryOptions {
                     amc_lookback_months: 5,
@@ -550,13 +548,14 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider
+            .context(store().id, "".to_string())
+            .unwrap();
         let service = service_provider.requisition_line_service;
 
         let result = service
             .get_requisition_line_chart(
                 &context,
-                &store().id,
                 &requisition_line().id,
                 ConsumptionHistoryOptions::default(),
                 StockEvolutionOptions {

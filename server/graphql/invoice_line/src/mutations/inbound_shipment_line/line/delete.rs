@@ -41,17 +41,12 @@ pub fn delete(ctx: &Context<'_>, store_id: &str, input: DeleteInput) -> Result<D
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context()?;
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
     map_response(
         service_provider
             .invoice_line_service
-            .delete_inbound_shipment_line(
-                &service_context,
-                store_id,
-                &user.user_id,
-                input.to_domain(),
-            ),
+            .delete_inbound_shipment_line(&service_context, input.to_domain()),
     )
 }
 
@@ -145,8 +140,6 @@ mod test {
         fn delete_inbound_shipment_line(
             &self,
             _: &ServiceContext,
-            _: &str,
-            _: &str,
             input: ServiceInput,
         ) -> Result<String, ServiceError> {
             self.0(input)

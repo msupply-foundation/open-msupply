@@ -1,11 +1,10 @@
-use repository::{Invoice, InvoiceRowRepository, LogRow, LogType};
+use repository::{Invoice, InvoiceRowRepository, LogType};
 use repository::{RepositoryError, TransactionError};
 
 pub mod generate;
 pub mod validate;
 
 use generate::generate;
-use util::uuid::uuid;
 use validate::validate;
 
 use crate::invoice::query::get_invoice;
@@ -39,15 +38,14 @@ type OutError = InsertOutboundShipmentError;
 /// Insert a new outbound shipment and returns the invoice when successful.
 pub fn insert_outbound_shipment(
     ctx: &ServiceContext,
-    store_id: &str,
-    user_id: &str,
     input: InsertOutboundShipment,
 ) -> Result<Invoice, OutError> {
     let invoice = ctx
         .connection
         .transaction_sync(|connection| {
-            let other_party = validate(connection, store_id, &input)?;
-            let new_invoice = generate(connection, store_id, user_id, input, other_party)?;
+            let other_party = validate(connection, &ctx.store_id, &input)?;
+            let new_invoice =
+                generate(connection, &ctx.store_id, &ctx.user_id, input, other_party)?;
 
             InvoiceRowRepository::new(&connection).upsert_one(&new_invoice)?;
 
@@ -58,15 +56,10 @@ pub fn insert_outbound_shipment(
         .map_err(|error| error.to_inner_error())?;
 
     log_entry(
-        &ctx.connection,
-        &LogRow {
-            id: uuid(),
-            r#type: LogType::InvoiceCreated,
-            user_id: Some(user_id.to_string()),
-            store_id: Some(invoice.invoice_row.store_id.clone()),
-            record_id: Some(invoice.invoice_row.id.clone()),
-            datetime: invoice.invoice_row.created_datetime.clone(),
-        },
+        &ctx,
+        LogType::InvoiceCreated,
+        Some(invoice.invoice_row.id.clone()),
+        invoice.invoice_row.created_datetime.clone(),
     )?;
 
     Ok(invoice)
@@ -97,8 +90,8 @@ mod test {
     use repository::{
         mock::{
             mock_name_linked_to_store_join, mock_name_not_linked_to_store,
-            mock_outbound_shipment_a, mock_store_a, mock_store_b, mock_store_linked_to_name,
-            mock_user_account_a, MockData, MockDataInserts,
+            mock_outbound_shipment_a, mock_store_a, mock_store_linked_to_name, mock_user_account_a,
+            MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
         InvoiceRowRepository, NameRow, NameStoreJoinRow,
@@ -147,15 +140,15 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_service;
 
         //InvoiceAlreadyExists
         assert_eq!(
             service.insert_outbound_shipment(
                 &context,
-                &mock_store_b().id,
-                "n/a",
                 inline_init(|r: &mut InsertOutboundShipment| {
                     r.id = mock_outbound_shipment_a().id;
                 })
@@ -166,8 +159,6 @@ mod test {
         assert_eq!(
             service.insert_outbound_shipment(
                 &context,
-                &mock_store_a().id,
-                "n/a",
                 inline_init(|r: &mut InsertOutboundShipment| {
                     r.id = "new_id".to_string();
                     r.other_party_id = "invalid".to_string();
@@ -179,8 +170,6 @@ mod test {
         assert_eq!(
             service.insert_outbound_shipment(
                 &context,
-                &mock_store_a().id,
-                "n/a",
                 inline_init(|r: &mut InsertOutboundShipment| {
                     r.id = "new_id".to_string();
                     r.other_party_id = not_visible().id;
@@ -192,8 +181,6 @@ mod test {
         assert_eq!(
             service.insert_outbound_shipment(
                 &context,
-                &mock_store_a().id,
-                "n/a",
                 inline_init(|r: &mut InsertOutboundShipment| {
                     r.id = "new_id".to_string();
                     r.other_party_id = not_a_customer().id;
@@ -233,15 +220,15 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
         let service = service_provider.invoice_service;
 
         // Success
         service
             .insert_outbound_shipment(
                 &context,
-                &mock_store_a().id,
-                &mock_user_account_a().id,
                 inline_init(|r: &mut InsertOutboundShipment| {
                     r.id = "new_id".to_string();
                     r.other_party_id = customer().id;
@@ -266,8 +253,6 @@ mod test {
         service
             .insert_outbound_shipment(
                 &context,
-                &mock_store_a().id,
-                &mock_user_account_a().id,
                 inline_init(|r: &mut InsertOutboundShipment| {
                     r.id = "test_on_hold".to_string();
                     r.other_party_id = customer().id;
@@ -293,8 +278,6 @@ mod test {
         service
             .insert_outbound_shipment(
                 &context,
-                &mock_store_a().id,
-                &mock_user_account_a().id,
                 inline_init(|r: &mut InsertOutboundShipment| {
                     r.id = "test_name_store_id_linked".to_string();
                     r.other_party_id = mock_name_linked_to_store_join().name_id.clone();
@@ -318,8 +301,6 @@ mod test {
         service
             .insert_outbound_shipment(
                 &context,
-                &mock_store_a().id,
-                &mock_user_account_a().id,
                 inline_init(|r: &mut InsertOutboundShipment| {
                     r.id = "test_name_store_id_not_linked".to_string();
                     r.other_party_id = mock_name_not_linked_to_store().id.clone();

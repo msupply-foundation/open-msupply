@@ -61,17 +61,12 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context()?;
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
     map_response(
         service_provider
             .requisition_service
-            .insert_request_requisition(
-                &service_context,
-                store_id,
-                &user.user_id,
-                input.to_domain(),
-            ),
+            .insert_request_requisition(&service_context, input.to_domain()),
     )
 }
 
@@ -167,8 +162,7 @@ mod test {
 
     use crate::RequisitionMutations;
 
-    type InsertLineMethod =
-        dyn Fn(&str, ServiceInput) -> Result<Requisition, ServiceError> + Sync + Send;
+    type InsertLineMethod = dyn Fn(ServiceInput) -> Result<Requisition, ServiceError> + Sync + Send;
 
     pub struct TestService(pub Box<InsertLineMethod>);
 
@@ -176,11 +170,9 @@ mod test {
         fn insert_request_requisition(
             &self,
             _: &ServiceContext,
-            store_id: &str,
-            _: &str,
             input: ServiceInput,
         ) -> Result<Requisition, ServiceError> {
-            self.0(store_id, input)
+            self.0(input)
         }
     }
 
@@ -228,7 +220,7 @@ mod test {
         "#;
 
         // OtherPartyNotASupplier
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::OtherPartyNotASupplier)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::OtherPartyNotASupplier)));
 
         let expected = json!({
             "insertRequestRequisition": {
@@ -248,8 +240,7 @@ mod test {
         );
 
         // RequisitionAlreadyExists
-        let test_service =
-            TestService(Box::new(|_, _| Err(ServiceError::RequisitionAlreadyExists)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::RequisitionAlreadyExists)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -261,7 +252,7 @@ mod test {
         );
 
         // OtherPartyDoesNotExist
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::OtherPartyDoesNotExist)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::OtherPartyDoesNotExist)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -273,7 +264,7 @@ mod test {
         );
 
         // OtherPartyIsNotAStore
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::OtherPartyIsNotAStore)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::OtherPartyIsNotAStore)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -285,7 +276,7 @@ mod test {
         );
 
         // NewlyCreatedRequisitionDoesNotExist
-        let test_service = TestService(Box::new(|_, _| {
+        let test_service = TestService(Box::new(|_| {
             Err(ServiceError::NewlyCreatedRequisitionDoesNotExist)
         }));
         let expected_message = "Internal error";
@@ -320,8 +311,7 @@ mod test {
         "#;
 
         // Success
-        let test_service = TestService(Box::new(|store_id, input| {
-            assert_eq!(store_id, "store_a");
+        let test_service = TestService(Box::new(|input| {
             assert_eq!(
                 input,
                 ServiceInput {
@@ -371,7 +361,7 @@ mod test {
         );
 
         // Default expected_delivery_date
-        let test_service = TestService(Box::new(|_, input| {
+        let test_service = TestService(Box::new(|input| {
             let now = date_now();
             let expected = input.expected_delivery_date.unwrap();
             assert_eq!((expected - now), chrono::Duration::weeks(2));

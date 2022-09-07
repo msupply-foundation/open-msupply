@@ -62,8 +62,6 @@ pub struct BatchRequestRequisitionResult {
 
 pub fn batch_request_requisition(
     ctx: &ServiceContext,
-    store_id: &str,
-    user_id: &str,
     input: BatchRequestRequisition,
 ) -> Result<BatchRequestRequisitionResult, RepositoryError> {
     let result = ctx
@@ -72,7 +70,7 @@ pub fn batch_request_requisition(
             let continue_on_error = input.continue_on_error.unwrap_or(false);
             let mut results = BatchRequestRequisitionResult::default();
 
-            let mutations_processor = BatchMutationsProcessor::new(ctx, store_id, user_id);
+            let mutations_processor = BatchMutationsProcessor::new(ctx);
 
             let (has_errors, result) = mutations_processor
                 .do_mutations_with_user_id(input.insert_requisition, insert_request_requisition);
@@ -133,7 +131,7 @@ mod test {
     use repository::{
         mock::{
             mock_draft_response_requisition_for_update_test, mock_item_a, mock_name_store_c,
-            MockDataInserts,
+            mock_store_a, MockDataInserts,
         },
         test_db::setup_all,
         RequisitionLineRowRepository, RequisitionRowRepository,
@@ -156,7 +154,9 @@ mod test {
             setup_all("batch_request_requisition_service", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.requisition_service;
 
         let delete_requisition_input = inline_init(|input: &mut DeleteRequestRequisition| {
@@ -184,7 +184,7 @@ mod test {
 
         // Test rollback
         let result = service
-            .batch_request_requisition(&context, "store_a", "n/a", input.clone())
+            .batch_request_requisition(&context, input.clone())
             .unwrap();
 
         assert_eq!(
@@ -212,9 +212,7 @@ mod test {
         // Test no rollback
         input.continue_on_error = Some(true);
 
-        service
-            .batch_request_requisition(&context, "store_a", "n/a", input)
-            .unwrap();
+        service.batch_request_requisition(&context, input).unwrap();
 
         assert_ne!(
             RequisitionRowRepository::new(&connection)

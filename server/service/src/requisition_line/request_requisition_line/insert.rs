@@ -46,14 +46,13 @@ type OutError = InsertRequestRequisitionLineError;
 
 pub fn insert_request_requisition_line(
     ctx: &ServiceContext,
-    store_id: &str,
     input: InsertRequestRequisitionLine,
 ) -> Result<RequisitionLine, OutError> {
     let requisition_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let requisition_row = validate(connection, store_id, &input)?;
-            let new_requisition_line_row = generate(ctx, store_id, requisition_row, input)?;
+            let requisition_row = validate(connection, &ctx.store_id, &input)?;
+            let new_requisition_line_row = generate(ctx, &ctx.store_id, requisition_row, input)?;
 
             RequisitionLineRowRepository::new(&connection).upsert_one(&new_requisition_line_row)?;
 
@@ -139,7 +138,8 @@ mod test {
             mock_draft_request_requisition_for_update_test,
             mock_draft_response_requisition_for_update_test, mock_item_c,
             mock_request_draft_requisition, mock_request_draft_requisition_calculation_test,
-            mock_sent_request_requisition, test_item_stats, MockDataInserts,
+            mock_sent_request_requisition, mock_store_a, mock_store_b, test_item_stats,
+            MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
         RequisitionLineRowRepository,
@@ -162,14 +162,15 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let mut context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.requisition_line_service;
 
         // RequisitionLineAlreadyExists
         assert_eq!(
             service.insert_request_requisition_line(
                 &context,
-                "store_a",
                 inline_init(|r: &mut InsertRequestRequisitionLine| {
                     r.id = mock_request_draft_requisition_calculation_test().lines[0]
                         .id
@@ -183,7 +184,6 @@ mod test {
         assert_eq!(
             service.insert_request_requisition_line(
                 &context,
-                "store_a",
                 inline_init(|r: &mut InsertRequestRequisitionLine| {
                     r.requisition_id = mock_request_draft_requisition_calculation_test()
                         .requisition
@@ -201,7 +201,6 @@ mod test {
         assert_eq!(
             service.insert_request_requisition_line(
                 &context,
-                "store_a",
                 inline_init(|r: &mut InsertRequestRequisitionLine| {
                     r.requisition_id = "invalid".to_owned();
                 }),
@@ -209,23 +208,10 @@ mod test {
             Err(ServiceError::RequisitionDoesNotExist)
         );
 
-        // NotThisStoreRequisition
-        assert_eq!(
-            service.insert_request_requisition_line(
-                &context,
-                "store_b",
-                inline_init(|r: &mut InsertRequestRequisitionLine| {
-                    r.requisition_id = mock_draft_request_requisition_for_update_test().id;
-                }),
-            ),
-            Err(ServiceError::NotThisStoreRequisition)
-        );
-
         // CannotEditRequisition
         assert_eq!(
             service.insert_request_requisition_line(
                 &context,
-                "store_a",
                 inline_init(|r: &mut InsertRequestRequisitionLine| {
                     r.requisition_id = mock_sent_request_requisition().id;
                 }),
@@ -237,7 +223,6 @@ mod test {
         assert_eq!(
             service.insert_request_requisition_line(
                 &context,
-                "store_a",
                 inline_init(|r: &mut InsertRequestRequisitionLine| {
                     r.requisition_id = mock_draft_response_requisition_for_update_test().id;
                 }),
@@ -249,7 +234,6 @@ mod test {
         assert_eq!(
             service.insert_request_requisition_line(
                 &context,
-                "store_a",
                 inline_init(|r: &mut InsertRequestRequisitionLine| {
                     r.requisition_id = mock_request_draft_requisition_calculation_test()
                         .requisition
@@ -258,6 +242,18 @@ mod test {
                 }),
             ),
             Err(ServiceError::ItemDoesNotExist)
+        );
+
+        // NotThisStoreRequisition
+        context.store_id = mock_store_b().id;
+        assert_eq!(
+            service.insert_request_requisition_line(
+                &context,
+                inline_init(|r: &mut InsertRequestRequisitionLine| {
+                    r.requisition_id = mock_draft_request_requisition_for_update_test().id;
+                }),
+            ),
+            Err(ServiceError::NotThisStoreRequisition)
         );
     }
 
@@ -271,13 +267,14 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.requisition_line_service;
 
         service
             .insert_request_requisition_line(
                 &context,
-                "store_a",
                 InsertRequestRequisitionLine {
                     requisition_id: mock_request_draft_requisition_calculation_test()
                         .requisition
@@ -311,7 +308,6 @@ mod test {
         // Check with item_c which exists in another requisition
         let result = service.insert_request_requisition_line(
             &context,
-            "store_a",
             inline_init(|r: &mut InsertRequestRequisitionLine| {
                 r.requisition_id = mock_request_draft_requisition().id;
                 r.id = "new requisition line id2".to_owned();
