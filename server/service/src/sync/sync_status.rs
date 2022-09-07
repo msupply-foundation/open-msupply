@@ -106,9 +106,7 @@ pub fn get_latest_sync_status(
     );
 
     let mut max_key = Initial;
-    let mut max_datetime = most_recent_sync_row
-        .prepare_initial_start_datetime
-        .unwrap_or(Defaults::naive_date_time());
+    let mut max_datetime = most_recent_sync_row.started_datetime;
     for (key, sync_status) in sync_map {
         if let Some(started) = sync_status.started {
             if started > max_datetime {
