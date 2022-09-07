@@ -15,7 +15,6 @@ import { themeOptions } from '@common/styles';
 import { LanguageMenu } from '../components';
 import { Setting } from './Setting';
 import { SettingTextArea, TextValue } from './SettingTextArea';
-import packageJson from 'package.json';
 import { useHost } from '../api/hooks';
 import { SyncSettings } from './SyncSettings';
 
@@ -108,25 +107,15 @@ export const Settings: React.FC = () => {
       <SyncSettings />
       <Grid style={{ position: 'absolute', right: 0, bottom: 30 }}>
         <Grid container padding={1} flexDirection="column">
-          <Grid item display="flex" flex={1} gap={1}>
-            <Grid item justifyContent="flex-end" flex={1} display="flex">
-              <Typography fontWeight={700} whiteSpace="nowrap">
-                {t('label.app-version')}
-              </Typography>
-            </Grid>
-            <Grid item flex={1}>
-              <Typography>{packageJson.version}</Typography>
-            </Grid>
-          </Grid>
           {!!data && (
             <Grid item display="flex" flex={1} gap={1}>
               <Grid item justifyContent="flex-end" flex={1} display="flex">
-                <Typography fontWeight={700} whiteSpace="nowrap">
-                  {t('label.api-version')}
+                <Typography fontWeight={700}>
+                  {t('label.app-version')}
                 </Typography>
               </Grid>
               <Grid item flex={1}>
-                <Typography>{data}</Typography>
+                <Typography whiteSpace="nowrap">{data}</Typography>
               </Grid>
             </Grid>
           )}
