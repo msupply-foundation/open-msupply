@@ -3,19 +3,17 @@
 
 @ECHO ##### Copying bin and certs folders #####
 mkdir "omSupply\omSupply Web Server\app_data"
-xcopy "omSupply\bin" "omSupply\omSupply Web Server\bin" /e /h /c /i
-xcopy "omSupply\certs" "omSupply\omSupply Web Server\app_data\certs" /e /h /c /i
+mkdir "omSupply\omSupply Web Server\certs"
 
 mkdir "omSupply\omSupply Desktop Server\server\app_data"
-xcopy "omSupply\bin" "omSupply\omSupply Desktop Server\server\bin" /e /h /c /i
-xcopy "omSupply\certs" "omSupply\omSupply Desktop Server\server\app_data\certs" /e /h /c /i
+mkdir "omSupply\omSupply Desktop Server\server\certs"
 
-copy "omSupply\build\omsupply_license_and_warranty.txt" "omSupply\omsupply_license_and_warranty.txt"
-copy "omSupply\build\omSupply.ico" "omSupply\omSupply.ico"
+copy "omSupply\omsupply_license_and_warranty.txt" "omSupply\omsupply_license_and_warranty.txt"
+copy "omSupply\omSupply.ico" "omSupply\omSupply.ico"
 
 @ECHO ##### Adjusting SUFS #####
 SET installerWorkspace=C:\Program Files (x86)\Jenkins\jobs\omSupplyMain - installers\workspace\omSupply
-SET SUFlocation=%installerWorkspace%\build
+SET SUFlocation=%installerWorkspace%
 FOR /F "delims=*" %%i in ('more omSupply\version.txt') do SET versionTag=%%i
 @ECHO "current tag = %versionTag%"
 SET installersOutputFolder=C:\Program Files (x86)\Jenkins\jobs\omSupplyMain - installers\workspace\installers
