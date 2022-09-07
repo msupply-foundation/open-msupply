@@ -18,7 +18,7 @@ import { Footer } from './Footer';
 
 export const DetailView: FC = () => {
   const t = useTranslation('patients');
-  const id = useEncounter.utils.id;
+  const id = useEncounter.utils.id();
   const navigate = useNavigate();
   const { setSuffix } = useBreadcrumbs([AppRoute.Encounter]);
   const dateFormat = useFormatDateTime();
