@@ -25,7 +25,6 @@ pub mod requisition_line;
 pub mod service_provider;
 pub mod settings;
 pub mod settings_service;
-pub mod site_info;
 pub mod static_files;
 pub mod stock_line;
 pub mod stocktake;
