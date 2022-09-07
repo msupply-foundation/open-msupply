@@ -3,7 +3,7 @@ use repository::{Document, DocumentRepository, DocumentStatus, RepositoryError, 
 
 use crate::{
     document::{document_service::DocumentInsertError, is_latest_doc, raw_document::RawDocument},
-    programs::patient::{patient_doc_name, patient_program_doc_name},
+    programs::patient::{main_patient_doc_name, patient_doc_name},
     service_provider::{ServiceContext, ServiceProvider},
 };
 
@@ -85,7 +85,7 @@ impl From<RepositoryError> for UpsertProgramEnrolmentError {
 
 fn generate(user_id: &str, input: UpsertProgramEnrolment) -> Result<RawDocument, RepositoryError> {
     Ok(RawDocument {
-        name: patient_program_doc_name(&input.patient_id, &input.r#type),
+        name: patient_doc_name(&input.patient_id, &input.r#type),
         parents: input.parent.map(|p| vec![p]).unwrap_or(vec![]),
         author: user_id.to_string(),
         timestamp: Utc::now(),
@@ -111,7 +111,7 @@ fn validate_patient_exists(
     ctx: &ServiceContext,
     patient_id: &str,
 ) -> Result<bool, RepositoryError> {
-    let doc_name = patient_doc_name(patient_id);
+    let doc_name = main_patient_doc_name(patient_id);
     let document = DocumentRepository::new(&ctx.connection).find_one_by_name(&doc_name)?;
     Ok(document.is_some())
 }
@@ -122,7 +122,7 @@ fn validate_program_not_exists(
     patient_id: &str,
     program: &str,
 ) -> Result<bool, RepositoryError> {
-    let patient_name = patient_program_doc_name(patient_id, program);
+    let patient_name = patient_doc_name(patient_id, program);
     let existing_document = service_provider
         .document_service
         .get_document(ctx, &patient_name)?;
@@ -167,7 +167,7 @@ mod test {
 
     use crate::{
         programs::{
-            patient::{patient_program_doc_name, test::mock_patient_1, UpdatePatient},
+            patient::{patient_doc_name, test::mock_patient_1, UpdatePatient},
             program_enrolment::{program_schema::SchemaProgramEnrolment, UpsertProgramEnrolment},
         },
         service_provider::ServiceProvider,
@@ -306,7 +306,7 @@ mod test {
 
         // success update
         let v0 = DocumentRepository::new(&ctx.connection)
-            .find_one_by_name(&patient_program_doc_name(&patient.id, &program_type))
+            .find_one_by_name(&patient_doc_name(&patient.id, &program_type))
             .unwrap()
             .unwrap();
         service
