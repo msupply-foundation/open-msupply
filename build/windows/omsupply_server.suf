@@ -5,152 +5,6 @@
 <ProductType>Commercial</ProductType>
 <ArchiveFiles>
 <FileData>
-<FldRef>1</FldRef>
-<FullName>#PROJECTFILEDIR#\omSupply Web Server\app_data\*.*</FullName>
-<FileName>*.*</FileName>
-<Source>#PROJECTFILEDIR#\omSupply Web Server\app_data</Source>
-<Ext>*</Ext>
-<RTSource>Archive</RTSource>
-<Desc/>
-<Recurse>1</Recurse>
-<MatchMode>0</MatchMode>
-<Dest>%AppFolder%\app_data</Dest>
-<Overwrite>2</Overwrite>
-<Backup>0</Backup>
-<Protect>0</Protect>
-<InstallOrder>1000</InstallOrder>
-<SCStartRoot>0</SCStartRoot>
-<SCStartProgs>0</SCStartProgs>
-<SCAppFld>0</SCAppFld>
-<SCStartup>0</SCStartup>
-<SCDesk>0</SCDesk>
-<SCQLaunch>0</SCQLaunch>
-<SCStartPinOption>0</SCStartPinOption>
-<SCCust>0</SCCust>
-<CustSCPath/>
-<SCDesc/>
-<SCComment/>
-<SCArgs/>
-<SCWork/>
-<UseExtIco>0</UseExtIco>
-<IcoFN/>
-<IcoIdx>0</IcoIdx>
-<IcoShowMd>0</IcoShowMd>
-<IcoHK>0</IcoHK>
-<RegTTF>1</RegTTF>
-<TTFName/>
-<RegOCX>1</RegOCX>
-<RegTLB>1</RegTLB>
-<SupInUse>0</SupInUse>
-<Compress>1</Compress>
-<UseOrigAttr>1</UseOrigAttr>
-<Attr>0</Attr>
-<NoCRC>0</NoCRC>
-<NoRemove>0</NoRemove>
-<Shared>0</Shared>
-<OSCond>
-<OS>32768</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-</OSCond>
-<RTCond/>
-<BuildConfigs>
-<Cfg>All</Cfg>
-</BuildConfigs>
-<Package>None</Package>
-<Packages/>
-<Notes/>
-<CompSize>0</CompSize>
-<CRC>0</CRC>
-<StoreOnly>0</StoreOnly>
-</FileData>
-<FileData>
-<FldRef>1</FldRef>
-<FullName>#PROJECTFILEDIR#\omSupply Web Server\bin\*.*</FullName>
-<FileName>*.*</FileName>
-<Source>#PROJECTFILEDIR#\omSupply Web Server\bin</Source>
-<Ext>*</Ext>
-<RTSource>Archive</RTSource>
-<Desc/>
-<Recurse>1</Recurse>
-<MatchMode>0</MatchMode>
-<Dest>%AppFolder%\bin</Dest>
-<Overwrite>1</Overwrite>
-<Backup>0</Backup>
-<Protect>0</Protect>
-<InstallOrder>1000</InstallOrder>
-<SCStartRoot>0</SCStartRoot>
-<SCStartProgs>0</SCStartProgs>
-<SCAppFld>0</SCAppFld>
-<SCStartup>0</SCStartup>
-<SCDesk>0</SCDesk>
-<SCQLaunch>0</SCQLaunch>
-<SCStartPinOption>0</SCStartPinOption>
-<SCCust>0</SCCust>
-<CustSCPath/>
-<SCDesc/>
-<SCComment/>
-<SCArgs/>
-<SCWork/>
-<UseExtIco>0</UseExtIco>
-<IcoFN/>
-<IcoIdx>0</IcoIdx>
-<IcoShowMd>0</IcoShowMd>
-<IcoHK>0</IcoHK>
-<RegTTF>1</RegTTF>
-<TTFName/>
-<RegOCX>1</RegOCX>
-<RegTLB>1</RegTLB>
-<SupInUse>0</SupInUse>
-<Compress>1</Compress>
-<UseOrigAttr>1</UseOrigAttr>
-<Attr>0</Attr>
-<NoCRC>0</NoCRC>
-<NoRemove>0</NoRemove>
-<Shared>0</Shared>
-<OSCond>
-<OS>32768</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-</OSCond>
-<RTCond/>
-<BuildConfigs>
-<Cfg>All</Cfg>
-</BuildConfigs>
-<Package>None</Package>
-<Packages/>
-<Notes/>
-<CompSize>0</CompSize>
-<CRC>0</CRC>
-<StoreOnly>0</StoreOnly>
-</FileData>
-<FileData>
 <FldRef>0</FldRef>
 <FullName>#PROJECTFILEDIR#\omSupply Web Server\omSupply-sqlite.exe</FullName>
 <FileName>omSupply-sqlite.exe</FileName>
@@ -4254,16 +4108,13 @@ TextFile.WriteFromString(SessionVar.Expand("%AppFolder%\\settings.ini"), sSettin
 local sFileToBeDeletePath = "";
 
 if (SessionVar.Get("%omsupply_selected_db%") == "sqlite") then
-	File.Run(SessionVar.Expand("%AppFolder%\\bin\\nssm.exe"), SessionVar.Expand("install \"omSupply\" \"%AppFolder%\\omSupply-sqlite.exe\""), "", SW_HIDE, true);
 	sFileToBeDeletePath = SessionVar.Expand("%AppFolder%\\omSupply-postgres.exe");
+	Service.Create(SessionVar.Expand("%AppFolder%\\omSupply-postgres.exe"), "Open mSupply Server", "omSupply", SERVICE_WIN32_OWN_PROCESS, false, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL, "", nil, nil, "", "");
 else
 	File.Copy(SessionVar.Expand("%AppFolder%\\configuration\\base.yaml"), SessionVar.Expand("%AppFolder%\\configuration\\local.yaml"), false, true);
-	File.Run(SessionVar.Expand("%AppFolder%\\bin\\nssm.exe"), SessionVar.Expand("install \"omSupply\" \"%AppFolder%\\omSupply-postgres.exe\""), "", SW_HIDE, true);
+	Service.Create(SessionVar.Expand("%AppFolder%\\omSupply-sqlite.exe"), "Open mSupply Server", "omSupplyServer", SERVICE_WIN32_OWN_PROCESS, false, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL, "", nil, nil, "", "");
 	sFileToBeDeletePath = SessionVar.Expand("%AppFolder%\\omSupply-sqlite.exe");
 end
-
-File.Run(SessionVar.Expand("%AppFolder%\\bin\\nssm.exe"), SessionVar.Expand("set \"omSupply\" Description \"Open mSupply remote desktop server.\""), "", SW_HIDE, false);
-File.Run(SessionVar.Expand("%AppFolder%\\bin\\nssm.exe"), SessionVar.Expand("set \"omSupply\" start SERVICE_DELAYED_AUTO_START"), "", SW_HIDE, false);
 
 File.Delete(sFileToBeDeletePath); -- Delete unchoosen app file (.exe) by a user
 
@@ -4273,7 +4124,7 @@ if (err ~= 0) then
 	--If an error occurred, display an error message to the user.
 	Dialog.Message("Error", _tblErrorMessages[err], MB_OK, MB_ICONEXCLAMATION, MB_DEFBUTTON1);
 end
-Service.Start("omSupply", "omSupply", nil);
+Service.Start("Open mSupply Server", "omSupply", nil);
 </Script>
 <BookMarks count="0">
 </BookMarks>
