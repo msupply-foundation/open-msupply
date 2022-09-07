@@ -116,7 +116,7 @@ impl SyncRecordTester for RequisitionRecordTester {
             d.suggested_quantity = 15;
             d.supply_quantity = 15;
             d.available_stock_on_hand = 15;
-            d.average_monthly_consumption = 20;
+            d.average_monthly_consumption = 10;
             d.comment = Some("some comment".to_string());
             d.snapshot_datetime = Some(NaiveDate::from_ymd(2022, 03, 20).and_hms(12, 13, 14));
             d

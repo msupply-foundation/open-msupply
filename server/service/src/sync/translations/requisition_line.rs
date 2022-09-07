@@ -1,4 +1,4 @@
-use crate::sync::sync_serde::{empty_date_time_as_option, empty_str_as_option};
+use crate::sync::sync_serde::empty_str_as_option;
 use chrono::NaiveDateTime;
 use repository::{
     ChangelogRow, ChangelogTableName, RequisitionLineRow, RequisitionLineRowRepository,
@@ -33,8 +33,6 @@ pub struct LegacyRequisitionLineRow {
     pub comment: Option<String>,
 
     #[serde(rename = "om_snapshot_datetime")]
-    #[serde(default)]
-    #[serde(deserialize_with = "empty_date_time_as_option")]
     pub snapshot_datetime: Option<NaiveDateTime>,
 }
 
@@ -63,7 +61,8 @@ impl SyncTranslation for RequisitionLineTranslation {
             suggested_quantity: data.suggested_quantity,
             supply_quantity: data.actualQuan,
             available_stock_on_hand: data.stock_on_hand,
-            average_monthly_consumption: (data.daily_usage * NUMBER_OF_DAYS_IN_A_MONTH) as i32,
+            average_monthly_consumption: (data.daily_usage * NUMBER_OF_DAYS_IN_A_MONTH).ceil()
+                as i32,
             comment: data.comment,
             snapshot_datetime: data.snapshot_datetime,
         };
@@ -111,10 +110,10 @@ impl SyncTranslation for RequisitionLineTranslation {
             comment,
             snapshot_datetime,
         } = RequisitionLineRowRepository::new(connection)
-            .find_one_by_id(&changelog.row_id)?
+            .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
                 "Requisition line row not found: {}",
-                changelog.row_id
+                changelog.record_id
             )))?;
 
         let legacy_row = LegacyRequisitionLineRow {
@@ -131,7 +130,7 @@ impl SyncTranslation for RequisitionLineTranslation {
         };
 
         Ok(Some(vec![PushUpsertRecord {
-            sync_id: changelog.id,
+            sync_id: changelog.cursor,
             table_name,
             record_id: id,
             data: serde_json::to_value(&legacy_row)?,
