@@ -15,31 +15,8 @@
       },
       "type": "object"
     },
-    "HIVRiscGroup": {
-      "enum": [
-        "SEX_WORKERS",
-        "MEN_SEX_WITH_MEN",
-        "INJECTING_DRUG_USER",
-        "PRISONER",
-        "SEX_WORKER_CLIENT",
-        "TRANSGENDER_WOMEN",
-        "SLUM_SWELLER"
-      ],
-      "type": "string"
-    },
     "HIVStatus": {
-      "enum": [
-        "POSITIVE",
-        "NEGATIVE",
-        "UNKNOWN"
-      ],
-      "type": "string"
-    },
-    "HIVTestType": {
-      "enum": [
-        "PCR",
-        "ANTIBODY"
-      ],
+      "enum": ["POSITIVE", "NEGATIVE", "UNKNOWN"],
       "type": "string"
     },
     "HIVTestingProgramEnrolment": {
@@ -53,9 +30,6 @@
           "description": "Program enrolment specific patient id.",
           "type": "string"
         },
-        "hivTestType": {
-          "$ref": "#/definitions/HIVTestType"
-        },
         "mother": {
           "$ref": "#/definitions/HIVRelation"
         },
@@ -65,26 +39,16 @@
         "referredFrom": {
           "$ref": "#/definitions/ReferredFrom"
         },
-        "riskGroup": {
-          "$ref": "#/definitions/HIVRiscGroup"
-        },
         "status": {
           "$ref": "#/definitions/ProgramEnrolmentStatus",
           "description": "Current status of the program enrolment"
         }
       },
-      "required": [
-        "enrolmentDatetime"
-      ],
+      "required": ["enrolmentDatetime"],
       "type": "object"
     },
     "ProgramEnrolmentStatus": {
-      "enum": [
-        "ACTIVE",
-        "OPTED_OUT",
-        "TRANSFERRED_OUT",
-        "PAUSED"
-      ],
+      "enum": ["ACTIVE", "OPTED_OUT", "TRANSFERRED_OUT", "PAUSED"],
       "type": "string"
     },
     "ReferredFrom": {

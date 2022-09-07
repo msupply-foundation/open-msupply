@@ -24,18 +24,11 @@
           "type": "string"
         }
       },
-      "required": [
-        "datetime",
-        "type"
-      ],
+      "required": ["datetime", "type"],
       "type": "object"
     },
     "EncounterStatus": {
-      "enum": [
-        "SCHEDULED",
-        "DONE",
-        "CANCELLED"
-      ],
+      "enum": ["SCHEDULED", "DONE", "CANCELLED"],
       "type": "string"
     },
     "FamilyPlanning": {
@@ -51,12 +44,16 @@
       },
       "type": "object"
     },
+    "HIVRiskGroup": {
+      "enum": ["GP", "HR", "MSM", "TG", "FSW", "MSW"],
+      "type": "string"
+    },
     "HIVStatus": {
-      "enum": [
-        "POSITIVE",
-        "NEGATIVE",
-        "UNKNOWN"
-      ],
+      "enum": ["POSITIVE", "NEGATIVE", "UNKNOWN"],
+      "type": "string"
+    },
+    "HIVTestType": {
+      "enum": ["PCR", "ANTIBODY"],
       "type": "string"
     },
     "HIVTestingEncounter": {
@@ -83,17 +80,10 @@
               "type": "string"
             },
             "type": {
-              "enum": [
-                "PCR",
-                "ANTIBODY"
-              ],
-              "type": "string"
+              "$ref": "#/definitions/HIVTestType"
             }
           },
-          "required": [
-            "datetime",
-            "type"
-          ],
+          "required": ["datetime", "type"],
           "type": "object"
         },
         "hivTestingResult": {
@@ -115,10 +105,7 @@
               "type": "number"
             }
           },
-          "required": [
-            "datetime",
-            "result"
-          ],
+          "required": ["datetime", "result"],
           "type": "object"
         },
         "practitioner": {
@@ -155,15 +142,7 @@
               "type": "boolean"
             },
             "riskGroup": {
-              "enum": [
-                "GP",
-                "HR",
-                "MSM",
-                "TG",
-                "FSW",
-                "MSW"
-              ],
-              "type": "string"
+              "$ref": "#/definitions/HIVRiskGroup"
             },
             "sexWithSameSex": {
               "description": "Have you received any of the following in the past 12 months ?: Had sex with someone of the same sex ?",
@@ -193,9 +172,7 @@
           "$ref": "#/definitions/EncounterStatus"
         }
       },
-      "required": [
-        "startDatetime"
-      ],
+      "required": ["startDatetime"],
       "type": "object"
     },
     "Practitioner": {
