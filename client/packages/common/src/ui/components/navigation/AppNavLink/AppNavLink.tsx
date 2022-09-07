@@ -51,6 +51,7 @@ export interface AppNavLinkProps {
   inactive?: boolean;
   text?: string;
   to: string;
+  visible?: boolean;
   onClick?: () => void;
 }
 
@@ -61,6 +62,7 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
     icon = <span style={{ width: 2 }} />,
     text,
     to,
+    visible = true,
     onClick,
   } = props;
   const drawer = useDrawer();
@@ -95,7 +97,7 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
     [to]
   );
 
-  return (
+  return visible ? (
     <StyledListItem isSelected={selected} to={to}>
       <ListItemButton
         sx={{
@@ -119,5 +121,5 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
         </Box>
       </ListItemButton>
     </StyledListItem>
-  );
+  ) : null;
 };
