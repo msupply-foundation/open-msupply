@@ -1,7 +1,7 @@
 [package]
 name = "server"
-version = "0.1.0"
-authors = ["will"]
+version = "1.0.0-alpha.6"
+authors = ["mSupply Foundation"]
 edition = "2018"
 default-run = "remote_server"
 
