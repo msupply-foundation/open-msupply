@@ -3,8 +3,7 @@ mod central_server_configurations;
 mod errors;
 mod remote;
 mod site_info;
-
-use std::{error::Error, future::Future};
+mod transfer;
 
 use self::central_server_configurations::NewSiteProperties;
 use crate::{
@@ -14,21 +13,40 @@ use crate::{
         synchroniser::Synchroniser,
         translations::{IntegrationRecords, PullDeleteRecord},
     },
+    test_helpers::{setup_all_and_service_provider, ServiceTestContext},
 };
-use actix_web::web::Data;
-use repository::{mock::MockDataInserts, test_db::setup_all, StorageConnection};
+use repository::{mock::MockDataInserts, StorageConnection};
+use std::{error::Error, future::Future, sync::Arc};
+use tokio::task::JoinHandle;
 
-async fn init_db(sync_settings: &SyncSettings, step: &str) -> (StorageConnection, Synchroniser) {
-    let (_, connection, connection_manager, _) = setup_all(
-        &format!("sync_integration_{}_tests", step),
+struct SyncIntegrationContext {
+    connection: StorageConnection,
+    synchroniser: Synchroniser,
+    service_provider: Arc<ServiceProvider>,
+    processors_task: JoinHandle<()>,
+}
+
+async fn init_db(sync_settings: &SyncSettings, identifier: &str) -> SyncIntegrationContext {
+    let ServiceTestContext {
+        connection,
+        service_provider,
+        processors_task,
+        ..
+    } = setup_all_and_service_provider(
+        &format!("sync_integration_{}_tests", identifier),
         MockDataInserts::none(),
     )
     .await;
 
-    let service_provider = Data::new(ServiceProvider::new(connection_manager.clone(), "app_data"));
-    let synchroniser = Synchroniser::new(sync_settings.clone(), service_provider).unwrap();
+    let synchroniser =
+        Synchroniser::new(sync_settings.clone(), service_provider.clone().into()).unwrap();
 
-    (connection, synchroniser)
+    SyncIntegrationContext {
+        connection,
+        synchroniser,
+        service_provider,
+        processors_task,
+    }
 }
 
 struct TestStepData {

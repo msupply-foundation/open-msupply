@@ -15,9 +15,7 @@ mod tests {
             api::{SyncApiError, SyncErrorV5},
             settings::SyncSettings,
             synchroniser::Synchroniser,
-            test::integration::central_server_configurations::{
-                ConfigureCentralServer, CreateSyncSiteResult,
-            },
+            test::integration::central_server_configurations::{ConfigureCentralServer, SiteConfiguration},
         },
     };
 
@@ -51,8 +49,8 @@ mod tests {
     }
     #[actix_rt::test]
     async fn integration_sync_parsed_error() {
-        let CreateSyncSiteResult { sync_settings, .. } = ConfigureCentralServer::from_env()
-            .create_sync_site()
+        let SiteConfiguration { sync_settings, .. } = ConfigureCentralServer::from_env()
+            .create_sync_site(vec![])
             .await
             .expect("Problem creating sync site");
 
