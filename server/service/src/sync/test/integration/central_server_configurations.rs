@@ -1,14 +1,12 @@
 use std::env;
 
 use rand::{thread_rng, Rng};
-use reqwest::{Client, Url};
 use serde_json::json;
 use util::{hash::sha256, uuid::uuid};
 
 use crate::sync::{
     api::{SyncApiError, SyncApiV5},
     settings::SyncSettings,
-    SyncCredentials,
 };
 
 use super::with_retry;
@@ -54,15 +52,7 @@ impl ConfigureCentralServer {
         let url = env::var("SYNC_URL").expect("SYNC_URL env variable missing");
 
         ConfigureCentralServer {
-            api: SyncApiV5::new(
-                Url::parse(&url).unwrap(),
-                SyncCredentials {
-                    username: site_name,
-                    password_sha256: sha256(&password),
-                },
-                Client::new(),
-                "",
-            ),
+            api: SyncApiV5::new_test(&url, &site_name, &password, ""),
             server_url: url,
             new_site_password,
         }
@@ -89,7 +79,6 @@ impl ConfigureCentralServer {
                 username: new_site_properties.site_id_as_string(),
                 password_sha256: new_site_properties.password_sha256.clone(),
                 interval_sec: 10000000,
-                central_server_site_id: 1,
             },
             new_site_properties,
         })
