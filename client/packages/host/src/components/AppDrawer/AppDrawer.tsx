@@ -21,6 +21,7 @@ import {
   useAuthContext,
   useLocation,
   EnvUtils,
+  UserPermissionNodePermission,
 } from '@openmsupply-client/common';
 import { AppRoute, ExternalURL } from '@openmsupply-client/config';
 import {
@@ -135,7 +136,7 @@ export const AppDrawer: React.FC = () => {
   const t = useTranslation('app');
   const isMediumScreen = useIsMediumScreen();
   const drawer = useDrawer();
-  const { logout } = useAuthContext();
+  const { logout, userHasPermission } = useAuthContext();
   const location = useLocation();
 
   React.useEffect(() => {
@@ -231,6 +232,9 @@ export const AppDrawer: React.FC = () => {
             to={AppRoute.Admin}
             icon={<SettingsIcon fontSize="small" color="primary" />}
             text={t('admin')}
+            visible={userHasPermission(
+              UserPermissionNodePermission.ServerAdmin
+            )}
           />
           <AppNavLink
             to={AppRoute.Login}

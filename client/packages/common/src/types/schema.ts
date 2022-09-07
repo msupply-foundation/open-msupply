@@ -3249,11 +3249,34 @@ export type UserNode = {
   defaultStore?: Maybe<UserStoreNode>;
   /** The user's email address */
   email?: Maybe<Scalars['String']>;
+  permissions: UserStorePermissionConnector;
   stores: UserStoreConnector;
   /** Internal user id */
   userId: Scalars['String'];
   username: Scalars['String'];
 };
+
+
+export type UserNodePermissionsArgs = {
+  storeId?: InputMaybe<Scalars['String']>;
+};
+
+export enum UserPermissionNodePermission {
+  InboundShipmentMutate = 'INBOUND_SHIPMENT_MUTATE',
+  InboundShipmentQuery = 'INBOUND_SHIPMENT_QUERY',
+  LocationMutate = 'LOCATION_MUTATE',
+  LogQuery = 'LOG_QUERY',
+  OutboundShipmentMutate = 'OUTBOUND_SHIPMENT_MUTATE',
+  OutboundShipmentQuery = 'OUTBOUND_SHIPMENT_QUERY',
+  Report = 'REPORT',
+  RequisitionMutate = 'REQUISITION_MUTATE',
+  RequisitionQuery = 'REQUISITION_QUERY',
+  ServerAdmin = 'SERVER_ADMIN',
+  StocktakeMutate = 'STOCKTAKE_MUTATE',
+  StocktakeQuery = 'STOCKTAKE_QUERY',
+  StockLineQuery = 'STOCK_LINE_QUERY',
+  StoreAccess = 'STORE_ACCESS'
+}
 
 export type UserResponse = UserNode;
 
@@ -3268,4 +3291,16 @@ export type UserStoreNode = {
   code: Scalars['String'];
   id: Scalars['String'];
   name: Scalars['String'];
+};
+
+export type UserStorePermissionConnector = {
+  __typename: 'UserStorePermissionConnector';
+  nodes: Array<UserStorePermissionNode>;
+  totalCount: Scalars['Int'];
+};
+
+export type UserStorePermissionNode = {
+  __typename: 'UserStorePermissionNode';
+  permissions: Array<UserPermissionNodePermission>;
+  storeId: Scalars['String'];
 };
