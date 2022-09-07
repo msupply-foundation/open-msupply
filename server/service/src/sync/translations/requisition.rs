@@ -9,8 +9,7 @@ use serde::{Deserialize, Serialize};
 use util::constants::NUMBER_OF_DAYS_IN_A_MONTH;
 
 use crate::sync::sync_serde::{
-    date_and_time_to_datatime, date_from_date_time, date_option_to_isostring, date_to_isostring,
-    empty_date_time_as_option, empty_str_as_option, zero_date_as_option,
+    date_and_time_to_datatime, date_from_date_time, date_to_isostring, empty_str_as_option,
 };
 
 use super::{
@@ -97,19 +96,12 @@ pub struct LegacyRequisitionRow {
     pub created_datetime: Option<NaiveDateTime>,
 
     #[serde(rename = "om_sent_datetime")]
-    #[serde(default)]
-    #[serde(deserialize_with = "empty_date_time_as_option")]
     pub sent_datetime: Option<NaiveDateTime>,
 
     #[serde(rename = "om_finalised_datetime")]
-    #[serde(default)]
-    #[serde(deserialize_with = "empty_date_time_as_option")]
     pub finalised_datetime: Option<NaiveDateTime>,
 
     #[serde(rename = "om_expected_delivery_date")]
-    #[serde(default)]
-    #[serde(deserialize_with = "zero_date_as_option")]
-    #[serde(serialize_with = "date_option_to_isostring")]
     pub expected_delivery_date: Option<NaiveDate>,
 
     #[serde(rename = "om_max_months_of_stock")]
@@ -139,6 +131,7 @@ impl SyncTranslation for RequisitionTranslation {
             "Unsupported requisition type: {:?}",
             data.r#type
         )))?;
+
         let (
             created_datetime,
             sent_datetime,
@@ -240,10 +233,10 @@ impl SyncTranslation for RequisitionTranslation {
             linked_requisition_id,
             expected_delivery_date,
         } = RequisitionRowRepository::new(connection)
-            .find_one_by_id(&changelog.row_id)?
+            .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
                 "Requisition row not found: {}",
-                changelog.row_id
+                changelog.record_id
             )))?;
 
         let legacy_row = LegacyRequisitionRow {
@@ -255,7 +248,7 @@ impl SyncTranslation for RequisitionTranslation {
             r#type: to_legacy_type(&r#type),
             status: to_legacy_status(&r#type, &status).ok_or(anyhow::Error::msg(format!(
                 "Unexpected row requisition status {:?} (type: {:?}), row id:{}",
-                status, r#type, changelog.row_id
+                status, r#type, changelog.record_id
             )))?,
             om_status: Some(status),
             date_entered: date_from_date_time(&created_datetime),
@@ -278,7 +271,7 @@ impl SyncTranslation for RequisitionTranslation {
         };
 
         Ok(Some(vec![PushUpsertRecord {
-            sync_id: changelog.id,
+            sync_id: changelog.cursor,
             table_name,
             record_id: id,
             data: serde_json::to_value(&legacy_row)?,
