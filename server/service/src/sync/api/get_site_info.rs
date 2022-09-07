@@ -3,7 +3,7 @@ use serde::Deserialize;
 use super::*;
 
 #[derive(Debug, PartialEq, Deserialize)]
-pub(crate) struct SiteInfoV5 {
+pub struct SiteInfoV5 {
     pub(crate) id: String,
     #[serde(rename = "siteId")]
     pub(crate) site_id: i32,

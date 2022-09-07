@@ -15,7 +15,6 @@ use service::{
     auth_data::AuthData,
     service_provider::ServiceProvider,
     settings::{is_develop, ServerSettings, Settings},
-    site_info::set_api_info,
     sync::synchroniser::Synchroniser,
     token_bucket::TokenBucket,
 };
@@ -153,7 +152,6 @@ async fn run_server(
     );
     let service_context = service_provider.context().unwrap();
     let service = &service_provider.settings;
-    let site_info_service = &service_provider.site_info;
 
     let db_settings = service.sync_settings(&service_context).unwrap();
     let sync_settings = db_settings.clone().or(config_settings.sync.clone());
@@ -174,18 +172,20 @@ async fn run_server(
     };
 
     if db_settings.is_none() && config_settings.sync.is_some() {
-        let remote =
-            set_api_info(&config_settings.sync.clone().unwrap(), &service_provider).unwrap();
-        let site_info = site_info_service.request_site_info(remote).await.unwrap();
-        site_info_service
-            .set_site_info(&service_context.connection, site_info)
+        service_provider
+            .site_info
+            .request_and_set_site_info(&service_provider, config_settings.sync.as_ref().unwrap())
+            .await
             .unwrap();
     }
 
     // Final settings:
     let mut settings = config_settings;
     settings.sync = Some(sync_settings.clone());
-    let site_id = site_info_service.get_site_id(&service_provider).unwrap();
+    let site_id = service_provider
+        .site_info
+        .get_site_id(&service_context)
+        .unwrap();
 
     let auth_data = auth_data(
         &settings.server,
