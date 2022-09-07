@@ -126,6 +126,7 @@ macro_rules! map_filter {
             equal_any: $from
                 .equal_any
                 .map(|inputs| inputs.into_iter().map($f).collect()),
+            equal_any_or_null: None,
             not_equal_all: None,
             is_null: None,
         }

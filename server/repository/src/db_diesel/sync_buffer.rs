@@ -63,7 +63,7 @@ pub struct SyncBufferRowRepository<'a> {
 
 use serde::{Deserialize, Serialize};
 use sync_buffer::dsl as sync_buffer_dsl;
-use util::Defaults;
+use util::{inline_init, Defaults};
 
 impl<'a> SyncBufferRowRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
@@ -157,14 +157,8 @@ impl SyncBufferFilter {
 }
 
 impl SyncBufferAction {
-    pub fn equal_to(&self) -> EqualFilter<SyncBufferAction> {
-        EqualFilter {
-            equal_to: Some(self.clone()),
-            not_equal_to: None,
-            equal_any: None,
-            not_equal_all: None,
-            is_null: None,
-        }
+    pub fn equal_to(&self) -> EqualFilter<Self> {
+        inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
     }
 }
 

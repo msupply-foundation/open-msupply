@@ -9,6 +9,7 @@ use crate::{EqualFilter, Pagination, SimpleStringFilter, Sort};
 use crate::{diesel_macros::apply_simple_string_filter, DBType, RepositoryError};
 
 use diesel::{dsl::IntoBoxed, prelude::*};
+use util::inline_init;
 
 pub type Report = ReportRow;
 
@@ -55,34 +56,16 @@ impl ReportFilter {
 }
 
 impl ReportType {
-    pub fn equal_to(&self) -> EqualFilter<ReportType> {
-        EqualFilter {
-            equal_to: Some(self.clone()),
-            not_equal_to: None,
-            equal_any: None,
-            not_equal_all: None,
-            is_null: None,
-        }
+    pub fn equal_to(&self) -> EqualFilter<Self> {
+        inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
     }
 
-    pub fn not_equal_to(&self) -> EqualFilter<ReportType> {
-        EqualFilter {
-            equal_to: None,
-            not_equal_to: Some(self.clone()),
-            equal_any: None,
-            not_equal_all: None,
-            is_null: None,
-        }
+    pub fn not_equal_to(&self) -> EqualFilter<Self> {
+        inline_init(|r: &mut EqualFilter<Self>| r.not_equal_to = Some(self.clone()))
     }
 
-    pub fn equal_any(value: Vec<ReportType>) -> EqualFilter<ReportType> {
-        EqualFilter {
-            equal_to: None,
-            not_equal_to: None,
-            equal_any: Some(value),
-            not_equal_all: None,
-            is_null: None,
-        }
+    pub fn equal_any(value: Vec<Self>) -> EqualFilter<Self> {
+        inline_init(|r: &mut EqualFilter<Self>| r.equal_any = Some(value))
     }
 }
 
