@@ -1,6 +1,7 @@
 mod mutations;
 mod queries;
 
+pub use self::queries::sync_status::*;
 use self::queries::*;
 
 use async_graphql::*;
