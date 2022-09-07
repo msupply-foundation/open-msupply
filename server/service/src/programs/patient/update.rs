@@ -174,7 +174,10 @@ pub mod test {
     use util::inline_init;
 
     use crate::{
-        programs::patient::patient_schema::{ContactDetails, Gender, SchemaPatient},
+        programs::patient::{
+            main_patient_doc_name,
+            patient_schema::{ContactDetails, Gender, SchemaPatient},
+        },
         service_provider::ServiceProvider,
     };
 
@@ -296,7 +299,7 @@ pub mod test {
 
         // success update
         let v0 = DocumentRepository::new(&ctx.connection)
-            .find_one_by_name("patients/testid")
+            .find_one_by_name(&main_patient_doc_name(&patient.id))
             .unwrap()
             .unwrap();
         service
