@@ -71,6 +71,7 @@ impl Processors {
                     Some(_) = shipment_transfer.recv() => {
                         process_shipment_transfers(&service_provider).map_err(ProcessorsError::ShipmentTransfer)
                     },
+                    // None will be returned by recv if channel is closed, this would only really happen if all receivers were dropped
                     else => break,
                 };
 
