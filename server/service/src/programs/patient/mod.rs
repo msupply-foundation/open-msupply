@@ -16,23 +16,18 @@ mod search;
 /// The default document type for a patient
 pub const PATIENT_TYPE: &str = "Patient";
 
-pub fn patient_doc_name(patient_id: &str) -> String {
-    format!("patients/{}", patient_id)
+pub fn main_patient_doc_name(patient_id: &str) -> String {
+    patient_doc_name(patient_id, PATIENT_TYPE)
 }
 
-pub fn patient_program_doc_name(patient_id: &str, program: &str) -> String {
-    format!("patients/{}/programs/{}", patient_id, program)
+pub fn patient_doc_name(patient_id: &str, doc_type: &str) -> String {
+    format!("p/{}/{}", patient_id, doc_type)
 }
 
-pub fn patient_program_encounter_doc_name(
-    patient_id: &str,
-    program: &str,
-    encounter_id: &str,
-) -> String {
-    format!(
-        "patients/{}/programs/{}/encounters/{}",
-        patient_id, program, encounter_id
-    )
+/// Note: the "p" prefix simply indicates that the used naming schema, i.e. how the name is
+/// constructed
+pub fn patient_doc_name_with_id(patient_id: &str, doc_type: &str, id: &str) -> String {
+    format!("p/{}/{}/{}", patient_id, doc_type, id)
 }
 
 pub trait PatientServiceTrait: Sync + Send {
