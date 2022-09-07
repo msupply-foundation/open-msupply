@@ -30,7 +30,7 @@ const UIComponent = (props: ControlProps) => {
       gap={2}
       justifyContent="space-around"
       style={{ minWidth: 300 }}
-      marginTop={0.5}
+      marginTop={1}
     >
       <Box style={{ textAlign: 'end' }} flexBasis={FORM_LABEL_COLUMN_WIDTH}>
         <FormLabel sx={{ fontWeight: 'bold' }}>{label}:</FormLabel>
