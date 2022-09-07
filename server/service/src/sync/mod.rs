@@ -9,6 +9,7 @@ pub mod settings;
 mod sync_api_credentials;
 mod sync_buffer;
 mod sync_serde;
+pub mod sync_status;
 pub mod synchroniser;
 pub(crate) mod translation_and_integration;
 pub(crate) mod translations;
@@ -41,7 +42,7 @@ enum SyncStepProgress {
 }
 
 pub(crate) struct SyncLogger<'a> {
-    connection: &'a StorageConnection,
+    sync_log_repo: SyncLogRowRepository<'a>,
     row: SyncLogRow,
 }
 
@@ -57,10 +58,9 @@ impl<'a> SyncLogger<'a> {
             ..Default::default()
         };
 
-        SyncLogRowRepository::new(connection)
-            .upsert_one(&row)
-            .map_err(SyncLoggerError)?;
-        Ok(SyncLogger { connection, row })
+        let sync_log_repo = SyncLogRowRepository::new(connection);
+        sync_log_repo.upsert_one(&row).map_err(SyncLoggerError)?;
+        Ok(SyncLogger { sync_log_repo, row })
     }
 
     fn done(&mut self) -> Result<(), SyncLoggerError> {
@@ -69,7 +69,7 @@ impl<'a> SyncLogger<'a> {
             ..self.row.clone()
         };
 
-        SyncLogRowRepository::new(self.connection)
+        self.sync_log_repo
             .upsert_one(&self.row)
             .map_err(SyncLoggerError)?;
         Ok(())
@@ -99,7 +99,7 @@ impl<'a> SyncLogger<'a> {
             },
         };
 
-        SyncLogRowRepository::new(self.connection)
+        self.sync_log_repo
             .upsert_one(&self.row)
             .map_err(SyncLoggerError)?;
         Ok(())
@@ -129,7 +129,7 @@ impl<'a> SyncLogger<'a> {
             },
         };
 
-        SyncLogRowRepository::new(self.connection)
+        self.sync_log_repo
             .upsert_one(&self.row)
             .map_err(SyncLoggerError)?;
         Ok(())
@@ -141,7 +141,7 @@ impl<'a> SyncLogger<'a> {
             ..self.row.clone()
         };
 
-        SyncLogRowRepository::new(self.connection)
+        self.sync_log_repo
             .upsert_one(&self.row)
             .map_err(SyncLoggerError)?;
         Ok(())
@@ -171,10 +171,9 @@ impl<'a> SyncLogger<'a> {
             },
         };
 
-        SyncLogRowRepository::new(self.connection)
+        self.sync_log_repo
             .upsert_one(&self.row)
             .map_err(SyncLoggerError)?;
-
         Ok(())
     }
 }
