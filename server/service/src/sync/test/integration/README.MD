@@ -27,7 +27,7 @@ As `1`, can provide via cli or rust analyzer:
 
 ## 3 `central server`
 
-Use branch `11087-Sync-v5-integration-test-endpoint` (TODO UPDATE)
+Use branch `#11434-create-sync-site-via-api` (TODO UPDATE)
 
 Only data that needs to be present on central server site is a new sync site:
 * Create new data files
