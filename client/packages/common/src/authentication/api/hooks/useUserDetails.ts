@@ -13,3 +13,8 @@ export const useUserStores = (token: string) => {
     enabled: !!token,
   });
 };
+
+export const useUserPermissions = () => {
+  const api = useAuthApi();
+  return useMutation(api.get.permissions);
+};
