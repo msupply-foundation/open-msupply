@@ -4273,23 +4273,23 @@ g_HandleSystemReboot();
 <CustomSegSizeMode>0</CustomSegSizeMode>
 <Platform>1</Platform>
 <CollectLaunchUserInfo>0</CollectLaunchUserInfo>
-<CodeSignSetups>0</CodeSignSetups>
-<CodeSignLocation/>
+<CodeSignSetups>1</CodeSignSetups>
+<CodeSignLocation>C:\Program Files (x86)\Windows Kits\8.0\bin\x64\signtool.exe</CodeSignLocation>
 <CodeSignWithSHA256>1</CodeSignWithSHA256>
-<CodeSignCertificateFileSHA256/>
+<CodeSignCertificateFileSHA256>C:\mSupply_installer_codesigning\mSupply_installer_code_signing.pfx</CodeSignCertificateFileSHA256>
 <CodeSignCertificatePasswordSHA256>
-</CodeSignCertificatePasswordSHA256>
+NDd4M2N0TUNvYWhQ</CodeSignCertificatePasswordSHA256>
 <CodeSignTimeStampURLSHA256/>
 <CodeSignArgumentsSHA256/>
-<CodeSignWithSHA1>1</CodeSignWithSHA1>
+<CodeSignWithSHA1>0</CodeSignWithSHA1>
 <CodeSignTimeStampURLSHA1/>
 <CodeSignArgumentsSHA1/>
 <CodeSignSHA1CertificateToUse>0</CodeSignSHA1CertificateToUse>
 <CodeSignCertificateFileSHA1/>
 <CodeSignCertificatePasswordSHA1>
 </CodeSignCertificatePasswordSHA1>
-<CodeSignDescription/>
-<CodeSignDescriptionURL/>
+<CodeSignDescription>Open mSupply Installer</CodeSignDescription>
+<CodeSignDescriptionURL>https://msupply.foundation</CodeSignDescriptionURL>
 <UseCustomIcon>1</UseCustomIcon>
 <CustomIconFile>#PROJECTFILEDIR#\omSupply.ico</CustomIconFile>
 <ResourceFileVersion>9.5.1.0</ResourceFileVersion>
