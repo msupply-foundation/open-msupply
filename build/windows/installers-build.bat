@@ -8,9 +8,6 @@ mkdir "omSupply\omSupply Web Server\certs"
 mkdir "omSupply\omSupply Desktop Server\server\app_data"
 mkdir "omSupply\omSupply Desktop Server\server\certs"
 
-copy "omSupply\omsupply_license_and_warranty.txt" "omSupply\omsupply_license_and_warranty.txt"
-copy "omSupply\omSupply.ico" "omSupply\omSupply.ico"
-
 @ECHO ##### Adjusting SUFS #####
 SET installerWorkspace=C:\Program Files (x86)\Jenkins\jobs\omSupplyMain - installers\workspace\omSupply
 SET SUFlocation=%installerWorkspace%
