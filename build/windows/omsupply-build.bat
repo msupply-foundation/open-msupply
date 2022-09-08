@@ -1,8 +1,9 @@
 @ECHO ##### Removing previous builds #####
 SET installerWorkspace=C:\Program Files (x86)\Jenkins\jobs\omSupplyMain - installers\workspace\omSupply
 
-@rmdir "%installerWorkspace%" /s /q
-@mkdir "%installerWorkspace%"
+@rmdir "%installerWorkspace%\omSupply Web Server" /s /q
+@rmdir "%installerWorkspace%\omSupply Desktop Server" /s /q
+@rmdir "%installerWorkspace%\windows" /s /q
 
 @ECHO ##### Starting omsupply builds #####
 mkdir "%installerWorkspace%\omSupply Web Server"
