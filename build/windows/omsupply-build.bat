@@ -12,7 +12,7 @@ mkdir "%installerWorkspace%\omSupply Desktop Server"
 mkdir "%installerWorkspace%\omSupply Desktop Server\server"
 xcopy "server\configuration" "%installerWorkspace%\omSupply Desktop Server\server\configuration" /e /h /c /i
 
-copy "server\server\src\omSupply.ico" "build\omSupply.ico"
+copy "server\server\omSupply.ico" "build\omSupply.ico"
 xcopy "build\*.*" "%installerWorkspace%" /e /h /c /i
 xcopy "build\windows\*.*" "%installerWorkspace%" /e /h /c /i
 copy "version.txt" "%installerWorkspace%\version.txt"
