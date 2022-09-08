@@ -2,20 +2,24 @@ use std::collections::HashMap;
 
 use chrono::{NaiveDateTime, Utc};
 use repository::{
-    DatetimeFilter, RepositoryError, StorageConnection, SyncLogFilter, SyncLogRepository,
-    SyncLogRowRepository,
+    ChangelogRowRepository, DatetimeFilter, RepositoryError, StorageConnection, SyncLogFilter,
+    SyncLogRepository, SyncLogRow, SyncLogRowRepository,
 };
 use util::Defaults;
 
+use crate::i32_to_u32;
+
+use super::remote_data_synchroniser::RemoteSyncState;
+
 #[derive(Debug)]
 pub struct SyncStatus {
-    pub started: Option<NaiveDateTime>,
+    pub started: NaiveDateTime,
     pub finished: Option<NaiveDateTime>,
 }
 
 #[derive(Debug)]
 pub struct SyncStatusWithProgress {
-    pub started: Option<NaiveDateTime>,
+    pub started: NaiveDateTime,
     pub finished: Option<NaiveDateTime>,
     pub total_progress: u32,
     pub done_progress: u32,
@@ -42,12 +46,23 @@ pub enum SyncStatusType {
     Integration,
 }
 
+pub trait SiteInfoQueriesTrait: Sync + Send {
+    fn get_latest_sync_status(
+        &self,
+        connection: &StorageConnection,
+    ) -> Result<FullSyncStatus, RepositoryError> {
+        get_latest_sync_status(connection)
+    }
+}
+
+pub struct SiteInfoQueriesService {}
+
+impl SiteInfoQueriesTrait for SiteInfoQueriesService {}
+
 pub fn is_initialised(connection: &StorageConnection) -> Result<bool, RepositoryError> {
-    match SyncLogRepository::new(&connection).query_by_filter(
-        SyncLogFilter::new().prepare_initial_done_datetime(Some(
-            DatetimeFilter::before_or_equal_to(Utc::now().naive_utc()),
-        )),
-    ) {
+    match SyncLogRepository::new(&connection).query_one(SyncLogFilter::new().done_datetime(Some(
+        DatetimeFilter::before_or_equal_to(Utc::now().naive_utc()),
+    ))) {
         Ok(sync_log) => {
             let mut is_initialised = false;
             for log in sync_log {
@@ -64,132 +79,74 @@ pub fn is_initialised(connection: &StorageConnection) -> Result<bool, Repository
 pub fn get_latest_sync_status(
     connection: &StorageConnection,
 ) -> Result<FullSyncStatus, RepositoryError> {
-    use crate::sync::sync_status::SyncStatusType::*;
+    let SyncLogRow {
+        id: _,
+        started_datetime,
+        done_datetime,
+        prepare_initial_start_datetime,
+        prepare_initial_done_datetime,
+        push_start_datetime,
+        push_done_datetime,
+        push_progress_start,
+        push_progress_done,
+        pull_central_start_datetime,
+        pull_central_done_datetime,
+        pull_central_progress_start,
+        pull_central_progress_done,
+        pull_remote_start_datetime,
+        pull_remote_done_datetime,
+        pull_remote_progress_start,
+        pull_remote_progress_done,
+        integration_start_datetime,
+        integration_done_datetime,
+        error_message,
+    } = SyncLogRowRepository::new(&connection).load_latest_sync_log()?;
 
-    let most_recent_sync_row = SyncLogRowRepository::new(&connection).load_latest_sync_log()?;
-
-    let mut sync_map = HashMap::new();
-    sync_map.insert(
-        Initial,
-        SyncStatus {
-            started: most_recent_sync_row.prepare_initial_start_datetime,
-            finished: most_recent_sync_row.prepare_initial_done_datetime,
-        },
-    );
-    sync_map.insert(
-        Push,
-        SyncStatus {
-            started: most_recent_sync_row.push_start_datetime,
-            finished: most_recent_sync_row.push_done_datetime,
-        },
-    );
-    sync_map.insert(
-        PullCentral,
-        SyncStatus {
-            started: most_recent_sync_row.pull_central_start_datetime,
-            finished: most_recent_sync_row.pull_central_done_datetime,
-        },
-    );
-    sync_map.insert(
-        PullRemote,
-        SyncStatus {
-            started: most_recent_sync_row.pull_remote_start_datetime,
-            finished: most_recent_sync_row.pull_remote_done_datetime,
-        },
-    );
-    sync_map.insert(
-        Integration,
-        SyncStatus {
-            started: most_recent_sync_row.integration_start_datetime,
-            finished: most_recent_sync_row.integration_done_datetime,
-        },
-    );
-
-    let mut max_key = Initial;
-    let mut max_datetime = most_recent_sync_row.started_datetime;
-    for (key, sync_status) in sync_map {
-        if let Some(started) = sync_status.started {
-            if started > max_datetime {
-                max_key = key;
-                max_datetime = started;
-            }
-        }
-        if let Some(finished) = sync_status.finished {
-            if finished > max_datetime {
-                max_key = key;
-                max_datetime = finished;
-            }
-        }
-    }
-
-    let mut sync_status = FullSyncStatus {
-        is_syncing: false,
-        error: most_recent_sync_row.error_message,
+    let result = FullSyncStatus {
+        is_syncing: done_datetime.is_some() || error_message.is_some(),
+        error: error_message,
         summary: SyncStatus {
-            started: Some(most_recent_sync_row.started_datetime),
-            finished: most_recent_sync_row.done_endtime,
+            started: started_datetime,
+            finished: done_datetime,
         },
-        prepare_initial: None,
-        integration: None,
-        pull_central: None,
-        pull_remote: None,
-        push: None,
+        prepare_initial: prepare_initial_start_datetime.map(|started| SyncStatus {
+            started,
+            finished: prepare_initial_done_datetime,
+        }),
+        integration: integration_start_datetime.map(|started| SyncStatus {
+            started,
+            finished: integration_done_datetime,
+        }),
+        pull_central: pull_central_start_datetime.map(|started| SyncStatusWithProgress {
+            started,
+            finished: pull_central_done_datetime,
+            total_progress: pull_central_progress_start.map(i32_to_u32).unwrap_or(0),
+            done_progress: pull_central_progress_done.unwrap_or(0) as u32,
+        }),
+        pull_remote: pull_remote_start_datetime.map(|started| SyncStatusWithProgress {
+            started,
+            finished: pull_remote_done_datetime,
+            total_progress: pull_remote_progress_start.map(i32_to_u32).unwrap_or(0),
+            done_progress: pull_remote_progress_done.unwrap_or(0) as u32,
+        }),
+        push: push_start_datetime.map(|started| SyncStatusWithProgress {
+            started,
+            finished: push_done_datetime,
+            total_progress: push_progress_start.map(i32_to_u32).unwrap_or(0),
+            done_progress: push_progress_done.unwrap_or(0) as u32,
+        }),
     };
-
-    match max_key {
-        Initial => {
-            sync_status.prepare_initial = Some(SyncStatus {
-                started: most_recent_sync_row.prepare_initial_start_datetime,
-                finished: most_recent_sync_row.prepare_initial_done_datetime,
-            });
-        }
-        Push => {
-            sync_status.push = Some(SyncStatusWithProgress {
-                started: most_recent_sync_row.push_start_datetime,
-                finished: most_recent_sync_row.push_done_datetime,
-                total_progress: most_recent_sync_row.push_progress_start.unwrap_or_default() as u32,
-                done_progress: most_recent_sync_row.push_progress_done.unwrap_or_default() as u32,
-            });
-        }
-        PullCentral => {
-            sync_status.pull_central = Some(SyncStatusWithProgress {
-                started: most_recent_sync_row.pull_central_start_datetime,
-                finished: most_recent_sync_row.pull_central_done_datetime,
-                total_progress: most_recent_sync_row
-                    .pull_central_progress_start
-                    .unwrap_or_default() as u32,
-                done_progress: most_recent_sync_row
-                    .pull_central_progress_done
-                    .unwrap_or_default() as u32,
-            });
-        }
-        PullRemote => {
-            sync_status.pull_remote = Some(SyncStatusWithProgress {
-                started: most_recent_sync_row.pull_remote_start_datetime,
-                finished: most_recent_sync_row.pull_remote_done_datetime,
-                total_progress: most_recent_sync_row
-                    .pull_remote_progress_start
-                    .unwrap_or_default() as u32,
-                done_progress: most_recent_sync_row
-                    .pull_remote_progress_done
-                    .unwrap_or_default() as u32,
-            });
-        }
-        Integration => {
-            sync_status.integration = Some(SyncStatus {
-                started: most_recent_sync_row.integration_start_datetime,
-                finished: most_recent_sync_row.integration_done_datetime,
-            });
-        }
-    }
-
-    Ok(sync_status)
+    Ok(result)
 }
 
 pub fn number_of_records_in_push_queue(
     connection: &StorageConnection,
 ) -> Result<u32, RepositoryError> {
-    let most_recent_sync_row = SyncLogRowRepository::new(&connection).load_latest_sync_log()?;
+    let changelog = ChangelogRowRepository::new(connection);
+    let state = RemoteSyncState::new(connection);
 
-    Ok(most_recent_sync_row.push_progress_start.unwrap_or_default() as u32)
+    let cursor = state.get_push_cursor()?;
+    let change_logs_total = changelog.count(cursor as u64)? as u32;
+
+    Ok(change_logs_total)
 }

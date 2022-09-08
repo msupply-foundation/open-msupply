@@ -65,7 +65,7 @@ impl<'a> SyncLogger<'a> {
 
     fn done(&mut self) -> Result<(), SyncLoggerError> {
         self.row = SyncLogRow {
-            done_endtime: Some(chrono::Utc::now().naive_utc()),
+            done_datetime: Some(chrono::Utc::now().naive_utc()),
             ..self.row.clone()
         };
 

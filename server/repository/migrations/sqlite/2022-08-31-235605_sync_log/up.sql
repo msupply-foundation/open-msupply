@@ -1,7 +1,7 @@
 CREATE TABLE sync_log (
     id TEXT NOT NULL PRIMARY KEY,
     started_datetime TIMESTAMP NOT NULL,
-    done_endtime TIMESTAMP,
+    done_datetime TIMESTAMP,
     prepare_initial_start_datetime TIMESTAMP,
     prepare_initial_done_datetime TIMESTAMP,
 
