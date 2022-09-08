@@ -60,19 +60,15 @@ pub struct SiteInfoQueriesService {}
 impl SiteInfoQueriesTrait for SiteInfoQueriesService {}
 
 pub fn is_initialised(connection: &StorageConnection) -> Result<bool, RepositoryError> {
-    match SyncLogRepository::new(&connection).query_one(SyncLogFilter::new().done_datetime(Some(
-        DatetimeFilter::before_or_equal_to(Utc::now().naive_utc()),
-    ))) {
-        Ok(sync_log) => {
-            let mut is_initialised = false;
-            for log in sync_log {
-                if log.sync_log_row.prepare_initial_done_datetime.is_some() {
-                    is_initialised = true;
-                }
-            }
-            Ok(is_initialised)
-        }
-        Err(e) => Err(e),
+    let done_datetime =
+        SyncLogRepository::new(&connection).query_one(SyncLogFilter::new().done_datetime(Some(
+            DatetimeFilter::before_or_equal_to(Utc::now().naive_utc()),
+        )))?;
+
+    if done_datetime.is_some() {
+        Ok(true)
+    } else {
+        Ok(false)
     }
 }
 
