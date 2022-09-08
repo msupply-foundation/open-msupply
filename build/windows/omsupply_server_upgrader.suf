@@ -2781,7 +2781,7 @@ g_HandleSystemReboot();
 -- Stop (if running) the service before upgrading the server.
 queryResult = Service.Query("omSupply", "omSupply");
 if (queryResult == SERVICE_RUNNING) then
-	Service.Stop("omSupply", "omSupply", 5);
+	Service.Stop("Open mSupply Server", "omSupply", 5);
 end
 </Script>
 <BookMarks count="0">
@@ -2815,7 +2815,8 @@ if File.DoesExist(SessionVar.Expand("%AppFolder%\\settings.ini")) then
 		Dialog.Message("Error", _tblErrorMessages[error], MB_OK, MB_ICONEXCLAMATION, MB_DEFBUTTON1);
 	end
 end
-Service.Start("omSupply", "omSupply", nil);
+
+Service.Start("Open mSupply Server", "omSupply", nil);
 </Script>
 <BookMarks count="0">
 </BookMarks>
@@ -2913,7 +2914,7 @@ g_HandleSystemReboot();
 <PostBuildProg/>
 <PostBuildCmdLine/>
 <PostBuildWait>0</PostBuildWait>
-<Filename>omSupply_Server_Upgrader_replace with version.exe</Filename>
+<Filename>omSupply_Server_Upgrader_v1.0.0-IS22-windows-instalers-test6.exe</Filename>
 <OutputFolder>C:\Program Files (x86)\Jenkins\jobs\omSupplyMain - installers\workspace\installers</OutputFolder>
 <SegmentSizeMode>0</SegmentSizeMode>
 <CustomSegSize>0</CustomSegSize>
