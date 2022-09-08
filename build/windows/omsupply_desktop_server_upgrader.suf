@@ -2706,9 +2706,9 @@ g_HandleSystemReboot();
 <Args/>
 <Script>-- Check if the open msupply service is running at the moment.
 -- Stop (if running) the service before upgrading the server.
-queryResult = Service.Query("omSupply", "omSupply");
+queryResult = Service.Query("Open mSupply Server", "omSupply");
 if (queryResult == SERVICE_RUNNING) then
-	Service.Stop("omSupply", "omSupply", 5);
+	Service.Stop("Open mSupply Server", "omSupply", 5);
 end
 </Script>
 <BookMarks count="0">
@@ -2742,7 +2742,7 @@ if File.DoesExist(SessionVar.Expand("%AppFolder%\\server\\settings.ini")) then
 		Dialog.Message("Error", _tblErrorMessages[error], MB_OK, MB_ICONEXCLAMATION, MB_DEFBUTTON1);
 	end
 end
-Service.Start("omSupply", "omSupply", nil);
+Service.Start("Open mSupply Server", "omSupply", nil);
 </Script>
 <BookMarks count="0">
 </BookMarks>
@@ -2847,23 +2847,23 @@ g_HandleSystemReboot();
 <CustomSegSizeMode>0</CustomSegSizeMode>
 <Platform>1</Platform>
 <CollectLaunchUserInfo>0</CollectLaunchUserInfo>
-<CodeSignSetups>0</CodeSignSetups>
-<CodeSignLocation/>
+<CodeSignSetups>1</CodeSignSetups>
+<CodeSignLocation>C:\Program Files (x86)\Windows Kits\8.0\bin\x64\signtool.exe</CodeSignLocation>
 <CodeSignWithSHA256>1</CodeSignWithSHA256>
-<CodeSignCertificateFileSHA256/>
+<CodeSignCertificateFileSHA256>C:\mSupply_installer_codesigning\mSupply_installer_code_signing.pfx</CodeSignCertificateFileSHA256>
 <CodeSignCertificatePasswordSHA256>
-</CodeSignCertificatePasswordSHA256>
+a2F0aG1hbmR1MzEy</CodeSignCertificatePasswordSHA256>
 <CodeSignTimeStampURLSHA256/>
 <CodeSignArgumentsSHA256/>
-<CodeSignWithSHA1>1</CodeSignWithSHA1>
+<CodeSignWithSHA1>0</CodeSignWithSHA1>
 <CodeSignTimeStampURLSHA1/>
 <CodeSignArgumentsSHA1/>
 <CodeSignSHA1CertificateToUse>0</CodeSignSHA1CertificateToUse>
 <CodeSignCertificateFileSHA1/>
 <CodeSignCertificatePasswordSHA1>
 </CodeSignCertificatePasswordSHA1>
-<CodeSignDescription/>
-<CodeSignDescriptionURL/>
+<CodeSignDescription>Open mSupply Installer</CodeSignDescription>
+<CodeSignDescriptionURL>https://msupply.foundation</CodeSignDescriptionURL>
 <UseCustomIcon>1</UseCustomIcon>
 <CustomIconFile>#PROJECTFILEDIR#\omSupply.ico</CustomIconFile>
 <ResourceFileVersion>9.5.1.0</ResourceFileVersion>

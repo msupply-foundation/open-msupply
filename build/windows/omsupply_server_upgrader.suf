@@ -2779,7 +2779,7 @@ g_HandleSystemReboot();
 <Args/>
 <Script>-- Check if the open msupply service is running at the moment.
 -- Stop (if running) the service before upgrading the server.
-queryResult = Service.Query("omSupply", "omSupply");
+queryResult = Service.Query("Open mSupply Server", "omSupply");
 if (queryResult == SERVICE_RUNNING) then
 	Service.Stop("Open mSupply Server", "omSupply", 5);
 end
@@ -2914,7 +2914,7 @@ g_HandleSystemReboot();
 <PostBuildProg/>
 <PostBuildCmdLine/>
 <PostBuildWait>0</PostBuildWait>
-<Filename>omSupply_Server_Upgrader_v1.0.0-IS22-windows-instalers-test6.exe</Filename>
+<Filename>omSupply_Server_Upgrader_replace with version.exe</Filename>
 <OutputFolder>C:\Program Files (x86)\Jenkins\jobs\omSupplyMain - installers\workspace\installers</OutputFolder>
 <SegmentSizeMode>0</SegmentSizeMode>
 <CustomSegSize>0</CustomSegSize>
@@ -2926,7 +2926,7 @@ g_HandleSystemReboot();
 <CodeSignWithSHA256>1</CodeSignWithSHA256>
 <CodeSignCertificateFileSHA256>C:\mSupply_installer_codesigning\mSupply_installer_code_signing.pfx</CodeSignCertificateFileSHA256>
 <CodeSignCertificatePasswordSHA256>
-NDd4M2N0TUNvYWhQ</CodeSignCertificatePasswordSHA256>
+a2F0aG1hbmR1MzEy</CodeSignCertificatePasswordSHA256>
 <CodeSignTimeStampURLSHA256/>
 <CodeSignArgumentsSHA256/>
 <CodeSignWithSHA1>0</CodeSignWithSHA1>

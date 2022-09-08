@@ -3916,10 +3916,10 @@ end
 -- Check if the open msupply service already exist or is running at the moment.
 -- Stop (if running) the service and then delete it for a fresh new service installation.
 local bServiceExists = false;
-queryResult = Service.Query("omSupply", "omSupply");
+queryResult = Service.Query("Open mSupply Server", "omSupply");
 if (queryResult == SERVICE_RUNNING) then
 	bServiceExists = true;
-	Service.Stop("omSupply", "omSupply", 5);
+	Service.Stop("Open mSupply Server", "omSupply", 5);
 end
 
 if ((queryResult == SERVICE_PAUSED) or (queryResult == SERVICE_STOPPED)) then
@@ -3927,7 +3927,7 @@ if ((queryResult == SERVICE_PAUSED) or (queryResult == SERVICE_STOPPED)) then
 end
 
 if (bServiceExists) then
-	Service.Delete("omSupply", "omSupply");
+	Service.Delete("Open mSupply Server", "omSupply");
 end
 </Script>
 <BookMarks count="0">
@@ -3946,10 +3946,10 @@ end
 <Args/>
 <Script>dataSources = TextFile.ReadToString(SessionVar.Expand("%AppFolder%\\server\\configuration\\base.yaml"));
 dataSources = String.Replace(dataSources, "8000", SessionVar.Get("%omsupply_port%"), true);
-dataSources = String.Replace(dataSources, "omsupply-database", SessionVar.Expand("\"%omsupply_db_name%\""), true);
+dataSources = String.Replace(dataSources, "omsupply-database", SessionVar.Get("%omsupply_db_name%"), true);
 dataSources = String.Replace(dataSources, "5432", SessionVar.Get("%postgres_db_port%"), true);
-dataSources = String.Replace(dataSources, "postgres", SessionVar.Expand("\"%postgres_db_user%\""), true);
-dataSources = String.Replace(dataSources, "password", SessionVar.Expand("\"%postgres_db_pass%\""), true);
+dataSources = String.Replace(dataSources, "postgres", SessionVar.Get("%postgres_db_user%"), true);
+dataSources = String.Replace(dataSources, "password:%s\"\"", SessionVar.Expand("password: \"%postgres_db_pass%\""), true);
 TextFile.WriteFromString(SessionVar.Expand("%AppFolder%\\server\\configuration\\base.yaml"), dataSources, false);
 
 -- Create settings.ini file to store current settings
@@ -3962,13 +3962,16 @@ TextFile.WriteFromString(SessionVar.Expand("%AppFolder%\\server\\settings.ini"),
 local sFileToBeDeletePath = "";
 
 if (SessionVar.Get("%omsupply_selected_db%") == "sqlite") then
-	Service.Create(SessionVar.Expand("%AppFolder%\\omSupply-sqlite.exe"), "Open mSupply Server", "omSupply", SERVICE_WIN32_OWN_PROCESS, false, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL, "", nil, nil, "", "");
+	File.Run(SessionVar.Expand("%AppFolder%\\server\\bin\\nssm.exe"), SessionVar.Expand("install \"Open mSupply Server\" \"%AppFolder%\\server\\omSupply-sqlite.exe\""), "", SW_HIDE, true);
 	sFileToBeDeletePath = SessionVar.Expand("%AppFolder%\\server\\omSupply-postgres.exe");
 else
 	File.Copy(SessionVar.Expand("%AppFolder%\\server\\configuration\\base.yaml"), SessionVar.Expand("%AppFolder%\\server\\configuration\\local.yaml"), false, true);
-	Service.Create(SessionVar.Expand("%AppFolder%\\omSupply-postgres.exe"), "Open mSupply Server", "omSupply", SERVICE_WIN32_OWN_PROCESS, false, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL, "", nil, nil, "", "");
+	File.Run(SessionVar.Expand("%AppFolder%\\server\\bin\\nssm.exe"), SessionVar.Expand("install \"Open mSupply Server\" \"%AppFolder%\\server\\omSupply-postgres.exe\""), "", SW_HIDE, true);
 	sFileToBeDeletePath = SessionVar.Expand("%AppFolder%\\server\\omSupply-sqlite.exe");
 end
+
+File.Run(SessionVar.Expand("%AppFolder%\\server\\bin\\nssm.exe"), SessionVar.Expand("set \"Open mSupply Server\" Description \"Open mSupply remote desktop server.\""), "", SW_HIDE, false);
+File.Run(SessionVar.Expand("%AppFolder%\\server\\bin\\nssm.exe"), SessionVar.Expand("set \"Open mSupply Server\" start SERVICE_DELAYED_AUTO_START"), "", SW_HIDE, false);
 
 File.Delete(sFileToBeDeletePath); -- Delete unchoosen app file (.exe) by a user
 
@@ -3978,7 +3981,7 @@ if (err ~= 0) then
 	--If an error occurred, display an error message to the user.
 	Dialog.Message("Error", _tblErrorMessages[err], MB_OK, MB_ICONEXCLAMATION, MB_DEFBUTTON1);
 end
-Service.Start("omSupply", "omSupply", nil);
+Service.Start("Open mSupply Server", "omSupply", nil);
 </Script>
 <BookMarks count="0">
 </BookMarks>
@@ -4113,23 +4116,23 @@ g_HandleSystemReboot();
 <CustomSegSizeMode>0</CustomSegSizeMode>
 <Platform>1</Platform>
 <CollectLaunchUserInfo>0</CollectLaunchUserInfo>
-<CodeSignSetups>0</CodeSignSetups>
-<CodeSignLocation/>
+<CodeSignSetups>1</CodeSignSetups>
+<CodeSignLocation>C:\Program Files (x86)\Windows Kits\8.0\bin\x64\signtool.exe</CodeSignLocation>
 <CodeSignWithSHA256>1</CodeSignWithSHA256>
-<CodeSignCertificateFileSHA256/>
+<CodeSignCertificateFileSHA256>C:\mSupply_installer_codesigning\mSupply_installer_code_signing.pfx</CodeSignCertificateFileSHA256>
 <CodeSignCertificatePasswordSHA256>
-</CodeSignCertificatePasswordSHA256>
+a2F0aG1hbmR1MzEy</CodeSignCertificatePasswordSHA256>
 <CodeSignTimeStampURLSHA256/>
 <CodeSignArgumentsSHA256/>
-<CodeSignWithSHA1>1</CodeSignWithSHA1>
+<CodeSignWithSHA1>0</CodeSignWithSHA1>
 <CodeSignTimeStampURLSHA1/>
 <CodeSignArgumentsSHA1/>
 <CodeSignSHA1CertificateToUse>0</CodeSignSHA1CertificateToUse>
 <CodeSignCertificateFileSHA1/>
 <CodeSignCertificatePasswordSHA1>
 </CodeSignCertificatePasswordSHA1>
-<CodeSignDescription/>
-<CodeSignDescriptionURL/>
+<CodeSignDescription>Open mSupply Installer</CodeSignDescription>
+<CodeSignDescriptionURL>https://msupply.foundation</CodeSignDescriptionURL>
 <UseCustomIcon>1</UseCustomIcon>
 <CustomIconFile>#PROJECTFILEDIR#\omSupply.ico</CustomIconFile>
 <ResourceFileVersion>9.5.1.0</ResourceFileVersion>

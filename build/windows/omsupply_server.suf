@@ -223,6 +223,79 @@
 <CRC>0</CRC>
 <StoreOnly>0</StoreOnly>
 </FileData>
+<FileData>
+<FldRef>1</FldRef>
+<FullName>C:\Program Files (x86)\Jenkins\jobs\omSupplyMain - Installers\workspace\omSupply\omSupply Web Server\bin\*.*</FullName>
+<FileName>*.*</FileName>
+<Source>#PROJECTFILEDIR#\omSupply Web Server\bin</Source>
+<Ext>*</Ext>
+<RTSource>Archive</RTSource>
+<Desc/>
+<Recurse>1</Recurse>
+<MatchMode>0</MatchMode>
+<Dest>%AppFolder%\bin</Dest>
+<Overwrite>1</Overwrite>
+<Backup>0</Backup>
+<Protect>0</Protect>
+<InstallOrder>1000</InstallOrder>
+<SCStartRoot>0</SCStartRoot>
+<SCStartProgs>0</SCStartProgs>
+<SCAppFld>0</SCAppFld>
+<SCStartup>0</SCStartup>
+<SCDesk>0</SCDesk>
+<SCQLaunch>0</SCQLaunch>
+<SCStartPinOption>0</SCStartPinOption>
+<SCCust>0</SCCust>
+<CustSCPath/>
+<SCDesc/>
+<SCComment/>
+<SCArgs/>
+<SCWork/>
+<UseExtIco>0</UseExtIco>
+<IcoFN/>
+<IcoIdx>0</IcoIdx>
+<IcoShowMd>0</IcoShowMd>
+<IcoHK>0</IcoHK>
+<RegTTF>1</RegTTF>
+<TTFName/>
+<RegOCX>1</RegOCX>
+<RegTLB>1</RegTLB>
+<SupInUse>0</SupInUse>
+<Compress>1</Compress>
+<UseOrigAttr>1</UseOrigAttr>
+<Attr>0</Attr>
+<NoCRC>0</NoCRC>
+<NoRemove>0</NoRemove>
+<Shared>0</Shared>
+<OSCond>
+<OS>32768</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+</OSCond>
+<RTCond/>
+<BuildConfigs>
+<Cfg>All</Cfg>
+</BuildConfigs>
+<Package>None</Package>
+<Packages/>
+<Notes/>
+<CompSize>0</CompSize>
+<CRC>0</CRC>
+<StoreOnly>0</StoreOnly>
+</FileData>
 </ArchiveFiles>
 <ExternalFiles/>
 <BeforeInstallingScreens>
@@ -4106,10 +4179,10 @@ end
 <Args/>
 <Script>dataSources = TextFile.ReadToString(SessionVar.Expand("%AppFolder%\\configuration\\base.yaml"));
 dataSources = String.Replace(dataSources, "8000", SessionVar.Get("%omsupply_port%"), true);
-dataSources = String.Replace(dataSources, "omsupply-database", SessionVar.Expand("\"%omsupply_db_name%\""), true);
+dataSources = String.Replace(dataSources, "omsupply-database", SessionVar.Get("%omsupply_db_name%"), true);
 dataSources = String.Replace(dataSources, "5432", SessionVar.Get("%postgres_db_port%"), true);
-dataSources = String.Replace(dataSources, "postgres", SessionVar.Expand("\"%postgres_db_user%\""), true);
-dataSources = String.Replace(dataSources, "password", SessionVar.Expand("\"%postgres_db_pass%\""), true);
+dataSources = String.Replace(dataSources, "postgres", SessionVar.Get("%postgres_db_user%"), true);
+dataSources = String.Replace(dataSources, "password:%s\"\"", SessionVar.Expand("password: \"%postgres_db_pass%\""), true);
 TextFile.WriteFromString(SessionVar.Expand("%AppFolder%\\configuration\\base.yaml"), dataSources, false);
 
 -- Create settings.ini file to store current settings
@@ -4122,13 +4195,16 @@ TextFile.WriteFromString(SessionVar.Expand("%AppFolder%\\settings.ini"), sSettin
 local sFileToBeDeletePath = "";
 
 if (SessionVar.Get("%omsupply_selected_db%") == "sqlite") then
+	File.Run(SessionVar.Expand("%AppFolder%\\bin\\nssm.exe"), SessionVar.Expand("install \"Open mSupply Server\" \"%AppFolder%\\omSupply-sqlite.exe\""), "", SW_HIDE, true);
 	sFileToBeDeletePath = SessionVar.Expand("%AppFolder%\\omSupply-postgres.exe");
-	Service.Create(SessionVar.Expand("%AppFolder%\\omSupply-sqlite.exe"), "Open mSupply Server", "omSupply", SERVICE_WIN32_OWN_PROCESS, false, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL, "", nil, nil, "", "");
 else
 	File.Copy(SessionVar.Expand("%AppFolder%\\configuration\\base.yaml"), SessionVar.Expand("%AppFolder%\\configuration\\local.yaml"), false, true);
-	Service.Create(SessionVar.Expand("%AppFolder%\\omSupply-postgres.exe"), "Open mSupply Server", "omSupply", SERVICE_WIN32_OWN_PROCESS, false, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL, "", nil, nil, "", "");
+	File.Run(SessionVar.Expand("%AppFolder%\\bin\\nssm.exe"), SessionVar.Expand("install \"Open mSupply Server\" \"%AppFolder%\\omSupply-postgres.exe\""), "", SW_HIDE, true);
 	sFileToBeDeletePath = SessionVar.Expand("%AppFolder%\\omSupply-sqlite.exe");
 end
+
+File.Run(SessionVar.Expand("%AppFolder%\\bin\\nssm.exe"), SessionVar.Expand("set \"Open mSupply Server\" Description \"Open mSupply remote desktop server.\""), "", SW_HIDE, false);
+File.Run(SessionVar.Expand("%AppFolder%\\bin\\nssm.exe"), SessionVar.Expand("set \"Open mSupply Server\" start SERVICE_DELAYED_AUTO_START"), "", SW_HIDE, false);
 
 File.Delete(sFileToBeDeletePath); -- Delete unchoosen app file (.exe) by a user
 
@@ -4266,7 +4342,7 @@ g_HandleSystemReboot();
 <PostBuildProg/>
 <PostBuildCmdLine/>
 <PostBuildWait>0</PostBuildWait>
-<Filename>omSupply_Server_v1.0.0-IS22-windows-instalers-test6.exe</Filename>
+<Filename>omSupply_Server_replace with versio444n.exe</Filename>
 <OutputFolder>C:\Program Files (x86)\Jenkins\jobs\omSupplyMain - installers\workspace\installers</OutputFolder>
 <SegmentSizeMode>0</SegmentSizeMode>
 <CustomSegSize>0</CustomSegSize>
@@ -4278,7 +4354,8 @@ g_HandleSystemReboot();
 <CodeSignWithSHA256>1</CodeSignWithSHA256>
 <CodeSignCertificateFileSHA256>C:\mSupply_installer_codesigning\mSupply_installer_code_signing.pfx</CodeSignCertificateFileSHA256>
 <CodeSignCertificatePasswordSHA256>
-NDd4M2N0TUNvYWhQ</CodeSignCertificatePasswordSHA256>
+a2F0aG1hbmR1MzEy
+</CodeSignCertificatePasswordSHA256>
 <CodeSignTimeStampURLSHA256/>
 <CodeSignArgumentsSHA256/>
 <CodeSignWithSHA1>0</CodeSignWithSHA1>
