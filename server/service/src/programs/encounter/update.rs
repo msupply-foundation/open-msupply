@@ -110,6 +110,7 @@ fn generate(
         schema_id: Some(input.schema_id),
         status: existing.status,
         comment: None,
+        patient_id: existing.patient_id,
     })
 }
 
