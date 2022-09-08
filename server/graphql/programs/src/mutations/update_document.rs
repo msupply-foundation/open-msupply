@@ -26,6 +26,7 @@ pub struct UpdateDocumentInput {
     pub r#type: String,
     pub data: serde_json::Value,
     pub schema_id: Option<String>,
+    pub patient_id: Option<String>,
 }
 
 pub struct MergeRequiredError(Option<RawDocument>);
@@ -159,6 +160,7 @@ fn input_to_raw_document(
         r#type,
         data,
         schema_id,
+        patient_id,
     }: UpdateDocumentInput,
 ) -> RawDocument {
     RawDocument {
@@ -171,6 +173,7 @@ fn input_to_raw_document(
         schema_id,
         status: DocumentStatus::Active,
         comment: None,
+        patient_id,
     }
 }
 

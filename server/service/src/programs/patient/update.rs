@@ -112,6 +112,7 @@ fn generate(
         schema_id: Some(input.schema_id),
         status: DocumentStatus::Active,
         comment: None,
+        patient_id: Some(patient.id.clone()),
     })
 }
 

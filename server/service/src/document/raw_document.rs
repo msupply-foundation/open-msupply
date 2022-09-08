@@ -18,6 +18,8 @@ pub struct RawDocument {
     pub status: DocumentStatus,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub patient_id: Option<String>,
 }
 
 impl RawDocument {
@@ -41,6 +43,7 @@ impl RawDocument {
             schema_id,
             status,
             comment,
+            patient_id,
         } = self;
         Ok(Document {
             id,
@@ -53,6 +56,7 @@ impl RawDocument {
             schema_id,
             status,
             comment,
+            patient_id,
         })
     }
 }
@@ -80,6 +84,7 @@ mod document_id_test {
             schema_id: None,
             status: DocumentStatus::Active,
             comment: None,
+            patient_id: None,
         };
         let document = raw.finalise().unwrap();
         let expected_json_string = r#"{"author":"author","data":{"a":"avalue","b":0.3453333},"name":"name","parents":["p1"],"status":"Active","timestamp":"1970-01-01T00:00:01Z","type":"test"}"#;
