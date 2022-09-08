@@ -2864,7 +2864,7 @@ end
 <IDS_CTRL_STATICTEXT_TOPINSTRUCTIONS/>
 <IDS_CTRL_STATICTEXT_BOTTOMINSTRUCTIONS/>
 <IDS_CTRL_STATICTEXT_LABEL_01>Installation Successful</IDS_CTRL_STATICTEXT_LABEL_01>
-<IDS_CTRL_STATICTEXT_LABEL_02>The omSupply Server replace with version installation is complete.</IDS_CTRL_STATICTEXT_LABEL_02>
+<IDS_CTRL_STATICTEXT_LABEL_02>The omSupply Server v1.0.0-IS22-windows-instalers-test6 installation is complete.</IDS_CTRL_STATICTEXT_LABEL_02>
 <IDS_CTRL_STATICTEXT_LABEL_03>Thank you for choosing omSupply Server!</IDS_CTRL_STATICTEXT_LABEL_03>
 <IDS_CTRL_STATICTEXT_LABEL_04>Please click Finish to exit this installer.</IDS_CTRL_STATICTEXT_LABEL_04>
 <IDS_CTRL_CHECK_BOX_01>Launch omSupply Server</IDS_CTRL_CHECK_BOX_01>
@@ -3816,8 +3816,22 @@ Please click Finish to exit.
 <Event>
 <Name>On Pre Uninstall</Name>
 <Args/>
-<Script>result = Shell.Execute(SessionVar.Expand("%AppFolder%\\bin\\nssm.exe"), "open", SessionVar.Expand("remove \"mSupply Dashboard\" confirm"), "", SW_SHOWNORMAL, true);
-</Script>
+<Script>-- Check if the open msupply service already exist or is running at the moment.
+-- Stop (if running) the service and then delete it for a fresh new service installation.
+local bServiceExists = false;
+queryResult = Service.Query("Open mSupply Server", "omSupply");
+if (queryResult == SERVICE_RUNNING) then
+	bServiceExists = true;
+	Service.Stop("Open mSupply Server", "omSupply", 5);
+end
+
+if ((queryResult == SERVICE_PAUSED) or (queryResult == SERVICE_STOPPED)) then
+	bServiceExists = true;
+end
+
+if (bServiceExists) then
+	Service.Delete("Open mSupply Server", "omSupply");
+end</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -4062,10 +4076,10 @@ end
 -- Check if the open msupply service already exist or is running at the moment.
 -- Stop (if running) the service and then delete it for a fresh new service installation.
 local bServiceExists = false;
-queryResult = Service.Query("omSupply", "omSupply");
+queryResult = Service.Query("Open mSupply Server", "omSupply");
 if (queryResult == SERVICE_RUNNING) then
 	bServiceExists = true;
-	Service.Stop("omSupply", "omSupply", 5);
+	Service.Stop("Open mSupply Server", "omSupply", 5);
 end
 
 if ((queryResult == SERVICE_PAUSED) or (queryResult == SERVICE_STOPPED)) then
@@ -4073,7 +4087,7 @@ if ((queryResult == SERVICE_PAUSED) or (queryResult == SERVICE_STOPPED)) then
 end
 
 if (bServiceExists) then
-	Service.Delete("omSupply", "omSupply");
+	Service.Delete("Open mSupply Server", "omSupply");
 end
 </Script>
 <BookMarks count="0">
@@ -4109,10 +4123,10 @@ local sFileToBeDeletePath = "";
 
 if (SessionVar.Get("%omsupply_selected_db%") == "sqlite") then
 	sFileToBeDeletePath = SessionVar.Expand("%AppFolder%\\omSupply-postgres.exe");
-	Service.Create(SessionVar.Expand("%AppFolder%\\omSupply-postgres.exe"), "Open mSupply Server", "omSupply", SERVICE_WIN32_OWN_PROCESS, false, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL, "", nil, nil, "", "");
+	Service.Create(SessionVar.Expand("%AppFolder%\\omSupply-sqlite.exe"), "Open mSupply Server", "omSupply", SERVICE_WIN32_OWN_PROCESS, false, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL, "", nil, nil, "", "");
 else
 	File.Copy(SessionVar.Expand("%AppFolder%\\configuration\\base.yaml"), SessionVar.Expand("%AppFolder%\\configuration\\local.yaml"), false, true);
-	Service.Create(SessionVar.Expand("%AppFolder%\\omSupply-sqlite.exe"), "Open mSupply Server", "omSupplyServer", SERVICE_WIN32_OWN_PROCESS, false, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL, "", nil, nil, "", "");
+	Service.Create(SessionVar.Expand("%AppFolder%\\omSupply-postgres.exe"), "Open mSupply Server", "omSupply", SERVICE_WIN32_OWN_PROCESS, false, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL, "", nil, nil, "", "");
 	sFileToBeDeletePath = SessionVar.Expand("%AppFolder%\\omSupply-sqlite.exe");
 end
 
@@ -4179,7 +4193,7 @@ g_HandleSystemReboot();
 </SessionVar>
 <SessionVar>
 <Name>%ProductVer%</Name>
-<Value>replace with version</Value>
+<Value>v1.0.0-IS22-windows-instalers-test6</Value>
 <Type>1</Type>
 </SessionVar>
 <SessionVar>
@@ -4252,8 +4266,8 @@ g_HandleSystemReboot();
 <PostBuildProg/>
 <PostBuildCmdLine/>
 <PostBuildWait>0</PostBuildWait>
-<Filename>omSupply_Server_replace with version.exe</Filename>
-<OutputFolder>C:\Program Files (x86)\Jenkins\jobs\omSupplyMain - Installers\workspace\installers</OutputFolder>
+<Filename>omSupply_Server_v1.0.0-IS22-windows-instalers-test6.exe</Filename>
+<OutputFolder>C:\Program Files (x86)\Jenkins\jobs\omSupplyMain - installers\workspace\installers</OutputFolder>
 <SegmentSizeMode>0</SegmentSizeMode>
 <CustomSegSize>0</CustomSegSize>
 <CustomSegSizeMode>0</CustomSegSizeMode>
