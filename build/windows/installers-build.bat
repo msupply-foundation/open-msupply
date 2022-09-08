@@ -2,13 +2,8 @@
 @rmdir "installers" /s /q
 
 @ECHO ##### Copying bin and certs folders #####
-mkdir "omSupply\omSupply Web Server\app_data"
 xcopy "omSupply\bin" "omSupply\omSupply Web Server\bin" /e /h /c /i
-mkdir "omSupply\omSupply Web Server\certs"
-
-mkdir "omSupply\omSupply Desktop Server\server\app_data"
 xcopy "omSupply\bin" "omSupply\omSupply Desktop Server\server\bin" /e /h /c /i
-mkdir "omSupply\omSupply Desktop Server\server\certs"
 
 @ECHO ##### Adjusting SUFS #####
 SET installerWorkspace=C:\Program Files (x86)\Jenkins\jobs\omSupplyMain - installers\workspace\omSupply
