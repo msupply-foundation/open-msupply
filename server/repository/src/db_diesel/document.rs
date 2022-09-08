@@ -1,6 +1,7 @@
 use super::StorageConnection;
 
 use crate::db_diesel::form_schema_row::form_schema;
+use crate::db_diesel::name_row::name;
 use crate::diesel_macros::apply_string_filter;
 use crate::{RepositoryError, StringFilter};
 
@@ -21,6 +22,7 @@ table! {
         schema_id -> Nullable<Text>,
         status -> crate::db_diesel::document::DocumentStatusMapping,
         comment -> Nullable<Text>,
+        patient_id -> Nullable<Text>,
     }
 }
 
@@ -36,12 +38,15 @@ table! {
         schema_id -> Nullable<Text>,
         status -> crate::db_diesel::document::DocumentStatusMapping,
         comment -> Nullable<Text>,
+        patient_id -> Nullable<Text>,
     }
 }
 
 joinable!(document -> form_schema (schema_id));
+joinable!(document -> name (patient_id));
 
 allow_tables_to_appear_in_same_query!(document, form_schema);
+allow_tables_to_appear_in_same_query!(document, name);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
@@ -74,6 +79,7 @@ pub struct DocumentRow {
     pub status: DocumentStatus,
     // Deletion comment
     pub comment: Option<String>,
+    pub patient_id: Option<String>,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
@@ -99,6 +105,7 @@ pub struct LatestDocumentRow {
     // Soft deletion status
     pub status: DocumentStatus,
     pub comment: Option<String>,
+    pub patient_id: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -120,6 +127,7 @@ pub struct Document {
     pub schema_id: Option<String>,
     pub status: DocumentStatus,
     pub comment: Option<String>,
+    pub patient_id: Option<String>,
 }
 
 #[derive(Clone)]
@@ -236,6 +244,7 @@ fn document_from_row(row: DocumentRow) -> Result<Document, RepositoryError> {
         schema_id: row.schema_id,
         status: row.status,
         comment: row.comment,
+        patient_id: row.patient_id,
     };
 
     Ok(document)
@@ -264,6 +273,7 @@ fn latest_document_from_row(row: LatestDocumentRow) -> Result<Document, Reposito
         schema_id: row.schema_id,
         status: row.status,
         comment: row.comment,
+        patient_id: row.patient_id,
     };
 
     Ok(document)
@@ -290,5 +300,6 @@ fn row_from_document(doc: &Document) -> Result<DocumentRow, RepositoryError> {
         schema_id: doc.schema_id.clone(),
         status: doc.status.to_owned(),
         comment: doc.comment.to_owned(),
+        patient_id: doc.patient_id.to_owned(),
     })
 }

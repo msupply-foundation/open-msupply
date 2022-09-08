@@ -8,7 +8,8 @@ CREATE TABLE document (
     data TEXT NOT NULL,
     schema_id TEXT REFERENCES form_schema(id),
     status TEXT NOT NULL,
-    comment TEXT
+    comment TEXT,
+    patient_id TEXT REFERENCES name (id)
 );
 
 CREATE INDEX ix_document_name_unique ON document(name);

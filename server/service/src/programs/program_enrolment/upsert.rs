@@ -94,6 +94,7 @@ fn generate(user_id: &str, input: UpsertProgramEnrolment) -> Result<RawDocument,
         schema_id: Some(input.schema_id),
         status: DocumentStatus::Active,
         comment: None,
+        patient_id: Some(input.patient_id),
     })
 }
 

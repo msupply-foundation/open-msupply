@@ -111,6 +111,7 @@ fn generate(user_id: &str, input: InsertEncounter) -> Result<RawDocument, Reposi
         schema_id: Some(input.schema_id),
         status: DocumentStatus::Active,
         comment: None,
+        patient_id: Some(input.patient_id),
     })
 }
 
