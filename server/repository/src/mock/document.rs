@@ -16,6 +16,7 @@ pub fn document_a() -> Document {
         data: mock_form_schema_simple().json_schema,
         status: DocumentStatus::Active,
         comment: None,
+        patient_id: None,
     }
 }
 
