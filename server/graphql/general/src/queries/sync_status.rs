@@ -7,13 +7,13 @@ use service::sync::sync_status::{
 
 #[derive(SimpleObject)]
 pub struct SyncStatusNode {
-    started: Option<NaiveDateTime>,
+    started: NaiveDateTime,
     finished: Option<NaiveDateTime>,
 }
 
 #[derive(SimpleObject)]
 pub struct SyncStatusWithProgressNode {
-    started: Option<NaiveDateTime>,
+    started: NaiveDateTime,
     finished: Option<NaiveDateTime>,
     total_progress: u32,
     done_progress: u32,
@@ -44,8 +44,11 @@ impl SyncInfoQueries {
     }
 
     pub async fn latest_sync_status(&self, ctx: &Context<'_>) -> Result<FullSyncStatusNode> {
-        let connection = ctx.service_provider().connection()?;
-        let sync_status = get_latest_sync_status(&connection)?;
+        let service_provider = ctx.service_provider();
+        let connection = service_provider.connection()?;
+        let sync_status = service_provider
+            .site_info_queries_service
+            .get_latest_sync_status(&connection)?;
 
         Ok(FullSyncStatusNode {
             is_syncing: sync_status.is_syncing,

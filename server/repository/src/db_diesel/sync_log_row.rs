@@ -10,7 +10,7 @@ table! {
     sync_log(id) {
         id -> Text,
         started_datetime -> Timestamp,
-        done_endtime -> Nullable<Timestamp>,
+        done_datetime -> Nullable<Timestamp>,
         prepare_initial_start_datetime -> Nullable<Timestamp>,
         prepare_initial_done_datetime -> Nullable<Timestamp>,
         push_start_datetime -> Nullable<Timestamp>,
@@ -37,7 +37,7 @@ table! {
 pub struct SyncLogRow {
     pub id: String,
     pub started_datetime: NaiveDateTime,
-    pub done_endtime: Option<NaiveDateTime>,
+    pub done_datetime: Option<NaiveDateTime>,
     pub prepare_initial_start_datetime: Option<NaiveDateTime>,
     pub prepare_initial_done_datetime: Option<NaiveDateTime>,
     pub push_start_datetime: Option<NaiveDateTime>,
@@ -62,7 +62,7 @@ impl Default for SyncLogRow {
         Self {
             id: Default::default(),
             started_datetime: Defaults::naive_date_time(),
-            done_endtime: Default::default(),
+            done_datetime: Default::default(),
             prepare_initial_start_datetime: Default::default(),
             prepare_initial_done_datetime: Default::default(),
             push_start_datetime: Default::default(),
