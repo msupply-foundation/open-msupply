@@ -51,6 +51,7 @@ export type JsonData =
 
 interface JsonFormProps {
   data?: JsonData;
+  config?: Record<string, JsonData>;
   jsonSchema: JsonSchema;
   uiSchema: UISchemaElement;
   isError: boolean;
@@ -68,6 +69,7 @@ interface JsonFormsComponentProps {
   setData: (data: JsonData) => void;
   setError?: (error: string | false) => void;
   renderers: JsonFormsRendererRegistryEntry[];
+  config?: Record<string, JsonData>;
 }
 
 // Prevents Form window being loaded with the same scroll position as its parent
@@ -94,11 +96,13 @@ const FormComponent = ({
   setData,
   setError,
   renderers,
+  config,
 }: JsonFormsComponentProps) => {
   const { user, store } = useAuthContext();
-  const config: JsonFormsConfig = {
+  const fullConfig: JsonFormsConfig = {
     store,
     user,
+    ...config,
   };
 
   return !data ? null : (
@@ -106,7 +110,7 @@ const FormComponent = ({
       schema={jsonSchema}
       uischema={uiSchema}
       data={data}
-      config={config}
+      config={fullConfig}
       renderers={renderers}
       // cells={materialCells}
       onChange={({ errors, data }) => {
@@ -149,6 +153,7 @@ export const JsonForm: FC<PropsWithChildren<JsonFormProps>> = ({
   setError,
   updateData,
   additionalRenderers,
+  config,
 }) => {
   const t = useTranslation('common');
 
@@ -189,6 +194,7 @@ export const JsonForm: FC<PropsWithChildren<JsonFormProps>> = ({
           setData={updateData}
           setError={setError}
           renderers={[...renderers, ...(additionalRenderers ?? [])]}
+          config={config}
         />
       )}
       {children}
