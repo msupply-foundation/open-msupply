@@ -225,6 +225,10 @@
               "description": "Hb [g/dL]",
               "type": "number"
             },
+            "fbePlt": {
+              "description": "Plt",
+              "type": "number"
+            },
             "fbeWCC": {
               "description": "WCC",
               "type": "number"
@@ -232,10 +236,6 @@
             "hepBSAg": {
               "enum": ["Pos", "Neg"],
               "type": "string"
-            },
-            "plt": {
-              "description": "Plt",
-              "type": "number"
             },
             "rbslToFbsl": {
               "description": "RBSL/FBSL",
@@ -375,8 +375,8 @@
             },
             "whoStaging": {
               "description": "420721002 Acquired immunodeficiency syndrome-associated disorder (disorder)",
-              "enum": [0, 1, 2, 3],
-              "type": "number"
+              "enum": ["1", "2", "3", "4"],
+              "type": "string"
             }
           },
           "type": "object"
@@ -454,7 +454,7 @@
               "type": "boolean"
             },
             "viralLoadResult": {
-              "description": "If not suppressed",
+              "description": "If not suppressed [copies/ml]",
               "type": "number"
             }
           },
