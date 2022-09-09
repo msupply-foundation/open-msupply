@@ -20,7 +20,10 @@ type OptionEvent = {
   };
   name?: string;
   type: string;
-  context?: string;
+  context?: {
+    value?: string;
+    documentName?: boolean;
+  };
 };
 
 type EventTrigger = {
@@ -56,7 +59,10 @@ const OptionEvent: z.ZodType<OptionEvent> = z
       .optional(),
     name: z.string().optional(),
     type: z.string(),
-    context: z.string().optional(),
+    context: z.object({
+      value: z.string().optional(),
+      documentName: z.boolean().optional(),
+    }),
   })
   .strict();
 
@@ -126,7 +132,7 @@ const scheduleEvent = (
 export const eventTriggerTester = rankWith(10, uiTypeIs('EventTrigger'));
 
 const UIComponent = (props: ControlProps) => {
-  const { data, handleChange, path, uischema } = props;
+  const { data, handleChange, path, uischema, config } = props;
   const { errors, options } = useZodOptionsValidation(
     Options,
     uischema.options
@@ -159,16 +165,17 @@ const UIComponent = (props: ControlProps) => {
 
       const existingEvents: EncounterEvent[] =
         extractProperty(data, 'events') ?? [];
+
       // Remove existing events for the group
       const events = existingEvents.filter(it => it.group !== options.group);
       for (const eventOption of options.events) {
+        const context =
+          eventOption.context?.value ??
+          (eventOption.context?.documentName
+            ? config?.documentName
+            : undefined);
         events.push(
-          scheduleEvent(
-            eventOption,
-            datetime,
-            options.group,
-            eventOption.context
-          )
+          scheduleEvent(eventOption, datetime, options.group, context)
         );
       }
 
