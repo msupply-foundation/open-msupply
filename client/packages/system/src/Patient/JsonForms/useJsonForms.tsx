@@ -164,6 +164,9 @@ export const useJsonForms = (
         setError={setValidationError}
         updateData={updateData}
         additionalRenderers={additionalRenderers}
+        config={{
+          documentName: docName,
+        }}
       />
     ),
     data,
