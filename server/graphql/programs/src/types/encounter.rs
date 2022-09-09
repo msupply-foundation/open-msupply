@@ -128,7 +128,7 @@ impl EncounterNode {
             .map(|f| f.to_domain())
             .unwrap_or(ProgramEventFilter::new())
             .name_id(EqualFilter::equal_to(&self.encounter_row.patient_id))
-            .context(EqualFilter::equal_to(&self.encounter_row.r#type));
+            .context(EqualFilter::equal_to(&self.encounter_row.name));
         let entries = ctx
             .service_provider()
             .program_event_service

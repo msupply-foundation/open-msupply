@@ -44,9 +44,13 @@ export const DetailView: FC = () => {
     isDirty,
     validationError,
     revert,
-  } = useJsonForms(encounter?.document?.name, {
-    handleSave,
-  });
+  } = useJsonForms(
+    encounter?.document?.name,
+    {
+      handleSave,
+    },
+    undefined
+  );
 
   const updateEncounter = useDebounceCallback(
     (patch: Partial<EncounterFragment>) =>
