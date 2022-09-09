@@ -85,78 +85,8 @@
           "scope": "#/properties/hivTesting/properties/type"
         },
         {
-          "type": "EventTrigger",
-          "scope": "#",
-          "options": {
-            "baseDatetimeField": "startDatetime",
-            "group": "PendingLabResults",
-            "trigger": [
-              {
-                "triggerField": "hivTesting.datetime",
-                "isTruthy": true
-              },
-              {
-                "triggerField": "hivTestingResult.datetime",
-                "isFalsy": true
-              }
-            ],
-            "events": [
-              {
-                "name": "Pending Lab Result",
-                "type": "status",
-                "context": "HIVTestingEncounter"
-              }
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "type": "Category",
-      "label": "HIV Results",
-      "options": { "icon": "microscope" },
-      "elements": [
-        {
-          "type": "VerticalLayout",
-          "elements": [
-            {
-              "type": "Control",
-              "scope": "#/properties/hivTestingResult/properties/datetime"
-            },
-            {
-              "type": "Control",
-              "scope": "#/properties/hivTestingResult/properties/result"
-            },
-            {
-              "type": "Control",
-              "scope": "#/properties/hivTestingResult/properties/cd4Count"
-            },
-            {
-              "type": "Control",
-              "scope": "#/properties/hivTestingResult/properties/viralLoad"
-            }
-          ]
-        },
-        {
-          "type": "EventTrigger",
-          "scope": "#",
-          "options": {
-            "baseDatetimeField": "startDatetime",
-            "group": "PendingLabResults",
-            "trigger": [
-              {
-                "triggerField": "hivTestingResult.datetime",
-                "isTruthy": true
-              }
-            ],
-            "events": [
-              {
-                "name": "Lab Result",
-                "type": "status",
-                "context": "HIVTestingEncounter"
-              }
-            ]
-          }
+          "type": "Control",
+          "scope": "#/properties/hivTesting/properties/result"
         }
       ]
     }

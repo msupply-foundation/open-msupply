@@ -79,33 +79,14 @@
               "format": "date-time",
               "type": "string"
             },
+            "result": {
+              "$ref": "#/definitions/HIVStatus"
+            },
             "type": {
               "$ref": "#/definitions/HIVTestType"
             }
           },
-          "required": ["datetime", "type"],
-          "type": "object"
-        },
-        "hivTestingResult": {
-          "properties": {
-            "cd4Count": {
-              "description": "Last CD4 count",
-              "type": "number"
-            },
-            "datetime": {
-              "description": "Date of HIV Test done",
-              "format": "date-time",
-              "type": "string"
-            },
-            "result": {
-              "$ref": "#/definitions/HIVStatus"
-            },
-            "viralLoad": {
-              "description": "Last viral load",
-              "type": "number"
-            }
-          },
-          "required": ["datetime", "result"],
+          "required": ["datetime", "type", "result"],
           "type": "object"
         },
         "practitioner": {

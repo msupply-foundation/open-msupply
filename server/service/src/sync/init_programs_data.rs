@@ -79,7 +79,6 @@ mod hiv_testing_encounter {
                 status: Default::default(),
                 events: Default::default(),
                 hiv_testing: Default::default(),
-                hiv_testing_result: Default::default(),
             }
         }
     }
@@ -101,6 +100,10 @@ mod hiv_care_encounter {
                 status: Default::default(),
                 tuberculosis: Default::default(),
                 events: Default::default(),
+                biochem: Default::default(),
+                haem: Default::default(),
+                tb_hcv: Default::default(),
+                viral_load: Default::default(),
             }
         }
     }

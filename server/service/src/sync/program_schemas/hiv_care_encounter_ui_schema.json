@@ -7,75 +7,65 @@
       "options": { "icon": "stethoscope" },
       "elements": [
         {
+          "type": "Control",
+          "scope": "#/properties/physicalExamination/properties/height"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/physicalExamination/properties/midUpperArmCircumference"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/physicalExamination/properties/weight"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/physicalExamination/properties/bloodPressure"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/physicalExamination/properties/bodyMassIndex"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/physicalExamination/properties/nutritionalStatus"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/physicalExamination/properties/symptoms"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/physicalExamination/properties/opportunisticInfection"
+        },
+        {
           "type": "HorizontalLayout",
           "elements": [
             {
-              "type": "VerticalLayout",
-              "elements": [
-                {
-                  "type": "Control",
-                  "scope": "#/properties/physicalExamination/properties/height"
-                },
-                {
-                  "type": "Control",
-                  "scope": "#/properties/physicalExamination/properties/midUpperArmCircumference"
-                },
-                {
-                  "type": "Control",
-                  "scope": "#/properties/physicalExamination/properties/weight"
-                },
-                {
-                  "type": "Control",
-                  "scope": "#/properties/physicalExamination/properties/bloodPressure"
-                },
-                {
-                  "type": "Control",
-                  "scope": "#/properties/physicalExamination/properties/bodyMassIndex"
-                },
-                {
-                  "type": "Control",
-                  "scope": "#/properties/physicalExamination/properties/nutritionalStatus"
-                },
-                {
-                  "type": "Control",
-                  "scope": "#/properties/physicalExamination/properties/symptoms"
-                },
-                {
-                  "type": "Control",
-                  "scope": "#/properties/physicalExamination/properties/opportunisticInfection"
-                }
-              ]
+              "type": "EncounterLineChart",
+              "scope": "#",
+              "options": {
+                "values": [
+                  {
+                    "field": "physicalExamination.weight",
+                    "label": "Weight",
+                    "unit": "kg"
+                  }
+                ]
+              }
             },
             {
-              "type": "HorizontalLayout",
-              "elements": [
-                {
-                  "type": "EncounterLineChart",
-                  "scope": "#",
-                  "options": {
-                    "values": [
-                      {
-                        "field": "physicalExamination.weight",
-                        "label": "Weight",
-                        "unit": "kg"
-                      }
-                    ]
+              "type": "EncounterLineChart",
+              "scope": "#",
+              "options": {
+                "values": [
+                  {
+                    "field": "physicalExamination.bloodPressure",
+                    "label": "Blood Pressure",
+                    "unit": "mmHg"
                   }
-                },
-                {
-                  "type": "EncounterLineChart",
-                  "scope": "#",
-                  "options": {
-                    "values": [
-                      {
-                        "field": "physicalExamination.bloodPressure",
-                        "label": "Blood Pressure",
-                        "unit": "mmHg"
-                      }
-                    ]
-                  }
-                }
-              ]
+                ]
+              }
             }
           ]
         }
@@ -169,16 +159,112 @@
     },
     {
       "type": "Category",
-      "label": "Tuberculosis",
+      "label": "Viral Load",
+      "options": { "icon": "microscope" },
+      "elements": [
+        {
+          "type": "VerticalLayout",
+          "elements": [
+            {
+              "type": "Control",
+              "scope": "#/properties/viralLoad/properties/tested"
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/viralLoad/properties/targetting"
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/viralLoad/properties/eacDone"
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/viralLoad/properties/viralLoadResult"
+            }
+          ]
+        },
+        {
+          "type": "EventTrigger",
+          "scope": "#",
+          "options": {
+            "baseDatetimeField": "startDatetime",
+            "group": "PendingLabResults",
+            "trigger": [
+              {
+                "triggerField": "viralLoad.tested",
+                "isTruthy": true
+              },
+              {
+                "triggerField": "viralLoad.viralLoadResult",
+                "isFalsy": true
+              }
+            ],
+            "events": [
+              {
+                "name": "Pending VL Result",
+                "type": "status",
+                "context": {
+                  "documentName": true
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "EventTrigger",
+          "scope": "#",
+          "options": {
+            "baseDatetimeField": "startDatetime",
+            "group": "PendingLabResults",
+            "trigger": [
+              {
+                "triggerField": "viralLoad.viralLoadResult",
+                "isTruthy": true
+              }
+            ],
+            "events": [
+              {
+                "name": "VL Result",
+                "type": "status",
+                "context": {
+                  "documentName": true
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "Category",
+      "label": "Biochem",
+      "options": { "icon": "microscope" },
+      "elements": [
+        {
+          "type": "Control",
+          "scope": "#/properties/biochem"
+        }
+      ]
+    },
+    {
+      "type": "Category",
+      "label": "Haem",
+      "options": { "icon": "microscope" },
+      "elements": [
+        {
+          "type": "Control",
+          "scope": "#/properties/haem"
+        }
+      ]
+    },
+    {
+      "type": "Category",
+      "label": "TB / HCV",
       "options": { "icon": "lungs" },
       "elements": [
         {
           "type": "Control",
-          "scope": "#/properties/tuberculosis/properties/tbScreening"
-        },
-        {
-          "type": "Control",
-          "scope": "#/properties/tuberculosis/properties/status"
+          "scope": "#/properties/tbHcv"
         }
       ]
     }

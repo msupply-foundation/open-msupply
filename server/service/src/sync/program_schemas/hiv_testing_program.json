@@ -6,9 +6,6 @@
         "clinic": {
           "type": "string"
         },
-        "note": {
-          "type": "string"
-        },
         "patientId": {
           "type": "string"
         }

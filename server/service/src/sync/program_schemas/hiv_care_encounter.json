@@ -48,6 +48,11 @@
       "properties": {
         "arvMedication": {
           "properties": {
+            "adherenceStatus": {
+              "description": "Antiretroviral adherence status",
+              "enum": [0, 1, 2],
+              "type": "number"
+            },
             "change": {
               "enum": [
                 "Substitution of ART Regimen",
@@ -67,6 +72,27 @@
             },
             "previousRegimen": {
               "description": "Previous antiretroviral treatment regimen",
+              "type": "string"
+            },
+            "prophylaxisMedication": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "reason": {
+              "enum": [
+                "101",
+                "102",
+                "103",
+                "104",
+                "105",
+                "106",
+                "107",
+                "108",
+                "109",
+                "151"
+              ],
               "type": "string"
             },
             "reasonFirstToSecondLine": {
@@ -104,11 +130,77 @@
             },
             "regimen": {
               "description": "Antiretroviral treatment regimen",
+              "enum": [
+                "1a-New",
+                "1a-Old",
+                "1b-New",
+                "1b-Old",
+                "2a-New",
+                "2a-Old",
+                "2b-New",
+                "2b-Old",
+                "2c-New",
+                "3a-New",
+                "3a-Old",
+                "3b-New",
+                "3b-Old",
+                "3c-New",
+                "4a-New",
+                "4a-Old",
+                "4b-New",
+                "4b-Old",
+                "4c-New",
+                "4c-Old",
+                "5a-New",
+                "5a-Old",
+                "5b-New",
+                "5b-Old",
+                "6a-New",
+                "6a-Old",
+                "6b-New",
+                "6b-Old",
+                "6c-New",
+                "6c-Old",
+                "Other"
+              ],
+              "type": "string"
+            },
+            "relevantCoMedication": {
+              "enum": [
+                "Asthma medication",
+                "Diabetes medication",
+                "Heart condition medication",
+                "Kidney medication",
+                "Liver medication"
+              ],
               "type": "string"
             },
             "stopReason": {
               "description": "Reasons to stop antiretroviral treatment",
               "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "biochem": {
+          "properties": {
+            "alt": {
+              "type": "number"
+            },
+            "ast": {
+              "description": "[IU/L]",
+              "type": "number"
+            },
+            "bilirubin": {
+              "type": "number"
+            },
+            "cd4": {
+              "description": "[+cells/mm^3]",
+              "type": "number"
+            },
+            "uec": {
+              "description": "UEC (Cr)",
+              "type": "number"
             }
           },
           "type": "object"
@@ -126,6 +218,39 @@
         },
         "familyPlanning": {
           "$ref": "#/definitions/FamilyPlanning"
+        },
+        "haem": {
+          "properties": {
+            "fbeHb": {
+              "description": "Hb [g/dL]",
+              "type": "number"
+            },
+            "fbeWCC": {
+              "description": "WCC",
+              "type": "number"
+            },
+            "hepBSAg": {
+              "enum": ["Pos", "Neg"],
+              "type": "string"
+            },
+            "plt": {
+              "description": "Plt",
+              "type": "number"
+            },
+            "rbslToFbsl": {
+              "description": "RBSL/FBSL",
+              "type": "string"
+            },
+            "tlc": {
+              "description": "[+cells/mm^3]",
+              "type": "number"
+            },
+            "tpha": {
+              "enum": ["Pos", "Neg"],
+              "type": "string"
+            }
+          },
+          "type": "object"
         },
         "physicalExamination": {
           "properties": {
@@ -200,7 +325,6 @@
               "type": "array"
             },
             "symptoms": {
-              "description": "420721002 Acquired immunodeficiency syndrome-associated disorder (disorder)",
               "items": {
                 "enum": [
                   "Anaemia",
@@ -248,6 +372,11 @@
             "weight": {
               "description": "735395000\tCurrent body weight [kg]",
               "type": "number"
+            },
+            "whoStaging": {
+              "description": "420721002 Acquired immunodeficiency syndrome-associated disorder (disorder)",
+              "enum": [0, 1, 2, 3],
+              "type": "number"
             }
           },
           "type": "object"
@@ -262,6 +391,31 @@
         },
         "status": {
           "$ref": "#/definitions/EncounterStatus"
+        },
+        "tbHcv": {
+          "properties": {
+            "cxr": {
+              "type": "number"
+            },
+            "hcv": {
+              "description": "HCV",
+              "enum": ["Pos", "Neg"],
+              "type": "string"
+            },
+            "tbGeneXpert": {
+              "enum": [
+                "Not Detected",
+                "Positive (Rif-Sensetive)",
+                "Postitive (Rif-Resistant"
+              ],
+              "type": "string"
+            },
+            "tbSputum": {
+              "enum": ["No AFB", "+", "++", "+++"],
+              "type": "string"
+            }
+          },
+          "type": "object"
         },
         "tuberculosis": {
           "properties": {
@@ -282,6 +436,26 @@
             },
             "tbScreening": {
               "type": "boolean"
+            }
+          },
+          "type": "object"
+        },
+        "viralLoad": {
+          "properties": {
+            "eacDone": {
+              "description": "If last VL unsuppressed",
+              "type": "boolean"
+            },
+            "targetting": {
+              "enum": ["Targeted", "Scheduled"],
+              "type": "string"
+            },
+            "tested": {
+              "type": "boolean"
+            },
+            "viralLoadResult": {
+              "description": "If not suppressed",
+              "type": "number"
             }
           },
           "type": "object"
