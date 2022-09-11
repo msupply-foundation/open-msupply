@@ -6,7 +6,7 @@ Pair records that belong to two different stores but are intrinsically linked to
 
 `OutboundShipment` -> `InboundShipment`
 
-The term `transfer` arrises from the need to `transfer` these records from one `sync site` to another, in a scenario where pair of linked transfer records belong to two different `sites`.
+The term `transfer` arises from the need to `transfer` these records from one `sync site` to another, in a scenario where a pair of linked transfer records belong to two different `sites`.
 
 ## Requirements
 
@@ -29,7 +29,7 @@ This means the `other half` of transfer record needs to be generated on the site
 
 Each processor (`shipment` and `requisition` transfer processor) keep track of changelog it has processed, and when it's triggerd it will try processing any records that have been changed since the last processed changelog entry.
 
-We **only** want to process shipments and requisitions that are `destined` for current site, thus changelogs are filtered by name_ids belonging to stores on that are active on current site.
+We **only** want to process shipments and requisitions that are `destined` for current site, thus changelogs are filtered by name_ids belonging to stores that are active on current site.
 
 ## If both stores are active on current site
 
@@ -37,15 +37,15 @@ Same exact process is used, except the processors are triggered in services, see
 * Request Requisition (id: A) is created and set to `sent` status
 * Requsition Processor is triggered
 * Processor sees new requisition in change log and executes `CreateResponseRequisitionProcessor` which creates Response Requisition (id: B) and links it to Request Requisition (requisition_id: A)
-* Processor tries to process any sother change log (it re-quieries changelogs until result is empty), and sees newly created Response Requisition, and will executed `LikRequestRequisitionProcessor` and set's (requisition_id: B) for Request Requistion (id: A)
+* Processor tries to process any other changelogs (it re-queries changelogs until result is empty), and sees the newly created Response Requisition, and will executed `LikRequestRequisitionProcessor` and sets (requisition_id: B) for Request Requistion (id: A)
 
 ## Potential for Circular/Infinite processing
 
-Any event driven system has a potential for infinite looping. Processor conditions are carefully crafted to avoid these scenarior, but there is a possibility of an edge case that hasn't been considered. Care should be taken when adding changes and review transfer processor code.
+Any event driven system has a potential for infinite looping. Processor conditions are carefully crafted to avoid these scenarios, but there is a possibility of an edge case that hasn't been considered. Care should be taken when adding changes and review transfer processor code.
 
 ## Referential integrity
 
-Having referential constraints in database means that at access time we dont' need to do extra checks, but referential constrains cause a slightly problem, for example `invoice_line` would be transfered from source site to destination site, but associated `stock_line` and `location` will not (as they would only exists on source site). This is metigated by incoming sync translator, if a record does not belong to current site both stock_line and location are set to null in database
+Having referential constraints in database means that at access time we don't need to do extra checks, but referential constrains cause a slight problem, for example `invoice_line` would be transferred from source site to destination site, but associated `stock_line` and `location` will not (as they would only exists on source site). This is mitigated by incoming sync translator, if a record does not belong to the current site both stock_line and location are set to null in database
 
 ## Diagram
 

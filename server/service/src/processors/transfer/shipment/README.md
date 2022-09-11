@@ -16,4 +16,4 @@ When inbound shipment is created from outbound shipment, we check for requisitio
 
 ## Invoice Line on Update
 
-When outbound shipment is updated and inbound shipment was already generated, invoice lines will be dropped and and reinstanted to match outbound shipment (this is the simples way to update potentially changed invoice lines)
+When an outbound shipment is updated and an inbound shipment is already generated, invoice lines will be dropped and reinstated to match the outbound shipment (this is the simplest way to update potentially changed invoice lines)
