@@ -1,5 +1,8 @@
-use super::api::{ParsingV5RecordError, SyncApiError, SyncApiV5};
-use crate::sync::api::CentralSyncBatchV5;
+use super::{
+    api::{ParsingV5RecordError, SyncApiError, SyncApiV5},
+    SyncLogger, SyncLoggerError,
+};
+use crate::sync::{api::CentralSyncBatchV5, SyncStepProgress};
 use log::info;
 use repository::{
     KeyValueStoreRepository, KeyValueType, RepositoryError, StorageConnection, SyncBufferRow,
@@ -15,6 +18,8 @@ pub(crate) enum CentralSyncError {
     SaveSyncBufferOrCursorsError(RepositoryError),
     #[error("{0}")]
     ParsingV5RecordError(ParsingV5RecordError),
+    #[error("{0}")]
+    SyncLoggerError(SyncLoggerError),
 }
 
 pub(crate) struct CentralDataSynchroniser {
@@ -22,10 +27,12 @@ pub(crate) struct CentralDataSynchroniser {
 }
 
 impl CentralDataSynchroniser {
-    pub(crate) async fn pull(
+    pub(crate) async fn pull<'a>(
         &self,
         connection: &StorageConnection,
+        logger: &mut SyncLogger<'a>,
     ) -> Result<(), CentralSyncError> {
+        use CentralSyncError::*;
         // Arbitrary batch size.
         const BATCH_SIZE: u32 = 500;
 
@@ -40,7 +47,7 @@ impl CentralDataSynchroniser {
                 .sync_api_v5
                 .get_central_records(cursor, BATCH_SIZE)
                 .await
-                .map_err(CentralSyncError::PullError)?;
+                .map_err(PullError)?;
 
             let batch_length = sync_batch.data.len();
             info!(
@@ -53,11 +60,20 @@ impl CentralDataSynchroniser {
                 let buffer_row = sync_record
                     .record
                     .to_buffer_row()
-                    .map_err(CentralSyncError::ParsingV5RecordError)?;
+                    .map_err(ParsingV5RecordError)?;
 
                 insert_one_and_update_cursor(connection, &buffer_row, cursor)
-                    .map_err(CentralSyncError::SaveSyncBufferOrCursorsError)?;
+                    .map_err(SaveSyncBufferOrCursorsError)?;
             }
+
+            let remaining = (sync_batch.max_cursor - cursor) as u64;
+            logger
+                .progress(
+                    SyncStepProgress::PullCentral,
+                    remaining,
+                    sync_batch.max_cursor as u64,
+                )
+                .map_err(SyncLoggerError)?;
 
             if batch_length == 0 {
                 info!("Central sync buffer is up-to-date");
