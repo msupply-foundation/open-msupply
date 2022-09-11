@@ -1,7 +1,10 @@
 use std::time::{Duration, SystemTime};
 
-use super::api::*;
-use crate::sync::translations::{translate_changelog, PushRecord};
+use super::{api::*, SyncLogger, SyncLoggerError};
+use crate::sync::{
+    translations::{translate_changelog, PushRecord},
+    SyncStepProgress,
+};
 use log::info;
 use repository::{
     ChangelogRow, ChangelogRowRepository, KeyValueStoreRepository, KeyValueType, RepositoryError,
@@ -26,6 +29,8 @@ pub(crate) enum RemotePullError {
     SaveSyncBufferError(RepositoryError),
     #[error("{0}")]
     ParsingV5RecordError(ParsingV5RecordError),
+    #[error("{0}")]
+    SyncLoggerError(SyncLoggerError),
 }
 #[derive(Error, Debug)]
 pub(crate) enum RequestAndSetSiteInfoError {
@@ -100,7 +105,12 @@ impl RemoteDataSynchroniser {
     }
 
     /// Pull all records from the central server
-    pub(crate) async fn pull(&self, connection: &StorageConnection) -> Result<(), RemotePullError> {
+    pub(crate) async fn pull<'a>(
+        &self,
+        connection: &StorageConnection,
+        logger: &mut SyncLogger<'a>,
+    ) -> Result<(), RemotePullError> {
+        use RemotePullError::*;
         // Arbitrary batch size TODO: should come from settings
         const BATCH_SIZE: u32 = 500;
         let sync_buffer_repository = SyncBufferRowRepository::new(connection);
@@ -112,13 +122,13 @@ impl RemoteDataSynchroniser {
                 .sync_api_v5
                 .get_queued_records(BATCH_SIZE)
                 .await
-                .map_err(RemotePullError::PullError)?;
+                .map_err(PullError)?;
 
             let total_queue_length = sync_batch.queue_length;
             let sync_ids = sync_batch.extract_sync_ids();
             let sync_buffer_rows = sync_batch
                 .to_sync_buffer_rows()
-                .map_err(RemotePullError::ParsingV5RecordError)?;
+                .map_err(ParsingV5RecordError)?;
 
             let number_of_pulled_records = sync_buffer_rows.len() as u64;
 
@@ -128,16 +138,21 @@ impl RemoteDataSynchroniser {
                 total_queue_length - number_of_pulled_records
             );
 
+            let remaining = total_queue_length - number_of_pulled_records;
+            logger
+                .progress(SyncStepProgress::PullRemote, remaining, total_queue_length)
+                .map_err(SyncLoggerError)?;
+
             if number_of_pulled_records > 0 {
                 sync_buffer_repository
                     .upsert_many(&sync_buffer_rows)
-                    .map_err(RemotePullError::SaveSyncBufferError)?;
+                    .map_err(SaveSyncBufferError)?;
 
                 info!("Acknowledging remote sync records...");
                 self.sync_api_v5
                     .post_acknowledged_records(sync_ids)
                     .await
-                    .map_err(RemotePullError::AcknowledgedError)?;
+                    .map_err(AcknowledgedError)?;
                 info!("Acknowledged remote sync records");
             } else {
                 break;
@@ -148,7 +163,11 @@ impl RemoteDataSynchroniser {
     }
 
     // Push all records in change log to central server
-    pub(crate) async fn push(&self, connection: &StorageConnection) -> Result<(), anyhow::Error> {
+    pub(crate) async fn push<'a>(
+        &self,
+        connection: &StorageConnection,
+        logger: &mut SyncLogger<'a>,
+    ) -> Result<(), anyhow::Error> {
         let changelog = ChangelogRowRepository::new(connection);
 
         const BATCH_SIZE: u32 = 1024;
@@ -179,6 +198,14 @@ impl RemoteDataSynchroniser {
                 "Remote push: {} records pushed to central server",
                 records_len
             );
+
+            logger
+                .progress(
+                    SyncStepProgress::PushRemote,
+                    change_logs_total - records_len as u64,
+                    change_logs_total,
+                )
+                .map_err(RemotePullError::SyncLoggerError)?;
 
             // Update cursor only if record for that cursor has been pushed/processed
             if let Some(last_pushed_cursor_id) = last_pushed_cursor {
