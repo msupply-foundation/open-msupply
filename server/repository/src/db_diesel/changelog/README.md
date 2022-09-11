@@ -1,14 +1,15 @@
 # Changelog
 
-A number of operations rely on processing a `queue` of database changes. There include pushing records to central server during synchronisation, processing transfer records, processing messaging, aggregation, interoperability synchronisation, etc.. 
+A number of operations rely on processing a `queue` of database changes.
+These operations include pushing records to central server during synchronisation, processing transfer records, processing messaging, aggregation, interoperability synchronisation, etc.. 
 
-Generic mechanism for recording and querying these database changes was implemente in the form of `changelog` table.
+Generic mechanism for recording and querying these database changes was implemented in the form of the `changelog` table.
 
 ## Triggers
 
 Database triggers insert new entries into changelog table with:
 
-* cursor <- sequencial number for order of database operation
+* cursor <- sequential number for order of database operation
 * record_id 
 * table_name
 * store_id
