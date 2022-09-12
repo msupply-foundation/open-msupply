@@ -153,7 +153,7 @@ fn create_filtered_query<'a>(
     query
 }
 
-#[cfg(test)]
+// Only used in tests (cfg flag doesn't seem to work for inline_init even in tests)
 impl Default for ChangelogRow {
     fn default() -> Self {
         Self {
