@@ -179,7 +179,7 @@ impl RequisitionTransferTester {
     pub(crate) fn check_response_requisition_not_created(&self, connection: &StorageConnection) {
         assert_eq!(
             RequisitionRepository::new(connection).query_one(
-                RequisitionFilter::new_match_linked_requisition_id(&self.request_requisition.id)
+                RequisitionFilter::by_linked_requisition_id(&self.request_requisition.id)
             ),
             Ok(None)
         )
@@ -202,7 +202,7 @@ impl RequisitionTransferTester {
 
     pub(crate) fn check_response_requisition_created(&mut self, connection: &StorageConnection) {
         let response_requisition = RequisitionRepository::new(&connection)
-            .query_one(RequisitionFilter::new_match_linked_requisition_id(
+            .query_one(RequisitionFilter::by_linked_requisition_id(
                 &self.request_requisition.id,
             ))
             .unwrap();
