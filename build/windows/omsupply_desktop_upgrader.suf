@@ -6,16 +6,16 @@
 <ArchiveFiles>
 <FileData>
 <FldRef>1</FldRef>
-<FullName>#PROJECTFILEDIR#\omSupply Desktop Server\*.*</FullName>
+<FullName>#PROJECTFILEDIR#\omSupply Desktop\*.*</FullName>
 <FileName>*.*</FileName>
-<Source>#PROJECTFILEDIR#\omSupply Desktop Server</Source>
+<Source>#PROJECTFILEDIR#\omSupply Desktop</Source>
 <Ext>*</Ext>
 <RTSource>Archive</RTSource>
 <Desc/>
 <Recurse>1</Recurse>
 <MatchMode>0</MatchMode>
 <Dest>%AppFolder%</Dest>
-<Overwrite>2</Overwrite>
+<Overwrite>1</Overwrite>
 <Backup>0</Backup>
 <Protect>0</Protect>
 <InstallOrder>1000</InstallOrder>
@@ -330,7 +330,7 @@ end
 <IDS_CTRL_BUTTON_BACK>&lt; &amp;Back</IDS_CTRL_BUTTON_BACK>
 <IDS_CTRL_BUTTON_CANCEL>&amp;Cancel</IDS_CTRL_BUTTON_CANCEL>
 <IDS_CTRL_BUTTON_HELP>&amp;Help</IDS_CTRL_BUTTON_HELP>
-<IDS_CTRL_STATICTEXT_BODY>Welcome to the installer for %ProductName% %ProductVer%.
+<IDS_CTRL_STATICTEXT_BODY>Welcome to the upgrader for %ProductName% %ProductVer%.
 
 It is strongly recommended that you exit all Windows programs before continuing with this installation.
 
@@ -1305,10 +1305,10 @@ end
 </DuringInstScreenData>
 <AfterInstallingScreens>
 <Screen>
-<Type>100</Type>
+<Type>170</Type>
 <Name>Finished Install</Name>
 <BannerStyle>1</BannerStyle>
-<TemplateName>Finished Install</TemplateName>
+<TemplateName>Custom</TemplateName>
 <OverrideProjTheme>0</OverrideProjTheme>
 <StyleData>
 <CstClrs>0</CstClrs>
@@ -1412,6 +1412,13 @@ end
 <ScreenW>497</ScreenW>
 <ScreenH>362</ScreenH>
 </StyleData>
+<CustomCtrlList>
+<CustomCtrlInfo Left="182" Top="14" Width="234" Height="27" ID="211"/>
+<CustomCtrlInfo Left="182" Top="46" Width="291" Height="29" ID="212"/>
+<CustomCtrlInfo Left="182" Top="84" Width="291" Height="16" ID="213"/>
+<CustomCtrlInfo Left="182" Top="108" Width="291" Height="16" ID="214"/>
+<CustomCtrlInfo Left="182" Top="135" Width="235" Height="17" ID="1300"/>
+</CustomCtrlList>
 <Events>
 <Event>
 <Name>On Preload</Name>
@@ -1436,7 +1443,10 @@ Screen.Back();
 <Name>On Next</Name>
 <Args/>
 <Script>-- These actions are performed when the Next button is clicked.
-
+-- Launch omSupply desktop
+if (cbStartOmSupply) then
+	File.Run(SessionVar.Expand("%AppFolder%\\open mSupply.exe"));
+end
 -- advance to the next screen
 Screen.Next();
 </Script>
@@ -1469,28 +1479,31 @@ end
 <Name>On Ctrl Message</Name>
 <Args>number e_CtrlID, number e_MsgID, table e_Details</Args>
 <Script>-- These actions are triggered by the controls on the screen.
+
+if (e_MsgID == MSGID_CLICKED) then
+	-- a control was clicked...
+
+	if (e_CtrlID == CTRL_BUTTON_01) then
+
+		-- Insert your button handling code here
+		
+		Dialog.Message("Click","You clicked on Button 01", MB_OK, MB_ICONNONE);
+	end
+	
+	if (e_CtrlID == CTRL_BUTTON_02) then
+
+		-- Insert your button handling code here
+		
+		Dialog.Message("Click","You clicked on Button 02", MB_OK, MB_ICONNONE);
+	end
+
+end
 </Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
 </Events>
 <Controls>
-<Control>
-<Type>1</Type>
-<ID>103</ID>
-<Visible>0</Visible>
-<Enabled>0</Enabled>
-<TabOrder>75</TabOrder>
-<FTButton>1</FTButton>
-</Control>
-<Control>
-<Type>1</Type>
-<ID>101</ID>
-<Visible>1</Visible>
-<Enabled>0</Enabled>
-<TabOrder>76</TabOrder>
-<FTButton>1</FTButton>
-</Control>
 <Control>
 <Type>1</Type>
 <ID>100</ID>
@@ -1509,19 +1522,60 @@ end
 </Control>
 <Control>
 <Type>2</Type>
-<ID>200</ID>
-<Visible>1</Visible>
-<Enabled>1</Enabled>
-<TabOrder>0</TabOrder>
-<IsHeading>0</IsHeading>
-</Control>
-<Control>
-<Type>2</Type>
-<ID>300</ID>
+<ID>211</ID>
 <Visible>1</Visible>
 <Enabled>1</Enabled>
 <TabOrder>1</TabOrder>
 <IsHeading>1</IsHeading>
+</Control>
+<Control>
+<Type>2</Type>
+<ID>212</ID>
+<Visible>1</Visible>
+<Enabled>1</Enabled>
+<TabOrder>2</TabOrder>
+<IsHeading>0</IsHeading>
+</Control>
+<Control>
+<Type>2</Type>
+<ID>213</ID>
+<Visible>1</Visible>
+<Enabled>1</Enabled>
+<TabOrder>3</TabOrder>
+<IsHeading>0</IsHeading>
+</Control>
+<Control>
+<Type>2</Type>
+<ID>214</ID>
+<Visible>1</Visible>
+<Enabled>1</Enabled>
+<TabOrder>4</TabOrder>
+<IsHeading>0</IsHeading>
+</Control>
+<Control>
+<Type>10</Type>
+<ID>1300</ID>
+<Visible>1</Visible>
+<Enabled>1</Enabled>
+<TabOrder>5</TabOrder>
+<Checked>1</Checked>
+<Variable>cbStartOmSupply</Variable>
+</Control>
+<Control>
+<Type>1</Type>
+<ID>103</ID>
+<Visible>0</Visible>
+<Enabled>0</Enabled>
+<TabOrder>75</TabOrder>
+<FTButton>1</FTButton>
+</Control>
+<Control>
+<Type>1</Type>
+<ID>101</ID>
+<Visible>1</Visible>
+<Enabled>0</Enabled>
+<TabOrder>76</TabOrder>
+<FTButton>1</FTButton>
 </Control>
 </Controls>
 <Languages>
@@ -1554,13 +1608,13 @@ end
 <IDS_CTRL_BUTTON_BACK>&lt; &amp;Back</IDS_CTRL_BUTTON_BACK>
 <IDS_CTRL_BUTTON_CANCEL>&amp;Cancel</IDS_CTRL_BUTTON_CANCEL>
 <IDS_CTRL_BUTTON_HELP>&amp;Help</IDS_CTRL_BUTTON_HELP>
-<IDS_CTRL_STATICTEXT_BODY>The %ProductName% %ProductVer% installation is complete.
-
-Thank you for choosing %ProductName%!
-
-Please click Finish to exit this installer.
-</IDS_CTRL_STATICTEXT_BODY>
-<IDS_CTRL_HEADINGTEXT_BODY>Installation Successful</IDS_CTRL_HEADINGTEXT_BODY>
+<IDS_CTRL_STATICTEXT_TOPINSTRUCTIONS/>
+<IDS_CTRL_STATICTEXT_BOTTOMINSTRUCTIONS/>
+<IDS_CTRL_STATICTEXT_LABEL_01>Installation Successful</IDS_CTRL_STATICTEXT_LABEL_01>
+<IDS_CTRL_STATICTEXT_LABEL_02>The %ProductName% %ProductVer% installation is complete.</IDS_CTRL_STATICTEXT_LABEL_02>
+<IDS_CTRL_STATICTEXT_LABEL_03>Thank you for choosing %ProductName%!</IDS_CTRL_STATICTEXT_LABEL_03>
+<IDS_CTRL_STATICTEXT_LABEL_04>Please click Finish to exit this installer.</IDS_CTRL_STATICTEXT_LABEL_04>
+<IDS_CTRL_CHECK_BOX_01>Launch %ProductName%</IDS_CTRL_CHECK_BOX_01>
 </Messages>
 </SUF70Messages>
 </Languages>
@@ -2509,8 +2563,7 @@ Please click Finish to exit.
 <Event>
 <Name>On Pre Uninstall</Name>
 <Args/>
-<Script>result = Shell.Execute(SessionVar.Expand("%AppFolder%\\bin\\nssm.exe"), "open", SessionVar.Expand("remove \"mSupply Dashboard\" confirm"), "", SW_SHOWNORMAL, true);
-</Script>
+<Script/>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -2525,7 +2578,7 @@ Please click Finish to exit.
 <Event>
 <Name>On Post Uninstall</Name>
 <Args/>
-<Script/>
+<Script>Shell.DeleteShortcut(Shell.GetFolder(SHF_DESKTOP), "omSupply Desktop");</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -2704,13 +2757,7 @@ g_HandleSystemReboot();
 <Event>
 <Name>On Pre Install</Name>
 <Args/>
-<Script>-- Check if the open msupply service is running at the moment.
--- Stop (if running) the service before upgrading the server.
-queryResult = Service.Query("Open mSupply Server", "omSupply");
-if (queryResult == SERVICE_RUNNING) then
-	Service.Stop("Open mSupply Server", "omSupply", 5);
-end
-</Script>
+<Script/>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -2725,25 +2772,7 @@ end
 <Event>
 <Name>On Post Install</Name>
 <Args/>
-<Script>local sFileToBeDeletePath = "";
-
-if File.DoesExist(SessionVar.Expand("%AppFolder%\\server\\settings.ini")) then
-	sDatabase = INIFile.GetValue(SessionVar.Expand("%AppFolder%\\server\\settings.ini"), "omSupply","Database");
-	if (sDatabase == "sqlite") then
-    	sFileToBeDeletePath = SessionVar.Expand("%AppFolder%\\server\\omSupply-postgres.exe");
-    else
-    	sFileToBeDeletePath = SessionVar.Expand("%AppFolder%\\server\\omSupply-sqlite.exe");
-    end
-    File.Delete(sFileToBeDeletePath); -- Delete unchoosen app file (.exe) by a user
-    -- Check to see if an error occurred when launching the file.
-	error = Application.GetLastError();
-	if (error ~= 0) then
-		--If an error occurred, display an error message to the user.
-		Dialog.Message("Error", _tblErrorMessages[error], MB_OK, MB_ICONEXCLAMATION, MB_DEFBUTTON1);
-	end
-end
-Service.Start("Open mSupply Server", "omSupply", nil);
-</Script>
+<Script/>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -2787,7 +2816,7 @@ g_HandleSystemReboot();
 <SUF7SessionVars>
 <SessionVar>
 <Name>%ProductName%</Name>
-<Value>omSupply Server</Value>
+<Value>omSupply Desktop</Value>
 <Type>1</Type>
 </SessionVar>
 <SessionVar>
@@ -2797,7 +2826,7 @@ g_HandleSystemReboot();
 </SessionVar>
 <SessionVar>
 <Name>%ProductVer%</Name>
-<Value>v1.0.5 Upgrader</Value>
+<Value>v1.0.0-IS22-windows-instalers-test11</Value>
 <Type>1</Type>
 </SessionVar>
 <SessionVar>
@@ -2812,7 +2841,7 @@ g_HandleSystemReboot();
 </SessionVar>
 <SessionVar>
 <Name>%WindowTitle%</Name>
-<Value>%ProductName% Setup</Value>
+<Value>%ProductName% Upgrade</Value>
 <Type>1</Type>
 </SessionVar>
 <SessionVar>
@@ -2840,7 +2869,7 @@ g_HandleSystemReboot();
 <PostBuildProg/>
 <PostBuildCmdLine/>
 <PostBuildWait>0</PostBuildWait>
-<Filename>omSupply_Desktop_Server_Upgrader_replace with version.exe</Filename>
+<Filename>omSupply_Desktop_v1.0.0-IS22-windows-instalers-test11.exe</Filename>
 <OutputFolder>C:\Program Files (x86)\Jenkins\jobs\omSupplyMain - installers\workspace\installers</OutputFolder>
 <SegmentSizeMode>0</SegmentSizeMode>
 <CustomSegSize>0</CustomSegSize>
