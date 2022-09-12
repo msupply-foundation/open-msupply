@@ -7,17 +7,17 @@ CREATE TABLE sync_log (
 
     push_start_datetime TIMESTAMP,
     push_done_datetime TIMESTAMP,
-    push_progress_start INTEGER,
+    push_progress_total INTEGER,
     push_progress_done INTEGER,
 
     pull_central_start_datetime TIMESTAMP,
     pull_central_done_datetime TIMESTAMP,
-    pull_central_progress_start INTEGER,
+    pull_central_progress_total INTEGER,
     pull_central_progress_done INTEGER,
 
     pull_remote_start_datetime TIMESTAMP,
     pull_remote_done_datetime TIMESTAMP,
-    pull_remote_progress_start INTEGER,
+    pull_remote_progress_total INTEGER,
     pull_remote_progress_done INTEGER,
 
     integration_start_datetime TIMESTAMP,
