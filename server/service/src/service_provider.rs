@@ -23,7 +23,7 @@ use crate::{
     stocktake::{StocktakeService, StocktakeServiceTrait},
     stocktake_line::{StocktakeLineService, StocktakeLineServiceTrait},
     store::{get_store, get_stores},
-    sync::sync_status::{SiteInfoQueriesService, SiteInfoQueriesTrait},
+    sync::sync_status::status::{SiteInfoQueriesService, SiteInfoQueriesTrait},
     ListError, ListResult,
 };
 

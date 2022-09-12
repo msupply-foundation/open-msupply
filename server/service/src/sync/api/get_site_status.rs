@@ -1,15 +1,15 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use super::*;
 
-#[derive(Debug, PartialEq, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub(crate) struct SiteStatusV5 {
     pub(crate) code: SiteStatusCodeV5,
     pub(crate) message: String,
     pub(crate) data: Option<String>,
 }
 
-#[derive(Debug, PartialEq, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub(crate) enum SiteStatusCodeV5 {
     #[serde(rename = "integration_in_progress")]
     IntegrationInProgress,

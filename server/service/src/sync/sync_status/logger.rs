@@ -1,8 +1,8 @@
-use std::convert::TryInto;
-
+use log::{error, info};
 use repository::{RepositoryError, StorageConnection, SyncLogRow, SyncLogRowRepository};
 use thiserror::Error;
 
+#[derive(Debug)]
 pub(crate) enum SyncStep {
     PrepareInitial,
     Push,
@@ -11,10 +11,11 @@ pub(crate) enum SyncStep {
     Integrate,
 }
 
+#[derive(Clone)]
 pub(crate) enum SyncStepProgress {
     PullCentral,
     PullRemote,
-    PushRemote,
+    Push,
 }
 
 pub(crate) struct SyncLogger<'a> {
@@ -28,6 +29,7 @@ pub(crate) struct SyncLoggerError(RepositoryError);
 
 impl<'a> SyncLogger<'a> {
     pub(crate) fn start(connection: &'a StorageConnection) -> Result<SyncLogger, SyncLoggerError> {
+        info!("Sync started");
         let row = SyncLogRow {
             id: util::uuid::uuid(),
             started_datetime: chrono::Utc::now().naive_utc(),
@@ -48,10 +50,12 @@ impl<'a> SyncLogger<'a> {
         self.sync_log_repo
             .upsert_one(&self.row)
             .map_err(SyncLoggerError)?;
+        info!("Sync finished");
         Ok(())
     }
 
     pub(crate) fn start_step(&mut self, step: SyncStep) -> Result<(), SyncLoggerError> {
+        info!("Sync step started {:?}", step);
         self.row = match step {
             SyncStep::PrepareInitial => SyncLogRow {
                 prepare_initial_start_datetime: Some(chrono::Utc::now().naive_utc()),
@@ -87,23 +91,43 @@ impl<'a> SyncLogger<'a> {
                 prepare_initial_done_datetime: Some(chrono::Utc::now().naive_utc()),
                 ..self.row.clone()
             },
-            SyncStep::Push => SyncLogRow {
-                push_done_datetime: Some(chrono::Utc::now().naive_utc()),
-                ..self.row.clone()
-            },
-            SyncStep::PullCentral => SyncLogRow {
-                pull_central_done_datetime: Some(chrono::Utc::now().naive_utc()),
-                ..self.row.clone()
-            },
-            SyncStep::PullRemote => SyncLogRow {
-                pull_remote_done_datetime: Some(chrono::Utc::now().naive_utc()),
-                ..self.row.clone()
-            },
+            SyncStep::Push => {
+                info!(
+                    "Pushed ({}) records",
+                    self.row.pull_remote_progress_done.as_ref().unwrap_or(&0)
+                );
+                SyncLogRow {
+                    push_done_datetime: Some(chrono::Utc::now().naive_utc()),
+                    ..self.row.clone()
+                }
+            }
+            SyncStep::PullCentral => {
+                info!(
+                    "Pulled ({}) central records",
+                    self.row.pull_remote_progress_done.as_ref().unwrap_or(&0)
+                );
+                SyncLogRow {
+                    pull_central_done_datetime: Some(chrono::Utc::now().naive_utc()),
+                    ..self.row.clone()
+                }
+            }
+            SyncStep::PullRemote => {
+                info!(
+                    "Pulled ({}) remote records",
+                    self.row.pull_remote_progress_done.as_ref().unwrap_or(&0)
+                );
+                SyncLogRow {
+                    pull_remote_done_datetime: Some(chrono::Utc::now().naive_utc()),
+                    ..self.row.clone()
+                }
+            }
             SyncStep::Integrate => SyncLogRow {
                 integration_done_datetime: Some(chrono::Utc::now().naive_utc()),
                 ..self.row.clone()
             },
         };
+
+        info!("Sync step finished {:?}", step);
 
         self.sync_log_repo
             .upsert_one(&self.row)
@@ -112,6 +136,8 @@ impl<'a> SyncLogger<'a> {
     }
 
     pub(crate) fn error(&mut self, error: String) -> Result<(), SyncLoggerError> {
+        error!("Error in sync: {}", error);
+
         self.row = SyncLogRow {
             error_message: Some(error),
             ..self.row.clone()
@@ -123,28 +149,56 @@ impl<'a> SyncLogger<'a> {
         Ok(())
     }
 
+    // TODO comment
     pub(crate) fn progress(
         &mut self,
         step: SyncStepProgress,
-        progress: u64,
-        total: u64,
+        remaining: u64,
     ) -> Result<(), SyncLoggerError> {
+        let get_progress = |remaining: u64, total: Option<i32>| -> (Option<i32>, Option<i32>) {
+            match total {
+                None => {
+                    let total = remaining as i32;
+                    (Some(total), Some(0))
+                }
+                Some(total) => {
+                    let done = total - remaining as i32;
+                    (
+                        Some(total),
+                        Some(match done < 0 {
+                            true => 0,
+                            _ => done,
+                        }),
+                    )
+                }
+            }
+        };
+
         self.row = match step {
-            SyncStepProgress::PullCentral => SyncLogRow {
-                pull_central_progress_start: Some(total.try_into().unwrap()),
-                pull_central_progress_done: Some(progress.try_into().unwrap()),
-                ..self.row.clone()
-            },
-            SyncStepProgress::PullRemote => SyncLogRow {
-                pull_remote_progress_start: Some(total.try_into().unwrap()),
-                pull_remote_progress_done: Some(progress.try_into().unwrap()),
-                ..self.row.clone()
-            },
-            SyncStepProgress::PushRemote => SyncLogRow {
-                push_progress_start: Some(total.try_into().unwrap()),
-                push_progress_done: Some(progress.try_into().unwrap()),
-                ..self.row.clone()
-            },
+            SyncStepProgress::PullCentral => {
+                let (total, done) = get_progress(remaining, self.row.pull_central_progress_total);
+                SyncLogRow {
+                    pull_central_progress_total: total,
+                    pull_central_progress_done: done,
+                    ..self.row.clone()
+                }
+            }
+            SyncStepProgress::PullRemote => {
+                let (total, done) = get_progress(remaining, self.row.pull_remote_progress_total);
+                SyncLogRow {
+                    pull_remote_progress_total: total,
+                    pull_remote_progress_done: done,
+                    ..self.row.clone()
+                }
+            }
+            SyncStepProgress::Push => {
+                let (total, done) = get_progress(remaining, self.row.push_progress_total);
+                SyncLogRow {
+                    push_progress_total: total,
+                    push_progress_done: done,
+                    ..self.row.clone()
+                }
+            }
         };
 
         self.sync_log_repo
