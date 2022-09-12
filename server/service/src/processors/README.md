@@ -2,7 +2,7 @@
 
 It is desirable to perform some operations consecutively as they may cause undesirable and unexpected side effects. These operations should be `triggerable` in services, wherever `ServiceContext` and `ServiceProvider` are available and should be `triggerable` on individual basis.
 
-We can achieve this creating chanells and spawning a task that listens to those chanells. The senders for the channel can be put into Atomic Reference Counter (Arc) and passed along as a context to a service.
+We can achieve this creating channels and spawning a task that listens to those channels. The senders for the channel can be put into Atomic Reference Counter (Arc) and passed along as a context to a service.
 
 ## Implementation
 
