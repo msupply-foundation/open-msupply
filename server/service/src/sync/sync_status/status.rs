@@ -1,15 +1,10 @@
-use std::collections::HashMap;
-
 use chrono::{NaiveDateTime, Utc};
 use repository::{
     ChangelogRowRepository, DatetimeFilter, RepositoryError, StorageConnection, SyncLogFilter,
     SyncLogRepository, SyncLogRow, SyncLogRowRepository,
 };
-use util::Defaults;
 
-use crate::i32_to_u32;
-
-use super::remote_data_synchroniser::RemoteSyncState;
+use crate::{i32_to_u32, sync::remote_data_synchroniser::RemoteSyncState};
 
 #[derive(Debug)]
 pub struct SyncStatus {
