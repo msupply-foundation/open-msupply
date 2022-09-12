@@ -141,16 +141,16 @@ fn get_upsert_record(
     let repo = RequisitionRepository::new(connection);
 
     let requisition = repo
-        .query_one(RequisitionFilter::new_match_id(&changelog_row.record_id))
+        .query_one(RequisitionFilter::by_id(&changelog_row.record_id))
         .map_err(|e| DatabaseError(changelog_row.record_id.clone(), e))?
         .ok_or_else(|| RequisitionNotFound(changelog_row.clone()))?;
-    
+
     let linked_requisition = match &requisition.requisition_row.linked_requisition_id {
         Some(id) => repo
-            .query_one(RequisitionFilter::new_match_id(id))
+            .query_one(RequisitionFilter::by_id(id))
             .map_err(|e| DatabaseError(id.to_string(), e))?,
         None => repo
-            .query_one(RequisitionFilter::new_match_linked_requisition_id(
+            .query_one(RequisitionFilter::by_linked_requisition_id(
                 &requisition.requisition_row.id,
             ))
             .map_err(|e| DatabaseError(requisition.requisition_row.id.clone(), e))?,
