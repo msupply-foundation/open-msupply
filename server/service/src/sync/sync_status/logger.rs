@@ -149,7 +149,15 @@ impl<'a> SyncLogger<'a> {
         Ok(())
     }
 
-    // TODO comment
+    /// Method will update progress of a sync step
+    ///
+    /// # Arguments
+    ///
+    /// * `step` - Sync step to apply progress update to
+    /// * `remaining` - How many records are remaining to be processed for the step
+    ///
+    /// If this is the first time progress is called for a step then `progress_total` for the step will be set to `remaining`, and `progress_done` will be 0
+    /// Otherwise progress_total will remain unchanged and `progress_done` will be set to `progress_total` - `remaining`
     pub(crate) fn progress(
         &mut self,
         step: SyncStepProgress,
