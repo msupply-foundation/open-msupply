@@ -1,10 +1,11 @@
-import React, { FC, ReactNode, useState } from 'react';
+import React, { FC, ReactNode, useEffect, useState } from 'react';
 import { TabContext } from '@mui/lab';
 import { Box } from '@mui/material';
 import { LocaleKey, useTranslation } from '@common/intl';
 import { AppBarTabsPortal } from '../../portals';
 import { DetailTab } from './DetailTab';
 import { ShortTabList, Tab } from './Tabs';
+import { useUrlQuery } from '@common/hooks';
 
 export type TabDefinition = {
   Component: ReactNode;
@@ -14,8 +15,24 @@ interface DetailTabsProps {
   tabs: TabDefinition[];
 }
 export const DetailTabs: FC<DetailTabsProps> = ({ tabs }) => {
+  const { urlQuery, updateQuery } = useUrlQuery();
   const [currentTab, setCurrentTab] = useState<string>(tabs[0]?.value ?? '');
   const t = useTranslation('common');
+
+  const onChange:
+    | ((event: React.SyntheticEvent<Element, Event>, value: any) => void)
+    | undefined = (_, tab) => {
+    updateQuery({ tab });
+    setCurrentTab(tab);
+  };
+
+  const isValidTab = (tab?: string) =>
+    !!tab && tabs.some(({ value }) => value === tab);
+
+  useEffect(() => {
+    const tab = urlQuery['tab'];
+    if (isValidTab(tab)) setCurrentTab(tab);
+  }, []);
 
   return (
     <TabContext value={currentTab}>
@@ -27,11 +44,7 @@ export const DetailTabs: FC<DetailTabsProps> = ({ tabs }) => {
         }}
       >
         <Box flex={1}>
-          <ShortTabList
-            value={currentTab}
-            centered
-            onChange={(_, v) => setCurrentTab(v)}
-          >
+          <ShortTabList value={currentTab} centered onChange={onChange}>
             {tabs.map(({ value }, index) => (
               <Tab
                 key={value}
