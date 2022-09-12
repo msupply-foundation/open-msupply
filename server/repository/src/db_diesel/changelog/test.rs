@@ -64,6 +64,7 @@ async fn test_changelog() {
     );
 
     // query the full list from cursor=0
+    // because we use the changelog_deduped view, we should only get the latest changelog row for the record_id
     let mut result = repo.changelogs(0, 10, None).unwrap();
     assert_eq!(1, result.len());
     let log_entry = result.pop().unwrap();
