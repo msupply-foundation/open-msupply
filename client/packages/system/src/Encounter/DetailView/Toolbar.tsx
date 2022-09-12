@@ -19,12 +19,17 @@ interface ToolbarProps {
   onChange: (patch: Partial<EncounterFragment>) => void;
 }
 export const Toolbar: FC<ToolbarProps> = ({ onChange }) => {
-  const { data: encounter } = useEncounter.document.get();
+  const { mutate: fetchEncounter, data: encounter } =
+    useEncounter.document.get();
   const [startDatetime, setStartDatetime] = useState<string | undefined>();
   const [endDatetime, setEndDatetime] = useState<string | undefined | null>();
   const t = useTranslation('patients');
+
+  useEffect(() => fetchEncounter(), []);
+
   useEffect(() => {
     if (!encounter) return;
+
     setStartDatetime(encounter.startDatetime);
     setEndDatetime(encounter.endDatetime);
   }, [encounter]);
