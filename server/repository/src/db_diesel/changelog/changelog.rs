@@ -153,6 +153,7 @@ fn create_filtered_query<'a>(
     query
 }
 
+#[cfg(test)]
 impl Default for ChangelogRow {
     fn default() -> Self {
         Self {
