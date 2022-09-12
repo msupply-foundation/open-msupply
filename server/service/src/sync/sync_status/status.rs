@@ -3,24 +3,25 @@ use repository::{
     ChangelogRowRepository, DatetimeFilter, RepositoryError, StorageConnection, SyncLogFilter,
     SyncLogRepository, SyncLogRow, SyncLogRowRepository,
 };
+use util::Defaults;
 
 use crate::{i32_to_u32, sync::remote_data_synchroniser::RemoteSyncState};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct SyncStatus {
     pub started: NaiveDateTime,
     pub finished: Option<NaiveDateTime>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct SyncStatusWithProgress {
     pub started: NaiveDateTime,
     pub finished: Option<NaiveDateTime>,
-    pub total_progress: u32,
-    pub done_progress: u32,
+    pub total_progress: Option<u32>,
+    pub done_progress: Option<u32>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Default)]
 pub struct FullSyncStatus {
     pub is_syncing: bool,
     pub error: Option<String>,
@@ -78,15 +79,15 @@ pub fn get_latest_sync_status(
         prepare_initial_done_datetime,
         push_start_datetime,
         push_done_datetime,
-        push_progress_start,
+        push_progress_total,
         push_progress_done,
         pull_central_start_datetime,
         pull_central_done_datetime,
-        pull_central_progress_start,
+        pull_central_progress_total,
         pull_central_progress_done,
         pull_remote_start_datetime,
         pull_remote_done_datetime,
-        pull_remote_progress_start,
+        pull_remote_progress_total,
         pull_remote_progress_done,
         integration_start_datetime,
         integration_done_datetime,
@@ -94,7 +95,7 @@ pub fn get_latest_sync_status(
     } = SyncLogRowRepository::new(&connection).load_latest_sync_log()?;
 
     let result = FullSyncStatus {
-        is_syncing: done_datetime.is_some() || error_message.is_some(),
+        is_syncing: done_datetime.is_none() && error_message.is_none(),
         error: error_message,
         summary: SyncStatus {
             started: started_datetime,
@@ -111,20 +112,20 @@ pub fn get_latest_sync_status(
         pull_central: pull_central_start_datetime.map(|started| SyncStatusWithProgress {
             started,
             finished: pull_central_done_datetime,
-            total_progress: pull_central_progress_start.map(i32_to_u32).unwrap_or(0),
-            done_progress: pull_central_progress_done.unwrap_or(0) as u32,
+            total_progress: pull_central_progress_total.map(i32_to_u32),
+            done_progress: pull_central_progress_done.map(i32_to_u32),
         }),
         pull_remote: pull_remote_start_datetime.map(|started| SyncStatusWithProgress {
             started,
             finished: pull_remote_done_datetime,
-            total_progress: pull_remote_progress_start.map(i32_to_u32).unwrap_or(0),
-            done_progress: pull_remote_progress_done.unwrap_or(0) as u32,
+            total_progress: pull_remote_progress_total.map(i32_to_u32),
+            done_progress: pull_remote_progress_done.map(i32_to_u32),
         }),
         push: push_start_datetime.map(|started| SyncStatusWithProgress {
             started,
             finished: push_done_datetime,
-            total_progress: push_progress_start.map(i32_to_u32).unwrap_or(0),
-            done_progress: push_progress_done.unwrap_or(0) as u32,
+            total_progress: push_progress_total.map(i32_to_u32),
+            done_progress: push_progress_done.map(i32_to_u32),
         }),
     };
     Ok(result)
@@ -140,4 +141,13 @@ pub fn number_of_records_in_push_queue(
     let change_logs_total = changelog.count(cursor as u64)? as u32;
 
     Ok(change_logs_total)
+}
+
+impl Default for SyncStatus {
+    fn default() -> Self {
+        Self {
+            started: Defaults::naive_date_time(),
+            finished: Default::default(),
+        }
+    }
 }
