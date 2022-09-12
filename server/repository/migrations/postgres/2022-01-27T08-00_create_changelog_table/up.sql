@@ -27,8 +27,8 @@ CREATE TABLE changelog (
     -- use UPSERT.
     row_action row_action_type NOT NULL,
     -- TODO comment
-    name_ID TEXT,
-    store_ID TEXT
+    name_id TEXT,
+    store_id TEXT
 );
 
 -- View of the changelog that only contains the most recent changes to a row, i.e. previous row
