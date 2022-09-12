@@ -7,7 +7,7 @@ CREATE TABLE changelog (
     -- Sqlite only fires INSERT when doing an upsert (it does a delete + insert) for this reason
     -- use UPSERT.
     row_action TEXT NOT NULL,
-    -- TODO comment
+    -- Below fields are extracted from associated record where it's deemed necessary (see changelog/README.md)
     name_id TEXT,
     store_id TEXT
 );
