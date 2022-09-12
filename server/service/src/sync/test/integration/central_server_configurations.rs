@@ -7,7 +7,7 @@ use util::{hash::sha256, uuid::uuid};
 
 use crate::sync::{
     api::{SyncApiError, SyncApiV5},
-    settings::SyncSettings,
+    settings::{BatchSize, SyncSettings},
     SyncCredentials,
 };
 
@@ -89,6 +89,11 @@ impl ConfigureCentralServer {
                 username: new_site_properties.site_id_as_string(),
                 password_sha256: new_site_properties.password_sha256.clone(),
                 interval_sec: 10000000,
+                batch_size: BatchSize {
+                    remote_pull: 3,
+                    remote_push: 3,
+                    central_pull: 3,
+                },
             },
             new_site_properties,
         })

@@ -43,6 +43,7 @@ pub trait SettingsServiceTrait: Sync + Send {
                 username: username?,
                 password_sha256: password_sha256?,
                 interval_sec: interval_sec? as u64,
+                batch_size: Default::default(),
             })
         };
 
