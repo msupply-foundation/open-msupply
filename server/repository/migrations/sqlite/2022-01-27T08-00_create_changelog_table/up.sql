@@ -1,5 +1,5 @@
 CREATE TABLE changelog (
-    cursor INTEGER PRIMARY KEY AUTOINCREMENT,
+    cursor INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     -- the table name where the change happend
     table_name TEXT NOT NULL,
     -- row id of the modified row
