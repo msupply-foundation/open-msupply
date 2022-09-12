@@ -116,7 +116,9 @@ impl<'a> ChangelogRepository<'a> {
         Ok(result as u64)
     }
 
-    pub fn latest_changelog(&self) -> Result<u64, RepositoryError> {
+    /// Returns latest change log
+    /// After initial sync we use this method to get the latest cursor to make sure we don't try to push any records that were synced to this site on initialisation
+    pub fn latest_cursor(&self) -> Result<u64, RepositoryError> {
         let result = changelog::dsl::changelog
             .select(diesel::dsl::max(changelog::dsl::cursor))
             .first::<Option<i64>>(&self.connection.connection)?;
