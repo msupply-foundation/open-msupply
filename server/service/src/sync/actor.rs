@@ -1,5 +1,5 @@
 use super::synchroniser::Synchroniser;
-use log::{error, info};
+use log::info;
 use tokio::{
     sync::mpsc::{self, error as mpsc_error, Receiver as MpscReceiver, Sender as MpscSender},
     time::Duration,
@@ -57,13 +57,7 @@ impl SyncReceiverActor {
     // Listen for incoming sync messages.
     pub async fn listen(&mut self, synchroniser: &Synchroniser) {
         while let Some(()) = self.receiver.recv().await {
-            info!("Starting sync...");
-            if let Err(error) = synchroniser.sync().await {
-                error!("Sync encountered an error!");
-                error!("{:?}", error);
-            } else {
-                info!("Finished sync!");
-            }
+            let _ = synchroniser.sync().await.ok();
         }
         unreachable!("Sync receiver has stopped listening as channel has closed");
     }

@@ -2,10 +2,10 @@ use std::time::{Duration, SystemTime};
 
 use super::{
     api::*,
-    sync_status::{SyncLogger, SyncLoggerError},
+    sync_status::logger::{SyncLogger, SyncLoggerError},
 };
 use crate::sync::{
-    sync_status::SyncStepProgress,
+    sync_status::logger::SyncStepProgress,
     translations::{translate_changelog, PushRecord},
 };
 use log::info;
@@ -24,9 +24,9 @@ pub(crate) struct PostInitialisationError(pub(crate) SyncApiError);
 pub(crate) struct SetInitialisedError(RepositoryError);
 #[derive(Error, Debug)]
 pub(crate) enum RemotePullError {
-    #[error("Api error while pulling remote records: {0:?}")]
+    #[error("Api error while pulling remote records: {0}")]
     PullError(SyncApiError),
-    #[error("Failed to acknowledge sync records: {0:?}")]
+    #[error("Failed to acknowledge sync records: {0}")]
     AcknowledgedError(SyncApiError),
     #[error("Failed to save sync buffer rows {0:?}")]
     SaveSyncBufferError(RepositoryError),
@@ -37,10 +37,24 @@ pub(crate) enum RemotePullError {
 }
 #[derive(Error, Debug)]
 pub(crate) enum RequestAndSetSiteInfoError {
-    #[error("Api error while requesting site info: {0:?}")]
+    #[error("Api error while requesting site info: {0}")]
     RequestSiteInfoError(SyncApiError),
     #[error("Failed to set site info: {0:?}")]
     SetSiteInfoError(RepositoryError),
+}
+
+#[derive(Error, Debug)]
+pub(crate) enum RemotePushError {
+    #[error("Api error while pushing remote records: {0}")]
+    PushError(SyncApiError),
+    #[error("Database error while pushing remote records {0:?}")]
+    DatabaseError(RepositoryError),
+    #[error("Problem translation remote records during push {0:?}")]
+    TranslationError(anyhow::Error),
+    #[error("Total remaining sent to server is 0 but integration not started")]
+    IntegrationNotStarter,
+    #[error("{0}")]
+    SyncLoggerError(SyncLoggerError),
 }
 
 pub struct RemoteDataSynchroniser {
@@ -50,13 +64,10 @@ pub struct RemoteDataSynchroniser {
 impl RemoteDataSynchroniser {
     /// Request initialisation
     pub(crate) async fn request_initialisation(&self) -> Result<(), PostInitialisationError> {
-        info!("Initialising remote sync records...");
         self.sync_api_v5
             .post_initialise()
             .await
             .map_err(PostInitialisationError)?;
-
-        info!("Initialised remote sync records");
 
         Ok(())
     }
@@ -111,23 +122,21 @@ impl RemoteDataSynchroniser {
     pub(crate) async fn pull<'a>(
         &self,
         connection: &StorageConnection,
+        batch_size: u32,
         logger: &mut SyncLogger<'a>,
     ) -> Result<(), RemotePullError> {
         use RemotePullError::*;
-        // Arbitrary batch size TODO: should come from settings
-        const BATCH_SIZE: u32 = 500;
+        let step_progress = SyncStepProgress::PullRemote;
         let sync_buffer_repository = SyncBufferRowRepository::new(connection);
 
         loop {
-            info!("Pulling remote sync records...");
-
             let sync_batch = self
                 .sync_api_v5
-                .get_queued_records(BATCH_SIZE)
+                .get_queued_records(batch_size)
                 .await
                 .map_err(PullError)?;
 
-            let total_queue_length = sync_batch.queue_length;
+            let remaining = sync_batch.queue_length;
             let sync_ids = sync_batch.extract_sync_ids();
             let sync_buffer_rows = sync_batch
                 .to_sync_buffer_rows()
@@ -135,15 +144,8 @@ impl RemoteDataSynchroniser {
 
             let number_of_pulled_records = sync_buffer_rows.len() as u64;
 
-            info!(
-                "Pulled {} remote sync records ({} remaining)",
-                number_of_pulled_records,
-                total_queue_length - number_of_pulled_records
-            );
-
-            let remaining = total_queue_length - number_of_pulled_records;
             logger
-                .progress(SyncStepProgress::PullRemote, remaining, total_queue_length)
+                .progress(step_progress.clone(), remaining)
                 .map_err(SyncLoggerError)?;
 
             if number_of_pulled_records > 0 {
@@ -151,15 +153,17 @@ impl RemoteDataSynchroniser {
                     .upsert_many(&sync_buffer_rows)
                     .map_err(SaveSyncBufferError)?;
 
-                info!("Acknowledging remote sync records...");
                 self.sync_api_v5
                     .post_acknowledged_records(sync_ids)
                     .await
                     .map_err(AcknowledgedError)?;
-                info!("Acknowledged remote sync records");
             } else {
                 break;
             }
+
+            logger
+                .progress(step_progress.clone(), remaining - number_of_pulled_records)
+                .map_err(SyncLoggerError)?;
         }
 
         Ok(())
@@ -169,59 +173,48 @@ impl RemoteDataSynchroniser {
     pub(crate) async fn push<'a>(
         &self,
         connection: &StorageConnection,
+        batch_size: u32,
         logger: &mut SyncLogger<'a>,
-    ) -> Result<(), anyhow::Error> {
+    ) -> Result<(), RemotePushError> {
+        use RemotePushError as Error;
         let changelog = ChangelogRowRepository::new(connection);
 
-        const BATCH_SIZE: u32 = 1024;
         let state = RemoteSyncState::new(connection);
         loop {
             // TODO inside transaction
-            info!("Remote push: Check changelog...");
-            let cursor = state.get_push_cursor()?;
-            let changelogs = changelog.changelogs(cursor as u64, BATCH_SIZE)?;
-            let change_logs_total = changelog.count(cursor as u64)?;
-            let total_remaining_after_push = change_logs_total - changelogs.len() as u64;
+            let cursor = state.get_push_cursor().map_err(Error::DatabaseError)?;
+            let changelogs = changelog
+                .changelogs(cursor as u64, batch_size)
+                .map_err(Error::DatabaseError)?;
+            let change_logs_total = changelog
+                .count(cursor as u64)
+                .map_err(Error::DatabaseError)?;
+
+            logger
+                .progress(SyncStepProgress::Push, change_logs_total)
+                .map_err(Error::SyncLoggerError)?;
+
             let last_pushed_cursor = changelogs.last().map(|log| log.id);
 
-            info!(
-                "Remote push: Translate {} changelogs to push records...",
-                changelogs.len()
-            );
-
-            let records = translate_changelogs_to_push_records(connection, changelogs)?;
-            let records_len = records.len();
+            let records = translate_changelogs_to_push_records(connection, changelogs)
+                .map_err(Error::TranslationError)?;
 
             let response = self
                 .sync_api_v5
-                .post_queued_records(total_remaining_after_push, records)
-                .await?;
-
-            info!(
-                "Remote push: {} records pushed to central server",
-                records_len
-            );
-
-            logger
-                .progress(
-                    SyncStepProgress::PushRemote,
-                    change_logs_total - records_len as u64,
-                    change_logs_total,
-                )
-                .map_err(RemotePullError::SyncLoggerError)?;
+                .post_queued_records(change_logs_total, records)
+                .await
+                .map_err(Error::PushError)?;
 
             // Update cursor only if record for that cursor has been pushed/processed
             if let Some(last_pushed_cursor_id) = last_pushed_cursor {
-                state.update_push_cursor(last_pushed_cursor_id as u32 + 1)?;
+                state
+                    .update_push_cursor(last_pushed_cursor_id as u32 + 1)
+                    .map_err(Error::DatabaseError)?;
             };
 
-            match (response.integration_started, total_remaining_after_push) {
+            match (response.integration_started, change_logs_total) {
                 (true, 0) => break,
-                (false, 0) => {
-                    return Err(anyhow::anyhow!(
-                        "Total remaining sent to server is 0 but integration not started"
-                    ))
-                }
+                (false, 0) => return Err(Error::IntegrationNotStarter),
                 _ => continue,
             };
         }

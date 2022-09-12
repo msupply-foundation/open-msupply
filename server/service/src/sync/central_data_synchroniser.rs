@@ -1,9 +1,8 @@
 use super::{
     api::{ParsingV5RecordError, SyncApiError, SyncApiV5},
-    sync_status::{SyncLogger, SyncLoggerError},
+    sync_status::logger::{SyncLogger, SyncLoggerError, SyncStepProgress},
 };
-use crate::sync::{api::CentralSyncBatchV5, sync_status::SyncStepProgress};
-use log::info;
+use crate::sync::api::CentralSyncBatchV5;
 use repository::{
     KeyValueStoreRepository, KeyValueType, RepositoryError, StorageConnection, SyncBufferRow,
     SyncBufferRowRepository,
@@ -12,7 +11,7 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub(crate) enum CentralSyncError {
-    #[error("Api error while pulling central records: {0:?}")]
+    #[error("Api error while pulling central records: {0}")]
     PullError(SyncApiError),
     #[error("Failed to save sync buffer or cursor {0:?}")]
     SaveSyncBufferOrCursorsError(RepositoryError),
@@ -30,33 +29,31 @@ impl CentralDataSynchroniser {
     pub(crate) async fn pull<'a>(
         &self,
         connection: &StorageConnection,
+        batch_size: u32,
         logger: &mut SyncLogger<'a>,
     ) -> Result<(), CentralSyncError> {
         use CentralSyncError::*;
-        // Arbitrary batch size.
-        const BATCH_SIZE: u32 = 500;
 
         // TODO protection fron infinite loop
         loop {
-            info!("Pulling central sync records...");
-            let cursor: u32 = CentralSyncPullCursor::new(&connection)
+            let mut cursor = CentralSyncPullCursor::new(&connection)
                 .get_cursor()
                 .unwrap_or(0);
 
-            let sync_batch: CentralSyncBatchV5 = self
+            let CentralSyncBatchV5 { max_cursor, data } = self
                 .sync_api_v5
-                .get_central_records(cursor, BATCH_SIZE)
+                .get_central_records(cursor, batch_size)
                 .await
                 .map_err(PullError)?;
 
-            let batch_length = sync_batch.data.len();
-            info!(
-                "Inserting {} central sync records into central sync buffer",
-                batch_length
-            );
+            let batch_length = data.len();
 
-            for sync_record in sync_batch.data {
-                let cursor = sync_record.id.clone();
+            logger
+                .progress(SyncStepProgress::PullCentral, (max_cursor - cursor) as u64)
+                .map_err(SyncLoggerError)?;
+
+            for sync_record in data {
+                cursor = sync_record.id.clone();
                 let buffer_row = sync_record
                     .record
                     .to_buffer_row()
@@ -66,17 +63,11 @@ impl CentralDataSynchroniser {
                     .map_err(SaveSyncBufferOrCursorsError)?;
             }
 
-            let remaining = (sync_batch.max_cursor - cursor) as u64;
             logger
-                .progress(
-                    SyncStepProgress::PullCentral,
-                    remaining,
-                    sync_batch.max_cursor as u64,
-                )
+                .progress(SyncStepProgress::PullCentral, (max_cursor - cursor) as u64)
                 .map_err(SyncLoggerError)?;
 
             if batch_length == 0 {
-                info!("Central sync buffer is up-to-date");
                 break;
             }
         }
