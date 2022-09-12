@@ -97,6 +97,7 @@ impl UpdateSyncSettingsInput {
             username: self.username,
             password_sha256: sha256(&self.password),
             interval_sec: self.interval_sec,
+            batch_size: Default::default(),
         }
     }
 }
