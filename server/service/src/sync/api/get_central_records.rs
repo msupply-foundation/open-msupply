@@ -1,7 +1,7 @@
 use super::*;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Deserialize, PartialEq, Debug, Serialize)]
 
 pub(crate) struct CentralSyncRecordV5 {
     #[serde(rename = "ID")]
@@ -10,7 +10,7 @@ pub(crate) struct CentralSyncRecordV5 {
     pub(crate) record: CommonSyncRecordV5,
 }
 
-#[derive(Debug, Deserialize, PartialEq)]
+#[derive(Debug, Deserialize, PartialEq, Serialize)]
 pub(crate) struct CentralSyncBatchV5 {
     #[serde(rename = "maxCursor")]
     pub(crate) max_cursor: u32,

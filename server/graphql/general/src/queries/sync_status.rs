@@ -1,7 +1,7 @@
 pub use async_graphql::*;
 use chrono::NaiveDateTime;
 use graphql_core::ContextExt;
-use service::sync::sync_status::{is_initialised, number_of_records_in_push_queue};
+use service::sync::sync_status::status::{is_initialised, number_of_records_in_push_queue};
 
 #[derive(SimpleObject)]
 pub struct SyncStatusNode {
@@ -13,8 +13,8 @@ pub struct SyncStatusNode {
 pub struct SyncStatusWithProgressNode {
     started: NaiveDateTime,
     finished: Option<NaiveDateTime>,
-    total_progress: u32,
-    done_progress: u32,
+    total_progress: Option<u32>,
+    done_progress: Option<u32>,
 }
 
 #[derive(SimpleObject)]

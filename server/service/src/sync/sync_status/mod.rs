@@ -1,5 +1,5 @@
-mod logger;
-mod status;
+pub(crate) mod logger;
+pub mod status;
 
-pub(crate) use self::logger::*;
-pub use self::status::*;
+#[cfg(test)]
+mod test;
