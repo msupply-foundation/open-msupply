@@ -1,9 +1,7 @@
 pub use async_graphql::*;
 use chrono::NaiveDateTime;
 use graphql_core::ContextExt;
-use service::sync::sync_status::{
-    get_latest_sync_status, is_initialised, number_of_records_in_push_queue,
-};
+use service::sync::sync_status::{is_initialised, number_of_records_in_push_queue};
 
 #[derive(SimpleObject)]
 pub struct SyncStatusNode {

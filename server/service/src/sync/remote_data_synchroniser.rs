@@ -1,9 +1,12 @@
 use std::time::{Duration, SystemTime};
 
-use super::{api::*, SyncLogger, SyncLoggerError};
+use super::{
+    api::*,
+    sync_status::{SyncLogger, SyncLoggerError},
+};
 use crate::sync::{
+    sync_status::SyncStepProgress,
     translations::{translate_changelog, PushRecord},
-    SyncStepProgress,
 };
 use log::info;
 use repository::{

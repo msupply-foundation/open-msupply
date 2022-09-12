@@ -1,8 +1,8 @@
 use super::{
     api::{ParsingV5RecordError, SyncApiError, SyncApiV5},
-    SyncLogger, SyncLoggerError,
+    sync_status::{SyncLogger, SyncLoggerError},
 };
-use crate::sync::{api::CentralSyncBatchV5, SyncStepProgress};
+use crate::sync::{api::CentralSyncBatchV5, sync_status::SyncStepProgress};
 use log::info;
 use repository::{
     KeyValueStoreRepository, KeyValueType, RepositoryError, StorageConnection, SyncBufferRow,

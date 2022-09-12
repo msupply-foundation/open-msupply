@@ -2,7 +2,7 @@ use crate::{
     service_provider::ServiceProvider,
     sync::{
         actor::{get_sync_actors, SyncReceiverActor, SyncSenderActor},
-        SyncLogger, SyncStep,
+        sync_status::SyncStep,
     },
 };
 use actix_web::web::Data;
@@ -17,6 +17,7 @@ use super::{
     remote_data_synchroniser::{RemoteDataSynchroniser, RemoteSyncState},
     settings::SyncSettings,
     sync_buffer::SyncBuffer,
+    sync_status::SyncLogger,
     translation_and_integration::{TranslationAndIntegration, TranslationAndIntegrationResults},
     SyncCredentials,
 };

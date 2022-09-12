@@ -89,7 +89,6 @@ impl ConfigureCentralServer {
                 username: new_site_properties.site_id_as_string(),
                 password_sha256: new_site_properties.password_sha256.clone(),
                 interval_sec: 10000000,
-                central_server_site_id: 1,
             },
             new_site_properties,
         })
