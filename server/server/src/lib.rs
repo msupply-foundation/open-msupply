@@ -120,10 +120,10 @@ async fn run_stage0(
         None => http_server.bind(config_settings.server.address())?,
     };
 
-    let running_sever = http_server.run();
-    let server_handle = running_sever.handle();
+    let running_server = http_server.run();
+    let server_handle = running_server.handle();
     // run server in another task so that we can handle restart/off events here
-    actix_web::rt::spawn(running_sever);
+    actix_web::rt::spawn(running_server);
 
     let mut off_switch = off_switch.lock().await;
     let off_switch = off_switch.deref_mut();
@@ -249,10 +249,10 @@ async fn run_server(
         None => http_server.bind(settings.server.address())?,
     };
 
-    let running_sever = http_server.run();
-    let server_handle = running_sever.handle();
+    let running_server = http_server.run();
+    let server_handle = running_server.handle();
     // run server in another task so that we can handle restart/off events here
-    actix_web::rt::spawn(running_sever);
+    actix_web::rt::spawn(running_server);
 
     let mut off_switch = off_switch.lock().await;
     let off_switch = off_switch.deref_mut();
