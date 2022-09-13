@@ -15,7 +15,7 @@ use thiserror::Error;
 use crate::{
     processors::transfer::requisition::{
         create_response_requisition::CreateResponseRequisitionProcessor,
-        link_request_requisition::LinkeRequestRequisitionProcessor,
+        link_request_requisition::LinkRequestRequisitionProcessor,
         update_request_requisition_status::UpdateRequestRequstionStatusProcessor,
     },
     service_provider::ServiceProvider,
@@ -27,6 +27,8 @@ const CHANGELOG_BATCH_SIZE: u32 = 20;
 #[derive(Clone, Debug)]
 pub(crate) struct RequisitionTransferProcessorRecord {
     requisition: Requisition,
+    /// Linked requisition through requisition.id, both relations are checked
+    /// (requisition.id = linked_requistion.linked_requisition_id OR requisition.linked_requistion_id = requisition.id)
     linked_requisition: Option<Requisition>,
     other_party_store_id: String,
 }
@@ -44,10 +46,8 @@ pub(crate) enum ProcessRequisitionTransfersError {
     #[error("Name id is missing from requisition changelog {0:?}")]
     NameIdIsMissingFromChangelog(ChangelogRow),
     #[error("Name is not an active store {0:?}")]
-    NameIsNotAnAciveStore(ChangelogRow),
+    NameIsNotAnActiveStore(ChangelogRow),
 }
-
-// TODO transaction
 
 pub(crate) fn process_requisition_transfers(
     service_provider: &ServiceProvider,
@@ -55,7 +55,7 @@ pub(crate) fn process_requisition_transfers(
     use ProcessRequisitionTransfersError as Error;
     let processors: Vec<Box<dyn RequisitionTransferProcessor>> = vec![
         Box::new(CreateResponseRequisitionProcessor),
-        Box::new(LinkeRequestRequisitionProcessor),
+        Box::new(LinkRequestRequisitionProcessor),
         Box::new(UpdateRequestRequstionStatusProcessor),
     ];
 
@@ -66,6 +66,8 @@ pub(crate) fn process_requisition_transfers(
 
     let changelog_repo = ChangelogRepository::new(&ctx.connection);
     let key_value_store_repo = KeyValueStoreRepository::new(&ctx.connection);
+    // For transfers, changelog MUST be filtered by records where name_id is active store on this site
+    // this is the contract obligation for try_process_record in ProcessorTrait
     let filter = ChangelogFilter::new()
         .table_name(ChangelogTableName::Requisition.equal_to())
         .name_id(EqualFilter::equal_any(active_stores.name_ids()));
@@ -103,7 +105,7 @@ pub(crate) fn process_requisition_transfers(
                 linked_requisition,
                 other_party_store_id: active_stores
                     .get_store_id_for_name_id(name_id)
-                    .ok_or_else(|| Error::NameIsNotAnAciveStore(log.clone()))?,
+                    .ok_or_else(|| Error::NameIsNotAnActiveStore(log.clone()))?,
             };
 
             // Try record against all of the processors
@@ -144,7 +146,7 @@ fn get_upsert_record(
         .query_one(RequisitionFilter::new_match_id(&changelog_row.record_id))
         .map_err(|e| DatabaseError(changelog_row.record_id.clone(), e))?
         .ok_or_else(|| RequisitionNotFound(changelog_row.clone()))?;
-    
+
     let linked_requisition = match &requisition.requisition_row.linked_requisition_id {
         Some(id) => repo
             .query_one(RequisitionFilter::new_match_id(id))
@@ -182,6 +184,7 @@ trait RequisitionTransferProcessor {
         Ok(result)
     }
 
+    /// Caller MUST gurantedd that record.requisition.name_id is a store active on this site
     fn try_process_record(
         &self,
         connection: &StorageConnection,
