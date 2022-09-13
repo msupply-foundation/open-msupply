@@ -12,7 +12,7 @@ From [TMF internal docs](https://app.diagrams.net/#G1o_xRQAhjVsnqhxhJEu9dY6AZ_lJ
 
 ## Request Requisition linked to Inbound Shipment
 
-When inbound shipment is created from outbound shipment, we check for requisition linked to outbound shipment (response requisition) and check what request requisition is linked to that response requisition and link inbound shipment with correct request requisition
+When an inbound shipment is created from outbound shipment, we check for a requisition linked to the outbound shipment (response requisition) and check which request requisition is linked to that response requisition and link the inbound shipment with correct request requisition
 
 ## Invoice Line on Update
 
