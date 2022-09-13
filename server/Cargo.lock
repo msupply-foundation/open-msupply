@@ -3099,9 +3099,10 @@ version = "0.1.0"
 dependencies = [
  "bitflags",
  "err-derive",
+ "server",
+ "service",
  "widestring",
  "windows-service",
- "windows-sys 0.36.1",
 ]
 
 [[package]]

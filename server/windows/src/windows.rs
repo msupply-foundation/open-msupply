@@ -1,9 +1,18 @@
 // Creates the entry points and event handling to manage running the server
 // under a windows service context
+use server::{configuration, logging_init};
+use service::settings::Settings;
 
 #[cfg(windows)]
 fn main() -> windows_service::Result<()> {
-    omsupply_service::run()
+    let settings: Settings =
+        configuration::get_configuration().expect("Failed to parse configuration settings");
+    logging_init(settings.logging.clone());
+
+    log::info!("Hello");
+
+    omsupply_service::run();
+    Ok(())
 }
 
 #[cfg(not(windows))]
@@ -13,13 +22,11 @@ fn main() {
 
 #[cfg(windows)]
 mod omsupply_service {
-    use server::{configuration, logging_init, start_server};
-    use std::{
-        ffi::OsString,
-        net::{IpAddr, SocketAddr, UdpSocket},
-        sync::mpsc,
-        time::Duration,
-    };
+    use log::info;
+    use server::{configuration, start_server};
+    use service::settings::Settings;
+    use std::{ffi::OsString, sync::mpsc, time::Duration};
+    use tokio::sync::oneshot;
     use windows_service::{
         define_windows_service,
         service::{
@@ -50,12 +57,13 @@ mod omsupply_service {
     // output to file if needed.
     pub fn omsupply_service_main(_arguments: Vec<OsString>) {
         if let Err(_e) = run_service() {
-            // TODO::log error to file
+            log::error!("Unable to start service");
         }
     }
 
-    pub async fn run_service() -> Result<()> {
+    pub fn run_service() -> Result<()> {
         // Create a channel to be able to poll a stop event from the service worker loop.
+        let (off_switch, off_switch_receiver) = oneshot::channel();
         let (shutdown_tx, shutdown_rx) = mpsc::channel();
 
         // Define system service event handler that will be receiving service events.
@@ -68,6 +76,11 @@ mod omsupply_service {
                 // Handle stop
                 ServiceControl::Stop => {
                     shutdown_tx.send(()).unwrap();
+                    if let Err(_) = off_switch.send(()) {
+                        println!("the receiver dropped");
+                    }
+
+                    // off_switch.send(()).unwrap();
                     ServiceControlHandlerResult::NoError
                 }
 
@@ -78,10 +91,6 @@ mod omsupply_service {
         // Register system service event handler.
         // The returned status handle should be used to report service status changes to the system.
         let status_handle = service_control_handler::register(SERVICE_NAME, event_handler)?;
-        let settings: Settings =
-            configuration::get_configuration().expect("Failed to parse configuration settings");
-        logging_init(settings.logging.clone());
-        let result = start_server(settings, shutdown_rx).await;
 
         // Tell the system that service is running
         status_handle.set_service_status(ServiceStatus {
@@ -94,18 +103,29 @@ mod omsupply_service {
             process_id: None,
         })?;
 
-        loop {
-            let _ = socket.send_to(msg, receiver_addr);
+        info!("Service started");
+        let settings: Settings =
+            configuration::get_configuration().expect("Failed to parse configuration settings");
+        let _result = async {
+            //			tokio::spawn(async move {
+            start_server(settings, off_switch_receiver).await;
+            //			});
+        };
 
-            // Poll shutdown event.
-            match shutdown_rx.recv_timeout(Duration::from_secs(1)) {
-                // Break the loop either upon stop or channel disconnect
-                Ok(_) | Err(mpsc::RecvTimeoutError::Disconnected) => break,
+        //		loop {
+        //
+        //            // Poll shutdown event.
+        //            match shutdown_rx.recv_timeout(Duration::from_secs(1)) {
+        //                // Break the loop either upon stop or channel disconnect
+        //                Ok(_) | Err(mpsc::RecvTimeoutError::Disconnected) => {
+        //					off_switch.send(());
+        //					break
+        //				},
 
-                // Continue work if no events were received within the timeout
-                Err(mpsc::RecvTimeoutError::Timeout) => (),
-            };
-        }
+        // Continue work if no events were received within the timeout
+        //                Err(mpsc::RecvTimeoutError::Timeout) => (),
+        //            };
+        //        }
 
         // Tell the system that service has stopped.
         status_handle.set_service_status(ServiceStatus {
