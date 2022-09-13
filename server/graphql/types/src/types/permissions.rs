@@ -34,7 +34,7 @@ pub enum UserPermissionNodePermission {
 #[Object]
 impl UserStorePermissionNode {
     pub async fn permissions(&self) -> Vec<UserPermissionNodePermission> {
-        self.user_store_permission
+        self.row()
             .permissions
             .clone()
             .into_iter()
@@ -44,6 +44,15 @@ impl UserStorePermissionNode {
 
     pub async fn store_id(&self) -> String {
         self.row().store_row.id.clone()
+    }
+
+    pub async fn context(&self) -> Vec<String> {
+        self.row()
+            .permissions
+            .clone()
+            .into_iter()
+            .filter_map(|c| c.context)
+            .collect()
     }
 }
 
