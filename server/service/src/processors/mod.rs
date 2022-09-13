@@ -15,7 +15,7 @@ use self::transfer::{
 mod test_helpers;
 pub(crate) mod transfer;
 
-const NUMBER_OF_CHANNELS: usize = 30;
+const CHANNEL_BUFFER_SIZE: usize = 30;
 
 #[derive(Clone)]
 pub struct ProcessorsTrigger {
@@ -39,10 +39,10 @@ enum ProcessorsError {
 impl Processors {
     pub fn init() -> (ProcessorsTrigger, Processors) {
         let (requisition_transfer_sender, requisition_transfer_receiver) =
-            mpsc::channel(NUMBER_OF_CHANNELS);
+            mpsc::channel(CHANNEL_BUFFER_SIZE);
 
         let (shipment_transfer_sender, shipment_transfer_receiver) =
-            mpsc::channel(NUMBER_OF_CHANNELS);
+            mpsc::channel(CHANNEL_BUFFER_SIZE);
 
         (
             ProcessorsTrigger {
