@@ -5,7 +5,7 @@ use repository::{
 };
 use util::uuid::uuid;
 
-pub(crate) fn regenerate_linked_invoice_lines(
+pub(crate) fn regenerate_inbound_shipment_lines(
     connection: &StorageConnection,
     linked_invoice: &InvoiceRow,
     source_invoice: &Invoice,
