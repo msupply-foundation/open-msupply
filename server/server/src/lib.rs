@@ -264,7 +264,7 @@ async fn run_server(
         () = async {
             synchroniser.run().await;
         } => unreachable!("Synchroniser unexpectedly died!?"),
-        result = processors_task => unreachable!("Transfer processor terminated ({:?})", result)
+        result = processors_task => unreachable!("Processor terminated ({:?})", result)
     };
 
     server_handle.stop(true).await;
