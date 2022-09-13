@@ -16,7 +16,7 @@ CREATE TABLE user_permission (
         'INBOUND_SHIPMENT_MUTATE',
         'REPORT',
         'LOG_QUERY',
-        'SERVER_ADMIN',
+        'SERVER_ADMIN'
     )) NOT NULL,
     context TEXT
 )

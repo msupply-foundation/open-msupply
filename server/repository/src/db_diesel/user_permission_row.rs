@@ -49,6 +49,7 @@ pub enum Permission {
 }
 
 #[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset)]
+#[changeset_options(treat_none_as_null = "true")]
 #[table_name = "user_permission"]
 pub struct UserPermissionRow {
     pub id: String,
