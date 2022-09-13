@@ -27,7 +27,7 @@ const CHANGELOG_BATCH_SIZE: u32 = 20;
 #[derive(Clone, Debug)]
 pub(crate) struct RequisitionTransferProcessorRecord {
     requisition: Requisition,
-    /// Linked requisition through requisition.id, both relations are checked
+    /// Linked requisition, both relations are checked
     /// (requisition.id = linked_requistion.linked_requisition_id OR requisition.linked_requistion_id = requisition.id)
     linked_requisition: Option<Requisition>,
     other_party_store_id: String,
