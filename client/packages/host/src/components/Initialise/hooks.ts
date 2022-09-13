@@ -86,25 +86,24 @@ export const useInitialiseForm = () => {
     };
     try {
       await update(syncSettings);
-      await restart().catch(e => {
-        console.error(e);
-        const message = parseErrorMessage(
+    } catch (e) {
+      setError({
+        message: parseErrorMessage(e as Error, 'error.unable_to_save_settings'),
+      });
+      return setIsLoading(false);
+    }
+
+    try {
+      await restart();
+    } catch (e) {
+      setError({
+        message: parseErrorMessage(
           e as Error,
           'error.unable_to_restart_server'
-        );
-        setError({ message });
-        setIsLoading(false);
-      });
-      return;
-    } catch (e) {
-      console.error(e);
-      const message = parseErrorMessage(
-        e as Error,
-        'error.unable_to_save_settings'
-      );
-      setError({ message });
-      setIsLoading(false);
-    }
+          ),
+        });
+      }
+
     setPassword('');
 
     setTimeout(() => {
