@@ -35,7 +35,7 @@ We **only** want to process shipments and requisitions that are destined for the
 
 Same exact process is used, except the processors are triggered in services, see diagram below. This diagram doesn't quite show how records are `linked` using processors, explained in this example
 * Request Requisition (id: A) is created and set to `sent` status
-* Requsition Processor is triggered
+* Requisition Processor is triggered
 * Processor sees new requisition in change log and executes `CreateResponseRequisitionProcessor` which creates Response Requisition (id: B) and links it to Request Requisition (requisition_id: A)
 * Processor tries to process any other changelogs (it re-queries changelogs until result is empty), and sees the newly created Response Requisition, and will executed `LikRequestRequisitionProcessor` and sets (requisition_id: B) for Request Requistion (id: A)
 
