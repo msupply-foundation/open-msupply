@@ -26,31 +26,31 @@ impl ShipmentTransferProcessor for CreateInboundShipmentProcessor {
     ///
     /// 1. Source shipment name_id is for a store that is active on current site (transfer processor driver guarantees this)
     /// 2. Source shipment is Outbound shipment
-    /// 3. Source shipment is either Shipped or Picked
+    /// 3. Source outbound shipment is either Shipped or Picked
     /// 4. Linked shipment does not exist (the inbound shipment)
     ///
     /// Only runs once:
-    /// 5. Because created shipment will be linked to source shipment `4.` will never be true again
+    /// 5. Because created inbound shipment will be linked to source outbound shipment `4.` will never be true again
     fn try_process_record(
         &self,
         connection: &StorageConnection,
         record_for_processing: &ShipmentTransferProcessorRecord,
     ) -> Result<Option<String>, RepositoryError> {
         // Check can execute
-        let (source_shipment, linked_shipment) = match &record_for_processing.operation {
+        let (outbound_shipment, linked_shipment) = match &record_for_processing.operation {
             Operation::Upsert {
-                shipment,
+                shipment: outbound_shipment,
                 linked_shipment,
-            } => (shipment, linked_shipment),
+            } => (outbound_shipment, linked_shipment),
             _ => return Ok(None),
         };
         // 2.
-        if source_shipment.invoice_row.r#type != InvoiceRowType::OutboundShipment {
+        if outbound_shipment.invoice_row.r#type != InvoiceRowType::OutboundShipment {
             return Ok(None);
         }
         // 3.
         if !matches!(
-            source_shipment.invoice_row.status,
+            outbound_shipment.invoice_row.status,
             InvoiceRowStatus::Shipped | InvoiceRowStatus::Picked
         ) {
             return Ok(None);
@@ -61,31 +61,30 @@ impl ShipmentTransferProcessor for CreateInboundShipmentProcessor {
         }
 
         // Execute
-        let new_shipment =
-            generate_inbound_shipment(connection, &source_shipment, record_for_processing)?;
-        let (lines_to_delete, new_shipment_lines) =
-            regenerate_inbound_shipment_lines(connection, &new_shipment, &source_shipment)?;
+        let new_inbound_shipment =
+            generate_inbound_shipment(connection, &outbound_shipment, record_for_processing)?;
+        let (_, new_inbound_lines) = regenerate_inbound_shipment_lines(
+            connection,
+            &new_inbound_shipment.id,
+            &outbound_shipment,
+        )?;
 
-        InvoiceRowRepository::new(connection).upsert_one(&new_shipment)?;
+        InvoiceRowRepository::new(connection).upsert_one(&new_inbound_shipment)?;
 
         let invoice_line_repository = InvoiceLineRowRepository::new(connection);
 
-        for line in lines_to_delete.iter() {
-            invoice_line_repository.delete(&line.id)?;
-        }
-
-        for line in new_shipment_lines.iter() {
+        for line in new_inbound_lines.iter() {
             invoice_line_repository.upsert_one(line)?;
         }
 
         let result = format!(
             "shipment ({}) lines ({:?}) source shipment ({})",
-            new_shipment.id,
-            new_shipment_lines
+            new_inbound_shipment.id,
+            new_inbound_lines
                 .into_iter()
                 .map(|r| r.id)
                 .collect::<Vec<String>>(),
-            source_shipment.invoice_row.id
+            outbound_shipment.invoice_row.id
         );
 
         Ok(Some(result))
@@ -94,22 +93,22 @@ impl ShipmentTransferProcessor for CreateInboundShipmentProcessor {
 
 fn generate_inbound_shipment(
     connection: &StorageConnection,
-    source_invoice: &Invoice,
+    outbound_shipment: &Invoice,
     record_for_processing: &ShipmentTransferProcessorRecord,
 ) -> Result<InvoiceRow, RepositoryError> {
     let store_id = record_for_processing.other_party_store_id.clone();
-    let name_id = source_invoice.store_row.name_id.clone();
+    let name_id = outbound_shipment.store_row.name_id.clone();
 
-    let source_invoice_row = &source_invoice.invoice_row;
+    let outbound_shipment_row = &outbound_shipment.invoice_row;
 
-    let status = match &source_invoice_row.status {
+    let status = match &outbound_shipment_row.status {
         InvoiceRowStatus::Picked => InvoiceRowStatus::Picked,
         InvoiceRowStatus::Shipped => InvoiceRowStatus::Shipped,
         _ => InvoiceRowStatus::New,
     };
 
     let requisition_id =
-        get_request_requisition_id_from_inbound_shipment(connection, &source_invoice_row)?;
+        get_request_requisition_id_from_inbound_shipment(connection, &outbound_shipment_row)?;
 
     let result = InvoiceRow {
         id: uuid(),
@@ -119,14 +118,14 @@ fn generate_inbound_shipment(
         store_id,
         status,
         requisition_id,
-        name_store_id: Some(source_invoice_row.store_id.clone()),
-        their_reference: source_invoice_row.their_reference.clone(),
+        name_store_id: Some(outbound_shipment_row.store_id.clone()),
+        their_reference: outbound_shipment_row.their_reference.clone(),
         // 5.
-        linked_invoice_id: Some(source_invoice_row.id.clone()),
+        linked_invoice_id: Some(outbound_shipment_row.id.clone()),
         created_datetime: Utc::now().naive_utc(),
-        picked_datetime: source_invoice_row.picked_datetime,
-        shipped_datetime: source_invoice_row.shipped_datetime,
-        transport_reference: source_invoice_row.transport_reference.clone(),
+        picked_datetime: outbound_shipment_row.picked_datetime,
+        shipped_datetime: outbound_shipment_row.shipped_datetime,
+        transport_reference: outbound_shipment_row.transport_reference.clone(),
         // Default
         colour: None,
         user_id: None,
@@ -142,9 +141,9 @@ fn generate_inbound_shipment(
 
 fn get_request_requisition_id_from_inbound_shipment(
     connection: &StorageConnection,
-    source_invoice: &InvoiceRow,
+    inbound_shipment: &InvoiceRow,
 ) -> Result<Option<String>, RepositoryError> {
-    let result = if let Some(response_requisition_id) = &source_invoice.requisition_id {
+    let result = if let Some(response_requisition_id) = &inbound_shipment.requisition_id {
         RequisitionRepository::new(connection)
             .query_one(
                 RequisitionFilter::new()
