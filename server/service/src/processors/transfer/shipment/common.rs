@@ -1,22 +1,24 @@
-use repository::{EqualFilter, Invoice};
-use repository::{
-    InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow, InvoiceLineRowType, InvoiceRow,
-    RepositoryError, StorageConnection,
-};
+use repository::Invoice;
+use repository::{InvoiceLineRow, InvoiceLineRowType, RepositoryError, StorageConnection};
 use util::uuid::uuid;
+
+use crate::invoice::common::get_lines_for_invoice;
 
 pub(crate) fn regenerate_inbound_shipment_lines(
     connection: &StorageConnection,
-    linked_invoice: &InvoiceRow,
+    inbound_shipment_id: &str,
     source_invoice: &Invoice,
-) -> Result<(Vec<InvoiceLineRow>, Vec<InvoiceLineRow>), RepositoryError> {
-    let lines_to_delete = get_lines_for_invoice(connection, &linked_invoice.id)?;
-
-    let source_lines: Vec<InvoiceLineRow> =
-        get_lines_for_invoice(connection, &source_invoice.invoice_row.id)?;
-
-    let new_lines = source_lines
+) -> Result<(Vec<String>, Vec<InvoiceLineRow>), RepositoryError> {
+    let line_ids_to_delete = get_lines_for_invoice(connection, inbound_shipment_id)?
         .into_iter()
+        .map(|l| l.invoice_line_row.id)
+        .collect();
+
+    let outbound_lines = get_lines_for_invoice(connection, &source_invoice.invoice_row.id)?;
+
+    let inbound_lines = outbound_lines
+        .into_iter()
+        .map(|l| l.invoice_line_row)
         .map(
             |InvoiceLineRow {
                  id: _,
@@ -41,7 +43,7 @@ pub(crate) fn regenerate_inbound_shipment_lines(
                 let cost_price_per_pack = sell_price_per_pack;
                 InvoiceLineRow {
                     id: uuid(),
-                    invoice_id: linked_invoice.id.clone(),
+                    invoice_id: inbound_shipment_id.to_string(),
                     item_id,
                     item_name,
                     item_code,
@@ -68,18 +70,5 @@ pub(crate) fn regenerate_inbound_shipment_lines(
         )
         .collect();
 
-    Ok((lines_to_delete, new_lines))
-}
-
-pub(crate) fn get_lines_for_invoice(
-    connection: &StorageConnection,
-    invoice_id: &str,
-) -> Result<Vec<InvoiceLineRow>, RepositoryError> {
-    let invoice_line_rows = InvoiceLineRepository::new(connection)
-        .query_by_filter(InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(invoice_id)))?
-        .into_iter()
-        .map(|line| line.invoice_line_row)
-        .collect();
-
-    Ok(invoice_line_rows)
+    Ok((line_ids_to_delete, inbound_lines))
 }
