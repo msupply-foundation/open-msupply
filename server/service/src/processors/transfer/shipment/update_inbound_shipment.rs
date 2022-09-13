@@ -1,5 +1,5 @@
 use repository::{
-    InvoiceLineRowRepository, InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType,
+    InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType,
     RepositoryError, StorageConnection,
 };
 
@@ -22,18 +22,18 @@ impl ShipmentTransferProcessor for UpdateInboundShipmentProcessor {
     /// 1. Source shipment name_id is for a store that is active on current site (transfer processor driver guarantees this)
     /// 2. Source shipment is Outbound shipment
     /// 3. Linked shipment exists (the inbound shipment)
-    /// 4. Linked shipment is Picked (Inbound shipment can only be deleted before it turns to Shipped status)
-    /// 5. Source shipment is Shipped
+    /// 4. Linked inbound shipment is Picked (Inbound shipment can only be deleted before it turns to Shipped status)
+    /// 5. Source outbound shipment is Shipped
     ///
     /// Only runs once:
-    /// 6. Because linked shipment will be changed to Shipped status and `4.` will never be true again
+    /// 6. Because linked inbound shipment will be changed to Shipped status and `4.` will never be true again
     fn try_process_record(
         &self,
         connection: &StorageConnection,
         record_for_processing: &ShipmentTransferProcessorRecord,
     ) -> Result<Option<String>, RepositoryError> {
         // Check can execute
-        let (source_shipment, linked_shipment) = match &record_for_processing.operation {
+        let (outbound_shipment, linked_shipment) = match &record_for_processing.operation {
             Operation::Upsert {
                 shipment,
                 linked_shipment,
@@ -41,56 +41,54 @@ impl ShipmentTransferProcessor for UpdateInboundShipmentProcessor {
             _ => return Ok(None),
         };
         // 2.
-        if source_shipment.invoice_row.r#type != InvoiceRowType::OutboundShipment {
+        if outbound_shipment.invoice_row.r#type != InvoiceRowType::OutboundShipment {
             return Ok(None);
         }
         // 3.
-        let linked_shipment = match &linked_shipment {
+        let inbound_shipment = match &linked_shipment {
             Some(linked_shipment) => linked_shipment,
             None => return Ok(None),
         };
         // 4.
-        if linked_shipment.invoice_row.status != InvoiceRowStatus::Picked {
+        if inbound_shipment.invoice_row.status != InvoiceRowStatus::Picked {
             return Ok(None);
         }
         // 5.
-        if source_shipment.invoice_row.status != InvoiceRowStatus::Shipped {
+        if outbound_shipment.invoice_row.status != InvoiceRowStatus::Shipped {
             return Ok(None);
         }
 
         // Execute
-        let (deleted_invoice_lines, new_invoice_lines) = regenerate_inbound_shipment_lines(
+        let (line_ids_to_delete, new_inbound_lines) = regenerate_inbound_shipment_lines(
             connection,
-            &linked_shipment.invoice_row,
-            &source_shipment,
+            &inbound_shipment.invoice_row.id,
+            &outbound_shipment,
         )?;
 
         let invoice_line_repository = InvoiceLineRowRepository::new(connection);
 
-        for line in deleted_invoice_lines.iter() {
-            invoice_line_repository.delete(&line.id)?;
+        for id in line_ids_to_delete.iter() {
+            invoice_line_repository.delete(id)?;
         }
 
-        for line in new_invoice_lines.iter() {
+        for line in new_inbound_lines.iter() {
             invoice_line_repository.upsert_one(line)?;
         }
 
-        let mut updated_linked_shipment = linked_shipment.invoice_row.clone();
-        // 6.
-        updated_linked_shipment.status = InvoiceRowStatus::Shipped;
-        updated_linked_shipment.shipped_datetime =
-            source_shipment.invoice_row.shipped_datetime.clone();
+        let updated_inbound_shipment = InvoiceRow {
+            // 6.
+            status: InvoiceRowStatus::Shipped,
+            shipped_datetime: outbound_shipment.invoice_row.shipped_datetime.clone(),
+            ..inbound_shipment.invoice_row.clone()
+        };
 
-        InvoiceRowRepository::new(connection).upsert_one(&updated_linked_shipment)?;
+        InvoiceRowRepository::new(connection).upsert_one(&updated_inbound_shipment)?;
 
         let result = format!(
             "shipment ({}) deleted lines ({:?}) inserted lines ({:?})",
-            updated_linked_shipment.id,
-            deleted_invoice_lines
-                .into_iter()
-                .map(|r| r.id)
-                .collect::<Vec<String>>(),
-            new_invoice_lines
+            updated_inbound_shipment.id,
+            line_ids_to_delete,
+            new_inbound_lines
                 .into_iter()
                 .map(|r| r.id)
                 .collect::<Vec<String>>(),
