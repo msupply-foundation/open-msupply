@@ -74,7 +74,7 @@ pub fn process_records(
         Box::new(UpdateInboundShipmentProcessor { connection }),
         Box::new(UpdateOutboundShipmentStatusProcessor { connection }),
     ];
-    // TODO transaction
+
     let mut results = Vec::new();
 
     for record in records.into_iter() {
