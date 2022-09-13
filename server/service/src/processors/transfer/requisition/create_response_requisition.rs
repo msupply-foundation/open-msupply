@@ -9,12 +9,23 @@ use repository::{
 };
 use util::uuid::uuid;
 
+const DESCRIPTION: &'static str = "Create response requisition from request requisition";
+
 pub struct CreateResponseRequisitionProcessor;
 impl RequisitionTransferProcessor for CreateResponseRequisitionProcessor {
     fn get_description(&self) -> String {
-        "Create response requisition from request requisition".to_string()
+        DESCRIPTION.to_string()
     }
 
+    /// Response requisition is created from source requisition when all below conditions are met:
+    ///
+    /// 1. Source requisition name_id is for a store that is active on current site (transfer processor driver guarantees this)
+    /// 2. Source requisition is Request requisition
+    /// 3. Source requisition is Status is Sent
+    /// 4. Response requisition does not exists (no link is found for source requisition)
+    ///
+    /// Only runs once:
+    /// 5. Because it's linked to source requisition when created and `4.` will never be true again
     fn try_process_record(
         &self,
         connection: &StorageConnection,
@@ -26,26 +37,26 @@ impl RequisitionTransferProcessor for CreateResponseRequisitionProcessor {
             requisition: source_requisition,
             ..
         } = &record_for_processing;
-
+        // 2.
         if source_requisition.requisition_row.r#type != RequisitionRowType::Request {
             return Ok(None);
         }
-
+        // 3.
         if source_requisition.requisition_row.status != RequisitionRowStatus::Sent {
             return Ok(None);
         }
-
+        // 4.
         if linked_requisition.is_some() {
             return Ok(None);
         }
 
         // Execute
         let new_requisition =
-            generate_linked_requisition(connection, &source_requisition, record_for_processing)?;
+            generate_response_requisition(connection, &source_requisition, record_for_processing)?;
 
-        let new_requisition_lines = generate_linked_requisition_lines(
+        let new_requisition_lines = generate_response_requisition_lines(
             connection,
-            &new_requisition,
+            &new_requisition.id,
             &source_requisition.requisition_row,
         )?;
 
@@ -68,7 +79,7 @@ impl RequisitionTransferProcessor for CreateResponseRequisitionProcessor {
     }
 }
 
-fn generate_linked_requisition(
+fn generate_response_requisition(
     connection: &StorageConnection,
     source_requisition: &Requisition,
     record_for_processing: &RequisitionTransferProcessorRecord,
@@ -78,13 +89,12 @@ fn generate_linked_requisition(
 
     let source_requistition_row = &source_requisition.requisition_row;
 
+    let requisition_number =
+        next_number(connection, &NumberRowType::ResponseRequisition, &store_id)?;
+
     let result = RequisitionRow {
         id: uuid(),
-        requisition_number: next_number(
-            connection,
-            &NumberRowType::ResponseRequisition,
-            &store_id,
-        )?,
+        requisition_number,
         name_id,
         store_id,
         r#type: RequisitionRowType::Response,
@@ -93,6 +103,7 @@ fn generate_linked_requisition(
         their_reference: source_requistition_row.their_reference.clone(),
         max_months_of_stock: source_requistition_row.max_months_of_stock.clone(),
         min_months_of_stock: source_requistition_row.min_months_of_stock.clone(),
+        // 5.
         linked_requisition_id: Some(source_requistition_row.id.clone()),
         expected_delivery_date: source_requistition_row.expected_delivery_date,
         // Default
@@ -106,9 +117,9 @@ fn generate_linked_requisition(
     Ok(result)
 }
 
-fn generate_linked_requisition_lines(
+fn generate_response_requisition_lines(
     connection: &StorageConnection,
-    linked_requisition: &RequisitionRow,
+    linked_requisition_id: &str,
     source_requisition: &RequisitionRow,
 ) -> Result<Vec<RequisitionLineRow>, RepositoryError> {
     let source_lines = get_lines_for_requisition(connection, &source_requisition.id)?;
@@ -118,7 +129,7 @@ fn generate_linked_requisition_lines(
     for source_line in source_lines.into_iter() {
         new_lines.push(RequisitionLineRow {
             id: uuid(),
-            requisition_id: linked_requisition.id.clone(),
+            requisition_id: linked_requisition_id.to_string(),
             item_id: source_line.requisition_line_row.item_id,
             requested_quantity: source_line.requisition_line_row.requested_quantity,
             suggested_quantity: source_line.requisition_line_row.suggested_quantity,
