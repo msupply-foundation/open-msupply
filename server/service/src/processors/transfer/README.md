@@ -6,7 +6,7 @@ Pair records that belong to two different stores but are intrinsically linked to
 
 `OutboundShipment` -> `InboundShipment`
 
-The term `transfer` arises from the need to `transfer` these records from one `sync site` to another, in a scenario where a pair of linked transfer records belong to two different `sites`.
+The origin of the term `transfer` arises from the need to `transfer` these records from one `sync site` to another, in a scenario where a pair of linked transfer records belong to two different `sites`. 
 
 ## Requirements
 
