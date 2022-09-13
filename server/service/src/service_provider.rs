@@ -24,6 +24,7 @@ use crate::{
     stocktake_line::{StocktakeLineService, StocktakeLineServiceTrait},
     store::{get_store, get_stores},
     sync::site_info::{SiteInfoService, SiteInfoTrait},
+    sync::sync_status::{SiteInfoQueriesService, SiteInfoQueriesTrait},
     ListError, ListResult,
 };
 
@@ -52,6 +53,7 @@ pub struct ServiceProvider {
     // App Data Service
     pub app_data_service: Box<dyn AppDataServiceTrait>,
     pub site_info: Box<dyn SiteInfoTrait>,
+    pub site_info_queries_service: Box<dyn SiteInfoQueriesTrait>,
 }
 
 pub struct ServiceContext {
@@ -79,6 +81,7 @@ impl ServiceProvider {
             settings: Box::new(SettingsService {}),
             app_data_service: Box::new(AppDataService::new(app_data_folder)),
             site_info: Box::new(SiteInfoService {}),
+            site_info_queries_service: Box::new(SiteInfoQueriesService {}),
         }
     }
 
