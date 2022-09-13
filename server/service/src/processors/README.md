@@ -1,6 +1,14 @@
 # Processors
 
-It is desirable to perform some operations consecutively as they may cause undesirable and unexpected side effects. These operations should be `triggerable` in services, wherever `ServiceContext` and `ServiceProvider` are available and should be `triggerable` on individual basis.
+Diagram below describes a single processor. The concept of single processor is extended with processors driver by grouping multiple processors in on thread/task.
+
+From [TMF internal google doc](https://app.diagrams.net/#G1KHIEK-PinYwflsAH4WP9fNvKL8U2POzX):
+
+![omSupply transfer workflow](./doc/omSupply_processor)
+
+## Motivation
+
+It is desirable to perform some operations syncrhonously as they may cause undesirable and unexpected side effects when run concurrently. These operations should be `triggerable` in services, wherever `ServiceContext` and `ServiceProvider` are available and should be `triggerable` on individual basis.
 
 We can achieve this creating channels and spawning a task that listens to those channels. The senders for the channel can be put into Atomic Reference Counter (Arc) and passed along as a context to a service.
 
