@@ -96,7 +96,7 @@ For each step:
 
 Using `RequisitionTransferTester` and `ShipmentTransferTester` defined in transfer processors unit test.
 
-There structs implement test methods that need to be run sequentially, they create, update, delete source and destination records and test that corresponding transfer records have been changed accordingly. Each of those methods accept connection or service provider to allow the operation to be executed on a chosen site.
+These structs implement test methods that need to be run sequentially. They create, update, delete source and destination records and test that corresponding transfer records have been changed accordingly. Each of those methods accept connection or service provider to allow the operation to be executed on a chosen site.
 
 Transfer integration test follow this pattern:
 * Request creation of two sites on central server
