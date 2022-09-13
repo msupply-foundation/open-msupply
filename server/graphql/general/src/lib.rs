@@ -166,7 +166,7 @@ impl ServerAdminMutations {
         ctx: &Context<'_>,
         input: UpdateServerSettingsInput,
     ) -> Result<UpdateServerSettingsResponse> {
-        update_server_settings(ctx, input, false)
+        update_server_settings(ctx, input, false).await
     }
 }
 
@@ -198,6 +198,6 @@ impl ServerAdminStage0Mutations {
         ctx: &Context<'_>,
         input: UpdateServerSettingsInput,
     ) -> Result<UpdateServerSettingsResponse> {
-        update_server_settings(ctx, input, true)
+        update_server_settings(ctx, input, true).await
     }
 }

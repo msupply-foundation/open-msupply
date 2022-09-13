@@ -8,7 +8,6 @@ use crate::{
 use actix_web::web::Data;
 use log::{info, warn};
 use repository::{RepositoryError, StorageConnection, SyncBufferAction};
-use reqwest::{Client, Url};
 use std::time::Duration;
 
 use super::{
@@ -18,7 +17,6 @@ use super::{
     settings::SyncSettings,
     sync_buffer::SyncBuffer,
     translation_and_integration::{TranslationAndIntegration, TranslationAndIntegrationResults},
-    SyncCredentials,
 };
 
 const INTEGRATION_POLL_PERIOD_SECONDS: u64 = 1;
@@ -62,19 +60,7 @@ impl Synchroniser {
         settings: SyncSettings,
         service_provider: Data<ServiceProvider>,
     ) -> anyhow::Result<Self> {
-        let client = Client::new();
-        let url = Url::parse(&settings.url)?;
-        let hardware_id = service_provider.app_data_service.get_hardware_id()?;
-        let credentials = SyncCredentials {
-            username: settings.username.clone(),
-            password_sha256: settings.password_sha256.clone(),
-        };
-        let sync_api_v5 = SyncApiV5::new(
-            url.clone(),
-            credentials.clone(),
-            client.clone(),
-            &hardware_id,
-        );
+        let sync_api_v5 = SyncApiV5::new(&settings, &service_provider)?;
         Ok(Synchroniser {
             remote: RemoteDataSynchroniser {
                 sync_api_v5: sync_api_v5.clone(),
@@ -167,9 +153,6 @@ impl Synchroniser {
         logger.done_step(SyncStep::Integrate)?;
 
         if !is_initialised {
-            self.remote
-                .request_and_set_site_info(&ctx.connection)
-                .await?;
             self.remote.set_initialised(&ctx.connection)?;
         }
 

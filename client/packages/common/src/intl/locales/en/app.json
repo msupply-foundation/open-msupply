@@ -64,6 +64,13 @@
   "heading.password": "Password",
   "button.login": "Log in",
   "error.login": "Invalid username or password",
+  "error.site_auth_timeout": "Site authentication timed out",
+  "error.site_has_no_store": "Site has no store",
+  "error.site_incorrect_hardware_id": "Incorrect hardware ID",
+  "error.site_incorrect_password": "Incorrect password",
+  "error.site_name_not_found": "Site name not found",
+  "error.unable_to_save_settings": "Unable to save settings",
+  "error.unable_to_restart_server": "Unable to restart the server",
   "select-store": "Select store",
   "select-report": "Select Template",
   "error.server-not-found": "Problem finding local omSupply server"
