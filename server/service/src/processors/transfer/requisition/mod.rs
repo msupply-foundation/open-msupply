@@ -184,7 +184,7 @@ trait RequisitionTransferProcessor {
         Ok(result)
     }
 
-    /// Caller MUST gurantedd that record.requisition.name_id is a store active on this site
+    /// Caller MUST guarantee that record.requisition.name_id is a store active on this site
     fn try_process_record(
         &self,
         connection: &StorageConnection,
