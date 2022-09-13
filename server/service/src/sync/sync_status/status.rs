@@ -42,7 +42,7 @@ pub enum SyncStatusType {
     Integration,
 }
 
-pub trait SiteInfoQueriesTrait: Sync + Send {
+pub trait SyncStatusTrait: Sync + Send {
     fn get_latest_sync_status(
         &self,
         connection: &StorageConnection,
@@ -51,9 +51,9 @@ pub trait SiteInfoQueriesTrait: Sync + Send {
     }
 }
 
-pub struct SiteInfoQueriesService {}
+pub struct SyncStatusService;
 
-impl SiteInfoQueriesTrait for SiteInfoQueriesService {}
+impl SyncStatusTrait for SyncStatusService {}
 
 pub fn is_initialised(connection: &StorageConnection) -> Result<bool, RepositoryError> {
     let done_datetime =
