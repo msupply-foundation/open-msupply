@@ -45,7 +45,7 @@ impl SyncInfoQueries {
         let service_provider = ctx.service_provider();
         let connection = service_provider.connection()?;
         let sync_status = service_provider
-            .site_info_queries_service
+            .sync_status_service
             .get_latest_sync_status(&connection)?;
 
         Ok(FullSyncStatusNode {

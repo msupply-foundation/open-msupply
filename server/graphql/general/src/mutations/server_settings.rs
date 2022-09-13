@@ -56,7 +56,7 @@ pub async fn update_server_settings(
     let sync_settings = input.sync_settings.to_domain();
 
     if let Err(error) = service_provider
-        .site_info
+        .site_info_service
         .request_and_set_site_info(&service_provider, &sync_settings)
         .await
     {
