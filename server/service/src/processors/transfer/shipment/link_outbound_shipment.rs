@@ -11,6 +11,15 @@ impl ShipmentTransferProcessor for LinkOutboundShipmentProcessor {
         DESCRIPTION.to_string()
     }
 
+    /// Outbound shipment will be linked to inbound shipment when all below conditions are met:
+    ///
+    /// 1. Source shipment name_id is for a store that is active on current site (transfer processor driver guarantees this)
+    /// 2. Source shipment is Inbound shipment
+    /// 3. Linked shipment exists (the outbound shipment)
+    /// 4. Linked shipment is not linked to source shipment
+    ///
+    /// Only runs once:
+    /// 5. Because link is created between linked shipment and source shipment `4.` will never be true again
     fn try_process_record(
         &self,
         connection: &StorageConnection,
@@ -24,22 +33,23 @@ impl ShipmentTransferProcessor for LinkOutboundShipmentProcessor {
             } => (shipment, linked_shipment),
             _ => return Ok(None),
         };
-
+        // 2.
         if source_shipment.invoice_row.r#type != InvoiceRowType::InboundShipment {
             return Ok(None);
         }
-
+        // 3.
         let linked_shipment = match &linked_shipment {
             Some(linked_shipment) => linked_shipment,
             None => return Ok(None),
         };
-
+        // 4.
         if linked_shipment.invoice_row.linked_invoice_id.is_some() {
             return Ok(None);
         }
 
         // Execute
         let mut update_linked_shipment = linked_shipment.invoice_row.clone();
+        // 5.
         update_linked_shipment.linked_invoice_id = Some(source_shipment.invoice_row.id.clone());
         InvoiceRowRepository::new(connection).upsert_one(&update_linked_shipment)?;
 
