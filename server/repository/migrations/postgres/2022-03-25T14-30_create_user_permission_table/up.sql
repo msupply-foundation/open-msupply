@@ -12,7 +12,7 @@ CREATE TYPE permission_type AS ENUM (
     'INBOUND_SHIPMENT_MUTATE',
     'REPORT',
     'LOG_QUERY',
-    'SERVER_ADMIN',
+    'SERVER_ADMIN'
 );
 
 CREATE TABLE user_permission (
