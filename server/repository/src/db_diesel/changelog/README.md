@@ -1,6 +1,9 @@
 # Changelog
 
-A number of operations rely on processing a `queue` of database changes. There include pushing records to central server during synchronisation, processing transfer records, processing messaging, aggregation, interoperability synchronisation, etc.. 
+The changelog records database change for selected tables, i.e. if a row has been upserted or deleted.
+
+A number of operations rely on processing a `queue` of database changes.
+These operations include pushing records to central server during synchronisation, processing transfer records, processing messaging, aggregation, interoperability synchronisation, etc.. 
 
 A generic mechanism for recording and querying these database changes was implemented in the form of the `changelog` table.
 
