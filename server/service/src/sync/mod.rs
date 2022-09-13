@@ -6,6 +6,7 @@ pub(crate) mod api;
 pub(crate) mod central_data_synchroniser;
 pub(crate) mod remote_data_synchroniser;
 pub mod settings;
+pub(crate) mod site_info;
 mod sync_api_credentials;
 mod sync_buffer;
 mod sync_serde;

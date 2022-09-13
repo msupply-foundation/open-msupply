@@ -13,18 +13,12 @@ pub(crate) use self::common_records::*;
 pub(crate) use self::core::*;
 pub(crate) use self::error::*;
 pub(crate) use get_central_records::*;
+pub(crate) use get_site_info::*;
 pub(crate) use get_site_status::*;
 #[cfg(test)]
 pub(crate) use post_queued_records::*;
 
 #[cfg(test)]
 fn create_api(url: &str, username: &str, password: &str) -> SyncApiV5 {
-    use reqwest::{Client, Url};
-
-    use super::SyncCredentials;
-
-    let url = Url::parse(url).unwrap();
-    let credentials = SyncCredentials::from_plain(username, password);
-    let client = Client::new();
-    SyncApiV5::new(url, credentials, client, "hardware_id")
+    SyncApiV5::new_test(url, username, password, "hardware_id")
 }
