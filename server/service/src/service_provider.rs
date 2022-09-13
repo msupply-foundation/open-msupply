@@ -16,6 +16,7 @@ use crate::{
     location::{LocationService, LocationServiceTrait},
     master_list::{MasterListService, MasterListServiceTrait},
     name::get_names,
+    processors::ProcessorsTrigger,
     report::report_service::{ReportService, ReportServiceTrait},
     requisition::{RequisitionService, RequisitionServiceTrait},
     requisition_line::{RequisitionLineService, RequisitionLineServiceTrait},
@@ -23,7 +24,7 @@ use crate::{
     stocktake::{StocktakeService, StocktakeServiceTrait},
     stocktake_line::{StocktakeLineService, StocktakeLineServiceTrait},
     store::{get_store, get_stores},
-    ListError, ListResult, processors::ProcessorsTrigger,
+    ListError, ListResult,
 };
 
 pub struct ServiceProvider {
@@ -67,7 +68,7 @@ impl ServiceProvider {
         ServiceProvider::new_with_processors(
             connection_manager,
             app_data_folder,
-            ProcessorsTrigger::new_test(),
+            ProcessorsTrigger::new_void(),
         )
     }
 
@@ -114,10 +115,10 @@ impl ServiceProvider {
 
 impl ServiceContext {
     #[cfg(test)]
-    pub(crate) fn new_test(connection: StorageConnection) -> ServiceContext {
+    pub(crate) fn new_without_processors(connection: StorageConnection) -> ServiceContext {
         ServiceContext {
             connection,
-            processors_trigger: ProcessorsTrigger::new_test(),
+            processors_trigger: ProcessorsTrigger::new_void(),
         }
     }
 }
