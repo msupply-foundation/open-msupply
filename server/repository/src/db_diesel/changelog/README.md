@@ -22,7 +22,7 @@ Current use cases require only the latest operation for a particular record, thu
 
 ## Cursors
 
-The 'cursor' is used by changelog consumers to track which records they have already processed and allow them to start processing again from where they left off.
+The cursor is used by changelog consumers to track which records they have already processed and allow them to start processing again from where they left off.
 For example, if the requisition processor has processed all the records until cursor 10, it should record the last cursor it processed (e.g. 10). Next time it starts processing records from the changelog, it will start from cursor number 11. 
 Meanwhile the shipment processor could be further ahead, processing cursor number 50. By allowing the processors to track their own cursor value, we don't need a separate queue of unprocessed records for each processor.
 
