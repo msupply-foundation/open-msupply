@@ -1,6 +1,6 @@
 # Transfers
 
-Pair records that belong to two different stores but are intrinsically linked together are called `transfers`:
+Paired records that belong to two different stores but are intrinsically linked together are called `transfers`:
 
 `RequestRequisition` -> `ResponseRequisition`
 
@@ -14,24 +14,24 @@ From [TMF internal google doc](https://docs.google.com/presentation/d/1eEe0uBGvk
 
 ![omSupply transfer workflow](./doc/omSupply_transfer_workflow.png)
 
-Big difference between mSupply transfer requirements and omSupply:
-* The inbound shipment part of the transfer is generate before outbound shipment is shipped (before inbound shipment is editable)
-* Status updates on destinaton part of transfer (response requisition and inbound shipment) are reflected on source part of the transfer (request requisition and outbound shipment)
+The big difference between mSupply transfer requirements and omSupply:
+* The inbound shipment part of the transfer is generated before the outbound shipment is shipped (before the inbound shipment is editable)
+* Status updates on the destination part of transfer (response requisition and inbound shipment) are reflected on the source part of the transfer (request requisition and outbound shipment)
 
 ## Ownership
 
 In our synchronisation system, we have a strong rule of:
 * records can belong to **one** site only, which mean they can only be mutated on that site.
 
-This means the `other half` of transfer record needs to be generated on the site that will own that record. This is done by processing `changelog` after syncrhonisation. 
+This means the corresponding half of the transfer record needs to be generated on the site that will own that record. This is done by processing the `changelog` after synchronisation. 
 
 ## Changelog Processing
 
-Each processor (`shipment` and `requisition` transfer processor) keep track of changelog it has processed, and when it's triggerd it will try processing any records that have been changed since the last processed changelog entry.
+Each processor (`shipment` and `requisition` transfer processor) keeps track of the changelog records that it has processed, and when triggered it will try processing any records that have been changed since the last processed changelog entry.
 
-We **only** want to process shipments and requisitions that are `destined` for current site, thus changelogs are filtered by name_ids belonging to stores on that are active on current site.
+We **only** want to process shipments and requisitions that are destined for the current site, thus changelogs are filtered by `name_id`s belonging to stores that are active on the current site.
 
-## If both stores are active on current site
+## If both stores are active on the current site
 
 Same exact process is used, except the processors are triggered in services, see diagram below. This diagram doesn't quite show how records are `linked` using processors, explained in this example
 * Request Requisition (id: A) is created and set to `sent` status
@@ -45,7 +45,7 @@ Any event driven system has a potential for infinite looping. Processor conditio
 
 ## Referential integrity
 
-Having referential constraints in database means that at access time we dont' need to do extra checks, but referential constrains cause a slightly problem, for example `invoice_line` would be transfered from source site to destination site, but associated `stock_line` and `location` will not (as they would only exists on source site). This is metigated by incoming sync translator, if a record does not belong to current site both stock_line and location are set to null in database
+Having referential constraints in the database means that at access time we don't need to do extra checks, but referential constraints cause a slight problem. For example `invoice_line` would be transferred from source site to destination site, but associated `stock_line` and `location` will not (as they would only exist on the source site). This is mitigated by the incoming sync translator, if a record does not belong to the current site both `stock_line` and `location` are set to null in the database
 
 ## Diagram
 
