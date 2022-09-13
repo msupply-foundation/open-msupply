@@ -4,7 +4,7 @@ use repository::{
 };
 
 use super::{
-    common::regenerate_linked_invoice_lines, Operation, ShipmentTransferProcessor,
+    common::regenerate_inbound_shipment_lines, Operation, ShipmentTransferProcessor,
     ShipmentTransferProcessorRecord,
 };
 
@@ -17,6 +17,16 @@ impl ShipmentTransferProcessor for UpdateInboundShipmentProcessor {
         DESCRIPTION.to_string()
     }
 
+    /// Inbound shipment will be updated when all below conditions are met:
+    ///
+    /// 1. Source shipment name_id is for a store that is active on current site (transfer processor driver guarantees this)
+    /// 2. Source shipment is Outbound shipment
+    /// 3. Linked shipment exists (the inbound shipment)
+    /// 4. Linked shipment is Picked (Inbound shipment can only be deleted before it turns to Shipped status)
+    /// 5. Source shipment is Shipped
+    ///
+    /// Only runs once:
+    /// 6. Because linked shipment will be changed to Shipped status and `4.` will never be true again
     fn try_process_record(
         &self,
         connection: &StorageConnection,
@@ -30,22 +40,26 @@ impl ShipmentTransferProcessor for UpdateInboundShipmentProcessor {
             } => (shipment, linked_shipment),
             _ => return Ok(None),
         };
-
+        // 2.
         if source_shipment.invoice_row.r#type != InvoiceRowType::OutboundShipment {
             return Ok(None);
         }
-
+        // 3.
         let linked_shipment = match &linked_shipment {
             Some(linked_shipment) => linked_shipment,
             None => return Ok(None),
         };
-
+        // 4.
         if linked_shipment.invoice_row.status != InvoiceRowStatus::Picked {
+            return Ok(None);
+        }
+        // 5.
+        if source_shipment.invoice_row.status != InvoiceRowStatus::Shipped {
             return Ok(None);
         }
 
         // Execute
-        let (deleted_invoice_lines, new_invoice_lines) = regenerate_linked_invoice_lines(
+        let (deleted_invoice_lines, new_invoice_lines) = regenerate_inbound_shipment_lines(
             connection,
             &linked_shipment.invoice_row,
             &source_shipment,
@@ -62,7 +76,8 @@ impl ShipmentTransferProcessor for UpdateInboundShipmentProcessor {
         }
 
         let mut updated_linked_shipment = linked_shipment.invoice_row.clone();
-        updated_linked_shipment.status = source_shipment.invoice_row.status.clone();
+        // 6.
+        updated_linked_shipment.status = InvoiceRowStatus::Shipped;
         updated_linked_shipment.shipped_datetime =
             source_shipment.invoice_row.shipped_datetime.clone();
 

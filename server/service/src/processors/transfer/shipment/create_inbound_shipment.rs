@@ -9,7 +9,7 @@ use util::uuid::uuid;
 use crate::number::next_number;
 
 use super::{
-    common::regenerate_linked_invoice_lines, Operation, ShipmentTransferProcessor,
+    common::regenerate_inbound_shipment_lines, Operation, ShipmentTransferProcessor,
     ShipmentTransferProcessorRecord,
 };
 
@@ -22,6 +22,15 @@ impl ShipmentTransferProcessor for CreateInboundShipmentProcessor {
         DESCRIPTION.to_string()
     }
 
+    /// Inbound shipment will be created whan all below conditions are met:
+    ///
+    /// 1. Source shipment name_id is for a store that is active on current site (transfer processor driver guarantees this)
+    /// 2. Source shipment is Outbound shipment
+    /// 3. Source shipment is either Shipped or Picked
+    /// 4. Linked shipment does not exist (the inbound shipment)
+    ///
+    /// Only runs once:
+    /// 5. Because created shipment will be linked to source shipment `4.` will never be true again
     fn try_process_record(
         &self,
         connection: &StorageConnection,
@@ -35,27 +44,27 @@ impl ShipmentTransferProcessor for CreateInboundShipmentProcessor {
             } => (shipment, linked_shipment),
             _ => return Ok(None),
         };
-
+        // 2.
         if source_shipment.invoice_row.r#type != InvoiceRowType::OutboundShipment {
             return Ok(None);
         }
-
+        // 3.
         if !matches!(
             source_shipment.invoice_row.status,
             InvoiceRowStatus::Shipped | InvoiceRowStatus::Picked
         ) {
             return Ok(None);
         }
-
+        // 4.
         if linked_shipment.is_some() {
             return Ok(None);
         }
 
         // Execute
         let new_shipment =
-            generate_linked_invoice(connection, &source_shipment, record_for_processing)?;
+            generate_inbound_shipment(connection, &source_shipment, record_for_processing)?;
         let (lines_to_delete, new_shipment_lines) =
-            regenerate_linked_invoice_lines(connection, &new_shipment, &source_shipment)?;
+            regenerate_inbound_shipment_lines(connection, &new_shipment, &source_shipment)?;
 
         InvoiceRowRepository::new(connection).upsert_one(&new_shipment)?;
 
@@ -83,7 +92,7 @@ impl ShipmentTransferProcessor for CreateInboundShipmentProcessor {
     }
 }
 
-fn generate_linked_invoice(
+fn generate_inbound_shipment(
     connection: &StorageConnection,
     source_invoice: &Invoice,
     record_for_processing: &ShipmentTransferProcessorRecord,
@@ -112,6 +121,7 @@ fn generate_linked_invoice(
         requisition_id,
         name_store_id: Some(source_invoice_row.store_id.clone()),
         their_reference: source_invoice_row.their_reference.clone(),
+        // 5.
         linked_invoice_id: Some(source_invoice_row.id.clone()),
         created_datetime: Utc::now().naive_utc(),
         picked_datetime: source_invoice_row.picked_datetime,

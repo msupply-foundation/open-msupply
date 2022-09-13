@@ -26,19 +26,18 @@ pub(crate) mod update_outbound_shipment_status;
 #[cfg(test)]
 pub(crate) mod test;
 
-// pub mod create_and_link_inbound_shipment;
-
-// pub mod update_outbound_shipment_status;
-
 const CHANGELOG_BATCH_SIZE: u32 = 20;
 
 #[derive(Clone, Debug)]
 enum Operation {
     Delete {
+        /// Linked invoice, where (changelog.record_id = linked_invoice.linked_invoice_id)
         linked_shipment: Option<Invoice>,
     },
     Upsert {
         shipment: Invoice,
+        /// Linked invoice, both relations are checked
+        /// (invoice.id = linked_invoice.linked_invoice_id OR invoice.linked_invoice_id = linked_invoice.id)
         linked_shipment: Option<Invoice>,
     },
 }
@@ -86,6 +85,8 @@ pub(crate) fn process_shipment_transfers(
 
     let changelog_repo = ChangelogRepository::new(&ctx.connection);
     let key_value_store_repo = KeyValueStoreRepository::new(&ctx.connection);
+    // For transfers, changelog MUST be filtered by records where name_id is active store on this site
+    // this is the contract obligation for try_process_record in ProcessorTrait
     let filter = ChangelogFilter::new()
         .table_name(ChangelogTableName::Invoice.equal_to())
         .name_id(EqualFilter::equal_any(active_stores.name_ids()));
@@ -214,6 +215,7 @@ trait ShipmentTransferProcessor {
         Ok(result)
     }
 
+    /// Caller MUST guarantee that source shipment.name_id is a store active on this site
     fn try_process_record(
         &self,
         connection: &StorageConnection,
