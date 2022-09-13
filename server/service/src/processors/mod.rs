@@ -102,7 +102,8 @@ impl ProcessorsTrigger {
         }
     }
 
-    pub(crate) fn new_test() -> ProcessorsTrigger {
+    /// Empty processor triggers for test that don't use processors but require processors for construction of ServiceContext and ServiceProvider
+    pub(crate) fn new_void() -> ProcessorsTrigger {
         ProcessorsTrigger {
             requisition_transfer: mpsc::channel(1).0,
             shipment_transfer: mpsc::channel(1).0,
