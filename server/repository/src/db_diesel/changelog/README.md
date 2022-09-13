@@ -2,11 +2,11 @@
 
 A number of operations rely on processing a `queue` of database changes. There include pushing records to central server during synchronisation, processing transfer records, processing messaging, aggregation, interoperability synchronisation, etc.. 
 
-Generic mechanism for recording and querying these database changes was implemente in the form of `changelog` table.
+A generic mechanism for recording and querying these database changes was implemented in the form of the `changelog` table.
 
 ## Triggers
 
-Database triggers insert new entries into changelog table with:
+Database triggers insert new entries into the `changelog` table with:
 
 * cursor <- sequencial number for order of database operation
 * record_id 
@@ -26,7 +26,7 @@ The cursor is used by changelog consumers to track which records they have alrea
 For example, if the requisition processor has processed all the records until cursor 10, it should record the last cursor it processed (e.g. 10). Next time it starts processing records from the changelog, it will start from cursor number 11. 
 Meanwhile the shipment processor could be further ahead, processing cursor number 50. By allowing the processors to track their own cursor value, we don't need a separate queue of unprocessed records for each processor.
 
-Services that use changelog need to manually maintain cursor and persist it using key_value_store repository (get_i64 and set_i64). After a query to changelog repository, next cursor would be `last cursor` in the query output `+ 1`.
+Services that use the changelog need to manually maintain cursor and persist it using the `key_value_store` repository (get_i64 and set_i64). After a query to changelog repository, next cursor would be `last cursor` in the query output `+ 1`.
 
 ## name_id and store_id
 
