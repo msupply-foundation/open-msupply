@@ -4,7 +4,7 @@ $$
   BEGIN
     INSERT INTO changelog (table_name, record_id, row_action, name_id, store_id)
       SELECT 'requisition_line', NEW.id, 'UPSERT', name_id, store_id FROM requisition WHERE id = NEW.requisition_id;
-    -- Ignored for AFTER trigger
+    -- The return value is required, even though it is ignored for a row-level AFTER trigger
     RETURN NULL;
   END;
 $$ LANGUAGE 'plpgsql';
@@ -15,7 +15,7 @@ $$
   BEGIN
     INSERT INTO changelog (table_name, record_id, row_action, name_id, store_id)
       SELECT 'requisition_line', OLD.id, 'DELETE', name_id, store_id FROM requisition WHERE id = OLD.requisition_id;
-    -- Ignored for AFTER trigger
+    -- The return value is required, even though it is ignored for a row-level AFTER trigger
     RETURN NULL;
   END;
 $$ LANGUAGE 'plpgsql';
