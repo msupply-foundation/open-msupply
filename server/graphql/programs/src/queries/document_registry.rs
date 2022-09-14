@@ -56,7 +56,7 @@ pub fn document_registries(
     filter: Option<DocumentRegistryFilterInput>,
     sort: Option<Vec<DocumentRegistrySortInput>>,
 ) -> Result<DocumentRegistryResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::QueryDocumentRegistry,
@@ -67,11 +67,20 @@ pub fn document_registries(
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
 
+    let filter =
+        filter
+            .map(|f| f.to_domain())
+            .unwrap_or(
+                DocumentRegistryFilter::new().document_type(EqualFilter::equal_any(
+                    user.context.iter().map(String::clone).collect(),
+                )),
+            );
+
     let entries = service_provider
         .document_registry_service
         .get_entries(
             &context,
-            filter.map(|filter| filter.to_domain()),
+            Some(filter),
             sort.and_then(|mut sort_list| sort_list.pop())
                 .map(|sort| sort.to_domain()),
         )

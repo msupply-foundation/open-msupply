@@ -66,7 +66,7 @@ pub fn program_enrolments(
     ctx: &Context<'_>,
     store_id: String,
     sort: Option<ProgramEnrolmentSortInput>,
-    input_filter: Option<ProgramEnrolmentFilterInput>,
+    filter: Option<ProgramEnrolmentFilterInput>,
 ) -> Result<ProgramEnrolmentResponse> {
     let user = validate_auth(
         ctx,
@@ -80,7 +80,7 @@ pub fn program_enrolments(
     let context = service_provider.basic_context()?;
 
     let filter =
-        input_filter
+        filter
             .map(|f| f.to_domain_filter())
             .unwrap_or(ProgramEnrolmentFilter::new().r#type(EqualFilter::equal_any(
                 user.context.iter().map(String::clone).collect(),

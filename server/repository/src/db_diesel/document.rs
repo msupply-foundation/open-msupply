@@ -2,8 +2,8 @@ use super::StorageConnection;
 
 use crate::db_diesel::form_schema_row::form_schema;
 use crate::db_diesel::name_row::name;
-use crate::diesel_macros::apply_string_filter;
-use crate::{RepositoryError, StringFilter};
+use crate::diesel_macros::{apply_equal_filter, apply_string_filter};
+use crate::{EqualFilter, RepositoryError, StringFilter};
 
 use chrono::{DateTime, NaiveDateTime, Utc};
 use diesel::prelude::*;
@@ -133,15 +133,24 @@ pub struct Document {
 #[derive(Clone)]
 pub struct DocumentFilter {
     pub name: Option<StringFilter>,
+    pub r#type: Option<EqualFilter<String>>,
 }
 
 impl DocumentFilter {
     pub fn new() -> Self {
-        DocumentFilter { name: None }
+        DocumentFilter {
+            name: None,
+            r#type: None,
+        }
     }
 
     pub fn name(mut self, value: StringFilter) -> Self {
         self.name = Some(value);
+        self
+    }
+
+    pub fn r#type(mut self, filter: EqualFilter<String>) -> Self {
+        self.r#type = Some(filter);
         self
     }
 }
@@ -194,9 +203,10 @@ impl<'a> DocumentRepository<'a> {
     pub fn query(&self, filter: Option<DocumentFilter>) -> Result<Vec<Document>, RepositoryError> {
         let mut query = latest_document::dsl::latest_document.into_boxed();
         if let Some(f) = filter {
-            let DocumentFilter { name } = f;
+            let DocumentFilter { name, r#type } = f;
 
             apply_string_filter!(query, name, latest_document::dsl::name);
+            apply_equal_filter!(query, r#type, latest_document::dsl::type_);
         }
         let rows: Vec<DocumentRow> = query.load(&self.connection.connection)?;
 
