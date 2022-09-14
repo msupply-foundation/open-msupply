@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use repository::{
     EqualFilter, Permission, RepositoryError, UserPermissionFilter, UserPermissionRepository,
@@ -431,6 +431,8 @@ impl AuthServiceTrait for AuthService {
             .clone()
             .into_iter()
             .filter_map(|c| c.context)
+            .collect::<HashSet<String>>()
+            .into_iter()
             .collect();
 
         if auth_data.debug_no_access_control {
