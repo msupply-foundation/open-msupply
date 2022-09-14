@@ -310,6 +310,7 @@ impl RequisitionTransferTester {
     }
 }
 
+/// Line uniqueness is checked in caller method where requisition line count is checked
 fn check_line(
     connection: &StorageConnection,
     response_requisition_id: &str,
