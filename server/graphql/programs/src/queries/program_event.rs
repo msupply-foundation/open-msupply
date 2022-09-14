@@ -48,7 +48,7 @@ pub fn program_events(
     sort: Option<ProgramEventSortInput>,
     filter: Option<ProgramEventFilterInput>,
 ) -> Result<ProgramEventResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::QueryProgram,
@@ -59,9 +59,13 @@ pub fn program_events(
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
 
-    let filter = filter
-        .map(|f| f.to_domain())
-        .unwrap_or(ProgramEventFilter::new().name_id(EqualFilter::equal_to(&patient_id)));
+    let filter = filter.map(|f| f.to_domain()).unwrap_or(
+        ProgramEventFilter::new()
+            .name_id(EqualFilter::equal_to(&patient_id))
+            .r#type(EqualFilter::equal_any(
+                user.context.iter().map(String::clone).collect(),
+            )),
+    );
     let list_result = service_provider
         .program_event_service
         .events(

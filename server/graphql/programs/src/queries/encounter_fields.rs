@@ -54,7 +54,7 @@ pub fn encounter_fields(
     store_id: String,
     input: EncounterFieldsInput,
     page: Option<PaginationInput>,
-    input_filter: Option<EncounterFilterInput>,
+    filter: Option<EncounterFilterInput>,
     sort: Option<EncounterSortInput>,
 ) -> Result<EncounterFieldsResponse> {
     let user = validate_auth(
@@ -68,12 +68,11 @@ pub fn encounter_fields(
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
 
-    let filter =
-        input_filter
-            .map(|f| f.to_domain_filter())
-            .unwrap_or(EncounterFilter::new().r#type(EqualFilter::equal_any(
-                user.context.iter().map(String::clone).collect(),
-            )));
+    let filter = filter
+        .map(|f| f.to_domain_filter())
+        .unwrap_or(EncounterFilter::new().r#type(EqualFilter::equal_any(
+            user.context.iter().map(String::clone).collect(),
+        )));
 
     let result = service_provider
         .encounter_service
