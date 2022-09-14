@@ -15,7 +15,7 @@ import { themeOptions } from '@common/styles';
 import { LanguageMenu } from '../components';
 import { Setting } from './Setting';
 import { SettingTextArea, TextValue } from './SettingTextArea';
-import { useHost } from '../api/hooks';
+import packageJson from 'package.json';
 import { SyncSettings } from './SyncSettings';
 
 export const Settings: React.FC = () => {
@@ -24,7 +24,6 @@ export const Settings: React.FC = () => {
   const navigate = useNavigate();
   const [customTheme, setCustomTheme] = useLocalStorage('/theme/custom');
   const [customLogo, setCustomLogo] = useLocalStorage('/theme/logo');
-  const { data } = useHost.utils.version();
   usePermissionCheck(UserPermissionNodePermission.ServerAdmin);
   const customThemeEnabled =
     !!customTheme && Object.keys(customTheme).length > 0;
@@ -107,18 +106,14 @@ export const Settings: React.FC = () => {
       <SyncSettings />
       <Grid style={{ position: 'absolute', right: 0, bottom: 30 }}>
         <Grid container padding={1} flexDirection="column">
-          {!!data && (
-            <Grid item display="flex" flex={1} gap={1}>
-              <Grid item justifyContent="flex-end" flex={1} display="flex">
-                <Typography fontWeight={700}>
-                  {t('label.app-version')}
-                </Typography>
-              </Grid>
-              <Grid item flex={1}>
-                <Typography whiteSpace="nowrap">{data}</Typography>
-              </Grid>
+          <Grid item display="flex" flex={1} gap={1}>
+            <Grid item justifyContent="flex-end" flex={1} display="flex">
+              <Typography fontWeight={700}>{t('label.app-version')}</Typography>
             </Grid>
-          )}
+            <Grid item flex={1}>
+              <Typography whiteSpace="nowrap">{packageJson.version}</Typography>
+            </Grid>
+          </Grid>
         </Grid>
       </Grid>
     </Grid>
