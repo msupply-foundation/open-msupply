@@ -22,6 +22,7 @@ use crate::{
     test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
 };
 
+/// This test is for outbound and inbound store on the same site
 #[actix_rt::test]
 async fn invoice_transfers() {
     let site_id = 25;
@@ -81,11 +82,15 @@ async fn invoice_transfers() {
         // Without delete
         let mut tester =
             ShipmentTransferTester::new(&inbound_store, &outbound_store, &item1, &item2);
+        let ctx = service_provider.context().unwrap();
 
         tester.insert_request_requisition(&service_provider).await;
         delay_for_processor().await;
         tester.check_response_requisition_created(&connection).await;
         tester.insert_outbound_shipment(&connection).await;
+        // Need to do manual trigger here since inserting shipment won't trigger processor
+        // and we want to validate that not shipped/picked shipment does not generate transfer
+        ctx.processors_trigger.trigger_shipment_transfers();
         delay_for_processor().await;
         tester.check_inbound_shipment_not_created(&connection);
         delay_for_processor().await;
