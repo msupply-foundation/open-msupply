@@ -69,9 +69,20 @@ impl SyncApiV5 {
             )
             .await?;
 
-        to_json(response)
+        let site_response = to_json::<CreateSyncSiteResponse>(response)
             .await
-            .map_err(SyncApiError::ResponseParsingError)
+            .map_err(SyncApiError::ResponseParsingError)?;
+
+        let check_site_api = SyncApiV5 {
+            credentials: SyncCredentials {
+                username: site_response.site.name.clone(),
+                password_sha256: site_response.site.password_sha256.clone(),
+            },
+            ..self.clone()
+        };
+
+        check_site_api.get_site_info().await?;
+        Ok(site_response)
     }
 }
 

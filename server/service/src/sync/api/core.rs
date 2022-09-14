@@ -12,10 +12,10 @@ use super::*;
 
 #[derive(Debug, Clone)]
 pub(crate) struct SyncApiV5 {
-    server_url: Url,
-    credentials: SyncCredentials,
-    client: Client,
-    headers: HeaderMap,
+    pub(crate) server_url: Url,
+    pub(crate) credentials: SyncCredentials,
+    pub(crate) client: Client,
+    pub(crate) headers: HeaderMap,
 }
 
 fn generate_headers(hardware_id: &str) -> HeaderMap {
