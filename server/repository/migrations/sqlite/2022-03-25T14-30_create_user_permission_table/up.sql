@@ -19,6 +19,11 @@ CREATE TABLE user_permission (
         'SERVER_ADMIN',
         'DOCUMENT',
         'PATIENT_QUERY',
-        'PATIENT_MUTATE'
-    )) NOT NULL
+        'PATIENT_MUTATE',
+        'DOCUMENT_ENCOUNTER_QUERY',
+        'DOCUMENT_ENCOUNTER_MUTATE',
+        'DOCUMENT_PROGRAM_QUERY',
+        'DOCUMENT_PROGRAM_MUTATE'
+    )) NOT NULL,
+    context TEXT
 )
