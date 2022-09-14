@@ -55,6 +55,7 @@ pub struct EncounterSortInput {
 #[derive(InputObject, Clone)]
 pub struct EncounterFilterInput {
     pub id: Option<EqualFilterStringInput>,
+    pub r#type: Option<EqualFilterStringInput>,
     pub patient_id: Option<EqualFilterStringInput>,
     pub program: Option<EqualFilterStringInput>,
     pub name: Option<EqualFilterStringInput>,
@@ -67,6 +68,7 @@ impl EncounterFilterInput {
     pub fn to_domain_filter(self) -> EncounterFilter {
         EncounterFilter {
             id: self.id.map(EqualFilter::from),
+            r#type: self.r#type.map(EqualFilter::from),
             patient_id: self.patient_id.map(EqualFilter::from),
             program: self.program.map(EqualFilter::from),
             name: self.name.map(EqualFilter::from),
@@ -83,10 +85,10 @@ pub fn encounters(
     ctx: &Context<'_>,
     store_id: String,
     page: Option<PaginationInput>,
-    filter: Option<EncounterFilterInput>,
+    input_filter: Option<EncounterFilterInput>,
     sort: Option<EncounterSortInput>,
 ) -> Result<EncounterResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::QueryEncounter,
@@ -97,12 +99,19 @@ pub fn encounters(
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
 
+    let filter =
+        input_filter
+            .map(|f| f.to_domain_filter())
+            .unwrap_or(EncounterFilter::new().r#type(EqualFilter::equal_any(
+                user.context.iter().map(String::clone).collect(),
+            )));
+
     let result = service_provider
         .encounter_service
         .encounters(
             &context,
             page.map(PaginationOption::from),
-            filter.map(|f| f.to_domain_filter()),
+            Some(filter),
             sort.map(EncounterSortInput::to_domain),
         )
         .map_err(StandardGraphqlError::from_list_error)?;
