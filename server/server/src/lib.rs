@@ -33,7 +33,7 @@ use std::{
     ops::{Deref, DerefMut},
     sync::{Arc, RwLock},
 };
-use tokio::sync::{oneshot, Mutex};
+use tokio::sync::{mpsc, Mutex};
 
 pub mod certs;
 pub mod configuration;
@@ -63,7 +63,7 @@ fn auth_data(
 
 async fn run_stage0(
     config_settings: Settings,
-    off_switch: Arc<Mutex<oneshot::Receiver<()>>>,
+    off_switch: Arc<Mutex<mpsc::Receiver<()>>>,
     token_bucket: Arc<RwLock<TokenBucket>>,
     token_secret: String,
     connection_manager: StorageConnectionManager,
@@ -148,7 +148,7 @@ async fn run_stage0(
     let ctrl_c = tokio::signal::ctrl_c();
     let restart = tokio::select! {
         _ = ctrl_c => false,
-        _ = off_switch => false,
+        _ = off_switch.recv() => false,
         _ = restart_switch_receiver.recv() => true,
     };
     // gracefully shutdown the server
@@ -159,7 +159,7 @@ async fn run_stage0(
 /// Return true if restart has been requested
 async fn run_server(
     config_settings: Settings,
-    off_switch: Arc<Mutex<oneshot::Receiver<()>>>,
+    off_switch: Arc<Mutex<mpsc::Receiver<()>>>,
     token_bucket: Arc<RwLock<TokenBucket>>,
     token_secret: String,
     connection_manager: StorageConnectionManager,
@@ -284,7 +284,7 @@ async fn run_server(
     let ctrl_c = tokio::signal::ctrl_c();
     let restart = tokio::select! {
         _ = ctrl_c => false,
-        _ = off_switch => false,
+        _ = off_switch.recv() => false,
         _ = restart_switch_receiver.recv() => true,
         () = async {
             synchroniser.run().await;
@@ -320,11 +320,7 @@ fn file_logger(settings: &LoggingSettings) -> fast_log::Config {
     let default_max_file_size = 10;
 
     // Note: the file_split will panic if the path separator isn't appended
-    let log_dir = &format!(
-        "{}{}",
-        settings.directory.clone().unwrap_or(default_log_dir),
-        std::path::MAIN_SEPARATOR
-    );
+    let log_dir = &format!("{}/", settings.directory.clone().unwrap_or(default_log_dir),);
     let log_path = &env::current_dir().unwrap_or_default().join(log_dir);
     let log_file = settings
         .filename
@@ -358,7 +354,7 @@ fn file_logger(settings: &LoggingSettings) -> fast_log::Config {
 /// This method doesn't return until a message is sent to the off_switch.
 pub async fn start_server(
     config_settings: Settings,
-    off_switch: oneshot::Receiver<()>,
+    off_switch: mpsc::Receiver<()>,
 ) -> std::io::Result<()> {
     info!(
         "Server starting in {} mode",
