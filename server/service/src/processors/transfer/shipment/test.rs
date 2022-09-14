@@ -133,8 +133,6 @@ async fn invoice_transfers() {
         _ = test() => (),
     };
 }
-
-
 pub(crate) struct ShipmentTransferTester {
     // TODO linked requisitions ?
     outbound_store: StoreRow,
@@ -584,6 +582,7 @@ fn check_shipment_status(shipment1: &InvoiceRow, shipment2: &InvoiceRow) {
     assert_eq!(shipment1.delivered_datetime, shipment2.delivered_datetime);
 }
 
+/// Line uniqueness is checked in caller method where invoice line count is checked
 fn check_line(
     connection: &StorageConnection,
     inbound_shipment_id: &str,
