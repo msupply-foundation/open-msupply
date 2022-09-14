@@ -18,6 +18,7 @@ use crate::{
     test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
 };
 
+/// This test is for requesting and responding store on the same site
 #[actix_rt::test]
 async fn requisition_transfer() {
     let site_id = 25;
@@ -76,8 +77,12 @@ async fn requisition_transfer() {
     let test = || async move {
         let mut tester =
             RequisitionTransferTester::new(&request_store, &response_store, &item1, &item2);
+        let ctx = service_provider.context().unwrap();
 
         tester.insert_request_requisition(&connection).await;
+        // Need to do manual trigger here since inserting requisition won't trigger processor
+        // and we want to validate that not sent requisition does not generate transfer
+        ctx.processors_trigger.trigger_requisition_transfers();
         delay_for_processor().await;
         tester.check_response_requisition_not_created(&connection);
         delay_for_processor().await;
