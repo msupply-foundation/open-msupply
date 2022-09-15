@@ -1,9 +1,6 @@
 @ECHO ##### Removing installers folder #####
 @rmdir "installers" /s /q
 
-@ECHO ##### Copying bin and certs folders #####
-xcopy "omSupply\bin" "omSupply\omSupply Server\bin" /e /h /c /i
-
 @ECHO ##### Adjusting SUFS #####
 SET installerWorkspace=C:\Program Files (x86)\Jenkins\jobs\omSupplyMain - installers\workspace\omSupply
 SET SUFlocation=%installerWorkspace%
