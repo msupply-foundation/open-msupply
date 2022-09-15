@@ -11,7 +11,7 @@ use service::{
 
 use crate::types::program_enrolment::ProgramEnrolmentNode;
 
-#[derive(InputObject)]
+#[derive(InputObject, PartialEq)]
 pub struct InsertProgramEnrolmentInput {
     /// The program type
     pub r#type: String,
@@ -42,6 +42,13 @@ pub fn insert_program_enrolment(
 
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
+
+    match user.context.into_iter().find(|c| c == &input.r#type) {
+        None => Err(StandardGraphqlError::BadUserInput(
+            "User does not have access to document type".to_string(),
+        )),
+        Some(_) => Ok(()),
+    }?;
 
     let document = match service_provider
         .program_enrolment_service
