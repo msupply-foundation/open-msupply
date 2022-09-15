@@ -73,17 +73,17 @@ pub fn update_document(
         },
     )?;
 
+    let service_provider = ctx.service_provider();
+    let context = service_provider.basic_context()?;
+
+    validate_document_type(&context.connection, &input)?;
+
     match user.context.into_iter().find(|c| c == &input.r#type) {
         None => Err(StandardGraphqlError::BadUserInput(
             "User does not have access to document type".to_string(),
         )),
         Some(_) => Ok(()),
     }?;
-
-    let service_provider = ctx.service_provider();
-    let context = service_provider.basic_context()?;
-
-    validate_document_type(&context.connection, &input)?;
 
     let response = match service_provider
         .document_service
@@ -242,7 +242,11 @@ mod graphql {
             ProgramsQueries,
             ProgramsMutations,
             "test_program_update_not_allowed",
-            MockDataInserts::none().names().stores(),
+            MockDataInserts::none()
+                .names()
+                .stores()
+                .user_permissions()
+                .user_accounts(),
         )
         .await;
 
