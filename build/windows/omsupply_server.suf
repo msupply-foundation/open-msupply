@@ -6,9 +6,9 @@
 <ArchiveFiles>
 <FileData>
 <FldRef>0</FldRef>
-<FullName>#PROJECTFILEDIR#\omSupply Web Server\omSupply-sqlite.exe</FullName>
+<FullName>#PROJECTFILEDIR#\Server\omSupply-sqlite.exe</FullName>
 <FileName>omSupply-sqlite.exe</FileName>
-<Source>#PROJECTFILEDIR#\omSupply Web Server</Source>
+<Source>#PROJECTFILEDIR#\Server</Source>
 <Ext>exe</Ext>
 <RTSource>Archive</RTSource>
 <Desc/>
@@ -79,9 +79,9 @@
 </FileData>
 <FileData>
 <FldRef>0</FldRef>
-<FullName>#PROJECTFILEDIR#\omSupply Web Server\omSupply-postgres.exe</FullName>
+<FullName>#PROJECTFILEDIR#\Server\omSupply-postgres.exe</FullName>
 <FileName>omSupply-postgres.exe</FileName>
-<Source>#PROJECTFILEDIR#\omSupply Web Server</Source>
+<Source>#PROJECTFILEDIR#\Server</Source>
 <Ext>exe</Ext>
 <RTSource>Archive</RTSource>
 <Desc/>
@@ -152,9 +152,9 @@
 </FileData>
 <FileData>
 <FldRef>1</FldRef>
-<FullName>#PROJECTFILEDIR#\omSupply Web Server\configuration\*.*</FullName>
+<FullName>#PROJECTFILEDIR#\Server\configuration\*.*</FullName>
 <FileName>*.*</FileName>
-<Source>#PROJECTFILEDIR#\omSupply Web Server\configuration</Source>
+<Source>#PROJECTFILEDIR#\Server\configuration</Source>
 <Ext>*</Ext>
 <RTSource>Archive</RTSource>
 <Desc/>
@@ -162,79 +162,6 @@
 <MatchMode>0</MatchMode>
 <Dest>%AppFolder%\configuration</Dest>
 <Overwrite>2</Overwrite>
-<Backup>0</Backup>
-<Protect>0</Protect>
-<InstallOrder>1000</InstallOrder>
-<SCStartRoot>0</SCStartRoot>
-<SCStartProgs>0</SCStartProgs>
-<SCAppFld>0</SCAppFld>
-<SCStartup>0</SCStartup>
-<SCDesk>0</SCDesk>
-<SCQLaunch>0</SCQLaunch>
-<SCStartPinOption>0</SCStartPinOption>
-<SCCust>0</SCCust>
-<CustSCPath/>
-<SCDesc/>
-<SCComment/>
-<SCArgs/>
-<SCWork/>
-<UseExtIco>0</UseExtIco>
-<IcoFN/>
-<IcoIdx>0</IcoIdx>
-<IcoShowMd>0</IcoShowMd>
-<IcoHK>0</IcoHK>
-<RegTTF>1</RegTTF>
-<TTFName/>
-<RegOCX>1</RegOCX>
-<RegTLB>1</RegTLB>
-<SupInUse>0</SupInUse>
-<Compress>1</Compress>
-<UseOrigAttr>1</UseOrigAttr>
-<Attr>0</Attr>
-<NoCRC>0</NoCRC>
-<NoRemove>0</NoRemove>
-<Shared>0</Shared>
-<OSCond>
-<OS>32768</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-</OSCond>
-<RTCond/>
-<BuildConfigs>
-<Cfg>All</Cfg>
-</BuildConfigs>
-<Package>None</Package>
-<Packages/>
-<Notes/>
-<CompSize>0</CompSize>
-<CRC>0</CRC>
-<StoreOnly>0</StoreOnly>
-</FileData>
-<FileData>
-<FldRef>1</FldRef>
-<FullName>C:\Program Files (x86)\Jenkins\jobs\omSupplyMain - Installers\workspace\omSupply\omSupply Web Server\bin\*.*</FullName>
-<FileName>*.*</FileName>
-<Source>#PROJECTFILEDIR#\omSupply Web Server\bin</Source>
-<Ext>*</Ext>
-<RTSource>Archive</RTSource>
-<Desc/>
-<Recurse>1</Recurse>
-<MatchMode>0</MatchMode>
-<Dest>%AppFolder%\bin</Dest>
-<Overwrite>1</Overwrite>
 <Backup>0</Backup>
 <Protect>0</Protect>
 <InstallOrder>1000</InstallOrder>
@@ -3892,10 +3819,10 @@ Please click Finish to exit.
 <Script>-- Check if the open msupply service already exist or is running at the moment.
 -- Stop (if running) the service and then delete it for a fresh new service installation.
 local bServiceExists = false;
-queryResult = Service.Query("Open mSupply Server", "omSupply");
+queryResult = Service.Query("Open mSupply Server", "omsupply-server");
 if (queryResult == SERVICE_RUNNING) then
 	bServiceExists = true;
-	Service.Stop("Open mSupply Server", "omSupply", 5);
+	Service.Stop("Open mSupply Server", "omsupply-server", 5);
 end
 
 if ((queryResult == SERVICE_PAUSED) or (queryResult == SERVICE_STOPPED)) then
@@ -3903,7 +3830,7 @@ if ((queryResult == SERVICE_PAUSED) or (queryResult == SERVICE_STOPPED)) then
 end
 
 if (bServiceExists) then
-	Service.Delete("Open mSupply Server", "omSupply");
+	Service.Delete("Open mSupply Server", "omsupply-server");
 end</Script>
 <BookMarks count="0">
 </BookMarks>
@@ -4149,10 +4076,10 @@ end
 -- Check if the open msupply service already exist or is running at the moment.
 -- Stop (if running) the service and then delete it for a fresh new service installation.
 local bServiceExists = false;
-queryResult = Service.Query("Open mSupply Server", "omSupply");
+queryResult = Service.Query("Open mSupply Server", "omsupply-server");
 if (queryResult == SERVICE_RUNNING) then
 	bServiceExists = true;
-	Service.Stop("Open mSupply Server", "omSupply", 5);
+	Service.Stop("Open mSupply Server", "omsupply-server", 5);
 end
 
 if ((queryResult == SERVICE_PAUSED) or (queryResult == SERVICE_STOPPED)) then
@@ -4160,7 +4087,7 @@ if ((queryResult == SERVICE_PAUSED) or (queryResult == SERVICE_STOPPED)) then
 end
 
 if (bServiceExists) then
-	Service.Delete("Open mSupply Server", "omSupply");
+	Service.Delete("Open mSupply Server", "omsupply-server");
 end
 </Script>
 <BookMarks count="0">
@@ -4177,13 +4104,22 @@ end
 <Event>
 <Name>On Post Install</Name>
 <Args/>
-<Script>dataSources = TextFile.ReadToString(SessionVar.Expand("%AppFolder%\\configuration\\base.yaml"));
-dataSources = String.Replace(dataSources, "8000", SessionVar.Get("%omsupply_port%"), true);
-dataSources = String.Replace(dataSources, "omsupply-database", SessionVar.Get("%omsupply_db_name%"), true);
-dataSources = String.Replace(dataSources, "5432", SessionVar.Get("%postgres_db_port%"), true);
-dataSources = String.Replace(dataSources, "postgres", SessionVar.Get("%postgres_db_user%"), true);
-dataSources = String.Replace(dataSources, "password:%s\"\"", SessionVar.Expand("password: \"%postgres_db_pass%\""), true);
-TextFile.WriteFromString(SessionVar.Expand("%AppFolder%\\configuration\\base.yaml"), dataSources, false);
+<Script>local config = "server:\r\n"
+config = config .. "  host: 192.168.178.68\r\n";
+config = config .. "  port: SessionVar.Get("%omsupply_port%")\r\n";
+config = config .. "database:\r\n";
+config = config .. "  port: SessionVar.Get("%postgres_db_port%")\r\n";
+config = config .. "  username: \"SessionVar.Get("%postgres_db_user%")\"\r\n";
+config = config .. "  password: \"SessionVar.Expand("%postgres_db_pass%")\"\r\n";
+config = config .. "  database_name: \"SessionVar.Get("%omsupply_db_name%")\"\r\n";
+config = config .. "logging:\r\n";
+config = config .. "  mode: File\r\n";
+config = config .. "  level: Warn\r\n";
+config = config .. "  directory: log\r\n";
+config = config .. "  filename: omsupply.log\r\n";
+config = config .. "  max_file_count: 5\r\n";
+config = config .. "  max_file_size: 10\r\n";
+TextFile.WriteFromString(SessionVar.Expand("%AppFolder%\\configuration\\local.yaml"), config, false);
 
 -- Create settings.ini file to store current settings
 sSettingsContent = String.Concat("[omSupply]", String.Char(13));
@@ -4195,16 +4131,12 @@ TextFile.WriteFromString(SessionVar.Expand("%AppFolder%\\settings.ini"), sSettin
 local sFileToBeDeletePath = "";
 
 if (SessionVar.Get("%omsupply_selected_db%") == "sqlite") then
-	File.Run(SessionVar.Expand("%AppFolder%\\bin\\nssm.exe"), SessionVar.Expand("install \"Open mSupply Server\" \"%AppFolder%\\omSupply-sqlite.exe\""), "", SW_HIDE, true);
+	Service.Create(SessionVar.Expand("%AppFolder%\\omSupply-sqlite.exe"), "Open mSupply Server", "omsupply-server", SERVICE_WIN32_OWN_PROCESS, false, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL, "", nil, nil, "", "");
 	sFileToBeDeletePath = SessionVar.Expand("%AppFolder%\\omSupply-postgres.exe");
 else
-	File.Copy(SessionVar.Expand("%AppFolder%\\configuration\\base.yaml"), SessionVar.Expand("%AppFolder%\\configuration\\local.yaml"), false, true);
-	File.Run(SessionVar.Expand("%AppFolder%\\bin\\nssm.exe"), SessionVar.Expand("install \"Open mSupply Server\" \"%AppFolder%\\omSupply-postgres.exe\""), "", SW_HIDE, true);
+	Service.Create(SessionVar.Expand("%AppFolder%\\omSupply-postgres.exe"), "Open mSupply Server", "omsupply-server", SERVICE_WIN32_OWN_PROCESS, false, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL, "", nil, nil, "", "");
 	sFileToBeDeletePath = SessionVar.Expand("%AppFolder%\\omSupply-sqlite.exe");
 end
-
-File.Run(SessionVar.Expand("%AppFolder%\\bin\\nssm.exe"), SessionVar.Expand("set \"Open mSupply Server\" Description \"Open mSupply remote desktop server.\""), "", SW_HIDE, false);
-File.Run(SessionVar.Expand("%AppFolder%\\bin\\nssm.exe"), SessionVar.Expand("set \"Open mSupply Server\" start SERVICE_DELAYED_AUTO_START"), "", SW_HIDE, false);
 
 File.Delete(sFileToBeDeletePath); -- Delete unchoosen app file (.exe) by a user
 
@@ -4214,7 +4146,7 @@ if (err ~= 0) then
 	--If an error occurred, display an error message to the user.
 	Dialog.Message("Error", _tblErrorMessages[err], MB_OK, MB_ICONEXCLAMATION, MB_DEFBUTTON1);
 end
-Service.Start("Open mSupply Server", "omSupply", nil);
+Service.Start("Open mSupply Server", "omsupply-server", nil);
 </Script>
 <BookMarks count="0">
 </BookMarks>
@@ -4354,8 +4286,7 @@ g_HandleSystemReboot();
 <CodeSignWithSHA256>1</CodeSignWithSHA256>
 <CodeSignCertificateFileSHA256>C:\mSupply_installer_codesigning\mSupply_installer_code_signing.pfx</CodeSignCertificateFileSHA256>
 <CodeSignCertificatePasswordSHA256>
-a2F0aG1hbmR1MzEy
-</CodeSignCertificatePasswordSHA256>
+a2F0aG1hbmR1MzEy</CodeSignCertificatePasswordSHA256>
 <CodeSignTimeStampURLSHA256/>
 <CodeSignArgumentsSHA256/>
 <CodeSignWithSHA1>0</CodeSignWithSHA1>

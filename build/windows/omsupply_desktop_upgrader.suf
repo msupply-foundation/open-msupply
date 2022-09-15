@@ -6,9 +6,9 @@
 <ArchiveFiles>
 <FileData>
 <FldRef>1</FldRef>
-<FullName>#PROJECTFILEDIR#\omSupply Desktop\*.*</FullName>
+<FullName>#PROJECTFILEDIR#\Desktop\*.*</FullName>
 <FileName>*.*</FileName>
-<Source>#PROJECTFILEDIR#\omSupply Desktop</Source>
+<Source>#PROJECTFILEDIR#\Desktop</Source>
 <Ext>*</Ext>
 <RTSource>Archive</RTSource>
 <Desc/>
