@@ -11,7 +11,7 @@ use service::{
 
 use crate::types::program_enrolment::ProgramEnrolmentNode;
 
-#[derive(InputObject, PartialEq)]
+#[derive(InputObject)]
 pub struct InsertProgramEnrolmentInput {
     /// The program type
     pub r#type: String,
