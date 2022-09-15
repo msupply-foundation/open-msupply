@@ -30,13 +30,20 @@ pub fn insert_document_registry(
     ctx: &Context<'_>,
     input: InsertDocumentRegistryInput,
 ) -> Result<InsertDocumentResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::MutateDocumentRegistry,
             store_id: None,
         },
     )?;
+
+    match user.context.into_iter().find(|c| c == &input.document_type) {
+        None => Err(StandardGraphqlError::BadUserInput(
+            "User does not have access to document type".to_string(),
+        )),
+        Some(_) => Ok(()),
+    }?;
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
