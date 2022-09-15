@@ -5,11 +5,11 @@
 mkdir "omSupply"
 mkdir "omSupply\Server"
 mkdir "omSupply\Desktop"
-xcopy "server\configuration" "omSupply\Server\configuration" /e /h /c /i
+xcopy "server\configuration" "omSupply\Server\configuration" /c
 
 copy "server\server\omSupply.ico" "build\omSupply.ico"
-xcopy "build\*.*" "omSupply" /e /h /c /i
-xcopy "build\windows\*.*" "omSupply" /e /h /c /i
+xcopy "build\*.*" "omSupply" /c
+xcopy "build\windows\*.*" "omSupply" /c
 copy "version.txt" "omSupply\version.txt"
 
 @cd "build\windows"
