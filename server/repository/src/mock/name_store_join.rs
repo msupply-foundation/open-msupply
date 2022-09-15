@@ -50,6 +50,26 @@ pub fn mock_name_store_join_e() -> NameStoreJoinRow {
     }
 }
 
+pub fn mock_patient_store_join() -> NameStoreJoinRow {
+    NameStoreJoinRow {
+        id: String::from("mock_patient_store_join"),
+        name_id: String::from("testId"),
+        store_id: String::from("store_a"),
+        name_is_customer: true,
+        name_is_supplier: true,
+    }
+}
+
+pub fn mock_patient_store_join_b() -> NameStoreJoinRow {
+    NameStoreJoinRow {
+        id: String::from("mock_patient_store_join_b"),
+        name_id: String::from("patient2"),
+        store_id: String::from("store_a"),
+        name_is_customer: true,
+        name_is_supplier: true,
+    }
+}
+
 pub fn mock_name_store_joins() -> Vec<NameStoreJoinRow> {
     vec![
         mock_name_store_join_a(),
@@ -57,5 +77,7 @@ pub fn mock_name_store_joins() -> Vec<NameStoreJoinRow> {
         mock_name_store_join_c(),
         mock_name_store_join_d(),
         mock_name_store_join_e(),
+        mock_patient_store_join(),
+        mock_patient_store_join_b(),
     ]
 }

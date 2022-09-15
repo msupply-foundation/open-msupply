@@ -175,7 +175,11 @@ mod test {
     async fn test_encounter_insert() {
         let (_, _, connection_manager, _) = setup_all(
             "test_encounter_insert",
-            MockDataInserts::none().names().stores().form_schemas(),
+            MockDataInserts::none()
+                .names()
+                .stores()
+                .form_schemas()
+                .name_store_joins(),
         )
         .await;
 
