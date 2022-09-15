@@ -1,7 +1,6 @@
 use chrono::Utc;
 use repository::{
-    DocumentStatus, EqualFilter, NameFilter, NameRepository, RepositoryError, SimpleStringFilter,
-    TransactionError,
+    DocumentStatus, EqualFilter, NameFilter, NameRepository, RepositoryError, TransactionError,
 };
 
 use crate::{
@@ -158,11 +157,9 @@ fn patient_belongs_to_store(
     let name = NameRepository::new(&ctx.connection)
         .query_one(
             store_id,
-            NameFilter::new().name(SimpleStringFilter::equal_to(patient_id)),
+            NameFilter::new().id(EqualFilter::equal_to(patient_id)),
         )?
         .unwrap_or_default();
-
-    println!("Name is visible: {:?}", name.is_visible());
     Ok(name.is_visible())
 }
 
@@ -225,7 +222,7 @@ pub mod test {
             zip_code: None,
         };
         inline_init(|p: &mut SchemaPatient| {
-            p.id = "testid".to_string();
+            p.id = "testId".to_string();
             p.code = Some("national_id".to_string());
             p.contact_details = vec![contact_details.clone()];
             p.date_of_birth = Some("2000-03-04".to_string());
@@ -239,7 +236,11 @@ pub mod test {
     async fn test_patient_update() {
         let (_, _, connection_manager, _) = setup_all(
             "test_patient_update",
-            MockDataInserts::none().names().stores().form_schemas(),
+            MockDataInserts::none()
+                .names()
+                .stores()
+                .form_schemas()
+                .name_store_joins(),
         )
         .await;
 
@@ -271,6 +272,25 @@ pub mod test {
             .err()
             .unwrap();
         matches!(err, UpdatePatientError::InvalidDataSchema(_));
+
+        let not_visible_err = service
+            .update_patient(
+                &ctx,
+                &service_provider,
+                "store_b",
+                "user",
+                super::UpdatePatient {
+                    data: serde_json::to_value(patient.clone()).unwrap(),
+                    schema_id: schema.id.clone(),
+                    parent: None,
+                },
+            )
+            .err()
+            .unwrap();
+        matches!(
+            not_visible_err,
+            UpdatePatientError::PatientDoesNotBelongToStore
+        );
 
         // success insert
         service
