@@ -320,6 +320,7 @@ fn file_logger(settings: &LoggingSettings) -> fast_log::Config {
     let default_max_file_size = 10;
 
     // Note: the file_split will panic if the path separator isn't appended
+    // and the path separator has to be unix-style, even on windows
     let log_dir = &format!("{}/", settings.directory.clone().unwrap_or(default_log_dir),);
     let log_path = &env::current_dir().unwrap_or_default().join(log_dir);
     let log_file = settings
