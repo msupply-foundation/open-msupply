@@ -1,8 +1,7 @@
 use chrono::Utc;
 use repository::{
-    EqualFilter, Invoice, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository,
-    InvoiceRowStatus, InvoiceRowType, NumberRowType, RepositoryError, RequisitionFilter,
-    RequisitionRepository, StorageConnection,
+    Invoice, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, InvoiceRowStatus,
+    InvoiceRowType, NumberRowType, RepositoryError, Requisition, StorageConnection,
 };
 use util::uuid::uuid;
 
@@ -37,13 +36,15 @@ impl ShipmentTransferProcessor for CreateInboundShipmentProcessor {
         record_for_processing: &ShipmentTransferProcessorRecord,
     ) -> Result<Option<String>, RepositoryError> {
         // Check can execute
-        let (outbound_shipment, linked_shipment) = match &record_for_processing.operation {
-            Operation::Upsert {
-                shipment: outbound_shipment,
-                linked_shipment,
-            } => (outbound_shipment, linked_shipment),
-            _ => return Ok(None),
-        };
+        let (outbound_shipment, linked_shipment, request_requistion) =
+            match &record_for_processing.operation {
+                Operation::Upsert {
+                    shipment: outbound_shipment,
+                    linked_shipment,
+                    linked_shipment_requisition: request_requistion,
+                } => (outbound_shipment, linked_shipment, request_requistion),
+                _ => return Ok(None),
+            };
         // 2.
         if outbound_shipment.invoice_row.r#type != InvoiceRowType::OutboundShipment {
             return Ok(None);
@@ -61,8 +62,12 @@ impl ShipmentTransferProcessor for CreateInboundShipmentProcessor {
         }
 
         // Execute
-        let new_inbound_shipment =
-            generate_inbound_shipment(connection, &outbound_shipment, record_for_processing)?;
+        let new_inbound_shipment = generate_inbound_shipment(
+            connection,
+            &outbound_shipment,
+            record_for_processing,
+            request_requistion,
+        )?;
         let (_, new_inbound_lines) = regenerate_inbound_shipment_lines(
             connection,
             &new_inbound_shipment.id,
@@ -95,6 +100,7 @@ fn generate_inbound_shipment(
     connection: &StorageConnection,
     outbound_shipment: &Invoice,
     record_for_processing: &ShipmentTransferProcessorRecord,
+    request_requistion: &Option<Requisition>,
 ) -> Result<InvoiceRow, RepositoryError> {
     let store_id = record_for_processing.other_party_store_id.clone();
     let name_id = outbound_shipment.store_row.name_id.clone();
@@ -107,8 +113,9 @@ fn generate_inbound_shipment(
         _ => InvoiceRowStatus::New,
     };
 
-    let requisition_id =
-        get_request_requisition_id_from_inbound_shipment(connection, &outbound_shipment_row)?;
+    let request_requisition_id = request_requistion
+        .as_ref()
+        .map(|r| r.requisition_row.id.clone());
 
     let result = InvoiceRow {
         id: uuid(),
@@ -117,7 +124,7 @@ fn generate_inbound_shipment(
         name_id,
         store_id,
         status,
-        requisition_id,
+        requisition_id: request_requisition_id,
         name_store_id: Some(outbound_shipment_row.store_id.clone()),
         their_reference: outbound_shipment_row.their_reference.clone(),
         // 5.
@@ -134,24 +141,6 @@ fn generate_inbound_shipment(
         allocated_datetime: None,
         delivered_datetime: None,
         verified_datetime: None,
-    };
-
-    Ok(result)
-}
-
-fn get_request_requisition_id_from_inbound_shipment(
-    connection: &StorageConnection,
-    inbound_shipment: &InvoiceRow,
-) -> Result<Option<String>, RepositoryError> {
-    let result = if let Some(response_requisition_id) = &inbound_shipment.requisition_id {
-        RequisitionRepository::new(connection)
-            .query_one(
-                RequisitionFilter::new()
-                    .linked_requisition_id(EqualFilter::equal_to(response_requisition_id)),
-            )?
-            .map(|request_requisition| request_requisition.requisition_row.id)
-    } else {
-        None
     };
 
     Ok(result)

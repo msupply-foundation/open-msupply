@@ -1,10 +1,13 @@
 use crate::{
-    processors::transfer::shipment::{
-        create_inbound_shipment::CreateInboundShipmentProcessor,
-        delete_inbound_shipment::DeleteInboundShipmentProcessor,
-        link_outbound_shipment::LinkOutboundShipmentProcessor,
-        update_inbound_shipment::UpdateInboundShipmentProcessor,
-        update_outbound_shipment_status::UpdateOutboundShipmentStatusProcessor,
+    processors::transfer::{
+        get_requisition_and_linked_requisition,
+        shipment::{
+            create_inbound_shipment::CreateInboundShipmentProcessor,
+            delete_inbound_shipment::DeleteInboundShipmentProcessor,
+            link_outbound_shipment::LinkOutboundShipmentProcessor,
+            update_inbound_shipment::UpdateInboundShipmentProcessor,
+            update_outbound_shipment_status::UpdateOutboundShipmentStatusProcessor,
+        },
     },
     service_provider::ServiceProvider,
     sync::{ActiveStoresOnSite, GetActiveStoresOnSiteError},
@@ -12,9 +15,11 @@ use crate::{
 use repository::{
     ChangelogAction, ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogTableName,
     EqualFilter, Invoice, InvoiceFilter, InvoiceRepository, KeyValueStoreRepository, KeyValueType,
-    RepositoryError, StorageConnection,
+    RepositoryError, Requisition, StorageConnection,
 };
 use thiserror::Error;
+
+use super::GetRequisitionAndLinkedRequisitionError;
 
 pub(crate) mod common;
 pub(crate) mod create_inbound_shipment;
@@ -39,6 +44,14 @@ enum Operation {
         /// Linked invoice, both relations are checked
         /// (invoice.id = linked_invoice.linked_invoice_id OR invoice.linked_invoice_id = linked_invoice.id)
         linked_shipment: Option<Invoice>,
+        /// Requisition for linked shipment, required for linking inbound shipment to request requisition
+        /// could be Some() even if linked_shipment is None
+        ///
+        /// Deduced through:
+        /// `shipment.requisition_id -> requisition.linked_requisition_id = linked_requisition.id`
+        /// OR
+        /// `shipment.requisition_id -> requisition.id -> linked_requisition.linked_requisition_id`
+        linked_shipment_requisition: Option<Requisition>,
     },
 }
 
@@ -150,6 +163,8 @@ pub(crate) enum GetUpsertOperationError {
     ShipmentNotFound(ChangelogRow),
     #[error("Database error while fetching shipment with id {0} {1:?}")]
     DatabaseError(String, RepositoryError),
+    #[error("Error while fetching shipment operation {0:?} {1}")]
+    GetRequisitionAndLinkedRequisitionError(ChangelogRow, GetRequisitionAndLinkedRequisitionError),
 }
 
 fn get_upsert_operation(
@@ -175,9 +190,21 @@ fn get_upsert_operation(
             .map_err(|e| DatabaseError(shipment.invoice_row.id.clone(), e))?,
     };
 
+    let linked_shipment_requisition = match &shipment.invoice_row.requisition_id {
+        Some(requisition_id) => {
+            let (_, linked_requisition) =
+                get_requisition_and_linked_requisition(connection, requisition_id).map_err(
+                    |e| GetRequisitionAndLinkedRequisitionError(changelog_row.clone(), e),
+                )?;
+            linked_requisition
+        }
+        None => None,
+    };
+
     Ok(Operation::Upsert {
         shipment,
         linked_shipment,
+        linked_shipment_requisition,
     })
 }
 
