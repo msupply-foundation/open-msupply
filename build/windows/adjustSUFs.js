@@ -6,7 +6,6 @@ files.forEach((fileName) => {
     const sufFileName = `${fileName}`;
     const fileContent = fs.readFileSync(sufFileName, 'utf8');
     fs.writeFileSync(fileName, replaceVersion(adjustOutputFolder(fileContent)));
-    console.log(sufFileName);
   }
 });
 
