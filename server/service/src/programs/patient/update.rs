@@ -1,5 +1,8 @@
 use chrono::Utc;
-use repository::{DocumentStatus, EqualFilter, RepositoryError, TransactionError};
+use repository::{
+    DocumentStatus, EqualFilter, NameFilter, NameRepository, RepositoryError, SimpleStringFilter,
+    TransactionError,
+};
 
 use crate::{
     document::{document_service::DocumentInsertError, is_latest_doc, raw_document::RawDocument},
@@ -17,6 +20,7 @@ pub enum UpdatePatientError {
     InvalidParentId,
     PatientExists,
     InvalidDataSchema(Vec<String>),
+    PatientDoesNotBelongToStore,
     DataSchemaDoesNotExist,
     InternalError(String),
     DatabaseError(RepositoryError),
@@ -39,7 +43,7 @@ pub fn update_patient(
     let patient = ctx
         .connection
         .transaction_sync(|_| {
-            let patient = validate(ctx, service_provider, &input)?;
+            let patient = validate(ctx, service_provider, store_id, &input)?;
             let patient_id = patient.id.clone();
             let doc = generate(user_id, &patient, input)?;
             let doc_timestamp = doc.timestamp.clone();
@@ -146,9 +150,26 @@ fn validate_patient_not_exists(
     Ok(existing_document.is_none())
 }
 
+fn patient_belongs_to_store(
+    ctx: &ServiceContext,
+    store_id: &str,
+    patient_id: &str,
+) -> Result<bool, UpdatePatientError> {
+    let name = NameRepository::new(&ctx.connection)
+        .query_one(
+            store_id,
+            NameFilter::new().name(SimpleStringFilter::equal_to(patient_id)),
+        )?
+        .unwrap_or_default();
+
+    println!("Name is visible: {:?}", name.is_visible());
+    Ok(name.is_visible())
+}
+
 fn validate(
     ctx: &ServiceContext,
     service_provider: &ServiceProvider,
+    store_id: &str,
     input: &UpdatePatient,
 ) -> Result<SchemaPatient, UpdatePatientError> {
     let patient = validate_patient_schema(input)?;
@@ -160,6 +181,10 @@ fn validate(
         if !validate_patient_not_exists(ctx, service_provider, &patient.id)? {
             return Err(UpdatePatientError::PatientExists);
         }
+    }
+
+    if !patient_belongs_to_store(ctx, store_id, &patient.id)? {
+        return Err(UpdatePatientError::PatientDoesNotBelongToStore);
     }
     Ok(patient)
 }
