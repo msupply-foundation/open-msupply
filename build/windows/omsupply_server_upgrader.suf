@@ -6,9 +6,9 @@
 <ArchiveFiles>
 <FileData>
 <FldRef>0</FldRef>
-<FullName>#PROJECTFILEDIR#\omSupply Web Server\omSupply-sqlite.exe</FullName>
+<FullName>#PROJECTFILEDIR#\Server\omSupply-sqlite.exe</FullName>
 <FileName>omSupply-sqlite.exe</FileName>
-<Source>#PROJECTFILEDIR#\omSupply Web Server</Source>
+<Source>#PROJECTFILEDIR#\Server</Source>
 <Ext>exe</Ext>
 <RTSource>Archive</RTSource>
 <Desc/>
@@ -79,9 +79,9 @@
 </FileData>
 <FileData>
 <FldRef>0</FldRef>
-<FullName>#PROJECTFILEDIR#\omSupply Web Server\omSupply-postgres.exe</FullName>
+<FullName>#PROJECTFILEDIR#\Server\omSupply-postgres.exe</FullName>
 <FileName>omSupply-postgres.exe</FileName>
-<Source>#PROJECTFILEDIR#\omSupply Web Server</Source>
+<Source>#PROJECTFILEDIR#\Server</Source>
 <Ext>exe</Ext>
 <RTSource>Archive</RTSource>
 <Desc/>
@@ -2582,8 +2582,22 @@ Please click Finish to exit.
 <Event>
 <Name>On Pre Uninstall</Name>
 <Args/>
-<Script>result = Shell.Execute(SessionVar.Expand("%AppFolder%\\bin\\nssm.exe"), "open", SessionVar.Expand("remove \"mSupply Dashboard\" confirm"), "", SW_SHOWNORMAL, true);
-</Script>
+<Script>-- Check if the open msupply service already exist or is running at the moment.
+-- Stop (if running) the service and then delete it for a fresh new service installation.
+local bServiceExists = false;
+queryResult = Service.Query("Open mSupply Server", "omsupply-server");
+if (queryResult == SERVICE_RUNNING) then
+	bServiceExists = true;
+	Service.Stop("Open mSupply Server", "omsupply-server", 5);
+end
+
+if ((queryResult == SERVICE_PAUSED) or (queryResult == SERVICE_STOPPED)) then
+	bServiceExists = true;
+end
+
+if (bServiceExists) then
+	Service.Delete("Open mSupply Server", "omsupply-server");
+end</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -2779,9 +2793,9 @@ g_HandleSystemReboot();
 <Args/>
 <Script>-- Check if the open msupply service is running at the moment.
 -- Stop (if running) the service before upgrading the server.
-queryResult = Service.Query("Open mSupply Server", "omSupply");
+queryResult = Service.Query("Open mSupply Server", "omsupply-server");
 if (queryResult == SERVICE_RUNNING) then
-	Service.Stop("Open mSupply Server", "omSupply", 5);
+	Service.Stop("Open mSupply Server", "omsupply-server", 5);
 end
 </Script>
 <BookMarks count="0">
@@ -2816,7 +2830,7 @@ if File.DoesExist(SessionVar.Expand("%AppFolder%\\settings.ini")) then
 	end
 end
 
-Service.Start("Open mSupply Server", "omSupply", nil);
+Service.Start("Open mSupply Server", "omsupply-server", nil);
 </Script>
 <BookMarks count="0">
 </BookMarks>
@@ -2914,7 +2928,7 @@ g_HandleSystemReboot();
 <PostBuildProg/>
 <PostBuildCmdLine/>
 <PostBuildWait>0</PostBuildWait>
-<Filename>omSupply_Server_Upgrader_replace with version.exe</Filename>
+<Filename>omSupply_Server_Upgrader_v1.0.0-test-15.exe</Filename>
 <OutputFolder>C:\Program Files (x86)\Jenkins\jobs\omSupplyMain - installers\workspace\installers</OutputFolder>
 <SegmentSizeMode>0</SegmentSizeMode>
 <CustomSegSize>0</CustomSegSize>
