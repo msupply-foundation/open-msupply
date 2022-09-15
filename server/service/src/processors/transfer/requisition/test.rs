@@ -9,7 +9,7 @@ use repository::{
 use util::{inline_edit, inline_init, uuid::uuid};
 
 use crate::{
-    processors::test_helpers::delay_for_processor,
+    processors::test_helpers::{delay_for_processor, exec_concurrent},
     requisition::{
         request_requisition::{UpdateRequestRequisition, UpdateRequestRequstionStatus},
         response_requisition::{UpdateResponseRequisition, UpdateResponseRequstionStatus},
@@ -18,7 +18,7 @@ use crate::{
     test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
 };
 
-#[actix_rt::test]
+#[tokio::test(flavor = "multi_thread", worker_threads = 3)]
 async fn requisition_transfer() {
     let site_id = 25;
     let request_store_name = inline_init(|r: &mut NameRow| {
@@ -57,7 +57,6 @@ async fn requisition_transfer() {
     });
 
     let ServiceTestContext {
-        connection,
         service_provider,
         processors_task,
         ..
@@ -73,28 +72,43 @@ async fn requisition_transfer() {
     )
     .await;
 
-    let test = || async move {
+    let test_input = (
+        service_provider,
+        request_store,
+        response_store,
+        item1,
+        item2,
+    );
+
+    let number_of_instance = 6;
+
+    let test_handle = exec_concurrent(test_input, number_of_instance, |_, test_input| async move {
+        let (service_provider, request_store, response_store, item1, item2) = test_input;
+
+        let ctx = service_provider.context().unwrap();
+
         let mut tester =
             RequisitionTransferTester::new(&request_store, &response_store, &item1, &item2);
 
-        tester.insert_request_requisition(&connection).await;
+        tester.insert_request_requisition(&ctx.connection);
+        // todo manual trigger
         delay_for_processor().await;
-        tester.check_response_requisition_not_created(&connection);
+        tester.check_response_requisition_not_created(&ctx.connection);
         delay_for_processor().await;
         tester.update_request_requisition_to_sent(&service_provider);
         delay_for_processor().await;
-        tester.check_response_requisition_created(&connection);
+        tester.check_response_requisition_created(&ctx.connection);
         delay_for_processor().await;
-        tester.check_request_requisition_was_linked(&connection);
+        tester.check_request_requisition_was_linked(&ctx.connection);
         delay_for_processor().await;
         tester.update_response_requisition_to_finalised(&service_provider);
         delay_for_processor().await;
-        tester.check_request_requisition_status_updated(&connection);
-    };
+        tester.check_request_requisition_status_updated(&ctx.connection);
+    });
 
     tokio::select! {
         Err(err) = processors_task => unreachable!("{}", err),
-        _ = test() => (),
+        _ = test_handle => ()
     };
 }
 
@@ -162,9 +176,9 @@ impl RequisitionTransferTester {
 
     // These methods to be run in sequence
 
-    pub(crate) async fn insert_request_requisition(&self, connection: &StorageConnection) {
+    pub(crate) fn insert_request_requisition(&self, connection: &StorageConnection) {
         insert_extra_mock_data(
-            &connection,
+            connection,
             inline_init(|r: &mut MockData| {
                 r.requisitions = vec![self.request_requisition.clone()];
                 r.requisition_lines = vec![
@@ -173,7 +187,6 @@ impl RequisitionTransferTester {
                 ]
             }),
         )
-        .await
     }
 
     pub(crate) fn check_response_requisition_not_created(&self, connection: &StorageConnection) {
