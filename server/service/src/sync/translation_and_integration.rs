@@ -199,13 +199,13 @@ impl PullDeleteRecord {
             InvoiceLine => InvoiceLineRowRepository::new(con).delete(id),
             Requisition => RequisitionRowRepository::new(con).delete(id),
             RequisitionLine => RequisitionLineRowRepository::new(con).delete(id),
-            #[cfg(test)]
+            #[cfg(all(test, feature = "integration_test"))]
             Location => LocationRowRepository::new(con).delete(id),
-            #[cfg(test)]
+            #[cfg(all(test, feature = "integration_test"))]
             StockLine => StockLineRowRepository::new(con).delete(id),
-            #[cfg(test)]
+            #[cfg(all(test, feature = "integration_test"))]
             Stocktake => StocktakeRowRepository::new(con).delete(id),
-            #[cfg(test)]
+            #[cfg(all(test, feature = "integration_test"))]
             StocktakeLine => StocktakeLineRowRepository::new(con).delete(id),
         }
     }

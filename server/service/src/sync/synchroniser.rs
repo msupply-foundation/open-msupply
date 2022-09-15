@@ -112,6 +112,12 @@ impl Synchroniser {
         let is_initialised = remote_sync_state.initial_remote_data_synced()?;
         // Initialisation request was sent and successfully processed
         let is_sync_queue_initialised = remote_sync_state.sync_queue_initalised()?;
+        // Get site id from central server
+        if !is_initialised {
+            self.remote
+                .request_and_set_site_info(&ctx.connection)
+                .await?;
+        }
 
         // Request initialisation from server
         if !is_sync_queue_initialised {
@@ -135,15 +141,15 @@ impl Synchroniser {
         self.remote.pull(&ctx.connection).await?;
 
         let (upserts, deletes) = integrate_and_translate_sync_buffer(&ctx.connection)?;
-        info!("Upsert Integration result: {:?}", upserts);
-        info!("Delete Integration result: {:?}", deletes);
+        info!("Upsert Integration result: {:#?}", upserts);
+        info!("Delete Integration result: {:#?}", deletes);
 
         if !is_initialised {
-            self.remote
-                .request_and_set_site_info(&ctx.connection)
-                .await?;
             self.remote.set_initialised(&ctx.connection)?;
         }
+
+        ctx.processors_trigger.trigger_requisition_transfers();
+        ctx.processors_trigger.trigger_shipment_transfers();
 
         Ok(())
     }

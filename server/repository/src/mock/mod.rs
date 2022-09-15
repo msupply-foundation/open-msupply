@@ -30,7 +30,6 @@ mod test_requisition_service;
 mod test_service_lines;
 mod test_stocktake;
 mod test_stocktake_line;
-mod test_sync_processor;
 mod test_unallocated_line;
 mod unit;
 mod user_account;
@@ -63,17 +62,16 @@ pub use test_requisition_service::*;
 pub use test_service_lines::*;
 pub use test_stocktake::*;
 pub use test_stocktake_line::*;
-pub use test_sync_processor::*;
 pub use test_unallocated_line::*;
 pub use user_account::*;
 
 use crate::{
-    InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, ItemRow, LocationRow,
-    LocationRowRepository, NumberRow, NumberRowRepository, RequisitionLineRow,
-    RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, StockLineRowRepository,
-    StocktakeLineRowRepository, StocktakeRowRepository, SyncBufferRow, SyncBufferRowRepository,
-    UserAccountRow, UserAccountRowRepository, UserPermissionRow, UserPermissionRowRepository,
-    UserStoreJoinRow, UserStoreJoinRowRepository,
+    InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, ItemRow, KeyValueStoreRepository,
+    KeyValueStoreRow, LocationRow, LocationRowRepository, NumberRow, NumberRowRepository,
+    RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository,
+    StockLineRowRepository, StocktakeLineRowRepository, StocktakeRowRepository, SyncBufferRow,
+    SyncBufferRowRepository, UserAccountRow, UserAccountRowRepository, UserPermissionRow,
+    UserPermissionRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
 };
 
 use self::unit::mock_units;
@@ -107,6 +105,7 @@ pub struct MockData {
     pub stocktakes: Vec<StocktakeRow>,
     pub stocktake_lines: Vec<StocktakeLineRow>,
     pub sync_buffer_rows: Vec<SyncBufferRow>,
+    pub key_value_store_rows: Vec<KeyValueStoreRow>,
 }
 
 impl MockData {
@@ -145,6 +144,7 @@ pub struct MockDataInserts {
     pub stocktakes: bool,
     pub stocktake_lines: bool,
     pub sync_buffer_rows: bool,
+    pub key_value_store_rows: bool,
 }
 
 impl MockDataInserts {
@@ -171,6 +171,7 @@ impl MockDataInserts {
             stocktakes: true,
             stocktake_lines: true,
             sync_buffer_rows: true,
+            key_value_store_rows: true,
         }
     }
 
@@ -262,6 +263,11 @@ impl MockDataInserts {
         self.stocktake_lines = true;
         self
     }
+
+    pub fn key_value_store_rows(mut self) -> Self {
+        self.key_value_store_rows = true;
+        self
+    }
 }
 
 #[derive(Default)]
@@ -320,6 +326,7 @@ fn all_mock_data() -> MockDataCollection {
             requisitions: vec![],
             requisition_lines: vec![],
             sync_buffer_rows: vec![],
+            key_value_store_rows: vec![],
         },
     );
     data.insert(
@@ -354,7 +361,6 @@ fn all_mock_data() -> MockDataCollection {
         "mock_test_master_list_repository",
         mock_test_master_list_repository(),
     );
-    data.insert("mock_test_sync_processor", mock_test_sync_processor());
     data.insert("mock_test_invoice_loaders", mock_test_invoice_loaders());
     data.insert("mock_test_remote_pull", mock_test_remote_pull());
     data.insert("mock_test_service_item", mock_test_service_item());
@@ -367,6 +373,17 @@ pub async fn insert_all_mock_data(
     inserts: MockDataInserts,
 ) -> MockDataCollection {
     insert_mock_data(connection, inserts, all_mock_data()).await
+}
+
+pub async fn insert_extra_mock_data(connection: &StorageConnection, extra_mock_data: MockData) {
+    insert_mock_data(
+        connection,
+        MockDataInserts::all(),
+        MockDataCollection {
+            data: vec![("extra_data".to_string(), extra_mock_data)],
+        },
+    )
+    .await;
 }
 
 pub async fn insert_mock_data(
@@ -506,16 +523,23 @@ pub async fn insert_mock_data(
         }
 
         if inserts.stocktake_lines {
+            let repo = StocktakeLineRowRepository::new(connection);
             for row in &mock_data.stocktake_lines {
-                let repo = StocktakeLineRowRepository::new(connection);
                 repo.upsert_one(row).unwrap();
             }
         }
 
         if inserts.sync_buffer_rows {
+            let repo = SyncBufferRowRepository::new(connection);
             for row in &mock_data.sync_buffer_rows {
-                let repo = SyncBufferRowRepository::new(connection);
                 repo.upsert_one(row).unwrap();
+            }
+        }
+
+        if inserts.key_value_store_rows {
+            let repo = KeyValueStoreRepository::new(connection);
+            for row in &mock_data.key_value_store_rows {
+                repo.upsert_one(&row).unwrap();
             }
         }
     }
@@ -547,6 +571,7 @@ impl MockData {
             user_store_joins: _,
             user_permissions: _,
             sync_buffer_rows: _,
+            mut key_value_store_rows,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
@@ -567,6 +592,7 @@ impl MockData {
         self.stocktake_lines.append(&mut stocktake_lines);
         self.name_store_joins.append(&mut name_store_joins);
         self.stock_lines.append(&mut stock_lines);
+        self.key_value_store_rows.append(&mut key_value_store_rows);
 
         self
     }
