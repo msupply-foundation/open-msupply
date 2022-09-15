@@ -3122,7 +3122,7 @@ g_HandleSystemReboot();
 </SessionVar>
 <SessionVar>
 <Name>%ProductVer%</Name>
-<Value>v1.0.0-IS22-windows-instalers-test11</Value>
+<Value>replace with version</Value>
 <Type>1</Type>
 </SessionVar>
 <SessionVar>
@@ -3165,8 +3165,8 @@ g_HandleSystemReboot();
 <PostBuildProg/>
 <PostBuildCmdLine/>
 <PostBuildWait>0</PostBuildWait>
-<Filename>omSupply_Desktop_v1.0.0-IS22-windows-instalers-test11.exe</Filename>
-<OutputFolder>C:\Program Files (x86)\Jenkins\jobs\omSupplyMain - installers\workspace\installers</OutputFolder>
+<Filename>omSupply_Desktop_replace with version.exe</Filename>
+<OutputFolder>.*</OutputFolder>
 <SegmentSizeMode>0</SegmentSizeMode>
 <CustomSegSize>0</CustomSegSize>
 <CustomSegSizeMode>0</CustomSegSizeMode>
