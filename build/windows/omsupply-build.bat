@@ -1,26 +1,19 @@
 @ECHO ##### Removing previous builds #####
-SET installerWorkspace=C:\Program Files (x86)\Jenkins\jobs\omSupplyMain - installers\workspace\omSupply
-
-@rmdir "%installerWorkspace%\omSupply Server" /s /q
-@rmdir "%installerWorkspace%\omSupply Desktop" /s /q
-@rmdir "%installerWorkspace%\windows" /s /q
+@rmdir "omSupply" /s /q
 
 @ECHO ##### Starting omsupply builds #####
-mkdir "%installerWorkspace%\omSupply Server"
-xcopy "server\configuration" "%installerWorkspace%\omSupply Server\configuration" /e /h /c /i
-
-mkdir "%installerWorkspace%\omSupply Desktop"
+mkdir "omSupply"
+mkdir "omSupply\Server"
+mkdir "omSupply\Desktop"
+xcopy "server\configuration" "omSupply\Server\configuration" /e /h /c /i
 
 copy "server\server\omSupply.ico" "build\omSupply.ico"
-xcopy "build\*.*" "%installerWorkspace%" /e /h /c /i
-xcopy "build\windows\*.*" "%installerWorkspace%" /e /h /c /i
-copy "version.txt" "%installerWorkspace%\version.txt"
+xcopy "build\*.*" "omSupply" /e /h /c /i
+xcopy "build\windows\*.*" "omSupply" /e /h /c /i
+copy "version.txt" "omSupply\version.txt"
 
 @cd "build\windows"
 start /b /wait omsupply-prepare.bat
-
 start /b /wait omsupply-sqlite-build.bat
-
 start /b /wait omsupply-postgres-build.bat
-
 start /b /wait omsupply-desktop-build.bat
