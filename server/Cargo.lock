@@ -3125,15 +3125,12 @@ dependencies = [
 name = "omsupply-service"
 version = "0.1.0"
 dependencies = [
- "bitflags",
- "err-derive",
- "fast_log",
+ "actix-web",
  "futures",
  "log 0.4.16",
  "server",
  "service",
  "tokio",
- "widestring",
  "windows-service",
 ]
 
