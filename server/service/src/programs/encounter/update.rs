@@ -25,6 +25,7 @@ pub enum UpdateEncounterError {
 }
 
 pub struct UpdateEncounter {
+    pub r#type: String,
     pub parent: String,
     pub data: serde_json::Value,
     pub schema_id: String,
@@ -272,6 +273,7 @@ mod test {
                 &service_provider,
                 "user",
                 UpdateEncounter {
+                    r#type: "TestEncounterType".to_string(),
                     data: json!({"enrolment_datetime": true}),
                     schema_id: schema.id.clone(),
                     parent: "invalid".to_string(),
@@ -288,6 +290,7 @@ mod test {
                 &service_provider,
                 "user",
                 UpdateEncounter {
+                    r#type: "TestEncounterType".to_string(),
                     data: json!({"encounter_datetime": true}),
                     schema_id: schema.id.clone(),
                     parent: initial_encounter.id.clone(),
@@ -308,6 +311,7 @@ mod test {
                 &service_provider,
                 "user",
                 UpdateEncounter {
+                    r#type: "TestEncounterType".to_string(),
                     data: serde_json::to_value(encounter.clone()).unwrap(),
                     schema_id: schema.id.clone(),
                     parent: initial_encounter.id.clone(),
