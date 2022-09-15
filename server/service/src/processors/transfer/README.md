@@ -37,11 +37,11 @@ Same exact process is used, except the processors are triggered in services, see
 * Request Requisition (id: A) is created and set to `sent` status
 * Requisition Processor is triggered
 * Processor sees new requisition in change log and executes `CreateResponseRequisitionProcessor` which creates Response Requisition (id: B) and links it to Request Requisition (requisition_id: A)
-* Processor tries to process any sother change log (it re-quieries changelogs until result is empty), and sees newly created Response Requisition, and will executed `LikRequestRequisitionProcessor` and set's (requisition_id: B) for Request Requistion (id: A)
+* Processor tries to process any other changelogs (it re-queries changelogs until result is empty), and sees the newly created Response Requisition, and will executed `LikRequestRequisitionProcessor` and sets (requisition_id: B) for Request Requistion (id: A)
 
 ## Potential for Circular/Infinite processing
 
-Any event driven system has a potential for infinite looping. Processor conditions are carefully crafted to avoid these scenarior, but there is a possibility of an edge case that hasn't been considered. Care should be taken when adding changes and review transfer processor code.
+Any event driven system has a potential for infinite looping. Processor conditions are carefully crafted to avoid these scenarios, but there is a possibility of an edge case that hasn't been considered. Care should be taken when adding changes and review transfer processor code.
 
 ## Referential integrity
 
