@@ -15,6 +15,7 @@ pub fn mock_store_b() -> StoreRow {
         s.id = "store_b".to_string();
         s.name_id = "name_store_b".to_string();
         s.code = "code".to_string();
+        s.site_id = 2;
     })
 }
 

@@ -146,11 +146,11 @@ impl RequisitionFilter {
         self
     }
 
-    pub fn new_match_id(id: &str) -> RequisitionFilter {
+    pub fn by_id(id: &str) -> RequisitionFilter {
         RequisitionFilter::new().id(EqualFilter::equal_to(id))
     }
 
-    pub fn new_match_linked_requisition_id(id: &str) -> RequisitionFilter {
+    pub fn by_linked_requisition_id(id: &str) -> RequisitionFilter {
         RequisitionFilter::new().linked_requisition_id(EqualFilter::equal_to(id))
     }
 }

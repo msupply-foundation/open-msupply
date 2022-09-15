@@ -1,13 +1,11 @@
-use repository::{
-    EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceRowRepository,
-    RepositoryError, TransactionError,
-};
+use repository::{InvoiceLine, InvoiceRowRepository, RepositoryError, TransactionError};
 
 pub mod validate;
 
 use validate::validate;
 
 use crate::{
+    invoice::common::get_lines_for_invoice,
     invoice_line::outbound_shipment_line::{
         delete_outbound_shipment_line, DeleteOutboundShipmentLine, DeleteOutboundShipmentLineError,
     },
@@ -28,8 +26,7 @@ pub fn delete_outbound_shipment(
             validate(&id, &connection)?;
 
             // TODO https://github.com/openmsupply/remote-server/issues/839
-            let lines = InvoiceLineRepository::new(&connection)
-                .query_by_filter(InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&id)))?;
+            let lines = get_lines_for_invoice(connection, &id)?;
             for line in lines {
                 delete_outbound_shipment_line(
                     ctx,
@@ -53,6 +50,8 @@ pub fn delete_outbound_shipment(
             }
         })
         .map_err(|error| error.to_inner_error())?;
+
+    ctx.processors_trigger.trigger_shipment_transfers();
     Ok(invoice_id)
 }
 

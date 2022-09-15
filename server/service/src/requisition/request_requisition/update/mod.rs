@@ -1,8 +1,4 @@
-use crate::{
-    requisition::query::get_requisition,
-    service_provider::ServiceContext,
-    sync_processor::{process_records, Record},
-};
+use crate::{requisition::query::get_requisition, service_provider::ServiceContext};
 use chrono::NaiveDate;
 use repository::{
     RepositoryError, Requisition, RequisitionLineRowRepository, RequisitionRowRepository,
@@ -79,14 +75,7 @@ pub fn update_request_requisition(
         })
         .map_err(|error| error.to_inner_error())?;
 
-    // TODO use change log (and maybe ask sync porcessor actor to retrigger here)
-    println!(
-        "{:#?}",
-        process_records(
-            &ctx.connection,
-            vec![Record::RequisitionRow(requisition.requisition_row.clone())],
-        )
-    );
+    ctx.processors_trigger.trigger_requisition_transfers();
 
     Ok(requisition)
 }
