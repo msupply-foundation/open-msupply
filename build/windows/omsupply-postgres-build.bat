@@ -1,2 +1,2 @@
 @ECHO ##### Building omsupply for the postgres #####
-cd "..\..\server" && cargo build --release --bin omsupply_service --features postgres && copy "target\release\remote_server.exe" "omSupply\Server\omSupply-postgres.exe" && cd..
+cd "..\..\server" && cargo build --release --bin omsupply_service --features postgres && xcopy "target\release\remote_server.exe" "..\omSupply\Server\omSupply-postgres.exe"
