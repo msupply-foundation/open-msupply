@@ -2885,7 +2885,7 @@ g_HandleSystemReboot();
 </SessionVar>
 <SessionVar>
 <Name>%ProductVer%</Name>
-<Value>v1.0.5 Upgrader</Value>
+<Value>replace with version</Value>
 <Type>1</Type>
 </SessionVar>
 <SessionVar>
@@ -2928,8 +2928,8 @@ g_HandleSystemReboot();
 <PostBuildProg/>
 <PostBuildCmdLine/>
 <PostBuildWait>0</PostBuildWait>
-<Filename>omSupply_Server_Upgrader_v1.0.0-test-15.exe</Filename>
-<OutputFolder>C:\Program Files (x86)\Jenkins\jobs\omSupplyMain - installers\workspace\installers</OutputFolder>
+<Filename>omSupply_Server_Upgrader_replace with version.exe</Filename>
+<OutputFolder>.*</OutputFolder>
 <SegmentSizeMode>0</SegmentSizeMode>
 <CustomSegSize>0</CustomSegSize>
 <CustomSegSizeMode>0</CustomSegSizeMode>
