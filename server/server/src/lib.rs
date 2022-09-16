@@ -155,7 +155,7 @@ async fn run_server(
     let service = &service_provider.settings;
 
     let db_settings = service.sync_settings(&service_context).unwrap();
-    let sync_settings = db_settings.or(config_settings.sync.clone());
+    let sync_settings = db_settings.clone().or(config_settings.sync.clone());
     let sync_settings = match sync_settings {
         Some(sync_settings) => sync_settings,
         // No sync settings found, start in stage0 mode
@@ -171,9 +171,22 @@ async fn run_server(
             .await
         }
     };
+
+    if db_settings.is_none() && config_settings.sync.is_some() {
+        service_provider
+            .site_info
+            .request_and_set_site_info(&service_provider, config_settings.sync.as_ref().unwrap())
+            .await
+            .unwrap();
+    }
+
     // Final settings:
     let mut settings = config_settings;
     settings.sync = Some(sync_settings.clone());
+    let site_id = service_provider
+        .site_info
+        .get_site_id(&service_context)
+        .unwrap();
 
     let auth_data = auth_data(
         &settings.server,
@@ -207,7 +220,7 @@ async fn run_server(
         Ok(_) => {}
         Err(err) => {
             error!("Failed to perform the initial sync: {}", err);
-            if !is_develop() {
+            if !is_develop() || site_id.is_none() {
                 warn!("Falling back to bootstrap mode");
                 return run_stage0(
                     settings,
