@@ -1,9 +1,7 @@
 pub use async_graphql::*;
 use chrono::NaiveDateTime;
-use graphql_core::ContextExt;
-use service::sync::sync_status::{
-    get_latest_sync_status, is_initialised, number_of_records_in_push_queue,
-};
+use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
+use service::sync::sync_status::{is_initialised, number_of_records_in_push_queue};
 
 #[derive(SimpleObject)]
 pub struct SyncStatusNode {
@@ -90,9 +88,12 @@ impl SyncInfoQueries {
         })
     }
 
-    pub async fn number_of_records_in_push_queue(&self, ctx: &Context<'_>) -> Result<u32> {
+    pub async fn number_of_records_in_push_queue(&self, ctx: &Context<'_>) -> Result<u64> {
         let connection = ctx.service_provider().connection()?;
-        let push_queue_count = number_of_records_in_push_queue(&connection)?;
+        let push_queue_count = number_of_records_in_push_queue(&connection).map_err(|error| {
+            let formatted_error = format!("{:#?}", error);
+            StandardGraphqlError::InternalError(formatted_error).extend()
+        })?;
 
         Ok(push_queue_count)
     }
