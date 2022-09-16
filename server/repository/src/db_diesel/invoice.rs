@@ -371,7 +371,7 @@ impl InvoiceFilter {
         self
     }
 
-    pub fn new_match_id(id: &str) -> InvoiceFilter {
+    pub fn by_id(id: &str) -> InvoiceFilter {
         InvoiceFilter::new().id(EqualFilter::equal_to(id))
     }
 
