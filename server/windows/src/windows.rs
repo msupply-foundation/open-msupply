@@ -1,5 +1,6 @@
 /// Creates the entry points and event handling to manage running the server
 // under a windows service context
+
 #[cfg(windows)]
 fn main() -> windows_service::Result<()> {
     omsupply_service::run()
@@ -19,6 +20,7 @@ mod omsupply_service {
         env::{current_exe, set_current_dir},
         ffi::OsString,
         time::Duration,
+		panic,
     };
     use tokio::sync::mpsc;
     use windows_service::{
@@ -59,6 +61,10 @@ mod omsupply_service {
         logging_init(settings.logging.clone());
 
         info!("Starting service");
+		
+		panic::set_hook(Box::new(|panic_info| {
+			error!("panic occurred {:?}", panic_info);
+		}));
 
         if let Err(_e) = run_service(settings) {
             error!("Unable to start service");
