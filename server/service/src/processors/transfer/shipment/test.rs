@@ -22,7 +22,9 @@ use crate::{
     test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
 };
 
-/// This test is for outbound and inbound store on the same site
+/// This test is for requesting and responding store on the same site
+/// See same site transfer diagram in requisition README.md for example of how
+/// changelog is upserted and processed by the same instance of triggered processor
 #[actix_rt::test]
 async fn invoice_transfers() {
     let site_id = 25;
