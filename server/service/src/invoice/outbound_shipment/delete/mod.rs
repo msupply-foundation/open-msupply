@@ -25,7 +25,8 @@ pub fn delete_outbound_shipment(
         .transaction_sync(|connection| {
             validate(&id, &connection)?;
 
-            // TODO https://github.com/openmsupply/remote-server/issues/839
+            // Note that lines are not deleted when an invoice is deleted, due to issues with batch deletes.
+            // TODO: implement delete lines. See https://github.com/openmsupply/remote-server/issues/839 for details.
             let lines = get_lines_for_invoice(connection, &id)?;
             for line in lines {
                 delete_outbound_shipment_line(
