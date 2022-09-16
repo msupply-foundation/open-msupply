@@ -90,7 +90,8 @@ async fn invoice_transfers() {
         tester.insert_outbound_shipment(&connection).await;
         // Need to do manual trigger here since inserting shipment won't trigger processor
         // and we want to validate that not shipped/picked shipment does not generate transfer
-        ctx.processors_trigger.trigger_shipment_transfers();
+        ctx.processors_trigger
+            .trigger_shipment_transfer_processors();
         delay_for_processor().await;
         tester.check_inbound_shipment_not_created(&connection);
         delay_for_processor().await;

@@ -75,7 +75,8 @@ pub fn update_request_requisition(
         })
         .map_err(|error| error.to_inner_error())?;
 
-    ctx.processors_trigger.trigger_requisition_transfers();
+    ctx.processors_trigger
+        .trigger_requisition_transfer_processors();
 
     Ok(requisition)
 }

@@ -83,7 +83,8 @@ async fn requisition_transfer() {
         tester.insert_request_requisition(&connection).await;
         // Need to do manual trigger here since inserting requisition won't trigger processor
         // and we want to validate that not sent requisition does not generate transfer
-        ctx.processors_trigger.trigger_requisition_transfers();
+        ctx.processors_trigger
+            .trigger_requisition_transfer_processors();
         delay_for_processor().await;
         tester.check_response_requisition_not_created(&connection);
         delay_for_processor().await;
