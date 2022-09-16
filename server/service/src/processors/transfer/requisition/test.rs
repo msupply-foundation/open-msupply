@@ -83,7 +83,8 @@ async fn requisition_transfer() {
         tester.insert_request_requisition(&connection).await;
         // Need to do manual trigger here since inserting requisition won't trigger processor
         // and we want to validate that not sent requisition does not generate transfer
-        ctx.processors_trigger.trigger_requisition_transfers();
+        ctx.processors_trigger
+            .trigger_requisition_transfer_processors();
         delay_for_processor().await;
         tester.check_response_requisition_not_created(&connection);
         delay_for_processor().await;
@@ -185,7 +186,7 @@ impl RequisitionTransferTester {
     pub(crate) fn check_response_requisition_not_created(&self, connection: &StorageConnection) {
         assert_eq!(
             RequisitionRepository::new(connection).query_one(
-                RequisitionFilter::new_match_linked_requisition_id(&self.request_requisition.id)
+                RequisitionFilter::by_linked_requisition_id(&self.request_requisition.id)
             ),
             Ok(None)
         )
@@ -208,7 +209,7 @@ impl RequisitionTransferTester {
 
     pub(crate) fn check_response_requisition_created(&mut self, connection: &StorageConnection) {
         let response_requisition = RequisitionRepository::new(&connection)
-            .query_one(RequisitionFilter::new_match_linked_requisition_id(
+            .query_one(RequisitionFilter::by_linked_requisition_id(
                 &self.request_requisition.id,
             ))
             .unwrap();

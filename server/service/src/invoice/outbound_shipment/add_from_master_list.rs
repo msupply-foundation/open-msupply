@@ -1,7 +1,4 @@
-use crate::{
-    invoice::check_invoice_exists, service_provider::ServiceContext,
-    sync_processor::invoice::common::get_lines_for_invoice,
-};
+use crate::{invoice::check_invoice_exists, service_provider::ServiceContext};
 use repository::EqualFilter;
 use repository::{
     InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
@@ -100,11 +97,13 @@ fn generate(
     invoice_row: InvoiceRow,
     input: &AddFromMasterList,
 ) -> Result<Vec<InvoiceLineRow>, RepositoryError> {
-    let invoice_lines = get_lines_for_invoice(&ctx.connection, &input.outbound_shipment_id)?;
+    let invoice_lines = InvoiceLineRepository::new(&ctx.connection).query_by_filter(
+        InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&invoice_row.id)),
+    )?;
 
     let item_ids_in_invoice: Vec<String> = invoice_lines
         .into_iter()
-        .map(|invoice_line| invoice_line.item_id)
+        .map(|invoice_line| invoice_line.invoice_line_row.item_id)
         .collect();
 
     let master_list_lines_not_in_invoice = MasterListLineRepository::new(&ctx.connection)

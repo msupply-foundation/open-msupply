@@ -64,6 +64,7 @@ async fn test_changelog() {
     );
 
     // query the full list from cursor=0
+    // because we use the changelog_deduped view, we should only get the latest changelog row for the record_id
     let mut result = repo.changelogs(0, 10, None).unwrap();
     assert_eq!(1, result.len());
     let log_entry = result.pop().unwrap();
@@ -310,6 +311,9 @@ fn test_changelog_name_and_store_id<T, F>(
 
 #[actix_rt::test]
 async fn test_changelog_name_and_store_id_in_trigger() {
+
+// This test checks that the database triggers that should create change log records are working correctly
+// For each record type we create an example record, then check that the associated changelog record has automatically been created.
     fn name() -> NameRow {
         inline_init(|r: &mut NameRow| {
             r.id = "name_id".to_string();

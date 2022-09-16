@@ -112,7 +112,7 @@ impl Synchroniser {
         let is_initialised = remote_sync_state.initial_remote_data_synced()?;
         // Initialisation request was sent and successfully processed
         let is_sync_queue_initialised = remote_sync_state.sync_queue_initalised()?;
-        // Get site id from sever
+        // Get site id from central server
         if !is_initialised {
             self.remote
                 .request_and_set_site_info(&ctx.connection)
@@ -148,8 +148,10 @@ impl Synchroniser {
             self.remote.set_initialised(&ctx.connection)?;
         }
 
-        ctx.processors_trigger.trigger_requisition_transfers();
-        ctx.processors_trigger.trigger_shipment_transfers();
+        ctx.processors_trigger
+            .trigger_requisition_transfer_processors();
+        ctx.processors_trigger
+            .trigger_shipment_transfer_processors();
 
         Ok(())
     }

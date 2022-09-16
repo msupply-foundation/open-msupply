@@ -18,16 +18,16 @@ Either with cli or rust analyzer settings:
 
 The following environment variables should be provided for sync integration test:
 
-SYNC_SITE_PASSWORD
-SYNC_SITE_NAME
-SYNC_URL
+* SYNC_SITE_PASSWORD
+* SYNC_SITE_NAME
+* SYNC_URL
 
 As `1`, can provide via cli or rust analyzer:
 `"rust-analyzer.runnableEnv": { "SYNC_URL": "http://localhost:2048", "SYNC_SITE_NAME": "demo","SYNC_SITE_PASSWORD": "pass" }`
 
 ## 3 `central server`
 
-Use branch `11087-Sync-v5-integration-test-endpoint` (TODO UPDATE)
+Use branch `feature/sync-v5`
 
 Only data that needs to be present on central server site is a new sync site:
 * Create new data files
@@ -48,8 +48,10 @@ Via cli: `SYNC_SITE_PASSWORD="pass" SYNC_SITE_NAME="demo" SYNC_URL="http://local
 If you've set configurations in rust analyzer, can use inlay hint play and debug buttons in:
 * integration/remote/test
 * integration/central/test
+* integration/transfer/requisition
+* integration/transfer/shiipment
 
-# How do they work 
+# How do they work (Central and Remote)
 
 There is a common `SyncRecordTester` trait with a `test_step_data` method returning a vector of TestData.
 Each TestData struct contains the test data required for the various testing steps.
@@ -60,7 +62,7 @@ We have the ability to update and delete central data records directly on the se
 Central and remote tests use SyncRecordTester implementations to do integration tests.
 
 A test sync site is created for each test 
-See `central_server_configurations.rs` comment for site creation info
+See `central_server_configurations.rs`
 
 ## Central
 
@@ -90,10 +92,24 @@ For each step:
 * Completely Re Sync
 * Check IntegratonRecords in TestData against database
 
+# How do they work (Transfers)
+
+Using `RequisitionTransferTester` and `ShipmentTransferTester` defined in transfer processors unit test.
+
+These structs implement test methods that need to be run sequentially. They create, update, delete source and destination records and test that corresponding transfer records have been changed accordingly. Each of those methods accept connection or service provider to allow the operation to be executed on a chosen site.
+
+Transfer integration test follow this pattern:
+* Request creation of two sites on central server
+* Add extra central data that is needed for transfer tests
+* Create database for each site and instantiate connection, service_provider and processor_handle.
+* Create instance of `TransferTester` 
+* Execute each method in `TransferTester` sequentially, passing through connection or service_provider for the site that should be doing that operation
+* Synchronise and delay between each method execution (delay to allow both central server and remote server to do transfer operation)
+
 # Extra info
 
 * As per normal tests, you should be testing both databases
-* When tests fail, you can uncomment `util::init_logger(util::LogLevel::Warn);`, in `test_remote_sync_record` and `test_central_sync_record` methods;
+* When tests fail, you can uncomment `util::init_logger(util::LogLevel::Warn);`, in the test methods
 * Sometimes central server seems to get overloaded and returns 'connection closed before message completed' or 'Site record locked preventing authentication update' for that reason 'with_retry' was added
 
 Full test including integration can be run with:

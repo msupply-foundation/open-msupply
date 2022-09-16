@@ -1,11 +1,14 @@
 use std::time::{Duration, SystemTime};
 
 use super::api::*;
-use crate::sync::translations::{translate_changelog, PushRecord};
+use crate::sync::{
+    translations::{translate_changelog, PushRecord},
+    ActiveStoresOnSite,
+};
 use log::info;
 use repository::{
-    ChangelogRow, ChangelogRowRepository, KeyValueStoreRepository, KeyValueType, RepositoryError,
-    StorageConnection, SyncBufferRowRepository,
+    ChangelogFilter, ChangelogRepository, ChangelogRow, EqualFilter, KeyValueStoreRepository,
+    KeyValueType, RepositoryError, StorageConnection, SyncBufferRowRepository,
 };
 use serde_json::json;
 use thiserror::Error;
@@ -85,11 +88,9 @@ impl RemoteDataSynchroniser {
         let remote_sync_state = RemoteSyncState::new(&connection);
         // Update push cursor after initial sync, i.e. set it to the end of the just received data
         // so we only push new data to the central server
-        let cursor = ChangelogRowRepository::new(connection)
-            .latest_changelog()
-            .map_err(SetInitialisedError)?
-            .map(|row| row.id)
-            .unwrap_or(0) as u32;
+        let cursor = ChangelogRepository::new(connection)
+            .latest_cursor()
+            .map_err(SetInitialisedError)? as u32;
         remote_sync_state
             .update_push_cursor(cursor + 1)
             .map_err(SetInitialisedError)?;
@@ -149,18 +150,24 @@ impl RemoteDataSynchroniser {
 
     // Push all records in change log to central server
     pub(crate) async fn push(&self, connection: &StorageConnection) -> Result<(), anyhow::Error> {
-        let changelog = ChangelogRowRepository::new(connection);
+        let changelog = ChangelogRepository::new(connection);
+        let active_stores = ActiveStoresOnSite::get(&connection)?;
+        let change_log_filter = Some(
+            ChangelogFilter::new()
+                .store_id(EqualFilter::equal_any_or_null(active_stores.store_ids())),
+        );
 
         const BATCH_SIZE: u32 = 1024;
         let state = RemoteSyncState::new(connection);
         loop {
             // TODO inside transaction
             info!("Remote push: Check changelog...");
-            let cursor = state.get_push_cursor()?;
-            let changelogs = changelog.changelogs(cursor as u64, BATCH_SIZE)?;
-            let change_logs_total = changelog.count(cursor as u64)?;
+            let cursor = state.get_push_cursor()? as u64;
+            let changelogs = changelog.changelogs(cursor, BATCH_SIZE, change_log_filter.clone())?;
+            let change_logs_total = changelog.count(cursor, change_log_filter.clone())?;
+
             let total_remaining_after_push = change_logs_total - changelogs.len() as u64;
-            let last_pushed_cursor = changelogs.last().map(|log| log.id);
+            let last_pushed_cursor = changelogs.last().map(|log| log.cursor);
 
             info!(
                 "Remote push: Translate {} changelogs to push records...",
