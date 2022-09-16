@@ -19,6 +19,7 @@ use crate::{
 };
 
 /// This test is for requesting and responding store on the same site
+/// See same site transfer diagram in README.md
 #[actix_rt::test]
 async fn requisition_transfer() {
     let site_id = 25;
