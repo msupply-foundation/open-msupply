@@ -21,10 +21,10 @@ async fn integration_sync_requisition_transfers_normal() {
     });
 
     let SyncIntegrationTransferContext {
-        site_1,
-        site_2,
-        site_1_processors_task,
-        site_2_processors_task,
+        site_1: request_site,
+        site_2: response_site,
+        site_1_processors_task: request_site_processors_task,
+        site_2_processors_task: response_site_processors_task,
     } = initialise_transfer_sites(
         json!({
             "item": [
@@ -37,60 +37,69 @@ async fn integration_sync_requisition_transfers_normal() {
     .await;
 
     let test = async move {
-        let mut tester =
-            RequisitionTransferTester::new(&site_1.store, &site_2.store, &item1, &item2);
+        let mut tester = RequisitionTransferTester::new(
+            &request_site.store,
+            &response_site.store,
+            &item1,
+            &item2,
+        );
 
-        log::info!("Inserting request requisition on site {:?}", site_1.config);
-        tester.insert_request_requisition(&site_1.connection).await;
+        log::info!(
+            "Inserting request requisition on site {:?}",
+            request_site.config
+        );
+        tester
+            .insert_request_requisition(&request_site.connection)
+            .await;
 
-        sync_and_delay(&site_1, &site_2).await;
+        sync_and_delay(&request_site, &response_site).await;
 
         log::info!(
             "Checking response requisition is not created on site {:?}",
-            site_2.config
+            response_site.config
         );
-        tester.check_response_requisition_not_created(&site_2.connection);
+        tester.check_response_requisition_not_created(&response_site.connection);
 
         log::info!(
             "Updating request requisition to sent status on site {:?}",
-            site_1.config
+            request_site.config
         );
-        tester.update_request_requisition_to_sent(&site_1.service_provider);
+        tester.update_request_requisition_to_sent(&request_site.service_provider);
 
-        sync_and_delay(&site_1, &site_2).await;
+        sync_and_delay(&request_site, &response_site).await;
 
         log::info!(
             "Checking response requisition is created on site {:?}",
-            site_2.config
+            response_site.config
         );
-        tester.check_response_requisition_created(&site_2.connection);
+        tester.check_response_requisition_created(&response_site.connection);
 
-        sync_and_delay(&site_2, &site_1).await;
+        sync_and_delay(&response_site, &request_site).await;
 
         log::info!(
             "Checking that request requisition was linked on site {:?}",
-            site_1.config
+            request_site.config
         );
-        tester.check_request_requisition_was_linked(&site_1.connection);
+        tester.check_request_requisition_was_linked(&request_site.connection);
 
         log::info!(
             "Updating response requisition to finalised on site {:?}",
-            site_2.config
+            response_site.config
         );
-        tester.update_response_requisition_to_finalised(&site_2.service_provider);
+        tester.update_response_requisition_to_finalised(&response_site.service_provider);
 
-        sync_and_delay(&site_2, &site_1).await;
+        sync_and_delay(&response_site, &request_site).await;
 
         log::info!(
             "Checking request requisition status is updated to finalise on site {:?}",
-            site_1.config
+            request_site.config
         );
-        tester.check_request_requisition_status_updated(&site_1.connection);
+        tester.check_request_requisition_status_updated(&request_site.connection);
     };
 
     tokio::select! {
-        Err(err) = site_1_processors_task => unreachable!("{}", err),
-        Err(err) = site_2_processors_task => unreachable!("{}", err),
+        Err(err) = request_site_processors_task => unreachable!("{}", err),
+        Err(err) = response_site_processors_task => unreachable!("{}", err),
         _ = test => (),
     };
 }
@@ -109,10 +118,10 @@ async fn integration_sync_requisition_transfers_initialisation() {
     });
 
     let SyncIntegrationTransferContext {
-        site_1,
-        site_2,
-        site_1_processors_task,
-        site_2_processors_task,
+        site_1: request_site,
+        site_2: response_site,
+        site_1_processors_task: request_site_processors_task,
+        site_2_processors_task: response_site_processors_task,
     } = initialise_transfer_sites(
         json!({
             "item": [
@@ -125,42 +134,52 @@ async fn integration_sync_requisition_transfers_initialisation() {
     .await;
 
     let test = async move {
-        let tester = RequisitionTransferTester::new(&site_1.store, &site_2.store, &item1, &item2);
+        let tester = RequisitionTransferTester::new(
+            &request_site.store,
+            &response_site.store,
+            &item1,
+            &item2,
+        );
 
-        log::info!("Inserting request requisition on site {:?}", site_1.config);
-        tester.insert_request_requisition(&site_1.connection).await;
+        log::info!(
+            "Inserting request requisition on site {:?}",
+            request_site.config
+        );
+        tester
+            .insert_request_requisition(&request_site.connection)
+            .await;
 
         log::info!(
             "Updating request requisition to sent status on site {:?}",
-            site_1.config
+            request_site.config
         );
-        tester.update_request_requisition_to_sent(&site_1.service_provider);
-        sync_and_delay(&site_1, &site_1).await;
+        tester.update_request_requisition_to_sent(&request_site.service_provider);
+        sync_and_delay(&request_site, &request_site).await;
 
-        (tester, site_2)
+        (tester, response_site)
     };
 
-    let (mut tester, site_2) = tokio::select! {
-        Err(err) = site_1_processors_task => unreachable!("{}", err),
-        Err(err) = site_2_processors_task => unreachable!("{}", err),
+    let (mut tester, response_site) = tokio::select! {
+        Err(err) = request_site_processors_task => unreachable!("{}", err),
+        Err(err) = response_site_processors_task => unreachable!("{}", err),
         test_result = test => test_result,
     };
-    // Since this test check transfers are forward on initialisation, we want to re-set database for site_2
-    let (site_2, site_2_processors_task) =
-        new_instance_of_existing_site(site_2, &format!("{}_site2_2", identifier)).await;
+    // Since this test check transfers are forward on initialisation, we want to re-set database for response_site
+    let (response_site, response_site_processors_task) =
+        new_instance_of_existing_site(response_site, &format!("{}_site2_2", identifier)).await;
 
     let test = async move {
         // Site 2 should be re-initialised here
-        sync_and_delay(&site_2, &site_2).await;
+        sync_and_delay(&response_site, &response_site).await;
         log::info!(
             "Checking response requisition is created on site {:?}",
-            site_2.config
+            response_site.config
         );
-        tester.check_response_requisition_created(&site_2.connection);
+        tester.check_response_requisition_created(&response_site.connection);
     };
 
     tokio::select! {
-        Err(err) = site_2_processors_task => unreachable!("{}", err),
+        Err(err) = response_site_processors_task => unreachable!("{}", err),
         _ = test => (),
     };
 }
