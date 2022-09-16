@@ -186,6 +186,7 @@
   "log.requisition-status-sent": "Requisition sent",
   "log.requisition-status-finalised": "Requisition finalised",
   "messages.cant-delete-generic": "You cannot delete one or more of the selected items",
+  "messages.confirm-cancel-generic": "You will lose any changes you have made to this form",
   "messages.confirm-delete-generic": "This will permanently remove data",
   "messages.delete-this-line": "Delete this line",
   "messages.deleted-generic_one": "Deleted {{count}} record",
