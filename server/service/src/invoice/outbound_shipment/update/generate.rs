@@ -74,10 +74,15 @@ fn set_new_status_datetime(
     invoice: &mut InvoiceRow,
     status: &Option<UpdateOutboundShipmentStatus>,
 ) {
-    let new_status = match status {
-        Some(new_status) if new_status.full_status() != invoice.status => new_status,
-        _ => return,
+   let new_status = match status {
+        Some(status) => status,
+        None => return, // There's no status to update
     };
+
+    if new_status.full_status() == invoice.status {
+        // The invoice already has this status, there's nothing to do.
+        return;
+    }
 
     let current_datetime = Utc::now().naive_utc();
 
