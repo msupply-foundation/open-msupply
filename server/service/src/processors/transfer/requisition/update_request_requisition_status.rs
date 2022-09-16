@@ -1,6 +1,6 @@
 use repository::{
     requisition_row::{RequisitionRowStatus, RequisitionRowType},
-    RepositoryError, RequisitionRowRepository, StorageConnection,
+    RepositoryError, RequisitionRow, RequisitionRowRepository, StorageConnection,
 };
 
 use super::{RequisitionTransferProcessor, RequisitionTransferProcessorRecord};
@@ -17,13 +17,13 @@ impl RequisitionTransferProcessor for UpdateRequestRequstionStatusProcessor {
     /// Request requisition status will be updated to finalised when all below conditions are met:
     ///
     /// 1. Source requisition name_id is for a store that is active on current site (transfer processor driver guarantees this)
-    /// 2. Source requisition is Resposnse requisition
+    /// 2. Source requisition is Response requisition
     /// 3. Linked requisition exists (the request requisition)
-    /// 4. Linked requsition is not Finalised
-    /// 5. Source requisition is Finalised
+    /// 4. Linked request requsition is not Finalised
+    /// 5. Source response requisition is Finalised
     ///
     /// Only runs once:
-    /// 6. Because linked requisition status is set to Finalised and `4.` will never be true again
+    /// 6. Because linked request requisition status is set to Finalised and `4.` will never be true again
     fn try_process_record(
         &self,
         connection: &StorageConnection,
@@ -32,42 +32,43 @@ impl RequisitionTransferProcessor for UpdateRequestRequstionStatusProcessor {
         // Check can execute
         let RequisitionTransferProcessorRecord {
             linked_requisition,
-            requisition: source_requisition,
+            requisition: response_requisition,
             ..
         } = &record_for_processing;
         // 2.
-        if source_requisition.requisition_row.r#type != RequisitionRowType::Response {
+        if response_requisition.requisition_row.r#type != RequisitionRowType::Response {
             return Ok(None);
         }
         // 3.
-        let linked_requisition = match &linked_requisition {
+        let request_requisition = match &linked_requisition {
             Some(linked_requisition) => linked_requisition,
             None => return Ok(None),
         };
         // 4.
-        if linked_requisition.requisition_row.status == RequisitionRowStatus::Finalised {
+        if request_requisition.requisition_row.status == RequisitionRowStatus::Finalised {
             return Ok(None);
         }
         // 5.
-        if source_requisition.requisition_row.status != RequisitionRowStatus::Finalised {
+        if response_requisition.requisition_row.status != RequisitionRowStatus::Finalised {
             return Ok(None);
         }
 
         // Execute
-        let mut updated_linked_requisition = linked_requisition.requisition_row.clone();
-        // 6.
-        updated_linked_requisition.status = RequisitionRowStatus::Finalised;
+        let updated_request_requisition = RequisitionRow {
+            // 6.
+            status: RequisitionRowStatus::Finalised,
+            finalised_datetime: response_requisition
+                .requisition_row
+                .finalised_datetime
+                .clone(),
+            ..request_requisition.requisition_row.clone()
+        };
 
-        updated_linked_requisition.finalised_datetime = source_requisition
-            .requisition_row
-            .finalised_datetime
-            .clone();
-
-        RequisitionRowRepository::new(connection).upsert_one(&updated_linked_requisition)?;
+        RequisitionRowRepository::new(connection).upsert_one(&updated_request_requisition)?;
 
         let result = format!(
             "requisition ({}) source requisition ({})",
-            updated_linked_requisition.id, source_requisition.requisition_row.id
+            updated_request_requisition.id, response_requisition.requisition_row.id
         );
 
         Ok(Some(result))

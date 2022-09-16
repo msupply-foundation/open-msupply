@@ -15,7 +15,7 @@ use self::transfer::{
 mod test_helpers;
 pub(crate) mod transfer;
 
-const NUMBER_OF_CHANNELS: usize = 30;
+const CHANNEL_BUFFER_SIZE: usize = 30;
 
 #[derive(Clone)]
 pub struct ProcessorsTrigger {
@@ -39,10 +39,10 @@ enum ProcessorsError {
 impl Processors {
     pub fn init() -> (ProcessorsTrigger, Processors) {
         let (requisition_transfer_sender, requisition_transfer_receiver) =
-            mpsc::channel(NUMBER_OF_CHANNELS);
+            mpsc::channel(CHANNEL_BUFFER_SIZE);
 
         let (shipment_transfer_sender, shipment_transfer_receiver) =
-            mpsc::channel(NUMBER_OF_CHANNELS);
+            mpsc::channel(CHANNEL_BUFFER_SIZE);
 
         (
             ProcessorsTrigger {
@@ -71,6 +71,7 @@ impl Processors {
                     Some(_) = shipment_transfer.recv() => {
                         process_shipment_transfers(&service_provider).map_err(ProcessorsError::ShipmentTransfer)
                     },
+                    // None will be returned by recv if channel is closed, this would only really happen if all receivers were dropped
                     else => break,
                 };
 
@@ -83,7 +84,7 @@ impl Processors {
 }
 
 impl ProcessorsTrigger {
-    pub(crate) fn trigger_requisition_transfers(&self) {
+    pub(crate) fn trigger_requisition_transfer_processors(&self) {
         if let Err(error) = self.requisition_transfer.try_send(()) {
             log::error!(
                 "Problem triggering requisition transfer processor {:#?}",
@@ -92,7 +93,7 @@ impl ProcessorsTrigger {
         }
     }
 
-    pub(crate) fn trigger_shipment_transfers(&self) {
+    pub(crate) fn trigger_shipment_transfer_processors(&self) {
         if let Err(error) = self.shipment_transfer.try_send(()) {
             log::error!(
                 "Problem triggering shipment transfer processor {:#?}",
@@ -101,7 +102,8 @@ impl ProcessorsTrigger {
         }
     }
 
-    pub(crate) fn new_test() -> ProcessorsTrigger {
+    /// Empty processor triggers for test that don't use processors but require processors for construction of ServiceContext and ServiceProvider
+    pub(crate) fn new_void() -> ProcessorsTrigger {
         ProcessorsTrigger {
             requisition_transfer: mpsc::channel(1).0,
             shipment_transfer: mpsc::channel(1).0,

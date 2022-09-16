@@ -1,6 +1,7 @@
 use super::{RequisitionTransferProcessor, RequisitionTransferProcessorRecord};
 use repository::{
-    RepositoryError, RequisitionRowRepository, RequisitionRowType, StorageConnection,
+    RepositoryError, RequisitionRow, RequisitionRowRepository, RequisitionRowType,
+    StorageConnection,
 };
 
 const DESCRIPTION: &'static str = "Link request requisition to response requisition";
@@ -17,10 +18,10 @@ impl RequisitionTransferProcessor for LinkRequestRequisitionProcessor {
     /// 1. Source requisition name_id is for a store that is active on current site (transfer processor driver guarantees this)
     /// 2. Source requisition is Response requisition
     /// 3. Linked requisition exists (the request requisition)
-    /// 4. There is no link between linked requisition and source requisition
+    /// 4. There is no link between request requisition and source response requisition
     ///
     /// Only runs once:
-    /// 5. Because link is created between linked request requisition and source requisition and `4.` will never be true again
+    /// 5. Because link is created between linked request requisition and source response requisition and `4.` will never be true again
     fn try_process_record(
         &self,
         connection: &StorageConnection,
@@ -29,20 +30,20 @@ impl RequisitionTransferProcessor for LinkRequestRequisitionProcessor {
         // Check can execute
         let RequisitionTransferProcessorRecord {
             linked_requisition,
-            requisition: source_requisition,
+            requisition: response_requisition,
             ..
         } = &record_for_processing;
         // 2.
-        if source_requisition.requisition_row.r#type != RequisitionRowType::Response {
+        if response_requisition.requisition_row.r#type != RequisitionRowType::Response {
             return Ok(None);
         }
         // 3.
-        let linked_requisition = match &linked_requisition {
+        let request_requisition = match &linked_requisition {
             Some(linked_requisition) => linked_requisition,
             None => return Ok(None),
         };
         // 4.
-        if linked_requisition
+        if request_requisition
             .requisition_row
             .linked_requisition_id
             .is_some()
@@ -51,15 +52,17 @@ impl RequisitionTransferProcessor for LinkRequestRequisitionProcessor {
         }
 
         // Execute
-        let mut update_linked_requisition = linked_requisition.requisition_row.clone();
-        // 5.
-        update_linked_requisition.linked_requisition_id =
-            Some(source_requisition.requisition_row.id.clone());
-        RequisitionRowRepository::new(connection).upsert_one(&update_linked_requisition)?;
+        let linked_request_requisition = RequisitionRow {
+            // 5.
+            linked_requisition_id: Some(response_requisition.requisition_row.id.clone()),
+            ..request_requisition.requisition_row.clone()
+        };
+
+        RequisitionRowRepository::new(connection).upsert_one(&linked_request_requisition)?;
 
         let result = format!(
             "requisition ({}) source requisition ({})",
-            update_linked_requisition.id, source_requisition.requisition_row.id
+            linked_request_requisition.id, response_requisition.requisition_row.id
         );
 
         Ok(Some(result))

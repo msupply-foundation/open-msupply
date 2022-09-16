@@ -18,17 +18,15 @@ CREATE TYPE row_action_type AS ENUM (
 );
 
 CREATE TABLE changelog (
-    cursor BIGSERIAL,
+    cursor BIGSERIAL NOT NULL PRIMARY KEY,
     -- the table name where the change happend
     table_name changelog_table_name NOT NULL,
     -- row id of the modified row
     record_id TEXT NOT NULL,
-    -- Sqlite only fires INSERT when doing an upsert (it does a delete + insert) for this reason
-    -- use UPSERT.
     row_action row_action_type NOT NULL,
-    -- TODO comment
-    name_ID TEXT,
-    store_ID TEXT
+    -- Below fields are extracted from associated record where it's deemed necessary (see changelog/README.md)
+    name_id TEXT,
+    store_id TEXT
 );
 
 -- View of the changelog that only contains the most recent changes to a row, i.e. previous row

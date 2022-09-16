@@ -5,7 +5,8 @@ mod test {
     use graphql_core::assert_graphql_query;
     use graphql_core::test_helpers::setup_graphl_test;
     use repository::mock::{
-        mock_invoice_loader_invoice1, mock_invoice_loader_invoice2, mock_invoice_loader_requistion1,
+        mock_invoice_loader_invoice1, mock_invoice_loader_invoice2,
+        mock_invoice_loader_requisition1,
     };
 
     use repository::mock::MockDataInserts;
@@ -59,7 +60,7 @@ mod test {
                     "id": &invoice1.id,
                     "linkedShipment": null,
                     "requisition": {
-                        "id": mock_invoice_loader_requistion1().id
+                        "id": mock_invoice_loader_requisition1().id
                     }
                 },
                 {
