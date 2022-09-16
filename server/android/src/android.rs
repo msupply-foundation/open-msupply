@@ -155,7 +155,7 @@ pub mod android {
             None => return -1,
         };
         match handle.off_switch.send(()) {
-            Ok(_) => {}
+            Some(_) => {}
             Err(_) => return -1,
         }
         match handle.thread.join() {
