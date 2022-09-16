@@ -152,6 +152,8 @@ impl RemoteDataSynchroniser {
     pub(crate) async fn push(&self, connection: &StorageConnection) -> Result<(), anyhow::Error> {
         let changelog = ChangelogRepository::new(connection);
         let active_stores = ActiveStoresOnSite::get(&connection)?;
+        // It is possible to have entries for foreign records in change log (other half of transfers)
+        // they should be filtered out and not pushed to central server
         let change_log_filter = Some(
             ChangelogFilter::new()
                 .store_id(EqualFilter::equal_any_or_null(active_stores.store_ids())),
