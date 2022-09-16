@@ -154,8 +154,8 @@ pub mod android {
             Some(handle) => handle,
             None => return -1,
         };
-        match handle.off_switch.send(()) {
-            Some(_) => {}
+        match futures::executor::block_on(handle.off_switch.send(())) {
+            Ok(_) => {}
             Err(_) => return -1,
         }
         match handle.thread.join() {
