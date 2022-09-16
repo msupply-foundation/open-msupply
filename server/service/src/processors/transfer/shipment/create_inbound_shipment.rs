@@ -9,7 +9,7 @@ use util::uuid::uuid;
 use crate::number::next_number;
 
 use super::{
-    common::regenerate_inbound_shipment_lines, Operation, ShipmentTransferProcessor,
+    common::generate_inbound_shipment_lines, Operation, ShipmentTransferProcessor,
     ShipmentTransferProcessorRecord,
 };
 
@@ -65,7 +65,7 @@ impl ShipmentTransferProcessor for CreateInboundShipmentProcessor {
         // Execute
         let new_inbound_shipment =
             generate_inbound_shipment(connection, &outbound_shipment, record_for_processing)?;
-        let (_, new_inbound_lines) = regenerate_inbound_shipment_lines(
+        let new_inbound_lines = generate_inbound_shipment_lines(
             connection,
             &new_inbound_shipment.id,
             &outbound_shipment,
