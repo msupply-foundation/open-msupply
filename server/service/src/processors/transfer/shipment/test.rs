@@ -22,7 +22,9 @@ use crate::{
     test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
 };
 
-/// This test is for outbound and inbound store on the same site
+/// This test is for requesting and responding store on the same site
+/// See same site transfer diagram in requisition README.md for example of how
+/// changelog is upserted and processed by the same instance of triggered processor
 #[actix_rt::test]
 async fn invoice_transfers() {
     let site_id = 25;
@@ -90,7 +92,8 @@ async fn invoice_transfers() {
         tester.insert_outbound_shipment(&connection).await;
         // Need to do manual trigger here since inserting shipment won't trigger processor
         // and we want to validate that not shipped/picked shipment does not generate transfer
-        ctx.processors_trigger.trigger_shipment_transfers();
+        ctx.processors_trigger
+            .trigger_shipment_transfer_processors();
         delay_for_processor().await;
         tester.check_inbound_shipment_not_created(&connection);
         delay_for_processor().await;

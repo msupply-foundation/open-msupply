@@ -36,8 +36,6 @@ pub struct LegacyStocktakeLineRow {
     pub sell_price: f64,
 
     #[serde(rename = "om_note")]
-    #[serde(deserialize_with = "empty_str_as_option")]
-    #[serde(default)]
     pub note: Option<String>,
 }
 
@@ -110,7 +108,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             sell_price_per_pack,
             note,
         } = StocktakeLineRowRepository::new(connection)
-            .find_one_by_id(&changelog.row_id)?
+            .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg("Stocktake row not found"))?;
 
         let stock_line = match &stock_line_id {
@@ -139,7 +137,7 @@ impl SyncTranslation for StocktakeLineTranslation {
         };
 
         Ok(Some(vec![PushUpsertRecord {
-            sync_id: changelog.id,
+            sync_id: changelog.cursor,
             table_name,
             record_id: id,
             data: serde_json::to_value(&legacy_row)?,

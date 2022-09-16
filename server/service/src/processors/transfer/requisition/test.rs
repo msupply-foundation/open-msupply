@@ -18,6 +18,9 @@ use crate::{
     test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
 };
 
+/// This test is for requesting and responding store on the same site
+/// See same site transfer diagram in README.md for example of how
+/// changelog is upserted and processed by the same instance of triggered processor
 #[actix_rt::test]
 async fn requisition_transfer() {
     let site_id = 25;
@@ -76,8 +79,13 @@ async fn requisition_transfer() {
     let test = || async move {
         let mut tester =
             RequisitionTransferTester::new(&request_store, &response_store, &item1, &item2);
+        let ctx = service_provider.context().unwrap();
 
         tester.insert_request_requisition(&connection).await;
+        // Need to do manual trigger here since inserting requisition won't trigger processor
+        // and we want to validate that not sent requisition does not generate transfer
+        ctx.processors_trigger
+            .trigger_requisition_transfer_processors();
         delay_for_processor().await;
         tester.check_response_requisition_not_created(&connection);
         delay_for_processor().await;
@@ -179,7 +187,7 @@ impl RequisitionTransferTester {
     pub(crate) fn check_response_requisition_not_created(&self, connection: &StorageConnection) {
         assert_eq!(
             RequisitionRepository::new(connection).query_one(
-                RequisitionFilter::new_match_linked_requisition_id(&self.request_requisition.id)
+                RequisitionFilter::by_linked_requisition_id(&self.request_requisition.id)
             ),
             Ok(None)
         )
@@ -202,7 +210,7 @@ impl RequisitionTransferTester {
 
     pub(crate) fn check_response_requisition_created(&mut self, connection: &StorageConnection) {
         let response_requisition = RequisitionRepository::new(&connection)
-            .query_one(RequisitionFilter::new_match_linked_requisition_id(
+            .query_one(RequisitionFilter::by_linked_requisition_id(
                 &self.request_requisition.id,
             ))
             .unwrap();
@@ -310,6 +318,7 @@ impl RequisitionTransferTester {
     }
 }
 
+/// Line uniqueness is checked in caller method where requisition line count is checked
 fn check_line(
     connection: &StorageConnection,
     response_requisition_id: &str,

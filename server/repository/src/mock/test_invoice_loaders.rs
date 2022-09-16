@@ -12,13 +12,13 @@ pub fn mock_test_invoice_loaders() -> MockData {
     let mut result = MockData::default();
     result.invoices.push(mock_invoice_loader_invoice1());
     result.invoices.push(mock_invoice_loader_invoice2());
-    result.requisitions.push(mock_invoice_loader_requistion1());
+    result.requisitions.push(mock_invoice_loader_requisition1());
     result
 }
 
-pub fn mock_invoice_loader_requistion1() -> RequisitionRow {
+pub fn mock_invoice_loader_requisition1() -> RequisitionRow {
     inline_init(|r: &mut RequisitionRow| {
-        r.id = "mock_invoice_loader_requistion1".to_owned();
+        r.id = "mock_invoice_loader_requisition1".to_owned();
         r.requisition_number = 1;
         r.name_id = "name_a".to_owned();
         r.store_id = mock_store_a().id;
@@ -36,7 +36,7 @@ pub fn mock_invoice_loader_invoice1() -> InvoiceRow {
         r.name_id = mock_name_store_b().id;
         r.store_id = mock_store_a().id;
         r.invoice_number = 1;
-        r.requisition_id = Some(mock_invoice_loader_requistion1().id);
+        r.requisition_id = Some(mock_invoice_loader_requisition1().id);
         r.r#type = InvoiceRowType::OutboundShipment;
         r.status = InvoiceRowStatus::Picked;
         r.created_datetime = NaiveDate::from_ymd(1970, 1, 1).and_hms_milli(12, 30, 0, 0);

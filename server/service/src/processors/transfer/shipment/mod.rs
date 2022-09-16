@@ -160,13 +160,13 @@ fn get_upsert_operation(
     let repo = InvoiceRepository::new(connection);
 
     let shipment = repo
-        .query_one(InvoiceFilter::new_match_id(&changelog_row.record_id))
+        .query_one(InvoiceFilter::by_id(&changelog_row.record_id))
         .map_err(|e| DatabaseError(changelog_row.record_id.clone(), e))?
         .ok_or_else(|| ShipmentNotFound(changelog_row.clone()))?;
 
     let linked_shipment = match &shipment.invoice_row.linked_invoice_id {
         Some(id) => repo
-            .query_one(InvoiceFilter::new_match_id(id))
+            .query_one(InvoiceFilter::by_id(id))
             .map_err(|e| DatabaseError(id.to_string(), e))?,
         None => repo
             .query_one(InvoiceFilter::new_match_linked_invoice_id(

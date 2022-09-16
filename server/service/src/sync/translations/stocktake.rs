@@ -1,6 +1,6 @@
 use crate::sync::sync_serde::{
-    date_from_date_time, date_option_to_isostring, date_to_isostring, empty_date_time_as_option,
-    empty_str_as_option, naive_time, zero_date_as_option,
+    date_from_date_time, date_option_to_isostring, date_to_isostring, empty_str_as_option,
+    naive_time, zero_date_as_option,
 };
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
@@ -63,8 +63,6 @@ pub struct LegacyStocktakeRow {
     pub created_datetime: Option<NaiveDateTime>,
 
     #[serde(rename = "om_finalised_datetime")]
-    #[serde(default)]
-    #[serde(deserialize_with = "empty_date_time_as_option")]
     pub finalised_datetime: Option<NaiveDateTime>,
 }
 
@@ -140,7 +138,7 @@ impl SyncTranslation for StocktakeTranslation {
             is_locked,
             stocktake_date,
         } = StocktakeRowRepository::new(connection)
-            .find_one_by_id(&changelog.row_id)?
+            .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg("Stocktake row not found"))?;
 
         let legacy_row = LegacyStocktakeRow {
@@ -161,7 +159,7 @@ impl SyncTranslation for StocktakeTranslation {
         };
 
         Ok(Some(vec![PushUpsertRecord {
-            sync_id: changelog.id,
+            sync_id: changelog.cursor,
             table_name,
             record_id: id,
             data: serde_json::to_value(&legacy_row)?,
