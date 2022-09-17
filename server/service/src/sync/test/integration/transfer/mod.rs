@@ -6,7 +6,7 @@ use super::{
 };
 use crate::{
     service_provider::ServiceProvider,
-    sync::{synchroniser::Synchroniser, test::integration::init_db},
+    sync::{synchroniser::Synchroniser, test::integration::init_test_context},
 };
 use repository::{StorageConnection, StoreRow, StoreRowRepository};
 use serde_json::json;
@@ -45,12 +45,12 @@ async fn initialise_transfer_sites(
         .await
         .expect("Problem creating sync site");
 
-    let site_1_context = init_db(
+    let site_1_context = init_test_context(
         &site_1_config.sync_settings,
         &format!("{}_site1", identifier),
     )
     .await;
-    let site_2_context = init_db(
+    let site_2_context = init_test_context(
         &site_2_config.sync_settings,
         &format!("{}_site2", identifier),
     )
@@ -81,7 +81,6 @@ async fn initialise_transfer_sites(
         .expect("Problem inserting central data");
 
     site_1_context.synchroniser.sync().await.unwrap();
-
     site_2_context.synchroniser.sync().await.unwrap();
 
     let site_1_store = StoreRowRepository::new(&site_1_context.connection)
@@ -128,7 +127,7 @@ async fn new_instance_of_existing_site(
     existing_site: SiteContext,
     identifier: &str,
 ) -> (SiteContext, JoinHandle<()>) {
-    let sync_context = init_db(
+    let sync_context = init_test_context(
         &existing_site.config.sync_settings,
         &format!("{}_site2_2", identifier),
     )
