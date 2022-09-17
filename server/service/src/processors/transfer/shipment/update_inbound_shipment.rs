@@ -71,7 +71,7 @@ impl ShipmentTransferProcessor for UpdateInboundShipmentProcessor {
         let invoice_line_repository = InvoiceLineRowRepository::new(connection);
 
         for line in lines_to_delete.iter() {
-            invoice_line_repository.delete(&line.invoice_row.id)?;
+            invoice_line_repository.delete(&line.invoice_line_row.id)?;
         }
 
         for line in new_inbound_lines.iter() {

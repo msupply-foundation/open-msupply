@@ -26,7 +26,10 @@ struct SyncIntegrationContext {
     processors_task: JoinHandle<()>,
 }
 
-async fn init_db(sync_settings: &SyncSettings, identifier: &str) -> SyncIntegrationContext {
+async fn init_test_context(
+    sync_settings: &SyncSettings,
+    identifier: &str,
+) -> SyncIntegrationContext {
     let ServiceTestContext {
         connection,
         service_provider,
@@ -38,6 +41,11 @@ async fn init_db(sync_settings: &SyncSettings, identifier: &str) -> SyncIntegrat
     )
     .await;
 
+    service_provider
+        .site_info
+        .request_and_set_site_info(&service_provider, &sync_settings)
+        .await
+        .unwrap();
     let synchroniser =
         Synchroniser::new(sync_settings.clone(), service_provider.clone().into()).unwrap();
 
