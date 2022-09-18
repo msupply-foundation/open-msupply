@@ -4,7 +4,6 @@ mod queries;
 pub use self::queries::sync_status::*;
 use self::queries::*;
 
-use async_graphql::*;
 use graphql_core::pagination::PaginationInput;
 use mutations::server_settings::{
     update_server_settings, UpdateServerSettingsInput, UpdateServerSettingsResponse,

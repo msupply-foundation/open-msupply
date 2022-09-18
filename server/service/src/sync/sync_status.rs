@@ -1,15 +1,12 @@
-use std::collections::HashMap;
-
 use chrono::{NaiveDateTime, Utc};
 use repository::{
-    ChangelogRowRepository, DatetimeFilter, RepositoryError, StorageConnection, SyncLogFilter,
+    ChangelogRepository, DatetimeFilter, RepositoryError, StorageConnection, SyncLogFilter,
     SyncLogRepository, SyncLogRow, SyncLogRowRepository,
 };
-use util::Defaults;
 
-use crate::i32_to_u32;
+use crate::{i32_to_u32, sync::GetActiveStoresOnSiteError};
 
-use super::remote_data_synchroniser::RemoteSyncState;
+use super::{get_active_records_on_site_filter, remote_data_synchroniser::RemoteSyncState};
 
 #[derive(Debug)]
 pub struct SyncStatus {
@@ -135,14 +132,30 @@ pub fn get_latest_sync_status(
     Ok(result)
 }
 
+#[derive(Debug)]
+pub enum NumberOfRecordsInPushQueueError {
+    DatabaseError(RepositoryError),
+    SiteIdNotSet,
+}
+
 pub fn number_of_records_in_push_queue(
     connection: &StorageConnection,
-) -> Result<u32, RepositoryError> {
-    let changelog = ChangelogRowRepository::new(connection);
+) -> Result<u64, NumberOfRecordsInPushQueueError> {
+    use NumberOfRecordsInPushQueueError as Error;
+    let changelog = ChangelogRepository::new(connection);
     let state = RemoteSyncState::new(connection);
 
-    let cursor = state.get_push_cursor()?;
-    let change_logs_total = changelog.count(cursor as u64)? as u32;
+    let cursor = state.get_push_cursor().map_err(Error::DatabaseError)?;
+
+    let changelog_filter =
+        get_active_records_on_site_filter(&connection).map_err(|error| match error {
+            GetActiveStoresOnSiteError::DatabaseError(error) => Error::DatabaseError(error),
+            GetActiveStoresOnSiteError::SiteIdNotSet => Error::SiteIdNotSet,
+        })?;
+
+    let change_logs_total = changelog
+        .count(cursor, changelog_filter)
+        .map_err(Error::DatabaseError)?;
 
     Ok(change_logs_total)
 }

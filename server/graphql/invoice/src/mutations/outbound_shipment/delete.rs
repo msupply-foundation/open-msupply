@@ -169,7 +169,8 @@ mod graphql {
             None
         );
 
-        // TODO https://github.com/openmsupply/remote-server/issues/839
+        // Note that lines are not deleted when an invoice is deleted, due to issues with batch deletes.
+        // TODO: implement delete lines. See https://github.com/openmsupply/remote-server/issues/839 for details.
         // CannotDeleteInvoiceWithLines
         // let variables = Some(json!({
         //   "id": "outbound_shipment_a"

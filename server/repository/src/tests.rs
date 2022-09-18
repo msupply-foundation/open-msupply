@@ -248,13 +248,12 @@ mod repository_test {
         }
     }
 
-    use std::{convert::TryInto, time::SystemTime};
+    use std::time::SystemTime;
 
     use crate::{
         mock::{
             mock_draft_request_requisition_line, mock_draft_request_requisition_line2,
             mock_inbound_shipment_number_store_a, mock_master_list_master_list_line_filter_test,
-            mock_name_a, mock_name_b, mock_name_store_a, mock_name_store_b,
             mock_outbound_shipment_number_store_a, mock_request_draft_requisition,
             mock_request_draft_requisition2, mock_test_master_list_name1,
             mock_test_master_list_name2, mock_test_master_list_name_filter1,
@@ -262,8 +261,7 @@ mod repository_test {
             mock_test_master_list_store1, MockDataInserts,
         },
         requisition_row::RequisitionRowStatus,
-        test_db, ChangelogAction, ChangelogRow, ChangelogRowRepository, ChangelogTableName,
-        InvoiceLineRepository, InvoiceLineRowRepository, InvoiceRowRepository, ItemRow,
+        test_db, InvoiceLineRepository, InvoiceLineRowRepository, InvoiceRowRepository, ItemRow,
         ItemRowRepository, KeyValueStoreRepository, KeyValueType, MasterListFilter,
         MasterListLineFilter, MasterListLineRepository, MasterListLineRowRepository,
         MasterListNameJoinRepository, MasterListRepository, MasterListRowRepository,
@@ -717,164 +715,6 @@ mod repository_test {
             .find_one_by_type_and_store(&NumberRowType::OutboundShipment, "store_b")
             .unwrap();
         assert_eq!(result, None);
-    }
-
-    #[actix_rt::test]
-    async fn test_changelog() {
-        let (_, connection, _, _) =
-            test_db::setup_all("test_changelog", MockDataInserts::none()).await;
-
-        // use name entries to populate the changelog (via the trigger)
-        let name_repo = NameRowRepository::new(&connection);
-        let repo = ChangelogRowRepository::new(&connection);
-
-        // single entry:
-        let name_a = mock_name_a();
-        name_repo.upsert_one(&name_a).unwrap();
-        let mut result = repo.changelogs(0, 10).unwrap();
-        assert_eq!(1, result.len());
-        let log_entry = result.pop().unwrap();
-        assert_eq!(
-            log_entry,
-            ChangelogRow {
-                id: 1,
-                table_name: ChangelogTableName::Name,
-                row_id: name_a.id.clone(),
-                row_action: ChangelogAction::Upsert,
-            }
-        );
-
-        // querying from the first entry should give the same result:
-        assert_eq!(
-            repo.changelogs(0, 10).unwrap(),
-            repo.changelogs(1, 10).unwrap()
-        );
-
-        // update the entry
-        let mut name_a_update = mock_name_a();
-        name_a_update.comment = Some("updated".to_string());
-        name_repo.upsert_one(&name_a_update).unwrap();
-        let mut result = repo.changelogs((log_entry.id + 1) as u64, 10).unwrap();
-        assert_eq!(1, result.len());
-        let log_entry = result.pop().unwrap();
-        assert_eq!(
-            log_entry,
-            ChangelogRow {
-                id: 2,
-                table_name: ChangelogTableName::Name,
-                row_id: name_a.id.clone(),
-                row_action: ChangelogAction::Upsert,
-            }
-        );
-
-        // query the full list from cursor=0
-        let mut result = repo.changelogs(0, 10).unwrap();
-        assert_eq!(1, result.len());
-        let log_entry = result.pop().unwrap();
-        assert_eq!(
-            log_entry,
-            ChangelogRow {
-                id: 2,
-                table_name: ChangelogTableName::Name,
-                row_id: name_a.id.clone(),
-                row_action: ChangelogAction::Upsert,
-            }
-        );
-
-        // add another entry
-        let name_b = mock_name_b();
-        name_repo.upsert_one(&name_b).unwrap();
-        let result = repo.changelogs(0, 10).unwrap();
-        assert_eq!(2, result.len());
-        assert_eq!(
-            result,
-            vec![
-                ChangelogRow {
-                    id: 2,
-                    table_name: ChangelogTableName::Name,
-                    row_id: name_a.id.clone(),
-                    row_action: ChangelogAction::Upsert,
-                },
-                ChangelogRow {
-                    id: 3,
-                    table_name: ChangelogTableName::Name,
-                    row_id: name_b.id.clone(),
-                    row_action: ChangelogAction::Upsert,
-                }
-            ]
-        );
-
-        // delete an entry
-        name_repo.delete(&name_b.id).unwrap();
-        let result = repo.changelogs(0, 10).unwrap();
-        assert_eq!(2, result.len());
-        assert_eq!(
-            result,
-            vec![
-                ChangelogRow {
-                    id: 2,
-                    table_name: ChangelogTableName::Name,
-                    row_id: name_a.id.clone(),
-                    row_action: ChangelogAction::Upsert,
-                },
-                ChangelogRow {
-                    id: 4,
-                    table_name: ChangelogTableName::Name,
-                    row_id: name_b.id.clone(),
-                    row_action: ChangelogAction::Delete,
-                }
-            ]
-        );
-    }
-
-    #[actix_rt::test]
-    async fn test_changelog_iteration() {
-        let (_, connection, _, _) =
-            test_db::setup_all("test_changelog_2", MockDataInserts::none()).await;
-
-        // use names entries to populate the changelog (via the trigger)
-        let name_repo = NameRowRepository::new(&connection);
-        let repo = ChangelogRowRepository::new(&connection);
-
-        let name_a = mock_name_a();
-        let name_b = mock_name_store_a();
-        let name_c = mock_name_store_b();
-        let name_d = mock_name_b();
-
-        name_repo.upsert_one(&name_a).unwrap();
-        name_repo.upsert_one(&name_b).unwrap();
-        name_repo.upsert_one(&name_c).unwrap();
-        name_repo.upsert_one(&name_d).unwrap();
-        name_repo.delete(&name_b.id).unwrap();
-        name_repo.upsert_one(&name_c).unwrap();
-        name_repo.upsert_one(&name_a).unwrap();
-        name_repo.upsert_one(&name_c).unwrap();
-        name_repo.delete(&name_c.id).unwrap();
-
-        // test iterating through the change log
-        let changelogs = repo.changelogs(0, 3).unwrap();
-        let latest_id: u64 = changelogs.last().unwrap().id.try_into().unwrap();
-        assert_eq!(
-            changelogs
-                .into_iter()
-                .map(|it| it.row_id)
-                .collect::<Vec<String>>(),
-            vec![name_d.id, name_b.id, name_a.id]
-        );
-
-        let changelogs = repo.changelogs(latest_id + 1, 3).unwrap();
-        let latest_id: u64 = changelogs.last().unwrap().id.try_into().unwrap();
-
-        assert_eq!(
-            changelogs
-                .into_iter()
-                .map(|it| it.row_id)
-                .collect::<Vec<String>>(),
-            vec![name_c.id]
-        );
-
-        let changelogs = repo.changelogs(latest_id + 1, 3).unwrap();
-        assert_eq!(changelogs.len(), 0);
     }
 
     #[actix_rt::test]

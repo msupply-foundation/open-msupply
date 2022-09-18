@@ -71,10 +71,10 @@ impl SyncTranslation for LocationTranslation {
             on_hold,
             store_id,
         } = LocationRowRepository::new(connection)
-            .find_one_by_id(&changelog.row_id)?
+            .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
                 "Location row ({}) not found",
-                changelog.row_id
+                changelog.record_id
             )))?;
 
         let legacy_row = LegacyLocationRow {
@@ -86,7 +86,7 @@ impl SyncTranslation for LocationTranslation {
         };
 
         Ok(Some(vec![PushUpsertRecord {
-            sync_id: changelog.id,
+            sync_id: changelog.cursor,
             table_name,
             record_id: id,
             data: serde_json::to_value(&legacy_row)?,
