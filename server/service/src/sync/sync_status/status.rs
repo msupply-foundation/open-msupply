@@ -1,13 +1,21 @@
 use chrono::{NaiveDateTime, Utc};
 use repository::{
-    ChangelogRowRepository, DatetimeFilter, RepositoryError, StorageConnection, SyncLogFilter,
-    SyncLogRepository, SyncLogRow, SyncLogRowRepository,
+    ChangelogRepository, DatetimeFilter, RepositoryError, SyncLogFilter, SyncLogRepository,
+    SyncLogRow, SyncLogRowRepository,
 };
 use util::Defaults;
 
-use crate::{i32_to_u32, sync::remote_data_synchroniser::RemoteSyncState};
+use crate::{
+    i32_to_u32,
+    service_provider::ServiceContext,
+    sync::{
+        get_active_records_on_site_filter, remote_data_synchroniser::RemoteSyncState,
+        GetActiveStoresOnSiteError,
+    },
+};
 
 #[derive(Debug, Clone, PartialEq)]
+
 pub struct SyncStatus {
     pub started: NaiveDateTime,
     pub finished: Option<NaiveDateTime>,
@@ -45,21 +53,32 @@ pub enum SyncStatusType {
 pub trait SyncStatusTrait: Sync + Send {
     fn get_latest_sync_status(
         &self,
-        connection: &StorageConnection,
+        ctx: &ServiceContext,
     ) -> Result<FullSyncStatus, RepositoryError> {
-        get_latest_sync_status(connection)
+        get_latest_sync_status(ctx)
+    }
+
+    fn is_initialised(&self, ctx: &ServiceContext) -> Result<bool, RepositoryError> {
+        is_initialised(ctx)
+    }
+
+    fn number_of_records_in_push_queue(
+        &self,
+        ctx: &ServiceContext,
+    ) -> Result<u64, NumberOfRecordsInPushQueueError> {
+        number_of_records_in_push_queue(ctx)
     }
 }
 
-pub struct SyncStatusService;
+pub(crate) struct SyncStatusService;
 
 impl SyncStatusTrait for SyncStatusService {}
 
-pub fn is_initialised(connection: &StorageConnection) -> Result<bool, RepositoryError> {
+fn is_initialised(ctx: &ServiceContext) -> Result<bool, RepositoryError> {
     let done_datetime =
-        SyncLogRepository::new(&connection).query_one(SyncLogFilter::new().done_datetime(Some(
-            DatetimeFilter::before_or_equal_to(Utc::now().naive_utc()),
-        )))?;
+        SyncLogRepository::new(&ctx.connection).query_one(SyncLogFilter::new().done_datetime(
+            Some(DatetimeFilter::before_or_equal_to(Utc::now().naive_utc())),
+        ))?;
 
     if done_datetime.is_some() {
         Ok(true)
@@ -68,9 +87,7 @@ pub fn is_initialised(connection: &StorageConnection) -> Result<bool, Repository
     }
 }
 
-pub fn get_latest_sync_status(
-    connection: &StorageConnection,
-) -> Result<FullSyncStatus, RepositoryError> {
+fn get_latest_sync_status(ctx: &ServiceContext) -> Result<FullSyncStatus, RepositoryError> {
     let SyncLogRow {
         id: _,
         started_datetime,
@@ -92,7 +109,7 @@ pub fn get_latest_sync_status(
         integration_start_datetime,
         integration_done_datetime,
         error_message,
-    } = SyncLogRowRepository::new(&connection).load_latest_sync_log()?;
+    } = SyncLogRowRepository::new(&ctx.connection).load_latest_sync_log()?;
 
     let result = FullSyncStatus {
         is_syncing: done_datetime.is_none() && error_message.is_none(),
@@ -131,14 +148,30 @@ pub fn get_latest_sync_status(
     Ok(result)
 }
 
-pub fn number_of_records_in_push_queue(
-    connection: &StorageConnection,
-) -> Result<u32, RepositoryError> {
-    let changelog = ChangelogRowRepository::new(connection);
-    let state = RemoteSyncState::new(connection);
+#[derive(Debug)]
+pub enum NumberOfRecordsInPushQueueError {
+    DatabaseError(RepositoryError),
+    SiteIdNotSet,
+}
 
-    let cursor = state.get_push_cursor()?;
-    let change_logs_total = changelog.count(cursor as u64)? as u32;
+fn number_of_records_in_push_queue(
+    ctx: &ServiceContext,
+) -> Result<u64, NumberOfRecordsInPushQueueError> {
+    use NumberOfRecordsInPushQueueError as Error;
+    let changelog_repo = ChangelogRepository::new(&ctx.connection);
+    let state = RemoteSyncState::new(&ctx.connection);
+
+    let cursor = state.get_push_cursor().map_err(Error::DatabaseError)?;
+
+    let changelog_filter =
+        get_active_records_on_site_filter(&ctx.connection).map_err(|error| match error {
+            GetActiveStoresOnSiteError::DatabaseError(error) => Error::DatabaseError(error),
+            GetActiveStoresOnSiteError::SiteIdNotSet => Error::SiteIdNotSet,
+        })?;
+
+    let change_logs_total = changelog_repo
+        .count(cursor, changelog_filter)
+        .map_err(Error::DatabaseError)?;
 
     Ok(change_logs_total)
 }

@@ -1,6 +1,6 @@
-use crate::{DateFilter, DatetimeFilter, EqualFilter, SimpleStringFilter, Sort};
+use util::inline_init;
 
-use crate::requisition_row::{RequisitionRowStatus, RequisitionRowType};
+use crate::{DateFilter, DatetimeFilter, EqualFilter, SimpleStringFilter, Sort};
 
 mod requisition;
 pub mod requisition_row;
@@ -145,28 +145,24 @@ impl RequisitionFilter {
         self.their_reference = Some(filter);
         self
     }
+
+    pub fn by_id(id: &str) -> RequisitionFilter {
+        RequisitionFilter::new().id(EqualFilter::equal_to(id))
+    }
+
+    pub fn by_linked_requisition_id(id: &str) -> RequisitionFilter {
+        RequisitionFilter::new().linked_requisition_id(EqualFilter::equal_to(id))
+    }
 }
 
 impl RequisitionRowStatus {
-    pub fn equal_to(&self) -> EqualFilter<RequisitionRowStatus> {
-        EqualFilter {
-            equal_to: Some(self.clone()),
-            not_equal_to: None,
-            equal_any: None,
-            not_equal_all: None,
-            is_null: None,
-        }
+    pub fn equal_to(&self) -> EqualFilter<Self> {
+        inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
     }
 }
 
 impl RequisitionRowType {
-    pub fn equal_to(&self) -> EqualFilter<RequisitionRowType> {
-        EqualFilter {
-            equal_to: Some(self.clone()),
-            not_equal_to: None,
-            equal_any: None,
-            not_equal_all: None,
-            is_null: None,
-        }
+    pub fn equal_to(&self) -> EqualFilter<Self> {
+        inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
     }
 }

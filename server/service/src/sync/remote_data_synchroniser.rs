@@ -1,16 +1,20 @@
 use std::time::{Duration, SystemTime};
 
+use crate::sync::{
+    get_active_records_on_site_filter,
+    sync_status::logger::SyncStepProgress,
+    translations::{translate_changelog, PushRecord},
+    GetActiveStoresOnSiteError,
+};
+
 use super::{
     api::*,
     sync_status::logger::{SyncLogger, SyncLoggerError},
 };
-use crate::sync::{
-    sync_status::logger::SyncStepProgress,
-    translations::{translate_changelog, PushRecord},
-};
+
 use log::info;
 use repository::{
-    ChangelogRow, ChangelogRowRepository, KeyValueStoreRepository, KeyValueType, RepositoryError,
+    ChangelogRepository, ChangelogRow, KeyValueStoreRepository, KeyValueType, RepositoryError,
     StorageConnection, SyncBufferRowRepository,
 };
 use serde_json::json;
@@ -44,6 +48,8 @@ pub(crate) enum RemotePushError {
     DatabaseError(RepositoryError),
     #[error("Problem translation remote records during push {0:?}")]
     TranslationError(anyhow::Error),
+    #[error("Site is id is not set, cannot proceed with remote push")]
+    SiteIdNotSet,
     #[error("Total remaining sent to server is 0 but integration not started")]
     IntegrationNotStarter,
     #[error("{0}")]
@@ -73,11 +79,9 @@ impl RemoteDataSynchroniser {
         let remote_sync_state = RemoteSyncState::new(&connection);
         // Update push cursor after initial sync, i.e. set it to the end of the just received data
         // so we only push new data to the central server
-        let cursor = ChangelogRowRepository::new(connection)
-            .latest_changelog()
-            .map_err(SetInitialisedError)?
-            .map(|row| row.id)
-            .unwrap_or(0) as u32;
+        let cursor = ChangelogRepository::new(connection)
+            .latest_cursor()
+            .map_err(SetInitialisedError)? as u32;
         remote_sync_state
             .update_push_cursor(cursor + 1)
             .map_err(SetInitialisedError)?;
@@ -146,24 +150,29 @@ impl RemoteDataSynchroniser {
         logger: &mut SyncLogger<'a>,
     ) -> Result<(), RemotePushError> {
         use RemotePushError as Error;
-        let changelog = ChangelogRowRepository::new(connection);
+        let changelog_repo = ChangelogRepository::new(connection);
+        let change_log_filter =
+            get_active_records_on_site_filter(connection).map_err(|e| match e {
+                GetActiveStoresOnSiteError::DatabaseError(error) => Error::DatabaseError(error),
+                GetActiveStoresOnSiteError::SiteIdNotSet => Error::SiteIdNotSet,
+            })?;
 
         let state = RemoteSyncState::new(connection);
         loop {
             // TODO inside transaction
             let cursor = state.get_push_cursor().map_err(Error::DatabaseError)?;
-            let changelogs = changelog
-                .changelogs(cursor as u64, batch_size)
+            let changelogs = changelog_repo
+                .changelogs(cursor, batch_size, change_log_filter.clone())
                 .map_err(Error::DatabaseError)?;
-            let change_logs_total = changelog
-                .count(cursor as u64)
+            let change_logs_total = changelog_repo
+                .count(cursor, change_log_filter.clone())
                 .map_err(Error::DatabaseError)?;
 
             logger
                 .progress(SyncStepProgress::Push, change_logs_total)
                 .map_err(Error::SyncLoggerError)?;
 
-            let last_pushed_cursor = changelogs.last().map(|log| log.id);
+            let last_pushed_cursor = changelogs.last().map(|log| log.cursor);
 
             let records = translate_changelogs_to_push_records(connection, changelogs)
                 .map_err(Error::TranslationError)?;
@@ -303,12 +312,12 @@ impl<'a> RemoteSyncState<'a> {
             .set_bool(KeyValueType::RemoteSyncInitilisationFinished, Some(true))
     }
 
-    pub fn get_push_cursor(&self) -> Result<u32, RepositoryError> {
+    pub fn get_push_cursor(&self) -> Result<u64, RepositoryError> {
         let value = self
             .key_value_store
             .get_i32(KeyValueType::RemoteSyncPushCursor)?;
         let cursor = value.unwrap_or(0);
-        Ok(cursor as u32)
+        Ok(cursor as u64)
     }
 
     pub fn update_push_cursor(&self, cursor: u32) -> Result<(), RepositoryError> {

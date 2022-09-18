@@ -28,6 +28,9 @@ pub enum KeyValueType {
     RemoteSyncInitilisationFinished,
     RemoteSyncPushCursor,
 
+    ShipmentTransferProcessorCursor,
+    RequisitionTransferProcessorCursor,
+
     SettingsSyncUrl,
     SettingsSyncUsername,
     SettingsSyncPasswordSha256,
@@ -39,7 +42,13 @@ pub enum KeyValueType {
     SettingsTokenSecret,
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
+impl Default for KeyValueType {
+    fn default() -> Self {
+        KeyValueType::CentralSyncPullCursor
+    }
+}
+
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[changeset_options(treat_none_as_null = "true")]
 #[table_name = "key_value_store"]
 pub struct KeyValueStoreRow {

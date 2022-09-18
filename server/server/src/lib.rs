@@ -13,6 +13,7 @@ use repository::{get_storage_connection_manager, run_db_migrations, StorageConne
 
 use service::{
     auth_data::AuthData,
+    processors::Processors,
     service_provider::ServiceProvider,
     settings::{is_develop, ServerSettings, Settings},
     sync::synchroniser::Synchroniser,
@@ -119,10 +120,10 @@ async fn run_stage0(
         None => http_server.bind(config_settings.server.address())?,
     };
 
-    let running_sever = http_server.run();
-    let server_handle = running_sever.handle();
+    let running_server = http_server.run();
+    let server_handle = running_server.handle();
     // run server in another task so that we can handle restart/off events here
-    actix_web::rt::spawn(running_sever);
+    actix_web::rt::spawn(running_server);
 
     let mut off_switch = off_switch.lock().await;
     let off_switch = off_switch.deref_mut();
@@ -197,11 +198,14 @@ async fn run_server(
     let (restart_switch, mut restart_switch_receiver) = tokio::sync::mpsc::channel::<bool>(1);
     let connection_manager_data_app = Data::new(connection_manager.clone());
 
-    let service_provider = ServiceProvider::new(
+    let (processors_trigger, processors) = Processors::init();
+    let service_provider = ServiceProvider::new_with_processors(
         connection_manager.clone(),
         &settings.server.base_dir.clone().unwrap(),
+        processors_trigger,
     );
     let service_provider_data = Data::new(service_provider);
+    let processors_task = processors.spawn(service_provider_data.clone().into_inner());
 
     let loaders = get_loaders(&connection_manager, service_provider_data.clone()).await;
     let loader_registry_data = Data::new(LoaderRegistry { loaders });
@@ -258,10 +262,10 @@ async fn run_server(
         None => http_server.bind(settings.server.address())?,
     };
 
-    let running_sever = http_server.run();
-    let server_handle = running_sever.handle();
+    let running_server = http_server.run();
+    let server_handle = running_server.handle();
     // run server in another task so that we can handle restart/off events here
-    actix_web::rt::spawn(running_sever);
+    actix_web::rt::spawn(running_server);
 
     let mut off_switch = off_switch.lock().await;
     let off_switch = off_switch.deref_mut();
@@ -273,6 +277,7 @@ async fn run_server(
         () = async {
             synchroniser.run().await;
         } => unreachable!("Synchroniser unexpectedly died!?"),
+        result = processors_task => unreachable!("Processor terminated ({:?})", result)
     };
 
     server_handle.stop(true).await;

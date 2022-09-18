@@ -74,27 +74,48 @@ fn set_new_status_datetime(
     invoice: &mut InvoiceRow,
     status: &Option<UpdateOutboundShipmentStatus>,
 ) {
-    if let Some(new_invoice_status) = UpdateOutboundShipmentStatus::full_status_option(status) {
-        let current_datetime = Utc::now().naive_utc();
-        let invoice_status_index = invoice.status.index();
-        let new_invoice_status_index = new_invoice_status.index();
+   let new_status = match status {
+        Some(status) => status,
+        None => return, // There's no status to update
+    };
 
-        let is_status_update = |status: InvoiceRowStatus| {
-            new_invoice_status_index >= status.index()
-                && invoice_status_index < new_invoice_status_index
-        };
+    if new_status.full_status() == invoice.status {
+        // The invoice already has this status, there's nothing to do.
+        return;
+    }
 
-        if is_status_update(InvoiceRowStatus::Allocated) {
+    let current_datetime = Utc::now().naive_utc();
+
+    // Status sequence for outbound shipment: New, Allocated, Picked, Shipped
+    match (&invoice.status, new_status) {
+        // From Shipped to Any, ingore
+        (InvoiceRowStatus::Shipped, _) => {}
+        // From New to Shipped, Picked, Allocated
+        (InvoiceRowStatus::New, UpdateOutboundShipmentStatus::Shipped) => {
             invoice.allocated_datetime = Some(current_datetime.clone());
+            invoice.picked_datetime = Some(current_datetime.clone());
+            invoice.shipped_datetime = Some(current_datetime)
         }
-
-        if is_status_update(InvoiceRowStatus::Picked) {
+        (InvoiceRowStatus::New, UpdateOutboundShipmentStatus::Picked) => {
+            invoice.allocated_datetime = Some(current_datetime.clone());
             invoice.picked_datetime = Some(current_datetime);
         }
-
-        if is_status_update(InvoiceRowStatus::Shipped) {
-            invoice.shipped_datetime = Some(current_datetime);
+        (InvoiceRowStatus::New, UpdateOutboundShipmentStatus::Allocated) => {
+            invoice.allocated_datetime = Some(current_datetime);
         }
+        // From Allocated to Shipped or Picked
+        (InvoiceRowStatus::Allocated, UpdateOutboundShipmentStatus::Shipped) => {
+            invoice.picked_datetime = Some(current_datetime.clone());
+            invoice.shipped_datetime = Some(current_datetime)
+        }
+        (InvoiceRowStatus::Allocated, UpdateOutboundShipmentStatus::Picked) => {
+            invoice.picked_datetime = Some(current_datetime)
+        }
+        // From Picked to Shipped
+        (InvoiceRowStatus::Picked, UpdateOutboundShipmentStatus::Shipped) => {
+            invoice.shipped_datetime = Some(current_datetime)
+        }
+        _ => {}
     }
 }
 

@@ -9,7 +9,9 @@ use util::uuid::uuid;
 use super::{central_server_configurations::ConfigureCentralServer, SyncRecordTester};
 use crate::sync::test::{
     check_records_against_database,
-    integration::{central_server_configurations::CreateSyncSiteResult, init_db},
+    integration::{
+        central_server_configurations::SiteConfiguration, init_test_context, SyncIntegrationContext,
+    },
 };
 
 fn small_uuid() -> String {
@@ -27,15 +29,19 @@ async fn test_central_sync_record(identifier: &str, tester: &dyn SyncRecordTeste
     println!("test_central_sync_record_{}_init", identifier);
 
     let central_server_configurations = ConfigureCentralServer::from_env();
-    let CreateSyncSiteResult {
+    let SiteConfiguration {
         new_site_properties,
         sync_settings,
     } = central_server_configurations
-        .create_sync_site()
+        .create_sync_site(vec![])
         .await
         .expect("Problem creating sync site");
 
-    let (connection, synchroniser) = init_db(&sync_settings, &identifier).await;
+    let SyncIntegrationContext {
+        connection,
+        synchroniser,
+        ..
+    } = init_test_context(&sync_settings, &identifier).await;
 
     let steps_data = tester.test_step_data(&new_site_properties);
 
@@ -57,15 +63,15 @@ async fn test_central_sync_record(identifier: &str, tester: &dyn SyncRecordTeste
     }
 
     // With re-initialisation
-    let identifier = format!("with_reinitialisation_{}", identifier);
+    let identifier = format!("with_reinit_{}", identifier);
     println!("test_central_sync_record_{}_init", identifier);
 
     let central_server_configurations = ConfigureCentralServer::from_env();
-    let CreateSyncSiteResult {
+    let SiteConfiguration {
         new_site_properties,
         sync_settings,
     } = central_server_configurations
-        .create_sync_site()
+        .create_sync_site(vec![])
         .await
         .expect("Problem creating sync site");
 
@@ -84,7 +90,11 @@ async fn test_central_sync_record(identifier: &str, tester: &dyn SyncRecordTeste
             .await
             .expect("Problem deleting central data");
 
-        let (connection, synchroniser) = init_db(&sync_settings, &inner_identifier).await;
+        let SyncIntegrationContext {
+            connection,
+            synchroniser,
+            ..
+        } = init_test_context(&sync_settings, &inner_identifier).await;
         synchroniser.sync().await.unwrap();
         check_records_against_database(&connection, step_data.integration_records).await;
     }

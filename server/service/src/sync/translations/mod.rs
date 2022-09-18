@@ -20,6 +20,7 @@ pub(crate) mod unit;
 
 use log::{info, warn};
 use repository::*;
+use thiserror::Error;
 
 use super::SyncTranslationError;
 
@@ -123,13 +124,13 @@ pub(crate) enum PullDeleteRecordTable {
     InvoiceLine,
     Requisition,
     RequisitionLine,
-    #[cfg(test)]
+    #[cfg(all(test, feature = "integration_test"))]
     Location,
-    #[cfg(test)]
+    #[cfg(all(test, feature = "integration_test"))]
     StockLine,
-    #[cfg(test)]
+    #[cfg(all(test, feature = "integration_test"))]
     Stocktake,
-    #[cfg(test)]
+    #[cfg(all(test, feature = "integration_test"))]
     StocktakeLine,
 }
 
@@ -262,7 +263,6 @@ pub(crate) fn translate_changelog(
                         record: format!("{:?}", changelog),
                     })?
                 {
-                    info!("Push record upserts: {:?}", records);
                     for record in records {
                         results.push(PushRecord::Upsert(record));
                     }
@@ -273,12 +273,12 @@ pub(crate) fn translate_changelog(
         ChangelogAction::Delete => {
             info!(
                 "Push record deletion: table: \"{:?}\", record id: {}",
-                changelog.table_name, changelog.row_id
+                changelog.table_name, changelog.record_id
             );
             results.push(PushRecord::Delete(PushDeleteRecord {
-                sync_id: changelog.id,
+                sync_id: changelog.cursor,
                 table_name: table_name_to_central(&changelog.table_name),
-                record_id: changelog.row_id.clone(),
+                record_id: changelog.record_id.clone(),
             }));
             return Ok(());
         }
@@ -286,4 +286,42 @@ pub(crate) fn translate_changelog(
 
     warn!("Unhandled push changlog: {:?}", changelog);
     Ok(())
+}
+
+#[derive(Debug)]
+enum ActiveRecordCheck {
+    InvoiceLine { invoice_id: String },
+}
+
+#[derive(Error, Debug)]
+enum ActiveRecordCheckError {
+    #[error("Database error while checking record is active on site {0:?}")]
+    DatabaseError(RepositoryError),
+    #[error("Problem checking record is active on site, site id is not set in database")]
+    SiteIdNotSet,
+    #[error("Problem checking record is active on site, parent record not found for {0:?}")]
+    ParentRecordNotFound(ActiveRecordCheck),
+}
+
+fn is_active_record_on_site(
+    connection: &StorageConnection,
+    record: ActiveRecordCheck,
+) -> Result<bool, ActiveRecordCheckError> {
+    use ActiveRecordCheckError as Error;
+    let site_id = KeyValueStoreRepository::new(connection)
+        .get_i32(repository::KeyValueType::SettingsSyncSiteId)
+        .map_err(Error::DatabaseError)?
+        .ok_or(Error::SiteIdNotSet)?;
+
+    let result = match &record {
+        ActiveRecordCheck::InvoiceLine { invoice_id } => {
+            let invoice = InvoiceRepository::new(connection)
+                .query_one(InvoiceFilter::new().id(EqualFilter::equal_to(&invoice_id)))
+                .map_err(Error::DatabaseError)?
+                .ok_or_else(|| Error::ParentRecordNotFound(record))?;
+            invoice.store_row.site_id == site_id
+        }
+    };
+
+    Ok(result)
 }

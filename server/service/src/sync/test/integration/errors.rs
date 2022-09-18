@@ -3,7 +3,7 @@ mod tests {
     use std::{io::Error, path::PathBuf};
 
     use actix_web::web::Data;
-    use repository::{mock::MockDataInserts, test_db::setup_all, StorageConnectionManager};
+    use repository::{mock::MockDataInserts, StorageConnectionManager};
     use reqwest::StatusCode;
     use serde_json::json;
     use util::assert_matches;
@@ -16,9 +16,10 @@ mod tests {
             settings::SyncSettings,
             synchroniser::Synchroniser,
             test::integration::central_server_configurations::{
-                ConfigureCentralServer, CreateSyncSiteResult,
+                ConfigureCentralServer, SiteConfiguration,
             },
         },
+        test_helpers::{setup_all_and_service_provider, ServiceTestContext},
     };
 
     fn get_synchroniser_with_hardware_id(
@@ -51,17 +52,26 @@ mod tests {
     }
     #[actix_rt::test]
     async fn integration_sync_parsed_error() {
-        let CreateSyncSiteResult { sync_settings, .. } = ConfigureCentralServer::from_env()
-            .create_sync_site()
+        let SiteConfiguration { sync_settings, .. } = ConfigureCentralServer::from_env()
+            .create_sync_site(vec![])
             .await
             .expect("Problem creating sync site");
 
-        let (_, _, connection_manager, _) = setup_all(
+        let ServiceTestContext {
+            connection_manager,
+            service_provider,
+            ..
+        } = setup_all_and_service_provider(
             "sync_integration_test_parsed_error",
             MockDataInserts::none(),
         )
         .await;
 
+        service_provider
+            .site_info
+            .request_and_set_site_info(&service_provider, &sync_settings)
+            .await
+            .unwrap();
         let synchroniser =
             get_synchroniser_with_hardware_id(&connection_manager, &sync_settings, "id1");
         synchroniser.sync().await.unwrap();

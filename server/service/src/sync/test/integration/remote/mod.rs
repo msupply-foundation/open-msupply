@@ -9,8 +9,8 @@ mod test;
 use crate::sync::test::{
     check_records_against_database,
     integration::{
-        central_server_configurations::{ConfigureCentralServer, CreateSyncSiteResult},
-        init_db,
+        central_server_configurations::{ConfigureCentralServer, SiteConfiguration},
+        init_test_context, SyncIntegrationContext,
     },
 };
 
@@ -26,15 +26,19 @@ async fn test_remote_sync_record(identifier: &str, tester: &dyn SyncRecordTester
     println!("test_remote_sync_record_{}_init", identifier);
 
     let central_server_configurations = ConfigureCentralServer::from_env();
-    let CreateSyncSiteResult {
+    let SiteConfiguration {
         new_site_properties,
         sync_settings,
     } = central_server_configurations
-        .create_sync_site()
+        .create_sync_site(vec![])
         .await
         .expect("Problem creating sync site");
 
-    let (connection, synchroniser) = init_db(&sync_settings, &identifier).await;
+    let SyncIntegrationContext {
+        connection,
+        synchroniser,
+        ..
+    } = init_test_context(&sync_settings, &identifier).await;
     let steps_data = tester.test_step_data(&new_site_properties);
 
     let mut previous_connection = connection;
@@ -64,7 +68,11 @@ async fn test_remote_sync_record(identifier: &str, tester: &dyn SyncRecordTester
         // Push integrated changes
         previous_synchroniser.sync().await.unwrap();
         // Re initialise
-        let (connection, synchroniser) = init_db(&sync_settings, &inner_identifier).await;
+        let SyncIntegrationContext {
+            connection,
+            synchroniser,
+            ..
+        } = init_test_context(&sync_settings, &inner_identifier).await;
         previous_connection = connection;
         previous_synchroniser = synchroniser;
         previous_synchroniser.sync().await.unwrap();

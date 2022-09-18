@@ -93,7 +93,7 @@ impl SyncTranslation for StockLineTranslation {
             expiry_date,
             on_hold,
             note,
-        } = StockLineRowRepository::new(connection).find_one_by_id(&changelog.row_id)?;
+        } = StockLineRowRepository::new(connection).find_one_by_id(&changelog.record_id)?;
 
         let legacy_row = LegacyStockLineRow {
             ID: id.clone(),
@@ -112,7 +112,7 @@ impl SyncTranslation for StockLineTranslation {
         };
 
         Ok(Some(vec![PushUpsertRecord {
-            sync_id: changelog.id,
+            sync_id: changelog.cursor,
             table_name,
             record_id: id,
             data: serde_json::to_value(&legacy_row)?,

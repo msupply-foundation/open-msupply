@@ -19,6 +19,7 @@ pub mod login;
 pub mod master_list;
 pub mod name;
 pub mod number;
+pub mod processors;
 pub mod report;
 pub mod requisition;
 pub mod requisition_line;
@@ -31,7 +32,6 @@ pub mod stocktake;
 pub mod stocktake_line;
 pub mod store;
 pub mod sync;
-pub mod sync_processor;
 pub mod token;
 pub mod token_bucket;
 pub mod user_account;
@@ -39,6 +39,8 @@ pub mod validate;
 
 #[cfg(test)]
 mod login_mock_data;
+#[cfg(test)]
+mod test_helpers;
 
 #[derive(PartialEq, Debug)]
 pub struct ListResult<T> {

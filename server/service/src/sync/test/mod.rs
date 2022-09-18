@@ -243,9 +243,13 @@ pub(crate) async fn check_records_against_database(
             }
             Requisition => check_delete_record_by_id!(ReportRowRepository, con, id),
             RequisitionLine => check_delete_record_by_id!(ReportRowRepository, con, id),
+            #[cfg(feature = "integration_test")]
             Location => check_delete_record_by_id!(LocationRowRepository, con, id),
+            #[cfg(feature = "integration_test")]
             StockLine => check_delete_record_by_id_option!(StockLineRowRepository, con, id),
+            #[cfg(feature = "integration_test")]
             Stocktake => check_delete_record_by_id!(StocktakeRowRepository, con, id),
+            #[cfg(feature = "integration_test")]
             StocktakeLine => check_delete_record_by_id!(StocktakeLineRowRepository, con, id),
         }
     }
