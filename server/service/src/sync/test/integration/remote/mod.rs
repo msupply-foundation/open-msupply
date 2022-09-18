@@ -6,6 +6,8 @@ pub(crate) mod stock_line;
 pub(crate) mod stocktake;
 mod test;
 
+use std::time::Duration;
+
 use crate::sync::test::{
     check_records_against_database,
     integration::{
