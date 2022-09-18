@@ -149,7 +149,7 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
     };
     use repository::{
-        mock::{mock_name_a, mock_request_draft_requisition, MockDataInserts},
+        mock::{mock_request_draft_requisition, MockDataInserts},
         Requisition, StorageConnectionManager,
     };
     use serde_json::json;
@@ -163,7 +163,7 @@ mod test {
         },
         service_provider::{ServiceContext, ServiceProvider},
     };
-    use util::date_now;
+    use util::{date_now, inline_init};
 
     use crate::RequisitionMutations;
 
@@ -335,10 +335,9 @@ mod test {
                     expected_delivery_date: Some(NaiveDate::from_ymd(2022, 01, 03))
                 }
             );
-            Ok(Requisition {
-                requisition_row: mock_request_draft_requisition(),
-                name_row: mock_name_a(),
-            })
+            Ok(inline_init(|r: &mut Requisition| {
+                r.requisition_row = mock_request_draft_requisition()
+            }))
         }));
 
         let variables = json!({
@@ -376,10 +375,9 @@ mod test {
             let expected = input.expected_delivery_date.unwrap();
             assert_eq!((expected - now), chrono::Duration::weeks(2));
 
-            Ok(Requisition {
-                requisition_row: mock_request_draft_requisition(),
-                name_row: mock_name_a(),
-            })
+            Ok(inline_init(|r: &mut Requisition| {
+                r.requisition_row = mock_request_draft_requisition()
+            }))
         }));
 
         let expected = json!({

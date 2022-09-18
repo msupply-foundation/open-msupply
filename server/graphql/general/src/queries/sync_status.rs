@@ -1,7 +1,6 @@
 pub use async_graphql::*;
 use chrono::NaiveDateTime;
-use graphql_core::ContextExt;
-use service::sync::sync_status::status::{is_initialised, number_of_records_in_push_queue};
+use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
 
 #[derive(SimpleObject)]
 pub struct SyncStatusNode {
@@ -35,18 +34,19 @@ pub struct SyncInfoQueries;
 #[Object]
 impl SyncInfoQueries {
     pub async fn is_initialised(&self, ctx: &Context<'_>) -> Result<bool> {
-        let connection = ctx.service_provider().connection()?;
-        let is_initialised = is_initialised(&connection)?;
+        let service_provider = ctx.service_provider();
+        let ctx = service_provider.context()?;
+        let is_initialised = service_provider.sync_status_service.is_initialised(&ctx)?;
 
         Ok(is_initialised)
     }
 
     pub async fn latest_sync_status(&self, ctx: &Context<'_>) -> Result<FullSyncStatusNode> {
         let service_provider = ctx.service_provider();
-        let connection = service_provider.connection()?;
+        let ctx = service_provider.context()?;
         let sync_status = service_provider
             .sync_status_service
-            .get_latest_sync_status(&connection)?;
+            .get_latest_sync_status(&ctx)?;
 
         Ok(FullSyncStatusNode {
             is_syncing: sync_status.is_syncing,
@@ -88,9 +88,16 @@ impl SyncInfoQueries {
         })
     }
 
-    pub async fn number_of_records_in_push_queue(&self, ctx: &Context<'_>) -> Result<u32> {
-        let connection = ctx.service_provider().connection()?;
-        let push_queue_count = number_of_records_in_push_queue(&connection)?;
+    pub async fn number_of_records_in_push_queue(&self, ctx: &Context<'_>) -> Result<u64> {
+        let service_provider = ctx.service_provider();
+        let ctx = service_provider.context()?;
+        let push_queue_count = service_provider
+            .sync_status_service
+            .number_of_records_in_push_queue(&ctx)
+            .map_err(|error| {
+                let formatted_error = format!("{:#?}", error);
+                StandardGraphqlError::InternalError(formatted_error).extend()
+            })?;
 
         Ok(push_queue_count)
     }

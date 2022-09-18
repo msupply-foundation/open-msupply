@@ -44,7 +44,8 @@ pub fn delete_request_requisition(
         .transaction_sync(|connection| {
             validate(connection, store_id, &input)?;
 
-            // TODO https://github.com/openmsupply/remote-server/issues/839
+            // Note that lines are not deleted when an invoice is deleted, due to issues with batch deletes.
+            // TODO: implement delete lines. See https://github.com/openmsupply/remote-server/issues/839 for details.
             let lines = RequisitionLineRepository::new(&connection).query_by_filter(
                 RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(&input.id)),
             )?;
@@ -94,7 +95,8 @@ fn validate(
     if requisition_row.r#type != RequisitionRowType::Request {
         return Err(OutError::NotARequestRequisition);
     }
-    // TODO https://github.com/openmsupply/remote-server/issues/839
+    // Note that lines are not deleted when an invoice is deleted, due to issues with batch deletes.
+    // TODO: implement delete lines. See https://github.com/openmsupply/remote-server/issues/839 for details.
     // if !get_lines_for_requisition(connection, &input.id)?.is_empty() {
     //     return Err(OutError::CannotDeleteRequisitionWithLines);
     // }
@@ -184,7 +186,8 @@ mod test_delete {
             ),
             Err(ServiceError::NotARequestRequisition)
         );
-        // TODO https://github.com/openmsupply/remote-server/issues/839
+        // Note that lines are not deleted when an invoice is deleted, due to issues with batch deletes.
+        // TODO: implement delete lines. See https://github.com/openmsupply/remote-server/issues/839 for details.
         // CannotDeleteRequisitionWithLines
         // assert_eq!(
         //     service.delete_request_requisition(

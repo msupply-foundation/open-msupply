@@ -168,6 +168,11 @@ impl Synchroniser {
             self.remote.set_initialised(&ctx.connection)?;
         }
 
+        ctx.processors_trigger
+            .trigger_requisition_transfer_processors();
+        ctx.processors_trigger
+            .trigger_shipment_transfer_processors();
+
         Ok(())
     }
 }

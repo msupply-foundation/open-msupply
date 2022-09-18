@@ -1,9 +1,4 @@
-use crate::{
-    invoice::query::get_invoice,
-    service_provider::ServiceContext,
-    sync_processor::{process_records, Record},
-    WithDBError,
-};
+use crate::{invoice::query::get_invoice, service_provider::ServiceContext, WithDBError};
 use repository::Invoice;
 use repository::{
     InvoiceLineRowRepository, InvoiceRowRepository, InvoiceRowStatus, RepositoryError,
@@ -68,14 +63,8 @@ pub fn update_inbound_shipment(
         })
         .map_err(|error| error.to_inner_error())?;
 
-    // TODO use change log (and maybe ask sync porcessor actor to retrigger here)
-    println!(
-        "{:#?}",
-        process_records(
-            &ctx.connection,
-            vec![Record::InvoiceRow(invoice.invoice_row.clone())],
-        )
-    );
+    ctx.processors_trigger
+        .trigger_shipment_transfer_processors();
 
     Ok(invoice)
 }

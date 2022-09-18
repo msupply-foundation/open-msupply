@@ -17,6 +17,7 @@ use diesel::{
     dsl::{InnerJoin, IntoBoxed},
     prelude::*,
 };
+use util::inline_init;
 
 #[derive(PartialEq, Debug, Clone, Default)]
 pub struct Invoice {
@@ -156,9 +157,9 @@ impl<'a> InvoiceRepository<'a> {
         Ok(result.into_iter().map(to_domain).collect())
     }
 
-    pub fn find_one_by_id(&self, row_id: &str) -> Result<InvoiceJoin, RepositoryError> {
+    pub fn find_one_by_id(&self, record_id: &str) -> Result<InvoiceJoin, RepositoryError> {
         Ok(invoice_dsl::invoice
-            .filter(invoice_dsl::id.eq(row_id))
+            .filter(invoice_dsl::id.eq(record_id))
             .inner_join(name_dsl::name)
             .inner_join(store_dsl::store)
             .first::<InvoiceJoin>(&self.connection.connection)?)
@@ -238,66 +239,30 @@ fn create_filtered_query<'a>(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery
 }
 
 impl InvoiceRowStatus {
-    pub fn equal_to(&self) -> EqualFilter<InvoiceRowStatus> {
-        EqualFilter {
-            equal_to: Some(self.clone()),
-            not_equal_to: None,
-            equal_any: None,
-            not_equal_all: None,
-            is_null: None,
-        }
+    pub fn equal_to(&self) -> EqualFilter<Self> {
+        inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
     }
 
-    pub fn not_equal_to(&self) -> EqualFilter<InvoiceRowStatus> {
-        EqualFilter {
-            equal_to: None,
-            not_equal_to: Some(self.clone()),
-            equal_any: None,
-            not_equal_all: None,
-            is_null: None,
-        }
+    pub fn not_equal_to(&self) -> EqualFilter<Self> {
+        inline_init(|r: &mut EqualFilter<Self>| r.not_equal_to = Some(self.clone()))
     }
 
-    pub fn equal_any(value: Vec<InvoiceRowStatus>) -> EqualFilter<InvoiceRowStatus> {
-        EqualFilter {
-            equal_to: None,
-            not_equal_to: None,
-            equal_any: Some(value),
-            not_equal_all: None,
-            is_null: None,
-        }
+    pub fn equal_any(value: Vec<Self>) -> EqualFilter<Self> {
+        inline_init(|r: &mut EqualFilter<Self>| r.equal_any = Some(value))
     }
 }
 
 impl InvoiceRowType {
-    pub fn equal_to(&self) -> EqualFilter<InvoiceRowType> {
-        EqualFilter {
-            equal_to: Some(self.clone()),
-            not_equal_to: None,
-            equal_any: None,
-            not_equal_all: None,
-            is_null: None,
-        }
+    pub fn equal_to(&self) -> EqualFilter<Self> {
+        inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
     }
 
-    pub fn not_equal_to(&self) -> EqualFilter<InvoiceRowType> {
-        EqualFilter {
-            equal_to: None,
-            not_equal_to: Some(self.clone()),
-            equal_any: None,
-            not_equal_all: None,
-            is_null: None,
-        }
+    pub fn not_equal_to(&self) -> EqualFilter<Self> {
+        inline_init(|r: &mut EqualFilter<Self>| r.not_equal_to = Some(self.clone()))
     }
 
-    pub fn equal_any(value: Vec<InvoiceRowType>) -> EqualFilter<InvoiceRowType> {
-        EqualFilter {
-            equal_to: None,
-            not_equal_to: None,
-            equal_any: Some(value),
-            not_equal_all: None,
-            is_null: None,
-        }
+    pub fn equal_any(value: Vec<Self>) -> EqualFilter<Self> {
+        inline_init(|r: &mut EqualFilter<Self>| r.equal_any = Some(value))
     }
 }
 
@@ -404,6 +369,14 @@ impl InvoiceFilter {
     pub fn their_reference(mut self, filter: EqualFilter<String>) -> Self {
         self.their_reference = Some(filter);
         self
+    }
+
+    pub fn by_id(id: &str) -> InvoiceFilter {
+        InvoiceFilter::new().id(EqualFilter::equal_to(id))
+    }
+
+    pub fn new_match_linked_invoice_id(id: &str) -> InvoiceFilter {
+        InvoiceFilter::new().linked_invoice_id(EqualFilter::equal_to(id))
     }
 }
 

@@ -189,7 +189,7 @@ cargo test --features postgres
 
 - To run sync integration test
 
-See [Sync Integration Tests](/service/sync/test/integration/README.md)
+See [Sync Integration Tests](service/src/sync/test/integration/README.md)
 
 ## Building docs
 

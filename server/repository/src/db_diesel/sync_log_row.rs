@@ -94,9 +94,9 @@ impl<'a> SyncLogRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &SyncLogRow) -> Result<(), ReopsitoryError> {
+    pub fn upsert_one(&self, row: &SyncLogRow) -> Result<(), RepositoryError> {
         diesel::insert_into(sync_log_dsl::sync_log)
-            .value(row)
+            .values(row)
             .on_conflict(sync_log_dsl::id)
             .do_update()
             .set(row)

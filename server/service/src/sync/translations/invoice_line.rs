@@ -7,8 +7,8 @@ use repository::{
 use serde::{Deserialize, Serialize};
 
 use super::{
-    IntegrationRecords, LegacyTableName, PullDeleteRecordTable, PullUpsertRecord, PushUpsertRecord,
-    SyncTranslation,
+    is_active_record_on_site, ActiveRecordCheck, IntegrationRecords, LegacyTableName,
+    PullDeleteRecordTable, PullUpsertRecord, PushUpsertRecord, SyncTranslation,
 };
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -30,33 +30,37 @@ pub enum LegacyTransLineType {
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
 pub struct LegacyTransLineRow {
-    pub ID: String,
-    pub transaction_ID: String,
-    pub item_ID: String,
+    #[serde(rename = "ID")]
+    pub id: String,
+    #[serde(rename = "transaction_ID")]
+    pub invoice_id: String,
+    #[serde(rename = "item_ID")]
+    pub item_id: String,
     pub item_name: String,
-    // stock line id
+    #[serde(rename = "item_line_ID")]
     #[serde(deserialize_with = "empty_str_as_option")]
-    pub item_line_ID: Option<String>,
+    pub stock_line_id: Option<String>,
+    #[serde(rename = "location_ID")]
     #[serde(deserialize_with = "empty_str_as_option")]
-    pub location_ID: Option<String>,
+    pub location_id: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option")]
     pub batch: Option<String>,
     #[serde(deserialize_with = "zero_date_as_option")]
     #[serde(serialize_with = "date_option_to_isostring")]
     pub expiry_date: Option<NaiveDate>,
     pub pack_size: i32,
-    pub cost_price: f64,
-    pub sell_price: f64,
+    #[serde(rename = "cost_price")]
+    pub cost_price_per_pack: f64,
+    #[serde(rename = "sell_price")]
+    pub sell_price_per_pack: f64,
     #[serde(rename = "type")]
-    pub _type: LegacyTransLineType,
+    pub r#type: LegacyTransLineType,
     #[serde(rename = "quantity")]
     pub number_of_packs: i32,
     #[serde(deserialize_with = "empty_str_as_option")]
     pub note: Option<String>,
 
     #[serde(rename = "om_item_code")]
-    #[serde(deserialize_with = "empty_str_as_option")]
-    #[serde(default)]
     pub item_code: Option<String>,
     #[serde(rename = "om_tax")]
     pub tax: Option<f64>,
@@ -81,57 +85,94 @@ impl SyncTranslation for InvoiceLineTranslation {
             return Ok(None);
         }
 
-        let data = serde_json::from_str::<LegacyTransLineRow>(&sync_record.data)?;
+        let LegacyTransLineRow {
+            id,
+            invoice_id,
+            item_id,
+            item_name,
+            stock_line_id,
+            location_id,
+            batch,
+            expiry_date,
+            pack_size,
+            cost_price_per_pack,
+            sell_price_per_pack,
+            r#type,
+            number_of_packs,
+            note,
+            item_code,
+            tax,
+            total_before_tax,
+            total_after_tax,
+        } = serde_json::from_str::<LegacyTransLineRow>(&sync_record.data)?;
 
-        let line_type = to_invoice_line_type(&data._type).ok_or(anyhow::Error::msg(format!(
+        let line_type = to_invoice_line_type(&r#type).ok_or(anyhow::Error::msg(format!(
             "Unsupported trans_line type: {:?}",
-            data._type
+            r#type
         )))?;
 
-        let (item_code, tax, total_before_tax, total_after_tax) = match data.item_code {
+        let (item_code, tax, total_before_tax, total_after_tax) = match item_code {
             Some(item_code) => {
                 // use new om_* fields
                 (
                     item_code,
-                    data.tax,
-                    data.total_before_tax.unwrap_or(0.0),
-                    data.total_after_tax.unwrap_or(0.0),
+                    tax,
+                    total_before_tax.unwrap_or(0.0),
+                    total_after_tax.unwrap_or(0.0),
                 )
             }
             None => {
-                let item = match ItemRowRepository::new(connection).find_one_by_id(&data.item_ID)? {
+                let item = match ItemRowRepository::new(connection).find_one_by_id(&item_id)? {
                     Some(item) => item,
                     None => {
                         return Err(anyhow::Error::msg(format!(
                             "Failed to get item: {}",
-                            data.item_ID
+                            item_id
                         )))
                     }
                 };
-                let total = total(&data);
+                let total_multiplier = match r#type {
+                    LegacyTransLineType::StockIn => cost_price_per_pack,
+                    LegacyTransLineType::StockOut => sell_price_per_pack,
+                    _ => 0.0,
+                };
+
+                let total = total_multiplier * number_of_packs as f64;
                 (item.code, None, total, total)
             }
         };
+        // When invoice lines are coming from another site, we don't get stock line and location
+        // so foreign key constraint is violated, thus we want to set them to None if it's foreign site record.
+        let (stock_line_id, location_id) = if is_active_record_on_site(
+            &connection,
+            ActiveRecordCheck::InvoiceLine {
+                invoice_id: invoice_id.clone(),
+            },
+        )? {
+            (stock_line_id, location_id)
+        } else {
+            (None, None)
+        };
 
         let result = InvoiceLineRow {
-            id: data.ID,
-            invoice_id: data.transaction_ID,
-            item_id: data.item_ID,
-            item_name: data.item_name,
+            id,
+            invoice_id,
+            item_id,
+            item_name,
             item_code,
-            stock_line_id: data.item_line_ID,
-            location_id: data.location_ID,
-            batch: data.batch,
-            expiry_date: data.expiry_date,
-            pack_size: data.pack_size,
-            cost_price_per_pack: data.cost_price,
-            sell_price_per_pack: data.sell_price,
+            stock_line_id,
+            location_id,
+            batch,
+            expiry_date,
+            pack_size,
+            cost_price_per_pack,
+            sell_price_per_pack,
             total_before_tax,
             total_after_tax,
             tax,
             r#type: line_type,
-            number_of_packs: data.number_of_packs,
-            note: data.note,
+            number_of_packs,
+            note,
         };
 
         Ok(Some(IntegrationRecords::from_upsert(
@@ -184,21 +225,21 @@ impl SyncTranslation for InvoiceLineTranslation {
             r#type,
             number_of_packs,
             note,
-        } = InvoiceLineRowRepository::new(connection).find_one_by_id(&changelog.row_id)?;
+        } = InvoiceLineRowRepository::new(connection).find_one_by_id(&changelog.record_id)?;
 
         let legacy_row = LegacyTransLineRow {
-            ID: id.clone(),
-            transaction_ID: invoice_id,
-            item_ID: item_id,
+            id: id.clone(),
+            invoice_id,
+            item_id,
             item_name,
-            item_line_ID: stock_line_id,
-            location_ID: location_id,
+            stock_line_id,
+            location_id,
             batch,
             expiry_date,
             pack_size,
-            cost_price: cost_price_per_pack,
-            sell_price: sell_price_per_pack,
-            _type: to_legacy_invoice_line_type(&r#type),
+            cost_price_per_pack,
+            sell_price_per_pack,
+            r#type: to_legacy_invoice_line_type(&r#type),
             number_of_packs,
             note,
             item_code: Some(item_code),
@@ -208,19 +249,11 @@ impl SyncTranslation for InvoiceLineTranslation {
         };
 
         Ok(Some(vec![PushUpsertRecord {
-            sync_id: changelog.id,
+            sync_id: changelog.cursor,
             table_name,
             record_id: id,
             data: serde_json::to_value(&legacy_row)?,
         }]))
-    }
-}
-
-fn total(data: &LegacyTransLineRow) -> f64 {
-    match data._type {
-        LegacyTransLineType::StockIn => data.cost_price * data.number_of_packs as f64,
-        LegacyTransLineType::StockOut => data.sell_price * data.number_of_packs as f64,
-        _ => 0.0,
     }
 }
 
@@ -247,16 +280,28 @@ fn to_legacy_invoice_line_type(_type: &InvoiceLineRowType) -> LegacyTransLineTyp
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        mock::{mock_outbound_shipment_a, mock_store_b, MockData, MockDataInserts},
+        test_db::setup_all_with_data,
+        KeyValueStoreRow, KeyValueType,
+    };
+    use util::inline_init;
 
     #[actix_rt::test]
     async fn test_invoice_line_translation() {
         use crate::sync::test::test_data::invoice_line as test_data;
         let translator = InvoiceLineTranslation {};
 
-        let (_, connection, _, _) = setup_all(
+        let (_, connection, _, _) = setup_all_with_data(
             "test_invoice_line_translation",
-            MockDataInserts::none().units().items(),
+            MockDataInserts::none().units().items().names().stores(),
+            inline_init(|r: &mut MockData| {
+                r.invoices = vec![mock_outbound_shipment_a()];
+                r.key_value_store_rows = vec![inline_init(|r: &mut KeyValueStoreRow| {
+                    r.id = KeyValueType::SettingsSyncSiteId;
+                    r.value_int = Some(mock_store_b().site_id);
+                })]
+            }),
         )
         .await;
 

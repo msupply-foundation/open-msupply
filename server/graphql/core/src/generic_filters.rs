@@ -45,6 +45,7 @@ impl<I: InputType> EqualFilterInput<I> {
             equal_any: self
                 .equal_any
                 .map(|inputs| inputs.into_iter().map(&to_domain).collect()),
+            equal_any_or_null: None,
             not_equal_all: None,
             is_null: None,
         }
@@ -66,6 +67,7 @@ where
             equal_to,
             equal_any,
             not_equal_to,
+            equal_any_or_null: None,
             not_equal_all: None,
             is_null: None,
         }

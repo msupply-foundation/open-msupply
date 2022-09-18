@@ -1,6 +1,6 @@
 use crate::sync::sync_serde::{
-    date_from_date_time, date_option_to_isostring, date_to_isostring, empty_date_time_as_option,
-    empty_str_as_option, naive_time, zero_date_as_option,
+    date_from_date_time, date_option_to_isostring, date_to_isostring, empty_str_as_option,
+    naive_time, zero_date_as_option,
 };
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
@@ -82,8 +82,6 @@ pub struct LegacyTransactRow {
     pub their_ref: Option<String>,
 
     #[serde(rename = "om_transport_reference")]
-    #[serde(default)]
-    #[serde(deserialize_with = "empty_str_as_option")]
     pub transport_reference: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option")]
     pub requisition_ID: Option<String>,
@@ -117,28 +115,18 @@ pub struct LegacyTransactRow {
     pub created_datetime: Option<NaiveDateTime>,
 
     #[serde(rename = "om_allocated_datetime")]
-    #[serde(default)]
-    #[serde(deserialize_with = "empty_date_time_as_option")]
     pub allocated_datetime: Option<NaiveDateTime>,
 
     #[serde(rename = "om_picked_datetime")]
-    #[serde(default)]
-    #[serde(deserialize_with = "empty_date_time_as_option")]
     pub picked_datetime: Option<NaiveDateTime>,
 
     #[serde(rename = "om_shipped_datetime")]
-    #[serde(default)]
-    #[serde(deserialize_with = "empty_date_time_as_option")]
     pub shipped_datetime: Option<NaiveDateTime>,
 
     #[serde(rename = "om_delivered_datetime")]
-    #[serde(default)]
-    #[serde(deserialize_with = "empty_date_time_as_option")]
     pub delivered_datetime: Option<NaiveDateTime>,
 
     #[serde(rename = "om_verified_datetime")]
-    #[serde(default)]
-    #[serde(deserialize_with = "empty_date_time_as_option")]
     pub verified_datetime: Option<NaiveDateTime>,
 
     pub om_status: Option<InvoiceRowStatus>,
@@ -266,7 +254,7 @@ impl SyncTranslation for InvoiceTranslation {
             requisition_id,
             linked_invoice_id,
             transport_reference,
-        } = InvoiceRowRepository::new(connection).find_one_by_id(&changelog.row_id)?;
+        } = InvoiceRowRepository::new(connection).find_one_by_id(&changelog.record_id)?;
 
         let _type = legacy_invoice_type(&r#type).ok_or(anyhow::Error::msg(format!(
             "Invalid invoice type: {:?}",
@@ -312,7 +300,7 @@ impl SyncTranslation for InvoiceTranslation {
         };
 
         Ok(Some(vec![PushUpsertRecord {
-            sync_id: changelog.id,
+            sync_id: changelog.cursor,
             table_name,
             record_id: id,
             data: serde_json::to_value(&legacy_row)?,

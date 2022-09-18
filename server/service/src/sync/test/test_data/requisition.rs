@@ -70,10 +70,12 @@ fn requisition_request_pull_record() -> TestSyncPullRecord {
 fn requisition_request_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
         change_log: ChangelogRow {
-            id: 2,
+            cursor: 2,
             table_name: ChangelogTableName::Requisition,
-            row_id: REQUISITION_REQUEST.0.to_string(),
+            record_id: REQUISITION_REQUEST.0.to_string(),
             row_action: ChangelogAction::Upsert,
+            name_id: Some("name_store_a".to_string()),
+            store_id: Some("store_a".to_string()),
         },
         push_data: json!(LegacyRequisitionRow {
             ID: REQUISITION_REQUEST.0.to_string(),
@@ -161,10 +163,12 @@ fn requisition_response_pull_record() -> TestSyncPullRecord {
 fn requisition_response_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
         change_log: ChangelogRow {
-            id: 2,
+            cursor: 2,
             table_name: ChangelogTableName::Requisition,
-            row_id: REQUISITION_RESPONSE.0.to_string(),
+            record_id: REQUISITION_RESPONSE.0.to_string(),
             row_action: ChangelogAction::Upsert,
+            name_id: Some("name_store_b".to_string()),
+            store_id: Some("store_b".to_string()),
         },
         push_data: json!(LegacyRequisitionRow {
             ID: REQUISITION_RESPONSE.0.to_string(),
@@ -259,10 +263,12 @@ fn requisition_om_fields_pull_record() -> TestSyncPullRecord {
 fn requisition_om_fields_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
         change_log: ChangelogRow {
-            id: 2,
+            cursor: 2,
             table_name: ChangelogTableName::Requisition,
-            row_id: REQUISITION_OM_FIELDS.0.to_string(),
+            record_id: REQUISITION_OM_FIELDS.0.to_string(),
             row_action: ChangelogAction::Upsert,
+            name_id: Some("name_store_b".to_string()),
+            store_id: Some("store_b".to_string()),
         },
         push_data: json!(LegacyRequisitionRow {
             ID: REQUISITION_OM_FIELDS.0.to_string(),
