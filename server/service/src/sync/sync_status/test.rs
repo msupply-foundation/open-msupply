@@ -1,14 +1,13 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 
 use actix_web::{
     web::{self, Data},
-    App, HttpServer,
+    App, HttpServer, 
 };
 use chrono::{NaiveDateTime, Utc};
 use repository::{
-    mock::{mock_store_a, MockDataInserts},
-    test_db::setup_all,
-    LocationRow, LocationRowRepository, StorageConnectionManager,
+    mock::{mock_store_a, MockDataInserts, insert_extra_mock_data, MockData, mock_store_b},
+    LocationRow, KeyValueStoreRow, KeyValueType,
 };
 use tokio::sync::Mutex;
 use util::{inline_edit, inline_init};
@@ -22,10 +21,10 @@ use crate::{
         },
         settings::{BatchSize, SyncSettings},
         synchroniser::Synchroniser,
-    },
+    }, test_helpers::{setup_all_and_service_provider, ServiceTestContext},
 };
 
-use super::status::{get_latest_sync_status, FullSyncStatus};
+use super::status::{FullSyncStatus};
 
 const PORT: u16 = 12345;
 
@@ -39,13 +38,17 @@ macro_rules! assert_between {
 
 #[actix_rt::test]
 async fn sync_status() {
-    let (_, connection, connection_manager, _) =
-        setup_all("sync_status", MockDataInserts::none().names().stores()).await;
+    let ServiceTestContext {
+        connection,
+        service_provider,
+        ..
+    } =
+        setup_all_and_service_provider("sync_status", MockDataInserts::none().names().stores()).await;
 
 // Test INITIALISATION
-        let  tester = get_initialisation_sync_status_tester(connection_manager.clone());
+        let  tester = get_initialisation_sync_status_tester(service_provider.clone());
     let tester_data = Data::new(Mutex::new(tester));
-    run_server_and_sync(connection_manager.clone(), tester_data.clone(), PORT)
+    run_server_and_sync(service_provider.clone(), tester_data.clone(), PORT)
         .await
         .unwrap();
     tester_data.lock().await.try_route("final".to_string());
@@ -53,20 +56,29 @@ async fn sync_status() {
     // Test PUSH and ERROR
 
     // Insert some location rows to be pushed
-    let repo = LocationRowRepository::new(&connection);
-    for i in 1..=3 {
-        repo.upsert_one(&inline_init(|r: &mut LocationRow| {
-            r.id = i.to_string();
-            r.store_id = mock_store_a().id;
-        }))
-        .unwrap();
-    }
+    insert_extra_mock_data(
+        &connection,
+        inline_init(|r: &mut MockData| {
+            r.key_value_store_rows = vec![ inline_init(|r: &mut KeyValueStoreRow| {
+                r.id = KeyValueType::SettingsSyncSiteId;
+                r.value_int = Some(mock_store_b().site_id);
+            })];
+            r.locations = 
+                (1..=3).into_iter().map(|i| inline_init(|r: &mut LocationRow| {
+                    r.id = i.to_string();
+                    r.store_id = mock_store_a().id;
+                })).collect();
+            
+        }),
+    ).await;
+    let ctx = service_provider.context().unwrap();
+assert_eq!(service_provider.sync_status_service.number_of_records_in_push_queue(&ctx).unwrap(), 3);
 
-    let tester = get_push_and_error_sync_status_tester(connection_manager.clone()) ;
+    let tester = get_push_and_error_sync_status_tester(service_provider.clone()) ;
 
     let tester_data = Data::new(Mutex::new(tester));
     let result =
-        run_server_and_sync(connection_manager.clone(), tester_data.clone(), PORT + 1).await;
+        run_server_and_sync(service_provider.clone(), tester_data.clone(), PORT + 1).await;
 
     assert!(matches!(result, Err(_)));
     tester_data.lock().await.try_route("final".to_string());
@@ -80,8 +92,8 @@ async fn sync_status() {
 /// * /acknowledged_records (placeholder)
 /// * /site (placeholder)
 /// * /final (manually called as last step)
-fn get_initialisation_sync_status_tester(connection_manager: StorageConnectionManager) -> Tester {
-    Tester::new(connection_manager.clone())
+fn get_initialisation_sync_status_tester(service_provider: Arc<ServiceProvider>) -> Tester {
+    Tester::new(service_provider.clone())
     .add_test(
         "initialise",
         |TestInput {
@@ -307,8 +319,8 @@ fn get_initialisation_sync_status_tester(connection_manager: StorageConnectionMa
 /// * /site_status
 /// * /central_records (returns an error)
 /// * /final (manually called as last step)
-fn get_push_and_error_sync_status_tester(connection_manager: StorageConnectionManager) -> Tester {
-    Tester::new(connection_manager.clone())
+fn get_push_and_error_sync_status_tester(service_provider: Arc<ServiceProvider>) -> Tester {
+    Tester::new(service_provider.clone())
     .add_test(
         "queued_records",
         |TestInput {
@@ -419,7 +431,7 @@ fn get_push_and_error_sync_status_tester(connection_manager: StorageConnectionMa
                 r.error = current_status.error.clone();
                 r
             });               
-             assert_eq!(current_status, new_status);
+            assert_eq!(current_status, new_status);
 
             assert_eq!(current_status.error.unwrap(), "Api error while pulling central records: Could not parse response body, error: (expected value at line 1 column 1) reponse; (invalid) ");
 
@@ -433,7 +445,7 @@ fn get_push_and_error_sync_status_tester(connection_manager: StorageConnectionMa
 
 /// Create synchroniser and server and run, returning synchroniser result
 async fn run_server_and_sync(
-    connection_manager: StorageConnectionManager,
+    service_provider: Arc<ServiceProvider>,
     tester_data: TesterData,
     port: u16,
 ) -> anyhow::Result<()> {
@@ -450,8 +462,7 @@ async fn run_server_and_sync(
         },
     };
 
-    let service_provider = Data::new(ServiceProvider::new(connection_manager.clone(), "app_data"));
-    let synchroniser = Synchroniser::new(sync_settings.clone(), service_provider).unwrap();
+    let synchroniser = Synchroniser::new(sync_settings.clone(), service_provider.clone().into()).unwrap();
 
     async fn entry(path: web::Path<String>, tester: TesterData) -> String {
         tester.lock().await.try_route(path.to_string())
@@ -500,7 +511,7 @@ type TesterData = Data<Mutex<Tester>>;
 
 /// Helper struct for defining mock server routes and tests withing routes
 struct Tester {
-    connection_manager: StorageConnectionManager,
+    service_provider: Arc<ServiceProvider>,
     previous_status: FullSyncStatus,
     previous_date: NaiveDateTime,
     iterations: HashMap<String, u32>,
@@ -508,9 +519,9 @@ struct Tester {
 }
 
 impl Tester {
-    fn new(connection_manager: StorageConnectionManager) -> Self {
+    fn new(service_provider: Arc<ServiceProvider>) -> Self {
         Tester {
-            connection_manager,
+            service_provider,
             previous_status: Default::default(),
             iterations: HashMap::new(),
             tests: HashMap::new(),
@@ -530,7 +541,7 @@ impl Tester {
             None => unreachable!("Could not match route ({})", route),
         };
 
-        let connection = self.connection_manager.connection().unwrap();
+        let ctx = self.service_provider.context().unwrap();
 
         let iteration = self.iterations.entry(route.clone()).or_insert(0);
 
@@ -538,7 +549,7 @@ impl Tester {
 
         let input = TestInput {
             now,
-            current_status: get_latest_sync_status(&connection).unwrap(),
+            current_status: self.service_provider.sync_status_service.get_latest_sync_status(&ctx).unwrap(),
             previous_status: self.previous_status.clone(),
             iteration: *iteration,
             previous_datetime: self.previous_date,
