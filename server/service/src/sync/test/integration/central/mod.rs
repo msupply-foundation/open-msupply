@@ -63,7 +63,7 @@ async fn test_central_sync_record(identifier: &str, tester: &dyn SyncRecordTeste
     }
 
     // With re-initialisation
-    let identifier = format!("with_reinitialisation_{}", identifier);
+    let identifier = format!("with_reinit_{}", identifier);
     println!("test_central_sync_record_{}_init", identifier);
 
     let central_server_configurations = ConfigureCentralServer::from_env();

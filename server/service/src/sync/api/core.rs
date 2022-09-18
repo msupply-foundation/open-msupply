@@ -18,7 +18,6 @@ use super::*;
 pub(crate) struct SyncApiV5 {
     pub(crate) server_url: Url,
     pub(crate) credentials: SyncCredentials,
-    pub(crate) client: Client,
     pub(crate) headers: HeaderMap,
 }
 
@@ -50,7 +49,6 @@ impl SyncApiV5 {
 
         Ok(SyncApiV5 {
             server_url: Url::parse(&settings.url)?,
-            client: Client::new(),
             credentials: SyncCredentials {
                 username: settings.username.clone(),
                 password_sha256: settings.password_sha256.clone(),
@@ -65,7 +63,6 @@ impl SyncApiV5 {
 
         SyncApiV5 {
             server_url: Url::parse(&url).unwrap(),
-            client: Client::new(),
             credentials: SyncCredentials {
                 username: site_name.to_string(),
                 password_sha256: sha256(&password),
@@ -79,8 +76,7 @@ impl SyncApiV5 {
         T: Serialize + ?Sized,
     {
         let url = self.server_url.join(route).context("Failed to parse url")?;
-        let result = self
-            .client
+        let result = Client::new()
             .get(url.clone())
             .basic_auth(
                 &self.credentials.username,
@@ -103,8 +99,7 @@ impl SyncApiV5 {
         T: Serialize,
     {
         let url = self.server_url.join(route).context("Failed to parse url")?;
-        let result = self
-            .client
+        let result = Client::new()
             .post(url.clone())
             .basic_auth(
                 &self.credentials.username,
