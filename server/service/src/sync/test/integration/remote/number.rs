@@ -24,42 +24,42 @@ impl SyncRecordTester for NumberRecordTester {
             id: uuid(),
             value: gen_i32() as i64,
             store_id: store_id.to_string(),
-            r#type: NumberRowType::InboundShipment,
+            r#type: NumberRowType::InboundShipment.to_string(),
         };
 
         let mut row_1 = NumberRow {
             id: uuid(),
             value: gen_i32() as i64,
             store_id: store_id.to_string(),
-            r#type: NumberRowType::OutboundShipment,
+            r#type: NumberRowType::OutboundShipment.to_string(),
         };
 
         let mut row_2 = NumberRow {
             id: uuid(),
             value: gen_i32() as i64,
             store_id: store_id.to_string(),
-            r#type: NumberRowType::InventoryAdjustment,
+            r#type: NumberRowType::InventoryAdjustment.to_string(),
         };
 
         let mut row_3 = NumberRow {
             id: uuid(),
             value: gen_i32() as i64,
             store_id: store_id.to_string(),
-            r#type: NumberRowType::RequestRequisition,
+            r#type: NumberRowType::RequestRequisition.to_string(),
         };
 
         let mut row_4 = NumberRow {
             id: uuid(),
             value: gen_i32() as i64,
             store_id: store_id.to_string(),
-            r#type: NumberRowType::ResponseRequisition,
+            r#type: NumberRowType::ResponseRequisition.to_string(),
         };
 
         let mut row_5 = NumberRow {
             id: uuid(),
             value: gen_i32() as i64,
             store_id: store_id.to_string(),
-            r#type: NumberRowType::Stocktake,
+            r#type: NumberRowType::Stocktake.to_string(),
         };
 
         result.push(TestStepData {

@@ -1,6 +1,6 @@
 use crate::{
     service_provider::ServiceProvider,
-    sync::{settings::SyncSettings, SyncCredentials},
+    sync::{settings::SyncSettings, sync_api_credentials::SyncCredentials},
 };
 
 use anyhow::Context;
