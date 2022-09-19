@@ -29,7 +29,7 @@ export type PermissionsQueryVariables = Types.Exact<{
 }>;
 
 
-export type PermissionsQuery = { __typename: 'FullQuery', me: { __typename: 'UserNode', username: string, permissions: { __typename: 'UserStorePermissionConnector', totalCount: number, nodes: Array<{ __typename: 'UserStorePermissionNode', permissions: Array<Types.UserPermissionNodePermission>, storeId: string }> } } };
+export type PermissionsQuery = { __typename: 'FullQuery', me: { __typename: 'UserNode', username: string, permissions: { __typename: 'UserStorePermissionConnector', totalCount: number, nodes: Array<{ __typename: 'UserStorePermissionNode', permissions: Array<Types.UserPermission>, storeId: string }> } } };
 
 export const UserStoreNodeFragmentDoc = gql`
     fragment UserStoreNode on UserStoreNode {
