@@ -92,7 +92,7 @@ const ITEM_2: (&'static str, &'static str) = (
     "item_name": "Non stock items 2",
     "start_of_year_date": "0000-00-00",
     "manufacture_method": "",
-    "default_pack_size": 1,
+    "default_pack_size": 2,
     "dose_picture": "data:image/png;base64,",
     "atc_category": "",
     "medication_purpose": "",
@@ -176,6 +176,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                 unit_id: None,
                 r#type: ItemRowType::NonStock,
                 legacy_record: ordered_simple_json(ITEM_1.1).unwrap(),
+                default_pack_size: 1,
             }),
         ),
         TestSyncPullRecord::new_pull_upsert(
@@ -188,6 +189,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                 unit_id: Some("A02C91EB6C77400BA783C4CD7C565F29".to_owned()),
                 r#type: ItemRowType::Stock,
                 legacy_record: ordered_simple_json(ITEM_2.1).unwrap(),
+                default_pack_size: 2,
             }),
         ),
     ]

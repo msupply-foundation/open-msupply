@@ -47,14 +47,13 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context()?;
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
-    map_response(service_provider.invoice_service.insert_outbound_shipment(
-        &service_context,
-        store_id,
-        &user.user_id,
-        input.to_domain(),
-    ))
+    map_response(
+        service_provider
+            .invoice_service
+            .insert_outbound_shipment(&service_context, input.to_domain()),
+    )
 }
 
 pub fn map_response(from: Result<Invoice, ServiceError>) -> Result<InsertResponse> {

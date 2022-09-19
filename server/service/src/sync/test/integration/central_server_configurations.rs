@@ -4,7 +4,7 @@ use std::env;
 use crate::sync::{
     api::{to_json, SyncApiError, SyncApiV5},
     settings::{BatchSize, SyncSettings},
-    SyncCredentials,
+    sync_api_credentials::SyncCredentials,
 };
 
 use super::with_retry;

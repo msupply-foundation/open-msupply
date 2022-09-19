@@ -31,7 +31,7 @@ pub enum DeleteResponse {
 }
 
 pub fn delete(ctx: &Context<'_>, store_id: &str, input: DeleteInput) -> Result<DeleteResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::MutateInboundShipment,
@@ -40,12 +40,12 @@ pub fn delete(ctx: &Context<'_>, store_id: &str, input: DeleteInput) -> Result<D
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context()?;
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
     map_response(
         service_provider
             .invoice_line_service
-            .delete_inbound_shipment_service_line(&service_context, store_id, input.to_domain()),
+            .delete_inbound_shipment_service_line(&service_context, input.to_domain()),
     )
 }
 
@@ -98,6 +98,7 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
         // Standard Graphql Errors
         ServiceError::NotThisInvoiceLine(_) => BadUserInput(formatted_error),
         ServiceError::NotAnInboundShipment => BadUserInput(formatted_error),
+        ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 
@@ -126,8 +127,7 @@ mod test {
     type ServiceInput = DeleteInboundShipmentLine;
     type ServiceError = DeleteInboundShipmentServiceLineError;
 
-    type DeleteLineMethod =
-        dyn Fn(&str, ServiceInput) -> Result<String, ServiceError> + Sync + Send;
+    type DeleteLineMethod = dyn Fn(ServiceInput) -> Result<String, ServiceError> + Sync + Send;
 
     pub struct TestService(pub Box<DeleteLineMethod>);
 
@@ -135,10 +135,9 @@ mod test {
         fn delete_inbound_shipment_service_line(
             &self,
             _: &ServiceContext,
-            store_id: &str,
             input: ServiceInput,
         ) -> Result<String, ServiceError> {
-            self.0(store_id, input)
+            self.0(input)
         }
     }
 
@@ -181,7 +180,7 @@ mod test {
         }));
 
         // LineDoesNotExist
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::LineDoesNotExist)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::LineDoesNotExist)));
 
         let expected = json!({
             "deleteInboundShipmentServiceLine": {
@@ -201,7 +200,7 @@ mod test {
         );
 
         // InvoiceDoesNotExist
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::InvoiceDoesNotExist)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::InvoiceDoesNotExist)));
 
         let expected = json!({
             "deleteInboundShipmentServiceLine": {
@@ -221,7 +220,7 @@ mod test {
         );
 
         // CannotEditInvoice
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::CannotEditInvoice)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::CannotEditInvoice)));
 
         let expected = json!({
             "deleteInboundShipmentServiceLine": {
@@ -241,7 +240,7 @@ mod test {
         );
 
         // NotAnInboundShipment
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotAnInboundShipment)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NotAnInboundShipment)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -253,7 +252,7 @@ mod test {
         );
 
         // NotThisInvoiceLine
-        let test_service = TestService(Box::new(|_, _| {
+        let test_service = TestService(Box::new(|_| {
             Err(ServiceError::NotThisInvoiceLine("id".to_string()))
         }));
         let expected_message = "Bad user input";
@@ -288,8 +287,7 @@ mod test {
         "#;
 
         // Success
-        let test_service = TestService(Box::new(|store_id, input| {
-            assert_eq!(store_id, "store_a");
+        let test_service = TestService(Box::new(|input| {
             assert_eq!(
                 input,
                 ServiceInput {

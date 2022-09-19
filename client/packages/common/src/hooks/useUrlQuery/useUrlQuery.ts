@@ -16,17 +16,14 @@ export const useUrlQuery = ({ skipParse = [] }: useUrlQueryProps = {}) => {
   const updateQuery = (values: UrlQueryObject, overwrite = false) => {
     const newQueryObject = overwrite
       ? {}
-      : { ...parseSearchParams(searchParams, skipParse) };
+      : Object.fromEntries(searchParams.entries());
+
     Object.entries(values).forEach(([key, value]) => {
       if (!value) delete newQueryObject[key];
-      else newQueryObject[key] = value;
+      else newQueryObject[key] = String(value);
     });
-    setSearchParams(
-      Object.fromEntries(
-        // SearchParams requires values to be strings
-        Object.entries(newQueryObject).map(([key, val]) => [key, String(val)])
-      )
-    );
+
+    setSearchParams(newQueryObject, { replace: true });
   };
 
   return {

@@ -3,6 +3,8 @@ mod integration;
 mod pull_and_push;
 pub(crate) mod test_data;
 
+use std::convert::TryInto;
+
 use super::translations::{IntegrationRecords, PullDeleteRecordTable};
 use crate::sync::translations::PullUpsertRecord;
 use repository::{mock::MockData, *};
@@ -149,7 +151,7 @@ pub(crate) async fn check_records_against_database(
                 assert_eq!(
                     NumberRowRepository::new(&con)
                         .find_one_by_type_and_store(
-                            &comparison_record.r#type,
+                            &comparison_record.r#type.clone().try_into().unwrap(),
                             &comparison_record.store_id
                         )
                         .unwrap()

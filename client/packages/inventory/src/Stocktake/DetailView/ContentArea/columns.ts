@@ -90,7 +90,8 @@ export const useStocktakeColumns = ({
                 ArrayUtils.ifTheSameElseDefault(lines, 'expiryDate', null) ??
                 '';
               return (
-                (expiryDate && Formatter.expiryDate(new Date(expiryDate))) || ''
+                (expiryDate && Formatter.expiryDate(new Date(expiryDate))) ||
+                '[multiple]'
               );
             } else {
               return row.expiryDate
@@ -104,7 +105,7 @@ export const useStocktakeColumns = ({
               const expiryDate = ArrayUtils.ifTheSameElseDefault(
                 lines,
                 'expiryDate',
-                null
+                '[multiple]'
               );
               return expiryDate;
             } else {
@@ -121,7 +122,11 @@ export const useStocktakeColumns = ({
             if ('lines' in row) {
               const { lines } = row;
               return (
-                ArrayUtils.ifTheSameElseDefault(lines, 'packSize', '') ?? ''
+                ArrayUtils.ifTheSameElseDefault(
+                  lines,
+                  'packSize',
+                  '[multiple]'
+                ) ?? ''
               );
             } else {
               return row.packSize ?? '';
@@ -130,7 +135,11 @@ export const useStocktakeColumns = ({
           accessor: ({ rowData }) => {
             if ('lines' in rowData) {
               const { lines } = rowData;
-              return ArrayUtils.ifTheSameElseDefault(lines, 'packSize', '');
+              return ArrayUtils.ifTheSameElseDefault(
+                lines,
+                'packSize',
+                '[multiple]'
+              );
             } else {
               return rowData.packSize;
             }
@@ -146,12 +155,11 @@ export const useStocktakeColumns = ({
           if ('lines' in row) {
             const { lines } = row;
             return (
-              ArrayUtils.ifTheSameElseDefault(
-                lines,
-                'snapshotNumberOfPacks',
-                ''
-              ) ?? ''
-            );
+              lines.reduce(
+                (total, line) => total + line.snapshotNumberOfPacks,
+                0
+              ) ?? 0
+            ).toString();
           } else {
             return row.snapshotNumberOfPacks ?? '';
           }
@@ -159,11 +167,12 @@ export const useStocktakeColumns = ({
         accessor: ({ rowData }) => {
           if ('lines' in rowData) {
             const { lines } = rowData;
-            return ArrayUtils.ifTheSameElseDefault(
-              lines,
-              'snapshotNumberOfPacks',
-              ''
-            );
+            return (
+              lines.reduce(
+                (total, line) => total + line.snapshotNumberOfPacks,
+                0
+              ) ?? 0
+            ).toString();
           } else {
             return rowData.snapshotNumberOfPacks;
           }
@@ -178,12 +187,11 @@ export const useStocktakeColumns = ({
           if ('lines' in row) {
             const { lines } = row;
             return (
-              ArrayUtils.ifTheSameElseDefault(
-                lines,
-                'countedNumberOfPacks',
-                ''
-              ) ?? ''
-            );
+              lines.reduce(
+                (total, line) => total + (line.countedNumberOfPacks ?? 0),
+                0
+              ) ?? 0
+            ).toString();
           } else {
             return row.countedNumberOfPacks ?? '';
           }
@@ -191,11 +199,12 @@ export const useStocktakeColumns = ({
         accessor: ({ rowData }) => {
           if ('lines' in rowData) {
             const { lines } = rowData;
-            return ArrayUtils.ifTheSameElseDefault(
-              lines,
-              'countedNumberOfPacks',
-              ''
-            );
+            return (
+              lines.reduce(
+                (total, line) => total + (line.countedNumberOfPacks ?? 0),
+                0
+              ) ?? 0
+            ).toString();
           } else {
             return rowData.countedNumberOfPacks;
           }

@@ -19,7 +19,6 @@ use repository::{
     ChangelogFilter, EqualFilter, KeyValueStoreRepository, RepositoryError, StorageConnection,
     Store, StoreFilter, StoreRepository,
 };
-pub use sync_api_credentials::SyncCredentials;
 use thiserror::Error;
 
 #[derive(Error, Debug)]

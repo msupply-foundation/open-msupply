@@ -11,7 +11,7 @@ use util::{inline_edit, inline_init, uuid::uuid};
 use crate::{
     processors::test_helpers::delay_for_processor,
     requisition::{
-        request_requisition::{UpdateRequestRequisition, UpdateRequestRequstionStatus},
+        request_requisition::{UpdateRequestRequisition, UpdateRequestRequistionStatus},
         response_requisition::{UpdateResponseRequisition, UpdateResponseRequstionStatus},
     },
     service_provider::ServiceProvider,
@@ -79,7 +79,7 @@ async fn requisition_transfer() {
     let test = || async move {
         let mut tester =
             RequisitionTransferTester::new(&request_store, &response_store, &item1, &item2);
-        let ctx = service_provider.context().unwrap();
+        let ctx = service_provider.basic_context().unwrap();
 
         tester.insert_request_requisition(&connection).await;
         // Need to do manual trigger here since inserting requisition won't trigger processor
@@ -194,15 +194,16 @@ impl RequisitionTransferTester {
     }
 
     pub(crate) fn update_request_requisition_to_sent(&self, service_provider: &ServiceProvider) {
-        let ctx = service_provider.context().unwrap();
+        let ctx = service_provider
+            .context(self.request_store.id.clone(), "".to_string())
+            .unwrap();
         service_provider
             .requisition_service
             .update_request_requisition(
                 &ctx,
-                &self.request_store.id,
                 inline_init(|r: &mut UpdateRequestRequisition| {
                     r.id = self.request_requisition.id.clone();
-                    r.status = Some(UpdateRequestRequstionStatus::Sent);
+                    r.status = Some(UpdateRequestRequistionStatus::Sent);
                 }),
             )
             .unwrap();
@@ -278,14 +279,14 @@ impl RequisitionTransferTester {
         &mut self,
         service_provider: &ServiceProvider,
     ) {
-        let ctx = service_provider.context().unwrap();
+        let ctx = service_provider
+            .context(self.response_store.id.clone(), "".to_string())
+            .unwrap();
 
         let response_requisition = service_provider
             .requisition_service
             .update_response_requisition(
                 &ctx,
-                &self.response_store.id,
-                "user_id",
                 inline_init(|r: &mut UpdateResponseRequisition| {
                     r.id = self.response_requisition.clone().map(|r| r.id).unwrap();
                     r.status = Some(UpdateResponseRequstionStatus::Finalised);

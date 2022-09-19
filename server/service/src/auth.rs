@@ -59,6 +59,7 @@ pub enum Resource {
     // reporting
     Report,
     // view/edit server setting
+    QueryLog,
     ServerAdmin,
 }
 
@@ -203,6 +204,11 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
             PermissionDSL::HasPermission(Permission::Report),
         ]),
     );
+
+    map.insert(
+        Resource::QueryLog,
+        PermissionDSL::HasPermission(Permission::LogQuery),
+    );
     map
 }
 
@@ -245,16 +251,15 @@ pub fn validate_auth(
     auth_data: &AuthData,
     auth_token: &Option<String>,
 ) -> Result<ValidatedUserAuth, AuthError> {
-    if auth_data.debug_no_access_control {
-        return Ok(dummy_user_auth());
-    }
-
     let auth_token = match auth_token {
         Some(token) => token,
         None => {
+            if auth_data.debug_no_access_control {
+                return Ok(dummy_user_auth());
+            }
             return Err(AuthError::Denied(AuthDeniedKind::NotAuthenticated(
                 "Missing auth token".to_string(),
-            )))
+            )));
         }
     };
     let service = TokenService::new(
@@ -333,6 +338,11 @@ fn validate_resource_permissions(
             return Ok(());
         }
         PermissionDSL::HasStoreAccess => {
+            // The user_permissions are already filtered by store_id if resource_request.store_id
+            // is specified. What remains to be checked is:
+            // 1) that store_id is set, i.e. validate_auth() is used correctly with the required
+            // parameters
+            // 2) the filtered user_permissions contain StoreAccess
             let store_id = match &resource_request.store_id {
                 Some(id) => id,
                 None => return Err("Store id not specified in request".to_string()),
@@ -728,7 +738,9 @@ mod permission_validation_test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider
+            .context("".to_string(), user_id.to_string())
+            .unwrap();
         let permission_repo = UserPermissionRowRepository::new(&context.connection);
 
         let mut service = AuthService::new();
@@ -888,7 +900,7 @@ mod permission_validation_test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider.basic_context().unwrap();
 
         let auth_data = AuthData {
             auth_token_secret: "some secret".to_string(),
