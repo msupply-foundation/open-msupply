@@ -12,7 +12,7 @@ import { AuthenticationResponse } from './api';
 import { UserStoreNodeFragment } from './api/operations.generated';
 import {
   PropsWithChildrenOnly,
-  UserPermissionNodePermission,
+  UserPermission,
 } from '@common/types';
 import { RouteBuilder } from '../utils/navigation';
 import { matchPath } from 'react-router-dom';
@@ -32,7 +32,7 @@ export enum AuthError {
 type User = {
   id: string;
   name: string;
-  permissions: UserPermissionNodePermission[];
+  permissions: UserPermission[];
 };
 
 interface AuthCookie {
@@ -62,7 +62,7 @@ interface AuthControl {
   storeId: string;
   token: string;
   user?: User;
-  userHasPermission: (permission: UserPermissionNodePermission) => boolean;
+  userHasPermission: (permission: UserPermission) => boolean;
 }
 
 export const getAuthCookie = (): AuthCookie => {
@@ -160,7 +160,7 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
   const getUserPermissions = async (
     token?: string,
     store?: UserStoreNodeFragment
-  ): Promise<UserPermissionNodePermission[]> => {
+  ): Promise<UserPermission[]> => {
     const permissions = await getPermissions({
       storeId: store?.id || '',
       token,
@@ -270,7 +270,7 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
     setCookie(undefined);
   };
 
-  const userHasPermission = (permission: UserPermissionNodePermission) =>
+  const userHasPermission = (permission: UserPermission) =>
     cookie?.user?.permissions.some(p => p === permission) || false;
 
   const val = useMemo(
