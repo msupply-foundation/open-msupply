@@ -38,7 +38,7 @@ mod test_exec_concurrent {
     // conclusion: I couldn't see any performance difference but would suggest using tokio with worker thread for
     // test that are testing concurrency, you can see that finish order is random for multiple worker thread vs single thread
     // which shows that if there is a problem with concurrency, it is more likely that multi worker thread would catch it
-    // rathern then single thread
+    // rather than single thread
 
     async fn test(identifier: &'static str) {
         let now = SystemTime::now();
