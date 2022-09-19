@@ -133,6 +133,6 @@ pub async fn setup_all_with_data(
     let connection = connection_manager.connection().unwrap();
 
     let core_data = insert_all_mock_data(&connection, inserts).await;
-    insert_extra_mock_data(&connection, extra_mock_data).await;
+    insert_extra_mock_data(&connection, extra_mock_data);
     (core_data, connection, connection_manager, settings)
 }
