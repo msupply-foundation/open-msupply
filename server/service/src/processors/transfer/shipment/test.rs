@@ -84,62 +84,66 @@ async fn invoice_transfers() {
         item2,
     );
 
-    let number_of_instance = 6;
+    let number_of_instances = 6;
 
-    let test_handle = exec_concurrent(test_input, number_of_instance, |_, test_input| async move {
-        let (service_provider, inbound_store, outbound_store, item1, item2) = test_input;
+    let test_handle = exec_concurrent(
+        test_input,
+        number_of_instances,
+        |_, test_input| async move {
+            let (service_provider, inbound_store, outbound_store, item1, item2) = test_input;
 
-        let ctx = service_provider.context().unwrap();
+            let ctx = service_provider.context().unwrap();
 
-        // Without delete
-        let mut tester =
-            ShipmentTransferTester::new(&inbound_store, &outbound_store, &item1, &item2);
+            // Without delete
+            let mut tester =
+                ShipmentTransferTester::new(&inbound_store, &outbound_store, &item1, &item2);
 
-        tester.insert_request_requisition(&service_provider).await;
-        delay_for_processor().await;
-        tester.check_response_requisition_created(&ctx.connection);
-        tester.insert_outbound_shipment(&ctx.connection);
-        delay_for_processor().await;
-        tester.check_inbound_shipment_not_created(&ctx.connection);
-        delay_for_processor().await;
-        tester.update_outbound_shipment_to_picked(&service_provider);
-        delay_for_processor().await;
-        tester.check_inbound_shipment_created(&ctx.connection);
-        delay_for_processor().await;
-        tester.check_outbound_shipment_was_linked(&ctx.connection);
-        delay_for_processor().await;
-        tester.update_outbound_shipment_lines(&service_provider);
-        delay_for_processor().await;
-        tester.update_outbound_shipment_to_shipped(&service_provider);
-        delay_for_processor().await;
-        tester.check_inbound_shipment_was_updated(&ctx.connection);
-        delay_for_processor().await;
-        tester.update_inbound_shipment_to_delivered(&service_provider);
-        delay_for_processor().await;
-        tester.check_outbound_shipment_status_matches_inbound_shipment(&ctx.connection);
-        delay_for_processor().await;
-        tester.update_inbound_shipment_to_verified(&service_provider);
-        delay_for_processor().await;
-        tester.check_outbound_shipment_status_matches_inbound_shipment(&ctx.connection);
-        delay_for_processor().await;
+            tester.insert_request_requisition(&service_provider).await;
+            delay_for_processor().await;
+            tester.check_response_requisition_created(&ctx.connection);
+            tester.insert_outbound_shipment(&ctx.connection);
+            delay_for_processor().await;
+            tester.check_inbound_shipment_not_created(&ctx.connection);
+            delay_for_processor().await;
+            tester.update_outbound_shipment_to_picked(&service_provider);
+            delay_for_processor().await;
+            tester.check_inbound_shipment_created(&ctx.connection);
+            delay_for_processor().await;
+            tester.check_outbound_shipment_was_linked(&ctx.connection);
+            delay_for_processor().await;
+            tester.update_outbound_shipment_lines(&service_provider);
+            delay_for_processor().await;
+            tester.update_outbound_shipment_to_shipped(&service_provider);
+            delay_for_processor().await;
+            tester.check_inbound_shipment_was_updated(&ctx.connection);
+            delay_for_processor().await;
+            tester.update_inbound_shipment_to_delivered(&service_provider);
+            delay_for_processor().await;
+            tester.check_outbound_shipment_status_matches_inbound_shipment(&ctx.connection);
+            delay_for_processor().await;
+            tester.update_inbound_shipment_to_verified(&service_provider);
+            delay_for_processor().await;
+            tester.check_outbound_shipment_status_matches_inbound_shipment(&ctx.connection);
+            delay_for_processor().await;
 
-        // With delete
-        let mut tester =
-            ShipmentTransferTester::new(&inbound_store, &outbound_store, &item1, &item2);
+            // With delete
+            let mut tester =
+                ShipmentTransferTester::new(&inbound_store, &outbound_store, &item1, &item2);
 
-        tester.insert_request_requisition(&service_provider).await;
-        delay_for_processor().await;
-        tester.check_response_requisition_created(&ctx.connection);
-        tester.insert_outbound_shipment(&ctx.connection);
-        delay_for_processor().await;
-        tester.update_outbound_shipment_to_picked(&service_provider);
-        delay_for_processor().await;
-        tester.check_inbound_shipment_created(&ctx.connection);
-        delay_for_processor().await;
-        tester.delete_outbound_shipment(&service_provider);
-        delay_for_processor().await;
-        tester.check_inbound_shipment_deleted(&ctx.connection);
-    });
+            tester.insert_request_requisition(&service_provider).await;
+            delay_for_processor().await;
+            tester.check_response_requisition_created(&ctx.connection);
+            tester.insert_outbound_shipment(&ctx.connection);
+            delay_for_processor().await;
+            tester.update_outbound_shipment_to_picked(&service_provider);
+            delay_for_processor().await;
+            tester.check_inbound_shipment_created(&ctx.connection);
+            delay_for_processor().await;
+            tester.delete_outbound_shipment(&service_provider);
+            delay_for_processor().await;
+            tester.check_inbound_shipment_deleted(&ctx.connection);
+        },
+    );
 
     tokio::select! {
          Err(err) = processors_task => unreachable!("{}", err),
