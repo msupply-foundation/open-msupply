@@ -379,10 +379,10 @@ impl ShipmentTransferTester {
         assert_eq!(inbound_shipment.on_hold, false);
         assert_eq!(inbound_shipment.allocated_datetime, None);
 
-        // assert_eq!(
-        //     inbound_shipment.requisition_id,
-        //     Some(self.request_requisition.id.clone())
-        // );
+        assert_eq!(
+            inbound_shipment.requisition_id,
+            Some(self.request_requisition.id.clone())
+        );
 
         check_shipment_status(&inbound_shipment, &self.outbound_shipment);
 
