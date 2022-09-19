@@ -18,18 +18,20 @@ pub struct DocumentFilterInput {
     pub r#type: Option<EqualFilterStringInput>,
 }
 
-fn to_domain_filter(f: DocumentFilterInput) -> DocumentFilter {
-    DocumentFilter {
-        name: f.name.map(|f| repository::StringFilter {
-            equal_to: f.equal_to,
-            not_equal_to: f.not_equal_to,
-            equal_any: f.equal_any,
-            not_equal_all: None,
-            like: None,
-            starts_with: None,
-            ends_with: None,
-        }),
-        r#type: f.r#type.map(EqualFilter::from),
+impl DocumentFilterInput {
+    fn to_domain_filter(self) -> DocumentFilter {
+        DocumentFilter {
+            name: self.name.map(|f| repository::StringFilter {
+                equal_to: f.equal_to,
+                not_equal_to: f.not_equal_to,
+                equal_any: f.equal_any,
+                not_equal_all: None,
+                like: None,
+                starts_with: None,
+                ends_with: None,
+            }),
+            r#type: self.r#type.map(EqualFilter::from),
+        }
     }
 }
 
@@ -69,7 +71,7 @@ pub fn documents(
     store_id: String,
     filter: Option<DocumentFilterInput>,
 ) -> Result<DocumentResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::QueryDocument,
@@ -80,9 +82,20 @@ pub fn documents(
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
 
+    let filter = filter
+        .map(|f| {
+            f.to_domain_filter().r#type(EqualFilter::equal_any(
+                user.context.iter().map(String::clone).collect(),
+            ))
+        })
+        .unwrap_or(DocumentFilter::new().r#type(EqualFilter::equal_any(
+            user.context.iter().map(String::clone).collect(),
+        )));
+
     let nodes: Vec<DocumentNode> = service_provider
         .document_service
-        .get_documents(&context, filter.map(to_domain_filter))?
+        .get_documents(&context, Some(filter))?
+        .into_iter()
         .into_iter()
         .map(|document| DocumentNode { document })
         .collect();

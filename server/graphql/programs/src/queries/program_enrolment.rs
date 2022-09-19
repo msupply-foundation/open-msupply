@@ -79,12 +79,15 @@ pub fn program_enrolments(
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
 
-    let filter =
-        filter
-            .map(|f| f.to_domain_filter())
-            .unwrap_or(ProgramEnrolmentFilter::new().r#type(EqualFilter::equal_any(
+    let filter = filter
+        .map(|f| {
+            f.to_domain_filter().r#type(EqualFilter::equal_any(
                 user.context.iter().map(String::clone).collect(),
-            )));
+            ))
+        })
+        .unwrap_or(ProgramEnrolmentFilter::new().r#type(EqualFilter::equal_any(
+            user.context.iter().map(String::clone).collect(),
+        )));
 
     let nodes: Vec<ProgramEnrolmentNode> = service_provider
         .program_enrolment_service

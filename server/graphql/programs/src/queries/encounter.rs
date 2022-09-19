@@ -100,7 +100,11 @@ pub fn encounters(
     let context = service_provider.basic_context()?;
 
     let filter = filter
-        .map(|f| f.to_domain_filter())
+        .map(|f| {
+            f.to_domain_filter().r#type(EqualFilter::equal_any(
+                user.context.iter().map(String::clone).collect(),
+            ))
+        })
         .unwrap_or(EncounterFilter::new().r#type(EqualFilter::equal_any(
             user.context.iter().map(String::clone).collect(),
         )));
