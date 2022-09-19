@@ -3,8 +3,10 @@ use repository::{
     RepositoryError, StorageConnection,
 };
 
+use crate::invoice::common::get_lines_for_invoice;
+
 use super::{
-    common::regenerate_inbound_shipment_lines, Operation, ShipmentTransferProcessor,
+    common::generate_inbound_shipment_lines, Operation, ShipmentTransferProcessor,
     ShipmentTransferProcessorRecord,
 };
 
@@ -37,6 +39,7 @@ impl ShipmentTransferProcessor for UpdateInboundShipmentProcessor {
             Operation::Upsert {
                 shipment,
                 linked_shipment,
+                ..
             } => (shipment, linked_shipment),
             _ => return Ok(None),
         };
@@ -59,7 +62,8 @@ impl ShipmentTransferProcessor for UpdateInboundShipmentProcessor {
         }
 
         // Execute
-        let (line_ids_to_delete, new_inbound_lines) = regenerate_inbound_shipment_lines(
+        let lines_to_delete = get_lines_for_invoice(connection, &inbound_shipment.invoice_row.id)?;
+        let new_inbound_lines = generate_inbound_shipment_lines(
             connection,
             &inbound_shipment.invoice_row.id,
             &outbound_shipment,
@@ -67,8 +71,8 @@ impl ShipmentTransferProcessor for UpdateInboundShipmentProcessor {
 
         let invoice_line_repository = InvoiceLineRowRepository::new(connection);
 
-        for id in line_ids_to_delete.iter() {
-            invoice_line_repository.delete(id)?;
+        for line in lines_to_delete.iter() {
+            invoice_line_repository.delete(&line.invoice_line_row.id)?;
         }
 
         for line in new_inbound_lines.iter() {
@@ -87,7 +91,10 @@ impl ShipmentTransferProcessor for UpdateInboundShipmentProcessor {
         let result = format!(
             "shipment ({}) deleted lines ({:?}) inserted lines ({:?})",
             updated_inbound_shipment.id,
-            line_ids_to_delete,
+            lines_to_delete
+                .into_iter()
+                .map(|l| l.invoice_row.id)
+                .collect::<Vec<String>>(),
             new_inbound_lines
                 .into_iter()
                 .map(|r| r.id)

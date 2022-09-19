@@ -16,4 +16,8 @@ When an inbound shipment is created from outbound shipment, we check for a requi
 
 ## Invoice Line on Update
 
-When outbound shipment is updated and inbound shipment was already generated, invoice lines will be dropped and and reinstanted to match outbound shipment (this is the simples way to update potentially changed invoice lines)
+When an outbound shipment is updated and an inbound shipment is already generated, invoice lines will be dropped and reinstated to match the outbound shipment (this is the simplest way to update potentially changed invoice lines)
+
+## Same site transfer (both stores on same site)
+
+You may want to refer to [requisition trasfer docs](../requisition/README.md#same-site-transfer-both-stores-on-same-site) for example of how one instance of triggered processor can itself upsert records and process them in the next iteration

@@ -1,6 +1,9 @@
 import React, { useEffect } from 'react';
 import { RecordPatch } from '@openmsupply-client/common';
-import { useDefaultServiceItem } from '@openmsupply-client/system';
+import {
+  toItemWithPackSize,
+  useDefaultServiceItem,
+} from '@openmsupply-client/system';
 import { useInbound } from '../../../api';
 import { DraftInboundLine } from './../../../../types';
 import { CreateDraft } from '../utils';
@@ -22,7 +25,7 @@ export const useDraftServiceLines = () => {
       const newDraftLines = lines.map(seed =>
         CreateDraft.serviceLine({
           invoiceId: id,
-          item: defaultServiceItem,
+          item: toItemWithPackSize({ item: defaultServiceItem }),
           seed,
         })
       );
@@ -32,7 +35,7 @@ export const useDraftServiceLines = () => {
         newDraftLines.push(
           CreateDraft.serviceLine({
             invoiceId: id,
-            item: defaultServiceItem,
+            item: toItemWithPackSize({ item: defaultServiceItem }),
           })
         );
       }
@@ -55,7 +58,7 @@ export const useDraftServiceLines = () => {
       if (defaultServiceItem) {
         const newRow = CreateDraft.serviceLine({
           invoiceId: id,
-          item: defaultServiceItem,
+          item: toItemWithPackSize({ item: defaultServiceItem }),
         });
         return currLines.concat(newRow);
       }

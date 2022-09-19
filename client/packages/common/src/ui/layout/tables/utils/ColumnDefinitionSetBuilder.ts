@@ -42,7 +42,8 @@ export type ColumnKey =
   | 'monthlyConsumption'
   | 'requestedQuantity'
   | 'supplyQuantity'
-  | 'stockOnHand';
+  | 'stockOnHand'
+  | 'theirReference';
 
 const getColumnLookup = <T extends RecordWithId>(): Record<
   ColumnKey,
@@ -68,10 +69,12 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     key: 'expiryDate',
     label: 'label.expiry',
     width: 100,
-    formatter: dateString =>
-      dateString
+    formatter: dateString => {
+      if (dateString === '[multiple]') return '[multiple]';
+      return dateString
         ? Formatter.expiryDate(new Date(dateString as string)) || ''
-        : '',
+        : '';
+    },
   },
 
   itemCode: {
@@ -244,6 +247,11 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     key: 'availableStockOnHand',
     width: 100,
     align: ColumnAlign.Right,
+  },
+  theirReference: {
+    label: 'label.reference',
+    key: 'theirReference',
+    width: 100,
   },
 });
 

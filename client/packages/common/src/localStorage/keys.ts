@@ -6,6 +6,7 @@ import { AuthError } from '../authentication/AuthContext';
 export type GroupByItem = {
   outboundShipment?: boolean;
   inboundShipment?: boolean;
+  stocktake?: boolean;
 };
 type AuthenticationCredentials = {
   store?: UserStoreNodeFragment | undefined;
@@ -21,6 +22,8 @@ export type LocalStorageRecord = {
   '/theme/logo': string;
   '/mru/credentials': AuthenticationCredentials;
   '/auth/error': AuthError | undefined;
+  '/pagination/rowsperpage': number;
+  '/columns/hidden': Record<string, string[]> | undefined;
 };
 
 export type LocalStorageKey = keyof LocalStorageRecord;

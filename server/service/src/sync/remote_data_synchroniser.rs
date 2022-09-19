@@ -1,14 +1,15 @@
 use std::time::{Duration, SystemTime};
 
-use super::api::*;
+use super::{api::*, SyncLogger, SyncLoggerError};
 use crate::sync::{
+    get_active_records_on_site_filter,
     translations::{translate_changelog, PushRecord},
-    ActiveStoresOnSite,
+    SyncStepProgress,
 };
 use log::info;
 use repository::{
-    ChangelogFilter, ChangelogRepository, ChangelogRow, EqualFilter, KeyValueStoreRepository,
-    KeyValueType, RepositoryError, StorageConnection, SyncBufferRowRepository,
+    ChangelogRepository, ChangelogRow, KeyValueStoreRepository, KeyValueType, RepositoryError,
+    StorageConnection, SyncBufferRowRepository,
 };
 use serde_json::json;
 use thiserror::Error;
@@ -29,13 +30,8 @@ pub(crate) enum RemotePullError {
     SaveSyncBufferError(RepositoryError),
     #[error("{0}")]
     ParsingV5RecordError(ParsingV5RecordError),
-}
-#[derive(Error, Debug)]
-pub(crate) enum RequestAndSetSiteInfoError {
-    #[error("Api error while requesting site info: {0:?}")]
-    RequestSiteInfoError(SyncApiError),
-    #[error("Failed to set site info: {0:?}")]
-    SetSiteInfoError(RepositoryError),
+    #[error("{0}")]
+    SyncLoggerError(SyncLoggerError),
 }
 
 pub struct RemoteDataSynchroniser {
@@ -53,30 +49,6 @@ impl RemoteDataSynchroniser {
 
         info!("Initialised remote sync records");
 
-        Ok(())
-    }
-
-    /// Request site info and persist it
-    pub(crate) async fn request_and_set_site_info(
-        &self,
-        connection: &StorageConnection,
-    ) -> Result<(), RequestAndSetSiteInfoError> {
-        info!("Requesting site info");
-        let site_info = self
-            .sync_api_v5
-            .get_site_info()
-            .await
-            .map_err(RequestAndSetSiteInfoError::RequestSiteInfoError)?;
-
-        let remote_sync_state = RemoteSyncState::new(&connection);
-        remote_sync_state
-            .set_site_uuid(site_info.id)
-            .map_err(RequestAndSetSiteInfoError::SetSiteInfoError)?;
-        remote_sync_state
-            .set_site_id(site_info.site_id)
-            .map_err(RequestAndSetSiteInfoError::SetSiteInfoError)?;
-
-        info!("Received site info");
         Ok(())
     }
 
@@ -101,7 +73,12 @@ impl RemoteDataSynchroniser {
     }
 
     /// Pull all records from the central server
-    pub(crate) async fn pull(&self, connection: &StorageConnection) -> Result<(), RemotePullError> {
+    pub(crate) async fn pull<'a>(
+        &self,
+        connection: &StorageConnection,
+        logger: &mut SyncLogger<'a>,
+    ) -> Result<(), RemotePullError> {
+        use RemotePullError::*;
         // Arbitrary batch size TODO: should come from settings
         const BATCH_SIZE: u32 = 500;
         let sync_buffer_repository = SyncBufferRowRepository::new(connection);
@@ -113,13 +90,13 @@ impl RemoteDataSynchroniser {
                 .sync_api_v5
                 .get_queued_records(BATCH_SIZE)
                 .await
-                .map_err(RemotePullError::PullError)?;
+                .map_err(PullError)?;
 
             let total_queue_length = sync_batch.queue_length;
             let sync_ids = sync_batch.extract_sync_ids();
             let sync_buffer_rows = sync_batch
                 .to_sync_buffer_rows()
-                .map_err(RemotePullError::ParsingV5RecordError)?;
+                .map_err(ParsingV5RecordError)?;
 
             let number_of_pulled_records = sync_buffer_rows.len() as u64;
 
@@ -129,16 +106,21 @@ impl RemoteDataSynchroniser {
                 total_queue_length - number_of_pulled_records
             );
 
+            let remaining = total_queue_length - number_of_pulled_records;
+            logger
+                .progress(SyncStepProgress::PullRemote, remaining, total_queue_length)
+                .map_err(SyncLoggerError)?;
+
             if number_of_pulled_records > 0 {
                 sync_buffer_repository
                     .upsert_many(&sync_buffer_rows)
-                    .map_err(RemotePullError::SaveSyncBufferError)?;
+                    .map_err(SaveSyncBufferError)?;
 
                 info!("Acknowledging remote sync records...");
                 self.sync_api_v5
                     .post_acknowledged_records(sync_ids)
                     .await
-                    .map_err(RemotePullError::AcknowledgedError)?;
+                    .map_err(AcknowledgedError)?;
                 info!("Acknowledged remote sync records");
             } else {
                 break;
@@ -149,13 +131,14 @@ impl RemoteDataSynchroniser {
     }
 
     // Push all records in change log to central server
-    pub(crate) async fn push(&self, connection: &StorageConnection) -> Result<(), anyhow::Error> {
+    pub(crate) async fn push<'a>(
+        &self,
+        connection: &StorageConnection,
+        logger: &mut SyncLogger<'a>,
+    ) -> Result<(), anyhow::Error> {
         let changelog = ChangelogRepository::new(connection);
-        let active_stores = ActiveStoresOnSite::get(&connection)?;
-        let change_log_filter = Some(
-            ChangelogFilter::new()
-                .store_id(EqualFilter::equal_any_or_null(active_stores.store_ids())),
-        );
+
+        let change_log_filter = get_active_records_on_site_filter(connection)?;
 
         const BATCH_SIZE: u32 = 1024;
         let state = RemoteSyncState::new(connection);
@@ -186,6 +169,14 @@ impl RemoteDataSynchroniser {
                 "Remote push: {} records pushed to central server",
                 records_len
             );
+
+            logger
+                .progress(
+                    SyncStepProgress::PushRemote,
+                    change_logs_total - records_len as u64,
+                    change_logs_total,
+                )
+                .map_err(RemotePullError::SyncLoggerError)?;
 
             // Update cursor only if record for that cursor has been pushed/processed
             if let Some(last_pushed_cursor_id) = last_pushed_cursor {
@@ -318,22 +309,12 @@ impl<'a> RemoteSyncState<'a> {
             .set_bool(KeyValueType::RemoteSyncInitilisationFinished, Some(true))
     }
 
-    pub fn set_site_id(&self, site_id: i32) -> Result<(), RepositoryError> {
-        self.key_value_store
-            .set_i32(KeyValueType::SettingsSyncSiteId, Some(site_id))
-    }
-
-    pub fn set_site_uuid(&self, uuid: String) -> Result<(), RepositoryError> {
-        self.key_value_store
-            .set_string(KeyValueType::SettingsSyncSiteUuid, Some(uuid))
-    }
-
-    pub fn get_push_cursor(&self) -> Result<u32, RepositoryError> {
+    pub fn get_push_cursor(&self) -> Result<u64, RepositoryError> {
         let value = self
             .key_value_store
             .get_i32(KeyValueType::RemoteSyncPushCursor)?;
         let cursor = value.unwrap_or(0);
-        Ok(cursor as u32)
+        Ok(cursor as u64)
     }
 
     pub fn update_push_cursor(&self, cursor: u32) -> Result<(), RepositoryError> {

@@ -17,12 +17,15 @@ use crate::{
     },
     invoice_line::outbound_shipment_line::UpdateOutboundShipmentLine,
     processors::test_helpers::{delay_for_processor, exec_concurrent},
-    requisition::request_requisition::{UpdateRequestRequisition, UpdateRequestRequstionStatus},
+    requisition::request_requisition::{UpdateRequestRequisition, UpdateRequestRequistionStatus},
     service_provider::ServiceProvider,
     test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
 };
 
-#[actix_rt::test]
+/// This test is for requesting and responding store on the same site
+/// See same site transfer diagram in requisition README.md for example of how
+/// changelog is upserted and processed by the same instance of triggered processor
+#[tokio::test(flavor = "multi_thread", worker_threads = 3)]
 async fn invoice_transfers() {
     let site_id = 25;
     let outbound_store_name = inline_init(|r: &mut NameRow| {
@@ -92,7 +95,7 @@ async fn invoice_transfers() {
         |_, test_input| async move {
             let (service_provider, inbound_store, outbound_store, item1, item2) = test_input;
 
-            let ctx = service_provider.context().unwrap();
+            let ctx = service_provider.basic_context().unwrap();
 
             // Without delete
             let mut tester =
@@ -273,7 +276,10 @@ impl ShipmentTransferTester {
     // Need request/response requisition to check that requisitions are linked to invoices correctly
 
     pub(crate) async fn insert_request_requisition(&self, service_provider: &ServiceProvider) {
-        let ctx = service_provider.context().unwrap();
+        let ctx = service_provider
+            .context(self.inbound_store.id.clone(), "".to_string())
+            .unwrap();
+
         RequisitionRowRepository::new(&ctx.connection)
             .upsert_one(&self.request_requisition)
             .unwrap();
@@ -282,10 +288,9 @@ impl ShipmentTransferTester {
             .requisition_service
             .update_request_requisition(
                 &ctx,
-                &self.inbound_store.id,
                 inline_init(|r: &mut UpdateRequestRequisition| {
                     r.id = self.request_requisition.id.clone();
-                    r.status = Some(UpdateRequestRequstionStatus::Sent);
+                    r.status = Some(UpdateRequestRequistionStatus::Sent);
                 }),
             )
             .unwrap();
@@ -334,12 +339,13 @@ impl ShipmentTransferTester {
         &mut self,
         service_provider: &ServiceProvider,
     ) {
-        let ctx = service_provider.context().unwrap();
+        let ctx = service_provider
+            .context(self.outbound_store.id.clone(), "".to_string())
+            .unwrap();
         self.outbound_shipment = service_provider
             .invoice_service
             .update_outbound_shipment(
                 &ctx,
-                &self.outbound_store.id,
                 inline_init(|r: &mut UpdateOutboundShipment| {
                     r.id = self.outbound_shipment.id.clone();
                     r.status = Some(UpdateOutboundShipmentStatus::Picked);
@@ -425,14 +431,12 @@ impl ShipmentTransferTester {
 
     // This to be skipped on second attempt
     pub(crate) fn delete_outbound_shipment(&self, service_provider: &ServiceProvider) {
-        let ctx = service_provider.context().unwrap();
+        let ctx = service_provider
+            .context(self.outbound_store.id.clone(), "".to_string())
+            .unwrap();
         service_provider
             .invoice_service
-            .delete_outbound_shipment(
-                &ctx,
-                &self.outbound_store.id,
-                self.outbound_shipment.id.clone(),
-            )
+            .delete_outbound_shipment(&ctx, self.outbound_shipment.id.clone())
             .unwrap();
     }
     // This to be skipped on second attempt
@@ -456,7 +460,10 @@ impl ShipmentTransferTester {
     }
 
     pub(crate) fn update_outbound_shipment_lines(&mut self, service_provider: &ServiceProvider) {
-        let ctx = service_provider.context().unwrap();
+        let ctx = service_provider
+            .context(self.outbound_store.id.clone(), "".to_string())
+            .unwrap();
+
         InvoiceLineRowRepository::new(&ctx.connection)
             .delete(&self.outbound_shipment_line1.id)
             .unwrap();
@@ -465,7 +472,6 @@ impl ShipmentTransferTester {
             .invoice_line_service
             .update_outbound_shipment_line(
                 &ctx,
-                &self.outbound_store.id,
                 inline_init(|r: &mut UpdateOutboundShipmentLine| {
                     r.id = self.outbound_shipment_line2.id.clone();
                     r.number_of_packs = Some(21)
@@ -478,12 +484,14 @@ impl ShipmentTransferTester {
         &mut self,
         service_provider: &ServiceProvider,
     ) {
-        let ctx = service_provider.context().unwrap();
+        let ctx = service_provider
+            .context(self.outbound_store.id.clone(), "".to_string())
+            .unwrap();
+
         self.outbound_shipment = service_provider
             .invoice_service
             .update_outbound_shipment(
                 &ctx,
-                &self.outbound_store.id,
                 inline_init(|r: &mut UpdateOutboundShipment| {
                     r.id = self.outbound_shipment.id.clone();
                     r.status = Some(UpdateOutboundShipmentStatus::Shipped);
@@ -533,13 +541,14 @@ impl ShipmentTransferTester {
         &mut self,
         service_provider: &ServiceProvider,
     ) {
-        let ctx = service_provider.context().unwrap();
+        let ctx = service_provider
+            .context(self.inbound_store.id.clone(), "".to_string())
+            .unwrap();
+
         let inbound_shipment = service_provider
             .invoice_service
             .update_inbound_shipment(
                 &ctx,
-                &self.inbound_store.id,
-                "user_id",
                 inline_init(|r: &mut UpdateInboundShipment| {
                     r.id = self.inbound_shipment.clone().map(|r| r.id).unwrap();
                     r.status = Some(UpdateInboundShipmentStatus::Delivered);
@@ -554,13 +563,14 @@ impl ShipmentTransferTester {
         &mut self,
         service_provider: &ServiceProvider,
     ) {
-        let ctx = service_provider.context().unwrap();
+        let ctx = service_provider
+            .context(self.inbound_store.id.clone(), "".to_string())
+            .unwrap();
+
         let inbound_shipment = service_provider
             .invoice_service
             .update_inbound_shipment(
                 &ctx,
-                &self.inbound_store.id,
-                "user_id",
                 inline_init(|r: &mut UpdateInboundShipment| {
                     r.id = self.inbound_shipment.clone().map(|r| r.id).unwrap();
                     r.status = Some(UpdateInboundShipmentStatus::Verified);

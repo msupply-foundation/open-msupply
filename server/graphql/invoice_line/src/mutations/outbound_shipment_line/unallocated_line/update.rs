@@ -1,6 +1,6 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::RecordNotFound,
+    simple_generic_errors::{ForeignKey, ForeignKeyError, RecordNotFound},
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
@@ -26,6 +26,7 @@ pub struct UpdateInput {
 #[graphql(field(name = "description", type = "String"))]
 pub enum UpdateErrorInterface {
     RecordNotFound(RecordNotFound),
+    ForeignKeyError(ForeignKeyError),
 }
 
 #[derive(SimpleObject)]
@@ -50,7 +51,7 @@ impl UpdateInput {
 }
 
 pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<UpdateResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::MutateOutboundShipment,
@@ -59,16 +60,12 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context()?;
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
     map_response(
         service_provider
             .invoice_line_service
-            .update_outbound_shipment_unallocated_line(
-                &service_context,
-                store_id,
-                input.to_domain(),
-            ),
+            .update_outbound_shipment_unallocated_line(&service_context, input.to_domain()),
     )
 }
 
@@ -92,10 +89,18 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         ServiceError::LineDoesNotExist => {
             return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound {}))
         }
+        ServiceError::InvoiceDoesNotExist => {
+            //TODO: Change all to std error or update check_line_exists_option
+            //https://github.com/openmsupply/open-msupply/pull/366#discussion_r930574975
+            return Ok(UpdateErrorInterface::ForeignKeyError(ForeignKeyError(
+                ForeignKey::InvoiceId,
+            )));
+        }
         // Standard Graphql Errors
         ServiceError::LineIsNotUnallocatedLine => BadUserInput(formatted_error),
-        ServiceError::UpdatedLineDoesNotExist => InternalError(formatted_error),
+        ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
+        ServiceError::UpdatedLineDoesNotExist => InternalError(formatted_error),
     };
 
     Err(graphql_error.extend())
@@ -134,7 +139,6 @@ mod graphql {
         fn update_outbound_shipment_unallocated_line(
             &self,
             _: &ServiceContext,
-            _: &str,
             input: ServiceInput,
         ) -> Result<InvoiceLine, ServiceError> {
             self.0(input)
@@ -262,6 +266,7 @@ mod graphql {
                 invoice_line_row: mock_outbound_shipment_a_invoice_lines()[0].clone(),
                 invoice_row: mock_outbound_shipment_a(),
                 location_row_option: None,
+                stock_line_option: None,
             }
         }
 

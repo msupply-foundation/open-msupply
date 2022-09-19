@@ -93,13 +93,14 @@ pub mod android {
         port: jchar,
         files_dir: JString,
         cache_dir: JString,
-        _android_id: JString,
+        android_id: JString,
     ) -> jlong {
         android_logger::init_once(Config::default().with_min_level(Level::Trace));
 
         let (off_switch, off_switch_receiver) = oneshot::channel();
         let files_dir: String = env.get_string(files_dir).unwrap().into();
         let files_dir = PathBuf::from(&files_dir);
+        let android_id: String = env.get_string(android_id).unwrap().into();
         let db_path = files_dir.join("omsupply-database");
 
         let cache_dir: String = env.get_string(cache_dir).unwrap().into();
@@ -119,6 +120,7 @@ pub mod android {
                         debug_no_access_control: false,
                         cors_origins: vec!["http://localhost".to_string()],
                         base_dir: Some(files_dir.to_str().unwrap().to_string()),
+                        machine_uid: Some(android_id),
                     },
                     database: DatabaseSettings {
                         username: "n/a".to_string(),
@@ -131,6 +133,7 @@ pub mod android {
                     },
                     // sync settings need to be configured at runtime
                     sync: None,
+                    logging: None,
                 };
                 let _ = start_server(settings, off_switch_receiver).await;
             });

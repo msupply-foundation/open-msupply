@@ -1,22 +1,18 @@
 mod generate;
 mod validate;
 
+use crate::invoice_line::ShipmentTaxUpdate;
 use generate::generate;
 use repository::{InvoiceLine, InvoiceLineRowRepository, RepositoryError};
 use validate::validate;
 
-use crate::{
-    invoice_line::{query::get_invoice_line, ShipmentTaxUpdate},
-    service_provider::ServiceContext,
-    WithDBError,
-};
+use crate::{invoice_line::query::get_invoice_line, service_provider::ServiceContext, WithDBError};
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct UpdateInboundShipmentServiceLine {
     pub id: String,
     pub item_id: Option<String>,
     pub name: Option<String>,
     pub total_before_tax: Option<f64>,
-    pub total_after_tax: Option<f64>,
     pub tax: Option<ShipmentTaxUpdate>,
     pub note: Option<String>,
 }
@@ -25,13 +21,12 @@ type OutError = UpdateInboundShipmentServiceLineError;
 
 pub fn update_inbound_shipment_service_line(
     ctx: &ServiceContext,
-    _store_id: &str,
     input: UpdateInboundShipmentServiceLine,
 ) -> Result<InvoiceLine, OutError> {
     let updated_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let (existing_line, _, item) = validate(&input, &connection)?;
+            let (existing_line, _, item) = validate(&input, &ctx.store_id, &connection)?;
             let updated_line = generate(input, existing_line, item)?;
             InvoiceLineRowRepository::new(&connection).upsert_one(&updated_line)?;
 
@@ -49,7 +44,7 @@ pub enum UpdateInboundShipmentServiceLineError {
     LineDoesNotExist,
     InvoiceDoesNotExist,
     NotAnInboundShipment,
-    // NotThisStoreInvoice,
+    NotThisStoreInvoice,
     NotThisInvoiceLine(String),
     CannotEditInvoice,
     ItemNotFound,
@@ -79,12 +74,11 @@ where
 
 #[cfg(test)]
 mod test {
-
     use repository::{
         mock::{
             mock_default_service_item, mock_draft_inbound_service_line,
             mock_draft_inbound_verified_service_line, mock_draft_outbound_service_line,
-            mock_item_a, mock_item_service_item, MockDataInserts,
+            mock_item_a, mock_item_service_item, mock_store_a, mock_store_b, MockDataInserts,
         },
         test_db::setup_all,
         InvoiceLineRowRepository,
@@ -111,14 +105,15 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let mut context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_line_service;
 
         // LineDoesNotExist
         assert_eq!(
             service.update_inbound_shipment_service_line(
                 &context,
-                "store_a",
                 inline_init(|r: &mut UpdateInboundShipmentServiceLine| {
                     r.id = "invalid".to_string();
                 }),
@@ -130,7 +125,6 @@ mod test {
         assert_eq!(
             service.update_inbound_shipment_service_line(
                 &context,
-                "store_a",
                 inline_init(|r: &mut UpdateInboundShipmentServiceLine| {
                     r.id = mock_draft_outbound_service_line().id;
                 }),
@@ -142,7 +136,6 @@ mod test {
         assert_eq!(
             service.update_inbound_shipment_service_line(
                 &context,
-                "store_a",
                 inline_init(|r: &mut UpdateInboundShipmentServiceLine| {
                     r.id = mock_draft_inbound_verified_service_line().id;
                 }),
@@ -154,7 +147,6 @@ mod test {
         assert_eq!(
             service.update_inbound_shipment_service_line(
                 &context,
-                "store_a",
                 inline_init(|r: &mut UpdateInboundShipmentServiceLine| {
                     r.id = mock_draft_inbound_service_line().id;
                     r.item_id = Some("invalid".to_string())
@@ -167,13 +159,25 @@ mod test {
         assert_eq!(
             service.update_inbound_shipment_service_line(
                 &context,
-                "store_a",
                 inline_init(|r: &mut UpdateInboundShipmentServiceLine| {
                     r.id = mock_draft_inbound_service_line().id;
                     r.item_id = Some(mock_item_a().id)
                 }),
             ),
             Err(ServiceError::NotAServiceItem)
+        );
+
+        // NotThisStoreInvoice
+        context.store_id = mock_store_b().id;
+        assert_eq!(
+            service.update_inbound_shipment_service_line(
+                &context,
+                inline_init(|r: &mut UpdateInboundShipmentServiceLine| {
+                    r.id = mock_draft_inbound_service_line().id;
+                    r.item_id = Some(mock_item_service_item().id)
+                }),
+            ),
+            Err(ServiceError::NotThisStoreInvoice)
         );
     }
 
@@ -186,14 +190,15 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_line_service;
 
         // Service Item Changed
         service
             .update_inbound_shipment_service_line(
                 &context,
-                "store_a",
                 inline_init(|r: &mut UpdateInboundShipmentServiceLine| {
                     r.id = mock_draft_inbound_service_line().id;
                     r.item_id = Some(mock_item_service_item().id);
@@ -212,7 +217,6 @@ mod test {
         service
             .update_inbound_shipment_service_line(
                 &context,
-                "store_a",
                 inline_init(|r: &mut UpdateInboundShipmentServiceLine| {
                     r.id = mock_draft_inbound_service_line().id;
                     r.item_id = Some(mock_default_service_item().id);
@@ -233,13 +237,11 @@ mod test {
         service
             .update_inbound_shipment_service_line(
                 &context,
-                "store_a",
                 UpdateInboundShipmentServiceLine {
                     id: mock_draft_inbound_service_line().id,
                     item_id: Some(mock_item_service_item().id),
                     name: Some("modified name".to_string()),
                     total_before_tax: Some(1.0),
-                    total_after_tax: Some(1.1),
                     tax: Some(ShipmentTaxUpdate {
                         percentage: Some(10.0),
                     }),
@@ -259,7 +261,6 @@ mod test {
                 u.item_id = mock_item_service_item().id;
                 u.item_name = "modified name".to_string();
                 u.total_before_tax = 1.0;
-                u.total_after_tax = 1.1;
                 u.tax = Some(10.0);
                 u.note = Some("note".to_string());
                 u

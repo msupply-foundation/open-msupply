@@ -1,7 +1,7 @@
 use async_graphql::*;
 
 #[derive(InputObject)]
-pub struct TaxUpdate {
+pub struct TaxInput {
     /// Set or unset the tax value (in percentage)
     pub percentage: Option<f64>,
 }
