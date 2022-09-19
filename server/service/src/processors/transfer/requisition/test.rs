@@ -80,31 +80,35 @@ async fn requisition_transfer() {
         item2,
     );
 
-    let number_of_instance = 6;
+    let number_of_instances = 6;
 
-    let test_handle = exec_concurrent(test_input, number_of_instance, |_, test_input| async move {
-        let (service_provider, request_store, response_store, item1, item2) = test_input;
+    let test_handle = exec_concurrent(
+        test_input,
+        number_of_instances,
+        |_, test_input| async move {
+            let (service_provider, request_store, response_store, item1, item2) = test_input;
 
-        let ctx = service_provider.context().unwrap();
+            let ctx = service_provider.context().unwrap();
 
-        let mut tester =
-            RequisitionTransferTester::new(&request_store, &response_store, &item1, &item2);
+            let mut tester =
+                RequisitionTransferTester::new(&request_store, &response_store, &item1, &item2);
 
-        tester.insert_request_requisition(&ctx.connection);
-        // todo manual trigger
-        delay_for_processor().await;
-        tester.check_response_requisition_not_created(&ctx.connection);
-        delay_for_processor().await;
-        tester.update_request_requisition_to_sent(&service_provider);
-        delay_for_processor().await;
-        tester.check_response_requisition_created(&ctx.connection);
-        delay_for_processor().await;
-        tester.check_request_requisition_was_linked(&ctx.connection);
-        delay_for_processor().await;
-        tester.update_response_requisition_to_finalised(&service_provider);
-        delay_for_processor().await;
-        tester.check_request_requisition_status_updated(&ctx.connection);
-    });
+            tester.insert_request_requisition(&ctx.connection);
+            // todo manual trigger
+            delay_for_processor().await;
+            tester.check_response_requisition_not_created(&ctx.connection);
+            delay_for_processor().await;
+            tester.update_request_requisition_to_sent(&service_provider);
+            delay_for_processor().await;
+            tester.check_response_requisition_created(&ctx.connection);
+            delay_for_processor().await;
+            tester.check_request_requisition_was_linked(&ctx.connection);
+            delay_for_processor().await;
+            tester.update_response_requisition_to_finalised(&service_provider);
+            delay_for_processor().await;
+            tester.check_request_requisition_status_updated(&ctx.connection);
+        },
+    );
 
     tokio::select! {
         Err(err) = processors_task => unreachable!("{}", err),
