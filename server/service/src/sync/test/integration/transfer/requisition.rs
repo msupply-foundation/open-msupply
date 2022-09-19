@@ -48,9 +48,7 @@ async fn integration_sync_requisition_transfers_normal() {
             "Inserting request requisition on site {:?}",
             request_site.config
         );
-        tester
-            .insert_request_requisition(&request_site.connection)
-            .await;
+        tester.insert_request_requisition(&request_site.connection);
 
         sync_and_delay(&request_site, &response_site).await;
 
@@ -145,9 +143,7 @@ async fn integration_sync_requisition_transfers_initialisation() {
             "Inserting request requisition on site {:?}",
             request_site.config
         );
-        tester
-            .insert_request_requisition(&request_site.connection)
-            .await;
+        tester.insert_request_requisition(&request_site.connection);
 
         log::info!(
             "Updating request requisition to sent status on site {:?}",
