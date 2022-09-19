@@ -8,7 +8,7 @@ import {
   useNavigate,
   useTranslation,
   useNotification,
-  UserPermissionNodePermission,
+  UserPermission,
   usePermissionCheck,
 } from '@openmsupply-client/common';
 import { themeOptions } from '@common/styles';
@@ -17,6 +17,7 @@ import { Setting } from './Setting';
 import { SettingTextArea, TextValue } from './SettingTextArea';
 import packageJson from 'package.json';
 import { SyncSettings } from './SyncSettings';
+import { useHost } from '../api/hooks';
 
 export const Settings: React.FC = () => {
   const t = useTranslation('common');
@@ -24,7 +25,8 @@ export const Settings: React.FC = () => {
   const navigate = useNavigate();
   const [customTheme, setCustomTheme] = useLocalStorage('/theme/custom');
   const [customLogo, setCustomLogo] = useLocalStorage('/theme/logo');
-  usePermissionCheck(UserPermissionNodePermission.ServerAdmin);
+  const { data } = useHost.utils.version();
+  usePermissionCheck(UserPermission.ServerAdmin);
   const customThemeEnabled =
     !!customTheme && Object.keys(customTheme).length > 0;
 
