@@ -8,7 +8,7 @@ export const RTLProvider: FC<PropsWithChildrenOnly> = props => {
   return (
     <div
       style={{
-        height: '100vh',
+        height: '100%',
         width: '100vw',
         display: 'flex',
         flexDirection: 'column',

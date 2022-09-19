@@ -1,10 +1,11 @@
 import { InvoiceLineNodeType, FnUtils } from '@openmsupply-client/common';
-import { ItemRowFragment } from '@openmsupply-client/system';
 import { DraftInboundLine } from './../../../types';
 import { InboundLineFragment } from './../../api/operations.generated';
 
+type InboundLineItem = InboundLineFragment['item'];
+
 export interface CreateDraftInboundLineParams {
-  item: ItemRowFragment;
+  item: InboundLineItem;
   invoiceId: string;
   seed?: InboundLineFragment;
   type?: InvoiceLineNodeType;
@@ -25,7 +26,7 @@ const createDraftInboundLine = ({
     sellPricePerPack: 0,
     costPricePerPack: 0,
     numberOfPacks: 0,
-    packSize: 1,
+    packSize: item.defaultPackSize,
     isCreated: seed ? false : true,
     expiryDate: undefined,
     location: undefined,

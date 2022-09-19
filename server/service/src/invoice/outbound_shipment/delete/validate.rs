@@ -1,17 +1,19 @@
 use super::DeleteOutboundShipmentError;
 use crate::invoice::{
-    check_invoice_exists, check_invoice_is_editable, check_invoice_type, InvoiceDoesNotExist,
-    InvoiceIsNotEditable, InvoiceLinesExist, WrongInvoiceRowType,
+    check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store,
+    InvoiceDoesNotExist, InvoiceIsNotEditable, InvoiceLinesExist, NotThisStoreInvoice,
+    WrongInvoiceRowType,
 };
 use repository::{InvoiceRow, InvoiceRowType, StorageConnection};
 
 pub fn validate(
     id: &str,
+    store_id: &str,
     connection: &StorageConnection,
 ) -> Result<InvoiceRow, DeleteOutboundShipmentError> {
     let invoice = check_invoice_exists(&id, connection)?;
 
-    // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
+    check_store(&invoice, store_id)?;
     check_invoice_type(&invoice, InvoiceRowType::OutboundShipment)?;
     check_invoice_is_editable(&invoice)?;
 
@@ -41,5 +43,11 @@ impl From<InvoiceDoesNotExist> for DeleteOutboundShipmentError {
 impl From<InvoiceLinesExist> for DeleteOutboundShipmentError {
     fn from(error: InvoiceLinesExist) -> Self {
         DeleteOutboundShipmentError::InvoiceLinesExists(error.0)
+    }
+}
+
+impl From<NotThisStoreInvoice> for DeleteOutboundShipmentError {
+    fn from(_: NotThisStoreInvoice) -> Self {
+        DeleteOutboundShipmentError::NotThisStoreInvoice
     }
 }

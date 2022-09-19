@@ -34,8 +34,8 @@ export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
     <FlatButton
       label={s.name}
       disabled={s.id === store.id}
-      onClick={() => {
-        setStore(s);
+      onClick={async () => {
+        await setStore(s);
         hide();
         navigate(AppRoute.Dashboard);
       }}

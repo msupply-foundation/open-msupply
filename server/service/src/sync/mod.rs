@@ -14,13 +14,11 @@ pub mod sync_status;
 pub mod synchroniser;
 pub(crate) mod translation_and_integration;
 pub(crate) mod translations;
-use std::convert::TryInto;
-
 use repository::{
     ChangelogFilter, EqualFilter, KeyValueStoreRepository, RepositoryError, StorageConnection,
     Store, StoreFilter, StoreRepository, SyncLogRow, SyncLogRowRepository,
 };
-pub use sync_api_credentials::SyncCredentials;
+use std::convert::TryInto;
 use thiserror::Error;
 
 #[derive(Error, Debug)]

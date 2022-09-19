@@ -3,7 +3,7 @@ name: Bundle size diff
 on:
   pull_request:
     paths:
-      - 'client/**'
+      - "client/**"
 
 jobs:
   build-base:
@@ -21,7 +21,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{secrets.TOKEN_REPO}}
 
       - name: Build
-        run: cd ./client && yarn build
+        run: cd ./client && yarn build-dev
 
       - name: Upload base stats.json
         uses: actions/upload-artifact@v2
@@ -43,7 +43,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{secrets.TOKEN_REPO}}
 
       - name: Build
-        run: cd ./client && yarn build
+        run: cd ./client && yarn build-dev
 
       - name: Upload base stats.json
         uses: actions/upload-artifact@v2
@@ -77,13 +77,13 @@ jobs:
         id: get-diff
         uses: NejcZdovc/bundle-size-diff@v1
         with:
-          base_path: './base/stats.json'
-          pr_path: './pr/stats.json'
+          base_path: "./base/stats.json"
+          pr_path: "./pr/stats.json"
 
       - name: Comment
         uses: NejcZdovc/comment-pr@v1
         with:
-          file: 'comment.md'
+          file: "comment.md"
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
           OLD: ${{steps.get-diff.outputs.base_file_string}}

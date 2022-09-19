@@ -31,7 +31,7 @@ pub enum DeleteResponse {
 }
 
 pub fn delete(ctx: &Context<'_>, store_id: &str, input: DeleteInput) -> Result<DeleteResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::MutateOutboundShipment,
@@ -40,12 +40,12 @@ pub fn delete(ctx: &Context<'_>, store_id: &str, input: DeleteInput) -> Result<D
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context()?;
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
     map_response(
         service_provider
             .invoice_line_service
-            .delete_outbound_shipment_line(&service_context, store_id, input.to_domain()),
+            .delete_outbound_shipment_line(&service_context, input.to_domain()),
     )
 }
 
@@ -85,7 +85,7 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
         ServiceError::LineDoesNotExist => {
             return Ok(DeleteErrorInterface::RecordNotFound(RecordNotFound {}))
         }
-        ServiceError::CannotEditFinalised => {
+        ServiceError::CannotEditInvoice => {
             return Ok(DeleteErrorInterface::CannotEditInvoice(
                 CannotEditInvoice {},
             ))
@@ -105,271 +105,247 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
     Err(graphql_error.extend())
 }
 
-// mod graphql {
-//     use crate::graphql::common::{
-//         assert_matches, assert_unwrap_enum, assert_unwrap_optional_key, get_invoice_inline,
-//         get_invoice_lines_inline,
-//     };
-//     use crate::graphql::get_gql_result;
-//     use crate::graphql::{
-//         delete_outbound_shipment_line_full as delete, DeleteOutboundShipmentLineFull as Delete,
-//     };
+#[cfg(test)]
+mod test {
+    use async_graphql::EmptyMutation;
+    use graphql_core::{
+        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
+    };
+    use repository::{mock::MockDataInserts, RepositoryError, StorageConnectionManager};
+    use serde_json::json;
 
-//     use repository::schema::{InvoiceRowStatus, InvoiceRowType};
-//     use repository::EqualFilter;
-//     use repository::{InvoiceFilter, InvoiceLineRowRepository, StockLineRowRepository};
-//     use server::test_utils::setup_all;
+    use service::{
+        invoice_line::{
+            outbound_shipment_line::{
+                DeleteOutboundShipmentLine as ServiceInput,
+                DeleteOutboundShipmentLineError as ServiceError,
+            },
+            InvoiceLineServiceTrait,
+        },
+        service_provider::{ServiceContext, ServiceProvider},
+    };
 
-//     use graphql_client::{GraphQLQuery, Response};
-//     use repository::{mock::MockDataInserts, RepositoryError};
+    use crate::InvoiceLineMutations;
 
-//     use delete::DeleteOutboundShipmentLineErrorInterface::*;
+    type DeleteLineMethod = dyn Fn(ServiceInput) -> Result<String, ServiceError> + Sync + Send;
 
-//     macro_rules! assert_unwrap_response_variant {
-//         ($response:ident) => {
-//             assert_unwrap_optional_key!($response, data).delete_outbound_shipment_line
-//         };
-//     }
+    pub struct TestService(pub Box<DeleteLineMethod>);
 
-//     macro_rules! assert_unwrap_delete {
-//         ($response:ident) => {{
-//             let response_variant = assert_unwrap_response_variant!($response);
-//             assert_unwrap_enum!(
-//                 response_variant,
-//                 delete::DeleteOutboundShipmentLineResponse::DeleteResponse
-//             )
-//         }};
-//     }
+    impl InvoiceLineServiceTrait for TestService {
+        fn delete_outbound_shipment_line(
+            &self,
+            _: &ServiceContext,
+            input: ServiceInput,
+        ) -> Result<String, ServiceError> {
+            self.0(input)
+        }
+    }
 
-//     macro_rules! assert_unwrap_error {
-//         ($response:ident) => {{
-//             let response_variant = assert_unwrap_response_variant!($response);
-//             let error_wrapper = assert_unwrap_enum!(
-//                 response_variant,
-//                 delete::DeleteOutboundShipmentLineResponse::DeleteOutboundShipmentLineError
-//             );
-//             error_wrapper.error
-//         }};
-//     }
+    fn service_provider(
+        test_service: TestService,
+        connection_manager: &StorageConnectionManager,
+    ) -> ServiceProvider {
+        let mut service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
+        service_provider.invoice_line_service = Box::new(test_service);
+        service_provider
+    }
 
-//     macro_rules! assert_error {
-//         ($response:ident, $error:expr) => {{
-//             let lhs = assert_unwrap_error!($response);
-//             let rhs = $error;
-//             assert_eq!(lhs, rhs);
-//         }};
-//     }
+    fn empty_variables() -> serde_json::Value {
+        json!({
+            "input": {
+                "id": "n/a",
+            }
+        })
+    }
 
-//     #[actix_rt::test]
-//     async fn test_delete_outbound_shipment_line() {
-//         let (_, connection, _, settings) = setup_all(
-//             "test_delete_outbound_shipment_line_query",
-//             MockDataInserts::all(),
-//         )
-//         .await;
+    #[actix_rt::test]
+    async fn test_graphql_delete_outbound_line_errors() {
+        let (_, _, connection_manager, settings) = setup_graphl_test(
+            EmptyMutation,
+            InvoiceLineMutations,
+            "test_graphql_delete_outbound_line_errors",
+            MockDataInserts::all(),
+        )
+        .await;
 
-//         // Setup
+        let mutation = r#"
+        mutation ($input: DeleteOutboundShipmentLineInput!) {
+            deleteOutboundShipmentLine(input: $input, storeId: \"store_a\") {
+                ... on DeleteOutboundShipmentLineError {
+                    error {
+                        __typename
+                    }
+                }
+            }
+        }
+        "#;
 
-//         let draft_outbound_shipment = get_invoice_inline!(
-//             InvoiceFilter::new()
-//                 .r#type(InvoiceRowType::OutboundShipment.equal_to())
-//                 .status(InvoiceRowStatus::New.equal_to())
-//                 .id(EqualFilter::equal_to("outbound_shipment_c")),
-//             &connection
-//         );
-//         let picked_outbound_shipment = get_invoice_inline!(
-//             InvoiceFilter::new()
-//                 .r#type(InvoiceRowType::OutboundShipment.equal_to())
-//                 .status(InvoiceRowStatus::Picked.equal_to())
-//                 .id(EqualFilter::equal_to("outbound_shipment_a")),
-//             &connection
-//         );
-//         let shipped_outbound_shipment = get_invoice_inline!(
-//             InvoiceFilter::new()
-//                 .r#type(InvoiceRowType::OutboundShipment.equal_to())
-//                 .status(InvoiceRowStatus::Shipped.equal_to())
-//                 .id(EqualFilter::equal_to("outbound_shipment_b")),
-//             &connection
-//         );
-//         let inbound_shipment = get_invoice_inline!(
-//             InvoiceFilter::new()
-//                 .r#type(InvoiceRowType::InboundShipment.equal_to())
-//                 .id(EqualFilter::equal_to("inbound_shipment_a")),
-//             &connection
-//         );
-//         let picked_invoice_lines = get_invoice_lines_inline!(
-//             &picked_outbound_shipment.invoice_row.id.clone(),
-//             &connection
-//         );
-//         let inbound_shipment_lines =
-//             get_invoice_lines_inline!(&inbound_shipment.invoice_row.id.clone(), &connection);
-//         let shipped_invoice_lines = get_invoice_lines_inline!(
-//             &shipped_outbound_shipment.invoice_row.id.clone(),
-//             &connection
-//         );
-//         let draft_invoice_lines =
-//             get_invoice_lines_inline!(&draft_outbound_shipment.invoice_row.id.clone(), &connection);
+        //RecordNotFound
+        let test_service = TestService(Box::new(|_| Err(ServiceError::LineDoesNotExist)));
 
-//         let base_variables = delete::Variables {
-//             id: draft_invoice_lines[0].id.clone(),
-//             invoice_id: draft_outbound_shipment.invoice_row.id.clone(),
-//         };
+        let expected = json!({
+            "deleteOutboundShipmentLine": {
+              "error": {
+                "__typename": "RecordNotFound"
+              }
+            }
+          }
+        );
 
-//         // Test RecordNotFound Item
+        assert_graphql_query!(
+            &settings,
+            mutation,
+            &Some(empty_variables()),
+            &expected,
+            Some(service_provider(test_service, &connection_manager))
+        );
 
-//         let mut variables = base_variables.clone();
-//         variables.id = "invalid".to_string();
+        //CannotEditInvoice
+        let test_service = TestService(Box::new(|_| Err(ServiceError::CannotEditInvoice)));
 
-//         let query = Delete::build_query(variables);
-//         let response: Response<delete::ResponseData> = get_gql_result(&settings, query).await;
+        let expected = json!({
+            "deleteOutboundShipmentLine": {
+              "error": {
+                "__typename": "CannotEditInvoice"
+              }
+            }
+          }
+        );
 
-//         assert_error!(
-//             response,
-//             RecordNotFound(delete::RecordNotFound {
-//                 description: "Record not found".to_string(),
-//             })
-//         );
+        assert_graphql_query!(
+            &settings,
+            mutation,
+            &Some(empty_variables()),
+            &expected,
+            Some(service_provider(test_service, &connection_manager))
+        );
 
-//         // Test ForeingKeyError Invoice
+        //ForeignKeyError
+        let test_service = TestService(Box::new(|_| Err(ServiceError::InvoiceDoesNotExist)));
 
-//         let mut variables = base_variables.clone();
-//         variables.invoice_id = "invalid".to_string();
+        let expected = json!({
+            "deleteOutboundShipmentLine": {
+              "error": {
+                "__typename": "ForeignKeyError"
+              }
+            }
+          }
+        );
 
-//         let query = Delete::build_query(variables);
-//         let response: Response<delete::ResponseData> = get_gql_result(&settings, query).await;
-//         assert_error!(
-//             response,
-//             ForeignKeyError(delete::ForeignKeyError {
-//                 description: "FK record doesn't exist".to_string(),
-//                 key: delete::ForeignKey::InvoiceId,
-//             })
-//         );
+        assert_graphql_query!(
+            &settings,
+            mutation,
+            &Some(empty_variables()),
+            &expected,
+            Some(service_provider(test_service, &connection_manager))
+        );
 
-//         // Test CannotEditInvoice
+        //NotThisInvoiceLine
+        let test_service = TestService(Box::new(|_| {
+            Err(ServiceError::NotThisInvoiceLine("invalid".to_string()))
+        }));
+        let expected_message = "Bad user input";
+        assert_standard_graphql_error!(
+            &settings,
+            &mutation,
+            &Some(empty_variables()),
+            &expected_message,
+            None,
+            Some(service_provider(test_service, &connection_manager))
+        );
 
-//         let mut variables = base_variables.clone();
-//         variables.id = shipped_invoice_lines[0].id.clone();
-//         variables.invoice_id = shipped_outbound_shipment.invoice_row.id.clone();
+        //NotAnOutboundShipment
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NotAnOutboundShipment)));
+        let expected_message = "Bad user input";
+        assert_standard_graphql_error!(
+            &settings,
+            &mutation,
+            &Some(empty_variables()),
+            &expected_message,
+            None,
+            Some(service_provider(test_service, &connection_manager))
+        );
 
-//         let query = Delete::build_query(variables);
-//         let response: Response<delete::ResponseData> = get_gql_result(&settings, query).await;
-//         assert_error!(
-//             response,
-//             CannotEditInvoice(delete::CannotEditInvoice {
-//                 description: "Cannot edit invoice".to_string(),
-//             },)
-//         );
+        //NotThisStoreInvoice
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NotThisStoreInvoice)));
+        let expected_message = "Bad user input";
+        assert_standard_graphql_error!(
+            &settings,
+            &mutation,
+            &Some(empty_variables()),
+            &expected_message,
+            None,
+            Some(service_provider(test_service, &connection_manager))
+        );
 
-//         // Test NotAnOutboundShipment
+        //DatabaseError
+        let test_service = TestService(Box::new(|_| {
+            Err(ServiceError::DatabaseError(
+                RepositoryError::ThreadPoolCanceled,
+            ))
+        }));
+        let expected_message = "Internal error";
+        assert_standard_graphql_error!(
+            &settings,
+            &mutation,
+            &Some(empty_variables()),
+            &expected_message,
+            None,
+            Some(service_provider(test_service, &connection_manager))
+        );
+    }
 
-//         let mut variables = base_variables.clone();
-//         variables.id = inbound_shipment_lines[0].id.clone();
-//         variables.invoice_id = inbound_shipment.invoice_row.id.clone();
+    #[actix_rt::test]
+    async fn test_graphql_delete_outbound_line_success() {
+        let (_, _, connection_manager, settings) = setup_graphl_test(
+            EmptyMutation,
+            InvoiceLineMutations,
+            "test_graphql_delete_outbound_line",
+            MockDataInserts::all(),
+        )
+        .await;
 
-//         let query = Delete::build_query(variables);
-//         let response: Response<delete::ResponseData> = get_gql_result(&settings, query).await;
-//         assert_error!(
-//             response,
-//             NotAnOutboundShipment(delete::NotAnOutboundShipment {
-//                 description: "Invoice is not Outbound Shipment".to_string(),
-//             })
-//         );
+        let mutation = r#"
+        mutation ($storeId: String, $input: DeleteOutboundShipmentLineInput!) {
+            deleteOutboundShipmentLine(storeId: $storeId, input: $input) {
+                ... on DeleteResponse {
+                    id
+                }
+            }
+          }
+        "#;
 
-//         // Test InvoiceLineBelongsToAnotherInvoice
+        //Success
+        let test_service = TestService(Box::new(|input| {
+            assert_eq!(
+                input,
+                ServiceInput {
+                    id: "id input".to_string(),
+                }
+            );
+            Ok("deleted id".to_owned())
+        }));
 
-//         let mut variables = base_variables.clone();
-//         variables.invoice_id = picked_outbound_shipment.invoice_row.id.clone();
+        let variables = json!({
+          "input": {
+            "id": "id input",
+          },
+          "storeId": "store_a"
+        });
 
-//         let query = Delete::build_query(variables);
-//         let response: Response<delete::ResponseData> = get_gql_result(&settings, query).await;
+        let expected = json!({
+            "deleteOutboundShipmentLine": {
+                "id": "deleted id"
+            }
+          }
+        );
 
-//         let error_variant = assert_unwrap_error!(response);
-//         assert_unwrap_enum!(error_variant, InvoiceLineBelongsToAnotherInvoice);
-
-//         // Success Draft
-
-//         let draft_invoice_line = &draft_invoice_lines[0];
-
-//         let variables = base_variables.clone();
-
-//         let stock_line_id = draft_invoice_line.stock_line_id.as_ref().unwrap();
-//         let stock_line_before_deletion = StockLineRowRepository::new(&connection)
-//             .find_one_by_id(&stock_line_id)
-//             .unwrap();
-
-//         let query = Delete::build_query(variables.clone());
-
-//         let response: Response<delete::ResponseData> = get_gql_result(&settings, query).await;
-
-//         let delete_response = assert_unwrap_delete!(response);
-
-//         let deleted_line = InvoiceLineRowRepository::new(&connection).find_one_by_id(&variables.id);
-
-//         let stock_line_after_deletion = StockLineRowRepository::new(&connection)
-//             .find_one_by_id(&stock_line_id)
-//             .unwrap();
-
-//         assert_eq!(
-//             delete_response,
-//             delete::DeleteResponse {
-//                 id: variables.id.clone()
-//             }
-//         );
-
-//         assert!(matches!(deleted_line, Err(RepositoryError::NotFound)));
-
-//         assert_eq!(
-//             stock_line_after_deletion.available_number_of_packs,
-//             stock_line_before_deletion.available_number_of_packs
-//                 + draft_invoice_line.number_of_packs
-//         );
-
-//         assert_eq!(
-//             stock_line_after_deletion.total_number_of_packs,
-//             stock_line_before_deletion.total_number_of_packs
-//         );
-
-//         // Success Picked
-
-//         let picked_invoice_line = &picked_invoice_lines[0];
-
-//         let mut variables = base_variables.clone();
-//         variables.id = picked_invoice_line.id.clone();
-//         variables.invoice_id = picked_outbound_shipment.invoice_row.id.clone();
-
-//         let stock_line_id = picked_invoice_line.stock_line_id.as_ref().unwrap();
-//         let stock_line_before_deletion = StockLineRowRepository::new(&connection)
-//             .find_one_by_id(&stock_line_id)
-//             .unwrap();
-
-//         let query = Delete::build_query(variables.clone());
-//         let response: Response<delete::ResponseData> = get_gql_result(&settings, query).await;
-//         let delete_response = assert_unwrap_delete!(response);
-
-//         let deleted_line = InvoiceLineRowRepository::new(&connection).find_one_by_id(&variables.id);
-
-//         let stock_line_after_deletion = StockLineRowRepository::new(&connection)
-//             .find_one_by_id(&stock_line_id)
-//             .unwrap();
-
-//         assert_eq!(
-//             delete_response,
-//             delete::DeleteResponse {
-//                 id: variables.id.clone()
-//             }
-//         );
-
-//         assert_matches!(deleted_line, Err(RepositoryError::NotFound));
-
-//         assert_eq!(
-//             stock_line_after_deletion.available_number_of_packs,
-//             stock_line_before_deletion.available_number_of_packs
-//                 + picked_invoice_line.number_of_packs
-//         );
-
-//         assert_eq!(
-//             stock_line_after_deletion.total_number_of_packs,
-//             stock_line_before_deletion.total_number_of_packs + picked_invoice_line.number_of_packs
-//         );
-//     }
-// }
+        assert_graphql_query!(
+            &settings,
+            mutation,
+            &Some(variables),
+            &expected,
+            Some(service_provider(test_service, &connection_manager))
+        );
+    }
+}

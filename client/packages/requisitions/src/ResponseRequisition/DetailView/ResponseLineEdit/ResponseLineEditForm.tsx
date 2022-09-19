@@ -102,22 +102,20 @@ export const ResponseLineEditForm = ({
       Middle={
         <>
           <Typography variant="body1" fontWeight="bold">
-            {t('heading.comment')}
-          </Typography>
-          <TextArea
-            value={draftLine.comment}
-            onChange={e => update({ comment: e.target.value })}
-            InputProps={{
-              sx: { backgroundColor: theme => theme.palette.background.menu },
-            }}
-          />
-        </>
-      }
-      Right={
-        <>
-          <Typography variant="body1" fontWeight="bold">
             {t('heading.order')}
           </Typography>
+          <InputWithLabelRow
+            Input={
+              <NumericTextInput
+                width={150}
+                value={draftLine.requestedQuantity}
+                disabled
+              />
+            }
+            labelWidth="150px"
+            labelProps={{ sx: { fontWeight: 500 } }}
+            label={t('label.requested-quantity', { ns: 'distribution' })}
+          />
           <InputWithLabelRow
             Input={
               <NonNegativeIntegerInput
@@ -132,17 +130,19 @@ export const ResponseLineEditForm = ({
             labelProps={{ sx: { fontWeight: 500 } }}
             label={t('label.supply-quantity', { ns: 'distribution' })}
           />
-          <InputWithLabelRow
-            Input={
-              <NumericTextInput
-                width={150}
-                value={draftLine.requestedQuantity}
-                disabled
-              />
-            }
-            labelWidth="150px"
-            labelProps={{ sx: { fontWeight: 500 } }}
-            label={t('label.requested-quantity', { ns: 'distribution' })}
+        </>
+      }
+      Right={
+        <>
+          <Typography variant="body1" fontWeight="bold">
+            {t('heading.comment')}
+          </Typography>
+          <TextArea
+            value={draftLine.comment}
+            onChange={e => update({ comment: e.target.value })}
+            InputProps={{
+              sx: { backgroundColor: theme => theme.palette.background.menu },
+            }}
           />
         </>
       }

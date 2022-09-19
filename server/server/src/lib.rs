@@ -1,4 +1,6 @@
+#[cfg(not(target_os = "android"))]
 extern crate machine_uid;
+
 use crate::{
     certs::Certificates, configuration::get_or_create_token_secret, cors::cors_policy,
     serve_frontend::config_server_frontend, static_files::config_static_files,
@@ -22,7 +24,7 @@ use service::{
 
 use actix_web::{web::Data, App, HttpServer};
 use std::{
-    ops::DerefMut,
+    ops::{Deref, DerefMut},
     sync::{Arc, RwLock},
 };
 use tokio::sync::{oneshot, Mutex};
@@ -83,9 +85,19 @@ async fn run_stage0(
         .get_hardware_id()?
         .is_empty()
     {
+        #[cfg(not(target_os = "android"))]
+        let machine_uid = machine_uid::get().expect("Failed to query OS for hardware id");
+
+        #[cfg(target_os = "android")]
+        let machine_uid = config_settings
+            .server
+            .machine_uid
+            .clone()
+            .unwrap_or("".to_string());
+
         service_provider
             .app_data_service
-            .set_hardware_id(machine_uid::get().expect("Failed to query OS for hardware id"))?;
+            .set_hardware_id(machine_uid)?;
     }
 
     let service_provider_data = Data::new(service_provider);
@@ -151,7 +163,7 @@ async fn run_server(
         connection_manager.clone(),
         &config_settings.server.base_dir.clone().unwrap(),
     );
-    let service_context = service_provider.context().unwrap();
+    let service_context = service_provider.basic_context().unwrap();
     let service = &service_provider.settings;
 
     let db_settings = service.sync_settings(&service_context).unwrap();
@@ -214,7 +226,8 @@ async fn run_server(
 
     let restart_switch = Data::new(restart_switch);
 
-    let mut synchroniser = Synchroniser::new(sync_settings, service_provider_data.clone()).unwrap();
+    let mut synchroniser =
+        Synchroniser::new(sync_settings, service_provider_data.deref().clone()).unwrap();
     // Do the initial pull before doing anything else
     match synchroniser.sync().await {
         Ok(_) => {}
@@ -233,7 +246,7 @@ async fn run_server(
                 .await;
             }
         }
-    };
+    }
 
     let closure_settings = settings.clone();
 

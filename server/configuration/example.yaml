@@ -10,7 +10,7 @@
 #       http://localhost:3003,
 #       https://demo-open.msupply.org,
 #       http://localhost:8000,
-#     ] # Used to set the allowed Origin in Cross Origin Requst Security
+#     ] # Used to set the allowed Origin in Cross Origin Request Security
 #   base_dir: "app_data"
 # sync:
 #   url: "http://localhost:2048"
@@ -24,3 +24,13 @@
 #   username: "postgres"
 #   password: "password"
 #   database_name: "omsupply-database"
+# logging:
+##   one of: Console | File
+#   mode: Console
+##   one of:  Off | Error | Warn | Info (default) | Debug | Trace
+#   level: Info
+#   directory: log
+#   filename: remote_server.log
+#   max_file_count: 5
+#   max_file_size: 10
+

@@ -9,7 +9,6 @@ import {
   useLocalStorage,
   useLocation,
   useNavigate,
-  LocalStorage,
 } from '@openmsupply-client/common';
 import { AlertModal } from '@common/components';
 import { LocaleKey, TypedTFunction, useTranslation } from '@common/intl';
@@ -19,7 +18,7 @@ export const AuthenticationAlert = () => {
   const { isOn, toggleOff, toggleOn } = useToggle();
   const t = useTranslation('app');
   const location = useLocation();
-  const [error] = useLocalStorage('/auth/error');
+  const [error, , removeError] = useLocalStorage('/auth/error');
 
   useEffect(() => {
     if (!!error) toggleOn();
@@ -46,7 +45,8 @@ export const AuthenticationAlert = () => {
     }
 
     if (error === AuthError.PermissionDenied) {
-      LocalStorage.removeItem('/auth/error');
+      toggleOff();
+      setTimeout(removeError, 200);
       return;
     }
 
@@ -94,6 +94,11 @@ const translateErrorMessage = (
       return {
         title: t('auth.alert-title'),
         message: t('auth.permission-denied'),
+      };
+    case AuthError.ServerError:
+      return {
+        title: t('auth.alert-title'),
+        message: t('auth.server-error'),
       };
     default:
       return undefined;

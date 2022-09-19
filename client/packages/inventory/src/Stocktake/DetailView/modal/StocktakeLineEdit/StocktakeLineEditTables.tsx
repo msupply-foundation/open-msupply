@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect } from 'react';
 import {
   TextInputCell,
   alpha,
@@ -10,10 +10,12 @@ import {
   getExpiryDateInputColumn,
   NonNegativeIntegerCell,
   PositiveNumberInputCell,
-  CheckboxCell,
+  EnabledCheckboxCell,
   ColumnDescription,
   Theme,
   useTheme,
+  useTableStore,
+  CellProps,
 } from '@openmsupply-client/common';
 import { getLocationInputColumn } from '@openmsupply-client/system';
 import { DraftStocktakeLine } from './utils';
@@ -30,6 +32,16 @@ type DraftLineSetter = (
   patch: Partial<DraftStocktakeLine> & { id: string }
 ) => void;
 
+const useDisableStocktakeRows = (rows?: DraftStocktakeLine[]) => {
+  const { setDisabledRows } = useTableStore();
+  useEffect(() => {
+    const disabledRows = rows
+      ?.filter(row => !row.countThisLine)
+      .map(({ id }) => id);
+    if (disabledRows) setDisabledRows(disabledRows);
+  }, [rows]);
+};
+
 const getBatchColumn = (
   setter: DraftLineSetter,
   theme: Theme
@@ -37,8 +49,6 @@ const getBatchColumn = (
   [
     'batch',
     {
-      accessor: ({ rowData }) =>
-        rowData.countThisLine ? rowData.batch ?? '' : '',
       width: 150,
       maxWidth: 150,
       maxLength: 50,
@@ -56,7 +66,7 @@ const getCountThisLineColumn = (
     key: 'countThisLine',
     label: 'label.count-this-line',
     width: 100,
-    Cell: CheckboxCell,
+    Cell: EnabledCheckboxCell,
     setter: patch => setter({ ...patch }),
     backgroundColor: alpha(theme.palette.background.menu, 0.4),
   };
@@ -69,6 +79,14 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
 }) => {
   const t = useTranslation('inventory');
   const theme = useTheme();
+  useDisableStocktakeRows(batches);
+
+  const PackSizeCell = (props: CellProps<DraftStocktakeLine>) => (
+    <PositiveNumberInputCell
+      {...props}
+      isDisabled={!!props.rowData.stockLine}
+    />
+  );
 
   const columns = useColumns<DraftStocktakeLine>([
     getCountThisLineColumn(update, theme),
@@ -77,25 +95,19 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
       key: 'snapshotNumberOfPacks',
       label: 'label.num-packs',
       width: 100,
-      accessor: ({ rowData }) =>
-        rowData.countThisLine ? rowData.snapshotNumberOfPacks : '',
       setter: patch => update({ ...patch, countThisLine: true }),
     },
     {
       key: 'packSize',
       label: 'label.pack-size',
       width: 125,
-      accessor: ({ rowData }) =>
-        rowData.countThisLine ? rowData.packSize : '',
-      Cell: PositiveNumberInputCell,
+      Cell: PackSizeCell,
       setter: patch => update({ ...patch, countThisLine: true }),
     },
     {
       key: 'countedNumberOfPacks',
       label: 'label.counted-num-of-packs',
       width: 100,
-      accessor: ({ rowData }) =>
-        rowData.countThisLine ? rowData.countedNumberOfPacks : '',
       Cell: NonNegativeIntegerCell,
       setter: patch => update({ ...patch, countThisLine: true }),
     },
@@ -103,8 +115,6 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
       expiryDateColumn,
       {
         width: 100,
-        accessor: ({ rowData }) =>
-          rowData.countThisLine ? rowData.expiryDate : null,
         setter: patch => update({ ...patch, countThisLine: true }),
       },
     ],
@@ -112,6 +122,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
 
   return (
     <DataTable
+      key="stocktake-batch"
       isDisabled={isDisabled}
       columns={columns}
       data={batches}
@@ -136,8 +147,6 @@ export const PricingTable: FC<StocktakeLineEditTableProps> = ({
       {
         Cell: CurrencyInputCell,
         width: 200,
-        accessor: ({ rowData }) =>
-          rowData.countThisLine ? rowData.sellPricePerPack : '',
         setter: patch => update({ ...patch, countThisLine: true }),
       },
     ],
@@ -146,8 +155,6 @@ export const PricingTable: FC<StocktakeLineEditTableProps> = ({
       {
         Cell: CurrencyInputCell,
         width: 200,
-        accessor: ({ rowData }) =>
-          rowData.countThisLine ? rowData.costPricePerPack : '',
         setter: patch => update({ ...patch, countThisLine: true }),
       },
     ],
@@ -155,6 +162,7 @@ export const PricingTable: FC<StocktakeLineEditTableProps> = ({
 
   return (
     <DataTable
+      key="stocktake-pricing"
       isDisabled={isDisabled}
       columns={columns}
       data={batches}
@@ -179,14 +187,13 @@ export const LocationTable: FC<StocktakeLineEditTableProps> = ({
       {
         width: 400,
         setter: patch => update({ ...patch, countThisLine: true }),
-        accessor: ({ rowData }) =>
-          rowData.countThisLine ? rowData.location : null,
       },
     ],
   ]);
 
   return (
     <DataTable
+      key="stocktake-location"
       isDisabled={isDisabled}
       columns={columns}
       data={batches}

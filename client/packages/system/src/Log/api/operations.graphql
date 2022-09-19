@@ -1,0 +1,26 @@
+fragment LogRow on LogNode {
+  id
+  datetime
+  recordId
+  storeId
+  type
+  user {
+    username
+  }
+}
+
+query logs(
+  $first: Int
+  $offset: Int
+  $sort: LogSortInput
+  $filter: LogFilterInput
+) {
+  logs(filter: $filter, page: { first: $first, offset: $offset }, sort: $sort) {
+    ... on LogConnector {
+      nodes {
+        ...LogRow
+      }
+      totalCount
+    }
+  }
+}

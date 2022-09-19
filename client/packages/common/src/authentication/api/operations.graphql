@@ -84,3 +84,19 @@ query refreshToken {
     }
   }
 }
+
+query permissions($storeId: String!) {
+  me {
+    ... on UserNode {
+      __typename
+      username
+      permissions(storeId: $storeId) {
+        nodes {
+          permissions
+          storeId
+        }
+        totalCount
+      }
+    }
+  }
+}
