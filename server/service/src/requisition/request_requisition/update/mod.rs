@@ -1,7 +1,9 @@
-use crate::{requisition::query::get_requisition, service_provider::ServiceContext};
-use chrono::NaiveDate;
+use crate::{
+    log::log_entry, requisition::query::get_requisition, service_provider::ServiceContext,
+};
+use chrono::{NaiveDate, Utc};
 use repository::{
-    RepositoryError, Requisition, RequisitionLineRowRepository, RequisitionRowRepository,
+    LogType, RepositoryError, Requisition, RequisitionLineRowRepository, RequisitionRowRepository,
 };
 
 mod generate;
@@ -12,7 +14,7 @@ use generate::generate;
 use validate::validate;
 
 #[derive(Debug, PartialEq, Clone)]
-pub enum UpdateRequestRequstionStatus {
+pub enum UpdateRequestRequistionStatus {
     Sent,
 }
 
@@ -25,7 +27,7 @@ pub struct UpdateRequestRequisition {
     pub comment: Option<String>,
     pub max_months_of_stock: Option<f64>,
     pub min_months_of_stock: Option<f64>,
-    pub status: Option<UpdateRequestRequstionStatus>,
+    pub status: Option<UpdateRequestRequistionStatus>,
     pub expected_delivery_date: Option<NaiveDate>,
 }
 
@@ -52,15 +54,15 @@ type OutError = UpdateRequestRequisitionError;
 
 pub fn update_request_requisition(
     ctx: &ServiceContext,
-    store_id: &str,
     input: UpdateRequestRequisition,
+    //TODO add user_id
 ) -> Result<Requisition, OutError> {
     let requisition = ctx
         .connection
         .transaction_sync(|connection| {
-            let requisition_row = validate(connection, store_id, &input)?;
+            let requisition_row = validate(connection, &ctx.store_id, &input)?;
             let (updated_requisition, update_requisition_line_rows) =
-                generate(connection, requisition_row, input)?;
+                generate(connection, requisition_row, input.clone())?;
             RequisitionRowRepository::new(&connection).upsert_one(&updated_requisition)?;
 
             let requisition_line_row_repository = RequisitionLineRowRepository::new(&connection);
@@ -77,6 +79,15 @@ pub fn update_request_requisition(
 
     ctx.processors_trigger
         .trigger_requisition_transfer_processors();
+
+    if input.status == Some(UpdateRequestRequistionStatus::Sent) {
+        log_entry(
+            &ctx,
+            LogType::RequisitionStatusSent,
+            Some(requisition.requisition_row.id.to_string()),
+            Utc::now().naive_utc(),
+        )?;
+    }
 
     Ok(requisition)
 }

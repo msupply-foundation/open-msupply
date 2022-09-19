@@ -56,6 +56,14 @@ impl EqualFilter<i32> {
     pub fn equal_to_i32(value: i32) -> Self {
         inline_init(|r: &mut Self| r.equal_to = Some(value))
     }
+    pub fn not_equal_to_i32(value: i32) -> Self {
+        EqualFilter {
+            equal_to: None,
+            not_equal_to: Some(value),
+            equal_any: None,
+            not_equal_all: None,
+        }
+    }
 }
 
 impl EqualFilter<String> {

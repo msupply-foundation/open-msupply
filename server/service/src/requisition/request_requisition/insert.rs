@@ -1,4 +1,5 @@
 use crate::{
+    log::log_entry,
     number::next_number,
     requisition::{common::check_requisition_exists, query::get_requisition},
     service_provider::ServiceContext,
@@ -7,7 +8,8 @@ use crate::{
 use chrono::{NaiveDate, Utc};
 use repository::{
     requisition_row::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
-    NumberRowType, RepositoryError, Requisition, RequisitionRowRepository, StorageConnection,
+    LogType, NumberRowType, RepositoryError, Requisition, RequisitionRowRepository,
+    StorageConnection,
 };
 
 #[derive(Debug, PartialEq, Clone, Default)]
@@ -42,15 +44,13 @@ type OutError = InsertRequestRequisitionError;
 
 pub fn insert_request_requisition(
     ctx: &ServiceContext,
-    store_id: &str,
-    user_id: &str,
     input: InsertRequestRequisition,
 ) -> Result<Requisition, OutError> {
     let requisition = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(connection, store_id, &input)?;
-            let new_requisition = generate(connection, store_id, user_id, input)?;
+            validate(connection, &ctx.store_id, &input)?;
+            let new_requisition = generate(connection, &ctx.store_id, &ctx.user_id, input)?;
             RequisitionRowRepository::new(&connection).upsert_one(&new_requisition)?;
 
             get_requisition(ctx, None, &new_requisition.id)
@@ -58,6 +58,14 @@ pub fn insert_request_requisition(
                 .ok_or(OutError::NewlyCreatedRequisitionDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
+
+    log_entry(
+        &ctx,
+        LogType::RequisitionCreated,
+        Some(requisition.requisition_row.id.to_string()),
+        requisition.requisition_row.created_datetime,
+    )?;
+
     Ok(requisition)
 }
 
@@ -174,15 +182,15 @@ mod test_insert {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.requisition_service;
 
         // RequisitionAlreadyExists
         assert_eq!(
             service.insert_request_requisition(
                 &context,
-                "store_a",
-                "n/a",
                 inline_init(|r: &mut InsertRequestRequisition| {
                     r.id = mock_request_draft_requisition().id;
                 }),
@@ -195,8 +203,6 @@ mod test_insert {
         assert_eq!(
             service.insert_request_requisition(
                 &context,
-                "store_a",
-                "n/a",
                 inline_init(|r: &mut InsertRequestRequisition| {
                     r.id = "new_request_requisition".to_owned();
                     r.other_party_id = name_store_b.id.clone();
@@ -209,8 +215,6 @@ mod test_insert {
         assert_eq!(
             service.insert_request_requisition(
                 &context,
-                &mock_store_a().id,
-                "n/a",
                 inline_init(|r: &mut InsertRequestRequisition| {
                     r.id = "new_id".to_string();
                     r.other_party_id = not_visible().id;
@@ -223,8 +227,6 @@ mod test_insert {
         assert_eq!(
             service.insert_request_requisition(
                 &context,
-                "store_a",
-                "n/a",
                 inline_init(|r: &mut InsertRequestRequisition| {
                     r.id = "new_request_requisition".to_owned();
                     r.other_party_id = "invalid".to_owned();
@@ -237,8 +239,6 @@ mod test_insert {
         assert_eq!(
             service.insert_request_requisition(
                 &context,
-                "store_c",
-                "n/a",
                 inline_init(|r: &mut InsertRequestRequisition| {
                     r.id = "new_request_requisition".to_owned();
                     r.other_party_id = mock_name_a().id;
@@ -254,7 +254,9 @@ mod test_insert {
             setup_all("insert_request_requisition_success", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
         let service = service_provider.requisition_service;
 
         let before_insert = Utc::now().naive_utc();
@@ -262,8 +264,6 @@ mod test_insert {
         let result = service
             .insert_request_requisition(
                 &context,
-                "store_a",
-                &mock_user_account_a().id,
                 InsertRequestRequisition {
                     id: "new_request_requisition".to_owned(),
                     other_party_id: mock_name_store_c().id,

@@ -53,11 +53,11 @@ pub fn supply_requested_quantity(
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context()?;
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
     let response = match service_provider
         .requisition_service
-        .supply_requested_quantity(&service_context, store_id, &user.user_id, input.to_domain())
+        .supply_requested_quantity(&service_context, input.to_domain())
     {
         Ok(requisition_lines) => SupplyRequestedQuantityResponse::Response(
             RequisitionLineConnector::from_vec(requisition_lines),
@@ -130,7 +130,7 @@ mod test {
     };
 
     type DeleteLineMethod =
-        dyn Fn(&str, ServiceInput) -> Result<Vec<RequisitionLine>, ServiceError> + Sync + Send;
+        dyn Fn(ServiceInput) -> Result<Vec<RequisitionLine>, ServiceError> + Sync + Send;
 
     pub struct TestService(pub Box<DeleteLineMethod>);
 
@@ -138,11 +138,9 @@ mod test {
         fn supply_requested_quantity(
             &self,
             _: &ServiceContext,
-            store_id: &str,
-            _: &str,
             input: ServiceInput,
         ) -> Result<Vec<RequisitionLine>, ServiceError> {
-            self.0(store_id, input)
+            self.0(input)
         }
     }
 
@@ -187,7 +185,7 @@ mod test {
         "#;
 
         // RequisitionDoesNotExist
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::RequisitionDoesNotExist)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::RequisitionDoesNotExist)));
 
         let expected = json!({
             "supplyRequestedQuantity": {
@@ -207,7 +205,7 @@ mod test {
         );
 
         // CannotEditRequisition
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::CannotEditRequisition)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::CannotEditRequisition)));
 
         let expected = json!({
             "supplyRequestedQuantity": {
@@ -227,7 +225,7 @@ mod test {
         );
 
         // NotThisStoreRequisition
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotThisStoreRequisition)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NotThisStoreRequisition)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -239,7 +237,7 @@ mod test {
         );
 
         // NotAResponseRequisition
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotAResponseRequisition)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NotAResponseRequisition)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -274,8 +272,7 @@ mod test {
         "#;
 
         // Success
-        let test_service = TestService(Box::new(|store_id, input| {
-            assert_eq!(store_id, "store_a");
+        let test_service = TestService(Box::new(|input| {
             assert_eq!(
                 input,
                 ServiceInput {
