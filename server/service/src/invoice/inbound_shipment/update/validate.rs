@@ -1,6 +1,7 @@
 use crate::invoice::{
     check_invoice_exists, check_invoice_is_editable, check_invoice_status, check_invoice_type,
-    InvoiceDoesNotExist, InvoiceIsNotEditable, InvoiceRowStatusError, WrongInvoiceRowType,
+    check_store, InvoiceDoesNotExist, InvoiceIsNotEditable, InvoiceRowStatusError,
+    NotThisStoreInvoice, WrongInvoiceRowType,
 };
 use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
 use repository::{InvoiceRow, InvoiceRowType, Name, StorageConnection};
@@ -15,7 +16,7 @@ pub fn validate(
     use UpdateInboundShipmentError::*;
     let invoice = check_invoice_exists(&patch.id, connection)?;
 
-    // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
+    check_store(&invoice, store_id)?;
     check_invoice_type(&invoice, InvoiceRowType::InboundShipment)?;
     check_invoice_is_editable(&invoice)?;
     check_invoice_status(&invoice, patch.full_status(), &patch.on_hold)?;
@@ -56,6 +57,12 @@ impl From<InvoiceIsNotEditable> for UpdateInboundShipmentError {
 impl From<InvoiceDoesNotExist> for UpdateInboundShipmentError {
     fn from(_: InvoiceDoesNotExist) -> Self {
         UpdateInboundShipmentError::InvoiceDoesNotExist
+    }
+}
+
+impl From<NotThisStoreInvoice> for UpdateInboundShipmentError {
+    fn from(_: NotThisStoreInvoice) -> Self {
+        UpdateInboundShipmentError::NotThisStoreInvoice
     }
 }
 

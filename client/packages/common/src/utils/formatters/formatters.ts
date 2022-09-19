@@ -1,3 +1,4 @@
+import { LocaleKey } from '@common/intl';
 import format from 'date-fns/format';
 import isValid from 'date-fns/isValid';
 import Papa, { UnparseConfig, UnparseObject } from 'papaparse';
@@ -31,4 +32,6 @@ export const Formatter = {
     const date = dateString ? new Date(dateString) : null;
     return date && isValid(date) ? format(date, "yyyy-MM-dd' 'HH:mm:ss") : '';
   },
+  logTypeTranslation: (logType: string): LocaleKey =>
+    `log.${logType.toLowerCase().replace(/_/g, '-')}` as LocaleKey,
 };

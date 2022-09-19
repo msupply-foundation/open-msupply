@@ -9,8 +9,10 @@ import {
   RouteBuilder,
   useEditModal,
   createQueryParamsStore,
+  DetailTabs,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
+import { LogList } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
@@ -36,6 +38,17 @@ export const DetailView: FC = () => {
 
   if (isLoading) return <DetailViewSkeleton />;
 
+  const tabs = [
+    {
+      Component: <ContentArea onRowClick={!isDisabled ? onRowClick : null} />,
+      value: 'Details',
+    },
+    {
+      Component: <LogList recordId={data?.id ?? ''} />,
+      value: 'Log',
+    },
+  ];
+
   return !!data ? (
     <TableProvider
       createStore={createTableStore}
@@ -45,7 +58,8 @@ export const DetailView: FC = () => {
     >
       <AppBarButtons />
       <Toolbar />
-      <ContentArea onRowClick={!isDisabled ? onRowClick : null} />
+      <DetailTabs tabs={tabs} />
+
       <Footer />
       <SidePanel />
       {entity && (

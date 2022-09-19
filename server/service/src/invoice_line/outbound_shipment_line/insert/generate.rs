@@ -1,4 +1,4 @@
-use crate::u32_to_i32;
+use crate::{invoice::common::calculate_total_after_tax, u32_to_i32};
 use repository::{
     InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow,
 };
@@ -44,7 +44,6 @@ fn generate_line(
         stock_line_id,
         number_of_packs,
         total_before_tax,
-        total_after_tax,
         tax,
     }: InsertOutboundShipmentLine,
     ItemRow {
@@ -63,6 +62,9 @@ fn generate_line(
         ..
     }: StockLineRow,
 ) -> InvoiceLineRow {
+    let total_before_tax = total_before_tax.unwrap_or(cost_price_per_pack * number_of_packs as f64);
+    let total_after_tax = calculate_total_after_tax(total_before_tax, tax);
+
     InvoiceLineRow {
         id,
         invoice_id,

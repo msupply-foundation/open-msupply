@@ -17,6 +17,11 @@ impl ShipmentTransferProcessor for DeleteInboundShipmentProcessor {
         DESCRIPTION.to_string()
     }
 
+    /// Outbound shipment is editable in Picked status, at this stage Inbound shipment may exist as a transfer.
+    /// Since Outbound shipment is editable it can be deleted, in which case if Inbound shipment exists we also
+    /// want to delete it (Inbound shipment wont' be editable until Outbound shipment is picked, so it's ok to delete it,
+    /// and user will not loose any work because none will be done yet for Inbound shipment)
+    ///
     /// Inbound shipment will be deleted when all below conditions are met:
     ///
     /// 1. Source shipment name_id is for a store that is active on current site (transfer processor driver guarantees this)

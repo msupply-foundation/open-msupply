@@ -11,6 +11,7 @@ import {
   ServerStatus,
   useElectronClient,
   frontEndHostDisplay,
+  LocalStorage,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { useHost } from '../../api/hooks';
@@ -39,6 +40,7 @@ export const Login = () => {
 
   useEffect(() => {
     setPageTitle(`${t('app.login')} | ${t('app')} `);
+    LocalStorage.removeItem('/auth/error');
   }, []);
 
   useEffect(() => {

@@ -113,8 +113,8 @@ impl ItemNode {
         self.legacy_bool("is_vaccine")
     }
 
-    pub async fn default_pack_size(&self) -> i64 {
-        self.legacy_i64("default_pack_size")
+    pub async fn default_pack_size(&self) -> i32 {
+        self.row().default_pack_size
     }
 
     pub async fn outer_pack_size(&self) -> i64 {
@@ -289,7 +289,7 @@ mod test {
                                 "item_name": "test_item",
                                 "start_of_year_date": "0000-00-00",
                                 "manufacture_method": "",
-                                "default_pack_size": 1,
+                                "default_pack_size": 0,
                                 "dose_picture": "[object Picture]",
                                 "atc_category": "",
                                 "medication_purpose": "",
@@ -371,7 +371,6 @@ mod test {
               "__typename": "ItemNode",
               "atcCategory": "",
               "ddd": "0.1",
-              "defaultPackSize": 1,
               "doses": 11,
               "isVaccine": true,
               "margin": 0.3,
@@ -394,7 +393,6 @@ mod test {
                msupplyUniversalName
                doses
                isVaccine
-               defaultPackSize
                outerPackSize
                volumePerPack
                volumePerOuterPack

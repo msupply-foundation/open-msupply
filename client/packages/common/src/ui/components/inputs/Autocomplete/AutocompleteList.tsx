@@ -1,7 +1,6 @@
 import React from 'react';
 
 import {
-  Paper,
   Autocomplete as MuiAutocomplete,
   AutocompleteRenderInputParams,
   createFilterOptions,
@@ -81,12 +80,14 @@ export const AutocompleteList = <T,>({
       noOptionsText={noOptionsText}
       onChange={onChange}
       sx={{
-        '& .MuiAutocomplete-listbox': {
-          minHeight: height ? `${height}` : 'auto',
-          maxHeight: height ? `${height}` : 'auto',
-        },
         '& .MuiAutocomplete-inputRoot': {
           width: width ? `${width}px` : 'auto',
+        },
+      }}
+      ListboxProps={{
+        style: {
+          minHeight: height ? `${height}` : 'auto',
+          maxHeight: height ? `${height}` : 'auto',
         },
       }}
       renderInput={
@@ -97,22 +98,14 @@ export const AutocompleteList = <T,>({
       forcePopupIcon={false}
       options={mappedOptions}
       renderOption={optionRenderer}
-      ListboxProps={{
-        style: {
-          height: height ? `${height}` : 'auto',
-          maxHeight: height ? `${height}` : 'auto',
-        },
-      }}
-      PaperComponent={props => (
-        <Paper
-          sx={{
+      componentsProps={{
+        paper: {
+          sx: {
             backgroundColor: theme => theme.palette.background.toolbar,
             minHeight: height ? `${height}` : 'auto',
-          }}
-        >
-          {props.children}
-        </Paper>
-      )}
+          },
+        },
+      }}
       disableCloseOnSelect={disableCloseOnSelect}
       multiple={multiple}
       getOptionLabel={getOptionLabel}

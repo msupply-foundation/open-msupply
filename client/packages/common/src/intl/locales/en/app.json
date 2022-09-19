@@ -5,6 +5,7 @@
   "auth.unauthenticated-message": "You are not currently logged in. Click OK to return to the login screen.",
   "auth.no-store-assigned": "You are not assigned to any stores. Please login as a different user, or contact your administrator.",
   "auth.permission-denied": "Permission denied",
+  "auth.server-error": "The server has returned an error when fetching user details! \r\nUnable to continue, please contact support.",
   "auth.timeout-title": "Session Timed Out",
   "auth.timeout-message": "You have been logged out of your session due to inactivity. Click OK to return to the login screen.",
   "button.close-the-menu": "Close the menu",
@@ -64,7 +65,16 @@
   "heading.password": "Password",
   "button.login": "Log in",
   "error.login": "Invalid username or password",
+  "error.site_auth_timeout": "Site authentication timed out",
+  "error.site_has_no_store": "Site has no store",
+  "error.site_incorrect_hardware_id": "Incorrect hardware ID",
+  "error.site_incorrect_password": "Incorrect password",
+  "error.site_name_not_found": "Site name not found",
+  "error.unable_to_save_settings": "Unable to save settings",
+  "error.unable_to_restart_server": "Unable to restart the server",
   "select-store": "Select store",
   "select-report": "Select Template",
-  "error.server-not-found": "Problem finding local omSupply server"
+  "error.server-not-found": "Problem finding local omSupply server",
+  "error.authentication-error": "The server has returned an error",
+  "store-details": "Store code: {{code}}"
 }

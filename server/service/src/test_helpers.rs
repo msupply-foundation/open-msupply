@@ -4,7 +4,7 @@ use actix_rt::task::JoinHandle;
 use repository::{
     mock::{MockData, MockDataInserts},
     test_db::setup_all_with_data,
-    StorageConnection,
+    StorageConnection, StorageConnectionManager,
 };
 
 use crate::{processors::Processors, service_provider::ServiceProvider};
@@ -14,6 +14,7 @@ pub(crate) struct ServiceTestContext {
     pub(crate) connection: StorageConnection,
     pub(crate) service_provider: Arc<ServiceProvider>,
     pub(crate) processors_task: JoinHandle<()>,
+    pub(crate) connection_manager: StorageConnectionManager,
 }
 
 // TODO use this method in service tests
@@ -38,6 +39,7 @@ pub(crate) async fn setup_all_with_data_and_service_provider(
         connection,
         service_provider,
         processors_task,
+        connection_manager,
     }
 }
 

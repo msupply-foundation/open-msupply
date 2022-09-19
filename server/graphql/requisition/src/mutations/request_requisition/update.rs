@@ -14,7 +14,7 @@ use service::{
     auth::{Resource, ResourceAccessRequest},
     requisition::request_requisition::{
         UpdateRequestRequisition as ServiceInput, UpdateRequestRequisitionError as ServiceError,
-        UpdateRequestRequstionStatus,
+        UpdateRequestRequistionStatus,
     },
 };
 
@@ -61,7 +61,7 @@ pub enum UpdateResponse {
 }
 
 pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<UpdateResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::MutateRequisition,
@@ -70,12 +70,12 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context()?;
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
     map_response(
         service_provider
             .requisition_service
-            .update_request_requisition(&service_context, store_id, input.to_domain()),
+            .update_request_requisition(&service_context, input.to_domain()),
     )
 }
 
@@ -155,10 +155,10 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
 }
 
 impl UpdateRequestRequisitionStatusInput {
-    pub fn to_domain(self) -> UpdateRequestRequstionStatus {
+    pub fn to_domain(self) -> UpdateRequestRequistionStatus {
         use UpdateRequestRequisitionStatusInput::*;
         match self {
-            Sent => UpdateRequestRequstionStatus::Sent,
+            Sent => UpdateRequestRequistionStatus::Sent,
         }
     }
 }
@@ -179,7 +179,7 @@ mod test {
         requisition::{
             request_requisition::{
                 UpdateRequestRequisition as ServiceInput,
-                UpdateRequestRequisitionError as ServiceError, UpdateRequestRequstionStatus,
+                UpdateRequestRequisitionError as ServiceError, UpdateRequestRequistionStatus,
             },
             RequisitionServiceTrait,
         },
@@ -189,8 +189,7 @@ mod test {
 
     use crate::RequisitionMutations;
 
-    type UpdateLineMethod =
-        dyn Fn(&str, ServiceInput) -> Result<Requisition, ServiceError> + Sync + Send;
+    type UpdateLineMethod = dyn Fn(ServiceInput) -> Result<Requisition, ServiceError> + Sync + Send;
 
     pub struct TestService(pub Box<UpdateLineMethod>);
 
@@ -198,10 +197,9 @@ mod test {
         fn update_request_requisition(
             &self,
             _: &ServiceContext,
-            store_id: &str,
             input: ServiceInput,
         ) -> Result<Requisition, ServiceError> {
-            self.0(store_id, input)
+            self.0(input)
         }
     }
 
@@ -246,7 +244,7 @@ mod test {
         "#;
 
         // RequisitionDoesNotExist
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::RequisitionDoesNotExist)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::RequisitionDoesNotExist)));
 
         let expected = json!({
             "updateRequestRequisition": {
@@ -266,7 +264,7 @@ mod test {
         );
 
         // CannotEditRequisition
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::CannotEditRequisition)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::CannotEditRequisition)));
 
         let expected = json!({
             "updateRequestRequisition": {
@@ -286,7 +284,7 @@ mod test {
         );
 
         // NotThisStoreRequisition
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotThisStoreRequisition)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NotThisStoreRequisition)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -298,7 +296,7 @@ mod test {
         );
 
         // NotARequestRequisition
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotARequestRequisition)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NotARequestRequisition)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -310,7 +308,7 @@ mod test {
         );
 
         // UpdatedRequisitionDoesNotExist
-        let test_service = TestService(Box::new(|_, _| {
+        let test_service = TestService(Box::new(|_| {
             Err(ServiceError::UpdatedRequisitionDoesNotExist)
         }));
         let expected_message = "Internal error";
@@ -324,7 +322,7 @@ mod test {
         );
 
         // OtherPartyNotASupplier
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::OtherPartyNotASupplier)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::OtherPartyNotASupplier)));
 
         let expected = json!({
             "updateRequestRequisition": {
@@ -344,7 +342,7 @@ mod test {
         );
 
         // OtherPartyDoesNotExist
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::OtherPartyDoesNotExist)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::OtherPartyDoesNotExist)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -356,7 +354,7 @@ mod test {
         );
 
         // OtherPartyIsNotAStore
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::OtherPartyIsNotAStore)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::OtherPartyIsNotAStore)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -389,8 +387,7 @@ mod test {
         "#;
 
         // Success
-        let test_service = TestService(Box::new(|store_id, input| {
-            assert_eq!(store_id, "store_a");
+        let test_service = TestService(Box::new(|input| {
             assert_eq!(
                 input,
                 ServiceInput {
@@ -401,7 +398,7 @@ mod test {
                     max_months_of_stock: Some(1.0),
                     min_months_of_stock: Some(2.0),
                     other_party_id: Some("other_party_id".to_string()),
-                    status: Some(UpdateRequestRequstionStatus::Sent),
+                    status: Some(UpdateRequestRequistionStatus::Sent),
                     expected_delivery_date: Some(NaiveDate::from_ymd(2022, 01, 03))
                 }
             );

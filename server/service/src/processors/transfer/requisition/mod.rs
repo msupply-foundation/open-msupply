@@ -8,19 +8,24 @@ pub(crate) mod test;
 use repository::{
     ChangelogAction, ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogTableName,
     EqualFilter, KeyValueStoreRepository, KeyValueType, RepositoryError, Requisition,
-    RequisitionFilter, RequisitionRepository, StorageConnection,
+    StorageConnection,
 };
 use thiserror::Error;
 
 use crate::{
-    processors::transfer::requisition::{
-        create_response_requisition::CreateResponseRequisitionProcessor,
-        link_request_requisition::LinkRequestRequisitionProcessor,
-        update_request_requisition_status::UpdateRequestRequstionStatusProcessor,
+    processors::transfer::{
+        get_requisition_and_linked_requisition,
+        requisition::{
+            create_response_requisition::CreateResponseRequisitionProcessor,
+            link_request_requisition::LinkRequestRequisitionProcessor,
+            update_request_requisition_status::UpdateRequestRequstionStatusProcessor,
+        },
     },
     service_provider::ServiceProvider,
     sync::{ActiveStoresOnSite, GetActiveStoresOnSiteError},
 };
+
+use super::GetRequisitionAndLinkedRequisitionError;
 
 const CHANGELOG_BATCH_SIZE: u32 = 20;
 
@@ -36,7 +41,7 @@ pub(crate) struct RequisitionTransferProcessorRecord {
 #[derive(Error, Debug)]
 pub(crate) enum ProcessRequisitionTransfersError {
     #[error("Problem getting upsert record {0}")]
-    GetUpsertRecordError(GetUpsertRecordError),
+    GetRequisitionAndLinkedRequisitionError(GetRequisitionAndLinkedRequisitionError),
     #[error("{0}")]
     GetActiveStoresOnSiteError(GetActiveStoresOnSiteError),
     #[error("{0:?}")]
@@ -59,7 +64,9 @@ pub(crate) fn process_requisition_transfers(
         Box::new(UpdateRequestRequstionStatusProcessor),
     ];
 
-    let ctx = service_provider.context().map_err(Error::DatabaseError)?;
+    let ctx = service_provider
+        .basic_context()
+        .map_err(Error::DatabaseError)?;
 
     let active_stores =
         ActiveStoresOnSite::get(&ctx.connection).map_err(Error::GetActiveStoresOnSiteError)?;
@@ -95,7 +102,8 @@ pub(crate) fn process_requisition_transfers(
             // Prepare record
             let (requisition, linked_requisition) = match &log.row_action {
                 ChangelogAction::Upsert => {
-                    get_upsert_record(&ctx.connection, &log).map_err(Error::GetUpsertRecordError)?
+                    get_requisition_and_linked_requisition(&ctx.connection, &log.record_id)
+                        .map_err(Error::GetRequisitionAndLinkedRequisitionError)?
                 }
                 ChangelogAction::Delete => continue,
             };
@@ -125,40 +133,6 @@ pub(crate) fn process_requisition_transfers(
     }
 
     Ok(())
-}
-
-#[derive(Error, Debug)]
-pub(crate) enum GetUpsertRecordError {
-    #[error("Requisition not found {0:?}")]
-    RequisitionNotFound(ChangelogRow),
-    #[error("Database error while fetching requisition with id {0} {1:?}")]
-    DatabaseError(String, RepositoryError),
-}
-
-fn get_upsert_record(
-    connection: &StorageConnection,
-    changelog_row: &ChangelogRow,
-) -> Result<(Requisition, Option<Requisition>), GetUpsertRecordError> {
-    use GetUpsertRecordError::*;
-    let repo = RequisitionRepository::new(connection);
-
-    let requisition = repo
-        .query_one(RequisitionFilter::by_id(&changelog_row.record_id))
-        .map_err(|e| DatabaseError(changelog_row.record_id.clone(), e))?
-        .ok_or_else(|| RequisitionNotFound(changelog_row.clone()))?;
-
-    let linked_requisition = match &requisition.requisition_row.linked_requisition_id {
-        Some(id) => repo
-            .query_one(RequisitionFilter::by_id(id))
-            .map_err(|e| DatabaseError(id.to_string(), e))?,
-        None => repo
-            .query_one(RequisitionFilter::by_linked_requisition_id(
-                &requisition.requisition_row.id,
-            ))
-            .map_err(|e| DatabaseError(requisition.requisition_row.id.clone(), e))?,
-    };
-
-    Ok((requisition, linked_requisition))
 }
 
 #[derive(Error, Debug)]

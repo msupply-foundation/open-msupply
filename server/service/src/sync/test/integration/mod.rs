@@ -26,7 +26,10 @@ struct SyncIntegrationContext {
     processors_task: JoinHandle<()>,
 }
 
-async fn init_db(sync_settings: &SyncSettings, identifier: &str) -> SyncIntegrationContext {
+async fn init_test_context(
+    sync_settings: &SyncSettings,
+    identifier: &str,
+) -> SyncIntegrationContext {
     let ServiceTestContext {
         connection,
         service_provider,
@@ -38,6 +41,11 @@ async fn init_db(sync_settings: &SyncSettings, identifier: &str) -> SyncIntegrat
     )
     .await;
 
+    service_provider
+        .site_info
+        .request_and_set_site_info(&service_provider, &sync_settings)
+        .await
+        .unwrap();
     let synchroniser =
         Synchroniser::new(sync_settings.clone(), service_provider.clone().into()).unwrap();
 
@@ -81,6 +89,7 @@ where
 {
     let mut retries = 0;
     loop {
+        random_delay(10, 50).await;
         let error = match f().await {
             Ok(result) => return Ok(result),
             Err(error) => error,
@@ -91,6 +100,7 @@ where
         if error_string.contains("Site record locked preventing authentication update")
             || error_string.contains("connection closed before message completed")
             || error_string.contains("os error 54")
+            || error_string.contains("site_name_not_found")
         {
             retries += 1;
 
@@ -101,4 +111,13 @@ where
             return Err(error);
         }
     }
+}
+
+async fn random_delay(min_millisecond: u64, max_millisecond: u64) {
+    use rand::prelude::*;
+    let diff = max_millisecond - min_millisecond;
+    // .gen::<f64>() generates a float between 0 and 1
+    let delay_millisecond =
+        (rand::thread_rng().gen::<f64>() * diff as f64) as u64 + min_millisecond;
+    tokio::time::sleep(std::time::Duration::from_millis(delay_millisecond)).await;
 }

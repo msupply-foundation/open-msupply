@@ -4,7 +4,7 @@ use serde::Deserialize;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub(crate) enum SyncApiError {
+pub enum SyncApiError {
     #[error("status: ({status}) error: {source}")]
     MappedError {
         source: SyncErrorV5,
@@ -19,7 +19,7 @@ pub(crate) enum SyncApiError {
 }
 
 #[derive(Error, Debug, Deserialize)]
-pub(crate) enum SyncErrorV5 {
+pub enum SyncErrorV5 {
     #[error("code: ({code}) message: ({message})")]
     #[serde(rename = "error")]
     ParsedError {

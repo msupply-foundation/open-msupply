@@ -3,7 +3,8 @@ on:
     branches:
       - main
       - develop
-
+    paths:
+      - "server/**"
 name: CI
 
 jobs:
@@ -18,4 +19,4 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --features=sqlite
+          args: --features=sqlite --manifest-path server/Cargo.toml

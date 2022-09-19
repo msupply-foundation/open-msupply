@@ -11,13 +11,16 @@ use util::{inline_edit, inline_init, uuid::uuid};
 use crate::{
     processors::test_helpers::{delay_for_processor, exec_concurrent},
     requisition::{
-        request_requisition::{UpdateRequestRequisition, UpdateRequestRequstionStatus},
+        request_requisition::{UpdateRequestRequisition, UpdateRequestRequistionStatus},
         response_requisition::{UpdateResponseRequisition, UpdateResponseRequstionStatus},
     },
     service_provider::ServiceProvider,
     test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
 };
 
+/// This test is for requesting and responding store on the same site
+/// See same site transfer diagram in README.md for example of how
+/// changelog is upserted and processed by the same instance of triggered processor
 #[tokio::test(flavor = "multi_thread", worker_threads = 3)]
 async fn requisition_transfer() {
     let site_id = 25;
@@ -88,7 +91,7 @@ async fn requisition_transfer() {
         |_, test_input| async move {
             let (service_provider, request_store, response_store, item1, item2) = test_input;
 
-            let ctx = service_provider.context().unwrap();
+            let ctx = service_provider.basic_context().unwrap();
 
             let mut tester =
                 RequisitionTransferTester::new(&request_store, &response_store, &item1, &item2);
@@ -111,8 +114,8 @@ async fn requisition_transfer() {
     );
 
     tokio::select! {
-        Err(err) = processors_task => unreachable!("{}", err),
-        _ = test_handle => ()
+         Err(err) = processors_task => unreachable!("{}", err),
+        _ = test_handle => (),
     };
 }
 
@@ -203,15 +206,16 @@ impl RequisitionTransferTester {
     }
 
     pub(crate) fn update_request_requisition_to_sent(&self, service_provider: &ServiceProvider) {
-        let ctx = service_provider.context().unwrap();
+        let ctx = service_provider
+            .context(self.request_store.id.clone(), "".to_string())
+            .unwrap();
         service_provider
             .requisition_service
             .update_request_requisition(
                 &ctx,
-                &self.request_store.id,
                 inline_init(|r: &mut UpdateRequestRequisition| {
                     r.id = self.request_requisition.id.clone();
-                    r.status = Some(UpdateRequestRequstionStatus::Sent);
+                    r.status = Some(UpdateRequestRequistionStatus::Sent);
                 }),
             )
             .unwrap();
@@ -287,14 +291,14 @@ impl RequisitionTransferTester {
         &mut self,
         service_provider: &ServiceProvider,
     ) {
-        let ctx = service_provider.context().unwrap();
+        let ctx = service_provider
+            .context(self.response_store.id.clone(), "".to_string())
+            .unwrap();
 
         let response_requisition = service_provider
             .requisition_service
             .update_response_requisition(
                 &ctx,
-                &self.response_store.id,
-                "user_id",
                 inline_init(|r: &mut UpdateResponseRequisition| {
                     r.id = self.response_requisition.clone().map(|r| r.id).unwrap();
                     r.status = Some(UpdateResponseRequstionStatus::Finalised);

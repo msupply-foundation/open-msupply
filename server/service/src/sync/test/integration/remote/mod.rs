@@ -10,7 +10,7 @@ use crate::sync::test::{
     check_records_against_database,
     integration::{
         central_server_configurations::{ConfigureCentralServer, SiteConfiguration},
-        init_db, SyncIntegrationContext,
+        init_test_context, SyncIntegrationContext,
     },
 };
 
@@ -38,7 +38,7 @@ async fn test_remote_sync_record(identifier: &str, tester: &dyn SyncRecordTester
         connection,
         synchroniser,
         ..
-    } = init_db(&sync_settings, &identifier).await;
+    } = init_test_context(&sync_settings, &identifier).await;
     let steps_data = tester.test_step_data(&new_site_properties);
 
     let mut previous_connection = connection;
@@ -72,7 +72,7 @@ async fn test_remote_sync_record(identifier: &str, tester: &dyn SyncRecordTester
             connection,
             synchroniser,
             ..
-        } = init_db(&sync_settings, &inner_identifier).await;
+        } = init_test_context(&sync_settings, &inner_identifier).await;
         previous_connection = connection;
         previous_synchroniser = synchroniser;
         previous_synchroniser.sync().await.unwrap();
