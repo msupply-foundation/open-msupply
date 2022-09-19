@@ -19,9 +19,7 @@ export const DetailTabs: FC<DetailTabsProps> = ({ tabs }) => {
   const [currentTab, setCurrentTab] = useState<string>(tabs[0]?.value ?? '');
   const t = useTranslation('common');
 
-  const onChange:
-    | ((event: React.SyntheticEvent<Element, Event>, value: any) => void)
-    | undefined = (_, tab) => {
+  const onChange  = (_: React.SyntheticEvent, tab: string) => {
     updateQuery({ tab });
     setCurrentTab(tab);
   };
