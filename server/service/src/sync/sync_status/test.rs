@@ -144,7 +144,7 @@ fn get_initialisation_sync_status_tester(service_provider: Arc<ServiceProvider>)
             let mut response_record = CentralSyncBatchV5 {
                 max_cursor: 3,
                 data: vec![CentralSyncRecordV5 {
-                    id: 1,
+                    cursor: 1,
                     record: CommonSyncRecordV5::test(),
                 }],
             };
@@ -160,21 +160,21 @@ fn get_initialisation_sync_status_tester(service_provider: Arc<ServiceProvider>)
                     assert_eq!(pull_central.done_progress, None);
                     assert_eq!(pull_central.total_progress, None);
 
-                    response_record.data[0].id = 1;
+                    response_record.data[0].cursor = 1;
                     response_record
                 }
                 1 => {
                     assert_eq!(pull_central.done_progress, Some(1));
                     assert_eq!(pull_central.total_progress, Some(3));
 
-                    response_record.data[0].id = 2;
+                    response_record.data[0].cursor = 2;
                     response_record
                 }
                 2 => {
                     assert_eq!(pull_central.done_progress, Some(2));
                     assert_eq!(pull_central.total_progress, Some(3));
 
-                    response_record.data[0].id = 3;
+                    response_record.data[0].cursor = 3;
                     response_record
                 }
                 3 => {
