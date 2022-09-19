@@ -13,11 +13,7 @@ mod tests {
 
     #[actix_rt::test]
     async fn integration_sync_central_name_and_store_and_name_store_join() {
-        test_central_sync_record(
-            "name_and_store_and_name_store_join",
-            &NameAndStoreAndNameStoreJoinTester,
-        )
-        .await;
+        test_central_sync_record("name_store_and_join", &NameAndStoreAndNameStoreJoinTester).await;
     }
 
     #[actix_rt::test]

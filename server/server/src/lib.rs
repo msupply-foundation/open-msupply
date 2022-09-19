@@ -1,4 +1,6 @@
+#[cfg(not(target_os = "android"))]
 extern crate machine_uid;
+
 use crate::{
     certs::Certificates, configuration::get_or_create_token_secret, cors::cors_policy,
     serve_frontend::config_server_frontend, static_files::config_static_files,
@@ -22,7 +24,7 @@ use service::{
 
 use actix_web::{web::Data, App, HttpServer};
 use std::{
-    ops::DerefMut,
+    ops::{Deref, DerefMut},
     sync::{Arc, RwLock},
 };
 use tokio::sync::{oneshot, Mutex};
@@ -83,9 +85,19 @@ async fn run_stage0(
         .get_hardware_id()?
         .is_empty()
     {
+        #[cfg(not(target_os = "android"))]
+        let machine_uid = machine_uid::get().expect("Failed to query OS for hardware id");
+
+        #[cfg(target_os = "android")]
+        let machine_uid = config_settings
+            .server
+            .machine_uid
+            .clone()
+            .unwrap_or("".to_string());
+
         service_provider
             .app_data_service
-            .set_hardware_id(machine_uid::get().expect("Failed to query OS for hardware id"))?;
+            .set_hardware_id(machine_uid)?;
     }
 
     let service_provider_data = Data::new(service_provider);
@@ -151,11 +163,11 @@ async fn run_server(
         connection_manager.clone(),
         &config_settings.server.base_dir.clone().unwrap(),
     );
-    let service_context = service_provider.context().unwrap();
+    let service_context = service_provider.basic_context().unwrap();
     let service = &service_provider.settings;
 
     let db_settings = service.sync_settings(&service_context).unwrap();
-    let sync_settings = db_settings.or(config_settings.sync.clone());
+    let sync_settings = db_settings.clone().or(config_settings.sync.clone());
     let sync_settings = match sync_settings {
         Some(sync_settings) => sync_settings,
         // No sync settings found, start in stage0 mode
@@ -171,9 +183,22 @@ async fn run_server(
             .await
         }
     };
+
+    if db_settings.is_none() && config_settings.sync.is_some() {
+        service_provider
+            .site_info
+            .request_and_set_site_info(&service_provider, config_settings.sync.as_ref().unwrap())
+            .await
+            .unwrap();
+    }
+
     // Final settings:
     let mut settings = config_settings;
     settings.sync = Some(sync_settings.clone());
+    let site_id = service_provider
+        .site_info
+        .get_site_id(&service_context)
+        .unwrap();
 
     let auth_data = auth_data(
         &settings.server,
@@ -201,13 +226,14 @@ async fn run_server(
 
     let restart_switch = Data::new(restart_switch);
 
-    let mut synchroniser = Synchroniser::new(sync_settings, service_provider_data.clone()).unwrap();
+    let mut synchroniser =
+        Synchroniser::new(sync_settings, service_provider_data.deref().clone()).unwrap();
     // Do the initial pull before doing anything else
     match synchroniser.sync().await {
         Ok(_) => {}
         Err(err) => {
             error!("Failed to perform the initial sync: {}", err);
-            if !is_develop() {
+            if !is_develop() || site_id.is_none() {
                 warn!("Falling back to bootstrap mode");
                 return run_stage0(
                     settings,
@@ -220,7 +246,7 @@ async fn run_server(
                 .await;
             }
         }
-    };
+    }
 
     let closure_settings = settings.clone();
 

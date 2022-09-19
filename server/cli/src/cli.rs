@@ -1,7 +1,9 @@
-use actix_web::web::Data;
+use crate::fast_log::Config;
+
 use chrono::Utc;
 use clap::StructOpt;
 use cli::RefreshDatesRepository;
+use fast_log;
 use graphql::schema_builder;
 use log::info;
 use repository::{
@@ -26,7 +28,7 @@ use std::{
     path::{Path, PathBuf},
     sync::{Arc, RwLock},
 };
-use util::{init_logger, inline_init, LogLevel};
+use util::inline_init;
 
 const DATA_EXPORT_FOLDER: &'static str = "data";
 
@@ -90,7 +92,7 @@ async fn initialise_from_central(settings: Settings, users: &str) -> StorageConn
 
     let connection_manager = get_storage_connection_manager(&settings.database);
     let app_data_folder = settings.server.base_dir.unwrap();
-    let service_provider = Data::new(ServiceProvider::new(
+    let service_provider = Arc::new(ServiceProvider::new(
         connection_manager.clone(),
         &app_data_folder,
     ));
@@ -130,8 +132,7 @@ async fn initialise_from_central(settings: Settings, users: &str) -> StorageConn
 
 #[tokio::main]
 async fn main() {
-    init_logger(LogLevel::Info);
-
+    fast_log::init(Config::new().console()).unwrap();
     let args = Args::parse();
 
     let settings: Settings =
@@ -204,11 +205,11 @@ async fn main() {
 
             let connection_manager = get_storage_connection_manager(&settings.database);
             let hardware_id = settings.server.base_dir.unwrap();
-            let service_provider = Data::new(ServiceProvider::new(
+            let service_provider = Arc::new(ServiceProvider::new(
                 connection_manager.clone(),
                 &hardware_id,
             ));
-            let ctx = service_provider.context().unwrap();
+            let ctx = service_provider.basic_context().unwrap();
 
             let (_, import_file, users_file) = export_paths(&name);
 
@@ -275,11 +276,11 @@ async fn main() {
                 .refresh_dates(Utc::now().naive_local())
                 .unwrap();
 
-            let service_provider = Data::new(ServiceProvider::new(
+            let service_provider = Arc::new(ServiceProvider::new(
                 connection_manager.clone(),
                 &app_data_folder,
             ));
-            let ctx = service_provider.context().unwrap();
+            let ctx = service_provider.basic_context().unwrap();
             let service = &service_provider.settings;
             info!("Disabling sync");
             service.disable_sync(&ctx).unwrap();

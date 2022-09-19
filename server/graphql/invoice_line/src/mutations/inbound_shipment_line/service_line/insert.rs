@@ -1,6 +1,5 @@
 use async_graphql::*;
 
-use graphql_core::generic_inputs::TaxUpdate;
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::{
     simple_generic_errors::{CannotEditInvoice, ForeignKey, ForeignKeyError},
@@ -23,8 +22,7 @@ pub struct InsertInput {
     pub item_id: Option<String>,
     name: Option<String>,
     total_before_tax: f64,
-    total_after_tax: f64,
-    tax: Option<TaxUpdate>,
+    tax: Option<f64>,
     note: Option<String>,
 }
 
@@ -42,7 +40,7 @@ pub enum InsertResponse {
 }
 
 pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<InsertResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::MutateInboundShipment,
@@ -51,12 +49,12 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context()?;
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
     map_response(
         service_provider
             .invoice_line_service
-            .insert_inbound_shipment_service_line(&service_context, store_id, input.to_domain()),
+            .insert_inbound_shipment_service_line(&service_context, input.to_domain()),
     )
 }
 
@@ -87,7 +85,6 @@ impl InsertInput {
             item_id,
             name,
             total_before_tax,
-            total_after_tax,
             tax,
             note,
         } = self;
@@ -98,8 +95,7 @@ impl InsertInput {
             item_id,
             name,
             total_before_tax,
-            total_after_tax,
-            tax: tax.and_then(|tax| tax.percentage),
+            tax,
             note,
         }
     }
@@ -126,6 +122,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         ServiceError::LineAlreadyExists => BadUserInput(formatted_error),
         ServiceError::ItemNotFound => BadUserInput(formatted_error),
         ServiceError::NotAServiceItem => BadUserInput(formatted_error),
+        ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::NewlyCreatedLineDoesNotExist => InternalError(formatted_error),
         ServiceError::CannotFindDefaultServiceItem => InternalError(formatted_error),
@@ -158,8 +155,7 @@ mod test {
     type ServiceInput = InsertInboundShipmentServiceLine;
     type ServiceError = InsertInboundShipmentServiceLineError;
 
-    type InsertLineMethod =
-        dyn Fn(&str, ServiceInput) -> Result<InvoiceLine, ServiceError> + Sync + Send;
+    type InsertLineMethod = dyn Fn(ServiceInput) -> Result<InvoiceLine, ServiceError> + Sync + Send;
 
     pub struct TestService(pub Box<InsertLineMethod>);
 
@@ -167,10 +163,9 @@ mod test {
         fn insert_inbound_shipment_service_line(
             &self,
             _: &ServiceContext,
-            store_id: &str,
             input: ServiceInput,
         ) -> Result<InvoiceLine, ServiceError> {
-            self.0(store_id, input)
+            self.0(input)
         }
     }
 
@@ -211,12 +206,11 @@ mod test {
                 "id": "n/a",
                 "invoiceId": "n/a",
                 "totalBeforeTax": 0,
-                "totalAfterTax": 0,
             }
         }));
 
         // InvoiceDoesNotExist
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::InvoiceDoesNotExist)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::InvoiceDoesNotExist)));
 
         let expected = json!({
             "insertInboundShipmentServiceLine": {
@@ -236,7 +230,7 @@ mod test {
         );
 
         // CannotEditInvoice
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::CannotEditInvoice)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::CannotEditInvoice)));
 
         let expected = json!({
             "insertInboundShipmentServiceLine": {
@@ -256,7 +250,7 @@ mod test {
         );
 
         // NotAnInboundShipment
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotAnInboundShipment)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NotAnInboundShipment)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -268,7 +262,7 @@ mod test {
         );
 
         // ItemNotFound
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::ItemNotFound)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::ItemNotFound)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -280,7 +274,7 @@ mod test {
         );
 
         // NotThisInvoiceLine
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::LineAlreadyExists)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::LineAlreadyExists)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -292,7 +286,7 @@ mod test {
         );
 
         // NotAServiceItem
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotAServiceItem)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NotAServiceItem)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -304,7 +298,7 @@ mod test {
         );
 
         // NewlyCreatedLineDoesNotExist
-        let test_service = TestService(Box::new(|_, _| {
+        let test_service = TestService(Box::new(|_| {
             Err(ServiceError::NewlyCreatedLineDoesNotExist)
         }));
         let expected_message = "Internal error";
@@ -339,8 +333,7 @@ mod test {
         "#;
 
         // Success
-        let test_service = TestService(Box::new(|store_id, input| {
-            assert_eq!(store_id, "store_a");
+        let test_service = TestService(Box::new(|input| {
             assert_eq!(
                 input,
                 ServiceInput {
@@ -349,9 +342,7 @@ mod test {
                     item_id: Some("item_id".to_string()),
                     name: Some("some name".to_string()),
                     total_before_tax: 0.1,
-                    total_after_tax: 0.2,
-                    // TODO why is this different from update ?
-                    tax: Some(10.0),
+                    tax: Some(5.0),
                     note: Some("note".to_string())
                 }
             );
@@ -367,10 +358,7 @@ mod test {
             "itemId": "item_id",
             "name": "some name",
             "totalBeforeTax": 0.1,
-            "totalAfterTax": 0.2,
-            "tax": {
-                "percentage": 10
-            },
+            "tax": 5.0,
             "note": "note"
           },
           "storeId": "store_a"

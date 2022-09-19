@@ -10,7 +10,7 @@ use super::{central_server_configurations::ConfigureCentralServer, SyncRecordTes
 use crate::sync::test::{
     check_records_against_database,
     integration::{
-        central_server_configurations::SiteConfiguration, init_db, SyncIntegrationContext,
+        central_server_configurations::SiteConfiguration, init_test_context, SyncIntegrationContext,
     },
 };
 
@@ -41,7 +41,7 @@ async fn test_central_sync_record(identifier: &str, tester: &dyn SyncRecordTeste
         connection,
         synchroniser,
         ..
-    } = init_db(&sync_settings, &identifier).await;
+    } = init_test_context(&sync_settings, &identifier).await;
 
     let steps_data = tester.test_step_data(&new_site_properties);
 
@@ -63,7 +63,7 @@ async fn test_central_sync_record(identifier: &str, tester: &dyn SyncRecordTeste
     }
 
     // With re-initialisation
-    let identifier = format!("with_reinitialisation_{}", identifier);
+    let identifier = format!("with_reinit_{}", identifier);
     println!("test_central_sync_record_{}_init", identifier);
 
     let central_server_configurations = ConfigureCentralServer::from_env();
@@ -94,7 +94,7 @@ async fn test_central_sync_record(identifier: &str, tester: &dyn SyncRecordTeste
             connection,
             synchroniser,
             ..
-        } = init_db(&sync_settings, &inner_identifier).await;
+        } = init_test_context(&sync_settings, &inner_identifier).await;
         synchroniser.sync().await.unwrap();
         check_records_against_database(&connection, step_data.integration_records).await;
     }

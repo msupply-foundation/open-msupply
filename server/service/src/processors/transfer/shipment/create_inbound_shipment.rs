@@ -8,7 +8,7 @@ use util::uuid::uuid;
 use crate::number::next_number;
 
 use super::{
-    common::regenerate_inbound_shipment_lines, Operation, ShipmentTransferProcessor,
+    common::generate_inbound_shipment_lines, Operation, ShipmentTransferProcessor,
     ShipmentTransferProcessorRecord,
 };
 
@@ -21,11 +21,13 @@ impl ShipmentTransferProcessor for CreateInboundShipmentProcessor {
         DESCRIPTION.to_string()
     }
 
-    /// Inbound shipment will be created whan all below conditions are met:
+    /// Inbound shipment will be created when all below conditions are met:
     ///
     /// 1. Source shipment name_id is for a store that is active on current site (transfer processor driver guarantees this)
     /// 2. Source shipment is Outbound shipment
     /// 3. Source outbound shipment is either Shipped or Picked
+    ///    (outbound shipment can also be Draft or Allocated, but we only want to generate transfer when it's Shipped or picked, as per
+    ///     ./doc/omSupply_shipment_transfer_workflow.png)
     /// 4. Linked shipment does not exist (the inbound shipment)
     ///
     /// Only runs once:
@@ -68,7 +70,7 @@ impl ShipmentTransferProcessor for CreateInboundShipmentProcessor {
             record_for_processing,
             request_requistion,
         )?;
-        let (_, new_inbound_lines) = regenerate_inbound_shipment_lines(
+        let new_inbound_lines = generate_inbound_shipment_lines(
             connection,
             &new_inbound_shipment.id,
             &outbound_shipment,

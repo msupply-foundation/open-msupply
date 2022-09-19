@@ -1,10 +1,12 @@
+use chrono::Utc;
 use repository::{
-    EqualFilter, RepositoryError, StocktakeLineFilter, StocktakeLineRepository,
+    EqualFilter, LogType, RepositoryError, StocktakeLineFilter, StocktakeLineRepository,
     StocktakeRowRepository, StorageConnection, TransactionError,
 };
 
 use crate::{
-    service_provider::ServiceContext, stocktake_line::*, validate::check_store_id_matches,
+    log::log_entry, service_provider::ServiceContext, stocktake_line::*,
+    validate::check_store_id_matches,
 };
 
 use super::validate::{check_stocktake_exist, check_stocktake_not_finalised};
@@ -48,7 +50,8 @@ fn validate(
     if !check_stocktake_not_finalised(&existing.status) {
         return Err(DeleteStocktakeError::CannotEditFinalised);
     }
-    // TODO https://github.com/openmsupply/remote-server/issues/839
+    // Note that lines are not deleted when an invoice is deleted, due to issues with batch deletes.
+    // TODO: implement delete lines. See https://github.com/openmsupply/remote-server/issues/839 for details.
     // if !check_no_stocktake_lines_exist(connection, stocktake_id)? {
     //     return Err(DeleteStocktakeError::StocktakeLinesExist);
     // }
@@ -58,19 +61,19 @@ fn validate(
 /// Returns the id of the deleted stocktake
 pub fn delete_stocktake(
     ctx: &ServiceContext,
-    store_id: &str,
     stocktake_id: String,
 ) -> Result<String, DeleteStocktakeError> {
     ctx.connection
         .transaction_sync(|connection| {
-            validate(connection, store_id, &stocktake_id)?;
+            validate(connection, &ctx.store_id, &stocktake_id)?;
 
-            // TODO https://github.com/openmsupply/remote-server/issues/839
+            // Note that lines are not deleted when an invoice is deleted, due to issues with batch deletes.
+            // TODO: implement delete lines. See https://github.com/openmsupply/remote-server/issues/839 for details.
             let lines = StocktakeLineRepository::new(&connection).query_by_filter(
                 StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to(&stocktake_id)),
             )?;
             for line in lines {
-                delete_stocktake_line(ctx, store_id, line.line.id.clone()).map_err(|error| {
+                delete_stocktake_line(ctx, line.line.id.clone()).map_err(|error| {
                     DeleteStocktakeError::LineDeleteError {
                         line_id: line.line.id,
                         error,
@@ -83,6 +86,14 @@ pub fn delete_stocktake(
             Ok(())
         })
         .map_err(|error: TransactionError<DeleteStocktakeError>| error.to_inner_error())?;
+
+    log_entry(
+        &ctx,
+        LogType::StocktakeDeleted,
+        Some(stocktake_id.clone()),
+        Utc::now().naive_utc(),
+    )?;
+
     Ok(stocktake_id.to_string())
 }
 
@@ -94,7 +105,6 @@ impl From<RepositoryError> for DeleteStocktakeError {
 
 #[cfg(test)]
 mod stocktake_test {
-
     use repository::{
         mock::{
             mock_locked_stocktake, mock_stocktake_finalised_without_lines,
@@ -111,31 +121,33 @@ mod stocktake_test {
             setup_all("delete_stocktake", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let mut context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.stocktake_service;
 
         // error: stock does not exist
-        let store_a = mock_stocktake_without_lines();
         let error = service
-            .delete_stocktake(&context, &store_a.id, "invalid".to_string())
+            .delete_stocktake(&context, "invalid".to_string())
             .unwrap_err();
         assert_eq!(error, DeleteStocktakeError::StocktakeDoesNotExist);
 
         // error: StocktakeIsLocked
-        let store_a = mock_store_a();
         let error = service
-            .delete_stocktake(&context, &store_a.id, mock_locked_stocktake().id)
+            .delete_stocktake(&context, mock_locked_stocktake().id)
             .unwrap_err();
         assert_eq!(error, DeleteStocktakeError::StocktakeIsLocked);
 
         // error: invalid store
+        context.store_id = "invalid".to_string();
         let existing_stocktake = mock_stocktake_without_lines();
         let error = service
-            .delete_stocktake(&context, "invalid", existing_stocktake.id)
+            .delete_stocktake(&context, existing_stocktake.id)
             .unwrap_err();
         assert_eq!(error, DeleteStocktakeError::InvalidStore);
 
-        // TODO https://github.com/openmsupply/remote-server/issues/839
+        // Note that lines are not deleted when an invoice is deleted, due to issues with batch deletes.
+        // TODO: implement delete lines. See https://github.com/openmsupply/remote-server/issues/839 for details.
         // error: StocktakeLinesExist
         // let store_a = mock_store_a();
         // let stocktake_a = mock_stocktake_a();
@@ -145,18 +157,17 @@ mod stocktake_test {
         // assert_eq!(error, DeleteStocktakeError::StocktakeLinesExist);
 
         // error: CannotEditFinalised
-        let store_a = mock_store_a();
+        context.store_id = mock_store_a().id;
         let stocktake = mock_stocktake_finalised_without_lines();
         let error = service
-            .delete_stocktake(&context, &store_a.id, stocktake.id)
+            .delete_stocktake(&context, stocktake.id)
             .unwrap_err();
         assert_eq!(error, DeleteStocktakeError::CannotEditFinalised);
 
         // success
-        let store_a = mock_store_a();
         let existing_stocktake = mock_stocktake_without_lines();
         let deleted_stocktake_id = service
-            .delete_stocktake(&context, &store_a.id, existing_stocktake.id.clone())
+            .delete_stocktake(&context, existing_stocktake.id.clone())
             .unwrap();
         assert_eq!(existing_stocktake.id, deleted_stocktake_id);
         assert_eq!(

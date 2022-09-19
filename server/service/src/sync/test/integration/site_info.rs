@@ -1,7 +1,8 @@
 #[cfg(test)]
 mod tests {
     use crate::sync::test::integration::{
-        central_server_configurations::{ConfigureCentralServer, SiteConfiguration}, init_db, SyncIntegrationContext,
+        central_server_configurations::{ConfigureCentralServer, SiteConfiguration},
+        init_test_context, SyncIntegrationContext,
     };
     use repository::{KeyValueStoreRepository, KeyValueType};
 
@@ -19,7 +20,7 @@ mod tests {
             connection,
             synchroniser,
             ..
-        } = init_db(&sync_settings, "site_info").await;
+        } = init_test_context(&sync_settings, "site_info").await;
 
         synchroniser.sync().await.unwrap();
 

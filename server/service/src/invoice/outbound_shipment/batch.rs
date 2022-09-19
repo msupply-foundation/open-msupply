@@ -135,8 +135,6 @@ pub struct BatchOutboundShipmentResult {
 
 pub fn batch_outbound_shipment(
     ctx: &ServiceContext,
-    store_id: &str,
-    user_id: &str,
     input: BatchOutboundShipment,
 ) -> Result<BatchOutboundShipmentResult, RepositoryError> {
     let result = ctx
@@ -145,7 +143,7 @@ pub fn batch_outbound_shipment(
             let continue_on_error = input.continue_on_error.unwrap_or(false);
             let mut results = BatchOutboundShipmentResult::default();
 
-            let mutations_processor = BatchMutationsProcessor::new(ctx, store_id, user_id);
+            let mutations_processor = BatchMutationsProcessor::new(ctx);
             // Insert Shipment
 
             let (has_errors, result) = mutations_processor
@@ -278,7 +276,7 @@ mod test {
     use repository::{
         mock::{
             mock_inbound_shipment_a, mock_item_a, mock_name_store_b, mock_stock_line_a,
-            MockDataInserts,
+            mock_store_a, MockDataInserts,
         },
         test_db::setup_all,
         InvoiceLineRowRepository, InvoiceRowRepository,
@@ -300,7 +298,9 @@ mod test {
             setup_all("batch_outbound_shipment_service", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_service;
 
         let delete_shipment_input = mock_inbound_shipment_a().id;
@@ -335,7 +335,7 @@ mod test {
 
         // Test rollback
         let result = service
-            .batch_outbound_shipment(&context, "store_a", "n/a", input.clone())
+            .batch_outbound_shipment(&context, input.clone())
             .unwrap();
 
         assert_eq!(
@@ -363,9 +363,7 @@ mod test {
         // Test no rollback
         input.continue_on_error = Some(true);
 
-        service
-            .batch_outbound_shipment(&context, "store_a", "n/a", input)
-            .unwrap();
+        service.batch_outbound_shipment(&context, input).unwrap();
 
         assert_ne!(
             InvoiceRowRepository::new(&connection)

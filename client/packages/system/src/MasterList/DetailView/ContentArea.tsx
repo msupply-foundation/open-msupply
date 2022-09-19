@@ -7,6 +7,7 @@ export const ContentArea = () => {
   const { lines, columns } = useMasterList.line.rows();
   return (
     <DataTable
+      key="master-list-detail"
       columns={columns}
       data={lines}
       noDataMessage={t('error.no-items')}

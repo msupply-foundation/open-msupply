@@ -12,7 +12,7 @@ import { useOutboundApi } from './useOutboundApi';
 export const useAddFromMasterList = () => {
   const { error } = useNotification();
   const queryClient = useQueryClient();
-  const { id: outboundShipmentId, invoiceNumber } = useOutboundFields([
+  const { id: shipmentId, invoiceNumber } = useOutboundFields([
     'id',
     'invoiceNumber',
   ]);
@@ -34,24 +34,24 @@ export const useAddFromMasterList = () => {
     getConfirmation({
       onConfirm: () =>
         mutationState.mutate(
-          { masterListId, outboundShipmentId },
+          { masterListId, shipmentId },
           {
             onError: e => {
               const { message } = e as Error;
               switch (message) {
-                case 'CannotEditRequisition': {
-                  return error('Cannot edit requisition')();
+                case 'CannotEditInvoice': {
+                  return error('Cannot edit shipment')();
                 }
                 case 'RecordNotFound': {
                   return error('This master list has been deleted!')();
                 }
-                case 'MasterListNotFoundForThisStore': {
+                case 'MasterListNotFoundForThisName': {
                   return error(
                     "Uh oh this is not the master list you're looking for"
                   )();
                 }
                 default:
-                  return error('Could not add items to requisition')();
+                  return error('Could not add items to shipment')();
               }
             },
           }

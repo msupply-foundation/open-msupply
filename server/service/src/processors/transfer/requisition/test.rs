@@ -11,7 +11,7 @@ use util::{inline_edit, inline_init, uuid::uuid};
 use crate::{
     processors::test_helpers::delay_for_processor,
     requisition::{
-        request_requisition::{UpdateRequestRequisition, UpdateRequestRequstionStatus},
+        request_requisition::{UpdateRequestRequisition, UpdateRequestRequistionStatus},
         response_requisition::{UpdateResponseRequisition, UpdateResponseRequstionStatus},
     },
     service_provider::ServiceProvider,
@@ -19,6 +19,8 @@ use crate::{
 };
 
 /// This test is for requesting and responding store on the same site
+/// See same site transfer diagram in README.md for example of how
+/// changelog is upserted and processed by the same instance of triggered processor
 #[actix_rt::test]
 async fn requisition_transfer() {
     let site_id = 25;
@@ -77,12 +79,13 @@ async fn requisition_transfer() {
     let test = || async move {
         let mut tester =
             RequisitionTransferTester::new(&request_store, &response_store, &item1, &item2);
-        let ctx = service_provider.context().unwrap();
+        let ctx = service_provider.basic_context().unwrap();
 
         tester.insert_request_requisition(&connection).await;
         // Need to do manual trigger here since inserting requisition won't trigger processor
         // and we want to validate that not sent requisition does not generate transfer
-        ctx.processors_trigger.trigger_requisition_transfers();
+        ctx.processors_trigger
+            .trigger_requisition_transfer_processors();
         delay_for_processor().await;
         tester.check_response_requisition_not_created(&connection);
         delay_for_processor().await;
@@ -191,15 +194,16 @@ impl RequisitionTransferTester {
     }
 
     pub(crate) fn update_request_requisition_to_sent(&self, service_provider: &ServiceProvider) {
-        let ctx = service_provider.context().unwrap();
+        let ctx = service_provider
+            .context(self.request_store.id.clone(), "".to_string())
+            .unwrap();
         service_provider
             .requisition_service
             .update_request_requisition(
                 &ctx,
-                &self.request_store.id,
                 inline_init(|r: &mut UpdateRequestRequisition| {
                     r.id = self.request_requisition.id.clone();
-                    r.status = Some(UpdateRequestRequstionStatus::Sent);
+                    r.status = Some(UpdateRequestRequistionStatus::Sent);
                 }),
             )
             .unwrap();
@@ -275,14 +279,14 @@ impl RequisitionTransferTester {
         &mut self,
         service_provider: &ServiceProvider,
     ) {
-        let ctx = service_provider.context().unwrap();
+        let ctx = service_provider
+            .context(self.response_store.id.clone(), "".to_string())
+            .unwrap();
 
         let response_requisition = service_provider
             .requisition_service
             .update_response_requisition(
                 &ctx,
-                &self.response_store.id,
-                "user_id",
                 inline_init(|r: &mut UpdateResponseRequisition| {
                     r.id = self.response_requisition.clone().map(|r| r.id).unwrap();
                     r.status = Some(UpdateResponseRequstionStatus::Finalised);

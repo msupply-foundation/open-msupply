@@ -11,7 +11,7 @@ A generic mechanism for recording and querying these database changes was implem
 
 Database triggers insert new entries into the `changelog` table with:
 
-* cursor <- sequencial number for order of database operation
+* cursor <- sequential number for order of database operation
 * record_id 
 * table_name
 * store_id <- the store that `owns` the record

@@ -141,7 +141,8 @@ impl SyncTranslation for InvoiceLineTranslation {
                 (item.code, None, total, total)
             }
         };
-
+        // When invoice lines are coming from another site, we don't get stock line and location
+        // so foreign key constraint is violated, thus we want to set them to None if it's foreign site record.
         let (stock_line_id, location_id) = if is_active_record_on_site(
             &connection,
             ActiveRecordCheck::InvoiceLine {

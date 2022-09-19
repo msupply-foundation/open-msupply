@@ -4,15 +4,19 @@ import {
   useTranslation,
   useToggle,
   PlusCircleIcon,
+  InvoiceNodeStatus,
 } from '@openmsupply-client/common';
 import { MasterListSearchModal } from '@openmsupply-client/system';
 import { useOutbound } from '../api';
 
 export const AddFromMasterListButtonComponent = () => {
-  const t = useTranslation('replenishment');
-  const isDisabled = useOutbound.utils.isDisabled();
+  const t = useTranslation('distribution');
+  const { status } = useOutbound.document.fields(['status']);
+  const isDisabled = status !== InvoiceNodeStatus.New;
   const { addFromMasterList } = useOutbound.utils.addFromMasterList();
+  const { otherPartyId } = useOutbound.document.fields(['otherPartyId']);
   const modalController = useToggle();
+  const filterByName = { existsForNameId: { equalTo: otherPartyId } };
 
   return (
     <>
@@ -23,6 +27,7 @@ export const AddFromMasterListButtonComponent = () => {
           modalController.toggleOff();
           addFromMasterList(masterList);
         }}
+        filterBy={filterByName}
       />
       <ButtonWithIcon
         disabled={isDisabled}

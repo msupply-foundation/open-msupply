@@ -5,6 +5,7 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
+use graphql_general::MasterListNotFoundForThisStore;
 use graphql_types::types::RequisitionLineConnector;
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -46,7 +47,7 @@ pub fn add_from_master_list(
     store_id: &str,
     input: AddFromMasterListInput,
 ) -> Result<AddFromMasterListResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::MutateRequisition,
@@ -55,13 +56,12 @@ pub fn add_from_master_list(
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context()?;
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
-    let response = match service_provider.requisition_service.add_from_master_list(
-        &service_context,
-        store_id,
-        input.to_domain(),
-    ) {
+    let response = match service_provider
+        .requisition_service
+        .add_from_master_list(&service_context, input.to_domain())
+    {
         Ok(requisition_lines) => AddFromMasterListResponse::Response(
             RequisitionLineConnector::from_vec(requisition_lines),
         ),
@@ -114,14 +114,6 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
     Err(graphql_error.extend())
 }
 
-pub struct MasterListNotFoundForThisStore;
-#[Object]
-impl MasterListNotFoundForThisStore {
-    pub async fn description(&self) -> &'static str {
-        "Master list for this store is not found (might not be visible in this store)"
-    }
-}
-
 #[cfg(test)]
 mod test {
     use async_graphql::EmptyMutation;
@@ -148,7 +140,7 @@ mod test {
     use crate::RequisitionMutations;
 
     type DeleteLineMethod =
-        dyn Fn(&str, ServiceInput) -> Result<Vec<RequisitionLine>, ServiceError> + Sync + Send;
+        dyn Fn(ServiceInput) -> Result<Vec<RequisitionLine>, ServiceError> + Sync + Send;
 
     pub struct TestService(pub Box<DeleteLineMethod>);
 
@@ -156,10 +148,9 @@ mod test {
         fn add_from_master_list(
             &self,
             _: &ServiceContext,
-            store_id: &str,
             input: ServiceInput,
         ) -> Result<Vec<RequisitionLine>, ServiceError> {
-            self.0(store_id, input)
+            self.0(input)
         }
     }
 
@@ -205,7 +196,7 @@ mod test {
         "#;
 
         // RecordDoesNotExist
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::RequisitionDoesNotExist)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::RequisitionDoesNotExist)));
 
         let expected = json!({
             "addFromMasterList": {
@@ -225,7 +216,7 @@ mod test {
         );
 
         // CannotEditRecord
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::CannotEditRequisition)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::CannotEditRequisition)));
 
         let expected = json!({
             "addFromMasterList": {
@@ -245,7 +236,7 @@ mod test {
         );
 
         // MasterListNotFoundForThisStore
-        let test_service = TestService(Box::new(|_, _| {
+        let test_service = TestService(Box::new(|_| {
             Err(ServiceError::MasterListNotFoundForThisStore)
         }));
 
@@ -267,7 +258,7 @@ mod test {
         );
 
         // NotThisStoreRequisition
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotThisStoreRequisition)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NotThisStoreRequisition)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -279,7 +270,7 @@ mod test {
         );
 
         // NotARequestRequisition
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotARequestRequisition)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NotARequestRequisition)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -314,8 +305,7 @@ mod test {
         "#;
 
         // Success
-        let test_service = TestService(Box::new(|store_id, input| {
-            assert_eq!(store_id, "store_a");
+        let test_service = TestService(Box::new(|input| {
             assert_eq!(
                 input,
                 ServiceInput {

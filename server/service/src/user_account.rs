@@ -227,6 +227,11 @@ mod user_account_test {
         // should be able to verify correct username and password
         service.verify_password(username, password).unwrap();
 
+        // should be able to verify with uppercase(username) and correct password
+        service
+            .verify_password(&username.to_uppercase(), password)
+            .unwrap();
+
         // should fail to verify wrong password
         let err = service.verify_password(username, "wrong").unwrap_err();
         assert_matches!(err, VerifyPasswordError::InvalidCredentials);
@@ -249,7 +254,7 @@ mod user_account_test {
         )
         .await;
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider.basic_context().unwrap();
 
         let user_repo = UserRepository::new(&context.connection);
         let user_permission_repo = UserPermissionRepository::new(&context.connection);

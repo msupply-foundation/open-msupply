@@ -16,6 +16,7 @@ import {
   ReportSelector,
   useReport,
 } from '@openmsupply-client/system';
+import { AddFromMasterListButton } from './AddFromMasterListButton';
 
 interface AppBarButtonProps {
   onAddItem: (newState: boolean) => void;
@@ -44,7 +45,11 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
           Icon={<PlusCircleIcon />}
           onClick={() => onAddItem(true)}
         />
-        <ReportSelector context={ReportContext.InboundShipment} onClick={printReport}>
+        <AddFromMasterListButton />
+        <ReportSelector
+          context={ReportContext.InboundShipment}
+          onClick={printReport}
+        >
           <LoadingButton
             variant="outlined"
             startIcon={<PrinterIcon />}

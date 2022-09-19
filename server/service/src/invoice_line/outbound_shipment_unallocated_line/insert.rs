@@ -5,6 +5,7 @@ use repository::{
     ItemRowType, RepositoryError, StorageConnection,
 };
 
+use crate::invoice::{check_store, NotThisStoreInvoice};
 use crate::invoice_line::query::get_invoice_line;
 use crate::{
     invoice::check_invoice_exists_option,
@@ -26,7 +27,7 @@ pub enum InsertOutboundShipmentUnallocatedLineError {
     DatabaseError(RepositoryError),
     InvoiceDoesNotExist,
     NotAnOutboundShipment,
-    //NotThisStoreInvoice,
+    NotThisStoreInvoice,
     CanOnlyAddLinesToNewOutboundShipment,
     ItemNotFound,
     NotAStockItem,
@@ -38,13 +39,12 @@ type OutError = InsertOutboundShipmentUnallocatedLineError;
 
 pub fn insert_outbound_shipment_unallocated_line(
     ctx: &ServiceContext,
-    _store_id: &str,
     input: InsertOutboundShipmentUnallocatedLine,
 ) -> Result<InvoiceLine, OutError> {
     let line = ctx
         .connection
         .transaction_sync(|connection| {
-            let item_row = validate(connection, &input)?;
+            let item_row = validate(connection, &ctx.store_id, &input)?;
             let new_line = generate(input, item_row)?;
             InvoiceLineRowRepository::new(&connection).upsert_one(&new_line)?;
 
@@ -58,6 +58,7 @@ pub fn insert_outbound_shipment_unallocated_line(
 
 fn validate(
     connection: &StorageConnection,
+    store_id: &str,
     input: &InsertOutboundShipmentUnallocatedLine,
 ) -> Result<ItemRow, OutError> {
     if !check_line_does_not_exists_new(connection, &input.id)? {
@@ -73,8 +74,7 @@ fn validate(
 
     let invoice_row = check_invoice_exists_option(&input.invoice_id, connection)?
         .ok_or(OutError::InvoiceDoesNotExist)?;
-    // TODO:
-    // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
+    check_store(&invoice_row, store_id)?;
 
     if invoice_row.r#type != InvoiceRowType::OutboundShipment {
         return Err(OutError::NotAnOutboundShipment);
@@ -147,13 +147,19 @@ impl From<RepositoryError> for InsertOutboundShipmentUnallocatedLineError {
     }
 }
 
+impl From<NotThisStoreInvoice> for InsertOutboundShipmentUnallocatedLineError {
+    fn from(_: NotThisStoreInvoice) -> Self {
+        InsertOutboundShipmentUnallocatedLineError::NotThisStoreInvoice
+    }
+}
+
 #[cfg(test)]
 mod test_insert {
     use repository::{
         mock::{
             mock_allocated_invoice, mock_inbound_shipment_a, mock_item_service_item,
-            mock_new_invoice_with_unallocated_line, mock_unallocated_line, mock_unallocated_line2,
-            MockDataInserts,
+            mock_new_invoice_with_unallocated_line, mock_store_a, mock_store_c,
+            mock_unallocated_line, mock_unallocated_line2, MockDataInserts,
         },
         test_db::setup_all,
         InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, ItemRowRepository,
@@ -173,7 +179,9 @@ mod test_insert {
             setup_all("insert_unallocated_line_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let mut context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_line_service;
 
         let new_outbound_shipment = mock_new_invoice_with_unallocated_line();
@@ -185,7 +193,6 @@ mod test_insert {
         assert_eq!(
             service.insert_outbound_shipment_unallocated_line(
                 &context,
-                "store_a",
                 InsertOutboundShipmentUnallocatedLine {
                     id: existing_invoice_line.id.clone(),
                     invoice_id: "".to_owned(),
@@ -200,7 +207,6 @@ mod test_insert {
         assert_eq!(
             service.insert_outbound_shipment_unallocated_line(
                 &context,
-                "store_a",
                 InsertOutboundShipmentUnallocatedLine {
                     id: new_line_id.clone(),
                     invoice_id: "invalid".to_owned(),
@@ -215,7 +221,6 @@ mod test_insert {
         assert_eq!(
             service.insert_outbound_shipment_unallocated_line(
                 &context,
-                "store_a",
                 InsertOutboundShipmentUnallocatedLine {
                     id: new_line_id.clone(),
                     invoice_id: mock_inbound_shipment_a().id.clone(),
@@ -230,7 +235,6 @@ mod test_insert {
         assert_eq!(
             service.insert_outbound_shipment_unallocated_line(
                 &context,
-                "store_a",
                 InsertOutboundShipmentUnallocatedLine {
                     id: new_line_id.clone(),
                     invoice_id: mock_allocated_invoice().id.clone(),
@@ -245,7 +249,6 @@ mod test_insert {
         assert_eq!(
             service.insert_outbound_shipment_unallocated_line(
                 &context,
-                "store_a",
                 InsertOutboundShipmentUnallocatedLine {
                     id: new_line_id.clone(),
                     invoice_id: new_outbound_shipment.id.clone(),
@@ -259,7 +262,6 @@ mod test_insert {
         assert_eq!(
             service.insert_outbound_shipment_unallocated_line(
                 &context,
-                "store_a",
                 InsertOutboundShipmentUnallocatedLine {
                     id: new_line_id.clone(),
                     invoice_id: new_outbound_shipment.id.clone(),
@@ -269,11 +271,24 @@ mod test_insert {
             ),
             Err(ServiceError::NotAStockItem)
         );
-        // UnallocatedLineForItemAlreadyExistsInInvoice
+        // NotThisStoreInvoice
         assert_eq!(
             service.insert_outbound_shipment_unallocated_line(
                 &context,
-                "store_a",
+                InsertOutboundShipmentUnallocatedLine {
+                    id: "new unallocated line id".to_owned(),
+                    invoice_id: mock_new_invoice_with_unallocated_line().id.clone(),
+                    item_id: existing_invoice_line.item_id.clone(),
+                    quantity: 0
+                },
+            ),
+            Err(ServiceError::NotThisStoreInvoice)
+        );
+        // UnallocatedLineForItemAlreadyExistsInInvoice
+        context.store_id = mock_store_c().id;
+        assert_eq!(
+            service.insert_outbound_shipment_unallocated_line(
+                &context,
                 InsertOutboundShipmentUnallocatedLine {
                     id: new_line_id.clone(),
                     invoice_id: new_outbound_shipment.id.clone(),
@@ -292,7 +307,9 @@ mod test_insert {
 
         let connection = connection_manager.connection().unwrap();
         let service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider
+            .context(mock_store_c().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_line_service;
 
         // Successful insert
@@ -305,7 +322,6 @@ mod test_insert {
         let result = service
             .insert_outbound_shipment_unallocated_line(
                 &context,
-                "store_a",
                 InsertOutboundShipmentUnallocatedLine {
                     id: "new_line".to_owned(),
                     invoice_id: invoice_id.clone(),

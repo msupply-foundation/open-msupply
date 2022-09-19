@@ -246,9 +246,18 @@ mod repository_test {
                 email: None,
             }
         }
-    }
 
-    use std::time::SystemTime;
+        pub fn log_1() -> LogRow {
+            LogRow {
+                id: "log1".to_string(),
+                r#type: LogType::UserLoggedIn,
+                user_id: Some(user_account_1().id.to_string()),
+                store_id: None,
+                record_id: None,
+                datetime: NaiveDateTime::from_timestamp(2000, 0),
+            }
+        }
+    }
 
     use crate::{
         mock::{
@@ -261,20 +270,20 @@ mod repository_test {
             mock_test_master_list_store1, MockDataInserts,
         },
         requisition_row::RequisitionRowStatus,
-        test_db, InvoiceLineRepository, InvoiceLineRowRepository, InvoiceRowRepository, ItemRow,
-        ItemRowRepository, KeyValueStoreRepository, KeyValueType, MasterListFilter,
-        MasterListLineFilter, MasterListLineRepository, MasterListLineRowRepository,
-        MasterListNameJoinRepository, MasterListRepository, MasterListRowRepository,
-        NameRowRepository, NumberRowRepository, NumberRowType, OutboundShipmentRowRepository,
-        RepositoryError, RequisitionFilter, RequisitionLineFilter, RequisitionLineRepository,
-        RequisitionLineRowRepository, RequisitionRepository, RequisitionRowRepository,
-        StockLineFilter, StockLineRepository, StockLineRowRepository, StoreRowRepository,
-        TransactionError, UserAccountRowRepository,
+        test_db, InvoiceLineRepository, InvoiceLineRowRepository, InvoiceRowRepository,
+        ItemRowRepository, KeyValueStoreRepository, KeyValueType, LogRowRepository,
+        MasterListFilter, MasterListLineFilter, MasterListLineRepository,
+        MasterListLineRowRepository, MasterListNameJoinRepository, MasterListRepository,
+        MasterListRowRepository, NameRowRepository, NumberRowRepository, NumberRowType,
+        OutboundShipmentRowRepository, RequisitionFilter, RequisitionLineFilter,
+        RequisitionLineRepository, RequisitionLineRowRepository, RequisitionRepository,
+        RequisitionRowRepository, StockLineFilter, StockLineRepository, StockLineRowRepository,
+        StoreRowRepository, UserAccountRowRepository,
     };
     use crate::{DateFilter, EqualFilter, SimpleStringFilter};
     use chrono::Duration;
     use diesel::{sql_query, sql_types::Text, RunQueryDsl};
-    use util::{inline_edit, inline_init};
+    use util::inline_edit;
 
     #[actix_rt::test]
     async fn test_name_repository() {
@@ -979,6 +988,10 @@ mod repository_test {
     #[cfg(not(feature = "memory"))]
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn test_tx_deadlock() {
+        use crate::{ItemRow, RepositoryError, TransactionError};
+        use std::time::SystemTime;
+        use util::inline_init;
+
         let (_, _, connection_manager, _) =
             test_db::setup_all("tx_deadlock", MockDataInserts::none()).await;
 
@@ -1125,5 +1138,19 @@ mod repository_test {
             .unwrap()
             .expect("tx_deadlock_id2 record didn't get created!");
         assert!("name_a" == tx_deadlock_item2.name);
+    }
+
+    #[actix_rt::test]
+    async fn test_log_row_repository() {
+        let settings = test_db::get_test_db_settings("omsupply-database-store-repository");
+        let connection_manager = test_db::setup(&settings).await;
+        let connection = connection_manager.connection().unwrap();
+
+        let repo = LogRowRepository::new(&connection);
+
+        let log1 = data::log_1();
+        repo.insert_one(&log1).unwrap();
+        let loaded_item = repo.find_one_by_id(log1.id.as_str()).unwrap().unwrap();
+        assert_eq!(log1, loaded_item);
     }
 }
