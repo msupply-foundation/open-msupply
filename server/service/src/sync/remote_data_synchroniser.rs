@@ -48,10 +48,10 @@ pub(crate) enum RemotePushError {
     DatabaseError(RepositoryError),
     #[error("Problem translation remote records during push {0:?}")]
     TranslationError(anyhow::Error),
-    #[error("Site is id is not set, cannot proceed with remote push")]
-    SiteIdNotSet,
     #[error("Total remaining sent to server is 0 but integration not started")]
     IntegrationNotStarter,
+    #[error("Problem getting active stores on site during remote push {0}")]
+    GetActiveStoresOnSiteError(GetActiveStoresOnSiteError),
     #[error("{0}")]
     SyncLoggerError(SyncLoggerError),
 }
@@ -109,6 +109,8 @@ impl RemoteDataSynchroniser {
                 .await
                 .map_err(PullError)?;
 
+            // queued_length is number of remote pull records awaiting acknowledgement
+            // at this point it's number of records waiting to be pulled including records in this pull batch
             let remaining = sync_batch.queue_length;
             let sync_ids = sync_batch.extract_sync_ids();
             let sync_buffer_rows = sync_batch
@@ -151,11 +153,8 @@ impl RemoteDataSynchroniser {
     ) -> Result<(), RemotePushError> {
         use RemotePushError as Error;
         let changelog_repo = ChangelogRepository::new(connection);
-        let change_log_filter =
-            get_active_records_on_site_filter(connection).map_err(|e| match e {
-                GetActiveStoresOnSiteError::DatabaseError(error) => Error::DatabaseError(error),
-                GetActiveStoresOnSiteError::SiteIdNotSet => Error::SiteIdNotSet,
-            })?;
+        let change_log_filter = get_active_records_on_site_filter(connection)
+            .map_err(Error::GetActiveStoresOnSiteError)?;
 
         let state = RemoteSyncState::new(connection);
         loop {
@@ -266,12 +265,6 @@ pub(crate) fn translate_changelogs_to_push_records(
         .collect();
     Ok(records)
 }
-
-// sync_type: SyncTypeV3::Update,
-// store_id: record.store_id,
-// record_type: record.table_name.to_string(),
-// record_id: record.record_id.clone(),
-// data: Some(record.data),
 
 // This struct is only for updating values related to sync state, avoid using logic within associated methods
 pub struct RemoteSyncState<'a> {

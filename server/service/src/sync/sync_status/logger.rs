@@ -94,7 +94,7 @@ impl<'a> SyncLogger<'a> {
             SyncStep::Push => {
                 info!(
                     "Pushed ({}) records",
-                    self.row.pull_remote_progress_done.as_ref().unwrap_or(&0)
+                    self.row.push_progress_done.as_ref().unwrap_or(&0)
                 );
                 SyncLogRow {
                     push_done_datetime: Some(chrono::Utc::now().naive_utc()),
@@ -104,7 +104,7 @@ impl<'a> SyncLogger<'a> {
             SyncStep::PullCentral => {
                 info!(
                     "Pulled ({}) central records",
-                    self.row.pull_remote_progress_done.as_ref().unwrap_or(&0)
+                    self.row.pull_central_progress_done.as_ref().unwrap_or(&0)
                 );
                 SyncLogRow {
                     pull_central_done_datetime: Some(chrono::Utc::now().naive_utc()),
