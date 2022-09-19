@@ -41,11 +41,9 @@ pub trait StocktakeServiceTrait: Sync + Send {
     fn insert_stocktake(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
-        user_id: &str,
         input: InsertStocktake,
     ) -> Result<Stocktake, InsertStocktakeError> {
-        insert_stocktake(ctx, store_id, user_id, input)
+        insert_stocktake(ctx, input)
     }
 
     /// # Arguments
@@ -54,10 +52,9 @@ pub trait StocktakeServiceTrait: Sync + Send {
     fn delete_stocktake(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
         stocktake_id: String,
     ) -> Result<String, DeleteStocktakeError> {
-        delete_stocktake(ctx, store_id, stocktake_id)
+        delete_stocktake(ctx, stocktake_id)
     }
 
     /// # Arguments
@@ -65,21 +62,17 @@ pub trait StocktakeServiceTrait: Sync + Send {
     fn update_stocktake(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
-        user_id: &str,
         input: UpdateStocktake,
     ) -> Result<Stocktake, UpdateStocktakeError> {
-        update_stocktake(ctx, store_id, user_id, input)
+        update_stocktake(ctx, input)
     }
 
     fn batch_stocktake(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
-        user_id: &str,
         input: BatchStocktake,
     ) -> Result<BatchStocktakeResult, RepositoryError> {
-        batch_stocktake(ctx, store_id, user_id, input)
+        batch_stocktake(ctx, input)
     }
 }
 

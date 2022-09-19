@@ -84,7 +84,7 @@ impl Processors {
 }
 
 impl ProcessorsTrigger {
-    pub(crate) fn trigger_requisition_transfers(&self) {
+    pub(crate) fn trigger_requisition_transfer_processors(&self) {
         if let Err(error) = self.requisition_transfer.try_send(()) {
             log::error!(
                 "Problem triggering requisition transfer processor {:#?}",
@@ -93,7 +93,7 @@ impl ProcessorsTrigger {
         }
     }
 
-    pub(crate) fn trigger_shipment_transfers(&self) {
+    pub(crate) fn trigger_shipment_transfer_processors(&self) {
         if let Err(error) = self.shipment_transfer.try_send(()) {
             log::error!(
                 "Problem triggering shipment transfer processor {:#?}",

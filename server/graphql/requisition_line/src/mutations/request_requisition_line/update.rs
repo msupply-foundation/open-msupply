@@ -44,7 +44,7 @@ pub enum UpdateResponse {
     Response(RequisitionLineNode),
 }
 pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<UpdateResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::MutateRequisition,
@@ -53,12 +53,12 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context()?;
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
     map_response(
         service_provider
             .requisition_line_service
-            .update_request_requisition_line(&service_context, store_id, input.to_domain()),
+            .update_request_requisition_line(&service_context, input.to_domain()),
     )
 }
 
@@ -146,7 +146,7 @@ mod test {
     };
 
     type UpdateLineMethod =
-        dyn Fn(&str, ServiceInput) -> Result<RequisitionLine, ServiceError> + Sync + Send;
+        dyn Fn(ServiceInput) -> Result<RequisitionLine, ServiceError> + Sync + Send;
 
     pub struct TestService(pub Box<UpdateLineMethod>);
 
@@ -154,10 +154,9 @@ mod test {
         fn update_request_requisition_line(
             &self,
             _: &ServiceContext,
-            store_id: &str,
             input: ServiceInput,
         ) -> Result<RequisitionLine, ServiceError> {
-            self.0(store_id, input)
+            self.0(input)
         }
     }
 
@@ -202,9 +201,8 @@ mod test {
         "#;
 
         // RecordNotFound
-        let test_service = TestService(Box::new(|_, _| {
-            Err(ServiceError::RequisitionLineDoesNotExist)
-        }));
+        let test_service =
+            TestService(Box::new(|_| Err(ServiceError::RequisitionLineDoesNotExist)));
 
         let expected = json!({
             "updateRequestRequisitionLine": {
@@ -224,7 +222,7 @@ mod test {
         );
 
         // RequisitionDoesNotExist
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::RequisitionDoesNotExist)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::RequisitionDoesNotExist)));
 
         let expected = json!({
             "updateRequestRequisitionLine": {
@@ -244,7 +242,7 @@ mod test {
         );
 
         // CannotEditRequisition
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::CannotEditRequisition)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::CannotEditRequisition)));
 
         let expected = json!({
             "updateRequestRequisitionLine": {
@@ -264,7 +262,7 @@ mod test {
         );
 
         // NotThisStoreRequisition
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotThisStoreRequisition)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NotThisStoreRequisition)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -276,7 +274,7 @@ mod test {
         );
 
         // NotARequestRequisition
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotARequestRequisition)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NotARequestRequisition)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -288,7 +286,7 @@ mod test {
         );
 
         // UpdatedRequisitionLineDoesNotExist
-        let test_service = TestService(Box::new(|_, _| {
+        let test_service = TestService(Box::new(|_| {
             Err(ServiceError::UpdatedRequisitionLineDoesNotExist)
         }));
         let expected_message = "Internal error";
@@ -323,8 +321,7 @@ mod test {
         "#;
 
         // Success
-        let test_service = TestService(Box::new(|store_id, input| {
-            assert_eq!(store_id, "store_a");
+        let test_service = TestService(Box::new(|input| {
             assert_eq!(
                 input,
                 ServiceInput {

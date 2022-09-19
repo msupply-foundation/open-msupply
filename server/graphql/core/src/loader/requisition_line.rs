@@ -23,7 +23,7 @@ impl Loader<String> for RequisitionLinesByRequisitionIdLoader {
         &self,
         requisition_ids: &[String],
     ) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let service_context = self.service_provider.context()?;
+        let service_context = self.service_provider.basic_context()?;
 
         let filter = RequisitionLineFilter::new().requisition_id(EqualFilter::equal_any(
             requisition_ids.iter().map(String::clone).collect(),
@@ -59,7 +59,7 @@ impl Loader<RequisitionAndItemId> for LinkedRequisitionLineLoader {
         &self,
         requisition_and_item_id: &[RequisitionAndItemId],
     ) -> Result<HashMap<RequisitionAndItemId, Self::Value>, Self::Error> {
-        let service_context = self.service_provider.context()?;
+        let service_context = self.service_provider.basic_context()?;
 
         let (requisition_ids, item_ids) = IdPair::extract_unique_ids(requisition_and_item_id);
 

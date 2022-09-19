@@ -1,7 +1,9 @@
 import React, { FC } from 'react';
-import { Box, Typography, Pagination } from '@mui/material';
-import { useTableStore } from '../../context';
+import { Box, Typography, Pagination, TablePagination } from '@mui/material';
 import { useTranslation } from '@common/intl';
+import { useLocalStorage } from '@openmsupply-client/common';
+import { DEFAULT_RECORDS_PER_PAGE } from '@common/hooks';
+import { useTableStore } from '../../context';
 
 interface PaginationRowProps {
   offset: number;
@@ -19,12 +21,19 @@ export const PaginationRow: FC<PaginationRowProps> = ({
   onChange,
 }) => {
   const { numberSelected } = useTableStore();
+  const [, setRowsPerPage] = useLocalStorage(
+    '/pagination/rowsperpage',
+    DEFAULT_RECORDS_PER_PAGE
+  );
 
   // Offset is zero indexed, but should display one indexed for
   // users.
   const xToY = `${offset + 1}-${Math.min(first + offset, total)}`;
 
-  const onChangePage = (_: React.ChangeEvent<unknown>, value: number) => {
+  const onChangePage = (
+    _: React.ChangeEvent<unknown> | React.MouseEvent<HTMLButtonElement> | null,
+    value: number
+  ) => {
     // The type here is broken and `value` can be `null`!
 
     const isValidPage = !!value;
@@ -33,6 +42,13 @@ export const PaginationRow: FC<PaginationRowProps> = ({
       const zeroIndexedPageNumber = value - 1;
       onChange(zeroIndexedPageNumber);
     }
+  };
+
+  const onChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    onChangePage(event, 0);
   };
 
   const t = useTranslation('common');
@@ -72,6 +88,20 @@ export const PaginationRow: FC<PaginationRowProps> = ({
             )}
           </Box>
 
+          <TablePagination
+            size="small"
+            component="div"
+            page={page}
+            onPageChange={onChangePage}
+            rowsPerPage={first}
+            onRowsPerPageChange={onChangeRowsPerPage}
+            count={total}
+            rowsPerPageOptions={[20, 50, 100, 500]}
+            nextIconButtonProps={{ style: { display: 'none' } }}
+            backIconButtonProps={{ style: { display: 'none' } }}
+            labelDisplayedRows={() => null}
+            labelRowsPerPage={t('label.rows-per-page')}
+          />
           <Pagination
             size="small"
             page={displayPage}

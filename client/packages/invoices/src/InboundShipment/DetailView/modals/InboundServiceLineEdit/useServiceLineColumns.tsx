@@ -9,7 +9,10 @@ import {
   CurrencyInputCell,
   ColumnAlign,
 } from '@openmsupply-client/common';
-import { ServiceItemSearchInput } from '@openmsupply-client/system';
+import {
+  ServiceItemSearchInput,
+  toItemWithPackSize,
+} from '@openmsupply-client/system';
 import { DraftInboundLine } from './../../../../types';
 
 export const useServiceLineColumns = (
@@ -28,7 +31,9 @@ export const useServiceLineColumns = (
           <ServiceItemSearchInput
             refetchOnMount={false}
             width={300}
-            onChange={item => item && setter({ ...rowData, item })}
+            onChange={item =>
+              item && setter({ ...rowData, item: toItemWithPackSize({ item }) })
+            }
             currentItemId={id}
           />
         );

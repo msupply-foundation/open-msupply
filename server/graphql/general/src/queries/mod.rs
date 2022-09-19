@@ -18,8 +18,12 @@ pub mod stock_counts;
 pub use self::stock_counts::*;
 pub mod store;
 pub use self::store::*;
+pub mod log;
+pub use self::log::*;
 pub mod requisition_line_chart;
 pub mod server_settings;
+pub mod sync_status;
+pub use self::sync_status::*;
 
 #[cfg(test)]
 mod tests;

@@ -5,10 +5,6 @@ fragment SyncSettings on SyncSettingsNode {
   username
 }
 
-query apiVersion {
-  apiVersion
-}
-
 query serverSettings {
   serverSettings {
     ... on ServerSettingsNode {

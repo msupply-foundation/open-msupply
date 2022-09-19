@@ -18,6 +18,16 @@ pub fn check_invoice_type(
     }
 }
 
+pub struct NotThisStoreInvoice;
+
+pub fn check_store(invoice: &InvoiceRow, store_id: &str) -> Result<(), NotThisStoreInvoice> {
+    if invoice.store_id != store_id {
+        Err(NotThisStoreInvoice {})
+    } else {
+        Ok(())
+    }
+}
+
 pub struct InvoiceIsNotEditable;
 
 pub fn check_invoice_is_editable(invoice: &InvoiceRow) -> Result<(), InvoiceIsNotEditable> {

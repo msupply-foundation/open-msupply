@@ -5,7 +5,7 @@ import { useAuthApi } from './useAuthApi';
 export const useUserDetails = () => {
   const api = useAuthApi();
   return useMutation<
-    UserNode | undefined,
+    Partial<UserNode> | undefined,
     unknown,
     string | undefined,
     unknown
@@ -18,4 +18,9 @@ export const useUserStores = (token: string) => {
     cacheTime: 0,
     enabled: !!token,
   });
+};
+
+export const useUserPermissions = () => {
+  const api = useAuthApi();
+  return useMutation(api.get.permissions);
 };

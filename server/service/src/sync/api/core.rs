@@ -1,4 +1,8 @@
-use crate::sync::SyncCredentials;
+use crate::{
+    service_provider::ServiceProvider,
+    sync::{settings::SyncSettings, sync_api_credentials::SyncCredentials},
+};
+
 use anyhow::Context;
 use reqwest::{
     header::{HeaderMap, HeaderName},
@@ -14,7 +18,6 @@ use super::*;
 pub(crate) struct SyncApiV5 {
     pub(crate) server_url: Url,
     pub(crate) credentials: SyncCredentials,
-    pub(crate) client: Client,
     pub(crate) headers: HeaderMap,
 }
 
@@ -39,16 +42,32 @@ fn generate_headers(hardware_id: &str) -> HeaderMap {
 
 impl SyncApiV5 {
     pub(crate) fn new(
-        server_url: Url,
-        credentials: SyncCredentials,
-        client: Client,
-        hardware_id: &str,
-    ) -> SyncApiV5 {
-        SyncApiV5 {
-            server_url,
-            credentials,
-            client,
+        settings: &SyncSettings,
+        service_provider: &ServiceProvider,
+    ) -> anyhow::Result<Self> {
+        let hardware_id = service_provider.app_data_service.get_hardware_id()?;
+
+        Ok(SyncApiV5 {
+            server_url: Url::parse(&settings.url)?,
+            credentials: SyncCredentials {
+                username: settings.username.clone(),
+                password_sha256: settings.password_sha256.clone(),
+            },
             headers: generate_headers(&hardware_id),
+        })
+    }
+
+    #[cfg(test)]
+    pub(crate) fn new_test(url: &str, site_name: &str, password: &str, hardware_id: &str) -> Self {
+        use util::hash::sha256;
+
+        SyncApiV5 {
+            server_url: Url::parse(&url).unwrap(),
+            credentials: SyncCredentials {
+                username: site_name.to_string(),
+                password_sha256: sha256(&password),
+            },
+            headers: generate_headers(hardware_id),
         }
     }
 
@@ -57,8 +76,7 @@ impl SyncApiV5 {
         T: Serialize + ?Sized,
     {
         let url = self.server_url.join(route).context("Failed to parse url")?;
-        let result = self
-            .client
+        let result = Client::new()
             .get(url.clone())
             .basic_auth(
                 &self.credentials.username,
@@ -81,8 +99,7 @@ impl SyncApiV5 {
         T: Serialize,
     {
         let url = self.server_url.join(route).context("Failed to parse url")?;
-        let result = self
-            .client
+        let result = Client::new()
             .post(url.clone())
             .basic_auth(
                 &self.credentials.username,
@@ -104,7 +121,7 @@ impl SyncApiV5 {
 }
 
 #[derive(Error, Debug)]
-pub(crate) enum ParsingResponseError {
+pub enum ParsingResponseError {
     #[error("Cannot retreive response body: {0}")]
     CannotGetTextReponse(reqwest::Error),
     #[error("Could not parse response body, error: ({source}) reponse; ({response_text}) ")]
@@ -156,7 +173,7 @@ async fn response_or_err(
 #[cfg(test)]
 mod tests {
     use httpmock::{Method::POST, MockServer};
-    use reqwest::{header::AUTHORIZATION, Client, Url};
+    use reqwest::header::AUTHORIZATION;
     use util::assert_matches;
 
     use super::*;
@@ -175,12 +192,7 @@ mod tests {
             then.status(204);
         });
 
-        let api = SyncApiV5::new(
-            Url::parse(&url).unwrap(),
-            SyncCredentials::from_plain("", ""),
-            Client::new(),
-            "site_id",
-        );
+        let api = SyncApiV5::new_test(&url, "", "", "site_id");
 
         let result = api.post_acknowledged_records(Vec::new()).await;
 

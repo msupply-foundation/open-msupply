@@ -1,5 +1,6 @@
 use crate::invoice::{
-    check_invoice_is_editable, check_invoice_status, InvoiceIsNotEditable, InvoiceRowStatusError,
+    check_invoice_is_editable, check_invoice_status, check_store, InvoiceIsNotEditable,
+    InvoiceRowStatusError, NotThisStoreInvoice,
 };
 use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
 use repository::EqualFilter;
@@ -17,7 +18,7 @@ pub fn validate(
 ) -> Result<(InvoiceRow, Option<Name>), UpdateOutboundShipmentError> {
     use UpdateOutboundShipmentError::*;
     let invoice = check_invoice_exists(&patch.id, connection)?;
-    // TODO check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
+    check_store(&invoice, store_id)?;
     check_invoice_type(&invoice)?;
     check_invoice_is_editable(&invoice)?;
     check_invoice_status(&invoice, patch.full_status(), &patch.on_hold)?;
@@ -51,11 +52,13 @@ fn check_invoice_exists(
     let result = InvoiceRowRepository::new(connection).find_one_by_id(id);
 
     if let Err(RepositoryError::NotFound) = &result {
-        return Err(UpdateOutboundShipmentError::InvoiceDoesNotExists);
+        return Err(UpdateOutboundShipmentError::InvoiceDoesNotExist);
     }
     Ok(result?)
 }
 
+// If status is changed to allocated and above, return error if there are
+// unallocated lines with quantity above 0, zero quantity unallocated lines will be deleted
 fn check_can_change_status_to_allocated(
     connection: &StorageConnection,
     invoice_row: &InvoiceRow,
@@ -65,6 +68,7 @@ fn check_can_change_status_to_allocated(
         return Ok(());
     };
 
+    // Status sequence for outbound shipment: New, Allocated, Picked, Shipped
     if let Some(new_status) = status_option {
         if new_status == InvoiceRowStatus::New {
             return Ok(());
@@ -74,7 +78,8 @@ fn check_can_change_status_to_allocated(
         let unallocated_lines = repository.query_by_filter(
             InvoiceLineFilter::new()
                 .invoice_id(EqualFilter::equal_to(&invoice_row.id))
-                .r#type(InvoiceLineRowType::UnallocatedStock.equal_to()),
+                .r#type(InvoiceLineRowType::UnallocatedStock.equal_to())
+                .number_of_packs(EqualFilter::not_equal_to_i32(0)),
         )?;
 
         if unallocated_lines.len() > 0 {
@@ -112,5 +117,11 @@ impl From<InvoiceRowStatusError> for UpdateOutboundShipmentError {
             }
             InvoiceRowStatusError::CannotReverseInvoiceStatus => CannotReverseInvoiceStatus,
         }
+    }
+}
+
+impl From<NotThisStoreInvoice> for UpdateOutboundShipmentError {
+    fn from(_: NotThisStoreInvoice) -> Self {
+        UpdateOutboundShipmentError::NotThisStoreInvoice
     }
 }

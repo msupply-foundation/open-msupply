@@ -14,16 +14,19 @@ import { BasicSpinner, useRegisterActions } from '@openmsupply-client/common';
 import { TableProps } from './types';
 import { DataRow } from './components/DataRow/DataRow';
 import { PaginationRow } from './columns/PaginationRow';
-import { HeaderCell, HeaderRow } from './components/Header';
+import { ColumnPicker, HeaderCell, HeaderRow } from './components/Header';
 import { RecordWithId } from '@common/types';
 import { useTranslation } from '@common/intl';
 import { useTableStore } from './context';
 
-export const DataTableComponent = <T extends RecordWithId>({
+const DataTableComponent = <T extends RecordWithId>({
+  key,
   ExpandContent,
   columns,
   data = [],
   dense = false,
+  enableColumnSelection,
+  generateRowTooltip = () => '',
   isDisabled = false,
   isError = false,
   isLoading = false,
@@ -36,6 +39,11 @@ export const DataTableComponent = <T extends RecordWithId>({
   const t = useTranslation('common');
   const { setRows, setDisabledRows, setFocus } = useTableStore();
   const [clickFocusedRow, setClickFocusedRow] = useState(false);
+  const [displayColumns, setDisplayColumns] = useState(columns);
+  const columnsToDisplay = columns.filter(c =>
+    displayColumns.map(({ key }) => key).includes(c.key)
+  );
+
   useRegisterActions([
     {
       id: 'table:focus-down',
@@ -94,7 +102,7 @@ export const DataTableComponent = <T extends RecordWithId>({
     return (
       noDataElement || (
         <Box sx={{ padding: 2 }}>
-          <Typography variant="h6">
+          <Typography sx={{ color: 'gray.dark' }}>
             {noDataMessage || t('error.no-results')}
           </Typography>
         </Box>
@@ -122,13 +130,20 @@ export const DataTableComponent = <T extends RecordWithId>({
           }}
         >
           <HeaderRow dense={dense}>
-            {columns.map(column => (
+            {columnsToDisplay.map(column => (
               <HeaderCell
                 dense={dense}
                 column={column}
                 key={String(column.key)}
               />
             ))}
+            {!!enableColumnSelection && (
+              <ColumnPicker
+                columns={columns}
+                onChange={setDisplayColumns}
+                tableKey={key}
+              />
+            )}
           </HeaderRow>
         </TableHead>
         <TableBody>
@@ -138,12 +153,13 @@ export const DataTableComponent = <T extends RecordWithId>({
               rows={data}
               ExpandContent={ExpandContent}
               rowIndex={idx}
-              columns={columns}
+              columns={columnsToDisplay}
               onClick={onRowClick ? onRowClick : undefined}
               rowData={row}
               rowKey={String(idx)}
               dense={dense}
               keyboardActivated={clickFocusedRow}
+              generateRowTooltip={generateRowTooltip}
             />
           ))}
         </TableBody>

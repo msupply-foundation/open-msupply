@@ -57,7 +57,7 @@ pub enum UpdateResponse {
 }
 
 pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<UpdateResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::MutateOutboundShipment,
@@ -66,13 +66,13 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context()?;
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
-    map_response(service_provider.invoice_service.update_outbound_shipment(
-        &service_context,
-        store_id,
-        input.to_domain(),
-    ))
+    map_response(
+        service_provider
+            .invoice_service
+            .update_outbound_shipment(&service_context, input.to_domain()),
+    )
 }
 
 pub fn map_response(from: Result<Invoice, ServiceError>) -> Result<UpdateResponse> {
@@ -89,7 +89,7 @@ pub fn map_response(from: Result<Invoice, ServiceError>) -> Result<UpdateRespons
 #[derive(Interface)]
 #[graphql(field(name = "description", type = "String"))]
 pub enum UpdateErrorInterface {
-    InvoiceDoesNotExists(RecordNotFound),
+    InvoiceDoesNotExist(RecordNotFound),
     CannotReverseInvoiceStatus(CannotReverseInvoiceStatus),
     CannotChangeStatusOfInvoiceOnHold(CannotChangeStatusOfInvoiceOnHold),
     InvoiceIsNotEditable(InvoiceIsNotEditable),
@@ -131,10 +131,8 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
 
     let graphql_error = match error {
         // Structured Errors
-        ServiceError::InvoiceDoesNotExists => {
-            return Ok(UpdateErrorInterface::InvoiceDoesNotExists(
-                RecordNotFound {},
-            ))
+        ServiceError::InvoiceDoesNotExist => {
+            return Ok(UpdateErrorInterface::InvoiceDoesNotExist(RecordNotFound {}))
         }
         ServiceError::CannotReverseInvoiceStatus => {
             return Ok(UpdateErrorInterface::CannotReverseInvoiceStatus(
@@ -174,9 +172,10 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         // Standard Graphql Errors
         ServiceError::NotAnOutboundShipment => BadUserInput(formatted_error),
         ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::InvoiceLineHasNoStockLine(_) => InternalError(formatted_error),
-        ServiceError::UpdatedInvoicenDoesNotExist => InternalError(formatted_error),
+        ServiceError::UpdatedInvoiceDoesNotExist => InternalError(formatted_error),
     };
 
     Err(graphql_error.extend())
@@ -207,18 +206,14 @@ impl UpdateOutboundShipmentStatusInput {
 
 #[cfg(test)]
 mod graphql {
-
     use graphql_core::test_helpers::setup_graphl_test;
     use graphql_core::{assert_graphql_query, assert_standard_graphql_error};
     use repository::mock::{
-        mock_name_linked_to_store, mock_name_not_linked_to_store,
-        mock_new_invoice_with_unallocated_line, mock_store_linked_to_name,
+        mock_name_linked_to_store_a, mock_name_store_join_e,
+        mock_new_invoice_with_unallocated_line, mock_store_linked_to_name_a,
     };
-    use repository::mock::{mock_name_store_c, MockDataInserts};
-    use repository::{
-        InvoiceLineRow, InvoiceLineRowRepository, InvoiceRowRepository, StockLineRow,
-        StockLineRowRepository,
-    };
+    use repository::mock::{mock_name_not_linked_to_store_a, MockDataInserts};
+    use repository::InvoiceRowRepository;
     use serde_json::json;
 
     use crate::{InvoiceMutations, InvoiceQueries};
@@ -234,7 +229,7 @@ mod graphql {
         .await;
 
         let query = r#"mutation DeleteOutboundShipment($input: UpdateOutboundShipmentInput!) {
-            updateOutboundShipment(input: $input, storeId: \"store_a\") {
+            updateOutboundShipment(input: $input, storeId: \"store_c\") {
                 ... on UpdateOutboundShipmentError {
                   error {
                     __typename
@@ -316,11 +311,11 @@ mod graphql {
             None
         );
         // OtherPartyNotACustomer
-        let other_party_supplier = mock_name_store_c();
+        let other_party_supplier = mock_name_store_join_e();
         let variables = Some(json!({
           "input": {
-            "id": "outbound_shipment_a",
-            "otherPartyId": other_party_supplier.id
+            "id": "outbound_shipment_c",
+            "otherPartyId": other_party_supplier.name_id
           }
         }));
         let expected = json!({
@@ -386,14 +381,14 @@ mod graphql {
         let variables = Some(json!({
           "input": {
             "id": "outbound_shipment_c",
-            "otherPartyId": mock_name_linked_to_store().id,
+            "otherPartyId": mock_name_linked_to_store_a().id,
           }
         }));
         let expected = json!({
             "updateOutboundShipment": {
               "id": "outbound_shipment_c",
               "otherPartyStore": {
-                "id": mock_store_linked_to_name().id
+                "id": mock_store_linked_to_name_a().id,
               }
             }
           }
@@ -407,14 +402,14 @@ mod graphql {
 
         assert_eq!(
             new_invoice.name_store_id,
-            Some(mock_store_linked_to_name().id)
+            Some(mock_store_linked_to_name_a().id)
         );
 
         // Test Success name_store_id, not linked to store
         let variables = Some(json!({
           "input": {
             "id": "outbound_shipment_c",
-            "otherPartyId": mock_name_not_linked_to_store().id,
+            "otherPartyId": mock_name_not_linked_to_store_a().id,
           }
         }));
         let expected = json!({
@@ -450,46 +445,7 @@ mod graphql {
             None
         );
 
-        // helpers to compare totals
-        let stock_lines_for_invoice_lines = |invoice_lines: &Vec<InvoiceLineRow>| {
-            let stock_line_ids: Vec<String> = invoice_lines
-                .iter()
-                .filter_map(|invoice| invoice.stock_line_id.to_owned())
-                .collect();
-            StockLineRowRepository::new(&connection)
-                .find_many_by_ids(&stock_line_ids)
-                .unwrap()
-        };
-        // calculates the expected stock line total for every invoice line row
-        let expected_stock_line_totals = |invoice_lines: &Vec<InvoiceLineRow>| {
-            let stock_lines = stock_lines_for_invoice_lines(invoice_lines);
-            let expected_stock_line_totals: Vec<(StockLineRow, i32)> = stock_lines
-                .into_iter()
-                .map(|line| {
-                    let invoice_line = invoice_lines
-                        .iter()
-                        .find(|il| il.stock_line_id.clone().unwrap() == line.id)
-                        .unwrap();
-                    let expected_total = line.total_number_of_packs - invoice_line.number_of_packs;
-                    (line, expected_total)
-                })
-                .collect();
-            expected_stock_line_totals
-        };
-        let assert_stock_line_totals =
-            |invoice_lines: &Vec<InvoiceLineRow>, expected: &Vec<(StockLineRow, i32)>| {
-                let stock_lines = stock_lines_for_invoice_lines(invoice_lines);
-                for line in stock_lines {
-                    let expected = expected.iter().find(|l| l.0.id == line.id).unwrap();
-                    assert_eq!(line.total_number_of_packs, expected.1);
-                }
-            };
-
         // test DRAFT to CONFIRMED
-        let invoice_lines = InvoiceLineRowRepository::new(&connection)
-            .find_many_by_invoice_id("outbound_shipment_c")
-            .unwrap();
-        let expected_totals = expected_stock_line_totals(&invoice_lines);
         let variables = Some(json!({
           "input": {
             "id": "outbound_shipment_c",
@@ -505,13 +461,10 @@ mod graphql {
           }
         );
         assert_graphql_query!(&settings, query, &variables, &expected, None);
-        assert_stock_line_totals(&invoice_lines, &expected_totals);
 
         // test DRAFT to FINALISED (while setting onHold to true)
         let full_invoice = mock_data["base"].full_invoices.get("draft_ci_a").unwrap();
         let invoice_id = full_invoice.invoice.id.clone();
-        let invoice_lines = full_invoice.get_lines();
-        let expected_totals = expected_stock_line_totals(&invoice_lines);
         let variables = Some(json!({
           "input": {
             "id": invoice_id,
@@ -528,7 +481,6 @@ mod graphql {
           }
         );
         assert_graphql_query!(&settings, query, &variables, &expected, None);
-        assert_stock_line_totals(&invoice_lines, &expected_totals);
 
         // test Status Change on Hold
         let full_invoice = mock_data["base"]

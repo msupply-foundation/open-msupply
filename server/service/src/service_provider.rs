@@ -24,6 +24,10 @@ use crate::{
     stocktake::{StocktakeService, StocktakeServiceTrait},
     stocktake_line::{StocktakeLineService, StocktakeLineServiceTrait},
     store::{get_store, get_stores},
+    sync::{
+        site_info::{SiteInfoService, SiteInfoTrait},
+        sync_status::{SiteInfoQueriesService, SiteInfoQueriesTrait},
+    },
     ListError, ListResult,
 };
 
@@ -51,6 +55,8 @@ pub struct ServiceProvider {
     pub settings: Box<dyn SettingsServiceTrait>,
     // App Data Service
     pub app_data_service: Box<dyn AppDataServiceTrait>,
+    pub site_info: Box<dyn SiteInfoTrait>,
+    pub site_info_queries_service: Box<dyn SiteInfoQueriesTrait>,
     // Triggers
     processors_trigger: ProcessorsTrigger,
 }
@@ -58,6 +64,8 @@ pub struct ServiceProvider {
 pub struct ServiceContext {
     pub connection: StorageConnection,
     pub(crate) processors_trigger: ProcessorsTrigger,
+    pub user_id: String,
+    pub store_id: String,
 }
 
 impl ServiceProvider {
@@ -95,15 +103,32 @@ impl ServiceProvider {
             report_service: Box::new(ReportService {}),
             settings: Box::new(SettingsService {}),
             app_data_service: Box::new(AppDataService::new(app_data_folder)),
+            site_info: Box::new(SiteInfoService {}),
+            site_info_queries_service: Box::new(SiteInfoQueriesService {}),
             processors_trigger,
         }
     }
 
     /// Creates a new service context with a new DB connection
-    pub fn context(&self) -> Result<ServiceContext, RepositoryError> {
+    pub fn basic_context(&self) -> Result<ServiceContext, RepositoryError> {
         Ok(ServiceContext {
             connection: self.connection()?,
             processors_trigger: self.processors_trigger.clone(),
+            user_id: "".to_string(),
+            store_id: "".to_string(),
+        })
+    }
+
+    pub fn context(
+        &self,
+        store_id: String,
+        user_id: String,
+    ) -> Result<ServiceContext, RepositoryError> {
+        Ok(ServiceContext {
+            connection: self.connection()?,
+            processors_trigger: self.processors_trigger.clone(),
+            user_id: user_id,
+            store_id: store_id,
         })
     }
 
@@ -119,6 +144,8 @@ impl ServiceContext {
         ServiceContext {
             connection,
             processors_trigger: ProcessorsTrigger::new_void(),
+            user_id: "".to_string(),
+            store_id: "".to_string(),
         }
     }
 }

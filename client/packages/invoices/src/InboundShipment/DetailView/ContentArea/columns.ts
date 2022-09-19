@@ -8,17 +8,25 @@ import {
   ArrayUtils,
   useCurrency,
   useUrlQueryParams,
+  ColumnAlign,
 } from '@openmsupply-client/common';
 import { LocationRowFragment } from '@openmsupply-client/system';
 import { InboundItem } from './../../../types';
 import { InboundLineFragment } from '../../api';
+import { isInboundPlaceholderRow } from '../../../utils';
+
+const getUnitQuantity = (row: InboundLineFragment) =>
+  row.packSize * row.numberOfPacks;
 
 export const useInboundShipmentColumns = () => {
   const {
     updateSortQuery,
     queryParams: { sortBy },
-  } = useUrlQueryParams();
+  } = useUrlQueryParams({ initialSort: { key: 'itemName', dir: 'asc' } });
   const { c } = useCurrency();
+  const getSellPrice = (row: InboundLineFragment) =>
+    isInboundPlaceholderRow(row) ? '' : c(row.sellPricePerPack).format();
+
   const columns = useColumns<InboundLineFragment | InboundItem>(
     [
       [
@@ -176,33 +184,34 @@ export const useInboundShipmentColumns = () => {
           },
         },
       ],
-      [
-        'sellPricePerPack',
-        {
-          accessor: ({ rowData }) => {
-            if ('lines' in rowData) {
-              const { lines } = rowData;
-              return ArrayUtils.ifTheSameElseDefault(
-                lines,
-                'sellPricePerPack',
-                ''
-              );
-            } else {
-              return rowData.sellPricePerPack;
-            }
-          },
-          getSortValue: rowData => {
-            if ('lines' in rowData) {
-              const { lines } = rowData;
-              return c(
-                ArrayUtils.ifTheSameElseDefault(lines, 'sellPricePerPack', '')
-              ).format();
-            } else {
-              return c(rowData.sellPricePerPack).format();
-            }
-          },
+      {
+        label: 'label.sell',
+        key: 'sellPricePerPack',
+        align: ColumnAlign.Right,
+        width: 100,
+        accessor: ({ rowData }) => {
+          if ('lines' in rowData) {
+            const { lines } = rowData;
+            return ArrayUtils.ifTheSameElseDefault(
+              lines.map(line => ({ sell: getSellPrice(line) })),
+              'sell',
+              ''
+            );
+          } else {
+            return getSellPrice(rowData);
+          }
         },
-      ],
+        getSortValue: rowData => {
+          if ('lines' in rowData) {
+            const { lines } = rowData;
+            return c(
+              ArrayUtils.ifTheSameElseDefault(lines, 'sellPricePerPack', '')
+            ).format();
+          } else {
+            return getSellPrice(rowData);
+          }
+        },
+      },
       [
         'packSize',
         {
@@ -211,7 +220,7 @@ export const useInboundShipmentColumns = () => {
               const { lines } = rowData;
               return ArrayUtils.ifTheSameElseDefault(lines, 'packSize', '');
             } else {
-              return rowData.packSize;
+              return rowData.packSize ?? '';
             }
           },
           getSortValue: rowData => {
@@ -219,7 +228,7 @@ export const useInboundShipmentColumns = () => {
               const { lines } = rowData;
               return ArrayUtils.ifTheSameElseDefault(lines, 'packSize', '');
             } else {
-              return rowData.packSize;
+              return rowData.packSize ?? '';
             }
           },
         },
@@ -232,7 +241,7 @@ export const useInboundShipmentColumns = () => {
               const { lines } = rowData;
               return ArrayUtils.getUnitQuantity(lines);
             } else {
-              return rowData.packSize * rowData.numberOfPacks;
+              return getUnitQuantity(rowData);
             }
           },
           getSortValue: rowData => {
@@ -240,7 +249,7 @@ export const useInboundShipmentColumns = () => {
               const { lines } = rowData;
               return ArrayUtils.getUnitQuantity(lines);
             } else {
-              return rowData.packSize * rowData.numberOfPacks;
+              return getUnitQuantity(rowData);
             }
           },
         },
