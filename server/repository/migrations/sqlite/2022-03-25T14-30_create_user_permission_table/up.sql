@@ -20,5 +20,6 @@ CREATE TABLE user_permission (
         'DOCUMENT',
         'PATIENT_QUERY',
         'PATIENT_MUTATE'
-    )) NOT NULL
+    )) NOT NULL,
+    context TEXT
 )

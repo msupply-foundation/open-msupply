@@ -14,7 +14,7 @@ pub struct UserStorePermissionConnector {
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
-pub enum UserPermissionNodePermission {
+pub enum UserPermission {
     ServerAdmin,
     StoreAccess,
     LocationMutate,
@@ -35,17 +35,26 @@ pub enum UserPermissionNodePermission {
 
 #[Object]
 impl UserStorePermissionNode {
-    pub async fn permissions(&self) -> Vec<UserPermissionNodePermission> {
-        self.user_store_permission
+    pub async fn permissions(&self) -> Vec<UserPermission> {
+        self.row()
             .permissions
             .clone()
             .into_iter()
-            .map(|p| UserPermissionNodePermission::from_domain(&p.permission))
+            .map(|p| UserPermission::from_domain(&p.permission))
             .collect()
     }
 
     pub async fn store_id(&self) -> String {
         self.row().store_row.id.clone()
+    }
+
+    pub async fn context(&self) -> Vec<String> {
+        self.row()
+            .permissions
+            .clone()
+            .into_iter()
+            .filter_map(|c| c.context)
+            .collect()
     }
 }
 
@@ -61,59 +70,47 @@ impl UserStorePermissionNode {
     }
 }
 
-impl UserPermissionNodePermission {
-    pub fn from_domain(from: &Permission) -> UserPermissionNodePermission {
+impl UserPermission {
+    pub fn from_domain(from: &Permission) -> UserPermission {
         match from {
-            Permission::ServerAdmin => UserPermissionNodePermission::ServerAdmin,
-            Permission::StoreAccess => UserPermissionNodePermission::StoreAccess,
-            Permission::LocationMutate => UserPermissionNodePermission::LocationMutate,
-            Permission::StockLineQuery => UserPermissionNodePermission::StockLineQuery,
-            Permission::StocktakeQuery => UserPermissionNodePermission::StocktakeQuery,
-            Permission::StocktakeMutate => UserPermissionNodePermission::StocktakeMutate,
-            Permission::RequisitionQuery => UserPermissionNodePermission::RequisitionQuery,
-            Permission::RequisitionMutate => UserPermissionNodePermission::RequisitionMutate,
-            Permission::OutboundShipmentQuery => {
-                UserPermissionNodePermission::OutboundShipmentQuery
-            }
-            Permission::OutboundShipmentMutate => {
-                UserPermissionNodePermission::OutboundShipmentMutate
-            }
-            Permission::InboundShipmentQuery => UserPermissionNodePermission::InboundShipmentQuery,
-            Permission::InboundShipmentMutate => {
-                UserPermissionNodePermission::InboundShipmentMutate
-            }
-            Permission::Report => UserPermissionNodePermission::Report,
-            Permission::LogQuery => UserPermissionNodePermission::LogQuery,
-            Permission::Document => UserPermissionNodePermission::PatientQuery,
-            Permission::PatientQuery => UserPermissionNodePermission::PatientQuery,
-            Permission::PatientMutate => UserPermissionNodePermission::PatientMutate,
+            Permission::ServerAdmin => UserPermission::ServerAdmin,
+            Permission::StoreAccess => UserPermission::StoreAccess,
+            Permission::LocationMutate => UserPermission::LocationMutate,
+            Permission::StockLineQuery => UserPermission::StockLineQuery,
+            Permission::StocktakeQuery => UserPermission::StocktakeQuery,
+            Permission::StocktakeMutate => UserPermission::StocktakeMutate,
+            Permission::RequisitionQuery => UserPermission::RequisitionQuery,
+            Permission::RequisitionMutate => UserPermission::RequisitionMutate,
+            Permission::OutboundShipmentQuery => UserPermission::OutboundShipmentQuery,
+            Permission::OutboundShipmentMutate => UserPermission::OutboundShipmentMutate,
+            Permission::InboundShipmentQuery => UserPermission::InboundShipmentQuery,
+            Permission::InboundShipmentMutate => UserPermission::InboundShipmentMutate,
+            Permission::Report => UserPermission::Report,
+            Permission::LogQuery => UserPermission::LogQuery,
+            Permission::Document => UserPermission::PatientQuery,
+            Permission::PatientQuery => UserPermission::PatientQuery,
+            Permission::PatientMutate => UserPermission::PatientMutate,
         }
     }
 
     pub fn to_domain(self) -> Permission {
         match self {
-            UserPermissionNodePermission::ServerAdmin => Permission::ServerAdmin,
-            UserPermissionNodePermission::StoreAccess => Permission::StoreAccess,
-            UserPermissionNodePermission::LocationMutate => Permission::LocationMutate,
-            UserPermissionNodePermission::StockLineQuery => Permission::StockLineQuery,
-            UserPermissionNodePermission::StocktakeQuery => Permission::StocktakeQuery,
-            UserPermissionNodePermission::StocktakeMutate => Permission::StocktakeMutate,
-            UserPermissionNodePermission::RequisitionQuery => Permission::RequisitionQuery,
-            UserPermissionNodePermission::RequisitionMutate => Permission::RequisitionMutate,
-            UserPermissionNodePermission::OutboundShipmentQuery => {
-                Permission::OutboundShipmentQuery
-            }
-            UserPermissionNodePermission::OutboundShipmentMutate => {
-                Permission::OutboundShipmentMutate
-            }
-            UserPermissionNodePermission::InboundShipmentQuery => Permission::InboundShipmentQuery,
-            UserPermissionNodePermission::InboundShipmentMutate => {
-                Permission::InboundShipmentMutate
-            }
-            UserPermissionNodePermission::Report => Permission::Report,
-            UserPermissionNodePermission::LogQuery => Permission::LogQuery,
-            UserPermissionNodePermission::PatientQuery => Permission::PatientQuery,
-            UserPermissionNodePermission::PatientMutate => Permission::PatientMutate,
+            UserPermission::ServerAdmin => Permission::ServerAdmin,
+            UserPermission::StoreAccess => Permission::StoreAccess,
+            UserPermission::LocationMutate => Permission::LocationMutate,
+            UserPermission::StockLineQuery => Permission::StockLineQuery,
+            UserPermission::StocktakeQuery => Permission::StocktakeQuery,
+            UserPermission::StocktakeMutate => Permission::StocktakeMutate,
+            UserPermission::RequisitionQuery => Permission::RequisitionQuery,
+            UserPermission::RequisitionMutate => Permission::RequisitionMutate,
+            UserPermission::OutboundShipmentQuery => Permission::OutboundShipmentQuery,
+            UserPermission::OutboundShipmentMutate => Permission::OutboundShipmentMutate,
+            UserPermission::InboundShipmentQuery => Permission::InboundShipmentQuery,
+            UserPermission::InboundShipmentMutate => Permission::InboundShipmentMutate,
+            UserPermission::Report => Permission::Report,
+            UserPermission::LogQuery => Permission::LogQuery,
+            UserPermission::PatientQuery => Permission::PatientQuery,
+            UserPermission::PatientMutate => Permission::PatientMutate,
         }
     }
 }
