@@ -35,7 +35,7 @@ pub struct SyncInfoQueries;
 impl SyncInfoQueries {
     pub async fn is_initialised(&self, ctx: &Context<'_>) -> Result<bool> {
         let service_provider = ctx.service_provider();
-        let ctx = service_provider.context()?;
+        let ctx = service_provider.basic_context()?;
         let is_initialised = service_provider.sync_status_service.is_initialised(&ctx)?;
 
         Ok(is_initialised)
@@ -43,7 +43,7 @@ impl SyncInfoQueries {
 
     pub async fn latest_sync_status(&self, ctx: &Context<'_>) -> Result<FullSyncStatusNode> {
         let service_provider = ctx.service_provider();
-        let ctx = service_provider.context()?;
+        let ctx = service_provider.basic_context()?;
         let sync_status = service_provider
             .sync_status_service
             .get_latest_sync_status(&ctx)?;
@@ -90,7 +90,7 @@ impl SyncInfoQueries {
 
     pub async fn number_of_records_in_push_queue(&self, ctx: &Context<'_>) -> Result<u64> {
         let service_provider = ctx.service_provider();
-        let ctx = service_provider.context()?;
+        let ctx = service_provider.basic_context()?;
         let push_queue_count = service_provider
             .sync_status_service
             .number_of_records_in_push_queue(&ctx)
