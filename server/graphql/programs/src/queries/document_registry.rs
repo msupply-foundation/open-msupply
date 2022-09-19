@@ -67,14 +67,17 @@ pub fn document_registries(
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
 
-    let filter =
-        filter
-            .map(|f| f.to_domain())
-            .unwrap_or(
-                DocumentRegistryFilter::new().document_type(EqualFilter::equal_any(
-                    user.context.iter().map(String::clone).collect(),
-                )),
-            );
+    let filter = filter
+        .map(|f| {
+            f.to_domain().document_type(EqualFilter::equal_any(
+                user.context.iter().map(String::clone).collect(),
+            ))
+        })
+        .unwrap_or(
+            DocumentRegistryFilter::new().document_type(EqualFilter::equal_any(
+                user.context.iter().map(String::clone).collect(),
+            )),
+        );
 
     let entries = service_provider
         .document_registry_service

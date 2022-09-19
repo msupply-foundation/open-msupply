@@ -44,9 +44,10 @@ pub fn insert_program_enrolment(
     let service_context = service_provider.basic_context()?;
 
     match user.context.into_iter().find(|c| c == &input.r#type) {
-        None => Err(StandardGraphqlError::BadUserInput(
-            "User does not have access to document type".to_string(),
-        )),
+        None => Err(StandardGraphqlError::BadUserInput(format!(
+            "User does not have access to {}",
+            input.r#type
+        ))),
         Some(_) => Ok(()),
     }?;
 

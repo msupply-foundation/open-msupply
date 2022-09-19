@@ -39,9 +39,10 @@ pub fn insert_document_registry(
     )?;
 
     match user.context.into_iter().find(|c| c == &input.document_type) {
-        None => Err(StandardGraphqlError::BadUserInput(
-            "User does not have access to document type".to_string(),
-        )),
+        None => Err(StandardGraphqlError::BadUserInput(format!(
+            "User does not have access to {}",
+            input.document_type
+        ))),
         Some(_) => Ok(()),
     }?;
 
