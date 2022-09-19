@@ -8,6 +8,5 @@ export const useHost = {
   utils: {
     restart: Utils.useServerRestart,
     settings: Utils.useServerSettings,
-    version: Utils.useHostVersion,
   },
 };
