@@ -78,7 +78,9 @@ pub(crate) fn process_shipment_transfers(
         Box::new(DeleteInboundShipmentProcessor),
     ];
 
-    let ctx = service_provider.context().map_err(Error::DatabaseError)?;
+    let ctx = service_provider
+        .basic_context()
+        .map_err(Error::DatabaseError)?;
 
     let active_stores =
         ActiveStoresOnSite::get(&ctx.connection).map_err(Error::GetActiveStoresOnSiteError)?;

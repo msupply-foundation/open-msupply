@@ -1,11 +1,9 @@
 #[cfg(test)]
 mod tests {
-    use std::{io::Error, path::PathBuf};
-
-    use actix_web::web::Data;
     use repository::{mock::MockDataInserts, StorageConnectionManager};
     use reqwest::StatusCode;
     use serde_json::json;
+    use std::{io::Error, path::PathBuf, sync::Arc};
     use util::assert_matches;
 
     use crate::{
@@ -48,7 +46,7 @@ mod tests {
         }
         service_provider.app_data_service = Box::new(TestService1(hardware_id.to_string()));
 
-        Synchroniser::new(settings.clone(), Data::new(service_provider)).unwrap()
+        Synchroniser::new(settings.clone(), Arc::new(service_provider)).unwrap()
     }
     #[actix_rt::test]
     async fn integration_sync_parsed_error() {
