@@ -1,0 +1,16 @@
+License
+
+omSupply software (including it’s documentation produced by mSupply Foundation) is protected by copyright and is the exclusive property of mSupply Foundation and all rights are reserved.
+
+mSupply Foundation grants you license to use mSupply software according to the clauses herein stated and your installation and/or continued use of mSupply confirms your agreement.
+
+The software may not, in whole or in part, be copied, reproduced, translated or reduced to any machine readable form without prior consent in writing from mSupply Foundation, except as a backup copy. The user guide, including material on the mSupply web site may not, in whole or in part, be copied, reproduced, translated or reduced to any machine readable form without prior consent in writing from mSupply Foundation.
+
+
+Warranty
+
+No warranty is given on product software, the user guide and other training materials. Even though mSupply Foundation has tested the software and documentation and reviewed their contents, mSupply Foundation and its distributors and dealers make no warranties, either expressed or implied, with respect to their fitness for a particular purpose. The program and the user guides are distributed solely on an “as is” basis. The entire risk as to their quality and performance is with the you.
+
+Should either the software or the manuals or both prove defective, you, and not mSupply Foundation or its distributors or dealers, assume the entire cost of all necessary servicing, repair, or correction.
+
+mSupply Foundation and its distributors and dealers will not be liable for direct, indirect, incidental, or consequential damages resulting from any defect in the software or user guide, even if they have been advised of the possibility of such damage.

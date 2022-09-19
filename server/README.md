@@ -253,3 +253,9 @@ cargo run --bin remote_server_cli -- initialise-from-central -u 'user1:password1
 # attempt to refresh dates (advance them forward, see --help)
 cargo run --bin remote_server_cli -- refresh-dates
 ```
+
+## Logging
+
+By default, the server logs to console with a logging level of `Info`
+You can configure this, to log to a file, for example, with a rollover of log files based on file size.
+See the `example.yaml` file for the available options.

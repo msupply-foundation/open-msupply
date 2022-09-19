@@ -45,7 +45,9 @@ impl SiteInfoTrait for SiteInfoService {
         use RequestAndSetSiteInfoError as Error;
 
         let sync_api_v5 = SyncApiV5::new(&settings, &service_provider)?;
-        let ctx = service_provider.context().map_err(Error::DatabaseError)?;
+        let ctx = service_provider
+            .basic_context()
+            .map_err(Error::DatabaseError)?;
 
         info!("Requesting site info");
         let site_info = sync_api_v5

@@ -51,6 +51,7 @@ impl SyncRecordTester for UnitAndItemTester {
             unit_id: None,
             r#type: ItemRowType::NonStock,
             legacy_record: "".to_string(),
+            default_pack_size: 1,
         };
         let item_json1 = extend_base(json!({
             "ID": item_row1.id,
@@ -68,6 +69,7 @@ impl SyncRecordTester for UnitAndItemTester {
             unit_id: Some(unit_row1.id.clone()),
             r#type: ItemRowType::Stock,
             legacy_record: "".to_string(),
+            default_pack_size: 1,
         };
         let item_json2 = extend_base(json!({
             "ID": item_row2.id,
@@ -85,6 +87,7 @@ impl SyncRecordTester for UnitAndItemTester {
             unit_id: None,
             r#type: ItemRowType::Service,
             legacy_record: "".to_string(),
+            default_pack_size: 1,
         };
         let item_json3 = extend_base(json!({
             "ID": item_row3.id,

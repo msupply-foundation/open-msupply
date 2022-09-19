@@ -19,7 +19,7 @@ pub fn update_location(
     store_id: &str,
     input: UpdateLocationInput,
 ) -> Result<UpdateLocationResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::MutateLocation,
@@ -28,13 +28,12 @@ pub fn update_location(
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context()?;
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
-    match service_provider.location_service.update_location(
-        &service_context,
-        store_id,
-        input.into(),
-    ) {
+    match service_provider
+        .location_service
+        .update_location(&service_context, input.into())
+    {
         Ok(location) => Ok(UpdateLocationResponse::Response(LocationNode::from_domain(
             location,
         ))),

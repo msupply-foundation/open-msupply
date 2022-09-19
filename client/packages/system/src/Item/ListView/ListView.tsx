@@ -33,6 +33,7 @@ const ItemListComponent: FC = () => {
 
   return (
     <DataTable
+      key="item-list"
       pagination={{ ...pagination, total: data?.totalCount }}
       onChangePage={updatePaginationQuery}
       columns={columns}

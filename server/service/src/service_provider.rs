@@ -65,6 +65,8 @@ pub struct ServiceProvider {
 pub struct ServiceContext {
     pub connection: StorageConnection,
     pub(crate) processors_trigger: ProcessorsTrigger,
+    pub user_id: String,
+    pub store_id: String,
 }
 
 impl ServiceProvider {
@@ -109,10 +111,25 @@ impl ServiceProvider {
     }
 
     /// Creates a new service context with a new DB connection
-    pub fn context(&self) -> Result<ServiceContext, RepositoryError> {
+    pub fn basic_context(&self) -> Result<ServiceContext, RepositoryError> {
         Ok(ServiceContext {
             connection: self.connection()?,
             processors_trigger: self.processors_trigger.clone(),
+            user_id: "".to_string(),
+            store_id: "".to_string(),
+        })
+    }
+
+    pub fn context(
+        &self,
+        store_id: String,
+        user_id: String,
+    ) -> Result<ServiceContext, RepositoryError> {
+        Ok(ServiceContext {
+            connection: self.connection()?,
+            processors_trigger: self.processors_trigger.clone(),
+            user_id: user_id,
+            store_id: store_id,
         })
     }
 
@@ -128,6 +145,8 @@ impl ServiceContext {
         ServiceContext {
             connection,
             processors_trigger: ProcessorsTrigger::new_void(),
+            user_id: "".to_string(),
+            store_id: "".to_string(),
         }
     }
 }

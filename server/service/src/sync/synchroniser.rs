@@ -1,14 +1,13 @@
 use crate::{
-    service_provider::ServiceProvider,
+    service_provider::{ServiceContext, ServiceProvider},
     sync::{
         actor::{get_sync_actors, SyncReceiverActor, SyncSenderActor},
         sync_status::logger::SyncStep,
     },
 };
-use actix_web::web::Data;
 use log::{info, warn};
 use repository::{RepositoryError, StorageConnection, SyncBufferAction};
-use std::time::Duration;
+use std::{sync::Arc, time::Duration};
 
 use super::{
     api::SyncApiV5,
@@ -25,7 +24,7 @@ const INTEGRATION_TIMEOUT_SECONDS: u64 = 15;
 
 pub struct Synchroniser {
     settings: SyncSettings,
-    service_provider: Data<ServiceProvider>,
+    service_provider: Arc<ServiceProvider>,
     central: CentralDataSynchroniser,
     remote: RemoteDataSynchroniser,
 }
@@ -59,7 +58,7 @@ pub struct Synchroniser {
 impl Synchroniser {
     pub fn new(
         settings: SyncSettings,
-        service_provider: Data<ServiceProvider>,
+        service_provider: Arc<ServiceProvider>,
     ) -> anyhow::Result<Self> {
         let sync_api_v5 = SyncApiV5::new(&settings, &service_provider)?;
         Ok(Synchroniser {
@@ -88,10 +87,10 @@ impl Synchroniser {
     }
 
     pub async fn sync(&self) -> anyhow::Result<()> {
-        let ctx = self.service_provider.context()?;
+        let ctx = self.service_provider.basic_context()?;
         let mut logger = SyncLogger::start(&ctx.connection)?;
 
-        let sync_result = self.sync_inner(&mut logger).await;
+        let sync_result = self.sync_inner(&mut logger, &ctx).await;
 
         if let Err(error) = &sync_result {
             logger.error(error.to_string())?;
@@ -103,8 +102,11 @@ impl Synchroniser {
     }
 
     /// Sync must not be called concurrently (e.g. sync cursors are fetched/updated without DB tx)
-    async fn sync_inner<'a>(&self, logger: &mut SyncLogger<'a>) -> anyhow::Result<()> {
-        let ctx = self.service_provider.context()?;
+    async fn sync_inner<'a>(
+        &self,
+        logger: &mut SyncLogger<'a>,
+        ctx: &'a ServiceContext,
+    ) -> anyhow::Result<()> {
         let service = &self.service_provider.settings;
         let batch_size = &self.settings.batch_size;
 
@@ -212,21 +214,22 @@ pub fn integrate_and_translate_sync_buffer(
 
 #[cfg(test)]
 mod tests {
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::mock::MockDataInserts;
     use util::{assert_matches, inline_init};
+
+    use crate::test_helpers::{setup_all_and_service_provider, ServiceTestContext};
 
     use super::*;
 
     #[actix_rt::test]
     async fn test_disabled_sync() {
-        let (_, _, connection_manager, _) =
-            setup_all("test_disabled_sync", MockDataInserts::none()).await;
+        let ServiceTestContext {
+            service_provider, ..
+        } = setup_all_and_service_provider("test_disabled_sync", MockDataInserts::none()).await;
 
         // 0.0.0.0:0 should hopefully be always unreachable and valid url
 
-        let service_provider =
-            Data::new(ServiceProvider::new(connection_manager.clone(), "app_data"));
-        let ctx = service_provider.context().unwrap();
+        let ctx = service_provider.basic_context().unwrap();
         let service = &service_provider.settings;
         let s = Synchroniser::new(
             inline_init(|r: &mut SyncSettings| r.url = "http://0.0.0.0:0".to_string()),

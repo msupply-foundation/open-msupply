@@ -100,7 +100,7 @@ pub fn get_invoice(
     store_id: Option<String>,
     id: &str,
 ) -> Result<InvoiceResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::QueryInvoice,
@@ -109,7 +109,8 @@ pub fn get_invoice(
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context()?;
+    let service_context =
+        service_provider.context(store_id.clone().unwrap_or("".to_string()), user.user_id)?;
     let invoice_service = &service_provider.invoice_service;
 
     let invoice_option = invoice_service.get_invoice(&service_context, store_id.as_deref(), id)?;
@@ -131,7 +132,7 @@ pub fn get_invoices(
     filter: Option<InvoiceFilterInput>,
     sort: Option<Vec<InvoiceSortInput>>,
 ) -> Result<InvoicesResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::QueryInvoice,
@@ -140,7 +141,7 @@ pub fn get_invoices(
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context()?;
+    let service_context = service_provider.context(store_id.clone(), user.user_id)?;
 
     let invoices = service_provider
         .invoice_service
@@ -166,7 +167,7 @@ pub fn get_invoice_by_number(
     invoice_number: u32,
     r#type: InvoiceNodeType,
 ) -> Result<InvoiceResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::QueryInvoice,
@@ -175,7 +176,7 @@ pub fn get_invoice_by_number(
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context()?;
+    let service_context = service_provider.context(store_id.clone(), user.user_id)?;
     let invoice_service = &service_provider.invoice_service;
 
     let invoice_option = invoice_service.get_invoice_by_number(

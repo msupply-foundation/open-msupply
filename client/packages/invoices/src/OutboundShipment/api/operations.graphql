@@ -740,19 +740,16 @@ mutation deleteOutboundShipmentLines(
   }
 }
 
-mutation addToShipmentFromMasterList(
+mutation addToOutboundShipmentFromMasterList(
   $storeId: String!
-  $outboundShipmentId: String!
+  $shipmentId: String!
   $masterListId: String!
 ) {
-  addToShipmentFromMasterList(
-    input: {
-      outboundShipmentId: $outboundShipmentId
-      masterListId: $masterListId
-    }
+  addToOutboundShipmentFromMasterList(
+    input: { shipmentId: $shipmentId, masterListId: $masterListId }
     storeId: $storeId
   ) {
-    ... on AddToShipmentFromMasterListError {
+    ... on AddToOutboundShipmentFromMasterListError {
       __typename
       error {
         ... on MasterListNotFoundForThisName {

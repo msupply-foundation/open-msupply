@@ -57,6 +57,7 @@ fn get_exclude_timestamp_fields() -> Vec<TableAndFieldName> {
     vec![
         ("sync_buffer", "received_datetime"),
         ("sync_buffer", "integration_datetime"),
+        ("log", "datetime"),
     ]
     .iter()
     .map(|(table_name, field_name)| TableAndFieldName {

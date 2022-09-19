@@ -20,7 +20,7 @@ pub struct GeneralQueries;
 impl GeneralQueries {
     #[allow(non_snake_case)]
     pub async fn apiVersion(&self) -> String {
-        "1.0".to_string()
+        env!("CARGO_PKG_VERSION").to_string()
     }
 
     /// Retrieves a new auth bearer and refresh token
@@ -137,6 +137,17 @@ impl GeneralQueries {
             stock_evolution_options_input,
         )
     }
+
+    pub async fn logs(
+        &self,
+        ctx: &Context<'_>,
+        #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
+        #[graphql(desc = "Filter option")] filter: Option<LogFilterInput>,
+        #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
+        sort: Option<Vec<LogSortInput>>,
+    ) -> Result<LogResponse> {
+        logs(ctx, page, filter, sort)
+    }
 }
 
 #[derive(Default, Clone)]
@@ -198,5 +209,13 @@ impl ServerAdminStage0Mutations {
         input: UpdateServerSettingsInput,
     ) -> Result<UpdateServerSettingsResponse> {
         update_server_settings(ctx, input, true).await
+    }
+}
+
+pub struct MasterListNotFoundForThisStore;
+#[Object]
+impl MasterListNotFoundForThisStore {
+    pub async fn description(&self) -> &'static str {
+        "Master list not found (might not be visible to this store)"
     }
 }

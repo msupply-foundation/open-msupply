@@ -15,7 +15,7 @@ module.exports = env => {
   return {
     entry: './src/index',
     mode: isProduction ? 'production' : 'development',
-    devtool: 'source-map',
+    devtool: isProduction ? undefined : 'source-map',
     devServer: {
       hot: true,
       static: isProduction
@@ -95,7 +95,7 @@ module.exports = env => {
          * In "json" mode single JSON file with bundle report will be generated
          */
         analyzerMode: 'disabled',
-        generateStatsFile: isProduction,
+        generateStatsFile: !isProduction,
       }),
 
       new HtmlWebpackPlugin({
