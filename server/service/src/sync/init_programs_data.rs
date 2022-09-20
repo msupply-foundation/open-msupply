@@ -15,7 +15,7 @@ use crate::{
 use chrono::{Duration, Utc};
 use repository::{
     DocumentContext, DocumentRegistryRow, DocumentRegistryRowRepository, EqualFilter, FormSchema,
-    FormSchemaRowRepository, RepositoryError, StoreFilter, StoreRepository,
+    FormSchemaRowRepository, RepositoryError, StoreFilter, StoreRepository, NameStoreJoinRepository, NameStoreJoinRow, NameRowRepository, NameRow, NameType, StorageConnection,
 };
 use serde::{Deserialize, Serialize};
 use util::{inline_init, uuid::uuid};
@@ -457,6 +457,64 @@ fn encounter_hiv_care_5() -> hiv_care_encounter::HivcareEncounter {
     })
 }
 
+fn insert_patient(connection: &StorageConnection, ctx: &ServiceContext, service_provider: &Arc<ServiceProvider>, patient_schema_id: String, site_id: u32, patient: Patient) {
+    NameRowRepository::new(connection).upsert_one(&NameRow {
+        id: patient.id.clone(),
+        first_name: patient.first_name.clone(),
+        last_name: patient.last_name.clone(),
+        name: "".to_string(),
+        code: "".to_string(),
+        r#type: NameType::Patient,
+        is_customer: true,
+        is_supplier: false,
+        supplying_store_id: None,
+        gender: None,
+        date_of_birth: None,
+        phone: None,
+        charge_code: None,
+        comment: None,
+        country: None,
+        address1: None,
+        address2: None,
+        email: None,
+        website: None,
+        is_manufacturer: false,
+        is_donor: false,
+        on_hold: false,
+        created_datetime: None,
+        is_deceased: false,
+        national_health_number: None,
+    }).unwrap();
+    let store_id = StoreRepository::new(connection)
+        .query_one(StoreFilter::new().site_id(EqualFilter::equal_to_i32(site_id as i32)))
+        .unwrap()
+        .unwrap()
+        .store_row
+        .id;
+    let service = PatientService {};
+    NameStoreJoinRepository::new(connection).upsert_one(&NameStoreJoinRow {
+        id: uuid(),
+        name_id: patient.id.clone(),
+        store_id: store_id.clone(),
+        name_is_customer: true,
+        name_is_supplier: false,
+    }).unwrap();
+
+    service
+        .update_patient(
+            &ctx,
+            &service_provider,
+            &store_id,
+            "no user",
+            UpdatePatient {
+                data: serde_json::to_value(patient).unwrap(),
+                schema_id: patient_schema_id.clone(),
+                parent: None,
+            },
+        )
+        .unwrap();
+}
+
 pub fn init_program_data(
     service_provider: &Arc<ServiceProvider>,
     site_id: u32,
@@ -570,40 +628,8 @@ pub fn init_program_data(
     })?;
 
     // patients
-    let store_id = StoreRepository::new(connection)
-        .query_one(StoreFilter::new().site_id(EqualFilter::equal_to_i32(site_id as i32)))
-        .unwrap()
-        .unwrap()
-        .store_row
-        .id;
-    let service = PatientService {};
-    service
-        .update_patient(
-            &ctx,
-            &service_provider,
-            &store_id,
-            "no user",
-            UpdatePatient {
-                data: serde_json::to_value(patient_1()).unwrap(),
-                schema_id: patient_schema_id.clone(),
-                parent: None,
-            },
-        )
-        .unwrap();
-    let service = PatientService {};
-    service
-        .update_patient(
-            &ctx,
-            &service_provider,
-            &store_id,
-            "no user",
-            UpdatePatient {
-                data: serde_json::to_value(patient_2()).unwrap(),
-                schema_id: patient_schema_id,
-                parent: None,
-            },
-        )
-        .unwrap();
+    insert_patient(connection, ctx, service_provider, patient_schema_id.clone(), site_id, patient_1() );
+    insert_patient(connection, ctx, service_provider, patient_schema_id.clone(), site_id, patient_2() );
 
     // program
     let service = ProgramEnrolmentService {};
