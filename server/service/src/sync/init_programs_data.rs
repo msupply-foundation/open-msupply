@@ -17,7 +17,7 @@ use repository::{
     DocumentContext, DocumentRegistryRow, DocumentRegistryRowRepository, EqualFilter, FormSchema,
     FormSchemaRowRepository, NameRow, NameRowRepository, NameStoreJoinRepository, NameStoreJoinRow,
     NameType, Permission, RepositoryError, StorageConnection, StoreFilter, StoreRepository,
-    UserPermissionRow, UserPermissionRowRepository,
+    UserPermissionRow, UserPermissionRowRepository, UserStoreJoinRowRepository,
 };
 use serde::{Deserialize, Serialize};
 use util::{inline_init, uuid::uuid};
@@ -460,11 +460,15 @@ fn encounter_hiv_care_5() -> hiv_care_encounter::HivcareEncounter {
 }
 
 pub fn insert_programs_permissions(connection: &StorageConnection, user_id: String) {
+    let user_store_join = UserStoreJoinRowRepository::new(&connection)
+        .find_one_by_user_id(&user_id.clone())
+        .unwrap()
+        .unwrap();
     UserPermissionRowRepository::new(&connection)
         .upsert_one(&UserPermissionRow {
             id: uuid(),
             user_id: user_id.clone(),
-            store_id: Some("D77F67339BF8400886D009178F4962E1".to_string()),
+            store_id: Some(user_store_join.store_id.clone()),
             permission: Permission::DocumentProgramQuery,
             context: Some("HIVCareProgram".to_string()),
         })
@@ -474,7 +478,7 @@ pub fn insert_programs_permissions(connection: &StorageConnection, user_id: Stri
         .upsert_one(&UserPermissionRow {
             id: uuid(),
             user_id: user_id.clone(),
-            store_id: Some("D77F67339BF8400886D009178F4962E1".to_string()),
+            store_id: Some(user_store_join.store_id.clone()),
             permission: Permission::PatientQuery,
             context: None,
         })
@@ -484,7 +488,7 @@ pub fn insert_programs_permissions(connection: &StorageConnection, user_id: Stri
         .upsert_one(&UserPermissionRow {
             id: uuid(),
             user_id: user_id.clone(),
-            store_id: Some("D77F67339BF8400886D009178F4962E1".to_string()),
+            store_id: Some(user_store_join.store_id.clone()),
             permission: Permission::Document,
             context: None,
         })
@@ -493,10 +497,30 @@ pub fn insert_programs_permissions(connection: &StorageConnection, user_id: Stri
     UserPermissionRowRepository::new(&connection)
         .upsert_one(&UserPermissionRow {
             id: uuid(),
-            user_id,
-            store_id: Some("D77F67339BF8400886D009178F4962E1".to_string()),
+            user_id: user_id.clone(),
+            store_id: Some(user_store_join.store_id.clone()),
             permission: Permission::DocumentProgramMutate,
             context: Some("Patient".to_string()),
+        })
+        .unwrap();
+
+    UserPermissionRowRepository::new(&connection)
+        .upsert_one(&UserPermissionRow {
+            id: uuid(),
+            user_id: user_id.clone(),
+            store_id: Some(user_store_join.store_id.clone()),
+            permission: Permission::DocumentEncounterQuery,
+            context: Some("HIVCareEncounter".to_string()),
+        })
+        .unwrap();
+
+    UserPermissionRowRepository::new(&connection)
+        .upsert_one(&UserPermissionRow {
+            id: uuid(),
+            user_id,
+            store_id: Some(user_store_join.store_id),
+            permission: Permission::DocumentEncounterMutate,
+            context: None,
         })
         .unwrap();
 }
