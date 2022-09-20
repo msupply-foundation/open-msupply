@@ -76,7 +76,7 @@ impl<'a> UserStoreJoinRowRepository<'a> {
     }
 
     //TODO Delete after programs implemented
-    pub fn find_one_by_user_id(
+    pub fn find_by_user_id(
         &self,
         user_id: &str,
     ) -> Result<Option<Vec<UserStoreJoinRow>>, RepositoryError> {
