@@ -358,9 +358,13 @@ Screen.Back();
 <Name>On Next</Name>
 <Args/>
 <Script>-- These actions are performed when the Next button is clicked.
+local sNextScreenName = "License Agreement";
+if (hasOmsupplyInstalled) then
+	sNextScreenName = "Select Install Folder";
+end
 
 -- advance to the next screen
-Screen.Next();
+Screen.Jump(sNextScreenName);
 </Script>
 <BookMarks count="0">
 </BookMarks>
@@ -2677,6 +2681,9 @@ end
 <Name>On Preload</Name>
 <Args/>
 <Script>-- These actions are performed before the screen is shown.
+if hasOmsupplyInstalled then
+	DlgCheckBox.SetProperties(CTRL_CHECK_BOX_01, {Visible = false});
+end
 </Script>
 <BookMarks count="0">
 </BookMarks>
@@ -2697,7 +2704,7 @@ Screen.Back();
 <Args/>
 <Script>-- These actions are performed when the Next button is clicked.
 -- Launch omSupply Server
-if (cbStartOmSupply) then
+if (not hasOmsupplyInstalled and cbStartOmSupply) then
 	File.OpenURL(SessionVar.Expand("https://localhost:%omsupply_port%"));
 end
 -- advance to the next screen
@@ -4018,7 +4025,24 @@ g_HandleSystemReboot();
 <Event>
 <Name>On Startup</Name>
 <Args/>
-<Script/>
+<Script>omsupplyDatabase = SessionVar.Get("%omsupply_selected_db%");
+hasOmsupplyInstalled = false;
+
+if File.DoesExist(SessionVar.Expand("%AppFolder%\\settings.ini")) then
+	omsupplyDatabase = INIFile.GetValue(SessionVar.Expand("%AppFolder%\\settings.ini"), "omSupply","Database");
+	local omsupplyInstallFolder = INIFile.GetValue(SessionVar.Expand("%AppFolder%\\settings.ini"), "omSupply","InstallFolder");
+	
+	local omsupplyServer = "";
+	if (omsupplyDatabase == "sqlite") then
+		omsupplyServer = omsupplyInstallFolder.."\\omSupply-sqlite.exe";
+	else
+		omsupplyServer = omsupplyInstallFolder.."\\omSupply-postgres.exe";
+	end
+	if File.DoesExist(omsupplyServer) then
+		hasOmsupplyInstalled = true;
+	end
+end
+</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -4104,33 +4128,43 @@ end
 <Event>
 <Name>On Post Install</Name>
 <Args/>
-<Script>local config = "server:\r\n"
-config = config .. "  host: 192.168.178.68\r\n";
-config = config .. "  port: " .. SessionVar.Get("%omsupply_port%") .. "\r\n";
-config = config .. "database:\r\n";
-config = config .. "  port: " .. SessionVar.Get("%postgres_db_port%") .. "\r\n";
-config = config .. "  username: \"" .. SessionVar.Get("%postgres_db_user%") .. "\"\r\n";
-config = config .. "  password: \"" .. SessionVar.Expand("%postgres_db_pass%") .. "\"\r\n";
-config = config .. "  database_name: \"" .. SessionVar.Get("%omsupply_db_name%") .. "\"\r\n";
-config = config .. "logging:\r\n";
-config = config .. "  mode: File\r\n";
-config = config .. "  level: Warn\r\n";
-config = config .. "  directory: log\r\n";
-config = config .. "  filename: omsupply.log\r\n";
-config = config .. "  max_file_count: 5\r\n";
-config = config .. "  max_file_size: 10\r\n";
-TextFile.WriteFromString(SessionVar.Expand("%AppFolder%\\configuration\\local.yaml"), config, false);
+<Script>local sFileToBeDeletePath = "";
+if not hasOmsupplyInstalled then
+	local config = "server:\r\n"
+	config = config .. "  host: 192.168.178.68\r\n";
+	config = config .. "  port: " .. SessionVar.Get("%omsupply_port%") .. "\r\n";
+	config = config .. "database:\r\n";
+	config = config .. "  port: " .. SessionVar.Get("%postgres_db_port%") .. "\r\n";
+	config = config .. "  username: \"" .. SessionVar.Get("%postgres_db_user%") .. "\"\r\n";
+	config = config .. "  password: \"" .. SessionVar.Expand("%postgres_db_pass%") .. "\"\r\n";
+	config = config .. "  database_name: \"" .. SessionVar.Get("%omsupply_db_name%") .. "\"\r\n";
+	config = config .. "logging:\r\n";
+	config = config .. "  mode: File\r\n";
+	config = config .. "  level: Warn\r\n";
+	config = config .. "  directory: log\r\n";
+	config = config .. "  filename: omsupply.log\r\n";
+	config = config .. "  max_file_count: 5\r\n";
+	config = config .. "  max_file_size: 10\r\n";
+	TextFile.WriteFromString(SessionVar.Expand("%AppFolder%\\configuration\\local.yaml"), config, false);
 
--- Create settings.ini file to store current settings
-sSettingsContent = String.Concat("[omSupply]", String.Char(13));
-sSettingsContent = sSettingsContent..String.Concat("InstallFolder=", SessionVar.Expand("%AppFolder%")..String.Char(13));
-sSettingsContent = sSettingsContent..String.Concat("Database=", SessionVar.Get("%omsupply_selected_db%"));
+	-- Create settings.ini file to store current settings
+	sSettingsContent = String.Concat("[omSupply]", String.Char(13));
+	sSettingsContent = sSettingsContent..String.Concat("InstallFolder=", SessionVar.Expand("%AppFolder%")..String.Char(13));
+	sSettingsContent = sSettingsContent..String.Concat("Database=", SessionVar.Get("%omsupply_selected_db%"));
+	TextFile.WriteFromString(SessionVar.Expand("%AppFolder%\\settings.ini"), sSettingsContent, false);
+	
+	--[[
+	if (SessionVar.Get("%omsupply_selected_db%") == "sqlite") then
+		Service.Create(SessionVar.Expand("%AppFolder%\\omSupply-sqlite.exe"), "Open mSupply Server", "omsupply-server", SERVICE_WIN32_OWN_PROCESS, false, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL, "", nil, nil, "", "");
+		sFileToBeDeletePath = SessionVar.Expand("%AppFolder%\\omSupply-postgres.exe");
+	else
+		Service.Create(SessionVar.Expand("%AppFolder%\\omSupply-postgres.exe"), "Open mSupply Server", "omsupply-server", SERVICE_WIN32_OWN_PROCESS, false, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL, "", nil, nil, "", "");
+		sFileToBeDeletePath = SessionVar.Expand("%AppFolder%\\omSupply-sqlite.exe");
+	end
+	]]
+end
 
-TextFile.WriteFromString(SessionVar.Expand("%AppFolder%\\settings.ini"), sSettingsContent, false);
-
-local sFileToBeDeletePath = "";
-
-if (SessionVar.Get("%omsupply_selected_db%") == "sqlite") then
+if (omsupplyDatabase == "sqlite") then
 	Service.Create(SessionVar.Expand("%AppFolder%\\omSupply-sqlite.exe"), "Open mSupply Server", "omsupply-server", SERVICE_WIN32_OWN_PROCESS, false, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL, "", nil, nil, "", "");
 	sFileToBeDeletePath = SessionVar.Expand("%AppFolder%\\omSupply-postgres.exe");
 else
