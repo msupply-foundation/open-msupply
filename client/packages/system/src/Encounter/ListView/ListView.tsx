@@ -2,26 +2,18 @@ import React, { FC } from 'react';
 import {
   TableProvider,
   DataTable,
-  useColumns,
   createTableStore,
   NothingHere,
   useUrlQueryParams,
   useNavigate,
   createQueryParamsStore,
-  ColumnAlign,
-  useFormatDateTime,
 } from '@openmsupply-client/common';
+import { useEncounter, EncounterFragmentWithId } from '../api';
+import { useEncounterListColumns } from './columns';
 import {
-  useEncounter,
-  EncounterFragmentWithId,
-  EncounterRowFragment,
-} from '../api';
-import { ProgramEventFragment } from '../api/operations.generated';
-
-const encounterEventCellValue = (events: ProgramEventFragment[]) => {
-  // just take the name of the first event
-  return events[0]?.name ?? '';
-};
+  EncounterFragmentWithStatus,
+  useEncounterFragmentWithStatus,
+} from '../utils';
 
 const EncounterListComponent: FC = () => {
   const {
@@ -32,75 +24,28 @@ const EncounterListComponent: FC = () => {
   const { data, isError, isLoading } = useEncounter.document.list();
   const pagination = { page, first, offset };
   const navigate = useNavigate();
-  const { localisedDate, localisedTime } = useFormatDateTime();
-  const columns = useColumns<EncounterRowFragment>(
-    [
-      {
-        key: 'encounter-type',
-        label: 'label.encounter-type',
-        sortable: false,
-        accessor: ({ rowData }) => rowData?.document.documentRegistry?.name,
-      },
-      {
-        key: 'startDatetime',
-        label: 'label.date',
-        accessor: ({ rowData }) => rowData?.startDatetime,
-        formatter: dateString =>
-          dateString ? localisedDate((dateString as string) || '') : '',
-      },
-      {
-        key: 'startTime',
-        label: 'label.encounter-start',
-        sortable: false,
-        formatter: dateString =>
-          dateString ? localisedTime((dateString as string) || '') : '',
-      },
-      {
-        key: 'endDatetime',
-        label: 'label.encounter-end',
-        formatter: dateString =>
-          dateString ? localisedTime((dateString as string) || '') : '',
-      },
-      {
-        key: 'patientId',
-        label: 'label.patient',
-        accessor: ({ rowData }) => rowData?.patient?.name,
-      },
-      {
-        key: 'events',
-        label: 'label.label',
-        sortable: false,
-        formatter: events =>
-          encounterEventCellValue((events as ProgramEventFragment[]) ?? []),
-      },
-      {
-        key: 'status',
-        label: 'label.status',
-        sortable: false,
-        align: ColumnAlign.Right,
-        width: 175,
-      },
-    ],
-    { onChangeSortBy: updateSortQuery, sortBy },
-    [sortBy]
-  );
+  const columns = useEncounterListColumns({
+    onChangeSortBy: updateSortQuery,
+    sortBy,
+    includePatient: true,
+  });
+  const dataWithStatus: EncounterFragmentWithStatus[] | undefined =
+    useEncounterFragmentWithStatus(data?.nodes);
 
   return (
-    <>
-      <DataTable
-        id="name-list"
-        pagination={{ ...pagination, total: data?.totalCount }}
-        onChangePage={updatePaginationQuery}
-        columns={columns}
-        data={data?.nodes}
-        isLoading={isLoading}
-        isError={isError}
-        onRowClick={row => {
-          navigate(String(row.id));
-        }}
-        noDataElement={<NothingHere />}
-      />
-    </>
+    <DataTable
+      id="name-list"
+      pagination={{ ...pagination, total: data?.totalCount }}
+      onChangePage={updatePaginationQuery}
+      columns={columns}
+      data={dataWithStatus}
+      isLoading={isLoading}
+      isError={isError}
+      onRowClick={row => {
+        navigate(String(row.id));
+      }}
+      noDataElement={<NothingHere />}
+    />
   );
 };
 
