@@ -212,9 +212,13 @@ Screen.Back();
 <Name>On Next</Name>
 <Args/>
 <Script>-- These actions are performed when the Next button is clicked.
+local sNextScreenName = "License Agreement";
+if hasOmsupplyDesktopInstalled then
+	sNextScreenName = "Select Install Folder";
+end
 
 -- advance to the next screen
-Screen.Next();
+Screen.Jump(sNextScreenName);
 </Script>
 <BookMarks count="0">
 </BookMarks>
@@ -1719,7 +1723,9 @@ end
 <Name>On Preload</Name>
 <Args/>
 <Script>-- These actions are performed before the screen is shown.
-</Script>
+if hasOmsupplyDesktopInstalled then
+	DlgCheckBox.SetProperties(CTRL_CHECK_BOX_01, {Visible = false});
+end</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -1739,7 +1745,7 @@ Screen.Back();
 <Args/>
 <Script>-- These actions are performed when the Next button is clicked.
 -- Launch omSupply desktop
-if (cbStartOmSupply) then
+if (not hasOmsupplyDesktopInstalled and cbStartOmSupply) then
 	File.Run(SessionVar.Expand("%AppFolder%\\open mSupply.exe"));
 end
 -- advance to the next screen
@@ -3045,7 +3051,11 @@ g_HandleSystemReboot();
 <Event>
 <Name>On Startup</Name>
 <Args/>
-<Script/>
+<Script>hasOmsupplyDesktopInstalled = false;
+if File.DoesExist(SessionVar.Expand("%AppFolder%\\open mSupply.exe")) then
+	hasOmsupplyDesktopInstalled = true;
+end
+</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -3067,7 +3077,9 @@ g_HandleSystemReboot();
 <Event>
 <Name>On Post Install</Name>
 <Args/>
-<Script>Shell.CreateShortcut(Shell.GetFolder(SHF_DESKTOP), "omSupply Desktop", SessionVar.Expand("%AppFolder%\\open mSupply.exe"), "", "", "", 0, SW_SHOWNORMAL, nil, "", START_OPTION_DEFAULT);
+<Script>if not hasOmsupplyDesktopInstalled then
+	Shell.CreateShortcut(Shell.GetFolder(SHF_DESKTOP), "omSupply Desktop", SessionVar.Expand("%AppFolder%\\open mSupply.exe"), "", "", "", 0, SW_SHOWNORMAL, nil, "", START_OPTION_DEFAULT);
+end
 </Script>
 <BookMarks count="0">
 </BookMarks>
