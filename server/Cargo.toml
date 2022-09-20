@@ -23,4 +23,5 @@ members = [
   "graphql/general",
   "graphql/batch_mutations",
   "cli",
+  "windows",
 ]
