@@ -7,14 +7,12 @@ import {
   CheckIcon,
   XCircleIcon,
   useNavigate,
-  RouteBuilder,
   Typography,
   DetailContainer,
   DialogButton,
   ClockIcon,
   useDialog,
 } from '@openmsupply-client/common';
-import { AppRoute } from 'packages/config/src';
 import { DocumentHistory } from '../../Patient/DocumentHistory';
 
 interface FooterProps {
@@ -63,11 +61,7 @@ export const Footer: FC<FooterProps> = ({
               Icon={<XCircleIcon />}
               onClick={() => {
                 onCancel();
-                navigate(
-                  RouteBuilder.create(AppRoute.Dispensary)
-                    .addPart(AppRoute.Encounter)
-                    .build()
-                );
+                navigate(-1);
               }}
               label={t('button.cancel')}
             />
