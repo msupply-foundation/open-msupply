@@ -15,7 +15,8 @@ use crate::{
 use chrono::{Duration, Utc};
 use repository::{
     DocumentContext, DocumentRegistryRow, DocumentRegistryRowRepository, EqualFilter, FormSchema,
-    FormSchemaRowRepository, RepositoryError, StoreFilter, StoreRepository,
+    FormSchemaRowRepository, Permission, RepositoryError, StorageConnection, StoreFilter,
+    StoreRepository, UserPermissionRow, UserPermissionRowRepository,
 };
 use serde::{Deserialize, Serialize};
 use util::{inline_init, uuid::uuid};
@@ -455,6 +456,48 @@ fn encounter_hiv_care_5() -> hiv_care_encounter::HivcareEncounter {
             },
         ));
     })
+}
+
+pub fn insert_programs_permissions(connection: &StorageConnection, user_id: String) {
+    UserPermissionRowRepository::new(&connection)
+        .upsert_one(&UserPermissionRow {
+            id: uuid(),
+            user_id: user_id.clone(),
+            store_id: Some("D77F67339BF8400886D009178F4962E1".to_string()),
+            permission: Permission::DocumentProgramQuery,
+            context: Some("HIVCareProgram".to_string()),
+        })
+        .unwrap();
+
+    UserPermissionRowRepository::new(&connection)
+        .upsert_one(&UserPermissionRow {
+            id: uuid(),
+            user_id: user_id.clone(),
+            store_id: Some("D77F67339BF8400886D009178F4962E1".to_string()),
+            permission: Permission::PatientQuery,
+            context: None,
+        })
+        .unwrap();
+
+    UserPermissionRowRepository::new(&connection)
+        .upsert_one(&UserPermissionRow {
+            id: uuid(),
+            user_id: user_id.clone(),
+            store_id: Some("D77F67339BF8400886D009178F4962E1".to_string()),
+            permission: Permission::Document,
+            context: None,
+        })
+        .unwrap();
+
+    UserPermissionRowRepository::new(&connection)
+        .upsert_one(&UserPermissionRow {
+            id: uuid(),
+            user_id,
+            store_id: Some("D77F67339BF8400886D009178F4962E1".to_string()),
+            permission: Permission::DocumentProgramMutate,
+            context: Some("Patient".to_string()),
+        })
+        .unwrap();
 }
 
 pub fn init_program_data(
