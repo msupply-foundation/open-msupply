@@ -15,7 +15,7 @@ pub mod android {
     use server::certs::{PRIVATE_CERT_FILE, PUBLIC_CERT_FILE};
     use server::start_server;
     use service::settings::{ServerSettings, Settings};
-    use tokio::sync::oneshot;
+    use tokio::sync::mpsc;
 
     use self::jni::objects::{JClass, JString};
     use self::jni::sys::{jlong, jstring};
@@ -29,7 +29,7 @@ pub mod android {
     /// Handle for a running remote_server instance
     struct RunningServerHandle {
         /// Channel to signal the remote_server to exit
-        off_switch: oneshot::Sender<()>,
+        off_switch: mpsc::Sender<()>,
         /// JoinHandle for the running remote_server thread
         thread: JoinHandle<()>,
     }
@@ -97,7 +97,7 @@ pub mod android {
     ) -> jlong {
         android_logger::init_once(Config::default().with_min_level(Level::Trace));
 
-        let (off_switch, off_switch_receiver) = oneshot::channel();
+        let (off_switch, off_switch_receiver) = mpsc::channel(1);
         let files_dir: String = env.get_string(files_dir).unwrap().into();
         let files_dir = PathBuf::from(&files_dir);
         let android_id: String = env.get_string(android_id).unwrap().into();
@@ -154,7 +154,7 @@ pub mod android {
             Some(handle) => handle,
             None => return -1,
         };
-        match handle.off_switch.send(()) {
+        match futures::executor::block_on(handle.off_switch.send(())) {
             Ok(_) => {}
             Err(_) => return -1,
         }
