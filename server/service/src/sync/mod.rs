@@ -7,6 +7,7 @@ mod sync_serde;
 mod synchroniser;
 mod translation_central;
 mod translation_remote;
+pub use init_programs_data::insert_programs_permissions;
 
 #[cfg(test)]
 mod integration_tests;
