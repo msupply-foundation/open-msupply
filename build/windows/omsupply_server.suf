@@ -4140,12 +4140,6 @@ end
 
 File.Delete(sFileToBeDeletePath); -- Delete unchoosen app file (.exe) by a user
 
--- Check to see if an error occurred when launching the file.
-err = Application.GetLastError();
-if (err ~= 0) then
-	--If an error occurred, display an error message to the user.
-	Dialog.Message("Error", _tblErrorMessages[err], MB_OK, MB_ICONEXCLAMATION, MB_DEFBUTTON1);
-end
 Service.Start("Open mSupply Server", "omsupply-server", nil);
 </Script>
 <BookMarks count="0">
