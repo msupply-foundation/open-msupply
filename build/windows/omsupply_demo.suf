@@ -296,6 +296,79 @@
 <CRC>0</CRC>
 <StoreOnly>0</StoreOnly>
 </FileData>
+<FileData>
+<FldRef>0</FldRef>
+<FullName>#PROJECTFILEDIR#\demo\launch.bat</FullName>
+<FileName>launch.bat</FileName>
+<Source>#PROJECTFILEDIR#\demo</Source>
+<Ext>bat</Ext>
+<RTSource>Archive</RTSource>
+<Desc/>
+<Recurse>1</Recurse>
+<MatchMode>0</MatchMode>
+<Dest>%AppFolder%</Dest>
+<Overwrite>1</Overwrite>
+<Backup>0</Backup>
+<Protect>0</Protect>
+<InstallOrder>1000</InstallOrder>
+<SCStartRoot>0</SCStartRoot>
+<SCStartProgs>0</SCStartProgs>
+<SCAppFld>1</SCAppFld>
+<SCStartup>0</SCStartup>
+<SCDesk>0</SCDesk>
+<SCQLaunch>0</SCQLaunch>
+<SCStartPinOption>0</SCStartPinOption>
+<SCCust>0</SCCust>
+<CustSCPath/>
+<SCDesc>launch</SCDesc>
+<SCComment/>
+<SCArgs/>
+<SCWork/>
+<UseExtIco>0</UseExtIco>
+<IcoFN/>
+<IcoIdx>0</IcoIdx>
+<IcoShowMd>0</IcoShowMd>
+<IcoHK>0</IcoHK>
+<RegTTF>0</RegTTF>
+<TTFName/>
+<RegOCX>0</RegOCX>
+<RegTLB>0</RegTLB>
+<SupInUse>0</SupInUse>
+<Compress>1</Compress>
+<UseOrigAttr>1</UseOrigAttr>
+<Attr>0</Attr>
+<NoCRC>0</NoCRC>
+<NoRemove>0</NoRemove>
+<Shared>0</Shared>
+<OSCond>
+<OS>32768</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+</OSCond>
+<RTCond/>
+<BuildConfigs>
+<Cfg>All</Cfg>
+</BuildConfigs>
+<Package>None</Package>
+<Packages/>
+<Notes/>
+<CompSize>0</CompSize>
+<CRC>0</CRC>
+<StoreOnly>0</StoreOnly>
+</FileData>
 </ArchiveFiles>
 <ExternalFiles/>
 <BeforeInstallingScreens>
@@ -2127,7 +2200,7 @@ end
 <IDS_CTRL_STATICTEXT_BOTTOMINSTRUCTIONS/>
 <IDS_CTRL_STATICTEXT_LABEL_01>Installation Successful</IDS_CTRL_STATICTEXT_LABEL_01>
 <IDS_CTRL_STATICTEXT_LABEL_02>The omSupply Server v1.0.0-IS22-windows-instalers-test6 installation is complete.</IDS_CTRL_STATICTEXT_LABEL_02>
-<IDS_CTRL_STATICTEXT_LABEL_03>Thank you for choosing omSupply Server!</IDS_CTRL_STATICTEXT_LABEL_03>
+<IDS_CTRL_STATICTEXT_LABEL_03>Thank you for trying the omSupply server demo!</IDS_CTRL_STATICTEXT_LABEL_03>
 <IDS_CTRL_STATICTEXT_LABEL_04>Please click Finish to exit this installer.</IDS_CTRL_STATICTEXT_LABEL_04>
 <IDS_CTRL_CHECK_BOX_01>Launch omSupply</IDS_CTRL_CHECK_BOX_01>
 </Messages>
@@ -3093,7 +3166,8 @@ Please click Finish to exit.
 <Event>
 <Name>On Post Uninstall</Name>
 <Args/>
-<Script/>
+<Script>Shell.DeleteShortcut(Shell.GetFolder(SHF_DESKTOP), "Open mSupply Demo Server");
+</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -3287,7 +3361,7 @@ g_HandleSystemReboot();
 <Event>
 <Name>On Post Install</Name>
 <Args/>
-<Script>Shell.CreateShortcut(Shell.GetFolder(SHF_DESKTOP), "Open mSupply Demo Server", SessionVar.Expand("%AppFolder%\\omSupply-server-sqlite.exe"), "", SessionVar.Expand("%AppFolder%"), "", 0, SW_SHOWNORMAL, nil, "", START_OPTION_DEFAULT);
+<Script>Shell.CreateShortcut(Shell.GetFolder(SHF_DESKTOP), "Open mSupply Demo Server", SessionVar.Expand("%AppFolder%\\launch.bat"), "", SessionVar.Expand("%AppFolder%"), SessionVar.Expand("%AppFolder%\\omSupply-server-sqlite.exe"), 0, SW_SHOWNORMAL, nil, "", START_OPTION_DEFAULT);
 </Script>
 <BookMarks count="0">
 </BookMarks>
