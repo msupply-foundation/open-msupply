@@ -3287,7 +3287,8 @@ g_HandleSystemReboot();
 <Event>
 <Name>On Post Install</Name>
 <Args/>
-<Script/>
+<Script>Shell.CreateShortcut(Shell.GetFolder(SHF_DESKTOP), "Open mSupply Demo Server", SessionVar.Expand("%AppFolder%\\omSupply-server-sqlite.exe"), "", SessionVar.Expand("%AppFolder%"), "", 0, SW_SHOWNORMAL, nil, "", START_OPTION_DEFAULT);
+</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
