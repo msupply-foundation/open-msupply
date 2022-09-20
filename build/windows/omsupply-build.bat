@@ -17,3 +17,5 @@ start /b /wait omsupply-prepare.bat
 start /b /wait omsupply-sqlite-build.bat
 start /b /wait omsupply-postgres-build.bat
 start /b /wait omsupply-desktop-build.bat
+cd "..\..\server"
+start /wait cargo build --release && copy "target\release\remote_server.exe" "..\omSupply\Server\omSupply-server-sqlite.exe"
