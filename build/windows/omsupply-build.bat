@@ -10,6 +10,7 @@ xcopy "server\configuration" "omSupply\Server\configuration" /e /h /c /i
 copy "server\server\omSupply.ico" "build\omSupply.ico"
 xcopy "build\*.*" "omSupply" /c
 xcopy "build\windows\*.*" "omSupply" /c
+xcopy "build\windows\demo" "omSupply\demo" /c /y /i
 copy "version.txt" "omSupply\version.txt"
 
 @cd "build\windows"
