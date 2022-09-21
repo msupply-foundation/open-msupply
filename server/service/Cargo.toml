@@ -30,6 +30,9 @@ failure = "0.1.8"
 
 [dev-dependencies]
 actix-rt = "2.6.0"
+actix-web = { version = "4.0.1", default-features = false, features = [
+    "macros",
+] }
 httpmock = "0.6.6"
 rand = "0.8.5"
 

@@ -75,7 +75,9 @@ async fn sync_status() {
         }),
     )
     .await;
-    let ctx = service_provider.context().unwrap();
+    let ctx = service_provider
+        .context("".to_string(), "".to_string())
+        .unwrap();
     assert_eq!(
         service_provider
             .sync_status_service
@@ -549,7 +551,10 @@ impl Tester {
             None => unreachable!("Could not match route ({})", route),
         };
 
-        let ctx = self.service_provider.context().unwrap();
+        let ctx = self
+            .service_provider
+            .context("".to_string(), "".to_string())
+            .unwrap();
 
         let iteration = self.iterations.entry(route.clone()).or_insert(0);
 
