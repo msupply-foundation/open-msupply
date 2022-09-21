@@ -1,12 +1,12 @@
 use std::collections::HashMap;
 
 use repository::{
-    ReportContext, ReportRow, ReportType,
-    ReportRowRepository, RepositoryError, StorageConnection,
+    ReportContext, ReportRow, ReportRowRepository, ReportType, RepositoryError, StorageConnection,
 };
 
 use super::definition::{
-    DefaultQuery, ReportDefinition, ReportDefinitionEntry, ReportOutputType, TeraTemplate, ReportDefinitionIndex,
+    DefaultQuery, ReportDefinition, ReportDefinitionEntry, ReportDefinitionIndex, ReportOutputType,
+    TeraTemplate,
 };
 
 pub struct DummyReport {
@@ -51,7 +51,7 @@ pub fn invoice_report() -> DummyReport {
                 "query".to_string(),
                 ReportDefinitionEntry::DefaultQuery(DefaultQuery::Invoice),
             ),
-        ]),    
+        ]),
     };
     DummyReport {
         id: "dummy_report_invoice".to_string(),

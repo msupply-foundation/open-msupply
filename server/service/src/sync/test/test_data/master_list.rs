@@ -2,7 +2,7 @@ use repository::MasterListRow;
 
 use crate::sync::{
     test::TestSyncPullRecord,
-    translations::{LegacyTableName, PullUpsertRecord, PullDeleteRecordTable},
+    translations::{LegacyTableName, PullDeleteRecordTable, PullUpsertRecord},
 };
 
 const MASTER_LIST_1: (&'static str, &'static str) = (

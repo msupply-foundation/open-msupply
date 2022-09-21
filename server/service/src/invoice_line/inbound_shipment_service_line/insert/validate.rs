@@ -6,8 +6,8 @@ use util::constants::DEFAULT_SERVICE_ITEM_CODE;
 
 use crate::{
     invoice::{
-        check_invoice_exists, check_invoice_is_editable, check_invoice_type, InvoiceDoesNotExist,
-        InvoiceIsNotEditable, NotThisStoreInvoice, WrongInvoiceRowType, check_store,
+        check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store,
+        InvoiceDoesNotExist, InvoiceIsNotEditable, NotThisStoreInvoice, WrongInvoiceRowType,
     },
     invoice_line::validate::{
         check_item, check_line_does_not_exists, ItemNotFound, LineAlreadyExists,
