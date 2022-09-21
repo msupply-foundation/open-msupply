@@ -82,9 +82,7 @@ fn generate_line(
         sell_price_per_pack.unwrap_or(update_line.sell_price_per_pack);
     update_line.cost_price_per_pack =
         cost_price_per_pack.unwrap_or(update_line.cost_price_per_pack);
-    update_line.number_of_packs = number_of_packs
-        .map(u32_to_i32)
-        .unwrap_or(update_line.number_of_packs);
+    update_line.number_of_packs = number_of_packs.unwrap_or(update_line.number_of_packs);
     update_line.tax = tax.map(|tax| tax.percentage).unwrap_or(update_line.tax);
 
     if let Some(item) = new_item_option {

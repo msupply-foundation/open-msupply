@@ -56,7 +56,7 @@ impl SyncRecordTester<Vec<FullStocktake>> for StocktakeRecordTester {
                 stock_line_id: None,
                 location_id: Some(location.id),
                 comment: None,
-                snapshot_number_of_packs: 100,
+                snapshot_number_of_packs: 100.0,
                 counted_number_of_packs: None,
                 item_id: item.item_row.id,
                 batch: None,
@@ -121,8 +121,8 @@ impl SyncRecordTester<Vec<FullStocktake>> for StocktakeRecordTester {
                         inline_edit(l, |mut d| {
                             d.comment = Some("stocktake line comment".to_string());
                             d.location_id = None;
-                            d.snapshot_number_of_packs = 110;
-                            d.counted_number_of_packs = Some(90);
+                            d.snapshot_number_of_packs = 110.0;
+                            d.counted_number_of_packs = Some(90.0);
                             d.item_id = item.id;
                             d.stock_line_id = Some(stock_line.id);
                             d.batch = stock_line.batch;

@@ -106,7 +106,7 @@ fn empty_lines_to_trim(
         InvoiceLineFilter::new()
             .invoice_id(EqualFilter::equal_to(&invoice.id))
             .r#type(InvoiceLineRowType::StockIn.equal_to())
-            .number_of_packs(EqualFilter::equal_to_i32(0)),
+            .number_of_packs(EqualFilter::equal_to_f64(0.0)),
     )?;
 
     if lines.is_empty() {
@@ -171,7 +171,7 @@ pub fn generate_lines_and_stock_lines(
             number_of_packs,
             note,
         }: InvoiceLineRow = invoice_lines;
-        if number_of_packs > 0 {
+        if number_of_packs > 0.0 {
             let stock_line = StockLineRow {
                 id: stock_line_id,
                 item_id,

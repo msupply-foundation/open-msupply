@@ -80,7 +80,7 @@ impl SyncRecordTester<Vec<FullInvoice>> for InvoiceRecordTester {
             total_before_tax: 8.0,
             total_after_tax: 12.0,
             tax: Some(10.0),
-            number_of_packs: 10,
+            number_of_packs: 10.0,
             note: None,
         };
         let invoice_row_id_1 = uuid();
@@ -246,7 +246,7 @@ impl SyncRecordTester<Vec<FullInvoice>> for InvoiceRecordTester {
                             // work with the new push endpoint
                             // d.tax = None;
                             d.tax = Some(0.0);
-                            d.number_of_packs = 15;
+                            d.number_of_packs = 15.0;
                             d.note = Some("invoice line note".to_string());
                             d
                         })

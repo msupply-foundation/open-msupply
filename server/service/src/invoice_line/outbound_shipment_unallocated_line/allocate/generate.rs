@@ -38,7 +38,7 @@ pub fn generate(
     // Assume pack_size 1 for unallocated line
     let mut remaining_to_allocated = unallocated_line.number_of_packs;
     // If nothing remaing to alloacted just remove the line
-    if remaining_to_allocated <= 0 {
+    if remaining_to_allocated <= 0.0 {
         result.delete_unallocated_line = Some(DeleteOutboundShipmentUnallocatedLine {
             id: unallocated_line.id,
         });
@@ -90,22 +90,22 @@ pub fn generate(
         }
 
         remaining_to_allocated =
-            remaining_to_allocated - packs_to_allocate * stock_line.stock_line_row.pack_size;
+            remaining_to_allocated - packs_to_allocate * stock_line.stock_line_row.pack_size as f64;
 
-        if remaining_to_allocated <= 0 {
+        if remaining_to_allocated <= 0.0 {
             break;
         }
     }
 
     // If nothing remaing to alloacted just remove the line, otherwise update
-    if remaining_to_allocated <= 0 {
+    if remaining_to_allocated <= 0.0 {
         result.delete_unallocated_line = Some(DeleteOutboundShipmentUnallocatedLine {
             id: unallocated_line.id,
         });
     } else {
         result.update_unallocated_line = Some(UpdateOutboundShipmentUnallocatedLine {
             id: unallocated_line.id,
-            quantity: remaining_to_allocated as u32,
+            quantity: remaining_to_allocated,
         });
     };
 
@@ -146,7 +146,7 @@ fn get_stock_line_eligibility(stock_line: &StockLine) -> Option<StockLineAlert> 
 
 fn generate_new_line(
     invoice_id: &str,
-    packs_to_allocate: i32,
+    packs_to_allocate: f64,
     stock_line: &StockLine,
 ) -> InsertOutboundShipmentLine {
     let stock_line_row = &stock_line.stock_line_row;
@@ -155,14 +155,14 @@ fn generate_new_line(
         invoice_id: invoice_id.to_string(),
         item_id: stock_line_row.item_id.clone(),
         stock_line_id: stock_line_row.id.clone(),
-        number_of_packs: packs_to_allocate as u32,
+        number_of_packs: packs_to_allocate,
         total_before_tax: None,
         tax: None,
     }
 }
 
 fn try_allocate_existing_line(
-    number_of_packs_to_add: i32,
+    number_of_packs_to_add: f64,
     stock_line_id: &str,
     allocated_lines: &Vec<InvoiceLine>,
 ) -> Option<UpdateOutboundShipmentLine> {
@@ -173,7 +173,7 @@ fn try_allocate_existing_line(
             let line_row = line.invoice_line_row.clone();
             UpdateOutboundShipmentLine {
                 id: line_row.id,
-                number_of_packs: Some((line_row.number_of_packs + number_of_packs_to_add) as u32),
+                number_of_packs: Some(line_row.number_of_packs + number_of_packs_to_add),
                 item_id: None,
                 stock_line_id: None,
                 total_before_tax: None,
@@ -182,7 +182,7 @@ fn try_allocate_existing_line(
         })
 }
 
-fn packs_to_allocate_from_stock_line(remaining_to_allocated: i32, line: &StockLine) -> i32 {
+fn packs_to_allocate_from_stock_line(remaining_to_allocated: f64, line: &StockLine) -> f64 {
     let available_quantity = line.available_quantity();
     let line_row = &line.stock_line_row;
     if available_quantity < remaining_to_allocated {
@@ -192,10 +192,10 @@ fn packs_to_allocate_from_stock_line(remaining_to_allocated: i32, line: &StockLi
     let fractional_number_of_packs = remaining_to_allocated as f64 / line_row.pack_size as f64;
 
     if fraction_is_integer(fractional_number_of_packs) {
-        return fractional_number_of_packs as i32;
+        return fractional_number_of_packs;
     }
 
-    fractional_number_of_packs.floor() as i32 + 1
+    fractional_number_of_packs
 }
 
 fn get_sorted_available_stock_lines(

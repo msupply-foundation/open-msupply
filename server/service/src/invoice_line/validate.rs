@@ -36,10 +36,10 @@ pub fn check_line_does_not_exists_new(
 pub struct NumberOfPacksBelowOne;
 
 pub fn check_number_of_packs(
-    number_of_packs_option: Option<u32>,
+    number_of_packs_option: Option<f64>,
 ) -> Result<(), NumberOfPacksBelowOne> {
     if let Some(number_of_packs) = number_of_packs_option {
-        if number_of_packs < 1 {
+        if number_of_packs < 1.0 {
             Err(NumberOfPacksBelowOne {})
         } else {
             Ok(())

@@ -22,7 +22,7 @@ pub struct InsertInboundShipmentLine {
     pub cost_price_per_pack: f64,
     pub sell_price_per_pack: f64,
     pub expiry_date: Option<NaiveDate>,
-    pub number_of_packs: u32,
+    pub number_of_packs: f64,
     pub total_before_tax: Option<f64>,
     pub tax: Option<f64>,
 }
@@ -147,7 +147,7 @@ mod test {
                     r.invoice_id = "new invoice id".to_string();
                     r.item_id = mock_item_a().id.clone();
                     r.pack_size = 1;
-                    r.number_of_packs = 1;
+                    r.number_of_packs = 1.0;
                 }),
             ),
             Err(ServiceError::InvoiceDoesNotExist)
@@ -162,7 +162,7 @@ mod test {
                     r.invoice_id = mock_outbound_shipment_e().id;
                     r.item_id = mock_item_a().id.clone();
                     r.pack_size = 1;
-                    r.number_of_packs = 1;
+                    r.number_of_packs = 1.0;
                 }),
             ),
             Err(ServiceError::NotAnInboundShipment)
@@ -180,7 +180,7 @@ mod test {
                     r.location_id = Some("invalid".to_string());
                     r.item_id = mock_item_a().id.clone();
                     r.pack_size = 1;
-                    r.number_of_packs = 1;
+                    r.number_of_packs = 1.0;
                 }),
             ),
             Err(ServiceError::LocationDoesNotExist)
@@ -197,7 +197,7 @@ mod test {
                         .clone();
                     r.item_id = "invalid".to_string();
                     r.pack_size = 1;
-                    r.number_of_packs = 1;
+                    r.number_of_packs = 1.0;
                 }),
             ),
             Err(ServiceError::ItemNotFound)
@@ -214,7 +214,7 @@ mod test {
                         .clone();
                     r.item_id = mock_item_a().id.clone();
                     r.pack_size = 0;
-                    r.number_of_packs = 1;
+                    r.number_of_packs = 1.0;
                 }),
             ),
             Err(ServiceError::PackSizeBelowOne)
@@ -231,7 +231,7 @@ mod test {
                         .clone();
                     r.item_id = mock_item_a().id.clone();
                     r.pack_size = 1;
-                    r.number_of_packs = 0;
+                    r.number_of_packs = 0.0;
                 }),
             ),
             Err(ServiceError::NumberOfPacksBelowOne)
@@ -247,7 +247,7 @@ mod test {
                     r.invoice_id = mock_inbound_shipment_c().id.clone();
                     r.item_id = mock_item_a().id.clone();
                     r.pack_size = 1;
-                    r.number_of_packs = 1;
+                    r.number_of_packs = 1.0;
                 }),
             ),
             Err(ServiceError::NotThisStoreInvoice)
@@ -280,7 +280,7 @@ mod test {
                         .clone();
                     r.item_id = mock_item_a().id.clone();
                     r.pack_size = 1;
-                    r.number_of_packs = 1;
+                    r.number_of_packs = 1.0;
                 }),
             )
             .unwrap();
@@ -295,7 +295,7 @@ mod test {
                 u.id = "new invoice line id".to_string();
                 u.item_id = mock_item_a().id.clone();
                 u.pack_size = 1;
-                u.number_of_packs = 1;
+                u.number_of_packs = 1.0;
                 u
             })
         );

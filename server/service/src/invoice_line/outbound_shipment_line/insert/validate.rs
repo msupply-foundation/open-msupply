@@ -13,7 +13,6 @@ use crate::{
         BatchIsOnHold, ItemDoesNotMatchStockLine, LocationIsOnHoldError,
         StockLineAlreadyExistsInInvoice, StockLineNotFound,
     },
-    u32_to_i32,
 };
 use repository::{InvoiceRow, InvoiceRowType, ItemRow, StockLineRow, StorageConnection};
 
@@ -51,7 +50,7 @@ fn check_reduction_below_zero(
     input: &InsertOutboundShipmentLine,
     batch: &StockLineRow,
 ) -> Result<(), InsertOutboundShipmentLineError> {
-    if batch.available_number_of_packs < u32_to_i32(input.number_of_packs) {
+    if batch.available_number_of_packs < input.number_of_packs {
         Err(InsertOutboundShipmentLineError::ReductionBelowZero {
             stock_line_id: batch.id.clone(),
         })

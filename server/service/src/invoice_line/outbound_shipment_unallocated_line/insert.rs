@@ -11,14 +11,13 @@ use crate::{
     invoice::check_invoice_exists_option,
     invoice_line::validate::{check_item_exists_option, check_line_does_not_exists_new},
     service_provider::ServiceContext,
-    u32_to_i32,
 };
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct InsertOutboundShipmentUnallocatedLine {
     pub id: String,
     pub invoice_id: String,
     pub item_id: String,
-    pub quantity: u32,
+    pub quantity: f64,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -104,7 +103,7 @@ fn generate(
         id,
         invoice_id,
         pack_size: 1,
-        number_of_packs: u32_to_i32(quantity),
+        number_of_packs: quantity,
         item_id,
         item_code: item.code,
         item_name: item.name,
@@ -202,7 +201,7 @@ mod test_insert {
                     id: existing_invoice_line.id.clone(),
                     invoice_id: "".to_owned(),
                     item_id: "".to_owned(),
-                    quantity: 0
+                    quantity: 0.0
                 },
             ),
             Err(ServiceError::LineAlreadyExists)
@@ -216,7 +215,7 @@ mod test_insert {
                     id: new_line_id.clone(),
                     invoice_id: "invalid".to_owned(),
                     item_id: "item_a".to_owned(),
-                    quantity: 0
+                    quantity: 0.0
                 },
             ),
             Err(ServiceError::InvoiceDoesNotExist)
@@ -230,7 +229,7 @@ mod test_insert {
                     id: new_line_id.clone(),
                     invoice_id: mock_inbound_shipment_a().id.clone(),
                     item_id: "item_a".to_owned(),
-                    quantity: 0
+                    quantity: 0.0
                 },
             ),
             Err(ServiceError::NotAnOutboundShipment)
@@ -244,7 +243,7 @@ mod test_insert {
                     id: new_line_id.clone(),
                     invoice_id: mock_allocated_invoice().id.clone(),
                     item_id: "item_a".to_owned(),
-                    quantity: 0
+                    quantity: 0.0
                 },
             ),
             Err(ServiceError::CanOnlyAddLinesToNewOutboundShipment)
@@ -258,7 +257,7 @@ mod test_insert {
                     id: new_line_id.clone(),
                     invoice_id: new_outbound_shipment.id.clone(),
                     item_id: "invalid".to_owned(),
-                    quantity: 0
+                    quantity: 0.0
                 },
             ),
             Err(ServiceError::ItemNotFound)
@@ -271,7 +270,7 @@ mod test_insert {
                     id: new_line_id.clone(),
                     invoice_id: new_outbound_shipment.id.clone(),
                     item_id: mock_item_service_item().id.clone(),
-                    quantity: 0
+                    quantity: 0.0
                 },
             ),
             Err(ServiceError::NotAStockItem)
@@ -284,7 +283,7 @@ mod test_insert {
                     id: "new unallocated line id".to_owned(),
                     invoice_id: mock_new_invoice_with_unallocated_line().id.clone(),
                     item_id: existing_invoice_line.item_id.clone(),
-                    quantity: 0
+                    quantity: 0.0
                 },
             ),
             Err(ServiceError::NotThisStoreInvoice)
@@ -298,7 +297,7 @@ mod test_insert {
                     id: new_line_id.clone(),
                     invoice_id: new_outbound_shipment.id.clone(),
                     item_id: existing_invoice_line.item_id.clone(),
-                    quantity: 0
+                    quantity: 0.0
                 },
             ),
             Err(ServiceError::UnallocatedLineForItemAlreadyExistsInInvoice)
@@ -331,7 +330,7 @@ mod test_insert {
                     id: "new_line".to_owned(),
                     invoice_id: invoice_id.clone(),
                     item_id: item.id.clone(),
-                    quantity: 4,
+                    quantity: 4.0,
                 },
             )
             .unwrap();
@@ -346,7 +345,7 @@ mod test_insert {
                 invoice_id: invoice_id.clone(),
                 pack_size: 1,
                 r#type: InvoiceLineRowType::UnallocatedStock,
-                number_of_packs: 4,
+                number_of_packs: 4.0,
                 item_id: item.id.clone(),
                 item_name: item.name.clone(),
                 item_code: item.code.clone(),

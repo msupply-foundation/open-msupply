@@ -316,7 +316,7 @@ mod test {
                     input.id = "new_line_id".to_string();
                     input.item_id = mock_item_a().id;
                     input.stock_line_id = mock_stock_line_a().id;
-                    input.number_of_packs = 1
+                    input.number_of_packs = 1.0
                 },
             )]),
             update_line: None,

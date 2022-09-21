@@ -65,7 +65,7 @@ mod test {
                 r.invoice_id = invoice().id;
                 r.item_id = mock_item_a().id;
                 r.r#type = InvoiceLineRowType::UnallocatedStock;
-                r.number_of_packs = 20;
+                r.number_of_packs = 20.0;
                 r.pack_size = 1;
             })
         }
@@ -76,7 +76,7 @@ mod test {
                 r.store_id = mock_store_a().id;
                 r.item_id = mock_item_a().id;
                 r.pack_size = 2;
-                r.available_number_of_packs = 30;
+                r.available_number_of_packs = 30.0;
             })
         }
 
@@ -87,7 +87,7 @@ mod test {
                 r.store_id = mock_store_b().id;
                 r.item_id = mock_item_a().id;
                 r.pack_size = 2;
-                r.available_number_of_packs = 30;
+                r.available_number_of_packs = 30.0;
             })
         }
 
@@ -98,7 +98,7 @@ mod test {
                 r.store_id = mock_store_a().id;
                 r.item_id = mock_item_b().id;
                 r.pack_size = 2;
-                r.available_number_of_packs = 30;
+                r.available_number_of_packs = 30.0;
             })
         }
 
@@ -141,7 +141,7 @@ mod test {
         assert_eq!(
             new_line,
             inline_edit(&new_line, |mut u| {
-                u.number_of_packs = 10;
+                u.number_of_packs = 10.0;
                 u.pack_size = 2;
                 u
             })
@@ -165,7 +165,7 @@ mod test {
                 r.invoice_id = invoice().id;
                 r.item_id = mock_item_a().id;
                 r.r#type = InvoiceLineRowType::UnallocatedStock;
-                r.number_of_packs = 50;
+                r.number_of_packs = 50.0;
                 r.pack_size = 1;
             })
         }
@@ -176,7 +176,7 @@ mod test {
                 r.store_id = mock_store_a().id;
                 r.item_id = mock_item_a().id;
                 r.pack_size = 3;
-                r.available_number_of_packs = 10;
+                r.available_number_of_packs = 10.0;
                 r.expiry_date = Some(NaiveDate::from_ymd(3021, 01, 01))
             })
         }
@@ -187,7 +187,7 @@ mod test {
                 r.store_id = mock_store_a().id;
                 r.item_id = mock_item_a().id;
                 r.pack_size = 3;
-                r.available_number_of_packs = 2;
+                r.available_number_of_packs = 2.0;
                 r.expiry_date = Some(NaiveDate::from_ymd(3021, 02, 01))
             })
         }
@@ -198,7 +198,7 @@ mod test {
                 r.store_id = mock_store_a().id;
                 r.item_id = mock_item_a().id;
                 r.pack_size = 1;
-                r.available_number_of_packs = 2;
+                r.available_number_of_packs = 2.0;
                 r.expiry_date = None
             })
         }
@@ -238,7 +238,7 @@ mod test {
         assert_eq!(
             new_line1,
             inline_edit(&new_line1, |mut u| {
-                u.number_of_packs = 10;
+                u.number_of_packs = 10.0;
                 u.pack_size = 3;
                 u
             })
@@ -251,7 +251,7 @@ mod test {
         assert_eq!(
             new_line2,
             inline_edit(&new_line2, |mut u| {
-                u.number_of_packs = 2;
+                u.number_of_packs = 2.0;
                 u.pack_size = 3;
                 u
             })
@@ -264,7 +264,7 @@ mod test {
         assert_eq!(
             new_line3,
             inline_edit(&new_line3, |mut u| {
-                u.number_of_packs = 2;
+                u.number_of_packs = 2.0;
                 u.pack_size = 1;
                 u
             })
@@ -277,7 +277,7 @@ mod test {
         assert_eq!(
             updated_uallocated_line,
             inline_edit(&updated_uallocated_line, |mut u| {
-                u.number_of_packs = 12;
+                u.number_of_packs = 12.0;
                 u
             })
         );
@@ -300,7 +300,7 @@ mod test {
                 r.invoice_id = invoice().id;
                 r.item_id = mock_item_a().id;
                 r.r#type = InvoiceLineRowType::UnallocatedStock;
-                r.number_of_packs = 3;
+                r.number_of_packs = 3.0;
                 r.pack_size = 1;
             })
         }
@@ -311,7 +311,7 @@ mod test {
                 r.store_id = mock_store_a().id;
                 r.item_id = mock_item_a().id;
                 r.pack_size = 1;
-                r.available_number_of_packs = 1;
+                r.available_number_of_packs = 1.0;
             })
         }
 
@@ -445,7 +445,7 @@ mod test {
                 r.invoice_id = invoice().id;
                 r.item_id = mock_item_a().id;
                 r.r#type = InvoiceLineRowType::UnallocatedStock;
-                r.number_of_packs = 50;
+                r.number_of_packs = 50.0;
                 r.pack_size = 1;
             })
         }
@@ -456,7 +456,7 @@ mod test {
                 r.store_id = mock_store_a().id;
                 r.item_id = mock_item_a().id;
                 r.pack_size = 1;
-                r.available_number_of_packs = 30;
+                r.available_number_of_packs = 30.0;
                 r.expiry_date = Some(NaiveDate::from_ymd(3021, 02, 01))
             })
         }
@@ -468,7 +468,7 @@ mod test {
                 r.item_id = mock_item_a().id;
                 r.stock_line_id = Some(stock_line().id);
                 r.r#type = InvoiceLineRowType::StockOut;
-                r.number_of_packs = 2;
+                r.number_of_packs = 2.0;
                 r.pack_size = 1;
             })
         }
@@ -479,7 +479,7 @@ mod test {
                 r.store_id = mock_store_a().id;
                 r.item_id = mock_item_a().id;
                 r.pack_size = 1;
-                r.available_number_of_packs = 5;
+                r.available_number_of_packs = 5.0;
             })
         }
 
@@ -490,7 +490,7 @@ mod test {
                 r.item_id = mock_item_a().id;
                 r.stock_line_id = Some(stock_line2().id);
                 r.r#type = InvoiceLineRowType::StockOut;
-                r.number_of_packs = 10;
+                r.number_of_packs = 10.0;
                 r.pack_size = 1;
             })
         }
@@ -501,7 +501,7 @@ mod test {
                 r.store_id = mock_store_a().id;
                 r.item_id = mock_item_a().id;
                 r.pack_size = 1;
-                r.available_number_of_packs = 100;
+                r.available_number_of_packs = 100.0;
             })
         }
 
@@ -535,7 +535,7 @@ mod test {
             update,
             inline_edit(&update, |mut u| {
                 u.invoice_line_row.id = allocated_line().id;
-                u.invoice_line_row.number_of_packs = 32;
+                u.invoice_line_row.number_of_packs = 32.0;
                 u
             })
         );
@@ -545,7 +545,7 @@ mod test {
             update,
             inline_edit(&update, |mut u| {
                 u.invoice_line_row.id = allocated_line2().id;
-                u.invoice_line_row.number_of_packs = 15;
+                u.invoice_line_row.number_of_packs = 15.0;
                 u
             })
         );
@@ -554,85 +554,7 @@ mod test {
         assert_eq!(
             insert,
             inline_edit(&insert, |mut u| {
-                u.invoice_line_row.number_of_packs = 15;
-                u
-            })
-        );
-    }
-
-    #[actix_rt::test]
-    async fn allocate_unallocated_line_round_up() {
-        fn invoice() -> InvoiceRow {
-            inline_init(|r: &mut InvoiceRow| {
-                r.id = "invoice".to_string();
-                r.store_id = mock_store_a().id;
-                r.name_id = mock_name_a().id;
-                r.r#type = InvoiceRowType::OutboundShipment;
-            })
-        }
-
-        fn line() -> InvoiceLineRow {
-            inline_init(|r: &mut InvoiceLineRow| {
-                r.id = "line".to_string();
-                r.invoice_id = invoice().id;
-                r.item_id = mock_item_a().id;
-                r.r#type = InvoiceLineRowType::UnallocatedStock;
-                r.number_of_packs = 1;
-                r.pack_size = 1;
-            })
-        }
-
-        fn stock_line() -> StockLineRow {
-            inline_init(|r: &mut StockLineRow| {
-                r.id = "stock_line".to_string();
-                r.store_id = mock_store_a().id;
-                r.item_id = mock_item_a().id;
-                r.pack_size = 3;
-                r.available_number_of_packs = 3;
-            })
-        }
-
-        let (_, connection, connection_manager, _) = setup_all_with_data(
-            "allocate_unallocated_line_round_up",
-            MockDataInserts::none().stores().items().names().units(),
-            inline_init(|r: &mut MockData| {
-                r.invoices = vec![invoice()];
-                r.invoice_lines = vec![line()];
-                r.stock_lines = vec![stock_line()];
-            }),
-        )
-        .await;
-
-        let service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
-        let context = service_provider
-            .context(mock_store_a().id, "".to_string())
-            .unwrap();
-        let service = service_provider.invoice_line_service;
-
-        let result = service
-            .allocate_outbound_shipment_unallocated_line(&context, line().id.clone())
-            .unwrap();
-
-        assert_eq!(result.inserts.len(), 1);
-        assert_eq!(result.deletes.len(), 1);
-        assert_eq!(result.updates.len(), 0);
-
-        let repo = InvoiceLineRowRepository::new(&connection);
-
-        assert_eq!(
-            repo.find_one_by_id(&result.deletes[0]),
-            Err(RepositoryError::NotFound)
-        );
-
-        let new_line = repo
-            .find_one_by_id(&result.inserts[0].invoice_line_row.id)
-            .unwrap();
-
-        assert_eq!(
-            new_line,
-            inline_edit(&new_line, |mut u| {
-                u.number_of_packs = 1;
-                u.pack_size = 3;
+                u.invoice_line_row.number_of_packs = 15.0;
                 u
             })
         );

@@ -1,7 +1,7 @@
 use crate::{
     invoice_line::{query::get_invoice_line, ShipmentTaxUpdate},
     service_provider::ServiceContext,
-    u32_to_i32, WithDBError,
+    WithDBError,
 };
 use repository::{
     InvoiceLine, InvoiceLineRow, InvoiceLineRowRepository, RepositoryError, StockLineRow,
@@ -18,7 +18,7 @@ pub struct UpdateOutboundShipmentLine {
     pub id: String,
     pub item_id: Option<String>,
     pub stock_line_id: Option<String>,
-    pub number_of_packs: Option<u32>,
+    pub number_of_packs: Option<f64>,
     pub total_before_tax: Option<f64>,
     pub tax: Option<ShipmentTaxUpdate>,
 }
@@ -64,22 +64,21 @@ impl BatchPair {
         &self,
         input: &UpdateOutboundShipmentLine,
         existing_line: &InvoiceLineRow,
-    ) -> i32 {
+    ) -> f64 {
         // Previous batch exists, this mean new batch was requested means:
         // - reduction should be number of packs from input (or existing line if number of pack is missing in input)
         if self.previous_batch_option.is_some() {
             input
                 .number_of_packs
-                .map(u32_to_i32)
                 .unwrap_or(existing_line.number_of_packs)
         } else {
             // Previous batch does not exists, this mean updating existing batch, thus:
             // - reduction is the difference between input and existing line number of packs
             if let Some(number_of_packs) = &input.number_of_packs {
-                u32_to_i32(*number_of_packs) - existing_line.number_of_packs
+                *number_of_packs - existing_line.number_of_packs
             } else {
                 // No changes in input, no reduction
-                0
+                0.0
             }
         }
     }
@@ -183,7 +182,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut UpdateOutboundShipmentLine| {
                     r.id = mock_outbound_shipment_a_invoice_lines()[0].id.clone();
-                    r.number_of_packs = Some(10);
+                    r.number_of_packs = Some(10.0);
                 }),
             ),
             Err(ServiceError::NotThisStoreInvoice)
@@ -254,7 +253,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut UpdateOutboundShipmentLine| {
                     r.id = mock_outbound_shipment_a_invoice_lines()[0].id.clone();
-                    r.number_of_packs = Some(0);
+                    r.number_of_packs = Some(0.0);
                 }),
             ),
             Err(ServiceError::NumberOfPacksBelowOne)
@@ -305,7 +304,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut UpdateOutboundShipmentLine| {
                     r.id = mock_outbound_shipment_a_invoice_lines()[0].id.clone();
-                    r.number_of_packs = Some(100);
+                    r.number_of_packs = Some(100.0);
                 }),
             ),
             Err(ServiceError::ReductionBelowZero {
@@ -378,7 +377,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut UpdateOutboundShipmentLine| {
                     r.id = mock_outbound_shipment_c_invoice_lines()[0].id.clone();
-                    r.number_of_packs = Some(2);
+                    r.number_of_packs = Some(2.0);
                     r.total_before_tax = Some(18.00);
                 }),
             )
@@ -395,7 +394,7 @@ mod test {
             outbound_line,
             inline_edit(&mock_outbound_shipment_c_invoice_lines()[0], |mut u| {
                 u.id = mock_outbound_shipment_c_invoice_lines()[0].id.clone();
-                u.number_of_packs = 2;
+                u.number_of_packs = 2.0;
                 u.total_before_tax = 18.00;
                 u.total_after_tax = 18.00;
                 u
@@ -439,7 +438,7 @@ mod test {
                 inline_init(|r: &mut UpdateOutboundShipmentLine| {
                     r.id = mock_outbound_shipment_c_invoice_lines()[0].id.clone();
                     r.stock_line_id = Some(mock_stock_line_b().id.clone());
-                    r.number_of_packs = Some(2);
+                    r.number_of_packs = Some(2.0);
                     r.total_before_tax = Some(10.99);
                 }),
             )
@@ -480,7 +479,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut UpdateOutboundShipmentLine| {
                     r.id = mock_outbound_shipment_a_invoice_lines()[0].id.clone();
-                    r.number_of_packs = Some(15);
+                    r.number_of_packs = Some(15.0);
                     r.total_before_tax = Some(10.99);
                 }),
             )

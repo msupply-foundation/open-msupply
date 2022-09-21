@@ -161,7 +161,7 @@ mod test_delete {
             .unwrap();
 
         assert_eq!(result, line_to_delete.id);
-        line_to_delete.number_of_packs = 20;
+        line_to_delete.number_of_packs = 20.0;
         assert_eq!(
             InvoiceLineRowRepository::new(&connection).find_one_by_id(&result),
             Err(RepositoryError::NotFound)

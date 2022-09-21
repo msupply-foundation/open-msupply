@@ -32,7 +32,7 @@ pub use name::{translate_name, LegacyNameRow, LegacyNameType};
 
 use super::{SyncImportError, SyncTranslationError};
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq)]
 pub enum IntegrationUpsertRecord {
     Unit(UnitRow),
     Name(NameRow),
