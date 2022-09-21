@@ -391,7 +391,7 @@ mod test {
                 r.item_id = mock_item_a().id;
                 r.r#type = InvoiceLineRowType::UnallocatedStock;
                 r.pack_size = 1;
-                r.number_of_packs = 0;
+                r.number_of_packs = 0.0;
             })
         }
 
@@ -531,7 +531,7 @@ mod test {
         // calculates the expected stock line total for every invoice line row
         let expected_stock_line_totals = |invoice_lines: &Vec<InvoiceLineRow>| {
             let stock_lines = stock_lines_for_invoice_lines(invoice_lines);
-            let expected_stock_line_totals: Vec<(StockLineRow, i32)> = stock_lines
+            let expected_stock_line_totals: Vec<(StockLineRow, f64)> = stock_lines
                 .into_iter()
                 .map(|line| {
                     let invoice_line = invoice_lines
@@ -545,7 +545,7 @@ mod test {
             expected_stock_line_totals
         };
         let assert_stock_line_totals =
-            |invoice_lines: &Vec<InvoiceLineRow>, expected: &Vec<(StockLineRow, i32)>| {
+            |invoice_lines: &Vec<InvoiceLineRow>, expected: &Vec<(StockLineRow, f64)>| {
                 let stock_lines = stock_lines_for_invoice_lines(invoice_lines);
                 for line in stock_lines {
                     let expected = expected.iter().find(|l| l.0.id == line.id).unwrap();
@@ -590,8 +590,8 @@ mod test {
             inline_init(|r: &mut StockLineRow| {
                 r.id = "stock_line".to_string();
                 r.store_id = mock_store_a().id;
-                r.available_number_of_packs = 8;
-                r.total_number_of_packs = 10;
+                r.available_number_of_packs = 8.0;
+                r.total_number_of_packs = 10.0;
                 r.pack_size = 1;
                 r.item_id = mock_item_a().id;
             })
@@ -602,7 +602,7 @@ mod test {
                 r.id = "invoice_line".to_string();
                 r.invoice_id = invoice().id;
                 r.stock_line_id = Some(stock_line().id);
-                r.number_of_packs = 2;
+                r.number_of_packs = 2.0;
                 r.item_id = mock_item_a().id;
                 r.r#type = InvoiceLineRowType::StockOut;
             })
@@ -640,7 +640,7 @@ mod test {
 
         // Stock line total_number_of_packs should have been reduced
         let new_stock_line = inline_edit(&stock_line(), |mut u| {
-            u.total_number_of_packs = 8;
+            u.total_number_of_packs = 8.0;
             u
         });
         assert_eq!(
@@ -721,7 +721,7 @@ mod test {
         assert_eq!(
             stock_line_repo.find_one_by_id(&stock_line().id).unwrap(),
             inline_edit(&stock_line(), |mut u| {
-                u.total_number_of_packs = 8;
+                u.total_number_of_packs = 8.0;
                 u
             })
         );

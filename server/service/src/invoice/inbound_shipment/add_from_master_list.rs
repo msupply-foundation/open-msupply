@@ -300,7 +300,7 @@ mod test {
             .find(|line| line.item_id == mock_item_a().id)
             .unwrap();
 
-        assert_eq!(line.number_of_packs, 0);
+        assert_eq!(line.number_of_packs, 0.0);
         assert_eq!(line.item_name, mock_item_a().name);
         assert_eq!(line.item_code, mock_item_a().code);
 
@@ -309,7 +309,7 @@ mod test {
             .find(|line| line.item_id == mock_item_b().id)
             .unwrap();
 
-        assert_eq!(line.number_of_packs, 0);
+        assert_eq!(line.number_of_packs, 0.0);
         assert_eq!(line.item_name, mock_item_b().name);
         assert_eq!(line.item_code, mock_item_b().code);
     }
