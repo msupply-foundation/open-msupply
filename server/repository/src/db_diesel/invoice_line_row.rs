@@ -28,7 +28,7 @@ table! {
         total_after_tax -> Double,
         tax -> Nullable<Double>,
         #[sql_name = "type"] type_ -> crate::db_diesel::invoice_line_row::InvoiceLineRowTypeMapping,
-        number_of_packs -> Integer,
+        number_of_packs -> Double,
         note -> Nullable<Text>,
     }
 }
@@ -75,7 +75,7 @@ pub struct InvoiceLineRow {
     pub tax: Option<f64>,
     #[column_name = "type_"]
     pub r#type: InvoiceLineRowType,
-    pub number_of_packs: i32,
+    pub number_of_packs: f64,
     pub note: Option<String>,
 }
 

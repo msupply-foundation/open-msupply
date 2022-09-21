@@ -58,7 +58,7 @@ pub struct InvoiceLineFilter {
     pub r#type: Option<EqualFilter<InvoiceLineRowType>>,
     pub location_id: Option<EqualFilter<String>>,
     pub requisition_id: Option<EqualFilter<String>>,
-    pub number_of_packs: Option<EqualFilter<i32>>,
+    pub number_of_packs: Option<EqualFilter<f64>>,
 }
 
 impl InvoiceLineFilter {
@@ -104,7 +104,7 @@ impl InvoiceLineFilter {
         self
     }
 
-    pub fn number_of_packs(mut self, filter: EqualFilter<i32>) -> Self {
+    pub fn number_of_packs(mut self, filter: EqualFilter<f64>) -> Self {
         self.number_of_packs = Some(filter);
         self
     }

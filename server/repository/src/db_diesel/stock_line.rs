@@ -118,8 +118,8 @@ fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery
         apply_equal_filter!(query, store_id, stock_line_dsl::store_id);
 
         query = match is_available {
-            Some(true) => query.filter(stock_line_dsl::available_number_of_packs.gt(0)),
-            Some(false) => query.filter(stock_line_dsl::available_number_of_packs.lt(1)),
+            Some(true) => query.filter(stock_line_dsl::available_number_of_packs.gt(0.0)),
+            Some(false) => query.filter(stock_line_dsl::available_number_of_packs.lt(1.0)),
             None => query,
         };
     }
@@ -184,8 +184,8 @@ impl StockLine {
             .map(|location_row| location_row.name.as_str())
     }
 
-    pub fn available_quantity(&self) -> i32 {
-        self.stock_line_row.available_number_of_packs * self.stock_line_row.pack_size
+    pub fn available_quantity(&self) -> f64 {
+        self.stock_line_row.available_number_of_packs * self.stock_line_row.pack_size as f64
     }
 }
 

@@ -61,7 +61,7 @@ pub fn linked_line_1() -> InvoiceLineRow {
         r.item_id = line_to_supply_q2().item_id;
         r.r#type = InvoiceLineRowType::UnallocatedStock;
         r.pack_size = 1;
-        r.number_of_packs = 3;
+        r.number_of_packs = 3.0;
     })
 }
 
@@ -81,7 +81,7 @@ pub fn linked_line_2() -> InvoiceLineRow {
         r.item_id = line_to_supply_q1().item_id;
         r.r#type = InvoiceLineRowType::UnallocatedStock;
         r.pack_size = 1;
-        r.number_of_packs = 3;
+        r.number_of_packs = 3.0;
     })
 }
 pub fn linked_line_3() -> InvoiceLineRow {
@@ -91,7 +91,7 @@ pub fn linked_line_3() -> InvoiceLineRow {
         r.item_id = line_to_supply_q1().item_id;
         r.r#type = InvoiceLineRowType::StockOut;
         r.pack_size = 3;
-        r.number_of_packs = 2;
+        r.number_of_packs = 2.0;
     })
 }
 // Fully supplied
@@ -110,7 +110,7 @@ pub fn linked_line_4() -> InvoiceLineRow {
         r.item_id = line_to_supply_q0().item_id;
         r.r#type = InvoiceLineRowType::UnallocatedStock;
         r.pack_size = 2;
-        r.number_of_packs = 1;
+        r.number_of_packs = 1.0;
     })
 }
 pub fn test_remaining_to_supply() -> MockData {

@@ -22,7 +22,7 @@ CREATE TABLE invoice_line (
     total_after_tax DOUBLE PRECISION NOT NULL,
     tax DOUBLE PRECISION,
     type invoice_line_type NOT NULL,
-    number_of_packs INTEGER NOT NULL,
+    number_of_packs DOUBLE PRECISION NOT NULL,
     pack_size INTEGER NOT NULL,
     note TEXT
 );
