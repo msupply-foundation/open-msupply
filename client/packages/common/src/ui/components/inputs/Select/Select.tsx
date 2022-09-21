@@ -32,19 +32,24 @@ export const Select: FC<SelectProps> = React.forwardRef(
     },
     ref
   ) => {
-    const CloseComponent = () => (
-      <CloseIcon
-        onClick={e => onChange({ ...e, target: { value: undefined } } as any)}
-        style={{
-          fontSize: '1em',
-          cursor: 'pointer',
-          color: 'rgba(0, 0, 0, 0.54);',
-        }}
-      />
-    );
-
     const SelectProps =
-      clearable && value ? { IconComponent: CloseComponent } : {};
+      clearable && value
+        ? {
+            IconComponent: () => (
+              // Element to clear current selection.
+              <CloseIcon
+                onClick={e =>
+                  onChange({ ...e, target: { value: undefined } } as any)
+                }
+                style={{
+                  fontSize: '1em',
+                  cursor: 'pointer',
+                  color: 'rgba(0, 0, 0, 0.54);',
+                }}
+              />
+            ),
+          }
+        : {};
 
     return (
       <TextField
