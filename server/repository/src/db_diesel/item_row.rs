@@ -11,7 +11,7 @@ table! {
         name -> Text,
         code -> Text,
         unit_id -> Nullable<Text>,
-        default_pack_size -> Integer,
+        default_pack_size -> Double,
         #[sql_name = "type"] type_ -> crate::db_diesel::item_row::ItemRowTypeMapping,
         // TODO, this is temporary, remove
         legacy_record -> Text,
@@ -36,14 +36,14 @@ pub enum ItemRowType {
     NonStock,
 }
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset)]
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset)]
 #[table_name = "item"]
 pub struct ItemRow {
     pub id: String,
     pub name: String,
     pub code: String,
     pub unit_id: Option<String>,
-    pub default_pack_size: i32,
+    pub default_pack_size: f64,
     #[column_name = "type_"]
     pub r#type: ItemRowType,
     // TODO, this is temporary, remove

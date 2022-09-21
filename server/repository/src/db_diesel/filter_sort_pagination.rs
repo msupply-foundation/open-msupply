@@ -60,6 +60,25 @@ impl EqualFilter<i32> {
     }
 }
 
+impl EqualFilter<f64> {
+    pub fn equal_to_f64(value: f64) -> Self {
+        EqualFilter {
+            equal_to: Some(value),
+            not_equal_to: None,
+            equal_any: None,
+            not_equal_all: None,
+        }
+    }
+    pub fn not_equal_to_f64(value: f64) -> Self {
+        EqualFilter {
+            equal_to: None,
+            not_equal_to: Some(value),
+            equal_any: None,
+            not_equal_all: None,
+        }
+    }
+}
+
 impl EqualFilter<String> {
     pub fn equal_to(value: &str) -> Self {
         EqualFilter {
