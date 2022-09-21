@@ -89,7 +89,7 @@ pub fn mock_item_service_item() -> ItemRow {
 
 pub fn mock_default_service_item() -> ItemRow {
     inline_init(|r: &mut ItemRow| {
-        r.id = String::from("devault_service_item");
+        r.id = String::from("default_service_item");
         r.name = String::from("Service charge");
         r.code = String::from("service");
         r.r#type = ItemType::Service;

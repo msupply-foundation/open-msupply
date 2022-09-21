@@ -172,8 +172,8 @@ fn generate_stock_line_update(
         }
     };
 
-    let quantiy_change = i32::abs(delta as i32);
-    let shipment_line = if quantiy_change > 0 {
+    let quantity_change = i32::abs(delta as i32);
+    let shipment_line = if quantity_change > 0 {
         let line_type = if delta > 0.0 {
             InvoiceLineRowType::StockIn
         } else {
