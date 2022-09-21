@@ -1,5 +1,6 @@
 import React, { FC } from 'react';
 import { MenuItem, StandardTextFieldProps, TextField } from '@mui/material';
+import { CloseIcon } from '../../../icons/Close';
 
 export type Option = {
   label: string;
@@ -8,6 +9,7 @@ export type Option = {
 export interface SelectProps extends StandardTextFieldProps {
   options: Option[];
   renderOption?: (option: Option) => React.ReactNode;
+  clearable: boolean;
 }
 
 const defaultRenderOption = (option: Option) => (
@@ -17,33 +19,64 @@ const defaultRenderOption = (option: Option) => (
 );
 
 export const Select: FC<SelectProps> = React.forwardRef(
-  ({ options, renderOption, sx, InputProps, ...props }, ref) => (
-    <TextField
-      ref={ref}
-      sx={{
-        '& .MuiInput-underline:before': { borderBottomWidth: 0 },
-        '& .MuiInput-input': { color: theme => theme.palette.gray.dark },
-        ...sx,
-      }}
-      select
-      variant="standard"
-      size="small"
-      InputProps={{
-        disableUnderline: true,
-        ...InputProps,
-        sx: {
-          backgroundColor: theme =>
-            props.disabled
-              ? theme.palette.background.toolbar
-              : theme.palette.background.menu,
-          borderRadius: '8px',
-          padding: '4px 8px',
-          ...InputProps?.sx,
-        },
-      }}
-      {...props}
-    >
-      {options.map(renderOption || defaultRenderOption)}
-    </TextField>
-  )
+  (
+    {
+      options,
+      renderOption,
+      sx,
+      InputProps,
+      clearable = false,
+      value,
+      onChange = () => {},
+      ...props
+    },
+    ref
+  ) => {
+    const CloseComponent = () => (
+      <CloseIcon
+        onClick={e => onChange({ ...e, target: { value: undefined } } as any)}
+        style={{
+          fontSize: '1em',
+          cursor: 'pointer',
+          color: 'rgba(0, 0, 0, 0.54);',
+        }}
+      />
+    );
+
+    const SelectProps =
+      clearable && value ? { IconComponent: CloseComponent } : {};
+
+    return (
+      <TextField
+        ref={ref}
+        sx={{
+          '& .MuiInput-underline:before': { borderBottomWidth: 0 },
+          '& .MuiInput-input': { color: theme => theme.palette.gray.dark },
+          ...sx,
+        }}
+        select
+        variant="standard"
+        size="small"
+        InputProps={{
+          disableUnderline: true,
+          ...InputProps,
+          sx: {
+            backgroundColor: theme =>
+              props.disabled
+                ? theme.palette.background.toolbar
+                : theme.palette.background.menu,
+            borderRadius: '8px',
+            padding: '4px 8px',
+            ...InputProps?.sx,
+          },
+        }}
+        SelectProps={SelectProps}
+        value={value}
+        onChange={onChange}
+        {...props}
+      >
+        {options.map(renderOption || defaultRenderOption)}
+      </TextField>
+    );
+  }
 );

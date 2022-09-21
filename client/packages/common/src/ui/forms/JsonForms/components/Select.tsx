@@ -42,6 +42,7 @@ const UIComponent = (props: ControlProps) => {
           value={data ?? ''}
           onChange={e => handleChange(path, e.target.value)}
           error={!!props.errors}
+          clearable
           helperText={props.errors}
         />
       </Box>
