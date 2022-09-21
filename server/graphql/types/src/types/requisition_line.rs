@@ -160,9 +160,9 @@ impl RequisitionLineNode {
     /// Quantity remaining to supply
     /// supplyQuantity minus all (including unallocated) linked invoice lines numberOfPacks * packSize
     /// Only available in response requisition, request requistion returns 0
-    pub async fn remaining_quantity_to_supply(&self, ctx: &Context<'_>) -> Result<i32> {
+    pub async fn remaining_quantity_to_supply(&self, ctx: &Context<'_>) -> Result<f64> {
         if self.requisition_row().r#type == RequisitionRowType::Request {
-            return Ok(0);
+            return Ok(0.0);
         }
 
         let loader = ctx.get_loader::<DataLoader<RequisitionLineSupplyStatusLoader>>();
@@ -176,7 +176,7 @@ impl RequisitionLineNode {
 
         Ok(response_option
             .map(|requisition_line_status| requisition_line_status.remaining_quantity())
-            .unwrap_or(0))
+            .unwrap_or(0.0))
     }
 
     pub async fn linked_requisition_line(
@@ -328,19 +328,19 @@ mod test {
         let expected = json!({
             "testQuery1": {
                 "id":  TestData::line_to_supply_q5().id,
-                "remainingQuantityToSupply": 5
+                "remainingQuantityToSupply": 5.0
             },
             "testQuery2": {
                 "id":  TestData::line_to_supply_q2().id,
-                "remainingQuantityToSupply": 2
+                "remainingQuantityToSupply": 2.0
             },
             "testQuery3": {
                 "id":  TestData::line_to_supply_q1().id,
-                "remainingQuantityToSupply": 1
+                "remainingQuantityToSupply": 1.0
             },
             "testQuery4": {
                 "id":  TestData::line_to_supply_q0().id,
-                "remainingQuantityToSupply": 0
+                "remainingQuantityToSupply": 0.0
             }
         }
         );
