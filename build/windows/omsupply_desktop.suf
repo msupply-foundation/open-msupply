@@ -193,7 +193,17 @@
 <Name>On Preload</Name>
 <Args/>
 <Script>-- These actions are performed before the screen is shown.
-</Script>
+local sBodyWelcomeText = SessionVar.Expand("Welcome to the installer for %ProductName% %ProductVer%.\r\n\r\n");
+
+if hasOmsupplyDesktopInstalled then
+	sBodyWelcomeText = SessionVar.Expand("Welcome to the installer for %ProductName% %ProductVer% Upgrader.\r\n\r\n");
+end
+
+local sBodyInfoText = sBodyWelcomeText .. "It is strongly recommended that you exit all Windows programs before continuing with this installation.\r\n\r\n";
+sBodyInfoText = sBodyInfoText .. "If you have any other programs running, please click Cancel, close the programs, and run this setup again.\r\n\r\n";
+sBodyInfoText = sBodyInfoText .. "Otherwise, click Next to continue.";
+
+DlgStaticText.SetProperties(CTRL_STATICTEXT_BODY, {Text = sBodyInfoText});</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -214,7 +224,7 @@ Screen.Back();
 <Script>-- These actions are performed when the Next button is clicked.
 local sNextScreenName = "License Agreement";
 if hasOmsupplyDesktopInstalled then
-	sNextScreenName = "Select Install Folder";
+	sNextScreenName = "Ready to Install";
 end
 
 -- advance to the next screen
@@ -327,7 +337,7 @@ end
 </Secondary>
 </Language>
 <Messages>
-<IDS_WINDOW_TITLE>%ProductName% Setup</IDS_WINDOW_TITLE>
+<IDS_WINDOW_TITLE>%window_title%</IDS_WINDOW_TITLE>
 <IDS_HEADER_TEXT>Welcome</IDS_HEADER_TEXT>
 <IDS_SUBHEADER_TEXT>Welcome to the installer for %ProductName% %ProductVer%</IDS_SUBHEADER_TEXT>
 <IDS_CTRL_BUTTON_NEXT>&amp;Next &gt;</IDS_CTRL_BUTTON_NEXT>
@@ -627,7 +637,7 @@ end
 </Secondary>
 </Language>
 <Messages>
-<IDS_WINDOW_TITLE>%ProductName% Setup</IDS_WINDOW_TITLE>
+<IDS_WINDOW_TITLE>%window_title%</IDS_WINDOW_TITLE>
 <IDS_HEADER_TEXT>License Agreement</IDS_HEADER_TEXT>
 <IDS_SUBHEADER_TEXT>Please read the following license agreement carefully.</IDS_SUBHEADER_TEXT>
 <IDS_CTRL_BUTTON_NEXT>&amp;Next &gt;</IDS_CTRL_BUTTON_NEXT>
@@ -1019,7 +1029,7 @@ end
 </Secondary>
 </Language>
 <Messages>
-<IDS_WINDOW_TITLE>%ProductName% Setup</IDS_WINDOW_TITLE>
+<IDS_WINDOW_TITLE>%window_title%</IDS_WINDOW_TITLE>
 <IDS_HEADER_TEXT>Installation Folder</IDS_HEADER_TEXT>
 <IDS_SUBHEADER_TEXT>Where would you like %ProductName% to be installed?</IDS_SUBHEADER_TEXT>
 <IDS_CTRL_BUTTON_NEXT>&amp;Next &gt;</IDS_CTRL_BUTTON_NEXT>
@@ -1149,6 +1159,18 @@ end
 <Name>On Preload</Name>
 <Args/>
 <Script>-- These actions are performed before the screen is shown.
+local sBodyInfoText = SessionVar.Expand("The installer now has enough information to install %ProductName% on your computer.\r\n\r\n\r\n\r\n");
+
+if hasOmsupplyDesktopInstalled then
+	sBodyInfoText = SessionVar.Expand("The upgrader installer now has enough information to install %ProductName% on your computer.\r\n\r\n\r\n\r\n");
+end
+
+local sBodyInfoSubText = sBodyInfoText .. "The following settings will be used:\r\n\r\n";
+sBodyInfoSubText = sBodyInfoSubText .. SessionVar.Expand("Install folder:        %AppFolder%\r\n\r\n");
+sBodyInfoSubText = sBodyInfoSubText .. SessionVar.Expand("Shortcut folder:    %AppShortcutFolderName%\r\n\r\n\r\n\r\n");
+sBodyInfoSubText = sBodyInfoSubText .. "Please click Next to proceed with the installation.";
+
+DlgStaticText.SetProperties(CTRL_STATICTEXT_BODY, {Text = sBodyInfoSubText});
 </Script>
 <BookMarks count="0">
 </BookMarks>
@@ -1279,9 +1301,9 @@ end
 </Secondary>
 </Language>
 <Messages>
-<IDS_WINDOW_TITLE>%ProductName% Setup</IDS_WINDOW_TITLE>
+<IDS_WINDOW_TITLE>%window_title%</IDS_WINDOW_TITLE>
 <IDS_HEADER_TEXT>Ready to Install</IDS_HEADER_TEXT>
-<IDS_SUBHEADER_TEXT>You are now ready to install %ProductName% %ProductVer%</IDS_SUBHEADER_TEXT>
+<IDS_SUBHEADER_TEXT>%ready_to_install_sub_title%</IDS_SUBHEADER_TEXT>
 <IDS_CTRL_BUTTON_NEXT>&amp;Next &gt;</IDS_CTRL_BUTTON_NEXT>
 <IDS_CTRL_BUTTON_BACK>&lt; &amp;Back</IDS_CTRL_BUTTON_BACK>
 <IDS_CTRL_BUTTON_CANCEL>&amp;Cancel</IDS_CTRL_BUTTON_CANCEL>
@@ -1585,7 +1607,7 @@ end
 </Secondary>
 </Language>
 <Messages>
-<IDS_WINDOW_TITLE>%ProductName% Setup</IDS_WINDOW_TITLE>
+<IDS_WINDOW_TITLE>%window_title%</IDS_WINDOW_TITLE>
 <IDS_HEADER_TEXT>Installing %ProductName%</IDS_HEADER_TEXT>
 <IDS_SUBHEADER_TEXT>Please wait...</IDS_SUBHEADER_TEXT>
 <IDS_CTRL_BUTTON_CANCEL>&amp;Cancel</IDS_CTRL_BUTTON_CANCEL>
@@ -1902,7 +1924,7 @@ end
 </Secondary>
 </Language>
 <Messages>
-<IDS_WINDOW_TITLE>%ProductName% Setup</IDS_WINDOW_TITLE>
+<IDS_WINDOW_TITLE>%window_title%</IDS_WINDOW_TITLE>
 <IDS_HEADER_TEXT>Installation Finished</IDS_HEADER_TEXT>
 <IDS_SUBHEADER_TEXT>The installation has completed successfully.</IDS_SUBHEADER_TEXT>
 <IDS_CTRL_BUTTON_NEXT>&amp;Finish</IDS_CTRL_BUTTON_NEXT>
@@ -2864,7 +2886,11 @@ Please click Finish to exit.
 <Event>
 <Name>On Pre Uninstall</Name>
 <Args/>
-<Script/>
+<Script>-- Remove omSupply Desktop keys from registry
+if Registry.DoesKeyExist(HKEY_LOCAL_MACHINE, "Software\\omSupply Desktop") then
+	Registry.DeleteKey(HKEY_LOCAL_MACHINE, "Software\\omSupply Desktop");
+end
+</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -3051,10 +3077,27 @@ g_HandleSystemReboot();
 <Event>
 <Name>On Startup</Name>
 <Args/>
-<Script>hasOmsupplyDesktopInstalled = false;
-if File.DoesExist(SessionVar.Expand("%AppFolder%\\open mSupply.exe")) then
-	hasOmsupplyDesktopInstalled = true;
+<Script>local sWindowTitle = "omSupply Desktop Setup";
+local sReadyToInstallSubTitle = SessionVar.Expand("You are now ready to install %ProductName% %ProductVer%.");
+
+hasOmsupplyDesktopInstalled = false;
+omSupplyDesktopPath = SessionVar.Expand("%AppFolder%\\open mSupply.exe");
+
+-- Check if the omSupply Desktop has been already installed on this machine
+if Registry.DoesKeyExist(HKEY_LOCAL_MACHINE, "Software\\omSupply Desktop") then
+	omSupplyDesktopPath = Registry.GetValue(HKEY_LOCAL_MACHINE, "Software\\omSupply Desktop", "Path", true);
+	if File.DoesExist(omSupplyDesktopPath) then
+		hasOmsupplyDesktopInstalled = true;
+	end
 end
+
+if hasOmsupplyDesktopInstalled then
+	sWindowTitle = "omSupply Desktop Upgrader Setup";
+	sReadyToInstallSubTitle = SessionVar.Expand("You are now ready to install %ProductName% %ProductVer% Upgrader.");
+end
+
+SessionVar.Set("%window_title%", sWindowTitle);
+SessionVar.Set("%ready_to_install_sub_title%", sReadyToInstallSubTitle);
 </Script>
 <BookMarks count="0">
 </BookMarks>
@@ -3078,7 +3121,11 @@ end
 <Name>On Post Install</Name>
 <Args/>
 <Script>if not hasOmsupplyDesktopInstalled then
-	Shell.CreateShortcut(Shell.GetFolder(SHF_DESKTOP), "omSupply Desktop", SessionVar.Expand("%AppFolder%\\open mSupply.exe"), "", "", "", 0, SW_SHOWNORMAL, nil, "", START_OPTION_DEFAULT);
+	-- Create omSupply Desktop keys in registry
+	Registry.CreateKey(HKEY_LOCAL_MACHINE, "Software\\omSupply Desktop");
+	Registry.SetValue(HKEY_LOCAL_MACHINE, "Software\\omSupply Desktop", "Path", omSupplyDesktopPath, REG_SZ);
+
+	Shell.CreateShortcut(Shell.GetFolder(SHF_DESKTOP), "omSupply Desktop", omSupplyDesktopPath, "", "", "", 0, SW_SHOWNORMAL, nil, "", START_OPTION_DEFAULT);
 end
 </Script>
 <BookMarks count="0">
@@ -3166,6 +3213,16 @@ g_HandleSystemReboot();
 <Name>%AppShortcutFolderName%</Name>
 <Value>%ProductName%</Value>
 <Type>2</Type>
+</SessionVar>
+<SessionVar>
+<Name>%window_title%</Name>
+<Value>omSupply Desktop Setup</Value>
+<Type>10</Type>
+</SessionVar>
+<SessionVar>
+<Name>%ready_to_install_sub_title%</Name>
+<Value/>
+<Type>10</Type>
 </SessionVar>
 </SUF7SessionVars>
 <BuildConfigurations>
