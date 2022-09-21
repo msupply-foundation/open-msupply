@@ -26,7 +26,7 @@ pub struct UpdateInput {
     pub id: String,
     item_id: Option<String>,
     stock_line_id: Option<String>,
-    number_of_packs: Option<u32>,
+    number_of_packs: Option<f64>,
     total_before_tax: Option<f64>,
     tax: Option<TaxInput>,
 }
@@ -585,7 +585,7 @@ mod test {
                     id: "id input".to_string(),
                     item_id: Some("item_id input".to_string()),
                     stock_line_id: Some("stock_line_id input".to_string()),
-                    number_of_packs: Some(1),
+                    number_of_packs: Some(1.0),
                     total_before_tax: Some(1.0),
                     tax: Some(ShipmentTaxUpdate {
                         percentage: Some(1.0),
@@ -605,7 +605,7 @@ mod test {
             "id": "id input",
             "itemId": "item_id input",
             "stockLineId": "stock_line_id input",
-            "numberOfPacks": 1,
+            "numberOfPacks": 1.0,
             "totalBeforeTax": 1.0,
             "tax": {
               "percentage": 1.0

@@ -23,7 +23,7 @@ pub struct InsertInput {
     pub invoice_id: String,
     pub item_id: String,
     pub stock_line_id: String,
-    pub number_of_packs: u32,
+    pub number_of_packs: f64,
     pub total_before_tax: Option<f64>,
     pub tax: Option<f64>,
 }
@@ -567,7 +567,7 @@ mod test {
                     invoice_id: "invoice input".to_string(),
                     item_id: "item input".to_string(),
                     stock_line_id: "stock line input".to_string(),
-                    number_of_packs: 1,
+                    number_of_packs: 1.0,
                     total_before_tax: Some(1.1),
                     tax: Some(5.0)
                 }
@@ -586,7 +586,7 @@ mod test {
                 "invoiceId": "invoice input",
                 "itemId": "item input",
                 "stockLineId": "stock line input",
-                "numberOfPacks": 1,
+                "numberOfPacks": 1.0,
                 "totalBeforeTax": 1.1,
                 "tax": 5.0
             },

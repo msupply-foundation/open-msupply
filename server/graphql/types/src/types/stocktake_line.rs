@@ -53,12 +53,12 @@ impl StocktakeLineNode {
         self.line.line.comment.clone()
     }
 
-    pub async fn snapshot_number_of_packs(&self) -> u32 {
-        i32_to_u32(self.line.line.snapshot_number_of_packs)
+    pub async fn snapshot_number_of_packs(&self) -> f64 {
+        self.line.line.snapshot_number_of_packs
     }
 
-    pub async fn counted_number_of_packs(&self) -> Option<u32> {
-        self.line.line.counted_number_of_packs.map(i32_to_u32)
+    pub async fn counted_number_of_packs(&self) -> Option<f64> {
+        self.line.line.counted_number_of_packs
     }
 
     pub async fn item_id(&self) -> &str {

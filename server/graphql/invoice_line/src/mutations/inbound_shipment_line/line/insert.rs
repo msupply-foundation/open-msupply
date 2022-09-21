@@ -24,7 +24,7 @@ pub struct InsertInput {
     pub cost_price_per_pack: f64,
     pub sell_price_per_pack: f64,
     pub expiry_date: Option<NaiveDate>,
-    pub number_of_packs: u32,
+    pub number_of_packs: f64,
     pub total_before_tax: Option<f64>,
     pub tax: Option<f64>,
 }
@@ -425,7 +425,7 @@ mod test {
                     cost_price_per_pack: 1.1,
                     sell_price_per_pack: 2.2,
                     expiry_date: Some(NaiveDate::from_ymd(2022, 01, 01)),
-                    number_of_packs: 1,
+                    number_of_packs: 1.0,
                     total_before_tax: Some(1.1),
                     tax: Some(5.0)
                 }
@@ -449,7 +449,7 @@ mod test {
                 "costPricePerPack": 1.1,
                 "sellPricePerPack": 2.2,
                 "expiryDate": "2022-01-01",
-                "numberOfPacks": 1,
+                "numberOfPacks": 1.0,
                 "totalBeforeTax": 1.1,
                 "tax": 5.0
             },
