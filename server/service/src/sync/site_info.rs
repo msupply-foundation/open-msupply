@@ -19,6 +19,8 @@ pub enum RequestAndSetSiteInfoError {
     RequestSiteInfoError(SyncApiError),
     #[error("Database error whie requistin site info: {0:?}")]
     DatabaseError(RepositoryError),
+    #[error("Attempt to change initialised site, UUID does not match: current ({0}) new ({1}")]
+    SiteUUIDIsBeingChanged(String, String),
     #[error("Unknown error while requesting and setting site info: {0:?}")]
     Other(#[from] anyhow::Error),
 }
@@ -56,6 +58,17 @@ impl SiteInfoTrait for SiteInfoService {
             .map_err(Error::RequestSiteInfoError)?;
 
         let repo = KeyValueStoreRepository::new(&ctx.connection);
+
+        // If site uuid is in database check against new site uuid
+        if let Some(site_uuid) = repo
+            .get_string(KeyValueType::SettingsSyncSiteUuid)
+            .map_err(Error::DatabaseError)?
+        {
+            if site_uuid != site_info.id {
+                return Err(Error::SiteUUIDIsBeingChanged(site_uuid, site_info.id));
+            }
+        }
+
         repo.set_string(
             KeyValueType::SettingsSyncSiteUuid,
             Some(site_info.id.clone()),
