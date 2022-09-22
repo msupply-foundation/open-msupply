@@ -1,144 +1,185 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import create from 'zustand';
 import { AppRoute } from '@openmsupply-client/config';
 import {
   AuthenticationError,
-  AuthError,
   LocaleKey,
-  LocalStorage,
-  ServerStatus,
+  SyncStateType,
+  TypedTFunction,
   useNavigate,
   useTranslation,
 } from '@openmsupply-client/common';
 import { useHost } from '../../api/hooks';
 
-const SERVER_RESTART_TIMEOUT = 60000;
-const POLLING_INTERVAL = 3000;
-const POLLING_DELAY = 6000;
+// For refetch of syncStatus and syncState
+const POLLING_INTERVAL = 500;
+// Default sync settings sync interval;
+const SYNC_INTERVAL = 300;
 
 interface InitialiseForm {
-  error?: AuthenticationError;
+  // Error on validation of sync credentials, there is another error for sync progress
+  siteCredentialsError?: AuthenticationError;
+  // true:
+  // * on start of initialisation
+  // * on start of retry
+  // * syncStatus exists and not erronous
+  // false - default:
+  // * on site credentials vaidation
+  // * sync exists and erronous
   isLoading: boolean;
+  // true - default (to make form non editable while before api result is known)
+  // * SyncState is Initialising
+  // false:
+  // * SyncState is PreInitialising
+  isInitialising: boolean;
+  // password is set to empty string if isInitialising
   password: string;
+  // set to settings value from api if isInitialising
   username: string;
+  // set to settings value from api if isInitialising
   url: string;
-  setError: (error?: AuthenticationError) => void;
+  // Used to enable polling of syncStatus and syncState
+  // false by default and toggled to POLLING_INTERVAL when isInitialising
+  refetchInterval: number | false;
+  setSiteCredentialsError: (error?: AuthenticationError) => void;
   setIsLoading: (isLoading: boolean) => void;
   setPassword: (password: string) => void;
   setUsername: (username: string) => void;
   setUrl: (url: string) => void;
+  setIsInitialising: (isInitialising: boolean) => void;
 }
 
 const useInitialiseFormState = create<InitialiseForm>(set => ({
-  error: undefined,
+  siteCredentialsError: undefined,
   isLoading: false,
+  isInitialising: true,
   password: '',
   username: '',
   url: 'https://',
-  setError: (error?: AuthenticationError) =>
-    set(state => ({ ...state, error })),
-  setIsLoading: (isLoading: boolean) => set(state => ({ ...state, isLoading })),
-  setPassword: (password: string) => set(state => ({ ...state, password })),
-  setUsername: (username: string) => set(state => ({ ...state, username })),
-  setUrl: (url: string) => set(state => ({ ...state, url })),
+  refetchInterval: false,
+  setSiteCredentialsError: error => set(state => ({ ...state, error })),
+  setIsLoading: isLoading => set(state => ({ ...state, isLoading })),
+  setPassword: password => set(state => ({ ...state, password })),
+  setUsername: username => set(state => ({ ...state, username })),
+  setUrl: url => set(state => ({ ...state, url })),
+  // When sync is already ongoing either after initialise button is pressed
+  // or when initialisation page is loaded while sync is ongoing
+  // inputs should be disabled and polling for syncStatus should start
+  setIsInitialising: isInitialising =>
+    set(state => ({
+      ...state,
+      isInitialising,
+      refetchInterval: isInitialising && POLLING_INTERVAL,
+      password: '',
+    })),
 }));
 
+// Hook will navigate to login if SyncState is Initialised
 export const useInitialiseForm = () => {
   const state = useInitialiseFormState();
   const navigate = useNavigate();
-  const { mutateAsync: restart } = useHost.utils.restart();
   const {
     setIsLoading,
     password,
-    setPassword,
     username,
-    error,
-    setError,
+    setSiteCredentialsError,
     url,
+    refetchInterval,
+    setIsInitialising,
+    setUrl,
+    setUsername,
   } = state;
-  const [isPolling, setIsPolling] = useState(false);
-  const [isBootstrap, setIsBootstrap] = useState(false);
-  const { mutateAsync: update } = useHost.sync.update();
-  const { data } = useHost.utils.settings({
-    refetchInterval: POLLING_INTERVAL,
-    enabled: isPolling,
-  });
   const t = useTranslation('app');
-  const parseErrorMessage = (error: Error, defaultKey: LocaleKey) => {
-    const matches = /code: "([a-zA-Z_]+?)"/g.exec(error?.message);
-    const key =
-      matches && matches.length > 1
-        ? (`error.${matches[1]}` as LocaleKey)
-        : defaultKey;
+  const { mutateAsync: initialise } = useHost.sync.initialise();
+  const { mutateAsync: manualSync } = useHost.sync.manualSync();
+  // Both syncState and syncStatus are polled because we want to navigate
+  // to login when initialisation is finished, but syncStatus will be behind auth after
+  // initialisation has finished, whereas syncStatus is always an open API
+  const { data: syncState } = useHost.utils.syncState(refetchInterval);
+  const { data: syncStatus } = useHost.utils.syncStatus(refetchInterval);
+  const { data: syncSettings } = useHost.utils.syncSettings();
 
-    return t(key);
-  };
-
-  const onSave = async () => {
-    setError();
+  const onInitialise = async () => {
+    setSiteCredentialsError();
     setIsLoading(true);
-    setIsBootstrap(false);
     const syncSettings = {
-      intervalSec: 300,
+      intervalSec: SYNC_INTERVAL,
       password,
       url,
       username,
     };
     try {
-      await update(syncSettings);
+      await initialise(syncSettings);
+      setIsInitialising(true);
     } catch (e) {
-      setError({
-        message: parseErrorMessage(e as Error, 'error.unable_to_save_settings'),
+      console.log(e);
+      setSiteCredentialsError({
+        message: parseSyncErrorMessage(
+          (e as Error)?.message,
+          'error.unable_to_save_settings',
+          t
+        ),
       });
       return setIsLoading(false);
     }
-
-    try {
-      await restart();
-    } catch (e) {
-      setError({
-        message: parseErrorMessage(
-          e as Error,
-          'error.unable_to_restart_server'
-          ),
-        });
-      }
-
-    setPassword('');
-
-    setTimeout(() => {
-      setIsPolling(true);
-    }, POLLING_DELAY);
-
-    LocalStorage.removeItem('/auth/error');
-    LocalStorage.addListener<AuthError>((key, value) => {
-      if (key === '/auth/error' && value === AuthError.Unauthenticated) {
-        // Server is up! and rejecting our request!
-        setIsLoading(false);
-        setIsPolling(false);
-
-        navigate(`/${AppRoute.Login}`, { replace: true });
-      }
-    });
-
-    setTimeout(() => {
-      setIsLoading(false);
-      setIsPolling(false);
-      const message = isBootstrap
-        ? 'Unable to sync! Please check your settings.'
-        : 'Server restart has timed out';
-      setError({ message });
-    }, SERVER_RESTART_TIMEOUT);
   };
 
-  const isValid = !!username && !!password && !!url;
+  const onRetry = async () => {
+    setIsLoading(true);
+    await manualSync();
+  };
+
   useEffect(() => {
-    if (!!data) setIsBootstrap(data?.status === ServerStatus.Stage_0);
-  }, [data]);
+    if (!syncState) return;
+
+    switch (syncState) {
+      case SyncStateType.Initialised:
+        return navigate(`/${AppRoute.Login}`, { replace: true });
+      case SyncStateType.Initialising:
+        return setIsInitialising(true);
+      case SyncStateType.PreInitialisation:
+        return setIsInitialising(false);
+    }
+  }, [syncState]);
+
+  useEffect(() => {
+    if (!syncStatus) return;
+    // Need to be able to retry is syncStatus is erronous
+    setIsLoading(!syncStatus.error);
+  }, [syncStatus]);
+
+  useEffect(() => {
+    // If page is loaded or reloaded when isInitialising
+    // url and username should be set from api result
+    if (
+      syncState === SyncStateType.Initialising &&
+      syncSettings?.username &&
+      syncSettings?.url
+    ) {
+      setUsername(syncSettings.username);
+      setUrl(syncSettings.url);
+    }
+  }, [syncSettings, syncState]);
+
   return {
-    isValid,
-    onSave,
+    isValid: !!username && !!password && !!url,
+    onInitialise,
+    onRetry,
     ...state,
-    error,
+    syncStatus,
   };
 };
+
+export function parseSyncErrorMessage(
+  message: string,
+  defaultKey: LocaleKey,
+  t: TypedTFunction<LocaleKey>
+) {
+  const matches = /code: "([a-zA-Z_]+?)"/g.exec(message);
+  const key =
+    matches && matches.length > 1
+      ? (`error.${matches[1]}` as LocaleKey)
+      : defaultKey;
+
+  return t(key);
+}
