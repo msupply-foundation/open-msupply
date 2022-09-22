@@ -11,11 +11,8 @@ mod permission_tests {
         service_provider::{ServiceContext, ServiceProvider},
     };
 
-    // TODO for some reason Rust complained when using the Full{Query|Mutation} definition from
-    // lib.rs. As a workaround these defs are copied here. Hopefully this should be possible but I
-    // gave up on this for now.
     use graphql_batch_mutations::BatchMutations;
-    use graphql_general::{GeneralQueries, ServerAdminMutations, ServerAdminQueries};
+    use graphql_general::GeneralQueries;
     use graphql_invoice::{InvoiceMutations, InvoiceQueries};
     use graphql_invoice_line::InvoiceLineMutations;
     use graphql_location::{LocationMutations, LocationQueries};
@@ -25,6 +22,9 @@ mod permission_tests {
     use graphql_stocktake::{StocktakeMutations, StocktakeQueries};
     use graphql_stocktake_line::StocktakeLineMutations;
 
+    // TODO for some reason Rust complained when using the Full{Query|Mutation} definition from
+    // lib.rs. As a workaround these defs are copied here. Hopefully this should be possible but I
+    // gave up on this for now.
     #[derive(MergedObject, Default, Clone)]
     pub struct FullQuery(
         pub InvoiceQueries,
@@ -33,7 +33,6 @@ mod permission_tests {
         pub GeneralQueries,
         pub RequisitionQueries,
         pub ReportQueries,
-        pub ServerAdminQueries,
     );
 
     #[derive(MergedObject, Default, Clone)]
@@ -46,7 +45,6 @@ mod permission_tests {
         pub BatchMutations,
         pub RequisitionMutations,
         pub RequisitionLineMutations,
-        pub ServerAdminMutations,
     );
 
     pub fn full_query() -> FullQuery {
@@ -57,7 +55,6 @@ mod permission_tests {
             GeneralQueries,
             RequisitionQueries,
             ReportQueries,
-            ServerAdminQueries,
         )
     }
 
@@ -71,7 +68,6 @@ mod permission_tests {
             BatchMutations,
             RequisitionMutations,
             RequisitionLineMutations,
-            ServerAdminMutations,
         )
     }
 
