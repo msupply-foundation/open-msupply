@@ -18,7 +18,7 @@ use service::{
     processors::Processors,
     service_provider::ServiceProvider,
     settings::{is_develop, LogMode, LoggingSettings, ServerSettings, Settings},
-    sync::{remote_data_synchroniser::RemoteSyncState, Synchroniser},
+    sync::synchroniser::Synchroniser,
     token_bucket::TokenBucket,
 };
 
