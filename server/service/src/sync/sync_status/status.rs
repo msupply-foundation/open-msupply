@@ -1,7 +1,7 @@
 use chrono::{NaiveDateTime, Utc};
 use repository::{
-    ChangelogRepository, DatetimeFilter, RepositoryError, SyncLogFilter, SyncLogRepository,
-    SyncLogRow, SyncLogRowRepository,
+    ChangelogRepository, DatetimeFilter, Pagination, RepositoryError, Sort, SyncLogFilter,
+    SyncLogRepository, SyncLogRow, SyncLogSortField,
 };
 use util::Defaults;
 
@@ -9,8 +9,7 @@ use crate::{
     i32_to_u32,
     service_provider::ServiceContext,
     sync::{
-        get_active_records_on_site_filter, remote_data_synchroniser::RemoteSyncState,
-        GetActiveStoresOnSiteError,
+        get_active_records_on_site_filter, remote_data_synchroniser, GetActiveStoresOnSiteError,
     },
 };
 
@@ -41,7 +40,7 @@ pub struct FullSyncStatus {
     pub push: Option<SyncStatusWithProgress>,
 }
 
-#[derive(Eq, PartialEq, Hash, Copy, Clone)]
+#[derive(Eq, PartialEq, Hash, Copy, Clone, Debug)]
 pub enum SyncStatusType {
     Initial,
     Push,
@@ -50,16 +49,34 @@ pub enum SyncStatusType {
     Integration,
 }
 
+#[derive(PartialEq, Debug)]
+pub enum SyncState {
+    /// Fuly initialised
+    Initialised,
+    /// Sync settings were set and sync was attempted at least once
+    Initialising,
+    /// Sync settings are not set and sync was not attempted
+    PreInitialisation,
+}
+
 pub trait SyncStatusTrait: Sync + Send {
     fn get_latest_sync_status(
         &self,
         ctx: &ServiceContext,
-    ) -> Result<FullSyncStatus, RepositoryError> {
+    ) -> Result<Option<FullSyncStatus>, RepositoryError> {
         get_latest_sync_status(ctx)
     }
 
+    fn get_sync_state(&self, ctx: &ServiceContext) -> Result<SyncState, RepositoryError> {
+        get_sync_state(ctx)
+    }
+
     fn is_initialised(&self, ctx: &ServiceContext) -> Result<bool, RepositoryError> {
-        is_initialised(ctx)
+        Ok(self.get_sync_state(ctx)? == SyncState::Initialised)
+    }
+
+    fn is_sync_queue_initialised(&self, ctx: &ServiceContext) -> Result<bool, RepositoryError> {
+        is_sync_queue_initialised(ctx)
     }
 
     fn number_of_records_in_push_queue(
@@ -74,20 +91,55 @@ pub(crate) struct SyncStatusService;
 
 impl SyncStatusTrait for SyncStatusService {}
 
-fn is_initialised(ctx: &ServiceContext) -> Result<bool, RepositoryError> {
-    let done_datetime =
-        SyncLogRepository::new(&ctx.connection).query_one(SyncLogFilter::new().done_datetime(
-            Some(DatetimeFilter::before_or_equal_to(Utc::now().naive_utc())),
-        ))?;
+/// * If there are no sync logs then: PreInitialisation
+/// * If sync log sorted by done datetime has a value in done datetime: Initialised
+/// * If sync log sorted by done datetime has not valule in done datetime: Initialising
+fn get_sync_state(ctx: &ServiceContext) -> Result<SyncState, RepositoryError> {
+    let sort = Sort {
+        key: SyncLogSortField::DoneDatetime,
+        desc: Some(true),
+    };
+    let latest_log_sorted_by_done_datetime = SyncLogRepository::new(&ctx.connection)
+        .query(Pagination::one(), None, Some(sort))?
+        .pop();
 
-    if done_datetime.is_some() {
-        Ok(true)
-    } else {
-        Ok(false)
-    }
+    let sync_state = match latest_log_sorted_by_done_datetime {
+        None => SyncState::PreInitialisation,
+        Some(sync_log) => match sync_log.sync_log_row.done_datetime {
+            Some(_) => SyncState::Initialised,
+            None => SyncState::Initialising,
+        },
+    };
+
+    Ok(sync_state)
 }
 
-fn get_latest_sync_status(ctx: &ServiceContext) -> Result<FullSyncStatus, RepositoryError> {
+/// During initial sync remote server asks central server to initialise remote data
+/// preparte initial done datetime is set on associated sync log, this is check to see
+/// if synce queue was initialised
+fn is_sync_queue_initialised(ctx: &ServiceContext) -> Result<bool, RepositoryError> {
+    let log_with_done_prepare_initial_datetime = SyncLogRepository::new(&ctx.connection)
+        .query_one(SyncLogFilter::new().prepare_initial_done_datetime(
+            DatetimeFilter::before_or_equal_to(Utc::now().naive_utc()),
+        ))?;
+
+    Ok(log_with_done_prepare_initial_datetime.is_some())
+}
+
+fn get_latest_sync_status(ctx: &ServiceContext) -> Result<Option<FullSyncStatus>, RepositoryError> {
+    let sort = Sort {
+        key: SyncLogSortField::StartedDatetime,
+        desc: Some(true),
+    };
+
+    let sync_log_row = match SyncLogRepository::new(&ctx.connection)
+        .query(Pagination::one(), None, Some(sort))?
+        .pop()
+    {
+        Some(sync_log_row) => sync_log_row,
+        None => return Ok(None),
+    };
+
     let SyncLogRow {
         id: _,
         started_datetime,
@@ -109,7 +161,7 @@ fn get_latest_sync_status(ctx: &ServiceContext) -> Result<FullSyncStatus, Reposi
         integration_start_datetime,
         integration_done_datetime,
         error_message,
-    } = SyncLogRowRepository::new(&ctx.connection).load_latest_sync_log()?;
+    } = sync_log_row.sync_log_row;
 
     let result = FullSyncStatus {
         is_syncing: done_datetime.is_none() && error_message.is_none(),
@@ -145,7 +197,7 @@ fn get_latest_sync_status(ctx: &ServiceContext) -> Result<FullSyncStatus, Reposi
             done_progress: push_progress_done.map(i32_to_u32),
         }),
     };
-    Ok(result)
+    Ok(Some(result))
 }
 
 #[derive(Debug)]
@@ -159,9 +211,9 @@ fn number_of_records_in_push_queue(
 ) -> Result<u64, NumberOfRecordsInPushQueueError> {
     use NumberOfRecordsInPushQueueError as Error;
     let changelog_repo = ChangelogRepository::new(&ctx.connection);
-    let state = RemoteSyncState::new(&ctx.connection);
 
-    let cursor = state.get_push_cursor().map_err(Error::DatabaseError)?;
+    let cursor =
+        remote_data_synchroniser::get_push_cursor(&ctx.connection).map_err(Error::DatabaseError)?;
 
     let changelog_filter =
         get_active_records_on_site_filter(&ctx.connection).map_err(|error| match error {

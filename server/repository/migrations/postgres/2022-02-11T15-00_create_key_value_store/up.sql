@@ -2,8 +2,7 @@
 CREATE TYPE key_type AS ENUM (
     -- Cursor for pulling central records from the central server
     'CENTRAL_SYNC_PULL_CURSOR',
-    'REMOTE_SYNC_INITILISATION_STARTED',
-    'REMOTE_SYNC_INITILISATION_FINISHED',
+    -- Cursor for pushing remote records to central server
     'REMOTE_SYNC_PUSH_CURSOR',
     -- sync settings
     'SETTINGS_SYNC_URL',
