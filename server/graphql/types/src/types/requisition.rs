@@ -293,7 +293,7 @@ mod test {
     };
     use repository::{
         mock::{mock_user_account_a, MockDataInserts},
-        unknown_user, NameRow, Requisition, RequisitionRow,
+        unknown_user, Requisition, RequisitionRow,
     };
     use serde_json::json;
     use util::inline_init;
@@ -317,30 +317,27 @@ mod test {
         impl TestQuery {
             pub async fn test_query_user_exists(&self) -> RequisitionNode {
                 RequisitionNode {
-                    requisition: Requisition {
-                        requisition_row: inline_init(|r: &mut RequisitionRow| {
+                    requisition: inline_init(|r: &mut Requisition| {
+                        r.requisition_row = inline_init(|r: &mut RequisitionRow| {
                             r.user_id = Some(mock_user_account_a().id);
-                        }),
-                        name_row: NameRow::default(),
-                    },
+                        })
+                    }),
                 }
             }
             pub async fn test_query_user_does_not_exist(&self) -> RequisitionNode {
                 RequisitionNode {
-                    requisition: Requisition {
-                        requisition_row: inline_init(|r: &mut RequisitionRow| {
+                    requisition: inline_init(|r: &mut Requisition| {
+                        r.requisition_row = inline_init(|r: &mut RequisitionRow| {
                             r.user_id = Some("does not exist".to_string());
-                        }),
-                        name_row: NameRow::default(),
-                    },
+                        })
+                    }),
                 }
             }
             pub async fn test_query_user_not_associated(&self) -> RequisitionNode {
                 RequisitionNode {
-                    requisition: Requisition {
-                        requisition_row: inline_init(|r: &mut RequisitionRow| r.user_id = None),
-                        name_row: NameRow::default(),
-                    },
+                    requisition: inline_init(|r: &mut Requisition| {
+                        r.requisition_row = inline_init(|r: &mut RequisitionRow| r.user_id = None)
+                    }),
                 }
             }
         }

@@ -36,6 +36,7 @@ joinable!(stocktake_line -> stocktake (stocktake_id));
 joinable!(stocktake_line -> stock_line (stock_line_id));
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
+#[changeset_options(treat_none_as_null = "true")]
 #[table_name = "stocktake_line"]
 pub struct StocktakeLineRow {
     pub id: String,

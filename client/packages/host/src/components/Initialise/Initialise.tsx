@@ -11,7 +11,6 @@ import {
 import { LoginTextInput } from '../Login/LoginTextInput';
 import { InitialiseLayout } from './InitialiseLayout';
 import { useInitialiseForm } from './hooks';
-import { InitialiseNumericInput } from './InitialiseNumericInput';
 
 export const Initialise = () => {
   const t = useTranslation('app');
@@ -21,13 +20,11 @@ export const Initialise = () => {
     isValid,
     isLoading,
     password,
-    siteId,
     url,
     username,
     onSave,
     setPassword,
     setUsername,
-    setSiteId,
     setUrl,
     error,
   } = useInitialiseForm();
@@ -73,18 +70,6 @@ export const Initialise = () => {
           value={url}
           disabled={isLoading}
           onChange={e => setUrl(e.target.value)}
-        />
-      }
-      SiteIdInput={
-        <InitialiseNumericInput
-          fullWidth
-          label={t('label.settings-site-id')}
-          value={siteId}
-          disabled={isLoading}
-          onChange={e => {
-            const siteId = Number(e.target.value);
-            setSiteId(Number.isNaN(siteId) ? 0 : siteId);
-          }}
         />
       }
       SaveButton={

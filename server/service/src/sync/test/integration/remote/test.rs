@@ -1,0 +1,38 @@
+#[cfg(test)]
+mod tests {
+    use crate::sync::test::integration::remote::{
+        invoice::InvoiceRecordTester, location::LocationRecordTester, number::NumberRecordTester,
+        requisition::RequisitionRecordTester, stock_line::StockLineRecordTester,
+        test_remote_sync_record,
+    };
+
+    #[actix_rt::test]
+    async fn integration_sync_remote_number() {
+        test_remote_sync_record("number", &NumberRecordTester).await;
+    }
+
+    #[actix_rt::test]
+    async fn integration_sync_remote_location() {
+        test_remote_sync_record("location", &LocationRecordTester).await;
+    }
+
+    #[actix_rt::test]
+    async fn integration_sync_remote_stock_line() {
+        test_remote_sync_record("stock_line", &StockLineRecordTester).await;
+    }
+
+    #[actix_rt::test]
+    async fn integration_sync_remote_stocktake() {
+        test_remote_sync_record("stocktake", &StockLineRecordTester).await;
+    }
+
+    #[actix_rt::test]
+    async fn integration_sync_remote_invoice() {
+        test_remote_sync_record("invoice", &InvoiceRecordTester).await;
+    }
+
+    #[actix_rt::test]
+    async fn integration_sync_remote_requisition() {
+        test_remote_sync_record("requisition", &RequisitionRecordTester).await;
+    }
+}

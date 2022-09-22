@@ -30,6 +30,33 @@ fn get_timestamp_fields() -> Vec<TableAndFieldName> {
         ("requisition_line", "snapshot_datetime"),
         ("stocktake", "created_datetime"),
         ("stocktake", "finalised_datetime"),
+        ("sync_log", "started_datetime"),
+        ("sync_log", "done_datetime"),
+        ("sync_log", "prepare_initial_start_datetime"),
+        ("sync_log", "prepare_initial_done_datetime"),
+        ("sync_log", "push_start_datetime"),
+        ("sync_log", "push_done_datetime"),
+        ("sync_log", "pull_central_start_datetime"),
+        ("sync_log", "pull_central_done_datetime"),
+        ("sync_log", "pull_remote_start_datetime"),
+        ("sync_log", "pull_remote_done_datetime"),
+        ("sync_log", "integration_start_datetime"),
+        ("sync_log", "integration_done_datetime"),
+    ]
+    .iter()
+    .map(|(table_name, field_name)| TableAndFieldName {
+        table_name,
+        field_name,
+    })
+    .collect()
+}
+
+#[cfg(test)]
+#[cfg(feature = "postgres")]
+fn get_exclude_timestamp_fields() -> Vec<TableAndFieldName> {
+    vec![
+        ("sync_buffer", "received_datetime"),
+        ("sync_buffer", "integration_datetime"),
         ("log", "datetime"),
     ]
     .iter()
@@ -519,7 +546,8 @@ mod tests {
             .load::<TableNameAndFieldRow>(&connection.connection)
             .unwrap();
 
-        let defined_table_and_fields = get_timestamp_fields();
+        let mut defined_table_and_fields = get_timestamp_fields();
+        defined_table_and_fields.append(&mut get_exclude_timestamp_fields());
 
         for schema_row in schema_table_and_fields.iter() {
             assert_eq!(
