@@ -1,8 +1,3 @@
-use repository::{
-    Name, NameFilter, NameSort, PaginationOption, RepositoryError, StorageConnection,
-    StorageConnectionManager, Store, StoreFilter, StoreSort,
-};
-
 use crate::{
     app_data::{AppDataService, AppDataServiceTrait},
     auth::{AuthService, AuthServiceTrait},
@@ -27,8 +22,13 @@ use crate::{
     sync::{
         site_info::{SiteInfoService, SiteInfoTrait},
         sync_status::status::{SyncStatusService, SyncStatusTrait},
+        synchroniser_driver::{SiteIsInitialisedTrigger, SyncTrigger},
     },
     ListError, ListResult,
+};
+use repository::{
+    Name, NameFilter, NameSort, PaginationOption, RepositoryError, StorageConnection,
+    StorageConnectionManager, Store, StoreFilter, StoreSort,
 };
 
 pub struct ServiceProvider {
@@ -60,6 +60,8 @@ pub struct ServiceProvider {
     pub sync_status_service: Box<dyn SyncStatusTrait>,
     // Triggers
     processors_trigger: ProcessorsTrigger,
+    pub sync_trigger: SyncTrigger,
+    pub site_is_initialised_trigger: SiteIsInitialisedTrigger,
 }
 
 pub struct ServiceContext {
@@ -74,17 +76,21 @@ impl ServiceProvider {
     // and it would be a bit of refactor, ideally setup_all and setup_all_with_data will return an instance of ServiceProvider
     // {make an issue}
     pub fn new(connection_manager: StorageConnectionManager, app_data_folder: &str) -> Self {
-        ServiceProvider::new_with_processors(
+        ServiceProvider::new_with_triggers(
             connection_manager,
             app_data_folder,
             ProcessorsTrigger::new_void(),
+            SyncTrigger::new_void(),
+            SiteIsInitialisedTrigger::new_void(),
         )
     }
 
-    pub fn new_with_processors(
+    pub fn new_with_triggers(
         connection_manager: StorageConnectionManager,
         app_data_folder: &str,
         processors_trigger: ProcessorsTrigger,
+        sync_trigger: SyncTrigger,
+        site_is_initialised_trigger: SiteIsInitialisedTrigger,
     ) -> Self {
         ServiceProvider {
             connection_manager: connection_manager.clone(),
@@ -107,6 +113,8 @@ impl ServiceProvider {
             site_info_service: Box::new(SiteInfoService),
             sync_status_service: Box::new(SyncStatusService),
             processors_trigger,
+            sync_trigger,
+            site_is_initialised_trigger,
         }
     }
 
@@ -141,7 +149,7 @@ impl ServiceProvider {
 
 impl ServiceContext {
     #[cfg(test)]
-    pub(crate) fn new_without_processors(connection: StorageConnection) -> ServiceContext {
+    pub(crate) fn new_without_triggers(connection: StorageConnection) -> ServiceContext {
         ServiceContext {
             connection,
             processors_trigger: ProcessorsTrigger::new_void(),
