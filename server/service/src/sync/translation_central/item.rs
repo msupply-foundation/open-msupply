@@ -21,7 +21,7 @@ pub struct LegacyItemRow {
     code: String,
     unit_ID: String,
     type_of: LegacyItemType,
-    default_pack_size: f64,
+    default_pack_size: i32,
 }
 
 fn to_item_type(type_of: LegacyItemType) -> ItemRowType {

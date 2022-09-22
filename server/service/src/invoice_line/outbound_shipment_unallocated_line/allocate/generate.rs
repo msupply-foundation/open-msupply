@@ -105,7 +105,7 @@ pub fn generate(
     } else {
         result.update_unallocated_line = Some(UpdateOutboundShipmentUnallocatedLine {
             id: unallocated_line.id,
-            quantity: remaining_to_allocated,
+            quantity: remaining_to_allocated as u32,
         });
     };
 
