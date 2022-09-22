@@ -5,7 +5,10 @@ import { getSdk } from '../../operations.generated';
 export const useHostApi = () => {
   const keys = {
     base: () => ['host'] as const,
-    settings: () => [...keys.base(), 'settings'] as const,
+    syncSettings: () => [...keys.base(), 'syncSettings'] as const,
+    syncState: () => [...keys.base(), 'syncState'] as const,
+    syncStatus: () => [...keys.base(), 'syncStatus'] as const,
+    initialiseSite: () => [...keys.base(), 'initialiseSite'] as const,
   };
 
   const { client } = useGql();
