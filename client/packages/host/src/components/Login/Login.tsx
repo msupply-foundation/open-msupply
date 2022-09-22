@@ -5,10 +5,10 @@ import {
   LoadingButton,
   Box,
   Typography,
+  SyncStateType,
   AlertIcon,
   useHostContext,
   useNavigate,
-  ServerStatus,
   useElectronClient,
   frontEndHostDisplay,
   LocalStorage,
@@ -23,7 +23,7 @@ export const Login = () => {
   const t = useTranslation('app');
   const { connectedServer } = useElectronClient();
   const { setPageTitle } = useHostContext();
-  const { data } = useHost.utils.settings();
+  const { data: syncState } = useHost.utils.syncState();
   const navigate = useNavigate();
 
   const passwordRef = React.useRef(null);
@@ -44,10 +44,10 @@ export const Login = () => {
   }, []);
 
   useEffect(() => {
-    if (data?.status === ServerStatus.Stage_0) {
+    if (!!syncState && syncState !== SyncStateType.Initialised) {
       navigate(`/${AppRoute.Initialise}`);
     }
-  }, [data]);
+  }, [syncState]);
 
   return (
     <LoginLayout
