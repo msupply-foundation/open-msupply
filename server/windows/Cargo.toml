@@ -1,0 +1,26 @@
+[package]
+name = "omsupply-service"
+version = "0.1.0"
+description = "A crate that implements windows service methods"
+keywords = ["windows", "service", "daemon"]
+edition = "2018"
+
+[[bin]]
+path = "src/windows.rs"
+name = "omsupply_service"
+test = false
+bench = false
+
+[package.metadata.docs.rs]
+default-target = "x86_64-pc-windows-msvc"
+
+[target.'cfg(windows)'.dependencies]
+actix-web = { version = "4.0.1", default-features = false, features = [
+    "macros",
+] }
+futures = "0.3"
+log = "0.4.14"
+server = { path = "../server", default-features = false }
+service = { path = "../service" }
+tokio = { version = "1.17.0", features = ["macros"] }
+windows-service = "0.5.0"
