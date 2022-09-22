@@ -20,23 +20,23 @@ pub struct SyncLog {
 pub struct SyncLogFilter {
     pub id: Option<EqualFilter<String>>,
     pub started_datetime: Option<DatetimeFilter>,
-    pub done_datetime: Option<DatetimeFilter>,
-    pub prepare_initial_start_datetime: Option<DatetimeFilter>,
-    pub prepare_initial_done_datetime: Option<DatetimeFilter>,
-    pub push_start_datetime: Option<DatetimeFilter>,
-    pub push_done_datetime: Option<DatetimeFilter>,
+    pub finished_datetime: Option<DatetimeFilter>,
+    pub prepare_initial_started_datetime: Option<DatetimeFilter>,
+    pub prepare_initial_finished_datetime: Option<DatetimeFilter>,
+    pub push_started_datetime: Option<DatetimeFilter>,
+    pub push_finished_datetime: Option<DatetimeFilter>,
     pub push_progress_total: Option<EqualFilter<i32>>,
     pub push_progress_done: Option<EqualFilter<i32>>,
-    pub pull_central_start_datetime: Option<DatetimeFilter>,
-    pub pull_central_done_datetime: Option<DatetimeFilter>,
+    pub pull_central_started_datetime: Option<DatetimeFilter>,
+    pub pull_central_finished_datetime: Option<DatetimeFilter>,
     pub pull_central_progress_total: Option<EqualFilter<i32>>,
     pub pull_central_progress_done: Option<EqualFilter<i32>>,
-    pub pull_remote_start_datetime: Option<DatetimeFilter>,
-    pub pull_remote_done_datetime: Option<DatetimeFilter>,
+    pub pull_remote_started_datetime: Option<DatetimeFilter>,
+    pub pull_remote_finished_datetime: Option<DatetimeFilter>,
     pub pull_remote_progress_total: Option<EqualFilter<i32>>,
     pub pull_remote_progress_done: Option<EqualFilter<i32>>,
-    pub integration_start_datetime: Option<DatetimeFilter>,
-    pub integration_done_datetime: Option<DatetimeFilter>,
+    pub integration_started_datetime: Option<DatetimeFilter>,
+    pub integration_finished_datetime: Option<DatetimeFilter>,
     pub error_message: Option<SimpleStringFilter>,
 }
 
@@ -53,8 +53,8 @@ impl SyncLogFilter {
         SyncLogFilter::default()
     }
 
-    pub fn done_datetime(mut self, done_datetime: Option<DatetimeFilter>) -> SyncLogFilter {
-        self.done_datetime = done_datetime;
+    pub fn finished_datetime(mut self, finished_datetime: Option<DatetimeFilter>) -> SyncLogFilter {
+        self.finished_datetime = finished_datetime;
         self
     }
 }
@@ -94,7 +94,7 @@ impl<'a> SyncLogRepository<'a> {
                     apply_sort!(query, sort, sync_log_dsl::started_datetime)
                 }
                 SyncLogSortField::DoneEndtime => {
-                    apply_sort!(query, sort, sync_log_dsl::done_datetime)
+                    apply_sort!(query, sort, sync_log_dsl::finished_datetime)
                 }
             }
         } else {
@@ -116,7 +116,7 @@ fn create_filtered_query(filter: Option<SyncLogFilter>) -> BoxedSyncLogQuery {
 
     if let Some(f) = filter {
         apply_equal_filter!(query, f.id, sync_log_dsl::id);
-        apply_date_time_filter!(query, f.done_datetime, sync_log_dsl::done_datetime);
+        apply_date_time_filter!(query, f.finished_datetime, sync_log_dsl::finished_datetime);
     }
 
     query

@@ -43,7 +43,7 @@ impl<'a> SyncLogger<'a> {
 
     pub(crate) fn done(&mut self) -> Result<(), SyncLoggerError> {
         self.row = SyncLogRow {
-            done_datetime: Some(chrono::Utc::now().naive_utc()),
+            finished_datetime: Some(chrono::Utc::now().naive_utc()),
             ..self.row.clone()
         };
 
@@ -58,23 +58,23 @@ impl<'a> SyncLogger<'a> {
         info!("Sync step started {:?}", step);
         self.row = match step {
             SyncStep::PrepareInitial => SyncLogRow {
-                prepare_initial_start_datetime: Some(chrono::Utc::now().naive_utc()),
+                prepare_initial_started_datetime: Some(chrono::Utc::now().naive_utc()),
                 ..self.row.clone()
             },
             SyncStep::Push => SyncLogRow {
-                push_start_datetime: Some(chrono::Utc::now().naive_utc()),
+                push_started_datetime: Some(chrono::Utc::now().naive_utc()),
                 ..self.row.clone()
             },
             SyncStep::PullCentral => SyncLogRow {
-                pull_central_start_datetime: Some(chrono::Utc::now().naive_utc()),
+                pull_central_started_datetime: Some(chrono::Utc::now().naive_utc()),
                 ..self.row.clone()
             },
             SyncStep::PullRemote => SyncLogRow {
-                pull_remote_start_datetime: Some(chrono::Utc::now().naive_utc()),
+                pull_remote_started_datetime: Some(chrono::Utc::now().naive_utc()),
                 ..self.row.clone()
             },
             SyncStep::Integrate => SyncLogRow {
-                integration_start_datetime: Some(chrono::Utc::now().naive_utc()),
+                integration_started_datetime: Some(chrono::Utc::now().naive_utc()),
                 ..self.row.clone()
             },
         };
@@ -88,7 +88,7 @@ impl<'a> SyncLogger<'a> {
     pub(crate) fn done_step(&mut self, step: SyncStep) -> Result<(), SyncLoggerError> {
         self.row = match step {
             SyncStep::PrepareInitial => SyncLogRow {
-                prepare_initial_done_datetime: Some(chrono::Utc::now().naive_utc()),
+                prepare_initial_finished_datetime: Some(chrono::Utc::now().naive_utc()),
                 ..self.row.clone()
             },
             SyncStep::Push => {
@@ -97,7 +97,7 @@ impl<'a> SyncLogger<'a> {
                     self.row.push_progress_done.as_ref().unwrap_or(&0)
                 );
                 SyncLogRow {
-                    push_done_datetime: Some(chrono::Utc::now().naive_utc()),
+                    push_finished_datetime: Some(chrono::Utc::now().naive_utc()),
                     ..self.row.clone()
                 }
             }
@@ -107,7 +107,7 @@ impl<'a> SyncLogger<'a> {
                     self.row.pull_central_progress_done.as_ref().unwrap_or(&0)
                 );
                 SyncLogRow {
-                    pull_central_done_datetime: Some(chrono::Utc::now().naive_utc()),
+                    pull_central_finished_datetime: Some(chrono::Utc::now().naive_utc()),
                     ..self.row.clone()
                 }
             }
@@ -117,12 +117,12 @@ impl<'a> SyncLogger<'a> {
                     self.row.pull_remote_progress_done.as_ref().unwrap_or(&0)
                 );
                 SyncLogRow {
-                    pull_remote_done_datetime: Some(chrono::Utc::now().naive_utc()),
+                    pull_remote_finished_datetime: Some(chrono::Utc::now().naive_utc()),
                     ..self.row.clone()
                 }
             }
             SyncStep::Integrate => SyncLogRow {
-                integration_done_datetime: Some(chrono::Utc::now().naive_utc()),
+                integration_finished_datetime: Some(chrono::Utc::now().naive_utc()),
                 ..self.row.clone()
             },
         };
