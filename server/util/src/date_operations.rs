@@ -14,7 +14,7 @@ pub fn date_with_days_offset(date: &NaiveDate, days_offset: i32) -> NaiveDate {
 }
 
 pub fn date_now() -> NaiveDate {
-    Utc::now().naive_local().date()
+    Utc::now().naive_utc().date()
 }
 
 pub fn datetime_with_offset(date: &NaiveDateTime, off_set: Duration) -> NaiveDateTime {

@@ -1,9 +1,6 @@
 use std::{collections::HashMap, sync::Arc};
 
-use actix_web::{
-    web::{self, Data},
-    App, HttpServer, 
-};
+use actix_web::{web::{self, Data}, HttpServer, App};
 use chrono::{NaiveDateTime, Utc};
 use repository::{
     mock::{mock_store_a, MockDataInserts, insert_extra_mock_data, MockData, mock_store_b},
@@ -45,7 +42,7 @@ async fn sync_status() {
     } =
         setup_all_and_service_provider("sync_status", MockDataInserts::none().names().stores()).await;
 
-// Test INITIALISATION
+    // Test INITIALISATION
         let  tester = get_initialisation_sync_status_tester(service_provider.clone());
     let tester_data = Data::new(Mutex::new(tester));
     run_server_and_sync(service_provider.clone(), tester_data.clone(), PORT)
@@ -71,7 +68,7 @@ async fn sync_status() {
             
         }),
     ).await;
-    let ctx = service_provider.context().unwrap();
+    let ctx = service_provider.basic_context().unwrap();
 assert_eq!(service_provider.sync_status_service.number_of_records_in_push_queue(&ctx).unwrap(), 3);
 
     let tester = get_push_and_error_sync_status_tester(service_provider.clone()) ;
@@ -525,7 +522,7 @@ impl Tester {
             previous_status: Default::default(),
             iterations: HashMap::new(),
             tests: HashMap::new(),
-            previous_date: Utc::now().naive_local(),
+            previous_date: Utc::now().naive_utc(),
         }
     }
 
@@ -541,15 +538,15 @@ impl Tester {
             None => unreachable!("Could not match route ({})", route),
         };
 
-        let ctx = self.service_provider.context().unwrap();
+        let ctx = self.service_provider.basic_context().unwrap();
 
         let iteration = self.iterations.entry(route.clone()).or_insert(0);
 
-        let now = Utc::now().naive_local();
+        let now = Utc::now().naive_utc();
 
         let input = TestInput {
             now,
-            current_status: self.service_provider.sync_status_service.get_latest_sync_status(&ctx).unwrap(),
+            current_status: self.service_provider.sync_status_service.get_latest_sync_status(&ctx).unwrap().unwrap(),
             previous_status: self.previous_status.clone(),
             iteration: *iteration,
             previous_datetime: self.previous_date,
