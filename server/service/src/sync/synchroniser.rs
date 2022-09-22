@@ -1,18 +1,15 @@
 use crate::{
     service_provider::{ServiceContext, ServiceProvider},
-    sync::{
-        actor::{get_sync_actors, SyncReceiverActor, SyncSenderActor},
-        sync_status::logger::SyncStep,
-    },
+    sync::sync_status::logger::SyncStep,
 };
 use log::{info, warn};
 use repository::{RepositoryError, StorageConnection, SyncBufferAction};
-use std::{sync::Arc, time::Duration};
+use std::sync::Arc;
 
 use super::{
     api::SyncApiV5,
     central_data_synchroniser::CentralDataSynchroniser,
-    remote_data_synchroniser::{RemoteDataSynchroniser, RemoteSyncState},
+    remote_data_synchroniser::RemoteDataSynchroniser,
     settings::SyncSettings,
     sync_buffer::SyncBuffer,
     sync_status::logger::SyncLogger,
@@ -71,21 +68,6 @@ impl Synchroniser {
         })
     }
 
-    /// Runs the continues sync process (not suppose to return)
-    pub async fn run(&mut self) {
-        let (mut sync_sender, mut sync_receiver): (SyncSenderActor, SyncReceiverActor) =
-            get_sync_actors();
-
-        tokio::select! {
-            () = async {
-              sync_sender.schedule_send(Duration::from_secs(self.settings.interval_sec)).await;
-            } => unreachable!("Sync receiver unexpectedly died!?"),
-            () = async {
-                sync_receiver.listen(self).await;
-            } => unreachable!("Sync scheduler unexpectedly died!?"),
-        };
-    }
-
     pub async fn sync(&self) -> anyhow::Result<()> {
         let ctx = self.service_provider.basic_context()?;
         let mut logger = SyncLogger::start(&ctx.connection)?;
@@ -107,43 +89,42 @@ impl Synchroniser {
         logger: &mut SyncLogger<'a>,
         ctx: &'a ServiceContext,
     ) -> anyhow::Result<()> {
-        let service = &self.service_provider.settings;
         let batch_size = &self.settings.batch_size;
+        let sync_status_service = &self.service_provider.sync_status_service;
 
-        if service.is_sync_disabled(&ctx)? {
+        if self.service_provider.settings.is_sync_disabled(&ctx)? {
+            // TODO logger ?
             warn!("Sync is disabled, skipping");
             return Ok(());
         }
 
-        let remote_sync_state = RemoteSyncState::new(&ctx.connection);
         // Remote data was initialised
-        let is_initialised = remote_sync_state.initial_remote_data_synced()?;
+        let is_initialised = sync_status_service.is_initialised(ctx)?;
         // Initialisation request was sent and successfully processed
-        let is_sync_queue_initialised = remote_sync_state.sync_queue_initalised()?;
+        let is_sync_queue_initialised = sync_status_service.is_sync_queue_initialised(ctx)?;
 
         // REQUEST INITIALISATION
+        logger.start_step(SyncStep::PrepareInitial)?;
         if !is_sync_queue_initialised {
-            logger.start_step(SyncStep::PrepareInitial)?;
             self.remote.request_initialisation().await?;
-            remote_sync_state.set_sync_queue_initialised()?;
-            logger.done_step(SyncStep::PrepareInitial)?;
         }
+        logger.done_step(SyncStep::PrepareInitial)?;
 
         // First push before pulling, this avoids records being pulled from central server
         // and overwritting existing records waiting to be pulled
 
         // PUSH
         // Only push if initialised (site data was initialised on central and successfully pulled)
+        logger.start_step(SyncStep::Push)?;
         if is_initialised {
-            logger.start_step(SyncStep::Push)?;
             self.remote
                 .push(&ctx.connection, batch_size.remote_push, logger)
                 .await?;
             self.remote
                 .wait_for_integration(INTEGRATION_POLL_PERIOD_SECONDS, INTEGRATION_TIMEOUT_SECONDS)
                 .await?;
-            logger.done_step(SyncStep::Push)?;
         }
+        logger.done_step(SyncStep::Push)?;
 
         // PULL CENTRAL
         logger.start_step(SyncStep::PullCentral)?;
@@ -167,7 +148,8 @@ impl Synchroniser {
         logger.done_step(SyncStep::Integrate)?;
 
         if !is_initialised {
-            self.remote.set_initialised(&ctx.connection)?;
+            self.remote.advance_push_cursor(&ctx.connection)?;
+            self.service_provider.site_is_initialised_trigger.trigger();
         }
 
         ctx.processors_trigger

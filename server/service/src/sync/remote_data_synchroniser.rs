@@ -71,23 +71,17 @@ impl RemoteDataSynchroniser {
         Ok(())
     }
 
-    /// Request initialisation
-    pub(crate) fn set_initialised(
+    /// Update push cursor after initial sync, i.e. set it to the end of the just received data
+    /// so we only push new data to the central server
+    pub(crate) fn advance_push_cursor(
         &self,
         connection: &StorageConnection,
     ) -> Result<(), SetInitialisedError> {
-        let remote_sync_state = RemoteSyncState::new(&connection);
-        // Update push cursor after initial sync, i.e. set it to the end of the just received data
-        // so we only push new data to the central server
         let cursor = ChangelogRepository::new(connection)
             .latest_cursor()
-            .map_err(SetInitialisedError)? as u32;
-        remote_sync_state
-            .update_push_cursor(cursor + 1)
             .map_err(SetInitialisedError)?;
-        remote_sync_state
-            .set_initial_remote_data_synced()
-            .map_err(SetInitialisedError)?;
+
+        update_push_cursor(connection, cursor + 1).map_err(SetInitialisedError)?;
         Ok(())
     }
 
@@ -156,10 +150,9 @@ impl RemoteDataSynchroniser {
         let change_log_filter = get_active_records_on_site_filter(connection)
             .map_err(Error::GetActiveStoresOnSiteError)?;
 
-        let state = RemoteSyncState::new(connection);
         loop {
             // TODO inside transaction
-            let cursor = state.get_push_cursor().map_err(Error::DatabaseError)?;
+            let cursor = get_push_cursor(connection).map_err(Error::DatabaseError)?;
             let changelogs = changelog_repo
                 .changelogs(cursor, batch_size, change_log_filter.clone())
                 .map_err(Error::DatabaseError)?;
@@ -184,8 +177,7 @@ impl RemoteDataSynchroniser {
 
             // Update cursor only if record for that cursor has been pushed/processed
             if let Some(last_pushed_cursor_id) = last_pushed_cursor {
-                state
-                    .update_push_cursor(last_pushed_cursor_id as u32 + 1)
+                update_push_cursor(connection, last_pushed_cursor_id as u64 + 1)
                     .map_err(Error::DatabaseError)?;
             };
 
@@ -266,55 +258,14 @@ pub(crate) fn translate_changelogs_to_push_records(
     Ok(records)
 }
 
-// This struct is only for updating values related to sync state, avoid using logic within associated methods
-pub struct RemoteSyncState<'a> {
-    key_value_store: KeyValueStoreRepository<'a>,
+pub(crate) fn get_push_cursor(connection: &StorageConnection) -> Result<u64, RepositoryError> {
+    let value =
+        KeyValueStoreRepository::new(connection).get_i32(KeyValueType::RemoteSyncPushCursor)?;
+    let cursor = value.unwrap_or(0);
+    Ok(cursor as u64)
 }
 
-impl<'a> RemoteSyncState<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
-        RemoteSyncState {
-            key_value_store: KeyValueStoreRepository::new(connection),
-        }
-    }
-
-    /// Initalisation request was sent and successfull processed
-    pub fn sync_queue_initalised(&self) -> Result<bool, RepositoryError> {
-        let value = self
-            .key_value_store
-            .get_bool(KeyValueType::RemoteSyncInitilisationStarted)?;
-        Ok(value.unwrap_or(false))
-    }
-
-    pub fn set_sync_queue_initialised(&self) -> Result<(), RepositoryError> {
-        self.key_value_store
-            .set_bool(KeyValueType::RemoteSyncInitilisationStarted, Some(true))
-    }
-
-    /// Remote data was initialised
-    pub fn initial_remote_data_synced(&self) -> Result<bool, RepositoryError> {
-        let value = self
-            .key_value_store
-            .get_bool(KeyValueType::RemoteSyncInitilisationFinished)?;
-        Ok(value.unwrap_or(false))
-    }
-
-    // This method should always be coupled with updating of RemoteSyncPushCursor to latest change log + 1
-    pub fn set_initial_remote_data_synced(&self) -> Result<(), RepositoryError> {
-        self.key_value_store
-            .set_bool(KeyValueType::RemoteSyncInitilisationFinished, Some(true))
-    }
-
-    pub fn get_push_cursor(&self) -> Result<u64, RepositoryError> {
-        let value = self
-            .key_value_store
-            .get_i32(KeyValueType::RemoteSyncPushCursor)?;
-        let cursor = value.unwrap_or(0);
-        Ok(cursor as u64)
-    }
-
-    pub fn update_push_cursor(&self, cursor: u32) -> Result<(), RepositoryError> {
-        self.key_value_store
-            .set_i32(KeyValueType::RemoteSyncPushCursor, Some(cursor as i32))
-    }
+fn update_push_cursor(connection: &StorageConnection, cursor: u64) -> Result<(), RepositoryError> {
+    KeyValueStoreRepository::new(connection)
+        .set_i32(KeyValueType::RemoteSyncPushCursor, Some(cursor as i32))
 }
