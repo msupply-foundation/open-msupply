@@ -68,6 +68,8 @@ impl EqualFilter<f64> {
             not_equal_to: None,
             equal_any: None,
             not_equal_all: None,
+            equal_any_or_null: None,
+            is_null: None,
         }
     }
     pub fn not_equal_to_f64(value: f64) -> Self {
@@ -76,6 +78,8 @@ impl EqualFilter<f64> {
             not_equal_to: Some(value),
             equal_any: None,
             not_equal_all: None,
+            equal_any_or_null: None,
+            is_null: None,
         }
     }
 }
