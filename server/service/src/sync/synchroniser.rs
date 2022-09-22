@@ -1,24 +1,31 @@
 use crate::{
-    apis::{sync_api_credentials::SyncCredentials, sync_api_v3::SyncApiV3, sync_api_v5::SyncApiV5},
-    service_provider::ServiceProvider,
+    service_provider::{ServiceContext, ServiceProvider},
+    sync::{
+        actor::{get_sync_actors, SyncReceiverActor, SyncSenderActor},
+        SyncLogger, SyncStep,
+    },
 };
-use log::warn;
-use reqwest::{Client, Url};
+use log::{info, warn};
+use repository::{RepositoryError, StorageConnection, SyncBufferAction};
 use std::{sync::Arc, time::Duration};
 
 use super::{
-    central_data_synchroniser::{CentralDataSynchroniser, CentralSyncError},
-    get_sync_actors,
-    remote_data_synchroniser::RemoteDataSynchroniser,
+    api::SyncApiV5,
+    central_data_synchroniser::CentralDataSynchroniser,
+    remote_data_synchroniser::{RemoteDataSynchroniser, RemoteSyncState},
     settings::SyncSettings,
-    SyncReceiverActor, SyncSenderActor,
+    sync_buffer::SyncBuffer,
+    translation_and_integration::{TranslationAndIntegration, TranslationAndIntegrationResults},
 };
+
+const INTEGRATION_POLL_PERIOD_SECONDS: u64 = 1;
+const INTEGRATION_TIMEOUT_SECONDS: u64 = 15;
 
 pub struct Synchroniser {
     settings: SyncSettings,
     service_provider: Arc<ServiceProvider>,
-    pub(crate) central_data: CentralDataSynchroniser,
-    pub(crate) remote_data: RemoteDataSynchroniser,
+    central: CentralDataSynchroniser,
+    remote: RemoteDataSynchroniser,
 }
 
 /// There are three types of data that is synced between the central server and the remote server:
@@ -47,93 +54,20 @@ pub struct Synchroniser {
 /// pulled from the central server through this queue.
 /// 3) Remote data is regularly pushed to the central server.
 ///
-#[allow(unused_assignments)]
 impl Synchroniser {
     pub fn new(
         settings: SyncSettings,
         service_provider: Arc<ServiceProvider>,
     ) -> anyhow::Result<Self> {
-        let client = Client::new();
-        let url = Url::parse(&settings.url)?;
-        let hardware_id = service_provider.app_data_service.get_hardware_id()?;
-        let credentials = SyncCredentials {
-            username: settings.username.clone(),
-            password_sha256: settings.password_sha256.clone(),
-        };
-        let sync_api_v5 = SyncApiV5::new(
-            url.clone(),
-            credentials.clone(),
-            client.clone(),
-            &hardware_id,
-        );
-        let sync_api_v3 = SyncApiV3::new(url, credentials, client, &hardware_id)?;
+        let sync_api_v5 = SyncApiV5::new(&settings, &service_provider)?;
         Ok(Synchroniser {
-            remote_data: RemoteDataSynchroniser {
+            remote: RemoteDataSynchroniser {
                 sync_api_v5: sync_api_v5.clone(),
-                sync_api_v3,
-                site_id: settings.site_id,
-                central_server_site_id: settings.central_server_site_id,
             },
             settings,
             service_provider,
-            central_data: CentralDataSynchroniser { sync_api_v5 },
+            central: CentralDataSynchroniser { sync_api_v5 },
         })
-    }
-
-    pub async fn initial_pull(&self) -> anyhow::Result<()> {
-        let ctx = self
-            .service_provider
-            .basic_context()
-            .map_err(CentralSyncError::from_database_error)?;
-        let service = &self.service_provider.settings;
-
-        if service
-            .is_sync_disabled(&ctx)
-            .map_err(CentralSyncError::from_database_error)?
-        {
-            warn!("Sync is disabled, skipping");
-            return Ok(());
-        }
-
-        // first pull data from the central server
-        self.central_data
-            .pull_and_integrate_records(&ctx.connection)
-            .await?;
-
-        self.remote_data.initial_pull(&ctx.connection).await?;
-
-        Ok(())
-    }
-
-    /// Sync must not be called concurrently (e.g. sync cursors are fetched/updated without DB tx)
-    pub async fn sync(&self) -> anyhow::Result<()> {
-        let ctx = self
-            .service_provider
-            .basic_context()
-            .map_err(CentralSyncError::from_database_error)?;
-        let service = &self.service_provider.settings;
-
-        if service
-            .is_sync_disabled(&ctx)
-            .map_err(CentralSyncError::from_database_error)?
-        {
-            warn!("Sync is disabled, skipping");
-            return Ok(());
-        }
-
-        // First push before pulling. This avoids problems with the existing central server
-        // implementation...
-        self.remote_data.push_changes(&ctx.connection).await?;
-        self.remote_data.pull(&ctx.connection).await?;
-
-        // Check if there is new data on the central server. Do this after pulling the remote data
-        // in case the just pulled remote data requires the new central data.
-        self.central_data
-            .pull_and_integrate_records(&ctx.connection)
-            .await?;
-
-        RemoteDataSynchroniser::integrate_records(&ctx.connection).await?;
-        Ok(())
     }
 
     /// Runs the continues sync process (not suppose to return)
@@ -150,24 +84,139 @@ impl Synchroniser {
             } => unreachable!("Sync scheduler unexpectedly died!?"),
         };
     }
+
+    pub async fn sync(&self) -> anyhow::Result<()> {
+        let ctx = self.service_provider.basic_context()?;
+        let mut logger = SyncLogger::start(&ctx.connection)?;
+
+        let sync_result = self.sync_inner(&mut logger, &ctx).await;
+
+        if let Err(error) = &sync_result {
+            logger.error(error.to_string())?;
+        };
+
+        sync_result?;
+        logger.done()?;
+        Ok(())
+    }
+
+    /// Sync must not be called concurrently (e.g. sync cursors are fetched/updated without DB tx)
+    async fn sync_inner<'a>(
+        &self,
+        logger: &mut SyncLogger<'a>,
+        ctx: &'a ServiceContext,
+    ) -> anyhow::Result<()> {
+        let service = &self.service_provider.settings;
+
+        if service.is_sync_disabled(&ctx)? {
+            warn!("Sync is disabled, skipping");
+            return Ok(());
+        }
+
+        let remote_sync_state = RemoteSyncState::new(&ctx.connection);
+        // Remote data was initialised
+        let is_initialised = remote_sync_state.initial_remote_data_synced()?;
+        // Initialisation request was sent and successfully processed
+        let is_sync_queue_initialised = remote_sync_state.sync_queue_initalised()?;
+
+        // Request initialisation from server
+        if !is_sync_queue_initialised {
+            logger.start_step(SyncStep::PrepareInitial)?;
+            self.remote.request_initialisation().await?;
+            remote_sync_state.set_sync_queue_initialised()?;
+            logger.done_step(SyncStep::PrepareInitial)?;
+        }
+
+        // First push before pulling, this avoids records being pulled from central server
+        // and overwritting existing records waiting to be pulled
+
+        // Only push if initialised (site data was initialised on central and successfully pulled)
+        if is_initialised {
+            logger.start_step(SyncStep::Push)?;
+            self.remote.push(&ctx.connection, logger).await?;
+            self.remote
+                .wait_for_integration(INTEGRATION_POLL_PERIOD_SECONDS, INTEGRATION_TIMEOUT_SECONDS)
+                .await?;
+            logger.done_step(SyncStep::Push)?;
+        }
+
+        logger.start_step(SyncStep::PullCentral)?;
+        self.central.pull(&ctx.connection, logger).await?;
+        logger.done_step(SyncStep::PullCentral)?;
+
+        logger.start_step(SyncStep::PullRemote)?;
+        self.remote.pull(&ctx.connection, logger).await?;
+        logger.done_step(SyncStep::PullRemote)?;
+
+        logger.start_step(SyncStep::Integrate)?;
+        let (upserts, deletes) = integrate_and_translate_sync_buffer(&ctx.connection)?;
+        info!("Upsert Integration result: {:?}", upserts);
+        info!("Delete Integration result: {:?}", deletes);
+        logger.done_step(SyncStep::Integrate)?;
+
+        if !is_initialised {
+            self.remote.set_initialised(&ctx.connection)?;
+        }
+
+        ctx.processors_trigger
+            .trigger_requisition_transfer_processors();
+        ctx.processors_trigger
+            .trigger_shipment_transfer_processors();
+
+        Ok(())
+    }
+}
+
+/// Translation And Integration of sync buffer, pub since used in CLI
+pub fn integrate_and_translate_sync_buffer(
+    connection: &StorageConnection,
+) -> anyhow::Result<(
+    TranslationAndIntegrationResults,
+    TranslationAndIntegrationResults,
+)> {
+    // Integration is done inside of transaction, to make sure all records are available at the same time
+    // and maintain logical data integrity
+    let result = connection
+        .transaction_sync(|connection| {
+            let sync_buffer = SyncBuffer::new(connection);
+            let translation_and_integration =
+                TranslationAndIntegration::new(connection, &sync_buffer);
+            // Translate and integrate upserts (ordered by referencial database constraints)
+            let upsert_sync_buffer_records =
+                sync_buffer.get_ordered_sync_buffer_records(SyncBufferAction::Upsert)?;
+            let upsert_integration_result = translation_and_integration
+                .translate_and_integrate_sync_records(upsert_sync_buffer_records)?;
+
+            // Translate and integrate delete (ordered by referencial database constraints, in reverse)
+            let delete_sync_buffer_records =
+                sync_buffer.get_ordered_sync_buffer_records(SyncBufferAction::Delete)?;
+            let delete_integration_result = translation_and_integration
+                .translate_and_integrate_sync_records(delete_sync_buffer_records)?;
+
+            Ok((upsert_integration_result, delete_integration_result))
+        })
+        .map_err::<RepositoryError, _>(|e| e.to_inner_error())?;
+
+    Ok(result)
 }
 
 #[cfg(test)]
 mod tests {
-    use repository::{mock::MockDataInserts, test_db::setup_all};
-    use util::inline_init;
+    use repository::mock::MockDataInserts;
+    use util::{assert_matches, inline_init};
+
+    use crate::test_helpers::{setup_all_and_service_provider, ServiceTestContext};
 
     use super::*;
 
     #[actix_rt::test]
     async fn test_disabled_sync() {
-        let (_, _, connection_manager, _) =
-            setup_all("test_disabled_sync", MockDataInserts::none()).await;
+        let ServiceTestContext {
+            service_provider, ..
+        } = setup_all_and_service_provider("test_disabled_sync", MockDataInserts::none()).await;
 
         // 0.0.0.0:0 should hopefully be always unreachable and valid url
 
-        let service_provider =
-            Arc::new(ServiceProvider::new(connection_manager.clone(), "app_data"));
         let ctx = service_provider.basic_context().unwrap();
         let service = &service_provider.settings;
         let s = Synchroniser::new(
@@ -176,24 +225,13 @@ mod tests {
         )
         .unwrap();
 
-        // First check that both pulls fail (wrong url in default)
-        assert!(
-            matches!(s.initial_pull().await, Err(_)),
-            "initial pull should have failed"
-        );
-        assert!(matches!(s.sync().await, Err(_)), "sync should have failed");
+        // First check that synch fails (due to wrong url)
+
+        assert_matches!(s.sync().await, Err(_));
 
         // Check that disabling return Ok(())
         service.disable_sync(&ctx).unwrap();
 
-        assert!(
-            matches!(s.initial_pull().await, Ok(_)),
-            "initial should have succeeded with early return"
-        );
-
-        assert!(
-            matches!(s.sync().await, Ok(_)),
-            "sync should succeeded with early return"
-        );
+        assert_matches!(s.sync().await, Ok(_));
     }
 }

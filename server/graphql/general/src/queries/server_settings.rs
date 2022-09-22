@@ -39,14 +39,6 @@ impl SyncSettingsNode {
     pub async fn interval_sec(&self) -> u64 {
         self.settings.interval_sec
     }
-
-    pub async fn central_server_site_id(&self) -> u32 {
-        self.settings.central_server_site_id
-    }
-
-    pub async fn site_id(&self) -> u32 {
-        self.settings.site_id
-    }
 }
 
 #[derive(Debug)]

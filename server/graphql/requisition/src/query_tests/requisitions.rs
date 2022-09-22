@@ -17,6 +17,7 @@ mod graphql {
         service_provider::{ServiceContext, ServiceProvider},
         ListError, ListResult,
     };
+    use util::inline_init;
 
     use crate::RequisitionQueries;
 
@@ -242,10 +243,10 @@ mod graphql {
             );
 
             Ok(ListResult {
-                rows: vec![Requisition {
-                    requisition_row: mock_request_draft_requisition_all_fields().requisition,
-                    name_row: mock_name_a(),
-                }],
+                rows: vec![inline_init(|r: &mut Requisition| {
+                    r.requisition_row = mock_request_draft_requisition_all_fields().requisition;
+                    r.name_row = mock_name_a();
+                })],
                 count: 1,
             })
         }));

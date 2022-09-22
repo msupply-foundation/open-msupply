@@ -187,6 +187,10 @@ cargo test
 cargo test --features postgres
 ```
 
+- To run sync integration test
+
+See [Sync Integration Tests](service/src/sync/test/integration/README.md)
+
 ## Building docs
 
 Docs are built via github action, but can build local version with docker: [how to build docs locally](docker/zola_docs/README.md)

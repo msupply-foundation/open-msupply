@@ -1,7 +1,7 @@
+use crate::invoice::common::check_master_list_for_name;
+use crate::invoice::common::get_lines_for_invoice;
 use crate::invoice::common::AddToShipmentFromMasterListInput as ServiceInput;
-use crate::invoice::{check_invoice_exists, common::check_master_list_for_name};
-use crate::service_provider::ServiceContext;
-use crate::sync_processor::invoice::common::get_lines_for_invoice;
+use crate::{invoice::check_invoice_exists, service_provider::ServiceContext};
 use repository::EqualFilter;
 use repository::{
     InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
@@ -95,7 +95,7 @@ fn generate(
 
     let item_ids_in_invoice: Vec<String> = invoice_lines
         .into_iter()
-        .map(|invoice_line| invoice_line.item_id)
+        .map(|invoice_line| invoice_line.invoice_line_row.item_id)
         .collect();
 
     let master_list_lines_not_in_invoice = MasterListLineRepository::new(&ctx.connection)

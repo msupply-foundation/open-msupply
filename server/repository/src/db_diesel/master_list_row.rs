@@ -50,10 +50,30 @@ impl<'a> MasterListRowRepository<'a> {
         Ok(())
     }
 
-    pub async fn find_one_by_id(&self, item_id: &str) -> Result<MasterListRow, RepositoryError> {
+    pub async fn find_one_by_id(
+        &self,
+        master_list_id: &str,
+    ) -> Result<MasterListRow, RepositoryError> {
         let result = master_list
-            .filter(id.eq(item_id))
+            .filter(id.eq(master_list_id))
             .first(&self.connection.connection)?;
         Ok(result)
+    }
+
+    pub fn find_one_by_id_option(
+        &self,
+        master_list_id: &str,
+    ) -> Result<Option<MasterListRow>, RepositoryError> {
+        let result = master_list
+            .filter(id.eq(master_list_id))
+            .first(&self.connection.connection)
+            .optional()?;
+        Ok(result)
+    }
+
+    pub fn delete(&self, master_list_id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(master_list.filter(id.eq(master_list_id)))
+            .execute(&self.connection.connection)?;
+        Ok(())
     }
 }

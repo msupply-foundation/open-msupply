@@ -4,12 +4,12 @@ import { GraphQLClient } from 'graphql-request';
 import * as Dom from 'graphql-request/dist/types.dom';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type SyncSettingsFragment = { __typename: 'SyncSettingsNode', centralServerSiteId: number, intervalSec: number, siteId: number, url: string, username: string };
+export type SyncSettingsFragment = { __typename: 'SyncSettingsNode', intervalSec: number, url: string, username: string };
 
 export type ServerSettingsQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
 
-export type ServerSettingsQuery = { __typename: 'FullQuery', serverSettings: { __typename: 'ServerSettingsNode', status: Types.ServerStatus, syncSettingsDb?: { __typename: 'SyncSettingsNode', centralServerSiteId: number, intervalSec: number, siteId: number, url: string, username: string } | null, syncSettings?: { __typename: 'SyncSettingsNode', centralServerSiteId: number, intervalSec: number, siteId: number, url: string, username: string } | null } };
+export type ServerSettingsQuery = { __typename: 'FullQuery', serverSettings: { __typename: 'ServerSettingsNode', status: Types.ServerStatus, syncSettingsDb?: { __typename: 'SyncSettingsNode', intervalSec: number, url: string, username: string } | null, syncSettings?: { __typename: 'SyncSettingsNode', intervalSec: number, url: string, username: string } | null } };
 
 export type ServerRestartQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
@@ -26,9 +26,7 @@ export type UpdateServerSettingsMutation = { __typename: 'FullMutation', updateS
 export const SyncSettingsFragmentDoc = gql`
     fragment SyncSettings on SyncSettingsNode {
   __typename
-  centralServerSiteId
   intervalSec
-  siteId
   url
   username
 }

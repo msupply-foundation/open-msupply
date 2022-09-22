@@ -36,9 +36,6 @@ pub trait SettingsServiceTrait: Sync + Send {
         let password_sha256 =
             key_value_store.get_string(KeyValueType::SettingsSyncPasswordSha256)?;
         let interval_sec = key_value_store.get_i64(KeyValueType::SettingsSyncIntervalSec)?;
-        let central_server_site_id =
-            key_value_store.get_i32(KeyValueType::SettingsSyncCentralServerSiteId)?;
-        let site_id = key_value_store.get_i32(KeyValueType::SettingsSyncSiteId)?;
 
         let make_settings = || {
             Some(SyncSettings {
@@ -46,8 +43,6 @@ pub trait SettingsServiceTrait: Sync + Send {
                 username: username?,
                 password_sha256: password_sha256?,
                 interval_sec: interval_sec? as u64,
-                central_server_site_id: central_server_site_id? as u32,
-                site_id: site_id? as u32,
             })
         };
 
@@ -78,14 +73,6 @@ pub trait SettingsServiceTrait: Sync + Send {
                 key_value_store.set_i64(
                     KeyValueType::SettingsSyncIntervalSec,
                     Some(settings.interval_sec as i64),
-                )?;
-                key_value_store.set_i32(
-                    KeyValueType::SettingsSyncCentralServerSiteId,
-                    Some(settings.central_server_site_id as i32),
-                )?;
-                key_value_store.set_i32(
-                    KeyValueType::SettingsSyncSiteId,
-                    Some(settings.site_id as i32),
                 )?;
                 Ok(())
             })

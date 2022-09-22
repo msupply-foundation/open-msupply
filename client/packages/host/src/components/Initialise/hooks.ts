@@ -4,9 +4,11 @@ import { AppRoute } from '@openmsupply-client/config';
 import {
   AuthenticationError,
   AuthError,
+  LocaleKey,
   LocalStorage,
   ServerStatus,
   useNavigate,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { useHost } from '../../api/hooks';
 
@@ -18,14 +20,12 @@ interface InitialiseForm {
   error?: AuthenticationError;
   isLoading: boolean;
   password: string;
-  siteId?: number;
   username: string;
   url: string;
   setError: (error?: AuthenticationError) => void;
   setIsLoading: (isLoading: boolean) => void;
   setPassword: (password: string) => void;
   setUsername: (username: string) => void;
-  setSiteId: (siteId: number) => void;
   setUrl: (url: string) => void;
 }
 
@@ -35,14 +35,12 @@ const useInitialiseFormState = create<InitialiseForm>(set => ({
   password: '',
   username: '',
   url: 'https://',
-  siteId: undefined,
   setError: (error?: AuthenticationError) =>
     set(state => ({ ...state, error })),
   setIsLoading: (isLoading: boolean) => set(state => ({ ...state, isLoading })),
   setPassword: (password: string) => set(state => ({ ...state, password })),
   setUsername: (username: string) => set(state => ({ ...state, username })),
   setUrl: (url: string) => set(state => ({ ...state, url })),
-  setSiteId: (siteId: number) => set(state => ({ ...state, siteId })),
 }));
 
 export const useInitialiseForm = () => {
@@ -57,7 +55,6 @@ export const useInitialiseForm = () => {
     error,
     setError,
     url,
-    siteId,
   } = state;
   const [isPolling, setIsPolling] = useState(false);
   const [isBootstrap, setIsBootstrap] = useState(false);
@@ -66,34 +63,48 @@ export const useInitialiseForm = () => {
     refetchInterval: POLLING_INTERVAL,
     enabled: isPolling,
   });
+  const t = useTranslation('app');
+  const parseErrorMessage = (error: Error, defaultKey: LocaleKey) => {
+    const matches = /code: "([a-zA-Z_]+?)"/g.exec(error?.message);
+    const key =
+      matches && matches.length > 1
+        ? (`error.${matches[1]}` as LocaleKey)
+        : defaultKey;
+
+    return t(key);
+  };
 
   const onSave = async () => {
     setError();
     setIsLoading(true);
     setIsBootstrap(false);
     const syncSettings = {
-      centralServerSiteId: 1,
       intervalSec: 300,
       password,
-      siteId: siteId || 2,
       url,
       username,
     };
+    try {
+      await update(syncSettings);
+    } catch (e) {
+      setError({
+        message: parseErrorMessage(e as Error, 'error.unable_to_save_settings'),
+      });
+      return setIsLoading(false);
+    }
 
-    await update(syncSettings).catch(e => {
-      console.error(e);
-      setError({ message: 'Unable to save settings' });
-      setIsLoading(false);
-      return;
-    });
+    try {
+      await restart();
+    } catch (e) {
+      setError({
+        message: parseErrorMessage(
+          e as Error,
+          'error.unable_to_restart_server'
+          ),
+        });
+      }
+
     setPassword('');
-
-    await restart().catch(e => {
-      console.error(e);
-      setError({ message: 'Unable to restart the server' });
-      setIsLoading(false);
-      return;
-    });
 
     setTimeout(() => {
       setIsPolling(true);

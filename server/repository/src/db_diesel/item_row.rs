@@ -124,4 +124,9 @@ impl<'a> ItemRowRepository<'a> {
             .load(&self.connection.connection)?;
         Ok(result)
     }
+
+    pub fn delete(&self, item_id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(item.filter(id.eq(item_id))).execute(&self.connection.connection)?;
+        Ok(())
+    }
 }
