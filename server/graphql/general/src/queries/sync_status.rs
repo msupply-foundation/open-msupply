@@ -12,8 +12,10 @@ pub struct SyncStatusNode {
 pub struct SyncStatusWithProgressNode {
     started: NaiveDateTime,
     finished: Option<NaiveDateTime>,
-    total_progress: Option<u32>,
-    done_progress: Option<u32>,
+    // Total number of records to pull or push
+    total: Option<u32>,
+    // Number of records pulled or pushed
+    done: Option<u32>,
 }
 
 #[derive(SimpleObject)]
@@ -68,22 +70,22 @@ impl SyncInfoQueries {
                 .map(|status| SyncStatusWithProgressNode {
                     started: status.started,
                     finished: status.finished,
-                    total_progress: status.total_progress,
-                    done_progress: status.done_progress,
+                    total: status.total,
+                    done: status.done,
                 }),
             pull_remote: sync_status
                 .pull_remote
                 .map(|status| SyncStatusWithProgressNode {
                     started: status.started,
                     finished: status.finished,
-                    total_progress: status.total_progress,
-                    done_progress: status.done_progress,
+                    total: status.total,
+                    done: status.done,
                 }),
             push: sync_status.push.map(|status| SyncStatusWithProgressNode {
                 started: status.started,
                 finished: status.finished,
-                total_progress: status.total_progress,
-                done_progress: status.done_progress,
+                total: status.total,
+                done: status.done,
             }),
         })
     }
