@@ -22,7 +22,7 @@ export type MasterListsQueryVariables = Types.Exact<{
 }>;
 
 
-export type MasterListsQuery = { __typename: 'FullQuery', masterLists: { __typename: 'MasterListConnector', totalCount: number, nodes: Array<{ __typename: 'MasterListNode', name: string, code: string, description: string, id: string }> } };
+export type MasterListsQuery = { __typename: 'Queries', masterLists: { __typename: 'MasterListConnector', totalCount: number, nodes: Array<{ __typename: 'MasterListNode', name: string, code: string, description: string, id: string }> } };
 
 export type MasterListQueryVariables = Types.Exact<{
   filter?: Types.InputMaybe<Types.MasterListFilterInput>;
@@ -30,7 +30,7 @@ export type MasterListQueryVariables = Types.Exact<{
 }>;
 
 
-export type MasterListQuery = { __typename: 'FullQuery', masterLists: { __typename: 'MasterListConnector', totalCount: number, nodes: Array<{ __typename: 'MasterListNode', name: string, code: string, description: string, id: string, lines: { __typename: 'MasterListLineConnector', nodes: Array<{ __typename: 'MasterListLineNode', id: string, item: { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null } }> } }> } };
+export type MasterListQuery = { __typename: 'Queries', masterLists: { __typename: 'MasterListConnector', totalCount: number, nodes: Array<{ __typename: 'MasterListNode', name: string, code: string, description: string, id: string, lines: { __typename: 'MasterListLineConnector', nodes: Array<{ __typename: 'MasterListLineNode', id: string, item: { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null } }> } }> } };
 
 export const MasterListItemFragmentDoc = gql`
     fragment MasterListItem on ItemNode {

@@ -4,24 +4,38 @@ import { GraphQLClient } from 'graphql-request';
 import * as Dom from 'graphql-request/dist/types.dom';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type SyncSettingsFragment = { __typename: 'SyncSettingsNode', intervalSec: number, url: string, username: string };
+export type SyncSettingsFragment = { __typename: 'SyncSettingsNode', intervalSec?: number | null, url?: string | null, username?: string | null };
 
-export type ServerSettingsQueryVariables = Types.Exact<{ [key: string]: never; }>;
-
-
-export type ServerSettingsQuery = { __typename: 'FullQuery', serverSettings: { __typename: 'ServerSettingsNode', status: Types.ServerStatus, syncSettingsDb?: { __typename: 'SyncSettingsNode', intervalSec: number, url: string, username: string } | null, syncSettings?: { __typename: 'SyncSettingsNode', intervalSec: number, url: string, username: string } | null } };
-
-export type ServerRestartQueryVariables = Types.Exact<{ [key: string]: never; }>;
+export type SyncSettingsQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
 
-export type ServerRestartQuery = { __typename: 'FullQuery', serverRestart: { __typename: 'RestartNode', message: string } };
+export type SyncSettingsQuery = { __typename: 'Queries', syncSettings: { __typename: 'SyncSettingsNode', intervalSec?: number | null, url?: string | null, username?: string | null } };
 
-export type UpdateServerSettingsMutationVariables = Types.Exact<{
-  syncSettings: Types.UpdateSyncSettingsInput;
+export type SyncStateQueryVariables = Types.Exact<{ [key: string]: never; }>;
+
+
+export type SyncStateQuery = { __typename: 'Queries', syncState: Types.SyncStateType };
+
+export type InitialiseSiteMutationVariables = Types.Exact<{
+  syncSettings: Types.SyncSettingsInput;
 }>;
 
 
-export type UpdateServerSettingsMutation = { __typename: 'FullMutation', updateServerSettings: { __typename: 'ServerSettingsNode', status: Types.ServerStatus } };
+export type InitialiseSiteMutation = { __typename: 'Mutations', initialiseSite: { __typename: 'SyncSettingsNode', intervalSec?: number | null, url?: string | null, username?: string | null } };
+
+export type SyncStatusFragment = { __typename: 'SyncStatusNode', finished?: any | null, started: any };
+
+export type SyncStatusWithProgressFragment = { __typename: 'SyncStatusWithProgressNode', finished?: any | null, started: any, doneProgress?: number | null, totalProgress?: number | null };
+
+export type SyncStatusQueryVariables = Types.Exact<{ [key: string]: never; }>;
+
+
+export type SyncStatusQuery = { __typename: 'Queries', latestSyncStatus?: { __typename: 'FullSyncStatusNode', error?: string | null, isSyncing: boolean, integration?: { __typename: 'SyncStatusNode', finished?: any | null, started: any } | null, prepareInitial?: { __typename: 'SyncStatusNode', finished?: any | null, started: any } | null, pullCentral?: { __typename: 'SyncStatusWithProgressNode', finished?: any | null, started: any, doneProgress?: number | null, totalProgress?: number | null } | null, pullRemote?: { __typename: 'SyncStatusWithProgressNode', finished?: any | null, started: any, doneProgress?: number | null, totalProgress?: number | null } | null, push?: { __typename: 'SyncStatusWithProgressNode', finished?: any | null, started: any, doneProgress?: number | null, totalProgress?: number | null } | null, summary: { __typename: 'SyncStatusNode', finished?: any | null, started: any } } | null };
+
+export type ManualSyncMutationVariables = Types.Exact<{ [key: string]: never; }>;
+
+
+export type ManualSyncMutation = { __typename: 'Mutations', manualSync: string };
 
 export const SyncSettingsFragmentDoc = gql`
     fragment SyncSettings on SyncSettingsNode {
@@ -31,38 +45,76 @@ export const SyncSettingsFragmentDoc = gql`
   username
 }
     `;
-export const ServerSettingsDocument = gql`
-    query serverSettings {
-  serverSettings {
-    ... on ServerSettingsNode {
-      __typename
-      status
-      syncSettingsDb {
-        ...SyncSettings
-      }
-      syncSettings {
-        ...SyncSettings
-      }
+export const SyncStatusFragmentDoc = gql`
+    fragment SyncStatus on SyncStatusNode {
+  __typename
+  finished
+  started
+}
+    `;
+export const SyncStatusWithProgressFragmentDoc = gql`
+    fragment SyncStatusWithProgress on SyncStatusWithProgressNode {
+  __typename
+  finished
+  started
+  doneProgress
+  totalProgress
+}
+    `;
+export const SyncSettingsDocument = gql`
+    query syncSettings {
+  syncSettings {
+    ... on SyncSettingsNode {
+      ...SyncSettings
     }
   }
 }
     ${SyncSettingsFragmentDoc}`;
-export const ServerRestartDocument = gql`
-    query serverRestart {
-  serverRestart {
-    __typename
-    message
-  }
+export const SyncStateDocument = gql`
+    query syncState {
+  syncState
 }
     `;
-export const UpdateServerSettingsDocument = gql`
-    mutation updateServerSettings($syncSettings: UpdateSyncSettingsInput!) {
-  updateServerSettings(input: {syncSettings: $syncSettings}) {
-    ... on ServerSettingsNode {
-      __typename
-      status
+export const InitialiseSiteDocument = gql`
+    mutation initialiseSite($syncSettings: SyncSettingsInput!) {
+  initialiseSite(input: $syncSettings) {
+    ... on SyncSettingsNode {
+      ...SyncSettings
     }
   }
+}
+    ${SyncSettingsFragmentDoc}`;
+export const SyncStatusDocument = gql`
+    query syncStatus {
+  latestSyncStatus {
+    __typename
+    error
+    integration {
+      ...SyncStatus
+    }
+    isSyncing
+    prepareInitial {
+      ...SyncStatus
+    }
+    pullCentral {
+      ...SyncStatusWithProgress
+    }
+    pullRemote {
+      ...SyncStatusWithProgress
+    }
+    push {
+      ...SyncStatusWithProgress
+    }
+    summary {
+      ...SyncStatus
+    }
+  }
+}
+    ${SyncStatusFragmentDoc}
+${SyncStatusWithProgressFragmentDoc}`;
+export const ManualSyncDocument = gql`
+    mutation manualSync {
+  manualSync
 }
     `;
 
@@ -73,14 +125,20 @@ const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationTy
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
-    serverSettings(variables?: ServerSettingsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ServerSettingsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ServerSettingsQuery>(ServerSettingsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'serverSettings', 'query');
+    syncSettings(variables?: SyncSettingsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<SyncSettingsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<SyncSettingsQuery>(SyncSettingsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'syncSettings', 'query');
     },
-    serverRestart(variables?: ServerRestartQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ServerRestartQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ServerRestartQuery>(ServerRestartDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'serverRestart', 'query');
+    syncState(variables?: SyncStateQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<SyncStateQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<SyncStateQuery>(SyncStateDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'syncState', 'query');
     },
-    updateServerSettings(variables: UpdateServerSettingsMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateServerSettingsMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateServerSettingsMutation>(UpdateServerSettingsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateServerSettings', 'mutation');
+    initialiseSite(variables: InitialiseSiteMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InitialiseSiteMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<InitialiseSiteMutation>(InitialiseSiteDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'initialiseSite', 'mutation');
+    },
+    syncStatus(variables?: SyncStatusQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<SyncStatusQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<SyncStatusQuery>(SyncStatusDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'syncStatus', 'query');
+    },
+    manualSync(variables?: ManualSyncMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ManualSyncMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ManualSyncMutation>(ManualSyncDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'manualSync', 'mutation');
     }
   };
 }
@@ -90,15 +148,15 @@ export type Sdk = ReturnType<typeof getSdk>;
  * @param resolver a function that accepts a captured request and may return a mocked response.
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
- * mockServerSettingsQuery((req, res, ctx) => {
+ * mockSyncSettingsQuery((req, res, ctx) => {
  *   return res(
- *     ctx.data({ serverSettings })
+ *     ctx.data({ syncSettings })
  *   )
  * })
  */
-export const mockServerSettingsQuery = (resolver: ResponseResolver<GraphQLRequest<ServerSettingsQueryVariables>, GraphQLContext<ServerSettingsQuery>, any>) =>
-  graphql.query<ServerSettingsQuery, ServerSettingsQueryVariables>(
-    'serverSettings',
+export const mockSyncSettingsQuery = (resolver: ResponseResolver<GraphQLRequest<SyncSettingsQueryVariables>, GraphQLContext<SyncSettingsQuery>, any>) =>
+  graphql.query<SyncSettingsQuery, SyncSettingsQueryVariables>(
+    'syncSettings',
     resolver
   )
 
@@ -106,15 +164,15 @@ export const mockServerSettingsQuery = (resolver: ResponseResolver<GraphQLReques
  * @param resolver a function that accepts a captured request and may return a mocked response.
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
- * mockServerRestartQuery((req, res, ctx) => {
+ * mockSyncStateQuery((req, res, ctx) => {
  *   return res(
- *     ctx.data({ serverRestart })
+ *     ctx.data({ syncState })
  *   )
  * })
  */
-export const mockServerRestartQuery = (resolver: ResponseResolver<GraphQLRequest<ServerRestartQueryVariables>, GraphQLContext<ServerRestartQuery>, any>) =>
-  graphql.query<ServerRestartQuery, ServerRestartQueryVariables>(
-    'serverRestart',
+export const mockSyncStateQuery = (resolver: ResponseResolver<GraphQLRequest<SyncStateQueryVariables>, GraphQLContext<SyncStateQuery>, any>) =>
+  graphql.query<SyncStateQuery, SyncStateQueryVariables>(
+    'syncState',
     resolver
   )
 
@@ -122,15 +180,47 @@ export const mockServerRestartQuery = (resolver: ResponseResolver<GraphQLRequest
  * @param resolver a function that accepts a captured request and may return a mocked response.
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
- * mockUpdateServerSettingsMutation((req, res, ctx) => {
+ * mockInitialiseSiteMutation((req, res, ctx) => {
  *   const { syncSettings } = req.variables;
  *   return res(
- *     ctx.data({ updateServerSettings })
+ *     ctx.data({ initialiseSite })
  *   )
  * })
  */
-export const mockUpdateServerSettingsMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateServerSettingsMutationVariables>, GraphQLContext<UpdateServerSettingsMutation>, any>) =>
-  graphql.mutation<UpdateServerSettingsMutation, UpdateServerSettingsMutationVariables>(
-    'updateServerSettings',
+export const mockInitialiseSiteMutation = (resolver: ResponseResolver<GraphQLRequest<InitialiseSiteMutationVariables>, GraphQLContext<InitialiseSiteMutation>, any>) =>
+  graphql.mutation<InitialiseSiteMutation, InitialiseSiteMutationVariables>(
+    'initialiseSite',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockSyncStatusQuery((req, res, ctx) => {
+ *   return res(
+ *     ctx.data({ latestSyncStatus })
+ *   )
+ * })
+ */
+export const mockSyncStatusQuery = (resolver: ResponseResolver<GraphQLRequest<SyncStatusQueryVariables>, GraphQLContext<SyncStatusQuery>, any>) =>
+  graphql.query<SyncStatusQuery, SyncStatusQueryVariables>(
+    'syncStatus',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockManualSyncMutation((req, res, ctx) => {
+ *   return res(
+ *     ctx.data({ manualSync })
+ *   )
+ * })
+ */
+export const mockManualSyncMutation = (resolver: ResponseResolver<GraphQLRequest<ManualSyncMutationVariables>, GraphQLContext<ManualSyncMutation>, any>) =>
+  graphql.mutation<ManualSyncMutation, ManualSyncMutationVariables>(
+    'manualSync',
     resolver
   )
