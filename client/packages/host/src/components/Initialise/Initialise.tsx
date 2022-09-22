@@ -4,13 +4,14 @@ import {
   LoadingButton,
   Box,
   Typography,
-  AlertIcon,
   useHostContext,
   SaveIcon,
+  AlertIcon,
 } from '@openmsupply-client/common';
 import { LoginTextInput } from '../Login/LoginTextInput';
 import { InitialiseLayout } from './InitialiseLayout';
 import { useInitialiseForm } from './hooks';
+import { SyncProgress } from '../SyncProgress';
 
 export const Initialise = () => {
   const t = useTranslation('app');
@@ -19,14 +20,17 @@ export const Initialise = () => {
   const {
     isValid,
     isLoading,
+    isInitialising,
     password,
     url,
     username,
-    onSave,
+    onInitialise,
+    onRetry,
     setPassword,
     setUsername,
     setUrl,
-    error,
+    siteCredentialsError: error,
+    syncStatus,
   } = useInitialiseForm();
 
   useEffect(() => {
@@ -40,7 +44,7 @@ export const Initialise = () => {
           fullWidth
           label={t('label.settings-username')}
           value={username}
-          disabled={isLoading}
+          disabled={isInitialising}
           onChange={e => setUsername(e.target.value)}
           inputProps={{
             autoComplete: 'username',
@@ -55,7 +59,7 @@ export const Initialise = () => {
           label={t('label.settings-password')}
           type="password"
           value={password}
-          disabled={isLoading}
+          disabled={isInitialising}
           onChange={e => setPassword(e.target.value)}
           inputProps={{
             autoComplete: 'current-password',
@@ -68,19 +72,26 @@ export const Initialise = () => {
           fullWidth
           label={t('label.settings-url')}
           value={url}
-          disabled={isLoading}
+          disabled={isInitialising}
           onChange={e => setUrl(e.target.value)}
         />
       }
-      SaveButton={
+      SyncProgress={
+        <SyncProgress syncStatus={syncStatus} isOperational={false} />
+      }
+      Button={
         <LoadingButton
           isLoading={isLoading}
-          onClick={onSave}
+          onClick={isInitialising ? onRetry : onInitialise}
           variant="outlined"
           startIcon={<SaveIcon />}
-          disabled={!isValid}
+          disabled={
+            !isValid &&
+            !isInitialising /* isValid would be false if isInitialising since password is emptied out */
+          }
         >
-          {t('button.save')}
+          {/* Retry will only be shown when not loading and is initialised (when sync error occured) */}
+          {isInitialising ? t('button.retry') : t('button.initialise')}
         </LoadingButton>
       }
       ErrorMessage={
@@ -97,8 +108,9 @@ export const Initialise = () => {
           </Box>
         )
       }
-      onSave={async () => {
-        if (isValid) await onSave();
+      onInitialise={async () => {
+        /* onInitialise from layout only happens on form key event, form is disabled when isInitialising */
+        if (isValid) await onInitialise();
       }}
     />
   );
