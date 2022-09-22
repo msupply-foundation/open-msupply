@@ -1,23 +1,30 @@
-import { UpdateSyncSettingsInput } from '@common/types';
+import { SyncSettingsInput } from '@common/types';
 import { Sdk } from './operations.generated';
 
 export const getHostQueries = (sdk: Sdk) => ({
   get: {
-    settings: async () => {
-      const result = await sdk.serverSettings();
-      return result?.serverSettings;
+    syncSettings: async () => {
+      const result = await sdk.syncSettings();
+      return result?.syncSettings;
+    },
+    syncState: async () => {
+      const result = await sdk.syncState();
+      return result?.syncState;
+    },
+    syncStatus: async () => {
+      const result = await sdk.syncStatus();
+      return result?.latestSyncStatus;
     },
   },
-  update: {
-    restart: async () => {
-      const result = await sdk.serverRestart();
-      return result?.serverRestart?.message || '';
-    },
-    syncSettings: async (settings: UpdateSyncSettingsInput) => {
-      const result = await sdk.updateServerSettings({
-        syncSettings: settings,
-      });
-      return result?.updateServerSettings;
-    },
+  manualSync: async () => {
+    await sdk.manualSync();
+    // manaulSync is a trigger that returns a string result (don't need to caputre it)
+    return;
+  },
+  initialise: async (settings: SyncSettingsInput) => {
+    const result = await sdk.initialiseSite({
+      syncSettings: settings,
+    });
+    return result?.initialiseSite;
   },
 });

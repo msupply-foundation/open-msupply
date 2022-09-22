@@ -1,5 +1,7 @@
-import { useSyncSettingsUpdate } from './useSyncSettingsUpdate';
+import { useInitialiseSite } from './useInitialiseSite';
+import { useManualSync } from './useManualSync';
 
 export const Sync = {
-  useSyncSettingsUpdate,
+  useInitialiseSite,
+  useManualSync,
 };

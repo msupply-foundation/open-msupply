@@ -5,33 +5,66 @@ fragment SyncSettings on SyncSettingsNode {
   username
 }
 
-query serverSettings {
-  serverSettings {
-    ... on ServerSettingsNode {
-      __typename
-      status
-      syncSettingsDb {
-        ...SyncSettings
-      }
-      syncSettings {
-        ...SyncSettings
-      }
+query syncSettings {
+  syncSettings {
+    ... on SyncSettingsNode {
+      ...SyncSettings
     }
   }
 }
 
-query serverRestart {
-  serverRestart {
+query syncState {
+  syncState
+}
+
+mutation initialiseSite($syncSettings: SyncSettingsInput!) {
+  initialiseSite(input: $syncSettings) {
+    ... on SyncSettingsNode {
+      ...SyncSettings
+    }
+  }
+}
+
+fragment SyncStatus on SyncStatusNode {
+  __typename
+  finished
+  started
+}
+
+fragment SyncStatusWithProgress on SyncStatusWithProgressNode {
+  __typename
+  finished
+  started
+  doneProgress
+  totalProgress
+}
+
+query syncStatus {
+  latestSyncStatus {
     __typename
-    message
+    error
+    integration {
+      ...SyncStatus
+    }
+    isSyncing
+    prepareInitial {
+      ...SyncStatus
+    }
+    pullCentral {
+      ...SyncStatusWithProgress
+    }
+    pullRemote {
+      ...SyncStatusWithProgress
+    }
+    push {
+      ...SyncStatusWithProgress
+    }
+    summary {
+      ...SyncStatus
+    }
   }
 }
 
-mutation updateServerSettings($syncSettings: UpdateSyncSettingsInput!) {
-  updateServerSettings(input: { syncSettings: $syncSettings }) {
-    ... on ServerSettingsNode {
-      __typename
-      status
-    }
-  }
+mutation manualSync {
+  manualSync
 }
