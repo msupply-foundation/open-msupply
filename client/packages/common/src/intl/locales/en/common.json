@@ -6,6 +6,7 @@
   "button.cancel": "Cancel",
   "button.close": "Close",
   "button.create-a-new-one": "Create a new one",
+  "button.initialise": "Initialise",
   "button.export": "Export",
   "button.language": "Language",
   "button.more": "More",
@@ -14,6 +15,7 @@
   "button.ok": "OK",
   "button.ok-and-next": "OK & Next",
   "button.print": "Print",
+  "button.retry": "Retry",
   "button.save": "Save",
   "button.select-a-color": "Select a color",
   "button.try-again": "Try again",
@@ -199,5 +201,10 @@
   "placeholder.search-by-name-or-code": "Search by name or code",
   "success": "Success!",
   "success.sync-settings": "Sync settings updated successfully!",
+  "sync-status.prepare": "Prepare",
+  "sync-status.pull-central": "Pull Central",
+  "sync-status.pull-remote": "Pull Remote",
+  "sync-status.push": "Push",
+  "sync-status.integrate": "Integrate",
   "table.show-columns": "Show / hide columns"
 }
