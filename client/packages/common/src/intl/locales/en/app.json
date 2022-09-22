@@ -72,6 +72,7 @@
   "error.site_name_not_found": "Site name not found",
   "error.unable_to_save_settings": "Unable to save settings",
   "error.unable_to_restart_server": "Unable to restart the server",
+  "error.unknown-sync-error": "Unknown sync error",
   "select-store": "Select store",
   "select-report": "Select Template",
   "error.server-not-found": "Problem finding local omSupply server",
