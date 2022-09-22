@@ -1,7 +1,6 @@
 #[cfg(test)]
 pub(crate) mod test;
 
-mod actor;
 pub(crate) mod api;
 pub(crate) mod central_data_synchroniser;
 pub(crate) mod remote_data_synchroniser;
@@ -12,6 +11,7 @@ mod sync_buffer;
 mod sync_serde;
 pub mod sync_status;
 pub mod synchroniser;
+pub mod synchroniser_driver;
 pub(crate) mod translation_and_integration;
 pub(crate) mod translations;
 
