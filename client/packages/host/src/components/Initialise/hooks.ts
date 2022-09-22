@@ -1,5 +1,4 @@
-import { useEffect } from 'react';
-import create from 'zustand';
+import { useEffect, useState } from 'react';
 import { AppRoute } from '@openmsupply-client/config';
 import {
   AuthenticationError,
@@ -41,38 +40,40 @@ interface InitialiseForm {
   // Used to enable polling of syncStatus and syncState
   // false by default and toggled to POLLING_INTERVAL when isInitialising
   refetchInterval: number | false;
-  setSiteCredentialsError: (error?: AuthenticationError) => void;
-  setIsLoading: (isLoading: boolean) => void;
-  setPassword: (password: string) => void;
-  setUsername: (username: string) => void;
-  setUrl: (url: string) => void;
-  setIsInitialising: (isInitialising: boolean) => void;
 }
 
-const useInitialiseFormState = create<InitialiseForm>(set => ({
-  siteCredentialsError: undefined,
-  isLoading: false,
-  isInitialising: true,
-  password: '',
-  username: '',
-  url: 'https://',
-  refetchInterval: false,
-  setSiteCredentialsError: error => set(state => ({ ...state, error })),
-  setIsLoading: isLoading => set(state => ({ ...state, isLoading })),
-  setPassword: password => set(state => ({ ...state, password })),
-  setUsername: username => set(state => ({ ...state, username })),
-  setUrl: url => set(state => ({ ...state, url })),
-  // When sync is already ongoing either after initialise button is pressed
-  // or when initialisation page is loaded while sync is ongoing
-  // inputs should be disabled and polling for syncStatus should start
-  setIsInitialising: isInitialising =>
-    set(state => ({
-      ...state,
-      isInitialising,
-      refetchInterval: isInitialising && POLLING_INTERVAL,
-      password: '',
-    })),
-}));
+const useInitialiseFormState = () => {
+  const [state, set] = useState<InitialiseForm>({
+    siteCredentialsError: undefined,
+    isLoading: false,
+    isInitialising: true,
+    password: '',
+    username: '',
+    url: 'https://',
+    refetchInterval: false,
+  });
+
+  return {
+    ...state,
+    setSiteCredentialsError: (siteCredentialsError?: AuthenticationError) =>
+      set(state => ({ ...state, siteCredentialsError })),
+    setIsLoading: (isLoading: boolean) =>
+      set(state => ({ ...state, isLoading })),
+    setPassword: (password: string) => set(state => ({ ...state, password })),
+    setUsername: (username: string) => set(state => ({ ...state, username })),
+    setUrl: (url: string) => set(state => ({ ...state, url })),
+    // When sync is already ongoing either after initialise button is pressed
+    // or when initialisation page is loaded while sync is ongoing
+    // inputs should be disabled and polling for syncStatus should start
+    setIsInitialising: (isInitialising: boolean) =>
+      set(state => ({
+        ...state,
+        isInitialising,
+        refetchInterval: isInitialising && POLLING_INTERVAL,
+        password: '',
+      })),
+  };
+};
 
 // Hook will navigate to login if SyncState is Initialised
 export const useInitialiseForm = () => {
