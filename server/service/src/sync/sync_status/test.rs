@@ -73,8 +73,7 @@ async fn sync_status() {
                 })
                 .collect();
         }),
-    )
-    .await;
+    );
     let ctx = service_provider.basic_context().unwrap();
     assert_eq!(
         service_provider
