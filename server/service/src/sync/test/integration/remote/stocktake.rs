@@ -47,7 +47,7 @@ impl SyncRecordTester for StocktakeRecordTester {
             stock_line_id: None,
             location_id: Some(location_row.id.clone()),
             comment: None,
-            snapshot_number_of_packs: 100,
+            snapshot_number_of_packs: 100.13,
             counted_number_of_packs: None,
             item_id: uuid(),
             batch: None,
@@ -98,8 +98,8 @@ impl SyncRecordTester for StocktakeRecordTester {
         let stocktake_line_row = inline_edit(&stocktake_line_row, |mut d| {
             d.comment = Some("stocktake line comment".to_string());
             d.location_id = None;
-            d.snapshot_number_of_packs = 110;
-            d.counted_number_of_packs = Some(90);
+            d.snapshot_number_of_packs = 110.12;
+            d.counted_number_of_packs = Some(90.3219);
             d.item_id = stock_line_row.item_id.clone();
             d.stock_line_id = Some(stock_line_row.id.clone());
             d.batch = Some(uuid());
