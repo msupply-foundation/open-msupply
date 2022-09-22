@@ -5,8 +5,7 @@ use super::{
 
 use crate::{
     diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort},
-    DBType, DatetimeFilter, EqualFilter, Pagination, RepositoryError, SimpleStringFilter, Sort,
-    SyncLogRow,
+    DBType, DatetimeFilter, EqualFilter, Pagination, RepositoryError, Sort, SyncLogRow,
 };
 
 use diesel::prelude::*;
@@ -19,45 +18,16 @@ pub struct SyncLog {
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct SyncLogFilter {
     pub id: Option<EqualFilter<String>>,
-    pub started_datetime: Option<DatetimeFilter>,
-    pub done_datetime: Option<DatetimeFilter>,
-    pub prepare_initial_start_datetime: Option<DatetimeFilter>,
     pub prepare_initial_done_datetime: Option<DatetimeFilter>,
-    pub push_start_datetime: Option<DatetimeFilter>,
-    pub push_done_datetime: Option<DatetimeFilter>,
-    pub push_progress_total: Option<EqualFilter<i32>>,
-    pub push_progress_done: Option<EqualFilter<i32>>,
-    pub pull_central_start_datetime: Option<DatetimeFilter>,
-    pub pull_central_done_datetime: Option<DatetimeFilter>,
-    pub pull_central_progress_total: Option<EqualFilter<i32>>,
-    pub pull_central_progress_done: Option<EqualFilter<i32>>,
-    pub pull_remote_start_datetime: Option<DatetimeFilter>,
-    pub pull_remote_done_datetime: Option<DatetimeFilter>,
-    pub pull_remote_progress_total: Option<EqualFilter<i32>>,
-    pub pull_remote_progress_done: Option<EqualFilter<i32>>,
-    pub integration_start_datetime: Option<DatetimeFilter>,
-    pub integration_done_datetime: Option<DatetimeFilter>,
-    pub error_message: Option<SimpleStringFilter>,
 }
 
 #[derive(PartialEq, Debug)]
 pub enum SyncLogSortField {
     StartedDatetime,
-    DoneEndtime,
+    DoneDatetime,
 }
 
 pub type SyncLogSort = Sort<SyncLogSortField>;
-
-impl SyncLogFilter {
-    pub fn new() -> SyncLogFilter {
-        SyncLogFilter::default()
-    }
-
-    pub fn done_datetime(mut self, done_datetime: Option<DatetimeFilter>) -> SyncLogFilter {
-        self.done_datetime = done_datetime;
-        self
-    }
-}
 
 pub struct SyncLogRepository<'a> {
     connection: &'a StorageConnection,
@@ -74,7 +44,7 @@ impl<'a> SyncLogRepository<'a> {
     }
 
     pub fn query_one(&self, filter: SyncLogFilter) -> Result<Option<SyncLog>, RepositoryError> {
-        Ok(self.query_by_filter(filter)?.pop())
+        Ok(self.query(Pagination::one(), Some(filter), None)?.pop())
     }
 
     pub fn query_by_filter(&self, filter: SyncLogFilter) -> Result<Vec<SyncLog>, RepositoryError> {
@@ -93,7 +63,7 @@ impl<'a> SyncLogRepository<'a> {
                 SyncLogSortField::StartedDatetime => {
                     apply_sort!(query, sort, sync_log_dsl::started_datetime)
                 }
-                SyncLogSortField::DoneEndtime => {
+                SyncLogSortField::DoneDatetime => {
                     apply_sort!(query, sort, sync_log_dsl::done_datetime)
                 }
             }
@@ -115,8 +85,16 @@ fn create_filtered_query(filter: Option<SyncLogFilter>) -> BoxedSyncLogQuery {
     let mut query = sync_log::table.into_boxed();
 
     if let Some(f) = filter {
-        apply_equal_filter!(query, f.id, sync_log_dsl::id);
-        apply_date_time_filter!(query, f.done_datetime, sync_log_dsl::done_datetime);
+        let SyncLogFilter {
+            id,
+            prepare_initial_done_datetime,
+        } = f;
+        apply_equal_filter!(query, id, sync_log_dsl::id);
+        apply_date_time_filter!(
+            query,
+            prepare_initial_done_datetime,
+            sync_log_dsl::prepare_initial_done_datetime
+        );
     }
 
     query
@@ -124,4 +102,15 @@ fn create_filtered_query(filter: Option<SyncLogFilter>) -> BoxedSyncLogQuery {
 
 fn to_domain(sync_log_row: SyncLogRow) -> SyncLog {
     SyncLog { sync_log_row }
+}
+
+impl SyncLogFilter {
+    pub fn new() -> SyncLogFilter {
+        SyncLogFilter::default()
+    }
+
+    pub fn prepare_initial_done_datetime(mut self, value: DatetimeFilter) -> SyncLogFilter {
+        self.prepare_initial_done_datetime = Some(value);
+        self
+    }
 }

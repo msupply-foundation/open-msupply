@@ -111,11 +111,4 @@ impl<'a> SyncLogRowRepository<'a> {
             .execute(&self.connection.connection)?;
         Ok(())
     }
-
-    pub fn load_latest_sync_log(&self) -> Result<SyncLogRow, RepositoryError> {
-        let result = sync_log_dsl::sync_log
-            .order(sync_log_dsl::started_datetime.desc())
-            .first(&self.connection.connection)?;
-        Ok(result)
-    }
 }
