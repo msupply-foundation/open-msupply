@@ -17,17 +17,24 @@ use service::{
     auth_data::AuthData,
     processors::Processors,
     service_provider::ServiceProvider,
-    settings::{is_develop, ServerSettings, Settings},
+    settings::{is_develop, LogMode, LoggingSettings, ServerSettings, Settings},
     sync::synchroniser::Synchroniser,
     token_bucket::TokenBucket,
 };
 
 use actix_web::{web::Data, App, HttpServer};
+use fast_log::{
+    consts::LogSize,
+    plugin::{file_split::RollingType, packer::LogPacker},
+    Config as LogConfig,
+};
+use log::LevelFilter;
+use std::env;
 use std::{
     ops::{Deref, DerefMut},
     sync::{Arc, RwLock},
 };
-use tokio::sync::{oneshot, Mutex};
+use tokio::sync::{mpsc, Mutex};
 
 pub mod certs;
 pub mod configuration;
@@ -57,7 +64,7 @@ fn auth_data(
 
 async fn run_stage0(
     config_settings: Settings,
-    off_switch: Arc<Mutex<oneshot::Receiver<()>>>,
+    off_switch: Arc<Mutex<mpsc::Receiver<()>>>,
     token_bucket: Arc<RwLock<TokenBucket>>,
     token_secret: String,
     connection_manager: StorageConnectionManager,
@@ -142,7 +149,7 @@ async fn run_stage0(
     let ctrl_c = tokio::signal::ctrl_c();
     let restart = tokio::select! {
         _ = ctrl_c => false,
-        _ = off_switch => false,
+        _ = off_switch.recv() => false,
         _ = restart_switch_receiver.recv() => true,
     };
     // gracefully shutdown the server
@@ -153,7 +160,7 @@ async fn run_stage0(
 /// Return true if restart has been requested
 async fn run_server(
     config_settings: Settings,
-    off_switch: Arc<Mutex<oneshot::Receiver<()>>>,
+    off_switch: Arc<Mutex<mpsc::Receiver<()>>>,
     token_bucket: Arc<RwLock<TokenBucket>>,
     token_secret: String,
     connection_manager: StorageConnectionManager,
@@ -285,7 +292,7 @@ async fn run_server(
     let ctrl_c = tokio::signal::ctrl_c();
     let restart = tokio::select! {
         _ = ctrl_c => false,
-        _ = off_switch => false,
+        _ = off_switch.recv() => false,
         _ = restart_switch_receiver.recv() => true,
         () = async {
             synchroniser.run().await;
@@ -297,12 +304,64 @@ async fn run_server(
     Ok(restart)
 }
 
+pub fn logging_init(settings: Option<LoggingSettings>) {
+    let settings = settings.unwrap_or(LoggingSettings {
+        mode: LogMode::Console,
+        level: service::settings::Level::Info,
+        directory: None,
+        filename: None,
+        max_file_count: None,
+        max_file_size: None,
+    });
+    let config = match settings.mode {
+        LogMode::File => file_logger(&settings),
+        LogMode::Console => LogConfig::new().console(),
+        LogMode::All => file_logger(&settings).console(),
+    };
+    fast_log::init(config.level(LevelFilter::from(settings.level.clone())))
+        .expect("Unable to initialise logger");
+}
+
+fn file_logger(settings: &LoggingSettings) -> LogConfig {
+    let default_log_file = "remote_server.log".to_string();
+    let default_log_dir = "log".to_string();
+    let default_max_file_count = 5;
+    let default_max_file_size = 10;
+
+    // Note: the file_split will panic if the path separator isn't appended
+    // and the path separator has to be unix-style, even on windows
+    let log_dir = format!("{}/", settings.directory.clone().unwrap_or(default_log_dir),);
+    let log_path = env::current_dir().unwrap_or_default().join(&log_dir);
+    let log_file = settings
+        .filename
+        .clone()
+        .unwrap_or_else(|| default_log_file);
+    let log_file = log_path.join(log_file).to_string_lossy().to_string();
+    let max_file_count = settings.max_file_count.unwrap_or(default_max_file_count);
+    let max_file_size = settings.max_file_size.unwrap_or(default_max_file_size);
+
+    // file_loop will append to the specified log file until the max size is reached,
+    // then create a new log file with the same name, with date and time appended
+    // file_split will split the temp file when the max file size is reached
+    // and retain the max number of files while the server is running
+    // Note: when the server is started, the temp files are removed. The main log file is
+    // appended to, but only to the max size limit. Only one additional main log is created
+    LogConfig::new()
+        .file_split(
+            &log_dir,
+            LogSize::MB(max_file_size),
+            RollingType::KeepNum(max_file_count),
+            LogPacker {},
+        )
+        .file_loop(&log_file, LogSize::MB(max_file_size))
+}
+
 /// Starts the server
 ///
-/// This method doesn't return until a message is send to the off_switch.
+/// This method doesn't return until a message is sent to the off_switch.
 pub async fn start_server(
     config_settings: Settings,
-    off_switch: oneshot::Receiver<()>,
+    off_switch: mpsc::Receiver<()>,
 ) -> std::io::Result<()> {
     info!(
         "Server starting in {} mode",

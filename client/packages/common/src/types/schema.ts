@@ -3257,7 +3257,7 @@ export type UserNodePermissionsArgs = {
   storeId?: InputMaybe<Scalars['String']>;
 };
 
-export enum UserPermissionNodePermission {
+export enum UserPermission {
   InboundShipmentMutate = 'INBOUND_SHIPMENT_MUTATE',
   InboundShipmentQuery = 'INBOUND_SHIPMENT_QUERY',
   LocationMutate = 'LOCATION_MUTATE',
@@ -3297,6 +3297,7 @@ export type UserStorePermissionConnector = {
 
 export type UserStorePermissionNode = {
   __typename: 'UserStorePermissionNode';
-  permissions: Array<UserPermissionNodePermission>;
+  context: Array<Scalars['String']>;
+  permissions: Array<UserPermission>;
   storeId: Scalars['String'];
 };
