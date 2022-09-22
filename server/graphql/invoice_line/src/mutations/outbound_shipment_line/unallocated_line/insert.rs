@@ -19,7 +19,7 @@ pub struct InsertInput {
     pub id: String,
     pub invoice_id: String,
     pub item_id: String,
-    pub quantity: f64,
+    pub quantity: u32,
 }
 
 #[derive(Interface)]
