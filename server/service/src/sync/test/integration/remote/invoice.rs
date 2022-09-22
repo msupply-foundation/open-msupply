@@ -64,7 +64,7 @@ impl SyncRecordTester for InvoiceRecordTester {
             total_before_tax: 8.0,
             total_after_tax: 12.0,
             tax: Some(10.0),
-            number_of_packs: 10,
+            number_of_packs: 10.129,
             note: None,
         };
         let invoice_row_1 = base_invoice_row.clone();
@@ -209,7 +209,7 @@ impl SyncRecordTester for InvoiceRecordTester {
             // work with the new push endpoint
             // d.tax = None;
             d.tax = Some(0.0);
-            d.number_of_packs = 15;
+            d.number_of_packs = 15.120;
             d.note = Some("invoice line note".to_string());
             d
         });
