@@ -50,14 +50,15 @@ pub enum AuthTokenResponse {
 
 pub async fn login(ctx: &Context<'_>, username: &str, password: &str) -> Result<AuthTokenResponse> {
     let service_provider = ctx.service_provider();
+    let service_context = service_provider.basic_context()?;
     let auth_data = ctx.get_auth_data();
-    let sync_settings =
-        ctx.get_settings()
-            .sync
-            .as_ref()
-            .ok_or(StandardGraphqlError::InternalError(
-                "Sync settings not available".to_string(),
-            ))?;
+    let sync_settings = service_provider
+        .settings
+        .sync_settings(&service_context)?
+        .ok_or(StandardGraphqlError::InternalError(
+            "Sync settings not available".to_string(),
+        ))?;
+
     let pair = match LoginService::login(
         service_provider,
         auth_data,
