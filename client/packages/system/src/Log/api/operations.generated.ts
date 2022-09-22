@@ -14,7 +14,7 @@ export type LogsQueryVariables = Types.Exact<{
 }>;
 
 
-export type LogsQuery = { __typename: 'FullQuery', logs: { __typename: 'LogConnector', totalCount: number, nodes: Array<{ __typename: 'LogNode', id: string, datetime: any, recordId?: string | null, storeId?: string | null, type: Types.LogNodeType, user?: { __typename: 'UserNode', username: string } | null }> } };
+export type LogsQuery = { __typename: 'Queries', logs: { __typename: 'LogConnector', totalCount: number, nodes: Array<{ __typename: 'LogNode', id: string, datetime: any, recordId?: string | null, storeId?: string | null, type: Types.LogNodeType, user?: { __typename: 'UserNode', username: string } | null }> } };
 
 export const LogRowFragmentDoc = gql`
     fragment LogRow on LogNode {

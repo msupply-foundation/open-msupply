@@ -12,24 +12,24 @@ export type AuthTokenQueryVariables = Types.Exact<{
 }>;
 
 
-export type AuthTokenQuery = { __typename: 'FullQuery', authToken: { __typename: 'AuthToken', token: string } | { __typename: 'AuthTokenError', error: { __typename: 'InvalidCredentials', description: string } } };
+export type AuthTokenQuery = { __typename: 'Queries', authToken: { __typename: 'AuthToken', token: string } | { __typename: 'AuthTokenError', error: { __typename: 'InvalidCredentials', description: string } } };
 
 export type MeQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
 
-export type MeQuery = { __typename: 'FullQuery', me: { __typename: 'UserNode', email?: string | null, username: string, userId: string, defaultStore?: { __typename: 'UserStoreNode', code: string, id: string, name: string } | null, stores: { __typename: 'UserStoreConnector', totalCount: number, nodes: Array<{ __typename: 'UserStoreNode', code: string, id: string, name: string }> } } };
+export type MeQuery = { __typename: 'Queries', me: { __typename: 'UserNode', email?: string | null, username: string, userId: string, defaultStore?: { __typename: 'UserStoreNode', code: string, id: string, name: string } | null, stores: { __typename: 'UserStoreConnector', totalCount: number, nodes: Array<{ __typename: 'UserStoreNode', code: string, id: string, name: string }> } } };
 
 export type RefreshTokenQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
 
-export type RefreshTokenQuery = { __typename: 'FullQuery', refreshToken: { __typename: 'RefreshToken', token: string } | { __typename: 'RefreshTokenError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'InternalError', description: string, fullError: string } | { __typename: 'InvalidToken', description: string } | { __typename: 'NoRefreshTokenProvided', description: string } | { __typename: 'NotARefreshToken', description: string } | { __typename: 'TokenExpired', description: string } } };
+export type RefreshTokenQuery = { __typename: 'Queries', refreshToken: { __typename: 'RefreshToken', token: string } | { __typename: 'RefreshTokenError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'InternalError', description: string, fullError: string } | { __typename: 'InvalidToken', description: string } | { __typename: 'NoRefreshTokenProvided', description: string } | { __typename: 'NotARefreshToken', description: string } | { __typename: 'TokenExpired', description: string } } };
 
 export type PermissionsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
 }>;
 
 
-export type PermissionsQuery = { __typename: 'FullQuery', me: { __typename: 'UserNode', username: string, permissions: { __typename: 'UserStorePermissionConnector', totalCount: number, nodes: Array<{ __typename: 'UserStorePermissionNode', permissions: Array<Types.UserPermissionNodePermission>, storeId: string }> } } };
+export type PermissionsQuery = { __typename: 'Queries', me: { __typename: 'UserNode', username: string, permissions: { __typename: 'UserStorePermissionConnector', totalCount: number, nodes: Array<{ __typename: 'UserStorePermissionNode', permissions: Array<Types.UserPermissionNodePermission>, storeId: string }> } } };
 
 export const UserStoreNodeFragmentDoc = gql`
     fragment UserStoreNode on UserStoreNode {

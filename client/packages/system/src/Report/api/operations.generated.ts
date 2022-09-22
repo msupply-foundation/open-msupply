@@ -14,7 +14,7 @@ export type ReportsQueryVariables = Types.Exact<{
 }>;
 
 
-export type ReportsQuery = { __typename: 'FullQuery', reports: { __typename: 'ReportConnector', totalCount: number, nodes: Array<{ __typename: 'ReportNode', context: Types.ReportContext, id: string, name: string }> } };
+export type ReportsQuery = { __typename: 'Queries', reports: { __typename: 'ReportConnector', totalCount: number, nodes: Array<{ __typename: 'ReportNode', context: Types.ReportContext, id: string, name: string }> } };
 
 export type PrintReportQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -24,7 +24,7 @@ export type PrintReportQueryVariables = Types.Exact<{
 }>;
 
 
-export type PrintReportQuery = { __typename: 'FullQuery', printReport: { __typename: 'PrintReportError', error: { __typename: 'FailedToFetchReportData', description: string, errors: any } } | { __typename: 'PrintReportNode', fileId: string } };
+export type PrintReportQuery = { __typename: 'Queries', printReport: { __typename: 'PrintReportError', error: { __typename: 'FailedToFetchReportData', description: string, errors: any } } | { __typename: 'PrintReportNode', fileId: string } };
 
 export const ReportRowFragmentDoc = gql`
     fragment ReportRow on ReportNode {
