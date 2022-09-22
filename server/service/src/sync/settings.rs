@@ -28,3 +28,15 @@ impl Default for BatchSize {
         }
     }
 }
+
+impl SyncSettings {
+    /// Check to see if sync configuration difference would require confirmation that site is still the same
+    /// for example if site username is was changed, we want to check that site username against the server
+    /// and make sure it's still the same site
+    pub fn core_site_details_changed(&self, other: &SyncSettings) -> bool {
+        let equal = self.username == other.username
+            && self.url == other.url
+            && self.password_sha256 == other.password_sha256;
+        !equal
+    }
+}
