@@ -16,7 +16,7 @@ use crate::{
         outbound_shipment::{UpdateOutboundShipment, UpdateOutboundShipmentStatus},
     },
     invoice_line::outbound_shipment_line::UpdateOutboundShipmentLine,
-    processors::test_helpers::delay_for_processor,
+    processors::test_helpers::{delay_for_processor, exec_concurrent},
     requisition::request_requisition::{UpdateRequestRequisition, UpdateRequestRequistionStatus},
     service_provider::ServiceProvider,
     test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
@@ -25,7 +25,7 @@ use crate::{
 /// This test is for requesting and responding store on the same site
 /// See same site transfer diagram in requisition README.md for example of how
 /// changelog is upserted and processed by the same instance of triggered processor
-#[actix_rt::test]
+#[tokio::test(flavor = "multi_thread", worker_threads = 3)]
 async fn invoice_transfers() {
     let site_id = 25;
     let outbound_store_name = inline_init(|r: &mut NameRow| {
@@ -64,7 +64,6 @@ async fn invoice_transfers() {
     });
 
     let ServiceTestContext {
-        connection,
         service_provider,
         processors_task,
         ..
@@ -80,65 +79,78 @@ async fn invoice_transfers() {
     )
     .await;
 
-    let test = || async move {
-        // Without delete
-        let mut tester =
-            ShipmentTransferTester::new(&inbound_store, &outbound_store, &item1, &item2);
-        let ctx = service_provider.basic_context().unwrap();
+    let test_input = (
+        service_provider,
+        inbound_store,
+        outbound_store,
+        item1,
+        item2,
+    );
 
-        tester.insert_request_requisition(&service_provider).await;
-        delay_for_processor().await;
-        tester.check_response_requisition_created(&connection).await;
-        tester.insert_outbound_shipment(&connection).await;
-        // Need to do manual trigger here since inserting shipment won't trigger processor
-        // and we want to validate that not shipped/picked shipment does not generate transfer
-        ctx.processors_trigger
-            .trigger_shipment_transfer_processors();
-        delay_for_processor().await;
-        tester.check_inbound_shipment_not_created(&connection);
-        delay_for_processor().await;
-        tester.update_outbound_shipment_to_picked(&service_provider);
-        delay_for_processor().await;
-        tester.check_inbound_shipment_created(&connection);
-        delay_for_processor().await;
-        tester.check_outbound_shipment_was_linked(&connection);
-        delay_for_processor().await;
-        tester.update_outbound_shipment_lines(&service_provider);
-        delay_for_processor().await;
-        tester.update_outbound_shipment_to_shipped(&service_provider);
-        delay_for_processor().await;
-        tester.check_inbound_shipment_was_updated(&connection);
-        delay_for_processor().await;
-        tester.update_inbound_shipment_to_delivered(&service_provider);
-        delay_for_processor().await;
-        tester.check_outbound_shipment_status_matches_inbound_shipment(&connection);
-        delay_for_processor().await;
-        tester.update_inbound_shipment_to_verified(&service_provider);
-        delay_for_processor().await;
-        tester.check_outbound_shipment_status_matches_inbound_shipment(&connection);
-        delay_for_processor().await;
+    let number_of_instances = 6;
 
-        // With delete
-        let mut tester =
-            ShipmentTransferTester::new(&inbound_store, &outbound_store, &item1, &item2);
+    let test_handle = exec_concurrent(
+        test_input,
+        number_of_instances,
+        |_, test_input| async move {
+            let (service_provider, inbound_store, outbound_store, item1, item2) = test_input;
 
-        tester.insert_request_requisition(&service_provider).await;
-        delay_for_processor().await;
-        tester.check_response_requisition_created(&connection).await;
-        tester.insert_outbound_shipment(&connection).await;
-        delay_for_processor().await;
-        tester.update_outbound_shipment_to_picked(&service_provider);
-        delay_for_processor().await;
-        tester.check_inbound_shipment_created(&connection);
-        delay_for_processor().await;
-        tester.delete_outbound_shipment(&service_provider);
-        delay_for_processor().await;
-        tester.check_inbound_shipment_deleted(&connection);
-    };
+            let ctx = service_provider.basic_context().unwrap();
+
+            // Without delete
+            let mut tester =
+                ShipmentTransferTester::new(&inbound_store, &outbound_store, &item1, &item2);
+
+            tester.insert_request_requisition(&service_provider).await;
+            delay_for_processor().await;
+            tester.check_response_requisition_created(&ctx.connection);
+            tester.insert_outbound_shipment(&ctx.connection);
+            delay_for_processor().await;
+            tester.check_inbound_shipment_not_created(&ctx.connection);
+            delay_for_processor().await;
+            tester.update_outbound_shipment_to_picked(&service_provider);
+            delay_for_processor().await;
+            tester.check_inbound_shipment_created(&ctx.connection);
+            delay_for_processor().await;
+            tester.check_outbound_shipment_was_linked(&ctx.connection);
+            delay_for_processor().await;
+            tester.update_outbound_shipment_lines(&service_provider);
+            delay_for_processor().await;
+            tester.update_outbound_shipment_to_shipped(&service_provider);
+            delay_for_processor().await;
+            tester.check_inbound_shipment_was_updated(&ctx.connection);
+            delay_for_processor().await;
+            tester.update_inbound_shipment_to_delivered(&service_provider);
+            delay_for_processor().await;
+            tester.check_outbound_shipment_status_matches_inbound_shipment(&ctx.connection);
+            delay_for_processor().await;
+            tester.update_inbound_shipment_to_verified(&service_provider);
+            delay_for_processor().await;
+            tester.check_outbound_shipment_status_matches_inbound_shipment(&ctx.connection);
+            delay_for_processor().await;
+
+            // With delete
+            let mut tester =
+                ShipmentTransferTester::new(&inbound_store, &outbound_store, &item1, &item2);
+
+            tester.insert_request_requisition(&service_provider).await;
+            delay_for_processor().await;
+            tester.check_response_requisition_created(&ctx.connection);
+            tester.insert_outbound_shipment(&ctx.connection);
+            delay_for_processor().await;
+            tester.update_outbound_shipment_to_picked(&service_provider);
+            delay_for_processor().await;
+            tester.check_inbound_shipment_created(&ctx.connection);
+            delay_for_processor().await;
+            tester.delete_outbound_shipment(&service_provider);
+            delay_for_processor().await;
+            tester.check_inbound_shipment_deleted(&ctx.connection);
+        },
+    );
 
     tokio::select! {
-        Err(err) = processors_task => unreachable!("{}", err),
-        _ = test() => (),
+         Err(err) = processors_task => unreachable!("{}", err),
+        _ = test_handle => (),
     };
 }
 pub(crate) struct ShipmentTransferTester {
@@ -284,10 +296,7 @@ impl ShipmentTransferTester {
             .unwrap();
     }
 
-    pub(crate) async fn check_response_requisition_created(
-        &mut self,
-        connection: &StorageConnection,
-    ) {
+    pub(crate) fn check_response_requisition_created(&mut self, connection: &StorageConnection) {
         let response_requisition = RequisitionRepository::new(connection)
             .query_one(
                 RequisitionFilter::new()
@@ -298,7 +307,7 @@ impl ShipmentTransferTester {
         self.response_requisition = Some(response_requisition.unwrap().requisition_row);
     }
 
-    pub(crate) async fn insert_outbound_shipment(&self, connection: &StorageConnection) {
+    pub(crate) fn insert_outbound_shipment(&self, connection: &StorageConnection) {
         assert!(self.response_requisition.is_some());
         let response_requisition_id = self.response_requisition.clone().unwrap().id;
         insert_extra_mock_data(
@@ -314,8 +323,7 @@ impl ShipmentTransferTester {
                 ]
             })
             .join(self.extra_mock_data.clone()),
-        )
-        .await
+        );
     }
 
     pub(crate) fn check_inbound_shipment_not_created(&self, connection: &StorageConnection) {
@@ -379,11 +387,10 @@ impl ShipmentTransferTester {
         assert_eq!(inbound_shipment.on_hold, false);
         assert_eq!(inbound_shipment.allocated_datetime, None);
 
-        // TODO reinstante this when: https://github.com/openmsupply/open-msupply/pull/616 is merged
-        // assert_eq!(
-        //     inbound_shipment.requisition_id,
-        //     Some(self.request_requisition.id.clone())
-        // );
+        assert_eq!(
+            inbound_shipment.requisition_id,
+            Some(self.request_requisition.id.clone())
+        );
 
         check_shipment_status(&inbound_shipment, &self.outbound_shipment);
 

@@ -58,7 +58,7 @@ impl TestSyncPullRecord {
 
     pub(crate) async fn insert_extra_data(&self, connection: &StorageConnection) {
         if let Some(data) = &self.extra_data {
-            data.insert(connection).await;
+            data.insert(connection);
         }
     }
 }

@@ -39,6 +39,7 @@ impl ShipmentTransferProcessor for UpdateInboundShipmentProcessor {
             Operation::Upsert {
                 shipment,
                 linked_shipment,
+                ..
             } => (shipment, linked_shipment),
             _ => return Ok(None),
         };

@@ -1,13 +1,13 @@
 import { useEffect, useRef } from 'react';
 import { AppRoute } from '@openmsupply-client/config';
-import { UserPermissionNodePermission } from '../../types/schema';
+import { UserPermission } from '../../types/schema';
 import { AuthError, useAuthContext } from '../AuthContext';
 import { useLocalStorage } from '../../localStorage';
 import { useNavigate } from 'react-router-dom';
 import { RouteBuilder } from '../../utils/navigation';
 
 export const usePermissionCheck = (
-  permission: UserPermissionNodePermission
+  permission: UserPermission
 ) => {
   const { userHasPermission } = useAuthContext();
   const navigate = useNavigate();

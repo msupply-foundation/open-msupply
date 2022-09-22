@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use repository::{
     EqualFilter, Permission, RepositoryError, UserPermissionFilter, UserPermissionRepository,
@@ -299,6 +299,9 @@ pub fn validate_auth(
 pub struct ValidatedUser {
     pub user_id: String,
     pub claims: OmSupplyClaim,
+    // List of validated resources, e.g. ["HIVProgram", "TBProgram", ...]
+    // Limitation: every request can only have one type of resources, e.g. you can't mix doc types with something else
+    pub context: Vec<String>,
 }
 
 /// Information about the resource a user wants to access
@@ -415,14 +418,8 @@ impl AuthServiceTrait for AuthService {
         resource_request: &ResourceAccessRequest,
     ) -> Result<ValidatedUser, AuthError> {
         let validated_auth = validate_auth(auth_data, auth_token)?;
-        if auth_data.debug_no_access_control {
-            return Ok(ValidatedUser {
-                user_id: validated_auth.user_id,
-                claims: validated_auth.claims,
-            });
-        }
-
         let connection = &context.connection;
+
         let mut permission_filter =
             UserPermissionFilter::new().user_id(EqualFilter::equal_to(&validated_auth.user_id));
         if let Some(store_id) = &resource_request.store_id {
@@ -430,6 +427,21 @@ impl AuthServiceTrait for AuthService {
         }
         let user_permission =
             UserPermissionRepository::new(&connection).query_by_filter(permission_filter)?;
+        let context: Vec<String> = user_permission
+            .clone()
+            .into_iter()
+            .filter_map(|c| c.context)
+            .collect::<HashSet<String>>()
+            .into_iter()
+            .collect();
+
+        if auth_data.debug_no_access_control {
+            return Ok(ValidatedUser {
+                user_id: validated_auth.user_id,
+                claims: validated_auth.claims,
+                context,
+            });
+        }
 
         let required_permissions = match self.resource_permissions.get(&resource_request.resource) {
             Some(required_permissions) => required_permissions,
@@ -460,6 +472,7 @@ impl AuthServiceTrait for AuthService {
         Ok(ValidatedUser {
             user_id: validated_auth.user_id,
             claims: validated_auth.claims,
+            context,
         })
     }
 }
@@ -503,6 +516,7 @@ mod validate_resource_permissions_test {
             user_id: user_id.to_string(),
             permission: Permission::ServerAdmin,
             store_id: None,
+            context: None,
         }];
         let validation_result = validate_resource_permissions(
             user_id,
@@ -554,6 +568,7 @@ mod validate_resource_permissions_test {
             user_id: user_id.to_string(),
             permission: Permission::StocktakeMutate,
             store_id: Some(store_id.to_string()),
+            context: None,
         }];
         let required_permissions = PermissionDSL::And(vec![
             PermissionDSL::HasPermission(Permission::ServerAdmin),
@@ -574,12 +589,14 @@ mod validate_resource_permissions_test {
                 user_id: user_id.to_string(),
                 permission: Permission::ServerAdmin,
                 store_id: None,
+                context: None,
             },
             UserPermissionRow {
                 id: "dummy_id2".to_string(),
                 user_id: user_id.to_string(),
                 permission: Permission::StocktakeMutate,
                 store_id: Some(store_id.to_string()),
+                context: None,
             },
         ];
         let required_permissions = PermissionDSL::And(vec![
@@ -608,12 +625,14 @@ mod validate_resource_permissions_test {
                 user_id: user_id.to_string(),
                 permission: Permission::StocktakeMutate,
                 store_id: Some(store_id.to_string()),
+                context: None,
             },
             UserPermissionRow {
                 id: "dummy_id2".to_string(),
                 user_id: user_id.to_string(),
                 permission: Permission::StoreAccess,
                 store_id: Some(store_id.to_string()),
+                context: None,
             },
         ];
         let validation_result = validate_resource_permissions(
@@ -636,6 +655,7 @@ mod validate_resource_permissions_test {
             user_id: user_id.to_string(),
             permission: Permission::ServerAdmin,
             store_id: None,
+            context: None,
         }];
         let validation_result = validate_resource_permissions(
             user_id,
@@ -659,12 +679,14 @@ mod validate_resource_permissions_test {
                 user_id: user_id.to_string(),
                 permission: Permission::StocktakeMutate,
                 store_id: Some(store_id.to_string()),
+                context: None,
             },
             UserPermissionRow {
                 id: "dummy_id2".to_string(),
                 user_id: user_id.to_string(),
                 permission: Permission::StoreAccess,
                 store_id: Some(store_id.to_string()),
+                context: None,
             },
         ];
         let validation_result = validate_resource_permissions(
@@ -681,12 +703,14 @@ mod validate_resource_permissions_test {
                 user_id: user_id.to_string(),
                 permission: Permission::ServerAdmin,
                 store_id: None,
+                context: None,
             },
             UserPermissionRow {
                 id: "dummy_id2".to_string(),
                 user_id: user_id.to_string(),
                 permission: Permission::StoreAccess,
                 store_id: Some(store_id.to_string()),
+                context: None,
             },
         ];
         let validation_result = validate_resource_permissions(
@@ -787,6 +811,7 @@ mod permission_validation_test {
                 user_id: mock_user_account_a().id,
                 store_id: Some("store_a".to_string()),
                 permission: Permission::InboundShipmentMutate,
+                context: None,
             })
             .unwrap();
         assert!(service
@@ -808,6 +833,7 @@ mod permission_validation_test {
                 user_id: mock_user_account_a().id,
                 store_id: Some("store_a".to_string()),
                 permission: Permission::StocktakeQuery,
+                context: None,
             })
             .unwrap();
         assert!(service
@@ -877,12 +903,14 @@ mod permission_validation_test {
                     user_id: user().id,
                     store_id: Some(store().id),
                     permission: Permission::RequisitionMutate,
+                    context: None,
                 },
                 UserPermissionRow {
                     id: "permission_store_access".to_string(),
                     user_id: user().id,
                     store_id: Some(store().id),
                     permission: Permission::StoreAccess,
+                    context: None,
                 },
             ]
         }

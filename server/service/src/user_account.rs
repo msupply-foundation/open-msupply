@@ -134,7 +134,7 @@ impl<'a> UserAccountService<'a> {
                 let row = UserAccountRow {
                     id: uuid(),
                     username: user.username,
-                    hashed_password: hashed_password,
+                    hashed_password,
                     email: user.email,
                 };
                 repo.insert_one(&row)?;
@@ -294,6 +294,7 @@ mod user_account_test {
                         user_id: mock_user_account_a().id,
                         store_id: Some("store_b".to_string()),
                         permission: Permission::InboundShipmentMutate,
+                        context: None,
                     }],
                 }],
             )

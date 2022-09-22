@@ -112,15 +112,14 @@ pub struct MockData {
 }
 
 impl MockData {
-    pub async fn insert(&self, connection: &StorageConnection) {
+    pub fn insert(&self, connection: &StorageConnection) {
         insert_mock_data(
             connection,
             MockDataInserts::all(),
             MockDataCollection {
                 data: vec![("".to_string(), self.clone())],
             },
-        )
-        .await;
+        );
     }
 }
 
@@ -383,21 +382,20 @@ pub async fn insert_all_mock_data(
     connection: &StorageConnection,
     inserts: MockDataInserts,
 ) -> MockDataCollection {
-    insert_mock_data(connection, inserts, all_mock_data()).await
+    insert_mock_data(connection, inserts, all_mock_data())
 }
 
-pub async fn insert_extra_mock_data(connection: &StorageConnection, extra_mock_data: MockData) {
+pub fn insert_extra_mock_data(connection: &StorageConnection, extra_mock_data: MockData) {
     insert_mock_data(
         connection,
         MockDataInserts::all(),
         MockDataCollection {
             data: vec![("extra_data".to_string(), extra_mock_data)],
         },
-    )
-    .await;
+    );
 }
 
-pub async fn insert_mock_data(
+pub fn insert_mock_data(
     connection: &StorageConnection,
     inserts: MockDataInserts,
     mock_data: MockDataCollection,
@@ -406,14 +404,14 @@ pub async fn insert_mock_data(
         if inserts.names {
             let repo = NameRowRepository::new(connection);
             for row in &mock_data.names {
-                repo.insert_one(&row).await.unwrap();
+                repo.upsert_one(&row).unwrap();
             }
         }
 
         if inserts.stores {
             let repo = StoreRowRepository::new(connection);
             for row in &mock_data.stores {
-                repo.insert_one(&row).await.unwrap();
+                repo.upsert_one(&row).unwrap();
             }
         }
 
@@ -448,7 +446,7 @@ pub async fn insert_mock_data(
         if inserts.items {
             let repo = ItemRowRepository::new(connection);
             for row in &mock_data.items {
-                repo.insert_one(&row).await.unwrap();
+                repo.upsert_one(&row).unwrap();
             }
         }
 

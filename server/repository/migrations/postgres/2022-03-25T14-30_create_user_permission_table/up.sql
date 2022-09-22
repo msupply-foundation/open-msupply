@@ -19,5 +19,6 @@ CREATE TABLE user_permission (
     id TEXT NOT NULL PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES user_account(id),
     store_id TEXT NOT NULL REFERENCES store(id),
-    permission permission_type NOT NULL
+    permission permission_type NOT NULL,
+    context TEXT
 )
