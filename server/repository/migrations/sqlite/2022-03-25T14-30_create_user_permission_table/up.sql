@@ -17,5 +17,6 @@ CREATE TABLE user_permission (
         'REPORT',
         'LOG_QUERY',
         'SERVER_ADMIN'
-    )) NOT NULL
+    )) NOT NULL,
+    context TEXT
 )
