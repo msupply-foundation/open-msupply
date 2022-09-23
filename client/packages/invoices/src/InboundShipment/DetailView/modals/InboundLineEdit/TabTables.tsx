@@ -10,9 +10,10 @@ import {
   Theme,
   alpha,
   PositiveNumberInputCell,
-  NonNegativeIntegerCell,
   QueryParamsProvider,
   createQueryParamsStore,
+  NonNegativeIntegerCell,
+  PositiveNumberCell,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import {
@@ -69,16 +70,16 @@ export const QuantityTableComponent: FC<TableProps> = ({
       [
         'numberOfPacks',
         {
-          Cell: NonNegativeIntegerCell,
+          Cell: PositiveNumberInputCell,
           width: 100,
           label: 'label.num-packs',
           setter: updateDraftLine,
         },
       ],
-      ['packSize', { Cell: PositiveNumberInputCell, setter: updateDraftLine }],
+      ['packSize', { Cell: NonNegativeIntegerCell, setter: updateDraftLine }],
       [
         'unitQuantity',
-        { accessor: ({ rowData }) => rowData.numberOfPacks * rowData.packSize },
+        { Cell: PositiveNumberCell, accessor: ({ rowData }) => rowData.numberOfPacks * rowData.packSize },
       ],
     ],
     {},
@@ -119,7 +120,7 @@ export const PricingTableComponent: FC<TableProps> = ({
       ],
       [
         'unitQuantity',
-        { accessor: ({ rowData }) => rowData.numberOfPacks * rowData.packSize },
+        { Cell: PositiveNumberCell, accessor: ({ rowData }) => rowData.numberOfPacks * rowData.packSize },
       ],
       [
         'lineTotal',
