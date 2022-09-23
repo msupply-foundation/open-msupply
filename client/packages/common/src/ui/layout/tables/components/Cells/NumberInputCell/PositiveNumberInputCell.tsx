@@ -28,8 +28,9 @@ export const PositiveNumberInputCell = <T extends RecordWithId>({
       type="number"
       value={buffer}
       onChange={newValue => {
-        setBuffer(newValue.toString());
-        updater({ ...rowData, [column.key]: newValue });
+        const value = Math.round(newValue * 100) / 100;
+        setBuffer(value.toString());
+        updater({ ...rowData, [column.key]: value });
       }}
     />
   );

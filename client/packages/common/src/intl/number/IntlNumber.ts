@@ -12,5 +12,11 @@ export const useFormatNumber = () => {
       });
       return intl.format(value ?? 0);
     },
+    twoDp: (value?: number, dp?: number): string => {
+      const intl = new Intl.NumberFormat(language, {
+        maximumFractionDigits: dp ?? 2,
+      });
+      return intl.format(value ?? 0);
+    }
   };
 };
