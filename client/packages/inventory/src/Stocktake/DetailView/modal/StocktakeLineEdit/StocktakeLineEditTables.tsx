@@ -8,7 +8,6 @@ import {
   CurrencyInputCell,
   useTranslation,
   getExpiryDateInputColumn,
-  NonNegativeIntegerCell,
   PositiveNumberInputCell,
   EnabledCheckboxCell,
   ColumnDescription,
@@ -108,7 +107,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
       key: 'countedNumberOfPacks',
       label: 'label.counted-num-of-packs',
       width: 100,
-      Cell: NonNegativeIntegerCell,
+      Cell: PositiveNumberInputCell,
       setter: patch => update({ ...patch, countThisLine: true }),
     },
     [
