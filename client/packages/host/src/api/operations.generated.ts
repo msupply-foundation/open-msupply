@@ -4,17 +4,12 @@ import { GraphQLClient } from 'graphql-request';
 import * as Dom from 'graphql-request/dist/types.dom';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type SyncSettingsFragment = { __typename: 'SyncSettingsNode', centralServerSiteId: number, intervalSec: number, siteId: number, url: string, username: string };
-
-export type ApiVersionQueryVariables = Types.Exact<{ [key: string]: never; }>;
-
-
-export type ApiVersionQuery = { __typename: 'FullQuery', apiVersion: string };
+export type SyncSettingsFragment = { __typename: 'SyncSettingsNode', intervalSec: number, url: string, username: string };
 
 export type ServerSettingsQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
 
-export type ServerSettingsQuery = { __typename: 'FullQuery', serverSettings: { __typename: 'ServerSettingsNode', status: Types.ServerStatus, syncSettingsDb?: { __typename: 'SyncSettingsNode', centralServerSiteId: number, intervalSec: number, siteId: number, url: string, username: string } | null, syncSettings?: { __typename: 'SyncSettingsNode', centralServerSiteId: number, intervalSec: number, siteId: number, url: string, username: string } | null } };
+export type ServerSettingsQuery = { __typename: 'FullQuery', serverSettings: { __typename: 'ServerSettingsNode', status: Types.ServerStatus, syncSettingsDb?: { __typename: 'SyncSettingsNode', intervalSec: number, url: string, username: string } | null, syncSettings?: { __typename: 'SyncSettingsNode', intervalSec: number, url: string, username: string } | null } };
 
 export type ServerRestartQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
@@ -31,16 +26,9 @@ export type UpdateServerSettingsMutation = { __typename: 'FullMutation', updateS
 export const SyncSettingsFragmentDoc = gql`
     fragment SyncSettings on SyncSettingsNode {
   __typename
-  centralServerSiteId
   intervalSec
-  siteId
   url
   username
-}
-    `;
-export const ApiVersionDocument = gql`
-    query apiVersion {
-  apiVersion
 }
     `;
 export const ServerSettingsDocument = gql`
@@ -85,9 +73,6 @@ const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationTy
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
-    apiVersion(variables?: ApiVersionQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ApiVersionQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ApiVersionQuery>(ApiVersionDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'apiVersion', 'query');
-    },
     serverSettings(variables?: ServerSettingsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ServerSettingsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ServerSettingsQuery>(ServerSettingsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'serverSettings', 'query');
     },
@@ -100,22 +85,6 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
   };
 }
 export type Sdk = ReturnType<typeof getSdk>;
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockApiVersionQuery((req, res, ctx) => {
- *   return res(
- *     ctx.data({ apiVersion })
- *   )
- * })
- */
-export const mockApiVersionQuery = (resolver: ResponseResolver<GraphQLRequest<ApiVersionQueryVariables>, GraphQLContext<ApiVersionQuery>, any>) =>
-  graphql.query<ApiVersionQuery, ApiVersionQueryVariables>(
-    'apiVersion',
-    resolver
-  )
 
 /**
  * @param resolver a function that accepts a captured request and may return a mocked response.

@@ -2794,10 +2794,8 @@ export type SupplyRequestedQuantityResponse = RequisitionLineConnector | SupplyR
 
 export type SyncSettingsNode = {
   __typename: 'SyncSettingsNode';
-  centralServerSiteId: Scalars['Int'];
   /** How frequently central data is synced */
   intervalSec: Scalars['Int'];
-  siteId: Scalars['Int'];
   /** Central server url */
   url: Scalars['String'];
   /** Central server username */
@@ -3219,12 +3217,10 @@ export type UpdateStocktakeResponseWithId = {
 };
 
 export type UpdateSyncSettingsInput = {
-  centralServerSiteId: Scalars['Int'];
   /** Sync interval in sec */
   intervalSec: Scalars['Int'];
   /** Plain text password */
   password: Scalars['String'];
-  siteId: Scalars['Int'];
   url: Scalars['String'];
   username: Scalars['String'];
 };
@@ -3261,7 +3257,7 @@ export type UserNodePermissionsArgs = {
   storeId?: InputMaybe<Scalars['String']>;
 };
 
-export enum UserPermissionNodePermission {
+export enum UserPermission {
   InboundShipmentMutate = 'INBOUND_SHIPMENT_MUTATE',
   InboundShipmentQuery = 'INBOUND_SHIPMENT_QUERY',
   LocationMutate = 'LOCATION_MUTATE',
@@ -3301,6 +3297,7 @@ export type UserStorePermissionConnector = {
 
 export type UserStorePermissionNode = {
   __typename: 'UserStorePermissionNode';
-  permissions: Array<UserPermissionNodePermission>;
+  context: Array<Scalars['String']>;
+  permissions: Array<UserPermission>;
   storeId: Scalars['String'];
 };

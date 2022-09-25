@@ -1,0 +1,24 @@
+server:
+  port: 8000
+  danger_allow_http: true
+sync:
+  url: 'http://localhost:2048'
+  username: ''
+  password_sha256: ''
+  interval_sec: 3600
+  central_server_site_id: 1
+  site_id: 2
+database:
+  host: 'localhost'
+  port: 5432
+  username: 'user'
+  password: 'pass'
+  database_name: omsupply-demo
+logging:
+  mode: All
+  level: Info
+  directory: log
+  filename: remote_server.log
+  max_file_count: 5
+  max_file_size: 10
+

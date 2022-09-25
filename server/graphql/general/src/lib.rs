@@ -1,9 +1,9 @@
 mod mutations;
 mod queries;
 
+pub use self::queries::sync_status::*;
 use self::queries::*;
 
-use async_graphql::*;
 use graphql_core::pagination::PaginationInput;
 use mutations::server_settings::{
     update_server_settings, UpdateServerSettingsInput, UpdateServerSettingsResponse,
@@ -20,7 +20,7 @@ pub struct GeneralQueries;
 impl GeneralQueries {
     #[allow(non_snake_case)]
     pub async fn apiVersion(&self) -> String {
-        "1.0".to_string()
+        env!("CARGO_PKG_VERSION").to_string()
     }
 
     /// Retrieves a new auth bearer and refresh token
@@ -176,7 +176,7 @@ impl ServerAdminMutations {
         ctx: &Context<'_>,
         input: UpdateServerSettingsInput,
     ) -> Result<UpdateServerSettingsResponse> {
-        update_server_settings(ctx, input, false)
+        update_server_settings(ctx, input, false).await
     }
 }
 
@@ -208,7 +208,7 @@ impl ServerAdminStage0Mutations {
         ctx: &Context<'_>,
         input: UpdateServerSettingsInput,
     ) -> Result<UpdateServerSettingsResponse> {
-        update_server_settings(ctx, input, true)
+        update_server_settings(ctx, input, true).await
     }
 }
 

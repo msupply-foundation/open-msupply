@@ -122,11 +122,11 @@ impl ItemStats {
             .collect()
     }
 
-    pub fn from_requisition_line(requistion_line: &RequisitionLineRow) -> Self {
+    pub fn from_requisition_line(requisition_line: &RequisitionLineRow) -> Self {
         ItemStats {
-            average_monthly_consumption: requistion_line.average_monthly_consumption as f64,
-            available_stock_on_hand: requistion_line.available_stock_on_hand as u32,
-            item_id: requistion_line.item_id.clone(),
+            average_monthly_consumption: requisition_line.average_monthly_consumption as f64,
+            available_stock_on_hand: requisition_line.available_stock_on_hand as u32,
+            item_id: requisition_line.item_id.clone(),
         }
     }
 }

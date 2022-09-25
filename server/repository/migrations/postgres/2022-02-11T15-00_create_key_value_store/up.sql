@@ -12,9 +12,13 @@ CREATE TYPE key_type AS ENUM (
     'SETTINGS_SYNC_INTERVAL_SEC',
     'SETTINGS_SYNC_CENTRAL_SERVER_SITE_ID',
     'SETTINGS_SYNC_SITE_ID',
+    'SETTINGS_SYNC_SITE_UUID',
     'SETTINGS_SYNC_IS_DISABLED',
-    --Used to validate JWT Tokens
-    'SETTINGS_TOKEN_SECRET'
+    -- Used to validate JWT Tokens
+    'SETTINGS_TOKEN_SECRET',
+    -- Change log cursors for processors
+    'SHIPMENT_TRANSFER_PROCESSOR_CURSOR',
+    'REQUISITION_TRANSFER_PROCESSOR_CURSOR'
 );
 
 -- key value store, e.g. to store local server state

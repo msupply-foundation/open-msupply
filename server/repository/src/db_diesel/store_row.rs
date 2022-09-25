@@ -86,4 +86,10 @@ impl<'a> StoreRowRepository<'a> {
         let result = store_dsl::store.load(&self.connection.connection)?;
         Ok(result)
     }
+
+    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(store_dsl::store.filter(store_dsl::id.eq(id)))
+            .execute(&self.connection.connection)?;
+        Ok(())
+    }
 }

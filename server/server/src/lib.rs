@@ -15,18 +15,26 @@ use repository::{get_storage_connection_manager, run_db_migrations, StorageConne
 
 use service::{
     auth_data::AuthData,
+    processors::Processors,
     service_provider::ServiceProvider,
-    settings::{is_develop, ServerSettings, Settings},
-    sync::{remote_data_synchroniser::RemoteSyncState, Synchroniser},
+    settings::{is_develop, LogMode, LoggingSettings, ServerSettings, Settings},
+    sync::synchroniser::Synchroniser,
     token_bucket::TokenBucket,
 };
 
 use actix_web::{web::Data, App, HttpServer};
+use fast_log::{
+    consts::LogSize,
+    plugin::{file_split::RollingType, packer::LogPacker},
+    Config as LogConfig,
+};
+use log::LevelFilter;
+use std::env;
 use std::{
     ops::{Deref, DerefMut},
     sync::{Arc, RwLock},
 };
-use tokio::sync::{oneshot, Mutex};
+use tokio::sync::{mpsc, Mutex};
 
 pub mod certs;
 pub mod configuration;
@@ -56,7 +64,7 @@ fn auth_data(
 
 async fn run_stage0(
     config_settings: Settings,
-    off_switch: Arc<Mutex<oneshot::Receiver<()>>>,
+    off_switch: Arc<Mutex<mpsc::Receiver<()>>>,
     token_bucket: Arc<RwLock<TokenBucket>>,
     token_secret: String,
     connection_manager: StorageConnectionManager,
@@ -131,17 +139,17 @@ async fn run_stage0(
         None => http_server.bind(config_settings.server.address())?,
     };
 
-    let running_sever = http_server.run();
-    let server_handle = running_sever.handle();
+    let running_server = http_server.run();
+    let server_handle = running_server.handle();
     // run server in another task so that we can handle restart/off events here
-    actix_web::rt::spawn(running_sever);
+    actix_web::rt::spawn(running_server);
 
     let mut off_switch = off_switch.lock().await;
     let off_switch = off_switch.deref_mut();
     let ctrl_c = tokio::signal::ctrl_c();
     let restart = tokio::select! {
         _ = ctrl_c => false,
-        _ = off_switch => false,
+        _ = off_switch.recv() => false,
         _ = restart_switch_receiver.recv() => true,
     };
     // gracefully shutdown the server
@@ -152,7 +160,7 @@ async fn run_stage0(
 /// Return true if restart has been requested
 async fn run_server(
     config_settings: Settings,
-    off_switch: Arc<Mutex<oneshot::Receiver<()>>>,
+    off_switch: Arc<Mutex<mpsc::Receiver<()>>>,
     token_bucket: Arc<RwLock<TokenBucket>>,
     token_secret: String,
     connection_manager: StorageConnectionManager,
@@ -166,7 +174,7 @@ async fn run_server(
     let service = &service_provider.settings;
 
     let db_settings = service.sync_settings(&service_context).unwrap();
-    let sync_settings = db_settings.or(config_settings.sync.clone());
+    let sync_settings = db_settings.clone().or(config_settings.sync.clone());
     let sync_settings = match sync_settings {
         Some(sync_settings) => sync_settings,
         // No sync settings found, start in stage0 mode
@@ -182,9 +190,22 @@ async fn run_server(
             .await
         }
     };
+
+    if db_settings.is_none() && config_settings.sync.is_some() {
+        service_provider
+            .site_info
+            .request_and_set_site_info(&service_provider, config_settings.sync.as_ref().unwrap())
+            .await
+            .unwrap();
+    }
+
     // Final settings:
     let mut settings = config_settings;
     settings.sync = Some(sync_settings.clone());
+    let site_id = service_provider
+        .site_info
+        .get_site_id(&service_context)
+        .unwrap();
 
     let auth_data = auth_data(
         &settings.server,
@@ -196,11 +217,14 @@ async fn run_server(
     let (restart_switch, mut restart_switch_receiver) = tokio::sync::mpsc::channel::<bool>(1);
     let connection_manager_data_app = Data::new(connection_manager.clone());
 
-    let service_provider = ServiceProvider::new(
+    let (processors_trigger, processors) = Processors::init();
+    let service_provider = ServiceProvider::new_with_processors(
         connection_manager.clone(),
         &settings.server.base_dir.clone().unwrap(),
+        processors_trigger,
     );
     let service_provider_data = Data::new(service_provider);
+    let processors_task = processors.spawn(service_provider_data.clone().into_inner());
 
     let loaders = get_loaders(&connection_manager, service_provider_data.clone()).await;
     let loader_registry_data = Data::new(LoaderRegistry { loaders });
@@ -212,32 +236,23 @@ async fn run_server(
     let mut synchroniser =
         Synchroniser::new(sync_settings, service_provider_data.deref().clone()).unwrap();
     // Do the initial pull before doing anything else
-    let connection = get_storage_connection_manager(&settings.database)
-        .connection()
-        .unwrap();
-
-    let state = RemoteSyncState::new(&connection);
-    if state.initial_remote_data_synced().unwrap_or(false) {
-        {}
-    } else {
-        match synchroniser.initial_pull().await {
-            Ok(_) => {}
-            Err(err) => {
-                error!("Failed to perform the initial sync: {}", err);
-                if !is_develop() {
-                    warn!("Falling back to bootstrap mode");
-                    return run_stage0(
-                        settings,
-                        off_switch,
-                        token_bucket,
-                        token_secret,
-                        connection_manager,
-                        certificates,
-                    )
-                    .await;
-                }
+    match synchroniser.sync().await {
+        Ok(_) => {}
+        Err(err) => {
+            error!("Failed to perform the initial sync: {}", err);
+            if !is_develop() || site_id.is_none() {
+                warn!("Falling back to bootstrap mode");
+                return run_stage0(
+                    settings,
+                    off_switch,
+                    token_bucket,
+                    token_secret,
+                    connection_manager,
+                    certificates,
+                )
+                .await;
             }
-        };
+        }
     }
 
     let closure_settings = settings.clone();
@@ -267,33 +282,86 @@ async fn run_server(
         None => http_server.bind(settings.server.address())?,
     };
 
-    let running_sever = http_server.run();
-    let server_handle = running_sever.handle();
+    let running_server = http_server.run();
+    let server_handle = running_server.handle();
     // run server in another task so that we can handle restart/off events here
-    actix_web::rt::spawn(running_sever);
+    actix_web::rt::spawn(running_server);
 
     let mut off_switch = off_switch.lock().await;
     let off_switch = off_switch.deref_mut();
     let ctrl_c = tokio::signal::ctrl_c();
     let restart = tokio::select! {
         _ = ctrl_c => false,
-        _ = off_switch => false,
+        _ = off_switch.recv() => false,
         _ = restart_switch_receiver.recv() => true,
         () = async {
             synchroniser.run().await;
         } => unreachable!("Synchroniser unexpectedly died!?"),
+        result = processors_task => unreachable!("Processor terminated ({:?})", result)
     };
 
     server_handle.stop(true).await;
     Ok(restart)
 }
 
+pub fn logging_init(settings: Option<LoggingSettings>) {
+    let settings = settings.unwrap_or(LoggingSettings {
+        mode: LogMode::Console,
+        level: service::settings::Level::Info,
+        directory: None,
+        filename: None,
+        max_file_count: None,
+        max_file_size: None,
+    });
+    let config = match settings.mode {
+        LogMode::File => file_logger(&settings),
+        LogMode::Console => LogConfig::new().console(),
+        LogMode::All => file_logger(&settings).console(),
+    };
+    fast_log::init(config.level(LevelFilter::from(settings.level.clone())))
+        .expect("Unable to initialise logger");
+}
+
+fn file_logger(settings: &LoggingSettings) -> LogConfig {
+    let default_log_file = "remote_server.log".to_string();
+    let default_log_dir = "log".to_string();
+    let default_max_file_count = 5;
+    let default_max_file_size = 10;
+
+    // Note: the file_split will panic if the path separator isn't appended
+    // and the path separator has to be unix-style, even on windows
+    let log_dir = format!("{}/", settings.directory.clone().unwrap_or(default_log_dir),);
+    let log_path = env::current_dir().unwrap_or_default().join(&log_dir);
+    let log_file = settings
+        .filename
+        .clone()
+        .unwrap_or_else(|| default_log_file);
+    let log_file = log_path.join(log_file).to_string_lossy().to_string();
+    let max_file_count = settings.max_file_count.unwrap_or(default_max_file_count);
+    let max_file_size = settings.max_file_size.unwrap_or(default_max_file_size);
+
+    // file_loop will append to the specified log file until the max size is reached,
+    // then create a new log file with the same name, with date and time appended
+    // file_split will split the temp file when the max file size is reached
+    // and retain the max number of files while the server is running
+    // Note: when the server is started, the temp files are removed. The main log file is
+    // appended to, but only to the max size limit. Only one additional main log is created
+    LogConfig::new()
+        .file_split(
+            &log_dir,
+            LogSize::MB(max_file_size),
+            RollingType::KeepNum(max_file_count),
+            LogPacker {},
+        )
+        .file_loop(&log_file, LogSize::MB(max_file_size))
+}
+
 /// Starts the server
 ///
-/// This method doesn't return until a message is send to the off_switch.
+/// This method doesn't return until a message is sent to the off_switch.
 pub async fn start_server(
     config_settings: Settings,
-    off_switch: oneshot::Receiver<()>,
+    off_switch: mpsc::Receiver<()>,
 ) -> std::io::Result<()> {
     info!(
         "Server starting in {} mode",
