@@ -290,7 +290,6 @@ export const useOutboundColumns = ({
       [
         'unitQuantity',
         {
-          Cell: PositiveNumberCell,
           accessor: ({ rowData }) => {
             if ('lines' in rowData) {
               const { lines } = rowData;
