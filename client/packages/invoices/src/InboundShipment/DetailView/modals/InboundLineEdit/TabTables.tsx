@@ -9,11 +9,11 @@ import {
   useTheme,
   Theme,
   alpha,
-  PositiveNumberInputCell,
   QueryParamsProvider,
   createQueryParamsStore,
-  NonNegativeIntegerCell,
+  NonNegativeDecimalCell,
   PositiveNumberCell,
+  PositiveNumberInputCell,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import {
@@ -70,13 +70,13 @@ export const QuantityTableComponent: FC<TableProps> = ({
       [
         'numberOfPacks',
         {
-          Cell: PositiveNumberInputCell,
+          Cell: NonNegativeDecimalCell,
           width: 100,
           label: 'label.num-packs',
           setter: updateDraftLine,
         },
       ],
-      ['packSize', { Cell: NonNegativeIntegerCell, setter: updateDraftLine }],
+      ['packSize', { Cell: PositiveNumberInputCell, setter: updateDraftLine }],
       [
         'unitQuantity',
         { Cell: PositiveNumberCell, accessor: ({ rowData }) => rowData.numberOfPacks * rowData.packSize },
