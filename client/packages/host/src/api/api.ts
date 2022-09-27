@@ -16,10 +16,9 @@ export const getHostQueries = (sdk: Sdk) => ({
       return result?.latestSyncStatus;
     },
   },
+  // manaulSync is a trigger that returns a string result (don't need to caputre it)
   manualSync: async () => {
-    await sdk.manualSync();
-    // manaulSync is a trigger that returns a string result (don't need to caputre it)
-    return;
+    return await sdk.manualSync();
   },
   initialise: async (settings: SyncSettingsInput) => {
     const result = await sdk.initialiseSite({
