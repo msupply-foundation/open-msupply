@@ -112,7 +112,6 @@ export const useInitialiseForm = () => {
       await initialise(syncSettings);
       setIsInitialising(true);
     } catch (e) {
-      console.log(e);
       setSiteCredentialsError({
         message: parseSyncErrorMessage(
           (e as Error)?.message,
