@@ -17,7 +17,6 @@ use super::{
         DefaultQuery, GraphQlQuery, ReportDefinition, ReportDefinitionEntry, ReportRef,
         TeraTemplate,
     },
-    dummy_reports::insert_dummy_reports,
     html_printing::html_to_pdf,
 };
 
@@ -249,12 +248,6 @@ fn query_reports(
     sort: Option<ReportSort>,
 ) -> Result<Vec<ReportRow>, ListError> {
     let repo = ReportRepository::new(&ctx.connection);
-
-    // TODO remove when reports are loaded through other means:
-    if repo.count(None)? == 0 {
-        insert_dummy_reports(&ctx.connection)?;
-    }
-
     let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
     let filter = filter
         .unwrap_or(ReportFilter::new())

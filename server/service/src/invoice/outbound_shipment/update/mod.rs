@@ -14,7 +14,7 @@ use crate::invoice::outbound_shipment::update::generate::GenerateResult;
 use crate::invoice::query::get_invoice;
 use crate::log::log_entry;
 use crate::service_provider::ServiceContext;
-use crate::sync_processor::{process_records, Record};
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum UpdateOutboundShipmentStatus {
     Allocated,
@@ -91,14 +91,8 @@ pub fn update_outbound_shipment(
         })
         .map_err(|error| error.to_inner_error())?;
 
-    // TODO use change log (and maybe ask sync porcessor actor to retrigger here)
-    println!(
-        "{:#?}",
-        process_records(
-            &ctx.connection,
-            vec![Record::InvoiceRow(invoice.invoice_row.clone())],
-        )
-    );
+    ctx.processors_trigger
+        .trigger_shipment_transfer_processors();
 
     if let Some(status) = patch.status {
         log_entry(
@@ -179,7 +173,7 @@ mod test {
         InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType, NameRow, NameStoreJoinRow,
         StockLineRow, StockLineRowRepository,
     };
-    use util::{inline_edit, inline_init};
+    use util::{assert_matches, inline_edit, inline_init};
 
     use crate::{
         invoice::outbound_shipment::{
@@ -489,7 +483,7 @@ mod test {
 
         let result = service.update_outbound_shipment(&context, get_update());
 
-        assert!(matches!(result, Ok(_)), "Not Ok(_) {:#?}", result);
+        assert_matches!(result, Ok(_));
 
         let updated_record = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&invoice().id)

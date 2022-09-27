@@ -13,3 +13,4 @@ node "adjustSUFs.js"
 @ECHO ##### Creating installers #####
 start "" /wait "C:\Program Files (x86)\Setup Factory 9\SUFDesign.exe" /BUILD /LOG:installers\setup-factory.log "omSupply\omsupply_server.suf"
 start "" /wait "C:\Program Files (x86)\Setup Factory 9\SUFDesign.exe" /BUILD /LOG:installers\setup-factory.log "omSupply\omsupply_desktop.suf"
+start "" /wait "C:\Program Files (x86)\Setup Factory 9\SUFDesign.exe" /BUILD /LOG:installers\setup-factory.log "omSupply\omsupply_demo.suf"

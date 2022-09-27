@@ -159,7 +159,7 @@ impl RequisitionLineNode {
 
     /// Quantity remaining to supply
     /// supplyQuantity minus all (including unallocated) linked invoice lines numberOfPacks * packSize
-    /// Only available in response requisition, request requistion returns 0
+    /// Only available in response requisition, request requisition returns 0
     pub async fn remaining_quantity_to_supply(&self, ctx: &Context<'_>) -> Result<i32> {
         if self.requisition_row().r#type == RequisitionRowType::Request {
             return Ok(0);

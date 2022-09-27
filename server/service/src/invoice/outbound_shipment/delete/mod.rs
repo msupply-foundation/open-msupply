@@ -1,14 +1,12 @@
 use chrono::Utc;
-use repository::{
-    EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceRowRepository,
-    LogType, RepositoryError, TransactionError,
-};
+use repository::{InvoiceLine, InvoiceRowRepository, LogType, RepositoryError, TransactionError};
 
 pub mod validate;
 
 use validate::validate;
 
 use crate::{
+    invoice::common::get_lines_for_invoice,
     invoice_line::outbound_shipment_line::{
         delete_outbound_shipment_line, DeleteOutboundShipmentLine, DeleteOutboundShipmentLineError,
     },
@@ -28,9 +26,9 @@ pub fn delete_outbound_shipment(
         .transaction_sync(|connection| {
             validate(&id, &ctx.store_id, &connection)?;
 
-            // TODO https://github.com/openmsupply/remote-server/issues/839
-            let lines = InvoiceLineRepository::new(&connection)
-                .query_by_filter(InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&id)))?;
+            // Note that lines are not deleted when an invoice is deleted, due to issues with batch deletes.
+            // TODO: implement delete lines. See https://github.com/openmsupply/remote-server/issues/839 for details.
+            let lines = get_lines_for_invoice(connection, &id)?;
             for line in lines {
                 delete_outbound_shipment_line(
                     ctx,
@@ -58,6 +56,9 @@ pub fn delete_outbound_shipment(
         Some(id),
         Utc::now().naive_utc(),
     )?;
+
+    ctx.processors_trigger
+        .trigger_shipment_transfer_processors();
 
     Ok(invoice_id)
 }

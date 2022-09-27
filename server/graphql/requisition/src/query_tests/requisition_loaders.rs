@@ -396,7 +396,7 @@ mod test {
         }
         );
 
-        // Used data from create_requistion_shipment_success tests
+        // Used data from create_requisition_shipment_success tests
 
         let expected = json!({
             "requisitions": {
