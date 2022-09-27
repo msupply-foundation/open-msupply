@@ -48,7 +48,7 @@ export const Initialise = () => {
           onChange={e => setUsername(e.target.value)}
           inputProps={{
             autoComplete: 'username',
-            autocapitalize: 'off',
+            autoCapitalize: 'off',
           }}
           autoFocus
         />
@@ -63,7 +63,7 @@ export const Initialise = () => {
           onChange={e => setPassword(e.target.value)}
           inputProps={{
             autoComplete: 'current-password',
-            autocapitalize: 'off',
+            autoCapitalize: 'off',
           }}
         />
       }
