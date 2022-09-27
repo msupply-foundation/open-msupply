@@ -82,7 +82,7 @@ enum SyncSteps {
   Integrate,
 }
 
-function getSteps(
+const getSteps = (
   t: TypedTFunction<LocaleKey>,
   syncStatus?: SyncStatus
 ): {
@@ -90,7 +90,7 @@ function getSteps(
   progress?: { total: number; done: number };
   active: boolean;
   completed: boolean;
-}[] {
+}[] => {
   const getProgress = (progress?: SyncStatusWithProgressFragment | null) => {
     if (!progress?.totalProgress) return;
     const { totalProgress: total, doneProgress } = progress;
@@ -129,4 +129,4 @@ function getSteps(
     ...getStatus(syncStatus?.integration),
   };
   return steps;
-}
+};
