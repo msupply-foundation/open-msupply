@@ -10,10 +10,8 @@ import {
 } from '@openmsupply-client/common';
 import { useHost } from '../../api/hooks';
 
-// For refetch of syncStatus and initialisationStatus
-const POLLING_INTERVAL = 500;
-// Default sync settings sync interval;
-const SYNC_INTERVAL = 300;
+const STATUS_POLLING_INTERVAL = 500;
+const DEFAULT_SYNC_INTERVAL_SECS = 300;
 
 interface InitialiseForm {
   // Error on validation of sync credentials, there is another error for sync progress
@@ -38,7 +36,7 @@ interface InitialiseForm {
   // set to settings value from api if isInitialising
   url: string;
   // Used to enable polling of syncStatus and initialisationStatus
-  // false by default and toggled to POLLING_INTERVAL when isInitialising
+  // false by default and toggled to STATUS_POLLING_INTERVAL when isInitialising
   refetchInterval: number | false;
 }
 
@@ -69,7 +67,7 @@ const useInitialiseFormState = () => {
       set(state => ({
         ...state,
         isInitialising,
-        refetchInterval: isInitialising && POLLING_INTERVAL,
+        refetchInterval: isInitialising && STATUS_POLLING_INTERVAL,
         password: '',
       })),
   };
@@ -105,7 +103,7 @@ export const useInitialiseForm = () => {
     setSiteCredentialsError();
     setIsLoading(true);
     const syncSettings = {
-      intervalSec: SYNC_INTERVAL,
+      intervalSec: DEFAULT_SYNC_INTERVAL_SECS,
       password,
       url,
       username,
