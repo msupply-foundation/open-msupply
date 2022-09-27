@@ -1,7 +1,4 @@
 import React, { FC } from 'react';
-import Stepper from '@mui/material/Stepper';
-import Step from '@mui/material/Step';
-import StepLabel from '@mui/material/StepLabel';
 import {
   SyncStatusFragment,
   SyncStatusQuery,
@@ -14,6 +11,9 @@ import {
   Box,
   Typography,
   AlertIcon,
+  StepLabel,
+  Step,
+  Stepper,
 } from '@openmsupply-client/common';
 import { parseSyncErrorMessage } from '../Initialise/hooks';
 
@@ -33,7 +33,6 @@ export const SyncProgress: FC<SyncProgressProps> = ({
   const t = useTranslation();
   let error = syncStatus?.error;
   if (!!error) {
-    console.log(error);
     error = parseSyncErrorMessage(error, 'error.unknown-sync-error', t);
   }
 
