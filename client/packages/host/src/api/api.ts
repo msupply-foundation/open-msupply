@@ -7,9 +7,9 @@ export const getHostQueries = (sdk: Sdk) => ({
       const result = await sdk.syncSettings();
       return result?.syncSettings;
     },
-    syncState: async () => {
-      const result = await sdk.syncState();
-      return result?.syncState;
+    initialisationStatus: async () => {
+      const result = await sdk.initialisationStatus();
+      return result?.initialisationStatus;
     },
     syncStatus: async () => {
       const result = await sdk.syncStatus();

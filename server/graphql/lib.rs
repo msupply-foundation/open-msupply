@@ -101,7 +101,7 @@ impl Mutations {
 pub struct GraphqlSchema {
     operational: OperationalSchema,
     initialisation: InitialisationSchema,
-    /// Set on startup based on SyncState and then updated via SiteIsInitialisedCallback after initialisation
+    /// Set on startup based on InitialisationStatus and then updated via SiteIsInitialisedCallback after initialisation
     is_operational: RwLock<bool>,
 }
 

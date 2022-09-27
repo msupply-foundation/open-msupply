@@ -13,8 +13,8 @@ query syncSettings {
   }
 }
 
-query syncState {
-  syncState
+query initialisationStatus {
+  initialisationStatus
 }
 
 mutation initialiseSite($syncSettings: SyncSettingsInput!) {

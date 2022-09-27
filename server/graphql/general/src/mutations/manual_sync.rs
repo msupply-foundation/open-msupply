@@ -6,7 +6,7 @@ use graphql_core::{
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    sync::sync_status::status::SyncState,
+    sync::sync_status::status::InitialisationStatus,
 };
 
 pub fn manual_sync(ctx: &Context<'_>, with_auth: bool) -> Result<String> {
@@ -23,11 +23,11 @@ pub fn manual_sync(ctx: &Context<'_>, with_auth: bool) -> Result<String> {
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
 
-    let sync_state = service_provider
+    let initialisation_status = service_provider
         .sync_status_service
-        .get_sync_state(&service_context)?;
+        .get_initialisation_status(&service_context)?;
 
-    if sync_state == SyncState::PreInitialisation {
+    if initialisation_status == InitialisationStatus::PreInitialisation {
         return Err(StandardGraphqlError::BadUserInput(
             "Cannot trigger sync in pre initialisation state".to_string(),
         )
