@@ -36,9 +36,9 @@ pub fn generate(
     let mut result = GenerateOutput::default();
     let allocated_lines = get_allocated_lines(connection, &unallocated_line)?;
     // Assume pack_size 1 for unallocated line
-    let mut remaining_to_allocated = unallocated_line.number_of_packs;
+    let mut remaining_to_allocate = unallocated_line.number_of_packs;
     // If nothing remaing to alloacted just remove the line
-    if remaining_to_allocated <= 0.0 {
+    if remaining_to_allocate <= 0.0 {
         result.delete_unallocated_line = Some(DeleteOutboundShipmentUnallocatedLine {
             id: unallocated_line.id,
         });
@@ -73,7 +73,7 @@ pub fn generate(
         }
 
         let packs_to_allocate =
-            packs_to_allocate_from_stock_line(remaining_to_allocated, &stock_line);
+            packs_to_allocate_from_stock_line(remaining_to_allocate, &stock_line);
 
         // Add to existing allocated line or create new
         match try_allocate_existing_line(
@@ -89,23 +89,23 @@ pub fn generate(
             )),
         }
 
-        remaining_to_allocated =
-            remaining_to_allocated - packs_to_allocate * stock_line.stock_line_row.pack_size as f64;
+        remaining_to_allocate =
+            remaining_to_allocate - packs_to_allocate * stock_line.stock_line_row.pack_size as f64;
 
-        if remaining_to_allocated <= 0.0 {
+        if remaining_to_allocate <= 0.0 {
             break;
         }
     }
 
     // If nothing remaing to alloacted just remove the line, otherwise update
-    if remaining_to_allocated <= 0.0 {
+    if remaining_to_allocate <= 0.0 {
         result.delete_unallocated_line = Some(DeleteOutboundShipmentUnallocatedLine {
             id: unallocated_line.id,
         });
     } else {
         result.update_unallocated_line = Some(UpdateOutboundShipmentUnallocatedLine {
             id: unallocated_line.id,
-            quantity: remaining_to_allocated as u32,
+            quantity: remaining_to_allocate as u32,
         });
     };
 
@@ -182,14 +182,14 @@ fn try_allocate_existing_line(
         })
 }
 
-fn packs_to_allocate_from_stock_line(remaining_to_allocated: f64, line: &StockLine) -> f64 {
+fn packs_to_allocate_from_stock_line(remaining_to_allocate: f64, line: &StockLine) -> f64 {
     let available_quantity = line.available_quantity();
     let line_row = &line.stock_line_row;
-    if available_quantity < remaining_to_allocated {
+    if available_quantity < remaining_to_allocate {
         return line_row.available_number_of_packs;
     }
-    // We don't want to use fractions for number_of_packs (issue here)
-    let fractional_number_of_packs = remaining_to_allocated as f64 / line_row.pack_size as f64;
+    // We don't want to use fractions for number_of_packs (issue here) - to discuss
+    let fractional_number_of_packs = remaining_to_allocate as f64 / line_row.pack_size as f64;
 
     if fraction_is_integer(fractional_number_of_packs) {
         return fractional_number_of_packs;
