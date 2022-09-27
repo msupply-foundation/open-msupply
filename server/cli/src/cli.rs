@@ -256,7 +256,7 @@ async fn main() {
                     &ctx,
                     &inline_init(|r: &mut SyncSettings| {
                         r.url = "http://0.0.0.0:0".to_string();
-                        r.interval_sec = 100000000;
+                        r.interval_seconds = 100000000;
                         r.username = "Sync is disabled (datafile initialise from file".to_string();
                     }),
                 )

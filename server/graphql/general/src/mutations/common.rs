@@ -8,8 +8,8 @@ pub struct SyncSettingsInput {
     pub username: String,
     /// Plain text password
     pub password: String,
-    /// Sync interval in sec
-    pub interval_sec: u64,
+    /// Sync interval
+    pub interval_seconds: u64,
 }
 
 impl SyncSettingsInput {
@@ -18,7 +18,7 @@ impl SyncSettingsInput {
             url: self.url,
             username: self.username,
             password_sha256: sha256(&self.password),
-            interval_sec: self.interval_sec,
+            interval_seconds: self.interval_seconds,
             batch_size: Default::default(),
         }
     }

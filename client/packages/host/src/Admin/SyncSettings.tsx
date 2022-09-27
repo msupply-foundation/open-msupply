@@ -77,7 +77,7 @@ const isValid = (syncSettings: SyncSettings | null) => {
     !!syncSettings.url &&
     !!syncSettings.username &&
     !!syncSettings.password &&
-    !!syncSettings.intervalSec 
+    !!syncSettings.intervalSeconds
   );
 };
 
@@ -138,7 +138,7 @@ const SyncSettingsForm = ({
         title={t('label.settings-interval')}
         component={
           <NumericSyncSetting
-            property="intervalSec"
+            property="intervalSeconds"
             settings={settings}
             disabled={isDisabled}
             update={setSyncSettings}
@@ -170,7 +170,7 @@ export const SyncSettings = ({}) => {
   const { success, info } = useNotification();
 
   const currentSettings = {
-    intervalSec: data?.syncSettings?.intervalSec || 10,
+    intervalSeconds: data?.syncSettings?.intervalSeconds || 10,
     password: '',
     url: data?.syncSettings?.url || '',
     username: data?.syncSettings?.username || '',

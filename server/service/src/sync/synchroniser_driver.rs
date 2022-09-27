@@ -19,7 +19,7 @@ pub struct SyncTrigger {
 
 /// Used to 'drive' synchronisation, it's tasks:
 /// * Expose channel for manually triggering sync
-/// * Trigger sync every SyncSettings.interval_secs (only when initialised)
+/// * Trigger sync every SyncSettings.interval_secondss (only when initialised)
 impl SynchroniserDriver {
     pub fn init() -> (SyncTrigger, SynchroniserDriver) {
         // We use a single-element channel so that we can only have one sync pending at a time.
@@ -53,11 +53,11 @@ impl SynchroniserDriver {
                 tokio::select! {
                     // Wait for trigger
                     Some(_) = self.receiver.recv() => {},
-                    // OR wait for SyncSettings.interval_sec
+                    // OR wait for SyncSettings.interval_seconds
                     _ = async {
-                        // Need to get interval_secs from database on every iteration, since it could have been updated
+                        // Need to get interval_secondss from database on every iteration, since it could have been updated
                         let sync_settings = get_sync_settings(&service_provider);
-                        let duration = Duration::from_secs(sync_settings.interval_sec);
+                        let duration = Duration::from_secs(sync_settings.interval_seconds);
                         tokio::time::sleep(duration).await;
                      } => {},
                     else => break,

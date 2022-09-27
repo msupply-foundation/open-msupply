@@ -134,7 +134,7 @@ impl ConfigureCentralServer {
                 url: self.server_url.clone(),
                 username: result.site.name,
                 password_sha256: result.site.password_sha256,
-                interval_sec: 10000000,
+                interval_seconds: 10000000,
                 batch_size: BatchSize {
                     remote_pull: 3,
                     remote_push: 3,

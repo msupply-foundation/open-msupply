@@ -28,8 +28,8 @@ impl SyncSettingsNode {
     }
 
     /// How frequently central data is synced
-    pub async fn interval_sec(&self) -> Option<u64> {
-        self.settings.as_ref().map(|s| s.interval_sec)
+    pub async fn interval_seconds(&self) -> Option<u64> {
+        self.settings.as_ref().map(|s| s.interval_seconds)
     }
 }
 
