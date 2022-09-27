@@ -342,7 +342,7 @@
 local sBodyWelcomeText = SessionVar.Expand("Welcome to the installer for %ProductName% %ProductVer%.\r\n\r\n");
 
 if hasOmsupplyInstalled then
-	sBodyWelcomeText = SessionVar.Expand("Welcome to the installer for %ProductName% %ProductVer% Upgrader.\r\n\r\n");
+	sBodyWelcomeText = SessionVar.Expand("Welcome to the upgrader for %ProductName% %ProductVer%.\r\n\r\n");
 end
 
 local sBodyInfoText = sBodyWelcomeText .. "It is strongly recommended that you exit all Windows programs before continuing with this installation.\r\n\r\n";
@@ -2119,15 +2119,15 @@ end
 <Name>On Preload</Name>
 <Args/>
 <Script>-- These actions are performed before the screen is shown.
-local sBodyInfoText = SessionVar.Expand("The installer now has enough information to install %ProductName% on your computer.\r\n\r\n\r\n\r\n");
+local sBodyInfoText = SessionVar.Expand("We are now ready to install %ProductName% on your computer.\r\n\r\n\r\n\r\n");
 
 if hasOmsupplyInstalled then
-	sBodyInfoText = SessionVar.Expand("The upgrader installer now has enough information to install %ProductName% on your computer.\r\n\r\n\r\n\r\n");
+	sBodyInfoText = SessionVar.Expand("We are now ready to upgrade %ProductName% on your computer.\r\n\r\n\r\n\r\n");
 end
 
 local sBodyInfoSubText = sBodyInfoText .. "The following settings will be used:\r\n\r\n";
-sBodyInfoSubText = sBodyInfoSubText .. SessionVar.Expand("Install folder:        %AppFolder%\r\n\r\n");
-sBodyInfoSubText = sBodyInfoSubText .. SessionVar.Expand("Shortcut folder:    %AppShortcutFolderName%\r\n\r\n\r\n\r\n");
+sBodyInfoSubText = sBodyInfoSubText .. SessionVar.Expand("  Install folder:    %AppFolder%\r\n\r\n");
+sBodyInfoSubText = sBodyInfoSubText .. SessionVar.Expand("  Version       :    %ProductVer%\r\n\r\n\r\n\r\n");
 sBodyInfoSubText = sBodyInfoSubText .. "Please click Next to proceed with the installation.";
 
 DlgStaticText.SetProperties(CTRL_STATICTEXT_BODY, {Text = sBodyInfoSubText});
@@ -2263,7 +2263,7 @@ end
 <Messages>
 <IDS_WINDOW_TITLE>%window_title%</IDS_WINDOW_TITLE>
 <IDS_HEADER_TEXT>Ready to Install</IDS_HEADER_TEXT>
-<IDS_SUBHEADER_TEXT>%ready_to_install_sub_title%</IDS_SUBHEADER_TEXT>
+<IDS_SUBHEADER_TEXT/>
 <IDS_CTRL_BUTTON_NEXT>&amp;Next &gt;</IDS_CTRL_BUTTON_NEXT>
 <IDS_CTRL_BUTTON_BACK>&lt; &amp;Back</IDS_CTRL_BUTTON_BACK>
 <IDS_CTRL_BUTTON_CANCEL>&amp;Cancel</IDS_CTRL_BUTTON_CANCEL>
@@ -4056,7 +4056,6 @@ g_HandleSystemReboot();
 <Args/>
 <Script>-- Set window title
 local sWindowTitle = "omSupply Server Setup";
-local sReadyToInstallSubTitle = SessionVar.Expand("You are now ready to install %ProductName% %ProductVer%.");
 
 hasOmsupplyInstalled = false;
 omSupplyServerDatabase = SessionVar.Get("%omsupply_selected_db%");
@@ -4078,11 +4077,9 @@ end
 
 if hasOmsupplyInstalled then
 	sWindowTitle = "omSupply Server Upgrader Setup";
-	sReadyToInstallSubTitle = SessionVar.Expand("You are now ready to install %ProductName% %ProductVer% Upgrader.");
 end
 
 SessionVar.Set("%window_title%", sWindowTitle);
-SessionVar.Set("%ready_to_install_sub_title%", sReadyToInstallSubTitle);
 </Script>
 <BookMarks count="0">
 </BookMarks>
