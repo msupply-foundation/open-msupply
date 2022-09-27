@@ -11,7 +11,7 @@ import {
 import { useHost } from '../../api/hooks';
 
 const STATUS_POLLING_INTERVAL = 500;
-const DEFAULT_SYNC_INTERVAL_SECS = 300;
+const DEFAULT_SYNC_INTERVAL_IN_SECONDS = 300;
 
 interface InitialiseForm {
   // Error on validation of sync credentials, there is another error for sync progress
@@ -103,7 +103,7 @@ export const useInitialiseForm = () => {
     setSiteCredentialsError();
     setIsLoading(true);
     const syncSettings = {
-      intervalSeconds: DEFAULT_SYNC_INTERVAL_SECS,
+      intervalSeconds: DEFAULT_SYNC_INTERVAL_IN_SECONDS,
       password,
       url,
       username,
