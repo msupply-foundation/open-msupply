@@ -451,7 +451,7 @@ async fn run_server_and_sync(
         url: format!("http://127.0.0.1:{}", port),
         username: "".to_string(),
         password_sha256: "".to_string(),
-        interval_sec: 100000,
+        interval_seconds: 100000,
         batch_size: BatchSize {
             remote_pull: 1,
             remote_push: 1,

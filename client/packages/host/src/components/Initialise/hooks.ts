@@ -103,7 +103,7 @@ export const useInitialiseForm = () => {
     setSiteCredentialsError();
     setIsLoading(true);
     const syncSettings = {
-      intervalSec: DEFAULT_SYNC_INTERVAL_SECS,
+      intervalSeconds: DEFAULT_SYNC_INTERVAL_SECS,
       password,
       url,
       username,

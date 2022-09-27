@@ -4,12 +4,12 @@ import { GraphQLClient } from 'graphql-request';
 import * as Dom from 'graphql-request/dist/types.dom';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type SyncSettingsFragment = { __typename: 'SyncSettingsNode', intervalSec?: number | null, url?: string | null, username?: string | null };
+export type SyncSettingsFragment = { __typename: 'SyncSettingsNode', intervalSeconds?: number | null, url?: string | null, username?: string | null };
 
 export type SyncSettingsQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
 
-export type SyncSettingsQuery = { __typename: 'Queries', syncSettings: { __typename: 'SyncSettingsNode', intervalSec?: number | null, url?: string | null, username?: string | null } };
+export type SyncSettingsQuery = { __typename: 'Queries', syncSettings: { __typename: 'SyncSettingsNode', intervalSeconds?: number | null, url?: string | null, username?: string | null } };
 
 export type InitialisationStatusQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
@@ -21,7 +21,7 @@ export type InitialiseSiteMutationVariables = Types.Exact<{
 }>;
 
 
-export type InitialiseSiteMutation = { __typename: 'Mutations', initialiseSite: { __typename: 'SyncSettingsNode', intervalSec?: number | null, url?: string | null, username?: string | null } };
+export type InitialiseSiteMutation = { __typename: 'Mutations', initialiseSite: { __typename: 'SyncSettingsNode', intervalSeconds?: number | null, url?: string | null, username?: string | null } };
 
 export type SyncStatusFragment = { __typename: 'SyncStatusNode', finished?: any | null, started: any };
 
@@ -40,7 +40,7 @@ export type ManualSyncMutation = { __typename: 'Mutations', manualSync: string }
 export const SyncSettingsFragmentDoc = gql`
     fragment SyncSettings on SyncSettingsNode {
   __typename
-  intervalSec
+  intervalSeconds
   url
   username
 }
