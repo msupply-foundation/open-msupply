@@ -167,9 +167,7 @@ pub async fn start_server(
             loader_registry: Data::new(LoaderRegistry { loaders }),
             service_provider: service_provider.clone(),
             settings: Data::new(settings.clone()),
-            auth,
-            // TODO what what this like before ?
-            include_logger: true,
+            auth
         },
         is_operational,
     ));
