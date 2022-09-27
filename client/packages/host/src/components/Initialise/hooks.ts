@@ -169,11 +169,11 @@ export const useInitialiseForm = () => {
   };
 };
 
-export function parseSyncErrorMessage(
+const parseSyncErrorMessage = (
   message: string,
   defaultKey: LocaleKey,
   t: TypedTFunction<LocaleKey>
-) {
+) => {
   const matches = /code: "([a-zA-Z_]+?)"/g.exec(message);
   const key =
     matches && matches.length > 1
@@ -181,4 +181,4 @@ export function parseSyncErrorMessage(
       : defaultKey;
 
   return t(key);
-}
+};
