@@ -24,9 +24,9 @@ export const NonNegativeDecimalCell = <T extends RecordWithId>({
       type="number"
       value={buffer}
       onChange={newValue => {
-        const intValue = Math.round(newValue * 100) / 100;
-        setBuffer(intValue.toString());
-        updater({ ...rowData, [column.key]: intValue });
+        const decimal = Math.round(newValue * 100) / 100;
+        setBuffer(decimal.toString());
+        updater({ ...rowData, [column.key]: decimal });
       }}
     />
   );
