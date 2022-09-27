@@ -19,10 +19,10 @@ interface InitialiseForm {
   // true:
   // * on start of initialisation
   // * on start of retry
-  // * syncStatus exists and not erronous
+  // * syncStatus exists and not erroneous
   // false - default:
   // * on site credentials vaidation
-  // * sync exists and erronous
+  // * sync exists and erroneous
   isLoading: boolean;
   // true - default (to make form non editable while before api result is known)
   // * initialisationStatus is Initialising
@@ -144,7 +144,7 @@ export const useInitialiseForm = () => {
 
   useEffect(() => {
     if (!syncStatus) return;
-    // Need to be able to retry is syncStatus is erronous
+    // Need to be able to retry is syncStatus is erroneous
     setIsLoading(!syncStatus.error);
   }, [syncStatus]);
 
