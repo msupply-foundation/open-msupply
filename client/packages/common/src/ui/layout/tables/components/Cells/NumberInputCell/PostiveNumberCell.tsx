@@ -10,7 +10,7 @@ export const PositiveNumberCell = <T extends RecordWithId>({
   rows,
 }: CellProps<T>) => {
   const value = column.accessor({ rowData, rows }) as number;
-  const formattedValue = useFormatNumber().twoDp(value);
+  const formattedValue = useFormatNumber().round(value, 2);
 
   return (
     <Typography
