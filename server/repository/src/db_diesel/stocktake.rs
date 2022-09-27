@@ -224,9 +224,9 @@ impl<'a> StocktakeRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_one_by_id(&self, row_id: &str) -> Result<Option<Stocktake>, RepositoryError> {
+    pub fn find_one_by_id(&self, record_id: &str) -> Result<Option<Stocktake>, RepositoryError> {
         Ok(stocktake_dsl::stocktake
-            .filter(stocktake_dsl::id.eq(row_id))
+            .filter(stocktake_dsl::id.eq(record_id))
             .first::<Stocktake>(&self.connection.connection)
             .optional()?)
     }

@@ -11,7 +11,6 @@ import { Theme } from '@common/styles';
 type LoginLayoutProps = {
   UsernameInput: ReactNode;
   PasswordInput: ReactNode;
-  SiteIdInput: ReactNode;
   UrlInput: ReactNode;
   SaveButton: ReactNode;
   ErrorMessage: ReactNode;
@@ -21,7 +20,6 @@ type LoginLayoutProps = {
 export const InitialiseLayout = ({
   UsernameInput,
   PasswordInput,
-  SiteIdInput,
   UrlInput,
   SaveButton,
   ErrorMessage,
@@ -104,7 +102,6 @@ export const InitialiseLayout = ({
                 <LoginIcon small />
               </Box>
               {UrlInput}
-              {SiteIdInput}
               {UsernameInput}
               {PasswordInput}
               {ErrorMessage}

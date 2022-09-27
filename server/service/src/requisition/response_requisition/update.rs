@@ -2,7 +2,6 @@ use crate::{
     log::log_entry,
     requisition::{common::check_requisition_exists, query::get_requisition},
     service_provider::ServiceContext,
-    sync_processor::{process_records, Record},
 };
 use chrono::Utc;
 use repository::{
@@ -15,7 +14,7 @@ use util::inline_edit;
 pub enum UpdateResponseRequstionStatus {
     Finalised,
 }
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct UpdateResponseRequisition {
     pub id: String,
     pub colour: Option<String>,
@@ -65,15 +64,8 @@ pub fn update_response_requisition(
         })
         .map_err(|error| error.to_inner_error())?;
 
-    // TODO use change log (and maybe ask sync porcessor actor to retrigger here)
-    println!(
-        "{:#?}",
-        process_records(
-            &ctx.connection,
-            vec![Record::RequisitionRow(requisition.requisition_row.clone())],
-        )
-    );
-
+    ctx.processors_trigger
+        .trigger_requisition_transfer_processors();
     Ok(requisition)
 }
 

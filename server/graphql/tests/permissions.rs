@@ -1039,7 +1039,7 @@ mod permission_tests {
             TestData {
                 name: "updateServerSettings",
                 query: r#"mutation Mutation {
-                updateServerSettings(input: {syncSettings: {url: "test", username: "user", password: "", intervalSec: 10, centralServerSiteId: 10, siteId: 10}}) {
+                updateServerSettings(input: {syncSettings: {url: "test", username: "user", password: "", intervalSec: 10}}) {
                   ... on ServerSettingsNode {
                     __typename
                     status

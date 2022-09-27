@@ -11,7 +11,7 @@ table! {
     }
 }
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset)]
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset, Default)]
 #[table_name = "unit"]
 pub struct UnitRow {
     pub id: String,
@@ -53,5 +53,18 @@ impl<'a> UnitRowRepository<'a> {
             .filter(id.eq(unit_id))
             .first(&self.connection.connection)?;
         Ok(result)
+    }
+
+    pub fn find_one_by_id_option(&self, unit_id: &str) -> Result<Option<UnitRow>, RepositoryError> {
+        let result = unit
+            .filter(id.eq(unit_id))
+            .first(&self.connection.connection)
+            .optional()?;
+        Ok(result)
+    }
+
+    pub fn delete(&self, unit_id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(unit.filter(id.eq(unit_id))).execute(&self.connection.connection)?;
+        Ok(())
     }
 }

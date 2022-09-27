@@ -15,9 +15,10 @@ use repository::{get_storage_connection_manager, run_db_migrations, StorageConne
 
 use service::{
     auth_data::AuthData,
+    processors::Processors,
     service_provider::ServiceProvider,
     settings::{is_develop, LogMode, LoggingSettings, ServerSettings, Settings},
-    sync::{remote_data_synchroniser::RemoteSyncState, Synchroniser},
+    sync::synchroniser::Synchroniser,
     token_bucket::TokenBucket,
 };
 
@@ -138,10 +139,10 @@ async fn run_stage0(
         None => http_server.bind(config_settings.server.address())?,
     };
 
-    let running_sever = http_server.run();
-    let server_handle = running_sever.handle();
+    let running_server = http_server.run();
+    let server_handle = running_server.handle();
     // run server in another task so that we can handle restart/off events here
-    actix_web::rt::spawn(running_sever);
+    actix_web::rt::spawn(running_server);
 
     let mut off_switch = off_switch.lock().await;
     let off_switch = off_switch.deref_mut();
@@ -173,7 +174,7 @@ async fn run_server(
     let service = &service_provider.settings;
 
     let db_settings = service.sync_settings(&service_context).unwrap();
-    let sync_settings = db_settings.or(config_settings.sync.clone());
+    let sync_settings = db_settings.clone().or(config_settings.sync.clone());
     let sync_settings = match sync_settings {
         Some(sync_settings) => sync_settings,
         // No sync settings found, start in stage0 mode
@@ -189,9 +190,22 @@ async fn run_server(
             .await
         }
     };
+
+    if db_settings.is_none() && config_settings.sync.is_some() {
+        service_provider
+            .site_info
+            .request_and_set_site_info(&service_provider, config_settings.sync.as_ref().unwrap())
+            .await
+            .unwrap();
+    }
+
     // Final settings:
     let mut settings = config_settings;
     settings.sync = Some(sync_settings.clone());
+    let site_id = service_provider
+        .site_info
+        .get_site_id(&service_context)
+        .unwrap();
 
     let auth_data = auth_data(
         &settings.server,
@@ -203,11 +217,14 @@ async fn run_server(
     let (restart_switch, mut restart_switch_receiver) = tokio::sync::mpsc::channel::<bool>(1);
     let connection_manager_data_app = Data::new(connection_manager.clone());
 
-    let service_provider = ServiceProvider::new(
+    let (processors_trigger, processors) = Processors::init();
+    let service_provider = ServiceProvider::new_with_processors(
         connection_manager.clone(),
         &settings.server.base_dir.clone().unwrap(),
+        processors_trigger,
     );
     let service_provider_data = Data::new(service_provider);
+    let processors_task = processors.spawn(service_provider_data.clone().into_inner());
 
     let loaders = get_loaders(&connection_manager, service_provider_data.clone()).await;
     let loader_registry_data = Data::new(LoaderRegistry { loaders });
@@ -219,32 +236,23 @@ async fn run_server(
     let mut synchroniser =
         Synchroniser::new(sync_settings, service_provider_data.deref().clone()).unwrap();
     // Do the initial pull before doing anything else
-    let connection = get_storage_connection_manager(&settings.database)
-        .connection()
-        .unwrap();
-
-    let state = RemoteSyncState::new(&connection);
-    if state.initial_remote_data_synced().unwrap_or(false) {
-        {}
-    } else {
-        match synchroniser.initial_pull().await {
-            Ok(_) => {}
-            Err(err) => {
-                error!("Failed to perform the initial sync: {}", err);
-                if !is_develop() {
-                    warn!("Falling back to bootstrap mode");
-                    return run_stage0(
-                        settings,
-                        off_switch,
-                        token_bucket,
-                        token_secret,
-                        connection_manager,
-                        certificates,
-                    )
-                    .await;
-                }
+    match synchroniser.sync().await {
+        Ok(_) => {}
+        Err(err) => {
+            error!("Failed to perform the initial sync: {}", err);
+            if !is_develop() || site_id.is_none() {
+                warn!("Falling back to bootstrap mode");
+                return run_stage0(
+                    settings,
+                    off_switch,
+                    token_bucket,
+                    token_secret,
+                    connection_manager,
+                    certificates,
+                )
+                .await;
             }
-        };
+        }
     }
 
     let closure_settings = settings.clone();
@@ -274,10 +282,10 @@ async fn run_server(
         None => http_server.bind(settings.server.address())?,
     };
 
-    let running_sever = http_server.run();
-    let server_handle = running_sever.handle();
+    let running_server = http_server.run();
+    let server_handle = running_server.handle();
     // run server in another task so that we can handle restart/off events here
-    actix_web::rt::spawn(running_sever);
+    actix_web::rt::spawn(running_server);
 
     let mut off_switch = off_switch.lock().await;
     let off_switch = off_switch.deref_mut();
@@ -289,6 +297,7 @@ async fn run_server(
         () = async {
             synchroniser.run().await;
         } => unreachable!("Synchroniser unexpectedly died!?"),
+        result = processors_task => unreachable!("Processor terminated ({:?})", result)
     };
 
     server_handle.stop(true).await;

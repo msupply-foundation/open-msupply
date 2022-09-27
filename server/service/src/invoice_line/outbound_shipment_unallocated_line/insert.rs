@@ -135,12 +135,7 @@ pub fn check_unallocated_line_does_not_exist(
         InvoiceLineFilter::new()
             .item_id(EqualFilter::equal_to(item_id))
             .invoice_id(EqualFilter::equal_to(invoice_id))
-            .r#type(EqualFilter {
-                equal_to: Some(InvoiceLineRowType::UnallocatedStock),
-                not_equal_to: None,
-                equal_any: None,
-                not_equal_all: None,
-            }),
+            .r#type(InvoiceLineRowType::UnallocatedStock.equal_to()),
     ))?;
 
     Ok(count == 0)
