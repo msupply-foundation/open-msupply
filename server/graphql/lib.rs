@@ -10,12 +10,12 @@ use async_graphql::extensions::{
     Extension, ExtensionContext, ExtensionFactory, Logger, NextExecute,
 };
 use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
-use async_graphql::EmptySubscription;
+use async_graphql::{EmptySubscription, Schema};
 use async_graphql::{MergedObject, Response};
 use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
 use graphql_batch_mutations::BatchMutations;
 use graphql_core::loader::LoaderRegistry;
-use graphql_core::{auth_data_from_request, RequestUserData, SelfRequest};
+use graphql_core::{auth_data_from_request, BoxedSelfRequest, RequestUserData, SelfRequest};
 use graphql_general::{
     GeneralMutations, GeneralQueries, InitialisationMutations, InitialisationQueries,
 };
@@ -111,7 +111,6 @@ pub struct GraphSchemaData {
     pub service_provider: Data<ServiceProvider>,
     pub auth: Data<AuthData>,
     pub settings: Data<Settings>,
-    pub include_logger: bool,
 }
 
 impl GraphqlSchema {
@@ -122,52 +121,42 @@ impl GraphqlSchema {
             service_provider,
             auth,
             settings,
-            include_logger,
         } = data;
 
-        let mut operational_builder =
+        // Self requester schema is a copy of operational scheam, used for reports
+        // needs to be available as data in operational schema
+        let self_requester_schema =
             OperationalSchema::build(Queries::new(), Mutations::new(), EmptySubscription)
                 .data(connection_manager.clone())
                 .data(loader_registry.clone())
                 .data(service_provider.clone())
                 .data(auth.clone())
-                .data(settings.clone());
+                .data(settings.clone())
+                .finish();
+        // Self requester does not need loggers
+
+        // Operational schema
+        let operational_builder =
+            OperationalSchema::build(Queries::new(), Mutations::new(), EmptySubscription)
+                .data(connection_manager.clone())
+                .data(loader_registry.clone())
+                .data(service_provider.clone())
+                .data(auth.clone())
+                .data(settings.clone())
+                // Add self requester to operational
+                .data(Data::new(SelfRequestImpl::new_boxed(self_requester_schema)))
+                .extension(Logger)
+                .extension(ResponseLogger);
 
         // Initialisation schema should ony need service_provider
-        let mut initialisiation_builder = InitialisationSchema::build(
+        let initialisiation_builder = InitialisationSchema::build(
             InitialisationQueries,
             InitialisationMutations,
             EmptySubscription,
         )
-        .data(service_provider.clone());
-
-        // Self requester schema is a copy of operational scheam, used for reports
-        // needs to be available as data in operational schema
-        let mut self_requester_builder =
-            OperationalSchema::build(Queries::new(), Mutations::new(), EmptySubscription)
-                .data(connection_manager.clone())
-                .data(loader_registry.clone())
-                .data(service_provider.clone())
-                .data(auth.clone())
-                .data(settings.clone());
-
-        if include_logger {
-            operational_builder = operational_builder
-                .extension(Logger)
-                .extension(ResponseLogger);
-            initialisiation_builder = initialisiation_builder
-                .extension(Logger)
-                .extension(ResponseLogger);
-            self_requester_builder = self_requester_builder
-                .extension(Logger)
-                .extension(ResponseLogger);
-        }
-
-        let self_requester: Data<Box<dyn SelfRequest>> = Data::new(Box::new(SelfRequestImpl {
-            schema: self_requester_builder.finish(),
-        }));
-        // Add self requester to operational
-        operational_builder = operational_builder.data(self_requester);
+        .data(service_provider.clone())
+        .extension(Logger)
+        .extension(ResponseLogger);
 
         GraphqlSchema {
             operational: operational_builder.finish(),
@@ -251,9 +240,17 @@ impl Extension for ResponseLoggerExtension {
 
 // TODO remove this and just do reqwest query to self
 /// Used for reports
+
 struct SelfRequestImpl {
     schema: OperationalSchema,
 }
+
+impl SelfRequestImpl {
+    fn new_boxed(schema: Schema<Queries, Mutations, EmptySubscription>) -> BoxedSelfRequest {
+        Box::new(SelfRequestImpl { schema })
+    }
+}
+
 #[async_trait::async_trait]
 impl SelfRequest for SelfRequestImpl {
     async fn call(
