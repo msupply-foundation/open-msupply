@@ -13,9 +13,9 @@ use mutations::{
     sync_settings::{update_sync_settings, UpdateSyncSettingsResponse},
 };
 use queries::{
+    initialisation_status::{initialisation_status, InitialisationStatusType},
     requisition_line_chart::{ConsumptionOptionsInput, StockEvolutionOptionsInput},
     sync_settings::{sync_settings, SyncSettingsResponse},
-    sync_state::{sync_state, SyncStateType},
 };
 
 #[derive(Default, Clone)]
@@ -155,8 +155,11 @@ impl GeneralQueries {
     }
 
     /// Available without authorisation in operational and initialisation states
-    pub async fn sync_state(&self, ctx: &Context<'_>) -> Result<SyncStateType> {
-        sync_state(ctx)
+    pub async fn initialisation_status(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<InitialisationStatusType> {
+        initialisation_status(ctx)
     }
 
     pub async fn latest_sync_status(
@@ -212,8 +215,11 @@ impl InitialisationQueries {
         sync_settings(ctx, false)
     }
     /// Available without authorisation in operational and initialisation states
-    pub async fn sync_state(&self, ctx: &Context<'_>) -> Result<SyncStateType> {
-        sync_state(ctx)
+    pub async fn initialisation_status(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<InitialisationStatusType> {
+        initialisation_status(ctx)
     }
 
     pub async fn latest_sync_status(

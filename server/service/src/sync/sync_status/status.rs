@@ -50,7 +50,7 @@ pub enum SyncStatusType {
 }
 
 #[derive(PartialEq, Debug)]
-pub enum SyncState {
+pub enum InitialisationStatus {
     /// Fuly initialised
     Initialised,
     /// Sync settings were set and sync was attempted at least once
@@ -67,12 +67,15 @@ pub trait SyncStatusTrait: Sync + Send {
         get_latest_sync_status(ctx)
     }
 
-    fn get_sync_state(&self, ctx: &ServiceContext) -> Result<SyncState, RepositoryError> {
-        get_sync_state(ctx)
+    fn get_initialisation_status(
+        &self,
+        ctx: &ServiceContext,
+    ) -> Result<InitialisationStatus, RepositoryError> {
+        get_initialisation_status(ctx)
     }
 
     fn is_initialised(&self, ctx: &ServiceContext) -> Result<bool, RepositoryError> {
-        Ok(self.get_sync_state(ctx)? == SyncState::Initialised)
+        Ok(self.get_initialisation_status(ctx)? == InitialisationStatus::Initialised)
     }
 
     fn is_sync_queue_initialised(&self, ctx: &ServiceContext) -> Result<bool, RepositoryError> {
@@ -94,7 +97,9 @@ impl SyncStatusTrait for SyncStatusService {}
 /// * If there are no sync logs then: PreInitialisation
 /// * If sync log sorted by done datetime has a value in done datetime: Initialised
 /// * If sync log sorted by done datetime has not valule in done datetime: Initialising
-fn get_sync_state(ctx: &ServiceContext) -> Result<SyncState, RepositoryError> {
+fn get_initialisation_status(
+    ctx: &ServiceContext,
+) -> Result<InitialisationStatus, RepositoryError> {
     let sort = Sort {
         key: SyncLogSortField::DoneDatetime,
         desc: Some(true),
@@ -103,15 +108,15 @@ fn get_sync_state(ctx: &ServiceContext) -> Result<SyncState, RepositoryError> {
         .query(Pagination::one(), None, Some(sort))?
         .pop();
 
-    let sync_state = match latest_log_sorted_by_done_datetime {
-        None => SyncState::PreInitialisation,
+    let initialisation_status = match latest_log_sorted_by_done_datetime {
+        None => InitialisationStatus::PreInitialisation,
         Some(sync_log) => match sync_log.sync_log_row.done_datetime {
-            Some(_) => SyncState::Initialised,
-            None => SyncState::Initialising,
+            Some(_) => InitialisationStatus::Initialised,
+            None => InitialisationStatus::Initialising,
         },
     };
 
-    Ok(sync_state)
+    Ok(initialisation_status)
 }
 
 /// During initial sync remote server asks central server to initialise remote data

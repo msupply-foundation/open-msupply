@@ -24,7 +24,7 @@ pub mod requisition_line_chart;
 pub mod sync_settings;
 pub mod sync_status;
 pub use self::sync_status::*;
-pub mod sync_state;
+pub mod initialisation_status;
 
 #[cfg(test)]
 mod tests;

@@ -5,7 +5,7 @@ import {
   LoadingButton,
   Box,
   Typography,
-  SyncStateType,
+  initialisationStatusType,
   AlertIcon,
   useHostContext,
   useNavigate,
@@ -23,7 +23,7 @@ export const Login = () => {
   const t = useTranslation('app');
   const { connectedServer } = useElectronClient();
   const { setPageTitle } = useHostContext();
-  const { data: syncState } = useHost.utils.syncState();
+  const { data: initialisationStatus } = useHost.utils.initialisationStatus();
   const navigate = useNavigate();
 
   const passwordRef = React.useRef(null);
@@ -44,10 +44,13 @@ export const Login = () => {
   }, []);
 
   useEffect(() => {
-    if (!!syncState && syncState !== SyncStateType.Initialised) {
+    if (
+      !!initialisationStatus &&
+      initialisationStatus !== initialisationStatusType.Initialised
+    ) {
       navigate(`/${AppRoute.Initialise}`);
     }
-  }, [syncState]);
+  }, [initialisationStatus]);
 
   return (
     <LoginLayout

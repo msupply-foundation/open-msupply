@@ -9,6 +9,6 @@ export const useHost = {
   utils: {
     syncStatus: Utils.useSyncStatus,
     syncSettings: Utils.useSyncSettings,
-    syncState: Utils.useSyncState,
+    initialisationStatus: Utils.useinitialisationStatus,
   },
 };
