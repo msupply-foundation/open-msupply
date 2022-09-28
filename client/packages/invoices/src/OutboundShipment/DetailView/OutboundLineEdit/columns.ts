@@ -1,11 +1,12 @@
 import {
   useCurrencyFormat,
   useColumns,
-  NonNegativeIntegerCell,
+  PositiveNumberCell,
   ColumnAlign,
   ExpiryDateCell,
   CheckCell,
   CurrencyCell,
+  NonNegativeIntegerCell,
 } from '@openmsupply-client/common';
 import { DraftOutboundLine } from '../../../types';
 
@@ -35,6 +36,7 @@ export const useOutboundLineEditColumns = ({
         },
       ],
       {
+        Cell: PositiveNumberCell,
         label: 'label.available',
         key: 'availableNumberOfPacks',
         align: ColumnAlign.Right,
@@ -42,6 +44,7 @@ export const useOutboundLineEditColumns = ({
         accessor: ({ rowData }) => rowData.stockLine?.availableNumberOfPacks,
       },
       {
+        Cell: PositiveNumberCell,
         label: 'label.in-store',
         key: 'totalNumberOfPacks',
         align: ColumnAlign.Right,

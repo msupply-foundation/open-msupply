@@ -86,7 +86,9 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
                 justifyContent: 'center',
               }}
             >
-              {t('label.available-quantity', { number: availableQuantity })}
+              {t('label.available-quantity', {
+                number: availableQuantity.toFixed(0),
+              })}
             </Typography>
           </Grid>
 
