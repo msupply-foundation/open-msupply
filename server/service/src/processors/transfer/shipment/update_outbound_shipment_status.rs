@@ -1,9 +1,9 @@
 use repository::{
-    InvoiceRow, InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType, RepositoryError,
+    InvoiceRow, InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType, LogType, RepositoryError,
     StorageConnection,
 };
 
-use crate::processors::transfer::shipment::Operation;
+use crate::{log::system_log_entry, processors::transfer::shipment::Operation};
 
 use super::{ShipmentTransferProcessor, ShipmentTransferProcessorRecord};
 
@@ -70,6 +70,17 @@ impl ShipmentTransferProcessor for UpdateOutboundShipmentStatusProcessor {
         };
 
         InvoiceRowRepository::new(connection).upsert_one(&updated_outbound_shipment)?;
+
+        system_log_entry(
+            connection,
+            match inbound_shipment.invoice_row.status.clone() {
+                InvoiceRowStatus::Delivered => LogType::InvoiceStatusDelivered,
+                InvoiceRowStatus::Verified => LogType::InvoiceStatusVerified,
+                _ => LogType::InvoiceCreated,
+            },
+            Some(outbound_shipment.invoice_row.store_id.clone()),
+            Some(outbound_shipment.invoice_row.id.clone()),
+        )?;
 
         let result = format!(
             "shipment ({}) source shipment {}) status ({:?})",
