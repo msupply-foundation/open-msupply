@@ -559,4 +559,82 @@ mod test {
             })
         );
     }
+
+    #[actix_rt::test]
+    async fn allocate_unallocated_line_round_up() {
+        fn invoice() -> InvoiceRow {
+            inline_init(|r: &mut InvoiceRow| {
+                r.id = "invoice".to_string();
+                r.store_id = mock_store_a().id;
+                r.name_id = mock_name_a().id;
+                r.r#type = InvoiceRowType::OutboundShipment;
+            })
+        }
+
+        fn line() -> InvoiceLineRow {
+            inline_init(|r: &mut InvoiceLineRow| {
+                r.id = "line".to_string();
+                r.invoice_id = invoice().id;
+                r.item_id = mock_item_a().id;
+                r.r#type = InvoiceLineRowType::UnallocatedStock;
+                r.number_of_packs = 1.0;
+                r.pack_size = 1;
+            })
+        }
+
+        fn stock_line() -> StockLineRow {
+            inline_init(|r: &mut StockLineRow| {
+                r.id = "stock_line".to_string();
+                r.store_id = mock_store_a().id;
+                r.item_id = mock_item_a().id;
+                r.pack_size = 3;
+                r.available_number_of_packs = 3.0;
+            })
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "allocate_unallocated_line_round_up",
+            MockDataInserts::none().stores().items().names().units(),
+            inline_init(|r: &mut MockData| {
+                r.invoices = vec![invoice()];
+                r.invoice_lines = vec![line()];
+                r.stock_lines = vec![stock_line()];
+            }),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let service = service_provider.invoice_line_service;
+
+        let result = service
+            .allocate_outbound_shipment_unallocated_line(&context, line().id.clone())
+            .unwrap();
+
+        assert_eq!(result.inserts.len(), 1);
+        assert_eq!(result.deletes.len(), 1);
+        assert_eq!(result.updates.len(), 0);
+
+        let repo = InvoiceLineRowRepository::new(&connection);
+
+        assert_eq!(
+            repo.find_one_by_id(&result.deletes[0]),
+            Err(RepositoryError::NotFound)
+        );
+
+        let new_line = repo
+            .find_one_by_id(&result.inserts[0].invoice_line_row.id)
+            .unwrap();
+
+        assert_eq!(
+            new_line,
+            inline_edit(&new_line, |mut u| {
+                u.number_of_packs = 1.0;
+                u.pack_size = 3;
+                u
+            })
+        );
+    }
 }

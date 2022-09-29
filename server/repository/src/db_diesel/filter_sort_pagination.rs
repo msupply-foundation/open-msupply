@@ -63,24 +63,11 @@ impl EqualFilter<i32> {
 
 impl EqualFilter<f64> {
     pub fn equal_to_f64(value: f64) -> Self {
-        EqualFilter {
-            equal_to: Some(value),
-            not_equal_to: None,
-            equal_any: None,
-            not_equal_all: None,
-            equal_any_or_null: None,
-            is_null: None,
-        }
+        inline_init(|r: &mut Self| r.equal_to = Some(value))
     }
+
     pub fn not_equal_to_f64(value: f64) -> Self {
-        EqualFilter {
-            equal_to: None,
-            not_equal_to: Some(value),
-            equal_any: None,
-            not_equal_all: None,
-            equal_any_or_null: None,
-            is_null: None,
-        }
+        inline_init(|r: &mut Self| r.not_equal_to = Some(value))
     }
 }
 
