@@ -5,3 +5,4 @@ export * from './InputWithLabelRow';
 export * from './ReadOnlyInput';
 export * from './BufferedTextInput';
 export * from './numeric';
+export * from './PasswordTextInput';
