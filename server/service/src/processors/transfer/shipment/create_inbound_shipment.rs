@@ -1,11 +1,11 @@
 use chrono::Utc;
 use repository::{
     Invoice, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, InvoiceRowStatus,
-    InvoiceRowType, NumberRowType, RepositoryError, Requisition, StorageConnection,
+    InvoiceRowType, LogType, NumberRowType, RepositoryError, Requisition, StorageConnection,
 };
 use util::uuid::uuid;
 
-use crate::number::next_number;
+use crate::{log::system_log_entry, number::next_number};
 
 use super::{
     common::generate_inbound_shipment_lines, Operation, ShipmentTransferProcessor,
@@ -144,6 +144,17 @@ fn generate_inbound_shipment(
         delivered_datetime: None,
         verified_datetime: None,
     };
+
+    system_log_entry(
+        connection,
+        match result.status.clone() {
+            InvoiceRowStatus::Picked => LogType::InvoiceStatusPicked,
+            InvoiceRowStatus::Shipped => LogType::InvoiceStatusShipped,
+            _ => LogType::InvoiceCreated,
+        },
+        Some(result.store_id.clone()),
+        Some(result.id.clone()),
+    )?;
 
     Ok(result)
 }

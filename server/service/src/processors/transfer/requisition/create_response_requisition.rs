@@ -1,11 +1,13 @@
-use crate::{number::next_number, requisition::common::get_lines_for_requisition};
+use crate::{
+    log::system_log_entry, number::next_number, requisition::common::get_lines_for_requisition,
+};
 
 use super::{RequisitionTransferProcessor, RequisitionTransferProcessorRecord};
 use chrono::Utc;
 use repository::{
-    NumberRowType, RepositoryError, Requisition, RequisitionLineRow, RequisitionLineRowRepository,
-    RequisitionRow, RequisitionRowRepository, RequisitionRowStatus, RequisitionRowType,
-    StorageConnection,
+    LogType, NumberRowType, RepositoryError, Requisition, RequisitionLineRow,
+    RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, RequisitionRowStatus,
+    RequisitionRowType, StorageConnection,
 };
 use util::uuid::uuid;
 
@@ -113,6 +115,16 @@ fn generate_response_requisition(
         colour: None,
         comment: None,
     };
+
+    system_log_entry(
+        connection,
+        match result.status.clone() {
+            RequisitionRowStatus::New => LogType::RequisitionCreated,
+            _ => LogType::RequisitionCreated,
+        },
+        Some(result.store_id.clone()),
+        Some(result.id.clone()),
+    )?;
 
     Ok(result)
 }
