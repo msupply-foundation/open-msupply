@@ -1,4 +1,4 @@
-use super::{StorageConnection, location_row::location::dsl as location_dsl, store_row::store};
+use super::{location_row::location::dsl as location_dsl, store_row::store, StorageConnection};
 
 use crate::repository_error::RepositoryError;
 
