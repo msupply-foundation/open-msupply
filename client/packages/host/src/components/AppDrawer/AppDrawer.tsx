@@ -21,7 +21,7 @@ import {
   useAuthContext,
   useLocation,
   EnvUtils,
-  UserPermissionNodePermission,
+  UserPermission,
 } from '@openmsupply-client/common';
 import { AppRoute, ExternalURL } from '@openmsupply-client/config';
 import {
@@ -233,7 +233,7 @@ export const AppDrawer: React.FC = () => {
             icon={<SettingsIcon fontSize="small" color="primary" />}
             text={t('admin')}
             visible={userHasPermission(
-              UserPermissionNodePermission.ServerAdmin
+              UserPermission.ServerAdmin
             )}
           />
           <AppNavLink

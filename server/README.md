@@ -128,7 +128,7 @@ cargo run --bin remote_server_cli -- initialise-database
 ## Sharing SQLite Database files
 
 When using sqlite, open-mSupply enables a feature called [Write Ahead Log (WAL)](https://sqlite.org/wal.html), this uses a separate file to improve concurrent access to the data.
-If you want to ensure all your changes have been written to the main sqlite database file, you may need to run the VACUM command against your database.
+If you want to ensure all your changes have been written to the main sqlite database file, you may need to run the `VACUUM` command against your database.
 
 `sqlite3 omsupply-database 'VACUUM;'`
 

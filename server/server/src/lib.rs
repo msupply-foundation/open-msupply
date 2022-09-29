@@ -24,15 +24,16 @@ use service::{
 
 use actix_web::{web::Data, App, HttpServer};
 use std::sync::{Arc, RwLock};
-use tokio::sync::oneshot;
 
 pub mod certs;
 pub mod configuration;
 pub mod cors;
 pub mod environment;
+mod logging;
 pub mod middleware;
 mod serve_frontend;
 pub mod static_files;
+pub use self::logging::*;
 
 // Only import discovery for non android features (otherwise build for android targets would fail due to local-ip-address)
 #[cfg(not(target_os = "android"))]
@@ -40,10 +41,14 @@ mod discovery;
 
 /// Starts the server
 ///
-/// This method doesn't return until a message is send to the off_switch.
+/// # Arguments
+/// * `settigngs` - Server settings (manually defined for android and from .yaml file for other)
+/// * `off_switch` - For android or windows service to turn off server
+///
+/// This method doesn't return until a message is send to the off_switch
 pub async fn start_server(
     settings: Settings,
-    off_switch: oneshot::Receiver<()>,
+    mut off_switch: tokio::sync::mpsc::Receiver<()>,
 ) -> std::io::Result<()> {
     info!(
         "Server starting in {} mode",
@@ -167,7 +172,7 @@ pub async fn start_server(
             loader_registry: Data::new(LoaderRegistry { loaders }),
             service_provider: service_provider.clone(),
             settings: Data::new(settings.clone()),
-            auth
+            auth,
         },
         is_operational,
     ));
@@ -225,11 +230,12 @@ pub async fn start_server(
     info!("Server started, running on port: {}", settings.server.port);
     // run server in another task so that we can handle restart/off events here
     actix_web::rt::spawn(running_server);
-    let ctrl_c = tokio::signal::ctrl_c();
+
     tokio::select! {
-        _ = ctrl_c => {},
-        _ = off_switch => {},
-        _ = syncrhoniser_task => unreachable!("Synchroniser unexpectedly died!?"),
+        // TODO log error in ctrl_c and None in off_switch
+        _ = tokio::signal::ctrl_c() => {},
+        Some(_) = off_switch.recv() => {},
+        _ = syncrhoniser_task => unreachable!("Synchroniser unexpectedly stopped"),
         result = processors_task => unreachable!("Processor terminated ({:?})", result)
     };
 
