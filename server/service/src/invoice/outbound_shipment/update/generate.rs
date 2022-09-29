@@ -128,7 +128,7 @@ fn set_new_status_datetime(
     invoice: &mut InvoiceRow,
     status: &Option<UpdateOutboundShipmentStatus>,
 ) {
-   let new_status = match status {
+    let new_status = match status {
         Some(status) => status,
         None => return, // There's no status to update
     };
