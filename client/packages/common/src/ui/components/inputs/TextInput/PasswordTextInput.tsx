@@ -4,12 +4,17 @@ import { BasicTextInput } from './BasicTextInput';
 import { EyeIcon, EyeOffIcon } from '@common/icons';
 import { useTranslation } from '@common/intl';
 
-export type PasswordTextInputProps = StandardTextFieldProps;
+export type PasswordTextInputProps = StandardTextFieldProps & {
+  fixedHeight?: boolean;
+};
 
 export const PasswordTextInput: FC<PasswordTextInputProps> = React.forwardRef(
   (props, ref) => {
+    // if the helper text is a space then the height of the component doesn't change
+    // when the helper text is shown / removed
+    const defaultWarning = props.fixedHeight ? ' ' : '';
     const [showPassword, setShowPassword] = useState(false);
-    const [warning, setWarning] = useState(' ');
+    const [warning, setWarning] = useState(defaultWarning);
     const t = useTranslation();
     const visibilityInputButton = (
       <IconButton
@@ -37,7 +42,9 @@ export const PasswordTextInput: FC<PasswordTextInputProps> = React.forwardRef(
           endAdornment: visibilityInputButton,
           onKeyUp: event =>
             setWarning(
-              event.getModifierState('CapsLock') ? t('warning.caps-lock') : ' '
+              event.getModifierState('CapsLock')
+                ? t('warning.caps-lock')
+                : defaultWarning
             ),
           ...props.InputProps,
         }}

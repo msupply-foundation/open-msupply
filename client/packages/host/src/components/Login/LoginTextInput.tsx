@@ -54,7 +54,7 @@ export const LoginTextInput: FC<StandardTextFieldProps> = React.forwardRef(
     };
 
     return props.type === 'password' ? (
-      <PasswordTextInput {...componentProps} />
+      <PasswordTextInput {...componentProps} fixedHeight />
     ) : (
       <TextField {...componentProps} />
     );
