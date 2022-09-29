@@ -6,9 +6,9 @@
 <ArchiveFiles>
 <FileData>
 <FldRef>0</FldRef>
-<FullName>#PROJECTFILEDIR#\omSupply Web Server\omSupply-sqlite.exe</FullName>
+<FullName>#PROJECTFILEDIR#\Server\omSupply-sqlite.exe</FullName>
 <FileName>omSupply-sqlite.exe</FileName>
-<Source>#PROJECTFILEDIR#\omSupply Web Server</Source>
+<Source>#PROJECTFILEDIR#\Server</Source>
 <Ext>exe</Ext>
 <RTSource>Archive</RTSource>
 <Desc/>
@@ -79,9 +79,9 @@
 </FileData>
 <FileData>
 <FldRef>0</FldRef>
-<FullName>#PROJECTFILEDIR#\omSupply Web Server\omSupply-postgres.exe</FullName>
+<FullName>#PROJECTFILEDIR#\Server\omSupply-postgres.exe</FullName>
 <FileName>omSupply-postgres.exe</FileName>
-<Source>#PROJECTFILEDIR#\omSupply Web Server</Source>
+<Source>#PROJECTFILEDIR#\Server</Source>
 <Ext>exe</Ext>
 <RTSource>Archive</RTSource>
 <Desc/>
@@ -152,9 +152,9 @@
 </FileData>
 <FileData>
 <FldRef>1</FldRef>
-<FullName>#PROJECTFILEDIR#\omSupply Web Server\configuration\*.*</FullName>
+<FullName>#PROJECTFILEDIR#\Server\configuration\*.*</FullName>
 <FileName>*.*</FileName>
-<Source>#PROJECTFILEDIR#\omSupply Web Server\configuration</Source>
+<Source>#PROJECTFILEDIR#\Server\configuration</Source>
 <Ext>*</Ext>
 <RTSource>Archive</RTSource>
 <Desc/>
@@ -162,79 +162,6 @@
 <MatchMode>0</MatchMode>
 <Dest>%AppFolder%\configuration</Dest>
 <Overwrite>2</Overwrite>
-<Backup>0</Backup>
-<Protect>0</Protect>
-<InstallOrder>1000</InstallOrder>
-<SCStartRoot>0</SCStartRoot>
-<SCStartProgs>0</SCStartProgs>
-<SCAppFld>0</SCAppFld>
-<SCStartup>0</SCStartup>
-<SCDesk>0</SCDesk>
-<SCQLaunch>0</SCQLaunch>
-<SCStartPinOption>0</SCStartPinOption>
-<SCCust>0</SCCust>
-<CustSCPath/>
-<SCDesc/>
-<SCComment/>
-<SCArgs/>
-<SCWork/>
-<UseExtIco>0</UseExtIco>
-<IcoFN/>
-<IcoIdx>0</IcoIdx>
-<IcoShowMd>0</IcoShowMd>
-<IcoHK>0</IcoHK>
-<RegTTF>1</RegTTF>
-<TTFName/>
-<RegOCX>1</RegOCX>
-<RegTLB>1</RegTLB>
-<SupInUse>0</SupInUse>
-<Compress>1</Compress>
-<UseOrigAttr>1</UseOrigAttr>
-<Attr>0</Attr>
-<NoCRC>0</NoCRC>
-<NoRemove>0</NoRemove>
-<Shared>0</Shared>
-<OSCond>
-<OS>32768</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-<OS>65535</OS>
-</OSCond>
-<RTCond/>
-<BuildConfigs>
-<Cfg>All</Cfg>
-</BuildConfigs>
-<Package>None</Package>
-<Packages/>
-<Notes/>
-<CompSize>0</CompSize>
-<CRC>0</CRC>
-<StoreOnly>0</StoreOnly>
-</FileData>
-<FileData>
-<FldRef>1</FldRef>
-<FullName>C:\Program Files (x86)\Jenkins\jobs\omSupplyMain - Installers\workspace\omSupply\omSupply Web Server\bin\*.*</FullName>
-<FileName>*.*</FileName>
-<Source>#PROJECTFILEDIR#\omSupply Web Server\bin</Source>
-<Ext>*</Ext>
-<RTSource>Archive</RTSource>
-<Desc/>
-<Recurse>1</Recurse>
-<MatchMode>0</MatchMode>
-<Dest>%AppFolder%\bin</Dest>
-<Overwrite>1</Overwrite>
 <Backup>0</Backup>
 <Protect>0</Protect>
 <InstallOrder>1000</InstallOrder>
@@ -412,6 +339,17 @@
 <Name>On Preload</Name>
 <Args/>
 <Script>-- These actions are performed before the screen is shown.
+local sBodyWelcomeText = SessionVar.Expand("Welcome to the installer for %ProductName% %ProductVer%.\r\n\r\n");
+
+if hasOmsupplyInstalled then
+	sBodyWelcomeText = SessionVar.Expand("Welcome to the upgrader for %ProductName% %ProductVer%.\r\n\r\n");
+end
+
+local sBodyInfoText = sBodyWelcomeText .. "It is strongly recommended that you exit all Windows programs before continuing with this installation.\r\n\r\n";
+sBodyInfoText = sBodyInfoText .. "If you have any other programs running, please click Cancel, close the programs, and run this setup again.\r\n\r\n";
+sBodyInfoText = sBodyInfoText .. "Otherwise, click Next to continue.";
+
+DlgStaticText.SetProperties(CTRL_STATICTEXT_BODY, {Text = sBodyInfoText});
 </Script>
 <BookMarks count="0">
 </BookMarks>
@@ -431,9 +369,14 @@ Screen.Back();
 <Name>On Next</Name>
 <Args/>
 <Script>-- These actions are performed when the Next button is clicked.
+local sNextScreenName = "License Agreement";
+
+if (hasOmsupplyInstalled) then
+	sNextScreenName = "Ready to Install";
+end
 
 -- advance to the next screen
-Screen.Next();
+Screen.Jump(sNextScreenName);
 </Script>
 <BookMarks count="0">
 </BookMarks>
@@ -542,7 +485,7 @@ end
 </Secondary>
 </Language>
 <Messages>
-<IDS_WINDOW_TITLE>%ProductName% Setup</IDS_WINDOW_TITLE>
+<IDS_WINDOW_TITLE>%window_title%</IDS_WINDOW_TITLE>
 <IDS_HEADER_TEXT>Welcome</IDS_HEADER_TEXT>
 <IDS_SUBHEADER_TEXT>Welcome to the installer for %ProductName% %ProductVer%</IDS_SUBHEADER_TEXT>
 <IDS_CTRL_BUTTON_NEXT>&amp;Next &gt;</IDS_CTRL_BUTTON_NEXT>
@@ -842,7 +785,7 @@ end
 </Secondary>
 </Language>
 <Messages>
-<IDS_WINDOW_TITLE>%ProductName% Setup</IDS_WINDOW_TITLE>
+<IDS_WINDOW_TITLE>%window_title%</IDS_WINDOW_TITLE>
 <IDS_HEADER_TEXT>License Agreement</IDS_HEADER_TEXT>
 <IDS_SUBHEADER_TEXT>Please read the following license agreement carefully.</IDS_SUBHEADER_TEXT>
 <IDS_CTRL_BUTTON_NEXT>&amp;Next &gt;</IDS_CTRL_BUTTON_NEXT>
@@ -1214,7 +1157,7 @@ end
 </Secondary>
 </Language>
 <Messages>
-<IDS_WINDOW_TITLE>%ProductName% Setup</IDS_WINDOW_TITLE>
+<IDS_WINDOW_TITLE>%window_title%</IDS_WINDOW_TITLE>
 <IDS_HEADER_TEXT>omSupply Configuration</IDS_HEADER_TEXT>
 <IDS_SUBHEADER_TEXT>Settings required in order to configure the omSupply.</IDS_SUBHEADER_TEXT>
 <IDS_CTRL_BUTTON_NEXT>&amp;Next &gt;</IDS_CTRL_BUTTON_NEXT>
@@ -1638,7 +1581,7 @@ end
 </Secondary>
 </Language>
 <Messages>
-<IDS_WINDOW_TITLE>%ProductName% Setup</IDS_WINDOW_TITLE>
+<IDS_WINDOW_TITLE>%window_title%</IDS_WINDOW_TITLE>
 <IDS_HEADER_TEXT>PostgresSQL Server Configuration</IDS_HEADER_TEXT>
 <IDS_SUBHEADER_TEXT>Enter the details for the postgres server database.</IDS_SUBHEADER_TEXT>
 <IDS_CTRL_BUTTON_NEXT>&amp;Next &gt;</IDS_CTRL_BUTTON_NEXT>
@@ -2046,7 +1989,7 @@ end
 </Secondary>
 </Language>
 <Messages>
-<IDS_WINDOW_TITLE>%ProductName% Setup</IDS_WINDOW_TITLE>
+<IDS_WINDOW_TITLE>%window_title%</IDS_WINDOW_TITLE>
 <IDS_HEADER_TEXT>Installation Folder</IDS_HEADER_TEXT>
 <IDS_SUBHEADER_TEXT>Where would you like %ProductName% to be installed?</IDS_SUBHEADER_TEXT>
 <IDS_CTRL_BUTTON_NEXT>&amp;Next &gt;</IDS_CTRL_BUTTON_NEXT>
@@ -2176,6 +2119,18 @@ end
 <Name>On Preload</Name>
 <Args/>
 <Script>-- These actions are performed before the screen is shown.
+local sBodyInfoText = SessionVar.Expand("We are now ready to install %ProductName% on your computer.\r\n\r\n\r\n\r\n");
+
+if hasOmsupplyInstalled then
+	sBodyInfoText = SessionVar.Expand("We are now ready to upgrade %ProductName% on your computer.\r\n\r\n\r\n\r\n");
+end
+
+local sBodyInfoSubText = sBodyInfoText .. "The following settings will be used:\r\n\r\n";
+sBodyInfoSubText = sBodyInfoSubText .. SessionVar.Expand("  Install folder:    %AppFolder%\r\n\r\n");
+sBodyInfoSubText = sBodyInfoSubText .. SessionVar.Expand("  Version       :    %ProductVer%\r\n\r\n\r\n\r\n");
+sBodyInfoSubText = sBodyInfoSubText .. "Please click Next to proceed with the installation.";
+
+DlgStaticText.SetProperties(CTRL_STATICTEXT_BODY, {Text = sBodyInfoSubText});
 </Script>
 <BookMarks count="0">
 </BookMarks>
@@ -2306,9 +2261,9 @@ end
 </Secondary>
 </Language>
 <Messages>
-<IDS_WINDOW_TITLE>%ProductName% Setup</IDS_WINDOW_TITLE>
+<IDS_WINDOW_TITLE>%window_title%</IDS_WINDOW_TITLE>
 <IDS_HEADER_TEXT>Ready to Install</IDS_HEADER_TEXT>
-<IDS_SUBHEADER_TEXT>You are now ready to install %ProductName% %ProductVer%</IDS_SUBHEADER_TEXT>
+<IDS_SUBHEADER_TEXT/>
 <IDS_CTRL_BUTTON_NEXT>&amp;Next &gt;</IDS_CTRL_BUTTON_NEXT>
 <IDS_CTRL_BUTTON_BACK>&lt; &amp;Back</IDS_CTRL_BUTTON_BACK>
 <IDS_CTRL_BUTTON_CANCEL>&amp;Cancel</IDS_CTRL_BUTTON_CANCEL>
@@ -2612,7 +2567,7 @@ end
 </Secondary>
 </Language>
 <Messages>
-<IDS_WINDOW_TITLE>%ProductName% Setup</IDS_WINDOW_TITLE>
+<IDS_WINDOW_TITLE>%window_title%</IDS_WINDOW_TITLE>
 <IDS_HEADER_TEXT>Installing %ProductName%</IDS_HEADER_TEXT>
 <IDS_SUBHEADER_TEXT>Please wait...</IDS_SUBHEADER_TEXT>
 <IDS_CTRL_BUTTON_CANCEL>&amp;Cancel</IDS_CTRL_BUTTON_CANCEL>
@@ -2750,6 +2705,9 @@ end
 <Name>On Preload</Name>
 <Args/>
 <Script>-- These actions are performed before the screen is shown.
+if hasOmsupplyInstalled then
+	DlgCheckBox.SetProperties(CTRL_CHECK_BOX_01, {Visible = false});
+end
 </Script>
 <BookMarks count="0">
 </BookMarks>
@@ -2770,7 +2728,7 @@ Screen.Back();
 <Args/>
 <Script>-- These actions are performed when the Next button is clicked.
 -- Launch omSupply Server
-if (cbStartOmSupply) then
+if (not hasOmsupplyInstalled and cbStartOmSupply) then
 	File.OpenURL(SessionVar.Expand("https://localhost:%omsupply_port%"));
 end
 -- advance to the next screen
@@ -2927,7 +2885,7 @@ end
 </Secondary>
 </Language>
 <Messages>
-<IDS_WINDOW_TITLE>%ProductName% Setup</IDS_WINDOW_TITLE>
+<IDS_WINDOW_TITLE>%window_title%</IDS_WINDOW_TITLE>
 <IDS_HEADER_TEXT>Installation Finished</IDS_HEADER_TEXT>
 <IDS_SUBHEADER_TEXT>The installation has completed successfully.</IDS_SUBHEADER_TEXT>
 <IDS_CTRL_BUTTON_NEXT>&amp;Finish</IDS_CTRL_BUTTON_NEXT>
@@ -2940,7 +2898,7 @@ end
 <IDS_CTRL_STATICTEXT_LABEL_02>The omSupply Server v1.0.0-IS22-windows-instalers-test6 installation is complete.</IDS_CTRL_STATICTEXT_LABEL_02>
 <IDS_CTRL_STATICTEXT_LABEL_03>Thank you for choosing omSupply Server!</IDS_CTRL_STATICTEXT_LABEL_03>
 <IDS_CTRL_STATICTEXT_LABEL_04>Please click Finish to exit this installer.</IDS_CTRL_STATICTEXT_LABEL_04>
-<IDS_CTRL_CHECK_BOX_01>Launch omSupply Server</IDS_CTRL_CHECK_BOX_01>
+<IDS_CTRL_CHECK_BOX_01>Launch omSupply</IDS_CTRL_CHECK_BOX_01>
 </Messages>
 </SUF70Messages>
 </Languages>
@@ -3889,13 +3847,18 @@ Please click Finish to exit.
 <Event>
 <Name>On Pre Uninstall</Name>
 <Args/>
-<Script>-- Check if the open msupply service already exist or is running at the moment.
+<Script>-- Remove omSupply Server keys from registry
+if Registry.DoesKeyExist(HKEY_LOCAL_MACHINE, "Software\\omSupply Server") then
+	Registry.DeleteKey(HKEY_LOCAL_MACHINE, "Software\\omSupply Server");
+end
+
+-- Check if the open msupply service already exist or is running at the moment.
 -- Stop (if running) the service and then delete it for a fresh new service installation.
 local bServiceExists = false;
-queryResult = Service.Query("Open mSupply Server", "omSupply");
+queryResult = Service.Query("Open mSupply Server", "omsupply-server");
 if (queryResult == SERVICE_RUNNING) then
 	bServiceExists = true;
-	Service.Stop("Open mSupply Server", "omSupply", 5);
+	Service.Stop("Open mSupply Server", "omsupply-server", 5);
 end
 
 if ((queryResult == SERVICE_PAUSED) or (queryResult == SERVICE_STOPPED)) then
@@ -3903,7 +3866,7 @@ if ((queryResult == SERVICE_PAUSED) or (queryResult == SERVICE_STOPPED)) then
 end
 
 if (bServiceExists) then
-	Service.Delete("Open mSupply Server", "omSupply");
+	Service.Delete("Open mSupply Server", "omsupply-server");
 end</Script>
 <BookMarks count="0">
 </BookMarks>
@@ -4091,7 +4054,33 @@ g_HandleSystemReboot();
 <Event>
 <Name>On Startup</Name>
 <Args/>
-<Script/>
+<Script>-- Set window title
+local sWindowTitle = "omSupply Server Setup";
+
+hasOmsupplyInstalled = false;
+omSupplyServerDatabase = SessionVar.Get("%omsupply_selected_db%");
+
+if (omSupplyServerDatabase == "sqlite") then
+	omSupplyServerPath = SessionVar.Expand("%AppFolder%\\omSupply-sqlite.exe");
+else
+	omSupplyServerPath = SessionVar.Expand("%AppFolder%\\omSupply-postgres.exe");
+end
+
+-- Check if the omSupply Server has been already installed on this machine
+if Registry.DoesKeyExist(HKEY_LOCAL_MACHINE, "Software\\omSupply Server") then
+	omSupplyServerPath = Registry.GetValue(HKEY_LOCAL_MACHINE, "Software\\omSupply Server", "Path", true);
+	omSupplyServerDatabase = Registry.GetValue(HKEY_LOCAL_MACHINE, "Software\\omSupply Server", "Database", true);
+	if File.DoesExist(omSupplyServerPath) then
+		hasOmsupplyInstalled = true;
+	end
+end
+
+if hasOmsupplyInstalled then
+	sWindowTitle = "omSupply Server Upgrader Setup";
+end
+
+SessionVar.Set("%window_title%", sWindowTitle);
+</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -4149,10 +4138,10 @@ end
 -- Check if the open msupply service already exist or is running at the moment.
 -- Stop (if running) the service and then delete it for a fresh new service installation.
 local bServiceExists = false;
-queryResult = Service.Query("Open mSupply Server", "omSupply");
+queryResult = Service.Query("Open mSupply Server", "omsupply-server");
 if (queryResult == SERVICE_RUNNING) then
 	bServiceExists = true;
-	Service.Stop("Open mSupply Server", "omSupply", 5);
+	Service.Stop("Open mSupply Server", "omsupply-server", 5);
 end
 
 if ((queryResult == SERVICE_PAUSED) or (queryResult == SERVICE_STOPPED)) then
@@ -4160,7 +4149,7 @@ if ((queryResult == SERVICE_PAUSED) or (queryResult == SERVICE_STOPPED)) then
 end
 
 if (bServiceExists) then
-	Service.Delete("Open mSupply Server", "omSupply");
+	Service.Delete("Open mSupply Server", "omsupply-server");
 end
 </Script>
 <BookMarks count="0">
@@ -4177,44 +4166,42 @@ end
 <Event>
 <Name>On Post Install</Name>
 <Args/>
-<Script>dataSources = TextFile.ReadToString(SessionVar.Expand("%AppFolder%\\configuration\\base.yaml"));
-dataSources = String.Replace(dataSources, "8000", SessionVar.Get("%omsupply_port%"), true);
-dataSources = String.Replace(dataSources, "omsupply-database", SessionVar.Get("%omsupply_db_name%"), true);
-dataSources = String.Replace(dataSources, "5432", SessionVar.Get("%postgres_db_port%"), true);
-dataSources = String.Replace(dataSources, "postgres", SessionVar.Get("%postgres_db_user%"), true);
-dataSources = String.Replace(dataSources, "password:%s\"\"", SessionVar.Expand("password: \"%postgres_db_pass%\""), true);
-TextFile.WriteFromString(SessionVar.Expand("%AppFolder%\\configuration\\base.yaml"), dataSources, false);
+<Script>local sFileToBeDeletePath = "";
+if not hasOmsupplyInstalled then
+	local config = "server:\r\n"
+	config = config .. "  host: 192.168.178.68\r\n";
+	config = config .. "  port: " .. SessionVar.Get("%omsupply_port%") .. "\r\n";
+	config = config .. "database:\r\n";
+	config = config .. "  port: " .. SessionVar.Get("%postgres_db_port%") .. "\r\n";
+	config = config .. "  username: \"" .. SessionVar.Get("%postgres_db_user%") .. "\"\r\n";
+	config = config .. "  password: \"" .. SessionVar.Expand("%postgres_db_pass%") .. "\"\r\n";
+	config = config .. "  database_name: \"" .. SessionVar.Get("%omsupply_db_name%") .. "\"\r\n";
+	config = config .. "logging:\r\n";
+	config = config .. "  mode: File\r\n";
+	config = config .. "  level: Warn\r\n";
+	config = config .. "  directory: log\r\n";
+	config = config .. "  filename: omsupply.log\r\n";
+	config = config .. "  max_file_count: 5\r\n";
+	config = config .. "  max_file_size: 10\r\n";
+	TextFile.WriteFromString(SessionVar.Expand("%AppFolder%\\configuration\\local.yaml"), config, false);
 
--- Create settings.ini file to store current settings
-sSettingsContent = String.Concat("[omSupply]", String.Char(13));
-sSettingsContent = sSettingsContent..String.Concat("InstallFolder=", SessionVar.Expand("%AppFolder%")..String.Char(13));
-sSettingsContent = sSettingsContent..String.Concat("Database=", SessionVar.Get("%omsupply_selected_db%"));
+	-- Create omSupply Server keys in registry
+	Registry.CreateKey(HKEY_LOCAL_MACHINE, "Software\\omSupply Server");
+	Registry.SetValue(HKEY_LOCAL_MACHINE, "Software\\omSupply Server", "Path", omSupplyServerPath, REG_SZ);
+	Registry.SetValue(HKEY_LOCAL_MACHINE, "Software\\omSupply Server", "Database", omSupplyServerDatabase, REG_SZ);
+end
 
-TextFile.WriteFromString(SessionVar.Expand("%AppFolder%\\settings.ini"), sSettingsContent, false);
-
-local sFileToBeDeletePath = "";
-
-if (SessionVar.Get("%omsupply_selected_db%") == "sqlite") then
-	File.Run(SessionVar.Expand("%AppFolder%\\bin\\nssm.exe"), SessionVar.Expand("install \"Open mSupply Server\" \"%AppFolder%\\omSupply-sqlite.exe\""), "", SW_HIDE, true);
+if (omSupplyServerDatabase == "sqlite") then
+	Service.Create(SessionVar.Expand("%AppFolder%\\omSupply-sqlite.exe"), "Open mSupply Server", "omsupply-server", SERVICE_WIN32_OWN_PROCESS, false, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL, "", nil, nil, "", "");
 	sFileToBeDeletePath = SessionVar.Expand("%AppFolder%\\omSupply-postgres.exe");
 else
-	File.Copy(SessionVar.Expand("%AppFolder%\\configuration\\base.yaml"), SessionVar.Expand("%AppFolder%\\configuration\\local.yaml"), false, true);
-	File.Run(SessionVar.Expand("%AppFolder%\\bin\\nssm.exe"), SessionVar.Expand("install \"Open mSupply Server\" \"%AppFolder%\\omSupply-postgres.exe\""), "", SW_HIDE, true);
+	Service.Create(SessionVar.Expand("%AppFolder%\\omSupply-postgres.exe"), "Open mSupply Server", "omsupply-server", SERVICE_WIN32_OWN_PROCESS, false, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL, "", nil, nil, "", "");
 	sFileToBeDeletePath = SessionVar.Expand("%AppFolder%\\omSupply-sqlite.exe");
 end
 
-File.Run(SessionVar.Expand("%AppFolder%\\bin\\nssm.exe"), SessionVar.Expand("set \"Open mSupply Server\" Description \"Open mSupply remote desktop server.\""), "", SW_HIDE, false);
-File.Run(SessionVar.Expand("%AppFolder%\\bin\\nssm.exe"), SessionVar.Expand("set \"Open mSupply Server\" start SERVICE_DELAYED_AUTO_START"), "", SW_HIDE, false);
-
 File.Delete(sFileToBeDeletePath); -- Delete unchoosen app file (.exe) by a user
 
--- Check to see if an error occurred when launching the file.
-err = Application.GetLastError();
-if (err ~= 0) then
-	--If an error occurred, display an error message to the user.
-	Dialog.Message("Error", _tblErrorMessages[err], MB_OK, MB_ICONEXCLAMATION, MB_DEFBUTTON1);
-end
-Service.Start("Open mSupply Server", "omSupply", nil);
+Service.Start("Open mSupply Server", "omsupply-server", nil);
 </Script>
 <BookMarks count="0">
 </BookMarks>
@@ -4269,7 +4256,7 @@ g_HandleSystemReboot();
 </SessionVar>
 <SessionVar>
 <Name>%ProductVer%</Name>
-<Value>v1.0.0-IS22-windows-instalers-test6</Value>
+<Value>replace with version</Value>
 <Type>1</Type>
 </SessionVar>
 <SessionVar>
@@ -4332,6 +4319,16 @@ g_HandleSystemReboot();
 <Value>5432</Value>
 <Type>10</Type>
 </SessionVar>
+<SessionVar>
+<Name>%window_title%</Name>
+<Value>omSupply Server Setup</Value>
+<Type>10</Type>
+</SessionVar>
+<SessionVar>
+<Name>%ready_to_install_sub_title%</Name>
+<Value/>
+<Type>10</Type>
+</SessionVar>
 </SUF7SessionVars>
 <BuildConfigurations>
 <BuildConfig>
@@ -4342,8 +4339,8 @@ g_HandleSystemReboot();
 <PostBuildProg/>
 <PostBuildCmdLine/>
 <PostBuildWait>0</PostBuildWait>
-<Filename>omSupply_Server_replace with versio444n.exe</Filename>
-<OutputFolder>C:\Program Files (x86)\Jenkins\jobs\omSupplyMain - installers\workspace\installers</OutputFolder>
+<Filename>omSupply_Server_replace with version.exe</Filename>
+<OutputFolder>.*</OutputFolder>
 <SegmentSizeMode>0</SegmentSizeMode>
 <CustomSegSize>0</CustomSegSize>
 <CustomSegSizeMode>0</CustomSegSizeMode>
@@ -4354,8 +4351,7 @@ g_HandleSystemReboot();
 <CodeSignWithSHA256>1</CodeSignWithSHA256>
 <CodeSignCertificateFileSHA256>C:\mSupply_installer_codesigning\mSupply_installer_code_signing.pfx</CodeSignCertificateFileSHA256>
 <CodeSignCertificatePasswordSHA256>
-a2F0aG1hbmR1MzEy
-</CodeSignCertificatePasswordSHA256>
+a2F0aG1hbmR1MzEy</CodeSignCertificatePasswordSHA256>
 <CodeSignTimeStampURLSHA256/>
 <CodeSignArgumentsSHA256/>
 <CodeSignWithSHA1>0</CodeSignWithSHA1>

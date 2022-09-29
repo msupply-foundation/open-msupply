@@ -59,17 +59,13 @@ async fn integration_sync_shipment_transfers_normal() {
             "Checking response requisition is created on site {:?}",
             outbound_and_response_site.config
         );
-        tester
-            .check_response_requisition_created(&outbound_and_response_site.connection)
-            .await;
+        tester.check_response_requisition_created(&outbound_and_response_site.connection);
 
         log::info!(
             "Inserting outbound shipment on site {:?}",
             outbound_and_response_site.config
         );
-        tester
-            .insert_outbound_shipment(&outbound_and_response_site.connection)
-            .await;
+        tester.insert_outbound_shipment(&outbound_and_response_site.connection);
 
         sync_and_delay(&outbound_and_response_site, &inbound_and_request_site).await;
 
@@ -214,17 +210,13 @@ async fn integration_sync_shipment_transfers_delete() {
             "Checking response requisition is created on site {:?}",
             outbound_and_response_site.config
         );
-        tester
-            .check_response_requisition_created(&outbound_and_response_site.connection)
-            .await;
+        tester.check_response_requisition_created(&outbound_and_response_site.connection);
 
         log::info!(
             "Inserting outbound shipment on site {:?}",
             outbound_and_response_site.config
         );
-        tester
-            .insert_outbound_shipment(&outbound_and_response_site.connection)
-            .await;
+        tester.insert_outbound_shipment(&outbound_and_response_site.connection);
 
         log::info!(
             "Updating outbound shipment to picked on site {:?}",
@@ -315,17 +307,13 @@ async fn integration_sync_shipment_transfers_initialise() {
             "Checking response requisition is created on site {:?}",
             outbound_and_response_site.config
         );
-        tester
-            .check_response_requisition_created(&outbound_and_response_site.connection)
-            .await;
+        tester.check_response_requisition_created(&outbound_and_response_site.connection);
 
         log::info!(
             "Inserting outbound shipment on site {:?}",
             outbound_and_response_site.config
         );
-        tester
-            .insert_outbound_shipment(&outbound_and_response_site.connection)
-            .await;
+        tester.insert_outbound_shipment(&outbound_and_response_site.connection);
 
         log::info!(
             "Updating outbound shipment to picked on site {:?}",

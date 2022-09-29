@@ -14,9 +14,11 @@ use crate::{
 };
 
 pub(crate) struct ServiceTestContext {
+    #[allow(dead_code)]
     pub(crate) connection: StorageConnection,
     pub(crate) service_provider: Arc<ServiceProvider>,
     pub(crate) processors_task: JoinHandle<()>,
+    #[allow(dead_code)]
     pub(crate) connection_manager: StorageConnectionManager,
 }
 
@@ -52,6 +54,7 @@ pub(crate) async fn setup_all_with_data_and_service_provider(
 }
 
 // TODO use this method in service tests
+#[allow(dead_code)]
 #[cfg(test)]
 pub(crate) async fn setup_all_and_service_provider(
     db_name: &str,

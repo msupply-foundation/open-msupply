@@ -32,6 +32,7 @@ impl ShipmentTransferProcessor for LinkOutboundShipmentProcessor {
             Operation::Upsert {
                 shipment,
                 linked_shipment,
+                ..
             } => (shipment, linked_shipment),
             _ => return Ok(None),
         };

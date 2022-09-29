@@ -29,7 +29,7 @@
 #   password: "password"
 #   database_name: "omsupply-database"
 # logging:
-##   one of: Console | File
+##   one of: All | Console | File
 #   mode: Console
 ##   one of:  Off | Error | Warn | Info (default) | Debug | Trace
 #   level: Info
