@@ -138,8 +138,7 @@ fn generate_response_requisition_lines(
                  available_stock_on_hand,
                  average_monthly_consumption,
                  snapshot_datetime,
-                 // TODO should comment transfer ?
-                 comment: _,
+                 comment,
              }| RequisitionLineRow {
                 id: uuid(),
                 requisition_id: response_requisition_id.to_string(),
@@ -149,9 +148,9 @@ fn generate_response_requisition_lines(
                 available_stock_on_hand,
                 average_monthly_consumption,
                 snapshot_datetime,
+                comment,
                 // Default
                 supply_quantity: 0,
-                comment: None,
             },
         )
         .collect();

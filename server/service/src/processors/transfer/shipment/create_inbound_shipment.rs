@@ -135,10 +135,10 @@ fn generate_inbound_shipment(
         picked_datetime: outbound_shipment_row.picked_datetime,
         shipped_datetime: outbound_shipment_row.shipped_datetime,
         transport_reference: outbound_shipment_row.transport_reference.clone(),
+        comment: outbound_shipment_row.comment.clone(),
         // Default
         colour: None,
         user_id: None,
-        comment: None,
         on_hold: false,
         allocated_datetime: None,
         delivered_datetime: None,
