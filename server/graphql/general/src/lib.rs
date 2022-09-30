@@ -1,5 +1,6 @@
 mod mutations;
 mod queries;
+mod sync_api_error;
 
 pub use self::queries::sync_status::*;
 use self::queries::*;
@@ -15,7 +16,7 @@ use mutations::{
 use queries::{
     initialisation_status::{initialisation_status, InitialisationStatusType},
     requisition_line_chart::{ConsumptionOptionsInput, StockEvolutionOptionsInput},
-    sync_settings::{sync_settings, SyncSettingsResponse},
+    sync_settings::{sync_settings, SyncSettingsNode},
 };
 
 #[derive(Default, Clone)]
@@ -173,7 +174,7 @@ impl GeneralQueries {
         number_of_records_in_push_queue(ctx)
     }
 
-    pub async fn sync_settings(&self, ctx: &Context<'_>) -> Result<SyncSettingsResponse> {
+    pub async fn sync_settings(&self, ctx: &Context<'_>) -> Result<Option<SyncSettingsNode>> {
         sync_settings(ctx, true)
     }
 }
@@ -211,7 +212,7 @@ pub struct InitialisationQueries;
 
 #[Object]
 impl InitialisationQueries {
-    pub async fn sync_settings(&self, ctx: &Context<'_>) -> Result<SyncSettingsResponse> {
+    pub async fn sync_settings(&self, ctx: &Context<'_>) -> Result<Option<SyncSettingsNode>> {
         sync_settings(ctx, false)
     }
     /// Available without authorisation in operational and initialisation states
