@@ -1,7 +1,7 @@
 import { useQuery } from '@openmsupply-client/common';
 import { useHostApi } from './useHostApi';
 
-export const useinitialisationStatus = (
+export const useInitialisationStatus = (
   refetchInterval: number | false = false
 ) => {
   const api = useHostApi();
