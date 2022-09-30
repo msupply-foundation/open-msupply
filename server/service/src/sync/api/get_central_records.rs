@@ -26,15 +26,16 @@ impl SyncApiV5 {
         limit: u32,
     ) -> Result<CentralSyncBatchV5, SyncApiError> {
         // TODO: add constants for query parameters.
+        let route = "/sync/v5/central_records";
         let query = [
             ("cursor", &cursor.to_string()),
             ("limit", &limit.to_string()),
         ];
-        let response = self.do_get("/sync/v5/central_records", &query).await?;
+        let response = self.do_get(route, &query).await?;
 
         to_json(response)
             .await
-            .map_err(SyncApiError::ResponseParsingError)
+            .map_err(|error| self.api_error(route, error.into()))
     }
 }
 
