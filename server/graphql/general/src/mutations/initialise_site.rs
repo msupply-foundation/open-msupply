@@ -1,17 +1,16 @@
 use async_graphql::*;
 
 use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
-use service::{
-    settings_service::UpdateSettingsError, sync::sync_status::status::InitialisationStatus,
-};
+use service::sync::sync_status::status::InitialisationStatus;
 
-use crate::queries::sync_settings::SyncSettingsNode;
+use crate::{queries::sync_settings::SyncSettingsNode, sync_api_error::SetSyncSettingErrorNode};
 
 use super::common::SyncSettingsInput;
 
 #[derive(Union)]
 pub enum InitialiseSiteResponse {
     Response(SyncSettingsNode),
+    Error(SetSyncSettingErrorNode),
 }
 
 pub async fn initialise_site(
@@ -32,35 +31,25 @@ pub async fn initialise_site(
 
     let sync_settings = input.to_domain();
 
-    // TODO map to structured error
-    service_provider
+    if let Err(error) = service_provider
         .site_info_service
         .request_and_set_site_info(&service_provider, &sync_settings)
         .await
-        .map_err(StandardGraphqlError::from_error)?;
+    {
+        return Ok(InitialiseSiteResponse::Error(
+            SetSyncSettingErrorNode::map_error(error)?,
+        ));
+    }
 
-    match service_provider
+    // request_and_set_site_info above should validate settings, can consider all error in update_sync_settings as internal error
+    service_provider
         .settings
         .update_sync_settings(&service_context, &sync_settings)
-    {
-        Ok(sync_settings) => sync_settings,
-        Err(error) => {
-            let formatted_error = format!("{:#?}", error);
-            let graphql_error = match error {
-                UpdateSettingsError::RepositoryError(_) => {
-                    StandardGraphqlError::InternalError(formatted_error)
-                }
-                UpdateSettingsError::InvalidSettings(_) => {
-                    StandardGraphqlError::BadUserInput(formatted_error)
-                }
-            };
-            return Err(graphql_error.extend());
-        }
-    };
+        .map_err(StandardGraphqlError::from_debug)?;
 
     service_provider.sync_trigger.trigger();
 
     Ok(InitialiseSiteResponse::Response(SyncSettingsNode {
-        settings: Some(sync_settings),
+        settings: sync_settings,
     }))
 }
