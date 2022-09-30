@@ -9,13 +9,13 @@ import {
   TypedTFunction,
   useTranslation,
   Box,
-  Typography,
   AlertIcon,
   StepLabel,
   Step,
   Stepper,
+  ErrorWithDetails,
 } from '@openmsupply-client/common';
-import { parseSyncErrorMessage } from '../Initialise/hooks';
+import { mapSyncError } from '../../api/api';
 
 type SyncStatus = SyncStatusQuery['latestSyncStatus'];
 
@@ -30,11 +30,10 @@ export const SyncProgress: FC<SyncProgressProps> = ({
   syncStatus,
   isOperational,
 }) => {
-  const t = useTranslation();
-  let error = syncStatus?.error;
-  if (!!error) {
-    error = parseSyncErrorMessage(error, 'error.unknown-sync-error', t);
-  }
+  const t = useTranslation('app');
+  const error =
+    syncStatus?.error &&
+    mapSyncError(t, syncStatus?.error, 'error.unknown-sync-error');
 
   return (
     <Box>
@@ -64,9 +63,7 @@ export const SyncProgress: FC<SyncProgressProps> = ({
           }
         )}
       </Stepper>
-      <Box display="flex" justifyContent="center">
-        {error && <Typography sx={{ color: 'error.main' }}>{error}</Typography>}
-      </Box>
+      {error && <ErrorWithDetails {...error} />}
     </Box>
   );
 };

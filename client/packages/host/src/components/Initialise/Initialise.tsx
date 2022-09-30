@@ -2,11 +2,9 @@ import React, { useEffect } from 'react';
 import {
   useTranslation,
   LoadingButton,
-  Box,
-  Typography,
   useHostContext,
   SaveIcon,
-  AlertIcon,
+  ErrorWithDetails,
 } from '@openmsupply-client/common';
 import { LoginTextInput } from '../Login/LoginTextInput';
 import { InitialiseLayout } from './InitialiseLayout';
@@ -37,6 +35,8 @@ export const Initialise = () => {
     setPageTitle(`${t('app.initialise')} | ${t('app')} `);
   }, []);
 
+  const isInputDisabled = isInitialising || isLoading;
+
   return (
     <InitialiseLayout
       UsernameInput={
@@ -44,7 +44,7 @@ export const Initialise = () => {
           fullWidth
           label={t('label.settings-username')}
           value={username}
-          disabled={isInitialising}
+          disabled={isInputDisabled}
           onChange={e => setUsername(e.target.value)}
           inputProps={{
             autoComplete: 'username',
@@ -59,7 +59,7 @@ export const Initialise = () => {
           label={t('label.settings-password')}
           type="password"
           value={password}
-          disabled={isInitialising}
+          disabled={isInputDisabled}
           onChange={e => setPassword(e.target.value)}
           inputProps={{
             autoComplete: 'current-password',
@@ -72,7 +72,7 @@ export const Initialise = () => {
           fullWidth
           label={t('label.settings-url')}
           value={url}
-          disabled={isInitialising}
+          disabled={isInputDisabled}
           onChange={e => setUrl(e.target.value)}
         />
       }
@@ -94,20 +94,7 @@ export const Initialise = () => {
           {isInitialising ? t('button.retry') : t('button.initialise')}
         </LoadingButton>
       }
-      ErrorMessage={
-        error && (
-          <Box display="flex" sx={{ color: 'error.main' }} gap={1}>
-            <Box>
-              <AlertIcon />
-            </Box>
-            <Box>
-              <Typography sx={{ color: 'inherit' }}>
-                {error.message || t('error.login')}
-              </Typography>
-            </Box>
-          </Box>
-        )
-      }
+      ErrorMessage={error && <ErrorWithDetails {...error} />}
       onInitialise={async () => {
         /* onInitialise from layout only happens on form key event, form is disabled when isInitialising */
         if (isValid) await onInitialise();
