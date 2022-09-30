@@ -1,77 +1,58 @@
-import React, { FC, useState } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import { useTranslation } from '@common/intl';
 import {
   BasicTextInput,
   CircularProgress,
+  ErrorWithDetails,
+  ErrorWithDetailsProps,
   Grid,
   LoadingButton,
   NumericTextInput,
   SaveIcon,
+  SyncSettingsInput,
   Typography,
-  UpdateSyncSettingsInput,
   useNotification,
 } from '@openmsupply-client/common';
 import { useHost } from '../api/hooks';
 import { Setting } from './Setting';
+import { mapSyncError } from '../api/api';
 
-type SyncSettings = Omit<UpdateSyncSettingsInput, '__typename'>;
-
-interface SyncSettingProps {
+interface CommonSyncSettingProps<ValueType> {
   autocomplete?: string;
   disabled?: boolean;
-  property: keyof SyncSettings;
-  settings?: SyncSettings;
-  type?: string;
-  update: (syncSettings: SyncSettings) => void;
+  value: ValueType;
+  update: (syncSettings: ValueType) => void;
 }
 
-const StringSyncSetting: FC<SyncSettingProps> = ({
-  autocomplete = 'off',
-  disabled = false,
-  property,
-  type = 'text',
-  settings,
-  update,
-}) => {
-  const value = settings?.[property] || '';
-  const onChange = (value: string) => {
-    const patched = { ...settings, [property]: value } as SyncSettings;
-    update(patched);
-  };
+const StringSyncSetting: FC<
+  CommonSyncSettingProps<string> & { isPassword?: boolean }
+> = ({ autocomplete = 'off', disabled = false, update, value, isPassword }) => {
   return (
     <BasicTextInput
       value={value}
-      onChange={e => onChange(e.target.value)}
-      type={type}
+      onChange={e => update(e.target.value)}
+      type={!!isPassword ? 'password' : 'text'}
       inputProps={{ autoComplete: autocomplete }}
       disabled={disabled}
     />
   );
 };
 
-const NumericSyncSetting: FC<SyncSettingProps> = ({
-  property,
-  settings,
+const NumericSyncSetting: FC<CommonSyncSettingProps<number>> = ({
   update,
-  disabled,
+  value,
+  disabled = false,
 }) => {
-  const value = settings?.[property] || '';
-  const onChange = (value: string) => {
-    const patched = {
-      ...settings,
-      [property]: Number(value),
-    } as SyncSettings;
-    update(patched);
-  };
   return (
     <NumericTextInput
       value={value}
-      onChange={e => onChange(e.target.value)}
+      onChange={e => update(Number(e.target.value))}
       disabled={disabled}
     />
   );
 };
-const isValid = (syncSettings: SyncSettings | null) => {
+
+const isValid = (syncSettings: SyncSettingsInput | null) => {
   if (!syncSettings) return false;
   return (
     !!syncSettings.url &&
@@ -92,21 +73,23 @@ const SyncSettingsForm = ({
   isDisabled: boolean;
   isSaving: boolean;
   isValid: boolean;
-  settings?: SyncSettings;
+  settings: SyncSettingsInput;
   onSave: () => void;
-  setSyncSettings: (syncSettings: SyncSettings) => void;
+  setSyncSettings: (syncSettings: SyncSettingsInput) => void;
 }) => {
   const t = useTranslation('common');
+  const getSetter =
+    (property: keyof SyncSettingsInput) => (value: number | string) =>
+      setSyncSettings({ ...settings, [property]: value });
   return (
     <form style={{ width: '100%' }}>
       <Setting
         title={t('label.settings-url')}
         component={
           <StringSyncSetting
-            property="url"
-            settings={settings}
             disabled={isDisabled}
-            update={setSyncSettings}
+            value={settings['url']}
+            update={getSetter('url')}
           />
         }
       />
@@ -114,10 +97,9 @@ const SyncSettingsForm = ({
         title={t('label.settings-username')}
         component={
           <StringSyncSetting
-            property="username"
-            settings={settings}
             disabled={isDisabled}
-            update={setSyncSettings}
+            value={settings['username']}
+            update={getSetter('username')}
           />
         }
       />
@@ -125,12 +107,11 @@ const SyncSettingsForm = ({
         title={t('label.settings-password')}
         component={
           <StringSyncSetting
-            property="password"
-            type="password"
+            isPassword={true}
             autocomplete="sync-password"
-            settings={settings}
             disabled={isDisabled}
-            update={setSyncSettings}
+            value={settings['password']}
+            update={getSetter('password')}
           />
         }
       />
@@ -138,10 +119,9 @@ const SyncSettingsForm = ({
         title={t('label.settings-interval')}
         component={
           <NumericSyncSetting
-            property="intervalSeconds"
-            settings={settings}
             disabled={isDisabled}
-            update={setSyncSettings}
+            value={settings['intervalSeconds']}
+            update={getSetter('intervalSeconds')}
           />
         }
       />
@@ -161,34 +141,74 @@ const SyncSettingsForm = ({
   );
 };
 
-export const SyncSettings = ({}) => {
-  const { data, isLoading, isError } = useHost.utils.settings();
-  const { mutate, isLoading: isSaving } = useHost.sync.update();
-  const { mutateAsync: serverRestart } = useHost.utils.restart();
-  const t = useTranslation('common');
-  const [syncSettings, setSyncSettings] = useState<SyncSettings | null>(null);
-  const { success, info } = useNotification();
+interface UpdateSyncSettingsState {
+  syncSettings: SyncSettingsInput | null;
+  error: ErrorWithDetailsProps | null;
+  isSaving: boolean;
+}
 
-  const currentSettings = {
-    intervalSeconds: data?.syncSettings?.intervalSeconds || 10,
-    password: '',
-    url: data?.syncSettings?.url || '',
-    username: data?.syncSettings?.username || '',
+const useUpdateSyncSettingsState = () => {
+  const [state, set] = useState<UpdateSyncSettingsState>({
+    syncSettings: null,
+    error: null,
+    isSaving: false,
+  });
+
+  return {
+    ...state,
+    setSyncSettings: (syncSettings: UpdateSyncSettingsState['syncSettings']) =>
+      set(state => ({ ...state, syncSettings })),
+    setError: (error: UpdateSyncSettingsState['error']) =>
+      set(state => ({ ...state, error })),
+    setIsSaving: (isSaving: UpdateSyncSettingsState['isSaving']) =>
+      set(state => ({ ...state, isSaving })),
   };
-  const settings = data?.syncSettings
-    ? { ...currentSettings, ...syncSettings }
-    : undefined;
+};
 
-  const onSave = () => {
+export const SyncSettings = ({}) => {
+  // TODO update when useTranslation works with array or when namespace is not specified
+  const t = useTranslation('app');
+  const { data, isError } = useHost.utils.syncSettings();
+  const { mutateAsync: update } = useHost.sync.update();
+  const {
+    syncSettings,
+    error,
+    isSaving,
+    setError,
+    setIsSaving,
+    setSyncSettings,
+  } = useUpdateSyncSettingsState();
+  const { success } = useNotification();
+
+  useEffect(() => {
+    if (data) {
+      setSyncSettings({ ...data, password: '' });
+    }
+  }, [data]);
+
+  const onSave = async () => {
     if (!syncSettings) return;
-    const successSnack = success(t('success.sync-settings'));
-    const restart = async () => {
-      successSnack();
-      await serverRestart(); // returns 'Restarting'
-      const infoSnack = info(t('info.server-restarting'));
-      infoSnack();
-    };
-    mutate(syncSettings, { onSuccess: restart });
+    setIsSaving(true);
+    setError(null);
+    try {
+      const response = await update(syncSettings);
+      // Map structured error
+      if (response.__typename === 'SetSyncSettingErrorNode') {
+        setError(
+          mapSyncError(t, response.error, 'error.unable-to-save-settings')
+        );
+        return setIsSaving(false);
+      }
+    } catch (e) {
+      // Set standard error
+      setError({
+        error: t('error.unable-to-save-settings'),
+        details: (e as Error)?.message || '',
+      });
+      return setIsSaving(false);
+    }
+    setIsSaving(false);
+    success(t('success.sync-settings'))();
   };
 
   return (
@@ -196,19 +216,22 @@ export const SyncSettings = ({}) => {
       <Typography variant="h5" color="primary" style={{ paddingBottom: 25 }}>
         {t('heading.settings-sync')}
       </Typography>
-      {isLoading ? (
+      {!syncSettings ? (
         <Grid item justifyContent="center" width="100%" display="flex">
           <CircularProgress size={20} />
         </Grid>
       ) : (
-        <SyncSettingsForm
-          setSyncSettings={setSyncSettings}
-          isDisabled={isError}
-          isSaving={isSaving}
-          isValid={isValid(syncSettings)}
-          settings={settings}
-          onSave={onSave}
-        />
+        <>
+          <SyncSettingsForm
+            setSyncSettings={setSyncSettings}
+            isDisabled={isError}
+            isSaving={isSaving}
+            isValid={isValid(syncSettings)}
+            settings={syncSettings}
+            onSave={onSave}
+          />
+          {error && <ErrorWithDetails {...error} />}
+        </>
       )}
     </Grid>
   );
