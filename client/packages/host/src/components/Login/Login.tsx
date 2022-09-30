@@ -5,7 +5,7 @@ import {
   LoadingButton,
   Box,
   Typography,
-  initialisationStatusType,
+  InitialisationStatusType,
   AlertIcon,
   useHostContext,
   useNavigate,
@@ -46,7 +46,7 @@ export const Login = () => {
   useEffect(() => {
     if (
       !!initialisationStatus &&
-      initialisationStatus !== initialisationStatusType.Initialised
+      initialisationStatus !== InitialisationStatusType.Initialised
     ) {
       navigate(`/${AppRoute.Initialise}`);
     }

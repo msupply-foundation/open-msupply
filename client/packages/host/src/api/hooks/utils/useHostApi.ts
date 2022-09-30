@@ -10,6 +10,7 @@ export const useHostApi = () => {
       [...keys.base(), 'initialisationStatus'] as const,
     syncStatus: () => [...keys.base(), 'syncStatus'] as const,
     initialiseSite: () => [...keys.base(), 'initialiseSite'] as const,
+    updateSyncSettings: () => [...keys.base(), 'updateSyncSettings'] as const,
   };
 
   const { client } = useGql();

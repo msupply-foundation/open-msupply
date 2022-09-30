@@ -5,10 +5,11 @@ export const useHost = {
   sync: {
     initialise: Sync.useInitialiseSite,
     manualSync: Sync.useManualSync,
+    update: Sync.useUpdateSyncSettings,
   },
   utils: {
     syncStatus: Utils.useSyncStatus,
     syncSettings: Utils.useSyncSettings,
-    initialisationStatus: Utils.useinitialisationStatus,
+    initialisationStatus: Utils.useInitialisationStatus,
   },
 };
