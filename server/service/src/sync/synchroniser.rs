@@ -5,14 +5,18 @@ use crate::{
 use log::{info, warn};
 use repository::{RepositoryError, StorageConnection, SyncBufferAction};
 use std::sync::Arc;
+use thiserror::Error;
 
 use super::{
     api::SyncApiV5,
-    central_data_synchroniser::CentralDataSynchroniser,
-    remote_data_synchroniser::RemoteDataSynchroniser,
+    central_data_synchroniser::{CentralDataSynchroniser, CentralPullError},
+    remote_data_synchroniser::{
+        PostInitialisationError, RemoteDataSynchroniser, RemotePullError, RemotePushError,
+        WaitForIntegrationError,
+    },
     settings::SyncSettings,
     sync_buffer::SyncBuffer,
-    sync_status::logger::SyncLogger,
+    sync_status::logger::{SyncLogger, SyncLoggerError},
     translation_and_integration::{TranslationAndIntegration, TranslationAndIntegrationResults},
 };
 
@@ -24,6 +28,26 @@ pub struct Synchroniser {
     service_provider: Arc<ServiceProvider>,
     central: CentralDataSynchroniser,
     remote: RemoteDataSynchroniser,
+}
+
+#[derive(Error, Debug)]
+pub(crate) enum SyncError {
+    #[error("Database error while syncing")]
+    DatabaseError(#[from] RepositoryError),
+    #[error(transparent)]
+    SyncLoggerError(#[from] SyncLoggerError),
+    #[error("Error while requesting initialisation from central server")]
+    PostInitialisationError(#[from] PostInitialisationError),
+    #[error("Error while pushing remote records")]
+    RemotePushError(#[from] RemotePushError),
+    #[error("Error while awaiting remote record integration")]
+    WaitForIntegrationError(#[from] WaitForIntegrationError),
+    #[error("Error while pulling central records")]
+    CentralPullError(#[from] CentralPullError),
+    #[error("Error while pulling remote records")]
+    RemotePullError(#[from] RemotePullError),
+    #[error("Error while integrating records")]
+    IntegrationError(anyhow::Error),
 }
 
 /// There are three types of data that is synced between the central server and the remote server:
@@ -53,7 +77,7 @@ pub struct Synchroniser {
 /// 3) Remote data is regularly pushed to the central server.
 ///
 impl Synchroniser {
-    pub fn new(
+    pub(crate) fn new(
         settings: SyncSettings,
         service_provider: Arc<ServiceProvider>,
     ) -> anyhow::Result<Self> {
@@ -68,14 +92,14 @@ impl Synchroniser {
         })
     }
 
-    pub async fn sync(&self) -> anyhow::Result<()> {
+    pub(crate) async fn sync(&self) -> Result<(), SyncError> {
         let ctx = self.service_provider.basic_context()?;
         let mut logger = SyncLogger::start(&ctx.connection)?;
 
         let sync_result = self.sync_inner(&mut logger, &ctx).await;
 
         if let Err(error) = &sync_result {
-            logger.error(error.to_string())?;
+            logger.error(error)?;
         };
 
         sync_result?;
@@ -88,7 +112,7 @@ impl Synchroniser {
         &self,
         logger: &mut SyncLogger<'a>,
         ctx: &'a ServiceContext,
-    ) -> anyhow::Result<()> {
+    ) -> Result<(), SyncError> {
         let batch_size = &self.settings.batch_size;
         let sync_status_service = &self.service_provider.sync_status_service;
 
@@ -142,7 +166,8 @@ impl Synchroniser {
 
         // INTEGRATE RECORDS
         logger.start_step(SyncStep::Integrate)?;
-        let (upserts, deletes) = integrate_and_translate_sync_buffer(&ctx.connection)?;
+        let (upserts, deletes) = integrate_and_translate_sync_buffer(&ctx.connection)
+            .map_err(SyncError::IntegrationError)?;
         info!("Upsert Integration result: {:?}", upserts);
         info!("Delete Integration result: {:?}", deletes);
         logger.done_step(SyncStep::Integrate)?;
