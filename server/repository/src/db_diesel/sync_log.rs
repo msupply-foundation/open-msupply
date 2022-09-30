@@ -4,7 +4,9 @@ use super::{
 };
 
 use crate::{
-    diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort},
+    diesel_macros::{
+        apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_asc_nulls_first,
+    },
     DBType, DatetimeFilter, EqualFilter, Pagination, RepositoryError, Sort, SyncLogRow,
 };
 
@@ -61,19 +63,30 @@ impl<'a> SyncLogRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 SyncLogSortField::StartedDatetime => {
+                    // started_datetime is not nullable
                     apply_sort!(query, sort, sync_log_dsl::started_datetime)
                 }
                 SyncLogSortField::DoneDatetime => {
-                    apply_sort!(query, sort, sync_log_dsl::done_datetime)
+                    // If nulls last on desc search and nulls first on asc search is more
+                    // convenient for sync log rows datetimes that are nullable (see get_initialisation_status)
+                    apply_sort_asc_nulls_first!(query, sort, sync_log_dsl::done_datetime)
                 }
             }
         } else {
             query = query.order(sync_log_dsl::started_datetime.asc())
         }
-        let result = query
+
+        let final_query = query
             .offset(pagination.offset as i64)
-            .limit(pagination.limit as i64)
-            .load::<SyncLogRow>(&self.connection.connection)?;
+            .limit(pagination.limit as i64);
+
+        // Debug diesel query
+        // println!(
+        //     "{}",
+        //     diesel::debug_query::<crate::DBType, _>(&final_query).to_string()
+        // );
+
+        let result = final_query.load::<SyncLogRow>(&self.connection.connection)?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }

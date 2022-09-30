@@ -71,9 +71,9 @@ use crate::{
     KeyValueStoreRow, LocationRow, LocationRowRepository, LogRow, LogRowRepository, NumberRow,
     NumberRowRepository, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
     RequisitionRowRepository, StockLineRowRepository, StocktakeLineRowRepository,
-    StocktakeRowRepository, SyncBufferRow, SyncBufferRowRepository, UserAccountRow,
-    UserAccountRowRepository, UserPermissionRow, UserPermissionRowRepository, UserStoreJoinRow,
-    UserStoreJoinRowRepository,
+    StocktakeRowRepository, SyncBufferRow, SyncBufferRowRepository, SyncLogRow,
+    SyncLogRowRepository, UserAccountRow, UserAccountRowRepository, UserPermissionRow,
+    UserPermissionRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
 };
 
 use self::{log::mock_logs, unit::mock_units};
@@ -109,6 +109,7 @@ pub struct MockData {
     pub sync_buffer_rows: Vec<SyncBufferRow>,
     pub key_value_store_rows: Vec<KeyValueStoreRow>,
     pub logs: Vec<LogRow>,
+    pub sync_logs: Vec<SyncLogRow>,
 }
 
 impl MockData {
@@ -148,6 +149,7 @@ pub struct MockDataInserts {
     pub sync_buffer_rows: bool,
     pub key_value_store_rows: bool,
     pub logs: bool,
+    pub sync_logs: bool,
 }
 
 impl MockDataInserts {
@@ -176,6 +178,7 @@ impl MockDataInserts {
             sync_buffer_rows: true,
             key_value_store_rows: true,
             logs: true,
+            sync_logs: true,
         }
     }
 
@@ -277,6 +280,11 @@ impl MockDataInserts {
         self.logs = true;
         self
     }
+
+    pub fn sync_logs(mut self) -> Self {
+        self.sync_logs = true;
+        self
+    }
 }
 
 #[derive(Default)]
@@ -337,6 +345,7 @@ fn all_mock_data() -> MockDataCollection {
             sync_buffer_rows: vec![],
             key_value_store_rows: vec![],
             logs: mock_logs(),
+            sync_logs: vec![],
         },
     );
     data.insert(
@@ -558,6 +567,13 @@ pub fn insert_mock_data(
                 repo.insert_one(row).unwrap();
             }
         }
+
+        if inserts.sync_logs {
+            for row in &mock_data.sync_logs {
+                let repo = SyncLogRowRepository::new(connection);
+                repo.upsert_one(row).unwrap();
+            }
+        }
     }
 
     mock_data
@@ -589,6 +605,7 @@ impl MockData {
             sync_buffer_rows: _,
             mut key_value_store_rows,
             mut logs,
+            mut sync_logs,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
@@ -611,6 +628,7 @@ impl MockData {
         self.stock_lines.append(&mut stock_lines);
         self.key_value_store_rows.append(&mut key_value_store_rows);
         self.logs.append(&mut logs);
+        self.sync_logs.append(&mut sync_logs);
 
         self
     }

@@ -31,6 +31,7 @@ log = "0.4.14"
 [dev-dependencies]
 tokio = { version = "1.17.0", features = ["time", "rt-multi-thread", "macros"] }
 actix-rt = "2.6.0"
+strum = { version = "0.24", features = ["derive"] }
 
 [features]
 default = ["sqlite"]
