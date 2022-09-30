@@ -60,16 +60,14 @@ impl SyncApiV5 {
         &self,
         visible_name_ids: Vec<String>,
     ) -> Result<CreateSyncSiteResponse, SyncApiError> {
+        let route = "/sync/v5/test/create_site";
         let response = self
-            .do_post(
-                "/sync/v5/test/create_site",
-                &CreateSyncSiteInput { visible_name_ids },
-            )
+            .do_post(route, &CreateSyncSiteInput { visible_name_ids })
             .await?;
 
         let site_response = to_json::<CreateSyncSiteResponse>(response)
             .await
-            .map_err(SyncApiError::ResponseParsingError)?;
+            .map_err(|error| self.api_error(route, error.into()))?;
 
         let check_site_api = SyncApiV5 {
             credentials: SyncCredentials {
@@ -108,11 +106,17 @@ impl ConfigureCentralServer {
         }
     }
 
-    pub(crate) async fn upsert_records(&self, records: serde_json::Value) -> anyhow::Result<()> {
+    pub(crate) async fn upsert_records(
+        &self,
+        records: serde_json::Value,
+    ) -> Result<(), SyncApiError> {
         Ok(with_retry(|| self.api.upsert_central_records(&records)).await?)
     }
 
-    pub(crate) async fn delete_records(&self, records: serde_json::Value) -> anyhow::Result<()> {
+    pub(crate) async fn delete_records(
+        &self,
+        records: serde_json::Value,
+    ) -> Result<(), SyncApiError> {
         Ok(with_retry(|| self.api.delete_central_records(&records)).await?)
     }
 
@@ -135,11 +139,11 @@ impl ConfigureCentralServer {
                 username: result.site.name,
                 password_sha256: result.site.password_sha256,
                 interval_seconds: 10000000,
-                batch_size: BatchSize {
-                    remote_pull: 3,
-                    remote_push: 3,
-                    central_pull: 3,
-                },
+                // TODO make this adjustable after initialisation
+                // to check cursor is being updated correctly
+                // fresh data file has 230 central change logs
+                // and a small number makes integration tests super slow
+                batch_size: Default::default(),
             },
             new_site_properties,
         })
