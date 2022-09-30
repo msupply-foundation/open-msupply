@@ -7,33 +7,31 @@ use service::{
 
 #[derive(Debug)]
 pub struct SyncSettingsNode {
-    pub settings: Option<SyncSettings>,
-}
-
-#[derive(Union)]
-pub enum SyncSettingsResponse {
-    Response(SyncSettingsNode),
+    pub settings: SyncSettings,
 }
 
 #[Object]
 impl SyncSettingsNode {
     /// Central server url
-    pub async fn url(&self) -> Option<String> {
-        self.settings.as_ref().map(|s| s.url.clone())
+    pub async fn url(&self) -> &str {
+        &self.settings.url
     }
 
     /// Central server username
-    pub async fn username(&self) -> Option<String> {
-        self.settings.as_ref().map(|s| s.username.clone())
+    pub async fn username(&self) -> &str {
+        &self.settings.username
     }
 
     /// How frequently central data is synced
-    pub async fn interval_seconds(&self) -> Option<u64> {
-        self.settings.as_ref().map(|s| s.interval_seconds)
+    pub async fn interval_seconds(&self) -> u64 {
+        self.settings.interval_seconds
     }
 }
 
-pub(crate) fn sync_settings(ctx: &Context<'_>, with_auth: bool) -> Result<SyncSettingsResponse> {
+pub(crate) fn sync_settings(
+    ctx: &Context<'_>,
+    with_auth: bool,
+) -> Result<Option<SyncSettingsNode>> {
     if with_auth {
         validate_auth(
             ctx,
@@ -46,8 +44,7 @@ pub(crate) fn sync_settings(ctx: &Context<'_>, with_auth: bool) -> Result<SyncSe
 
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
-    let settings = SyncSettingsNode {
-        settings: service_provider.settings.sync_settings(&service_context)?,
-    };
-    Ok(SyncSettingsResponse::Response(settings))
+
+    let settings = service_provider.settings.sync_settings(&service_context)?;
+    Ok(settings.map(|settings| SyncSettingsNode { settings }))
 }
