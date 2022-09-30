@@ -12,7 +12,7 @@ mod permission_tests {
     };
 
     use graphql_batch_mutations::BatchMutations;
-    use graphql_general::GeneralQueries;
+    use graphql_general::{GeneralMutations, GeneralQueries};
     use graphql_invoice::{InvoiceMutations, InvoiceQueries};
     use graphql_invoice_line::InvoiceLineMutations;
     use graphql_location::{LocationMutations, LocationQueries};
@@ -45,6 +45,7 @@ mod permission_tests {
         pub BatchMutations,
         pub RequisitionMutations,
         pub RequisitionLineMutations,
+        pub GeneralMutations,
     );
 
     pub fn full_query() -> FullQuery {
@@ -68,6 +69,7 @@ mod permission_tests {
             BatchMutations,
             RequisitionMutations,
             RequisitionLineMutations,
+            GeneralMutations,
         )
     }
 
@@ -239,13 +241,10 @@ mod permission_tests {
                 },
             },
             TestData {
-                name: "serverSettings",
+                name: "syncSettings",
                 query: r#"query Query {
-                serverSettings {
-                  ... on ServerSettingsNode {
+                  syncSettings { 
                     __typename
-                    status
-                  }
                 }
               }"#,
                 expected: ResourceAccessRequest {
@@ -1033,13 +1032,10 @@ mod permission_tests {
                 },
             },
             TestData {
-                name: "updateServerSettings",
+                name: "updateSyncSettings",
                 query: r#"mutation Mutation {
-                updateServerSettings(input: {syncSettings: {url: "test", username: "user", password: "", intervalSec: 10}}) {
-                  ... on ServerSettingsNode {
+                  updateSyncSettings(input: {url: "test", username: "user", password: "", intervalSeconds: 10}) {
                     __typename
-                    status
-                  }
                 }
             }"#,
                 expected: ResourceAccessRequest {
