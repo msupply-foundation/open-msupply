@@ -4,24 +4,37 @@ import { GraphQLClient } from 'graphql-request';
 import * as Dom from 'graphql-request/dist/types.dom';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type SyncSettingsFragment = { __typename: 'SyncSettingsNode', intervalSeconds?: number | null, url?: string | null, username?: string | null };
+export type SyncSettingsFragment = { __typename: 'SyncSettingsNode', intervalSeconds: number, url: string, username: string };
 
 export type SyncSettingsQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
 
-export type SyncSettingsQuery = { __typename: 'Queries', syncSettings: { __typename: 'SyncSettingsNode', intervalSeconds?: number | null, url?: string | null, username?: string | null } };
+export type SyncSettingsQuery = { __typename: 'Queries', syncSettings?: { __typename: 'SyncSettingsNode', intervalSeconds: number, url: string, username: string } | null };
 
 export type InitialisationStatusQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
 
 export type InitialisationStatusQuery = { __typename: 'Queries', initialisationStatus: Types.InitialisationStatusType };
 
+export type SyncErrors_MappedSyncError_Fragment = { __typename: 'MappedSyncError', errorVariant: Types.SyncErrorVariant, description: string, fullError: string };
+
+export type SyncErrors_UnknownSyncError_Fragment = { __typename: 'UnknownSyncError', description: string, fullError: string };
+
+export type SyncErrorsFragment = SyncErrors_MappedSyncError_Fragment | SyncErrors_UnknownSyncError_Fragment;
+
 export type InitialiseSiteMutationVariables = Types.Exact<{
   syncSettings: Types.SyncSettingsInput;
 }>;
 
 
-export type InitialiseSiteMutation = { __typename: 'Mutations', initialiseSite: { __typename: 'SyncSettingsNode', intervalSeconds?: number | null, url?: string | null, username?: string | null } };
+export type InitialiseSiteMutation = { __typename: 'Mutations', initialiseSite: { __typename: 'SetSyncSettingErrorNode', error: { __typename: 'MappedSyncError', errorVariant: Types.SyncErrorVariant, description: string, fullError: string } | { __typename: 'UnknownSyncError', description: string, fullError: string } } | { __typename: 'SyncSettingsNode', intervalSeconds: number, url: string, username: string } };
+
+export type UpdateSyncSettingsMutationVariables = Types.Exact<{
+  syncSettings: Types.SyncSettingsInput;
+}>;
+
+
+export type UpdateSyncSettingsMutation = { __typename: 'Mutations', updateSyncSettings: { __typename: 'SetSyncSettingErrorNode', error: { __typename: 'MappedSyncError', errorVariant: Types.SyncErrorVariant, description: string, fullError: string } | { __typename: 'UnknownSyncError', description: string, fullError: string } } | { __typename: 'SyncSettingsNode', intervalSeconds: number, url: string, username: string } };
 
 export type SyncStatusFragment = { __typename: 'SyncStatusNode', finished?: any | null, started: any };
 
@@ -30,7 +43,7 @@ export type SyncStatusWithProgressFragment = { __typename: 'SyncStatusWithProgre
 export type SyncStatusQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
 
-export type SyncStatusQuery = { __typename: 'Queries', latestSyncStatus?: { __typename: 'FullSyncStatusNode', error?: string | null, isSyncing: boolean, integration?: { __typename: 'SyncStatusNode', finished?: any | null, started: any } | null, prepareInitial?: { __typename: 'SyncStatusNode', finished?: any | null, started: any } | null, pullCentral?: { __typename: 'SyncStatusWithProgressNode', finished?: any | null, started: any, doneProgress?: number | null, totalProgress?: number | null } | null, pullRemote?: { __typename: 'SyncStatusWithProgressNode', finished?: any | null, started: any, doneProgress?: number | null, totalProgress?: number | null } | null, push?: { __typename: 'SyncStatusWithProgressNode', finished?: any | null, started: any, doneProgress?: number | null, totalProgress?: number | null } | null, summary: { __typename: 'SyncStatusNode', finished?: any | null, started: any } } | null };
+export type SyncStatusQuery = { __typename: 'Queries', latestSyncStatus?: { __typename: 'FullSyncStatusNode', isSyncing: boolean, error?: { __typename: 'MappedSyncError', errorVariant: Types.SyncErrorVariant, description: string, fullError: string } | { __typename: 'UnknownSyncError', description: string, fullError: string } | null, integration?: { __typename: 'SyncStatusNode', finished?: any | null, started: any } | null, prepareInitial?: { __typename: 'SyncStatusNode', finished?: any | null, started: any } | null, pullCentral?: { __typename: 'SyncStatusWithProgressNode', finished?: any | null, started: any, doneProgress?: number | null, totalProgress?: number | null } | null, pullRemote?: { __typename: 'SyncStatusWithProgressNode', finished?: any | null, started: any, doneProgress?: number | null, totalProgress?: number | null } | null, push?: { __typename: 'SyncStatusWithProgressNode', finished?: any | null, started: any, doneProgress?: number | null, totalProgress?: number | null } | null, summary: { __typename: 'SyncStatusNode', finished?: any | null, started: any } } | null };
 
 export type ManualSyncMutationVariables = Types.Exact<{ [key: string]: never; }>;
 
@@ -43,6 +56,20 @@ export const SyncSettingsFragmentDoc = gql`
   intervalSeconds
   url
   username
+}
+    `;
+export const SyncErrorsFragmentDoc = gql`
+    fragment SyncErrors on SyncErrorInterface {
+  __typename
+  description
+  fullError
+  ... on MappedSyncError {
+    __typename
+    errorVariant
+  }
+  ... on UnknownSyncError {
+    __typename
+  }
 }
     `;
 export const SyncStatusFragmentDoc = gql`
@@ -64,9 +91,7 @@ export const SyncStatusWithProgressFragmentDoc = gql`
 export const SyncSettingsDocument = gql`
     query syncSettings {
   syncSettings {
-    ... on SyncSettingsNode {
-      ...SyncSettings
-    }
+    ...SyncSettings
   }
 }
     ${SyncSettingsFragmentDoc}`;
@@ -78,17 +103,41 @@ export const InitialisationStatusDocument = gql`
 export const InitialiseSiteDocument = gql`
     mutation initialiseSite($syncSettings: SyncSettingsInput!) {
   initialiseSite(input: $syncSettings) {
+    __typename
     ... on SyncSettingsNode {
       ...SyncSettings
     }
+    ... on SetSyncSettingErrorNode {
+      error {
+        ...SyncErrors
+      }
+    }
   }
 }
-    ${SyncSettingsFragmentDoc}`;
+    ${SyncSettingsFragmentDoc}
+${SyncErrorsFragmentDoc}`;
+export const UpdateSyncSettingsDocument = gql`
+    mutation updateSyncSettings($syncSettings: SyncSettingsInput!) {
+  updateSyncSettings(input: $syncSettings) {
+    __typename
+    ... on SyncSettingsNode {
+      ...SyncSettings
+    }
+    ... on SetSyncSettingErrorNode {
+      error {
+        ...SyncErrors
+      }
+    }
+  }
+}
+    ${SyncSettingsFragmentDoc}
+${SyncErrorsFragmentDoc}`;
 export const SyncStatusDocument = gql`
     query syncStatus {
   latestSyncStatus {
-    __typename
-    error
+    error {
+      ...SyncErrors
+    }
     integration {
       ...SyncStatus
     }
@@ -110,7 +159,8 @@ export const SyncStatusDocument = gql`
     }
   }
 }
-    ${SyncStatusFragmentDoc}
+    ${SyncErrorsFragmentDoc}
+${SyncStatusFragmentDoc}
 ${SyncStatusWithProgressFragmentDoc}`;
 export const ManualSyncDocument = gql`
     mutation manualSync {
@@ -133,6 +183,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     initialiseSite(variables: InitialiseSiteMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InitialiseSiteMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InitialiseSiteMutation>(InitialiseSiteDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'initialiseSite', 'mutation');
+    },
+    updateSyncSettings(variables: UpdateSyncSettingsMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateSyncSettingsMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateSyncSettingsMutation>(UpdateSyncSettingsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateSyncSettings', 'mutation');
     },
     syncStatus(variables?: SyncStatusQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<SyncStatusQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<SyncStatusQuery>(SyncStatusDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'syncStatus', 'query');
@@ -190,6 +243,23 @@ export const mockInitialisationStatusQuery = (resolver: ResponseResolver<GraphQL
 export const mockInitialiseSiteMutation = (resolver: ResponseResolver<GraphQLRequest<InitialiseSiteMutationVariables>, GraphQLContext<InitialiseSiteMutation>, any>) =>
   graphql.mutation<InitialiseSiteMutation, InitialiseSiteMutationVariables>(
     'initialiseSite',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockUpdateSyncSettingsMutation((req, res, ctx) => {
+ *   const { syncSettings } = req.variables;
+ *   return res(
+ *     ctx.data({ updateSyncSettings })
+ *   )
+ * })
+ */
+export const mockUpdateSyncSettingsMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateSyncSettingsMutationVariables>, GraphQLContext<UpdateSyncSettingsMutation>, any>) =>
+  graphql.mutation<UpdateSyncSettingsMutation, UpdateSyncSettingsMutationVariables>(
+    'updateSyncSettings',
     resolver
   )
 
