@@ -20,3 +20,6 @@ pub use test_helpers::*;
 
 mod json;
 pub use json::*;
+
+mod error;
+pub use error::*;
