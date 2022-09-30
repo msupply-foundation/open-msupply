@@ -15,6 +15,8 @@ pub(crate) use self::error::*;
 pub(crate) use get_central_records::*;
 pub(crate) use get_site_info::*;
 pub(crate) use get_site_status::*;
+#[cfg(test)]
+pub(crate) use post_queued_records::*;
 
 #[cfg(test)]
 fn create_api(url: &str, username: &str, password: &str) -> SyncApiV5 {

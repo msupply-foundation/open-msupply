@@ -2,7 +2,7 @@ use crate::{
     service_provider::{ServiceContext, ServiceProvider},
     sync::{
         actor::{get_sync_actors, SyncReceiverActor, SyncSenderActor},
-        SyncLogger, SyncStep,
+        sync_status::logger::SyncStep,
     },
 };
 use log::{info, warn};
@@ -15,6 +15,7 @@ use super::{
     remote_data_synchroniser::{RemoteDataSynchroniser, RemoteSyncState},
     settings::SyncSettings,
     sync_buffer::SyncBuffer,
+    sync_status::logger::SyncLogger,
     translation_and_integration::{TranslationAndIntegration, TranslationAndIntegrationResults},
 };
 
@@ -107,6 +108,7 @@ impl Synchroniser {
         ctx: &'a ServiceContext,
     ) -> anyhow::Result<()> {
         let service = &self.service_provider.settings;
+        let batch_size = &self.settings.batch_size;
 
         if service.is_sync_disabled(&ctx)? {
             warn!("Sync is disabled, skipping");
@@ -119,7 +121,7 @@ impl Synchroniser {
         // Initialisation request was sent and successfully processed
         let is_sync_queue_initialised = remote_sync_state.sync_queue_initalised()?;
 
-        // Request initialisation from server
+        // REQUEST INITIALISATION
         if !is_sync_queue_initialised {
             logger.start_step(SyncStep::PrepareInitial)?;
             self.remote.request_initialisation().await?;
@@ -130,24 +132,34 @@ impl Synchroniser {
         // First push before pulling, this avoids records being pulled from central server
         // and overwritting existing records waiting to be pulled
 
+        // PUSH
         // Only push if initialised (site data was initialised on central and successfully pulled)
         if is_initialised {
             logger.start_step(SyncStep::Push)?;
-            self.remote.push(&ctx.connection, logger).await?;
+            self.remote
+                .push(&ctx.connection, batch_size.remote_push, logger)
+                .await?;
             self.remote
                 .wait_for_integration(INTEGRATION_POLL_PERIOD_SECONDS, INTEGRATION_TIMEOUT_SECONDS)
                 .await?;
             logger.done_step(SyncStep::Push)?;
         }
 
+        // PULL CENTRAL
         logger.start_step(SyncStep::PullCentral)?;
-        self.central.pull(&ctx.connection, logger).await?;
+        self.central
+            .pull(&ctx.connection, batch_size.central_pull, logger)
+            .await?;
         logger.done_step(SyncStep::PullCentral)?;
 
+        // PULL REMOTE
         logger.start_step(SyncStep::PullRemote)?;
-        self.remote.pull(&ctx.connection, logger).await?;
+        self.remote
+            .pull(&ctx.connection, batch_size.remote_pull, logger)
+            .await?;
         logger.done_step(SyncStep::PullRemote)?;
 
+        // INTEGRATE RECORDS
         logger.start_step(SyncStep::Integrate)?;
         let (upserts, deletes) = integrate_and_translate_sync_buffer(&ctx.connection)?;
         info!("Upsert Integration result: {:?}", upserts);

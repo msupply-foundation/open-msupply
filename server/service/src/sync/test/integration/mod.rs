@@ -42,7 +42,7 @@ async fn init_test_context(
     .await;
 
     service_provider
-        .site_info
+        .site_info_service
         .request_and_set_site_info(&service_provider, &sync_settings)
         .await
         .unwrap();

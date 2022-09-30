@@ -11,6 +11,7 @@ mod tests {
         service_provider::ServiceProvider,
         sync::{
             api::{SyncApiError, SyncErrorV5},
+            remote_data_synchroniser::RemotePushError,
             settings::SyncSettings,
             synchroniser::Synchroniser,
             test::integration::central_server_configurations::{
@@ -66,7 +67,7 @@ mod tests {
         .await;
 
         service_provider
-            .site_info
+            .site_info_service
             .request_and_set_site_info(&service_provider, &sync_settings)
             .await
             .unwrap();
@@ -83,14 +84,14 @@ mod tests {
             Err(e) => e,
         };
 
-        println!("{}", error);
+        println!("{:?}", error);
 
         assert_matches!(
-            error.downcast_ref::<SyncApiError>(),
-            Some(SyncApiError::MappedError {
+            error.downcast_ref::<RemotePushError>(),
+            Some(RemotePushError::PushError(SyncApiError::MappedError {
                 source: SyncErrorV5::ParsedError { .. },
                 status: StatusCode::UNAUTHORIZED,
-            })
+            }))
         );
     }
 

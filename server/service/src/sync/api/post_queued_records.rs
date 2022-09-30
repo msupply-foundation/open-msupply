@@ -1,7 +1,7 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use super::*;
-#[derive(Debug, Deserialize, PartialEq)]
+#[derive(Debug, Deserialize, Serialize, PartialEq)]
 pub(crate) struct RemotePushResponseV5 {
     #[serde(rename = "integrationStarted")]
     pub(crate) integration_started: bool,

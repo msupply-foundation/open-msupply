@@ -193,7 +193,7 @@ async fn run_server(
 
     if db_settings.is_none() && config_settings.sync.is_some() {
         service_provider
-            .site_info
+            .site_info_service
             .request_and_set_site_info(&service_provider, config_settings.sync.as_ref().unwrap())
             .await
             .unwrap();
@@ -203,7 +203,7 @@ async fn run_server(
     let mut settings = config_settings;
     settings.sync = Some(sync_settings.clone());
     let site_id = service_provider
-        .site_info
+        .site_info_service
         .get_site_id(&service_context)
         .unwrap();
 
