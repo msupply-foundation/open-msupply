@@ -40,7 +40,7 @@
         },
         {
           "type": "Control",
-          "scope": "#/properties/physicalExamination/properties/opportunisticInfection"
+          "scope": "#/properties/physicalExamination/properties/opportunisticInfections"
         },
         {
           "type": "HorizontalLayout",
