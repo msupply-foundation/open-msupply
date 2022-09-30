@@ -45,7 +45,7 @@ mod discovery;
 /// * `settigngs` - Server settings (manually defined for android and from .yaml file for other)
 /// * `off_switch` - For android or windows service to turn off server
 ///
-/// This method doesn't return until a message is send to the off_switch
+/// This method doesn't return until a message is sent to the off_switch
 pub async fn start_server(
     settings: Settings,
     mut off_switch: tokio::sync::mpsc::Receiver<()>,
@@ -200,7 +200,7 @@ pub async fn start_server(
     // START SERVER
     info!("Initialising http server..",);
     let processors_task = processors.spawn(service_provider.clone().into_inner());
-    let syncrhoniser_task = synchroniser_driver.run(
+    let synchroniser_task = synchroniser_driver.run(
         service_provider.clone().into_inner(),
         force_trigger_sync_on_startup,
     );
@@ -235,7 +235,7 @@ pub async fn start_server(
         // TODO log error in ctrl_c and None in off_switch
         _ = tokio::signal::ctrl_c() => {},
         Some(_) = off_switch.recv() => {},
-        _ = syncrhoniser_task => unreachable!("Synchroniser unexpectedly stopped"),
+        _ = synchroniser_task => unreachable!("Synchroniser unexpectedly stopped"),
         result = processors_task => unreachable!("Processor terminated ({:?})", result)
     };
 

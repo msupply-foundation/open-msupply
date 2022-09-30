@@ -123,7 +123,7 @@ impl GraphqlSchema {
             settings,
         } = data;
 
-        // Self requester schema is a copy of operational scheam, used for reports
+        // Self requester schema is a copy of operational schema, used for reports
         // needs to be available as data in operational schema
         let self_requester_schema =
             OperationalSchema::build(Queries::new(), Mutations::new(), EmptySubscription)
