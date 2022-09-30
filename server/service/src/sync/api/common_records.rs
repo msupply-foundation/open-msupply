@@ -102,3 +102,15 @@ impl RemoteSyncBatchV5 {
             .collect()
     }
 }
+
+#[cfg(test)]
+impl CommonSyncRecordV5 {
+    pub(crate) fn test() -> Self {
+        Self {
+            table_name: "test".to_string(),
+            record_id: "test".to_string(),
+            action: SyncActionV5::Delete,
+            data: json!({}),
+        }
+    }
+}

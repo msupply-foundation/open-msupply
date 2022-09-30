@@ -3,7 +3,7 @@ use std::env;
 
 use crate::sync::{
     api::{to_json, SyncApiError, SyncApiV5},
-    settings::SyncSettings,
+    settings::{BatchSize, SyncSettings},
     sync_api_credentials::SyncCredentials,
 };
 
@@ -135,6 +135,11 @@ impl ConfigureCentralServer {
                 username: result.site.name,
                 password_sha256: result.site.password_sha256,
                 interval_sec: 10000000,
+                batch_size: BatchSize {
+                    remote_pull: 3,
+                    remote_push: 3,
+                    central_pull: 3,
+                },
             },
             new_site_properties,
         })

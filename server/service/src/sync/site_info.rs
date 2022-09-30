@@ -33,7 +33,7 @@ pub trait SiteInfoTrait: Sync + Send {
     fn get_site_id(&self, ctx: &ServiceContext) -> Result<Option<i32>, RepositoryError>;
 }
 
-pub struct SiteInfoService {}
+pub struct SiteInfoService;
 
 #[async_trait]
 impl SiteInfoTrait for SiteInfoService {

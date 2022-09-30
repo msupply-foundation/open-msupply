@@ -1,7 +1,6 @@
 pub use async_graphql::*;
 use chrono::NaiveDateTime;
 use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
-use service::sync::sync_status::{is_initialised, number_of_records_in_push_queue};
 
 #[derive(SimpleObject)]
 pub struct SyncStatusNode {
@@ -13,8 +12,10 @@ pub struct SyncStatusNode {
 pub struct SyncStatusWithProgressNode {
     started: NaiveDateTime,
     finished: Option<NaiveDateTime>,
-    total_progress: u32,
-    done_progress: u32,
+    // Total number of records to pull or push
+    total: Option<u32>,
+    // Number of records pulled or pushed
+    done: Option<u32>,
 }
 
 #[derive(SimpleObject)]
@@ -35,18 +36,19 @@ pub struct SyncInfoQueries;
 #[Object]
 impl SyncInfoQueries {
     pub async fn is_initialised(&self, ctx: &Context<'_>) -> Result<bool> {
-        let connection = ctx.service_provider().connection()?;
-        let is_initialised = is_initialised(&connection)?;
+        let service_provider = ctx.service_provider();
+        let ctx = service_provider.basic_context()?;
+        let is_initialised = service_provider.sync_status_service.is_initialised(&ctx)?;
 
         Ok(is_initialised)
     }
 
     pub async fn latest_sync_status(&self, ctx: &Context<'_>) -> Result<FullSyncStatusNode> {
         let service_provider = ctx.service_provider();
-        let connection = service_provider.connection()?;
+        let ctx = service_provider.basic_context()?;
         let sync_status = service_provider
-            .site_info_queries_service
-            .get_latest_sync_status(&connection)?;
+            .sync_status_service
+            .get_latest_sync_status(&ctx)?;
 
         Ok(FullSyncStatusNode {
             is_syncing: sync_status.is_syncing,
@@ -68,32 +70,36 @@ impl SyncInfoQueries {
                 .map(|status| SyncStatusWithProgressNode {
                     started: status.started,
                     finished: status.finished,
-                    total_progress: status.total_progress,
-                    done_progress: status.done_progress,
+                    total: status.total,
+                    done: status.done,
                 }),
             pull_remote: sync_status
                 .pull_remote
                 .map(|status| SyncStatusWithProgressNode {
                     started: status.started,
                     finished: status.finished,
-                    total_progress: status.total_progress,
-                    done_progress: status.done_progress,
+                    total: status.total,
+                    done: status.done,
                 }),
             push: sync_status.push.map(|status| SyncStatusWithProgressNode {
                 started: status.started,
                 finished: status.finished,
-                total_progress: status.total_progress,
-                done_progress: status.done_progress,
+                total: status.total,
+                done: status.done,
             }),
         })
     }
 
     pub async fn number_of_records_in_push_queue(&self, ctx: &Context<'_>) -> Result<u64> {
-        let connection = ctx.service_provider().connection()?;
-        let push_queue_count = number_of_records_in_push_queue(&connection).map_err(|error| {
-            let formatted_error = format!("{:#?}", error);
-            StandardGraphqlError::InternalError(formatted_error).extend()
-        })?;
+        let service_provider = ctx.service_provider();
+        let ctx = service_provider.basic_context()?;
+        let push_queue_count = service_provider
+            .sync_status_service
+            .number_of_records_in_push_queue(&ctx)
+            .map_err(|error| {
+                let formatted_error = format!("{:#?}", error);
+                StandardGraphqlError::InternalError(formatted_error).extend()
+            })?;
 
         Ok(push_queue_count)
     }

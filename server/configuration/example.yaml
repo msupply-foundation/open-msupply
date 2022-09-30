@@ -18,6 +18,10 @@
 #   # 'd74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1' = 'pass'
 #   password_sha256: "d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1"
 #   interval_sec: 300
+#   batch_size:
+#     remote_push: 1024
+#     remote_pull: 500
+#     central_pull: 500
 # database:
 #   host: "localhost"
 #   port: 5432
