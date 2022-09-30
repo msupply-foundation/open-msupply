@@ -663,7 +663,7 @@ export type ForeignKeyError = DeleteInboundShipmentLineErrorInterface & DeleteIn
 
 export type FullSyncStatusNode = {
   __typename: 'FullSyncStatusNode';
-  error?: Maybe<Scalars['String']>;
+  error?: Maybe<SyncErrorInterface>;
   integration?: Maybe<SyncStatusNode>;
   isSyncing: Scalars['Boolean'];
   prepareInitial?: Maybe<SyncStatusNode>;
@@ -697,7 +697,7 @@ export enum InitialisationStatusType {
   PreInitialisation = 'PRE_INITIALISATION'
 }
 
-export type InitialiseSiteResponse = SyncSettingsNode;
+export type InitialiseSiteResponse = SetSyncSettingErrorNode | SyncSettingsNode;
 
 export type InsertErrorInterface = {
   description: Scalars['String'];
@@ -1417,6 +1417,13 @@ export type Logout = {
 
 export type LogoutResponse = Logout;
 
+export type MappedSyncError = SyncErrorInterface & {
+  __typename: 'MappedSyncError';
+  description: Scalars['String'];
+  errorVariant: SyncErrorVariant;
+  fullError: Scalars['String'];
+};
+
 export type MasterListConnector = {
   __typename: 'MasterListConnector';
   nodes: Array<MasterListNode>;
@@ -2103,7 +2110,7 @@ export type Queries = {
   stocktakes: StocktakesResponse;
   store: StoreResponse;
   stores: StoresResponse;
-  syncSettings: SyncSettingsResponse;
+  syncSettings?: Maybe<SyncSettingsNode>;
 };
 
 
@@ -2520,6 +2527,11 @@ export type RequisitionSortInput = {
 
 export type RequisitionsResponse = RequisitionConnector;
 
+export type SetSyncSettingErrorNode = {
+  __typename: 'SetSyncSettingErrorNode';
+  error: SyncErrorInterface;
+};
+
 export type SimpleStringFilterInput = {
   /** Search term must be an exact match (case sensitive) */
   equalTo?: InputMaybe<Scalars['String']>;
@@ -2771,8 +2783,25 @@ export type SupplyRequestedQuantityInput = {
 
 export type SupplyRequestedQuantityResponse = RequisitionLineConnector | SupplyRequestedQuantityError;
 
+export type SyncErrorInterface = {
+  description: Scalars['String'];
+  fullError: Scalars['String'];
+};
+
+export enum SyncErrorVariant {
+  ConnectionError = 'connectionError',
+  HardwareIdMismatch = 'hardwareIdMismatch',
+  IncorrectPassword = 'incorrectPassword',
+  IntegrationTimeoutReached = 'integrationTimeoutReached',
+  InvalidUrl = 'invalidUrl',
+  SiteAuthTimeout = 'siteAuthTimeout',
+  SiteHasNoStore = 'siteHasNoStore',
+  SiteNameNotFound = 'siteNameNotFound',
+  SiteUuidIsBeingChanged = 'siteUUIDIsBeingChanged'
+}
+
 export type SyncSettingsInput = {
-  /** Sync interval in sec */
+  /** Sync interval */
   intervalSeconds: Scalars['Int'];
   /** Plain text password */
   password: Scalars['String'];
@@ -2783,14 +2812,12 @@ export type SyncSettingsInput = {
 export type SyncSettingsNode = {
   __typename: 'SyncSettingsNode';
   /** How frequently central data is synced */
-  intervalSeconds?: Maybe<Scalars['Int']>;
+  intervalSeconds: Scalars['Int'];
   /** Central server url */
-  url?: Maybe<Scalars['String']>;
+  url: Scalars['String'];
   /** Central server username */
-  username?: Maybe<Scalars['String']>;
+  username: Scalars['String'];
 };
-
-export type SyncSettingsResponse = SyncSettingsNode;
 
 export type SyncStatusNode = {
   __typename: 'SyncStatusNode';
@@ -2834,6 +2861,12 @@ export type UniqueValueViolation = InsertLocationErrorInterface & UpdateLocation
   __typename: 'UniqueValueViolation';
   description: Scalars['String'];
   field: UniqueValueKey;
+};
+
+export type UnknownSyncError = SyncErrorInterface & {
+  __typename: 'UnknownSyncError';
+  description: Scalars['String'];
+  fullError: Scalars['String'];
 };
 
 export type UpdateErrorInterface = {
@@ -3214,7 +3247,7 @@ export type UpdateStocktakeResponseWithId = {
   response: UpdateStocktakeResponse;
 };
 
-export type UpdateSyncSettingsResponse = SyncSettingsNode;
+export type UpdateSyncSettingsResponse = SetSyncSettingErrorNode | SyncSettingsNode;
 
 export type UseSuggestedQuantityError = {
   __typename: 'UseSuggestedQuantityError';
