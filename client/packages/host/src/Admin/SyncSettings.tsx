@@ -6,6 +6,7 @@ import {
   Grid,
   LoadingButton,
   NumericTextInput,
+  PasswordTextInput,
   SaveIcon,
   Typography,
   UpdateSyncSettingsInput,
@@ -38,7 +39,15 @@ const StringSyncSetting: FC<SyncSettingProps> = ({
     const patched = { ...settings, [property]: value } as SyncSettings;
     update(patched);
   };
-  return (
+  return type === 'password' ? (
+    <PasswordTextInput
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      inputProps={{ autoComplete: autocomplete }}
+      disabled={disabled}
+      style={{ width: 'calc(100% - 24px)' }}
+    />
+  ) : (
     <BasicTextInput
       value={value}
       onChange={e => onChange(e.target.value)}
@@ -77,7 +86,7 @@ const isValid = (syncSettings: SyncSettings | null) => {
     !!syncSettings.url &&
     !!syncSettings.username &&
     !!syncSettings.password &&
-    !!syncSettings.intervalSec 
+    !!syncSettings.intervalSec
   );
 };
 
