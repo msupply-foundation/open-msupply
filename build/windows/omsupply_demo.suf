@@ -6,8 +6,8 @@
 <ArchiveFiles>
 <FileData>
 <FldRef>0</FldRef>
-<FullName>#PROJECTFILEDIR#\Server\omSupply-sqlite.exe</FullName>
-<FileName>omSupply-sqlite.exe</FileName>
+<FullName>#PROJECTFILEDIR#\Server\omSupply-server-sqlite.exe</FullName>
+<FileName>omSupply-server-sqlite.exe</FileName>
 <Source>#PROJECTFILEDIR#\Server</Source>
 <Ext>exe</Ext>
 <RTSource>Archive</RTSource>
@@ -78,17 +78,236 @@
 <StoreOnly>0</StoreOnly>
 </FileData>
 <FileData>
+<FldRef>1</FldRef>
+<FullName>#PROJECTFILEDIR#\Server\configuration\*.*</FullName>
+<FileName>*.*</FileName>
+<Source>#PROJECTFILEDIR#\Server\configuration</Source>
+<Ext>*</Ext>
+<RTSource>Archive</RTSource>
+<Desc/>
+<Recurse>1</Recurse>
+<MatchMode>0</MatchMode>
+<Dest>%AppFolder%\configuration</Dest>
+<Overwrite>2</Overwrite>
+<Backup>0</Backup>
+<Protect>0</Protect>
+<InstallOrder>1000</InstallOrder>
+<SCStartRoot>0</SCStartRoot>
+<SCStartProgs>0</SCStartProgs>
+<SCAppFld>0</SCAppFld>
+<SCStartup>0</SCStartup>
+<SCDesk>0</SCDesk>
+<SCQLaunch>0</SCQLaunch>
+<SCStartPinOption>0</SCStartPinOption>
+<SCCust>0</SCCust>
+<CustSCPath/>
+<SCDesc/>
+<SCComment/>
+<SCArgs/>
+<SCWork/>
+<UseExtIco>0</UseExtIco>
+<IcoFN/>
+<IcoIdx>0</IcoIdx>
+<IcoShowMd>0</IcoShowMd>
+<IcoHK>0</IcoHK>
+<RegTTF>1</RegTTF>
+<TTFName/>
+<RegOCX>1</RegOCX>
+<RegTLB>1</RegTLB>
+<SupInUse>0</SupInUse>
+<Compress>1</Compress>
+<UseOrigAttr>1</UseOrigAttr>
+<Attr>0</Attr>
+<NoCRC>0</NoCRC>
+<NoRemove>0</NoRemove>
+<Shared>0</Shared>
+<OSCond>
+<OS>32768</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+</OSCond>
+<RTCond/>
+<BuildConfigs>
+<Cfg>All</Cfg>
+</BuildConfigs>
+<Package>None</Package>
+<Packages/>
+<Notes/>
+<CompSize>0</CompSize>
+<CRC>0</CRC>
+<StoreOnly>0</StoreOnly>
+</FileData>
+<FileData>
 <FldRef>0</FldRef>
-<FullName>#PROJECTFILEDIR#\Server\omSupply-postgres.exe</FullName>
-<FileName>omSupply-postgres.exe</FileName>
-<Source>#PROJECTFILEDIR#\Server</Source>
-<Ext>exe</Ext>
+<FullName>#PROJECTFILEDIR#\demo\omsupply-demo</FullName>
+<FileName>omsupply-demo</FileName>
+<Source>#PROJECTFILEDIR#\demo</Source>
+<Ext/>
 <RTSource>Archive</RTSource>
 <Desc/>
 <Recurse>1</Recurse>
 <MatchMode>0</MatchMode>
 <Dest>%AppFolder%</Dest>
-<Overwrite>2</Overwrite>
+<Overwrite>1</Overwrite>
+<Backup>0</Backup>
+<Protect>0</Protect>
+<InstallOrder>1000</InstallOrder>
+<SCStartRoot>0</SCStartRoot>
+<SCStartProgs>0</SCStartProgs>
+<SCAppFld>0</SCAppFld>
+<SCStartup>0</SCStartup>
+<SCDesk>0</SCDesk>
+<SCQLaunch>0</SCQLaunch>
+<SCStartPinOption>0</SCStartPinOption>
+<SCCust>0</SCCust>
+<CustSCPath/>
+<SCDesc>omsupply-demo</SCDesc>
+<SCComment/>
+<SCArgs/>
+<SCWork/>
+<UseExtIco>0</UseExtIco>
+<IcoFN/>
+<IcoIdx>0</IcoIdx>
+<IcoShowMd>0</IcoShowMd>
+<IcoHK>0</IcoHK>
+<RegTTF>0</RegTTF>
+<TTFName/>
+<RegOCX>0</RegOCX>
+<RegTLB>0</RegTLB>
+<SupInUse>0</SupInUse>
+<Compress>1</Compress>
+<UseOrigAttr>1</UseOrigAttr>
+<Attr>0</Attr>
+<NoCRC>0</NoCRC>
+<NoRemove>0</NoRemove>
+<Shared>0</Shared>
+<OSCond>
+<OS>32768</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+</OSCond>
+<RTCond/>
+<BuildConfigs>
+<Cfg>All</Cfg>
+</BuildConfigs>
+<Package>None</Package>
+<Packages/>
+<Notes/>
+<CompSize>0</CompSize>
+<CRC>0</CRC>
+<StoreOnly>0</StoreOnly>
+</FileData>
+<FileData>
+<FldRef>0</FldRef>
+<FullName>#PROJECTFILEDIR#\demo\local.yaml</FullName>
+<FileName>local.yaml</FileName>
+<Source>#PROJECTFILEDIR#\demo</Source>
+<Ext>yaml</Ext>
+<RTSource>Archive</RTSource>
+<Desc/>
+<Recurse>1</Recurse>
+<MatchMode>0</MatchMode>
+<Dest>%AppFolder%\configuration</Dest>
+<Overwrite>1</Overwrite>
+<Backup>0</Backup>
+<Protect>0</Protect>
+<InstallOrder>1000</InstallOrder>
+<SCStartRoot>0</SCStartRoot>
+<SCStartProgs>0</SCStartProgs>
+<SCAppFld>0</SCAppFld>
+<SCStartup>0</SCStartup>
+<SCDesk>0</SCDesk>
+<SCQLaunch>0</SCQLaunch>
+<SCStartPinOption>0</SCStartPinOption>
+<SCCust>0</SCCust>
+<CustSCPath/>
+<SCDesc>local</SCDesc>
+<SCComment/>
+<SCArgs/>
+<SCWork/>
+<UseExtIco>0</UseExtIco>
+<IcoFN/>
+<IcoIdx>0</IcoIdx>
+<IcoShowMd>0</IcoShowMd>
+<IcoHK>0</IcoHK>
+<RegTTF>0</RegTTF>
+<TTFName/>
+<RegOCX>0</RegOCX>
+<RegTLB>0</RegTLB>
+<SupInUse>0</SupInUse>
+<Compress>1</Compress>
+<UseOrigAttr>1</UseOrigAttr>
+<Attr>0</Attr>
+<NoCRC>0</NoCRC>
+<NoRemove>0</NoRemove>
+<Shared>0</Shared>
+<OSCond>
+<OS>32768</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+</OSCond>
+<RTCond/>
+<BuildConfigs>
+<Cfg>All</Cfg>
+</BuildConfigs>
+<Package>None</Package>
+<Packages/>
+<Notes/>
+<CompSize>0</CompSize>
+<CRC>0</CRC>
+<StoreOnly>0</StoreOnly>
+</FileData>
+<FileData>
+<FldRef>0</FldRef>
+<FullName>#PROJECTFILEDIR#\demo\launch.bat</FullName>
+<FileName>launch.bat</FileName>
+<Source>#PROJECTFILEDIR#\demo</Source>
+<Ext>bat</Ext>
+<RTSource>Archive</RTSource>
+<Desc/>
+<Recurse>1</Recurse>
+<MatchMode>0</MatchMode>
+<Dest>%AppFolder%</Dest>
+<Overwrite>1</Overwrite>
 <Backup>0</Backup>
 <Protect>0</Protect>
 <InstallOrder>1000</InstallOrder>
@@ -101,7 +320,7 @@
 <SCStartPinOption>0</SCStartPinOption>
 <SCCust>0</SCCust>
 <CustSCPath/>
-<SCDesc>server</SCDesc>
+<SCDesc>launch</SCDesc>
 <SCComment/>
 <SCArgs/>
 <SCWork/>
@@ -412,6 +631,301 @@ If you have any other programs running, please click Cancel, close the programs,
 Otherwise, click Next to continue.
 </IDS_CTRL_STATICTEXT_BODY>
 <IDS_CTRL_HEADINGTEXT_BODY>Welcome</IDS_CTRL_HEADINGTEXT_BODY>
+</Messages>
+</SUF70Messages>
+</Languages>
+</Screen>
+<Screen>
+<Type>125</Type>
+<Name>License Agreement</Name>
+<BannerStyle>2</BannerStyle>
+<TemplateName>License Agreement</TemplateName>
+<OverrideProjTheme>0</OverrideProjTheme>
+<StyleData>
+<CstClrs>0</CstClrs>
+<TBBG format="hex">ffffff</TBBG>
+<BDYBG format="hex">ece9d8</BDYBG>
+<FTBG format="hex">ece9d8</FTBG>
+<TBTXT format="hex">000000</TBTXT>
+<BDYTXT format="hex">000000</BDYTXT>
+<CBG format="hex">ffffff</CBG>
+<C3DFACE format="hex">ece9d8</C3DFACE>
+<C3DHLT format="hex">ece9d8</C3DHLT>
+<C3DLIT format="hex">ffffff</C3DLIT>
+<C3DSH format="hex">aca899</C3DSH>
+<CBTNTXT format="hex">000000</CBTNTXT>
+<CTEXT format="hex">000000</CTEXT>
+<CDISTXT format="hex">aca899</CDISTXT>
+<CPRGRS format="hex">316ac5</CPRGRS>
+<C3DSHDK format="hex">716f64</C3DSHDK>
+<TBIMG>open_msupply_top_banner.png</TBIMG>
+<SBIMG>open_msupply_side_banner.png</SBIMG>
+<BDIMG/>
+<BDFILL>0</BDFILL>
+<HDSEP>1</HDSEP>
+<FTSEP>1</FTSEP>
+<CstFnts>0</CstFnts>
+<Fonts>
+<FontData>
+<FontName>Arial</FontName>
+<CharacterSet>0</CharacterSet>
+<Height>-13</Height>
+<Weight>700</Weight>
+<Italic>0</Italic>
+<Underline>0</Underline>
+<StrikeOut>0</StrikeOut>
+<AntiAlias>1</AntiAlias>
+</FontData>
+<FontData>
+<FontName>Arial</FontName>
+<CharacterSet>0</CharacterSet>
+<Height>-13</Height>
+<Weight>700</Weight>
+<Italic>0</Italic>
+<Underline>0</Underline>
+<StrikeOut>0</StrikeOut>
+<AntiAlias>1</AntiAlias>
+</FontData>
+<FontData>
+<FontName>Arial</FontName>
+<CharacterSet>0</CharacterSet>
+<Height>-24</Height>
+<Weight>700</Weight>
+<Italic>0</Italic>
+<Underline>0</Underline>
+<StrikeOut>0</StrikeOut>
+<AntiAlias>1</AntiAlias>
+</FontData>
+<FontData>
+<FontName>Arial</FontName>
+<CharacterSet>0</CharacterSet>
+<Height>-13</Height>
+<Weight>400</Weight>
+<Italic>0</Italic>
+<Underline>0</Underline>
+<StrikeOut>0</StrikeOut>
+<AntiAlias>1</AntiAlias>
+</FontData>
+<FontData>
+<FontName>Arial</FontName>
+<CharacterSet>0</CharacterSet>
+<Height>-13</Height>
+<Weight>400</Weight>
+<Italic>0</Italic>
+<Underline>0</Underline>
+<StrikeOut>0</StrikeOut>
+<AntiAlias>1</AntiAlias>
+</FontData>
+</Fonts>
+<CAOff>
+<TP>0</TP>
+<L>15</L>
+<T>15</T>
+<R>15</R>
+<B>15</B>
+</CAOff>
+<CAOff>
+<TP>1</TP>
+<L>15</L>
+<T>15</T>
+<R>15</R>
+<B>15</B>
+</CAOff>
+<CAOff>
+<TP>2</TP>
+<L>15</L>
+<T>15</T>
+<R>15</R>
+<B>15</B>
+</CAOff>
+<TBTXTX>10</TBTXTX>
+<TBTXTY>10</TBTXTY>
+<ScreenW>497</ScreenW>
+<ScreenH>362</ScreenH>
+</StyleData>
+<Checked>1</Checked>
+<Events>
+<Event>
+<Name>On Preload</Name>
+<Args/>
+<Script>-- These actions are performed before the screen is shown.
+
+-- from _SUF70_Global_Functions.lua:
+-- disable the Next button unless 'I agree' is selected
+g_LicenseAgreementScreen_UpdateNextButton();
+</Script>
+<BookMarks count="0">
+</BookMarks>
+</Event>
+<Event>
+<Name>On Back</Name>
+<Args/>
+<Script>-- These actions are performed when the Back button is clicked.
+
+-- go back to the previous screen
+Screen.Back();
+</Script>
+<BookMarks count="0">
+</BookMarks>
+</Event>
+<Event>
+<Name>On Next</Name>
+<Args/>
+<Script>-- These actions are performed when the Next button is clicked.
+-- Tip: this is where you could add actions to validate the
+--      user's input before proceeding
+
+-- advance to the next screen
+Screen.Next();
+</Script>
+<BookMarks count="0">
+</BookMarks>
+</Event>
+<Event>
+<Name>On Cancel</Name>
+<Args/>
+<Script>-- These actions are performed when the Cancel button is clicked.
+
+-- from _SUF70_Global_Functions.lua:
+-- ask user if they're sure they want to exit
+if g_ConfirmSetupAbort() then
+	Application.Exit(EXIT_REASON_USER_ABORTED);
+end
+</Script>
+<BookMarks count="0">
+</BookMarks>
+</Event>
+<Event>
+<Name>On Help</Name>
+<Args/>
+<Script>-- These actions are performed when the Help button is clicked.
+</Script>
+<BookMarks count="0">
+</BookMarks>
+</Event>
+<Event>
+<Name>On Ctrl Message</Name>
+<Args>number e_CtrlID, number e_MsgID, table e_Details</Args>
+<Script>-- These actions are triggered by the controls on the screen.
+
+if (e_CtrlID == CTRL_RADIOBTN_AGREE or e_CtrlID == CTRL_RADIOBTN_DISAGREE) then
+	-- the control message is from one of the radio buttons
+	-- if it's a click message, update the Next button
+	if (e_MsgID == MSGID_CLICKED) then
+		-- from _SUF70_Global_Functions.lua:
+		-- disable the Next button unless 'I agree' is selected
+		g_LicenseAgreementScreen_UpdateNextButton();
+	end
+end
+</Script>
+<BookMarks count="0">
+</BookMarks>
+</Event>
+</Events>
+<Controls>
+<Control>
+<Type>1</Type>
+<ID>103</ID>
+<Visible>0</Visible>
+<Enabled>0</Enabled>
+<TabOrder>75</TabOrder>
+<FTButton>1</FTButton>
+</Control>
+<Control>
+<Type>1</Type>
+<ID>101</ID>
+<Visible>1</Visible>
+<Enabled>1</Enabled>
+<TabOrder>76</TabOrder>
+<FTButton>1</FTButton>
+</Control>
+<Control>
+<Type>1</Type>
+<ID>100</ID>
+<Visible>1</Visible>
+<Enabled>1</Enabled>
+<TabOrder>-10</TabOrder>
+<FTButton>1</FTButton>
+</Control>
+<Control>
+<Type>1</Type>
+<ID>102</ID>
+<Visible>1</Visible>
+<Enabled>1</Enabled>
+<TabOrder>-9</TabOrder>
+<FTButton>1</FTButton>
+</Control>
+<Control>
+<Type>3</Type>
+<ID>400</ID>
+<Visible>1</Visible>
+<Enabled>1</Enabled>
+<TabOrder>0</TabOrder>
+<IsHTML>0</IsHTML>
+<TextAlign>0</TextAlign>
+<VertScroll>1</VertScroll>
+<HorizScroll>0</HorizScroll>
+<RTLReadingOrder>0</RTLReadingOrder>
+<Style>1</Style>
+<ReadOnly>1</ReadOnly>
+<SpecifyType>0</SpecifyType>
+<Variable/>
+</Control>
+<Control>
+<Type>5</Type>
+<ID>602</ID>
+<Visible>1</Visible>
+<Enabled>1</Enabled>
+<TabOrder>35</TabOrder>
+<Group>1</Group>
+<StartID>602</StartID>
+<EndID>603</EndID>
+</Control>
+<Control>
+<Type>5</Type>
+<ID>603</ID>
+<Visible>1</Visible>
+<Enabled>1</Enabled>
+<TabOrder>40</TabOrder>
+<Group>0</Group>
+<StartID>602</StartID>
+<EndID>603</EndID>
+</Control>
+</Controls>
+<Languages>
+<SUF70Messages>
+<Language>
+<Name>English</Name>
+<Default>1</Default>
+<Primary>9</Primary>
+<Secondary>
+<ID>1</ID>
+<ID>2</ID>
+<ID>3</ID>
+<ID>4</ID>
+<ID>5</ID>
+<ID>6</ID>
+<ID>7</ID>
+<ID>8</ID>
+<ID>9</ID>
+<ID>10</ID>
+<ID>11</ID>
+<ID>12</ID>
+<ID>13</ID>
+</Secondary>
+</Language>
+<Messages>
+<IDS_WINDOW_TITLE>%ProductName% Setup</IDS_WINDOW_TITLE>
+<IDS_HEADER_TEXT>License Agreement</IDS_HEADER_TEXT>
+<IDS_SUBHEADER_TEXT>Please read the following license agreement carefully.</IDS_SUBHEADER_TEXT>
+<IDS_CTRL_BUTTON_NEXT>&amp;Next &gt;</IDS_CTRL_BUTTON_NEXT>
+<IDS_CTRL_BUTTON_BACK>&lt; &amp;Back</IDS_CTRL_BUTTON_BACK>
+<IDS_CTRL_BUTTON_CANCEL>&amp;Cancel</IDS_CTRL_BUTTON_CANCEL>
+<IDS_CTRL_BUTTON_HELP>&amp;Help</IDS_CTRL_BUTTON_HELP>
+<IDS_CTRL_SCROLLTEXT_BODY>Insert your license agreement text here...</IDS_CTRL_SCROLLTEXT_BODY>
+<IDS_CTRL_RADIOBTN_AGREE>I agree to the terms of this license agreement</IDS_CTRL_RADIOBTN_AGREE>
+<IDS_CTRL_RADIOBTN_DISAGREE>I do not agree to the terms of this license agreement</IDS_CTRL_RADIOBTN_DISAGREE>
+<IDS_CTRL_SCROLLTEXT_FILE>#PROJECTFILEDIR#\omsupply_license_and_warranty.txt</IDS_CTRL_SCROLLTEXT_FILE>
 </Messages>
 </SUF70Messages>
 </Languages>
@@ -1378,10 +1892,10 @@ end
 </DuringInstScreenData>
 <AfterInstallingScreens>
 <Screen>
-<Type>100</Type>
+<Type>170</Type>
 <Name>Finished Install</Name>
 <BannerStyle>1</BannerStyle>
-<TemplateName>Finished Install</TemplateName>
+<TemplateName>Custom</TemplateName>
 <OverrideProjTheme>0</OverrideProjTheme>
 <StyleData>
 <CstClrs>0</CstClrs>
@@ -1485,6 +1999,13 @@ end
 <ScreenW>497</ScreenW>
 <ScreenH>362</ScreenH>
 </StyleData>
+<CustomCtrlList>
+<CustomCtrlInfo Left="182" Top="14" Width="234" Height="27" ID="211"/>
+<CustomCtrlInfo Left="182" Top="46" Width="291" Height="29" ID="212"/>
+<CustomCtrlInfo Left="182" Top="84" Width="291" Height="16" ID="213"/>
+<CustomCtrlInfo Left="182" Top="108" Width="291" Height="16" ID="214"/>
+<CustomCtrlInfo Left="182" Top="135" Width="235" Height="17" ID="1300"/>
+</CustomCtrlList>
 <Events>
 <Event>
 <Name>On Preload</Name>
@@ -1509,7 +2030,11 @@ Screen.Back();
 <Name>On Next</Name>
 <Args/>
 <Script>-- These actions are performed when the Next button is clicked.
-
+-- Launch omSupply Server
+if (cbStartOmSupply) then
+	File.Run(SessionVar.Expand("%AppFolder%\\omSupply-server-sqlite.exe"), "", SessionVar.Expand("%AppFolder%"), SW_SHOWNORMAL, false);
+	File.OpenURL("http://localhost:8000");
+end
 -- advance to the next screen
 Screen.Next();
 </Script>
@@ -1542,28 +2067,31 @@ end
 <Name>On Ctrl Message</Name>
 <Args>number e_CtrlID, number e_MsgID, table e_Details</Args>
 <Script>-- These actions are triggered by the controls on the screen.
+
+if (e_MsgID == MSGID_CLICKED) then
+	-- a control was clicked...
+
+	if (e_CtrlID == CTRL_BUTTON_01) then
+
+		-- Insert your button handling code here
+		
+		Dialog.Message("Click","You clicked on Button 01", MB_OK, MB_ICONNONE);
+	end
+	
+	if (e_CtrlID == CTRL_BUTTON_02) then
+
+		-- Insert your button handling code here
+		
+		Dialog.Message("Click","You clicked on Button 02", MB_OK, MB_ICONNONE);
+	end
+
+end
 </Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
 </Events>
 <Controls>
-<Control>
-<Type>1</Type>
-<ID>103</ID>
-<Visible>0</Visible>
-<Enabled>0</Enabled>
-<TabOrder>75</TabOrder>
-<FTButton>1</FTButton>
-</Control>
-<Control>
-<Type>1</Type>
-<ID>101</ID>
-<Visible>1</Visible>
-<Enabled>0</Enabled>
-<TabOrder>76</TabOrder>
-<FTButton>1</FTButton>
-</Control>
 <Control>
 <Type>1</Type>
 <ID>100</ID>
@@ -1582,19 +2110,60 @@ end
 </Control>
 <Control>
 <Type>2</Type>
-<ID>200</ID>
-<Visible>1</Visible>
-<Enabled>1</Enabled>
-<TabOrder>0</TabOrder>
-<IsHeading>0</IsHeading>
-</Control>
-<Control>
-<Type>2</Type>
-<ID>300</ID>
+<ID>211</ID>
 <Visible>1</Visible>
 <Enabled>1</Enabled>
 <TabOrder>1</TabOrder>
 <IsHeading>1</IsHeading>
+</Control>
+<Control>
+<Type>2</Type>
+<ID>212</ID>
+<Visible>1</Visible>
+<Enabled>1</Enabled>
+<TabOrder>2</TabOrder>
+<IsHeading>0</IsHeading>
+</Control>
+<Control>
+<Type>2</Type>
+<ID>213</ID>
+<Visible>1</Visible>
+<Enabled>1</Enabled>
+<TabOrder>3</TabOrder>
+<IsHeading>0</IsHeading>
+</Control>
+<Control>
+<Type>2</Type>
+<ID>214</ID>
+<Visible>1</Visible>
+<Enabled>1</Enabled>
+<TabOrder>4</TabOrder>
+<IsHeading>0</IsHeading>
+</Control>
+<Control>
+<Type>10</Type>
+<ID>1300</ID>
+<Visible>1</Visible>
+<Enabled>1</Enabled>
+<TabOrder>5</TabOrder>
+<Checked>1</Checked>
+<Variable>cbStartOmSupply</Variable>
+</Control>
+<Control>
+<Type>1</Type>
+<ID>103</ID>
+<Visible>0</Visible>
+<Enabled>0</Enabled>
+<TabOrder>75</TabOrder>
+<FTButton>1</FTButton>
+</Control>
+<Control>
+<Type>1</Type>
+<ID>101</ID>
+<Visible>1</Visible>
+<Enabled>0</Enabled>
+<TabOrder>76</TabOrder>
+<FTButton>1</FTButton>
 </Control>
 </Controls>
 <Languages>
@@ -1627,13 +2196,13 @@ end
 <IDS_CTRL_BUTTON_BACK>&lt; &amp;Back</IDS_CTRL_BUTTON_BACK>
 <IDS_CTRL_BUTTON_CANCEL>&amp;Cancel</IDS_CTRL_BUTTON_CANCEL>
 <IDS_CTRL_BUTTON_HELP>&amp;Help</IDS_CTRL_BUTTON_HELP>
-<IDS_CTRL_STATICTEXT_BODY>The %ProductName% %ProductVer% installation is complete.
-
-Thank you for choosing %ProductName%!
-
-Please click Finish to exit this installer.
-</IDS_CTRL_STATICTEXT_BODY>
-<IDS_CTRL_HEADINGTEXT_BODY>Installation Successful</IDS_CTRL_HEADINGTEXT_BODY>
+<IDS_CTRL_STATICTEXT_TOPINSTRUCTIONS/>
+<IDS_CTRL_STATICTEXT_BOTTOMINSTRUCTIONS/>
+<IDS_CTRL_STATICTEXT_LABEL_01>Installation Successful</IDS_CTRL_STATICTEXT_LABEL_01>
+<IDS_CTRL_STATICTEXT_LABEL_02>The omSupply Server v1.0.0-IS22-windows-instalers-test6 installation is complete.</IDS_CTRL_STATICTEXT_LABEL_02>
+<IDS_CTRL_STATICTEXT_LABEL_03>Thank you for trying the omSupply server demo!</IDS_CTRL_STATICTEXT_LABEL_03>
+<IDS_CTRL_STATICTEXT_LABEL_04>Please click Finish to exit this installer.</IDS_CTRL_STATICTEXT_LABEL_04>
+<IDS_CTRL_CHECK_BOX_01>Launch omSupply</IDS_CTRL_CHECK_BOX_01>
 </Messages>
 </SUF70Messages>
 </Languages>
@@ -2582,22 +3151,7 @@ Please click Finish to exit.
 <Event>
 <Name>On Pre Uninstall</Name>
 <Args/>
-<Script>-- Check if the open msupply service already exist or is running at the moment.
--- Stop (if running) the service and then delete it for a fresh new service installation.
-local bServiceExists = false;
-queryResult = Service.Query("Open mSupply Server", "omsupply-server");
-if (queryResult == SERVICE_RUNNING) then
-	bServiceExists = true;
-	Service.Stop("Open mSupply Server", "omsupply-server", 5);
-end
-
-if ((queryResult == SERVICE_PAUSED) or (queryResult == SERVICE_STOPPED)) then
-	bServiceExists = true;
-end
-
-if (bServiceExists) then
-	Service.Delete("Open mSupply Server", "omsupply-server");
-end</Script>
+<Script/>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -2612,7 +3166,8 @@ end</Script>
 <Event>
 <Name>On Post Uninstall</Name>
 <Args/>
-<Script/>
+<Script>Shell.DeleteShortcut(Shell.GetFolder(SHF_DESKTOP), "Open mSupply Demo Server");
+</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -2791,13 +3346,7 @@ g_HandleSystemReboot();
 <Event>
 <Name>On Pre Install</Name>
 <Args/>
-<Script>-- Check if the open msupply service is running at the moment.
--- Stop (if running) the service before upgrading the server.
-queryResult = Service.Query("Open mSupply Server", "omsupply-server");
-if (queryResult == SERVICE_RUNNING) then
-	Service.Stop("Open mSupply Server", "omsupply-server", 5);
-end
-</Script>
+<Script/>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -2812,25 +3361,7 @@ end
 <Event>
 <Name>On Post Install</Name>
 <Args/>
-<Script>local sFileToBeDeletePath = "";
-
-if File.DoesExist(SessionVar.Expand("%AppFolder%\\settings.ini")) then
-	sDatabase = INIFile.GetValue(SessionVar.Expand("%AppFolder%\\settings.ini"), "omSupply","Database");
-	if (sDatabase == "sqlite") then
-    	sFileToBeDeletePath = SessionVar.Expand("%AppFolder%\\omSupply-postgres.exe");
-    else
-    	sFileToBeDeletePath = SessionVar.Expand("%AppFolder%\\omSupply-sqlite.exe");
-    end
-    File.Delete(sFileToBeDeletePath); -- Delete unchoosen app file (.exe) by a user
-    -- Check to see if an error occurred when launching the file.
-	error = Application.GetLastError();
-	if (error ~= 0) then
-		--If an error occurred, display an error message to the user.
-		Dialog.Message("Error", _tblErrorMessages[error], MB_OK, MB_ICONEXCLAMATION, MB_DEFBUTTON1);
-	end
-end
-
-Service.Start("Open mSupply Server", "omsupply-server", nil);
+<Script>Shell.CreateShortcut(Shell.GetFolder(SHF_DESKTOP), "Open mSupply Demo Server", SessionVar.Expand("%AppFolder%\\launch.bat"), "", SessionVar.Expand("%AppFolder%"), SessionVar.Expand("%AppFolder%\\omSupply-server-sqlite.exe"), 0, SW_SHOWNORMAL, nil, "", START_OPTION_DEFAULT);
 </Script>
 <BookMarks count="0">
 </BookMarks>
@@ -2875,7 +3406,7 @@ g_HandleSystemReboot();
 <SUF7SessionVars>
 <SessionVar>
 <Name>%ProductName%</Name>
-<Value>omSupply Server</Value>
+<Value>omSupply Server Demo</Value>
 <Type>1</Type>
 </SessionVar>
 <SessionVar>
@@ -2928,7 +3459,7 @@ g_HandleSystemReboot();
 <PostBuildProg/>
 <PostBuildCmdLine/>
 <PostBuildWait>0</PostBuildWait>
-<Filename>omSupply_Server_Upgrader_replace with version.exe</Filename>
+<Filename>omSupply_Demo_replace with version.exe</Filename>
 <OutputFolder>.*</OutputFolder>
 <SegmentSizeMode>0</SegmentSizeMode>
 <CustomSegSize>0</CustomSegSize>
