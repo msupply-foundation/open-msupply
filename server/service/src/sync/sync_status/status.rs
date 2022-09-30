@@ -13,6 +13,8 @@ use crate::{
     },
 };
 
+use super::SyncLogError;
+
 #[derive(Debug, Clone, PartialEq)]
 
 pub struct SyncStatus {
@@ -31,7 +33,7 @@ pub struct SyncStatusWithProgress {
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct FullSyncStatus {
     pub is_syncing: bool,
-    pub error: Option<String>,
+    pub error: Option<SyncLogError>,
     pub summary: SyncStatus,
     pub prepare_initial: Option<SyncStatus>,
     pub integration: Option<SyncStatus>,
@@ -137,16 +139,17 @@ fn get_latest_sync_status(ctx: &ServiceContext) -> Result<Option<FullSyncStatus>
         desc: Some(true),
     };
 
-    let sync_log_row = match SyncLogRepository::new(&ctx.connection)
+    let sync_log = match SyncLogRepository::new(&ctx.connection)
         .query(Pagination::one(), None, Some(sort))?
         .pop()
     {
-        Some(sync_log_row) => sync_log_row,
+        Some(sync_log) => sync_log,
         None => return Ok(None),
     };
 
+    let error = SyncLogError::from_sync_log_row(&sync_log.sync_log_row);
+
     let SyncLogRow {
-        id: _,
         started_datetime,
         done_datetime,
         prepare_initial_start_datetime,
@@ -165,12 +168,14 @@ fn get_latest_sync_status(ctx: &ServiceContext) -> Result<Option<FullSyncStatus>
         pull_remote_progress_done,
         integration_start_datetime,
         integration_done_datetime,
-        error_message,
-    } = sync_log_row.sync_log_row;
+        error_code: _,
+        error_message: _,
+        id: _,
+    } = sync_log.sync_log_row;
 
     let result = FullSyncStatus {
-        is_syncing: done_datetime.is_none() && error_message.is_none(),
-        error: error_message,
+        is_syncing: done_datetime.is_none() && error.is_none(),
+        error,
         summary: SyncStatus {
             started: started_datetime,
             finished: done_datetime,
@@ -239,5 +244,141 @@ impl Default for SyncStatus {
             started: Defaults::naive_date_time(),
             finished: Default::default(),
         }
+    }
+}
+
+impl SyncLogError {
+    fn from_sync_log_row(
+        SyncLogRow {
+            error_code,
+            error_message,
+            ..
+        }: &SyncLogRow,
+    ) -> Option<Self> {
+        if error_message.is_none() && error_code.is_none() {
+            return None;
+        }
+
+        Some(Self {
+            message: error_message.clone().unwrap_or_default(),
+            code: error_code.clone(),
+        })
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::{
+        sync::sync_status::status::InitialisationStatus,
+        test_helpers::{setup_all_and_service_provider, ServiceTestContext},
+    };
+    use chrono::Utc;
+    use repository::{
+        mock::{insert_extra_mock_data, MockData, MockDataInserts},
+        SyncLogRow, SyncLogRowRepository,
+    };
+    use util::inline_init;
+
+    #[actix_rt::test]
+    async fn initialisation_status() {
+        let ServiceTestContext {
+            connection,
+            service_provider,
+            service_context,
+            ..
+        } = setup_all_and_service_provider("initialisation_status", MockDataInserts::none()).await;
+
+        assert_eq!(
+            service_provider
+                .sync_status_service
+                .get_initialisation_status(&service_context),
+            Ok(InitialisationStatus::PreInitialisation)
+        );
+
+        // started_datetime is not nullable in, thus if row exist, sync state should be Initialisation
+
+        SyncLogRowRepository::new(&connection)
+            .upsert_one(&inline_init(|r: &mut SyncLogRow| {
+                r.id = "1".to_string();
+                r.started_datetime = Utc::now().naive_local();
+            }))
+            .unwrap();
+
+        assert_eq!(
+            service_provider
+                .sync_status_service
+                .get_initialisation_status(&service_context),
+            Ok(InitialisationStatus::Initialising)
+        );
+
+        insert_extra_mock_data(
+            &connection,
+            inline_init(|r: &mut MockData| {
+                r.sync_logs = vec![
+                    inline_init(|r: &mut SyncLogRow| {
+                        r.id = "1".to_string();
+                        r.error_message = Some("n/a".to_string())
+                    }),
+                    inline_init(|r: &mut SyncLogRow| {
+                        r.id = "2".to_string();
+                        r.done_datetime = Some(Utc::now().naive_local())
+                    }),
+                    inline_init(|r: &mut SyncLogRow| {
+                        r.id = "3".to_string();
+                    }),
+                ]
+            }),
+        );
+
+        assert_eq!(
+            service_provider
+                .sync_status_service
+                .get_initialisation_status(&service_context),
+            Ok(InitialisationStatus::Initialised)
+        );
+    }
+
+    #[actix_rt::test]
+    async fn is_sync_queue_initialised() {
+        let ServiceTestContext {
+            connection,
+            service_provider,
+            service_context,
+            ..
+        } = setup_all_and_service_provider("is_sync_queue_initialised", MockDataInserts::none())
+            .await;
+
+        assert_eq!(
+            service_provider
+                .sync_status_service
+                .is_sync_queue_initialised(&service_context),
+            Ok(false)
+        );
+
+        insert_extra_mock_data(
+            &connection,
+            inline_init(|r: &mut MockData| {
+                r.sync_logs = vec![
+                    inline_init(|r: &mut SyncLogRow| {
+                        r.id = "1".to_string();
+                        r.error_message = Some("n/a".to_string())
+                    }),
+                    inline_init(|r: &mut SyncLogRow| {
+                        r.id = "2".to_string();
+                        r.prepare_initial_done_datetime = Some(Utc::now().naive_local())
+                    }),
+                    inline_init(|r: &mut SyncLogRow| {
+                        r.id = "3".to_string();
+                    }),
+                ]
+            }),
+        );
+
+        assert_eq!(
+            service_provider
+                .sync_status_service
+                .is_sync_queue_initialised(&service_context),
+            Ok(true)
+        );
     }
 }
