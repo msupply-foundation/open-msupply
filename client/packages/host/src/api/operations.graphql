@@ -7,9 +7,7 @@ fragment SyncSettings on SyncSettingsNode {
 
 query syncSettings {
   syncSettings {
-    ... on SyncSettingsNode {
-      ...SyncSettings
-    }
+    ...SyncSettings
   }
 }
 
@@ -17,10 +15,43 @@ query initialisationStatus {
   initialisationStatus
 }
 
+fragment SyncErrors on SyncErrorInterface {
+  __typename
+  description
+  fullError
+  ... on MappedSyncError {
+    __typename
+    errorVariant
+  }
+  ... on UnknownSyncError {
+    __typename
+  }
+}
+
 mutation initialiseSite($syncSettings: SyncSettingsInput!) {
   initialiseSite(input: $syncSettings) {
+    __typename
     ... on SyncSettingsNode {
       ...SyncSettings
+    }
+    ... on SetSyncSettingErrorNode {
+      error {
+        ...SyncErrors
+      }
+    }
+  }
+}
+
+mutation updateSyncSettings($syncSettings: SyncSettingsInput!) {
+  updateSyncSettings(input: $syncSettings) {
+    __typename
+    ... on SyncSettingsNode {
+      ...SyncSettings
+    }
+    ... on SetSyncSettingErrorNode {
+      error {
+        ...SyncErrors
+      }
     }
   }
 }
@@ -41,8 +72,9 @@ fragment SyncStatusWithProgress on SyncStatusWithProgressNode {
 
 query syncStatus {
   latestSyncStatus {
-    __typename
-    error
+    error {
+      ...SyncErrors
+    }
     integration {
       ...SyncStatus
     }
