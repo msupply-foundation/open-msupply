@@ -148,7 +148,13 @@ fn generate_response_requisition_lines(
                 available_stock_on_hand,
                 average_monthly_consumption,
                 snapshot_datetime,
-                comment,
+                comment: Some(
+                    [
+                        comment.clone().unwrap_or("".to_string()),
+                        request_requisition.requisition_number.to_string(),
+                    ]
+                    .join(", "),
+                ),
                 // Default
                 supply_quantity: 0,
             },

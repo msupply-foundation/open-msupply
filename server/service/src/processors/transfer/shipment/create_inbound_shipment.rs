@@ -119,6 +119,18 @@ fn generate_inbound_shipment(
         .as_ref()
         .map(|r| r.requisition_row.id.clone());
 
+    let formatted_comment = [
+        outbound_shipment_row
+            .comment
+            .clone()
+            .unwrap_or("".to_string()),
+        outbound_shipment_row
+            .their_reference
+            .clone()
+            .unwrap_or("".to_string()),
+    ]
+    .join(", ");
+
     let result = InvoiceRow {
         id: uuid(),
         invoice_number: next_number(connection, &NumberRowType::InboundShipment, &store_id)?,
@@ -135,7 +147,7 @@ fn generate_inbound_shipment(
         picked_datetime: outbound_shipment_row.picked_datetime,
         shipped_datetime: outbound_shipment_row.shipped_datetime,
         transport_reference: outbound_shipment_row.transport_reference.clone(),
-        comment: outbound_shipment_row.comment.clone(),
+        comment: Some(formatted_comment),
         // Default
         colour: None,
         user_id: None,
