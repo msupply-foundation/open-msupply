@@ -28,7 +28,7 @@ pub enum KeyValueType {
     SettingsSyncUrl,
     SettingsSyncUsername,
     SettingsSyncPasswordSha256,
-    SettingsSyncIntervalSec,
+    SettingsSyncIntervalSeconds,
     SettingsSyncCentralServerSiteId,
     SettingsSyncSiteId,
     SettingsSyncSiteUuid,

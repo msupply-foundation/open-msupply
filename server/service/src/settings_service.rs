@@ -35,8 +35,10 @@ pub trait SettingsServiceTrait: Sync + Send {
         let username = key_value_store.get_string(KeyValueType::SettingsSyncUsername)?;
         let password_sha256 =
             key_value_store.get_string(KeyValueType::SettingsSyncPasswordSha256)?;
-        let interval_seconds = key_value_store.get_i64(KeyValueType::SettingsSyncIntervalSec)?;
+        let interval_seconds =
+            key_value_store.get_i64(KeyValueType::SettingsSyncIntervalSeconds)?;
 
+        // `?` inside this closure would result in closure returning `None`
         let make_settings = || {
             Some(SyncSettings {
                 url: url?,
@@ -72,7 +74,7 @@ pub trait SettingsServiceTrait: Sync + Send {
                     Some(settings.password_sha256.clone()),
                 )?;
                 key_value_store.set_i64(
-                    KeyValueType::SettingsSyncIntervalSec,
+                    KeyValueType::SettingsSyncIntervalSeconds,
                     Some(settings.interval_seconds as i64),
                 )?;
                 Ok(())
