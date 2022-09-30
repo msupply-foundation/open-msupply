@@ -9,7 +9,7 @@ use repository::{
 
 use crate::{
     processors::Processors,
-    service_provider::ServiceProvider,
+    service_provider::{ServiceContext, ServiceProvider},
     sync::synchroniser_driver::{SiteIsInitialisedCallback, SynchroniserDriver},
 };
 
@@ -20,6 +20,8 @@ pub(crate) struct ServiceTestContext {
     pub(crate) processors_task: JoinHandle<()>,
     #[allow(dead_code)]
     pub(crate) connection_manager: StorageConnectionManager,
+    #[allow(dead_code)]
+    pub(crate) service_context: ServiceContext,
 }
 
 // TODO use this method in service tests
@@ -45,11 +47,14 @@ pub(crate) async fn setup_all_with_data_and_service_provider(
 
     let processors_task = processors.spawn(service_provider.clone());
 
+    let service_context = service_provider.basic_context().unwrap();
+
     ServiceTestContext {
         connection,
         service_provider,
         processors_task,
         connection_manager,
+        service_context,
     }
 }
 
