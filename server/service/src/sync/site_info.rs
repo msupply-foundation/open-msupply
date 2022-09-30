@@ -11,17 +11,19 @@ use crate::{
     },
 };
 
-use super::api::SyncApiError;
+use super::api::{SyncApiError, SyncApiV5CreatingError};
 
 #[derive(Error, Debug)]
 pub enum RequestAndSetSiteInfoError {
-    #[error("Api error while requesting site info: {0:?}")]
-    RequestSiteInfoError(SyncApiError),
-    #[error("Database error whie requistin site info: {0:?}")]
+    #[error("Api error while requesting site info")]
+    RequestSiteInfoError(#[source] SyncApiError),
+    #[error("Database error whie requistin site info")]
     DatabaseError(RepositoryError),
     #[error("Attempt to change initialised site, UUID does not match: current ({0}) new ({1}")]
     SiteUUIDIsBeingChanged(String, String),
-    #[error("Unknown error while requesting and setting site info: {0:?}")]
+    #[error("Error while requesting and setting site info")]
+    SyncApiV5CreatingError(#[from] SyncApiV5CreatingError),
+    #[error("Unknown error while requesting and setting site info")]
     Other(#[from] anyhow::Error),
 }
 
