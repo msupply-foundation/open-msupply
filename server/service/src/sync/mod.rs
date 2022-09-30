@@ -1,11 +1,11 @@
 #[cfg(test)]
 pub(crate) mod test;
 
-pub(crate) mod api;
+pub mod api;
 pub(crate) mod central_data_synchroniser;
 pub(crate) mod remote_data_synchroniser;
 pub mod settings;
-pub(crate) mod site_info;
+pub mod site_info;
 mod sync_api_credentials;
 mod sync_buffer;
 mod sync_serde;
@@ -48,7 +48,7 @@ pub(crate) fn get_active_records_on_site_filter(
 
 #[derive(Error, Debug)]
 pub(crate) enum GetActiveStoresOnSiteError {
-    #[error("Database error while getting active store on site {0:?}")]
+    #[error("Database error while getting active store on site")]
     DatabaseError(RepositoryError),
     #[error("Site id is not set in database")]
     SiteIdNotSet,

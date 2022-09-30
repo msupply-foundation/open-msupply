@@ -10,15 +10,15 @@ use repository::{
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub(crate) enum CentralSyncError {
-    #[error("Api error while pulling central records: {0}")]
-    PullError(SyncApiError),
-    #[error("Failed to save sync buffer or cursor {0:?}")]
-    SaveSyncBufferOrCursorsError(RepositoryError),
-    #[error("{0}")]
-    ParsingV5RecordError(ParsingV5RecordError),
-    #[error("{0}")]
-    SyncLoggerError(SyncLoggerError),
+pub(crate) enum CentralPullError {
+    #[error(transparent)]
+    SyncApiError(#[from] SyncApiError),
+    #[error("Failed to save sync buffer or cursor")]
+    SaveSyncBufferOrCursorsError(#[from] RepositoryError),
+    #[error(transparent)]
+    ParsingV5RecordError(#[from] ParsingV5RecordError),
+    #[error(transparent)]
+    SyncLoggerError(#[from] SyncLoggerError),
 }
 
 pub(crate) struct CentralDataSynchroniser {
@@ -31,9 +31,7 @@ impl CentralDataSynchroniser {
         connection: &StorageConnection,
         batch_size: u32,
         logger: &mut SyncLogger<'a>,
-    ) -> Result<(), CentralSyncError> {
-        use CentralSyncError::*;
-
+    ) -> Result<(), CentralPullError> {
         // TODO protection fron infinite loop
         loop {
             let mut cursor = CentralSyncPullCursor::new(&connection)
@@ -43,36 +41,25 @@ impl CentralDataSynchroniser {
             let CentralSyncBatchV5 { max_cursor, data } = self
                 .sync_api_v5
                 .get_central_records(cursor, batch_size)
-                .await
-                .map_err(PullError)?;
+                .await?;
             let batch_length = data.len();
 
-            logger
-                .progress(SyncStepProgress::PullCentral, max_cursor - cursor)
-                .map_err(SyncLoggerError)?;
+            logger.progress(SyncStepProgress::PullCentral, max_cursor - cursor)?;
 
             for sync_record in data {
                 cursor = sync_record.cursor.clone();
-                let buffer_row = sync_record
-                    .record
-                    .to_buffer_row()
-                    .map_err(ParsingV5RecordError)?;
+                let buffer_row = sync_record.record.to_buffer_row()?;
 
-                insert_one_and_update_cursor(connection, &buffer_row, cursor)
-                    .map_err(SaveSyncBufferOrCursorsError)?;
+                insert_one_and_update_cursor(connection, &buffer_row, cursor)?;
             }
 
-            logger
-                .progress(SyncStepProgress::PullCentral, max_cursor - cursor)
-                .map_err(SyncLoggerError)?;
+            logger.progress(SyncStepProgress::PullCentral, max_cursor - cursor)?;
 
             match (batch_length, cursor < max_cursor) {
                 (0, false) => break,
                 // It's possible for batch_length in response to be zero even though we haven't reached max_cursor
                 // in this case we should increment cursor manually
-                (0, true) => CentralSyncPullCursor::new(connection)
-                    .update_cursor(cursor + 1)
-                    .map_err(SaveSyncBufferOrCursorsError)?,
+                (0, true) => CentralSyncPullCursor::new(connection).update_cursor(cursor + 1)?,
                 _ => continue,
             }
         }
