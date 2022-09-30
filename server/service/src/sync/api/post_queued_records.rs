@@ -15,16 +15,17 @@ impl SyncApiV5 {
         queue_length: u64,
         records: Vec<RemoteSyncRecordV5>,
     ) -> Result<RemotePushResponseV5, SyncApiError> {
+        let route = "/sync/v5/queued_records";
         let body = RemoteSyncBatchV5 {
             queue_length,
             data: records,
         };
 
-        let response = self.do_post("/sync/v5/queued_records", &body).await?;
+        let response = self.do_post(route, &body).await?;
 
         to_json(response)
             .await
-            .map_err(SyncApiError::ResponseParsingError)
+            .map_err(|error| self.api_error(route, error.into()))
     }
 }
 

@@ -10,8 +10,8 @@ mod post_initialise;
 mod post_queued_records;
 
 pub(crate) use self::common_records::*;
-pub(crate) use self::core::*;
-pub(crate) use self::error::*;
+pub use self::core::*;
+pub use self::error::*;
 pub(crate) use get_central_records::*;
 pub(crate) use get_site_info::*;
 pub(crate) use get_site_status::*;

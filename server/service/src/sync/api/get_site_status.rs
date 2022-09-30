@@ -20,11 +20,12 @@ pub(crate) enum SiteStatusCodeV5 {
 impl SyncApiV5 {
     // Get site status
     pub(crate) async fn get_site_status(&self) -> Result<SiteStatusV5, SyncApiError> {
-        let response = self.do_get_no_query("/sync/v5/site_status").await?;
+        let route = "/sync/v5/site_status";
+        let response = self.do_get_no_query(route).await?;
 
         to_json(response)
             .await
-            .map_err(SyncApiError::ResponseParsingError)
+            .map_err(|error| self.api_error(route, error.into()))
     }
 }
 

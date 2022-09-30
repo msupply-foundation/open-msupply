@@ -12,11 +12,12 @@ pub struct SiteInfoV5 {
 impl SyncApiV5 {
     // Get site status
     pub(crate) async fn get_site_info(&self) -> Result<SiteInfoV5, SyncApiError> {
-        let response = self.do_get_no_query("/sync/v5/site").await?;
+        let route = "/sync/v5/site";
+        let response = self.do_get_no_query(route).await?;
 
         to_json(response)
             .await
-            .map_err(SyncApiError::ResponseParsingError)
+            .map_err(|error| self.api_error(route, error.into()))
     }
 }
 
