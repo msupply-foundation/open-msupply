@@ -1,21 +1,20 @@
 import { useEffect, useState } from 'react';
 import { AppRoute } from '@openmsupply-client/config';
 import {
-  AuthenticationError,
-  LocaleKey,
-  initialisationStatusType,
-  TypedTFunction,
   useNavigate,
   useTranslation,
+  ErrorWithDetailsProps,
+  InitialisationStatusType,
 } from '@openmsupply-client/common';
 import { useHost } from '../../api/hooks';
+import { mapSyncError } from '../../api/api';
 
 const STATUS_POLLING_INTERVAL = 500;
 const DEFAULT_SYNC_INTERVAL_IN_SECONDS = 300;
 
 interface InitialiseForm {
   // Error on validation of sync credentials, there is another error for sync progress
-  siteCredentialsError?: AuthenticationError;
+  siteCredentialsError: ErrorWithDetailsProps | null;
   // true:
   // * on start of initialisation
   // * on start of retry
@@ -42,7 +41,7 @@ interface InitialiseForm {
 
 const useInitialiseFormState = () => {
   const [state, set] = useState<InitialiseForm>({
-    siteCredentialsError: undefined,
+    siteCredentialsError: null,
     isLoading: false,
     isInitialising: true,
     password: '',
@@ -53,8 +52,9 @@ const useInitialiseFormState = () => {
 
   return {
     ...state,
-    setSiteCredentialsError: (siteCredentialsError?: AuthenticationError) =>
-      set(state => ({ ...state, siteCredentialsError })),
+    setSiteCredentialsError: (
+      siteCredentialsError: InitialiseForm['siteCredentialsError']
+    ) => set(state => ({ ...state, siteCredentialsError })),
     setIsLoading: (isLoading: boolean) =>
       set(state => ({ ...state, isLoading })),
     setPassword: (password: string) => set(state => ({ ...state, password })),
@@ -100,27 +100,32 @@ export const useInitialiseForm = () => {
   const { data: syncSettings } = useHost.utils.syncSettings();
 
   const onInitialise = async () => {
-    setSiteCredentialsError();
+    setSiteCredentialsError(null);
     setIsLoading(true);
-    const syncSettings = {
-      intervalSeconds: DEFAULT_SYNC_INTERVAL_IN_SECONDS,
-      password,
-      url,
-      username,
-    };
     try {
-      await initialise(syncSettings);
-      setIsInitialising(true);
+      const response = await initialise({
+        intervalSeconds: DEFAULT_SYNC_INTERVAL_IN_SECONDS,
+        password,
+        url,
+        username,
+      });
+      // Map structured error
+      if (response.__typename === 'SetSyncSettingErrorNode') {
+        setSiteCredentialsError(
+          mapSyncError(t, response.error, 'error.unable-to-initialise')
+        );
+        return setIsLoading(false);
+      }
     } catch (e) {
+      // Set standard error
       setSiteCredentialsError({
-        message: parseSyncErrorMessage(
-          (e as Error)?.message,
-          'error.unable_to_save_settings',
-          t
-        ),
+        error: t('error.unable-to-initialise'),
+        details: (e as Error)?.message || '',
       });
       return setIsLoading(false);
     }
+
+    setIsInitialising(true);
   };
 
   const onRetry = async () => {
@@ -132,11 +137,11 @@ export const useInitialiseForm = () => {
     if (!initStatus) return;
 
     switch (initStatus) {
-      case initialisationStatusType.Initialised:
+      case InitialisationStatusType.Initialised:
         return navigate(`/${AppRoute.Login}`, { replace: true });
-      case initialisationStatusType.Initialising:
+      case InitialisationStatusType.Initialising:
         return setIsInitialising(true);
-      case initialisationStatusType.PreInitialisation:
+      case InitialisationStatusType.PreInitialisation:
         return setIsInitialising(false);
     }
   }, [initStatus]);
@@ -151,9 +156,8 @@ export const useInitialiseForm = () => {
     // If page is loaded or reloaded when isInitialising
     // url and username should be set from api result
     if (
-      initStatus === initialisationStatusType.Initialising &&
-      syncSettings?.username &&
-      syncSettings?.url
+      initStatus === InitialisationStatusType.Initialising &&
+      !!syncSettings
     ) {
       setUsername(syncSettings.username);
       setUrl(syncSettings.url);
@@ -167,18 +171,4 @@ export const useInitialiseForm = () => {
     ...state,
     syncStatus,
   };
-};
-
-const parseSyncErrorMessage = (
-  message: string,
-  defaultKey: LocaleKey,
-  t: TypedTFunction<LocaleKey>
-) => {
-  const matches = /code: "([a-zA-Z_]+?)"/g.exec(message);
-  const key =
-    matches && matches.length > 1
-      ? (`error.${matches[1]}` as LocaleKey)
-      : defaultKey;
-
-  return t(key);
 };
