@@ -165,16 +165,5 @@ fn generate_inbound_shipment(
         verified_datetime: None,
     };
 
-    // system_log_entry(
-    //     connection,
-    //     match outbound_shipment_row.status.clone() {
-    //         InvoiceRowStatus::Picked => LogType::InvoiceStatusPicked,
-    //         InvoiceRowStatus::Shipped => LogType::InvoiceStatusShipped,
-    //         _ => LogType::InvoiceCreated,
-    //     },
-    //     Some(outbound_shipment_row.store_id.clone()),
-    //     Some(outbound_shipment_row.id.clone()),
-    // )?;
-
     Ok(result)
 }
