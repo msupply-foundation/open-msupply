@@ -92,9 +92,6 @@ fn generate_response_requisition(
     let requisition_number =
         next_number(connection, &NumberRowType::ResponseRequisition, &store_id)?;
 
-    let requisition_number_string =
-        ["Requisition number", &requisition_number.to_string()].join(": ");
-
     let result = RequisitionRow {
         id: uuid(),
         requisition_number,
@@ -106,13 +103,11 @@ fn generate_response_requisition(
         their_reference: request_requisition_row.their_reference.clone(),
         max_months_of_stock: request_requisition_row.max_months_of_stock.clone(),
         min_months_of_stock: request_requisition_row.min_months_of_stock.clone(),
-        comment: Some(
-            [
-                requisition_number_string,
-                request_requisition_row.comment.clone().unwrap(),
-            ]
-            .join(". "),
-        ),
+        comment: Some(format!(
+            "Requisition number: {}. {}",
+            requisition_number.to_string(),
+            request_requisition_row.comment.clone().unwrap_or_default()
+        )),
         // 5.
         linked_requisition_id: Some(request_requisition_row.id.clone()),
         expected_delivery_date: request_requisition_row.expected_delivery_date,
