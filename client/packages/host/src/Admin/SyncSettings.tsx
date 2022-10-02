@@ -166,7 +166,6 @@ const useUpdateSyncSettingsState = () => {
 };
 
 export const SyncSettings = ({}) => {
-  // TODO update when useTranslation works with array or when namespace is not specified
   const t = useTranslation('app');
   const { data, isError } = useHost.utils.syncSettings();
   const { mutateAsync: update } = useHost.sync.update();
