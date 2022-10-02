@@ -3,7 +3,7 @@ use std::env;
 
 use crate::sync::{
     api::{to_json, SyncApiError, SyncApiV5},
-    settings::{BatchSize, SyncSettings},
+    settings::SyncSettings,
     sync_api_credentials::SyncCredentials,
 };
 

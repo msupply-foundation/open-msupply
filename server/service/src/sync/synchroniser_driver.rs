@@ -73,7 +73,7 @@ impl SynchroniserDriver {
         }
     }
 
-    async fn sync(&self, service_provider: Arc<ServiceProvider>) {
+    pub async fn sync(&self, service_provider: Arc<ServiceProvider>) {
         // Error is already logged, keeping result with `_` to avoid compilation warning
         // We initialise new instance of Syncrhoniser since SyncSettings could have changed
         let _ = Synchroniser::new(get_sync_settings(&service_provider), service_provider)
