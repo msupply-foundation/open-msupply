@@ -84,6 +84,12 @@ pub async fn update_server_settings(
         }
     };
 
+    if stage0 {
+        service_provider
+            .general_service
+            .create_system_user(&service_provider)?
+    }
+
     Ok(UpdateServerSettingsResponse::Response(
         ServerSettingsNode::from_domain(Some(sync_settings), stage0),
     ))
