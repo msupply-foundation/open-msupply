@@ -1,9 +1,9 @@
 use repository::{
-    InvoiceLineRowRepository, InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType,
+    InvoiceLineRowRepository, InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType, LogType,
     RepositoryError, StorageConnection,
 };
 
-use crate::invoice::common::get_lines_for_invoice;
+use crate::{invoice::common::get_lines_for_invoice, log::system_log_entry};
 
 use super::{Operation, ShipmentTransferProcessor, ShipmentTransferProcessorRecord};
 
@@ -68,6 +68,18 @@ impl ShipmentTransferProcessor for DeleteInboundShipmentProcessor {
         }
         // 6.
         InvoiceRowRepository::new(connection).delete(deleted_inbound_shipment_id)?;
+
+        let store_id = match linked_shipment {
+            Some(invoice) => invoice.invoice_row.store_id.clone(),
+            None => "".to_string(),
+        };
+
+        system_log_entry(
+            connection,
+            LogType::InvoiceDeleted,
+            Some(store_id),
+            Some(deleted_inbound_shipment_id.clone()),
+        )?;
 
         let result = format!(
             "shipment ({}) lines ({:?})",
