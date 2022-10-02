@@ -17,7 +17,10 @@ use service::{
     login::{LoginInput, LoginService},
     service_provider::ServiceProvider,
     settings::Settings,
-    sync::{settings::SyncSettings, synchroniser::integrate_and_translate_sync_buffer},
+    sync::{
+        settings::SyncSettings, synchroniser::integrate_and_translate_sync_buffer,
+        synchroniser_driver::SynchroniserDriver,
+    },
     token_bucket::TokenBucket,
 };
 use std::{
@@ -104,13 +107,9 @@ async fn initialise_from_central(settings: Settings, users: &str) -> StorageConn
         debug_no_access_control: false,
     };
 
-    // TODO fix (without exposing synchroniser sync as pub )
     info!("Initialising from central");
-    // Synchroniser::new(sync_settings, service_provider.clone())
-    //     .unwrap()
-    //     .sync()
-    //     .await
-    //     .unwrap();
+    let (_, sync_driver) = SynchroniserDriver::init();
+    sync_driver.sync(service_provider.clone()).await;
 
     info!("Syncing users");
     for user in users.split(",") {
