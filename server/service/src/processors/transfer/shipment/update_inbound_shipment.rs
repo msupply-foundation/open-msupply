@@ -1,9 +1,9 @@
 use repository::{
     InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType,
-    RepositoryError, StorageConnection,
+    LogType, RepositoryError, StorageConnection,
 };
 
-use crate::invoice::common::get_lines_for_invoice;
+use crate::{invoice::common::get_lines_for_invoice, log::system_log_entry};
 
 use super::{
     common::generate_inbound_shipment_lines, Operation, ShipmentTransferProcessor,
@@ -87,6 +87,17 @@ impl ShipmentTransferProcessor for UpdateInboundShipmentProcessor {
         };
 
         InvoiceRowRepository::new(connection).upsert_one(&updated_inbound_shipment)?;
+
+        system_log_entry(
+            connection,
+            match inbound_shipment.invoice_row.status.clone() {
+                InvoiceRowStatus::Delivered => LogType::InvoiceStatusDelivered,
+                InvoiceRowStatus::Verified => LogType::InvoiceStatusVerified,
+                _ => LogType::InvoiceCreated,
+            },
+            Some(outbound_shipment.invoice_row.store_id.clone()),
+            Some(inbound_shipment.invoice_row.id.clone()),
+        )?;
 
         let result = format!(
             "shipment ({}) deleted lines ({:?}) inserted lines ({:?})",

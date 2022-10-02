@@ -78,6 +78,15 @@ impl ShipmentTransferProcessor for CreateInboundShipmentProcessor {
 
         InvoiceRowRepository::new(connection).upsert_one(&new_inbound_shipment)?;
 
+        if outbound_shipment.invoice_row.status.clone() == InvoiceRowStatus::Picked {
+            system_log_entry(
+                connection,
+                LogType::InvoiceCreated,
+                Some(outbound_shipment.invoice_row.store_id.clone()),
+                Some(new_inbound_shipment.id.clone()),
+            )?;
+        }
+
         system_log_entry(
             connection,
             match outbound_shipment.invoice_row.status.clone() {
