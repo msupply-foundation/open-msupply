@@ -197,6 +197,10 @@ async fn run_server(
             .request_and_set_site_info(&service_provider, config_settings.sync.as_ref().unwrap())
             .await
             .unwrap();
+        service_provider
+            .general_service
+            .create_system_user(&service_provider)
+            .unwrap();
     }
 
     // Final settings:

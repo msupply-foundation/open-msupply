@@ -4,10 +4,10 @@ use repository::{
     StorageConnectionManager,
 };
 use repository::{PaginationOption, RepositoryError};
+use util::constants::SYSTEM_USER_ID;
 use util::uuid::uuid;
 
 use crate::service_provider::ServiceContext;
-use crate::system_user::system_user;
 
 use super::{get_default_pagination, i64_to_u32, ListError, ListResult};
 
@@ -62,16 +62,14 @@ pub fn system_log_entry(
     store_id: Option<String>,
     record_id: Option<String>,
 ) -> Result<(), RepositoryError> {
-    let user = system_user(connection)?;
-
     let log = &LogRow {
         id: uuid(),
         r#type: log_type,
-        user_id: Some(user.id),
+        user_id: Some(SYSTEM_USER_ID.to_string()),
         store_id,
         record_id,
         datetime: Utc::now().naive_utc(),
     };
 
-    Ok(LogRowRepository::new(connection).insert_one(log)?)
+    Ok(LogRowRepository::new(&connection).insert_one(log)?)
 }

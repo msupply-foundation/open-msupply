@@ -1,20 +1,23 @@
-use repository::{RepositoryError, StorageConnection, UserAccountRow, UserAccountRowRepository};
-use util::uuid::uuid;
+use repository::{RepositoryError, UserAccountRow, UserAccountRowRepository};
+use util::constants::SYSTEM_USER_ID;
 
-pub fn system_user(connection: &StorageConnection) -> Result<UserAccountRow, RepositoryError> {
+use crate::service_provider::ServiceProvider;
+
+pub fn create_system_user(service_provider: &ServiceProvider) -> Result<(), RepositoryError> {
     let system_user = UserAccountRow {
-        id: uuid(),
-        username: "System".to_string(),
+        id: SYSTEM_USER_ID.to_string(),
+        username: SYSTEM_USER_ID.to_string(),
         hashed_password: "".to_string(),
         email: None,
     };
 
-    let user_repository = UserAccountRowRepository::new(connection);
-    match user_repository.find_one_by_user_name(&system_user.username)? {
-        Some(user) => Ok(user),
+    let connection = service_provider.connection()?;
+    let user_repository = UserAccountRowRepository::new(&connection);
+    match user_repository.find_one_by_id(&system_user.id)? {
+        Some(_) => Ok(()),
         None => {
             user_repository.insert_one(&system_user)?;
-            Ok(system_user)
+            Ok(())
         }
     }
 }

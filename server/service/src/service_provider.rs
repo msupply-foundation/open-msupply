@@ -28,6 +28,7 @@ use crate::{
         site_info::{SiteInfoService, SiteInfoTrait},
         sync_status::{SiteInfoQueriesService, SiteInfoQueriesTrait},
     },
+    system_user::create_system_user,
     ListError, ListResult,
 };
 
@@ -127,8 +128,8 @@ impl ServiceProvider {
         Ok(ServiceContext {
             connection: self.connection()?,
             processors_trigger: self.processors_trigger.clone(),
-            user_id: user_id,
-            store_id: store_id,
+            user_id,
+            store_id,
         })
     }
 
@@ -178,6 +179,13 @@ pub trait GeneralServiceTrait: Sync + Send {
         filter: StoreFilter,
     ) -> Result<Option<Store>, RepositoryError> {
         get_store(ctx, filter)
+    }
+
+    fn create_system_user(
+        &self,
+        service_provider: &ServiceProvider,
+    ) -> Result<(), RepositoryError> {
+        create_system_user(service_provider)
     }
 }
 
