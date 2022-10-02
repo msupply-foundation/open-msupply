@@ -406,11 +406,11 @@ mod test {
                          "nodes": [
                             {
                               "id": "mock_new_response_requisition_test1",
-                              "remainingQuantityToSupply": 44
+                              "remainingQuantityToSupply": 44.0
                             },
                             {
                               "id": "mock_new_response_requisition_test2",
-                              "remainingQuantityToSupply": 100
+                              "remainingQuantityToSupply": 100.0
                             }
                           ]
                     }

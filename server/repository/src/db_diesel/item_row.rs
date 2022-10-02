@@ -36,7 +36,7 @@ pub enum ItemRowType {
     NonStock,
 }
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset)]
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq)]
 #[table_name = "item"]
 pub struct ItemRow {
     pub id: String,
