@@ -119,17 +119,23 @@ fn generate_inbound_shipment(
         .as_ref()
         .map(|r| r.requisition_row.id.clone());
 
-    let formatted_comment = [
-        outbound_shipment_row
-            .comment
-            .clone()
-            .unwrap_or("".to_string()),
-        outbound_shipment_row
+    let reference_string = [
+        "Reference",
+        &outbound_shipment_row
             .their_reference
             .clone()
             .unwrap_or("".to_string()),
     ]
-    .join(", ");
+    .join(": ");
+
+    let formatted_comment = [
+        reference_string,
+        outbound_shipment_row
+            .comment
+            .clone()
+            .unwrap_or("".to_string()),
+    ]
+    .join(". ");
 
     let result = InvoiceRow {
         id: uuid(),
