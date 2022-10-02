@@ -67,7 +67,7 @@ fn generate_line(
         sell_price_per_pack,
         cost_price_per_pack,
         r#type: InvoiceLineRowType::StockIn,
-        number_of_packs: u32_to_i32(number_of_packs),
+        number_of_packs,
         item_name,
         item_code,
         stock_line_id: None,

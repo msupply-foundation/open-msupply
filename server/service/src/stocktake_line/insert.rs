@@ -24,7 +24,7 @@ pub struct InsertStocktakeLine {
     pub stock_line_id: Option<String>,
     pub location_id: Option<String>,
     pub comment: Option<String>,
-    pub counted_number_of_packs: Option<u32>,
+    pub counted_number_of_packs: Option<f64>,
 
     pub item_id: Option<String>,
     pub batch: Option<String>,
@@ -189,7 +189,7 @@ fn generate(
     let snapshot_number_of_packs = if let Some(stock_line) = stock_line {
         stock_line.stock_line_row.total_number_of_packs
     } else {
-        0
+        0.0
     };
     StocktakeLineRow {
         id,
@@ -198,7 +198,7 @@ fn generate(
         location_id,
         comment,
         snapshot_number_of_packs,
-        counted_number_of_packs: counted_number_of_packs.map(u32_to_i32),
+        counted_number_of_packs,
         item_id: item_id.to_string(),
         batch,
         expiry_date,
@@ -272,7 +272,7 @@ mod stocktake_line_test {
                     r.id = uuid();
                     r.stocktake_id = "invalid".to_string();
                     r.stock_line_id = Some(stock_line_a.id);
-                    r.counted_number_of_packs = Some(17);
+                    r.counted_number_of_packs = Some(17.0);
                 }),
             )
             .unwrap_err();
@@ -289,7 +289,7 @@ mod stocktake_line_test {
                     r.id = uuid();
                     r.stocktake_id = stocktake_a.id;
                     r.stock_line_id = Some(stock_line_a.id);
-                    r.counted_number_of_packs = Some(17);
+                    r.counted_number_of_packs = Some(17.0);
                 }),
             )
             .unwrap_err();
@@ -306,7 +306,7 @@ mod stocktake_line_test {
                     r.id = uuid();
                     r.stocktake_id = stocktake_a.id;
                     r.stock_line_id = Some(stock_line_a.id);
-                    r.counted_number_of_packs = Some(17);
+                    r.counted_number_of_packs = Some(17.0);
                 }),
             )
             .unwrap_err();
@@ -326,7 +326,7 @@ mod stocktake_line_test {
                     r.stocktake_id = stocktake_a.id;
                     r.stock_line_id = Some(stock_line.id);
                     r.location_id = Some("invalid".to_string());
-                    r.counted_number_of_packs = Some(17);
+                    r.counted_number_of_packs = Some(17.0);
                 }),
             )
             .unwrap_err();
@@ -343,7 +343,7 @@ mod stocktake_line_test {
                     r.id = stocktake_line_a.id;
                     r.stocktake_id = stocktake_a.id;
                     r.stock_line_id = Some(stock_line.id);
-                    r.counted_number_of_packs = Some(17);
+                    r.counted_number_of_packs = Some(17.0);
                 }),
             )
             .unwrap_err();
@@ -373,7 +373,7 @@ mod stocktake_line_test {
                     r.id = uuid();
                     r.stocktake_id = stocktake_finalised.id;
                     r.stock_line_id = Some(stock_line.id);
-                    r.counted_number_of_packs = Some(17);
+                    r.counted_number_of_packs = Some(17.0);
                 }),
             )
             .unwrap_err();
@@ -389,7 +389,7 @@ mod stocktake_line_test {
                     r.id = uuid();
                     r.stocktake_id = stocktake_a.id;
                     r.stock_line_id = Some(stock_line.id);
-                    r.counted_number_of_packs = Some(17);
+                    r.counted_number_of_packs = Some(17.0);
                 }),
             )
             .unwrap();
@@ -403,7 +403,7 @@ mod stocktake_line_test {
                 inline_init(|r: &mut InsertStocktakeLine| {
                     r.id = uuid();
                     r.stocktake_id = stocktake_a.id;
-                    r.counted_number_of_packs = Some(17);
+                    r.counted_number_of_packs = Some(17.0);
                     r.item_id = Some(item_a.id);
                 }),
             )

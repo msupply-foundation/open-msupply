@@ -205,8 +205,8 @@ impl ShipmentTransferTester {
             r.batch = Some(uuid());
             r.expiry_date = Some(NaiveDate::from_ymd(2025, 3, 1));
             r.pack_size = 10;
-            r.total_number_of_packs = 200;
-            r.available_number_of_packs = 200;
+            r.total_number_of_packs = 200.0;
+            r.available_number_of_packs = 200.0;
         });
 
         let outbound_shipment_line1 = inline_init(|r: &mut InvoiceLineRow| {
@@ -214,7 +214,7 @@ impl ShipmentTransferTester {
             r.invoice_id = outbound_shipment.id.clone();
             r.r#type = InvoiceLineRowType::StockOut;
             r.pack_size = stock_line1.pack_size;
-            r.number_of_packs = 2;
+            r.number_of_packs = 2.0;
             r.item_id = item1.id.clone();
             r.item_name = item1.name.clone();
             r.item_code = item1.code.clone();
@@ -233,8 +233,8 @@ impl ShipmentTransferTester {
             r.item_id = item2.id.clone();
             r.batch = Some(uuid());
             r.pack_size = 10;
-            r.total_number_of_packs = 200;
-            r.available_number_of_packs = 200;
+            r.total_number_of_packs = 200.0;
+            r.available_number_of_packs = 200.0;
             r.expiry_date = Some(NaiveDate::from_ymd(2023, 1, 5));
         });
 
@@ -243,7 +243,7 @@ impl ShipmentTransferTester {
             r.invoice_id = outbound_shipment.id.clone();
             r.r#type = InvoiceLineRowType::StockOut;
             r.pack_size = stock_line2.pack_size;
-            r.number_of_packs = 6;
+            r.number_of_packs = 6.0;
             r.item_id = item2.id.clone();
             r.item_name = item2.name.clone();
             r.item_code = item2.code.clone();
@@ -474,7 +474,7 @@ impl ShipmentTransferTester {
                 &ctx,
                 inline_init(|r: &mut UpdateOutboundShipmentLine| {
                     r.id = self.outbound_shipment_line2.id.clone();
-                    r.number_of_packs = Some(21)
+                    r.number_of_packs = Some(21.0)
                 }),
             )
             .unwrap()
