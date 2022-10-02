@@ -78,6 +78,17 @@ impl ShipmentTransferProcessor for CreateInboundShipmentProcessor {
 
         InvoiceRowRepository::new(connection).upsert_one(&new_inbound_shipment)?;
 
+        system_log_entry(
+            connection,
+            match outbound_shipment.invoice_row.status.clone() {
+                InvoiceRowStatus::Picked => LogType::InvoiceStatusPicked,
+                InvoiceRowStatus::Shipped => LogType::InvoiceStatusShipped,
+                _ => LogType::InvoiceCreated,
+            },
+            Some(new_inbound_shipment.store_id.clone()),
+            Some(new_inbound_shipment.id.clone()),
+        )?;
+
         let invoice_line_repository = InvoiceLineRowRepository::new(connection);
 
         for line in new_inbound_lines.iter() {
@@ -145,16 +156,16 @@ fn generate_inbound_shipment(
         verified_datetime: None,
     };
 
-    system_log_entry(
-        connection,
-        match result.status.clone() {
-            InvoiceRowStatus::Picked => LogType::InvoiceStatusPicked,
-            InvoiceRowStatus::Shipped => LogType::InvoiceStatusShipped,
-            _ => LogType::InvoiceCreated,
-        },
-        Some(result.store_id.clone()),
-        Some(result.id.clone()),
-    )?;
+    // system_log_entry(
+    //     connection,
+    //     match outbound_shipment_row.status.clone() {
+    //         InvoiceRowStatus::Picked => LogType::InvoiceStatusPicked,
+    //         InvoiceRowStatus::Shipped => LogType::InvoiceStatusShipped,
+    //         _ => LogType::InvoiceCreated,
+    //     },
+    //     Some(outbound_shipment_row.store_id.clone()),
+    //     Some(outbound_shipment_row.id.clone()),
+    // )?;
 
     Ok(result)
 }

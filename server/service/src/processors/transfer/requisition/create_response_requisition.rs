@@ -64,6 +64,13 @@ impl RequisitionTransferProcessor for CreateResponseRequisitionProcessor {
 
         RequisitionRowRepository::new(connection).upsert_one(&new_response_requisition)?;
 
+        system_log_entry(
+            connection,
+            LogType::RequisitionCreated,
+            Some(new_response_requisition.store_id.clone()),
+            Some(new_response_requisition.id.clone()),
+        )?;
+
         let requisition_line_row_repository = RequisitionLineRowRepository::new(connection);
 
         for line in new_requisition_lines.iter() {
@@ -115,16 +122,6 @@ fn generate_response_requisition(
         colour: None,
         comment: None,
     };
-
-    system_log_entry(
-        connection,
-        match result.status.clone() {
-            RequisitionRowStatus::New => LogType::RequisitionCreated,
-            _ => LogType::RequisitionCreated,
-        },
-        Some(result.store_id.clone()),
-        Some(result.id.clone()),
-    )?;
 
     Ok(result)
 }

@@ -70,10 +70,7 @@ impl RequisitionTransferProcessor for UpdateRequestRequstionStatusProcessor {
 
         system_log_entry(
             connection,
-            match updated_request_requisition.status.clone() {
-                RequisitionRowStatus::Finalised => LogType::RequisitionStatusFinalised,
-                _ => LogType::RequisitionCreated,
-            },
+            LogType::RequisitionStatusFinalised,
             Some(request_requisition.requisition_row.store_id.clone()),
             Some(request_requisition.requisition_row.id.clone()),
         )?;
