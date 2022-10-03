@@ -95,7 +95,7 @@ impl SyncApiErrorVariant {
 
         use ParsingResponseError::*;
         match error {
-            CannotGetTextReponse(source) => {
+            CannotGetTextResponse(source) => {
                 SyncApiErrorVariant::ErrorParsingError { status, source }
             }
             ParseError {

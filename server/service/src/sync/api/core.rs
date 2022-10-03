@@ -145,7 +145,7 @@ impl SyncApiV5 {
 #[derive(Error, Debug)]
 pub enum ParsingResponseError {
     #[error("Cannot retreive response body")]
-    CannotGetTextReponse(#[from] reqwest::Error),
+    CannotGetTextResponse(#[from] reqwest::Error),
     #[error("Could not parse response body, response: '{response_text}'")]
     ParseError {
         source: serde_json::Error,
