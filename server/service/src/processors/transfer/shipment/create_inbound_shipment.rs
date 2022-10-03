@@ -119,6 +119,20 @@ fn generate_inbound_shipment(
         .as_ref()
         .map(|r| r.requisition_row.id.clone());
 
+    let formatted_ref = format!(
+        "From invoice number: {} ({})",
+        outbound_shipment_row.invoice_number,
+        outbound_shipment_row
+            .their_reference
+            .clone()
+            .unwrap_or_default()
+    );
+
+    let formatted_comment = format!(
+        "Stock transfer ({})",
+        outbound_shipment_row.comment.clone().unwrap_or_default()
+    );
+
     let result = InvoiceRow {
         id: uuid(),
         invoice_number: next_number(connection, &NumberRowType::InboundShipment, &store_id)?,
@@ -128,17 +142,17 @@ fn generate_inbound_shipment(
         status,
         requisition_id: request_requisition_id,
         name_store_id: Some(outbound_shipment_row.store_id.clone()),
-        their_reference: outbound_shipment_row.their_reference.clone(),
+        their_reference: Some(formatted_ref),
         // 5.
         linked_invoice_id: Some(outbound_shipment_row.id.clone()),
         created_datetime: Utc::now().naive_utc(),
         picked_datetime: outbound_shipment_row.picked_datetime,
         shipped_datetime: outbound_shipment_row.shipped_datetime,
         transport_reference: outbound_shipment_row.transport_reference.clone(),
+        comment: Some(formatted_comment),
         // Default
         colour: None,
         user_id: None,
-        comment: None,
         on_hold: false,
         allocated_datetime: None,
         delivered_datetime: None,
