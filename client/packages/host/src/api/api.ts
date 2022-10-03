@@ -20,7 +20,10 @@ export const getHostQueries = (sdk: Sdk) => ({
     },
     syncStatus: async () => {
       const result = await sdk.syncStatus();
-      return result?.latestSyncStatus;
+      return result?.syncStatus;
+    },
+    syncInfo: async () => {
+      return await sdk.syncInfo();
     },
   },
   // manaulSync is a trigger that returns a string result (don't need to caputre it)

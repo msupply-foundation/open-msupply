@@ -40,10 +40,17 @@ export type SyncStatusFragment = { __typename: 'SyncStatusNode', finished?: any 
 
 export type SyncStatusWithProgressFragment = { __typename: 'SyncStatusWithProgressNode', finished?: any | null, started: any, doneProgress?: number | null, totalProgress?: number | null };
 
+export type FullSyncStatusFragment = { __typename: 'FullSyncStatusNode', isSyncing: boolean, error?: { __typename: 'MappedSyncError', errorVariant: Types.SyncErrorVariant, description: string, fullError: string } | { __typename: 'UnknownSyncError', description: string, fullError: string } | null, integration?: { __typename: 'SyncStatusNode', finished?: any | null, started: any } | null, prepareInitial?: { __typename: 'SyncStatusNode', finished?: any | null, started: any } | null, pullCentral?: { __typename: 'SyncStatusWithProgressNode', finished?: any | null, started: any, doneProgress?: number | null, totalProgress?: number | null } | null, pullRemote?: { __typename: 'SyncStatusWithProgressNode', finished?: any | null, started: any, doneProgress?: number | null, totalProgress?: number | null } | null, push?: { __typename: 'SyncStatusWithProgressNode', finished?: any | null, started: any, doneProgress?: number | null, totalProgress?: number | null } | null, summary: { __typename: 'SyncStatusNode', finished?: any | null, started: any } };
+
+export type SyncInfoQueryVariables = Types.Exact<{ [key: string]: never; }>;
+
+
+export type SyncInfoQuery = { __typename: 'Queries', numberOfRecordsInPushQueue: number, syncStatus?: { __typename: 'FullSyncStatusNode', isSyncing: boolean, error?: { __typename: 'MappedSyncError', errorVariant: Types.SyncErrorVariant, description: string, fullError: string } | { __typename: 'UnknownSyncError', description: string, fullError: string } | null, integration?: { __typename: 'SyncStatusNode', finished?: any | null, started: any } | null, prepareInitial?: { __typename: 'SyncStatusNode', finished?: any | null, started: any } | null, pullCentral?: { __typename: 'SyncStatusWithProgressNode', finished?: any | null, started: any, doneProgress?: number | null, totalProgress?: number | null } | null, pullRemote?: { __typename: 'SyncStatusWithProgressNode', finished?: any | null, started: any, doneProgress?: number | null, totalProgress?: number | null } | null, push?: { __typename: 'SyncStatusWithProgressNode', finished?: any | null, started: any, doneProgress?: number | null, totalProgress?: number | null } | null, summary: { __typename: 'SyncStatusNode', finished?: any | null, started: any } } | null };
+
 export type SyncStatusQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
 
-export type SyncStatusQuery = { __typename: 'Queries', latestSyncStatus?: { __typename: 'FullSyncStatusNode', isSyncing: boolean, error?: { __typename: 'MappedSyncError', errorVariant: Types.SyncErrorVariant, description: string, fullError: string } | { __typename: 'UnknownSyncError', description: string, fullError: string } | null, integration?: { __typename: 'SyncStatusNode', finished?: any | null, started: any } | null, prepareInitial?: { __typename: 'SyncStatusNode', finished?: any | null, started: any } | null, pullCentral?: { __typename: 'SyncStatusWithProgressNode', finished?: any | null, started: any, doneProgress?: number | null, totalProgress?: number | null } | null, pullRemote?: { __typename: 'SyncStatusWithProgressNode', finished?: any | null, started: any, doneProgress?: number | null, totalProgress?: number | null } | null, push?: { __typename: 'SyncStatusWithProgressNode', finished?: any | null, started: any, doneProgress?: number | null, totalProgress?: number | null } | null, summary: { __typename: 'SyncStatusNode', finished?: any | null, started: any } } | null };
+export type SyncStatusQuery = { __typename: 'Queries', syncStatus?: { __typename: 'FullSyncStatusNode', isSyncing: boolean, error?: { __typename: 'MappedSyncError', errorVariant: Types.SyncErrorVariant, description: string, fullError: string } | { __typename: 'UnknownSyncError', description: string, fullError: string } | null, integration?: { __typename: 'SyncStatusNode', finished?: any | null, started: any } | null, prepareInitial?: { __typename: 'SyncStatusNode', finished?: any | null, started: any } | null, pullCentral?: { __typename: 'SyncStatusWithProgressNode', finished?: any | null, started: any, doneProgress?: number | null, totalProgress?: number | null } | null, pullRemote?: { __typename: 'SyncStatusWithProgressNode', finished?: any | null, started: any, doneProgress?: number | null, totalProgress?: number | null } | null, push?: { __typename: 'SyncStatusWithProgressNode', finished?: any | null, started: any, doneProgress?: number | null, totalProgress?: number | null } | null, summary: { __typename: 'SyncStatusNode', finished?: any | null, started: any } } | null };
 
 export type ManualSyncMutationVariables = Types.Exact<{ [key: string]: never; }>;
 
@@ -88,6 +95,35 @@ export const SyncStatusWithProgressFragmentDoc = gql`
   totalProgress
 }
     `;
+export const FullSyncStatusFragmentDoc = gql`
+    fragment FullSyncStatus on FullSyncStatusNode {
+  __typename
+  error {
+    ...SyncErrors
+  }
+  integration {
+    ...SyncStatus
+  }
+  isSyncing
+  prepareInitial {
+    ...SyncStatus
+  }
+  pullCentral {
+    ...SyncStatusWithProgress
+  }
+  pullRemote {
+    ...SyncStatusWithProgress
+  }
+  push {
+    ...SyncStatusWithProgress
+  }
+  summary {
+    ...SyncStatus
+  }
+}
+    ${SyncErrorsFragmentDoc}
+${SyncStatusFragmentDoc}
+${SyncStatusWithProgressFragmentDoc}`;
 export const SyncSettingsDocument = gql`
     query syncSettings {
   syncSettings {
@@ -132,36 +168,21 @@ export const UpdateSyncSettingsDocument = gql`
 }
     ${SyncSettingsFragmentDoc}
 ${SyncErrorsFragmentDoc}`;
+export const SyncInfoDocument = gql`
+    query syncInfo {
+  syncStatus: latestSyncStatus {
+    ...FullSyncStatus
+  }
+  numberOfRecordsInPushQueue
+}
+    ${FullSyncStatusFragmentDoc}`;
 export const SyncStatusDocument = gql`
     query syncStatus {
-  latestSyncStatus {
-    error {
-      ...SyncErrors
-    }
-    integration {
-      ...SyncStatus
-    }
-    isSyncing
-    prepareInitial {
-      ...SyncStatus
-    }
-    pullCentral {
-      ...SyncStatusWithProgress
-    }
-    pullRemote {
-      ...SyncStatusWithProgress
-    }
-    push {
-      ...SyncStatusWithProgress
-    }
-    summary {
-      ...SyncStatus
-    }
+  syncStatus: latestSyncStatus {
+    ...FullSyncStatus
   }
 }
-    ${SyncErrorsFragmentDoc}
-${SyncStatusFragmentDoc}
-${SyncStatusWithProgressFragmentDoc}`;
+    ${FullSyncStatusFragmentDoc}`;
 export const ManualSyncDocument = gql`
     mutation manualSync {
   manualSync
@@ -186,6 +207,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     updateSyncSettings(variables: UpdateSyncSettingsMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateSyncSettingsMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpdateSyncSettingsMutation>(UpdateSyncSettingsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateSyncSettings', 'mutation');
+    },
+    syncInfo(variables?: SyncInfoQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<SyncInfoQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<SyncInfoQuery>(SyncInfoDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'syncInfo', 'query');
     },
     syncStatus(variables?: SyncStatusQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<SyncStatusQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<SyncStatusQuery>(SyncStatusDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'syncStatus', 'query');
@@ -260,6 +284,22 @@ export const mockInitialiseSiteMutation = (resolver: ResponseResolver<GraphQLReq
 export const mockUpdateSyncSettingsMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateSyncSettingsMutationVariables>, GraphQLContext<UpdateSyncSettingsMutation>, any>) =>
   graphql.mutation<UpdateSyncSettingsMutation, UpdateSyncSettingsMutationVariables>(
     'updateSyncSettings',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockSyncInfoQuery((req, res, ctx) => {
+ *   return res(
+ *     ctx.data({ latestSyncStatus, numberOfRecordsInPushQueue })
+ *   )
+ * })
+ */
+export const mockSyncInfoQuery = (resolver: ResponseResolver<GraphQLRequest<SyncInfoQueryVariables>, GraphQLContext<SyncInfoQuery>, any>) =>
+  graphql.query<SyncInfoQuery, SyncInfoQueryVariables>(
+    'syncInfo',
     resolver
   )
 
