@@ -16,25 +16,21 @@ export type InitialisationStatusQueryVariables = Types.Exact<{ [key: string]: ne
 
 export type InitialisationStatusQuery = { __typename: 'Queries', initialisationStatus: Types.InitialisationStatusType };
 
-export type SyncErrors_MappedSyncError_Fragment = { __typename: 'MappedSyncError', errorVariant: Types.SyncErrorVariant, description: string, fullError: string };
-
-export type SyncErrors_UnknownSyncError_Fragment = { __typename: 'UnknownSyncError', description: string, fullError: string };
-
-export type SyncErrorsFragment = SyncErrors_MappedSyncError_Fragment | SyncErrors_UnknownSyncError_Fragment;
+export type SyncErrorFragment = { __typename: 'SyncErrorNode', variant: Types.SyncErrorVariant, fullError: string };
 
 export type InitialiseSiteMutationVariables = Types.Exact<{
   syncSettings: Types.SyncSettingsInput;
 }>;
 
 
-export type InitialiseSiteMutation = { __typename: 'Mutations', initialiseSite: { __typename: 'SetSyncSettingErrorNode', error: { __typename: 'MappedSyncError', errorVariant: Types.SyncErrorVariant, description: string, fullError: string } | { __typename: 'UnknownSyncError', description: string, fullError: string } } | { __typename: 'SyncSettingsNode', intervalSeconds: number, url: string, username: string } };
+export type InitialiseSiteMutation = { __typename: 'Mutations', initialiseSite: { __typename: 'SyncErrorNode', variant: Types.SyncErrorVariant, fullError: string } | { __typename: 'SyncSettingsNode', intervalSeconds: number, url: string, username: string } };
 
 export type UpdateSyncSettingsMutationVariables = Types.Exact<{
   syncSettings: Types.SyncSettingsInput;
 }>;
 
 
-export type UpdateSyncSettingsMutation = { __typename: 'Mutations', updateSyncSettings: { __typename: 'SetSyncSettingErrorNode', error: { __typename: 'MappedSyncError', errorVariant: Types.SyncErrorVariant, description: string, fullError: string } | { __typename: 'UnknownSyncError', description: string, fullError: string } } | { __typename: 'SyncSettingsNode', intervalSeconds: number, url: string, username: string } };
+export type UpdateSyncSettingsMutation = { __typename: 'Mutations', updateSyncSettings: { __typename: 'SyncErrorNode', variant: Types.SyncErrorVariant, fullError: string } | { __typename: 'SyncSettingsNode', intervalSeconds: number, url: string, username: string } };
 
 export type SyncStatusFragment = { __typename: 'SyncStatusNode', finished?: any | null, started: any };
 
@@ -43,7 +39,7 @@ export type SyncStatusWithProgressFragment = { __typename: 'SyncStatusWithProgre
 export type SyncStatusQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
 
-export type SyncStatusQuery = { __typename: 'Queries', latestSyncStatus?: { __typename: 'FullSyncStatusNode', isSyncing: boolean, error?: { __typename: 'MappedSyncError', errorVariant: Types.SyncErrorVariant, description: string, fullError: string } | { __typename: 'UnknownSyncError', description: string, fullError: string } | null, integration?: { __typename: 'SyncStatusNode', finished?: any | null, started: any } | null, prepareInitial?: { __typename: 'SyncStatusNode', finished?: any | null, started: any } | null, pullCentral?: { __typename: 'SyncStatusWithProgressNode', finished?: any | null, started: any, doneProgress?: number | null, totalProgress?: number | null } | null, pullRemote?: { __typename: 'SyncStatusWithProgressNode', finished?: any | null, started: any, doneProgress?: number | null, totalProgress?: number | null } | null, push?: { __typename: 'SyncStatusWithProgressNode', finished?: any | null, started: any, doneProgress?: number | null, totalProgress?: number | null } | null, summary: { __typename: 'SyncStatusNode', finished?: any | null, started: any } } | null };
+export type SyncStatusQuery = { __typename: 'Queries', latestSyncStatus?: { __typename: 'FullSyncStatusNode', isSyncing: boolean, error?: { __typename: 'SyncErrorNode', variant: Types.SyncErrorVariant, fullError: string } | null, integration?: { __typename: 'SyncStatusNode', finished?: any | null, started: any } | null, prepareInitial?: { __typename: 'SyncStatusNode', finished?: any | null, started: any } | null, pullCentral?: { __typename: 'SyncStatusWithProgressNode', finished?: any | null, started: any, doneProgress?: number | null, totalProgress?: number | null } | null, pullRemote?: { __typename: 'SyncStatusWithProgressNode', finished?: any | null, started: any, doneProgress?: number | null, totalProgress?: number | null } | null, push?: { __typename: 'SyncStatusWithProgressNode', finished?: any | null, started: any, doneProgress?: number | null, totalProgress?: number | null } | null, summary: { __typename: 'SyncStatusNode', finished?: any | null, started: any } } | null };
 
 export type ManualSyncMutationVariables = Types.Exact<{ [key: string]: never; }>;
 
@@ -58,18 +54,11 @@ export const SyncSettingsFragmentDoc = gql`
   username
 }
     `;
-export const SyncErrorsFragmentDoc = gql`
-    fragment SyncErrors on SyncErrorInterface {
+export const SyncErrorFragmentDoc = gql`
+    fragment SyncError on SyncErrorNode {
   __typename
-  description
+  variant
   fullError
-  ... on MappedSyncError {
-    __typename
-    errorVariant
-  }
-  ... on UnknownSyncError {
-    __typename
-  }
 }
     `;
 export const SyncStatusFragmentDoc = gql`
@@ -107,15 +96,13 @@ export const InitialiseSiteDocument = gql`
     ... on SyncSettingsNode {
       ...SyncSettings
     }
-    ... on SetSyncSettingErrorNode {
-      error {
-        ...SyncErrors
-      }
+    ... on SyncErrorNode {
+      ...SyncError
     }
   }
 }
     ${SyncSettingsFragmentDoc}
-${SyncErrorsFragmentDoc}`;
+${SyncErrorFragmentDoc}`;
 export const UpdateSyncSettingsDocument = gql`
     mutation updateSyncSettings($syncSettings: SyncSettingsInput!) {
   updateSyncSettings(input: $syncSettings) {
@@ -123,20 +110,18 @@ export const UpdateSyncSettingsDocument = gql`
     ... on SyncSettingsNode {
       ...SyncSettings
     }
-    ... on SetSyncSettingErrorNode {
-      error {
-        ...SyncErrors
-      }
+    ... on SyncErrorNode {
+      ...SyncError
     }
   }
 }
     ${SyncSettingsFragmentDoc}
-${SyncErrorsFragmentDoc}`;
+${SyncErrorFragmentDoc}`;
 export const SyncStatusDocument = gql`
     query syncStatus {
   latestSyncStatus {
     error {
-      ...SyncErrors
+      ...SyncError
     }
     integration {
       ...SyncStatus
@@ -159,7 +144,7 @@ export const SyncStatusDocument = gql`
     }
   }
 }
-    ${SyncErrorsFragmentDoc}
+    ${SyncErrorFragmentDoc}
 ${SyncStatusFragmentDoc}
 ${SyncStatusWithProgressFragmentDoc}`;
 export const ManualSyncDocument = gql`

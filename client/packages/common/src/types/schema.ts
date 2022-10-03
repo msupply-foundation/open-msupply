@@ -663,7 +663,7 @@ export type ForeignKeyError = DeleteInboundShipmentLineErrorInterface & DeleteIn
 
 export type FullSyncStatusNode = {
   __typename: 'FullSyncStatusNode';
-  error?: Maybe<SyncErrorInterface>;
+  error?: Maybe<SyncErrorNode>;
   integration?: Maybe<SyncStatusNode>;
   isSyncing: Scalars['Boolean'];
   prepareInitial?: Maybe<SyncStatusNode>;
@@ -697,7 +697,7 @@ export enum InitialisationStatusType {
   PreInitialisation = 'PRE_INITIALISATION'
 }
 
-export type InitialiseSiteResponse = SetSyncSettingErrorNode | SyncSettingsNode;
+export type InitialiseSiteResponse = SyncErrorNode | SyncSettingsNode;
 
 export type InsertErrorInterface = {
   description: Scalars['String'];
@@ -1416,13 +1416,6 @@ export type Logout = {
 };
 
 export type LogoutResponse = Logout;
-
-export type MappedSyncError = SyncErrorInterface & {
-  __typename: 'MappedSyncError';
-  description: Scalars['String'];
-  errorVariant: SyncErrorVariant;
-  fullError: Scalars['String'];
-};
 
 export type MasterListConnector = {
   __typename: 'MasterListConnector';
@@ -2527,11 +2520,6 @@ export type RequisitionSortInput = {
 
 export type RequisitionsResponse = RequisitionConnector;
 
-export type SetSyncSettingErrorNode = {
-  __typename: 'SetSyncSettingErrorNode';
-  error: SyncErrorInterface;
-};
-
 export type SimpleStringFilterInput = {
   /** Search term must be an exact match (case sensitive) */
   equalTo?: InputMaybe<Scalars['String']>;
@@ -2783,21 +2771,23 @@ export type SupplyRequestedQuantityInput = {
 
 export type SupplyRequestedQuantityResponse = RequisitionLineConnector | SupplyRequestedQuantityError;
 
-export type SyncErrorInterface = {
-  description: Scalars['String'];
+export type SyncErrorNode = {
+  __typename: 'SyncErrorNode';
   fullError: Scalars['String'];
+  variant: SyncErrorVariant;
 };
 
 export enum SyncErrorVariant {
-  ConnectionError = 'connectionError',
-  HardwareIdMismatch = 'hardwareIdMismatch',
-  IncorrectPassword = 'incorrectPassword',
-  IntegrationTimeoutReached = 'integrationTimeoutReached',
-  InvalidUrl = 'invalidUrl',
-  SiteAuthTimeout = 'siteAuthTimeout',
-  SiteHasNoStore = 'siteHasNoStore',
-  SiteNameNotFound = 'siteNameNotFound',
-  SiteUuidIsBeingChanged = 'siteUUIDIsBeingChanged'
+  ConnectionError = 'CONNECTION_ERROR',
+  HardwareIdMismatch = 'HARDWARE_ID_MISMATCH',
+  IncorrectPassword = 'INCORRECT_PASSWORD',
+  IntegrationTimeoutReached = 'INTEGRATION_TIMEOUT_REACHED',
+  InvalidUrl = 'INVALID_URL',
+  SiteAuthTimeout = 'SITE_AUTH_TIMEOUT',
+  SiteHasNoStore = 'SITE_HAS_NO_STORE',
+  SiteNameNotFound = 'SITE_NAME_NOT_FOUND',
+  SiteUuidIsBeingChanged = 'SITE_UUID_IS_BEING_CHANGED',
+  Unknown = 'UNKNOWN'
 }
 
 export type SyncSettingsInput = {
@@ -2861,12 +2851,6 @@ export type UniqueValueViolation = InsertLocationErrorInterface & UpdateLocation
   __typename: 'UniqueValueViolation';
   description: Scalars['String'];
   field: UniqueValueKey;
-};
-
-export type UnknownSyncError = SyncErrorInterface & {
-  __typename: 'UnknownSyncError';
-  description: Scalars['String'];
-  fullError: Scalars['String'];
 };
 
 export type UpdateErrorInterface = {
@@ -3247,7 +3231,7 @@ export type UpdateStocktakeResponseWithId = {
   response: UpdateStocktakeResponse;
 };
 
-export type UpdateSyncSettingsResponse = SetSyncSettingErrorNode | SyncSettingsNode;
+export type UpdateSyncSettingsResponse = SyncErrorNode | SyncSettingsNode;
 
 export type UseSuggestedQuantityError = {
   __typename: 'UseSuggestedQuantityError';

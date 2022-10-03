@@ -192,10 +192,8 @@ export const SyncSettings = ({}) => {
     try {
       const response = await update(syncSettings);
       // Map structured error
-      if (response.__typename === 'SetSyncSettingErrorNode') {
-        setError(
-          mapSyncError(t, response.error, 'error.unable-to-save-settings')
-        );
+      if (response.__typename === 'SyncErrorNode') {
+        setError(mapSyncError(t, response, 'error.unable-to-save-settings'));
         return setIsSaving(false);
       }
     } catch (e) {
