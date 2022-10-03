@@ -12,7 +12,7 @@ pub fn validate(
     connection: &StorageConnection,
     store_id: &str,
     patch: &UpdateInboundShipment,
-) -> Result<(InvoiceRow, Option<Name>), UpdateInboundShipmentError> {
+) -> Result<(InvoiceRow, Option<Name>, bool), UpdateInboundShipmentError> {
     use UpdateInboundShipmentError::*;
     let invoice = check_invoice_exists(&patch.id, connection)?;
 
@@ -22,7 +22,7 @@ pub fn validate(
     check_invoice_status(&invoice, patch.full_status(), &patch.on_hold)?;
 
     let other_party_id = match &patch.other_party_id {
-        None => return Ok((invoice, None)),
+        None => return Ok((invoice, None, false)),
         Some(other_party_id) => other_party_id,
     };
 
@@ -39,7 +39,12 @@ pub fn validate(
         OtherPartyErrors::DatabaseError(repository_error) => DatabaseError(repository_error),
     })?;
 
-    Ok((invoice, Some(other_party)))
+    let status_changed = match patch.status.clone() {
+        Some(status) => status.full_status() != invoice.status,
+        None => false,
+    };
+
+    Ok((invoice, Some(other_party), status_changed))
 }
 
 impl From<WrongInvoiceRowType> for UpdateInboundShipmentError {

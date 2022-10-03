@@ -53,18 +53,17 @@ pub fn insert_request_requisition(
             let new_requisition = generate(connection, &ctx.store_id, &ctx.user_id, input)?;
             RequisitionRowRepository::new(&connection).upsert_one(&new_requisition)?;
 
+            log_entry(
+                &ctx,
+                LogType::RequisitionCreated,
+                new_requisition.id.clone(),
+            )?;
+
             get_requisition(ctx, None, &new_requisition.id)
                 .map_err(|error| OutError::DatabaseError(error))?
                 .ok_or(OutError::NewlyCreatedRequisitionDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
-
-    log_entry(
-        &ctx,
-        LogType::RequisitionCreated,
-        Some(requisition.requisition_row.id.to_string()),
-        requisition.requisition_row.created_datetime,
-    )?;
 
     Ok(requisition)
 }

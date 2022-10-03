@@ -1,4 +1,4 @@
-use chrono::{NaiveDateTime, Utc};
+use chrono::Utc;
 use repository::{
     InvoiceRowStatus, Log, LogFilter, LogRepository, LogRow, LogRowRepository, LogSort, LogType,
     StorageConnection, StorageConnectionManager,
@@ -33,8 +33,7 @@ pub fn get_logs(
 pub fn log_entry(
     ctx: &ServiceContext,
     log_type: LogType,
-    record_id: Option<String>,
-    datetime: NaiveDateTime,
+    record_id: String,
 ) -> Result<(), RepositoryError> {
     let log = &LogRow {
         id: uuid(),
@@ -49,8 +48,32 @@ pub fn log_entry(
         } else {
             None
         },
-        record_id,
-        datetime,
+        record_id: Some(record_id),
+        datetime: Utc::now().naive_utc(),
+    };
+
+    Ok(LogRowRepository::new(&ctx.connection).insert_one(log)?)
+}
+
+pub fn log_entry_without_record(
+    ctx: &ServiceContext,
+    log_type: LogType,
+) -> Result<(), RepositoryError> {
+    let log = &LogRow {
+        id: uuid(),
+        r#type: log_type,
+        user_id: if ctx.user_id != "" {
+            Some(ctx.user_id.clone())
+        } else {
+            None
+        },
+        store_id: if ctx.store_id != "" {
+            Some(ctx.store_id.clone())
+        } else {
+            None
+        },
+        record_id: None,
+        datetime: Utc::now().naive_utc(),
     };
 
     Ok(LogRowRepository::new(&ctx.connection).insert_one(log)?)
