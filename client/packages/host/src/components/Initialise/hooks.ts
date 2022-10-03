@@ -110,9 +110,9 @@ export const useInitialiseForm = () => {
         username,
       });
       // Map structured error
-      if (response.__typename === 'SetSyncSettingErrorNode') {
+      if (response.__typename === 'SyncErrorNode') {
         setSiteCredentialsError(
-          mapSyncError(t, response.error, 'error.unable-to-initialise')
+          mapSyncError(t, response, 'error.unable-to-initialise')
         );
         return setIsLoading(false);
       }

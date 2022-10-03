@@ -3,14 +3,14 @@ use async_graphql::*;
 use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
 use service::sync::sync_status::status::InitialisationStatus;
 
-use crate::{queries::sync_settings::SyncSettingsNode, sync_api_error::SetSyncSettingErrorNode};
+use crate::{queries::sync_settings::SyncSettingsNode, sync_api_error::SyncErrorNode};
 
 use super::common::SyncSettingsInput;
 
 #[derive(Union)]
 pub enum InitialiseSiteResponse {
     Response(SyncSettingsNode),
-    Error(SetSyncSettingErrorNode),
+    Error(SyncErrorNode),
 }
 
 pub async fn initialise_site(
@@ -37,7 +37,7 @@ pub async fn initialise_site(
         .await
     {
         return Ok(InitialiseSiteResponse::Error(
-            SetSyncSettingErrorNode::map_error(error)?,
+            SyncErrorNode::map_error(error)?,
         ));
     }
 

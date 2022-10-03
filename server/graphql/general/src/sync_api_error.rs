@@ -9,45 +9,15 @@ use service::sync::{
 use util::format_error;
 
 #[derive(SimpleObject)]
-pub struct SetSyncSettingErrorNode {
-    pub error: SyncErrorInterface,
-}
-
-impl SetSyncSettingErrorNode {
-    pub fn map_error(error: RequestAndSetSiteInfoError) -> Result<Self> {
-        use RequestAndSetSiteInfoError as from;
-
-        let error = match &error {
-            // Structured error
-            from::RequestSiteInfoError(api_error) => {
-                SyncErrorInterface::from_sync_api_error(api_error)
-            }
-            from::SiteUUIDIsBeingChanged(_, _) => {
-                SyncErrorInterface::from_variant(SyncErrorVariant::SiteUUIDIsBeingChanged, &error)
-            }
-            from::SyncApiV5CreatingError(SyncApiV5CreatingError::CannotParseSyncUrl(_, _)) => {
-                SyncErrorInterface::from_variant(SyncErrorVariant::InvalidUrl, &error)
-            }
-            // Standard Graphql Errors
-            _ => return Err(StandardGraphqlError::from_error(&error)),
-        };
-
-        Ok(Self { error })
-    }
-}
-
-#[derive(Interface)]
-#[graphql(name = "SyncErrorInterface")]
-#[graphql(field(name = "description", type = "String"))]
-#[graphql(field(name = "full_error", type = "String"))]
-pub enum SyncErrorInterface {
-    MappedSyncError(MappedSyncError),
-    UnknownError(UnknownSyncError),
+pub struct SyncErrorNode {
+    pub variant: Variant,
+    pub full_error: String,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
-#[graphql(rename_items = "camelCase")]
-pub enum SyncErrorVariant {
+#[graphql(rename_items = "SCREAMING_SNAKE_CASE")]
+#[graphql(name = "SyncErrorVariant")]
+pub enum Variant {
     ConnectionError,
     SiteUUIDIsBeingChanged,
     SiteNameNotFound,
@@ -57,76 +27,88 @@ pub enum SyncErrorVariant {
     SiteAuthTimeout,
     IntegrationTimeoutReached,
     InvalidUrl,
+    Unknown,
 }
 
-pub struct MappedSyncError(pub SyncErrorVariant, pub String);
-#[Object]
-impl MappedSyncError {
-    pub async fn description(&self) -> &'static str {
-        "Mapped sync error"
+impl SyncErrorNode {
+    pub fn unknown_error<E: std::error::Error>(error: &E) -> Self {
+        Self {
+            variant: Variant::Unknown,
+            full_error: format_error(error),
+        }
     }
 
-    pub async fn error_variant(&self) -> SyncErrorVariant {
-        self.0
+    pub fn unknown(message: String) -> Self {
+        Self {
+            variant: Variant::Unknown,
+            full_error: message,
+        }
     }
 
-    pub async fn full_error(&self) -> &str {
-        &self.1
-    }
-}
-
-pub struct UnknownSyncError(pub String);
-#[Object]
-impl UnknownSyncError {
-    pub async fn description(&self) -> &'static str {
-        "Uknown sync error"
+    pub fn from_error_variant<E: std::error::Error>(variant: Variant, error: &E) -> Self {
+        Self {
+            variant,
+            full_error: format_error(error),
+        }
     }
 
-    pub async fn full_error(&self) -> &str {
-        &self.0
-    }
-}
-
-impl SyncErrorInterface {
-    pub fn unknow_error(error: &SyncApiError) -> Self {
-        Self::UnknownError(UnknownSyncError(format_error(error)))
+    pub fn from_variant(variant: Variant, message: String) -> Self {
+        Self {
+            variant,
+            full_error: message,
+        }
     }
 
-    pub fn from_variant<E: std::error::Error>(variant: SyncErrorVariant, error: &E) -> Self {
-        Self::MappedSyncError(MappedSyncError(variant, format_error(error)))
+    pub fn map_error(error: RequestAndSetSiteInfoError) -> Result<Self> {
+        use RequestAndSetSiteInfoError as from;
+
+        let error = match &error {
+            // Structured error
+            from::RequestSiteInfoError(api_error) => Self::from_sync_api_error(api_error),
+            from::SiteUUIDIsBeingChanged(_, _) => {
+                Self::from_error_variant(Variant::SiteUUIDIsBeingChanged, &error)
+            }
+            from::SyncApiV5CreatingError(SyncApiV5CreatingError::CannotParseSyncUrl(_, _)) => {
+                Self::from_error_variant(Variant::InvalidUrl, &error)
+            }
+            // Standard Graphql Errors
+            _ => return Err(StandardGraphqlError::from_error(&error)),
+        };
+
+        Ok(error)
     }
 
     pub fn from_sync_api_error(error: &SyncApiError) -> Self {
         let sync_v5_error_code = match &error.source {
             SyncApiErrorVariant::ParsedError { source, .. } => &source.code,
             SyncApiErrorVariant::ConnectionError { .. } => {
-                return Self::from_variant(SyncErrorVariant::ConnectionError, error)
+                return Self::from_error_variant(Variant::ConnectionError, error)
             }
-            _ => return Self::unknow_error(error),
+            _ => return Self::unknown_error(error),
         };
 
         use SyncErrorCodeV5 as from;
-        use SyncErrorVariant as to;
+        use Variant as to;
         let variant = match sync_v5_error_code {
             from::SiteNameNotFound => to::SiteNameNotFound,
             from::SiteIncorrectPassword => to::IncorrectPassword,
             from::SiteIncorrectHardwareId => to::HardwareIdMismatch,
             from::SiteHasNoStore => to::SiteHasNoStore,
             from::SiteAuthTimeout => to::SiteAuthTimeout,
-            from::Other(_) => return Self::unknow_error(error),
+            from::Other(_) => return Self::unknown_error(error),
         };
 
-        Self::from_variant(variant, error)
+        Self::from_error_variant(variant, error)
     }
 
     pub fn from_sync_log_error(SyncLogError { message, code }: SyncLogError) -> Self {
         let code = match code {
-            None => return Self::UnknownError(UnknownSyncError(message)),
+            None => return Self::unknown(message),
             Some(code) => code,
         };
 
-        use SyncErrorVariant as to;
         use SyncLogRowErrorCode as from;
+        use Variant as to;
         let variant = match code {
             from::SiteNameNotFound => to::SiteNameNotFound,
             from::IncorrectPassword => to::IncorrectPassword,
@@ -137,7 +119,7 @@ impl SyncErrorInterface {
             from::IntegrationTimeoutReached => to::IntegrationTimeoutReached,
         };
 
-        Self::MappedSyncError(MappedSyncError(variant, message))
+        Self::from_variant(variant, message)
     }
 }
 
@@ -188,25 +170,25 @@ mod test {
 
         #[Object]
         impl TestQuery {
-            pub async fn test(&self, r#type: String) -> SyncErrorInterface {
+            pub async fn test(&self, r#type: String) -> SyncErrorNode {
                 match r#type.as_str() {
                     "from_sync_api_error_connection" => {
-                        SyncErrorInterface::from_sync_api_error(&sync_api_error_connection().await)
+                        SyncErrorNode::from_sync_api_error(&sync_api_error_connection().await)
                     }
                     "from_sync_api_error_unknown" => {
-                        SyncErrorInterface::from_sync_api_error(&sync_api_error_unknown())
+                        SyncErrorNode::from_sync_api_error(&sync_api_error_unknown())
                     }
                     "from_sync_api_error_hardware" => {
-                        SyncErrorInterface::from_sync_api_error(&sync_api_error_hardware())
+                        SyncErrorNode::from_sync_api_error(&sync_api_error_hardware())
                     }
                     "from_sync_log_error_connection" => {
-                        SyncErrorInterface::from_sync_log_error(SyncLogError {
+                        SyncErrorNode::from_sync_log_error(SyncLogError {
                             message: "n/a".to_string(),
                             code: Some(SyncLogRowErrorCode::ConnectionError),
                         })
                     }
                     "from_sync_log_error_unknown" => {
-                        SyncErrorInterface::from_sync_log_error(SyncLogError {
+                        SyncErrorNode::from_sync_log_error(SyncLogError {
                             message: "Unknown".to_string(),
                             code: None,
                         })
@@ -219,15 +201,8 @@ mod test {
         let query = r#"
         query($type: String) {
             test(type: $type) {
-                __typename
                 fullError
-                description
-               ... on MappedSyncError {
-                  errorVariant
-               }
-               ... on UnknownSyncError {
-                  __typename
-               }
+                variant
             }
         }
         "#;
@@ -237,9 +212,7 @@ mod test {
         });
         let expected = json!({
             "test": {
-              "__typename": "MappedSyncError",
-              "description": "Mapped sync error",
-              "errorVariant": "connectionError",
+              "variant": "CONNECTION_ERROR",
               "fullError": format_error(&sync_api_error_connection().await)
             }
           }
@@ -251,8 +224,7 @@ mod test {
         });
         let expected = json!({
             "test": {
-              "__typename": "UnknownSyncError",
-              "description": "Uknown sync error",
+              "variant": "UNKNOWN",
               "fullError":  format_error(&sync_api_error_unknown())
             }
           }
@@ -264,9 +236,7 @@ mod test {
         });
         let expected = json!({
             "test": {
-              "__typename": "MappedSyncError",
-              "description": "Mapped sync error",
-              "errorVariant": "hardwareIdMismatch",
+              "variant": "HARDWARE_ID_MISMATCH",
               "fullError":  format_error(&sync_api_error_hardware())
             }
           }
@@ -278,9 +248,7 @@ mod test {
         });
         let expected = json!({
             "test": {
-              "__typename": "MappedSyncError",
-              "description": "Mapped sync error",
-              "errorVariant": "connectionError",
+              "variant": "CONNECTION_ERROR",
               "fullError": "n/a"
             }
           }
@@ -292,8 +260,7 @@ mod test {
         });
         let expected = json!({
             "test": {
-              "__typename": "UnknownSyncError",
-              "description": "Uknown sync error",
+              "variant": "UNKNOWN",
               "fullError": "Unknown"
             }
           }
