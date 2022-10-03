@@ -13,11 +13,10 @@ pub fn create_system_user(service_provider: &ServiceProvider) -> Result<(), Repo
 
     let connection = service_provider.connection()?;
     let user_repository = UserAccountRowRepository::new(&connection);
-    match user_repository.find_one_by_id(&system_user.id)? {
-        Some(_) => Ok(()),
-        None => {
-            user_repository.insert_one(&system_user)?;
-            Ok(())
-        }
-    }
+    let user = user_repository.find_one_by_id(&system_user.id)?;
+    if user.is_none() {
+        user_repository.insert_one(&system_user)?;
+    };
+
+    Ok(())
 }
