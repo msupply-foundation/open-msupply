@@ -52,7 +52,6 @@ mod tests {
     }
     #[actix_rt::test]
     async fn integration_sync_parsed_error() {
-        // util::init_logger(util::LogLevel::Warn);
         let SiteConfiguration { sync_settings, .. } = ConfigureCentralServer::from_env()
             .create_sync_site(vec![])
             .await
