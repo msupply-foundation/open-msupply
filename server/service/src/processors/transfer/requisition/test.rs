@@ -227,6 +227,20 @@ impl RequisitionTransferTester {
                 &self.request_requisition.id,
             ))
             .unwrap();
+        let their_ref = format!(
+            "From request requisition {} ({})",
+            self.request_requisition.requisition_number.to_string(),
+            self.request_requisition
+                .their_reference
+                .clone()
+                .unwrap_or_default()
+        );
+
+        let comment = format!(
+            "From request requisition {} ({})",
+            self.request_requisition.requisition_number.to_string(),
+            self.request_requisition.comment.clone().unwrap_or_default()
+        );
 
         assert!(response_requisition.is_some());
         let response_requisition = response_requisition.unwrap().requisition_row;
@@ -235,10 +249,8 @@ impl RequisitionTransferTester {
         assert_eq!(response_requisition.status, RequisitionRowStatus::New);
         assert_eq!(response_requisition.store_id, self.response_store.id);
         assert_eq!(response_requisition.name_id, self.request_store.name_id);
-        assert_eq!(
-            response_requisition.their_reference,
-            self.request_requisition.their_reference
-        );
+        assert_eq!(response_requisition.their_reference, Some(their_ref));
+        assert_eq!(response_requisition.comment, Some(comment));
         assert_eq!(
             response_requisition.max_months_of_stock,
             self.request_requisition.max_months_of_stock

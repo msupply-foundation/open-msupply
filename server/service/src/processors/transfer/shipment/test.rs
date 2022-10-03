@@ -365,12 +365,16 @@ impl ShipmentTransferTester {
         assert!(inbound_shipment.is_some());
         let inbound_shipment = inbound_shipment.unwrap().invoice_row;
         self.inbound_shipment = Some(inbound_shipment.clone());
-        let comment = format!(
-            "Reference: {}. {}",
+        let their_ref = format!(
+            "From invoice number: {} ({})",
+            self.outbound_shipment.invoice_number,
             self.outbound_shipment
                 .their_reference
                 .clone()
-                .unwrap_or_default(),
+                .unwrap_or_default()
+        );
+        let comment = format!(
+            "Stock transfer ({})",
             self.outbound_shipment.comment.clone().unwrap_or_default()
         );
 
@@ -381,10 +385,7 @@ impl ShipmentTransferTester {
             inbound_shipment.name_store_id,
             Some(self.outbound_store.id.clone())
         );
-        assert_eq!(
-            inbound_shipment.their_reference,
-            self.outbound_shipment.their_reference
-        );
+        assert_eq!(inbound_shipment.their_reference, Some(their_ref));
         assert_eq!(
             inbound_shipment.transport_reference,
             self.outbound_shipment.transport_reference
