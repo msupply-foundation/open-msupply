@@ -6,6 +6,7 @@ use log::{info, warn};
 use repository::{RepositoryError, StorageConnection, SyncBufferAction};
 use std::sync::Arc;
 use thiserror::Error;
+use util::format_error;
 
 use super::{
     api::SyncApiV5,
@@ -30,7 +31,7 @@ pub struct Synchroniser {
     remote: RemoteDataSynchroniser,
 }
 
-#[derive(Error, Debug)]
+#[derive(Error)]
 pub(crate) enum SyncError {
     #[error("Database error while syncing")]
     DatabaseError(#[from] RepositoryError),
@@ -48,6 +49,13 @@ pub(crate) enum SyncError {
     RemotePullError(#[from] RemotePullError),
     #[error("Error while integrating records")]
     IntegrationError(anyhow::Error),
+}
+
+// For unwrap and expect debug implementation is used
+impl std::fmt::Debug for SyncError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", format_error(self))
+    }
 }
 
 /// There are three types of data that is synced between the central server and the remote server:
