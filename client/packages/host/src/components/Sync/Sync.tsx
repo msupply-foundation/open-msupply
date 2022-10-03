@@ -14,26 +14,19 @@ import { SyncProgress } from '../SyncProgress';
 const STATUS_POLLING_INTERVAL = 1000;
 
 const useSync = () => {
-  const { localisedDate, localisedTime } = useFormatDateTime();
   // Polling whenever Sync page is opened
-  const { data } = useHost.utils.syncInfo(STATUS_POLLING_INTERVAL);
+  const { syncStatus, numberOfRecordsInPushQueue } = useHost.utils.syncInfo(
+    STATUS_POLLING_INTERVAL
+  );
   const { mutateAsync: manualSync } = useHost.sync.manualSync();
 
-  // Derived state
-  const [latestSyncDate, setLatestSyncDate] = useState<null | string>(null);
   // true by default to wait for first syncStatus api result
   const [isLoading, setIsLoading] = useState(true);
-
-  const syncStatus = data?.syncStatus;
-  const numberOfRecordsInPushQueue = data?.numberOfRecordsInPushQueue;
 
   useEffect(() => {
     if (!syncStatus) {
       return;
     }
-    // Generate latestSyncDate
-    const date = new Date(syncStatus.summary.started);
-    setLatestSyncDate(`${localisedDate(date)} ${localisedTime(date)}`);
     // When we receive syncStatus, resulting isLoading state should be = isSyncing form api result
     setIsLoading(false);
   }, [syncStatus]);
@@ -46,15 +39,16 @@ const useSync = () => {
 
   return {
     isLoading: !!syncStatus?.isSyncing || isLoading,
-    syncStatus,
-    latestSyncDate,
-    numberOfRecordsInPushQueue,
+    latestSyncDate: syncStatus && new Date(syncStatus.summary.started),
     onManualSync,
+    syncStatus,
+    numberOfRecordsInPushQueue,
   };
 };
 
 export const Sync: React.FC = () => {
   const t = useTranslation('common');
+  const { localisedDate, localisedTime } = useFormatDateTime();
   const {
     syncStatus,
     latestSyncDate,
@@ -62,6 +56,10 @@ export const Sync: React.FC = () => {
     isLoading,
     onManualSync,
   } = useSync();
+
+  const formattedLatestSyncDate = latestSyncDate
+    ? `${localisedDate(latestSyncDate)} ${localisedTime(latestSyncDate)}`
+    : '';
 
   return (
     <Grid style={{ padding: 15 }} justifyContent="center">
@@ -78,7 +76,7 @@ export const Sync: React.FC = () => {
         <Row title={t('sync-info.number-to-push')}>
           {numberOfRecordsInPushQueue}
         </Row>
-        <Row title={t('sync-info.last-sync')}>{latestSyncDate}</Row>
+        <Row title={t('sync-info.last-sync')}>{formattedLatestSyncDate}</Row>
         <Row>
           <LoadingButton
             isLoading={isLoading}
