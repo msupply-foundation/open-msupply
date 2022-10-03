@@ -44,17 +44,16 @@ pub fn update_response_requisition(
     let requisition = ctx
         .connection
         .transaction_sync(|connection| {
-            let requisition_row = validate(connection, &ctx.store_id, &input)?;
+            let (requisition_row, status_changed) = validate(connection, &ctx.store_id, &input)?;
             let updated_requisition =
                 generate(&ctx.user_id, requisition_row.clone(), input.clone());
             RequisitionRowRepository::new(&connection).upsert_one(&updated_requisition)?;
 
-            if requisition_row.status != updated_requisition.status {
+            if status_changed {
                 log_entry(
                     &ctx,
                     LogType::RequisitionStatusFinalised,
-                    Some(updated_requisition.id.to_string()),
-                    Utc::now().naive_utc(),
+                    updated_requisition.id.clone(),
                 )?;
             }
 
@@ -73,7 +72,7 @@ pub fn validate(
     connection: &StorageConnection,
     store_id: &str,
     input: &UpdateResponseRequisition,
-) -> Result<RequisitionRow, OutError> {
+) -> Result<(RequisitionRow, bool), OutError> {
     let requisition_row = check_requisition_exists(connection, &input.id)?
         .ok_or(OutError::RequisitionDoesNotExist)?;
 
@@ -89,7 +88,9 @@ pub fn validate(
         return Err(OutError::CannotEditRequisition);
     }
 
-    Ok(requisition_row)
+    let status_changed = requisition_row.status != RequisitionRowStatus::Finalised;
+
+    Ok((requisition_row, status_changed))
 }
 
 pub fn generate(

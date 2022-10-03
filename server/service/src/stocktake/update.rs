@@ -443,8 +443,7 @@ pub fn update_stocktake(
                 log_entry(
                     &ctx,
                     LogType::StocktakeStatusFinalised,
-                    Some(stocktake_id.to_string()),
-                    Utc::now().naive_utc(),
+                    stocktake_id.clone(),
                 )?;
             }
 

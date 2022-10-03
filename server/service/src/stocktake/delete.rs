@@ -1,4 +1,3 @@
-use chrono::Utc;
 use repository::{
     EqualFilter, LogType, RepositoryError, StocktakeLineFilter, StocktakeLineRepository,
     StocktakeRowRepository, StorageConnection, TransactionError,
@@ -81,18 +80,12 @@ pub fn delete_stocktake(
                 })?;
             }
             // End TODO
+            log_entry(&ctx, LogType::StocktakeDeleted, stocktake_id.clone())?;
 
             StocktakeRowRepository::new(&connection).delete(&stocktake_id)?;
             Ok(())
         })
         .map_err(|error: TransactionError<DeleteStocktakeError>| error.to_inner_error())?;
-
-    log_entry(
-        &ctx,
-        LogType::StocktakeDeleted,
-        Some(stocktake_id.clone()),
-        Utc::now().naive_utc(),
-    )?;
 
     Ok(stocktake_id.to_string())
 }

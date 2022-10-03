@@ -1,4 +1,3 @@
-use chrono::Utc;
 use repository::{
     Invoice, InvoiceLine, InvoiceLineRowRepository, InvoiceRowRepository, InvoiceRowStatus,
     LogType, RepositoryError, StockLineRowRepository, TransactionError,
@@ -63,7 +62,8 @@ pub fn update_outbound_shipment(
     let invoice = ctx
         .connection
         .transaction_sync(|connection| {
-            let (invoice, other_party_option) = validate(connection, &ctx.store_id, &patch)?;
+            let (invoice, other_party_option, status_changed) =
+                validate(connection, &ctx.store_id, &patch)?;
             let GenerateResult {
                 batches_to_update,
                 update_invoice,
@@ -85,6 +85,14 @@ pub fn update_outbound_shipment(
                 }
             }
 
+            if status_changed {
+                log_entry(
+                    &ctx,
+                    log_type_from_status(update_invoice.status),
+                    update_invoice.id.clone(),
+                )?;
+            }
+
             get_invoice(ctx, None, &update_invoice.id)
                 .map_err(|error| OutError::DatabaseError(error))?
                 .ok_or(OutError::UpdatedInvoiceDoesNotExist)
@@ -93,19 +101,6 @@ pub fn update_outbound_shipment(
 
     ctx.processors_trigger
         .trigger_shipment_transfer_processors();
-
-    if let Some(status) = patch.status {
-        log_entry(
-            &ctx,
-            match status {
-                UpdateOutboundShipmentStatus::Allocated => LogType::InvoiceStatusAllocated,
-                UpdateOutboundShipmentStatus::Picked => LogType::InvoiceStatusPicked,
-                UpdateOutboundShipmentStatus::Shipped => LogType::InvoiceStatusShipped,
-            },
-            Some(invoice.invoice_row.id.clone()),
-            Utc::now().naive_utc(),
-        )?;
-    }
 
     Ok(invoice)
 }
@@ -155,6 +150,15 @@ impl UpdateOutboundShipment {
             Some(status) => Some(status.full_status()),
             None => None,
         }
+    }
+}
+
+fn log_type_from_status(status: InvoiceRowStatus) -> LogType {
+    match status {
+        InvoiceRowStatus::Allocated => LogType::InvoiceStatusAllocated,
+        InvoiceRowStatus::Picked => LogType::InvoiceStatusPicked,
+        InvoiceRowStatus::Shipped => LogType::InvoiceStatusShipped,
+        _ => LogType::InvoiceCreated, // shouldn't happen
     }
 }
 
