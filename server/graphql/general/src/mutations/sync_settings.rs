@@ -51,7 +51,7 @@ pub async fn update_sync_settings(
         }
     }
 
-    // request and set site info above should validate settings, can consider all error in update_sync_settings as interna lerror
+    // request and set site info above should validate settings, can consider all errors in update_sync_settings as internal errors
     service_provider
         .settings
         .update_sync_settings(&service_context, &sync_settings)
