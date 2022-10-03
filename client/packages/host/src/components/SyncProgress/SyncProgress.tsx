@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import {
+  FullSyncStatusFragment,
   SyncStatusFragment,
-  SyncStatusQuery,
   SyncStatusWithProgressFragment,
 } from '../../api/operations.generated';
 import {
@@ -17,7 +17,7 @@ import {
 } from '@openmsupply-client/common';
 import { mapSyncError } from '../../api/api';
 
-type SyncStatus = SyncStatusQuery['latestSyncStatus'];
+type SyncStatus = FullSyncStatusFragment | null;
 
 interface SyncProgressProps {
   syncStatus?: SyncStatus;
@@ -36,7 +36,7 @@ export const SyncProgress: FC<SyncProgressProps> = ({
     mapSyncError(t, syncStatus?.error, 'error.unknown-sync-error');
 
   return (
-    <Box>
+    <Box alignItems={'center'} display="flex" flexDirection={'column'}>
       {/* alternativeLabel shows icons on top */}
       <Stepper alternativeLabel>
         {getSteps(t, syncStatus).map(
@@ -54,7 +54,14 @@ export const SyncProgress: FC<SyncProgressProps> = ({
                     )
                   }
                   error={isActiveAndError}
-                  optional={progress && `${progress.done}/${progress.total}`}
+                  optional={
+                    progress && (
+                      <Box
+                        display={'flex'}
+                        justifyContent="center"
+                      >{`${progress.done}/${progress.total}`}</Box>
+                    )
+                  }
                 >
                   {label}
                 </StepLabel>
