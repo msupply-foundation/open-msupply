@@ -179,7 +179,7 @@ mod test {
             }
         );
 
-        // Service Unavailable`
+        // Service Unavailable
         let mock_server = MockServer::start();
         let url = mock_server.base_url();
 
