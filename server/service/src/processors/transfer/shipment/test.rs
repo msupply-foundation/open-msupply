@@ -189,6 +189,7 @@ impl ShipmentTransferTester {
             r.r#type = InvoiceRowType::OutboundShipment;
             r.status = InvoiceRowStatus::Allocated;
             r.their_reference = Some("some reference".to_string());
+            r.comment = Some("some comment".to_string());
             r.created_datetime = NaiveDate::from_ymd(1970, 1, 1).and_hms_milli(12, 30, 0, 0);
         });
 
@@ -365,18 +366,6 @@ impl ShipmentTransferTester {
         assert!(inbound_shipment.is_some());
         let inbound_shipment = inbound_shipment.unwrap().invoice_row;
         self.inbound_shipment = Some(inbound_shipment.clone());
-        let their_ref = format!(
-            "From invoice number: {} ({})",
-            self.outbound_shipment.invoice_number,
-            self.outbound_shipment
-                .their_reference
-                .clone()
-                .unwrap_or_default()
-        );
-        let comment = format!(
-            "Stock transfer ({})",
-            self.outbound_shipment.comment.clone().unwrap_or_default()
-        );
 
         assert_eq!(inbound_shipment.r#type, InvoiceRowType::InboundShipment);
         assert_eq!(inbound_shipment.store_id, self.inbound_store.id);
@@ -385,12 +374,18 @@ impl ShipmentTransferTester {
             inbound_shipment.name_store_id,
             Some(self.outbound_store.id.clone())
         );
-        assert_eq!(inbound_shipment.their_reference, Some(their_ref));
+        assert_eq!(
+            inbound_shipment.their_reference,
+            Some("From invoice number: 20 (some reference)".to_string())
+        );
         assert_eq!(
             inbound_shipment.transport_reference,
             self.outbound_shipment.transport_reference
         );
-        assert_eq!(inbound_shipment.comment, Some(comment));
+        assert_eq!(
+            inbound_shipment.comment,
+            Some("Stock transfer (some comment)".to_string())
+        );
         assert_eq!(inbound_shipment.colour, None);
         assert_eq!(inbound_shipment.user_id, None);
         assert_eq!(inbound_shipment.on_hold, false);
