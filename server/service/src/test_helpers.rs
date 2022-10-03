@@ -14,7 +14,6 @@ pub(crate) struct ServiceTestContext {
     pub(crate) connection: StorageConnection,
     pub(crate) service_provider: Arc<ServiceProvider>,
     pub(crate) processors_task: JoinHandle<()>,
-    #[allow(dead_code)]
     pub(crate) connection_manager: StorageConnectionManager,
 }
 
