@@ -1,7 +1,7 @@
 use chrono::{NaiveDateTime, Utc};
 use repository::{
-    Log, LogFilter, LogRepository, LogRow, LogRowRepository, LogSort, LogType, StorageConnection,
-    StorageConnectionManager,
+    InvoiceRowStatus, Log, LogFilter, LogRepository, LogRow, LogRowRepository, LogSort, LogType,
+    StorageConnection, StorageConnectionManager,
 };
 use repository::{PaginationOption, RepositoryError};
 use util::constants::SYSTEM_USER_ID;
@@ -65,6 +65,31 @@ pub fn system_log_entry(
     let log = &LogRow {
         id: uuid(),
         r#type: log_type,
+        user_id: Some(SYSTEM_USER_ID.to_string()),
+        store_id: Some(store_id),
+        record_id: Some(record_id),
+        datetime: Utc::now().naive_utc(),
+    };
+
+    Ok(LogRowRepository::new(&connection).insert_one(log)?)
+}
+
+pub fn system_invoice_log_entry(
+    connection: &StorageConnection,
+    status: InvoiceRowStatus,
+    store_id: String,
+    record_id: String,
+) -> Result<(), RepositoryError> {
+    let log = &LogRow {
+        id: uuid(),
+        r#type: match status {
+            InvoiceRowStatus::New => LogType::InvoiceCreated,
+            InvoiceRowStatus::Allocated => LogType::InvoiceStatusAllocated,
+            InvoiceRowStatus::Picked => LogType::InvoiceStatusPicked,
+            InvoiceRowStatus::Shipped => LogType::InvoiceStatusShipped,
+            InvoiceRowStatus::Delivered => LogType::InvoiceStatusDelivered,
+            InvoiceRowStatus::Verified => LogType::InvoiceStatusVerified,
+        },
         user_id: Some(SYSTEM_USER_ID.to_string()),
         store_id: Some(store_id),
         record_id: Some(record_id),

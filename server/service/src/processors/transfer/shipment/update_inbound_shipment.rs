@@ -1,9 +1,9 @@
 use repository::{
     InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType,
-    LogType, RepositoryError, StorageConnection,
+    RepositoryError, StorageConnection,
 };
 
-use crate::{invoice::common::get_lines_for_invoice, log::system_log_entry};
+use crate::{invoice::common::get_lines_for_invoice, log::system_invoice_log_entry};
 
 use super::{
     common::generate_inbound_shipment_lines, Operation, ShipmentTransferProcessor,
@@ -88,13 +88,9 @@ impl ShipmentTransferProcessor for UpdateInboundShipmentProcessor {
 
         InvoiceRowRepository::new(connection).upsert_one(&updated_inbound_shipment)?;
 
-        system_log_entry(
+        system_invoice_log_entry(
             connection,
-            match inbound_shipment.invoice_row.status.clone() {
-                InvoiceRowStatus::Delivered => LogType::InvoiceStatusDelivered,
-                InvoiceRowStatus::Verified => LogType::InvoiceStatusVerified,
-                _ => LogType::InvoiceCreated,
-            },
+            outbound_shipment.invoice_row.status.clone(),
             inbound_shipment.invoice_row.store_id.clone(),
             inbound_shipment.invoice_row.id.clone(),
         )?;
