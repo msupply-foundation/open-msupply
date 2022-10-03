@@ -144,7 +144,7 @@ impl<'a> SyncLogger<'a> {
     }
 
     pub(crate) fn error(&mut self, error: &SyncError) -> Result<(), SyncLoggerError> {
-        error!("Error in sync: {}", error);
+        error!("Error in sync: {}", format_error(error));
 
         // Convert to sync log error
 

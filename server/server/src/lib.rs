@@ -115,6 +115,7 @@ pub async fn start_server(
         .sync_settings(&service_context)
         .unwrap();
 
+    // Need to set sync settings in database if they are provided via yaml configurations
     let force_trigger_sync_on_startup = match (database_sync_settings, yaml_sync_settings) {
         // If we are changing sync setting via yaml configurations, need to check against central server
         // to confirm that site is still the same (request_and_set_site_info checks site UUID)
@@ -133,7 +134,8 @@ pub async fn start_server(
                 .settings
                 .update_sync_settings(&service_context, &yaml_sync_settings)
                 .unwrap();
-            false
+            // Settings are set in database -> try syncing on startup
+            true
         }
         (None, Some(yaml_sync_settings)) => {
             info!("Sync settings in configurations and not in database");
@@ -149,9 +151,13 @@ pub async fn start_server(
                 .settings
                 .update_sync_settings(&service_context, &yaml_sync_settings)
                 .unwrap();
+            // Settings are set in database -> try syncing on startup
             true
         }
-        _ => false,
+        // Settings are set in database -> try syncing on startup
+        (Some(_), None) => true,
+        // Settings are not set in database -> don't try syncing on startup
+        (None, None) => false,
     };
 
     // CREATE GRAPHQL SCHEMA
