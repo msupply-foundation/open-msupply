@@ -44,7 +44,7 @@ pub(crate) enum RemotePushError {
     #[error("Problem translation remote records during push")]
     TranslationError(#[from] anyhow::Error),
     #[error("Total remaining sent to server is 0 but integration not started")]
-    IntegrationNotStarter,
+    IntegrationNotStarted,
     #[error("Problem getting active stores on site during remote push")]
     GetActiveStoresOnSiteError(#[from] GetActiveStoresOnSiteError),
     #[error(transparent)]
@@ -155,7 +155,7 @@ impl RemoteDataSynchroniser {
 
             match (response.integration_started, change_logs_total) {
                 (true, 0) => break,
-                (false, 0) => return Err(RemotePushError::IntegrationNotStarter),
+                (false, 0) => return Err(RemotePushError::IntegrationNotStarted),
                 _ => continue,
             };
         }
