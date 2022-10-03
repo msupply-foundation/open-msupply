@@ -92,6 +92,21 @@ fn generate_response_requisition(
     let requisition_number =
         next_number(connection, &NumberRowType::ResponseRequisition, &store_id)?;
 
+    let their_ref = format!(
+        "From request requisition {} ({})",
+        request_requisition_row.requisition_number.to_string(),
+        request_requisition_row
+            .their_reference
+            .clone()
+            .unwrap_or_default()
+    );
+
+    let comment = format!(
+        "From request requisition {} ({})",
+        request_requisition_row.requisition_number.to_string(),
+        request_requisition_row.comment.clone().unwrap_or_default()
+    );
+
     let result = RequisitionRow {
         id: uuid(),
         requisition_number,
@@ -100,14 +115,10 @@ fn generate_response_requisition(
         r#type: RequisitionRowType::Response,
         status: RequisitionRowStatus::New,
         created_datetime: Utc::now().naive_utc(),
-        their_reference: request_requisition_row.their_reference.clone(),
+        their_reference: Some(their_ref),
         max_months_of_stock: request_requisition_row.max_months_of_stock.clone(),
         min_months_of_stock: request_requisition_row.min_months_of_stock.clone(),
-        comment: Some(format!(
-            "Requisition number: {}. {}",
-            requisition_number.to_string(),
-            request_requisition_row.comment.clone().unwrap_or_default()
-        )),
+        comment: Some(comment),
         // 5.
         linked_requisition_id: Some(request_requisition_row.id.clone()),
         expected_delivery_date: request_requisition_row.expected_delivery_date,
@@ -152,17 +163,7 @@ fn generate_response_requisition_lines(
                 available_stock_on_hand,
                 average_monthly_consumption,
                 snapshot_datetime,
-                comment: Some(
-                    [
-                        comment.clone().unwrap_or("".to_string()),
-                        [
-                            "Requisition number",
-                            &request_requisition.requisition_number.to_string(),
-                        ]
-                        .join(": "),
-                    ]
-                    .join(", "),
-                ),
+                comment: comment.clone(),
                 // Default
                 supply_quantity: 0,
             },

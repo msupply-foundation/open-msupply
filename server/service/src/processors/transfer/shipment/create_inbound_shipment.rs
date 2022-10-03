@@ -119,12 +119,17 @@ fn generate_inbound_shipment(
         .as_ref()
         .map(|r| r.requisition_row.id.clone());
 
-    let formatted_comment = format!(
-        "Reference: {}. {}",
+    let formatted_ref = format!(
+        "From invoice number: {} ({})",
+        outbound_shipment_row.invoice_number,
         outbound_shipment_row
             .their_reference
             .clone()
-            .unwrap_or_default(),
+            .unwrap_or_default()
+    );
+
+    let formatted_comment = format!(
+        "Stock transfer ({})",
         outbound_shipment_row.comment.clone().unwrap_or_default()
     );
 
@@ -137,7 +142,7 @@ fn generate_inbound_shipment(
         status,
         requisition_id: request_requisition_id,
         name_store_id: Some(outbound_shipment_row.store_id.clone()),
-        their_reference: outbound_shipment_row.their_reference.clone(),
+        their_reference: Some(formatted_ref),
         // 5.
         linked_invoice_id: Some(outbound_shipment_row.id.clone()),
         created_datetime: Utc::now().naive_utc(),
