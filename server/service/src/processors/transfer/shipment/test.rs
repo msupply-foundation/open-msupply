@@ -189,6 +189,7 @@ impl ShipmentTransferTester {
             r.r#type = InvoiceRowType::OutboundShipment;
             r.status = InvoiceRowStatus::Allocated;
             r.their_reference = Some("some reference".to_string());
+            r.comment = Some("some comment".to_string());
             r.created_datetime = NaiveDate::from_ymd(1970, 1, 1).and_hms_milli(12, 30, 0, 0);
         });
 
@@ -375,15 +376,18 @@ impl ShipmentTransferTester {
         );
         assert_eq!(
             inbound_shipment.their_reference,
-            self.outbound_shipment.their_reference
+            Some("From invoice number: 20 (some reference)".to_string())
         );
         assert_eq!(
             inbound_shipment.transport_reference,
             self.outbound_shipment.transport_reference
         );
+        assert_eq!(
+            inbound_shipment.comment,
+            Some("Stock transfer (some comment)".to_string())
+        );
         assert_eq!(inbound_shipment.colour, None);
         assert_eq!(inbound_shipment.user_id, None);
-        assert_eq!(inbound_shipment.comment, None);
         assert_eq!(inbound_shipment.on_hold, false);
         assert_eq!(inbound_shipment.allocated_datetime, None);
 
