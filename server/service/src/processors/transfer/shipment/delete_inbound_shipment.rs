@@ -69,16 +69,11 @@ impl ShipmentTransferProcessor for DeleteInboundShipmentProcessor {
         // 6.
         InvoiceRowRepository::new(connection).delete(deleted_inbound_shipment_id)?;
 
-        let store_id = match linked_shipment {
-            Some(invoice) => invoice.invoice_row.store_id.clone(),
-            None => "".to_string(),
-        };
-
         system_log_entry(
             connection,
             LogType::InvoiceDeleted,
-            Some(store_id),
-            Some(deleted_inbound_shipment_id.clone()),
+            inbound_shipment.invoice_row.store_id.clone(),
+            deleted_inbound_shipment_id.clone(),
         )?;
 
         let result = format!(

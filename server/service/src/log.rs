@@ -59,15 +59,15 @@ pub fn log_entry(
 pub fn system_log_entry(
     connection: &StorageConnection,
     log_type: LogType,
-    store_id: Option<String>,
-    record_id: Option<String>,
+    store_id: String,
+    record_id: String,
 ) -> Result<(), RepositoryError> {
     let log = &LogRow {
         id: uuid(),
         r#type: log_type,
         user_id: Some(SYSTEM_USER_ID.to_string()),
-        store_id,
-        record_id,
+        store_id: Some(store_id),
+        record_id: Some(record_id),
         datetime: Utc::now().naive_utc(),
     };
 

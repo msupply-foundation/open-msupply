@@ -67,8 +67,8 @@ impl RequisitionTransferProcessor for CreateResponseRequisitionProcessor {
         system_log_entry(
             connection,
             LogType::RequisitionCreated,
-            Some(new_response_requisition.store_id.clone()),
-            Some(new_response_requisition.id.clone()),
+            new_response_requisition.store_id.clone(),
+            new_response_requisition.id.clone(),
         )?;
 
         let requisition_line_row_repository = RequisitionLineRowRepository::new(connection);

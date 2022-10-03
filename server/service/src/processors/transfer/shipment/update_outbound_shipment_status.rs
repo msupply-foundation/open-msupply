@@ -78,8 +78,8 @@ impl ShipmentTransferProcessor for UpdateOutboundShipmentStatusProcessor {
                 InvoiceRowStatus::Verified => LogType::InvoiceStatusVerified,
                 _ => LogType::InvoiceCreated,
             },
-            Some(inbound_shipment.invoice_row.store_id.clone()),
-            Some(outbound_shipment.invoice_row.id.clone()),
+            outbound_shipment.invoice_row.store_id.clone(),
+            outbound_shipment.invoice_row.id.clone(),
         )?;
 
         let result = format!(
