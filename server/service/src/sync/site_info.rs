@@ -18,7 +18,7 @@ use super::api::{SyncApiError, SyncApiV5CreatingError};
 pub enum RequestAndSetSiteInfoError {
     #[error("Api error while requesting site info")]
     RequestSiteInfoError(#[from] SyncApiError),
-    #[error("Database error whie requistin site info")]
+    #[error("Database error while requesting site info")]
     DatabaseError(#[from] RepositoryError),
     #[error("Attempt to change initialised site, UUID does not match: current ({0}) new ({1}")]
     SiteUUIDIsBeingChanged(String, String),
