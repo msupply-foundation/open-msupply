@@ -24,7 +24,7 @@ export const getHostQueries = (sdk: Sdk) => ({
     },
     syncInfo: () => sdk.syncInfo(),
   },
-  // manaulSync is a trigger that returns a string result (don't need to caputre it)
+  // manualSync is a trigger that returns a string result (don't need to capture it)
   manualSync: async () => sdk.manualSync(),
   initialise: async (settings: SyncSettingsInput) => {
     const result = await sdk.initialiseSite({
