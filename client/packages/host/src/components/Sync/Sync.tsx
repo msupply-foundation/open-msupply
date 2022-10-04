@@ -86,7 +86,7 @@ export const Sync: React.FC = () => {
             disabled={false}
             onClick={onManualSync}
           >
-            {t('button.manual-sync')}
+            {t('button.sync-now')}
           </LoadingButton>
         </Row>
       </Grid>
