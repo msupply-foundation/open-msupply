@@ -3,7 +3,10 @@ use repository::{
     StorageConnection,
 };
 
-use crate::{log::system_invoice_log_entry, processors::transfer::shipment::Operation};
+use crate::{
+    log::{log_type_from_invoice_status, system_log_entry},
+    processors::transfer::shipment::Operation,
+};
 
 use super::{ShipmentTransferProcessor, ShipmentTransferProcessorRecord};
 
@@ -71,11 +74,11 @@ impl ShipmentTransferProcessor for UpdateOutboundShipmentStatusProcessor {
 
         InvoiceRowRepository::new(connection).upsert_one(&updated_outbound_shipment)?;
 
-        system_invoice_log_entry(
+        system_log_entry(
             connection,
-            inbound_shipment.invoice_row.status.clone(),
-            outbound_shipment.invoice_row.store_id.clone(),
-            outbound_shipment.invoice_row.id.clone(),
+            log_type_from_invoice_status(&updated_outbound_shipment.status),
+            &updated_outbound_shipment.store_id,
+            &updated_outbound_shipment.id,
         )?;
 
         let result = format!(

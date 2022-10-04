@@ -3,7 +3,10 @@ use repository::{
     RepositoryError, StorageConnection,
 };
 
-use crate::{invoice::common::get_lines_for_invoice, log::system_invoice_log_entry};
+use crate::{
+    invoice::common::get_lines_for_invoice,
+    log::{log_type_from_invoice_status, system_log_entry},
+};
 
 use super::{
     common::generate_inbound_shipment_lines, Operation, ShipmentTransferProcessor,
@@ -88,11 +91,11 @@ impl ShipmentTransferProcessor for UpdateInboundShipmentProcessor {
 
         InvoiceRowRepository::new(connection).upsert_one(&updated_inbound_shipment)?;
 
-        system_invoice_log_entry(
+        system_log_entry(
             connection,
-            outbound_shipment.invoice_row.status.clone(),
-            inbound_shipment.invoice_row.store_id.clone(),
-            inbound_shipment.invoice_row.id.clone(),
+            log_type_from_invoice_status(&updated_inbound_shipment.status),
+            &updated_inbound_shipment.store_id,
+            &updated_inbound_shipment.id,
         )?;
 
         let result = format!(

@@ -35,7 +35,7 @@ pub fn insert_inbound_shipment(
                 generate(connection, &ctx.store_id, &ctx.user_id, input, other_party)?;
             InvoiceRowRepository::new(connection).upsert_one(&new_invoice)?;
 
-            log_entry(&ctx, LogType::InvoiceCreated, new_invoice.id.clone())?;
+            log_entry(&ctx, LogType::InvoiceCreated, &new_invoice.id)?;
 
             get_invoice(ctx, None, &new_invoice.id)
                 .map_err(|error| OutError::DatabaseError(error))?

@@ -41,7 +41,7 @@ pub fn delete_outbound_shipment(
                 })?;
             }
             // End TODO
-            log_entry(&ctx, LogType::InvoiceDeleted, id.clone())?;
+            log_entry(&ctx, LogType::InvoiceDeleted, &id)?;
 
             match InvoiceRowRepository::new(&connection).delete(&id) {
                 Ok(_) => Ok(id.clone()),

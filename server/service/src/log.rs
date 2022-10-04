@@ -33,7 +33,7 @@ pub fn get_logs(
 pub fn log_entry(
     ctx: &ServiceContext,
     log_type: LogType,
-    record_id: String,
+    record_id: &str,
 ) -> Result<(), RepositoryError> {
     let log = &LogRow {
         id: uuid(),
@@ -48,7 +48,7 @@ pub fn log_entry(
         } else {
             None
         },
-        record_id: Some(record_id),
+        record_id: Some(record_id.to_string()),
         datetime: Utc::now().naive_utc(),
     };
 
@@ -82,44 +82,33 @@ pub fn log_entry_without_record(
 pub fn system_log_entry(
     connection: &StorageConnection,
     log_type: LogType,
-    store_id: String,
-    record_id: String,
+    store_id: &str,
+    record_id: &str,
 ) -> Result<(), RepositoryError> {
     let log = &LogRow {
         id: uuid(),
         r#type: log_type,
         user_id: Some(SYSTEM_USER_ID.to_string()),
-        store_id: Some(store_id),
-        record_id: Some(record_id),
+        store_id: Some(store_id.to_string()),
+        record_id: Some(record_id.to_string()),
         datetime: Utc::now().naive_utc(),
     };
 
     Ok(LogRowRepository::new(&connection).insert_one(log)?)
 }
 
-pub fn system_invoice_log_entry(
-    connection: &StorageConnection,
-    status: InvoiceRowStatus,
-    store_id: String,
-    record_id: String,
-) -> Result<(), RepositoryError> {
-    let log = &LogRow {
-        id: uuid(),
-        r#type: match status {
-            InvoiceRowStatus::New => LogType::InvoiceCreated,
-            InvoiceRowStatus::Allocated => LogType::InvoiceStatusAllocated,
-            InvoiceRowStatus::Picked => LogType::InvoiceStatusPicked,
-            InvoiceRowStatus::Shipped => LogType::InvoiceStatusShipped,
-            InvoiceRowStatus::Delivered => LogType::InvoiceStatusDelivered,
-            InvoiceRowStatus::Verified => LogType::InvoiceStatusVerified,
-        },
-        user_id: Some(SYSTEM_USER_ID.to_string()),
-        store_id: Some(store_id),
-        record_id: Some(record_id),
-        datetime: Utc::now().naive_utc(),
-    };
+pub fn log_type_from_invoice_status(status: &InvoiceRowStatus) -> LogType {
+    use InvoiceRowStatus as from;
+    use LogType as to;
 
-    Ok(LogRowRepository::new(&connection).insert_one(log)?)
+    match status {
+        from::New => to::InvoiceCreated,
+        from::Allocated => to::InvoiceStatusAllocated,
+        from::Picked => to::InvoiceStatusPicked,
+        from::Shipped => to::InvoiceStatusShipped,
+        from::Delivered => to::InvoiceStatusDelivered,
+        from::Verified => to::InvoiceStatusVerified,
+    }
 }
 
 #[cfg(test)]
@@ -137,7 +126,7 @@ mod test {
     use super::get_logs;
 
     #[actix_rt::test]
-    async fn invoice_log() {
+    async fn invoice_log_status() {
         let ServiceTestContext {
             service_provider,
             connection_manager,

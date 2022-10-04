@@ -5,10 +5,7 @@ use repository::{
 };
 use util::uuid::uuid;
 
-use crate::{
-    log::{system_invoice_log_entry, system_log_entry},
-    number::next_number,
-};
+use crate::{log::system_log_entry, number::next_number};
 
 use super::{
     common::generate_inbound_shipment_lines, Operation, ShipmentTransferProcessor,
@@ -84,16 +81,10 @@ impl ShipmentTransferProcessor for CreateInboundShipmentProcessor {
         system_log_entry(
             connection,
             LogType::InvoiceCreated,
-            new_inbound_shipment.store_id.clone(),
-            new_inbound_shipment.id.clone(),
+            &new_inbound_shipment.store_id,
+            &new_inbound_shipment.id,
         )?;
 
-        system_invoice_log_entry(
-            connection,
-            outbound_shipment.invoice_row.status.clone(),
-            new_inbound_shipment.store_id.clone(),
-            new_inbound_shipment.id.clone(),
-        )?;
         println!("{:?}", outbound_shipment.invoice_row.status.clone());
 
         let invoice_line_repository = InvoiceLineRowRepository::new(connection);

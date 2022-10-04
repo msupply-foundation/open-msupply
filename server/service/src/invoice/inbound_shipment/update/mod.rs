@@ -1,7 +1,6 @@
-use crate::invoice::check_status_change;
-use crate::log::log_entry;
+use crate::log::{log_entry, log_type_from_invoice_status};
 use crate::{invoice::query::get_invoice, service_provider::ServiceContext, WithDBError};
-use repository::{Invoice, LogType};
+use repository::Invoice;
 use repository::{
     InvoiceLineRowRepository, InvoiceRowRepository, InvoiceRowStatus, RepositoryError,
     StockLineRowRepository,
@@ -42,8 +41,8 @@ pub fn update_inbound_shipment(
     let invoice = ctx
         .connection
         .transaction_sync(|connection| {
-            let (invoice, other_party) = validate(connection, &ctx.store_id, &patch)?;
-            let status_changed = check_status_change(&invoice, patch.full_status());
+            let (invoice, other_party, status_changed) =
+                validate(connection, &ctx.store_id, &patch)?;
             let GenerateResult {
                 batches_to_update,
                 update_invoice,
@@ -78,8 +77,8 @@ pub fn update_inbound_shipment(
             if status_changed {
                 log_entry(
                     &ctx,
-                    log_type_from_status(update_invoice.status),
-                    update_invoice.id.clone(),
+                    log_type_from_invoice_status(&update_invoice.status),
+                    &update_invoice.id,
                 )?;
             }
 
@@ -145,14 +144,6 @@ impl UpdateInboundShipment {
             Some(status) => Some(status.full_status()),
             None => None,
         }
-    }
-}
-
-fn log_type_from_status(status: InvoiceRowStatus) -> LogType {
-    match status {
-        InvoiceRowStatus::Delivered => LogType::InvoiceStatusDelivered,
-        InvoiceRowStatus::Verified => LogType::InvoiceStatusVerified,
-        _ => LogType::InvoiceCreated, // shouldn't happen
     }
 }
 

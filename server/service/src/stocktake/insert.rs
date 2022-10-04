@@ -93,7 +93,7 @@ pub fn insert_stocktake(
             let new_stocktake = generate(connection, &ctx.store_id, &ctx.user_id, input)?;
             StocktakeRowRepository::new(&connection).upsert_one(&new_stocktake)?;
 
-            log_entry(&ctx, LogType::StocktakeCreated, new_stocktake.id.clone())?;
+            log_entry(&ctx, LogType::StocktakeCreated, &new_stocktake.id)?;
             let stocktake = get_stocktake(ctx, new_stocktake.id)?;
             stocktake.ok_or(InsertStocktakeError::InternalError(
                 "Failed to read the just inserted stocktake!".to_string(),

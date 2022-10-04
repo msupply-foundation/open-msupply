@@ -4,7 +4,6 @@ use crate::{
 use chrono::NaiveDate;
 use repository::{
     LogType, RepositoryError, Requisition, RequisitionLineRowRepository, RequisitionRowRepository,
-    RequisitionRowStatus,
 };
 
 mod generate;
@@ -61,8 +60,7 @@ pub fn update_request_requisition(
     let requisition = ctx
         .connection
         .transaction_sync(|connection| {
-            let requisition_row = validate(connection, &ctx.store_id, &input)?;
-            let status_changed = requisition_row.status != RequisitionRowStatus::Sent;
+            let (requisition_row, status_changed) = validate(connection, &ctx.store_id, &input)?;
             let (updated_requisition, update_requisition_line_rows) =
                 generate(connection, requisition_row, input.clone())?;
             RequisitionRowRepository::new(&connection).upsert_one(&updated_requisition)?;
@@ -77,7 +75,7 @@ pub fn update_request_requisition(
                 log_entry(
                     &ctx,
                     LogType::RequisitionStatusSent,
-                    updated_requisition.id.clone(),
+                    &updated_requisition.id,
                 )?;
             }
 
