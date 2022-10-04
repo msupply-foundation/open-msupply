@@ -10,7 +10,8 @@ mod test_update {
         },
         requisition_row::RequisitionRowStatus,
         test_db::{setup_all, setup_all_with_data},
-        NameRow, NameStoreJoinRow, RequisitionLineRowRepository, RequisitionRowRepository,
+        LogRowRepository, LogType, NameRow, NameStoreJoinRow, RequisitionLineRowRepository,
+        RequisitionRowRepository,
     };
     use util::{inline_edit, inline_init};
 
@@ -194,6 +195,14 @@ mod test_update {
 
         let sent_datetime = updated_row.sent_datetime.unwrap();
         assert!(sent_datetime > before_update && sent_datetime < after_update);
+
+        let log = LogRowRepository::new(&connection)
+            .find_many_by_record_id(&updated_row.id)
+            .unwrap()
+            .into_iter()
+            .find(|l| l.r#type == LogType::RequisitionStatusSent)
+            .unwrap();
+        assert_eq!(log.r#type, LogType::RequisitionStatusSent);
 
         // Recalculate stock
 

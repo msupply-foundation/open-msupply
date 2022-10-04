@@ -44,7 +44,8 @@ pub fn update_response_requisition(
     let requisition = ctx
         .connection
         .transaction_sync(|connection| {
-            let (requisition_row, status_changed) = validate(connection, &ctx.store_id, &input)?;
+            let requisition_row = validate(connection, &ctx.store_id, &input)?;
+            let status_changed = requisition_row.status != RequisitionRowStatus::Finalised;
             let updated_requisition =
                 generate(&ctx.user_id, requisition_row.clone(), input.clone());
             RequisitionRowRepository::new(&connection).upsert_one(&updated_requisition)?;
@@ -72,7 +73,7 @@ pub fn validate(
     connection: &StorageConnection,
     store_id: &str,
     input: &UpdateResponseRequisition,
-) -> Result<(RequisitionRow, bool), OutError> {
+) -> Result<RequisitionRow, OutError> {
     let requisition_row = check_requisition_exists(connection, &input.id)?
         .ok_or(OutError::RequisitionDoesNotExist)?;
 
@@ -88,9 +89,7 @@ pub fn validate(
         return Err(OutError::CannotEditRequisition);
     }
 
-    let status_changed = requisition_row.status != RequisitionRowStatus::Finalised;
-
-    Ok((requisition_row, status_changed))
+    Ok(requisition_row)
 }
 
 pub fn generate(
@@ -141,7 +140,7 @@ mod test_update {
         },
         requisition_row::{RequisitionRow, RequisitionRowStatus},
         test_db::setup_all,
-        RequisitionRowRepository,
+        LogRowRepository, LogType, RequisitionRowRepository,
     };
 
     use crate::{
@@ -276,6 +275,14 @@ mod test_update {
         assert_eq!(their_reference, Some("new their_reference".to_owned()));
         assert_eq!(comment, Some("new comment".to_owned()));
         assert_eq!(status, RequisitionRowStatus::Finalised);
+
+        let log = LogRowRepository::new(&connection)
+            .find_many_by_record_id(&id)
+            .unwrap()
+            .into_iter()
+            .find(|l| l.r#type == LogType::RequisitionStatusFinalised)
+            .unwrap();
+        assert_eq!(log.r#type, LogType::RequisitionStatusFinalised);
 
         let finalised_datetime = finalised_datetime.unwrap();
         assert!(finalised_datetime > before_update && finalised_datetime < after_update);

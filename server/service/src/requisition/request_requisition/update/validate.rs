@@ -12,7 +12,7 @@ pub fn validate(
     connection: &StorageConnection,
     store_id: &str,
     input: &UpdateRequestRequisition,
-) -> Result<(RequisitionRow, bool), OutError> {
+) -> Result<RequisitionRow, OutError> {
     let requisition_row = check_requisition_exists(connection, &input.id)?
         .ok_or(OutError::RequisitionDoesNotExist)?;
 
@@ -29,7 +29,7 @@ pub fn validate(
     }
 
     let other_party_id = match &input.other_party_id {
-        None => return Ok((requisition_row, false)),
+        None => return Ok(requisition_row),
         Some(other_party_id) => other_party_id,
     };
 
@@ -52,7 +52,5 @@ pub fn validate(
         .store_id()
         .ok_or(OutError::OtherPartyIsNotAStore)?;
 
-    let status_changed = requisition_row.status != RequisitionRowStatus::Sent;
-
-    Ok((requisition_row, status_changed))
+    Ok(requisition_row)
 }
