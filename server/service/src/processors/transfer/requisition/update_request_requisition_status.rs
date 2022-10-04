@@ -71,8 +71,8 @@ impl RequisitionTransferProcessor for UpdateRequestRequstionStatusProcessor {
         system_log_entry(
             connection,
             LogType::RequisitionStatusFinalised,
-            updated_request_requisition.store_id.clone(),
-            updated_request_requisition.id.clone(),
+            &updated_request_requisition.store_id,
+            &updated_request_requisition.id,
         )?;
 
         let result = format!(

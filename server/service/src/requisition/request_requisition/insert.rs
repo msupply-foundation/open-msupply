@@ -53,11 +53,7 @@ pub fn insert_request_requisition(
             let new_requisition = generate(connection, &ctx.store_id, &ctx.user_id, input)?;
             RequisitionRowRepository::new(&connection).upsert_one(&new_requisition)?;
 
-            log_entry(
-                &ctx,
-                LogType::RequisitionCreated,
-                new_requisition.id.clone(),
-            )?;
+            log_entry(&ctx, LogType::RequisitionCreated, &new_requisition.id)?;
 
             get_requisition(ctx, None, &new_requisition.id)
                 .map_err(|error| OutError::DatabaseError(error))?

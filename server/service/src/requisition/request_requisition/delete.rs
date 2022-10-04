@@ -64,7 +64,7 @@ pub fn delete_request_requisition(
                 })?;
             }
             // End TODO
-            log_entry(&ctx, LogType::RequisitionDeleted, input.id.clone())?;
+            log_entry(&ctx, LogType::RequisitionDeleted, &input.id)?;
 
             match RequisitionRowRepository::new(&connection).delete(&input.id) {
                 Ok(_) => Ok(input.id.clone()),

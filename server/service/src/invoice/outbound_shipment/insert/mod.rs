@@ -49,7 +49,7 @@ pub fn insert_outbound_shipment(
 
             InvoiceRowRepository::new(&connection).upsert_one(&new_invoice)?;
 
-            log_entry(&ctx, LogType::InvoiceCreated, new_invoice.id.clone())?;
+            log_entry(&ctx, LogType::InvoiceCreated, &new_invoice.id)?;
 
             get_invoice(ctx, None, &new_invoice.id)
                 .map_err(|error| OutError::DatabaseError(error))?

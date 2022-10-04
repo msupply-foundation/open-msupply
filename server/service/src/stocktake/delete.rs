@@ -80,7 +80,7 @@ pub fn delete_stocktake(
                 })?;
             }
             // End TODO
-            log_entry(&ctx, LogType::StocktakeDeleted, stocktake_id.clone())?;
+            log_entry(&ctx, LogType::StocktakeDeleted, &stocktake_id)?;
 
             StocktakeRowRepository::new(&connection).delete(&stocktake_id)?;
             Ok(())

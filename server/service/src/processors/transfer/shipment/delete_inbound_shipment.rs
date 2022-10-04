@@ -58,8 +58,9 @@ impl ShipmentTransferProcessor for DeleteInboundShipmentProcessor {
         }
 
         // Execute
-        let deleted_inbound_shipment_id = &inbound_shipment.invoice_row.id;
-        let deleted_inbound_lines = get_lines_for_invoice(connection, deleted_inbound_shipment_id)?;
+        let deleted_inbound_shipment = inbound_shipment.invoice_row.clone();
+        let deleted_inbound_lines =
+            get_lines_for_invoice(connection, &deleted_inbound_shipment.id)?;
 
         let invoice_line_repository = InvoiceLineRowRepository::new(connection);
 
@@ -67,18 +68,18 @@ impl ShipmentTransferProcessor for DeleteInboundShipmentProcessor {
             invoice_line_repository.delete(&line.invoice_line_row.id)?;
         }
         // 6.
-        InvoiceRowRepository::new(connection).delete(deleted_inbound_shipment_id)?;
+        InvoiceRowRepository::new(connection).delete(&deleted_inbound_shipment.id)?;
 
         system_log_entry(
             connection,
             LogType::InvoiceDeleted,
-            inbound_shipment.invoice_row.store_id.clone(),
-            deleted_inbound_shipment_id.clone(),
+            &deleted_inbound_shipment.store_id,
+            &deleted_inbound_shipment.id,
         )?;
 
         let result = format!(
             "shipment ({}) lines ({:?})",
-            deleted_inbound_shipment_id,
+            deleted_inbound_shipment.id,
             deleted_inbound_lines
                 .into_iter()
                 .map(|r| r.invoice_line_row.id),
