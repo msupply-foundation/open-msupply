@@ -183,29 +183,29 @@ fn get_initialisation_sync_status_tester(service_provider: Arc<ServiceProvider>)
                         assert_between!(pull_central.started, previous_datetime, now);
                         assert!(pull_central.finished.is_none());
 
-                        assert_eq!(pull_central.done_progress, None);
-                        assert_eq!(pull_central.total_progress, None);
+                        assert_eq!(pull_central.done, None);
+                        assert_eq!(pull_central.total, None);
 
                         response_record.data[0].cursor = 1;
                         response_record
                     }
                     1 => {
-                        assert_eq!(pull_central.done_progress, Some(1));
-                        assert_eq!(pull_central.total_progress, Some(3));
+                        assert_eq!(pull_central.done, Some(1));
+                        assert_eq!(pull_central.total, Some(3));
 
                         response_record.data[0].cursor = 2;
                         response_record
                     }
                     2 => {
-                        assert_eq!(pull_central.done_progress, Some(2));
-                        assert_eq!(pull_central.total_progress, Some(3));
+                        assert_eq!(pull_central.done, Some(2));
+                        assert_eq!(pull_central.total, Some(3));
 
                         response_record.data[0].cursor = 3;
                         response_record
                     }
                     3 => {
-                        assert_eq!(pull_central.done_progress, Some(3));
-                        assert_eq!(pull_central.total_progress, Some(3));
+                        assert_eq!(pull_central.done, Some(3));
+                        assert_eq!(pull_central.total, Some(3));
 
                         response_record.data = vec![];
                         response_record
@@ -253,29 +253,29 @@ fn get_initialisation_sync_status_tester(service_provider: Arc<ServiceProvider>)
                         assert_between!(pull_remote.started, previous_datetime, now);
                         assert!(pull_remote.finished.is_none());
 
-                        assert_eq!(pull_remote.done_progress, None);
-                        assert_eq!(pull_remote.total_progress, None);
+                        assert_eq!(pull_remote.done, None);
+                        assert_eq!(pull_remote.total, None);
 
                         response_record.queue_length = 3;
                         response_record
                     }
                     1 => {
-                        assert_eq!(pull_remote.done_progress, Some(1));
-                        assert_eq!(pull_remote.total_progress, Some(3));
+                        assert_eq!(pull_remote.done, Some(1));
+                        assert_eq!(pull_remote.total, Some(3));
 
                         response_record.queue_length = 2;
                         response_record
                     }
                     2 => {
-                        assert_eq!(pull_remote.done_progress, Some(2));
-                        assert_eq!(pull_remote.total_progress, Some(3));
+                        assert_eq!(pull_remote.done, Some(2));
+                        assert_eq!(pull_remote.total, Some(3));
 
                         response_record.queue_length = 1;
                         response_record
                     }
                     3 => {
-                        assert_eq!(pull_remote.done_progress, Some(3));
-                        assert_eq!(pull_remote.total_progress, Some(3));
+                        assert_eq!(pull_remote.done, Some(3));
+                        assert_eq!(pull_remote.total, Some(3));
 
                         response_record.queue_length = 0;
                         response_record.data = vec![];
@@ -375,26 +375,26 @@ fn get_push_and_error_sync_status_tester(service_provider: Arc<ServiceProvider>)
                         assert_between!(push_status.started, previous_datetime, now);
                         assert!(push_status.finished.is_none());
 
-                        assert_eq!(push_status.done_progress, Some(0));
-                        assert_eq!(push_status.total_progress, Some(3));
+                        assert_eq!(push_status.done, Some(0));
+                        assert_eq!(push_status.total, Some(3));
 
                         false
                     }
                     1 => {
-                        assert_eq!(push_status.done_progress, Some(1));
-                        assert_eq!(push_status.total_progress, Some(3));
+                        assert_eq!(push_status.done, Some(1));
+                        assert_eq!(push_status.total, Some(3));
 
                         false
                     }
                     2 => {
-                        assert_eq!(push_status.done_progress, Some(2));
-                        assert_eq!(push_status.total_progress, Some(3));
+                        assert_eq!(push_status.done, Some(2));
+                        assert_eq!(push_status.total, Some(3));
 
                         false
                     }
                     3 => {
-                        assert_eq!(push_status.done_progress, Some(3));
-                        assert_eq!(push_status.total_progress, Some(3));
+                        assert_eq!(push_status.done, Some(3));
+                        assert_eq!(push_status.total, Some(3));
 
                         true
                     }

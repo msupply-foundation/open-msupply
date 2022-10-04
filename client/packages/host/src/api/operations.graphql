@@ -55,8 +55,8 @@ fragment SyncStatusWithProgress on SyncStatusWithProgressNode {
   __typename
   finished
   started
-  doneProgress
-  totalProgress
+  done
+  total
 }
 
 query syncStatus {
