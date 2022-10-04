@@ -59,8 +59,7 @@ export function mapSyncError(
 ): ErrorWithDetailsProps {
   const errorMapping: { [key in SyncErrorVariant]: LocaleKey } = {
     [SyncErrorVariant.ConnectionError]: 'error.connection-error',
-    [SyncErrorVariant.SiteUuidIsBeingChanged]:
-      'error.site-uuid-is-being-changed',
+    [SyncErrorVariant.SiteUuidIsBeingChanged]: 'error.site-mismatch',
     [SyncErrorVariant.HardwareIdMismatch]: 'error.site-incorrect-hardware-id',
     [SyncErrorVariant.IncorrectPassword]: 'error.site-incorrect-password',
     [SyncErrorVariant.SiteAuthTimeout]: 'error.site-auth-timeout',
