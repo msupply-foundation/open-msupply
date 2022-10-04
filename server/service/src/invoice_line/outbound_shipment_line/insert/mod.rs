@@ -12,7 +12,7 @@ pub struct InsertOutboundShipmentLine {
     pub invoice_id: String,
     pub item_id: String,
     pub stock_line_id: String,
-    pub number_of_packs: u32,
+    pub number_of_packs: f64,
     pub total_before_tax: Option<f64>,
     pub tax: Option<f64>,
 }
@@ -135,7 +135,7 @@ mod test {
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
                         .invoice_id
                         .clone();
-                    r.number_of_packs = 1;
+                    r.number_of_packs = 1.0;
                     r.stock_line_id = mock_item_b_lines()[0].id.clone();
                 }),
             ),
@@ -150,7 +150,7 @@ mod test {
                     r.id = "new outbound shipment line id".to_string();
                     r.invoice_id = "new invoice id".to_string();
                     r.item_id = mock_item_b_lines()[0].item_id.clone();
-                    r.number_of_packs = 1;
+                    r.number_of_packs = 1.0;
                     r.stock_line_id = mock_item_b_lines()[0].id.clone();
                 }),
             ),
@@ -164,7 +164,7 @@ mod test {
                 inline_init(|r: &mut InsertOutboundShipmentLine| {
                     r.id = "new outbound line id".to_string();
                     r.invoice_id = "invalid".to_string();
-                    r.number_of_packs = 1;
+                    r.number_of_packs = 1.0;
                 }),
             ),
             Err(ServiceError::StockLineNotFound)
@@ -179,7 +179,7 @@ mod test {
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
                         .invoice_id
                         .clone();
-                    r.number_of_packs = 0;
+                    r.number_of_packs = 0.0;
                 }),
             ),
             Err(ServiceError::NumberOfPacksBelowOne)
@@ -194,7 +194,7 @@ mod test {
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
                         .invoice_id
                         .clone();
-                    r.number_of_packs = 1;
+                    r.number_of_packs = 1.0;
                     r.stock_line_id = mock_stock_line_location_is_on_hold()[0].id.clone();
                     r.item_id = mock_stock_line_location_is_on_hold()[0].item_id.clone();
                 }),
@@ -211,7 +211,7 @@ mod test {
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
                         .invoice_id
                         .clone();
-                    r.number_of_packs = 1;
+                    r.number_of_packs = 1.0;
                     r.stock_line_id = mock_stock_line_a().id.clone();
                     r.item_id = mock_item_b().id.clone();
                 }),
@@ -228,7 +228,7 @@ mod test {
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
                         .invoice_id
                         .clone();
-                    r.number_of_packs = 1;
+                    r.number_of_packs = 1.0;
                     r.stock_line_id = mock_stock_line_on_hold()[0].id.clone();
                     r.item_id = mock_stock_line_on_hold()[0].item_id.clone();
                 }),
@@ -245,7 +245,7 @@ mod test {
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
                         .invoice_id
                         .clone();
-                    r.number_of_packs = 40;
+                    r.number_of_packs = 40.0;
                     r.stock_line_id = mock_stock_line_a().id.clone();
                     r.item_id = mock_stock_line_a().item_id.clone();
                 }),
@@ -264,7 +264,7 @@ mod test {
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
                         .invoice_id
                         .clone();
-                    r.number_of_packs = 8;
+                    r.number_of_packs = 8.0;
                     r.stock_line_id = mock_stock_line_si_d()[0].id.clone();
                     r.item_id = mock_stock_line_a().item_id.clone();
                 }),
@@ -284,7 +284,7 @@ mod test {
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
                         .invoice_id
                         .clone();
-                    r.number_of_packs = 1;
+                    r.number_of_packs = 1.0;
                     r.stock_line_id = mock_stock_line_si_d()[0].id.clone();
                     r.item_id = mock_stock_line_a().item_id.clone();
                 }),
@@ -334,7 +334,7 @@ mod test {
                         .clone();
                     r.stock_line_id = mock_stock_line_si_d()[0].id.clone();
                     r.item_id = mock_stock_line_si_d()[0].item_id.clone();
-                    r.number_of_packs = 1;
+                    r.number_of_packs = 1.0;
                     r.total_before_tax = Some(1.0);
                 }),
             )
@@ -351,7 +351,7 @@ mod test {
                 u.id = "new outbound line id".to_string();
                 u.item_id = mock_item_a().id.clone();
                 u.pack_size = 1;
-                u.number_of_packs = 1;
+                u.number_of_packs = 1.0;
                 u
             })
         );
@@ -385,7 +385,7 @@ mod test {
                         .clone();
                     r.stock_line_id = mock_stock_line_a().id.clone();
                     r.item_id = mock_stock_line_a().item_id.clone();
-                    r.number_of_packs = 2;
+                    r.number_of_packs = 2.0;
                     r.total_before_tax = Some(1.0);
                 }),
             )
@@ -425,7 +425,7 @@ mod test {
                         .clone();
                     r.stock_line_id = mock_item_b_lines()[0].id.clone();
                     r.item_id = mock_item_b_lines()[0].item_id.clone();
-                    r.number_of_packs = 2;
+                    r.number_of_packs = 2.0;
                     r.total_before_tax = Some(1.0);
                 }),
             )

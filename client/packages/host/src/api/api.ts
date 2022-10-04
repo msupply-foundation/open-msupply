@@ -6,7 +6,7 @@ import {
   SyncErrorVariant,
 } from '@openmsupply-client/common';
 
-import { Sdk, SyncErrorsFragment } from './operations.generated';
+import { Sdk, SyncErrorFragment } from './operations.generated';
 
 export const getHostQueries = (sdk: Sdk) => ({
   get: {
@@ -57,20 +57,12 @@ function cleanSyncSettings({
 
 export function mapSyncError(
   t: TypedTFunction<LocaleKey>,
-  error: SyncErrorsFragment,
+  error: SyncErrorFragment,
   defaultKey?: LocaleKey
 ): ErrorWithDetailsProps {
-  if (error.__typename === 'UnknownSyncError') {
-    return {
-      error: defaultKey ? t(defaultKey) : t('error.unknown-sync-error'),
-      details: error.fullError,
-    };
-  }
-
   const errorMapping: { [key in SyncErrorVariant]: LocaleKey } = {
     [SyncErrorVariant.ConnectionError]: 'error.connection-error',
-    [SyncErrorVariant.SiteUuidIsBeingChanged]:
-      'error.site-uuid-is-being-changed',
+    [SyncErrorVariant.SiteUuidIsBeingChanged]: 'error.site-mismatch',
     [SyncErrorVariant.HardwareIdMismatch]: 'error.site-incorrect-hardware-id',
     [SyncErrorVariant.IncorrectPassword]: 'error.site-incorrect-password',
     [SyncErrorVariant.SiteAuthTimeout]: 'error.site-auth-timeout',
@@ -79,10 +71,11 @@ export function mapSyncError(
     [SyncErrorVariant.IntegrationTimeoutReached]:
       'error.integration-timeout-reached',
     [SyncErrorVariant.InvalidUrl]: 'error.invalid-url',
+    [SyncErrorVariant.Unknown]: defaultKey || 'error.unknown-sync-error',
   };
 
   return {
-    error: t(errorMapping[error.errorVariant]),
+    error: t(errorMapping[error.variant]),
     details: error.fullError,
   };
 }

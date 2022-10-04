@@ -164,6 +164,7 @@
   "label.target-stock": "Target Stock",
   "label.tax": "Tax",
   "label.time": "Time",
+  "label.toggle-password-visibility": "Toggle password visibility",
   "label.total": "Total",
   "label.type": "Type",
   "label.unit": "Unit",
@@ -210,5 +211,6 @@
   "sync-status.pull-remote": "Pull Remote",
   "sync-status.push": "Push",
   "sync-status.integrate": "Integrate",
-  "table.show-columns": "Show / hide columns"
+  "table.show-columns": "Show / hide columns",
+  "warning.caps-lock": "Warning: Caps lock is on"
 }

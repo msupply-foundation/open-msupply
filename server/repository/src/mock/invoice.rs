@@ -283,7 +283,7 @@ pub fn mock_outbound_shipment_line_a() -> InvoiceLineRow {
         r.total_before_tax = 0.0;
         r.total_after_tax = 0.0;
         r.r#type = InvoiceLineRowType::StockOut;
-        r.number_of_packs = 0;
+        r.number_of_packs = 0.0;
     })
 }
 

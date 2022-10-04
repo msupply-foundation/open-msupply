@@ -6,14 +6,14 @@ use graphql_core::{
 };
 use service::auth::{Resource, ResourceAccessRequest};
 
-use crate::{queries::sync_settings::SyncSettingsNode, sync_api_error::SetSyncSettingErrorNode};
+use crate::{queries::sync_settings::SyncSettingsNode, sync_api_error::SyncErrorNode};
 
 use super::common::SyncSettingsInput;
 
 #[derive(Union)]
 pub enum UpdateSyncSettingsResponse {
     Response(SyncSettingsNode),
-    Error(SetSyncSettingErrorNode),
+    Error(SyncErrorNode),
 }
 
 pub async fn update_sync_settings(
@@ -45,13 +45,13 @@ pub async fn update_sync_settings(
             .request_and_set_site_info(&service_provider, &sync_settings)
             .await
         {
-            return Ok(UpdateSyncSettingsResponse::Error(
-                SetSyncSettingErrorNode::map_error(error)?,
-            ));
+            return Ok(UpdateSyncSettingsResponse::Error(SyncErrorNode::map_error(
+                error,
+            )?));
         }
     }
 
-    // request and set site info above should validate settings, can consider all error in update_sync_settings as interna lerror
+    // request and set site info above should validate settings, can consider all errors in update_sync_settings as internal errors
     service_provider
         .settings
         .update_sync_settings(&service_context, &sync_settings)

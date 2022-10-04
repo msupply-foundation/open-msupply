@@ -52,7 +52,7 @@ pub fn mock_item_stats() -> MockData {
     })
     .join(inline_edit(&consumption_points(), |mut u| {
         u.invoices[0].picked_datetime = Some(Utc::now().naive_utc() - Duration::days(3));
-        u.invoice_lines[ITEM1_INDEX].number_of_packs = 5;
+        u.invoice_lines[ITEM1_INDEX].number_of_packs = 5.0;
         u.invoice_lines[ITEM1_INDEX].pack_size = 3;
         // Don't want item2 invoice line for 1 month calculation
         u.invoice_lines.remove(ITEM2_INDEX);
@@ -61,23 +61,23 @@ pub fn mock_item_stats() -> MockData {
     .join(inline_edit(&consumption_points(), |mut u| {
         u.invoices[0].picked_datetime =
             Some(Utc::now().naive_utc() - Duration::days((NUMBER_OF_DAYS_IN_A_MONTH + 2.0) as i64));
-        u.invoice_lines[ITEM1_INDEX].number_of_packs = 1000;
-        u.invoice_lines[ITEM2_INDEX].number_of_packs = 30;
+        u.invoice_lines[ITEM1_INDEX].number_of_packs = 1000.0;
+        u.invoice_lines[ITEM2_INDEX].number_of_packs = 30.0;
         u
     }))
     .join(inline_edit(&consumption_points(), |mut u| {
         u.invoices[0].picked_datetime = Some(
             Utc::now().naive_utc() - Duration::days((NUMBER_OF_DAYS_IN_A_MONTH * 3.0 + 1.0) as i64),
         );
-        u.invoice_lines[ITEM1_INDEX].number_of_packs = 100000;
-        u.invoice_lines[ITEM2_INDEX].number_of_packs = 100000;
+        u.invoice_lines[ITEM1_INDEX].number_of_packs = 100000.0;
+        u.invoice_lines[ITEM2_INDEX].number_of_packs = 100000.0;
         u
     }))
     .join(inline_edit(&consumption_points(), |mut u| {
         u.invoices[0].picked_datetime =
             Some(Utc::now().naive_utc() - Duration::days((NUMBER_OF_DAYS_IN_A_MONTH * 2.0) as i64));
         u.invoices[0].store_id = mock_store_b().id;
-        u.invoice_lines[ITEM1_INDEX].number_of_packs = 50;
+        u.invoice_lines[ITEM1_INDEX].number_of_packs = 50.0;
         u
     }))
 }
@@ -115,8 +115,8 @@ pub fn stock_line1() -> StockLineRow {
         r.item_id = item().id;
         r.store_id = mock_store_a().id;
         r.pack_size = 10;
-        r.available_number_of_packs = 1;
-        r.total_number_of_packs = 40;
+        r.available_number_of_packs = 1.0;
+        r.total_number_of_packs = 40.0;
     })
 }
 
@@ -126,9 +126,9 @@ pub fn stock_line2() -> StockLineRow {
         r.id = id.clone();
         r.item_id = item().id;
         r.store_id = mock_store_a().id;
-        r.available_number_of_packs = 20;
+        r.available_number_of_packs = 20.0;
         r.pack_size = 10;
-        r.total_number_of_packs = 40;
+        r.total_number_of_packs = 40.0;
     })
 }
 
@@ -138,9 +138,9 @@ pub fn stock_line3() -> StockLineRow {
         r.id = id.clone();
         r.item_id = item().id;
         r.store_id = mock_store_a().id;
-        r.available_number_of_packs = 10;
+        r.available_number_of_packs = 10.0;
         r.pack_size = 1;
-        r.total_number_of_packs = 40;
+        r.total_number_of_packs = 40.0;
     })
 }
 
@@ -154,9 +154,9 @@ pub fn stock_line_1_store_b() -> StockLineRow {
         r.id = id.clone();
         r.item_id = item().id;
         r.store_id = mock_store_b().id;
-        r.available_number_of_packs = 1;
+        r.available_number_of_packs = 1.0;
         r.pack_size = 10;
-        r.total_number_of_packs = 40;
+        r.total_number_of_packs = 40.0;
     })
 }
 
@@ -180,9 +180,9 @@ pub fn stock_line1_item2() -> StockLineRow {
         r.id = id.clone();
         r.item_id = item2().id;
         r.store_id = mock_store_a().id;
-        r.available_number_of_packs = 11;
+        r.available_number_of_packs = 11.0;
         r.pack_size = 2;
-        r.total_number_of_packs = 40;
+        r.total_number_of_packs = 40.0;
     })
 }
 

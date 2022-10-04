@@ -663,7 +663,7 @@ export type ForeignKeyError = DeleteInboundShipmentLineErrorInterface & DeleteIn
 
 export type FullSyncStatusNode = {
   __typename: 'FullSyncStatusNode';
-  error?: Maybe<SyncErrorInterface>;
+  error?: Maybe<SyncErrorNode>;
   integration?: Maybe<SyncStatusNode>;
   isSyncing: Scalars['Boolean'];
   prepareInitial?: Maybe<SyncStatusNode>;
@@ -697,7 +697,7 @@ export enum InitialisationStatusType {
   PreInitialisation = 'PRE_INITIALISATION'
 }
 
-export type InitialiseSiteResponse = SetSyncSettingErrorNode | SyncSettingsNode;
+export type InitialiseSiteResponse = SyncErrorNode | SyncSettingsNode;
 
 export type InsertErrorInterface = {
   description: Scalars['String'];
@@ -738,7 +738,7 @@ export type InsertInboundShipmentLineInput = {
   invoiceId: Scalars['String'];
   itemId: Scalars['String'];
   locationId?: InputMaybe<Scalars['String']>;
-  numberOfPacks: Scalars['Int'];
+  numberOfPacks: Scalars['Float'];
   packSize: Scalars['Int'];
   sellPricePerPack: Scalars['Float'];
   tax?: InputMaybe<Scalars['Float']>;
@@ -835,7 +835,7 @@ export type InsertOutboundShipmentLineInput = {
   id: Scalars['String'];
   invoiceId: Scalars['String'];
   itemId: Scalars['String'];
-  numberOfPacks: Scalars['Int'];
+  numberOfPacks: Scalars['Float'];
   stockLineId: Scalars['String'];
   tax?: InputMaybe<Scalars['Float']>;
   totalBeforeTax?: InputMaybe<Scalars['Float']>;
@@ -983,7 +983,7 @@ export type InsertStocktakeLineInput = {
   batch?: InputMaybe<Scalars['String']>;
   comment?: InputMaybe<Scalars['String']>;
   costPricePerPack?: InputMaybe<Scalars['Float']>;
-  countedNumberOfPacks?: InputMaybe<Scalars['Int']>;
+  countedNumberOfPacks?: InputMaybe<Scalars['Float']>;
   expiryDate?: InputMaybe<Scalars['NaiveDate']>;
   id: Scalars['String'];
   itemId?: InputMaybe<Scalars['String']>;
@@ -1096,7 +1096,7 @@ export type InvoiceLineNode = {
   locationId?: Maybe<Scalars['String']>;
   locationName?: Maybe<Scalars['String']>;
   note?: Maybe<Scalars['String']>;
-  numberOfPacks: Scalars['Int'];
+  numberOfPacks: Scalars['Float'];
   packSize: Scalars['Int'];
   pricing: PricingNode;
   sellPricePerPack: Scalars['Float'];
@@ -1416,13 +1416,6 @@ export type Logout = {
 };
 
 export type LogoutResponse = Logout;
-
-export type MappedSyncError = SyncErrorInterface & {
-  __typename: 'MappedSyncError';
-  description: Scalars['String'];
-  errorVariant: SyncErrorVariant;
-  fullError: Scalars['String'];
-};
 
 export type MasterListConnector = {
   __typename: 'MasterListConnector';
@@ -2415,7 +2408,7 @@ export type RequisitionLineNode = {
    * supplyQuantity minus all (including unallocated) linked invoice lines numberOfPacks * packSize
    * Only available in response requisition, request requisition returns 0
    */
-  remainingQuantityToSupply: Scalars['Int'];
+  remainingQuantityToSupply: Scalars['Float'];
   /** Quantity requested */
   requestedQuantity: Scalars['Int'];
   /**
@@ -2527,11 +2520,6 @@ export type RequisitionSortInput = {
 
 export type RequisitionsResponse = RequisitionConnector;
 
-export type SetSyncSettingErrorNode = {
-  __typename: 'SetSyncSettingErrorNode';
-  error: SyncErrorInterface;
-};
-
 export type SimpleStringFilterInput = {
   /** Search term must be an exact match (case sensitive) */
   equalTo?: InputMaybe<Scalars['String']>;
@@ -2593,7 +2581,7 @@ export type StockLineIsOnHold = InsertOutboundShipmentLineErrorInterface & Updat
 
 export type StockLineNode = {
   __typename: 'StockLineNode';
-  availableNumberOfPacks: Scalars['Int'];
+  availableNumberOfPacks: Scalars['Float'];
   batch?: Maybe<Scalars['String']>;
   costPricePerPack: Scalars['Float'];
   expiryDate?: Maybe<Scalars['NaiveDate']>;
@@ -2608,7 +2596,7 @@ export type StockLineNode = {
   packSize: Scalars['Int'];
   sellPricePerPack: Scalars['Float'];
   storeId: Scalars['String'];
-  totalNumberOfPacks: Scalars['Int'];
+  totalNumberOfPacks: Scalars['Float'];
 };
 
 export type StockLineResponse = NodeError | StockLineNode;
@@ -2649,7 +2637,7 @@ export type StocktakeLineNode = {
   batch?: Maybe<Scalars['String']>;
   comment?: Maybe<Scalars['String']>;
   costPricePerPack?: Maybe<Scalars['Float']>;
-  countedNumberOfPacks?: Maybe<Scalars['Int']>;
+  countedNumberOfPacks?: Maybe<Scalars['Float']>;
   expiryDate?: Maybe<Scalars['NaiveDate']>;
   id: Scalars['String'];
   item: ItemNode;
@@ -2658,7 +2646,7 @@ export type StocktakeLineNode = {
   note?: Maybe<Scalars['String']>;
   packSize?: Maybe<Scalars['Int']>;
   sellPricePerPack?: Maybe<Scalars['Float']>;
-  snapshotNumberOfPacks: Scalars['Int'];
+  snapshotNumberOfPacks: Scalars['Float'];
   stockLine?: Maybe<StockLineNode>;
   stocktakeId: Scalars['String'];
 };
@@ -2783,21 +2771,23 @@ export type SupplyRequestedQuantityInput = {
 
 export type SupplyRequestedQuantityResponse = RequisitionLineConnector | SupplyRequestedQuantityError;
 
-export type SyncErrorInterface = {
-  description: Scalars['String'];
+export type SyncErrorNode = {
+  __typename: 'SyncErrorNode';
   fullError: Scalars['String'];
+  variant: SyncErrorVariant;
 };
 
 export enum SyncErrorVariant {
-  ConnectionError = 'connectionError',
-  HardwareIdMismatch = 'hardwareIdMismatch',
-  IncorrectPassword = 'incorrectPassword',
-  IntegrationTimeoutReached = 'integrationTimeoutReached',
-  InvalidUrl = 'invalidUrl',
-  SiteAuthTimeout = 'siteAuthTimeout',
-  SiteHasNoStore = 'siteHasNoStore',
-  SiteNameNotFound = 'siteNameNotFound',
-  SiteUuidIsBeingChanged = 'siteUUIDIsBeingChanged'
+  ConnectionError = 'CONNECTION_ERROR',
+  HardwareIdMismatch = 'HARDWARE_ID_MISMATCH',
+  IncorrectPassword = 'INCORRECT_PASSWORD',
+  IntegrationTimeoutReached = 'INTEGRATION_TIMEOUT_REACHED',
+  InvalidUrl = 'INVALID_URL',
+  SiteAuthTimeout = 'SITE_AUTH_TIMEOUT',
+  SiteHasNoStore = 'SITE_HAS_NO_STORE',
+  SiteNameNotFound = 'SITE_NAME_NOT_FOUND',
+  SiteUuidIsBeingChanged = 'SITE_UUID_IS_BEING_CHANGED',
+  Unknown = 'UNKNOWN'
 }
 
 export type SyncSettingsInput = {
@@ -2827,10 +2817,10 @@ export type SyncStatusNode = {
 
 export type SyncStatusWithProgressNode = {
   __typename: 'SyncStatusWithProgressNode';
-  doneProgress?: Maybe<Scalars['Int']>;
+  done?: Maybe<Scalars['Int']>;
   finished?: Maybe<Scalars['NaiveDateTime']>;
   started: Scalars['NaiveDateTime'];
-  totalProgress?: Maybe<Scalars['Int']>;
+  total?: Maybe<Scalars['Int']>;
 };
 
 export type TaxInput = {
@@ -2861,12 +2851,6 @@ export type UniqueValueViolation = InsertLocationErrorInterface & UpdateLocation
   __typename: 'UniqueValueViolation';
   description: Scalars['String'];
   field: UniqueValueKey;
-};
-
-export type UnknownSyncError = SyncErrorInterface & {
-  __typename: 'UnknownSyncError';
-  description: Scalars['String'];
-  fullError: Scalars['String'];
 };
 
 export type UpdateErrorInterface = {
@@ -2908,7 +2892,7 @@ export type UpdateInboundShipmentLineInput = {
   id: Scalars['String'];
   itemId?: InputMaybe<Scalars['String']>;
   locationId?: InputMaybe<Scalars['String']>;
-  numberOfPacks?: InputMaybe<Scalars['Int']>;
+  numberOfPacks?: InputMaybe<Scalars['Float']>;
   packSize?: InputMaybe<Scalars['Int']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']>;
   tax?: InputMaybe<TaxInput>;
@@ -3018,7 +3002,7 @@ export type UpdateOutboundShipmentLineErrorInterface = {
 export type UpdateOutboundShipmentLineInput = {
   id: Scalars['String'];
   itemId?: InputMaybe<Scalars['String']>;
-  numberOfPacks?: InputMaybe<Scalars['Int']>;
+  numberOfPacks?: InputMaybe<Scalars['Float']>;
   stockLineId?: InputMaybe<Scalars['String']>;
   tax?: InputMaybe<TaxInput>;
   totalBeforeTax?: InputMaybe<Scalars['Float']>;
@@ -3221,14 +3205,14 @@ export type UpdateStocktakeLineInput = {
   batch?: InputMaybe<Scalars['String']>;
   comment?: InputMaybe<Scalars['String']>;
   costPricePerPack?: InputMaybe<Scalars['Float']>;
-  countedNumberOfPacks?: InputMaybe<Scalars['Int']>;
+  countedNumberOfPacks?: InputMaybe<Scalars['Float']>;
   expiryDate?: InputMaybe<Scalars['NaiveDate']>;
   id: Scalars['String'];
   locationId?: InputMaybe<Scalars['String']>;
   note?: InputMaybe<Scalars['String']>;
   packSize?: InputMaybe<Scalars['Int']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']>;
-  snapshotNumberOfPacks?: InputMaybe<Scalars['Int']>;
+  snapshotNumberOfPacks?: InputMaybe<Scalars['Float']>;
 };
 
 export type UpdateStocktakeLineResponse = StocktakeLineNode | UpdateStocktakeLineError;
@@ -3247,7 +3231,7 @@ export type UpdateStocktakeResponseWithId = {
   response: UpdateStocktakeResponse;
 };
 
-export type UpdateSyncSettingsResponse = SetSyncSettingErrorNode | SyncSettingsNode;
+export type UpdateSyncSettingsResponse = SyncErrorNode | SyncSettingsNode;
 
 export type UseSuggestedQuantityError = {
   __typename: 'UseSuggestedQuantityError';
