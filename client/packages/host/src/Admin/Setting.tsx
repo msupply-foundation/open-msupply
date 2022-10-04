@@ -17,7 +17,9 @@ export const Setting: React.FC<SettingProps> = ({ component, icon, title }) => {
       <Grid item flexShrink={0} flexGrow={1}>
         <Typography style={{ fontSize: 16 }}>{title}</Typography>
       </Grid>
-      <Grid item>{component}</Grid>
+      <Grid item display="flex" justifyContent="flex-end">
+        {component}
+      </Grid>
     </Grid>
   );
 };

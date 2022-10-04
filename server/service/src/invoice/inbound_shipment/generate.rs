@@ -31,7 +31,7 @@ pub fn generate_empty_invoice_lines(
                     total_after_tax: 0.0,
                     tax: None,
                     r#type: InvoiceLineRowType::StockIn,
-                    number_of_packs: 0,
+                    number_of_packs: 0.0,
                     note: None,
                 });
             }

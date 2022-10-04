@@ -144,7 +144,8 @@ impl RequisitionTransferTester {
             r.status = RequisitionRowStatus::Draft;
             r.created_datetime = NaiveDate::from_ymd(2021, 01, 01).and_hms(0, 0, 0);
             r.sent_datetime = None;
-            r.their_reference = Some(uuid());
+            r.their_reference = Some("some reference".to_string());
+            r.comment = Some("some comment".to_string());
             r.max_months_of_stock = 10.0;
             r.min_months_of_stock = 5.0;
         });
@@ -155,6 +156,7 @@ impl RequisitionTransferTester {
             r.item_id = item1.id.clone();
             r.requested_quantity = 2;
             r.suggested_quantity = 3;
+            r.comment = Some("line comment".to_string());
             r.available_stock_on_hand = 1;
             r.average_monthly_consumption = 1;
             r.snapshot_datetime = Some(NaiveDate::from_ymd(2021, 01, 01).and_hms(1, 0, 0));
@@ -237,7 +239,11 @@ impl RequisitionTransferTester {
         assert_eq!(response_requisition.name_id, self.request_store.name_id);
         assert_eq!(
             response_requisition.their_reference,
-            self.request_requisition.their_reference
+            Some("From request requisition 3 (some reference)".to_string())
+        );
+        assert_eq!(
+            response_requisition.comment,
+            Some("From request requisition 3 (some comment)".to_string())
         );
         assert_eq!(
             response_requisition.max_months_of_stock,
@@ -360,6 +366,7 @@ fn check_line(
         response_line.available_stock_on_hand,
         request_line.available_stock_on_hand
     );
+    assert_eq!(response_line.comment, request_line.comment);
     assert_eq!(
         response_line.average_monthly_consumption,
         request_line.average_monthly_consumption

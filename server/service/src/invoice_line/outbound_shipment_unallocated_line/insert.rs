@@ -11,7 +11,6 @@ use crate::{
     invoice::check_invoice_exists_option,
     invoice_line::validate::{check_item_exists_option, check_line_does_not_exists_new},
     service_provider::ServiceContext,
-    u32_to_i32,
 };
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct InsertOutboundShipmentUnallocatedLine {
@@ -104,7 +103,7 @@ fn generate(
         id,
         invoice_id,
         pack_size: 1,
-        number_of_packs: u32_to_i32(quantity),
+        number_of_packs: quantity as f64,
         item_id,
         item_code: item.code,
         item_name: item.name,
@@ -341,7 +340,7 @@ mod test_insert {
                 invoice_id: invoice_id.clone(),
                 pack_size: 1,
                 r#type: InvoiceLineRowType::UnallocatedStock,
-                number_of_packs: 4,
+                number_of_packs: 4.0,
                 item_id: item.id.clone(),
                 item_name: item.name.clone(),
                 item_code: item.code.clone(),

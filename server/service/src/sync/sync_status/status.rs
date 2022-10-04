@@ -26,8 +26,8 @@ pub struct SyncStatus {
 pub struct SyncStatusWithProgress {
     pub started: NaiveDateTime,
     pub finished: Option<NaiveDateTime>,
-    pub total_progress: Option<u32>,
-    pub done_progress: Option<u32>,
+    pub total: Option<u32>,
+    pub done: Option<u32>,
 }
 
 #[derive(Debug, Clone, PartialEq, Default)]
@@ -106,13 +106,13 @@ fn get_initialisation_status(
         key: SyncLogSortField::DoneDatetime,
         desc: Some(true),
     };
-    let latest_log_sorted_by_done_datetime = SyncLogRepository::new(&ctx.connection)
+    let latest_log_sorted_by_finished_datetime = SyncLogRepository::new(&ctx.connection)
         .query(Pagination::one(), None, Some(sort))?
         .pop();
 
-    let initialisation_status = match latest_log_sorted_by_done_datetime {
+    let initialisation_status = match latest_log_sorted_by_finished_datetime {
         None => InitialisationStatus::PreInitialisation,
-        Some(sync_log) => match sync_log.sync_log_row.done_datetime {
+        Some(sync_log) => match sync_log.sync_log_row.finished_datetime {
             Some(_) => InitialisationStatus::Initialised,
             None => InitialisationStatus::Initialising,
         },
@@ -126,7 +126,7 @@ fn get_initialisation_status(
 /// if synce queue was initialised
 fn is_sync_queue_initialised(ctx: &ServiceContext) -> Result<bool, RepositoryError> {
     let log_with_done_prepare_initial_datetime = SyncLogRepository::new(&ctx.connection)
-        .query_one(SyncLogFilter::new().prepare_initial_done_datetime(
+        .query_one(SyncLogFilter::new().prepare_initial_finished_datetime(
             DatetimeFilter::before_or_equal_to(Utc::now().naive_utc()),
         ))?;
 
@@ -151,60 +151,60 @@ fn get_latest_sync_status(ctx: &ServiceContext) -> Result<Option<FullSyncStatus>
 
     let SyncLogRow {
         started_datetime,
-        done_datetime,
-        prepare_initial_start_datetime,
-        prepare_initial_done_datetime,
-        push_start_datetime,
-        push_done_datetime,
+        finished_datetime,
+        prepare_initial_started_datetime,
+        prepare_initial_finished_datetime,
+        push_started_datetime,
+        push_finished_datetime,
         push_progress_total,
         push_progress_done,
-        pull_central_start_datetime,
-        pull_central_done_datetime,
+        pull_central_started_datetime,
+        pull_central_finished_datetime,
         pull_central_progress_total,
         pull_central_progress_done,
-        pull_remote_start_datetime,
-        pull_remote_done_datetime,
+        pull_remote_started_datetime,
+        pull_remote_finished_datetime,
         pull_remote_progress_total,
         pull_remote_progress_done,
-        integration_start_datetime,
-        integration_done_datetime,
+        integration_started_datetime,
+        integration_finished_datetime,
         error_code: _,
         error_message: _,
         id: _,
     } = sync_log.sync_log_row;
 
     let result = FullSyncStatus {
-        is_syncing: done_datetime.is_none() && error.is_none(),
+        is_syncing: finished_datetime.is_none() && error.is_none(),
         error,
         summary: SyncStatus {
             started: started_datetime,
-            finished: done_datetime,
+            finished: finished_datetime,
         },
-        prepare_initial: prepare_initial_start_datetime.map(|started| SyncStatus {
+        prepare_initial: prepare_initial_started_datetime.map(|started| SyncStatus {
             started,
-            finished: prepare_initial_done_datetime,
+            finished: prepare_initial_finished_datetime,
         }),
-        integration: integration_start_datetime.map(|started| SyncStatus {
+        integration: integration_started_datetime.map(|started| SyncStatus {
             started,
-            finished: integration_done_datetime,
+            finished: integration_finished_datetime,
         }),
-        pull_central: pull_central_start_datetime.map(|started| SyncStatusWithProgress {
+        pull_central: pull_central_started_datetime.map(|started| SyncStatusWithProgress {
             started,
-            finished: pull_central_done_datetime,
-            total_progress: pull_central_progress_total.map(i32_to_u32),
-            done_progress: pull_central_progress_done.map(i32_to_u32),
+            finished: pull_central_finished_datetime,
+            total: pull_central_progress_total.map(i32_to_u32),
+            done: pull_central_progress_done.map(i32_to_u32),
         }),
-        pull_remote: pull_remote_start_datetime.map(|started| SyncStatusWithProgress {
+        pull_remote: pull_remote_started_datetime.map(|started| SyncStatusWithProgress {
             started,
-            finished: pull_remote_done_datetime,
-            total_progress: pull_remote_progress_total.map(i32_to_u32),
-            done_progress: pull_remote_progress_done.map(i32_to_u32),
+            finished: pull_remote_finished_datetime,
+            total: pull_remote_progress_total.map(i32_to_u32),
+            done: pull_remote_progress_done.map(i32_to_u32),
         }),
-        push: push_start_datetime.map(|started| SyncStatusWithProgress {
+        push: push_started_datetime.map(|started| SyncStatusWithProgress {
             started,
-            finished: push_done_datetime,
-            total_progress: push_progress_total.map(i32_to_u32),
-            done_progress: push_progress_done.map(i32_to_u32),
+            finished: push_finished_datetime,
+            total: push_progress_total.map(i32_to_u32),
+            done: push_progress_done.map(i32_to_u32),
         }),
     };
     Ok(Some(result))
@@ -321,7 +321,7 @@ mod test {
                     }),
                     inline_init(|r: &mut SyncLogRow| {
                         r.id = "2".to_string();
-                        r.done_datetime = Some(Utc::now().naive_local())
+                        r.finished_datetime = Some(Utc::now().naive_local())
                     }),
                     inline_init(|r: &mut SyncLogRow| {
                         r.id = "3".to_string();
@@ -365,7 +365,7 @@ mod test {
                     }),
                     inline_init(|r: &mut SyncLogRow| {
                         r.id = "2".to_string();
-                        r.prepare_initial_done_datetime = Some(Utc::now().naive_local())
+                        r.prepare_initial_finished_datetime = Some(Utc::now().naive_local())
                     }),
                     inline_init(|r: &mut SyncLogRow| {
                         r.id = "3".to_string();
