@@ -121,3 +121,115 @@ pub fn system_invoice_log_entry(
 
     Ok(LogRowRepository::new(&connection).insert_one(log)?)
 }
+
+#[cfg(test)]
+mod test {
+    use crate::{
+        invoice::outbound_shipment::{UpdateOutboundShipment, UpdateOutboundShipmentStatus},
+        test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
+    };
+    use repository::{
+        mock::{mock_name_a, mock_store_a, MockData, MockDataInserts},
+        InvoiceRow, InvoiceRowStatus, InvoiceRowType, LogType,
+    };
+    use util::inline_init;
+
+    use super::get_logs;
+
+    #[actix_rt::test]
+    async fn invoice_log() {
+        let ServiceTestContext {
+            service_provider,
+            connection_manager,
+            ..
+        } = setup_all_with_data_and_service_provider(
+            "invoice_log",
+            MockDataInserts::none().names().stores(),
+            inline_init(|r: &mut MockData| {
+                r.invoices = vec![inline_init(|r: &mut InvoiceRow| {
+                    r.id = "test".to_string();
+                    r.name_id = mock_name_a().id;
+                    r.store_id = mock_store_a().id;
+                    r.r#type = InvoiceRowType::OutboundShipment;
+                    r.status = InvoiceRowStatus::Allocated;
+                })]
+            }),
+        )
+        .await;
+
+        let ctx = service_provider
+            .context(mock_store_a().id, "n/a".to_string())
+            .unwrap();
+
+        // Test dupilcate status
+        service_provider
+            .invoice_service
+            .update_outbound_shipment(
+                &ctx,
+                inline_init(|r: &mut UpdateOutboundShipment| {
+                    r.id = "test".to_string();
+                    r.status = Some(UpdateOutboundShipmentStatus::Allocated)
+                }),
+            )
+            .unwrap();
+        // Status did not change expect no logs
+        assert_eq!(
+            get_logs(&connection_manager, None, None, None)
+                .unwrap()
+                .rows
+                .len(),
+            0
+        );
+
+        // Test correct statuses
+        service_provider
+            .invoice_service
+            .update_outbound_shipment(
+                &ctx,
+                inline_init(|r: &mut UpdateOutboundShipment| {
+                    r.id = "test".to_string();
+                    r.status = Some(UpdateOutboundShipmentStatus::Picked)
+                }),
+            )
+            .unwrap();
+
+        service_provider
+            .invoice_service
+            .update_outbound_shipment(
+                &ctx,
+                inline_init(|r: &mut UpdateOutboundShipment| {
+                    r.id = "test".to_string();
+                    // Picked again
+                    r.status = Some(UpdateOutboundShipmentStatus::Picked)
+                }),
+            )
+            .unwrap();
+
+        service_provider
+            .invoice_service
+            .update_outbound_shipment(
+                &ctx,
+                inline_init(|r: &mut UpdateOutboundShipment| {
+                    r.id = "test".to_string();
+                    // Picked again
+                    r.status = Some(UpdateOutboundShipmentStatus::Shipped)
+                }),
+            )
+            .unwrap();
+
+        let logs = get_logs(
+            &connection_manager,
+            None,
+            None,
+            // By default sorted by datetime asc
+            None,
+        )
+        .unwrap()
+        .rows;
+
+        assert_eq!(logs.len(), 2);
+
+        assert_eq!(logs[0].log_row.r#type, LogType::InvoiceStatusPicked);
+        assert_eq!(logs[1].log_row.r#type, LogType::InvoiceStatusShipped);
+    }
+}
