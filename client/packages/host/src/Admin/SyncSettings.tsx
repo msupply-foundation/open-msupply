@@ -100,6 +100,7 @@ const SyncSettingsForm = ({
         <LoadingButton
           isLoading={isSaving}
           startIcon={<SaveIcon />}
+          type="submit"
           variant="contained"
           sx={{ fontSize: '12px' }}
           disabled={!isValid}
