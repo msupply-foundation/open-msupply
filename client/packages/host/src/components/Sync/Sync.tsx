@@ -71,7 +71,7 @@ export const Sync: React.FC = () => {
         flexWrap="nowrap"
       >
         <Typography variant="h5" color="primary" style={{ paddingBottom: 25 }}>
-          {t('heading.sync-status')}
+          {t('heading.synchronise-status')}
         </Typography>
         <Row title={t('sync-info.number-to-push')}>
           {numberOfRecordsInPushQueue}
