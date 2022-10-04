@@ -211,7 +211,6 @@ mod test {
                 &ctx,
                 inline_init(|r: &mut UpdateOutboundShipment| {
                     r.id = "test".to_string();
-                    // Picked again
                     r.status = Some(UpdateOutboundShipmentStatus::Shipped)
                 }),
             )
