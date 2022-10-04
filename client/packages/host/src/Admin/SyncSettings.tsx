@@ -18,7 +18,7 @@ import { useHost } from '../api/hooks';
 import { Setting } from './Setting';
 import { mapSyncError } from '../api/api';
 
-const isValid = (syncSettings: SyncSettings | null) => {
+const isValid = (syncSettings: SyncSettingsInput | null) => {
   if (!syncSettings) return false;
   return (
     !!syncSettings.url &&

@@ -2817,10 +2817,10 @@ export type SyncStatusNode = {
 
 export type SyncStatusWithProgressNode = {
   __typename: 'SyncStatusWithProgressNode';
-  doneProgress?: Maybe<Scalars['Int']>;
+  done?: Maybe<Scalars['Int']>;
   finished?: Maybe<Scalars['NaiveDateTime']>;
   started: Scalars['NaiveDateTime'];
-  totalProgress?: Maybe<Scalars['Int']>;
+  total?: Maybe<Scalars['Int']>;
 };
 
 export type TaxInput = {
