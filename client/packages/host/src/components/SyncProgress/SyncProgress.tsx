@@ -96,9 +96,9 @@ const getSteps = (
   completed: boolean;
 }[] => {
   const getProgress = (progress?: SyncStatusWithProgressFragment | null) => {
-    if (!progress?.totalProgress) return;
-    const { totalProgress: total, doneProgress } = progress;
-    return { total, done: doneProgress || 0 };
+    if (!progress?.total) return;
+    const { total: total, done } = progress;
+    return { total, done: done || 0 };
   };
 
   const getStatus = (

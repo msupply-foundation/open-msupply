@@ -20,7 +20,7 @@ pub struct SyncLog {
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct SyncLogFilter {
     pub id: Option<EqualFilter<String>>,
-    pub prepare_initial_done_datetime: Option<DatetimeFilter>,
+    pub prepare_initial_finished_datetime: Option<DatetimeFilter>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -69,7 +69,7 @@ impl<'a> SyncLogRepository<'a> {
                 SyncLogSortField::DoneDatetime => {
                     // If nulls last on desc search and nulls first on asc search is more
                     // convenient for sync log rows datetimes that are nullable (see get_initialisation_status)
-                    apply_sort_asc_nulls_first!(query, sort, sync_log_dsl::done_datetime)
+                    apply_sort_asc_nulls_first!(query, sort, sync_log_dsl::finished_datetime)
                 }
             }
         } else {
@@ -100,13 +100,13 @@ fn create_filtered_query(filter: Option<SyncLogFilter>) -> BoxedSyncLogQuery {
     if let Some(f) = filter {
         let SyncLogFilter {
             id,
-            prepare_initial_done_datetime,
+            prepare_initial_finished_datetime,
         } = f;
         apply_equal_filter!(query, id, sync_log_dsl::id);
         apply_date_time_filter!(
             query,
-            prepare_initial_done_datetime,
-            sync_log_dsl::prepare_initial_done_datetime
+            prepare_initial_finished_datetime,
+            sync_log_dsl::prepare_initial_finished_datetime
         );
     }
 
@@ -122,8 +122,8 @@ impl SyncLogFilter {
         SyncLogFilter::default()
     }
 
-    pub fn prepare_initial_done_datetime(mut self, value: DatetimeFilter) -> SyncLogFilter {
-        self.prepare_initial_done_datetime = Some(value);
+    pub fn prepare_initial_finished_datetime(mut self, value: DatetimeFilter) -> SyncLogFilter {
+        self.prepare_initial_finished_datetime = Some(value);
         self
     }
 }

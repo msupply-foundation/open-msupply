@@ -17,8 +17,8 @@ table! {
         stock_line_id -> Nullable<Text>,
         location_id	-> Nullable<Text>,
         comment	-> Nullable<Text>,
-        snapshot_number_of_packs -> Integer,
-        counted_number_of_packs -> Nullable<Integer>,
+        snapshot_number_of_packs -> Double,
+        counted_number_of_packs -> Nullable<Double>,
 
         // stock line related fields:
         item_id -> Text,
@@ -46,8 +46,8 @@ pub struct StocktakeLineRow {
     pub location_id: Option<String>,
     /// Comment for this stocktake line
     pub comment: Option<String>,
-    pub snapshot_number_of_packs: i32,
-    pub counted_number_of_packs: Option<i32>,
+    pub snapshot_number_of_packs: f64,
+    pub counted_number_of_packs: Option<f64>,
 
     // stock line related fields:
     /// When a creating a new stock line this field holds the required item id

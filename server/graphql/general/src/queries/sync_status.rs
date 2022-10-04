@@ -9,7 +9,7 @@ use service::{
     sync::sync_status::status::FullSyncStatus,
 };
 
-use crate::sync_api_error::SyncErrorInterface;
+use crate::sync_api_error::SyncErrorNode;
 
 #[derive(SimpleObject)]
 pub struct SyncStatusNode {
@@ -21,14 +21,14 @@ pub struct SyncStatusNode {
 pub struct SyncStatusWithProgressNode {
     started: NaiveDateTime,
     finished: Option<NaiveDateTime>,
-    total_progress: Option<u32>,
-    done_progress: Option<u32>,
+    total: Option<u32>,
+    done: Option<u32>,
 }
 
 #[derive(SimpleObject)]
 pub struct FullSyncStatusNode {
     is_syncing: bool,
-    error: Option<SyncErrorInterface>,
+    error: Option<SyncErrorNode>,
     summary: SyncStatusNode,
     prepare_initial: Option<SyncStatusNode>,
     integration: Option<SyncStatusNode>,
@@ -68,7 +68,7 @@ pub fn latest_sync_status(
 
     let result = FullSyncStatusNode {
         is_syncing,
-        error: error.map(SyncErrorInterface::from_sync_log_error),
+        error: error.map(SyncErrorNode::from_sync_log_error),
         summary: SyncStatusNode {
             started: summary.started,
             finished: summary.finished,
@@ -84,20 +84,20 @@ pub fn latest_sync_status(
         pull_central: pull_central.map(|status| SyncStatusWithProgressNode {
             started: status.started,
             finished: status.finished,
-            total_progress: status.total_progress,
-            done_progress: status.done_progress,
+            total: status.total,
+            done: status.done,
         }),
         pull_remote: pull_remote.map(|status| SyncStatusWithProgressNode {
             started: status.started,
             finished: status.finished,
-            total_progress: status.total_progress,
-            done_progress: status.done_progress,
+            total: status.total,
+            done: status.done,
         }),
         push: push.map(|status| SyncStatusWithProgressNode {
             started: status.started,
             finished: status.finished,
-            total_progress: status.total_progress,
-            done_progress: status.done_progress,
+            total: status.total,
+            done: status.done,
         }),
     };
 

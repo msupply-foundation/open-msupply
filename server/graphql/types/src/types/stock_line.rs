@@ -44,10 +44,10 @@ impl StockLineNode {
     pub async fn sell_price_per_pack(&self) -> f64 {
         self.row().sell_price_per_pack
     }
-    pub async fn available_number_of_packs(&self) -> i32 {
+    pub async fn available_number_of_packs(&self) -> f64 {
         self.row().available_number_of_packs
     }
-    pub async fn total_number_of_packs(&self) -> i32 {
+    pub async fn total_number_of_packs(&self) -> f64 {
         self.row().total_number_of_packs
     }
     pub async fn expiry_date(&self) -> &Option<NaiveDate> {

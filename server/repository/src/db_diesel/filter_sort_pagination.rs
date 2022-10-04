@@ -61,6 +61,16 @@ impl EqualFilter<i32> {
     }
 }
 
+impl EqualFilter<f64> {
+    pub fn equal_to_f64(value: f64) -> Self {
+        inline_init(|r: &mut Self| r.equal_to = Some(value))
+    }
+
+    pub fn not_equal_to_f64(value: f64) -> Self {
+        inline_init(|r: &mut Self| r.not_equal_to = Some(value))
+    }
+}
+
 impl EqualFilter<String> {
     pub fn equal_to(value: &str) -> Self {
         inline_init(|r: &mut Self| r.equal_to = Some(value.to_owned()))

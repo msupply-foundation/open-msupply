@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from '@common/intl';
 import {
   BasicTextInput,
@@ -8,6 +8,7 @@ import {
   Grid,
   LoadingButton,
   NumericTextInput,
+  PasswordTextInput,
   SaveIcon,
   SyncSettingsInput,
   Typography,
@@ -16,41 +17,6 @@ import {
 import { useHost } from '../api/hooks';
 import { Setting } from './Setting';
 import { mapSyncError } from '../api/api';
-
-interface CommonSyncSettingProps<ValueType> {
-  autocomplete?: string;
-  disabled?: boolean;
-  value: ValueType;
-  update: (syncSettings: ValueType) => void;
-}
-
-const StringSyncSetting: FC<
-  CommonSyncSettingProps<string> & { isPassword?: boolean }
-> = ({ autocomplete = 'off', disabled = false, update, value, isPassword }) => {
-  return (
-    <BasicTextInput
-      value={value}
-      onChange={e => update(e.target.value)}
-      type={!!isPassword ? 'password' : 'text'}
-      inputProps={{ autoComplete: autocomplete }}
-      disabled={disabled}
-    />
-  );
-};
-
-const NumericSyncSetting: FC<CommonSyncSettingProps<number>> = ({
-  update,
-  value,
-  disabled = false,
-}) => {
-  return (
-    <NumericTextInput
-      value={value}
-      onChange={e => update(Number(e.target.value))}
-      disabled={disabled}
-    />
-  );
-};
 
 const isValid = (syncSettings: SyncSettingsInput | null) => {
   if (!syncSettings) return false;
@@ -78,50 +44,55 @@ const SyncSettingsForm = ({
   setSyncSettings: (syncSettings: SyncSettingsInput) => void;
 }) => {
   const t = useTranslation('common');
-  const getSetter =
-    (property: keyof SyncSettingsInput) => (value: number | string) =>
-      setSyncSettings({ ...settings, [property]: value });
+  const setSettings = (
+    property: keyof SyncSettingsInput,
+    value: number | string
+  ) => setSyncSettings({ ...settings, [property]: value });
+
+  const { url, username, password, intervalSeconds } = settings;
   return (
     <form style={{ width: '100%' }}>
       <Setting
         title={t('label.settings-url')}
         component={
-          <StringSyncSetting
+          <BasicTextInput
+            value={url}
+            onChange={e => setSettings('url', e.target.value)}
             disabled={isDisabled}
-            value={settings['url']}
-            update={getSetter('url')}
           />
         }
       />
       <Setting
         title={t('label.settings-username')}
         component={
-          <StringSyncSetting
+          <BasicTextInput
+            value={username}
+            onChange={e => setSettings('username', e.target.value)}
             disabled={isDisabled}
-            value={settings['username']}
-            update={getSetter('username')}
           />
         }
       />
       <Setting
         title={t('label.settings-password')}
         component={
-          <StringSyncSetting
-            isPassword={true}
-            autocomplete="sync-password"
+          <PasswordTextInput
+            value={password}
+            onChange={e => setSettings('password', e.target.value)}
+            inputProps={{ autoComplete: 'sync-password' }}
             disabled={isDisabled}
-            value={settings['password']}
-            update={getSetter('password')}
+            style={{ width: 'calc(100% - 24px)' }}
           />
         }
       />
       <Setting
         title={t('label.settings-interval')}
         component={
-          <NumericSyncSetting
+          <NumericTextInput
+            value={intervalSeconds}
+            onChange={e =>
+              setSettings('intervalSeconds', Number(e.target.value))
+            }
             disabled={isDisabled}
-            value={settings['intervalSeconds']}
-            update={getSetter('intervalSeconds')}
           />
         }
       />
@@ -129,6 +100,7 @@ const SyncSettingsForm = ({
         <LoadingButton
           isLoading={isSaving}
           startIcon={<SaveIcon />}
+          type="submit"
           variant="contained"
           sx={{ fontSize: '12px' }}
           disabled={!isValid}
@@ -192,10 +164,8 @@ export const SyncSettings = ({}) => {
     try {
       const response = await update(syncSettings);
       // Map structured error
-      if (response.__typename === 'SetSyncSettingErrorNode') {
-        setError(
-          mapSyncError(t, response.error, 'error.unable-to-save-settings')
-        );
+      if (response.__typename === 'SyncErrorNode') {
+        setError(mapSyncError(t, response, 'error.unable-to-save-settings'));
         return setIsSaving(false);
       }
     } catch (e) {
