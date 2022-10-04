@@ -22,14 +22,10 @@ export const getHostQueries = (sdk: Sdk) => ({
       const result = await sdk.syncStatus();
       return result?.syncStatus;
     },
-    syncInfo: async () => {
-      return await sdk.syncInfo();
-    },
+    syncInfo: () => sdk.syncInfo(),
   },
   // manaulSync is a trigger that returns a string result (don't need to caputre it)
-  manualSync: async () => {
-    return await sdk.manualSync();
-  },
+  manualSync: async () => sdk.manualSync(),
   initialise: async (settings: SyncSettingsInput) => {
     const result = await sdk.initialiseSite({
       syncSettings: cleanSyncSettings(settings),
