@@ -54,10 +54,7 @@
               "type": "number"
             },
             "change": {
-              "enum": [
-                "Substitution of ART Regimen",
-                "Switching of ART regimen"
-              ],
+              "enum": ["Substitution of ART Regimen", "Switching of ART regimen"],
               "type": "string"
             },
             "initialWeight": {
@@ -81,18 +78,7 @@
               "type": "array"
             },
             "reason": {
-              "enum": [
-                "101",
-                "102",
-                "103",
-                "104",
-                "105",
-                "106",
-                "107",
-                "108",
-                "109",
-                "151"
-              ],
+              "enum": ["101", "102", "103", "104", "105", "106", "107", "108", "109", "151"],
               "type": "string"
             },
             "reasonFirstToSecondLine": {
@@ -256,7 +242,10 @@
           "properties": {
             "bloodPressure": {
               "description": "75367002\tBlood pressure [mmHg]",
-              "type": "number"
+              "pattern": "^\\d{3}\\/\\d{2}$",
+              "title": "BP in mmHg",
+              "type": "string",
+              "messages": { "pattern": "Format is 000/00" }
             },
             "bodyMassIndex": {
               "description": "60621009\tBody mass index (BMI)",
@@ -264,18 +253,24 @@
             },
             "height": {
               "description": "50373000\tBody height measure [m]",
-              "type": "number"
+              "pattern": "^\\d\\.\\d{2}$",
+              "title": "Height in meters",
+              "type": "string",
+              "messages": { "pattern": "Format is 0.00" }
             },
             "midUpperArmCircumference": {
               "description": "284473002\tMid upper arm circumference (MUAC) [cm]",
-              "type": "number"
+              "pattern": "^\\d+\\.\\d{2}$",
+              "title": "MUAC in cm",
+              "type": "string",
+              "messages": { "pattern": "Format is 0.00" }
             },
             "nutritionalStatus": {
               "description": "366364004  nutritional status",
               "enum": ["Under nourished", "Well nourished", "Overweight"],
               "type": "string"
             },
-            "opportunisticInfection": {
+            "opportunisticInfections": {
               "items": {
                 "enum": [
                   "411 - 1 - (1) Asymptomatic",
@@ -371,11 +366,20 @@
             },
             "weight": {
               "description": "735395000\tCurrent body weight [kg]",
-              "type": "number"
+              "pattern": "^\\d+\\.\\d{2}$",
+              "title": "Weight in kg",
+              "type": "string",
+              "messages": { "pattern": "Format is 0.00" }
             },
             "whoStaging": {
               "description": "420721002 Acquired immunodeficiency syndrome-associated disorder (disorder)",
-              "enum": ["1", "2", "3", "4"],
+              "enum": [
+                "Stage 1 - Asymptomatic",
+                "Stage 2 - Mildly symptomatic",
+                "Stage 3 - Moderately symptomatic",
+                "Stage 4 - Severely symptomatic"
+              ],
+              "title": "WHO Staging",
               "type": "string"
             }
           },
@@ -403,11 +407,7 @@
               "type": "string"
             },
             "tbGeneXpert": {
-              "enum": [
-                "Not Detected",
-                "Positive (Rif-Sensetive)",
-                "Postitive (Rif-Resistant"
-              ],
+              "enum": ["Not Detected", "Positive (Rif-Sensetive)", "Postitive (Rif-Resistant"],
               "type": "string"
             },
             "tbSputum": {
