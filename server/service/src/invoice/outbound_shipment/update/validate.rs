@@ -15,7 +15,7 @@ pub fn validate(
     connection: &StorageConnection,
     store_id: &str,
     patch: &UpdateOutboundShipment,
-) -> Result<(InvoiceRow, Option<Name>, bool), UpdateOutboundShipmentError> {
+) -> Result<(InvoiceRow, Option<Name>), UpdateOutboundShipmentError> {
     use UpdateOutboundShipmentError::*;
     let invoice = check_invoice_exists(&patch.id, connection)?;
     check_store(&invoice, store_id)?;
@@ -25,7 +25,7 @@ pub fn validate(
     check_can_change_status_to_allocated(connection, &invoice, patch.full_status())?;
 
     let other_party_id = match &patch.other_party_id {
-        None => return Ok((invoice, None, false)),
+        None => return Ok((invoice, None)),
         Some(other_party_id) => other_party_id,
     };
 
@@ -42,12 +42,7 @@ pub fn validate(
         OtherPartyErrors::DatabaseError(repository_error) => DatabaseError(repository_error),
     })?;
 
-    let status_changed = match &patch.status {
-        Some(status) => status.full_status() != invoice.status,
-        None => false,
-    };
-
-    Ok((invoice, Some(other_party), status_changed))
+    Ok((invoice, Some(other_party)))
 }
 
 fn check_invoice_exists(
