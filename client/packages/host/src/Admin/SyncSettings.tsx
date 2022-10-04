@@ -58,7 +58,6 @@ const SyncSettingsForm = ({
           <BasicTextInput
             value={url}
             onChange={e => setSettings('url', e.target.value)}
-            type={'text'}
             disabled={isDisabled}
           />
         }
@@ -69,7 +68,6 @@ const SyncSettingsForm = ({
           <BasicTextInput
             value={username}
             onChange={e => setSettings('username', e.target.value)}
-            type={'text'}
             disabled={isDisabled}
           />
         }
