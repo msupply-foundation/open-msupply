@@ -9,6 +9,7 @@ import {
   useCurrency,
   useUrlQueryParams,
   ColumnAlign,
+  PositiveNumberCell,
 } from '@openmsupply-client/common';
 import { LocationRowFragment } from '@openmsupply-client/system';
 import { InboundItem } from './../../../types';
@@ -257,6 +258,7 @@ export const useInboundShipmentColumns = () => {
       [
         'numberOfPacks',
         {
+          Cell: PositiveNumberCell,
           accessor: ({ rowData }) => {
             if ('lines' in rowData) {
               const { lines } = rowData;

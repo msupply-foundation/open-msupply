@@ -738,7 +738,7 @@ export type InsertInboundShipmentLineInput = {
   invoiceId: Scalars['String'];
   itemId: Scalars['String'];
   locationId?: InputMaybe<Scalars['String']>;
-  numberOfPacks: Scalars['Int'];
+  numberOfPacks: Scalars['Float'];
   packSize: Scalars['Int'];
   sellPricePerPack: Scalars['Float'];
   tax?: InputMaybe<Scalars['Float']>;
@@ -835,7 +835,7 @@ export type InsertOutboundShipmentLineInput = {
   id: Scalars['String'];
   invoiceId: Scalars['String'];
   itemId: Scalars['String'];
-  numberOfPacks: Scalars['Int'];
+  numberOfPacks: Scalars['Float'];
   stockLineId: Scalars['String'];
   tax?: InputMaybe<Scalars['Float']>;
   totalBeforeTax?: InputMaybe<Scalars['Float']>;
@@ -983,7 +983,7 @@ export type InsertStocktakeLineInput = {
   batch?: InputMaybe<Scalars['String']>;
   comment?: InputMaybe<Scalars['String']>;
   costPricePerPack?: InputMaybe<Scalars['Float']>;
-  countedNumberOfPacks?: InputMaybe<Scalars['Int']>;
+  countedNumberOfPacks?: InputMaybe<Scalars['Float']>;
   expiryDate?: InputMaybe<Scalars['NaiveDate']>;
   id: Scalars['String'];
   itemId?: InputMaybe<Scalars['String']>;
@@ -1096,7 +1096,7 @@ export type InvoiceLineNode = {
   locationId?: Maybe<Scalars['String']>;
   locationName?: Maybe<Scalars['String']>;
   note?: Maybe<Scalars['String']>;
-  numberOfPacks: Scalars['Int'];
+  numberOfPacks: Scalars['Float'];
   packSize: Scalars['Int'];
   pricing: PricingNode;
   sellPricePerPack: Scalars['Float'];
@@ -2408,7 +2408,7 @@ export type RequisitionLineNode = {
    * supplyQuantity minus all (including unallocated) linked invoice lines numberOfPacks * packSize
    * Only available in response requisition, request requisition returns 0
    */
-  remainingQuantityToSupply: Scalars['Int'];
+  remainingQuantityToSupply: Scalars['Float'];
   /** Quantity requested */
   requestedQuantity: Scalars['Int'];
   /**
@@ -2581,7 +2581,7 @@ export type StockLineIsOnHold = InsertOutboundShipmentLineErrorInterface & Updat
 
 export type StockLineNode = {
   __typename: 'StockLineNode';
-  availableNumberOfPacks: Scalars['Int'];
+  availableNumberOfPacks: Scalars['Float'];
   batch?: Maybe<Scalars['String']>;
   costPricePerPack: Scalars['Float'];
   expiryDate?: Maybe<Scalars['NaiveDate']>;
@@ -2596,7 +2596,7 @@ export type StockLineNode = {
   packSize: Scalars['Int'];
   sellPricePerPack: Scalars['Float'];
   storeId: Scalars['String'];
-  totalNumberOfPacks: Scalars['Int'];
+  totalNumberOfPacks: Scalars['Float'];
 };
 
 export type StockLineResponse = NodeError | StockLineNode;
@@ -2637,7 +2637,7 @@ export type StocktakeLineNode = {
   batch?: Maybe<Scalars['String']>;
   comment?: Maybe<Scalars['String']>;
   costPricePerPack?: Maybe<Scalars['Float']>;
-  countedNumberOfPacks?: Maybe<Scalars['Int']>;
+  countedNumberOfPacks?: Maybe<Scalars['Float']>;
   expiryDate?: Maybe<Scalars['NaiveDate']>;
   id: Scalars['String'];
   item: ItemNode;
@@ -2646,7 +2646,7 @@ export type StocktakeLineNode = {
   note?: Maybe<Scalars['String']>;
   packSize?: Maybe<Scalars['Int']>;
   sellPricePerPack?: Maybe<Scalars['Float']>;
-  snapshotNumberOfPacks: Scalars['Int'];
+  snapshotNumberOfPacks: Scalars['Float'];
   stockLine?: Maybe<StockLineNode>;
   stocktakeId: Scalars['String'];
 };
@@ -2892,7 +2892,7 @@ export type UpdateInboundShipmentLineInput = {
   id: Scalars['String'];
   itemId?: InputMaybe<Scalars['String']>;
   locationId?: InputMaybe<Scalars['String']>;
-  numberOfPacks?: InputMaybe<Scalars['Int']>;
+  numberOfPacks?: InputMaybe<Scalars['Float']>;
   packSize?: InputMaybe<Scalars['Int']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']>;
   tax?: InputMaybe<TaxInput>;
@@ -3002,7 +3002,7 @@ export type UpdateOutboundShipmentLineErrorInterface = {
 export type UpdateOutboundShipmentLineInput = {
   id: Scalars['String'];
   itemId?: InputMaybe<Scalars['String']>;
-  numberOfPacks?: InputMaybe<Scalars['Int']>;
+  numberOfPacks?: InputMaybe<Scalars['Float']>;
   stockLineId?: InputMaybe<Scalars['String']>;
   tax?: InputMaybe<TaxInput>;
   totalBeforeTax?: InputMaybe<Scalars['Float']>;
@@ -3205,14 +3205,14 @@ export type UpdateStocktakeLineInput = {
   batch?: InputMaybe<Scalars['String']>;
   comment?: InputMaybe<Scalars['String']>;
   costPricePerPack?: InputMaybe<Scalars['Float']>;
-  countedNumberOfPacks?: InputMaybe<Scalars['Int']>;
+  countedNumberOfPacks?: InputMaybe<Scalars['Float']>;
   expiryDate?: InputMaybe<Scalars['NaiveDate']>;
   id: Scalars['String'];
   locationId?: InputMaybe<Scalars['String']>;
   note?: InputMaybe<Scalars['String']>;
   packSize?: InputMaybe<Scalars['Int']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']>;
-  snapshotNumberOfPacks?: InputMaybe<Scalars['Int']>;
+  snapshotNumberOfPacks?: InputMaybe<Scalars['Float']>;
 };
 
 export type UpdateStocktakeLineResponse = StocktakeLineNode | UpdateStocktakeLineError;

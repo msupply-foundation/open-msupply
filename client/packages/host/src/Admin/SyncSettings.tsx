@@ -8,6 +8,7 @@ import {
   Grid,
   LoadingButton,
   NumericTextInput,
+  PasswordTextInput,
   SaveIcon,
   SyncSettingsInput,
   Typography,
@@ -17,7 +18,7 @@ import { useHost } from '../api/hooks';
 import { Setting } from './Setting';
 import { mapSyncError } from '../api/api';
 
-const isValid = (syncSettings: SyncSettingsInput | null) => {
+const isValid = (syncSettings: SyncSettings | null) => {
   if (!syncSettings) return false;
   return (
     !!syncSettings.url &&
@@ -76,12 +77,12 @@ const SyncSettingsForm = ({
       <Setting
         title={t('label.settings-password')}
         component={
-          <BasicTextInput
+          <PasswordTextInput
             value={password}
-            inputProps={{ autocomplete: 'sync-password' }}
             onChange={e => setSettings('password', e.target.value)}
-            type={'password'}
+            inputProps={{ autoComplete: 'sync-password' }}
             disabled={isDisabled}
+            style={{ width: 'calc(100% - 24px)' }}
           />
         }
       />
