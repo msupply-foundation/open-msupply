@@ -3188,7 +3188,7 @@ export type UpdateStocktakeInput = {
   description?: InputMaybe<Scalars['String']>;
   id: Scalars['String'];
   isLocked?: InputMaybe<Scalars['Boolean']>;
-  status?: InputMaybe<StocktakeNodeStatus>;
+  status?: InputMaybe<UpdateStocktakeStatusInput>;
   stocktakeDate?: InputMaybe<Scalars['NaiveDate']>;
 };
 
@@ -3230,6 +3230,10 @@ export type UpdateStocktakeResponseWithId = {
   id: Scalars['String'];
   response: UpdateStocktakeResponse;
 };
+
+export enum UpdateStocktakeStatusInput {
+  Finalised = 'FINALISED'
+}
 
 export type UpdateSyncSettingsResponse = SyncErrorNode | SyncSettingsNode;
 

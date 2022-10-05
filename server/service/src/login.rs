@@ -4,7 +4,6 @@ use std::{
 };
 
 use bcrypt::BcryptError;
-use chrono::Utc;
 use log::info;
 use repository::{
     LogType, Permission, RepositoryError, UserAccountRow, UserPermissionRow, UserStoreJoinRow,
@@ -21,7 +20,7 @@ use crate::{
         permissions::{map_api_permissions, Permissions},
     },
     auth_data::AuthData,
-    log::log_entry,
+    log::log_entry_without_record,
     service_provider::{ServiceContext, ServiceProvider},
     settings::is_develop,
     token::{JWTIssuingError, TokenPair, TokenService},
@@ -134,12 +133,7 @@ impl LoginService {
         };
         service_ctx.user_id = user_account.id.clone();
 
-        log_entry(
-            &service_ctx,
-            LogType::UserLoggedIn,
-            None,
-            Utc::now().naive_utc(),
-        )?;
+        log_entry_without_record(&service_ctx, LogType::UserLoggedIn)?;
 
         let mut token_service = TokenService::new(
             &auth_data.token_bucket,

@@ -1,7 +1,6 @@
-use crate::log::log_entry;
+use crate::log::{log_entry, log_type_from_invoice_status};
 use crate::{invoice::query::get_invoice, service_provider::ServiceContext, WithDBError};
-use chrono::Utc;
-use repository::{Invoice, LogType};
+use repository::Invoice;
 use repository::{
     InvoiceLineRowRepository, InvoiceRowRepository, InvoiceRowStatus, RepositoryError,
     StockLineRowRepository,
@@ -42,7 +41,8 @@ pub fn update_inbound_shipment(
     let invoice = ctx
         .connection
         .transaction_sync(|connection| {
-            let (invoice, other_party) = validate(connection, &ctx.store_id, &patch)?;
+            let (invoice, other_party, status_changed) =
+                validate(connection, &ctx.store_id, &patch)?;
             let GenerateResult {
                 batches_to_update,
                 update_invoice,
@@ -74,6 +74,14 @@ pub fn update_inbound_shipment(
                 }
             }
 
+            if status_changed {
+                log_entry(
+                    &ctx,
+                    log_type_from_invoice_status(&update_invoice.status),
+                    &update_invoice.id,
+                )?;
+            }
+
             get_invoice(ctx, None, &update_invoice.id)
                 .map_err(|error| OutError::DatabaseError(error))?
                 .ok_or(OutError::UpdatedInvoiceDoesNotExist)
@@ -82,18 +90,6 @@ pub fn update_inbound_shipment(
 
     ctx.processors_trigger
         .trigger_shipment_transfer_processors();
-
-    if let Some(status) = patch.status {
-        log_entry(
-            &ctx,
-            match status {
-                UpdateInboundShipmentStatus::Delivered => LogType::InvoiceStatusDelivered,
-                UpdateInboundShipmentStatus::Verified => LogType::InvoiceStatusVerified,
-            },
-            Some(invoice.invoice_row.id.clone()),
-            Utc::now().naive_utc(),
-        )?;
-    }
 
     Ok(invoice)
 }
@@ -163,8 +159,8 @@ mod test {
             MockDataInserts,
         },
         test_db::setup_all_with_data,
-        EqualFilter, InvoiceLineFilter, InvoiceRowRepository, InvoiceRowStatus, NameRow,
-        NameStoreJoinRow, StockLineRowRepository,
+        EqualFilter, InvoiceLineFilter, InvoiceRowRepository, InvoiceRowStatus, LogRowRepository,
+        LogType, NameRow, NameStoreJoinRow, StockLineRowRepository,
     };
     use util::{inline_edit, inline_init};
 
@@ -367,7 +363,7 @@ mod test {
             })
         );
 
-        //Test Confirmed
+        // Test Confirmed and logging
         service
             .update_inbound_shipment(
                 &context,
@@ -382,10 +378,17 @@ mod test {
         let invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&mock_inbound_shipment_c().id)
             .unwrap();
+        let log = LogRowRepository::new(&connection)
+            .find_many_by_record_id(&mock_inbound_shipment_c().id)
+            .unwrap()
+            .into_iter()
+            .find(|l| l.r#type == LogType::InvoiceStatusDelivered)
+            .unwrap();
 
         assert_eq!(invoice.verified_datetime, None);
         assert!(invoice.delivered_datetime.unwrap() > now);
         assert!(invoice.delivered_datetime.unwrap() < end_time);
+        assert_eq!(log.r#type, LogType::InvoiceStatusDelivered);
 
         let filter = InvoiceLineFilter::new().invoice_id(EqualFilter::equal_any(vec![invoice.id]));
         let invoice_lines = get_invoice_lines(&context, Some(filter)).unwrap();
@@ -397,6 +400,25 @@ mod test {
                 .unwrap();
             assert_eq!(lines.invoice_line_row.stock_line_id, Some(stock_line.id));
         }
+
+        // Test log isn't duplicated when status isn't changed
+        service
+            .update_inbound_shipment(
+                &context,
+                inline_init(|r: &mut UpdateInboundShipment| {
+                    r.id = mock_inbound_shipment_c().id;
+                    r.other_party_id = Some(supplier().id);
+                }),
+            )
+            .unwrap();
+
+        let log = LogRowRepository::new(&connection)
+            .find_many_by_record_id(&mock_inbound_shipment_c().id)
+            .unwrap()
+            .into_iter()
+            .find(|l| l.r#type == LogType::InvoiceStatusDelivered)
+            .unwrap();
+        assert_eq!(log.r#type, LogType::InvoiceStatusDelivered);
 
         //Test success name_store_id linked to store
         service
@@ -438,7 +460,7 @@ mod test {
 
         assert_eq!(invoice.name_store_id, None);
 
-        //Test Finalised (while setting invoice status onHold to true)
+        // Test Finalised (while setting invoice status onHold to true)
         service
             .update_inbound_shipment(
                 &context,
@@ -454,6 +476,12 @@ mod test {
         let invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&mock_inbound_shipment_a().id)
             .unwrap();
+        let log = LogRowRepository::new(&connection)
+            .find_many_by_record_id(&mock_inbound_shipment_a().id)
+            .unwrap()
+            .into_iter()
+            .find(|l| l.r#type == LogType::InvoiceStatusVerified)
+            .unwrap();
 
         assert!(invoice.verified_datetime.unwrap() > now);
         assert!(invoice.verified_datetime.unwrap() < end_time);
@@ -465,5 +493,6 @@ mod test {
                 u
             })
         );
+        assert_eq!(log.r#type, LogType::InvoiceStatusVerified);
     }
 }

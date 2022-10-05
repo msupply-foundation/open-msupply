@@ -1,7 +1,6 @@
-use chrono::Utc;
 use repository::{
     Invoice, InvoiceLine, InvoiceLineRowRepository, InvoiceRowRepository, InvoiceRowStatus,
-    LogType, RepositoryError, StockLineRowRepository, TransactionError,
+    RepositoryError, StockLineRowRepository, TransactionError,
 };
 
 pub mod generate;
@@ -12,7 +11,7 @@ use validate::validate;
 
 use crate::invoice::outbound_shipment::update::generate::GenerateResult;
 use crate::invoice::query::get_invoice;
-use crate::log::log_entry;
+use crate::log::{log_entry, log_type_from_invoice_status};
 use crate::service_provider::ServiceContext;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -63,7 +62,8 @@ pub fn update_outbound_shipment(
     let invoice = ctx
         .connection
         .transaction_sync(|connection| {
-            let (invoice, other_party_option) = validate(connection, &ctx.store_id, &patch)?;
+            let (invoice, other_party_option, status_changed) =
+                validate(connection, &ctx.store_id, &patch)?;
             let GenerateResult {
                 batches_to_update,
                 update_invoice,
@@ -71,6 +71,7 @@ pub fn update_outbound_shipment(
             } = generate(invoice, other_party_option, patch.clone(), connection)?;
 
             InvoiceRowRepository::new(connection).upsert_one(&update_invoice)?;
+
             if let Some(stock_lines) = batches_to_update {
                 let repository = StockLineRowRepository::new(connection);
                 for stock_line in stock_lines {
@@ -85,6 +86,14 @@ pub fn update_outbound_shipment(
                 }
             }
 
+            if status_changed {
+                log_entry(
+                    &ctx,
+                    log_type_from_invoice_status(&update_invoice.status),
+                    &update_invoice.id,
+                )?;
+            }
+
             get_invoice(ctx, None, &update_invoice.id)
                 .map_err(|error| OutError::DatabaseError(error))?
                 .ok_or(OutError::UpdatedInvoiceDoesNotExist)
@@ -93,19 +102,6 @@ pub fn update_outbound_shipment(
 
     ctx.processors_trigger
         .trigger_shipment_transfer_processors();
-
-    if let Some(status) = patch.status {
-        log_entry(
-            &ctx,
-            match status {
-                UpdateOutboundShipmentStatus::Allocated => LogType::InvoiceStatusAllocated,
-                UpdateOutboundShipmentStatus::Picked => LogType::InvoiceStatusPicked,
-                UpdateOutboundShipmentStatus::Shipped => LogType::InvoiceStatusShipped,
-            },
-            Some(invoice.invoice_row.id.clone()),
-            Utc::now().naive_utc(),
-        )?;
-    }
 
     Ok(invoice)
 }
@@ -170,8 +166,8 @@ mod test {
         },
         test_db::setup_all_with_data,
         InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRow,
-        InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType, NameRow, NameStoreJoinRow,
-        StockLineRow, StockLineRowRepository,
+        InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType, LogRowRepository, LogType, NameRow,
+        NameStoreJoinRow, StockLineRow, StockLineRowRepository,
     };
     use util::{assert_matches, inline_edit, inline_init};
 
@@ -566,7 +562,32 @@ mod test {
             )
             .unwrap();
 
+        let log = LogRowRepository::new(&connection)
+            .find_many_by_record_id(&mock_outbound_shipment_c().id)
+            .unwrap()
+            .into_iter()
+            .find(|l| l.r#type == LogType::InvoiceStatusPicked)
+            .unwrap();
         assert_stock_line_totals(&invoice_lines, &expected_stock_line_totals);
+        assert_eq!(log.r#type, LogType::InvoiceStatusPicked);
+
+        service
+            .update_outbound_shipment(
+                &context,
+                inline_init(|r: &mut UpdateOutboundShipment| {
+                    r.id = mock_outbound_shipment_c().id;
+                    r.comment = Some("Some comment".to_string());
+                }),
+            )
+            .unwrap();
+
+        let log = LogRowRepository::new(&connection)
+            .find_many_by_record_id(&mock_outbound_shipment_c().id)
+            .unwrap()
+            .into_iter()
+            .find(|l| l.r#type == LogType::InvoiceStatusPicked)
+            .unwrap();
+        assert_eq!(log.r#type, LogType::InvoiceStatusPicked);
     }
 
     #[actix_rt::test]

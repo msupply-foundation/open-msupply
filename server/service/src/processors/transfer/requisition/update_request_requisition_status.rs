@@ -1,7 +1,9 @@
 use repository::{
     requisition_row::{RequisitionRowStatus, RequisitionRowType},
-    RepositoryError, RequisitionRow, RequisitionRowRepository, StorageConnection,
+    LogType, RepositoryError, RequisitionRow, RequisitionRowRepository, StorageConnection,
 };
+
+use crate::log::system_log_entry;
 
 use super::{RequisitionTransferProcessor, RequisitionTransferProcessorRecord};
 
@@ -65,6 +67,13 @@ impl RequisitionTransferProcessor for UpdateRequestRequstionStatusProcessor {
         };
 
         RequisitionRowRepository::new(connection).upsert_one(&updated_request_requisition)?;
+
+        system_log_entry(
+            connection,
+            LogType::RequisitionStatusFinalised,
+            &updated_request_requisition.store_id,
+            &updated_request_requisition.id,
+        )?;
 
         let result = format!(
             "requisition ({}) source requisition ({})",

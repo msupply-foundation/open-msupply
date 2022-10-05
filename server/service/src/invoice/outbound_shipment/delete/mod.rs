@@ -1,4 +1,3 @@
-use chrono::Utc;
 use repository::{InvoiceLine, InvoiceRowRepository, LogType, RepositoryError, TransactionError};
 
 pub mod validate;
@@ -42,6 +41,7 @@ pub fn delete_outbound_shipment(
                 })?;
             }
             // End TODO
+            log_entry(&ctx, LogType::InvoiceDeleted, &id)?;
 
             match InvoiceRowRepository::new(&connection).delete(&id) {
                 Ok(_) => Ok(id.clone()),
@@ -49,13 +49,6 @@ pub fn delete_outbound_shipment(
             }
         })
         .map_err(|error| error.to_inner_error())?;
-
-    log_entry(
-        &ctx,
-        LogType::InvoiceDeleted,
-        Some(id),
-        Utc::now().naive_utc(),
-    )?;
 
     ctx.processors_trigger
         .trigger_shipment_transfer_processors();

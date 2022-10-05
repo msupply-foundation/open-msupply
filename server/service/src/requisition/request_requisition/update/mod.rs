@@ -1,7 +1,7 @@
 use crate::{
     log::log_entry, requisition::query::get_requisition, service_provider::ServiceContext,
 };
-use chrono::{NaiveDate, Utc};
+use chrono::NaiveDate;
 use repository::{
     LogType, RepositoryError, Requisition, RequisitionLineRowRepository, RequisitionRowRepository,
 };
@@ -60,7 +60,7 @@ pub fn update_request_requisition(
     let requisition = ctx
         .connection
         .transaction_sync(|connection| {
-            let requisition_row = validate(connection, &ctx.store_id, &input)?;
+            let (requisition_row, status_changed) = validate(connection, &ctx.store_id, &input)?;
             let (updated_requisition, update_requisition_line_rows) =
                 generate(connection, requisition_row, input.clone())?;
             RequisitionRowRepository::new(&connection).upsert_one(&updated_requisition)?;
@@ -71,6 +71,14 @@ pub fn update_request_requisition(
                 requisition_line_row_repository.upsert_one(&requisition_line_row)?;
             }
 
+            if status_changed {
+                log_entry(
+                    &ctx,
+                    LogType::RequisitionStatusSent,
+                    &updated_requisition.id,
+                )?;
+            }
+
             get_requisition(ctx, None, &updated_requisition.id)
                 .map_err(|error| OutError::DatabaseError(error))?
                 .ok_or(OutError::UpdatedRequisitionDoesNotExist)
@@ -79,15 +87,6 @@ pub fn update_request_requisition(
 
     ctx.processors_trigger
         .trigger_requisition_transfer_processors();
-
-    if input.status == Some(UpdateRequestRequistionStatus::Sent) {
-        log_entry(
-            &ctx,
-            LogType::RequisitionStatusSent,
-            Some(requisition.requisition_row.id.to_string()),
-            Utc::now().naive_utc(),
-        )?;
-    }
 
     Ok(requisition)
 }

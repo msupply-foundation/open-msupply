@@ -1,4 +1,3 @@
-use chrono::Utc;
 use repository::{InvoiceLine, InvoiceRowRepository, LogType, RepositoryError};
 
 mod validate;
@@ -47,6 +46,7 @@ pub fn delete_inbound_shipment(
                 })?;
             }
             // End TODO
+            log_entry(&ctx, LogType::InvoiceDeleted, &input.id)?;
 
             match InvoiceRowRepository::new(&connection).delete(&input.id.clone()) {
                 Ok(_) => Ok(input.id.clone()),
@@ -54,13 +54,6 @@ pub fn delete_inbound_shipment(
             }
         })
         .map_err(|error| error.to_inner_error())?;
-
-    log_entry(
-        &ctx,
-        LogType::InvoiceDeleted,
-        Some(input.id),
-        Utc::now().naive_utc(),
-    )?;
 
     Ok(invoice_id)
 }

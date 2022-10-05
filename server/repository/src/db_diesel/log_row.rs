@@ -76,4 +76,11 @@ impl<'a> LogRowRepository<'a> {
             .optional()?;
         Ok(result)
     }
+
+    pub fn find_many_by_record_id(&self, id: &str) -> Result<Vec<LogRow>, RepositoryError> {
+        let result = log_dsl::log
+            .filter(log_dsl::record_id.eq(id))
+            .get_results(&self.connection.connection)?;
+        Ok(result)
+    }
 }

@@ -24,6 +24,7 @@ use crate::{
         sync_status::status::{SyncStatusService, SyncStatusTrait},
         synchroniser_driver::{SiteIsInitialisedTrigger, SyncTrigger},
     },
+    system_user::create_system_user,
     ListError, ListResult,
 };
 use repository::{
@@ -136,8 +137,8 @@ impl ServiceProvider {
         Ok(ServiceContext {
             connection: self.connection()?,
             processors_trigger: self.processors_trigger.clone(),
-            user_id: user_id,
-            store_id: store_id,
+            user_id,
+            store_id,
         })
     }
 
@@ -187,6 +188,13 @@ pub trait GeneralServiceTrait: Sync + Send {
         filter: StoreFilter,
     ) -> Result<Option<Store>, RepositoryError> {
         get_store(ctx, filter)
+    }
+
+    fn create_system_user(
+        &self,
+        service_provider: &ServiceProvider,
+    ) -> Result<(), RepositoryError> {
+        create_system_user(service_provider)
     }
 }
 

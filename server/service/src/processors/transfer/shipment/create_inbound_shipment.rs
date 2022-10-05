@@ -1,11 +1,11 @@
 use chrono::Utc;
 use repository::{
     Invoice, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, InvoiceRowStatus,
-    InvoiceRowType, NumberRowType, RepositoryError, Requisition, StorageConnection,
+    InvoiceRowType, LogType, NumberRowType, RepositoryError, Requisition, StorageConnection,
 };
 use util::uuid::uuid;
 
-use crate::number::next_number;
+use crate::{log::system_log_entry, number::next_number};
 
 use super::{
     common::generate_inbound_shipment_lines, Operation, ShipmentTransferProcessor,
@@ -77,6 +77,15 @@ impl ShipmentTransferProcessor for CreateInboundShipmentProcessor {
         )?;
 
         InvoiceRowRepository::new(connection).upsert_one(&new_inbound_shipment)?;
+
+        system_log_entry(
+            connection,
+            LogType::InvoiceCreated,
+            &new_inbound_shipment.store_id,
+            &new_inbound_shipment.id,
+        )?;
+
+        println!("{:?}", outbound_shipment.invoice_row.status.clone());
 
         let invoice_line_repository = InvoiceLineRowRepository::new(connection);
 
