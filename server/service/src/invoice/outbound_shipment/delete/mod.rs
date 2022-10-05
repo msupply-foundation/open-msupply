@@ -1,15 +1,17 @@
-use repository::{InvoiceLine, InvoiceRowRepository, LogType, RepositoryError, TransactionError};
+use repository::{
+    ActivityLogType, InvoiceLine, InvoiceRowRepository, RepositoryError, TransactionError,
+};
 
 pub mod validate;
 
 use validate::validate;
 
 use crate::{
+    activity_log::activity_log_entry,
     invoice::common::get_lines_for_invoice,
     invoice_line::outbound_shipment_line::{
         delete_outbound_shipment_line, DeleteOutboundShipmentLine, DeleteOutboundShipmentLineError,
     },
-    log::log_entry,
     service_provider::ServiceContext,
     WithDBError,
 };
@@ -41,7 +43,7 @@ pub fn delete_outbound_shipment(
                 })?;
             }
             // End TODO
-            log_entry(&ctx, LogType::InvoiceDeleted, &id)?;
+            activity_log_entry(&ctx, ActivityLogType::InvoiceDeleted, &id)?;
 
             match InvoiceRowRepository::new(&connection).delete(&id) {
                 Ok(_) => Ok(id.clone()),

@@ -6,60 +6,60 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use graphql_types::types::{LogConnector, LogNodeType};
+use graphql_types::types::{ActivityLogConnector, ActivityLogNodeType};
+use repository::{ActivityLogFilter, ActivityLogSort, ActivityLogSortField};
 use repository::{EqualFilter, PaginationOption};
-use repository::{LogFilter, LogSort, LogSortField};
 use service::{
+    activity_log::get_activity_logs,
     auth::{Resource, ResourceAccessRequest},
-    log::get_logs,
 };
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
-#[graphql(remote = "repository::LogSortField")]
+#[graphql(remote = "repository::ActivityLogSortField")]
 #[graphql(rename_items = "camelCase")]
-pub enum LogSortFieldInput {
+pub enum ActivityLogSortFieldInput {
     Id,
-    LogType,
+    ActivityLogType,
     UserId,
     RecordId,
 }
 
 #[derive(InputObject)]
-pub struct LogSortInput {
+pub struct ActivityLogSortInput {
     /// Sort query result by `key`
-    key: LogSortFieldInput,
+    key: ActivityLogSortFieldInput,
     /// Sort query result is sorted descending or ascending (if not provided the default is
     /// ascending)
     desc: Option<bool>,
 }
 
 #[derive(InputObject, Clone)]
-pub struct EqualFilterLogTypeInput {
-    pub equal_to: Option<LogNodeType>,
-    pub equal_any: Option<Vec<LogNodeType>>,
-    pub not_equal_to: Option<LogNodeType>,
+pub struct EqualFilterActivityLogTypeInput {
+    pub equal_to: Option<ActivityLogNodeType>,
+    pub equal_any: Option<Vec<ActivityLogNodeType>>,
+    pub not_equal_to: Option<ActivityLogNodeType>,
 }
 
 #[derive(InputObject, Clone)]
-pub struct LogFilterInput {
+pub struct ActivityLogFilterInput {
     pub id: Option<EqualFilterStringInput>,
-    pub r#type: Option<EqualFilterLogTypeInput>,
+    pub r#type: Option<EqualFilterActivityLogTypeInput>,
     pub user_id: Option<EqualFilterStringInput>,
     pub store_id: Option<EqualFilterStringInput>,
     pub record_id: Option<EqualFilterStringInput>,
 }
 
 #[derive(Union)]
-pub enum LogResponse {
-    Response(LogConnector),
+pub enum ActivityLogResponse {
+    Response(ActivityLogConnector),
 }
 
-pub fn logs(
+pub fn activity_logs(
     ctx: &Context<'_>,
     page: Option<PaginationInput>,
-    filter: Option<LogFilterInput>,
-    sort: Option<Vec<LogSortInput>>,
-) -> Result<LogResponse> {
+    filter: Option<ActivityLogFilterInput>,
+    sort: Option<Vec<ActivityLogSortInput>>,
+) -> Result<ActivityLogResponse> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -69,7 +69,7 @@ pub fn logs(
     )?;
 
     let connection_manager = ctx.get_connection_manager();
-    let items = get_logs(
+    let items = get_activity_logs(
         connection_manager,
         page.map(PaginationOption::from),
         filter.map(|filter| filter.to_domain()),
@@ -79,12 +79,14 @@ pub fn logs(
     )
     .map_err(StandardGraphqlError::from_list_error)?;
 
-    Ok(LogResponse::Response(LogConnector::from_domain(items)))
+    Ok(ActivityLogResponse::Response(
+        ActivityLogConnector::from_domain(items),
+    ))
 }
 
-impl LogFilterInput {
-    pub fn to_domain(self) -> LogFilter {
-        let LogFilterInput {
+impl ActivityLogFilterInput {
+    pub fn to_domain(self) -> ActivityLogFilter {
+        let ActivityLogFilterInput {
             id,
             r#type,
             user_id,
@@ -92,9 +94,9 @@ impl LogFilterInput {
             record_id,
         } = self;
 
-        LogFilter {
+        ActivityLogFilter {
             id: id.map(EqualFilter::from),
-            r#type: r#type.map(|t| map_filter!(t, LogNodeType::to_domain)),
+            r#type: r#type.map(|t| map_filter!(t, ActivityLogNodeType::to_domain)),
             user_id: user_id.map(EqualFilter::from),
             store_id: store_id.map(EqualFilter::from),
             record_id: record_id.map(EqualFilter::from),
@@ -102,18 +104,18 @@ impl LogFilterInput {
     }
 }
 
-impl LogSortInput {
-    pub fn to_domain(self) -> LogSort {
-        use LogSortField as to;
-        use LogSortFieldInput as from;
+impl ActivityLogSortInput {
+    pub fn to_domain(self) -> ActivityLogSort {
+        use ActivityLogSortField as to;
+        use ActivityLogSortFieldInput as from;
         let key = match self.key {
             from::Id => to::Id,
-            from::LogType => to::LogType,
+            from::ActivityLogType => to::ActivityLogType,
             from::UserId => to::UserId,
             from::RecordId => to::RecordId,
         };
 
-        LogSort {
+        ActivityLogSort {
             key,
             desc: self.desc,
         }

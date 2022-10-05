@@ -1,5 +1,5 @@
 use crate::{
-    log::log_entry,
+    activity_log::activity_log_entry,
     requisition::common::check_requisition_exists,
     requisition_line::request_requisition_line::{
         delete_request_requisition_line, DeleteRequestRequisitionLine,
@@ -9,8 +9,8 @@ use crate::{
 };
 use repository::{
     requisition_row::{RequisitionRowStatus, RequisitionRowType},
-    EqualFilter, LogType, RepositoryError, RequisitionLineFilter, RequisitionLineRepository,
-    RequisitionRowRepository, StorageConnection,
+    ActivityLogType, EqualFilter, RepositoryError, RequisitionLineFilter,
+    RequisitionLineRepository, RequisitionRowRepository, StorageConnection,
 };
 
 #[derive(Debug, PartialEq, Clone, Default)]
@@ -64,7 +64,7 @@ pub fn delete_request_requisition(
                 })?;
             }
             // End TODO
-            log_entry(&ctx, LogType::RequisitionDeleted, &input.id)?;
+            activity_log_entry(&ctx, ActivityLogType::RequisitionDeleted, &input.id)?;
 
             match RequisitionRowRepository::new(&connection).delete(&input.id) {
                 Ok(_) => Ok(input.id.clone()),

@@ -48,8 +48,8 @@ pub use self::stocktake_line::*;
 pub mod user;
 pub use self::user::*;
 
-pub mod log;
-pub use self::log::*;
+pub mod activity_log;
+pub use self::activity_log::*;
 
 pub mod permissions;
 pub use self::permissions::*;

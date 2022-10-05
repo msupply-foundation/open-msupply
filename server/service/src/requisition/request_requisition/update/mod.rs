@@ -1,9 +1,11 @@
 use crate::{
-    log::log_entry, requisition::query::get_requisition, service_provider::ServiceContext,
+    activity_log::activity_log_entry, requisition::query::get_requisition,
+    service_provider::ServiceContext,
 };
 use chrono::NaiveDate;
 use repository::{
-    LogType, RepositoryError, Requisition, RequisitionLineRowRepository, RequisitionRowRepository,
+    ActivityLogType, RepositoryError, Requisition, RequisitionLineRowRepository,
+    RequisitionRowRepository,
 };
 
 mod generate;
@@ -72,9 +74,9 @@ pub fn update_request_requisition(
             }
 
             if status_changed {
-                log_entry(
+                activity_log_entry(
                     &ctx,
-                    LogType::RequisitionStatusSent,
+                    ActivityLogType::RequisitionStatusSent,
                     &updated_requisition.id,
                 )?;
             }

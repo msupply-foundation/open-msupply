@@ -1,4 +1,4 @@
-use repository::{Invoice, InvoiceRowRepository, LogType};
+use repository::{ActivityLogType, Invoice, InvoiceRowRepository};
 use repository::{RepositoryError, TransactionError};
 
 pub mod generate;
@@ -7,8 +7,8 @@ pub mod validate;
 use generate::generate;
 use validate::validate;
 
+use crate::activity_log::activity_log_entry;
 use crate::invoice::query::get_invoice;
-use crate::log::log_entry;
 use crate::service_provider::ServiceContext;
 
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -49,7 +49,7 @@ pub fn insert_outbound_shipment(
 
             InvoiceRowRepository::new(&connection).upsert_one(&new_invoice)?;
 
-            log_entry(&ctx, LogType::InvoiceCreated, &new_invoice.id)?;
+            activity_log_entry(&ctx, ActivityLogType::InvoiceCreated, &new_invoice.id)?;
 
             get_invoice(ctx, None, &new_invoice.id)
                 .map_err(|error| OutError::DatabaseError(error))?
