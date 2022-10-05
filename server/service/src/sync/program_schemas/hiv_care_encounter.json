@@ -254,7 +254,7 @@
             "height": {
               "description": "50373000\tBody height measure [m]",
               "pattern": "^\\d\\.\\d{2}$",
-              "title": "Height in meters",
+              "title": "Height in m",
               "type": "string",
               "messages": { "pattern": "Format is 0.00" }
             },
