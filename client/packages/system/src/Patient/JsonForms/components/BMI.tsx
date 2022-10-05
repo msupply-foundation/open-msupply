@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import {
   composePaths,
   ControlProps,
@@ -18,23 +18,19 @@ const round = (value: number) => Math.round(value * 100) / 100;
 
 const UIComponent = (props: ControlProps) => {
   const { data, handleChange, label, path } = props;
-  const [bmi, setBmi] = useState<number | null>(null);
+  const { height, weight } = data;
 
   useEffect(() => {
     if (!data) return;
 
-    const height = NumUtils.parseString(data.height);
-    const weight = NumUtils.parseString(data.weight);
+    const h = NumUtils.parseString(height);
+    const w = NumUtils.parseString(weight);
 
-    if (!height || !weight) return;
+    if (!handleChange || !w) return;
 
-    setBmi(round(weight / (height * height)));
-  }, [data]);
-
-  useEffect(() => {
-    if (bmi === null) return;
+    const bmi = round(w / (h * h));
     handleChange(composePaths(path, 'bodyMassIndex'), bmi);
-  }, [bmi]);
+  }, [height, weight]);
 
   if (!props.visible) {
     return null;
