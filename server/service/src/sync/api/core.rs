@@ -2,8 +2,6 @@ use crate::{
     service_provider::ServiceProvider,
     sync::{settings::SyncSettings, sync_api_credentials::SyncCredentials},
 };
-
-use anyhow::Context;
 use reqwest::{
     header::{HeaderMap, HeaderName},
     Client, Response, Url,
@@ -11,6 +9,7 @@ use reqwest::{
 use serde::{de::DeserializeOwned, Serialize};
 use serde_json::json;
 use thiserror::Error;
+use url::ParseError;
 
 use super::*;
 
@@ -40,15 +39,28 @@ fn generate_headers(hardware_id: &str) -> HeaderMap {
     headers
 }
 
+#[derive(Error, Debug)]
+pub enum SyncApiV5CreatingError {
+    #[error("Cannot parse url while creating SyncApiV5 instance url: '{0}'")]
+    CannotParseSyncUrl(String, #[source] ParseError),
+    #[error("Error while creating SyncApiV5 instance")]
+    Other(#[source] anyhow::Error),
+}
+
 impl SyncApiV5 {
-    pub(crate) fn new(
+    pub fn new(
         settings: &SyncSettings,
         service_provider: &ServiceProvider,
-    ) -> anyhow::Result<Self> {
-        let hardware_id = service_provider.app_data_service.get_hardware_id()?;
+    ) -> Result<Self, SyncApiV5CreatingError> {
+        use SyncApiV5CreatingError as Error;
+        let hardware_id = service_provider
+            .app_data_service
+            .get_hardware_id()
+            .map_err(|error| Error::Other(error.into()))?;
 
         Ok(SyncApiV5 {
-            server_url: Url::parse(&settings.url)?,
+            server_url: Url::parse(&settings.url)
+                .map_err(|error| Error::CannotParseSyncUrl(settings.url.clone(), error))?,
             credentials: SyncCredentials {
                 username: settings.username.clone(),
                 password_sha256: settings.password_sha256.clone(),
@@ -75,7 +87,10 @@ impl SyncApiV5 {
     where
         T: Serialize + ?Sized,
     {
-        let url = self.server_url.join(route).context("Failed to parse url")?;
+        let url = self
+            .server_url
+            .join(route)
+            .map_err(|error| self.api_error(route, error.into()))?;
         let result = Client::new()
             .get(url.clone())
             .basic_auth(
@@ -87,7 +102,9 @@ impl SyncApiV5 {
             .send()
             .await;
 
-        response_or_err(url, result).await
+        response_or_err(result)
+            .await
+            .map_err(|error| self.api_error(route, error))
     }
 
     pub(crate) async fn do_get_no_query(&self, route: &str) -> Result<Response, SyncApiError> {
@@ -98,7 +115,10 @@ impl SyncApiV5 {
     where
         T: Serialize,
     {
-        let url = self.server_url.join(route).context("Failed to parse url")?;
+        let url = self
+            .server_url
+            .join(route)
+            .map_err(|error| self.api_error(route, error.into()))?;
         let result = Client::new()
             .post(url.clone())
             .basic_auth(
@@ -112,7 +132,9 @@ impl SyncApiV5 {
             .send()
             .await;
 
-        response_or_err(url, result).await
+        response_or_err(result)
+            .await
+            .map_err(|error| self.api_error(route, error))
     }
 
     pub(crate) async fn do_empty_post(&self, route: &str) -> Result<Response, SyncApiError> {
@@ -122,9 +144,9 @@ impl SyncApiV5 {
 
 #[derive(Error, Debug)]
 pub enum ParsingResponseError {
-    #[error("Cannot retreive response body: {0}")]
-    CannotGetTextReponse(reqwest::Error),
-    #[error("Could not parse response body, error: ({source}) reponse; ({response_text}) ")]
+    #[error("Cannot retrieve response body")]
+    CannotGetTextResponse(#[from] reqwest::Error),
+    #[error("Could not parse response body, response: '{response_text}'")]
     ParseError {
         source: serde_json::Error,
         response_text: String,
@@ -135,10 +157,7 @@ pub(crate) async fn to_json<T: DeserializeOwned>(
     response: Response,
 ) -> Result<T, ParsingResponseError> {
     // TODO not owned (to avoid double parsing)
-    let response_text = response
-        .text()
-        .await
-        .map_err(ParsingResponseError::CannotGetTextReponse)?;
+    let response_text = response.text().await?;
     let result = serde_json::from_str(&response_text).map_err(|source| {
         ParsingResponseError::ParseError {
             source,
@@ -149,16 +168,15 @@ pub(crate) async fn to_json<T: DeserializeOwned>(
 }
 
 async fn response_or_err(
-    url: Url,
     result: Result<Response, reqwest::Error>,
-) -> Result<Response, SyncApiError> {
+) -> Result<Response, SyncApiErrorVariant> {
     let response = match result {
         Ok(result) => result,
         Err(error) => {
             if error.is_connect() {
-                return Err(SyncApiError::ConnectionError { source: error, url });
+                return Err(SyncApiErrorVariant::ConnectionError(error));
             } else {
-                return Err(SyncApiError::Other(error.into()));
+                return Err(SyncApiErrorVariant::Other(error.into()));
             }
         }
     };
@@ -167,7 +185,7 @@ async fn response_or_err(
         return Ok(response);
     }
 
-    Err(SyncErrorV5::from_response_and_status(response.status(), response).await)
+    Err(SyncApiErrorVariant::from_response_and_status(response.status(), response).await)
 }
 
 #[cfg(test)]

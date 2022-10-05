@@ -19,6 +19,7 @@ export const PasswordTextInput: FC<PasswordTextInputProps> = React.forwardRef(
     const visibilityInputButton = (
       <IconButton
         aria-label="toggle password visibility"
+        disabled={props.disabled}
         title={t('label.toggle-password-visibility')}
         onClick={() => {
           setShowPassword(!showPassword);

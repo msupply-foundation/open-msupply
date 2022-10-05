@@ -1,3 +1,14 @@
+CREATE TYPE sync_api_error_code AS ENUM (
+    'CONNECTION_ERROR',
+    'SITE_UUID_IS_BEING_CHANGED',
+    'SITE_NAME_NOT_FOUND',
+    'INCORRECT_PASSWORD',
+    'HARDWARE_ID_MISMATCH',
+    'SITE_HAS_NO_STORE',
+    'SITE_AUTH_TIMEOUT',
+    'INTEGRATION_TIMEOUT_REACHED'
+);
+
 CREATE TABLE sync_log (
     id TEXT NOT NULL PRIMARY KEY,
     started_datetime TIMESTAMP NOT NULL,
@@ -23,5 +34,6 @@ CREATE TABLE sync_log (
     integration_started_datetime TIMESTAMP,
     integration_finished_datetime TIMESTAMP,
 
-    error_message TEXT
+    error_message TEXT,
+    error_code sync_api_error_code
 )

@@ -6,12 +6,13 @@ impl SyncApiV5 {
         &self,
         batch_size: u32,
     ) -> Result<RemoteSyncBatchV5, SyncApiError> {
+        let route = "/sync/v5/queued_records";
         let query = [("limit", &batch_size.to_string())];
-        let response = self.do_get("/sync/v5/queued_records", &query).await?;
+        let response = self.do_get(route, &query).await?;
 
         to_json(response)
             .await
-            .map_err(SyncApiError::ResponseParsingError)
+            .map_err(|error| self.api_error(route, error.into()))
     }
 }
 

@@ -9,44 +9,246 @@ use crate::{
 use self::middleware::{compress as compress_middleware, logger as logger_middleware};
 use graphql_core::loader::{get_loaders, LoaderRegistry};
 
-use graphql::{config as graphql_config, config_stage0};
-use log::{error, info, warn};
-use repository::{get_storage_connection_manager, run_db_migrations, StorageConnectionManager};
+use graphql::{attach_graphql_schema, GraphSchemaData, GraphqlSchema};
+use log::info;
+use repository::{get_storage_connection_manager, run_db_migrations};
 
 use service::{
     auth_data::AuthData,
     processors::Processors,
     service_provider::ServiceProvider,
-    settings::{is_develop, LogMode, LoggingSettings, ServerSettings, Settings},
-    sync::synchroniser::Synchroniser,
+    settings::{is_develop, ServerSettings, Settings},
+    sync::synchroniser_driver::{SiteIsInitialisedCallback, SynchroniserDriver},
     token_bucket::TokenBucket,
 };
 
 use actix_web::{web::Data, App, HttpServer};
-use fast_log::{
-    consts::LogSize,
-    plugin::{file_split::RollingType, packer::LogPacker},
-    Config as LogConfig,
-};
-use log::LevelFilter;
-use std::env;
-use std::{
-    ops::{Deref, DerefMut},
-    sync::{Arc, RwLock},
-};
-use tokio::sync::{mpsc, Mutex};
+use std::sync::{Arc, RwLock};
 
 pub mod certs;
 pub mod configuration;
 pub mod cors;
 pub mod environment;
+mod logging;
 pub mod middleware;
 mod serve_frontend;
 pub mod static_files;
+pub use self::logging::*;
 
 // Only import discovery for non android features (otherwise build for android targets would fail due to local-ip-address)
 #[cfg(not(target_os = "android"))]
 mod discovery;
+
+/// Starts the server
+///
+/// # Arguments
+/// * `settigngs` - Server settings (manually defined for android and from .yaml file for other)
+/// * `off_switch` - For android or windows service to turn off server
+///
+/// This method doesn't return until a message is sent to the off_switch
+pub async fn start_server(
+    settings: Settings,
+    mut off_switch: tokio::sync::mpsc::Receiver<()>,
+) -> std::io::Result<()> {
+    info!(
+        "Server starting in {} mode",
+        match is_develop() {
+            true => "Development",
+            false => "Production",
+        }
+    );
+
+    // INITIALISE DATABASE AND CONNECTION
+    let connection_manager = get_storage_connection_manager(&settings.database);
+    if let Some(init_sql) = &settings.database.full_init_sql() {
+        connection_manager.execute(init_sql).unwrap();
+    }
+    info!("Run DB migrations...");
+    run_db_migrations(&connection_manager.connection().unwrap(), true)
+        .expect("Failed to run DB migrations");
+    info!("Run DB migrations...done");
+
+    // INITIALISE CONTEXT
+    info!("Initialising server context..");
+    let (processors_trigger, processors) = Processors::init();
+    let (sync_trigger, synchroniser_driver) = SynchroniserDriver::init();
+    let (site_is_initialise_trigger, site_is_initialised_callback) =
+        SiteIsInitialisedCallback::init();
+
+    let service_provider = Data::new(ServiceProvider::new_with_triggers(
+        connection_manager.clone(),
+        &settings.server.base_dir.clone().unwrap(),
+        processors_trigger,
+        sync_trigger,
+        site_is_initialise_trigger,
+    ));
+    let loaders = get_loaders(&connection_manager, service_provider.clone()).await;
+    let certificates = Certificates::try_load(&settings.server).unwrap();
+    let token_bucket = Arc::new(RwLock::new(TokenBucket::new()));
+    let token_secret = get_or_create_token_secret(&connection_manager.connection().unwrap());
+    let auth = auth_data(&settings.server, token_bucket, token_secret, &certificates);
+    info!("Initialising server context..done");
+
+    // SET HARDWARE UUID
+    info!("Setting hardware uuid..");
+    #[cfg(not(target_os = "android"))]
+    let machine_uid = machine_uid::get().expect("Failed to query OS for hardware id");
+
+    #[cfg(target_os = "android")]
+    let machine_uid = config_settings
+        .server
+        .machine_uid
+        .clone()
+        .unwrap_or("".to_string());
+    service_provider
+        .app_data_service
+        .set_hardware_id(machine_uid)
+        .unwrap();
+    info!("Setting hardware uuid..done");
+
+    // CHECK SYNC STATUS
+    info!("Checking sync status..");
+    let service_context = service_provider.basic_context().unwrap();
+    let yaml_sync_settings = settings.sync.clone();
+    let database_sync_settings = service_provider
+        .settings
+        .sync_settings(&service_context)
+        .unwrap();
+
+    // Need to set sync settings in database if they are provided via yaml configurations
+    let force_trigger_sync_on_startup = match (database_sync_settings, yaml_sync_settings) {
+        // If we are changing sync setting via yaml configurations, need to check against central server
+        // to confirm that site is still the same (request_and_set_site_info checks site UUID)
+        (Some(database_sync_settings), Some(yaml_sync_settings)) => {
+            if database_sync_settings.core_site_details_changed(&yaml_sync_settings) {
+                info!("Sync settings in configurations dont match database");
+                info!("Checking sync credentails are for the same site..");
+                service_provider
+                    .site_info_service
+                    .request_and_set_site_info(&service_provider, &yaml_sync_settings)
+                    .await
+                    .unwrap();
+                info!("Checking sync credentails are for the same site..done");
+            }
+            service_provider
+                .settings
+                .update_sync_settings(&service_context, &yaml_sync_settings)
+                .unwrap();
+            // Settings are set in database -> try syncing on startup
+            true
+        }
+        (None, Some(yaml_sync_settings)) => {
+            info!("Sync settings in configurations and not in database");
+            info!("Checking sync credentails..");
+            // If fresh sync settings provided in yaml, check credentials against central server and save them in database
+            service_provider
+                .site_info_service
+                .request_and_set_site_info(&service_provider, &yaml_sync_settings)
+                .await
+                .unwrap();
+            info!("Checking sync credentails..done");
+            service_provider
+                .settings
+                .update_sync_settings(&service_context, &yaml_sync_settings)
+                .unwrap();
+            // Settings are set in database -> try syncing on startup
+            true
+        }
+        // Settings are set in database -> try syncing on startup
+        (Some(_), None) => true,
+        // Settings are not set in database -> don't try syncing on startup
+        (None, None) => false,
+    };
+
+    // CREATE GRAPHQL SCHEMA
+    let is_operational = service_provider
+        .sync_status_service
+        .is_initialised(&service_context)
+        .unwrap();
+    info!(
+        "Creating graphql schema in {} mode..",
+        match is_operational {
+            true => "operational",
+            false => "initialisation",
+        }
+    );
+    let graphql_schema = Data::new(GraphqlSchema::new(
+        GraphSchemaData {
+            connection_manager: Data::new(connection_manager),
+            loader_registry: Data::new(LoaderRegistry { loaders }),
+            service_provider: service_provider.clone(),
+            settings: Data::new(settings.clone()),
+            auth,
+        },
+        is_operational,
+    ));
+    // Bind trigger to change schema when site is initialised
+    if !is_operational {
+        let graphql_schema = graphql_schema.clone();
+        site_is_initialised_callback.on_trigger(async move {
+            info!("Changing graphql schema to operational mode");
+            graphql_schema.clone().toggle_is_operational(true).await;
+        });
+    }
+    info!("Creating graphql schema..done",);
+
+    // START DISCOVERY
+    // Don't do discovery in android
+    #[cfg(not(target_os = "android"))]
+    {
+        info!("Starting server discovery",);
+        let _ = discovery::Discovery::start(discovery::ServerInfo::new(
+            certificates.protocol(),
+            &settings.server,
+        ));
+    }
+
+    // START SERVER
+    info!("Initialising http server..",);
+    let processors_task = processors.spawn(service_provider.clone().into_inner());
+    let synchroniser_task = synchroniser_driver.run(
+        service_provider.clone().into_inner(),
+        force_trigger_sync_on_startup,
+    );
+
+    let closure_settings = settings.clone();
+    let mut http_server = HttpServer::new(move || {
+        App::new()
+            .wrap(logger_middleware())
+            .wrap(cors_policy(&closure_settings))
+            .wrap(compress_middleware())
+            .configure(attach_graphql_schema(graphql_schema.clone()))
+            .configure(config_static_files)
+            .configure(config_server_frontend)
+    })
+    .disable_signals();
+
+    http_server = match certificates.config() {
+        Some(config) => http_server
+            .bind_rustls(settings.server.address(), config)
+            .unwrap(),
+        None => http_server.bind(settings.server.address()).unwrap(),
+    };
+    info!("Initialising http server..done",);
+
+    let running_server = http_server.run();
+    let server_handle = running_server.handle();
+    info!("Server started, running on port: {}", settings.server.port);
+    // run server in another task so that we can handle restart/off events here
+    actix_web::rt::spawn(running_server);
+
+    tokio::select! {
+        // TODO log error in ctrl_c and None in off_switch
+        _ = tokio::signal::ctrl_c() => {},
+        Some(_) = off_switch.recv() => {},
+        _ = synchroniser_task => unreachable!("Synchroniser unexpectedly stopped"),
+        result = processors_task => unreachable!("Processor terminated ({:?})", result)
+    };
+
+    server_handle.stop(true).await;
+
+    Ok(())
+}
 
 fn auth_data(
     server_settings: &ServerSettings,
@@ -60,371 +262,4 @@ fn auth_data(
         no_ssl: !certificates.is_https(),
         debug_no_access_control: is_develop() && server_settings.debug_no_access_control,
     })
-}
-
-async fn run_stage0(
-    config_settings: Settings,
-    off_switch: Arc<Mutex<mpsc::Receiver<()>>>,
-    token_bucket: Arc<RwLock<TokenBucket>>,
-    token_secret: String,
-    connection_manager: StorageConnectionManager,
-    certificates: &Certificates,
-) -> std::io::Result<bool> {
-    warn!("Starting server in bootstrap mode. Please use API to configure the server.");
-
-    let auth_data = auth_data(
-        &config_settings.server,
-        token_bucket,
-        token_secret,
-        &certificates,
-    );
-
-    let (restart_switch, mut restart_switch_receiver) = tokio::sync::mpsc::channel::<bool>(1);
-    let connection_manager_data_app = Data::new(connection_manager.clone());
-
-    let service_provider = ServiceProvider::new(
-        connection_manager.clone(),
-        &config_settings.server.base_dir.clone().unwrap(),
-    );
-
-    if service_provider
-        .app_data_service
-        .get_hardware_id()?
-        .is_empty()
-    {
-        #[cfg(not(target_os = "android"))]
-        let machine_uid = machine_uid::get().expect("Failed to query OS for hardware id");
-
-        #[cfg(target_os = "android")]
-        let machine_uid = config_settings
-            .server
-            .machine_uid
-            .clone()
-            .unwrap_or("".to_string());
-
-        service_provider
-            .app_data_service
-            .set_hardware_id(machine_uid)?;
-    }
-
-    let service_provider_data = Data::new(service_provider);
-
-    let loaders = get_loaders(&connection_manager, service_provider_data.clone()).await;
-    let loader_registry_data = Data::new(LoaderRegistry { loaders });
-
-    let restart_switch = Data::new(restart_switch);
-
-    let closure_settings = Data::new(config_settings.clone());
-
-    let mut http_server = HttpServer::new(move || {
-        let cors = cors_policy(&closure_settings);
-        App::new()
-            .wrap(logger_middleware())
-            .wrap(cors)
-            .wrap(compress_middleware())
-            .configure(config_stage0(
-                connection_manager_data_app.clone(),
-                loader_registry_data.clone(),
-                service_provider_data.clone(),
-                auth_data.clone(),
-                closure_settings.clone(),
-                restart_switch.clone(),
-            ))
-            .configure(config_server_frontend)
-    })
-    .disable_signals();
-
-    http_server = match certificates.config() {
-        Some(config) => http_server.bind_rustls(config_settings.server.address(), config)?,
-        None => http_server.bind(config_settings.server.address())?,
-    };
-
-    let running_server = http_server.run();
-    let server_handle = running_server.handle();
-    // run server in another task so that we can handle restart/off events here
-    actix_web::rt::spawn(running_server);
-
-    let mut off_switch = off_switch.lock().await;
-    let off_switch = off_switch.deref_mut();
-    let ctrl_c = tokio::signal::ctrl_c();
-    let restart = tokio::select! {
-        _ = ctrl_c => false,
-        _ = off_switch.recv() => false,
-        _ = restart_switch_receiver.recv() => true,
-    };
-    // gracefully shutdown the server
-    server_handle.stop(true).await;
-    Ok(restart)
-}
-
-/// Return true if restart has been requested
-async fn run_server(
-    config_settings: Settings,
-    off_switch: Arc<Mutex<mpsc::Receiver<()>>>,
-    token_bucket: Arc<RwLock<TokenBucket>>,
-    token_secret: String,
-    connection_manager: StorageConnectionManager,
-    certificates: &Certificates,
-) -> std::io::Result<bool> {
-    let service_provider = ServiceProvider::new(
-        connection_manager.clone(),
-        &config_settings.server.base_dir.clone().unwrap(),
-    );
-    let service_context = service_provider.basic_context().unwrap();
-    let service = &service_provider.settings;
-
-    let db_settings = service.sync_settings(&service_context).unwrap();
-    let sync_settings = db_settings.clone().or(config_settings.sync.clone());
-    let sync_settings = match sync_settings {
-        Some(sync_settings) => sync_settings,
-        // No sync settings found, start in stage0 mode
-        None => {
-            return run_stage0(
-                config_settings,
-                off_switch,
-                token_bucket.clone(),
-                token_secret,
-                connection_manager,
-                certificates,
-            )
-            .await
-        }
-    };
-
-    if db_settings.is_none() && config_settings.sync.is_some() {
-        service_provider
-            .site_info_service
-            .request_and_set_site_info(&service_provider, config_settings.sync.as_ref().unwrap())
-            .await
-            .unwrap();
-    }
-
-    // Final settings:
-    let mut settings = config_settings;
-    settings.sync = Some(sync_settings.clone());
-    let site_id = service_provider
-        .site_info_service
-        .get_site_id(&service_context)
-        .unwrap();
-
-    let auth_data = auth_data(
-        &settings.server,
-        token_bucket.clone(),
-        token_secret.clone(),
-        &certificates,
-    );
-
-    let (restart_switch, mut restart_switch_receiver) = tokio::sync::mpsc::channel::<bool>(1);
-    let connection_manager_data_app = Data::new(connection_manager.clone());
-
-    let (processors_trigger, processors) = Processors::init();
-    let service_provider = ServiceProvider::new_with_processors(
-        connection_manager.clone(),
-        &settings.server.base_dir.clone().unwrap(),
-        processors_trigger,
-    );
-    let service_provider_data = Data::new(service_provider);
-    let processors_task = processors.spawn(service_provider_data.clone().into_inner());
-
-    let loaders = get_loaders(&connection_manager, service_provider_data.clone()).await;
-    let loader_registry_data = Data::new(LoaderRegistry { loaders });
-
-    let settings_data = Data::new(settings.clone());
-
-    let restart_switch = Data::new(restart_switch);
-
-    let mut synchroniser =
-        Synchroniser::new(sync_settings, service_provider_data.deref().clone()).unwrap();
-    // Do the initial pull before doing anything else
-    match synchroniser.sync().await {
-        Ok(_) => {}
-        Err(err) => {
-            error!("Failed to perform the initial sync: {}", err);
-            if !is_develop() || site_id.is_none() {
-                warn!("Falling back to bootstrap mode");
-                return run_stage0(
-                    settings,
-                    off_switch,
-                    token_bucket,
-                    token_secret,
-                    connection_manager,
-                    certificates,
-                )
-                .await;
-            }
-        }
-    }
-
-    let closure_settings = settings.clone();
-
-    let mut http_server = HttpServer::new(move || {
-        let cors = cors_policy(&closure_settings);
-        App::new()
-            .wrap(logger_middleware())
-            .wrap(cors)
-            .wrap(compress_middleware())
-            .configure(graphql_config(
-                connection_manager_data_app.clone(),
-                loader_registry_data.clone(),
-                service_provider_data.clone(),
-                auth_data.clone(),
-                settings_data.clone(),
-                restart_switch.clone(),
-            ))
-            .app_data(Data::new(closure_settings.clone()))
-            .configure(config_static_files)
-            .configure(config_server_frontend)
-    })
-    .disable_signals();
-
-    http_server = match certificates.config() {
-        Some(config) => http_server.bind_rustls(settings.server.address(), config)?,
-        None => http_server.bind(settings.server.address())?,
-    };
-
-    let running_server = http_server.run();
-    let server_handle = running_server.handle();
-    // run server in another task so that we can handle restart/off events here
-    actix_web::rt::spawn(running_server);
-
-    let mut off_switch = off_switch.lock().await;
-    let off_switch = off_switch.deref_mut();
-    let ctrl_c = tokio::signal::ctrl_c();
-    let restart = tokio::select! {
-        _ = ctrl_c => false,
-        _ = off_switch.recv() => false,
-        _ = restart_switch_receiver.recv() => true,
-        () = async {
-            synchroniser.run().await;
-        } => unreachable!("Synchroniser unexpectedly died!?"),
-        result = processors_task => unreachable!("Processor terminated ({:?})", result)
-    };
-
-    server_handle.stop(true).await;
-    Ok(restart)
-}
-
-pub fn logging_init(settings: Option<LoggingSettings>) {
-    let settings = settings.unwrap_or(LoggingSettings {
-        mode: LogMode::Console,
-        level: service::settings::Level::Info,
-        directory: None,
-        filename: None,
-        max_file_count: None,
-        max_file_size: None,
-    });
-    let config = match settings.mode {
-        LogMode::File => file_logger(&settings),
-        LogMode::Console => LogConfig::new().console(),
-        LogMode::All => file_logger(&settings).console(),
-    };
-    fast_log::init(config.level(LevelFilter::from(settings.level.clone())))
-        .expect("Unable to initialise logger");
-}
-
-fn file_logger(settings: &LoggingSettings) -> LogConfig {
-    let default_log_file = "remote_server.log".to_string();
-    let default_log_dir = "log".to_string();
-    let default_max_file_count = 5;
-    let default_max_file_size = 10;
-
-    // Note: the file_split will panic if the path separator isn't appended
-    // and the path separator has to be unix-style, even on windows
-    let log_dir = format!("{}/", settings.directory.clone().unwrap_or(default_log_dir),);
-    let log_path = env::current_dir().unwrap_or_default().join(&log_dir);
-    let log_file = settings
-        .filename
-        .clone()
-        .unwrap_or_else(|| default_log_file);
-    let log_file = log_path.join(log_file).to_string_lossy().to_string();
-    let max_file_count = settings.max_file_count.unwrap_or(default_max_file_count);
-    let max_file_size = settings.max_file_size.unwrap_or(default_max_file_size);
-
-    // file_loop will append to the specified log file until the max size is reached,
-    // then create a new log file with the same name, with date and time appended
-    // file_split will split the temp file when the max file size is reached
-    // and retain the max number of files while the server is running
-    // Note: when the server is started, the temp files are removed. The main log file is
-    // appended to, but only to the max size limit. Only one additional main log is created
-    LogConfig::new()
-        .file_split(
-            &log_dir,
-            LogSize::MB(max_file_size),
-            RollingType::KeepNum(max_file_count),
-            LogPacker {},
-        )
-        .file_loop(&log_file, LogSize::MB(max_file_size))
-}
-
-/// Starts the server
-///
-/// This method doesn't return until a message is sent to the off_switch.
-pub async fn start_server(
-    config_settings: Settings,
-    off_switch: mpsc::Receiver<()>,
-) -> std::io::Result<()> {
-    info!(
-        "Server starting in {} mode",
-        if is_develop() {
-            "Development"
-        } else {
-            "Production"
-        }
-    );
-
-    let connection_manager = get_storage_connection_manager(&config_settings.database);
-
-    if let Some(init_sql) = &config_settings.database.full_init_sql() {
-        connection_manager.execute(init_sql).unwrap();
-    }
-
-    info!("Run DB migrations...");
-    match run_db_migrations(&connection_manager.connection().unwrap(), true) {
-        Ok(_) => info!("DB migrations succeeded"),
-        Err(err) => {
-            let msg = format!("Failed to run DB migrations: {}", err);
-            error!("{}", msg);
-            panic!("{}", msg);
-        }
-    };
-
-    let certificates = Certificates::try_load(&config_settings.server)?;
-
-    // Don't do discovery in android
-    #[cfg(not(target_os = "android"))]
-    let _ = discovery::Discovery::start(discovery::ServerInfo::new(
-        certificates.protocol(),
-        &config_settings.server,
-    ));
-
-    // allow the off_switch to be passed around during multiple server stages
-    let off_switch = Arc::new(Mutex::new(off_switch));
-
-    let token_bucket = Arc::new(RwLock::new(TokenBucket::new()));
-    let token_secret = get_or_create_token_secret(&connection_manager.connection().unwrap());
-    loop {
-        match run_server(
-            config_settings.clone(),
-            off_switch.clone(),
-            token_bucket.clone(),
-            token_secret.clone(),
-            connection_manager.clone(),
-            &certificates,
-        )
-        .await
-        {
-            Ok(restart) => {
-                if !restart {
-                    break;
-                }
-
-                // restart the server in next loop
-                info!("Restart server");
-            }
-            Err(err) => return Err(err),
-        }
-    }
-
-    info!("Remote server stopped");
-    Ok(())
 }

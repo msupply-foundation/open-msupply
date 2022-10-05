@@ -1,6 +1,20 @@
 use log::{error, info};
-use repository::{RepositoryError, StorageConnection, SyncLogRow, SyncLogRowRepository};
+use repository::{
+    RepositoryError, StorageConnection, SyncLogRow, SyncLogRowErrorCode, SyncLogRowRepository,
+};
 use thiserror::Error;
+use util::format_error;
+
+use crate::sync::{
+    api::{SyncApiErrorVariant, SyncErrorCodeV5},
+    central_data_synchroniser::CentralPullError,
+    remote_data_synchroniser::{
+        PostInitialisationError, RemotePullError, RemotePushError, WaitForIntegrationError,
+    },
+    synchroniser::SyncError,
+};
+
+use super::SyncLogError;
 
 #[derive(Debug)]
 pub(crate) enum SyncStep {
@@ -24,8 +38,8 @@ pub(crate) struct SyncLogger<'a> {
 }
 
 #[derive(Error, Debug)]
-#[error("Problem writing to sync log {0:?}")]
-pub(crate) struct SyncLoggerError(RepositoryError);
+#[error("Problem writing to sync log")]
+pub(crate) struct SyncLoggerError(#[from] RepositoryError);
 
 impl<'a> SyncLogger<'a> {
     pub(crate) fn start(connection: &'a StorageConnection) -> Result<SyncLogger, SyncLoggerError> {
@@ -37,7 +51,7 @@ impl<'a> SyncLogger<'a> {
         };
 
         let sync_log_repo = SyncLogRowRepository::new(connection);
-        sync_log_repo.upsert_one(&row).map_err(SyncLoggerError)?;
+        sync_log_repo.upsert_one(&row)?;
         Ok(SyncLogger { sync_log_repo, row })
     }
 
@@ -47,9 +61,7 @@ impl<'a> SyncLogger<'a> {
             ..self.row.clone()
         };
 
-        self.sync_log_repo
-            .upsert_one(&self.row)
-            .map_err(SyncLoggerError)?;
+        self.sync_log_repo.upsert_one(&self.row)?;
         info!("Sync finished");
         Ok(())
     }
@@ -79,9 +91,7 @@ impl<'a> SyncLogger<'a> {
             },
         };
 
-        self.sync_log_repo
-            .upsert_one(&self.row)
-            .map_err(SyncLoggerError)?;
+        self.sync_log_repo.upsert_one(&self.row)?;
         Ok(())
     }
 
@@ -129,23 +139,24 @@ impl<'a> SyncLogger<'a> {
 
         info!("Sync step finished {:?}", step);
 
-        self.sync_log_repo
-            .upsert_one(&self.row)
-            .map_err(SyncLoggerError)?;
+        self.sync_log_repo.upsert_one(&self.row)?;
         Ok(())
     }
 
-    pub(crate) fn error(&mut self, error: String) -> Result<(), SyncLoggerError> {
-        error!("Error in sync: {}", error);
+    pub(crate) fn error(&mut self, error: &SyncError) -> Result<(), SyncLoggerError> {
+        error!("Error in sync: {}", format_error(error));
+
+        // Convert to sync log error
+
+        let SyncLogError { message, code } = SyncLogError::from_sync_error(error);
 
         self.row = SyncLogRow {
-            error_message: Some(error),
+            error_message: Some(message),
+            error_code: code,
             ..self.row.clone()
         };
 
-        self.sync_log_repo
-            .upsert_one(&self.row)
-            .map_err(SyncLoggerError)?;
+        self.sync_log_repo.upsert_one(&self.row)?;
         Ok(())
     }
 
@@ -209,9 +220,210 @@ impl<'a> SyncLogger<'a> {
             }
         };
 
-        self.sync_log_repo
-            .upsert_one(&self.row)
-            .map_err(SyncLoggerError)?;
+        self.sync_log_repo.upsert_one(&self.row)?;
         Ok(())
+    }
+}
+
+impl SyncLogError {
+    /// Map SyncError to SyncLogError, to be queried later and translated in front end
+    fn from_sync_error(sync_error: &SyncError) -> Self {
+        let sync_api_error = match &sync_error {
+            // Sync Api Error
+            SyncError::CentralPullError(CentralPullError::SyncApiError(error))
+            | SyncError::RemotePullError(RemotePullError::SyncApiError(error))
+            | SyncError::PostInitialisationError(PostInitialisationError(error))
+            | SyncError::RemotePushError(RemotePushError::SyncApiError(error))
+            | SyncError::WaitForIntegrationError(WaitForIntegrationError::SyncApiError(error)) => {
+                error
+            }
+            // Integration timeout reached
+            SyncError::WaitForIntegrationError(_) => {
+                return Self::new(SyncLogRowErrorCode::IntegrationTimeoutReached, sync_error)
+            }
+            // Internal errors
+            _ => return Self::message_only(sync_error),
+        };
+
+        let sync_v5_error_code = match &sync_api_error.source {
+            // Map SyncErrorCodeV5 to
+            SyncApiErrorVariant::ParsedError { source, .. } => &source.code,
+            // Important to map connection error
+            SyncApiErrorVariant::ConnectionError { .. } => {
+                return Self::new(SyncLogRowErrorCode::ConnectionError, sync_error)
+            }
+            // Internal errors
+            _ => return Self::message_only(sync_error),
+        };
+
+        use SyncErrorCodeV5 as from;
+        use SyncLogRowErrorCode as to;
+        let log_error_code = match sync_v5_error_code {
+            from::SiteNameNotFound => to::SiteNameNotFound,
+            from::SiteIncorrectPassword => to::IncorrectPassword,
+            from::SiteIncorrectHardwareId => to::HardwareIdMismatch,
+            from::SiteHasNoStore => to::SiteHasNoStore,
+            from::SiteAuthTimeout => to::SiteAuthTimeout,
+            from::Other(_) => return Self::message_only(sync_error),
+        };
+
+        Self::new(log_error_code, &sync_error)
+    }
+
+    fn message_only(sync_error: &SyncError) -> Self {
+        Self {
+            message: format_error(sync_error),
+            code: None,
+        }
+    }
+
+    fn new<T: std::error::Error>(code: SyncLogRowErrorCode, error: &T) -> Self {
+        Self {
+            message: format_error(error),
+            code: Some(code),
+        }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::sync::{
+        api::{ParsedError, SyncApiError, SyncApiErrorVariant, SyncErrorCodeV5},
+        central_data_synchroniser::CentralPullError,
+        remote_data_synchroniser::{
+            PostInitialisationError, RemotePullError, RemotePushError, WaitForIntegrationError,
+        },
+        sync_status::{logger::SyncLoggerError, SyncLogError},
+        synchroniser::SyncError,
+    };
+    use actix_web::http::StatusCode;
+    use repository::{RepositoryError, SyncLogRowErrorCode};
+    use reqwest::{Client, Url};
+    use url::ParseError;
+    use util::format_error;
+
+    #[actix_rt::test]
+    async fn sync_log_error_from_sync_error() {
+        use SyncApiErrorVariant as Variant;
+        // Internal error
+        let sync_error = SyncError::SyncLoggerError(SyncLoggerError(RepositoryError::NotFound));
+        let sync_log_error = SyncLogError::from_sync_error(&sync_error);
+        assert_eq!(
+            sync_log_error,
+            SyncLogError {
+                message: format_error(&sync_error),
+                code: None
+            }
+        );
+        // CentralPullError -> ConnectionError
+        let sync_error = SyncError::CentralPullError(CentralPullError::SyncApiError(
+            SyncApiError::new_test(reqwest_error().await.into()),
+        ));
+        let sync_log_error = SyncLogError::from_sync_error(&sync_error);
+        assert_eq!(
+            sync_log_error.code,
+            Some(SyncLogRowErrorCode::ConnectionError)
+        );
+        // RemotePullError -> ResponseParsingError
+        let sync_error = SyncError::RemotePullError(RemotePullError::SyncApiError(
+            SyncApiError::new_test(Variant::ResponseParsingError(reqwest_error().await.into())),
+        ));
+        let sync_log_error = SyncLogError::from_sync_error(&sync_error);
+        assert_eq!(
+            sync_log_error,
+            SyncLogError {
+                message: format_error(&sync_error),
+                code: None
+            }
+        );
+        // PostInitialisationError -> FailedToParseUrl
+        let sync_error = SyncError::PostInitialisationError(PostInitialisationError(
+            SyncApiError::new_test(parse_error().into()),
+        ));
+        let sync_log_error = SyncLogError::from_sync_error(&sync_error);
+        assert_eq!(
+            sync_log_error,
+            SyncLogError {
+                message: format_error(&sync_error),
+                code: None
+            }
+        );
+        // RemotePushError -> MappedError::FullText
+        let sync_error = SyncError::RemotePushError(RemotePushError::SyncApiError(
+            SyncApiError::new_test(Variant::AsText {
+                text: "n/a".to_string(),
+                status: StatusCode::UNAUTHORIZED,
+            }),
+        ));
+        let sync_log_error = SyncLogError::from_sync_error(&sync_error);
+        assert_eq!(
+            sync_log_error,
+            SyncLogError {
+                message: format_error(&sync_error),
+                code: None
+            }
+        );
+        // WaitForIntegrationError -> IntegrationTimeoutReached
+        let sync_error =
+            SyncError::WaitForIntegrationError(WaitForIntegrationError::IntegrationTimeoutReached);
+        let sync_log_error = SyncLogError::from_sync_error(&sync_error);
+        assert_eq!(
+            sync_log_error,
+            SyncLogError {
+                message: format_error(&sync_error),
+                code: Some(SyncLogRowErrorCode::IntegrationTimeoutReached)
+            }
+        );
+        // CentralPullError -> MappedError::ParsedError -> Other
+        let sync_error = SyncError::CentralPullError(CentralPullError::SyncApiError(
+            SyncApiError::new_test(Variant::ParsedError {
+                status: StatusCode::UNAUTHORIZED,
+                source: ParsedError {
+                    code: SyncErrorCodeV5::Other("n/a".to_string()),
+                    message: "n/a".to_string(),
+                    data: Some("n/a".to_string()),
+                },
+            }),
+        ));
+        let sync_log_error = SyncLogError::from_sync_error(&sync_error);
+        assert_eq!(
+            sync_log_error,
+            SyncLogError {
+                message: format_error(&sync_error),
+                code: None
+            }
+        );
+        // CentralPullError -> MappedError::ParsedError -> IncorrectHardwareId
+        let sync_error = SyncError::CentralPullError(CentralPullError::SyncApiError(
+            SyncApiError::new_test(Variant::ParsedError {
+                status: StatusCode::UNAUTHORIZED,
+                source: ParsedError {
+                    code: SyncErrorCodeV5::SiteIncorrectHardwareId,
+                    message: "n/a".to_string(),
+                    data: Some("n/a".to_string()),
+                },
+            }),
+        ));
+        let sync_log_error = SyncLogError::from_sync_error(&sync_error);
+        assert_eq!(
+            sync_log_error,
+            SyncLogError {
+                message: format_error(&sync_error),
+                code: Some(SyncLogRowErrorCode::HardwareIdMismatch)
+            }
+        );
+    }
+
+    async fn reqwest_error() -> reqwest::Error {
+        Client::new()
+            .get(Url::parse("http://0.0.0.0:0").unwrap())
+            .send()
+            .await
+            .err()
+            .expect("Must be error")
+    }
+
+    fn parse_error() -> ParseError {
+        Url::parse("not url at all").err().expect("must be error")
     }
 }

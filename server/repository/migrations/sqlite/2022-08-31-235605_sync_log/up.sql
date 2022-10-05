@@ -23,5 +23,6 @@ CREATE TABLE sync_log (
     integration_started_datetime TIMESTAMP,
     integration_finished_datetime TIMESTAMP,
 
-    error_message TEXT
+    error_message TEXT,
+    error_code TEXT
 )

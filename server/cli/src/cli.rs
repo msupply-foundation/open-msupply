@@ -1,10 +1,10 @@
 use crate::fast_log::Config;
-
+use async_graphql::EmptySubscription;
 use chrono::Utc;
 use clap::StructOpt;
 use cli::RefreshDatesRepository;
 use fast_log;
-use graphql::schema_builder;
+use graphql::{Mutations, OperationalSchema, Queries};
 use log::info;
 use repository::{
     get_storage_connection_manager, test_db, StorageConnectionManager, SyncBufferRowRepository,
@@ -18,8 +18,8 @@ use service::{
     service_provider::ServiceProvider,
     settings::Settings,
     sync::{
-        settings::SyncSettings,
-        synchroniser::{integrate_and_translate_sync_buffer, Synchroniser},
+        settings::SyncSettings, synchroniser::integrate_and_translate_sync_buffer,
+        synchroniser_driver::SynchroniserDriver,
     },
     token_bucket::TokenBucket,
 };
@@ -108,11 +108,8 @@ async fn initialise_from_central(settings: Settings, users: &str) -> StorageConn
     };
 
     info!("Initialising from central");
-    Synchroniser::new(sync_settings, service_provider.clone())
-        .unwrap()
-        .sync()
-        .await
-        .unwrap();
+    let (_, sync_driver) = SynchroniserDriver::init();
+    sync_driver.sync(service_provider.clone()).await;
 
     info!("Syncing users");
     for user in users.split(",") {
@@ -141,7 +138,9 @@ async fn main() {
     match args.action {
         Action::ExportGraphqlSchema => {
             info!("Exporting graphql schema");
-            let schema = schema_builder().finish();
+            let schema =
+                OperationalSchema::build(Queries::new(), Mutations::new(), EmptySubscription)
+                    .finish();
             fs::write("schema.graphql", &schema.sdl()).unwrap();
             info!("Schema exported in schema.graphql");
         }
@@ -241,7 +240,7 @@ async fn main() {
             if refresh {
                 info!("Refreshing dates");
                 let result = RefreshDatesRepository::new(&ctx.connection)
-                    .refresh_dates(Utc::now().naive_local())
+                    .refresh_dates(Utc::now().naive_utc())
                     .expect("Error while refreshing data");
                 info!("Refresh data result: {:#?}", result);
             }
@@ -254,7 +253,7 @@ async fn main() {
                     &ctx,
                     &inline_init(|r: &mut SyncSettings| {
                         r.url = "http://0.0.0.0:0".to_string();
-                        r.interval_sec = 100000000;
+                        r.interval_seconds = 100000000;
                         r.username = "Sync is disabled (datafile initialise from file".to_string();
                     }),
                 )
@@ -273,7 +272,7 @@ async fn main() {
 
             info!("Refreshing dates");
             let result = RefreshDatesRepository::new(&connection)
-                .refresh_dates(Utc::now().naive_local())
+                .refresh_dates(Utc::now().naive_utc())
                 .unwrap();
 
             let service_provider = Arc::new(ServiceProvider::new(

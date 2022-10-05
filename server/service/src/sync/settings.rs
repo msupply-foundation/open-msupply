@@ -5,8 +5,8 @@ pub struct SyncSettings {
     pub url: String,
     pub username: String,
     pub password_sha256: String,
-    /// sync interval in sec
-    pub interval_sec: u64,
+    /// Sync interval
+    pub interval_seconds: u64,
     // Number of records to pull or push in one API call
     #[serde(default)]
     pub batch_size: BatchSize,
@@ -26,5 +26,17 @@ impl Default for BatchSize {
             remote_push: 1024,
             central_pull: 500,
         }
+    }
+}
+
+impl SyncSettings {
+    /// Check to see if sync configuration difference would require confirmation that site is still the same
+    /// for example if site username is was changed, we want to check that site username against the server
+    /// and make sure it's still the same site
+    pub fn core_site_details_changed(&self, other: &SyncSettings) -> bool {
+        let equal = self.username == other.username
+            && self.url == other.url
+            && self.password_sha256 == other.password_sha256;
+        !equal
     }
 }

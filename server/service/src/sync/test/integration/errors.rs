@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use repository::{mock::MockDataInserts, StorageConnectionManager};
+    use repository::{mock::MockDataInserts, StorageConnectionManager, SyncLogRowErrorCode};
     use reqwest::StatusCode;
     use serde_json::json;
     use std::{io::Error, path::PathBuf, sync::Arc};
@@ -10,10 +10,11 @@ mod tests {
         app_data::{AppData, AppDataServiceTrait},
         service_provider::ServiceProvider,
         sync::{
-            api::{SyncApiError, SyncErrorV5},
+            api::{SyncApiError, SyncApiErrorVariant},
             remote_data_synchroniser::RemotePushError,
             settings::SyncSettings,
-            synchroniser::Synchroniser,
+            sync_status::SyncLogError,
+            synchroniser::{SyncError, Synchroniser},
             test::integration::central_server_configurations::{
                 ConfigureCentralServer, SiteConfiguration,
             },
@@ -59,6 +60,7 @@ mod tests {
         let ServiceTestContext {
             connection_manager,
             service_provider,
+            service_context,
             ..
         } = setup_all_and_service_provider(
             "sync_integration_test_parsed_error",
@@ -79,20 +81,36 @@ mod tests {
         let synchroniser =
             get_synchroniser_with_hardware_id(&connection_manager, &sync_settings, "id2");
 
-        let error = match synchroniser.sync().await {
-            Ok(_) => panic!("Should result in error"),
-            Err(e) => e,
-        };
-
-        println!("{:?}", error);
+        let error = synchroniser
+            .sync()
+            .await
+            .err()
+            .expect("Should result in error");
 
         assert_matches!(
-            error.downcast_ref::<RemotePushError>(),
-            Some(RemotePushError::PushError(SyncApiError::MappedError {
-                source: SyncErrorV5::ParsedError { .. },
-                status: StatusCode::UNAUTHORIZED,
+            error,
+            SyncError::RemotePushError(RemotePushError::SyncApiError(SyncApiError {
+                source: SyncApiErrorVariant::ParsedError {
+                    status: StatusCode::UNAUTHORIZED,
+                    ..
+                },
+                ..
             }))
         );
+        // Check that error is recorded in logs
+        let status = service_provider
+            .sync_status_service
+            .get_latest_sync_status(&service_context)
+            .unwrap()
+            .expect("Sync log row should exist");
+
+        assert_matches!(
+            status.error,
+            Some(SyncLogError {
+                code: Some(SyncLogRowErrorCode::HardwareIdMismatch),
+                ..
+            })
+        )
     }
 
     #[actix_rt::test]
@@ -111,11 +129,14 @@ mod tests {
         };
 
         assert_matches!(
-            error.downcast_ref::<SyncApiError>(),
-            Some(SyncApiError::MappedError {
-                source: SyncErrorV5::FullText(_),
-                status: StatusCode::INTERNAL_SERVER_ERROR,
-            })
+            error,
+            SyncApiError {
+                source: SyncApiErrorVariant::AsText {
+                    status: StatusCode::INTERNAL_SERVER_ERROR,
+                    ..
+                },
+                ..
+            }
         );
     }
 }

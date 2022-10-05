@@ -1,37 +1,91 @@
 fragment SyncSettings on SyncSettingsNode {
   __typename
-  intervalSec
+  intervalSeconds
   url
   username
 }
 
-query serverSettings {
-  serverSettings {
-    ... on ServerSettingsNode {
-      __typename
-      status
-      syncSettingsDb {
-        ...SyncSettings
-      }
-      syncSettings {
-        ...SyncSettings
-      }
-    }
+query syncSettings {
+  syncSettings {
+    ...SyncSettings
   }
 }
 
-query serverRestart {
-  serverRestart {
+query initialisationStatus {
+  initialisationStatus
+}
+
+fragment SyncError on SyncErrorNode {
+  __typename
+  variant
+  fullError
+}
+
+mutation initialiseSite($syncSettings: SyncSettingsInput!) {
+  initialiseSite(input: $syncSettings) {
     __typename
-    message
+    ... on SyncSettingsNode {
+      ...SyncSettings
+    }
+    ... on SyncErrorNode {
+      ...SyncError
+    }
   }
 }
 
-mutation updateServerSettings($syncSettings: UpdateSyncSettingsInput!) {
-  updateServerSettings(input: { syncSettings: $syncSettings }) {
-    ... on ServerSettingsNode {
-      __typename
-      status
+mutation updateSyncSettings($syncSettings: SyncSettingsInput!) {
+  updateSyncSettings(input: $syncSettings) {
+    __typename
+    ... on SyncSettingsNode {
+      ...SyncSettings
+    }
+    ... on SyncErrorNode {
+      ...SyncError
     }
   }
+}
+
+fragment SyncStatus on SyncStatusNode {
+  __typename
+  finished
+  started
+}
+
+fragment SyncStatusWithProgress on SyncStatusWithProgressNode {
+  __typename
+  finished
+  started
+  done
+  total
+}
+
+query syncStatus {
+  latestSyncStatus {
+    error {
+      ...SyncError
+    }
+    integration {
+      ...SyncStatus
+    }
+    isSyncing
+    prepareInitial {
+      ...SyncStatus
+    }
+    pullCentral {
+      ...SyncStatusWithProgress
+    }
+    pullRemote {
+      ...SyncStatusWithProgress
+    }
+    push {
+      ...SyncStatusWithProgress
+    }
+    summary {
+      ...SyncStatus
+    }
+  }
+}
+
+mutation manualSync {
+  manualSync
 }

@@ -10,7 +10,7 @@ use repository::{
     KeyValueStoreRow, KeyValueType, LocationRow,
 };
 use tokio::sync::Mutex;
-use util::{inline_edit, inline_init};
+use util::{assert_matches, inline_edit, inline_init};
 
 use crate::{
     service_provider::ServiceProvider,
@@ -20,7 +20,8 @@ use crate::{
             RemoteSyncBatchV5, RemoteSyncRecordV5, SiteStatusCodeV5, SiteStatusV5,
         },
         settings::{BatchSize, SyncSettings},
-        synchroniser::Synchroniser,
+        sync_status::{status::InitialisationStatus, SyncLogError},
+        synchroniser::{SyncError, Synchroniser},
     },
     test_helpers::{setup_all_and_service_provider, ServiceTestContext},
 };
@@ -41,9 +42,17 @@ async fn sync_status() {
     let ServiceTestContext {
         connection,
         service_provider,
+        service_context,
         ..
     } = setup_all_and_service_provider("sync_status", MockDataInserts::none().names().stores())
         .await;
+
+    assert_eq!(
+        service_provider
+            .sync_status_service
+            .get_initialisation_status(&service_context),
+        Ok(InitialisationStatus::PreInitialisation)
+    );
 
     // Test INITIALISATION
     let tester = get_initialisation_sync_status_tester(service_provider.clone());
@@ -52,6 +61,13 @@ async fn sync_status() {
         .await
         .unwrap();
     tester_data.lock().await.try_route("final".to_string());
+
+    assert_eq!(
+        service_provider
+            .sync_status_service
+            .get_initialisation_status(&service_context),
+        Ok(InitialisationStatus::Initialised)
+    );
 
     // Test PUSH and ERROR
 
@@ -65,7 +81,7 @@ async fn sync_status() {
             })];
             r.locations = (1..=3)
                 .into_iter()
-                .map(|i: i32| {
+                .map(|i| {
                     inline_init(|r: &mut LocationRow| {
                         r.id = i.to_string();
                         r.store_id = mock_store_a().id;
@@ -74,6 +90,7 @@ async fn sync_status() {
                 .collect();
         }),
     );
+
     let ctx = service_provider.basic_context().unwrap();
     assert_eq!(
         service_provider
@@ -88,7 +105,7 @@ async fn sync_status() {
     let tester_data = Data::new(Mutex::new(tester));
     let result = run_server_and_sync(service_provider.clone(), tester_data.clone(), PORT + 1).await;
 
-    assert!(matches!(result, Err(_)));
+    assert_matches!(result, Err(_));
     tester_data.lock().await.try_route("final".to_string());
 }
 
@@ -143,6 +160,8 @@ fn get_initialisation_sync_status_tester(service_provider: Arc<ServiceProvider>)
                     if iteration == 0 {
                         r.prepare_initial = current_status.prepare_initial.clone()
                     }
+                    // Even though push is not done start and end is logged
+                    r.push = current_status.push.clone();
                     r.pull_central = current_status.pull_central.clone();
                     r
                 });
@@ -328,126 +347,127 @@ fn get_initialisation_sync_status_tester(service_provider: Arc<ServiceProvider>)
 /// * /final (manually called as last step)
 fn get_push_and_error_sync_status_tester(service_provider: Arc<ServiceProvider>) -> Tester {
     Tester::new(service_provider.clone())
-    .add_test(
-        "queued_records",
-        |TestInput {
-             previous_status,
-             current_status,
-             previous_datetime,
-             now,
-             iteration,
-         }| {
-            let new_status = inline_edit(&previous_status, |mut r| {
-                if iteration == 0 {
-                    r.is_syncing = true;
-                    r.summary = current_status.summary.clone();
+        .add_test(
+            "queued_records",
+            |TestInput {
+                 previous_status,
+                 current_status,
+                 previous_datetime,
+                 now,
+                 iteration,
+             }| {
+                let new_status = inline_edit(&previous_status, |mut r| {
+                    if iteration == 0 {
+                        r.is_syncing = true;
+                        r.summary = current_status.summary.clone();
+                    }
+                    // Even though prepare_initial is not run, it is logged
+                    r.prepare_initial = current_status.prepare_initial.clone();
+                    r.push = current_status.push.clone();
+                    r
+                });
+                assert_eq!(current_status, new_status);
+                let push_status = current_status.push.unwrap();
+
+                let integration_started = match iteration {
+                    0 => {
+                        assert_between!(current_status.summary.started, previous_datetime, now);
+                        assert_between!(push_status.started, previous_datetime, now);
+                        assert!(push_status.finished.is_none());
+
+                        assert_eq!(push_status.done, Some(0));
+                        assert_eq!(push_status.total, Some(3));
+
+                        false
+                    }
+                    1 => {
+                        assert_eq!(push_status.done, Some(1));
+                        assert_eq!(push_status.total, Some(3));
+
+                        false
+                    }
+                    2 => {
+                        assert_eq!(push_status.done, Some(2));
+                        assert_eq!(push_status.total, Some(3));
+
+                        false
+                    }
+                    3 => {
+                        assert_eq!(push_status.done, Some(3));
+                        assert_eq!(push_status.total, Some(3));
+
+                        true
+                    }
+                    _ => unreachable!("Problem in test, too many central data requests"),
+                };
+
+                let response_record = RemotePushResponseV5 {
+                    integration_started,
+                };
+
+                TestOutput {
+                    new_status,
+                    response: serde_json::to_string(&response_record).unwrap(),
                 }
-                r.push = current_status.push.clone();
-                r
-            });
-            assert_eq!(current_status, new_status);
-            let push_status = current_status.push.unwrap();
-
-            let integration_started = match iteration {
-                0 => {
-                    assert_between!(current_status.summary.started, previous_datetime, now);
-                    assert_between!(push_status.started, previous_datetime, now);
-                    assert!(push_status.finished.is_none());
-
-                    assert_eq!(push_status.done, Some(0));
-                    assert_eq!(push_status.total, Some(3));
-
-                    false
-                }
-                1 => {
-                    assert_eq!(push_status.done, Some(1));
-                    assert_eq!(push_status.total, Some(3));
-
-                    false
-                }
-                2 => {
-                    assert_eq!(push_status.done, Some(2));
-                    assert_eq!(push_status.total, Some(3));
-
-                    false
-                }
-                3 => {
-                    assert_eq!(push_status.done, Some(3));
-                    assert_eq!(push_status.total, Some(3));
-
-                    true
-                }
-                _ => unreachable!("Problem in test, too many central data requests"),
+            },
+        )
+        .add_test("site_status", |ctx| {
+            let response_record = SiteStatusV5 {
+                code: SiteStatusCodeV5::Idle,
+                message: String::new(),
+                data: None,
             };
-
-            let response_record = RemotePushResponseV5 {
-                integration_started,
-            };
-
             TestOutput {
-                new_status,
+                new_status: ctx.current_status,
                 response: serde_json::to_string(&response_record).unwrap(),
             }
-        },
-    )
-    .add_test("site_status", |ctx| {
-        let response_record = SiteStatusV5 {
-            code: SiteStatusCodeV5::Idle,
-            message: String::new(),
-            data: None,
-        };
-        TestOutput {
-            new_status: ctx.current_status,
-            response: serde_json::to_string(&response_record).unwrap(),
-        }
-    })
-    .add_test(
-        "central_records",
-        |TestInput {
-             previous_status,
-             current_status,
-             previous_datetime,
-             now,
-             ..
-         }| {
-            let new_status = inline_edit(&previous_status, |mut r| {
-                r.push = current_status.push.clone();
-                r.pull_central = current_status.pull_central.clone();
-                r
-            });
-            assert_eq!(current_status, new_status);
+        })
+        .add_test(
+            "central_records",
+            |TestInput {
+                 previous_status,
+                 current_status,
+                 previous_datetime,
+                 now,
+                 ..
+             }| {
+                let new_status = inline_edit(&previous_status, |mut r| {
+                    r.push = current_status.push.clone();
+                    r.pull_central = current_status.pull_central.clone();
+                    r
+                });
+                assert_eq!(current_status, new_status);
 
-            let push_status = current_status.push.unwrap();
-            assert_between!(push_status.finished.unwrap(), previous_datetime, now);
+                let push_status = current_status.push.unwrap();
+                assert_between!(push_status.finished.unwrap(), previous_datetime, now);
 
-            TestOutput {
-                new_status,
-                response: r#"invalid"#.to_string(),
-            }
-        },
-    )
-    .add_test(
-        "final",
-        |TestInput {
-             previous_status,
-             current_status,
-             ..
-         }| {
-            let new_status = inline_edit(&previous_status, |mut r| {
-                r.is_syncing = false;
-                r.error = current_status.error.clone();
-                r
-            });
-            assert_eq!(current_status, new_status);
+                TestOutput {
+                    new_status,
+                    response: r#"invalid"#.to_string(),
+                }
+            },
+        )
+        .add_test(
+            "final",
+            |TestInput {
+                 previous_status,
+                 current_status,
+                 ..
+             }| {
+                let new_status = inline_edit(&previous_status, |mut r| {
+                    r.is_syncing = false;
+                    r.error = current_status.error.clone();
+                    r
+                });
+                assert_eq!(current_status, new_status);
+                util::assert_matches!(current_status.error, Some(SyncLogError { .. }));
 
-            assert_eq!(current_status.error.unwrap(), "Api error while pulling central records: Could not parse response body, error: (expected value at line 1 column 1) reponse; (invalid) ");
-
-            TestOutput {
-                new_status,
-                response: String::new(),
-            }
-        },
-    )
+                TestOutput {
+                    new_status,
+                    response: String::new(),
+                }
+            },
+        )
 }
 
 /// Create synchroniser and server and run, returning synchroniser result
@@ -455,12 +475,12 @@ async fn run_server_and_sync(
     service_provider: Arc<ServiceProvider>,
     tester_data: TesterData,
     port: u16,
-) -> anyhow::Result<()> {
+) -> Result<(), SyncError> {
     let sync_settings = SyncSettings {
         url: format!("http://127.0.0.1:{}", port),
         username: "".to_string(),
         password_sha256: "".to_string(),
-        interval_sec: 100000,
+        interval_seconds: 100000,
         batch_size: BatchSize {
             remote_pull: 1,
             remote_push: 1,
@@ -532,7 +552,7 @@ impl Tester {
             previous_status: Default::default(),
             iterations: HashMap::new(),
             tests: HashMap::new(),
-            previous_date: Utc::now().naive_local(),
+            previous_date: Utc::now().naive_utc(),
         }
     }
 
@@ -552,7 +572,7 @@ impl Tester {
 
         let iteration = self.iterations.entry(route.clone()).or_insert(0);
 
-        let now = Utc::now().naive_local();
+        let now = Utc::now().naive_utc();
 
         let input = TestInput {
             now,
@@ -560,6 +580,7 @@ impl Tester {
                 .service_provider
                 .sync_status_service
                 .get_latest_sync_status(&ctx)
+                .unwrap()
                 .unwrap(),
             previous_status: self.previous_status.clone(),
             iteration: *iteration,
