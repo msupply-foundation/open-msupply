@@ -37,15 +37,15 @@
         },
         {
           "type": "Control",
-          "scope": "#/properties/physicalExamination/properties/whoStaging"
-        },
-        {
-          "type": "Control",
           "scope": "#/properties/physicalExamination/properties/symptoms"
         },
         {
           "type": "Control",
           "scope": "#/properties/physicalExamination/properties/opportunisticInfections"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/physicalExamination/properties/whoStaging"
         },
         {
           "type": "HorizontalLayout",
