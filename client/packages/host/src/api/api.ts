@@ -72,7 +72,10 @@ export function mapSyncError(
   };
 
   return {
-    error: t(errorMapping[error.variant]),
+    error:
+      t(errorMapping[error.variant]) ||
+      defaultKey ||
+      'error.unknown-sync-error',
     details: error.fullError,
   };
 }
