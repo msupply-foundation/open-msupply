@@ -12,24 +12,26 @@ type LoginLayoutProps = {
   UsernameInput: ReactNode;
   PasswordInput: ReactNode;
   UrlInput: ReactNode;
-  SaveButton: ReactNode;
+  Button: ReactNode;
+  SyncProgress: ReactNode;
   ErrorMessage: ReactNode;
-  onSave: () => Promise<void>;
+  onInitialise: () => Promise<void>;
 };
 
 export const InitialiseLayout = ({
   UsernameInput,
   PasswordInput,
   UrlInput,
-  SaveButton,
+  Button,
   ErrorMessage,
-  onSave,
+  SyncProgress,
+  onInitialise,
 }: LoginLayoutProps) => {
   const t = useTranslation('app');
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
     if (e.key === 'Enter') {
-      onSave();
+      onInitialise();
     }
   };
 
@@ -96,7 +98,7 @@ export const InitialiseLayout = ({
         flexDirection="column"
       >
         <Box style={{ width: 285 }}>
-          <form onSubmit={onSave} onKeyDown={handleKeyDown}>
+          <form onSubmit={onInitialise} onKeyDown={handleKeyDown}>
             <Stack spacing={5}>
               <Box display="flex" justifyContent="center">
                 <LoginIcon small />
@@ -106,11 +108,12 @@ export const InitialiseLayout = ({
               {PasswordInput}
               {ErrorMessage}
               <Box display="flex" justifyContent="flex-end">
-                {SaveButton}
+                {Button}
               </Box>
             </Stack>
           </form>
         </Box>
+        {SyncProgress}
       </Box>
     </Box>
   );

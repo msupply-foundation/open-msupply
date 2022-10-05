@@ -207,7 +207,7 @@ mod invoice_count_service_test {
             &repo,
             &item1_type,
             &status,
-            Utc::now().naive_local(),
+            Utc::now().naive_utc(),
             None,
             &store_1.id,
         )
@@ -270,7 +270,7 @@ mod invoice_count_service_test {
             MockDataInserts::all(),
         )
         .await;
-        let ctx = ServiceContext::new_without_processors(connection);
+        let ctx = ServiceContext::new_without_triggers(connection);
         let service = InvoiceCountService {};
 
         // There are two invoices created at these times for store_a:

@@ -184,9 +184,9 @@ fn generate_stock_line_update(
         }
     };
 
-    let quantiy_change = i32::abs(delta);
-    let shipment_line = if quantiy_change > 0 {
-        let line_type = if delta > 0 {
+    let quantity_change = f64::abs(delta);
+    let shipment_line = if quantity_change > 0.0 {
+        let line_type = if delta > 0.0 {
             InvoiceLineRowType::StockIn
         } else {
             InvoiceLineRowType::StockOut
@@ -208,7 +208,7 @@ fn generate_stock_line_update(
             total_before_tax: 0.0,
             total_after_tax: 0.0,
             tax: None,
-            number_of_packs: quantiy_change,
+            number_of_packs: quantity_change,
             note: stock_line.note.clone(),
         })
     } else {
@@ -228,7 +228,7 @@ fn generate_new_stock_line(
     invoice_id: &str,
     stocktake_line: StocktakeLine,
 ) -> Result<StockLineJob, UpdateStocktakeError> {
-    let counted_number_of_packs = stocktake_line.line.counted_number_of_packs.unwrap_or(0);
+    let counted_number_of_packs = stocktake_line.line.counted_number_of_packs.unwrap_or(0.0);
     let row = stocktake_line.line;
     let pack_size = row.pack_size.unwrap_or(0);
     let cost_price_per_pack = row.cost_price_per_pack.unwrap_or(0.0);
@@ -267,7 +267,7 @@ fn generate_new_stock_line(
             )))
         }
     };
-    let shipment_line = if counted_number_of_packs > 0 {
+    let shipment_line = if counted_number_of_packs > 0.0 {
         Some(InvoiceLineRow {
             id: uuid(),
             r#type: InvoiceLineRowType::StockIn,
@@ -331,7 +331,7 @@ fn generate(
     if !is_finalised {
         // just update the existing stocktake
         return Ok(StocktakeGenerateJob {
-            stocktake: stocktake,
+            stocktake,
             stocktake_lines: vec![],
             inventory_adjustment: None,
             inventory_adjustment_lines: vec![],
@@ -385,7 +385,7 @@ fn generate(
     }
 
     // find inventory adjustment name:
-    let invad_name = NameRowRepository::new(connection)
+    let invalid_name = NameRowRepository::new(connection)
         .find_one_by_code(INVENTORY_ADJUSTMENT_NAME_CODE)?
         .ok_or(UpdateStocktakeError::InternalError(
             "Missing inventory adjustment name".to_string(),
@@ -396,7 +396,7 @@ fn generate(
     let shipment = InvoiceRow {
         id: inventory_adjustment_id,
         user_id: Some(user_id.to_string()),
-        name_id: invad_name.id,
+        name_id: invalid_name.id,
         store_id: store_id.to_string(),
         invoice_number: next_number(connection, &NumberRowType::InventoryAdjustment, store_id)?,
         name_store_id: None,
@@ -483,13 +483,13 @@ impl From<RepositoryError> for UpdateStocktakeError {
 
 #[cfg(test)]
 mod test {
-
     use chrono::NaiveDate;
     use repository::{
         mock::{
-            mock_locked_stocktake, mock_stock_line_a, mock_stocktake_a,
+            mock_locked_stocktake, mock_stock_line_a, mock_stock_line_b, mock_stocktake_a,
             mock_stocktake_finalised_without_lines, mock_stocktake_full_edit,
             mock_stocktake_line_a, mock_stocktake_line_new_stock_line,
+            mock_stocktake_line_stock_deficit, mock_stocktake_line_stock_surplus,
             mock_stocktake_new_stock_line, mock_stocktake_no_count_change, mock_stocktake_no_lines,
             mock_stocktake_stock_deficit, mock_stocktake_stock_surplus, mock_store_a,
             MockDataInserts,
@@ -571,7 +571,7 @@ mod test {
 
         // error: SnapshotCountCurrentCountMismatch
         let mut stock_line = mock_stock_line_a();
-        stock_line.total_number_of_packs = 5;
+        stock_line.total_number_of_packs = 5.0;
         StockLineRowRepository::new(&context.connection)
             .upsert_one(&stock_line)
             .unwrap();
@@ -611,6 +611,11 @@ mod test {
 
         // success surplus should result in StockIn shipment line
         let stocktake = mock_stocktake_stock_surplus();
+        let stocktake_line = mock_stocktake_line_stock_surplus();
+        let stock_line = mock_stock_line_b();
+        let surplus_amount =
+            stocktake_line.counted_number_of_packs.unwrap() - stock_line.total_number_of_packs;
+
         let result = service
             .update_stocktake(
                 &context,
@@ -626,9 +631,15 @@ mod test {
             .pop()
             .unwrap();
         assert_eq!(shipment.r#type, InvoiceLineRowType::StockIn);
+        assert_eq!(shipment.number_of_packs, surplus_amount);
 
         // success deficit should result in StockOut shipment line
         let stocktake = mock_stocktake_stock_deficit();
+        let stocktake_line = mock_stocktake_line_stock_deficit();
+        let stock_line = mock_stock_line_b();
+        let deficit_amount =
+            stocktake_line.counted_number_of_packs.unwrap() - stock_line.total_number_of_packs;
+
         let result = service
             .update_stocktake(
                 &context,
@@ -644,6 +655,7 @@ mod test {
             .pop()
             .unwrap();
         assert_eq!(shipment.r#type, InvoiceLineRowType::StockOut);
+        assert_eq!(shipment.number_of_packs, f64::abs(deficit_amount));
 
         // success: no count change should not generate shipment line
         let stocktake = mock_stocktake_no_count_change();

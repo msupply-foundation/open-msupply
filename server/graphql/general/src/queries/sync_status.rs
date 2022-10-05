@@ -1,7 +1,15 @@
 pub use async_graphql::*;
 use chrono::NaiveDateTime;
-use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
-use service::sync::sync_status::{is_initialised, number_of_records_in_push_queue};
+use graphql_core::{
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
+    ContextExt,
+};
+use service::{
+    auth::{Resource, ResourceAccessRequest},
+    sync::sync_status::status::FullSyncStatus,
+};
+
+use crate::sync_api_error::SyncErrorNode;
 
 #[derive(SimpleObject)]
 pub struct SyncStatusNode {
@@ -13,14 +21,14 @@ pub struct SyncStatusNode {
 pub struct SyncStatusWithProgressNode {
     started: NaiveDateTime,
     finished: Option<NaiveDateTime>,
-    total_progress: u32,
-    done_progress: u32,
+    total: Option<u32>,
+    done: Option<u32>,
 }
 
 #[derive(SimpleObject)]
 pub struct FullSyncStatusNode {
     is_syncing: bool,
-    error: Option<String>,
+    error: Option<SyncErrorNode>,
     summary: SyncStatusNode,
     prepare_initial: Option<SyncStatusNode>,
     integration: Option<SyncStatusNode>,
@@ -29,72 +37,97 @@ pub struct FullSyncStatusNode {
     push: Option<SyncStatusWithProgressNode>,
 }
 
-#[derive(Default, Clone)]
-pub struct SyncInfoQueries;
+pub fn latest_sync_status(
+    ctx: &Context<'_>,
+    with_auth: bool,
+) -> Result<Option<FullSyncStatusNode>> {
+    if with_auth {
+        validate_sync_info_auth(ctx)?
+    };
 
-#[Object]
-impl SyncInfoQueries {
-    pub async fn is_initialised(&self, ctx: &Context<'_>) -> Result<bool> {
-        let connection = ctx.service_provider().connection()?;
-        let is_initialised = is_initialised(&connection)?;
+    let service_provider = ctx.service_provider();
+    let ctx = service_provider.basic_context()?;
+    let sync_status = match service_provider
+        .sync_status_service
+        .get_latest_sync_status(&ctx)?
+    {
+        Some(sync_status) => sync_status,
+        None => return Ok(None),
+    };
 
-        Ok(is_initialised)
-    }
+    let FullSyncStatus {
+        is_syncing,
+        error,
+        summary,
+        prepare_initial,
+        integration,
+        pull_central,
+        pull_remote,
+        push,
+    } = sync_status;
 
-    pub async fn latest_sync_status(&self, ctx: &Context<'_>) -> Result<FullSyncStatusNode> {
-        let service_provider = ctx.service_provider();
-        let connection = service_provider.connection()?;
-        let sync_status = service_provider
-            .site_info_queries_service
-            .get_latest_sync_status(&connection)?;
+    let result = FullSyncStatusNode {
+        is_syncing,
+        error: error.map(SyncErrorNode::from_sync_log_error),
+        summary: SyncStatusNode {
+            started: summary.started,
+            finished: summary.finished,
+        },
+        prepare_initial: prepare_initial.map(|status| SyncStatusNode {
+            started: status.started,
+            finished: status.finished,
+        }),
+        integration: integration.map(|status| SyncStatusNode {
+            started: status.started,
+            finished: status.finished,
+        }),
+        pull_central: pull_central.map(|status| SyncStatusWithProgressNode {
+            started: status.started,
+            finished: status.finished,
+            total: status.total,
+            done: status.done,
+        }),
+        pull_remote: pull_remote.map(|status| SyncStatusWithProgressNode {
+            started: status.started,
+            finished: status.finished,
+            total: status.total,
+            done: status.done,
+        }),
+        push: push.map(|status| SyncStatusWithProgressNode {
+            started: status.started,
+            finished: status.finished,
+            total: status.total,
+            done: status.done,
+        }),
+    };
 
-        Ok(FullSyncStatusNode {
-            is_syncing: sync_status.is_syncing,
-            error: sync_status.error,
-            summary: SyncStatusNode {
-                started: sync_status.summary.started,
-                finished: sync_status.summary.finished,
-            },
-            prepare_initial: sync_status.prepare_initial.map(|status| SyncStatusNode {
-                started: status.started,
-                finished: status.finished,
-            }),
-            integration: sync_status.integration.map(|status| SyncStatusNode {
-                started: status.started,
-                finished: status.finished,
-            }),
-            pull_central: sync_status
-                .pull_central
-                .map(|status| SyncStatusWithProgressNode {
-                    started: status.started,
-                    finished: status.finished,
-                    total_progress: status.total_progress,
-                    done_progress: status.done_progress,
-                }),
-            pull_remote: sync_status
-                .pull_remote
-                .map(|status| SyncStatusWithProgressNode {
-                    started: status.started,
-                    finished: status.finished,
-                    total_progress: status.total_progress,
-                    done_progress: status.done_progress,
-                }),
-            push: sync_status.push.map(|status| SyncStatusWithProgressNode {
-                started: status.started,
-                finished: status.finished,
-                total_progress: status.total_progress,
-                done_progress: status.done_progress,
-            }),
-        })
-    }
+    Ok(Some(result))
+}
 
-    pub async fn number_of_records_in_push_queue(&self, ctx: &Context<'_>) -> Result<u64> {
-        let connection = ctx.service_provider().connection()?;
-        let push_queue_count = number_of_records_in_push_queue(&connection).map_err(|error| {
+pub fn number_of_records_in_push_queue(ctx: &Context<'_>) -> Result<u64> {
+    validate_sync_info_auth(ctx)?;
+
+    let service_provider = ctx.service_provider();
+    let ctx = service_provider.basic_context()?;
+    let push_queue_count = service_provider
+        .sync_status_service
+        .number_of_records_in_push_queue(&ctx)
+        .map_err(|error| {
             let formatted_error = format!("{:#?}", error);
             StandardGraphqlError::InternalError(formatted_error).extend()
         })?;
 
-        Ok(push_queue_count)
-    }
+    Ok(push_queue_count)
+}
+
+fn validate_sync_info_auth(ctx: &Context<'_>) -> Result<()> {
+    validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::SyncInfo,
+            store_id: None,
+        },
+    )?;
+
+    Ok(())
 }

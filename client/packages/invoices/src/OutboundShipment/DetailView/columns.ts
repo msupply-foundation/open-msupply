@@ -10,6 +10,7 @@ import {
   ArrayUtils,
   useCurrency,
   InvoiceLineNodeType,
+  PositiveNumberCell,
 } from '@openmsupply-client/common';
 import { OutboundItem } from '../../types';
 import { OutboundLineFragment } from '../api/operations.generated';
@@ -220,6 +221,7 @@ export const useOutboundColumns = ({
       [
         'numberOfPacks',
         {
+          Cell: PositiveNumberCell,
           getSortValue: row => {
             if ('lines' in row) {
               const { lines } = row;

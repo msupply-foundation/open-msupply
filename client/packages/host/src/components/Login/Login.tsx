@@ -5,10 +5,10 @@ import {
   LoadingButton,
   Box,
   Typography,
+  InitialisationStatusType,
   AlertIcon,
   useHostContext,
   useNavigate,
-  ServerStatus,
   useElectronClient,
   frontEndHostDisplay,
   LocalStorage,
@@ -23,7 +23,7 @@ export const Login = () => {
   const t = useTranslation('app');
   const { connectedServer } = useElectronClient();
   const { setPageTitle } = useHostContext();
-  const { data } = useHost.utils.settings();
+  const { data: initialisationStatus } = useHost.utils.initialisationStatus();
   const navigate = useNavigate();
 
   const passwordRef = React.useRef(null);
@@ -44,10 +44,13 @@ export const Login = () => {
   }, []);
 
   useEffect(() => {
-    if (data?.status === ServerStatus.Stage_0) {
+    if (
+      !!initialisationStatus &&
+      initialisationStatus !== InitialisationStatusType.Initialised
+    ) {
       navigate(`/${AppRoute.Initialise}`);
     }
-  }, [data]);
+  }, [initialisationStatus]);
 
   return (
     <LoginLayout

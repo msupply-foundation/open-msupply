@@ -1,19 +1,19 @@
 use super::*;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Deserialize, PartialEq, Debug, Serialize)]
 
 pub(crate) struct CentralSyncRecordV5 {
     #[serde(rename = "ID")]
-    pub(crate) id: u32,
+    pub(crate) cursor: u64,
     #[serde(flatten)]
     pub(crate) record: CommonSyncRecordV5,
 }
 
-#[derive(Debug, Deserialize, PartialEq)]
+#[derive(Debug, Deserialize, PartialEq, Serialize)]
 pub(crate) struct CentralSyncBatchV5 {
     #[serde(rename = "maxCursor")]
-    pub(crate) max_cursor: u32,
+    pub(crate) max_cursor: u64,
     #[serde(default)]
     pub(crate) data: Vec<CentralSyncRecordV5>,
 }
@@ -22,19 +22,20 @@ impl SyncApiV5 {
     // Pull batch of records from central sync log.
     pub(crate) async fn get_central_records(
         &self,
-        cursor: u32,
+        cursor: u64,
         limit: u32,
     ) -> Result<CentralSyncBatchV5, SyncApiError> {
         // TODO: add constants for query parameters.
+        let route = "/sync/v5/central_records";
         let query = [
             ("cursor", &cursor.to_string()),
             ("limit", &limit.to_string()),
         ];
-        let response = self.do_get("/sync/v5/central_records", &query).await?;
+        let response = self.do_get(route, &query).await?;
 
         to_json(response)
             .await
-            .map_err(SyncApiError::ResponseParsingError)
+            .map_err(|error| self.api_error(route, error.into()))
     }
 }
 
@@ -91,7 +92,7 @@ mod test {
                 max_cursor: 200,
                 data: vec![
                     CentralSyncRecordV5 {
-                        id: 2,
+                        cursor: 2,
                         record: CommonSyncRecordV5 {
                             table_name: "test_table_1".to_string(),
                             record_id: "ID2".to_string(),
@@ -100,7 +101,7 @@ mod test {
                         }
                     },
                     CentralSyncRecordV5 {
-                        id: 3,
+                        cursor: 3,
                         record: CommonSyncRecordV5 {
                             table_name: "test_table_2".to_string(),
                             record_id: "ID4".to_string(),

@@ -1,15 +1,15 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use super::*;
 
-#[derive(Debug, PartialEq, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub(crate) struct SiteStatusV5 {
     pub(crate) code: SiteStatusCodeV5,
     pub(crate) message: String,
     pub(crate) data: Option<String>,
 }
 
-#[derive(Debug, PartialEq, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub(crate) enum SiteStatusCodeV5 {
     #[serde(rename = "integration_in_progress")]
     IntegrationInProgress,
@@ -20,11 +20,12 @@ pub(crate) enum SiteStatusCodeV5 {
 impl SyncApiV5 {
     // Get site status
     pub(crate) async fn get_site_status(&self) -> Result<SiteStatusV5, SyncApiError> {
-        let response = self.do_get_no_query("/sync/v5/site_status").await?;
+        let route = "/sync/v5/site_status";
+        let response = self.do_get_no_query(route).await?;
 
         to_json(response)
             .await
-            .map_err(SyncApiError::ResponseParsingError)
+            .map_err(|error| self.api_error(route, error.into()))
     }
 }
 

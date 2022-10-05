@@ -3,7 +3,7 @@ macro_rules! assert_matches {
     ($left:expr, $right:pat_param) => {{
         assert!(
             matches!($left, $right),
-            "Unexpected match, expected: {} got: {:#?}",
+            "Unexpected match, \nexpected: {} \ngot: {:#?}",
             stringify!($right),
             $left
         )

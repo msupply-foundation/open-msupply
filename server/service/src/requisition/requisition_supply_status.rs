@@ -72,20 +72,20 @@ pub struct RequisitionLineSupplyStatus {
 }
 
 impl RequisitionLineSupplyStatus {
-    pub fn remaining_quantity(&self) -> i32 {
-        let result = self.requisition_line.requisition_line_row.supply_quantity
+    pub fn remaining_quantity(&self) -> f64 {
+        let result = self.requisition_line.requisition_line_row.supply_quantity as f64
             - self.quantity_in_invoices();
 
-        if result > 0 {
+        if result > 0.0 {
             result
         } else {
-            0
+            0.0
         }
     }
 
-    pub fn quantity_in_invoices(&self) -> i32 {
-        self.invoice_lines.iter().fold(0, |sum, line| {
-            sum + line.invoice_line_row.pack_size * line.invoice_line_row.number_of_packs
+    pub fn quantity_in_invoices(&self) -> f64 {
+        self.invoice_lines.iter().fold(0.0, |sum, line| {
+            sum + line.invoice_line_row.pack_size as f64 * line.invoice_line_row.number_of_packs
         })
     }
 
@@ -98,7 +98,7 @@ impl RequisitionLineSupplyStatus {
     ) -> Vec<RequisitionLineSupplyStatus> {
         statuses
             .into_iter()
-            .filter(|status| status.remaining_quantity() > 0)
+            .filter(|status| status.remaining_quantity() > 0.0)
             .collect()
     }
 }

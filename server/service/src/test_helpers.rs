@@ -7,7 +7,11 @@ use repository::{
     StorageConnection, StorageConnectionManager,
 };
 
-use crate::{processors::Processors, service_provider::ServiceProvider};
+use crate::{
+    processors::Processors,
+    service_provider::{ServiceContext, ServiceProvider},
+    sync::synchroniser_driver::{SiteIsInitialisedCallback, SynchroniserDriver},
+};
 
 pub(crate) struct ServiceTestContext {
     #[allow(dead_code)]
@@ -15,6 +19,8 @@ pub(crate) struct ServiceTestContext {
     pub(crate) service_provider: Arc<ServiceProvider>,
     pub(crate) processors_task: JoinHandle<()>,
     pub(crate) connection_manager: StorageConnectionManager,
+    #[allow(dead_code)]
+    pub(crate) service_context: ServiceContext,
 }
 
 // TODO use this method in service tests
@@ -27,19 +33,27 @@ pub(crate) async fn setup_all_with_data_and_service_provider(
         setup_all_with_data(db_name, inserts, extra_mock_data).await;
 
     let (processors_trigger, processors) = Processors::init();
-    let service_provider = Arc::new(ServiceProvider::new_with_processors(
+    let (sync_trigger, _) = SynchroniserDriver::init();
+    let (site_is_initialise_trigger, _) = SiteIsInitialisedCallback::init();
+
+    let service_provider = Arc::new(ServiceProvider::new_with_triggers(
         connection_manager.clone(),
         "",
         processors_trigger,
+        sync_trigger,
+        site_is_initialise_trigger,
     ));
 
     let processors_task = processors.spawn(service_provider.clone());
+
+    let service_context = service_provider.basic_context().unwrap();
 
     ServiceTestContext {
         connection,
         service_provider,
         processors_task,
         connection_manager,
+        service_context,
     }
 }
 

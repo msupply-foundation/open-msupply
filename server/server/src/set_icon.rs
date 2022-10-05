@@ -11,5 +11,4 @@ fn main() {
 
 // Keep the unix build happy
 #[cfg(unix)]
-fn main() {
-}
+fn main() {}

@@ -311,9 +311,8 @@ fn test_changelog_name_and_store_id<T, F>(
 
 #[actix_rt::test]
 async fn test_changelog_name_and_store_id_in_trigger() {
-
-// This test checks that the database triggers that should create change log records are working correctly
-// For each record type we create an example record, then check that the associated changelog record has automatically been created.
+    // This test checks that the database triggers that should create change log records are working correctly
+    // For each record type we create an example record, then check that the associated changelog record has automatically been created.
     fn name() -> NameRow {
         inline_init(|r: &mut NameRow| {
             r.id = "name_id".to_string();

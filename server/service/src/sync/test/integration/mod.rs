@@ -42,7 +42,7 @@ async fn init_test_context(
     .await;
 
     service_provider
-        .site_info
+        .site_info_service
         .request_and_set_site_info(&service_provider, &sync_settings)
         .await
         .unwrap();
@@ -89,12 +89,12 @@ where
 {
     let mut retries = 0;
     loop {
+        // Reduce chance concurrent operations runing at the same time (when tests all start at once)
         random_delay(10, 50).await;
         let error = match f().await {
             Ok(result) => return Ok(result),
             Err(error) => error,
         };
-
         let error_string = format!("{}", error);
 
         if error_string.contains("Site record locked preventing authentication update")

@@ -25,6 +25,7 @@ use tokio::sync::mpsc::Sender;
 pub trait SelfRequest: Send + Sync {
     async fn call(&self, request: Request, user_data: RequestUserData) -> Response;
 }
+pub type BoxedSelfRequest = Box<dyn SelfRequest>;
 
 // Sugar that helps make things neater and avoid errors that would only crop up at runtime.
 pub trait ContextExt {
@@ -33,7 +34,7 @@ pub trait ContextExt {
     fn service_provider(&self) -> &ServiceProvider;
     fn get_auth_data(&self) -> &AuthData;
     fn get_auth_token(&self) -> Option<String>;
-    fn self_request(&self) -> Option<&Box<dyn SelfRequest>>;
+    fn self_request(&self) -> Option<&BoxedSelfRequest>;
     fn get_settings(&self) -> &Settings;
     fn restart_switch(&self) -> Sender<bool>;
 }
@@ -64,8 +65,8 @@ impl<'a> ContextExt for Context<'a> {
         self.data_unchecked::<Data<Settings>>()
     }
 
-    fn self_request(&self) -> Option<&Box<dyn SelfRequest>> {
-        self.data_opt::<Data<Box<dyn SelfRequest>>>()
+    fn self_request(&self) -> Option<&BoxedSelfRequest> {
+        self.data_opt::<Data<BoxedSelfRequest>>()
             .map(|data| data.get_ref())
     }
 

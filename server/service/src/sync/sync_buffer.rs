@@ -46,7 +46,7 @@ impl<'a> SyncBuffer<'a> {
         row: &SyncBufferRow,
     ) -> Result<(), RepositoryError> {
         self.row_repository.upsert_one(&inline_edit(row, |mut r| {
-            r.integration_datetime = Some(Utc::now().naive_local());
+            r.integration_datetime = Some(Utc::now().naive_utc());
             r.integration_error = None;
             r
         }))
@@ -58,7 +58,7 @@ impl<'a> SyncBuffer<'a> {
         error: &anyhow::Error,
     ) -> Result<(), RepositoryError> {
         self.row_repository.upsert_one(&inline_edit(row, |mut r| {
-            r.integration_datetime = Some(Utc::now().naive_local());
+            r.integration_datetime = Some(Utc::now().naive_utc());
             r.integration_error = Some(format!("{:?}", &error));
             r
         }))
