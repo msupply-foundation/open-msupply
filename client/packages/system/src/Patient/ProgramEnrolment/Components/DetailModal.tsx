@@ -72,7 +72,7 @@ export const ProgramDetailModal: FC = () => {
           }}
         />
       }
-      width={1024}
+      width={700}
     >
       <React.Suspense fallback={<div />}>
         {isLoading ? (

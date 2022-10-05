@@ -112,7 +112,7 @@ const UIComponent = (props: ControlProps) => {
       gap={2}
       justifyContent="space-around"
       style={{ minWidth: 300 }}
-      marginTop={0.5}
+      marginTop={2}
     >
       <LineChart
         width={500}
