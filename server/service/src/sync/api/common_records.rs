@@ -61,7 +61,7 @@ impl SyncActionV5 {
 }
 
 #[derive(Error, Debug)]
-#[error("Failed to parse V5 remote record into sync buffer row: {source:?} {record:?}")]
+#[error("Failed to parse V5 remote record into sync buffer row, record: '{record:?}'")]
 pub(crate) struct ParsingV5RecordError {
     source: serde_json::Error,
     record: serde_json::Value,
@@ -100,5 +100,17 @@ impl RemoteSyncBatchV5 {
             .into_iter()
             .map(|r| Ok(r.record.to_buffer_row()?))
             .collect()
+    }
+}
+
+#[cfg(test)]
+impl CommonSyncRecordV5 {
+    pub(crate) fn test() -> Self {
+        Self {
+            table_name: "test".to_string(),
+            record_id: "test".to_string(),
+            action: SyncActionV5::Delete,
+            data: json!({}),
+        }
     }
 }

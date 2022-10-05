@@ -1,4 +1,4 @@
-use crate::{invoice::common::calculate_total_after_tax, u32_to_i32};
+use crate::invoice::common::calculate_total_after_tax;
 use repository::{
     InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow,
 };
@@ -26,7 +26,7 @@ fn generate_batch_update(
 ) -> StockLineRow {
     let mut update_batch = batch;
 
-    let reduction = u32_to_i32(input.number_of_packs);
+    let reduction = input.number_of_packs;
 
     update_batch.available_number_of_packs = update_batch.available_number_of_packs - reduction;
     if adjust_total_number_of_packs {
@@ -76,7 +76,7 @@ fn generate_line(
         sell_price_per_pack,
         cost_price_per_pack,
         r#type: InvoiceLineRowType::StockOut,
-        number_of_packs: u32_to_i32(number_of_packs),
+        number_of_packs: number_of_packs,
         item_name,
         item_code,
         stock_line_id: Some(stock_line_id),

@@ -1,33 +1,48 @@
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
+use diesel_derive_enum::DbEnum;
 use util::Defaults;
 
 use crate::RepositoryError;
 
 use super::{sync_log_row::sync_log::dsl as sync_log_dsl, StorageConnection};
 
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(strum::EnumIter))]
+#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+pub enum SyncLogRowErrorCode {
+    ConnectionError,
+    SiteNameNotFound,
+    IncorrectPassword,
+    HardwareIdMismatch,
+    SiteHasNoStore,
+    SiteAuthTimeout,
+    IntegrationTimeoutReached,
+}
+
 table! {
     sync_log(id) {
         id -> Text,
         started_datetime -> Timestamp,
-        done_datetime -> Nullable<Timestamp>,
-        prepare_initial_start_datetime -> Nullable<Timestamp>,
-        prepare_initial_done_datetime -> Nullable<Timestamp>,
-        push_start_datetime -> Nullable<Timestamp>,
-        push_done_datetime -> Nullable<Timestamp>,
-        push_progress_start -> Nullable<Integer>,
+        finished_datetime -> Nullable<Timestamp>,
+        prepare_initial_started_datetime -> Nullable<Timestamp>,
+        prepare_initial_finished_datetime -> Nullable<Timestamp>,
+        push_started_datetime -> Nullable<Timestamp>,
+        push_finished_datetime -> Nullable<Timestamp>,
+        push_progress_total -> Nullable<Integer>,
         push_progress_done -> Nullable<Integer>,
-        pull_central_start_datetime -> Nullable<Timestamp>,
-        pull_central_done_datetime -> Nullable<Timestamp>,
-        pull_central_progress_start -> Nullable<Integer>,
+        pull_central_started_datetime -> Nullable<Timestamp>,
+        pull_central_finished_datetime -> Nullable<Timestamp>,
+        pull_central_progress_total -> Nullable<Integer>,
         pull_central_progress_done -> Nullable<Integer>,
-        pull_remote_start_datetime -> Nullable<Timestamp>,
-        pull_remote_done_datetime -> Nullable<Timestamp>,
-        pull_remote_progress_start -> Nullable<Integer>,
+        pull_remote_started_datetime -> Nullable<Timestamp>,
+        pull_remote_finished_datetime -> Nullable<Timestamp>,
+        pull_remote_progress_total -> Nullable<Integer>,
         pull_remote_progress_done -> Nullable<Integer>,
-        integration_start_datetime -> Nullable<Timestamp>,
-        integration_done_datetime -> Nullable<Timestamp>,
+        integration_started_datetime -> Nullable<Timestamp>,
+        integration_finished_datetime -> Nullable<Timestamp>,
         error_message -> Nullable<Text>,
+        error_code -> Nullable<crate::db_diesel::sync_log_row::SyncLogRowErrorCodeMapping>,
     }
 }
 
@@ -37,24 +52,25 @@ table! {
 pub struct SyncLogRow {
     pub id: String,
     pub started_datetime: NaiveDateTime,
-    pub done_datetime: Option<NaiveDateTime>,
-    pub prepare_initial_start_datetime: Option<NaiveDateTime>,
-    pub prepare_initial_done_datetime: Option<NaiveDateTime>,
-    pub push_start_datetime: Option<NaiveDateTime>,
-    pub push_done_datetime: Option<NaiveDateTime>,
-    pub push_progress_start: Option<i32>,
+    pub finished_datetime: Option<NaiveDateTime>,
+    pub prepare_initial_started_datetime: Option<NaiveDateTime>,
+    pub prepare_initial_finished_datetime: Option<NaiveDateTime>,
+    pub push_started_datetime: Option<NaiveDateTime>,
+    pub push_finished_datetime: Option<NaiveDateTime>,
+    pub push_progress_total: Option<i32>,
     pub push_progress_done: Option<i32>,
-    pub pull_central_start_datetime: Option<NaiveDateTime>,
-    pub pull_central_done_datetime: Option<NaiveDateTime>,
-    pub pull_central_progress_start: Option<i32>,
+    pub pull_central_started_datetime: Option<NaiveDateTime>,
+    pub pull_central_finished_datetime: Option<NaiveDateTime>,
+    pub pull_central_progress_total: Option<i32>,
     pub pull_central_progress_done: Option<i32>,
-    pub pull_remote_start_datetime: Option<NaiveDateTime>,
-    pub pull_remote_done_datetime: Option<NaiveDateTime>,
-    pub pull_remote_progress_start: Option<i32>,
+    pub pull_remote_started_datetime: Option<NaiveDateTime>,
+    pub pull_remote_finished_datetime: Option<NaiveDateTime>,
+    pub pull_remote_progress_total: Option<i32>,
     pub pull_remote_progress_done: Option<i32>,
-    pub integration_start_datetime: Option<NaiveDateTime>,
-    pub integration_done_datetime: Option<NaiveDateTime>,
+    pub integration_started_datetime: Option<NaiveDateTime>,
+    pub integration_finished_datetime: Option<NaiveDateTime>,
     pub error_message: Option<String>,
+    pub error_code: Option<SyncLogRowErrorCode>,
 }
 
 impl Default for SyncLogRow {
@@ -62,24 +78,25 @@ impl Default for SyncLogRow {
         Self {
             id: Default::default(),
             started_datetime: Defaults::naive_date_time(),
-            done_datetime: Default::default(),
-            prepare_initial_start_datetime: Default::default(),
-            prepare_initial_done_datetime: Default::default(),
-            push_start_datetime: Default::default(),
-            push_done_datetime: Default::default(),
-            push_progress_start: Default::default(),
+            finished_datetime: Default::default(),
+            prepare_initial_started_datetime: Default::default(),
+            prepare_initial_finished_datetime: Default::default(),
+            push_started_datetime: Default::default(),
+            push_finished_datetime: Default::default(),
+            push_progress_total: Default::default(),
             push_progress_done: Default::default(),
-            pull_central_start_datetime: Default::default(),
-            pull_central_done_datetime: Default::default(),
-            pull_central_progress_start: Default::default(),
+            pull_central_started_datetime: Default::default(),
+            pull_central_finished_datetime: Default::default(),
+            pull_central_progress_total: Default::default(),
             pull_central_progress_done: Default::default(),
-            pull_remote_start_datetime: Default::default(),
-            pull_remote_done_datetime: Default::default(),
-            pull_remote_progress_start: Default::default(),
+            pull_remote_started_datetime: Default::default(),
+            pull_remote_finished_datetime: Default::default(),
+            pull_remote_progress_total: Default::default(),
             pull_remote_progress_done: Default::default(),
-            integration_start_datetime: Default::default(),
-            integration_done_datetime: Default::default(),
+            integration_started_datetime: Default::default(),
+            integration_finished_datetime: Default::default(),
             error_message: Default::default(),
+            error_code: Default::default(),
         }
     }
 }
@@ -112,10 +129,40 @@ impl<'a> SyncLogRowRepository<'a> {
         Ok(())
     }
 
-    pub fn load_latest_sync_log(&self) -> Result<SyncLogRow, RepositoryError> {
+    pub fn find_one_by_id(&self, id: &str) -> Result<Option<SyncLogRow>, RepositoryError> {
         let result = sync_log_dsl::sync_log
-            .order(sync_log_dsl::started_datetime.desc())
-            .first(&self.connection.connection)?;
+            .filter(sync_log_dsl::id.eq(id))
+            .first(&self.connection.connection)
+            .optional()?;
         Ok(result)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use strum::IntoEnumIterator;
+    use util::inline_init;
+
+    use crate::{
+        mock::MockDataInserts, test_db::setup_all, SyncLogRow, SyncLogRowErrorCode,
+        SyncLogRowRepository,
+    };
+
+    #[actix_rt::test]
+    async fn sync_log_row_enum() {
+        let (_, connection, _, _) = setup_all("sync_log_row_enum", MockDataInserts::none()).await;
+
+        let repo = SyncLogRowRepository::new(&connection);
+        // Try upsert all variants of SyncLogRowErrorCode, confirm that diesel enums match postgres
+        for variant in SyncLogRowErrorCode::iter() {
+            let result = repo.upsert_one(&inline_init(|r: &mut SyncLogRow| {
+                r.id = "test".to_string();
+                r.error_code = Some(variant.clone());
+            }));
+            assert_eq!(result, Ok(()));
+
+            let result = repo.find_one_by_id("test").unwrap().unwrap();
+            assert_eq!(result.error_code, Some(variant));
+        }
     }
 }

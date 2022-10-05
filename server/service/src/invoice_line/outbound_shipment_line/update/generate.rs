@@ -1,4 +1,4 @@
-use crate::{invoice::common::calculate_total_after_tax, u32_to_i32};
+use crate::invoice::common::calculate_total_after_tax;
 use repository::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow};
 
 use super::{BatchPair, UpdateOutboundShipmentLine, UpdateOutboundShipmentLineError};
@@ -122,7 +122,7 @@ fn generate_line(
     };
 
     if let Some(number_of_packs) = input.number_of_packs {
-        update_line.number_of_packs = u32_to_i32(number_of_packs);
+        update_line.number_of_packs = number_of_packs;
     }
 
     update_line.total_before_tax = if let Some(total_before_tax) = input.total_before_tax {

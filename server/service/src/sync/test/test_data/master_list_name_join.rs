@@ -1,6 +1,6 @@
 use crate::sync::{
     test::TestSyncPullRecord,
-    translations::{LegacyTableName, PullUpsertRecord, PullDeleteRecordTable},
+    translations::{LegacyTableName, PullDeleteRecordTable, PullUpsertRecord},
 };
 use repository::MasterListNameJoinRow;
 

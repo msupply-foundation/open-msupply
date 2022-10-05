@@ -49,7 +49,7 @@ pub fn mock_unallocated_line() -> InvoiceLineRow {
         total_after_tax: 0.0,
         tax: None,
         r#type: InvoiceLineRowType::UnallocatedStock,
-        number_of_packs: 1,
+        number_of_packs: 1.0,
         note: None,
     }
 }
@@ -86,7 +86,7 @@ pub fn mock_unallocated_line2() -> InvoiceLineRow {
         total_after_tax: 0.0,
         tax: None,
         r#type: InvoiceLineRowType::UnallocatedStock,
-        number_of_packs: 1,
+        number_of_packs: 1.0,
         note: None,
     }
 }

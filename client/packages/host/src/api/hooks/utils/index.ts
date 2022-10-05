@@ -1,9 +1,13 @@
 import { useHostApi } from './useHostApi';
-import { useServerSettings } from './useServerSettings';
-import { useServerRestart } from './useServerRestart';
+import { useSyncSettings } from './useSyncSettings';
+import { useInitialisationStatus } from './useInitialisationStatus';
+import { useSyncStatus } from './useSyncStatus';
+import { useSyncInfo } from './useSyncInfo';
 
 export const Utils = {
   useHostApi,
-  useServerRestart,
-  useServerSettings,
+  useSyncSettings,
+  useInitialisationStatus,
+  useSyncStatus,
+  useSyncInfo,
 };

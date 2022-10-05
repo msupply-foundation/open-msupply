@@ -35,6 +35,6 @@ pub fn generate(
         pack_size: 0,
         cost_price_per_pack: 0.0,
         sell_price_per_pack: 0.0,
-        number_of_packs: 0,
+        number_of_packs: 0.0,
     })
 }

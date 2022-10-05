@@ -7,6 +7,7 @@ import {
   Formatter,
   Column,
   SortBy,
+  PositiveNumberCell,
 } from '@openmsupply-client/common';
 import { StocktakeSummaryItem } from '../../../types';
 import { StocktakeLineFragment } from '../../api';
@@ -151,6 +152,7 @@ export const useStocktakeColumns = ({
         width: 180,
         label: 'label.snapshot-num-of-packs',
         align: ColumnAlign.Right,
+        Cell: PositiveNumberCell,
         getSortValue: row => {
           if ('lines' in row) {
             const { lines } = row;
@@ -183,6 +185,7 @@ export const useStocktakeColumns = ({
         label: 'label.counted-num-of-packs',
         width: 180,
         align: ColumnAlign.Right,
+        Cell: PositiveNumberCell,
         getSortValue: row => {
           if ('lines' in row) {
             const { lines } = row;

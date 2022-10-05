@@ -101,6 +101,21 @@ fn generate_response_requisition(
     let requisition_number =
         next_number(connection, &NumberRowType::ResponseRequisition, &store_id)?;
 
+    let their_ref = format!(
+        "From request requisition {} ({})",
+        request_requisition_row.requisition_number.to_string(),
+        request_requisition_row
+            .their_reference
+            .clone()
+            .unwrap_or_default()
+    );
+
+    let comment = format!(
+        "From request requisition {} ({})",
+        request_requisition_row.requisition_number.to_string(),
+        request_requisition_row.comment.clone().unwrap_or_default()
+    );
+
     let result = RequisitionRow {
         id: uuid(),
         requisition_number,
@@ -109,9 +124,10 @@ fn generate_response_requisition(
         r#type: RequisitionRowType::Response,
         status: RequisitionRowStatus::New,
         created_datetime: Utc::now().naive_utc(),
-        their_reference: request_requisition_row.their_reference.clone(),
+        their_reference: Some(their_ref),
         max_months_of_stock: request_requisition_row.max_months_of_stock.clone(),
         min_months_of_stock: request_requisition_row.min_months_of_stock.clone(),
+        comment: Some(comment),
         // 5.
         linked_requisition_id: Some(request_requisition_row.id.clone()),
         expected_delivery_date: request_requisition_row.expected_delivery_date,
@@ -120,7 +136,6 @@ fn generate_response_requisition(
         sent_datetime: None,
         finalised_datetime: None,
         colour: None,
-        comment: None,
     };
 
     Ok(result)
@@ -147,8 +162,7 @@ fn generate_response_requisition_lines(
                  available_stock_on_hand,
                  average_monthly_consumption,
                  snapshot_datetime,
-                 // TODO should comment transfer ?
-                 comment: _,
+                 comment,
              }| RequisitionLineRow {
                 id: uuid(),
                 requisition_id: response_requisition_id.to_string(),
@@ -158,9 +172,9 @@ fn generate_response_requisition_lines(
                 available_stock_on_hand,
                 average_monthly_consumption,
                 snapshot_datetime,
+                comment: comment.clone(),
                 // Default
                 supply_quantity: 0,
-                comment: None,
             },
         )
         .collect();

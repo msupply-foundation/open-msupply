@@ -1,58 +1,128 @@
 use super::*;
 use reqwest::{Response, StatusCode, Url};
-use serde::Deserialize;
+use serde::{
+    de::{value::StrDeserializer, IntoDeserializer},
+    Deserialize, Deserializer, Serialize, Serializer,
+};
 use thiserror::Error;
+use url::ParseError;
 
 #[derive(Error, Debug)]
-pub enum SyncApiError {
-    #[error("status: ({status}) error: {source}")]
-    MappedError {
-        source: SyncErrorV5,
-        status: StatusCode,
-    },
-    #[error("Error connecting to server: ({url})")]
-    ConnectionError { source: reqwest::Error, url: Url },
-    #[error("{0}")]
-    ResponseParsingError(ParsingResponseError),
-    #[error("{0}")]
-    Other(#[from] anyhow::Error),
+#[error("Sync api error, url: '{url}', route: '{route}'")]
+pub struct SyncApiError {
+    pub source: SyncApiErrorVariant,
+    pub(crate) url: Url,
+    pub(crate) route: String,
 }
 
-#[derive(Error, Debug, Deserialize)]
-pub enum SyncErrorV5 {
-    #[error("code: ({code}) message: ({message})")]
-    #[serde(rename = "error")]
+#[derive(Error, Debug)]
+pub enum SyncApiErrorVariant {
+    #[error("status: '{status}'")]
     ParsedError {
-        code: String,
-        message: String,
-        data: Option<String>,
+        status: StatusCode,
+        source: ParsedError,
     },
-    #[error("{0}")]
-    FullText(String),
+    #[error("status: '{status}' text: '{text}'")]
+    AsText { status: StatusCode, text: String },
+    #[error("Cannot parse error, status: '{status}'")]
+    ErrorParsingError {
+        status: StatusCode,
+        source: reqwest::Error,
+    },
+    #[error("Connection problem")]
+    ConnectionError(#[from] reqwest::Error),
+    #[error("Could not parse respose")]
+    ResponseParsingError(#[from] ParsingResponseError),
+    #[error("Could not parse url")]
+    FailToParseUrl(#[from] ParseError),
+    #[error("Unknown api error")]
+    Other(#[source] anyhow::Error),
 }
 
-impl SyncErrorV5 {
-    pub(crate) async fn from_response_and_status(
-        status: StatusCode,
-        response: Response,
-    ) -> SyncApiError {
-        let error = match to_json::<SyncErrorV5>(response).await {
-            Ok(source) => return SyncApiError::MappedError { source, status },
+#[derive(Error, Debug, Serialize, Deserialize)]
+#[error("code: '{code:?}' message: '{message}' data: '{data:?}")]
+pub struct ParsedError {
+    #[serde(serialize_with = "sync_error_code_v5_se")]
+    #[serde(deserialize_with = "sync_error_code_v5_de")]
+    pub code: SyncErrorCodeV5,
+    pub message: String,
+    pub data: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum SyncErrorCodeV5 {
+    SiteNameNotFound,
+    SiteIncorrectPassword,
+    SiteIncorrectHardwareId,
+    SiteHasNoStore,
+    SiteAuthTimeout,
+    Other(String),
+}
+
+// Below helps serialise and deserialise the Other variant
+pub fn sync_error_code_v5_de<'de, D: Deserializer<'de>>(d: D) -> Result<SyncErrorCodeV5, D::Error> {
+    // Deserialize to string, try to deserialize string to the num, if fail use string
+    let as_string = String::deserialize(d)?;
+    let str_d: StrDeserializer<D::Error> = as_string.as_str().into_deserializer();
+    SyncErrorCodeV5::deserialize(str_d).or(Ok(SyncErrorCodeV5::Other(as_string)))
+}
+pub fn sync_error_code_v5_se<S: Serializer>(
+    value: &SyncErrorCodeV5,
+    s: S,
+) -> Result<S::Ok, S::Error> {
+    if let SyncErrorCodeV5::Other(string) = value {
+        string.serialize(s)
+    } else {
+        value.serialize(s)
+    }
+}
+/// Error is under 'error' field, want to reduce nesting in SyncApiErrorVariant and serialize error
+/// to this struct first and then extract ParsedError to be passed to SyncApiErrorVariant
+#[derive(Deserialize)]
+struct ErrorWrapper {
+    error: ParsedError,
+}
+
+impl SyncApiErrorVariant {
+    pub(crate) async fn from_response_and_status(status: StatusCode, response: Response) -> Self {
+        let error = match to_json::<ErrorWrapper>(response).await {
+            Ok(ErrorWrapper { error: source }) => {
+                return SyncApiErrorVariant::ParsedError { source, status }
+            }
             Err(error) => error,
         };
 
         use ParsingResponseError::*;
-        let source = match error {
-            CannotGetTextReponse(_) => {
-                SyncErrorV5::FullText("Cannot retreive error body".to_string())
+        match error {
+            CannotGetTextResponse(source) => {
+                SyncApiErrorVariant::ErrorParsingError { status, source }
             }
             ParseError {
-                source: _,
-                response_text,
-            } => SyncErrorV5::FullText(response_text),
-        };
+                response_text: text,
+                ..
+            } => SyncApiErrorVariant::AsText { status, text },
+        }
+    }
+}
 
-        SyncApiError::MappedError { source, status }
+impl SyncApiV5 {
+    pub(crate) fn api_error(&self, route: &str, source: SyncApiErrorVariant) -> SyncApiError {
+        SyncApiError {
+            url: self.server_url.clone(),
+            route: route.to_string(),
+            source,
+        }
+    }
+}
+
+impl SyncApiError {
+    pub fn new_test(error: SyncApiErrorVariant) -> Self {
+        SyncApiError {
+            source: error,
+            url: Url::parse("http://localhost").unwrap(),
+            route: "".to_string(),
+        }
     }
 }
 
@@ -68,11 +138,20 @@ mod test {
         // "http://localhost:9999" = unreachable url
         let result = create_api("http://localhost:9999", "", "")
             .post_initialise()
-            .await;
-        assert_matches!(result, Err(SyncApiError::ConnectionError { .. }));
+            .await
+            .err()
+            .expect("Should result in error");
+
+        assert_matches!(
+            result,
+            SyncApiError {
+                source: SyncApiErrorVariant::ConnectionError { .. },
+                ..
+            }
+        );
         assert_eq!(
-            format!("{}", result.err().unwrap()),
-            "Error connecting to server: (http://localhost:9999/sync/v5/initialise)"
+            result.to_string(),
+            "Sync api error, url: 'http://localhost:9999/', route: '/sync/v5/initialise'"
         );
 
         // Service Unavailable (empty string result)
@@ -84,20 +163,23 @@ mod test {
             then.status(503);
         });
 
-        let result = create_api(&url, "", "").post_initialise().await;
+        let result = create_api(&url, "", "")
+            .post_initialise()
+            .await
+            .err()
+            .expect("Should result in error");
         assert_matches!(
             result,
-            Err(SyncApiError::MappedError {
-                source: SyncErrorV5::FullText(_),
-                status: StatusCode::SERVICE_UNAVAILABLE
-            })
-        );
-        assert_eq!(
-            format!("{}", result.err().unwrap()),
-            "status: (503 Service Unavailable) error: "
+            SyncApiError {
+                source: SyncApiErrorVariant::AsText {
+                    status: StatusCode::SERVICE_UNAVAILABLE,
+                    ..
+                },
+                ..
+            }
         );
 
-        // Service Unavailableg
+        // Service Unavailable
         let mock_server = MockServer::start();
         let url = mock_server.base_url();
 
@@ -114,17 +196,23 @@ mod test {
             );
         });
 
-        let result = create_api(&url, "", "").post_initialise().await;
+        let result = create_api(&url, "", "")
+            .post_initialise()
+            .await
+            .err()
+            .expect("Should result in error");
 
         mock.assert();
         assert_matches!(
             result,
-            Err(SyncApiError::MappedError {
-                source: SyncErrorV5::ParsedError { .. },
-                status: StatusCode::SERVICE_UNAVAILABLE
-            })
+            SyncApiError {
+                source: SyncApiErrorVariant::ParsedError {
+                    status: StatusCode::SERVICE_UNAVAILABLE,
+                    ..
+                },
+                ..
+            }
         );
-        assert_eq!(format!("{}", result.err().unwrap()), "status: (503 Service Unavailable) error: code: (sync_is_running) message: (Sync is already running - try again later)");
 
         // Service Unavailable (can't parse error)
         let mock_server = MockServer::start();
@@ -135,19 +223,22 @@ mod test {
             then.status(503).body(r#"some plain text error"#);
         });
 
-        let result = create_api(&url, "", "").post_initialise().await;
+        let result = create_api(&url, "", "")
+            .post_initialise()
+            .await
+            .err()
+            .expect("Should result in error");
 
         mock.assert();
         assert_matches!(
             result,
-            Err(SyncApiError::MappedError {
-                source: SyncErrorV5::FullText(_),
-                status: StatusCode::SERVICE_UNAVAILABLE
-            })
-        );
-        assert_eq!(
-            format!("{}", result.err().unwrap()),
-            "status: (503 Service Unavailable) error: some plain text error"
+            SyncApiError {
+                source: SyncApiErrorVariant::AsText {
+                    status: StatusCode::SERVICE_UNAVAILABLE,
+                    ..
+                },
+                ..
+            }
         );
 
         // Incorrect hardware id
@@ -168,17 +259,23 @@ mod test {
             );
         });
 
-        let result = create_api(&url, "", "").post_initialise().await;
+        let result = create_api(&url, "", "")
+            .post_initialise()
+            .await
+            .err()
+            .expect("Should result in error");
 
         mock.assert();
 
         assert_matches!(
             result,
-            Err(SyncApiError::MappedError {
-                source: SyncErrorV5::ParsedError { .. },
-                status: StatusCode::UNAUTHORIZED
-            })
+            SyncApiError {
+                source: SyncApiErrorVariant::ParsedError {
+                    status: StatusCode::UNAUTHORIZED,
+                    ..
+                },
+                ..
+            }
         );
-        assert_eq!(format!("{}", result.err().unwrap()), "status: (401 Unauthorized) error: code: (site_incorrect_hardware_id) message: (Site hardware ID does not match)");
     }
 }

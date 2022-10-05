@@ -7,6 +7,7 @@ use service::{
     ListError,
 };
 use thiserror::Error;
+use util::format_error;
 
 #[derive(Debug, Error, Clone)]
 pub enum StandardGraphqlError {
@@ -54,6 +55,18 @@ impl StandardGraphqlError {
 
     pub fn from_repository_error(error: RepositoryError) -> async_graphql::Error {
         StandardGraphqlError::from(error).extend()
+    }
+
+    pub fn from_str(str_slice: &str) -> async_graphql::Error {
+        StandardGraphqlError::InternalError(str_slice.to_string()).extend()
+    }
+
+    pub fn from_error<E: std::error::Error>(error: &E) -> async_graphql::Error {
+        StandardGraphqlError::InternalError(format_error(error)).extend()
+    }
+
+    pub fn from_debug<E: std::fmt::Debug>(error: E) -> async_graphql::Error {
+        StandardGraphqlError::InternalError(format!("{:#?}", error)).extend()
     }
 }
 

@@ -84,7 +84,7 @@ fn check_can_change_status_to_allocated(
             InvoiceLineFilter::new()
                 .invoice_id(EqualFilter::equal_to(&invoice_row.id))
                 .r#type(InvoiceLineRowType::UnallocatedStock.equal_to())
-                .number_of_packs(EqualFilter::not_equal_to_i32(0)),
+                .number_of_packs(EqualFilter::not_equal_to_f64(0.0)),
         )?;
 
         if unallocated_lines.len() > 0 {
