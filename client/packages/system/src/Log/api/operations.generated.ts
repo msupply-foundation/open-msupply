@@ -4,20 +4,20 @@ import { GraphQLClient } from 'graphql-request';
 import * as Dom from 'graphql-request/dist/types.dom';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type LogRowFragment = { __typename: 'LogNode', id: string, datetime: any, recordId?: string | null, storeId?: string | null, type: Types.LogNodeType, user?: { __typename: 'UserNode', username: string } | null };
+export type ActivityLogRowFragment = { __typename: 'ActivityLogNode', id: string, datetime: any, recordId?: string | null, storeId?: string | null, type: Types.ActivityLogNodeType, user?: { __typename: 'UserNode', username: string } | null };
 
-export type LogsQueryVariables = Types.Exact<{
+export type ActivityLogsQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']>;
   offset?: Types.InputMaybe<Types.Scalars['Int']>;
-  sort?: Types.InputMaybe<Types.LogSortInput>;
-  filter?: Types.InputMaybe<Types.LogFilterInput>;
+  sort?: Types.InputMaybe<Types.ActivityLogSortInput>;
+  filter?: Types.InputMaybe<Types.ActivityLogFilterInput>;
 }>;
 
 
-export type LogsQuery = { __typename: 'Queries', logs: { __typename: 'LogConnector', totalCount: number, nodes: Array<{ __typename: 'LogNode', id: string, datetime: any, recordId?: string | null, storeId?: string | null, type: Types.LogNodeType, user?: { __typename: 'UserNode', username: string } | null }> } };
+export type ActivityLogsQuery = { __typename: 'Queries', activityLogs: { __typename: 'ActivityLogConnector', totalCount: number, nodes: Array<{ __typename: 'ActivityLogNode', id: string, datetime: any, recordId?: string | null, storeId?: string | null, type: Types.ActivityLogNodeType, user?: { __typename: 'UserNode', username: string } | null }> } };
 
-export const LogRowFragmentDoc = gql`
-    fragment LogRow on LogNode {
+export const ActivityLogRowFragmentDoc = gql`
+    fragment ActivityLogRow on ActivityLogNode {
   id
   datetime
   recordId
@@ -28,18 +28,22 @@ export const LogRowFragmentDoc = gql`
   }
 }
     `;
-export const LogsDocument = gql`
-    query logs($first: Int, $offset: Int, $sort: LogSortInput, $filter: LogFilterInput) {
-  logs(filter: $filter, page: {first: $first, offset: $offset}, sort: $sort) {
-    ... on LogConnector {
+export const ActivityLogsDocument = gql`
+    query activityLogs($first: Int, $offset: Int, $sort: ActivityLogSortInput, $filter: ActivityLogFilterInput) {
+  activityLogs(
+    filter: $filter
+    page: {first: $first, offset: $offset}
+    sort: $sort
+  ) {
+    ... on ActivityLogConnector {
       nodes {
-        ...LogRow
+        ...ActivityLogRow
       }
       totalCount
     }
   }
 }
-    ${LogRowFragmentDoc}`;
+    ${ActivityLogRowFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -48,8 +52,8 @@ const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationTy
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
-    logs(variables?: LogsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<LogsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<LogsQuery>(LogsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'logs', 'query');
+    activityLogs(variables?: ActivityLogsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ActivityLogsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ActivityLogsQuery>(ActivityLogsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'activityLogs', 'query');
     }
   };
 }
@@ -59,15 +63,15 @@ export type Sdk = ReturnType<typeof getSdk>;
  * @param resolver a function that accepts a captured request and may return a mocked response.
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
- * mockLogsQuery((req, res, ctx) => {
+ * mockActivityLogsQuery((req, res, ctx) => {
  *   const { first, offset, sort, filter } = req.variables;
  *   return res(
- *     ctx.data({ logs })
+ *     ctx.data({ activityLogs })
  *   )
  * })
  */
-export const mockLogsQuery = (resolver: ResponseResolver<GraphQLRequest<LogsQueryVariables>, GraphQLContext<LogsQuery>, any>) =>
-  graphql.query<LogsQuery, LogsQueryVariables>(
-    'logs',
+export const mockActivityLogsQuery = (resolver: ResponseResolver<GraphQLRequest<ActivityLogsQueryVariables>, GraphQLContext<ActivityLogsQuery>, any>) =>
+  graphql.query<ActivityLogsQuery, ActivityLogsQueryVariables>(
+    'activityLogs',
     resolver
   )

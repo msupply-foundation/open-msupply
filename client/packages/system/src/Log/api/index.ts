@@ -1,2 +1,2 @@
 export * from './hooks';
-export { LogRowFragment } from './operations.generated';
+export { ActivityLogRowFragment } from './operations.generated';
