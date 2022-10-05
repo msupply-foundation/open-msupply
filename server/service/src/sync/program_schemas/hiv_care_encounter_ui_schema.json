@@ -48,7 +48,7 @@
           "scope": "#/properties/physicalExamination/properties/whoStaging"
         },
         {
-          "type": "HorizontalLayout",
+          "type": "VerticalLayout",
           "elements": [
             {
               "type": "EncounterLineChart",
