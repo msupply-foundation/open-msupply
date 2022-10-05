@@ -8,14 +8,14 @@ import {
 } from '@openmsupply-client/common';
 import { useFormatDateTime } from '@common/intl';
 
-import { useLog, LogRowFragment } from '../api';
+import { useLog, ActivityLogRowFragment } from '../api';
 
 export const LogList: FC<{ recordId: string }> = ({ recordId }) => {
   const { data, isError, isLoading } = useLog.document.listByRecord(recordId);
   const t = useTranslation();
   const { localisedTime } = useFormatDateTime();
 
-  const columns = useColumns<LogRowFragment>([
+  const columns = useColumns<ActivityLogRowFragment>([
     {
       key: 'datetime',
       label: 'label.date',

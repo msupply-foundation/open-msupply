@@ -1,12 +1,12 @@
 use crate::{
-    log::log_entry,
+    activity_log::activity_log_entry,
     requisition::{common::check_requisition_exists, query::get_requisition},
     service_provider::ServiceContext,
 };
 use chrono::Utc;
 use repository::{
     requisition_row::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
-    LogType, RepositoryError, Requisition, RequisitionRowRepository, StorageConnection,
+    ActivityLogType, RepositoryError, Requisition, RequisitionRowRepository, StorageConnection,
 };
 use util::inline_edit;
 
@@ -51,9 +51,9 @@ pub fn update_response_requisition(
             RequisitionRowRepository::new(&connection).upsert_one(&updated_requisition)?;
 
             if status_changed {
-                log_entry(
+                activity_log_entry(
                     &ctx,
-                    LogType::RequisitionStatusFinalised,
+                    ActivityLogType::RequisitionStatusFinalised,
                     &updated_requisition.id,
                 )?;
             }
@@ -142,7 +142,7 @@ mod test_update {
         },
         requisition_row::{RequisitionRow, RequisitionRowStatus},
         test_db::setup_all,
-        LogRowRepository, LogType, RequisitionRowRepository,
+        ActivityLogRowRepository, ActivityLogType, RequisitionRowRepository,
     };
 
     use crate::{
@@ -278,13 +278,13 @@ mod test_update {
         assert_eq!(comment, Some("new comment".to_owned()));
         assert_eq!(status, RequisitionRowStatus::Finalised);
 
-        let log = LogRowRepository::new(&connection)
+        let log = ActivityLogRowRepository::new(&connection)
             .find_many_by_record_id(&id)
             .unwrap()
             .into_iter()
-            .find(|l| l.r#type == LogType::RequisitionStatusFinalised)
+            .find(|l| l.r#type == ActivityLogType::RequisitionStatusFinalised)
             .unwrap();
-        assert_eq!(log.r#type, LogType::RequisitionStatusFinalised);
+        assert_eq!(log.r#type, ActivityLogType::RequisitionStatusFinalised);
 
         let finalised_datetime = finalised_datetime.unwrap();
         assert!(finalised_datetime > before_update && finalised_datetime < after_update);

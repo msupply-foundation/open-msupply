@@ -1,4 +1,4 @@
-use crate::log::{log_entry, log_type_from_invoice_status};
+use crate::activity_log::{activity_log_entry, log_type_from_invoice_status};
 use crate::{invoice::query::get_invoice, service_provider::ServiceContext, WithDBError};
 use repository::Invoice;
 use repository::{
@@ -75,7 +75,7 @@ pub fn update_inbound_shipment(
             }
 
             if status_changed {
-                log_entry(
+                activity_log_entry(
                     &ctx,
                     log_type_from_invoice_status(&update_invoice.status),
                     &update_invoice.id,
@@ -159,8 +159,8 @@ mod test {
             MockDataInserts,
         },
         test_db::setup_all_with_data,
-        EqualFilter, InvoiceLineFilter, InvoiceRowRepository, InvoiceRowStatus, LogRowRepository,
-        LogType, NameRow, NameStoreJoinRow, StockLineRowRepository,
+        ActivityLogRowRepository, ActivityLogType, EqualFilter, InvoiceLineFilter,
+        InvoiceRowRepository, InvoiceRowStatus, NameRow, NameStoreJoinRow, StockLineRowRepository,
     };
     use util::{inline_edit, inline_init};
 
@@ -378,17 +378,17 @@ mod test {
         let invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&mock_inbound_shipment_c().id)
             .unwrap();
-        let log = LogRowRepository::new(&connection)
+        let log = ActivityLogRowRepository::new(&connection)
             .find_many_by_record_id(&mock_inbound_shipment_c().id)
             .unwrap()
             .into_iter()
-            .find(|l| l.r#type == LogType::InvoiceStatusDelivered)
+            .find(|l| l.r#type == ActivityLogType::InvoiceStatusDelivered)
             .unwrap();
 
         assert_eq!(invoice.verified_datetime, None);
         assert!(invoice.delivered_datetime.unwrap() > now);
         assert!(invoice.delivered_datetime.unwrap() < end_time);
-        assert_eq!(log.r#type, LogType::InvoiceStatusDelivered);
+        assert_eq!(log.r#type, ActivityLogType::InvoiceStatusDelivered);
 
         let filter = InvoiceLineFilter::new().invoice_id(EqualFilter::equal_any(vec![invoice.id]));
         let invoice_lines = get_invoice_lines(&context, Some(filter)).unwrap();
@@ -412,13 +412,13 @@ mod test {
             )
             .unwrap();
 
-        let log = LogRowRepository::new(&connection)
+        let log = ActivityLogRowRepository::new(&connection)
             .find_many_by_record_id(&mock_inbound_shipment_c().id)
             .unwrap()
             .into_iter()
-            .find(|l| l.r#type == LogType::InvoiceStatusDelivered)
+            .find(|l| l.r#type == ActivityLogType::InvoiceStatusDelivered)
             .unwrap();
-        assert_eq!(log.r#type, LogType::InvoiceStatusDelivered);
+        assert_eq!(log.r#type, ActivityLogType::InvoiceStatusDelivered);
 
         //Test success name_store_id linked to store
         service
@@ -476,11 +476,11 @@ mod test {
         let invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&mock_inbound_shipment_a().id)
             .unwrap();
-        let log = LogRowRepository::new(&connection)
+        let log = ActivityLogRowRepository::new(&connection)
             .find_many_by_record_id(&mock_inbound_shipment_a().id)
             .unwrap()
             .into_iter()
-            .find(|l| l.r#type == LogType::InvoiceStatusVerified)
+            .find(|l| l.r#type == ActivityLogType::InvoiceStatusVerified)
             .unwrap();
 
         assert!(invoice.verified_datetime.unwrap() > now);
@@ -493,6 +493,6 @@ mod test {
                 u
             })
         );
-        assert_eq!(log.r#type, LogType::InvoiceStatusVerified);
+        assert_eq!(log.r#type, ActivityLogType::InvoiceStatusVerified);
     }
 }

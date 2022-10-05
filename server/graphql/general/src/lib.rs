@@ -144,15 +144,15 @@ impl GeneralQueries {
         )
     }
 
-    pub async fn logs(
+    pub async fn activity_logs(
         &self,
         ctx: &Context<'_>,
         #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
-        #[graphql(desc = "Filter option")] filter: Option<LogFilterInput>,
+        #[graphql(desc = "Filter option")] filter: Option<ActivityLogFilterInput>,
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
-        sort: Option<Vec<LogSortInput>>,
-    ) -> Result<LogResponse> {
-        logs(ctx, page, filter, sort)
+        sort: Option<Vec<ActivityLogSortInput>>,
+    ) -> Result<ActivityLogResponse> {
+        activity_logs(ctx, page, filter, sort)
     }
 
     /// Available without authorisation in operational and initialisation states

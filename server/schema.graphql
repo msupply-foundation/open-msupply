@@ -1009,27 +1009,27 @@ ascending)
 	desc: Boolean
 }
 union LocationsResponse = | LocationConnector
-type LogConnector {
+type ActivityLogConnector {
 	totalCount: Int!
-	nodes: [LogNode!]!
+	nodes: [ActivityLogNode!]!
 }
-input LogFilterInput {
+input ActivityLogFilterInput {
 	id: EqualFilterStringInput
-	type: EqualFilterLogTypeInput
+	type: EqualFilterActivityLogTypeInput
 	userId: EqualFilterStringInput
 	storeId: EqualFilterStringInput
 	recordId: EqualFilterStringInput
 }
-type LogNode {
+type ActivityLogNode {
 	id: String!
-	type: LogNodeType!
+	type: ActivityLogNodeType!
 	storeId: String
 	recordId: String
 	datetime: NaiveDateTime!
 	user: UserNode
 	store: StoreNode
 }
-enum LogNodeType {
+enum ActivityLogNodeType {
 	USER_LOGGED_IN
 	INVOICE_CREATED
 	INVOICE_DELETED
@@ -1046,18 +1046,18 @@ enum LogNodeType {
 	REQUISITION_STATUS_SENT
 	REQUISITION_STATUS_FINALISED
 }
-union LogResponse = | LogConnector
-enum LogSortFieldInput {
+union ActivityLogResponse = | ActivityLogConnector
+enum ActivityLogSortFieldInput {
 	id
 	logType
 	userId
 	recordId
 }
-input LogSortInput {
+input ActivityLogSortInput {
 	"""
 	Sort query result by `key`
 	"""
-	key: LogSortFieldInput!
+	key: ActivityLogSortFieldInput!
 	"""
 	Sort query result is sorted descending or ascending (if not provided the default is
 ascending)

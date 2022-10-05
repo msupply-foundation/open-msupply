@@ -1,7 +1,7 @@
 use chrono::{NaiveDate, Utc};
 use repository::{
-    EqualFilter, InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRow,
-    InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType, ItemRowRepository, LogType,
+    ActivityLogType, EqualFilter, InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType,
+    InvoiceRow, InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType, ItemRowRepository,
     NameRowRepository, NumberRowType, RepositoryError, StockLineRow, StockLineRowRepository,
     Stocktake, StocktakeLine, StocktakeLineFilter, StocktakeLineRepository, StocktakeLineRow,
     StocktakeLineRowRepository, StocktakeRow, StocktakeRowRepository, StocktakeStatus,
@@ -10,7 +10,7 @@ use repository::{
 use util::{constants::INVENTORY_ADJUSTMENT_NAME_CODE, inline_edit, uuid::uuid};
 
 use crate::{
-    log::log_entry, number::next_number, service_provider::ServiceContext,
+    activity_log::activity_log_entry, number::next_number, service_provider::ServiceContext,
     stocktake::query::get_stocktake, validate::check_store_id_matches,
 };
 
@@ -462,7 +462,11 @@ pub fn update_stocktake(
             StocktakeRowRepository::new(connection).upsert_one(&result.stocktake)?;
 
             if status_changed {
-                log_entry(&ctx, LogType::StocktakeStatusFinalised, &stocktake_id)?;
+                activity_log_entry(
+                    &ctx,
+                    ActivityLogType::StocktakeStatusFinalised,
+                    &stocktake_id,
+                )?;
             }
 
             // return the updated stocktake

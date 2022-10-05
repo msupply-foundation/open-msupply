@@ -1,10 +1,10 @@
 use repository::{
-    EqualFilter, LogType, RepositoryError, StocktakeLineFilter, StocktakeLineRepository,
+    ActivityLogType, EqualFilter, RepositoryError, StocktakeLineFilter, StocktakeLineRepository,
     StocktakeRowRepository, StorageConnection, TransactionError,
 };
 
 use crate::{
-    log::log_entry, service_provider::ServiceContext, stocktake_line::*,
+    activity_log::activity_log_entry, service_provider::ServiceContext, stocktake_line::*,
     validate::check_store_id_matches,
 };
 
@@ -80,7 +80,7 @@ pub fn delete_stocktake(
                 })?;
             }
             // End TODO
-            log_entry(&ctx, LogType::StocktakeDeleted, &stocktake_id)?;
+            activity_log_entry(&ctx, ActivityLogType::StocktakeDeleted, &stocktake_id)?;
 
             StocktakeRowRepository::new(&connection).delete(&stocktake_id)?;
             Ok(())

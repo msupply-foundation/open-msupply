@@ -1,11 +1,11 @@
 use chrono::NaiveDate;
 
-use crate::{LogRow, LogType};
+use crate::{ActivityLogRow, ActivityLogType};
 
-pub fn log_a() -> LogRow {
-    LogRow {
+pub fn activity_log_a() -> ActivityLogRow {
+    ActivityLogRow {
         id: String::from("log_a"),
-        r#type: LogType::UserLoggedIn,
+        r#type: ActivityLogType::UserLoggedIn,
         user_id: Some(String::from("user_account_a")),
         store_id: None,
         record_id: None,
@@ -13,10 +13,10 @@ pub fn log_a() -> LogRow {
     }
 }
 
-pub fn log_b() -> LogRow {
-    LogRow {
+pub fn activity_log_b() -> ActivityLogRow {
+    ActivityLogRow {
         id: String::from("log_b"),
-        r#type: LogType::InvoiceCreated,
+        r#type: ActivityLogType::InvoiceCreated,
         user_id: Some(String::from("user_account_a")),
         store_id: Some(String::from("store_a")),
         record_id: Some(String::from("outbound_shipment_a")),
@@ -24,10 +24,10 @@ pub fn log_b() -> LogRow {
     }
 }
 
-pub fn log_c() -> LogRow {
-    LogRow {
+pub fn activity_log_c() -> ActivityLogRow {
+    ActivityLogRow {
         id: String::from("log_c"),
-        r#type: LogType::InvoiceStatusAllocated,
+        r#type: ActivityLogType::InvoiceStatusAllocated,
         user_id: Some(String::from("user_account_a")),
         store_id: Some(String::from("store_b")),
         record_id: Some(String::from("inbound_shipment_a")),
@@ -35,6 +35,6 @@ pub fn log_c() -> LogRow {
     }
 }
 
-pub fn mock_logs() -> Vec<LogRow> {
-    vec![log_a(), log_b(), log_c()]
+pub fn mock_activity_logs() -> Vec<ActivityLogRow> {
+    vec![activity_log_a(), activity_log_b(), activity_log_c()]
 }

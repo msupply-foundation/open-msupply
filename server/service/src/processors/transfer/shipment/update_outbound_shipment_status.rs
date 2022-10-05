@@ -4,7 +4,7 @@ use repository::{
 };
 
 use crate::{
-    log::{log_type_from_invoice_status, system_log_entry},
+    activity_log::{log_type_from_invoice_status, system_activity_log_entry},
     processors::transfer::shipment::Operation,
 };
 
@@ -74,7 +74,7 @@ impl ShipmentTransferProcessor for UpdateOutboundShipmentStatusProcessor {
 
         InvoiceRowRepository::new(connection).upsert_one(&updated_outbound_shipment)?;
 
-        system_log_entry(
+        system_activity_log_entry(
             connection,
             log_type_from_invoice_status(&updated_outbound_shipment.status),
             &updated_outbound_shipment.store_id,
