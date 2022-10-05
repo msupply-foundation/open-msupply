@@ -8,19 +8,23 @@
       "elements": [
         {
           "type": "Control",
-          "scope": "#/properties/physicalExamination/properties/height"
+          "scope": "#/properties/physicalExamination/properties/height",
+          "options": { "width": "100px" }
         },
         {
           "type": "Control",
-          "scope": "#/properties/physicalExamination/properties/midUpperArmCircumference"
+          "scope": "#/properties/physicalExamination/properties/midUpperArmCircumference",
+          "options": { "width": "100px" }
         },
         {
           "type": "Control",
-          "scope": "#/properties/physicalExamination/properties/weight"
+          "scope": "#/properties/physicalExamination/properties/weight",
+          "options": { "width": "100px" }
         },
         {
           "type": "Control",
-          "scope": "#/properties/physicalExamination/properties/bloodPressure"
+          "scope": "#/properties/physicalExamination/properties/bloodPressure",
+          "options": { "width": "100px" }
         },
         {
           "type": "Control",

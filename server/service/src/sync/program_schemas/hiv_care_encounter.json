@@ -242,7 +242,10 @@
           "properties": {
             "bloodPressure": {
               "description": "75367002\tBlood pressure [mmHg]",
-              "type": "number"
+              "pattern": "^\\d{3}\\/\\d{2}$",
+              "title": "BP in mmHg",
+              "type": "string",
+              "messages": { "pattern": "Format is 000/00" }
             },
             "bodyMassIndex": {
               "description": "60621009\tBody mass index (BMI)",
@@ -250,11 +253,17 @@
             },
             "height": {
               "description": "50373000\tBody height measure [m]",
-              "type": "number"
+              "pattern": "^\\d\\.\\d{2}$",
+              "title": "Height in meters",
+              "type": "string",
+              "messages": { "pattern": "Format is 0.00" }
             },
             "midUpperArmCircumference": {
               "description": "284473002\tMid upper arm circumference (MUAC) [cm]",
-              "type": "number"
+              "pattern": "^\\d+\\.\\d{2}$",
+              "title": "MUAC in cm",
+              "type": "string",
+              "messages": { "pattern": "Format is 0.00" }
             },
             "nutritionalStatus": {
               "description": "366364004  nutritional status",
@@ -357,7 +366,10 @@
             },
             "weight": {
               "description": "735395000\tCurrent body weight [kg]",
-              "type": "number"
+              "pattern": "^\\d+\\.\\d{2}$",
+              "title": "Weight in kg",
+              "type": "string",
+              "messages": { "pattern": "Format is 0.00" }
             },
             "whoStaging": {
               "description": "420721002 Acquired immunodeficiency syndrome-associated disorder (disorder)",
