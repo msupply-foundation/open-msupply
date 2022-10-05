@@ -1,9 +1,9 @@
 use repository::{
     requisition_row::{RequisitionRowStatus, RequisitionRowType},
-    LogType, RepositoryError, RequisitionRow, RequisitionRowRepository, StorageConnection,
+    ActivityLogType, RepositoryError, RequisitionRow, RequisitionRowRepository, StorageConnection,
 };
 
-use crate::log::system_log_entry;
+use crate::activity_log::system_activity_log_entry;
 
 use super::{RequisitionTransferProcessor, RequisitionTransferProcessorRecord};
 
@@ -68,9 +68,9 @@ impl RequisitionTransferProcessor for UpdateRequestRequstionStatusProcessor {
 
         RequisitionRowRepository::new(connection).upsert_one(&updated_request_requisition)?;
 
-        system_log_entry(
+        system_activity_log_entry(
             connection,
-            LogType::RequisitionStatusFinalised,
+            ActivityLogType::RequisitionStatusFinalised,
             &updated_request_requisition.store_id,
             &updated_request_requisition.id,
         )?;

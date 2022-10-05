@@ -1,15 +1,15 @@
-use repository::{InvoiceLine, InvoiceRowRepository, LogType, RepositoryError};
+use repository::{ActivityLogType, InvoiceLine, InvoiceRowRepository, RepositoryError};
 
 mod validate;
 
 use validate::validate;
 
 use crate::{
+    activity_log::activity_log_entry,
     invoice::common::get_lines_for_invoice,
     invoice_line::inbound_shipment_line::{
         delete_inbound_shipment_line, DeleteInboundShipmentLine, DeleteInboundShipmentLineError,
     },
-    log::log_entry,
     service_provider::ServiceContext,
     WithDBError,
 };
@@ -46,7 +46,7 @@ pub fn delete_inbound_shipment(
                 })?;
             }
             // End TODO
-            log_entry(&ctx, LogType::InvoiceDeleted, &input.id)?;
+            activity_log_entry(&ctx, ActivityLogType::InvoiceDeleted, &input.id)?;
 
             match InvoiceRowRepository::new(&connection).delete(&input.id.clone()) {
                 Ok(_) => Ok(input.id.clone()),

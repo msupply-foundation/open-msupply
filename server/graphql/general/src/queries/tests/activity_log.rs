@@ -7,18 +7,18 @@ mod graphql {
     use crate::GeneralQueries;
 
     #[actix_rt::test]
-    async fn test_graphql_logs_query() {
+    async fn test_graphql_activity_logs_query() {
         let (_, _, _, settings) = setup_graphl_test(
             GeneralQueries,
             EmptyMutation,
-            "test_logs_query",
+            "test_activity_logs_query",
             MockDataInserts::all(),
         )
         .await;
 
-        let query = r#"query logs {
-            logs {
-                ... on LogConnector {
+        let query = r#"query activityLogs {
+            activityLogs {
+                ... on ActivityLogConnector {
                     nodes {
                         datetime
                         id
@@ -31,7 +31,7 @@ mod graphql {
         }"#;
 
         let expected = json!({
-            "logs": {
+            "activityLogs": {
                 "nodes": [
                     {
                         "datetime": "2020-01-01T00:00:00",
@@ -62,18 +62,18 @@ mod graphql {
     }
 
     #[actix_rt::test]
-    async fn test_graphql_logs_query_loaders() {
+    async fn test_graphql_activity_logs_query_loaders() {
         let (_, _, _, settings) = setup_graphl_test(
             GeneralQueries,
             EmptyMutation,
-            "test_logs_query_loaders",
+            "test_activity_logs_query_loaders",
             MockDataInserts::all(),
         )
         .await;
 
-        let query = r#"query logs($logFilter: LogFilterInput!) {
-            logs(filter: $logFilter) {
-                ... on LogConnector {
+        let query = r#"query activityLogs($activityLogFilter: ActivityLogFilterInput!) {
+            activityLogs(filter: $activityLogFilter) {
+                ... on ActivityLogConnector {
                     nodes {
                         datetime
                         id
@@ -92,7 +92,7 @@ mod graphql {
         }"#;
 
         let variables = json!({
-            "logFilter": {
+            "activityLogFilter": {
                 "type": {
                     "equalTo": "INVOICE_CREATED"
                 }
@@ -100,7 +100,7 @@ mod graphql {
         });
 
         let expected = json!({
-            "logs": {
+            "activityLogs": {
                 "nodes": [
                     {
                         "id": "log_b",

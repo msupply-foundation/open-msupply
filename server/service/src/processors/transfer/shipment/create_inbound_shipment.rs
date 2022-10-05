@@ -1,11 +1,12 @@
 use chrono::Utc;
 use repository::{
-    Invoice, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, InvoiceRowStatus,
-    InvoiceRowType, LogType, NumberRowType, RepositoryError, Requisition, StorageConnection,
+    ActivityLogType, Invoice, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository,
+    InvoiceRowStatus, InvoiceRowType, NumberRowType, RepositoryError, Requisition,
+    StorageConnection,
 };
 use util::uuid::uuid;
 
-use crate::{log::system_log_entry, number::next_number};
+use crate::{activity_log::system_activity_log_entry, number::next_number};
 
 use super::{
     common::generate_inbound_shipment_lines, Operation, ShipmentTransferProcessor,
@@ -78,9 +79,9 @@ impl ShipmentTransferProcessor for CreateInboundShipmentProcessor {
 
         InvoiceRowRepository::new(connection).upsert_one(&new_inbound_shipment)?;
 
-        system_log_entry(
+        system_activity_log_entry(
             connection,
-            LogType::InvoiceCreated,
+            ActivityLogType::InvoiceCreated,
             &new_inbound_shipment.store_id,
             &new_inbound_shipment.id,
         )?;

@@ -9,9 +9,9 @@ pub mod validate;
 use generate::generate;
 use validate::validate;
 
+use crate::activity_log::{activity_log_entry, log_type_from_invoice_status};
 use crate::invoice::outbound_shipment::update::generate::GenerateResult;
 use crate::invoice::query::get_invoice;
-use crate::log::{log_entry, log_type_from_invoice_status};
 use crate::service_provider::ServiceContext;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -87,7 +87,7 @@ pub fn update_outbound_shipment(
             }
 
             if status_changed {
-                log_entry(
+                activity_log_entry(
                     &ctx,
                     log_type_from_invoice_status(&update_invoice.status),
                     &update_invoice.id,
@@ -165,9 +165,9 @@ mod test {
             MockDataInserts,
         },
         test_db::setup_all_with_data,
-        InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRow,
-        InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType, LogRowRepository, LogType, NameRow,
-        NameStoreJoinRow, StockLineRow, StockLineRowRepository,
+        ActivityLogRowRepository, ActivityLogType, InvoiceLineRow, InvoiceLineRowRepository,
+        InvoiceLineRowType, InvoiceRow, InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType,
+        NameRow, NameStoreJoinRow, StockLineRow, StockLineRowRepository,
     };
     use util::{assert_matches, inline_edit, inline_init};
 
@@ -562,14 +562,14 @@ mod test {
             )
             .unwrap();
 
-        let log = LogRowRepository::new(&connection)
+        let log = ActivityLogRowRepository::new(&connection)
             .find_many_by_record_id(&mock_outbound_shipment_c().id)
             .unwrap()
             .into_iter()
-            .find(|l| l.r#type == LogType::InvoiceStatusPicked)
+            .find(|l| l.r#type == ActivityLogType::InvoiceStatusPicked)
             .unwrap();
         assert_stock_line_totals(&invoice_lines, &expected_stock_line_totals);
-        assert_eq!(log.r#type, LogType::InvoiceStatusPicked);
+        assert_eq!(log.r#type, ActivityLogType::InvoiceStatusPicked);
 
         service
             .update_outbound_shipment(
@@ -581,13 +581,13 @@ mod test {
             )
             .unwrap();
 
-        let log = LogRowRepository::new(&connection)
+        let log = ActivityLogRowRepository::new(&connection)
             .find_many_by_record_id(&mock_outbound_shipment_c().id)
             .unwrap()
             .into_iter()
-            .find(|l| l.r#type == LogType::InvoiceStatusPicked)
+            .find(|l| l.r#type == ActivityLogType::InvoiceStatusPicked)
             .unwrap();
-        assert_eq!(log.r#type, LogType::InvoiceStatusPicked);
+        assert_eq!(log.r#type, ActivityLogType::InvoiceStatusPicked);
     }
 
     #[actix_rt::test]

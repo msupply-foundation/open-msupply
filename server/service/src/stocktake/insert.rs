@@ -1,11 +1,11 @@
 use chrono::{NaiveDate, Utc};
 use repository::{
-    EqualFilter, LogType, NumberRowType, RepositoryError, Stocktake, StocktakeFilter,
+    ActivityLogType, EqualFilter, NumberRowType, RepositoryError, Stocktake, StocktakeFilter,
     StocktakeRepository, StocktakeRow, StocktakeRowRepository, StocktakeStatus, StorageConnection,
 };
 
 use crate::{
-    log::log_entry, number::next_number, service_provider::ServiceContext,
+    activity_log::activity_log_entry, number::next_number, service_provider::ServiceContext,
     validate::check_store_exists,
 };
 
@@ -93,7 +93,7 @@ pub fn insert_stocktake(
             let new_stocktake = generate(connection, &ctx.store_id, &ctx.user_id, input)?;
             StocktakeRowRepository::new(&connection).upsert_one(&new_stocktake)?;
 
-            log_entry(&ctx, LogType::StocktakeCreated, &new_stocktake.id)?;
+            activity_log_entry(&ctx, ActivityLogType::StocktakeCreated, &new_stocktake.id)?;
             let stocktake = get_stocktake(ctx, new_stocktake.id)?;
             stocktake.ok_or(InsertStocktakeError::InternalError(
                 "Failed to read the just inserted stocktake!".to_string(),

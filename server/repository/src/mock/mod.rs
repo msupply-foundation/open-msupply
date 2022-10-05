@@ -1,5 +1,6 @@
 use std::{collections::HashMap, ops::Index};
 
+mod activity_log;
 pub mod common;
 mod full_invoice;
 mod full_master_list;
@@ -7,7 +8,6 @@ mod invoice;
 mod invoice_line;
 mod item;
 mod location;
-mod log;
 mod name;
 mod name_store_join;
 mod number;
@@ -67,16 +67,16 @@ pub use test_unallocated_line::*;
 pub use user_account::*;
 
 use crate::{
-    InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, ItemRow, KeyValueStoreRepository,
-    KeyValueStoreRow, LocationRow, LocationRowRepository, LogRow, LogRowRepository, NumberRow,
-    NumberRowRepository, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
-    RequisitionRowRepository, StockLineRowRepository, StocktakeLineRowRepository,
+    ActivityLogRow, ActivityLogRowRepository, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow,
+    ItemRow, KeyValueStoreRepository, KeyValueStoreRow, LocationRow, LocationRowRepository,
+    NumberRow, NumberRowRepository, RequisitionLineRow, RequisitionLineRowRepository,
+    RequisitionRow, RequisitionRowRepository, StockLineRowRepository, StocktakeLineRowRepository,
     StocktakeRowRepository, SyncBufferRow, SyncBufferRowRepository, SyncLogRow,
     SyncLogRowRepository, UserAccountRow, UserAccountRowRepository, UserPermissionRow,
     UserPermissionRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
 };
 
-use self::{log::mock_logs, unit::mock_units};
+use self::{activity_log::mock_activity_logs, unit::mock_units};
 
 use super::{
     InvoiceRowRepository, ItemRowRepository, NameRow, NameRowRepository, NameStoreJoinRepository,
@@ -108,7 +108,7 @@ pub struct MockData {
     pub stocktake_lines: Vec<StocktakeLineRow>,
     pub sync_buffer_rows: Vec<SyncBufferRow>,
     pub key_value_store_rows: Vec<KeyValueStoreRow>,
-    pub logs: Vec<LogRow>,
+    pub activity_logs: Vec<ActivityLogRow>,
     pub sync_logs: Vec<SyncLogRow>,
 }
 
@@ -148,7 +148,7 @@ pub struct MockDataInserts {
     pub stocktake_lines: bool,
     pub sync_buffer_rows: bool,
     pub key_value_store_rows: bool,
-    pub logs: bool,
+    pub activity_logs: bool,
     pub sync_logs: bool,
 }
 
@@ -177,7 +177,7 @@ impl MockDataInserts {
             stocktake_lines: true,
             sync_buffer_rows: true,
             key_value_store_rows: true,
-            logs: true,
+            activity_logs: true,
             sync_logs: true,
         }
     }
@@ -276,8 +276,8 @@ impl MockDataInserts {
         self
     }
 
-    pub fn logs(mut self) -> Self {
-        self.logs = true;
+    pub fn activity_logs(mut self) -> Self {
+        self.activity_logs = true;
         self
     }
 
@@ -344,7 +344,7 @@ fn all_mock_data() -> MockDataCollection {
             requisition_lines: vec![],
             sync_buffer_rows: vec![],
             key_value_store_rows: vec![],
-            logs: mock_logs(),
+            activity_logs: mock_activity_logs(),
             sync_logs: vec![],
         },
     );
@@ -561,9 +561,9 @@ pub fn insert_mock_data(
             }
         }
 
-        if inserts.logs {
-            for row in &mock_data.logs {
-                let repo = LogRowRepository::new(connection);
+        if inserts.activity_logs {
+            for row in &mock_data.activity_logs {
+                let repo = ActivityLogRowRepository::new(connection);
                 repo.insert_one(row).unwrap();
             }
         }
@@ -604,7 +604,7 @@ impl MockData {
             user_permissions: _,
             sync_buffer_rows: _,
             mut key_value_store_rows,
-            mut logs,
+            mut activity_logs,
             mut sync_logs,
         } = other;
 
@@ -627,7 +627,7 @@ impl MockData {
         self.name_store_joins.append(&mut name_store_joins);
         self.stock_lines.append(&mut stock_lines);
         self.key_value_store_rows.append(&mut key_value_store_rows);
-        self.logs.append(&mut logs);
+        self.activity_logs.append(&mut activity_logs);
         self.sync_logs.append(&mut sync_logs);
 
         self

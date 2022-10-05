@@ -1,8 +1,8 @@
+use crate::activity_log::activity_log_entry;
 use crate::invoice::query::get_invoice;
-use crate::log::log_entry;
 use crate::service_provider::ServiceContext;
 use crate::WithDBError;
-use repository::{Invoice, LogType};
+use repository::{ActivityLogType, Invoice};
 use repository::{InvoiceRowRepository, RepositoryError};
 
 mod generate;
@@ -35,7 +35,7 @@ pub fn insert_inbound_shipment(
                 generate(connection, &ctx.store_id, &ctx.user_id, input, other_party)?;
             InvoiceRowRepository::new(connection).upsert_one(&new_invoice)?;
 
-            log_entry(&ctx, LogType::InvoiceCreated, &new_invoice.id)?;
+            activity_log_entry(&ctx, ActivityLogType::InvoiceCreated, &new_invoice.id)?;
 
             get_invoice(ctx, None, &new_invoice.id)
                 .map_err(|error| OutError::DatabaseError(error))?

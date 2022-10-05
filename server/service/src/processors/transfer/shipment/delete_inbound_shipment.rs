@@ -1,9 +1,9 @@
 use repository::{
-    InvoiceLineRowRepository, InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType, LogType,
-    RepositoryError, StorageConnection,
+    ActivityLogType, InvoiceLineRowRepository, InvoiceRowRepository, InvoiceRowStatus,
+    InvoiceRowType, RepositoryError, StorageConnection,
 };
 
-use crate::{invoice::common::get_lines_for_invoice, log::system_log_entry};
+use crate::{activity_log::system_activity_log_entry, invoice::common::get_lines_for_invoice};
 
 use super::{Operation, ShipmentTransferProcessor, ShipmentTransferProcessorRecord};
 
@@ -70,9 +70,9 @@ impl ShipmentTransferProcessor for DeleteInboundShipmentProcessor {
         // 6.
         InvoiceRowRepository::new(connection).delete(&deleted_inbound_shipment.id)?;
 
-        system_log_entry(
+        system_activity_log_entry(
             connection,
-            LogType::InvoiceDeleted,
+            ActivityLogType::InvoiceDeleted,
             &deleted_inbound_shipment.store_id,
             &deleted_inbound_shipment.id,
         )?;

@@ -1,11 +1,12 @@
 use crate::{
-    log::system_log_entry, number::next_number, requisition::common::get_lines_for_requisition,
+    activity_log::system_activity_log_entry, number::next_number,
+    requisition::common::get_lines_for_requisition,
 };
 
 use super::{RequisitionTransferProcessor, RequisitionTransferProcessorRecord};
 use chrono::Utc;
 use repository::{
-    LogType, NumberRowType, RepositoryError, Requisition, RequisitionLineRow,
+    ActivityLogType, NumberRowType, RepositoryError, Requisition, RequisitionLineRow,
     RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, RequisitionRowStatus,
     RequisitionRowType, StorageConnection,
 };
@@ -64,9 +65,9 @@ impl RequisitionTransferProcessor for CreateResponseRequisitionProcessor {
 
         RequisitionRowRepository::new(connection).upsert_one(&new_response_requisition)?;
 
-        system_log_entry(
+        system_activity_log_entry(
             connection,
-            LogType::RequisitionCreated,
+            ActivityLogType::RequisitionCreated,
             &new_response_requisition.store_id,
             &new_response_requisition.id,
         )?;
