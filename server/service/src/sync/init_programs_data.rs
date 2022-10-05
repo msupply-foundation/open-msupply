@@ -15,7 +15,8 @@ use crate::{
 use chrono::{Duration, Utc};
 use repository::{
     DocumentContext, DocumentRegistryRow, DocumentRegistryRowRepository, EqualFilter, FormSchema,
-    FormSchemaRowRepository, RepositoryError, StoreFilter, StoreRepository, NameStoreJoinRepository, NameStoreJoinRow, NameRowRepository, NameRow, NameType, StorageConnection,
+    FormSchemaRowRepository, NameRow, NameRowRepository, NameStoreJoinRepository, NameStoreJoinRow,
+    NameType, RepositoryError, StorageConnection, StoreFilter, StoreRepository,
 };
 use serde::{Deserialize, Serialize};
 use util::{inline_init, uuid::uuid};
@@ -369,8 +370,8 @@ fn encounter_hiv_care_1() -> hiv_care_encounter::HivcareEncounter {
             .to_rfc3339();
         e.physical_examination = Some(inline_init(
             |exam: &mut HivcareEncounterPhysicalExamination| {
-                exam.weight = Some(51.0);
-                exam.blood_pressure = Some(120.0);
+                exam.weight = Some("51.00".to_string());
+                exam.blood_pressure = Some("120/80".to_string());
             },
         ));
     })
@@ -383,8 +384,8 @@ fn encounter_hiv_care_2() -> hiv_care_encounter::HivcareEncounter {
         e.start_datetime = time.to_rfc3339();
         e.physical_examination = Some(inline_init(
             |exam: &mut HivcareEncounterPhysicalExamination| {
-                exam.weight = Some(52.0);
-                exam.blood_pressure = Some(125.0);
+                exam.weight = Some("52.00".to_string());
+                exam.blood_pressure = Some("125/90".to_string());
             },
         ));
         e.events = Some(vec![
@@ -421,8 +422,8 @@ fn encounter_hiv_care_3() -> hiv_care_encounter::HivcareEncounter {
             .to_rfc3339();
         e.physical_examination = Some(inline_init(
             |exam: &mut HivcareEncounterPhysicalExamination| {
-                exam.weight = Some(52.5);
-                exam.blood_pressure = Some(128.0);
+                exam.weight = Some("52.50".to_string());
+                exam.blood_pressure = Some("128/00".to_string());
             },
         ));
     })
@@ -437,8 +438,8 @@ fn encounter_hiv_care_4() -> hiv_care_encounter::HivcareEncounter {
             .to_rfc3339();
         e.physical_examination = Some(inline_init(
             |exam: &mut HivcareEncounterPhysicalExamination| {
-                exam.weight = Some(51.0);
-                exam.blood_pressure = Some(121.0);
+                exam.weight = Some("51.00".to_string());
+                exam.blood_pressure = Some("121/00".to_string());
             },
         ));
     })
@@ -450,41 +451,50 @@ fn encounter_hiv_care_5() -> hiv_care_encounter::HivcareEncounter {
         e.start_datetime = Utc::now().to_rfc3339();
         e.physical_examination = Some(inline_init(
             |exam: &mut HivcareEncounterPhysicalExamination| {
-                exam.weight = Some(54.0);
-                exam.blood_pressure = Some(118.0);
+                exam.weight = Some("54.00".to_string());
+                exam.blood_pressure = Some("118/00".to_string());
             },
         ));
     })
 }
 
-fn insert_patient(connection: &StorageConnection, ctx: &ServiceContext, service_provider: &Arc<ServiceProvider>, patient_schema_id: String, site_id: u32, patient: Patient) {
-    NameRowRepository::new(connection).upsert_one(&NameRow {
-        id: patient.id.clone(),
-        first_name: patient.first_name.clone(),
-        last_name: patient.last_name.clone(),
-        name: "".to_string(),
-        code: "".to_string(),
-        r#type: NameType::Patient,
-        is_customer: true,
-        is_supplier: false,
-        supplying_store_id: None,
-        gender: None,
-        date_of_birth: None,
-        phone: None,
-        charge_code: None,
-        comment: None,
-        country: None,
-        address1: None,
-        address2: None,
-        email: None,
-        website: None,
-        is_manufacturer: false,
-        is_donor: false,
-        on_hold: false,
-        created_datetime: None,
-        is_deceased: false,
-        national_health_number: None,
-    }).unwrap();
+fn insert_patient(
+    connection: &StorageConnection,
+    ctx: &ServiceContext,
+    service_provider: &Arc<ServiceProvider>,
+    patient_schema_id: String,
+    site_id: u32,
+    patient: Patient,
+) {
+    NameRowRepository::new(connection)
+        .upsert_one(&NameRow {
+            id: patient.id.clone(),
+            first_name: patient.first_name.clone(),
+            last_name: patient.last_name.clone(),
+            name: "".to_string(),
+            code: "".to_string(),
+            r#type: NameType::Patient,
+            is_customer: true,
+            is_supplier: false,
+            supplying_store_id: None,
+            gender: None,
+            date_of_birth: None,
+            phone: None,
+            charge_code: None,
+            comment: None,
+            country: None,
+            address1: None,
+            address2: None,
+            email: None,
+            website: None,
+            is_manufacturer: false,
+            is_donor: false,
+            on_hold: false,
+            created_datetime: None,
+            is_deceased: false,
+            national_health_number: None,
+        })
+        .unwrap();
     let store_id = StoreRepository::new(connection)
         .query_one(StoreFilter::new().site_id(EqualFilter::equal_to_i32(site_id as i32)))
         .unwrap()
@@ -492,13 +502,15 @@ fn insert_patient(connection: &StorageConnection, ctx: &ServiceContext, service_
         .store_row
         .id;
     let service = PatientService {};
-    NameStoreJoinRepository::new(connection).upsert_one(&NameStoreJoinRow {
-        id: uuid(),
-        name_id: patient.id.clone(),
-        store_id: store_id.clone(),
-        name_is_customer: true,
-        name_is_supplier: false,
-    }).unwrap();
+    NameStoreJoinRepository::new(connection)
+        .upsert_one(&NameStoreJoinRow {
+            id: uuid(),
+            name_id: patient.id.clone(),
+            store_id: store_id.clone(),
+            name_is_customer: true,
+            name_is_supplier: false,
+        })
+        .unwrap();
 
     service
         .update_patient(
@@ -628,8 +640,22 @@ pub fn init_program_data(
     })?;
 
     // patients
-    insert_patient(connection, ctx, service_provider, patient_schema_id.clone(), site_id, patient_1() );
-    insert_patient(connection, ctx, service_provider, patient_schema_id.clone(), site_id, patient_2() );
+    insert_patient(
+        connection,
+        ctx,
+        service_provider,
+        patient_schema_id.clone(),
+        site_id,
+        patient_1(),
+    );
+    insert_patient(
+        connection,
+        ctx,
+        service_provider,
+        patient_schema_id.clone(),
+        site_id,
+        patient_2(),
+    );
 
     // program
     let service = ProgramEnrolmentService {};
