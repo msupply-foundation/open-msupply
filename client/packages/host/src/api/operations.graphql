@@ -59,30 +59,42 @@ fragment SyncStatusWithProgress on SyncStatusWithProgressNode {
   total
 }
 
+fragment FullSyncStatus on FullSyncStatusNode {
+  __typename
+  error {
+    ...SyncError
+  }
+  integration {
+    ...SyncStatus
+  }
+  isSyncing
+  prepareInitial {
+    ...SyncStatus
+  }
+  pullCentral {
+    ...SyncStatusWithProgress
+  }
+  pullRemote {
+    ...SyncStatusWithProgress
+  }
+  push {
+    ...SyncStatusWithProgress
+  }
+  summary {
+    ...SyncStatus
+  }
+}
+
+query syncInfo {
+  syncStatus: latestSyncStatus {
+    ...FullSyncStatus
+  }
+  numberOfRecordsInPushQueue
+}
+
 query syncStatus {
-  latestSyncStatus {
-    error {
-      ...SyncError
-    }
-    integration {
-      ...SyncStatus
-    }
-    isSyncing
-    prepareInitial {
-      ...SyncStatus
-    }
-    pullCentral {
-      ...SyncStatusWithProgress
-    }
-    pullRemote {
-      ...SyncStatusWithProgress
-    }
-    push {
-      ...SyncStatusWithProgress
-    }
-    summary {
-      ...SyncStatus
-    }
+  syncStatus: latestSyncStatus {
+    ...FullSyncStatus
   }
 }
 

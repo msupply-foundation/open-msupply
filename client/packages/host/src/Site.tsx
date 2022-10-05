@@ -31,6 +31,7 @@ import {
 } from './routers';
 import { RequireAuthentication } from './components/Navigation/RequireAuthentication';
 import { QueryErrorHandler } from './QueryErrorHandler';
+import { Sync } from './components/Sync';
 
 const Heading: FC<PropsWithChildrenOnly> = ({ children }) => (
   <div style={{ margin: 50 }}>
@@ -124,6 +125,11 @@ export const Site: FC = () => {
               <Route
                 path={RouteBuilder.create(AppRoute.Admin).addWildCard().build()}
                 element={<Settings />}
+              />
+
+              <Route
+                path={RouteBuilder.create(AppRoute.Sync).addWildCard().build()}
+                element={<Sync />}
               />
 
               <Route

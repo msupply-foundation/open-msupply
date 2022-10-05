@@ -22,6 +22,7 @@ import {
   useLocation,
   EnvUtils,
   UserPermission,
+  RadioIcon,
 } from '@openmsupply-client/common';
 import { AppRoute, ExternalURL } from '@openmsupply-client/config';
 import {
@@ -217,11 +218,6 @@ export const AppDrawer: React.FC = () => {
       <LowerListContainer>
         <List>
           {drawer.isOpen && <StyledDivider color="drawerDivider" />}
-          {/* <AppNavLink
-            to={AppRoute.Sync}
-            icon={<RadioIcon fontSize="small" color="primary" />}
-            text={t('sync')}
-          /> */}
           <ExternalNavLink
             to={docsUrl}
             icon={<BookIcon fontSize="small" color="primary" />}
@@ -229,12 +225,15 @@ export const AppDrawer: React.FC = () => {
             trustedSite={true}
           />
           <AppNavLink
+            to={AppRoute.Sync}
+            icon={<RadioIcon fontSize="small" color="primary" />}
+            text={t('sync')}
+          />
+          <AppNavLink
             to={AppRoute.Admin}
             icon={<SettingsIcon fontSize="small" color="primary" />}
             text={t('admin')}
-            visible={userHasPermission(
-              UserPermission.ServerAdmin
-            )}
+            visible={userHasPermission(UserPermission.ServerAdmin)}
           />
           <AppNavLink
             to={AppRoute.Login}
