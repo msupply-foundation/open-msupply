@@ -1,5 +1,7 @@
 use crate::repository_error::RepositoryError;
 
+mod activity_log;
+mod activity_log_row;
 mod changelog;
 mod consumption;
 pub mod diesel_schema;
@@ -13,8 +15,6 @@ mod item_row;
 mod key_value_store;
 mod location;
 mod location_row;
-mod log;
-mod log_row;
 mod master_list;
 mod master_list_line;
 mod master_list_line_row;
@@ -49,7 +49,8 @@ mod user_permission_row;
 mod user_row;
 mod user_store_join_row;
 
-pub use self::log::*;
+pub use activity_log::*;
+pub use activity_log_row::*;
 pub use changelog::*;
 pub use consumption::*;
 pub use filter_sort_pagination::*;
@@ -62,7 +63,6 @@ pub use item_row::*;
 pub use key_value_store::*;
 pub use location::*;
 pub use location_row::*;
-pub use log_row::*;
 pub use master_list::*;
 pub use master_list_line::*;
 pub use master_list_line_row::*;

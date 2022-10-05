@@ -1,4 +1,4 @@
-CREATE TABLE log (
+CREATE TABLE activity_log (
     id TEXT NOT NULL PRIMARY KEY,
     type TEXT NOT NULL,
     user_id TEXT,

@@ -6,13 +6,15 @@ use std::{
 use bcrypt::BcryptError;
 use log::info;
 use repository::{
-    LogType, Permission, RepositoryError, UserAccountRow, UserPermissionRow, UserStoreJoinRow,
+    ActivityLogType, Permission, RepositoryError, UserAccountRow, UserPermissionRow,
+    UserStoreJoinRow,
 };
 use reqwest::{ClientBuilder, Url};
 use serde::{Deserialize, Serialize};
 use util::uuid::uuid;
 
 use crate::{
+    activity_log::activity_log_entry_without_record,
     apis::{
         login_v4::{
             LoginApiV4, LoginInputV4, LoginStatusV4, LoginUserInfoV4, LoginUserTypeV4, LoginV4Error,
@@ -20,7 +22,6 @@ use crate::{
         permissions::{map_api_permissions, Permissions},
     },
     auth_data::AuthData,
-    log::log_entry_without_record,
     service_provider::{ServiceContext, ServiceProvider},
     settings::is_develop,
     token::{JWTIssuingError, TokenPair, TokenService},
@@ -133,7 +134,7 @@ impl LoginService {
         };
         service_ctx.user_id = user_account.id.clone();
 
-        log_entry_without_record(&service_ctx, LogType::UserLoggedIn)?;
+        activity_log_entry_without_record(&service_ctx, ActivityLogType::UserLoggedIn)?;
 
         let mut token_service = TokenService::new(
             &auth_data.token_bucket,

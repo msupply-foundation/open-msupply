@@ -1,4 +1,4 @@
-fragment LogRow on LogNode {
+fragment ActivityLogRow on ActivityLogNode {
   id
   datetime
   recordId
@@ -9,16 +9,16 @@ fragment LogRow on LogNode {
   }
 }
 
-query logs(
+query activityLogs(
   $first: Int
   $offset: Int
-  $sort: LogSortInput
-  $filter: LogFilterInput
+  $sort: ActivityLogSortInput
+  $filter: ActivityLogFilterInput
 ) {
-  logs(filter: $filter, page: { first: $first, offset: $offset }, sort: $sort) {
-    ... on LogConnector {
+  activityLogs(filter: $filter, page: { first: $first, offset: $offset }, sort: $sort) {
+    ... on ActivityLogConnector {
       nodes {
-        ...LogRow
+        ...ActivityLogRow
       }
       totalCount
     }

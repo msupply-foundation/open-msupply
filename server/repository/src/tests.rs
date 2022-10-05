@@ -247,10 +247,10 @@ mod repository_test {
             }
         }
 
-        pub fn log_1() -> LogRow {
-            LogRow {
-                id: "log1".to_string(),
-                r#type: LogType::UserLoggedIn,
+        pub fn activity_log_1() -> ActivityLogRow {
+            ActivityLogRow {
+                id: "activity_log1".to_string(),
+                r#type: ActivityLogType::UserLoggedIn,
                 user_id: Some(user_account_1().id.to_string()),
                 store_id: None,
                 record_id: None,
@@ -270,8 +270,8 @@ mod repository_test {
             mock_test_master_list_store1, MockDataInserts,
         },
         requisition_row::RequisitionRowStatus,
-        test_db, InvoiceLineRepository, InvoiceLineRowRepository, InvoiceRowRepository,
-        ItemRowRepository, KeyValueStoreRepository, KeyValueType, LogRowRepository,
+        test_db, ActivityLogRowRepository, InvoiceLineRepository, InvoiceLineRowRepository,
+        InvoiceRowRepository, ItemRowRepository, KeyValueStoreRepository, KeyValueType,
         MasterListFilter, MasterListLineFilter, MasterListLineRepository,
         MasterListLineRowRepository, MasterListNameJoinRepository, MasterListRepository,
         MasterListRowRepository, NameRowRepository, NumberRowRepository, NumberRowType,
@@ -1141,16 +1141,19 @@ mod repository_test {
     }
 
     #[actix_rt::test]
-    async fn test_log_row_repository() {
+    async fn test_activity_log_row_repository() {
         let settings = test_db::get_test_db_settings("omsupply-database-store-repository");
         let connection_manager = test_db::setup(&settings).await;
         let connection = connection_manager.connection().unwrap();
 
-        let repo = LogRowRepository::new(&connection);
+        let repo = ActivityLogRowRepository::new(&connection);
 
-        let log1 = data::log_1();
-        repo.insert_one(&log1).unwrap();
-        let loaded_item = repo.find_one_by_id(log1.id.as_str()).unwrap().unwrap();
-        assert_eq!(log1, loaded_item);
+        let activity_log1 = data::activity_log_1();
+        repo.insert_one(&activity_log1).unwrap();
+        let loaded_item = repo
+            .find_one_by_id(activity_log1.id.as_str())
+            .unwrap()
+            .unwrap();
+        assert_eq!(activity_log1, loaded_item);
     }
 }

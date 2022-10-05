@@ -4,8 +4,8 @@ use repository::{
 };
 
 use crate::{
+    activity_log::{log_type_from_invoice_status, system_activity_log_entry},
     invoice::common::get_lines_for_invoice,
-    log::{log_type_from_invoice_status, system_log_entry},
 };
 
 use super::{
@@ -91,7 +91,7 @@ impl ShipmentTransferProcessor for UpdateInboundShipmentProcessor {
 
         InvoiceRowRepository::new(connection).upsert_one(&updated_inbound_shipment)?;
 
-        system_log_entry(
+        system_activity_log_entry(
             connection,
             log_type_from_invoice_status(&updated_inbound_shipment.status),
             &updated_inbound_shipment.store_id,
