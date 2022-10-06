@@ -185,3 +185,26 @@ fn legacy_activity_log_type(r#type: &ActivityLogType) -> Option<LegacyActivityLo
         from::RequisitionStatusFinalised => Some(to::RequisitionStatusFinalised),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use repository::{mock::MockDataInserts, test_db::setup_all};
+
+    #[actix_rt::test]
+    async fn test_activity_log_translation() {
+        use crate::sync::test::test_data::activity_log as test_data;
+        let translator = ActivityLogTranslation {};
+
+        let (_, connection, _, _) =
+            setup_all("test_activity_log_translation", MockDataInserts::none()).await;
+
+        for record in test_data::test_pull_upsert_records() {
+            let translation_result = translator
+                .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
+                .unwrap();
+
+            assert_eq!(translation_result, record.translated_record);
+        }
+    }
+}

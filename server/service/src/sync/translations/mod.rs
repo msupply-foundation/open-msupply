@@ -76,7 +76,7 @@ pub(crate) mod LegacyTableName {
     pub(crate) const STOCKTAKE_LINE: &str = "Stock_take_lines";
     pub(crate) const REQUISITION: &str = "requisition";
     pub(crate) const REQUISITION_LINE: &str = "requisition_line";
-    pub(crate) const OM_ACTIVITY_LOG: &str = "activity_log";
+    pub(crate) const OM_ACTIVITY_LOG: &str = "om_activity_log";
     // Remote-Central (site specific)
     pub(crate) const NAME_STORE_JOIN: &str = "name_store_join";
 }
