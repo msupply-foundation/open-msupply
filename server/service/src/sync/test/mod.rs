@@ -203,7 +203,7 @@ pub(crate) async fn check_records_against_database(
                     MasterListLineRowRepository,
                     con,
                     record,
-                    "MaseterListLine"
+                    "MasterListLine"
                 )
             }
 
@@ -215,6 +215,10 @@ pub(crate) async fn check_records_against_database(
             ),
 
             Report(record) => check_record_by_id!(ReportRowRepository, con, record, "Report"),
+
+            ActivityLog(record) => {
+                check_record_by_id!(ActivityLogRowRepository, con, record, "ActivityLog")
+            }
         }
     }
 

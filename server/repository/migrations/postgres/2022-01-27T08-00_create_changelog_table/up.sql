@@ -10,6 +10,7 @@ CREATE TYPE changelog_table_name AS ENUM (
     'stocktake_line',
     'requisition',
     'requisition_line'
+    'activity_log'
 );
 
 CREATE TYPE row_action_type AS ENUM (
