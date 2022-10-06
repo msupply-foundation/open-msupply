@@ -50,6 +50,7 @@ pub enum ChangelogTableName {
     StocktakeLine,
     Requisition,
     RequisitionLine,
+    ActivityLog,
 }
 
 #[derive(Clone, Queryable, Debug, PartialEq, Insertable)]
