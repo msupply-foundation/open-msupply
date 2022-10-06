@@ -1,3 +1,4 @@
+pub(crate) mod activity_log;
 pub(crate) mod invoice;
 pub(crate) mod invoice_line;
 pub(crate) mod item;
@@ -47,6 +48,7 @@ pub(crate) fn all_translators() -> SyncTanslators {
         Box::new(stocktake_line::StocktakeLineTranslation {}),
         Box::new(requisition::RequisitionTranslation {}),
         Box::new(requisition_line::RequisitionLineTranslation {}),
+        Box::new(activity_log::ActivityLogTranslation {}),
         // Remote-Central (site specific)
         Box::new(name_store_join::NameStoreJoinTranslation {}),
         // Special translations
@@ -74,6 +76,7 @@ pub(crate) mod LegacyTableName {
     pub(crate) const STOCKTAKE_LINE: &str = "Stock_take_lines";
     pub(crate) const REQUISITION: &str = "requisition";
     pub(crate) const REQUISITION_LINE: &str = "requisition_line";
+    pub(crate) const OM_ACTIVITY_LOG: &str = "activity_log";
     // Remote-Central (site specific)
     pub(crate) const NAME_STORE_JOIN: &str = "name_store_join";
 }
@@ -98,6 +101,7 @@ pub(crate) enum PullUpsertRecord {
     StocktakeLine(StocktakeLineRow),
     Requisition(RequisitionRow),
     RequisitionLine(RequisitionLineRow),
+    ActivityLog(ActivityLogRow),
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -242,6 +246,7 @@ pub(crate) fn table_name_to_central(table: &ChangelogTableName) -> &'static str 
         ChangelogTableName::StocktakeLine => LegacyTableName::STOCKTAKE_LINE,
         ChangelogTableName::Requisition => LegacyTableName::REQUISITION,
         ChangelogTableName::RequisitionLine => LegacyTableName::REQUISITION_LINE,
+        ChangelogTableName::ActivityLog => LegacyTableName::OM_ACTIVITY_LOG,
     }
 }
 

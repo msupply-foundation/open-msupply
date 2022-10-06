@@ -177,6 +177,7 @@ impl PullUpsertRecord {
             StocktakeLine(record) => StocktakeLineRowRepository::new(con).upsert_one(record),
             Requisition(record) => RequisitionRowRepository::new(con).upsert_one(record),
             RequisitionLine(record) => RequisitionLineRowRepository::new(con).upsert_one(record),
+            ActivityLog(record) => ActivityLogRowRepository::new(con).insert_one(record),
         }
     }
 }
