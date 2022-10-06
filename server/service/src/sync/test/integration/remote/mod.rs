@@ -1,3 +1,4 @@
+// pub(crate) mod activity_log;
 pub(crate) mod invoice;
 pub(crate) mod location;
 pub(crate) mod number;

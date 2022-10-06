@@ -35,4 +35,9 @@ mod tests {
     async fn integration_sync_remote_requisition() {
         test_remote_sync_record("requisition", &RequisitionRecordTester).await;
     }
+
+    // #[actix_rt::test]
+    // async fn integration_sync_remote_activity_log() {
+    //     test_remote_sync_record("om_activity_log", &ActivityLogRecordTester).await;
+    // }
 }
