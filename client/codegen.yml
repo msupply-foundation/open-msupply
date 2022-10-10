@@ -1,9 +1,5 @@
 overwrite: true
-schema:
-  [
-    'https://demo-open.msupply.org/graphql',
-    './packages/common/src/additions.schema.graphql',
-  ]
+schema: [ '../server/schema.graphql' ]
 generates:
   ./packages/common/src/types/schema.ts:
     plugins:
