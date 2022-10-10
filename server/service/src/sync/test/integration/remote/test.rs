@@ -39,5 +39,5 @@ mod tests {
     // #[actix_rt::test]
     // async fn integration_sync_remote_activity_log() {
     //     test_remote_sync_record("om_activity_log", &ActivityLogRecordTester).await;
-    // }
+    // } TODO implement when table is in mSupply
 }

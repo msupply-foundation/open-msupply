@@ -16,7 +16,7 @@ impl SyncRecordTester for ActivityLogRecordTester {
 
         // STEP 1 - insert
         let store_id = &new_site_properties.store_id;
-        let row = ActivityLogRow {
+        let log_1 = ActivityLogRow {
             id: uuid(),
             r#type: ActivityLogType::UserLoggedIn,
             user_id: Some("user_account_a".to_string()),
