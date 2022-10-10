@@ -18,72 +18,13 @@ fn match_push_table(changelog: &ChangelogRow) -> bool {
     changelog.table_name == ChangelogTableName::ActivityLog
 }
 
-#[derive(Deserialize, Serialize, Debug, PartialEq)]
-pub enum LegacyActivityLogType {
-    #[serde(rename = "user_logged_in")]
-    UserLoggedIn,
-    #[serde(rename = "invoice_created")]
-    InvoiceCreated,
-    #[serde(rename = "invoice_deleted")]
-    InvoiceDeleted,
-    #[serde(rename = "invoice_status_allocated")]
-    InvoiceStatusAllocated,
-    #[serde(rename = "invoice_status_picked")]
-    InvoiceStatusPicked,
-    #[serde(rename = "invoice_status_shipped")]
-    InvoiceStatusShipped,
-    #[serde(rename = "invoice_status_delivered")]
-    InvoiceStatusDelivered,
-    #[serde(rename = "invoice_status_verified")]
-    InvoiceStatusVerified,
-    #[serde(rename = "stocktake_created")]
-    StocktakeCreated,
-    #[serde(rename = "stocktake_deleted")]
-    StocktakeDeleted,
-    #[serde(rename = "stocktake_status_finalised")]
-    StocktakeStatusFinalised,
-    #[serde(rename = "requisition_created")]
-    RequisitionCreated,
-    #[serde(rename = "requsition_deleted")]
-    RequisitionDeleted,
-    #[serde(rename = "requisition_status_sent")]
-    RequisitionStatusSent,
-    #[serde(rename = "requisition_status_finalised")]
-    RequisitionStatusFinalised,
-}
-
-impl LegacyActivityLogType {
-    fn to_log_type(&self) -> ActivityLogType {
-        use ActivityLogType as to;
-        use LegacyActivityLogType as from;
-
-        match self {
-            from::UserLoggedIn => to::UserLoggedIn,
-            from::InvoiceCreated => to::InvoiceCreated,
-            from::InvoiceDeleted => to::InvoiceDeleted,
-            from::InvoiceStatusAllocated => to::InvoiceStatusAllocated,
-            from::InvoiceStatusPicked => to::InvoiceStatusPicked,
-            from::InvoiceStatusShipped => to::InvoiceStatusShipped,
-            from::InvoiceStatusDelivered => to::InvoiceStatusDelivered,
-            from::InvoiceStatusVerified => to::InvoiceStatusVerified,
-            from::StocktakeCreated => to::StocktakeCreated,
-            from::StocktakeDeleted => to::StocktakeDeleted,
-            from::StocktakeStatusFinalised => to::StocktakeStatusFinalised,
-            from::RequisitionCreated => to::RequisitionCreated,
-            from::RequisitionDeleted => to::RequisitionDeleted,
-            from::RequisitionStatusSent => to::RequisitionStatusSent,
-            from::RequisitionStatusFinalised => to::RequisitionStatusFinalised,
-        }
-    }
-}
-
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
 pub struct LegacyActivityLogRow {
     #[serde(rename = "ID")]
     pub id: String,
     #[serde(rename = "type")]
-    pub r#type: LegacyActivityLogType,
+    pub r#type: ActivityLogType,
     #[serde(rename = "user_ID")]
     pub user_id: String,
     #[serde(rename = "store_ID")]
@@ -108,7 +49,7 @@ impl SyncTranslation for ActivityLogTranslation {
 
         let result = ActivityLogRow {
             id: data.id.to_string(),
-            r#type: data.r#type.to_log_type(),
+            r#type: data.r#type,
             user_id: Some(data.user_id),
             store_id: Some(data.store_id),
             record_id: Some(data.record_id),
@@ -145,14 +86,9 @@ impl SyncTranslation for ActivityLogTranslation {
 
         // TODO if no store_id or record_id return Vec::new()
 
-        let legacy_type = legacy_activity_log_type(&r#type).ok_or(anyhow::Error::msg(format!(
-            "Invalid activity log type: {:?}",
-            r#type
-        )))?;
-
         let legacy_row = LegacyActivityLogRow {
             id: id.clone(),
-            r#type: legacy_type,
+            r#type,
             user_id: user_id.unwrap_or_default(),
             store_id: store_id.unwrap_or_default(),
             record_id: record_id.unwrap_or_default(),
@@ -164,29 +100,6 @@ impl SyncTranslation for ActivityLogTranslation {
             LEGACY_TABLE_NAME,
             serde_json::to_value(&legacy_row)?,
         )]))
-    }
-}
-
-fn legacy_activity_log_type(r#type: &ActivityLogType) -> Option<LegacyActivityLogType> {
-    use ActivityLogType as from;
-    use LegacyActivityLogType as to;
-
-    match r#type {
-        from::UserLoggedIn => Some(to::UserLoggedIn),
-        from::InvoiceCreated => Some(to::InvoiceCreated),
-        from::InvoiceDeleted => Some(to::InvoiceDeleted),
-        from::InvoiceStatusAllocated => Some(to::InvoiceStatusAllocated),
-        from::InvoiceStatusPicked => Some(to::InvoiceStatusPicked),
-        from::InvoiceStatusShipped => Some(to::InvoiceStatusShipped),
-        from::InvoiceStatusDelivered => Some(to::InvoiceStatusDelivered),
-        from::InvoiceStatusVerified => Some(to::InvoiceStatusVerified),
-        from::StocktakeCreated => Some(to::StocktakeCreated),
-        from::StocktakeDeleted => Some(to::StocktakeDeleted),
-        from::StocktakeStatusFinalised => Some(to::StocktakeStatusFinalised),
-        from::RequisitionCreated => Some(to::RequisitionCreated),
-        from::RequisitionDeleted => Some(to::RequisitionDeleted),
-        from::RequisitionStatusSent => Some(to::RequisitionStatusSent),
-        from::RequisitionStatusFinalised => Some(to::RequisitionStatusFinalised),
     }
 }
 
