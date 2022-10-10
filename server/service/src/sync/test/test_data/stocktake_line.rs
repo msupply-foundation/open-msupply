@@ -3,9 +3,8 @@ use crate::sync::{
     test::TestSyncPullRecord,
     translations::{stocktake_line::LegacyStocktakeLineRow, LegacyTableName, PullUpsertRecord},
 };
-use repository::{ChangelogAction, ChangelogRow, ChangelogTableName, StocktakeLineRow};
+use repository::StocktakeLineRow;
 use serde_json::json;
-use util::inline_init;
 
 const STOCKTAKE_LINE_1: (&'static str, &'static str) = (
     "0a3de900f0d211eb8dddb54df6d741bc",
@@ -56,12 +55,8 @@ fn stocktake_line_pull_record() -> TestSyncPullRecord {
 }
 fn stocktake_line_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
-        change_log: inline_init(|r: &mut ChangelogRow| {
-            r.cursor = 2;
-            r.table_name = ChangelogTableName::StocktakeLine;
-            r.record_id = STOCKTAKE_LINE_1.0.to_string();
-            r.row_action = ChangelogAction::Upsert;
-        }),
+        table_name: LegacyTableName::STOCKTAKE_LINE.to_string(),
+        record_id: STOCKTAKE_LINE_1.0.to_string(),
         push_data: json!(LegacyStocktakeLineRow {
             ID: STOCKTAKE_LINE_1.0.to_string(),
             stock_take_ID: "stocktake_a".to_string(),
@@ -132,12 +127,8 @@ fn stocktake_line_om_field_pull_record() -> TestSyncPullRecord {
 }
 fn stocktake_line_om_field_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
-        change_log: inline_init(|r: &mut ChangelogRow| {
-            r.cursor = 2;
-            r.table_name = ChangelogTableName::StocktakeLine;
-            r.record_id = STOCKTAKE_LINE_OM_FIELDS.0.to_string();
-            r.row_action = ChangelogAction::Upsert;
-        }),
+        table_name: LegacyTableName::STOCKTAKE_LINE.to_string(),
+        record_id: STOCKTAKE_LINE_OM_FIELDS.0.to_string(),
         push_data: json!(LegacyStocktakeLineRow {
             ID: STOCKTAKE_LINE_OM_FIELDS.0.to_string(),
             stock_take_ID: "stocktake_a".to_string(),

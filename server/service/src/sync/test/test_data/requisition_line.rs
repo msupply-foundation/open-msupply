@@ -5,10 +5,7 @@ use crate::sync::translations::{
 
 use super::{TestSyncPullRecord, TestSyncPushRecord};
 use chrono::NaiveDate;
-use repository::{
-    mock::mock_request_draft_requisition2, ChangelogAction, ChangelogRow, ChangelogTableName,
-    RequisitionLineRow,
-};
+use repository::RequisitionLineRow;
 use serde_json::json;
 use util::constants::NUMBER_OF_DAYS_IN_A_MONTH;
 
@@ -16,7 +13,7 @@ const REQUISITION_LINE_1: (&'static str, &'static str) = (
     "66FB0A41C95441ABBBC7905857466089",
     r#"{
         "ID": "66FB0A41C95441ABBBC7905857466089",
-        "requisition_ID": "mock_request_draft_requisition2",
+        "requisition_ID": "mock_request_draft_requisition3",
         "item_ID": "item_a",
         "stock_on_hand": 10,
         "actualQuan": 2,
@@ -53,7 +50,7 @@ fn requisition_line_request_pull_record() -> TestSyncPullRecord {
         REQUISITION_LINE_1,
         PullUpsertRecord::RequisitionLine(RequisitionLineRow {
             id: REQUISITION_LINE_1.0.to_string(),
-            requisition_id: "mock_request_draft_requisition2".to_string(),
+            requisition_id: "mock_request_draft_requisition3".to_string(),
             item_id: "item_a".to_string(),
             requested_quantity: 102,
             suggested_quantity: 101,
@@ -67,17 +64,11 @@ fn requisition_line_request_pull_record() -> TestSyncPullRecord {
 }
 fn requisition_line_request_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
-        change_log: ChangelogRow {
-            cursor: 2,
-            table_name: ChangelogTableName::RequisitionLine,
-            record_id: REQUISITION_LINE_1.0.to_string(),
-            row_action: ChangelogAction::Upsert,
-            name_id: Some(mock_request_draft_requisition2().name_id),
-            store_id: Some(mock_request_draft_requisition2().store_id),
-        },
+        table_name: LegacyTableName::REQUISITION_LINE.to_string(),
+        record_id: REQUISITION_LINE_1.0.to_string(),
         push_data: json!(LegacyRequisitionLineRow {
             ID: REQUISITION_LINE_1.0.to_string(),
-            requisition_ID: "mock_request_draft_requisition2".to_string(),
+            requisition_ID: "mock_request_draft_requisition3".to_string(),
             item_ID: "item_a".to_string(),
             Cust_stock_order: 102,
             suggested_quantity: 101,
@@ -94,7 +85,7 @@ const REQUISITION_LINE_OM_FIELD: (&'static str, &'static str) = (
     "ABCB0A41C95441ABBBC7905857466089",
     r#"{
         "ID": "ABCB0A41C95441ABBBC7905857466089",
-        "requisition_ID": "mock_request_draft_requisition2",
+        "requisition_ID": "mock_request_draft_requisition3",
         "item_ID": "item_a",
         "stock_on_hand": 10,
         "actualQuan": 2,
@@ -132,7 +123,7 @@ fn requisition_line_om_fields_pull_record() -> TestSyncPullRecord {
         REQUISITION_LINE_OM_FIELD,
         PullUpsertRecord::RequisitionLine(RequisitionLineRow {
             id: REQUISITION_LINE_OM_FIELD.0.to_string(),
-            requisition_id: "mock_request_draft_requisition2".to_string(),
+            requisition_id: "mock_request_draft_requisition3".to_string(),
             item_id: "item_a".to_string(),
             requested_quantity: 102,
             suggested_quantity: 101,
@@ -146,17 +137,11 @@ fn requisition_line_om_fields_pull_record() -> TestSyncPullRecord {
 }
 fn requisition_line_om_fields_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
-        change_log: ChangelogRow {
-            cursor: 3,
-            table_name: ChangelogTableName::RequisitionLine,
-            record_id: REQUISITION_LINE_OM_FIELD.0.to_string(),
-            row_action: ChangelogAction::Upsert,
-            name_id: Some(mock_request_draft_requisition2().name_id),
-            store_id: Some(mock_request_draft_requisition2().store_id),
-        },
+        table_name: LegacyTableName::REQUISITION_LINE.to_string(),
+        record_id: REQUISITION_LINE_OM_FIELD.0.to_string(),
         push_data: json!(LegacyRequisitionLineRow {
             ID: REQUISITION_LINE_OM_FIELD.0.to_string(),
-            requisition_ID: "mock_request_draft_requisition2".to_string(),
+            requisition_ID: "mock_request_draft_requisition3".to_string(),
             item_ID: "item_a".to_string(),
             Cust_stock_order: 102,
             suggested_quantity: 101,
