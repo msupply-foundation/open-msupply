@@ -8,6 +8,7 @@ import {
   Grid,
   LoadingButton,
   NumericTextInput,
+  NumUtils,
   PasswordTextInput,
   SaveIcon,
   SyncSettingsInput,
@@ -89,8 +90,15 @@ const SyncSettingsForm = ({
         component={
           <NumericTextInput
             value={intervalSeconds}
-            onChange={e =>
-              setSettings('intervalSeconds', Number(e.target.value))
+            onChange={seconds =>
+              setSettings(
+                'intervalSeconds',
+                NumUtils.constrain(
+                  Math.round(seconds),
+                  1,
+                  Number.MAX_SAFE_INTEGER
+                )
+              )
             }
             disabled={isDisabled}
           />
