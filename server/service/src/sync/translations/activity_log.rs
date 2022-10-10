@@ -5,11 +5,18 @@ use repository::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::sync::sync_serde::empty_str_as_option;
+use crate::sync::{api::RemoteSyncRecordV5, sync_serde::empty_str_as_option};
 
-use super::{
-    IntegrationRecords, LegacyTableName, PullUpsertRecord, PushUpsertRecord, SyncTranslation,
-};
+use super::{IntegrationRecords, LegacyTableName, PullUpsertRecord, SyncTranslation};
+
+const LEGACY_TABLE_NAME: &'static str = LegacyTableName::OM_ACTIVITY_LOG;
+
+fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
+    sync_record.table_name == LEGACY_TABLE_NAME
+}
+fn match_push_table(changelog: &ChangelogRow) -> bool {
+    changelog.table_name == ChangelogTableName::ActivityLog
+}
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
 pub enum LegacyActivityLogType {
@@ -85,10 +92,6 @@ pub struct LegacyActivityLogRow {
     pub datetime: NaiveDateTime,
 }
 
-fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
-    sync_record.table_name == LegacyTableName::OM_ACTIVITY_LOG
-}
-
 pub(crate) struct ActivityLogTranslation {}
 impl SyncTranslation for ActivityLogTranslation {
     fn try_translate_pull_upsert(
@@ -116,15 +119,14 @@ impl SyncTranslation for ActivityLogTranslation {
         )))
     }
 
-    fn try_translate_push(
+    fn try_translate_push_upsert(
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<PushUpsertRecord>>, anyhow::Error> {
-        if changelog.table_name != ChangelogTableName::ActivityLog {
+    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
+        if !match_push_table(changelog) {
             return Ok(None);
         }
-        let table_name = LegacyTableName::OM_ACTIVITY_LOG;
 
         let ActivityLogRow {
             id,
@@ -140,6 +142,8 @@ impl SyncTranslation for ActivityLogTranslation {
                 changelog.record_id
             )))?;
 
+        // TODO if no store_id or record_id return Vec::new()
+
         let legacy_type = legacy_activity_log_type(&r#type).ok_or(anyhow::Error::msg(format!(
             "Invalid activity log type: {:?}",
             r#type
@@ -154,12 +158,11 @@ impl SyncTranslation for ActivityLogTranslation {
             datetime,
         };
 
-        Ok(Some(vec![PushUpsertRecord {
-            sync_id: changelog.cursor,
-            table_name,
-            record_id: id,
-            data: serde_json::to_value(&legacy_row)?,
-        }]))
+        Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
+            changelog,
+            LEGACY_TABLE_NAME,
+            serde_json::to_value(&legacy_row)?,
+        )]))
     }
 }
 

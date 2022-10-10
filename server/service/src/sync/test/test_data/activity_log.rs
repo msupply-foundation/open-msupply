@@ -6,11 +6,8 @@ use crate::sync::{
     },
 };
 use chrono::NaiveDate;
-use repository::{
-    ActivityLogRow, ActivityLogType, ChangelogAction, ChangelogRow, ChangelogTableName,
-};
+use repository::{ActivityLogRow, ActivityLogType};
 use serde_json::json;
-use util::inline_init;
 
 const ACTIVITY_LOG_1: (&'static str, &'static str) = (
     "log_a",
@@ -68,12 +65,8 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
 pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
     vec![
         TestSyncPushRecord {
-            change_log: inline_init(|r: &mut ChangelogRow| {
-                r.cursor = 2;
-                r.table_name = ChangelogTableName::ActivityLog;
-                r.record_id = ACTIVITY_LOG_1.0.to_string();
-                r.row_action = ChangelogAction::Upsert;
-            }),
+            record_id: ACTIVITY_LOG_1.0.to_string(),
+            table_name: LegacyTableName::OM_ACTIVITY_LOG.to_string(),
             push_data: json!(LegacyActivityLogRow {
                 ID: ACTIVITY_LOG_1.0.to_string(),
                 r#type: LegacyActivityLogType::UserLoggedIn,
@@ -84,12 +77,8 @@ pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
             }),
         },
         TestSyncPushRecord {
-            change_log: inline_init(|r: &mut ChangelogRow| {
-                r.cursor = 2;
-                r.table_name = ChangelogTableName::ActivityLog;
-                r.record_id = ACTIVITY_LOG_2.0.to_string();
-                r.row_action = ChangelogAction::Upsert;
-            }),
+            record_id: ACTIVITY_LOG_2.0.to_string(),
+            table_name: LegacyTableName::OM_ACTIVITY_LOG.to_string(),
             push_data: json!(LegacyActivityLogRow {
                 ID: ACTIVITY_LOG_2.0.to_string(),
                 r#type: LegacyActivityLogType::InvoiceCreated,
