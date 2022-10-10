@@ -6,7 +6,7 @@ use crate::sync::translations::{
 use chrono::NaiveDate;
 use repository::{
     requisition_row::{RequisitionRowStatus, RequisitionRowType},
-    ChangelogAction, ChangelogRow, ChangelogTableName, RequisitionRow,
+    RequisitionRow,
 };
 use serde_json::json;
 
@@ -21,7 +21,7 @@ const REQUISITION_REQUEST: (&'static str, &'static str) = (
       "date_entered": "2020-07-10",
       "nsh_custInv_ID": "",
       "daysToSupply": 150,
-      "store_ID": "store_a",
+      "store_ID": "store_b",
       "type": "request",
       "date_order_received": "0000-00-00",
       "previous_csh_id": "",
@@ -51,7 +51,7 @@ fn requisition_request_pull_record() -> TestSyncPullRecord {
             user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
             requisition_number: 8,
             name_id: "name_store_a".to_string(),
-            store_id: "store_a".to_string(),
+            store_id: "store_b".to_string(),
             r#type: RequisitionRowType::Request,
             status: RequisitionRowStatus::Sent,
             created_datetime: NaiveDate::from_ymd(2020, 7, 10).and_hms(0, 0, 0),
@@ -69,20 +69,14 @@ fn requisition_request_pull_record() -> TestSyncPullRecord {
 }
 fn requisition_request_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
-        change_log: ChangelogRow {
-            cursor: 2,
-            table_name: ChangelogTableName::Requisition,
-            record_id: REQUISITION_REQUEST.0.to_string(),
-            row_action: ChangelogAction::Upsert,
-            name_id: Some("name_store_a".to_string()),
-            store_id: Some("store_a".to_string()),
-        },
+        table_name: LegacyTableName::REQUISITION.to_string(),
+        record_id: REQUISITION_REQUEST.0.to_string(),
         push_data: json!(LegacyRequisitionRow {
             ID: REQUISITION_REQUEST.0.to_string(),
             user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
             serial_number: 8,
             name_ID: "name_store_a".to_string(),
-            store_ID: "store_a".to_string(),
+            store_ID: "store_b".to_string(),
             r#type: LegacyRequisitionType::Request,
             status: LegacyRequisitionStatus::Fn,
             date_entered: NaiveDate::from_ymd(2020, 7, 10),
@@ -162,14 +156,8 @@ fn requisition_response_pull_record() -> TestSyncPullRecord {
 }
 fn requisition_response_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
-        change_log: ChangelogRow {
-            cursor: 2,
-            table_name: ChangelogTableName::Requisition,
-            record_id: REQUISITION_RESPONSE.0.to_string(),
-            row_action: ChangelogAction::Upsert,
-            name_id: Some("name_store_b".to_string()),
-            store_id: Some("store_b".to_string()),
-        },
+        table_name: LegacyTableName::REQUISITION.to_string(),
+        record_id: REQUISITION_RESPONSE.0.to_string(),
         push_data: json!(LegacyRequisitionRow {
             ID: REQUISITION_RESPONSE.0.to_string(),
             user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
@@ -262,14 +250,8 @@ fn requisition_om_fields_pull_record() -> TestSyncPullRecord {
 }
 fn requisition_om_fields_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
-        change_log: ChangelogRow {
-            cursor: 2,
-            table_name: ChangelogTableName::Requisition,
-            record_id: REQUISITION_OM_FIELDS.0.to_string(),
-            row_action: ChangelogAction::Upsert,
-            name_id: Some("name_store_b".to_string()),
-            store_id: Some("store_b".to_string()),
-        },
+        table_name: LegacyTableName::REQUISITION.to_string(),
+        record_id: REQUISITION_OM_FIELDS.0.to_string(),
         push_data: json!(LegacyRequisitionRow {
             ID: REQUISITION_OM_FIELDS.0.to_string(),
             user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
