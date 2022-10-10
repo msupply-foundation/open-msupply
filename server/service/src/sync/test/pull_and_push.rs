@@ -53,10 +53,10 @@ async fn test_sync_pull_and_push() {
     ]
     .concat();
     insert_all_extra_data(&test_records, &connection).await;
-    let sync_reords: Vec<SyncBufferRow> = extract_sync_buffer_rows(&test_records);
+    let sync_records: Vec<SyncBufferRow> = extract_sync_buffer_rows(&test_records);
 
     SyncBufferRowRepository::new(&connection)
-        .upsert_many(&sync_reords)
+        .upsert_many(&sync_records)
         .unwrap();
 
     integrate_and_translate_sync_buffer(&connection).unwrap();
