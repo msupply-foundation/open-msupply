@@ -1,6 +1,4 @@
-use repository::{
-    ChangelogAction, ChangelogRow, ChangelogTableName, NumberRow, NumberRowType, SyncBufferRow,
-};
+use repository::{NumberRow, NumberRowType, SyncBufferRow};
 use serde_json::json;
 use util::inline_init;
 
@@ -34,12 +32,8 @@ fn number_stock_take_pull_record() -> TestSyncPullRecord {
 }
 fn number_stock_take_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
-        change_log: inline_init(|r: &mut ChangelogRow| {
-            r.cursor = 2;
-            r.table_name = ChangelogTableName::Number;
-            r.record_id = NUMBER_STOCK_TAKE.0.to_string();
-            r.row_action = ChangelogAction::Upsert;
-        }),
+        table_name: LegacyTableName::NUMBER.to_string(),
+        record_id: NUMBER_STOCK_TAKE.0.to_string(),
         push_data: json!(LegacyNumberRow {
             ID: NUMBER_STOCK_TAKE.0.to_string(),
             name: "stock_take_number_for_store_store_remote_pull".to_string(),
@@ -72,12 +66,8 @@ fn number_inv_adjustment_pull_record() -> TestSyncPullRecord {
 }
 fn number_inv_adjustment_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
-        change_log: inline_init(|r: &mut ChangelogRow| {
-            r.cursor = 2;
-            r.table_name = ChangelogTableName::Number;
-            r.record_id = NUMBER_INVENTORY_ADJUSTMENT.0.to_string();
-            r.row_action = ChangelogAction::Upsert;
-        }),
+        table_name: LegacyTableName::NUMBER.to_string(),
+        record_id: NUMBER_INVENTORY_ADJUSTMENT.0.to_string(),
         push_data: json!(LegacyNumberRow {
             ID: NUMBER_INVENTORY_ADJUSTMENT.0.to_string(),
             name: "inventory_adjustment_serial_number_for_store_store_remote_pull".to_string(),
@@ -110,12 +100,8 @@ fn number_customer_invoice_pull_record() -> TestSyncPullRecord {
 }
 fn number_customer_invoice_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
-        change_log: inline_init(|r: &mut ChangelogRow| {
-            r.cursor = 2;
-            r.table_name = ChangelogTableName::Number;
-            r.record_id = CUSTOMER_INVOICE_ADJUSTMENT.0.to_string();
-            r.row_action = ChangelogAction::Upsert;
-        }),
+        table_name: LegacyTableName::NUMBER.to_string(),
+        record_id: CUSTOMER_INVOICE_ADJUSTMENT.0.to_string(),
         push_data: json!(LegacyNumberRow {
             ID: CUSTOMER_INVOICE_ADJUSTMENT.0.to_string(),
             name: "customer_invoice_number_for_store_store_remote_pull".to_string(),
@@ -171,12 +157,8 @@ fn number_supplier_invoice_pull_record() -> TestSyncPullRecord {
 }
 fn number_supplier_invoice_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
-        change_log: inline_init(|r: &mut ChangelogRow| {
-            r.cursor = 2;
-            r.table_name = ChangelogTableName::Number;
-            r.record_id = SUPPLIER_INVOICE.0.to_string();
-            r.row_action = ChangelogAction::Upsert;
-        }),
+        table_name: LegacyTableName::NUMBER.to_string(),
+        record_id: SUPPLIER_INVOICE.0.to_string(),
         push_data: json!(LegacyNumberRow {
             ID: SUPPLIER_INVOICE.0.to_string(),
             name: "supplier_invoice_number_for_store_store_remote_pull".to_string(),

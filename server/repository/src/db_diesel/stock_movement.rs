@@ -14,7 +14,7 @@ table! {
         id -> Text,
         item_id -> Text,
         store_id -> Text,
-        quantity -> Integer,
+        quantity -> BigInt,
         datetime -> Timestamp,
     }
 }
@@ -24,7 +24,7 @@ pub struct StockMovementRow {
     pub id: String,
     pub item_id: String,
     pub store_id: String,
-    pub quantity: i32,
+    pub quantity: i64,
     pub datetime: NaiveDateTime,
 }
 

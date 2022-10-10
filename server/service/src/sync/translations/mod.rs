@@ -19,11 +19,10 @@ pub(crate) mod stocktake_line;
 pub(crate) mod store;
 pub(crate) mod unit;
 
-use log::{info, warn};
 use repository::*;
 use thiserror::Error;
 
-use super::SyncTranslationError;
+use super::api::{CommonSyncRecordV5, RemoteSyncRecordV5, SyncActionV5};
 
 pub(crate) type SyncTanslators = Vec<Box<dyn SyncTranslation>>;
 
@@ -55,6 +54,7 @@ pub(crate) fn all_translators() -> SyncTanslators {
         Box::new(special::NameToNameStoreJoinTranslation {}),
     ]
 }
+
 #[allow(non_snake_case)]
 pub(crate) mod LegacyTableName {
     // Central
@@ -203,94 +203,106 @@ pub(crate) trait SyncTranslation {
         Ok(None)
     }
 
-    fn try_translate_push(
+    /// Implementation should return three types of results
+    /// * Error - Something completely unexpected that is not recoverable
+    /// * None - Translator did not match record type
+    /// * Some - Translator did match and either translated record/records or
+    ///          empty array if record is deliberatly ignored
+    fn try_translate_push_upsert(
         &self,
         _: &StorageConnection,
         _: &ChangelogRow,
-    ) -> Result<Option<Vec<PushUpsertRecord>>, anyhow::Error> {
+    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
+        Ok(None)
+    }
+
+    fn try_translate_push_delete(
+        &self,
+        _: &StorageConnection,
+        _: &ChangelogRow,
+    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
         Ok(None)
     }
 }
 
-#[derive(Debug)]
-pub(crate) struct PushUpsertRecord {
-    pub(crate) sync_id: i64,
-    /// The translated table name
-    pub(crate) table_name: &'static str,
-    pub(crate) record_id: String,
-    pub(crate) data: serde_json::Value,
-}
-
-pub(crate) struct PushDeleteRecord {
-    pub(crate) sync_id: i64,
-    /// The translated table name
-    pub(crate) table_name: &'static str,
-    pub(crate) record_id: String,
-}
-
-pub(crate) enum PushRecord {
-    Upsert(PushUpsertRecord),
-    Delete(PushDeleteRecord),
-}
-
-pub(crate) fn table_name_to_central(table: &ChangelogTableName) -> &'static str {
-    match table {
-        ChangelogTableName::Number => LegacyTableName::NUMBER,
-        ChangelogTableName::Location => LegacyTableName::LOCATION,
-        ChangelogTableName::StockLine => LegacyTableName::ITEM_LINE,
-        ChangelogTableName::Name => LegacyTableName::NAME,
-        ChangelogTableName::NameStoreJoin => LegacyTableName::NAME_STORE_JOIN,
-        ChangelogTableName::Invoice => LegacyTableName::TRANSACT,
-        ChangelogTableName::InvoiceLine => LegacyTableName::TRANS_LINE,
-        ChangelogTableName::Stocktake => LegacyTableName::STOCKTAKE,
-        ChangelogTableName::StocktakeLine => LegacyTableName::STOCKTAKE_LINE,
-        ChangelogTableName::Requisition => LegacyTableName::REQUISITION,
-        ChangelogTableName::RequisitionLine => LegacyTableName::REQUISITION_LINE,
-        ChangelogTableName::ActivityLog => LegacyTableName::OM_ACTIVITY_LOG,
+impl RemoteSyncRecordV5 {
+    pub(crate) fn new_upsert(
+        changelog: &ChangelogRow,
+        table_name: &'static str,
+        data: serde_json::Value,
+    ) -> Self {
+        Self {
+            sync_id: changelog.cursor.to_string(),
+            record: CommonSyncRecordV5 {
+                table_name: table_name.to_string(),
+                record_id: changelog.record_id.clone(),
+                action: SyncActionV5::Update,
+                data,
+            },
+        }
+    }
+    pub(crate) fn new_delete(changelog: &ChangelogRow, table_name: &'static str) -> Self {
+        Self {
+            sync_id: changelog.cursor.to_string(),
+            record: CommonSyncRecordV5 {
+                table_name: table_name.to_string(),
+                record_id: changelog.record_id.clone(),
+                action: SyncActionV5::Delete,
+                data: Default::default(),
+            },
+        }
     }
 }
 
-pub(crate) fn translate_changelog(
+#[derive(Error, Debug)]
+#[error("Problem translation push record: {changelog:?}")]
+pub(crate) struct PushTranslationError {
+    changelog: ChangelogRow,
+    source: anyhow::Error,
+}
+
+pub(crate) fn translate_changelogs_to_push_records(
     connection: &StorageConnection,
+    changelogs: Vec<ChangelogRow>,
+) -> Result<Vec<RemoteSyncRecordV5>, PushTranslationError> {
+    let translators = all_translators();
+    let mut out_records = Vec::new();
+    for changelog in changelogs {
+        let mut translation_results = translate_changelog(connection, &translators, &changelog)
+            .map_err(|source| PushTranslationError { source, changelog })?;
+        out_records.append(&mut translation_results);
+    }
+
+    Ok(out_records)
+}
+
+fn translate_changelog(
+    connection: &StorageConnection,
+    translators: &SyncTanslators,
     changelog: &ChangelogRow,
-    results: &mut Vec<PushRecord>,
-) -> Result<(), SyncTranslationError> {
-    match changelog.row_action {
-        ChangelogAction::Upsert => {
-            let translations = all_translators();
+) -> Result<Vec<RemoteSyncRecordV5>, anyhow::Error> {
+    let mut translation_results = Vec::new();
 
-            for translation in translations {
-                if let Some(records) = translation
-                    .try_translate_push(connection, changelog)
-                    .map_err(|err| SyncTranslationError {
-                        table_name: table_name_to_central(&changelog.table_name).to_string(),
-                        source: err,
-                        record: format!("{:?}", changelog),
-                    })?
-                {
-                    for record in records {
-                        results.push(PushRecord::Upsert(record));
-                    }
-                    return Ok(());
-                }
+    for translator in translators.iter() {
+        let translation_result = match changelog.row_action {
+            ChangelogAction::Upsert => {
+                translator.try_translate_push_upsert(connection, &changelog)?
             }
-        }
-        ChangelogAction::Delete => {
-            info!(
-                "Push record deletion: table: \"{:?}\", record id: {}",
-                changelog.table_name, changelog.record_id
-            );
-            results.push(PushRecord::Delete(PushDeleteRecord {
-                sync_id: changelog.cursor,
-                table_name: table_name_to_central(&changelog.table_name),
-                record_id: changelog.record_id.clone(),
-            }));
-            return Ok(());
-        }
-    };
+            ChangelogAction::Delete => {
+                translator.try_translate_push_delete(connection, &changelog)?
+            }
+        };
 
-    warn!("Unhandled push changlog: {:?}", changelog);
-    Ok(())
+        if let Some(mut translation_result) = translation_result {
+            translation_results.append(&mut translation_result);
+        }
+    }
+
+    if translation_results.is_empty() {
+        return Err(anyhow::anyhow!("Translator for record not found"));
+    }
+
+    Ok(translation_results)
 }
 
 #[derive(Debug)]

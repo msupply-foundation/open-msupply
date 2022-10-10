@@ -4,9 +4,18 @@ use repository::{
 };
 use serde::{Deserialize, Serialize};
 
-use super::{
-    IntegrationRecords, LegacyTableName, PullUpsertRecord, PushUpsertRecord, SyncTranslation,
-};
+use crate::sync::api::RemoteSyncRecordV5;
+
+use super::{IntegrationRecords, LegacyTableName, PullUpsertRecord, SyncTranslation};
+
+const LEGACY_TABLE_NAME: &'static str = LegacyTableName::LOCATION;
+
+fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
+    sync_record.table_name == LEGACY_TABLE_NAME
+}
+fn match_push_table(changelog: &ChangelogRow) -> bool {
+    changelog.table_name == ChangelogTableName::Location
+}
 
 #[derive(Deserialize, Serialize)]
 pub struct LegacyLocationRow {
@@ -28,8 +37,7 @@ impl SyncTranslation for LocationTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        let table_name = LegacyTableName::LOCATION;
-        if sync_record.table_name != table_name {
+        if !match_pull_table(sync_record) {
             return Ok(None);
         }
 
@@ -54,15 +62,14 @@ impl SyncTranslation for LocationTranslation {
         )))
     }
 
-    fn try_translate_push(
+    fn try_translate_push_upsert(
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<PushUpsertRecord>>, anyhow::Error> {
-        if changelog.table_name != ChangelogTableName::Location {
+    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
+        if !match_push_table(changelog) {
             return Ok(None);
         }
-        let table_name = LegacyTableName::LOCATION;
 
         let LocationRow {
             id,
@@ -85,12 +92,22 @@ impl SyncTranslation for LocationTranslation {
             store_id: store_id,
         };
 
-        Ok(Some(vec![PushUpsertRecord {
-            sync_id: changelog.cursor,
-            table_name,
-            record_id: id,
-            data: serde_json::to_value(&legacy_row)?,
-        }]))
+        Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
+            changelog,
+            LEGACY_TABLE_NAME,
+            serde_json::to_value(&legacy_row)?,
+        )]))
+    }
+
+    fn try_translate_push_delete(
+        &self,
+        _: &StorageConnection,
+        changelog: &ChangelogRow,
+    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
+        let result = match_push_table(changelog)
+            .then(|| vec![RemoteSyncRecordV5::new_delete(changelog, LEGACY_TABLE_NAME)]);
+
+        Ok(result)
     }
 }
 

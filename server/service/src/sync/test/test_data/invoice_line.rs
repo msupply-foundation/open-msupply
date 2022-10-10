@@ -8,8 +8,8 @@ use crate::sync::{
 };
 use chrono::NaiveDate;
 use repository::{
-    mock::{mock_item_a, mock_outbound_shipment_a, mock_stock_line_a},
-    ChangelogAction, ChangelogRow, ChangelogTableName, InvoiceLineRow, InvoiceLineRowType,
+    mock::{mock_item_a,  mock_stock_line_a},
+  InvoiceLineRow, InvoiceLineRowType,
 };
 use serde_json::json;
 
@@ -98,14 +98,8 @@ fn trans_line_1_pull_record() -> TestSyncPullRecord {
 }
 fn trans_line_1_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
-        change_log: ChangelogRow {
-            cursor: 2,
-            table_name: ChangelogTableName::InvoiceLine,
-            record_id: TRANS_LINE_1.0.to_string(),
-            row_action: ChangelogAction::Upsert,
-            name_id: Some(mock_outbound_shipment_a().name_id),
-            store_id: Some(mock_outbound_shipment_a().store_id),
-        },
+        record_id: TRANS_LINE_1.0.to_string(),
+        table_name: LegacyTableName::TRANS_LINE.to_string(),
         push_data: json!(LegacyTransLineRow {
             id: TRANS_LINE_1.0.to_string(),
             invoice_id: "outbound_shipment_a".to_string(),
@@ -214,14 +208,8 @@ fn trans_line_2_pull_record() -> TestSyncPullRecord {
 }
 fn trans_line_2_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
-        change_log: ChangelogRow {
-            cursor: 2,
-            table_name: ChangelogTableName::InvoiceLine,
-            record_id: TRANS_LINE_2.0.to_string(),
-            row_action: ChangelogAction::Upsert,
-            name_id: Some(mock_outbound_shipment_a().name_id),
-            store_id: Some(mock_outbound_shipment_a().store_id),
-        },
+        table_name: LegacyTableName::TRANS_LINE.to_string(),
+        record_id: TRANS_LINE_2.0.to_string(),
         push_data: json!(LegacyTransLineRow {
             id: TRANS_LINE_2.0.to_string(),
             invoice_id: "outbound_shipment_a".to_string(),
@@ -333,14 +321,8 @@ fn trans_line_om_fields_pull_record() -> TestSyncPullRecord {
 }
 fn trans_line_om_fields_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
-        change_log: ChangelogRow {
-            cursor: 2,
-            table_name: ChangelogTableName::InvoiceLine,
-            record_id: TRANS_LINE_OM_FIELDS.0.to_string(),
-            row_action: ChangelogAction::Upsert,
-            name_id: Some(mock_outbound_shipment_a().name_id),
-            store_id: Some(mock_outbound_shipment_a().store_id),
-        },
+        table_name: LegacyTableName::TRANS_LINE.to_string(),
+        record_id: TRANS_LINE_OM_FIELDS.0.to_string(),
         push_data: json!(LegacyTransLineRow {
             id: TRANS_LINE_OM_FIELDS.0.to_string(),
             invoice_id: "outbound_shipment_a".to_string(),
@@ -452,14 +434,8 @@ fn trans_line_om_fields_unset_tax_pull_record() -> TestSyncPullRecord {
 }
 fn trans_line_om_fields_unset_tax_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
-        change_log: ChangelogRow {
-            cursor: 2,
-            table_name: ChangelogTableName::InvoiceLine,
-            record_id: TRANS_LINE_OM_UNSET_TAX_FIELDS.0.to_string(),
-            row_action: ChangelogAction::Upsert,
-            name_id: Some(mock_outbound_shipment_a().name_id),
-            store_id: Some(mock_outbound_shipment_a().store_id),
-        },
+        table_name: LegacyTableName::TRANS_LINE.to_string(),
+        record_id: TRANS_LINE_OM_UNSET_TAX_FIELDS.0.to_string(),
         push_data: json!(LegacyTransLineRow {
             id: TRANS_LINE_OM_UNSET_TAX_FIELDS.0.to_string(),
             invoice_id: "outbound_shipment_a".to_string(),

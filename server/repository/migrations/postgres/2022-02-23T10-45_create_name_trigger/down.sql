@@ -1,1 +1,0 @@
-DROP TRIGGER IF EXISTS name_trigger;
