@@ -1,4 +1,7 @@
-use crate::sync::sync_serde::{date_option_to_isostring, empty_str_as_option, zero_date_as_option};
+use crate::sync::{
+    api::RemoteSyncRecordV5,
+    sync_serde::{date_option_to_isostring, empty_str_as_option, zero_date_as_option},
+};
 use chrono::NaiveDate;
 use repository::{
     ChangelogRow, ChangelogTableName, InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType,
@@ -8,8 +11,17 @@ use serde::{Deserialize, Serialize};
 
 use super::{
     is_active_record_on_site, ActiveRecordCheck, IntegrationRecords, LegacyTableName,
-    PullDeleteRecordTable, PullUpsertRecord, PushUpsertRecord, SyncTranslation,
+    PullDeleteRecordTable, PullUpsertRecord, SyncTranslation,
 };
+
+const LEGACY_TABLE_NAME: &'static str = LegacyTableName::TRANS_LINE;
+
+fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
+    sync_record.table_name == LEGACY_TABLE_NAME
+}
+fn match_push_table(changelog: &ChangelogRow) -> bool {
+    changelog.table_name == ChangelogTableName::InvoiceLine
+}
 
 #[derive(Deserialize, Serialize, Debug)]
 pub enum LegacyTransLineType {
@@ -68,10 +80,6 @@ pub struct LegacyTransLineRow {
     pub total_before_tax: Option<f64>,
     #[serde(rename = "om_total_after_tax")]
     pub total_after_tax: Option<f64>,
-}
-
-fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
-    sync_record.table_name == LegacyTableName::TRANS_LINE
 }
 
 pub(crate) struct InvoiceLineTranslation {}
@@ -196,15 +204,14 @@ impl SyncTranslation for InvoiceLineTranslation {
         Ok(result)
     }
 
-    fn try_translate_push(
+    fn try_translate_push_upsert(
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<PushUpsertRecord>>, anyhow::Error> {
-        if changelog.table_name != ChangelogTableName::InvoiceLine {
+    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
+        if !match_push_table(changelog) {
             return Ok(None);
         }
-        let table_name = LegacyTableName::TRANS_LINE;
 
         let InvoiceLineRow {
             id,
@@ -248,12 +255,22 @@ impl SyncTranslation for InvoiceLineTranslation {
             total_after_tax: Some(total_after_tax),
         };
 
-        Ok(Some(vec![PushUpsertRecord {
-            sync_id: changelog.cursor,
-            table_name,
-            record_id: id,
-            data: serde_json::to_value(&legacy_row)?,
-        }]))
+        Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
+            changelog,
+            LEGACY_TABLE_NAME,
+            serde_json::to_value(&legacy_row)?,
+        )]))
+    }
+
+    fn try_translate_push_delete(
+        &self,
+        _: &StorageConnection,
+        changelog: &ChangelogRow,
+    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
+        let result = match_push_table(changelog)
+            .then(|| vec![RemoteSyncRecordV5::new_delete(changelog, LEGACY_TABLE_NAME)]);
+
+        Ok(result)
     }
 }
 

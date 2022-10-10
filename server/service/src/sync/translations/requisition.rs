@@ -8,14 +8,25 @@ use repository::{
 use serde::{Deserialize, Serialize};
 use util::constants::NUMBER_OF_DAYS_IN_A_MONTH;
 
-use crate::sync::sync_serde::{
-    date_and_time_to_datatime, date_from_date_time, date_to_isostring, empty_str_as_option,
+use crate::sync::{
+    api::RemoteSyncRecordV5,
+    sync_serde::{
+        date_and_time_to_datatime, date_from_date_time, date_to_isostring, empty_str_as_option,
+    },
 };
 
 use super::{
-    IntegrationRecords, LegacyTableName, PullDeleteRecordTable, PullUpsertRecord, PushUpsertRecord,
-    SyncTranslation,
+    IntegrationRecords, LegacyTableName, PullDeleteRecordTable, PullUpsertRecord, SyncTranslation,
 };
+
+const LEGACY_TABLE_NAME: &'static str = LegacyTableName::REQUISITION;
+
+fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
+    sync_record.table_name == LEGACY_TABLE_NAME
+}
+fn match_push_table(changelog: &ChangelogRow) -> bool {
+    changelog.table_name == ChangelogTableName::Requisition
+}
 
 #[derive(Deserialize, Serialize, Debug)]
 pub enum LegacyRequisitionType {
@@ -113,9 +124,6 @@ pub struct LegacyRequisitionRow {
     pub om_colour: Option<String>,
 }
 
-fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
-    sync_record.table_name == LegacyTableName::REQUISITION
-}
 pub(crate) struct RequisitionTranslation {}
 impl SyncTranslation for RequisitionTranslation {
     fn try_translate_pull_upsert(
@@ -204,15 +212,14 @@ impl SyncTranslation for RequisitionTranslation {
         Ok(result)
     }
 
-    fn try_translate_push(
+    fn try_translate_push_upsert(
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<PushUpsertRecord>>, anyhow::Error> {
-        if changelog.table_name != ChangelogTableName::Requisition {
+    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
+        if !match_push_table(changelog) {
             return Ok(None);
         }
-        let table_name = LegacyTableName::REQUISITION;
 
         let RequisitionRow {
             id,
@@ -270,12 +277,22 @@ impl SyncTranslation for RequisitionTranslation {
             comment,
         };
 
-        Ok(Some(vec![PushUpsertRecord {
-            sync_id: changelog.cursor,
-            table_name,
-            record_id: id,
-            data: serde_json::to_value(&legacy_row)?,
-        }]))
+        Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
+            changelog,
+            LEGACY_TABLE_NAME,
+            serde_json::to_value(&legacy_row)?,
+        )]))
+    }
+
+    fn try_translate_push_delete(
+        &self,
+        _: &StorageConnection,
+        changelog: &ChangelogRow,
+    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
+        let result = match_push_table(changelog)
+            .then(|| vec![RemoteSyncRecordV5::new_delete(changelog, LEGACY_TABLE_NAME)]);
+
+        Ok(result)
     }
 }
 
