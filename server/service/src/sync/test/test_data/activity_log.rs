@@ -1,9 +1,6 @@
 use crate::sync::{
     test::{TestSyncPullRecord, TestSyncPushRecord},
-    translations::{
-        activity_log::{LegacyActivityLogRow, LegacyActivityLogType},
-        LegacyTableName, PullUpsertRecord,
-    },
+    translations::{activity_log::LegacyActivityLogRow, LegacyTableName, PullUpsertRecord},
 };
 use chrono::NaiveDate;
 use repository::{ActivityLogRow, ActivityLogType};
@@ -69,7 +66,7 @@ pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
             table_name: LegacyTableName::OM_ACTIVITY_LOG.to_string(),
             push_data: json!(LegacyActivityLogRow {
                 id: ACTIVITY_LOG_1.0.to_string(),
-                r#type: LegacyActivityLogType::InvoiceCreated,
+                r#type: ActivityLogType::InvoiceCreated,
                 user_id: "user_account_a".to_string(),
                 store_id: "store_a".to_string(),
                 record_id: "outbound_shipment_a".to_string(),
@@ -81,7 +78,7 @@ pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
             table_name: LegacyTableName::OM_ACTIVITY_LOG.to_string(),
             push_data: json!(LegacyActivityLogRow {
                 id: ACTIVITY_LOG_2.0.to_string(),
-                r#type: LegacyActivityLogType::InvoiceStatusAllocated,
+                r#type: ActivityLogType::InvoiceStatusAllocated,
                 user_id: "user_account_a".to_string(),
                 store_id: "store_b".to_string(),
                 record_id: "inbound_shipment_a".to_string(),
