@@ -67,10 +67,11 @@ impl TestSyncPullRecord {
 /// I.e. first run and integrate a row from TestSyncPullRecord and then try to push this record out
 #[derive(Debug)]
 pub struct TestSyncPushRecord {
-    /// Change log event for the row to be pushed.
+    /// Record id for the row to be pushed.
     /// Its assumed the row exists, e.g. because it has been integrated before through a
     /// TestSyncPullRecord
-    pub change_log: ChangelogRow,
+    pub record_id: String,
+    pub table_name: String,
     /// Expected record as pushed out to the server
     pub push_data: serde_json::Value,
 }
