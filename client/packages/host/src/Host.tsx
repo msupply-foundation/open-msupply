@@ -22,7 +22,6 @@ import {
   EnvUtils,
   LocalStorage,
   AuthError,
-  SnackbarProvider,
 } from '@openmsupply-client/common';
 import { AppRoute, Environment } from '@openmsupply-client/config';
 import { Initialise, Login, Viewport } from './components';
@@ -73,23 +72,21 @@ const Host = () => (
                         <AuthenticationAlert />
                         <Viewport>
                           <Box display="flex" style={{ minHeight: '100%' }}>
-                            <SnackbarProvider maxSnack={3}>
-                              <Routes>
-                                <Route
-                                  path={RouteBuilder.create(
-                                    AppRoute.Initialise
-                                  ).build()}
-                                  element={<Initialise />}
-                                />
-                                <Route
-                                  path={RouteBuilder.create(
-                                    AppRoute.Login
-                                  ).build()}
-                                  element={<Login />}
-                                />
-                                <Route path="*" element={<Site />} />
-                              </Routes>
-                            </SnackbarProvider>
+                            <Routes>
+                              <Route
+                                path={RouteBuilder.create(
+                                  AppRoute.Initialise
+                                ).build()}
+                                element={<Initialise />}
+                              />
+                              <Route
+                                path={RouteBuilder.create(
+                                  AppRoute.Login
+                                ).build()}
+                                element={<Login />}
+                              />
+                              <Route path="*" element={<Site />} />
+                            </Routes>
                           </Box>
                         </Viewport>
                       </BrowserRouter>
