@@ -77,6 +77,61 @@ We're using [React Query](https://react-query.tanstack.com/overview) to query th
 
 Check out the existing implementation using `api.ts` files and integration with the `DataTable` component.
 
+React Query is a higher level package which manages caching and provides useful hooks for implementation. The API communication is using the package `graphql-request`. For this we've implemented a wrapper around `request` within the component `GqlContext` in order to catch gql errors and raise them up to React Query. The api is returning valid (200) responses with an error object when there is an error. React Query is expecting an error to be raised - so the implementation in `GqlContext` is interrogating responses and checking for errors.
+
+When using `useQuery`, caching is handled for you. Provide a cache key as in the example usages here. When using a mutation we typically don't want to cache the response, so no cacheKey is used.
+
+Cache keys are simply an object which is used as a stable reference for the cache. We are using a hierarchy for the cache keys and pass in an array of strings as the actual key. For example, in the outbound shipments, we have a base key of the string `outbound`. For a specific invoice, the cache key consists of the base, the store ID and the invoice ID. If you invalidate the base cache key of 'outbound' then the cache will be cleared for all invoices. To be more targeted, you could invalidate for a specific invoice, or for all invoices in a store.
+
+An example of the pattern of hooks we've implemented when working with api calls is shown below. This is a simplified version of the outbound shipment implementation:
+
+```
+api/
+├─ hooks/
+│  ├─ document/
+│  │  ├─ ...
+│  │  ├─ index.ts
+│  │  ├─ useOutbound.ts
+│  ├─ line/
+│  │  ├─ index.ts
+│  │  ├─ useOutboundLines.ts
+│  └─ utils/
+│     ├─ index.ts
+│     └─ useOutboundApi.ts
+├─ api.ts
+├─ index.ts
+├─ operations.generated.ts
+└─ operations.graphql
+
+```
+
+where the file `hooks/index.ts` has something like this in it:
+
+```
+import { Utils } from './utils';
+import { Lines } from './line';
+import { Document } from './document';
+
+export const useOutbound = {
+  utils: {
+    api: Utils.useOutboundApi,
+    ...
+  },
+
+  document: {
+    get: Document.useOutbound,
+    ...
+  },
+
+  line: {
+    stockLines: Lines.useOutboundLines,
+    ...
+  },
+};
+```
+
+The queries are implemented in `api.ts`. If you need to modify the shape of the data returned, then the preferred approach is to implement that in the api query. If required, this can also be done in the hook which calls the query, though this isn't idiomatic.
+
 ## Localisation
 
 We're using [react-i18next](https://react.i18next.com/) for localisations. Collections of translatable items are grouped into namespaces so that we can reduce bundle sizes and keep files contained to specific areas. The namespace files are json files - kept separate from the main bundles and downloaded on demand. These are also cached locally in the browser.
