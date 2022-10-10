@@ -5,7 +5,7 @@ use repository::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::sync::{api::RemoteSyncRecordV5, sync_serde::empty_str_as_option};
+use crate::sync::api::RemoteSyncRecordV5;
 
 use super::{IntegrationRecords, LegacyTableName, PullUpsertRecord, SyncTranslation};
 
@@ -80,15 +80,16 @@ impl LegacyActivityLogType {
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
 pub struct LegacyActivityLogRow {
-    pub ID: String,
+    #[serde(rename = "ID")]
+    pub id: String,
     #[serde(rename = "type")]
     pub r#type: LegacyActivityLogType,
-    #[serde(deserialize_with = "empty_str_as_option")]
-    pub user_ID: Option<String>,
-    #[serde(deserialize_with = "empty_str_as_option")]
-    pub store_ID: Option<String>,
-    #[serde(deserialize_with = "empty_str_as_option")]
-    pub record_ID: Option<String>,
+    #[serde(rename = "user_ID")]
+    pub user_id: String,
+    #[serde(rename = "store_ID")]
+    pub store_id: String,
+    #[serde(rename = "record_ID")]
+    pub record_id: String,
     pub datetime: NaiveDateTime,
 }
 
@@ -106,11 +107,11 @@ impl SyncTranslation for ActivityLogTranslation {
         let data = serde_json::from_str::<LegacyActivityLogRow>(&sync_record.data)?;
 
         let result = ActivityLogRow {
-            id: data.ID.to_string(),
+            id: data.id.to_string(),
             r#type: data.r#type.to_log_type(),
-            user_id: data.user_ID,
-            store_id: data.store_ID,
-            record_id: data.record_ID,
+            user_id: Some(data.user_id),
+            store_id: Some(data.store_id),
+            record_id: Some(data.record_id),
             datetime: data.datetime,
         };
 
@@ -150,11 +151,11 @@ impl SyncTranslation for ActivityLogTranslation {
         )))?;
 
         let legacy_row = LegacyActivityLogRow {
-            ID: id.clone(),
+            id: id.clone(),
             r#type: legacy_type,
-            user_ID: user_id,
-            store_ID: store_id,
-            record_ID: record_id,
+            user_id: user_id.unwrap_or_default(),
+            store_id: store_id.unwrap_or_default(),
+            record_id: record_id.unwrap_or_default(),
             datetime,
         };
 
