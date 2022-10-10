@@ -65,7 +65,6 @@ export const Site: FC = () => {
     <RequireAuthentication>
       <CommandK>
         <SnackbarProvider maxSnack={3}>
-          {' '}
           <AppDrawer />
           <Box flex={1} display="flex" flexDirection="column" overflow="hidden">
             <AppBar />
