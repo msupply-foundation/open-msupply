@@ -1,6 +1,8 @@
 import React, { PropsWithChildren, useState, useEffect } from 'react';
 
 import {
+  DateUtils,
+  Formatter,
   Grid,
   LoadingButton,
   RadioIcon,
@@ -39,7 +41,7 @@ const useSync = () => {
 
   return {
     isLoading: !!syncStatus?.isSyncing || isLoading,
-    latestSyncDate: syncStatus && new Date(syncStatus.summary.started),
+    latestSyncDate: DateUtils.parseNaiveDateTime(syncStatus?.summary.started),
     onManualSync,
     syncStatus,
     numberOfRecordsInPushQueue,
@@ -48,7 +50,7 @@ const useSync = () => {
 
 export const Sync: React.FC = () => {
   const t = useTranslation('common');
-  const { localisedDate, localisedTime } = useFormatDateTime();
+  const { localisedDistanceToNow, relativeDateTime } = useFormatDateTime();
   const {
     syncStatus,
     latestSyncDate,
@@ -58,7 +60,10 @@ export const Sync: React.FC = () => {
   } = useSync();
 
   const formattedLatestSyncDate = latestSyncDate
-    ? `${localisedDate(latestSyncDate)} ${localisedTime(latestSyncDate)}`
+    ? `${Formatter.sentenceCase(relativeDateTime(latestSyncDate))} ( ${t(
+        'messages.ago',
+        { time: localisedDistanceToNow(latestSyncDate) }
+      )} )`
     : '';
 
   return (
@@ -67,7 +72,7 @@ export const Sync: React.FC = () => {
         container
         flexDirection="column"
         justifyContent="flex-start"
-        style={{ padding: 15, width: 400 }}
+        style={{ padding: '15 15 50 15', minWidth: 500 }}
         flexWrap="nowrap"
       >
         <Typography variant="h5" color="primary" style={{ paddingBottom: 25 }}>
@@ -99,13 +104,13 @@ interface RowProps {
   title?: string;
 }
 
-const Row: React.FC<PropsWithChildren<RowProps>> = ({ title, children }) => {
-  return (
-    <Grid container style={{ paddingBottom: 15 }}>
-      <Grid item flexShrink={0} flexGrow={1}>
-        <Typography style={{ fontSize: 16 }}>{title}</Typography>
-      </Grid>
-      {children}
+const Row: React.FC<PropsWithChildren<RowProps>> = ({ title, children }) => (
+  <Grid container display="flex" padding={1}>
+    <Grid item flex={1}>
+      <Typography fontWeight={700}>{title}</Typography>
     </Grid>
-  );
-};
+    <Grid item flex={1}>
+      <Typography>{children}</Typography>
+    </Grid>
+  </Grid>
+);

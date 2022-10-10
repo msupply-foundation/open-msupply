@@ -12,6 +12,8 @@ import {
   format,
   parseISO,
   fromUnixTime,
+  formatRelative,
+  formatDistanceToNow,
 } from 'date-fns';
 import { enGB, enUS, fr, ar } from 'date-fns/locale';
 
@@ -45,6 +47,15 @@ export const DateUtils = {
   isAfter,
   isBefore,
   isEqual,
+  parseNaiveDateTime: (dateTime?: string): Date | null => {
+    if (!dateTime) return null;
+
+    const maybeDate = dateTime.endsWith('Z')
+      ? new Date(dateTime)
+      : new Date(`${dateTime}Z`);
+
+    return isValid(maybeDate) ? maybeDate : new Date();
+  },
 };
 
 export const useFormatDateTime = () => {
@@ -69,7 +80,21 @@ export const useFormatDateTime = () => {
     date: Date | string | number,
     formatString: string
   ): string => format(dateInputHandler(date), formatString, { locale });
-  // Add more date/time formatters as required
 
-  return { localisedDate, localisedTime, dayMonthShort, customDate };
+  const relativeDateTime = (
+    date: Date | string | number,
+    baseDate: Date = new Date()
+  ): string => formatRelative(dateInputHandler(date), baseDate, { locale });
+
+  const localisedDistanceToNow = (date: Date | string | number) =>
+    formatDistanceToNow(dateInputHandler(date), { locale });
+
+  return {
+    customDate,
+    dayMonthShort,
+    localisedDate,
+    localisedDistanceToNow,
+    localisedTime,
+    relativeDateTime,
+  };
 };

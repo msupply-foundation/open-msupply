@@ -52,7 +52,14 @@ const SyncSettingsForm = ({
 
   const { url, username, password, intervalSeconds } = settings;
   return (
-    <form style={{ width: '100%' }}>
+    <form
+      style={{ width: '100%' }}
+      onKeyDown={e => {
+        if (e.key === 'Enter') {
+          onSave();
+        }
+      }}
+    >
       <Setting
         title={t('label.settings-url')}
         component={
