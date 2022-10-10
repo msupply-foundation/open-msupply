@@ -1,4 +1,7 @@
-use crate::sync::sync_serde::{date_option_to_isostring, empty_str_as_option, zero_date_as_option};
+use crate::sync::{
+    api::RemoteSyncRecordV5,
+    sync_serde::{date_option_to_isostring, empty_str_as_option, zero_date_as_option},
+};
 use chrono::NaiveDate;
 use repository::{
     ChangelogRow, ChangelogTableName, StockLineRow, StockLineRowRepository, StorageConnection,
@@ -6,9 +9,16 @@ use repository::{
 };
 use serde::{Deserialize, Serialize};
 
-use super::{
-    IntegrationRecords, LegacyTableName, PullUpsertRecord, PushUpsertRecord, SyncTranslation,
-};
+use super::{IntegrationRecords, LegacyTableName, PullUpsertRecord, SyncTranslation};
+
+const LEGACY_TABLE_NAME: &'static str = LegacyTableName::ITEM_LINE;
+
+fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
+    sync_record.table_name == LEGACY_TABLE_NAME
+}
+fn match_push_table(changelog: &ChangelogRow) -> bool {
+    changelog.table_name == ChangelogTableName::StockLine
+}
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
@@ -40,9 +50,7 @@ impl SyncTranslation for StockLineTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        let table_name = LegacyTableName::ITEM_LINE;
-
-        if sync_record.table_name != table_name {
+        if !match_pull_table(sync_record) {
             return Ok(None);
         }
 
@@ -69,15 +77,14 @@ impl SyncTranslation for StockLineTranslation {
         )))
     }
 
-    fn try_translate_push(
+    fn try_translate_push_upsert(
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<PushUpsertRecord>>, anyhow::Error> {
-        if changelog.table_name != ChangelogTableName::StockLine {
+    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
+        if !match_push_table(changelog) {
             return Ok(None);
         }
-        let table_name = LegacyTableName::ITEM_LINE;
 
         let StockLineRow {
             id,
@@ -111,12 +118,22 @@ impl SyncTranslation for StockLineTranslation {
             note,
         };
 
-        Ok(Some(vec![PushUpsertRecord {
-            sync_id: changelog.cursor,
-            table_name,
-            record_id: id,
-            data: serde_json::to_value(&legacy_row)?,
-        }]))
+        Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
+            changelog,
+            LEGACY_TABLE_NAME,
+            serde_json::to_value(&legacy_row)?,
+        )]))
+    }
+
+    fn try_translate_push_delete(
+        &self,
+        _: &StorageConnection,
+        changelog: &ChangelogRow,
+    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
+        let result = match_push_table(changelog)
+            .then(|| vec![RemoteSyncRecordV5::new_delete(changelog, LEGACY_TABLE_NAME)]);
+
+        Ok(result)
     }
 }
 
