@@ -8,6 +8,7 @@ import {
   Grid,
   LoadingButton,
   NumericTextInput,
+  NumUtils,
   PasswordTextInput,
   SaveIcon,
   SyncSettingsInput,
@@ -51,7 +52,14 @@ const SyncSettingsForm = ({
 
   const { url, username, password, intervalSeconds } = settings;
   return (
-    <form style={{ width: '100%' }}>
+    <form
+      style={{ width: '100%' }}
+      onKeyDown={e => {
+        if (e.key === 'Enter') {
+          onSave();
+        }
+      }}
+    >
       <Setting
         title={t('label.settings-url')}
         component={
@@ -89,8 +97,15 @@ const SyncSettingsForm = ({
         component={
           <NumericTextInput
             value={intervalSeconds}
-            onChange={e =>
-              setSettings('intervalSeconds', Number(e.target.value))
+            onChange={seconds =>
+              setSettings(
+                'intervalSeconds',
+                NumUtils.constrain(
+                  Math.round(seconds),
+                  1,
+                  Number.MAX_SAFE_INTEGER
+                )
+              )
             }
             disabled={isDisabled}
           />

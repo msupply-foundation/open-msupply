@@ -156,6 +156,7 @@
   "label.verified": "Vérifiée",
   "label.website": "Site Internet",
   "link.copy-to-clipboard": "Copier vers le Presse-papier",
+  "messages.ago": "il y a {{time}}",
   "messages.delete-this-line": "Supprimer cette ligne",
   "placeholder.filter-items": "Filtrer les articles",
   "placeholder.search-by-name": "Rechercher par nom",

@@ -28,10 +28,7 @@ export const PositiveNumberInput = React.forwardRef(
         InputProps={{
           sx: { ...sx, '& .MuiInput-input': { textAlign: 'right' } },
         }}
-        onChange={e => {
-          const newValue = NumUtils.parseString(e.target.value, 1, max);
-          onChange(newValue);
-        }}
+        onChange={value => onChange(NumUtils.constrain(value, 1, max))}
         disabled={disabled}
         value={value}
         {...rest}

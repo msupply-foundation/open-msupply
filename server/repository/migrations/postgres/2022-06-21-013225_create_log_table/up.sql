@@ -1,4 +1,5 @@
-CREATE TYPE activity_log_type AS ENUM (
+CREATE TYPE activity_log_type AS ENUM
+(
     'USER_LOGGED_IN',
     'INVOICE_CREATED',
     'INVOICE_DELETED',
@@ -16,9 +17,10 @@ CREATE TYPE activity_log_type AS ENUM (
     'REQUISITION_STATUS_FINALISED'
 );
 
-CREATE TABLE activity_log (
+CREATE TABLE activity_log
+(
     id TEXT NOT NULL PRIMARY KEY,
-    type log_type, 
+    type activity_log_type,
     user_id TEXT,
     store_id TEXT REFERENCES store(id),
     record_id TEXT,
