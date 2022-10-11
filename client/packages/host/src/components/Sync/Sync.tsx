@@ -60,13 +60,14 @@ export const Sync: React.FC = () => {
   } = useSync();
 
   const formattedLatestSyncDate = latestSyncDate ? (
-    <Grid display="flex" container>
-      <Grid item flex={1}>
+    <Grid display="flex" container gap={1}>
+      <Grid item flex={1} style={{ whiteSpace: 'nowrap' }}>
         {Formatter.sentenceCase(relativeDateTime(latestSyncDate))}
       </Grid>
       <Grid item flex={1} style={{ whiteSpace: 'nowrap' }}>
-        ( {t('messages.ago', { time: localisedDistanceToNow(latestSyncDate) })}{' '}
-        )
+        {`( ${t('messages.ago', {
+          time: localisedDistanceToNow(latestSyncDate),
+        })} )`}
       </Grid>
     </Grid>
   ) : null;
