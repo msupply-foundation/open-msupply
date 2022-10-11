@@ -15,6 +15,13 @@ query initialisationStatus {
   initialisationStatus
 }
 
+query displaySettings {
+  displaySettings {
+    customLogo
+    customTheme
+  }
+}
+
 fragment SyncError on SyncErrorNode {
   __typename
   variant

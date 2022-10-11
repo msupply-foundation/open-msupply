@@ -16,6 +16,11 @@ export type InitialisationStatusQueryVariables = Types.Exact<{ [key: string]: ne
 
 export type InitialisationStatusQuery = { __typename: 'Queries', initialisationStatus: Types.InitialisationStatusType };
 
+export type DisplaySettingsQueryVariables = Types.Exact<{ [key: string]: never; }>;
+
+
+export type DisplaySettingsQuery = { __typename: 'Queries', displaySettings?: { __typename: 'DisplaySettingsNode', customLogo?: string | null, customTheme?: string | null } | null };
+
 export type SyncErrorFragment = { __typename: 'SyncErrorNode', variant: Types.SyncErrorVariant, fullError: string };
 
 export type InitialiseSiteMutationVariables = Types.Exact<{
@@ -125,6 +130,14 @@ export const InitialisationStatusDocument = gql`
   initialisationStatus
 }
     `;
+export const DisplaySettingsDocument = gql`
+    query displaySettings {
+  displaySettings {
+    customLogo
+    customTheme
+  }
+}
+    `;
 export const InitialiseSiteDocument = gql`
     mutation initialiseSite($syncSettings: SyncSettingsInput!) {
   initialiseSite(input: $syncSettings) {
@@ -187,6 +200,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     initialisationStatus(variables?: InitialisationStatusQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InitialisationStatusQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<InitialisationStatusQuery>(InitialisationStatusDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'initialisationStatus', 'query');
     },
+    displaySettings(variables?: DisplaySettingsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DisplaySettingsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DisplaySettingsQuery>(DisplaySettingsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'displaySettings', 'query');
+    },
     initialiseSite(variables: InitialiseSiteMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InitialiseSiteMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InitialiseSiteMutation>(InitialiseSiteDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'initialiseSite', 'mutation');
     },
@@ -235,6 +251,22 @@ export const mockSyncSettingsQuery = (resolver: ResponseResolver<GraphQLRequest<
 export const mockInitialisationStatusQuery = (resolver: ResponseResolver<GraphQLRequest<InitialisationStatusQueryVariables>, GraphQLContext<InitialisationStatusQuery>, any>) =>
   graphql.query<InitialisationStatusQuery, InitialisationStatusQueryVariables>(
     'initialisationStatus',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockDisplaySettingsQuery((req, res, ctx) => {
+ *   return res(
+ *     ctx.data({ displaySettings })
+ *   )
+ * })
+ */
+export const mockDisplaySettingsQuery = (resolver: ResponseResolver<GraphQLRequest<DisplaySettingsQueryVariables>, GraphQLContext<DisplaySettingsQuery>, any>) =>
+  graphql.query<DisplaySettingsQuery, DisplaySettingsQueryVariables>(
+    'displaySettings',
     resolver
   )
 

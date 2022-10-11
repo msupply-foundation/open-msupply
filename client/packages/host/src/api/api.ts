@@ -10,6 +10,10 @@ import { Sdk, SyncErrorFragment } from './operations.generated';
 
 export const getHostQueries = (sdk: Sdk) => ({
   get: {
+    displaySettings: async () => {
+      const result = await sdk.displaySettings();
+      return result.displaySettings;
+    },
     syncSettings: async () => {
       const result = await sdk.syncSettings();
       return result.syncSettings;

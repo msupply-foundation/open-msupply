@@ -87,5 +87,4 @@ pub struct LoggingSettings {
 pub struct DisplaySettings {
     pub custom_logo: Option<String>,
     pub custom_theme: Option<String>,
-    pub default_language: String,
 }

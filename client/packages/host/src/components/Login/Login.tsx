@@ -24,6 +24,7 @@ export const Login = () => {
   const { connectedServer } = useElectronClient();
   const { setPageTitle } = useHostContext();
   const { data: initialisationStatus } = useHost.utils.initialisationStatus();
+  const { data: displaySettings } = useHost.settings.displaySettings();
   const navigate = useNavigate();
 
   const passwordRef = React.useRef(null);
@@ -37,6 +38,14 @@ export const Login = () => {
     onLogin,
     error,
   } = useLoginForm(passwordRef);
+
+  useEffect(() => {
+    if (!displaySettings) return;
+
+    const { customLogo, customTheme } = displaySettings;
+    if (!!customLogo) LocalStorage.setItem('/theme/logo', customLogo);
+    if (!!customTheme) LocalStorage.setItem('/theme/logo', customTheme);
+  }, [displaySettings]);
 
   useEffect(() => {
     setPageTitle(`${t('app.login')} | ${t('app')} `);
