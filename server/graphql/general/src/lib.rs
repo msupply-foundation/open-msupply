@@ -9,7 +9,9 @@ use graphql_core::pagination::PaginationInput;
 
 use mutations::{
     common::SyncSettingsInput,
-    display_settings::{update_display_settings, DisplaySettingsInput, UpdateDisplaySettingsError},
+    display_settings::{
+        update_display_settings, DisplaySettingsInput, UpdateDisplaySettingsResponse,
+    },
     initialise_site::{initialise_site, InitialiseSiteResponse},
     manual_sync::manual_sync,
     sync_settings::{update_sync_settings, UpdateSyncSettingsResponse},
@@ -215,7 +217,7 @@ impl GeneralMutations {
         &self,
         ctx: &Context<'_>,
         input: DisplaySettingsInput,
-    ) -> Result<DisplaySettingsNode, UpdateDisplaySettingsError> {
+    ) -> Result<UpdateDisplaySettingsResponse> {
         update_display_settings(ctx, input)
     }
 }

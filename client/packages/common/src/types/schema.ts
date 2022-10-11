@@ -1543,7 +1543,7 @@ export type Mutations = {
   manualSync: Scalars['String'];
   /** Set supply quantity to requested quantity */
   supplyRequestedQuantity: SupplyRequestedQuantityResponse;
-  updateDisplaySettings: DisplaySettingsNode;
+  updateDisplaySettings: UpdateDisplaySettingsResponse;
   updateInboundShipment: UpdateInboundShipmentResponse;
   updateInboundShipmentLine: UpdateInboundShipmentLineResponse;
   updateInboundShipmentServiceLine: UpdateInboundShipmentServiceLineResponse;
@@ -2872,6 +2872,13 @@ export type UniqueValueViolation = InsertLocationErrorInterface & UpdateLocation
   description: Scalars['String'];
   field: UniqueValueKey;
 };
+
+export type UpdateDisplaySettingsError = {
+  __typename: 'UpdateDisplaySettingsError';
+  error: Scalars['String'];
+};
+
+export type UpdateDisplaySettingsResponse = DisplaySettingsNode | UpdateDisplaySettingsError;
 
 export type UpdateErrorInterface = {
   description: Scalars['String'];
