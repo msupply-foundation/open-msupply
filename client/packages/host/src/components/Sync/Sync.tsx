@@ -41,7 +41,7 @@ const useSync = () => {
 
   return {
     isLoading: !!syncStatus?.isSyncing || isLoading,
-    latestSyncDate: DateUtils.parseNaiveDateTime(syncStatus?.summary.started),
+    latestSyncDate: DateUtils.getDateOrNull(syncStatus?.summary.started),
     onManualSync,
     syncStatus,
     numberOfRecordsInPushQueue,
@@ -59,12 +59,17 @@ export const Sync: React.FC = () => {
     onManualSync,
   } = useSync();
 
-  const formattedLatestSyncDate = latestSyncDate
-    ? `${Formatter.sentenceCase(relativeDateTime(latestSyncDate))} ( ${t(
-        'messages.ago',
-        { time: localisedDistanceToNow(latestSyncDate) }
-      )} )`
-    : '';
+  const formattedLatestSyncDate = latestSyncDate ? (
+    <Grid display="flex" container>
+      <Grid item flex={1}>
+        {Formatter.sentenceCase(relativeDateTime(latestSyncDate))}
+      </Grid>
+      <Grid item flex={1} style={{ whiteSpace: 'nowrap' }}>
+        ( {t('messages.ago', { time: localisedDistanceToNow(latestSyncDate) })}{' '}
+        )
+      </Grid>
+    </Grid>
+  ) : null;
 
   return (
     <Grid style={{ padding: 15 }} justifyContent="center">

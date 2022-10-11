@@ -47,15 +47,6 @@ export const DateUtils = {
   isAfter,
   isBefore,
   isEqual,
-  parseNaiveDateTime: (dateTime?: string): Date | null => {
-    if (!dateTime) return null;
-
-    const maybeDate = dateTime.endsWith('Z')
-      ? new Date(dateTime)
-      : new Date(`${dateTime}Z`);
-
-    return isValid(maybeDate) ? maybeDate : new Date();
-  },
 };
 
 export const useFormatDateTime = () => {

@@ -105,6 +105,27 @@ api/
 
 ```
 
+The cache keys are created in `use_____Api.ts`. For example, in `useOutboundApi.ts` there is the following:
+
+```
+  const keys = {
+    base: () => ['outbound'] as const,
+    detail: (id: string) => [...keys.base(), storeId, id] as const,
+    list: () => [...keys.base(), storeId, 'list'] as const,
+    paramList: (params: ListParams) => [...keys.list(), params] as const,
+    sortedList: (sortBy: SortBy<OutboundRowFragment>) =>
+      [...keys.list(), sortBy] as const,
+  };
+```
+
+and you will see the keys being referenced in other hooks, like so:
+
+```
+  const api = useOutboundApi();
+  useQuery(api.keys.paramList(queryParams), ...
+```
+
+
 where the file `hooks/index.ts` has something like this in it:
 
 ```
