@@ -181,7 +181,7 @@ impl GeneralQueries {
     }
 
     pub async fn display_settings(&self, ctx: &Context<'_>) -> Result<Option<DisplaySettingsNode>> {
-        display_settings(ctx, true)
+        display_settings(ctx)
     }
 }
 

@@ -97,7 +97,7 @@ export const useInitialiseForm = () => {
   const { data: initStatus } =
     useHost.utils.initialisationStatus(refetchInterval);
   const { data: syncStatus } = useHost.utils.syncStatus(refetchInterval);
-  const { data: syncSettings } = useHost.utils.syncSettings();
+  const { data: syncSettings } = useHost.settings.syncSettings();
 
   const onInitialise = async () => {
     setSiteCredentialsError(null);

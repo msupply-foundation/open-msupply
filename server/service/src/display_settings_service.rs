@@ -2,11 +2,6 @@ use repository::{KeyValueStoreRepository, KeyValueType, RepositoryError};
 
 use crate::{service_provider::ServiceContext, settings::DisplaySettings};
 
-pub struct DisplaySettingsInput {
-    pub custom_logo: Option<String>,
-    pub custom_theme: Option<String>,
-}
-
 pub trait DisplaySettingsServiceTrait: Sync + Send {
     /// Loads display settings from the DB
     fn display_settings(
@@ -17,16 +12,10 @@ pub trait DisplaySettingsServiceTrait: Sync + Send {
 
         let custom_logo = key_value_store.get_string(KeyValueType::SettingsDisplayCustomLogo)?;
         let custom_theme = key_value_store.get_string(KeyValueType::SettingsDisplayCustomTheme)?;
-        let default_language = key_value_store
-            .get_string(KeyValueType::SettingsDisplayDefaultLanguage)
-            .unwrap()
-            .unwrap_or("en".to_string());
-
         let make_settings = || {
             Some(DisplaySettings {
                 custom_logo,
                 custom_theme,
-                default_language,
             })
         };
 
@@ -36,7 +25,7 @@ pub trait DisplaySettingsServiceTrait: Sync + Send {
     fn update_display_settings(
         &self,
         ctx: &ServiceContext,
-        settings: &DisplaySettingsInput,
+        settings: &DisplaySettings,
     ) -> Result<(), RepositoryError> {
         let result = ctx
             .connection

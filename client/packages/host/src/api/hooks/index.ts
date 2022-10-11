@@ -1,7 +1,12 @@
 import { Sync } from './sync';
 import { Utils } from './utils';
+import { Settings } from './settings';
 
 export const useHost = {
+  settings: {
+    displaySettings: Settings.useDisplaySettings,
+    syncSettings: Settings.useSyncSettings,
+  },
   sync: {
     initialise: Sync.useInitialiseSite,
     manualSync: Sync.useManualSync,
@@ -10,7 +15,6 @@ export const useHost = {
   utils: {
     syncStatus: Utils.useSyncStatus,
     syncInfo: Utils.useSyncInfo,
-    syncSettings: Utils.useSyncSettings,
     initialisationStatus: Utils.useInitialisationStatus,
   },
 };

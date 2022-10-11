@@ -1,5 +1,5 @@
 import { useQuery } from '@openmsupply-client/common';
-import { useHostApi } from './useHostApi';
+import { useHostApi } from '../utils/useHostApi';
 
 export const useSyncSettings = () => {
   const api = useHostApi();

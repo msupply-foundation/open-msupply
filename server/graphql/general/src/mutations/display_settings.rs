@@ -2,10 +2,7 @@ use async_graphql::*;
 
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 use repository::RepositoryError;
-use service::{
-    auth::{Resource, ResourceAccessRequest},
-    display_settings_service,
-};
+use service::auth::{Resource, ResourceAccessRequest};
 use std::fmt;
 
 use crate::queries::display_settings::DisplaySettingsNode;
@@ -49,8 +46,8 @@ impl From<async_graphql::Error> for UpdateDisplaySettingsError {
 }
 
 impl DisplaySettingsInput {
-    pub fn to_domain(&self) -> display_settings_service::DisplaySettingsInput {
-        display_settings_service::DisplaySettingsInput {
+    pub fn to_domain(&self) -> service::settings::DisplaySettings {
+        service::settings::DisplaySettings {
             custom_logo: self.custom_logo.clone(),
             custom_theme: self.custom_theme.clone(),
         }

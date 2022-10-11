@@ -636,6 +636,19 @@ export type DeleteStocktakeResponseWithId = {
   response: DeleteStocktakeResponse;
 };
 
+export type DisplaySettingsInput = {
+  customLogo?: InputMaybe<Scalars['String']>;
+  customTheme?: InputMaybe<Scalars['String']>;
+};
+
+export type DisplaySettingsNode = {
+  __typename: 'DisplaySettingsNode';
+  /** Custom logo */
+  customLogo?: Maybe<Scalars['String']>;
+  /** Custom theme */
+  customTheme?: Maybe<Scalars['String']>;
+};
+
 export type EqualFilterActivityLogTypeInput = {
   equalAny?: InputMaybe<Array<ActivityLogNodeType>>;
   equalTo?: InputMaybe<ActivityLogNodeType>;
@@ -1530,6 +1543,7 @@ export type Mutations = {
   manualSync: Scalars['String'];
   /** Set supply quantity to requested quantity */
   supplyRequestedQuantity: SupplyRequestedQuantityResponse;
+  updateDisplaySettings: DisplaySettingsNode;
   updateInboundShipment: UpdateInboundShipmentResponse;
   updateInboundShipmentLine: UpdateInboundShipmentLineResponse;
   updateInboundShipmentServiceLine: UpdateInboundShipmentServiceLineResponse;
@@ -1756,6 +1770,11 @@ export type MutationsInsertStocktakeLineArgs = {
 export type MutationsSupplyRequestedQuantityArgs = {
   input: SupplyRequestedQuantityInput;
   storeId: Scalars['String'];
+};
+
+
+export type MutationsUpdateDisplaySettingsArgs = {
+  input: DisplaySettingsInput;
 };
 
 
@@ -2059,6 +2078,7 @@ export type Queries = {
    * The refresh token is returned as a cookie
    */
   authToken: AuthTokenResponse;
+  displaySettings?: Maybe<DisplaySettingsNode>;
   /** Available without authorisation in operational and initialisation states */
   initialisationStatus: InitialisationStatusType;
   invoice: InvoiceResponse;

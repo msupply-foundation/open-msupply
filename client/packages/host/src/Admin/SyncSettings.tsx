@@ -154,7 +154,7 @@ const useUpdateSyncSettingsState = () => {
 
 export const SyncSettings = ({}) => {
   const t = useTranslation('app');
-  const { data, isError } = useHost.utils.syncSettings();
+  const { data, isError } = useHost.settings.syncSettings();
   const { mutateAsync: update } = useHost.sync.update();
   const {
     syncSettings,
