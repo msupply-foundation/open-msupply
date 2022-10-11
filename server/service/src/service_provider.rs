@@ -5,6 +5,7 @@ use crate::{
         invoice_count::{InvoiceCountService, InvoiceCountServiceTrait},
         stock_expiry_count::{StockExpiryCountServiceTrait, StockExpiryServiceCount},
     },
+    display_settings_service::{DisplaySettingsService, DisplaySettingsServiceTrait},
     invoice::{InvoiceService, InvoiceServiceTrait},
     invoice_line::{InvoiceLineService, InvoiceLineServiceTrait},
     item_stats::{ItemStatsService, ItemStatsServiceTrait},
@@ -63,6 +64,7 @@ pub struct ServiceProvider {
     processors_trigger: ProcessorsTrigger,
     pub sync_trigger: SyncTrigger,
     pub site_is_initialised_trigger: SiteIsInitialisedTrigger,
+    pub display_settings_service: Box<dyn DisplaySettingsServiceTrait>,
 }
 
 pub struct ServiceContext {
@@ -116,6 +118,7 @@ impl ServiceProvider {
             processors_trigger,
             sync_trigger,
             site_is_initialised_trigger,
+            display_settings_service: Box::new(DisplaySettingsService {}),
         }
     }
 

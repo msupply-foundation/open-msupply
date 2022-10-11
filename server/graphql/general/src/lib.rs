@@ -9,11 +9,13 @@ use graphql_core::pagination::PaginationInput;
 
 use mutations::{
     common::SyncSettingsInput,
+    display_settings::{update_display_settings, DisplaySettingsInput, UpdateDisplaySettingsError},
     initialise_site::{initialise_site, InitialiseSiteResponse},
     manual_sync::manual_sync,
     sync_settings::{update_sync_settings, UpdateSyncSettingsResponse},
 };
 use queries::{
+    display_settings::{display_settings, DisplaySettingsNode},
     initialisation_status::{initialisation_status, InitialisationStatusType},
     requisition_line_chart::{ConsumptionOptionsInput, StockEvolutionOptionsInput},
     sync_settings::{sync_settings, SyncSettingsNode},
@@ -177,6 +179,10 @@ impl GeneralQueries {
     pub async fn sync_settings(&self, ctx: &Context<'_>) -> Result<Option<SyncSettingsNode>> {
         sync_settings(ctx, true)
     }
+
+    pub async fn display_settings(&self, ctx: &Context<'_>) -> Result<Option<DisplaySettingsNode>> {
+        display_settings(ctx, true)
+    }
 }
 
 #[derive(Default, Clone)]
@@ -203,6 +209,14 @@ impl GeneralMutations {
 
     pub async fn manual_sync(&self, ctx: &Context<'_>) -> Result<String> {
         manual_sync(ctx, true)
+    }
+
+    pub async fn update_display_settings(
+        &self,
+        ctx: &Context<'_>,
+        input: DisplaySettingsInput,
+    ) -> Result<DisplaySettingsNode, UpdateDisplaySettingsError> {
+        update_display_settings(ctx, input)
     }
 }
 
