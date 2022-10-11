@@ -55,6 +55,9 @@ const inboundParsers = {
       case 'invoiceNumber': {
         return InvoiceSortFieldInput.InvoiceNumber;
       }
+      case 'theirReference': {
+        return InvoiceSortFieldInput.TheirReference;
+      }
       case 'status':
       default: {
         return InvoiceSortFieldInput.Status;
@@ -87,7 +90,6 @@ const inboundParsers = {
         : null,
       packSize: line.packSize,
       numberOfPacks: line.numberOfPacks,
-      totalAfterTax: 0,
       totalBeforeTax: 0,
       invoiceId: line.invoiceId,
       locationId: line.location?.id,
@@ -106,9 +108,7 @@ const inboundParsers = {
     numberOfPacks: line.numberOfPacks,
     locationId: line.location?.id,
   }),
-  toDeleteLine: (line: {
-    id: string;
-  }): DeleteInboundShipmentLineInput => {
+  toDeleteLine: (line: { id: string }): DeleteInboundShipmentLineInput => {
     return { id: line.id };
   },
   toInsertServiceCharge: (line: DraftInboundLine) => ({
@@ -116,20 +116,16 @@ const inboundParsers = {
     invoiceId: line.invoiceId,
     itemId: line.item.id,
     totalBeforeTax: line.totalBeforeTax,
-    totalAfterTax: line.totalBeforeTax,
     note: line.note,
   }),
   toUpdateServiceCharge: (line: DraftInboundLine) => ({
     id: line.id,
-    invoiceId: line.invoiceId,
     itemId: line.item.id,
     totalBeforeTax: line.totalBeforeTax,
-    totalAfterTax: line.totalBeforeTax,
     note: line.note,
   }),
   toDeleteServiceCharge: (line: DraftInboundLine) => ({
     id: line.id,
-    invoiceId: line.invoiceId,
   }),
 };
 
@@ -271,7 +267,7 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
           ({ type, isCreated, isDeleted }) =>
             type === InvoiceLineNodeType.Service && !isDeleted && isCreated
         )
-        .map(inboundParsers.toUpdateServiceCharge),
+        .map(inboundParsers.toInsertServiceCharge),
       updateInboundShipmentServiceLines: draftInboundLine
         .filter(
           ({ type, isUpdated, isCreated, isDeleted }) =>
@@ -292,6 +288,37 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
     const result = await sdk.upsertInboundShipment({ storeId, input });
 
     return result;
+  },
+  addFromMasterList: async ({
+    shipmentId,
+    masterListId,
+  }: {
+    shipmentId: string;
+    masterListId: string;
+  }) => {
+    const result = await sdk.addToInboundShipmentFromMasterList({
+      shipmentId,
+      masterListId,
+      storeId,
+    });
+
+    if (
+      result.addToInboundShipmentFromMasterList.__typename ===
+      'InvoiceLineConnector'
+    ) {
+      return result.addToInboundShipmentFromMasterList;
+    }
+
+    if (
+      result.addToInboundShipmentFromMasterList.__typename ===
+      'AddToInboundShipmentFromMasterListError'
+    ) {
+      throw new Error(
+        result.addToInboundShipmentFromMasterList.error.__typename
+      );
+    }
+
+    throw new Error('Could not add from master list');
   },
   dashboard: {
     shipmentCount: async (): Promise<{

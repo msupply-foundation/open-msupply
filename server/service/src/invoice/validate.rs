@@ -18,6 +18,25 @@ pub fn check_invoice_type(
     }
 }
 
+pub struct NotThisStoreInvoice;
+
+pub fn check_store(invoice: &InvoiceRow, store_id: &str) -> Result<(), NotThisStoreInvoice> {
+    if invoice.store_id != store_id {
+        Err(NotThisStoreInvoice {})
+    } else {
+        Ok(())
+    }
+}
+
+pub fn check_status_change(invoice: &InvoiceRow, status_option: Option<InvoiceRowStatus>) -> bool {
+    if let Some(new_status) = status_option {
+        if new_status != invoice.status {
+            return true;
+        }
+    }
+    return false;
+}
+
 pub struct InvoiceIsNotEditable;
 
 pub fn check_invoice_is_editable(invoice: &InvoiceRow) -> Result<(), InvoiceIsNotEditable> {

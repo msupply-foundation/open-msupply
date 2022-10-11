@@ -9,10 +9,10 @@ import {
   useTheme,
   Theme,
   alpha,
-  PositiveNumberInputCell,
-  NonNegativeIntegerCell,
   QueryParamsProvider,
   createQueryParamsStore,
+  NonNegativeDecimalCell,
+  PositiveNumberInputCell,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import {
@@ -39,6 +39,8 @@ const getBatchColumn = (
     Cell: TextInputCell,
     setter: updateDraftLine,
     backgroundColor: alpha(theme.palette.background.menu, 0.4),
+    // Remember previously entered batches for this item and suggest them in future shipments
+    autocompleteProvider: data => `inboundshipment${data.item.id}`,
   },
 ];
 const getExpiryColumn = (
@@ -67,7 +69,7 @@ export const QuantityTableComponent: FC<TableProps> = ({
       [
         'numberOfPacks',
         {
-          Cell: NonNegativeIntegerCell,
+          Cell: NonNegativeDecimalCell,
           width: 100,
           label: 'label.num-packs',
           setter: updateDraftLine,
@@ -80,11 +82,12 @@ export const QuantityTableComponent: FC<TableProps> = ({
       ],
     ],
     {},
-    [updateDraftLine]
+    [updateDraftLine, lines]
   );
 
   return (
     <DataTable
+      key="inbound-line-quantity"
       isDisabled={isDisabled}
       columns={columns}
       data={lines}
@@ -127,11 +130,12 @@ export const PricingTableComponent: FC<TableProps> = ({
       ],
     ],
     {},
-    [updateDraftLine]
+    [updateDraftLine, lines]
   );
 
   return (
     <DataTable
+      key="inbound-line-pricing"
       isDisabled={isDisabled}
       columns={columns}
       data={lines}
@@ -156,7 +160,7 @@ export const LocationTableComponent: FC<TableProps> = ({
       [getLocationInputColumn(), { setter: updateDraftLine }],
     ],
     {},
-    [updateDraftLine]
+    [updateDraftLine, lines]
   );
 
   return (
@@ -167,7 +171,13 @@ export const LocationTableComponent: FC<TableProps> = ({
         })
       }
     >
-      <DataTable columns={columns} data={lines} dense isDisabled={isDisabled} />
+      <DataTable
+        key="inbound-line-location"
+        columns={columns}
+        data={lines}
+        dense
+        isDisabled={isDisabled}
+      />
     </QueryParamsProvider>
   );
 };

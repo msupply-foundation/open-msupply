@@ -21,7 +21,7 @@ impl Loader<RequisitionAndItemId> for RequisitionLineSupplyStatusLoader {
         &self,
         requisition_and_item_id: &[RequisitionAndItemId],
     ) -> Result<HashMap<RequisitionAndItemId, Self::Value>, Self::Error> {
-        let service_context = self.service_provider.context()?;
+        let service_context = self.service_provider.basic_context()?;
 
         let (requisition_ids, _) = IdPair::extract_unique_ids(requisition_and_item_id);
 
@@ -59,7 +59,7 @@ impl Loader<String> for RequisitionLinesRemainingToSupplyLoader {
         &self,
         requisition_ids: &[String],
     ) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let service_context = self.service_provider.context()?;
+        let service_context = self.service_provider.basic_context()?;
 
         let requisition_supply_statuses = self
             .service_provider
@@ -71,11 +71,11 @@ impl Loader<String> for RequisitionLinesRemainingToSupplyLoader {
 
         let mut result: HashMap<String, Vec<RequisitionLine>> = HashMap::new();
         for supply_status in remaining_to_supply {
-            let requistion_line = supply_status.requisition_line;
+            let requisition_line = supply_status.requisition_line;
             let list = result
-                .entry(requistion_line.requisition_line_row.requisition_id.clone())
+                .entry(requisition_line.requisition_line_row.requisition_id.clone())
                 .or_insert_with(|| Vec::<RequisitionLine>::new());
-            list.push(requistion_line);
+            list.push(requisition_line);
         }
         Ok(result)
     }

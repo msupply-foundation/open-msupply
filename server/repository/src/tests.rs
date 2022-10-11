@@ -55,11 +55,11 @@ mod repository_test {
                 item_id: "item1".to_string(),
                 store_id: "store1".to_string(),
                 batch: Some("batch1".to_string()),
-                available_number_of_packs: 6,
+                available_number_of_packs: 6.0,
                 pack_size: 1,
                 cost_price_per_pack: 0.0,
                 sell_price_per_pack: 0.0,
-                total_number_of_packs: 1,
+                total_number_of_packs: 1.0,
                 expiry_date: Some(NaiveDate::from_ymd(2021, 12, 13)),
                 on_hold: false,
                 note: None,
@@ -155,7 +155,7 @@ mod repository_test {
                 total_after_tax: 1.0,
                 tax: None,
                 r#type: InvoiceLineRowType::StockIn,
-                number_of_packs: 1,
+                number_of_packs: 1.0,
                 note: None,
                 location_id: None,
             }
@@ -177,7 +177,7 @@ mod repository_test {
                 total_after_tax: 2.0,
                 tax: None,
                 r#type: InvoiceLineRowType::StockOut,
-                number_of_packs: 1,
+                number_of_packs: 1.0,
                 note: None,
                 location_id: None,
             }
@@ -200,7 +200,7 @@ mod repository_test {
                 total_after_tax: 3.0,
                 tax: None,
                 r#type: InvoiceLineRowType::StockOut,
-                number_of_packs: 1,
+                number_of_packs: 1.0,
                 note: None,
                 location_id: None,
             }
@@ -223,7 +223,7 @@ mod repository_test {
                 total_after_tax: 15.0,
                 tax: None,
                 r#type: InvoiceLineRowType::Service,
-                number_of_packs: 1,
+                number_of_packs: 1.0,
                 note: None,
                 location_id: None,
             }
@@ -247,32 +247,22 @@ mod repository_test {
             }
         }
 
-        pub fn central_sync_buffer_row_a() -> CentralSyncBufferRow {
-            CentralSyncBufferRow {
-                id: 1,
-                table_name: "store".to_string(),
-                record_id: "store_a".to_string(),
-                data: r#"{ "ID": "store_a" }"#.to_string(),
-            }
-        }
-
-        pub fn central_sync_buffer_row_b() -> CentralSyncBufferRow {
-            CentralSyncBufferRow {
-                id: 2,
-                table_name: "store".to_string(),
-                record_id: "store_b".to_string(),
-                data: r#"{ "ID": "store_b" }"#.to_string(),
+        pub fn activity_log_1() -> ActivityLogRow {
+            ActivityLogRow {
+                id: "activity_log1".to_string(),
+                r#type: ActivityLogType::UserLoggedIn,
+                user_id: Some(user_account_1().id.to_string()),
+                store_id: None,
+                record_id: None,
+                datetime: NaiveDateTime::from_timestamp(2000, 0),
             }
         }
     }
-
-    use std::{convert::TryInto, time::SystemTime};
 
     use crate::{
         mock::{
             mock_draft_request_requisition_line, mock_draft_request_requisition_line2,
             mock_inbound_shipment_number_store_a, mock_master_list_master_list_line_filter_test,
-            mock_name_a, mock_name_b, mock_name_store_a, mock_name_store_b,
             mock_outbound_shipment_number_store_a, mock_request_draft_requisition,
             mock_request_draft_requisition2, mock_test_master_list_name1,
             mock_test_master_list_name2, mock_test_master_list_name_filter1,
@@ -280,21 +270,20 @@ mod repository_test {
             mock_test_master_list_store1, MockDataInserts,
         },
         requisition_row::RequisitionRowStatus,
-        test_db, CentralSyncBufferRepository, ChangelogAction, ChangelogRow,
-        ChangelogRowRepository, ChangelogTableName, InvoiceLineRepository,
-        InvoiceLineRowRepository, InvoiceRowRepository, ItemRow, ItemRowRepository,
-        KeyValueStoreRepository, KeyValueType, MasterListFilter, MasterListLineFilter,
-        MasterListLineRepository, MasterListLineRowRepository, MasterListNameJoinRepository,
-        MasterListRepository, MasterListRowRepository, NameRowRepository, NumberRowRepository,
-        NumberRowType, OutboundShipmentRowRepository, RepositoryError, RequisitionFilter,
-        RequisitionLineFilter, RequisitionLineRepository, RequisitionLineRowRepository,
-        RequisitionRepository, RequisitionRowRepository, StockLineFilter, StockLineRepository,
-        StockLineRowRepository, StoreRowRepository, TransactionError, UserAccountRowRepository,
+        test_db, ActivityLogRowRepository, InvoiceLineRepository, InvoiceLineRowRepository,
+        InvoiceRowRepository, ItemRowRepository, KeyValueStoreRepository, KeyValueType,
+        MasterListFilter, MasterListLineFilter, MasterListLineRepository,
+        MasterListLineRowRepository, MasterListNameJoinRepository, MasterListRepository,
+        MasterListRowRepository, NameRowRepository, NumberRowRepository, NumberRowType,
+        OutboundShipmentRowRepository, RequisitionFilter, RequisitionLineFilter,
+        RequisitionLineRepository, RequisitionLineRowRepository, RequisitionRepository,
+        RequisitionRowRepository, StockLineFilter, StockLineRepository, StockLineRowRepository,
+        StoreRowRepository, UserAccountRowRepository,
     };
     use crate::{DateFilter, EqualFilter, SimpleStringFilter};
     use chrono::Duration;
     use diesel::{sql_query, sql_types::Text, RunQueryDsl};
-    use util::{inline_edit, inline_init};
+    use util::inline_edit;
 
     #[actix_rt::test]
     async fn test_name_repository() {
@@ -712,29 +701,6 @@ mod repository_test {
     }
 
     #[actix_rt::test]
-    async fn test_central_sync_buffer() {
-        let settings = test_db::get_test_db_settings("omsupply-database-central-sync_buffer");
-        let connection_manager = test_db::setup(&settings).await;
-        let connection = connection_manager.connection().unwrap();
-
-        let repo = CentralSyncBufferRepository::new(&connection);
-        let central_sync_buffer_row_a = data::central_sync_buffer_row_a();
-        let central_sync_buffer_row_b = data::central_sync_buffer_row_b();
-
-        // `insert_one` inserts some sync entries
-        repo.insert_one(&central_sync_buffer_row_a).await.unwrap();
-        repo.insert_one(&central_sync_buffer_row_b).await.unwrap();
-
-        // `remove_all` removes all buffered records.
-        repo.remove_all().await.unwrap();
-        let result = repo
-            .get_sync_entries(&central_sync_buffer_row_a.table_name)
-            .await
-            .unwrap();
-        assert!(result.is_empty());
-    }
-
-    #[actix_rt::test]
     async fn test_number() {
         let (_, connection, _, _) = test_db::setup_all("test_number", MockDataInserts::all()).await;
 
@@ -758,164 +724,6 @@ mod repository_test {
             .find_one_by_type_and_store(&NumberRowType::OutboundShipment, "store_b")
             .unwrap();
         assert_eq!(result, None);
-    }
-
-    #[actix_rt::test]
-    async fn test_changelog() {
-        let (_, connection, _, _) =
-            test_db::setup_all("test_changelog", MockDataInserts::none()).await;
-
-        // use name entries to populate the changelog (via the trigger)
-        let name_repo = NameRowRepository::new(&connection);
-        let repo = ChangelogRowRepository::new(&connection);
-
-        // single entry:
-        let name_a = mock_name_a();
-        name_repo.upsert_one(&name_a).unwrap();
-        let mut result = repo.changelogs(0, 10).unwrap();
-        assert_eq!(1, result.len());
-        let log_entry = result.pop().unwrap();
-        assert_eq!(
-            log_entry,
-            ChangelogRow {
-                id: 1,
-                table_name: ChangelogTableName::Name,
-                row_id: name_a.id.clone(),
-                row_action: ChangelogAction::Upsert,
-            }
-        );
-
-        // querying from the first entry should give the same result:
-        assert_eq!(
-            repo.changelogs(0, 10).unwrap(),
-            repo.changelogs(1, 10).unwrap()
-        );
-
-        // update the entry
-        let mut name_a_update = mock_name_a();
-        name_a_update.comment = Some("updated".to_string());
-        name_repo.upsert_one(&name_a_update).unwrap();
-        let mut result = repo.changelogs((log_entry.id + 1) as u64, 10).unwrap();
-        assert_eq!(1, result.len());
-        let log_entry = result.pop().unwrap();
-        assert_eq!(
-            log_entry,
-            ChangelogRow {
-                id: 2,
-                table_name: ChangelogTableName::Name,
-                row_id: name_a.id.clone(),
-                row_action: ChangelogAction::Upsert,
-            }
-        );
-
-        // query the full list from cursor=0
-        let mut result = repo.changelogs(0, 10).unwrap();
-        assert_eq!(1, result.len());
-        let log_entry = result.pop().unwrap();
-        assert_eq!(
-            log_entry,
-            ChangelogRow {
-                id: 2,
-                table_name: ChangelogTableName::Name,
-                row_id: name_a.id.clone(),
-                row_action: ChangelogAction::Upsert,
-            }
-        );
-
-        // add another entry
-        let name_b = mock_name_b();
-        name_repo.upsert_one(&name_b).unwrap();
-        let result = repo.changelogs(0, 10).unwrap();
-        assert_eq!(2, result.len());
-        assert_eq!(
-            result,
-            vec![
-                ChangelogRow {
-                    id: 2,
-                    table_name: ChangelogTableName::Name,
-                    row_id: name_a.id.clone(),
-                    row_action: ChangelogAction::Upsert,
-                },
-                ChangelogRow {
-                    id: 3,
-                    table_name: ChangelogTableName::Name,
-                    row_id: name_b.id.clone(),
-                    row_action: ChangelogAction::Upsert,
-                }
-            ]
-        );
-
-        // delete an entry
-        name_repo.delete(&name_b.id).unwrap();
-        let result = repo.changelogs(0, 10).unwrap();
-        assert_eq!(2, result.len());
-        assert_eq!(
-            result,
-            vec![
-                ChangelogRow {
-                    id: 2,
-                    table_name: ChangelogTableName::Name,
-                    row_id: name_a.id.clone(),
-                    row_action: ChangelogAction::Upsert,
-                },
-                ChangelogRow {
-                    id: 4,
-                    table_name: ChangelogTableName::Name,
-                    row_id: name_b.id.clone(),
-                    row_action: ChangelogAction::Delete,
-                }
-            ]
-        );
-    }
-
-    #[actix_rt::test]
-    async fn test_changelog_iteration() {
-        let (_, connection, _, _) =
-            test_db::setup_all("test_changelog_2", MockDataInserts::none()).await;
-
-        // use names entries to populate the changelog (via the trigger)
-        let name_repo = NameRowRepository::new(&connection);
-        let repo = ChangelogRowRepository::new(&connection);
-
-        let name_a = mock_name_a();
-        let name_b = mock_name_store_a();
-        let name_c = mock_name_store_b();
-        let name_d = mock_name_b();
-
-        name_repo.upsert_one(&name_a).unwrap();
-        name_repo.upsert_one(&name_b).unwrap();
-        name_repo.upsert_one(&name_c).unwrap();
-        name_repo.upsert_one(&name_d).unwrap();
-        name_repo.delete(&name_b.id).unwrap();
-        name_repo.upsert_one(&name_c).unwrap();
-        name_repo.upsert_one(&name_a).unwrap();
-        name_repo.upsert_one(&name_c).unwrap();
-        name_repo.delete(&name_c.id).unwrap();
-
-        // test iterating through the change log
-        let changelogs = repo.changelogs(0, 3).unwrap();
-        let latest_id: u64 = changelogs.last().unwrap().id.try_into().unwrap();
-        assert_eq!(
-            changelogs
-                .into_iter()
-                .map(|it| it.row_id)
-                .collect::<Vec<String>>(),
-            vec![name_d.id, name_b.id, name_a.id]
-        );
-
-        let changelogs = repo.changelogs(latest_id + 1, 3).unwrap();
-        let latest_id: u64 = changelogs.last().unwrap().id.try_into().unwrap();
-
-        assert_eq!(
-            changelogs
-                .into_iter()
-                .map(|it| it.row_id)
-                .collect::<Vec<String>>(),
-            vec![name_c.id]
-        );
-
-        let changelogs = repo.changelogs(latest_id + 1, 3).unwrap();
-        assert_eq!(changelogs.len(), 0);
     }
 
     #[actix_rt::test]
@@ -1097,12 +905,7 @@ mod repository_test {
                     .requisition_id(EqualFilter::equal_to(
                         &mock_draft_request_requisition_line().requisition_id,
                     ))
-                    .requested_quantity(EqualFilter {
-                        equal_to: Some(99),
-                        not_equal_to: None,
-                        equal_any: None,
-                        not_equal_all: None,
-                    }),
+                    .requested_quantity(EqualFilter::equal_to_i32(99)),
             )
             .unwrap();
 
@@ -1185,6 +988,10 @@ mod repository_test {
     #[cfg(not(feature = "memory"))]
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn test_tx_deadlock() {
+        use crate::{ItemRow, RepositoryError, TransactionError};
+        use std::time::SystemTime;
+        use util::inline_init;
+
         let (_, _, connection_manager, _) =
             test_db::setup_all("tx_deadlock", MockDataInserts::none()).await;
 
@@ -1331,5 +1138,22 @@ mod repository_test {
             .unwrap()
             .expect("tx_deadlock_id2 record didn't get created!");
         assert!("name_a" == tx_deadlock_item2.name);
+    }
+
+    #[actix_rt::test]
+    async fn test_activity_log_row_repository() {
+        let settings = test_db::get_test_db_settings("omsupply-database-store-repository");
+        let connection_manager = test_db::setup(&settings).await;
+        let connection = connection_manager.connection().unwrap();
+
+        let repo = ActivityLogRowRepository::new(&connection);
+
+        let activity_log1 = data::activity_log_1();
+        repo.insert_one(&activity_log1).unwrap();
+        let loaded_item = repo
+            .find_one_by_id(activity_log1.id.as_str())
+            .unwrap()
+            .unwrap();
+        assert_eq!(activity_log1, loaded_item);
     }
 }

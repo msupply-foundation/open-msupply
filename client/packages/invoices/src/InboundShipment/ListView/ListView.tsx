@@ -56,6 +56,7 @@ export const InboundListView: FC = () => {
       'createdDatetime',
       'allocatedDatetime',
       ['comment', { width: '100%' }],
+      'theirReference',
       [
         'totalAfterTax',
         {
@@ -74,6 +75,7 @@ export const InboundListView: FC = () => {
       <AppBarButtons sortBy={sortBy} modalController={modalController} />
 
       <DataTable
+        key="inbound-line-list"
         pagination={{ ...pagination, total: data?.totalCount }}
         onChangePage={updatePaginationQuery}
         columns={columns}
@@ -89,6 +91,7 @@ export const InboundListView: FC = () => {
             onCreate={modalController.toggleOn}
           />
         }
+        enableColumnSelection
       />
     </>
   );

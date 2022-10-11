@@ -1,3 +1,6 @@
+[profile.release]
+strip = true
+
 [workspace]
 
 members = [
@@ -20,4 +23,5 @@ members = [
   "graphql/general",
   "graphql/batch_mutations",
   "cli",
+  "windows",
 ]

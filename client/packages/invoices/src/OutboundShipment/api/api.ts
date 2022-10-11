@@ -91,9 +91,8 @@ const outboundParsers = {
       numberOfPacks: line.numberOfPacks,
       stockLineId: line.stockLine?.id ?? '',
       invoiceId: line.invoiceId,
-      tax: { percentage: 0 },
+      tax: 0.0,
       totalBeforeTax: get.stockLineSubtotal(line),
-      totalAfterTax: get.stockLineTotal(line),
     };
   },
   toUpdateLine: (line: DraftOutboundLine): UpdateOutboundShipmentLineInput => {
@@ -103,12 +102,9 @@ const outboundParsers = {
       stockLineId: line.stockLine?.id ?? '',
       tax: { percentage: line.taxPercentage },
       totalBeforeTax: get.stockLineSubtotal(line),
-      totalAfterTax: get.stockLineTotal(line),
     };
   },
-  toDeleteLine: (line: {
-    id: string;
-  }): DeleteOutboundShipmentLineInput => ({
+  toDeleteLine: (line: { id: string }): DeleteOutboundShipmentLineInput => ({
     id: line.id,
   }),
   toInsertPlaceholder: (
@@ -132,23 +128,19 @@ const outboundParsers = {
     id: line.id,
     invoiceId: line.invoiceId,
     itemId: line.item.id,
-    tax: { percentage: line.taxPercentage },
+    tax: line.taxPercentage,
     totalBeforeTax: line.totalBeforeTax,
-    totalAfterTax: get.serviceChargeTotal(line),
     note: line.note,
   }),
   toUpdateServiceCharge: (line: DraftOutboundLine) => ({
     id: line.id,
-    invoiceId: line.invoiceId,
     itemId: line.item.id,
     tax: { percentage: line.taxPercentage },
     totalBeforeTax: line.totalBeforeTax,
-    totalAfterTax: get.serviceChargeTotal(line),
     note: line.note,
   }),
   toDeleteServiceCharge: (line: DraftOutboundLine) => ({
     id: line.id,
-    invoiceId: line.invoiceId,
   }),
 };
 
@@ -420,5 +412,36 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
         toBePicked: result?.invoiceCounts?.outbound.toBePicked ?? 0,
       };
     },
+  },
+  addFromMasterList: async ({
+    shipmentId,
+    masterListId,
+  }: {
+    shipmentId: string;
+    masterListId: string;
+  }) => {
+    const result = await sdk.addToOutboundShipmentFromMasterList({
+      shipmentId,
+      masterListId,
+      storeId,
+    });
+
+    if (
+      result.addToOutboundShipmentFromMasterList.__typename ===
+      'InvoiceLineConnector'
+    ) {
+      return result.addToOutboundShipmentFromMasterList;
+    }
+
+    if (
+      result.addToOutboundShipmentFromMasterList.__typename ===
+      'AddToOutboundShipmentFromMasterListError'
+    ) {
+      throw new Error(
+        result.addToOutboundShipmentFromMasterList.error.__typename
+      );
+    }
+
+    throw new Error('Could not add from master list');
   },
 });

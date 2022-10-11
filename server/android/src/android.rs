@@ -15,7 +15,7 @@ pub mod android {
     use server::certs::{PRIVATE_CERT_FILE, PUBLIC_CERT_FILE};
     use server::start_server;
     use service::settings::{ServerSettings, Settings};
-    use tokio::sync::oneshot;
+    use tokio::sync::mpsc;
 
     use self::jni::objects::{JClass, JString};
     use self::jni::sys::{jlong, jstring};
@@ -29,7 +29,7 @@ pub mod android {
     /// Handle for a running remote_server instance
     struct RunningServerHandle {
         /// Channel to signal the remote_server to exit
-        off_switch: oneshot::Sender<()>,
+        off_switch: mpsc::Sender<()>,
         /// JoinHandle for the running remote_server thread
         thread: JoinHandle<()>,
     }
@@ -93,13 +93,14 @@ pub mod android {
         port: jchar,
         files_dir: JString,
         cache_dir: JString,
-        _android_id: JString,
+        android_id: JString,
     ) -> jlong {
         android_logger::init_once(Config::default().with_min_level(Level::Trace));
 
-        let (off_switch, off_switch_receiver) = oneshot::channel();
+        let (off_switch, off_switch_receiver) = mpsc::channel(1);
         let files_dir: String = env.get_string(files_dir).unwrap().into();
         let files_dir = PathBuf::from(&files_dir);
+        let android_id: String = env.get_string(android_id).unwrap().into();
         let db_path = files_dir.join("omsupply-database");
 
         let cache_dir: String = env.get_string(cache_dir).unwrap().into();
@@ -119,6 +120,7 @@ pub mod android {
                         debug_no_access_control: false,
                         cors_origins: vec!["http://localhost".to_string()],
                         base_dir: Some(files_dir.to_str().unwrap().to_string()),
+                        machine_uid: Some(android_id),
                     },
                     database: DatabaseSettings {
                         username: "n/a".to_string(),
@@ -131,6 +133,7 @@ pub mod android {
                     },
                     // sync settings need to be configured at runtime
                     sync: None,
+                    logging: None,
                 };
                 let _ = start_server(settings, off_switch_receiver).await;
             });
@@ -151,7 +154,7 @@ pub mod android {
             Some(handle) => handle,
             None => return -1,
         };
-        match handle.off_switch.send(()) {
+        match futures::executor::block_on(handle.off_switch.send(())) {
             Ok(_) => {}
             Err(_) => return -1,
         }

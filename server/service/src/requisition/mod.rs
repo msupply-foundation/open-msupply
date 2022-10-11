@@ -72,87 +72,73 @@ pub trait RequisitionServiceTrait: Sync + Send {
     fn insert_request_requisition(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
-        user_id: &str,
         input: InsertRequestRequisition,
     ) -> Result<Requisition, InsertRequestRequisitionError> {
-        insert_request_requisition(ctx, store_id, user_id, input)
+        insert_request_requisition(ctx, input)
     }
 
     fn update_request_requisition(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
         input: UpdateRequestRequisition,
     ) -> Result<Requisition, UpdateRequestRequisitionError> {
-        update_request_requisition(ctx, store_id, input)
+        update_request_requisition(ctx, input)
     }
 
     fn delete_request_requisition(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
         input: DeleteRequestRequisition,
     ) -> Result<String, DeleteRequestRequisitionError> {
-        delete_request_requisition(ctx, store_id, input)
+        delete_request_requisition(ctx, input)
     }
 
     fn use_suggested_quantity(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
         input: UseSuggestedQuantity,
     ) -> Result<Vec<RequisitionLine>, UseSuggestedQuantityError> {
-        use_suggested_quantity(ctx, store_id, input)
+        use_suggested_quantity(ctx, input)
     }
 
     fn add_from_master_list(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
         input: AddFromMasterList,
     ) -> Result<Vec<RequisitionLine>, AddFromMasterListError> {
-        add_from_master_list(ctx, store_id, input)
+        add_from_master_list(ctx, input)
     }
 
     fn update_response_requisition(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
-        user_id: &str,
         input: UpdateResponseRequisition,
     ) -> Result<Requisition, UpdateResponseRequisitionError> {
-        update_response_requisition(ctx, store_id, user_id, input)
+        update_response_requisition(ctx, input)
     }
 
     fn supply_requested_quantity(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
-        user_id: &str,
         input: SupplyRequestedQuantity,
     ) -> Result<Vec<RequisitionLine>, SupplyRequestedQuantityError> {
-        supply_requested_quantity(ctx, store_id, user_id, input)
+        supply_requested_quantity(ctx, input)
     }
 
     fn create_requisition_shipment(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
-        user_id: &str,
         input: CreateRequisitionShipment,
     ) -> Result<Invoice, CreateRequisitionShipmentError> {
-        create_requisition_shipment(ctx, store_id, user_id, input)
+        create_requisition_shipment(ctx, input)
     }
 
     fn batch_request_requisition(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
-        user_id: &str,
         input: BatchRequestRequisition,
     ) -> Result<BatchRequestRequisitionResult, RepositoryError> {
-        batch_request_requisition(ctx, store_id, user_id, input)
+        batch_request_requisition(ctx, input)
     }
 }
 

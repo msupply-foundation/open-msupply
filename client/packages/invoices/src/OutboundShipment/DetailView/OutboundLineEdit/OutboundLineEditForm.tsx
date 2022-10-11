@@ -63,6 +63,7 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
         <Grid item flex={1}>
           <StockItemSearchInput
             autoFocus={!item}
+            openOnFocus={!item}
             disabled={disabled}
             currentItemId={item?.id}
             onChange={onChangeItem}
@@ -85,7 +86,9 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
                 justifyContent: 'center',
               }}
             >
-              {t('label.available-quantity', { number: availableQuantity })}
+              {t('label.available-quantity', {
+                number: availableQuantity.toFixed(0),
+              })}
             </Typography>
           </Grid>
 
@@ -106,6 +109,7 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
           <Grid container>
             <ModalLabel label={t('label.issue')} />
             <NonNegativeIntegerInput
+              autoFocus
               value={quantity}
               onChange={value => {
                 onChangeQuantity(

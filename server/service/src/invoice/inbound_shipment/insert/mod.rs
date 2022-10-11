@@ -1,7 +1,8 @@
+use crate::activity_log::activity_log_entry;
 use crate::invoice::query::get_invoice;
 use crate::service_provider::ServiceContext;
 use crate::WithDBError;
-use repository::Invoice;
+use repository::{ActivityLogType, Invoice};
 use repository::{InvoiceRowRepository, RepositoryError};
 
 mod generate;
@@ -10,7 +11,7 @@ mod validate;
 use generate::generate;
 use validate::validate;
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct InsertInboundShipment {
     pub id: String,
     pub other_party_id: String,
@@ -24,21 +25,24 @@ type OutError = InsertInboundShipmentError;
 
 pub fn insert_inbound_shipment(
     ctx: &ServiceContext,
-    store_id: &str,
-    user_id: &str,
     input: InsertInboundShipment,
 ) -> Result<Invoice, OutError> {
     let invoice = ctx
         .connection
         .transaction_sync(|connection| {
-            let other_party = validate(connection, store_id, &input)?;
-            let new_invoice = generate(connection, store_id, user_id, input, other_party)?;
+            let other_party = validate(connection, &ctx.store_id, &input)?;
+            let new_invoice =
+                generate(connection, &ctx.store_id, &ctx.user_id, input, other_party)?;
             InvoiceRowRepository::new(connection).upsert_one(&new_invoice)?;
+
+            activity_log_entry(&ctx, ActivityLogType::InvoiceCreated, &new_invoice.id)?;
+
             get_invoice(ctx, None, &new_invoice.id)
                 .map_err(|error| OutError::DatabaseError(error))?
                 .ok_or(OutError::NewlyCreatedInvoiceDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
+
     Ok(invoice)
 }
 
@@ -75,7 +79,11 @@ where
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{mock_store_a, mock_user_account_a, MockData, MockDataInserts},
+        mock::{
+            mock_inbound_shipment_c, mock_name_a, mock_name_linked_to_store_join,
+            mock_name_not_linked_to_store, mock_store_a, mock_store_linked_to_name,
+            mock_user_account_a, MockData, MockDataInserts,
+        },
         test_db::setup_all_with_data,
         InvoiceRowRepository, NameRow, NameStoreJoinRow,
     };
@@ -123,15 +131,26 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_service;
 
+        //InvoiceAlreadyExists
+        assert_eq!(
+            service.insert_inbound_shipment(
+                &context,
+                inline_init(|r: &mut InsertInboundShipment| {
+                    r.id = mock_inbound_shipment_c().id.clone();
+                    r.other_party_id = mock_name_a().id.clone();
+                })
+            ),
+            Err(ServiceError::InvoiceAlreadyExists)
+        );
         // OtherPartyDoesNotExist
         assert_eq!(
             service.insert_inbound_shipment(
                 &context,
-                &mock_store_a().id,
-                "n/a",
                 inline_init(|r: &mut InsertInboundShipment| {
                     r.id = "new_id".to_string();
                     r.other_party_id = "invalid".to_string();
@@ -143,8 +162,6 @@ mod test {
         assert_eq!(
             service.insert_inbound_shipment(
                 &context,
-                &mock_store_a().id,
-                "n/a",
                 inline_init(|r: &mut InsertInboundShipment| {
                     r.id = "new_id".to_string();
                     r.other_party_id = not_visible().id;
@@ -156,8 +173,6 @@ mod test {
         assert_eq!(
             service.insert_inbound_shipment(
                 &context,
-                &mock_store_a().id,
-                "n/a",
                 inline_init(|r: &mut InsertInboundShipment| {
                     r.id = "new_id".to_string();
                     r.other_party_id = not_a_supplier().id;
@@ -166,7 +181,7 @@ mod test {
             Err(ServiceError::OtherPartyNotASupplier)
         );
 
-        // TODO add not Other error (only other party related atm)
+        // NewlyCreatedInvoiceDoesNotExist
     }
 
     #[actix_rt::test]
@@ -197,15 +212,15 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
         let service = service_provider.invoice_service;
 
         // Success
         service
             .insert_inbound_shipment(
                 &context,
-                &mock_store_a().id,
-                &mock_user_account_a().id,
                 inline_init(|r: &mut InsertInboundShipment| {
                     r.id = "new_id".to_string();
                     r.other_party_id = supplier().id;
@@ -224,8 +239,71 @@ mod test {
                 u.user_id = Some(mock_user_account_a().id);
                 u
             })
-        )
+        );
 
-        // TODO validate other field
+        //Test success On Hold
+        service
+            .insert_inbound_shipment(
+                &context,
+                inline_init(|r: &mut InsertInboundShipment| {
+                    r.id = "test_on_hold".to_string();
+                    r.other_party_id = supplier().id;
+                    r.on_hold = Some(true);
+                }),
+            )
+            .unwrap();
+
+        let invoice = InvoiceRowRepository::new(&connection)
+            .find_one_by_id("test_on_hold")
+            .unwrap();
+
+        assert_eq!(
+            invoice,
+            inline_edit(&invoice, |mut u| {
+                u.name_id = supplier().id;
+                u.on_hold = true;
+                u
+            })
+        );
+
+        //Test success name_store_id linked to store
+        service
+            .insert_inbound_shipment(
+                &context,
+                inline_init(|r: &mut InsertInboundShipment| {
+                    r.id = "test_name_store_id_linked".to_string();
+                    r.other_party_id = mock_name_linked_to_store_join().name_id.clone();
+                }),
+            )
+            .unwrap();
+
+        let invoice = InvoiceRowRepository::new(&connection)
+            .find_one_by_id("test_name_store_id_linked")
+            .unwrap();
+
+        assert_eq!(
+            invoice,
+            inline_edit(&invoice, |mut u| {
+                u.name_store_id = Some(mock_store_linked_to_name().id.clone());
+                u
+            })
+        );
+
+        //Test success name_store_id, not linked to store
+        service
+            .insert_inbound_shipment(
+                &context,
+                inline_init(|r: &mut InsertInboundShipment| {
+                    r.id = "test_name_store_id_not_linked".to_string();
+                    r.other_party_id = mock_name_not_linked_to_store().id.clone();
+                }),
+            )
+            .unwrap();
+
+        let invoice = InvoiceRowRepository::new(&connection)
+            .find_one_by_id("test_name_store_id_not_linked")
+            .unwrap();
+
+        assert_eq!(invoice.name_store_id, None);
     }
 }

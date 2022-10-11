@@ -1,133 +1,174 @@
 import { useEffect, useState } from 'react';
-import create from 'zustand';
 import { AppRoute } from '@openmsupply-client/config';
 import {
-  AuthenticationError,
-  AuthError,
-  LocalStorage,
-  ServerStatus,
   useNavigate,
+  useTranslation,
+  ErrorWithDetailsProps,
+  InitialisationStatusType,
 } from '@openmsupply-client/common';
 import { useHost } from '../../api/hooks';
+import { mapSyncError } from '../../api/api';
 
-const SERVER_RESTART_TIMEOUT = 60000;
-const POLLING_INTERVAL = 3000;
-const POLLING_DELAY = 6000;
+const STATUS_POLLING_INTERVAL = 500;
+const DEFAULT_SYNC_INTERVAL_IN_SECONDS = 300;
 
 interface InitialiseForm {
-  error?: AuthenticationError;
+  // Error on validation of sync credentials, there is another error for sync progress
+  siteCredentialsError: ErrorWithDetailsProps | null;
+  // true:
+  // * on start of initialisation
+  // * on start of retry
+  // * syncStatus exists and not erroneous
+  // false - default:
+  // * on site credentials vaidation
+  // * sync exists and erroneous
   isLoading: boolean;
+  // true - default (to make form non editable while before api result is known)
+  // * initialisationStatus is Initialising
+  // false:
+  // * initialisationStatus is PreInitialising
+  isInitialising: boolean;
+  // password is set to empty string if isInitialising
   password: string;
-  siteId?: number;
+  // set to settings value from api if isInitialising
   username: string;
+  // set to settings value from api if isInitialising
   url: string;
-  setError: (error?: AuthenticationError) => void;
-  setIsLoading: (isLoading: boolean) => void;
-  setPassword: (password: string) => void;
-  setUsername: (username: string) => void;
-  setSiteId: (siteId: number) => void;
-  setUrl: (url: string) => void;
+  // Used to enable polling of syncStatus and initialisationStatus
+  // false by default and toggled to STATUS_POLLING_INTERVAL when isInitialising
+  refetchInterval: number | false;
 }
 
-const useInitialiseFormState = create<InitialiseForm>(set => ({
-  error: undefined,
-  isLoading: false,
-  password: '',
-  username: '',
-  url: 'https://',
-  siteId: undefined,
-  setError: (error?: AuthenticationError) =>
-    set(state => ({ ...state, error })),
-  setIsLoading: (isLoading: boolean) => set(state => ({ ...state, isLoading })),
-  setPassword: (password: string) => set(state => ({ ...state, password })),
-  setUsername: (username: string) => set(state => ({ ...state, username })),
-  setUrl: (url: string) => set(state => ({ ...state, url })),
-  setSiteId: (siteId: number) => set(state => ({ ...state, siteId })),
-}));
+const useInitialiseFormState = () => {
+  const [state, set] = useState<InitialiseForm>({
+    siteCredentialsError: null,
+    isLoading: false,
+    isInitialising: true,
+    password: '',
+    username: '',
+    url: 'https://',
+    refetchInterval: false,
+  });
 
+  return {
+    ...state,
+    setSiteCredentialsError: (
+      siteCredentialsError: InitialiseForm['siteCredentialsError']
+    ) => set(state => ({ ...state, siteCredentialsError })),
+    setIsLoading: (isLoading: boolean) =>
+      set(state => ({ ...state, isLoading })),
+    setPassword: (password: string) => set(state => ({ ...state, password })),
+    setUsername: (username: string) => set(state => ({ ...state, username })),
+    setUrl: (url: string) => set(state => ({ ...state, url })),
+    // When sync is already ongoing either after initialise button is pressed
+    // or when initialisation page is loaded while sync is ongoing
+    // inputs should be disabled and polling for syncStatus should start
+    setIsInitialising: (isInitialising: boolean) =>
+      set(state => ({
+        ...state,
+        isInitialising,
+        refetchInterval: isInitialising && STATUS_POLLING_INTERVAL,
+        password: '',
+      })),
+  };
+};
+
+// Hook will navigate to login if initialisationStatus is Initialised
 export const useInitialiseForm = () => {
   const state = useInitialiseFormState();
   const navigate = useNavigate();
-  const { mutateAsync: restart } = useHost.utils.restart();
   const {
     setIsLoading,
     password,
-    setPassword,
     username,
-    error,
-    setError,
+    setSiteCredentialsError,
     url,
-    siteId,
+    refetchInterval,
+    setIsInitialising,
+    setUrl,
+    setUsername,
   } = state;
-  const [isPolling, setIsPolling] = useState(false);
-  const [isBootstrap, setIsBootstrap] = useState(false);
-  const { mutateAsync: update } = useHost.sync.update();
-  const { data } = useHost.utils.settings({
-    refetchInterval: POLLING_INTERVAL,
-    enabled: isPolling,
-  });
+  const t = useTranslation('app');
+  const { mutateAsync: initialise } = useHost.sync.initialise();
+  const { mutateAsync: manualSync } = useHost.sync.manualSync();
+  // Both initialisationStatus and syncStatus are polled because we want to navigate
+  // to login when initialisation is finished, but syncStatus will be behind auth after
+  // initialisation has finished, whereas syncStatus is always an open API
+  const { data: initStatus } =
+    useHost.utils.initialisationStatus(refetchInterval);
+  const { data: syncStatus } = useHost.utils.syncStatus(refetchInterval);
+  const { data: syncSettings } = useHost.utils.syncSettings();
 
-  const onSave = async () => {
-    setError();
+  const onInitialise = async () => {
+    setSiteCredentialsError(null);
     setIsLoading(true);
-    setIsBootstrap(false);
-    const syncSettings = {
-      centralServerSiteId: 1,
-      intervalSec: 300,
-      password,
-      siteId: siteId || 2,
-      url,
-      username,
-    };
-
-    await update(syncSettings).catch(e => {
-      console.error(e);
-      setError({ message: 'Unable to save settings' });
-      setIsLoading(false);
-      return;
-    });
-    setPassword('');
-
-    await restart().catch(e => {
-      console.error(e);
-      setError({ message: 'Unable to restart the server' });
-      setIsLoading(false);
-      return;
-    });
-
-    setTimeout(() => {
-      setIsPolling(true);
-    }, POLLING_DELAY);
-
-    LocalStorage.removeItem('/auth/error');
-    LocalStorage.addListener<AuthError>((key, value) => {
-      if (key === '/auth/error' && value === AuthError.Unauthenticated) {
-        // Server is up! and rejecting our request!
-        setIsLoading(false);
-        setIsPolling(false);
-
-        navigate(`/${AppRoute.Login}`, { replace: true });
+    try {
+      const response = await initialise({
+        intervalSeconds: DEFAULT_SYNC_INTERVAL_IN_SECONDS,
+        password,
+        url,
+        username,
+      });
+      // Map structured error
+      if (response.__typename === 'SyncErrorNode') {
+        setSiteCredentialsError(
+          mapSyncError(t, response, 'error.unable-to-initialise')
+        );
+        return setIsLoading(false);
       }
-    });
+    } catch (e) {
+      // Set standard error
+      setSiteCredentialsError({
+        error: t('error.unable-to-initialise'),
+        details: (e as Error)?.message || '',
+      });
+      return setIsLoading(false);
+    }
 
-    setTimeout(() => {
-      setIsLoading(false);
-      setIsPolling(false);
-      const message = isBootstrap
-        ? 'Unable to sync! Please check your settings.'
-        : 'Server restart has timed out';
-      setError({ message });
-    }, SERVER_RESTART_TIMEOUT);
+    setIsInitialising(true);
   };
 
-  const isValid = !!username && !!password && !!url;
+  const onRetry = async () => {
+    setIsLoading(true);
+    await manualSync();
+  };
+
   useEffect(() => {
-    if (!!data) setIsBootstrap(data?.status === ServerStatus.Stage_0);
-  }, [data]);
+    if (!initStatus) return;
+
+    switch (initStatus) {
+      case InitialisationStatusType.Initialised:
+        return navigate(`/${AppRoute.Login}`, { replace: true });
+      case InitialisationStatusType.Initialising:
+        return setIsInitialising(true);
+      case InitialisationStatusType.PreInitialisation:
+        return setIsInitialising(false);
+    }
+  }, [initStatus]);
+
+  useEffect(() => {
+    if (!syncStatus) return;
+    // Need to be able to retry is syncStatus is erroneous
+    setIsLoading(!syncStatus.error);
+  }, [syncStatus]);
+
+  useEffect(() => {
+    // If page is loaded or reloaded when isInitialising
+    // url and username should be set from api result
+    if (
+      initStatus === InitialisationStatusType.Initialising &&
+      !!syncSettings
+    ) {
+      setUsername(syncSettings.username);
+      setUrl(syncSettings.url);
+    }
+  }, [syncSettings, initStatus]);
+
   return {
-    isValid,
-    onSave,
+    isValid: !!username && !!password && !!url,
+    onInitialise,
+    onRetry,
     ...state,
-    error,
+    syncStatus,
   };
 };

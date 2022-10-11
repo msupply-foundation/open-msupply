@@ -23,7 +23,7 @@ pub fn mock_new_invoice_with_unallocated_line() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
         r.id = "unallocated_line_new_invoice".to_owned();
         r.name_id = "name_store_a".to_owned();
-        r.store_id = "store_a".to_owned();
+        r.store_id = "store_c".to_owned();
         r.invoice_number = 1;
         r.r#type = InvoiceRowType::OutboundShipment;
         r.status = InvoiceRowStatus::New;
@@ -49,7 +49,7 @@ pub fn mock_unallocated_line() -> InvoiceLineRow {
         total_after_tax: 0.0,
         tax: None,
         r#type: InvoiceLineRowType::UnallocatedStock,
-        number_of_packs: 1,
+        number_of_packs: 1.0,
         note: None,
     }
 }
@@ -86,7 +86,7 @@ pub fn mock_unallocated_line2() -> InvoiceLineRow {
         total_after_tax: 0.0,
         tax: None,
         r#type: InvoiceLineRowType::UnallocatedStock,
-        number_of_packs: 1,
+        number_of_packs: 1.0,
         note: None,
     }
 }

@@ -24,7 +24,7 @@ pub struct InsertStocktakeLine {
     pub stock_line_id: Option<String>,
     pub location_id: Option<String>,
     pub comment: Option<String>,
-    pub counted_number_of_packs: Option<u32>,
+    pub counted_number_of_packs: Option<f64>,
 
     pub item_id: Option<String>,
     pub batch: Option<String>,
@@ -189,7 +189,7 @@ fn generate(
     let snapshot_number_of_packs = if let Some(stock_line) = stock_line {
         stock_line.stock_line_row.total_number_of_packs
     } else {
-        0
+        0.0
     };
     StocktakeLineRow {
         id,
@@ -198,7 +198,7 @@ fn generate(
         location_id,
         comment,
         snapshot_number_of_packs,
-        counted_number_of_packs: counted_number_of_packs.map(u32_to_i32),
+        counted_number_of_packs,
         item_id: item_id.to_string(),
         batch,
         expiry_date,
@@ -211,13 +211,12 @@ fn generate(
 
 pub fn insert_stocktake_line(
     ctx: &ServiceContext,
-    store_id: &str,
     input: InsertStocktakeLine,
 ) -> Result<StocktakeLine, InsertStocktakeLineError> {
     let result = ctx
         .connection
         .transaction_sync(|connection| {
-            let (stock_line, item_id) = validate(connection, store_id, &input)?;
+            let (stock_line, item_id) = validate(connection, &ctx.store_id, &input)?;
             let new_stocktake_line = generate(stock_line, item_id, input);
             StocktakeLineRowRepository::new(&connection).upsert_one(&new_stocktake_line)?;
 
@@ -259,56 +258,55 @@ mod stocktake_line_test {
             setup_all("insert_stocktake_line", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let mut context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.stocktake_line_service;
 
         // error: StocktakeDoesNotExist,
-        let store_a = mock_store_a();
         let stock_line_a = mock_item_a_lines()[0].clone();
         let error = service
             .insert_stocktake_line(
                 &context,
-                &store_a.id,
                 inline_init(|r: &mut InsertStocktakeLine| {
                     r.id = uuid();
                     r.stocktake_id = "invalid".to_string();
                     r.stock_line_id = Some(stock_line_a.id);
-                    r.counted_number_of_packs = Some(17);
+                    r.counted_number_of_packs = Some(17.0);
                 }),
             )
             .unwrap_err();
         assert_eq!(error, InsertStocktakeLineError::StocktakeDoesNotExist);
 
         // error: InvalidStore,
+        context.store_id = "invalid".to_string();
         let stocktake_a = mock_stocktake_a();
         let stock_line_a = mock_item_a_lines()[0].clone();
         let error = service
             .insert_stocktake_line(
                 &context,
-                "invalid_store",
                 inline_init(|r: &mut InsertStocktakeLine| {
                     r.id = uuid();
                     r.stocktake_id = stocktake_a.id;
                     r.stock_line_id = Some(stock_line_a.id);
-                    r.counted_number_of_packs = Some(17);
+                    r.counted_number_of_packs = Some(17.0);
                 }),
             )
             .unwrap_err();
         assert_eq!(error, InsertStocktakeLineError::InvalidStore);
 
         // error StockLineAlreadyExistsInStocktake
-        let store_a = mock_store_a();
         let stocktake_a = mock_stocktake_a();
         let stock_line_a = mock_item_a_lines()[0].clone();
+        context.store_id = mock_store_a().id;
         let error = service
             .insert_stocktake_line(
                 &context,
-                &store_a.id,
                 inline_init(|r: &mut InsertStocktakeLine| {
                     r.id = uuid();
                     r.stocktake_id = stocktake_a.id;
                     r.stock_line_id = Some(stock_line_a.id);
-                    r.counted_number_of_packs = Some(17);
+                    r.counted_number_of_packs = Some(17.0);
                 }),
             )
             .unwrap_err();
@@ -318,51 +316,45 @@ mod stocktake_line_test {
         );
 
         // error LocationDoesNotExist
-        let store_a = mock_store_a();
         let stocktake_a = mock_stocktake_a();
         let stock_line = mock_new_stock_line_for_stocktake_a();
         let error = service
             .insert_stocktake_line(
                 &context,
-                &store_a.id,
                 inline_init(|r: &mut InsertStocktakeLine| {
                     r.id = uuid();
                     r.stocktake_id = stocktake_a.id;
                     r.stock_line_id = Some(stock_line.id);
                     r.location_id = Some("invalid".to_string());
-                    r.counted_number_of_packs = Some(17);
+                    r.counted_number_of_packs = Some(17.0);
                 }),
             )
             .unwrap_err();
         assert_eq!(error, InsertStocktakeLineError::LocationDoesNotExist);
 
         // error StocktakeLineAlreadyExists
-        let store_a = mock_store_a();
         let stocktake_a = mock_stocktake_a();
         let stocktake_line_a = mock_stocktake_line_a();
         let stock_line = mock_new_stock_line_for_stocktake_a();
         let error = service
             .insert_stocktake_line(
                 &context,
-                &store_a.id,
                 inline_init(|r: &mut InsertStocktakeLine| {
                     r.id = stocktake_line_a.id;
                     r.stocktake_id = stocktake_a.id;
                     r.stock_line_id = Some(stock_line.id);
-                    r.counted_number_of_packs = Some(17);
+                    r.counted_number_of_packs = Some(17.0);
                 }),
             )
             .unwrap_err();
         assert_eq!(error, InsertStocktakeLineError::StocktakeLineAlreadyExists);
 
         // error StocktakeIsLocked
-        let store_a = mock_store_a();
         let stocktake_a = mock_locked_stocktake();
 
         let error = service
             .insert_stocktake_line(
                 &context,
-                &store_a.id,
                 inline_init(|r: &mut InsertStocktakeLine| {
                     r.id = "n/a".to_string();
                     r.stocktake_id = stocktake_a.id;
@@ -372,52 +364,46 @@ mod stocktake_line_test {
         assert_eq!(error, InsertStocktakeLineError::StocktakeIsLocked);
 
         // check CannotEditFinalised
-        let store_a = mock_store_a();
         let stocktake_finalised = mock_stocktake_finalised();
         let stock_line = mock_new_stock_line_for_stocktake_a();
         let error = service
             .insert_stocktake_line(
                 &context,
-                &store_a.id,
                 inline_init(|r: &mut InsertStocktakeLine| {
                     r.id = uuid();
                     r.stocktake_id = stocktake_finalised.id;
                     r.stock_line_id = Some(stock_line.id);
-                    r.counted_number_of_packs = Some(17);
+                    r.counted_number_of_packs = Some(17.0);
                 }),
             )
             .unwrap_err();
         assert_eq!(error, InsertStocktakeLineError::CannotEditFinalised);
 
         // success with stock_line_id
-        let store_a = mock_store_a();
         let stocktake_a = mock_stocktake_a();
         let stock_line = mock_new_stock_line_for_stocktake_a();
         service
             .insert_stocktake_line(
                 &context,
-                &store_a.id,
                 inline_init(|r: &mut InsertStocktakeLine| {
                     r.id = uuid();
                     r.stocktake_id = stocktake_a.id;
                     r.stock_line_id = Some(stock_line.id);
-                    r.counted_number_of_packs = Some(17);
+                    r.counted_number_of_packs = Some(17.0);
                 }),
             )
             .unwrap();
 
         // success with item_id
-        let store_a = mock_store_a();
         let stocktake_a = mock_stocktake_a();
         let item_a = mock_item_a();
         service
             .insert_stocktake_line(
                 &context,
-                &store_a.id,
                 inline_init(|r: &mut InsertStocktakeLine| {
                     r.id = uuid();
                     r.stocktake_id = stocktake_a.id;
-                    r.counted_number_of_packs = Some(17);
+                    r.counted_number_of_packs = Some(17.0);
                     r.item_id = Some(item_a.id);
                 }),
             )

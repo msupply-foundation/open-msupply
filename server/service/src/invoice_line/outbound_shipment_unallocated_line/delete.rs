@@ -3,7 +3,11 @@ use repository::{
     StorageConnection,
 };
 
-use crate::{invoice_line::validate::check_line_exists_option, service_provider::ServiceContext};
+use crate::{
+    invoice::{check_invoice_exists_option, check_store, NotThisStoreInvoice},
+    invoice_line::validate::check_line_exists_option,
+    service_provider::ServiceContext,
+};
 
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct DeleteOutboundShipmentUnallocatedLine {
@@ -15,20 +19,20 @@ pub enum DeleteOutboundShipmentUnallocatedLineError {
     LineDoesNotExist,
     DatabaseError(RepositoryError),
     LineIsNotUnallocatedLine,
-    //TODO: NotThisStoreInvoice,
+    InvoiceDoesNotExist,
+    NotThisStoreInvoice,
 }
 
 type OutError = DeleteOutboundShipmentUnallocatedLineError;
 
 pub fn delete_outbound_shipment_unallocated_line(
     ctx: &ServiceContext,
-    _store_id: &str,
     input: DeleteOutboundShipmentUnallocatedLine,
 ) -> Result<String, OutError> {
     let id = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(connection, &input)?;
+            validate(connection, &ctx.store_id, &input)?;
             match InvoiceLineRowRepository::new(&connection).delete(&input.id) {
                 Ok(_) => Ok(input.id),
                 Err(error) => Err(OutError::DatabaseError(error)),
@@ -40,6 +44,7 @@ pub fn delete_outbound_shipment_unallocated_line(
 
 fn validate(
     connection: &StorageConnection,
+    store_id: &str,
     input: &DeleteOutboundShipmentUnallocatedLine,
 ) -> Result<InvoiceLineRow, OutError> {
     let invoice_line =
@@ -48,6 +53,10 @@ fn validate(
     if invoice_line.r#type != InvoiceLineRowType::UnallocatedStock {
         return Err(OutError::LineIsNotUnallocatedLine);
     }
+
+    let invoice = check_invoice_exists_option(&invoice_line.invoice_id, connection)?
+        .ok_or(OutError::InvoiceDoesNotExist)?;
+    check_store(&invoice, store_id)?;
 
     Ok(invoice_line)
 }
@@ -58,11 +67,19 @@ impl From<RepositoryError> for DeleteOutboundShipmentUnallocatedLineError {
     }
 }
 
+impl From<NotThisStoreInvoice> for DeleteOutboundShipmentUnallocatedLineError {
+    fn from(_: NotThisStoreInvoice) -> Self {
+        DeleteOutboundShipmentUnallocatedLineError::NotThisStoreInvoice
+    }
+}
+
 #[cfg(test)]
 mod test_delete {
-
     use repository::{
-        mock::{mock_outbound_shipment_a_invoice_lines, mock_unallocated_line, MockDataInserts},
+        mock::{
+            mock_outbound_shipment_a_invoice_lines, mock_store_a, mock_store_c,
+            mock_unallocated_line, MockDataInserts,
+        },
         test_db::setup_all,
         InvoiceLineRowRepository, RepositoryError,
     };
@@ -81,14 +98,15 @@ mod test_delete {
             setup_all("delete_unallocated_line_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_line_service;
 
         // Line Does not Exist
         assert_eq!(
             service.delete_outbound_shipment_unallocated_line(
                 &context,
-                "store_a",
                 DeleteOutboundShipmentUnallocatedLine {
                     id: "invalid".to_owned()
                 },
@@ -100,12 +118,22 @@ mod test_delete {
         assert_eq!(
             service.delete_outbound_shipment_unallocated_line(
                 &context,
-                "store_a",
                 DeleteOutboundShipmentUnallocatedLine {
                     id: mock_outbound_shipment_a_invoice_lines()[0].id.clone(),
                 },
             ),
             Err(ServiceError::LineIsNotUnallocatedLine)
+        );
+
+        // NotThisStoreInvoice
+        assert_eq!(
+            service.delete_outbound_shipment_unallocated_line(
+                &context,
+                DeleteOutboundShipmentUnallocatedLine {
+                    id: mock_unallocated_line().id.clone(),
+                },
+            ),
+            Err(ServiceError::NotThisStoreInvoice)
         );
     }
 
@@ -116,7 +144,9 @@ mod test_delete {
 
         let connection = connection_manager.connection().unwrap();
         let service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider
+            .context(mock_store_c().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_line_service;
 
         let mut line_to_delete = mock_unallocated_line();
@@ -124,7 +154,6 @@ mod test_delete {
         let result = service
             .delete_outbound_shipment_unallocated_line(
                 &context,
-                "store_a",
                 DeleteOutboundShipmentUnallocatedLine {
                     id: line_to_delete.id.clone(),
                 },
@@ -132,7 +161,7 @@ mod test_delete {
             .unwrap();
 
         assert_eq!(result, line_to_delete.id);
-        line_to_delete.number_of_packs = 20;
+        line_to_delete.number_of_packs = 20.0;
         assert_eq!(
             InvoiceLineRowRepository::new(&connection).find_one_by_id(&result),
             Err(RepositoryError::NotFound)

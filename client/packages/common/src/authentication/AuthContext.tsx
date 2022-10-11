@@ -7,10 +7,13 @@ import { addMinutes } from 'date-fns';
 import { useGql } from '../api';
 import { useGetRefreshToken } from './api/hooks';
 import { useGetAuthToken } from './api/hooks/useGetAuthToken';
-import { useUserDetails } from './api/hooks/useUserDetails';
+import { useUserDetails, useUserPermissions } from './api/hooks/useUserDetails';
 import { AuthenticationResponse } from './api';
 import { UserStoreNodeFragment } from './api/operations.generated';
-import { PropsWithChildrenOnly } from '@common/types';
+import {
+  PropsWithChildrenOnly,
+  UserPermission,
+} from '@common/types';
 import { RouteBuilder } from '../utils/navigation';
 import { matchPath } from 'react-router-dom';
 import { DefinitionNode, DocumentNode, OperationDefinitionNode } from 'graphql';
@@ -21,6 +24,7 @@ const TOKEN_CHECK_INTERVAL = 60 * 1000;
 export enum AuthError {
   NoStoreAssigned = 'NoStoreAssigned',
   PermissionDenied = 'Forbidden',
+  ServerError = 'ServerError',
   Unauthenticated = 'Unauthenticated',
   Timeout = 'Timeout',
 }
@@ -28,6 +32,7 @@ export enum AuthError {
 type User = {
   id: string;
   name: string;
+  permissions: UserPermission[];
 };
 
 interface AuthCookie {
@@ -52,11 +57,12 @@ interface AuthControl {
   logout: () => void;
   mostRecentlyUsedCredentials?: MRUCredentials | null;
   setError?: (error: AuthError) => void;
-  setStore: (store: UserStoreNodeFragment) => void;
+  setStore: (store: UserStoreNodeFragment) => Promise<void>;
   store?: UserStoreNodeFragment;
   storeId: string;
   token: string;
   user?: User;
+  userHasPermission: (permission: UserPermission) => boolean;
 }
 
 export const getAuthCookie = (): AuthCookie => {
@@ -100,7 +106,8 @@ const AuthContext = createContext<AuthControl>({
     })),
   logout: () => {},
   storeId: '',
-  setStore: () => {},
+  setStore: () => new Promise(() => ({})),
+  userHasPermission: () => false,
 });
 
 const { Provider } = AuthContext;
@@ -116,6 +123,7 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
   const [error, setError, removeError] = useLocalStorage('/auth/error');
   const storeId = cookie?.store?.id ?? '';
   const { mutateAsync: getStores } = useUserDetails();
+  const { mutateAsync: getPermissions } = useUserPermissions();
   const { setHeader, setSkipRequest } = useGql();
 
   const saveToken = (token?: string) => {
@@ -131,7 +139,7 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
   const getStore = async (token?: string) => {
     const userDetails = await getStores(token);
     const defaultStore = userDetails?.defaultStore;
-    const stores = userDetails?.stores.nodes;
+    const stores = userDetails?.stores?.nodes;
 
     if (
       mostRecentlyUsedCredentials?.store &&
@@ -149,7 +157,20 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
     return !!stores && stores?.length > 0 ? stores?.[0] : undefined;
   };
 
+  const getUserPermissions = async (
+    token?: string,
+    store?: UserStoreNodeFragment
+  ): Promise<UserPermission[]> => {
+    const permissions = await getPermissions({
+      storeId: store?.id || '',
+      token,
+    });
+    return permissions?.nodes?.[0]?.permissions || [];
+  };
+
   const setLoginError = (isLoggedIn: boolean, hasValidStore: boolean) => {
+    if (LocalStorage.getItem('/auth/error') === AuthError.ServerError) return;
+
     switch (true) {
       case isLoggedIn && hasValidStore: {
         removeError();
@@ -184,6 +205,7 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
       case AuthError.NoStoreAssigned:
       case AuthError.Unauthenticated:
       case AuthError.Timeout:
+      case AuthError.ServerError:
         return true;
       default:
         return false;
@@ -191,14 +213,19 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
   };
 
   const login = async (username: string, password: string) => {
-    setSkipRequest(skipNoStoreRequests);
     const { token, error } = await mutateAsync({ username, password });
     setHeader('Authorization', `Bearer ${token}`);
     const store = await getStore(token);
+    const permissions = await getUserPermissions(token, store);
+    setSkipRequest(skipNoStoreRequests);
     const authCookie = {
       store,
       token,
-      user: { id: '', name: username },
+      user: {
+        id: '',
+        name: username,
+        permissions,
+      },
     };
 
     // When the a user first logs in, check that their browser language is an internally supported
@@ -219,14 +246,20 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
     return { token, error };
   };
 
-  const setStore = (store: UserStoreNodeFragment) => {
+  const setStore = async (store: UserStoreNodeFragment) => {
     if (!cookie?.token) return;
 
     setMRUCredentials({
       username: mostRecentlyUsedCredentials?.username ?? '',
       store,
     });
-    const newCookie = { ...cookie, store };
+    const permissions = await getUserPermissions(cookie?.token, store);
+    const user = {
+      id: cookie.user?.id ?? '',
+      name: cookie.user?.name ?? '',
+      permissions,
+    };
+    const newCookie = { ...cookie, store, user };
     setAuthCookie(newCookie);
     setCookie(newCookie);
   };
@@ -236,6 +269,9 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
     setError(undefined);
     setCookie(undefined);
   };
+
+  const userHasPermission = (permission: UserPermission) =>
+    cookie?.user?.permissions.some(p => p === permission) || false;
 
   const val = useMemo(
     () => ({
@@ -250,6 +286,7 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
       mostRecentlyUsedCredentials,
       setStore,
       setError,
+      userHasPermission,
     }),
     [
       login,
@@ -259,6 +296,7 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
       isLoggingIn,
       setStore,
       setError,
+      userHasPermission,
     ]
   );
 

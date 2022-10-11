@@ -3,17 +3,20 @@ use super::{
     invoice_line_row::{invoice_line, invoice_line::dsl as invoice_line_dsl},
     invoice_row::{invoice, invoice::dsl as invoice_dsl},
     location_row::{location, location::dsl as location_dsl},
+    stock_line_row::{stock_line, stock_line::dsl as stock_line_dsl},
     DBType, InvoiceLineRow, InvoiceLineRowType, InvoiceRow, LocationRow, StorageConnection,
 };
 
 use crate::{
     diesel_macros::apply_equal_filter, repository_error::RepositoryError, EqualFilter, Pagination,
+    StockLineRow,
 };
 
 use diesel::{
     dsl::{InnerJoin, IntoBoxed, LeftJoin},
     prelude::*,
 };
+use util::inline_init;
 
 table! {
     invoice_stats (invoice_id) {
@@ -46,6 +49,7 @@ pub struct InvoiceLine {
     pub invoice_line_row: InvoiceLineRow,
     pub invoice_row: InvoiceRow,
     pub location_row_option: Option<LocationRow>,
+    pub stock_line_option: Option<StockLineRow>,
 }
 
 pub struct InvoiceLineFilter {
@@ -55,6 +59,7 @@ pub struct InvoiceLineFilter {
     pub r#type: Option<EqualFilter<InvoiceLineRowType>>,
     pub location_id: Option<EqualFilter<String>>,
     pub requisition_id: Option<EqualFilter<String>>,
+    pub number_of_packs: Option<EqualFilter<f64>>,
 }
 
 impl InvoiceLineFilter {
@@ -66,6 +71,7 @@ impl InvoiceLineFilter {
             item_id: None,
             location_id: None,
             requisition_id: None,
+            number_of_packs: None,
         }
     }
 
@@ -98,9 +104,19 @@ impl InvoiceLineFilter {
         self.requisition_id = Some(filter);
         self
     }
+
+    pub fn number_of_packs(mut self, filter: EqualFilter<f64>) -> Self {
+        self.number_of_packs = Some(filter);
+        self
+    }
 }
 
-type InvoiceLineJoin = (InvoiceLineRow, InvoiceRow, Option<LocationRow>);
+type InvoiceLineJoin = (
+    InvoiceLineRow,
+    InvoiceRow,
+    Option<LocationRow>,
+    Option<StockLineRow>,
+);
 
 pub struct InvoiceLineRepository<'a> {
     connection: &'a StorageConnection,
@@ -159,7 +175,10 @@ impl<'a> InvoiceLineRepository<'a> {
 
 type BoxedInvoiceLineQuery = IntoBoxed<
     'static,
-    LeftJoin<InnerJoin<invoice_line::table, invoice::table>, location::table>,
+    LeftJoin<
+        LeftJoin<InnerJoin<invoice_line::table, invoice::table>, location::table>,
+        stock_line::table,
+    >,
     DBType,
 >;
 
@@ -167,25 +186,40 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
     let mut query = invoice_line_dsl::invoice_line
         .inner_join(invoice_dsl::invoice)
         .left_join(location_dsl::location)
+        .left_join(stock_line_dsl::stock_line)
         .into_boxed();
 
     if let Some(f) = filter {
-        apply_equal_filter!(query, f.id, invoice_line_dsl::id);
-        apply_equal_filter!(query, f.requisition_id, invoice_dsl::requisition_id);
-        apply_equal_filter!(query, f.invoice_id, invoice_line_dsl::invoice_id);
-        apply_equal_filter!(query, f.location_id, invoice_line_dsl::location_id);
-        apply_equal_filter!(query, f.item_id, invoice_line_dsl::item_id);
-        apply_equal_filter!(query, f.r#type, invoice_line_dsl::type_);
+        let InvoiceLineFilter {
+            id,
+            invoice_id,
+            item_id,
+            r#type,
+            location_id,
+            requisition_id,
+            number_of_packs,
+        } = f;
+
+        apply_equal_filter!(query, id, invoice_line_dsl::id);
+        apply_equal_filter!(query, requisition_id, invoice_dsl::requisition_id);
+        apply_equal_filter!(query, invoice_id, invoice_line_dsl::invoice_id);
+        apply_equal_filter!(query, location_id, invoice_line_dsl::location_id);
+        apply_equal_filter!(query, item_id, invoice_line_dsl::item_id);
+        apply_equal_filter!(query, r#type, invoice_line_dsl::type_);
+        apply_equal_filter!(query, number_of_packs, invoice_line_dsl::number_of_packs);
     }
 
     query
 }
 
-fn to_domain((invoice_line_row, invoice_row, location_row_option): InvoiceLineJoin) -> InvoiceLine {
+fn to_domain(
+    (invoice_line_row, invoice_row, location_row_option, stock_line_option): InvoiceLineJoin,
+) -> InvoiceLine {
     InvoiceLine {
         invoice_line_row,
         invoice_row,
         location_row_option,
+        stock_line_option,
     }
 }
 
@@ -216,12 +250,7 @@ impl InvoiceLine {
 }
 
 impl InvoiceLineRowType {
-    pub fn equal_to(&self) -> EqualFilter<InvoiceLineRowType> {
-        EqualFilter {
-            equal_to: Some(self.clone()),
-            not_equal_to: None,
-            equal_any: None,
-            not_equal_all: None,
-        }
+    pub fn equal_to(&self) -> EqualFilter<Self> {
+        inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
     }
 }

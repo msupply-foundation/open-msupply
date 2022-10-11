@@ -3,6 +3,7 @@ import { ColumnAlign, ColumnFormat } from '../columns/types';
 import { Formatter } from '@common/utils';
 import { RecordWithId } from '@common/types';
 import { ColumnDefinition } from '../columns/types';
+import { PositiveNumberCell } from '../components';
 
 const createColumn = <T extends RecordWithId>(
   column: ColumnDefinition<T>
@@ -42,7 +43,8 @@ export type ColumnKey =
   | 'monthlyConsumption'
   | 'requestedQuantity'
   | 'supplyQuantity'
-  | 'stockOnHand';
+  | 'stockOnHand'
+  | 'theirReference';
 
 const getColumnLookup = <T extends RecordWithId>(): Record<
   ColumnKey,
@@ -63,15 +65,18 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     description: 'description.pack-quantity',
     label: 'label.pack-quantity',
     width: 100,
+    Cell: PositiveNumberCell,
   },
   expiryDate: {
     key: 'expiryDate',
     label: 'label.expiry',
     width: 100,
-    formatter: dateString =>
-      dateString
+    formatter: dateString => {
+      if (dateString === '[multiple]') return '[multiple]';
+      return dateString
         ? Formatter.expiryDate(new Date(dateString as string)) || ''
-        : '',
+        : '';
+    },
   },
 
   itemCode: {
@@ -244,6 +249,11 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     key: 'availableStockOnHand',
     width: 100,
     align: ColumnAlign.Right,
+  },
+  theirReference: {
+    label: 'label.reference',
+    key: 'theirReference',
+    width: 100,
   },
 });
 

@@ -34,16 +34,19 @@ type OutError = CreateRequisitionShipmentError;
 
 pub fn create_requisition_shipment(
     ctx: &ServiceContext,
-    store_id: &str,
-    user_id: &str,
     input: CreateRequisitionShipment,
 ) -> Result<Invoice, OutError> {
     let invoice = ctx
         .connection
         .transaction_sync(|connection| {
-            let (requisition_row, fullfilments) = validate(connection, store_id, &input)?;
-            let (invoice_row, invoice_line_rows) =
-                generate(connection, store_id, user_id, requisition_row, fullfilments)?;
+            let (requisition_row, fullfilments) = validate(connection, &ctx.store_id, &input)?;
+            let (invoice_row, invoice_line_rows) = generate(
+                connection,
+                &ctx.store_id,
+                &ctx.user_id,
+                requisition_row,
+                fullfilments,
+            )?;
 
             InvoiceRowRepository::new(&connection).upsert_one(&invoice_row)?;
 

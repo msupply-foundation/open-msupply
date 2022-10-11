@@ -1,7 +1,7 @@
 use crate::{
     invoice::{
-        check_invoice_exists, check_invoice_is_editable, check_invoice_type, InvoiceDoesNotExist,
-        InvoiceIsNotEditable, WrongInvoiceRowType,
+        check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store,
+        InvoiceDoesNotExist, InvoiceIsNotEditable, NotThisStoreInvoice, WrongInvoiceRowType,
     },
     invoice_line::{
         check_batch_exists, check_batch_on_hold, check_item_matches_batch, check_location_on_hold,
@@ -13,7 +13,6 @@ use crate::{
         BatchIsOnHold, ItemDoesNotMatchStockLine, LocationIsOnHoldError,
         StockLineAlreadyExistsInInvoice, StockLineNotFound,
     },
-    u32_to_i32,
 };
 use repository::{InvoiceRow, InvoiceRowType, ItemRow, StockLineRow, StorageConnection};
 
@@ -21,6 +20,7 @@ use super::{InsertOutboundShipmentLine, InsertOutboundShipmentLineError};
 
 pub fn validate(
     input: &InsertOutboundShipmentLine,
+    store_id: &str,
     connection: &StorageConnection,
 ) -> Result<(ItemRow, InvoiceRow, StockLineRow), InsertOutboundShipmentLineError> {
     check_line_does_not_exists(&input.id, connection)?;
@@ -29,13 +29,13 @@ pub fn validate(
     let item = check_item(&input.item_id, connection)?;
     check_item_matches_batch(&batch, &item)?;
     let invoice = check_invoice_exists(&input.invoice_id, connection)?;
+    check_store(&invoice, store_id)?;
     check_unique_stock_line(
         &input.id,
         &invoice.id,
         Some(input.stock_line_id.to_string()),
         connection,
     )?;
-    // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
     check_invoice_type(&invoice, InvoiceRowType::OutboundShipment)?;
     check_invoice_is_editable(&invoice)?;
 
@@ -50,7 +50,7 @@ fn check_reduction_below_zero(
     input: &InsertOutboundShipmentLine,
     batch: &StockLineRow,
 ) -> Result<(), InsertOutboundShipmentLineError> {
-    if batch.available_number_of_packs < u32_to_i32(input.number_of_packs) {
+    if batch.available_number_of_packs < input.number_of_packs {
         Err(InsertOutboundShipmentLineError::ReductionBelowZero {
             stock_line_id: batch.id.clone(),
         })
@@ -126,5 +126,11 @@ impl From<InvoiceIsNotEditable> for InsertOutboundShipmentLineError {
 impl From<InvoiceDoesNotExist> for InsertOutboundShipmentLineError {
     fn from(_: InvoiceDoesNotExist) -> Self {
         InsertOutboundShipmentLineError::InvoiceDoesNotExist
+    }
+}
+
+impl From<NotThisStoreInvoice> for InsertOutboundShipmentLineError {
+    fn from(_: NotThisStoreInvoice) -> Self {
+        InsertOutboundShipmentLineError::NotThisStoreInvoice
     }
 }

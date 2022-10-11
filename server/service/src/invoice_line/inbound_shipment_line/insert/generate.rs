@@ -1,5 +1,7 @@
 use crate::{
-    invoice::common::generate_invoice_user_id_update, invoice_line::generate_batch, u32_to_i32,
+    invoice::common::{calculate_total_after_tax, generate_invoice_user_id_update},
+    invoice_line::generate_batch,
+    u32_to_i32,
 };
 use repository::{
     InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow,
@@ -43,7 +45,6 @@ fn generate_line(
         number_of_packs,
         location_id,
         total_before_tax,
-        total_after_tax,
         tax,
     }: InsertInboundShipmentLine,
     ItemRow {
@@ -52,6 +53,9 @@ fn generate_line(
         ..
     }: ItemRow,
 ) -> InvoiceLineRow {
+    let total_before_tax = total_before_tax.unwrap_or(cost_price_per_pack * number_of_packs as f64);
+    let total_after_tax = calculate_total_after_tax(total_before_tax, tax);
+
     InvoiceLineRow {
         id,
         invoice_id,
@@ -63,7 +67,7 @@ fn generate_line(
         sell_price_per_pack,
         cost_price_per_pack,
         r#type: InvoiceLineRowType::StockIn,
-        number_of_packs: u32_to_i32(number_of_packs),
+        number_of_packs,
         item_name,
         item_code,
         stock_line_id: None,

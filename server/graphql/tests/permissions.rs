@@ -11,11 +11,8 @@ mod permission_tests {
         service_provider::{ServiceContext, ServiceProvider},
     };
 
-    // TODO for some reason Rust complained when using the Full{Query|Mutation} definition from
-    // lib.rs. As a workaround these defs are copied here. Hopefully this should be possible but I
-    // gave up on this for now.
     use graphql_batch_mutations::BatchMutations;
-    use graphql_general::{GeneralQueries, ServerAdminMutations, ServerAdminQueries};
+    use graphql_general::{GeneralMutations, GeneralQueries};
     use graphql_invoice::{InvoiceMutations, InvoiceQueries};
     use graphql_invoice_line::InvoiceLineMutations;
     use graphql_location::{LocationMutations, LocationQueries};
@@ -25,6 +22,9 @@ mod permission_tests {
     use graphql_stocktake::{StocktakeMutations, StocktakeQueries};
     use graphql_stocktake_line::StocktakeLineMutations;
 
+    // TODO for some reason Rust complained when using the Full{Query|Mutation} definition from
+    // lib.rs. As a workaround these defs are copied here. Hopefully this should be possible but I
+    // gave up on this for now.
     #[derive(MergedObject, Default, Clone)]
     pub struct FullQuery(
         pub InvoiceQueries,
@@ -33,7 +33,6 @@ mod permission_tests {
         pub GeneralQueries,
         pub RequisitionQueries,
         pub ReportQueries,
-        pub ServerAdminQueries,
     );
 
     #[derive(MergedObject, Default, Clone)]
@@ -46,7 +45,7 @@ mod permission_tests {
         pub BatchMutations,
         pub RequisitionMutations,
         pub RequisitionLineMutations,
-        pub ServerAdminMutations,
+        pub GeneralMutations,
     );
 
     pub fn full_query() -> FullQuery {
@@ -57,7 +56,6 @@ mod permission_tests {
             GeneralQueries,
             RequisitionQueries,
             ReportQueries,
-            ServerAdminQueries,
         )
     }
 
@@ -71,7 +69,7 @@ mod permission_tests {
             BatchMutations,
             RequisitionMutations,
             RequisitionLineMutations,
-            ServerAdminMutations,
+            GeneralMutations,
         )
     }
 
@@ -243,13 +241,10 @@ mod permission_tests {
                 },
             },
             TestData {
-                name: "serverSettings",
+                name: "syncSettings",
                 query: r#"query Query {
-                serverSettings {
-                  ... on ServerSettingsNode {
+                  syncSettings { 
                     __typename
-                    status
-                  }
                 }
               }"#,
                 expected: ResourceAccessRequest {
@@ -699,7 +694,7 @@ mod permission_tests {
             TestData {
                 name: "insertInboundShipmentLine",
                 query: r#"mutation Mutation {
-                insertInboundShipmentLine(input: {id: "", invoiceId: "", itemId: "", packSize: 10, costPricePerPack: 1.5, sellPricePerPack: 1.5, numberOfPacks: 10, totalBeforeTax: 1.5, totalAfterTax: 1.5}, storeId: "") {
+                insertInboundShipmentLine(input: {id: "", invoiceId: "", itemId: "", packSize: 10, costPricePerPack: 1.5, sellPricePerPack: 1.5, numberOfPacks: 10, totalBeforeTax: 1.5}, storeId: "") {
                   ... on InvoiceLineNode {
                     id
                   }
@@ -713,7 +708,7 @@ mod permission_tests {
             TestData {
                 name: "insertInboundShipmentServiceLine",
                 query: r#"mutation Mutation {
-                insertInboundShipmentServiceLine(input: {id: "", invoiceId: "", totalBeforeTax: 1.5, totalAfterTax: 1.5}, storeId: "") {
+                insertInboundShipmentServiceLine(input: {id: "", invoiceId: "", totalBeforeTax: 1.5}, storeId: "") {
                   ... on InvoiceLineNode {
                     id
                   }
@@ -756,7 +751,7 @@ mod permission_tests {
             TestData {
                 name: "insertOutboundShipmentLine",
                 query: r#"mutation Mutation {
-                insertOutboundShipmentLine(input: {id: "", invoiceId: "", itemId: "", stockLineId: "", numberOfPacks: 10, totalBeforeTax: 1.5, totalAfterTax: 1.5}, storeId: "") {
+                insertOutboundShipmentLine(input: {id: "", invoiceId: "", itemId: "", stockLineId: "", numberOfPacks: 10, totalBeforeTax: 1.5}, storeId: "") {
                   ... on InvoiceLineNode {
                     id
                   }
@@ -770,7 +765,7 @@ mod permission_tests {
             TestData {
                 name: "insertOutboundShipmentServiceLine",
                 query: r#"mutation Mutation {
-              insertOutboundShipmentServiceLine(input: {id: "", invoiceId: "", totalBeforeTax: 1.5, totalAfterTax: 1.5}, storeId: "") {
+              insertOutboundShipmentServiceLine(input: {id: "", invoiceId: "", totalBeforeTax: 1.5}, storeId: "") {
                 ... on InvoiceLineNode {
                   id
                 }
@@ -1037,13 +1032,10 @@ mod permission_tests {
                 },
             },
             TestData {
-                name: "updateServerSettings",
+                name: "updateSyncSettings",
                 query: r#"mutation Mutation {
-                updateServerSettings(input: {syncSettings: {url: "test", username: "user", password: "", intervalSec: 10, centralServerSiteId: 10, siteId: 10}}) {
-                  ... on ServerSettingsNode {
+                  updateSyncSettings(input: {url: "test", username: "user", password: "", intervalSeconds: 10}) {
                     __typename
-                    status
-                  }
                 }
             }"#,
                 expected: ResourceAccessRequest {

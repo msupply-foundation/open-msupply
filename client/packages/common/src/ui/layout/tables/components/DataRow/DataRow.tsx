@@ -9,7 +9,7 @@ import {
   useIsFocused,
   useRowStyle,
 } from '../../context';
-import { Fade } from '@mui/material';
+import { Fade, Tooltip } from '@mui/material';
 
 interface DataRowProps<T extends RecordWithId> {
   columns: Column<T>[];
@@ -21,6 +21,7 @@ interface DataRowProps<T extends RecordWithId> {
   dense?: boolean;
   rowIndex: number;
   keyboardActivated?: boolean;
+  generateRowTooltip: (row: T) => string;
 }
 
 export const DataRow = <T extends RecordWithId>({
@@ -33,6 +34,7 @@ export const DataRow = <T extends RecordWithId>({
   dense = false,
   rows,
   keyboardActivated,
+  generateRowTooltip,
 }: DataRowProps<T>): JSX.Element => {
   const hasOnClick = !!onClick;
   const { isExpanded } = useExpanded(rowData.id);
@@ -51,62 +53,69 @@ export const DataRow = <T extends RecordWithId>({
   return (
     <>
       <Fade in={true} timeout={500}>
-        <TableRow
-          sx={{
-            '&.MuiTableRow-root': {
-              '&:hover': hasOnClick
-                ? { backgroundColor: 'background.menu' }
-                : {},
-            },
-            color: isDisabled ? 'gray.main' : 'black',
-            backgroundColor: isFocused ? 'background.menu' : null,
-            alignItems: 'center',
-            height: '40px',
-            maxHeight: '45px',
-            boxShadow: dense
-              ? 'none'
-              : 'inset 0 0.5px 0 0 rgba(143, 144, 166, 0.5)',
-            ...rowStyle,
-          }}
-          onClick={onRowClick}
+        <Tooltip
+          title={generateRowTooltip(rowData)}
+          followCursor
+          placement="bottom-start"
         >
-          {columns.map((column, columnIndex) => {
-            return (
-              <TableCell
-                key={`${rowKey}${String(column.key)}`}
-                align={column.align}
-                sx={{
-                  borderBottom: 'none',
-                  overflow: 'hidden',
-                  whiteSpace: 'nowrap',
-                  paddingLeft: paddingX,
-                  paddingRight: paddingX,
-                  paddingTop: paddingY,
-                  paddingBottom: paddingY,
-                  ...(hasOnClick && { cursor: 'pointer' }),
-                  minWidth: column.minWidth,
-                  maxWidth: column.maxWidth,
-                  width: column.width,
-                  color: 'inherit',
-                  fontSize: dense ? '12px' : '14px',
-                  backgroundColor: column.backgroundColor,
-                  fontWeight: 'normal',
-                }}
-              >
-                <column.Cell
-                  isDisabled={isDisabled}
-                  rows={rows}
-                  rowData={rowData}
-                  columns={columns}
-                  column={column}
-                  rowKey={rowKey}
-                  columnIndex={columnIndex}
-                  rowIndex={rowIndex}
-                />
-              </TableCell>
-            );
-          })}
-        </TableRow>
+          <TableRow
+            sx={{
+              '&.MuiTableRow-root': {
+                '&:hover': hasOnClick
+                  ? { backgroundColor: 'background.menu' }
+                  : {},
+              },
+              color: isDisabled ? 'gray.main' : 'black',
+              backgroundColor: isFocused ? 'background.menu' : null,
+              alignItems: 'center',
+              height: '40px',
+              maxHeight: '45px',
+              boxShadow: dense
+                ? 'none'
+                : 'inset 0 0.5px 0 0 rgba(143, 144, 166, 0.5)',
+              ...rowStyle,
+            }}
+            onClick={onRowClick}
+          >
+            {columns.map((column, columnIndex) => {
+              return (
+                <TableCell
+                  key={`${rowKey}${String(column.key)}`}
+                  align={column.align}
+                  sx={{
+                    borderBottom: 'none',
+                    overflow: 'hidden',
+                    whiteSpace: 'nowrap',
+                    paddingLeft: paddingX,
+                    paddingRight: paddingX,
+                    paddingTop: paddingY,
+                    paddingBottom: paddingY,
+                    ...(hasOnClick && { cursor: 'pointer' }),
+                    minWidth: column.minWidth,
+                    maxWidth: column.maxWidth,
+                    width: column.width,
+                    color: 'inherit',
+                    fontSize: dense ? '12px' : '14px',
+                    backgroundColor: column.backgroundColor,
+                    fontWeight: 'normal',
+                  }}
+                >
+                  <column.Cell
+                    isDisabled={isDisabled}
+                    rows={rows}
+                    rowData={rowData}
+                    columns={columns}
+                    column={column}
+                    rowKey={rowKey}
+                    columnIndex={columnIndex}
+                    rowIndex={rowIndex}
+                    autocompleteName={column.autocompleteProvider?.(rowData)}
+                  />
+                </TableCell>
+              );
+            })}
+          </TableRow>
+        </Tooltip>
       </Fade>
       {isExpanded && !!ExpandContent ? (
         <tr>

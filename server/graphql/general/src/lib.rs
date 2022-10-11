@@ -1,16 +1,22 @@
 mod mutations;
 mod queries;
+mod sync_api_error;
 
+pub use self::queries::sync_status::*;
 use self::queries::*;
 
-use async_graphql::*;
 use graphql_core::pagination::PaginationInput;
-use mutations::server_settings::{
-    update_server_settings, UpdateServerSettingsInput, UpdateServerSettingsResponse,
+
+use mutations::{
+    common::SyncSettingsInput,
+    initialise_site::{initialise_site, InitialiseSiteResponse},
+    manual_sync::manual_sync,
+    sync_settings::{update_sync_settings, UpdateSyncSettingsResponse},
 };
 use queries::{
+    initialisation_status::{initialisation_status, InitialisationStatusType},
     requisition_line_chart::{ConsumptionOptionsInput, StockEvolutionOptionsInput},
-    server_settings::{get_server_settings, server_restart, RestartNode, ServerSettingsResponse},
+    sync_settings::{sync_settings, SyncSettingsNode},
 };
 
 #[derive(Default, Clone)]
@@ -20,7 +26,7 @@ pub struct GeneralQueries;
 impl GeneralQueries {
     #[allow(non_snake_case)]
     pub async fn apiVersion(&self) -> String {
-        "1.0".to_string()
+        env!("CARGO_PKG_VERSION").to_string()
     }
 
     /// Retrieves a new auth bearer and refresh token
@@ -137,66 +143,116 @@ impl GeneralQueries {
             stock_evolution_options_input,
         )
     }
-}
 
-#[derive(Default, Clone)]
-pub struct ServerAdminQueries;
-
-#[Object]
-impl ServerAdminQueries {
-    /// Retrieves a new auth bearer and refresh token
-    /// The refresh token is returned as a cookie
-    pub async fn server_settings(&self, ctx: &Context<'_>) -> Result<ServerSettingsResponse> {
-        get_server_settings(ctx, false)
-    }
-
-    /// Restarts the server
-    pub async fn server_restart(&self, ctx: &Context<'_>) -> Result<RestartNode> {
-        server_restart(ctx, false).await
-    }
-}
-#[derive(Default, Clone)]
-pub struct ServerAdminMutations;
-
-#[Object]
-impl ServerAdminMutations {
-    pub async fn update_server_settings(
+    pub async fn activity_logs(
         &self,
         ctx: &Context<'_>,
-        input: UpdateServerSettingsInput,
-    ) -> Result<UpdateServerSettingsResponse> {
-        update_server_settings(ctx, input, false)
-    }
-}
-
-/// No access control during init stage
-#[derive(Default, Clone)]
-pub struct ServerAdminStage0Queries;
-
-#[Object]
-impl ServerAdminStage0Queries {
-    /// Retrieves a new auth bearer and refresh token
-    /// The refresh token is returned as a cookie
-    pub async fn server_settings(&self, ctx: &Context<'_>) -> Result<ServerSettingsResponse> {
-        get_server_settings(ctx, true)
+        #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
+        #[graphql(desc = "Filter option")] filter: Option<ActivityLogFilterInput>,
+        #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
+        sort: Option<Vec<ActivityLogSortInput>>,
+    ) -> Result<ActivityLogResponse> {
+        activity_logs(ctx, page, filter, sort)
     }
 
-    /// Restarts the server
-    pub async fn server_restart(&self, ctx: &Context<'_>) -> Result<RestartNode> {
-        server_restart(ctx, true).await
-    }
-}
-/// No access control during init stage
-#[derive(Default, Clone)]
-pub struct ServerAdminStage0Mutations;
-
-#[Object]
-impl ServerAdminStage0Mutations {
-    pub async fn update_server_settings(
+    /// Available without authorisation in operational and initialisation states
+    pub async fn initialisation_status(
         &self,
         ctx: &Context<'_>,
-        input: UpdateServerSettingsInput,
-    ) -> Result<UpdateServerSettingsResponse> {
-        update_server_settings(ctx, input, true)
+    ) -> Result<InitialisationStatusType> {
+        initialisation_status(ctx)
+    }
+
+    pub async fn latest_sync_status(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<FullSyncStatusNode>> {
+        latest_sync_status(ctx, true)
+    }
+
+    pub async fn number_of_records_in_push_queue(&self, ctx: &Context<'_>) -> Result<u64> {
+        number_of_records_in_push_queue(ctx)
+    }
+
+    pub async fn sync_settings(&self, ctx: &Context<'_>) -> Result<Option<SyncSettingsNode>> {
+        sync_settings(ctx, true)
+    }
+}
+
+#[derive(Default, Clone)]
+pub struct GeneralMutations;
+
+#[Object]
+impl GeneralMutations {
+    pub async fn update_sync_settings(
+        &self,
+        ctx: &Context<'_>,
+        input: SyncSettingsInput,
+    ) -> Result<UpdateSyncSettingsResponse> {
+        update_sync_settings(ctx, input).await
+    }
+
+    // Only available for graphql introspection, error will be thrown after PreInitialisation state
+    pub async fn initialise_site(
+        &self,
+        ctx: &Context<'_>,
+        input: SyncSettingsInput,
+    ) -> Result<InitialiseSiteResponse> {
+        initialise_site(ctx, input).await
+    }
+
+    pub async fn manual_sync(&self, ctx: &Context<'_>) -> Result<String> {
+        manual_sync(ctx, true)
+    }
+}
+
+/// Auth is not checked during initialisation stage
+#[derive(Default, Clone)]
+pub struct InitialisationQueries;
+
+#[Object]
+impl InitialisationQueries {
+    pub async fn sync_settings(&self, ctx: &Context<'_>) -> Result<Option<SyncSettingsNode>> {
+        sync_settings(ctx, false)
+    }
+    /// Available without authorisation in operational and initialisation states
+    pub async fn initialisation_status(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<InitialisationStatusType> {
+        initialisation_status(ctx)
+    }
+
+    pub async fn latest_sync_status(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<FullSyncStatusNode>> {
+        latest_sync_status(ctx, false)
+    }
+}
+/// Auth is not checked during initialisation stage
+#[derive(Default, Clone)]
+pub struct InitialisationMutations;
+
+#[Object]
+impl InitialisationMutations {
+    pub async fn initialise_site(
+        &self,
+        ctx: &Context<'_>,
+        input: SyncSettingsInput,
+    ) -> Result<InitialiseSiteResponse> {
+        initialise_site(ctx, input).await
+    }
+
+    pub async fn manual_sync(&self, ctx: &Context<'_>) -> Result<String> {
+        manual_sync(ctx, false)
+    }
+}
+
+pub struct MasterListNotFoundForThisStore;
+#[Object]
+impl MasterListNotFoundForThisStore {
+    pub async fn description(&self) -> &'static str {
+        "Master list not found (might not be visible to this store)"
     }
 }

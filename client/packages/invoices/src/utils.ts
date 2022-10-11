@@ -120,6 +120,9 @@ export const isInboundDisabled = (inbound: InboundRowFragment): boolean => {
         inbound.status === InvoiceNodeStatus.Verified;
 };
 
+export const isInboundPlaceholderRow = (row: InboundLineFragment): boolean =>
+  row.type === InvoiceLineNodeType.StockIn && row.numberOfPacks === 0;
+
 export const useIsInboundStatusChangeDisabled = (
   inbound: InboundFragment
 ): boolean => {
@@ -172,27 +175,6 @@ export const isA = {
 export const get = {
   stockLineSubtotal: (line: DraftOutboundLine) =>
     line.numberOfPacks * (line.stockLine?.sellPricePerPack ?? 0),
-  stockLineTotal: ({
-    numberOfPacks,
-    taxPercentage,
-    sellPricePerPack,
-  }: DraftOutboundLine) => {
-    const subtotal = numberOfPacks * sellPricePerPack;
-
-    if (taxPercentage == null) return subtotal;
-    if (taxPercentage === 0) return subtotal;
-
-    return subtotal * (1 + taxPercentage / 100);
-  },
-  serviceChargeTotal: ({
-    totalBeforeTax,
-    taxPercentage,
-  }: DraftOutboundLine) => {
-    if (taxPercentage == null) return totalBeforeTax;
-    if (taxPercentage === 0) return totalBeforeTax;
-
-    return totalBeforeTax * (1 + taxPercentage / 100);
-  },
 };
 
 export const outboundsToCsv = (

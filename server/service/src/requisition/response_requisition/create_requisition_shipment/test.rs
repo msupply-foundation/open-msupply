@@ -1,5 +1,6 @@
 #[cfg(test)]
 mod test_update {
+    use repository::mock::{mock_store_a, mock_store_b};
     use repository::EqualFilter;
     use repository::{
         mock::{
@@ -25,15 +26,15 @@ mod test_update {
             setup_all("create_requisition_shipment_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let mut context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.requisition_service;
 
         // RequisitionDoesNotExist
         assert_eq!(
             service.create_requisition_shipment(
                 &context,
-                "store_a",
-                "/na",
                 CreateRequisitionShipment {
                     response_requisition_id: "invalid".to_owned(),
                 },
@@ -41,25 +42,10 @@ mod test_update {
             Err(ServiceError::RequisitionDoesNotExist)
         );
 
-        // NotThisStoreRequisition
-        assert_eq!(
-            service.create_requisition_shipment(
-                &context,
-                "store_b",
-                "/na",
-                CreateRequisitionShipment {
-                    response_requisition_id: mock_draft_response_requisition_for_update_test().id,
-                },
-            ),
-            Err(ServiceError::NotThisStoreRequisition)
-        );
-
         // CannotEditRequisition
         assert_eq!(
             service.create_requisition_shipment(
                 &context,
-                "store_a",
-                "/na",
                 CreateRequisitionShipment {
                     response_requisition_id: mock_finalised_response_requisition().id,
                 },
@@ -71,13 +57,23 @@ mod test_update {
         assert_eq!(
             service.create_requisition_shipment(
                 &context,
-                "store_a",
-                "/na",
                 CreateRequisitionShipment {
                     response_requisition_id: mock_sent_request_requisition().id,
                 },
             ),
             Err(ServiceError::NotAResponseRequisition)
+        );
+
+        // NotThisStoreRequisition
+        context.store_id = mock_store_b().id;
+        assert_eq!(
+            service.create_requisition_shipment(
+                &context,
+                CreateRequisitionShipment {
+                    response_requisition_id: mock_draft_response_requisition_for_update_test().id,
+                },
+            ),
+            Err(ServiceError::NotThisStoreRequisition)
         );
     }
 
@@ -90,15 +86,15 @@ mod test_update {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.requisition_service;
 
         // Check existing invoice is accounted for
         let invoice = service
             .create_requisition_shipment(
                 &context,
-                "store_a",
-                "/na",
                 CreateRequisitionShipment {
                     response_requisition_id: mock_new_response_requisition_test().requisition.id,
                 },
@@ -124,15 +120,13 @@ mod test_update {
 
         assert_eq!(invoice_lines.len(), 2);
 
-        assert_eq!(invoice_lines[0].invoice_line_row.number_of_packs, 44);
-        assert_eq!(invoice_lines[1].invoice_line_row.number_of_packs, 100);
+        assert_eq!(invoice_lines[0].invoice_line_row.number_of_packs, 44.0);
+        assert_eq!(invoice_lines[1].invoice_line_row.number_of_packs, 100.0);
 
         // NothingRemainingToSupply
         assert_eq!(
             service.create_requisition_shipment(
                 &context,
-                "store_a",
-                "/na",
                 CreateRequisitionShipment {
                     response_requisition_id: mock_new_response_requisition_test().requisition.id,
                 },
@@ -145,8 +139,6 @@ mod test_update {
             .requisition_line_service
             .update_response_requisition_line(
                 &context,
-                "store_a",
-                "n/a",
                 inline_init(|r: &mut UpdateResponseRequisitionLine| {
                     r.id = mock_new_response_requisition_test().lines[0].id.clone();
                     r.supply_quantity = Some(100);
@@ -157,8 +149,6 @@ mod test_update {
         let invoice = service
             .create_requisition_shipment(
                 &context,
-                "store_a",
-                "/na",
                 CreateRequisitionShipment {
                     response_requisition_id: mock_new_response_requisition_test().requisition.id,
                 },
@@ -184,6 +174,6 @@ mod test_update {
 
         assert_eq!(invoice_lines.len(), 1);
 
-        assert_eq!(invoice_lines[0].invoice_line_row.number_of_packs, 50);
+        assert_eq!(invoice_lines[0].invoice_line_row.number_of_packs, 50.0);
     }
 }

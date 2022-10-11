@@ -12,17 +12,24 @@ export type AuthTokenQueryVariables = Types.Exact<{
 }>;
 
 
-export type AuthTokenQuery = { __typename: 'FullQuery', authToken: { __typename: 'AuthToken', token: string } | { __typename: 'AuthTokenError', error: { __typename: 'InvalidCredentials', description: string } } };
+export type AuthTokenQuery = { __typename: 'Queries', authToken: { __typename: 'AuthToken', token: string } | { __typename: 'AuthTokenError', error: { __typename: 'InvalidCredentials', description: string } } };
 
 export type MeQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
 
-export type MeQuery = { __typename: 'FullQuery', me: { __typename: 'UserNode', email?: string | null, username: string, userId: string, defaultStore?: { __typename: 'UserStoreNode', code: string, id: string, name: string } | null, stores: { __typename: 'UserStoreConnector', totalCount: number, nodes: Array<{ __typename: 'UserStoreNode', code: string, id: string, name: string }> } } };
+export type MeQuery = { __typename: 'Queries', me: { __typename: 'UserNode', email?: string | null, username: string, userId: string, defaultStore?: { __typename: 'UserStoreNode', code: string, id: string, name: string } | null, stores: { __typename: 'UserStoreConnector', totalCount: number, nodes: Array<{ __typename: 'UserStoreNode', code: string, id: string, name: string }> } } };
 
 export type RefreshTokenQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
 
-export type RefreshTokenQuery = { __typename: 'FullQuery', refreshToken: { __typename: 'RefreshToken', token: string } | { __typename: 'RefreshTokenError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'InternalError', description: string, fullError: string } | { __typename: 'InvalidToken', description: string } | { __typename: 'NoRefreshTokenProvided', description: string } | { __typename: 'NotARefreshToken', description: string } | { __typename: 'TokenExpired', description: string } } };
+export type RefreshTokenQuery = { __typename: 'Queries', refreshToken: { __typename: 'RefreshToken', token: string } | { __typename: 'RefreshTokenError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'InternalError', description: string, fullError: string } | { __typename: 'InvalidToken', description: string } | { __typename: 'NoRefreshTokenProvided', description: string } | { __typename: 'NotARefreshToken', description: string } | { __typename: 'TokenExpired', description: string } } };
+
+export type PermissionsQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String'];
+}>;
+
+
+export type PermissionsQuery = { __typename: 'Queries', me: { __typename: 'UserNode', username: string, permissions: { __typename: 'UserStorePermissionConnector', totalCount: number, nodes: Array<{ __typename: 'UserStorePermissionNode', permissions: Array<Types.UserPermission>, storeId: string }> } } };
 
 export const UserStoreNodeFragmentDoc = gql`
     fragment UserStoreNode on UserStoreNode {
@@ -115,6 +122,23 @@ export const RefreshTokenDocument = gql`
   }
 }
     `;
+export const PermissionsDocument = gql`
+    query permissions($storeId: String!) {
+  me {
+    ... on UserNode {
+      __typename
+      username
+      permissions(storeId: $storeId) {
+        nodes {
+          permissions
+          storeId
+        }
+        totalCount
+      }
+    }
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -131,6 +155,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     refreshToken(variables?: RefreshTokenQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<RefreshTokenQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<RefreshTokenQuery>(RefreshTokenDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'refreshToken', 'query');
+    },
+    permissions(variables: PermissionsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<PermissionsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<PermissionsQuery>(PermissionsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'permissions', 'query');
     }
   };
 }
@@ -182,5 +209,22 @@ export const mockMeQuery = (resolver: ResponseResolver<GraphQLRequest<MeQueryVar
 export const mockRefreshTokenQuery = (resolver: ResponseResolver<GraphQLRequest<RefreshTokenQueryVariables>, GraphQLContext<RefreshTokenQuery>, any>) =>
   graphql.query<RefreshTokenQuery, RefreshTokenQueryVariables>(
     'refreshToken',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockPermissionsQuery((req, res, ctx) => {
+ *   const { storeId } = req.variables;
+ *   return res(
+ *     ctx.data({ me })
+ *   )
+ * })
+ */
+export const mockPermissionsQuery = (resolver: ResponseResolver<GraphQLRequest<PermissionsQueryVariables>, GraphQLContext<PermissionsQuery>, any>) =>
+  graphql.query<PermissionsQuery, PermissionsQueryVariables>(
+    'permissions',
     resolver
   )

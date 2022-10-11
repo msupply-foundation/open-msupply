@@ -20,7 +20,7 @@ pub fn mock_full_draft_outbound_shipment_a() -> FullMockInvoice {
         invoice: inline_init(|r: &mut InvoiceRow| {
             r.id = invoice_id.clone();
             r.name_id = String::from("name_store_b");
-            r.store_id = String::from("store_a");
+            r.store_id = String::from("store_c");
             r.invoice_number = 10;
             r.r#type = InvoiceRowType::OutboundShipment;
             r.status = InvoiceRowStatus::New;
@@ -42,17 +42,17 @@ pub fn mock_full_draft_outbound_shipment_a() -> FullMockInvoice {
                     r.total_after_tax = 320.0;
                     r.tax = Some(15.0);
                     r.r#type = InvoiceLineRowType::StockOut;
-                    r.number_of_packs = 10;
+                    r.number_of_packs = 10.0;
                 }),
                 stock_line: inline_init(|r: &mut StockLineRow| {
                     r.id = stock_line_a_id;
                     r.item_id = String::from("item_a");
-                    r.store_id = String::from("store_a");
-                    r.available_number_of_packs = 20;
+                    r.store_id = String::from("store_c");
+                    r.available_number_of_packs = 20.0;
                     r.pack_size = 4;
                     r.cost_price_per_pack = 43.0;
                     r.sell_price_per_pack = 32.0;
-                    r.total_number_of_packs = 30;
+                    r.total_number_of_packs = 30.0;
                 }),
             },
             FullMockInvoiceLine {
@@ -69,17 +69,17 @@ pub fn mock_full_draft_outbound_shipment_a() -> FullMockInvoice {
                     r.total_before_tax = 210.0;
                     r.total_after_tax = 210.0;
                     r.r#type = InvoiceLineRowType::StockOut;
-                    r.number_of_packs = 2;
+                    r.number_of_packs = 2.0;
                 }),
                 stock_line: inline_init(|r: &mut StockLineRow| {
                     r.id = stock_line_b_id;
                     r.item_id = String::from("item_a");
-                    r.store_id = String::from("store_a");
-                    r.available_number_of_packs = 10;
+                    r.store_id = String::from("store_c");
+                    r.available_number_of_packs = 10.0;
                     r.pack_size = 2;
                     r.cost_price_per_pack = 41.0;
                     r.sell_price_per_pack = 21.0;
-                    r.total_number_of_packs = 12;
+                    r.total_number_of_packs = 12.0;
                 }),
             },
         ],
@@ -93,7 +93,7 @@ pub fn mock_full_draft_inbound_shipment_on_hold() -> FullMockInvoice {
         invoice: inline_init(|r: &mut InvoiceRow| {
             r.id = invoice_id.clone();
             r.name_id = String::from("name_store_a");
-            r.store_id = String::from("store_b");
+            r.store_id = String::from("store_a");
             r.invoice_number = 11;
             r.r#type = InvoiceRowType::InboundShipment;
             r.status = InvoiceRowStatus::New;
@@ -111,7 +111,7 @@ pub fn mock_full_draft_outbound_shipment_on_hold() -> FullMockInvoice {
         invoice: inline_init(|r: &mut InvoiceRow| {
             r.id = invoice_id.clone();
             r.name_id = String::from("name_store_a");
-            r.store_id = String::from("store_b");
+            r.store_id = String::from("store_c");
             r.invoice_number = 11;
             r.r#type = InvoiceRowType::OutboundShipment;
             r.status = InvoiceRowStatus::New;

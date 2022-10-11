@@ -19,8 +19,8 @@ pub struct UpdateInput {
     pub id: String,
     pub location_id: Option<String>,
     pub comment: Option<String>,
-    pub snapshot_number_of_packs: Option<u32>,
-    pub counted_number_of_packs: Option<u32>,
+    pub snapshot_number_of_packs: Option<f64>,
+    pub counted_number_of_packs: Option<f64>,
     pub batch: Option<String>,
     pub expiry_date: Option<NaiveDate>,
     pub pack_size: Option<u32>,
@@ -50,7 +50,7 @@ pub struct UpdateError {
 }
 
 pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<UpdateResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::MutateStocktake,
@@ -59,11 +59,11 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context()?;
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
     map_response(
         service_provider
             .stocktake_line_service
-            .update_stocktake_line(&service_context, store_id, input.to_domain()),
+            .update_stocktake_line(&service_context, input.to_domain()),
     )
 }
 
@@ -153,11 +153,7 @@ mod test {
 
     use crate::StocktakeLineMutations;
 
-    type ServiceMethod = dyn Fn(
-            &ServiceContext,
-            &str,
-            UpdateStocktakeLine,
-        ) -> Result<StocktakeLine, UpdateStocktakeLineError>
+    type ServiceMethod = dyn Fn(&ServiceContext, UpdateStocktakeLine) -> Result<StocktakeLine, UpdateStocktakeLineError>
         + Sync
         + Send;
 
@@ -167,10 +163,9 @@ mod test {
         fn update_stocktake_line(
             &self,
             ctx: &ServiceContext,
-            store_id: &str,
             input: UpdateStocktakeLine,
         ) -> Result<StocktakeLine, UpdateStocktakeLineError> {
-            (self.0)(ctx, store_id, input)
+            (self.0)(ctx, input)
         }
     }
 
@@ -219,7 +214,7 @@ mod test {
         }));
 
         // Stocktake is locked mapping
-        let test_service = TestService(Box::new(|_, _, _| {
+        let test_service = TestService(Box::new(|_, _| {
             Err(UpdateStocktakeLineError::StocktakeIsLocked)
         }));
 
@@ -234,15 +229,15 @@ mod test {
         );
 
         // success
-        let test_service = TestService(Box::new(|_, _, _| {
+        let test_service = TestService(Box::new(|_, _| {
             Ok(StocktakeLine {
                 line: StocktakeLineRow {
                     id: "id1".to_string(),
                     stocktake_id: "stocktake id".to_string(),
                     stock_line_id: Some("stock line id".to_string()),
                     location_id: Some("location id".to_string()),
-                    snapshot_number_of_packs: 10,
-                    counted_number_of_packs: Some(20),
+                    snapshot_number_of_packs: 10.0,
+                    counted_number_of_packs: Some(20.0),
                     comment: Some("comment".to_string()),
                     item_id: "item id".to_string(),
                     batch: Some("batch".to_string()),
