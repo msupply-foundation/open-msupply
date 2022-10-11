@@ -2878,7 +2878,7 @@ export type UpdateDisplaySettingsError = {
   error: Scalars['String'];
 };
 
-export type UpdateDisplaySettingsResponse = DisplaySettingsNode | UpdateDisplaySettingsError;
+export type UpdateDisplaySettingsResponse = UpdateDisplaySettingsError | UpdateResult;
 
 export type UpdateErrorInterface = {
   description: Scalars['String'];
@@ -3200,6 +3200,12 @@ export type UpdateResponseRequisitionResponse = RequisitionNode | UpdateResponse
 export enum UpdateResponseRequisitionStatusInput {
   Finalised = 'FINALISED'
 }
+
+export type UpdateResult = {
+  __typename: 'UpdateResult';
+  logo: Scalars['Boolean'];
+  theme: Scalars['Boolean'];
+};
 
 export type UpdateStocktakeError = {
   __typename: 'UpdateStocktakeError';

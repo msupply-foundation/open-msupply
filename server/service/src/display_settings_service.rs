@@ -2,6 +2,11 @@ use repository::{KeyValueStoreRepository, KeyValueType, RepositoryError};
 
 use crate::{service_provider::ServiceContext, settings::DisplaySettings};
 
+pub struct UpdateResult {
+    pub logo: bool,
+    pub theme: bool,
+}
+
 pub trait DisplaySettingsServiceTrait: Sync + Send {
     /// Loads display settings from the DB
     fn display_settings(
@@ -26,22 +31,33 @@ pub trait DisplaySettingsServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         settings: &DisplaySettings,
-    ) -> Result<(), RepositoryError> {
+    ) -> Result<UpdateResult, RepositoryError> {
         let result = ctx
             .connection
             .transaction_sync(|con| {
                 let key_value_store = KeyValueStoreRepository::new(con);
+                let mut update_result = UpdateResult {
+                    logo: false,
+                    theme: false,
+                };
 
-                key_value_store.set_string(
-                    KeyValueType::SettingsDisplayCustomLogo,
-                    settings.custom_logo.clone(),
-                )?;
-                key_value_store.set_string(
-                    KeyValueType::SettingsDisplayCustomTheme,
-                    settings.custom_theme.clone(),
-                )?;
+                if let Some(_) = &settings.custom_logo {
+                    key_value_store.set_string(
+                        KeyValueType::SettingsDisplayCustomLogo,
+                        settings.custom_logo.clone(),
+                    )?;
+                    update_result.logo = true;
+                }
 
-                Ok(())
+                if let Some(_) = &settings.custom_theme {
+                    key_value_store.set_string(
+                        KeyValueType::SettingsDisplayCustomTheme,
+                        settings.custom_theme.clone(),
+                    )?;
+                    update_result.theme = true;
+                }
+
+                Ok(update_result)
             })
             .map_err(|err| err)?;
         Ok(result)

@@ -52,6 +52,21 @@ mutation updateSyncSettings($syncSettings: SyncSettingsInput!) {
   }
 }
 
+mutation updateDisplaySettings($displaySettings: DisplaySettingsInput!) {
+  updateDisplaySettings(input: $displaySettings) {
+    __typename
+    ... on UpdateResult {
+      __typename
+      theme
+      logo
+    }
+    ... on UpdateDisplaySettingsError {
+      __typename
+      error
+    }
+  }
+}
+
 fragment SyncStatus on SyncStatusNode {
   __typename
   finished

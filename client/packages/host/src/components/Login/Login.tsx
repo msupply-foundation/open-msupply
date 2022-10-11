@@ -44,7 +44,8 @@ export const Login = () => {
 
     const { customLogo, customTheme } = displaySettings;
     if (!!customLogo) LocalStorage.setItem('/theme/logo', customLogo);
-    if (!!customTheme) LocalStorage.setItem('/theme/logo', customTheme);
+    if (!!customTheme)
+      LocalStorage.setItem('/theme/custom', JSON.parse(customTheme));
   }, [displaySettings]);
 
   useEffect(() => {

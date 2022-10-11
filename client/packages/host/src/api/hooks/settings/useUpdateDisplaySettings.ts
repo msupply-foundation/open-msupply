@@ -1,8 +1,7 @@
 import { useMutation } from '@openmsupply-client/common';
 import { useHostApi } from '../utils/useHostApi';
 
-export const useDisplaySettings = () => {
+export const useUpdateDisplaySettings = () => {
   const api = useHostApi();
-  // return useMutation(api.updateDisplaySettings);
-  return useMutation(api.update);
+  return useMutation(api.updateDisplaySettings);
 };

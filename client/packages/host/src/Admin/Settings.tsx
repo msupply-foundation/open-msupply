@@ -17,6 +17,7 @@ import { Setting } from './Setting';
 import { SettingTextArea, TextValue } from './SettingTextArea';
 import packageJson from 'package.json';
 import { SyncSettings } from './SyncSettings';
+import { useHost } from '../api/hooks';
 
 export const Settings: React.FC = () => {
   const t = useTranslation('common');
@@ -24,6 +25,7 @@ export const Settings: React.FC = () => {
   const navigate = useNavigate();
   const [customTheme, setCustomTheme] = useLocalStorage('/theme/custom');
   const [customLogo, setCustomLogo] = useLocalStorage('/theme/logo');
+  const { mutate: updateSettings } = useHost.settings.updateDisplaySettings();
   usePermissionCheck(UserPermission.ServerAdmin);
   const customThemeEnabled =
     !!customTheme && Object.keys(customTheme).length > 0;
@@ -42,12 +44,17 @@ export const Settings: React.FC = () => {
     text: customLogo ?? '',
   };
 
+  const updateTheme = (customTheme: string) => {
+    updateSettings({ customTheme }, { onSuccess: () => navigate(0) });
+  };
+
   const saveTheme = (value: TextValue) => {
     if (!value.text) return;
+
     try {
       const themeOptions = JSON.parse(value.text);
       setCustomTheme(themeOptions);
-      navigate(0);
+      updateTheme(value.text);
     } catch (e) {
       error(`${t('error.something-wrong')} ${(e as Error).message}`)();
     }
@@ -56,6 +63,7 @@ export const Settings: React.FC = () => {
   const onToggleCustomTheme = (checked: boolean) => {
     if (!checked) {
       setCustomTheme({});
+      updateTheme('');
     }
   };
 
@@ -63,7 +71,7 @@ export const Settings: React.FC = () => {
     if (!value.text) return;
     try {
       setCustomLogo(value.text);
-      //      navigate(0);
+      updateSettings({ customLogo: value.text });
     } catch (e) {
       error(`${t('error.something-wrong')} ${(e as Error).message}`)();
     }
@@ -72,6 +80,7 @@ export const Settings: React.FC = () => {
   const onToggleCustomLogo = (checked: boolean) => {
     if (!checked) {
       setCustomLogo('');
+      updateSettings({ customLogo: '' });
     }
   };
 
