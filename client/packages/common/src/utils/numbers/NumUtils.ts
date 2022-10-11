@@ -12,15 +12,4 @@ export const NumUtils = {
 
     return constrain(parsed, min, max);
   },
-  parseStringAsInt(
-    str: string,
-    min = 0,
-    max = Number.MAX_SAFE_INTEGER
-  ): number {
-    const parsed = Number(str);
-    if (Number.isNaN(parsed)) return min;
-    const rounded = Math.round(parsed);
-
-    return constrain(rounded, min, max);
-  },
 };

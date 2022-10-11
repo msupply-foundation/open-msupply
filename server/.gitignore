@@ -32,6 +32,3 @@ app_data/
 
 # operational logfiles
 **/*.log
-
-# graphql schema
-schema.graphql
