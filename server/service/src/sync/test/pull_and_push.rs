@@ -71,7 +71,8 @@ async fn test_sync_pull_and_push() {
         .changelogs(push_cursor, 100000, change_log_filter)
         .unwrap();
     // Translate and sort
-    let mut translated = translate_changelogs_to_push_records(&connection, changelogs).unwrap();
+    let mut translated =
+        translate_changelogs_to_push_records(&connection, changelogs.clone()).unwrap();
     translated.sort_by(|a, b| a.record.record_id.cmp(&b.record.record_id));
     test_records.sort_by(|a, b| a.record_id.cmp(&b.record_id));
     // Test ids and table names

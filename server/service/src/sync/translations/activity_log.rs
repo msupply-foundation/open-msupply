@@ -84,22 +84,23 @@ impl SyncTranslation for ActivityLogTranslation {
                 changelog.record_id
             )))?;
 
-        // TODO if no store_id or record_id return Vec::new()
-
-        let legacy_row = LegacyActivityLogRow {
-            id: id.clone(),
-            r#type,
-            user_id: user_id.unwrap_or_default(),
-            store_id: store_id.unwrap_or_default(),
-            record_id: record_id.unwrap_or_default(),
-            datetime,
-        };
-
-        Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
-            changelog,
-            LEGACY_TABLE_NAME,
-            serde_json::to_value(&legacy_row)?,
-        )]))
+        if let (Some(store_id), Some(record_id)) = (store_id, record_id) {
+            let legacy_row = LegacyActivityLogRow {
+                id: id.clone(),
+                r#type,
+                user_id: user_id.unwrap_or_default(),
+                store_id,
+                record_id,
+                datetime,
+            };
+            Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
+                changelog,
+                LEGACY_TABLE_NAME,
+                serde_json::to_value(&legacy_row)?,
+            )]))
+        } else {
+            Ok(Some(vec![]))
+        }
     }
 }
 
