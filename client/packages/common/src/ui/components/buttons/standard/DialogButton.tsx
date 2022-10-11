@@ -7,7 +7,11 @@ type DialogButtonVariant = 'cancel' | 'next' | 'ok';
 
 interface DialogButtonProps {
   disabled?: boolean;
-  onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  onClick: (
+    event:
+      | React.MouseEvent<HTMLButtonElement>
+      | React.KeyboardEvent<HTMLButtonElement>
+  ) => void;
   variant: DialogButtonVariant;
   autoFocus?: boolean;
 }
@@ -59,6 +63,12 @@ export const DialogButton: React.FC<DialogButtonProps> = ({
       Icon={icon}
       variant={buttonVariant}
       label={t(labelKey)}
+      tabIndex={variant === 'cancel' ? 1 : 0}
+      onKeyDown={e => {
+        if (e.key === 'Enter') {
+          onClick(e);
+        }
+      }}
       sx={
         disabled
           ? {

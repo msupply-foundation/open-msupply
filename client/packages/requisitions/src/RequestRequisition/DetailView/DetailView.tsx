@@ -9,8 +9,9 @@ import {
   useTranslation,
   useEditModal,
   createQueryParamsStore,
+  DetailTabs,
 } from '@openmsupply-client/common';
-import { ItemRowWithStatsFragment } from '@openmsupply-client/system';
+import { ItemRowWithStatsFragment, LogList } from '@openmsupply-client/system';
 import { RequestLineFragment, useRequest } from '../api';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
@@ -37,6 +38,22 @@ export const DetailView: FC = () => {
 
   if (isLoading) return <DetailViewSkeleton />;
 
+  const tabs = [
+    {
+      Component: (
+        <ContentArea
+          onRowClick={!isDisabled ? onRowClick : null}
+          onAddItem={() => onOpen(null)}
+        />
+      ),
+      value: 'Details',
+    },
+    {
+      Component: <LogList recordId={data?.id ?? ''} />,
+      value: 'Log',
+    },
+  ];
+
   return !!data ? (
     <TableProvider
       createStore={createTableStore}
@@ -49,10 +66,9 @@ export const DetailView: FC = () => {
         onAddItem={() => onOpen(null)}
       />
       <Toolbar />
-      <ContentArea
-        onRowClick={!isDisabled ? onRowClick : null}
-        onAddItem={() => onOpen(null)}
-      />
+
+      <DetailTabs tabs={tabs} />
+
       <Footer />
       <SidePanel />
       {isOpen && (

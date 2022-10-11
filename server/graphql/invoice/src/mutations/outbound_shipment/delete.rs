@@ -26,7 +26,7 @@ pub enum DeleteResponse {
 }
 
 pub fn delete(ctx: &Context<'_>, store_id: &str, id: String) -> Result<DeleteResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::MutateOutboundShipment,
@@ -35,13 +35,13 @@ pub fn delete(ctx: &Context<'_>, store_id: &str, id: String) -> Result<DeleteRes
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context()?;
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
-    map_response(service_provider.invoice_service.delete_outbound_shipment(
-        &service_context,
-        store_id,
-        id,
-    ))
+    map_response(
+        service_provider
+            .invoice_service
+            .delete_outbound_shipment(&service_context, id),
+    )
 }
 
 pub fn map_response(from: Result<String, ServiceError>) -> Result<DeleteResponse> {
@@ -94,25 +94,61 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
 
 #[cfg(test)]
 mod graphql {
-
-    use graphql_core::test_helpers::setup_graphl_test;
+    use chrono::{NaiveDate, Utc};
+    use graphql_core::test_helpers::setup_graphl_test_with_data;
     use graphql_core::{assert_graphql_query, assert_standard_graphql_error};
 
-    use repository::mock::MockDataInserts;
-    use repository::{InvoiceRowRepository, RepositoryError};
+    use repository::mock::{MockData, MockDataInserts};
+    use repository::{
+        InvoiceRow, InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType, RepositoryError,
+    };
     use serde_json::json;
+    use util::inline_init;
 
     use crate::{InvoiceMutations, InvoiceQueries};
 
     #[actix_rt::test]
     async fn test_graphql_outbound_shipment_delete() {
-        let (_, connection, _, settings) = setup_graphl_test(
+        let (_, connection, _, settings) = setup_graphl_test_with_data(
             InvoiceQueries,
             InvoiceMutations,
             "omsupply-database-gql-outbound_shipment_delete",
             MockDataInserts::all(),
+            inline_init(|r: &mut MockData| {
+                r.invoices = vec![shipped_outbound_shipment(), outbound_shipment_no_lines()];
+            }),
         )
         .await;
+
+        fn shipped_outbound_shipment() -> InvoiceRow {
+            inline_init(|r: &mut InvoiceRow| {
+                r.id = "shipped_outbound_shipment".to_string();
+                r.name_id = String::from("name_store_a");
+                r.store_id = String::from("store_a");
+                r.invoice_number = 3;
+                r.r#type = InvoiceRowType::OutboundShipment;
+                r.status = InvoiceRowStatus::Shipped;
+                r.created_datetime = NaiveDate::from_ymd(1970, 1, 5).and_hms_milli(15, 30, 0, 0);
+                r.picked_datetime = Some(Utc::now().naive_utc());
+                r.shipped_datetime = Some(Utc::now().naive_utc());
+                r.allocated_datetime =
+                    Some(NaiveDate::from_ymd(1970, 1, 5).and_hms_milli(15, 30, 0, 0));
+            })
+        }
+
+        fn outbound_shipment_no_lines() -> InvoiceRow {
+            inline_init(|r: &mut InvoiceRow| {
+                r.id = String::from("outbound_shipment_no_lines_test");
+                r.name_id = String::from("name_store_a");
+                r.store_id = String::from("store_a");
+                r.r#type = InvoiceRowType::OutboundShipment;
+                r.status = InvoiceRowStatus::Picked;
+                r.created_datetime = NaiveDate::from_ymd(1970, 1, 6).and_hms_milli(15, 30, 0, 0);
+                r.picked_datetime = Some(Utc::now().naive_utc());
+                r.allocated_datetime =
+                    Some(NaiveDate::from_ymd(1970, 1, 6).and_hms_milli(15, 30, 0, 0));
+            })
+        }
 
         let query = r#"mutation DeleteOutboundShipment($id: String!) {
             deleteOutboundShipment(id: $id, storeId: \"store_a\") {
@@ -143,7 +179,7 @@ mod graphql {
 
         // CannotEditInvoice
         let variables = Some(json!({
-          "id": "outbound_shipment_shipped"
+          "id": "shipped_outbound_shipment"
         }));
         let expected = json!({
             "deleteOutboundShipment": {
@@ -169,28 +205,17 @@ mod graphql {
             None
         );
 
-        // TODO https://github.com/openmsupply/remote-server/issues/839
+        // Note that lines are not deleted when an invoice is deleted, due to issues with batch deletes.
+        // TODO: implement delete lines. See https://github.com/openmsupply/remote-server/issues/839 for details.
         // CannotDeleteInvoiceWithLines
-        // let variables = Some(json!({
-        //   "id": "outbound_shipment_a"
-        // }));
-        // let expected = json!({
-        //     "deleteOutboundShipment": {
-        //       "error": {
-        //         "__typename": "CannotDeleteInvoiceWithLines"
-        //       }
-        //     }
-        //   }
-        // );
-        // assert_graphql_query!(&settings, query, &variables, &expected, None);
 
         // Test succeeding delete
         let variables = Some(json!({
-          "id": "outbound_shipment_no_lines"
+          "id": outbound_shipment_no_lines().id
         }));
         let expected = json!({
             "deleteOutboundShipment": {
-              "id": "outbound_shipment_no_lines"
+              "id": outbound_shipment_no_lines().id
             }
           }
         );
@@ -198,7 +223,7 @@ mod graphql {
         // test entry has been deleted
         assert_eq!(
             InvoiceRowRepository::new(&connection)
-                .find_one_by_id("outbound_shipment_no_lines")
+                .find_one_by_id(&outbound_shipment_no_lines().id)
                 .expect_err("Invoice not deleted"),
             RepositoryError::NotFound
         );

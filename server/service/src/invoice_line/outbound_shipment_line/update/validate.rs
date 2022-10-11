@@ -1,7 +1,7 @@
 use crate::{
     invoice::{
-        check_invoice_exists, check_invoice_is_editable, check_invoice_type, InvoiceDoesNotExist,
-        InvoiceIsNotEditable, WrongInvoiceRowType,
+        check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store,
+        InvoiceDoesNotExist, InvoiceIsNotEditable, NotThisStoreInvoice, WrongInvoiceRowType,
     },
     invoice_line::{
         check_batch_exists, check_batch_on_hold, check_item_matches_batch, check_location_on_hold,
@@ -20,10 +20,12 @@ use super::{BatchPair, UpdateOutboundShipmentLine, UpdateOutboundShipmentLineErr
 
 pub fn validate(
     input: &UpdateOutboundShipmentLine,
+    store_id: &str,
     connection: &StorageConnection,
 ) -> Result<(InvoiceLineRow, ItemRow, BatchPair, InvoiceRow), UpdateOutboundShipmentLineError> {
     let line = check_line_exists(&input.id, connection)?;
     let invoice = check_invoice_exists(&line.invoice_id, connection)?;
+    check_store(&invoice, store_id)?;
     check_unique_stock_line(
         &line.id,
         &invoice.id,
@@ -31,7 +33,6 @@ pub fn validate(
         connection,
     )?;
 
-    // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
     // check batch belongs to store
 
     check_invoice_type(&invoice, InvoiceRowType::OutboundShipment)?;
@@ -186,5 +187,11 @@ impl From<InvoiceIsNotEditable> for UpdateOutboundShipmentLineError {
 impl From<InvoiceDoesNotExist> for UpdateOutboundShipmentLineError {
     fn from(_: InvoiceDoesNotExist) -> Self {
         UpdateOutboundShipmentLineError::InvoiceDoesNotExist
+    }
+}
+
+impl From<NotThisStoreInvoice> for UpdateOutboundShipmentLineError {
+    fn from(_: NotThisStoreInvoice) -> Self {
+        UpdateOutboundShipmentLineError::NotThisStoreInvoice
     }
 }

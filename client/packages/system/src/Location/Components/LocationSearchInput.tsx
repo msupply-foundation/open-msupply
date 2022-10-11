@@ -21,7 +21,10 @@ export const LocationSearchInput: FC<LocationSearchInputProps> = ({
   disabled,
   autoFocus = false,
 }) => {
-  const { data, isLoading } = useLocation.document.list();
+  const { data, isLoading } = useLocation.document.listAll({
+    direction: 'asc',
+    key: 'name',
+  });
 
   return (
     <Autocomplete<LocationRowFragment>

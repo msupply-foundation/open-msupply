@@ -13,7 +13,6 @@ import {
 } from '@openmsupply-client/common';
 import { ServiceItemSearchInput } from '@openmsupply-client/system';
 import { DraftOutboundLine } from './../../../types';
-import { get } from './../../../utils';
 
 export const useServiceLineColumns = (
   setter: (patch: RecordPatch<DraftOutboundLine>) => void
@@ -65,7 +64,7 @@ export const useServiceLineColumns = (
       label: 'label.total',
       align: ColumnAlign.Right,
       width: 75,
-      accessor: ({ rowData }) => c(get.serviceChargeTotal(rowData)),
+      accessor: ({ rowData }) => c(rowData?.totalAfterTax),
     },
     {
       key: 'isDeleted',

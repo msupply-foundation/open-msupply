@@ -68,6 +68,7 @@ export const StocktakeListView: FC = () => {
       <AppBarButtons sortBy={sortBy} modalController={modalController} />
 
       <DataTable
+        key="stocktake-list"
         pagination={{ ...pagination, total: data?.totalCount }}
         onChangePage={updatePaginationQuery}
         columns={columns}

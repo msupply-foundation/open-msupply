@@ -20,7 +20,7 @@ impl Loader<String> for StoreByIdLoader {
         &self,
         store_ids: &[String],
     ) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let service_context = self.service_provider.context()?;
+        let service_context = self.service_provider.basic_context()?;
 
         let filter = StoreFilter::new().id(EqualFilter::equal_any(store_ids.to_owned()));
 

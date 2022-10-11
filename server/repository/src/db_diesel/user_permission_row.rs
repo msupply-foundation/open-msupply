@@ -15,7 +15,8 @@ table! {
       user_id -> Text,
       store_id -> Nullable<Text>,
       permission -> crate::db_diesel::user_permission_row::PermissionMapping,
-  }
+      context -> Nullable<Text>,
+    }
 }
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash)]
@@ -44,15 +45,20 @@ pub enum Permission {
     InboundShipmentMutate,
     // reporting
     Report,
+    LogQuery,
 }
 
 #[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset)]
+#[changeset_options(treat_none_as_null = "true")]
 #[table_name = "user_permission"]
 pub struct UserPermissionRow {
     pub id: String,
     pub user_id: String,
     pub store_id: Option<String>,
     pub permission: Permission,
+    /// An optional resource associated with this permission.
+    /// The resource value is only used for certain Permission variants.
+    pub context: Option<String>,
 }
 
 pub struct UserPermissionRowRepository<'a> {

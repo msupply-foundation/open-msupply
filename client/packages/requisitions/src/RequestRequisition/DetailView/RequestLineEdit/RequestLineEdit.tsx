@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   ModalMode,
   useDialog,
@@ -32,17 +32,47 @@ export const RequestLineEdit = ({
   const disabled = useRequest.utils.isDisabled();
   const { Modal } = useDialog({ onClose, isOpen, animationTimeout: 100 });
   const [currentItem, setCurrentItem] = useBufferState(item);
+  const [previousItemLineId, setPreviousItemLineId] = useBufferState<
+    string | null
+  >(null);
   const { draft, isLoading, save, update } =
     useDraftRequisitionLine(currentItem);
   const { next, hasNext } = useNextRequestLine(currentItem);
+  const deleteLine = useRequest.line.deleteLine();
+  const isDisabled = useRequest.utils.isDisabled();
+
   const nextDisabled = (!hasNext && mode === ModalMode.Update) || !currentItem;
   const height = useKeyboardHeightAdjustment(600);
+
+  const deletePreviousLine = () => {
+    if (previousItemLineId && !isDisabled) deleteLine(previousItemLineId);
+  };
+  const onChangeItem = (item: ItemRowWithStatsFragment) => {
+    deletePreviousLine();
+    setCurrentItem(item);
+  };
+
+  const onCancel = () => {
+    if (mode === ModalMode.Create) {
+      deletePreviousLine();
+    }
+    onClose();
+  };
+
+  useEffect(() => {
+    // isCreated is true when the line exists only locally i.e. not saved to server
+    if (!!draft?.isCreated) {
+      save();
+    } else {
+      if (!!draft?.id) setPreviousItemLineId(draft.id);
+    }
+  }, [draft]);
 
   return (
     <Modal
       title={''}
       contentProps={{ sx: { padding: 0 } }}
-      cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
+      cancelButton={<DialogButton variant="cancel" onClick={onCancel} />}
       nextButton={
         <DialogButton
           disabled={nextDisabled}
@@ -76,7 +106,7 @@ export const RequestLineEdit = ({
             draftLine={draft}
             update={update}
             disabled={mode === ModalMode.Update || disabled}
-            onChangeItem={setCurrentItem}
+            onChangeItem={onChangeItem}
             item={currentItem}
           />
           {!!draft && (
@@ -93,8 +123,14 @@ export const RequestLineEdit = ({
             sx={{ paddingLeft: 4, paddingRight: 4 }}
             justifyContent="space-between"
           >
-            <ConsumptionHistory id={draft?.id || ''} />
-            <StockEvolution id={draft?.id || ''} />
+            {draft?.isCreated ? (
+              <Box display="flex" height={289} />
+            ) : (
+              <>
+                <ConsumptionHistory id={draft?.id || ''} />
+                <StockEvolution id={draft?.id || ''} />
+              </>
+            )}
           </Box>
         </>
       ) : (

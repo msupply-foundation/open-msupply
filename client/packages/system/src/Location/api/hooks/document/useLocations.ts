@@ -3,7 +3,9 @@ import { useLocationApi } from '../utils/useLocationApi';
 
 export const useLocations = () => {
   const api = useLocationApi();
-  const { queryParams } = useUrlQueryParams({ initialSortKey: 'name' });
+  const { queryParams } = useUrlQueryParams({
+    initialSort: { key: 'name', dir: 'asc' },
+  });
   const result = useQuery(api.keys.paramList(queryParams), () =>
     api.get.list(queryParams)
   );

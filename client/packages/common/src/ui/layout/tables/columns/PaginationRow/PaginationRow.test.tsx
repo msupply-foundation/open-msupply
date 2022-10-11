@@ -8,8 +8,8 @@ import { createQueryParamsStore } from '@common/hooks';
 describe('PaginationRow', () => {
   it('Renders a string : Showing X-Y of Z', () => {
     const offset = 0;
-    const first = 10;
-    const total = 20;
+    const first = 20;
+    const total = 40;
 
     const { getByText } = render(
       <TestingProvider>
@@ -54,7 +54,7 @@ describe('PaginationRow', () => {
             page={0}
             offset={1}
             total={1}
-            first={1}
+            first={20}
             onChange={jest.fn()}
           />
         </TableProvider>
@@ -68,7 +68,7 @@ describe('PaginationRow', () => {
 
   it('Renders the first 5 pages and the last page', () => {
     const offset = 0;
-    const first = 10;
+    const first = 20;
     const total = 20000;
 
     const { queryByRole, getByRole } = render(
@@ -90,13 +90,13 @@ describe('PaginationRow', () => {
       </TestingProvider>
     );
 
-    const node1 = getByRole('button', { name: /page 1/i });
+    const node1 = getByRole('button', { name: /page 1$/i });
     const node2 = getByRole('button', { name: /page 2$/i });
     const node3 = getByRole('button', { name: /page 3/i });
     const node4 = getByRole('button', { name: /page 4/i });
     const node5 = getByRole('button', { name: /page 5/i });
     const node6 = queryByRole('button', { name: /page 6/i });
-    const node2000 = getByRole('button', { name: /page 2000/i });
+    const node1000 = getByRole('button', { name: /page 1000/i });
 
     expect(node1).toBeInTheDocument();
     expect(node2).toBeInTheDocument();
@@ -104,12 +104,12 @@ describe('PaginationRow', () => {
     expect(node4).toBeInTheDocument();
     expect(node5).toBeInTheDocument();
     expect(node6).not.toBeInTheDocument();
-    expect(node2000).toBeInTheDocument();
+    expect(node1000).toBeInTheDocument();
   });
 
   it('Renders nothing when the total is zero', () => {
     const offset = 0;
-    const first = 10;
+    const first = 20;
     const total = 0;
 
     const { queryByRole, queryByText } = render(
@@ -140,7 +140,7 @@ describe('PaginationRow', () => {
 
   it('Triggers the callback when a page button is pressed, with the page, zero indexed', () => {
     const offset = 0;
-    const first = 10;
+    const first = 20;
     const total = 20000;
     const onChange = jest.fn();
 
@@ -163,7 +163,7 @@ describe('PaginationRow', () => {
       </TestingProvider>
     );
 
-    const node = getByRole('button', { name: /page 1/i });
+    const node = getByRole('button', { name: /page 1$/i });
 
     fireEvent.click(node);
 
@@ -173,7 +173,7 @@ describe('PaginationRow', () => {
 
   it('has a disabled back button when on page 1', () => {
     const offset = 0;
-    const first = 10;
+    const first = 20;
     const total = 20000;
     const onChange = jest.fn();
 
@@ -203,7 +203,7 @@ describe('PaginationRow', () => {
 
   it('has an enabled next button when on page 1', () => {
     const offset = 0;
-    const first = 10;
+    const first = 20;
     const total = 20000;
     const onChange = jest.fn();
 
@@ -233,7 +233,7 @@ describe('PaginationRow', () => {
 
   it('has both back and next buttons enabled when not on page 1', () => {
     const offset = 0;
-    const first = 10;
+    const first = 20;
     const total = 20000;
     const onChange = jest.fn();
 

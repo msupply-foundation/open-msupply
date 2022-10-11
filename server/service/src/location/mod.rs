@@ -38,28 +38,25 @@ pub trait LocationServiceTrait: Sync + Send {
     fn delete_location(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
         input: DeleteLocation,
     ) -> Result<String, DeleteLocationError> {
-        delete_location(ctx, store_id, input)
+        delete_location(ctx, input)
     }
 
     fn insert_location(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
         input: InsertLocation,
     ) -> Result<Location, InsertLocationError> {
-        insert_location(ctx, store_id, input)
+        insert_location(ctx, input)
     }
 
     fn update_location(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
         input: UpdateLocation,
     ) -> Result<Location, UpdateLocationError> {
-        update_location(ctx, store_id, input)
+        update_location(ctx, input)
     }
 }
 

@@ -6,8 +6,8 @@ use util::constants::DEFAULT_SERVICE_ITEM_CODE;
 
 use crate::{
     invoice::{
-        check_invoice_exists, check_invoice_is_editable, check_invoice_type, InvoiceDoesNotExist,
-        InvoiceIsNotEditable, WrongInvoiceRowType,
+        check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store,
+        InvoiceDoesNotExist, InvoiceIsNotEditable, NotThisStoreInvoice, WrongInvoiceRowType,
     },
     invoice_line::validate::{
         check_item, check_line_does_not_exists, ItemNotFound, LineAlreadyExists,
@@ -20,6 +20,7 @@ type OutError = InsertOutboundShipmentServiceLineError;
 
 pub fn validate(
     input: &InsertOutboundShipmentServiceLine,
+    store_id: &str,
     connection: &StorageConnection,
 ) -> Result<(ItemRow, InvoiceRow), OutError> {
     check_line_does_not_exists(&input.id, connection)?;
@@ -38,8 +39,7 @@ pub fn validate(
     };
 
     let invoice = check_invoice_exists(&input.invoice_id, connection)?;
-    // TODO:
-    // check_store(invoice, connection)?; InvoiceDoesNotBelongToCurrentStore
+    check_store(&invoice, store_id)?;
     check_invoice_type(&invoice, InvoiceRowType::OutboundShipment)?;
     check_invoice_is_editable(&invoice)?;
 
@@ -83,5 +83,11 @@ impl From<WrongInvoiceRowType> for OutError {
 impl From<InvoiceIsNotEditable> for OutError {
     fn from(_: InvoiceIsNotEditable) -> Self {
         OutError::CannotEditInvoice
+    }
+}
+
+impl From<NotThisStoreInvoice> for OutError {
+    fn from(_: NotThisStoreInvoice) -> Self {
+        OutError::NotThisStoreInvoice
     }
 }

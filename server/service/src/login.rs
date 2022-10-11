@@ -6,13 +6,15 @@ use std::{
 use bcrypt::BcryptError;
 use log::info;
 use repository::{
-    Permission, RepositoryError, UserAccountRow, UserPermissionRow, UserStoreJoinRow,
+    ActivityLogType, Permission, RepositoryError, UserAccountRow, UserPermissionRow,
+    UserStoreJoinRow,
 };
 use reqwest::{ClientBuilder, Url};
 use serde::{Deserialize, Serialize};
 use util::uuid::uuid;
 
 use crate::{
+    activity_log::activity_log_entry_without_record,
     apis::{
         login_v4::{
             LoginApiV4, LoginInputV4, LoginStatusV4, LoginUserInfoV4, LoginUserTypeV4, LoginV4Error,
@@ -103,7 +105,8 @@ impl LoginService {
         let mut username = input.username.clone();
         match LoginService::fetch_user_from_central(&input).await {
             Ok(user_info) => {
-                let service_ctx = service_provider.context()?;
+                let service_ctx =
+                    service_provider.context("".to_string(), user_info.user.id.clone())?;
                 username = user_info.user.name.clone();
                 LoginService::update_user(&service_ctx, &input.password, user_info)
                     .map_err(|e| LoginError::UpdateUserError(e))?;
@@ -114,7 +117,7 @@ impl LoginService {
                 FetchUserError::InternalError(_) => info!("{:?}", err),
             },
         };
-        let service_ctx = service_provider.context()?;
+        let mut service_ctx = service_provider.basic_context()?;
         let user_service = UserAccountService::new(&service_ctx.connection);
         let user_account = match user_service.verify_password(&username, &input.password) {
             Ok(user) => user,
@@ -129,6 +132,9 @@ impl LoginService {
                 });
             }
         };
+        service_ctx.user_id = user_account.id.clone();
+
+        activity_log_entry_without_record(&service_ctx, ActivityLogType::UserLoggedIn)?;
 
         let mut token_service = TokenService::new(
             &auth_data.token_bucket,
@@ -246,6 +252,7 @@ impl LoginService {
                         user_id: user_store_join.user_id.clone(),
                         store_id: Some(user_store_join.store_id.clone()),
                         permission,
+                        context: None,
                     })
                     .collect();
 
@@ -337,6 +344,9 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permission> {
             Permissions::ViewReports => {
                 output.insert(Permission::Report);
             }
+            Permissions::ViewLog => {
+                output.insert(Permission::LogQuery);
+            }
             _ => continue,
         }
     }
@@ -352,6 +362,7 @@ mod test {
         mock::MockDataInserts, test_db::setup_all, EqualFilter, UserFilter, UserPermissionFilter,
         UserPermissionRepository, UserRepository,
     };
+    use util::assert_matches;
 
     use crate::{
         apis::login_v4::LoginResponseV4,
@@ -369,7 +380,9 @@ mod test {
         let (_, _, connection_manager, _) =
             setup_all("login_test", MockDataInserts::none().names().stores()).await;
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider
+            .context("".to_string(), "".to_string())
+            .unwrap();
 
         let auth_data = AuthData {
             auth_token_secret: "secret".to_string(),
@@ -443,11 +456,7 @@ mod test {
             )
             .await;
 
-            assert!(
-                matches!(result, Err(LoginError::LoginFailure)),
-                "expected login failure, got {:#?}",
-                result
-            );
+            assert_matches!(result, Err(LoginError::LoginFailure));
         }
         // Old password should still work in offline mode or if central return an error
         {
@@ -471,11 +480,7 @@ mod test {
             )
             .await;
 
-            assert!(
-                matches!(result, Ok(_)),
-                "expected Ok token pair, got {:#?}",
-                result
-            );
+            assert_matches!(result, Ok(_));
         }
         // If server password has changed, and trying to login with old password, return LoginError::LoginFailure
         {
@@ -499,11 +504,7 @@ mod test {
             )
             .await;
 
-            assert!(
-                matches!(result, Err(LoginError::LoginFailure)),
-                "expected login failure, got {:#?}",
-                result
-            );
+            assert_matches!(result, Err(LoginError::LoginFailure));
         }
         // If central server is not accessible after trying to login with old password, make sure old password does not work
         // Issue #1101 in remote-server: Extra login protection when user password has changed

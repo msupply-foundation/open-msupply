@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect } from 'react';
 import {
   useToggle,
   useFormatNumber,
@@ -47,6 +47,7 @@ interface StockItemSearchInputProps {
   extraFilter?: (item: ItemRowWithStatsFragment) => boolean;
   width?: number;
   autoFocus?: boolean;
+  openOnFocus?: boolean;
 }
 
 export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
@@ -56,6 +57,7 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   extraFilter,
   width,
   autoFocus = false,
+  openOnFocus,
 }) => {
   const { data, isLoading } = useStockItemsWithStats();
   const t = useTranslation('common');
@@ -67,6 +69,14 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   const options = extraFilter
     ? data?.nodes?.filter(extraFilter) ?? []
     : data?.nodes ?? [];
+
+  useEffect(() => {
+    // using the Autocomplete openOnFocus prop, the popper is incorrectly positioned
+    // when used within a Dialog. This is a workaround to fix the popper position.
+    if (openOnFocus) {
+      setTimeout(() => selectControl.toggleOn(), 300);
+    }
+  }, []);
 
   return (
     <Autocomplete
@@ -85,6 +95,7 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
       width={width ? `${width}px` : '100%'}
       popperMinWidth={width}
       isOptionEqualToValue={(option, value) => option?.id === value?.id}
+      open={selectControl.isOn}
     />
   );
 };

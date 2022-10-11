@@ -23,14 +23,13 @@ pub struct InsertLocation {
 
 pub fn insert_location(
     ctx: &ServiceContext,
-    store_id: &str,
     input: InsertLocation,
 ) -> Result<Location, InsertLocationError> {
     let location = ctx
         .connection
         .transaction_sync(|connection| {
             validate(&input, connection)?;
-            let new_location = generate(store_id, input);
+            let new_location = generate(&ctx.store_id, input);
             LocationRowRepository::new(&connection).upsert_one(&new_location)?;
 
             get_location(ctx, new_location.id).map_err(InsertLocationError::from)

@@ -57,7 +57,7 @@ pub fn chart(
     consumption_options_input: Option<ConsumptionOptionsInput>,
     stock_evolution_options_input: Option<StockEvolutionOptionsInput>,
 ) -> Result<ChartResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::RequisitionChart,
@@ -66,13 +66,12 @@ pub fn chart(
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context()?;
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
     let result = match service_provider
         .requisition_line_service
         .get_requisition_line_chart(
             &service_context,
-            store_id,
             request_requisition_line_id,
             consumption_options_input
                 .map(|i| i.to_domain())
@@ -164,7 +163,6 @@ mod graphql {
 
     type GetRequisitionLineChart = dyn Fn(
             &str,
-            &str,
             ConsumptionHistoryOptions,
             StockEvolutionOptions,
         ) -> Result<ItemChart, RequisitionLineChartError>
@@ -177,13 +175,11 @@ mod graphql {
         fn get_requisition_line_chart(
             &self,
             _: &ServiceContext,
-            store_id: &str,
             requisition_line_id: &str,
             consumption_history_options: ConsumptionHistoryOptions,
             stock_evolution_options: StockEvolutionOptions,
         ) -> Result<ItemChart, RequisitionLineChartError> {
             self.0(
-                store_id,
                 requisition_line_id,
                 consumption_history_options,
                 stock_evolution_options,
@@ -243,7 +239,7 @@ mod graphql {
         .await;
 
         // Test list error
-        let test_service = TestService(Box::new(|_, _, _, _| {
+        let test_service = TestService(Box::new(|_, _, _| {
             Err(ServiceError::RequisitionLineDoesNotExist)
         }));
 
@@ -264,7 +260,7 @@ mod graphql {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        let test_service = TestService(Box::new(|_, _, _, _| {
+        let test_service = TestService(Box::new(|_, _, _| {
             Err(ServiceError::RequisitionLineDoesNotBelongToCurrentStore)
         }));
 
@@ -278,7 +274,7 @@ mod graphql {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        let test_service = TestService(Box::new(|_, _, _, _| {
+        let test_service = TestService(Box::new(|_, _, _| {
             Err(ServiceError::NotARequestRequisition)
         }));
 
@@ -304,7 +300,7 @@ mod graphql {
         .await;
 
         // Test defaults
-        let test_service = TestService(Box::new(|_, _, consumption_history, stock_evolution| {
+        let test_service = TestService(Box::new(|_, consumption_history, stock_evolution| {
             assert_eq!(stock_evolution, StockEvolutionOptions::default());
             assert_eq!(
                 consumption_history,
@@ -340,7 +336,7 @@ mod graphql {
 
         // Test all inputs
         let test_service = TestService(Box::new(
-            |store_id, requisition_line_id, consumption_history, stock_evolution| {
+            |requisition_line_id, consumption_history, stock_evolution| {
                 assert_eq!(
                     stock_evolution,
                     StockEvolutionOptions {
@@ -356,7 +352,7 @@ mod graphql {
                     }
                 );
 
-                assert_eq!(store_id, "store_id");
+                // assert_eq!(store_id, "store_id");
                 assert_eq!(requisition_line_id, "requisition_line_id");
                 Ok(ItemChart::default())
             },

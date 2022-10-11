@@ -1,10 +1,12 @@
+import { useTranslation } from '@common/intl';
 import { useGql } from '../../../api';
 import { getAuthQueries } from '../api';
 import { getSdk } from '../operations.generated';
 
 export const useAuthApi = () => {
   const { client } = useGql();
-  const queries = getAuthQueries(getSdk(client));
+  const t = useTranslation('app');
+  const queries = getAuthQueries(getSdk(client), t);
 
   const keys = {
     me: (token: string) => ['me', token] as const,

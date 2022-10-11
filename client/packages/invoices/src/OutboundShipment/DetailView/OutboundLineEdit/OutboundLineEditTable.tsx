@@ -13,6 +13,7 @@ import { DraftOutboundLine } from '../../../types';
 import { PackSizeController, useOutboundLineEditRows } from './hooks';
 import { useOutbound } from '../../api';
 import { useOutboundLineEditColumns } from './columns';
+import { shouldUpdatePlaceholder } from './utils';
 
 export interface OutboundLineEditTableProps {
   onChange: (key: string, value: number, packSize: number) => void;
@@ -67,11 +68,20 @@ export const OutboundLineEditTable: React.FC<OutboundLineEditTableProps> = ({
   packSizeController,
   rows,
 }) => {
-  const columns = useOutboundLineEditColumns({ onChange });
   const { orderedRows, placeholderRow } = useOutboundLineEditRows(
     rows,
     packSizeController
   );
+  const onEditStockLine = (key: string, value: number, packSize: number) => {
+    onChange(key, value, packSize);
+    if (placeholderRow && shouldUpdatePlaceholder(value, placeholderRow))
+      // if a stock line has been allocated
+      // and the placeholder row is a generated one with a zero value,
+      // this allows removal of the placeholder row
+      placeholderRow.isUpdated = true;
+  };
+
+  const columns = useOutboundLineEditColumns({ onChange: onEditStockLine });
 
   return (
     <Box style={{ width: '100%' }}>
@@ -85,7 +95,12 @@ export const OutboundLineEditTable: React.FC<OutboundLineEditTableProps> = ({
         }}
       >
         {!!orderedRows.length && (
-          <DataTable columns={columns} data={orderedRows} dense />
+          <DataTable
+            key="outbound-line-edit"
+            columns={columns}
+            data={orderedRows}
+            dense
+          />
         )}
         {placeholderRow ? (
           <PlaceholderRow line={placeholderRow} onChange={onChange} />

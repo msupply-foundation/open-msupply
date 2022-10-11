@@ -47,6 +47,7 @@ const NameListComponent: FC<{ type: 'customer' | 'supplier' }> = ({ type }) => {
   return (
     <>
       <DataTable
+        key="name-list"
         pagination={{ ...pagination, total: data?.totalCount }}
         onChangePage={updatePaginationQuery}
         columns={columns}

@@ -3,7 +3,7 @@ import { useNameApi } from '../utils/useNameApi';
 
 export const useNames = (type: 'customer' | 'supplier') => {
   const { queryParams } = useUrlQueryParams({
-    initialSortKey: 'name',
+    initialSort: { key: 'name', dir: 'asc' },
   });
   const api = useNameApi();
   return {

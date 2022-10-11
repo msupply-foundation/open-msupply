@@ -9,8 +9,13 @@ import {
   RouteBuilder,
   useTranslation,
   createQueryParamsStore,
+  DetailTabs,
 } from '@openmsupply-client/common';
-import { toItemRow, ItemRowFragment } from '@openmsupply-client/system';
+import {
+  toItemRow,
+  ItemRowFragment,
+  LogList,
+} from '@openmsupply-client/system';
 import { ContentArea } from './ContentArea';
 import { OutboundLineEdit } from './OutboundLineEdit';
 import { OutboundItem } from '../../types';
@@ -38,6 +43,22 @@ export const DetailView: FC = () => {
 
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
+  const tabs = [
+    {
+      Component: (
+        <ContentArea
+          onRowClick={!isDisabled ? onRowClick : null}
+          onAddItem={onOpen}
+        />
+      ),
+      value: 'Details',
+    },
+    {
+      Component: <LogList recordId={data?.id ?? ''} />,
+      value: 'Log',
+    },
+  ];
+
   return (
     <React.Suspense
       fallback={<DetailViewSkeleton hasGroupBy={true} hasHold={true} />}
@@ -64,10 +85,7 @@ export const DetailView: FC = () => {
           )}
 
           <Toolbar />
-          <ContentArea
-            onRowClick={!isDisabled ? onRowClick : null}
-            onAddItem={onOpen}
-          />
+          <DetailTabs tabs={tabs} />
           <Footer />
           <SidePanel />
         </TableProvider>

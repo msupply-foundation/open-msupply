@@ -19,8 +19,8 @@ table! {
         pack_size -> Integer,
         cost_price_per_pack -> Double,
         sell_price_per_pack -> Double,
-        available_number_of_packs -> Integer,
-        total_number_of_packs -> Integer,
+        available_number_of_packs -> Double,
+        total_number_of_packs -> Double,
         expiry_date -> Nullable<Date>,
         on_hold -> Bool,
         note -> Nullable<Text>,
@@ -32,6 +32,7 @@ joinable!(stock_line -> store (store_id));
 joinable!(stock_line -> location (location_id));
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
+#[changeset_options(treat_none_as_null = "true")]
 #[table_name = "stock_line"]
 pub struct StockLineRow {
     pub id: String,
@@ -42,8 +43,8 @@ pub struct StockLineRow {
     pub pack_size: i32,
     pub cost_price_per_pack: f64,
     pub sell_price_per_pack: f64,
-    pub available_number_of_packs: i32,
-    pub total_number_of_packs: i32,
+    pub available_number_of_packs: f64,
+    pub total_number_of_packs: f64,
     pub expiry_date: Option<NaiveDate>,
     pub on_hold: bool,
     pub note: Option<String>,
@@ -95,5 +96,13 @@ impl<'a> StockLineRowRepository<'a> {
             .filter(stock_line_dsl::id.eq_any(ids))
             .load::<StockLineRow>(&self.connection.connection)
             .map_err(RepositoryError::from)
+    }
+
+    pub fn find_one_by_id_option(&self, id: &str) -> Result<Option<StockLineRow>, RepositoryError> {
+        let result = stock_line_dsl::stock_line
+            .filter(stock_line_dsl::id.eq(id))
+            .first(&self.connection.connection)
+            .optional()?;
+        Ok(result)
     }
 }

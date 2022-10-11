@@ -1,10 +1,16 @@
-import { useEffect } from 'react';
+import { useContext, useEffect, useRef } from 'react';
+import { UNSAFE_NavigationContext as NavigationContext } from 'react-router-dom';
+import type { History } from 'history';
+import { useTranslation } from '@common/intl';
 
-// Note: if the unsaved condition can be navigated away from using react-router
-// then this hook won't catch the navigation action
-// you will need to use the `Prompt` component instead ( or usePrompt or useBlocker )
+// Ideally we'd use the `Prompt` component instead ( or usePrompt or useBlocker ) to prompt when navigating away using react-router
 // however, these weren't implemented in react-router-dom v6 at the time of implementation
-export const useConfirmOnLeaving = (isUnsaved: boolean) => {
+export const useConfirmOnLeaving = (isUnsaved?: boolean) => {
+  const unblockRef = useRef<any>(null);
+  const { navigator } = useContext(NavigationContext);
+  const t = useTranslation();
+  const blockNavigator = navigator as History;
+
   const promptUser = (e: BeforeUnloadEvent) => {
     // Cancel the event
     e.preventDefault(); // If you prevent default behavior in Mozilla Firefox prompt will always be shown
@@ -12,13 +18,32 @@ export const useConfirmOnLeaving = (isUnsaved: boolean) => {
     e.returnValue = '';
   };
 
+  const showConfirmation = (onOk: () => void) => {
+    if (
+      confirm(
+        `${t('heading.are-you-sure')}\n${t('messages.confirm-cancel-generic')}`
+      )
+    ) {
+      onOk();
+    }
+  };
+
   useEffect(() => {
     if (isUnsaved) {
       window.addEventListener('beforeunload', promptUser, { capture: true });
+      unblockRef.current = blockNavigator.block(blocker => {
+        showConfirmation(() => {
+          unblockRef.current?.();
+          blocker.retry();
+        });
+      });
     } else {
       window.removeEventListener('beforeunload', promptUser, { capture: true });
+      unblockRef.current?.();
     }
-    return () =>
+    return () => {
       window.removeEventListener('beforeunload', promptUser, { capture: true });
-  }, [isUnsaved]);
+      unblockRef.current?.();
+    };
+  }, [blockNavigator, isUnsaved]);
 };

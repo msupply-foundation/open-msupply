@@ -17,7 +17,7 @@ pub fn insert_location(
     store_id: &str,
     input: InsertLocationInput,
 ) -> Result<InsertLocationResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::MutateLocation,
@@ -26,13 +26,12 @@ pub fn insert_location(
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context()?;
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
-    match service_provider.location_service.insert_location(
-        &service_context,
-        store_id,
-        input.into(),
-    ) {
+    match service_provider
+        .location_service
+        .insert_location(&service_context, input.into())
+    {
         Ok(location) => Ok(InsertLocationResponse::Response(LocationNode::from_domain(
             location,
         ))),
@@ -131,7 +130,6 @@ mod test {
         fn insert_location(
             &self,
             _: &ServiceContext,
-            _: &str,
             input: InsertLocation,
         ) -> Result<Location, InsertLocationError> {
             (self.0)(input)

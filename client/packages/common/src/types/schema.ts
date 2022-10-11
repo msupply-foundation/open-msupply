@@ -10,24 +10,72 @@ export type Scalars = {
   Boolean: boolean;
   Int: number;
   Float: number;
-  /**
-   * Implement the DateTime<Utc> scalar
-   *
-   * The input/output is a string in RFC3339 format.
-   */
   DateTime: string;
-  /** A scalar that can represent any JSON value. */
   JSON: any;
-  /**
-   * ISO 8601 calendar date without timezone.
-   * Format: %Y-%m-%d
-   *
-   * # Examples
-   *
-   * * `1994-11-13`
-   * * `2000-02-24`
-   */
   NaiveDate: string;
+  NaiveDateTime: string;
+};
+
+export type ActivityLogConnector = {
+  __typename: 'ActivityLogConnector';
+  nodes: Array<ActivityLogNode>;
+  totalCount: Scalars['Int'];
+};
+
+export type ActivityLogFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  recordId?: InputMaybe<EqualFilterStringInput>;
+  storeId?: InputMaybe<EqualFilterStringInput>;
+  type?: InputMaybe<EqualFilterActivityLogTypeInput>;
+  userId?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type ActivityLogNode = {
+  __typename: 'ActivityLogNode';
+  datetime: Scalars['NaiveDateTime'];
+  id: Scalars['String'];
+  recordId?: Maybe<Scalars['String']>;
+  store?: Maybe<StoreNode>;
+  storeId?: Maybe<Scalars['String']>;
+  type: ActivityLogNodeType;
+  user?: Maybe<UserNode>;
+};
+
+export enum ActivityLogNodeType {
+  InvoiceCreated = 'INVOICE_CREATED',
+  InvoiceDeleted = 'INVOICE_DELETED',
+  InvoiceStatusAllocated = 'INVOICE_STATUS_ALLOCATED',
+  InvoiceStatusDelivered = 'INVOICE_STATUS_DELIVERED',
+  InvoiceStatusPicked = 'INVOICE_STATUS_PICKED',
+  InvoiceStatusShipped = 'INVOICE_STATUS_SHIPPED',
+  InvoiceStatusVerified = 'INVOICE_STATUS_VERIFIED',
+  RequisitionCreated = 'REQUISITION_CREATED',
+  RequisitionDeleted = 'REQUISITION_DELETED',
+  RequisitionStatusFinalised = 'REQUISITION_STATUS_FINALISED',
+  RequisitionStatusSent = 'REQUISITION_STATUS_SENT',
+  StocktakeCreated = 'STOCKTAKE_CREATED',
+  StocktakeDeleted = 'STOCKTAKE_DELETED',
+  StocktakeStatusFinalised = 'STOCKTAKE_STATUS_FINALISED',
+  UserLoggedIn = 'USER_LOGGED_IN'
+}
+
+export type ActivityLogResponse = ActivityLogConnector;
+
+export enum ActivityLogSortFieldInput {
+  ActivityLogType = 'activityLogType',
+  Id = 'id',
+  RecordId = 'recordId',
+  UserId = 'userId'
+}
+
+export type ActivityLogSortInput = {
+  /**
+   * Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']>;
+  /** Sort query result by `key` */
+  key: ActivityLogSortFieldInput;
 };
 
 export type AddFromMasterListError = {
@@ -45,6 +93,33 @@ export type AddFromMasterListInput = {
 };
 
 export type AddFromMasterListResponse = AddFromMasterListError | RequisitionLineConnector;
+
+export type AddToInboundShipmentFromMasterListError = {
+  __typename: 'AddToInboundShipmentFromMasterListError';
+  error: AddToInboundShipmentFromMasterListErrorInterface;
+};
+
+export type AddToInboundShipmentFromMasterListErrorInterface = {
+  description: Scalars['String'];
+};
+
+export type AddToInboundShipmentFromMasterListResponse = AddToInboundShipmentFromMasterListError | InvoiceLineConnector;
+
+export type AddToOutboundShipmentFromMasterListError = {
+  __typename: 'AddToOutboundShipmentFromMasterListError';
+  error: AddToOutboundShipmentFromMasterListErrorInterface;
+};
+
+export type AddToOutboundShipmentFromMasterListErrorInterface = {
+  description: Scalars['String'];
+};
+
+export type AddToOutboundShipmentFromMasterListResponse = AddToOutboundShipmentFromMasterListError | InvoiceLineConnector;
+
+export type AddToShipmentFromMasterListInput = {
+  masterListId: Scalars['String'];
+  shipmentId: Scalars['String'];
+};
 
 export type AllocateOutboundShipmentUnallocatedLineError = {
   __typename: 'AllocateOutboundShipmentUnallocatedLineError';
@@ -217,7 +292,7 @@ export type CannotDeleteRequisitionWithLines = DeleteRequestRequisitionErrorInte
   description: Scalars['String'];
 };
 
-export type CannotEditInvoice = DeleteErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertInboundShipmentLineErrorInterface & InsertInboundShipmentServiceLineErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & {
+export type CannotEditInvoice = AddToInboundShipmentFromMasterListErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & DeleteErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertInboundShipmentLineErrorInterface & InsertInboundShipmentServiceLineErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & {
   __typename: 'CannotEditInvoice';
   description: Scalars['String'];
 };
@@ -539,6 +614,12 @@ export type DeleteStocktakeResponseWithId = {
   response: DeleteStocktakeResponse;
 };
 
+export type EqualFilterActivityLogTypeInput = {
+  equalAny?: InputMaybe<Array<ActivityLogNodeType>>;
+  equalTo?: InputMaybe<ActivityLogNodeType>;
+  notEqualTo?: InputMaybe<ActivityLogNodeType>;
+};
+
 export type EqualFilterBigNumberInput = {
   equalAny?: InputMaybe<Array<Scalars['Int']>>;
   equalTo?: InputMaybe<Scalars['Int']>;
@@ -614,572 +695,22 @@ export enum ForeignKey {
   StockLineId = 'stockLineId'
 }
 
-export type ForeignKeyError = DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertInboundShipmentLineErrorInterface & InsertInboundShipmentServiceLineErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & InsertOutboundShipmentUnallocatedLineErrorInterface & InsertRequestRequisitionLineErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionLineErrorInterface & {
+export type ForeignKeyError = DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & InsertInboundShipmentLineErrorInterface & InsertInboundShipmentServiceLineErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & InsertOutboundShipmentUnallocatedLineErrorInterface & InsertRequestRequisitionLineErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionLineErrorInterface & {
   __typename: 'ForeignKeyError';
   description: Scalars['String'];
   key: ForeignKey;
 };
 
-export type FullMutation = {
-  __typename: 'FullMutation';
-  /** Add requisition lines from master item master list */
-  addFromMasterList: AddFromMasterListResponse;
-  allocateOutboundShipmentUnallocatedLine: AllocateOutboundShipmentUnallocatedLineResponse;
-  batchInboundShipment: BatchInboundShipmentResponse;
-  batchOutboundShipment: BatchOutboundShipmentResponse;
-  batchRequestRequisition: BatchRequestRequisitionResponse;
-  batchStocktake: BatchStocktakeResponse;
-  /**
-   * Create shipment for response requisition
-   * Will create Outbound Shipment with placeholder lines for each requisition line
-   * placeholder line quantity will be set to requisitionLine.supply - all linked outbound shipments
-   * lines quantity (placeholder and filled) for requisitionLine.item
-   */
-  createRequisitionShipment: CreateRequisitionShipmentResponse;
-  deleteInboundShipment: DeleteInboundShipmentResponse;
-  deleteInboundShipmentLine: DeleteInboundShipmentLineResponse;
-  deleteInboundShipmentServiceLine: DeleteInboundShipmentServiceLineResponse;
-  deleteLocation: DeleteLocationResponse;
-  deleteOutboundShipment: DeleteOutboundShipmentResponse;
-  deleteOutboundShipmentLine: DeleteOutboundShipmentLineResponse;
-  deleteOutboundShipmentServiceLine: DeleteOutboundShipmentServiceLineResponse;
-  deleteOutboundShipmentUnallocatedLine: DeleteOutboundShipmentUnallocatedLineResponse;
-  deleteRequestRequisition: DeleteRequestRequisitionResponse;
-  deleteRequestRequisitionLine: DeleteRequestRequisitionLineResponse;
-  deleteStocktake: DeleteStocktakeResponse;
-  deleteStocktakeLine: DeleteStocktakeLineResponse;
-  insertInboundShipment: InsertInboundShipmentResponse;
-  insertInboundShipmentLine: InsertInboundShipmentLineResponse;
-  insertInboundShipmentServiceLine: InsertInboundShipmentServiceLineResponse;
-  insertLocation: InsertLocationResponse;
-  insertOutboundShipment: InsertOutboundShipmentResponse;
-  insertOutboundShipmentLine: InsertOutboundShipmentLineResponse;
-  insertOutboundShipmentServiceLine: InsertOutboundShipmentServiceLineResponse;
-  insertOutboundShipmentUnallocatedLine: InsertOutboundShipmentUnallocatedLineResponse;
-  insertRequestRequisition: InsertRequestRequisitionResponse;
-  insertRequestRequisitionLine: InsertRequestRequisitionLineResponse;
-  insertStocktake: InsertStocktakeResponse;
-  insertStocktakeLine: InsertStocktakeLineResponse;
-  /** Set supply quantity to requested quantity */
-  supplyRequestedQuantity: SupplyRequestedQuantityResponse;
-  updateInboundShipment: UpdateInboundShipmentResponse;
-  updateInboundShipmentLine: UpdateInboundShipmentLineResponse;
-  updateInboundShipmentServiceLine: UpdateInboundShipmentServiceLineResponse;
-  updateLocation: UpdateLocationResponse;
-  updateOutboundShipment: UpdateOutboundShipmentResponse;
-  updateOutboundShipmentLine: UpdateOutboundShipmentLineResponse;
-  updateOutboundShipmentServiceLine: UpdateOutboundShipmentServiceLineResponse;
-  updateOutboundShipmentUnallocatedLine: UpdateOutboundShipmentUnallocatedLineResponse;
-  updateRequestRequisition: UpdateRequestRequisitionResponse;
-  updateRequestRequisitionLine: UpdateRequestRequisitionLineResponse;
-  updateResponseRequisition: UpdateResponseRequisitionResponse;
-  updateResponseRequisitionLine: UpdateResponseRequisitionLineResponse;
-  updateServerSettings: UpdateServerSettingsResponse;
-  updateStocktake: UpdateStocktakeResponse;
-  updateStocktakeLine: UpdateStocktakeLineResponse;
-  /** Set requested for each line in request requisition to calculated */
-  useSuggestedQuantity: UseSuggestedQuantityResponse;
-};
-
-
-export type FullMutationAddFromMasterListArgs = {
-  input: AddFromMasterListInput;
-  storeId: Scalars['String'];
-};
-
-
-export type FullMutationAllocateOutboundShipmentUnallocatedLineArgs = {
-  lineId: Scalars['String'];
-  storeId: Scalars['String'];
-};
-
-
-export type FullMutationBatchInboundShipmentArgs = {
-  input: BatchInboundShipmentInput;
-  storeId: Scalars['String'];
-};
-
-
-export type FullMutationBatchOutboundShipmentArgs = {
-  input: BatchOutboundShipmentInput;
-  storeId: Scalars['String'];
-};
-
-
-export type FullMutationBatchRequestRequisitionArgs = {
-  input: BatchRequestRequisitionInput;
-  storeId: Scalars['String'];
-};
-
-
-export type FullMutationBatchStocktakeArgs = {
-  input: BatchStocktakeInput;
-  storeId: Scalars['String'];
-};
-
-
-export type FullMutationCreateRequisitionShipmentArgs = {
-  input: CreateRequisitionShipmentInput;
-  storeId: Scalars['String'];
-};
-
-
-export type FullMutationDeleteInboundShipmentArgs = {
-  input: DeleteInboundShipmentInput;
-  storeId: Scalars['String'];
-};
-
-
-export type FullMutationDeleteInboundShipmentLineArgs = {
-  input: DeleteInboundShipmentLineInput;
-  storeId: Scalars['String'];
-};
-
-
-export type FullMutationDeleteInboundShipmentServiceLineArgs = {
-  input: DeleteInboundShipmentServiceLineInput;
-  storeId: Scalars['String'];
-};
-
-
-export type FullMutationDeleteLocationArgs = {
-  input: DeleteLocationInput;
-  storeId: Scalars['String'];
-};
-
-
-export type FullMutationDeleteOutboundShipmentArgs = {
-  id: Scalars['String'];
-  storeId: Scalars['String'];
-};
-
-
-export type FullMutationDeleteOutboundShipmentLineArgs = {
-  input: DeleteOutboundShipmentLineInput;
-  storeId: Scalars['String'];
-};
-
-
-export type FullMutationDeleteOutboundShipmentServiceLineArgs = {
-  input: DeleteOutboundShipmentServiceLineInput;
-  storeId: Scalars['String'];
-};
-
-
-export type FullMutationDeleteOutboundShipmentUnallocatedLineArgs = {
-  input: DeleteOutboundShipmentUnallocatedLineInput;
-  storeId: Scalars['String'];
-};
-
-
-export type FullMutationDeleteRequestRequisitionArgs = {
-  input: DeleteRequestRequisitionInput;
-  storeId: Scalars['String'];
-};
-
-
-export type FullMutationDeleteRequestRequisitionLineArgs = {
-  input: DeleteRequestRequisitionLineInput;
-  storeId: Scalars['String'];
-};
-
-
-export type FullMutationDeleteStocktakeArgs = {
-  input: DeleteStocktakeInput;
-  storeId: Scalars['String'];
-};
-
-
-export type FullMutationDeleteStocktakeLineArgs = {
-  input: DeleteStocktakeLineInput;
-  storeId: Scalars['String'];
-};
-
-
-export type FullMutationInsertInboundShipmentArgs = {
-  input: InsertInboundShipmentInput;
-  storeId: Scalars['String'];
-};
-
-
-export type FullMutationInsertInboundShipmentLineArgs = {
-  input: InsertInboundShipmentLineInput;
-  storeId: Scalars['String'];
-};
-
-
-export type FullMutationInsertInboundShipmentServiceLineArgs = {
-  input: InsertInboundShipmentServiceLineInput;
-  storeId: Scalars['String'];
-};
-
-
-export type FullMutationInsertLocationArgs = {
-  input: InsertLocationInput;
-  storeId: Scalars['String'];
-};
-
-
-export type FullMutationInsertOutboundShipmentArgs = {
-  input: InsertOutboundShipmentInput;
-  storeId: Scalars['String'];
-};
-
-
-export type FullMutationInsertOutboundShipmentLineArgs = {
-  input: InsertOutboundShipmentLineInput;
-  storeId: Scalars['String'];
-};
-
-
-export type FullMutationInsertOutboundShipmentServiceLineArgs = {
-  input: InsertOutboundShipmentServiceLineInput;
-  storeId: Scalars['String'];
-};
-
-
-export type FullMutationInsertOutboundShipmentUnallocatedLineArgs = {
-  input: InsertOutboundShipmentUnallocatedLineInput;
-  storeId: Scalars['String'];
-};
-
-
-export type FullMutationInsertRequestRequisitionArgs = {
-  input: InsertRequestRequisitionInput;
-  storeId: Scalars['String'];
-};
-
-
-export type FullMutationInsertRequestRequisitionLineArgs = {
-  input: InsertRequestRequisitionLineInput;
-  storeId: Scalars['String'];
-};
-
-
-export type FullMutationInsertStocktakeArgs = {
-  input: InsertStocktakeInput;
-  storeId: Scalars['String'];
-};
-
-
-export type FullMutationInsertStocktakeLineArgs = {
-  input: InsertStocktakeLineInput;
-  storeId: Scalars['String'];
-};
-
-
-export type FullMutationSupplyRequestedQuantityArgs = {
-  input: SupplyRequestedQuantityInput;
-  storeId: Scalars['String'];
-};
-
-
-export type FullMutationUpdateInboundShipmentArgs = {
-  input: UpdateInboundShipmentInput;
-  storeId: Scalars['String'];
-};
-
-
-export type FullMutationUpdateInboundShipmentLineArgs = {
-  input: UpdateInboundShipmentLineInput;
-  storeId: Scalars['String'];
-};
-
-
-export type FullMutationUpdateInboundShipmentServiceLineArgs = {
-  input: UpdateInboundShipmentServiceLineInput;
-  storeId: Scalars['String'];
-};
-
-
-export type FullMutationUpdateLocationArgs = {
-  input: UpdateLocationInput;
-  storeId: Scalars['String'];
-};
-
-
-export type FullMutationUpdateOutboundShipmentArgs = {
-  input: UpdateOutboundShipmentInput;
-  storeId: Scalars['String'];
-};
-
-
-export type FullMutationUpdateOutboundShipmentLineArgs = {
-  input: UpdateOutboundShipmentLineInput;
-  storeId: Scalars['String'];
-};
-
-
-export type FullMutationUpdateOutboundShipmentServiceLineArgs = {
-  input: UpdateOutboundShipmentServiceLineInput;
-  storeId: Scalars['String'];
-};
-
-
-export type FullMutationUpdateOutboundShipmentUnallocatedLineArgs = {
-  input: UpdateOutboundShipmentUnallocatedLineInput;
-  storeId: Scalars['String'];
-};
-
-
-export type FullMutationUpdateRequestRequisitionArgs = {
-  input: UpdateRequestRequisitionInput;
-  storeId: Scalars['String'];
-};
-
-
-export type FullMutationUpdateRequestRequisitionLineArgs = {
-  input: UpdateRequestRequisitionLineInput;
-  storeId: Scalars['String'];
-};
-
-
-export type FullMutationUpdateResponseRequisitionArgs = {
-  input: UpdateResponseRequisitionInput;
-  storeId: Scalars['String'];
-};
-
-
-export type FullMutationUpdateResponseRequisitionLineArgs = {
-  input: UpdateResponseRequisitionLineInput;
-  storeId: Scalars['String'];
-};
-
-
-export type FullMutationUpdateServerSettingsArgs = {
-  input: UpdateServerSettingsInput;
-};
-
-
-export type FullMutationUpdateStocktakeArgs = {
-  input: UpdateStocktakeInput;
-  storeId: Scalars['String'];
-};
-
-
-export type FullMutationUpdateStocktakeLineArgs = {
-  input: UpdateStocktakeLineInput;
-  storeId: Scalars['String'];
-};
-
-
-export type FullMutationUseSuggestedQuantityArgs = {
-  input: UseSuggestedQuantityInput;
-  storeId: Scalars['String'];
-};
-
-export type FullQuery = {
-  __typename: 'FullQuery';
-  apiVersion: Scalars['String'];
-  /**
-   * Retrieves a new auth bearer and refresh token
-   * The refresh token is returned as a cookie
-   */
-  authToken: AuthTokenResponse;
-  invoice: InvoiceResponse;
-  invoiceByNumber: InvoiceResponse;
-  invoiceCounts: InvoiceCounts;
-  invoices: InvoicesResponse;
-  /** Query omSupply "item" entries */
-  items: ItemsResponse;
-  /** Query omSupply "locations" entries */
-  locations: LocationsResponse;
-  logout: LogoutResponse;
-  /** Query omSupply "master_lists" entries */
-  masterLists: MasterListsResponse;
-  me: UserResponse;
-  /** Query omSupply "name" entries */
-  names: NamesResponse;
-  /**
-   * Creates a printed report.
-   *
-   * All details about the report, e.g. the output format, are specified in the report definition
-   * which is referred to by the report_id.
-   * The printed report can be retrieved from the `/files` endpoint using the returned file id.
-   */
-  printReport: PrintReportResponse;
-  printReportDefinition: PrintReportResponse;
-  /**
-   * Retrieves a new auth bearer and refresh token
-   * The refresh token is returned as a cookie
-   */
-  refreshToken: RefreshTokenResponse;
-  /** Queries a list of available reports */
-  reports: ReportsResponse;
-  requisition: RequisitionResponse;
-  requisitionByNumber: RequisitionResponse;
-  requisitionLineChart: RequisitionLineChartResponse;
-  requisitions: RequisitionsResponse;
-  /** Restarts the server */
-  serverRestart: RestartNode;
-  /**
-   * Retrieves a new auth bearer and refresh token
-   * The refresh token is returned as a cookie
-   */
-  serverSettings: ServerSettingsResponse;
-  stockCounts: StockCounts;
-  stocktake: StocktakeResponse;
-  stocktakeByNumber: StocktakeResponse;
-  stocktakes: StocktakesResponse;
-  store: StoreResponse;
-  stores: StoresResponse;
-};
-
-
-export type FullQueryAuthTokenArgs = {
-  password: Scalars['String'];
-  username: Scalars['String'];
-};
-
-
-export type FullQueryInvoiceArgs = {
-  id: Scalars['String'];
-  storeId: Scalars['String'];
-};
-
-
-export type FullQueryInvoiceByNumberArgs = {
-  invoiceNumber: Scalars['Int'];
-  storeId: Scalars['String'];
-  type: InvoiceNodeType;
-};
-
-
-export type FullQueryInvoiceCountsArgs = {
-  storeId: Scalars['String'];
-  timezoneOffset?: InputMaybe<Scalars['Int']>;
-};
-
-
-export type FullQueryInvoicesArgs = {
-  filter?: InputMaybe<InvoiceFilterInput>;
-  page?: InputMaybe<PaginationInput>;
-  sort?: InputMaybe<Array<InvoiceSortInput>>;
-  storeId: Scalars['String'];
-};
-
-
-export type FullQueryItemsArgs = {
-  filter?: InputMaybe<ItemFilterInput>;
-  page?: InputMaybe<PaginationInput>;
-  sort?: InputMaybe<Array<ItemSortInput>>;
-  storeId: Scalars['String'];
-};
-
-
-export type FullQueryLocationsArgs = {
-  filter?: InputMaybe<LocationFilterInput>;
-  page?: InputMaybe<PaginationInput>;
-  sort?: InputMaybe<Array<LocationSortInput>>;
-  storeId: Scalars['String'];
-};
-
-
-export type FullQueryMasterListsArgs = {
-  filter?: InputMaybe<MasterListFilterInput>;
-  page?: InputMaybe<PaginationInput>;
-  sort?: InputMaybe<Array<MasterListSortInput>>;
-  storeId: Scalars['String'];
-};
-
-
-export type FullQueryNamesArgs = {
-  filter?: InputMaybe<NameFilterInput>;
-  page?: InputMaybe<PaginationInput>;
-  sort?: InputMaybe<Array<NameSortInput>>;
-  storeId: Scalars['String'];
-};
-
-
-export type FullQueryPrintReportArgs = {
-  dataId: Scalars['String'];
-  format?: InputMaybe<PrintFormat>;
-  reportId: Scalars['String'];
-  storeId: Scalars['String'];
-};
-
-
-export type FullQueryPrintReportDefinitionArgs = {
-  dataId: Scalars['String'];
-  name?: InputMaybe<Scalars['String']>;
-  report: Scalars['JSON'];
-  storeId: Scalars['String'];
-};
-
-
-export type FullQueryReportsArgs = {
-  filter?: InputMaybe<ReportFilterInput>;
-  page?: InputMaybe<PaginationInput>;
-  sort?: InputMaybe<Array<ReportSortInput>>;
-  storeId: Scalars['String'];
-};
-
-
-export type FullQueryRequisitionArgs = {
-  id: Scalars['String'];
-  storeId: Scalars['String'];
-};
-
-
-export type FullQueryRequisitionByNumberArgs = {
-  requisitionNumber: Scalars['Int'];
-  storeId: Scalars['String'];
-  type: RequisitionNodeType;
-};
-
-
-export type FullQueryRequisitionLineChartArgs = {
-  consumptionOptionsInput?: InputMaybe<ConsumptionOptionsInput>;
-  requestRequisitionLineId: Scalars['String'];
-  stockEvolutionOptionsInput?: InputMaybe<StockEvolutionOptionsInput>;
-  storeId: Scalars['String'];
-};
-
-
-export type FullQueryRequisitionsArgs = {
-  filter?: InputMaybe<RequisitionFilterInput>;
-  page?: InputMaybe<PaginationInput>;
-  sort?: InputMaybe<Array<RequisitionSortInput>>;
-  storeId: Scalars['String'];
-};
-
-
-export type FullQueryStockCountsArgs = {
-  daysTillExpired?: InputMaybe<Scalars['Int']>;
-  storeId: Scalars['String'];
-  timezoneOffset?: InputMaybe<Scalars['Int']>;
-};
-
-
-export type FullQueryStocktakeArgs = {
-  id: Scalars['String'];
-  storeId: Scalars['String'];
-};
-
-
-export type FullQueryStocktakeByNumberArgs = {
-  stocktakeNumber: Scalars['Int'];
-  storeId: Scalars['String'];
-};
-
-
-export type FullQueryStocktakesArgs = {
-  filter?: InputMaybe<StocktakeFilterInput>;
-  page?: InputMaybe<PaginationInput>;
-  sort?: InputMaybe<Array<StocktakeSortInput>>;
-  storeId: Scalars['String'];
-};
-
-
-export type FullQueryStoreArgs = {
-  id: Scalars['String'];
-};
-
-
-export type FullQueryStoresArgs = {
-  filter?: InputMaybe<StoreFilterInput>;
-  page?: InputMaybe<PaginationInput>;
-  sort?: InputMaybe<Array<StoreSortInput>>;
+export type FullSyncStatusNode = {
+  __typename: 'FullSyncStatusNode';
+  error?: Maybe<SyncErrorNode>;
+  integration?: Maybe<SyncStatusNode>;
+  isSyncing: Scalars['Boolean'];
+  prepareInitial?: Maybe<SyncStatusNode>;
+  pullCentral?: Maybe<SyncStatusWithProgressNode>;
+  pullRemote?: Maybe<SyncStatusWithProgressNode>;
+  push?: Maybe<SyncStatusWithProgressNode>;
+  summary: SyncStatusNode;
 };
 
 export enum GenderType {
@@ -1199,6 +730,17 @@ export type InboundInvoiceCounts = {
   __typename: 'InboundInvoiceCounts';
   created: InvoiceCountsSummary;
 };
+
+export enum InitialisationStatusType {
+  /** Fuly initialised */
+  Initialised = 'INITIALISED',
+  /** Sync settings were set and sync was attempted at least once */
+  Initialising = 'INITIALISING',
+  /** Sync settings are not set and sync was not attempted */
+  PreInitialisation = 'PRE_INITIALISATION'
+}
+
+export type InitialiseSiteResponse = SyncErrorNode | SyncSettingsNode;
 
 export type InsertErrorInterface = {
   description: Scalars['String'];
@@ -1239,12 +781,11 @@ export type InsertInboundShipmentLineInput = {
   invoiceId: Scalars['String'];
   itemId: Scalars['String'];
   locationId?: InputMaybe<Scalars['String']>;
-  numberOfPacks: Scalars['Int'];
+  numberOfPacks: Scalars['Float'];
   packSize: Scalars['Int'];
   sellPricePerPack: Scalars['Float'];
-  tax?: InputMaybe<TaxUpdate>;
-  totalAfterTax: Scalars['Float'];
-  totalBeforeTax: Scalars['Float'];
+  tax?: InputMaybe<Scalars['Float']>;
+  totalBeforeTax?: InputMaybe<Scalars['Float']>;
 };
 
 export type InsertInboundShipmentLineResponse = InsertInboundShipmentLineError | InvoiceLineNode;
@@ -1278,8 +819,7 @@ export type InsertInboundShipmentServiceLineInput = {
   itemId?: InputMaybe<Scalars['String']>;
   name?: InputMaybe<Scalars['String']>;
   note?: InputMaybe<Scalars['String']>;
-  tax?: InputMaybe<TaxUpdate>;
-  totalAfterTax: Scalars['Float'];
+  tax?: InputMaybe<Scalars['Float']>;
   totalBeforeTax: Scalars['Float'];
 };
 
@@ -1338,11 +878,10 @@ export type InsertOutboundShipmentLineInput = {
   id: Scalars['String'];
   invoiceId: Scalars['String'];
   itemId: Scalars['String'];
-  numberOfPacks: Scalars['Int'];
+  numberOfPacks: Scalars['Float'];
   stockLineId: Scalars['String'];
-  tax?: InputMaybe<TaxUpdate>;
-  totalAfterTax: Scalars['Float'];
-  totalBeforeTax: Scalars['Float'];
+  tax?: InputMaybe<Scalars['Float']>;
+  totalBeforeTax?: InputMaybe<Scalars['Float']>;
 };
 
 export type InsertOutboundShipmentLineResponse = InsertOutboundShipmentLineError | InvoiceLineNode;
@@ -1376,8 +915,7 @@ export type InsertOutboundShipmentServiceLineInput = {
   itemId?: InputMaybe<Scalars['String']>;
   name?: InputMaybe<Scalars['String']>;
   note?: InputMaybe<Scalars['String']>;
-  tax?: InputMaybe<TaxUpdate>;
-  totalAfterTax: Scalars['Float'];
+  tax?: InputMaybe<Scalars['Float']>;
   totalBeforeTax: Scalars['Float'];
 };
 
@@ -1488,7 +1026,7 @@ export type InsertStocktakeLineInput = {
   batch?: InputMaybe<Scalars['String']>;
   comment?: InputMaybe<Scalars['String']>;
   costPricePerPack?: InputMaybe<Scalars['Float']>;
-  countedNumberOfPacks?: InputMaybe<Scalars['Int']>;
+  countedNumberOfPacks?: InputMaybe<Scalars['Float']>;
   expiryDate?: InputMaybe<Scalars['NaiveDate']>;
   id: Scalars['String'];
   itemId?: InputMaybe<Scalars['String']>;
@@ -1601,7 +1139,7 @@ export type InvoiceLineNode = {
   locationId?: Maybe<Scalars['String']>;
   locationName?: Maybe<Scalars['String']>;
   note?: Maybe<Scalars['String']>;
-  numberOfPacks: Scalars['Int'];
+  numberOfPacks: Scalars['Float'];
   packSize: Scalars['Int'];
   pricing: PricingNode;
   sellPricePerPack: Scalars['Float'];
@@ -1935,7 +1473,12 @@ export type MasterListNode = {
   name: Scalars['String'];
 };
 
-export type MasterListNotFoundForThisStore = AddFromMasterListErrorInterface & {
+export type MasterListNotFoundForThisName = AddToOutboundShipmentFromMasterListErrorInterface & {
+  __typename: 'MasterListNotFoundForThisName';
+  description: Scalars['String'];
+};
+
+export type MasterListNotFoundForThisStore = AddFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & {
   __typename: 'MasterListNotFoundForThisStore';
   description: Scalars['String'];
 };
@@ -1957,6 +1500,376 @@ export type MasterListSortInput = {
 };
 
 export type MasterListsResponse = MasterListConnector;
+
+export type Mutations = {
+  __typename: 'Mutations';
+  /** Add requisition lines from master item master list */
+  addFromMasterList: AddFromMasterListResponse;
+  addToInboundShipmentFromMasterList: AddToInboundShipmentFromMasterListResponse;
+  /** Add invoice lines from master item master list */
+  addToOutboundShipmentFromMasterList: AddToOutboundShipmentFromMasterListResponse;
+  allocateOutboundShipmentUnallocatedLine: AllocateOutboundShipmentUnallocatedLineResponse;
+  batchInboundShipment: BatchInboundShipmentResponse;
+  batchOutboundShipment: BatchOutboundShipmentResponse;
+  batchRequestRequisition: BatchRequestRequisitionResponse;
+  batchStocktake: BatchStocktakeResponse;
+  /**
+   * Create shipment for response requisition
+   * Will create Outbound Shipment with placeholder lines for each requisition line
+   * placeholder line quantity will be set to requisitionLine.supply - all linked outbound shipments
+   * lines quantity (placeholder and filled) for requisitionLine.item
+   */
+  createRequisitionShipment: CreateRequisitionShipmentResponse;
+  deleteInboundShipment: DeleteInboundShipmentResponse;
+  deleteInboundShipmentLine: DeleteInboundShipmentLineResponse;
+  deleteInboundShipmentServiceLine: DeleteInboundShipmentServiceLineResponse;
+  deleteLocation: DeleteLocationResponse;
+  deleteOutboundShipment: DeleteOutboundShipmentResponse;
+  deleteOutboundShipmentLine: DeleteOutboundShipmentLineResponse;
+  deleteOutboundShipmentServiceLine: DeleteOutboundShipmentServiceLineResponse;
+  deleteOutboundShipmentUnallocatedLine: DeleteOutboundShipmentUnallocatedLineResponse;
+  deleteRequestRequisition: DeleteRequestRequisitionResponse;
+  deleteRequestRequisitionLine: DeleteRequestRequisitionLineResponse;
+  deleteStocktake: DeleteStocktakeResponse;
+  deleteStocktakeLine: DeleteStocktakeLineResponse;
+  initialiseSite: InitialiseSiteResponse;
+  insertInboundShipment: InsertInboundShipmentResponse;
+  insertInboundShipmentLine: InsertInboundShipmentLineResponse;
+  insertInboundShipmentServiceLine: InsertInboundShipmentServiceLineResponse;
+  insertLocation: InsertLocationResponse;
+  insertOutboundShipment: InsertOutboundShipmentResponse;
+  insertOutboundShipmentLine: InsertOutboundShipmentLineResponse;
+  insertOutboundShipmentServiceLine: InsertOutboundShipmentServiceLineResponse;
+  insertOutboundShipmentUnallocatedLine: InsertOutboundShipmentUnallocatedLineResponse;
+  insertRequestRequisition: InsertRequestRequisitionResponse;
+  insertRequestRequisitionLine: InsertRequestRequisitionLineResponse;
+  insertStocktake: InsertStocktakeResponse;
+  insertStocktakeLine: InsertStocktakeLineResponse;
+  manualSync: Scalars['String'];
+  /** Set supply quantity to requested quantity */
+  supplyRequestedQuantity: SupplyRequestedQuantityResponse;
+  updateInboundShipment: UpdateInboundShipmentResponse;
+  updateInboundShipmentLine: UpdateInboundShipmentLineResponse;
+  updateInboundShipmentServiceLine: UpdateInboundShipmentServiceLineResponse;
+  updateLocation: UpdateLocationResponse;
+  updateOutboundShipment: UpdateOutboundShipmentResponse;
+  updateOutboundShipmentLine: UpdateOutboundShipmentLineResponse;
+  updateOutboundShipmentServiceLine: UpdateOutboundShipmentServiceLineResponse;
+  updateOutboundShipmentUnallocatedLine: UpdateOutboundShipmentUnallocatedLineResponse;
+  updateRequestRequisition: UpdateRequestRequisitionResponse;
+  updateRequestRequisitionLine: UpdateRequestRequisitionLineResponse;
+  updateResponseRequisition: UpdateResponseRequisitionResponse;
+  updateResponseRequisitionLine: UpdateResponseRequisitionLineResponse;
+  updateStocktake: UpdateStocktakeResponse;
+  updateStocktakeLine: UpdateStocktakeLineResponse;
+  updateSyncSettings: UpdateSyncSettingsResponse;
+  /** Set requested for each line in request requisition to calculated */
+  useSuggestedQuantity: UseSuggestedQuantityResponse;
+};
+
+
+export type MutationsAddFromMasterListArgs = {
+  input: AddFromMasterListInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsAddToInboundShipmentFromMasterListArgs = {
+  input: AddToShipmentFromMasterListInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsAddToOutboundShipmentFromMasterListArgs = {
+  input: AddToShipmentFromMasterListInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsAllocateOutboundShipmentUnallocatedLineArgs = {
+  lineId: Scalars['String'];
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsBatchInboundShipmentArgs = {
+  input: BatchInboundShipmentInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsBatchOutboundShipmentArgs = {
+  input: BatchOutboundShipmentInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsBatchRequestRequisitionArgs = {
+  input: BatchRequestRequisitionInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsBatchStocktakeArgs = {
+  input: BatchStocktakeInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsCreateRequisitionShipmentArgs = {
+  input: CreateRequisitionShipmentInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsDeleteInboundShipmentArgs = {
+  input: DeleteInboundShipmentInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsDeleteInboundShipmentLineArgs = {
+  input: DeleteInboundShipmentLineInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsDeleteInboundShipmentServiceLineArgs = {
+  input: DeleteInboundShipmentServiceLineInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsDeleteLocationArgs = {
+  input: DeleteLocationInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsDeleteOutboundShipmentArgs = {
+  id: Scalars['String'];
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsDeleteOutboundShipmentLineArgs = {
+  input: DeleteOutboundShipmentLineInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsDeleteOutboundShipmentServiceLineArgs = {
+  input: DeleteOutboundShipmentServiceLineInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsDeleteOutboundShipmentUnallocatedLineArgs = {
+  input: DeleteOutboundShipmentUnallocatedLineInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsDeleteRequestRequisitionArgs = {
+  input: DeleteRequestRequisitionInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsDeleteRequestRequisitionLineArgs = {
+  input: DeleteRequestRequisitionLineInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsDeleteStocktakeArgs = {
+  input: DeleteStocktakeInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsDeleteStocktakeLineArgs = {
+  input: DeleteStocktakeLineInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsInitialiseSiteArgs = {
+  input: SyncSettingsInput;
+};
+
+
+export type MutationsInsertInboundShipmentArgs = {
+  input: InsertInboundShipmentInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsInsertInboundShipmentLineArgs = {
+  input: InsertInboundShipmentLineInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsInsertInboundShipmentServiceLineArgs = {
+  input: InsertInboundShipmentServiceLineInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsInsertLocationArgs = {
+  input: InsertLocationInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsInsertOutboundShipmentArgs = {
+  input: InsertOutboundShipmentInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsInsertOutboundShipmentLineArgs = {
+  input: InsertOutboundShipmentLineInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsInsertOutboundShipmentServiceLineArgs = {
+  input: InsertOutboundShipmentServiceLineInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsInsertOutboundShipmentUnallocatedLineArgs = {
+  input: InsertOutboundShipmentUnallocatedLineInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsInsertRequestRequisitionArgs = {
+  input: InsertRequestRequisitionInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsInsertRequestRequisitionLineArgs = {
+  input: InsertRequestRequisitionLineInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsInsertStocktakeArgs = {
+  input: InsertStocktakeInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsInsertStocktakeLineArgs = {
+  input: InsertStocktakeLineInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsSupplyRequestedQuantityArgs = {
+  input: SupplyRequestedQuantityInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsUpdateInboundShipmentArgs = {
+  input: UpdateInboundShipmentInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsUpdateInboundShipmentLineArgs = {
+  input: UpdateInboundShipmentLineInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsUpdateInboundShipmentServiceLineArgs = {
+  input: UpdateInboundShipmentServiceLineInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsUpdateLocationArgs = {
+  input: UpdateLocationInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsUpdateOutboundShipmentArgs = {
+  input: UpdateOutboundShipmentInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsUpdateOutboundShipmentLineArgs = {
+  input: UpdateOutboundShipmentLineInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsUpdateOutboundShipmentServiceLineArgs = {
+  input: UpdateOutboundShipmentServiceLineInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsUpdateOutboundShipmentUnallocatedLineArgs = {
+  input: UpdateOutboundShipmentUnallocatedLineInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsUpdateRequestRequisitionArgs = {
+  input: UpdateRequestRequisitionInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsUpdateRequestRequisitionLineArgs = {
+  input: UpdateRequestRequisitionLineInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsUpdateResponseRequisitionArgs = {
+  input: UpdateResponseRequisitionInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsUpdateResponseRequisitionLineArgs = {
+  input: UpdateResponseRequisitionLineInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsUpdateStocktakeArgs = {
+  input: UpdateStocktakeInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsUpdateStocktakeLineArgs = {
+  input: UpdateStocktakeLineInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsUpdateSyncSettingsArgs = {
+  input: SyncSettingsInput;
+};
+
+
+export type MutationsUseSuggestedQuantityArgs = {
+  input: UseSuggestedQuantityInput;
+  storeId: Scalars['String'];
+};
 
 export type NameConnector = {
   __typename: 'NameConnector';
@@ -2155,6 +2068,226 @@ export type PrintReportNode = {
 
 export type PrintReportResponse = PrintReportError | PrintReportNode;
 
+export type Queries = {
+  __typename: 'Queries';
+  activityLogs: ActivityLogResponse;
+  apiVersion: Scalars['String'];
+  /**
+   * Retrieves a new auth bearer and refresh token
+   * The refresh token is returned as a cookie
+   */
+  authToken: AuthTokenResponse;
+  /** Available without authorisation in operational and initialisation states */
+  initialisationStatus: InitialisationStatusType;
+  invoice: InvoiceResponse;
+  invoiceByNumber: InvoiceResponse;
+  invoiceCounts: InvoiceCounts;
+  invoices: InvoicesResponse;
+  /** Query omSupply "item" entries */
+  items: ItemsResponse;
+  latestSyncStatus?: Maybe<FullSyncStatusNode>;
+  /** Query omSupply "locations" entries */
+  locations: LocationsResponse;
+  logout: LogoutResponse;
+  /** Query omSupply "master_lists" entries */
+  masterLists: MasterListsResponse;
+  me: UserResponse;
+  /** Query omSupply "name" entries */
+  names: NamesResponse;
+  numberOfRecordsInPushQueue: Scalars['Int'];
+  /**
+   * Creates a printed report.
+   *
+   * All details about the report, e.g. the output format, are specified in the report definition
+   * which is referred to by the report_id.
+   * The printed report can be retrieved from the `/files` endpoint using the returned file id.
+   */
+  printReport: PrintReportResponse;
+  printReportDefinition: PrintReportResponse;
+  /**
+   * Retrieves a new auth bearer and refresh token
+   * The refresh token is returned as a cookie
+   */
+  refreshToken: RefreshTokenResponse;
+  /** Queries a list of available reports */
+  reports: ReportsResponse;
+  requisition: RequisitionResponse;
+  requisitionByNumber: RequisitionResponse;
+  requisitionLineChart: RequisitionLineChartResponse;
+  requisitions: RequisitionsResponse;
+  stockCounts: StockCounts;
+  stocktake: StocktakeResponse;
+  stocktakeByNumber: StocktakeResponse;
+  stocktakes: StocktakesResponse;
+  store: StoreResponse;
+  stores: StoresResponse;
+  syncSettings?: Maybe<SyncSettingsNode>;
+};
+
+
+export type QueriesActivityLogsArgs = {
+  filter?: InputMaybe<ActivityLogFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<ActivityLogSortInput>>;
+};
+
+
+export type QueriesAuthTokenArgs = {
+  password: Scalars['String'];
+  username: Scalars['String'];
+};
+
+
+export type QueriesInvoiceArgs = {
+  id: Scalars['String'];
+  storeId: Scalars['String'];
+};
+
+
+export type QueriesInvoiceByNumberArgs = {
+  invoiceNumber: Scalars['Int'];
+  storeId: Scalars['String'];
+  type: InvoiceNodeType;
+};
+
+
+export type QueriesInvoiceCountsArgs = {
+  storeId: Scalars['String'];
+  timezoneOffset?: InputMaybe<Scalars['Int']>;
+};
+
+
+export type QueriesInvoicesArgs = {
+  filter?: InputMaybe<InvoiceFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<InvoiceSortInput>>;
+  storeId: Scalars['String'];
+};
+
+
+export type QueriesItemsArgs = {
+  filter?: InputMaybe<ItemFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<ItemSortInput>>;
+  storeId: Scalars['String'];
+};
+
+
+export type QueriesLocationsArgs = {
+  filter?: InputMaybe<LocationFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<LocationSortInput>>;
+  storeId: Scalars['String'];
+};
+
+
+export type QueriesMasterListsArgs = {
+  filter?: InputMaybe<MasterListFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<MasterListSortInput>>;
+  storeId: Scalars['String'];
+};
+
+
+export type QueriesNamesArgs = {
+  filter?: InputMaybe<NameFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<NameSortInput>>;
+  storeId: Scalars['String'];
+};
+
+
+export type QueriesPrintReportArgs = {
+  dataId: Scalars['String'];
+  format?: InputMaybe<PrintFormat>;
+  reportId: Scalars['String'];
+  storeId: Scalars['String'];
+};
+
+
+export type QueriesPrintReportDefinitionArgs = {
+  dataId: Scalars['String'];
+  name?: InputMaybe<Scalars['String']>;
+  report: Scalars['JSON'];
+  storeId: Scalars['String'];
+};
+
+
+export type QueriesReportsArgs = {
+  filter?: InputMaybe<ReportFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<ReportSortInput>>;
+  storeId: Scalars['String'];
+};
+
+
+export type QueriesRequisitionArgs = {
+  id: Scalars['String'];
+  storeId: Scalars['String'];
+};
+
+
+export type QueriesRequisitionByNumberArgs = {
+  requisitionNumber: Scalars['Int'];
+  storeId: Scalars['String'];
+  type: RequisitionNodeType;
+};
+
+
+export type QueriesRequisitionLineChartArgs = {
+  consumptionOptionsInput?: InputMaybe<ConsumptionOptionsInput>;
+  requestRequisitionLineId: Scalars['String'];
+  stockEvolutionOptionsInput?: InputMaybe<StockEvolutionOptionsInput>;
+  storeId: Scalars['String'];
+};
+
+
+export type QueriesRequisitionsArgs = {
+  filter?: InputMaybe<RequisitionFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<RequisitionSortInput>>;
+  storeId: Scalars['String'];
+};
+
+
+export type QueriesStockCountsArgs = {
+  daysTillExpired?: InputMaybe<Scalars['Int']>;
+  storeId: Scalars['String'];
+  timezoneOffset?: InputMaybe<Scalars['Int']>;
+};
+
+
+export type QueriesStocktakeArgs = {
+  id: Scalars['String'];
+  storeId: Scalars['String'];
+};
+
+
+export type QueriesStocktakeByNumberArgs = {
+  stocktakeNumber: Scalars['Int'];
+  storeId: Scalars['String'];
+};
+
+
+export type QueriesStocktakesArgs = {
+  filter?: InputMaybe<StocktakeFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<StocktakeSortInput>>;
+  storeId: Scalars['String'];
+};
+
+
+export type QueriesStoreArgs = {
+  id: Scalars['String'];
+};
+
+
+export type QueriesStoresArgs = {
+  filter?: InputMaybe<StoreFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<StoreSortInput>>;
+};
+
 export type RecordAlreadyExist = InsertLocationErrorInterface & {
   __typename: 'RecordAlreadyExist';
   description: Scalars['String'];
@@ -2165,7 +2298,7 @@ export type RecordBelongsToAnotherStore = DeleteLocationErrorInterface & UpdateL
   description: Scalars['String'];
 };
 
-export type RecordNotFound = AddFromMasterListErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & NodeErrorInterface & RequisitionLineChartErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateLocationErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UseSuggestedQuantityErrorInterface & {
+export type RecordNotFound = AddFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & NodeErrorInterface & RequisitionLineChartErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateLocationErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UseSuggestedQuantityErrorInterface & {
   __typename: 'RecordNotFound';
   description: Scalars['String'];
 };
@@ -2291,9 +2424,9 @@ export type RequisitionLineNode = {
   /**
    * Quantity remaining to supply
    * supplyQuantity minus all (including unallocated) linked invoice lines numberOfPacks * packSize
-   * Only available in response requisition, request requistion returns 0
+   * Only available in response requisition, request requisition returns 0
    */
-  remainingQuantityToSupply: Scalars['Int'];
+  remainingQuantityToSupply: Scalars['Float'];
   /** Quantity requested */
   requestedQuantity: Scalars['Int'];
   /**
@@ -2414,28 +2547,6 @@ export type RequisitionSortInput = {
 
 export type RequisitionsResponse = RequisitionConnector;
 
-export type RestartNode = {
-  __typename: 'RestartNode';
-  message: Scalars['String'];
-};
-
-export type ServerSettingsNode = {
-  __typename: 'ServerSettingsNode';
-  status: ServerStatus;
-  /** Currently used sync settings (may differ from what is stored in the DB) */
-  syncSettings?: Maybe<SyncSettingsNode>;
-  /** Returns sync settings as currently stored on the server. If null no sync settings are set. */
-  syncSettingsDb?: Maybe<SyncSettingsNode>;
-};
-
-export type ServerSettingsResponse = ServerSettingsNode;
-
-export enum ServerStatus {
-  Running = 'RUNNING',
-  /** Server misses configuration to start up fully */
-  Stage_0 = 'STAGE_0'
-}
-
 export type SimpleStringFilterInput = {
   /** Search term must be an exact match (case sensitive) */
   equalTo?: InputMaybe<Scalars['String']>;
@@ -2497,7 +2608,7 @@ export type StockLineIsOnHold = InsertOutboundShipmentLineErrorInterface & Updat
 
 export type StockLineNode = {
   __typename: 'StockLineNode';
-  availableNumberOfPacks: Scalars['Int'];
+  availableNumberOfPacks: Scalars['Float'];
   batch?: Maybe<Scalars['String']>;
   costPricePerPack: Scalars['Float'];
   expiryDate?: Maybe<Scalars['NaiveDate']>;
@@ -2512,7 +2623,7 @@ export type StockLineNode = {
   packSize: Scalars['Int'];
   sellPricePerPack: Scalars['Float'];
   storeId: Scalars['String'];
-  totalNumberOfPacks: Scalars['Int'];
+  totalNumberOfPacks: Scalars['Float'];
 };
 
 export type StockLineResponse = NodeError | StockLineNode;
@@ -2553,7 +2664,7 @@ export type StocktakeLineNode = {
   batch?: Maybe<Scalars['String']>;
   comment?: Maybe<Scalars['String']>;
   costPricePerPack?: Maybe<Scalars['Float']>;
-  countedNumberOfPacks?: Maybe<Scalars['Int']>;
+  countedNumberOfPacks?: Maybe<Scalars['Float']>;
   expiryDate?: Maybe<Scalars['NaiveDate']>;
   id: Scalars['String'];
   item: ItemNode;
@@ -2562,7 +2673,7 @@ export type StocktakeLineNode = {
   note?: Maybe<Scalars['String']>;
   packSize?: Maybe<Scalars['Int']>;
   sellPricePerPack?: Maybe<Scalars['Float']>;
-  snapshotNumberOfPacks: Scalars['Int'];
+  snapshotNumberOfPacks: Scalars['Float'];
   stockLine?: Maybe<StockLineNode>;
   stocktakeId: Scalars['String'];
 };
@@ -2687,19 +2798,59 @@ export type SupplyRequestedQuantityInput = {
 
 export type SupplyRequestedQuantityResponse = RequisitionLineConnector | SupplyRequestedQuantityError;
 
+export type SyncErrorNode = {
+  __typename: 'SyncErrorNode';
+  fullError: Scalars['String'];
+  variant: SyncErrorVariant;
+};
+
+export enum SyncErrorVariant {
+  ConnectionError = 'CONNECTION_ERROR',
+  HardwareIdMismatch = 'HARDWARE_ID_MISMATCH',
+  IncorrectPassword = 'INCORRECT_PASSWORD',
+  IntegrationTimeoutReached = 'INTEGRATION_TIMEOUT_REACHED',
+  InvalidUrl = 'INVALID_URL',
+  SiteAuthTimeout = 'SITE_AUTH_TIMEOUT',
+  SiteHasNoStore = 'SITE_HAS_NO_STORE',
+  SiteNameNotFound = 'SITE_NAME_NOT_FOUND',
+  SiteUuidIsBeingChanged = 'SITE_UUID_IS_BEING_CHANGED',
+  Unknown = 'UNKNOWN'
+}
+
+export type SyncSettingsInput = {
+  /** Sync interval */
+  intervalSeconds: Scalars['Int'];
+  /** Plain text password */
+  password: Scalars['String'];
+  url: Scalars['String'];
+  username: Scalars['String'];
+};
+
 export type SyncSettingsNode = {
   __typename: 'SyncSettingsNode';
-  centralServerSiteId: Scalars['Int'];
   /** How frequently central data is synced */
-  intervalSec: Scalars['Int'];
-  siteId: Scalars['Int'];
+  intervalSeconds: Scalars['Int'];
   /** Central server url */
   url: Scalars['String'];
   /** Central server username */
   username: Scalars['String'];
 };
 
-export type TaxUpdate = {
+export type SyncStatusNode = {
+  __typename: 'SyncStatusNode';
+  finished?: Maybe<Scalars['NaiveDateTime']>;
+  started: Scalars['NaiveDateTime'];
+};
+
+export type SyncStatusWithProgressNode = {
+  __typename: 'SyncStatusWithProgressNode';
+  done?: Maybe<Scalars['Int']>;
+  finished?: Maybe<Scalars['NaiveDateTime']>;
+  started: Scalars['NaiveDateTime'];
+  total?: Maybe<Scalars['Int']>;
+};
+
+export type TaxInput = {
   /** Set or unset the tax value (in percentage) */
   percentage?: InputMaybe<Scalars['Float']>;
 };
@@ -2768,9 +2919,11 @@ export type UpdateInboundShipmentLineInput = {
   id: Scalars['String'];
   itemId?: InputMaybe<Scalars['String']>;
   locationId?: InputMaybe<Scalars['String']>;
-  numberOfPacks?: InputMaybe<Scalars['Int']>;
+  numberOfPacks?: InputMaybe<Scalars['Float']>;
   packSize?: InputMaybe<Scalars['Int']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']>;
+  tax?: InputMaybe<TaxInput>;
+  totalBeforeTax?: InputMaybe<Scalars['Float']>;
 };
 
 export type UpdateInboundShipmentLineResponse = InvoiceLineNode | UpdateInboundShipmentLineError;
@@ -2803,8 +2956,7 @@ export type UpdateInboundShipmentServiceLineInput = {
   itemId?: InputMaybe<Scalars['String']>;
   name?: InputMaybe<Scalars['String']>;
   note?: InputMaybe<Scalars['String']>;
-  tax?: InputMaybe<TaxUpdate>;
-  totalAfterTax?: InputMaybe<Scalars['Float']>;
+  tax?: InputMaybe<TaxInput>;
   totalBeforeTax?: InputMaybe<Scalars['Float']>;
 };
 
@@ -2877,10 +3029,9 @@ export type UpdateOutboundShipmentLineErrorInterface = {
 export type UpdateOutboundShipmentLineInput = {
   id: Scalars['String'];
   itemId?: InputMaybe<Scalars['String']>;
-  numberOfPacks?: InputMaybe<Scalars['Int']>;
+  numberOfPacks?: InputMaybe<Scalars['Float']>;
   stockLineId?: InputMaybe<Scalars['String']>;
-  tax?: InputMaybe<TaxUpdate>;
-  totalAfterTax?: InputMaybe<Scalars['Float']>;
+  tax?: InputMaybe<TaxInput>;
   totalBeforeTax?: InputMaybe<Scalars['Float']>;
 };
 
@@ -2914,8 +3065,7 @@ export type UpdateOutboundShipmentServiceLineInput = {
   itemId?: InputMaybe<Scalars['String']>;
   name?: InputMaybe<Scalars['String']>;
   note?: InputMaybe<Scalars['String']>;
-  tax?: InputMaybe<TaxUpdate>;
-  totalAfterTax?: InputMaybe<Scalars['Float']>;
+  tax?: InputMaybe<TaxInput>;
   totalBeforeTax?: InputMaybe<Scalars['Float']>;
 };
 
@@ -3051,12 +3201,6 @@ export enum UpdateResponseRequisitionStatusInput {
   Finalised = 'FINALISED'
 }
 
-export type UpdateServerSettingsInput = {
-  syncSettings?: InputMaybe<UpdateSyncSettingsInput>;
-};
-
-export type UpdateServerSettingsResponse = ServerSettingsNode;
-
 export type UpdateStocktakeError = {
   __typename: 'UpdateStocktakeError';
   error: UpdateStocktakeErrorInterface;
@@ -3071,7 +3215,7 @@ export type UpdateStocktakeInput = {
   description?: InputMaybe<Scalars['String']>;
   id: Scalars['String'];
   isLocked?: InputMaybe<Scalars['Boolean']>;
-  status?: InputMaybe<StocktakeNodeStatus>;
+  status?: InputMaybe<UpdateStocktakeStatusInput>;
   stocktakeDate?: InputMaybe<Scalars['NaiveDate']>;
 };
 
@@ -3088,14 +3232,14 @@ export type UpdateStocktakeLineInput = {
   batch?: InputMaybe<Scalars['String']>;
   comment?: InputMaybe<Scalars['String']>;
   costPricePerPack?: InputMaybe<Scalars['Float']>;
-  countedNumberOfPacks?: InputMaybe<Scalars['Int']>;
+  countedNumberOfPacks?: InputMaybe<Scalars['Float']>;
   expiryDate?: InputMaybe<Scalars['NaiveDate']>;
   id: Scalars['String'];
   locationId?: InputMaybe<Scalars['String']>;
   note?: InputMaybe<Scalars['String']>;
   packSize?: InputMaybe<Scalars['Int']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']>;
-  snapshotNumberOfPacks?: InputMaybe<Scalars['Int']>;
+  snapshotNumberOfPacks?: InputMaybe<Scalars['Float']>;
 };
 
 export type UpdateStocktakeLineResponse = StocktakeLineNode | UpdateStocktakeLineError;
@@ -3114,16 +3258,11 @@ export type UpdateStocktakeResponseWithId = {
   response: UpdateStocktakeResponse;
 };
 
-export type UpdateSyncSettingsInput = {
-  centralServerSiteId: Scalars['Int'];
-  /** Sync interval in sec */
-  intervalSec: Scalars['Int'];
-  /** Plain text password */
-  password: Scalars['String'];
-  siteId: Scalars['Int'];
-  url: Scalars['String'];
-  username: Scalars['String'];
-};
+export enum UpdateStocktakeStatusInput {
+  Finalised = 'FINALISED'
+}
+
+export type UpdateSyncSettingsResponse = SyncErrorNode | SyncSettingsNode;
 
 export type UseSuggestedQuantityError = {
   __typename: 'UseSuggestedQuantityError';
@@ -3145,11 +3284,34 @@ export type UserNode = {
   defaultStore?: Maybe<UserStoreNode>;
   /** The user's email address */
   email?: Maybe<Scalars['String']>;
+  permissions: UserStorePermissionConnector;
   stores: UserStoreConnector;
   /** Internal user id */
   userId: Scalars['String'];
   username: Scalars['String'];
 };
+
+
+export type UserNodePermissionsArgs = {
+  storeId?: InputMaybe<Scalars['String']>;
+};
+
+export enum UserPermission {
+  InboundShipmentMutate = 'INBOUND_SHIPMENT_MUTATE',
+  InboundShipmentQuery = 'INBOUND_SHIPMENT_QUERY',
+  LocationMutate = 'LOCATION_MUTATE',
+  LogQuery = 'LOG_QUERY',
+  OutboundShipmentMutate = 'OUTBOUND_SHIPMENT_MUTATE',
+  OutboundShipmentQuery = 'OUTBOUND_SHIPMENT_QUERY',
+  Report = 'REPORT',
+  RequisitionMutate = 'REQUISITION_MUTATE',
+  RequisitionQuery = 'REQUISITION_QUERY',
+  ServerAdmin = 'SERVER_ADMIN',
+  StocktakeMutate = 'STOCKTAKE_MUTATE',
+  StocktakeQuery = 'STOCKTAKE_QUERY',
+  StockLineQuery = 'STOCK_LINE_QUERY',
+  StoreAccess = 'STORE_ACCESS'
+}
 
 export type UserResponse = UserNode;
 
@@ -3164,4 +3326,17 @@ export type UserStoreNode = {
   code: Scalars['String'];
   id: Scalars['String'];
   name: Scalars['String'];
+};
+
+export type UserStorePermissionConnector = {
+  __typename: 'UserStorePermissionConnector';
+  nodes: Array<UserStorePermissionNode>;
+  totalCount: Scalars['Int'];
+};
+
+export type UserStorePermissionNode = {
+  __typename: 'UserStorePermissionNode';
+  context: Array<Scalars['String']>;
+  permissions: Array<UserPermission>;
+  storeId: Scalars['String'];
 };

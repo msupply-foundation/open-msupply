@@ -4,7 +4,10 @@ import { PlusCircleIcon } from '@common/icons';
 import { useFormatDateTime, useTranslation } from '@common/intl';
 import { ToggleState } from '@common/hooks';
 import { useStocktake } from '../api';
-import { StockItemSelectModal } from '@openmsupply-client/system';
+import {
+  ItemWithStockLines,
+  StockItemSelectModal,
+} from '@openmsupply-client/system';
 import { useAuthContext } from '@openmsupply-client/common';
 
 export const CreateStocktakeButton: React.FC<{
@@ -15,13 +18,13 @@ export const CreateStocktakeButton: React.FC<{
   const { user } = useAuthContext();
   const { localisedDate } = useFormatDateTime();
 
-  const onChange = async (itemIds?: string[]) => {
+  const onChange = async (items?: ItemWithStockLines[]) => {
     const description = t('stocktake.description-template', {
       username: user ? user.name : 'unknown user',
       date: localisedDate(new Date()),
     });
 
-    await mutateAsync({ description, itemIds });
+    await mutateAsync({ description, items });
   };
 
   return (

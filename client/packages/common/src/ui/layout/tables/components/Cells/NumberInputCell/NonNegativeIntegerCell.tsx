@@ -9,8 +9,6 @@ export const NonNegativeIntegerCell = <T extends RecordWithId>({
   rowData,
   column,
   rows,
-  rowIndex,
-  columnIndex,
   isDisabled = false,
 }: CellProps<T>): React.ReactElement<CellProps<T>> => {
   const [buffer, setBuffer] = useBufferState(
@@ -19,12 +17,9 @@ export const NonNegativeIntegerCell = <T extends RecordWithId>({
 
   const updater = useDebounceCallback(column.setter, [column.setter], 250);
 
-  const autoFocus = rowIndex === 0 && columnIndex === 0;
-
   return (
     <NonNegativeNumberInput
       disabled={isDisabled}
-      autoFocus={autoFocus}
       InputProps={{ sx: { '& .MuiInput-input': { textAlign: 'right' } } }}
       type="number"
       value={buffer}

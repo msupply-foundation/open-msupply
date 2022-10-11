@@ -35,8 +35,12 @@ fragment ItemRow on ItemNode {
   unitName
 }
 
-fragment ItemRowWithStats on ItemNode {
+fragment ItemWithPackSize on ItemNode {
   ...ItemRow
+  defaultPackSize
+}
+fragment ItemRowWithStats on ItemNode {
+  ...ItemWithPackSize
   stats(storeId: $storeId) {
     __typename
     averageMonthlyConsumption
@@ -150,6 +154,7 @@ query itemsWithStats(
         isVisible
         name
         unitName
+        defaultPackSize
         stats(storeId: $storeId) {
           __typename
           averageMonthlyConsumption

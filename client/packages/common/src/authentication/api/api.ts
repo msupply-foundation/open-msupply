@@ -1,3 +1,4 @@
+import { AuthError, LocaleKey, LocalStorage, TypedTFunction } from '../..';
 import { Sdk, AuthTokenQuery, RefreshTokenQuery } from './operations.generated';
 
 export type AuthenticationError = {
@@ -13,7 +14,8 @@ export interface RefreshResponse {
   token: string;
 }
 const authTokenGuard = (
-  authTokenQuery: AuthTokenQuery
+  authTokenQuery: AuthTokenQuery,
+  t: TypedTFunction<LocaleKey>
 ): AuthenticationResponse => {
   if (authTokenQuery?.authToken?.__typename === 'AuthToken') {
     return { token: authTokenQuery.authToken.token };
@@ -33,7 +35,7 @@ const authTokenGuard = (
 
   return {
     token: '',
-    error: { message: 'Error communicating with the server' },
+    error: { message: t('error.authentication-error') },
   };
 };
 
@@ -47,7 +49,7 @@ const refreshTokenGuard = (
   return { token: '' };
 };
 
-export const getAuthQueries = (sdk: Sdk) => ({
+export const getAuthQueries = (sdk: Sdk, t: TypedTFunction<LocaleKey>) => ({
   get: {
     authToken: async ({
       username,
@@ -61,11 +63,17 @@ export const getAuthQueries = (sdk: Sdk) => ({
           username,
           password,
         });
-        return authTokenGuard(result);
+        return authTokenGuard(result, t);
       } catch (e) {
+        const error = e as Error;
+        if ('message' in error) {
+          console.error(error.message);
+        }
         return {
           token: '',
-          error: { message: 'Error communicating with the server' },
+          error: {
+            message: t('error.authentication-error'),
+          },
         };
       }
     },
@@ -82,11 +90,39 @@ export const getAuthQueries = (sdk: Sdk) => ({
           }
         );
         return result.me;
-      } catch {}
+      } catch (e) {
+        console.error(e);
+        LocalStorage.setItem('/auth/error', AuthError.ServerError);
+      }
+    },
+    permissions: async ({
+      storeId,
+      token,
+    }: {
+      storeId: string;
+      token?: string;
+    }) => {
+      try {
+        const result = await sdk.permissions(
+          { storeId },
+          {
+            Authorization: `Bearer ${token}`,
+          }
+        );
+        return result?.me?.permissions;
+      } catch (e) {
+        console.error(e);
+        return { nodes: [] };
+      }
     },
     stores: () => async () => {
-      const result = await sdk.me();
-      return result?.me?.stores?.nodes;
+      try {
+        const result = await sdk.me();
+        return result?.me?.stores?.nodes;
+      } catch (e) {
+        console.error(e);
+        LocalStorage.setItem('/auth/error', AuthError.ServerError);
+      }
     },
   },
 });

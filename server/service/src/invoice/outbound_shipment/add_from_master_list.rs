@@ -1,25 +1,18 @@
-use crate::{
-    invoice::check_invoice_exists, service_provider::ServiceContext,
-    sync_processor::invoice::common::get_lines_for_invoice,
-};
+use crate::invoice::common::check_master_list_for_name;
+use crate::invoice::common::get_lines_for_invoice;
+use crate::invoice::common::AddToShipmentFromMasterListInput as ServiceInput;
+use crate::{invoice::check_invoice_exists, service_provider::ServiceContext};
 use repository::EqualFilter;
 use repository::{
     InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
-    InvoiceLineRowRepository, InvoiceRow, InvoiceRowStatus, InvoiceRowType, MasterList,
-    MasterListFilter, MasterListLineFilter, MasterListLineRepository, MasterListRepository,
-    RepositoryError, StorageConnection,
+    InvoiceLineRowRepository, InvoiceRow, InvoiceRowStatus, InvoiceRowType, MasterListLineFilter,
+    MasterListLineRepository, RepositoryError, StorageConnection,
 };
 
 use super::generate_unallocated_invoice_lines;
 
 #[derive(Debug, PartialEq)]
-pub struct AddFromMasterList {
-    pub outbound_shipment_id: String,
-    pub master_list_id: String,
-}
-
-#[derive(Debug, PartialEq)]
-pub enum AddToShipmentFromMasterListError {
+pub enum AddToOutboundShipmentFromMasterListError {
     ShipmentDoesNotExist,
     NotThisStoreShipment,
     CannotEditShipment,
@@ -28,23 +21,22 @@ pub enum AddToShipmentFromMasterListError {
     DatabaseError(RepositoryError),
 }
 
-type OutError = AddToShipmentFromMasterListError;
+type OutError = AddToOutboundShipmentFromMasterListError;
 
-impl From<RepositoryError> for AddToShipmentFromMasterListError {
+impl From<RepositoryError> for AddToOutboundShipmentFromMasterListError {
     fn from(error: RepositoryError) -> Self {
-        AddToShipmentFromMasterListError::DatabaseError(error)
+        AddToOutboundShipmentFromMasterListError::DatabaseError(error)
     }
 }
 
 pub fn add_from_master_list(
     ctx: &ServiceContext,
-    store_id: &str,
-    input: AddFromMasterList,
+    input: ServiceInput,
 ) -> Result<Vec<InvoiceLine>, OutError> {
     let invoice_lines = ctx
         .connection
         .transaction_sync(|connection| {
-            let invoice_row = validate(connection, store_id, &input)?;
+            let invoice_row = validate(connection, &ctx.store_id, &input)?;
             let new_invoice_line_rows = generate(ctx, invoice_row, &input)?;
 
             let invoice_line_row_repository = InvoiceLineRowRepository::new(&connection);
@@ -54,8 +46,7 @@ pub fn add_from_master_list(
             }
 
             match InvoiceLineRepository::new(connection).query_by_filter(
-                InvoiceLineFilter::new()
-                    .invoice_id(EqualFilter::equal_to(&input.outbound_shipment_id)),
+                InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&input.shipment_id)),
             ) {
                 Ok(lines) => Ok(lines),
                 Err(error) => Err(OutError::DatabaseError(error)),
@@ -68,9 +59,9 @@ pub fn add_from_master_list(
 fn validate(
     connection: &StorageConnection,
     store_id: &str,
-    input: &AddFromMasterList,
+    input: &ServiceInput,
 ) -> Result<InvoiceRow, OutError> {
-    let invoice_row = match check_invoice_exists(&input.outbound_shipment_id, connection) {
+    let invoice_row = match check_invoice_exists(&input.shipment_id, connection) {
         Ok(row) => row,
         Err(_error) => return Err(OutError::ShipmentDoesNotExist),
     };
@@ -78,7 +69,6 @@ fn validate(
     if invoice_row.store_id != store_id {
         return Err(OutError::NotThisStoreShipment);
     }
-
     if invoice_row.status == InvoiceRowStatus::Shipped
         || invoice_row.status == InvoiceRowStatus::Delivered
         || invoice_row.status == InvoiceRowStatus::Verified
@@ -99,13 +89,13 @@ fn validate(
 fn generate(
     ctx: &ServiceContext,
     invoice_row: InvoiceRow,
-    input: &AddFromMasterList,
+    input: &ServiceInput,
 ) -> Result<Vec<InvoiceLineRow>, RepositoryError> {
-    let invoice_lines = get_lines_for_invoice(&ctx.connection, &input.outbound_shipment_id)?;
+    let invoice_lines = get_lines_for_invoice(&ctx.connection, &input.shipment_id)?;
 
     let item_ids_in_invoice: Vec<String> = invoice_lines
         .into_iter()
-        .map(|invoice_line| invoice_line.item_id)
+        .map(|invoice_line| invoice_line.invoice_line_row.item_id)
         .collect();
 
     let master_list_lines_not_in_invoice = MasterListLineRepository::new(&ctx.connection)
@@ -127,25 +117,18 @@ fn generate(
     )?)
 }
 
-pub fn check_master_list_for_name(
-    connection: &StorageConnection,
-    name_id: &str,
-    master_list_id: &str,
-) -> Result<Option<MasterList>, RepositoryError> {
-    let mut rows = MasterListRepository::new(connection).query_by_filter(
-        MasterListFilter::new()
-            .id(EqualFilter::equal_to(master_list_id))
-            .exists_for_name_id(EqualFilter::equal_to(name_id)),
-    )?;
-    Ok(rows.pop())
-}
-
 #[cfg(test)]
 mod test {
+    use crate::invoice::{
+        common::AddToShipmentFromMasterListInput as ServiceInput,
+        outbound_shipment::AddToOutboundShipmentFromMasterListError as ServiceError,
+    };
+    use crate::service_provider::ServiceProvider;
+    use repository::mock::{mock_store_a, mock_store_c};
     use repository::{
         mock::{
             common::FullMockMasterList, mock_inbound_shipment_c, mock_item_a, mock_item_b,
-            mock_item_c, mock_item_d, mock_name_store_c, mock_new_outbound_shipment_no_lines,
+            mock_item_c, mock_item_d, mock_new_outbound_shipment_no_lines,
             mock_outbound_shipment_c, mock_outbound_shipment_no_lines,
             mock_outbound_shipment_shipped, mock_test_not_store_a_master_list, MockData,
             MockDataInserts,
@@ -155,29 +138,23 @@ mod test {
     };
     use util::inline_init;
 
-    use crate::{
-        invoice::outbound_shipment::{
-            AddFromMasterList, AddToShipmentFromMasterListError as ServiceError,
-        },
-        service_provider::ServiceProvider,
-    };
-
     #[actix_rt::test]
     async fn add_from_master_list_errors() {
         let (_, _, connection_manager, _) =
-            setup_all("add_from_master_list_errors", MockDataInserts::all()).await;
+            setup_all("os_add_from_master_list_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let mut context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_service;
 
         // RecordDoesNotExist
         assert_eq!(
-            service.add_from_master_list(
+            service.add_to_outbound_shipment_from_master_list(
                 &context,
-                "store_a",
-                AddFromMasterList {
-                    outbound_shipment_id: "invalid".to_owned(),
+                ServiceInput {
+                    shipment_id: "invalid".to_owned(),
                     master_list_id: "n/a".to_owned()
                 },
             ),
@@ -186,50 +163,47 @@ mod test {
 
         // NotThisStore
         assert_eq!(
-            service.add_from_master_list(
+            service.add_to_outbound_shipment_from_master_list(
                 &context,
-                "store_b",
-                AddFromMasterList {
-                    outbound_shipment_id: mock_outbound_shipment_no_lines().id,
+                ServiceInput {
+                    shipment_id: mock_outbound_shipment_no_lines().id,
                     master_list_id: "n/a".to_owned()
                 },
             ),
             Err(ServiceError::NotThisStoreShipment)
         );
 
-        // CannotEditRecord
-        assert_eq!(
-            service.add_from_master_list(
-                &context,
-                "store_c",
-                AddFromMasterList {
-                    outbound_shipment_id: mock_outbound_shipment_shipped().id,
-                    master_list_id: "n/a".to_owned()
-                },
-            ),
-            Err(ServiceError::CannotEditShipment)
-        );
-
         // RecordIsIncorrectType
         assert_eq!(
-            service.add_from_master_list(
+            service.add_to_outbound_shipment_from_master_list(
                 &context,
-                "store_a",
-                AddFromMasterList {
-                    outbound_shipment_id: mock_inbound_shipment_c().id,
+                ServiceInput {
+                    shipment_id: mock_inbound_shipment_c().id,
                     master_list_id: "n/a".to_owned()
                 },
             ),
             Err(ServiceError::NotAnOutboundShipment)
         );
 
+        // CannotEditRecord
+        context.store_id = mock_store_c().id;
+        assert_eq!(
+            service.add_to_outbound_shipment_from_master_list(
+                &context,
+                ServiceInput {
+                    shipment_id: mock_outbound_shipment_shipped().id,
+                    master_list_id: "n/a".to_owned()
+                },
+            ),
+            Err(ServiceError::CannotEditShipment)
+        );
+
         // MasterListNotFoundForThisName
         assert_eq!(
-            service.add_from_master_list(
+            service.add_to_outbound_shipment_from_master_list(
                 &context,
-                "store_c",
-                AddFromMasterList {
-                    outbound_shipment_id: mock_outbound_shipment_c().id,
+                ServiceInput {
+                    shipment_id: mock_outbound_shipment_c().id,
                     master_list_id: mock_test_not_store_a_master_list().master_list.id
                 },
             ),
@@ -257,7 +231,7 @@ mod test {
                 joins: vec![MasterListNameJoinRow {
                     id: join1,
                     master_list_id: id.clone(),
-                    name_id: mock_name_store_c().id,
+                    name_id: mock_new_outbound_shipment_no_lines().name_id,
                 }],
                 lines: vec![
                     MasterListLineRow {
@@ -285,7 +259,7 @@ mod test {
         }
 
         let (_, _, connection_manager, _) = setup_all_with_data(
-            "add_from_master_list_success",
+            "os_add_from_master_list_success",
             MockDataInserts::all(),
             inline_init(|r: &mut MockData| {
                 r.full_master_lists = vec![master_list()];
@@ -294,15 +268,16 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider
+            .context(mock_store_c().id, "".to_string())
+            .unwrap();
         let service = service_provider.invoice_service;
 
         let result: Vec<repository::InvoiceLineRow> = service
-            .add_from_master_list(
+            .add_to_outbound_shipment_from_master_list(
                 &context,
-                "store_c",
-                AddFromMasterList {
-                    outbound_shipment_id: mock_new_outbound_shipment_no_lines().id,
+                ServiceInput {
+                    shipment_id: mock_new_outbound_shipment_no_lines().id,
                     master_list_id: master_list().master_list.id,
                 },
             )
@@ -332,7 +307,7 @@ mod test {
             .find(|line| line.item_id == mock_item_a().id)
             .unwrap();
 
-        assert_eq!(line.number_of_packs, 0);
+        assert_eq!(line.number_of_packs, 0.0);
         assert_eq!(line.item_name, mock_item_a().name);
         assert_eq!(line.item_code, mock_item_a().code);
 
@@ -341,7 +316,7 @@ mod test {
             .find(|line| line.item_id == mock_item_b().id)
             .unwrap();
 
-        assert_eq!(line.number_of_packs, 0);
+        assert_eq!(line.number_of_packs, 0.0);
         assert_eq!(line.item_name, mock_item_b().name);
         assert_eq!(line.item_code, mock_item_b().code);
     }

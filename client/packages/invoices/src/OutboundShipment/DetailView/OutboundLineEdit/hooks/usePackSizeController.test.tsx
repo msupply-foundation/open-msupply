@@ -361,6 +361,6 @@ describe('usePackSizeController', () => {
       usePackSizeController(lines)
     );
 
-    expect(result.current.options.map(({ value }) => value)).toEqual([-1]);
+    expect(result.current.options.map(({ value }) => value)).toEqual([]);
   });
 });

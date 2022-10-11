@@ -21,24 +21,28 @@ table! {
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum KeyValueType {
     CentralSyncPullCursor,
-    /// Indicates if the sync queue on the remote server has been initialised
-    RemoteSyncInitilisationStarted,
-    /// Indicates if the remote data has been pulled and integrated from the central server
-    /// Possible value: "true"
-    RemoteSyncInitilisationFinished,
     RemoteSyncPushCursor,
+    ShipmentTransferProcessorCursor,
+    RequisitionTransferProcessorCursor,
 
     SettingsSyncUrl,
     SettingsSyncUsername,
     SettingsSyncPasswordSha256,
-    SettingsSyncIntervalSec,
+    SettingsSyncIntervalSeconds,
     SettingsSyncCentralServerSiteId,
     SettingsSyncSiteId,
+    SettingsSyncSiteUuid,
     SettingsSyncIsDisabled,
     SettingsTokenSecret,
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
+impl Default for KeyValueType {
+    fn default() -> Self {
+        KeyValueType::CentralSyncPullCursor
+    }
+}
+
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[changeset_options(treat_none_as_null = "true")]
 #[table_name = "key_value_store"]
 pub struct KeyValueStoreRow {

@@ -7,6 +7,7 @@ export const useOutbound = {
     isDisabled: Utils.useOutboundIsDisabled,
     number: Utils.useOutboundNumber,
     api: Utils.useOutboundApi,
+    addFromMasterList: Utils.useAddFromMasterList,
   },
 
   document: {

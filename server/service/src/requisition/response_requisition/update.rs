@@ -1,20 +1,20 @@
 use crate::{
+    activity_log::activity_log_entry,
     requisition::{common::check_requisition_exists, query::get_requisition},
     service_provider::ServiceContext,
-    sync_processor::{process_records, Record},
 };
 use chrono::Utc;
 use repository::{
     requisition_row::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
-    RepositoryError, Requisition, RequisitionRowRepository, StorageConnection,
+    ActivityLogType, RepositoryError, Requisition, RequisitionRowRepository, StorageConnection,
 };
 use util::inline_edit;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum UpdateResponseRequstionStatus {
     Finalised,
 }
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct UpdateResponseRequisition {
     pub id: String,
     pub colour: Option<String>,
@@ -39,16 +39,24 @@ type OutError = UpdateResponseRequisitionError;
 
 pub fn update_response_requisition(
     ctx: &ServiceContext,
-    store_id: &str,
-    user_id: &str,
     input: UpdateResponseRequisition,
 ) -> Result<Requisition, OutError> {
     let requisition = ctx
         .connection
         .transaction_sync(|connection| {
-            let requisition_row = validate(connection, store_id, &input)?;
-            let updated_requisition = generate(user_id, requisition_row, input);
+            let (requisition_row, status_changed) = validate(connection, &ctx.store_id, &input)?;
+
+            let updated_requisition =
+                generate(&ctx.user_id, requisition_row.clone(), input.clone());
             RequisitionRowRepository::new(&connection).upsert_one(&updated_requisition)?;
+
+            if status_changed {
+                activity_log_entry(
+                    &ctx,
+                    ActivityLogType::RequisitionStatusFinalised,
+                    &updated_requisition.id,
+                )?;
+            }
 
             get_requisition(ctx, None, &updated_requisition.id)
                 .map_err(|error| OutError::DatabaseError(error))?
@@ -56,14 +64,8 @@ pub fn update_response_requisition(
         })
         .map_err(|error| error.to_inner_error())?;
 
-    // TODO use change log (and maybe ask sync porcessor actor to retrigger here)
-    println!(
-        "{:#?}",
-        process_records(
-            &ctx.connection,
-            vec![Record::RequisitionRow(requisition.requisition_row.clone())],
-        )
-    );
+    ctx.processors_trigger
+        .trigger_requisition_transfer_processors();
     Ok(requisition)
 }
 
@@ -71,7 +73,7 @@ pub fn validate(
     connection: &StorageConnection,
     store_id: &str,
     input: &UpdateResponseRequisition,
-) -> Result<RequisitionRow, OutError> {
+) -> Result<(RequisitionRow, bool), OutError> {
     let requisition_row = check_requisition_exists(connection, &input.id)?
         .ok_or(OutError::RequisitionDoesNotExist)?;
 
@@ -87,7 +89,9 @@ pub fn validate(
         return Err(OutError::CannotEditRequisition);
     }
 
-    Ok(requisition_row)
+    let status_changed = input.status.is_some();
+
+    Ok((requisition_row, status_changed))
 }
 
 pub fn generate(
@@ -133,12 +137,12 @@ mod test_update {
     use repository::{
         mock::{
             mock_draft_response_requisition_for_update_test, mock_finalised_response_requisition,
-            mock_new_response_requisition, mock_sent_request_requisition, mock_user_account_b,
-            MockDataInserts,
+            mock_new_response_requisition, mock_sent_request_requisition, mock_store_a,
+            mock_store_b, mock_user_account_b, MockDataInserts,
         },
         requisition_row::{RequisitionRow, RequisitionRowStatus},
         test_db::setup_all,
-        RequisitionRowRepository,
+        ActivityLogRowRepository, ActivityLogType, RequisitionRowRepository,
     };
 
     use crate::{
@@ -155,15 +159,15 @@ mod test_update {
             setup_all("update_response_requisition_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let mut context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.requisition_service;
 
         // RequisitionDoesNotExist
         assert_eq!(
             service.update_response_requisition(
                 &context,
-                "store_a",
-                "n/a",
                 UpdateResponseRequisition {
                     id: "invalid".to_owned(),
                     colour: None,
@@ -175,29 +179,10 @@ mod test_update {
             Err(ServiceError::RequisitionDoesNotExist)
         );
 
-        // NotThisStoreRequisition
-        assert_eq!(
-            service.update_response_requisition(
-                &context,
-                "store_b",
-                "n/a",
-                UpdateResponseRequisition {
-                    id: mock_draft_response_requisition_for_update_test().id,
-                    colour: None,
-                    status: None,
-                    their_reference: None,
-                    comment: None,
-                },
-            ),
-            Err(ServiceError::NotThisStoreRequisition)
-        );
-
         // CannotEditRequisition
         assert_eq!(
             service.update_response_requisition(
                 &context,
-                "store_a",
-                "n/a",
                 UpdateResponseRequisition {
                     id: mock_finalised_response_requisition().id,
                     colour: None,
@@ -213,8 +198,6 @@ mod test_update {
         assert_eq!(
             service.update_response_requisition(
                 &context,
-                "store_a",
-                "n/a",
                 UpdateResponseRequisition {
                     id: mock_sent_request_requisition().id,
                     colour: None,
@@ -224,6 +207,22 @@ mod test_update {
                 },
             ),
             Err(ServiceError::NotAResponseRequisition)
+        );
+
+        // NotThisStoreRequisition
+        context.store_id = mock_store_b().id;
+        assert_eq!(
+            service.update_response_requisition(
+                &context,
+                UpdateResponseRequisition {
+                    id: mock_draft_response_requisition_for_update_test().id,
+                    colour: None,
+                    status: None,
+                    their_reference: None,
+                    comment: None,
+                },
+            ),
+            Err(ServiceError::NotThisStoreRequisition)
         );
     }
 
@@ -236,7 +235,9 @@ mod test_update {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_b().id)
+            .unwrap();
         let service = service_provider.requisition_service;
 
         let before_update = Utc::now().naive_utc();
@@ -244,8 +245,6 @@ mod test_update {
         let result = service
             .update_response_requisition(
                 &context,
-                "store_a",
-                &mock_user_account_b().id,
                 UpdateResponseRequisition {
                     id: mock_new_response_requisition().id,
                     colour: Some("new colour".to_owned()),
@@ -278,6 +277,14 @@ mod test_update {
         assert_eq!(their_reference, Some("new their_reference".to_owned()));
         assert_eq!(comment, Some("new comment".to_owned()));
         assert_eq!(status, RequisitionRowStatus::Finalised);
+
+        let log = ActivityLogRowRepository::new(&connection)
+            .find_many_by_record_id(&id)
+            .unwrap()
+            .into_iter()
+            .find(|l| l.r#type == ActivityLogType::RequisitionStatusFinalised)
+            .unwrap();
+        assert_eq!(log.r#type, ActivityLogType::RequisitionStatusFinalised);
 
         let finalised_datetime = finalised_datetime.unwrap();
         assert!(finalised_datetime > before_update && finalised_datetime < after_update);

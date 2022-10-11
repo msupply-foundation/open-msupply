@@ -26,6 +26,7 @@ describe('DataRow', () => {
             rowKey="rowKey"
             rowIndex={0}
             rowData={{ id: 'josh' }}
+            generateRowTooltip={() => ''}
           />
         </TableBody>
       </Table>

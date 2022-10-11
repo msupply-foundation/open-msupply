@@ -54,6 +54,7 @@ pub fn mock_item_f() -> ItemRow {
         r.name = id.clone();
         r.code = id.clone();
         r.r#type = ItemType::Stock;
+        r.default_pack_size = 1;
     })
 }
 
@@ -72,6 +73,7 @@ pub fn item_query_test2() -> ItemRow {
         r.name = String::from("name_item_query_test2");
         r.code = String::from("code_item_query_test2");
         r.unit_id = Some("item_query_test2".to_owned());
+        r.default_pack_size = 1;
         r.r#type = ItemType::Stock;
     })
 }
@@ -87,7 +89,7 @@ pub fn mock_item_service_item() -> ItemRow {
 
 pub fn mock_default_service_item() -> ItemRow {
     inline_init(|r: &mut ItemRow| {
-        r.id = String::from("devault_service_item");
+        r.id = String::from("default_service_item");
         r.name = String::from("Service charge");
         r.code = String::from("service");
         r.r#type = ItemType::Service;

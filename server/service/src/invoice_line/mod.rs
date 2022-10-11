@@ -45,149 +45,130 @@ pub trait InvoiceLineServiceTrait: Sync + Send {
     fn insert_outbound_shipment_line(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
         input: InsertOutboundShipmentLine,
     ) -> Result<InvoiceLine, InsertOutboundShipmentLineError> {
-        insert_outbound_shipment_line(ctx, store_id, input)
+        insert_outbound_shipment_line(ctx, input)
     }
 
     fn update_outbound_shipment_line(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
         input: UpdateOutboundShipmentLine,
     ) -> Result<InvoiceLine, UpdateOutboundShipmentLineError> {
-        update_outbound_shipment_line(ctx, store_id, input)
+        update_outbound_shipment_line(ctx, input)
     }
 
     fn delete_outbound_shipment_line(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
         input: DeleteOutboundShipmentLine,
     ) -> Result<String, DeleteOutboundShipmentLineError> {
-        delete_outbound_shipment_line(ctx, store_id, input)
+        delete_outbound_shipment_line(ctx, input)
     }
 
     fn insert_inbound_shipment_service_line(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
         input: InsertInboundShipmentServiceLine,
     ) -> Result<InvoiceLine, InsertInboundShipmentServiceLineError> {
-        insert_inbound_shipment_service_line(ctx, store_id, input)
+        insert_inbound_shipment_service_line(ctx, input)
     }
 
     fn update_inbound_shipment_service_line(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
         input: UpdateInboundShipmentServiceLine,
     ) -> Result<InvoiceLine, UpdateInboundShipmentServiceLineError> {
-        update_inbound_shipment_service_line(ctx, store_id, input)
+        update_inbound_shipment_service_line(ctx, input)
     }
 
     fn delete_inbound_shipment_service_line(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
         input: DeleteInboundShipmentLine,
     ) -> Result<String, DeleteInboundShipmentServiceLineError> {
-        delete_inbound_shipment_service_line(ctx, store_id, input)
+        delete_inbound_shipment_service_line(ctx, input)
     }
 
     // Inbound
     fn insert_inbound_shipment_line(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
-        user_id: &str,
         input: InsertInboundShipmentLine,
     ) -> Result<InvoiceLine, InsertInboundShipmentLineError> {
-        insert_inbound_shipment_line(ctx, store_id, user_id, input)
+        insert_inbound_shipment_line(ctx, input)
     }
 
     fn update_inbound_shipment_line(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
-        user_id: &str,
         input: UpdateInboundShipmentLine,
     ) -> Result<InvoiceLine, UpdateInboundShipmentLineError> {
-        update_inbound_shipment_line(ctx, store_id, user_id, input)
+        update_inbound_shipment_line(ctx, input)
     }
 
     fn delete_inbound_shipment_line(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
-        user_id: &str,
         input: DeleteInboundShipmentLine,
     ) -> Result<String, DeleteInboundShipmentLineError> {
-        delete_inbound_shipment_line(ctx, store_id, user_id, input)
+        delete_inbound_shipment_line(ctx, input)
     }
 
     fn insert_outbound_shipment_service_line(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
         input: InsertOutboundShipmentServiceLine,
     ) -> Result<InvoiceLine, InsertOutboundShipmentServiceLineError> {
-        insert_outbound_shipment_service_line(ctx, store_id, input)
+        insert_outbound_shipment_service_line(ctx, input)
     }
 
     fn update_outbound_shipment_service_line(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
         input: UpdateOutboundShipmentServiceLine,
     ) -> Result<InvoiceLine, UpdateOutboundShipmentServiceLineError> {
-        update_outbound_shipment_service_line(ctx, store_id, input)
+        update_outbound_shipment_service_line(ctx, input)
     }
 
     fn delete_outbound_shipment_service_line(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
         input: DeleteOutboundShipmentLine,
     ) -> Result<String, DeleteOutboundShipmentServiceLineError> {
-        delete_outbound_shipment_service_line(ctx, store_id, input)
+        delete_outbound_shipment_service_line(ctx, input)
     }
 
     fn insert_outbound_shipment_unallocated_line(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
         input: InsertOutboundShipmentUnallocatedLine,
     ) -> Result<InvoiceLine, InsertOutboundShipmentUnallocatedLineError> {
-        insert_outbound_shipment_unallocated_line(ctx, store_id, input)
+        insert_outbound_shipment_unallocated_line(ctx, input)
     }
 
     fn update_outbound_shipment_unallocated_line(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
         input: UpdateOutboundShipmentUnallocatedLine,
     ) -> Result<InvoiceLine, UpdateOutboundShipmentUnallocatedLineError> {
-        update_outbound_shipment_unallocated_line(ctx, store_id, input)
+        update_outbound_shipment_unallocated_line(ctx, input)
     }
 
     fn delete_outbound_shipment_unallocated_line(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
         input: DeleteOutboundShipmentUnallocatedLine,
     ) -> Result<String, DeleteOutboundShipmentUnallocatedLineError> {
-        delete_outbound_shipment_unallocated_line(ctx, store_id, input)
+        delete_outbound_shipment_unallocated_line(ctx, input)
     }
 
     fn allocate_outbound_shipment_unallocated_line(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
         line_id: String,
     ) -> Result<AllocateLineResult, AllocateOutboundShipmentUnallocatedLineError> {
-        allocate_outbound_shipment_unallocated_line(ctx, store_id, line_id)
+        allocate_outbound_shipment_unallocated_line(ctx, line_id)
     }
 }
 

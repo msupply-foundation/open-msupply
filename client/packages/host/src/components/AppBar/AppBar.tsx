@@ -8,6 +8,7 @@ import {
   useAppBarRect,
   AppBarButtons,
   useMatch,
+  AppBarTabs,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { SectionIcon } from './SectionIcon';
@@ -43,6 +44,7 @@ export const AppBar: React.FC = () => {
         <AppBarButtons />
       </Toolbar>
       <AppBarContent />
+      <AppBarTabs />
     </StyledContainer>
   );
 };

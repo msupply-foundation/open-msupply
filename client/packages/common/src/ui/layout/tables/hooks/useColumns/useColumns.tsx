@@ -157,15 +157,14 @@ export const createColumns = <T extends RecordWithId>(
     .addColumns(columnsToCreate)
     .build();
 
-  return columnDefinitions.map(column => {
-    return createColumnWithDefaults(column, options);
-  });
+  return columnDefinitions.map(column =>
+    createColumnWithDefaults(column, options)
+  );
 };
 
 export const useColumns = <T extends RecordWithId>(
   columnsToCreate: ColumnDescription<T>[],
   options?: ColumnOptions<T>,
   depsArray: DependencyList = []
-): Column<T>[] => {
-  return useMemo(() => createColumns(columnsToCreate, options), depsArray);
-};
+): Column<T>[] =>
+  useMemo(() => createColumns(columnsToCreate, options), depsArray);

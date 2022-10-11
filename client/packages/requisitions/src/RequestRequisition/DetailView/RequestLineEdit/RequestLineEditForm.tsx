@@ -95,6 +95,7 @@ export const RequestLineEditForm = ({
         <>
           <StockItemSearchInput
             autoFocus={!item}
+            openOnFocus={!item}
             width={300}
             disabled={disabled}
             currentItemId={item?.id}

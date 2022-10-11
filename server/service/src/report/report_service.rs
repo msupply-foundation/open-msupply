@@ -17,7 +17,6 @@ use super::{
         DefaultQuery, GraphQlQuery, ReportDefinition, ReportDefinitionEntry, ReportRef,
         TeraTemplate,
     },
-    dummy_reports::insert_dummy_reports,
     html_printing::html_to_pdf,
 };
 
@@ -82,21 +81,19 @@ pub trait ReportServiceTrait: Sync + Send {
     fn resolve_report(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
         report_id: &str,
     ) -> Result<ResolvedReportDefinition, ReportError> {
-        resolve_report(ctx, store_id, report_id)
+        resolve_report(ctx, report_id)
     }
 
     /// Resolve a already loaded report definition
     fn resolve_report_definition(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
         name: String,
         report_definition: ReportDefinition,
     ) -> Result<ResolvedReportDefinition, ReportError> {
-        resolve_report_definition(ctx, store_id, name, report_definition)
+        resolve_report_definition(ctx, name, report_definition)
     }
 
     fn generate_report(
@@ -192,7 +189,6 @@ pub trait ReportServiceTrait: Sync + Send {
       }}
 
       header {{
-        position: absolute;
         top: 0;
       }}
 
@@ -252,12 +248,6 @@ fn query_reports(
     sort: Option<ReportSort>,
 ) -> Result<Vec<ReportRow>, ListError> {
     let repo = ReportRepository::new(&ctx.connection);
-
-    // TODO remove when reports are loaded through other means:
-    if repo.count(None)? == 0 {
-        insert_dummy_reports(&ctx.connection)?;
-    }
-
     let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
     let filter = filter
         .unwrap_or(ReportFilter::new())
@@ -267,23 +257,21 @@ fn query_reports(
 
 fn resolve_report(
     ctx: &ServiceContext,
-    store_id: &str,
     report_id: &str,
 ) -> Result<ResolvedReportDefinition, ReportError> {
     let repo = ReportRowRepository::new(&ctx.connection);
 
     let (report_name, main) = load_report_definition(&repo, report_id)?;
-    resolve_report_definition(ctx, store_id, report_name, main)
+    resolve_report_definition(ctx, report_name, main)
 }
 
 fn resolve_report_definition(
     ctx: &ServiceContext,
-    store_id: &str,
     name: String,
     main: ReportDefinition,
 ) -> Result<ResolvedReportDefinition, ReportError> {
     let repo = ReportRowRepository::new(&ctx.connection);
-    let fully_loaded_report = load_template_references(&repo, store_id, main)?;
+    let fully_loaded_report = load_template_references(&repo, &ctx.store_id, main)?;
 
     let templates = tera_templates_from_resolved_template(&fully_loaded_report)
         .ok_or(ReportError::TemplateNotSpecified)?;
@@ -615,11 +603,11 @@ mod report_service_test {
         .unwrap();
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
-        let service = service_provider.report_service;
-        let resolved_def = service
-            .resolve_report(&context, "store_id", "report_1")
+        let context = service_provider
+            .context("store_id".to_string(), "".to_string())
             .unwrap();
+        let service = service_provider.report_service;
+        let resolved_def = service.resolve_report(&context, "report_1").unwrap();
 
         let doc = service
             .generate_report(

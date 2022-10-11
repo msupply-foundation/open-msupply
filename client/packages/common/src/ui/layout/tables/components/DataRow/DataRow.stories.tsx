@@ -12,7 +12,7 @@ export default {
   },
 } as ComponentMeta<typeof DataRow>;
 
-const Template: Story = ({ onClick }) => {
+const Template: Story = ({ onClick, generateRowTooltip = () => '' }) => {
   const columns = useColumns<{ id: string; status: string; comment: string }>([
     'type',
     'status',
@@ -33,6 +33,7 @@ const Template: Story = ({ onClick }) => {
             comment: 'Supplier invoice',
           }}
           onClick={onClick}
+          generateRowTooltip={generateRowTooltip}
         />
       </TableBody>
     </Table>
@@ -47,4 +48,11 @@ Basic.args = {
 export const WithRowClick = Template.bind({});
 WithRowClick.args = {
   onClick: () => {},
+};
+
+export const WithTooltip = Template.bind({});
+WithTooltip.args = {
+  onClick: () => {},
+  generateRowTooltip: (row: any) =>
+    `This tooltip is not very helpful. It just says that the status is ${row.status}`,
 };

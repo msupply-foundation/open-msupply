@@ -35,13 +35,19 @@ export const getMasterListQueries = (sdk: Sdk, storeId: string) => ({
       });
       return result?.masterLists;
     },
-    listAll: async ({ sortBy }: { sortBy: SortBy<MasterListRowFragment> }) => {
+    listAll: async ({
+      sortBy,
+      filterBy,
+    }: {
+      sortBy: SortBy<MasterListRowFragment>;
+      filterBy?: FilterBy;
+    }) => {
       const key = masterListParser.toSort(sortBy);
       const desc = !!sortBy.isDesc;
       const result = await sdk.masterLists({
         key,
         desc,
-        filter: { existsForStoreId: { equalTo: storeId } },
+        filter: filterBy ?? { existsForStoreId: { equalTo: storeId } },
         storeId,
       });
       return result?.masterLists;

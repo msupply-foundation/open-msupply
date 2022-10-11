@@ -33,7 +33,7 @@ export const issueStock = (
     ({ id }) => id === idToIssue
   );
   const foundRow = draftOutboundLines[foundRowIdx];
-  if (!foundRow) return [];
+  if (!foundRow) return draftOutboundLines;
 
   const newDraftOutboundLines = [...draftOutboundLines];
   newDraftOutboundLines[foundRowIdx] = {
@@ -131,6 +131,10 @@ export const allocateQuantities =
 
       if (!placeholder) throw new Error('No placeholder within item editing');
 
+      // stock has been allocated, and the auto generated placeholder is no longer required
+      if (shouldUpdatePlaceholder(newValue, placeholder))
+        placeholder.isUpdated = true;
+
       newDraftOutboundLines[placeholderIdx] = {
         ...placeholder,
         numberOfPacks: placeholder.numberOfPacks + toAllocate,
@@ -158,7 +162,7 @@ const allocateToBatches = ({
     if (toAllocate < 0) return null;
 
     const availableUnits =
-      (draftOutboundLine.stockLine?.availableNumberOfPacks ?? 0) *
+      (Math.floor(draftOutboundLine.stockLine?.availableNumberOfPacks ?? 0)) *
       draftOutboundLine.packSize;
     const unitsToAllocate = Math.min(toAllocate, availableUnits);
     const numberOfPacks = unitsToAllocate / draftOutboundLine.packSize;
@@ -169,6 +173,7 @@ const allocateToBatches = ({
     newDraftOutboundLines[draftOutboundLineIdx] = {
       ...draftOutboundLine,
       numberOfPacks: allocatedNumberOfPacks,
+      isUpdated: true,
     };
   });
   return toAllocate;
@@ -205,6 +210,7 @@ const allocatedAdditionalStock = ({
 
     toAllocate -= allocatedNumberOfPacks * draftOutboundLine.packSize;
     draftOutboundLine.numberOfPacks = allocatedNumberOfPacks;
+    draftOutboundLine.isUpdated = true;
   });
   return toAllocate;
 };
@@ -249,7 +255,13 @@ const reduceBatchAllocation = ({
       newDraftOutboundLines[draftOutboundLineIdx] = {
         ...draftOutboundLine,
         numberOfPacks: numberOfPacks,
+        isUpdated: true,
       };
     });
   return Math.abs(toAllocate);
 };
+
+export const shouldUpdatePlaceholder = (
+  quantity: number,
+  placeholder: DraftOutboundLine
+) => quantity > 0 && placeholder.numberOfPacks === 0 && !placeholder.isCreated;

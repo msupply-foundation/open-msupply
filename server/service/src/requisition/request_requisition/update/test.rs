@@ -6,18 +6,19 @@ mod test_update {
             mock_draft_request_requisition_for_update_test,
             mock_draft_response_requisition_for_update_test, mock_name_store_c,
             mock_request_draft_requisition_calculation_test, mock_sent_request_requisition,
-            mock_store_a, MockData, MockDataInserts,
+            mock_store_a, mock_store_b, MockData, MockDataInserts,
         },
         requisition_row::RequisitionRowStatus,
         test_db::{setup_all, setup_all_with_data},
-        NameRow, NameStoreJoinRow, RequisitionLineRowRepository, RequisitionRowRepository,
+        ActivityLogRowRepository, ActivityLogType, NameRow, NameStoreJoinRow,
+        RequisitionLineRowRepository, RequisitionRowRepository,
     };
     use util::{inline_edit, inline_init};
 
     use crate::{
         requisition::request_requisition::{
             UpdateRequestRequisition, UpdateRequestRequisitionError as ServiceError,
-            UpdateRequestRequstionStatus,
+            UpdateRequestRequistionStatus,
         },
         service_provider::ServiceProvider,
     };
@@ -56,14 +57,15 @@ mod test_update {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let mut context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.requisition_service;
 
         // RequisitionDoesNotExist
         assert_eq!(
             service.update_request_requisition(
                 &context,
-                "store_a",
                 inline_init(|r: &mut UpdateRequestRequisition| {
                     r.id = "invalid".to_owned();
                 }),
@@ -71,23 +73,10 @@ mod test_update {
             Err(ServiceError::RequisitionDoesNotExist)
         );
 
-        // NotThisStoreRequisition
-        assert_eq!(
-            service.update_request_requisition(
-                &context,
-                "store_b",
-                inline_init(|r: &mut UpdateRequestRequisition| {
-                    r.id = mock_draft_request_requisition_for_update_test().id;
-                }),
-            ),
-            Err(ServiceError::NotThisStoreRequisition)
-        );
-
         // CannotEditRequisition
         assert_eq!(
             service.update_request_requisition(
                 &context,
-                "store_a",
                 inline_init(|r: &mut UpdateRequestRequisition| {
                     r.id = mock_sent_request_requisition().id;
                 }),
@@ -99,7 +88,6 @@ mod test_update {
         assert_eq!(
             service.update_request_requisition(
                 &context,
-                "store_a",
                 inline_init(|r: &mut UpdateRequestRequisition| {
                     r.id = mock_draft_response_requisition_for_update_test().id;
                 }),
@@ -111,7 +99,6 @@ mod test_update {
         assert_eq!(
             service.update_request_requisition(
                 &context,
-                &mock_store_a().id,
                 inline_init(|r: &mut UpdateRequestRequisition| {
                     r.id = mock_draft_request_requisition_for_update_test().id;
                     r.other_party_id = Some("invalid".to_string());
@@ -123,7 +110,6 @@ mod test_update {
         assert_eq!(
             service.update_request_requisition(
                 &context,
-                &mock_store_a().id,
                 inline_init(|r: &mut UpdateRequestRequisition| {
                     r.id = mock_draft_request_requisition_for_update_test().id;
                     r.other_party_id = Some(not_visible().id);
@@ -135,13 +121,24 @@ mod test_update {
         assert_eq!(
             service.update_request_requisition(
                 &context,
-                &mock_store_a().id,
                 inline_init(|r: &mut UpdateRequestRequisition| {
                     r.id = mock_draft_request_requisition_for_update_test().id;
                     r.other_party_id = Some(not_a_supplier().id);
                 })
             ),
             Err(ServiceError::OtherPartyNotASupplier)
+        );
+
+        // NotThisStoreRequisition
+        context.store_id = mock_store_b().id;
+        assert_eq!(
+            service.update_request_requisition(
+                &context,
+                inline_init(|r: &mut UpdateRequestRequisition| {
+                    r.id = mock_draft_request_requisition_for_update_test().id;
+                }),
+            ),
+            Err(ServiceError::NotThisStoreRequisition)
         );
     }
 
@@ -151,7 +148,9 @@ mod test_update {
             setup_all("update_request_requisition_success", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
         let service = service_provider.requisition_service;
 
         let before_update = Utc::now().naive_utc();
@@ -160,11 +159,10 @@ mod test_update {
         let result = service
             .update_request_requisition(
                 &context,
-                "store_a",
                 UpdateRequestRequisition {
                     id: mock_draft_request_requisition_for_update_test().id,
                     colour: Some("new colour".to_owned()),
-                    status: Some(UpdateRequestRequstionStatus::Sent),
+                    status: Some(UpdateRequestRequistionStatus::Sent),
                     their_reference: Some("new their_reference".to_owned()),
                     comment: Some("new comment".to_owned()),
                     max_months_of_stock: None,
@@ -198,6 +196,14 @@ mod test_update {
         let sent_datetime = updated_row.sent_datetime.unwrap();
         assert!(sent_datetime > before_update && sent_datetime < after_update);
 
+        let log = ActivityLogRowRepository::new(&connection)
+            .find_many_by_record_id(&updated_row.id)
+            .unwrap()
+            .into_iter()
+            .find(|l| l.r#type == ActivityLogType::RequisitionStatusSent)
+            .unwrap();
+        assert_eq!(log.r#type, ActivityLogType::RequisitionStatusSent);
+
         // Recalculate stock
 
         let calculation_requisition = mock_request_draft_requisition_calculation_test();
@@ -205,7 +211,6 @@ mod test_update {
         service
             .update_request_requisition(
                 &context,
-                "store_a",
                 inline_init(|r: &mut UpdateRequestRequisition| {
                     r.id = calculation_requisition.requisition.id.clone();
                     r.max_months_of_stock = Some(20.0);

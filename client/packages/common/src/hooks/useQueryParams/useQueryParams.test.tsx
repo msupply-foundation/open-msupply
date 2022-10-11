@@ -5,7 +5,7 @@ import {
 } from '@openmsupply-client/common';
 import { TestingProvider } from '../../utils/testing';
 import { useTheme } from '@common/styles';
-import { act, renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import { useQueryParamsStore } from './useQueryParamsStore';
 
 type TestSortBy = {
@@ -174,11 +174,9 @@ describe('sort', () => {
     const { result } = renderHook(() => useQueryParamsStore(), {
       wrapper: getWrapper(),
     });
-
     act(() => {
       result.current.sort.onChangeSortBy(quantityColumn);
     });
-
     expect(result.current.sort.sortBy).toEqual({
       key: 'quantity',
       isDesc: false,
@@ -191,11 +189,9 @@ describe('sort', () => {
     const { result } = renderHook(() => useQueryParamsStore(), {
       wrapper: getWrapper(),
     });
-
     act(() => {
       result.current.sort.onChangeSortBy(idColumn);
     });
-
     expect(result.current.sort.sortBy).toEqual({
       key: 'id',
       isDesc: true,
@@ -211,7 +207,6 @@ describe('sort', () => {
     const { result } = renderHook(() => useQueryParamsStore(), {
       wrapper: getWrapper(),
     });
-
     act(() => {
       // initially: id/asc
       result.current.sort.onChangeSortBy(idColumn);
@@ -238,38 +233,29 @@ describe('sort', () => {
       const { result } = renderHook(() => useQueryParamsStore(), {
         wrapper: getWrapper(),
       });
-
       const { pagination } = result.current;
       act(() => {
         pagination.onChangePage(3);
       });
-
-      waitFor(() => {
-        expect(pagination.offset).toEqual(30);
-        expect(pagination.first).toEqual(10);
-        expect(pagination.page).toEqual(3);
-      });
+      expect(result.current.pagination.offset).toEqual(60);
+      expect(result.current.pagination.first).toEqual(20);
+      expect(result.current.pagination.page).toEqual(3);
     });
 
     it('still has correct state after a series of page changes', () => {
       const { result } = renderHook(() => useQueryParamsStore(), {
         wrapper: getWrapper(),
       });
-      const { pagination } = result.current;
-
       act(() => {
-        pagination.onChangePage(3);
-        pagination.onChangePage(1);
-        pagination.onChangePage(99);
-        pagination.onChangePage(32);
-        pagination.onChangePage(7);
+        result.current.pagination.onChangePage(3);
+        result.current.pagination.onChangePage(1);
+        result.current.pagination.onChangePage(99);
+        result.current.pagination.onChangePage(32);
+        result.current.pagination.onChangePage(7);
       });
-
-      waitFor(() => {
-        expect(pagination.offset).toEqual(70);
-        expect(pagination.first).toEqual(10);
-        expect(pagination.page).toEqual(7);
-      });
+      expect(result.current.pagination.offset).toEqual(140);
+      expect(result.current.pagination.first).toEqual(20);
+      expect(result.current.pagination.page).toEqual(7);
     });
   });
 });

@@ -1,11 +1,11 @@
 use crate::{
-    requisition::query::get_requisition,
+    activity_log::activity_log_entry, requisition::query::get_requisition,
     service_provider::ServiceContext,
-    sync_processor::{process_records, Record},
 };
 use chrono::NaiveDate;
 use repository::{
-    RepositoryError, Requisition, RequisitionLineRowRepository, RequisitionRowRepository,
+    ActivityLogType, RepositoryError, Requisition, RequisitionLineRowRepository,
+    RequisitionRowRepository,
 };
 
 mod generate;
@@ -16,7 +16,7 @@ use generate::generate;
 use validate::validate;
 
 #[derive(Debug, PartialEq, Clone)]
-pub enum UpdateRequestRequstionStatus {
+pub enum UpdateRequestRequistionStatus {
     Sent,
 }
 
@@ -29,7 +29,7 @@ pub struct UpdateRequestRequisition {
     pub comment: Option<String>,
     pub max_months_of_stock: Option<f64>,
     pub min_months_of_stock: Option<f64>,
-    pub status: Option<UpdateRequestRequstionStatus>,
+    pub status: Option<UpdateRequestRequistionStatus>,
     pub expected_delivery_date: Option<NaiveDate>,
 }
 
@@ -56,15 +56,15 @@ type OutError = UpdateRequestRequisitionError;
 
 pub fn update_request_requisition(
     ctx: &ServiceContext,
-    store_id: &str,
     input: UpdateRequestRequisition,
+    //TODO add user_id
 ) -> Result<Requisition, OutError> {
     let requisition = ctx
         .connection
         .transaction_sync(|connection| {
-            let requisition_row = validate(connection, store_id, &input)?;
+            let (requisition_row, status_changed) = validate(connection, &ctx.store_id, &input)?;
             let (updated_requisition, update_requisition_line_rows) =
-                generate(connection, requisition_row, input)?;
+                generate(connection, requisition_row, input.clone())?;
             RequisitionRowRepository::new(&connection).upsert_one(&updated_requisition)?;
 
             let requisition_line_row_repository = RequisitionLineRowRepository::new(&connection);
@@ -73,20 +73,22 @@ pub fn update_request_requisition(
                 requisition_line_row_repository.upsert_one(&requisition_line_row)?;
             }
 
+            if status_changed {
+                activity_log_entry(
+                    &ctx,
+                    ActivityLogType::RequisitionStatusSent,
+                    &updated_requisition.id,
+                )?;
+            }
+
             get_requisition(ctx, None, &updated_requisition.id)
                 .map_err(|error| OutError::DatabaseError(error))?
                 .ok_or(OutError::UpdatedRequisitionDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
 
-    // TODO use change log (and maybe ask sync porcessor actor to retrigger here)
-    println!(
-        "{:#?}",
-        process_records(
-            &ctx.connection,
-            vec![Record::RequisitionRow(requisition.requisition_row.clone())],
-        )
-    );
+    ctx.processors_trigger
+        .trigger_requisition_transfer_processors();
 
     Ok(requisition)
 }

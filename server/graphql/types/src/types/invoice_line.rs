@@ -80,7 +80,7 @@ impl InvoiceLineNode {
     pub async fn pack_size(&self) -> i32 {
         self.row().pack_size
     }
-    pub async fn number_of_packs(&self) -> i32 {
+    pub async fn number_of_packs(&self) -> f64 {
         self.row().number_of_packs
     }
     // Batch
@@ -208,7 +208,8 @@ mod test {
     use chrono::NaiveDate;
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
     use repository::{
-        mock::MockDataInserts, InvoiceLineRow, InvoiceLineRowType, InvoiceRow, LocationRow,
+        mock::MockDataInserts, InvoiceLine, InvoiceLineRow, InvoiceLineRowType, InvoiceRow,
+        LocationRow,
     };
     use serde_json::json;
     use util::inline_init;
@@ -241,7 +242,7 @@ mod test {
                             r.item_name = "line_item_name".to_string();
                             r.item_code = "line_item_code".to_string();
                             r.pack_size = 1;
-                            r.number_of_packs = 2;
+                            r.number_of_packs = 2.0;
                             r.batch = Some("line_batch".to_string());
                             r.expiry_date = Some(NaiveDate::from_ymd(2021, 01, 01));
                             r.location_id = Some("line_location_id".to_string());
@@ -251,6 +252,7 @@ mod test {
                         location_row_option: Some(inline_init(|r: &mut LocationRow| {
                             r.name = "line_location_name".to_string();
                         })),
+                        stock_line_option: None,
                     },
                 }
             }
@@ -266,7 +268,7 @@ mod test {
                 "itemName": "line_item_name",
                 "itemCode": "line_item_code",
                 "packSize": 1,
-                "numberOfPacks": 2,
+                "numberOfPacks": 2.0,
                 "batch": "line_batch",
                 "expiryDate": "2021-01-01",
                 "locationName": "line_location_name",
@@ -317,44 +319,38 @@ mod test {
         impl TestQuery {
             pub async fn test_query_stock_in(&self) -> InvoiceLineNode {
                 InvoiceLineNode {
-                    invoice_line: repository::InvoiceLine {
-                        invoice_line_row: inline_init(|r: &mut InvoiceLineRow| {
+                    invoice_line: inline_init(|record: &mut InvoiceLine| {
+                        record.invoice_line_row = inline_init(|r: &mut InvoiceLineRow| {
                             r.total_before_tax = 1.0;
                             r.total_after_tax = 2.0;
                             r.tax = Some(10.0);
                             r.r#type = InvoiceLineRowType::StockIn
-                        }),
-                        invoice_row: InvoiceRow::default(),
-                        location_row_option: None,
-                    },
+                        })
+                    }),
                 }
             }
             pub async fn test_query_stock_out(&self) -> InvoiceLineNode {
                 InvoiceLineNode {
-                    invoice_line: repository::InvoiceLine {
-                        invoice_line_row: inline_init(|r: &mut InvoiceLineRow| {
+                    invoice_line: inline_init(|record: &mut InvoiceLine| {
+                        record.invoice_line_row = inline_init(|r: &mut InvoiceLineRow| {
                             r.total_before_tax = 1.0;
                             r.total_after_tax = 2.0;
                             r.tax = Some(5.0);
                             r.r#type = InvoiceLineRowType::StockOut
-                        }),
-                        invoice_row: InvoiceRow::default(),
-                        location_row_option: None,
-                    },
+                        })
+                    }),
                 }
             }
             pub async fn test_query_service(&self) -> InvoiceLineNode {
                 InvoiceLineNode {
-                    invoice_line: repository::InvoiceLine {
-                        invoice_line_row: inline_init(|r: &mut InvoiceLineRow| {
+                    invoice_line: inline_init(|record: &mut InvoiceLine| {
+                        record.invoice_line_row = inline_init(|r: &mut InvoiceLineRow| {
                             r.total_before_tax = 1.0;
                             r.total_after_tax = 2.0;
                             r.tax = None;
                             r.r#type = InvoiceLineRowType::Service
-                        }),
-                        invoice_row: InvoiceRow::default(),
-                        location_row_option: None,
-                    },
+                        })
+                    }),
                 }
             }
         }

@@ -1,6 +1,6 @@
 use async_graphql::*;
 
-use graphql_core::generic_inputs::TaxUpdate;
+use graphql_core::generic_inputs::TaxInput;
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::{
     simple_generic_errors::{CannotEditInvoice, ForeignKey, ForeignKeyError, RecordNotFound},
@@ -10,13 +10,11 @@ use graphql_types::types::InvoiceLineNode;
 
 use repository::InvoiceLine;
 use service::auth::{Resource, ResourceAccessRequest};
-use service::invoice_line::{
-    inbound_shipment_service_line::{
-        UpdateInboundShipmentServiceLine as ServiceInput,
-        UpdateInboundShipmentServiceLineError as ServiceError,
-    },
-    ShipmentTaxUpdate,
+use service::invoice_line::inbound_shipment_service_line::{
+    UpdateInboundShipmentServiceLine as ServiceInput,
+    UpdateInboundShipmentServiceLineError as ServiceError,
 };
+use service::invoice_line::ShipmentTaxUpdate;
 
 #[derive(InputObject)]
 #[graphql(name = "UpdateInboundShipmentServiceLineInput")]
@@ -25,13 +23,12 @@ pub struct UpdateInput {
     item_id: Option<String>,
     name: Option<String>,
     total_before_tax: Option<f64>,
-    total_after_tax: Option<f64>,
-    tax: Option<TaxUpdate>,
+    tax: Option<TaxInput>,
     note: Option<String>,
 }
 
 pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<UpdateResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::MutateInboundShipment,
@@ -40,12 +37,12 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context()?;
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
     map_response(
         service_provider
             .invoice_line_service
-            .update_inbound_shipment_service_line(&service_context, store_id, input.to_domain()),
+            .update_inbound_shipment_service_line(&service_context, input.to_domain()),
     )
 }
 
@@ -89,7 +86,6 @@ impl UpdateInput {
             item_id,
             name,
             total_before_tax,
-            total_after_tax,
             tax,
             note,
         } = self;
@@ -99,9 +95,10 @@ impl UpdateInput {
             item_id,
             name,
             total_before_tax,
-            total_after_tax,
-            tax: tax.map(|tax| ShipmentTaxUpdate {
-                percentage: tax.percentage,
+            tax: tax.and_then(|tax| {
+                Some(ShipmentTaxUpdate {
+                    percentage: tax.percentage,
+                })
             }),
             note,
         }
@@ -131,6 +128,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         ServiceError::NotAnInboundShipment => BadUserInput(formatted_error),
         ServiceError::ItemNotFound => BadUserInput(formatted_error),
         ServiceError::NotThisInvoiceLine(_) => BadUserInput(formatted_error),
+        ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
         ServiceError::NotAServiceItem => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::UpdatedLineDoesNotExist => InternalError(formatted_error),
@@ -163,8 +161,7 @@ mod test {
     type ServiceInput = UpdateInboundShipmentServiceLine;
     type ServiceError = UpdateInboundShipmentServiceLineError;
 
-    type UpdateLineMethod =
-        dyn Fn(&str, ServiceInput) -> Result<InvoiceLine, ServiceError> + Sync + Send;
+    type UpdateLineMethod = dyn Fn(ServiceInput) -> Result<InvoiceLine, ServiceError> + Sync + Send;
 
     pub struct TestService(pub Box<UpdateLineMethod>);
 
@@ -172,10 +169,9 @@ mod test {
         fn update_inbound_shipment_service_line(
             &self,
             _: &ServiceContext,
-            store_id: &str,
             input: ServiceInput,
         ) -> Result<InvoiceLine, ServiceError> {
-            self.0(store_id, input)
+            self.0(input)
         }
     }
 
@@ -218,7 +214,7 @@ mod test {
         }));
 
         // LineDoesNotExist
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::LineDoesNotExist)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::LineDoesNotExist)));
 
         let expected = json!({
             "updateInboundShipmentServiceLine": {
@@ -238,7 +234,7 @@ mod test {
         );
 
         // InvoiceDoesNotExist
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::InvoiceDoesNotExist)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::InvoiceDoesNotExist)));
 
         let expected = json!({
             "updateInboundShipmentServiceLine": {
@@ -258,7 +254,7 @@ mod test {
         );
 
         // CannotEditInvoice
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::CannotEditInvoice)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::CannotEditInvoice)));
 
         let expected = json!({
             "updateInboundShipmentServiceLine": {
@@ -278,7 +274,7 @@ mod test {
         );
 
         // NotAnInboundShipment
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotAnInboundShipment)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NotAnInboundShipment)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -290,7 +286,7 @@ mod test {
         );
 
         // ItemNotFound
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::ItemNotFound)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::ItemNotFound)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -302,7 +298,7 @@ mod test {
         );
 
         // NotThisInvoiceLine
-        let test_service = TestService(Box::new(|_, _| {
+        let test_service = TestService(Box::new(|_| {
             Err(ServiceError::NotThisInvoiceLine("id".to_string()))
         }));
         let expected_message = "Bad user input";
@@ -316,20 +312,8 @@ mod test {
         );
 
         // NotAServiceItem
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotAServiceItem)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NotAServiceItem)));
         let expected_message = "Bad user input";
-        assert_standard_graphql_error!(
-            &settings,
-            &mutation,
-            &variables,
-            &expected_message,
-            None,
-            Some(service_provider(test_service, &connection_manager))
-        );
-
-        // UpdatedLineDoesNotExist
-        let test_service = TestService(Box::new(|_, _| Err(ServiceError::UpdatedLineDoesNotExist)));
-        let expected_message = "Internal error";
         assert_standard_graphql_error!(
             &settings,
             &mutation,
@@ -361,8 +345,7 @@ mod test {
         "#;
 
         // Success
-        let test_service = TestService(Box::new(|store_id, input| {
-            assert_eq!(store_id, "store_a");
+        let test_service = TestService(Box::new(|input| {
             assert_eq!(
                 input,
                 ServiceInput {
@@ -370,9 +353,8 @@ mod test {
                     item_id: Some("item_id".to_string()),
                     name: Some("some name".to_string()),
                     total_before_tax: Some(0.1),
-                    total_after_tax: Some(0.2),
                     tax: Some(ShipmentTaxUpdate {
-                        percentage: Some(10.0)
+                        percentage: Some(10.0),
                     }),
                     note: Some("note".to_string())
                 }
@@ -388,7 +370,6 @@ mod test {
             "itemId": "item_id",
             "name": "some name",
             "totalBeforeTax": 0.1,
-            "totalAfterTax": 0.2,
             "tax": {
                 "percentage": 10
             },

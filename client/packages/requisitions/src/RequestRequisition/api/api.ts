@@ -153,6 +153,23 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
       throw new Error('Unable to load chart data');
     },
   },
+  deleteLine: async (requestLineId: string) => {
+    const ids = [{ id: requestLineId }];
+    const result = await sdk.deleteRequestLines({ ids, storeId });
+
+    if (result.batchRequestRequisition.deleteRequestRequisitionLines) {
+      const failedLines =
+        result.batchRequestRequisition.deleteRequestRequisitionLines.filter(
+          line =>
+            line.response.__typename === 'DeleteRequestRequisitionLineError'
+        );
+      if (failedLines.length === 0) {
+        return result.batchRequestRequisition.deleteRequestRequisitionLines;
+      }
+    }
+
+    throw new Error('Could not delete requisition lines!');
+  },
   deleteLines: async (requestLines: RequestLineFragment[]) => {
     const ids = requestLines.map(requestParser.toDeleteLine);
     const result = await sdk.deleteRequestLines({ ids, storeId });

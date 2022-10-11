@@ -8,7 +8,7 @@ import {
   ExternalNavLink,
   List,
   PowerIcon,
-  RadioIcon,
+  // RadioIcon,
   // ReportsIcon,
   SettingsIcon,
   Theme,
@@ -21,6 +21,8 @@ import {
   useAuthContext,
   useLocation,
   EnvUtils,
+  UserPermission,
+  RadioIcon,
 } from '@openmsupply-client/common';
 import { AppRoute, ExternalURL } from '@openmsupply-client/config';
 import {
@@ -97,7 +99,7 @@ const StyledDrawer = styled(Box, {
 })<{ isOpen: boolean }>(({ isOpen, theme }) => ({
   display: 'flex',
   flexDirection: 'column',
-  height: '100vh',
+  height: '100%',
   borderRadius: '0 8px 8px 0',
   overflow: 'hidden',
   boxShadow: theme.shadows[7],
@@ -135,7 +137,7 @@ export const AppDrawer: React.FC = () => {
   const t = useTranslation('app');
   const isMediumScreen = useIsMediumScreen();
   const drawer = useDrawer();
-  const { logout } = useAuthContext();
+  const { logout, userHasPermission } = useAuthContext();
   const location = useLocation();
 
   React.useEffect(() => {
@@ -216,11 +218,6 @@ export const AppDrawer: React.FC = () => {
       <LowerListContainer>
         <List>
           {drawer.isOpen && <StyledDivider color="drawerDivider" />}
-          <AppNavLink
-            to={AppRoute.Sync}
-            icon={<RadioIcon fontSize="small" color="primary" />}
-            text={t('sync')}
-          />
           <ExternalNavLink
             to={docsUrl}
             icon={<BookIcon fontSize="small" color="primary" />}
@@ -228,9 +225,15 @@ export const AppDrawer: React.FC = () => {
             trustedSite={true}
           />
           <AppNavLink
+            to={AppRoute.Sync}
+            icon={<RadioIcon fontSize="small" color="primary" />}
+            text={t('sync')}
+          />
+          <AppNavLink
             to={AppRoute.Admin}
             icon={<SettingsIcon fontSize="small" color="primary" />}
             text={t('admin')}
+            visible={userHasPermission(UserPermission.ServerAdmin)}
           />
           <AppNavLink
             to={AppRoute.Login}

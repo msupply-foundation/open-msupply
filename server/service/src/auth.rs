@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use repository::{
     EqualFilter, Permission, RepositoryError, UserPermissionFilter, UserPermissionRepository,
@@ -59,10 +59,14 @@ pub enum Resource {
     // reporting
     Report,
     // view/edit server setting
+    QueryLog,
     ServerAdmin,
+    SyncInfo,
+    ManualSync,
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
+    // TODO use match instead of map (unless there is a specific case for map)
     let mut map = HashMap::new();
     // me: No permission needed
     map.insert(Resource::RouteMe, PermissionDSL::NoPermissionRequired);
@@ -203,6 +207,15 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
             PermissionDSL::HasPermission(Permission::Report),
         ]),
     );
+
+    map.insert(
+        Resource::QueryLog,
+        PermissionDSL::HasPermission(Permission::LogQuery),
+    );
+
+    // sync info and manual sync, not permission needed
+    map.insert(Resource::SyncInfo, PermissionDSL::NoPermissionRequired);
+    map.insert(Resource::ManualSync, PermissionDSL::NoPermissionRequired);
     map
 }
 
@@ -245,16 +258,15 @@ pub fn validate_auth(
     auth_data: &AuthData,
     auth_token: &Option<String>,
 ) -> Result<ValidatedUserAuth, AuthError> {
-    if auth_data.debug_no_access_control {
-        return Ok(dummy_user_auth());
-    }
-
     let auth_token = match auth_token {
         Some(token) => token,
         None => {
+            if auth_data.debug_no_access_control {
+                return Ok(dummy_user_auth());
+            }
             return Err(AuthError::Denied(AuthDeniedKind::NotAuthenticated(
                 "Missing auth token".to_string(),
-            )))
+            )));
         }
     };
     let service = TokenService::new(
@@ -294,6 +306,9 @@ pub fn validate_auth(
 pub struct ValidatedUser {
     pub user_id: String,
     pub claims: OmSupplyClaim,
+    // List of validated resources, e.g. ["HIVProgram", "TBProgram", ...]
+    // Limitation: every request can only have one type of resources, e.g. you can't mix doc types with something else
+    pub context: Vec<String>,
 }
 
 /// Information about the resource a user wants to access
@@ -310,6 +325,15 @@ fn validate_resource_permissions(
     resource_request: &ResourceAccessRequest,
     resource_permission: &PermissionDSL,
 ) -> Result<(), String> {
+    // When this code runs, user_permissions have already been filtered by store (if specified).
+    // It is possible to mis-configure an API call and not specify a store_id when it is required which could result in incorrect permssion evaluation.
+    // We use a StoreAccess permission to catch this case (As it checks both the permission and the store in the request)
+
+    // println!(
+    //     "validate_resource_permissions() user_permissions {:?} required {:?}",
+    //     user_permissions, resource_permission
+    // );
+
     Ok(match resource_permission {
         PermissionDSL::HasPermission(permission) => {
             if user_permissions
@@ -324,6 +348,11 @@ fn validate_resource_permissions(
             return Ok(());
         }
         PermissionDSL::HasStoreAccess => {
+            // The user_permissions are already filtered by store_id if resource_request.store_id
+            // is specified. What remains to be checked is:
+            // 1) that store_id is set, i.e. validate_auth() is used correctly with the required
+            // parameters
+            // 2) the filtered user_permissions contain StoreAccess
             let store_id = match &resource_request.store_id {
                 Some(id) => id,
                 None => return Err("Store id not specified in request".to_string()),
@@ -357,7 +386,7 @@ fn validate_resource_permissions(
                     resource_request,
                     child,
                 ) {
-                    ()
+                    return Ok(());
                 }
             }
             return Err(format!("No permissions for any of: {:?}", children));
@@ -396,14 +425,8 @@ impl AuthServiceTrait for AuthService {
         resource_request: &ResourceAccessRequest,
     ) -> Result<ValidatedUser, AuthError> {
         let validated_auth = validate_auth(auth_data, auth_token)?;
-        if auth_data.debug_no_access_control {
-            return Ok(ValidatedUser {
-                user_id: validated_auth.user_id,
-                claims: validated_auth.claims,
-            });
-        }
-
         let connection = &context.connection;
+
         let mut permission_filter =
             UserPermissionFilter::new().user_id(EqualFilter::equal_to(&validated_auth.user_id));
         if let Some(store_id) = &resource_request.store_id {
@@ -411,6 +434,21 @@ impl AuthServiceTrait for AuthService {
         }
         let user_permission =
             UserPermissionRepository::new(&connection).query_by_filter(permission_filter)?;
+        let context: Vec<String> = user_permission
+            .clone()
+            .into_iter()
+            .filter_map(|c| c.context)
+            .collect::<HashSet<String>>()
+            .into_iter()
+            .collect();
+
+        if auth_data.debug_no_access_control {
+            return Ok(ValidatedUser {
+                user_id: validated_auth.user_id,
+                claims: validated_auth.claims,
+                context,
+            });
+        }
 
         let required_permissions = match self.resource_permissions.get(&resource_request.resource) {
             Some(required_permissions) => required_permissions,
@@ -441,6 +479,7 @@ impl AuthServiceTrait for AuthService {
         Ok(ValidatedUser {
             user_id: validated_auth.user_id,
             claims: validated_auth.claims,
+            context,
         })
     }
 }
@@ -448,6 +487,246 @@ impl AuthServiceTrait for AuthService {
 impl From<RepositoryError> for AuthError {
     fn from(error: RepositoryError) -> Self {
         AuthError::InternalError(format!("{:#?}", error))
+    }
+}
+
+#[cfg(test)]
+mod validate_resource_permissions_test {
+    use repository::{Permission, UserPermissionRow};
+
+    use super::{validate_resource_permissions, PermissionDSL, Resource, ResourceAccessRequest};
+
+    #[actix_rt::test]
+    async fn test_validate_resource_permissions() {
+        let user_id = "test_user_id";
+        let store_id = "test_store_id";
+
+        let user_permissions: Vec<UserPermissionRow> = vec![];
+        let resource_request = ResourceAccessRequest {
+            resource: Resource::MutateLocation,
+            store_id: Some(store_id.to_string()),
+        };
+        let required_permissions = PermissionDSL::HasPermission(Permission::ServerAdmin);
+
+        //Ensure validation fails if user has no permissions
+        let validation_result = validate_resource_permissions(
+            user_id,
+            &user_permissions,
+            &resource_request,
+            &required_permissions,
+        );
+        assert!(validation_result.is_err());
+
+        //Ensure validation succeeds if user has single required permission
+        let user_permissions: Vec<UserPermissionRow> = vec![UserPermissionRow {
+            id: "dummy_id".to_string(),
+            user_id: user_id.to_string(),
+            permission: Permission::ServerAdmin,
+            store_id: None,
+            context: None,
+        }];
+        let validation_result = validate_resource_permissions(
+            user_id,
+            &user_permissions,
+            &resource_request,
+            &required_permissions,
+        );
+        assert!(validation_result.is_ok());
+
+        //Test DSL user has 1 out of any 1 permission - any(1 perm)
+        let required_permissions =
+            PermissionDSL::Any(vec![PermissionDSL::HasPermission(Permission::ServerAdmin)]);
+        let validation_result = validate_resource_permissions(
+            user_id,
+            &user_permissions,
+            &resource_request,
+            &required_permissions,
+        );
+        assert!(validation_result.is_ok());
+
+        //Test DSL user has 1 out of any 2 permissions - any(2 perm)
+        let required_permissions = PermissionDSL::Any(vec![
+            PermissionDSL::HasPermission(Permission::ServerAdmin),
+            PermissionDSL::HasPermission(Permission::StocktakeMutate),
+        ]);
+        let validation_result = validate_resource_permissions(
+            user_id,
+            &user_permissions,
+            &resource_request,
+            &required_permissions,
+        );
+        assert!(validation_result.is_ok());
+
+        //Test DSL user has 0 out of any 1 permission - any(1 perm)
+        let required_permissions = PermissionDSL::Any(vec![PermissionDSL::HasPermission(
+            Permission::StocktakeMutate,
+        )]);
+        let validation_result = validate_resource_permissions(
+            user_id,
+            &user_permissions,
+            &resource_request,
+            &required_permissions,
+        );
+        assert!(validation_result.is_err());
+
+        //Test DSL user has 1 out of 2 required permission - And(2 perm)
+        let user_permissions: Vec<UserPermissionRow> = vec![UserPermissionRow {
+            id: "dummy_id2".to_string(),
+            user_id: user_id.to_string(),
+            permission: Permission::StocktakeMutate,
+            store_id: Some(store_id.to_string()),
+            context: None,
+        }];
+        let required_permissions = PermissionDSL::And(vec![
+            PermissionDSL::HasPermission(Permission::ServerAdmin),
+            PermissionDSL::HasPermission(Permission::StocktakeMutate),
+        ]);
+        let validation_result = validate_resource_permissions(
+            user_id,
+            &user_permissions,
+            &resource_request,
+            &required_permissions,
+        );
+        assert!(validation_result.is_err());
+
+        //Test DSL user has 2 out of 2 required permission - And(2 perm)
+        let user_permissions: Vec<UserPermissionRow> = vec![
+            UserPermissionRow {
+                id: "dummy_id1".to_string(),
+                user_id: user_id.to_string(),
+                permission: Permission::ServerAdmin,
+                store_id: None,
+                context: None,
+            },
+            UserPermissionRow {
+                id: "dummy_id2".to_string(),
+                user_id: user_id.to_string(),
+                permission: Permission::StocktakeMutate,
+                store_id: Some(store_id.to_string()),
+                context: None,
+            },
+        ];
+        let required_permissions = PermissionDSL::And(vec![
+            PermissionDSL::HasPermission(Permission::ServerAdmin),
+            PermissionDSL::HasPermission(Permission::StocktakeMutate),
+        ]);
+        let validation_result = validate_resource_permissions(
+            user_id,
+            &user_permissions,
+            &resource_request,
+            &required_permissions,
+        );
+        assert!(validation_result.is_ok());
+
+        //Test DSL user has Any(1,And(1,2))
+        let required_permissions = PermissionDSL::Any(vec![
+            PermissionDSL::HasPermission(Permission::ServerAdmin),
+            PermissionDSL::And(vec![
+                PermissionDSL::HasPermission(Permission::StocktakeMutate),
+                PermissionDSL::HasStoreAccess,
+            ]),
+        ]);
+        let user_permissions: Vec<UserPermissionRow> = vec![
+            UserPermissionRow {
+                id: "dummy_id2".to_string(),
+                user_id: user_id.to_string(),
+                permission: Permission::StocktakeMutate,
+                store_id: Some(store_id.to_string()),
+                context: None,
+            },
+            UserPermissionRow {
+                id: "dummy_id2".to_string(),
+                user_id: user_id.to_string(),
+                permission: Permission::StoreAccess,
+                store_id: Some(store_id.to_string()),
+                context: None,
+            },
+        ];
+        let validation_result = validate_resource_permissions(
+            user_id,
+            &user_permissions,
+            &resource_request,
+            &required_permissions,
+        );
+        assert!(validation_result.is_ok());
+
+        let required_permissions = PermissionDSL::Any(vec![
+            PermissionDSL::HasPermission(Permission::ServerAdmin),
+            PermissionDSL::And(vec![
+                PermissionDSL::HasPermission(Permission::StocktakeMutate),
+                PermissionDSL::HasStoreAccess,
+            ]),
+        ]);
+        let user_permissions: Vec<UserPermissionRow> = vec![UserPermissionRow {
+            id: "dummy_id2".to_string(),
+            user_id: user_id.to_string(),
+            permission: Permission::ServerAdmin,
+            store_id: None,
+            context: None,
+        }];
+        let validation_result = validate_resource_permissions(
+            user_id,
+            &user_permissions,
+            &resource_request,
+            &required_permissions,
+        );
+        assert!(validation_result.is_ok());
+
+        //Test DSL user has And(1,Any(1,2))
+        let required_permissions = PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::Any(vec![
+                PermissionDSL::HasPermission(Permission::ServerAdmin),
+                PermissionDSL::HasPermission(Permission::StocktakeMutate),
+            ]),
+        ]);
+        let user_permissions: Vec<UserPermissionRow> = vec![
+            UserPermissionRow {
+                id: "dummy_id2".to_string(),
+                user_id: user_id.to_string(),
+                permission: Permission::StocktakeMutate,
+                store_id: Some(store_id.to_string()),
+                context: None,
+            },
+            UserPermissionRow {
+                id: "dummy_id2".to_string(),
+                user_id: user_id.to_string(),
+                permission: Permission::StoreAccess,
+                store_id: Some(store_id.to_string()),
+                context: None,
+            },
+        ];
+        let validation_result = validate_resource_permissions(
+            user_id,
+            &user_permissions,
+            &resource_request,
+            &required_permissions,
+        );
+        assert!(validation_result.is_ok());
+
+        let user_permissions: Vec<UserPermissionRow> = vec![
+            UserPermissionRow {
+                id: "dummy_id2".to_string(),
+                user_id: user_id.to_string(),
+                permission: Permission::ServerAdmin,
+                store_id: None,
+                context: None,
+            },
+            UserPermissionRow {
+                id: "dummy_id2".to_string(),
+                user_id: user_id.to_string(),
+                permission: Permission::StoreAccess,
+                store_id: Some(store_id.to_string()),
+                context: None,
+            },
+        ];
+        let validation_result = validate_resource_permissions(
+            user_id,
+            &user_permissions,
+            &resource_request,
+            &required_permissions,
+        );
+        assert!(validation_result.is_ok());
     }
 }
 
@@ -490,7 +769,9 @@ mod permission_validation_test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider
+            .context("".to_string(), user_id.to_string())
+            .unwrap();
         let permission_repo = UserPermissionRowRepository::new(&context.connection);
 
         let mut service = AuthService::new();
@@ -537,6 +818,7 @@ mod permission_validation_test {
                 user_id: mock_user_account_a().id,
                 store_id: Some("store_a".to_string()),
                 permission: Permission::InboundShipmentMutate,
+                context: None,
             })
             .unwrap();
         assert!(service
@@ -558,6 +840,7 @@ mod permission_validation_test {
                 user_id: mock_user_account_a().id,
                 store_id: Some("store_a".to_string()),
                 permission: Permission::StocktakeQuery,
+                context: None,
             })
             .unwrap();
         assert!(service
@@ -627,12 +910,14 @@ mod permission_validation_test {
                     user_id: user().id,
                     store_id: Some(store().id),
                     permission: Permission::RequisitionMutate,
+                    context: None,
                 },
                 UserPermissionRow {
                     id: "permission_store_access".to_string(),
                     user_id: user().id,
                     store_id: Some(store().id),
                     permission: Permission::StoreAccess,
+                    context: None,
                 },
             ]
         }
@@ -650,7 +935,7 @@ mod permission_validation_test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.context().unwrap();
+        let context = service_provider.basic_context().unwrap();
 
         let auth_data = AuthData {
             auth_token_secret: "some secret".to_string(),

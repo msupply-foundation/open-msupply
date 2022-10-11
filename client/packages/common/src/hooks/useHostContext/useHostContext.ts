@@ -10,6 +10,9 @@ type HostContext = {
   setAppBarContentRef: (ref: React.MutableRefObject<null> | null) => void;
   appBarContentRef: React.MutableRefObject<null> | null;
 
+  setAppBarTabsRef: (ref: React.MutableRefObject<null> | null) => void;
+  appBarTabsRef: React.MutableRefObject<null> | null;
+
   setAppBarButtonsRef: (ref: React.MutableRefObject<null> | null) => void;
   appBarButtonsRef: React.MutableRefObject<null> | null;
 
@@ -32,6 +35,10 @@ export const useHostContext = create<HostContext>(set => ({
   setAppBarContentRef: (refOrNull: React.MutableRefObject<null> | null) =>
     set(state => ({ ...state, appBarContentRef: refOrNull })),
   appBarContentRef: null,
+
+  setAppBarTabsRef: (refOrNull: React.MutableRefObject<null> | null) =>
+    set(state => ({ ...state, appBarTabsRef: refOrNull })),
+  appBarTabsRef: null,
 
   setAppBarButtonsRef: (refOrNull: React.MutableRefObject<null> | null) =>
     set(state => ({ ...state, appBarButtonsRef: refOrNull })),

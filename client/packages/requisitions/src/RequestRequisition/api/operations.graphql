@@ -3,6 +3,7 @@ fragment ItemWithStats on ItemNode {
   name
   code
   unitName
+  defaultPackSize
   stats(storeId: $storeId) {
     averageMonthlyConsumption
     availableStockOnHand
