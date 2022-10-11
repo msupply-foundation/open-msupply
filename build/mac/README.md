@@ -8,7 +8,11 @@
 
 Above will build and `bundle` files in `{..}_mac_sqlite` folder where `{..}` is replaced with architecture of the build
 
-* In finder, right click on `{..}_mac_sqlite/open_msupply_server.sh`, then `Get info`, then `Open with` then select `terminal` from `Utilities` after selecting `Enable All Application`
+In finder, right click on `{..}_mac_sqlite/open_msupply_server.sh`, then
+* `Open With`
+* `Other`
+* Select `All Appliations` for `Enable` drop down
+* Select `terminal` from `Utilities
 
 You can zip the contents of `{..}_mac_sqlite` folder now and share with testers or for demo purposes.
 
