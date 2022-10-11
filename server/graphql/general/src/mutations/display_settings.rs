@@ -1,19 +1,34 @@
 use async_graphql::*;
 
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
-use service::auth::{Resource, ResourceAccessRequest};
-
-use crate::queries::display_settings::DisplaySettingsNode;
-
+use service::{
+    auth::{Resource, ResourceAccessRequest},
+    display_settings_service,
+};
 #[derive(InputObject)]
 pub struct DisplaySettingsInput {
     pub custom_logo: Option<String>,
     pub custom_theme: Option<String>,
 }
 
+#[derive(SimpleObject)]
+pub struct UpdateResult {
+    pub logo: bool,
+    pub theme: bool,
+}
+
+impl From<display_settings_service::UpdateResult> for UpdateResult {
+    fn from(result: display_settings_service::UpdateResult) -> Self {
+        UpdateResult {
+            logo: result.logo,
+            theme: result.theme,
+        }
+    }
+}
+
 #[derive(Union)]
 pub enum UpdateDisplaySettingsResponse {
-    Response(DisplaySettingsNode),
+    Response(UpdateResult),
     Error(UpdateDisplaySettingsError),
 }
 
@@ -46,21 +61,15 @@ pub fn update_display_settings(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
     let display_settings = input.to_domain();
-
-    if let Err(error) = service_provider
+    let result = service_provider
         .display_settings_service
-        .update_display_settings(&service_context, &display_settings)
-    {
+        .update_display_settings(&service_context, &display_settings);
+
+    if let Err(error) = result {
         return Err(async_graphql::Error::from(error));
     }
 
-    let display_settings = service_provider
-        .display_settings_service
-        .display_settings(&service_context)?;
-
     Ok(UpdateDisplaySettingsResponse::Response(
-        DisplaySettingsNode {
-            settings: display_settings.unwrap(),
-        },
+        result.unwrap().into(),
     ))
 }

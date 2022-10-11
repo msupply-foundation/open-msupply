@@ -6,6 +6,7 @@ export const useHost = {
   settings: {
     displaySettings: Settings.useDisplaySettings,
     syncSettings: Settings.useSyncSettings,
+    updateDisplaySettings: Settings.useUpdateDisplaySettings,
   },
   sync: {
     initialise: Sync.useInitialiseSite,
