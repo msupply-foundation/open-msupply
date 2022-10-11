@@ -82,3 +82,10 @@ pub struct LoggingSettings {
     /// Max logfile size in MB
     pub max_file_size: Option<usize>,
 }
+
+#[derive(serde::Deserialize, Clone)]
+pub struct DisplaySettings {
+    pub custom_logo: Option<String>,
+    pub custom_theme: Option<String>,
+    pub default_language: String,
+}
