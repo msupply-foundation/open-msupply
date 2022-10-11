@@ -1,9 +1,7 @@
 use async_graphql::*;
 
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
-use repository::RepositoryError;
 use service::auth::{Resource, ResourceAccessRequest};
-use std::fmt;
 
 use crate::queries::display_settings::DisplaySettingsNode;
 
@@ -13,36 +11,15 @@ pub struct DisplaySettingsInput {
     pub custom_theme: Option<String>,
 }
 
-pub enum UpdateDisplaySettingsError {
-    RepositoryError(RepositoryError),
-    AuthError(String),
-    GraphqlError(String),
+#[derive(Union)]
+pub enum UpdateDisplaySettingsResponse {
+    Response(DisplaySettingsNode),
+    Error(UpdateDisplaySettingsError),
 }
 
-impl fmt::Display for UpdateDisplaySettingsError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            UpdateDisplaySettingsError::RepositoryError(error) => {
-                write!(f, "Repository error: {}", error)
-            }
-            UpdateDisplaySettingsError::AuthError(error) => write!(f, "Auth error: {}", error),
-            UpdateDisplaySettingsError::GraphqlError(error) => {
-                write!(f, "Graphql error: {}", error)
-            }
-        }
-    }
-}
-
-impl From<RepositoryError> for UpdateDisplaySettingsError {
-    fn from(error: RepositoryError) -> Self {
-        UpdateDisplaySettingsError::RepositoryError(error)
-    }
-}
-
-impl From<async_graphql::Error> for UpdateDisplaySettingsError {
-    fn from(error: async_graphql::Error) -> Self {
-        UpdateDisplaySettingsError::GraphqlError(error.message.clone())
-    }
+#[derive(SimpleObject)]
+pub struct UpdateDisplaySettingsError {
+    pub error: String,
 }
 
 impl DisplaySettingsInput {
@@ -57,7 +34,7 @@ impl DisplaySettingsInput {
 pub fn update_display_settings(
     ctx: &Context<'_>,
     input: DisplaySettingsInput,
-) -> Result<DisplaySettingsNode, UpdateDisplaySettingsError> {
+) -> Result<UpdateDisplaySettingsResponse> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -74,14 +51,16 @@ pub fn update_display_settings(
         .display_settings_service
         .update_display_settings(&service_context, &display_settings)
     {
-        return Err(UpdateDisplaySettingsError::RepositoryError(error));
+        return Err(async_graphql::Error::from(error));
     }
 
     let display_settings = service_provider
         .display_settings_service
         .display_settings(&service_context)?;
 
-    Ok(DisplaySettingsNode {
-        settings: display_settings.unwrap(),
-    })
+    Ok(UpdateDisplaySettingsResponse::Response(
+        DisplaySettingsNode {
+            settings: display_settings.unwrap(),
+        },
+    ))
 }
