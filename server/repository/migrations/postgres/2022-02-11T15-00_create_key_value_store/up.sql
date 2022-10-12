@@ -5,10 +5,6 @@ CREATE TYPE key_type AS ENUM
     'CENTRAL_SYNC_PULL_CURSOR',
     -- Cursor for pushing remote records to central server
     'REMOTE_SYNC_PUSH_CURSOR',
-    -- display settings
-    'SETTINGS_DISPLAY_CUSTOM_THEME',
-    'SETTINGS_DISPLAY_CUSTOM_LOGO',
-    'SETTINGS_DISPLAY_DEFAULT_LANGUAGE',
     -- sync settings
     'SETTINGS_SYNC_URL',
     'SETTINGS_SYNC_USERNAME',

@@ -9,22 +9,17 @@ pub struct UpdateResult {
 
 pub trait DisplaySettingsServiceTrait: Sync + Send {
     /// Loads display settings from the DB
-    fn display_settings(
-        &self,
-        ctx: &ServiceContext,
-    ) -> Result<Option<DisplaySettings>, RepositoryError> {
+    fn display_settings(&self, ctx: &ServiceContext) -> Result<DisplaySettings, RepositoryError> {
         let key_value_store = KeyValueStoreRepository::new(&ctx.connection);
 
         let custom_logo = key_value_store.get_string(KeyValueType::SettingsDisplayCustomLogo)?;
         let custom_theme = key_value_store.get_string(KeyValueType::SettingsDisplayCustomTheme)?;
-        let make_settings = || {
-            Some(DisplaySettings {
-                custom_logo,
-                custom_theme,
-            })
+        let display_settings = DisplaySettings {
+            custom_logo,
+            custom_theme,
         };
 
-        Ok(make_settings())
+        Ok(display_settings)
     }
 
     fn update_display_settings(

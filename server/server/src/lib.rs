@@ -42,7 +42,7 @@ mod discovery;
 /// Starts the server
 ///
 /// # Arguments
-/// * `settigngs` - Server settings (manually defined for android and from .yaml file for other)
+/// * `settings` - Server settings (manually defined for android and from .yaml file for other)
 /// * `off_switch` - For android or windows service to turn off server
 ///
 /// This method doesn't return until a message is sent to the off_switch
@@ -95,7 +95,7 @@ pub async fn start_server(
     let machine_uid = machine_uid::get().expect("Failed to query OS for hardware id");
 
     #[cfg(target_os = "android")]
-    let machine_uid = config_settings
+    let machine_uid = settings
         .server
         .machine_uid
         .clone()

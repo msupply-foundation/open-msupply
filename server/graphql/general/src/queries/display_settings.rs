@@ -19,12 +19,12 @@ impl DisplaySettingsNode {
     }
 }
 
-pub(crate) fn display_settings(ctx: &Context<'_>) -> Result<Option<DisplaySettingsNode>> {
+pub(crate) fn display_settings(ctx: &Context<'_>) -> Result<DisplaySettingsNode> {
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
 
     let settings = service_provider
         .display_settings_service
         .display_settings(&service_context)?;
-    Ok(settings.map(|settings| DisplaySettingsNode { settings }))
+    Ok(DisplaySettingsNode { settings })
 }
