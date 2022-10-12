@@ -17,19 +17,19 @@ pub struct UpdateResult {
     pub theme: bool,
 }
 
-impl From<display_settings_service::UpdateResult> for UpdateResult {
-    fn from(result: display_settings_service::UpdateResult) -> Self {
-        UpdateResult {
-            logo: result.logo,
-            theme: result.theme,
-        }
-    }
-}
-
 #[derive(Union)]
 pub enum UpdateDisplaySettingsResponse {
     Response(UpdateResult),
     Error(UpdateDisplaySettingsError),
+}
+
+impl UpdateDisplaySettingsResponse {
+    fn from_domain(from: display_settings_service::UpdateResult) -> UpdateDisplaySettingsResponse {
+        UpdateDisplaySettingsResponse::Response(UpdateResult {
+            logo: from.logo,
+            theme: from.theme,
+        })
+    }
 }
 
 #[derive(SimpleObject)]
@@ -65,11 +65,8 @@ pub fn update_display_settings(
         .display_settings_service
         .update_display_settings(&service_context, &display_settings);
 
-    if let Err(error) = result {
-        return Err(async_graphql::Error::from(error));
+    match result {
+        Ok(result) => Ok(UpdateDisplaySettingsResponse::from_domain(result)),
+        Err(error) => Err(async_graphql::Error::from(error)),
     }
-
-    Ok(UpdateDisplaySettingsResponse::Response(
-        result.unwrap().into(),
-    ))
 }

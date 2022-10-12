@@ -182,7 +182,7 @@ impl GeneralQueries {
         sync_settings(ctx, true)
     }
 
-    pub async fn display_settings(&self, ctx: &Context<'_>) -> Result<Option<DisplaySettingsNode>> {
+    pub async fn display_settings(&self, ctx: &Context<'_>) -> Result<DisplaySettingsNode> {
         display_settings(ctx)
     }
 }

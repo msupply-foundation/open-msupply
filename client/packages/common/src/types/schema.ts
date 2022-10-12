@@ -2078,7 +2078,7 @@ export type Queries = {
    * The refresh token is returned as a cookie
    */
   authToken: AuthTokenResponse;
-  displaySettings?: Maybe<DisplaySettingsNode>;
+  displaySettings: DisplaySettingsNode;
   /** Available without authorisation in operational and initialisation states */
   initialisationStatus: InitialisationStatusType;
   invoice: InvoiceResponse;

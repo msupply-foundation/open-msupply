@@ -19,7 +19,7 @@ export type InitialisationStatusQuery = { __typename: 'Queries', initialisationS
 export type DisplaySettingsQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
 
-export type DisplaySettingsQuery = { __typename: 'Queries', displaySettings?: { __typename: 'DisplaySettingsNode', customLogo?: string | null, customTheme?: string | null } | null };
+export type DisplaySettingsQuery = { __typename: 'Queries', displaySettings: { __typename: 'DisplaySettingsNode', customLogo?: string | null, customTheme?: string | null } };
 
 export type SyncErrorFragment = { __typename: 'SyncErrorNode', variant: Types.SyncErrorVariant, fullError: string };
 
