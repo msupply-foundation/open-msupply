@@ -99,7 +99,7 @@ impl SyncTranslation for ActivityLogTranslation {
                 serde_json::to_value(&legacy_row)?,
             )]))
         } else {
-            Ok(Some(vec![]))
+            Ok(Some(Vec::new()))
         }
     }
 }

@@ -1,7 +1,8 @@
 #[cfg(test)]
 mod tests {
     use crate::sync::test::integration::remote::{
-        invoice::InvoiceRecordTester, location::LocationRecordTester, number::NumberRecordTester,
+        activity_log::ActivityLogRecordTester, invoice::InvoiceRecordTester,
+        location::LocationRecordTester, number::NumberRecordTester,
         requisition::RequisitionRecordTester, stock_line::StockLineRecordTester,
         test_remote_sync_record,
     };
@@ -36,8 +37,8 @@ mod tests {
         test_remote_sync_record("requisition", &RequisitionRecordTester).await;
     }
 
-    // #[actix_rt::test]
-    // async fn integration_sync_remote_activity_log() {
-    //     test_remote_sync_record("om_activity_log", &ActivityLogRecordTester).await;
-    // } TODO implement when table is in mSupply
+    #[actix_rt::test]
+    async fn integration_sync_remote_activity_log() {
+        test_remote_sync_record("om_activity_log", &ActivityLogRecordTester).await;
+    }
 }

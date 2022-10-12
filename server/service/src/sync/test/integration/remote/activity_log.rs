@@ -2,9 +2,10 @@ use crate::sync::{
     test::integration::{
         central_server_configurations::NewSiteProperties, SyncRecordTester, TestStepData,
     },
-    translations::{IntegrationRecords, PullUpsertRecord},
+    translations::{IntegrationRecords, PullDeleteRecord, PullDeleteRecordTable, PullUpsertRecord},
 };
-use repository::ActivityLogRow;
+use chrono::NaiveDate;
+use repository::{ActivityLogRow, ActivityLogType};
 use serde_json::json;
 use util::{inline_edit, uuid::uuid};
 
@@ -15,31 +16,41 @@ impl SyncRecordTester for ActivityLogRecordTester {
         let store_id = &new_site_properties.store_id;
 
         // STEP 1 - insert
-        let store_id = &new_site_properties.store_id;
         let log_1 = ActivityLogRow {
             id: uuid(),
-            r#type: ActivityLogType::UserLoggedIn,
+            r#type: ActivityLogType::InvoiceCreated,
             user_id: Some("user_account_a".to_string()),
-            store_id: None,
-            record_id: None,
+            store_id: Some(store_id.to_string()),
+            record_id: Some("outbound_shipment_a".to_string()),
             datetime: NaiveDate::from_ymd(2020, 1, 1).and_hms(0, 0, 0),
         };
 
-        let log_2 = inline_edit(&row, |mut l| {
+        let log_2 = inline_edit(&log_1, |mut l| {
             l.id = uuid();
-            l.r#type = ActivityLogType::InvoiceCreated;
-            l.store_id = Some(store_id.to_string());
-            l.record_id = Some("outbound_shipment_a");
-            d
+            l.r#type = ActivityLogType::InvoiceStatusAllocated;
+            l.record_id = Some("inbound_shipment_a".to_string());
+            l
+        });
+
+        let log_3 = inline_edit(&log_1, |mut l| {
+            l.id = uuid();
+            l.r#type = ActivityLogType::UserLoggedIn;
+            l.store_id = None;
+            l.record_id = None;
+            l
         });
 
         result.push(TestStepData {
             central_upsert: json!({}),
             central_delete: json!({}),
             integration_records: IntegrationRecords::from_upserts(vec![
-                PullUpsertRecord::ActivityLog(row.clone()),
+                PullUpsertRecord::ActivityLog(log_1.clone()),
                 PullUpsertRecord::ActivityLog(log_2.clone()),
-            ]),
+            ])
+            .join(IntegrationRecords::from_deletes(vec![PullDeleteRecord {
+                id: log_3.id.clone(),
+                table: PullDeleteRecordTable::ActivityLog,
+            }])),
         });
         result
     }

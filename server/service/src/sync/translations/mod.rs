@@ -136,6 +136,8 @@ pub(crate) enum PullDeleteRecordTable {
     Stocktake,
     #[cfg(all(test, feature = "integration_test"))]
     StocktakeLine,
+    #[cfg(all(test, feature = "integration_test"))]
+    ActivityLog,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -282,6 +284,7 @@ fn translate_changelog(
     changelog: &ChangelogRow,
 ) -> Result<Vec<RemoteSyncRecordV5>, anyhow::Error> {
     let mut translation_results = Vec::new();
+    let mut skip = false;
 
     for translator in translators.iter() {
         let translation_result = match changelog.row_action {
@@ -295,10 +298,11 @@ fn translate_changelog(
 
         if let Some(mut translation_result) = translation_result {
             translation_results.append(&mut translation_result);
+            skip = true;
         }
     }
 
-    if translation_results.is_empty() {
+    if !skip {
         return Err(anyhow::anyhow!("Translator for record not found"));
     }
 
