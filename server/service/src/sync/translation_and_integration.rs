@@ -208,6 +208,8 @@ impl PullDeleteRecord {
             Stocktake => StocktakeRowRepository::new(con).delete(id),
             #[cfg(all(test, feature = "integration_test"))]
             StocktakeLine => StocktakeLineRowRepository::new(con).delete(id),
+            #[cfg(all(test, feature = "integration_test"))]
+            ActivityLog => Ok(()),
         }
     }
 }
