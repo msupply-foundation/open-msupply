@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect } from 'react';
 import {
   Autocomplete,
   defaultOptionMapper,
@@ -21,10 +21,14 @@ export const LocationSearchInput: FC<LocationSearchInputProps> = ({
   disabled,
   autoFocus = false,
 }) => {
-  const { data, isLoading } = useLocation.document.listAll({
+  const { mutateAsync, data, isLoading } = useLocation.document.listAll({
     direction: 'asc',
     key: 'name',
   });
+
+  useEffect(() => {
+    mutateAsync();
+  }, []);
 
   return (
     <Autocomplete<LocationRowFragment>
