@@ -45,7 +45,7 @@ mod graphql {
                         "id": "log_b",
                         "type": "INVOICE_CREATED",
                         "recordId": "outbound_shipment_a",
-                        "storeId": "store_a",
+                        "storeId": "store_b",
                     },
                     {
                         "datetime": "2020-01-01T00:00:00",
@@ -108,9 +108,9 @@ mod graphql {
                         "recordId": "outbound_shipment_a",
                         "datetime": "2020-01-01T00:00:00",
                         "store": {
-                            "id": "store_a"
+                            "id": "store_b"
                         },
-                        "storeId": "store_a",
+                        "storeId": "store_b",
                         "user": {
                             "userId": "user_account_a"
                         }
