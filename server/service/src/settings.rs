@@ -84,7 +84,19 @@ pub struct LoggingSettings {
 }
 
 #[derive(serde::Deserialize, Clone)]
-pub struct DisplaySettings {
+pub struct DisplaySettingNode {
+    pub value: String,
+    pub hash: String,
+}
+
+#[derive(serde::Deserialize, Clone)]
+pub struct DisplaySettingsNode {
+    pub custom_logo: Option<DisplaySettingNode>,
+    pub custom_theme: Option<DisplaySettingNode>,
+}
+
+#[derive(serde::Deserialize, Clone)]
+pub struct DisplaySettingsInput {
     pub custom_logo: Option<String>,
     pub custom_theme: Option<String>,
 }

@@ -16,10 +16,12 @@ export type InitialisationStatusQueryVariables = Types.Exact<{ [key: string]: ne
 
 export type InitialisationStatusQuery = { __typename: 'Queries', initialisationStatus: Types.InitialisationStatusType };
 
-export type DisplaySettingsQueryVariables = Types.Exact<{ [key: string]: never; }>;
+export type DisplaySettingsQueryVariables = Types.Exact<{
+  input: Types.DisplaySettingsHash;
+}>;
 
 
-export type DisplaySettingsQuery = { __typename: 'Queries', displaySettings: { __typename: 'DisplaySettingsNode', customLogo?: string | null, customTheme?: string | null } };
+export type DisplaySettingsQuery = { __typename: 'Queries', displaySettings: { __typename: 'DisplaySettingsNode', customTheme?: { __typename: 'DisplaySettingNode', value: string, hash: string } | null, customLogo?: { __typename: 'DisplaySettingNode', value: string, hash: string } | null } };
 
 export type SyncErrorFragment = { __typename: 'SyncErrorNode', variant: Types.SyncErrorVariant, fullError: string };
 
@@ -42,7 +44,7 @@ export type UpdateDisplaySettingsMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateDisplaySettingsMutation = { __typename: 'Mutations', updateDisplaySettings: { __typename: 'UpdateDisplaySettingsError', error: string } | { __typename: 'UpdateResult', theme: boolean, logo: boolean } };
+export type UpdateDisplaySettingsMutation = { __typename: 'Mutations', updateDisplaySettings: { __typename: 'UpdateDisplaySettingsError', error: string } | { __typename: 'UpdateResult', theme?: string | null, logo?: string | null } };
 
 export type SyncStatusFragment = { __typename: 'SyncStatusNode', finished?: any | null, started: any };
 
@@ -138,10 +140,16 @@ export const InitialisationStatusDocument = gql`
 }
     `;
 export const DisplaySettingsDocument = gql`
-    query displaySettings {
-  displaySettings {
-    customLogo
-    customTheme
+    query displaySettings($input: DisplaySettingsHash!) {
+  displaySettings(input: $input) {
+    customTheme {
+      value
+      hash
+    }
+    customLogo {
+      value
+      hash
+    }
   }
 }
     `;
@@ -223,7 +231,7 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     initialisationStatus(variables?: InitialisationStatusQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InitialisationStatusQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<InitialisationStatusQuery>(InitialisationStatusDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'initialisationStatus', 'query');
     },
-    displaySettings(variables?: DisplaySettingsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DisplaySettingsQuery> {
+    displaySettings(variables: DisplaySettingsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DisplaySettingsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<DisplaySettingsQuery>(DisplaySettingsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'displaySettings', 'query');
     },
     initialiseSite(variables: InitialiseSiteMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InitialiseSiteMutation> {
@@ -285,6 +293,7 @@ export const mockInitialisationStatusQuery = (resolver: ResponseResolver<GraphQL
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockDisplaySettingsQuery((req, res, ctx) => {
+ *   const { input } = req.variables;
  *   return res(
  *     ctx.data({ displaySettings })
  *   )

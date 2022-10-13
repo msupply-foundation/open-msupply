@@ -13,8 +13,8 @@ pub struct DisplaySettingsInput {
 
 #[derive(SimpleObject)]
 pub struct UpdateResult {
-    pub logo: bool,
-    pub theme: bool,
+    pub logo: Option<String>,
+    pub theme: Option<String>,
 }
 
 #[derive(Union)]
@@ -38,8 +38,8 @@ pub struct UpdateDisplaySettingsError {
 }
 
 impl DisplaySettingsInput {
-    pub fn to_domain(&self) -> service::settings::DisplaySettings {
-        service::settings::DisplaySettings {
+    pub fn to_domain(&self) -> service::settings::DisplaySettingsInput {
+        service::settings::DisplaySettingsInput {
             custom_logo: self.custom_logo.clone(),
             custom_theme: self.custom_theme.clone(),
         }
@@ -60,10 +60,10 @@ pub fn update_display_settings(
 
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
-    let display_settings = input.to_domain();
+    let input = input.to_domain();
     let result = service_provider
         .display_settings_service
-        .update_display_settings(&service_context, &display_settings);
+        .update_display_settings(&service_context, &input);
 
     match result {
         Ok(result) => Ok(UpdateDisplaySettingsResponse::from_domain(result)),
