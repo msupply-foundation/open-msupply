@@ -12,7 +12,8 @@ export const PasswordTextInput: FC<PasswordTextInputProps> = React.forwardRef(
   (props, ref) => {
     // if the helper text is a space then the height of the component doesn't change
     // when the helper text is shown / removed
-    const defaultWarning = props.fixedHeight ? ' ' : '';
+    const { fixedHeight, ...rest } = props;
+    const defaultWarning = fixedHeight ? ' ' : '';
     const [showPassword, setShowPassword] = useState(false);
     const [warning, setWarning] = useState(defaultWarning);
     const t = useTranslation();
@@ -32,7 +33,7 @@ export const PasswordTextInput: FC<PasswordTextInputProps> = React.forwardRef(
 
     return (
       <BasicTextInput
-        {...props}
+        {...rest}
         type={showPassword ? 'text' : 'password'}
         InputLabelProps={{
           shrink: true,

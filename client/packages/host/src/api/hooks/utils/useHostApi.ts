@@ -5,6 +5,7 @@ import { getSdk } from '../../operations.generated';
 export const useHostApi = () => {
   const keys = {
     base: () => ['host'] as const,
+    displaySettings: () => [...keys.base(), 'displaySettings'] as const,
     syncSettings: () => [...keys.base(), 'syncSettings'] as const,
     initialisationStatus: () =>
       [...keys.base(), 'initialisationStatus'] as const,

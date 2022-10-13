@@ -24,6 +24,11 @@ export const Login = () => {
   const { connectedServer } = useElectronClient();
   const { setPageTitle } = useHostContext();
   const { data: initialisationStatus } = useHost.utils.initialisationStatus();
+  const hashInput = {
+    logo: LocalStorage.getItem('/theme/logohash') ?? '',
+    theme: LocalStorage.getItem('/theme/customhash') ?? '',
+  };
+  const { data: displaySettings } = useHost.settings.displaySettings(hashInput);
   const navigate = useNavigate();
 
   const passwordRef = React.useRef(null);
@@ -37,6 +42,20 @@ export const Login = () => {
     onLogin,
     error,
   } = useLoginForm(passwordRef);
+
+  useEffect(() => {
+    if (!displaySettings) return;
+
+    const { customLogo, customTheme } = displaySettings;
+    if (!!customLogo) {
+      LocalStorage.setItem('/theme/logo', customLogo.value);
+      LocalStorage.setItem('/theme/logohash', customLogo.hash);
+    }
+    if (!!customTheme) {
+      LocalStorage.setItem('/theme/custom', JSON.parse(customTheme.value));
+      LocalStorage.setItem('/theme/customhash', customTheme.hash);
+    }
+  }, [displaySettings]);
 
   useEffect(() => {
     setPageTitle(`${t('app.login')} | ${t('app')} `);
