@@ -34,4 +34,6 @@ export const Formatter = {
   },
   logTypeTranslation: (logType: string): LocaleKey =>
     `log.${logType.toLowerCase().replace(/_/g, '-')}` as LocaleKey,
+  sentenceCase: (str: string): string =>
+    str.length === 0 ? str : `${str?.[0]?.toUpperCase()}${str.slice(1)}`,
 };

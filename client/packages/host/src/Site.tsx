@@ -16,6 +16,7 @@ import {
   useAuthContext,
   useNotification,
   useTranslation,
+  SnackbarProvider,
 } from '@openmsupply-client/common';
 import { PropsWithChildrenOnly } from '@common/types';
 import { AppDrawer, AppBar, Footer, NotFound } from './components';
@@ -63,92 +64,100 @@ export const Site: FC = () => {
   return (
     <RequireAuthentication>
       <CommandK>
-        <AppDrawer />
-        <Box flex={1} display="flex" flexDirection="column" overflow="hidden">
-          <AppBar />
-          <NotifyOnLogin />
-          <Box display="flex" flex={1} overflow="auto">
-            <Routes>
-              <Route
-                path={RouteBuilder.create(AppRoute.Dashboard)
-                  .addWildCard()
-                  .build()}
-                element={<DashboardRouter />}
-              />
-              <Route
-                path={RouteBuilder.create(AppRoute.Catalogue)
-                  .addWildCard()
-                  .build()}
-                element={<CatalogueRouter />}
-              />
-              <Route
-                path={RouteBuilder.create(AppRoute.Distribution)
-                  .addWildCard()
-                  .build()}
-                element={<DistributionRouter />}
-              />
-              <Route
-                path={RouteBuilder.create(AppRoute.Replenishment)
-                  .addWildCard()
-                  .build()}
-                element={<ReplenishmentRouter />}
-              />
-              <Route
-                path={RouteBuilder.create(AppRoute.Suppliers)
-                  .addWildCard()
-                  .build()}
-                element={<Heading>suppliers</Heading>}
-              />
-              <Route
-                path={RouteBuilder.create(AppRoute.Inventory)
-                  .addWildCard()
-                  .build()}
-                element={<InventoryRouter />}
-              />
-              <Route
-                path={RouteBuilder.create(AppRoute.Tools).addWildCard().build()}
-                element={<Heading>tools</Heading>}
-              />
-              <Route
-                path={RouteBuilder.create(AppRoute.Reports)
-                  .addWildCard()
-                  .build()}
-                element={<Heading>reports</Heading>}
-              />
-              <Route
-                path={RouteBuilder.create(AppRoute.Messages)
-                  .addWildCard()
-                  .build()}
-                element={<Heading>messages</Heading>}
-              />
+        <SnackbarProvider maxSnack={3}>
+          <AppDrawer />
+          <Box flex={1} display="flex" flexDirection="column" overflow="hidden">
+            <AppBar />
+            <NotifyOnLogin />
+            <Box display="flex" flex={1} overflow="auto">
+              <Routes>
+                <Route
+                  path={RouteBuilder.create(AppRoute.Dashboard)
+                    .addWildCard()
+                    .build()}
+                  element={<DashboardRouter />}
+                />
+                <Route
+                  path={RouteBuilder.create(AppRoute.Catalogue)
+                    .addWildCard()
+                    .build()}
+                  element={<CatalogueRouter />}
+                />
+                <Route
+                  path={RouteBuilder.create(AppRoute.Distribution)
+                    .addWildCard()
+                    .build()}
+                  element={<DistributionRouter />}
+                />
+                <Route
+                  path={RouteBuilder.create(AppRoute.Replenishment)
+                    .addWildCard()
+                    .build()}
+                  element={<ReplenishmentRouter />}
+                />
+                <Route
+                  path={RouteBuilder.create(AppRoute.Suppliers)
+                    .addWildCard()
+                    .build()}
+                  element={<Heading>suppliers</Heading>}
+                />
+                <Route
+                  path={RouteBuilder.create(AppRoute.Inventory)
+                    .addWildCard()
+                    .build()}
+                  element={<InventoryRouter />}
+                />
+                <Route
+                  path={RouteBuilder.create(AppRoute.Tools)
+                    .addWildCard()
+                    .build()}
+                  element={<Heading>tools</Heading>}
+                />
+                <Route
+                  path={RouteBuilder.create(AppRoute.Reports)
+                    .addWildCard()
+                    .build()}
+                  element={<Heading>reports</Heading>}
+                />
+                <Route
+                  path={RouteBuilder.create(AppRoute.Messages)
+                    .addWildCard()
+                    .build()}
+                  element={<Heading>messages</Heading>}
+                />
 
-              <Route
-                path={RouteBuilder.create(AppRoute.Admin).addWildCard().build()}
-                element={<Settings />}
-              />
+                <Route
+                  path={RouteBuilder.create(AppRoute.Admin)
+                    .addWildCard()
+                    .build()}
+                  element={<Settings />}
+                />
 
-              <Route
-                path={RouteBuilder.create(AppRoute.Sync).addWildCard().build()}
-                element={<Sync />}
-              />
+                <Route
+                  path={RouteBuilder.create(AppRoute.Sync)
+                    .addWildCard()
+                    .build()}
+                  element={<Sync />}
+                />
 
-              <Route
-                path="/"
-                element={
-                  <Navigate
-                    replace
-                    to={RouteBuilder.create(AppRoute.Dashboard).build()}
-                  />
-                }
-              />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+                <Route
+                  path="/"
+                  element={
+                    <Navigate
+                      replace
+                      to={RouteBuilder.create(AppRoute.Dashboard).build()}
+                    />
+                  }
+                />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Box>
+            <AppFooter />
+            <AppFooterPortal SessionDetails={<Footer />} />
           </Box>
-          <AppFooter />
-          <AppFooterPortal SessionDetails={<Footer />} />
-        </Box>
-        <DetailPanel />
-        <QueryErrorHandler />
+          <DetailPanel />
+          <QueryErrorHandler />
+        </SnackbarProvider>
       </CommandK>
     </RequireAuthentication>
   );
