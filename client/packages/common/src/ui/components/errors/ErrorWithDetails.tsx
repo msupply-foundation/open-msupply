@@ -1,9 +1,9 @@
 import React from 'react';
 import {
   Box,
-  useNotification,
   AlertIcon,
   Typography,
+  InfoTooltipIcon,
 } from '@openmsupply-client/common';
 
 export type ErrorWithDetailsProps = {
@@ -14,17 +14,16 @@ export type ErrorWithDetailsProps = {
 export const ErrorWithDetails: React.FC<ErrorWithDetailsProps> = ({
   error,
   details,
-}) => {
-  const n = useNotification();
-
-  return (
-    <Box display="flex" sx={{ color: 'error.main' }} gap={1}>
-      <Box>
-        <AlertIcon onClick={n.error(details)} />
-      </Box>
-      <Box>
-        <Typography sx={{ color: 'inherit' }}>{error}</Typography>
-      </Box>
+}) => (
+  <Box display="flex" sx={{ color: 'error.main' }} gap={1} padding={2}>
+    <Box>
+      <AlertIcon />
     </Box>
-  );
-};
+    <Box>
+      <Typography sx={{ color: 'inherit' }}>{error}</Typography>
+    </Box>
+    <Box>
+      <InfoTooltipIcon title={details} />
+    </Box>
+  </Box>
+);

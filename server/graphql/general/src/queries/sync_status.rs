@@ -1,5 +1,5 @@
 pub use async_graphql::*;
-use chrono::NaiveDateTime;
+use chrono::{DateTime, NaiveDateTime, Utc};
 use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
@@ -11,18 +11,46 @@ use service::{
 
 use crate::sync_api_error::SyncErrorNode;
 
-#[derive(SimpleObject)]
 pub struct SyncStatusNode {
     started: NaiveDateTime,
     finished: Option<NaiveDateTime>,
 }
 
-#[derive(SimpleObject)]
+#[Object]
+impl SyncStatusNode {
+    async fn started(&self) -> DateTime<Utc> {
+        DateTime::<Utc>::from_utc(self.started, Utc)
+    }
+
+    async fn finished(&self) -> Option<DateTime<Utc>> {
+        self.finished.map(|v| DateTime::<Utc>::from_utc(v, Utc))
+    }
+}
+
 pub struct SyncStatusWithProgressNode {
     started: NaiveDateTime,
     finished: Option<NaiveDateTime>,
     total: Option<u32>,
     done: Option<u32>,
+}
+
+#[Object]
+impl SyncStatusWithProgressNode {
+    async fn started(&self) -> DateTime<Utc> {
+        DateTime::<Utc>::from_utc(self.started, Utc)
+    }
+
+    async fn finished(&self) -> Option<DateTime<Utc>> {
+        self.finished.map(|v| DateTime::<Utc>::from_utc(v, Utc))
+    }
+
+    async fn total(&self) -> &Option<u32> {
+        &self.total
+    }
+
+    async fn done(&self) -> &Option<u32> {
+        &self.done
+    }
 }
 
 #[derive(SimpleObject)]

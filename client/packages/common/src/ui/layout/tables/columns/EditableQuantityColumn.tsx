@@ -16,22 +16,15 @@ export const getEditableQuantityColumn = <
   width: 100,
   Cell: ({ rowData, isDisabled }) => {
     const { quantity } = rowData;
-    const [buffer, setBuffer] = useState(String(quantity));
+    const [buffer, setBuffer] = useState(quantity);
     const [value, setValue] = useState(quantity);
     const [error, setError] = useState(false);
 
-    const tryUpdateValue = (
-      event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
-    ) => {
-      const {
-        target: { value },
-      } = event;
-
-      const asNumber = Number(value);
-      const isValid = Number.isInteger(asNumber) && asNumber >= 0;
+    const tryUpdateValue = (value: number) => {
+      const isValid = Number.isInteger(value) && value >= 0;
 
       if (isValid) {
-        setValue(asNumber);
+        setValue(value);
         setError(false);
       } else {
         setError(true);
@@ -42,7 +35,7 @@ export const getEditableQuantityColumn = <
 
     useEffect(() => {
       setValue(quantity);
-      setBuffer(String(quantity));
+      setBuffer(quantity);
       setError(false);
     }, [rowData]);
 
