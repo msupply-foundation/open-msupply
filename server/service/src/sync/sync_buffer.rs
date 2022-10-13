@@ -26,6 +26,7 @@ const TRANSLATION_AND_INTEGRATION_ORDER: &[&str] = &[
     LegacyTableName::REQUISITION,
     LegacyTableName::REQUISITION_LINE,
     LegacyTableName::NAME_STORE_JOIN,
+    LegacyTableName::OM_ACTIVITY_LOG,
 ];
 
 pub(crate) struct SyncBuffer<'a> {

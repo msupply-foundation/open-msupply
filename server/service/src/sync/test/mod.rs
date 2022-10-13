@@ -204,7 +204,7 @@ pub(crate) async fn check_records_against_database(
                     MasterListLineRowRepository,
                     con,
                     record,
-                    "MaseterListLine"
+                    "MasterListLine"
                 )
             }
 
@@ -216,6 +216,10 @@ pub(crate) async fn check_records_against_database(
             ),
 
             Report(record) => check_record_by_id!(ReportRowRepository, con, record, "Report"),
+
+            ActivityLog(record) => {
+                check_record_by_id!(ActivityLogRowRepository, con, record, "ActivityLog")
+            }
         }
     }
 
@@ -254,6 +258,8 @@ pub(crate) async fn check_records_against_database(
             Stocktake => check_delete_record_by_id!(StocktakeRowRepository, con, id),
             #[cfg(feature = "integration_test")]
             StocktakeLine => check_delete_record_by_id!(StocktakeLineRowRepository, con, id),
+            #[cfg(feature = "integration_test")]
+            ActivityLog => check_delete_record_by_id!(ActivityLogRowRepository, con, id),
         }
     }
 }
