@@ -15,10 +15,16 @@ query initialisationStatus {
   initialisationStatus
 }
 
-query displaySettings {
-  displaySettings {
-    customLogo
-    customTheme
+query displaySettings($input: DisplaySettingsHash!) {
+  displaySettings(input: $input) {
+    customTheme {
+      value
+      hash
+    }
+    customLogo {
+      value
+      hash
+    }
   }
 }
 

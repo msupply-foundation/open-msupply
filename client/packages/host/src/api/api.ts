@@ -5,14 +5,15 @@ import {
   ErrorWithDetailsProps,
   SyncErrorVariant,
   DisplaySettingsInput,
+  DisplaySettingsHash,
 } from '@openmsupply-client/common';
 
 import { Sdk, SyncErrorFragment } from './operations.generated';
 
 export const getHostQueries = (sdk: Sdk) => ({
   get: {
-    displaySettings: async () => {
-      const result = await sdk.displaySettings();
+    displaySettings: async (input: DisplaySettingsHash) => {
+      const result = await sdk.displaySettings({ input });
       return result.displaySettings;
     },
     syncSettings: async () => {

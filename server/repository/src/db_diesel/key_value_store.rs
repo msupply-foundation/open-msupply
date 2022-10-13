@@ -36,8 +36,9 @@ pub enum KeyValueType {
     SettingsTokenSecret,
 
     SettingsDisplayCustomLogo,
+    SettingsDisplayCustomLogoHash,
     SettingsDisplayCustomTheme,
-    SettingsDisplayDefaultLanguage,
+    SettingsDisplayCustomThemeHash,
 }
 
 impl Default for KeyValueType {

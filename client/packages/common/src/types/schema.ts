@@ -636,6 +636,17 @@ export type DeleteStocktakeResponseWithId = {
   response: DeleteStocktakeResponse;
 };
 
+export type DisplaySettingNode = {
+  __typename: 'DisplaySettingNode';
+  hash: Scalars['String'];
+  value: Scalars['String'];
+};
+
+export type DisplaySettingsHash = {
+  logo: Scalars['String'];
+  theme: Scalars['String'];
+};
+
 export type DisplaySettingsInput = {
   customLogo?: InputMaybe<Scalars['String']>;
   customTheme?: InputMaybe<Scalars['String']>;
@@ -643,10 +654,8 @@ export type DisplaySettingsInput = {
 
 export type DisplaySettingsNode = {
   __typename: 'DisplaySettingsNode';
-  /** Custom logo */
-  customLogo?: Maybe<Scalars['String']>;
-  /** Custom theme */
-  customTheme?: Maybe<Scalars['String']>;
+  customLogo?: Maybe<DisplaySettingNode>;
+  customTheme?: Maybe<DisplaySettingNode>;
 };
 
 export type EqualFilterActivityLogTypeInput = {
@@ -2140,6 +2149,11 @@ export type QueriesAuthTokenArgs = {
 };
 
 
+export type QueriesDisplaySettingsArgs = {
+  input: DisplaySettingsHash;
+};
+
+
 export type QueriesInvoiceArgs = {
   id: Scalars['String'];
   storeId: Scalars['String'];
@@ -3203,8 +3217,8 @@ export enum UpdateResponseRequisitionStatusInput {
 
 export type UpdateResult = {
   __typename: 'UpdateResult';
-  logo: Scalars['Boolean'];
-  theme: Scalars['Boolean'];
+  logo?: Maybe<Scalars['String']>;
+  theme?: Maybe<Scalars['String']>;
 };
 
 export type UpdateStocktakeError = {
