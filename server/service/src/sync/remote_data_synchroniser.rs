@@ -1,23 +1,22 @@
 use std::time::{Duration, SystemTime};
 
 use crate::sync::{
-    get_active_records_on_site_filter,
-    sync_status::logger::SyncStepProgress,
-    translations::{translate_changelog, PushRecord},
+    get_active_records_on_site_filter, sync_status::logger::SyncStepProgress,
     GetActiveStoresOnSiteError,
 };
 
 use super::{
     api::*,
     sync_status::logger::{SyncLogger, SyncLoggerError},
+    translations::{translate_changelogs_to_push_records, PushTranslationError},
 };
 
 use log::info;
 use repository::{
-    ChangelogRepository, ChangelogRow, KeyValueStoreRepository, KeyValueType, RepositoryError,
-    StorageConnection, SyncBufferRowRepository,
+    ChangelogRepository, KeyValueStoreRepository, KeyValueType, RepositoryError, StorageConnection,
+    SyncBufferRowRepository,
 };
-use serde_json::json;
+
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -41,8 +40,8 @@ pub(crate) enum RemotePushError {
     SyncApiError(#[from] SyncApiError),
     #[error("Database error")]
     DatabaseError(#[from] RepositoryError),
-    #[error("Problem translation remote records during push")]
-    TranslationError(#[from] anyhow::Error),
+    #[error(transparent)]
+    PushTranslationError(#[from] PushTranslationError),
     #[error("Total remaining sent to server is 0 but integration not started")]
     IntegrationNotStarted,
     #[error("Problem getting active stores on site during remote push")]
@@ -192,42 +191,6 @@ impl RemoteDataSynchroniser {
 
         Ok(())
     }
-}
-
-pub(crate) fn translate_changelogs_to_push_records(
-    connection: &StorageConnection,
-    changelogs: Vec<ChangelogRow>,
-) -> Result<Vec<RemoteSyncRecordV5>, anyhow::Error> {
-    let mut out_records: Vec<PushRecord> = Vec::new();
-    for changelog in changelogs {
-        translate_changelog(connection, &changelog, &mut out_records)?;
-    }
-
-    info!("Remote push: Send records to central server...");
-    let records: Vec<RemoteSyncRecordV5> = out_records
-        .into_iter()
-        .map(|record| match record {
-            PushRecord::Upsert(record) => RemoteSyncRecordV5 {
-                sync_id: record.sync_id.to_string(),
-                record: CommonSyncRecordV5 {
-                    table_name: record.table_name.to_string(),
-                    record_id: record.record_id,
-                    action: SyncActionV5::Update,
-                    data: record.data,
-                },
-            },
-            PushRecord::Delete(record) => RemoteSyncRecordV5 {
-                sync_id: record.sync_id.to_string(),
-                record: CommonSyncRecordV5 {
-                    table_name: record.table_name.to_string(),
-                    record_id: record.record_id,
-                    action: SyncActionV5::Delete,
-                    data: json!({}),
-                },
-            },
-        })
-        .collect();
-    Ok(records)
 }
 
 pub(crate) fn get_push_cursor(connection: &StorageConnection) -> Result<u64, RepositoryError> {

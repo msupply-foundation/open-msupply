@@ -6,9 +6,7 @@ use crate::sync::{
     },
 };
 use chrono::{Duration, NaiveDate, NaiveTime};
-use repository::{
-    ChangelogAction, ChangelogRow, ChangelogTableName, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
-};
+use repository::{InvoiceRow, InvoiceRowStatus, InvoiceRowType};
 use serde_json::json;
 
 use super::TestSyncPushRecord;
@@ -73,7 +71,7 @@ const TRANSACT_1: (&'static str, &'static str) = (
       "ship_method_ID": "",
       "ship_method_comment": "",
       "status": "cn",
-      "store_ID": "store_a",
+      "store_ID": "store_b",
       "subtotal": 0,
       "supplier_charge_fc": 0,
       "tax": 0,
@@ -96,7 +94,7 @@ fn transact_1_pull_record() -> TestSyncPullRecord {
         PullUpsertRecord::Invoice(InvoiceRow {
             id: TRANSACT_1.0.to_string(),
             user_id: None,
-            store_id: "store_a".to_string(),
+            store_id: "store_b".to_string(),
             name_id: "name_store_a".to_string(),
             name_store_id: Some("store_a".to_string()),
             invoice_number: 1,
@@ -123,19 +121,13 @@ fn transact_1_pull_record() -> TestSyncPullRecord {
 }
 fn transact_1_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
-        change_log: ChangelogRow {
-            cursor: 2,
-            table_name: ChangelogTableName::Invoice,
-            record_id: TRANSACT_1.0.to_string(),
-            row_action: ChangelogAction::Upsert,
-            name_id: Some("name_store_a".to_string()),
-            store_id: Some("store_a".to_string()),
-        },
+        table_name: LegacyTableName::TRANSACT.to_string(),
+        record_id: TRANSACT_1.0.to_string(),
         push_data: json!(LegacyTransactRow {
             ID: TRANSACT_1.0.to_string(),
             user_id: None,
             name_ID: "name_store_a".to_string(),
-            store_ID: "store_a".to_string(),
+            store_ID: "store_b".to_string(),
             invoice_num: 1,
             _type: LegacyTransactType::Si,
             status: LegacyTransactStatus::Cn,
@@ -276,14 +268,8 @@ fn transact_2_pull_record() -> TestSyncPullRecord {
 }
 fn transact_2_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
-        change_log: ChangelogRow {
-            cursor: 2,
-            table_name: ChangelogTableName::Invoice,
-            record_id: TRANSACT_2.0.to_string(),
-            row_action: ChangelogAction::Upsert,
-            name_id: Some("name_store_b".to_string()),
-            store_id: Some("store_b".to_string()),
-        },
+        table_name: LegacyTableName::TRANSACT.to_string(),
+        record_id: TRANSACT_2.0.to_string(),
         push_data: json!(LegacyTransactRow {
             ID: TRANSACT_2.0.to_string(),
             user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
@@ -438,14 +424,8 @@ fn transact_om_fields_pull_record() -> TestSyncPullRecord {
 }
 fn transact_om_fields_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
-        change_log: ChangelogRow {
-            cursor: 2,
-            table_name: ChangelogTableName::Invoice,
-            record_id: TRANSACT_OM_FIELDS.0.to_string(),
-            row_action: ChangelogAction::Upsert,
-            name_id: Some("name_store_b".to_string()),
-            store_id: Some("store_b".to_string()),
-        },
+        table_name: LegacyTableName::TRANSACT.to_string(),
+        record_id: TRANSACT_OM_FIELDS.0.to_string(),
         push_data: json!(LegacyTransactRow {
             ID: TRANSACT_OM_FIELDS.0.to_string(),
             user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),

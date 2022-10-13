@@ -21,14 +21,6 @@ use repository::{
 };
 use thiserror::Error;
 
-#[derive(Error, Debug)]
-#[error("Failed to translate {table_name} sync record: {record}")]
-pub(crate) struct SyncTranslationError {
-    pub table_name: String,
-    pub source: anyhow::Error,
-    pub record: String,
-}
-
 pub(crate) struct ActiveStoresOnSite {
     stores: Vec<Store>,
 }
@@ -41,7 +33,7 @@ pub(crate) fn get_active_records_on_site_filter(
 ) -> Result<Option<ChangelogFilter>, GetActiveStoresOnSiteError> {
     let active_stores = ActiveStoresOnSite::get(&connection)?;
 
-    Ok(Some(ChangelogFilter::new().store_id(
+Ok(Some(ChangelogFilter::new().store_id(
         EqualFilter::equal_any_or_null(active_stores.store_ids()),
     )))
 }

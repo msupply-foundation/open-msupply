@@ -1,15 +1,17 @@
 use crate::sync::{
-    remote_data_synchroniser::translate_changelogs_to_push_records,
+    api::SyncActionV5,
+    get_active_records_on_site_filter,
     synchroniser::integrate_and_translate_sync_buffer,
     test::{
         check_test_records_against_database, extract_sync_buffer_rows,
         test_data::get_all_push_test_records,
     },
-    translations::table_name_to_central,
+    translations::translate_changelogs_to_push_records,
 };
 use repository::{
     mock::{mock_store_b, MockData, MockDataInserts},
-    test_db, KeyValueStoreRow, KeyValueType, SyncBufferRow, SyncBufferRowRepository,
+    test_db, ChangelogRepository, KeyValueStoreRow, KeyValueType, SyncBufferRow,
+    SyncBufferRowRepository,
 };
 use util::inline_init;
 
@@ -38,7 +40,13 @@ async fn test_sync_pull_and_push() {
     )
     .await;
 
-    // Test Pull Upsert
+    // Get push cursor before inserting pull data (so that we can test push)
+    let push_cursor = ChangelogRepository::new(&connection)
+        .latest_cursor()
+        .unwrap()
+        + 1;
+
+    // PULL UPSERT
     let test_records = vec![
         get_all_pull_upsert_central_test_records(),
         get_all_pull_upsert_remote_test_records(),
@@ -55,26 +63,35 @@ async fn test_sync_pull_and_push() {
 
     check_test_records_against_database(&connection, test_records).await;
 
-    // Test Push
-    let test_records = get_all_push_test_records();
-    for test_record in test_records {
-        let expected_record_id = test_record.change_log.record_id.to_string();
-        let expected_table_name = table_name_to_central(&test_record.change_log.table_name);
-        let mut result =
-            translate_changelogs_to_push_records(&connection, vec![test_record.change_log.clone()])
-                .unwrap();
-        // we currently only have one entry in the data_list
-        let result = result
-            .pop()
-            .expect(&format!("Could not translate {:#?}", test_record));
-        let record = result.record;
-
-        assert_eq!(record.record_id, expected_record_id);
-        assert_eq!(record.table_name, expected_table_name);
-        assert_eq!(record.data, test_record.push_data);
+    // PUSH UPSERT
+    let mut test_records = get_all_push_test_records();
+    let change_log_filter = get_active_records_on_site_filter(&connection).unwrap();
+    // Records would have been inserted in test Pull Upsert and trigger should have inserted changelogs
+    let changelogs = ChangelogRepository::new(&connection)
+        .changelogs(push_cursor, 100000, change_log_filter)
+        .unwrap();
+    // Translate and sort
+    let mut translated = translate_changelogs_to_push_records(&connection, changelogs).unwrap();
+    translated.sort_by(|a, b| a.record.record_id.cmp(&b.record.record_id));
+    test_records.sort_by(|a, b| a.record_id.cmp(&b.record_id));
+    // Test ids and table names
+    assert_eq!(
+        translated
+            .iter()
+            .map(|r| (r.record.record_id.clone(), r.record.table_name.clone()))
+            .collect::<Vec<(String, String)>>(),
+        test_records
+            .iter()
+            .map(|r| (r.record_id.clone(), r.table_name.clone()))
+            .collect::<Vec<(String, String)>>()
+    );
+    // Test data
+    for (index, test_record) in test_records.iter().enumerate() {
+        assert_eq!(test_record.push_data, translated[index].record.data);
+        assert_eq!(translated[index].record.action, SyncActionV5::Update)
     }
 
-    // Test Pull Delete
+    // PULL DELETE
     let test_records = vec![
         get_all_pull_delete_central_test_records(),
         get_all_pull_delete_remote_test_records(),
@@ -90,4 +107,7 @@ async fn test_sync_pull_and_push() {
     integrate_and_translate_sync_buffer(&connection).unwrap();
 
     check_test_records_against_database(&connection, test_records).await;
+
+    // PUSH DELETE
+    // TODO
 }

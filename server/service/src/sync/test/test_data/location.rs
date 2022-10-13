@@ -1,7 +1,7 @@
 use crate::sync::translations::{location::LegacyLocationRow, LegacyTableName, PullUpsertRecord};
-use repository::{ChangelogAction, ChangelogRow, ChangelogTableName, LocationRow};
+
+use repository::LocationRow;
 use serde_json::json;
-use util::inline_init;
 
 use super::{TestSyncPullRecord, TestSyncPushRecord};
 
@@ -43,12 +43,8 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
 
 pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
     vec![TestSyncPushRecord {
-        change_log: inline_init(|r: &mut ChangelogRow| {
-            r.cursor = 2;
-            r.table_name = ChangelogTableName::Location;
-            r.record_id = LOCATION_1.0.to_string();
-            r.row_action = ChangelogAction::Upsert;
-        }),
+        table_name: LegacyTableName::LOCATION.to_string(),
+        record_id: LOCATION_1.0.to_string(),
         push_data: json!(LegacyLocationRow {
             id: LOCATION_1.0.to_string(),
             name: "NameRed.02".to_string(),
