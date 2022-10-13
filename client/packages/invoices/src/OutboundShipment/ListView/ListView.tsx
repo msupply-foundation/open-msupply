@@ -27,7 +27,7 @@ const useDisableOutboundRows = (rows?: OutboundRowFragment[]) => {
   }, [rows]);
 };
 
-export const OutboundShipmentListViewComponent: FC = () => {
+const OutboundShipmentListViewComponent: FC = () => {
   const { mutate: onUpdate } = useOutbound.document.update();
   const t = useTranslation('distribution');
   const {

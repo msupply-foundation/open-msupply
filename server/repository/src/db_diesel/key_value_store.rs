@@ -34,6 +34,11 @@ pub enum KeyValueType {
     SettingsSyncSiteUuid,
     SettingsSyncIsDisabled,
     SettingsTokenSecret,
+
+    SettingsDisplayCustomLogo,
+    SettingsDisplayCustomLogoHash,
+    SettingsDisplayCustomTheme,
+    SettingsDisplayCustomThemeHash,
 }
 
 impl Default for KeyValueType {

@@ -636,6 +636,28 @@ export type DeleteStocktakeResponseWithId = {
   response: DeleteStocktakeResponse;
 };
 
+export type DisplaySettingNode = {
+  __typename: 'DisplaySettingNode';
+  hash: Scalars['String'];
+  value: Scalars['String'];
+};
+
+export type DisplaySettingsHash = {
+  logo: Scalars['String'];
+  theme: Scalars['String'];
+};
+
+export type DisplaySettingsInput = {
+  customLogo?: InputMaybe<Scalars['String']>;
+  customTheme?: InputMaybe<Scalars['String']>;
+};
+
+export type DisplaySettingsNode = {
+  __typename: 'DisplaySettingsNode';
+  customLogo?: Maybe<DisplaySettingNode>;
+  customTheme?: Maybe<DisplaySettingNode>;
+};
+
 export type EqualFilterActivityLogTypeInput = {
   equalAny?: InputMaybe<Array<ActivityLogNodeType>>;
   equalTo?: InputMaybe<ActivityLogNodeType>;
@@ -1530,6 +1552,7 @@ export type Mutations = {
   manualSync: Scalars['String'];
   /** Set supply quantity to requested quantity */
   supplyRequestedQuantity: SupplyRequestedQuantityResponse;
+  updateDisplaySettings: UpdateDisplaySettingsResponse;
   updateInboundShipment: UpdateInboundShipmentResponse;
   updateInboundShipmentLine: UpdateInboundShipmentLineResponse;
   updateInboundShipmentServiceLine: UpdateInboundShipmentServiceLineResponse;
@@ -1756,6 +1779,11 @@ export type MutationsInsertStocktakeLineArgs = {
 export type MutationsSupplyRequestedQuantityArgs = {
   input: SupplyRequestedQuantityInput;
   storeId: Scalars['String'];
+};
+
+
+export type MutationsUpdateDisplaySettingsArgs = {
+  input: DisplaySettingsInput;
 };
 
 
@@ -2059,6 +2087,7 @@ export type Queries = {
    * The refresh token is returned as a cookie
    */
   authToken: AuthTokenResponse;
+  displaySettings: DisplaySettingsNode;
   /** Available without authorisation in operational and initialisation states */
   initialisationStatus: InitialisationStatusType;
   invoice: InvoiceResponse;
@@ -2117,6 +2146,11 @@ export type QueriesActivityLogsArgs = {
 export type QueriesAuthTokenArgs = {
   password: Scalars['String'];
   username: Scalars['String'];
+};
+
+
+export type QueriesDisplaySettingsArgs = {
+  input: DisplaySettingsHash;
 };
 
 
@@ -2853,6 +2887,13 @@ export type UniqueValueViolation = InsertLocationErrorInterface & UpdateLocation
   field: UniqueValueKey;
 };
 
+export type UpdateDisplaySettingsError = {
+  __typename: 'UpdateDisplaySettingsError';
+  error: Scalars['String'];
+};
+
+export type UpdateDisplaySettingsResponse = UpdateDisplaySettingsError | UpdateResult;
+
 export type UpdateErrorInterface = {
   description: Scalars['String'];
 };
@@ -3173,6 +3214,12 @@ export type UpdateResponseRequisitionResponse = RequisitionNode | UpdateResponse
 export enum UpdateResponseRequisitionStatusInput {
   Finalised = 'FINALISED'
 }
+
+export type UpdateResult = {
+  __typename: 'UpdateResult';
+  logo?: Maybe<Scalars['String']>;
+  theme?: Maybe<Scalars['String']>;
+};
 
 export type UpdateStocktakeError = {
   __typename: 'UpdateStocktakeError';

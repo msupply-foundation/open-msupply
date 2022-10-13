@@ -11,6 +11,7 @@ pub mod app_data;
 pub mod auth;
 pub mod auth_data;
 pub mod dashboard;
+pub mod display_settings_service;
 pub mod invoice;
 pub mod invoice_line;
 pub mod item;
