@@ -1,10 +1,11 @@
 import React, { FC } from 'react';
-import { Grid, Paper, Typography } from '@mui/material';
+import { Grid, Paper, Tooltip, Typography } from '@mui/material';
 import { BarChartIcon, InlineSpinner, StockIcon } from '../../../';
+import { useTranslation } from '@common/intl';
 
 export type Stat = {
   label: string;
-  value: string;
+  value?: string;
 };
 export interface StatsPanelProps {
   isLoading: boolean;
@@ -19,12 +20,29 @@ export const StatsPanel: FC<StatsPanelProps> = ({
   title,
   width,
 }) => {
+  const t = useTranslation();
   const Statistic: FC<Stat> = ({ label, value }) => (
     <Grid container alignItems="center" style={{ height: 30 }}>
       <Grid item>
-        <Typography style={{ fontSize: 24, fontWeight: 'bold' }}>
-          {value}
-        </Typography>
+        {value ? (
+          <Typography style={{ fontSize: 24, fontWeight: 'bold' }}>
+            {value}
+          </Typography>
+        ) : (
+          <Tooltip title={t('messages.no-data-available')}>
+            <Typography
+              style={{
+                cursor: 'help',
+                fontSize: 16,
+                fontWeight: 'bold',
+                paddingTop: 8,
+                paddingBottom: 8,
+              }}
+            >
+              {t('messages.not-applicable')}
+            </Typography>
+          </Tooltip>
+        )}
       </Grid>
       <Grid
         item
