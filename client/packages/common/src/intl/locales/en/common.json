@@ -190,6 +190,7 @@
   "log.requisition-deleted": "Requisition deleted",
   "log.requisition-status-sent": "Requisition sent",
   "log.requisition-status-finalised": "Requisition finalised",
+  "messages.ago": "{{time}} ago",
   "messages.cant-delete-generic": "You cannot delete one or more of the selected items",
   "messages.confirm-cancel-generic": "You will lose any changes you have made to this form",
   "messages.confirm-delete-generic": "This will permanently remove data",
