@@ -42,6 +42,8 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
             is_donor: true,
             on_hold: true,
             created_datetime: Some(NaiveDate::from_ymd(2022, 05, 22).and_hms(0, 0, 0)),
+            national_health_number: None,
+            is_deceased: false,
         };
         let name_json1 = json!({
             "ID": name_row1.id,
