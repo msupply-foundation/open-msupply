@@ -55,6 +55,7 @@ const getBatchColumn = (
       Cell: TextInputCell,
       setter: patch => setter({ ...patch, countThisLine: true }),
       backgroundColor: alpha(theme.palette.background.menu, 0.4),
+      accessor: ({ rowData }) => rowData.batch ?? '',
     },
   ] as ColumnDescription<DraftStocktakeLine>;
 
@@ -110,6 +111,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
       width: 100,
       Cell: NonNegativeDecimalCell,
       setter: patch => update({ ...patch, countThisLine: true }),
+      accessor: ({ rowData }) => rowData.countedNumberOfPacks ?? '',
     },
     [
       expiryDateColumn,

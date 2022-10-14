@@ -31,7 +31,7 @@ const dateInputHandler = (date: Date | string | number): Date => {
 };
 
 export const DateUtils = {
-  getDateOrNull: (date: string | null): Date | null => {
+  getDateOrNull: (date?: string | null): Date | null => {
     if (!date) return null;
     const maybeDate = new Date(date);
     return isValid(maybeDate) ? maybeDate : null;

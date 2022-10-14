@@ -2845,15 +2845,15 @@ export type SyncSettingsNode = {
 
 export type SyncStatusNode = {
   __typename: 'SyncStatusNode';
-  finished?: Maybe<Scalars['NaiveDateTime']>;
-  started: Scalars['NaiveDateTime'];
+  finished?: Maybe<Scalars['DateTime']>;
+  started: Scalars['DateTime'];
 };
 
 export type SyncStatusWithProgressNode = {
   __typename: 'SyncStatusWithProgressNode';
   done?: Maybe<Scalars['Int']>;
-  finished?: Maybe<Scalars['NaiveDateTime']>;
-  started: Scalars['NaiveDateTime'];
+  finished?: Maybe<Scalars['DateTime']>;
+  started: Scalars['DateTime'];
   total?: Maybe<Scalars['Int']>;
 };
 
