@@ -114,6 +114,11 @@ pub struct LegacyNameRow {
     #[serde(deserialize_with = "zero_date_as_option")]
     #[serde(serialize_with = "date_option_to_isostring")]
     pub created_date: Option<NaiveDate>,
+
+    pub national_health_number: Option<String>,
+
+    #[serde(rename = "isDeceased")]
+    pub is_deceased: bool,
     // TODO not in mSupply:
     //pub om_created_datetime: Option<NaiveDateTime>,
     //pub om_gender: Option<Gender>,
@@ -171,8 +176,8 @@ impl SyncTranslation for NameTranslation {
                 None
             },
             created_datetime: data.created_date.map(|date| date.and_hms(0, 0, 0)),
-            is_deceased: false,
-            national_health_number: None,
+            is_deceased: data.is_deceased,
+            national_health_number: data.national_health_number,
             /*
             gender: data.om_gender.or(if data.female {
                 Some(Gender::Female)
