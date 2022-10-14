@@ -25,7 +25,7 @@ pub struct UpdateInboundShipmentLine {
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
     pub expiry_date: Option<NaiveDate>,
-    pub number_of_packs: Option<u32>,
+    pub number_of_packs: Option<f64>,
     pub total_before_tax: Option<f64>,
     pub tax: Option<ShipmentTaxUpdate>,
 }
@@ -169,7 +169,7 @@ mod test {
                     r.id = mock_inbound_shipment_c_invoice_lines()[0].id.clone();
                     r.item_id = Some("invalid".to_string());
                     r.pack_size = Some(1);
-                    r.number_of_packs = Some(1);
+                    r.number_of_packs = Some(1.0);
                 }),
             ),
             Err(ServiceError::ItemNotFound)
@@ -183,7 +183,7 @@ mod test {
                     r.id = mock_inbound_shipment_c_invoice_lines()[0].id.clone();
                     r.item_id = Some(mock_item_a().id.clone());
                     r.pack_size = Some(0);
-                    r.number_of_packs = Some(1);
+                    r.number_of_packs = Some(1.0);
                 }),
             ),
             Err(ServiceError::PackSizeBelowOne)
@@ -197,7 +197,7 @@ mod test {
                     r.id = mock_inbound_shipment_c_invoice_lines()[0].id.clone();
                     r.item_id = Some(mock_item_a().id.clone());
                     r.pack_size = Some(1);
-                    r.number_of_packs = Some(0);
+                    r.number_of_packs = Some(0.0);
                 }),
             ),
             Err(ServiceError::NumberOfPacksBelowOne)
@@ -211,7 +211,7 @@ mod test {
                     r.id = mock_inbound_shipment_b_invoice_lines()[0].id.clone();
                     r.item_id = Some(mock_item_a().id.clone());
                     r.pack_size = Some(1);
-                    r.number_of_packs = Some(1);
+                    r.number_of_packs = Some(1.0);
                 }),
             ),
             Err(ServiceError::CannotEditFinalised)
@@ -225,7 +225,7 @@ mod test {
                     r.id = mock_inbound_shipment_a_invoice_lines()[0].id.clone();
                     r.item_id = Some(mock_item_a().id.clone());
                     r.pack_size = Some(1);
-                    r.number_of_packs = Some(1);
+                    r.number_of_packs = Some(1.0);
                 }),
             ),
             Err(ServiceError::BatchIsReserved)
@@ -240,7 +240,7 @@ mod test {
                     r.id = mock_inbound_shipment_a_invoice_lines()[0].id.clone();
                     r.item_id = Some(mock_item_a().id.clone());
                     r.pack_size = Some(1);
-                    r.number_of_packs = Some(1);
+                    r.number_of_packs = Some(1.0);
                 }),
             ),
             Err(ServiceError::NotThisStoreInvoice)
@@ -268,7 +268,7 @@ mod test {
                     r.id = mock_inbound_shipment_c_invoice_lines()[0].id.clone();
                     r.item_id = Some(mock_item_a().id.clone());
                     r.pack_size = Some(2);
-                    r.number_of_packs = Some(3);
+                    r.number_of_packs = Some(3.0);
                 }),
             )
             .unwrap();
@@ -283,7 +283,7 @@ mod test {
                 u.id = mock_inbound_shipment_c_invoice_lines()[0].id.clone();
                 u.item_id = mock_item_a().id.clone();
                 u.pack_size = 2;
-                u.number_of_packs = 3;
+                u.number_of_packs = 3.0;
                 u
             })
         );

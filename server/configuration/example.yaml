@@ -17,9 +17,11 @@
 #   username: "demo"
 #   # 'd74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1' = 'pass'
 #   password_sha256: "d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1"
-#   interval_sec: 300
-#   central_server_site_id: 1
-#   site_id: 2
+#   interval_seconds: 300
+#   batch_size:
+#     remote_push: 1024
+#     remote_pull: 500
+#     central_pull: 500
 # database:
 #   host: "localhost"
 #   port: 5432
@@ -27,7 +29,7 @@
 #   password: "password"
 #   database_name: "omsupply-database"
 # logging:
-##   one of: Console | File
+##   one of: All | Console | File
 #   mode: Console
 ##   one of:  Off | Error | Warn | Info (default) | Debug | Trace
 #   level: Info

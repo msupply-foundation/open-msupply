@@ -33,7 +33,7 @@ actix-files = "0.6.0"
 # the openssl shared lib which is not easily available on the host platform. To enable the
 # "openssl/vendored" feature on Android (see below) the openssl crate needs to be a dependency.
 openssl = { version = "0.10", features = ["v110"] }
-anyhow = "1.0.44"
+anyhow = "1.0.56"
 config = "0.11.0"
 chrono = { version = "0.4", features = ["serde"] }
 log = "0.4.14"

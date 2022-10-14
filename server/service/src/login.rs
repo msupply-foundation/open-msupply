@@ -4,16 +4,17 @@ use std::{
 };
 
 use bcrypt::BcryptError;
-use chrono::Utc;
 use log::info;
 use repository::{
-    LogType, Permission, RepositoryError, UserAccountRow, UserPermissionRow, UserStoreJoinRow,
+    ActivityLogType, Permission, RepositoryError, UserAccountRow, UserPermissionRow,
+    UserStoreJoinRow,
 };
 use reqwest::{ClientBuilder, Url};
 use serde::{Deserialize, Serialize};
 use util::uuid::uuid;
 
 use crate::{
+    activity_log::activity_log_entry_without_record,
     apis::{
         login_v4::{
             LoginApiV4, LoginInputV4, LoginStatusV4, LoginUserInfoV4, LoginUserTypeV4, LoginV4Error,
@@ -21,7 +22,6 @@ use crate::{
         permissions::{map_api_permissions, Permissions},
     },
     auth_data::AuthData,
-    log::log_entry,
     service_provider::{ServiceContext, ServiceProvider},
     settings::is_develop,
     token::{JWTIssuingError, TokenPair, TokenService},
@@ -134,12 +134,7 @@ impl LoginService {
         };
         service_ctx.user_id = user_account.id.clone();
 
-        log_entry(
-            &service_ctx,
-            LogType::UserLoggedIn,
-            None,
-            Utc::now().naive_utc(),
-        )?;
+        activity_log_entry_without_record(&service_ctx, ActivityLogType::UserLoggedIn)?;
 
         let mut token_service = TokenService::new(
             &auth_data.token_bucket,
@@ -374,6 +369,7 @@ mod test {
         mock::MockDataInserts, test_db::setup_all, EqualFilter, UserFilter, UserPermissionFilter,
         UserPermissionRepository, UserRepository,
     };
+    use util::assert_matches;
 
     use crate::{
         apis::login_v4::LoginResponseV4,
@@ -467,11 +463,7 @@ mod test {
             )
             .await;
 
-            assert!(
-                matches!(result, Err(LoginError::LoginFailure)),
-                "expected login failure, got {:#?}",
-                result
-            );
+            assert_matches!(result, Err(LoginError::LoginFailure));
         }
         // Old password should still work in offline mode or if central return an error
         {
@@ -495,11 +487,7 @@ mod test {
             )
             .await;
 
-            assert!(
-                matches!(result, Ok(_)),
-                "expected Ok token pair, got {:#?}",
-                result
-            );
+            assert_matches!(result, Ok(_));
         }
         // If server password has changed, and trying to login with old password, return LoginError::LoginFailure
         {
@@ -523,11 +511,7 @@ mod test {
             )
             .await;
 
-            assert!(
-                matches!(result, Err(LoginError::LoginFailure)),
-                "expected login failure, got {:#?}",
-                result
-            );
+            assert_matches!(result, Err(LoginError::LoginFailure));
         }
         // If central server is not accessible after trying to login with old password, make sure old password does not work
         // Issue #1101 in remote-server: Extra login protection when user password has changed

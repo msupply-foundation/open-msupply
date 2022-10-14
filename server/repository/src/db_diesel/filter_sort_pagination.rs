@@ -1,4 +1,5 @@
 use chrono::{NaiveDate, NaiveDateTime};
+use util::inline_init;
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct SimpleStringFilter {
@@ -135,74 +136,72 @@ pub struct EqualFilter<T> {
     pub equal_to: Option<T>,
     pub not_equal_to: Option<T>,
     pub equal_any: Option<Vec<T>>,
+    pub equal_any_or_null: Option<Vec<T>>,
     pub not_equal_all: Option<Vec<T>>,
+    pub is_null: Option<bool>,
+}
+
+impl<T> Default for EqualFilter<T> {
+    fn default() -> Self {
+        Self {
+            equal_to: None,
+            not_equal_to: None,
+            equal_any: None,
+            equal_any_or_null: None,
+            not_equal_all: None,
+            is_null: None,
+        }
+    }
 }
 
 impl EqualFilter<i64> {
     pub fn equal_to_i64(value: i64) -> Self {
-        EqualFilter {
-            equal_to: Some(value),
-            not_equal_to: None,
-            equal_any: None,
-            not_equal_all: None,
-        }
+        inline_init(|r: &mut Self| r.equal_to = Some(value))
     }
 }
 
 impl EqualFilter<i32> {
     pub fn equal_to_i32(value: i32) -> Self {
-        EqualFilter {
-            equal_to: Some(value),
-            not_equal_to: None,
-            equal_any: None,
-            not_equal_all: None,
-        }
+        inline_init(|r: &mut Self| r.equal_to = Some(value))
     }
     pub fn not_equal_to_i32(value: i32) -> Self {
-        EqualFilter {
-            equal_to: None,
-            not_equal_to: Some(value),
-            equal_any: None,
-            not_equal_all: None,
-        }
+        inline_init(|r: &mut Self| r.not_equal_to = Some(value))
+    }
+}
+
+impl EqualFilter<f64> {
+    pub fn equal_to_f64(value: f64) -> Self {
+        inline_init(|r: &mut Self| r.equal_to = Some(value))
+    }
+
+    pub fn not_equal_to_f64(value: f64) -> Self {
+        inline_init(|r: &mut Self| r.not_equal_to = Some(value))
     }
 }
 
 impl EqualFilter<String> {
     pub fn equal_to(value: &str) -> Self {
-        EqualFilter {
-            equal_to: Some(value.to_owned()),
-            not_equal_to: None,
-            equal_any: None,
-            not_equal_all: None,
-        }
+        inline_init(|r: &mut Self| r.equal_to = Some(value.to_owned()))
     }
 
     pub fn not_equal_to(value: &str) -> Self {
-        EqualFilter {
-            equal_to: None,
-            not_equal_to: Some(value.to_owned()),
-            equal_any: None,
-            not_equal_all: None,
-        }
+        inline_init(|r: &mut Self| r.not_equal_to = Some(value.to_owned()))
     }
 
     pub fn equal_any(value: Vec<String>) -> Self {
-        EqualFilter {
-            equal_to: None,
-            not_equal_to: None,
-            equal_any: Some(value),
-            not_equal_all: None,
-        }
+        inline_init(|r: &mut Self| r.equal_any = Some(value))
+    }
+
+    pub fn equal_any_or_null(value: Vec<String>) -> Self {
+        inline_init(|r: &mut Self| r.equal_any_or_null = Some(value))
     }
 
     pub fn not_equal_all(value: Vec<String>) -> Self {
-        EqualFilter {
-            equal_to: None,
-            not_equal_to: None,
-            equal_any: None,
-            not_equal_all: Some(value),
-        }
+        inline_init(|r: &mut Self| r.not_equal_all = Some(value))
+    }
+
+    pub fn is_null(value: bool) -> Self {
+        inline_init(|r: &mut Self| r.is_null = Some(value))
     }
 }
 
@@ -211,6 +210,7 @@ pub struct DatetimeFilter {
     pub equal_to: Option<NaiveDateTime>,
     pub before_or_equal_to: Option<NaiveDateTime>,
     pub after_or_equal_to: Option<NaiveDateTime>,
+    pub is_null: Option<bool>,
 }
 
 impl DatetimeFilter {
@@ -219,6 +219,7 @@ impl DatetimeFilter {
             equal_to: None,
             after_or_equal_to: Some(from),
             before_or_equal_to: Some(to),
+            is_null: None,
         }
     }
 
@@ -227,6 +228,7 @@ impl DatetimeFilter {
             equal_to: Some(value.to_owned()),
             after_or_equal_to: None,
             before_or_equal_to: None,
+            is_null: None,
         }
     }
 
@@ -235,6 +237,7 @@ impl DatetimeFilter {
             equal_to: None,
             after_or_equal_to: Some(value.to_owned()),
             before_or_equal_to: None,
+            is_null: None,
         }
     }
 
@@ -243,6 +246,16 @@ impl DatetimeFilter {
             equal_to: None,
             after_or_equal_to: None,
             before_or_equal_to: Some(value),
+            is_null: None,
+        }
+    }
+
+    pub fn is_null(value: bool) -> Self {
+        DatetimeFilter {
+            equal_to: None,
+            after_or_equal_to: None,
+            before_or_equal_to: None,
+            is_null: Some(value),
         }
     }
 }
