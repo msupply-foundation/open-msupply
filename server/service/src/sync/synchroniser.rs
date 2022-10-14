@@ -133,6 +133,7 @@ impl Synchroniser {
 
         // Remote data was initialised
         let is_initialised = sync_status_service.is_initialised(ctx)?;
+
         // Initialisation request was sent and successfully processed
         let is_sync_queue_initialised = sync_status_service.is_sync_queue_initialised(ctx)?;
 
@@ -183,6 +184,8 @@ impl Synchroniser {
 
         if !is_initialised {
             self.remote.advance_push_cursor(&ctx.connection)?;
+            // TODO remove the program init data call
+            init_program_data(&self.service_provider, 2, &ctx)?;
             self.service_provider.site_is_initialised_trigger.trigger();
         }
 
