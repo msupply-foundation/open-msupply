@@ -110,6 +110,8 @@ fn name_1() -> TestSyncPullRecord {
             r#type: NameType::Patient,
             is_supplier: true,
             is_customer: true,
+            is_deceased: false,
+            national_health_number: Some("NHN001".to_string()),
 
             supplying_store_id: None,
             first_name: Some("first_name".to_string()),
@@ -254,6 +256,8 @@ fn name_2() -> TestSyncPullRecord {
             is_donor: false,
             on_hold: false,
             created_datetime: None,
+            is_deceased: false,
+            national_health_number: None,
         }),
     )
 }
@@ -380,6 +384,8 @@ fn name_3() -> TestSyncPullRecord {
             is_donor: false,
             on_hold: false,
             created_datetime: None,
+            is_deceased: false,
+            national_health_number: Some("NHN002".to_string()),
         }),
     )
 }
@@ -507,6 +513,8 @@ fn name_4() -> TestSyncPullRecord {
             is_donor: false,
             on_hold: false,
             created_datetime: Some(NaiveDate::from_ymd(2022, 05, 22).and_hms(0, 0, 0)),
+            is_deceased: true,
+            national_health_number: Some("NHN003".to_string()),
         }),
     )
 }

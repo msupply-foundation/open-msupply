@@ -52,7 +52,6 @@ pub struct Queries(
     pub GeneralQueries,
     pub RequisitionQueries,
     pub ReportQueries,
-    pub ServerAdminQueries,
     pub ProgramsQueries,
 );
 
@@ -65,6 +64,7 @@ impl Queries {
             GeneralQueries,
             RequisitionQueries,
             ReportQueries,
+            ProgramsQueries,
         )
     }
 }
@@ -80,12 +80,8 @@ pub struct Mutations(
     pub RequisitionMutations,
     pub RequisitionLineMutations,
     pub GeneralMutations,
-    pub ServerAdminMutations,
     pub ProgramsMutations,
 );
-
-pub type Schema = async_graphql::Schema<FullQuery, FullMutation, async_graphql::EmptySubscription>;
-type Builder = SchemaBuilder<FullQuery, FullMutation, EmptySubscription>;
 
 impl Mutations {
     pub fn new() -> Mutations {
@@ -99,7 +95,6 @@ impl Mutations {
             RequisitionMutations,
             RequisitionLineMutations,
             GeneralMutations,
-            ServerAdminMutations,
             ProgramsMutations,
         )
     }
