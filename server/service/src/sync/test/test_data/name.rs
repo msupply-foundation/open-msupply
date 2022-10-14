@@ -70,7 +70,7 @@ const NAME_1: (&'static str, &'static str) = (
     "ethnicity_ID": "",
     "occupation_ID": "",
     "religion_ID": "",
-    "national_health_number": "",
+    "national_health_number": "NHN001",
     "Master_RTM_Supplier_Code": 0,
     "ordering_method": "",
     "donor": false,
@@ -95,7 +95,8 @@ const NAME_1: (&'static str, &'static str) = (
     "custom_data": null,
     "maximum_credit": 0,
     "nationality_ID": "",
-    "created_date": "2022-02-10"
+    "created_date": "2022-02-10",
+    "isDeceased": false
 }"#,
 );
 
@@ -199,7 +200,6 @@ const NAME_2: (&'static str, &'static str) = (
     "ethnicity_ID": "",
     "occupation_ID": "",
     "religion_ID": "",
-    "national_health_number": "",
     "Master_RTM_Supplier_Code": 0,
     "ordering_method": "sh",
     "donor": false,
@@ -224,7 +224,8 @@ const NAME_2: (&'static str, &'static str) = (
     "custom_data": null,
     "maximum_credit": 0,
     "nationality_ID": "",
-    "created_date": "0000-00-00"
+    "created_date": "0000-00-00",
+    "isDeceased": false
 }"#,
 );
 
@@ -327,7 +328,7 @@ const NAME_3: (&'static str, &'static str) = (
     "ethnicity_ID": "",
     "occupation_ID": "",
     "religion_ID": "",
-    "national_health_number": "",
+    "national_health_number": "NHN002",
     "Master_RTM_Supplier_Code": 0,
     "ordering_method": "sh",
     "donor": false,
@@ -352,7 +353,8 @@ const NAME_3: (&'static str, &'static str) = (
     "custom_data": null,
     "maximum_credit": 0,
     "nationality_ID": "",
-    "created_date": "0000-00-00"
+    "created_date": "0000-00-00",
+    "isDeceased": false
 }"#,
 );
 
@@ -455,7 +457,7 @@ const NAME_4: (&'static str, &'static str) = (
       "ethnicity_ID": "",
       "occupation_ID": "",
       "religion_ID": "",
-      "national_health_number": "",
+      "national_health_number": "NHN003",
       "Master_RTM_Supplier_Code": 0,
       "ordering_method": "",
       "donor": false,
@@ -481,7 +483,8 @@ const NAME_4: (&'static str, &'static str) = (
       "maximum_credit": 0,
       "nationality_ID": "",
       "created_date": "2022-05-22",
-      "integration_ID": ""
+      "integration_ID": "",
+      "isDeceased": true  
   }"#,
 );
 
