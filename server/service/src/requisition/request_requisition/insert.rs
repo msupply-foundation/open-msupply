@@ -1,5 +1,5 @@
 use crate::{
-    log::log_entry,
+    activity_log::activity_log_entry,
     number::next_number,
     requisition::{common::check_requisition_exists, query::get_requisition},
     service_provider::ServiceContext,
@@ -8,7 +8,7 @@ use crate::{
 use chrono::{NaiveDate, Utc};
 use repository::{
     requisition_row::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
-    LogType, NumberRowType, RepositoryError, Requisition, RequisitionRowRepository,
+    ActivityLogType, NumberRowType, RepositoryError, Requisition, RequisitionRowRepository,
     StorageConnection,
 };
 
@@ -53,18 +53,17 @@ pub fn insert_request_requisition(
             let new_requisition = generate(connection, &ctx.store_id, &ctx.user_id, input)?;
             RequisitionRowRepository::new(&connection).upsert_one(&new_requisition)?;
 
+            activity_log_entry(
+                &ctx,
+                ActivityLogType::RequisitionCreated,
+                &new_requisition.id,
+            )?;
+
             get_requisition(ctx, None, &new_requisition.id)
                 .map_err(|error| OutError::DatabaseError(error))?
                 .ok_or(OutError::NewlyCreatedRequisitionDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
-
-    log_entry(
-        &ctx,
-        LogType::RequisitionCreated,
-        Some(requisition.requisition_row.id.to_string()),
-        requisition.requisition_row.created_datetime,
-    )?;
 
     Ok(requisition)
 }

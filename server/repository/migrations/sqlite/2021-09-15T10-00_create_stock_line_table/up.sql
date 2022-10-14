@@ -7,8 +7,8 @@ CREATE TABLE stock_line (
     expiry_date TEXT,
     cost_price_per_pack REAL NOT NULL,
     sell_price_per_pack REAL NOT NULL,
-    available_number_of_packs INTEGER NOT NULL,
-    total_number_of_packs INTEGER NOT NULL,
+    available_number_of_packs REAL NOT NULL,
+    total_number_of_packs REAL NOT NULL,
     pack_size INTEGER NOT NULL,
     on_hold BOOLEAN NOT NULL,
     note TEXT

@@ -1,7 +1,7 @@
 use crate::invoice::{
     check_invoice_exists, check_invoice_is_editable, check_invoice_status, check_invoice_type,
-    check_store, InvoiceDoesNotExist, InvoiceIsNotEditable, InvoiceRowStatusError,
-    NotThisStoreInvoice, WrongInvoiceRowType,
+    check_status_change, check_store, InvoiceDoesNotExist, InvoiceIsNotEditable,
+    InvoiceRowStatusError, NotThisStoreInvoice, WrongInvoiceRowType,
 };
 use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
 use repository::{InvoiceRow, InvoiceRowType, Name, StorageConnection};
@@ -12,17 +12,23 @@ pub fn validate(
     connection: &StorageConnection,
     store_id: &str,
     patch: &UpdateInboundShipment,
-) -> Result<(InvoiceRow, Option<Name>), UpdateInboundShipmentError> {
+) -> Result<(InvoiceRow, Option<Name>, bool), UpdateInboundShipmentError> {
     use UpdateInboundShipmentError::*;
     let invoice = check_invoice_exists(&patch.id, connection)?;
 
     check_store(&invoice, store_id)?;
     check_invoice_type(&invoice, InvoiceRowType::InboundShipment)?;
     check_invoice_is_editable(&invoice)?;
-    check_invoice_status(&invoice, patch.full_status(), &patch.on_hold)?;
 
+    // Status check
+    let status_changed = check_status_change(&invoice, patch.full_status());
+    if status_changed {
+        check_invoice_status(&invoice, patch.full_status(), &patch.on_hold)?;
+    }
+
+    // Other party check
     let other_party_id = match &patch.other_party_id {
-        None => return Ok((invoice, None)),
+        None => return Ok((invoice, None, status_changed)),
         Some(other_party_id) => other_party_id,
     };
 
@@ -39,7 +45,7 @@ pub fn validate(
         OtherPartyErrors::DatabaseError(repository_error) => DatabaseError(repository_error),
     })?;
 
-    Ok((invoice, Some(other_party)))
+    Ok((invoice, Some(other_party), status_changed))
 }
 
 impl From<WrongInvoiceRowType> for UpdateInboundShipmentError {

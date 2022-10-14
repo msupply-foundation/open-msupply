@@ -19,8 +19,8 @@ pub struct UpdateStocktakeLine {
     pub id: String,
     pub location_id: Option<String>,
     pub comment: Option<String>,
-    pub snapshot_number_of_packs: Option<u32>,
-    pub counted_number_of_packs: Option<u32>,
+    pub snapshot_number_of_packs: Option<f64>,
+    pub counted_number_of_packs: Option<f64>,
 
     pub batch: Option<String>,
     pub expiry_date: Option<NaiveDate>,
@@ -103,11 +103,8 @@ fn generate(
         comment: comment.or(existing.comment),
 
         snapshot_number_of_packs: snapshot_number_of_packs
-            .map(u32_to_i32)
             .unwrap_or(existing.snapshot_number_of_packs),
-        counted_number_of_packs: counted_number_of_packs
-            .map(u32_to_i32)
-            .or(existing.counted_number_of_packs),
+        counted_number_of_packs: counted_number_of_packs.or(existing.counted_number_of_packs),
 
         item_id: existing.item_id,
         expiry_date: expiry_date.or(existing.expiry_date),
@@ -278,8 +275,8 @@ mod stocktake_line_test {
                     r.comment = Some("test comment".to_string());
                     r.cost_price_per_pack = Some(20.0);
                     r.sell_price_per_pack = Some(25.0);
-                    r.snapshot_number_of_packs = Some(10);
-                    r.counted_number_of_packs = Some(14);
+                    r.snapshot_number_of_packs = Some(10.0);
+                    r.counted_number_of_packs = Some(14.0);
                 }),
             )
             .unwrap();
@@ -294,8 +291,8 @@ mod stocktake_line_test {
                 comment: Some("test comment".to_string()),
                 cost_price_per_pack: Some(20.0),
                 sell_price_per_pack: Some(25.0),
-                snapshot_number_of_packs: 10,
-                counted_number_of_packs: Some(14),
+                snapshot_number_of_packs: 10.0,
+                counted_number_of_packs: Some(14.0),
                 item_id: stocktake_line_a.item_id,
                 expiry_date: None,
                 pack_size: None,

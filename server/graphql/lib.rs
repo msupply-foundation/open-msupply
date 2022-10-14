@@ -10,15 +10,14 @@ use async_graphql::extensions::{
     Extension, ExtensionContext, ExtensionFactory, Logger, NextExecute,
 };
 use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
-use async_graphql::MergedObject;
-use async_graphql::{EmptySubscription, SchemaBuilder};
+use async_graphql::{EmptySubscription, Schema};
+use async_graphql::{MergedObject, Response};
 use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
 use graphql_batch_mutations::BatchMutations;
 use graphql_core::loader::LoaderRegistry;
-use graphql_core::{auth_data_from_request, RequestUserData, SelfRequest};
+use graphql_core::{auth_data_from_request, BoxedSelfRequest, RequestUserData, SelfRequest};
 use graphql_general::{
-    GeneralQueries, ServerAdminMutations, ServerAdminQueries, ServerAdminStage0Mutations,
-    ServerAdminStage0Queries,
+    GeneralMutations, GeneralQueries, InitialisationMutations, InitialisationQueries,
 };
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
 use graphql_invoice_line::InvoiceLineMutations;
@@ -35,10 +34,18 @@ use repository::StorageConnectionManager;
 use service::auth_data::AuthData;
 use service::service_provider::ServiceProvider;
 use service::settings::Settings;
-use tokio::sync::mpsc::Sender;
+use tokio::sync::RwLock;
+
+pub type OperationalSchema =
+    async_graphql::Schema<Queries, Mutations, async_graphql::EmptySubscription>;
+pub type InitialisationSchema = async_graphql::Schema<
+    InitialisationQueries,
+    InitialisationMutations,
+    async_graphql::EmptySubscription,
+>;
 
 #[derive(MergedObject, Default, Clone)]
-pub struct FullQuery(
+pub struct Queries(
     pub InvoiceQueries,
     pub LocationQueries,
     pub StocktakeQueries,
@@ -49,8 +56,21 @@ pub struct FullQuery(
     pub ProgramsQueries,
 );
 
+impl Queries {
+    pub fn new() -> Queries {
+        Queries(
+            InvoiceQueries,
+            LocationQueries,
+            StocktakeQueries,
+            GeneralQueries,
+            RequisitionQueries,
+            ReportQueries,
+        )
+    }
+}
+
 #[derive(MergedObject, Default, Clone)]
-pub struct FullMutation(
+pub struct Mutations(
     pub InvoiceMutations,
     pub InvoiceLineMutations,
     pub LocationMutations,
@@ -59,6 +79,7 @@ pub struct FullMutation(
     pub BatchMutations,
     pub RequisitionMutations,
     pub RequisitionLineMutations,
+    pub GeneralMutations,
     pub ServerAdminMutations,
     pub ProgramsMutations,
 );
@@ -66,32 +87,141 @@ pub struct FullMutation(
 pub type Schema = async_graphql::Schema<FullQuery, FullMutation, async_graphql::EmptySubscription>;
 type Builder = SchemaBuilder<FullQuery, FullMutation, EmptySubscription>;
 
-pub fn full_query() -> FullQuery {
-    FullQuery(
-        InvoiceQueries,
-        LocationQueries,
-        StocktakeQueries,
-        GeneralQueries,
-        RequisitionQueries,
-        ReportQueries,
-        ServerAdminQueries,
-        ProgramsQueries,
-    )
+impl Mutations {
+    pub fn new() -> Mutations {
+        Mutations(
+            InvoiceMutations,
+            InvoiceLineMutations,
+            LocationMutations,
+            StocktakeMutations,
+            StocktakeLineMutations,
+            BatchMutations,
+            RequisitionMutations,
+            RequisitionLineMutations,
+            GeneralMutations,
+            ServerAdminMutations,
+            ProgramsMutations,
+        )
+    }
 }
 
-pub fn full_mutation() -> FullMutation {
-    FullMutation(
-        InvoiceMutations,
-        InvoiceLineMutations,
-        LocationMutations,
-        StocktakeMutations,
-        StocktakeLineMutations,
-        BatchMutations,
-        RequisitionMutations,
-        RequisitionLineMutations,
-        ServerAdminMutations,
-        ProgramsMutations,
-    )
+/// We need to swap schema between initialisation and operational modes
+/// this is done to avoid validations check in operational mode where
+/// data for validation is not available, this struct helps achieve this
+pub struct GraphqlSchema {
+    operational: OperationalSchema,
+    initialisation: InitialisationSchema,
+    /// Set on startup based on InitialisationStatus and then updated via SiteIsInitialisedCallback after initialisation
+    is_operational: RwLock<bool>,
+}
+
+pub struct GraphSchemaData {
+    pub connection_manager: Data<StorageConnectionManager>,
+    pub loader_registry: Data<LoaderRegistry>,
+    pub service_provider: Data<ServiceProvider>,
+    pub auth: Data<AuthData>,
+    pub settings: Data<Settings>,
+}
+
+impl GraphqlSchema {
+    pub fn new(data: GraphSchemaData, is_operational: bool) -> GraphqlSchema {
+        let GraphSchemaData {
+            connection_manager,
+            loader_registry,
+            service_provider,
+            auth,
+            settings,
+        } = data;
+
+        // Self requester schema is a copy of operational schema, used for reports
+        // needs to be available as data in operational schema
+        let self_requester_schema =
+            OperationalSchema::build(Queries::new(), Mutations::new(), EmptySubscription)
+                .data(connection_manager.clone())
+                .data(loader_registry.clone())
+                .data(service_provider.clone())
+                .data(auth.clone())
+                .data(settings.clone())
+                .finish();
+        // Self requester does not need loggers
+
+        // Operational schema
+        let operational_builder =
+            OperationalSchema::build(Queries::new(), Mutations::new(), EmptySubscription)
+                .data(connection_manager.clone())
+                .data(loader_registry.clone())
+                .data(service_provider.clone())
+                .data(auth.clone())
+                .data(settings.clone())
+                // Add self requester to operational
+                .data(Data::new(SelfRequestImpl::new_boxed(self_requester_schema)))
+                .extension(Logger)
+                .extension(ResponseLogger);
+
+        // Initialisation schema should ony need service_provider
+        let initialisiation_builder = InitialisationSchema::build(
+            InitialisationQueries,
+            InitialisationMutations,
+            EmptySubscription,
+        )
+        .data(service_provider.clone())
+        .extension(Logger)
+        .extension(ResponseLogger);
+
+        GraphqlSchema {
+            operational: operational_builder.finish(),
+            initialisation: initialisiation_builder.finish(),
+            is_operational: RwLock::new(is_operational),
+        }
+    }
+
+    pub async fn toggle_is_operational(&self, is_operational: bool) {
+        (*self.is_operational.write().await) = is_operational;
+    }
+
+    async fn execute(&self, http_req: HttpRequest, req: GraphQLRequest) -> Response {
+        let req = req.into_inner();
+        if *self.is_operational.read().await {
+            // auth_data is only available in schema in operational mode
+            let user_data = auth_data_from_request(&http_req);
+            self.operational.execute(req.data(user_data)).await
+        } else {
+            self.initialisation.execute(req).await
+        }
+    }
+}
+
+pub fn attach_graphql_schema(
+    graphql_schema: Data<GraphqlSchema>,
+) -> impl FnOnce(&mut actix_web::web::ServiceConfig) {
+    |cfg| {
+        cfg.app_data(graphql_schema)
+            .service(
+                web::resource("/graphql")
+                    .guard(guard::Post())
+                    .to(graphql_index),
+            )
+            .service(
+                web::resource("/graphql")
+                    .guard(guard::Get())
+                    .to(graphql_playground),
+            );
+    }
+}
+
+/// Entrypoint for graphql
+async fn graphql_index(
+    schema: Data<GraphqlSchema>,
+    http_req: HttpRequest,
+    req: GraphQLRequest,
+) -> GraphQLResponse {
+    schema.execute(http_req, req).await.into()
+}
+
+async fn graphql_playground() -> HttpResponse {
+    HttpResponse::Ok()
+        .content_type("text/html; charset=utf-8")
+        .body(playground_source(GraphQLPlaygroundConfig::new("/graphql")))
 }
 
 pub struct ResponseLogger;
@@ -118,79 +248,19 @@ impl Extension for ResponseLoggerExtension {
     }
 }
 
-pub fn schema_builder() -> Builder {
-    Schema::build(full_query(), full_mutation(), EmptySubscription)
-}
-
-pub fn build_schema(
-    connection_manager: Data<StorageConnectionManager>,
-    loader_registry: Data<LoaderRegistry>,
-    service_provider: Data<ServiceProvider>,
-    auth_data: Data<AuthData>,
-    settings_data: Data<Settings>,
-    restart_switch: Data<Sender<bool>>,
-    self_request: Option<Data<Box<dyn SelfRequest>>>,
-    include_logger: bool,
-) -> Schema {
-    let mut builder = schema_builder()
-        .data(connection_manager)
-        .data(loader_registry)
-        .data(service_provider)
-        .data(auth_data)
-        .data(settings_data)
-        .data(restart_switch);
-
-    match self_request {
-        Some(self_request) => builder = builder.data(self_request),
-        None => {}
-    }
-    if include_logger {
-        builder = builder.extension(Logger).extension(ResponseLogger);
-    }
-    builder.finish()
-}
-
-pub type SchemaStage0 = async_graphql::Schema<
-    ServerAdminStage0Queries,
-    ServerAdminStage0Mutations,
-    async_graphql::EmptySubscription,
->;
-
-pub fn build_schema_stage0(
-    connection_manager: Data<StorageConnectionManager>,
-    loader_registry: Data<LoaderRegistry>,
-    service_provider: Data<ServiceProvider>,
-    auth_data: Data<AuthData>,
-    settings_data: Data<Settings>,
-    restart_switch: Data<Sender<bool>>,
-    self_request: Option<Data<Box<dyn SelfRequest>>>,
-    include_logger: bool,
-) -> SchemaStage0 {
-    let mut builder = SchemaStage0::build(
-        ServerAdminStage0Queries,
-        ServerAdminStage0Mutations,
-        EmptySubscription,
-    )
-    .data(connection_manager)
-    .data(loader_registry)
-    .data(service_provider)
-    .data(auth_data)
-    .data(settings_data)
-    .data(restart_switch);
-
-    match self_request {
-        Some(self_request) => builder = builder.data(self_request),
-        None => {}
-    }
-    if include_logger {
-        builder = builder.extension(Logger).extension(ResponseLogger);
-    }
-    builder.finish()
-}
+// TODO remove this and just do reqwest query to self
+/// Used for reports
 
 struct SelfRequestImpl {
-    schema: Schema,
+    schema: OperationalSchema,
 }
+
+impl SelfRequestImpl {
+    fn new_boxed(schema: Schema<Queries, Mutations, EmptySubscription>) -> BoxedSelfRequest {
+        Box::new(SelfRequestImpl { schema })
+    }
+}
+
 #[async_trait::async_trait]
 impl SelfRequest for SelfRequestImpl {
     async fn call(
@@ -202,130 +272,3 @@ impl SelfRequest for SelfRequestImpl {
         self.schema.execute(query).await.into()
     }
 }
-
-pub fn config_stage0(
-    connection_manager: Data<StorageConnectionManager>,
-    loader_registry: Data<LoaderRegistry>,
-    service_provider: Data<ServiceProvider>,
-    auth_data: Data<AuthData>,
-    settings_data: Data<Settings>,
-    restart_switch: Data<Sender<bool>>,
-) -> impl FnOnce(&mut actix_web::web::ServiceConfig) {
-    |cfg| {
-        let schema = build_schema_stage0(
-            connection_manager,
-            loader_registry,
-            service_provider,
-            auth_data,
-            settings_data,
-            restart_switch,
-            None,
-            true,
-        );
-
-        cfg.app_data(Data::new(schema))
-            .service(web::resource("/graphql").guard(guard::Post()).to(
-                |schema: Data<SchemaStage0>, http_req, req: GraphQLRequest| {
-                    graphql(schema, http_req, req)
-                },
-            ))
-            .service(web::resource("/graphql").guard(guard::Get()).to(playground));
-    }
-}
-
-pub fn config(
-    connection_manager: Data<StorageConnectionManager>,
-    loader_registry: Data<LoaderRegistry>,
-    service_provider: Data<ServiceProvider>,
-    auth_data: Data<AuthData>,
-    settings_data: Data<Settings>,
-    restart_switch: Data<Sender<bool>>,
-) -> impl FnOnce(&mut actix_web::web::ServiceConfig) {
-    |cfg| {
-        let self_requester: Data<Box<dyn SelfRequest>> = Data::new(Box::new(SelfRequestImpl {
-            schema: build_schema(
-                connection_manager.clone(),
-                loader_registry.clone(),
-                service_provider.clone(),
-                auth_data.clone(),
-                settings_data.clone(),
-                restart_switch.clone(),
-                None,
-                false,
-            ),
-        }));
-
-        let schema = build_schema(
-            connection_manager,
-            loader_registry,
-            service_provider,
-            auth_data,
-            settings_data,
-            restart_switch,
-            Some(self_requester),
-            true,
-        );
-
-        cfg.app_data(Data::new(schema))
-            .service(web::resource("/graphql").guard(guard::Post()).to(
-                |schema: Data<Schema>, http_req, req: GraphQLRequest| {
-                    graphql(schema, http_req, req)
-                },
-            ))
-            .service(web::resource("/graphql").guard(guard::Get()).to(playground));
-    }
-}
-
-async fn playground() -> HttpResponse {
-    HttpResponse::Ok()
-        .content_type("text/html; charset=utf-8")
-        .body(playground_source(GraphQLPlaygroundConfig::new("/graphql")))
-}
-
-async fn graphql<
-    Query: 'static + async_graphql::ObjectType,
-    Mutation: 'static + async_graphql::ObjectType,
-    Subscription: 'static + async_graphql::SubscriptionType,
->(
-    schema: Data<async_graphql::Schema<Query, Mutation, Subscription>>,
-    http_req: HttpRequest,
-    req: GraphQLRequest,
-) -> GraphQLResponse {
-    let user_data = auth_data_from_request(&http_req);
-    let query = req.into_inner().data(user_data);
-    schema.execute(query).await.into()
-}
-
-// disabling the test - this will be tedious to update every time the version bumps
-
-// #[cfg(test)]
-// mod test {
-//     use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
-//     use repository::mock::MockDataInserts;
-//     use serde_json::json;
-
-//     use crate::{full_mutation, full_query};
-
-//     #[actix_rt::test]
-//     async fn test_graphql_version() {
-//         // This test should also checks that there are no duplicate types (which will be a panic when schema is built)
-//         let (_, _, _, settings) = setup_graphl_test(
-//             full_query(),
-//             full_mutation(),
-//             "graphql_requisition_user_loader",
-//             MockDataInserts::none(),
-//         )
-//         .await;
-//         let expected = json!({
-//             "apiVersion": "1.0"
-//         });
-
-//         let query = r#"
-//         query {
-//             apiVersion
-//         }
-//         "#;
-
-//         assert_graphql_query!(&settings, &query, &None, expected, None);
-//     }
-// }
