@@ -34,6 +34,7 @@ export const StocktakeLineEditForm: FC<StocktakeLineEditProps> = ({
         <Grid item flex={1} padding={1}>
           <StockItemSearchInput
             autoFocus={!item}
+            openOnFocus={!item}
             disabled={disabled}
             currentItemId={item?.id}
             onChange={onChangeItem}
