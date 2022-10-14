@@ -51,27 +51,28 @@ export const StockWidget: React.FC = () => {
     return () => setHasItemStatsError(false);
   }, [itemStatsData, isItemStatsLoading]);
 
-  const { mutate: onCreate } = useRequest.document.insert();
+  const { mutateAsync: onCreate } = useRequest.document.insert();
+  const onError = (e: unknown) => {
+    const message = (e as Error).message ?? '';
+    const errorSnack = error(`Failed to create requisition! ${message}`);
+    errorSnack();
+  };
 
   return (
     <>
       {modalControl.isOn ? (
         <InternalSupplierSearchModal
-          open={modalControl.isOn}
+          open={true}
           onClose={modalControl.toggleOff}
-          onChange={async name => {
+          onChange={async ({ id: otherPartyId }) => {
             modalControl.toggleOff();
-            try {
-              await onCreate({
+            await onCreate(
+              {
                 id: FnUtils.generateUUID(),
-                otherPartyId: name?.id,
-              });
-            } catch (e) {
-              const errorSnack = error(
-                'Failed to create requisition! ' + (e as Error).message
-              );
-              errorSnack();
-            }
+                otherPartyId,
+              },
+              { onError }
+            );
           }}
         />
       ) : null}

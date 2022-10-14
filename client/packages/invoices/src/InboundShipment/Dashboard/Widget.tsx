@@ -31,27 +31,28 @@ export const InboundShipmentWidget: React.FC<PropsWithChildrenOnly> = () => {
     }
   );
 
-  const { mutate: onCreate } = useInbound.document.insert();
+  const { mutateAsync: onCreate } = useInbound.document.insert();
+  const onError = (e: unknown) => {
+    const message = (e as Error).message ?? '';
+    const errorSnack = error(`Failed to create requisition! ${message}`);
+    errorSnack();
+  };
 
   return (
     <>
       {modalControl.isOn ? (
         <InternalSupplierSearchModal
-          open={modalControl.isOn}
+          open={true}
           onClose={modalControl.toggleOff}
-          onChange={async name => {
+          onChange={async ({ id: otherPartyId }) => {
             modalControl.toggleOff();
-            try {
-              await onCreate({
+            await onCreate(
+              {
                 id: FnUtils.generateUUID(),
-                otherPartyId: name?.id,
-              });
-            } catch (e) {
-              const errorSnack = error(
-                'Failed to create invoice! ' + (e as Error).message
-              );
-              errorSnack();
-            }
+                otherPartyId,
+              },
+              { onError }
+            );
           }}
         />
       ) : null}
