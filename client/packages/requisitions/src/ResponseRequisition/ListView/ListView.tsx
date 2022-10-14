@@ -67,7 +67,7 @@ export const ResponseRequisitionListView: FC = () => {
       <AppBarButtons sortBy={sortBy} />
 
       <DataTable
-        key="requisition-list"
+        id="requisition-list"
         pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
         onChangePage={updatePaginationQuery}
         columns={columns}
