@@ -80,7 +80,7 @@ const OutboundServiceLineEditComponent = ({
             })}
           >
             <DataTable
-              key="outbound-service-line"
+              id="outbound-service-line"
               columns={columns}
               data={lines.filter(({ isDeleted }) => !isDeleted)}
               dense

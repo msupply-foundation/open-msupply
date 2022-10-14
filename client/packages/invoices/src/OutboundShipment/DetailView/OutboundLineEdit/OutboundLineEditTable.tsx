@@ -96,7 +96,7 @@ export const OutboundLineEditTable: React.FC<OutboundLineEditTableProps> = ({
       >
         {!!orderedRows.length && (
           <DataTable
-            key="outbound-line-edit"
+            id="outbound-line-edit"
             columns={columns}
             data={orderedRows}
             dense

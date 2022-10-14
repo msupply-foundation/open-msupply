@@ -49,7 +49,7 @@ const LocationListComponent: FC = () => {
       <Toolbar data={locations} filter={filter} />
       <AppBarButtons onCreate={() => onOpen()} sortBy={sortBy} />
       <DataTable
-        key="location-list"
+        id="location-list"
         pagination={{ ...pagination, total: data?.totalCount }}
         onChangePage={updatePaginationQuery}
         columns={columns}
