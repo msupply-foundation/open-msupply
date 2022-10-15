@@ -115,6 +115,7 @@ pub struct LegacyNameRow {
     #[serde(serialize_with = "date_option_to_isostring")]
     pub created_date: Option<NaiveDate>,
 
+    #[serde(deserialize_with = "empty_str_as_option")]
     pub national_health_number: Option<String>,
 
     #[serde(rename = "isDeceased")]
