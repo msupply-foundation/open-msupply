@@ -225,7 +225,8 @@ const NAME_2: (&'static str, &'static str) = (
     "maximum_credit": 0,
     "nationality_ID": "",
     "created_date": "0000-00-00",
-    "isDeceased": false
+    "isDeceased": false,
+    "national_health_number": ""
 }"#,
 );
 
