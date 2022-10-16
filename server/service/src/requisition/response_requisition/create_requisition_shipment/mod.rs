@@ -1,5 +1,6 @@
+use crate::activity_log::activity_log_entry;
 use crate::service_provider::ServiceContext;
-use repository::EqualFilter;
+use repository::{ActivityLogType, EqualFilter};
 use repository::{
     Invoice, InvoiceFilter, InvoiceLineRowRepository, InvoiceRepository, InvoiceRowRepository,
     RepositoryError,
@@ -54,6 +55,8 @@ pub fn create_requisition_shipment(
             for row in invoice_line_rows {
                 invoice_line_repository.upsert_one(&row)?;
             }
+
+            activity_log_entry(&ctx, ActivityLogType::RequisitionCreated, &invoice_row.id)?;
 
             // TODO use invoice service if it accepts ctx
             let mut result = InvoiceRepository::new(&connection)
