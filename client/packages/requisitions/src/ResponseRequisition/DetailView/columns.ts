@@ -61,10 +61,11 @@ export const useResponseColumns = () => {
         'requestedQuantity',
         { getSortValue: rowData => rowData.requestedQuantity },
       ],
+      ['supplyQuantity', { getSortValue: rowData => rowData.supplyQuantity }],
       {
-        label: 'label.already-issued',
-        description: 'description.already-issued',
-        key: 'alreadyIssued',
+        label: 'label.unissued',
+        description: 'description.unissued',
+        key: 'unissued',
         width: 100,
         align: ColumnAlign.Right,
         accessor: ({ rowData }) =>
@@ -81,7 +82,6 @@ export const useResponseColumns = () => {
         accessor: ({ rowData }) => rowData.remainingQuantityToSupply,
         getSortValue: rowData => rowData.remainingQuantityToSupply,
       },
-      ['supplyQuantity', { getSortValue: rowData => rowData.supplyQuantity }],
       GenericColumnKey.Selection,
     ],
     {
