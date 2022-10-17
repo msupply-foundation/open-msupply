@@ -3,7 +3,6 @@ import { ControlProps, rankWith, schemaTypeIs } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import {
   NumericTextInput,
-  NumUtils,
   useDebounceCallback,
 } from '@openmsupply-client/common';
 import {
@@ -45,10 +44,9 @@ const UIComponent = (props: ControlProps) => {
           InputProps={{
             sx: { '& .MuiInput-input': { textAlign: 'right' }, minWidth: 100 },
           }}
-          onChange={e => {
-            const newValue = NumUtils.parseString(e.target.value);
-            setLocalData(newValue);
-            onChange(newValue);
+          onChange={value => {
+            setLocalData(value);
+            onChange(value);
           }}
           disabled={!props.enabled}
           error={error}
