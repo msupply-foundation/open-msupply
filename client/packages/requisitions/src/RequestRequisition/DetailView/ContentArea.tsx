@@ -1,15 +1,53 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
+  AppSxProp,
   DataTable,
   NothingHere,
+  useRowStyle,
   useTranslation,
 } from '@openmsupply-client/common';
 import { RequestLineFragment, useHideOverStocked, useRequest } from '../api';
+import { isRequestLinePlaceholderRow } from '../../utils';
+import { RequestItem } from '../../types';
 
 interface ContentAreaProps {
   onAddItem: () => void;
   onRowClick: null | ((line: RequestLineFragment) => void);
 }
+
+const useHighlightPlaceholderRows = (
+  rows: RequestLineFragment[] | RequestItem[] | undefined
+) => {
+  const { setRowStyles } = useRowStyle();
+
+  useEffect(() => {
+    if (!rows) return;
+    const placeholders = [];
+
+    for (const row of rows) {
+      if ('requestedQuantity' in row) {
+        if (isRequestLinePlaceholderRow(row)) {
+          placeholders.push(row.id);
+        }
+      } else {
+        const hasPlaceholder = row.lines.some(isRequestLinePlaceholderRow);
+        if (hasPlaceholder) {
+          row.lines.forEach(line => {
+            if (isRequestLinePlaceholderRow(line)) {
+              placeholders.push(line.id);
+            }
+          });
+          placeholders.push(row.id);
+        }
+      }
+    }
+
+    const style: AppSxProp = {
+      color: theme => theme.palette.secondary.light,
+    };
+    setRowStyles(placeholders, style);
+  }, [rows, setRowStyles]);
+};
 
 export const ContentArea = ({ onAddItem, onRowClick }: ContentAreaProps) => {
   const t = useTranslation('replenishment');
@@ -17,6 +55,7 @@ export const ContentArea = ({ onAddItem, onRowClick }: ContentAreaProps) => {
   const { on } = useHideOverStocked();
   const isDisabled = useRequest.utils.isDisabled();
   const isFiltered = !!itemFilter || on;
+  useHighlightPlaceholderRows(lines);
 
   return (
     <DataTable
