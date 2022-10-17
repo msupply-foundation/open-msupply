@@ -15,7 +15,13 @@ export const ErrorWithDetails: React.FC<ErrorWithDetailsProps> = ({
   error,
   details,
 }) => (
-  <Box display="flex" sx={{ color: 'error.main' }} gap={1} padding={2}>
+  <Box
+    display="flex"
+    sx={{ color: 'error.main' }}
+    gap={1}
+    padding={2}
+    justifyContent="center"
+  >
     <Box>
       <AlertIcon />
     </Box>
