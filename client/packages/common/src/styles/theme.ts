@@ -161,7 +161,7 @@ export const themeOptions = {
       pale: '#ccddff',
     },
     border: '#e4e4eb',
-    primary: { main: '#e95c30', light: '#fe9318', dark: '#c43c11' },
+    primary: { main: '#e95c30', light: '#ed7d59', dark: '#c43c11' },
     secondary: { main: '#3e7bfa', light: '#5b8def', dark: '#3568d4' },
     background: {
       drawer: '#f2f2f5',

@@ -41,7 +41,9 @@ const useSync = () => {
 
   return {
     isLoading: !!syncStatus?.isSyncing || isLoading,
-    latestSyncDate: DateUtils.getDateOrNull(syncStatus?.summary.started),
+    latestSyncDate: DateUtils.getDateOrNull(
+      syncStatus?.summary.started || null
+    ),
     onManualSync,
     syncStatus,
     numberOfRecordsInPushQueue,
@@ -101,7 +103,11 @@ export const Sync: React.FC = () => {
           </LoadingButton>
         </Row>
       </Grid>
-      <SyncProgress syncStatus={syncStatus} isOperational={true} />
+      <SyncProgress
+        syncStatus={syncStatus}
+        isOperational={true}
+        colour="primary"
+      />
     </Grid>
   );
 };

@@ -37,7 +37,7 @@ Same exact process is used, except the processors are triggered in services, see
 * Request Requisition (id: A) is created and set to `sent` status
 * Requisition Processor is triggered
 * Processor sees new requisition in change log and executes `CreateResponseRequisitionProcessor` which creates Response Requisition (id: B) and links it to Request Requisition (requisition_id: A)
-* Processor tries to process any other changelogs (it re-queries changelogs until result is empty), and sees the newly created Response Requisition, and will executed `LikRequestRequisitionProcessor` and sets (requisition_id: B) for Request Requistion (id: A)
+* Processor tries to process any other changelogs (it re-queries changelogs until result is empty), and sees the newly created Response Requisition, and will executed `LikRequestRequisitionProcessor` and sets (requisition_id: B) for Request Requisition (id: A)
 
 ## Potential for Circular/Infinite processing
 
@@ -55,8 +55,8 @@ From [TMF internal docs](https://app.diagrams.net/#G1o_xRQAhjVsnqhxhJEu9dY6AZ_lJ
 
 ## Integration tests
 
-Transfer processor functionality tests are inculded in sync integration tests.
+Transfer processor functionality tests are included in sync integration tests.
 
 ## TODO
 
-* Any way to protect against infinite loop ? (Can potentialy identify that changelog is constantly growing within a processor loop), is there a way to test for it ?
+* Any way to protect against infinite loop ? (Can potentially identify that changelog is constantly growing within a processor loop), is there a way to test for it ?
