@@ -8,6 +8,7 @@ import {
   TableContainer,
   Table as MuiTable,
   Typography,
+  TableCell,
 } from '@mui/material';
 import { BasicSpinner, useRegisterActions } from '@openmsupply-client/common';
 
@@ -138,11 +139,20 @@ const DataTableComponent = <T extends RecordWithId>({
               />
             ))}
             {!!enableColumnSelection && (
-              <ColumnPicker
-                columns={columns}
-                onChange={setDisplayColumns}
-                tableKey={key}
-              />
+              <TableCell
+                role="columnheader"
+                padding={'none'}
+                sx={{
+                  backgroundColor: 'transparent',
+                  borderBottom: '0px',
+                }}
+              >
+                <ColumnPicker
+                  columns={columns}
+                  onChange={setDisplayColumns}
+                  tableKey={key}
+                />
+              </TableCell>
             )}
           </HeaderRow>
         </TableHead>
