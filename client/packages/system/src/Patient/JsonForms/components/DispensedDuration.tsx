@@ -12,7 +12,6 @@ import {
   FORM_INPUT_COLUMN_WIDTH,
   useDebounceCallback,
   NumericTextInput,
-  NumUtils,
   DateUtils,
 } from '@openmsupply-client/common';
 import { get as extractProperty } from 'lodash';
@@ -175,10 +174,9 @@ const UIComponent = (props: ControlProps) => {
           InputProps={{
             sx: { '& .MuiInput-input': { textAlign: 'right' } },
           }}
-          onChange={e => {
-            const newValue = NumUtils.parseString(e.target.value);
-            setLocalData(newValue);
-            onChange(newValue);
+          onChange={value => {
+            setLocalData(value);
+            onChange(value);
           }}
           disabled={!props.enabled || baseTime === undefined}
           error={error}
