@@ -103,11 +103,7 @@ export const Sync: React.FC = () => {
           </LoadingButton>
         </Row>
       </Grid>
-      <SyncProgress
-        syncStatus={syncStatus}
-        isOperational={true}
-        colour="primary"
-      />
+      <SyncProgress syncStatus={syncStatus} isOperational={true} />
     </Grid>
   );
 };
