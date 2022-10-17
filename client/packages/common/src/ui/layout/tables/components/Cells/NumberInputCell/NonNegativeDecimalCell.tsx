@@ -12,7 +12,7 @@ export const NonNegativeDecimalCell = <T extends RecordWithId>({
   isDisabled = false,
 }: CellProps<T>): React.ReactElement<CellProps<T>> => {
   const [buffer, setBuffer] = useBufferState(
-    column.accessor({ rowData, rows })
+    column.accessor({ rowData, rows }) || ''
   );
 
   const updater = useDebounceCallback(column.setter, [column.setter], 250);
