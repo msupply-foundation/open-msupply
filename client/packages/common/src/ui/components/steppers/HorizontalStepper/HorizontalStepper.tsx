@@ -32,28 +32,6 @@ interface StepperProps {
 
 type PaletteColour = Omit<PaletteColor, 'contrastText'> & { error: string };
 
-// const StyledConnector = styled(StepConnector)(({ theme }) => ({
-//   '&.MuiStepConnector-root': {
-//     left: 'calc(-50% + 15px)',
-//     right: 'calc(50% + 15px)',
-//   },
-//   [`& .${stepConnectorClasses.line}`]: {
-//     borderColor: theme.palette.gray.pale,
-//     // The width is for the connector which is significantly thicker than the default.
-//     borderWidth: '4px 0 0 0',
-//   },
-//   [`&.${stepConnectorClasses.active}`]: {
-//     [`& .${stepConnectorClasses.line}`]: {
-//       borderColor: theme.palette.secondary.light,
-//     },
-//   },
-//   [`&.${stepConnectorClasses.completed}`]: {
-//     [`& .${stepConnectorClasses.line}`]: {
-//       borderColor: theme.palette.secondary.light,
-//     },
-//   },
-// }));
-
 const getConnector = (paletteColour: PaletteColour) => () => {
   const style = {
     '&.MuiStepConnector-root': {
