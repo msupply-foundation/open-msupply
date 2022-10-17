@@ -19,6 +19,9 @@ import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
 import Fab from '@mui/material/Fab';
 import MuiLink from '@mui/material/Link';
+import StepLabel from '@mui/material/StepLabel';
+import Step from '@mui/material/Step';
+import Stepper from '@mui/material/Stepper';
 
 export * from './portals';
 export * from './inputs';
@@ -56,4 +59,7 @@ export {
   Tooltip,
   Radio,
   RadioGroup,
+  StepLabel,
+  Step,
+  Stepper,
 };

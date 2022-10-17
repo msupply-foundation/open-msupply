@@ -2,9 +2,11 @@ mod mutations;
 mod queries;
 mod sync_api_error;
 
-pub use self::queries::names::{EqualFilterGenderInput, GenderInput};
-pub use self::queries::sync_status::*;
 use self::queries::*;
+pub use self::queries::{
+    names::{EqualFilterGenderInput, GenderInput},
+    sync_status::*,
+};
 
 use graphql_core::pagination::PaginationInput;
 

@@ -6,16 +6,16 @@
 <ArchiveFiles>
 <FileData>
 <FldRef>1</FldRef>
-<FullName>#PROJECTFILEDIR#\omSupply Desktop Server\*.*</FullName>
+<FullName>#PROJECTFILEDIR#\Desktop\*.*</FullName>
 <FileName>*.*</FileName>
-<Source>#PROJECTFILEDIR#\omSupply Desktop Server</Source>
+<Source>#PROJECTFILEDIR#\Desktop</Source>
 <Ext>*</Ext>
 <RTSource>Archive</RTSource>
 <Desc/>
 <Recurse>1</Recurse>
 <MatchMode>0</MatchMode>
 <Dest>%AppFolder%</Dest>
-<Overwrite>2</Overwrite>
+<Overwrite>1</Overwrite>
 <Backup>0</Backup>
 <Protect>0</Protect>
 <InstallOrder>1000</InstallOrder>
@@ -193,7 +193,17 @@
 <Name>On Preload</Name>
 <Args/>
 <Script>-- These actions are performed before the screen is shown.
-</Script>
+local sBodyWelcomeText = SessionVar.Expand("Welcome to the installer for %ProductName% %ProductVer%.\r\n\r\n");
+
+if hasOmsupplyDesktopInstalled then
+	sBodyWelcomeText = SessionVar.Expand("Welcome to the upgrader for %ProductName% %ProductVer%.\r\n\r\n");
+end
+
+local sBodyInfoText = sBodyWelcomeText .. "It is strongly recommended that you exit all Windows programs before continuing with this installation.\r\n\r\n";
+sBodyInfoText = sBodyInfoText .. "If you have any other programs running, please click Cancel, close the programs, and run this setup again.\r\n\r\n";
+sBodyInfoText = sBodyInfoText .. "Otherwise, click Next to continue.";
+
+DlgStaticText.SetProperties(CTRL_STATICTEXT_BODY, {Text = sBodyInfoText});</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -212,9 +222,13 @@ Screen.Back();
 <Name>On Next</Name>
 <Args/>
 <Script>-- These actions are performed when the Next button is clicked.
+local sNextScreenName = "License Agreement";
+if hasOmsupplyDesktopInstalled then
+	sNextScreenName = "Ready to Install";
+end
 
 -- advance to the next screen
-Screen.Next();
+Screen.Jump(sNextScreenName);
 </Script>
 <BookMarks count="0">
 </BookMarks>
@@ -323,7 +337,7 @@ end
 </Secondary>
 </Language>
 <Messages>
-<IDS_WINDOW_TITLE>%ProductName% Setup</IDS_WINDOW_TITLE>
+<IDS_WINDOW_TITLE>%window_title%</IDS_WINDOW_TITLE>
 <IDS_HEADER_TEXT>Welcome</IDS_HEADER_TEXT>
 <IDS_SUBHEADER_TEXT>Welcome to the installer for %ProductName% %ProductVer%</IDS_SUBHEADER_TEXT>
 <IDS_CTRL_BUTTON_NEXT>&amp;Next &gt;</IDS_CTRL_BUTTON_NEXT>
@@ -339,6 +353,301 @@ If you have any other programs running, please click Cancel, close the programs,
 Otherwise, click Next to continue.
 </IDS_CTRL_STATICTEXT_BODY>
 <IDS_CTRL_HEADINGTEXT_BODY>Welcome</IDS_CTRL_HEADINGTEXT_BODY>
+</Messages>
+</SUF70Messages>
+</Languages>
+</Screen>
+<Screen>
+<Type>125</Type>
+<Name>License Agreement</Name>
+<BannerStyle>2</BannerStyle>
+<TemplateName>License Agreement</TemplateName>
+<OverrideProjTheme>0</OverrideProjTheme>
+<StyleData>
+<CstClrs>0</CstClrs>
+<TBBG format="hex">ffffff</TBBG>
+<BDYBG format="hex">ece9d8</BDYBG>
+<FTBG format="hex">ece9d8</FTBG>
+<TBTXT format="hex">000000</TBTXT>
+<BDYTXT format="hex">000000</BDYTXT>
+<CBG format="hex">ffffff</CBG>
+<C3DFACE format="hex">ece9d8</C3DFACE>
+<C3DHLT format="hex">ece9d8</C3DHLT>
+<C3DLIT format="hex">ffffff</C3DLIT>
+<C3DSH format="hex">aca899</C3DSH>
+<CBTNTXT format="hex">000000</CBTNTXT>
+<CTEXT format="hex">000000</CTEXT>
+<CDISTXT format="hex">aca899</CDISTXT>
+<CPRGRS format="hex">316ac5</CPRGRS>
+<C3DSHDK format="hex">716f64</C3DSHDK>
+<TBIMG>open_msupply_top_banner.png</TBIMG>
+<SBIMG>open_msupply_side_banner.png</SBIMG>
+<BDIMG/>
+<BDFILL>0</BDFILL>
+<HDSEP>1</HDSEP>
+<FTSEP>1</FTSEP>
+<CstFnts>0</CstFnts>
+<Fonts>
+<FontData>
+<FontName>Arial</FontName>
+<CharacterSet>0</CharacterSet>
+<Height>-13</Height>
+<Weight>700</Weight>
+<Italic>0</Italic>
+<Underline>0</Underline>
+<StrikeOut>0</StrikeOut>
+<AntiAlias>1</AntiAlias>
+</FontData>
+<FontData>
+<FontName>Arial</FontName>
+<CharacterSet>0</CharacterSet>
+<Height>-13</Height>
+<Weight>700</Weight>
+<Italic>0</Italic>
+<Underline>0</Underline>
+<StrikeOut>0</StrikeOut>
+<AntiAlias>1</AntiAlias>
+</FontData>
+<FontData>
+<FontName>Arial</FontName>
+<CharacterSet>0</CharacterSet>
+<Height>-24</Height>
+<Weight>700</Weight>
+<Italic>0</Italic>
+<Underline>0</Underline>
+<StrikeOut>0</StrikeOut>
+<AntiAlias>1</AntiAlias>
+</FontData>
+<FontData>
+<FontName>Arial</FontName>
+<CharacterSet>0</CharacterSet>
+<Height>-13</Height>
+<Weight>400</Weight>
+<Italic>0</Italic>
+<Underline>0</Underline>
+<StrikeOut>0</StrikeOut>
+<AntiAlias>1</AntiAlias>
+</FontData>
+<FontData>
+<FontName>Arial</FontName>
+<CharacterSet>0</CharacterSet>
+<Height>-13</Height>
+<Weight>400</Weight>
+<Italic>0</Italic>
+<Underline>0</Underline>
+<StrikeOut>0</StrikeOut>
+<AntiAlias>1</AntiAlias>
+</FontData>
+</Fonts>
+<CAOff>
+<TP>0</TP>
+<L>15</L>
+<T>15</T>
+<R>15</R>
+<B>15</B>
+</CAOff>
+<CAOff>
+<TP>1</TP>
+<L>15</L>
+<T>15</T>
+<R>15</R>
+<B>15</B>
+</CAOff>
+<CAOff>
+<TP>2</TP>
+<L>15</L>
+<T>15</T>
+<R>15</R>
+<B>15</B>
+</CAOff>
+<TBTXTX>10</TBTXTX>
+<TBTXTY>10</TBTXTY>
+<ScreenW>497</ScreenW>
+<ScreenH>362</ScreenH>
+</StyleData>
+<Checked>1</Checked>
+<Events>
+<Event>
+<Name>On Preload</Name>
+<Args/>
+<Script>-- These actions are performed before the screen is shown.
+
+-- from _SUF70_Global_Functions.lua:
+-- disable the Next button unless 'I agree' is selected
+g_LicenseAgreementScreen_UpdateNextButton();
+</Script>
+<BookMarks count="0">
+</BookMarks>
+</Event>
+<Event>
+<Name>On Back</Name>
+<Args/>
+<Script>-- These actions are performed when the Back button is clicked.
+
+-- go back to the previous screen
+Screen.Back();
+</Script>
+<BookMarks count="0">
+</BookMarks>
+</Event>
+<Event>
+<Name>On Next</Name>
+<Args/>
+<Script>-- These actions are performed when the Next button is clicked.
+-- Tip: this is where you could add actions to validate the
+--      user's input before proceeding
+
+-- advance to the next screen
+Screen.Next();
+</Script>
+<BookMarks count="0">
+</BookMarks>
+</Event>
+<Event>
+<Name>On Cancel</Name>
+<Args/>
+<Script>-- These actions are performed when the Cancel button is clicked.
+
+-- from _SUF70_Global_Functions.lua:
+-- ask user if they're sure they want to exit
+if g_ConfirmSetupAbort() then
+	Application.Exit(EXIT_REASON_USER_ABORTED);
+end
+</Script>
+<BookMarks count="0">
+</BookMarks>
+</Event>
+<Event>
+<Name>On Help</Name>
+<Args/>
+<Script>-- These actions are performed when the Help button is clicked.
+</Script>
+<BookMarks count="0">
+</BookMarks>
+</Event>
+<Event>
+<Name>On Ctrl Message</Name>
+<Args>number e_CtrlID, number e_MsgID, table e_Details</Args>
+<Script>-- These actions are triggered by the controls on the screen.
+
+if (e_CtrlID == CTRL_RADIOBTN_AGREE or e_CtrlID == CTRL_RADIOBTN_DISAGREE) then
+	-- the control message is from one of the radio buttons
+	-- if it's a click message, update the Next button
+	if (e_MsgID == MSGID_CLICKED) then
+		-- from _SUF70_Global_Functions.lua:
+		-- disable the Next button unless 'I agree' is selected
+		g_LicenseAgreementScreen_UpdateNextButton();
+	end
+end
+</Script>
+<BookMarks count="0">
+</BookMarks>
+</Event>
+</Events>
+<Controls>
+<Control>
+<Type>1</Type>
+<ID>103</ID>
+<Visible>0</Visible>
+<Enabled>0</Enabled>
+<TabOrder>75</TabOrder>
+<FTButton>1</FTButton>
+</Control>
+<Control>
+<Type>1</Type>
+<ID>101</ID>
+<Visible>1</Visible>
+<Enabled>1</Enabled>
+<TabOrder>76</TabOrder>
+<FTButton>1</FTButton>
+</Control>
+<Control>
+<Type>1</Type>
+<ID>100</ID>
+<Visible>1</Visible>
+<Enabled>1</Enabled>
+<TabOrder>-10</TabOrder>
+<FTButton>1</FTButton>
+</Control>
+<Control>
+<Type>1</Type>
+<ID>102</ID>
+<Visible>1</Visible>
+<Enabled>1</Enabled>
+<TabOrder>-9</TabOrder>
+<FTButton>1</FTButton>
+</Control>
+<Control>
+<Type>3</Type>
+<ID>400</ID>
+<Visible>1</Visible>
+<Enabled>1</Enabled>
+<TabOrder>0</TabOrder>
+<IsHTML>0</IsHTML>
+<TextAlign>0</TextAlign>
+<VertScroll>1</VertScroll>
+<HorizScroll>0</HorizScroll>
+<RTLReadingOrder>0</RTLReadingOrder>
+<Style>1</Style>
+<ReadOnly>1</ReadOnly>
+<SpecifyType>0</SpecifyType>
+<Variable/>
+</Control>
+<Control>
+<Type>5</Type>
+<ID>602</ID>
+<Visible>1</Visible>
+<Enabled>1</Enabled>
+<TabOrder>35</TabOrder>
+<Group>1</Group>
+<StartID>602</StartID>
+<EndID>603</EndID>
+</Control>
+<Control>
+<Type>5</Type>
+<ID>603</ID>
+<Visible>1</Visible>
+<Enabled>1</Enabled>
+<TabOrder>40</TabOrder>
+<Group>0</Group>
+<StartID>602</StartID>
+<EndID>603</EndID>
+</Control>
+</Controls>
+<Languages>
+<SUF70Messages>
+<Language>
+<Name>English</Name>
+<Default>1</Default>
+<Primary>9</Primary>
+<Secondary>
+<ID>1</ID>
+<ID>2</ID>
+<ID>3</ID>
+<ID>4</ID>
+<ID>5</ID>
+<ID>6</ID>
+<ID>7</ID>
+<ID>8</ID>
+<ID>9</ID>
+<ID>10</ID>
+<ID>11</ID>
+<ID>12</ID>
+<ID>13</ID>
+</Secondary>
+</Language>
+<Messages>
+<IDS_WINDOW_TITLE>%window_title%</IDS_WINDOW_TITLE>
+<IDS_HEADER_TEXT>License Agreement</IDS_HEADER_TEXT>
+<IDS_SUBHEADER_TEXT>Please read the following license agreement carefully.</IDS_SUBHEADER_TEXT>
+<IDS_CTRL_BUTTON_NEXT>&amp;Next &gt;</IDS_CTRL_BUTTON_NEXT>
+<IDS_CTRL_BUTTON_BACK>&lt; &amp;Back</IDS_CTRL_BUTTON_BACK>
+<IDS_CTRL_BUTTON_CANCEL>&amp;Cancel</IDS_CTRL_BUTTON_CANCEL>
+<IDS_CTRL_BUTTON_HELP>&amp;Help</IDS_CTRL_BUTTON_HELP>
+<IDS_CTRL_SCROLLTEXT_BODY>Insert your license agreement text here...</IDS_CTRL_SCROLLTEXT_BODY>
+<IDS_CTRL_RADIOBTN_AGREE>I agree to the terms of this license agreement</IDS_CTRL_RADIOBTN_AGREE>
+<IDS_CTRL_RADIOBTN_DISAGREE>I do not agree to the terms of this license agreement</IDS_CTRL_RADIOBTN_DISAGREE>
+<IDS_CTRL_SCROLLTEXT_FILE>#PROJECTFILEDIR#\omsupply_license_and_warranty.txt</IDS_CTRL_SCROLLTEXT_FILE>
 </Messages>
 </SUF70Messages>
 </Languages>
@@ -720,7 +1029,7 @@ end
 </Secondary>
 </Language>
 <Messages>
-<IDS_WINDOW_TITLE>%ProductName% Setup</IDS_WINDOW_TITLE>
+<IDS_WINDOW_TITLE>%window_title%</IDS_WINDOW_TITLE>
 <IDS_HEADER_TEXT>Installation Folder</IDS_HEADER_TEXT>
 <IDS_SUBHEADER_TEXT>Where would you like %ProductName% to be installed?</IDS_SUBHEADER_TEXT>
 <IDS_CTRL_BUTTON_NEXT>&amp;Next &gt;</IDS_CTRL_BUTTON_NEXT>
@@ -850,6 +1159,18 @@ end
 <Name>On Preload</Name>
 <Args/>
 <Script>-- These actions are performed before the screen is shown.
+local sBodyInfoText = SessionVar.Expand("We are now ready to install %ProductName% on your computer.\r\n\r\n\r\n\r\n");
+
+if hasOmsupplyDesktopInstalled then
+	sBodyInfoText = SessionVar.Expand("We are now ready to upgrade %ProductName% on your computer.\r\n\r\n\r\n\r\n");
+end
+
+local sBodyInfoSubText = sBodyInfoText .. "The following settings will be used:\r\n\r\n";
+sBodyInfoSubText = sBodyInfoSubText .. SessionVar.Expand("  Install folder:    %AppFolder%\r\n\r\n");
+sBodyInfoSubText = sBodyInfoSubText .. SessionVar.Expand("  Version       :    %ProductVer%\r\n\r\n\r\n\r\n");
+sBodyInfoSubText = sBodyInfoSubText .. "Please click Next to proceed with the installation.";
+
+DlgStaticText.SetProperties(CTRL_STATICTEXT_BODY, {Text = sBodyInfoSubText});
 </Script>
 <BookMarks count="0">
 </BookMarks>
@@ -980,9 +1301,9 @@ end
 </Secondary>
 </Language>
 <Messages>
-<IDS_WINDOW_TITLE>%ProductName% Setup</IDS_WINDOW_TITLE>
+<IDS_WINDOW_TITLE>%window_title%</IDS_WINDOW_TITLE>
 <IDS_HEADER_TEXT>Ready to Install</IDS_HEADER_TEXT>
-<IDS_SUBHEADER_TEXT>You are now ready to install %ProductName% %ProductVer%</IDS_SUBHEADER_TEXT>
+<IDS_SUBHEADER_TEXT/>
 <IDS_CTRL_BUTTON_NEXT>&amp;Next &gt;</IDS_CTRL_BUTTON_NEXT>
 <IDS_CTRL_BUTTON_BACK>&lt; &amp;Back</IDS_CTRL_BUTTON_BACK>
 <IDS_CTRL_BUTTON_CANCEL>&amp;Cancel</IDS_CTRL_BUTTON_CANCEL>
@@ -1286,7 +1607,7 @@ end
 </Secondary>
 </Language>
 <Messages>
-<IDS_WINDOW_TITLE>%ProductName% Setup</IDS_WINDOW_TITLE>
+<IDS_WINDOW_TITLE>%window_title%</IDS_WINDOW_TITLE>
 <IDS_HEADER_TEXT>Installing %ProductName%</IDS_HEADER_TEXT>
 <IDS_SUBHEADER_TEXT>Please wait...</IDS_SUBHEADER_TEXT>
 <IDS_CTRL_BUTTON_CANCEL>&amp;Cancel</IDS_CTRL_BUTTON_CANCEL>
@@ -1305,10 +1626,10 @@ end
 </DuringInstScreenData>
 <AfterInstallingScreens>
 <Screen>
-<Type>100</Type>
+<Type>170</Type>
 <Name>Finished Install</Name>
 <BannerStyle>1</BannerStyle>
-<TemplateName>Finished Install</TemplateName>
+<TemplateName>Custom</TemplateName>
 <OverrideProjTheme>0</OverrideProjTheme>
 <StyleData>
 <CstClrs>0</CstClrs>
@@ -1412,6 +1733,13 @@ end
 <ScreenW>497</ScreenW>
 <ScreenH>362</ScreenH>
 </StyleData>
+<CustomCtrlList>
+<CustomCtrlInfo Left="182" Top="14" Width="234" Height="27" ID="211"/>
+<CustomCtrlInfo Left="182" Top="46" Width="291" Height="29" ID="212"/>
+<CustomCtrlInfo Left="182" Top="84" Width="291" Height="16" ID="213"/>
+<CustomCtrlInfo Left="182" Top="108" Width="291" Height="16" ID="214"/>
+<CustomCtrlInfo Left="182" Top="135" Width="235" Height="17" ID="1300"/>
+</CustomCtrlList>
 <Events>
 <Event>
 <Name>On Preload</Name>
@@ -1436,7 +1764,10 @@ Screen.Back();
 <Name>On Next</Name>
 <Args/>
 <Script>-- These actions are performed when the Next button is clicked.
-
+-- Launch omSupply desktop
+if (not hasOmsupplyDesktopInstalled and cbStartOmSupply) then
+	File.Run(SessionVar.Expand("%AppFolder%\\open mSupply.exe"));
+end
 -- advance to the next screen
 Screen.Next();
 </Script>
@@ -1469,28 +1800,31 @@ end
 <Name>On Ctrl Message</Name>
 <Args>number e_CtrlID, number e_MsgID, table e_Details</Args>
 <Script>-- These actions are triggered by the controls on the screen.
+
+if (e_MsgID == MSGID_CLICKED) then
+	-- a control was clicked...
+
+	if (e_CtrlID == CTRL_BUTTON_01) then
+
+		-- Insert your button handling code here
+		
+		Dialog.Message("Click","You clicked on Button 01", MB_OK, MB_ICONNONE);
+	end
+	
+	if (e_CtrlID == CTRL_BUTTON_02) then
+
+		-- Insert your button handling code here
+		
+		Dialog.Message("Click","You clicked on Button 02", MB_OK, MB_ICONNONE);
+	end
+
+end
 </Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
 </Events>
 <Controls>
-<Control>
-<Type>1</Type>
-<ID>103</ID>
-<Visible>0</Visible>
-<Enabled>0</Enabled>
-<TabOrder>75</TabOrder>
-<FTButton>1</FTButton>
-</Control>
-<Control>
-<Type>1</Type>
-<ID>101</ID>
-<Visible>1</Visible>
-<Enabled>0</Enabled>
-<TabOrder>76</TabOrder>
-<FTButton>1</FTButton>
-</Control>
 <Control>
 <Type>1</Type>
 <ID>100</ID>
@@ -1509,19 +1843,60 @@ end
 </Control>
 <Control>
 <Type>2</Type>
-<ID>200</ID>
-<Visible>1</Visible>
-<Enabled>1</Enabled>
-<TabOrder>0</TabOrder>
-<IsHeading>0</IsHeading>
-</Control>
-<Control>
-<Type>2</Type>
-<ID>300</ID>
+<ID>211</ID>
 <Visible>1</Visible>
 <Enabled>1</Enabled>
 <TabOrder>1</TabOrder>
 <IsHeading>1</IsHeading>
+</Control>
+<Control>
+<Type>2</Type>
+<ID>212</ID>
+<Visible>1</Visible>
+<Enabled>1</Enabled>
+<TabOrder>2</TabOrder>
+<IsHeading>0</IsHeading>
+</Control>
+<Control>
+<Type>2</Type>
+<ID>213</ID>
+<Visible>1</Visible>
+<Enabled>1</Enabled>
+<TabOrder>3</TabOrder>
+<IsHeading>0</IsHeading>
+</Control>
+<Control>
+<Type>2</Type>
+<ID>214</ID>
+<Visible>1</Visible>
+<Enabled>1</Enabled>
+<TabOrder>4</TabOrder>
+<IsHeading>0</IsHeading>
+</Control>
+<Control>
+<Type>10</Type>
+<ID>1300</ID>
+<Visible>1</Visible>
+<Enabled>1</Enabled>
+<TabOrder>5</TabOrder>
+<Checked>1</Checked>
+<Variable>cbStartOmSupply</Variable>
+</Control>
+<Control>
+<Type>1</Type>
+<ID>103</ID>
+<Visible>0</Visible>
+<Enabled>0</Enabled>
+<TabOrder>75</TabOrder>
+<FTButton>1</FTButton>
+</Control>
+<Control>
+<Type>1</Type>
+<ID>101</ID>
+<Visible>1</Visible>
+<Enabled>0</Enabled>
+<TabOrder>76</TabOrder>
+<FTButton>1</FTButton>
 </Control>
 </Controls>
 <Languages>
@@ -1547,20 +1922,20 @@ end
 </Secondary>
 </Language>
 <Messages>
-<IDS_WINDOW_TITLE>%ProductName% Setup</IDS_WINDOW_TITLE>
+<IDS_WINDOW_TITLE>%window_title%</IDS_WINDOW_TITLE>
 <IDS_HEADER_TEXT>Installation Finished</IDS_HEADER_TEXT>
 <IDS_SUBHEADER_TEXT>The installation has completed successfully.</IDS_SUBHEADER_TEXT>
 <IDS_CTRL_BUTTON_NEXT>&amp;Finish</IDS_CTRL_BUTTON_NEXT>
 <IDS_CTRL_BUTTON_BACK>&lt; &amp;Back</IDS_CTRL_BUTTON_BACK>
 <IDS_CTRL_BUTTON_CANCEL>&amp;Cancel</IDS_CTRL_BUTTON_CANCEL>
 <IDS_CTRL_BUTTON_HELP>&amp;Help</IDS_CTRL_BUTTON_HELP>
-<IDS_CTRL_STATICTEXT_BODY>The %ProductName% %ProductVer% installation is complete.
-
-Thank you for choosing %ProductName%!
-
-Please click Finish to exit this installer.
-</IDS_CTRL_STATICTEXT_BODY>
-<IDS_CTRL_HEADINGTEXT_BODY>Installation Successful</IDS_CTRL_HEADINGTEXT_BODY>
+<IDS_CTRL_STATICTEXT_TOPINSTRUCTIONS/>
+<IDS_CTRL_STATICTEXT_BOTTOMINSTRUCTIONS/>
+<IDS_CTRL_STATICTEXT_LABEL_01>Installation Successful</IDS_CTRL_STATICTEXT_LABEL_01>
+<IDS_CTRL_STATICTEXT_LABEL_02>The %ProductName% %ProductVer% installation is complete.</IDS_CTRL_STATICTEXT_LABEL_02>
+<IDS_CTRL_STATICTEXT_LABEL_03>Thank you for choosing %ProductName%!</IDS_CTRL_STATICTEXT_LABEL_03>
+<IDS_CTRL_STATICTEXT_LABEL_04>Please click Finish to exit this installer.</IDS_CTRL_STATICTEXT_LABEL_04>
+<IDS_CTRL_CHECK_BOX_01>Launch %ProductName%</IDS_CTRL_CHECK_BOX_01>
 </Messages>
 </SUF70Messages>
 </Languages>
@@ -2509,7 +2884,10 @@ Please click Finish to exit.
 <Event>
 <Name>On Pre Uninstall</Name>
 <Args/>
-<Script>result = Shell.Execute(SessionVar.Expand("%AppFolder%\\bin\\nssm.exe"), "open", SessionVar.Expand("remove \"mSupply Dashboard\" confirm"), "", SW_SHOWNORMAL, true);
+<Script>-- Remove omSupply Desktop keys from registry
+if Registry.DoesKeyExist(HKEY_LOCAL_MACHINE, "Software\\omSupply Desktop") then
+	Registry.DeleteKey(HKEY_LOCAL_MACHINE, "Software\\omSupply Desktop");
+end
 </Script>
 <BookMarks count="0">
 </BookMarks>
@@ -2525,7 +2903,10 @@ Please click Finish to exit.
 <Event>
 <Name>On Post Uninstall</Name>
 <Args/>
-<Script/>
+<Script>Shell.DeleteShortcut(Shell.GetFolder(SHF_DESKTOP), "omSupply Desktop");
+if Registry.DoesKeyExist(HKEY_LOCAL_MACHINE, "Software\\omSupply Desktop") then
+	Registry.DeleteKey(HKEY_LOCAL_MACHINE, "Software\\omSupply Desktop");
+end</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -2697,20 +3078,31 @@ g_HandleSystemReboot();
 <Event>
 <Name>On Startup</Name>
 <Args/>
-<Script/>
+<Script>local sWindowTitle = "omSupply Desktop Setup";
+
+hasOmsupplyDesktopInstalled = false;
+omSupplyDesktopPath = SessionVar.Expand("%AppFolder%\\open mSupply.exe");
+
+-- Check if the omSupply Desktop has been already installed on this machine
+if Registry.DoesKeyExist(HKEY_LOCAL_MACHINE, "Software\\omSupply Desktop") then
+	omSupplyDesktopPath = Registry.GetValue(HKEY_LOCAL_MACHINE, "Software\\omSupply Desktop", "Path", true);
+	if File.DoesExist(omSupplyDesktopPath) then
+		hasOmsupplyDesktopInstalled = true;
+	end
+end
+
+if hasOmsupplyDesktopInstalled then
+	sWindowTitle = "omSupply Desktop Upgrader";
+end
+
+SessionVar.Set("%window_title%", sWindowTitle);</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
 <Event>
 <Name>On Pre Install</Name>
 <Args/>
-<Script>-- Check if the open msupply service is running at the moment.
--- Stop (if running) the service before upgrading the server.
-queryResult = Service.Query("Open mSupply Server", "omSupply");
-if (queryResult == SERVICE_RUNNING) then
-	Service.Stop("Open mSupply Server", "omSupply", 5);
-end
-</Script>
+<Script/>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -2725,24 +3117,13 @@ end
 <Event>
 <Name>On Post Install</Name>
 <Args/>
-<Script>local sFileToBeDeletePath = "";
+<Script>if not hasOmsupplyDesktopInstalled then
+	-- Create omSupply Desktop keys in registry
+	Registry.CreateKey(HKEY_LOCAL_MACHINE, "Software\\omSupply Desktop");
+	Registry.SetValue(HKEY_LOCAL_MACHINE, "Software\\omSupply Desktop", "Path", omSupplyDesktopPath, REG_SZ);
 
-if File.DoesExist(SessionVar.Expand("%AppFolder%\\server\\settings.ini")) then
-	sDatabase = INIFile.GetValue(SessionVar.Expand("%AppFolder%\\server\\settings.ini"), "omSupply","Database");
-	if (sDatabase == "sqlite") then
-    	sFileToBeDeletePath = SessionVar.Expand("%AppFolder%\\server\\omSupply-postgres.exe");
-    else
-    	sFileToBeDeletePath = SessionVar.Expand("%AppFolder%\\server\\omSupply-sqlite.exe");
-    end
-    File.Delete(sFileToBeDeletePath); -- Delete unchoosen app file (.exe) by a user
-    -- Check to see if an error occurred when launching the file.
-	error = Application.GetLastError();
-	if (error ~= 0) then
-		--If an error occurred, display an error message to the user.
-		Dialog.Message("Error", _tblErrorMessages[error], MB_OK, MB_ICONEXCLAMATION, MB_DEFBUTTON1);
-	end
+	Shell.CreateShortcut(Shell.GetFolder(SHF_DESKTOP), "omSupply Desktop", omSupplyDesktopPath, "", "", "", 0, SW_SHOWNORMAL, nil, "", START_OPTION_DEFAULT);
 end
-Service.Start("Open mSupply Server", "omSupply", nil);
 </Script>
 <BookMarks count="0">
 </BookMarks>
@@ -2787,7 +3168,7 @@ g_HandleSystemReboot();
 <SUF7SessionVars>
 <SessionVar>
 <Name>%ProductName%</Name>
-<Value>omSupply Server</Value>
+<Value>omSupply Desktop</Value>
 <Type>1</Type>
 </SessionVar>
 <SessionVar>
@@ -2797,7 +3178,7 @@ g_HandleSystemReboot();
 </SessionVar>
 <SessionVar>
 <Name>%ProductVer%</Name>
-<Value>v1.0.5 Upgrader</Value>
+<Value>replace with version</Value>
 <Type>1</Type>
 </SessionVar>
 <SessionVar>
@@ -2830,6 +3211,16 @@ g_HandleSystemReboot();
 <Value>%ProductName%</Value>
 <Type>2</Type>
 </SessionVar>
+<SessionVar>
+<Name>%window_title%</Name>
+<Value>omSupply Desktop Setup</Value>
+<Type>10</Type>
+</SessionVar>
+<SessionVar>
+<Name>%ready_to_install_sub_title%</Name>
+<Value/>
+<Type>10</Type>
+</SessionVar>
 </SUF7SessionVars>
 <BuildConfigurations>
 <BuildConfig>
@@ -2840,8 +3231,8 @@ g_HandleSystemReboot();
 <PostBuildProg/>
 <PostBuildCmdLine/>
 <PostBuildWait>0</PostBuildWait>
-<Filename>omSupply_Desktop_Server_Upgrader_replace with version.exe</Filename>
-<OutputFolder>C:\Program Files (x86)\Jenkins\jobs\omSupplyMain - installers\workspace\installers</OutputFolder>
+<Filename>omSupply_Desktop_replace with version.exe</Filename>
+<OutputFolder>.*</OutputFolder>
 <SegmentSizeMode>0</SegmentSizeMode>
 <CustomSegSize>0</CustomSegSize>
 <CustomSegSizeMode>0</CustomSegSizeMode>

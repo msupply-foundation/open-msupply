@@ -28,29 +28,31 @@ export const OutboundShipmentWidget: React.FC = () => {
     { retry: false, onError: () => setHasError(true) }
   );
 
-  const { mutate: onCreate } = useOutbound.document.insert();
+  const { mutateAsync: onCreate } = useOutbound.document.insert();
+  const onError = (e: unknown) => {
+    const message = (e as Error).message ?? '';
+    const errorSnack = error(`Failed to create invoice! ${message}`);
+    errorSnack();
+  };
 
   return (
     <>
-      <CustomerSearchModal
-        open={modalControl.isOn}
-        onClose={modalControl.toggleOff}
-        onChange={async name => {
-          modalControl.toggleOff();
-          try {
-            await onCreate({
-              id: FnUtils.generateUUID(),
-              otherPartyId: name?.id,
-            });
-          } catch (e) {
-            const errorSnack = error(
-              'Failed to create invoice! ' + (e as Error).message
+      {modalControl.isOn ? (
+        <CustomerSearchModal
+          open={true}
+          onClose={modalControl.toggleOff}
+          onChange={async ({ id: otherPartyId }) => {
+            modalControl.toggleOff();
+            await onCreate(
+              {
+                id: FnUtils.generateUUID(),
+                otherPartyId,
+              },
+              { onError }
             );
-            errorSnack();
-          }
-        }}
-      />
-
+          }}
+        />
+      ) : null}
       <Widget title={t('outbound-shipments')}>
         <Grid
           container

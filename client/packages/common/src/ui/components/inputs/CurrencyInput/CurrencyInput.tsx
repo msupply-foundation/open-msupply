@@ -34,7 +34,6 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
   ...restOfProps
 }) => {
   const { c, options, language } = useCurrency();
-
   const prefix = language !== 'fr' ? options.symbol : '';
   const suffix = language === 'fr' ? options.symbol : '';
 
@@ -48,15 +47,13 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
             : theme.palette.background.menu,
       }}
       defaultValue={defaultValue}
-      onValueChange={newValue => {
-        onChangeNumber(c(newValue ?? '').value);
-      }}
+      onValueChange={newValue => onChangeNumber(c(newValue || '').value)}
       allowNegativeValue={allowNegativeValue}
       prefix={prefix}
       suffix={suffix}
       decimalSeparator={options.decimal}
       groupSeparator={options.separator}
-      decimalsLimit={options.precision}
+      decimalsLimit={2}
       allowDecimals={allowDecimals}
       {...restOfProps}
     />
