@@ -1,4 +1,4 @@
-use super::UpdateRequestRequisition;
+use super::{UpdateRequestRequisition, UpdateRequestRequistionStatus};
 use crate::requisition::{
     common::get_lines_for_requisition,
     request_requisition::{generate_suggested_quantity, GenerateSuggestedQuantity},
@@ -6,9 +6,16 @@ use crate::requisition::{
 use chrono::Utc;
 use repository::{
     requisition_row::{RequisitionRow, RequisitionRowStatus},
-    RepositoryError, RequisitionLine, RequisitionLineRow, StorageConnection,
+    EqualFilter, RepositoryError, RequisitionLine, RequisitionLineFilter,
+    RequisitionLineRepository, RequisitionLineRow, StorageConnection,
 };
 use util::inline_edit;
+
+pub struct GenerateResult {
+    pub(crate) updated_requisition_row: RequisitionRow,
+    pub(crate) updated_requisition_lines: Vec<RequisitionLineRow>,
+    pub(crate) empty_lines_to_trim: Option<Vec<RequisitionLineRow>>,
+}
 
 pub fn generate(
     connection: &StorageConnection,
@@ -24,7 +31,7 @@ pub fn generate(
         min_months_of_stock: update_threashold_months_of_stock,
         expected_delivery_date: update_expected_delivery_date,
     }: UpdateRequestRequisition,
-) -> Result<(RequisitionRow, Vec<RequisitionLineRow>), RepositoryError> {
+) -> Result<GenerateResult, RepositoryError> {
     // Recalculate lines only if max_months_of_stock or min_months_of_stock changed
     let update_threashold_months_of_stock =
         update_threashold_months_of_stock.unwrap_or(existing.min_months_of_stock);
@@ -68,7 +75,12 @@ pub fn generate(
         vec![]
     };
 
-    Ok((updated_requisition_row, updated_requisition_lines))
+    // Ok((updated_requisition_row, updated_requisition_lines))
+    Ok(GenerateResult {
+        updated_requisition_row,
+        updated_requisition_lines,
+        empty_lines_to_trim: empty_lines_to_trim(connection, &existing, &update_status)?,
+    })
 }
 
 pub fn generate_updated_lines(
@@ -100,4 +112,32 @@ pub fn generate_updated_lines(
         .collect();
 
     Ok(result)
+}
+
+pub fn empty_lines_to_trim(
+    connection: &StorageConnection,
+    requisition: &RequisitionRow,
+    status: &Option<UpdateRequestRequistionStatus>,
+) -> Result<Option<Vec<RequisitionLineRow>>, RepositoryError> {
+    let new_status = match status {
+        Some(new_status) => new_status,
+        None => return Ok(None),
+    };
+
+    if new_status != &UpdateRequestRequistionStatus::Sent {
+        return Ok(None);
+    }
+
+    let lines = RequisitionLineRepository::new(connection).query_by_filter(
+        RequisitionLineFilter::new()
+            .requisition_id(EqualFilter::equal_to(&requisition.id))
+            .requested_quantity(EqualFilter::equal_to_i32(0)),
+    )?;
+
+    if lines.is_empty() {
+        return Ok(None);
+    }
+
+    let requisition_lines = lines.into_iter().map(|l| l.requisition_line_row).collect();
+    return Ok(Some(requisition_lines));
 }
