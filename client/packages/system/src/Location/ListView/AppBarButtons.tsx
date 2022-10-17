@@ -23,10 +23,10 @@ interface AppBarButtonsProps {
 export const AppBarButtons: FC<AppBarButtonsProps> = ({ onCreate, sortBy }) => {
   const { success, error } = useNotification();
   const t = useTranslation(['inventory', 'common']);
-  const { isLoading, mutateAsync } = useLocation.document.listAll(sortBy);
+  const { isLoading, fetchAsync } = useLocation.document.listAll(sortBy);
 
   const csvExport = async () => {
-    const data = await mutateAsync();
+    const data = await fetchAsync();
     if (!data || !data?.nodes.length) {
       error(t('error.no-data'))();
       return;
