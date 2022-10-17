@@ -75,7 +75,6 @@ pub fn generate(
         vec![]
     };
 
-    // Ok((updated_requisition_row, updated_requisition_lines))
     Ok(GenerateResult {
         updated_requisition_row,
         updated_requisition_lines,
