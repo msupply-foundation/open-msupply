@@ -24,10 +24,10 @@ export const AppBarButtons: FC<{
   const { mutate: onCreate } = useInbound.document.insert();
   const { success, error } = useNotification();
   const t = useTranslation('replenishment');
-  const { isLoading, mutateAsync } = useInbound.document.listAll(sortBy);
+  const { isLoading, fetchAsync } = useInbound.document.listAll(sortBy);
 
   const csvExport = async () => {
-    const data = await mutateAsync();
+    const data = await fetchAsync();
     if (!data || !data?.nodes.length) {
       error(t('error.no-data'))();
       return;
