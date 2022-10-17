@@ -21,13 +21,13 @@ export const LocationSearchInput: FC<LocationSearchInputProps> = ({
   disabled,
   autoFocus = false,
 }) => {
-  const { mutateAsync, data, isLoading } = useLocation.document.listAll({
+  const { fetchAsync, data, isLoading } = useLocation.document.listAll({
     direction: 'asc',
     key: 'name',
   });
 
   useEffect(() => {
-    mutateAsync();
+    fetchAsync();
   }, []);
 
   return (
