@@ -13,7 +13,7 @@ export type StoresQueryVariables = Types.Exact<{
 }>;
 
 
-export type StoresQuery = { __typename: 'FullQuery', stores: { __typename: 'StoreConnector', totalCount: number, nodes: Array<{ __typename: 'StoreNode', code: string, id: string }> } };
+export type StoresQuery = { __typename: 'Queries', stores: { __typename: 'StoreConnector', totalCount: number, nodes: Array<{ __typename: 'StoreNode', code: string, id: string }> } };
 
 export const StoreRowFragmentDoc = gql`
     fragment StoreRow on StoreNode {

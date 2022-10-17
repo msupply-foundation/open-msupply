@@ -8,5 +8,5 @@ export const useLocationsAll = (sortBy: SortBy<LocationRowFragment>) => {
     api.get.list({ sortBy })
   );
 
-  return { ...result };
+  return { ...result, fetchAsync: result.mutateAsync };
 };

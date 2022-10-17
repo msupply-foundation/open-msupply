@@ -1,17 +1,23 @@
 import React from 'react';
 import {
   ButtonWithIcon,
+  FnUtils,
   Grid,
   PlusCircleIcon,
   StatsPanel,
+  useNotification,
   useQuery,
+  useToggle,
   Widget,
 } from '@openmsupply-client/common';
 import { useFormatNumber, useTranslation } from '@common/intl';
 import { PropsWithChildrenOnly } from '@common/types';
 import { useInbound } from '../api';
+import { InternalSupplierSearchModal } from '@openmsupply-client/system';
 
 export const InboundShipmentWidget: React.FC<PropsWithChildrenOnly> = () => {
+  const modalControl = useToggle(false);
+  const { error } = useNotification();
   const api = useInbound.utils.api();
   const t = useTranslation(['app', 'dashboard']);
   const [hasError, setHasError] = React.useState(false);
@@ -25,49 +31,73 @@ export const InboundShipmentWidget: React.FC<PropsWithChildrenOnly> = () => {
     }
   );
 
+  const { mutateAsync: onCreate } = useInbound.document.insert();
+  const onError = (e: unknown) => {
+    const message = (e as Error).message ?? '';
+    const errorSnack = error(`Failed to create requisition! ${message}`);
+    errorSnack();
+  };
+
   return (
-    <Widget title={t('inbound-shipments')}>
-      <Grid
-        container
-        justifyContent="flex-start"
-        flex={1}
-        flexDirection="column"
-      >
-        <Grid item>
-          {!hasError && (
-            <StatsPanel
-              isLoading={isLoading}
-              title={t('inbound-shipments')}
-              stats={[
-                {
-                  label: t('label.today', { ns: 'dashboard' }),
-                  value: formatNumber.round(data?.today),
-                },
-                {
-                  label: t('label.this-week', { ns: 'dashboard' }),
-                  value: formatNumber.round(data?.thisWeek),
-                },
-              ]}
-            />
-          )}
-        </Grid>
+    <>
+      {modalControl.isOn ? (
+        <InternalSupplierSearchModal
+          open={true}
+          onClose={modalControl.toggleOff}
+          onChange={async ({ id: otherPartyId }) => {
+            modalControl.toggleOff();
+            await onCreate(
+              {
+                id: FnUtils.generateUUID(),
+                otherPartyId,
+              },
+              { onError }
+            );
+          }}
+        />
+      ) : null}
+      <Widget title={t('inbound-shipments')}>
         <Grid
-          item
-          flex={1}
           container
-          justifyContent="flex-end"
-          alignItems="flex-end"
+          justifyContent="flex-start"
+          flex={1}
+          flexDirection="column"
         >
-          <ButtonWithIcon
-            disabled
-            variant="contained"
-            color="secondary"
-            Icon={<PlusCircleIcon />}
-            label={t('button.new-inbound-shipment')}
-            onClick={() => alert('create')}
-          />
+          <Grid item>
+            {!hasError && (
+              <StatsPanel
+                isLoading={isLoading}
+                title={t('inbound-shipments')}
+                stats={[
+                  {
+                    label: t('label.today', { ns: 'dashboard' }),
+                    value: formatNumber.round(data?.today),
+                  },
+                  {
+                    label: t('label.this-week', { ns: 'dashboard' }),
+                    value: formatNumber.round(data?.thisWeek),
+                  },
+                ]}
+              />
+            )}
+          </Grid>
+          <Grid
+            item
+            flex={1}
+            container
+            justifyContent="flex-end"
+            alignItems="flex-end"
+          >
+            <ButtonWithIcon
+              variant="contained"
+              color="secondary"
+              Icon={<PlusCircleIcon />}
+              label={t('button.new-inbound-shipment')}
+              onClick={modalControl.toggleOn}
+            />
+          </Grid>
         </Grid>
-      </Grid>
-    </Widget>
+      </Widget>
+    </>
   );
 };

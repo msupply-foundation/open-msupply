@@ -8,8 +8,8 @@ import {
   CurrencyInputCell,
   useTranslation,
   getExpiryDateInputColumn,
-  NonNegativeIntegerCell,
   PositiveNumberInputCell,
+  NonNegativeDecimalCell,
   EnabledCheckboxCell,
   ColumnDescription,
   Theme,
@@ -55,6 +55,7 @@ const getBatchColumn = (
       Cell: TextInputCell,
       setter: patch => setter({ ...patch, countThisLine: true }),
       backgroundColor: alpha(theme.palette.background.menu, 0.4),
+      accessor: ({ rowData }) => rowData.batch || '',
     },
   ] as ColumnDescription<DraftStocktakeLine>;
 
@@ -96,6 +97,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
       label: 'label.num-packs',
       width: 100,
       setter: patch => update({ ...patch, countThisLine: true }),
+      accessor: ({ rowData }) => rowData.snapshotNumberOfPacks || '',
     },
     {
       key: 'packSize',
@@ -108,8 +110,9 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
       key: 'countedNumberOfPacks',
       label: 'label.counted-num-of-packs',
       width: 100,
-      Cell: NonNegativeIntegerCell,
+      Cell: NonNegativeDecimalCell,
       setter: patch => update({ ...patch, countThisLine: true }),
+      accessor: ({ rowData }) => rowData.countedNumberOfPacks || '',
     },
     [
       expiryDateColumn,

@@ -11,9 +11,10 @@ import { Sdk, LocationRowFragment } from './operations.generated';
 export type ListParams = { sortBy: SortBy<LocationRowFragment> };
 
 const locationParsers = {
-  toSortInput: (sortBy: SortBy<LocationRowFragment>): LocationSortInput => {
-    return { desc: sortBy.isDesc, key: sortBy.key as LocationSortFieldInput };
-  },
+  toSortInput: (sortBy: SortBy<LocationRowFragment>): LocationSortInput => ({
+    desc: sortBy.isDesc,
+    key: sortBy.key as LocationSortFieldInput,
+  }),
   toDelete: (location: LocationRowFragment): DeleteLocationInput => ({
     id: location.id,
   }),

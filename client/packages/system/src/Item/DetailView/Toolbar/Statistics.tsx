@@ -11,6 +11,10 @@ export const Statistics = () => {
 
   if (!stats) return null;
 
+  const monthsOfStockOnHand = !stats?.availableMonthsOfStockOnHand
+    ? undefined
+    : formatNumber.round(stats?.availableMonthsOfStockOnHand, 1);
+
   return (
     <Grid
       flex={1}
@@ -46,10 +50,7 @@ export const Statistics = () => {
         stats={[
           {
             label: t('label.months'),
-            value: formatNumber.round(
-              stats?.availableMonthsOfStockOnHand ?? 0,
-              1
-            ),
+            value: monthsOfStockOnHand,
           },
         ]}
         title={t('title.months-of-stock')}

@@ -1,5 +1,5 @@
-import React, { ForwardedRef } from 'react';
 import { NumUtils } from '@common/utils';
+import React, { ForwardedRef } from 'react';
 import { NumericTextInputProps, NumericTextInput } from './NumericTextInput';
 
 interface NonNegativeIntegerInputProps
@@ -28,10 +28,9 @@ export const NonNegativeIntegerInput = React.forwardRef(
         InputProps={{
           sx: { ...sx, '& .MuiInput-input': { textAlign: 'right' } },
         }}
-        onChange={e => {
-          const newValue = NumUtils.parseStringAsInt(e.target.value, 0, max);
-          onChange(newValue);
-        }}
+        onChange={value =>
+          onChange(NumUtils.constrain(Math.round(value), 0, max))
+        }
         disabled={disabled}
         value={value}
         {...rest}

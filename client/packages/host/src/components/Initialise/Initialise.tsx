@@ -2,16 +2,14 @@ import React, { useEffect } from 'react';
 import {
   useTranslation,
   LoadingButton,
-  Box,
-  Typography,
-  AlertIcon,
   useHostContext,
   SaveIcon,
+  ErrorWithDetails,
 } from '@openmsupply-client/common';
 import { LoginTextInput } from '../Login/LoginTextInput';
 import { InitialiseLayout } from './InitialiseLayout';
 import { useInitialiseForm } from './hooks';
-import { InitialiseNumericInput } from './InitialiseNumericInput';
+import { SyncProgress } from '../SyncProgress';
 
 export const Initialise = () => {
   const t = useTranslation('app');
@@ -20,21 +18,24 @@ export const Initialise = () => {
   const {
     isValid,
     isLoading,
+    isInitialising,
     password,
-    siteId,
     url,
     username,
-    onSave,
+    onInitialise,
+    onRetry,
     setPassword,
     setUsername,
-    setSiteId,
     setUrl,
-    error,
+    siteCredentialsError: error,
+    syncStatus,
   } = useInitialiseForm();
 
   useEffect(() => {
     setPageTitle(`${t('app.initialise')} | ${t('app')} `);
   }, []);
+
+  const isInputDisabled = isInitialising || isLoading;
 
   return (
     <InitialiseLayout
@@ -43,11 +44,11 @@ export const Initialise = () => {
           fullWidth
           label={t('label.settings-username')}
           value={username}
-          disabled={isLoading}
+          disabled={isInputDisabled}
           onChange={e => setUsername(e.target.value)}
           inputProps={{
             autoComplete: 'username',
-            autocapitalize: 'off',
+            autoCapitalize: 'off',
           }}
           autoFocus
         />
@@ -58,11 +59,11 @@ export const Initialise = () => {
           label={t('label.settings-password')}
           type="password"
           value={password}
-          disabled={isLoading}
+          disabled={isInputDisabled}
           onChange={e => setPassword(e.target.value)}
           inputProps={{
             autoComplete: 'current-password',
-            autocapitalize: 'off',
+            autoCapitalize: 'off',
           }}
         />
       }
@@ -71,49 +72,32 @@ export const Initialise = () => {
           fullWidth
           label={t('label.settings-url')}
           value={url}
-          disabled={isLoading}
+          disabled={isInputDisabled}
           onChange={e => setUrl(e.target.value)}
         />
       }
-      SiteIdInput={
-        <InitialiseNumericInput
-          fullWidth
-          label={t('label.settings-site-id')}
-          value={siteId}
-          disabled={isLoading}
-          onChange={e => {
-            const siteId = Number(e.target.value);
-            setSiteId(Number.isNaN(siteId) ? 0 : siteId);
-          }}
-        />
+      SyncProgress={
+        <SyncProgress syncStatus={syncStatus} isOperational={false} />
       }
-      SaveButton={
+      Button={
         <LoadingButton
           isLoading={isLoading}
-          onClick={onSave}
+          onClick={isInitialising ? onRetry : onInitialise}
           variant="outlined"
           startIcon={<SaveIcon />}
-          disabled={!isValid}
+          disabled={
+            !isValid &&
+            !isInitialising /* isValid would be false if isInitialising since password is emptied out */
+          }
         >
-          {t('button.save')}
+          {/* Retry will only be shown when not loading and is initialised (when sync error occured) */}
+          {isInitialising ? t('button.retry') : t('button.initialise')}
         </LoadingButton>
       }
-      ErrorMessage={
-        error && (
-          <Box display="flex" sx={{ color: 'error.main' }} gap={1}>
-            <Box>
-              <AlertIcon />
-            </Box>
-            <Box>
-              <Typography sx={{ color: 'inherit' }}>
-                {error.message || t('error.login')}
-              </Typography>
-            </Box>
-          </Box>
-        )
-      }
-      onSave={async () => {
-        if (isValid) await onSave();
+      ErrorMessage={error && <ErrorWithDetails {...error} />}
+      onInitialise={async () => {
+        /* onInitialise from layout only happens on form key event, form is disabled when isInitialising */
+        if (isValid) await onInitialise();
       }}
     />
   );
