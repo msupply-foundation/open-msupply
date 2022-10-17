@@ -56,11 +56,28 @@ impl<'a> MasterListNameJoinRepository<'a> {
 
     pub async fn find_one_by_id(
         &self,
-        item_id: &str,
+        record_id: &str,
     ) -> Result<MasterListNameJoinRow, RepositoryError> {
         let result = master_list_name_join
-            .filter(id.eq(item_id))
+            .filter(id.eq(record_id))
             .first(&self.connection.connection)?;
         Ok(result)
+    }
+
+    pub fn find_one_by_id_option(
+        &self,
+        record_id: &str,
+    ) -> Result<Option<MasterListNameJoinRow>, RepositoryError> {
+        let result = master_list_name_join
+            .filter(id.eq(record_id))
+            .first(&self.connection.connection)
+            .optional()?;
+        Ok(result)
+    }
+
+    pub fn delete(&self, record_id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(master_list_name_join.filter(id.eq(record_id)))
+            .execute(&self.connection.connection)?;
+        Ok(())
     }
 }

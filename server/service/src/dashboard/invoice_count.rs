@@ -91,11 +91,8 @@ fn invoices_count(
     earliest: Option<NaiveDateTime>,
     store_id: &str,
 ) -> Result<i64, RepositoryError> {
-    let mut datetime_filter = DatetimeFilter {
-        equal_to: None,
-        before_or_equal_to: None,
-        after_or_equal_to: Some(oldest),
-    };
+    let mut datetime_filter = DatetimeFilter::after_or_equal_to(oldest);
+
     if let Some(earliest) = earliest {
         datetime_filter.before_or_equal_to = Some(earliest);
     }
@@ -210,7 +207,7 @@ mod invoice_count_service_test {
             &repo,
             &item1_type,
             &status,
-            Utc::now().naive_local(),
+            Utc::now().naive_utc(),
             None,
             &store_1.id,
         )
@@ -273,11 +270,7 @@ mod invoice_count_service_test {
             MockDataInserts::all(),
         )
         .await;
-        let ctx = ServiceContext {
-            connection,
-            user_id: "".to_string(),
-            store_id: "".to_string(),
-        };
+        let ctx = ServiceContext::new_without_triggers(connection);
         let service = InvoiceCountService {};
 
         // There are two invoices created at these times for store_a:

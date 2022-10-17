@@ -63,6 +63,8 @@ impl Gender {
             not_equal_to: None,
             equal_any: None,
             not_equal_all: None,
+            equal_any_or_null: None,
+            is_null: None,
         }
     }
 }

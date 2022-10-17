@@ -1,11 +1,10 @@
-use chrono::Utc;
 use repository::{
-    EqualFilter, LogType, RepositoryError, StocktakeLineFilter, StocktakeLineRepository,
+    ActivityLogType, EqualFilter, RepositoryError, StocktakeLineFilter, StocktakeLineRepository,
     StocktakeRowRepository, StorageConnection, TransactionError,
 };
 
 use crate::{
-    log::log_entry, service_provider::ServiceContext, stocktake_line::*,
+    activity_log::activity_log_entry, service_provider::ServiceContext, stocktake_line::*,
     validate::check_store_id_matches,
 };
 
@@ -50,7 +49,8 @@ fn validate(
     if !check_stocktake_not_finalised(&existing.status) {
         return Err(DeleteStocktakeError::CannotEditFinalised);
     }
-    // TODO https://github.com/openmsupply/remote-server/issues/839
+    // Note that lines are not deleted when an invoice is deleted, due to issues with batch deletes.
+    // TODO: implement delete lines. See https://github.com/openmsupply/remote-server/issues/839 for details.
     // if !check_no_stocktake_lines_exist(connection, stocktake_id)? {
     //     return Err(DeleteStocktakeError::StocktakeLinesExist);
     // }
@@ -66,7 +66,8 @@ pub fn delete_stocktake(
         .transaction_sync(|connection| {
             validate(connection, &ctx.store_id, &stocktake_id)?;
 
-            // TODO https://github.com/openmsupply/remote-server/issues/839
+            // Note that lines are not deleted when an invoice is deleted, due to issues with batch deletes.
+            // TODO: implement delete lines. See https://github.com/openmsupply/remote-server/issues/839 for details.
             let lines = StocktakeLineRepository::new(&connection).query_by_filter(
                 StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to(&stocktake_id)),
             )?;
@@ -79,18 +80,12 @@ pub fn delete_stocktake(
                 })?;
             }
             // End TODO
+            activity_log_entry(&ctx, ActivityLogType::StocktakeDeleted, &stocktake_id)?;
 
             StocktakeRowRepository::new(&connection).delete(&stocktake_id)?;
             Ok(())
         })
         .map_err(|error: TransactionError<DeleteStocktakeError>| error.to_inner_error())?;
-
-    log_entry(
-        &ctx,
-        LogType::StocktakeDeleted,
-        Some(stocktake_id.clone()),
-        Utc::now().naive_utc(),
-    )?;
 
     Ok(stocktake_id.to_string())
 }
@@ -144,7 +139,8 @@ mod stocktake_test {
             .unwrap_err();
         assert_eq!(error, DeleteStocktakeError::InvalidStore);
 
-        // TODO https://github.com/openmsupply/remote-server/issues/839
+        // Note that lines are not deleted when an invoice is deleted, due to issues with batch deletes.
+        // TODO: implement delete lines. See https://github.com/openmsupply/remote-server/issues/839 for details.
         // error: StocktakeLinesExist
         // let store_a = mock_store_a();
         // let stocktake_a = mock_stocktake_a();

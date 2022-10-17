@@ -1,8 +1,3 @@
-use repository::{
-    Name, NameFilter, NameSort, PaginationOption, RepositoryError, StorageConnection,
-    StorageConnectionManager, Store, StoreFilter, StoreSort,
-};
-
 use crate::{
     app_data::{AppDataService, AppDataServiceTrait},
     auth::{AuthService, AuthServiceTrait},
@@ -10,6 +5,7 @@ use crate::{
         invoice_count::{InvoiceCountService, InvoiceCountServiceTrait},
         stock_expiry_count::{StockExpiryCountServiceTrait, StockExpiryServiceCount},
     },
+    display_settings_service::{DisplaySettingsService, DisplaySettingsServiceTrait},
     document::{
         document_registry::{DocumentRegistryService, DocumentRegistryServiceTrait},
         document_service::{DocumentService, DocumentServiceTrait},
@@ -21,6 +17,7 @@ use crate::{
     location::{LocationService, LocationServiceTrait},
     master_list::{MasterListService, MasterListServiceTrait},
     name::get_names,
+    processors::ProcessorsTrigger,
     programs::{
         encounter::{EncounterService, EncounterServiceTrait},
         patient::{PatientService, PatientServiceTrait},
@@ -34,7 +31,17 @@ use crate::{
     stocktake::{StocktakeService, StocktakeServiceTrait},
     stocktake_line::{StocktakeLineService, StocktakeLineServiceTrait},
     store::{get_store, get_stores},
+    sync::{
+        site_info::{SiteInfoService, SiteInfoTrait},
+        sync_status::status::{SyncStatusService, SyncStatusTrait},
+        synchroniser_driver::{SiteIsInitialisedTrigger, SyncTrigger},
+    },
+    system_user::create_system_user,
     ListError, ListResult,
+};
+use repository::{
+    Name, NameFilter, NameSort, PaginationOption, RepositoryError, StorageConnection,
+    StorageConnectionManager, Store, StoreFilter, StoreSort,
 };
 
 pub struct ServiceProvider {
@@ -73,16 +80,44 @@ pub struct ServiceProvider {
     pub settings: Box<dyn SettingsServiceTrait>,
     // App Data Service
     pub app_data_service: Box<dyn AppDataServiceTrait>,
+    // Sync
+    pub site_info_service: Box<dyn SiteInfoTrait>,
+    pub sync_status_service: Box<dyn SyncStatusTrait>,
+    // Triggers
+    processors_trigger: ProcessorsTrigger,
+    pub sync_trigger: SyncTrigger,
+    pub site_is_initialised_trigger: SiteIsInitialisedTrigger,
+    pub display_settings_service: Box<dyn DisplaySettingsServiceTrait>,
 }
 
 pub struct ServiceContext {
     pub connection: StorageConnection,
+    pub(crate) processors_trigger: ProcessorsTrigger,
     pub user_id: String,
     pub store_id: String,
 }
 
 impl ServiceProvider {
+    // TODO we should really use `new` with processors_trigger, we constructs ServiceProvider manually in tests though
+    // and it would be a bit of refactor, ideally setup_all and setup_all_with_data will return an instance of ServiceProvider
+    // {make an issue}
     pub fn new(connection_manager: StorageConnectionManager, app_data_folder: &str) -> Self {
+        ServiceProvider::new_with_triggers(
+            connection_manager,
+            app_data_folder,
+            ProcessorsTrigger::new_void(),
+            SyncTrigger::new_void(),
+            SiteIsInitialisedTrigger::new_void(),
+        )
+    }
+
+    pub fn new_with_triggers(
+        connection_manager: StorageConnectionManager,
+        app_data_folder: &str,
+        processors_trigger: ProcessorsTrigger,
+        sync_trigger: SyncTrigger,
+        site_is_initialised_trigger: SiteIsInitialisedTrigger,
+    ) -> Self {
         ServiceProvider {
             connection_manager: connection_manager.clone(),
             validation_service: Box::new(AuthService::new()),
@@ -108,6 +143,12 @@ impl ServiceProvider {
             encounter_service: Box::new(EncounterService {}),
             settings: Box::new(SettingsService {}),
             app_data_service: Box::new(AppDataService::new(app_data_folder)),
+            site_info_service: Box::new(SiteInfoService),
+            sync_status_service: Box::new(SyncStatusService),
+            processors_trigger,
+            sync_trigger,
+            site_is_initialised_trigger,
+            display_settings_service: Box::new(DisplaySettingsService {}),
         }
     }
 
@@ -115,6 +156,7 @@ impl ServiceProvider {
     pub fn basic_context(&self) -> Result<ServiceContext, RepositoryError> {
         Ok(ServiceContext {
             connection: self.connection()?,
+            processors_trigger: self.processors_trigger.clone(),
             user_id: "".to_string(),
             store_id: "".to_string(),
         })
@@ -127,14 +169,27 @@ impl ServiceProvider {
     ) -> Result<ServiceContext, RepositoryError> {
         Ok(ServiceContext {
             connection: self.connection()?,
-            user_id: user_id,
-            store_id: store_id,
+            processors_trigger: self.processors_trigger.clone(),
+            user_id,
+            store_id,
         })
     }
 
     /// Establishes a new DB connection
     pub fn connection(&self) -> Result<StorageConnection, RepositoryError> {
         self.connection_manager.connection()
+    }
+}
+
+impl ServiceContext {
+    #[cfg(test)]
+    pub(crate) fn new_without_triggers(connection: StorageConnection) -> ServiceContext {
+        ServiceContext {
+            connection,
+            processors_trigger: ProcessorsTrigger::new_void(),
+            user_id: "".to_string(),
+            store_id: "".to_string(),
+        }
     }
 }
 
@@ -166,6 +221,13 @@ pub trait GeneralServiceTrait: Sync + Send {
         filter: StoreFilter,
     ) -> Result<Option<Store>, RepositoryError> {
         get_store(ctx, filter)
+    }
+
+    fn create_system_user(
+        &self,
+        service_provider: &ServiceProvider,
+    ) -> Result<(), RepositoryError> {
+        create_system_user(service_provider)
     }
 }
 

@@ -1,13 +1,12 @@
 use crate::{
-    log::log_entry,
+    activity_log::activity_log_entry,
     requisition::{common::check_requisition_exists, query::get_requisition},
     service_provider::ServiceContext,
-    sync_processor::{process_records, Record},
 };
 use chrono::Utc;
 use repository::{
     requisition_row::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
-    LogType, RepositoryError, Requisition, RequisitionRowRepository, StorageConnection,
+    ActivityLogType, RepositoryError, Requisition, RequisitionRowRepository, StorageConnection,
 };
 use util::inline_edit;
 
@@ -15,7 +14,7 @@ use util::inline_edit;
 pub enum UpdateResponseRequstionStatus {
     Finalised,
 }
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct UpdateResponseRequisition {
     pub id: String,
     pub colour: Option<String>,
@@ -45,17 +44,17 @@ pub fn update_response_requisition(
     let requisition = ctx
         .connection
         .transaction_sync(|connection| {
-            let requisition_row = validate(connection, &ctx.store_id, &input)?;
+            let (requisition_row, status_changed) = validate(connection, &ctx.store_id, &input)?;
+
             let updated_requisition =
                 generate(&ctx.user_id, requisition_row.clone(), input.clone());
             RequisitionRowRepository::new(&connection).upsert_one(&updated_requisition)?;
 
-            if requisition_row.status != updated_requisition.status {
-                log_entry(
+            if status_changed {
+                activity_log_entry(
                     &ctx,
-                    LogType::RequisitionStatusFinalised,
-                    Some(updated_requisition.id.to_string()),
-                    Utc::now().naive_utc(),
+                    ActivityLogType::RequisitionStatusFinalised,
+                    &updated_requisition.id,
                 )?;
             }
 
@@ -65,15 +64,8 @@ pub fn update_response_requisition(
         })
         .map_err(|error| error.to_inner_error())?;
 
-    // TODO use change log (and maybe ask sync porcessor actor to retrigger here)
-    println!(
-        "{:#?}",
-        process_records(
-            &ctx.connection,
-            vec![Record::RequisitionRow(requisition.requisition_row.clone())],
-        )
-    );
-
+    ctx.processors_trigger
+        .trigger_requisition_transfer_processors();
     Ok(requisition)
 }
 
@@ -81,7 +73,7 @@ pub fn validate(
     connection: &StorageConnection,
     store_id: &str,
     input: &UpdateResponseRequisition,
-) -> Result<RequisitionRow, OutError> {
+) -> Result<(RequisitionRow, bool), OutError> {
     let requisition_row = check_requisition_exists(connection, &input.id)?
         .ok_or(OutError::RequisitionDoesNotExist)?;
 
@@ -97,7 +89,9 @@ pub fn validate(
         return Err(OutError::CannotEditRequisition);
     }
 
-    Ok(requisition_row)
+    let status_changed = input.status.is_some();
+
+    Ok((requisition_row, status_changed))
 }
 
 pub fn generate(
@@ -148,7 +142,7 @@ mod test_update {
         },
         requisition_row::{RequisitionRow, RequisitionRowStatus},
         test_db::setup_all,
-        RequisitionRowRepository,
+        ActivityLogRowRepository, ActivityLogType, RequisitionRowRepository,
     };
 
     use crate::{
@@ -283,6 +277,14 @@ mod test_update {
         assert_eq!(their_reference, Some("new their_reference".to_owned()));
         assert_eq!(comment, Some("new comment".to_owned()));
         assert_eq!(status, RequisitionRowStatus::Finalised);
+
+        let log = ActivityLogRowRepository::new(&connection)
+            .find_many_by_record_id(&id)
+            .unwrap()
+            .into_iter()
+            .find(|l| l.r#type == ActivityLogType::RequisitionStatusFinalised)
+            .unwrap();
+        assert_eq!(log.r#type, ActivityLogType::RequisitionStatusFinalised);
 
         let finalised_datetime = finalised_datetime.unwrap();
         assert!(finalised_datetime > before_update && finalised_datetime < after_update);

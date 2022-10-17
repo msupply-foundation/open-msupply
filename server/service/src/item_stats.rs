@@ -1,6 +1,6 @@
 use std::{collections::HashMap, ops::Neg};
 
-use crate::{i64_to_u32, service_provider::ServiceContext};
+use crate::service_provider::ServiceContext;
 use chrono::Duration;
 use repository::{
     ConsumptionFilter, ConsumptionRepository, ConsumptionRow, DateFilter, EqualFilter,
@@ -112,7 +112,7 @@ impl ItemStats {
         stock_on_hand_rows
             .into_iter()
             .map(|stock_on_hand| ItemStats {
-                available_stock_on_hand: i64_to_u32(stock_on_hand.available_stock_on_hand),
+                available_stock_on_hand: stock_on_hand.available_stock_on_hand as u32,
                 item_id: stock_on_hand.item_id.clone(),
                 average_monthly_consumption: consumption_map
                     .get(&stock_on_hand.item_id)
@@ -122,11 +122,11 @@ impl ItemStats {
             .collect()
     }
 
-    pub fn from_requisition_line(requistion_line: &RequisitionLineRow) -> Self {
+    pub fn from_requisition_line(requisition_line: &RequisitionLineRow) -> Self {
         ItemStats {
-            average_monthly_consumption: requistion_line.average_monthly_consumption as f64,
-            available_stock_on_hand: requistion_line.available_stock_on_hand as u32,
-            item_id: requistion_line.item_id.clone(),
+            average_monthly_consumption: requisition_line.average_monthly_consumption as f64,
+            available_stock_on_hand: requisition_line.available_stock_on_hand as u32,
+            item_id: requisition_line.item_id.clone(),
         }
     }
 }

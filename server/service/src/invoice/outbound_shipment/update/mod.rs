@@ -1,7 +1,6 @@
-use chrono::Utc;
 use repository::{
     Invoice, InvoiceLine, InvoiceLineRowRepository, InvoiceRowRepository, InvoiceRowStatus,
-    LogType, RepositoryError, StockLineRowRepository, TransactionError,
+    RepositoryError, StockLineRowRepository, TransactionError,
 };
 
 pub mod generate;
@@ -10,11 +9,11 @@ pub mod validate;
 use generate::generate;
 use validate::validate;
 
+use crate::activity_log::{activity_log_entry, log_type_from_invoice_status};
 use crate::invoice::outbound_shipment::update::generate::GenerateResult;
 use crate::invoice::query::get_invoice;
-use crate::log::log_entry;
 use crate::service_provider::ServiceContext;
-use crate::sync_processor::{process_records, Record};
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum UpdateOutboundShipmentStatus {
     Allocated,
@@ -63,7 +62,8 @@ pub fn update_outbound_shipment(
     let invoice = ctx
         .connection
         .transaction_sync(|connection| {
-            let (invoice, other_party_option) = validate(connection, &ctx.store_id, &patch)?;
+            let (invoice, other_party_option, status_changed) =
+                validate(connection, &ctx.store_id, &patch)?;
             let GenerateResult {
                 batches_to_update,
                 update_invoice,
@@ -71,6 +71,7 @@ pub fn update_outbound_shipment(
             } = generate(invoice, other_party_option, patch.clone(), connection)?;
 
             InvoiceRowRepository::new(connection).upsert_one(&update_invoice)?;
+
             if let Some(stock_lines) = batches_to_update {
                 let repository = StockLineRowRepository::new(connection);
                 for stock_line in stock_lines {
@@ -85,33 +86,22 @@ pub fn update_outbound_shipment(
                 }
             }
 
+            if status_changed {
+                activity_log_entry(
+                    &ctx,
+                    log_type_from_invoice_status(&update_invoice.status),
+                    &update_invoice.id,
+                )?;
+            }
+
             get_invoice(ctx, None, &update_invoice.id)
                 .map_err(|error| OutError::DatabaseError(error))?
                 .ok_or(OutError::UpdatedInvoiceDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
 
-    // TODO use change log (and maybe ask sync porcessor actor to retrigger here)
-    println!(
-        "{:#?}",
-        process_records(
-            &ctx.connection,
-            vec![Record::InvoiceRow(invoice.invoice_row.clone())],
-        )
-    );
-
-    if let Some(status) = patch.status {
-        log_entry(
-            &ctx,
-            match status {
-                UpdateOutboundShipmentStatus::Allocated => LogType::InvoiceStatusAllocated,
-                UpdateOutboundShipmentStatus::Picked => LogType::InvoiceStatusPicked,
-                UpdateOutboundShipmentStatus::Shipped => LogType::InvoiceStatusShipped,
-            },
-            Some(invoice.invoice_row.id.clone()),
-            Utc::now().naive_utc(),
-        )?;
-    }
+    ctx.processors_trigger
+        .trigger_shipment_transfer_processors();
 
     Ok(invoice)
 }
@@ -175,11 +165,11 @@ mod test {
             MockDataInserts,
         },
         test_db::setup_all_with_data,
-        InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRow,
-        InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType, NameRow, NameStoreJoinRow,
-        StockLineRow, StockLineRowRepository,
+        ActivityLogRowRepository, ActivityLogType, InvoiceLineRow, InvoiceLineRowRepository,
+        InvoiceLineRowType, InvoiceRow, InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType,
+        NameRow, NameStoreJoinRow, StockLineRow, StockLineRowRepository,
     };
-    use util::{inline_edit, inline_init};
+    use util::{assert_matches, inline_edit, inline_init};
 
     use crate::{
         invoice::outbound_shipment::{
@@ -391,7 +381,7 @@ mod test {
                 r.item_id = mock_item_a().id;
                 r.r#type = InvoiceLineRowType::UnallocatedStock;
                 r.pack_size = 1;
-                r.number_of_packs = 0;
+                r.number_of_packs = 0.0;
             })
         }
 
@@ -489,7 +479,7 @@ mod test {
 
         let result = service.update_outbound_shipment(&context, get_update());
 
-        assert!(matches!(result, Ok(_)), "Not Ok(_) {:#?}", result);
+        assert_matches!(result, Ok(_));
 
         let updated_record = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&invoice().id)
@@ -531,7 +521,7 @@ mod test {
         // calculates the expected stock line total for every invoice line row
         let expected_stock_line_totals = |invoice_lines: &Vec<InvoiceLineRow>| {
             let stock_lines = stock_lines_for_invoice_lines(invoice_lines);
-            let expected_stock_line_totals: Vec<(StockLineRow, i32)> = stock_lines
+            let expected_stock_line_totals: Vec<(StockLineRow, f64)> = stock_lines
                 .into_iter()
                 .map(|line| {
                     let invoice_line = invoice_lines
@@ -545,7 +535,7 @@ mod test {
             expected_stock_line_totals
         };
         let assert_stock_line_totals =
-            |invoice_lines: &Vec<InvoiceLineRow>, expected: &Vec<(StockLineRow, i32)>| {
+            |invoice_lines: &Vec<InvoiceLineRow>, expected: &Vec<(StockLineRow, f64)>| {
                 let stock_lines = stock_lines_for_invoice_lines(invoice_lines);
                 for line in stock_lines {
                     let expected = expected.iter().find(|l| l.0.id == line.id).unwrap();
@@ -572,7 +562,32 @@ mod test {
             )
             .unwrap();
 
+        let log = ActivityLogRowRepository::new(&connection)
+            .find_many_by_record_id(&mock_outbound_shipment_c().id)
+            .unwrap()
+            .into_iter()
+            .find(|l| l.r#type == ActivityLogType::InvoiceStatusPicked)
+            .unwrap();
         assert_stock_line_totals(&invoice_lines, &expected_stock_line_totals);
+        assert_eq!(log.r#type, ActivityLogType::InvoiceStatusPicked);
+
+        service
+            .update_outbound_shipment(
+                &context,
+                inline_init(|r: &mut UpdateOutboundShipment| {
+                    r.id = mock_outbound_shipment_c().id;
+                    r.comment = Some("Some comment".to_string());
+                }),
+            )
+            .unwrap();
+
+        let log = ActivityLogRowRepository::new(&connection)
+            .find_many_by_record_id(&mock_outbound_shipment_c().id)
+            .unwrap()
+            .into_iter()
+            .find(|l| l.r#type == ActivityLogType::InvoiceStatusPicked)
+            .unwrap();
+        assert_eq!(log.r#type, ActivityLogType::InvoiceStatusPicked);
     }
 
     #[actix_rt::test]
@@ -590,8 +605,8 @@ mod test {
             inline_init(|r: &mut StockLineRow| {
                 r.id = "stock_line".to_string();
                 r.store_id = mock_store_a().id;
-                r.available_number_of_packs = 8;
-                r.total_number_of_packs = 10;
+                r.available_number_of_packs = 8.0;
+                r.total_number_of_packs = 10.0;
                 r.pack_size = 1;
                 r.item_id = mock_item_a().id;
             })
@@ -602,7 +617,7 @@ mod test {
                 r.id = "invoice_line".to_string();
                 r.invoice_id = invoice().id;
                 r.stock_line_id = Some(stock_line().id);
-                r.number_of_packs = 2;
+                r.number_of_packs = 2.0;
                 r.item_id = mock_item_a().id;
                 r.r#type = InvoiceLineRowType::StockOut;
             })
@@ -640,7 +655,7 @@ mod test {
 
         // Stock line total_number_of_packs should have been reduced
         let new_stock_line = inline_edit(&stock_line(), |mut u| {
-            u.total_number_of_packs = 8;
+            u.total_number_of_packs = 8.0;
             u
         });
         assert_eq!(
@@ -721,7 +736,7 @@ mod test {
         assert_eq!(
             stock_line_repo.find_one_by_id(&stock_line().id).unwrap(),
             inline_edit(&stock_line(), |mut u| {
-                u.total_number_of_packs = 8;
+                u.total_number_of_packs = 8.0;
                 u
             })
         );

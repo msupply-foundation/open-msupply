@@ -4,8 +4,9 @@ use chrono::NaiveDate;
 use graphql_core::simple_generic_errors::{CannotEditStocktake, StocktakeIsLocked};
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
-use graphql_types::types::{StocktakeLineConnector, StocktakeNode, StocktakeNodeStatus};
+use graphql_types::types::{StocktakeLineConnector, StocktakeNode};
 use repository::{Stocktake, StocktakeLine};
+use service::stocktake::UpdateStocktakeStatus;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     stocktake::{UpdateStocktake as ServiceInput, UpdateStocktakeError as ServiceError},
@@ -17,9 +18,14 @@ pub struct UpdateInput {
     pub id: String,
     pub comment: Option<String>,
     pub description: Option<String>,
-    pub status: Option<StocktakeNodeStatus>,
+    pub status: Option<UpdateStocktakeStatusInput>,
     pub stocktake_date: Option<NaiveDate>,
     pub is_locked: Option<bool>,
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
+pub enum UpdateStocktakeStatusInput {
+    Finalised,
 }
 
 pub struct SnapshotCountCurrentCountMismatch(Vec<StocktakeLine>);
@@ -135,6 +141,14 @@ impl UpdateInput {
             status: status.map(|status| status.to_domain()),
             is_locked,
             stocktake_date,
+        }
+    }
+}
+
+impl UpdateStocktakeStatusInput {
+    pub fn to_domain(self) -> UpdateStocktakeStatus {
+        match self {
+            Self::Finalised => UpdateStocktakeStatus::Finalised,
         }
     }
 }
