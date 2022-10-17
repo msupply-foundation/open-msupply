@@ -29,7 +29,7 @@
   "description.invoice-number": "Shipment number",
   "description.our-soh": "Our Stock on Hand",
   "description.pack-quantity": "Total quantity in number of packs",
-  "description.remaining-to-supply": "Amount not yet supplied",
+  "description.remaining-to-supply": "Remaining to supply",
   "description.requested-quantity": "Requested Quantity",
   "description.stock-on-hand": "Stock on Hand (Est. remaining)",
   "description.supply-quantity": "Amount to supply",
