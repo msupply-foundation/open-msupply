@@ -77,7 +77,11 @@ export const Initialise = () => {
         />
       }
       SyncProgress={
-        <SyncProgress syncStatus={syncStatus} isOperational={false} />
+        <SyncProgress
+          syncStatus={syncStatus}
+          isOperational={false}
+          colour="secondary"
+        />
       }
       Button={
         <LoadingButton

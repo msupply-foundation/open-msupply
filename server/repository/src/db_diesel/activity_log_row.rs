@@ -5,6 +5,7 @@ use crate::{db_diesel::store_row::store, repository_error::RepositoryError, user
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
+use serde::{Deserialize, Serialize};
 
 table! {
     activity_log (id) {
@@ -20,7 +21,7 @@ table! {
 joinable!(activity_log -> user_account (user_id));
 joinable!(activity_log -> store (store_id));
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum ActivityLogType {
     UserLoggedIn,
