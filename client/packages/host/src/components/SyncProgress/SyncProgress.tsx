@@ -107,6 +107,9 @@ const getSteps = (
     };
   };
 
+  // This is the order of sync operations on server.
+  // Note that prepareInitial is only run when initialising
+  // and push is only run when operational.
   const steps = [];
 
   if (!isOperational) {
