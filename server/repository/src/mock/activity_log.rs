@@ -18,7 +18,7 @@ pub fn activity_log_b() -> ActivityLogRow {
         id: String::from("log_b"),
         r#type: ActivityLogType::InvoiceCreated,
         user_id: Some(String::from("user_account_a")),
-        store_id: Some(String::from("store_a")),
+        store_id: Some(String::from("store_b")),
         record_id: Some(String::from("outbound_shipment_a")),
         datetime: NaiveDate::from_ymd(2020, 1, 1).and_hms(0, 0, 0),
     }

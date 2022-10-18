@@ -41,7 +41,9 @@ const useSync = () => {
 
   return {
     isLoading: !!syncStatus?.isSyncing || isLoading,
-    latestSyncDate: DateUtils.getDateOrNull(syncStatus?.summary.started),
+    latestSyncDate: DateUtils.getDateOrNull(
+      syncStatus?.summary.started || null
+    ),
     onManualSync,
     syncStatus,
     numberOfRecordsInPushQueue,

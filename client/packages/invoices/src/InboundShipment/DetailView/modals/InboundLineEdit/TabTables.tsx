@@ -41,6 +41,7 @@ const getBatchColumn = (
     backgroundColor: alpha(theme.palette.background.menu, 0.4),
     // Remember previously entered batches for this item and suggest them in future shipments
     autocompleteProvider: data => `inboundshipment${data.item.id}`,
+    accessor: ({ rowData }) => rowData.batch || '',
   },
 ];
 const getExpiryColumn = (

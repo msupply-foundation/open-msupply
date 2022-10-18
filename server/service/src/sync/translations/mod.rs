@@ -1,3 +1,4 @@
+pub(crate) mod activity_log;
 pub(crate) mod invoice;
 pub(crate) mod invoice_line;
 pub(crate) mod item;
@@ -46,6 +47,7 @@ pub(crate) fn all_translators() -> SyncTanslators {
         Box::new(stocktake_line::StocktakeLineTranslation {}),
         Box::new(requisition::RequisitionTranslation {}),
         Box::new(requisition_line::RequisitionLineTranslation {}),
+        Box::new(activity_log::ActivityLogTranslation {}),
         // Remote-Central (site specific)
         Box::new(name_store_join::NameStoreJoinTranslation {}),
         // Special translations
@@ -74,6 +76,7 @@ pub(crate) mod LegacyTableName {
     pub(crate) const STOCKTAKE_LINE: &str = "Stock_take_lines";
     pub(crate) const REQUISITION: &str = "requisition";
     pub(crate) const REQUISITION_LINE: &str = "requisition_line";
+    pub(crate) const OM_ACTIVITY_LOG: &str = "om_activity_log";
     // Remote-Central (site specific)
     pub(crate) const NAME_STORE_JOIN: &str = "name_store_join";
 }
@@ -98,6 +101,7 @@ pub(crate) enum PullUpsertRecord {
     StocktakeLine(StocktakeLineRow),
     Requisition(RequisitionRow),
     RequisitionLine(RequisitionLineRow),
+    ActivityLog(ActivityLogRow),
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -132,6 +136,8 @@ pub(crate) enum PullDeleteRecordTable {
     Stocktake,
     #[cfg(all(test, feature = "integration_test"))]
     StocktakeLine,
+    #[cfg(all(test, feature = "integration_test"))]
+    ActivityLog,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -237,7 +243,6 @@ impl RemoteSyncRecordV5 {
             },
         }
     }
-
     pub(crate) fn new_delete(changelog: &ChangelogRow, table_name: &'static str) -> Self {
         Self {
             sync_id: changelog.cursor.to_string(),
@@ -279,6 +284,7 @@ fn translate_changelog(
     changelog: &ChangelogRow,
 ) -> Result<Vec<RemoteSyncRecordV5>, anyhow::Error> {
     let mut translation_results = Vec::new();
+    let mut skip = false;
 
     for translator in translators.iter() {
         let translation_result = match changelog.row_action {
@@ -292,10 +298,11 @@ fn translate_changelog(
 
         if let Some(mut translation_result) = translation_result {
             translation_results.append(&mut translation_result);
+            skip = true;
         }
     }
 
-    if translation_results.is_empty() {
+    if !skip {
         return Err(anyhow::anyhow!("Translator for record not found"));
     }
 

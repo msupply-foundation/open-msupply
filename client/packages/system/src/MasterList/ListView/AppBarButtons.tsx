@@ -18,10 +18,10 @@ export const AppBarButtons: FC<{
 }> = ({ sortBy }) => {
   const { success, error } = useNotification();
   const t = useTranslation('inventory');
-  const { isLoading, mutateAsync } = useMasterList.document.listAll(sortBy);
+  const { isLoading, fetchAsync } = useMasterList.document.listAll(sortBy);
 
   const csvExport = async () => {
-    const data = await mutateAsync();
+    const data = await fetchAsync();
     if (!data || !data?.nodes.length) {
       error(t('error.no-data'))();
       return;

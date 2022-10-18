@@ -1,6 +1,6 @@
 use config::{Config, ConfigError, Environment, File, FileSourceFile};
 use repository::{KeyValueStoreRepository, KeyValueType, StorageConnection};
-use service::settings::Settings;
+use service::settings::{is_develop, Settings};
 use std::{
     env::{self, VarError},
     fmt::{Debug, Display, Formatter, Result as FmtResult},
@@ -96,7 +96,7 @@ pub fn get_configuration_environment() -> Environment {
 pub fn copy_example_environment_configuration_file_if_required() -> Result<(), SettingsError> {
     let configuration_directory = get_configuration_directory()?;
     let app = get_configuration_app_file_path(configuration_directory.clone());
-    if !app.exists() {
+    if !app.exists() && is_develop() {
         //Config file doesn't exist, Try to copy example file over
         let example_path = get_example_file_path(configuration_directory);
         if let Err(err) = fs::copy(example_path.clone(), app.clone()) {

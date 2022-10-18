@@ -20,10 +20,10 @@ export const AppBarButtons: FC<{
 }> = ({ modalController, sortBy }) => {
   const { success, error } = useNotification();
   const t = useTranslation(['distribution', 'common']);
-  const { isLoading, mutateAsync } = useStocktake.document.listAll(sortBy);
+  const { isLoading, fetchAsync } = useStocktake.document.listAll(sortBy);
 
   const csvExport = async () => {
-    const data = await mutateAsync();
+    const data = await fetchAsync();
     if (!data || !data?.nodes.length) {
       error(t('error.no-data'))();
       return;
