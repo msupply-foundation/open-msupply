@@ -8,7 +8,6 @@ import {
 } from '@openmsupply-client/common';
 import { RequestLineFragment, useHideOverStocked, useRequest } from '../api';
 import { isRequestLinePlaceholderRow } from '../../utils';
-import { RequestItem } from '../../types';
 
 interface ContentAreaProps {
   onAddItem: () => void;
@@ -16,7 +15,7 @@ interface ContentAreaProps {
 }
 
 const useHighlightPlaceholderRows = (
-  rows: RequestLineFragment[] | RequestItem[] | undefined
+  rows: RequestLineFragment[] | undefined
 ) => {
   const { setRowStyles } = useRowStyle();
 
@@ -25,13 +24,7 @@ const useHighlightPlaceholderRows = (
 
     const placeholders = rows
       .filter(isRequestLinePlaceholderRow)
-      .map(row => row.id);
-    const style: AppSxProp = {
-      color: theme => theme.palette.secondary.light,
-    };
-    setRowStyles(placeholders, style);
-  }, [rows, setRowStyles]);
-
+      .map((row: { id: any; }) => row.id);
     const style: AppSxProp = {
       color: theme => theme.palette.secondary.light,
     };

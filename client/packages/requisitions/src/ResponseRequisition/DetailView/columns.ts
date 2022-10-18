@@ -63,17 +63,6 @@ export const useResponseColumns = () => {
       ],
       ['supplyQuantity', { getSortValue: rowData => rowData.supplyQuantity }],
       {
-        label: 'label.unissued',
-        description: 'description.unissued',
-        key: 'unissued',
-        width: 100,
-        align: ColumnAlign.Right,
-        accessor: ({ rowData }) =>
-          rowData.requestedQuantity - rowData.remainingQuantityToSupply,
-        getSortValue: rowData =>
-          rowData.requestedQuantity - rowData.remainingQuantityToSupply,
-      },
-      {
         label: 'label.remaining-to-supply',
         description: 'description.remaining-to-supply',
         key: 'remainingToSupply',
