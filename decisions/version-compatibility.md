@@ -121,7 +121,7 @@ So let's say 1.07 is trying to sync with 5.08, central says it's compatible with
 - Quite flexible in forward and backwards compatibility
 
 *Cons:*
-- Doesn't allow backwards compatibility when `core` is changed (i.e. api shape)
+- More involved, and flexibility can be a doulbe edge sword
 
 ## Decision
 
