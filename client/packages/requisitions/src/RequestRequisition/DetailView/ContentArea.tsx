@@ -22,25 +22,15 @@ const useHighlightPlaceholderRows = (
 
   useEffect(() => {
     if (!rows) return;
-    const placeholders = [];
 
-    for (const row of rows) {
-      if ('requestedQuantity' in row) {
-        if (isRequestLinePlaceholderRow(row)) {
-          placeholders.push(row.id);
-        }
-      } else {
-        const hasPlaceholder = row.lines.some(isRequestLinePlaceholderRow);
-        if (hasPlaceholder) {
-          row.lines.forEach(line => {
-            if (isRequestLinePlaceholderRow(line)) {
-              placeholders.push(line.id);
-            }
-          });
-          placeholders.push(row.id);
-        }
-      }
-    }
+    const placeholders = rows
+      .filter(isRequestLinePlaceholderRow)
+      .map(row => row.id);
+    const style: AppSxProp = {
+      color: theme => theme.palette.secondary.light,
+    };
+    setRowStyles(placeholders, style);
+  }, [rows, setRowStyles]);
 
     const style: AppSxProp = {
       color: theme => theme.palette.secondary.light,
