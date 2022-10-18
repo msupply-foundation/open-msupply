@@ -82,19 +82,23 @@ const getCircle =
       colors.color = paletteColour.error;
     }
 
-    const style = {
-      border: 'solid',
-      borderWidth: '3px',
-      width: '30px',
-      height: '30px',
-      borderRadius: '30px',
-      textAlign: 'center' as 'center' | 'left' | 'right',
-      fontWeight: 700,
-      animation: active ? 'pulse 2s infinite' : 'none',
-      ...colors,
-    };
-
-    return <div style={style}>{icon}</div>;
+    return (
+      <div
+        style={{
+          border: 'solid',
+          borderWidth: 3,
+          width: 30,
+          height: 30,
+          borderRadius: 30,
+          textAlign: 'center',
+          fontWeight: 700,
+          animation: active ? 'pulse 2s infinite' : 'none',
+          ...colors,
+        }}
+      >
+        {icon}
+      </div>
+    );
   };
 
 const getAnimationStyles = (colour: StepperColour) => {
@@ -105,26 +109,26 @@ const getAnimationStyles = (colour: StepperColour) => {
   return {
     '@-webkit-keyframes pulse': {
       '0%': {
-        '-webkit-box-shadow': `0 0 0 0 ${colour1}`,
+        WebkitBoxShadow: `0 0 0 0 ${colour1}`,
       },
       '70%': {
-        '-webkit-box-shadow': `0 0 0 10px ${colour2}`,
+        WebkitBoxShadow: `0 0 0 10px ${colour2}`,
       },
       '100%': {
-        '-webkit-box-shadow': `0 0 0 0 ${colour2}`,
+        WebkitBoxShadow: `0 0 0 0 ${colour2}`,
       },
     },
     '@keyframes pulse': {
       '0%': {
-        '-moz-box-shadow': `0 0 0 0 ${colour1}`,
+        MozBoxShadow: `0 0 0 0 ${colour1}`,
         boxShadow: `0 0 0 0 ${colour1}`,
       },
       '70%': {
-        '-moz-box-shadow': `0 0 0 10px ${colour2}`,
+        MozBoxShadow: `0 0 0 10px ${colour2}`,
         boxShadow: `0 0 0 10px ${colour2}`,
       },
       '100%': {
-        '-moz-box-shadow': `0 0 0 0 ${colour2}`,
+        MozBoxShadow: `0 0 0 0 ${colour2}`,
         boxShadow: `0 0 0 0 ${colour2}`,
       },
     },
@@ -166,6 +170,14 @@ const usePaletteColour = (colour: StepperColour): PaletteColour => {
   }
 };
 
+const getTestId = (step: StepDefinition) => {
+  let testId = '';
+  if (step.active) testId += 'active';
+  if (step.completed) testId += 'completed';
+
+  return testId;
+};
+
 /* alternativeLabel shows icons on top */
 export const HorizontalStepper: FC<StepperProps> = ({
   colour = 'secondary',
@@ -188,14 +200,11 @@ export const HorizontalStepper: FC<StepperProps> = ({
           // There is no accessability role that I can find to accurately describe
           // a stepper, so turning to testids to mark the active/completed steps
           // for tests
-          let testId = '';
-          if (active) testId += 'active';
-          if (completed) testId += 'completed';
           const stepIcon = icon ? undefined : getCircle(paletteColour);
 
           return (
             <Step
-              data-testid={testId}
+              data-testid={getTestId(step)}
               key={label}
               active={active}
               completed={completed}
