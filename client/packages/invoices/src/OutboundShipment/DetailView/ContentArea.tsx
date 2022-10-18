@@ -135,7 +135,7 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
         </Box>
       )}
       <DataTable
-        key="outbound-detail"
+        id="outbound-detail"
         onRowClick={onRowClick}
         ExpandContent={Expand}
         columns={columns}

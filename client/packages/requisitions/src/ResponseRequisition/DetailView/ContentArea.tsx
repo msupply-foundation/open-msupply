@@ -11,7 +11,7 @@ export const ContentArea = ({ onRowClick }: ContentAreaProps) => {
 
   return (
     <DataTable
-      key="requisition-detail"
+      id="requisition-detail"
       onRowClick={onRowClick}
       columns={columns}
       data={lines}

@@ -24,12 +24,12 @@ const MasterListsTable = () => {
   if (isLoading) return <BasicSpinner />;
 
   return (
-    <DataTable key="master-list-detail" data={data?.nodes} columns={columns} />
+    <DataTable id="master-list-detail" data={data?.nodes} columns={columns} />
   );
 };
 
 export const MasterListsTab = () => (
-  <Box justifyContent="center" display="flex">
+  <Box justifyContent="center" display="flex" flex={1} paddingTop={3}>
     <Box flex={1} display="flex" style={{ maxWidth: 1000 }}>
       <TableProvider
         createStore={createTableStore}

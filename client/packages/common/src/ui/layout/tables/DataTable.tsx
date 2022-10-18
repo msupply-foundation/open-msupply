@@ -21,7 +21,7 @@ import { useTranslation } from '@common/intl';
 import { useTableStore } from './context';
 
 const DataTableComponent = <T extends RecordWithId>({
-  key,
+  id,
   ExpandContent,
   columns,
   data = [],
@@ -150,7 +150,7 @@ const DataTableComponent = <T extends RecordWithId>({
                 <ColumnPicker
                   columns={columns}
                   onChange={setDisplayColumns}
-                  tableKey={key}
+                  tableKey={id}
                 />
               </TableCell>
             )}

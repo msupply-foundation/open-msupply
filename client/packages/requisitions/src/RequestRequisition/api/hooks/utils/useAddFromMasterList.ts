@@ -33,7 +33,7 @@ export const useAddFromMasterList = () => {
   }: MasterListRowFragment) => {
     getConfirmation({
       onConfirm: () =>
-        mutationState.mutate(
+        mutationState.mutateAsync(
           { masterListId, requestId },
           {
             onError: e => {
