@@ -24,7 +24,7 @@ const useHighlightPlaceholderRows = (
 
     const placeholders = rows
       .filter(isRequestLinePlaceholderRow)
-      .map((row: { id: any; }) => row.id);
+      .map(row => row.id);
     const style: AppSxProp = {
       color: theme => theme.palette.secondary.light,
     };
