@@ -56,7 +56,7 @@ pub fn create_requisition_shipment(
                 invoice_line_repository.upsert_one(&row)?;
             }
 
-            activity_log_entry(&ctx, ActivityLogType::RequisitionCreated, &invoice_row.id)?;
+            activity_log_entry(&ctx, ActivityLogType::InvoiceCreated, &invoice_row.id)?;
 
             // TODO use invoice service if it accepts ctx
             let mut result = InvoiceRepository::new(&connection)
