@@ -5,6 +5,7 @@ import {
   GenderInput,
   Typography,
   useColumns,
+  useFormatDateTime,
   useNavigate,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -41,6 +42,7 @@ export const PatientResultsTab: FC<PatientPanel> = ({ patient, value }) => {
   const { setNewPatient, updatePatient } = usePatientCreateStore();
   const t = useTranslation('patients');
   const navigate = useNavigate();
+  const { localisedDate } = useFormatDateTime();
 
   const columns = useColumns<PatientFragment>([
     {
@@ -62,6 +64,8 @@ export const PatientResultsTab: FC<PatientPanel> = ({ patient, value }) => {
     {
       key: 'dateOfBirth',
       label: 'label.date-of-birth',
+      formatter: dateString =>
+        dateString ? localisedDate((dateString as string) || '') : '',
     },
     {
       key: 'gender',
@@ -108,6 +112,9 @@ export const PatientResultsTab: FC<PatientPanel> = ({ patient, value }) => {
           {t('messages.patients-found', { count })}
         </Typography>
       )}
+      <Typography component="div" fontSize={12}>
+        {t('messages.patients-create', { count })}
+      </Typography>
       <DataTable
         dense
         id="create-patient-duplicates"
