@@ -153,7 +153,11 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
           gap={2}
           onKeyDown={handleKeyDown}
         >
-          <WizardStepper activeStep={getActiveStep()} steps={patientSteps} />
+          <WizardStepper
+            activeStep={getActiveStep()}
+            steps={patientSteps}
+            nowrap
+          />
           <TabContext value={currentTab}>
             <DetailSection title="">
               <PatientFormTab value={Tabs.Form} patient={patient} />
