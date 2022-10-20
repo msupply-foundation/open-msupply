@@ -40,6 +40,7 @@ export const getStockQueries = (stockApi: StockApi, storeId: string) => ({
           .forEach(batch =>
             nodes.push({
               id: batch.id,
+              itemId: item.id,
               itemCode: item.code,
               itemName: item.name,
               itemUnit: item.unitName ?? '',

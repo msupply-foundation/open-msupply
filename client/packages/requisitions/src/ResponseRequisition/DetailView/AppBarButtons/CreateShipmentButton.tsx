@@ -22,6 +22,7 @@ export const CreateShipmentButtonComponent = () => {
   const alert = useAlertModal({
     title: t('heading.cannot-do-that'),
     message: t('message.all-lines-have-been-fulfilled'),
+    onOk: () => {},
   });
 
   const onCreateShipment = () => {
