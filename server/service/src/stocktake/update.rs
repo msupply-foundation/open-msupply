@@ -169,7 +169,7 @@ fn generate_stock_line_update(
         // TODO might get negative!
         available_number_of_packs: stock_line.available_number_of_packs + delta,
         total_number_of_packs: stock_line.total_number_of_packs + delta,
-        expiry_date: stock_line.expiry_date,
+        expiry_date: stocktake_line.line.expiry_date.or(stock_line.expiry_date),
         on_hold: stock_line.on_hold,
         note: stock_line.note.clone(),
     };

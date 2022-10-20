@@ -113,7 +113,9 @@ export const InitialiseLayout = ({
             </Stack>
           </form>
         </Box>
-        {SyncProgress}
+        <Box paddingTop={2} width="100%">
+          {SyncProgress}
+        </Box>
       </Box>
     </Box>
   );
