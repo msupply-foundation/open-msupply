@@ -5,6 +5,7 @@ import { CreateNewPatient } from '../hooks';
 
 const StyledTabPanel = styled(TabPanel)({
   height: '100%',
+  padding: '0px 24px',
 });
 
 const StyledTabContainer = styled(Box)(({ theme }) => ({
