@@ -6,10 +6,8 @@ import {
   useNavigate,
   useTranslation,
   Box,
-  TabContext,
-  TabPanel,
-  useTabs,
   useBreadcrumbs,
+  DetailTabs,
 } from '@openmsupply-client/common';
 import { useItem } from '../api';
 import { Toolbar } from './Toolbar';
@@ -21,7 +19,6 @@ export const ItemDetailView: FC = () => {
   const { data, isLoading } = useItem();
   const navigate = useNavigate();
   const t = useTranslation('catalogue');
-  const { currentTab, onChangeTab } = useTabs('general');
   const { setSuffix } = useBreadcrumbs();
 
   React.useEffect(() => {
@@ -30,19 +27,21 @@ export const ItemDetailView: FC = () => {
 
   if (isLoading) return <DetailFormSkeleton />;
 
+  const tabs = [
+    {
+      Component: <GeneralTab />,
+      value: 'General',
+    },
+    {
+      Component: <MasterListsTab />,
+      value: 'Master Lists',
+    },
+  ];
+
   return !!data ? (
     <Box style={{ width: '100%' }}>
-      <TabContext value={currentTab}>
-        <Toolbar currentTab={currentTab} onChangeTab={onChangeTab} />
-        <Box display="flex" flex={1}>
-          <TabPanel sx={{ flex: 1 }} value={'general'}>
-            <GeneralTab />
-          </TabPanel>
-          <TabPanel sx={{ flex: 1 }} value={'master-lists'}>
-            <MasterListsTab />
-          </TabPanel>
-        </Box>
-      </TabContext>
+      <Toolbar />
+      <DetailTabs tabs={tabs} />
     </Box>
   ) : (
     <AlertModal
