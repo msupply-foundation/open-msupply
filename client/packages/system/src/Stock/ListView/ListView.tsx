@@ -10,7 +10,10 @@ import {
   NothingHere,
   useUrlQuery,
   useUrlQueryParams,
+  useNavigate,
+  RouteBuilder,
 } from '@openmsupply-client/common';
+import { AppRoute } from '@openmsupply-client/config';
 import { Toolbar } from '../Components';
 import { useStock } from '../api';
 import { StockRow } from '../types';
@@ -25,6 +28,7 @@ const StockListComponent: FC = () => {
   const pagination = { page, first, offset };
   const t = useTranslation('inventory');
   const filterString = String(urlQuery.filter ?? '');
+  const navigate = useNavigate();
 
   const { data, isLoading, isError } = useStock.document.list();
 
@@ -74,6 +78,17 @@ const StockListComponent: FC = () => {
         noDataElement={<NothingHere body={t('error.no-stock')} />}
         isError={isError}
         isLoading={isLoading}
+        generateRowTooltip={({ itemName }) =>
+          t('messages.click-to-view-item', { itemName })
+        }
+        onRowClick={row => {
+          navigate(
+            RouteBuilder.create(AppRoute.Catalogue)
+              .addPart(AppRoute.Items)
+              .addPart(row.itemId)
+              .build()
+          );
+        }}
       />
     </>
   );

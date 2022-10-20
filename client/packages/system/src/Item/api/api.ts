@@ -89,7 +89,11 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
         key: itemParsers.toSortField(sortBy),
         desc: sortBy.isDesc,
         storeId,
-        filter: { ...filterBy, type: { equalTo: ItemNodeType.Stock } },
+        filter: {
+          ...filterBy,
+          type: { equalTo: ItemNodeType.Stock },
+          isVisible: true,
+        },
       });
 
       const { items } = result;
@@ -112,7 +116,7 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
         key: itemParsers.toSortField(sortBy),
         desc: sortBy.isDesc,
         storeId,
-        filter: filterBy,
+        filter: { ...filterBy, isVisible: true },
       });
 
       const items = result?.items;
