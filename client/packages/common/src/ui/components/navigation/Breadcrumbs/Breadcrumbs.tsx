@@ -13,9 +13,13 @@ const Breadcrumb = styled(Link)({
   '&:hover': { textDecoration: 'underline' },
 });
 
-export const Breadcrumbs: React.FC = () => {
+export const Breadcrumbs = ({
+  topLevelPaths = ['admin', 'sync'],
+}: {
+  topLevelPaths?: string[];
+}) => {
   const t = useTranslation('app');
-  const { urlParts, navigateUpOne, suffix } = useBreadcrumbs();
+  const { urlParts, navigateUpOne, suffix } = useBreadcrumbs(topLevelPaths);
 
   useRegisterActions(
     [
