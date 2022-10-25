@@ -121,7 +121,7 @@ So let's say 1.07 is trying to sync with 5.08, central says it's compatible with
 - Quite flexible in forward and backwards compatibility
 
 *Cons:*
-- More involved, and flexibility can be a doulbe edge sword
+- More involved, and flexibility can be a double edged sword
 
 ## Decision
 
