@@ -71,7 +71,7 @@ Since our diesel type from previous version wont' be compatible with new version
 
 ### 10.
 
-Would assume that we always run migrations on startup and that production code will not run until migrations are finished
+Would assume that we always run migrations on startup and that production code will not run until migrations are finished. There would need to be an indication that server is under maintenance and indication of migration progress in UI
 
 ## Options
 
