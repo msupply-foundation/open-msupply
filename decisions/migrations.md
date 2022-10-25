@@ -51,6 +51,8 @@ General data about migration result should be logged for debugging purposes, and
 
 I think ability to revert to previous version (on failure) allows for system to be available to the users in timely manner, in case errors in migration occur.
 
+This might be quite difficult for Android, but look like there is a way (https://blog.esper.io/adb-29-how-to-downgrade-rollback-app/)
+
 ### 6.
 
 This could be tricky especially if we want to use diesel db strong typing. I think this in necessary and very important, we've had some major failures in the past with data migrations.
