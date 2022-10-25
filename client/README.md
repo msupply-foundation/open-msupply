@@ -36,11 +36,54 @@ To see it in action, check out the [demo server](https://demo-open.msupply.org/)
 
 ## Development
 
-- `main` branch - is the (un?)stable release branch
+- `main` branch - is the stable release branch
+- `develop` branch - the default, and active, development branch
 
-When developing, create an issue first then a branch based on the issue number. Current practice is to use the format `#[issue number]-some-description` for the branch name. When ready, create a PR which targets `main` and when approved, merge to `main`. We aim to review PRs promptly and keep the PR list as low as possible as a kindness to other developers ( and reduce merge hell! )
+When developing, create an issue first then a branch based on the issue number. Current practice is to use the format `[issue number]-some-description` for the branch name. When ready, create a PR which targets `develop` and when approved, merge to `develop`. We aim to review PRs promptly and keep the PR list as low as possible as a kindness to other developers ( and reduce merge hell! )
 
 When creating a new component, please create a story in storybook. For functional areas, please add a test or two - just check the current examples of tests and stories to see how things works now.
+
+The directory structure in `client` looks like this:
+
+```
+client
+├─ node_modules
+├─ packages
+│  ├─ android
+│  │  ├─ app
+│  │  │  ├─ build
+│  │  │  │  ├─ outputs
+│  │  │  │  │  ├─ apk
+│  │  │  │  │  │  ├─ debug
+│  │  │  │  │  │  └─ release
+│  │  │  │  │  └─ ...
+│  │  │  │  └─ ...
+│  │  │  └─ ...
+│  │  └─ ...
+│  ├─ common
+│  ├─ config
+│  ├─ dashboard
+│  ├─ electron
+│  │  ├─ node_modules
+│  │  ├─ out
+│  │  │  ├─ make
+│  │  │  └─ [platform specific]
+│  │  └─ src
+│  ├─ host
+│  ├─ inventory
+│  ├─ invoices
+│  ├─ requisitions
+│  └─ system
+```
+
+The functional areas are in `packages` as noted below. Mostly the packages are similar and standard, with the following exceptions:
+
+- android: which contains the build files for the android app. The directory path for the apk has been expanded, other than this you should only need to run the yarn scripts required to build the app
+- common: as the name suggests, contains code common to the other packages. This is the largest bundle and should be fairly static. External packages are imported only into `common` and then re-exported as required, in order to reduce bundle size and the number of dependencies.
+- config: has application specific configuration such as routes and the API URL
+- electron: the build files for the electron based desktop application. The output folder has been expanded; as with the android app, you should only need to use the yarn scripts to generate the required binaries.
+- host: the wrapper for the application which then hosts individual packages. Components in here include the framework - navigation, footer, drawer, app bar - and pages such as login
+- system: packages which are re-used by other packages, such as `item` and `name` but are application-specific, which is why they are in here and not in `common` which is trying to be more application agnostic.
 
 Code is separated into functional areas, so that we can isolate bundles to these areas. These are not the same as areas in the site; there is a separation between code organisation and UI organisation - for example the site has `Distribution > Outbound Shipments` and `Replenishment > Inbound Shipments` and both of these are found in the `invoices` package in the code, as they are functionally very similar while being logically different.
 
@@ -67,9 +110,15 @@ Couple of things to note:
 
 - There is a pre-commit hook ( thanks husky ) which will run a typescript compilation and a linter to ensure that your changes will compile
 - When you create a PR, there is a GitHub webhook which uses the webpack bundle size analyzer plugin and will create a comment on your PR telling you the size difference introduced by your change
-- When merging to `main` there is another webhook which will deploy your change to the demo server
+- When merging to `main` there is another webhook which will deploy your change to the demo server (this is currently disabled for the `main` branch, though there is a webhook deploying the `feature/programs` branch)
 
-Once we are through the initial development phase, we'll move to a `develop` branch and keep `main` as a stable release branch. We're not there yet!
+The default branch is `develop` and any PRs will be merged into this branch, if not working on a specific feature. We retain `main` as a stable release branch. When releasing, the package number is bumped in `client/package.json` and a tag added in the format `[major].[minor].[patch]` e.g. `1.0.5` - with release candidate versions supported as `[major].[minor].[patch]-RC[release candidate number]`.
+
+Standard semver rules apply:
+
+1. MAJOR version when you make incompatible API changes
+2. MINOR version when you add functionality in a backwards compatible manner
+3. PATCH version when you make backwards compatible bug fixes
 
 ## Queries
 
