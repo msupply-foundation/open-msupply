@@ -63,9 +63,11 @@ This could be tricky especially if we want to use diesel db strong typing. I thi
 
 Say we are on version 1.01, and are working on version 1.02, before deployment we should be able to:
 * Make an RC version, say 1.02-RC1
-* Test upgrade of 1.01 data file to 1.02-RC1 (just by replacing binary)
-* RC versions should not be upgradable, if you open RC version and there is a version mismatch then user should be warned that version are incompatible (this is to avoid additions to migrations that won't run or won't be tested)
-* When we happy with 1.02, it's released and 1.01 would be upgradable to 1.02-RC1
+* Test upgrade of 1.01 database  to 1.02-RC1 (just by replacing binary)
+* RC versions should not be upgradable, if you open RC version and there is a version mismatch then user should be warned that version are incompatible (this is to avoid additions to migrations that won't run or won't be tested). To extend above example, if in 1.02-RC1 we find a bug in migration, then we fix it, and create 1.02-RC2, if we try to open 1.02-RC1 with 1.02-RC2 we should have an error saying they are not compatible
+* When we happy with 1.02, it's released and 1.01 would be upgradable to 1.02
+
+In one sentance, to avoid extra use cases during development, RC versions are only compatible with the same RC version (shouldn't be able to upgrade RC version).
 
 ### 9.
 
