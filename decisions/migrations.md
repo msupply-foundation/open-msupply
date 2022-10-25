@@ -51,7 +51,9 @@ General data about migration result should be logged for debugging purposes, and
 
 I think ability to revert to previous version (on failure) allows for system to be available to the users in timely manner, in case errors in migration occur.
 
-This might be quite difficult for Android, but look like there is a way (https://blog.esper.io/adb-29-how-to-downgrade-rollback-app/)
+This might be quite difficult for Android, but look like there is a way (https://blog.esper.io/adb-29-how-to-downgrade-rollback-app/)/
+
+It was noted that long transaction rollbacks have been problematic in the past (in other systems). Would need to make sure user is aware of the migration progress and could potentially do a backup/restore vs transaction and rollback.
 
 ### 6.
 
@@ -247,20 +249,6 @@ It should be very easy to navigate to any given migration if they are located in
 
 I suggest to go with `Option 2`, I don't think there is much work to make it happen (2-3 hours for the core and half a day to fill the gaps like logging etc..)
 
-## Other considerations
-
-TODO move this out to new issues / KDD or expand this KDD to include these
-
-### Integration test
-
-It would be great to have the ability to test migrations on live data file (annonymised). There is a challenge in validating that migrations are indeed correct, either with sanity check (which would require logic to be written and probably tested) or something like a data diff, the latter might be a good option to go with. If we use automated github actions for this it would be more `available` for tester and more likely to be looked at.
-
-### James comments
-
-Long transaction rollbacks is also something that was seen. Would need to make sure user is aware of the migration progress and could potentially do a backup/restore vs transaction and rollback.
-
-Unforseen data variations can cause migrations to fail, hard to put those in tests. That is absolutely true, not sure if we can protect against those, but if they do happen, having tests in migrations can help replicate the issue (by adding more test variations) and can protect from regression when those are fixed
-
-### Mobile Considerations
+## Mobile Considerations
 
 We want to display an error somehow if migration fails, not actually sure what happens right now if there is say database error during startup. Could potentially have another graphql schema `migration`, and another table to record migration results, similar to sync status.
