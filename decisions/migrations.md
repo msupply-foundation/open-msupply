@@ -81,7 +81,7 @@ Version number would need to be in migration folder name
 - Would be hard to insert a test for a particular version
 - For more complex data migration SQL is pretty hard to read / change
 - Couldn't quite do `8.`
-- Less visibility to the `internals` and quite rigit (i.e. does it happen in transaction ?)
+- Less visibility to the `internals` and quite rigid (i.e. does it happen in transaction ?)
 
 ### Option 2 - Our own migration mechanism
 
