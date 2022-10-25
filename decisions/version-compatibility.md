@@ -102,7 +102,7 @@ Basicallly for `Example 1.`, when new field is added on remote, we add it to cen
 
 For `Example 2.`, when api shape changes on central we update remote to use new api, and keep existing api support on remote, in this case `from verion of remote` will now be updated to match new `remote` version (this new remote version will still be backwards compatible with older central versions)
 
-An example:
+*An example:*
 * 1.01 remote is compatible with `>=` 5.06 central
 * 1.02 remote is compatible with `>=` 5.07 central
 * 1.06 remote is compatible with `>=` 5.08 central
@@ -112,9 +112,15 @@ An example:
 * 6 central is compatible with `>=` 1.02 of remote  (this is carried over from 5.08 version of central).
 * 7.01 central is compatible with `>=` 2 of remote
 
+*when remote and central both agree about compatibility*
+
 So let's say 1.07 is trying to sync with 5.08, central says it's compatible with 1.02 and up and 1.07 knows it's compatible with 5.08 and up, thus it's ok to sync.
 
+*central agrees with compatibility but remote disagrees*
+
 2 is trying to sync with 5.08, central says it's compatible with 1.02 and up and remote knows it's compatible with 6 and up, sync is not allowed.
+
+*remote agrees with compatibility but central disagrees*
 
 1.02 is trying to sync with 7.01, remote knows it's compatible with 5.07 and up, but central says it's only compatible with 2 and up, sync is not allowed
 
