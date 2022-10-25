@@ -12,7 +12,7 @@
 2. Migrate data
    a. Before and/or after schema update
    b. Without schema update (just data migration)
-3. Do above only for the migrations that are applicable to from current database version to current app version (don't re-run old migrations)
+3. Do above only for the migrations that are applicable from the current database version to current app version (don't re-run old migrations)
 4. Record migration results
 5. Easy way to explore full schema (all of the migrations applied, for a particular version)
 6. Test data migrations
