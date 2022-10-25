@@ -1,9 +1,9 @@
 # KDD-001: Versions and Compatibility
 
 - *Date*: 2022-10-19
-- *Deciders*:
-- *Status*: DRAFT
-- *Outcome*: 
+- *Deciders*: Mark Prins, Andrei Evguenov
+- *Status*: DECIDED
+- *Outcome*: Option 3
 
 ## Context
 
