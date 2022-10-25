@@ -69,6 +69,10 @@ Say we are on version 1.01, and are working on version 1.02, before deployment w
 
 Since our diesel type from previous version wont' be compatible with new version we might need to resolve to using raw sql statements to migrate data, I would prefer if we copy and paste data types from pre migrated version to do data migrations (see example in proposed solutions)
 
+### 10.
+
+Would assume that we always run migrations on startup and that production code will not run until migrations are finished
+
 ## Options
 
 ### Option 1 - Migrate with SQL
@@ -252,8 +256,6 @@ TODO move this out to new issues / KDD or expand this KDD to include these
 It would be great to have the ability to test migrations on live data file (annonymised). There is a challenge in validating that migrations are indeed correct, either with sanity check (which would require logic to be written and probably tested) or something like a data diff, the latter might be a good option to go with. If we use automated github actions for this it would be more `available` for tester and more likely to be looked at.
 
 ### James comments
-
-Noted that he has seen database locks with production code being run in parallel with migrations, we would need to avoid this and make sure we run migration code on startup in isolation.
 
 Long transaction rollbacks is also something that was seen. Would need to make sure user is aware of the migration progress and could potentially do a backup/restore vs transaction and rollback.
 
