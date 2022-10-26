@@ -8,6 +8,7 @@ pub fn mock_user_account_a() -> UserAccountRow {
         username: String::from("username_a"),
         hashed_password: String::from("password_a"),
         email: Some(String::from("username_a@openmsupply.foundation")),
+        language: String::from("en"),
     }
 }
 
@@ -17,6 +18,7 @@ pub fn mock_user_account_b() -> UserAccountRow {
         username: String::from("username_b"),
         hashed_password: String::from("password_b"),
         email: Some(String::from("username_b@openmsupply.foundation")),
+        language: String::from("en"),
     }
 }
 

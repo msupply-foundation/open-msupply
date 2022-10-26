@@ -3304,6 +3304,7 @@ export type UserNode = {
   defaultStore?: Maybe<UserStoreNode>;
   /** The user's email address */
   email?: Maybe<Scalars['String']>;
+  language: Scalars['String'];
   permissions: UserStorePermissionConnector;
   stores: UserStoreConnector;
   /** Internal user id */

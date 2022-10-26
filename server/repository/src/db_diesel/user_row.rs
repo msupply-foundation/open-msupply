@@ -10,6 +10,7 @@ table! {
         username -> Text,
         hashed_password -> Text,
         email -> Nullable<Text>,
+        language -> Text,
     }
 }
 
@@ -20,6 +21,7 @@ pub struct UserAccountRow {
     pub username: String,
     pub hashed_password: String,
     pub email: Option<String>,
+    pub language: String,
 }
 
 pub struct UserAccountRowRepository<'a> {
@@ -97,6 +99,7 @@ pub fn unknown_user() -> User {
             username: "unknown".to_string(),
             hashed_password: "unknown".to_string(),
             email: Some("unknown@sussol.net".to_string()),
+            language: String::from("en"),
         },
         stores: vec![],
     }

@@ -106,6 +106,10 @@ impl UserNode {
 
         Ok(UserStorePermissionConnector::from_vec(result))
     }
+
+    pub async fn language(&self) -> &str {
+        &self.user.user_row.language
+    }
 }
 
 impl UserNode {

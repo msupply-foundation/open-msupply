@@ -10,10 +10,7 @@ import { useGetAuthToken } from './api/hooks/useGetAuthToken';
 import { useUserDetails, useUserPermissions } from './api/hooks/useUserDetails';
 import { AuthenticationResponse } from './api';
 import { UserStoreNodeFragment } from './api/operations.generated';
-import {
-  PropsWithChildrenOnly,
-  UserPermission,
-} from '@common/types';
+import { PropsWithChildrenOnly, UserNode, UserPermission } from '@common/types';
 import { RouteBuilder } from '../utils/navigation';
 import { matchPath } from 'react-router-dom';
 import { DefinitionNode, DocumentNode, OperationDefinitionNode } from 'graphql';
@@ -116,7 +113,6 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
   const [mostRecentlyUsedCredentials, setMRUCredentials] =
     useLocalStorage('/mru/credentials');
   const i18n = IntlUtils.useI18N();
-  const defaultLanguage = IntlUtils.useDefaultLanguage();
   const { mutateAsync, isLoading: isLoggingIn } = useGetAuthToken();
   const authCookie = getAuthCookie();
   const [cookie, setCookie] = useState<AuthCookie | undefined>(authCookie);
@@ -136,8 +132,7 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
 
   // returns MRU store, if set
   // or the first store in the list
-  const getStore = async (token?: string) => {
-    const userDetails = await getStores(token);
+  const getStore = async (userDetails?: Partial<UserNode>) => {
     const defaultStore = userDetails?.defaultStore;
     const stores = userDetails?.stores?.nodes;
 
@@ -215,7 +210,8 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
   const login = async (username: string, password: string) => {
     const { token, error } = await mutateAsync({ username, password });
     setHeader('Authorization', `Bearer ${token}`);
-    const store = await getStore(token);
+    const userDetails = await getStores(token);
+    const store = await getStore(userDetails);
     const permissions = await getUserPermissions(token, store);
     setSkipRequest(skipNoStoreRequests);
     const authCookie = {
@@ -228,11 +224,10 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
       },
     };
 
-    // When the a user first logs in, check that their browser language is an internally supported
-    // language. If not, set their language to the default.
-    const { language } = i18n;
-    if (!IntlUtils.isSupportedLang(language)) {
-      i18n.changeLanguage(defaultLanguage);
+    const userLanguage = userDetails?.language;
+    if (!!userLanguage && IntlUtils.isSupportedLang(userLanguage)) {
+      console.log(`** CHANGE LANGUAGE TO ${userLanguage}`);
+      i18n.changeLanguage(userLanguage);
     }
 
     setMRUCredentials({ username, store });
