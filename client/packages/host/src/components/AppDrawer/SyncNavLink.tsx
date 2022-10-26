@@ -10,17 +10,13 @@ import { AppRoute } from '@openmsupply-client/config';
 import React from 'react';
 import { useHost } from '../../api/hooks';
 
+const POLLING_INTERVAL_IN_MILLISECONDS = 60 * 1000;
+
 export const SyncNavLink = () => {
   const t = useTranslation('app');
   const theme = useTheme();
-  const { data: syncSettings } = useHost.settings.syncSettings();
-  const { intervalSeconds } = syncSettings || {};
-  const pollingIntervalInSeconds =
-    intervalSeconds && !Number.isNaN(intervalSeconds)
-      ? intervalSeconds / 5
-      : 60;
   const { syncStatus, numberOfRecordsInPushQueue } = useHost.utils.syncInfo(
-    1000 * pollingIntervalInSeconds
+    POLLING_INTERVAL_IN_MILLISECONDS
   );
 
   const badgeProps = {
