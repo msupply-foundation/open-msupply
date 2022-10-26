@@ -9,9 +9,14 @@ type WizardStepDefinition = StepDefinition & {
 interface StepperProps {
   activeStep: number;
   steps: WizardStepDefinition[];
+  nowrap?: boolean;
 }
 
-export const WizardStepper: FC<StepperProps> = ({ activeStep, steps }) => {
+export const WizardStepper: FC<StepperProps> = ({
+  activeStep,
+  nowrap,
+  steps,
+}) => {
   const wizardSteps = steps.map((step, index) => {
     const active = index === activeStep;
     const completed = index <= activeStep;
@@ -24,5 +29,5 @@ export const WizardStepper: FC<StepperProps> = ({ activeStep, steps }) => {
     return { ...step, active, completed, optional };
   });
 
-  return <HorizontalStepper steps={wizardSteps} />;
+  return <HorizontalStepper steps={wizardSteps} nowrap={nowrap} />;
 };
