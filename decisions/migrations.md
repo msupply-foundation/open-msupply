@@ -1,9 +1,9 @@
 # Migrations
 
 - *Date*: 2022-10-19
-- *Deciders*:
-- *Status*: DRAFT
-- *Outcome*: 
+- *Deciders*: Mark Prins, James Brunskill, Andrei Evguenov
+- *Status*: DECIDED
+- *Outcome*: Option 2
 - *Related Material*: [Database migration Issue](https://github.com/openmsupply/open-msupply/issues/704)
 
 ## Requirements
