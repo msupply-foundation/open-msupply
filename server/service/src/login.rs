@@ -229,6 +229,16 @@ impl LoginService {
                 "" => None,
                 _ => Some(user_info.user.e_mail.to_string()),
             },
+            language: match user_info.user.language {
+                0 => "en".to_string(),
+                1 => "fr".to_string(),
+                2 => "es".to_string(),
+                3 => "la".to_string(),
+                4 => "kh".to_string(),
+                5 => "pt".to_string(),
+                6 => "ru".to_string(),
+                _ => "en".to_string(),
+            },
         };
         let stores_permissions: Vec<StorePermissions> = user_info
             .user_stores
