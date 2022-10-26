@@ -226,7 +226,6 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
 
     const userLanguage = userDetails?.language;
     if (!!userLanguage && IntlUtils.isSupportedLang(userLanguage)) {
-      console.log(`** CHANGE LANGUAGE TO ${userLanguage}`);
       i18n.changeLanguage(userLanguage);
     }
 
