@@ -235,6 +235,7 @@ mod repository_test {
                 username: "user 1".to_string(),
                 hashed_password: "p1".to_string(),
                 email: Some("email".to_string()),
+                language: "en".to_string(),
             }
         }
 
@@ -244,6 +245,7 @@ mod repository_test {
                 username: "user 2".to_string(),
                 hashed_password: "p2".to_string(),
                 email: None,
+                language: "en".to_string(),
             }
         }
 
