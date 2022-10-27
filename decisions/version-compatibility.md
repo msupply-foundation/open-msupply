@@ -1,4 +1,4 @@
-# KDD-001: Versions and Compatibility
+# Versions and Compatibility
 
 - *Date*: 2022-10-19
 - *Deciders*: Mark Prins, Andrei Evguenov
