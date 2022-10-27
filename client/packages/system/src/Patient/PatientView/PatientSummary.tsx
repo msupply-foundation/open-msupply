@@ -18,7 +18,7 @@ const SummaryRow = ({ label, value }: { label: LocaleKey; value: string }) => {
   const t = useTranslation('patients');
   return (
     <Box gap={1} display="flex">
-      <Box style={{ textAlign: 'start', width: 100 }}>
+      <Box style={{ textAlign: 'start', width: 135 }}>
         <Typography sx={{ fontWeight: 'bold' }}>{t(label)}:</Typography>
       </Box>
       <Box flex={1}>

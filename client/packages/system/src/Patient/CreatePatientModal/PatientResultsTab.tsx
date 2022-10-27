@@ -47,11 +47,11 @@ export const PatientResultsTab: FC<PatientPanel> = ({ patient, value }) => {
   const columns = useColumns<PatientFragment>([
     {
       key: 'code',
-      label: 'label.id',
+      label: 'label.patient-id',
     },
     {
       key: 'code2',
-      label: 'label.id2',
+      label: 'label.patient-nuic',
     },
     {
       key: 'firstName',
