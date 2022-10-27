@@ -891,6 +891,7 @@ mod permission_validation_test {
                 username: "user".to_string(),
                 hashed_password: "n/a".to_string(),
                 email: None,
+                language: "en".to_string(),
             }
         }
 
@@ -900,6 +901,7 @@ mod permission_validation_test {
                 username: "user".to_string(),
                 hashed_password: "n/a".to_string(),
                 email: None,
+                language: "en".to_string(),
             }
         }
 
