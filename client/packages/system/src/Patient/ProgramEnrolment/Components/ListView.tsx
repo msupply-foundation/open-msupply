@@ -50,7 +50,7 @@ const ProgramListComponent: FC = () => {
       },
       {
         key: 'events',
-        label: 'label.label',
+        label: 'label.program-status',
         formatter: events =>
           programEventCellValue(events as ProgramEventFragment[]),
         sortable: false,
