@@ -6,7 +6,7 @@ use std::{
 use bcrypt::BcryptError;
 use log::info;
 use repository::{
-    ActivityLogType, Permission, RepositoryError, UserAccountRow, UserPermissionRow,
+    ActivityLogType, Language, Permission, RepositoryError, UserAccountRow, UserPermissionRow,
     UserStoreJoinRow,
 };
 use reqwest::{ClientBuilder, Url};
@@ -228,6 +228,16 @@ impl LoginService {
                 // TODO do this using serde
                 "" => None,
                 _ => Some(user_info.user.e_mail.to_string()),
+            },
+            language: match user_info.user.language {
+                0 => Language::English,
+                1 => Language::French,
+                2 => Language::Spanish,
+                3 => Language::Laos,
+                4 => Language::Khmer,
+                5 => Language::Portuguese,
+                6 => Language::Russian,
+                _ => Language::English,
             },
         };
         let stores_permissions: Vec<StorePermissions> = user_info

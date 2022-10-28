@@ -1,10 +1,10 @@
 use async_graphql::{
-    dataloader::DataLoader, Context, ErrorExtensions, Object, Result, SimpleObject,
+    dataloader::DataLoader, Context, Enum, ErrorExtensions, Object, Result, SimpleObject,
 };
 use graphql_core::{
     loader::NameRowLoader, standard_graphql_error::StandardGraphqlError, ContextExt,
 };
-use repository::{User, UserStore};
+use repository::{Language, User, UserStore};
 use service::permission::permissions;
 
 use super::UserStorePermissionConnector;
@@ -39,6 +39,17 @@ impl UserStoreNode {
 
         Ok(name_row.name)
     }
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+pub enum LanguageType {
+    English,
+    French,
+    Spanish,
+    Laos,
+    Khmer,
+    Portuguese,
+    Russian,
 }
 
 #[derive(SimpleObject)]
@@ -105,6 +116,24 @@ impl UserNode {
         }?;
 
         Ok(UserStorePermissionConnector::from_vec(result))
+    }
+
+    pub async fn language(&self) -> LanguageType {
+        LanguageType::from_domain(&self.user.user_row.language)
+    }
+}
+
+impl LanguageType {
+    fn from_domain(from: &Language) -> Self {
+        match from {
+            Language::English => Self::English,
+            Language::French => Self::French,
+            Language::Spanish => Self::Spanish,
+            Language::Laos => Self::Laos,
+            Language::Khmer => Self::Khmer,
+            Language::Portuguese => Self::Portuguese,
+            Language::Russian => Self::Russian,
+        }
     }
 }
 
