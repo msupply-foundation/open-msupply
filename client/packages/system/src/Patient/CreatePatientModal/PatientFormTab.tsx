@@ -30,7 +30,7 @@ export const PatientFormTab: FC<PatientPanel> = ({ patient, value }) => {
     <PatientPanel value={value} patient={patient}>
       <Stack spacing={2}>
         <InputWithLabelRow
-          label={t('label.id')}
+          label={t('label.patient-id')}
           Input={
             <BufferedTextInput
               size="small"
@@ -42,7 +42,7 @@ export const PatientFormTab: FC<PatientPanel> = ({ patient, value }) => {
           }
         />
         <InputWithLabelRow
-          label={t('label.id2')}
+          label={t('label.patient-nuic')}
           Input={
             <BufferedTextInput
               size="small"
