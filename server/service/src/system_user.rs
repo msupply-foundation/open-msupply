@@ -9,7 +9,7 @@ pub fn create_system_user(service_provider: &ServiceProvider) -> Result<(), Repo
         username: SYSTEM_USER_ID.to_string(),
         hashed_password: "".to_string(),
         email: None,
-        language: "en".to_string(),
+        language: Default::default(),
     };
 
     let connection = service_provider.connection()?;

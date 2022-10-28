@@ -136,7 +136,7 @@ impl<'a> UserAccountService<'a> {
                     username: user.username,
                     hashed_password,
                     email: user.email,
-                    language: "en".to_string(),
+                    language: Default::default(),
                 };
                 repo.insert_one(&row)?;
                 Ok(row)
