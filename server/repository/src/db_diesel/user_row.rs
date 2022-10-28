@@ -3,6 +3,7 @@ use super::{user_row::user_account::dsl as user_account_dsl, StorageConnection, 
 use crate::{lower, repository_error::RepositoryError};
 
 use diesel::prelude::*;
+use diesel_derive_enum::DbEnum;
 
 table! {
     user_account (id) {
@@ -10,7 +11,26 @@ table! {
         username -> Text,
         hashed_password -> Text,
         email -> Nullable<Text>,
-        language -> Text,
+        language -> crate::db_diesel::user_row::LanguageMapping,
+    }
+}
+
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(test, derive(strum::EnumIter))]
+#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+pub enum Language {
+    English,
+    French,
+    Spanish,
+    Laos,
+    Khmer,
+    Portuguese,
+    Russian,
+}
+
+impl Default for Language {
+    fn default() -> Self {
+        Self::English
     }
 }
 
@@ -21,7 +41,7 @@ pub struct UserAccountRow {
     pub username: String,
     pub hashed_password: String,
     pub email: Option<String>,
-    pub language: String,
+    pub language: Language,
 }
 
 pub struct UserAccountRowRepository<'a> {
@@ -99,8 +119,38 @@ pub fn unknown_user() -> User {
             username: "unknown".to_string(),
             hashed_password: "unknown".to_string(),
             email: Some("unknown@sussol.net".to_string()),
-            language: String::from("en"),
+            language: Default::default(),
         },
         stores: vec![],
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::{
+        mock::MockDataInserts, test_db::setup_all, Language, UserAccountRow,
+        UserAccountRowRepository,
+    };
+    use strum::IntoEnumIterator;
+    use util::inline_init;
+
+    #[actix_rt::test]
+    async fn user_row_language_enum() {
+        let (_, connection, _, _) =
+            setup_all("user_row_language_enum", MockDataInserts::none()).await;
+
+        let repo = UserAccountRowRepository::new(&connection);
+        // Try upsert all variants of Language, confirm that diesel enums match postgres
+        for variant in Language::iter() {
+            let id = format!("{:?}", variant);
+            let result = repo.insert_one(&inline_init(|r: &mut UserAccountRow| {
+                r.id = id.clone();
+                r.language = variant.clone();
+            }));
+            assert_eq!(result, Ok(()));
+
+            let result = repo.find_one_by_id(&id).unwrap().unwrap();
+            assert_eq!(result.language, variant);
+        }
     }
 }

@@ -112,7 +112,7 @@ const { Provider } = AuthContext;
 export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
   const [mostRecentlyUsedCredentials, setMRUCredentials] =
     useLocalStorage('/mru/credentials');
-  const i18n = IntlUtils.useI18N();
+  const changeLanguage = IntlUtils.useChangeLanguage();
   const { mutateAsync, isLoading: isLoggingIn } = useGetAuthToken();
   const authCookie = getAuthCookie();
   const [cookie, setCookie] = useState<AuthCookie | undefined>(authCookie);
@@ -224,11 +224,7 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
       },
     };
 
-    const userLanguage = userDetails?.language;
-    if (!!userLanguage && IntlUtils.isSupportedLang(userLanguage)) {
-      i18n.changeLanguage(userLanguage);
-    }
-
+    changeLanguage(userDetails?.language);
     setMRUCredentials({ username, store });
     setAuthCookie(authCookie);
     setCookie(authCookie);
