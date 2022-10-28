@@ -271,7 +271,6 @@ server
 ├─ cli
 ├─ configuration (runtime configuration files)
 ├─ data (contains reference data which can be used by the cli to initialise the database)
-├─ docker (a zola docker instance)
 ├─ docs
 ├─ graphql
 │  ├─ batch_mutations (batch mutations are grouped here)
@@ -280,7 +279,8 @@ server
 │  ├─ types (each database table has its types defined in a file)
 │  ├─ [data type]
 │  │  ├─ src
-│  │  │  ├─ lib.rs (queries are in here)
+│  │  │  ├─ lib.rs (queries are in here, if not in a separate file, as below)
+│  │  │  ├─ [data type]_queries.rs
 │  │  │  └─ mutations
 │  │  └─ test_output
 ├─ report_builder
@@ -292,9 +292,11 @@ server
 │  └─ test_output
 ├─ scripts
 ├─ server (includes the logging, front-end hosting, certificates, mDNS discovery, configuration)
-├─ service (these functions provide an intermediary between GraphQL and the repository)
+├─ service (these functions provide an intermediary between GraphQL and the repository and houses most of the business logic)
 ├─ target
 ├─ test_output
 ├─ util
 └─ windows (windows service hosting for the server)
 ```
+
+The `batch_mutations` case is a special one - the crate is fairly slow to compile, so has been split out. There are also some dependency issues, as it combines other objects, such as `invoice` and `invoice_line`.

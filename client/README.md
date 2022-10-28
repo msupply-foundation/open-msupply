@@ -112,7 +112,7 @@ Couple of things to note:
 - When you create a PR, there is a GitHub webhook which uses the webpack bundle size analyzer plugin and will create a comment on your PR telling you the size difference introduced by your change
 - When merging to `main` there is another webhook which will deploy your change to the demo server (this is currently disabled for the `main` branch, though there is a webhook deploying the `feature/programs` branch)
 
-The default branch is `develop` and any PRs will be merged into this branch, if not working on a specific feature. We retain `main` as a stable release branch. When releasing, the package number is bumped in `client/package.json` and a tag added in the format `[major].[minor].[patch]` e.g. `1.0.5` - with release candidate versions supported as `[major].[minor].[patch]-RC[release candidate number]`.
+The default branch is `develop` and any PRs will be merged into this branch, if not working on a specific feature. We retain `main` as a stable release branch. When releasing, the package number is bumped in `client/package.json` and a tag added in the format `v[major].[minor].[patch]` e.g. `v1.0.5` - with release candidate versions supported as `v[major].[minor].[patch]-RC[release candidate number]`.
 
 Standard semver rules apply:
 
