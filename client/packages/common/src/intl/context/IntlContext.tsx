@@ -4,9 +4,7 @@ import Backend from 'i18next-chained-backend';
 import LocalStorageBackend from 'i18next-localstorage-backend';
 import HttpApi from 'i18next-http-backend';
 import { I18nextProvider, initReactI18next } from 'react-i18next';
-import LanguageDetector from 'i18next-browser-languagedetector';
 import { PropsWithChildrenOnly } from '@common/types';
-import { browserLanguageDetector } from './browserLanguageDetector';
 import { EnvUtils, Platform } from '@common/utils';
 
 const defaultNS = 'common';
@@ -14,8 +12,6 @@ export const IntlProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
   React.useEffect(() => {
     if (i18next.isInitialized) return;
 
-    const languageDetector = new LanguageDetector();
-    languageDetector.addDetector(browserLanguageDetector);
     const minuteInMilliseconds = 60 * 1000;
     const isDevelopment = process.env['NODE_ENV'] === 'development';
     const expirationTime = isDevelopment
@@ -33,7 +29,6 @@ export const IntlProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
     i18next
       .use(initReactI18next) // passes i18n down to react-i18next
       .use(Backend)
-      .use(languageDetector)
       .init({
         backend: {
           backends: [

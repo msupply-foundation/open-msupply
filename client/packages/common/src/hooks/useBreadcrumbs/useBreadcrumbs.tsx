@@ -23,21 +23,21 @@ const useBreadcrumbState = create<BreadcrumbState>(set => ({
   urlParts: [],
 }));
 
-export const useBreadcrumbs = () => {
+export const useBreadcrumbs = (topLevelPaths: string[] = []) => {
   const navigate = useNavigate();
   const location = useLocation();
   const state = useBreadcrumbState();
   const { urlParts, setUrlParts, setSuffix, suffix } = state;
+  const { pathname } = location;
 
   useEffect(() => {
-    const parts = location.pathname.split('/');
+    const parts = pathname.split('/');
     const urlParts: UrlPart[] = [];
-
     parts.reduce((fullPath, part, index) => {
       if (part === '') return '';
       const path = `${fullPath}/${part}`;
 
-      if (index > 1)
+      if (index > 1 || topLevelPaths.includes(part))
         urlParts.push({
           path,
           key: `${part}` as unknown as LocaleKey,
@@ -47,7 +47,7 @@ export const useBreadcrumbs = () => {
     }, '');
     setUrlParts(urlParts);
     setSuffix(undefined);
-  }, [location]);
+  }, [pathname]);
 
   const navigateUpOne = () => {
     if (urlParts.length < 2) return;

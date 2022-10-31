@@ -1,11 +1,13 @@
 import React, { FC } from 'react';
 import {
+  Badge,
   ListItem,
   ListItemIcon,
   ListItemText,
   ListItemButton,
   Box,
   ListItemProps,
+  BadgeProps,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { useMatch, Link } from 'react-router-dom';
@@ -46,6 +48,7 @@ const StyledListItem = styled<
 }));
 
 export interface AppNavLinkProps {
+  badgeProps?: BadgeProps;
   end?: boolean; // denotes lowest level menu item, using terminology from useMatch
   icon?: JSX.Element;
   inactive?: boolean;
@@ -57,6 +60,7 @@ export interface AppNavLinkProps {
 
 export const AppNavLink: FC<AppNavLinkProps> = props => {
   const {
+    badgeProps,
     end,
     inactive,
     icon = <span style={{ width: 2 }} />,
@@ -114,11 +118,13 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
         disableGutters
         component={CustomLink}
       >
-        <ListItemIcon sx={{ minWidth: 20 }}>{icon}</ListItemIcon>
-        <Box className="navLinkText">
-          <Box width={10} />
-          <ListItemText primary={text} />
-        </Box>
+        <Badge {...badgeProps} sx={{ alignItems: 'center', flexGrow: 1 }}>
+          <ListItemIcon sx={{ minWidth: 20 }}>{icon}</ListItemIcon>
+          <Box className="navLinkText">
+            <Box width={10} />
+            <ListItemText primary={text} />
+          </Box>
+        </Badge>
       </ListItemButton>
     </StyledListItem>
   ) : null;
