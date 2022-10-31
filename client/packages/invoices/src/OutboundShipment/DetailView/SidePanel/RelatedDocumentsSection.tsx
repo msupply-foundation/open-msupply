@@ -36,7 +36,7 @@ const RelatedDocumentsSectionComponent = () => {
         {!requisition ? (
           <PanelLabel>{t('messages.no-related-documents')}</PanelLabel>
         ) : (
-          <Tooltip title={getTooltip(requisition?.createdDatetime, requisition.user?.username)}>
+          <Tooltip title={getTooltip(requisition.createdDatetime, requisition.user?.username)}>
             <Grid item>
               <PanelRow>
                 <PanelLabel>{t('label.requisition')}</PanelLabel>
