@@ -4,7 +4,7 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use repository::PaginationOption;
+use repository::{EncounterFilter, EqualFilter, PaginationOption};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     programs::encounter::encounter_fields::{EncounterFields, EncounterFieldsResult},
@@ -57,7 +57,7 @@ pub fn encounter_fields(
     filter: Option<EncounterFilterInput>,
     sort: Option<EncounterSortInput>,
 ) -> Result<EncounterFieldsResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::QueryEncounter,
@@ -68,6 +68,16 @@ pub fn encounter_fields(
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
 
+    let filter = filter
+        .map(|f| {
+            f.to_domain_filter().r#type(EqualFilter::equal_any(
+                user.context.iter().map(String::clone).collect(),
+            ))
+        })
+        .unwrap_or(EncounterFilter::new().r#type(EqualFilter::equal_any(
+            user.context.iter().map(String::clone).collect(),
+        )));
+
     let result = service_provider
         .encounter_service
         .encounters_fields(
@@ -76,7 +86,7 @@ pub fn encounter_fields(
                 fields: input.fields,
             },
             page.map(PaginationOption::from),
-            filter.map(|f| f.to_domain_filter()),
+            Some(filter),
             sort.map(EncounterSortInput::to_domain),
         )
         .map_err(StandardGraphqlError::from_list_error)?;

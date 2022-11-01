@@ -679,6 +679,7 @@ export type DocumentConnector = {
 
 export type DocumentFilterInput = {
   name?: InputMaybe<EqualFilterStringInput>;
+  type?: InputMaybe<EqualFilterStringInput>;
 };
 
 export type DocumentHistoryResponse = DocumentConnector;
@@ -781,6 +782,7 @@ export type EncounterFilterInput = {
   program?: InputMaybe<EqualFilterStringInput>;
   startDatetime?: InputMaybe<DatetimeFilterInput>;
   status?: InputMaybe<EqualFilterEncounterStatusInput>;
+  type?: InputMaybe<EqualFilterStringInput>;
 };
 
 export type EncounterNode = {
@@ -2450,6 +2452,7 @@ export type PatientFilterInput = {
   firstName?: InputMaybe<SimpleStringFilterInput>;
   gender?: InputMaybe<EqualFilterGenderInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  isVisible?: InputMaybe<Scalars['Boolean']>;
   lastName?: InputMaybe<SimpleStringFilterInput>;
   phone?: InputMaybe<SimpleStringFilterInput>;
 };
@@ -3615,6 +3618,8 @@ export type UpdateEncounterInput = {
   parent: Scalars['String'];
   /** The schema id used for the counter data */
   schemaId: Scalars['String'];
+  /** The encounter type */
+  type: Scalars['String'];
 };
 
 export type UpdateEncounterResponse = EncounterNode;
@@ -4065,6 +4070,11 @@ export type UserNodePermissionsArgs = {
 };
 
 export enum UserPermission {
+  Document = 'DOCUMENT',
+  DocumentEncounterMutate = 'DOCUMENT_ENCOUNTER_MUTATE',
+  DocumentEncounterQuery = 'DOCUMENT_ENCOUNTER_QUERY',
+  DocumentProgramMutate = 'DOCUMENT_PROGRAM_MUTATE',
+  DocumentProgramQuery = 'DOCUMENT_PROGRAM_QUERY',
   InboundShipmentMutate = 'INBOUND_SHIPMENT_MUTATE',
   InboundShipmentQuery = 'INBOUND_SHIPMENT_QUERY',
   LocationMutate = 'LOCATION_MUTATE',

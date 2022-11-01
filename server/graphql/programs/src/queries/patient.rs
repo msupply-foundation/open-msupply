@@ -161,6 +161,7 @@ pub struct PatientFilterInput {
     pub address2: Option<SimpleStringFilterInput>,
     pub country: Option<SimpleStringFilterInput>,
     pub email: Option<SimpleStringFilterInput>,
+    pub is_visible: Option<bool>,
 }
 
 impl PatientFilterInput {
@@ -178,6 +179,7 @@ impl PatientFilterInput {
             address2,
             country,
             email,
+            is_visible,
         } = self;
         PatientFilter {
             id: id.map(EqualFilter::from),
@@ -192,6 +194,7 @@ impl PatientFilterInput {
             address2: address2.map(SimpleStringFilter::from),
             country: country.map(SimpleStringFilter::from),
             email: email.map(SimpleStringFilter::from),
+            is_visible,
         }
     }
 }

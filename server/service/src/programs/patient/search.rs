@@ -61,6 +61,7 @@ pub fn patient_search(
             is_null: None,
         });
     }
+    filter.is_visible = Some(true);
 
     let results: Vec<PatientSearchResult> = service_provider
         .patient_service

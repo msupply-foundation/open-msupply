@@ -51,12 +51,14 @@ pub struct ProgramEnrolmentFilterInput {
     pub enrolment_datetime: Option<DatetimeFilterInput>,
     pub program_patient_id: Option<EqualFilterStringInput>,
 }
-fn to_domain_filter(f: ProgramEnrolmentFilterInput) -> ProgramEnrolmentFilter {
-    ProgramEnrolmentFilter {
-        r#type: f.r#type.map(EqualFilter::from),
-        patient_id: f.patient_id.map(EqualFilter::from),
-        enrolment_datetime: f.enrolment_datetime.map(DatetimeFilter::from),
-        program_patient_id: f.program_patient_id.map(EqualFilter::from),
+impl ProgramEnrolmentFilterInput {
+    fn to_domain_filter(self) -> ProgramEnrolmentFilter {
+        ProgramEnrolmentFilter {
+            r#type: self.r#type.map(EqualFilter::from),
+            patient_id: self.patient_id.map(EqualFilter::from),
+            enrolment_datetime: self.enrolment_datetime.map(DatetimeFilter::from),
+            program_patient_id: self.program_patient_id.map(EqualFilter::from),
+        }
     }
 }
 
@@ -66,7 +68,7 @@ pub fn program_enrolments(
     sort: Option<ProgramEnrolmentSortInput>,
     filter: Option<ProgramEnrolmentFilterInput>,
 ) -> Result<ProgramEnrolmentResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::QueryProgram,
@@ -77,13 +79,23 @@ pub fn program_enrolments(
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
 
+    let filter = filter
+        .map(|f| {
+            f.to_domain_filter().r#type(EqualFilter::equal_any(
+                user.context.iter().map(String::clone).collect(),
+            ))
+        })
+        .unwrap_or(ProgramEnrolmentFilter::new().r#type(EqualFilter::equal_any(
+            user.context.iter().map(String::clone).collect(),
+        )));
+
     let nodes: Vec<ProgramEnrolmentNode> = service_provider
         .program_enrolment_service
         .program_enrolments(
             &context,
             Pagination::all(),
             sort.map(ProgramEnrolmentSortInput::to_domain),
-            filter.map(to_domain_filter),
+            Some(filter),
         )?
         .into_iter()
         .map(|program_row| ProgramEnrolmentNode {

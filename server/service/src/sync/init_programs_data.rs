@@ -16,7 +16,8 @@ use chrono::{Duration, Utc};
 use repository::{
     DocumentContext, DocumentRegistryRow, DocumentRegistryRowRepository, EqualFilter, FormSchema,
     FormSchemaRowRepository, NameRow, NameRowRepository, NameStoreJoinRepository, NameStoreJoinRow,
-    NameType, RepositoryError, StorageConnection, StoreFilter, StoreRepository,
+    NameType, Permission, RepositoryError, StorageConnection, StoreFilter, StoreRepository,
+    UserPermissionRow, UserPermissionRowRepository, UserStoreJoinRowRepository,
 };
 use serde::{Deserialize, Serialize};
 use util::{inline_init, uuid::uuid};
@@ -456,6 +457,93 @@ fn encounter_hiv_care_5() -> hiv_care_encounter::HivcareEncounter {
             },
         ));
     })
+}
+
+pub fn insert_programs_permissions(connection: &StorageConnection, user_id: String) {
+    let user_store_join = UserStoreJoinRowRepository::new(&connection)
+        .find_by_user_id(&user_id.clone())
+        .unwrap()
+        .unwrap();
+
+    for user_store in user_store_join {
+        UserPermissionRowRepository::new(&connection)
+            .upsert_one(&UserPermissionRow {
+                id: uuid(),
+                user_id: user_id.clone(),
+                store_id: Some(user_store.store_id.clone()),
+                permission: Permission::DocumentProgramQuery,
+                context: Some("HIVTestingProgram".to_string()),
+            })
+            .unwrap();
+        UserPermissionRowRepository::new(&connection)
+            .upsert_one(&UserPermissionRow {
+                id: uuid(),
+                user_id: user_id.clone(),
+                store_id: Some(user_store.store_id.clone()),
+                permission: Permission::DocumentProgramQuery,
+                context: Some("HIVCareProgram".to_string()),
+            })
+            .unwrap();
+
+        UserPermissionRowRepository::new(&connection)
+            .upsert_one(&UserPermissionRow {
+                id: uuid(),
+                user_id: user_id.clone(),
+                store_id: Some(user_store.store_id.clone()),
+                permission: Permission::PatientQuery,
+                context: None,
+            })
+            .unwrap();
+
+        UserPermissionRowRepository::new(&connection)
+            .upsert_one(&UserPermissionRow {
+                id: uuid(),
+                user_id: user_id.clone(),
+                store_id: Some(user_store.store_id.clone()),
+                permission: Permission::Document,
+                context: None,
+            })
+            .unwrap();
+
+        UserPermissionRowRepository::new(&connection)
+            .upsert_one(&UserPermissionRow {
+                id: uuid(),
+                user_id: user_id.clone(),
+                store_id: Some(user_store.store_id.clone()),
+                permission: Permission::DocumentProgramMutate,
+                context: Some("Patient".to_string()),
+            })
+            .unwrap();
+
+        UserPermissionRowRepository::new(&connection)
+            .upsert_one(&UserPermissionRow {
+                id: uuid(),
+                user_id: user_id.clone(),
+                store_id: Some(user_store.store_id.clone()),
+                permission: Permission::DocumentEncounterQuery,
+                context: Some("HIVTestingEncounter".to_string()),
+            })
+            .unwrap();
+        UserPermissionRowRepository::new(&connection)
+            .upsert_one(&UserPermissionRow {
+                id: uuid(),
+                user_id: user_id.clone(),
+                store_id: Some(user_store.store_id.clone()),
+                permission: Permission::DocumentEncounterQuery,
+                context: Some("HIVCareEncounter".to_string()),
+            })
+            .unwrap();
+
+        UserPermissionRowRepository::new(&connection)
+            .upsert_one(&UserPermissionRow {
+                id: uuid(),
+                user_id: user_id.clone(),
+                store_id: Some(user_store.store_id),
+                permission: Permission::DocumentEncounterMutate,
+                context: None,
+            })
+            .unwrap();
+    }
 }
 
 fn insert_patient(

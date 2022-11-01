@@ -24,6 +24,7 @@ use crate::{
     auth_data::AuthData,
     service_provider::{ServiceContext, ServiceProvider},
     settings::is_develop,
+    sync::insert_programs_permissions,
     token::{JWTIssuingError, TokenPair, TokenService},
     user_account::{StorePermissions, UserAccountService, VerifyPasswordError},
 };
@@ -265,8 +266,9 @@ impl LoginService {
 
         let service = UserAccountService::new(&service_ctx.connection);
         service
-            .upsert_user(user, stores_permissions)
+            .upsert_user(user.clone(), stores_permissions)
             .map_err(|e| UpdateUserError::DatabaseError(e))?;
+        insert_programs_permissions(&service_ctx.connection, user.id); //TODO REMOVE ONCE PROGRAMS HAVE BEEN IMPLEMENTED IN CENTRAL
         Ok(())
     }
 }

@@ -14,6 +14,7 @@ use diesel::{dsl::IntoBoxed, prelude::*};
 #[derive(Clone)]
 pub struct EncounterFilter {
     pub id: Option<EqualFilter<String>>,
+    pub r#type: Option<EqualFilter<String>>,
     pub patient_id: Option<EqualFilter<String>>,
     pub program: Option<EqualFilter<String>>,
     pub name: Option<EqualFilter<String>>,
@@ -26,6 +27,7 @@ impl EncounterFilter {
     pub fn new() -> EncounterFilter {
         EncounterFilter {
             id: None,
+            r#type: None,
             patient_id: None,
             program: None,
             name: None,
@@ -37,6 +39,11 @@ impl EncounterFilter {
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {
         self.id = Some(filter);
+        self
+    }
+
+    pub fn r#type(mut self, filter: EqualFilter<String>) -> Self {
+        self.r#type = Some(filter);
         self
     }
 
@@ -92,6 +99,7 @@ fn create_filtered_query<'a>(filter: Option<EncounterFilter>) -> BoxedProgramQue
     if let Some(f) = filter {
         let EncounterFilter {
             id,
+            r#type,
             patient_id,
             program,
             name,
@@ -101,6 +109,7 @@ fn create_filtered_query<'a>(filter: Option<EncounterFilter>) -> BoxedProgramQue
         } = f;
 
         apply_equal_filter!(query, id, encounter_dsl::id);
+        apply_equal_filter!(query, r#type, encounter_dsl::type_);
         apply_equal_filter!(query, patient_id, encounter_dsl::patient_id);
         apply_equal_filter!(query, program, encounter_dsl::program);
         apply_equal_filter!(query, name, encounter_dsl::name);

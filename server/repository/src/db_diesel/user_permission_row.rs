@@ -46,11 +46,14 @@ pub enum Permission {
     // reporting
     Report,
     LogQuery,
-    // document
-    Document,
-    // patients
     PatientQuery,
     PatientMutate,
+    // Document
+    Document,
+    DocumentEncounterQuery,
+    DocumentEncounterMutate,
+    DocumentProgramQuery,
+    DocumentProgramMutate,
 }
 
 #[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset)]

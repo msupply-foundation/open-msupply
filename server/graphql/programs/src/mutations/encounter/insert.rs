@@ -45,6 +45,14 @@ pub fn insert_encounter(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
 
+    match user.context.into_iter().find(|c| c == &input.r#type) {
+        None => Err(StandardGraphqlError::BadUserInput(format!(
+            "User does not have access to {}",
+            input.r#type,
+        ))),
+        Some(_) => Ok(()),
+    }?;
+
     let document = match service_provider.encounter_service.insert_encounter(
         &service_context,
         service_provider,

@@ -1,5 +1,7 @@
 use chrono::Utc;
-use repository::{DocumentStatus, EqualFilter, RepositoryError, TransactionError};
+use repository::{
+    DocumentStatus, EqualFilter, NameFilter, NameRepository, RepositoryError, TransactionError,
+};
 
 use crate::{
     document::{document_service::DocumentInsertError, is_latest_doc, raw_document::RawDocument},
@@ -17,6 +19,7 @@ pub enum UpdatePatientError {
     InvalidParentId,
     PatientExists,
     InvalidDataSchema(Vec<String>),
+    PatientDoesNotBelongToStore,
     DataSchemaDoesNotExist,
     InternalError(String),
     DatabaseError(RepositoryError),
@@ -39,7 +42,7 @@ pub fn update_patient(
     let patient = ctx
         .connection
         .transaction_sync(|_| {
-            let patient = validate(ctx, service_provider, &input)?;
+            let patient = validate(ctx, service_provider, store_id, &input)?;
             let patient_id = patient.id.clone();
             let doc = generate(user_id, &patient, input)?;
             let doc_timestamp = doc.timestamp.clone();
@@ -146,9 +149,24 @@ fn validate_patient_not_exists(
     Ok(existing_document.is_none())
 }
 
+fn patient_belongs_to_store(
+    ctx: &ServiceContext,
+    store_id: &str,
+    patient_id: &str,
+) -> Result<bool, UpdatePatientError> {
+    let name = NameRepository::new(&ctx.connection)
+        .query_one(
+            store_id,
+            NameFilter::new().id(EqualFilter::equal_to(patient_id)),
+        )?
+        .unwrap_or_default();
+    Ok(name.is_visible())
+}
+
 fn validate(
     ctx: &ServiceContext,
     service_provider: &ServiceProvider,
+    store_id: &str,
     input: &UpdatePatient,
 ) -> Result<SchemaPatient, UpdatePatientError> {
     let patient = validate_patient_schema(input)?;
@@ -160,6 +178,10 @@ fn validate(
         if !validate_patient_not_exists(ctx, service_provider, &patient.id)? {
             return Err(UpdatePatientError::PatientExists);
         }
+    }
+
+    if !patient_belongs_to_store(ctx, store_id, &patient.id)? {
+        return Err(UpdatePatientError::PatientDoesNotBelongToStore);
     }
     Ok(patient)
 }
@@ -200,7 +222,7 @@ pub mod test {
             zip_code: None,
         };
         inline_init(|p: &mut SchemaPatient| {
-            p.id = "testid".to_string();
+            p.id = "testId".to_string();
             p.code = Some("national_id".to_string());
             p.contact_details = vec![contact_details.clone()];
             p.date_of_birth = Some("2000-03-04".to_string());
@@ -214,7 +236,11 @@ pub mod test {
     async fn test_patient_update() {
         let (_, _, connection_manager, _) = setup_all(
             "test_patient_update",
-            MockDataInserts::none().names().stores().form_schemas(),
+            MockDataInserts::none()
+                .names()
+                .stores()
+                .form_schemas()
+                .name_store_joins(),
         )
         .await;
 
@@ -246,6 +272,25 @@ pub mod test {
             .err()
             .unwrap();
         matches!(err, UpdatePatientError::InvalidDataSchema(_));
+
+        let not_visible_err = service
+            .update_patient(
+                &ctx,
+                &service_provider,
+                "store_b",
+                "user",
+                super::UpdatePatient {
+                    data: serde_json::to_value(patient.clone()).unwrap(),
+                    schema_id: schema.id.clone(),
+                    parent: None,
+                },
+            )
+            .err()
+            .unwrap();
+        matches!(
+            not_visible_err,
+            UpdatePatientError::PatientDoesNotBelongToStore
+        );
 
         // success insert
         service

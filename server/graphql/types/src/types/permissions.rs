@@ -31,6 +31,11 @@ pub enum UserPermission {
     LogQuery,
     PatientQuery,
     PatientMutate,
+    Document,
+    DocumentEncounterQuery,
+    DocumentEncounterMutate,
+    DocumentProgramQuery,
+    DocumentProgramMutate,
 }
 
 #[Object]
@@ -87,9 +92,13 @@ impl UserPermission {
             Permission::InboundShipmentMutate => UserPermission::InboundShipmentMutate,
             Permission::Report => UserPermission::Report,
             Permission::LogQuery => UserPermission::LogQuery,
-            Permission::Document => UserPermission::PatientQuery,
             Permission::PatientQuery => UserPermission::PatientQuery,
             Permission::PatientMutate => UserPermission::PatientMutate,
+            Permission::Document => UserPermission::Document,
+            Permission::DocumentEncounterQuery => UserPermission::DocumentEncounterQuery,
+            Permission::DocumentEncounterMutate => UserPermission::DocumentEncounterMutate,
+            Permission::DocumentProgramQuery => UserPermission::DocumentProgramQuery,
+            Permission::DocumentProgramMutate => UserPermission::DocumentProgramMutate,
         }
     }
 
@@ -111,6 +120,11 @@ impl UserPermission {
             UserPermission::LogQuery => Permission::LogQuery,
             UserPermission::PatientQuery => Permission::PatientQuery,
             UserPermission::PatientMutate => Permission::PatientMutate,
+            UserPermission::Document => Permission::Document,
+            UserPermission::DocumentEncounterQuery => Permission::DocumentEncounterQuery,
+            UserPermission::DocumentEncounterMutate => Permission::DocumentEncounterMutate,
+            UserPermission::DocumentProgramQuery => Permission::DocumentProgramQuery,
+            UserPermission::DocumentProgramMutate => Permission::DocumentProgramMutate,
         }
     }
 }

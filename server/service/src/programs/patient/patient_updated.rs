@@ -118,7 +118,7 @@ mod test {
     async fn test_patient_table_update() {
         let (_, _, connection_manager, _) = setup_all(
             "patient_table_update",
-            MockDataInserts::none().names().stores(),
+            MockDataInserts::none().names().stores().name_store_joins(),
         )
         .await;
 
@@ -148,7 +148,7 @@ mod test {
             zip_code: None,
         };
         let patient = inline_init(|p: &mut SchemaPatient| {
-            p.id = "patient1".to_string();
+            p.id = "testId".to_string();
             p.contact_details = vec![contact_details.clone()];
             p.date_of_birth = Some("2000-03-04".to_string());
             p.first_name = Some("firstname".to_string());

@@ -74,4 +74,15 @@ impl<'a> UserStoreJoinRowRepository<'a> {
         .execute(&self.connection.connection)?;
         Ok(())
     }
+
+    //TODO Delete after programs implemented
+    pub fn find_by_user_id(
+        &self,
+        user_id: &str,
+    ) -> Result<Option<Vec<UserStoreJoinRow>>, RepositoryError> {
+        let result = user_store_join_dsl::user_store_join
+            .filter(user_store_join_dsl::user_id.eq(user_id))
+            .load(&self.connection.connection)?;
+        Ok(Some(result))
+    }
 }

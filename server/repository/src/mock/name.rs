@@ -74,6 +74,24 @@ pub fn mock_name_master_list_filter_test() -> NameRow {
     })
 }
 
+pub fn mock_patient() -> NameRow {
+    inline_init(|r: &mut NameRow| {
+        r.id = String::from("testId");
+        r.name = String::from("testId");
+        r.code = String::from("testId");
+        r.is_customer = true;
+    })
+}
+
+pub fn mock_patient_b() -> NameRow {
+    inline_init(|r: &mut NameRow| {
+        r.id = String::from("patient2");
+        r.name = String::from("patient2");
+        r.code = String::from("patient2");
+        r.is_customer = true;
+    })
+}
+
 pub fn mock_names() -> Vec<NameRow> {
     vec![
         mock_name_store_a(),
@@ -83,5 +101,7 @@ pub fn mock_names() -> Vec<NameRow> {
         mock_name_a(),
         mock_name_invad(),
         mock_name_master_list_filter_test(),
+        mock_patient(),
+        mock_patient_b(),
     ]
 }

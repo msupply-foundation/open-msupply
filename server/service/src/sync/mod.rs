@@ -13,6 +13,7 @@ mod sync_serde;
 pub mod sync_status;
 pub mod synchroniser;
 pub mod synchroniser_driver;
+pub use init_programs_data::insert_programs_permissions;
 pub(crate) mod translation_and_integration;
 pub(crate) mod translations;
 

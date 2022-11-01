@@ -13,6 +13,8 @@ use crate::types::encounter::EncounterNode;
 
 #[derive(InputObject)]
 pub struct UpdateEncounterInput {
+    /// The encounter type
+    pub r#type: String,
     /// Encounter document data
     pub data: serde_json::Value,
     /// The schema id used for the counter data
@@ -39,6 +41,14 @@ pub fn update_encounter(
         },
     )?;
 
+    match user.context.into_iter().find(|c| c == &input.r#type) {
+        None => Err(StandardGraphqlError::BadUserInput(format!(
+            "User does not have access to {}",
+            input.r#type
+        ))),
+        Some(_) => Ok(()),
+    }?;
+
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
 
@@ -47,6 +57,7 @@ pub fn update_encounter(
         service_provider,
         &user.user_id,
         UpdateEncounter {
+            r#type: input.r#type,
             data: input.data,
             schema_id: input.schema_id,
             parent: input.parent,
