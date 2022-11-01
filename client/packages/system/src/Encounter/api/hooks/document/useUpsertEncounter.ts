@@ -31,6 +31,7 @@ export const useUpsertEncounter = (
         data: jsonData,
         parent,
         schemaId: formSchemaId,
+        type,
       });
       return result;
     }
