@@ -10,6 +10,7 @@ mod document_registry;
 mod document_registry_row;
 mod encounter;
 mod encounter_row;
+mod filter_restriction;
 mod filter_sort_pagination;
 mod form_schema_row;
 mod invoice;
