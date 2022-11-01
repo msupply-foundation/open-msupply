@@ -271,28 +271,28 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         Resource::QueryProgram,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(Permission::DocumentProgramQuery),
+            PermissionDSL::HasPermission(Permission::ProgramQuery),
         ]),
     );
     map.insert(
         Resource::QueryEncounter,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(Permission::DocumentEncounterQuery),
+            PermissionDSL::HasPermission(Permission::ProgramQuery),
         ]),
     );
     map.insert(
         Resource::MutateProgram,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(Permission::DocumentProgramMutate),
+            PermissionDSL::HasPermission(Permission::ProgramMutate),
         ]),
     );
     map.insert(
         Resource::MutateEncounter,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(Permission::DocumentEncounterMutate),
+            PermissionDSL::HasPermission(Permission::ProgramMutate),
         ]),
     );
 
