@@ -51,7 +51,12 @@ export const useOutboundLineEditColumns = ({
         width: 80,
         accessor: ({ rowData }) => rowData.stockLine?.totalNumberOfPacks,
       },
+      [
       'batch',
+      {
+        accessor: ({ rowData }) => rowData.stockLine?.batch,
+      }
+      ],
       [
         'expiryDate',
         {
