@@ -185,7 +185,13 @@ impl Synchroniser {
         if !is_initialised {
             self.remote.advance_push_cursor(&ctx.connection)?;
             // TODO remove the program init data call
-            init_program_data(&self.service_provider, 2, &ctx)?;
+            let site_id = self
+                .service_provider
+                .site_info_service
+                .get_site_id(&ctx)
+                .unwrap_or(None)
+                .unwrap_or(2);
+            init_program_data(&self.service_provider, site_id as u32, &ctx)?;
             self.service_provider.site_is_initialised_trigger.trigger();
         }
 
