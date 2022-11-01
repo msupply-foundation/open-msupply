@@ -461,11 +461,20 @@ fn encounter_hiv_care_5() -> hiv_care_encounter::HivcareEncounter {
 
 pub fn insert_programs_permissions(connection: &StorageConnection, user_id: String) {
     let user_store_join = UserStoreJoinRowRepository::new(&connection)
-        .find_one_by_user_id(&user_id.clone())
+        .find_by_user_id(&user_id.clone())
         .unwrap()
         .unwrap();
 
     for user_store in user_store_join {
+        UserPermissionRowRepository::new(&connection)
+            .upsert_one(&UserPermissionRow {
+                id: uuid(),
+                user_id: user_id.clone(),
+                store_id: Some(user_store.store_id.clone()),
+                permission: Permission::DocumentProgramQuery,
+                context: Some("HIVTestingProgram".to_string()),
+            })
+            .unwrap();
         UserPermissionRowRepository::new(&connection)
             .upsert_one(&UserPermissionRow {
                 id: uuid(),
@@ -506,6 +515,15 @@ pub fn insert_programs_permissions(connection: &StorageConnection, user_id: Stri
             })
             .unwrap();
 
+        UserPermissionRowRepository::new(&connection)
+            .upsert_one(&UserPermissionRow {
+                id: uuid(),
+                user_id: user_id.clone(),
+                store_id: Some(user_store.store_id.clone()),
+                permission: Permission::DocumentEncounterQuery,
+                context: Some("HIVTestingEncounter".to_string()),
+            })
+            .unwrap();
         UserPermissionRowRepository::new(&connection)
             .upsert_one(&UserPermissionRow {
                 id: uuid(),
