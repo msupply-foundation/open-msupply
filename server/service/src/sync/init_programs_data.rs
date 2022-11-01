@@ -471,7 +471,7 @@ pub fn insert_programs_permissions(connection: &StorageConnection, user_id: Stri
                 id: uuid(),
                 user_id: user_id.clone(),
                 store_id: Some(user_store.store_id.clone()),
-                permission: Permission::DocumentProgramQuery,
+                permission: Permission::ProgramQuery,
                 context: Some("HIVTestingProgram".to_string()),
             })
             .unwrap();
@@ -480,7 +480,7 @@ pub fn insert_programs_permissions(connection: &StorageConnection, user_id: Stri
                 id: uuid(),
                 user_id: user_id.clone(),
                 store_id: Some(user_store.store_id.clone()),
-                permission: Permission::DocumentProgramQuery,
+                permission: Permission::ProgramQuery,
                 context: Some("HIVCareProgram".to_string()),
             })
             .unwrap();
@@ -500,47 +500,8 @@ pub fn insert_programs_permissions(connection: &StorageConnection, user_id: Stri
                 id: uuid(),
                 user_id: user_id.clone(),
                 store_id: Some(user_store.store_id.clone()),
-                permission: Permission::Document,
-                context: None,
-            })
-            .unwrap();
-
-        UserPermissionRowRepository::new(&connection)
-            .upsert_one(&UserPermissionRow {
-                id: uuid(),
-                user_id: user_id.clone(),
-                store_id: Some(user_store.store_id.clone()),
-                permission: Permission::DocumentProgramMutate,
+                permission: Permission::ProgramMutate,
                 context: Some("Patient".to_string()),
-            })
-            .unwrap();
-
-        UserPermissionRowRepository::new(&connection)
-            .upsert_one(&UserPermissionRow {
-                id: uuid(),
-                user_id: user_id.clone(),
-                store_id: Some(user_store.store_id.clone()),
-                permission: Permission::DocumentEncounterQuery,
-                context: Some("HIVTestingEncounter".to_string()),
-            })
-            .unwrap();
-        UserPermissionRowRepository::new(&connection)
-            .upsert_one(&UserPermissionRow {
-                id: uuid(),
-                user_id: user_id.clone(),
-                store_id: Some(user_store.store_id.clone()),
-                permission: Permission::DocumentEncounterQuery,
-                context: Some("HIVCareEncounter".to_string()),
-            })
-            .unwrap();
-
-        UserPermissionRowRepository::new(&connection)
-            .upsert_one(&UserPermissionRow {
-                id: uuid(),
-                user_id: user_id.clone(),
-                store_id: Some(user_store.store_id),
-                permission: Permission::DocumentEncounterMutate,
-                context: None,
             })
             .unwrap();
     }
