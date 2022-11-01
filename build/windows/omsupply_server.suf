@@ -2842,7 +2842,7 @@ end
 <Visible>1</Visible>
 <Enabled>1</Enabled>
 <TabOrder>5</TabOrder>
-<Checked>1</Checked>
+<Checked>0</Checked>
 <Variable>cbStartOmSupply</Variable>
 </Control>
 <Control>
@@ -4058,7 +4058,7 @@ g_HandleSystemReboot();
 local sWindowTitle = "omSupply Server Setup";
 
 hasOmsupplyInstalled = false;
-omSupplyServerDatabase = SessionVar.Get("%omsupply_selected_db%");
+local omSupplyServerDatabase = SessionVar.Get("%omsupply_selected_db%");
 
 if (omSupplyServerDatabase == "sqlite") then
 	omSupplyServerPath = SessionVar.Expand("%AppFolder%\\omSupply-sqlite.exe");
@@ -4167,6 +4167,8 @@ end
 <Name>On Post Install</Name>
 <Args/>
 <Script>local sFileToBeDeletePath = "";
+local omSupplyServerDatabase = SessionVar.Get("%omsupply_selected_db%");
+
 if not hasOmsupplyInstalled then
 	local config = "server:\r\n"
 	config = config .. "  host: 192.168.178.68\r\n";
