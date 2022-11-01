@@ -52,6 +52,7 @@ fragment OutboundLine on InvoiceLineNode {
     __typename
     id
     itemId
+    batch
     availableNumberOfPacks
     totalNumberOfPacks
     onHold
