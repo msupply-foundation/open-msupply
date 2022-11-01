@@ -396,7 +396,7 @@ mod test {
         }
         );
 
-        // Used data from create_requistion_shipment_success tests
+        // Used data from create_requisition_shipment_success tests
 
         let expected = json!({
             "requisitions": {
@@ -406,11 +406,11 @@ mod test {
                          "nodes": [
                             {
                               "id": "mock_new_response_requisition_test1",
-                              "remainingQuantityToSupply": 44
+                              "remainingQuantityToSupply": 44.0
                             },
                             {
                               "id": "mock_new_response_requisition_test2",
-                              "remainingQuantityToSupply": 100
+                              "remainingQuantityToSupply": 100.0
                             }
                           ]
                     }

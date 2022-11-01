@@ -3,7 +3,6 @@ describe('NumUtils', () => {
   it('is defined', () => {
     expect(NumUtils.isPositive).toBeDefined();
     expect(NumUtils.parseString).toBeDefined();
-    expect(NumUtils.parseStringAsInt).toBeDefined();
   });
 
   it('isPositive', () => {
@@ -20,14 +19,5 @@ describe('NumUtils', () => {
     expect(NumUtils.parseString('4', 1, 10)).toBe(4);
     expect(NumUtils.parseString('40', 1, 10)).toBe(10);
     expect(NumUtils.parseString('4.56')).toBe(4.56);
-  });
-
-  it('parseStringAsInt', () => {
-    expect(NumUtils.parseStringAsInt('5')).toBe(5);
-    expect(NumUtils.parseStringAsInt('4', 5)).toBe(5);
-    expect(NumUtils.parseStringAsInt('4', 1, 10)).toBe(4);
-    expect(NumUtils.parseStringAsInt('40', 1, 10)).toBe(10);
-    expect(NumUtils.parseStringAsInt('4.1', 1, 10)).toBe(4);
-    expect(NumUtils.parseStringAsInt('4.5', 1, 10)).toBe(5);
   });
 });

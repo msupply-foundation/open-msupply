@@ -3,7 +3,6 @@ import React, { FC, useEffect } from 'react';
 import {
   AppFooterPortal,
   Box,
-  SnackbarProvider,
   DetailPanel,
   AppFooter,
   Routes,
@@ -17,6 +16,7 @@ import {
   useAuthContext,
   useNotification,
   useTranslation,
+  SnackbarProvider,
 } from '@openmsupply-client/common';
 import { PropsWithChildrenOnly } from '@common/types';
 import { AppDrawer, AppBar, Footer, NotFound } from './components';
@@ -33,6 +33,7 @@ import {
 } from './routers';
 import { RequireAuthentication } from './components/Navigation/RequireAuthentication';
 import { QueryErrorHandler } from './QueryErrorHandler';
+import { Sync } from './components/Sync';
 
 const Heading: FC<PropsWithChildrenOnly> = ({ children }) => (
   <div style={{ margin: 50 }}>
@@ -137,6 +138,13 @@ export const Site: FC = () => {
                     .build()}
                   element={<Settings />}
                 />
+                <Route
+                  path={RouteBuilder.create(AppRoute.Sync)
+                    .addWildCard()
+                    .build()}
+                  element={<Sync />}
+                />
+
                 <Route
                   path="/"
                   element={

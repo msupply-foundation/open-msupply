@@ -2,6 +2,7 @@ import React, { FC, useMemo } from 'react';
 import {
   BaseDatePickerInput,
   BufferedTextInput,
+  DateUtils,
   InputWithLabelRow,
   Select,
   Stack,
@@ -29,7 +30,7 @@ export const PatientFormTab: FC<PatientPanel> = ({ patient, value }) => {
     <PatientPanel value={value} patient={patient}>
       <Stack spacing={2}>
         <InputWithLabelRow
-          label={t('label.id')}
+          label={t('label.patient-id')}
           Input={
             <BufferedTextInput
               size="small"
@@ -41,7 +42,7 @@ export const PatientFormTab: FC<PatientPanel> = ({ patient, value }) => {
           }
         />
         <InputWithLabelRow
-          label={t('label.id2')}
+          label={t('label.patient-nuic')}
           Input={
             <BufferedTextInput
               size="small"
@@ -84,12 +85,13 @@ export const PatientFormTab: FC<PatientPanel> = ({ patient, value }) => {
           Input={
             <BaseDatePickerInput
               // undefined is displayed as "now" and null as unset
-              value={patient?.dateOfBirth ?? null}
-              onChange={event => {
-                if (event)
+              value={DateUtils.getDateOrNull(patient?.dateOfBirth ?? null)}
+              onChange={date => {
+                if (date && DateUtils.isValid(date)) {
                   updatePatient({
-                    dateOfBirth: dateFormatter(event, 'yyyy-MM-dd'),
+                    dateOfBirth: dateFormatter(date, 'yyyy-MM-dd'),
                   });
+                }
               }}
               inputFormat="dd/MM/yyyy"
               disableFuture

@@ -21,6 +21,8 @@ import {
   startOfDay,
   startOfYear,
   formatRFC3339,
+  formatRelative,
+  formatDistanceToNow,
 } from 'date-fns';
 import { enGB, enUS, fr, ar } from 'date-fns/locale';
 
@@ -92,11 +94,21 @@ export const useFormatDateTime = () => {
     formatString: string
   ): string => format(dateInputHandler(date), formatString, { locale });
 
+  const relativeDateTime = (
+    date: Date | string | number,
+    baseDate: Date = new Date()
+  ): string => formatRelative(dateInputHandler(date), baseDate, { locale });
+
+  const localisedDistanceToNow = (date: Date | string | number) =>
+    formatDistanceToNow(dateInputHandler(date), { locale });
+
   return {
-    localisedDate,
-    localisedTime,
-    localisedDateTime,
-    dayMonthShort,
     customDate,
+    dayMonthShort,
+    localisedDate,
+    localisedDateTime,
+    localisedDistanceToNow,
+    localisedTime,
+    relativeDateTime,
   };
 };

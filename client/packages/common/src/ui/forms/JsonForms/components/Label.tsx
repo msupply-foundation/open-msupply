@@ -23,7 +23,13 @@ type LayoutPropsExtended = LayoutProps & {
 };
 
 const variants: { [key in LabelVariant]: SxProps } = {
-  h1: { fontSize: '1.8em', fontWeight: 'bold', textAlign: 'center' },
+  h1: {
+    fontSize: '1.8em',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    paddingBottom: 2,
+    paddingTop: 1,
+  },
   h2: { fontSize: '1.4em', fontWeight: 'bold', textAlign: 'center' },
   h3: {
     fontWeight: 'bold',

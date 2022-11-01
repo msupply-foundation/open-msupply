@@ -1,4 +1,7 @@
-use super::{master_list_line_row::master_list_line::dsl::*, StorageConnection, master_list_row::master_list, item_row::item};
+use super::{
+    item_row::item, master_list_line_row::master_list_line::dsl::*, master_list_row::master_list,
+    StorageConnection,
+};
 
 use crate::repository_error::RepositoryError;
 
@@ -59,5 +62,22 @@ impl<'a> MasterListLineRowRepository<'a> {
             .filter(id.eq(line_id))
             .first(&self.connection.connection)?;
         Ok(result)
+    }
+
+    pub fn find_one_by_id_option(
+        &self,
+        line_id: &str,
+    ) -> Result<Option<MasterListLineRow>, RepositoryError> {
+        let result = master_list_line
+            .filter(id.eq(line_id))
+            .first(&self.connection.connection)
+            .optional()?;
+        Ok(result)
+    }
+
+    pub fn delete(&self, line_id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(master_list_line.filter(id.eq(line_id)))
+            .execute(&self.connection.connection)?;
+        Ok(())
     }
 }

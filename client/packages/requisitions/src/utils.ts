@@ -1,4 +1,7 @@
-import { RequestRowFragment } from './RequestRequisition/api/operations.generated';
+import {
+  RequestLineFragment,
+  RequestRowFragment,
+} from './RequestRequisition/api/operations.generated';
 import {
   RequisitionNodeStatus,
   LocaleKey,
@@ -116,3 +119,7 @@ export const responsesToCsv = (
   ]);
   return Formatter.csv({ fields, data });
 };
+
+export const isRequestLinePlaceholderRow = (
+  row: RequestLineFragment
+): boolean => row.requestedQuantity === 0;

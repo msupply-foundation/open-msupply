@@ -12,6 +12,7 @@ import {
   JsonSchema,
   UISchemaElement,
 } from '@jsonforms/core';
+import { ErrorObject } from '@jsonforms/core/node_modules/ajv';
 import { materialRenderers } from '@jsonforms/material-renderers';
 import {
   BooleanField,
@@ -105,6 +106,22 @@ const FormComponent = ({
     ...config,
   };
 
+  const mapErrors = (
+    errors?: ErrorObject<string, Record<string, any>, unknown>[]
+  ) =>
+    errors?.map(error => {
+      const { parentSchema, keyword } = error;
+      const messages = parentSchema?.['messages'];
+      // mutate the error object if a custom error has been defined
+      // was unable to get ajv-errors to work correctly or
+      // find an alternative to support custom error messages
+      // the alternative is for the message `must match pattern "[complicated regex]"` to be shown
+      // to use: add a `messages` prop to the schema object
+      // with a property for the required keyword to override
+      error.message = messages?.[keyword] ?? error.message;
+      return error.message ?? '';
+    });
+
   return !data ? null : (
     <JsonForms
       schema={jsonSchema}
@@ -116,7 +133,7 @@ const FormComponent = ({
       onChange={({ errors, data }) => {
         setData(data);
         if (errors && errors.length) {
-          setError?.(errors?.map(({ message }) => message ?? '').join(', '));
+          setError?.(mapErrors(errors)?.join(', ') ?? '');
           console.warn('Errors: ', errors);
         } else {
           setError?.(false);

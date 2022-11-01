@@ -162,7 +162,7 @@ const allocateToBatches = ({
     if (toAllocate < 0) return null;
 
     const availableUnits =
-      (draftOutboundLine.stockLine?.availableNumberOfPacks ?? 0) *
+      (Math.floor(draftOutboundLine.stockLine?.availableNumberOfPacks ?? 0)) *
       draftOutboundLine.packSize;
     const unitsToAllocate = Math.min(toAllocate, availableUnits);
     const numberOfPacks = unitsToAllocate / draftOutboundLine.packSize;

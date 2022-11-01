@@ -371,8 +371,8 @@ fn encounter_hiv_care_1() -> hiv_care_encounter::HivcareEncounter {
             .to_rfc3339();
         e.physical_examination = Some(inline_init(
             |exam: &mut HivcareEncounterPhysicalExamination| {
-                exam.weight = Some(51.0);
-                exam.blood_pressure = Some(120.0);
+                exam.weight = Some("51.00".to_string());
+                exam.blood_pressure = Some("120/80".to_string());
             },
         ));
     })
@@ -385,8 +385,8 @@ fn encounter_hiv_care_2() -> hiv_care_encounter::HivcareEncounter {
         e.start_datetime = time.to_rfc3339();
         e.physical_examination = Some(inline_init(
             |exam: &mut HivcareEncounterPhysicalExamination| {
-                exam.weight = Some(52.0);
-                exam.blood_pressure = Some(125.0);
+                exam.weight = Some("52.00".to_string());
+                exam.blood_pressure = Some("125/90".to_string());
             },
         ));
         e.events = Some(vec![
@@ -423,8 +423,8 @@ fn encounter_hiv_care_3() -> hiv_care_encounter::HivcareEncounter {
             .to_rfc3339();
         e.physical_examination = Some(inline_init(
             |exam: &mut HivcareEncounterPhysicalExamination| {
-                exam.weight = Some(52.5);
-                exam.blood_pressure = Some(128.0);
+                exam.weight = Some("52.50".to_string());
+                exam.blood_pressure = Some("128/00".to_string());
             },
         ));
     })
@@ -439,8 +439,8 @@ fn encounter_hiv_care_4() -> hiv_care_encounter::HivcareEncounter {
             .to_rfc3339();
         e.physical_examination = Some(inline_init(
             |exam: &mut HivcareEncounterPhysicalExamination| {
-                exam.weight = Some(51.0);
-                exam.blood_pressure = Some(121.0);
+                exam.weight = Some("51.00".to_string());
+                exam.blood_pressure = Some("121/00".to_string());
             },
         ));
     })
@@ -452,8 +452,8 @@ fn encounter_hiv_care_5() -> hiv_care_encounter::HivcareEncounter {
         e.start_datetime = Utc::now().to_rfc3339();
         e.physical_examination = Some(inline_init(
             |exam: &mut HivcareEncounterPhysicalExamination| {
-                exam.weight = Some(54.0);
-                exam.blood_pressure = Some(118.0);
+                exam.weight = Some("54.00".to_string());
+                exam.blood_pressure = Some("118/00".to_string());
             },
         ));
     })

@@ -49,6 +49,19 @@ pub struct ReportRow {
     pub comment: Option<String>,
 }
 
+impl Default for ReportRow {
+    fn default() -> Self {
+        Self {
+            id: Default::default(),
+            name: Default::default(),
+            r#type: ReportType::OmSupply,
+            template: Default::default(),
+            context: ReportContext::InboundShipment,
+            comment: Default::default(),
+        }
+    }
+}
+
 pub struct ReportRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -81,6 +94,12 @@ impl<'a> ReportRowRepository<'a> {
     pub fn upsert_one(&self, row: &ReportRow) -> Result<(), RepositoryError> {
         diesel::replace_into(report_dsl::report)
             .values(row)
+            .execute(&self.connection.connection)?;
+        Ok(())
+    }
+
+    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(report_dsl::report.filter(report_dsl::id.eq(id)))
             .execute(&self.connection.connection)?;
         Ok(())
     }

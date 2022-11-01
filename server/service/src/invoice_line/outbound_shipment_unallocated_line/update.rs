@@ -2,7 +2,6 @@ use crate::{
     invoice::{check_invoice_exists_option, check_store, NotThisStoreInvoice},
     invoice_line::{query::get_invoice_line, validate::check_line_exists_option},
     service_provider::ServiceContext,
-    u32_to_i32,
 };
 use repository::{
     InvoiceLine, InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, RepositoryError,
@@ -71,7 +70,7 @@ fn generate(
     }: UpdateOutboundShipmentUnallocatedLine,
     mut line: InvoiceLineRow,
 ) -> Result<InvoiceLineRow, UpdateOutboundShipmentUnallocatedLineError> {
-    line.number_of_packs = u32_to_i32(quantity);
+    line.number_of_packs = quantity as f64;
 
     Ok(line)
 }
@@ -180,7 +179,7 @@ mod test_update {
             .unwrap();
 
         assert_eq!(result.invoice_line_row.id, line_to_update.id);
-        line_to_update.number_of_packs = 20;
+        line_to_update.number_of_packs = 20.0;
         assert_eq!(
             InvoiceLineRowRepository::new(&connection)
                 .find_one_by_id(&result.invoice_line_row.id)

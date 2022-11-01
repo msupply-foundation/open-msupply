@@ -2,7 +2,9 @@ import {
   useNavigate,
   useQueryClient,
   useMutation,
+  RouteBuilder,
 } from '@openmsupply-client/common';
+import { AppRoute } from 'packages/config/src';
 import { useInboundApi } from '../utils/useInboundApi';
 
 export const useInsertInbound = () => {
@@ -11,7 +13,11 @@ export const useInsertInbound = () => {
   const api = useInboundApi();
   return useMutation(api.insert, {
     onSuccess: invoiceNumber => {
-      navigate(String(invoiceNumber));
+      const route = RouteBuilder.create(AppRoute.Replenishment)
+        .addPart(AppRoute.InboundShipment)
+        .addPart(String(invoiceNumber))
+        .build();
+      navigate(route, { replace: true });
       return queryClient.invalidateQueries(api.keys.base());
     },
   });

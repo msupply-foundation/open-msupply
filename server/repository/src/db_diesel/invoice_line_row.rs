@@ -28,7 +28,7 @@ table! {
         total_after_tax -> Double,
         tax -> Nullable<Double>,
         #[sql_name = "type"] type_ -> crate::db_diesel::invoice_line_row::InvoiceLineRowTypeMapping,
-        number_of_packs -> Integer,
+        number_of_packs -> Double,
         note -> Nullable<Text>,
     }
 }
@@ -54,6 +54,7 @@ impl Default for InvoiceLineRowType {
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
+#[changeset_options(treat_none_as_null = "true")]
 #[table_name = "invoice_line"]
 pub struct InvoiceLineRow {
     pub id: String,
@@ -75,7 +76,7 @@ pub struct InvoiceLineRow {
     pub tax: Option<f64>,
     #[column_name = "type_"]
     pub r#type: InvoiceLineRowType,
-    pub number_of_packs: i32,
+    pub number_of_packs: f64,
     pub note: Option<String>,
 }
 
@@ -113,9 +114,9 @@ impl<'a> InvoiceLineRowRepository<'a> {
         Ok(())
     }
 
-    pub fn find_one_by_id(&self, row_id: &str) -> Result<InvoiceLineRow, RepositoryError> {
+    pub fn find_one_by_id(&self, record_id: &str) -> Result<InvoiceLineRow, RepositoryError> {
         let result = invoice_line
-            .filter(id.eq(row_id))
+            .filter(id.eq(record_id))
             .first(&self.connection.connection);
         result.map_err(|err| RepositoryError::from(err))
     }

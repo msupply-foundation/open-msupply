@@ -36,7 +36,7 @@ pub enum ItemRowType {
     NonStock,
 }
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset)]
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq)]
 #[table_name = "item"]
 pub struct ItemRow {
     pub id: String,
@@ -123,5 +123,10 @@ impl<'a> ItemRowRepository<'a> {
             .filter(id.eq_any(ids))
             .load(&self.connection.connection)?;
         Ok(result)
+    }
+
+    pub fn delete(&self, item_id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(item.filter(id.eq(item_id))).execute(&self.connection.connection)?;
+        Ok(())
     }
 }

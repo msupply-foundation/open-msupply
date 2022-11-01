@@ -8,23 +8,28 @@
       "elements": [
         {
           "type": "Control",
-          "scope": "#/properties/physicalExamination/properties/height"
+          "scope": "#/properties/physicalExamination/properties/height",
+          "options": { "width": "100px" }
         },
         {
           "type": "Control",
-          "scope": "#/properties/physicalExamination/properties/midUpperArmCircumference"
+          "scope": "#/properties/physicalExamination/properties/midUpperArmCircumference",
+          "options": { "width": "100px" }
         },
         {
           "type": "Control",
-          "scope": "#/properties/physicalExamination/properties/weight"
+          "scope": "#/properties/physicalExamination/properties/weight",
+          "options": { "width": "100px" }
         },
         {
           "type": "Control",
-          "scope": "#/properties/physicalExamination/properties/bloodPressure"
+          "scope": "#/properties/physicalExamination/properties/bloodPressure",
+          "options": { "width": "100px" }
         },
         {
-          "type": "Control",
-          "scope": "#/properties/physicalExamination/properties/bodyMassIndex"
+          "type": "BMI",
+          "scope": "#/properties/physicalExamination/properties",
+          "label": "Body Mass Index (BMI)"
         },
         {
           "type": "Control",
@@ -32,18 +37,18 @@
         },
         {
           "type": "Control",
-          "scope": "#/properties/physicalExamination/properties/whoStaging"
-        },
-        {
-          "type": "Control",
           "scope": "#/properties/physicalExamination/properties/symptoms"
         },
         {
           "type": "Control",
-          "scope": "#/properties/physicalExamination/properties/opportunisticInfection"
+          "scope": "#/properties/physicalExamination/properties/opportunisticInfections"
         },
         {
-          "type": "HorizontalLayout",
+          "type": "Control",
+          "scope": "#/properties/physicalExamination/properties/whoStaging"
+        },
+        {
+          "type": "VerticalLayout",
           "elements": [
             {
               "type": "EncounterLineChart",
@@ -176,7 +181,7 @@
     {
       "type": "Category",
       "label": "Viral Load",
-      "options": { "icon": "microscope" },
+      "options": { "icon": "virus" },
       "elements": [
         {
           "type": "VerticalLayout",
@@ -313,7 +318,7 @@
     {
       "type": "Category",
       "label": "Haem",
-      "options": { "icon": "microscope" },
+      "options": { "icon": "test-tube" },
       "elements": [
         {
           "type": "Control",

@@ -13,14 +13,14 @@ export type StockCountsQueryVariables = Types.Exact<{
 }>;
 
 
-export type StockCountsQuery = { __typename: 'FullQuery', stockCounts: { __typename: 'StockCounts', expired: number, expiringSoon: number } };
+export type StockCountsQuery = { __typename: 'Queries', stockCounts: { __typename: 'StockCounts', expired: number, expiringSoon: number } };
 
 export type ItemStatsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
 }>;
 
 
-export type ItemStatsQuery = { __typename: 'FullQuery', items: { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null } }> } };
+export type ItemStatsQuery = { __typename: 'Queries', items: { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null } }> } };
 
 export const ItemStatsFragmentDoc = gql`
     fragment ItemStats on ItemNode {

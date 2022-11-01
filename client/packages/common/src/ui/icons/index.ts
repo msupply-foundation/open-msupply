@@ -20,6 +20,8 @@ export { DashboardIcon } from './Dashboard';
 export { DeleteIcon } from './Delete';
 export { DownloadIcon } from './Download';
 export { EditIcon } from './Edit';
+export { EyeIcon } from './Eye';
+export { EyeOffIcon } from './EyeOff';
 export { FilterIcon } from './Filter';
 export { HomeIcon } from './Home';
 export { InfoIcon } from './Info';

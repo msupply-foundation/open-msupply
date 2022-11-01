@@ -5,7 +5,7 @@ use super::{
 };
 
 use crate::{
-    diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort_asc_nulls_last},
+    diesel_macros::{apply_date_filter, apply_equal_filter, apply_sort_asc_nulls_last},
     repository_error::RepositoryError,
     DateFilter, EqualFilter, Pagination, Sort,
 };
@@ -114,12 +114,12 @@ fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery
         apply_equal_filter!(query, id, stock_line_dsl::id);
         apply_equal_filter!(query, item_id, stock_line_dsl::item_id);
         apply_equal_filter!(query, location_id, stock_line_dsl::location_id);
-        apply_date_time_filter!(query, expiry_date, stock_line_dsl::expiry_date);
+        apply_date_filter!(query, expiry_date, stock_line_dsl::expiry_date);
         apply_equal_filter!(query, store_id, stock_line_dsl::store_id);
 
         query = match is_available {
-            Some(true) => query.filter(stock_line_dsl::available_number_of_packs.gt(0)),
-            Some(false) => query.filter(stock_line_dsl::available_number_of_packs.lt(1)),
+            Some(true) => query.filter(stock_line_dsl::available_number_of_packs.gt(0.0)),
+            Some(false) => query.filter(stock_line_dsl::available_number_of_packs.le(0.0)),
             None => query,
         };
     }
@@ -184,8 +184,8 @@ impl StockLine {
             .map(|location_row| location_row.name.as_str())
     }
 
-    pub fn available_quantity(&self) -> i32 {
-        self.stock_line_row.available_number_of_packs * self.stock_line_row.pack_size
+    pub fn available_quantity(&self) -> f64 {
+        self.stock_line_row.available_number_of_packs * self.stock_line_row.pack_size as f64
     }
 }
 
@@ -197,8 +197,8 @@ mod test {
     use crate::{
         mock::MockDataInserts,
         mock::{mock_item_a, mock_store_a, MockData},
-        test_db, Pagination, StockLine, StockLineRepository, StockLineRow, StockLineSort,
-        StockLineSortField,
+        test_db, Pagination, StockLine, StockLineFilter, StockLineRepository, StockLineRow,
+        StockLineSort, StockLineSortField,
     };
 
     fn from_row(stock_line_row: StockLineRow) -> StockLine {
@@ -267,6 +267,64 @@ mod test {
         assert_eq!(
             vec![from_row(line3()), from_row(line2()), from_row(line1())],
             repo.query(Pagination::new(), None, Some(sort)).unwrap()
+        );
+    }
+
+    #[actix_rt::test]
+    async fn test_stock_line_is_available() {
+        // Stock not available
+        fn line1() -> StockLineRow {
+            inline_init(|r: &mut StockLineRow| {
+                r.id = "line1".to_string();
+                r.store_id = mock_store_a().id;
+                r.item_id = mock_item_a().id;
+                r.expiry_date = Some(NaiveDate::from_ymd(2021, 01, 01));
+                r.available_number_of_packs = 0.0;
+            })
+        }
+
+        // Stock available
+        fn line2() -> StockLineRow {
+            inline_init(|r: &mut StockLineRow| {
+                r.id = "line2".to_string();
+                r.store_id = mock_store_a().id;
+                r.item_id = mock_item_a().id;
+                r.expiry_date = Some(NaiveDate::from_ymd(2021, 02, 01));
+                r.available_number_of_packs = 1.0;
+            })
+        }
+
+        let (_, connection, _, _) = test_db::setup_all_with_data(
+            "test_stock_line_is_available",
+            MockDataInserts::none().stores().items().names().units(),
+            inline_init(|r: &mut MockData| {
+                r.stock_lines = vec![line1(), line2()];
+            }),
+        )
+        .await;
+
+        let repo = StockLineRepository::new(&connection);
+
+        // Stock not available
+        assert_eq!(
+            vec![from_row(line1())],
+            repo.query(
+                Pagination::new(),
+                Some(StockLineFilter::new().is_available(false)),
+                None
+            )
+            .unwrap()
+        );
+
+        // Stock available
+        assert_eq!(
+            vec![from_row(line2())],
+            repo.query(
+                Pagination::new(),
+                Some(StockLineFilter::new().is_available(true)),
+                None
+            )
+            .unwrap()
         );
     }
 }

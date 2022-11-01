@@ -29,7 +29,7 @@ const MasterListsTable = () => {
 };
 
 export const MasterListsTab = () => (
-  <Box justifyContent="center" display="flex">
+  <Box justifyContent="center" display="flex" flex={1} paddingTop={3}>
     <Box flex={1} display="flex" style={{ maxWidth: 1000 }}>
       <TableProvider
         createStore={createTableStore}

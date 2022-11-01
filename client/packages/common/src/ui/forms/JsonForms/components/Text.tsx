@@ -35,12 +35,15 @@ const UIComponent = (props: ControlProps) => {
   if (!props.visible) {
     return null;
   }
+
+  const width = props.uischema?.options?.['width'] ?? '100%';
+
   return (
     <DetailInputWithLabelRow
       label={label}
       inputProps={{
         value: localData ?? '',
-        sx: { margin: 0.5, width: '100%' },
+        sx: { margin: 0.5, width },
         onChange: e => {
           setLatestKey(Date.now());
           setLocalData(e.target.value);

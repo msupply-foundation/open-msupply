@@ -5,10 +5,10 @@ import {
   LoadingButton,
   Box,
   Typography,
+  InitialisationStatusType,
   AlertIcon,
   useHostContext,
   useNavigate,
-  ServerStatus,
   useElectronClient,
   frontEndHostDisplay,
   LocalStorage,
@@ -23,7 +23,12 @@ export const Login = () => {
   const t = useTranslation('app');
   const { connectedServer } = useElectronClient();
   const { setPageTitle } = useHostContext();
-  const { data } = useHost.utils.settings();
+  const { data: initialisationStatus } = useHost.utils.initialisationStatus();
+  const hashInput = {
+    logo: LocalStorage.getItem('/theme/logohash') ?? '',
+    theme: LocalStorage.getItem('/theme/customhash') ?? '',
+  };
+  const { data: displaySettings } = useHost.settings.displaySettings(hashInput);
   const navigate = useNavigate();
 
   const passwordRef = React.useRef(null);
@@ -39,15 +44,32 @@ export const Login = () => {
   } = useLoginForm(passwordRef);
 
   useEffect(() => {
+    if (!displaySettings) return;
+
+    const { customLogo, customTheme } = displaySettings;
+    if (!!customLogo) {
+      LocalStorage.setItem('/theme/logo', customLogo.value);
+      LocalStorage.setItem('/theme/logohash', customLogo.hash);
+    }
+    if (!!customTheme) {
+      LocalStorage.setItem('/theme/custom', JSON.parse(customTheme.value));
+      LocalStorage.setItem('/theme/customhash', customTheme.hash);
+    }
+  }, [displaySettings]);
+
+  useEffect(() => {
     setPageTitle(`${t('app.login')} | ${t('app')} `);
     LocalStorage.removeItem('/auth/error');
   }, []);
 
   useEffect(() => {
-    if (data?.status === ServerStatus.Stage_0) {
+    if (
+      !!initialisationStatus &&
+      initialisationStatus !== InitialisationStatusType.Initialised
+    ) {
       navigate(`/${AppRoute.Initialise}`);
     }
-  }, [data]);
+  }, [initialisationStatus]);
 
   return (
     <LoginLayout
