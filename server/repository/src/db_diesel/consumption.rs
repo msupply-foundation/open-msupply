@@ -1,7 +1,7 @@
 use super::{consumption::consumption::dsl as consumption_dsl, StorageConnection};
 
 use crate::{
-    diesel_macros::{apply_date_time_filter, apply_equal_filter},
+    diesel_macros::{apply_date_filter, apply_equal_filter},
     DateFilter, EqualFilter, RepositoryError,
 };
 use diesel::prelude::*;
@@ -12,7 +12,7 @@ table! {
         id -> Text,
         item_id -> Text,
         store_id -> Text,
-        quantity -> Integer,
+        quantity -> BigInt,
         date -> Date,
     }
 }
@@ -25,7 +25,7 @@ pub struct ConsumptionRow {
     pub id: String,
     pub item_id: String,
     pub store_id: String,
-    pub quantity: i32,
+    pub quantity: i64,
     pub date: NaiveDate,
 }
 
@@ -81,7 +81,7 @@ impl<'a> ConsumptionRepository<'a> {
 
             apply_equal_filter!(query, item_id, consumption_dsl::item_id);
             apply_equal_filter!(query, store_id, consumption_dsl::store_id);
-            apply_date_time_filter!(query, date, consumption_dsl::date);
+            apply_date_filter!(query, date, consumption_dsl::date);
         }
 
         // Debug diesel query

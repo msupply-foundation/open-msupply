@@ -6,7 +6,7 @@ server:
       http://localhost:3003,
       https://demo-open.msupply.org,
       http://localhost:8000,
-    ] # Used to set the allowed Origin in Cross Origin Requst Security
+    ] # Used to set the allowed Origin in Cross Origin Request Security
   base_dir: "app_data"
 database:
   host: "localhost"

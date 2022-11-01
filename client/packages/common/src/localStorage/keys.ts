@@ -19,7 +19,9 @@ export type LocalStorageRecord = {
   '/localisation/locale': SupportedLocales;
   '/groupbyitem': GroupByItem;
   '/theme/custom': ThemeOptions;
+  '/theme/customhash': string;
   '/theme/logo': string;
+  '/theme/logohash': string;
   '/mru/credentials': AuthenticationCredentials;
   '/auth/error': AuthError | undefined;
   '/pagination/rowsperpage': number;

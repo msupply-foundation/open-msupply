@@ -1,7 +1,7 @@
 use chrono::{NaiveDate, Utc};
 use repository::{
-    EqualFilter, InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRow,
-    InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType, ItemRowRepository, LogType,
+    ActivityLogType, EqualFilter, InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType,
+    InvoiceRow, InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType, ItemRowRepository,
     NameRowRepository, NumberRowType, RepositoryError, StockLineRow, StockLineRowRepository,
     Stocktake, StocktakeLine, StocktakeLineFilter, StocktakeLineRepository, StocktakeLineRow,
     StocktakeLineRowRepository, StocktakeRow, StocktakeRowRepository, StocktakeStatus,
@@ -10,18 +10,29 @@ use repository::{
 use util::{constants::INVENTORY_ADJUSTMENT_NAME_CODE, inline_edit, uuid::uuid};
 
 use crate::{
-    log::log_entry, number::next_number, service_provider::ServiceContext,
+    activity_log::activity_log_entry, number::next_number, service_provider::ServiceContext,
     stocktake::query::get_stocktake, validate::check_store_id_matches,
 };
 
 use super::validate::{check_stocktake_exist, check_stocktake_not_finalised};
+
+#[derive(Debug, Clone)]
+pub enum UpdateStocktakeStatus {
+    Finalised,
+}
+
+impl Default for UpdateStocktakeStatus {
+    fn default() -> Self {
+        Self::Finalised
+    }
+}
 
 #[derive(Default, Debug, Clone)]
 pub struct UpdateStocktake {
     pub id: String,
     pub comment: Option<String>,
     pub description: Option<String>,
-    pub status: Option<StocktakeStatus>,
+    pub status: Option<UpdateStocktakeStatus>,
     pub stocktake_date: Option<NaiveDate>,
     pub is_locked: Option<bool>,
 }
@@ -72,7 +83,7 @@ fn validate(
     connection: &StorageConnection,
     store_id: &str,
     input: &UpdateStocktake,
-) -> Result<(StocktakeRow, Vec<StocktakeLine>), UpdateStocktakeError> {
+) -> Result<(StocktakeRow, Vec<StocktakeLine>, bool), UpdateStocktakeError> {
     let existing = match check_stocktake_exist(connection, &input.id)? {
         Some(existing) => existing,
         None => return Err(UpdateStocktakeError::StocktakeDoesNotExist),
@@ -90,7 +101,8 @@ fn validate(
     }
     let stocktake_lines = load_stocktake_lines(connection, &input.id)?;
 
-    if let Some(StocktakeStatus::Finalised) = input.status {
+    let status_changed = input.status.is_some();
+    if status_changed {
         if stocktake_lines.len() == 0 {
             return Err(UpdateStocktakeError::NoLines);
         }
@@ -102,7 +114,7 @@ fn validate(
         }
     }
 
-    Ok((existing, stocktake_lines))
+    Ok((existing, stocktake_lines, status_changed))
 }
 
 pub fn check_stocktake_is_not_locked(input: &UpdateStocktake, existing: &StocktakeRow) -> bool {
@@ -157,7 +169,7 @@ fn generate_stock_line_update(
         // TODO might get negative!
         available_number_of_packs: stock_line.available_number_of_packs + delta,
         total_number_of_packs: stock_line.total_number_of_packs + delta,
-        expiry_date: stock_line.expiry_date,
+        expiry_date: stocktake_line.line.expiry_date.or(stock_line.expiry_date),
         on_hold: stock_line.on_hold,
         note: stock_line.note.clone(),
     };
@@ -172,9 +184,9 @@ fn generate_stock_line_update(
         }
     };
 
-    let quantiy_change = i32::abs(delta);
-    let shipment_line = if quantiy_change > 0 {
-        let line_type = if delta > 0 {
+    let quantity_change = f64::abs(delta);
+    let shipment_line = if quantity_change > 0.0 {
+        let line_type = if delta > 0.0 {
             InvoiceLineRowType::StockIn
         } else {
             InvoiceLineRowType::StockOut
@@ -196,7 +208,7 @@ fn generate_stock_line_update(
             total_before_tax: 0.0,
             total_after_tax: 0.0,
             tax: None,
-            number_of_packs: quantiy_change,
+            number_of_packs: quantity_change,
             note: stock_line.note.clone(),
         })
     } else {
@@ -216,7 +228,7 @@ fn generate_new_stock_line(
     invoice_id: &str,
     stocktake_line: StocktakeLine,
 ) -> Result<StockLineJob, UpdateStocktakeError> {
-    let counted_number_of_packs = stocktake_line.line.counted_number_of_packs.unwrap_or(0);
+    let counted_number_of_packs = stocktake_line.line.counted_number_of_packs.unwrap_or(0.0);
     let row = stocktake_line.line;
     let pack_size = row.pack_size.unwrap_or(0);
     let cost_price_per_pack = row.cost_price_per_pack.unwrap_or(0.0);
@@ -255,7 +267,7 @@ fn generate_new_stock_line(
             )))
         }
     };
-    let shipment_line = if counted_number_of_packs > 0 {
+    let shipment_line = if counted_number_of_packs > 0.0 {
         Some(InvoiceLineRow {
             id: uuid(),
             r#type: InvoiceLineRowType::StockIn,
@@ -288,32 +300,38 @@ fn generate_new_stock_line(
 }
 
 fn generate(
-    connection: &StorageConnection,
-    user_id: &str,
+    ctx: &ServiceContext,
     UpdateStocktake {
         id: _,
+        status: _,
         comment: input_comment,
         description: input_description,
-        status: input_status,
         is_locked: input_is_locked,
         stocktake_date: input_stocktake_date,
     }: UpdateStocktake,
     existing: StocktakeRow,
     stocktake_lines: Vec<StocktakeLine>,
-    store_id: &str,
+    is_finalised: bool,
 ) -> Result<StocktakeGenerateJob, UpdateStocktakeError> {
-    if input_status != Some(StocktakeStatus::Finalised) {
+    let ServiceContext {
+        connection,
+        store_id,
+        user_id,
+        ..
+    } = ctx;
+
+    let stocktake = inline_edit(&existing, |mut u: StocktakeRow| {
+        u.description = input_description.or(u.description);
+        u.comment = input_comment.or(u.comment);
+        u.is_locked = input_is_locked.unwrap_or(false);
+        u.stocktake_date = input_stocktake_date.or(u.stocktake_date);
+        u
+    });
+
+    if !is_finalised {
         // just update the existing stocktake
-        let stocktake = inline_edit(&existing, |mut u: StocktakeRow| {
-            u.description = input_description.or(u.description);
-            u.status = input_status.unwrap_or(u.status);
-            u.comment = input_comment.or(u.comment);
-            u.is_locked = input_is_locked.unwrap_or(false);
-            u.stocktake_date = input_stocktake_date.or(u.stocktake_date);
-            u
-        });
         return Ok(StocktakeGenerateJob {
-            stocktake: stocktake,
+            stocktake,
             stocktake_lines: vec![],
             inventory_adjustment: None,
             inventory_adjustment_lines: vec![],
@@ -321,11 +339,20 @@ fn generate(
         });
     }
 
+    let now = Utc::now().naive_utc();
+    let inventory_adjustment_id = uuid();
+    let stocktake = inline_edit(&existing, |mut u: StocktakeRow| {
+        u.status = StocktakeStatus::Finalised;
+        u.finalised_datetime = Some(now);
+        u.inventory_adjustment_id = Some(inventory_adjustment_id.clone());
+        u
+    });
+
     // finalise the stocktake
     let mut inventory_adjustment_lines: Vec<InvoiceLineRow> = Vec::new();
     let mut stock_lines: Vec<StockLineRow> = Vec::new();
     let mut stocktake_line_updates: Vec<StocktakeLineRow> = Vec::new();
-    let shipment_id = uuid();
+
     for stocktake_line in stocktake_lines {
         let StockLineJob {
             stock_line,
@@ -333,10 +360,20 @@ fn generate(
             stocktake_line,
         } = if let Some(ref stock_line) = stocktake_line.stock_line {
             // adjust existing stock line
-            generate_stock_line_update(connection, &shipment_id, &stocktake_line, stock_line)?
+            generate_stock_line_update(
+                connection,
+                &inventory_adjustment_id,
+                &stocktake_line,
+                stock_line,
+            )?
         } else {
             // create new stock line
-            generate_new_stock_line(connection, store_id, &shipment_id, stocktake_line)?
+            generate_new_stock_line(
+                connection,
+                store_id,
+                &inventory_adjustment_id,
+                stocktake_line,
+            )?
         };
         stock_lines.push(stock_line);
         if let Some(shipment_line) = invoice_line {
@@ -348,18 +385,18 @@ fn generate(
     }
 
     // find inventory adjustment name:
-    let invad_name = NameRowRepository::new(connection)
+    let invalid_name = NameRowRepository::new(connection)
         .find_one_by_code(INVENTORY_ADJUSTMENT_NAME_CODE)?
         .ok_or(UpdateStocktakeError::InternalError(
             "Missing inventory adjustment name".to_string(),
         ))?;
 
     // create a shipment even if there are no shipment lines
-    let now = Utc::now().naive_utc();
+
     let shipment = InvoiceRow {
-        id: shipment_id,
+        id: inventory_adjustment_id,
         user_id: Some(user_id.to_string()),
-        name_id: invad_name.id,
+        name_id: invalid_name.id,
         store_id: store_id.to_string(),
         invoice_number: next_number(connection, &NumberRowType::InventoryAdjustment, store_id)?,
         name_store_id: None,
@@ -370,25 +407,16 @@ fn generate(
         on_hold: false,
         comment: None,
         their_reference: None,
-        created_datetime: now.clone(),
+        created_datetime: now,
         allocated_datetime: None,
         picked_datetime: None,
         shipped_datetime: None,
         delivered_datetime: None,
-        verified_datetime: Some(now.clone()),
+        verified_datetime: Some(now),
         colour: None,
         requisition_id: None,
         linked_invoice_id: None,
     };
-
-    let stocktake = inline_edit(&existing, |mut u: StocktakeRow| {
-        u.description = input_description.or(u.description);
-        u.status = input_status.unwrap_or(u.status).clone();
-        u.comment = input_comment.or(u.comment);
-        u.finalised_datetime = Some(now);
-        u.inventory_adjustment_id = Some(shipment.id.clone());
-        u
-    });
 
     Ok(StocktakeGenerateJob {
         stocktake,
@@ -407,15 +435,9 @@ pub fn update_stocktake(
         .connection
         .transaction_sync(|connection| {
             let stocktake_id = input.id.clone();
-            let (existing, stocktake_lines) = validate(connection, &ctx.store_id, &input)?;
-            let result = generate(
-                connection,
-                &ctx.user_id,
-                input.clone(),
-                existing.clone(),
-                stocktake_lines,
-                &ctx.store_id,
-            )?;
+            let (existing, stocktake_lines, status_changed) =
+                validate(connection, &ctx.store_id, &input)?;
+            let result = generate(&ctx, input, existing, stocktake_lines, status_changed)?;
 
             // write data to the DB
             // write new stock lines
@@ -439,12 +461,11 @@ pub fn update_stocktake(
             }
             StocktakeRowRepository::new(connection).upsert_one(&result.stocktake)?;
 
-            if existing.status != result.stocktake.status {
-                log_entry(
+            if status_changed {
+                activity_log_entry(
                     &ctx,
-                    LogType::StocktakeStatusFinalised,
-                    Some(stocktake_id.to_string()),
-                    Utc::now().naive_utc(),
+                    ActivityLogType::StocktakeStatusFinalised,
+                    &stocktake_id,
                 )?;
             }
 
@@ -466,26 +487,29 @@ impl From<RepositoryError> for UpdateStocktakeError {
 
 #[cfg(test)]
 mod test {
-
     use chrono::NaiveDate;
     use repository::{
         mock::{
-            mock_locked_stocktake, mock_stock_line_a, mock_stocktake_a,
+            mock_locked_stocktake, mock_stock_line_a, mock_stock_line_b, mock_stocktake_a,
             mock_stocktake_finalised_without_lines, mock_stocktake_full_edit,
             mock_stocktake_line_a, mock_stocktake_line_new_stock_line,
+            mock_stocktake_line_stock_deficit, mock_stocktake_line_stock_surplus,
             mock_stocktake_new_stock_line, mock_stocktake_no_count_change, mock_stocktake_no_lines,
             mock_stocktake_stock_deficit, mock_stocktake_stock_surplus, mock_store_a,
             MockDataInserts,
         },
         test_db::setup_all,
         InvoiceLineRowRepository, InvoiceLineRowType, StockLineRowRepository, StocktakeLine,
-        StocktakeLineRowRepository, StocktakeRepository, StocktakeRow, StocktakeStatus,
+        StocktakeLineRowRepository, StocktakeRepository, StocktakeRow,
     };
     use util::{inline_edit, inline_init};
 
     use crate::{
         service_provider::ServiceProvider,
-        stocktake::update::{UpdateStocktake, UpdateStocktakeError},
+        stocktake::{
+            update::{UpdateStocktake, UpdateStocktakeError},
+            UpdateStocktakeStatus,
+        },
     };
 
     #[actix_rt::test]
@@ -551,7 +575,7 @@ mod test {
 
         // error: SnapshotCountCurrentCountMismatch
         let mut stock_line = mock_stock_line_a();
-        stock_line.total_number_of_packs = 5;
+        stock_line.total_number_of_packs = 5.0;
         StockLineRowRepository::new(&context.connection)
             .upsert_one(&stock_line)
             .unwrap();
@@ -562,7 +586,7 @@ mod test {
                 inline_init(|i: &mut UpdateStocktake| {
                     i.id = stocktake.id;
                     i.comment = Some("Comment".to_string());
-                    i.status = Some(StocktakeStatus::Finalised);
+                    i.status = Some(UpdateStocktakeStatus::Finalised);
                 }),
             )
             .unwrap_err();
@@ -583,7 +607,7 @@ mod test {
                 inline_init(|i: &mut UpdateStocktake| {
                     i.id = stocktake.id;
                     i.comment = Some("Comment".to_string());
-                    i.status = Some(StocktakeStatus::Finalised);
+                    i.status = Some(UpdateStocktakeStatus::Finalised);
                 }),
             )
             .unwrap_err();
@@ -591,12 +615,17 @@ mod test {
 
         // success surplus should result in StockIn shipment line
         let stocktake = mock_stocktake_stock_surplus();
+        let stocktake_line = mock_stocktake_line_stock_surplus();
+        let stock_line = mock_stock_line_b();
+        let surplus_amount =
+            stocktake_line.counted_number_of_packs.unwrap() - stock_line.total_number_of_packs;
+
         let result = service
             .update_stocktake(
                 &context,
                 inline_init(|i: &mut UpdateStocktake| {
                     i.id = stocktake.id;
-                    i.status = Some(StocktakeStatus::Finalised);
+                    i.status = Some(UpdateStocktakeStatus::Finalised);
                 }),
             )
             .unwrap();
@@ -606,15 +635,21 @@ mod test {
             .pop()
             .unwrap();
         assert_eq!(shipment.r#type, InvoiceLineRowType::StockIn);
+        assert_eq!(shipment.number_of_packs, surplus_amount);
 
         // success deficit should result in StockOut shipment line
         let stocktake = mock_stocktake_stock_deficit();
+        let stocktake_line = mock_stocktake_line_stock_deficit();
+        let stock_line = mock_stock_line_b();
+        let deficit_amount =
+            stocktake_line.counted_number_of_packs.unwrap() - stock_line.total_number_of_packs;
+
         let result = service
             .update_stocktake(
                 &context,
                 inline_init(|i: &mut UpdateStocktake| {
                     i.id = stocktake.id;
-                    i.status = Some(StocktakeStatus::Finalised);
+                    i.status = Some(UpdateStocktakeStatus::Finalised);
                 }),
             )
             .unwrap();
@@ -624,6 +659,7 @@ mod test {
             .pop()
             .unwrap();
         assert_eq!(shipment.r#type, InvoiceLineRowType::StockOut);
+        assert_eq!(shipment.number_of_packs, f64::abs(deficit_amount));
 
         // success: no count change should not generate shipment line
         let stocktake = mock_stocktake_no_count_change();
@@ -632,7 +668,7 @@ mod test {
                 &context,
                 inline_init(|i: &mut UpdateStocktake| {
                     i.id = stocktake.id;
-                    i.status = Some(StocktakeStatus::Finalised);
+                    i.status = Some(UpdateStocktakeStatus::Finalised);
                 }),
             )
             .unwrap();
@@ -649,7 +685,6 @@ mod test {
                 &context,
                 inline_init(|i: &mut UpdateStocktake| {
                     i.id = stocktake.id;
-                    i.status = Some(StocktakeStatus::New);
                 }),
             )
             .unwrap();
@@ -713,7 +748,7 @@ mod test {
                     id: stocktake.id.clone(),
                     comment: Some("comment_1".to_string()),
                     description: Some("description_1".to_string()),
-                    status: Some(StocktakeStatus::New),
+                    status: None,
                     stocktake_date: Some(NaiveDate::from_ymd(2019, 03, 20)),
                     is_locked: Some(false),
                 },
@@ -738,7 +773,7 @@ mod test {
                 &context,
                 inline_init(|i: &mut UpdateStocktake| {
                     i.id = stocktake.id.clone();
-                    i.status = Some(StocktakeStatus::Finalised);
+                    i.status = Some(UpdateStocktakeStatus::Finalised);
                 }),
             )
             .unwrap();

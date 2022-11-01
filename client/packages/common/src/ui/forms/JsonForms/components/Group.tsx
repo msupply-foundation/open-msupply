@@ -34,6 +34,8 @@ const UIComponent = (props: LayoutProps) => {
         width={'100%'}
         textAlign="left"
         marginBottom={1}
+        paddingBottom={1}
+        paddingTop={3}
       >
         <strong>{(uischema as GroupLayout).label}</strong>
       </Typography>

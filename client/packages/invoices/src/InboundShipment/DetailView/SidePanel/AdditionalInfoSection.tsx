@@ -50,7 +50,7 @@ export const AdditionalInfoSectionComponent = () => {
         <BufferedTextArea
           disabled={isDisabled}
           onChange={e => update({ comment: e.target.value })}
-          value={comment}
+          value={comment || ''}
         />
       </Grid>
     </DetailPanelSection>

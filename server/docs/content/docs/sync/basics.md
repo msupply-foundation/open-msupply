@@ -36,7 +36,7 @@ toc = true
 * `Store` - a site can have multiple stores. Stores share central data, but maintain their own remote data. For a given site, a store can be cateorised as `active`or `collector`.
 * `Active store` - if an instance of a store is `active` on a given site, that site has permission to edit remote data for that store. To ensure data integrity, a store can be active on no more than a single remote site at any given time.
 * `Collector store` - if an instance of a store is marked as a `collector` on a given site, that site has permission to read but not edit remote data for that store. Every store has a collector instance on the central server.
-* `Store visibility` - for a store to send or recieve stock to or from another store, the stores must be visible to each other. The concept of visibility is symmetrical i.e. if store A is visible in store B, then store B is also visible in store A.
+* `Store visibility` - for a store to send or receive stock to or from another store, the stores must be visible to each other. The concept of visibility is symmetrical i.e. if store A is visible in store B, then store B is also visible in store A.
 * `Central data` data which is only editable on the primary site. Central data is synchronised to all sites via the central server. The main types of central data are items, facilities and categories.
 * `Central store data`: data which is only editable on the central server. Central store data is synchronised with the site where the store is active. The main types of central store data are store records themselves, stores preferences and store visibility records.
 * `Remote data`: also known as `store data`, remote data is data which is only editable on a single remote site. Store data is synchronised with the central server. The main types of remote data are invoices, requisitions and stocktakes (and their related child tables, such as invoice_lines, requisition_lines etc.).
@@ -54,7 +54,7 @@ toc = true
     * The `central_change_log` table has a single record for each record of central data. This record has a `u64` serial number*.
 	* When a record is modified or inserted, the serial number is incremented.
     * Each remote site maintains a cursor recording its position in the change log. The remote site retrieves records sequentially, incrementing its cursor as it progresses.
-	* Remote sites are responsible for maintaining their own cursor (remote sites are not responsibile for confirming receipt of records).
+	* Remote sites are responsible for maintaining their own cursor (remote sites are not responsible for confirming receipt of records).
 
 *Hello Postgres, with your `u32` vacuum cleaning ;-).
 
@@ -77,4 +77,4 @@ toc = true
 
 * Why do databases have ids?
 
-Previously we have had problems with restoration of backup data or having two sites trying to initialise and claiming to be the same site. Having unique identifiers for each databases prevents this occuring. The central server stores the active database id on initialisation, and will not allow connections from a database with a different identifier (remote site data restoration should always ensure that the stored identifier is deleted).
+Previously we have had problems with restoration of backup data or having two sites trying to initialise and claiming to be the same site. Having unique identifiers for each databases prevents this occurring. The central server stores the active database id on initialisation, and will not allow connections from a database with a different identifier (remote site data restoration should always ensure that the stored identifier is deleted).

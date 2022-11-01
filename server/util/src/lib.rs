@@ -4,6 +4,9 @@ pub mod hash;
 pub mod timezone;
 pub mod uuid;
 
+mod logger;
+pub use logger::*;
+
 mod inline_init;
 pub use inline_init::*;
 
@@ -12,3 +15,12 @@ pub use number_operations::*;
 
 mod date_operations;
 pub use date_operations::*;
+
+mod test_helpers;
+pub use test_helpers::*;
+
+mod json;
+pub use json::*;
+
+mod error;
+pub use error::*;

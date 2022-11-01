@@ -9,10 +9,10 @@ import {
   useTheme,
   Theme,
   alpha,
-  PositiveNumberInputCell,
-  NonNegativeIntegerCell,
   QueryParamsProvider,
   createQueryParamsStore,
+  NonNegativeDecimalCell,
+  PositiveNumberInputCell,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import {
@@ -41,6 +41,7 @@ const getBatchColumn = (
     backgroundColor: alpha(theme.palette.background.menu, 0.4),
     // Remember previously entered batches for this item and suggest them in future shipments
     autocompleteProvider: data => `inboundshipment${data.item.id}`,
+    accessor: ({ rowData }) => rowData.batch || '',
   },
 ];
 const getExpiryColumn = (
@@ -69,7 +70,7 @@ export const QuantityTableComponent: FC<TableProps> = ({
       [
         'numberOfPacks',
         {
-          Cell: NonNegativeIntegerCell,
+          Cell: NonNegativeDecimalCell,
           width: 100,
           label: 'label.num-packs',
           setter: updateDraftLine,

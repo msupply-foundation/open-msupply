@@ -26,7 +26,7 @@ fn mock_outbound_shipment_line_no_stock_line() -> InvoiceLineRow {
         total_after_tax: 2.0,
         tax: None,
         r#type: InvoiceLineRowType::StockOut,
-        number_of_packs: 1,
+        number_of_packs: 1.0,
         note: None,
     }
 }

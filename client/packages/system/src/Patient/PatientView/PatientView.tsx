@@ -125,28 +125,32 @@ const PatientDetailView: FC = () => {
   });
 
   return (
-    <>
-      <Box style={{ position: 'absolute', bottom: 40, right: 30, zIndex: 100 }}>
-        <Box gap={0.5} flexDirection="row" display="flex" alignItems="center">
-          <DialogButton
-            variant="cancel"
-            disabled={!isDirty || isSaving}
-            onClick={() => {
-              showCancelConfirmation();
-            }}
-          />
-          <LoadingButton
-            color="secondary"
-            disabled={!isDirty}
-            isLoading={isSaving}
-            onClick={() => showSaveConfirmation()}
-          >
-            {createDoc ? t('button.create') : t('button.save')}
-          </LoadingButton>
+    <Box flex={1} display="flex" justifyContent="center">
+      <Box style={{ maxWidth: 1200, flex: 1 }}>
+        <Box
+          style={{ position: 'absolute', bottom: 40, right: 30, zIndex: 100 }}
+        >
+          <Box gap={0.5} flexDirection="row" display="flex" alignItems="center">
+            <DialogButton
+              variant="cancel"
+              disabled={!isDirty || isSaving}
+              onClick={() => {
+                showCancelConfirmation();
+              }}
+            />
+            <LoadingButton
+              color="secondary"
+              disabled={!isDirty}
+              isLoading={isSaving}
+              onClick={() => showSaveConfirmation()}
+            >
+              {createDoc ? t('button.create') : t('button.save')}
+            </LoadingButton>
+          </Box>
         </Box>
+        {JsonForm}
       </Box>
-      {JsonForm}
-    </>
+    </Box>
   );
 };
 

@@ -77,9 +77,12 @@ pub enum Resource {
     QueryEncounter,
     MutateProgram,
     MutateEncounter,
+    SyncInfo,
+    ManualSync,
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
+    // TODO use match instead of map (unless there is a specific case for map)
     let mut map = HashMap::new();
     // me: No permission needed
     map.insert(Resource::RouteMe, PermissionDSL::NoPermissionRequired);
@@ -293,6 +296,9 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         ]),
     );
 
+    // sync info and manual sync, not permission needed
+    map.insert(Resource::SyncInfo, PermissionDSL::NoPermissionRequired);
+    map.insert(Resource::ManualSync, PermissionDSL::NoPermissionRequired);
     map
 }
 

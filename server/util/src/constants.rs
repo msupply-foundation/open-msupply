@@ -12,9 +12,11 @@ pub const SYSTEM_NAME_CODES: &[&'static str] = &["invad", "build", "repack"];
 pub fn stock_line_expiring_soon_offset() -> Duration {
     Duration::weeks(6)
 }
-/// Expected delivery date offset (for request requisiton insert)
+/// Expected delivery date offset (for request requisition insert)
 pub fn expected_delivery_date_offset() -> Duration {
     Duration::weeks(2)
 }
 /// Default AMC calculation lookback
 pub const DEFAULT_AMC_LOOKBACK_MONTHS: u32 = 3;
+// System user
+pub const SYSTEM_USER_ID: &str = "omsupply_system";

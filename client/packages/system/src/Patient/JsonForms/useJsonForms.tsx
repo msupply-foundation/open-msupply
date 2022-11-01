@@ -14,6 +14,7 @@ import {
   EncounterLineChart,
   encounterLineChartTester,
 } from './components/EncounterLineChart';
+import { BMI, bmiTester } from './components/BMI';
 import { DateOfBirth, dateOfBirthTester } from './components/DateOfBirth';
 import { IdGenerator, idGeneratorTester } from './components/IdGenerator';
 import {
@@ -75,6 +76,7 @@ const additionalRenderers: JsonFormsRendererRegistryEntry[] = [
   { tester: encounterLineChartTester, renderer: EncounterLineChart },
   { tester: dispensedDurationTester, renderer: DispensedDuration },
   { tester: eventTriggerTester, renderer: EventTrigger },
+  { tester: bmiTester, renderer: BMI },
 ];
 
 export const useJsonForms = (

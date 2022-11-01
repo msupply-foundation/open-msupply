@@ -12,7 +12,8 @@ repository = { path = "../repository" }
 util = { path = "../util" }
 
 anymap = "0.12"
-anyhow = "1.0.44"
+anyhow = "1.0.56"
+async-trait = "0.1.57"
 thiserror = "1"
 bcrypt = "0.12.0"
 chrono = { version = "0.4", features = ["serde"] }
@@ -20,6 +21,7 @@ jsonschema = "0.16.0"
 jsonwebtoken = "8.0.1"
 log = "0.4.14"
 reqwest = { version = "0.11.10", features = ["json"] }
+url = "2.2"
 serde = "1.0.126"
 serde_json = "1.0.66"
 serde_yaml = "0.8.24"
@@ -35,9 +37,12 @@ actix-rt = "2.6.0"
 assert-json-diff = "2.0.1"
 httpmock = "0.6.6"
 rand = "0.8.5"
+actix-web = { version= "4.0.1" } 
+tokio = {version = "1.21.1", features = ["macros","rt-multi-thread", "time" ]}
 
 [features]
 default = ["sqlite"]
+integration_test = []
 sqlite = ["repository/sqlite"]
 memory = ["repository/sqlite"]
 postgres = ["repository/postgres"]

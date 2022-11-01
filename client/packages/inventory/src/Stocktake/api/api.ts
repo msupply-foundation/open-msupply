@@ -9,6 +9,8 @@ import {
   FilterBy,
   StocktakeSortFieldInput,
   DeleteStocktakeLineInput,
+  StocktakeNodeStatus,
+  UpdateStocktakeStatusInput,
 } from '@openmsupply-client/common';
 import {
   Sdk,
@@ -29,13 +31,16 @@ export type ListParams = {
 const stocktakeParser = {
   toUpdate: (patch: RecordPatch<StocktakeFragment>): UpdateStocktakeInput => ({
     description: patch.description,
-    status: patch.status,
     comment: patch.comment,
     id: patch.id,
     isLocked: patch.isLocked,
     stocktakeDate: patch.stocktakeDate
       ? Formatter.naiveDate(new Date(patch.stocktakeDate))
       : undefined,
+    status:
+      patch.status === StocktakeNodeStatus.Finalised
+        ? UpdateStocktakeStatusInput.Finalised
+        : undefined,
   }),
   line: {
     toDelete: (line: DraftStocktakeLine): DeleteStocktakeLineInput => ({
