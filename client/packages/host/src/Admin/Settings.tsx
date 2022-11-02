@@ -13,10 +13,9 @@ import {
   LocalStorage,
 } from '@openmsupply-client/common';
 import { themeOptions } from '@common/styles';
-import { LanguageMenu } from '../components';
+import { AppVersion, LanguageMenu } from '../components';
 import { Setting } from './Setting';
 import { SettingTextArea, TextValue } from './SettingTextArea';
-import packageJson from 'package.json';
 import { SyncSettings } from './SyncSettings';
 import { useHost } from '../api/hooks';
 
@@ -139,18 +138,7 @@ export const Settings: React.FC = () => {
         title={t('heading.custom-logo')}
       />
       <SyncSettings />
-      <Grid style={{ position: 'absolute', right: 0, bottom: 30 }}>
-        <Grid container padding={1} flexDirection="column">
-          <Grid item display="flex" flex={1} gap={1}>
-            <Grid item justifyContent="flex-end" flex={1} display="flex">
-              <Typography fontWeight={700}>{t('label.app-version')}</Typography>
-            </Grid>
-            <Grid item flex={1}>
-              <Typography whiteSpace="nowrap">{packageJson.version}</Typography>
-            </Grid>
-          </Grid>
-        </Grid>
-      </Grid>
+      <AppVersion />
     </Grid>
   );
 };
