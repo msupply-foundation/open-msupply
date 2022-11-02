@@ -5,30 +5,64 @@ use async_graphql::dataloader::*;
 use async_graphql::*;
 use service::service_provider::ServiceProvider;
 use std::collections::HashMap;
+use std::hash::Hasher;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DocumentRegistryLoaderInput {
+    pub allowed_docs: Vec<String>,
+    pub id: String,
+}
+
+impl DocumentRegistryLoaderInput {
+    pub fn new(allowed_docs: &Vec<String>, id: &String) -> Self {
+        DocumentRegistryLoaderInput {
+            allowed_docs: allowed_docs.clone(),
+            id: id.clone(),
+        }
+    }
+}
+
+impl std::hash::Hash for DocumentRegistryLoaderInput {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.allowed_docs.hash(state);
+        self.id.hash(state);
+    }
+}
 
 pub struct DocumentRegistryLoader {
     pub service_provider: Data<ServiceProvider>,
 }
 
 #[async_trait::async_trait]
-impl Loader<String> for DocumentRegistryLoader {
+impl Loader<DocumentRegistryLoaderInput> for DocumentRegistryLoader {
     type Value = DocumentRegistry;
     type Error = RepositoryError;
 
     async fn load(
         &self,
-        document_types: &[String],
-    ) -> Result<HashMap<String, Self::Value>, Self::Error> {
+        document_types: &[DocumentRegistryLoaderInput],
+    ) -> Result<HashMap<DocumentRegistryLoaderInput, Self::Value>, Self::Error> {
         let ctx = self.service_provider.basic_context()?;
 
-        let entries = self
-            .service_provider
-            .document_registry_service
-            .get_entries_by_doc_type(&ctx, document_types.to_vec())?;
+        let mut map = HashMap::<Vec<String>, Vec<String>>::new();
+        for item in document_types {
+            let entry = map.entry(item.allowed_docs.clone()).or_insert(vec![]);
+            entry.push(item.id.clone())
+        }
+        let mut out = HashMap::<DocumentRegistryLoaderInput, Self::Value>::new();
 
-        let mut out = HashMap::new();
-        for entry in entries {
-            out.insert(entry.document_type.clone(), entry);
+        for (allowed_docs, document_types) in map.into_iter() {
+            let entries = self
+                .service_provider
+                .document_registry_service
+                .get_entries_by_doc_type(&ctx, document_types.to_vec(), &allowed_docs)?;
+
+            for entry in entries.into_iter() {
+                out.insert(
+                    DocumentRegistryLoaderInput::new(&allowed_docs, &entry.id),
+                    entry,
+                );
+            }
         }
 
         Ok(out)
@@ -40,31 +74,40 @@ pub struct DocumentRegistryChildrenLoader {
 }
 
 #[async_trait::async_trait]
-impl Loader<String> for DocumentRegistryChildrenLoader {
+impl Loader<DocumentRegistryLoaderInput> for DocumentRegistryChildrenLoader {
     type Value = Vec<DocumentRegistry>;
     type Error = RepositoryError;
 
     async fn load(
         &self,
-        document_ids: &[String],
-    ) -> Result<HashMap<String, Self::Value>, Self::Error> {
+        document_ids: &[DocumentRegistryLoaderInput],
+    ) -> Result<HashMap<DocumentRegistryLoaderInput, Self::Value>, Self::Error> {
         let ctx = self.service_provider.basic_context()?;
 
-        let children = self
-            .service_provider
-            .document_registry_service
-            .get_children(&ctx, document_ids)?;
-
-        let mut out = HashMap::new();
-        for child in children {
-            let parent_id = child.parent_id.clone().ok_or(RepositoryError::DBError {
-                msg: "Error in registry children query".to_string(),
-                extra: "".to_string(),
-            })?;
-            let entry = out.entry(parent_id).or_insert(vec![]);
-            entry.push(child);
+        let mut map = HashMap::<Vec<String>, Vec<String>>::new();
+        for item in document_ids {
+            let entry = map.entry(item.allowed_docs.clone()).or_insert(vec![]);
+            entry.push(item.id.clone())
         }
+        let mut out = HashMap::<DocumentRegistryLoaderInput, Self::Value>::new();
 
+        for (allowed_docs, document_ids) in map.into_iter() {
+            let children = self
+                .service_provider
+                .document_registry_service
+                .get_children(&ctx, &document_ids, &allowed_docs)?;
+
+            for child in children {
+                let parent_id = child.parent_id.clone().ok_or(RepositoryError::DBError {
+                    msg: "Error in registry children query".to_string(),
+                    extra: "".to_string(),
+                })?;
+                let entry = out
+                    .entry(DocumentRegistryLoaderInput::new(&allowed_docs, &parent_id))
+                    .or_insert(vec![]);
+                entry.push(child);
+            }
+        }
         Ok(out)
     }
 }

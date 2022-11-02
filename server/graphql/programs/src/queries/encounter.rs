@@ -126,6 +126,7 @@ pub fn encounters(
         .map(|encounter_row| EncounterNode {
             store_id: store_id.clone(),
             encounter_row,
+            allowed_docs: allowed_docs.clone(),
         })
         .collect();
 

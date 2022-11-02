@@ -54,7 +54,11 @@ pub fn document(ctx: &Context<'_>, store_id: String, name: String) -> Result<Opt
             Some(DocumentFilter::new().name(StringFilter::equal_to(&name))),
         )?
         .into_iter()
-        .map(|document| DocumentNode { document })
+        .map(|document| DocumentNode {
+            // TODO if this endpoint is kept this needs to be fixed:
+            allowed_docs: vec![],
+            document,
+        })
         .next();
 
     Ok(node)
@@ -83,7 +87,11 @@ pub fn documents(
         .get_documents(&context, filter)?
         .into_iter()
         .into_iter()
-        .map(|document| DocumentNode { document })
+        .map(|document| DocumentNode {
+            // TODO if this endpoint is kept this needs to be fixed:
+            allowed_docs: vec![],
+            document,
+        })
         .collect();
 
     Ok(DocumentResponse::Response(DocumentConnector {

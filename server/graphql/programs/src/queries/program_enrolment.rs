@@ -103,6 +103,7 @@ pub fn program_enrolments(
         .map(|program_row| ProgramEnrolmentNode {
             store_id: store_id.clone(),
             program_row,
+            allowed_docs: allowed_docs.clone(),
         })
         .collect();
 

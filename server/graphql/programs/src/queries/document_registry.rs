@@ -66,19 +66,12 @@ pub fn document_registries(
     )?;
     let allowed_docs = context_permissions(Permission::ProgramQuery, &user.permissions);
 
-    let mut filter = filter
-        .map(|f| f.to_domain())
-        .unwrap_or(DocumentRegistryFilter::new());
-    // restrict query results to allowed entries
-    filter.document_type = Some(
-        filter
-            .document_type
-            .unwrap_or_default()
-            .restrict_results(&allowed_docs),
-    );
-
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
+
+    let filter = filter
+        .map(|f| f.to_domain())
+        .unwrap_or(DocumentRegistryFilter::new());
 
     let entries = service_provider
         .document_registry_service
@@ -87,6 +80,7 @@ pub fn document_registries(
             Some(filter),
             sort.and_then(|mut sort_list| sort_list.pop())
                 .map(|sort| sort.to_domain()),
+            &allowed_docs,
         )
         .map_err(|err| {
             let formatted_err = format! {"{:?}", err};
@@ -97,7 +91,10 @@ pub fn document_registries(
             total_count: usize_to_u32(entries.len()),
             nodes: entries
                 .into_iter()
-                .map(|document_registry| DocumentRegistryNode { document_registry })
+                .map(|document_registry| DocumentRegistryNode {
+                    allowed_docs: allowed_docs.clone(),
+                    document_registry,
+                })
                 .collect(),
         },
     ))

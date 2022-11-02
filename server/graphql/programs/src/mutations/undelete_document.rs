@@ -39,7 +39,11 @@ pub fn undelete_document(
             id: input.id.clone(),
         },
     ) {
-        Ok(document) => UndeleteDocumentResponse::Response(DocumentNode { document }),
+        Ok(document) => UndeleteDocumentResponse::Response(DocumentNode {
+            // TODO if this endpoint is kept this needs to be fixed:
+            allowed_docs: vec![],
+            document,
+        }),
         Err(error) => {
             let formatted_error = format!("{:?}", error);
             let graphql_error = match error {

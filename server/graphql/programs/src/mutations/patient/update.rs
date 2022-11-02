@@ -3,8 +3,9 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
+use repository::Permission;
 use service::{
-    auth::{Resource, ResourceAccessRequest},
+    auth::{context_permissions, Resource, ResourceAccessRequest},
     programs::patient::{UpdatePatient, UpdatePatientError},
 };
 
@@ -36,6 +37,7 @@ pub fn update_patient(
             store_id: Some(store_id.clone()),
         },
     )?;
+    let allowed_docs = context_permissions(Permission::ProgramMutate, &user.permissions);
 
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
@@ -54,6 +56,7 @@ pub fn update_patient(
         Ok(patient) => Ok(UpdatePatientResponse::Response(PatientNode {
             store_id,
             patient,
+            allowed_docs,
         })),
         Err(error) => {
             let formatted_error = format!("{:#?}", error);
