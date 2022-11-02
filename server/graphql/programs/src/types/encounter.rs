@@ -19,6 +19,7 @@ use super::{
 pub struct EncounterNode {
     pub store_id: String,
     pub encounter_row: EncounterRow,
+    pub allowed_docs: Vec<String>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
@@ -111,7 +112,10 @@ impl EncounterNode {
                 document_name: self.encounter_row.name.clone(),
             })
             .await?
-            .map(|document| DocumentNode { document })
+            .map(|document| DocumentNode {
+                allowed_docs: self.allowed_docs.clone(),
+                document,
+            })
             .ok_or(Error::new("Program without document"))?;
 
         Ok(result)

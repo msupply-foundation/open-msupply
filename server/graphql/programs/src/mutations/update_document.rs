@@ -82,7 +82,11 @@ pub fn update_document(
         .document_service
         .update_document(&context, input_to_raw_document(input))
     {
-        Ok(document) => UpdateDocumentResponse::Response(DocumentNode { document }),
+        Ok(document) => UpdateDocumentResponse::Response(DocumentNode {
+            // TODO if this endpoint is kept this needs to be fixed:
+            allowed_docs: vec![],
+            document,
+        }),
         Err(error) => UpdateDocumentResponse::Error(UpdateDocumentError {
             error: map_error(error)?,
         }),

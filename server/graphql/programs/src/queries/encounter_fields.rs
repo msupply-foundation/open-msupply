@@ -22,6 +22,8 @@ pub struct EncounterFieldsInput {
 pub struct EncounterFieldsNode {
     pub store_id: String,
     pub encounter_fields_result: EncounterFieldsResult,
+
+    allowed_docs: Vec<String>,
 }
 
 #[derive(SimpleObject)]
@@ -41,6 +43,7 @@ impl EncounterFieldsNode {
         EncounterNode {
             store_id: self.store_id.clone(),
             encounter_row: self.encounter_fields_result.row.clone(),
+            allowed_docs: self.allowed_docs.clone(),
         }
     }
 
@@ -99,6 +102,7 @@ pub fn encounter_fields(
         .map(|encounter_fields| EncounterFieldsNode {
             store_id: store_id.clone(),
             encounter_fields_result: encounter_fields,
+            allowed_docs: allowed_docs.clone(),
         })
         .collect();
 

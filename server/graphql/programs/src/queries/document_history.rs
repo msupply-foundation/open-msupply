@@ -47,7 +47,11 @@ pub fn document_history(
         total_count: usize_to_u32(documents.len()),
         nodes: documents
             .into_iter()
-            .map(|document| DocumentNode { document })
+            .map(|document| DocumentNode {
+                // TODO if this endpoint is kept this needs to be fixed:
+                allowed_docs: vec![],
+                document,
+            })
             .collect(),
     }))
 }

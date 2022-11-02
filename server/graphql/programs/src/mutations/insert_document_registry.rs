@@ -56,7 +56,11 @@ pub fn insert_document_registry(
         .insert(&context, to_domain(input))
     {
         Ok(document_registry) => {
-            InsertDocumentResponse::Response(DocumentRegistryNode { document_registry })
+            InsertDocumentResponse::Response(DocumentRegistryNode {
+                // TODO if this endpoint is kept this needs to be fixed:
+                allowed_docs: vec![],
+                document_registry,
+            })
         }
         Err(error) => {
             let formatted_error = format!("{:#?}", error);

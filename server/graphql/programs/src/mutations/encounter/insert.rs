@@ -46,13 +46,13 @@ pub fn insert_encounter(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
 
-    match allowed_docs.into_iter().find(|c| c == &input.r#type) {
-        None => Err(StandardGraphqlError::BadUserInput(format!(
+    if !allowed_docs.contains(&input.r#type) {
+        return Err(StandardGraphqlError::BadUserInput(format!(
             "User does not have access to {}",
             input.r#type,
-        ))),
-        Some(_) => Ok(()),
-    }?;
+        )))
+        .extend();
+    }
 
     let document = match service_provider.encounter_service.insert_encounter(
         &service_context,
@@ -103,5 +103,6 @@ pub fn insert_encounter(
     Ok(InsertEncounterResponse::Response(EncounterNode {
         store_id,
         encounter_row,
+        allowed_docs,
     }))
 }

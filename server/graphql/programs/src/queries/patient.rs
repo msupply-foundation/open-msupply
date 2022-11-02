@@ -11,10 +11,10 @@ use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 use graphql_general::{EqualFilterGenderInput, GenderInput};
 use graphql_types::types::GenderType;
 use repository::{
-    DateFilter, EqualFilter, Pagination, PaginationOption, ProgramEnrolmentFilter,
+    DateFilter, EqualFilter, Pagination, PaginationOption, Permission, ProgramEnrolmentFilter,
     SimpleStringFilter,
 };
-use service::auth::{Resource, ResourceAccessRequest};
+use service::auth::{context_permissions, Resource, ResourceAccessRequest};
 use service::programs::patient::{
     main_patient_doc_name, Patient, PatientFilter, PatientSort, PatientSortField,
 };
@@ -25,6 +25,7 @@ use crate::types::program_enrolment::ProgramEnrolmentNode;
 pub struct PatientNode {
     pub store_id: String,
     pub patient: Patient,
+    pub allowed_docs: Vec<String>,
 }
 
 #[Object]
@@ -107,7 +108,10 @@ impl PatientNode {
                 document_name: main_patient_doc_name(&self.patient.name_row.id),
             })
             .await?
-            .map(|document| DocumentNode { document });
+            .map(|document| DocumentNode {
+                document,
+                allowed_docs: self.allowed_docs.clone(),
+            });
 
         Ok(result)
     }
@@ -131,6 +135,7 @@ impl PatientNode {
             .map(|program_row| ProgramEnrolmentNode {
                 store_id: self.store_id.clone(),
                 program_row,
+                allowed_docs: self.allowed_docs.clone(),
             })
             .collect())
     }
@@ -254,13 +259,14 @@ pub fn patients(
     filter: Option<PatientFilterInput>,
     sort: Option<Vec<PatientSortInput>>,
 ) -> Result<PatientResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::QueryPatient,
             store_id: Some(store_id.to_string()),
         },
     )?;
+    let allowed_docs = context_permissions(Permission::ProgramQuery, &user.permissions);
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
@@ -279,6 +285,7 @@ pub fn patients(
         .map(|patient| PatientNode {
             store_id: store_id.clone(),
             patient,
+            allowed_docs: allowed_docs.clone(),
         })
         .collect();
     Ok(PatientResponse::Response(PatientConnector {
@@ -292,13 +299,14 @@ pub fn patient(
     store_id: String,
     patient_id: String,
 ) -> Result<Option<PatientNode>> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::QueryPatient,
             store_id: Some(store_id.to_string()),
         },
     )?;
+    let allowed_docs = context_permissions(Permission::ProgramQuery, &user.permissions);
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
@@ -317,6 +325,7 @@ pub fn patient(
         .map(|patient| PatientNode {
             store_id: store_id.clone(),
             patient,
+            allowed_docs,
         });
 
     Ok(node)
