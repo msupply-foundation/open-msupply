@@ -1,5 +1,8 @@
 use chrono::Utc;
-use repository::{Document, DocumentRepository, DocumentStatus, RepositoryError, TransactionError};
+use repository::{
+    Document, DocumentFilter, DocumentRepository, DocumentStatus, RepositoryError, StringFilter,
+    TransactionError,
+};
 
 use crate::{
     document::{document_service::DocumentInsertError, is_latest_doc, raw_document::RawDocument},
@@ -133,7 +136,11 @@ fn validate_patient_program_exists(
     program: &str,
 ) -> Result<bool, RepositoryError> {
     let doc_name = patient_doc_name(patient_id, program);
-    let document = DocumentRepository::new(&ctx.connection).find_one_by_name(&doc_name)?;
+    let document = DocumentRepository::new(&ctx.connection)
+        .query(Some(
+            DocumentFilter::new().name(StringFilter::equal_to(&doc_name)),
+        ))?
+        .pop();
     Ok(document.is_some())
 }
 
@@ -335,7 +342,7 @@ mod test {
             .unwrap();
         let found = service_provider
             .document_service
-            .get_document(&ctx, &result.name)
+            .get_document(&ctx, &result.name, None)
             .unwrap()
             .unwrap();
         assert!(found.parent_ids.is_empty());

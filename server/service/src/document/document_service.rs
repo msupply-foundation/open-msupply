@@ -1,8 +1,8 @@
 use chrono::Utc;
 use jsonschema::JSONSchema;
 use repository::{
-    Document, DocumentFilter, DocumentRepository, DocumentStatus, FormSchemaRowRepository,
-    RepositoryError, StorageConnection,
+    Document, DocumentFilter, DocumentRepository, DocumentStatus, EqualFilter,
+    FormSchemaRowRepository, RepositoryError, StorageConnection, StringFilter,
 };
 
 use crate::service_provider::ServiceContext;
@@ -76,25 +76,47 @@ pub trait DocumentServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         name: &str,
+        allowed_docs: Option<&[String]>,
     ) -> Result<Option<Document>, RepositoryError> {
-        DocumentRepository::new(&ctx.connection).find_one_by_name(name)
+        let mut filter = DocumentFilter::new().name(StringFilter::equal_to(name));
+        if let Some(allowed_docs) = allowed_docs {
+            filter = filter.r#type(EqualFilter::default().restrict_results(allowed_docs));
+        }
+        Ok(DocumentRepository::new(&ctx.connection)
+            .query(Some(filter))?
+            .pop())
     }
 
     fn get_documents(
         &self,
         ctx: &ServiceContext,
         filter: Option<DocumentFilter>,
+        allowed_docs: Option<&[String]>,
     ) -> Result<Vec<Document>, RepositoryError> {
-        DocumentRepository::new(&ctx.connection).query(filter)
+        let mut filter = filter.unwrap_or(DocumentFilter::new());
+        if let Some(allowed_docs) = allowed_docs {
+            filter.r#type = Some(
+                filter
+                    .r#type
+                    .unwrap_or_default()
+                    .restrict_results(allowed_docs),
+            );
+        }
+        DocumentRepository::new(&ctx.connection).query(Some(filter))
     }
 
     fn get_document_history(
         &self,
         ctx: &ServiceContext,
         name: &str,
+        allowed_docs: &[String],
     ) -> Result<Vec<Document>, DocumentHistoryError> {
+        let filter = DocumentFilter::new()
+            .name(StringFilter::equal_to(name))
+            .r#type(EqualFilter::default().restrict_results(allowed_docs));
+
         let repo = DocumentRepository::new(&ctx.connection);
-        let docs = repo.document_history(name)?;
+        let docs = repo.document_history(Some(filter))?;
         Ok(docs)
     }
 
@@ -376,7 +398,10 @@ mod document_service_test {
                 },
             )
             .unwrap();
-        let found = service.get_document(&context, doc_name).unwrap().unwrap();
+        let found = service
+            .get_document(&context, doc_name, None)
+            .unwrap()
+            .unwrap();
         assert_eq!(found, v1);
 
         // invalid parents
@@ -423,7 +448,10 @@ mod document_service_test {
             )
             .unwrap();
         assert_eq!(v2.parent_ids[0], v1.id);
-        let found = service.get_document(&context, doc_name).unwrap().unwrap();
+        let found = service
+            .get_document(&context, doc_name, None)
+            .unwrap()
+            .unwrap();
         assert_eq!(found, v2);
         assert_eq!(found.data["version"], 2);
 
@@ -451,7 +479,10 @@ mod document_service_test {
             )
             .unwrap();
         // should still find the correct document
-        let found = service.get_document(&context, doc_name).unwrap().unwrap();
+        let found = service
+            .get_document(&context, doc_name, None)
+            .unwrap()
+            .unwrap();
         assert_eq!(found.id, v2.id);
     }
 
@@ -607,7 +638,7 @@ mod document_service_test {
             )
             .unwrap();
         let document = service
-            .get_document(&context, &document_a().name)
+            .get_document(&context, &document_a().name, None)
             .unwrap()
             .unwrap();
         assert_eq!(document.status, DocumentStatus::Deleted);
@@ -632,7 +663,7 @@ mod document_service_test {
             .undelete_document(&context, "", DocumentUndelete { id: document.id })
             .unwrap();
         let undeleted_document = service
-            .get_document(&context, &document_a().name)
+            .get_document(&context, &document_a().name, None)
             .unwrap()
             .unwrap();
         assert_eq!(undeleted_document.status, DocumentStatus::Active);

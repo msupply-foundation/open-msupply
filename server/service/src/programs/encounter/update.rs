@@ -349,7 +349,7 @@ mod test {
             .unwrap();
         let found = service_provider
             .document_service
-            .get_document(&ctx, &result.name)
+            .get_document(&ctx, &result.name, None)
             .unwrap()
             .unwrap();
         assert_eq!(found.parent_ids, vec![initial_encounter.id]);

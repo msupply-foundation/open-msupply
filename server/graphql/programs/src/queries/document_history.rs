@@ -3,7 +3,8 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use service::auth::{Resource, ResourceAccessRequest};
+use repository::Permission;
+use service::auth::{context_permissions, Resource, ResourceAccessRequest};
 use service::document::document_service::DocumentHistoryError;
 use service::usize_to_u32;
 
@@ -19,20 +20,21 @@ pub fn document_history(
     store_id: String,
     document_name: String,
 ) -> Result<DocumentHistoryResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::QueryDocument,
             store_id: Some(store_id),
         },
     )?;
+    let allowed_docs = context_permissions(Permission::ProgramQuery, &user.permissions);
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
 
     let documents = service_provider
         .document_service
-        .get_document_history(&context, &document_name)
+        .get_document_history(&context, &document_name, &allowed_docs)
         .map_err(|err| {
             let formated_err = format! {"{:?}", err};
             let error = match err {
@@ -48,8 +50,7 @@ pub fn document_history(
         nodes: documents
             .into_iter()
             .map(|document| DocumentNode {
-                // TODO if this endpoint is kept this needs to be fixed:
-                allowed_docs: vec![],
+                allowed_docs: allowed_docs.clone(),
                 document,
             })
             .collect(),
