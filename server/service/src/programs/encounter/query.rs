@@ -15,19 +15,38 @@ pub(crate) fn encounters(
     pagination: Option<PaginationOption>,
     filter: Option<EncounterFilter>,
     sort: Option<EncounterSort>,
+    allowed_docs: Vec<String>,
 ) -> Result<ListResult<Encounter>, ListError> {
+    // restrict query results to allowed entries
+    let mut filter = filter.unwrap_or(EncounterFilter::new());
+    filter.r#type = Some(
+        filter
+            .r#type
+            .unwrap_or_default()
+            .restrict_results(&allowed_docs),
+    );
+
     let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
     let repository = EncounterRepository::new(&ctx.connection);
     Ok(ListResult {
-        rows: repository.query(pagination, filter.clone(), sort)?,
-        count: i64_to_u32(repository.count(filter)?),
+        rows: repository.query(pagination, Some(filter.clone()), sort)?,
+        count: i64_to_u32(repository.count(Some(filter))?),
     })
 }
 
 pub(crate) fn encounter(
     ctx: &ServiceContext,
-    filter: EncounterFilter,
+    mut filter: EncounterFilter,
+    allowed_docs: Vec<String>,
 ) -> Result<Option<Encounter>, RepositoryError> {
+    // restrict query results to allowed entries
+    filter.r#type = Some(
+        filter
+            .r#type
+            .unwrap_or_default()
+            .restrict_results(&allowed_docs),
+    );
+
     let repository = EncounterRepository::new(&ctx.connection);
     Ok(repository.query_by_filter(filter)?.pop())
 }

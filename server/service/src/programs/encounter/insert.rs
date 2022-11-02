@@ -14,6 +14,7 @@ use super::{
 
 #[derive(PartialEq, Debug)]
 pub enum InsertEncounterError {
+    NotAllowedToMutDocument,
     InvalidPatientOrProgram,
     InvalidDataSchema(Vec<String>),
     DataSchemaDoesNotExist,
@@ -35,7 +36,12 @@ pub fn insert_encounter(
     service_provider: &ServiceProvider,
     user_id: &str,
     input: InsertEncounter,
+    allowed_docs: Vec<String>,
 ) -> Result<Document, InsertEncounterError> {
+    if !allowed_docs.contains(&input.r#type) {
+        return Err(InsertEncounterError::NotAllowedToMutDocument);
+    }
+
     let patient = ctx
         .connection
         .transaction_sync(|_| {
@@ -225,11 +231,32 @@ mod test {
                     patient_id: patient.id.clone(),
                     r#type: program_type.clone(),
                 },
+                vec![program_type.clone()],
             )
             .unwrap();
 
         // start actual test:
         let service = &service_provider.encounter_service;
+
+        // NotAllowedToMutDocument
+        let err = service
+            .insert_encounter(
+                &ctx,
+                &service_provider,
+                "user",
+                InsertEncounter {
+                    data: json!({"encounter_datetime": true}),
+                    schema_id: schema.id.clone(),
+                    patient_id: patient.id.clone(),
+                    r#type: "SomeType".to_string(),
+                    program: program_type.clone(),
+                },
+                vec!["WrongType".to_string()],
+            )
+            .err()
+            .unwrap();
+        matches!(err, InsertEncounterError::NotAllowedToMutDocument);
+
         // InvalidPatientOrProgram,
         let err = service
             .insert_encounter(
@@ -243,6 +270,7 @@ mod test {
                     r#type: "SomeType".to_string(),
                     program: program_type.clone(),
                 },
+                vec!["SomeType".to_string()],
             )
             .err()
             .unwrap();
@@ -259,6 +287,7 @@ mod test {
                     r#type: "SomeType".to_string(),
                     program: "invalid".to_string(),
                 },
+                vec!["SomeType".to_string()],
             )
             .err()
             .unwrap();
@@ -277,6 +306,7 @@ mod test {
                     r#type: "SomeType".to_string(),
                     program: program_type.clone(),
                 },
+                vec!["SomeType".to_string()],
             )
             .err()
             .unwrap();
@@ -297,9 +327,10 @@ mod test {
                     data: serde_json::to_value(encounter.clone()).unwrap(),
                     schema_id: schema.id.clone(),
                     patient_id: patient.id.clone(),
-                    r#type: program_type.clone(),
+                    r#type: "SomeType".to_string(),
                     program: program_type.clone(),
                 },
+                vec!["SomeType".to_string()],
             )
             .unwrap();
         let found = service_provider

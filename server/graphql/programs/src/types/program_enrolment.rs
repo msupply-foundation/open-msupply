@@ -98,6 +98,7 @@ impl ProgramEnrolmentNode {
                         .program(EqualFilter::equal_to(&self.program_row.r#type)),
                 ),
                 None,
+                self.allowed_docs.clone(),
             )
             .map_err(StandardGraphqlError::from_list_error)?;
         Ok(entries

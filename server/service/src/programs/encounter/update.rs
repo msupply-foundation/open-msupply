@@ -16,6 +16,7 @@ use super::{
 
 #[derive(PartialEq, Debug)]
 pub enum UpdateEncounterError {
+    NotAllowedToMutDocument,
     InvalidParentId,
     EncounterRowNotFound,
     InvalidDataSchema(Vec<String>),
@@ -36,7 +37,12 @@ pub fn update_encounter(
     service_provider: &ServiceProvider,
     user_id: &str,
     input: UpdateEncounter,
+    allowed_docs: Vec<String>,
 ) -> Result<Document, UpdateEncounterError> {
+    if !allowed_docs.contains(&input.r#type) {
+        return Err(UpdateEncounterError::NotAllowedToMutDocument);
+    }
+
     let patient = ctx
         .connection
         .transaction_sync(|_| {
@@ -243,6 +249,7 @@ mod test {
                     patient_id: patient.id.clone(),
                     r#type: program_type.clone(),
                 },
+                vec![program_type.clone()],
             )
             .unwrap();
         let service = &service_provider.encounter_service;
@@ -263,8 +270,27 @@ mod test {
                     r#type: "TestEncounterType".to_string(),
                     program: program_type.clone(),
                 },
+                vec!["TestEncounterType".to_string()],
             )
             .unwrap();
+
+        // NotAllowedToMutDocument
+        let err = service
+            .update_encounter(
+                &ctx,
+                &service_provider,
+                "user",
+                UpdateEncounter {
+                    r#type: "TestEncounterType".to_string(),
+                    data: json!({"enrolment_datetime": true}),
+                    schema_id: schema.id.clone(),
+                    parent: "invalid".to_string(),
+                },
+                vec!["WrongType".to_string()],
+            )
+            .err()
+            .unwrap();
+        matches!(err, UpdateEncounterError::NotAllowedToMutDocument);
 
         // InvalidParentId
         let err = service
@@ -278,6 +304,7 @@ mod test {
                     schema_id: schema.id.clone(),
                     parent: "invalid".to_string(),
                 },
+                vec!["TestEncounterType".to_string()],
             )
             .err()
             .unwrap();
@@ -295,6 +322,7 @@ mod test {
                     schema_id: schema.id.clone(),
                     parent: initial_encounter.id.clone(),
                 },
+                vec!["TestEncounterType".to_string()],
             )
             .err()
             .unwrap();
@@ -316,6 +344,7 @@ mod test {
                     schema_id: schema.id.clone(),
                     parent: initial_encounter.id.clone(),
                 },
+                vec!["TestEncounterType".to_string()],
             )
             .unwrap();
         let found = service_provider

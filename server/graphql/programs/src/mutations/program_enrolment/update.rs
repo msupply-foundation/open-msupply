@@ -45,14 +45,6 @@ pub fn update_program_enrolment(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
 
-    if !allowed_docs.contains(&input.r#type) {
-        return Err(StandardGraphqlError::BadUserInput(format!(
-            "User does not have access to {}",
-            input.r#type,
-        )))
-        .extend();
-    }
-
     let document = match service_provider
         .program_enrolment_service
         .upsert_program_enrolment(
@@ -66,11 +58,15 @@ pub fn update_program_enrolment(
                 patient_id: input.patient_id,
                 r#type: input.r#type,
             },
+            allowed_docs.clone(),
         ) {
         Ok(document) => document,
         Err(error) => {
             let formatted_error = format!("{:#?}", error);
             let std_err = match error {
+                UpsertProgramEnrolmentError::NotAllowedToMutDocument => {
+                    StandardGraphqlError::Forbidden(formatted_error)
+                }
                 UpsertProgramEnrolmentError::InvalidPatientId => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
@@ -102,6 +98,7 @@ pub fn update_program_enrolment(
         .program_enrolment(
             &service_context,
             ProgramEnrolmentFilter::new().r#type(EqualFilter::equal_to(&document.r#type)),
+            allowed_docs.clone(),
         )?
         .ok_or(
             StandardGraphqlError::InternalError("Program enrolment went missing".to_string())

@@ -77,17 +77,6 @@ pub fn program_enrolments(
     )?;
     let allowed_docs = context_permissions(Permission::ProgramQuery, &user.permissions);
 
-    let mut filter = filter
-        .map(|f| f.to_domain_filter())
-        .unwrap_or(ProgramEnrolmentFilter::new());
-    // restrict query results to allowed entries
-    filter.r#type = Some(
-        filter
-            .r#type
-            .unwrap_or_default()
-            .restrict_results(&allowed_docs),
-    );
-
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
 
@@ -97,7 +86,8 @@ pub fn program_enrolments(
             &context,
             Pagination::all(),
             sort.map(ProgramEnrolmentSortInput::to_domain),
-            Some(filter),
+            filter.map(|f| f.to_domain_filter()),
+            allowed_docs.clone(),
         )?
         .into_iter()
         .map(|program_row| ProgramEnrolmentNode {

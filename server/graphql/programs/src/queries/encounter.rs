@@ -97,17 +97,6 @@ pub fn encounters(
     )?;
     let allowed_docs = context_permissions(Permission::ProgramQuery, &user.permissions);
 
-    let mut filter = filter
-        .map(|f| f.to_domain_filter())
-        .unwrap_or(EncounterFilter::new());
-    // restrict query results to allowed entries
-    filter.r#type = Some(
-        filter
-            .r#type
-            .unwrap_or_default()
-            .restrict_results(&allowed_docs),
-    );
-
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
 
@@ -116,8 +105,9 @@ pub fn encounters(
         .encounters(
             &context,
             page.map(PaginationOption::from),
-            Some(filter),
+            filter.map(|f| f.to_domain_filter()),
             sort.map(EncounterSortInput::to_domain),
+            allowed_docs.clone(),
         )
         .map_err(StandardGraphqlError::from_list_error)?;
     let nodes = result

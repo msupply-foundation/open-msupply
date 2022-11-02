@@ -129,6 +129,7 @@ impl PatientNode {
                     ProgramEnrolmentFilter::new()
                         .patient_id(EqualFilter::equal_to(&self.patient.name_row.id)),
                 ),
+                self.allowed_docs.clone(),
             )?;
         Ok(entries
             .into_iter()

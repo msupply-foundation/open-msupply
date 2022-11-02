@@ -42,14 +42,6 @@ pub fn update_encounter(
     )?;
     let allowed_docs = context_permissions(Permission::ProgramMutate, &user.permissions);
 
-    if !allowed_docs.contains(&input.r#type) {
-        return Err(StandardGraphqlError::BadUserInput(format!(
-            "User does not have access to {}",
-            input.r#type,
-        )))
-        .extend();
-    }
-
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
 
@@ -63,11 +55,15 @@ pub fn update_encounter(
             schema_id: input.schema_id,
             parent: input.parent,
         },
+        allowed_docs.clone(),
     ) {
         Ok(document) => document,
         Err(error) => {
             let formatted_error = format!("{:#?}", error);
             let std_err = match error {
+                UpdateEncounterError::NotAllowedToMutDocument => {
+                    StandardGraphqlError::Forbidden(formatted_error)
+                }
                 UpdateEncounterError::InvalidParentId => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
@@ -96,6 +92,7 @@ pub fn update_encounter(
         .encounter(
             &service_context,
             EncounterFilter::new().name(EqualFilter::equal_to(&document.name)),
+            allowed_docs.clone(),
         )?
         .ok_or(
             StandardGraphqlError::InternalError("Encounter went missing".to_string()).extend(),
@@ -104,6 +101,6 @@ pub fn update_encounter(
     Ok(UpdateEncounterResponse::Response(EncounterNode {
         store_id,
         encounter_row,
-        allowed_docs: allowed_docs.clone(),
+        allowed_docs,
     }))
 }
