@@ -10,14 +10,14 @@ use std::hash::Hasher;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DocumentRegistryLoaderInput {
     pub allowed_docs: Vec<String>,
-    pub id: String,
+    pub key: String,
 }
 
 impl DocumentRegistryLoaderInput {
-    pub fn new(allowed_docs: &Vec<String>, id: &String) -> Self {
+    pub fn new(allowed_docs: &Vec<String>, key: &String) -> Self {
         DocumentRegistryLoaderInput {
             allowed_docs: allowed_docs.clone(),
-            id: id.clone(),
+            key: key.clone(),
         }
     }
 }
@@ -25,10 +25,11 @@ impl DocumentRegistryLoaderInput {
 impl std::hash::Hash for DocumentRegistryLoaderInput {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.allowed_docs.hash(state);
-        self.id.hash(state);
+        self.key.hash(state);
     }
 }
 
+/// Loads document registry for a document type
 pub struct DocumentRegistryLoader {
     pub service_provider: Data<ServiceProvider>,
 }
@@ -47,7 +48,7 @@ impl Loader<DocumentRegistryLoaderInput> for DocumentRegistryLoader {
         let mut map = HashMap::<Vec<String>, Vec<String>>::new();
         for item in document_types {
             let entry = map.entry(item.allowed_docs.clone()).or_insert(vec![]);
-            entry.push(item.id.clone())
+            entry.push(item.key.clone())
         }
         let mut out = HashMap::<DocumentRegistryLoaderInput, Self::Value>::new();
 
@@ -59,7 +60,7 @@ impl Loader<DocumentRegistryLoaderInput> for DocumentRegistryLoader {
 
             for entry in entries.into_iter() {
                 out.insert(
-                    DocumentRegistryLoaderInput::new(&allowed_docs, &entry.id),
+                    DocumentRegistryLoaderInput::new(&allowed_docs, &entry.document_type),
                     entry,
                 );
             }
@@ -87,7 +88,7 @@ impl Loader<DocumentRegistryLoaderInput> for DocumentRegistryChildrenLoader {
         let mut map = HashMap::<Vec<String>, Vec<String>>::new();
         for item in document_ids {
             let entry = map.entry(item.allowed_docs.clone()).or_insert(vec![]);
-            entry.push(item.id.clone())
+            entry.push(item.key.clone())
         }
         let mut out = HashMap::<DocumentRegistryLoaderInput, Self::Value>::new();
 
