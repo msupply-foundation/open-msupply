@@ -13,6 +13,7 @@ use super::{
 
 #[derive(PartialEq, Debug)]
 pub enum UpsertProgramEnrolmentError {
+    NotAllowedToMutDocument,
     InvalidPatientId,
     InvalidParentId,
     /// Each patient can only be enrolled in a program once
@@ -37,7 +38,12 @@ pub fn upsert_program_enrolment(
     service_provider: &ServiceProvider,
     user_id: &str,
     input: UpsertProgramEnrolment,
+    allowed_docs: Vec<String>,
 ) -> Result<Document, UpsertProgramEnrolmentError> {
+    if !allowed_docs.contains(&input.r#type) {
+        return Err(UpsertProgramEnrolmentError::NotAllowedToMutDocument);
+    }
+
     let program_document = ctx
         .connection
         .transaction_sync(|_| {
@@ -198,6 +204,26 @@ mod test {
             .unwrap();
 
         let service = &service_provider.program_enrolment_service;
+
+        // NotAllowedToMutDocument
+        let err = service
+            .upsert_program_enrolment(
+                &ctx,
+                &service_provider,
+                "user",
+                UpsertProgramEnrolment {
+                    data: json!({"enrolment_datetime": true}),
+                    schema_id: schema.id.clone(),
+                    parent: None,
+                    patient_id: "some_id".to_string(),
+                    r#type: "SomeType".to_string(),
+                },
+                vec!["WrongType".to_string()],
+            )
+            .err()
+            .unwrap();
+        matches!(err, UpsertProgramEnrolmentError::NotAllowedToMutDocument);
+
         // InvalidPatientId
         let err = service
             .upsert_program_enrolment(
@@ -211,6 +237,7 @@ mod test {
                     patient_id: "some_id".to_string(),
                     r#type: "SomeType".to_string(),
                 },
+                vec!["SomeType".to_string()],
             )
             .err()
             .unwrap();
@@ -244,6 +271,7 @@ mod test {
                     patient_id: "some_id".to_string(),
                     r#type: "SomeType".to_string(),
                 },
+                vec!["SomeType".to_string()],
             )
             .err()
             .unwrap();
@@ -268,6 +296,7 @@ mod test {
                     patient_id: patient.id.clone(),
                     r#type: program_type.clone(),
                 },
+                vec![program_type.clone()],
             )
             .unwrap();
 
@@ -283,7 +312,8 @@ mod test {
                         data: serde_json::to_value(program.clone()).unwrap(),
                         schema_id: schema.id.clone(),
                         parent: None
-                    }
+                    },
+                    vec![program_type.clone()]
                 )
                 .err()
                 .unwrap(),
@@ -303,6 +333,7 @@ mod test {
                         schema_id: schema.id.clone(),
                         parent: Some("invalid".to_string()),
                     },
+                    vec![program_type.clone()]
                 )
                 .err()
                 .unwrap(),
@@ -326,6 +357,7 @@ mod test {
                     schema_id: schema.id.clone(),
                     parent: Some(v0.id),
                 },
+                vec![program_type.clone()],
             )
             .unwrap();
         // Test program has been written to the programs table

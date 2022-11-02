@@ -757,6 +757,7 @@ pub fn init_program_data(
                 schema_id: program_schema_id.clone(),
                 parent: None,
             },
+            vec!["TestProgram1".to_string()],
         )
         .unwrap();
     // hiv testing program
@@ -772,6 +773,7 @@ pub fn init_program_data(
                 schema_id: hiv_testing_program_schema_id,
                 parent: None,
             },
+            vec!["HIVTestingProgram".to_string()],
         )
         .unwrap();
     // hiv care program
@@ -787,6 +789,7 @@ pub fn init_program_data(
                 schema_id: hiv_care_program_schema_id,
                 parent: None,
             },
+            vec!["HIVCareProgram".to_string()],
         )
         .unwrap();
 
@@ -804,6 +807,7 @@ pub fn init_program_data(
                 schema_id: hiv_testing_encounter_schema_id.clone(),
                 program: "HIVTestingProgram".to_string(),
             },
+            vec!["HIVTestingEncounter".to_string()],
         )
         .unwrap();
     service
@@ -818,6 +822,7 @@ pub fn init_program_data(
                 schema_id: hiv_care_encounter_schema_id.clone(),
                 program: "HIVCareProgram".to_string(),
             },
+            vec!["HIVCareEncounter".to_string()],
         )
         .unwrap();
     service
@@ -832,6 +837,7 @@ pub fn init_program_data(
                 schema_id: hiv_care_encounter_schema_id.clone(),
                 program: "HIVCareProgram".to_string(),
             },
+            vec!["HIVCareEncounter".to_string()],
         )
         .unwrap();
     service
@@ -846,6 +852,7 @@ pub fn init_program_data(
                 schema_id: hiv_care_encounter_schema_id.clone(),
                 program: "HIVCareProgram".to_string(),
             },
+            vec!["HIVCareEncounter".to_string()],
         )
         .unwrap();
     service
@@ -860,6 +867,7 @@ pub fn init_program_data(
                 schema_id: hiv_care_encounter_schema_id.clone(),
                 program: "HIVCareProgram".to_string(),
             },
+            vec!["HIVCareEncounter".to_string()],
         )
         .unwrap();
     service
@@ -874,6 +882,7 @@ pub fn init_program_data(
                 schema_id: hiv_care_encounter_schema_id.clone(),
                 program: "HIVCareProgram".to_string(),
             },
+            vec!["HIVCareEncounter".to_string()],
         )
         .unwrap();
 

@@ -46,14 +46,6 @@ pub fn insert_encounter(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
 
-    if !allowed_docs.contains(&input.r#type) {
-        return Err(StandardGraphqlError::BadUserInput(format!(
-            "User does not have access to {}",
-            input.r#type,
-        )))
-        .extend();
-    }
-
     let document = match service_provider.encounter_service.insert_encounter(
         &service_context,
         service_provider,
@@ -65,11 +57,15 @@ pub fn insert_encounter(
             program: input.program_type,
             r#type: input.r#type,
         },
+        allowed_docs.clone(),
     ) {
         Ok(document) => document,
         Err(error) => {
             let formatted_error = format!("{:#?}", error);
             let std_err = match error {
+                InsertEncounterError::NotAllowedToMutDocument => {
+                    StandardGraphqlError::Forbidden(formatted_error)
+                }
                 InsertEncounterError::InvalidPatientOrProgram => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
@@ -95,6 +91,7 @@ pub fn insert_encounter(
         .encounter(
             &service_context,
             EncounterFilter::new().name(EqualFilter::equal_to(&document.name)),
+            allowed_docs.clone(),
         )?
         .ok_or(
             StandardGraphqlError::InternalError("Encounter went missing".to_string()).extend(),
