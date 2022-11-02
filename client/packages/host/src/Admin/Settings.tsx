@@ -138,7 +138,7 @@ export const Settings: React.FC = () => {
         title={t('heading.custom-logo')}
       />
       <SyncSettings />
-      <AppVersion />
+      <AppVersion style={{ bottom: 30, right: 15 }} />
     </Grid>
   );
 };
