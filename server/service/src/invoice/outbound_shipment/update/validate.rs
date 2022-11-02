@@ -2,11 +2,10 @@ use crate::invoice::{
     check_invoice_is_editable, check_invoice_status, check_status_change, check_store,
     InvoiceIsNotEditable, InvoiceRowStatusError, NotThisStoreInvoice,
 };
-use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
 use repository::EqualFilter;
 use repository::{
     InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowType, InvoiceRow, InvoiceRowRepository,
-    InvoiceRowStatus, InvoiceRowType, Name, RepositoryError, StorageConnection,
+    InvoiceRowStatus, InvoiceRowType, RepositoryError, StorageConnection,
 };
 
 use super::{UpdateOutboundShipment, UpdateOutboundShipmentError};
@@ -15,8 +14,7 @@ pub fn validate(
     connection: &StorageConnection,
     store_id: &str,
     patch: &UpdateOutboundShipment,
-) -> Result<(InvoiceRow, Option<Name>, bool), UpdateOutboundShipmentError> {
-    use UpdateOutboundShipmentError::*;
+) -> Result<(InvoiceRow, bool), UpdateOutboundShipmentError> {
     let invoice = check_invoice_exists(&patch.id, connection)?;
     check_store(&invoice, store_id)?;
     check_invoice_type(&invoice)?;
@@ -28,26 +26,7 @@ pub fn validate(
         check_invoice_status(&invoice, patch.full_status(), &patch.on_hold)?;
         check_can_change_status_to_allocated(connection, &invoice, patch.full_status())?;
     }
-    let other_party_id = match &patch.other_party_id {
-        None => return Ok((invoice, None, status_changed)),
-        Some(other_party_id) => other_party_id,
-    };
-
-    // Other party check
-    let other_party = check_other_party(
-        connection,
-        store_id,
-        &other_party_id,
-        CheckOtherPartyType::Customer,
-    )
-    .map_err(|e| match e {
-        OtherPartyErrors::OtherPartyDoesNotExist => OtherPartyDoesNotExist {},
-        OtherPartyErrors::OtherPartyNotVisible => OtherPartyNotVisible,
-        OtherPartyErrors::TypeMismatched => OtherPartyNotACustomer,
-        OtherPartyErrors::DatabaseError(repository_error) => DatabaseError(repository_error),
-    })?;
-
-    Ok((invoice, Some(other_party), status_changed))
+    Ok((invoice, status_changed))
 }
 
 fn check_invoice_exists(
