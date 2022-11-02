@@ -199,5 +199,13 @@ mod tests {
             .map(|p| p.invoice_row.user_id.unwrap())
             .collect::<Vec<_>>();
         assert!(result.is_empty());
+
+        // return empty list when allowed is empty
+        let result = repository
+            .query_by_filter(
+                InvoiceFilter::new().user_id(EqualFilter::default().restrict_results(&vec![])),
+            )
+            .unwrap();
+        assert!(result.is_empty());
     }
 }
