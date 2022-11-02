@@ -21,9 +21,6 @@ use service::invoice::outbound_shipment::{
 pub struct UpdateInput {
     /// The new invoice id provided by the client
     pub id: String,
-    /// The other party must be a customer of the current store.
-    /// This field can be used to change the other_party of an invoice
-    other_party_id: Option<String>,
     /// When changing the status from DRAFT to CONFIRMED or FINALISED the total_number_of_packs for
     /// existing invoice items gets updated.
     status: Option<UpdateOutboundShipmentStatusInput>,
@@ -103,7 +100,6 @@ impl UpdateInput {
     pub fn to_domain(self) -> ServiceInput {
         let UpdateInput {
             id,
-            other_party_id,
             status,
             on_hold,
             comment,
@@ -114,7 +110,6 @@ impl UpdateInput {
 
         ServiceInput {
             id,
-            other_party_id,
             status: status.map(|status| status.to_domain()),
             on_hold,
             comment,
@@ -159,19 +154,8 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
                 ),
             )
         }
-        ServiceError::OtherPartyNotACustomer => {
-            return Ok(UpdateErrorInterface::OtherPartyNotACustomer(
-                OtherPartyNotACustomer,
-            ))
-        }
-        ServiceError::OtherPartyNotVisible => {
-            return Ok(UpdateErrorInterface::OtherPartyNotVisible(
-                OtherPartyNotVisible,
-            ))
-        }
         // Standard Graphql Errors
         ServiceError::NotAnOutboundShipment => BadUserInput(formatted_error),
-        ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
         ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::InvoiceLineHasNoStockLine(_) => InternalError(formatted_error),
@@ -208,19 +192,14 @@ impl UpdateOutboundShipmentStatusInput {
 mod graphql {
     use graphql_core::test_helpers::setup_graphl_test;
     use graphql_core::{assert_graphql_query, assert_standard_graphql_error};
-    use repository::mock::{
-        mock_name_linked_to_store_a, mock_name_store_join_e,
-        mock_new_invoice_with_unallocated_line, mock_store_linked_to_name_a,
-    };
-    use repository::mock::{mock_name_not_linked_to_store_a, MockDataInserts};
-    use repository::InvoiceRowRepository;
+    use repository::mock::{mock_new_invoice_with_unallocated_line, MockDataInserts};
     use serde_json::json;
 
     use crate::{InvoiceMutations, InvoiceQueries};
 
     #[actix_rt::test]
     async fn test_graphql_outbound_shipment_update() {
-        let (mock_data, connection, _, settings) = setup_graphl_test(
+        let (mock_data, _, _, settings) = setup_graphl_test(
             InvoiceQueries,
             InvoiceMutations,
             "omsupply-database-gql-outbound_shipment_update",
@@ -294,40 +273,6 @@ mod graphql {
         );
         assert_graphql_query!(&settings, query, &variables, &expected, None);
 
-        // ForeignKeyError (Other party does not exist)
-        let variables = Some(json!({
-          "input": {
-            "id": "outbound_shipment_a",
-            "otherPartyId": "invalid_other_party"
-          }
-        }));
-        let expected_message = "Bad user input";
-        assert_standard_graphql_error!(
-            &settings,
-            &query,
-            &variables,
-            &expected_message,
-            None,
-            None
-        );
-        // OtherPartyNotACustomer
-        let other_party_supplier = mock_name_store_join_e();
-        let variables = Some(json!({
-          "input": {
-            "id": "outbound_shipment_c",
-            "otherPartyId": other_party_supplier.name_id
-          }
-        }));
-        let expected = json!({
-            "updateOutboundShipment": {
-              "error": {
-                "__typename": "OtherPartyNotACustomer"
-              }
-            }
-          }
-        );
-        assert_graphql_query!(&settings, query, &variables, &expected, None);
-
         // NotAnOutboundShipmentError
         let variables = Some(json!({
           "input": {
@@ -376,57 +321,6 @@ mod graphql {
           }
         );
         assert_graphql_query!(&settings, query, &variables, &expected, None);
-
-        // Test Success name_store_id, linked to store
-        let variables = Some(json!({
-          "input": {
-            "id": "outbound_shipment_c",
-            "otherPartyId": mock_name_linked_to_store_a().id,
-          }
-        }));
-        let expected = json!({
-            "updateOutboundShipment": {
-              "id": "outbound_shipment_c",
-              "otherPartyStore": {
-                "id": mock_store_linked_to_name_a().id,
-              }
-            }
-          }
-        );
-
-        assert_graphql_query!(&settings, query, &variables, &expected, None);
-
-        let new_invoice = InvoiceRowRepository::new(&connection)
-            .find_one_by_id("outbound_shipment_c")
-            .unwrap();
-
-        assert_eq!(
-            new_invoice.name_store_id,
-            Some(mock_store_linked_to_name_a().id)
-        );
-
-        // Test Success name_store_id, not linked to store
-        let variables = Some(json!({
-          "input": {
-            "id": "outbound_shipment_c",
-            "otherPartyId": mock_name_not_linked_to_store_a().id,
-          }
-        }));
-        let expected = json!({
-            "updateOutboundShipment": {
-              "id": "outbound_shipment_c",
-              "otherPartyStore": null
-            }
-          }
-        );
-
-        assert_graphql_query!(&settings, query, &variables, &expected, None);
-
-        let new_invoice = InvoiceRowRepository::new(&connection)
-            .find_one_by_id("outbound_shipment_c")
-            .unwrap();
-
-        assert_eq!(new_invoice.name_store_id, None);
 
         // Invoice
         let variables = Some(json!({
