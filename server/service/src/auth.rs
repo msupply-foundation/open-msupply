@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 use repository::{
     EqualFilter, Permission, RepositoryError, UserPermissionFilter, UserPermissionRepository,
@@ -389,9 +389,9 @@ pub fn validate_auth(
 pub struct ValidatedUser {
     pub user_id: String,
     pub claims: OmSupplyClaim,
-    // List of validated resources, e.g. ["HIVProgram", "TBProgram", ...]
-    // Limitation: every request can only have one type of resources, e.g. you can't mix doc types with something else
-    pub context: Vec<String>,
+    /// The user's permissions for the current request. This list might be filter by store_id if the
+    /// request was for a particular store.
+    pub permissions: Vec<UserPermissionRow>,
 }
 
 /// Information about the resource a user wants to access
@@ -406,7 +406,7 @@ fn validate_resource_permissions(
     user_id: &str,
     user_permissions: &[UserPermissionRow],
     resource_request: &ResourceAccessRequest,
-    resource_permission: &PermissionDSL,
+    required_permissions: &PermissionDSL,
 ) -> Result<(), String> {
     // When this code runs, user_permissions have already been filtered by store (if specified).
     // It is possible to mis-configure an API call and not specify a store_id when it is required which could result in incorrect permssion evaluation.
@@ -417,7 +417,7 @@ fn validate_resource_permissions(
     //     user_permissions, resource_permission
     // );
 
-    Ok(match resource_permission {
+    Ok(match required_permissions {
         PermissionDSL::HasPermission(permission) => {
             if user_permissions
                 .into_iter()
@@ -477,6 +477,17 @@ fn validate_resource_permissions(
     })
 }
 
+pub fn context_permissions(
+    permission: Permission,
+    user_permissions: &Vec<UserPermissionRow>,
+) -> Vec<String> {
+    user_permissions
+        .iter()
+        .filter(|p| p.permission == permission)
+        .filter_map(|p| p.context.clone())
+        .collect()
+}
+
 pub trait AuthServiceTrait: Send + Sync {
     fn validate(
         &self,
@@ -515,21 +526,14 @@ impl AuthServiceTrait for AuthService {
         if let Some(store_id) = &resource_request.store_id {
             permission_filter = permission_filter.store_id(EqualFilter::equal_to(store_id));
         }
-        let user_permission =
+        let user_permissions =
             UserPermissionRepository::new(&connection).query_by_filter(permission_filter)?;
-        let context: Vec<String> = user_permission
-            .clone()
-            .into_iter()
-            .filter_map(|c| c.context)
-            .collect::<HashSet<String>>()
-            .into_iter()
-            .collect();
 
         if auth_data.debug_no_access_control {
             return Ok(ValidatedUser {
                 user_id: validated_auth.user_id,
                 claims: validated_auth.claims,
-                context,
+                permissions: user_permissions,
             });
         }
 
@@ -546,7 +550,7 @@ impl AuthServiceTrait for AuthService {
 
         match validate_resource_permissions(
             &validated_auth.user_id,
-            &user_permission,
+            &user_permissions,
             &resource_request,
             required_permissions,
         ) {
@@ -562,7 +566,7 @@ impl AuthServiceTrait for AuthService {
         Ok(ValidatedUser {
             user_id: validated_auth.user_id,
             claims: validated_auth.claims,
-            context,
+            permissions: user_permissions,
         })
     }
 }

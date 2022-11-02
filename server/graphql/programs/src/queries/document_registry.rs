@@ -7,8 +7,9 @@ use graphql_core::{
 };
 use repository::{
     DocumentRegistryFilter, DocumentRegistrySort, DocumentRegistrySortField, EqualFilter,
+    Permission,
 };
-use service::auth::{Resource, ResourceAccessRequest};
+use service::auth::{context_permissions, Resource, ResourceAccessRequest};
 use service::usize_to_u32;
 
 use crate::types::document_registry::{
@@ -63,21 +64,21 @@ pub fn document_registries(
             store_id: None,
         },
     )?;
+    let allowed_docs = context_permissions(Permission::ProgramQuery, &user.permissions);
+
+    let mut filter = filter
+        .map(|f| f.to_domain())
+        .unwrap_or(DocumentRegistryFilter::new());
+    // restrict query results to allowed entries
+    filter.document_type = Some(
+        filter
+            .document_type
+            .unwrap_or_default()
+            .restrict_results(&allowed_docs),
+    );
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
-
-    let filter = filter
-        .map(|f| {
-            f.to_domain().document_type(EqualFilter::equal_any(
-                user.context.iter().map(String::clone).collect(),
-            ))
-        })
-        .unwrap_or(
-            DocumentRegistryFilter::new().document_type(EqualFilter::equal_any(
-                user.context.iter().map(String::clone).collect(),
-            )),
-        );
 
     let entries = service_provider
         .document_registry_service

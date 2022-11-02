@@ -65,7 +65,7 @@ pub fn update_document(
     store_id: String,
     input: UpdateDocumentInput,
 ) -> Result<UpdateDocumentResponse> {
-    let user = validate_auth(
+    validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::MutateDocument,
@@ -77,14 +77,6 @@ pub fn update_document(
     let context = service_provider.basic_context()?;
 
     validate_document_type(&context.connection, &input)?;
-
-    match user.context.into_iter().find(|c| c == &input.r#type) {
-        None => Err(StandardGraphqlError::BadUserInput(format!(
-            "User does not have access to {}",
-            input.r#type
-        ))),
-        Some(_) => Ok(()),
-    }?;
 
     let response = match service_provider
         .document_service

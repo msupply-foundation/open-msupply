@@ -3,9 +3,9 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use repository::{EncounterFilter, EqualFilter};
+use repository::{EncounterFilter, EqualFilter, Permission};
 use service::{
-    auth::{Resource, ResourceAccessRequest},
+    auth::{context_permissions, Resource, ResourceAccessRequest},
     programs::encounter::{InsertEncounter, InsertEncounterError},
 };
 
@@ -41,11 +41,12 @@ pub fn insert_encounter(
             store_id: Some(store_id.clone()),
         },
     )?;
+    let allowed_docs = context_permissions(Permission::ProgramMutate, &user.permissions);
 
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
 
-    match user.context.into_iter().find(|c| c == &input.r#type) {
+    match allowed_docs.into_iter().find(|c| c == &input.r#type) {
         None => Err(StandardGraphqlError::BadUserInput(format!(
             "User does not have access to {}",
             input.r#type,
