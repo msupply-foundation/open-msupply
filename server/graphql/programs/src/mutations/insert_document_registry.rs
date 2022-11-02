@@ -1,6 +1,7 @@
 use async_graphql::*;
+use repository::Permission;
 use service::{
-    auth::{Resource, ResourceAccessRequest},
+    auth::{context_permissions, Resource, ResourceAccessRequest},
     document::document_registry::{InsertDocRegistryError, InsertDocumentRegistry},
 };
 
@@ -37,8 +38,9 @@ pub fn insert_document_registry(
             store_id: None,
         },
     )?;
+    let allowed_docs = context_permissions(Permission::ProgramMutate, &user.permissions);
 
-    match user.context.into_iter().find(|c| c == &input.document_type) {
+    match allowed_docs.into_iter().find(|c| c == &input.document_type) {
         None => Err(StandardGraphqlError::BadUserInput(format!(
             "User does not have access to {}",
             input.document_type

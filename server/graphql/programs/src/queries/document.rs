@@ -36,7 +36,7 @@ impl DocumentFilterInput {
 }
 
 pub fn document(ctx: &Context<'_>, store_id: String, name: String) -> Result<Option<DocumentNode>> {
-    let user = validate_auth(
+    validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::QueryDocument,
@@ -51,13 +51,7 @@ pub fn document(ctx: &Context<'_>, store_id: String, name: String) -> Result<Opt
         .document_service
         .get_documents(
             &context,
-            Some(
-                DocumentFilter::new()
-                    .name(StringFilter::equal_to(&name))
-                    .r#type(EqualFilter::equal_any(
-                        user.context.iter().map(String::clone).collect(),
-                    )),
-            ),
+            Some(DocumentFilter::new().name(StringFilter::equal_to(&name))),
         )?
         .into_iter()
         .map(|document| DocumentNode { document })
@@ -71,7 +65,7 @@ pub fn documents(
     store_id: String,
     filter: Option<DocumentFilterInput>,
 ) -> Result<DocumentResponse> {
-    let user = validate_auth(
+    validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::QueryDocument,
@@ -82,19 +76,11 @@ pub fn documents(
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
 
-    let filter = filter
-        .map(|f| {
-            f.to_domain_filter().r#type(EqualFilter::equal_any(
-                user.context.iter().map(String::clone).collect(),
-            ))
-        })
-        .unwrap_or(DocumentFilter::new().r#type(EqualFilter::equal_any(
-            user.context.iter().map(String::clone).collect(),
-        )));
+    let filter = filter.map(|f| f.to_domain_filter());
 
     let nodes: Vec<DocumentNode> = service_provider
         .document_service
-        .get_documents(&context, Some(filter))?
+        .get_documents(&context, filter)?
         .into_iter()
         .into_iter()
         .map(|document| DocumentNode { document })
