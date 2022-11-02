@@ -466,6 +466,24 @@ pub fn insert_programs_permissions(connection: &StorageConnection, user_id: Stri
         .unwrap();
 
     for user_store in user_store_join {
+        UserPermissionRowRepository::new(&connection)
+            .upsert_one(&UserPermissionRow {
+                id: uuid(),
+                user_id: user_id.clone(),
+                store_id: Some(user_store.store_id.clone()),
+                permission: Permission::ProgramQuery,
+                context: Some(PATIENT_TYPE.to_string()),
+            })
+            .unwrap();
+        UserPermissionRowRepository::new(&connection)
+            .upsert_one(&UserPermissionRow {
+                id: uuid(),
+                user_id: user_id.clone(),
+                store_id: Some(user_store.store_id.clone()),
+                permission: Permission::ProgramMutate,
+                context: Some(PATIENT_TYPE.to_string()),
+            })
+            .unwrap();
         // query
         UserPermissionRowRepository::new(&connection)
             .upsert_one(&UserPermissionRow {
