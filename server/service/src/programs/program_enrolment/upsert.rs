@@ -1,5 +1,8 @@
 use chrono::Utc;
-use repository::{Document, DocumentRepository, DocumentStatus, RepositoryError, TransactionError};
+use repository::{
+    Document, DocumentFilter, DocumentRepository, DocumentStatus, RepositoryError, StringFilter,
+    TransactionError,
+};
 
 use crate::{
     document::{document_service::DocumentInsertError, is_latest_doc, raw_document::RawDocument},
@@ -119,7 +122,11 @@ fn validate_patient_exists(
     patient_id: &str,
 ) -> Result<bool, RepositoryError> {
     let doc_name = main_patient_doc_name(patient_id);
-    let document = DocumentRepository::new(&ctx.connection).find_one_by_name(&doc_name)?;
+    let document = DocumentRepository::new(&ctx.connection)
+        .query(Some(
+            DocumentFilter::new().name(StringFilter::equal_to(&doc_name)),
+        ))?
+        .pop();
     Ok(document.is_some())
 }
 
@@ -130,9 +137,10 @@ fn validate_program_not_exists(
     program: &str,
 ) -> Result<bool, RepositoryError> {
     let patient_name = patient_doc_name(patient_id, program);
-    let existing_document = service_provider
-        .document_service
-        .get_document(ctx, &patient_name)?;
+    let existing_document =
+        service_provider
+            .document_service
+            .get_document(ctx, &patient_name, None)?;
     Ok(existing_document.is_none())
 }
 
@@ -167,7 +175,8 @@ mod test {
     use repository::{
         mock::{mock_form_schema_empty, MockDataInserts},
         test_db::setup_all,
-        DocumentRepository, FormSchemaRowRepository, ProgramEnrolmentRepository,
+        DocumentFilter, DocumentRepository, FormSchemaRowRepository, ProgramEnrolmentRepository,
+        StringFilter,
     };
     use serde_json::json;
     use util::inline_init;
@@ -342,8 +351,11 @@ mod test {
 
         // success update
         let v0 = DocumentRepository::new(&ctx.connection)
-            .find_one_by_name(&patient_doc_name(&patient.id, &program_type))
+            .query(Some(DocumentFilter::new().name(StringFilter::equal_to(
+                &patient_doc_name(&patient.id, &program_type),
+            ))))
             .unwrap()
+            .pop()
             .unwrap();
         service
             .upsert_program_enrolment(

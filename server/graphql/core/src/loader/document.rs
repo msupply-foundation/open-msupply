@@ -45,6 +45,7 @@ impl Loader<DocumentLoaderInput> for DocumentLoader {
                     DocumentFilter::new()
                         .name(StringFilter::equal_any(doc_names.into_iter().collect())),
                 ),
+                None,
             )?;
             for doc in result {
                 out.insert(

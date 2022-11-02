@@ -26,6 +26,7 @@ table! {
     }
 }
 
+// view of the document table that only shows the latest document version
 table! {
     latest_document (id) {
         id -> Text,
@@ -78,32 +79,6 @@ pub struct DocumentRow {
     // Soft deletion status
     pub status: DocumentStatus,
     // Deletion comment
-    pub comment: Option<String>,
-    pub patient_id: Option<String>,
-}
-
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
-#[table_name = "latest_document"]
-pub struct LatestDocumentRow {
-    /// The document data hash
-    pub id: String,
-    /// Document path and name
-    pub name: String,
-    /// Stringified array of parents
-    pub parent_ids: String,
-    /// Id of the author who edited this document version
-    pub user_id: String,
-    /// The timestamp of this document version
-    pub timestamp: NaiveDateTime,
-    /// Type of the containing data
-    #[column_name = "type_"]
-    pub r#type: String,
-    /// The actual document data
-    pub data: String,
-    /// JSON schema id containing the schema for the data
-    pub schema_id: Option<String>,
-    // Soft deletion status
-    pub status: DocumentStatus,
     pub comment: Option<String>,
     pub patient_id: Option<String>,
 }
@@ -185,21 +160,7 @@ impl<'a> DocumentRepository<'a> {
         })
     }
 
-    /// Get the latest version of a document
-    pub fn find_one_by_name(
-        &self,
-        document_name: &str,
-    ) -> Result<Option<Document>, RepositoryError> {
-        let row: Option<LatestDocumentRow> = latest_document::dsl::latest_document
-            .filter(latest_document::dsl::name.eq(&document_name))
-            .first(&self.connection.connection)
-            .optional()?;
-        Ok(match row {
-            Some(row) => Some(latest_document_from_row(row)?),
-            None => None,
-        })
-    }
-
+    /// Get the latest version of some documents
     pub fn query(&self, filter: Option<DocumentFilter>) -> Result<Vec<Document>, RepositoryError> {
         let mut query = latest_document::dsl::latest_document.into_boxed();
         if let Some(f) = filter {
@@ -218,11 +179,21 @@ impl<'a> DocumentRepository<'a> {
     }
 
     /// Gets all document versions
-    pub fn document_history(&self, document_name: &str) -> Result<Vec<Document>, RepositoryError> {
-        let rows: Vec<DocumentRow> = document::dsl::document
-            .filter(document::dsl::name.eq(document_name))
+    pub fn document_history(
+        &self,
+        filter: Option<DocumentFilter>,
+    ) -> Result<Vec<Document>, RepositoryError> {
+        let mut query = document::dsl::document.into_boxed();
+        if let Some(f) = filter {
+            let DocumentFilter { name, r#type } = f;
+
+            apply_string_filter!(query, name, document::dsl::name);
+            apply_equal_filter!(query, r#type, document::dsl::type_);
+        }
+        let rows: Vec<DocumentRow> = query
             .order(document::dsl::timestamp.desc())
             .load(&self.connection.connection)?;
+
         let mut result = Vec::<Document>::new();
         for row in rows {
             result.push(document_from_row(row)?);
@@ -232,35 +203,6 @@ impl<'a> DocumentRepository<'a> {
 }
 
 fn document_from_row(row: DocumentRow) -> Result<Document, RepositoryError> {
-    let parents: Vec<String> =
-        serde_json::from_str(&row.parent_ids).map_err(|err| RepositoryError::DBError {
-            msg: "Invalid parents data".to_string(),
-            extra: format!("{}", err),
-        })?;
-    let data: serde_json::Value =
-        serde_json::from_str(&row.data).map_err(|err| RepositoryError::DBError {
-            msg: "Invalid data".to_string(),
-            extra: format!("{}", err),
-        })?;
-
-    let document = Document {
-        id: row.id,
-        name: row.name,
-        parent_ids: parents,
-        user_id: row.user_id,
-        timestamp: DateTime::<Utc>::from_utc(row.timestamp, Utc),
-        r#type: row.r#type,
-        data,
-        schema_id: row.schema_id,
-        status: row.status,
-        comment: row.comment,
-        patient_id: row.patient_id,
-    };
-
-    Ok(document)
-}
-
-fn latest_document_from_row(row: LatestDocumentRow) -> Result<Document, RepositoryError> {
     let parents: Vec<String> =
         serde_json::from_str(&row.parent_ids).map_err(|err| RepositoryError::DBError {
             msg: "Invalid parents data".to_string(),

@@ -143,9 +143,10 @@ fn validate_patient_not_exists(
     id: &str,
 ) -> Result<bool, RepositoryError> {
     let patient_name = main_patient_doc_name(id);
-    let existing_document = service_provider
-        .document_service
-        .get_document(ctx, &patient_name)?;
+    let existing_document =
+        service_provider
+            .document_service
+            .get_document(ctx, &patient_name, None)?;
     Ok(existing_document.is_none())
 }
 
@@ -191,7 +192,7 @@ pub mod test {
     use repository::{
         mock::{mock_form_schema_empty, MockDataInserts},
         test_db::setup_all,
-        DocumentRepository, FormSchemaRowRepository,
+        DocumentFilter, DocumentRepository, FormSchemaRowRepository, StringFilter,
     };
     use serde_json::json;
     use util::inline_init;
@@ -345,8 +346,11 @@ pub mod test {
 
         // success update
         let v0 = DocumentRepository::new(&ctx.connection)
-            .find_one_by_name(&main_patient_doc_name(&patient.id))
+            .query(Some(DocumentFilter::new().name(StringFilter::equal_to(
+                &main_patient_doc_name(&patient.id),
+            ))))
             .unwrap()
+            .pop()
             .unwrap();
         service
             .update_patient(
