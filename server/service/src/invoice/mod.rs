@@ -96,6 +96,14 @@ pub trait InvoiceServiceTrait: Sync + Send {
         update_outbound_shipment(ctx, input)
     }
 
+    fn update_outbound_shipment_name(
+        &self,
+        ctx: &ServiceContext,
+        input: UpdateOutboundShipmentName,
+    ) -> Result<Invoice, UpdateOutboundShipmentNameError> {
+        update_outbound_shipment_name(ctx, input)
+    }
+
     fn delete_outbound_shipment(
         &self,
         ctx: &ServiceContext,
