@@ -5,10 +5,9 @@ use graphql_core::{
     ContextExt,
 };
 use repository::{
-    EqualFilter, PaginationOption, Permission, ProgramEventFilter, ProgramEventSort,
-    ProgramEventSortField,
+    EqualFilter, PaginationOption, ProgramEventFilter, ProgramEventSort, ProgramEventSortField,
 };
-use service::auth::{context_permissions, Resource, ResourceAccessRequest};
+use service::auth::{CapabilityTag, Resource, ResourceAccessRequest};
 
 use crate::types::{program_enrolment::ProgramEventFilterInput, program_event::ProgramEventNode};
 
@@ -56,7 +55,7 @@ pub fn program_events(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let allowed_docs = context_permissions(Permission::DocumentQuery, &user.permissions);
+    let allowed_docs = user.capabilities(CapabilityTag::DocumentType);
 
     let mut filter = filter
         .map(|f| f.to_domain())

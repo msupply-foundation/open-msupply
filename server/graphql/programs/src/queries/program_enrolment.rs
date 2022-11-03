@@ -5,11 +5,11 @@ use graphql_core::{
     ContextExt,
 };
 use repository::{
-    DatetimeFilter, EqualFilter, Pagination, Permission, ProgramEnrolmentFilter,
-    ProgramEnrolmentSort, ProgramEnrolmentSortField,
+    DatetimeFilter, EqualFilter, Pagination, ProgramEnrolmentFilter, ProgramEnrolmentSort,
+    ProgramEnrolmentSortField,
 };
 use service::{
-    auth::{context_permissions, Resource, ResourceAccessRequest},
+    auth::{CapabilityTag, Resource, ResourceAccessRequest},
     usize_to_u32,
 };
 
@@ -75,7 +75,7 @@ pub fn program_enrolments(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let allowed_docs = context_permissions(Permission::DocumentQuery, &user.permissions);
+    let allowed_docs = user.capabilities(CapabilityTag::DocumentType);
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;

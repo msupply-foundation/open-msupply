@@ -3,8 +3,7 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use repository::Permission;
-use service::auth::{context_permissions, Resource, ResourceAccessRequest};
+use service::auth::{CapabilityTag, Resource, ResourceAccessRequest};
 use service::document::document_service::DocumentHistoryError;
 use service::usize_to_u32;
 
@@ -27,7 +26,7 @@ pub fn document_history(
             store_id: Some(store_id),
         },
     )?;
-    let allowed_docs = context_permissions(Permission::DocumentQuery, &user.permissions);
+    let allowed_docs = user.capabilities(CapabilityTag::DocumentType);
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;

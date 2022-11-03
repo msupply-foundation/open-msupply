@@ -7,9 +7,8 @@ use graphql_core::{
 };
 use repository::{
     DocumentRegistryFilter, DocumentRegistrySort, DocumentRegistrySortField, EqualFilter,
-    Permission,
 };
-use service::auth::{context_permissions, Resource, ResourceAccessRequest};
+use service::auth::{CapabilityTag, Resource, ResourceAccessRequest};
 use service::usize_to_u32;
 
 use crate::types::document_registry::{
@@ -64,7 +63,7 @@ pub fn document_registries(
             store_id: None,
         },
     )?;
-    let allowed_docs = context_permissions(Permission::DocumentQuery, &user.permissions);
+    let allowed_docs = user.capabilities(CapabilityTag::DocumentType);
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;

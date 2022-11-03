@@ -4,9 +4,9 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use repository::{PaginationOption, Permission};
+use repository::PaginationOption;
 use service::{
-    auth::{context_permissions, Resource, ResourceAccessRequest},
+    auth::{CapabilityTag, Resource, ResourceAccessRequest},
     programs::encounter::encounter_fields::{EncounterFields, EncounterFieldsResult},
 };
 
@@ -67,7 +67,7 @@ pub fn encounter_fields(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let allowed_docs = context_permissions(Permission::DocumentQuery, &user.permissions);
+    let allowed_docs = user.capabilities(CapabilityTag::DocumentType);
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;

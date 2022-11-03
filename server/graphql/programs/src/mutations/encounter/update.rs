@@ -3,9 +3,9 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use repository::{EncounterFilter, EqualFilter, Permission};
+use repository::{EncounterFilter, EqualFilter};
 use service::{
-    auth::{context_permissions, Resource, ResourceAccessRequest},
+    auth::{CapabilityTag, Resource, ResourceAccessRequest},
     programs::encounter::{UpdateEncounter, UpdateEncounterError},
 };
 
@@ -40,7 +40,7 @@ pub fn update_encounter(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let allowed_docs = context_permissions(Permission::DocumentMutate, &user.permissions);
+    let allowed_docs = user.capabilities(CapabilityTag::DocumentType);
 
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
@@ -101,6 +101,6 @@ pub fn update_encounter(
     Ok(UpdateEncounterResponse::Response(EncounterNode {
         store_id,
         encounter_row,
-        allowed_docs,
+        allowed_docs: allowed_docs.clone(),
     }))
 }

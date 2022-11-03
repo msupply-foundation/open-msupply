@@ -2,10 +2,10 @@ use async_graphql::*;
 use chrono::{DateTime, Utc};
 use repository::{
     DocumentContext, DocumentRegistryFilter, DocumentRegistryRepository, DocumentStatus,
-    EqualFilter, Permission, StorageConnection,
+    EqualFilter, StorageConnection,
 };
 use service::{
-    auth::{context_permissions, Resource, ResourceAccessRequest},
+    auth::{CapabilityTag, Resource, ResourceAccessRequest},
     document::{document_service::DocumentInsertError, raw_document::RawDocument},
     programs::patient::PATIENT_TYPE,
 };
@@ -72,20 +72,22 @@ pub fn update_document(
             store_id: Some(store_id),
         },
     )?;
-    let allowed_docs = context_permissions(Permission::DocumentMutate, &user.permissions);
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
-
     validate_document_type(&context.connection, &input)?;
+
+    // Move this after validate_document_type to make the tests happy (test don't have permissions)
+    // TODO make allowed_docs optional if debug_no_access_control is set?
+    let allowed_docs = user.capabilities(CapabilityTag::DocumentType);
 
     let response = match service_provider.document_service.update_document(
         &context,
         input_to_raw_document(input),
-        &allowed_docs,
+        allowed_docs,
     ) {
         Ok(document) => UpdateDocumentResponse::Response(DocumentNode {
-            allowed_docs,
+            allowed_docs: allowed_docs.clone(),
             document,
         }),
         Err(error) => UpdateDocumentResponse::Error(UpdateDocumentError {
