@@ -15,8 +15,8 @@ CREATE TYPE permission_type AS ENUM (
     'SERVER_ADMIN',
     'PATIENT_QUERY',
     'PATIENT_MUTATE',
-    'PROGRAM_QUERY',
-    'PROGRAM_MUTATE'
+    'DOCUMENT_QUERY',
+    'DOCUMENT_MUTATE'
 );
 
 CREATE TABLE user_permission (

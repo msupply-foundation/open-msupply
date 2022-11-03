@@ -56,7 +56,7 @@ pub fn program_events(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let allowed_docs = context_permissions(Permission::ProgramQuery, &user.permissions);
+    let allowed_docs = context_permissions(Permission::DocumentQuery, &user.permissions);
 
     let mut filter = filter
         .map(|f| f.to_domain())
