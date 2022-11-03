@@ -158,7 +158,8 @@ export const CommandK: FC<PropsWithChildrenOnly> = ({ children }) => {
     },
     {
       id: 'navigation:internal-order',
-      name: `${t('cmdk.goto-internal-order')}`,
+      name: `${t('cmdk.goto-internal-order')} (g+o)`,
+      shortcut: ['g', 'o'],
       keywords: 'replenishment',
       perform: () =>
         navigate(
@@ -181,7 +182,8 @@ export const CommandK: FC<PropsWithChildrenOnly> = ({ children }) => {
     },
     {
       id: 'navigation:stock',
-      name: t('cmdk.goto-stock'),
+      name: `${t('cmdk.goto-stock')} (s)`,
+      shortcut: ['s'],
       keywords: 'stock',
       perform: () =>
         navigate(
@@ -192,7 +194,8 @@ export const CommandK: FC<PropsWithChildrenOnly> = ({ children }) => {
     },
     {
       id: 'navigation:stocktakes',
-      name: t('cmdk.goto-stocktakes'),
+      name: `${t('cmdk.goto-stocktakes')} (g+t)`,
+      shortcut: ['g', 't'],
       keywords: 'stocktakes',
       perform: () =>
         navigate(
