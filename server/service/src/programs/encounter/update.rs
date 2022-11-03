@@ -39,10 +39,6 @@ pub fn update_encounter(
     input: UpdateEncounter,
     allowed_docs: Vec<String>,
 ) -> Result<Document, UpdateEncounterError> {
-    if !allowed_docs.contains(&input.r#type) {
-        return Err(UpdateEncounterError::NotAllowedToMutDocument);
-    }
-
     let patient = ctx
         .connection
         .transaction_sync(|_| {
@@ -73,8 +69,11 @@ pub fn update_encounter(
 
             let result = service_provider
                 .document_service
-                .update_document(ctx, doc)
+                .update_document(ctx, doc, &allowed_docs)
                 .map_err(|err| match err {
+                    DocumentInsertError::NotAllowedToMutDocument => {
+                        UpdateEncounterError::NotAllowedToMutDocument
+                    }
                     DocumentInsertError::InvalidDataSchema(err) => {
                         UpdateEncounterError::InvalidDataSchema(err)
                     }

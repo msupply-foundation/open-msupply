@@ -43,10 +43,6 @@ pub fn upsert_program_enrolment(
     input: UpsertProgramEnrolment,
     allowed_docs: Vec<String>,
 ) -> Result<Document, UpsertProgramEnrolmentError> {
-    if !allowed_docs.contains(&input.r#type) {
-        return Err(UpsertProgramEnrolmentError::NotAllowedToMutDocument);
-    }
-
     let program_document = ctx
         .connection
         .transaction_sync(|_| {
@@ -62,8 +58,11 @@ pub fn upsert_program_enrolment(
 
             let document = service_provider
                 .document_service
-                .update_document(ctx, doc)
+                .update_document(ctx, doc, &allowed_docs)
                 .map_err(|err| match err {
+                    DocumentInsertError::NotAllowedToMutDocument => {
+                        UpsertProgramEnrolmentError::NotAllowedToMutDocument
+                    }
                     DocumentInsertError::InvalidDataSchema(err) => {
                         UpsertProgramEnrolmentError::InvalidDataSchema(err)
                     }

@@ -56,8 +56,13 @@ pub fn update_patient(
             // Updating the document will trigger an update in the patient (names) table
             service_provider
                 .document_service
-                .update_document(ctx, doc)
+                .update_document(ctx, doc, &vec![PATIENT_TYPE.to_string()])
                 .map_err(|err| match err {
+                    DocumentInsertError::NotAllowedToMutDocument => {
+                        UpdatePatientError::InternalError(
+                            "Wrong params for update_document".to_string(),
+                        )
+                    }
                     DocumentInsertError::InvalidDataSchema(err) => {
                         UpdatePatientError::InvalidDataSchema(err)
                     }
