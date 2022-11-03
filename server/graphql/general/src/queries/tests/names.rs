@@ -121,7 +121,8 @@ mod graphql {
               "like": "store code like"
             },
             "isVisible": false,
-            "isSystemName": true
+            "isSystemName": true,
+            "type": { "equalTo": "STORE" },
           }
         });
 
@@ -161,6 +162,7 @@ mod graphql {
                 store_code,
                 is_visible,
                 is_system_name,
+                r#type: _,
             } = filter.unwrap();
 
             assert_eq!(id, Some(EqualFilter::not_equal_to("id_not_equal_to")));
@@ -175,6 +177,10 @@ mod graphql {
             );
             assert_eq!(is_visible, Some(false));
             assert_eq!(is_system_name, Some(true));
+            // assert_eq!(
+            //     r#type,
+            //     Some(EqualFilter::equal_to(NameType::Store))
+            // );
 
             Ok(ListResult {
                 rows: vec![Name {
