@@ -274,27 +274,8 @@ pub mod test {
             .unwrap();
         matches!(err, UpdatePatientError::InvalidDataSchema(_));
 
-        let not_visible_err = service
-            .update_patient(
-                &ctx,
-                &service_provider,
-                "store_b",
-                "user",
-                super::UpdatePatient {
-                    data: serde_json::to_value(patient.clone()).unwrap(),
-                    schema_id: schema.id.clone(),
-                    parent: None,
-                },
-            )
-            .err()
-            .unwrap();
-        matches!(
-            not_visible_err,
-            UpdatePatientError::PatientDoesNotBelongToStore
-        );
-
         // success insert
-        service
+        let inserted_patient = service
             .update_patient(
                 &ctx,
                 &service_provider,
@@ -307,6 +288,23 @@ pub mod test {
                 },
             )
             .unwrap();
+
+        // PatientDoesNotBelongToStore
+        let err = service
+            .update_patient(
+                &ctx,
+                &service_provider,
+                "store_b",
+                "user",
+                super::UpdatePatient {
+                    data: serde_json::to_value(patient.clone()).unwrap(),
+                    schema_id: schema.id.clone(),
+                    parent: Some(inserted_patient.name_row.id),
+                },
+            )
+            .err()
+            .unwrap();
+        matches!(err, UpdatePatientError::PatientDoesNotBelongToStore);
 
         assert_eq!(
             service
