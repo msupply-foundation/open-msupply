@@ -1,10 +1,7 @@
 use super::{CannotChangeStatusOfInvoiceOnHold, InvoiceIsNotEditable, NotAnOutboundShipmentError};
 
 use async_graphql::*;
-use graphql_core::simple_generic_errors::{
-    CannotReverseInvoiceStatus, NodeError, OtherPartyNotACustomer, OtherPartyNotVisible,
-    RecordNotFound,
-};
+use graphql_core::simple_generic_errors::{CannotReverseInvoiceStatus, NodeError, RecordNotFound};
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
 use graphql_types::types::{InvoiceLineConnector, InvoiceNode};
@@ -90,8 +87,6 @@ pub enum UpdateErrorInterface {
     CannotReverseInvoiceStatus(CannotReverseInvoiceStatus),
     CannotChangeStatusOfInvoiceOnHold(CannotChangeStatusOfInvoiceOnHold),
     InvoiceIsNotEditable(InvoiceIsNotEditable),
-    OtherPartyNotACustomer(OtherPartyNotACustomer),
-    OtherPartyNotVisible(OtherPartyNotVisible),
     NotAnOutboundShipment(NotAnOutboundShipmentError),
     CanOnlyChangeToAllocatedWhenNoUnallocatedLines(CanOnlyChangeToAllocatedWhenNoUnallocatedLines),
 }
