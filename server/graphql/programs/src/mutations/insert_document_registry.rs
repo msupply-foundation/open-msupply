@@ -38,7 +38,7 @@ pub fn insert_document_registry(
             store_id: None,
         },
     )?;
-    let allowed_docs = context_permissions(Permission::ProgramMutate, &user.permissions);
+    let allowed_docs = context_permissions(Permission::DocumentMutate, &user.permissions);
 
     match allowed_docs.into_iter().find(|c| c == &input.document_type) {
         None => Err(StandardGraphqlError::BadUserInput(format!(

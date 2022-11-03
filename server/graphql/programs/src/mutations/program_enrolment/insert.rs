@@ -39,7 +39,7 @@ pub fn insert_program_enrolment(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let allowed_docs = context_permissions(Permission::ProgramMutate, &user.permissions);
+    let allowed_docs = context_permissions(Permission::DocumentMutate, &user.permissions);
 
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;

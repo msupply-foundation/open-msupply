@@ -67,7 +67,7 @@ pub fn encounter_fields(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let allowed_docs = context_permissions(Permission::ProgramQuery, &user.permissions);
+    let allowed_docs = context_permissions(Permission::DocumentQuery, &user.permissions);
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;

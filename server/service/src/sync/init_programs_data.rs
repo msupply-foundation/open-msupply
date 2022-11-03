@@ -471,7 +471,7 @@ pub fn insert_programs_permissions(connection: &StorageConnection, user_id: Stri
                 id: uuid(),
                 user_id: user_id.clone(),
                 store_id: Some(user_store.store_id.clone()),
-                permission: Permission::ProgramQuery,
+                permission: Permission::DocumentQuery,
                 context: Some(PATIENT_TYPE.to_string()),
             })
             .unwrap();
@@ -480,7 +480,7 @@ pub fn insert_programs_permissions(connection: &StorageConnection, user_id: Stri
                 id: uuid(),
                 user_id: user_id.clone(),
                 store_id: Some(user_store.store_id.clone()),
-                permission: Permission::ProgramMutate,
+                permission: Permission::DocumentMutate,
                 context: Some(PATIENT_TYPE.to_string()),
             })
             .unwrap();
@@ -490,7 +490,7 @@ pub fn insert_programs_permissions(connection: &StorageConnection, user_id: Stri
                 id: uuid(),
                 user_id: user_id.clone(),
                 store_id: Some(user_store.store_id.clone()),
-                permission: Permission::ProgramQuery,
+                permission: Permission::DocumentQuery,
                 context: Some("HIVTestingProgram".to_string()),
             })
             .unwrap();
@@ -499,7 +499,7 @@ pub fn insert_programs_permissions(connection: &StorageConnection, user_id: Stri
                 id: uuid(),
                 user_id: user_id.clone(),
                 store_id: Some(user_store.store_id.clone()),
-                permission: Permission::ProgramQuery,
+                permission: Permission::DocumentQuery,
                 context: Some("HIVCareProgram".to_string()),
             })
             .unwrap();
@@ -508,7 +508,7 @@ pub fn insert_programs_permissions(connection: &StorageConnection, user_id: Stri
                 id: uuid(),
                 user_id: user_id.clone(),
                 store_id: Some(user_store.store_id.clone()),
-                permission: Permission::ProgramQuery,
+                permission: Permission::DocumentQuery,
                 context: Some("HIVTestingEncounter".to_string()),
             })
             .unwrap();
@@ -517,7 +517,7 @@ pub fn insert_programs_permissions(connection: &StorageConnection, user_id: Stri
                 id: uuid(),
                 user_id: user_id.clone(),
                 store_id: Some(user_store.store_id.clone()),
-                permission: Permission::ProgramQuery,
+                permission: Permission::DocumentQuery,
                 context: Some("HIVCareEncounter".to_string()),
             })
             .unwrap();
@@ -528,7 +528,7 @@ pub fn insert_programs_permissions(connection: &StorageConnection, user_id: Stri
                 id: uuid(),
                 user_id: user_id.clone(),
                 store_id: Some(user_store.store_id.clone()),
-                permission: Permission::ProgramMutate,
+                permission: Permission::DocumentMutate,
                 context: Some("HIVTestingProgram".to_string()),
             })
             .unwrap();
@@ -537,7 +537,7 @@ pub fn insert_programs_permissions(connection: &StorageConnection, user_id: Stri
                 id: uuid(),
                 user_id: user_id.clone(),
                 store_id: Some(user_store.store_id.clone()),
-                permission: Permission::ProgramMutate,
+                permission: Permission::DocumentMutate,
                 context: Some("HIVCareProgram".to_string()),
             })
             .unwrap();
@@ -546,7 +546,7 @@ pub fn insert_programs_permissions(connection: &StorageConnection, user_id: Stri
                 id: uuid(),
                 user_id: user_id.clone(),
                 store_id: Some(user_store.store_id.clone()),
-                permission: Permission::ProgramMutate,
+                permission: Permission::DocumentMutate,
                 context: Some("HIVTestingEncounter".to_string()),
             })
             .unwrap();
@@ -555,7 +555,7 @@ pub fn insert_programs_permissions(connection: &StorageConnection, user_id: Stri
                 id: uuid(),
                 user_id: user_id.clone(),
                 store_id: Some(user_store.store_id.clone()),
-                permission: Permission::ProgramMutate,
+                permission: Permission::DocumentMutate,
                 context: Some("HIVCareEncounter".to_string()),
             })
             .unwrap();
