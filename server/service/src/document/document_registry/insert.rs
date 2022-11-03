@@ -8,6 +8,7 @@ use crate::service_provider::ServiceContext;
 
 #[derive(PartialEq, Debug)]
 pub enum InsertDocRegistryError {
+    NotAllowedToMutDocument,
     OnlyOnePatientEntryAllowed,
     InvalidParent,
     DataSchemaDoesNotExist,
@@ -27,12 +28,13 @@ pub struct InsertDocumentRegistry {
 pub fn insert(
     ctx: &ServiceContext,
     input: InsertDocumentRegistry,
+    allowed_docs: &[String],
 ) -> Result<DocumentRegistry, InsertDocRegistryError> {
     let result = ctx
         .connection
         .transaction_sync(
             |connection| -> Result<DocumentRegistry, InsertDocRegistryError> {
-                validate(ctx, &input)?;
+                validate(ctx, &input, allowed_docs)?;
                 let id = input.id.clone();
                 let data = generate(input);
                 DocumentRegistryRowRepository::new(&connection).upsert_one(&data)?;
@@ -68,7 +70,11 @@ fn generate(input: InsertDocumentRegistry) -> DocumentRegistryRow {
 fn validate(
     ctx: &ServiceContext,
     input: &InsertDocumentRegistry,
+    allowed_docs: &[String],
 ) -> Result<(), InsertDocRegistryError> {
+    if !allowed_docs.contains(&input.document_type) {
+        return Err(InsertDocRegistryError::NotAllowedToMutDocument);
+    }
     if !validate_unique_patient_entry(ctx, input)? {
         return Err(InsertDocRegistryError::OnlyOnePatientEntryAllowed);
     }

@@ -40,31 +40,24 @@ pub fn insert_document_registry(
     )?;
     let allowed_docs = context_permissions(Permission::DocumentMutate, &user.permissions);
 
-    match allowed_docs.into_iter().find(|c| c == &input.document_type) {
-        None => Err(StandardGraphqlError::BadUserInput(format!(
-            "User does not have access to {}",
-            input.document_type
-        ))),
-        Some(_) => Ok(()),
-    }?;
-
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
 
-    let response = match service_provider
-        .document_registry_service
-        .insert(&context, to_domain(input))
-    {
-        Ok(document_registry) => {
-            InsertDocumentResponse::Response(DocumentRegistryNode {
-                // TODO if this endpoint is kept this needs to be fixed:
-                allowed_docs: vec![],
-                document_registry,
-            })
-        }
+    let response = match service_provider.document_registry_service.insert(
+        &context,
+        to_domain(input),
+        &allowed_docs,
+    ) {
+        Ok(document_registry) => InsertDocumentResponse::Response(DocumentRegistryNode {
+            allowed_docs,
+            document_registry,
+        }),
         Err(error) => {
             let formatted_error = format!("{:#?}", error);
             let graphql_error = match error {
+                InsertDocRegistryError::NotAllowedToMutDocument => {
+                    StandardGraphqlError::Forbidden(formatted_error)
+                }
                 InsertDocRegistryError::OnlyOnePatientEntryAllowed => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }

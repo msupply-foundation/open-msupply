@@ -2,10 +2,10 @@ use async_graphql::*;
 use chrono::{DateTime, Utc};
 use repository::{
     DocumentContext, DocumentRegistryFilter, DocumentRegistryRepository, DocumentStatus,
-    EqualFilter, StorageConnection,
+    EqualFilter, Permission, StorageConnection,
 };
 use service::{
-    auth::{Resource, ResourceAccessRequest},
+    auth::{context_permissions, Resource, ResourceAccessRequest},
     document::{document_service::DocumentInsertError, raw_document::RawDocument},
     programs::patient::PATIENT_TYPE,
 };
@@ -65,26 +65,27 @@ pub fn update_document(
     store_id: String,
     input: UpdateDocumentInput,
 ) -> Result<UpdateDocumentResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::MutateDocument,
             store_id: Some(store_id),
         },
     )?;
+    let allowed_docs = context_permissions(Permission::DocumentMutate, &user.permissions);
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
 
     validate_document_type(&context.connection, &input)?;
 
-    let response = match service_provider
-        .document_service
-        .update_document(&context, input_to_raw_document(input))
-    {
+    let response = match service_provider.document_service.update_document(
+        &context,
+        input_to_raw_document(input),
+        &allowed_docs,
+    ) {
         Ok(document) => UpdateDocumentResponse::Response(DocumentNode {
-            // TODO if this endpoint is kept this needs to be fixed:
-            allowed_docs: vec![],
+            allowed_docs,
             document,
         }),
         Err(error) => UpdateDocumentResponse::Error(UpdateDocumentError {
@@ -135,6 +136,9 @@ fn map_error(error: DocumentInsertError) -> Result<UpdateDocumentErrorInterface>
 
     let graphql_error = match error {
         // Standard Graphql Errors
+        DocumentInsertError::NotAllowedToMutDocument => {
+            StandardGraphqlError::Forbidden(formatted_error)
+        }
         DocumentInsertError::DatabaseError(_) => {
             StandardGraphqlError::InternalError(formatted_error)
         }

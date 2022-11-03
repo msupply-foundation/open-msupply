@@ -72,8 +72,9 @@ pub trait DocumentRegistryServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         input: InsertDocumentRegistry,
+        allowed_doc_types: &[String],
     ) -> Result<DocumentRegistry, InsertDocRegistryError> {
-        insert(ctx, input)
+        insert(ctx, input, allowed_doc_types)
     }
 }
 

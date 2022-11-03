@@ -11,6 +11,7 @@ use super::raw_document::RawDocument;
 
 #[derive(Debug, PartialEq)]
 pub enum DocumentInsertError {
+    NotAllowedToMutDocument,
     InvalidParent(String),
     /// Input document doesn't match the provided json schema
     InvalidDataSchema(Vec<String>),
@@ -39,6 +40,7 @@ pub struct DocumentDelete {
 
 #[derive(Debug, PartialEq)]
 pub enum DocumentDeleteError {
+    NotAllowedToMutDocument,
     DocumentNotFound,
     DocumentHasAlreadyBeenDeleted,
     DatabaseError(RepositoryError),
@@ -58,6 +60,7 @@ pub struct DocumentUndelete {
 
 #[derive(Debug, PartialEq)]
 pub enum DocumentUndeleteError {
+    NotAllowedToMutDocument,
     DocumentNotFound,
     ParentDoesNotExist,
     CannotUndeleteActiveDocument,
@@ -124,10 +127,14 @@ pub trait DocumentServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         doc: RawDocument,
+        allowed_docs: &[String],
     ) -> Result<Document, DocumentInsertError> {
         let document = ctx
             .connection
             .transaction_sync(|con| {
+                if !allowed_docs.contains(&doc.r#type) {
+                    return Err(DocumentInsertError::NotAllowedToMutDocument);
+                }
                 let validator = json_validator(con, &doc)?;
                 if let Some(validator) = &validator {
                     validate_json(&validator, &doc.data)
@@ -148,10 +155,11 @@ pub trait DocumentServiceTrait: Sync + Send {
         ctx: &ServiceContext,
         user_id: &str,
         input: DocumentDelete,
+        allowed_docs: &[String],
     ) -> Result<(), DocumentDeleteError> {
         ctx.connection
             .transaction_sync(|con| {
-                let current_document = validate_document_delete(con, &input.id)?;
+                let current_document = validate_document_delete(con, &input.id, allowed_docs)?;
                 let document = generate_deleted_document(input, current_document, user_id)?;
 
                 match DocumentRepository::new(con).insert(&document) {
@@ -168,11 +176,12 @@ pub trait DocumentServiceTrait: Sync + Send {
         ctx: &ServiceContext,
         user_id: &str,
         input: DocumentUndelete,
+        allowed_docs: &[String],
     ) -> Result<Document, DocumentUndeleteError> {
         let document = ctx
             .connection
             .transaction_sync(|con| {
-                let parent_doc = validate_document_undelete(con, &input.id)?;
+                let parent_doc = validate_document_undelete(con, &input.id, allowed_docs)?;
                 let document = generate_undeleted_document(&input.id, parent_doc, user_id)?;
 
                 match DocumentRepository::new(con).insert(&document) {
@@ -241,6 +250,7 @@ fn validate_parents(
 fn validate_document_delete(
     connection: &StorageConnection,
     id: &str,
+    allowed_docs: &[String],
 ) -> Result<Document, DocumentDeleteError> {
     let doc = match DocumentRepository::new(connection).find_one_by_id(id)? {
         Some(doc) => {
@@ -254,12 +264,16 @@ fn validate_document_delete(
             return Err(DocumentDeleteError::DocumentNotFound);
         }
     };
+    if !allowed_docs.contains(&doc.r#type) {
+        return Err(DocumentDeleteError::NotAllowedToMutDocument);
+    }
     Ok(doc)
 }
 
 fn validate_document_undelete(
     connection: &StorageConnection,
     id: &str,
+    allowed_docs: &[String],
 ) -> Result<Document, DocumentUndeleteError> {
     let doc = match DocumentRepository::new(connection).find_one_by_id(id)? {
         Some(doc) => {
@@ -273,6 +287,9 @@ fn validate_document_undelete(
             return Err(DocumentUndeleteError::DocumentNotFound);
         }
     };
+    if !allowed_docs.contains(&doc.r#type) {
+        return Err(DocumentUndeleteError::NotAllowedToMutDocument);
+    }
 
     let parent = match doc.parent_ids.last() {
         Some(parent) => parent,
@@ -375,6 +392,31 @@ mod document_service_test {
         let service = service_provider.document_service;
 
         let doc_name = "test/doc2";
+
+        // NotAllowedToMutDocument
+        let result = service.update_document(
+            &context,
+            RawDocument {
+                name: doc_name.to_string(),
+                parents: vec![],
+                author: "me".to_string(),
+                timestamp: DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(5000, 0), Utc),
+                r#type: "test_data".to_string(),
+                data: json!({
+                  "version": 1,
+                }),
+                schema_id: None,
+                status: DocumentStatus::Active,
+                comment: None,
+                patient_id: None,
+            },
+            &vec!["Wrong type".to_string()],
+        );
+        assert!(matches!(
+            result,
+            Err(DocumentInsertError::NotAllowedToMutDocument)
+        ));
+
         // successfully insert a document
         let v1 = service
             .update_document(
@@ -396,6 +438,7 @@ mod document_service_test {
                     comment: None,
                     patient_id: None,
                 },
+                &vec!["test_data".to_string()],
             )
             .unwrap();
         let found = service
@@ -421,6 +464,7 @@ mod document_service_test {
                 comment: None,
                 patient_id: None,
             },
+            &vec!["test_data".to_string()],
         );
         assert!(matches!(result, Err(DocumentInsertError::InvalidParent(_))));
 
@@ -445,6 +489,7 @@ mod document_service_test {
                     comment: None,
                     patient_id: None,
                 },
+                &vec!["test_data".to_string()],
             )
             .unwrap();
         assert_eq!(v2.parent_ids[0], v1.id);
@@ -476,6 +521,7 @@ mod document_service_test {
                     comment: None,
                     patient_id: None,
                 },
+                &vec!["test_data2".to_string()],
             )
             .unwrap();
         // should still find the correct document
@@ -522,6 +568,7 @@ mod document_service_test {
                     comment: None,
                     patient_id: None,
                 },
+                &vec!["test_data".to_string()],
             )
             .unwrap();
 
@@ -544,6 +591,7 @@ mod document_service_test {
                 comment: None,
                 patient_id: None,
             },
+            &vec!["test_data".to_string()],
         );
         assert!(matches!(
             result,
@@ -569,6 +617,7 @@ mod document_service_test {
                 comment: None,
                 patient_id: None,
             },
+            &vec!["test_data".to_string()],
         );
         assert!(matches!(
             result,
@@ -598,6 +647,7 @@ mod document_service_test {
                     comment: None,
                     patient_id: None,
                 },
+                &vec!["test_data".to_string()],
             )
             .unwrap();
     }
@@ -620,11 +670,26 @@ mod document_service_test {
                 id: "invalid".to_string(),
                 comment: None,
             },
+            &vec!["SomeType".to_string()],
         );
         assert_eq!(
             invalid_doc_deletion,
             Err(DocumentDeleteError::DocumentNotFound)
         );
+
+        // NotAllowedToMutDocument
+        let err = service
+            .delete_document(
+                &context,
+                "",
+                DocumentDelete {
+                    id: document_a().id,
+                    comment: Some("Testing deletion".to_string()),
+                },
+                &vec!["WrongType".to_string()],
+            )
+            .unwrap_err();
+        assert_eq!(err, DocumentDeleteError::NotAllowedToMutDocument);
 
         // Delete document
         service
@@ -635,6 +700,7 @@ mod document_service_test {
                     id: document_a().id,
                     comment: Some("Testing deletion".to_string()),
                 },
+                &vec![document_a().r#type],
             )
             .unwrap();
         let document = service
@@ -652,15 +718,34 @@ mod document_service_test {
                 id: document.id.clone(),
                 comment: None,
             },
+            &vec![document.r#type.clone()],
         );
         assert_eq!(
             deleted_doc,
             Err(DocumentDeleteError::DocumentHasAlreadyBeenDeleted)
         );
 
+        // NotAllowedToMutDocument
+        let err = service
+            .undelete_document(
+                &context,
+                "",
+                DocumentUndelete {
+                    id: document.id.clone(),
+                },
+                &vec!["WrongType".to_string()],
+            )
+            .unwrap_err();
+        assert_eq!(err, DocumentUndeleteError::NotAllowedToMutDocument);
+
         // Undelete document
         service
-            .undelete_document(&context, "", DocumentUndelete { id: document.id })
+            .undelete_document(
+                &context,
+                "",
+                DocumentUndelete { id: document.id },
+                &vec![document.r#type.clone()],
+            )
             .unwrap();
         let undeleted_document = service
             .get_document(&context, &document_a().name, None)
@@ -676,6 +761,7 @@ mod document_service_test {
             DocumentUndelete {
                 id: undeleted_document.id,
             },
+            &vec![document.r#type.clone()],
         );
         assert_eq!(
             undelete_active_document,

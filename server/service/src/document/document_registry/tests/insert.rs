@@ -18,6 +18,23 @@ mod tests {
         let context = service_provider.basic_context().unwrap();
         let service = service_provider.document_registry_service;
 
+        // InsertDocRegistryError::NotAllowedToMutDocument
+        assert_eq!(
+            service.insert(
+                &context,
+                InsertDocumentRegistry {
+                    id: "id".to_string(),
+                    parent_id: None,
+                    document_type: "MyDocType".to_string(),
+                    context: DocumentContext::Patient,
+                    name: None,
+                    form_schema_id: "invalid".to_string(),
+                },
+                &vec!["WrongType".to_string()]
+            ),
+            Err(InsertDocRegistryError::NotAllowedToMutDocument)
+        );
+
         // InsertDocRegistryError::DataSchemaDoesNotExist
         assert_eq!(
             service.insert(
@@ -29,7 +46,8 @@ mod tests {
                     context: DocumentContext::Patient,
                     name: None,
                     form_schema_id: "invalid".to_string(),
-                }
+                },
+                &vec!["MyDocType".to_string()]
             ),
             Err(InsertDocRegistryError::DataSchemaDoesNotExist)
         );
@@ -53,7 +71,8 @@ mod tests {
                     context: DocumentContext::Patient,
                     name: None,
                     form_schema_id: "schema1".to_string(),
-                }
+                },
+                &vec!["MyDocType".to_string()]
             ),
             Err(InsertDocRegistryError::InvalidParent)
         );
@@ -69,7 +88,8 @@ mod tests {
                     context: DocumentContext::Program,
                     name: Some("name".to_string()),
                     form_schema_id: "schema1".to_string(),
-                }
+                },
+                &vec!["MyProgram".to_string()]
             ),
             Ok(DocumentRegistry {
                 id: "program1".to_string(),
@@ -95,7 +115,8 @@ mod tests {
                     context: DocumentContext::Encounter,
                     name: None,
                     form_schema_id: "schema1".to_string(),
-                }
+                },
+                &vec!["MyEncounter".to_string()]
             ),
             Ok(DocumentRegistry {
                 id: "encounter1".to_string(),
@@ -122,6 +143,7 @@ mod tests {
                     name: None,
                     form_schema_id: "schema1".to_string(),
                 },
+                &vec!["Patient1".to_string()],
             )
             .unwrap();
         assert_eq!(
@@ -134,7 +156,8 @@ mod tests {
                     context: DocumentContext::Patient,
                     name: None,
                     form_schema_id: "schema1".to_string(),
-                }
+                },
+                &vec!["Patient2".to_string()]
             ),
             Err(InsertDocRegistryError::OnlyOnePatientEntryAllowed)
         );
