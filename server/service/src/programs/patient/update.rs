@@ -181,7 +181,7 @@ fn validate(
         }
     }
 
-    if !patient_belongs_to_store(ctx, store_id, &patient.id)? {
+    if input.parent.is_some() && !patient_belongs_to_store(ctx, store_id, &patient.id)? {
         return Err(UpdatePatientError::PatientDoesNotBelongToStore);
     }
     Ok(patient)
