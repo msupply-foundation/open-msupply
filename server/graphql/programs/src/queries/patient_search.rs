@@ -2,9 +2,8 @@ use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 use graphql_general::GenderInput;
-use repository::Permission;
 use service::{
-    auth::{context_permissions, Resource, ResourceAccessRequest},
+    auth::{CapabilityTag, Resource, ResourceAccessRequest},
     programs::patient::PatientSearch,
     usize_to_u32,
 };
@@ -63,7 +62,7 @@ pub fn patient_search(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let allowed_docs = context_permissions(Permission::DocumentQuery, &user.permissions);
+    let allowed_docs = user.capabilities(CapabilityTag::DocumentType);
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;

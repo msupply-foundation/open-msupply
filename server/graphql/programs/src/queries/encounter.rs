@@ -8,9 +8,9 @@ use graphql_core::{
 };
 use repository::{
     DatetimeFilter, EncounterFilter, EncounterSort, EncounterSortField, EqualFilter,
-    PaginationOption, Permission,
+    PaginationOption,
 };
-use service::auth::{context_permissions, Resource, ResourceAccessRequest};
+use service::auth::{CapabilityTag, Resource, ResourceAccessRequest};
 
 use crate::types::encounter::{EncounterNode, EncounterNodeStatus};
 
@@ -95,7 +95,7 @@ pub fn encounters(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let allowed_docs = context_permissions(Permission::DocumentQuery, &user.permissions);
+    let allowed_docs = user.capabilities(CapabilityTag::DocumentType);
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;

@@ -1,7 +1,6 @@
 use async_graphql::*;
-use repository::Permission;
 use service::{
-    auth::{context_permissions, Resource, ResourceAccessRequest},
+    auth::{CapabilityTag, Resource, ResourceAccessRequest},
     document::document_registry::{InsertDocRegistryError, InsertDocumentRegistry},
 };
 
@@ -38,7 +37,7 @@ pub fn insert_document_registry(
             store_id: None,
         },
     )?;
-    let allowed_docs = context_permissions(Permission::DocumentMutate, &user.permissions);
+    let allowed_docs = user.capabilities(CapabilityTag::DocumentType);
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
@@ -49,7 +48,7 @@ pub fn insert_document_registry(
         &allowed_docs,
     ) {
         Ok(document_registry) => InsertDocumentResponse::Response(DocumentRegistryNode {
-            allowed_docs,
+            allowed_docs: allowed_docs.clone(),
             document_registry,
         }),
         Err(error) => {

@@ -11,10 +11,10 @@ use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 use graphql_general::{EqualFilterGenderInput, GenderInput};
 use graphql_types::types::GenderType;
 use repository::{
-    DateFilter, EqualFilter, Pagination, PaginationOption, Permission, ProgramEnrolmentFilter,
+    DateFilter, EqualFilter, Pagination, PaginationOption, ProgramEnrolmentFilter,
     SimpleStringFilter,
 };
-use service::auth::{context_permissions, Resource, ResourceAccessRequest};
+use service::auth::{CapabilityTag, Resource, ResourceAccessRequest};
 use service::programs::patient::{
     main_patient_doc_name, Patient, PatientFilter, PatientSort, PatientSortField,
 };
@@ -267,7 +267,7 @@ pub fn patients(
             store_id: Some(store_id.to_string()),
         },
     )?;
-    let allowed_docs = context_permissions(Permission::DocumentQuery, &user.permissions);
+    let allowed_docs = user.capabilities(CapabilityTag::DocumentType);
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
@@ -307,7 +307,7 @@ pub fn patient(
             store_id: Some(store_id.to_string()),
         },
     )?;
-    let allowed_docs = context_permissions(Permission::DocumentQuery, &user.permissions);
+    let allowed_docs = user.capabilities(CapabilityTag::DocumentType);
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
@@ -326,7 +326,7 @@ pub fn patient(
         .map(|patient| PatientNode {
             store_id: store_id.clone(),
             patient,
-            allowed_docs,
+            allowed_docs: allowed_docs.clone(),
         });
 
     Ok(node)
