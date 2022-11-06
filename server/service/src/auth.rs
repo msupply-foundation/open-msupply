@@ -484,6 +484,11 @@ fn validate_resource_permissions(
             return Err(format!("Missing permission: {:?}", permission));
         }
         PermissionDSL::HasDynamicPermission(permission, tag) => {
+            // Always add an entry for the tag. This is later used to verify that the dev used
+            // ValidatedUser::capabilities with the correct parameter that matches the entry in the
+            // DSL
+            let capabilities = dynamic_permissions.entry(tag.clone()).or_insert(vec![]);
+
             let user_permissions = user_permissions
                 .into_iter()
                 .filter(|p| &p.permission == permission)
@@ -495,10 +500,8 @@ fn validate_resource_permissions(
                 .into_iter()
                 .filter_map(|p| p.context.clone())
                 .collect::<Vec<_>>();
-            dynamic_permissions
-                .entry(tag.clone())
-                .or_insert(vec![])
-                .append(&mut contexts);
+
+            capabilities.append(&mut contexts);
 
             return Ok(());
         }
@@ -601,14 +604,6 @@ impl AuthServiceTrait for AuthService {
         let user_permissions =
             UserPermissionRepository::new(&connection).query_by_filter(permission_filter)?;
 
-        if auth_data.debug_no_access_control {
-            return Ok(ValidatedUser {
-                user_id: validated_auth.user_id,
-                claims: validated_auth.claims,
-                capabilities: HashMap::new(),
-            });
-        }
-
         let required_permissions = match self.resource_permissions.get(&resource_request.resource) {
             Some(required_permissions) => required_permissions,
             None => {
@@ -630,6 +625,13 @@ impl AuthServiceTrait for AuthService {
         ) {
             Ok(_) => {}
             Err(msg) => {
+                if auth_data.debug_no_access_control {
+                    return Ok(ValidatedUser {
+                        user_id: validated_auth.user_id,
+                        claims: validated_auth.claims,
+                        capabilities: HashMap::new(),
+                    });
+                }
                 return Err(AuthError::Denied(AuthDeniedKind::InsufficientPermission {
                     msg,
                     required_permissions: required_permissions.clone(),
