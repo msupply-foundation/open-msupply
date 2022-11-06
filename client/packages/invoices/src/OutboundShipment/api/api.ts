@@ -80,7 +80,6 @@ const outboundParsers = {
     comment: patch.comment,
     status: outboundParsers.toStatus(patch),
     onHold: 'onHold' in patch ? patch.onHold : undefined,
-    otherPartyId: 'otherParty' in patch ? patch.otherParty?.id : undefined,
     theirReference: patch.theirReference,
     transportReference: patch.transportReference,
   }),
