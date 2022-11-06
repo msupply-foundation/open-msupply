@@ -27,7 +27,7 @@
         },
         {
           "type": "Control",
-          "scope": "#/properties/riskBehaviour/properties/receicedBloodTransfusion"
+          "scope": "#/properties/riskBehaviour/properties/receivedBloodTransfusion"
         },
         {
           "type": "Control",
