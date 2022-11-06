@@ -63,7 +63,7 @@ pub fn insert_encounter(
         Err(error) => {
             let formatted_error = format!("{:#?}", error);
             let std_err = match error {
-                InsertEncounterError::NotAllowedToMutDocument => {
+                InsertEncounterError::NotAllowedToMutateDocument => {
                     StandardGraphqlError::Forbidden(formatted_error)
                 }
                 InsertEncounterError::InvalidPatientOrProgram => {

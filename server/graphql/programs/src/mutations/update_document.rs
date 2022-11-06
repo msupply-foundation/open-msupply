@@ -136,7 +136,7 @@ fn map_error(error: DocumentInsertError) -> Result<UpdateDocumentErrorInterface>
 
     let graphql_error = match error {
         // Standard Graphql Errors
-        DocumentInsertError::NotAllowedToMutDocument => {
+        DocumentInsertError::NotAllowedToMutateDocument => {
             StandardGraphqlError::Forbidden(formatted_error)
         }
         DocumentInsertError::DatabaseError(_) => {

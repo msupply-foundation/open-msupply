@@ -49,7 +49,7 @@ pub fn undelete_document(
         Err(error) => {
             let formatted_error = format!("{:?}", error);
             let graphql_error = match error {
-                DocumentUndeleteError::NotAllowedToMutDocument => {
+                DocumentUndeleteError::NotAllowedToMutateDocument => {
                     StandardGraphqlError::Forbidden(formatted_error)
                 }
                 DocumentUndeleteError::DocumentNotFound => {

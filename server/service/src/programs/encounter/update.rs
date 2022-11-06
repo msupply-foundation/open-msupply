@@ -16,7 +16,7 @@ use super::{
 
 #[derive(PartialEq, Debug)]
 pub enum UpdateEncounterError {
-    NotAllowedToMutDocument,
+    NotAllowedToMutateDocument,
     InvalidParentId,
     EncounterRowNotFound,
     InvalidDataSchema(Vec<String>),
@@ -71,8 +71,8 @@ pub fn update_encounter(
                 .document_service
                 .update_document(ctx, doc, &allowed_docs)
                 .map_err(|err| match err {
-                    DocumentInsertError::NotAllowedToMutDocument => {
-                        UpdateEncounterError::NotAllowedToMutDocument
+                    DocumentInsertError::NotAllowedToMutateDocument => {
+                        UpdateEncounterError::NotAllowedToMutateDocument
                     }
                     DocumentInsertError::InvalidDataSchema(err) => {
                         UpdateEncounterError::InvalidDataSchema(err)
@@ -273,7 +273,7 @@ mod test {
             )
             .unwrap();
 
-        // NotAllowedToMutDocument
+        // NotAllowedToMutateDocument
         let err = service
             .update_encounter(
                 &ctx,
@@ -289,7 +289,7 @@ mod test {
             )
             .err()
             .unwrap();
-        matches!(err, UpdateEncounterError::NotAllowedToMutDocument);
+        matches!(err, UpdateEncounterError::NotAllowedToMutateDocument);
 
         // InvalidParentId
         let err = service

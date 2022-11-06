@@ -61,7 +61,7 @@ pub fn update_encounter(
         Err(error) => {
             let formatted_error = format!("{:#?}", error);
             let std_err = match error {
-                UpdateEncounterError::NotAllowedToMutDocument => {
+                UpdateEncounterError::NotAllowedToMutateDocument => {
                     StandardGraphqlError::Forbidden(formatted_error)
                 }
                 UpdateEncounterError::InvalidParentId => {

@@ -55,7 +55,7 @@ pub fn insert_document_registry(
         Err(error) => {
             let formatted_error = format!("{:#?}", error);
             let graphql_error = match error {
-                InsertDocRegistryError::NotAllowedToMutDocument => {
+                InsertDocRegistryError::NotAllowedToMutateDocument => {
                     StandardGraphqlError::Forbidden(formatted_error)
                 }
                 InsertDocRegistryError::OnlyOnePatientEntryAllowed => {
