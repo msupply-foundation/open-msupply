@@ -63,7 +63,15 @@ export type UpdateOutboundShipmentMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateOutboundShipmentMutation = { __typename: 'Mutations', updateOutboundShipment: { __typename: 'InvoiceNode', id: string, invoiceNumber: number } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'UpdateOutboundShipmentError', error: { __typename: 'CanOnlyChangeToAllocatedWhenNoUnallocatedLines', description: string } | { __typename: 'CannotChangeStatusOfInvoiceOnHold', description: string } | { __typename: 'CannotReverseInvoiceStatus', description: string } | { __typename: 'InvoiceIsNotEditable', description: string } | { __typename: 'NotAnOutboundShipmentError', description: string } | { __typename: 'OtherPartyNotACustomer', description: string } | { __typename: 'OtherPartyNotVisible', description: string } | { __typename: 'RecordNotFound', description: string } } };
+export type UpdateOutboundShipmentMutation = { __typename: 'Mutations', updateOutboundShipment: { __typename: 'InvoiceNode', id: string, invoiceNumber: number } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'UpdateOutboundShipmentError', error: { __typename: 'CanOnlyChangeToAllocatedWhenNoUnallocatedLines', description: string } | { __typename: 'CannotChangeStatusOfInvoiceOnHold', description: string } | { __typename: 'CannotReverseInvoiceStatus', description: string } | { __typename: 'InvoiceIsNotEditable', description: string } | { __typename: 'NotAnOutboundShipmentError', description: string } | { __typename: 'RecordNotFound', description: string } } };
+
+export type UpdateOutboundShipmentNameMutationVariables = Types.Exact<{
+  input: Types.UpdateOutboundShipmentNameInput;
+  storeId: Types.Scalars['String'];
+}>;
+
+
+export type UpdateOutboundShipmentNameMutation = { __typename: 'Mutations', updateOutboundShipmentName: { __typename: 'InvoiceNode', id: string } | { __typename: 'UpdateOutboundShipmentNameError', error: { __typename: 'InvoiceIsNotEditable', description: string } | { __typename: 'NotAnOutboundShipmentError', description: string } | { __typename: 'OtherPartyNotACustomer', description: string } | { __typename: 'OtherPartyNotVisible', description: string } | { __typename: 'RecordNotFound', description: string } } };
 
 export type DeleteOutboundShipmentsMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -79,7 +87,7 @@ export type UpsertOutboundShipmentMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpsertOutboundShipmentMutation = { __typename: 'Mutations', batchOutboundShipment: { __typename: 'BatchOutboundShipmentResponse', insertOutboundShipmentUnallocatedLines?: Array<{ __typename: 'InsertOutboundShipmentUnallocatedLineResponseWithId', id: string, response: { __typename: 'InsertOutboundShipmentUnallocatedLineError', error: { __typename: 'ForeignKeyError', description: string } | { __typename: 'UnallocatedLineForItemAlreadyExists', description: string } | { __typename: 'UnallocatedLinesOnlyEditableInNewInvoice', description: string } } | { __typename: 'InvoiceLineNode', id: string } }> | null, deleteOutboundShipmentLines?: Array<{ __typename: 'DeleteOutboundShipmentLineResponseWithId', id: string, response: { __typename: 'DeleteOutboundShipmentLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null, deleteOutboundShipmentServiceLines?: Array<{ __typename: 'DeleteOutboundShipmentServiceLineResponseWithId', id: string, response: { __typename: 'DeleteOutboundShipmentServiceLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null, deleteOutboundShipmentUnallocatedLines?: Array<{ __typename: 'DeleteOutboundShipmentUnallocatedLineResponseWithId', id: string, response: { __typename: 'DeleteOutboundShipmentUnallocatedLineError', error: { __typename: 'ForeignKeyError', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null, deleteOutboundShipments?: Array<{ __typename: 'DeleteOutboundShipmentResponseWithId', id: string, response: { __typename: 'DeleteOutboundShipmentError', error: { __typename: 'CannotDeleteInvoiceWithLines', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null, insertOutboundShipmentLines?: Array<{ __typename: 'InsertOutboundShipmentLineResponseWithId', id: string, response: { __typename: 'InsertOutboundShipmentLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string } | { __typename: 'LocationIsOnHold', description: string } | { __typename: 'LocationNotFound', description: string } | { __typename: 'NotEnoughStockForReduction', description: string } | { __typename: 'StockLineAlreadyExistsInInvoice', description: string } | { __typename: 'StockLineIsOnHold', description: string } } | { __typename: 'InvoiceLineNode' } }> | null, insertOutboundShipmentServiceLines?: Array<{ __typename: 'InsertOutboundShipmentServiceLineResponseWithId', id: string, response: { __typename: 'InsertOutboundShipmentServiceLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string } } | { __typename: 'InvoiceLineNode' } }> | null, insertOutboundShipments?: Array<{ __typename: 'InsertOutboundShipmentResponseWithId', id: string, response: { __typename: 'InsertOutboundShipmentError', error: { __typename: 'OtherPartyNotACustomer', description: string } | { __typename: 'OtherPartyNotVisible', description: string } } | { __typename: 'InvoiceNode' } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } }> | null, updateOutboundShipmentLines?: Array<{ __typename: 'UpdateOutboundShipmentLineResponseWithId', id: string, response: { __typename: 'InvoiceLineNode' } | { __typename: 'UpdateOutboundShipmentLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'LocationIsOnHold', description: string } | { __typename: 'LocationNotFound', description: string } | { __typename: 'NotEnoughStockForReduction', description: string, batch: { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'StockLineNode' } } | { __typename: 'RecordNotFound', description: string } | { __typename: 'StockLineAlreadyExistsInInvoice', description: string } | { __typename: 'StockLineIsOnHold', description: string } } }> | null, updateOutboundShipmentServiceLines?: Array<{ __typename: 'UpdateOutboundShipmentServiceLineResponseWithId', id: string, response: { __typename: 'InvoiceLineNode' } | { __typename: 'UpdateOutboundShipmentServiceLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordNotFound', description: string } } }> | null, updateOutboundShipmentUnallocatedLines?: Array<{ __typename: 'UpdateOutboundShipmentUnallocatedLineResponseWithId', id: string, response: { __typename: 'InvoiceLineNode' } | { __typename: 'UpdateOutboundShipmentUnallocatedLineError', error: { __typename: 'ForeignKeyError', description: string } | { __typename: 'RecordNotFound', description: string } } }> | null, updateOutboundShipments?: Array<{ __typename: 'UpdateOutboundShipmentResponseWithId', id: string, response: { __typename: 'InvoiceNode' } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'UpdateOutboundShipmentError', error: { __typename: 'CanOnlyChangeToAllocatedWhenNoUnallocatedLines', description: string } | { __typename: 'CannotChangeStatusOfInvoiceOnHold', description: string } | { __typename: 'CannotReverseInvoiceStatus', description: string } | { __typename: 'InvoiceIsNotEditable', description: string } | { __typename: 'NotAnOutboundShipmentError', description: string } | { __typename: 'OtherPartyNotACustomer', description: string } | { __typename: 'OtherPartyNotVisible', description: string } | { __typename: 'RecordNotFound', description: string } } }> | null, allocateOutboundShipmentUnallocatedLines?: Array<{ __typename: 'AllocateOutboundShipmentUnallocatedLineResponseWithId', id: string, response: { __typename: 'AllocateOutboundShipmentUnallocatedLineError', error: { __typename: 'RecordNotFound', description: string } } | { __typename: 'AllocateOutboundShipmentUnallocatedLineNode', deletes: Array<{ __typename: 'DeleteResponse', id: string }>, inserts: { __typename: 'InvoiceLineConnector', totalCount: number }, updates: { __typename: 'InvoiceLineConnector', totalCount: number } } }> | null } };
+export type UpsertOutboundShipmentMutation = { __typename: 'Mutations', batchOutboundShipment: { __typename: 'BatchOutboundShipmentResponse', insertOutboundShipmentUnallocatedLines?: Array<{ __typename: 'InsertOutboundShipmentUnallocatedLineResponseWithId', id: string, response: { __typename: 'InsertOutboundShipmentUnallocatedLineError', error: { __typename: 'ForeignKeyError', description: string } | { __typename: 'UnallocatedLineForItemAlreadyExists', description: string } | { __typename: 'UnallocatedLinesOnlyEditableInNewInvoice', description: string } } | { __typename: 'InvoiceLineNode', id: string } }> | null, deleteOutboundShipmentLines?: Array<{ __typename: 'DeleteOutboundShipmentLineResponseWithId', id: string, response: { __typename: 'DeleteOutboundShipmentLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null, deleteOutboundShipmentServiceLines?: Array<{ __typename: 'DeleteOutboundShipmentServiceLineResponseWithId', id: string, response: { __typename: 'DeleteOutboundShipmentServiceLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null, deleteOutboundShipmentUnallocatedLines?: Array<{ __typename: 'DeleteOutboundShipmentUnallocatedLineResponseWithId', id: string, response: { __typename: 'DeleteOutboundShipmentUnallocatedLineError', error: { __typename: 'ForeignKeyError', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null, deleteOutboundShipments?: Array<{ __typename: 'DeleteOutboundShipmentResponseWithId', id: string, response: { __typename: 'DeleteOutboundShipmentError', error: { __typename: 'CannotDeleteInvoiceWithLines', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null, insertOutboundShipmentLines?: Array<{ __typename: 'InsertOutboundShipmentLineResponseWithId', id: string, response: { __typename: 'InsertOutboundShipmentLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string } | { __typename: 'LocationIsOnHold', description: string } | { __typename: 'LocationNotFound', description: string } | { __typename: 'NotEnoughStockForReduction', description: string } | { __typename: 'StockLineAlreadyExistsInInvoice', description: string } | { __typename: 'StockLineIsOnHold', description: string } } | { __typename: 'InvoiceLineNode' } }> | null, insertOutboundShipmentServiceLines?: Array<{ __typename: 'InsertOutboundShipmentServiceLineResponseWithId', id: string, response: { __typename: 'InsertOutboundShipmentServiceLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string } } | { __typename: 'InvoiceLineNode' } }> | null, insertOutboundShipments?: Array<{ __typename: 'InsertOutboundShipmentResponseWithId', id: string, response: { __typename: 'InsertOutboundShipmentError', error: { __typename: 'OtherPartyNotACustomer', description: string } | { __typename: 'OtherPartyNotVisible', description: string } } | { __typename: 'InvoiceNode' } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } }> | null, updateOutboundShipmentLines?: Array<{ __typename: 'UpdateOutboundShipmentLineResponseWithId', id: string, response: { __typename: 'InvoiceLineNode' } | { __typename: 'UpdateOutboundShipmentLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'LocationIsOnHold', description: string } | { __typename: 'LocationNotFound', description: string } | { __typename: 'NotEnoughStockForReduction', description: string, batch: { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'StockLineNode' } } | { __typename: 'RecordNotFound', description: string } | { __typename: 'StockLineAlreadyExistsInInvoice', description: string } | { __typename: 'StockLineIsOnHold', description: string } } }> | null, updateOutboundShipmentServiceLines?: Array<{ __typename: 'UpdateOutboundShipmentServiceLineResponseWithId', id: string, response: { __typename: 'InvoiceLineNode' } | { __typename: 'UpdateOutboundShipmentServiceLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordNotFound', description: string } } }> | null, updateOutboundShipmentUnallocatedLines?: Array<{ __typename: 'UpdateOutboundShipmentUnallocatedLineResponseWithId', id: string, response: { __typename: 'InvoiceLineNode' } | { __typename: 'UpdateOutboundShipmentUnallocatedLineError', error: { __typename: 'ForeignKeyError', description: string } | { __typename: 'RecordNotFound', description: string } } }> | null, updateOutboundShipments?: Array<{ __typename: 'UpdateOutboundShipmentResponseWithId', id: string, response: { __typename: 'InvoiceNode' } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'UpdateOutboundShipmentError', error: { __typename: 'CanOnlyChangeToAllocatedWhenNoUnallocatedLines', description: string } | { __typename: 'CannotChangeStatusOfInvoiceOnHold', description: string } | { __typename: 'CannotReverseInvoiceStatus', description: string } | { __typename: 'InvoiceIsNotEditable', description: string } | { __typename: 'NotAnOutboundShipmentError', description: string } | { __typename: 'RecordNotFound', description: string } } }> | null, allocateOutboundShipmentUnallocatedLines?: Array<{ __typename: 'AllocateOutboundShipmentUnallocatedLineResponseWithId', id: string, response: { __typename: 'AllocateOutboundShipmentUnallocatedLineError', error: { __typename: 'RecordNotFound', description: string } } | { __typename: 'AllocateOutboundShipmentUnallocatedLineNode', deletes: Array<{ __typename: 'DeleteResponse', id: string }>, inserts: { __typename: 'InvoiceLineConnector', totalCount: number }, updates: { __typename: 'InvoiceLineConnector', totalCount: number } } }> | null } };
 
 export type DeleteOutboundShipmentLinesMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -436,6 +444,42 @@ export const UpdateOutboundShipmentDocument = gql`
     ... on InvoiceNode {
       id
       invoiceNumber
+    }
+  }
+}
+    `;
+export const UpdateOutboundShipmentNameDocument = gql`
+    mutation updateOutboundShipmentName($input: UpdateOutboundShipmentNameInput!, $storeId: String!) {
+  updateOutboundShipmentName(input: $input, storeId: $storeId) {
+    ... on UpdateOutboundShipmentNameError {
+      __typename
+      error {
+        description
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+        ... on InvoiceIsNotEditable {
+          __typename
+          description
+        }
+        ... on NotAnOutboundShipmentError {
+          __typename
+          description
+        }
+        ... on OtherPartyNotVisible {
+          __typename
+          description
+        }
+        ... on OtherPartyNotACustomer {
+          __typename
+          description
+        }
+      }
+    }
+    ... on InvoiceNode {
+      __typename
+      id
     }
   }
 }
@@ -879,6 +923,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     updateOutboundShipment(variables: UpdateOutboundShipmentMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateOutboundShipmentMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpdateOutboundShipmentMutation>(UpdateOutboundShipmentDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateOutboundShipment', 'mutation');
     },
+    updateOutboundShipmentName(variables: UpdateOutboundShipmentNameMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateOutboundShipmentNameMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateOutboundShipmentNameMutation>(UpdateOutboundShipmentNameDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateOutboundShipmentName', 'mutation');
+    },
     deleteOutboundShipments(variables: DeleteOutboundShipmentsMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DeleteOutboundShipmentsMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<DeleteOutboundShipmentsMutation>(DeleteOutboundShipmentsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteOutboundShipments', 'mutation');
     },
@@ -994,6 +1041,23 @@ export const mockInsertOutboundShipmentMutation = (resolver: ResponseResolver<Gr
 export const mockUpdateOutboundShipmentMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateOutboundShipmentMutationVariables>, GraphQLContext<UpdateOutboundShipmentMutation>, any>) =>
   graphql.mutation<UpdateOutboundShipmentMutation, UpdateOutboundShipmentMutationVariables>(
     'updateOutboundShipment',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockUpdateOutboundShipmentNameMutation((req, res, ctx) => {
+ *   const { input, storeId } = req.variables;
+ *   return res(
+ *     ctx.data({ updateOutboundShipmentName })
+ *   )
+ * })
+ */
+export const mockUpdateOutboundShipmentNameMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateOutboundShipmentNameMutationVariables>, GraphQLContext<UpdateOutboundShipmentNameMutation>, any>) =>
+  graphql.mutation<UpdateOutboundShipmentNameMutation, UpdateOutboundShipmentNameMutationVariables>(
+    'updateOutboundShipmentName',
     resolver
   )
 
