@@ -440,7 +440,7 @@ impl<'a> ValidatedUser {
         if let Some(contexts) = self.capabilities.get(&tag) {
             return contexts;
         }
-        // This is really a dev error hand should be caught by minimal testing. Moreover, the panic
+        // This is really a dev error and should be caught by minimal testing. Moreover, the panic
         // only kills the frontend request but doesn't kill the server.
         panic!(
             "Dev error: dynamic permission tag {:?} is not defined in the permission DSL",
