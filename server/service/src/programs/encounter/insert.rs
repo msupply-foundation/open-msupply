@@ -17,7 +17,7 @@ use super::{
 
 #[derive(PartialEq, Debug)]
 pub enum InsertEncounterError {
-    NotAllowedToMutDocument,
+    NotAllowedToMutateDocument,
     InvalidPatientOrProgram,
     InvalidDataSchema(Vec<String>),
     DataSchemaDoesNotExist,
@@ -75,8 +75,8 @@ pub fn insert_encounter(
                 .document_service
                 .update_document(ctx, doc, &allowed_docs)
                 .map_err(|err| match err {
-                    DocumentInsertError::NotAllowedToMutDocument => {
-                        InsertEncounterError::NotAllowedToMutDocument
+                    DocumentInsertError::NotAllowedToMutateDocument => {
+                        InsertEncounterError::NotAllowedToMutateDocument
                     }
                     DocumentInsertError::InvalidDataSchema(err) => {
                         InsertEncounterError::InvalidDataSchema(err)
@@ -244,7 +244,7 @@ mod test {
         // start actual test:
         let service = &service_provider.encounter_service;
 
-        // NotAllowedToMutDocument
+        // NotAllowedToMutateDocument
         let err = service
             .insert_encounter(
                 &ctx,
@@ -261,7 +261,7 @@ mod test {
             )
             .err()
             .unwrap();
-        matches!(err, InsertEncounterError::NotAllowedToMutDocument);
+        matches!(err, InsertEncounterError::NotAllowedToMutateDocument);
 
         // InvalidPatientOrProgram,
         let err = service

@@ -64,7 +64,7 @@ pub fn update_program_enrolment(
         Err(error) => {
             let formatted_error = format!("{:#?}", error);
             let std_err = match error {
-                UpsertProgramEnrolmentError::NotAllowedToMutDocument => {
+                UpsertProgramEnrolmentError::NotAllowedToMutateDocument => {
                     StandardGraphqlError::Forbidden(formatted_error)
                 }
                 UpsertProgramEnrolmentError::InvalidPatientId => {

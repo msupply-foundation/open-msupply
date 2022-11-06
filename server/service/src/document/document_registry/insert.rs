@@ -8,7 +8,7 @@ use crate::service_provider::ServiceContext;
 
 #[derive(PartialEq, Debug)]
 pub enum InsertDocRegistryError {
-    NotAllowedToMutDocument,
+    NotAllowedToMutateDocument,
     OnlyOnePatientEntryAllowed,
     InvalidParent,
     DataSchemaDoesNotExist,
@@ -73,7 +73,7 @@ fn validate(
     allowed_docs: &[String],
 ) -> Result<(), InsertDocRegistryError> {
     if !allowed_docs.contains(&input.document_type) {
-        return Err(InsertDocRegistryError::NotAllowedToMutDocument);
+        return Err(InsertDocRegistryError::NotAllowedToMutateDocument);
     }
     if !validate_unique_patient_entry(ctx, input)? {
         return Err(InsertDocRegistryError::OnlyOnePatientEntryAllowed);

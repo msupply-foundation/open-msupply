@@ -18,7 +18,7 @@ mod tests {
         let context = service_provider.basic_context().unwrap();
         let service = service_provider.document_registry_service;
 
-        // InsertDocRegistryError::NotAllowedToMutDocument
+        // InsertDocRegistryError::NotAllowedToMutateDocument
         assert_eq!(
             service.insert(
                 &context,
@@ -32,7 +32,7 @@ mod tests {
                 },
                 &vec!["WrongType".to_string()]
             ),
-            Err(InsertDocRegistryError::NotAllowedToMutDocument)
+            Err(InsertDocRegistryError::NotAllowedToMutateDocument)
         );
 
         // InsertDocRegistryError::DataSchemaDoesNotExist

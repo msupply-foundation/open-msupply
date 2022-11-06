@@ -16,7 +16,7 @@ use super::{
 
 #[derive(PartialEq, Debug)]
 pub enum UpsertProgramEnrolmentError {
-    NotAllowedToMutDocument,
+    NotAllowedToMutateDocument,
     InvalidPatientId,
     InvalidParentId,
     /// Each patient can only be enrolled in a program once
@@ -60,8 +60,8 @@ pub fn upsert_program_enrolment(
                 .document_service
                 .update_document(ctx, doc, &allowed_docs)
                 .map_err(|err| match err {
-                    DocumentInsertError::NotAllowedToMutDocument => {
-                        UpsertProgramEnrolmentError::NotAllowedToMutDocument
+                    DocumentInsertError::NotAllowedToMutateDocument => {
+                        UpsertProgramEnrolmentError::NotAllowedToMutateDocument
                     }
                     DocumentInsertError::InvalidDataSchema(err) => {
                         UpsertProgramEnrolmentError::InvalidDataSchema(err)
@@ -213,7 +213,7 @@ mod test {
 
         let service = &service_provider.program_enrolment_service;
 
-        // NotAllowedToMutDocument
+        // NotAllowedToMutateDocument
         let err = service
             .upsert_program_enrolment(
                 &ctx,
@@ -230,7 +230,7 @@ mod test {
             )
             .err()
             .unwrap();
-        matches!(err, UpsertProgramEnrolmentError::NotAllowedToMutDocument);
+        matches!(err, UpsertProgramEnrolmentError::NotAllowedToMutateDocument);
 
         // InvalidPatientId
         let err = service

@@ -58,7 +58,7 @@ pub fn update_patient(
                 .document_service
                 .update_document(ctx, doc, &vec![PATIENT_TYPE.to_string()])
                 .map_err(|err| match err {
-                    DocumentInsertError::NotAllowedToMutDocument => {
+                    DocumentInsertError::NotAllowedToMutateDocument => {
                         UpdatePatientError::InternalError(
                             "Wrong params for update_document".to_string(),
                         )

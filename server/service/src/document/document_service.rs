@@ -11,7 +11,7 @@ use super::raw_document::RawDocument;
 
 #[derive(Debug, PartialEq)]
 pub enum DocumentInsertError {
-    NotAllowedToMutDocument,
+    NotAllowedToMutateDocument,
     InvalidParent(String),
     /// Input document doesn't match the provided json schema
     InvalidDataSchema(Vec<String>),
@@ -40,7 +40,7 @@ pub struct DocumentDelete {
 
 #[derive(Debug, PartialEq)]
 pub enum DocumentDeleteError {
-    NotAllowedToMutDocument,
+    NotAllowedToMutateDocument,
     DocumentNotFound,
     DocumentHasAlreadyBeenDeleted,
     DatabaseError(RepositoryError),
@@ -60,7 +60,7 @@ pub struct DocumentUndelete {
 
 #[derive(Debug, PartialEq)]
 pub enum DocumentUndeleteError {
-    NotAllowedToMutDocument,
+    NotAllowedToMutateDocument,
     DocumentNotFound,
     ParentDoesNotExist,
     CannotUndeleteActiveDocument,
@@ -133,7 +133,7 @@ pub trait DocumentServiceTrait: Sync + Send {
             .connection
             .transaction_sync(|con| {
                 if !allowed_docs.contains(&doc.r#type) {
-                    return Err(DocumentInsertError::NotAllowedToMutDocument);
+                    return Err(DocumentInsertError::NotAllowedToMutateDocument);
                 }
                 let validator = json_validator(con, &doc)?;
                 if let Some(validator) = &validator {
@@ -265,7 +265,7 @@ fn validate_document_delete(
         }
     };
     if !allowed_docs.contains(&doc.r#type) {
-        return Err(DocumentDeleteError::NotAllowedToMutDocument);
+        return Err(DocumentDeleteError::NotAllowedToMutateDocument);
     }
     Ok(doc)
 }
@@ -288,7 +288,7 @@ fn validate_document_undelete(
         }
     };
     if !allowed_docs.contains(&doc.r#type) {
-        return Err(DocumentUndeleteError::NotAllowedToMutDocument);
+        return Err(DocumentUndeleteError::NotAllowedToMutateDocument);
     }
 
     let parent = match doc.parent_ids.last() {
@@ -393,7 +393,7 @@ mod document_service_test {
 
         let doc_name = "test/doc2";
 
-        // NotAllowedToMutDocument
+        // NotAllowedToMutateDocument
         let result = service.update_document(
             &context,
             RawDocument {
@@ -414,7 +414,7 @@ mod document_service_test {
         );
         assert!(matches!(
             result,
-            Err(DocumentInsertError::NotAllowedToMutDocument)
+            Err(DocumentInsertError::NotAllowedToMutateDocument)
         ));
 
         // successfully insert a document
@@ -677,7 +677,7 @@ mod document_service_test {
             Err(DocumentDeleteError::DocumentNotFound)
         );
 
-        // NotAllowedToMutDocument
+        // NotAllowedToMutateDocument
         let err = service
             .delete_document(
                 &context,
@@ -689,7 +689,7 @@ mod document_service_test {
                 &vec!["WrongType".to_string()],
             )
             .unwrap_err();
-        assert_eq!(err, DocumentDeleteError::NotAllowedToMutDocument);
+        assert_eq!(err, DocumentDeleteError::NotAllowedToMutateDocument);
 
         // Delete document
         service
@@ -725,7 +725,7 @@ mod document_service_test {
             Err(DocumentDeleteError::DocumentHasAlreadyBeenDeleted)
         );
 
-        // NotAllowedToMutDocument
+        // NotAllowedToMutateDocument
         let err = service
             .undelete_document(
                 &context,
@@ -736,7 +736,7 @@ mod document_service_test {
                 &vec!["WrongType".to_string()],
             )
             .unwrap_err();
-        assert_eq!(err, DocumentUndeleteError::NotAllowedToMutDocument);
+        assert_eq!(err, DocumentUndeleteError::NotAllowedToMutateDocument);
 
         // Undelete document
         service
