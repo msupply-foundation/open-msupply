@@ -118,7 +118,7 @@
               "description": "Have you received any of the following in the past 12 months ?: Sex in exchange for money/goods/services ?",
               "type": "boolean"
             },
-            "receicedBloodTransfusion": {
+            "receivedBloodTransfusion": {
               "description": "Have you received any of the following in the past 12 months ?: Received a blood transfusion ?",
               "type": "boolean"
             },
