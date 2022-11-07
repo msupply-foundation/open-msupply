@@ -42,11 +42,6 @@ export const useZodOptionsValidation = <T>(
   const [errors, setErrors] = useState<string | undefined>();
   const [parsedOptions, setOptions] = useState<T | undefined>();
   useEffect(() => {
-    if (!options) {
-      setErrors('Bad control config: options are required');
-      return;
-    }
-
     const result = TypeDef.safeParse(options);
     if (result.success) {
       setOptions(result.data);

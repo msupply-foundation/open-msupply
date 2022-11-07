@@ -14,12 +14,12 @@ import {
   FORM_LABEL_COLUMN_WIDTH,
   FORM_INPUT_COLUMN_WIDTH,
   JsonFormsConfig,
+  useZodOptionsValidation,
 } from '@openmsupply-client/common';
 import { Button, FormLabel } from '@mui/material';
 import { get as extractProperty } from 'lodash';
 import { useDocument } from '../api';
 import { z } from 'zod';
-import { useZodOptionsValidation } from '../useZodOptionsValidation';
 
 export const idGeneratorTester = rankWith(10, uiTypeIs('IdGenerator'));
 
