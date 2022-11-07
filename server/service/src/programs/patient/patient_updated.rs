@@ -41,6 +41,7 @@ pub fn patient_document_updated(
         gender: patient.gender.and_then(|g| match g {
             SchemaGender::Female => Some(Gender::Female),
             SchemaGender::Male => Some(Gender::Male),
+            SchemaGender::Transgender => Some(Gender::Transgender),
             SchemaGender::TransgenderMale => Some(Gender::TransgenderMale),
             SchemaGender::TransgenderFemale => Some(Gender::TransgenderFemale),
             SchemaGender::Unknown => Some(Gender::Unknown),

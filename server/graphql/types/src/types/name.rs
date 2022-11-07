@@ -50,6 +50,7 @@ impl NameNodeType {
 pub enum GenderType {
     Female,
     Male,
+    Transgender,
     TransgenderMale,
     TransgenderMaleHormone,
     TransgenderMaleSurgical,
@@ -64,6 +65,7 @@ impl GenderType {
         match gender {
             Gender::Female => GenderType::Female,
             Gender::Male => GenderType::Male,
+            Gender::Transgender => GenderType::Transgender,
             Gender::TransgenderMale => GenderType::TransgenderMale,
             Gender::TransgenderMaleHormone => GenderType::TransgenderMaleHormone,
             Gender::TransgenderMaleSurgical => GenderType::TransgenderMaleSurgical,

@@ -67,6 +67,7 @@
                             "mapping": {
                               "MALE": "1",
                               "FEMALE": "2",
+                              "TRANSGENDER": "3",
                               "TRANSGENDER_MALE": "3",
                               "TRANSGENDER_FEMALE": "3",
                               "UNKNOWN": "3",
@@ -99,7 +100,14 @@
                 {
                   "type": "Control",
                   "scope": "#/properties/gender",
-                  "label": "Sex"
+                  "label": "Sex",
+                  "options": {
+                    "show": [
+                      ["MALE", "Male"],
+                      ["FEMALE", "Female"],
+                      ["TRANSGENDER", "Transgender"]
+                    ]
+                  }
                 },
                 {
                   "type": "DateOfBirth",
@@ -127,7 +135,13 @@
                 },
                 {
                   "type": "Control",
-                  "scope": "#/properties/hand"
+                  "scope": "#/properties/hand",
+                  "options": {
+                    "show": [
+                      ["LEFT", "Left"],
+                      ["RIGHT", "Right"]
+                    ]
+                  }
                 },
                 {
                   "type": "FirstItemArray",
@@ -177,7 +191,17 @@
               "elements": [
                 {
                   "type": "Control",
-                  "scope": "#/properties/family/properties/maritalStatus"
+                  "scope": "#/properties/family/properties/maritalStatus",
+                  "options": {
+                    "show": [
+                      ["SINGLE", "Single"],
+                      ["MARRIED", "Married"],
+                      ["DIVORCED", "Divorced"],
+                      ["WIDOWED", "Widowed"],
+                      ["SEPARATED", "Separated"],
+                      ["REGISTERED_PARTNERSHIP", "Registered Partnership"]
+                    ]
+                  }
                 },
                 {
                   "type": "Control",
