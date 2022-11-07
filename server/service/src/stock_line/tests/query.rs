@@ -49,7 +49,6 @@ mod query {
             setup_all("test_stock_line_single_record", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
-        let context = service_provider.basic_context().unwrap();
         let service = service_provider.stock_line_service;
 
         assert_eq!(
@@ -103,68 +102,68 @@ mod query {
         assert_eq!(result.rows[1].stock_line_row.id, "item_a_line_b");
     }
 
-    // #[actix_rt::test]
-    // async fn stock_line_service_sort() {
-    //     let (mock_data, _, connection_manager, _) =
-    //         setup_all("test_stock_line_sort", MockDataInserts::all()).await;
+    #[actix_rt::test]
+    async fn stock_line_service_sort() {
+        let (mock_data, _, connection_manager, _) =
+            setup_all("test_stock_line_sort", MockDataInserts::all()).await;
 
-    //     let service_provider = ServiceProvider::new(connection_manager, "app_data");
-    //     let context = service_provider.basic_context().unwrap();
-    //     let service = service_provider.stock_line_service;
-    //     // Test Name sort with default sort order
-    //     let result = service
-    //         .get_stock_lines(
-    //             &context,
-    //             None,
-    //             None,
-    //             Some(Sort {
-    //                 key: StockLineSortField::Name,
-    //                 desc: None,
-    //             }),
-    //         )
-    //         .unwrap();
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let context = service_provider.basic_context().unwrap();
+        let service = service_provider.stock_line_service;
+        // Test Name sort with default sort order
+        let result = service
+            .get_stock_lines(
+                &context,
+                None,
+                None,
+                Some(Sort {
+                    key: StockLineSortField::ExpiryDate,
+                    desc: None,
+                }),
+            )
+            .unwrap();
 
-    //     let mut stock_lines = mock_data["base"].stock_lines.clone();
-    //     stock_lines.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+        let mut stock_lines = mock_data["base"].stock_lines.clone();
+        stock_lines.sort_by(|a, b| a.expiry_date.cmp(&b.expiry_date));
 
-    //     let result_names: Vec<String> = result
-    //         .rows
-    //         .into_iter()
-    //         .map(|stock_line| stock_line.stock_line_row.name)
-    //         .collect();
-    //     let sorted_names: Vec<String> = stock_lines
-    //         .into_iter()
-    //         .map(|stock_line| stock_line.name)
-    //         .collect();
+        let result_ids: Vec<String> = result
+            .rows
+            .into_iter()
+            .map(|stock_line| stock_line.stock_line_row.id)
+            .collect();
+        let sorted_ids: Vec<String> = stock_lines
+            .into_iter()
+            .map(|stock_line| stock_line.id)
+            .collect();
 
-    //     assert_eq!(result_names, sorted_names);
+        assert_eq!(result_ids, sorted_ids);
 
-    //     // Test Name sort with desc sort
-    //     let result = service
-    //         .get_stock_lines(
-    //             &context,
-    //             None,
-    //             None,
-    //             Some(Sort {
-    //                 key: StockLineSortField::Name,
-    //                 desc: Some(true),
-    //             }),
-    //         )
-    //         .unwrap();
+        // Test Name sort with desc sort
+        let result = service
+            .get_stock_lines(
+                &context,
+                None,
+                None,
+                Some(Sort {
+                    key: StockLineSortField::ExpiryDate,
+                    desc: Some(true),
+                }),
+            )
+            .unwrap();
 
-    //     let mut stock_lines = mock_data["base"].stock_lines.clone();
-    //     stock_lines.sort_by(|a, b| b.name.to_lowercase().cmp(&a.name.to_lowercase()));
+        let mut stock_lines = mock_data["base"].stock_lines.clone();
+        stock_lines.sort_by(|a, b| b.expiry_date.cmp(&a.expiry_date));
 
-    //     let result_names: Vec<String> = result
-    //         .rows
-    //         .into_iter()
-    //         .map(|stock_line| stock_line.stock_line_row.name)
-    //         .collect();
-    //     let sorted_names: Vec<String> = stock_lines
-    //         .into_iter()
-    //         .map(|stock_line| stock_line.name)
-    //         .collect();
+        let result_ids: Vec<String> = result
+            .rows
+            .into_iter()
+            .map(|stock_line| stock_line.stock_line_row.id)
+            .collect();
+        let sorted_ids: Vec<String> = stock_lines
+            .into_iter()
+            .map(|stock_line| stock_line.id)
+            .collect();
 
-    //     assert_eq!(result_names, sorted_names);
-    // }
+        assert_eq!(result_ids, sorted_ids);
+    }
 }
