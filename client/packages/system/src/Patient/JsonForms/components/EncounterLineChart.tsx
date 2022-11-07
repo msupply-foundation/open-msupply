@@ -8,11 +8,11 @@ import {
   useFormatDateTime,
   XAxis,
   YAxis,
+  useZodOptionsValidation,
 } from '@openmsupply-client/common';
 import { CartesianGrid, Tooltip, TooltipProps, Label } from 'recharts';
 import { useDocument } from '../api';
 import { z } from 'zod';
-import { useZodOptionsValidation } from '../useZodOptionsValidation';
 import { useEncounter } from '../../../Encounter/api/hooks';
 
 export const encounterLineChartTester = rankWith(
