@@ -34,11 +34,28 @@
     },
     {
       "type": "Control",
-      "scope": "#/properties/status"
+      "scope": "#/properties/status",
+      "options": {
+        "show": [
+          ["ACTIVE", "Active"],
+          ["OPTED_OUT", "Opted out"],
+          ["TRANSFERRED_OUT", "Transferred out"],
+          ["PAUSED", "Paused"]
+        ]
+      }
     },
     {
       "type": "Control",
-      "scope": "#/properties/priorART"
+      "scope": "#/properties/priorART",
+      "options": {
+        "show": [
+          ["TRANSFER_IN_WITH_RECORDS", "Transfer in with records"],
+          ["TRANSFER_IN_WITHOUT_RECORDS", "Transfer in without records"],
+          ["PPTCT_PROPHYLAXIS", "PPTCT Prophylaxis"],
+          ["PEP", "PEP"],
+          ["PrEP", "PrEP"]
+        ]
+      }
     },
     {
       "type": "Control",
@@ -54,7 +71,14 @@
     },
     {
       "type": "Control",
-      "scope": "#/properties/partnerHivStatus"
+      "scope": "#/properties/partnerHivStatus",
+      "options": {
+        "show": [
+          ["POSITIVE", "Positive"],
+          ["NEGATIVE", "Negative"],
+          ["UNKNOWN", "Unknown"]
+        ]
+      }
     },
     {
       "type": "Control",

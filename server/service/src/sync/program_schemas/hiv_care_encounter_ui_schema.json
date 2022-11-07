@@ -33,7 +33,14 @@
         },
         {
           "type": "Control",
-          "scope": "#/properties/physicalExamination/properties/nutritionalStatus"
+          "scope": "#/properties/physicalExamination/properties/nutritionalStatus",
+          "options": {
+            "show": [
+              ["UNDER_NOURISHED", "Under nourished"],
+              ["WELL_NOURISHED", "Well nourished"],
+              ["OVERWEIGHT", "Overweight"]
+            ]
+          }
         },
         {
           "type": "Control",
@@ -45,7 +52,18 @@
         },
         {
           "type": "Control",
-          "scope": "#/properties/physicalExamination/properties/whoStaging"
+          "scope": "#/properties/physicalExamination/properties/whoStaging",
+          "options": {
+            "show": [
+              ["STAGE_1_ASYMPTOMATIC", "Stage 1 - Asymptomatic"],
+              ["STAGE_2_MILDLY_SYMPTOMATIC", "Stage 2 - Mildly symptomatic"],
+              [
+                "STAGE_3_MODERATELY_SYMPTOMATIC",
+                "Stage 3 - Moderately symptomatic"
+              ],
+              ["STAGE_4_SEVERELY_SYMPTOMATIC", "Stage 4 - Severely symptomatic"]
+            ]
+          }
         },
         {
           "type": "VerticalLayout",
@@ -123,7 +141,18 @@
         },
         {
           "scope": "#/properties/arvMedication/properties/regimeStatus",
-          "type": "Control"
+          "type": "Control",
+          "options": {
+            "show": [
+              ["NO_ARV", "No ARV"],
+              ["START_ARV", "Start ARV"],
+              ["CONTINUE_ARV", "Continue ARV"],
+              ["STOP_ARV", "Stop ARV"],
+              ["RECOMMENCED_ARV", "Recommenced ARV"],
+              ["ARV_ON_HOLD", "ARV on Hold"],
+              ["CHANGES_TO_ART_REGIMEN", "Changes to ART Regimen"]
+            ]
+          }
         },
         {
           "scope": "#/properties/arvMedication/properties/reason",
@@ -139,11 +168,27 @@
         },
         {
           "scope": "#/properties/arvMedication/properties/regimeType",
-          "type": "Control"
+          "type": "Control",
+          "options": {
+            "show": [
+              ["FIRST_LINE_ADULT", "First Line - Adult"],
+              ["FIRST_LINE_PAEDS_20_30_KG", "First Line - Paeds 20-30kg"],
+              ["FIRST_LINE_PAEDS_0_20_KG", "First Line - Paeds <20kg"],
+              ["SECOND_LINE_ADULT", "Second Line - Adult"],
+              ["SECOND_LINE_PAEDS_20_30_KG", "Second Line - Paeds 20-30kg"],
+              ["SECOND_LINE_PAEDS_0_20_KG", "Second Line - Paeds <20kg"]
+            ]
+          }
         },
         {
           "scope": "#/properties/arvMedication/properties/change",
-          "type": "Control"
+          "type": "Control",
+          "options": {
+            "show": [
+              ["SUBSTITUTION", "Substitution of ART Regimen"],
+              ["SWITCHING", "Switching of ART regimen"]
+            ]
+          }
         },
         {
           "scope": "#/properties/arvMedication/properties/previousRegimen",
@@ -192,7 +237,13 @@
             },
             {
               "type": "Control",
-              "scope": "#/properties/viralLoad/properties/targetting"
+              "scope": "#/properties/viralLoad/properties/targetting",
+              "options": {
+                "show": [
+                  ["TARGETED", "Targeted"],
+                  ["SCHEDULED", "Scheduled"]
+                ]
+              }
             },
             {
               "type": "Control",
@@ -365,7 +416,14 @@
         {
           "type": "Control",
           "label": "TB-GeneXpert",
-          "scope": "#/properties/tbHcv/properties/tbGeneXpert"
+          "scope": "#/properties/tbHcv/properties/tbGeneXpert",
+          "options": {
+            "show": [
+              ["NOT_DETECTED", "Not Detected"],
+              ["POSITIVE_RIF_SENSITIVE", "Positive (Rif-Sensitive)"],
+              ["POSITIVE_RIF_RESISTANT", "Positive (Rif-Resistant)"]
+            ]
+          }
         },
         {
           "type": "Control",
@@ -375,7 +433,15 @@
         {
           "type": "Control",
           "label": "TB-Sputum",
-          "scope": "#/properties/tbHcv/properties/tbSputum"
+          "scope": "#/properties/tbHcv/properties/tbSputum",
+          "options": {
+            "show": [
+              ["NO_AFB", "No AFB"],
+              ["POS_1", "+"],
+              ["POS_2", "++"],
+              ["POS_3", "+++"]
+            ]
+          }
         },
         {
           "type": "Control",

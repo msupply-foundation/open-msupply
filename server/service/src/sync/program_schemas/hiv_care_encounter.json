@@ -54,7 +54,7 @@
               "type": "number"
             },
             "change": {
-              "enum": ["Substitution of ART Regimen", "Switching of ART regimen"],
+              "enum": ["SUBSTITUTION", "SWITCHING"],
               "type": "string"
             },
             "initialWeight": {
@@ -78,7 +78,18 @@
               "type": "array"
             },
             "reason": {
-              "enum": ["101", "102", "103", "104", "105", "106", "107", "108", "109", "151"],
+              "enum": [
+                "101",
+                "102",
+                "103",
+                "104",
+                "105",
+                "106",
+                "107",
+                "108",
+                "109",
+                "151"
+              ],
               "type": "string"
             },
             "reasonFirstToSecondLine": {
@@ -92,25 +103,25 @@
             "regimeStatus": {
               "description": "Antiretroviral treatment status",
               "enum": [
-                "No ARV",
-                "Start ARV",
-                "Continue ARV",
-                "Stop ARV",
-                "Recommenced ARV",
-                "ARV on Hold",
-                "Changes to ART Regimen"
+                "NO_ARV",
+                "START_ARV",
+                "CONTINUE_ARV",
+                "STOP_ARV",
+                "RECOMMENCED_ARV",
+                "ARV_ON_HOLD",
+                "CHANGES_TO_ART_REGIMEN"
               ],
               "type": "string"
             },
             "regimeType": {
               "description": "Antiretroviral treatment line",
               "enum": [
-                "First Line - Adult",
-                "First Line - Paeds 20-30kg",
-                "First Line - Paeds <20kg",
-                "Second Line - Adult",
-                "Second Line - Paeds 20-30kg",
-                "Second Line - Paeds <20kg"
+                "FIRST_LINE_ADULT",
+                "FIRST_LINE_PAEDS_20_30_KG",
+                "FIRST_LINE_PAEDS_0_20_KG",
+                "SECOND_LINE_ADULT",
+                "SECOND_LINE_PAEDS_20_30_KG",
+                "SECOND_LINE_PAEDS_0_20_KG"
               ],
               "type": "string"
             },
@@ -244,8 +255,7 @@
               "description": "75367002\tBlood pressure [mmHg]",
               "pattern": "^\\d{3}\\/\\d{2}$",
               "title": "BP in mmHg",
-              "type": "string",
-              "messages": { "pattern": "Format is 000/00" }
+              "type": "string"
             },
             "bodyMassIndex": {
               "description": "60621009\tBody mass index (BMI)",
@@ -255,19 +265,17 @@
               "description": "50373000\tBody height measure [m]",
               "pattern": "^\\d\\.\\d{2}$",
               "title": "Height in m",
-              "type": "string",
-              "messages": { "pattern": "Format is 0.00" }
+              "type": "string"
             },
             "midUpperArmCircumference": {
               "description": "284473002\tMid upper arm circumference (MUAC) [cm]",
-              "pattern": "^\\d+\\.\\d{2}$",
+              "pattern": "^\\d\\.\\d{2}$",
               "title": "MUAC in cm",
-              "type": "string",
-              "messages": { "pattern": "Format is 0.00" }
+              "type": "string"
             },
             "nutritionalStatus": {
               "description": "366364004  nutritional status",
-              "enum": ["Under nourished", "Well nourished", "Overweight"],
+              "enum": ["UNDER_NOURISHED", "WELL_NOURISHED", "OVERWEIGHT"],
               "type": "string"
             },
             "opportunisticInfections": {
@@ -327,10 +335,10 @@
                   "Burning/Numb/Tingling",
                   "Cryptococcal Meningitis",
                   "Dizzy",
-                  "anxiety",
-                  "nightmare",
-                  "depression",
-                  "neuritis",
+                  "Anxiety",
+                  "Nightmare",
+                  "Depression",
+                  "Neuritis",
                   "Cough",
                   "Diarrhoea",
                   "Difficulty Breathing",
@@ -366,18 +374,17 @@
             },
             "weight": {
               "description": "735395000\tCurrent body weight [kg]",
-              "pattern": "^\\d+\\.\\d{2}$",
+              "pattern": "^\\d+\\.\\d+$",
               "title": "Weight in kg",
-              "type": "string",
-              "messages": { "pattern": "Format is 0.00" }
+              "type": "string"
             },
             "whoStaging": {
               "description": "420721002 Acquired immunodeficiency syndrome-associated disorder (disorder)",
               "enum": [
-                "Stage 1 - Asymptomatic",
-                "Stage 2 - Mildly symptomatic",
-                "Stage 3 - Moderately symptomatic",
-                "Stage 4 - Severely symptomatic"
+                "STAGE_1_ASYMPTOMATIC",
+                "STAGE_2_MILDLY_SYMPTOMATIC",
+                "STAGE_3_MODERATELY_SYMPTOMATIC",
+                "STAGE_4_SEVERELY_SYMPTOMATIC"
               ],
               "title": "WHO Staging",
               "type": "string"
@@ -407,11 +414,15 @@
               "type": "string"
             },
             "tbGeneXpert": {
-              "enum": ["Not Detected", "Positive (Rif-Sensetive)", "Postitive (Rif-Resistant"],
+              "enum": [
+                "NOT_DETECTED",
+                "POSITIVE_RIF_SENSITIVE",
+                "POSITIVE_RIF_RESISTANT"
+              ],
               "type": "string"
             },
             "tbSputum": {
-              "enum": ["No AFB", "+", "++", "+++"],
+              "enum": ["NO_AFB", "POS_1", "POS_2", "POS_3"],
               "type": "string"
             }
           },
@@ -430,7 +441,7 @@
                 "TB suspected and sputums sample sent or results recorded",
                 "Currently on TB treatment",
                 "Has completed TB treatment, no signs or symptoms",
-                "Has TB (code from old CTC form"
+                "Has TB (code from old CTC form)"
               ],
               "type": "string"
             },
@@ -447,7 +458,7 @@
               "type": "boolean"
             },
             "targetting": {
-              "enum": ["Targeted", "Scheduled"],
+              "enum": ["TARGETED", "SCHEDULED"],
               "type": "string"
             },
             "tested": {

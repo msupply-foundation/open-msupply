@@ -23,6 +23,7 @@ CREATE TABLE name (
     gender TEXT CHECK (gender IN (
         'FEMALE',
         'MALE',
+        'TRANSGENDER',
         'TRANSGENDER_MALE',
         'TRANSGENDER_MALE_HORMONE',
         'TRANSGENDER_MALE_SURGICAL',

@@ -86,7 +86,14 @@
         },
         {
           "type": "Control",
-          "scope": "#/properties/hivTesting/properties/result"
+          "scope": "#/properties/hivTesting/properties/result",
+          "options": {
+            "show": [
+              ["POSITIVE", "Positive"],
+              ["NEGATIVE", "Negative"],
+              ["UNKNOWN", "Unknown"]
+            ]
+          }
         }
       ]
     }
