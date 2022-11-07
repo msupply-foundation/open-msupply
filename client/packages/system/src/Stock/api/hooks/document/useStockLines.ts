@@ -4,7 +4,7 @@ import { useStockApi } from '../utils/useStockApi';
 export const useStockLines = () => {
   const api = useStockApi();
   const { queryParams } = useUrlQueryParams({
-    initialSort: { key: 'itemName', dir: 'asc' },
+    initialSort: { key: 'expiryDate', dir: 'desc' },
   });
   return {
     ...useQuery(['stock', 'list', api.storeId, queryParams], () =>
