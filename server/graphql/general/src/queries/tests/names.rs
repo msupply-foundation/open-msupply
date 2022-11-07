@@ -9,7 +9,7 @@ mod graphql {
             mock_name_a, mock_name_linked_to_store, mock_name_not_linked_to_store,
             mock_store_linked_to_name, MockDataInserts,
         },
-        EqualFilter, Name, NameFilter, NameSort, NameSortField, PaginationOption,
+        EqualFilter, Name, NameFilter, NameSort, NameSortField, NameType, PaginationOption,
         SimpleStringFilter, StorageConnectionManager,
     };
     use serde_json::json;
@@ -162,7 +162,7 @@ mod graphql {
                 store_code,
                 is_visible,
                 is_system_name,
-                r#type: _,
+                r#type,
             } = filter.unwrap();
 
             assert_eq!(id, Some(EqualFilter::not_equal_to("id_not_equal_to")));
@@ -177,10 +177,10 @@ mod graphql {
             );
             assert_eq!(is_visible, Some(false));
             assert_eq!(is_system_name, Some(true));
-            // assert_eq!(
-            //     r#type,
-            //     Some(EqualFilter::equal_to(NameType::Store))
-            // );
+            assert_eq!(
+                r#type,
+                Some(EqualFilter::equal_to_name_type(&NameType::Store))
+            );
 
             Ok(ListResult {
                 rows: vec![Name {

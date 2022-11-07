@@ -16,7 +16,7 @@ use diesel::{
     prelude::*,
     query_source::joins::OnClauseWrapper,
 };
-use util::constants::SYSTEM_NAME_CODES;
+use util::{constants::SYSTEM_NAME_CODES, inline_init};
 
 #[derive(PartialEq, Debug, Clone, Default)]
 pub struct Name {
@@ -37,6 +37,12 @@ pub struct NameFilter {
     pub is_visible: Option<bool>,
     pub is_system_name: Option<bool>,
     pub r#type: Option<EqualFilter<NameType>>,
+}
+
+impl EqualFilter<NameType> {
+    pub fn equal_to_name_type(value: &NameType) -> Self {
+        inline_init(|r: &mut Self| r.equal_to = Some(value.to_owned()))
+    }
 }
 
 #[derive(PartialEq, Debug)]
