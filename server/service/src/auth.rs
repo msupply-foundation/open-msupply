@@ -289,8 +289,9 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasPermission(Permission::PatientMutate),
+            // permission to read the related doc types when reading the mutated patient
             PermissionDSL::HasDynamicPermission(
-                Permission::DocumentMutate,
+                Permission::DocumentQuery,
                 CapabilityTag::DocumentType,
             ),
         ]),
