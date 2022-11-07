@@ -5,7 +5,7 @@ use super::{
 };
 
 use crate::{
-    diesel_macros::{apply_date_filter, apply_equal_filter, apply_sort_asc_nulls_last},
+    diesel_macros::{apply_date_filter, apply_equal_filter, apply_sort_asc_nulls_first},
     repository_error::RepositoryError,
     DateFilter, EqualFilter, Pagination, Sort,
 };
@@ -71,7 +71,7 @@ impl<'a> StockLineRepository<'a> {
             match sort.key {
                 StockLineSortField::ExpiryDate => {
                     // TODO: would prefer to have extra parameter on Sort.nulls_last
-                    apply_sort_asc_nulls_last!(query, sort, stock_line_dsl::expiry_date);
+                    apply_sort_asc_nulls_first!(query, sort, stock_line_dsl::expiry_date);
                 }
             }
         } else {
