@@ -7,22 +7,72 @@ import {
   FORM_LABEL_COLUMN_WIDTH,
   FORM_INPUT_COLUMN_WIDTH,
 } from '../styleConstants';
+import { z } from 'zod';
+import { useZodOptionsValidation } from '../useZodOptionsValidation';
 
 export const selectTester = rankWith(4, isEnumControl);
 
+type Options = {
+  /**
+   * Option to set a display name and/or reorder enum item.
+   *
+   * For example, enum [YES, NO] can be displayed as [No, Yes] using:
+   * "show": [
+   *   ["NO", "No"],
+   *   ["YES", "Yes"]
+   * ]
+   *
+   * To only reorder the enum to [NO, YES] do:
+   * "show": [
+   *   ["NO"],
+   *   ["YES"]
+   * ]
+   */
+  show?: [string, string | undefined][];
+};
+const Options: z.ZodType<Options | undefined> = z
+  .object({
+    show: z.array(z.tuple([z.string(), z.string().optional()])).optional(),
+  })
+  .strict()
+  .optional();
+
+type DisplayOption = { label: string; value: string };
+
+const displayOptions = (
+  schemaEnum: string[],
+  options?: Options
+): DisplayOption[] => {
+  if (!options?.show) {
+    return schemaEnum.map((option: string) => ({
+      label: option,
+      value: option,
+    }));
+  }
+
+  return options.show.reduce<DisplayOption[]>((prev, [key, value]) => {
+    if (!schemaEnum.includes(key)) {
+      console.warn(
+        `Invalid select control config: key ${key} is not in the enum`
+      );
+      return prev;
+    }
+    prev.push({ value: key, label: value ?? key });
+    return prev;
+  }, []);
+};
+
 const UIComponent = (props: ControlProps) => {
   const { data, handleChange, label, schema, path } = props;
-
-  const options = schema.enum
-    ? schema.enum.map((option: string) => ({
-        label: option,
-        value: option,
-      }))
-    : [];
-
+  const { errors: zErrors, options: schemaOptions } = useZodOptionsValidation(
+    Options,
+    props.uischema.options
+  );
   if (!props.visible) {
     return null;
   }
+  const options = schema.enum ? displayOptions(schema.enum, schemaOptions) : [];
+
   return (
     <Box
       display="flex"
@@ -41,8 +91,8 @@ const UIComponent = (props: ControlProps) => {
           options={options}
           value={data ?? ''}
           onChange={e => handleChange(path, e.target.value)}
-          error={!!props.errors}
-          helperText={props.errors}
+          error={!!zErrors ?? !!props.errors}
+          helperText={zErrors ?? props.errors}
         />
       </Box>
     </Box>
