@@ -23,6 +23,7 @@ pub struct StockLineNode {
 #[graphql(rename_items = "camelCase")]
 pub enum StockLineSortFieldInput {
     ExpiryDate,
+    NumberOfPacks,
 }
 #[derive(InputObject)]
 pub struct StockLineSortInput {
@@ -52,6 +53,7 @@ impl From<StockLineFilterInput> for StockLineFilter {
             item_id: f.item_id.map(EqualFilter::from),
             location_id: f.location_id.map(EqualFilter::from),
             store_id: None,
+            item_code_or_name: None,
         }
     }
 }
@@ -193,6 +195,7 @@ impl StockLineSortInput {
         use StockLineSortFieldInput as from;
         let key = match self.key {
             from::ExpiryDate => to::ExpiryDate,
+            from::NumberOfPacks => to::NumberOfPacks,
         };
 
         StockLineSort {

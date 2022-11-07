@@ -1,17 +1,23 @@
 use super::{
+    item_row::{item, item::dsl as item_dsl},
     location_row::{location, location::dsl as location_dsl},
     stock_line_row::{stock_line, stock_line::dsl as stock_line_dsl},
     DBType, LocationRow, StockLineRow, StorageConnection,
 };
 
 use crate::{
-    diesel_macros::{apply_date_filter, apply_equal_filter, apply_sort_asc_nulls_last},
+    diesel_macros::{
+        apply_date_filter,
+        apply_equal_filter,
+        apply_sort, // apply_simple_string_or_filter, apply_sort,
+        apply_sort_asc_nulls_first,
+    },
     repository_error::RepositoryError,
-    DateFilter, EqualFilter, Pagination, Sort,
+    DateFilter, EqualFilter, Pagination, SimpleStringFilter, Sort,
 };
 
 use diesel::{
-    dsl::{IntoBoxed, LeftJoin},
+    dsl::{IntoBoxed, LeftJoin}, // InnerJoin,
     prelude::*,
 };
 
@@ -23,11 +29,16 @@ pub struct StockLine {
 
 pub enum StockLineSortField {
     ExpiryDate,
+    // ItemName,
+    // ItemCode,
+    // LocationName,
+    NumberOfPacks,
 }
 
 #[derive(Debug, Clone)]
 pub struct StockLineFilter {
     pub id: Option<EqualFilter<String>>,
+    pub item_code_or_name: Option<SimpleStringFilter>,
     pub item_id: Option<EqualFilter<String>>,
     pub location_id: Option<EqualFilter<String>>,
     pub is_available: Option<bool>,
@@ -69,9 +80,21 @@ impl<'a> StockLineRepository<'a> {
 
         if let Some(sort) = sort {
             match sort.key {
+                // StockLineSortField::ItemCode => {
+                //     apply_sort_no_case!(query, sort, stock_line_dsl::item::code);
+                // }
+                // StockLineSortField::ItemName => {
+                //     apply_sort_no_case!(query, sort, stock_line_dsl::ItemName);
+                // }
+                // StockLineSortField::LocationName => {
+                //     apply_sort_no_case!(query, sort, stock_line_dsl::LocationName);
+                // }
+                StockLineSortField::NumberOfPacks => {
+                    apply_sort!(query, sort, stock_line_dsl::total_number_of_packs);
+                }
                 StockLineSortField::ExpiryDate => {
                     // TODO: would prefer to have extra parameter on Sort.nulls_last
-                    apply_sort_asc_nulls_last!(query, sort, stock_line_dsl::expiry_date);
+                    apply_sort_asc_nulls_first!(query, sort, stock_line_dsl::expiry_date);
                 }
             }
         } else {
@@ -94,20 +117,27 @@ impl<'a> StockLineRepository<'a> {
     }
 }
 
-type BoxedStockLineQuery = IntoBoxed<'static, LeftJoin<stock_line::table, location::table>, DBType>;
+type BoxedStockLineQuery = IntoBoxed<
+    'static,
+    LeftJoin<stock_line::table, location::table>,
+    // LeftJoin<InnerJoin<stock_line::table, item::table>, location::table>,
+    DBType,
+>;
 
 fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery {
     let mut query = stock_line_dsl::stock_line
+        // .inner_join(item_dsl::item)
         .left_join(location_dsl::location)
         .into_boxed();
 
     if let Some(f) = filter {
         let StockLineFilter {
+            expiry_date,
             id,
+            is_available,
+            item_code_or_name,
             item_id,
             location_id,
-            is_available,
-            expiry_date,
             store_id,
         } = f;
 
@@ -116,6 +146,31 @@ fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery
         apply_equal_filter!(query, location_id, stock_line_dsl::location_id);
         apply_date_filter!(query, expiry_date, stock_line_dsl::expiry_date);
         apply_equal_filter!(query, store_id, stock_line_dsl::store_id);
+        // query.filter(stock_line_dsl::item_id in );
+        // apply_simple_string_or_filter!(query, item_code_or_name, item_dsl::code, item_dsl::name);
+        // query.filter(stock_line_dsl::item_id.(item_dsl::id));
+        // pub(crate) fn get_lines_for_invoice(
+        //     connection: &StorageConnection,
+        //     invoice_id: &str,
+        // ) -> Result<Vec<InvoiceLine>, RepositoryError> {
+        //     let result = InvoiceLineRepository::new(connection)
+        //         .query_by_filter(InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(invoice_id)))?;
+
+        //     Ok(result)
+        // }
+        // let invoice_lines = get_lines_for_invoice(&ctx.connection, &input.shipment_id)?;
+
+        // let item_ids_in_invoice: Vec<String> = invoice_lines
+        //     .into_iter()
+        //     .map(|invoice_line| invoice_line.invoice_line_row.item_id)
+        //     .collect();
+
+        // let master_list_lines_not_in_invoice = MasterListLineRepository::new(&ctx.connection)
+        //     .query_by_filter(
+        //         MasterListLineFilter::new()
+        //             .master_list_id(EqualFilter::equal_to(&input.master_list_id))
+        //             .item_id(EqualFilter::not_equal_all(item_ids_in_invoice)),
+        //     )?;
 
         query = match is_available {
             Some(true) => query.filter(stock_line_dsl::available_number_of_packs.gt(0.0)),
@@ -137,12 +192,13 @@ pub fn to_domain((stock_line_row, location_row): StockLineJoin) -> StockLine {
 impl StockLineFilter {
     pub fn new() -> StockLineFilter {
         StockLineFilter {
+            expiry_date: None,
             id: None,
+            is_available: None,
+            item_code_or_name: None,
             item_id: None,
             location_id: None,
-            expiry_date: None,
             store_id: None,
-            is_available: None,
         }
     }
 
