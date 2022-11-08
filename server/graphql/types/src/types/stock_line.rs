@@ -3,57 +3,16 @@ use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
-    generic_filters::{DateFilterInput, EqualFilterStringInput},
     loader::{ItemLoader, LocationByIdLoader},
     simple_generic_errors::NodeError,
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::{
-    DateFilter, EqualFilter, StockLine, StockLineFilter, StockLineRow, StockLineSort,
-    StockLineSortField, StorageConnectionManager,
-};
+use repository::{StockLine, StockLineRow, StorageConnectionManager};
 use service::{stock_line::query::get_stock_line, usize_to_u32, ListResult};
 
 pub struct StockLineNode {
     pub stock_line: StockLine,
-}
-
-#[derive(Enum, Copy, Clone, PartialEq, Eq)]
-#[graphql(rename_items = "camelCase")]
-pub enum StockLineSortFieldInput {
-    ExpiryDate,
-}
-#[derive(InputObject)]
-pub struct StockLineSortInput {
-    /// Sort query result by `key`
-    key: StockLineSortFieldInput,
-    /// Sort query result is sorted descending or ascending (if not provided the default is
-    /// ascending)
-    desc: Option<bool>,
-}
-
-#[derive(InputObject, Clone)]
-pub struct StockLineFilterInput {
-    pub expiry_date: Option<DateFilterInput>,
-    pub id: Option<EqualFilterStringInput>,
-    pub is_available: Option<bool>,
-    pub item_id: Option<EqualFilterStringInput>,
-    pub location_id: Option<EqualFilterStringInput>,
-    pub store_id: Option<EqualFilterStringInput>,
-}
-
-impl From<StockLineFilterInput> for StockLineFilter {
-    fn from(f: StockLineFilterInput) -> Self {
-        StockLineFilter {
-            expiry_date: f.expiry_date.map(DateFilter::from),
-            id: f.id.map(EqualFilter::from),
-            is_available: f.is_available,
-            item_id: f.item_id.map(EqualFilter::from),
-            location_id: f.location_id.map(EqualFilter::from),
-            store_id: None,
-        }
-    }
 }
 
 #[derive(SimpleObject)]
@@ -183,21 +142,6 @@ impl StockLineConnector {
                 .into_iter()
                 .map(StockLineNode::from_domain)
                 .collect(),
-        }
-    }
-}
-
-impl StockLineSortInput {
-    pub fn to_domain(self) -> StockLineSort {
-        use StockLineSortField as to;
-        use StockLineSortFieldInput as from;
-        let key = match self.key {
-            from::ExpiryDate => to::ExpiryDate,
-        };
-
-        StockLineSort {
-            key,
-            desc: self.desc,
         }
     }
 }
