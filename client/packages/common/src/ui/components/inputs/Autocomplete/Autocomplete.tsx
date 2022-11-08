@@ -9,6 +9,7 @@ import {
   styled,
   Popper,
   PopperProps,
+  StandardTextFieldProps,
 } from '@mui/material';
 import {
   AutocompleteOption,
@@ -44,6 +45,7 @@ export interface AutocompleteProps<T>
   ) => void;
   inputValue?: string;
   popperMinWidth?: number;
+  inputProps?: StandardTextFieldProps;
 }
 
 const StyledPopper = styled(Popper)(({ theme }) => ({
@@ -71,6 +73,7 @@ export function Autocomplete<T>({
   autoFocus = false,
   getOptionLabel,
   popperMinWidth,
+  inputProps,
   ...restOfAutocompleteProps
 }: PropsWithChildren<AutocompleteProps<T>>): JSX.Element {
   const filterOptions = createFilterOptions(filterOptionConfig);
@@ -78,6 +81,7 @@ export function Autocomplete<T>({
   const defaultRenderInput = (props: AutocompleteRenderInputParams) => (
     <BasicTextInput
       {...props}
+      {...inputProps}
       autoFocus={autoFocus}
       InputProps={{
         disableUnderline: false,
