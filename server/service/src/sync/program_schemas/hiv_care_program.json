@@ -86,6 +86,7 @@
       "enum": [
         "FEMALE",
         "MALE",
+        "TRANSGENDER",
         "TRANSGENDER_MALE",
         "TRANSGENDER_FEMALE",
         "UNKNOWN",

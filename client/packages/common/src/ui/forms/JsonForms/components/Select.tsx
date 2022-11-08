@@ -7,27 +7,77 @@ import {
   FORM_LABEL_COLUMN_WIDTH,
   FORM_INPUT_COLUMN_WIDTH,
 } from '../styleConstants';
+import { z } from 'zod';
+import { useZodOptionsValidation } from '../useZodOptionsValidation';
 
 export const selectTester = rankWith(4, isEnumControl);
 
-type Option = { label: string; value: string };
+type Options = {
+  /**
+   * Option to set a display name and/or reorder enum item.
+   *
+   * For example, enum [YES, NO] can be displayed as [No, Yes] using:
+   * "show": [
+   *   ["NO", "No"],
+   *   ["YES", "Yes"]
+   * ]
+   *
+   * To only reorder the enum to [NO, YES] do:
+   * "show": [
+   *   ["NO"],
+   *   ["YES"]
+   * ]
+   */
+  show?: [string, string | undefined][];
+};
+const Options: z.ZodType<Options | undefined> = z
+  .object({
+    show: z.array(z.tuple([z.string(), z.string().optional()])).optional(),
+  })
+  .strict()
+  .optional();
+
+type DisplayOption = { label: string; value: string };
+
+const getDisplayOptions = (
+  schemaEnum: string[],
+  options?: Options
+): DisplayOption[] => {
+  if (!options?.show) {
+    return schemaEnum.map((option: string) => ({
+      label: option,
+      value: option,
+    }));
+  }
+
+  return options.show.reduce<DisplayOption[]>((prev, [key, value]) => {
+    if (!schemaEnum.includes(key)) {
+      console.warn(
+        `Invalid select control config: key ${key} is not in the enum`
+      );
+      return prev;
+    }
+    prev.push({ value: key, label: value ?? key });
+    return prev;
+  }, []);
+};
 
 const UIComponent = (props: ControlProps) => {
   const { data, handleChange, label, schema, path } = props;
-
-  const options = schema.enum
-    ? schema.enum.map((option: string) => ({
-        label: option,
-        value: option,
-      }))
-    : [];
-
-  const onChange = (_event: React.SyntheticEvent, value: Option | null) =>
-    handleChange(path, value?.value);
-
+  const { errors: zErrors, options: schemaOptions } = useZodOptionsValidation(
+    Options,
+    props.uischema.options
+  );
   if (!props.visible) {
     return null;
   }
+  const onChange = (
+    _event: React.SyntheticEvent,
+    value: DisplayOption | null
+  ) => handleChange(path, value?.value);
+  const options = schema.enum
+    ? getDisplayOptions(schema.enum, schemaOptions)
+    : [];
   const value = data ? options.find(o => o.value === data) : null;
 
   return (
@@ -50,8 +100,8 @@ const UIComponent = (props: ControlProps) => {
           onChange={onChange}
           clearable={!props.config?.required}
           inputProps={{
-            error: !!props.errors,
-            helperText: props.errors,
+            error: !!zErrors || !!props.errors,
+            helperText: zErrors ?? props.errors,
           }}
           isOptionEqualToValue={option => option.value === data}
         />

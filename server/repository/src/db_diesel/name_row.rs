@@ -46,6 +46,7 @@ table! {
 pub enum Gender {
     Female,
     Male,
+    Transgender,
     TransgenderMale,
     TransgenderMaleHormone,
     TransgenderMaleSurgical,
