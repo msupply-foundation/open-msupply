@@ -253,6 +253,7 @@
           "properties": {
             "bloodPressure": {
               "description": "75367002\tBlood pressure [mmHg]",
+              "examples": ["90/60", "120/80"],
               "pattern": "^\\d{3}\\/\\d{2}$",
               "title": "BP in mmHg",
               "type": "string"
@@ -263,13 +264,15 @@
             },
             "height": {
               "description": "50373000\tBody height measure [m]",
+              "examples": ["1.55", "0.92", "1.75"],
               "pattern": "^\\d\\.\\d{2}$",
               "title": "Height in m",
               "type": "string"
             },
             "midUpperArmCircumference": {
               "description": "284473002\tMid upper arm circumference (MUAC) [cm]",
-              "pattern": "^\\d\\.\\d{2}$",
+              "examples": ["23.0", "21.4"],
+              "pattern": "^\\d+\\.\\d+$",
               "title": "MUAC in cm",
               "type": "string"
             },
@@ -374,6 +377,7 @@
             },
             "weight": {
               "description": "735395000\tCurrent body weight [kg]",
+              "examples": ["75.1", "60.0"],
               "pattern": "^\\d+\\.\\d+$",
               "title": "Weight in kg",
               "type": "string"

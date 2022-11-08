@@ -4,6 +4,7 @@ import { withJsonFormsControlProps } from '@jsonforms/react';
 import {
   DetailInputWithLabelRow,
   useDebounceCallback,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { FORM_LABEL_WIDTH } from '../styleConstants';
 
@@ -14,12 +15,22 @@ const UIComponent = (props: ControlProps) => {
   const [localData, setLocalData] = useState<string | undefined>(data);
   // timestamp of the last key stroke
   const [latestKey, setLatestKey] = useState<number>(0);
+  const error = !!errors;
   // debounce avoid rerendering the form on every key stroke which becomes a performance issue
   const onChange = useDebounceCallback(
-    (value: string) => handleChange(path, value),
-    [path]
+    (value: string) =>
+      handleChange(path, error && value === '' ? undefined : value),
+    [path, error]
   );
-  const error = !!errors;
+  const t = useTranslation('common');
+
+  const examples = (props.schema as Record<string, string[]>)['examples'];
+  const helperText =
+    error && examples && Array.isArray(examples)
+      ? t('error.json-bad-format-with-examples', {
+          examples: examples.join('", "'),
+        })
+      : errors;
 
   useEffect(() => {
     // Using debounce, the actual data is set after 500ms after the last key stroke (localDataTime).
@@ -51,7 +62,7 @@ const UIComponent = (props: ControlProps) => {
         },
         disabled: !props.enabled,
         error,
-        helperText: errors,
+        helperText,
         FormHelperTextProps: error
           ? { sx: { color: 'error.main' } }
           : undefined,
