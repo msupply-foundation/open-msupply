@@ -282,7 +282,7 @@ mod test {
         let invoice_row_repo = InvoiceRowRepository::new(&connection);
         let invoice_line_repo = InvoiceLineRowRepository::new(&connection);
 
-        let update_invoice = service
+        let updated_invoice = service
             .update_outbound_shipment_name(
                 &context,
                 UpdateOutboundShipmentName {
@@ -292,7 +292,7 @@ mod test {
             )
             .unwrap();
         let updated_lines = invoice_line_repo
-            .find_many_by_invoice_id(&update_invoice.invoice_row.id)
+            .find_many_by_invoice_id(&updated_invoice.invoice_row.id)
             .unwrap();
 
         assert_eq!(
@@ -309,23 +309,23 @@ mod test {
         );
         assert_eq!(
             invoice_row_repo
-                .find_one_by_id_option(&update_invoice.invoice_row.id)
+                .find_one_by_id_option(&updated_invoice.invoice_row.id)
                 .unwrap()
                 .unwrap(),
-            update_invoice.invoice_row
+            updated_invoice.invoice_row
         );
-        assert_ne!(update_invoice.invoice_row.name_id, invoice().name_id);
+        assert_ne!(updated_invoice.invoice_row.name_id, invoice().name_id);
         assert_eq!(
             updated_lines,
             vec![
                 inline_edit(&invoice_line_a(), |mut l| {
                     l.id = updated_lines[0].id.clone();
-                    l.invoice_id = update_invoice.invoice_row.id.clone();
+                    l.invoice_id = updated_invoice.invoice_row.id.clone();
                     l
                 }),
                 inline_edit(&invoice_line_b(), |mut l| {
                     l.id = updated_lines[1].id.clone();
-                    l.invoice_id = update_invoice.invoice_row.id.clone();
+                    l.invoice_id = updated_invoice.invoice_row.id.clone();
                     l
                 })
             ]
