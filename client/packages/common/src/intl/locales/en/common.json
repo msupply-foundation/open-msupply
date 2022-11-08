@@ -46,6 +46,7 @@
   "error.something-wrong": "Oops! Something's gone wrong.",
   "error.unable-to-load-data": "An error has occurred: there was a problem loading the data.",
   "error.problem-saving": "An error occurred: there was a problem saving the data.",
+  "error.json-bad-format-with-examples": "Incorrect format. Use: \"{{examples}}\"",
   "filename.inbounds": "inbound-shipments",
   "filename.locations": "locations",
   "filename.master-lists": "master-lists",
