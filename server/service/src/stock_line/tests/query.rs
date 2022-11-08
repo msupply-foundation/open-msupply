@@ -1,9 +1,11 @@
 #[cfg(test)]
 mod query {
+    use chrono::NaiveDate;
     use repository::{
         mock::MockDataInserts, test_db::setup_all, StockLineFilter, StockLineSortField,
     };
     use repository::{EqualFilter, PaginationOption, Sort};
+    use std::cmp::Ordering;
 
     use crate::{service_provider::ServiceProvider, ListError, SingleRecordError};
 
@@ -102,6 +104,23 @@ mod query {
         assert_eq!(result.rows[1].stock_line_row.id, "item_a_line_b");
     }
 
+    fn order_dates_with_nulls_last(a: &Option<NaiveDate>, b: &Option<NaiveDate>) -> Ordering {
+        match (a, b) {
+            (Some(a), Some(b)) => a.cmp(b),
+            (Some(_), None) => Ordering::Less,
+            (None, Some(_)) => Ordering::Greater,
+            (None, None) => Ordering::Equal,
+        }
+    }
+    fn order_dates_with_nulls_first(a: &Option<NaiveDate>, b: &Option<NaiveDate>) -> Ordering {
+        match (a, b) {
+            (Some(a), Some(b)) => b.cmp(a),
+            (Some(_), None) => Ordering::Greater,
+            (None, Some(_)) => Ordering::Less,
+            (None, None) => Ordering::Equal,
+        }
+    }
+
     #[actix_rt::test]
     async fn stock_line_service_sort() {
         let (mock_data, _, connection_manager, _) =
@@ -110,12 +129,28 @@ mod query {
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider.basic_context().unwrap();
         let service = service_provider.stock_line_service;
-        // Test Name sort with default sort order
+        let mut stock_lines = mock_data["base"].stock_lines.clone();
+        let filter = Some(StockLineFilter {
+            id: Some(EqualFilter::equal_any(
+                stock_lines
+                    .clone()
+                    .into_iter()
+                    .map(|stock_line| stock_line.id)
+                    .collect(),
+            )),
+            item_id: None,
+            location_id: None,
+            is_available: None,
+            expiry_date: None,
+            store_id: None,
+        });
+
+        // Test ExpiryDate sort with default sort order
         let result = service
             .get_stock_lines(
                 &context,
                 None,
-                None,
+                filter,
                 Some(Sort {
                     key: StockLineSortField::ExpiryDate,
                     desc: None,
@@ -123,27 +158,48 @@ mod query {
             )
             .unwrap();
 
-        let mut stock_lines = mock_data["base"].stock_lines.clone();
-        stock_lines.sort_by(|a, b| a.expiry_date.cmp(&b.expiry_date));
+        stock_lines.sort_by(|a, b| order_dates_with_nulls_last(&a.expiry_date, &b.expiry_date));
 
-        let result_ids: Vec<String> = result
+        let result_expiry_dates: Vec<String> = result
             .rows
             .into_iter()
-            .map(|stock_line| stock_line.stock_line_row.id)
+            .map(|stock_line| match stock_line.stock_line_row.expiry_date {
+                Some(date) => date.format("%Y-%m-%d").to_string(),
+                None => "".to_string(),
+            })
             .collect();
-        let sorted_ids: Vec<String> = stock_lines
+        let sorted_expiry_dates: Vec<String> = stock_lines
             .into_iter()
-            .map(|stock_line| stock_line.id)
+            .map(|stock_line| match stock_line.expiry_date {
+                Some(date) => date.format("%Y-%m-%d").to_string(),
+                None => "".to_string(),
+            })
             .collect();
 
-        assert_eq!(result_ids, sorted_ids);
+        assert_eq!(result_expiry_dates, sorted_expiry_dates);
 
-        // Test Name sort with desc sort
+        let mut stock_lines = mock_data["base"].stock_lines.clone();
+        let filter = Some(StockLineFilter {
+            id: Some(EqualFilter::equal_any(
+                stock_lines
+                    .clone()
+                    .into_iter()
+                    .map(|stock_line| stock_line.id)
+                    .collect(),
+            )),
+            item_id: None,
+            location_id: None,
+            is_available: None,
+            expiry_date: None,
+            store_id: None,
+        });
+
+        // Test ExpiryDate sort with desc sort order
         let result = service
             .get_stock_lines(
                 &context,
                 None,
-                None,
+                filter,
                 Some(Sort {
                     key: StockLineSortField::ExpiryDate,
                     desc: Some(true),
@@ -151,19 +207,24 @@ mod query {
             )
             .unwrap();
 
-        let mut stock_lines = mock_data["base"].stock_lines.clone();
-        stock_lines.sort_by(|a, b| b.expiry_date.cmp(&a.expiry_date));
+        stock_lines.sort_by(|a, b| order_dates_with_nulls_first(&a.expiry_date, &b.expiry_date));
 
-        let result_ids: Vec<String> = result
+        let result_expiry_dates: Vec<String> = result
             .rows
             .into_iter()
-            .map(|stock_line| stock_line.stock_line_row.id)
+            .map(|stock_line| match stock_line.stock_line_row.expiry_date {
+                Some(date) => date.format("%Y-%m-%d").to_string(),
+                None => "".to_string(),
+            })
             .collect();
-        let sorted_ids: Vec<String> = stock_lines
+        let sorted_expiry_dates: Vec<String> = stock_lines
             .into_iter()
-            .map(|stock_line| stock_line.id)
+            .map(|stock_line| match stock_line.expiry_date {
+                Some(date) => date.format("%Y-%m-%d").to_string(),
+                None => "".to_string(),
+            })
             .collect();
 
-        assert_eq!(result_ids, sorted_ids);
+        assert_eq!(result_expiry_dates, sorted_expiry_dates);
     }
 }
