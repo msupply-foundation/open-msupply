@@ -25,7 +25,7 @@ export const Toolbar: FC = () => {
   ]);
   const [theirReferenceBuffer, setTheirReferenceBuffer] =
     useBufferState(theirReference);
-  const { mutateAsync: onUpdate } = useOutbound.document.updateName();
+  const { mutateAsync: updateName } = useOutbound.document.updateName();
 
   const isDisabled = useOutbound.utils.isDisabled();
   const t = useTranslation('distribution');
@@ -48,9 +48,8 @@ export const Toolbar: FC = () => {
                   <CustomerSearchInput
                     disabled={isDisabled}
                     value={otherParty}
-                    onChange={async ({ id: otherParty }) => {
-                      await onUpdate({ id,
-                        otherPartyId: otherParty });
+                    onChange={async ({ id: otherPartyId }) => {
+                      await updateName({ id, otherPartyId });
                     }}
                   />
                 }
