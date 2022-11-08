@@ -48,7 +48,7 @@ const UIComponent = (props: ControlProps) => {
           options={options}
           value={value}
           onChange={onChange}
-          clearable={!!props.config?.required}
+          clearable={!props.config?.required}
           inputProps={{
             error: !!props.errors,
             helperText: props.errors,
