@@ -297,7 +297,8 @@
           "$ref": "#/definitions/Allergies"
         },
         "birthOrder": {
-          "description": "For example: 02 or 01",
+          "description": "Birth order, e.g. \"02\" for second child",
+          "examples": ["01", "02", "03"],
           "pattern": "^[0-9]{2}$",
           "type": "string"
         },

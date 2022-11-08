@@ -14,12 +14,15 @@ const UIComponent = (props: ControlProps) => {
   const [localData, setLocalData] = useState<string | undefined>(data);
   // timestamp of the last key stroke
   const [latestKey, setLatestKey] = useState<number>(0);
+  const error = !!errors;
   // debounce avoid rerendering the form on every key stroke which becomes a performance issue
   const onChange = useDebounceCallback(
-    (value: string) => handleChange(path, value),
-    [path]
+    (value: string) =>
+      handleChange(path, error && value === '' ? undefined : value),
+    [path, error]
   );
-  const error = !!errors;
+
+  const examples = (props.schema as Record<string, string[]>)['examples'];
 
   useEffect(() => {
     // Using debounce, the actual data is set after 500ms after the last key stroke (localDataTime).
@@ -51,7 +54,8 @@ const UIComponent = (props: ControlProps) => {
         },
         disabled: !props.enabled,
         error,
-        helperText: errors,
+        helperText:
+          errors && examples ? `Use e.g.: "${examples.join('", "')}"` : errors,
         FormHelperTextProps: error
           ? { sx: { color: 'error.main' } }
           : undefined,

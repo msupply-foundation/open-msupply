@@ -242,10 +242,10 @@
           "properties": {
             "bloodPressure": {
               "description": "75367002\tBlood pressure [mmHg]",
+              "examples": ["90/60", "120/80"],
               "pattern": "^\\d{3}\\/\\d{2}$",
               "title": "BP in mmHg",
-              "type": "string",
-              "messages": { "pattern": "Format is 000/00" }
+              "type": "string"
             },
             "bodyMassIndex": {
               "description": "60621009\tBody mass index (BMI)",
@@ -253,17 +253,17 @@
             },
             "height": {
               "description": "50373000\tBody height measure [m]",
+              "examples": ["1.55", "0.92", "1.75"],
               "pattern": "^\\d\\.\\d{2}$",
               "title": "Height in m",
-              "type": "string",
-              "messages": { "pattern": "Format is 0.00" }
+              "type": "string"
             },
             "midUpperArmCircumference": {
               "description": "284473002\tMid upper arm circumference (MUAC) [cm]",
-              "pattern": "^\\d+\\.\\d{2}$",
+              "examples": ["23.0", "21.4"],
+              "pattern": "^\\d+\\.\\d+$",
               "title": "MUAC in cm",
-              "type": "string",
-              "messages": { "pattern": "Format is 0.00" }
+              "type": "string"
             },
             "nutritionalStatus": {
               "description": "366364004  nutritional status",
@@ -366,10 +366,10 @@
             },
             "weight": {
               "description": "735395000\tCurrent body weight [kg]",
-              "pattern": "^\\d+\\.\\d{2}$",
+              "examples": ["75.1", "60.0"],
+              "pattern": "^\\d+\\.\\d+$",
               "title": "Weight in kg",
-              "type": "string",
-              "messages": { "pattern": "Format is 0.00" }
+              "type": "string"
             },
             "whoStaging": {
               "description": "420721002 Acquired immunodeficiency syndrome-associated disorder (disorder)",
