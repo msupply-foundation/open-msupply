@@ -39,7 +39,7 @@ const Options: z.ZodType<Options | undefined> = z
 
 type DisplayOption = { label: string; value: string };
 
-const displayOptions = (
+const getDisplayOptions = (
   schemaEnum: string[],
   options?: Options
 ): DisplayOption[] => {
@@ -71,7 +71,9 @@ const UIComponent = (props: ControlProps) => {
   if (!props.visible) {
     return null;
   }
-  const options = schema.enum ? displayOptions(schema.enum, schemaOptions) : [];
+  const options = schema.enum
+    ? getDisplayOptions(schema.enum, schemaOptions)
+    : [];
 
   return (
     <Box
