@@ -1,15 +1,70 @@
 use async_graphql::*;
 use graphql_core::{
+    generic_filters::{DateFilterInput, EqualFilterStringInput},
     pagination::PaginationInput,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
 use graphql_types::types::*;
-use repository::{EqualFilter, PaginationOption, StockLineFilter};
+use repository::{
+    DateFilter, EqualFilter, PaginationOption, StockLineFilter, StockLineSort, StockLineSortField,
+};
 use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(Default, Clone)]
 pub struct StockLineQueries;
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(rename_items = "camelCase")]
+pub enum StockLineSortFieldInput {
+    ExpiryDate,
+}
+#[derive(InputObject)]
+pub struct StockLineSortInput {
+    /// Sort query result by `key`
+    key: StockLineSortFieldInput,
+    /// Sort query result is sorted descending or ascending (if not provided the default is
+    /// ascending)
+    desc: Option<bool>,
+}
+
+#[derive(InputObject, Clone)]
+pub struct StockLineFilterInput {
+    pub expiry_date: Option<DateFilterInput>,
+    pub id: Option<EqualFilterStringInput>,
+    pub is_available: Option<bool>,
+    pub item_id: Option<EqualFilterStringInput>,
+    pub location_id: Option<EqualFilterStringInput>,
+    pub store_id: Option<EqualFilterStringInput>,
+}
+
+impl From<StockLineFilterInput> for StockLineFilter {
+    fn from(f: StockLineFilterInput) -> Self {
+        StockLineFilter {
+            expiry_date: f.expiry_date.map(DateFilter::from),
+            id: f.id.map(EqualFilter::from),
+            is_available: f.is_available,
+            item_id: f.item_id.map(EqualFilter::from),
+            location_id: f.location_id.map(EqualFilter::from),
+            store_id: None,
+        }
+    }
+}
+
+impl StockLineSortInput {
+    pub fn to_domain(self) -> StockLineSort {
+        use StockLineSortField as to;
+        use StockLineSortFieldInput as from;
+        let key = match self.key {
+            from::ExpiryDate => to::ExpiryDate,
+        };
+
+        StockLineSort {
+            key,
+            desc: self.desc,
+        }
+    }
+}
 
 #[Object]
 impl StockLineQueries {
