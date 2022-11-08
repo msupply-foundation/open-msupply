@@ -1,5 +1,4 @@
 use super::{
-    item_row::{item, item::dsl as item_dsl},
     location_row::{location, location::dsl as location_dsl},
     stock_line_row::{stock_line, stock_line::dsl as stock_line_dsl},
     DBType, LocationRow, StockLineRow, StorageConnection,
@@ -7,17 +6,14 @@ use super::{
 
 use crate::{
     diesel_macros::{
-        apply_date_filter,
-        apply_equal_filter,
-        apply_sort, // apply_simple_string_or_filter, apply_sort,
-        apply_sort_asc_nulls_first,
+        apply_date_filter, apply_equal_filter, apply_sort, apply_sort_asc_nulls_first,
     },
     repository_error::RepositoryError,
-    DateFilter, EqualFilter, Pagination, SimpleStringFilter, Sort,
+    DateFilter, EqualFilter, ItemFilter, ItemRepository, Pagination, SimpleStringFilter, Sort,
 };
 
 use diesel::{
-    dsl::{IntoBoxed, LeftJoin}, // InnerJoin,
+    dsl::{IntoBoxed, LeftJoin},
     prelude::*,
 };
 
@@ -29,9 +25,6 @@ pub struct StockLine {
 
 pub enum StockLineSortField {
     ExpiryDate,
-    // ItemName,
-    // ItemCode,
-    // LocationName,
     NumberOfPacks,
 }
 
@@ -59,7 +52,9 @@ impl<'a> StockLineRepository<'a> {
     }
 
     pub fn count(&self, filter: Option<StockLineFilter>) -> Result<i64, RepositoryError> {
-        let query = create_filtered_query(filter);
+        let mut query = create_filtered_query(filter.clone());
+        query = apply_item_filter(query, filter, &self.connection);
+
         Ok(query.count().get_result(&self.connection.connection)?)
     }
 
@@ -76,19 +71,11 @@ impl<'a> StockLineRepository<'a> {
         filter: Option<StockLineFilter>,
         sort: Option<StockLineSort>,
     ) -> Result<Vec<StockLine>, RepositoryError> {
-        let mut query = create_filtered_query(filter);
+        let mut query = create_filtered_query(filter.clone());
+        query = apply_item_filter(query, filter, &self.connection);
 
         if let Some(sort) = sort {
             match sort.key {
-                // StockLineSortField::ItemCode => {
-                //     apply_sort_no_case!(query, sort, stock_line_dsl::item::code);
-                // }
-                // StockLineSortField::ItemName => {
-                //     apply_sort_no_case!(query, sort, stock_line_dsl::ItemName);
-                // }
-                // StockLineSortField::LocationName => {
-                //     apply_sort_no_case!(query, sort, stock_line_dsl::LocationName);
-                // }
                 StockLineSortField::NumberOfPacks => {
                     apply_sort!(query, sort, stock_line_dsl::total_number_of_packs);
                 }
@@ -117,16 +104,10 @@ impl<'a> StockLineRepository<'a> {
     }
 }
 
-type BoxedStockLineQuery = IntoBoxed<
-    'static,
-    LeftJoin<stock_line::table, location::table>,
-    // LeftJoin<InnerJoin<stock_line::table, item::table>, location::table>,
-    DBType,
->;
+type BoxedStockLineQuery = IntoBoxed<'static, LeftJoin<stock_line::table, location::table>, DBType>;
 
 fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery {
     let mut query = stock_line_dsl::stock_line
-        // .inner_join(item_dsl::item)
         .left_join(location_dsl::location)
         .into_boxed();
 
@@ -135,7 +116,7 @@ fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery
             expiry_date,
             id,
             is_available,
-            item_code_or_name,
+            item_code_or_name: _,
             item_id,
             location_id,
             store_id,
@@ -146,31 +127,6 @@ fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery
         apply_equal_filter!(query, location_id, stock_line_dsl::location_id);
         apply_date_filter!(query, expiry_date, stock_line_dsl::expiry_date);
         apply_equal_filter!(query, store_id, stock_line_dsl::store_id);
-        // query.filter(stock_line_dsl::item_id in );
-        // apply_simple_string_or_filter!(query, item_code_or_name, item_dsl::code, item_dsl::name);
-        // query.filter(stock_line_dsl::item_id.(item_dsl::id));
-        // pub(crate) fn get_lines_for_invoice(
-        //     connection: &StorageConnection,
-        //     invoice_id: &str,
-        // ) -> Result<Vec<InvoiceLine>, RepositoryError> {
-        //     let result = InvoiceLineRepository::new(connection)
-        //         .query_by_filter(InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(invoice_id)))?;
-
-        //     Ok(result)
-        // }
-        // let invoice_lines = get_lines_for_invoice(&ctx.connection, &input.shipment_id)?;
-
-        // let item_ids_in_invoice: Vec<String> = invoice_lines
-        //     .into_iter()
-        //     .map(|invoice_line| invoice_line.invoice_line_row.item_id)
-        //     .collect();
-
-        // let master_list_lines_not_in_invoice = MasterListLineRepository::new(&ctx.connection)
-        //     .query_by_filter(
-        //         MasterListLineFilter::new()
-        //             .master_list_id(EqualFilter::equal_to(&input.master_list_id))
-        //             .item_id(EqualFilter::not_equal_all(item_ids_in_invoice)),
-        //     )?;
 
         query = match is_available {
             Some(true) => query.filter(stock_line_dsl::available_number_of_packs.gt(0.0)),
@@ -179,6 +135,26 @@ fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery
         };
     }
 
+    query
+}
+
+fn apply_item_filter(
+    query: BoxedStockLineQuery,
+    filter: Option<StockLineFilter>,
+    connection: &StorageConnection,
+) -> BoxedStockLineQuery {
+    if let Some(f) = filter {
+        if let Some(item_code_or_name) = &f.item_code_or_name {
+            let mut item_filter = ItemFilter::new();
+            item_filter.code_or_name = Some(item_code_or_name.clone());
+            let items = ItemRepository::new(connection)
+                .query_by_filter(item_filter)
+                .unwrap();
+            let item_ids: Vec<String> = items.into_iter().map(|item| item.item_row.id).collect();
+
+            return query.filter(stock_line_dsl::item_id.eq_any(item_ids));
+        }
+    }
     query
 }
 

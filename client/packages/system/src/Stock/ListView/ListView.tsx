@@ -6,7 +6,6 @@ import {
   createTableStore,
   useTranslation,
   NothingHere,
-  useUrlQuery,
   useUrlQueryParams,
   useNavigate,
   RouteBuilder,
@@ -17,12 +16,15 @@ import { Toolbar } from '../Components';
 import { StockLineRowFragment, useStock } from '../api';
 
 const StockListComponent: FC = () => {
-  const { urlQuery, updateQuery } = useUrlQuery({ skipParse: ['filter'] });
   const {
+    filter,
     updatePaginationQuery,
     updateSortQuery,
     queryParams: { sortBy, page, first, offset },
-  } = useUrlQueryParams({ initialSort: { key: 'itemName', dir: 'asc' } });
+  } = useUrlQueryParams({
+    initialSort: { key: 'expiryDate', dir: 'asc' },
+    filterKey: 'itemCodeOrName',
+  });
   const pagination = { page, first, offset };
   const t = useTranslation('inventory');
   const navigate = useNavigate();
@@ -69,10 +71,7 @@ const StockListComponent: FC = () => {
 
   return (
     <>
-      <Toolbar
-        onChangeFilter={updateQuery}
-        filterString={urlQuery.filter ?? ''}
-      />
+      <Toolbar filter={filter} />
       <DataTable
         id="stock-list"
         pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
