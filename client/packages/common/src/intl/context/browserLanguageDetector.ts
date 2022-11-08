@@ -10,11 +10,11 @@ export const browserLanguageDetector: CustomDetector = {
     const found: string[] = [];
     const add = (languageOrLocale?: string) => {
       if (!languageOrLocale) return;
-      if (/^[a-z]{2}$/i.test(languageOrLocale)) {
-        found.push(languageOrLocale);
+      const parsed = /(^[a-z]{2})(-(.*))?/.exec(languageOrLocale);
+      if (parsed) {
+        if (parsed.length > 1 && !!parsed[1]) found.push(parsed[1]);
       } else {
-        const language = languageOrLocale.split('-')[0];
-        if (language) found.push(language);
+        found.push(languageOrLocale);
       }
     };
     if (typeof navigator !== 'undefined') {
