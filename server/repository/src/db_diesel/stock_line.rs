@@ -255,7 +255,7 @@ mod test {
         };
         // Make sure NULLS are last
         assert_eq!(
-            vec![from_row(line2()), from_row(line1()), from_row(line3())],
+            vec![from_row(line1()), from_row(line2()), from_row(line3())],
             repo.query(Pagination::new(), None, Some(sort)).unwrap()
         );
         // Desc by expiry date
@@ -265,7 +265,7 @@ mod test {
         };
         // Make sure NULLS are first
         assert_eq!(
-            vec![from_row(line3()), from_row(line1()), from_row(line2())],
+            vec![from_row(line3()), from_row(line2()), from_row(line1())],
             repo.query(Pagination::new(), None, Some(sort)).unwrap()
         );
     }
