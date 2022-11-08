@@ -1302,6 +1302,7 @@ export type ItemConnector = {
 
 export type ItemFilterInput = {
   code?: InputMaybe<SimpleStringFilterInput>;
+  codeOrName?: InputMaybe<SimpleStringFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   isVisible?: InputMaybe<Scalars['Boolean']>;
   name?: InputMaybe<SimpleStringFilterInput>;
@@ -2632,6 +2633,7 @@ export type StockLineFilterInput = {
   expiryDate?: InputMaybe<DateFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   isAvailable?: InputMaybe<Scalars['Boolean']>;
+  itemCodeOrName?: InputMaybe<SimpleStringFilterInput>;
   itemId?: InputMaybe<EqualFilterStringInput>;
   locationId?: InputMaybe<EqualFilterStringInput>;
   storeId?: InputMaybe<EqualFilterStringInput>;

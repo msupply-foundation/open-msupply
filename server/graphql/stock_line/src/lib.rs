@@ -18,6 +18,7 @@ pub struct StockLineQueries;
 #[graphql(rename_items = "camelCase")]
 pub enum StockLineSortFieldInput {
     ExpiryDate,
+    NumberOfPacks,
 }
 #[derive(InputObject)]
 pub struct StockLineSortInput {
@@ -58,6 +59,7 @@ impl StockLineSortInput {
         use StockLineSortField as to;
         use StockLineSortFieldInput as from;
         let key = match self.key {
+            from::NumberOfPacks => to::NumberOfPacks,
             from::ExpiryDate => to::ExpiryDate,
         };
 
