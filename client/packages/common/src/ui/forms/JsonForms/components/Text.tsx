@@ -4,6 +4,7 @@ import { withJsonFormsControlProps } from '@jsonforms/react';
 import {
   DetailInputWithLabelRow,
   useDebounceCallback,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { FORM_LABEL_WIDTH } from '../styleConstants';
 
@@ -21,8 +22,15 @@ const UIComponent = (props: ControlProps) => {
       handleChange(path, error && value === '' ? undefined : value),
     [path, error]
   );
+  const t = useTranslation('common');
 
   const examples = (props.schema as Record<string, string[]>)['examples'];
+  const helperText =
+    error && examples && Array.isArray(examples)
+      ? t('error.json-bad-format-with-examples', {
+          examples: examples.join('", "'),
+        })
+      : errors;
 
   useEffect(() => {
     // Using debounce, the actual data is set after 500ms after the last key stroke (localDataTime).
@@ -54,8 +62,7 @@ const UIComponent = (props: ControlProps) => {
         },
         disabled: !props.enabled,
         error,
-        helperText:
-          errors && examples ? `Use e.g.: "${examples.join('", "')}"` : errors,
+        helperText,
         FormHelperTextProps: error
           ? { sx: { color: 'error.main' } }
           : undefined,
