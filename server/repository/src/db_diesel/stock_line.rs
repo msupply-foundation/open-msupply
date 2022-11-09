@@ -25,7 +25,7 @@ pub enum StockLineSortField {
     ExpiryDate,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct StockLineFilter {
     pub id: Option<EqualFilter<String>>,
     pub item_id: Option<EqualFilter<String>>,
