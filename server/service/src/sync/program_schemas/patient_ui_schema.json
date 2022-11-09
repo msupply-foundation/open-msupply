@@ -239,43 +239,6 @@
               "elements": [
                 {
                   "type": "AccordionGroup",
-                  "label": "Mother",
-                  "elements": [
-                    {
-                      "type": "Control",
-                      "scope": "#/properties/family/properties/mother/properties/firstName"
-                    },
-                    {
-                      "type": "Control",
-                      "scope": "#/properties/family/properties/mother/properties/lastName"
-                    },
-                    {
-                      "type": "FirstItemArray",
-                      "scope": "#/properties/family/properties/mother/properties/contactDetails",
-                      "options": {
-                        "detail": {
-                          "type": "VerticalLayout",
-                          "elements": [
-                            {
-                              "type": "Control",
-                              "scope": "/properties/phone"
-                            },
-                            {
-                              "type": "Control",
-                              "scope": "/properties/mobile"
-                            },
-                            {
-                              "type": "Control",
-                              "scope": "/properties/email"
-                            }
-                          ]
-                        }
-                      }
-                    }
-                  ]
-                },
-                {
-                  "type": "AccordionGroup",
                   "label": "Next of Kin",
                   "elements": [
                     {
