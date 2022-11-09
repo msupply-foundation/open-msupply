@@ -125,13 +125,58 @@
                 },
                 {
                   "type": "Control",
-                  "label": "Birth District",
-                  "scope": "#/properties/birthPlace/properties/district"
+                  "label": "Birth Province",
+                  "scope": "#/properties/birthPlace/properties/region",
+                  "options": {
+                    "allowedValues": ["Western", "Gulf"]
+                  }
                 },
                 {
                   "type": "Control",
-                  "label": "Birth Province",
-                  "scope": "#/properties/birthPlace/properties/region"
+                  "label": "Birth District",
+                  "scope": "#/properties/birthPlace/properties/district",
+                  "enabled": false,
+                  "rule": {
+                    "effect": "SHOW",
+                    "condition": {
+                      "scope": "#/properties/birthPlace/properties/region",
+                      "schema": { "const": null }
+                    }
+                  }
+                },
+                {
+                  "type": "Control",
+                  "label": "Birth District",
+                  "scope": "#/properties/birthPlace/properties/district",
+                  "rule": {
+                    "effect": "SHOW",
+                    "condition": {
+                      "scope": "#/properties/birthPlace/properties/region",
+                      "schema": { "const": "Western" }
+                    }
+                  },
+                  "options": {
+                    "allowedValues": [
+                      "Middle Fly",
+                      "North Fly District",
+                      "South Fly"
+                    ]
+                  }
+                },
+                {
+                  "type": "Control",
+                  "label": "Birth District",
+                  "scope": "#/properties/birthPlace/properties/district",
+                  "rule": {
+                    "effect": "SHOW",
+                    "condition": {
+                      "scope": "#/properties/birthPlace/properties/region",
+                      "schema": { "const": "Gulf" }
+                    }
+                  },
+                  "options": {
+                    "allowedValues": ["Kerema District", "Kikori District"]
+                  }
                 },
                 {
                   "type": "Control",

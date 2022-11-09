@@ -2,13 +2,20 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { ControlProps, rankWith, schemaTypeIs } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import {
+  Autocomplete,
+  Box,
   DetailInputWithLabelRow,
   useDebounceCallback,
   useTranslation,
 } from '@openmsupply-client/common';
-import { FORM_LABEL_WIDTH } from '../styleConstants';
+import {
+  FORM_INPUT_COLUMN_WIDTH,
+  FORM_LABEL_COLUMN_WIDTH,
+  FORM_LABEL_WIDTH,
+} from '../styleConstants';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../useZodOptionsValidation';
+import { FormLabel } from '@mui/material';
 
 type Options = {
   /**
@@ -20,12 +27,14 @@ type Options = {
    */
   examples?: string[];
   width?: string;
+  allowedValues?: string[];
 };
 const Options: z.ZodType<Options | undefined> = z
   .object({
     pattern: z.string().optional(),
     examples: z.array(z.string()).optional(),
     width: z.string().optional(),
+    allowedValues: z.array(z.string()).optional(),
   })
   .strict()
   .optional();
@@ -90,6 +99,27 @@ const UIComponent = (props: ControlProps) => {
   } = useOptions(props.uischema.options);
   const customErrors = usePatternValidation(pattern, localData);
 
+  // if we are visible and enabled clear data if value is not allowed
+  useEffect(() => {
+    if (
+      props.visible &&
+      props.enabled &&
+      localData &&
+      schemaOptions?.allowedValues &&
+      !schemaOptions?.allowedValues?.includes(localData)
+    ) {
+      setLocalData(undefined);
+      handleChange(path, undefined);
+      setLatestKey(Date.now());
+    }
+  }, [
+    schemaOptions?.allowedValues,
+    localData,
+    props.visible,
+    props.enabled,
+    path,
+  ]);
+
   const error = !!errors || !!zErrors || !!customErrors;
   // debounce avoid rerendering the form on every key stroke which becomes a performance issue
   const onChange = useDebounceCallback(
@@ -124,8 +154,52 @@ const UIComponent = (props: ControlProps) => {
     return null;
   }
 
-  const width = schemaOptions?.width ?? '100%';
+  if (schemaOptions?.allowedValues) {
+    return (
+      <Box
+        display="flex"
+        alignItems="center"
+        gap={2}
+        justifyContent="space-around"
+        style={{ minWidth: 300 }}
+        marginTop={1}
+      >
+        <Box style={{ textAlign: 'end' }} flexBasis={FORM_LABEL_COLUMN_WIDTH}>
+          <FormLabel sx={{ fontWeight: 'bold' }}>{label}:</FormLabel>
+        </Box>
+        <Box flexBasis={FORM_INPUT_COLUMN_WIDTH}>
+          <Autocomplete
+            sx={{ '.MuiFormControl-root': { minWidth: '135px' } }}
+            options={schemaOptions?.allowedValues.map((option: string) => ({
+              label: option,
+              value: option,
+            }))}
+            value={
+              localData
+                ? {
+                    label: localData,
+                    value: localData,
+                  }
+                : undefined
+            }
+            disabled={!props.enabled}
+            onChange={(_, v) => {
+              setLocalData(v?.value);
+              handleChange(path, v?.value);
+            }}
+            clearable={!props.config?.required}
+            inputProps={{
+              error: !!zErrors || !!props.errors,
+              helperText: zErrors ?? props.errors,
+            }}
+            isOptionEqualToValue={option => option.value === data}
+          />
+        </Box>
+      </Box>
+    );
+  }
 
+  const width = schemaOptions?.width ?? '100%';
   return (
     <DetailInputWithLabelRow
       label={label}
