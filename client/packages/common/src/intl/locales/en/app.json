@@ -52,6 +52,7 @@
   "cmdk.goto-locations": "Go to: Locations",
   "cmdk.goto-items": "Go to: Items",
   "cmdk.goto-customers": "Go to: Customers",
+  "cmdk.goto-patients": "Go to: Patients",
   "cmdk.goto-suppliers": "Go to: Suppliers",
   "cmdk.goto-reports": "Go to: Reports",
   "cmdk.goto-master-lists": "Go to: Master Lists",
