@@ -168,6 +168,18 @@ export const CommandK: FC<PropsWithChildrenOnly> = ({ children }) => {
         ),
     },
     {
+      id: 'navigation:patients',
+      name: `${t('cmdk.goto-patients')} (p)`,
+      keywords: 'patient',
+      shortcut: ['p'],
+      perform: () =>
+        navigate(
+          RouteBuilder.create(AppRoute.Dispensary)
+            .addPart(AppRoute.Patients)
+            .build()
+        ),
+    },
+    {
       id: 'navigation:suppliers',
       name: `${t('cmdk.goto-suppliers')} (g+s)`,
       keywords: 'suppliers',
