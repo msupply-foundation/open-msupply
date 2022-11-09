@@ -1,7 +1,6 @@
 use crate::invoice::{
-    check_invoice_exists, check_invoice_is_editable, check_invoice_status, check_invoice_type,
-    check_status_change, check_store, InvoiceDoesNotExist, InvoiceIsNotEditable,
-    InvoiceRowStatusError, NotThisStoreInvoice, WrongInvoiceRowType,
+    check_invoice_exists_option, check_invoice_is_editable, check_invoice_status,
+    check_invoice_type, check_status_change, check_store, InvoiceRowStatusError,
 };
 use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
 use repository::{InvoiceRow, InvoiceRowType, Name, StorageConnection};
@@ -14,16 +13,29 @@ pub fn validate(
     patch: &UpdateInboundShipment,
 ) -> Result<(InvoiceRow, Option<Name>, bool), UpdateInboundShipmentError> {
     use UpdateInboundShipmentError::*;
-    let invoice = check_invoice_exists(&patch.id, connection)?;
 
-    check_store(&invoice, store_id)?;
-    check_invoice_type(&invoice, InvoiceRowType::InboundShipment)?;
-    check_invoice_is_editable(&invoice)?;
+    let invoice = check_invoice_exists_option(&patch.id, connection)?.ok_or(InvoiceDoesNotExist)?;
+    if !check_store(&invoice, store_id) {
+        return Err(NotThisStoreInvoice);
+    }
+    if !check_invoice_is_editable(&invoice) {
+        return Err(CannotEditFinalised);
+    }
+    if !check_invoice_type(&invoice, InvoiceRowType::InboundShipment) {
+        return Err(NotAnInboundShipment);
+    }
 
     // Status check
     let status_changed = check_status_change(&invoice, patch.full_status());
     if status_changed {
-        check_invoice_status(&invoice, patch.full_status(), &patch.on_hold)?;
+        check_invoice_status(&invoice, patch.full_status(), &patch.on_hold).map_err(
+            |e| match e {
+                InvoiceRowStatusError::CannotChangeStatusOfInvoiceOnHold => {
+                    CannotChangeStatusOfInvoiceOnHold
+                }
+                InvoiceRowStatusError::CannotReverseInvoiceStatus => CannotReverseInvoiceStatus,
+            },
+        )?;
     }
 
     // Other party check
@@ -46,40 +58,4 @@ pub fn validate(
     })?;
 
     Ok((invoice, Some(other_party), status_changed))
-}
-
-impl From<WrongInvoiceRowType> for UpdateInboundShipmentError {
-    fn from(_: WrongInvoiceRowType) -> Self {
-        UpdateInboundShipmentError::NotAnInboundShipment
-    }
-}
-
-impl From<InvoiceIsNotEditable> for UpdateInboundShipmentError {
-    fn from(_: InvoiceIsNotEditable) -> Self {
-        UpdateInboundShipmentError::CannotEditFinalised
-    }
-}
-
-impl From<InvoiceDoesNotExist> for UpdateInboundShipmentError {
-    fn from(_: InvoiceDoesNotExist) -> Self {
-        UpdateInboundShipmentError::InvoiceDoesNotExist
-    }
-}
-
-impl From<NotThisStoreInvoice> for UpdateInboundShipmentError {
-    fn from(_: NotThisStoreInvoice) -> Self {
-        UpdateInboundShipmentError::NotThisStoreInvoice
-    }
-}
-
-impl From<InvoiceRowStatusError> for UpdateInboundShipmentError {
-    fn from(error: InvoiceRowStatusError) -> Self {
-        use UpdateInboundShipmentError::*;
-        match error {
-            InvoiceRowStatusError::CannotChangeStatusOfInvoiceOnHold => {
-                CannotChangeStatusOfInvoiceOnHold
-            }
-            InvoiceRowStatusError::CannotReverseInvoiceStatus => CannotReverseInvoiceStatus,
-        }
-    }
 }
