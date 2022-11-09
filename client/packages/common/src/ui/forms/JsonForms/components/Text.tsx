@@ -19,11 +19,13 @@ type Options = {
    * Examples for the correct pattern
    */
   examples?: string[];
+  width?: string;
 };
 const Options: z.ZodType<Options | undefined> = z
   .object({
     pattern: z.string().optional(),
-    examples: z.array(z.string()),
+    examples: z.array(z.string()).optional(),
+    width: z.string().optional(),
   })
   .strict()
   .optional();
@@ -122,7 +124,7 @@ const UIComponent = (props: ControlProps) => {
     return null;
   }
 
-  const width = props.uischema?.options?.['width'] ?? '100%';
+  const width = schemaOptions?.width ?? '100%';
 
   return (
     <DetailInputWithLabelRow
