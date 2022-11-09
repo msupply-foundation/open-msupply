@@ -14,7 +14,11 @@
                 {
                   "type": "Control",
                   "scope": "#/properties/code",
-                  "label": "National Health Id"
+                  "label": "National Health Id",
+                  "options": {
+                    "pattern": "^[0-9]{10}$",
+                    "examples": ["1234567890"]
+                  }
                 },
                 {
                   "type": "IdGenerator",
@@ -237,43 +241,6 @@
               "type": "Group",
               "label": "Family Information",
               "elements": [
-                {
-                  "type": "AccordionGroup",
-                  "label": "Mother",
-                  "elements": [
-                    {
-                      "type": "Control",
-                      "scope": "#/properties/family/properties/mother/properties/firstName"
-                    },
-                    {
-                      "type": "Control",
-                      "scope": "#/properties/family/properties/mother/properties/lastName"
-                    },
-                    {
-                      "type": "FirstItemArray",
-                      "scope": "#/properties/family/properties/mother/properties/contactDetails",
-                      "options": {
-                        "detail": {
-                          "type": "VerticalLayout",
-                          "elements": [
-                            {
-                              "type": "Control",
-                              "scope": "/properties/phone"
-                            },
-                            {
-                              "type": "Control",
-                              "scope": "/properties/mobile"
-                            },
-                            {
-                              "type": "Control",
-                              "scope": "/properties/email"
-                            }
-                          ]
-                        }
-                      }
-                    }
-                  ]
-                },
                 {
                   "type": "AccordionGroup",
                   "label": "Next of Kin",
