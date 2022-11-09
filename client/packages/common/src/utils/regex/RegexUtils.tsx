@@ -41,7 +41,10 @@ export const RegexUtils = {
     keys?: Array<keyof T>
   ) {
     return (keys ?? (Object.keys(object) as Array<keyof T>)).some(key =>
-      RegexUtils.includes(substring, String(object[key]))
+      RegexUtils.includes(
+        this.escapeChars(substring) ?? '',
+        String(object[key])
+      )
     );
   },
   escapeChars: (regexString?: string) =>
