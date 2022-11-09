@@ -67,7 +67,9 @@ export const useUrlQueryParams = ({
     filterBy:
       filterKey && urlQuery[filterKey]
         ? {
-            [filterKey]: { [filterCondition]: urlQuery[filterKey] ?? '' },
+            [filterKey]: {
+              [filterCondition]: String(urlQuery[filterKey]) ?? '',
+            },
           }
         : {},
   };
