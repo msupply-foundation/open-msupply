@@ -231,7 +231,7 @@ fn patient_1() -> Patient {
     };
     Patient {
         id: "patient1".to_string(),
-        code: Some("id12345".to_string()),
+        code: Some("3234567380".to_string()),
         contact_details: vec![contact_details.clone()],
         date_of_birth: Some("2000-03-04".to_string()),
         date_of_birth_is_estimated: None,
@@ -288,7 +288,7 @@ fn patient_2() -> Patient {
     };
     Patient {
         id: "patient2".to_string(),
-        code: Some("id88345".to_string()),
+        code: Some("7234567120".to_string()),
         contact_details: vec![contact_details.clone()],
         date_of_birth: Some("1990-11-10".to_string()),
         date_of_birth_is_estimated: None,

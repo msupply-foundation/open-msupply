@@ -14,7 +14,11 @@
                 {
                   "type": "Control",
                   "scope": "#/properties/code",
-                  "label": "National Health Id"
+                  "label": "National Health Id",
+                  "options": {
+                    "pattern": "^[0-9]{10}$",
+                    "examples": ["1234567890"]
+                  }
                 },
                 {
                   "type": "IdGenerator",
