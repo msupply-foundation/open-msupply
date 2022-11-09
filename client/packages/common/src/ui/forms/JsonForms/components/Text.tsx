@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ControlProps, rankWith, schemaTypeIs } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import {
@@ -7,6 +7,72 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { FORM_LABEL_WIDTH } from '../styleConstants';
+import { z } from 'zod';
+import { useZodOptionsValidation } from '../useZodOptionsValidation';
+
+type Options = {
+  /**
+   * Additional pattern to be matched that can be defined in ui schema
+   */
+  pattern?: string;
+  /**
+   * Examples for the correct pattern
+   */
+  examples?: string[];
+};
+const Options: z.ZodType<Options | undefined> = z
+  .object({
+    pattern: z.string().optional(),
+    examples: z.array(z.string()),
+  })
+  .strict()
+  .optional();
+
+// Validates the option and parses the pattern into RegEx
+const useOptions = (
+  options?: Record<string, unknown>
+): { errors?: string; options?: Options; pattern?: RegExp } => {
+  const [regexError, setRegexErrors] = useState<string | undefined>();
+  const { errors: zErrors, options: schemaOptions } = useZodOptionsValidation(
+    Options,
+    options
+  );
+  const pattern = useMemo(() => {
+    if (!schemaOptions?.pattern) {
+      return undefined;
+    }
+    try {
+      return new RegExp(schemaOptions?.pattern);
+    } catch {
+      setRegexErrors(`Invalid regex: ${schemaOptions.pattern}`);
+      return undefined;
+    }
+  }, [schemaOptions?.pattern]);
+
+  return { errors: zErrors ?? regexError, options: schemaOptions, pattern };
+};
+
+// Returns error if value doesn't match the pattern
+const usePatternValidation = (
+  pattern?: RegExp,
+  value?: string
+): string | undefined => {
+  const [error, setError] = useState<string | undefined>();
+
+  useEffect(() => {
+    if (!pattern || !value) {
+      setError(undefined);
+      return;
+    }
+    const result = pattern.exec(value);
+    if (result == null) {
+      setError('Invalid format');
+    } else {
+      setError(undefined);
+    }
+  }, [pattern, value]);
+  return error;
+};
 
 export const stringTester = rankWith(3, schemaTypeIs('string'));
 
@@ -15,7 +81,14 @@ const UIComponent = (props: ControlProps) => {
   const [localData, setLocalData] = useState<string | undefined>(data);
   // timestamp of the last key stroke
   const [latestKey, setLatestKey] = useState<number>(0);
-  const error = !!errors;
+  const {
+    errors: zErrors,
+    options: schemaOptions,
+    pattern,
+  } = useOptions(props.uischema.options);
+  const customErrors = usePatternValidation(pattern, localData);
+
+  const error = !!errors || !!zErrors || !!customErrors;
   // debounce avoid rerendering the form on every key stroke which becomes a performance issue
   const onChange = useDebounceCallback(
     (value: string) =>
@@ -24,13 +97,15 @@ const UIComponent = (props: ControlProps) => {
   );
   const t = useTranslation('common');
 
-  const examples = (props.schema as Record<string, string[]>)['examples'];
+  const examples =
+    (props.schema as Record<string, string[]>)['examples'] ??
+    schemaOptions?.examples;
   const helperText =
-    error && examples && Array.isArray(examples)
+    (!!customErrors || !!errors) && examples && Array.isArray(examples)
       ? t('error.json-bad-format-with-examples', {
           examples: examples.join('", "'),
         })
-      : errors;
+      : zErrors ?? errors ?? customErrors;
 
   useEffect(() => {
     // Using debounce, the actual data is set after 500ms after the last key stroke (localDataTime).
