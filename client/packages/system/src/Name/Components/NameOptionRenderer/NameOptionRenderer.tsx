@@ -10,13 +10,13 @@ import { NameRowFragment } from '../../api';
 
 export const getNameOptionRenderer =
   (onHoldLabel: string): AutocompleteOptionRenderer<NameRowFragment> =>
-  (props, item) =>
+  (props, name) =>
     (
-      <DefaultAutocompleteItemOption {...props} key={item.id}>
+      <DefaultAutocompleteItemOption {...props} key={name.id}>
         <Box display="flex" alignItems="flex-end" gap={1} height={25}>
           <Box display="flex" flexDirection="row" gap={1} width={110}>
             <Box flex={0} style={{ height: 24, minWidth: 20 }}>
-              {!!item.store && <HomeIcon fontSize="small" />}
+              {!!name.store && <HomeIcon fontSize="small" />}
             </Box>
             <Typography
               overflow="hidden"
@@ -26,12 +26,12 @@ export const getNameOptionRenderer =
                 whiteSpace: 'no-wrap',
               }}
             >
-              {item.code}
+              {name.code}
             </Typography>
           </Box>
           <Typography>
-            {item.name}
-            {item.isOnHold ? ` (${onHoldLabel})` : ''}
+            {name.name}
+            {name.isOnHold ? ` (${onHoldLabel})` : ''}
           </Typography>
         </Box>
       </DefaultAutocompleteItemOption>
