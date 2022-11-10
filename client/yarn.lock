@@ -2835,28 +2835,28 @@
     "@jridgewell/resolve-uri" "^3.0.3"
     "@jridgewell/sourcemap-codec" "^1.4.10"
 
-"@jsonforms/core@^3.0.0-beta.3":
-  version "3.0.0-beta.5"
-  resolved "https://registry.yarnpkg.com/@jsonforms/core/-/core-3.0.0-beta.5.tgz#b0b0f552ffa6cbcc1db864e77be6616faccb0cb2"
-  integrity sha512-KqL824DgFMTezvzM67f19+wj1leukpVOhtDez5Y20BHAKCPuVv258mb1X4ZpuwKllL4pWRLLNbZtDsiJquUuQg==
+"@jsonforms/core@^3.0.0":
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/@jsonforms/core/-/core-3.0.0.tgz#f743c139f2036f461cc52c109e1c3d884bea8e4e"
+  integrity sha512-DcUGLNaeAE411oA8d5dPuPEF2/nDmALAfQRsaA3GPAre2D76kJXyBb8TFMjLMRJCVIR0q5LsiRRdmLnuPVHKqA==
   dependencies:
     "@types/json-schema" "^7.0.3"
     ajv "^8.6.1"
     ajv-formats "^2.1.0"
     lodash "^4.17.15"
 
-"@jsonforms/material-renderers@^3.0.0-beta.3":
-  version "3.0.0-beta.5"
-  resolved "https://registry.yarnpkg.com/@jsonforms/material-renderers/-/material-renderers-3.0.0-beta.5.tgz#cb107528a6710be0fdb60d549573d2ceb38d0b4e"
-  integrity sha512-lDx38Z28PzprpSe3/WS8qgwfgNhOV7M9nCJWD5LATPefzUP6VvMHLuhIKVZDRDFL5nThplhCV4VfddhRioPO5Q==
+"@jsonforms/material-renderers@^3.0.0":
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/@jsonforms/material-renderers/-/material-renderers-3.0.0.tgz#573b5d4a8e28e3eab9130201d90ee14f5ed79f60"
+  integrity sha512-M0MgnB473vIAuuPMaUjNa3tBVEv/aTN59DK/Pm0TJrR+6UJgOJsBXfE6I/uQcpFaDbE5o91vK1fbRHHQ47BLZQ==
   dependencies:
     "@date-io/dayjs" "1.3.13"
     dayjs "1.10.6"
 
-"@jsonforms/react@^3.0.0-beta.3":
-  version "3.0.0-beta.5"
-  resolved "https://registry.yarnpkg.com/@jsonforms/react/-/react-3.0.0-beta.5.tgz#fa356e09b376b97b2d920b9146b54491754cd8b6"
-  integrity sha512-S6y9JaN+QRqj6wtYp8si9u36FSdpYVmDFzD4Qsw0k5oiyDTrumDAQxwKsYhvmvwHLCI9tM+WTgHI2qX6yZPIYQ==
+"@jsonforms/react@^3.0.0":
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/@jsonforms/react/-/react-3.0.0.tgz#73f9f52ec0301d6252b78a1af1c91f51f3da24e6"
+  integrity sha512-Fj/L6hjk9uYSEBQrV7Vyj3ocTYGFelSupAJYmlys/37BPgifzPc+cBQj5bMKzx6pfO8YbmI+Sr3HDs2eNA/LkA==
   dependencies:
     lodash "^4.17.15"
 
