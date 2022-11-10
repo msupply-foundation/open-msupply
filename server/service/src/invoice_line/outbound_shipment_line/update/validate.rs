@@ -1,13 +1,12 @@
 use crate::{
     invoice::{
-        check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store,
-        InvoiceDoesNotExist, InvoiceIsNotEditable, NotThisStoreInvoice, WrongInvoiceRowType,
+        check_invoice_exists_option, check_invoice_is_editable, check_invoice_type, check_store,
     },
     invoice_line::{
         check_batch_exists, check_batch_on_hold, check_item_matches_batch, check_location_on_hold,
         check_unique_stock_line,
         validate::{
-            check_item, check_line_exists, check_number_of_packs, ItemNotFound, LineDoesNotExist,
+            check_item, check_line_exists_option, check_number_of_packs, ItemNotFound,
             NotInvoiceLine, NumberOfPacksBelowOne,
         },
         BatchIsOnHold, ItemDoesNotMatchStockLine, LocationIsOnHoldError,
@@ -23,9 +22,14 @@ pub fn validate(
     store_id: &str,
     connection: &StorageConnection,
 ) -> Result<(InvoiceLineRow, ItemRow, BatchPair, InvoiceRow), UpdateOutboundShipmentLineError> {
-    let line = check_line_exists(&input.id, connection)?;
-    let invoice = check_invoice_exists(&line.invoice_id, connection)?;
-    check_store(&invoice, store_id)?;
+    use UpdateOutboundShipmentLineError::*;
+
+    let line = check_line_exists_option(connection, &input.id)?.ok_or(LineDoesNotExist)?;
+    let invoice =
+        check_invoice_exists_option(&line.invoice_id, connection)?.ok_or(InvoiceDoesNotExist)?;
+    if !check_store(&invoice, store_id) {
+        return Err(NotThisStoreInvoice);
+    }
     check_unique_stock_line(
         &line.id,
         &invoice.id,
@@ -35,8 +39,12 @@ pub fn validate(
 
     // check batch belongs to store
 
-    check_invoice_type(&invoice, InvoiceRowType::OutboundShipment)?;
-    check_invoice_is_editable(&invoice)?;
+    if !check_invoice_type(&invoice, InvoiceRowType::OutboundShipment) {
+        return Err(NotAnOutboundShipment);
+    }
+    if !check_invoice_is_editable(&invoice) {
+        return Err(CannotEditFinalised);
+    }
 
     check_number_of_packs(input.number_of_packs.clone())?;
     let batch_pair = check_batch_exists_option(&input, &line, connection)?;
@@ -142,12 +150,6 @@ impl From<NotInvoiceLine> for UpdateOutboundShipmentLineError {
     }
 }
 
-impl From<LineDoesNotExist> for UpdateOutboundShipmentLineError {
-    fn from(_: LineDoesNotExist) -> Self {
-        UpdateOutboundShipmentLineError::LineDoesNotExist
-    }
-}
-
 impl From<ItemNotFound> for UpdateOutboundShipmentLineError {
     fn from(_: ItemNotFound) -> Self {
         UpdateOutboundShipmentLineError::ItemNotFound
@@ -169,29 +171,5 @@ impl From<StockLineNotFound> for UpdateOutboundShipmentLineError {
 impl From<NumberOfPacksBelowOne> for UpdateOutboundShipmentLineError {
     fn from(_: NumberOfPacksBelowOne) -> Self {
         UpdateOutboundShipmentLineError::NumberOfPacksBelowOne
-    }
-}
-
-impl From<WrongInvoiceRowType> for UpdateOutboundShipmentLineError {
-    fn from(_: WrongInvoiceRowType) -> Self {
-        UpdateOutboundShipmentLineError::NotAnOutboundShipment
-    }
-}
-
-impl From<InvoiceIsNotEditable> for UpdateOutboundShipmentLineError {
-    fn from(_: InvoiceIsNotEditable) -> Self {
-        UpdateOutboundShipmentLineError::CannotEditFinalised
-    }
-}
-
-impl From<InvoiceDoesNotExist> for UpdateOutboundShipmentLineError {
-    fn from(_: InvoiceDoesNotExist) -> Self {
-        UpdateOutboundShipmentLineError::InvoiceDoesNotExist
-    }
-}
-
-impl From<NotThisStoreInvoice> for UpdateOutboundShipmentLineError {
-    fn from(_: NotThisStoreInvoice) -> Self {
-        UpdateOutboundShipmentLineError::NotThisStoreInvoice
     }
 }

@@ -73,19 +73,6 @@ pub fn check_item_exists_option(
 
 pub struct LineDoesNotExist;
 
-pub fn check_line_exists(
-    id: &str,
-    connection: &StorageConnection,
-) -> Result<InvoiceLineRow, WithDBError<LineDoesNotExist>> {
-    let result = InvoiceLineRowRepository::new(connection).find_one_by_id(id);
-
-    match result {
-        Ok(line) => Ok(line),
-        Err(RepositoryError::NotFound) => Err(WithDBError::err(LineDoesNotExist)),
-        Err(error) => Err(WithDBError::db(error)),
-    }
-}
-// TODO use this one instead of check_line_exists
 pub fn check_line_exists_option(
     connection: &StorageConnection,
     id: &str,

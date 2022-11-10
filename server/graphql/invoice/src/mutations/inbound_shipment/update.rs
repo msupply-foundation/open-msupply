@@ -349,7 +349,7 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        //OtherPartyNotVisible
+        // OtherPartyNotVisible
         let test_service = TestService(Box::new(|_| Err(ServiceError::OtherPartyNotVisible)));
 
         let expected = json!({

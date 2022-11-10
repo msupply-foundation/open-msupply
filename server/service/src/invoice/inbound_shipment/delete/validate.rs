@@ -1,6 +1,6 @@
 use crate::invoice::{
     check_invoice_exists_option, check_invoice_is_editable, check_invoice_type, check_store,
-    InvoiceDoesNotExist, InvoiceLinesExist,
+    InvoiceLinesExist,
 };
 use repository::{InvoiceRow, InvoiceRowType, StorageConnection};
 
@@ -27,12 +27,6 @@ pub fn validate(
     // check_invoice_is_empty(&input.id, connection)?; https://github.com/openmsupply/remote-server/issues/839
 
     Ok(invoice)
-}
-
-impl From<InvoiceDoesNotExist> for DeleteInboundShipmentError {
-    fn from(_: InvoiceDoesNotExist) -> Self {
-        DeleteInboundShipmentError::InvoiceDoesNotExist
-    }
 }
 
 impl From<InvoiceLinesExist> for DeleteInboundShipmentError {

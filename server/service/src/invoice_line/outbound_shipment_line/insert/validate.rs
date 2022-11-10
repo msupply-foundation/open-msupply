@@ -1,7 +1,6 @@
 use crate::{
     invoice::{
-        check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store,
-        InvoiceDoesNotExist, InvoiceIsNotEditable, NotThisStoreInvoice, WrongInvoiceRowType,
+        check_invoice_exists_option, check_invoice_is_editable, check_invoice_type, check_store,
     },
     invoice_line::{
         check_batch_exists, check_batch_on_hold, check_item_matches_batch, check_location_on_hold,
@@ -23,21 +22,30 @@ pub fn validate(
     store_id: &str,
     connection: &StorageConnection,
 ) -> Result<(ItemRow, InvoiceRow, StockLineRow), InsertOutboundShipmentLineError> {
+    use InsertOutboundShipmentLineError::*;
+
     check_line_does_not_exists(&input.id, connection)?;
     check_number_of_packs(Some(input.number_of_packs))?;
     let batch = check_batch_exists(&input.stock_line_id, connection)?;
     let item = check_item(&input.item_id, connection)?;
     check_item_matches_batch(&batch, &item)?;
-    let invoice = check_invoice_exists(&input.invoice_id, connection)?;
-    check_store(&invoice, store_id)?;
+    let invoice =
+        check_invoice_exists_option(&input.invoice_id, connection)?.ok_or(InvoiceDoesNotExist)?;
+    if !check_store(&invoice, store_id) {
+        return Err(NotThisStoreInvoice);
+    }
     check_unique_stock_line(
         &input.id,
         &invoice.id,
         Some(input.stock_line_id.to_string()),
         connection,
     )?;
-    check_invoice_type(&invoice, InvoiceRowType::OutboundShipment)?;
-    check_invoice_is_editable(&invoice)?;
+    if !check_invoice_type(&invoice, InvoiceRowType::OutboundShipment) {
+        return Err(NotAnOutboundShipment);
+    }
+    if !check_invoice_is_editable(&invoice) {
+        return Err(CannotEditFinalised);
+    }
 
     check_batch_on_hold(&batch)?;
     check_location_on_hold(&batch, connection)?;
@@ -108,29 +116,5 @@ impl From<NumberOfPacksBelowOne> for InsertOutboundShipmentLineError {
 impl From<LineAlreadyExists> for InsertOutboundShipmentLineError {
     fn from(_: LineAlreadyExists) -> Self {
         InsertOutboundShipmentLineError::LineAlreadyExists
-    }
-}
-
-impl From<WrongInvoiceRowType> for InsertOutboundShipmentLineError {
-    fn from(_: WrongInvoiceRowType) -> Self {
-        InsertOutboundShipmentLineError::NotAnOutboundShipment
-    }
-}
-
-impl From<InvoiceIsNotEditable> for InsertOutboundShipmentLineError {
-    fn from(_: InvoiceIsNotEditable) -> Self {
-        InsertOutboundShipmentLineError::CannotEditFinalised
-    }
-}
-
-impl From<InvoiceDoesNotExist> for InsertOutboundShipmentLineError {
-    fn from(_: InvoiceDoesNotExist) -> Self {
-        InsertOutboundShipmentLineError::InvoiceDoesNotExist
-    }
-}
-
-impl From<NotThisStoreInvoice> for InsertOutboundShipmentLineError {
-    fn from(_: NotThisStoreInvoice) -> Self {
-        InsertOutboundShipmentLineError::NotThisStoreInvoice
     }
 }

@@ -20,7 +20,7 @@ pub struct BatchIsReserved;
 pub fn check_batch(
     line: &InvoiceLineRow,
     connection: &StorageConnection,
-) -> Result<(), WithDBError<BatchIsReserved>> {
+) -> Result<bool, WithDBError<BatchIsReserved>> {
     if let Some(batch_id) = &line.stock_line_id {
         match StockLineRowRepository::new(connection).find_one_by_id(batch_id) {
             Ok(batch) => return check_batch_stock_reserved(line, batch),
@@ -28,18 +28,17 @@ pub fn check_batch(
         };
     }
 
-    return Ok(());
+    return Ok(true);
 }
 
 pub fn check_batch_stock_reserved(
     line: &InvoiceLineRow,
     batch: StockLineRow,
-) -> Result<(), WithDBError<BatchIsReserved>> {
+) -> Result<bool, WithDBError<BatchIsReserved>> {
     if line.number_of_packs != batch.available_number_of_packs {
-        Err(WithDBError::err(BatchIsReserved))
-    } else {
-        Ok(())
+        return Ok(false);
     }
+    Ok(true)
 }
 
 pub struct LocationDoesNotExist;
@@ -47,18 +46,12 @@ pub struct LocationDoesNotExist;
 pub fn check_location_exists(
     location_id: &Option<String>,
     connection: &StorageConnection,
-) -> Result<(), WithDBError<LocationDoesNotExist>> {
-    match location_id {
-        Some(location_id) => {
-            let location = LocationRowRepository::new(connection)
-                .find_one_by_id(&location_id)
-                .map_err(WithDBError::db)?;
-
-            match location {
-                Some(_) => Ok(()),
-                None => Err(WithDBError::err(LocationDoesNotExist)),
-            }
+) -> Result<bool, WithDBError<LocationDoesNotExist>> {
+    if let Some(location_id) = location_id {
+        let location = LocationRowRepository::new(connection).find_one_by_id(location_id)?;
+        if location.is_none() {
+            return Ok(false);
         }
-        None => Ok(()),
     }
+    Ok(true)
 }

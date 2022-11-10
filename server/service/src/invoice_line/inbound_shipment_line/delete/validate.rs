@@ -1,12 +1,10 @@
 use crate::{
     invoice::{
-        check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store,
-        validate::InvoiceIsNotEditable, InvoiceDoesNotExist, NotThisStoreInvoice,
-        WrongInvoiceRowType,
+        check_invoice_exists_option, check_invoice_is_editable, check_invoice_type, check_store,
     },
     invoice_line::{
         inbound_shipment_line::check_batch,
-        validate::{check_line_exists, LineDoesNotExist, NotInvoiceLine},
+        validate::{check_line_exists_option, NotInvoiceLine},
         BatchIsReserved,
     },
 };
@@ -19,33 +17,26 @@ pub fn validate(
     store_id: &str,
     connection: &StorageConnection,
 ) -> Result<(InvoiceRow, InvoiceLineRow), DeleteInboundShipmentLineError> {
-    let line = check_line_exists(&input.id, connection)?;
+    use DeleteInboundShipmentLineError::*;
 
-    let invoice = check_invoice_exists(&line.invoice_id, connection)?;
-    check_store(&invoice, store_id)?;
-    check_invoice_type(&invoice, InvoiceRowType::InboundShipment)?;
-    check_invoice_is_editable(&invoice)?;
-    check_batch(&line, connection)?;
+    let line = check_line_exists_option(connection, &input.id)?.ok_or(LineDoesNotExist)?;
+    let invoice =
+        check_invoice_exists_option(&line.invoice_id, connection)?.ok_or(InvoiceDoesNotExist)?;
+
+    if !check_store(&invoice, store_id) {
+        return Err(NotThisStoreInvoice);
+    }
+    if !check_invoice_type(&invoice, InvoiceRowType::InboundShipment) {
+        return Err(NotAnInboundShipment);
+    }
+    if !check_invoice_is_editable(&invoice) {
+        return Err(CannotEditFinalised);
+    }
+    if !check_batch(&line, connection)? {
+        return Err(BatchIsReserved);
+    }
 
     Ok((invoice, line))
-}
-
-impl From<LineDoesNotExist> for DeleteInboundShipmentLineError {
-    fn from(_: LineDoesNotExist) -> Self {
-        DeleteInboundShipmentLineError::LineDoesNotExist
-    }
-}
-
-impl From<WrongInvoiceRowType> for DeleteInboundShipmentLineError {
-    fn from(_: WrongInvoiceRowType) -> Self {
-        DeleteInboundShipmentLineError::NotAnInboundShipment
-    }
-}
-
-impl From<InvoiceIsNotEditable> for DeleteInboundShipmentLineError {
-    fn from(_: InvoiceIsNotEditable) -> Self {
-        DeleteInboundShipmentLineError::CannotEditFinalised
-    }
 }
 
 impl From<NotInvoiceLine> for DeleteInboundShipmentLineError {
@@ -57,17 +48,5 @@ impl From<NotInvoiceLine> for DeleteInboundShipmentLineError {
 impl From<BatchIsReserved> for DeleteInboundShipmentLineError {
     fn from(_: BatchIsReserved) -> Self {
         DeleteInboundShipmentLineError::BatchIsReserved
-    }
-}
-
-impl From<InvoiceDoesNotExist> for DeleteInboundShipmentLineError {
-    fn from(_: InvoiceDoesNotExist) -> Self {
-        DeleteInboundShipmentLineError::InvoiceDoesNotExist
-    }
-}
-
-impl From<NotThisStoreInvoice> for DeleteInboundShipmentLineError {
-    fn from(_: NotThisStoreInvoice) -> Self {
-        DeleteInboundShipmentLineError::NotThisStoreInvoice
     }
 }

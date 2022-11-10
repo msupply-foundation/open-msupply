@@ -6,8 +6,7 @@ use util::constants::DEFAULT_SERVICE_ITEM_CODE;
 
 use crate::{
     invoice::{
-        check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store,
-        InvoiceDoesNotExist, InvoiceIsNotEditable, NotThisStoreInvoice, WrongInvoiceRowType,
+        check_invoice_exists_option, check_invoice_is_editable, check_invoice_type, check_store,
     },
     invoice_line::validate::{
         check_item, check_line_does_not_exists, ItemNotFound, LineAlreadyExists,
@@ -38,10 +37,17 @@ pub fn validate(
         }
     };
 
-    let invoice = check_invoice_exists(&input.invoice_id, connection)?;
-    check_store(&invoice, store_id)?;
-    check_invoice_type(&invoice, InvoiceRowType::OutboundShipment)?;
-    check_invoice_is_editable(&invoice)?;
+    let invoice = check_invoice_exists_option(&input.invoice_id, connection)?
+        .ok_or(OutError::InvoiceDoesNotExist)?;
+    if !check_store(&invoice, store_id) {
+        return Err(OutError::NotThisStoreInvoice);
+    }
+    if !check_invoice_type(&invoice, InvoiceRowType::OutboundShipment) {
+        return Err(OutError::NotAnOutboundShipment);
+    }
+    if !check_invoice_is_editable(&invoice) {
+        return Err(OutError::CannotEditInvoice);
+    }
 
     Ok((item, invoice))
 }
@@ -65,29 +71,5 @@ impl From<LineAlreadyExists> for OutError {
 impl From<ItemNotFound> for OutError {
     fn from(_: ItemNotFound) -> Self {
         OutError::ItemNotFound
-    }
-}
-
-impl From<InvoiceDoesNotExist> for OutError {
-    fn from(_: InvoiceDoesNotExist) -> Self {
-        OutError::InvoiceDoesNotExist
-    }
-}
-
-impl From<WrongInvoiceRowType> for OutError {
-    fn from(_: WrongInvoiceRowType) -> Self {
-        OutError::NotAnOutboundShipment
-    }
-}
-
-impl From<InvoiceIsNotEditable> for OutError {
-    fn from(_: InvoiceIsNotEditable) -> Self {
-        OutError::CannotEditInvoice
-    }
-}
-
-impl From<NotThisStoreInvoice> for OutError {
-    fn from(_: NotThisStoreInvoice) -> Self {
-        OutError::NotThisStoreInvoice
     }
 }
