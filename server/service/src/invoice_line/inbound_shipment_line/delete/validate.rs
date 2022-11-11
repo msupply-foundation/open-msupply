@@ -4,8 +4,7 @@ use crate::{
     },
     invoice_line::{
         inbound_shipment_line::check_batch,
-        validate::{check_line_exists_option, NotInvoiceLine},
-        BatchIsReserved,
+        validate::{check_line_belongs_to_invoice, check_line_exists_option},
     },
 };
 use repository::{InvoiceLineRow, InvoiceRow, InvoiceRowType, StorageConnection};
@@ -35,18 +34,9 @@ pub fn validate(
     if !check_batch(&line, connection)? {
         return Err(BatchIsReserved);
     }
+    if !check_line_belongs_to_invoice(&line, &invoice) {
+        return Err(NotThisInvoiceLine(line.invoice_id));
+    }
 
     Ok((invoice, line))
-}
-
-impl From<NotInvoiceLine> for DeleteInboundShipmentLineError {
-    fn from(error: NotInvoiceLine) -> Self {
-        DeleteInboundShipmentLineError::NotThisInvoiceLine(error.0)
-    }
-}
-
-impl From<BatchIsReserved> for DeleteInboundShipmentLineError {
-    fn from(_: BatchIsReserved) -> Self {
-        DeleteInboundShipmentLineError::BatchIsReserved
-    }
 }

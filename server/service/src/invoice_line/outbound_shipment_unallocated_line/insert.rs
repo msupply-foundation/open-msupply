@@ -9,7 +9,7 @@ use crate::invoice::check_store;
 use crate::invoice_line::query::get_invoice_line;
 use crate::{
     invoice::check_invoice_exists_option,
-    invoice_line::validate::{check_item_exists_option, check_line_does_not_exists_new},
+    invoice_line::validate::{check_item_exists_option, check_line_does_not_exist},
     service_provider::ServiceContext,
 };
 #[derive(Clone, Debug, PartialEq, Default)]
@@ -60,7 +60,7 @@ fn validate(
     store_id: &str,
     input: &InsertOutboundShipmentUnallocatedLine,
 ) -> Result<ItemRow, OutError> {
-    if !check_line_does_not_exists_new(connection, &input.id)? {
+    if !check_line_does_not_exist(connection, &input.id)? {
         return Err(OutError::LineAlreadyExists);
     }
 

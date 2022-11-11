@@ -3,7 +3,7 @@ use crate::{
         check_invoice_exists_option, check_invoice_is_editable, check_invoice_type, check_store,
     },
     invoice_line::{
-        validate::{check_line_exists_option, NotInvoiceLine},
+        validate::{check_line_belongs_to_invoice, check_line_exists_option},
         DeleteInboundShipmentLine,
     },
 };
@@ -31,12 +31,9 @@ pub fn validate(
     if !check_invoice_is_editable(&invoice) {
         return Err(CannotEditInvoice);
     }
+    if !check_line_belongs_to_invoice(&line, &invoice) {
+        return Err(NotThisInvoiceLine(line.invoice_id));
+    }
 
     Ok(line)
-}
-
-impl From<NotInvoiceLine> for DeleteInboundShipmentServiceLineError {
-    fn from(error: NotInvoiceLine) -> Self {
-        DeleteInboundShipmentServiceLineError::NotThisInvoiceLine(error.0)
-    }
 }

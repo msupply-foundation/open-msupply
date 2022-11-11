@@ -6,7 +6,9 @@ use crate::{
     invoice::{
         check_invoice_exists_option, check_invoice_is_editable, check_invoice_type, check_store,
     },
-    invoice_line::validate::{check_item, check_line_exists_option, ItemNotFound, NotInvoiceLine},
+    invoice_line::validate::{
+        check_item_exists_option, check_line_belongs_to_invoice, check_line_exists_option,
+    },
 };
 
 use super::{UpdateInboundShipmentServiceLine, UpdateInboundShipmentServiceLineError};
@@ -23,9 +25,9 @@ pub fn validate(
         check_invoice_exists_option(&line.invoice_id, connection)?.ok_or(InvoiceDoesNotExist)?;
 
     let item = if let Some(item_id) = &input.item_id {
-        check_item(item_id, connection)?
+        check_item_exists_option(connection, item_id)?.ok_or(ItemNotFound)?
     } else {
-        check_item(&line.item_id, connection)?
+        check_item_exists_option(connection, &line.item_id)?.ok_or(ItemNotFound)?
     };
     if item.r#type != ItemRowType::Service {
         return Err(UpdateInboundShipmentServiceLineError::NotAServiceItem);
@@ -40,18 +42,9 @@ pub fn validate(
     if !check_invoice_is_editable(&invoice) {
         return Err(CannotEditInvoice);
     }
+    if !check_line_belongs_to_invoice(&line, &invoice) {
+        return Err(NotThisInvoiceLine(line.invoice_id));
+    }
 
     Ok((line, invoice, item))
-}
-
-impl From<NotInvoiceLine> for UpdateInboundShipmentServiceLineError {
-    fn from(error: NotInvoiceLine) -> Self {
-        UpdateInboundShipmentServiceLineError::NotThisInvoiceLine(error.0)
-    }
-}
-
-impl From<ItemNotFound> for UpdateInboundShipmentServiceLineError {
-    fn from(_: ItemNotFound) -> Self {
-        UpdateInboundShipmentServiceLineError::ItemNotFound
-    }
 }

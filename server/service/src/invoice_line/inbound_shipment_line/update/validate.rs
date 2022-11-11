@@ -5,10 +5,9 @@ use crate::{
     invoice_line::{
         check_batch, check_location_exists, check_pack_size,
         validate::{
-            check_item, check_line_exists_option, check_number_of_packs, ItemNotFound,
-            NotInvoiceLine, NumberOfPacksBelowOne,
+            check_item_exists_option, check_line_belongs_to_invoice, check_line_exists_option,
+            check_number_of_packs,
         },
-        BatchIsReserved, LocationDoesNotExist, PackSizeBelowOne,
     },
 };
 use repository::{InvoiceLineRow, InvoiceRow, InvoiceRowType, ItemRow, StorageConnection};
@@ -23,8 +22,13 @@ pub fn validate(
     use UpdateInboundShipmentLineError::*;
 
     let line = check_line_exists_option(connection, &input.id)?.ok_or(LineDoesNotExist)?;
-    check_pack_size(input.pack_size.clone())?;
-    check_number_of_packs(input.number_of_packs.clone())?;
+
+    if !check_pack_size(input.pack_size.clone()) {
+        return Err(PackSizeBelowOne);
+    }
+    if !check_number_of_packs(input.number_of_packs.clone()) {
+        return Err(NumberOfPacksBelowOne);
+    }
 
     let item = check_item_option(&input.item_id, connection)?;
 
@@ -47,6 +51,9 @@ pub fn validate(
     if !check_location_exists(&input.location_id, connection)? {
         return Err(LocationDoesNotExist);
     }
+    if !check_line_belongs_to_invoice(&line, &invoice) {
+        return Err(NotThisInvoiceLine(line.invoice_id));
+    }
 
     // TODO: StockLineDoesNotBelongToCurrentStore
     // TODO: LocationDoesNotBelongToCurrentStore
@@ -59,44 +66,11 @@ fn check_item_option(
     connection: &StorageConnection,
 ) -> Result<Option<ItemRow>, UpdateInboundShipmentLineError> {
     if let Some(item_id) = item_id_option {
-        Ok(Some(check_item(item_id, connection)?))
+        Ok(Some(
+            check_item_exists_option(connection, item_id)?
+                .ok_or(UpdateInboundShipmentLineError::ItemNotFound)?,
+        ))
     } else {
         Ok(None)
-    }
-}
-
-impl From<ItemNotFound> for UpdateInboundShipmentLineError {
-    fn from(_: ItemNotFound) -> Self {
-        UpdateInboundShipmentLineError::ItemNotFound
-    }
-}
-
-impl From<LocationDoesNotExist> for UpdateInboundShipmentLineError {
-    fn from(_: LocationDoesNotExist) -> Self {
-        UpdateInboundShipmentLineError::LocationDoesNotExist
-    }
-}
-
-impl From<NumberOfPacksBelowOne> for UpdateInboundShipmentLineError {
-    fn from(_: NumberOfPacksBelowOne) -> Self {
-        UpdateInboundShipmentLineError::NumberOfPacksBelowOne
-    }
-}
-
-impl From<PackSizeBelowOne> for UpdateInboundShipmentLineError {
-    fn from(_: PackSizeBelowOne) -> Self {
-        UpdateInboundShipmentLineError::PackSizeBelowOne
-    }
-}
-
-impl From<NotInvoiceLine> for UpdateInboundShipmentLineError {
-    fn from(error: NotInvoiceLine) -> Self {
-        UpdateInboundShipmentLineError::NotThisInvoiceLine(error.0)
-    }
-}
-
-impl From<BatchIsReserved> for UpdateInboundShipmentLineError {
-    fn from(_: BatchIsReserved) -> Self {
-        UpdateInboundShipmentLineError::BatchIsReserved
     }
 }
