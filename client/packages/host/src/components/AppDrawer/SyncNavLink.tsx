@@ -2,7 +2,6 @@ import {
   AlertIcon,
   AppNavLink,
   RadioIcon,
-  Tooltip,
   useTheme,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -28,13 +27,11 @@ export const SyncNavLink = () => {
   if (syncStatus && syncStatus.error) {
     badgeProps.color = 'default';
     badgeProps.badgeContent = (
-      <Tooltip title={'syncStatus?.error?.fullError'}>
-        <AlertIcon
-          color="error"
-          fontSize="small"
-          fill={theme.palette.background.drawer}
-        />
-      </Tooltip>
+      <AlertIcon
+        color="error"
+        fontSize="small"
+        fill={theme.palette.background.drawer}
+      />
     );
   }
   return (

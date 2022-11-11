@@ -956,8 +956,8 @@ Screen.Back();
 <Script>-- These actions are performed when the Next button is clicked.
 local sNextScreenName = "Select Install Folder";
 
-tRbSqliteProps = DlgRadioButton.GetProperties(CTRL_RADIO_BUTTON_01);
-if not tRbSqliteProps.Checked then
+tRbSqliteProps = DlgRadioButton.GetProperties(CTRL_RADIO_BUTTON_02); -- If postgres is selected as db
+if tRbSqliteProps.Checked then
 	SessionVar.Set("%omsupply_selected_db%", "postgres");
 	sNextScreenName = "Postgres Configuration";
 else
@@ -2842,7 +2842,7 @@ end
 <Visible>1</Visible>
 <Enabled>1</Enabled>
 <TabOrder>5</TabOrder>
-<Checked>1</Checked>
+<Checked>0</Checked>
 <Variable>cbStartOmSupply</Variable>
 </Control>
 <Control>
@@ -4056,25 +4056,14 @@ g_HandleSystemReboot();
 <Args/>
 <Script>-- Set window title
 local sWindowTitle = "omSupply Server Setup";
-
-hasOmsupplyInstalled = false;
-omSupplyServerDatabase = SessionVar.Get("%omsupply_selected_db%");
-
-if (omSupplyServerDatabase == "sqlite") then
-	omSupplyServerPath = SessionVar.Expand("%AppFolder%\\omSupply-sqlite.exe");
-else
-	omSupplyServerPath = SessionVar.Expand("%AppFolder%\\omSupply-postgres.exe");
-end
+local omSupplyServerPath = "";
 
 -- Check if the omSupply Server has been already installed on this machine
 if Registry.DoesKeyExist(HKEY_LOCAL_MACHINE, "Software\\omSupply Server") then
 	omSupplyServerPath = Registry.GetValue(HKEY_LOCAL_MACHINE, "Software\\omSupply Server", "Path", true);
-	omSupplyServerDatabase = Registry.GetValue(HKEY_LOCAL_MACHINE, "Software\\omSupply Server", "Database", true);
-	if File.DoesExist(omSupplyServerPath) then
-		hasOmsupplyInstalled = true;
-	end
 end
 
+hasOmsupplyInstalled = File.DoesExist(omSupplyServerPath);
 if hasOmsupplyInstalled then
 	sWindowTitle = "omSupply Server Upgrader Setup";
 end
@@ -4167,6 +4156,18 @@ end
 <Name>On Post Install</Name>
 <Args/>
 <Script>local sFileToBeDeletePath = "";
+local omSupplyServerPath = SessionVar.Expand("%AppFolder%\\omSupply-sqlite.exe");
+local omSupplyServerDatabase = SessionVar.Get("%omsupply_selected_db%");
+
+-- Get current database name from registry (if already installed)
+if hasOmsupplyInstalled then
+	omSupplyServerDatabase = Registry.GetValue(HKEY_LOCAL_MACHINE, "Software\\omSupply Server", "Database", true);
+end
+
+if (omSupplyServerDatabase == "postgres") then
+	omSupplyServerPath = SessionVar.Expand("%AppFolder%\\omSupply-postgres.exe"); 
+end
+
 if not hasOmsupplyInstalled then
 	local config = "server:\r\n"
 	config = config .. "  host: 192.168.178.68\r\n";
