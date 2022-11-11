@@ -724,6 +724,12 @@ export type EqualFilterStringInput = {
   notEqualTo?: InputMaybe<Scalars['String']>;
 };
 
+export type EqualFilterTypeInput = {
+  equalAny?: InputMaybe<Array<NameNodeType>>;
+  equalTo?: InputMaybe<NameNodeType>;
+  notEqualTo?: InputMaybe<NameNodeType>;
+};
+
 export type FailedToFetchReportData = PrintReportErrorInterface & {
   __typename: 'FailedToFetchReportData';
   description: Scalars['String'];
@@ -1920,12 +1926,14 @@ export type NameFilterInput = {
    * if is_visible is set to true and is_system_name is also true no system names will be returned
    */
   isSystemName?: InputMaybe<Scalars['Boolean']>;
-  /** Visibility in current store (based on store_id parameter and existance of name_store_join record) */
+  /** Visibility in current store (based on store_id parameter and existence of name_store_join record) */
   isVisible?: InputMaybe<Scalars['Boolean']>;
   /** Filter by name */
   name?: InputMaybe<SimpleStringFilterInput>;
   /** Code of the store if store is linked to name */
   storeCode?: InputMaybe<SimpleStringFilterInput>;
+  /** Filter by the name type */
+  type?: InputMaybe<EqualFilterTypeInput>;
 };
 
 export type NameNode = {
@@ -2144,6 +2152,8 @@ export type Queries = {
   requisitionLineChart: RequisitionLineChartResponse;
   requisitions: RequisitionsResponse;
   stockCounts: StockCounts;
+  /** Query for "stock_line" entries */
+  stockLines: StockLinesResponse;
   stocktake: StocktakeResponse;
   stocktakeByNumber: StocktakeResponse;
   stocktakes: StocktakesResponse;
@@ -2287,6 +2297,14 @@ export type QueriesStockCountsArgs = {
   daysTillExpired?: InputMaybe<Scalars['Int']>;
   storeId: Scalars['String'];
   timezoneOffset?: InputMaybe<Scalars['Int']>;
+};
+
+
+export type QueriesStockLinesArgs = {
+  filter?: InputMaybe<StockLineFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<StockLineSortInput>>;
+  storeId: Scalars['String'];
 };
 
 
@@ -2625,6 +2643,15 @@ export type StockLineConnector = {
   totalCount: Scalars['Int'];
 };
 
+export type StockLineFilterInput = {
+  expiryDate?: InputMaybe<DateFilterInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  isAvailable?: InputMaybe<Scalars['Boolean']>;
+  itemId?: InputMaybe<EqualFilterStringInput>;
+  locationId?: InputMaybe<EqualFilterStringInput>;
+  storeId?: InputMaybe<EqualFilterStringInput>;
+};
+
 export type StockLineIsOnHold = InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
   __typename: 'StockLineIsOnHold';
   description: Scalars['String'];
@@ -2651,6 +2678,22 @@ export type StockLineNode = {
 };
 
 export type StockLineResponse = NodeError | StockLineNode;
+
+export enum StockLineSortFieldInput {
+  ExpiryDate = 'expiryDate'
+}
+
+export type StockLineSortInput = {
+  /**
+   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']>;
+  /** Sort query result by `key` */
+  key: StockLineSortFieldInput;
+};
+
+export type StockLinesResponse = StockLineConnector;
 
 export type StocktakeConnector = {
   __typename: 'StocktakeConnector';
