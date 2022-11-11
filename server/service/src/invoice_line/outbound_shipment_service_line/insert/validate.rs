@@ -8,9 +8,7 @@ use crate::{
     invoice::{
         check_invoice_exists_option, check_invoice_is_editable, check_invoice_type, check_store,
     },
-    invoice_line::validate::{
-        check_item, check_line_does_not_exists, ItemNotFound, LineAlreadyExists,
-    },
+    invoice_line::validate::{check_item_exists_option, check_line_does_not_exist},
 };
 
 use super::{InsertOutboundShipmentServiceLine, InsertOutboundShipmentServiceLineError};
@@ -22,14 +20,17 @@ pub fn validate(
     store_id: &str,
     connection: &StorageConnection,
 ) -> Result<(ItemRow, InvoiceRow), OutError> {
-    check_line_does_not_exists(&input.id, connection)?;
+    if !check_line_does_not_exist(connection, &input.id)? {
+        return Err(OutError::LineAlreadyExists);
+    }
 
     let item = match &input.item_id {
         None => {
             get_default_service_item(connection)?.ok_or(OutError::CannotFindDefaultServiceItem)?
         }
         Some(item_id) => {
-            let item = check_item(item_id, connection)?;
+            let item =
+                check_item_exists_option(connection, item_id)?.ok_or(OutError::ItemNotFound)?;
             if item.r#type != ItemRowType::Service {
                 return Err(OutError::NotAServiceItem);
             }
@@ -60,16 +61,4 @@ fn get_default_service_item(
         .map(|item| item.item_row);
 
     Ok(item_row)
-}
-
-impl From<LineAlreadyExists> for OutError {
-    fn from(_: LineAlreadyExists) -> Self {
-        OutError::LineAlreadyExists
-    }
-}
-
-impl From<ItemNotFound> for OutError {
-    fn from(_: ItemNotFound) -> Self {
-        OutError::ItemNotFound
-    }
 }

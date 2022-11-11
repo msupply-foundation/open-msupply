@@ -1,32 +1,27 @@
-use crate::WithDBError;
 use repository::{
     InvoiceLineRow, InvoiceLineRowRepository, ItemRow, LocationRowRepository, RepositoryError,
     StockLineRow, StockLineRowRepository, StorageConnection,
 };
 
-pub struct StockLineNotFound;
-
 pub fn check_batch_exists(
     batch_id: &str,
     connection: &StorageConnection,
-) -> Result<StockLineRow, WithDBError<StockLineNotFound>> {
+) -> Result<Option<StockLineRow>, RepositoryError> {
     let batch_result = StockLineRowRepository::new(connection).find_one_by_id(batch_id);
 
     match batch_result {
-        Ok(batch) => Ok(batch),
-        Err(RepositoryError::NotFound) => Err(WithDBError::err(StockLineNotFound)),
-        Err(error) => Err(WithDBError::db(error)),
+        Ok(batch) => Ok(Some(batch)),
+        Err(RepositoryError::NotFound) => Ok(None),
+        Err(error) => Err(error),
     }
 }
-
-pub struct StockLineAlreadyExistsInInvoice(pub String);
 
 pub fn check_unique_stock_line(
     invoice_line_id: &str,
     invoice_id: &str,
     batch_id_option: Option<String>,
     connection: &StorageConnection,
-) -> Result<(), WithDBError<StockLineAlreadyExistsInInvoice>> {
+) -> Result<Option<InvoiceLineRow>, RepositoryError> {
     let find_another_line =
         |invoice_line: &&InvoiceLineRow| -> bool { invoice_line.id != invoice_line_id };
 
@@ -36,40 +31,30 @@ pub fn check_unique_stock_line(
         {
             Ok(lines) => {
                 if let Some(line) = lines.iter().find(find_another_line) {
-                    Err(WithDBError::err(StockLineAlreadyExistsInInvoice(
-                        line.id.to_string(),
-                    )))
+                    return Ok(Some(line.clone()));
                 } else {
-                    Ok(())
+                    Ok(None)
                 }
             }
-            Err(error) => Err(WithDBError::db(error)),
+            Err(_) => Ok(None),
         }
     } else {
-        Ok(())
+        Ok(None)
     }
 }
 
-pub struct ItemDoesNotMatchStockLine;
-
-pub fn check_item_matches_batch(
-    batch: &StockLineRow,
-    item: &ItemRow,
-) -> Result<(), ItemDoesNotMatchStockLine> {
+pub fn check_item_matches_batch(batch: &StockLineRow, item: &ItemRow) -> bool {
     if batch.item_id != item.id {
-        Err(ItemDoesNotMatchStockLine)
-    } else {
-        Ok(())
+        return false;
     }
+    return true;
 }
-pub struct BatchIsOnHold;
 
-pub fn check_batch_on_hold(batch: &StockLineRow) -> Result<(), BatchIsOnHold> {
+pub fn check_batch_on_hold(batch: &StockLineRow) -> bool {
     if batch.on_hold {
-        Err(BatchIsOnHold {})
-    } else {
-        Ok(())
+        return false;
     }
+    return true;
 }
 
 pub enum LocationIsOnHoldError {
@@ -80,18 +65,19 @@ pub enum LocationIsOnHoldError {
 pub fn check_location_on_hold(
     batch: &StockLineRow,
     connection: &StorageConnection,
-) -> Result<(), WithDBError<LocationIsOnHoldError>> {
+) -> Result<(), LocationIsOnHoldError> {
     use LocationIsOnHoldError::*;
+
     match &batch.location_id {
         Some(location_id) => {
             let location = LocationRowRepository::new(connection)
                 .find_one_by_id(&location_id)
-                .map_err(WithDBError::db)?;
+                .map_err(|_| LocationNotFound)?;
 
             match location {
-                Some(location) if location.on_hold => Err(WithDBError::err(LocationIsOnHold)),
+                Some(location) if location.on_hold => Err(LocationIsOnHold),
                 Some(_) => Ok(()),
-                None => Err(WithDBError::err(LocationNotFound)),
+                None => Err(LocationNotFound),
             }
         }
         None => Ok(()),
