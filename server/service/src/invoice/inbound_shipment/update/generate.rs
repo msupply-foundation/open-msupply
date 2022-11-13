@@ -1,14 +1,16 @@
 use chrono::Utc;
 
 use repository::{
-    EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowType, Name,
-    RepositoryError,
+    EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowType, LocationMovementRow,
+    Name, RepositoryError,
 };
 use repository::{
     InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceRowStatus, StockLineRow,
     StorageConnection,
 };
 use util::uuid::uuid;
+
+use crate::invoice::inbound_shipment::generate_inbound_location_movement;
 
 use super::{UpdateInboundShipment, UpdateInboundShipmentError, UpdateInboundShipmentStatus};
 
@@ -21,10 +23,12 @@ pub(crate) struct GenerateResult {
     pub(crate) batches_to_update: Option<Vec<LineAndStockLine>>,
     pub(crate) update_invoice: InvoiceRow,
     pub(crate) empty_lines_to_trim: Option<Vec<InvoiceLineRow>>,
+    pub(crate) location_movements: Option<Vec<LocationMovementRow>>,
 }
 
 pub(crate) fn generate(
     connection: &StorageConnection,
+    store_id: &str,
     user_id: &str,
     existing_invoice: InvoiceRow,
     other_party_option: Option<Name>,
@@ -60,10 +64,29 @@ pub(crate) fn generate(
         None
     };
 
+    let location_movements = if let Some(batches) = &batches_to_update {
+        let generate_movement = batches
+            .iter()
+            .filter_map(|batch| match batch.line.location_id {
+                Some(_) => Some(generate_inbound_location_movement(
+                    batch.line.location_id.to_owned(),
+                    store_id.to_owned(),
+                    Some(batch.stock_line.id.to_owned()),
+                )),
+                None => None,
+            })
+            .collect();
+
+        Some(generate_movement)
+    } else {
+        None
+    };
+
     Ok(GenerateResult {
         batches_to_update,
         empty_lines_to_trim: empty_lines_to_trim(connection, &existing_invoice, &patch.status)?,
         update_invoice,
+        location_movements,
     })
 }
 

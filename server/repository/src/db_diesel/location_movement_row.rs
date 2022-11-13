@@ -14,7 +14,7 @@ table! {
         store_id -> Text,
         stock_line_id -> Nullable<Text>,
         location_id -> Nullable<Text>,
-        enter_datetime -> Timestamp,
+        enter_datetime -> Nullable<Timestamp>,
         exit_datetime -> Nullable<Timestamp>,
     }
 }
@@ -30,7 +30,7 @@ pub struct LocationMovementRow {
     pub store_id: String,
     pub stock_line_id: Option<String>,
     pub location_id: Option<String>,
-    pub enter_datetime: NaiveDateTime,
+    pub enter_datetime: Option<NaiveDateTime>,
     pub exit_datetime: Option<NaiveDateTime>,
 }
 
@@ -68,15 +68,6 @@ impl<'a> LocationMovementRowRepository<'a> {
             .first(&self.connection.connection)
             .optional()?;
         Ok(result)
-    }
-
-    pub fn find_many_by_id(
-        &self,
-        ids: &[String],
-    ) -> Result<Vec<LocationMovementRow>, RepositoryError> {
-        Ok(location_movement_dsl::location_movement
-            .filter(location_movement_dsl::id.eq_any(ids))
-            .load(&self.connection.connection)?)
     }
 
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
