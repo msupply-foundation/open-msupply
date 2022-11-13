@@ -24,18 +24,25 @@ graphql_requisition_line = { path = "requisition_line" }
 graphql_stocktake = { path = "stocktake" }
 graphql_stocktake_line = { path = "stocktake_line" }
 graphql_batch_mutations = { path = "batch_mutations" }
+graphql_stock_line = { path = "stock_line" }
 
-actix-web = { version = "4.0.1", default-features = false, features = ["macros"] }
+actix-web = { version = "4.0.1", default-features = false, features = [
+    "macros",
+] }
 anymap = "0.12"
-async-graphql = { version = "3.0.35", features = ["dataloader", "chrono", "log"] }
+async-graphql = { version = "3.0.35", features = [
+    "dataloader",
+    "chrono",
+    "log",
+] }
 async-graphql-actix-web = "3.0.35"
 async-trait = "0.1.30"
 chrono = { version = "0.4", features = ["serde"] }
-reqwest = { version = "0.11.10", features = ["json"] } 
+reqwest = { version = "0.11.10", features = ["json"] }
 serde = "1.0.126"
 serde_json = "1.0.66"
 thiserror = "1.0.30"
-tokio = { version = "1.17.0", features = ["macros" ] }
+tokio = { version = "1.17.0", features = ["macros"] }
 log = "0.4.14"
 
 
@@ -47,4 +54,3 @@ assert-json-diff = "2.0.1"
 default = ["sqlite"]
 sqlite = ["repository/sqlite"]
 postgres = ["repository/postgres"]
-

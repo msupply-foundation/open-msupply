@@ -9,7 +9,7 @@ use graphql_core::{
     ContextExt,
 };
 use repository::{StockLine, StockLineRow, StorageConnectionManager};
-use service::{stock_line::get_stock_line, usize_to_u32, ListResult};
+use service::{stock_line::query::get_stock_line, usize_to_u32, ListResult};
 
 pub struct StockLineNode {
     pub stock_line: StockLine,
