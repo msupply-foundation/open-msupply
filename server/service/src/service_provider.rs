@@ -17,6 +17,7 @@ use crate::{
     requisition::{RequisitionService, RequisitionServiceTrait},
     requisition_line::{RequisitionLineService, RequisitionLineServiceTrait},
     settings_service::{SettingsService, SettingsServiceTrait},
+    stock_line::{StockLineService, StockLineServiceTrait},
     stocktake::{StocktakeService, StocktakeServiceTrait},
     stocktake_line::{StocktakeLineService, StocktakeLineServiceTrait},
     store::{get_store, get_stores},
@@ -51,6 +52,8 @@ pub struct ServiceProvider {
     pub stock_expiry_count_service: Box<dyn StockExpiryCountServiceTrait>,
     // Stock stats
     pub item_stats_service: Box<dyn ItemStatsServiceTrait>,
+    // Stock
+    pub stock_line_service: Box<dyn StockLineServiceTrait>,
     // Reports
     pub report_service: Box<dyn ReportServiceTrait>,
     // Settings
@@ -119,6 +122,7 @@ impl ServiceProvider {
             sync_trigger,
             site_is_initialised_trigger,
             display_settings_service: Box::new(DisplaySettingsService {}),
+            stock_line_service: Box::new(StockLineService {}),
         }
     }
 
