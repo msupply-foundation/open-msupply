@@ -1,5 +1,8 @@
+use chrono::Utc;
 use repository::db_diesel::InvoiceLineRowType;
-use repository::{InvoiceLineRow, InvoiceRow, ItemRowRepository, RepositoryError};
+use repository::{
+    InvoiceLineRow, InvoiceRow, ItemRowRepository, LocationMovementRow, RepositoryError,
+};
 use util::uuid::uuid;
 
 use crate::service_provider::ServiceContext;
@@ -41,4 +44,19 @@ pub fn generate_empty_invoice_lines(
     });
 
     Ok(result)
+}
+
+pub fn generate_inbound_location_movement(
+    location_id: Option<String>,
+    store_id: String,
+    stock_line_id: Option<String>,
+) -> LocationMovementRow {
+    LocationMovementRow {
+        id: uuid(),
+        store_id,
+        stock_line_id,
+        location_id,
+        enter_datetime: Some(Utc::now().naive_utc()),
+        exit_datetime: None,
+    }
 }
