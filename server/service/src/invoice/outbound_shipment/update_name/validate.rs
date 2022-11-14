@@ -1,10 +1,8 @@
 use crate::invoice::{
-    check_invoice_is_editable, check_store, InvoiceIsNotEditable, NotThisStoreInvoice,
+    check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store,
 };
 use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
-use repository::{
-    InvoiceRow, InvoiceRowRepository, InvoiceRowType, Name, RepositoryError, StorageConnection,
-};
+use repository::{InvoiceRow, InvoiceRowType, Name, StorageConnection};
 
 use super::{UpdateOutboundShipmentName, UpdateOutboundShipmentNameError};
 
@@ -14,10 +12,17 @@ pub fn validate(
     patch: &UpdateOutboundShipmentName,
 ) -> Result<(InvoiceRow, Option<Name>), UpdateOutboundShipmentNameError> {
     use UpdateOutboundShipmentNameError::*;
-    let invoice = check_invoice_exists(&patch.id, connection)?;
-    check_store(&invoice, store_id)?;
-    check_invoice_type(&invoice)?;
-    check_invoice_is_editable(&invoice)?;
+
+    let invoice = check_invoice_exists(&patch.id, connection)?.ok_or(InvoiceDoesNotExist)?;
+    if !check_store(&invoice, store_id) {
+        return Err(NotThisStoreInvoice);
+    }
+    if !check_invoice_type(&invoice, InvoiceRowType::OutboundShipment) {
+        return Err(NotAnOutboundShipment);
+    }
+    if !check_invoice_is_editable(&invoice) {
+        return Err(InvoiceIsNotEditable);
+    }
 
     let other_party_id = match &patch.other_party_id {
         None => return Ok((invoice, None)),
@@ -39,36 +44,4 @@ pub fn validate(
     })?;
 
     Ok((invoice, Some(other_party)))
-}
-
-fn check_invoice_exists(
-    id: &str,
-    connection: &StorageConnection,
-) -> Result<InvoiceRow, UpdateOutboundShipmentNameError> {
-    let result = InvoiceRowRepository::new(connection).find_one_by_id(id);
-
-    if let Err(RepositoryError::NotFound) = &result {
-        return Err(UpdateOutboundShipmentNameError::InvoiceDoesNotExist);
-    }
-    Ok(result?)
-}
-
-fn check_invoice_type(invoice: &InvoiceRow) -> Result<(), UpdateOutboundShipmentNameError> {
-    if invoice.r#type != InvoiceRowType::OutboundShipment {
-        Err(UpdateOutboundShipmentNameError::NotAnOutboundShipment)
-    } else {
-        Ok(())
-    }
-}
-
-impl From<InvoiceIsNotEditable> for UpdateOutboundShipmentNameError {
-    fn from(_: InvoiceIsNotEditable) -> Self {
-        UpdateOutboundShipmentNameError::InvoiceIsNotEditable
-    }
-}
-
-impl From<NotThisStoreInvoice> for UpdateOutboundShipmentNameError {
-    fn from(_: NotThisStoreInvoice) -> Self {
-        UpdateOutboundShipmentNameError::NotThisStoreInvoice
-    }
 }
