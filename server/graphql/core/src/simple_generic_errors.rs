@@ -184,6 +184,14 @@ impl StocktakeIsLocked {
     }
 }
 
+pub struct StockIsOnHold;
+#[Object]
+impl StockIsOnHold {
+    pub async fn description(&self) -> &'static str {
+        "Cannot edit stock"
+    }
+}
+
 pub struct NotAnOutboundShipment;
 #[Object]
 impl NotAnOutboundShipment {
