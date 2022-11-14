@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useInsertionEffect } from 'react';
 import create from 'zustand';
 import { AppRoute } from '@openmsupply-client/config';
 import {
   AuthenticationError,
+  InitialisationStatusType,
   useAuthContext,
+  useInitialisationStatus,
   useLocation,
   useNavigate,
 } from '@openmsupply-client/common';
@@ -36,6 +38,7 @@ export const useLoginForm = (
   passwordRef: React.RefObject<HTMLInputElement>
 ) => {
   const state = useLoginFormState();
+  const { data: initStatus } = useInitialisationStatus();
   const navigate = useNavigate();
   const location = useLocation();
   const { mostRecentlyUsedCredentials, login, isLoggingIn } = useAuthContext();
@@ -65,5 +68,19 @@ export const useLoginForm = (
     }
   }, [mostRecentlyUsedCredentials]);
 
-  return { isValid, onLogin, isLoggingIn, ...state, error };
+  useInsertionEffect(() => {
+    if (!initStatus) return;
+
+    if (initStatus.status != InitialisationStatusType.Initialised)
+      navigate(`/${AppRoute.Initialise}`);
+  }, [initStatus]);
+
+  return {
+    isValid,
+    onLogin,
+    isLoggingIn,
+    ...state,
+    error,
+    siteName: initStatus?.siteName,
+  };
 };
