@@ -28,9 +28,3 @@ pub fn validate(
 
     Ok(invoice)
 }
-
-impl From<InvoiceLinesExist> for DeleteInboundShipmentError {
-    fn from(error: InvoiceLinesExist) -> Self {
-        DeleteInboundShipmentError::InvoiceLinesExists(error.0)
-    }
-}

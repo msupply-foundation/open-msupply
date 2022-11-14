@@ -65,7 +65,6 @@ pub enum DeleteOutboundShipmentError {
     DatabaseError(RepositoryError),
     NotThisStoreInvoice,
     CannotEditFinalised,
-    InvoiceLinesExists(Vec<InvoiceLine>),
     LineDeleteError {
         line_id: String,
         error: DeleteOutboundShipmentLineError,

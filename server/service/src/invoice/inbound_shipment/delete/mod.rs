@@ -69,7 +69,6 @@ pub enum DeleteInboundShipmentError {
         line_id: String,
         error: DeleteInboundShipmentLineError,
     },
-    InvoiceLinesExists(Vec<InvoiceLine>),
 }
 
 impl From<RepositoryError> for DeleteInboundShipmentError {

@@ -23,13 +23,5 @@ pub fn validate(
         return Err(NotAnOutboundShipment);
     }
 
-    // check_invoice_is_empty(&id, connection)?; https://github.com/openmsupply/remote-server/issues/839
-
     Ok(invoice)
-}
-
-impl From<InvoiceLinesExist> for DeleteOutboundShipmentError {
-    fn from(error: InvoiceLinesExist) -> Self {
-        DeleteOutboundShipmentError::InvoiceLinesExists(error.0)
-    }
 }
