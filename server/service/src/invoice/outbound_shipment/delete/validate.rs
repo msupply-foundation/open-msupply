@@ -1,6 +1,6 @@
 use super::DeleteOutboundShipmentError;
 use crate::invoice::{
-    check_invoice_exists_option, check_invoice_is_editable, check_invoice_type, check_store,
+    check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store,
     InvoiceLinesExist,
 };
 use repository::{InvoiceRow, InvoiceRowType, StorageConnection};
@@ -12,7 +12,7 @@ pub fn validate(
 ) -> Result<InvoiceRow, DeleteOutboundShipmentError> {
     use DeleteOutboundShipmentError::*;
 
-    let invoice = check_invoice_exists_option(&id, connection)?.ok_or(InvoiceDoesNotExist)?;
+    let invoice = check_invoice_exists(&id, connection)?.ok_or(InvoiceDoesNotExist)?;
     if !check_store(&invoice, store_id) {
         return Err(NotThisStoreInvoice);
     }

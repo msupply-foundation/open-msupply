@@ -1,11 +1,9 @@
 use crate::{
-    invoice::{
-        check_invoice_exists_option, check_invoice_is_editable, check_invoice_type, check_store,
-    },
+    invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
     invoice_line::{
         check_batch, check_location_exists, check_pack_size,
         validate::{
-            check_item_exists_option, check_line_belongs_to_invoice, check_line_exists_option,
+            check_item_exists, check_line_belongs_to_invoice, check_line_exists_option,
             check_number_of_packs,
         },
     },
@@ -32,8 +30,7 @@ pub fn validate(
 
     let item = check_item_option(&input.item_id, connection)?;
 
-    let invoice =
-        check_invoice_exists_option(&line.invoice_id, connection)?.ok_or(InvoiceDoesNotExist)?;
+    let invoice = check_invoice_exists(&line.invoice_id, connection)?.ok_or(InvoiceDoesNotExist)?;
     if !check_invoice_type(&invoice, InvoiceRowType::InboundShipment) {
         return Err(NotAnInboundShipment);
     }
@@ -67,7 +64,7 @@ fn check_item_option(
 ) -> Result<Option<ItemRow>, UpdateInboundShipmentLineError> {
     if let Some(item_id) = item_id_option {
         Ok(Some(
-            check_item_exists_option(connection, item_id)?
+            check_item_exists(connection, item_id)?
                 .ok_or(UpdateInboundShipmentLineError::ItemNotFound)?,
         ))
     } else {

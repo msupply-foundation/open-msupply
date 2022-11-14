@@ -8,8 +8,8 @@ use repository::{
 use crate::invoice::check_store;
 use crate::invoice_line::query::get_invoice_line;
 use crate::{
-    invoice::check_invoice_exists_option,
-    invoice_line::validate::{check_item_exists_option, check_line_does_not_exist},
+    invoice::check_invoice_exists,
+    invoice_line::validate::{check_item_exists, check_line_does_not_exist},
     service_provider::ServiceContext,
 };
 #[derive(Clone, Debug, PartialEq, Default)]
@@ -64,14 +64,13 @@ fn validate(
         return Err(OutError::LineAlreadyExists);
     }
 
-    let item_row =
-        check_item_exists_option(connection, &input.item_id)?.ok_or(OutError::ItemNotFound)?;
+    let item_row = check_item_exists(connection, &input.item_id)?.ok_or(OutError::ItemNotFound)?;
 
     if item_row.r#type != ItemRowType::Stock {
         return Err(OutError::NotAStockItem);
     }
 
-    let invoice_row = check_invoice_exists_option(&input.invoice_id, connection)?
+    let invoice_row = check_invoice_exists(&input.invoice_id, connection)?
         .ok_or(OutError::InvoiceDoesNotExist)?;
     if !check_store(&invoice_row, store_id) {
         return Err(OutError::NotThisStoreInvoice);

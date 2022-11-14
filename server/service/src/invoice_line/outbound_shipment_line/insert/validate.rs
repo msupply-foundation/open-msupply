@@ -1,11 +1,9 @@
 use crate::{
-    invoice::{
-        check_invoice_exists_option, check_invoice_is_editable, check_invoice_type, check_store,
-    },
+    invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
     invoice_line::{
         check_batch_exists, check_batch_on_hold, check_item_matches_batch, check_location_on_hold,
         check_unique_stock_line,
-        validate::{check_item_exists_option, check_line_does_not_exist, check_number_of_packs},
+        validate::{check_item_exists, check_line_does_not_exist, check_number_of_packs},
         LocationIsOnHoldError,
     },
 };
@@ -28,14 +26,14 @@ pub fn validate(
     }
 
     let batch = check_batch_exists(&input.stock_line_id, connection)?.ok_or(StockLineNotFound)?;
-    let item = check_item_exists_option(connection, &input.item_id)?.ok_or(ItemNotFound)?;
+    let item = check_item_exists(connection, &input.item_id)?.ok_or(ItemNotFound)?;
 
     if !check_item_matches_batch(&batch, &item) {
         return Err(ItemDoesNotMatchStockLine);
     }
 
     let invoice =
-        check_invoice_exists_option(&input.invoice_id, connection)?.ok_or(InvoiceDoesNotExist)?;
+        check_invoice_exists(&input.invoice_id, connection)?.ok_or(InvoiceDoesNotExist)?;
 
     if !check_store(&invoice, store_id) {
         return Err(NotThisStoreInvoice);

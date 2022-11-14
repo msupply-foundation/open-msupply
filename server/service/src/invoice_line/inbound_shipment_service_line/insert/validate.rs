@@ -5,10 +5,8 @@ use repository::{
 use util::constants::DEFAULT_SERVICE_ITEM_CODE;
 
 use crate::{
-    invoice::{
-        check_invoice_exists_option, check_invoice_is_editable, check_invoice_type, check_store,
-    },
-    invoice_line::validate::{check_item_exists_option, check_line_does_not_exist},
+    invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
+    invoice_line::validate::{check_item_exists, check_line_does_not_exist},
 };
 
 use super::{InsertInboundShipmentServiceLine, InsertInboundShipmentServiceLineError};
@@ -29,8 +27,7 @@ pub fn validate(
             get_default_service_item(connection)?.ok_or(OutError::CannotFindDefaultServiceItem)?
         }
         Some(item_id) => {
-            let item =
-                check_item_exists_option(connection, item_id)?.ok_or(OutError::ItemNotFound)?;
+            let item = check_item_exists(connection, item_id)?.ok_or(OutError::ItemNotFound)?;
             if item.r#type != ItemRowType::Service {
                 return Err(OutError::NotAServiceItem);
             }
@@ -38,7 +35,7 @@ pub fn validate(
         }
     };
 
-    let invoice = check_invoice_exists_option(&input.invoice_id, connection)?
+    let invoice = check_invoice_exists(&input.invoice_id, connection)?
         .ok_or(OutError::InvoiceDoesNotExist)?;
     if !check_store(&invoice, store_id) {
         return Err(OutError::NotThisStoreInvoice);

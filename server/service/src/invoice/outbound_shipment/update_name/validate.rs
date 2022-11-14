@@ -1,5 +1,5 @@
 use crate::invoice::{
-    check_invoice_exists_option, check_invoice_is_editable, check_invoice_type, check_store,
+    check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store,
 };
 use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
 use repository::{InvoiceRow, InvoiceRowType, Name, StorageConnection};
@@ -13,7 +13,7 @@ pub fn validate(
 ) -> Result<(InvoiceRow, Option<Name>), UpdateOutboundShipmentNameError> {
     use UpdateOutboundShipmentNameError::*;
 
-    let invoice = check_invoice_exists_option(&patch.id, connection)?.ok_or(InvoiceDoesNotExist)?;
+    let invoice = check_invoice_exists(&patch.id, connection)?.ok_or(InvoiceDoesNotExist)?;
     if !check_store(&invoice, store_id) {
         return Err(NotThisStoreInvoice);
     }
