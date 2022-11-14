@@ -13,7 +13,7 @@ use crate::{
 
 use super::query::get_stock_line;
 
-#[derive(Default, Debug, Clone)]
+#[derive(Default, Debug, Clone, PartialEq)]
 pub struct UpdateStockLine {
     pub id: String,
     pub location_id: Option<String>,
