@@ -1,3 +1,4 @@
+pub mod mutations;
 use async_graphql::*;
 use graphql_core::{
     generic_filters::{DateFilterInput, EqualFilterStringInput},
@@ -110,5 +111,20 @@ impl StockLineQueries {
         Ok(StockLinesResponse::Response(
             StockLineConnector::from_domain(stock_lines),
         ))
+    }
+}
+
+#[derive(Default, Clone)]
+pub struct StockLineMutations;
+
+#[Object]
+impl StockLineMutations {
+    async fn update_stock_line(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: mutations::UpdateInput,
+    ) -> Result<mutations::UpdateResponse> {
+        mutations::update(ctx, &store_id, input)
     }
 }
