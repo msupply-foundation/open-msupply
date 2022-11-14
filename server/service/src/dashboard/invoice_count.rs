@@ -157,6 +157,7 @@ impl InvoiceCountServiceTrait for InvoiceCountService {
         let repo = InvoiceRepository::new(&ctx.connection);
         Ok(repo.count(Some(
             InvoiceFilter::new()
+                .store_id(EqualFilter::equal_to(&ctx.store_id))
                 .r#type(InvoiceRowType::OutboundShipment.equal_to())
                 .status(InvoiceRowStatus::Picked.equal_to()),
         ))?)
