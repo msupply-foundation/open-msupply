@@ -8,7 +8,7 @@ export const useStockLines = () => {
     filterKey: 'itemCodeOrName',
   });
   return {
-    ...useQuery(['stock', 'list', api.storeId, queryParams], () =>
+    ...useQuery(api.keys.paramList(queryParams), () =>
       api.get.list(queryParams)
     ),
   };
