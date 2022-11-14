@@ -4,7 +4,7 @@ use repository::{
 };
 
 use crate::{
-    invoice::{check_invoice_exists_option, check_store},
+    invoice::{check_invoice_exists, check_store},
     invoice_line::validate::check_line_exists_option,
     service_provider::ServiceContext,
 };
@@ -54,7 +54,7 @@ fn validate(
         return Err(OutError::LineIsNotUnallocatedLine);
     }
 
-    let invoice = check_invoice_exists_option(&invoice_line.invoice_id, connection)?
+    let invoice = check_invoice_exists(&invoice_line.invoice_id, connection)?
         .ok_or(OutError::InvoiceDoesNotExist)?;
     if !check_store(&invoice, store_id) {
         return Err(OutError::NotThisStoreInvoice);

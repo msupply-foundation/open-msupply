@@ -1,13 +1,11 @@
 use crate::{
-    invoice::{
-        check_invoice_exists_option, check_invoice_is_editable, check_invoice_type, check_store,
-    },
+    invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
     invoice_line::{
         check_batch_exists, check_batch_on_hold, check_item_matches_batch, check_location_on_hold,
         check_unique_stock_line,
         outbound_shipment_line::LocationIsOnHoldError,
         validate::{
-            check_item_exists_option, check_line_belongs_to_invoice, check_line_exists_option,
+            check_item_exists, check_line_belongs_to_invoice, check_line_exists_option,
             check_number_of_packs,
         },
     },
@@ -24,8 +22,7 @@ pub fn validate(
     use UpdateOutboundShipmentLineError::*;
 
     let line = check_line_exists_option(connection, &input.id)?.ok_or(LineDoesNotExist)?;
-    let invoice =
-        check_invoice_exists_option(&line.invoice_id, connection)?.ok_or(InvoiceDoesNotExist)?;
+    let invoice = check_invoice_exists(&line.invoice_id, connection)?.ok_or(InvoiceDoesNotExist)?;
     if !check_store(&invoice, store_id) {
         return Err(NotThisStoreInvoice);
     }
@@ -97,10 +94,10 @@ fn check_item_option(
     connection: &StorageConnection,
 ) -> Result<ItemRow, UpdateOutboundShipmentLineError> {
     if let Some(item_id) = item_id {
-        Ok(check_item_exists_option(connection, &item_id)?
+        Ok(check_item_exists(connection, &item_id)?
             .ok_or(UpdateOutboundShipmentLineError::ItemNotFound)?)
     } else {
-        Ok(check_item_exists_option(connection, &invoice_line.item_id)?
+        Ok(check_item_exists(connection, &invoice_line.item_id)?
             .ok_or(UpdateOutboundShipmentLineError::ItemNotFound)?)
     }
 }

@@ -25,7 +25,7 @@ pub fn check_number_of_packs(number_of_packs_option: Option<f64>) -> bool {
     return true;
 }
 
-pub fn check_item_exists_option(
+pub fn check_item_exists(
     connection: &StorageConnection,
     id: &str,
 ) -> Result<Option<ItemRow>, RepositoryError> {

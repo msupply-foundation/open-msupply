@@ -1,7 +1,5 @@
 use crate::{
-    invoice::{
-        check_invoice_exists_option, check_invoice_is_editable, check_invoice_type, check_store,
-    },
+    invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
     invoice_line::validate::{check_line_belongs_to_invoice, check_line_exists_option},
 };
 use repository::{InvoiceLineRow, InvoiceRowType, StorageConnection};
@@ -16,8 +14,7 @@ pub fn validate(
     use DeleteOutboundShipmentLineError::*;
 
     let line = check_line_exists_option(connection, &input.id)?.ok_or(LineDoesNotExist)?;
-    let invoice =
-        check_invoice_exists_option(&line.invoice_id, connection)?.ok_or(InvoiceDoesNotExist)?;
+    let invoice = check_invoice_exists(&line.invoice_id, connection)?.ok_or(InvoiceDoesNotExist)?;
 
     if !check_store(&invoice, store_id) {
         return Err(NotThisStoreInvoice);

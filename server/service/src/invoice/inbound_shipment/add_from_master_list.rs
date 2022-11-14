@@ -1,7 +1,7 @@
 use crate::invoice::common::{
     get_lines_for_invoice, AddToShipmentFromMasterListInput as ServiceInput,
 };
-use crate::invoice::{check_invoice_exists_option, common::check_master_list_for_store};
+use crate::invoice::{check_invoice_exists, common::check_master_list_for_store};
 use crate::service_provider::ServiceContext;
 use repository::EqualFilter;
 use repository::{
@@ -62,7 +62,7 @@ fn validate(
     store_id: &str,
     input: &ServiceInput,
 ) -> Result<InvoiceRow, InError> {
-    let invoice_row = check_invoice_exists_option(&input.shipment_id, connection)?
+    let invoice_row = check_invoice_exists(&input.shipment_id, connection)?
         .ok_or(InError::ShipmentDoesNotExist)?;
 
     if invoice_row.store_id != store_id {

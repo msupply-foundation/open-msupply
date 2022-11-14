@@ -85,7 +85,7 @@ pub fn check_invoice_status(
 
 pub struct InvoiceDoesNotExist;
 
-pub fn check_invoice_exists_option(
+pub fn check_invoice_exists(
     id: &str,
     connection: &StorageConnection,
 ) -> Result<Option<InvoiceRow>, RepositoryError> {
