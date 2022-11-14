@@ -114,7 +114,7 @@ impl ServiceProvider {
             item_stats_service: Box::new(ItemStatsService {}),
             general_service: Box::new(GeneralService {}),
             report_service: Box::new(ReportService {}),
-            settings: Box::new(SettingsService {}),
+            settings: Box::new(SettingsService),
             app_data_service: Box::new(AppDataService::new(app_data_folder)),
             site_info_service: Box::new(SiteInfoService),
             sync_status_service: Box::new(SyncStatusService),
