@@ -39,7 +39,6 @@ const connectToServer = (window: BrowserWindow, server: FrontEndHost) => {
   window.loadURL(url);
 
   connectedServer = server;
-  discovery.stop();
 };
 
 const start = (): void => {
