@@ -1,4 +1,4 @@
-use repository::{ActivityLogType, InvoiceLine, InvoiceRowRepository, RepositoryError};
+use repository::{ActivityLogType, InvoiceRowRepository, RepositoryError};
 
 mod validate;
 

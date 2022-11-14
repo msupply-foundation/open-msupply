@@ -1,6 +1,5 @@
 use crate::invoice::{
     check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store,
-    InvoiceLinesExist,
 };
 use repository::{InvoiceRow, InvoiceRowType, StorageConnection};
 
@@ -23,8 +22,6 @@ pub fn validate(
     if !check_invoice_is_editable(&invoice) {
         return Err(CannotEditFinalised);
     }
-
-    // check_invoice_is_empty(&input.id, connection)?; https://github.com/openmsupply/remote-server/issues/839
 
     Ok(invoice)
 }

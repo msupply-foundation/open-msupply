@@ -1,7 +1,6 @@
 use super::DeleteOutboundShipmentError;
 use crate::invoice::{
     check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store,
-    InvoiceLinesExist,
 };
 use repository::{InvoiceRow, InvoiceRowType, StorageConnection};
 

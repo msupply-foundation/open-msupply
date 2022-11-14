@@ -1,8 +1,6 @@
-use crate::WithDBError;
-use repository::EqualFilter;
 use repository::{
-    InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceRow, InvoiceRowRepository,
-    InvoiceRowStatus, InvoiceRowType, RepositoryError, StorageConnection,
+    InvoiceRow, InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType, RepositoryError,
+    StorageConnection,
 };
 
 pub fn check_invoice_type(invoice: &InvoiceRow, r#type: InvoiceRowType) -> bool {
@@ -95,22 +93,5 @@ pub fn check_invoice_exists(
         Ok(invoice_row) => Ok(Some(invoice_row)),
         Err(RepositoryError::NotFound) => Ok(None),
         Err(error) => Err(error),
-    }
-}
-
-pub struct InvoiceLinesExist(pub Vec<InvoiceLine>);
-
-pub fn check_invoice_is_empty(
-    id: &str,
-    connection: &StorageConnection,
-) -> Result<(), WithDBError<InvoiceLinesExist>> {
-    let lines = InvoiceLineRepository::new(connection)
-        .query_by_filter(InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(id)))
-        .map_err(WithDBError::db)?;
-
-    if lines.len() > 0 {
-        Err(WithDBError::err(InvoiceLinesExist(lines)))
-    } else {
-        Ok(())
     }
 }
