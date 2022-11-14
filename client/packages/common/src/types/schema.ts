@@ -724,6 +724,12 @@ export type EqualFilterStringInput = {
   notEqualTo?: InputMaybe<Scalars['String']>;
 };
 
+export type EqualFilterTypeInput = {
+  equalAny?: InputMaybe<Array<NameNodeType>>;
+  equalTo?: InputMaybe<NameNodeType>;
+  notEqualTo?: InputMaybe<NameNodeType>;
+};
+
 export type FailedToFetchReportData = PrintReportErrorInterface & {
   __typename: 'FailedToFetchReportData';
   description: Scalars['String'];
@@ -1914,12 +1920,14 @@ export type NameFilterInput = {
    * if is_visible is set to true and is_system_name is also true no system names will be returned
    */
   isSystemName?: InputMaybe<Scalars['Boolean']>;
-  /** Visibility in current store (based on store_id parameter and existance of name_store_join record) */
+  /** Visibility in current store (based on store_id parameter and existence of name_store_join record) */
   isVisible?: InputMaybe<Scalars['Boolean']>;
   /** Filter by name */
   name?: InputMaybe<SimpleStringFilterInput>;
   /** Code of the store if store is linked to name */
   storeCode?: InputMaybe<SimpleStringFilterInput>;
+  /** Filter by the name type */
+  type?: InputMaybe<EqualFilterTypeInput>;
 };
 
 export type NameNode = {
