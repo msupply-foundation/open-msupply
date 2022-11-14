@@ -13,3 +13,5 @@
 .externalNativeBuild
 .cxx
 local.properties
+# Server android build, see package.json
+/server-lib

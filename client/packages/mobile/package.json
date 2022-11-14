@@ -1,0 +1,26 @@
+{
+  "name": "@openmsupply-client/mobile",
+  "version": "0.0.0",
+  "private": true,
+  "devDependencies": {
+    "@capacitor/android": "^3.5.1",
+    "@capacitor/cli": "^3.5.1",
+    "@capacitor/core": "^3.5.1",
+    "cordova-android": "^10.1.1"
+  },
+  "//": "Below accessible with $npm_package_{}",
+  "serverToml": "../../../server/android/Cargo.toml",
+  "serverConfig": "../../../server/android/.cargo/config.toml",
+  "//": "Compile script sets out dir for native rust build to server-lib",
+  "serverArm64": "server-lib/aarch64-linux-android/release/libremote_server_android.so",
+  "serverArmabi": "server-lib/armv7-linux-androideabi/release/libremote_server_android.so",
+  "jniLibArm64": "app/src/main/jniLibs/arm64-v8a",
+  "jniLibArmeabi": "app/src/main/jniLibs/armeabi-v7a",
+  "//": "See ../../../server/android/README.md for below",
+  "scripts": {
+    "server:compile": "PATH=$PATH:$NDK_BIN cargo build --release --manifest-path=$npm_package_serverToml --config=$npm_package_serverConfig --target-dir=$(pwd)/server-lib",
+    "server:copy": "cp $npm_package_serverArm64 $npm_package_jniLibArm64 && cp $npm_package_serverArmabi $npm_package_jniLibArmeabi",
+    "server:build": "yarn server:compile && yarn server:copy"
+  },
+  "dependencies": {}
+}
