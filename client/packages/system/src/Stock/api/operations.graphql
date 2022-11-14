@@ -1,49 +1,44 @@
-query itemsWithStockLines(
+fragment StockLineRow on StockLineNode {
+  availableNumberOfPacks
+  batch
+  costPricePerPack
+  expiryDate
+  id
+  itemId
+  locationName
+  onHold
+  packSize
+  sellPricePerPack
+  storeId
+  totalNumberOfPacks
+  item {
+    code
+    name
+    unitName
+  }
+}
+
+query stockLines(
   $first: Int
   $offset: Int
-  $key: ItemSortFieldInput!
+  $key: StockLineSortFieldInput!
   $desc: Boolean
-  $filter: ItemFilterInput
+  $filter: StockLineFilterInput
   $storeId: String!
 ) {
-  items(
+  stockLines(
     storeId: $storeId
+    filter: $filter
     page: { first: $first, offset: $offset }
     sort: { key: $key, desc: $desc }
-    filter: $filter
   ) {
-    __typename
-    ... on ItemConnector {
+    ... on StockLineConnector {
       __typename
-      totalCount
       nodes {
         __typename
-        code
-        id
-        isVisible
-        name
-        unitName
-        availableBatches(storeId: $storeId) {
-          __typename
-          totalCount
-          nodes {
-            __typename
-            availableNumberOfPacks
-            batch
-            costPricePerPack
-            expiryDate
-            id
-            itemId
-            packSize
-            sellPricePerPack
-            totalNumberOfPacks
-            onHold
-            note
-            storeId
-            locationName
-          }
-        }
+        ...StockLineRow
       }
+      totalCount
     }
   }
 }

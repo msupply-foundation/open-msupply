@@ -1160,7 +1160,7 @@ export type InvoiceFilterInput = {
   verifiedDatetime?: InputMaybe<DatetimeFilterInput>;
 };
 
-export type InvoiceIsNotEditable = UpdateErrorInterface & UpdateNameErrorInterface & {
+export type InvoiceIsNotEditable = UpdateErrorInterface & {
   __typename: 'InvoiceIsNotEditable';
   description: Scalars['String'];
 };
@@ -1308,6 +1308,7 @@ export type ItemConnector = {
 
 export type ItemFilterInput = {
   code?: InputMaybe<SimpleStringFilterInput>;
+  codeOrName?: InputMaybe<SimpleStringFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   isVisible?: InputMaybe<Scalars['Boolean']>;
   name?: InputMaybe<SimpleStringFilterInput>;
@@ -1575,7 +1576,6 @@ export type Mutations = {
   updateLocation: UpdateLocationResponse;
   updateOutboundShipment: UpdateOutboundShipmentResponse;
   updateOutboundShipmentLine: UpdateOutboundShipmentLineResponse;
-  updateOutboundShipmentName: UpdateOutboundShipmentNameResponse;
   updateOutboundShipmentServiceLine: UpdateOutboundShipmentServiceLineResponse;
   updateOutboundShipmentUnallocatedLine: UpdateOutboundShipmentUnallocatedLineResponse;
   updateRequestRequisition: UpdateRequestRequisitionResponse;
@@ -1840,12 +1840,6 @@ export type MutationsUpdateOutboundShipmentLineArgs = {
 };
 
 
-export type MutationsUpdateOutboundShipmentNameArgs = {
-  input: UpdateOutboundShipmentNameInput;
-  storeId: Scalars['String'];
-};
-
-
 export type MutationsUpdateOutboundShipmentServiceLineArgs = {
   input: UpdateOutboundShipmentServiceLineInput;
   storeId: Scalars['String'];
@@ -2016,7 +2010,7 @@ export type NotAnInboundShipment = UpdateInboundShipmentLineErrorInterface & {
   description: Scalars['String'];
 };
 
-export type NotAnOutboundShipmentError = UpdateErrorInterface & UpdateNameErrorInterface & {
+export type NotAnOutboundShipmentError = UpdateErrorInterface & {
   __typename: 'NotAnOutboundShipmentError';
   description: Scalars['String'];
 };
@@ -2033,7 +2027,7 @@ export type NothingRemainingToSupply = CreateRequisitionShipmentErrorInterface &
   description: Scalars['String'];
 };
 
-export type OtherPartyNotACustomer = InsertErrorInterface & UpdateNameErrorInterface & {
+export type OtherPartyNotACustomer = InsertErrorInterface & UpdateErrorInterface & {
   __typename: 'OtherPartyNotACustomer';
   description: Scalars['String'];
 };
@@ -2043,7 +2037,7 @@ export type OtherPartyNotASupplier = InsertInboundShipmentErrorInterface & Inser
   description: Scalars['String'];
 };
 
-export type OtherPartyNotVisible = InsertErrorInterface & InsertInboundShipmentErrorInterface & InsertRequestRequisitionErrorInterface & UpdateInboundShipmentErrorInterface & UpdateNameErrorInterface & UpdateRequestRequisitionErrorInterface & {
+export type OtherPartyNotVisible = InsertErrorInterface & InsertInboundShipmentErrorInterface & InsertRequestRequisitionErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateRequestRequisitionErrorInterface & {
   __typename: 'OtherPartyNotVisible';
   description: Scalars['String'];
 };
@@ -2349,7 +2343,7 @@ export type RecordBelongsToAnotherStore = DeleteLocationErrorInterface & UpdateL
   description: Scalars['String'];
 };
 
-export type RecordNotFound = AddFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & NodeErrorInterface & RequisitionLineChartErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateLocationErrorInterface & UpdateNameErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UseSuggestedQuantityErrorInterface & {
+export type RecordNotFound = AddFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & NodeErrorInterface & RequisitionLineChartErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateLocationErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UseSuggestedQuantityErrorInterface & {
   __typename: 'RecordNotFound';
   description: Scalars['String'];
 };
@@ -2647,6 +2641,7 @@ export type StockLineFilterInput = {
   expiryDate?: InputMaybe<DateFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   isAvailable?: InputMaybe<Scalars['Boolean']>;
+  itemCodeOrName?: InputMaybe<SimpleStringFilterInput>;
   itemId?: InputMaybe<EqualFilterStringInput>;
   locationId?: InputMaybe<EqualFilterStringInput>;
   storeId?: InputMaybe<EqualFilterStringInput>;
@@ -2680,7 +2675,8 @@ export type StockLineNode = {
 export type StockLineResponse = NodeError | StockLineNode;
 
 export enum StockLineSortFieldInput {
-  ExpiryDate = 'expiryDate'
+  ExpiryDate = 'expiryDate',
+  NumberOfPacks = 'numberOfPacks'
 }
 
 export type StockLineSortInput = {
@@ -3065,10 +3061,6 @@ export type UpdateLocationInput = {
 
 export type UpdateLocationResponse = LocationNode | UpdateLocationError;
 
-export type UpdateNameErrorInterface = {
-  description: Scalars['String'];
-};
-
 export type UpdateOutboundShipmentError = {
   __typename: 'UpdateOutboundShipmentError';
   error: UpdateErrorInterface;
@@ -3080,6 +3072,11 @@ export type UpdateOutboundShipmentInput = {
   /** The new invoice id provided by the client */
   id: Scalars['String'];
   onHold?: InputMaybe<Scalars['Boolean']>;
+  /**
+   * 	The other party must be a customer of the current store.
+   * This field can be used to change the other_party of an invoice
+   */
+  otherPartyId?: InputMaybe<Scalars['String']>;
   /**
    * 	When changing the status from DRAFT to CONFIRMED or FINALISED the total_number_of_packs for
    * existing invoice items gets updated.
@@ -3115,18 +3112,6 @@ export type UpdateOutboundShipmentLineResponseWithId = {
   id: Scalars['String'];
   response: UpdateOutboundShipmentLineResponse;
 };
-
-export type UpdateOutboundShipmentNameError = {
-  __typename: 'UpdateOutboundShipmentNameError';
-  error: UpdateNameErrorInterface;
-};
-
-export type UpdateOutboundShipmentNameInput = {
-  id: Scalars['String'];
-  otherPartyId?: InputMaybe<Scalars['String']>;
-};
-
-export type UpdateOutboundShipmentNameResponse = InvoiceNode | UpdateOutboundShipmentNameError;
 
 export type UpdateOutboundShipmentResponse = InvoiceNode | NodeError | UpdateOutboundShipmentError;
 
