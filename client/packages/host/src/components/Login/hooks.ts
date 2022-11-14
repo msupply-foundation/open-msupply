@@ -1,4 +1,4 @@
-import React, { useInsertionEffect } from 'react';
+import React, { useEffect } from 'react';
 import create from 'zustand';
 import { AppRoute } from '@openmsupply-client/config';
 import {
@@ -68,7 +68,7 @@ export const useLoginForm = (
     }
   }, [mostRecentlyUsedCredentials]);
 
-  useInsertionEffect(() => {
+  useEffect(() => {
     if (!initStatus) return;
 
     if (initStatus.status != InitialisationStatusType.Initialised)
