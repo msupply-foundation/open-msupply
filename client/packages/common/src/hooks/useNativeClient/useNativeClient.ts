@@ -37,13 +37,42 @@ declare global {
     electronNativeAPI: NativeAPI;
   }
 }
+// For Android need to access globally rather then form window
+// otherwise we get `Java bridge method can't be invoked on a non-injected object`
+interface AndroidNativeApi {
+  discoveredServers: () => string;
+  startServerDiscovery: () => void;
+  connectToServer: (server: string) => void;
+  connectedServer: () => string;
+  goBackToDiscovery: () => void;
+}
+
+declare const androidNativeAPI: AndroidNativeApi;
 
 export const getNativeAPI = (): NativeAPI | null => {
+  // Android
+  if (typeof androidNativeAPI !== 'undefined')
+    return fromAndroidNative(androidNativeAPI);
+
   // Electron
   if (!!window.electronNativeAPI) return window.electronNativeAPI;
 
   return null;
 };
+
+const fromAndroidNative = (api: AndroidNativeApi): NativeAPI => ({
+  startServerDiscovery: () => api.startServerDiscovery(),
+  discoveredServers: async () =>
+    JSON.parse(api.discoveredServers()) as FrontEndHost[],
+  connectToServer: (server: FrontEndHost) =>
+    api.connectToServer(JSON.stringify(server)),
+  connectedServer: async () => {
+    let server = api.connectedServer();
+    if (!server) return null;
+    return JSON.parse(server) as FrontEndHost;
+  },
+  goBackToDiscovery: () => api.goBackToDiscovery(),
+});
 
 type NativeClientState = {
   servers: FrontEndHost[];
