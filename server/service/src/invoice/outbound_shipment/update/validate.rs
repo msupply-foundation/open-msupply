@@ -1,11 +1,11 @@
 use crate::invoice::{
-    check_invoice_is_editable, check_invoice_status, check_status_change, check_store,
-    InvoiceIsNotEditable, InvoiceRowStatusError, NotThisStoreInvoice,
+    check_invoice_exists, check_invoice_is_editable, check_invoice_status, check_invoice_type,
+    check_status_change, check_store, InvoiceRowStatusError,
 };
 use repository::EqualFilter;
 use repository::{
-    InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowType, InvoiceRow, InvoiceRowRepository,
-    InvoiceRowStatus, InvoiceRowType, RepositoryError, StorageConnection,
+    InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus,
+    InvoiceRowType, StorageConnection,
 };
 
 use super::{UpdateOutboundShipment, UpdateOutboundShipmentError};
@@ -15,30 +15,33 @@ pub fn validate(
     store_id: &str,
     patch: &UpdateOutboundShipment,
 ) -> Result<(InvoiceRow, bool), UpdateOutboundShipmentError> {
-    let invoice = check_invoice_exists(&patch.id, connection)?;
-    check_store(&invoice, store_id)?;
-    check_invoice_type(&invoice)?;
-    check_invoice_is_editable(&invoice)?;
+    use UpdateOutboundShipmentError::*;
+
+    let invoice = check_invoice_exists(&patch.id, connection)?.ok_or(InvoiceDoesNotExist)?;
+    if !check_store(&invoice, store_id) {
+        return Err(NotThisStoreInvoice);
+    }
+    if !check_invoice_is_editable(&invoice) {
+        return Err(InvoiceIsNotEditable);
+    }
+    if !check_invoice_type(&invoice, InvoiceRowType::OutboundShipment) {
+        return Err(NotAnOutboundShipment);
+    }
 
     // Status check
     let status_changed = check_status_change(&invoice, patch.full_status());
     if status_changed {
-        check_invoice_status(&invoice, patch.full_status(), &patch.on_hold)?;
+        check_invoice_status(&invoice, patch.full_status(), &patch.on_hold).map_err(
+            |e| match e {
+                InvoiceRowStatusError::CannotChangeStatusOfInvoiceOnHold => {
+                    CannotChangeStatusOfInvoiceOnHold
+                }
+                InvoiceRowStatusError::CannotReverseInvoiceStatus => CannotReverseInvoiceStatus,
+            },
+        )?;
         check_can_change_status_to_allocated(connection, &invoice, patch.full_status())?;
     }
     Ok((invoice, status_changed))
-}
-
-fn check_invoice_exists(
-    id: &str,
-    connection: &StorageConnection,
-) -> Result<InvoiceRow, UpdateOutboundShipmentError> {
-    let result = InvoiceRowRepository::new(connection).find_one_by_id(id);
-
-    if let Err(RepositoryError::NotFound) = &result {
-        return Err(UpdateOutboundShipmentError::InvoiceDoesNotExist);
-    }
-    Ok(result?)
 }
 
 // If status is changed to allocated and above, return error if there are
@@ -76,36 +79,4 @@ fn check_can_change_status_to_allocated(
     }
 
     Ok(())
-}
-
-fn check_invoice_type(invoice: &InvoiceRow) -> Result<(), UpdateOutboundShipmentError> {
-    if invoice.r#type != InvoiceRowType::OutboundShipment {
-        Err(UpdateOutboundShipmentError::NotAnOutboundShipment)
-    } else {
-        Ok(())
-    }
-}
-
-impl From<InvoiceIsNotEditable> for UpdateOutboundShipmentError {
-    fn from(_: InvoiceIsNotEditable) -> Self {
-        UpdateOutboundShipmentError::InvoiceIsNotEditable
-    }
-}
-
-impl From<InvoiceRowStatusError> for UpdateOutboundShipmentError {
-    fn from(error: InvoiceRowStatusError) -> Self {
-        use UpdateOutboundShipmentError::*;
-        match error {
-            InvoiceRowStatusError::CannotChangeStatusOfInvoiceOnHold => {
-                CannotChangeStatusOfInvoiceOnHold
-            }
-            InvoiceRowStatusError::CannotReverseInvoiceStatus => CannotReverseInvoiceStatus,
-        }
-    }
-}
-
-impl From<NotThisStoreInvoice> for UpdateOutboundShipmentError {
-    fn from(_: NotThisStoreInvoice) -> Self {
-        UpdateOutboundShipmentError::NotThisStoreInvoice
-    }
 }

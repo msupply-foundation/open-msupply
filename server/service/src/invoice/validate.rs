@@ -5,27 +5,18 @@ use repository::{
     InvoiceRowStatus, InvoiceRowType, RepositoryError, StorageConnection,
 };
 
-pub struct WrongInvoiceRowType;
-
-pub fn check_invoice_type(
-    invoice: &InvoiceRow,
-    r#type: InvoiceRowType,
-) -> Result<(), WrongInvoiceRowType> {
-    if invoice.r#type != r#type {
-        Err(WrongInvoiceRowType {})
-    } else {
-        Ok(())
+pub fn check_invoice_type(invoice: &InvoiceRow, r#type: InvoiceRowType) -> bool {
+    if invoice.r#type == r#type {
+        return true;
     }
+    return false;
 }
 
-pub struct NotThisStoreInvoice;
-
-pub fn check_store(invoice: &InvoiceRow, store_id: &str) -> Result<(), NotThisStoreInvoice> {
-    if invoice.store_id != store_id {
-        Err(NotThisStoreInvoice {})
-    } else {
-        Ok(())
+pub fn check_store(invoice: &InvoiceRow, store_id: &str) -> bool {
+    if invoice.store_id == store_id {
+        return true;
     }
+    return false;
 }
 
 pub fn check_status_change(invoice: &InvoiceRow, status_option: Option<InvoiceRowStatus>) -> bool {
@@ -37,9 +28,7 @@ pub fn check_status_change(invoice: &InvoiceRow, status_option: Option<InvoiceRo
     return false;
 }
 
-pub struct InvoiceIsNotEditable;
-
-pub fn check_invoice_is_editable(invoice: &InvoiceRow) -> Result<(), InvoiceIsNotEditable> {
+pub fn check_invoice_is_editable(invoice: &InvoiceRow) -> bool {
     let status = InvoiceRowStatus::from(invoice.status.clone());
     let is_editable = match &invoice.r#type {
         InvoiceRowType::OutboundShipment => match status {
@@ -62,11 +51,11 @@ pub fn check_invoice_is_editable(invoice: &InvoiceRow) -> Result<(), InvoiceIsNo
     };
 
     if is_editable {
-        Ok(())
-    } else {
-        Err(InvoiceIsNotEditable {})
+        return true;
     }
+    return false;
 }
+
 pub enum InvoiceRowStatusError {
     CannotChangeStatusOfInvoiceOnHold,
     CannotReverseInvoiceStatus,
@@ -97,20 +86,6 @@ pub fn check_invoice_status(
 pub struct InvoiceDoesNotExist;
 
 pub fn check_invoice_exists(
-    id: &str,
-    connection: &StorageConnection,
-) -> Result<InvoiceRow, WithDBError<InvoiceDoesNotExist>> {
-    let result = InvoiceRowRepository::new(connection).find_one_by_id(id);
-
-    match result {
-        Ok(invoice_row) => Ok(invoice_row),
-        Err(RepositoryError::NotFound) => Err(WithDBError::err(InvoiceDoesNotExist)),
-        Err(error) => Err(WithDBError::db(error)),
-    }
-}
-
-// TODO replace check_invoice_exists with this
-pub fn check_invoice_exists_option(
     id: &str,
     connection: &StorageConnection,
 ) -> Result<Option<InvoiceRow>, RepositoryError> {
