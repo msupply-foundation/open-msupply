@@ -162,7 +162,7 @@ public class MainActivity extends AppCompatActivity implements NsdManager.Discov
         discoveryManager.discoverServices(SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, this);
     }
 
-    // Available in JS as androidNativeAPI.startServerDiscovery
+    // Available in JS as androidNativeAPI.goBackToDiscovery
     @JavascriptInterface
     public void goBackToDiscovery() {
         runOnUiThread(new Runnable() {
