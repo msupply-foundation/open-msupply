@@ -5,9 +5,9 @@ use super::{
 };
 
 use crate::{
-    diesel_macros::{apply_date_filter, apply_equal_filter, apply_sort_asc_nulls_last},
+    diesel_macros::{apply_date_filter, apply_equal_filter, apply_sort, apply_sort_asc_nulls_last},
     repository_error::RepositoryError,
-    DateFilter, EqualFilter, Pagination, Sort,
+    DateFilter, EqualFilter, ItemFilter, ItemRepository, Pagination, SimpleStringFilter, Sort,
 };
 
 use diesel::{
@@ -23,11 +23,13 @@ pub struct StockLine {
 
 pub enum StockLineSortField {
     ExpiryDate,
+    NumberOfPacks,
 }
 
 #[derive(Debug, Clone)]
 pub struct StockLineFilter {
     pub id: Option<EqualFilter<String>>,
+    pub item_code_or_name: Option<SimpleStringFilter>,
     pub item_id: Option<EqualFilter<String>>,
     pub location_id: Option<EqualFilter<String>>,
     pub is_available: Option<bool>,
@@ -48,7 +50,9 @@ impl<'a> StockLineRepository<'a> {
     }
 
     pub fn count(&self, filter: Option<StockLineFilter>) -> Result<i64, RepositoryError> {
-        let query = create_filtered_query(filter);
+        let mut query = create_filtered_query(filter.clone());
+        query = apply_item_filter(query, filter, &self.connection);
+
         Ok(query.count().get_result(&self.connection.connection)?)
     }
 
@@ -65,10 +69,14 @@ impl<'a> StockLineRepository<'a> {
         filter: Option<StockLineFilter>,
         sort: Option<StockLineSort>,
     ) -> Result<Vec<StockLine>, RepositoryError> {
-        let mut query = create_filtered_query(filter);
+        let mut query = create_filtered_query(filter.clone());
+        query = apply_item_filter(query, filter, &self.connection);
 
         if let Some(sort) = sort {
             match sort.key {
+                StockLineSortField::NumberOfPacks => {
+                    apply_sort!(query, sort, stock_line_dsl::total_number_of_packs);
+                }
                 StockLineSortField::ExpiryDate => {
                     // TODO: would prefer to have extra parameter on Sort.nulls_last
                     apply_sort_asc_nulls_last!(query, sort, stock_line_dsl::expiry_date);
@@ -103,11 +111,12 @@ fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery
 
     if let Some(f) = filter {
         let StockLineFilter {
+            expiry_date,
             id,
+            is_available,
+            item_code_or_name: _,
             item_id,
             location_id,
-            is_available,
-            expiry_date,
             store_id,
         } = f;
 
@@ -127,6 +136,26 @@ fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery
     query
 }
 
+fn apply_item_filter(
+    query: BoxedStockLineQuery,
+    filter: Option<StockLineFilter>,
+    connection: &StorageConnection,
+) -> BoxedStockLineQuery {
+    if let Some(f) = filter {
+        if let Some(item_code_or_name) = &f.item_code_or_name {
+            let mut item_filter = ItemFilter::new();
+            item_filter.code_or_name = Some(item_code_or_name.clone());
+            let items = ItemRepository::new(connection)
+                .query_by_filter(item_filter)
+                .unwrap();
+            let item_ids: Vec<String> = items.into_iter().map(|item| item.item_row.id).collect();
+
+            return query.filter(stock_line_dsl::item_id.eq_any(item_ids));
+        }
+    }
+    query
+}
+
 pub fn to_domain((stock_line_row, location_row): StockLineJoin) -> StockLine {
     StockLine {
         stock_line_row,
@@ -137,12 +166,13 @@ pub fn to_domain((stock_line_row, location_row): StockLineJoin) -> StockLine {
 impl StockLineFilter {
     pub fn new() -> StockLineFilter {
         StockLineFilter {
+            expiry_date: None,
             id: None,
+            is_available: None,
+            item_code_or_name: None,
             item_id: None,
             location_id: None,
-            expiry_date: None,
             store_id: None,
-            is_available: None,
         }
     }
 

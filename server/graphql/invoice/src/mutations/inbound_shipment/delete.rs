@@ -5,7 +5,7 @@ use graphql_core::standard_graphql_error::validate_auth;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
 use graphql_types::generic_errors::CannotDeleteInvoiceWithLines;
-use graphql_types::types::{DeleteResponse as GenericDeleteResponse, InvoiceLineConnector};
+use graphql_types::types::DeleteResponse as GenericDeleteResponse;
 use service::auth::Resource;
 use service::auth::ResourceAccessRequest;
 use service::invoice::inbound_shipment::{
@@ -89,11 +89,6 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
         ServiceError::CannotEditFinalised => {
             return Ok(DeleteErrorInterface::CannotEditInvoice(
                 CannotEditInvoice {},
-            ))
-        }
-        ServiceError::InvoiceLinesExists(lines) => {
-            return Ok(DeleteErrorInterface::CannotDeleteInvoiceWithLines(
-                CannotDeleteInvoiceWithLines(InvoiceLineConnector::from_vec(lines)),
             ))
         }
         // Standard Graphql Errors
@@ -210,25 +205,6 @@ mod test {
             "deleteInboundShipment": {
               "error": {
                 "__typename": "CannotEditInvoice"
-              }
-            }
-          }
-        );
-
-        assert_graphql_query!(
-            &settings,
-            mutation,
-            &Some(empty_variables()),
-            &expected,
-            Some(service_provider(test_service, &connection_manager))
-        );
-
-        let test_service = TestService(Box::new(|_| Err(ServiceError::InvoiceLinesExists(vec![]))));
-
-        let expected = json!({
-            "deleteInboundShipment": {
-              "error": {
-                "__typename": "CannotDeleteInvoiceWithLines"
               }
             }
           }
