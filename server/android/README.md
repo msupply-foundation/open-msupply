@@ -24,6 +24,6 @@ The two main (supported by devices) ABI architectures are:
 
 `cargo build --release` from this directory will build for both ABI mentioned above, it's quicker to build one when doing a debug build `cargo build --target aarch64-linux-android --release`
 
-# Move to abi
+## How it connects to Mobile ?
 
-Link to how it connects
+See [mobile app readme](../../client/packages/mobile/README.md) for further description of how libs are connected to native java. Specifically `RemoteServer.java`, and referenced yarn scripts
