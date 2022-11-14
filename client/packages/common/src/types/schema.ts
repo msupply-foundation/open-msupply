@@ -781,6 +781,12 @@ export type InboundInvoiceCounts = {
   created: InvoiceCountsSummary;
 };
 
+export type InitialisationStatusNode = {
+  __typename: 'InitialisationStatusNode';
+  siteName?: Maybe<Scalars['String']>;
+  status: InitialisationStatusType;
+};
+
 export enum InitialisationStatusType {
   Initialised = 'INITIALISED',
   Initialising = 'INITIALISING',
@@ -2107,7 +2113,7 @@ export type Queries = {
   authToken: AuthTokenResponse;
   displaySettings: DisplaySettingsNode;
   /** Available without authorisation in operational and initialisation states */
-  initialisationStatus: InitialisationStatusType;
+  initialisationStatus: InitialisationStatusNode;
   invoice: InvoiceResponse;
   invoiceByNumber: InvoiceResponse;
   invoiceCounts: InvoiceCounts;
@@ -2145,6 +2151,8 @@ export type Queries = {
   requisitionLineChart: RequisitionLineChartResponse;
   requisitions: RequisitionsResponse;
   stockCounts: StockCounts;
+  /** Query for "stock_line" entries */
+  stockLines: StockLinesResponse;
   stocktake: StocktakeResponse;
   stocktakeByNumber: StocktakeResponse;
   stocktakes: StocktakesResponse;
@@ -2288,6 +2296,14 @@ export type QueriesStockCountsArgs = {
   daysTillExpired?: InputMaybe<Scalars['Int']>;
   storeId: Scalars['String'];
   timezoneOffset?: InputMaybe<Scalars['Int']>;
+};
+
+
+export type QueriesStockLinesArgs = {
+  filter?: InputMaybe<StockLineFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<StockLineSortInput>>;
+  storeId: Scalars['String'];
 };
 
 
@@ -2626,6 +2642,15 @@ export type StockLineConnector = {
   totalCount: Scalars['Int'];
 };
 
+export type StockLineFilterInput = {
+  expiryDate?: InputMaybe<DateFilterInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  isAvailable?: InputMaybe<Scalars['Boolean']>;
+  itemId?: InputMaybe<EqualFilterStringInput>;
+  locationId?: InputMaybe<EqualFilterStringInput>;
+  storeId?: InputMaybe<EqualFilterStringInput>;
+};
+
 export type StockLineIsOnHold = InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
   __typename: 'StockLineIsOnHold';
   description: Scalars['String'];
@@ -2652,6 +2677,22 @@ export type StockLineNode = {
 };
 
 export type StockLineResponse = NodeError | StockLineNode;
+
+export enum StockLineSortFieldInput {
+  ExpiryDate = 'expiryDate'
+}
+
+export type StockLineSortInput = {
+  /**
+   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']>;
+  /** Sort query result by `key` */
+  key: StockLineSortFieldInput;
+};
+
+export type StockLinesResponse = StockLineConnector;
 
 export type StocktakeConnector = {
   __typename: 'StocktakeConnector';
