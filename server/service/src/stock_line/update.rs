@@ -20,6 +20,7 @@ pub struct UpdateStockLine {
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
     pub expiry_date: Option<NaiveDate>,
+    pub on_hold: Option<bool>,
     pub batch: Option<String>,
 }
 
@@ -88,6 +89,7 @@ fn generate(
         sell_price_per_pack,
         expiry_date,
         batch,
+        on_hold,
     }: UpdateStockLine,
 ) -> StockLineRow {
     existing.location_id = location_id.or(existing.location_id);
@@ -95,6 +97,7 @@ fn generate(
     existing.cost_price_per_pack = cost_price_per_pack.unwrap_or(existing.cost_price_per_pack);
     existing.sell_price_per_pack = sell_price_per_pack.unwrap_or(existing.sell_price_per_pack);
     existing.expiry_date = expiry_date.or(existing.expiry_date);
+    existing.on_hold = on_hold.unwrap_or(existing.on_hold);
     existing
 }
 
