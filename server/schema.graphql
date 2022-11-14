@@ -209,23 +209,23 @@ type CanOnlyChangeToAllocatedWhenNoUnallocatedLines implements UpdateErrorInterf
 	description: String!
 	invoiceLines: InvoiceLineConnector!
 }
-type CannotChangeStatusOfInvoiceOnHold implements UpdateErrorInterface & UpdateInboundShipmentErrorInterface {
+type CannotChangeStatusOfInvoiceOnHold implements UpdateInboundShipmentErrorInterface & UpdateErrorInterface {
 	description: String!
 }
-type CannotDeleteInvoiceWithLines implements DeleteInboundShipmentErrorInterface & DeleteErrorInterface {
+type CannotDeleteInvoiceWithLines implements DeleteErrorInterface & DeleteInboundShipmentErrorInterface {
 	description: String!
 	lines: InvoiceLineConnector!
 }
 type CannotDeleteRequisitionWithLines implements DeleteRequestRequisitionErrorInterface {
 	description: String!
 }
-type CannotEditInvoice implements DeleteErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateInboundShipmentErrorInterface & InsertInboundShipmentLineErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & UpdateInboundShipmentLineErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & DeleteOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteInboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & InsertInboundShipmentServiceLineErrorInterface {
+type CannotEditInvoice implements UpdateInboundShipmentServiceLineErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & InsertInboundShipmentServiceLineErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & InsertOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteErrorInterface & UpdateInboundShipmentErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & UpdateInboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & DeleteInboundShipmentLineErrorInterface & InsertInboundShipmentLineErrorInterface {
 	description: String!
 }
-type CannotEditRequisition implements CreateRequisitionShipmentErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & DeleteRequestRequisitionLineErrorInterface & DeleteRequestRequisitionErrorInterface & UseSuggestedQuantityErrorInterface & UpdateRequestRequisitionErrorInterface & AddFromMasterListErrorInterface & InsertRequestRequisitionLineErrorInterface & UpdateRequestRequisitionLineErrorInterface & SupplyRequestedQuantityErrorInterface {
+type CannotEditRequisition implements UpdateRequestRequisitionErrorInterface & CreateRequisitionShipmentErrorInterface & UpdateResponseRequisitionLineErrorInterface & UseSuggestedQuantityErrorInterface & UpdateResponseRequisitionErrorInterface & InsertRequestRequisitionLineErrorInterface & AddFromMasterListErrorInterface & DeleteRequestRequisitionLineErrorInterface & UpdateRequestRequisitionLineErrorInterface & SupplyRequestedQuantityErrorInterface & DeleteRequestRequisitionErrorInterface {
 	description: String!
 }
-type CannotEditStocktake implements UpdateStocktakeErrorInterface & InsertStocktakeLineErrorInterface & DeleteStocktakeErrorInterface & UpdateStocktakeLineErrorInterface & DeleteStocktakeLineErrorInterface {
+type CannotEditStocktake implements UpdateStocktakeErrorInterface & DeleteStocktakeLineErrorInterface & InsertStocktakeLineErrorInterface & DeleteStocktakeErrorInterface & UpdateStocktakeLineErrorInterface {
 	description: String!
 }
 type CannotReverseInvoiceStatus implements UpdateErrorInterface & UpdateInboundShipmentErrorInterface {
@@ -262,7 +262,7 @@ input CreateRequisitionShipmentInput {
 	responseRequisitionId: String!
 }
 union CreateRequisitionShipmentResponse = | CreateRequisitionShipmentError | InvoiceNode
-type DatabaseError implements NodeErrorInterface & UpdateLocationErrorInterface & RefreshTokenErrorInterface & InsertLocationErrorInterface & DeleteLocationErrorInterface {
+type DatabaseError implements RefreshTokenErrorInterface & InsertLocationErrorInterface & DeleteLocationErrorInterface & NodeErrorInterface & UpdateLocationErrorInterface {
 	description: String!
 	fullError: String!
 }
@@ -534,7 +534,7 @@ enum ForeignKey {
 	locationId
 	requisitionId
 }
-type ForeignKeyError implements InsertOutboundShipmentUnallocatedLineErrorInterface & InsertRequestRequisitionLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateResponseRequisitionLineErrorInterface & InsertOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & UpdateRequestRequisitionLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & InsertInboundShipmentServiceLineErrorInterface & DeleteInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & InsertInboundShipmentLineErrorInterface {
+type ForeignKeyError implements InsertOutboundShipmentUnallocatedLineErrorInterface & UpdateInboundShipmentLineErrorInterface & InsertInboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & InsertInboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertRequestRequisitionLineErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & DeleteInboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface {
 	description: String!
 	key: ForeignKey!
 }
@@ -562,6 +562,10 @@ enum GenderType {
 }
 type InboundInvoiceCounts {
 	created: InvoiceCountsSummary!
+}
+type InitialisationStatusNode {
+	status: InitialisationStatusType!
+	siteName: String
 }
 enum InitialisationStatusType {
 	INITIALISED
@@ -808,7 +812,7 @@ type InsertStocktakeResponseWithId {
 	id: String!
 	response: InsertStocktakeResponse!
 }
-type InternalError implements UpdateLocationErrorInterface & InsertLocationErrorInterface & RefreshTokenErrorInterface {
+type InternalError implements UpdateLocationErrorInterface & RefreshTokenErrorInterface & InsertLocationErrorInterface {
 	description: String!
 	fullError: String!
 }
@@ -1075,7 +1079,7 @@ type LocationNode {
 	onHold: Boolean!
 	stock: StockLineConnector!
 }
-type LocationNotFound implements InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface {
+type LocationNotFound implements UpdateOutboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface {
 	description: String!
 }
 enum LocationSortFieldInput {
@@ -1372,10 +1376,10 @@ type NothingRemainingToSupply implements CreateRequisitionShipmentErrorInterface
 type OtherPartyNotACustomer implements InsertErrorInterface & UpdateErrorInterface {
 	description: String!
 }
-type OtherPartyNotASupplier implements InsertInboundShipmentErrorInterface & UpdateInboundShipmentErrorInterface & UpdateRequestRequisitionErrorInterface & InsertRequestRequisitionErrorInterface {
+type OtherPartyNotASupplier implements UpdateRequestRequisitionErrorInterface & InsertInboundShipmentErrorInterface & InsertRequestRequisitionErrorInterface & UpdateInboundShipmentErrorInterface {
 	description: String!
 }
-type OtherPartyNotVisible implements InsertErrorInterface & InsertRequestRequisitionErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateErrorInterface & InsertInboundShipmentErrorInterface & UpdateInboundShipmentErrorInterface {
+type OtherPartyNotVisible implements InsertRequestRequisitionErrorInterface & UpdateErrorInterface & InsertInboundShipmentErrorInterface & UpdateInboundShipmentErrorInterface & InsertErrorInterface & UpdateRequestRequisitionErrorInterface {
 	description: String!
 }
 type OutboundInvoiceCounts {
@@ -1472,7 +1476,7 @@ type Queries {
 	"""
 	Available without authorisation in operational and initialisation states
 	"""
-	initialisationStatus: InitialisationStatusType!
+	initialisationStatus: InitialisationStatusNode!
 	latestSyncStatus: FullSyncStatusNode
 	numberOfRecordsInPushQueue: Int!
 	syncSettings: SyncSettingsNode
@@ -1493,14 +1497,18 @@ type Queries {
 	"""
 	printReport(storeId: String!, reportId: String!, dataId: String!, format: PrintFormat): PrintReportResponse!
 	printReportDefinition(storeId: String!, name: String, report: JSON!, dataId: String!): PrintReportResponse!
+	"""
+	Query for "stock_line" entries
+	"""
+	stockLines(storeId: String!, page: PaginationInput, filter: StockLineFilterInput, sort: [StockLineSortInput!]): StockLinesResponse!
 }
 type RecordAlreadyExist implements InsertLocationErrorInterface {
 	description: String!
 }
-type RecordBelongsToAnotherStore implements DeleteLocationErrorInterface & UpdateLocationErrorInterface {
+type RecordBelongsToAnotherStore implements UpdateLocationErrorInterface & DeleteLocationErrorInterface {
 	description: String!
 }
-type RecordNotFound implements DeleteInboundShipmentLineErrorInterface & UpdateInboundShipmentErrorInterface & UpdateErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UseSuggestedQuantityErrorInterface & CreateRequisitionShipmentErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & UpdateLocationErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & DeleteInboundShipmentErrorInterface & UpdateResponseRequisitionLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & SupplyRequestedQuantityErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & DeleteRequestRequisitionErrorInterface & AddFromMasterListErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & NodeErrorInterface & UpdateRequestRequisitionErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & UpdateInboundShipmentLineErrorInterface & DeleteLocationErrorInterface & RequisitionLineChartErrorInterface & DeleteErrorInterface & UpdateOutboundShipmentLineErrorInterface & DeleteRequestRequisitionLineErrorInterface {
+type RecordNotFound implements DeleteRequestRequisitionLineErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & CreateRequisitionShipmentErrorInterface & AddFromMasterListErrorInterface & UseSuggestedQuantityErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateLocationErrorInterface & DeleteLocationErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateRequestRequisitionErrorInterface & DeleteOutboundShipmentLineErrorInterface & RequisitionLineChartErrorInterface & UpdateOutboundShipmentLineErrorInterface & SupplyRequestedQuantityErrorInterface & NodeErrorInterface & DeleteErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdateInboundShipmentLineErrorInterface & DeleteInboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteInboundShipmentErrorInterface & UpdateResponseRequisitionErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & UpdateResponseRequisitionLineErrorInterface & DeleteRequestRequisitionErrorInterface {
 	description: String!
 }
 type RefreshToken {
@@ -1756,7 +1764,7 @@ input StockEvolutionOptionsInput {
 	"""
 	numberOfProjectedDataPoints: Int
 }
-type StockLineAlreadyExistsInInvoice implements InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface {
+type StockLineAlreadyExistsInInvoice implements UpdateOutboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface {
 	description: String!
 	line: InvoiceLineNode!
 }
@@ -1764,7 +1772,15 @@ type StockLineConnector {
 	totalCount: Int!
 	nodes: [StockLineNode!]!
 }
-type StockLineIsOnHold implements UpdateOutboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface {
+input StockLineFilterInput {
+	expiryDate: DateFilterInput
+	id: EqualFilterStringInput
+	isAvailable: Boolean
+	itemId: EqualFilterStringInput
+	locationId: EqualFilterStringInput
+	storeId: EqualFilterStringInput
+}
+type StockLineIsOnHold implements InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface {
 	description: String!
 }
 type StockLineNode {
@@ -1786,6 +1802,21 @@ type StockLineNode {
 	item: ItemNode!
 }
 union StockLineResponse = | NodeError | StockLineNode
+enum StockLineSortFieldInput {
+	expiryDate
+}
+input StockLineSortInput {
+	"""
+	Sort query result by `key`
+	"""
+	key: StockLineSortFieldInput!
+	"""
+	Sort query result is sorted descending or ascending (if not provided the default is
+ascending)
+	"""
+	desc: Boolean
+}
+union StockLinesResponse = | StockLineConnector
 type StocktakeConnector {
 	totalCount: Int!
 	nodes: [StocktakeNode!]!
@@ -1995,7 +2026,7 @@ type UnallocatedLinesOnlyEditableInNewInvoice implements InsertOutboundShipmentU
 enum UniqueValueKey {
 	code
 }
-type UniqueValueViolation implements InsertLocationErrorInterface & UpdateLocationErrorInterface {
+type UniqueValueViolation implements UpdateLocationErrorInterface & InsertLocationErrorInterface {
 	description: String!
 	field: UniqueValueKey!
 }
