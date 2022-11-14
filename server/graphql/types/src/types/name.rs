@@ -31,6 +31,17 @@ impl NameNodeType {
             NameType::Others => NameNodeType::Others,
         }
     }
+    pub fn to_domain(self) -> NameType {
+        match self {
+            NameNodeType::Facility => NameType::Facility,
+            NameNodeType::Patient => NameType::Patient,
+            NameNodeType::Build => NameType::Build,
+            NameNodeType::Invad => NameType::Invad,
+            NameNodeType::Repack => NameType::Repack,
+            NameNodeType::Store => NameType::Store,
+            NameNodeType::Others => NameType::Others,
+        }
+    }
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
