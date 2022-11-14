@@ -60,6 +60,7 @@ const start = (): void => {
   });
 
   ipcMain.on(IPC_MESSAGES.GO_BACK_TO_DISCOVERY, () => {
+    // Just navigate, discovery UI requests discovery start
     window.loadURL(`${MAIN_WINDOW_WEBPACK_ENTRY}?autoconnect=false`);
   });
 
