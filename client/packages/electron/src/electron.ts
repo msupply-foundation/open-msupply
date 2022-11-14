@@ -7,6 +7,8 @@ import {
   frontEndHostUrl,
   isProtocol,
 } from '@openmsupply-client/common/src/hooks/useNativeClient';
+import { nativePrint } from './nativePrint';
+
 const SERVICE_TYPE = 'omsupply';
 const PROTOCOL_KEY = 'protocol';
 const CLIENT_VERSION_KEY = 'client_version';
@@ -69,6 +71,11 @@ const start = (): void => {
   );
 
   ipcMain.handle(IPC_MESSAGES.CONNECTED_SERVER, async () => connectedServer);
+
+  ipcMain.handle(IPC_MESSAGES.PRINT, async (_, html: string) => {
+    nativePrint(html);
+    return true;
+  });
 
   ipcMain.handle(IPC_MESSAGES.DISCOVERED_SERVERS, async () => {
     const servers = discoveredServers;

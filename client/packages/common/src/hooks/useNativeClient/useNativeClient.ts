@@ -30,6 +30,8 @@ export interface NativeAPI {
   // Will return currently connected client (to display in UI)
   connectedServer: () => Promise<FrontEndHost | null>;
   goBackToDiscovery: () => void;
+  // Boolean to indicate that native client handles print
+  print: (html: string) => Promise<boolean>;
 }
 
 declare global {
@@ -45,6 +47,8 @@ interface AndroidNativeApi {
   connectToServer: (server: string) => void;
   connectedServer: () => string;
   goBackToDiscovery: () => void;
+  // Boolean to indicate that native client handles print
+  print: (html: string) => boolean;
 }
 
 declare const androidNativeAPI: AndroidNativeApi;
@@ -72,6 +76,7 @@ const fromAndroidNative = (api: AndroidNativeApi): NativeAPI => ({
     return JSON.parse(server) as FrontEndHost;
   },
   goBackToDiscovery: () => api.goBackToDiscovery(),
+  print: async html => api.print(html),
 });
 
 type NativeClientState = {

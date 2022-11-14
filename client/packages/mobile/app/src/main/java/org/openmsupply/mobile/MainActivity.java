@@ -185,6 +185,17 @@ public class MainActivity extends AppCompatActivity implements NsdManager.Discov
 
     }
 
+    @JavascriptInterface
+    public boolean print(String html) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                startPrint(html);
+            }
+        });
+        return true;
+    }
+
     // Available in JS as androidNativeAPI.connectedServer
     @JavascriptInterface
     public String connectedServer() {
@@ -263,6 +274,27 @@ public class MainActivity extends AppCompatActivity implements NsdManager.Discov
             e.printStackTrace();
             return null;
         }
+    }
+
+    // Simple print window
+    private void startPrint(String html) {
+        printView = new WebView(this);
+        printView.setWebViewClient(new WebViewClient() {
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                return false;
+            }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                String jobName = getString(R.string.app_name) + " Document";
+                PrintDocumentAdapter printAdapter = printView.createPrintDocumentAdapter(jobName);
+                printManager.print(jobName, printAdapter,
+                        new PrintAttributes.Builder().build());
+                printView = null;
+            }
+        });
+
+        printView.loadDataWithBaseURL(null, html, "text/HTML", "UTF-8", null);
     }
 
     // NsdManager.DiscoveryListener

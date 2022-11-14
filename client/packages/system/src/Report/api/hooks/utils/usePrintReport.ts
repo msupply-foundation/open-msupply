@@ -1,13 +1,12 @@
 import {
   EnvUtils,
-  Platform,
+  getNativeAPI,
   PrintFormat,
   useMutation,
   useNotification,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
 import { useReportApi } from './useReportApi';
-import { Printer } from '@awesome-cordova-plugins/printer';
 
 type PrintReportParams = {
   reportId: string;
@@ -31,10 +30,9 @@ const setPrint = (frame: HTMLIFrameElement) => () => {
 const printPage = (url: string) => {
   fetch(url).then(async response => {
     const html = await response.text();
+    const nativeAPI = getNativeAPI();
 
-    if (EnvUtils.platform === Platform.Android) {
-      Printer.print(html);
-    } else {
+    if (!nativeAPI?.print(html)) {
       const frame = document.createElement('iframe');
       frame.style.position = 'fixed';
       frame.style.right = '0';

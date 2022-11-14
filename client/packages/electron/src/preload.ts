@@ -10,6 +10,7 @@ const electronNativeAPI: NativeAPI = {
     ipcRenderer.send(IPC_MESSAGES.CONNECT_TO_SERVER, server),
   discoveredServers: () => ipcRenderer.invoke(IPC_MESSAGES.DISCOVERED_SERVERS),
   goBackToDiscovery: () => ipcRenderer.send(IPC_MESSAGES.GO_BACK_TO_DISCOVERY),
+  print: (html: string) => ipcRenderer.invoke(IPC_MESSAGES.PRINT, html),
 };
 
 contextBridge.exposeInMainWorld('electronNativeAPI', electronNativeAPI);
