@@ -1,6 +1,4 @@
-use repository::{
-    ActivityLogType, InvoiceLine, InvoiceRowRepository, RepositoryError, TransactionError,
-};
+use repository::{ActivityLogType, InvoiceRowRepository, RepositoryError, TransactionError};
 
 pub mod validate;
 
