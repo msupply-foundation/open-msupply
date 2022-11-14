@@ -16,4 +16,4 @@ If you make any changes to front end or server, you will need to clear data for 
 
 Although app runs in emulator, it's not directly conencted to local network (todo add adb command for this)
 
-TODO (link to PR example of adding native functionality)
+Here is an example of how [Native API can be expanded](https://github.com/openmsupply/open-msupply/pull/804)
