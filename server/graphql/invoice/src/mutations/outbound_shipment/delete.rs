@@ -4,8 +4,7 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::{
-    generic_errors::CannotDeleteInvoiceWithLines,
-    types::{DeleteResponse as GenericDeleteResponse, InvoiceLineConnector},
+    generic_errors::CannotDeleteInvoiceWithLines, types::DeleteResponse as GenericDeleteResponse,
 };
 
 use async_graphql::*;
@@ -75,11 +74,6 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
         ServiceError::CannotEditFinalised => {
             return Ok(DeleteErrorInterface::CannotEditInvoice(
                 CannotEditInvoice {},
-            ))
-        }
-        ServiceError::InvoiceLinesExists(lines) => {
-            return Ok(DeleteErrorInterface::CannotDeleteInvoiceWithLines(
-                CannotDeleteInvoiceWithLines(InvoiceLineConnector::from_vec(lines)),
             ))
         }
         // Standard Graphql Errors

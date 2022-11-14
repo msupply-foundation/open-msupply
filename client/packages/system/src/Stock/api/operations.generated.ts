@@ -4,63 +4,60 @@ import { GraphQLClient } from 'graphql-request';
 import * as Dom from 'graphql-request/dist/types.dom';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type ItemsWithStockLinesQueryVariables = Types.Exact<{
+export type StockLineRowFragment = { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, locationName?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, item: { __typename: 'ItemNode', code: string, name: string, unitName?: string | null } };
+
+export type StockLinesQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']>;
   offset?: Types.InputMaybe<Types.Scalars['Int']>;
-  key: Types.ItemSortFieldInput;
+  key: Types.StockLineSortFieldInput;
   desc?: Types.InputMaybe<Types.Scalars['Boolean']>;
-  filter?: Types.InputMaybe<Types.ItemFilterInput>;
+  filter?: Types.InputMaybe<Types.StockLineFilterInput>;
   storeId: Types.Scalars['String'];
 }>;
 
 
-export type ItemsWithStockLinesQuery = { __typename: 'Queries', items: { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', code: string, id: string, isVisible: boolean, name: string, unitName?: string | null, availableBatches: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, packSize: number, sellPricePerPack: number, totalNumberOfPacks: number, onHold: boolean, note?: string | null, storeId: string, locationName?: string | null }> } }> } };
+export type StockLinesQuery = { __typename: 'Queries', stockLines: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, locationName?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, item: { __typename: 'ItemNode', code: string, name: string, unitName?: string | null } }> } };
 
-
-export const ItemsWithStockLinesDocument = gql`
-    query itemsWithStockLines($first: Int, $offset: Int, $key: ItemSortFieldInput!, $desc: Boolean, $filter: ItemFilterInput, $storeId: String!) {
-  items(
-    storeId: $storeId
-    page: {first: $first, offset: $offset}
-    sort: {key: $key, desc: $desc}
-    filter: $filter
-  ) {
-    __typename
-    ... on ItemConnector {
-      __typename
-      totalCount
-      nodes {
-        __typename
-        code
-        id
-        isVisible
-        name
-        unitName
-        availableBatches(storeId: $storeId) {
-          __typename
-          totalCount
-          nodes {
-            __typename
-            availableNumberOfPacks
-            batch
-            costPricePerPack
-            expiryDate
-            id
-            itemId
-            packSize
-            sellPricePerPack
-            totalNumberOfPacks
-            onHold
-            note
-            storeId
-            locationName
-          }
-        }
-      }
-    }
+export const StockLineRowFragmentDoc = gql`
+    fragment StockLineRow on StockLineNode {
+  availableNumberOfPacks
+  batch
+  costPricePerPack
+  expiryDate
+  id
+  itemId
+  locationName
+  onHold
+  packSize
+  sellPricePerPack
+  storeId
+  totalNumberOfPacks
+  item {
+    code
+    name
+    unitName
   }
 }
     `;
+export const StockLinesDocument = gql`
+    query stockLines($first: Int, $offset: Int, $key: StockLineSortFieldInput!, $desc: Boolean, $filter: StockLineFilterInput, $storeId: String!) {
+  stockLines(
+    storeId: $storeId
+    filter: $filter
+    page: {first: $first, offset: $offset}
+    sort: {key: $key, desc: $desc}
+  ) {
+    ... on StockLineConnector {
+      __typename
+      nodes {
+        __typename
+        ...StockLineRow
+      }
+      totalCount
+    }
+  }
+}
+    ${StockLineRowFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -69,8 +66,8 @@ const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationTy
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
-    itemsWithStockLines(variables: ItemsWithStockLinesQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ItemsWithStockLinesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ItemsWithStockLinesQuery>(ItemsWithStockLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemsWithStockLines', 'query');
+    stockLines(variables: StockLinesQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<StockLinesQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<StockLinesQuery>(StockLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'stockLines', 'query');
     }
   };
 }
@@ -80,15 +77,15 @@ export type Sdk = ReturnType<typeof getSdk>;
  * @param resolver a function that accepts a captured request and may return a mocked response.
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
- * mockItemsWithStockLinesQuery((req, res, ctx) => {
+ * mockStockLinesQuery((req, res, ctx) => {
  *   const { first, offset, key, desc, filter, storeId } = req.variables;
  *   return res(
- *     ctx.data({ items })
+ *     ctx.data({ stockLines })
  *   )
  * })
  */
-export const mockItemsWithStockLinesQuery = (resolver: ResponseResolver<GraphQLRequest<ItemsWithStockLinesQueryVariables>, GraphQLContext<ItemsWithStockLinesQuery>, any>) =>
-  graphql.query<ItemsWithStockLinesQuery, ItemsWithStockLinesQueryVariables>(
-    'itemsWithStockLines',
+export const mockStockLinesQuery = (resolver: ResponseResolver<GraphQLRequest<StockLinesQueryVariables>, GraphQLContext<StockLinesQuery>, any>) =>
+  graphql.query<StockLinesQuery, StockLinesQueryVariables>(
+    'stockLines',
     resolver
   )
