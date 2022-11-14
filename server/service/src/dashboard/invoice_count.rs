@@ -49,9 +49,10 @@ pub trait InvoiceCountServiceTrait: Send + Sync {
     fn outbound_invoices_pickable_count(
         &self,
         ctx: &ServiceContext,
+        store_id: &str,
     ) -> Result<i64, RepositoryError> {
         // default implementation:
-        InvoiceCountService {}.outbound_invoices_pickable_count(ctx)
+        InvoiceCountService {}.outbound_invoices_pickable_count(ctx, store_id)
     }
 }
 
@@ -153,13 +154,14 @@ impl InvoiceCountServiceTrait for InvoiceCountService {
     fn outbound_invoices_pickable_count(
         &self,
         ctx: &ServiceContext,
+        store_id: &str,
     ) -> Result<i64, RepositoryError> {
         let repo = InvoiceRepository::new(&ctx.connection);
         Ok(repo.count(Some(
             InvoiceFilter::new()
-                .store_id(EqualFilter::equal_to(&ctx.store_id))
+                .store_id(EqualFilter::equal_to(&store_id))
                 .r#type(InvoiceRowType::OutboundShipment.equal_to())
-                .status(InvoiceRowStatus::Picked.equal_to()),
+                .status(InvoiceRowStatus::Allocated.equal_to()),
         ))?)
     }
 }
