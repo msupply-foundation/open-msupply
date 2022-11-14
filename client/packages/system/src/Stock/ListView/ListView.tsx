@@ -51,7 +51,10 @@ const StockListComponent: FC = () => {
   );
 
   const filterData = (row: StockRow) => {
-    const re = RegExp(`^${RegexUtils.escapeChars(filterString) ?? '.'}`, 'i');
+    const re = RegExp(
+      `^${filterString ? RegexUtils.escapeChars(filterString) : '.'}`,
+      'i'
+    );
     return re.test(row.itemName) || re.test(row.itemCode);
   };
 
