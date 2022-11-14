@@ -4,13 +4,16 @@ import {
   Typography,
   useTranslation,
   Stack,
+  useNativeClient,
 } from '@openmsupply-client/common';
 import { LoginIcon } from '@openmsupply-client/host/src/components/Login/LoginIcon';
 import { Theme } from '@common/styles';
 import { DiscoveredServers } from './DiscoveredServers';
 
 export const ServerDiscovery = () => {
+  const { servers, discoveryTimedOut, connectToServer } = useNativeClient({discovery: true, autoconnect: isAutoconnect()});
   const t = useTranslation('app');
+
   return (
     <Stack display="flex" style={{ minHeight: '100%' }}>
       <Box display="flex" flex="0 0 50%" alignSelf="center">
@@ -86,9 +89,15 @@ export const ServerDiscovery = () => {
           {t('discovery.body')}
         </Typography>
         <Box display="flex" flex={1} justifyContent="center">
-          <DiscoveredServers />
+          <DiscoveredServers servers={servers} connect={connectToServer} discoveryTimedOut={discoveryTimedOut} />
         </Box>
       </Box>
     </Stack>
   );
 };
+
+const isAutoconnect = () => {
+  const url = new URL(window.location.href);
+  const params =   new URLSearchParams(url.search);
+  return params.get('autoconnect') === 'true'
+}
