@@ -18,7 +18,7 @@ use mutations::{
 };
 use queries::{
     display_settings::{display_settings, DisplaySettingsHash, DisplaySettingsNode},
-    initialisation_status::{initialisation_status, InitialisationStatusType},
+    initialisation_status::{initialisation_status, InitialisationStatusNode},
     requisition_line_chart::{ConsumptionOptionsInput, StockEvolutionOptionsInput},
     sync_settings::{sync_settings, SyncSettingsNode},
 };
@@ -163,7 +163,7 @@ impl GeneralQueries {
     pub async fn initialisation_status(
         &self,
         ctx: &Context<'_>,
-    ) -> Result<InitialisationStatusType> {
+    ) -> Result<InitialisationStatusNode> {
         initialisation_status(ctx)
     }
 
@@ -239,7 +239,7 @@ impl InitialisationQueries {
     pub async fn initialisation_status(
         &self,
         ctx: &Context<'_>,
-    ) -> Result<InitialisationStatusType> {
+    ) -> Result<InitialisationStatusNode> {
         initialisation_status(ctx)
     }
 
