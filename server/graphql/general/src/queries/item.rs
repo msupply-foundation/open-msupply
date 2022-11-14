@@ -46,6 +46,7 @@ pub struct ItemFilterInput {
     pub r#type: Option<EqualFilterItemTypeInput>,
     pub code: Option<SimpleStringFilterInput>,
     pub is_visible: Option<bool>,
+    pub code_or_name: Option<SimpleStringFilterInput>,
 }
 
 #[derive(Union)]
@@ -90,6 +91,7 @@ impl ItemFilterInput {
             r#type,
             code,
             is_visible,
+            code_or_name,
         } = self;
 
         ItemFilter {
@@ -98,6 +100,7 @@ impl ItemFilterInput {
             code: code.map(SimpleStringFilter::from),
             r#type: r#type.map(|t| map_filter!(t, ItemNodeType::to_domain)),
             is_visible,
+            code_or_name: code_or_name.map(SimpleStringFilter::from),
         }
     }
 }

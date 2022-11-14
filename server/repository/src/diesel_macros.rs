@@ -7,7 +7,7 @@
 /// ```
 /// if let Some(equal_filter) = filter.id {
 ///     if let Some(value) = equal_filter.equal_to {
-///         query = query.filterd(location_dsl::id.eq(value));
+///         query = query.filter(location_dsl::id.eq(value));
 ///     }
 ///
 ///     if let Some(value) = equal_filter.equal_any {
@@ -56,7 +56,7 @@ macro_rules! apply_equal_filter {
 /// ```
 /// if let Some(string_filter) = filter.comment {
 ///     if let Some(value) = equal_filter.equal_to {
-///         query = query.filterd(invoice_dsl::comment.eq(value));
+///         query = query.filter(invoice_dsl::comment.eq(value));
 ///     }
 ///
 ///     if let Some(value) = equal_filter.like {
@@ -98,21 +98,75 @@ macro_rules! apply_simple_string_filter {
 /// Example expand, when called with:
 ///
 /// ```
+/// apply_simple_string_or_filter!(query, filter.code_or_name, item_dsl::code, item_dsl::name)
+/// ```
+///
+/// ```
+/// if let Some(string_filter) = filter.code_or_name {
+///     if let Some(value) = equal_filter.equal_to {
+///         query = query.filter(item_dsl::code.eq(value));
+///         query = query.or_filter(item_dsl::name.eq(value));
+///     }
+///
+///     if let Some(value) = equal_filter.like {
+///         query = query.filter(item_dsl::code.like(format!("%{}%", value)));
+///         query = query.or_filter(item_dsl::name.like(format!("%{}%", value)));
+///     }
+/// }
+/// ```
+#[cfg(not(feature = "postgres"))]
+macro_rules! apply_simple_string_or_filter {
+    ($query:ident, $filter_field:expr, $dsl_field_1:expr, $dsl_field_2:expr ) => {{
+        if let Some(string_filter) = $filter_field {
+            if let Some(value) = string_filter.equal_to {
+                $query = $query.filter($dsl_field_1.eq(value.clone()));
+                $query = $query.or_filter($dsl_field_2.eq(value));
+            }
+
+            if let Some(value) = string_filter.like {
+                // in sqlite like is case insensitive (but on only works with ASCII chars)
+                $query = $query.filter($dsl_field_1.like(format!("%{}%", value.clone())));
+                $query = $query.or_filter($dsl_field_2.like(format!("%{}%", value)));
+            }
+        }
+    }};
+}
+#[cfg(feature = "postgres")]
+macro_rules! apply_simple_string_or_filter {
+    ($query:ident, $filter_field:expr, $dsl_field_1:expr, $dsl_field_2:expr ) => {{
+        if let Some(string_filter) = $filter_field {
+            if let Some(value) = string_filter.equal_to {
+                $query = $query.filter($dsl_field_1.eq(value.clone()));
+                $query = $query.or_filter($dsl_field_2.eq(value));
+            }
+
+            if let Some(value) = string_filter.like {
+                // Use case insensitive like
+                $query = $query.filter($dsl_field_1.ilike(format!("%{}%", value.clone())));
+                $query = $query.or_filter($dsl_field_2.ilike(format!("%{}%", value)));
+            }
+        }
+    }};
+}
+
+/// Example expand, when called with:
+///
+/// ```
 /// apply_date_time_filter!(query, filter.created_datetime, invoice_dsl::created_datetime)
 /// ```
 ///
 /// ```
 /// if let Some(date_time_filter) = filter.created_datetime {
 ///     if let Some(value) = date_time_filter.equal_to {
-///         query = query.filterd(invoice_dsl::created_datetime.eq(value));
+///         query = query.filter(invoice_dsl::created_datetime.eq(value));
 ///     }
 ///
 ///     if let Some(value) = date_time_filter.before_or_equal_to {
-///         query = query.filterd(invoice_dsl::created_datetime.le(value));
+///         query = query.filter(invoice_dsl::created_datetime.le(value));
 ///     }
 ///
 ///     if let Some(value) = date_time_filter.after_or_equal_to {
-///         query = query.filterd(invoice_dsl::created_datetime.ge(value));
+///         query = query.filter(invoice_dsl::created_datetime.ge(value));
 ///     }
 /// }
 /// ```
@@ -257,6 +311,7 @@ pub(crate) use apply_date_filter;
 pub(crate) use apply_date_time_filter;
 pub(crate) use apply_equal_filter;
 pub(crate) use apply_simple_string_filter;
+pub(crate) use apply_simple_string_or_filter;
 pub(crate) use apply_sort;
 pub(crate) use apply_sort_asc_nulls_first;
 pub(crate) use apply_sort_asc_nulls_last;
