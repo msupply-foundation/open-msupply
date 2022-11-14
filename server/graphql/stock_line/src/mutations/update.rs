@@ -21,6 +21,7 @@ pub struct UpdateInput {
     pub sell_price_per_pack: Option<f64>,
     pub expiry_date: Option<NaiveDate>,
     pub batch: Option<String>,
+    pub on_hold: Option<bool>,
 }
 
 #[derive(Interface)]
@@ -85,6 +86,7 @@ impl UpdateInput {
             sell_price_per_pack,
             expiry_date,
             batch,
+            on_hold,
         } = self;
 
         ServiceInput {
@@ -94,6 +96,7 @@ impl UpdateInput {
             sell_price_per_pack,
             expiry_date,
             batch,
+            on_hold,
         }
     }
 }
@@ -276,7 +279,8 @@ mod test {
                     cost_price_per_pack: None,
                     sell_price_per_pack: None,
                     expiry_date: None,
-                    batch: None
+                    batch: None,
+                    on_hold: None,
                 }
             );
             Ok(StockLine {

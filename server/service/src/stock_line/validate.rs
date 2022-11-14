@@ -24,10 +24,7 @@ pub fn check_store(stock: &StockLineRow, store_id: &str) -> bool {
 }
 
 pub fn check_stock_line_on_hold(stock: &StockLineRow) -> bool {
-    if stock.on_hold {
-        return true;
-    }
-    return false;
+    return stock.on_hold;
 }
 
 pub fn check_location_exists(
