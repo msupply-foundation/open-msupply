@@ -13,9 +13,11 @@ use diesel::{dsl::IntoBoxed, prelude::*};
 #[derive(Clone)]
 pub struct ProgramEventFilter {
     pub datetime: Option<DatetimeFilter>,
-    pub name_id: Option<EqualFilter<String>>,
-    pub context: Option<EqualFilter<String>>,
-    pub group: Option<EqualFilter<String>>,
+    pub active_start_datetime: Option<DatetimeFilter>,
+    pub active_end_datetime: Option<DatetimeFilter>,
+    pub patient_id: Option<EqualFilter<String>>,
+    pub document_type: Option<EqualFilter<String>>,
+    pub document_name: Option<EqualFilter<String>>,
     pub r#type: Option<EqualFilter<String>>,
 }
 
@@ -23,9 +25,11 @@ impl ProgramEventFilter {
     pub fn new() -> Self {
         ProgramEventFilter {
             datetime: None,
-            name_id: None,
-            context: None,
-            group: None,
+            active_start_datetime: None,
+            active_end_datetime: None,
+            patient_id: None,
+            document_type: None,
+            document_name: None,
             r#type: None,
         }
     }
@@ -35,18 +39,28 @@ impl ProgramEventFilter {
         self
     }
 
-    pub fn name_id(mut self, filter: EqualFilter<String>) -> Self {
-        self.name_id = Some(filter);
+    pub fn active_start_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.active_start_datetime = Some(filter);
         self
     }
 
-    pub fn context(mut self, filter: EqualFilter<String>) -> Self {
-        self.context = Some(filter);
+    pub fn active_end_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.active_end_datetime = Some(filter);
         self
     }
 
-    pub fn group(mut self, filter: EqualFilter<String>) -> Self {
-        self.group = Some(filter);
+    pub fn patient_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.patient_id = Some(filter);
+        self
+    }
+
+    pub fn document_type(mut self, filter: EqualFilter<String>) -> Self {
+        self.document_type = Some(filter);
+        self
+    }
+
+    pub fn document_name(mut self, filter: EqualFilter<String>) -> Self {
+        self.document_name = Some(filter);
         self
     }
 
@@ -58,9 +72,13 @@ impl ProgramEventFilter {
 
 pub enum ProgramEventSortField {
     Datetime,
-    Context,
-    Group,
+    ActiveStartDatetime,
+    ActiveEndDatetime,
+    Patient,
+    DocumentType,
+    DocumentName,
     Type,
+    Name,
 }
 
 pub type ProgramEventSort = Sort<ProgramEventSortField>;
@@ -71,9 +89,19 @@ macro_rules! apply_filters {
     ($query:ident, $filter:expr ) => {{
         if let Some(f) = $filter {
             apply_date_time_filter!($query, f.datetime, program_event_dsl::datetime);
-            apply_equal_filter!($query, f.name_id, program_event_dsl::name_id);
-            apply_equal_filter!($query, f.context, program_event_dsl::context);
-            apply_equal_filter!($query, f.group, program_event_dsl::group);
+            apply_date_time_filter!(
+                $query,
+                f.active_start_datetime,
+                program_event_dsl::active_start_datetime
+            );
+            apply_date_time_filter!(
+                $query,
+                f.active_end_datetime,
+                program_event_dsl::active_end_datetime
+            );
+            apply_equal_filter!($query, f.patient_id, program_event_dsl::patient_id);
+            apply_equal_filter!($query, f.document_type, program_event_dsl::document_type);
+            apply_equal_filter!($query, f.document_name, program_event_dsl::document_name);
             apply_equal_filter!($query, f.r#type, program_event_dsl::type_);
         }
         $query
@@ -120,14 +148,24 @@ impl<'a> ProgramEventRepository<'a> {
                 ProgramEventSortField::Datetime => {
                     apply_sort!(query, sort, program_event_dsl::datetime)
                 }
-                ProgramEventSortField::Context => {
-                    apply_sort!(query, sort, program_event_dsl::context)
+                ProgramEventSortField::ActiveStartDatetime => {
+                    apply_sort!(query, sort, program_event_dsl::active_start_datetime)
                 }
-                ProgramEventSortField::Group => {
-                    apply_sort!(query, sort, program_event_dsl::group)
+                ProgramEventSortField::ActiveEndDatetime => {
+                    apply_sort!(query, sort, program_event_dsl::active_end_datetime)
                 }
-                ProgramEventSortField::Type => {
-                    apply_sort!(query, sort, program_event_dsl::type_)
+                ProgramEventSortField::Patient => {
+                    apply_sort!(query, sort, program_event_dsl::patient_id)
+                }
+                ProgramEventSortField::DocumentType => {
+                    apply_sort!(query, sort, program_event_dsl::document_type)
+                }
+                ProgramEventSortField::DocumentName => {
+                    apply_sort!(query, sort, program_event_dsl::document_name)
+                }
+                ProgramEventSortField::Type => apply_sort!(query, sort, program_event_dsl::type_),
+                ProgramEventSortField::Name => {
+                    apply_sort!(query, sort, program_event_dsl::name)
                 }
             }
         } else {
