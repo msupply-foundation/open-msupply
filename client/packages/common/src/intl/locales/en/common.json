@@ -120,6 +120,7 @@
   "label.enrolment-program": "Program",
   "label.enrolment-patient-id": "Enrolment Patient Id",
   "label.enrolment-datetime": "Enrolment Date",
+  "label.encounter": "Encounter",
   "label.encounters": "Encounters",
   "label.encounter-id": "Encounter ID",
   "label.encounter-type": "Type",
