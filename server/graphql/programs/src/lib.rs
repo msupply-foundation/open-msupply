@@ -1,4 +1,6 @@
 use async_graphql::*;
+use chrono::DateTime;
+use chrono::Utc;
 use graphql_core::pagination::PaginationInput;
 use mutations::allocate_number::allocate_program_number;
 use mutations::allocate_number::AllocateProgramNumberInput;
@@ -130,11 +132,12 @@ impl ProgramsQueries {
         ctx: &Context<'_>,
         store_id: String,
         patient_id: String,
+        at: Option<DateTime<Utc>>,
         page: Option<PaginationInput>,
         sort: Option<ProgramEventSortInput>,
         filter: Option<ProgramEventFilterInput>,
     ) -> Result<ProgramEventResponse> {
-        program_events(ctx, store_id, patient_id, page, sort, filter)
+        program_events(ctx, store_id, patient_id, at, page, sort, filter)
     }
 
     pub async fn encounters(

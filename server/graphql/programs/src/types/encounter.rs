@@ -120,6 +120,7 @@ impl EncounterNode {
     pub async fn events(
         &self,
         ctx: &Context<'_>,
+        at: Option<DateTime<Utc>>,
         filter: Option<ProgramEventFilterInput>,
     ) -> Result<Vec<ProgramEventNode>> {
         // TODO use loader?
@@ -127,13 +128,16 @@ impl EncounterNode {
         let filter = filter
             .map(|f| f.to_domain())
             .unwrap_or(ProgramEventFilter::new())
-            .name_id(EqualFilter::equal_to(&self.encounter_row.patient_id))
-            .context(EqualFilter::equal_to(&self.encounter_row.name));
+            .patient_id(EqualFilter::equal_to(&self.encounter_row.patient_id))
+            .document_type(EqualFilter::equal_to(&self.encounter_row.r#type))
+            .document_name(EqualFilter::equal_to(&self.encounter_row.name));
         let entries = ctx
             .service_provider()
             .program_event_service
-            .events(
+            .active_events(
                 &context,
+                at.map(|at| at.naive_utc())
+                    .unwrap_or(Utc::now().naive_utc()),
                 None,
                 Some(filter),
                 Some(Sort {

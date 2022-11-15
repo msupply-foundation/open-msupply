@@ -1,33 +1,34 @@
 use async_graphql::{dataloader::DataLoader, *};
 use chrono::{DateTime, Utc};
 use graphql_core::{
-    generic_filters::{DatetimeFilterInput, EqualFilterStringInput},
+    generic_filters::EqualFilterStringInput,
     loader::{DocumentLoader, DocumentLoaderInput},
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
 use repository::{
-    DatetimeFilter, EncounterFilter, EqualFilter, ProgramEnrolmentRow, ProgramEventFilter,
-    ProgramEventSortField, Sort,
+    EncounterFilter, EqualFilter, ProgramEnrolmentRow, ProgramEventFilter, ProgramEventSortField,
+    Sort,
 };
 
 use super::{document::DocumentNode, encounter::EncounterNode, program_event::ProgramEventNode};
 
 #[derive(InputObject, Clone)]
 pub struct ProgramEventFilterInput {
-    pub datetime: Option<DatetimeFilterInput>,
-    pub context: Option<EqualFilterStringInput>,
-    pub group: Option<EqualFilterStringInput>,
+    pub document_type: Option<EqualFilterStringInput>,
+    pub document_name: Option<EqualFilterStringInput>,
     pub r#type: Option<EqualFilterStringInput>,
 }
 
 impl ProgramEventFilterInput {
     pub fn to_domain(self) -> ProgramEventFilter {
         ProgramEventFilter {
-            datetime: self.datetime.map(DatetimeFilter::from),
-            name_id: None,
-            context: self.context.map(EqualFilter::from),
-            group: self.group.map(EqualFilter::from),
+            datetime: None,
+            active_start_datetime: None,
+            active_end_datetime: None,
+            patient_id: None,
+            document_type: self.document_type.map(EqualFilter::from),
+            document_name: self.document_name.map(EqualFilter::from),
             r#type: self.r#type.map(EqualFilter::from),
         }
     }
@@ -109,6 +110,7 @@ impl ProgramEnrolmentNode {
     pub async fn events(
         &self,
         ctx: &Context<'_>,
+        at: Option<DateTime<Utc>>,
         filter: Option<ProgramEventFilterInput>,
     ) -> Result<Vec<ProgramEventNode>> {
         // TODO use loader?
@@ -116,13 +118,15 @@ impl ProgramEnrolmentNode {
         let filter = filter
             .map(|f| f.to_domain())
             .unwrap_or(ProgramEventFilter::new())
-            .name_id(EqualFilter::equal_to(&self.program_row.patient_id))
-            .context(EqualFilter::equal_to(&self.program_row.r#type));
+            .patient_id(EqualFilter::equal_to(&self.program_row.patient_id))
+            .document_type(EqualFilter::equal_to(&self.program_row.r#type));
         let entries = ctx
             .service_provider()
             .program_event_service
-            .events(
+            .active_events(
                 &context,
+                at.map(|at| at.naive_utc())
+                    .unwrap_or(Utc::now().naive_utc()),
                 None,
                 Some(filter),
                 Some(Sort {
