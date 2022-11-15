@@ -62,7 +62,7 @@ pub(crate) fn generate(
         let generate_movement = batches
             .iter()
             .filter_map(|batch| match batch.location_id {
-                Some(_) => Some(generate_location_movement_exit(batch, store.to_string())),
+                Some(_) => Some(generate_exit_location_movement(batch, store.to_string())),
                 None => None,
             })
             .collect();
@@ -210,7 +210,7 @@ fn generate_batches_total_number_of_packs_update(
     Ok(result)
 }
 
-pub fn generate_location_movement_exit(
+pub fn generate_exit_location_movement(
     batch: &StockLineRow,
     store_id: String,
 ) -> LocationMovementRow {
