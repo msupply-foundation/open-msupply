@@ -1,10 +1,13 @@
 use chrono::Utc;
 
-use repository::{EqualFilter, InvoiceLineFilter, InvoiceLineRepository, RepositoryError};
+use repository::{
+    EqualFilter, InvoiceLineFilter, InvoiceLineRepository, LocationMovementRow, RepositoryError,
+};
 use repository::{
     InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, StockLineRow,
     StorageConnection,
 };
+use util::uuid::uuid;
 
 use super::{UpdateOutboundShipment, UpdateOutboundShipmentError, UpdateOutboundShipmentStatus};
 
@@ -12,9 +15,11 @@ pub(crate) struct GenerateResult {
     pub(crate) batches_to_update: Option<Vec<StockLineRow>>,
     pub(crate) update_invoice: InvoiceRow,
     pub(crate) unallocated_lines_to_trim: Option<Vec<InvoiceLineRow>>,
+    pub(crate) location_movements: Option<Vec<LocationMovementRow>>,
 }
 
 pub(crate) fn generate(
+    store: &str,
     existing_invoice: InvoiceRow,
     UpdateOutboundShipment {
         id: _,
@@ -53,6 +58,20 @@ pub(crate) fn generate(
         None
     };
 
+    let location_movements = if let Some(batches) = batches_to_update.clone() {
+        let generate_movement = batches
+            .iter()
+            .filter_map(|batch| match batch.location_id {
+                Some(_) => Some(generate_location_movement_exit(batch, store.to_string())),
+                None => None,
+            })
+            .collect();
+
+        Some(generate_movement)
+    } else {
+        None
+    };
+
     Ok(GenerateResult {
         batches_to_update,
         unallocated_lines_to_trim: unallocated_lines_to_trim(
@@ -61,6 +80,7 @@ pub(crate) fn generate(
             &input_status,
         )?,
         update_invoice,
+        location_movements,
     })
 }
 
@@ -188,4 +208,18 @@ fn generate_batches_total_number_of_packs_update(
         result.push(stock_line);
     }
     Ok(result)
+}
+
+pub fn generate_location_movement_exit(
+    batch: &StockLineRow,
+    store_id: String,
+) -> LocationMovementRow {
+    LocationMovementRow {
+        id: uuid(),
+        store_id,
+        stock_line_id: batch.id.clone(),
+        location_id: batch.location_id.clone().or(None),
+        enter_datetime: None,
+        exit_datetime: Some(Utc::now().naive_utc()),
+    }
 }
