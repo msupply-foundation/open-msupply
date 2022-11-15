@@ -58,6 +58,18 @@ const StockListComponent: FC = () => {
         'numberOfPacks',
         {
           accessor: ({ rowData }) => rowData.totalNumberOfPacks,
+          width: 150,
+        },
+      ],
+      [
+        'stockOnHand',
+        {
+          accessor: ({ rowData }) =>
+            rowData.totalNumberOfPacks * rowData.packSize,
+          label: 'label.soh',
+          description: 'description.soh',
+          sortable: false,
+          width: 125,
         },
       ],
     ],
@@ -100,6 +112,7 @@ const StockListComponent: FC = () => {
           setSelectedId(row.id);
           showDialog();
         }}
+        enableColumnSelection
       />
     </>
   );

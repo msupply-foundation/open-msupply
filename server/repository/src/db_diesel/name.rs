@@ -8,7 +8,7 @@ use super::{
 use crate::{
     diesel_macros::{apply_equal_filter, apply_simple_string_filter, apply_sort_no_case},
     repository_error::RepositoryError,
-    EqualFilter, Pagination, SimpleStringFilter, Sort,
+    EqualFilter, NameType, Pagination, SimpleStringFilter, Sort,
 };
 
 use diesel::{
@@ -16,7 +16,7 @@ use diesel::{
     prelude::*,
     query_source::joins::OnClauseWrapper,
 };
-use util::constants::SYSTEM_NAME_CODES;
+use util::{constants::SYSTEM_NAME_CODES, inline_init};
 
 #[derive(PartialEq, Debug, Clone, Default)]
 pub struct Name {
@@ -36,6 +36,13 @@ pub struct NameFilter {
     pub store_code: Option<SimpleStringFilter>,
     pub is_visible: Option<bool>,
     pub is_system_name: Option<bool>,
+    pub r#type: Option<EqualFilter<NameType>>,
+}
+
+impl EqualFilter<NameType> {
+    pub fn equal_to_name_type(value: &NameType) -> Self {
+        inline_init(|r: &mut Self| r.equal_to = Some(value.to_owned()))
+    }
 }
 
 #[derive(PartialEq, Debug)]
@@ -166,12 +173,14 @@ fn create_filtered_query(store_id: String, filter: Option<NameFilter>) -> BoxedN
             store_code,
             is_visible,
             is_system_name,
+            r#type,
         } = f;
 
         apply_equal_filter!(query, id, name_dsl::id);
         apply_simple_string_filter!(query, code, name_dsl::code);
         apply_simple_string_filter!(query, name, name_dsl::name_);
         apply_simple_string_filter!(query, store_code, store_dsl::code);
+        apply_equal_filter!(query, r#type, name_dsl::type_);
 
         if let Some(is_customer) = is_customer {
             query = query.filter(name_store_join_dsl::name_is_customer.eq(is_customer));
@@ -249,6 +258,11 @@ impl NameFilter {
 
     pub fn is_customer(mut self, value: bool) -> Self {
         self.is_customer = Some(value);
+        self
+    }
+
+    pub fn r#type(mut self, filter: EqualFilter<NameType>) -> Self {
+        self.r#type = Some(filter);
         self
     }
 }
