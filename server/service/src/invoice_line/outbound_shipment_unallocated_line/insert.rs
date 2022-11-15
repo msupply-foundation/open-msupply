@@ -5,11 +5,11 @@ use repository::{
     ItemRowType, RepositoryError, StorageConnection,
 };
 
-use crate::invoice::{check_store, NotThisStoreInvoice};
+use crate::invoice::check_store;
 use crate::invoice_line::query::get_invoice_line;
 use crate::{
-    invoice::check_invoice_exists_option,
-    invoice_line::validate::{check_item_exists_option, check_line_does_not_exists_new},
+    invoice::check_invoice_exists,
+    invoice_line::validate::{check_item_exists, check_line_does_not_exist},
     service_provider::ServiceContext,
 };
 #[derive(Clone, Debug, PartialEq, Default)]
@@ -60,20 +60,21 @@ fn validate(
     store_id: &str,
     input: &InsertOutboundShipmentUnallocatedLine,
 ) -> Result<ItemRow, OutError> {
-    if !check_line_does_not_exists_new(connection, &input.id)? {
+    if !check_line_does_not_exist(connection, &input.id)? {
         return Err(OutError::LineAlreadyExists);
     }
 
-    let item_row =
-        check_item_exists_option(connection, &input.item_id)?.ok_or(OutError::ItemNotFound)?;
+    let item_row = check_item_exists(connection, &input.item_id)?.ok_or(OutError::ItemNotFound)?;
 
     if item_row.r#type != ItemRowType::Stock {
         return Err(OutError::NotAStockItem);
     }
 
-    let invoice_row = check_invoice_exists_option(&input.invoice_id, connection)?
+    let invoice_row = check_invoice_exists(&input.invoice_id, connection)?
         .ok_or(OutError::InvoiceDoesNotExist)?;
-    check_store(&invoice_row, store_id)?;
+    if !check_store(&invoice_row, store_id) {
+        return Err(OutError::NotThisStoreInvoice);
+    }
 
     if invoice_row.r#type != InvoiceRowType::OutboundShipment {
         return Err(OutError::NotAnOutboundShipment);
@@ -143,12 +144,6 @@ pub fn check_unallocated_line_does_not_exist(
 impl From<RepositoryError> for InsertOutboundShipmentUnallocatedLineError {
     fn from(error: RepositoryError) -> Self {
         InsertOutboundShipmentUnallocatedLineError::DatabaseError(error)
-    }
-}
-
-impl From<NotThisStoreInvoice> for InsertOutboundShipmentUnallocatedLineError {
-    fn from(_: NotThisStoreInvoice) -> Self {
-        InsertOutboundShipmentUnallocatedLineError::NotThisStoreInvoice
     }
 }
 

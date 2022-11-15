@@ -13,6 +13,7 @@ import {
   UpdateOutboundShipmentLineInput,
   InvoiceLineNodeType,
   InvoiceSortFieldInput,
+  UpdateOutboundShipmentNameInput,
 } from '@openmsupply-client/common';
 import { DraftOutboundLine } from '../../types';
 import { get, isA } from '../../utils';
@@ -80,9 +81,14 @@ const outboundParsers = {
     comment: patch.comment,
     status: outboundParsers.toStatus(patch),
     onHold: 'onHold' in patch ? patch.onHold : undefined,
-    otherPartyId: 'otherParty' in patch ? patch.otherParty?.id : undefined,
     theirReference: patch.theirReference,
     transportReference: patch.transportReference,
+  }),
+  toUpdateName: (
+    patch: RecordPatch<OutboundRowFragment> | RecordPatch<OutboundFragment>
+  ): UpdateOutboundShipmentNameInput => ({
+    id: patch.id,
+    otherPartyId: patch.otherPartyId,
   }),
   toInsertLine: (line: DraftOutboundLine): InsertOutboundShipmentLineInput => {
     return {
@@ -262,6 +268,26 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
     }
 
     throw new Error('Unable to update invoice');
+  },
+  updateName: async (
+    patch: RecordPatch<OutboundRowFragment> | RecordPatch<OutboundFragment>
+  ) => {
+    const result =
+      (await sdk.updateOutboundShipmentName({
+        storeId,
+        input: {
+          id: patch.id,
+          otherPartyId: patch.otherPartyId,
+        },
+      })) || {};
+
+    const { updateOutboundShipmentName } = result;
+
+    if (updateOutboundShipmentName?.__typename === 'InvoiceNode') {
+      return updateOutboundShipmentName.id;
+    }
+
+    throw new Error('Could not update customer name');
   },
   updateLines: async (draftOutboundLines: DraftOutboundLine[]) => {
     const input = {

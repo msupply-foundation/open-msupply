@@ -1,7 +1,7 @@
 pub mod mutations;
 use async_graphql::*;
 use graphql_core::{
-    generic_filters::{DateFilterInput, EqualFilterStringInput},
+    generic_filters::{DateFilterInput, EqualFilterStringInput, SimpleStringFilterInput},
     pagination::PaginationInput,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
@@ -19,6 +19,7 @@ pub struct StockLineQueries;
 #[graphql(rename_items = "camelCase")]
 pub enum StockLineSortFieldInput {
     ExpiryDate,
+    NumberOfPacks,
 }
 #[derive(InputObject)]
 pub struct StockLineSortInput {
@@ -34,6 +35,7 @@ pub struct StockLineFilterInput {
     pub expiry_date: Option<DateFilterInput>,
     pub id: Option<EqualFilterStringInput>,
     pub is_available: Option<bool>,
+    pub item_code_or_name: Option<SimpleStringFilterInput>,
     pub item_id: Option<EqualFilterStringInput>,
     pub location_id: Option<EqualFilterStringInput>,
     pub store_id: Option<EqualFilterStringInput>,
@@ -45,6 +47,7 @@ impl From<StockLineFilterInput> for StockLineFilter {
             expiry_date: f.expiry_date.map(DateFilter::from),
             id: f.id.map(EqualFilter::from),
             is_available: f.is_available,
+            item_code_or_name: f.item_code_or_name.map(SimpleStringFilterInput::into),
             item_id: f.item_id.map(EqualFilter::from),
             location_id: f.location_id.map(EqualFilter::from),
             store_id: None,
@@ -57,6 +60,7 @@ impl StockLineSortInput {
         use StockLineSortField as to;
         use StockLineSortFieldInput as from;
         let key = match self.key {
+            from::NumberOfPacks => to::NumberOfPacks,
             from::ExpiryDate => to::ExpiryDate,
         };
 

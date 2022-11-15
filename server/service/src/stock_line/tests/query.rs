@@ -144,6 +144,7 @@ mod query {
             is_available: None,
             expiry_date: None,
             store_id: None,
+            item_code_or_name: None,
         });
 
         // Test ExpiryDate sort with default sort order
@@ -193,6 +194,7 @@ mod query {
             is_available: None,
             expiry_date: None,
             store_id: None,
+            item_code_or_name: None,
         });
 
         // Test ExpiryDate sort with desc sort order
