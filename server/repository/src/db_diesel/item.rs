@@ -8,7 +8,8 @@ use super::{
 
 use crate::{
     diesel_macros::{
-        apply_equal_filter, apply_simple_string_filter, apply_sort, apply_sort_no_case,
+        apply_equal_filter, apply_simple_string_filter, apply_simple_string_or_filter, apply_sort,
+        apply_sort_no_case,
     },
     repository_error::RepositoryError,
     EqualFilter, Pagination, SimpleStringFilter, Sort,
@@ -37,6 +38,7 @@ pub struct ItemFilter {
     pub r#type: Option<EqualFilter<ItemRowType>>,
     /// If true it only returns ItemAndMasterList that have a name join row
     pub is_visible: Option<bool>,
+    pub code_or_name: Option<SimpleStringFilter>,
 }
 
 impl ItemFilter {
@@ -47,6 +49,7 @@ impl ItemFilter {
             code: None,
             r#type: None,
             is_visible: None,
+            code_or_name: None,
         }
     }
 
@@ -168,12 +171,14 @@ fn create_filtered_query(filter: Option<ItemFilter>) -> BoxedItemQuery {
             code,
             r#type,
             is_visible,
+            code_or_name,
         } = f;
 
         apply_equal_filter!(query, id, item_dsl::id);
         apply_simple_string_filter!(query, code, item_dsl::code);
         apply_simple_string_filter!(query, name, item_dsl::name);
         apply_equal_filter!(query, r#type, item_dsl::type_);
+        apply_simple_string_or_filter!(query, code_or_name, item_dsl::code, item_dsl::name);
 
         if let Some(is_visible) = is_visible {
             query = query.filter(item_is_visible::is_visible.eq(is_visible));
@@ -338,6 +343,7 @@ mod tests {
                     // query invisible rows
                     is_visible: Some(false),
                     r#type: None,
+                    code_or_name: None,
                 }),
                 None,
             )
@@ -512,6 +518,7 @@ mod tests {
                     // query invisible rows
                     is_visible: Some(false),
                     r#type: None,
+                    code_or_name: None,
                 }),
                 None,
             )
@@ -528,6 +535,7 @@ mod tests {
                     // query invisible rows
                     is_visible: Some(true),
                     r#type: None,
+                    code_or_name: None,
                 }),
                 None,
             )

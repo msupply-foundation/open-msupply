@@ -1,6 +1,4 @@
-use repository::{
-    ActivityLogType, InvoiceLine, InvoiceRowRepository, RepositoryError, TransactionError,
-};
+use repository::{ActivityLogType, InvoiceRowRepository, RepositoryError, TransactionError};
 
 pub mod validate;
 
@@ -65,7 +63,6 @@ pub enum DeleteOutboundShipmentError {
     DatabaseError(RepositoryError),
     NotThisStoreInvoice,
     CannotEditFinalised,
-    InvoiceLinesExists(Vec<InvoiceLine>),
     LineDeleteError {
         line_id: String,
         error: DeleteOutboundShipmentLineError,

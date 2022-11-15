@@ -1,6 +1,6 @@
 use chrono::Utc;
 
-use repository::{EqualFilter, InvoiceLineFilter, InvoiceLineRepository, Name, RepositoryError};
+use repository::{EqualFilter, InvoiceLineFilter, InvoiceLineRepository, RepositoryError};
 use repository::{
     InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, StockLineRow,
     StorageConnection,
@@ -16,10 +16,8 @@ pub(crate) struct GenerateResult {
 
 pub(crate) fn generate(
     existing_invoice: InvoiceRow,
-    other_party_option: Option<Name>,
     UpdateOutboundShipment {
         id: _,
-        other_party_id: input_other_party_id,
         status: input_status,
         on_hold: input_on_hold,
         comment: input_comment,
@@ -35,7 +33,6 @@ pub(crate) fn generate(
 
     set_new_status_datetime(&mut update_invoice, &input_status);
 
-    update_invoice.name_id = input_other_party_id.unwrap_or(update_invoice.name_id);
     update_invoice.comment = input_comment.or(update_invoice.comment);
     update_invoice.their_reference = input_their_reference.or(update_invoice.their_reference);
     update_invoice.on_hold = input_on_hold.unwrap_or(update_invoice.on_hold);
@@ -45,11 +42,6 @@ pub(crate) fn generate(
 
     if let Some(status) = input_status.clone() {
         update_invoice.status = status.full_status().into()
-    }
-
-    if let Some(other_party) = other_party_option {
-        update_invoice.name_store_id = other_party.store_id().map(|id| id.to_string());
-        update_invoice.name_id = other_party.name_row.id;
     }
 
     let batches_to_update = if should_update_batches_total_number_of_packs {
