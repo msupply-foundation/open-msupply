@@ -10,8 +10,6 @@ use repository::{
 };
 use util::uuid::uuid;
 
-use crate::invoice::inbound_shipment::generate_inbound_location_movement;
-
 use super::{UpdateInboundShipment, UpdateInboundShipmentError, UpdateInboundShipmentStatus};
 
 pub struct LineAndStockLine {
@@ -68,11 +66,7 @@ pub(crate) fn generate(
         let generate_movement = batches
             .iter()
             .filter_map(|batch| match batch.line.location_id {
-                Some(_) => Some(generate_inbound_location_movement(
-                    batch.line.location_id.to_owned(),
-                    store_id.to_owned(),
-                    Some(batch.stock_line.id.to_owned()),
-                )),
+                Some(_) => Some(generate_location_movement_entry(store_id.to_owned(), batch)),
                 None => None,
             })
             .collect();
@@ -214,4 +208,18 @@ pub fn generate_lines_and_stock_lines(
         }
     }
     Ok(result)
+}
+
+pub fn generate_location_movement_entry(
+    store_id: String,
+    batch: &LineAndStockLine,
+) -> LocationMovementRow {
+    LocationMovementRow {
+        id: uuid(),
+        store_id,
+        stock_line_id: batch.stock_line.id.clone(),
+        location_id: batch.line.location_id.clone(),
+        enter_datetime: Some(Utc::now().naive_utc()),
+        exit_datetime: None,
+    }
 }

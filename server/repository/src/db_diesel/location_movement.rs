@@ -20,6 +20,7 @@ pub struct LocationMovement {
 pub struct LocationMovementFilter {
     pub id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
+    pub location_id: Option<EqualFilter<String>>,
     pub stock_line_id: Option<EqualFilter<String>>,
     pub enter_datetime: Option<DatetimeFilter>,
     pub exit_datetime: Option<DatetimeFilter>,
@@ -100,6 +101,11 @@ fn create_filtered_query(filter: Option<LocationMovementFilter>) -> BoxedLocatio
             filter.stock_line_id,
             location_movement_dsl::stock_line_id
         );
+        apply_equal_filter!(
+            query,
+            filter.location_id,
+            location_movement_dsl::location_id
+        );
         apply_date_time_filter!(
             query,
             filter.enter_datetime,
@@ -126,6 +132,7 @@ impl LocationMovementFilter {
         LocationMovementFilter {
             id: None,
             store_id: None,
+            location_id: None,
             stock_line_id: None,
             enter_datetime: None,
             exit_datetime: None,
@@ -142,6 +149,11 @@ impl LocationMovementFilter {
         self
     }
 
+    pub fn location_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.location_id = Some(filter);
+        self
+    }
+
     pub fn stock_line_id(mut self, filter: EqualFilter<String>) -> Self {
         self.stock_line_id = Some(filter);
         self
@@ -149,6 +161,11 @@ impl LocationMovementFilter {
 
     pub fn enter_datetime(mut self, filter: DatetimeFilter) -> Self {
         self.enter_datetime = Some(filter);
+        self
+    }
+
+    pub fn exit_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.exit_datetime = Some(filter);
         self
     }
 }

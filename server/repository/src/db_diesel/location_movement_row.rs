@@ -12,7 +12,7 @@ table! {
     location_movement (id) {
         id -> Text,
         store_id -> Text,
-        stock_line_id -> Nullable<Text>,
+        stock_line_id -> Text,
         location_id -> Nullable<Text>,
         enter_datetime -> Nullable<Timestamp>,
         exit_datetime -> Nullable<Timestamp>,
@@ -28,7 +28,7 @@ joinable!(location_movement -> location (location_id));
 pub struct LocationMovementRow {
     pub id: String,
     pub store_id: String,
-    pub stock_line_id: Option<String>,
+    pub stock_line_id: String,
     pub location_id: Option<String>,
     pub enter_datetime: Option<NaiveDateTime>,
     pub exit_datetime: Option<NaiveDateTime>,
