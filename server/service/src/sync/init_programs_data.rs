@@ -139,6 +139,26 @@ const HIV_CARE_ENCOUNTER_SCHEMA: &'static str =
 const HIV_CARE_ENCOUNTER_UI_SCHEMA: &'static str =
     std::include_str!("./program_schemas/hiv_care_encounter_ui_schema.json");
 
+const IMMUNISATION_PROGRAM_SCHEMA: &'static str =
+    std::include_str!("./program_schemas/routine_immunisation_program.json");
+const IMMUNISATION_PROGRAM_UI_SCHEMA: &'static str =
+    std::include_str!("./program_schemas/routine_immunisation_program_ui_schema.json");
+
+const IMMUNISATION_ENCOUNTER_6WEEKS_SCHEMA: &'static str =
+    std::include_str!("./program_schemas/routine_immunisation_6weeks_encounter.json");
+const IMMUNISATION_ENCOUNTER_6WEEKS_UI_SCHEMA: &'static str =
+    std::include_str!("./program_schemas/routine_immunisation_6weeks_encounter_ui_schema.json");
+
+const IMMUNISATION_ENCOUNTER_3MONTH_SCHEMA: &'static str =
+    std::include_str!("./program_schemas/routine_immunisation_3month_encounter.json");
+const IMMUNISATION_ENCOUNTER_3MONTH_UI_SCHEMA: &'static str =
+    std::include_str!("./program_schemas/routine_immunisation_3month_encounter_ui_schema.json");
+
+const IMMUNISATION_ENCOUNTER_5MONTH_SCHEMA: &'static str =
+    std::include_str!("./program_schemas/routine_immunisation_5month_encounter.json");
+const IMMUNISATION_ENCOUNTER_5MONTH_UI_SCHEMA: &'static str =
+    std::include_str!("./program_schemas/routine_immunisation_5month_encounter_ui_schema.json");
+
 fn person_1() -> Person {
     Person {
         id: Some("person1".to_string()),
@@ -472,6 +492,79 @@ pub fn insert_programs_permissions(connection: &StorageConnection, user_id: Stri
                 user_id: user_id.clone(),
                 store_id: Some(user_store.store_id.clone()),
                 permission: Permission::DocumentProgramQuery,
+                context: Some("RoutineImmunisationProgram".to_string()),
+            })
+            .unwrap();
+        UserPermissionRowRepository::new(&connection)
+            .upsert_one(&UserPermissionRow {
+                id: uuid(),
+                user_id: user_id.clone(),
+                store_id: Some(user_store.store_id.clone()),
+                permission: Permission::DocumentProgramMutate,
+                context: Some("RoutineImmunisationProgram".to_string()),
+            })
+            .unwrap();
+        UserPermissionRowRepository::new(&connection)
+            .upsert_one(&UserPermissionRow {
+                id: uuid(),
+                user_id: user_id.clone(),
+                store_id: Some(user_store.store_id.clone()),
+                permission: Permission::DocumentProgramQuery,
+                context: Some("RoutineImmunisation6WeeksEncounter".to_string()),
+            })
+            .unwrap();
+        UserPermissionRowRepository::new(&connection)
+            .upsert_one(&UserPermissionRow {
+                id: uuid(),
+                user_id: user_id.clone(),
+                store_id: Some(user_store.store_id.clone()),
+                permission: Permission::DocumentProgramMutate,
+                context: Some("RoutineImmunisation6WeeksEncounter".to_string()),
+            })
+            .unwrap();
+        UserPermissionRowRepository::new(&connection)
+            .upsert_one(&UserPermissionRow {
+                id: uuid(),
+                user_id: user_id.clone(),
+                store_id: Some(user_store.store_id.clone()),
+                permission: Permission::DocumentProgramQuery,
+                context: Some("RoutineImmunisation3MonthEncounter".to_string()),
+            })
+            .unwrap();
+        UserPermissionRowRepository::new(&connection)
+            .upsert_one(&UserPermissionRow {
+                id: uuid(),
+                user_id: user_id.clone(),
+                store_id: Some(user_store.store_id.clone()),
+                permission: Permission::DocumentProgramMutate,
+                context: Some("RoutineImmunisation3MonthEncounter".to_string()),
+            })
+            .unwrap();
+        UserPermissionRowRepository::new(&connection)
+            .upsert_one(&UserPermissionRow {
+                id: uuid(),
+                user_id: user_id.clone(),
+                store_id: Some(user_store.store_id.clone()),
+                permission: Permission::DocumentProgramQuery,
+                context: Some("RoutineImmunisation5MonthEncounter".to_string()),
+            })
+            .unwrap();
+        UserPermissionRowRepository::new(&connection)
+            .upsert_one(&UserPermissionRow {
+                id: uuid(),
+                user_id: user_id.clone(),
+                store_id: Some(user_store.store_id.clone()),
+                permission: Permission::DocumentProgramMutate,
+                context: Some("RoutineImmunisation5MonthEncounter".to_string()),
+            })
+            .unwrap();
+
+        UserPermissionRowRepository::new(&connection)
+            .upsert_one(&UserPermissionRow {
+                id: uuid(),
+                user_id: user_id.clone(),
+                store_id: Some(user_store.store_id.clone()),
+                permission: Permission::DocumentProgramQuery,
                 context: Some("HIVTestingProgram".to_string()),
             })
             .unwrap();
@@ -725,6 +818,68 @@ pub fn init_program_data(
         name: Some("HIV Care Encounter".to_string()),
         parent_id: Some(hiv_care_program_id.clone()),
         form_schema_id: Some(hiv_care_encounter_schema_id.clone()),
+    })?;
+
+    let immunisation_schema_id = uuid();
+    FormSchemaRowRepository::new(connection).upsert_one(&FormSchema {
+        id: immunisation_schema_id.clone(),
+        r#type: "JsonForms".to_string(),
+        json_schema: serde_json::from_str(IMMUNISATION_PROGRAM_SCHEMA).unwrap(),
+        ui_schema: serde_json::from_str(IMMUNISATION_PROGRAM_UI_SCHEMA).unwrap(),
+    })?;
+    let immunisation_program_id = uuid();
+    DocumentRegistryRowRepository::new(connection).upsert_one(&DocumentRegistryRow {
+        id: immunisation_program_id.clone(),
+        document_type: "RoutineImmunisationProgram".to_string(),
+        context: DocumentContext::Program,
+        name: Some("Routine Immunisation Program".to_string()),
+        parent_id: None,
+        form_schema_id: Some(immunisation_schema_id.clone()),
+    })?;
+    let immunisation_schema_id = uuid();
+    FormSchemaRowRepository::new(connection).upsert_one(&FormSchema {
+        id: immunisation_schema_id.clone(),
+        r#type: "JsonForms".to_string(),
+        json_schema: serde_json::from_str(IMMUNISATION_ENCOUNTER_6WEEKS_SCHEMA).unwrap(),
+        ui_schema: serde_json::from_str(IMMUNISATION_ENCOUNTER_6WEEKS_UI_SCHEMA).unwrap(),
+    })?;
+    DocumentRegistryRowRepository::new(connection).upsert_one(&DocumentRegistryRow {
+        id: uuid(),
+        document_type: "RoutineImmunisation6WeeksEncounter".to_string(),
+        context: DocumentContext::Encounter,
+        name: Some("Routine Immunisation 6 Weeks Encounter".to_string()),
+        parent_id: Some(immunisation_program_id.clone()),
+        form_schema_id: Some(immunisation_schema_id.clone()),
+    })?;
+    let immunisation_schema_id = uuid();
+    FormSchemaRowRepository::new(connection).upsert_one(&FormSchema {
+        id: immunisation_schema_id.clone(),
+        r#type: "JsonForms".to_string(),
+        json_schema: serde_json::from_str(IMMUNISATION_ENCOUNTER_3MONTH_SCHEMA).unwrap(),
+        ui_schema: serde_json::from_str(IMMUNISATION_ENCOUNTER_3MONTH_UI_SCHEMA).unwrap(),
+    })?;
+    DocumentRegistryRowRepository::new(connection).upsert_one(&DocumentRegistryRow {
+        id: uuid(),
+        document_type: "RoutineImmunisation3MonthEncounter".to_string(),
+        context: DocumentContext::Encounter,
+        name: Some("Routine Immunisation 3 Month Encounter".to_string()),
+        parent_id: Some(immunisation_program_id.clone()),
+        form_schema_id: Some(immunisation_schema_id.clone()),
+    })?;
+    let immunisation_schema_id = uuid();
+    FormSchemaRowRepository::new(connection).upsert_one(&FormSchema {
+        id: immunisation_schema_id.clone(),
+        r#type: "JsonForms".to_string(),
+        json_schema: serde_json::from_str(IMMUNISATION_ENCOUNTER_5MONTH_SCHEMA).unwrap(),
+        ui_schema: serde_json::from_str(IMMUNISATION_ENCOUNTER_5MONTH_UI_SCHEMA).unwrap(),
+    })?;
+    DocumentRegistryRowRepository::new(connection).upsert_one(&DocumentRegistryRow {
+        id: uuid(),
+        document_type: "RoutineImmunisation5MonthEncounter".to_string(),
+        context: DocumentContext::Encounter,
+        name: Some("Routine Immunisation 5 Month Encounter".to_string()),
+        parent_id: Some(immunisation_program_id.clone()),
+        form_schema_id: Some(immunisation_schema_id.clone()),
     })?;
 
     // patients

@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "ProgramEnrolmentStatus": {
+      "enum": [
+        "ACTIVE",
+        "OPTED_OUT",
+        "TRANSFERRED_OUT",
+        "PAUSED"
+      ],
+      "type": "string"
+    },
+    "RoutineImmunisationProgramEnrolment": {
+      "properties": {
+        "enrolmentDatetime": {
+          "description": "Enrolment date and time",
+          "format": "date-time",
+          "type": "string"
+        },
+        "enrolmentPatientId": {
+          "description": "Program enrolment specific patient id.",
+          "type": "string"
+        },
+        "legalGuardianFullName": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "placeOfBirth": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/ProgramEnrolmentStatus",
+          "description": "Current status of the program enrolment"
+        }
+      },
+      "required": [
+        "enrolmentDatetime"
+      ],
+      "type": "object"
+    }
+  },
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "#/definitions/RoutineImmunisationProgramEnrolment"
+    }
+  ]
+}
