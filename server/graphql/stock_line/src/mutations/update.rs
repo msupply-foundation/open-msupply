@@ -1,7 +1,7 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
-    simple_generic_errors::{RecordNotFound, StockIsOnHold},
+    simple_generic_errors::RecordNotFound,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
@@ -29,7 +29,6 @@ pub struct UpdateInput {
 #[graphql(field(name = "description", type = "String"))]
 pub enum UpdateErrorInterface {
     RecordNotFound(RecordNotFound),
-    StockIsOnHold(StockIsOnHold),
 }
 
 #[derive(SimpleObject)]
@@ -109,9 +108,6 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         // Structured Errors
         ServiceError::StockDoesNotExist => {
             return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound {}))
-        }
-        ServiceError::StockIsOnHold => {
-            return Ok(UpdateErrorInterface::StockIsOnHold(StockIsOnHold {}))
         }
         // Standard Graphql Errors
         ServiceError::StockDoesNotBelongToStore => BadUserInput(formatted_error),
@@ -204,25 +200,6 @@ mod test {
             "updateStockLine": {
               "error": {
                 "__typename": "RecordNotFound"
-              }
-            }
-          }
-        );
-
-        assert_graphql_query!(
-            &settings,
-            mutation,
-            &Some(empty_variables()),
-            &expected,
-            Some(service_provider(test_service, &connection_manager))
-        );
-
-        // StockIsOnHold
-        let test_service = TestService(Box::new(|_| Err(ServiceError::StockIsOnHold)));
-        let expected = json!({
-            "updateStockLine": {
-              "error": {
-                "__typename": "StockIsOnHold"
               }
             }
           }

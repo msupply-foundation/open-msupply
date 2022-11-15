@@ -5,9 +5,7 @@ use repository::{
 
 use crate::{
     service_provider::ServiceContext,
-    stock_line::validate::{
-        check_location_exists, check_stock_line_exists, check_stock_line_on_hold, check_store,
-    },
+    stock_line::validate::{check_location_exists, check_stock_line_exists, check_store},
     SingleRecordError,
 };
 
@@ -28,7 +26,6 @@ pub struct UpdateStockLine {
 pub enum UpdateStockLineError {
     DatabaseError(RepositoryError),
     StockDoesNotBelongToStore,
-    StockIsOnHold,
     StockDoesNotExist,
     LocationDoesNotExist,
     UpdatedStockNotFound,
@@ -68,9 +65,6 @@ fn validate(
     if !check_store(&stock_line, store_id) {
         return Err(StockDoesNotBelongToStore);
     };
-    if check_stock_line_on_hold(&stock_line) {
-        return Err(StockIsOnHold);
-    }
     if let Some(location_id) = input.location_id.clone() {
         if !check_location_exists(connection, &location_id)? {
             return Err(LocationDoesNotExist);
