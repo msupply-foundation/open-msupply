@@ -209,7 +209,7 @@ type CanOnlyChangeToAllocatedWhenNoUnallocatedLines implements UpdateErrorInterf
 	description: String!
 	invoiceLines: InvoiceLineConnector!
 }
-type CannotChangeStatusOfInvoiceOnHold implements UpdateErrorInterface & UpdateInboundShipmentErrorInterface {
+type CannotChangeStatusOfInvoiceOnHold implements UpdateInboundShipmentErrorInterface & UpdateErrorInterface {
 	description: String!
 }
 type CannotDeleteInvoiceWithLines implements DeleteInboundShipmentErrorInterface & DeleteErrorInterface {
@@ -516,6 +516,11 @@ input EqualFilterStringInput {
 	equalTo: String
 	equalAny: [String!]
 	notEqualTo: String
+}
+input EqualFilterTypeInput {
+	equalTo: NameNodeType
+	equalAny: [NameNodeType!]
+	notEqualTo: NameNodeType
 }
 type FailedToFetchReportData implements PrintReportErrorInterface {
 	description: String!
@@ -849,7 +854,7 @@ input InvoiceFilterInput {
 	requisitionId: EqualFilterStringInput
 	linkedInvoiceId: EqualFilterStringInput
 }
-type InvoiceIsNotEditable implements UpdateErrorInterface {
+type InvoiceIsNotEditable implements UpdateNameErrorInterface & UpdateErrorInterface {
 	description: String!
 }
 type InvoiceLineConnector {
@@ -1152,6 +1157,7 @@ union MasterListsResponse = | MasterListConnector
 type Mutations {
 	insertOutboundShipment(storeId: String!, input: InsertOutboundShipmentInput!): InsertOutboundShipmentResponse!
 	updateOutboundShipment(storeId: String!, input: UpdateOutboundShipmentInput!): UpdateOutboundShipmentResponse!
+	updateOutboundShipmentName(storeId: String!, input: UpdateOutboundShipmentNameInput!): UpdateOutboundShipmentNameResponse!
 	deleteOutboundShipment(storeId: String!, id: String!): DeleteOutboundShipmentResponse!
 	insertInboundShipment(storeId: String!, input: InsertInboundShipmentInput!): InsertInboundShipmentResponse!
 	updateInboundShipment(storeId: String!, input: UpdateInboundShipmentInput!): UpdateInboundShipmentResponse!
@@ -1271,7 +1277,7 @@ input NameFilterInput {
 	"""
 	storeCode: SimpleStringFilterInput
 	"""
-	Visibility in current store (based on store_id parameter and existance of name_store_join record)
+	Visibility in current store (based on store_id parameter and existence of name_store_join record)
 	"""
 	isVisible: Boolean
 	"""
@@ -1280,6 +1286,10 @@ System names don't have name_store_join thus if queried with true filter, is_vis
 if is_visible is set to true and is_system_name is also true no system names will be returned
 	"""
 	isSystemName: Boolean
+	"""
+	Filter by the name type
+	"""
+	type: EqualFilterTypeInput
 }
 type NameNode {
 	id: String!
@@ -1350,7 +1360,7 @@ type NotARefreshToken implements RefreshTokenErrorInterface {
 type NotAnInboundShipment implements UpdateInboundShipmentLineErrorInterface {
 	description: String!
 }
-type NotAnOutboundShipmentError implements UpdateErrorInterface {
+type NotAnOutboundShipmentError implements UpdateNameErrorInterface & UpdateErrorInterface {
 	description: String!
 }
 type NotEnoughStockForReduction implements InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface {
@@ -1368,6 +1378,7 @@ type OtherPartyNotASupplier implements InsertInboundShipmentErrorInterface & Ins
 	description: String!
 }
 type OtherPartyNotVisible implements InsertRequestRequisitionErrorInterface & UpdateErrorInterface & InsertInboundShipmentErrorInterface & UpdateInboundShipmentErrorInterface & UpdateRequestRequisitionErrorInterface & InsertErrorInterface {
+
 	description: String!
 }
 type OutboundInvoiceCounts {
@@ -1752,7 +1763,7 @@ input StockEvolutionOptionsInput {
 	"""
 	numberOfProjectedDataPoints: Int
 }
-type StockLineAlreadyExistsInInvoice implements InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface {
+type StockLineAlreadyExistsInInvoice implements UpdateOutboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface {
 	description: String!
 	line: InvoiceLineNode!
 }
@@ -1769,7 +1780,7 @@ input StockLineFilterInput {
 	locationId: EqualFilterStringInput
 	storeId: EqualFilterStringInput
 }
-type StockLineIsOnHold implements UpdateOutboundShipmentLineErrorInterface & InsertOutboundShipmentLineErrorInterface {
+type StockLineIsOnHold implements InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface {
 	description: String!
 }
 type StockLineNode {
@@ -2107,6 +2118,9 @@ input UpdateLocationInput {
 	onHold: Boolean
 }
 union UpdateLocationResponse = | UpdateLocationError | LocationNode
+interface UpdateNameErrorInterface {
+	description: String!
+}
 type UpdateOutboundShipmentError {
 	error: UpdateErrorInterface!
 }
@@ -2115,11 +2129,6 @@ input UpdateOutboundShipmentInput {
 	The new invoice id provided by the client
 	"""
 	id: String!
-	"""
-	The other party must be a customer of the current store.
-This field can be used to change the other_party of an invoice
-	"""
-	otherPartyId: String
 	"""
 	When changing the status from DRAFT to CONFIRMED or FINALISED the total_number_of_packs for
 existing invoice items gets updated.
@@ -2153,6 +2162,14 @@ type UpdateOutboundShipmentLineResponseWithId {
 	id: String!
 	response: UpdateOutboundShipmentLineResponse!
 }
+type UpdateOutboundShipmentNameError {
+	error: UpdateNameErrorInterface!
+}
+input UpdateOutboundShipmentNameInput {
+	id: String!
+	otherPartyId: String
+}
+union UpdateOutboundShipmentNameResponse = | UpdateOutboundShipmentNameError | InvoiceNode
 union UpdateOutboundShipmentResponse = | UpdateOutboundShipmentError | NodeError | InvoiceNode
 type UpdateOutboundShipmentResponseWithId {
 	id: String!

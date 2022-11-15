@@ -87,7 +87,7 @@ export const Sync: React.FC = () => {
           {t('heading.synchronise-status')}
         </Typography>
         <Row title={t('sync-info.number-to-push')}>
-          {numberOfRecordsInPushQueue}
+          <Typography>{numberOfRecordsInPushQueue}</Typography>
         </Row>
         <Row title={t('sync-info.last-sync')}>{formattedLatestSyncDate}</Row>
         <Row>
@@ -118,7 +118,7 @@ const Row: React.FC<PropsWithChildren<RowProps>> = ({ title, children }) => (
       <Typography fontWeight={700}>{title}</Typography>
     </Grid>
     <Grid item flex={1}>
-      <Typography>{children}</Typography>
+      {children}
     </Grid>
   </Grid>
 );

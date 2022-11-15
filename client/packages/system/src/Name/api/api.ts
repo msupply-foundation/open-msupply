@@ -1,4 +1,8 @@
-import { SortBy, NameSortFieldInput } from '@openmsupply-client/common';
+import {
+  SortBy,
+  NameSortFieldInput,
+  NameNodeType,
+} from '@openmsupply-client/common';
 import { Sdk, NameRowFragment } from './operations.generated';
 
 export type ListParams = {
@@ -49,7 +53,10 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
         key,
         desc: !!sortBy?.isDesc,
         storeId,
-        filter: { isSupplier: true },
+        filter: {
+          isSupplier: true,
+          type: { equalAny: [NameNodeType.Facility, NameNodeType.Store] },
+        },
         first: 1000,
       });
 
@@ -62,7 +69,10 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
         key,
         desc: !!sortBy?.isDesc,
         storeId,
-        filter: { isCustomer: true },
+        filter: {
+          isCustomer: true,
+          type: { equalAny: [NameNodeType.Facility, NameNodeType.Store] },
+        },
         first: 1000,
       });
 
@@ -91,6 +101,7 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
         storeId,
         filter: {
           [type === 'customer' ? 'isCustomer' : 'isSupplier']: true,
+          type: { equalAny: [NameNodeType.Facility, NameNodeType.Store] },
         },
       });
 

@@ -724,6 +724,12 @@ export type EqualFilterStringInput = {
   notEqualTo?: InputMaybe<Scalars['String']>;
 };
 
+export type EqualFilterTypeInput = {
+  equalAny?: InputMaybe<Array<NameNodeType>>;
+  equalTo?: InputMaybe<NameNodeType>;
+  notEqualTo?: InputMaybe<NameNodeType>;
+};
+
 export type FailedToFetchReportData = PrintReportErrorInterface & {
   __typename: 'FailedToFetchReportData';
   description: Scalars['String'];
@@ -1154,7 +1160,7 @@ export type InvoiceFilterInput = {
   verifiedDatetime?: InputMaybe<DatetimeFilterInput>;
 };
 
-export type InvoiceIsNotEditable = UpdateErrorInterface & {
+export type InvoiceIsNotEditable = UpdateErrorInterface & UpdateNameErrorInterface & {
   __typename: 'InvoiceIsNotEditable';
   description: Scalars['String'];
 };
@@ -1570,6 +1576,7 @@ export type Mutations = {
   updateLocation: UpdateLocationResponse;
   updateOutboundShipment: UpdateOutboundShipmentResponse;
   updateOutboundShipmentLine: UpdateOutboundShipmentLineResponse;
+  updateOutboundShipmentName: UpdateOutboundShipmentNameResponse;
   updateOutboundShipmentServiceLine: UpdateOutboundShipmentServiceLineResponse;
   updateOutboundShipmentUnallocatedLine: UpdateOutboundShipmentUnallocatedLineResponse;
   updateRequestRequisition: UpdateRequestRequisitionResponse;
@@ -1834,6 +1841,12 @@ export type MutationsUpdateOutboundShipmentLineArgs = {
 };
 
 
+export type MutationsUpdateOutboundShipmentNameArgs = {
+  input: UpdateOutboundShipmentNameInput;
+  storeId: Scalars['String'];
+};
+
+
 export type MutationsUpdateOutboundShipmentServiceLineArgs = {
   input: UpdateOutboundShipmentServiceLineInput;
   storeId: Scalars['String'];
@@ -1914,12 +1927,14 @@ export type NameFilterInput = {
    * if is_visible is set to true and is_system_name is also true no system names will be returned
    */
   isSystemName?: InputMaybe<Scalars['Boolean']>;
-  /** Visibility in current store (based on store_id parameter and existance of name_store_join record) */
+  /** Visibility in current store (based on store_id parameter and existence of name_store_join record) */
   isVisible?: InputMaybe<Scalars['Boolean']>;
   /** Filter by name */
   name?: InputMaybe<SimpleStringFilterInput>;
   /** Code of the store if store is linked to name */
   storeCode?: InputMaybe<SimpleStringFilterInput>;
+  /** Filter by the name type */
+  type?: InputMaybe<EqualFilterTypeInput>;
 };
 
 export type NameNode = {
@@ -2002,7 +2017,7 @@ export type NotAnInboundShipment = UpdateInboundShipmentLineErrorInterface & {
   description: Scalars['String'];
 };
 
-export type NotAnOutboundShipmentError = UpdateErrorInterface & {
+export type NotAnOutboundShipmentError = UpdateErrorInterface & UpdateNameErrorInterface & {
   __typename: 'NotAnOutboundShipmentError';
   description: Scalars['String'];
 };
@@ -2019,7 +2034,7 @@ export type NothingRemainingToSupply = CreateRequisitionShipmentErrorInterface &
   description: Scalars['String'];
 };
 
-export type OtherPartyNotACustomer = InsertErrorInterface & UpdateErrorInterface & {
+export type OtherPartyNotACustomer = InsertErrorInterface & UpdateNameErrorInterface & {
   __typename: 'OtherPartyNotACustomer';
   description: Scalars['String'];
 };
@@ -2029,7 +2044,7 @@ export type OtherPartyNotASupplier = InsertInboundShipmentErrorInterface & Inser
   description: Scalars['String'];
 };
 
-export type OtherPartyNotVisible = InsertErrorInterface & InsertInboundShipmentErrorInterface & InsertRequestRequisitionErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateRequestRequisitionErrorInterface & {
+export type OtherPartyNotVisible = InsertErrorInterface & InsertInboundShipmentErrorInterface & InsertRequestRequisitionErrorInterface & UpdateInboundShipmentErrorInterface & UpdateNameErrorInterface & UpdateRequestRequisitionErrorInterface & {
   __typename: 'OtherPartyNotVisible';
   description: Scalars['String'];
 };
@@ -2335,7 +2350,7 @@ export type RecordBelongsToAnotherStore = DeleteLocationErrorInterface & UpdateL
   description: Scalars['String'];
 };
 
-export type RecordNotFound = AddFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & NodeErrorInterface & RequisitionLineChartErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateLocationErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UseSuggestedQuantityErrorInterface & {
+export type RecordNotFound = AddFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & NodeErrorInterface & RequisitionLineChartErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateLocationErrorInterface & UpdateNameErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UseSuggestedQuantityErrorInterface & {
   __typename: 'RecordNotFound';
   description: Scalars['String'];
 };
@@ -3053,6 +3068,10 @@ export type UpdateLocationInput = {
 
 export type UpdateLocationResponse = LocationNode | UpdateLocationError;
 
+export type UpdateNameErrorInterface = {
+  description: Scalars['String'];
+};
+
 export type UpdateOutboundShipmentError = {
   __typename: 'UpdateOutboundShipmentError';
   error: UpdateErrorInterface;
@@ -3064,11 +3083,6 @@ export type UpdateOutboundShipmentInput = {
   /** The new invoice id provided by the client */
   id: Scalars['String'];
   onHold?: InputMaybe<Scalars['Boolean']>;
-  /**
-   * 	The other party must be a customer of the current store.
-   * This field can be used to change the other_party of an invoice
-   */
-  otherPartyId?: InputMaybe<Scalars['String']>;
   /**
    * 	When changing the status from DRAFT to CONFIRMED or FINALISED the total_number_of_packs for
    * existing invoice items gets updated.
@@ -3104,6 +3118,18 @@ export type UpdateOutboundShipmentLineResponseWithId = {
   id: Scalars['String'];
   response: UpdateOutboundShipmentLineResponse;
 };
+
+export type UpdateOutboundShipmentNameError = {
+  __typename: 'UpdateOutboundShipmentNameError';
+  error: UpdateNameErrorInterface;
+};
+
+export type UpdateOutboundShipmentNameInput = {
+  id: Scalars['String'];
+  otherPartyId?: InputMaybe<Scalars['String']>;
+};
+
+export type UpdateOutboundShipmentNameResponse = InvoiceNode | UpdateOutboundShipmentNameError;
 
 export type UpdateOutboundShipmentResponse = InvoiceNode | NodeError | UpdateOutboundShipmentError;
 

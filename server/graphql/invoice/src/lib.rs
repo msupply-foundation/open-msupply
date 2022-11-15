@@ -72,6 +72,15 @@ impl InvoiceMutations {
         outbound_shipment::update(ctx, &store_id, input)
     }
 
+    async fn update_outbound_shipment_name(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: outbound_shipment::UpdateNameInput,
+    ) -> Result<outbound_shipment::UpdateNameResponse> {
+        outbound_shipment::update_name(ctx, &store_id, input)
+    }
+
     async fn delete_outbound_shipment(
         &self,
         ctx: &Context<'_>,
