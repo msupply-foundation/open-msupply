@@ -303,6 +303,9 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permission> {
             Permissions::ViewStock => {
                 output.insert(Permission::StockLineQuery);
             }
+            Permissions::EditStock => {
+                output.insert(Permission::StockLineMutate);
+            }
             // stocktake
             Permissions::CreateStocktake => {
                 output.insert(Permission::StocktakeMutate);

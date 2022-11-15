@@ -23,10 +23,6 @@ pub fn check_store(stock: &StockLineRow, store_id: &str) -> bool {
     return true;
 }
 
-pub fn check_stock_line_on_hold(stock: &StockLineRow) -> bool {
-    return stock.on_hold;
-}
-
 pub fn check_location_exists(
     connection: &StorageConnection,
     id: &str,

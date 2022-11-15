@@ -1,10 +1,7 @@
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{
-            mock_stock_line_a, mock_stock_line_on_hold, mock_store_a, mock_user_account_a,
-            MockDataInserts,
-        },
+        mock::{mock_stock_line_a, mock_store_a, mock_user_account_a, MockDataInserts},
         test_db::setup_all,
         StockLineRowRepository,
     };
@@ -46,18 +43,6 @@ mod test {
                 })
             ),
             Err(ServiceError::LocationDoesNotExist)
-        );
-
-        // StockIsOnHold
-        assert_eq!(
-            service.update_stock_line(
-                &context,
-                inline_init(|r: &mut UpdateStockLine| {
-                    r.id = mock_stock_line_on_hold()[0].id.clone();
-                    r.location_id = Some("location_1".to_string());
-                })
-            ),
-            Err(ServiceError::StockIsOnHold)
         );
 
         // StockDoesNotBelongToStore
