@@ -1,9 +1,11 @@
 use chrono::NaiveDate;
 use repository::{
-    RepositoryError, StockLine, StockLineRow, StockLineRowRepository, StorageConnection,
+    ActivityLogType, RepositoryError, StockLine, StockLineRow, StockLineRowRepository,
+    StorageConnection,
 };
 
 use crate::{
+    activity_log::activity_log_entry,
     service_provider::ServiceContext,
     stock_line::validate::{check_location_exists, check_stock_line_exists, check_store},
     SingleRecordError,
@@ -41,8 +43,10 @@ pub fn update_stock_line(
         .connection
         .transaction_sync(|connection| {
             let existing = validate(connection, &ctx.store_id, &input)?;
-            let new_stock_line = generate(existing, input);
+            let new_stock_line = generate(existing.clone(), input);
             StockLineRowRepository::new(&connection).upsert_one(&new_stock_line)?;
+
+            log_stock_changes(ctx, existing, new_stock_line.clone())?;
 
             get_stock_line(ctx, new_stock_line.id).map_err(|error| match error {
                 SingleRecordError::DatabaseError(error) => DatabaseError(error),
@@ -93,6 +97,36 @@ fn generate(
     existing.expiry_date = expiry_date.or(existing.expiry_date);
     existing.on_hold = on_hold.unwrap_or(existing.on_hold);
     existing
+}
+
+fn log_stock_changes(
+    ctx: &ServiceContext,
+    existing: StockLineRow,
+    new: StockLineRow,
+) -> Result<(), RepositoryError> {
+    if existing.location_id != new.location_id {
+        activity_log_entry(&ctx, ActivityLogType::StockLocationChange, &new.id)?;
+    }
+    if existing.batch != new.batch {
+        activity_log_entry(&ctx, ActivityLogType::StockBatchChange, &new.id)?;
+    }
+    if existing.cost_price_per_pack != new.cost_price_per_pack {
+        activity_log_entry(&ctx, ActivityLogType::StockCostPriceChange, &new.id)?;
+    }
+    if existing.sell_price_per_pack != new.sell_price_per_pack {
+        activity_log_entry(&ctx, ActivityLogType::StockSellPriceChange, &new.id)?;
+    }
+    if existing.expiry_date != new.expiry_date {
+        activity_log_entry(&ctx, ActivityLogType::StockExpiryDateChange, &new.id)?;
+    }
+    if existing.on_hold != new.on_hold && new.on_hold {
+        activity_log_entry(&ctx, ActivityLogType::StockOnHold, &new.id)?;
+    }
+    if existing.on_hold != new.on_hold && !new.on_hold {
+        activity_log_entry(&ctx, ActivityLogType::StockOffHold, &new.id)?;
+    }
+
+    Ok(())
 }
 
 impl From<RepositoryError> for UpdateStockLineError {
