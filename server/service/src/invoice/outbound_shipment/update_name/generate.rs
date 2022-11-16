@@ -1,5 +1,6 @@
 use repository::{
-    EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow, Name,
+    ActivityLogFilter, ActivityLogRepository, ActivityLogRow, EqualFilter, InvoiceLine,
+    InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow, Name,
 };
 use repository::{InvoiceRow, StorageConnection};
 use util::uuid::uuid;
@@ -11,6 +12,7 @@ pub struct GenerateResult {
     pub(crate) old_invoice_lines: Vec<InvoiceLine>,
     pub(crate) new_invoice: InvoiceRow,
     pub(crate) new_invoice_lines: Vec<InvoiceLine>,
+    pub(crate) new_activity_log: Vec<ActivityLogRow>,
 }
 
 pub fn generate(
@@ -55,10 +57,23 @@ pub fn generate(
         new_invoice.name_id = other_party.name_row.id;
     }
 
+    let new_activity_log = ActivityLogRepository::new(connection)
+        .query_by_filter(
+            ActivityLogFilter::new().record_id(EqualFilter::equal_to(&old_invoice.id)),
+        )?
+        .iter()
+        .map(|log| ActivityLogRow {
+            id: uuid(),
+            record_id: Some(new_invoice.id.clone()),
+            ..log.activity_log_row.clone()
+        })
+        .collect();
+
     Ok(GenerateResult {
         old_invoice,
         old_invoice_lines,
         new_invoice,
         new_invoice_lines,
+        new_activity_log,
     })
 }
