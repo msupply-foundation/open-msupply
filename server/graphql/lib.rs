@@ -25,7 +25,7 @@ use graphql_location::{LocationMutations, LocationQueries};
 use graphql_reports::ReportQueries;
 use graphql_requisition::{RequisitionMutations, RequisitionQueries};
 use graphql_requisition_line::RequisitionLineMutations;
-use graphql_stock_line::StockLineQueries;
+use graphql_stock_line::{StockLineMutations, StockLineQueries};
 use graphql_stocktake::{StocktakeMutations, StocktakeQueries};
 use graphql_stocktake_line::StocktakeLineMutations;
 
@@ -79,6 +79,7 @@ pub struct Mutations(
     pub BatchMutations,
     pub RequisitionMutations,
     pub RequisitionLineMutations,
+    pub StockLineMutations,
     pub GeneralMutations,
 );
 
@@ -93,6 +94,7 @@ impl Mutations {
             BatchMutations,
             RequisitionMutations,
             RequisitionLineMutations,
+            StockLineMutations,
             GeneralMutations,
         )
     }
