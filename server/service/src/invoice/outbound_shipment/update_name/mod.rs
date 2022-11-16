@@ -3,7 +3,10 @@ pub mod validate;
 
 use crate::{invoice::query::get_invoice, service_provider::ServiceContext};
 use generate::{generate, GenerateResult};
-use repository::{Invoice, InvoiceLineRowRepository, InvoiceRowRepository, RepositoryError};
+use repository::{
+    ActivityLogRowRepository, Invoice, InvoiceLineRowRepository, InvoiceRowRepository,
+    RepositoryError,
+};
 use validate::validate;
 
 #[derive(Clone, Debug, PartialEq, Default)]
@@ -42,6 +45,7 @@ pub fn update_outbound_shipment_name(
                 old_invoice_lines,
                 new_invoice,
                 new_invoice_lines,
+                new_activity_log,
             } = generate(connection, invoice, other_party_option, patch.clone())?;
 
             let invoice_repo = InvoiceRowRepository::new(connection);
@@ -57,6 +61,10 @@ pub fn update_outbound_shipment_name(
             }
 
             invoice_repo.delete(&old_invoice.id)?;
+
+            for new_activity in new_activity_log {
+                ActivityLogRowRepository::new(connection).insert_one(&new_activity)?;
+            }
 
             get_invoice(ctx, None, &new_invoice.id)
                 .map_err(|error| OutError::DatabaseError(error))?
