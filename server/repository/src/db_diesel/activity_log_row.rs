@@ -39,6 +39,13 @@ pub enum ActivityLogType {
     RequisitionDeleted,
     RequisitionStatusSent,
     RequisitionStatusFinalised,
+    StockLocationChange,
+    StockCostPriceChange,
+    StockSellPriceChange,
+    StockExpiryDateChange,
+    StockBatchChange,
+    StockOnHold,
+    StockOffHold,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
