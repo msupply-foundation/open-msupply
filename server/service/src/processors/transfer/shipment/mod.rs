@@ -137,7 +137,6 @@ pub(crate) fn process_shipment_transfers(
                 operation,
                 other_party_store_id: active_stores
                     .get_store_id_for_name_id(name_id)
-                    .ok_or_else(|| Error::NameIsNotAnAciveStore(log.clone()))?,
                     .ok_or_else(|| Error::NameIsNotAnActiveStore(log.clone()))?,
             };
 
