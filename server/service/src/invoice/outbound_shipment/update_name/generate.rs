@@ -30,6 +30,7 @@ pub fn generate(
     let mut new_invoice = InvoiceRow {
         id: uuid(),
         name_id: input_other_party_id.unwrap_or(existing_invoice.name_id.clone()),
+        linked_invoice_id: None,
         ..old_invoice.clone()
     };
 
