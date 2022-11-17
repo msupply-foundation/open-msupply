@@ -1,11 +1,12 @@
 use chrono::{NaiveDate, Utc};
 use repository::{
-    ActivityLogType, EqualFilter, InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType,
-    InvoiceRow, InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType, ItemRowRepository,
-    LocationMovementRow, LocationMovementRowRepository, NameRowRepository, NumberRowType,
-    RepositoryError, StockLineRow, StockLineRowRepository, Stocktake, StocktakeLine,
-    StocktakeLineFilter, StocktakeLineRepository, StocktakeLineRow, StocktakeLineRowRepository,
-    StocktakeRow, StocktakeRowRepository, StocktakeStatus, StorageConnection,
+    ActivityLogType, DatetimeFilter, EqualFilter, InvoiceLineRow, InvoiceLineRowRepository,
+    InvoiceLineRowType, InvoiceRow, InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType,
+    ItemRowRepository, LocationMovementFilter, LocationMovementRepository, LocationMovementRow,
+    LocationMovementRowRepository, NameRowRepository, NumberRowType, RepositoryError, StockLineRow,
+    StockLineRowRepository, Stocktake, StocktakeLine, StocktakeLineFilter, StocktakeLineRepository,
+    StocktakeLineRow, StocktakeLineRowRepository, StocktakeRow, StocktakeRowRepository,
+    StocktakeStatus, StorageConnection,
 };
 use util::{constants::INVENTORY_ADJUSTMENT_NAME_CODE, inline_edit, uuid::uuid};
 
@@ -220,11 +221,7 @@ fn generate_stock_line_update(
     };
 
     let location_movement = if counted_number_of_packs <= 0.0 {
-        Some(generate_exit_location_movement(
-            store_id.to_owned(),
-            updated_line.id.clone(),
-            None,
-        ))
+        generate_exit_location_movement(connection, &store_id, updated_line.clone())?
     } else {
         None
     };
@@ -342,18 +339,40 @@ fn generate_location_movement_entry(
 }
 
 fn generate_exit_location_movement(
-    store_id: String,
-    stock_line_id: String,
-    location_id: Option<String>,
-) -> LocationMovementRow {
-    LocationMovementRow {
-        id: uuid(),
-        store_id,
-        stock_line_id,
-        location_id,
-        enter_datetime: None,
-        exit_datetime: Some(Utc::now().naive_utc()),
-    }
+    connection: &StorageConnection,
+    store_id: &str,
+    stock_line: StockLineRow,
+) -> Result<Option<LocationMovementRow>, RepositoryError> {
+    println!(
+        "Generating exit location movement for stock line {:?}",
+        stock_line
+    );
+
+    match stock_line.location_id {
+        Some(location_id) => {
+            let filter = LocationMovementRepository::new(connection)
+                .query_by_filter(
+                    LocationMovementFilter::new()
+                        .enter_datetime(DatetimeFilter::is_null(false))
+                        .exit_datetime(DatetimeFilter::is_null(true))
+                        .location_id(EqualFilter::equal_to(&location_id))
+                        .stock_line_id(EqualFilter::equal_to(&stock_line.id))
+                        .store_id(EqualFilter::equal_to(&store_id)),
+                )?
+                .into_iter()
+                .map(|l| l.location_movement_row)
+                .min_by_key(|l| l.enter_datetime);
+
+            if filter.is_some() {
+                let mut location_movement = filter.unwrap();
+                location_movement.exit_datetime = Some(Utc::now().naive_utc());
+                return Ok(Some(location_movement));
+            } else {
+                return Ok(None);
+            }
+        }
+        None => return Ok(None),
+    };
 }
 
 fn generate(
