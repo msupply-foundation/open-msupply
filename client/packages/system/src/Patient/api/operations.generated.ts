@@ -10,9 +10,9 @@ export type PatientDocumentFragment = { __typename: 'DocumentRegistryNode', id: 
 
 export type PatientDocumentRegistryFragment = { __typename: 'DocumentRegistryNode', id: string, documentType: string, formSchemaId: string, jsonSchema: any, name?: string | null, context: Types.DocumentRegistryNodeContext, parentId?: string | null, uiSchema: any, uiSchemaType: string, children: Array<{ __typename: 'DocumentRegistryNode', id: string, documentType: string, formSchemaId: string, jsonSchema: any, name?: string | null, context: Types.DocumentRegistryNodeContext, parentId?: string | null, uiSchema: any, uiSchemaType: string }> };
 
-export type ProgramEventFragment = { __typename: 'ProgramEventNode', datetime: string, name?: string | null, type: string };
+export type ProgramEventFragment = { __typename: 'ProgramEventNode', activeDatetime: string, name?: string | null, type: string };
 
-export type ProgramEnrolmentRowFragment = { __typename: 'ProgramEnrolmentNode', enrolmentDatetime: string, name: string, patientId: string, programPatientId?: string | null, type: string, document: { __typename: 'DocumentNode', documentRegistry?: { __typename: 'DocumentRegistryNode', id: string, name?: string | null } | null }, events: Array<{ __typename: 'ProgramEventNode', datetime: string, name?: string | null, type: string }> };
+export type ProgramEnrolmentRowFragment = { __typename: 'ProgramEnrolmentNode', enrolmentDatetime: string, name: string, patientId: string, programPatientId?: string | null, type: string, document: { __typename: 'DocumentNode', documentRegistry?: { __typename: 'DocumentRegistryNode', id: string, name?: string | null } | null }, events: Array<{ __typename: 'ProgramEventNode', activeDatetime: string, name?: string | null, type: string }> };
 
 export type PatientFragment = { __typename: 'PatientNode', address1?: string | null, address2?: string | null, code: string, code2?: string | null, country?: string | null, dateOfBirth?: string | null, email?: string | null, firstName?: string | null, lastName?: string | null, gender?: Types.GenderType | null, id: string, name: string, phone?: string | null, website?: string | null, isDeceased: boolean, document?: { __typename: 'DocumentNode', id: string, name: string, type: string } | null };
 
@@ -57,11 +57,11 @@ export type ProgramEnrolmentsQueryVariables = Types.Exact<{
   key: Types.ProgramEnrolmentSortFieldInput;
   desc?: Types.InputMaybe<Types.Scalars['Boolean']>;
   filter?: Types.InputMaybe<Types.ProgramEnrolmentFilterInput>;
-  latestEventTime: Types.Scalars['String'];
+  eventTime: Types.Scalars['String'];
 }>;
 
 
-export type ProgramEnrolmentsQuery = { __typename: 'Queries', programEnrolments: { __typename: 'ProgramEnrolmentConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramEnrolmentNode', enrolmentDatetime: string, name: string, patientId: string, programPatientId?: string | null, type: string, document: { __typename: 'DocumentNode', documentRegistry?: { __typename: 'DocumentRegistryNode', id: string, name?: string | null } | null }, events: Array<{ __typename: 'ProgramEventNode', datetime: string, name?: string | null, type: string }> }> } };
+export type ProgramEnrolmentsQuery = { __typename: 'Queries', programEnrolments: { __typename: 'ProgramEnrolmentConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramEnrolmentNode', enrolmentDatetime: string, name: string, patientId: string, programPatientId?: string | null, type: string, document: { __typename: 'DocumentNode', documentRegistry?: { __typename: 'DocumentRegistryNode', id: string, name?: string | null } | null }, events: Array<{ __typename: 'ProgramEventNode', activeDatetime: string, name?: string | null, type: string }> }> } };
 
 export type InsertPatientMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -79,7 +79,7 @@ export type UpdatePatientMutationVariables = Types.Exact<{
 
 export type UpdatePatientMutation = { __typename: 'Mutations', updatePatient: { __typename: 'PatientNode', id: string, code: string, code2?: string | null, firstName?: string | null, lastName?: string | null, name: string, dateOfBirth?: string | null, gender?: Types.GenderType | null, email?: string | null, isDeceased: boolean, document?: { __typename: 'DocumentNode', id: string, name: string, type: string } | null } };
 
-export type EncounterRowFragment = { __typename: 'EncounterNode', id: string, program: string, startDatetime: string, endDatetime?: string | null, status?: Types.EncounterNodeStatus | null, name: string, type: string, document: { __typename: 'DocumentNode', documentRegistry?: { __typename: 'DocumentRegistryNode', name?: string | null } | null }, patient: { __typename: 'NameNode', id: string, firstName?: string | null, lastName?: string | null, name: string }, events: Array<{ __typename: 'ProgramEventNode', datetime: string, name?: string | null, type: string }> };
+export type PatientEncounterRowFragment = { __typename: 'EncounterNode', id: string, program: string, startDatetime: string, endDatetime?: string | null, status?: Types.EncounterNodeStatus | null, name: string, type: string, document: { __typename: 'DocumentNode', documentRegistry?: { __typename: 'DocumentRegistryNode', name?: string | null } | null }, patient: { __typename: 'NameNode', id: string, firstName?: string | null, lastName?: string | null, name: string }, events: Array<{ __typename: 'ProgramEventNode', activeDatetime: string, name?: string | null, type: string }> };
 
 export type EncountersQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -87,11 +87,11 @@ export type EncountersQueryVariables = Types.Exact<{
   desc?: Types.InputMaybe<Types.Scalars['Boolean']>;
   filter?: Types.InputMaybe<Types.EncounterFilterInput>;
   page?: Types.InputMaybe<Types.PaginationInput>;
-  latestEventTime: Types.Scalars['String'];
+  eventTime: Types.Scalars['String'];
 }>;
 
 
-export type EncountersQuery = { __typename: 'Queries', encounters: { __typename: 'EncounterConnector', totalCount: number, nodes: Array<{ __typename: 'EncounterNode', id: string, program: string, startDatetime: string, endDatetime?: string | null, status?: Types.EncounterNodeStatus | null, name: string, type: string, document: { __typename: 'DocumentNode', documentRegistry?: { __typename: 'DocumentRegistryNode', name?: string | null } | null }, patient: { __typename: 'NameNode', id: string, firstName?: string | null, lastName?: string | null, name: string }, events: Array<{ __typename: 'ProgramEventNode', datetime: string, name?: string | null, type: string }> }> } };
+export type EncountersQuery = { __typename: 'Queries', encounters: { __typename: 'EncounterConnector', totalCount: number, nodes: Array<{ __typename: 'EncounterNode', id: string, program: string, startDatetime: string, endDatetime?: string | null, status?: Types.EncounterNodeStatus | null, name: string, type: string, document: { __typename: 'DocumentNode', documentRegistry?: { __typename: 'DocumentRegistryNode', name?: string | null } | null }, patient: { __typename: 'NameNode', id: string, firstName?: string | null, lastName?: string | null, name: string }, events: Array<{ __typename: 'ProgramEventNode', activeDatetime: string, name?: string | null, type: string }> }> } };
 
 export const PatientRowFragmentDoc = gql`
     fragment PatientRow on PatientNode {
@@ -135,7 +135,7 @@ export const PatientDocumentRegistryFragmentDoc = gql`
     ${PatientDocumentFragmentDoc}`;
 export const ProgramEventFragmentDoc = gql`
     fragment ProgramEvent on ProgramEventNode {
-  datetime
+  activeDatetime
   name
   type
 }
@@ -153,7 +153,7 @@ export const ProgramEnrolmentRowFragmentDoc = gql`
       name
     }
   }
-  events(filter: {datetime: {beforeOrEqualTo: $latestEventTime}}) {
+  events(at: $eventTime) {
     ...ProgramEvent
   }
 }
@@ -182,8 +182,8 @@ export const PatientFragmentDoc = gql`
   isDeceased
 }
     `;
-export const EncounterRowFragmentDoc = gql`
-    fragment EncounterRow on EncounterNode {
+export const PatientEncounterRowFragmentDoc = gql`
+    fragment PatientEncounterRow on EncounterNode {
   id
   document {
     documentRegistry {
@@ -202,7 +202,7 @@ export const EncounterRowFragmentDoc = gql`
     lastName
     name
   }
-  events(filter: {datetime: {beforeOrEqualTo: $latestEventTime}}) {
+  events(at: $eventTime) {
     ...ProgramEvent
   }
 }
@@ -275,7 +275,7 @@ export const GetDocumentHistoryDocument = gql`
 }
     `;
 export const ProgramEnrolmentsDocument = gql`
-    query programEnrolments($storeId: String!, $key: ProgramEnrolmentSortFieldInput!, $desc: Boolean, $filter: ProgramEnrolmentFilterInput, $latestEventTime: String!) {
+    query programEnrolments($storeId: String!, $key: ProgramEnrolmentSortFieldInput!, $desc: Boolean, $filter: ProgramEnrolmentFilterInput, $eventTime: String!) {
   programEnrolments(
     storeId: $storeId
     sort: {key: $key, desc: $desc}
@@ -312,7 +312,7 @@ export const UpdatePatientDocument = gql`
 }
     ${PatientRowFragmentDoc}`;
 export const EncountersDocument = gql`
-    query encounters($storeId: String!, $key: EncounterSortFieldInput!, $desc: Boolean, $filter: EncounterFilterInput, $page: PaginationInput, $latestEventTime: String!) {
+    query encounters($storeId: String!, $key: EncounterSortFieldInput!, $desc: Boolean, $filter: EncounterFilterInput, $page: PaginationInput, $eventTime: String!) {
   encounters(
     storeId: $storeId
     sort: {key: $key, desc: $desc}
@@ -321,13 +321,13 @@ export const EncountersDocument = gql`
   ) {
     ... on EncounterConnector {
       nodes {
-        ...EncounterRow
+        ...PatientEncounterRow
       }
       totalCount
     }
   }
 }
-    ${EncounterRowFragmentDoc}`;
+    ${PatientEncounterRowFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -437,7 +437,7 @@ export const mockGetDocumentHistoryQuery = (resolver: ResponseResolver<GraphQLRe
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockProgramEnrolmentsQuery((req, res, ctx) => {
- *   const { storeId, key, desc, filter, latestEventTime } = req.variables;
+ *   const { storeId, key, desc, filter, eventTime } = req.variables;
  *   return res(
  *     ctx.data({ programEnrolments })
  *   )
@@ -488,7 +488,7 @@ export const mockUpdatePatientMutation = (resolver: ResponseResolver<GraphQLRequ
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockEncountersQuery((req, res, ctx) => {
- *   const { storeId, key, desc, filter, page, latestEventTime } = req.variables;
+ *   const { storeId, key, desc, filter, page, eventTime } = req.variables;
  *   return res(
  *     ctx.data({ encounters })
  *   )

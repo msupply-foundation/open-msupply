@@ -17,13 +17,13 @@ fragment EncounterRow on EncounterNode {
     lastName
     name
   }
-  events(filter: { datetime: { beforeOrEqualTo: $latestEventTime } }) {
-    ...ProgramEvent
+  events(at: $eventTime) {
+    ...EncounterProgramEvent
   }
 }
 
-fragment ProgramEvent on ProgramEventNode {
-  datetime
+fragment EncounterProgramEvent on ProgramEventNode {
+  activeDatetime
   name
   type
 }
@@ -81,7 +81,7 @@ query encounters(
   $desc: Boolean
   $filter: EncounterFilterInput
   $page: PaginationInput
-  $latestEventTime: String!
+  $eventTime: String!
 ) {
   encounters(
     storeId: $storeId

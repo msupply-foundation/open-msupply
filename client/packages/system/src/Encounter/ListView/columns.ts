@@ -7,9 +7,9 @@ import {
 } from '@openmsupply-client/common';
 import { useFormatDateTime } from '@common/intl';
 import { EncounterRowFragment } from '../api';
-import { ProgramEventFragment } from '../api/operations.generated';
+import { EncounterProgramEventFragment } from '../api/operations.generated';
 
-const encounterEventCellValue = (events: ProgramEventFragment[]) => {
+const encounterEventCellValue = (events: EncounterProgramEventFragment[]) => {
   // just take the name of the first event
   return events[0]?.name ?? '';
 };
@@ -72,7 +72,9 @@ export const useEncounterListColumns = ({
     label: 'label.encounter-status',
     sortable: false,
     formatter: events =>
-      encounterEventCellValue((events as ProgramEventFragment[]) ?? []),
+      encounterEventCellValue(
+        (events as EncounterProgramEventFragment[]) ?? []
+      ),
   });
   columnList.push({
     key: 'effectiveStatus',

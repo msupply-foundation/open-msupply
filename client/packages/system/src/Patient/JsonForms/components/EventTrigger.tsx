@@ -5,7 +5,7 @@ import {
   uiTypeIs,
   composePaths,
 } from '@jsonforms/core';
-import { withJsonFormsControlProps } from '@jsonforms/react';
+import { withJsonFormsControlProps, useJsonForms } from '@jsonforms/react';
 import { FormLabel } from '@mui/material';
 import {
   useDebounceCallback,
@@ -15,18 +15,17 @@ import {
 import { get as extractProperty } from 'lodash';
 import { z } from 'zod';
 import _ from 'lodash';
+import { EncounterEvent } from './encounter_event';
 
 type OptionEvent = {
   scheduleIn?: {
     days?: number;
     minutes?: number;
   };
+  documentType: string;
+  documentName?: boolean;
   name?: string;
   type: string;
-  context?: {
-    value?: string;
-    documentName?: boolean;
-  };
 };
 
 type EventTrigger = {
@@ -46,7 +45,11 @@ type Options = {
   baseDatetimeField: string;
   /** Triggers evaluated with an AND */
   trigger: EventTrigger[];
-  /** All events have to be in the same group */
+
+  /**
+   * The group field can is used to group or "tag" events so that this UI component knows which
+   * events to update.
+   */
   group: string;
   /** Event to be emitted when trigger is fulfilled */
   events: OptionEvent[];
@@ -60,12 +63,10 @@ const OptionEvent: z.ZodType<OptionEvent> = z
         minutes: z.number().optional(),
       })
       .optional(),
+    documentType: z.string(),
+    documentName: z.boolean().optional(),
     name: z.string().optional(),
     type: z.string(),
-    context: z.object({
-      value: z.string().optional(),
-      documentName: z.boolean().optional(),
-    }),
   })
   .strict();
 
@@ -86,33 +87,17 @@ const Options: z.ZodType<Options> = z
   })
   .strict();
 
-interface EncounterEvent {
-  /**
-   * Time of the the event, can be in the future
-   *
-   * @format date-time
-   */
-  datetime: string;
-  group?: string;
-
-  /**
-   * Name of this specific event. There could be multiple events of the same type but with different
-   * names.
-   * For example, two event could have type 'status' and name "Status name 1" and "Status name 2"
-   */
-  name?: string;
-  /**
-   * For example, encounter 'status'.
-   */
-  type: string;
-  context?: string;
+export interface Practitioner {
+  id?: string;
+  firstName?: string;
+  lastName?: string;
 }
 
 const scheduleEvent = (
   event: OptionEvent,
   baseDatetime: Date,
-  group?: string,
-  context?: string
+  group: string,
+  documentName?: string
 ): EncounterEvent => {
   const datetimeDays = DateUtils.addDays(
     baseDatetime,
@@ -124,11 +109,12 @@ const scheduleEvent = (
   );
 
   return {
-    datetime: datetime.toISOString(),
+    activeDatetime: datetime.toISOString(),
+    documentType: event.documentType,
+    documentName,
     group,
     name: event.name,
     type: event.type,
-    context,
   };
 };
 
@@ -140,6 +126,8 @@ const UIComponent = (props: ControlProps) => {
     Options,
     uischema.options
   );
+  const ctx = useJsonForms();
+  const fullData = ctx.core?.data ?? {};
   const trigger = useDebounceCallback(
     data => {
       if (!options) {
@@ -161,24 +149,22 @@ const UIComponent = (props: ControlProps) => {
       }
 
       const datetimeField: string = extractProperty(
-        data,
+        fullData,
         options.baseDatetimeField
       );
       const datetime = new Date(datetimeField);
 
       const existingEvents: EncounterEvent[] =
-        extractProperty(data, 'events') ?? [];
+        extractProperty(fullData, 'events') ?? [];
 
       // Remove existing events for the group
       const events = existingEvents.filter(it => it.group !== options.group);
       for (const eventOption of options.events) {
-        const context =
-          eventOption.context?.value ??
-          (eventOption.context?.documentName
-            ? config?.documentName
-            : undefined);
+        const documentName = eventOption?.documentName
+          ? config?.documentName
+          : undefined;
         events.push(
-          scheduleEvent(eventOption, datetime, options.group, context)
+          scheduleEvent(eventOption, datetime, options.group, documentName)
         );
       }
 
@@ -190,7 +176,7 @@ const UIComponent = (props: ControlProps) => {
       const eventsPath = composePaths(path, 'events');
       handleChange(eventsPath, events);
     },
-    [path, options]
+    [path, options, fullData]
   );
 
   useEffect(() => {
