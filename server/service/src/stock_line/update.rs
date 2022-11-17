@@ -33,6 +33,7 @@ pub enum UpdateStockLineError {
     StockDoesNotExist,
     LocationDoesNotExist,
     UpdatedStockNotFound,
+    StockMovementNotFound,
 }
 
 pub fn update_stock_line(
@@ -133,7 +134,7 @@ fn generate_location_movement(
 
     match existing.location_id {
         Some(location_id) => {
-            exit_movement = LocationMovementRepository::new(connection)
+            let filter = LocationMovementRepository::new(connection)
                 .query_by_filter(
                     LocationMovementFilter::new()
                         .enter_datetime(DatetimeFilter::is_null(false))
@@ -144,11 +145,13 @@ fn generate_location_movement(
                 )?
                 .into_iter()
                 .map(|l| l.location_movement_row)
-                .min_by_key(|l| l.enter_datetime)
-                .ok_or(RepositoryError::NotFound)?;
+                .min_by_key(|l| l.enter_datetime);
 
-            exit_movement.exit_datetime = Some(Utc::now().naive_utc());
-            movement.push(exit_movement);
+            if filter.is_some() {
+                exit_movement = filter.unwrap();
+                exit_movement.exit_datetime = Some(Utc::now().naive_utc());
+                movement.push(exit_movement);
+            }
         }
         None => {}
     }

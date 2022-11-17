@@ -216,23 +216,24 @@ pub fn generate_exit_location_movement(
 
     for batch in batches {
         if batch.location_id.is_some() && batch.total_number_of_packs <= 0.0 {
-            movements_filter.push(
-                location_movement_repo
-                    .query_by_filter(
-                        LocationMovementFilter::new()
-                            .enter_datetime(DatetimeFilter::is_null(false))
-                            .exit_datetime(DatetimeFilter::is_null(true))
-                            .location_id(EqualFilter::equal_to(
-                                &batch.location_id.clone().unwrap_or_default(),
-                            ))
-                            .stock_line_id(EqualFilter::equal_to(&batch.id))
-                            .store_id(EqualFilter::equal_to(store_id)),
-                    )?
-                    .into_iter()
-                    .map(|l| l.location_movement_row)
-                    .min_by_key(|l| l.enter_datetime)
-                    .ok_or(RepositoryError::NotFound)?,
-            )
+            let filter = location_movement_repo
+                .query_by_filter(
+                    LocationMovementFilter::new()
+                        .enter_datetime(DatetimeFilter::is_null(false))
+                        .exit_datetime(DatetimeFilter::is_null(true))
+                        .location_id(EqualFilter::equal_to(
+                            &batch.location_id.clone().unwrap_or_default(),
+                        ))
+                        .stock_line_id(EqualFilter::equal_to(&batch.id))
+                        .store_id(EqualFilter::equal_to(store_id)),
+                )?
+                .into_iter()
+                .map(|l| l.location_movement_row)
+                .min_by_key(|l| l.enter_datetime);
+
+            if filter.is_some() {
+                movements_filter.push(filter.unwrap());
+            }
         }
     }
 
