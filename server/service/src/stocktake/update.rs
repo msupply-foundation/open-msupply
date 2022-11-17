@@ -343,11 +343,6 @@ fn generate_exit_location_movement(
     store_id: &str,
     stock_line: StockLineRow,
 ) -> Result<Option<LocationMovementRow>, RepositoryError> {
-    println!(
-        "Generating exit location movement for stock line {:?}",
-        stock_line
-    );
-
     match stock_line.location_id {
         Some(location_id) => {
             let filter = LocationMovementRepository::new(connection)
