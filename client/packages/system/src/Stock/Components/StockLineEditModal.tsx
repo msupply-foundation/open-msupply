@@ -15,6 +15,7 @@ import {
   InputWithLabelRowProps,
   ObjUtils,
   ExpiryDateInput,
+  useConfirmationModal,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment, useStock } from '../api';
 
@@ -76,10 +77,15 @@ export const StockLineEditModal: FC<StockLineEditModalProps> = ({
 }) => {
   const t = useTranslation('inventory');
   const { Modal } = useDialog({ isOpen, onClose });
+  const getConfirmation = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: t('messages.confirm-save-stock-line'),
+  });
 
   if (!stockLine) return null;
 
   const { draft, onUpdate, onSave } = useDraftStockLine(stockLine);
+
   return (
     <Modal
       width={600}
@@ -89,10 +95,14 @@ export const StockLineEditModal: FC<StockLineEditModalProps> = ({
         <DialogButton
           variant="ok"
           disabled={ObjUtils.isEqual(draft, stockLine)}
-          onClick={async () => {
-            await onSave();
-            onClose();
-          }}
+          onClick={() =>
+            getConfirmation({
+              onConfirm: async () => {
+                await onSave();
+                onClose();
+              },
+            })
+          }
         />
       }
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
