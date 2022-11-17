@@ -1,13 +1,13 @@
 use chrono::Utc;
 
 use repository::{
-    EqualFilter, InvoiceLineFilter, InvoiceLineRepository, LocationMovementRow, RepositoryError,
+    DatetimeFilter, EqualFilter, InvoiceLineFilter, InvoiceLineRepository, LocationMovementFilter,
+    LocationMovementRepository, LocationMovementRow, RepositoryError,
 };
 use repository::{
     InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, StockLineRow,
     StorageConnection,
 };
-use util::uuid::uuid;
 
 use super::{UpdateOutboundShipment, UpdateOutboundShipmentError, UpdateOutboundShipmentStatus};
 
@@ -19,7 +19,7 @@ pub(crate) struct GenerateResult {
 }
 
 pub(crate) fn generate(
-    store: &str,
+    store_id: &str,
     existing_invoice: InvoiceRow,
     UpdateOutboundShipment {
         id: _,
@@ -59,15 +59,9 @@ pub(crate) fn generate(
     };
 
     let location_movements = if let Some(batches) = batches_to_update.clone() {
-        let generate_movement = batches
-            .iter()
-            .filter_map(|batch| match batch.location_id {
-                Some(_) => Some(generate_exit_location_movement(batch, store.to_string())),
-                None => None,
-            })
-            .collect();
-
-        Some(generate_movement)
+        Some(generate_exit_location_movement(
+            connection, &batches, store_id,
+        )?)
     } else {
         None
     };
@@ -211,15 +205,42 @@ fn generate_batches_total_number_of_packs_update(
 }
 
 pub fn generate_exit_location_movement(
-    batch: &StockLineRow,
-    store_id: String,
-) -> LocationMovementRow {
-    LocationMovementRow {
-        id: uuid(),
-        store_id,
-        stock_line_id: batch.id.clone(),
-        location_id: batch.location_id.clone().or(None),
-        enter_datetime: None,
-        exit_datetime: Some(Utc::now().naive_utc()),
+    connection: &StorageConnection,
+    batches: &Vec<StockLineRow>,
+    store_id: &str,
+) -> Result<Vec<LocationMovementRow>, RepositoryError> {
+    let mut movements: Vec<LocationMovementRow> = Vec::new();
+    let mut movements_filter: Vec<LocationMovementRow> = Vec::new();
+
+    let location_movement_repo = LocationMovementRepository::new(connection);
+
+    for batch in batches {
+        if batch.location_id.is_some() && batch.total_number_of_packs <= 0.0 {
+            movements_filter.push(
+                location_movement_repo
+                    .query_by_filter(
+                        LocationMovementFilter::new()
+                            .enter_datetime(DatetimeFilter::is_null(false))
+                            .exit_datetime(DatetimeFilter::is_null(true))
+                            .location_id(EqualFilter::equal_to(
+                                &batch.location_id.clone().unwrap_or_default(),
+                            ))
+                            .stock_line_id(EqualFilter::equal_to(&batch.id))
+                            .store_id(EqualFilter::equal_to(store_id)),
+                    )?
+                    .into_iter()
+                    .map(|l| l.location_movement_row)
+                    .min_by_key(|l| l.enter_datetime)
+                    .ok_or(RepositoryError::NotFound)?,
+            )
+        }
     }
+
+    for movement in movements_filter {
+        let mut movement = movement;
+        movement.exit_datetime = Some(Utc::now().naive_utc());
+        movements.push(movement);
+    }
+
+    Ok(movements)
 }
