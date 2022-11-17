@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC } from 'react';
 import {
   TableProvider,
   DataTable,
@@ -8,10 +8,9 @@ import {
   NothingHere,
   useUrlQueryParams,
   DateUtils,
-  useDialog,
-  DialogButton,
+  useEditModal,
 } from '@openmsupply-client/common';
-import { DetailModal, Toolbar } from '../Components';
+import { StockLineEditModal, Toolbar } from '../Components';
 import { StockLineRowFragment, useStock } from '../api';
 
 const StockListComponent: FC = () => {
@@ -26,10 +25,7 @@ const StockListComponent: FC = () => {
   });
   const pagination = { page, first, offset };
   const t = useTranslation('inventory');
-  const [selectedId, setSelectedId] = useState<string>('');
-
   const { data, isLoading, isError } = useStock.document.list();
-  const { Modal, showDialog, hideDialog } = useDialog();
   const columns = useColumns<StockLineRowFragment>(
     [
       [
@@ -79,25 +75,19 @@ const StockListComponent: FC = () => {
     },
     [sortBy]
   );
+  const { isOpen, entity, onClose, onOpen } =
+    useEditModal<StockLineRowFragment>();
 
   return (
     <>
-      <Modal
-        slideAnimation={false}
-        title="Stock line details"
-        okButton={
-          <DialogButton
-            variant="ok"
-            disabled={true}
-            onClick={async () => {
-              hideDialog();
-            }}
-          />
-        }
-        cancelButton={<DialogButton variant="cancel" onClick={hideDialog} />}
-      >
-        <DetailModal id={selectedId} />
-      </Modal>
+      {isOpen && (
+        <StockLineEditModal
+          isOpen={isOpen}
+          onClose={onClose}
+          stockLine={entity}
+        />
+      )}
+
       <Toolbar filter={filter} />
       <DataTable
         id="stock-list"
@@ -108,10 +98,7 @@ const StockListComponent: FC = () => {
         noDataElement={<NothingHere body={t('error.no-stock')} />}
         isError={isError}
         isLoading={isLoading}
-        onRowClick={row => {
-          setSelectedId(row.id);
-          showDialog();
-        }}
+        onRowClick={onOpen}
         enableColumnSelection
       />
     </>

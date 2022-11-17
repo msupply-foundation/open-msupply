@@ -5,6 +5,7 @@ export const useStock = {
   document: {
     get: Document.useStockLine,
     list: Document.useStockLines,
+    update: Document.useStockLineUpdate,
   },
   utils: {
     api: Utils.useStockApi,

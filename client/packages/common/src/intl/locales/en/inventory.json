@@ -44,5 +44,6 @@
   "messages.deleted-lines": "Deleted {{count}} lines",
   "messages.select-rows-to-delete-them": "Select rows to delete them",
   "status.new": "New",
-  "status.finalised": "Finalised"
+  "status.finalised": "Finalised",
+  "title.stock-line-details": "Stock Line Details"
 }
