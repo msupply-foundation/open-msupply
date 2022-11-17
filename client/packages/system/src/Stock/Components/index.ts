@@ -1,2 +1,2 @@
-export * from './DetailModal';
+export * from './StockLineEditModal';
 export * from './Toolbar';

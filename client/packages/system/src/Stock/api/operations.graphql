@@ -5,26 +5,7 @@ fragment StockLineRow on StockLineNode {
   expiryDate
   id
   itemId
-  locationName
-  onHold
-  packSize
-  sellPricePerPack
-  storeId
-  totalNumberOfPacks
-  item {
-    code
-    name
-    unitName
-  }
-}
-
-fragment StockLineNode on StockLineNode {
-  availableNumberOfPacks
-  batch
-  costPricePerPack
-  expiryDate
-  id
-  itemId
+  locationId
   locationName
   onHold
   packSize
@@ -69,9 +50,18 @@ query stockLine($id: String!, $storeId: String!) {
       __typename
       nodes {
         __typename
-        ...StockLineNode
+        ...StockLineRow
       }
       totalCount
+    }
+  }
+}
+
+mutation updateStockLine($input: UpdateStockLineInput!, $storeId: String!) {
+  updateStockLine(input: $input, storeId: $storeId) {
+    ... on StockLineNode {
+      __typename
+      ...StockLineRow
     }
   }
 }
