@@ -3,16 +3,21 @@
   "definitions": {
     "EncounterEvent": {
       "properties": {
-        "context": {
-          "description": "If not specified the program is used.",
-          "type": "string"
-        },
-        "datetime": {
-          "description": "Time of the the event, can be in the future",
+        "activeDatetime": {
+          "description": "Time when the event becomes active. This can be in the future. For example, a status could be set to become active after a certain period of time.",
           "format": "date-time",
           "type": "string"
         },
+        "documentName": {
+          "description": "The event target document name, if event is associated with a specific document",
+          "type": "string"
+        },
+        "documentType": {
+          "description": "The document type this event is associated with",
+          "type": "string"
+        },
         "group": {
+          "description": "Field to group events.\n\nMotivation: UI components usually only update a subset of \"their\" events. The group field can be used to group or \"tag\" events so that the UI component knows which events to update. Note, the event type is in general not enough since multiple UI components could update events of the same type.",
           "type": "string"
         },
         "name": {
@@ -24,7 +29,7 @@
           "type": "string"
         }
       },
-      "required": ["datetime", "type"],
+      "required": ["activeDatetime", "documentType", "type"],
       "type": "object"
     },
     "EncounterStatus": {

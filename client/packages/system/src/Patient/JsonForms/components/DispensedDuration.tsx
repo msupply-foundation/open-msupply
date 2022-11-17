@@ -17,14 +17,15 @@ import {
 } from '@openmsupply-client/common';
 import { get as extractProperty } from 'lodash';
 import { z } from 'zod';
+import { EncounterEvent } from './encounter_event';
 
 type OptionEvent = {
   scheduleIn: {
     days?: number;
     minutes?: number;
   };
+  documentType: string;
   name?: string;
-  group?: string;
   type: string;
 };
 
@@ -47,8 +48,8 @@ const OptionEvent: z.ZodType<OptionEvent> = z
       days: z.number().optional(),
       minutes: z.number().optional(),
     }),
+    documentType: z.string(),
     name: z.string().optional(),
-    group: z.string().optional(),
     type: z.string(),
   })
   .strict();
@@ -62,27 +63,7 @@ const Options: z.ZodType<Options> = z
   })
   .strict();
 
-interface EncounterEvent {
-  /**
-   * Time of the the event, can be in the future
-   *
-   * @format date-time
-   */
-  datetime: string;
-  group?: string;
-
-  /**
-   * Name of this specific event. There could be multiple events of the same type but with different
-   * names.
-   * For example, two event could have type 'status' and name "Status name 1" and "Status name 2"
-   */
-  name?: string;
-  /**
-   * For example, encounter 'status'.
-   */
-  type: string;
-}
-
+const DISPENSED_DURATION_GROUP = 'DispensedDuration';
 const scheduleEvent = (
   event: OptionEvent,
   baseDatetime: Date
@@ -97,8 +78,9 @@ const scheduleEvent = (
   );
 
   return {
-    datetime: datetime.toISOString(),
-    group: event.group,
+    activeDatetime: datetime.toISOString(),
+    documentType: event.documentType,
+    group: DISPENSED_DURATION_GROUP,
     name: event.name,
     type: event.type,
   };
@@ -127,15 +109,23 @@ const UIComponent = (props: ControlProps) => {
       const fullPath = composePaths(path, options.targetField);
       handleChange(fullPath, value);
 
-      let events: EncounterEvent[] = [];
+      const existingEvents: EncounterEvent[] =
+        extractProperty(data, 'events') ?? [];
+
       if (baseTime === undefined) {
         throw Error('Unexpected error');
       }
+      // Remove existing events for the group
+      const events = existingEvents.filter(
+        it => it.group !== DISPENSED_DURATION_GROUP
+      );
       if (value > 0) {
         const scheduleStartTime = options.scheduleEventsNow
           ? new Date()
           : DateUtils.startOfDay(DateUtils.addDays(new Date(baseTime), value));
-        events = options.events.map(e => scheduleEvent(e, scheduleStartTime));
+        events.push(
+          ...options.events.map(e => scheduleEvent(e, scheduleStartTime))
+        );
       }
 
       const eventsPath = composePaths(path, 'events');

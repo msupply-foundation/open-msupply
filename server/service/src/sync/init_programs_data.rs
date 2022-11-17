@@ -391,24 +391,26 @@ fn encounter_hiv_care_2() -> hiv_care_encounter::HivcareEncounter {
         ));
         e.events = Some(vec![
             hiv_care_encounter::EncounterEvent {
-                datetime: time
+                active_datetime: time
                     .checked_add_signed(Duration::weeks(1))
                     .unwrap()
                     .to_rfc3339(),
-                group: Some("HivCareEncounterDispensingStatus".to_string()),
-                type_: "status".to_string(),
+                document_type: "HIVCareProgram".to_string(),
+                document_name: None,
+                group: Some("DispensedDuration".to_string()),
+                type_: "programStatus".to_string(),
                 name: Some("Interrupted".to_string()),
-                context: None,
             },
             hiv_care_encounter::EncounterEvent {
-                datetime: time
+                active_datetime: time
                     .checked_add_signed(Duration::weeks(2))
                     .unwrap()
                     .to_rfc3339(),
-                group: Some("HivCareEncounterDispensingStatus".to_string()),
-                type_: "status".to_string(),
+                document_type: "HIVCareProgram".to_string(),
+                document_name: None,
+                group: Some("DispensedDuration".to_string()),
+                type_: "programStatus".to_string(),
                 name: Some("Lost to follow up".to_string()),
-                context: None,
             },
         ])
     })

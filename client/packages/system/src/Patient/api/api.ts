@@ -16,7 +16,7 @@ import {
   PatientRowFragment,
   PatientFragment,
   ProgramEnrolmentRowFragment,
-  EncounterRowFragment,
+  PatientEncounterRowFragment,
 } from './operations.generated';
 
 export type ListParams = {
@@ -112,7 +112,7 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
           ProgramEnrolmentSortFieldInput.EnrolmentDatetime,
         desc: sortBy?.isDesc,
         filter: filterBy,
-        latestEventTime: new Date().toISOString(),
+        eventTime: new Date().toISOString(),
       });
 
       return result?.programEnrolments;
@@ -136,7 +136,7 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
       filterBy,
       pagination,
     }: EncounterListParams): Promise<{
-      nodes: EncounterRowFragment[];
+      nodes: PatientEncounterRowFragment[];
       totalCount: number;
     }> => {
       const result = await sdk.encounters({
@@ -145,7 +145,7 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
         desc: sortBy.isDesc,
         filter: filterBy,
         page: pagination,
-        latestEventTime: new Date().toISOString(),
+        eventTime: new Date().toISOString(),
       });
 
       return result?.encounters;

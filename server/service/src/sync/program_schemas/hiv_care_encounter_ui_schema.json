@@ -121,16 +121,16 @@
             "baseDatetimeField": "startDatetime",
             "events": [
               {
-                "group": "HivCareEncounterDispensingStatus",
+                "documentType": "HIVCareProgram",
                 "name": "Interrupted",
                 "scheduleIn": { "days": 0, "minutes": 1 },
-                "type": "status"
+                "type": "programStatus"
               },
               {
-                "group": "HivCareEncounterDispensingStatus",
+                "documentType": "HIVCareProgram",
                 "name": "Lost to follow up",
                 "scheduleIn": { "days": 0, "minutes": 3 },
-                "type": "status"
+                "type": "programStatus"
               }
             ],
             "scheduleEventsNow": true,
@@ -275,7 +275,6 @@
           "scope": "#",
           "options": {
             "baseDatetimeField": "startDatetime",
-            "group": "PendingLabResults",
             "trigger": [
               {
                 "triggerField": "viralLoad.tested",
@@ -286,13 +285,13 @@
                 "isFalsy": true
               }
             ],
+            "group": "HIVCareStatus",
             "events": [
               {
+                "documentType": "HIVCareEncounter",
+                "documentName": true,
                 "name": "Pending VL Result",
-                "type": "status",
-                "context": {
-                  "documentName": true
-                }
+                "type": "encounterStatus"
               }
             ]
           }
@@ -302,20 +301,19 @@
           "scope": "#",
           "options": {
             "baseDatetimeField": "startDatetime",
-            "group": "PendingLabResults",
             "trigger": [
               {
                 "triggerField": "viralLoad.viralLoadResult",
                 "isTruthy": true
               }
             ],
+            "group": "HIVCareStatus",
             "events": [
               {
+                "documentType": "HIVCareEncounter",
+                "documentName": true,
                 "name": "VL Result",
-                "type": "status",
-                "context": {
-                  "documentName": true
-                }
+                "type": "encounterStatus"
               }
             ]
           }
