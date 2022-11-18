@@ -15,6 +15,7 @@ table! {
         store_id -> Nullable<Text>,
         record_id -> Nullable<Text>,
         datetime -> Timestamp,
+        event -> Nullable<Text>,
     }
 }
 
@@ -59,6 +60,7 @@ pub struct ActivityLogRow {
     pub store_id: Option<String>,
     pub record_id: Option<String>,
     pub datetime: NaiveDateTime,
+    pub event: Option<String>,
 }
 
 pub struct ActivityLogRowRepository<'a> {
