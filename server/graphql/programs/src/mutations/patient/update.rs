@@ -4,7 +4,7 @@ use graphql_core::{
     ContextExt,
 };
 use service::{
-    auth::{Resource, ResourceAccessRequest},
+    auth::{CapabilityTag, Resource, ResourceAccessRequest},
     programs::patient::{UpdatePatient, UpdatePatientError},
 };
 
@@ -36,6 +36,7 @@ pub fn update_patient(
             store_id: Some(store_id.clone()),
         },
     )?;
+    let allowed_docs = user.capabilities(CapabilityTag::DocumentType);
 
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
@@ -54,6 +55,7 @@ pub fn update_patient(
         Ok(patient) => Ok(UpdatePatientResponse::Response(PatientNode {
             store_id,
             patient,
+            allowed_docs: allowed_docs.clone(),
         })),
         Err(error) => {
             let formatted_error = format!("{:#?}", error);

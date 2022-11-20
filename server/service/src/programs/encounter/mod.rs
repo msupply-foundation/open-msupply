@@ -33,8 +33,9 @@ pub trait EncounterServiceTrait: Sync + Send {
         service_provider: &ServiceProvider,
         user_id: &str,
         input: InsertEncounter,
+        allowed_docs: Vec<String>,
     ) -> Result<Document, InsertEncounterError> {
-        insert_encounter(ctx, service_provider, user_id, input)
+        insert_encounter(ctx, service_provider, user_id, input, allowed_docs)
     }
 
     fn update_encounter(
@@ -43,16 +44,18 @@ pub trait EncounterServiceTrait: Sync + Send {
         service_provider: &ServiceProvider,
         user_id: &str,
         input: UpdateEncounter,
+        allowed_docs: Vec<String>,
     ) -> Result<Document, UpdateEncounterError> {
-        update_encounter(ctx, service_provider, user_id, input)
+        update_encounter(ctx, service_provider, user_id, input, allowed_docs)
     }
 
     fn encounter(
         &self,
         ctx: &ServiceContext,
         filter: EncounterFilter,
+        allowed_docs: Vec<String>,
     ) -> Result<Option<Encounter>, RepositoryError> {
-        encounter(ctx, filter)
+        encounter(ctx, filter, allowed_docs)
     }
 
     fn encounters(
@@ -61,8 +64,9 @@ pub trait EncounterServiceTrait: Sync + Send {
         pagination: Option<PaginationOption>,
         filter: Option<EncounterFilter>,
         sort: Option<EncounterSort>,
+        allowed_docs: Vec<String>,
     ) -> Result<ListResult<Encounter>, ListError> {
-        encounters(ctx, pagination, filter, sort)
+        encounters(ctx, pagination, filter, sort, allowed_docs)
     }
 
     fn encounters_fields(
@@ -72,8 +76,9 @@ pub trait EncounterServiceTrait: Sync + Send {
         pagination: Option<PaginationOption>,
         filter: Option<EncounterFilter>,
         sort: Option<EncounterSort>,
+        allowed_docs: Vec<String>,
     ) -> Result<ListResult<EncounterFieldsResult>, ListError> {
-        encounter_fields(ctx, input, pagination, filter, sort)
+        encounter_fields(ctx, input, pagination, filter, sort, allowed_docs)
     }
 }
 

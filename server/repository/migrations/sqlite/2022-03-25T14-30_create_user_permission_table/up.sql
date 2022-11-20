@@ -17,13 +17,10 @@ CREATE TABLE user_permission (
         'REPORT',
         'LOG_QUERY',
         'SERVER_ADMIN',
-        'DOCUMENT',
         'PATIENT_QUERY',
         'PATIENT_MUTATE',
-        'DOCUMENT_ENCOUNTER_QUERY',
-        'DOCUMENT_ENCOUNTER_MUTATE',
-        'DOCUMENT_PROGRAM_QUERY',
-        'DOCUMENT_PROGRAM_MUTATE'
+        'DOCUMENT_QUERY',
+        'DOCUMENT_MUTATE'
     )) NOT NULL,
     context TEXT
 )

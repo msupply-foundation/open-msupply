@@ -1,5 +1,8 @@
 use chrono::Utc;
-use repository::{Document, DocumentRepository, DocumentStatus, RepositoryError, TransactionError};
+use repository::{
+    Document, DocumentFilter, DocumentRepository, DocumentStatus, RepositoryError, StringFilter,
+    TransactionError,
+};
 
 use crate::{
     document::{document_service::DocumentInsertError, is_latest_doc, raw_document::RawDocument},
@@ -13,6 +16,7 @@ use super::{
 
 #[derive(PartialEq, Debug)]
 pub enum UpsertProgramEnrolmentError {
+    NotAllowedToMutateDocument,
     InvalidPatientId,
     InvalidParentId,
     /// Each patient can only be enrolled in a program once
@@ -37,6 +41,7 @@ pub fn upsert_program_enrolment(
     service_provider: &ServiceProvider,
     user_id: &str,
     input: UpsertProgramEnrolment,
+    allowed_docs: Vec<String>,
 ) -> Result<Document, UpsertProgramEnrolmentError> {
     let program_document = ctx
         .connection
@@ -53,8 +58,11 @@ pub fn upsert_program_enrolment(
 
             let document = service_provider
                 .document_service
-                .update_document(ctx, doc)
+                .update_document(ctx, doc, &allowed_docs)
                 .map_err(|err| match err {
+                    DocumentInsertError::NotAllowedToMutateDocument => {
+                        UpsertProgramEnrolmentError::NotAllowedToMutateDocument
+                    }
                     DocumentInsertError::InvalidDataSchema(err) => {
                         UpsertProgramEnrolmentError::InvalidDataSchema(err)
                     }
@@ -113,7 +121,11 @@ fn validate_patient_exists(
     patient_id: &str,
 ) -> Result<bool, RepositoryError> {
     let doc_name = main_patient_doc_name(patient_id);
-    let document = DocumentRepository::new(&ctx.connection).find_one_by_name(&doc_name)?;
+    let document = DocumentRepository::new(&ctx.connection)
+        .query(Some(
+            DocumentFilter::new().name(StringFilter::equal_to(&doc_name)),
+        ))?
+        .pop();
     Ok(document.is_some())
 }
 
@@ -124,9 +136,10 @@ fn validate_program_not_exists(
     program: &str,
 ) -> Result<bool, RepositoryError> {
     let patient_name = patient_doc_name(patient_id, program);
-    let existing_document = service_provider
-        .document_service
-        .get_document(ctx, &patient_name)?;
+    let existing_document =
+        service_provider
+            .document_service
+            .get_document(ctx, &patient_name, None)?;
     Ok(existing_document.is_none())
 }
 
@@ -161,7 +174,8 @@ mod test {
     use repository::{
         mock::{mock_form_schema_empty, MockDataInserts},
         test_db::setup_all,
-        DocumentRepository, FormSchemaRowRepository, ProgramEnrolmentRepository,
+        DocumentFilter, DocumentRepository, FormSchemaRowRepository, ProgramEnrolmentRepository,
+        StringFilter,
     };
     use serde_json::json;
     use util::inline_init;
@@ -198,6 +212,26 @@ mod test {
             .unwrap();
 
         let service = &service_provider.program_enrolment_service;
+
+        // NotAllowedToMutateDocument
+        let err = service
+            .upsert_program_enrolment(
+                &ctx,
+                &service_provider,
+                "user",
+                UpsertProgramEnrolment {
+                    data: json!({"enrolment_datetime": true}),
+                    schema_id: schema.id.clone(),
+                    parent: None,
+                    patient_id: "some_id".to_string(),
+                    r#type: "SomeType".to_string(),
+                },
+                vec!["WrongType".to_string()],
+            )
+            .err()
+            .unwrap();
+        matches!(err, UpsertProgramEnrolmentError::NotAllowedToMutateDocument);
+
         // InvalidPatientId
         let err = service
             .upsert_program_enrolment(
@@ -211,6 +245,7 @@ mod test {
                     patient_id: "some_id".to_string(),
                     r#type: "SomeType".to_string(),
                 },
+                vec!["SomeType".to_string()],
             )
             .err()
             .unwrap();
@@ -244,6 +279,7 @@ mod test {
                     patient_id: "some_id".to_string(),
                     r#type: "SomeType".to_string(),
                 },
+                vec!["SomeType".to_string()],
             )
             .err()
             .unwrap();
@@ -268,6 +304,7 @@ mod test {
                     patient_id: patient.id.clone(),
                     r#type: program_type.clone(),
                 },
+                vec![program_type.clone()],
             )
             .unwrap();
 
@@ -283,7 +320,8 @@ mod test {
                         data: serde_json::to_value(program.clone()).unwrap(),
                         schema_id: schema.id.clone(),
                         parent: None
-                    }
+                    },
+                    vec![program_type.clone()]
                 )
                 .err()
                 .unwrap(),
@@ -303,6 +341,7 @@ mod test {
                         schema_id: schema.id.clone(),
                         parent: Some("invalid".to_string()),
                     },
+                    vec![program_type.clone()]
                 )
                 .err()
                 .unwrap(),
@@ -311,8 +350,11 @@ mod test {
 
         // success update
         let v0 = DocumentRepository::new(&ctx.connection)
-            .find_one_by_name(&patient_doc_name(&patient.id, &program_type))
+            .query(Some(DocumentFilter::new().name(StringFilter::equal_to(
+                &patient_doc_name(&patient.id, &program_type),
+            ))))
             .unwrap()
+            .pop()
             .unwrap();
         service
             .upsert_program_enrolment(
@@ -326,6 +368,7 @@ mod test {
                     schema_id: schema.id.clone(),
                     parent: Some(v0.id),
                 },
+                vec![program_type.clone()],
             )
             .unwrap();
         // Test program has been written to the programs table

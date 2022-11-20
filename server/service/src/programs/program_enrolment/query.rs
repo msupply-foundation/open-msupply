@@ -7,8 +7,17 @@ use crate::service_provider::ServiceContext;
 
 pub(crate) fn program_enrolment(
     ctx: &ServiceContext,
-    filter: ProgramEnrolmentFilter,
+    mut filter: ProgramEnrolmentFilter,
+    allowed_docs: Vec<String>,
 ) -> Result<Option<ProgramEnrolment>, RepositoryError> {
+    // restrict query results to allowed entries
+    filter.r#type = Some(
+        filter
+            .r#type
+            .unwrap_or_default()
+            .restrict_results(&allowed_docs),
+    );
+
     Ok(ProgramEnrolmentRepository::new(&ctx.connection)
         .query_by_filter(filter)?
         .pop())
@@ -19,6 +28,16 @@ pub(crate) fn program_enrolments(
     pagination: Pagination,
     sort: Option<Sort<ProgramEnrolmentSortField>>,
     filter: Option<ProgramEnrolmentFilter>,
+    allowed_docs: Vec<String>,
 ) -> Result<Vec<ProgramEnrolment>, RepositoryError> {
-    ProgramEnrolmentRepository::new(&ctx.connection).query(pagination, filter, sort)
+    // restrict query results to allowed entries
+    let mut filter = filter.unwrap_or(ProgramEnrolmentFilter::new());
+    filter.r#type = Some(
+        filter
+            .r#type
+            .unwrap_or_default()
+            .restrict_results(&allowed_docs),
+    );
+
+    ProgramEnrolmentRepository::new(&ctx.connection).query(pagination, Some(filter), sort)
 }

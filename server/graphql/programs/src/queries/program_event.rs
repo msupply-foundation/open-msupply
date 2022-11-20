@@ -7,7 +7,7 @@ use graphql_core::{
 use repository::{
     EqualFilter, PaginationOption, ProgramEventFilter, ProgramEventSort, ProgramEventSortField,
 };
-use service::auth::{Resource, ResourceAccessRequest};
+use service::auth::{CapabilityTag, Resource, ResourceAccessRequest};
 
 use crate::types::{program_enrolment::ProgramEventFilterInput, program_event::ProgramEventNode};
 
@@ -55,23 +55,23 @@ pub fn program_events(
             store_id: Some(store_id.clone()),
         },
     )?;
+    let allowed_docs = user.capabilities(CapabilityTag::DocumentType);
+
+    let mut filter = filter
+        .map(|f| f.to_domain())
+        .unwrap_or(ProgramEventFilter::new())
+        .name_id(EqualFilter::equal_to(&patient_id));
+    // restrict query results to allowed entries
+    filter.r#type = Some(
+        filter
+            .r#type
+            .unwrap_or_default()
+            .restrict_results(&allowed_docs),
+    );
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
 
-    let filter = filter
-        .map(|f| {
-            f.to_domain().r#type(EqualFilter::equal_any(
-                user.context.iter().map(String::clone).collect(),
-            ))
-        })
-        .unwrap_or(
-            ProgramEventFilter::new()
-                .name_id(EqualFilter::equal_to(&patient_id))
-                .r#type(EqualFilter::equal_any(
-                    user.context.iter().map(String::clone).collect(),
-                )),
-        );
     let list_result = service_provider
         .program_event_service
         .events(
@@ -89,6 +89,7 @@ pub fn program_events(
 
     Ok(ProgramEventResponse::Response(ProgramEventConnector {
         total_count: list_result.count,
+
         nodes,
     }))
 }
