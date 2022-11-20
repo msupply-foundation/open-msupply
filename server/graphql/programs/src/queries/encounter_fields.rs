@@ -4,9 +4,9 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use repository::{EncounterFilter, EqualFilter, PaginationOption};
+use repository::PaginationOption;
 use service::{
-    auth::{Resource, ResourceAccessRequest},
+    auth::{CapabilityTag, Resource, ResourceAccessRequest},
     programs::encounter::encounter_fields::{EncounterFields, EncounterFieldsResult},
 };
 
@@ -22,6 +22,8 @@ pub struct EncounterFieldsInput {
 pub struct EncounterFieldsNode {
     pub store_id: String,
     pub encounter_fields_result: EncounterFieldsResult,
+
+    allowed_docs: Vec<String>,
 }
 
 #[derive(SimpleObject)]
@@ -41,6 +43,7 @@ impl EncounterFieldsNode {
         EncounterNode {
             store_id: self.store_id.clone(),
             encounter_row: self.encounter_fields_result.row.clone(),
+            allowed_docs: self.allowed_docs.clone(),
         }
     }
 
@@ -64,19 +67,10 @@ pub fn encounter_fields(
             store_id: Some(store_id.clone()),
         },
     )?;
+    let allowed_docs = user.capabilities(CapabilityTag::DocumentType);
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
-
-    let filter = filter
-        .map(|f| {
-            f.to_domain_filter().r#type(EqualFilter::equal_any(
-                user.context.iter().map(String::clone).collect(),
-            ))
-        })
-        .unwrap_or(EncounterFilter::new().r#type(EqualFilter::equal_any(
-            user.context.iter().map(String::clone).collect(),
-        )));
 
     let result = service_provider
         .encounter_service
@@ -86,8 +80,9 @@ pub fn encounter_fields(
                 fields: input.fields,
             },
             page.map(PaginationOption::from),
-            Some(filter),
+            filter.map(|f| f.to_domain_filter()),
             sort.map(EncounterSortInput::to_domain),
+            allowed_docs.clone(),
         )
         .map_err(StandardGraphqlError::from_list_error)?;
 
@@ -97,6 +92,7 @@ pub fn encounter_fields(
         .map(|encounter_fields| EncounterFieldsNode {
             store_id: store_id.clone(),
             encounter_fields_result: encounter_fields,
+            allowed_docs: allowed_docs.clone(),
         })
         .collect();
 

@@ -5,7 +5,7 @@ use graphql_core::{
 };
 use repository::{EncounterFilter, EqualFilter};
 use service::{
-    auth::{Resource, ResourceAccessRequest},
+    auth::{CapabilityTag, Resource, ResourceAccessRequest},
     programs::encounter::{UpdateEncounter, UpdateEncounterError},
 };
 
@@ -40,14 +40,7 @@ pub fn update_encounter(
             store_id: Some(store_id.clone()),
         },
     )?;
-
-    match user.context.into_iter().find(|c| c == &input.r#type) {
-        None => Err(StandardGraphqlError::BadUserInput(format!(
-            "User does not have access to {}",
-            input.r#type
-        ))),
-        Some(_) => Ok(()),
-    }?;
+    let allowed_docs = user.capabilities(CapabilityTag::DocumentType);
 
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
@@ -62,11 +55,15 @@ pub fn update_encounter(
             schema_id: input.schema_id,
             parent: input.parent,
         },
+        allowed_docs.clone(),
     ) {
         Ok(document) => document,
         Err(error) => {
             let formatted_error = format!("{:#?}", error);
             let std_err = match error {
+                UpdateEncounterError::NotAllowedToMutateDocument => {
+                    StandardGraphqlError::Forbidden(formatted_error)
+                }
                 UpdateEncounterError::InvalidParentId => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
@@ -95,6 +92,7 @@ pub fn update_encounter(
         .encounter(
             &service_context,
             EncounterFilter::new().name(EqualFilter::equal_to(&document.name)),
+            allowed_docs.clone(),
         )?
         .ok_or(
             StandardGraphqlError::InternalError("Encounter went missing".to_string()).extend(),
@@ -103,5 +101,6 @@ pub fn update_encounter(
     Ok(UpdateEncounterResponse::Response(EncounterNode {
         store_id,
         encounter_row,
+        allowed_docs: allowed_docs.clone(),
     }))
 }

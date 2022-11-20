@@ -471,7 +471,26 @@ pub fn insert_programs_permissions(connection: &StorageConnection, user_id: Stri
                 id: uuid(),
                 user_id: user_id.clone(),
                 store_id: Some(user_store.store_id.clone()),
-                permission: Permission::DocumentProgramQuery,
+                permission: Permission::DocumentQuery,
+                context: Some(PATIENT_TYPE.to_string()),
+            })
+            .unwrap();
+        UserPermissionRowRepository::new(&connection)
+            .upsert_one(&UserPermissionRow {
+                id: uuid(),
+                user_id: user_id.clone(),
+                store_id: Some(user_store.store_id.clone()),
+                permission: Permission::DocumentMutate,
+                context: Some(PATIENT_TYPE.to_string()),
+            })
+            .unwrap();
+        // query
+        UserPermissionRowRepository::new(&connection)
+            .upsert_one(&UserPermissionRow {
+                id: uuid(),
+                user_id: user_id.clone(),
+                store_id: Some(user_store.store_id.clone()),
+                permission: Permission::DocumentQuery,
                 context: Some("HIVTestingProgram".to_string()),
             })
             .unwrap();
@@ -480,47 +499,16 @@ pub fn insert_programs_permissions(connection: &StorageConnection, user_id: Stri
                 id: uuid(),
                 user_id: user_id.clone(),
                 store_id: Some(user_store.store_id.clone()),
-                permission: Permission::DocumentProgramQuery,
+                permission: Permission::DocumentQuery,
                 context: Some("HIVCareProgram".to_string()),
             })
             .unwrap();
-
         UserPermissionRowRepository::new(&connection)
             .upsert_one(&UserPermissionRow {
                 id: uuid(),
                 user_id: user_id.clone(),
                 store_id: Some(user_store.store_id.clone()),
-                permission: Permission::PatientQuery,
-                context: None,
-            })
-            .unwrap();
-
-        UserPermissionRowRepository::new(&connection)
-            .upsert_one(&UserPermissionRow {
-                id: uuid(),
-                user_id: user_id.clone(),
-                store_id: Some(user_store.store_id.clone()),
-                permission: Permission::Document,
-                context: None,
-            })
-            .unwrap();
-
-        UserPermissionRowRepository::new(&connection)
-            .upsert_one(&UserPermissionRow {
-                id: uuid(),
-                user_id: user_id.clone(),
-                store_id: Some(user_store.store_id.clone()),
-                permission: Permission::DocumentProgramMutate,
-                context: Some("Patient".to_string()),
-            })
-            .unwrap();
-
-        UserPermissionRowRepository::new(&connection)
-            .upsert_one(&UserPermissionRow {
-                id: uuid(),
-                user_id: user_id.clone(),
-                store_id: Some(user_store.store_id.clone()),
-                permission: Permission::DocumentEncounterQuery,
+                permission: Permission::DocumentQuery,
                 context: Some("HIVTestingEncounter".to_string()),
             })
             .unwrap();
@@ -529,18 +517,46 @@ pub fn insert_programs_permissions(connection: &StorageConnection, user_id: Stri
                 id: uuid(),
                 user_id: user_id.clone(),
                 store_id: Some(user_store.store_id.clone()),
-                permission: Permission::DocumentEncounterQuery,
+                permission: Permission::DocumentQuery,
                 context: Some("HIVCareEncounter".to_string()),
             })
             .unwrap();
 
+        // mutate
         UserPermissionRowRepository::new(&connection)
             .upsert_one(&UserPermissionRow {
                 id: uuid(),
                 user_id: user_id.clone(),
-                store_id: Some(user_store.store_id),
-                permission: Permission::DocumentEncounterMutate,
-                context: None,
+                store_id: Some(user_store.store_id.clone()),
+                permission: Permission::DocumentMutate,
+                context: Some("HIVTestingProgram".to_string()),
+            })
+            .unwrap();
+        UserPermissionRowRepository::new(&connection)
+            .upsert_one(&UserPermissionRow {
+                id: uuid(),
+                user_id: user_id.clone(),
+                store_id: Some(user_store.store_id.clone()),
+                permission: Permission::DocumentMutate,
+                context: Some("HIVCareProgram".to_string()),
+            })
+            .unwrap();
+        UserPermissionRowRepository::new(&connection)
+            .upsert_one(&UserPermissionRow {
+                id: uuid(),
+                user_id: user_id.clone(),
+                store_id: Some(user_store.store_id.clone()),
+                permission: Permission::DocumentMutate,
+                context: Some("HIVTestingEncounter".to_string()),
+            })
+            .unwrap();
+        UserPermissionRowRepository::new(&connection)
+            .upsert_one(&UserPermissionRow {
+                id: uuid(),
+                user_id: user_id.clone(),
+                store_id: Some(user_store.store_id.clone()),
+                permission: Permission::DocumentMutate,
+                context: Some("HIVCareEncounter".to_string()),
             })
             .unwrap();
     }
@@ -759,6 +775,7 @@ pub fn init_program_data(
                 schema_id: program_schema_id.clone(),
                 parent: None,
             },
+            vec!["TestProgram1".to_string()],
         )
         .unwrap();
     // hiv testing program
@@ -774,6 +791,7 @@ pub fn init_program_data(
                 schema_id: hiv_testing_program_schema_id,
                 parent: None,
             },
+            vec!["HIVTestingProgram".to_string()],
         )
         .unwrap();
     // hiv care program
@@ -789,6 +807,7 @@ pub fn init_program_data(
                 schema_id: hiv_care_program_schema_id,
                 parent: None,
             },
+            vec!["HIVCareProgram".to_string()],
         )
         .unwrap();
 
@@ -806,6 +825,7 @@ pub fn init_program_data(
                 schema_id: hiv_testing_encounter_schema_id.clone(),
                 program: "HIVTestingProgram".to_string(),
             },
+            vec!["HIVTestingEncounter".to_string()],
         )
         .unwrap();
     service
@@ -820,6 +840,7 @@ pub fn init_program_data(
                 schema_id: hiv_care_encounter_schema_id.clone(),
                 program: "HIVCareProgram".to_string(),
             },
+            vec!["HIVCareEncounter".to_string()],
         )
         .unwrap();
     service
@@ -834,6 +855,7 @@ pub fn init_program_data(
                 schema_id: hiv_care_encounter_schema_id.clone(),
                 program: "HIVCareProgram".to_string(),
             },
+            vec!["HIVCareEncounter".to_string()],
         )
         .unwrap();
     service
@@ -848,6 +870,7 @@ pub fn init_program_data(
                 schema_id: hiv_care_encounter_schema_id.clone(),
                 program: "HIVCareProgram".to_string(),
             },
+            vec!["HIVCareEncounter".to_string()],
         )
         .unwrap();
     service
@@ -862,6 +885,7 @@ pub fn init_program_data(
                 schema_id: hiv_care_encounter_schema_id.clone(),
                 program: "HIVCareProgram".to_string(),
             },
+            vec!["HIVCareEncounter".to_string()],
         )
         .unwrap();
     service
@@ -876,6 +900,7 @@ pub fn init_program_data(
                 schema_id: hiv_care_encounter_schema_id.clone(),
                 program: "HIVCareProgram".to_string(),
             },
+            vec!["HIVCareEncounter".to_string()],
         )
         .unwrap();
 

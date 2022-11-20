@@ -357,8 +357,6 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permission> {
             _ => continue,
         }
     }
-    // TODO have a settings in mSupply:
-    output.insert(Permission::Document);
     output
 }
 

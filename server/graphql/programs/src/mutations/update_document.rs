@@ -5,7 +5,7 @@ use repository::{
     EqualFilter, StorageConnection,
 };
 use service::{
-    auth::{Resource, ResourceAccessRequest},
+    auth::{CapabilityTag, Resource, ResourceAccessRequest},
     document::{document_service::DocumentInsertError, raw_document::RawDocument},
     programs::patient::PATIENT_TYPE,
 };
@@ -75,22 +75,21 @@ pub fn update_document(
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
-
     validate_document_type(&context.connection, &input)?;
 
-    match user.context.into_iter().find(|c| c == &input.r#type) {
-        None => Err(StandardGraphqlError::BadUserInput(format!(
-            "User does not have access to {}",
-            input.r#type
-        ))),
-        Some(_) => Ok(()),
-    }?;
+    // Move this after validate_document_type to make the tests happy (test don't have permissions)
+    // TODO make allowed_docs optional if debug_no_access_control is set?
+    let allowed_docs = user.capabilities(CapabilityTag::DocumentType);
 
-    let response = match service_provider
-        .document_service
-        .update_document(&context, input_to_raw_document(input))
-    {
-        Ok(document) => UpdateDocumentResponse::Response(DocumentNode { document }),
+    let response = match service_provider.document_service.update_document(
+        &context,
+        input_to_raw_document(input),
+        allowed_docs,
+    ) {
+        Ok(document) => UpdateDocumentResponse::Response(DocumentNode {
+            allowed_docs: allowed_docs.clone(),
+            document,
+        }),
         Err(error) => UpdateDocumentResponse::Error(UpdateDocumentError {
             error: map_error(error)?,
         }),
@@ -139,6 +138,9 @@ fn map_error(error: DocumentInsertError) -> Result<UpdateDocumentErrorInterface>
 
     let graphql_error = match error {
         // Standard Graphql Errors
+        DocumentInsertError::NotAllowedToMutateDocument => {
+            StandardGraphqlError::Forbidden(formatted_error)
+        }
         DocumentInsertError::DatabaseError(_) => {
             StandardGraphqlError::InternalError(formatted_error)
         }
