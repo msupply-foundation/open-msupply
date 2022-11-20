@@ -221,7 +221,7 @@ fn generate_stock_line_update(
     };
 
     let location_movement = if counted_number_of_packs <= 0.0 {
-        generate_exit_location_movement(connection, &store_id, updated_line.clone())?
+        generate_exit_location_movements(connection, &store_id, updated_line.clone())?
     } else {
         None
     };
@@ -306,7 +306,7 @@ fn generate_new_stock_line(
     };
 
     let location_movement = if new_line.location_id.is_some() {
-        Some(generate_location_movement_entry(
+        Some(generate_enter_location_movements(
             store_id.to_owned(),
             new_line.id.to_owned(),
             new_line.location_id.to_owned(),
@@ -323,7 +323,7 @@ fn generate_new_stock_line(
     })
 }
 
-fn generate_location_movement_entry(
+fn generate_enter_location_movements(
     store_id: String,
     stock_line_id: String,
     location_id: Option<String>,
@@ -338,7 +338,7 @@ fn generate_location_movement_entry(
     }
 }
 
-fn generate_exit_location_movement(
+fn generate_exit_location_movements(
     connection: &StorageConnection,
     store_id: &str,
     stock_line: StockLineRow,

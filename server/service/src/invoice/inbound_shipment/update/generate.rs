@@ -66,7 +66,7 @@ pub(crate) fn generate(
         let generate_movement = batches
             .iter()
             .filter_map(|batch| match batch.line.location_id {
-                Some(_) => Some(generate_location_movement_entry(store_id.to_owned(), batch)),
+                Some(_) => Some(generate_location_movements(store_id.to_owned(), batch)),
                 None => None,
             })
             .collect();
@@ -210,7 +210,7 @@ pub fn generate_lines_and_stock_lines(
     Ok(result)
 }
 
-pub fn generate_location_movement_entry(
+pub fn generate_location_movements(
     store_id: String,
     batch: &LineAndStockLine,
 ) -> LocationMovementRow {
