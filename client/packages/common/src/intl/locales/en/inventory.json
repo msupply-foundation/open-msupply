@@ -9,6 +9,8 @@
   "error.stocktake-not-found": "Stocktake not found",
   "label.add-batch": "Add batch",
   "label.add-new-line": "Add a new line",
+  "label.cost-price": "Cost price",
+  "label.sell-price": "Sell price",
   "label.counted-num-of-packs": "Counted # of Packs",
   "label.create-location": "Create Location",
   "label.edit-location": "Edit Location",
