@@ -59,9 +59,7 @@ pub(crate) fn generate(
     };
 
     let location_movements = if let Some(batches) = batches_to_update.clone() {
-        Some(generate_exit_location_movement(
-            connection, &batches, store_id,
-        )?)
+        Some(generate_location_movements(connection, &batches, store_id)?)
     } else {
         None
     };
@@ -204,7 +202,7 @@ fn generate_batches_total_number_of_packs_update(
     Ok(result)
 }
 
-pub fn generate_exit_location_movement(
+pub fn generate_location_movements(
     connection: &StorageConnection,
     batches: &Vec<StockLineRow>,
     store_id: &str,
