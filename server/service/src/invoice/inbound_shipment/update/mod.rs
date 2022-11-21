@@ -78,7 +78,8 @@ pub fn update_inbound_shipment(
                 activity_log_entry(
                     &ctx,
                     log_type_from_invoice_status(&update_invoice.status),
-                    &update_invoice.id,
+                    Some(update_invoice.id.to_owned()),
+                    None,
                 )?;
             }
 

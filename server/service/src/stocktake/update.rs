@@ -465,7 +465,8 @@ pub fn update_stocktake(
                 activity_log_entry(
                     &ctx,
                     ActivityLogType::StocktakeStatusFinalised,
-                    &stocktake_id,
+                    Some(stocktake_id.to_owned()),
+                    None,
                 )?;
             }
 

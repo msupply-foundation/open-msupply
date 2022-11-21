@@ -114,7 +114,7 @@ fn log_stock_changes(
         activity_log_stock_entry(
             &ctx,
             ActivityLogType::StockLocationChange,
-            &new.id,
+            Some(new.id.to_owned()),
             previous_location,
             new.location_id,
         )?;
@@ -129,7 +129,7 @@ fn log_stock_changes(
         activity_log_stock_entry(
             &ctx,
             ActivityLogType::StockBatchChange,
-            &new.id,
+            Some(new.id.to_owned()),
             previous_batch,
             new.batch,
         )?;
@@ -138,7 +138,7 @@ fn log_stock_changes(
         activity_log_stock_entry(
             &ctx,
             ActivityLogType::StockCostPriceChange,
-            &new.id,
+            Some(new.id.to_owned()),
             Some(existing.cost_price_per_pack.to_string()),
             Some(new.cost_price_per_pack.to_string()),
         )?;
@@ -147,7 +147,7 @@ fn log_stock_changes(
         activity_log_stock_entry(
             &ctx,
             ActivityLogType::StockSellPriceChange,
-            &new.id,
+            Some(new.id.to_owned()),
             Some(existing.sell_price_per_pack.to_string()),
             Some(new.sell_price_per_pack.to_string()),
         )?;
@@ -162,7 +162,7 @@ fn log_stock_changes(
         activity_log_stock_entry(
             &ctx,
             ActivityLogType::StockExpiryDateChange,
-            &new.id,
+            Some(new.id.to_owned()),
             previous_expiry_date,
             new.expiry_date.map(|date| date.to_string()),
         )?;
@@ -171,7 +171,7 @@ fn log_stock_changes(
         activity_log_stock_entry(
             &ctx,
             ActivityLogType::StockOnHold,
-            &new.id,
+            Some(new.id.to_owned()),
             Some("off hold".to_string()),
             Some("on hold".to_string()),
         )?;
@@ -180,7 +180,7 @@ fn log_stock_changes(
         activity_log_stock_entry(
             &ctx,
             ActivityLogType::StockOffHold,
-            &new.id,
+            Some(new.id),
             Some("on hold".to_string()),
             Some("off hold".to_string()),
         )?;
