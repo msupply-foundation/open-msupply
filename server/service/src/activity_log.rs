@@ -34,7 +34,8 @@ pub fn get_activity_logs(
 pub fn activity_log_entry(
     ctx: &ServiceContext,
     log_type: ActivityLogType,
-    record_id: &str,
+    record_id: Option<String>,
+    event: Option<String>,
 ) -> Result<(), RepositoryError> {
     let log = &ActivityLogRow {
         id: uuid(),
@@ -49,9 +50,9 @@ pub fn activity_log_entry(
         } else {
             None
         },
-        record_id: Some(record_id.to_string()),
+        record_id,
         datetime: Utc::now().naive_utc(),
-        event: None,
+        event,
     };
 
     Ok(ActivityLogRowRepository::new(&ctx.connection).insert_one(log)?)
@@ -60,58 +61,17 @@ pub fn activity_log_entry(
 pub fn activity_log_stock_entry(
     ctx: &ServiceContext,
     log_type: ActivityLogType,
-    record_id: &str,
+    record_id: Option<String>,
     from: Option<String>,
     to: Option<String>,
 ) -> Result<(), RepositoryError> {
-    let log = &ActivityLogRow {
-        id: uuid(),
-        r#type: log_type,
-        user_id: if ctx.user_id != "" {
-            Some(ctx.user_id.clone())
-        } else {
-            None
-        },
-        store_id: if ctx.store_id != "" {
-            Some(ctx.store_id.clone())
-        } else {
-            None
-        },
-        record_id: Some(record_id.to_string()),
-        datetime: Utc::now().naive_utc(),
-        event: Some(format!(
-            "Changed from [{}] to [{}]",
-            from.unwrap_or_default(),
-            to.unwrap_or_default()
-        )),
-    };
+    let event = Some(format!(
+        "Changed from [{}] to [{}]",
+        from.unwrap_or_default(),
+        to.unwrap_or_default()
+    ));
 
-    Ok(ActivityLogRowRepository::new(&ctx.connection).insert_one(log)?)
-}
-
-pub fn activity_log_entry_without_record(
-    ctx: &ServiceContext,
-    log_type: ActivityLogType,
-) -> Result<(), RepositoryError> {
-    let log = &ActivityLogRow {
-        id: uuid(),
-        r#type: log_type,
-        user_id: if ctx.user_id != "" {
-            Some(ctx.user_id.clone())
-        } else {
-            None
-        },
-        store_id: if ctx.store_id != "" {
-            Some(ctx.store_id.clone())
-        } else {
-            None
-        },
-        record_id: None,
-        datetime: Utc::now().naive_utc(),
-        event: None,
-    };
-
-    Ok(ActivityLogRowRepository::new(&ctx.connection).insert_one(log)?)
+    Ok(activity_log_entry(ctx, log_type, record_id, event)?)
 }
 
 pub fn system_activity_log_entry(

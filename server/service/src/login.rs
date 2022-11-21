@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 use util::uuid::uuid;
 
 use crate::{
-    activity_log::activity_log_entry_without_record,
+    activity_log::activity_log_entry,
     apis::{
         login_v4::{
             LoginApiV4, LoginInputV4, LoginStatusV4, LoginUserInfoV4, LoginUserTypeV4, LoginV4Error,
@@ -134,7 +134,7 @@ impl LoginService {
         };
         service_ctx.user_id = user_account.id.clone();
 
-        activity_log_entry_without_record(&service_ctx, ActivityLogType::UserLoggedIn)?;
+        activity_log_entry(&service_ctx, ActivityLogType::UserLoggedIn, None, None)?;
 
         let mut token_service = TokenService::new(
             &auth_data.token_bucket,
