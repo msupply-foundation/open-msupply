@@ -1,8 +1,10 @@
-use chrono::NaiveDate;
+use chrono::{NaiveDate, Utc};
 use repository::{
-    ActivityLogType, RepositoryError, StockLine, StockLineRow, StockLineRowRepository,
-    StorageConnection,
+    ActivityLogType, DatetimeFilter, EqualFilter, LocationMovementFilter,
+    LocationMovementRepository, LocationMovementRow, LocationMovementRowRepository,
+    RepositoryError, StockLine, StockLineRow, StockLineRowRepository, StorageConnection,
 };
+use util::uuid::uuid;
 
 use crate::{
     activity_log::activity_log_entry,
@@ -31,6 +33,7 @@ pub enum UpdateStockLineError {
     StockDoesNotExist,
     LocationDoesNotExist,
     UpdatedStockNotFound,
+    StockMovementNotFound,
 }
 
 pub fn update_stock_line(
@@ -43,8 +46,15 @@ pub fn update_stock_line(
         .connection
         .transaction_sync(|connection| {
             let existing = validate(connection, &ctx.store_id, &input)?;
-            let new_stock_line = generate(existing.clone(), input);
+            let (new_stock_line, location_movements) =
+                generate(ctx.store_id.clone(), connection, existing.clone(), input)?;
             StockLineRowRepository::new(&connection).upsert_one(&new_stock_line)?;
+
+            if let Some(location_movements) = location_movements {
+                for movement in location_movements {
+                    LocationMovementRowRepository::new(connection).upsert_one(&movement)?;
+                }
+            }
 
             log_stock_changes(ctx, existing, new_stock_line.clone())?;
 
@@ -79,6 +89,8 @@ fn validate(
 }
 
 fn generate(
+    store_id: String,
+    connection: &StorageConnection,
     mut existing: StockLineRow,
     UpdateStockLine {
         id: _,
@@ -89,14 +101,71 @@ fn generate(
         batch,
         on_hold,
     }: UpdateStockLine,
-) -> StockLineRow {
+) -> Result<(StockLineRow, Option<Vec<LocationMovementRow>>), UpdateStockLineError> {
+    let location_movements = if location_id != existing.location_id {
+        Some(generate_location_movement(
+            store_id,
+            connection,
+            existing.clone(),
+            location_id.clone(),
+        )?)
+    } else {
+        None
+    };
+
     existing.location_id = location_id.or(existing.location_id);
     existing.batch = batch.or(existing.batch);
     existing.cost_price_per_pack = cost_price_per_pack.unwrap_or(existing.cost_price_per_pack);
     existing.sell_price_per_pack = sell_price_per_pack.unwrap_or(existing.sell_price_per_pack);
     existing.expiry_date = expiry_date.or(existing.expiry_date);
     existing.on_hold = on_hold.unwrap_or(existing.on_hold);
-    existing
+
+    Ok((existing, location_movements))
+}
+
+fn generate_location_movement(
+    store_id: String,
+    connection: &StorageConnection,
+    existing: StockLineRow,
+    location_id: Option<String>,
+) -> Result<Vec<LocationMovementRow>, UpdateStockLineError> {
+    let mut movement: Vec<LocationMovementRow> = Vec::new();
+    let mut exit_movement;
+
+    match existing.location_id {
+        Some(location_id) => {
+            let filter = LocationMovementRepository::new(connection)
+                .query_by_filter(
+                    LocationMovementFilter::new()
+                        .enter_datetime(DatetimeFilter::is_null(false))
+                        .exit_datetime(DatetimeFilter::is_null(true))
+                        .location_id(EqualFilter::equal_to(&location_id))
+                        .stock_line_id(EqualFilter::equal_to(&existing.id))
+                        .store_id(EqualFilter::equal_to(&store_id)),
+                )?
+                .into_iter()
+                .map(|l| l.location_movement_row)
+                .min_by_key(|l| l.enter_datetime);
+
+            if filter.is_some() {
+                exit_movement = filter.unwrap();
+                exit_movement.exit_datetime = Some(Utc::now().naive_utc());
+                movement.push(exit_movement);
+            }
+        }
+        None => {}
+    }
+
+    movement.push(LocationMovementRow {
+        id: uuid(),
+        store_id,
+        location_id,
+        stock_line_id: existing.id,
+        enter_datetime: Some(Utc::now().naive_utc()),
+        exit_datetime: None,
+    });
+
+    Ok(movement)
 }
 
 fn log_stock_changes(
