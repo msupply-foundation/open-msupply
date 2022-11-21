@@ -23,6 +23,16 @@ const stockLineParsers = {
 
 export const getStockQueries = (stockApi: StockApi, storeId: string) => ({
   get: {
+    byId: async (id: string) => {
+      const result = await stockApi.stockLine({ id, storeId });
+      const stockLine = result?.stockLines.nodes[0];
+
+      if (stockLine?.__typename === 'StockLineNode') {
+        return stockLine;
+      } else {
+        throw new Error('Could not find stock line');
+      }
+    },
     list: async ({
       first,
       offset,
