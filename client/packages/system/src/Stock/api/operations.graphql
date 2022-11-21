@@ -18,6 +18,26 @@ fragment StockLineRow on StockLineNode {
   }
 }
 
+fragment StockLineNode on StockLineNode {
+  availableNumberOfPacks
+  batch
+  costPricePerPack
+  expiryDate
+  id
+  itemId
+  locationName
+  onHold
+  packSize
+  sellPricePerPack
+  storeId
+  totalNumberOfPacks
+  item {
+    code
+    name
+    unitName
+  }
+}
+
 query stockLines(
   $first: Int
   $offset: Int
@@ -37,6 +57,19 @@ query stockLines(
       nodes {
         __typename
         ...StockLineRow
+      }
+      totalCount
+    }
+  }
+}
+
+query stockLine($id: String!, $storeId: String!) {
+  stockLines(storeId: $storeId, filter: { id: { equalTo: $id } }) {
+    ... on StockLineConnector {
+      __typename
+      nodes {
+        __typename
+        ...StockLineNode
       }
       totalCount
     }
