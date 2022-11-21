@@ -72,6 +72,7 @@ const UIComponent = (props: ControlProps) => {
       !(schemaOptions?.values ?? []).includes(s)
     ) {
       setLocalData(undefined);
+      handleChange(path, undefined);
     } else {
       setLocalData(s);
       handleChange(path, s === '' ? undefined : s);
