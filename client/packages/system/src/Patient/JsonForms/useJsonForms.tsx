@@ -85,12 +85,16 @@ export const useJsonForms = (
   createDoc?: CreateDocument
 ) => {
   const {
-    data: initialData,
+    data: loadedData,
     isLoading,
     documentId,
     documentRegistry,
     error,
   } = useDocumentLoader(docName, createDoc);
+  const [initialData, setInitialData] = useState(loadedData);
+  useEffect(() => {
+    setInitialData(loadedData);
+  }, [loadedData]);
   // current modified data
   const [data, setData] = useState<JsonData | undefined>();
   const [isSaving, setSaving] = useState(false);
@@ -118,6 +122,8 @@ export const useJsonForms = (
 
       const successSnack = success(t('success.data-saved'));
       successSnack();
+
+      setInitialData(data);
       return result?.name;
     } catch (err) {
       const errorSnack = errorNotification(t('error.problem-saving'));
