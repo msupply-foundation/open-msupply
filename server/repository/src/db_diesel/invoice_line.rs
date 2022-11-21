@@ -8,8 +8,8 @@ use super::{
 };
 
 use crate::{
-    diesel_macros::apply_equal_filter, repository_error::RepositoryError, EqualFilter, Pagination,
-    StockLineRow,
+    diesel_macros::apply_equal_filter, repository_error::RepositoryError, EqualFilter,
+    InvoiceRowStatus, InvoiceRowType, Pagination, StockLineRow,
 };
 
 use diesel::{
@@ -60,6 +60,8 @@ pub struct InvoiceLineFilter {
     pub location_id: Option<EqualFilter<String>>,
     pub requisition_id: Option<EqualFilter<String>>,
     pub number_of_packs: Option<EqualFilter<f64>>,
+    pub invoice_type: Option<EqualFilter<InvoiceRowType>>,
+    pub invoice_status: Option<EqualFilter<InvoiceRowStatus>>,
 }
 
 impl InvoiceLineFilter {
@@ -72,6 +74,8 @@ impl InvoiceLineFilter {
             location_id: None,
             requisition_id: None,
             number_of_packs: None,
+            invoice_type: None,
+            invoice_status: None,
         }
     }
 
@@ -107,6 +111,16 @@ impl InvoiceLineFilter {
 
     pub fn number_of_packs(mut self, filter: EqualFilter<f64>) -> Self {
         self.number_of_packs = Some(filter);
+        self
+    }
+
+    pub fn invoice_type(mut self, filter: EqualFilter<InvoiceRowType>) -> Self {
+        self.invoice_type = Some(filter);
+        self
+    }
+
+    pub fn invoice_status(mut self, filter: EqualFilter<InvoiceRowStatus>) -> Self {
+        self.invoice_status = Some(filter);
         self
     }
 }
@@ -198,6 +212,8 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
             location_id,
             requisition_id,
             number_of_packs,
+            invoice_type,
+            invoice_status,
         } = f;
 
         apply_equal_filter!(query, id, invoice_line_dsl::id);
@@ -207,6 +223,8 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
         apply_equal_filter!(query, item_id, invoice_line_dsl::item_id);
         apply_equal_filter!(query, r#type, invoice_line_dsl::type_);
         apply_equal_filter!(query, number_of_packs, invoice_line_dsl::number_of_packs);
+        apply_equal_filter!(query, invoice_type, invoice_dsl::type_);
+        apply_equal_filter!(query, invoice_status, invoice_dsl::status);
     }
 
     query
