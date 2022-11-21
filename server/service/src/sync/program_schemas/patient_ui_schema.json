@@ -124,14 +124,168 @@
                   "scope": "#/properties/dateOfBirthIsEstimated"
                 },
                 {
-                  "type": "Control",
-                  "label": "Birth District",
-                  "scope": "#/properties/birthPlace/properties/district"
+                  "type": "Autocomplete",
+                  "label": "Birth Province",
+                  "scope": "#/properties/birthPlace/properties/region",
+                  "options": {
+                    "freeText": false,
+                    "values": [
+                      "Western",
+                      "Gulf",
+                      "Central",
+                      "National Capital District",
+                      "Milne Bay",
+                      "Oro",
+                      "Southern Highlands",
+                      "Enga",
+                      "Western Highlands",
+                      "Simbu",
+                      "Eastern Highlands",
+                      "Morobe",
+                      "Madang",
+                      "East Sepik",
+                      "Saundaun",
+                      "Manus",
+                      "New Ireland",
+                      "East New Britain",
+                      "West New Britain",
+                      "North Solomon",
+                      "Expatriate",
+                      "Hela",
+                      "Jiwaka"
+                    ]
+                  }
                 },
                 {
-                  "type": "Control",
-                  "label": "Birth Province",
-                  "scope": "#/properties/birthPlace/properties/region"
+                  "type": "ConditionalSelect",
+                  "label": "Birth District",
+                  "scope": "#/properties/birthPlace/properties/district",
+                  "options": {
+                    "conditionField": "birthPlace.region",
+                    "conditionalValues": {
+                      "Western": [
+                        "Middle Fly",
+                        "North Fly District",
+                        "South Fly"
+                      ],
+                      "Gulf": ["Kerema District", "Kikori District"],
+                      "Central": [
+                        "Abau District",
+                        "Goilala District",
+                        "Kairuku-Hiri District",
+                        "Rigo District"
+                      ],
+                      "National Capital District": [
+                        "Moresby North-East",
+                        "Moresby North_West",
+                        "Moresby South"
+                      ],
+                      "Milne Bay": [
+                        "Alotau District",
+                        "Esa'ala District",
+                        "Kiriwini-Goodenough District",
+                        "Samarai-Murua District"
+                      ],
+                      "Oro": ["Ijivitari District", "Sohe District"],
+                      "Southern Highlands": [
+                        "Ialibu-Pangia District",
+                        "Imbonggu District",
+                        "Kagua-Erave District",
+                        "Komo-Magarima District",
+                        "Koroba-Kopiago District",
+                        "Mendi-Munihu District",
+                        "Nipa-Kutubu District",
+                        "Tari-Pori District"
+                      ],
+                      "Enga": [
+                        "Kandep District",
+                        "Kompiam District",
+                        "Lagaip-Porgera District",
+                        "Wabag District",
+                        "Kandep"
+                      ],
+                      "Western Highlands": [
+                        "Anglimp-South Waghi District",
+                        "Dei District",
+                        "Jimi District",
+                        "Mount Hagen District",
+                        "Mul-Baiyer District",
+                        "North Waghi District",
+                        "Tambul-Nebilyer District"
+                      ],
+                      "Simbu": [
+                        "Chauve District",
+                        "Gumine District",
+                        "Karimui-Nomane District",
+                        "Kerowagi District",
+                        "Kundiawa-Gembogl District",
+                        "Sina Sina-Yonggomugl District"
+                      ],
+                      "Eastern Highlands": [
+                        "Daulo District",
+                        "Goroka District",
+                        "Henganofi District",
+                        "Kainantu District",
+                        "Lufa District",
+                        "Obura-Wonenara District",
+                        "Okapa District District",
+                        "Unggai-Benna District"
+                      ],
+                      "Morobe": [
+                        "Bulolo District",
+                        "Finschhafen District",
+                        "Huon District",
+                        "Kabwum District",
+                        "Lae District",
+                        "Markham District",
+                        "Menyamya District",
+                        "Nawae District",
+                        "Tewae-Siassi District"
+                      ],
+                      "Madang": [
+                        "Bogia District",
+                        "Madang District",
+                        "Middle Ramu District",
+                        "Rai Coast District",
+                        "Sumkar District",
+                        "Usino Bundi District"
+                      ],
+                      "East Sepik": [
+                        "Ambunti-Dreikikir District",
+                        "Angoram District",
+                        "Maprik District",
+                        "Wewak District",
+                        "Wosera-Gawi District",
+                        "Yangoru-Saussia District"
+                      ],
+                      "Saundaun": [
+                        "Aitape-Lumi District",
+                        "Nuku District",
+                        "Telefomin District",
+                        "Vanimo-Green River District"
+                      ],
+                      "Manus": ["Manus District"],
+                      "New Ireland": ["Kavieng District", "Namatanai District"],
+                      "East New Britain": [
+                        "Gazelle District",
+                        "Kokopo District",
+                        "Pomio District",
+                        "Rabaul District"
+                      ],
+                      "West New Britain": [
+                        "Kandrian-Gloucester District",
+                        "Talasea District"
+                      ],
+                      "North Solomon": [
+                        "Central Bougainville District",
+                        "North Bougainville District",
+                        "South Bougainville District"
+                      ],
+                      "Expatriate": ["Other"],
+                      "Hela": [],
+                      "Jiwaka": []
+                    }
+                  }
                 },
                 {
                   "type": "Control",
