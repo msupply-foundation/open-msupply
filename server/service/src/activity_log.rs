@@ -80,7 +80,7 @@ pub fn activity_log_stock_entry(
         record_id: Some(record_id.to_string()),
         datetime: Utc::now().naive_utc(),
         event: Some(format!(
-            "Changed from {} to {}",
+            "Changed from [{}] to [{}]",
             from.unwrap_or_default(),
             to.unwrap_or_default()
         )),
