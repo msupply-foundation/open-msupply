@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useState } from 'react';
 import {
   TableProvider,
   DataTable,
@@ -7,12 +7,11 @@ import {
   useTranslation,
   NothingHere,
   useUrlQueryParams,
-  useNavigate,
-  RouteBuilder,
   DateUtils,
+  useDialog,
+  DialogButton,
 } from '@openmsupply-client/common';
-import { AppRoute } from '@openmsupply-client/config';
-import { Toolbar } from '../Components';
+import { DetailModal, Toolbar } from '../Components';
 import { StockLineRowFragment, useStock } from '../api';
 
 const StockListComponent: FC = () => {
@@ -27,10 +26,10 @@ const StockListComponent: FC = () => {
   });
   const pagination = { page, first, offset };
   const t = useTranslation('inventory');
-  const navigate = useNavigate();
+  const [selectedId, setSelectedId] = useState<string>('');
 
   const { data, isLoading, isError } = useStock.document.list();
-
+  const { Modal, showDialog, hideDialog } = useDialog();
   const columns = useColumns<StockLineRowFragment>(
     [
       [
@@ -83,6 +82,22 @@ const StockListComponent: FC = () => {
 
   return (
     <>
+      <Modal
+        slideAnimation={false}
+        title="Stock line details"
+        okButton={
+          <DialogButton
+            variant="ok"
+            disabled={true}
+            onClick={async () => {
+              hideDialog();
+            }}
+          />
+        }
+        cancelButton={<DialogButton variant="cancel" onClick={hideDialog} />}
+      >
+        <DetailModal id={selectedId} />
+      </Modal>
       <Toolbar filter={filter} />
       <DataTable
         id="stock-list"
@@ -94,12 +109,8 @@ const StockListComponent: FC = () => {
         isError={isError}
         isLoading={isLoading}
         onRowClick={row => {
-          navigate(
-            RouteBuilder.create(AppRoute.Catalogue)
-              .addPart(AppRoute.Items)
-              .addPart(row.itemId)
-              .build()
-          );
+          setSelectedId(row.id);
+          showDialog();
         }}
         enableColumnSelection
       />

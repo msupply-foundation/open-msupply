@@ -86,8 +86,6 @@ impl ShipmentTransferProcessor for CreateInboundShipmentProcessor {
             &new_inbound_shipment.id,
         )?;
 
-        println!("{:?}", outbound_shipment.invoice_row.status.clone());
-
         let invoice_line_repository = InvoiceLineRowRepository::new(connection);
 
         for line in new_inbound_lines.iter() {
