@@ -109,6 +109,9 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         ServiceError::StockDoesNotExist => {
             return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound {}))
         }
+        ServiceError::StockMovementNotFound => {
+            return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound {}))
+        }
         // Standard Graphql Errors
         ServiceError::StockDoesNotBelongToStore => BadUserInput(formatted_error),
         ServiceError::LocationDoesNotExist => BadUserInput(formatted_error),

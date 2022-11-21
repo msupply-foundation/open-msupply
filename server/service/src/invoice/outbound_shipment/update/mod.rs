@@ -1,6 +1,6 @@
 use repository::{
     Invoice, InvoiceLine, InvoiceLineRowRepository, InvoiceRowRepository, InvoiceRowStatus,
-    RepositoryError, StockLineRowRepository, TransactionError,
+    LocationMovementRowRepository, RepositoryError, StockLineRowRepository, TransactionError,
 };
 
 pub mod generate;
@@ -62,7 +62,8 @@ pub fn update_outbound_shipment(
                 batches_to_update,
                 update_invoice,
                 unallocated_lines_to_trim,
-            } = generate(invoice, patch.clone(), connection)?;
+                location_movements,
+            } = generate(&ctx.store_id, invoice, patch.clone(), connection)?;
 
             InvoiceRowRepository::new(connection).upsert_one(&update_invoice)?;
 
@@ -77,6 +78,12 @@ pub fn update_outbound_shipment(
                 let repository = InvoiceLineRowRepository::new(connection);
                 for line in lines {
                     repository.delete(&line.id)?;
+                }
+            }
+
+            if let Some(movements) = location_movements {
+                for movement in movements {
+                    LocationMovementRowRepository::new(&connection).upsert_one(&movement)?;
                 }
             }
 

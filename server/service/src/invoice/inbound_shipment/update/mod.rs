@@ -1,6 +1,6 @@
 use crate::activity_log::{activity_log_entry, log_type_from_invoice_status};
 use crate::{invoice::query::get_invoice, service_provider::ServiceContext, WithDBError};
-use repository::Invoice;
+use repository::{Invoice, LocationMovementRowRepository};
 use repository::{
     InvoiceLineRowRepository, InvoiceRowRepository, InvoiceRowStatus, RepositoryError,
     StockLineRowRepository,
@@ -47,8 +47,10 @@ pub fn update_inbound_shipment(
                 batches_to_update,
                 update_invoice,
                 empty_lines_to_trim,
+                location_movements,
             } = generate(
                 connection,
+                &ctx.store_id,
                 &ctx.user_id,
                 invoice,
                 other_party,
@@ -71,6 +73,14 @@ pub fn update_inbound_shipment(
                 let repository = InvoiceLineRowRepository::new(connection);
                 for line in lines {
                     repository.delete(&line.id)?;
+                }
+            }
+
+            if update_invoice.status == InvoiceRowStatus::Verified {
+                if let Some(movements) = location_movements {
+                    for movement in movements {
+                        LocationMovementRowRepository::new(&connection).upsert_one(&movement)?;
+                    }
                 }
             }
 
