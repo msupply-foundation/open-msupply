@@ -1,11 +1,11 @@
-import { Document } from './document';
+import { Lines } from './line';
 import { Utils } from './utils';
 
 export const useStock = {
-  document: {
-    get: Document.useStockLine,
-    list: Document.useStockLines,
-    update: Document.useStockLineUpdate,
+  line: {
+    get: Lines.useStockLine,
+    list: Lines.useStockLines,
+    update: Lines.useStockLineUpdate,
   },
   utils: {
     api: Utils.useStockApi,

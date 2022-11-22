@@ -25,7 +25,7 @@ const StockListComponent: FC = () => {
   });
   const pagination = { page, first, offset };
   const t = useTranslation('inventory');
-  const { data, isLoading, isError } = useStock.document.list();
+  const { data, isLoading, isError } = useStock.line.list();
   const columns = useColumns<StockLineRowFragment>(
     [
       [
