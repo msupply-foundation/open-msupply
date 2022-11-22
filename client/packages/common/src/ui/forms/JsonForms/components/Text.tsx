@@ -19,11 +19,13 @@ type Options = {
    * Examples for the correct pattern
    */
   examples?: string[];
+  width?: string;
 };
 const Options: z.ZodType<Options | undefined> = z
   .object({
     pattern: z.string().optional(),
-    examples: z.array(z.string()),
+    examples: z.array(z.string()).optional(),
+    width: z.string().optional(),
   })
   .strict()
   .optional();
