@@ -146,7 +146,7 @@ fn set_new_status_datetime(
 
     // Status sequence for outbound shipment: New, Allocated, Picked, Shipped
     match (&invoice.status, new_status) {
-        // From Shipped to Any, ingore
+        // From Shipped to Any, ignore
         (InvoiceRowStatus::Shipped, _) => {}
         // From New to Shipped, Picked, Allocated
         (InvoiceRowStatus::New, UpdateOutboundShipmentStatus::Shipped) => {

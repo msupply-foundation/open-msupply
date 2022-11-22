@@ -42,7 +42,9 @@
   "messages.error-deleting-locations_other": "{{count}} locations could not be deleted",
   "placeholder.enter-an-item-code-or-name": "Enter item code or name",
   "messages.deleted-lines": "Deleted {{count}} lines",
+  "messages.confirm-save-stock-line": "Do you want to save the changes to this stock line? All changes will be logged and can be reviewed later from this screen.",
   "messages.select-rows-to-delete-them": "Select rows to delete them",
   "status.new": "New",
-  "status.finalised": "Finalised"
+  "status.finalised": "Finalised",
+  "title.stock-line-details": "Stock Line Details"
 }

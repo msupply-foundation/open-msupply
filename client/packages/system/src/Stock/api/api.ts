@@ -3,6 +3,8 @@ import {
   FilterBy,
   StockLineNode,
   StockLineSortFieldInput,
+  RecordPatch,
+  UpdateStockLineInput,
 } from '@openmsupply-client/common';
 import { getSdk, StockLineRowFragment } from './operations.generated';
 
@@ -19,6 +21,17 @@ const stockLineParsers = {
       }
     }
   },
+  toUpdate: (
+    patch: RecordPatch<StockLineRowFragment>
+  ): UpdateStockLineInput => ({
+    id: patch?.id,
+    locationId: patch.locationId,
+    costPricePerPack: patch.costPricePerPack,
+    sellPricePerPack: patch.sellPricePerPack,
+    expiryDate: patch.expiryDate,
+    batch: patch.batch,
+    onHold: patch.onHold,
+  }),
 };
 
 export const getStockQueries = (stockApi: StockApi, storeId: string) => ({
@@ -58,5 +71,20 @@ export const getStockQueries = (stockApi: StockApi, storeId: string) => ({
       const { nodes, totalCount } = result?.stockLines;
       return { nodes, totalCount };
     },
+  },
+  update: async (patch: RecordPatch<StockLineRowFragment>) => {
+    const result =
+      (await stockApi.updateStockLine({
+        storeId,
+        input: stockLineParsers.toUpdate(patch),
+      })) || {};
+
+    const { updateStockLine } = result;
+
+    if (updateStockLine?.__typename === 'StockLineNode') {
+      return patch;
+    }
+
+    throw new Error('Unable to update stock line');
   },
 });

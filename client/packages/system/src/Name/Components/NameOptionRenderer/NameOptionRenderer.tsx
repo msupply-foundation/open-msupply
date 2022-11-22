@@ -23,7 +23,7 @@ export const getNameOptionRenderer =
               fontWeight="bold"
               textOverflow="ellipsis"
               sx={{
-                whiteSpace: 'no-wrap',
+                whiteSpace: 'nowrap',
               }}
             >
               {item.code}
