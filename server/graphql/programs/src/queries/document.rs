@@ -2,7 +2,7 @@ use async_graphql::*;
 use graphql_core::generic_filters::EqualFilterStringInput;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 use repository::{DocumentFilter, EqualFilter, StringFilter};
-use service::auth::{Resource, ResourceAccessRequest};
+use service::auth::{CapabilityTag, Resource, ResourceAccessRequest};
 use service::usize_to_u32;
 
 use crate::types::document::{DocumentConnector, DocumentNode};
@@ -43,6 +43,7 @@ pub fn document(ctx: &Context<'_>, store_id: String, name: String) -> Result<Opt
             store_id: Some(store_id),
         },
     )?;
+    let allowed_docs = user.capabilities(CapabilityTag::DocumentType);
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
@@ -51,16 +52,14 @@ pub fn document(ctx: &Context<'_>, store_id: String, name: String) -> Result<Opt
         .document_service
         .get_documents(
             &context,
-            Some(
-                DocumentFilter::new()
-                    .name(StringFilter::equal_to(&name))
-                    .r#type(EqualFilter::equal_any(
-                        user.context.iter().map(String::clone).collect(),
-                    )),
-            ),
+            Some(DocumentFilter::new().name(StringFilter::equal_to(&name))),
+            Some(&allowed_docs),
         )?
         .into_iter()
-        .map(|document| DocumentNode { document })
+        .map(|document| DocumentNode {
+            allowed_docs: allowed_docs.clone(),
+            document,
+        })
         .next();
 
     Ok(node)
@@ -78,26 +77,22 @@ pub fn documents(
             store_id: Some(store_id),
         },
     )?;
+    let allowed_docs = user.capabilities(CapabilityTag::DocumentType);
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
 
-    let filter = filter
-        .map(|f| {
-            f.to_domain_filter().r#type(EqualFilter::equal_any(
-                user.context.iter().map(String::clone).collect(),
-            ))
-        })
-        .unwrap_or(DocumentFilter::new().r#type(EqualFilter::equal_any(
-            user.context.iter().map(String::clone).collect(),
-        )));
+    let filter = filter.map(|f| f.to_domain_filter());
 
     let nodes: Vec<DocumentNode> = service_provider
         .document_service
-        .get_documents(&context, Some(filter))?
+        .get_documents(&context, filter, Some(&allowed_docs))?
         .into_iter()
         .into_iter()
-        .map(|document| DocumentNode { document })
+        .map(|document| DocumentNode {
+            allowed_docs: allowed_docs.clone(),
+            document,
+        })
         .collect();
 
     Ok(DocumentResponse::Response(DocumentConnector {
