@@ -7,12 +7,10 @@ import {
   useTranslation,
   NothingHere,
   useUrlQueryParams,
-  useNavigate,
-  RouteBuilder,
   DateUtils,
+  useEditModal,
 } from '@openmsupply-client/common';
-import { AppRoute } from '@openmsupply-client/config';
-import { Toolbar } from '../Components';
+import { StockLineEditModal, Toolbar } from '../Components';
 import { StockLineRowFragment, useStock } from '../api';
 
 const StockListComponent: FC = () => {
@@ -27,10 +25,7 @@ const StockListComponent: FC = () => {
   });
   const pagination = { page, first, offset };
   const t = useTranslation('inventory');
-  const navigate = useNavigate();
-
-  const { data, isLoading, isError } = useStock.document.list();
-
+  const { data, isLoading, isError } = useStock.line.list();
   const columns = useColumns<StockLineRowFragment>(
     [
       [
@@ -80,9 +75,19 @@ const StockListComponent: FC = () => {
     },
     [sortBy]
   );
+  const { isOpen, entity, onClose, onOpen } =
+    useEditModal<StockLineRowFragment>();
 
   return (
     <>
+      {isOpen && (
+        <StockLineEditModal
+          isOpen={isOpen}
+          onClose={onClose}
+          stockLine={entity}
+        />
+      )}
+
       <Toolbar filter={filter} />
       <DataTable
         id="stock-list"
@@ -93,14 +98,7 @@ const StockListComponent: FC = () => {
         noDataElement={<NothingHere body={t('error.no-stock')} />}
         isError={isError}
         isLoading={isLoading}
-        onRowClick={row => {
-          navigate(
-            RouteBuilder.create(AppRoute.Catalogue)
-              .addPart(AppRoute.Items)
-              .addPart(row.itemId)
-              .build()
-          );
-        }}
+        onRowClick={onOpen}
         enableColumnSelection
       />
     </>
