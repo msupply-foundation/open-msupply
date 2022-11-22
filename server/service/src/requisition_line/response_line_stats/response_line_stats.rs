@@ -6,6 +6,29 @@ use repository::{
 };
 
 #[derive(Clone, Debug, PartialEq, Default)]
+pub struct RequestStoreStats {
+    pub stock_on_hand: i32,
+    pub amc: i32,
+    pub max_months_of_stock: f64,
+    pub min_months_of_stock: f64,
+}
+
+pub fn customer_store_stats(
+    requisition_line: &RequisitionLine,
+) -> Result<RequestStoreStats, RepositoryError> {
+    Ok(RequestStoreStats {
+        stock_on_hand: requisition_line
+            .requisition_line_row
+            .available_stock_on_hand,
+        amc: requisition_line
+            .requisition_line_row
+            .average_monthly_consumption,
+        max_months_of_stock: requisition_line.requisition_row.max_months_of_stock,
+        min_months_of_stock: requisition_line.requisition_row.min_months_of_stock,
+    })
+}
+
+#[derive(Clone, Debug, PartialEq, Default)]
 pub struct ResponseStoreStats {
     pub stock_on_hand: f64,
     pub stock_on_order: i32, // Internal Order
