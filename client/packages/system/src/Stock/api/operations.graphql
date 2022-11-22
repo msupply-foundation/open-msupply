@@ -5,6 +5,7 @@ fragment StockLineRow on StockLineNode {
   expiryDate
   id
   itemId
+  locationId
   locationName
   onHold
   packSize
@@ -39,6 +40,28 @@ query stockLines(
         ...StockLineRow
       }
       totalCount
+    }
+  }
+}
+
+query stockLine($id: String!, $storeId: String!) {
+  stockLines(storeId: $storeId, filter: { id: { equalTo: $id } }) {
+    ... on StockLineConnector {
+      __typename
+      nodes {
+        __typename
+        ...StockLineRow
+      }
+      totalCount
+    }
+  }
+}
+
+mutation updateStockLine($input: UpdateStockLineInput!, $storeId: String!) {
+  updateStockLine(input: $input, storeId: $storeId) {
+    ... on StockLineNode {
+      __typename
+      ...StockLineRow
     }
   }
 }

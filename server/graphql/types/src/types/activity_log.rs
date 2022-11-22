@@ -68,6 +68,10 @@ impl ActivityLogNode {
         &self.row().datetime
     }
 
+    pub async fn event(&self) -> &Option<String> {
+        &self.row().event
+    }
+
     pub async fn user(&self, ctx: &Context<'_>) -> Result<Option<UserNode>> {
         let loader = ctx.get_loader::<DataLoader<UserLoader>>();
 

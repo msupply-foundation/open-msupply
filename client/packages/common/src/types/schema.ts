@@ -1583,6 +1583,7 @@ export type Mutations = {
   updateRequestRequisitionLine: UpdateRequestRequisitionLineResponse;
   updateResponseRequisition: UpdateResponseRequisitionResponse;
   updateResponseRequisitionLine: UpdateResponseRequisitionLineResponse;
+  updateStockLine: UpdateStockLineLineResponse;
   updateStocktake: UpdateStocktakeResponse;
   updateStocktakeLine: UpdateStocktakeLineResponse;
   updateSyncSettings: UpdateSyncSettingsResponse;
@@ -1879,6 +1880,12 @@ export type MutationsUpdateResponseRequisitionArgs = {
 
 export type MutationsUpdateResponseRequisitionLineArgs = {
   input: UpdateResponseRequisitionLineInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsUpdateStockLineArgs = {
+  input: UpdateStockLineInput;
   storeId: Scalars['String'];
 };
 
@@ -2350,7 +2357,7 @@ export type RecordBelongsToAnotherStore = DeleteLocationErrorInterface & UpdateL
   description: Scalars['String'];
 };
 
-export type RecordNotFound = AddFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & NodeErrorInterface & RequisitionLineChartErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateLocationErrorInterface & UpdateNameErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UseSuggestedQuantityErrorInterface & {
+export type RecordNotFound = AddFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & NodeErrorInterface & RequisitionLineChartErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateLocationErrorInterface & UpdateNameErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UpdateStockLineErrorInterface & UseSuggestedQuantityErrorInterface & {
   __typename: 'RecordNotFound';
   description: Scalars['String'];
 };
@@ -3295,6 +3302,27 @@ export type UpdateResult = {
   theme?: Maybe<Scalars['String']>;
 };
 
+export type UpdateStockLineError = {
+  __typename: 'UpdateStockLineError';
+  error: UpdateStockLineErrorInterface;
+};
+
+export type UpdateStockLineErrorInterface = {
+  description: Scalars['String'];
+};
+
+export type UpdateStockLineInput = {
+  batch?: InputMaybe<Scalars['String']>;
+  costPricePerPack?: InputMaybe<Scalars['Float']>;
+  expiryDate?: InputMaybe<Scalars['NaiveDate']>;
+  id: Scalars['String'];
+  locationId?: InputMaybe<Scalars['String']>;
+  onHold?: InputMaybe<Scalars['Boolean']>;
+  sellPricePerPack?: InputMaybe<Scalars['Float']>;
+};
+
+export type UpdateStockLineLineResponse = StockLineNode | UpdateStockLineError;
+
 export type UpdateStocktakeError = {
   __typename: 'UpdateStocktakeError';
   error: UpdateStocktakeErrorInterface;
@@ -3404,6 +3432,7 @@ export enum UserPermission {
   ServerAdmin = 'SERVER_ADMIN',
   StocktakeMutate = 'STOCKTAKE_MUTATE',
   StocktakeQuery = 'STOCKTAKE_QUERY',
+  StockLineMutate = 'STOCK_LINE_MUTATE',
   StockLineQuery = 'STOCK_LINE_QUERY',
   StoreAccess = 'STORE_ACCESS'
 }

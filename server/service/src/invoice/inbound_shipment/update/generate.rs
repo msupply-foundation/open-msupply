@@ -1,8 +1,8 @@
 use chrono::Utc;
 
 use repository::{
-    EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowType, Name,
-    RepositoryError,
+    EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowType, LocationMovementRow,
+    Name, RepositoryError,
 };
 use repository::{
     InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceRowStatus, StockLineRow,
@@ -21,10 +21,12 @@ pub(crate) struct GenerateResult {
     pub(crate) batches_to_update: Option<Vec<LineAndStockLine>>,
     pub(crate) update_invoice: InvoiceRow,
     pub(crate) empty_lines_to_trim: Option<Vec<InvoiceLineRow>>,
+    pub(crate) location_movements: Option<Vec<LocationMovementRow>>,
 }
 
 pub(crate) fn generate(
     connection: &StorageConnection,
+    store_id: &str,
     user_id: &str,
     existing_invoice: InvoiceRow,
     other_party_option: Option<Name>,
@@ -60,10 +62,25 @@ pub(crate) fn generate(
         None
     };
 
+    let location_movements = if let Some(batches) = &batches_to_update {
+        let generate_movement = batches
+            .iter()
+            .filter_map(|batch| match batch.line.location_id {
+                Some(_) => Some(generate_location_movements(store_id.to_owned(), batch)),
+                None => None,
+            })
+            .collect();
+
+        Some(generate_movement)
+    } else {
+        None
+    };
+
     Ok(GenerateResult {
         batches_to_update,
         empty_lines_to_trim: empty_lines_to_trim(connection, &existing_invoice, &patch.status)?,
         update_invoice,
+        location_movements,
     })
 }
 
@@ -191,4 +208,18 @@ pub fn generate_lines_and_stock_lines(
         }
     }
     Ok(result)
+}
+
+pub fn generate_location_movements(
+    store_id: String,
+    batch: &LineAndStockLine,
+) -> LocationMovementRow {
+    LocationMovementRow {
+        id: uuid(),
+        store_id,
+        stock_line_id: batch.stock_line.id.clone(),
+        location_id: batch.line.location_id.clone(),
+        enter_datetime: Some(Utc::now().naive_utc()),
+        exit_datetime: None,
+    }
 }

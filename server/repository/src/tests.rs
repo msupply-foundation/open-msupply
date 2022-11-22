@@ -257,6 +257,7 @@ mod repository_test {
                 store_id: None,
                 record_id: None,
                 datetime: NaiveDateTime::from_timestamp(2000, 0),
+                event: None,
             }
         }
     }
