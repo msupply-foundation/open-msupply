@@ -39,7 +39,7 @@ export const EncounterDetailModal: FC = () => {
   >();
   const [isError, setIsError] = useState(false);
 
-  const [data, setData] = useState<Encounter | undefined>(undefined);
+  const [draft, setDraft] = useState<Encounter | undefined>(undefined);
   const navigate = useNavigate();
   const { error } = useNotification();
 
@@ -52,7 +52,7 @@ export const EncounterDetailModal: FC = () => {
   const reset = () => {
     selectModal(undefined);
     setEncounterRegistry(undefined);
-    setData(undefined);
+    setDraft(undefined);
     setIsError(false);
   };
 
@@ -71,18 +71,19 @@ export const EncounterDetailModal: FC = () => {
 
     const startDatetime = DateUtils.formatRFC3339(date);
 
-    setData({
-      ...data,
+    setDraft({
+      ...draft,
       startDatetime,
       status: DateUtils.isFuture(date)
         ? EncounterNodeStatus.Scheduled
-        : data?.status,
+        : draft?.status,
     });
   };
 
   const setEndDatetime = (date: Date | null): void => {
     const endDatetime = date ? DateUtils.formatRFC3339(date) : null;
-    if (endDatetime && data?.startDatetime) setData({ ...data, endDatetime });
+    if (endDatetime && draft?.startDatetime)
+      setDraft({ ...draft, endDatetime });
   };
 
   return (
@@ -92,11 +93,11 @@ export const EncounterDetailModal: FC = () => {
       okButton={
         <DialogButton
           variant={'create'}
-          disabled={data === undefined}
+          disabled={draft === undefined}
           onClick={async () => {
             if (encounterRegistry !== undefined) {
               const { id } = await handleSave(
-                data,
+                draft,
                 encounterRegistry.encounter.formSchemaId
               );
               if (!!id)
@@ -133,7 +134,7 @@ export const EncounterDetailModal: FC = () => {
                   Input={
                     <DatePickerInput
                       value={DateUtils.getDateOrNull(
-                        data?.startDatetime ?? null
+                        draft?.startDatetime ?? null
                       )}
                       onChange={setStartDatetime}
                     />
@@ -144,7 +145,7 @@ export const EncounterDetailModal: FC = () => {
                   Input={
                     <TimePickerInput
                       value={DateUtils.getDateOrNull(
-                        data?.startDatetime ?? null
+                        draft?.startDatetime ?? null
                       )}
                       onChange={setStartDatetime}
                     />
@@ -154,8 +155,10 @@ export const EncounterDetailModal: FC = () => {
                   label={t('label.visit-end')}
                   Input={
                     <TimePickerInput
-                      value={DateUtils.getDateOrNull(data?.endDatetime ?? null)}
-                      disabled={data?.startDatetime === undefined}
+                      value={DateUtils.getDateOrNull(
+                        draft?.endDatetime ?? null
+                      )}
+                      disabled={draft?.startDatetime === undefined}
                       onChange={setEndDatetime}
                     />
                   }
