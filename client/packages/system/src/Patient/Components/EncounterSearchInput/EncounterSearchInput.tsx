@@ -29,7 +29,7 @@ export const getEncounterOptionRenderer =
               fontWeight="bold"
               textOverflow="ellipsis"
               sx={{
-                whiteSpace: 'no-wrap',
+                whiteSpace: 'nowrap',
               }}
             >
               {name?.substring(0, 3)}
