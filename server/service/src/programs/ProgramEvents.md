@@ -82,7 +82,7 @@ It is also required that events can becomes active in multiple stages, e.g. a st
 To achieve this, delayed events can be stacked.
 All events in a stack have the same creation time.
 
-For example, three events at time `20 become active in stages ("Warning" at t=30, "2nd Warning" at t=40, "Danger" at t=50):
+For example, three events at time `20` become active in stages ("Warning" at t=30, "2nd Warning" at t=40, "Danger" at t=50):
 
 ```
 ---------s1----------------------------
