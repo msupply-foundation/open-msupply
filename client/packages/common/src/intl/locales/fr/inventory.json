@@ -4,7 +4,7 @@
     "label.suggested": "Suggéré",
     "messages.select-rows-to-delete-them": "Sélectionner les lignes pour les supprimer",
     "label.add-batch": "Ajouter lot",
-    "label.finalised": "Finalisée",
+    "label.finalised": "Finalisé(e)",
     "label.pricing": "Tarification",
     "error.cant-save": "Problème rencontré lors de la sauvegarde.",
     "error.no-locations": "Il n'y a pas d'emplacement à afficher.",
