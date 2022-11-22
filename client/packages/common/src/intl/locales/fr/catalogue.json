@@ -2,7 +2,7 @@
     "error.item-not-found": "Article introuvable",
     "error.master-list-not-found": "Liste maître introuvable",
     "label.atc-category": "Classification ATC",
-    "label.code": "Code de l'article",
+    "label.code": "Code",
     "label.ddd": "Dose journalière définie",
     "label.default-pack-size": "Taille d'emballage par défaut",
     "label.doses": "Dosage",
