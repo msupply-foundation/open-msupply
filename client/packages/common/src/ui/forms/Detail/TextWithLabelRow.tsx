@@ -38,7 +38,7 @@ export const TextWithLabelRow: FC<TextWithLabelRowProps> = ({
           {label}:
         </FormLabel>
       </Box>
-      <Box>
+      <Box flex={1}>
         <Typography paddingRight={1.5} {...textProps}>
           {text}
         </Typography>
