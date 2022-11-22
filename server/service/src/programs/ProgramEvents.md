@@ -8,7 +8,7 @@ For example, events are currently used for the following purposes:
 1. Based on the dispensed pill count encounter, two events are scheduled in the future to change the program status to "Treatment interrupted" or "Lost to follow up"
 2. Based on encounter fields being set or not, the specific encounter is labelled as "Pending Lab Report" or "Lap Report Received"
 
-When updating a document (currently only encounter documents) the backend extracts events from the document and put these events into a `program_event` table.
+When updating a document (currently only encounter documents) the backend extracts events from the document and puts these events into a `program_event` table.
 This table can, for example, be used to find the current encounter status by querying the latest status event which is not scheduled in the future.
 
 ## Technical Details
