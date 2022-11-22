@@ -117,7 +117,7 @@ If an event is not superseded by a later event, the event has `active_end_dateti
 A query for a state at a time `t_search` becomes very simple now, e.g. `SELECT * WHERE active_start_datetime <= t_search AND t_search < active_end_datetime`;
 This even works for queries over multiple event targets, e.g. to query the status of all encounters.
 
-In the examples `active_start_datetime` is visualized with the `->` notation while the `active_end_datetime` time is from now on visualizes with `E` which shows when an event becomes deactivate:
+In the examples `active_start_datetime` is visualized with the `->` notation while the `active_end_datetime` time is from now on visualizes with `E` which shows when an event becomes deactivated:
 
 ```
 ---------s1----------------------------e2-
