@@ -10,6 +10,7 @@ import {
 interface TextWithLabelRowProps {
   label: string;
   labelProps?: FormLabelProps;
+  labelWidth?: string;
   text: string;
   textProps?: TypographyProps;
 }
@@ -17,18 +18,27 @@ interface TextWithLabelRowProps {
 export const TextWithLabelRow: FC<TextWithLabelRowProps> = ({
   label,
   labelProps,
+  labelWidth = '100px',
   text,
   textProps,
 }) => {
   const { sx, ...labelPropsRest } = labelProps || {};
   return (
     <Box display="flex" alignItems="center" gap={1}>
-      <Box style={{ textAlign: 'end', whiteSpace: 'nowrap' }} flexBasis="40%">
-        <FormLabel sx={{ fontWeight: 'bold', ...sx }} {...labelPropsRest}>
+      <Box style={{ textAlign: 'end', whiteSpace: 'nowrap' }}>
+        <FormLabel
+          sx={{
+            fontWeight: 'bold',
+            display: 'inline-block',
+            width: labelWidth,
+            ...sx,
+          }}
+          {...labelPropsRest}
+        >
           {label}:
         </FormLabel>
       </Box>
-      <Box flexBasis="60%">
+      <Box>
         <Typography paddingRight={1.5} {...textProps}>
           {text}
         </Typography>
