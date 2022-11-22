@@ -5,7 +5,7 @@ use graphql_core::{
 };
 use repository::{EqualFilter, ProgramEnrolmentFilter};
 use service::{
-    auth::{Resource, ResourceAccessRequest},
+    auth::{CapabilityTag, Resource, ResourceAccessRequest},
     programs::program_enrolment::{UpsertProgramEnrolment, UpsertProgramEnrolmentError},
 };
 
@@ -40,17 +40,10 @@ pub fn update_program_enrolment(
             store_id: Some(store_id.clone()),
         },
     )?;
+    let allowed_docs = user.capabilities(CapabilityTag::DocumentType);
 
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
-
-    match user.context.into_iter().find(|c| c == &input.r#type) {
-        None => Err(StandardGraphqlError::BadUserInput(format!(
-            "User does not have access to {}",
-            input.r#type
-        ))),
-        Some(_) => Ok(()),
-    }?;
 
     let document = match service_provider
         .program_enrolment_service
@@ -65,11 +58,15 @@ pub fn update_program_enrolment(
                 patient_id: input.patient_id,
                 r#type: input.r#type,
             },
+            allowed_docs.clone(),
         ) {
         Ok(document) => document,
         Err(error) => {
             let formatted_error = format!("{:#?}", error);
             let std_err = match error {
+                UpsertProgramEnrolmentError::NotAllowedToMutateDocument => {
+                    StandardGraphqlError::Forbidden(formatted_error)
+                }
                 UpsertProgramEnrolmentError::InvalidPatientId => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
@@ -101,6 +98,7 @@ pub fn update_program_enrolment(
         .program_enrolment(
             &service_context,
             ProgramEnrolmentFilter::new().r#type(EqualFilter::equal_to(&document.r#type)),
+            allowed_docs.clone(),
         )?
         .ok_or(
             StandardGraphqlError::InternalError("Program enrolment went missing".to_string())
@@ -110,6 +108,7 @@ pub fn update_program_enrolment(
         ProgramEnrolmentNode {
             store_id,
             program_row,
+            allowed_docs: allowed_docs.clone(),
         },
     ))
 }

@@ -56,8 +56,13 @@ pub fn update_patient(
             // Updating the document will trigger an update in the patient (names) table
             service_provider
                 .document_service
-                .update_document(ctx, doc)
+                .update_document(ctx, doc, &vec![PATIENT_TYPE.to_string()])
                 .map_err(|err| match err {
+                    DocumentInsertError::NotAllowedToMutateDocument => {
+                        UpdatePatientError::InternalError(
+                            "Wrong params for update_document".to_string(),
+                        )
+                    }
                     DocumentInsertError::InvalidDataSchema(err) => {
                         UpdatePatientError::InvalidDataSchema(err)
                     }
@@ -143,9 +148,10 @@ fn validate_patient_not_exists(
     id: &str,
 ) -> Result<bool, RepositoryError> {
     let patient_name = main_patient_doc_name(id);
-    let existing_document = service_provider
-        .document_service
-        .get_document(ctx, &patient_name)?;
+    let existing_document =
+        service_provider
+            .document_service
+            .get_document(ctx, &patient_name, None)?;
     Ok(existing_document.is_none())
 }
 
@@ -180,7 +186,7 @@ fn validate(
         }
     }
 
-    if !patient_belongs_to_store(ctx, store_id, &patient.id)? {
+    if input.parent.is_some() && !patient_belongs_to_store(ctx, store_id, &patient.id)? {
         return Err(UpdatePatientError::PatientDoesNotBelongToStore);
     }
     Ok(patient)
@@ -191,7 +197,7 @@ pub mod test {
     use repository::{
         mock::{mock_form_schema_empty, MockDataInserts},
         test_db::setup_all,
-        DocumentRepository, FormSchemaRowRepository,
+        DocumentFilter, DocumentRepository, FormSchemaRowRepository, StringFilter,
     };
     use serde_json::json;
     use util::inline_init;
@@ -273,27 +279,8 @@ pub mod test {
             .unwrap();
         matches!(err, UpdatePatientError::InvalidDataSchema(_));
 
-        let not_visible_err = service
-            .update_patient(
-                &ctx,
-                &service_provider,
-                "store_b",
-                "user",
-                super::UpdatePatient {
-                    data: serde_json::to_value(patient.clone()).unwrap(),
-                    schema_id: schema.id.clone(),
-                    parent: None,
-                },
-            )
-            .err()
-            .unwrap();
-        matches!(
-            not_visible_err,
-            UpdatePatientError::PatientDoesNotBelongToStore
-        );
-
         // success insert
-        service
+        let inserted_patient = service
             .update_patient(
                 &ctx,
                 &service_provider,
@@ -306,6 +293,23 @@ pub mod test {
                 },
             )
             .unwrap();
+
+        // PatientDoesNotBelongToStore
+        let err = service
+            .update_patient(
+                &ctx,
+                &service_provider,
+                "store_b",
+                "user",
+                super::UpdatePatient {
+                    data: serde_json::to_value(patient.clone()).unwrap(),
+                    schema_id: schema.id.clone(),
+                    parent: Some(inserted_patient.name_row.id),
+                },
+            )
+            .err()
+            .unwrap();
+        matches!(err, UpdatePatientError::PatientDoesNotBelongToStore);
 
         assert_eq!(
             service
@@ -345,8 +349,11 @@ pub mod test {
 
         // success update
         let v0 = DocumentRepository::new(&ctx.connection)
-            .find_one_by_name(&main_patient_doc_name(&patient.id))
+            .query(Some(DocumentFilter::new().name(StringFilter::equal_to(
+                &main_patient_doc_name(&patient.id),
+            ))))
             .unwrap()
+            .pop()
             .unwrap();
         service
             .update_patient(

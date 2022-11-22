@@ -9,7 +9,7 @@ use repository::{
     ProgramEnrolmentSortField,
 };
 use service::{
-    auth::{Resource, ResourceAccessRequest},
+    auth::{CapabilityTag, Resource, ResourceAccessRequest},
     usize_to_u32,
 };
 
@@ -75,19 +75,10 @@ pub fn program_enrolments(
             store_id: Some(store_id.clone()),
         },
     )?;
+    let allowed_docs = user.capabilities(CapabilityTag::DocumentType);
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
-
-    let filter = filter
-        .map(|f| {
-            f.to_domain_filter().r#type(EqualFilter::equal_any(
-                user.context.iter().map(String::clone).collect(),
-            ))
-        })
-        .unwrap_or(ProgramEnrolmentFilter::new().r#type(EqualFilter::equal_any(
-            user.context.iter().map(String::clone).collect(),
-        )));
 
     let nodes: Vec<ProgramEnrolmentNode> = service_provider
         .program_enrolment_service
@@ -95,12 +86,14 @@ pub fn program_enrolments(
             &context,
             Pagination::all(),
             sort.map(ProgramEnrolmentSortInput::to_domain),
-            Some(filter),
+            filter.map(|f| f.to_domain_filter()),
+            allowed_docs.clone(),
         )?
         .into_iter()
         .map(|program_row| ProgramEnrolmentNode {
             store_id: store_id.clone(),
             program_row,
+            allowed_docs: allowed_docs.clone(),
         })
         .collect();
 

@@ -29,10 +29,20 @@ pub(crate) fn encounter_fields(
     pagination: Option<PaginationOption>,
     filter: Option<EncounterFilter>,
     sort: Option<EncounterSort>,
+    allowed_docs: Vec<String>,
 ) -> Result<ListResult<EncounterFieldsResult>, ListError> {
+    // restrict query results to allowed entries
+    let mut filter = filter.unwrap_or(EncounterFilter::new());
+    filter.r#type = Some(
+        filter
+            .r#type
+            .unwrap_or_default()
+            .restrict_results(&allowed_docs),
+    );
+
     let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
     let repository = EncounterRepository::new(&ctx.connection);
-    let encounters = repository.query(pagination, filter.clone(), sort)?;
+    let encounters = repository.query(pagination, Some(filter.clone()), sort)?;
     let doc_names = encounters
         .iter()
         .map(|row| row.name.clone())
@@ -61,6 +71,6 @@ pub(crate) fn encounter_fields(
 
     Ok(ListResult {
         rows,
-        count: i64_to_u32(repository.count(filter)?),
+        count: i64_to_u32(repository.count(Some(filter))?),
     })
 }

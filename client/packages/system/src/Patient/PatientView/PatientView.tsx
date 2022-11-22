@@ -79,7 +79,7 @@ const PatientDetailView: FC = () => {
 
   const handleSave = useUpsertPatient();
   const { JsonForm, saveData, revert, isSaving, isDirty } = useJsonForms(
-    documentName,
+    patient ? undefined : documentName,
     { handleSave },
     createDoc
   );
