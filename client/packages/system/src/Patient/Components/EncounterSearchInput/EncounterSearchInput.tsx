@@ -19,7 +19,7 @@ interface EncounterSearchInputProps {
 
 export const getEncounterOptionRenderer =
   (): AutocompleteOptionRenderer<EncounterRegistry> => (props, node) => {
-    const name = node.encounter.name ?? '??';
+    const name = node.encounter.name ?? '';
     return (
       <DefaultAutocompleteItemOption {...props} key={props.id}>
         <Box display="flex" alignItems="flex-end" gap={1} height={25}>
@@ -47,11 +47,10 @@ export const EncounterSearchInput: FC<EncounterSearchInputProps> = ({
   value,
   disabled = false,
 }) => {
-  const { data: programsEnrolments, isLoading: programsIsLoading } =
+  const { data: enrolmentData, isLoading: isEnrolmentDataLoading } =
     usePatient.document.programEnrolments();
-  const { data, isLoading } = usePatient.document.programEncounters(
-    programsEnrolments?.nodes ?? []
-  );
+  const { data: encounterData, isLoading: isEncounterLoading } =
+    usePatient.document.programEncounters(enrolmentData?.nodes ?? []);
   const [buffer, setBuffer] = useBufferState(value);
   const EncounterOptionRenderer = getEncounterOptionRenderer();
 
@@ -65,12 +64,12 @@ export const EncounterSearchInput: FC<EncounterSearchInputProps> = ({
           label: buffer.encounter.name ?? '',
         }
       }
-      loading={programsIsLoading || isLoading}
+      loading={isEnrolmentDataLoading || isEncounterLoading}
       onChange={(_, name) => {
         setBuffer(name);
         name && onChange(name);
       }}
-      options={data ?? []}
+      options={encounterData ?? []}
       renderOption={EncounterOptionRenderer}
       width={`${width}px`}
       popperMinWidth={width}
