@@ -18,7 +18,7 @@ const round = (value: number) => Math.round(value * 100) / 100;
 
 const UIComponent = (props: ControlProps) => {
   const { data, handleChange, label, path } = props;
-  const { height, weight } = data;
+  const { height, weight } = data ?? {};
 
   useEffect(() => {
     if (!data) return;
@@ -40,7 +40,7 @@ const UIComponent = (props: ControlProps) => {
     <DetailInputWithLabelRow
       label={label}
       inputProps={{
-        value: data.bodyMassIndex ?? '',
+        value: data?.bodyMassIndex ?? '',
         sx: { margin: 0.5, width: '100px' },
         disabled: true,
       }}

@@ -10,7 +10,10 @@ import {
   SortRule,
   EncounterSortFieldInput,
   PaginationInput,
+  DocumentRegistryFilterInput,
+  DocumentRegistrySortFieldInput,
 } from '@openmsupply-client/common';
+import { DocumentRegistryFragment } from '../JsonForms/api';
 import {
   Sdk,
   PatientRowFragment,
@@ -29,6 +32,10 @@ export type ListParams = {
 export type ProgramEnrolmentListParams = {
   sortBy?: SortRule<ProgramEnrolmentSortFieldInput>;
   filterBy?: FilterBy;
+};
+
+export type ProgramEnrolmentParams = {
+  filter?: DocumentRegistryFilterInput;
 };
 
 export type EncounterListParams = {
@@ -116,6 +123,20 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
       });
 
       return result?.programEnrolments;
+    },
+    documentRegistries: async ({
+      filter,
+    }: ProgramEnrolmentParams): Promise<{
+      nodes: DocumentRegistryFragment[];
+      totalCount: number;
+    }> => {
+      const result = await sdk.documentRegistries({
+        filter,
+        key: DocumentRegistrySortFieldInput.DocumentType,
+        desc: false,
+      });
+
+      return result?.documentRegistries;
     },
     search: async (
       input: PatientSearchInput

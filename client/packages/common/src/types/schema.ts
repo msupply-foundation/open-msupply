@@ -981,6 +981,7 @@ export enum GenderType {
   Female = 'FEMALE',
   Male = 'MALE',
   NonBinary = 'NON_BINARY',
+  Transgender = 'TRANSGENDER',
   TransgenderFemale = 'TRANSGENDER_FEMALE',
   TransgenderFemaleHormone = 'TRANSGENDER_FEMALE_HORMONE',
   TransgenderFemaleSurgical = 'TRANSGENDER_FEMALE_SURGICAL',
