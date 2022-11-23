@@ -54,6 +54,7 @@ pub struct InvoiceLine {
 
 pub struct InvoiceLineFilter {
     pub id: Option<EqualFilter<String>>,
+    pub store_id: Option<EqualFilter<String>>,
     pub invoice_id: Option<EqualFilter<String>>,
     pub item_id: Option<EqualFilter<String>>,
     pub r#type: Option<EqualFilter<InvoiceLineRowType>>,
@@ -68,6 +69,7 @@ impl InvoiceLineFilter {
     pub fn new() -> InvoiceLineFilter {
         InvoiceLineFilter {
             id: None,
+            store_id: None,
             invoice_id: None,
             r#type: None,
             item_id: None,
@@ -81,6 +83,11 @@ impl InvoiceLineFilter {
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {
         self.id = Some(filter);
+        self
+    }
+
+    pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.store_id = Some(filter);
         self
     }
 
@@ -206,6 +213,7 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
     if let Some(f) = filter {
         let InvoiceLineFilter {
             id,
+            store_id,
             invoice_id,
             item_id,
             r#type,
@@ -217,6 +225,7 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
         } = f;
 
         apply_equal_filter!(query, id, invoice_line_dsl::id);
+        apply_equal_filter!(query, store_id, invoice_dsl::store_id);
         apply_equal_filter!(query, requisition_id, invoice_dsl::requisition_id);
         apply_equal_filter!(query, invoice_id, invoice_line_dsl::invoice_id);
         apply_equal_filter!(query, location_id, invoice_line_dsl::location_id);

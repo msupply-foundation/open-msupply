@@ -72,6 +72,7 @@ pub fn response_store_stats(
 
     let invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
+            .store_id(EqualFilter::equal_to(store_id))
             .item_id(EqualFilter::equal_to(
                 &requisition_line.requisition_line_row.item_id,
             ))
