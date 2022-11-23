@@ -113,7 +113,14 @@
         },
         {
           "scope": "#/properties/arvMedication/properties/adherenceStatus",
-          "type": "Control"
+          "type": "Control",
+          "options": {
+            "show": [
+              ["GOOD", "Good"],
+              ["MEDIUM", "Medium"],
+              ["POOR", "Poor"]
+            ]
+          }
         },
         {
           "label": "Number Of Days Dispensed",

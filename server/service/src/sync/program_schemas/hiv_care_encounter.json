@@ -55,8 +55,8 @@
           "properties": {
             "adherenceStatus": {
               "description": "Antiretroviral adherence status",
-              "enum": [0, 1, 2],
-              "type": "number"
+              "enum": ["GOOD", "MEDIUM", "POOR"],
+              "type": "string"
             },
             "change": {
               "enum": ["SUBSTITUTION", "SWITCHING"],
