@@ -61,7 +61,7 @@ mod hiv_care_program {
                 risk_group: Default::default(),
                 status: Default::default(),
                 treatment_supporter: Default::default(),
-                note: Default::default(),
+                // note: Default::default(),
                 referred_from: Default::default(),
             }
         }

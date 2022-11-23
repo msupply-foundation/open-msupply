@@ -115,9 +115,6 @@
         "mother": {
           "$ref": "#/definitions/HIVRelation"
         },
-        "note": {
-          "type": "string"
-        },
         "partnerHivStatus": {
           "enum": [
             "POSITIVE",
