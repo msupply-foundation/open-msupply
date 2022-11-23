@@ -1,4 +1,4 @@
-use chrono::Utc;
+use chrono::{DateTime, Utc};
 use repository::{Document, DocumentRepository, DocumentStatus, RepositoryError, TransactionError};
 
 use crate::{
@@ -28,6 +28,7 @@ pub struct InsertEncounter {
     pub r#type: String,
     pub data: serde_json::Value,
     pub schema_id: String,
+    pub event_datetime: DateTime<Utc>,
 }
 
 pub fn insert_encounter(
@@ -42,7 +43,8 @@ pub fn insert_encounter(
             let encounter = validate(ctx, &input)?;
             let patient_id = input.patient_id.clone();
             let program = input.program.clone();
-            let doc = generate(user_id, input)?;
+            let event_datetime = input.event_datetime;
+            let doc = generate(user_id, input, event_datetime)?;
 
             if is_latest_doc(ctx, service_provider, &doc)
                 .map_err(InsertEncounterError::DatabaseError)?
@@ -99,13 +101,17 @@ impl From<RepositoryError> for InsertEncounterError {
     }
 }
 
-fn generate(user_id: &str, input: InsertEncounter) -> Result<RawDocument, RepositoryError> {
+fn generate(
+    user_id: &str,
+    input: InsertEncounter,
+    event_datetime: DateTime<Utc>,
+) -> Result<RawDocument, RepositoryError> {
     let encounter_name = Utc::now().to_rfc3339();
     Ok(RawDocument {
         name: patient_doc_name_with_id(&input.patient_id, &input.r#type, &encounter_name),
         parents: vec![],
         author: user_id.to_string(),
-        timestamp: Utc::now(),
+        timestamp: event_datetime,
         r#type: input.r#type,
         data: input.data,
         schema_id: Some(input.schema_id),
@@ -242,6 +248,7 @@ mod test {
                     patient_id: "some_id".to_string(),
                     r#type: "SomeType".to_string(),
                     program: program_type.clone(),
+                    event_datetime: Utc::now(),
                 },
             )
             .err()
@@ -258,6 +265,7 @@ mod test {
                     patient_id: patient.id.clone(),
                     r#type: "SomeType".to_string(),
                     program: "invalid".to_string(),
+                    event_datetime: Utc::now(),
                 },
             )
             .err()
@@ -276,6 +284,7 @@ mod test {
                     patient_id: patient.id.clone(),
                     r#type: "SomeType".to_string(),
                     program: program_type.clone(),
+                    event_datetime: Utc::now(),
                 },
             )
             .err()
@@ -299,6 +308,7 @@ mod test {
                     patient_id: patient.id.clone(),
                     r#type: program_type.clone(),
                     program: program_type.clone(),
+                    event_datetime: Utc::now(),
                 },
             )
             .unwrap();

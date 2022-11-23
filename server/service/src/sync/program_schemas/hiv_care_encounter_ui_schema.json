@@ -134,7 +134,7 @@
               }
             ],
             "scheduleEventsNow": true,
-            "targetField": "numberOfDaysDispensed"
+            "targetField": "arvMedication.numberOfDaysDispensed"
           },
           "scope": "#",
           "type": "DispensedDuration"
