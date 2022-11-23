@@ -130,7 +130,6 @@ mod test {
             r.status = RequisitionRowStatus::New;
             r.created_datetime = Utc::now().naive_utc();
             r.max_months_of_stock = 3.0;
-            r.min_months_of_stock = 1.0;
         })
     }
 
@@ -151,6 +150,7 @@ mod test {
             r.requested_quantity = 15;
             r.available_stock_on_hand = 10;
             r.average_monthly_consumption = 50;
+            r.suggested_quantity = 240;
         })
     }
 
@@ -164,7 +164,6 @@ mod test {
             r.status = RequisitionRowStatus::New;
             r.created_datetime = Utc::now().naive_utc();
             r.max_months_of_stock = 6.0;
-            r.min_months_of_stock = 1.0;
         })
     }
 
@@ -187,7 +186,6 @@ mod test {
             r.status = RequisitionRowStatus::Sent;
             r.created_datetime = Utc::now().naive_utc();
             r.max_months_of_stock = 5.0;
-            r.min_months_of_stock = 1.0;
         })
     }
 
@@ -210,7 +208,6 @@ mod test {
             r.status = RequisitionRowStatus::New;
             r.created_datetime = Utc::now().naive_utc();
             r.max_months_of_stock = 5.0;
-            r.min_months_of_stock = 1.0;
         })
     }
 
@@ -267,7 +264,7 @@ mod test {
                 stock_on_hand: requisition_line_one_b().available_stock_on_hand,
                 amc: requisition_line_one_b().average_monthly_consumption,
                 max_months_of_stock: requisition_one().max_months_of_stock,
-                min_months_of_stock: requisition_one().min_months_of_stock,
+                suggested_quantity: requisition_line_one_b().suggested_quantity,
             },
         };
 

@@ -54,8 +54,8 @@ impl RequestStoreStatsNode {
         self.request_store_stats.max_months_of_stock
     }
 
-    pub async fn min_months_of_stock(&self) -> f64 {
-        self.request_store_stats.min_months_of_stock
+    pub async fn suggested_quantity(&self) -> i32 {
+        self.request_store_stats.suggested_quantity
     }
 }
 
