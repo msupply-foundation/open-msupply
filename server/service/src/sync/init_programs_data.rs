@@ -62,7 +62,7 @@ mod hiv_care_program {
                 status: Default::default(),
                 treatment_supporter: Default::default(),
                 note: Default::default(),
-                referred_from: ReferredFrom::Index,
+                referred_from: Default::default(),
             }
         }
     }
