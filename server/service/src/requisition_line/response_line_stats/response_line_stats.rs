@@ -10,7 +10,7 @@ pub struct RequestStoreStats {
     pub stock_on_hand: i32,
     pub amc: i32,
     pub max_months_of_stock: f64,
-    pub min_months_of_stock: f64,
+    pub suggested_quantity: i32,
 }
 
 pub fn customer_store_stats(
@@ -24,7 +24,7 @@ pub fn customer_store_stats(
             .requisition_line_row
             .average_monthly_consumption,
         max_months_of_stock: requisition_line.requisition_row.max_months_of_stock,
-        min_months_of_stock: requisition_line.requisition_row.min_months_of_stock,
+        suggested_quantity: requisition_line.requisition_line_row.suggested_quantity,
     })
 }
 
