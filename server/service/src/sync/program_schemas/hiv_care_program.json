@@ -116,13 +116,7 @@
           "$ref": "#/definitions/HIVRelation"
         },
         "partnerHivStatus": {
-          "enum": [
-            "POSITIVE",
-            "NEGATIVE",
-            "UNKNOWN",
-            "NOT_DONE"
-          ],
-          "type": "string"
+          "$ref": "#/definitions/HIVPartnerStatus"
         },
         "priorART": {
           "enum": [
@@ -152,6 +146,15 @@
         "enrolmentDatetime"
       ],
       "type": "object"
+    },
+    "HIVPartnerStatus": {
+      "enum": [
+        "POSITIVE",
+        "NEGATIVE",
+        "UNKNOWN",
+        "NOT_DONE"
+      ],
+      "type": "string"
     },
     "HIVRelation": {
       "properties": {
