@@ -119,7 +119,13 @@
           "type": "string"
         },
         "partnerHivStatus": {
-          "$ref": "#/definitions/HIVStatus"
+          "enum": [
+            "POSITIVE",
+            "NEGATIVE",
+            "UNKNOWN",
+            "NOT_DONE"
+          ],
+          "type": "string"
         },
         "priorART": {
           "enum": [
@@ -146,8 +152,7 @@
         }
       },
       "required": [
-        "enrolmentDatetime",
-        "referredFrom"
+        "enrolmentDatetime"
       ],
       "type": "object"
     },
@@ -170,15 +175,6 @@
         "TG",
         "FSW",
         "MSW"
-      ],
-      "type": "string"
-    },
-    "HIVStatus": {
-      "enum": [
-        "POSITIVE",
-        "NEGATIVE",
-        "UNKNOWN",
-        "NOT_DONE"
       ],
       "type": "string"
     },

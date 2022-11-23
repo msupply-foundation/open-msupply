@@ -129,18 +129,10 @@
       "type": "object"
     },
     "Gender": {
-      "enum": [
-        "FEMALE",
-        "MALE",
-        "TRANSGENDER",
-        "TRANSGENDER_MALE",
-        "TRANSGENDER_FEMALE",
-        "UNKNOWN",
-        "NON_BINARY"
-      ],
+      "enum": ["FEMALE", "MALE", "TRANSGENDER", "TRANSGENDER_MALE", "TRANSGENDER_FEMALE", "UNKNOWN", "NON_BINARY"],
       "type": "string"
     },
-    "Handiness": {
+    "Handedness": {
       "enum": ["LEFT", "RIGHT"],
       "type": "string"
     },
@@ -158,14 +150,7 @@
       "type": "object"
     },
     "MaritalStatus": {
-      "enum": [
-        "SINGLE",
-        "MARRIED",
-        "DIVORCED",
-        "WIDOWED",
-        "SEPARATED",
-        "REGISTERED_PARTNERSHIP"
-      ],
+      "enum": ["SINGLE", "MARRIED", "DIVORCED", "WIDOWED", "SEPARATED", "REGISTERED_PARTNERSHIP"],
       "type": "string"
     },
     "Note": {
@@ -346,7 +331,7 @@
           "description": "394744001 Gender unspecified"
         },
         "hand": {
-          "$ref": "#/definitions/Handiness"
+          "$ref": "#/definitions/Handedness"
         },
         "healthCenter": {
           "$ref": "#/definitions/HealthCenter",
