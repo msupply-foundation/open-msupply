@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ControlProps, rankWith, schemaTypeIs } from '@jsonforms/core';
-import { withJsonFormsControlProps } from '@jsonforms/react';
+import { Actions, ControlProps, rankWith, schemaTypeIs } from '@jsonforms/core';
+import { useJsonForms, withJsonFormsControlProps } from '@jsonforms/react';
 import {
   DetailInputWithLabelRow,
   useDebounceCallback,
@@ -108,6 +108,28 @@ const UIComponent = (props: ControlProps) => {
           examples: examples.join('", "'),
         })
       : zErrors ?? errors ?? customErrors;
+
+  const { core, dispatch } = useJsonForms();
+  useEffect(() => {
+    if (!core || !dispatch) {
+      return;
+    }
+    const currentErrors = core?.errors ?? [];
+    if (customErrors) {
+      dispatch(
+        Actions.updateErrors([
+          ...currentErrors,
+          {
+            instancePath: path,
+            message: customErrors,
+            schemaPath: path,
+            keyword: '',
+            params: {},
+          },
+        ])
+      );
+    }
+  }, [core, dispatch, customErrors]);
 
   useEffect(() => {
     // Using debounce, the actual data is set after 500ms after the last key stroke (localDataTime).

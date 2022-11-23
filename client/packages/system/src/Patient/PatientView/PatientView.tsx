@@ -78,11 +78,8 @@ const PatientDetailView: FC = () => {
   }, [patient]);
 
   const handleSave = useUpsertPatient();
-  const { JsonForm, saveData, revert, isSaving, isDirty } = useJsonForms(
-    patient ? undefined : documentName,
-    { handleSave },
-    createDoc
-  );
+  const { JsonForm, saveData, revert, isSaving, isDirty, validationError } =
+    useJsonForms(patient ? undefined : documentName, { handleSave }, createDoc);
   useEffect(() => {
     return () => setNewPatient(undefined);
   }, []);
@@ -140,7 +137,7 @@ const PatientDetailView: FC = () => {
             />
             <LoadingButton
               color="secondary"
-              disabled={!isDirty}
+              disabled={!isDirty || !!validationError}
               isLoading={isSaving}
               onClick={() => showSaveConfirmation()}
             >
