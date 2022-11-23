@@ -33,6 +33,10 @@ import {
   firstItemArrayTester,
   CategorizationTabLayout,
   categorizationTabLayoutTester,
+  Autocomplete,
+  autocompleteTester,
+  conditionalSelectTester,
+  ConditionalSelect,
 } from './components';
 import {
   AccordionGroup,
@@ -156,6 +160,8 @@ const renderers = [
   { tester: arrayTester, renderer: Array },
   { tester: firstItemArrayTester, renderer: FirstItemArray },
   { tester: categorizationTabLayoutTester, renderer: CategorizationTabLayout },
+  { tester: autocompleteTester, renderer: Autocomplete },
+  { tester: conditionalSelectTester, renderer: ConditionalSelect },
   // We should be able to remove materialRenderers once we are sure we have custom components to cover all cases.
   ...materialRenderers,
 ];
