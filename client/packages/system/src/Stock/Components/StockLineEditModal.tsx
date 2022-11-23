@@ -100,14 +100,13 @@ export const StockLineEditModal: FC<StockLineEditModalProps> = ({
       <Grid
         container
         paddingBottom={4}
-        paddingTop={4}
         alignItems="center"
         flexDirection="column"
       >
         <Typography sx={{ fontWeight: 'bold' }} variant="h6">
           {stockLine.item.name}
         </Typography>
-        <Typography sx={{ fontWeight: 'bold' }}>
+        <Typography sx={{ fontWeight: 'bold', marginBottom: 3 }}>
           {`${t('label.code')} : ${stockLine.item.code}`}
         </Typography>
         <ModalTabs tabs={tabs} />
