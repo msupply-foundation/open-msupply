@@ -803,6 +803,7 @@ export type EncounterNode = {
 
 
 export type EncounterNodeEventsArgs = {
+  at?: InputMaybe<Scalars['DateTime']>;
   filter?: InputMaybe<ProgramEventFilterInput>;
 };
 
@@ -2598,6 +2599,7 @@ export type ProgramEnrolmentNode = {
 
 
 export type ProgramEnrolmentNodeEventsArgs = {
+  at?: InputMaybe<Scalars['DateTime']>;
   filter?: InputMaybe<ProgramEventFilterInput>;
 };
 
@@ -2627,27 +2629,28 @@ export type ProgramEventConnector = {
 };
 
 export type ProgramEventFilterInput = {
-  context?: InputMaybe<EqualFilterStringInput>;
-  datetime?: InputMaybe<DatetimeFilterInput>;
-  group?: InputMaybe<EqualFilterStringInput>;
+  documentName?: InputMaybe<EqualFilterStringInput>;
+  documentType?: InputMaybe<EqualFilterStringInput>;
   type?: InputMaybe<EqualFilterStringInput>;
 };
 
 export type ProgramEventNode = {
   __typename: 'ProgramEventNode';
-  context: Scalars['String'];
+  activeDatetime: Scalars['DateTime'];
   datetime: Scalars['DateTime'];
-  group?: Maybe<Scalars['String']>;
+  documentName?: Maybe<Scalars['String']>;
+  documentType: Scalars['String'];
   name?: Maybe<Scalars['String']>;
+  patientId?: Maybe<Scalars['String']>;
   type: Scalars['String'];
 };
 
 export type ProgramEventResponse = ProgramEventConnector;
 
 export enum ProgramEventSortFieldInput {
-  Context = 'context',
   Datetime = 'datetime',
-  Group = 'group',
+  DocumentName = 'documentName',
+  DocumentType = 'documentType',
   Type = 'type'
 }
 
@@ -2898,6 +2901,7 @@ export type QueriesProgramEnrolmentsArgs = {
 
 
 export type QueriesProgramEventsArgs = {
+  at?: InputMaybe<Scalars['DateTime']>;
   filter?: InputMaybe<ProgramEventFilterInput>;
   page?: InputMaybe<PaginationInput>;
   patientId: Scalars['String'];
@@ -4071,11 +4075,8 @@ export type UserNodePermissionsArgs = {
 };
 
 export enum UserPermission {
-  Document = 'DOCUMENT',
-  DocumentEncounterMutate = 'DOCUMENT_ENCOUNTER_MUTATE',
-  DocumentEncounterQuery = 'DOCUMENT_ENCOUNTER_QUERY',
-  DocumentProgramMutate = 'DOCUMENT_PROGRAM_MUTATE',
-  DocumentProgramQuery = 'DOCUMENT_PROGRAM_QUERY',
+  DocumentMutate = 'DOCUMENT_MUTATE',
+  DocumentQuery = 'DOCUMENT_QUERY',
   InboundShipmentMutate = 'INBOUND_SHIPMENT_MUTATE',
   InboundShipmentQuery = 'INBOUND_SHIPMENT_QUERY',
   LocationMutate = 'LOCATION_MUTATE',

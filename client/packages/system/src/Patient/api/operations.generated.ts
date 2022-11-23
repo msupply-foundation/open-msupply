@@ -65,7 +65,7 @@ export type PatientDocumentRegistryFragment = {
 
 export type ProgramEventFragment = {
   __typename: 'ProgramEventNode';
-  datetime: string;
+  activeDatetime: string;
   name?: string | null;
   type: string;
 };
@@ -87,7 +87,7 @@ export type ProgramEnrolmentRowFragment = {
   };
   events: Array<{
     __typename: 'ProgramEventNode';
-    datetime: string;
+    activeDatetime: string;
     name?: string | null;
     type: string;
   }>;
@@ -260,7 +260,7 @@ export type ProgramEnrolmentsQueryVariables = Types.Exact<{
   key: Types.ProgramEnrolmentSortFieldInput;
   desc?: Types.InputMaybe<Types.Scalars['Boolean']>;
   filter?: Types.InputMaybe<Types.ProgramEnrolmentFilterInput>;
-  latestEventTime: Types.Scalars['String'];
+  eventTime: Types.Scalars['String'];
 }>;
 
 export type ProgramEnrolmentsQuery = {
@@ -285,7 +285,7 @@ export type ProgramEnrolmentsQuery = {
       };
       events: Array<{
         __typename: 'ProgramEventNode';
-        datetime: string;
+        activeDatetime: string;
         name?: string | null;
         type: string;
       }>;
@@ -376,7 +376,7 @@ export type UpdatePatientMutation = {
   };
 };
 
-export type EncounterRowFragment = {
+export type PatientEncounterRowFragment = {
   __typename: 'EncounterNode';
   id: string;
   program: string;
@@ -401,7 +401,7 @@ export type EncounterRowFragment = {
   };
   events: Array<{
     __typename: 'ProgramEventNode';
-    datetime: string;
+    activeDatetime: string;
     name?: string | null;
     type: string;
   }>;
@@ -413,7 +413,7 @@ export type EncountersQueryVariables = Types.Exact<{
   desc?: Types.InputMaybe<Types.Scalars['Boolean']>;
   filter?: Types.InputMaybe<Types.EncounterFilterInput>;
   page?: Types.InputMaybe<Types.PaginationInput>;
-  latestEventTime: Types.Scalars['String'];
+  eventTime: Types.Scalars['String'];
 }>;
 
 export type EncountersQuery = {
@@ -446,7 +446,7 @@ export type EncountersQuery = {
       };
       events: Array<{
         __typename: 'ProgramEventNode';
-        datetime: string;
+        activeDatetime: string;
         name?: string | null;
         type: string;
       }>;
@@ -497,7 +497,7 @@ export const PatientDocumentRegistryFragmentDoc = gql`
 `;
 export const ProgramEventFragmentDoc = gql`
   fragment ProgramEvent on ProgramEventNode {
-    datetime
+    activeDatetime
     name
     type
   }
@@ -515,7 +515,7 @@ export const ProgramEnrolmentRowFragmentDoc = gql`
         name
       }
     }
-    events(filter: { datetime: { beforeOrEqualTo: $latestEventTime } }) {
+    events(at: $eventTime) {
       ...ProgramEvent
     }
   }
@@ -545,8 +545,8 @@ export const PatientFragmentDoc = gql`
     isDeceased
   }
 `;
-export const EncounterRowFragmentDoc = gql`
-  fragment EncounterRow on EncounterNode {
+export const PatientEncounterRowFragmentDoc = gql`
+  fragment PatientEncounterRow on EncounterNode {
     id
     document {
       documentRegistry {
@@ -565,7 +565,7 @@ export const EncounterRowFragmentDoc = gql`
       lastName
       name
     }
-    events(filter: { datetime: { beforeOrEqualTo: $latestEventTime } }) {
+    events(at: $eventTime) {
       ...ProgramEvent
     }
   }
@@ -654,7 +654,7 @@ export const ProgramEnrolmentsDocument = gql`
     $key: ProgramEnrolmentSortFieldInput!
     $desc: Boolean
     $filter: ProgramEnrolmentFilterInput
-    $latestEventTime: String!
+    $eventTime: String!
   ) {
     programEnrolments(
       storeId: $storeId
@@ -718,7 +718,7 @@ export const EncountersDocument = gql`
     $desc: Boolean
     $filter: EncounterFilterInput
     $page: PaginationInput
-    $latestEventTime: String!
+    $eventTime: String!
   ) {
     encounters(
       storeId: $storeId
@@ -728,13 +728,13 @@ export const EncountersDocument = gql`
     ) {
       ... on EncounterConnector {
         nodes {
-          ...EncounterRow
+          ...PatientEncounterRow
         }
         totalCount
       }
     }
   }
-  ${EncounterRowFragmentDoc}
+  ${PatientEncounterRowFragmentDoc}
 `;
 
 export type SdkFunctionWrapper = <T>(
@@ -982,7 +982,7 @@ export const mockGetDocumentHistoryQuery = (
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockProgramEnrolmentsQuery((req, res, ctx) => {
- *   const { storeId, key, desc, filter, latestEventTime } = req.variables;
+ *   const { storeId, key, desc, filter, eventTime } = req.variables;
  *   return res(
  *     ctx.data({ programEnrolments })
  *   )
@@ -1074,7 +1074,7 @@ export const mockUpdatePatientMutation = (
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockEncountersQuery((req, res, ctx) => {
- *   const { storeId, key, desc, filter, page, latestEventTime } = req.variables;
+ *   const { storeId, key, desc, filter, page, eventTime } = req.variables;
  *   return res(
  *     ctx.data({ encounters })
  *   )

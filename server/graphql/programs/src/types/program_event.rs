@@ -9,16 +9,24 @@ pub struct ProgramEventNode {
 
 #[Object]
 impl ProgramEventNode {
+    pub async fn patient_id(&self) -> &Option<String> {
+        &self.row.patient_id
+    }
+
     pub async fn datetime(&self) -> DateTime<Utc> {
         DateTime::<Utc>::from_utc(self.row.datetime, Utc)
     }
 
-    pub async fn context(&self) -> &str {
-        &self.row.context
+    pub async fn active_datetime(&self) -> DateTime<Utc> {
+        DateTime::<Utc>::from_utc(self.row.active_start_datetime, Utc)
     }
 
-    pub async fn group(&self) -> &Option<String> {
-        &self.row.group
+    pub async fn document_type(&self) -> &str {
+        &&self.row.document_type
+    }
+
+    pub async fn document_name(&self) -> &Option<String> {
+        &self.row.document_name
     }
 
     pub async fn name(&self) -> &Option<String> {

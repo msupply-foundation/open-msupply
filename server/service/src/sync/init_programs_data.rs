@@ -12,7 +12,7 @@ use crate::{
     },
     service_provider::ServiceProvider,
 };
-use chrono::{Duration, Utc};
+use chrono::{DateTime, Duration, Utc};
 use repository::{
     DocumentContext, DocumentRegistryRow, DocumentRegistryRowRepository, EqualFilter, FormSchema,
     FormSchemaRowRepository, NameRow, NameRowRepository, NameStoreJoinRepository, NameStoreJoinRow,
@@ -372,23 +372,17 @@ fn program_hiv_testing() -> hiv_testing_program::HivtestingProgramEnrolment {
     })
 }
 
-fn encounter_hiv_testing_1() -> hiv_testing_encounter::HivtestingEncounter {
+fn encounter_hiv_testing_1(time: DateTime<Utc>) -> hiv_testing_encounter::HivtestingEncounter {
     inline_init(|e: &mut hiv_testing_encounter::HivtestingEncounter| {
         e.status = Some(hiv_testing_encounter::EncounterStatus::Scheduled);
-        e.start_datetime = Utc::now()
-            .checked_sub_signed(Duration::weeks(5))
-            .unwrap()
-            .to_rfc3339();
+        e.start_datetime = time.to_rfc3339();
     })
 }
 
-fn encounter_hiv_care_1() -> hiv_care_encounter::HivcareEncounter {
+fn encounter_hiv_care_1(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncounter {
     inline_init(|e: &mut hiv_care_encounter::HivcareEncounter| {
         e.status = Some(hiv_care_encounter::EncounterStatus::Scheduled);
-        e.start_datetime = Utc::now()
-            .checked_sub_signed(Duration::weeks(5))
-            .unwrap()
-            .to_rfc3339();
+        e.start_datetime = time.to_rfc3339();
         e.physical_examination = Some(inline_init(
             |exam: &mut HivcareEncounterPhysicalExamination| {
                 exam.weight = Some("51.00".to_string());
@@ -398,8 +392,7 @@ fn encounter_hiv_care_1() -> hiv_care_encounter::HivcareEncounter {
     })
 }
 
-fn encounter_hiv_care_2() -> hiv_care_encounter::HivcareEncounter {
-    let time = Utc::now().checked_sub_signed(Duration::weeks(4)).unwrap();
+fn encounter_hiv_care_2(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncounter {
     inline_init(|e: &mut hiv_care_encounter::HivcareEncounter| {
         e.status = Some(hiv_care_encounter::EncounterStatus::Scheduled);
         e.start_datetime = time.to_rfc3339();
@@ -411,36 +404,35 @@ fn encounter_hiv_care_2() -> hiv_care_encounter::HivcareEncounter {
         ));
         e.events = Some(vec![
             hiv_care_encounter::EncounterEvent {
-                datetime: time
+                active_datetime: time
                     .checked_add_signed(Duration::weeks(1))
                     .unwrap()
                     .to_rfc3339(),
-                group: Some("HivCareEncounterDispensingStatus".to_string()),
-                type_: "status".to_string(),
+                document_type: "HIVCareProgram".to_string(),
+                document_name: None,
+                group: Some("DispensedDuration".to_string()),
+                type_: "programStatus".to_string(),
                 name: Some("Interrupted".to_string()),
-                context: None,
             },
             hiv_care_encounter::EncounterEvent {
-                datetime: time
+                active_datetime: time
                     .checked_add_signed(Duration::weeks(2))
                     .unwrap()
                     .to_rfc3339(),
-                group: Some("HivCareEncounterDispensingStatus".to_string()),
-                type_: "status".to_string(),
+                document_type: "HIVCareProgram".to_string(),
+                document_name: None,
+                group: Some("DispensedDuration".to_string()),
+                type_: "programStatus".to_string(),
                 name: Some("Lost to follow up".to_string()),
-                context: None,
             },
         ])
     })
 }
 
-fn encounter_hiv_care_3() -> hiv_care_encounter::HivcareEncounter {
+fn encounter_hiv_care_3(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncounter {
     inline_init(|e: &mut hiv_care_encounter::HivcareEncounter| {
         e.status = Some(hiv_care_encounter::EncounterStatus::Scheduled);
-        e.start_datetime = Utc::now()
-            .checked_sub_signed(Duration::weeks(3))
-            .unwrap()
-            .to_rfc3339();
+        e.start_datetime = time.to_rfc3339();
         e.physical_examination = Some(inline_init(
             |exam: &mut HivcareEncounterPhysicalExamination| {
                 exam.weight = Some("52.50".to_string());
@@ -450,13 +442,10 @@ fn encounter_hiv_care_3() -> hiv_care_encounter::HivcareEncounter {
     })
 }
 
-fn encounter_hiv_care_4() -> hiv_care_encounter::HivcareEncounter {
+fn encounter_hiv_care_4(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncounter {
     inline_init(|e: &mut hiv_care_encounter::HivcareEncounter| {
         e.status = Some(hiv_care_encounter::EncounterStatus::Scheduled);
-        e.start_datetime = Utc::now()
-            .checked_sub_signed(Duration::weeks(1))
-            .unwrap()
-            .to_rfc3339();
+        e.start_datetime = time.to_rfc3339();
         e.physical_examination = Some(inline_init(
             |exam: &mut HivcareEncounterPhysicalExamination| {
                 exam.weight = Some("51.00".to_string());
@@ -466,10 +455,10 @@ fn encounter_hiv_care_4() -> hiv_care_encounter::HivcareEncounter {
     })
 }
 
-fn encounter_hiv_care_5() -> hiv_care_encounter::HivcareEncounter {
+fn encounter_hiv_care_5(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncounter {
     inline_init(|e: &mut hiv_care_encounter::HivcareEncounter| {
         e.status = Some(hiv_care_encounter::EncounterStatus::Scheduled);
-        e.start_datetime = Utc::now().to_rfc3339();
+        e.start_datetime = time.to_rfc3339();
         e.physical_examination = Some(inline_init(
             |exam: &mut HivcareEncounterPhysicalExamination| {
                 exam.weight = Some("54.00".to_string());
@@ -970,6 +959,7 @@ pub fn init_program_data(
 
     // encounter
     let service = EncounterService {};
+    let time = Utc::now().checked_sub_signed(Duration::weeks(5)).unwrap();
     service
         .insert_encounter(
             &ctx,
@@ -978,13 +968,15 @@ pub fn init_program_data(
             InsertEncounter {
                 patient_id: patient_1().id,
                 r#type: "HIVTestingEncounter".to_string(),
-                data: serde_json::to_value(encounter_hiv_testing_1()).unwrap(),
+                data: serde_json::to_value(encounter_hiv_testing_1(time)).unwrap(),
                 schema_id: hiv_testing_encounter_schema_id.clone(),
                 program: "HIVTestingProgram".to_string(),
+                event_datetime: time,
             },
             vec!["HIVTestingEncounter".to_string()],
         )
         .unwrap();
+    let time = Utc::now().checked_sub_signed(Duration::weeks(5)).unwrap();
     service
         .insert_encounter(
             &ctx,
@@ -993,13 +985,15 @@ pub fn init_program_data(
             InsertEncounter {
                 patient_id: patient_1().id,
                 r#type: "HIVCareEncounter".to_string(),
-                data: serde_json::to_value(encounter_hiv_care_1()).unwrap(),
+                data: serde_json::to_value(encounter_hiv_care_1(time)).unwrap(),
                 schema_id: hiv_care_encounter_schema_id.clone(),
                 program: "HIVCareProgram".to_string(),
+                event_datetime: Utc::now(),
             },
             vec!["HIVCareEncounter".to_string()],
         )
         .unwrap();
+    let time = Utc::now().checked_sub_signed(Duration::weeks(4)).unwrap();
     service
         .insert_encounter(
             &ctx,
@@ -1008,13 +1002,15 @@ pub fn init_program_data(
             InsertEncounter {
                 patient_id: patient_1().id,
                 r#type: "HIVCareEncounter".to_string(),
-                data: serde_json::to_value(encounter_hiv_care_2()).unwrap(),
+                data: serde_json::to_value(encounter_hiv_care_2(time)).unwrap(),
                 schema_id: hiv_care_encounter_schema_id.clone(),
                 program: "HIVCareProgram".to_string(),
+                event_datetime: time,
             },
             vec!["HIVCareEncounter".to_string()],
         )
         .unwrap();
+    let time = Utc::now().checked_sub_signed(Duration::weeks(3)).unwrap();
     service
         .insert_encounter(
             &ctx,
@@ -1023,13 +1019,15 @@ pub fn init_program_data(
             InsertEncounter {
                 patient_id: patient_1().id,
                 r#type: "HIVCareEncounter".to_string(),
-                data: serde_json::to_value(encounter_hiv_care_3()).unwrap(),
+                data: serde_json::to_value(encounter_hiv_care_3(time)).unwrap(),
                 schema_id: hiv_care_encounter_schema_id.clone(),
                 program: "HIVCareProgram".to_string(),
+                event_datetime: time,
             },
             vec!["HIVCareEncounter".to_string()],
         )
         .unwrap();
+    let time = Utc::now().checked_sub_signed(Duration::weeks(1)).unwrap();
     service
         .insert_encounter(
             &ctx,
@@ -1038,13 +1036,15 @@ pub fn init_program_data(
             InsertEncounter {
                 patient_id: patient_1().id,
                 r#type: "HIVCareEncounter".to_string(),
-                data: serde_json::to_value(encounter_hiv_care_4()).unwrap(),
+                data: serde_json::to_value(encounter_hiv_care_4(time)).unwrap(),
                 schema_id: hiv_care_encounter_schema_id.clone(),
                 program: "HIVCareProgram".to_string(),
+                event_datetime: time,
             },
             vec!["HIVCareEncounter".to_string()],
         )
         .unwrap();
+    let time = Utc::now();
     service
         .insert_encounter(
             &ctx,
@@ -1053,9 +1053,10 @@ pub fn init_program_data(
             InsertEncounter {
                 patient_id: patient_1().id,
                 r#type: "HIVCareEncounter".to_string(),
-                data: serde_json::to_value(encounter_hiv_care_5()).unwrap(),
+                data: serde_json::to_value(encounter_hiv_care_5(time)).unwrap(),
                 schema_id: hiv_care_encounter_schema_id.clone(),
                 program: "HIVCareProgram".to_string(),
+                event_datetime: time,
             },
             vec!["HIVCareEncounter".to_string()],
         )

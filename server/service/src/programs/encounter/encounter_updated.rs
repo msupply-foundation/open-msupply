@@ -1,6 +1,4 @@
-use std::collections::HashMap;
-
-use chrono::DateTime;
+use chrono::{DateTime, NaiveDateTime};
 use repository::{
     EncounterFilter, EncounterRepository, EncounterRow, EncounterRowRepository, EncounterStatus,
     EqualFilter, RepositoryError,
@@ -9,7 +7,7 @@ use util::uuid::uuid;
 
 use crate::{
     document::raw_document::RawDocument,
-    programs::program_event::ReplaceEventInput,
+    programs::program_event::EventInput,
     service_provider::{ServiceContext, ServiceProvider},
 };
 
@@ -64,7 +62,13 @@ pub(crate) fn encounter_updated(
     };
 
     if let Some(events) = encounter.events {
-        update_program_events(ctx, service_provider, patient_id, program, events)?;
+        update_program_events(
+            ctx,
+            service_provider,
+            patient_id,
+            doc.timestamp.naive_utc(),
+            events,
+        )?;
     }
 
     let repo = EncounterRepository::new(con);
@@ -93,71 +97,36 @@ pub(crate) fn encounter_updated(
     Ok(())
 }
 
-fn replace_context_events(
-    ctx: &ServiceContext,
-    service_provider: &ServiceProvider,
-    patient_id: &str,
-    context: &str,
-    events: Vec<EncounterEvent>,
-) -> Result<(), EncounterTableUpdateError> {
-    let mut grouped_events: HashMap<String, Vec<EncounterEvent>> = HashMap::new();
-    for event in events {
-        grouped_events
-            .entry(event.group.clone().unwrap_or("".to_string()))
-            .or_insert(vec![])
-            .push(event);
-    }
-
-    let service = &service_provider.program_event_service;
-    for (group, events) in grouped_events {
-        let replace_events = events
-            .into_iter()
-            .map(|event| {
-                let datetime = DateTime::parse_from_rfc3339(&event.datetime)
-                    .map_err(|err| {
-                        EncounterTableUpdateError::InternalError(format!(
-                            "Invalid encounter event datetime format: {}",
-                            err
-                        ))
-                    })?
-                    .naive_utc();
-                Ok(ReplaceEventInput {
-                    datetime: datetime,
-                    r#type: event.type_,
-                    name: event.name,
-                })
-            })
-            .collect::<Result<Vec<ReplaceEventInput>, EncounterTableUpdateError>>()?;
-        service
-            .replace_event_group(
-                ctx,
-                Some(patient_id.to_string()),
-                &context,
-                &group,
-                replace_events,
-            )
-            .map_err(|err| EncounterTableUpdateError::RepositoryError(err))?;
-    }
-    Ok(())
-}
-
 fn update_program_events(
     ctx: &ServiceContext,
     service_provider: &ServiceProvider,
     patient_id: &str,
-    program: &str,
+    event_date_time: NaiveDateTime,
     events: Vec<EncounterEvent>,
 ) -> Result<(), EncounterTableUpdateError> {
-    let mut context_events: HashMap<String, Vec<EncounterEvent>> = HashMap::new();
-    for event in events {
-        context_events
-            .entry(event.context.clone().unwrap_or(program.to_string()))
-            .or_insert(vec![])
-            .push(event);
-    }
-
-    for (context, ctx_events) in context_events {
-        replace_context_events(ctx, service_provider, patient_id, &context, ctx_events)?;
-    }
+    let service = &service_provider.program_event_service;
+    let event_inputs = events
+        .into_iter()
+        .map(|event| {
+            let active_datetime = DateTime::parse_from_rfc3339(&event.active_datetime)
+                .map_err(|err| {
+                    EncounterTableUpdateError::InternalError(format!(
+                        "Invalid encounter event datetime format: {}",
+                        err
+                    ))
+                })?
+                .naive_utc();
+            Ok(EventInput {
+                active_start_datetime: active_datetime,
+                document_type: event.document_type,
+                document_name: event.document_name,
+                name: event.name,
+                r#type: event.type_,
+            })
+        })
+        .collect::<Result<Vec<EventInput>, EncounterTableUpdateError>>()?;
+    service
+        .upsert_events(ctx, patient_id.to_string(), event_date_time, event_inputs)
+        .map_err(|err| EncounterTableUpdateError::RepositoryError(err))?;
     Ok(())
 }

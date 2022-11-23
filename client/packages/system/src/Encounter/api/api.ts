@@ -37,7 +37,7 @@ export const getEncounterQueries = (sdk: Sdk, storeId: string) => ({
         desc: sortBy?.isDesc,
         filter: filterBy,
         page: pagination,
-        latestEventTime: new Date().toISOString(),
+        eventTime: new Date().toISOString(),
       });
 
       return result?.encounters;

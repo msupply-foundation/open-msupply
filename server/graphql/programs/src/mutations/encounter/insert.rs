@@ -1,4 +1,5 @@
 use async_graphql::*;
+use chrono::Utc;
 use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
@@ -56,6 +57,7 @@ pub fn insert_encounter(
             patient_id: input.patient_id,
             program: input.program_type,
             r#type: input.r#type,
+            event_datetime: Utc::now(),
         },
         allowed_docs.clone(),
     ) {
