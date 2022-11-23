@@ -124,7 +124,7 @@ const UIComponent = (props: ControlProps) => {
     return null;
   }
 
-  const width = props.uischema?.options?.['width'] ?? '100%';
+  const width = schemaOptions?.width ?? '100%';
 
   return (
     <DetailInputWithLabelRow

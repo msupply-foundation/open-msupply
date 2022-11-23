@@ -139,6 +139,26 @@ const HIV_CARE_ENCOUNTER_SCHEMA: &'static str =
 const HIV_CARE_ENCOUNTER_UI_SCHEMA: &'static str =
     std::include_str!("./program_schemas/hiv_care_encounter_ui_schema.json");
 
+const IMMUNISATION_PROGRAM_SCHEMA: &'static str =
+    std::include_str!("./program_schemas/routine_immunisation_program.json");
+const IMMUNISATION_PROGRAM_UI_SCHEMA: &'static str =
+    std::include_str!("./program_schemas/routine_immunisation_program_ui_schema.json");
+
+const IMMUNISATION_ENCOUNTER_6WEEKS_SCHEMA: &'static str =
+    std::include_str!("./program_schemas/routine_immunisation_6weeks_encounter.json");
+const IMMUNISATION_ENCOUNTER_6WEEKS_UI_SCHEMA: &'static str =
+    std::include_str!("./program_schemas/routine_immunisation_6weeks_encounter_ui_schema.json");
+
+const IMMUNISATION_ENCOUNTER_3MONTH_SCHEMA: &'static str =
+    std::include_str!("./program_schemas/routine_immunisation_3month_encounter.json");
+const IMMUNISATION_ENCOUNTER_3MONTH_UI_SCHEMA: &'static str =
+    std::include_str!("./program_schemas/routine_immunisation_3month_encounter_ui_schema.json");
+
+const IMMUNISATION_ENCOUNTER_5MONTH_SCHEMA: &'static str =
+    std::include_str!("./program_schemas/routine_immunisation_5month_encounter.json");
+const IMMUNISATION_ENCOUNTER_5MONTH_UI_SCHEMA: &'static str =
+    std::include_str!("./program_schemas/routine_immunisation_5month_encounter_ui_schema.json");
+
 fn person_1() -> Person {
     Person {
         id: Some("person1".to_string()),
@@ -460,7 +480,101 @@ pub fn insert_programs_permissions(connection: &StorageConnection, user_id: Stri
                 id: uuid(),
                 user_id: user_id.clone(),
                 store_id: Some(user_store.store_id.clone()),
-                permission: Permission::DocumentProgramQuery,
+                permission: Permission::DocumentQuery,
+                context: Some(PATIENT_TYPE.to_string()),
+            })
+            .unwrap();
+        UserPermissionRowRepository::new(&connection)
+            .upsert_one(&UserPermissionRow {
+                id: uuid(),
+                user_id: user_id.clone(),
+                store_id: Some(user_store.store_id.clone()),
+                permission: Permission::DocumentMutate,
+                context: Some(PATIENT_TYPE.to_string()),
+            })
+            .unwrap();
+
+        // immunisation
+        UserPermissionRowRepository::new(&connection)
+            .upsert_one(&UserPermissionRow {
+                id: uuid(),
+                user_id: user_id.clone(),
+                store_id: Some(user_store.store_id.clone()),
+                permission: Permission::DocumentQuery,
+                context: Some("RoutineImmunisationProgram".to_string()),
+            })
+            .unwrap();
+        UserPermissionRowRepository::new(&connection)
+            .upsert_one(&UserPermissionRow {
+                id: uuid(),
+                user_id: user_id.clone(),
+                store_id: Some(user_store.store_id.clone()),
+                permission: Permission::DocumentMutate,
+                context: Some("RoutineImmunisationProgram".to_string()),
+            })
+            .unwrap();
+        UserPermissionRowRepository::new(&connection)
+            .upsert_one(&UserPermissionRow {
+                id: uuid(),
+                user_id: user_id.clone(),
+                store_id: Some(user_store.store_id.clone()),
+                permission: Permission::DocumentQuery,
+                context: Some("RoutineImmunisation6WeeksEncounter".to_string()),
+            })
+            .unwrap();
+        UserPermissionRowRepository::new(&connection)
+            .upsert_one(&UserPermissionRow {
+                id: uuid(),
+                user_id: user_id.clone(),
+                store_id: Some(user_store.store_id.clone()),
+                permission: Permission::DocumentMutate,
+                context: Some("RoutineImmunisation6WeeksEncounter".to_string()),
+            })
+            .unwrap();
+        UserPermissionRowRepository::new(&connection)
+            .upsert_one(&UserPermissionRow {
+                id: uuid(),
+                user_id: user_id.clone(),
+                store_id: Some(user_store.store_id.clone()),
+                permission: Permission::DocumentQuery,
+                context: Some("RoutineImmunisation3MonthEncounter".to_string()),
+            })
+            .unwrap();
+        UserPermissionRowRepository::new(&connection)
+            .upsert_one(&UserPermissionRow {
+                id: uuid(),
+                user_id: user_id.clone(),
+                store_id: Some(user_store.store_id.clone()),
+                permission: Permission::DocumentMutate,
+                context: Some("RoutineImmunisation3MonthEncounter".to_string()),
+            })
+            .unwrap();
+        UserPermissionRowRepository::new(&connection)
+            .upsert_one(&UserPermissionRow {
+                id: uuid(),
+                user_id: user_id.clone(),
+                store_id: Some(user_store.store_id.clone()),
+                permission: Permission::DocumentQuery,
+                context: Some("RoutineImmunisation5MonthEncounter".to_string()),
+            })
+            .unwrap();
+        UserPermissionRowRepository::new(&connection)
+            .upsert_one(&UserPermissionRow {
+                id: uuid(),
+                user_id: user_id.clone(),
+                store_id: Some(user_store.store_id.clone()),
+                permission: Permission::DocumentMutate,
+                context: Some("RoutineImmunisation5MonthEncounter".to_string()),
+            })
+            .unwrap();
+
+        // HIV Testing
+        UserPermissionRowRepository::new(&connection)
+            .upsert_one(&UserPermissionRow {
+                id: uuid(),
+                user_id: user_id.clone(),
+                store_id: Some(user_store.store_id.clone()),
+                permission: Permission::DocumentQuery,
                 context: Some("HIVTestingProgram".to_string()),
             })
             .unwrap();
@@ -469,47 +583,16 @@ pub fn insert_programs_permissions(connection: &StorageConnection, user_id: Stri
                 id: uuid(),
                 user_id: user_id.clone(),
                 store_id: Some(user_store.store_id.clone()),
-                permission: Permission::DocumentProgramQuery,
-                context: Some("HIVCareProgram".to_string()),
+                permission: Permission::DocumentMutate,
+                context: Some("HIVTestingProgram".to_string()),
             })
             .unwrap();
-
         UserPermissionRowRepository::new(&connection)
             .upsert_one(&UserPermissionRow {
                 id: uuid(),
                 user_id: user_id.clone(),
                 store_id: Some(user_store.store_id.clone()),
-                permission: Permission::PatientQuery,
-                context: None,
-            })
-            .unwrap();
-
-        UserPermissionRowRepository::new(&connection)
-            .upsert_one(&UserPermissionRow {
-                id: uuid(),
-                user_id: user_id.clone(),
-                store_id: Some(user_store.store_id.clone()),
-                permission: Permission::Document,
-                context: None,
-            })
-            .unwrap();
-
-        UserPermissionRowRepository::new(&connection)
-            .upsert_one(&UserPermissionRow {
-                id: uuid(),
-                user_id: user_id.clone(),
-                store_id: Some(user_store.store_id.clone()),
-                permission: Permission::DocumentProgramMutate,
-                context: Some("Patient".to_string()),
-            })
-            .unwrap();
-
-        UserPermissionRowRepository::new(&connection)
-            .upsert_one(&UserPermissionRow {
-                id: uuid(),
-                user_id: user_id.clone(),
-                store_id: Some(user_store.store_id.clone()),
-                permission: Permission::DocumentEncounterQuery,
+                permission: Permission::DocumentQuery,
                 context: Some("HIVTestingEncounter".to_string()),
             })
             .unwrap();
@@ -518,18 +601,46 @@ pub fn insert_programs_permissions(connection: &StorageConnection, user_id: Stri
                 id: uuid(),
                 user_id: user_id.clone(),
                 store_id: Some(user_store.store_id.clone()),
-                permission: Permission::DocumentEncounterQuery,
-                context: Some("HIVCareEncounter".to_string()),
+                permission: Permission::DocumentMutate,
+                context: Some("HIVTestingEncounter".to_string()),
             })
             .unwrap();
 
+        // HIV Care
         UserPermissionRowRepository::new(&connection)
             .upsert_one(&UserPermissionRow {
                 id: uuid(),
                 user_id: user_id.clone(),
-                store_id: Some(user_store.store_id),
-                permission: Permission::DocumentEncounterMutate,
-                context: None,
+                store_id: Some(user_store.store_id.clone()),
+                permission: Permission::DocumentQuery,
+                context: Some("HIVCareProgram".to_string()),
+            })
+            .unwrap();
+        UserPermissionRowRepository::new(&connection)
+            .upsert_one(&UserPermissionRow {
+                id: uuid(),
+                user_id: user_id.clone(),
+                store_id: Some(user_store.store_id.clone()),
+                permission: Permission::DocumentMutate,
+                context: Some("HIVCareProgram".to_string()),
+            })
+            .unwrap();
+        UserPermissionRowRepository::new(&connection)
+            .upsert_one(&UserPermissionRow {
+                id: uuid(),
+                user_id: user_id.clone(),
+                store_id: Some(user_store.store_id.clone()),
+                permission: Permission::DocumentQuery,
+                context: Some("HIVCareEncounter".to_string()),
+            })
+            .unwrap();
+        UserPermissionRowRepository::new(&connection)
+            .upsert_one(&UserPermissionRow {
+                id: uuid(),
+                user_id: user_id.clone(),
+                store_id: Some(user_store.store_id.clone()),
+                permission: Permission::DocumentMutate,
+                context: Some("HIVCareEncounter".to_string()),
             })
             .unwrap();
     }
@@ -716,6 +827,68 @@ pub fn init_program_data(
         form_schema_id: Some(hiv_care_encounter_schema_id.clone()),
     })?;
 
+    let immunisation_schema_id = uuid();
+    FormSchemaRowRepository::new(connection).upsert_one(&FormSchema {
+        id: immunisation_schema_id.clone(),
+        r#type: "JsonForms".to_string(),
+        json_schema: serde_json::from_str(IMMUNISATION_PROGRAM_SCHEMA).unwrap(),
+        ui_schema: serde_json::from_str(IMMUNISATION_PROGRAM_UI_SCHEMA).unwrap(),
+    })?;
+    let immunisation_program_id = uuid();
+    DocumentRegistryRowRepository::new(connection).upsert_one(&DocumentRegistryRow {
+        id: immunisation_program_id.clone(),
+        document_type: "RoutineImmunisationProgram".to_string(),
+        context: DocumentContext::Program,
+        name: Some("Routine Immunisation Program".to_string()),
+        parent_id: None,
+        form_schema_id: Some(immunisation_schema_id.clone()),
+    })?;
+    let immunisation_schema_id = uuid();
+    FormSchemaRowRepository::new(connection).upsert_one(&FormSchema {
+        id: immunisation_schema_id.clone(),
+        r#type: "JsonForms".to_string(),
+        json_schema: serde_json::from_str(IMMUNISATION_ENCOUNTER_6WEEKS_SCHEMA).unwrap(),
+        ui_schema: serde_json::from_str(IMMUNISATION_ENCOUNTER_6WEEKS_UI_SCHEMA).unwrap(),
+    })?;
+    DocumentRegistryRowRepository::new(connection).upsert_one(&DocumentRegistryRow {
+        id: uuid(),
+        document_type: "RoutineImmunisation6WeeksEncounter".to_string(),
+        context: DocumentContext::Encounter,
+        name: Some("Routine Immunisation 6 Weeks Encounter".to_string()),
+        parent_id: Some(immunisation_program_id.clone()),
+        form_schema_id: Some(immunisation_schema_id.clone()),
+    })?;
+    let immunisation_schema_id = uuid();
+    FormSchemaRowRepository::new(connection).upsert_one(&FormSchema {
+        id: immunisation_schema_id.clone(),
+        r#type: "JsonForms".to_string(),
+        json_schema: serde_json::from_str(IMMUNISATION_ENCOUNTER_3MONTH_SCHEMA).unwrap(),
+        ui_schema: serde_json::from_str(IMMUNISATION_ENCOUNTER_3MONTH_UI_SCHEMA).unwrap(),
+    })?;
+    DocumentRegistryRowRepository::new(connection).upsert_one(&DocumentRegistryRow {
+        id: uuid(),
+        document_type: "RoutineImmunisation3MonthEncounter".to_string(),
+        context: DocumentContext::Encounter,
+        name: Some("Routine Immunisation 3 Month Encounter".to_string()),
+        parent_id: Some(immunisation_program_id.clone()),
+        form_schema_id: Some(immunisation_schema_id.clone()),
+    })?;
+    let immunisation_schema_id = uuid();
+    FormSchemaRowRepository::new(connection).upsert_one(&FormSchema {
+        id: immunisation_schema_id.clone(),
+        r#type: "JsonForms".to_string(),
+        json_schema: serde_json::from_str(IMMUNISATION_ENCOUNTER_5MONTH_SCHEMA).unwrap(),
+        ui_schema: serde_json::from_str(IMMUNISATION_ENCOUNTER_5MONTH_UI_SCHEMA).unwrap(),
+    })?;
+    DocumentRegistryRowRepository::new(connection).upsert_one(&DocumentRegistryRow {
+        id: uuid(),
+        document_type: "RoutineImmunisation5MonthEncounter".to_string(),
+        context: DocumentContext::Encounter,
+        name: Some("Routine Immunisation 5 Month Encounter".to_string()),
+        parent_id: Some(immunisation_program_id.clone()),
+        form_schema_id: Some(immunisation_schema_id.clone()),
+    })?;
+
     // patients
     insert_patient(
         connection,
@@ -748,6 +921,7 @@ pub fn init_program_data(
                 schema_id: program_schema_id.clone(),
                 parent: None,
             },
+            vec!["TestProgram1".to_string()],
         )
         .unwrap();
     // hiv testing program
@@ -763,6 +937,7 @@ pub fn init_program_data(
                 schema_id: hiv_testing_program_schema_id,
                 parent: None,
             },
+            vec!["HIVTestingProgram".to_string()],
         )
         .unwrap();
     // hiv care program
@@ -778,6 +953,7 @@ pub fn init_program_data(
                 schema_id: hiv_care_program_schema_id,
                 parent: None,
             },
+            vec!["HIVCareProgram".to_string()],
         )
         .unwrap();
 
@@ -797,6 +973,7 @@ pub fn init_program_data(
                 program: "HIVTestingProgram".to_string(),
                 event_datetime: time,
             },
+            vec!["HIVTestingEncounter".to_string()],
         )
         .unwrap();
     let time = Utc::now().checked_sub_signed(Duration::weeks(5)).unwrap();
@@ -813,6 +990,7 @@ pub fn init_program_data(
                 program: "HIVCareProgram".to_string(),
                 event_datetime: Utc::now(),
             },
+            vec!["HIVCareEncounter".to_string()],
         )
         .unwrap();
     let time = Utc::now().checked_sub_signed(Duration::weeks(4)).unwrap();
@@ -829,6 +1007,7 @@ pub fn init_program_data(
                 program: "HIVCareProgram".to_string(),
                 event_datetime: time,
             },
+            vec!["HIVCareEncounter".to_string()],
         )
         .unwrap();
     let time = Utc::now().checked_sub_signed(Duration::weeks(3)).unwrap();
@@ -845,6 +1024,7 @@ pub fn init_program_data(
                 program: "HIVCareProgram".to_string(),
                 event_datetime: time,
             },
+            vec!["HIVCareEncounter".to_string()],
         )
         .unwrap();
     let time = Utc::now().checked_sub_signed(Duration::weeks(1)).unwrap();
@@ -861,6 +1041,7 @@ pub fn init_program_data(
                 program: "HIVCareProgram".to_string(),
                 event_datetime: time,
             },
+            vec!["HIVCareEncounter".to_string()],
         )
         .unwrap();
     let time = Utc::now();
@@ -877,6 +1058,7 @@ pub fn init_program_data(
                 program: "HIVCareProgram".to_string(),
                 event_datetime: time,
             },
+            vec!["HIVCareEncounter".to_string()],
         )
         .unwrap();
 

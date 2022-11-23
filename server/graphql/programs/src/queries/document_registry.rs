@@ -8,7 +8,7 @@ use graphql_core::{
 use repository::{
     DocumentRegistryFilter, DocumentRegistrySort, DocumentRegistrySortField, EqualFilter,
 };
-use service::auth::{Resource, ResourceAccessRequest};
+use service::auth::{CapabilityTag, Resource, ResourceAccessRequest};
 use service::usize_to_u32;
 
 use crate::types::document_registry::{
@@ -63,21 +63,14 @@ pub fn document_registries(
             store_id: None,
         },
     )?;
+    let allowed_docs = user.capabilities(CapabilityTag::DocumentType);
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
 
     let filter = filter
-        .map(|f| {
-            f.to_domain().document_type(EqualFilter::equal_any(
-                user.context.iter().map(String::clone).collect(),
-            ))
-        })
-        .unwrap_or(
-            DocumentRegistryFilter::new().document_type(EqualFilter::equal_any(
-                user.context.iter().map(String::clone).collect(),
-            )),
-        );
+        .map(|f| f.to_domain())
+        .unwrap_or(DocumentRegistryFilter::new());
 
     let entries = service_provider
         .document_registry_service
@@ -86,6 +79,7 @@ pub fn document_registries(
             Some(filter),
             sort.and_then(|mut sort_list| sort_list.pop())
                 .map(|sort| sort.to_domain()),
+            &allowed_docs,
         )
         .map_err(|err| {
             let formatted_err = format! {"{:?}", err};
@@ -96,7 +90,10 @@ pub fn document_registries(
             total_count: usize_to_u32(entries.len()),
             nodes: entries
                 .into_iter()
-                .map(|document_registry| DocumentRegistryNode { document_registry })
+                .map(|document_registry| DocumentRegistryNode {
+                    allowed_docs: allowed_docs.clone(),
+                    document_registry,
+                })
                 .collect(),
         },
     ))

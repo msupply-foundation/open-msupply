@@ -16,6 +16,7 @@ use super::{
 
 #[derive(PartialEq, Debug)]
 pub enum UpdateEncounterError {
+    NotAllowedToMutateDocument,
     InvalidParentId,
     EncounterRowNotFound,
     InvalidDataSchema(Vec<String>),
@@ -36,6 +37,7 @@ pub fn update_encounter(
     service_provider: &ServiceProvider,
     user_id: &str,
     input: UpdateEncounter,
+    allowed_docs: Vec<String>,
 ) -> Result<Document, UpdateEncounterError> {
     let patient = ctx
         .connection
@@ -67,8 +69,11 @@ pub fn update_encounter(
 
             let result = service_provider
                 .document_service
-                .update_document(ctx, doc)
+                .update_document(ctx, doc, &allowed_docs)
                 .map_err(|err| match err {
+                    DocumentInsertError::NotAllowedToMutateDocument => {
+                        UpdateEncounterError::NotAllowedToMutateDocument
+                    }
                     DocumentInsertError::InvalidDataSchema(err) => {
                         UpdateEncounterError::InvalidDataSchema(err)
                     }
@@ -243,6 +248,7 @@ mod test {
                     patient_id: patient.id.clone(),
                     r#type: program_type.clone(),
                 },
+                vec![program_type.clone()],
             )
             .unwrap();
         let service = &service_provider.encounter_service;
@@ -264,8 +270,27 @@ mod test {
                     program: program_type.clone(),
                     event_datetime: Utc::now(),
                 },
+                vec!["TestEncounterType".to_string()],
             )
             .unwrap();
+
+        // NotAllowedToMutateDocument
+        let err = service
+            .update_encounter(
+                &ctx,
+                &service_provider,
+                "user",
+                UpdateEncounter {
+                    r#type: "TestEncounterType".to_string(),
+                    data: json!({"enrolment_datetime": true}),
+                    schema_id: schema.id.clone(),
+                    parent: "invalid".to_string(),
+                },
+                vec!["WrongType".to_string()],
+            )
+            .err()
+            .unwrap();
+        matches!(err, UpdateEncounterError::NotAllowedToMutateDocument);
 
         // InvalidParentId
         let err = service
@@ -279,6 +304,7 @@ mod test {
                     schema_id: schema.id.clone(),
                     parent: "invalid".to_string(),
                 },
+                vec!["TestEncounterType".to_string()],
             )
             .err()
             .unwrap();
@@ -296,6 +322,7 @@ mod test {
                     schema_id: schema.id.clone(),
                     parent: initial_encounter.id.clone(),
                 },
+                vec!["TestEncounterType".to_string()],
             )
             .err()
             .unwrap();
@@ -317,11 +344,12 @@ mod test {
                     schema_id: schema.id.clone(),
                     parent: initial_encounter.id.clone(),
                 },
+                vec!["TestEncounterType".to_string()],
             )
             .unwrap();
         let found = service_provider
             .document_service
-            .get_document(&ctx, &result.name)
+            .get_document(&ctx, &result.name, None)
             .unwrap()
             .unwrap();
         assert_eq!(found.parent_ids, vec![initial_encounter.id]);

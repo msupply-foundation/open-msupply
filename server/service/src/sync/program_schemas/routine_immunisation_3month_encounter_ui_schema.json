@@ -1,0 +1,58 @@
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "Label",
+      "text": "Routine Immunisation 3 Month Encounter",
+      "variant": "h1"
+    },
+
+    {
+      "type": "Control",
+      "scope": "#/properties/vaccinator"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/notes",
+      "options": { "width": "135px" }
+    },
+    {
+      "type": "Categorization",
+      "options": {
+        "variant": "tab"
+      },
+      "elements": [
+        {
+          "type": "Category",
+          "label": "Rota Virus",
+          "options": { "icon": "injection" },
+          "elements": [
+            {
+              "type": "Control",
+              "scope": "#/properties/rotavirus/properties/location"
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/rotavirus/properties/vaccine"
+            }
+          ]
+        },
+        {
+          "type": "Category",
+          "label": "Pneumococcal",
+          "options": { "icon": "medicine" },
+          "elements": [
+            {
+              "type": "Control",
+              "scope": "#/properties/pneumococcal/properties/location"
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/pneumococcal/properties/vaccine"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

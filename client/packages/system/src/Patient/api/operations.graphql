@@ -173,6 +173,21 @@ query programEnrolments(
   }
 }
 
+query documentRegistries(
+  $filter: DocumentRegistryFilterInput
+  $key: DocumentRegistrySortFieldInput
+  $desc: Boolean
+) {
+  documentRegistries(filter: $filter, sort: { key: $key, desc: $desc }) {
+    ... on DocumentRegistryConnector {
+      nodes {
+        ...EncounterDocumentRegistry
+      }
+      totalCount
+    }
+  }
+}
+
 mutation insertPatient($storeId: String!, $input: InsertPatientInput!) {
   insertPatient(storeId: $storeId, input: $input) {
     ... on PatientNode {

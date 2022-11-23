@@ -4075,11 +4075,8 @@ export type UserNodePermissionsArgs = {
 };
 
 export enum UserPermission {
-  Document = 'DOCUMENT',
-  DocumentEncounterMutate = 'DOCUMENT_ENCOUNTER_MUTATE',
-  DocumentEncounterQuery = 'DOCUMENT_ENCOUNTER_QUERY',
-  DocumentProgramMutate = 'DOCUMENT_PROGRAM_MUTATE',
-  DocumentProgramQuery = 'DOCUMENT_PROGRAM_QUERY',
+  DocumentMutate = 'DOCUMENT_MUTATE',
+  DocumentQuery = 'DOCUMENT_QUERY',
   InboundShipmentMutate = 'INBOUND_SHIPMENT_MUTATE',
   InboundShipmentQuery = 'INBOUND_SHIPMENT_QUERY',
   LocationMutate = 'LOCATION_MUTATE',

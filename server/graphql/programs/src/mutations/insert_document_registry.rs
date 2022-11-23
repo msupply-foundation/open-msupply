@@ -1,6 +1,6 @@
 use async_graphql::*;
 use service::{
-    auth::{Resource, ResourceAccessRequest},
+    auth::{CapabilityTag, Resource, ResourceAccessRequest},
     document::document_registry::{InsertDocRegistryError, InsertDocumentRegistry},
 };
 
@@ -37,28 +37,26 @@ pub fn insert_document_registry(
             store_id: None,
         },
     )?;
-
-    match user.context.into_iter().find(|c| c == &input.document_type) {
-        None => Err(StandardGraphqlError::BadUserInput(format!(
-            "User does not have access to {}",
-            input.document_type
-        ))),
-        Some(_) => Ok(()),
-    }?;
+    let allowed_docs = user.capabilities(CapabilityTag::DocumentType);
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
 
-    let response = match service_provider
-        .document_registry_service
-        .insert(&context, to_domain(input))
-    {
-        Ok(document_registry) => {
-            InsertDocumentResponse::Response(DocumentRegistryNode { document_registry })
-        }
+    let response = match service_provider.document_registry_service.insert(
+        &context,
+        to_domain(input),
+        &allowed_docs,
+    ) {
+        Ok(document_registry) => InsertDocumentResponse::Response(DocumentRegistryNode {
+            allowed_docs: allowed_docs.clone(),
+            document_registry,
+        }),
         Err(error) => {
             let formatted_error = format!("{:#?}", error);
             let graphql_error = match error {
+                InsertDocRegistryError::NotAllowedToMutateDocument => {
+                    StandardGraphqlError::Forbidden(formatted_error)
+                }
                 InsertDocRegistryError::OnlyOnePatientEntryAllowed => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
