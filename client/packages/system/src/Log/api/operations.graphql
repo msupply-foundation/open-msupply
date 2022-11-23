@@ -1,6 +1,7 @@
 fragment ActivityLogRow on ActivityLogNode {
   id
   datetime
+  event
   recordId
   storeId
   type
@@ -15,7 +16,11 @@ query activityLogs(
   $sort: ActivityLogSortInput
   $filter: ActivityLogFilterInput
 ) {
-  activityLogs(filter: $filter, page: { first: $first, offset: $offset }, sort: $sort) {
+  activityLogs(
+    filter: $filter
+    page: { first: $first, offset: $offset }
+    sort: $sort
+  ) {
     ... on ActivityLogConnector {
       nodes {
         ...ActivityLogRow
