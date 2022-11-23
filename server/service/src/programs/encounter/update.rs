@@ -262,6 +262,7 @@ mod test {
                     patient_id: patient.id.clone(),
                     r#type: "TestEncounterType".to_string(),
                     program: program_type.clone(),
+                    event_datetime: Utc::now(),
                 },
             )
             .unwrap();
