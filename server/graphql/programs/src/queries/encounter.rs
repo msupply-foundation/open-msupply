@@ -10,7 +10,7 @@ use repository::{
     DatetimeFilter, EncounterFilter, EncounterSort, EncounterSortField, EqualFilter,
     PaginationOption,
 };
-use service::auth::{Resource, ResourceAccessRequest};
+use service::auth::{CapabilityTag, Resource, ResourceAccessRequest};
 
 use crate::types::encounter::{EncounterNode, EncounterNodeStatus};
 
@@ -95,27 +95,19 @@ pub fn encounters(
             store_id: Some(store_id.clone()),
         },
     )?;
+    let allowed_docs = user.capabilities(CapabilityTag::DocumentType);
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
-
-    let filter = filter
-        .map(|f| {
-            f.to_domain_filter().r#type(EqualFilter::equal_any(
-                user.context.iter().map(String::clone).collect(),
-            ))
-        })
-        .unwrap_or(EncounterFilter::new().r#type(EqualFilter::equal_any(
-            user.context.iter().map(String::clone).collect(),
-        )));
 
     let result = service_provider
         .encounter_service
         .encounters(
             &context,
             page.map(PaginationOption::from),
-            Some(filter),
+            filter.map(|f| f.to_domain_filter()),
             sort.map(EncounterSortInput::to_domain),
+            allowed_docs.clone(),
         )
         .map_err(StandardGraphqlError::from_list_error)?;
     let nodes = result
@@ -124,6 +116,7 @@ pub fn encounters(
         .map(|encounter_row| EncounterNode {
             store_id: store_id.clone(),
             encounter_row,
+            allowed_docs: allowed_docs.clone(),
         })
         .collect();
 

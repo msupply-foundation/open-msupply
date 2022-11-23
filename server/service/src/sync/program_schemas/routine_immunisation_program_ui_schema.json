@@ -1,0 +1,37 @@
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "Label",
+      "text": "Routine Immunisation Program Enrolment",
+      "variant": "h1"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/enrolmentDatetime",
+      "options": {
+        "readonly": true
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/enrolmentPatientId"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/status"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/legalGuardianFullName"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/placeOfBirth"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/note"
+    }
+  ]
+}

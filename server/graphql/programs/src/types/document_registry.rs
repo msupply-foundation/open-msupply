@@ -1,5 +1,8 @@
 use async_graphql::{dataloader::DataLoader, *};
-use graphql_core::{loader::DocumentRegistryChildrenLoader, ContextExt};
+use graphql_core::{
+    loader::{DocumentRegistryChildrenLoader, DocumentRegistryLoaderInput},
+    ContextExt,
+};
 use repository::{DocumentContext, DocumentRegistry};
 use serde::Serialize;
 
@@ -10,6 +13,7 @@ pub struct DocumentRegistryConnector {
 }
 
 pub struct DocumentRegistryNode {
+    pub allowed_docs: Vec<String>,
     pub document_registry: DocumentRegistry,
 }
 
@@ -68,12 +72,18 @@ impl DocumentRegistryNode {
     pub async fn children(&self, ctx: &Context<'_>) -> Result<Vec<DocumentRegistryNode>> {
         let loader = ctx.get_loader::<DataLoader<DocumentRegistryChildrenLoader>>();
         let children = loader
-            .load_one(self.document_registry.id.clone())
+            .load_one(DocumentRegistryLoaderInput::new(
+                &self.allowed_docs,
+                &self.document_registry.id,
+            ))
             .await?
             .unwrap_or(vec![]);
         Ok(children
             .into_iter()
-            .map(|document_registry| DocumentRegistryNode { document_registry })
+            .map(|document_registry| DocumentRegistryNode {
+                allowed_docs: self.allowed_docs.clone(),
+                document_registry,
+            })
             .collect())
     }
 }

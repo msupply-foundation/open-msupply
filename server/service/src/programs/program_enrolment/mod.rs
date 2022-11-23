@@ -25,16 +25,18 @@ pub trait ProgramEnrolmentServiceTrait: Sync + Send {
         service_provider: &ServiceProvider,
         user_id: &str,
         input: UpsertProgramEnrolment,
+        allowed_docs: Vec<String>,
     ) -> Result<Document, UpsertProgramEnrolmentError> {
-        upsert_program_enrolment(ctx, service_provider, user_id, input)
+        upsert_program_enrolment(ctx, service_provider, user_id, input, allowed_docs)
     }
 
     fn program_enrolment(
         &self,
         ctx: &ServiceContext,
         filter: ProgramEnrolmentFilter,
+        allowed_docs: Vec<String>,
     ) -> Result<Option<ProgramEnrolment>, RepositoryError> {
-        program_enrolment(ctx, filter)
+        program_enrolment(ctx, filter, allowed_docs)
     }
 
     fn program_enrolments(
@@ -43,8 +45,9 @@ pub trait ProgramEnrolmentServiceTrait: Sync + Send {
         pagination: Pagination,
         sort: Option<Sort<ProgramEnrolmentSortField>>,
         filter: Option<ProgramEnrolmentFilter>,
+        allowed_docs: Vec<String>,
     ) -> Result<Vec<ProgramEnrolment>, RepositoryError> {
-        program_enrolments(ctx, pagination, sort, filter)
+        program_enrolments(ctx, pagination, sort, filter, allowed_docs)
     }
 }
 

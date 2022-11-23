@@ -6,7 +6,7 @@ use graphql_core::{
 };
 use repository::{EncounterFilter, EqualFilter};
 use service::{
-    auth::{Resource, ResourceAccessRequest},
+    auth::{CapabilityTag, Resource, ResourceAccessRequest},
     programs::encounter::{InsertEncounter, InsertEncounterError},
 };
 
@@ -42,17 +42,10 @@ pub fn insert_encounter(
             store_id: Some(store_id.clone()),
         },
     )?;
+    let allowed_docs = user.capabilities(CapabilityTag::DocumentType);
 
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
-
-    match user.context.into_iter().find(|c| c == &input.r#type) {
-        None => Err(StandardGraphqlError::BadUserInput(format!(
-            "User does not have access to {}",
-            input.r#type,
-        ))),
-        Some(_) => Ok(()),
-    }?;
 
     let document = match service_provider.encounter_service.insert_encounter(
         &service_context,
@@ -66,11 +59,15 @@ pub fn insert_encounter(
             r#type: input.r#type,
             event_datetime: Utc::now(),
         },
+        allowed_docs.clone(),
     ) {
         Ok(document) => document,
         Err(error) => {
             let formatted_error = format!("{:#?}", error);
             let std_err = match error {
+                InsertEncounterError::NotAllowedToMutateDocument => {
+                    StandardGraphqlError::Forbidden(formatted_error)
+                }
                 InsertEncounterError::InvalidPatientOrProgram => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
@@ -96,6 +93,7 @@ pub fn insert_encounter(
         .encounter(
             &service_context,
             EncounterFilter::new().name(EqualFilter::equal_to(&document.name)),
+            allowed_docs.clone(),
         )?
         .ok_or(
             StandardGraphqlError::InternalError("Encounter went missing".to_string()).extend(),
@@ -104,5 +102,6 @@ pub fn insert_encounter(
     Ok(InsertEncounterResponse::Response(EncounterNode {
         store_id,
         encounter_row,
+        allowed_docs: allowed_docs.clone(),
     }))
 }

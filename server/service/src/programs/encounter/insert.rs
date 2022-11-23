@@ -1,5 +1,8 @@
 use chrono::{DateTime, Utc};
-use repository::{Document, DocumentRepository, DocumentStatus, RepositoryError, TransactionError};
+use repository::{
+    Document, DocumentFilter, DocumentRepository, DocumentStatus, RepositoryError, StringFilter,
+    TransactionError,
+};
 
 use crate::{
     document::{document_service::DocumentInsertError, is_latest_doc, raw_document::RawDocument},
@@ -14,6 +17,7 @@ use super::{
 
 #[derive(PartialEq, Debug)]
 pub enum InsertEncounterError {
+    NotAllowedToMutateDocument,
     InvalidPatientOrProgram,
     InvalidDataSchema(Vec<String>),
     DataSchemaDoesNotExist,
@@ -36,6 +40,7 @@ pub fn insert_encounter(
     service_provider: &ServiceProvider,
     user_id: &str,
     input: InsertEncounter,
+    allowed_docs: Vec<String>,
 ) -> Result<Document, InsertEncounterError> {
     let patient = ctx
         .connection
@@ -70,8 +75,11 @@ pub fn insert_encounter(
             // Updating the document will trigger an update in the patient (names) table
             let result = service_provider
                 .document_service
-                .update_document(ctx, doc)
+                .update_document(ctx, doc, &allowed_docs)
                 .map_err(|err| match err {
+                    DocumentInsertError::NotAllowedToMutateDocument => {
+                        InsertEncounterError::NotAllowedToMutateDocument
+                    }
                     DocumentInsertError::InvalidDataSchema(err) => {
                         InsertEncounterError::InvalidDataSchema(err)
                     }
@@ -133,7 +141,11 @@ fn validate_patient_program_exists(
     program: &str,
 ) -> Result<bool, RepositoryError> {
     let doc_name = patient_doc_name(patient_id, program);
-    let document = DocumentRepository::new(&ctx.connection).find_one_by_name(&doc_name)?;
+    let document = DocumentRepository::new(&ctx.connection)
+        .query(Some(
+            DocumentFilter::new().name(StringFilter::equal_to(&doc_name)),
+        ))?
+        .pop();
     Ok(document.is_some())
 }
 
@@ -231,11 +243,33 @@ mod test {
                     patient_id: patient.id.clone(),
                     r#type: program_type.clone(),
                 },
+                vec![program_type.clone()],
             )
             .unwrap();
 
         // start actual test:
         let service = &service_provider.encounter_service;
+
+        // NotAllowedToMutateDocument
+        let err = service
+            .insert_encounter(
+                &ctx,
+                &service_provider,
+                "user",
+                InsertEncounter {
+                    data: json!({"encounter_datetime": true}),
+                    schema_id: schema.id.clone(),
+                    patient_id: patient.id.clone(),
+                    r#type: "SomeType".to_string(),
+                    program: program_type.clone(),
+                    event_datetime: Utc::now(),
+                },
+                vec!["WrongType".to_string()],
+            )
+            .err()
+            .unwrap();
+        matches!(err, InsertEncounterError::NotAllowedToMutateDocument);
+
         // InvalidPatientOrProgram,
         let err = service
             .insert_encounter(
@@ -250,6 +284,7 @@ mod test {
                     program: program_type.clone(),
                     event_datetime: Utc::now(),
                 },
+                vec!["SomeType".to_string()],
             )
             .err()
             .unwrap();
@@ -267,6 +302,7 @@ mod test {
                     program: "invalid".to_string(),
                     event_datetime: Utc::now(),
                 },
+                vec!["SomeType".to_string()],
             )
             .err()
             .unwrap();
@@ -286,6 +322,7 @@ mod test {
                     program: program_type.clone(),
                     event_datetime: Utc::now(),
                 },
+                vec!["SomeType".to_string()],
             )
             .err()
             .unwrap();
@@ -306,15 +343,16 @@ mod test {
                     data: serde_json::to_value(encounter.clone()).unwrap(),
                     schema_id: schema.id.clone(),
                     patient_id: patient.id.clone(),
-                    r#type: program_type.clone(),
+                    r#type: "SomeType".to_string(),
                     program: program_type.clone(),
                     event_datetime: Utc::now(),
                 },
+                vec!["SomeType".to_string()],
             )
             .unwrap();
         let found = service_provider
             .document_service
-            .get_document(&ctx, &result.name)
+            .get_document(&ctx, &result.name, None)
             .unwrap()
             .unwrap();
         assert!(found.parent_ids.is_empty());

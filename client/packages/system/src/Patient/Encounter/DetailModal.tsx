@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC, useState } from 'react';
 import {
   AlertIcon,
   BasicSpinner,
@@ -19,13 +19,11 @@ import { DateUtils, useTranslation } from '@common/intl';
 import { useEncounter } from '../../Encounter';
 import { usePatientModalStore } from '../hooks';
 import { PatientModal } from '../PatientView';
-import { ProgramRowFragmentWithId, usePatient } from '../api';
-import { ProgramEnrolmentSearchInput } from '../Components';
-import {
-  EncounterFragment,
-  EncounterDocumentRegistryFragment,
-} from '../../Encounter/api/operations.generated';
+import { usePatient } from '../api';
+import { EncounterSearchInput } from '../Components';
+import { EncounterFragment } from '../../Encounter/api/operations.generated';
 import { AppRoute } from 'packages/config/src';
+import { EncounterRegistry } from '../api/hooks/document/useProgramEncounters';
 
 type Encounter = Pick<
   EncounterFragment,
@@ -36,32 +34,25 @@ export const EncounterDetailModal: FC = () => {
   const patientId = usePatient.utils.id();
   const t = useTranslation('patients');
   const { current, setModal: selectModal } = usePatientModalStore();
-  const [program, setProgram] = useState<ProgramRowFragmentWithId | null>(null);
+  const [encounterRegistry, setEncounterRegistry] = useState<
+    EncounterRegistry | undefined
+  >();
   const [isError, setIsError] = useState(false);
-  const {
-    mutate: fetch,
-    isLoading,
-    data: registryData,
-  } = useEncounter.registry.byProgram();
-  const [documentRegistry, setDocumentRegistry] = useState<
-    EncounterDocumentRegistryFragment | undefined
-  >(undefined);
 
-  const [data, setData] = useState<Encounter | undefined>(undefined);
+  const [draft, setDraft] = useState<Encounter | undefined>(undefined);
   const navigate = useNavigate();
   const { error } = useNotification();
 
   const handleSave = useEncounter.document.upsert(
     patientId,
-    program?.type ?? '',
-    documentRegistry?.documentType ?? ''
+    encounterRegistry?.program?.type ?? '',
+    encounterRegistry?.encounter.documentType ?? ''
   );
 
   const reset = () => {
     selectModal(undefined);
-    setProgram(null);
-    setDocumentRegistry(undefined);
-    setData(undefined);
+    setEncounterRegistry(undefined);
+    setDraft(undefined);
     setIsError(false);
   };
 
@@ -70,43 +61,29 @@ export const EncounterDetailModal: FC = () => {
     onClose: reset,
   });
 
-  const onChangeProgram = (program: ProgramRowFragmentWithId) => {
-    setProgram(program);
+  const onChangeEncounter = (entry: EncounterRegistry) => {
     setIsError(false);
-    fetch(program.document.documentRegistry?.id || '');
+    setEncounterRegistry(entry);
   };
-
-  useEffect(() => {
-    if (registryData && registryData?.totalCount > 0) {
-      const documentRegistry = registryData.nodes[0];
-      if (documentRegistry) {
-        setDocumentRegistry(documentRegistry);
-        setIsError(false);
-        return;
-      }
-    } else {
-      setIsError(true);
-    }
-    setDocumentRegistry(undefined);
-  }, [registryData]);
 
   const setStartDatetime = (date: Date | null): void => {
     if (!date) return;
 
     const startDatetime = DateUtils.formatRFC3339(date);
 
-    setData({
-      ...data,
+    setDraft({
+      ...draft,
       startDatetime,
       status: DateUtils.isFuture(date)
         ? EncounterNodeStatus.Scheduled
-        : data?.status,
+        : draft?.status,
     });
   };
 
   const setEndDatetime = (date: Date | null): void => {
     const endDatetime = date ? DateUtils.formatRFC3339(date) : null;
-    if (endDatetime && data?.startDatetime) setData({ ...data, endDatetime });
+    if (endDatetime && draft?.startDatetime)
+      setDraft({ ...draft, endDatetime });
   };
 
   return (
@@ -116,12 +93,12 @@ export const EncounterDetailModal: FC = () => {
       okButton={
         <DialogButton
           variant={'create'}
-          disabled={data === undefined || isLoading}
+          disabled={draft === undefined}
           onClick={async () => {
-            if (documentRegistry !== undefined) {
+            if (encounterRegistry !== undefined) {
               const { id } = await handleSave(
-                data,
-                documentRegistry.formSchemaId
+                draft,
+                encounterRegistry.encounter.formSchemaId
               );
               if (!!id)
                 navigate(
@@ -141,18 +118,15 @@ export const EncounterDetailModal: FC = () => {
       <React.Suspense fallback={<div />}>
         <Stack alignItems="flex-start" gap={1} sx={{ paddingLeft: '20px' }}>
           <InputWithLabelRow
-            label={t('label.program')}
+            label={t('label.encounter')}
             Input={
-              <ProgramEnrolmentSearchInput
-                onChange={onChangeProgram}
-                value={program}
-              />
+              <EncounterSearchInput onChange={onChangeEncounter} value={null} />
             }
           />
           <RenderForm
             isError={isError}
-            isLoading={isLoading}
-            isProgram={!!program}
+            isLoading={false}
+            isProgram={!!encounterRegistry}
             form={
               <>
                 <InputWithLabelRow
@@ -160,7 +134,7 @@ export const EncounterDetailModal: FC = () => {
                   Input={
                     <DatePickerInput
                       value={DateUtils.getDateOrNull(
-                        data?.startDatetime ?? null
+                        draft?.startDatetime ?? null
                       )}
                       onChange={setStartDatetime}
                     />
@@ -171,7 +145,7 @@ export const EncounterDetailModal: FC = () => {
                   Input={
                     <TimePickerInput
                       value={DateUtils.getDateOrNull(
-                        data?.startDatetime ?? null
+                        draft?.startDatetime ?? null
                       )}
                       onChange={setStartDatetime}
                     />
@@ -181,8 +155,10 @@ export const EncounterDetailModal: FC = () => {
                   label={t('label.visit-end')}
                   Input={
                     <TimePickerInput
-                      value={DateUtils.getDateOrNull(data?.endDatetime ?? null)}
-                      disabled={data?.startDatetime === undefined}
+                      value={DateUtils.getDateOrNull(
+                        draft?.endDatetime ?? null
+                      )}
+                      disabled={draft?.startDatetime === undefined}
                       onChange={setEndDatetime}
                     />
                   }

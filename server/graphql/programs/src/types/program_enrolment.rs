@@ -37,6 +37,7 @@ impl ProgramEventFilterInput {
 pub struct ProgramEnrolmentNode {
     pub store_id: String,
     pub program_row: ProgramEnrolmentRow,
+    pub allowed_docs: Vec<String>,
 }
 
 #[Object]
@@ -73,7 +74,10 @@ impl ProgramEnrolmentNode {
                 document_name: self.program_row.name.clone(),
             })
             .await?
-            .map(|document| DocumentNode { document })
+            .map(|document| DocumentNode {
+                allowed_docs: self.allowed_docs.clone(),
+                document,
+            })
             .ok_or(Error::new("Program without document"))?;
 
         Ok(result)
@@ -95,12 +99,14 @@ impl ProgramEnrolmentNode {
                         .program(EqualFilter::equal_to(&self.program_row.r#type)),
                 ),
                 None,
+                self.allowed_docs.clone(),
             )
             .map_err(StandardGraphqlError::from_list_error)?;
         Ok(entries
             .rows
             .into_iter()
             .map(|row| EncounterNode {
+                allowed_docs: self.allowed_docs.clone(),
                 store_id: self.store_id.clone(),
                 encounter_row: row,
             })

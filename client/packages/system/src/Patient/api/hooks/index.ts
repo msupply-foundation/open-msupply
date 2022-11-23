@@ -17,5 +17,6 @@ export const usePatient = {
     update: Document.useUpdatePatient,
     history: Document.useDocumentHistory,
     programEnrolments: Document.useProgramEnrolments,
+    programEncounters: Document.useProgramEncounters,
   },
 };

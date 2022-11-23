@@ -1,7 +1,7 @@
 use async_graphql::*;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
-use service::auth::{Resource, ResourceAccessRequest};
+use service::auth::{CapabilityTag, Resource, ResourceAccessRequest};
 use service::document::document_service::{DocumentUndelete, DocumentUndeleteError};
 
 use crate::types::document::DocumentNode;
@@ -28,6 +28,7 @@ pub fn undelete_document(
             store_id: Some(store_id),
         },
     )?;
+    let allowed_docs = user.capabilities(CapabilityTag::DocumentType);
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
@@ -38,11 +39,18 @@ pub fn undelete_document(
         DocumentUndelete {
             id: input.id.clone(),
         },
+        allowed_docs,
     ) {
-        Ok(document) => UndeleteDocumentResponse::Response(DocumentNode { document }),
+        Ok(document) => UndeleteDocumentResponse::Response(DocumentNode {
+            allowed_docs: allowed_docs.clone(),
+            document,
+        }),
         Err(error) => {
             let formatted_error = format!("{:?}", error);
             let graphql_error = match error {
+                DocumentUndeleteError::NotAllowedToMutateDocument => {
+                    StandardGraphqlError::Forbidden(formatted_error)
+                }
                 DocumentUndeleteError::DocumentNotFound => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
