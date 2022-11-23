@@ -55,6 +55,7 @@ export type ActivityLogFilterInput = {
 export type ActivityLogNode = {
   __typename: 'ActivityLogNode';
   datetime: Scalars['NaiveDateTime'];
+  event?: Maybe<Scalars['String']>;
   id: Scalars['String'];
   recordId?: Maybe<Scalars['String']>;
   store?: Maybe<StoreNode>;
@@ -78,6 +79,13 @@ export enum ActivityLogNodeType {
   StocktakeCreated = 'STOCKTAKE_CREATED',
   StocktakeDeleted = 'STOCKTAKE_DELETED',
   StocktakeStatusFinalised = 'STOCKTAKE_STATUS_FINALISED',
+  StockBatchChange = 'STOCK_BATCH_CHANGE',
+  StockCostPriceChange = 'STOCK_COST_PRICE_CHANGE',
+  StockExpiryDateChange = 'STOCK_EXPIRY_DATE_CHANGE',
+  StockLocationChange = 'STOCK_LOCATION_CHANGE',
+  StockOffHold = 'STOCK_OFF_HOLD',
+  StockOnHold = 'STOCK_ON_HOLD',
+  StockSellPriceChange = 'STOCK_SELL_PRICE_CHANGE',
   UserLoggedIn = 'USER_LOGGED_IN'
 }
 
