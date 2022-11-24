@@ -55,15 +55,15 @@ impl Migration for V1_00_05 {
                 "#
         )?;
 
-        sql_query(format!(
+        sql!(
+            connection,
             r#"
                 CREATE TABLE test_table_with_enum (
                     id TEXT NOT NULL PRIMARY KEY,
                     type {TEST_ENUM_TYPE}
                 );
                 "#
-        ))
-        .execute(&connection.connection)?;
+        )?;
 
         // At the time of writing, serial was not added to common types since it was rarely used
         // example shows addition of conditional type, inline
