@@ -23,6 +23,6 @@ Users browse to the client app on the configured server port from a web browser,
 
 In diagrammatic form this looks like the image below:
 
-![omSupply Architecture drawio](https://user-images.githubusercontent.com/9192912/199419177-94766a4c-14d4-4fb7-8e75-d00455b61839.png)
+![omSupply Architecture drawio](./architecture.svg)
 
 There are also several ancilliary applications as noted, which are available to be run (cli applications) or hosted (storybook) separately.
