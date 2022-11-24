@@ -52,7 +52,7 @@ _Cons:_
 
 ### Option 2 - Save a generated UUID in app data
 
-Simply generate a UUID and save in the app data.
+Simply generate a UUID and save in the app data. Not in the database but another file on disk.
 
 _Pros:_
 
@@ -62,7 +62,6 @@ _Cons:_
 
 - Changes on factory resets
 - Changes on clearing app data/reinstalling app
-- Breaks the protection of stopping sync when a database is shared (in desktop deployments with postgres/sqlite)
 
 ### Option 3 - Mac Address
 
