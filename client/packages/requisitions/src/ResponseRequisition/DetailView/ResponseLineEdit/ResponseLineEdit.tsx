@@ -76,7 +76,14 @@ export const ResponseLineEdit = ({
             update={update}
             disabled={isDisabled}
           />
-          <ModalTabs tabs={tabs} />
+          <ModalTabs
+            tabs={tabs}
+            sx={{
+              bgcolor: 'background.toolbar',
+              marginTop: '1px',
+              boxShadow: theme => theme.shadows[2],
+            }}
+          />
         </>
       ) : (
         <BasicSpinner />
