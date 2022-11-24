@@ -26,7 +26,7 @@ pub fn cors_policy(config_settings: &Settings) -> Cors {
             });
 
             match sec_fetch_site_header {
-                Some(b"cross-site") => return true,
+                Some(b"same-site") => return true,
                 Some(b"same-origin") => return true,
                 Some(b"none") => return true,
                 _ => {}
