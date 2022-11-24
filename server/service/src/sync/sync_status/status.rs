@@ -54,7 +54,7 @@ pub enum SyncStatusType {
 
 #[derive(PartialEq, Debug)]
 pub enum InitialisationStatus {
-    /// Fuly initialised (name)
+    /// Fully initialised (name)
     Initialised(String),
     /// Sync settings were set and sync was attempted at least once
     Initialising,
