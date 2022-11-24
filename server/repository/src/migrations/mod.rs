@@ -139,7 +139,7 @@ pub(crate) fn execute_sql_with_error<'a, Q>(
 ) -> Result<usize, SqlError>
 where
     Q: methods::ExecuteDsl<DBConnection>,
-    Q: QueryFragment<DBType>, // DebugQuery<'a, Q, DBType>: std::fmt::Display,
+    Q: QueryFragment<DBType>,
 {
     let debug_query = diesel::debug_query::<DBType, _>(&query).to_string();
     Q::execute(query, &connection.connection).map_err(|source| SqlError(debug_query, source.into()))
