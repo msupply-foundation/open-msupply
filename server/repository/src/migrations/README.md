@@ -6,6 +6,8 @@ Rust (manual) migrations were introduced in version 1.0.4 of omSupply, as per [t
 
 It's a good idea to explore `/templates` folder for examples of schema, data and data + schema migrations, you can copy and paste them as a starting point for a new migration.
 
+If you are exploring `/templates` folder it's best to look at them in this order: `adding_table`, `data_migration`, `data_and_schema`, `add_data_from_sync_buffer`.
+
 ## Manual migrations overview
 
 `Database version` is stored in [key_value_store] table under `DATABASE_VERSION` key, current `app version` is specified in [root package.json](../../../../package.json). 
