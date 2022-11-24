@@ -7,6 +7,26 @@ import {
   frontEndHostUrl,
 } from '@openmsupply-client/common/src/hooks/useElectronClient';
 import storage from 'electron-data-storage';
+import usb from 'usb';
+
+let windows: BrowserWindow[] = [];
+
+const webusb = new usb.WebUSB({
+  allowAllDevices: true
+});
+
+const showDevices = async () => {
+  const devices = await webusb.getDevices();
+  const text = devices.map((d: any) => `${d.vendorId}\t${d.productId}\t${d.serialNumber || '<no serial>'}`);
+  text.unshift('VID\tPID\tSerial\n-------------------------------------');
+
+  windows.forEach(win => {
+    if (win) {
+      // win.webContents.send('devices', text.join('\n'));
+      win.webContents.executeJavaScript(`console.log('***** FOUND **** ${text}');`);
+    }
+  });
+};
 
 const QUERY_INTERVAL = 1000;
 const SERVICE_NAME = '_omsupply._tcp.local';
@@ -74,7 +94,9 @@ const start = (): void => {
   });
   // and load the index.html of the app.
   window.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
-
+  window.webContents.openDevTools();
+  windows.push(window);
+  showDevices();
   // allow the user to press Alt and force display of the server selection
   window.webContents.on('before-input-event', (event, input) => {
     if (input.alt) {
@@ -130,3 +152,11 @@ app.on(
     }
   }
 );
+
+// This method will be called when Electron has finished
+// initialization and is ready to create browser windows.
+// Some APIs can only be used after this event occurs.
+app.whenReady().then(() => {
+  webusb.addEventListener('connect', showDevices);
+  webusb.addEventListener('disconnect', showDevices);
+});
