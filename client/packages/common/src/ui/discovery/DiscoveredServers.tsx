@@ -117,7 +117,7 @@ const DiscoveredServer: React.FC<DiscoveredServerProps> = ({
   const { data: initStatus } = useInitialisationStatus();
   const t = useTranslation();
 
-  const siteName = () => {
+  const getSiteName = () => {
     if (initStatus?.status == InitialisationStatusType.Initialised)
       return initStatus?.siteName;
     return t('app.initialise');
@@ -134,7 +134,7 @@ const DiscoveredServer: React.FC<DiscoveredServerProps> = ({
         <CheckboxEmptyIcon fontSize="small" color="inherit" />
       </ListItemIcon>
       <ListItemText primaryTypographyProps={{ sx: { color: 'inherit' } }}>
-        {`${frontEndHostDisplay(server)} ${siteName()} `}
+        {`${frontEndHostDisplay(server)} ${getSiteName()} `}
       </ListItemText>
       {server.isLocal && <HomeIcon fontSize="small" color="inherit" />}
     </MenuItem>
