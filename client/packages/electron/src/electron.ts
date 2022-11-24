@@ -52,7 +52,8 @@ const start = (): void => {
   });
   // and load the index.html of the app.
   window.loadURL(`${MAIN_WINDOW_WEBPACK_ENTRY}?autoconnect=true`);
-  window.webContents.openDevTools();
+  
+  // window.webContents.openDevTools();
 
   ipcMain.on(IPC_MESSAGES.START_SERVER_DISCOVERY, () => {
     discoveredServers = [];
