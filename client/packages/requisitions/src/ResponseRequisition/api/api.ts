@@ -123,6 +123,21 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
 
       throw new Error('Record not found');
     },
+    stats: async (requisitionLineId: string) => {
+      const result = await sdk.responseRequisitionStats({
+        requisitionLineId,
+        storeId,
+      });
+
+      if (
+        result?.responseRequisitionStats.__typename ===
+        'ResponseRequisitionStatsNode'
+      ) {
+        return result.responseRequisitionStats;
+      }
+
+      throw new Error('Unable to load chart data');
+    },
   },
   update: async (
     patch: Partial<ResponseFragment> & { id: string }
