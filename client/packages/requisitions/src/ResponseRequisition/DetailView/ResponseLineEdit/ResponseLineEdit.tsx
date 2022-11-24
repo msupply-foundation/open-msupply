@@ -4,10 +4,13 @@ import {
   DialogButton,
   BasicSpinner,
   useBufferState,
+  ModalTabs,
 } from '@openmsupply-client/common';
 import { ResponseLineEditForm } from './ResponseLineEditForm';
 import { useResponse, ResponseLineFragment } from '../../api';
 import { useDraftRequisitionLine, useNextResponseLine } from './hooks';
+import { RequestStoreStats } from '../ReponseStats/RequestStoreStats';
+import { ResponseStoreStats } from '../ReponseStats/ResponseStoreStats';
 
 interface ResponseLineEditProps {
   isOpen: boolean;
@@ -26,6 +29,17 @@ export const ResponseLineEdit = ({
   const { draft, isLoading, save, update } =
     useDraftRequisitionLine(currentLine);
   const { next, hasNext } = useNextResponseLine(currentLine);
+
+  const tabs = [
+    {
+      Component: <ResponseStoreStats id={draft?.id || ''} />,
+      value: 'My Store',
+    },
+    {
+      Component: <RequestStoreStats id={draft?.id || ''} />,
+      value: 'Customer',
+    },
+  ];
 
   return (
     <Modal
@@ -56,11 +70,14 @@ export const ResponseLineEdit = ({
       width={1024}
     >
       {!isLoading ? (
-        <ResponseLineEditForm
-          draftLine={draft}
-          update={update}
-          disabled={isDisabled}
-        />
+        <>
+          <ResponseLineEditForm
+            draftLine={draft}
+            update={update}
+            disabled={isDisabled}
+          />
+          <ModalTabs tabs={tabs} />
+        </>
       ) : (
         <BasicSpinner />
       )}

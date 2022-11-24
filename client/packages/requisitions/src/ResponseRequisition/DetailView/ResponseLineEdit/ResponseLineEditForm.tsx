@@ -138,7 +138,7 @@ export const ResponseLineEditForm = ({
             {t('heading.comment')}
           </Typography>
           <TextArea
-            value={draftLine.comment}
+            value={draftLine.comment ?? ''}
             onChange={e => update({ comment: e.target.value })}
             InputProps={{
               sx: { backgroundColor: theme => theme.palette.background.menu },
