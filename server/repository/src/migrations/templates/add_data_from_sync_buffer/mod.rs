@@ -240,6 +240,3 @@ async fn migration_1_00_08() {
         ]
     )
 }
-
-// Templates tear down
-// Or special feature ?
