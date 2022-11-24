@@ -3,14 +3,15 @@ import { useFormatNumber, useTranslation } from '@common/intl';
 import {
   AlertIcon,
   Box,
-  CircularProgress,
   Tooltip,
   Typography,
 } from '@openmsupply-client/common';
-import { useResponse } from '../../api';
 
 export interface RequestStoreStatsProps {
-  id: string;
+  maxMonthsOfStock: number;
+  suggestedQuantity: number;
+  availableStockOnHand: number;
+  averageMonthlyConsumption: number;
 }
 
 const MIN_FLEX_BASIS_TO_SHOW_LABEL = 10;
@@ -154,16 +155,15 @@ const CalculationError = ({
   );
 };
 
-export const RequestStoreStats: React.FC<RequestStoreStatsProps> = ({ id }) => {
+export const RequestStoreStats: React.FC<RequestStoreStatsProps> = ({
+  maxMonthsOfStock,
+  suggestedQuantity,
+  availableStockOnHand,
+  averageMonthlyConsumption,
+}) => {
   const t = useTranslation('replenishment');
-  const { data, isLoading } = useResponse.line.stats(id);
-  const averageMonthlyConsumption =
-    data?.requestStoreStats.averageMonthlyConsumption || 0;
   if (averageMonthlyConsumption === 0) return <CalculationError isAmcZero />;
 
-  const maxMonthsOfStock = data?.requestStoreStats.maxMonthsOfStock || 0;
-  const suggestedQuantity = data?.requestStoreStats.suggestedQuantity || 0;
-  const availableStockOnHand = data?.requestStoreStats.stockOnHand || 0;
   const targetQuantity = maxMonthsOfStock * averageMonthlyConsumption;
 
   if (suggestedQuantity === 0 && availableStockOnHand === 0)
@@ -174,9 +174,7 @@ export const RequestStoreStats: React.FC<RequestStoreStatsProps> = ({ id }) => {
       ? Math.round((100 * targetQuantity) / availableStockOnHand)
       : 100;
 
-  return isLoading ? (
-    <CircularProgress />
-  ) : (
+  return (
     <>
       <Box
         sx={{
