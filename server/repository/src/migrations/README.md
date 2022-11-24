@@ -15,7 +15,7 @@ During startup server will run [these steps sequentially](mod.rs):
 1. Run through diesel migrations
 2. Query for `database version` of the database
 3. Using visitor pattern will try to run any migrations that are higher then `database version` (database version will be updated after each migration)
-4. Finally database version is set to `app version`
+4. Finally database version is set to `app version` ([root package.json](../../../../package.json) is embedded in binary)
 
 Each migration implements two methods in migration visitor trait, version() and migrate(). Test database can be created for any database version, this allows us to test migrations (see templates for examples).
 
@@ -24,6 +24,8 @@ Diesel dsl can be used in data migrations, however, for some operations sql stat
 ## How to add migration
 
 Identify next version, see [package.json](../../../../package.json) for current version, then increment `patch` by one (we use semantic versioning syntax for our version number, but our app versioning wouldn't necesseraly follow SemVer guidelines which are aimed at publicly consumed packages and libraries, see [version.rs](./version.rs) for more details).
+
+**note** everything after `patch` is condiered `pre-release`, and cannot be upgraded further (pre-relase version is really undefined, it could be a test branch or a release candidate), but `pre-release` versions can be used to manually test migrations/functionality in production.
 
 Increment [package.json](../../../../package.json) version to the new version and create new migration folder with the version number. Copy template or existing migration, and rename to new version approprately. 
 
