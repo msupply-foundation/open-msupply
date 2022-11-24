@@ -77,10 +77,10 @@ export const ResponseStoreStats: React.FC<ResponseStoreStatsProps> = ({
   const requestedQuantity = data?.responseStoreStats.requestedQuantity || 0;
   const otherRequestedQuantity =
     data?.responseStoreStats.otherRequestedQuantity || 0;
-    
+
   const predictedStockLevels = stockOnHand + incomingStock + stockOnOrder;
   const totalRequested = requestedQuantity + otherRequestedQuantity;
-  
+
   const predictedStockPercent =
     predictedStockLevels < totalRequested
       ? Math.round((100 * predictedStockLevels) / totalRequested).toString() +
@@ -91,13 +91,14 @@ export const ResponseStoreStats: React.FC<ResponseStoreStatsProps> = ({
       ? Math.round((100 * totalRequested) / predictedStockLevels).toString() +
         '%'
       : '100%';
-    console.log(requestedPercent)
+  console.log(requestedPercent);
 
   return isLoading ? (
     <CircularProgress />
   ) : (
     <>
       <Box
+        flex={1}
         sx={{
           paddingLeft: 4,
           paddingRight: 4,
@@ -106,7 +107,11 @@ export const ResponseStoreStats: React.FC<ResponseStoreStatsProps> = ({
         }}
       >
         <>
-          <Box display="flex" alignItems="flex-start" width={predictedStockPercent}>
+          <Box
+            display="flex"
+            alignItems="flex-start"
+            width={predictedStockPercent}
+          >
             <Divider />
             <ValueBar
               value={stockOnHand}
@@ -138,7 +143,12 @@ export const ResponseStoreStats: React.FC<ResponseStoreStatsProps> = ({
         }}
       >
         <>
-          <Box display="flex" alignItems="flex-start" width={requestedPercent}>
+          <Box
+            display="flex"
+            alignItems="flex-start"
+            width={requestedPercent}
+            flex={1}
+          >
             <Divider />
             <ValueBar
               value={requestedQuantity}

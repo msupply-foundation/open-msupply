@@ -60,7 +60,7 @@ export const ResponseLineEditFormLayout = ({
       justifyContent="space-between"
       bgcolor="background.toolbar"
       padding={4}
-      boxShadow={theme => theme.shadows[2]}
+      paddingBottom={2}
     >
       <Grid item xs={4}>
         {Left}
