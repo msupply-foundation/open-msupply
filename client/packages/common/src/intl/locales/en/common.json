@@ -76,6 +76,7 @@
   "label.amount": "Amount",
   "label.app-version": "Version:",
   "label.available": "Available",
+  "label.barcode": "Barcode",
   "label.batch": "Batch",
   "label.chargeCode": "Charge Code",
   "label.clear-filter": "Clear filter",

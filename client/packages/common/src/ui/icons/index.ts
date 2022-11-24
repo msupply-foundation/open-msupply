@@ -38,6 +38,7 @@ export { RadioIcon } from './Radio';
 export { ReportsIcon } from './Reports';
 export { RewindIcon } from './Rewind';
 export { SaveIcon } from './Save';
+export { ScanIcon } from './Scan';
 export { SettingsIcon } from './Settings';
 export { SortAscIcon } from './SortAsc';
 export { SortDescIcon } from './SortDesc';
