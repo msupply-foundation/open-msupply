@@ -4,6 +4,7 @@ CREATE TYPE language_type AS ENUM
     'FRENCH',
     'SPANISH',
     'LATIN',
+    'LAOS',
     'KHMER',
     'PORTUGUESE',
     'RUSSIAN'
