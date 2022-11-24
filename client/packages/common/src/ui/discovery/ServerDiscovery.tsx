@@ -11,7 +11,7 @@ import { Theme } from '@common/styles';
 import { DiscoveredServers } from './DiscoveredServers';
 
 // When discovery is opened with ?autoconnect=true URL parameter, useNativeClient will try to connect to previously
-// connected server, this is usefull when navigating back to discovery from login or initialisation screen
+// connected server, this is useful when navigating back to discovery from login or initialisation screen
 // to prevent autoconnecting if discovery is desired
 const isAutoconnect = () => {
   const url = new URL(window.location.href);
