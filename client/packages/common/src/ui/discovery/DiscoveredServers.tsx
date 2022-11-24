@@ -90,7 +90,7 @@ export const DiscoveredServers = ({
       <MenuList style={{ overflowY: 'auto', maxHeight: '200px' }}>
         {servers.map(server => (
           <DiscoveredServerWrapper
-            key={frontEndHostGraphql(server)}
+            key={`${server.hardwareId}${server.port}`}
             server={server}
             connect={connect}
           />
