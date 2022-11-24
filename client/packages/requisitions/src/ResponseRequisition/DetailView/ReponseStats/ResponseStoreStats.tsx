@@ -1,15 +1,13 @@
 import React from 'react';
 import { useFormatNumber, useTranslation } from '@common/intl';
-import {
-  Box,
-  CircularProgress,
-  Tooltip,
-  Typography,
-} from '@openmsupply-client/common';
-import { useResponse } from '../../api';
+import { Box, Tooltip, Typography } from '@openmsupply-client/common';
 
 export interface ResponseStoreStatsProps {
-  id: string;
+  stockOnHand: number;
+  incomingStock: number;
+  stockOnOrder: number;
+  requestedQuantity: number;
+  otherRequestedQuantity: number;
 }
 
 const MIN_FLEX_BASIS_TO_SHOW_LABEL = 10;
@@ -67,17 +65,13 @@ const ValueBar = ({
 };
 
 export const ResponseStoreStats: React.FC<ResponseStoreStatsProps> = ({
-  id,
+  stockOnHand,
+  incomingStock,
+  stockOnOrder,
+  requestedQuantity,
+  otherRequestedQuantity,
 }) => {
   const t = useTranslation('replenishment');
-  const { data, isLoading } = useResponse.line.stats(id);
-  const stockOnHand = data?.responseStoreStats.stockOnHand || 0;
-  const incomingStock = data?.responseStoreStats.incomingStock || 0;
-  const stockOnOrder = data?.responseStoreStats.stockOnOrder || 0;
-  const requestedQuantity = data?.responseStoreStats.requestedQuantity || 0;
-  const otherRequestedQuantity =
-    data?.responseStoreStats.otherRequestedQuantity || 0;
-
   const predictedStockLevels = stockOnHand + incomingStock + stockOnOrder;
   const totalRequested = requestedQuantity + otherRequestedQuantity;
 
@@ -91,11 +85,8 @@ export const ResponseStoreStats: React.FC<ResponseStoreStatsProps> = ({
       ? Math.round((100 * totalRequested) / predictedStockLevels).toString() +
         '%'
       : '100%';
-  console.log(requestedPercent);
 
-  return isLoading ? (
-    <CircularProgress />
-  ) : (
+  return (
     <>
       <Box
         flex={1}
@@ -147,7 +138,6 @@ export const ResponseStoreStats: React.FC<ResponseStoreStatsProps> = ({
             display="flex"
             alignItems="flex-start"
             width={requestedPercent}
-            flex={1}
           >
             <Divider />
             <ValueBar

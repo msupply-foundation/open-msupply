@@ -29,14 +29,26 @@ export const ResponseLineEdit = ({
   const { draft, isLoading, save, update } =
     useDraftRequisitionLine(currentLine);
   const { next, hasNext } = useNextResponseLine(currentLine);
+  const { data } = useResponse.line.stats(draft?.id);
 
   const tabs = [
     {
-      Component: <ResponseStoreStats id={draft?.id || ''} />,
+      Component: <ResponseStoreStats
+        stockOnHand={data?.responseStoreStats.stockOnHand || 0}
+        incomingStock={data?.responseStoreStats.incomingStock || 0}
+        stockOnOrder={data?.responseStoreStats.stockOnOrder || 0}
+        requestedQuantity={data?.responseStoreStats.requestedQuantity || 0}
+        otherRequestedQuantity={data?.responseStoreStats.otherRequestedQuantity || 0}
+      />,
       value: 'My Store',
     },
     {
-      Component: <RequestStoreStats id={draft?.id || ''} />,
+      Component: <RequestStoreStats 
+        maxMonthsOfStock={data?.requestStoreStats.maxMonthsOfStock || 0}
+        suggestedQuantity={data?.requestStoreStats.suggestedQuantity || 0}
+        availableStockOnHand={data?.requestStoreStats.stockOnHand || 0}
+        averageMonthlyConsumption={data?.requestStoreStats.averageMonthlyConsumption || 0}
+      />,
       value: 'Customer',
     },
   ];
