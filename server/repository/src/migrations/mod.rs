@@ -12,7 +12,7 @@ use crate::{
     run_db_migrations, DBConnection, DBType, KeyValueStoreRepository, KeyValueType,
     RepositoryError, StorageConnection,
 };
-use diesel::{query_builder::QueryFragment, query_dsl::methods, sql_query, RunQueryDsl};
+use diesel::{query_builder::QueryFragment, query_dsl::methods};
 use thiserror::Error;
 
 pub(crate) trait Migration {
