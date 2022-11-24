@@ -1,9 +1,9 @@
 import { uniqWith } from 'lodash';
 import { useState, useEffect } from 'react';
+import { useLocalStorage } from '../../localStorage';
 
 const DISCOVERY_TIMEOUT = 5000;
 const DISCOVERED_SERVER_POLL = 1000;
-const PREVIOUS_SERVER_KEY = '/discovery/previous-server';
 
 export type Protocol = 'http' | 'https';
 export const isProtocol = (value: any): value is Protocol =>
@@ -91,18 +91,18 @@ export const useNativeClient = ({
   discovery,
 }: { discovery?: boolean; autoconnect?: boolean } = {}) => {
   const [timedOut, setTimedOut] = useState(false);
-  const [previousServer, setPreviousServer] = useState<FrontEndHost | null>(
-    null
-  );
   const [nativeAPI, setNativeAPI] = useState<NativeAPI | null>(null);
   const [state, setState] = useState<NativeClientState>({
     servers: [],
     connectedServer: null,
     discoveryTimedOut: false,
   });
+  const [previousServer, setPreviousServer] = useLocalStorage(
+    '/mru/previous-server'
+  );
 
   const connectToServer = (server: FrontEndHost) => {
-    localStorage.setItem(PREVIOUS_SERVER_KEY, JSON.stringify(server));
+    setPreviousServer(server);
     nativeAPI?.connectToServer(server);
   };
 
@@ -112,10 +112,6 @@ export const useNativeClient = ({
     if (!nativeAPI) return;
 
     setNativeAPI(nativeAPI);
-
-    // Can use localStorage
-    const previousServerJson = localStorage.getItem(PREVIOUS_SERVER_KEY);
-    if (previousServerJson) setPreviousServer(JSON.parse(previousServerJson));
 
     nativeAPI.connectedServer().then(connectedServer => {
       setState(state => ({ ...state, connectedServer }));

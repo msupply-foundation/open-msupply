@@ -1,3 +1,4 @@
+import { FrontEndHost } from '@common/hooks';
 import { SupportedLocales } from '@common/intl';
 import { ThemeOptions } from '@mui/material';
 import { UserStoreNodeFragment } from '../authentication/api/operations.generated';
@@ -23,6 +24,7 @@ export type LocalStorageRecord = {
   '/theme/logo': string;
   '/theme/logohash': string;
   '/mru/credentials': AuthenticationCredentials;
+  '/mru/previous-server': FrontEndHost;
   '/auth/error': AuthError | undefined;
   '/pagination/rowsperpage': number;
   '/columns/hidden': Record<string, string[]> | undefined;
