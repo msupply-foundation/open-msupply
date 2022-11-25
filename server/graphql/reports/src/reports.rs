@@ -37,6 +37,7 @@ pub enum ReportContext {
     Requisition,
     Stocktake,
     Resource,
+    Patient,
 }
 
 #[derive(InputObject, Clone)]
@@ -80,13 +81,7 @@ impl ReportNode {
         &self.row.name
     }
     pub async fn context(&self) -> ReportContext {
-        match self.row.context {
-            ReportContextDomain::InboundShipment => ReportContext::InboundShipment,
-            ReportContextDomain::OutboundShipment => ReportContext::OutboundShipment,
-            ReportContextDomain::Requisition => ReportContext::Requisition,
-            ReportContextDomain::Stocktake => ReportContext::Stocktake,
-            ReportContextDomain::Resource => ReportContext::Resource,
-        }
+        ReportContext::from_domain(&self.row.context)
     }
 }
 
@@ -158,6 +153,18 @@ impl ReportContext {
             ReportContext::Requisition => ReportContextDomain::Requisition,
             ReportContext::Stocktake => ReportContextDomain::Stocktake,
             ReportContext::Resource => ReportContextDomain::Resource,
+            ReportContext::Patient => ReportContextDomain::Patient,
+        }
+    }
+
+    pub fn from_domain(context: &ReportContextDomain) -> ReportContext {
+        match context {
+            ReportContextDomain::InboundShipment => ReportContext::InboundShipment,
+            ReportContextDomain::OutboundShipment => ReportContext::OutboundShipment,
+            ReportContextDomain::Requisition => ReportContext::Requisition,
+            ReportContextDomain::Stocktake => ReportContext::Stocktake,
+            ReportContextDomain::Resource => ReportContext::Resource,
+            ReportContextDomain::Patient => ReportContext::Patient,
         }
     }
 }

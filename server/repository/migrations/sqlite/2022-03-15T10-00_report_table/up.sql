@@ -8,7 +8,8 @@ CREATE TABLE report (
         'OUTBOUND_SHIPMENT',
         'REQUISITION',
         'STOCKTAKE',
-        'RESOURCE'
+        'RESOURCE',
+        'PATIENT'
     )) NOT NULL,
     comment TEXT
 )
