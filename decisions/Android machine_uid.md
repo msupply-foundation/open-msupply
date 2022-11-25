@@ -1,4 +1,4 @@
-# Versions and Compatibility
+# Android `machine_uid` in sync v5
 
 - _Date_: 2022-11-24
 - _Deciders_: Mark Prins, Andrei Evguenov, Chris Petty
