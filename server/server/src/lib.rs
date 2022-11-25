@@ -224,6 +224,8 @@ pub async fn start_server(
             .wrap(logger_middleware())
             .wrap(cors_policy(&closure_settings))
             .wrap(compress_middleware())
+            // needed for static files service
+            .app_data(Data::new(closure_settings.clone()))
             .configure(attach_graphql_schema(graphql_schema.clone()))
             .configure(config_static_files)
             .configure(config_server_frontend)

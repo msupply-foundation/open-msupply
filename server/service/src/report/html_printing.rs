@@ -33,6 +33,12 @@ pub fn html_to_pdf(
         None => std::env::current_dir()?,
     }
     .join("report_printing_tmp");
+    // headless chrome needs an absolute path
+    let temp_dir = if !temp_dir.is_absolute() {
+        std::env::current_dir()?.join(temp_dir)
+    } else {
+        temp_dir
+    };
     fs::create_dir_all(&temp_dir)?;
 
     let document_name = format!("{}.html", document_id);
