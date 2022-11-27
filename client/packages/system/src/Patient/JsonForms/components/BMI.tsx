@@ -28,7 +28,10 @@ const UIComponent = (props: ControlProps) => {
 
     if (!handleChange || !w) return;
 
-    const bmi = round(w / (h * h));
+    let bmi = round(w / (h * h));
+    if (!isFinite(bmi)) {
+      bmi = 0
+    }
     handleChange(composePaths(path, 'bodyMassIndex'), bmi);
   }, [height, weight]);
 
