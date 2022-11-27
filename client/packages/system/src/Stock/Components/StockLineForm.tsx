@@ -17,6 +17,7 @@ import {
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { BarcodeScanner } from '@capacitor-community/barcode-scanner';
+import { Capacitor } from '@capacitor/core';
 
 const StyledInputRow = ({ label, Input }: InputWithLabelRowProps) => (
   <InputWithLabelRow
@@ -39,6 +40,7 @@ interface StockLineFormProps {
 export const StockLineForm: FC<StockLineFormProps> = ({ draft, onUpdate }) => {
   const t = useTranslation('inventory');
   const [barcode, setBarcode] = React.useState('');
+  const hasBarcodeScanner = Capacitor.isPluginAvailable('BarcodeScanner');
 
   const scanBarcode = async () => {
     // Check camera permission
@@ -150,11 +152,13 @@ export const StockLineForm: FC<StockLineFormProps> = ({ draft, onUpdate }) => {
           Input={
             <Box>
               <BasicTextInput value={barcode} onChange={() => {}} />
-              <IconButton
-                onClick={scanBarcode}
-                icon={<ScanIcon />}
-                label={'Scan'}
-              />
+              {hasBarcodeScanner && (
+                <IconButton
+                  onClick={scanBarcode}
+                  icon={<ScanIcon />}
+                  label={'Scan'}
+                />
+              )}
             </Box>
           }
         />
