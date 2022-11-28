@@ -45,6 +45,7 @@
   "error.no-results": "Nothing here",
   "error.something-wrong": "Oops! Something's gone wrong.",
   "error.unable-to-load-data": "An error has occurred: there was a problem loading the data.",
+  "error.unable-to-read-barcode": "Unable to read a barcode",
   "filename.inbounds": "inbound-shipments",
   "filename.locations": "locations",
   "filename.master-lists": "master-lists",
