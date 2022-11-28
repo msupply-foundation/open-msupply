@@ -14,10 +14,9 @@ import {
   Box,
   IconButton,
   ScanIcon,
+  useBarcodeScannerContext,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
-import { BarcodeScanner } from '@capacitor-community/barcode-scanner';
-import { Capacitor } from '@capacitor/core';
 
 const StyledInputRow = ({ label, Input }: InputWithLabelRowProps) => (
   <InputWithLabelRow
@@ -34,28 +33,19 @@ const StyledInputRow = ({ label, Input }: InputWithLabelRowProps) => (
   />
 );
 interface StockLineFormProps {
-  draft: StockLineRowFragment;
-  onUpdate: (patch: Partial<StockLineRowFragment>) => void;
+  draft: StockLineRowFragment & { barcode?: string };
+  onUpdate: (
+    patch: Partial<StockLineRowFragment & { barcode?: string }>
+  ) => void;
 }
 export const StockLineForm: FC<StockLineFormProps> = ({ draft, onUpdate }) => {
   const t = useTranslation('inventory');
-  const [barcode, setBarcode] = React.useState('');
-  const hasBarcodeScanner = Capacitor.isPluginAvailable('BarcodeScanner');
+  const { hasBarcodeScanner, startScan } = useBarcodeScannerContext();
 
   const scanBarcode = async () => {
-    // Check camera permission
-    // This is just a simple example, check out the better checks below
-    await BarcodeScanner.checkPermission({ force: true });
-
-    // make background of WebView transparent
-    // note: if you are using ionic this might not be enough, check below
-    BarcodeScanner.hideBackground();
-
-    const result = await BarcodeScanner.startScan(); // start scanning and wait for a result
-
-    // if the result has content
+    const result = await startScan();
     if (result.hasContent) {
-      setBarcode(result.content ?? '');
+      onUpdate({ barcode: result.content ?? '' });
     }
   };
 
@@ -151,7 +141,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({ draft, onUpdate }) => {
           label={t('label.barcode')}
           Input={
             <Box>
-              <BasicTextInput value={barcode} onChange={() => {}} />
+              <BasicTextInput value={draft.barcode} onChange={() => {}} />
               {hasBarcodeScanner && (
                 <IconButton
                   onClick={scanBarcode}

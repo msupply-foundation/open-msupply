@@ -36,7 +36,7 @@
   "devDependencies": {
     "@babel/core": "^7.18.2",
     "@babel/preset-env": "^7.18.2",
-    "@capacitor-community/barcode-scanner": "^3.0.1",
+    "@capacitor-community/barcode-scanner": "2.1.1",
     "@capacitor/keyboard": "^1.2.2",
     "@graphql-codegen/cli": "^2.3.0",
     "@graphql-codegen/near-operation-file-preset": "^2.2.5",
@@ -81,6 +81,7 @@
     "jest": "^28.1.0",
     "jest-environment-jsdom": "^28.1.0",
     "jest-transform-stub": "^2.0.0",
+    "jetifier": "^2.0.0",
     "msw-storybook-addon": "^1.6.3",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
