@@ -3,12 +3,9 @@ use repository::{
 };
 
 use crate::{
-    invoice::{
-        check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store,
-        InvoiceDoesNotExist, InvoiceIsNotEditable, NotThisStoreInvoice, WrongInvoiceRowType,
-    },
+    invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
     invoice_line::validate::{
-        check_item, check_line_exists, ItemNotFound, LineDoesNotExist, NotInvoiceLine,
+        check_item_exists, check_line_belongs_to_invoice, check_line_exists_option,
     },
 };
 
@@ -19,63 +16,32 @@ pub fn validate(
     store_id: &str,
     connection: &StorageConnection,
 ) -> Result<(InvoiceLineRow, InvoiceRow, ItemRow), UpdateOutboundShipmentServiceLineError> {
-    let line = check_line_exists(&input.id, connection)?;
-    let invoice = check_invoice_exists(&line.invoice_id, connection)?;
+    use UpdateOutboundShipmentServiceLineError::*;
+
+    let line = check_line_exists_option(connection, &input.id)?.ok_or(LineDoesNotExist)?;
+    let invoice = check_invoice_exists(&line.invoice_id, connection)?.ok_or(InvoiceDoesNotExist)?;
 
     let item = if let Some(item_id) = &input.item_id {
-        check_item(item_id, connection)?
+        check_item_exists(connection, item_id)?.ok_or(ItemNotFound)?
     } else {
-        check_item(&line.item_id, connection)?
+        check_item_exists(connection, &line.item_id)?.ok_or(ItemNotFound)?
     };
     if item.r#type != ItemRowType::Service {
         return Err(UpdateOutboundShipmentServiceLineError::NotAServiceItem);
     }
 
-    check_store(&invoice, store_id)?;
-    check_invoice_type(&invoice, InvoiceRowType::OutboundShipment)?;
-    check_invoice_is_editable(&invoice)?;
+    if !check_store(&invoice, store_id) {
+        return Err(NotThisStoreInvoice);
+    }
+    if !check_invoice_type(&invoice, InvoiceRowType::OutboundShipment) {
+        return Err(NotAnOutboundShipment);
+    }
+    if !check_invoice_is_editable(&invoice) {
+        return Err(CannotEditInvoice);
+    }
+    if !check_line_belongs_to_invoice(&line, &invoice) {
+        return Err(NotThisInvoiceLine(line.invoice_id));
+    }
 
     Ok((line, invoice, item))
-}
-
-impl From<LineDoesNotExist> for UpdateOutboundShipmentServiceLineError {
-    fn from(_: LineDoesNotExist) -> Self {
-        UpdateOutboundShipmentServiceLineError::LineDoesNotExist
-    }
-}
-
-impl From<InvoiceDoesNotExist> for UpdateOutboundShipmentServiceLineError {
-    fn from(_: InvoiceDoesNotExist) -> Self {
-        UpdateOutboundShipmentServiceLineError::InvoiceDoesNotExist
-    }
-}
-
-impl From<NotInvoiceLine> for UpdateOutboundShipmentServiceLineError {
-    fn from(error: NotInvoiceLine) -> Self {
-        UpdateOutboundShipmentServiceLineError::NotThisInvoiceLine(error.0)
-    }
-}
-
-impl From<WrongInvoiceRowType> for UpdateOutboundShipmentServiceLineError {
-    fn from(_: WrongInvoiceRowType) -> Self {
-        UpdateOutboundShipmentServiceLineError::NotAnOutboundShipment
-    }
-}
-
-impl From<InvoiceIsNotEditable> for UpdateOutboundShipmentServiceLineError {
-    fn from(_: InvoiceIsNotEditable) -> Self {
-        UpdateOutboundShipmentServiceLineError::CannotEditInvoice
-    }
-}
-
-impl From<ItemNotFound> for UpdateOutboundShipmentServiceLineError {
-    fn from(_: ItemNotFound) -> Self {
-        UpdateOutboundShipmentServiceLineError::ItemNotFound
-    }
-}
-
-impl From<NotThisStoreInvoice> for UpdateOutboundShipmentServiceLineError {
-    fn from(_: NotThisStoreInvoice) -> Self {
-        UpdateOutboundShipmentServiceLineError::NotThisStoreInvoice
-    }
 }

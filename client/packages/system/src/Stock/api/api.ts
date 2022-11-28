@@ -1,59 +1,90 @@
 import {
   SortBy,
   FilterBy,
-  ItemSortFieldInput,
+  StockLineNode,
+  StockLineSortFieldInput,
+  RecordPatch,
+  UpdateStockLineInput,
 } from '@openmsupply-client/common';
-import { getSdk } from './operations.generated';
-import { StockRow } from '../types';
+import { getSdk, StockLineRowFragment } from './operations.generated';
 
 export type StockApi = ReturnType<typeof getSdk>;
 
+const stockLineParsers = {
+  toSortField: (sortBy: SortBy<StockLineNode>): StockLineSortFieldInput => {
+    switch (sortBy.key) {
+      case 'numberOfPacks':
+        return StockLineSortFieldInput.NumberOfPacks;
+      case 'expiryDate':
+      default: {
+        return StockLineSortFieldInput.ExpiryDate;
+      }
+    }
+  },
+  toUpdate: (
+    patch: RecordPatch<StockLineRowFragment>
+  ): UpdateStockLineInput => ({
+    id: patch?.id,
+    locationId: patch.locationId,
+    costPricePerPack: patch.costPricePerPack,
+    sellPricePerPack: patch.sellPricePerPack,
+    expiryDate: patch.expiryDate,
+    batch: patch.batch,
+    onHold: patch.onHold,
+  }),
+};
+
 export const getStockQueries = (stockApi: StockApi, storeId: string) => ({
   get: {
+    byId: async (id: string) => {
+      const result = await stockApi.stockLine({ id, storeId });
+      const stockLine = result?.stockLines.nodes[0];
+
+      if (stockLine?.__typename === 'StockLineNode') {
+        return stockLine;
+      } else {
+        throw new Error('Could not find stock line');
+      }
+    },
     list: async ({
+      first,
+      offset,
       sortBy,
       filterBy,
     }: {
       first: number;
       offset: number;
-      sortBy: SortBy<StockRow>;
+      sortBy: SortBy<StockLineNode>;
       filterBy: FilterBy | null;
     }): Promise<{
-      nodes: StockRow[];
+      nodes: StockLineRowFragment[];
       totalCount: number;
     }> => {
-      const result = await stockApi.itemsWithStockLines({
-        first: 1000,
-        offset: 0,
-        key: ItemSortFieldInput.Name,
+      const result = await stockApi.stockLines({
+        storeId,
+        first: first,
+        offset: offset,
+        key: stockLineParsers.toSortField(sortBy),
         desc: sortBy.isDesc,
         filter: filterBy,
-        storeId,
       });
-
-      const items = result?.items;
-      const nodes: StockRow[] = [];
-      (items?.nodes || []).forEach(item => {
-        const availableBatches = item.availableBatches;
-        availableBatches.nodes
-          .filter(batch => batch.totalNumberOfPacks > 0)
-          .forEach(batch =>
-            nodes.push({
-              id: batch.id,
-              itemId: item.id,
-              itemCode: item.code,
-              itemName: item.name,
-              itemUnit: item.unitName ?? '',
-              batch: batch.batch ?? '',
-              expiryDate: batch.expiryDate ? new Date(batch.expiryDate) : null,
-              packSize: batch.packSize,
-              numberOfPacks: batch.totalNumberOfPacks,
-              locationName: batch.locationName ?? '',
-            })
-          );
-      });
-
-      return { totalCount: nodes.length, nodes };
+      const { nodes, totalCount } = result?.stockLines;
+      return { nodes, totalCount };
     },
+  },
+  update: async (patch: RecordPatch<StockLineRowFragment>) => {
+    const result =
+      (await stockApi.updateStockLine({
+        storeId,
+        input: stockLineParsers.toUpdate(patch),
+      })) || {};
+
+    const { updateStockLine } = result;
+
+    if (updateStockLine?.__typename === 'StockLineNode') {
+      return patch;
+    }
+
+    throw new Error('Unable to update stock line');
   },
 });
