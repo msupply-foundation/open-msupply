@@ -76,7 +76,7 @@ pub(crate) enum ProcessShipmentTransfersError {
     #[error("Name id is missing from invoice changelog {0:?}")]
     NameIdIsMissingFromChangelog(ChangelogRow),
     #[error("Name is not an active store {0:?}")]
-    NameIsNotAnAciveStore(ChangelogRow),
+    NameIsNotAnActiveStore(ChangelogRow),
 }
 
 pub(crate) fn process_shipment_transfers(
@@ -137,7 +137,7 @@ pub(crate) fn process_shipment_transfers(
                 operation,
                 other_party_store_id: active_stores
                     .get_store_id_for_name_id(name_id)
-                    .ok_or_else(|| Error::NameIsNotAnAciveStore(log.clone()))?,
+                    .ok_or_else(|| Error::NameIsNotAnActiveStore(log.clone()))?,
             };
 
             // Try record against all of the processors

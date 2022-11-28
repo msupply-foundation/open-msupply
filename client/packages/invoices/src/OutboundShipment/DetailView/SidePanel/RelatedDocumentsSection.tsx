@@ -19,18 +19,16 @@ const RelatedDocumentsSectionComponent = () => {
   const { localisedDate: d } = useFormatDateTime();
   const { requisition } = useOutbound.document.fields('requisition');
 
-  let tooltip = '';
-  if (requisition) {
-    const { user, createdDatetime } = requisition;
-    tooltip = t('messages.customer-requisition-created-on', {
-      date: d(new Date(createdDatetime)),
+  const getTooltip = (createdDatetime: string, username?: string) => {
+    let tooltip = t('messages.customer-requisition-created-on', {
+      date: d(createdDatetime),
     });
-    if (user && user?.username !== 'unknown') {
-      tooltip += ` ${t('messages.by-user', {
-        user: user?.username,
-      })}`;
+    if (username && username !== 'unknown') {
+      tooltip += ` ${t('messages.by-user', { username })}`;
     }
-  }
+
+    return tooltip;
+  };
 
   return (
     <DetailPanelSection title={t('heading.related-documents')}>
@@ -38,7 +36,7 @@ const RelatedDocumentsSectionComponent = () => {
         {!requisition ? (
           <PanelLabel>{t('messages.no-related-documents')}</PanelLabel>
         ) : (
-          <Tooltip title={tooltip}>
+          <Tooltip title={getTooltip(requisition.createdDatetime, requisition.user?.username)}>
             <Grid item>
               <PanelRow>
                 <PanelLabel>{t('label.requisition')}</PanelLabel>

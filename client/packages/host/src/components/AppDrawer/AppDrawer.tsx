@@ -215,7 +215,7 @@ export const AppDrawer: React.FC = () => {
           /> */}
         </List>
       </UpperListContainer>
-      <LowerListContainer>
+      <LowerListContainer onMouseEnter={onHoverOver} onMouseLeave={onHoverOut}>
         <List>
           {drawer.isOpen && <StyledDivider color="drawerDivider" />}
           <ExternalNavLink
