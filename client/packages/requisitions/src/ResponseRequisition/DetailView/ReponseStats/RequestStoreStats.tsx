@@ -146,7 +146,7 @@ const CalculationError = ({
   const message = `${t('error.unable-to-calculate')}${detail}`;
 
   return (
-    <Box display="flex" padding={1} gap={1}>
+    <Box display="flex" padding={2} gap={1}>
       <AlertIcon color="primary" fontSize="small" />
       <Typography variant="body1" fontSize={12} sx={{ color: 'error.main' }}>
         {message}
