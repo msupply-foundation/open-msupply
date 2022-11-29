@@ -20,7 +20,6 @@ export const BasicTextInput: FC<BasicTextInputProps> = React.forwardRef(
       variant="standard"
       size="small"
       InputProps={{
-        disableUnderline: true,
         ...InputProps,
         sx: {
           border: theme =>
