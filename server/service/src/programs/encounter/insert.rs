@@ -126,7 +126,7 @@ fn generate(
         status: DocumentStatus::Active,
         comment: None,
         owner: Some(input.patient_id),
-        context: Some(input.r#type),
+        context: Some(input.program),
     })
 }
 
