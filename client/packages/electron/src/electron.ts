@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain } from 'electron';
 import dnssd from 'dnssd';
 import { IPC_MESSAGES } from './shared';
 import thisIp from 'ip';
@@ -129,3 +129,32 @@ app.on(
     // }
   }
 );
+
+process.on('uncaughtException', error => {
+  // See coment below
+  if (
+    error.message.includes('t[this.constructor.name] is not a constructor') &&
+    error.stack?.includes('v._addKnownAnswers')
+  ) {
+    return;
+  }
+
+  // TODO bugsnag ?
+  dialog.showErrorBox('Error', error.stack || error.message);
+
+  // The following error sometime occurs, it's dnssd related, it doesn't stop or break discovery, electron catching it and displays in error message, it's ignore by above if condition
+
+  /* Uncaught Exception:
+        TypeError: t[this.constructor.name] is not a constructor
+        at e.value (/Users/andreievg/Documents/repo/work/open-msupply/client/packages/electron/out/open mSupply-darwin-arm64/open mSupply.app/Contents/Resources/app/.webpack/main/index.js:2:48513)
+        at /Users/andreievg/Documents/repo/work/open-msupply/client/packages/electron/out/open mSupply-darwin-arm64/open mSupply.app/Contents/Resources/app/.webpack/main/index.js:2:20805
+        at Array.reduce (<anonymous>)
+        at e.value (/Users/andreievg/Documents/repo/work/open-msupply/client/packages/electron/out/open mSupply-darwin-arm64/open mSupply.app/Contents/Resources/app/.webpack/main/index.js:2:20662)
+        at e.value (/Users/andreievg/Documents/repo/work/open-msupply/client/packages/electron/out/open mSupply-darwin-arm64/open mSupply.app/Contents/Resources/app/.webpack/main/index.js:2:20277)
+        at v._addKnownAnswers (/Users/andreievg/Documents/repo/work/open-msupply/client/packages/electron/out/open mSupply-darwin-arm64/open mSupply.app/Contents/Resources/app/.webpack/main/index.js:2:39980)
+        at v._send (/Users/andreievg/Documents/repo/work/open-msupply/client/packages/electron/out/open mSupply-darwin-arm64/open mSupply.app/Contents/Resources/app/.webpack/main/index.js:2:39523)
+        at Timeout._onTimeout (/Users/andreievg/Documents/repo/work/open-msupply/client/packages/electron/out/open mSupply-darwin-arm64/open mSupply.app/Contents/Resources/app/.webpack/main/index.js:2:82424)
+        at listOnTimeout (node:internal/timers:559:17)
+        at process.processTimers (node:internal/timers:502:7)
+  */
+});
