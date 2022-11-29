@@ -71,14 +71,13 @@ export const ResponseStoreStats: React.FC<ResponseStoreStatsProps> = ({
   requestedQuantity,
   otherRequestedQuantity,
 }) => {
-  const t = useTranslation('replenishment');
+  const t = useTranslation('distribution');
   const predictedStockLevels = stockOnHand + incomingStock + stockOnOrder;
   const totalRequested = requestedQuantity + otherRequestedQuantity;
 
   const predictedStockPercent =
     predictedStockLevels < totalRequested
-      ? Math.round((100 * predictedStockLevels) / totalRequested).toString() +
-        '%'
+      ? `${Math.round((100 * predictedStockLevels) / totalRequested).toString()}%`
       : '100%';
   const requestedPercent =
     totalRequested < predictedStockLevels

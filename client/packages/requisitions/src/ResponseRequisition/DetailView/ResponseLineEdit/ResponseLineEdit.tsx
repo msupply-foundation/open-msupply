@@ -5,6 +5,7 @@ import {
   BasicSpinner,
   useBufferState,
   ModalTabs,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { ResponseLineEditForm } from './ResponseLineEditForm';
 import { useResponse, ResponseLineFragment } from '../../api';
@@ -23,6 +24,7 @@ export const ResponseLineEdit = ({
   onClose,
   line,
 }: ResponseLineEditProps) => {
+  const t = useTranslation('distribution');
   const [currentLine, setCurrentLine] = useBufferState(line);
   const isDisabled = useResponse.utils.isDisabled();
   const { Modal } = useDialog({ onClose, isOpen });
@@ -33,23 +35,31 @@ export const ResponseLineEdit = ({
 
   const tabs = [
     {
-      Component: <ResponseStoreStats
-        stockOnHand={data?.responseStoreStats.stockOnHand || 0}
-        incomingStock={data?.responseStoreStats.incomingStock || 0}
-        stockOnOrder={data?.responseStoreStats.stockOnOrder || 0}
-        requestedQuantity={data?.responseStoreStats.requestedQuantity || 0}
-        otherRequestedQuantity={data?.responseStoreStats.otherRequestedQuantity || 0}
-      />,
-      value: 'My Store',
+      Component: (
+        <ResponseStoreStats
+          stockOnHand={data?.responseStoreStats.stockOnHand || 0}
+          incomingStock={data?.responseStoreStats.incomingStock || 0}
+          stockOnOrder={data?.responseStoreStats.stockOnOrder || 0}
+          requestedQuantity={data?.responseStoreStats.requestedQuantity || 0}
+          otherRequestedQuantity={
+            data?.responseStoreStats.otherRequestedQuantity || 0
+          }
+        />
+      ),
+      value: t('label.my-store')
     },
     {
-      Component: <RequestStoreStats 
-        maxMonthsOfStock={data?.requestStoreStats.maxMonthsOfStock || 0}
-        suggestedQuantity={data?.requestStoreStats.suggestedQuantity || 0}
-        availableStockOnHand={data?.requestStoreStats.stockOnHand || 0}
-        averageMonthlyConsumption={data?.requestStoreStats.averageMonthlyConsumption || 0}
-      />,
-      value: 'Customer',
+      Component: (
+        <RequestStoreStats
+          maxMonthsOfStock={data?.requestStoreStats.maxMonthsOfStock || 0}
+          suggestedQuantity={data?.requestStoreStats.suggestedQuantity || 0}
+          availableStockOnHand={data?.requestStoreStats.stockOnHand || 0}
+          averageMonthlyConsumption={
+            data?.requestStoreStats.averageMonthlyConsumption || 0
+          }
+        />
+      ),
+      value: t('label.customer'),
     },
   ];
 

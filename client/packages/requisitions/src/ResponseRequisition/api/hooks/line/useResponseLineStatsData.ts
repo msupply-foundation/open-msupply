@@ -1,7 +1,7 @@
 import { useQuery } from '@openmsupply-client/common';
 import { useResponseApi } from '../utils/useResponseApi';
 
-export const useRequestLineStatsData = (requisitionLineId: string) => {
+export const useResponseLineStatsData = (requisitionLineId: string) => {
   const api = useResponseApi();
   return useQuery(
     api.keys.statsData(requisitionLineId),
