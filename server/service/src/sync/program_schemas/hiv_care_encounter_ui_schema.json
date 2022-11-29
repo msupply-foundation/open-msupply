@@ -147,7 +147,7 @@
           "type": "DispensedDuration"
         },
         {
-          "scope": "#/properties/arvMedication/properties/regimeStatus",
+          "scope": "#/properties/arvMedication/properties/regimenStatus",
           "type": "Control",
           "options": {
             "show": [
@@ -174,7 +174,7 @@
           "type": "Control"
         },
         {
-          "scope": "#/properties/arvMedication/properties/regimeType",
+          "scope": "#/properties/arvMedication/properties/regimenType",
           "type": "Control",
           "options": {
             "show": [

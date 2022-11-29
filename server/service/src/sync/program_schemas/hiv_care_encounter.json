@@ -105,7 +105,7 @@
               "description": "Reasons for substitution within first line treatment",
               "type": "string"
             },
-            "regimeStatus": {
+            "regimenStatus": {
               "description": "Antiretroviral treatment status",
               "enum": [
                 "NO_ARV",
@@ -118,7 +118,7 @@
               ],
               "type": "string"
             },
-            "regimeType": {
+            "regimenType": {
               "description": "Antiretroviral treatment line",
               "enum": [
                 "FIRST_LINE_ADULT",
