@@ -321,7 +321,8 @@ fn generate_deleted_document(
         schema_id: current_document.schema_id,
         status: DocumentStatus::Deleted,
         comment: input.comment,
-        patient_id: None,
+        owner: None,
+        context: None,
     }
     .finalise()
     .map_err(|err| DocumentDeleteError::InternalError(err))?;
@@ -344,7 +345,8 @@ fn generate_undeleted_document(
         schema_id: deleted_document_parent.schema_id,
         status: DocumentStatus::Active,
         comment: None,
-        patient_id: deleted_document_parent.patient_id,
+        owner: deleted_document_parent.owner,
+        context: deleted_document_parent.context,
     }
     .finalise()
     .map_err(|err| DocumentUndeleteError::InternalError(err))?;
@@ -408,7 +410,8 @@ mod document_service_test {
                 schema_id: None,
                 status: DocumentStatus::Active,
                 comment: None,
-                patient_id: None,
+                owner: None,
+                context: None,
             },
             &vec!["Wrong type".to_string()],
         );
@@ -436,7 +439,8 @@ mod document_service_test {
                     schema_id: None,
                     status: DocumentStatus::Active,
                     comment: None,
-                    patient_id: None,
+                    owner: None,
+                    context: None,
                 },
                 &vec!["test_data".to_string()],
             )
@@ -462,7 +466,8 @@ mod document_service_test {
                 schema_id: None,
                 status: DocumentStatus::Active,
                 comment: None,
-                patient_id: None,
+                owner: None,
+                context: None,
             },
             &vec!["test_data".to_string()],
         );
@@ -487,7 +492,8 @@ mod document_service_test {
                     schema_id: None,
                     status: DocumentStatus::Active,
                     comment: None,
-                    patient_id: None,
+                    owner: None,
+                    context: None,
                 },
                 &vec!["test_data".to_string()],
             )
@@ -519,7 +525,8 @@ mod document_service_test {
                     schema_id: None,
                     status: DocumentStatus::Active,
                     comment: None,
-                    patient_id: None,
+                    owner: None,
+                    context: None,
                 },
                 &vec!["test_data2".to_string()],
             )
@@ -566,7 +573,8 @@ mod document_service_test {
                     schema_id: Some(schema.id),
                     status: DocumentStatus::Active,
                     comment: None,
-                    patient_id: None,
+                    owner: None,
+                    context: None,
                 },
                 &vec!["test_data".to_string()],
             )
@@ -589,7 +597,8 @@ mod document_service_test {
                 schema_id: Some(schema.id),
                 status: DocumentStatus::Active,
                 comment: None,
-                patient_id: None,
+                owner: None,
+                context: None,
             },
             &vec!["test_data".to_string()],
         );
@@ -615,7 +624,8 @@ mod document_service_test {
                 schema_id: Some(schema.id),
                 status: DocumentStatus::Active,
                 comment: None,
-                patient_id: None,
+                owner: None,
+                context: None,
             },
             &vec!["test_data".to_string()],
         );
@@ -645,7 +655,8 @@ mod document_service_test {
                     schema_id: Some(schema.id),
                     status: DocumentStatus::Active,
                     comment: None,
-                    patient_id: None,
+                    owner: None,
+                    context: None,
                 },
                 &vec!["test_data".to_string()],
             )
