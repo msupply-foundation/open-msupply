@@ -1,7 +1,7 @@
 use async_graphql::*;
-use graphql_core::generic_filters::EqualFilterStringInput;
+use graphql_core::generic_filters::{EqualFilterStringInput, SimpleStringFilterInput};
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
-use repository::{DocumentFilter, EqualFilter, StringFilter};
+use repository::{DocumentFilter, EqualFilter, SimpleStringFilter, StringFilter};
 use service::auth::{CapabilityTag, Resource, ResourceAccessRequest};
 use service::usize_to_u32;
 
@@ -16,6 +16,9 @@ pub enum DocumentResponse {
 pub struct DocumentFilterInput {
     pub name: Option<EqualFilterStringInput>,
     pub r#type: Option<EqualFilterStringInput>,
+    /// This filter makes it possible to search the raw text json data.
+    /// Be beware of potential performance issues.
+    pub data: Option<SimpleStringFilterInput>,
 }
 
 impl DocumentFilterInput {
@@ -31,6 +34,7 @@ impl DocumentFilterInput {
                 ends_with: None,
             }),
             r#type: self.r#type.map(EqualFilter::from),
+            data: self.data.map(SimpleStringFilter::from),
         }
     }
 }
