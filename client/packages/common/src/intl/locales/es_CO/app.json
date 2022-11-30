@@ -13,5 +13,6 @@
     "customers": "Clientes",
     "dashboard": "Tablero",
     "distribution": "Distribución",
-    "docs": "Documentos"
+    "docs": "Documentos",
+    "auth.timeout-title": ""
 }
