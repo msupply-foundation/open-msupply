@@ -3,7 +3,7 @@ use repository::{Document, DocumentFilter, RepositoryError, StringFilter};
 use actix_web::web::Data;
 use async_graphql::dataloader::*;
 use async_graphql::*;
-use service::service_provider::ServiceProvider;
+use service::{service_provider::ServiceProvider, ListError};
 use std::collections::{HashMap, HashSet};
 
 pub struct DocumentLoader {
@@ -39,15 +39,31 @@ impl Loader<DocumentLoaderInput> for DocumentLoader {
         let jobs = doc_names_by_store(names);
         let mut out = HashMap::new();
         for (store_id, doc_names) in jobs {
-            let result = self.service_provider.document_service.get_documents(
-                &ctx,
-                Some(
-                    DocumentFilter::new()
-                        .name(StringFilter::equal_any(doc_names.into_iter().collect())),
-                ),
-                None,
-            )?;
-            for doc in result {
+            let result = self
+                .service_provider
+                .document_service
+                .documents(
+                    &ctx,
+                    None,
+                    Some(
+                        DocumentFilter::new()
+                            .name(StringFilter::equal_any(doc_names.into_iter().collect())),
+                    ),
+                    None,
+                    None,
+                )
+                .map_err(|err| match err {
+                    ListError::DatabaseError(err) => err,
+                    ListError::LimitBelowMin(_) => RepositoryError::DBError {
+                        msg: "LimitBelowMin".to_string(),
+                        extra: "".to_string(),
+                    },
+                    ListError::LimitAboveMax(_) => RepositoryError::DBError {
+                        msg: "LimitAboveMax".to_string(),
+                        extra: "".to_string(),
+                    },
+                })?;
+            for doc in result.rows {
                 out.insert(
                     DocumentLoaderInput {
                         store_id: store_id.clone(),

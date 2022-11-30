@@ -1,7 +1,7 @@
 use chrono::Utc;
 use repository::{
-    Document, DocumentFilter, DocumentRepository, DocumentStatus, RepositoryError, StringFilter,
-    TransactionError,
+    Document, DocumentFilter, DocumentRepository, DocumentStatus, Pagination, RepositoryError,
+    StringFilter, TransactionError,
 };
 
 use crate::{
@@ -123,9 +123,11 @@ fn validate_patient_exists(
 ) -> Result<bool, RepositoryError> {
     let doc_name = main_patient_doc_name(patient_id);
     let document = DocumentRepository::new(&ctx.connection)
-        .query(Some(
-            DocumentFilter::new().name(StringFilter::equal_to(&doc_name)),
-        ))?
+        .query(
+            Pagination::one(),
+            Some(DocumentFilter::new().name(StringFilter::equal_to(&doc_name))),
+            None,
+        )?
         .pop();
     Ok(document.is_some())
 }
@@ -137,10 +139,9 @@ fn validate_program_not_exists(
     program: &str,
 ) -> Result<bool, RepositoryError> {
     let patient_name = patient_doc_name(patient_id, program);
-    let existing_document =
-        service_provider
-            .document_service
-            .get_document(ctx, &patient_name, None)?;
+    let existing_document = service_provider
+        .document_service
+        .document(ctx, &patient_name, None)?;
     Ok(existing_document.is_none())
 }
 
@@ -175,8 +176,8 @@ mod test {
     use repository::{
         mock::{mock_form_schema_empty, MockDataInserts},
         test_db::setup_all,
-        DocumentFilter, DocumentRepository, FormSchemaRowRepository, ProgramEnrolmentRepository,
-        StringFilter,
+        DocumentFilter, DocumentRepository, FormSchemaRowRepository, Pagination,
+        ProgramEnrolmentRepository, StringFilter,
     };
     use serde_json::json;
     use util::inline_init;
@@ -351,9 +352,16 @@ mod test {
 
         // success update
         let v0 = DocumentRepository::new(&ctx.connection)
-            .query(Some(DocumentFilter::new().name(StringFilter::equal_to(
-                &patient_doc_name(&patient.id, &program_type),
-            ))))
+            .query(
+                Pagination::one(),
+                Some(
+                    DocumentFilter::new().name(StringFilter::equal_to(&patient_doc_name(
+                        &patient.id,
+                        &program_type,
+                    ))),
+                ),
+                None,
+            )
             .unwrap()
             .pop()
             .unwrap();
