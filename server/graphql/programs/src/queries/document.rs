@@ -16,6 +16,8 @@ pub enum DocumentResponse {
 pub struct DocumentFilterInput {
     pub name: Option<EqualFilterStringInput>,
     pub r#type: Option<EqualFilterStringInput>,
+    pub owner: Option<EqualFilterStringInput>,
+    pub context: Option<EqualFilterStringInput>,
     /// This filter makes it possible to search the raw text json data.
     /// Be beware of potential performance issues.
     pub data: Option<SimpleStringFilterInput>,
@@ -34,6 +36,8 @@ impl DocumentFilterInput {
                 ends_with: None,
             }),
             r#type: self.r#type.map(EqualFilter::from),
+            owner: self.owner.map(EqualFilter::from),
+            context: self.context.map(EqualFilter::from),
             data: self.data.map(SimpleStringFilter::from),
         }
     }
