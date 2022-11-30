@@ -76,6 +76,35 @@ const findIndexOfRemoved = (base: string[], newList: string[]): number => {
   return base.length - 1;
 };
 
+const searchRanking = {
+  STARTS_WITH: 2,
+  CONTAINS: 1,
+  NO_MATCH: 0,
+} as const;
+
+const filterOptions = (
+  options: string[],
+  { inputValue }: { inputValue: string }
+) => {
+  const searchTerm = inputValue.toLowerCase();
+  const filteredOptions = options
+    .map(option => {
+      const lowerCaseOption = option.toLowerCase();
+
+      const rank = lowerCaseOption.startsWith(searchTerm)
+        ? searchRanking.STARTS_WITH
+        : lowerCaseOption.includes(searchTerm)
+        ? searchRanking.CONTAINS
+        : searchRanking.NO_MATCH;
+      return { option, rank };
+    })
+    .filter(({ rank }) => rank !== searchRanking.NO_MATCH)
+    .sort((a, b) => b.rank - a.rank)
+    .map(({ option }) => option);
+
+  return filteredOptions;
+};
+
 const EnumArrayComponent: FC<EnumArrayControlCustomProps> = ({
   data,
   label,
@@ -113,6 +142,7 @@ const EnumArrayComponent: FC<EnumArrayControlCustomProps> = ({
             multiple
             value={data}
             options={schema.enum ?? []}
+            filterOptions={filterOptions}
             renderInput={params => <TextField {...params} variant="standard" />}
             onChange={(_, value) => {
               if (value.length - 1 === data.length) {
