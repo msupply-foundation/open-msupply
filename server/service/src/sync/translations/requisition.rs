@@ -104,18 +104,22 @@ pub struct LegacyRequisitionRow {
     #[serde(deserialize_with = "empty_str_as_option")]
     pub comment: Option<String>,
 
+    #[serde(default)]
     #[serde(rename = "om_created_datetime")]
     #[serde(deserialize_with = "empty_str_as_option_datetime")]
     pub created_datetime: Option<NaiveDateTime>,
 
+    #[serde(default)]
     #[serde(rename = "om_sent_datetime")]
     #[serde(deserialize_with = "empty_str_as_option_datetime")]
     pub sent_datetime: Option<NaiveDateTime>,
 
+    #[serde(default)]
     #[serde(rename = "om_finalised_datetime")]
     #[serde(deserialize_with = "empty_str_as_option_datetime")]
     pub finalised_datetime: Option<NaiveDateTime>,
 
+    #[serde(default)]
     #[serde(rename = "om_expected_delivery_date")]
     pub expected_delivery_date: Option<NaiveDate>,
 
