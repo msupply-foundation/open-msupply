@@ -58,6 +58,32 @@ const UIComponent = (props: ControlProps) => {
 
   const dateOnly = uischema.options?.['dateOnly'] ?? false;
 
+  const inputFormat = !dateOnly ? 'dd/MM/yyyy hh:mm' : 'dd/MM/yyyy';
+
+  const onChange = (e: Date | null) => {
+    if (!e) return;
+
+    try {
+      const dateString = !dateOnly
+        ? e.toISOString()
+        : // By default, will use current date-time. However, if a
+          // different date is selected, the time will be considered "midnight"
+          dateFormatter(e, 'yyyy-MM-dd') + ' 00:00:00';
+      setError('');
+      if (e) handleChange(path, dateString);
+    } catch (err) {
+      setError((err as Error).message);
+      console.error(err);
+    }
+  };
+
+  const sharedComponentProps = {
+    value: data ?? null,
+    onChange: (e: Date | null) => onChange(e),
+    inputFormat,
+    readOnly: !!props.uischema.options?.['readonly'],
+  };
+
   return (
     <Box
       display="flex"
@@ -74,36 +100,11 @@ const UIComponent = (props: ControlProps) => {
         {!dateOnly ? (
           <BaseDateTimePickerInput
             // undefined is displayed as "now" and null as unset
-            value={data ?? null}
-            onChange={e => {
-              try {
-                setError('');
-                if (e) handleChange(path, e.toISOString());
-              } catch (err) {
-                setError((err as Error).message);
-                console.error(err);
-              }
-            }}
-            inputFormat="dd/MM/yyyy hh:mm"
+            {...sharedComponentProps}
             error={error || props.errors}
-            readOnly={!!props.uischema.options?.['readonly']}
           />
         ) : (
-          <BaseDatePickerInput
-            // undefined is displayed as "now" and null as unset
-            value={data ?? null}
-            onChange={e => {
-              if (e)
-                handleChange(
-                  path,
-                  // By default, will set current date-time. However, if a date
-                  // is selected, the time will be considered "midnight"
-                  dateFormatter(e, 'yyyy-MM-dd') + ' 00:00:00'
-                );
-            }}
-            inputFormat="dd/MM/yyyy"
-            readOnly={!!props.uischema.options?.['readonly']}
-          />
+          <BaseDatePickerInput {...sharedComponentProps} />
         )}
       </Box>
     </Box>
