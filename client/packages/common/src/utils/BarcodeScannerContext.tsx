@@ -25,38 +25,65 @@ const BarcodeScannerContext = createContext<BarcodeScannerControl>({
 
 const { Provider } = BarcodeScannerContext;
 
+const parseBarcode = (data: number[] | undefined) => {
+  if (!data || data.length < 5) return undefined;
+
+  return data
+    .slice(4)
+    .reduce((barcode, curr) => barcode + String.fromCharCode(curr), '');
+};
+
 export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
   children,
 }) => {
   const t = useTranslation('common');
   const [isScanning, setIsScanning] = React.useState(false);
   const { error } = useNotification();
-  const hasBarcodeScanner = Capacitor.isPluginAvailable('BarcodeScanner');
+  const { electronAPI } = window;
+
+  const hasAndroidBarcodeScanner =
+    Capacitor.isPluginAvailable('BarcodeScanner');
+  const hasElectronApi = !!electronAPI;
+  const hasBarcodeScanner = hasAndroidBarcodeScanner || hasElectronApi;
 
   const startScan = async () => {
-    // Check camera permission
-    await BarcodeScanner.checkPermission({ force: true });
-
-    // make background of WebView transparent
     setIsScanning(true);
-    BarcodeScanner.hideBackground();
-
     const timeout = setTimeout(() => {
       stopScan();
       error(t('error.unable-to-read-barcode'))();
     }, SCAN_TIMEOUT_IN_MS);
-    const result = await BarcodeScanner.startScan(); // start scanning and wait for a result
 
-    clearTimeout(timeout);
-    setIsScanning(false);
-    BarcodeScanner.showBackground();
-    return result;
+    if (hasElectronApi) {
+      const { startBarcodeScan } = electronAPI;
+      const data = await startBarcodeScan();
+      const barcode = parseBarcode(data);
+      clearTimeout(timeout);
+      setIsScanning(false);
+      return { hasContent: true, content: barcode };
+    } else if (hasAndroidBarcodeScanner) {
+      // Check camera permission
+      await BarcodeScanner.checkPermission({ force: true });
+
+      // make background of WebView transparent
+      BarcodeScanner.hideBackground();
+      const result = await BarcodeScanner.startScan(); // start scanning and wait for a result
+      clearTimeout(timeout);
+      setIsScanning(false);
+      BarcodeScanner.showBackground();
+      return result;
+    }
+
+    return { hasContent: false };
   };
 
   const stopScan = () => {
-    BarcodeScanner.stopScan({ resolveScan: true });
     setIsScanning(false);
-    BarcodeScanner.showBackground();
+    if (hasElectronApi) {
+      electronAPI.stopBarcodeScan();
+    } else if (hasAndroidBarcodeScanner) {
+      BarcodeScanner.stopScan({ resolveScan: true });
+      BarcodeScanner.showBackground();
+    }
   };
 
   const val = useMemo(
