@@ -39,7 +39,14 @@ const REQUISITION_REQUEST: (&'static str, &'static str) = (
       "programID": "F36DBBC6DBCA4528BDA2403CE07CB44F",
       "lastModifiedAt": 1594273006,
       "is_emergency": false,
-      "isRemoteOrder": false
+      "isRemoteOrder": false,
+      "om_created_datetime": "",
+      "om_sent_datetime": "",
+      "om_finalised_datetime": "",
+      "om_expected_delivery_date": null,
+      "om_max_months_of_stock": 0,
+      "om_status": "",
+      "om_colour": "" 
     }"#,
 );
 fn requisition_request_pull_record() -> TestSyncPullRecord {
