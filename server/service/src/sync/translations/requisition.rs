@@ -11,8 +11,8 @@ use util::constants::NUMBER_OF_DAYS_IN_A_MONTH;
 use crate::sync::{
     api::RemoteSyncRecordV5,
     sync_serde::{
-        date_and_time_to_datatime, date_from_date_time, date_to_isostring, empty_str_as_option,
-        empty_str_as_option_datetime,
+        date_and_time_to_datatime, date_from_date_time, date_option_to_isostring,
+        date_to_isostring, empty_str_as_option, empty_str_as_option_datetime, zero_date_as_option,
     },
 };
 
@@ -121,6 +121,8 @@ pub struct LegacyRequisitionRow {
 
     #[serde(default)]
     #[serde(rename = "om_expected_delivery_date")]
+    #[serde(deserialize_with = "zero_date_as_option")]
+    #[serde(serialize_with = "date_option_to_isostring")]
     pub expected_delivery_date: Option<NaiveDate>,
 
     #[serde(rename = "om_max_months_of_stock")]
