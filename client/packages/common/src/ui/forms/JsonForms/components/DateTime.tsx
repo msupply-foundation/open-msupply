@@ -88,7 +88,7 @@ const UIComponent = (props: ControlProps) => {
             }}
             inputFormat="dd/MM/yyyy hh:mm"
             error={error || props.errors}
-            // readOnly={!!props.uischema.options?.['readonly']}
+            readOnly={!!props.uischema.options?.['readonly']}
           />
         ) : (
           <BaseDatePickerInput
@@ -104,6 +104,7 @@ const UIComponent = (props: ControlProps) => {
                 );
             }}
             inputFormat="dd/MM/yyyy"
+            readOnly={!!props.uischema.options?.['readonly']}
           />
         )}
       </Box>
