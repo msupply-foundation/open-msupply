@@ -23,7 +23,7 @@ export type ElectronAPI = {
   connectToServer: (server: FrontEndHost) => void;
   // Will return currently connected client (to display in UI)
   connectedServer: () => Promise<FrontEndHost | null>;
-  startBarcodeScan: () => Promise<number[] | undefined>;
+  startBarcodeScan: () => Promise<number[]>;
   stopBarcodeScan: () => void;
 };
 
