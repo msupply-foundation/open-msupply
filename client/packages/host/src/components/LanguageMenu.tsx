@@ -1,5 +1,11 @@
 import React from 'react';
-import { IntlUtils, useNavigate, Select } from '@openmsupply-client/common';
+import {
+  IntlUtils,
+  useNavigate,
+  Select,
+  MenuItem,
+  Option,
+} from '@openmsupply-client/common';
 
 export const LanguageMenu: React.FC = () => {
   const navigate = useNavigate();
@@ -11,12 +17,29 @@ export const LanguageMenu: React.FC = () => {
   };
 
   const options = [
-    { label: 'Arabic', value: 'ar' },
-    { label: 'French', value: 'fr' },
+    { label: 'عربي', value: 'ar' },
+    { label: 'Français', value: 'fr' },
     { label: 'English', value: 'en' },
+    { label: 'Española', value: 'es' },
+    { label: 'Tetum', value: 'tet' },
   ];
 
+  const renderOption = (option: Option) => (
+    <MenuItem
+      key={option.value}
+      value={option.value}
+      sx={option.value === 'ar' ? { justifyContent: 'flex-end' } : {}}
+    >
+      {option.label}
+    </MenuItem>
+  );
+
   return (
-    <Select onChange={handleChange} options={options} value={i18n.language} />
+    <Select
+      onChange={handleChange}
+      options={options}
+      value={i18n.language}
+      renderOption={renderOption}
+    />
   );
 };
