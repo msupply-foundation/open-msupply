@@ -13,12 +13,14 @@ const SCAN_TIMEOUT_IN_MS = 5000;
 
 interface BarcodeScannerControl {
   hasBarcodeScanner: boolean;
+  isScanning: boolean;
   startScan: () => Promise<ScanResult>;
   stopScan: () => void;
 }
 
 const BarcodeScannerContext = createContext<BarcodeScannerControl>({
   hasBarcodeScanner: false,
+  isScanning: false,
   startScan: async () => ({ hasContent: false }),
   stopScan: () => {},
 });
@@ -41,26 +43,37 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
   const { error } = useNotification();
   const { electronAPI } = window;
 
-  const hasAndroidBarcodeScanner =
-    Capacitor.isPluginAvailable('BarcodeScanner');
+  const hasNativeBarcodeScanner =
+    Capacitor.isPluginAvailable('BarcodeScanner') &&
+    Capacitor.isNativePlatform();
   const hasElectronApi = !!electronAPI;
-  const hasBarcodeScanner = hasAndroidBarcodeScanner || hasElectronApi;
+  const hasBarcodeScanner = hasNativeBarcodeScanner || hasElectronApi;
 
   const startScan = async () => {
     setIsScanning(true);
     const timeout = setTimeout(() => {
       stopScan();
-      error(t('error.unable-to-read-barcode'))();
+      // if the timeout has been hit then an error is raised
+      // by the electron implementation, and the snack is shown
+      // in that error handler, no need to duplicate
+      if (!hasElectronApi) error(t('error.unable-to-read-barcode'))();
     }, SCAN_TIMEOUT_IN_MS);
 
     if (hasElectronApi) {
-      const { startBarcodeScan } = electronAPI;
-      const data = await startBarcodeScan();
-      const barcode = parseBarcode(data);
-      clearTimeout(timeout);
-      setIsScanning(false);
-      return { hasContent: true, content: barcode };
-    } else if (hasAndroidBarcodeScanner) {
+      try {
+        const { startBarcodeScan } = electronAPI;
+        const data = await startBarcodeScan();
+        const barcode = parseBarcode(data);
+        clearTimeout(timeout);
+        setIsScanning(false);
+        return { hasContent: true, content: barcode };
+      } catch {
+        error(t('error.unable-to-read-barcode'))();
+        clearTimeout(timeout);
+      }
+    }
+
+    if (hasNativeBarcodeScanner) {
       // Check camera permission
       await BarcodeScanner.checkPermission({ force: true });
 
@@ -80,7 +93,9 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
     setIsScanning(false);
     if (hasElectronApi) {
       electronAPI.stopBarcodeScan();
-    } else if (hasAndroidBarcodeScanner) {
+    }
+
+    if (hasNativeBarcodeScanner) {
       BarcodeScanner.stopScan({ resolveScan: true });
       BarcodeScanner.showBackground();
     }
@@ -89,6 +104,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
   const val = useMemo(
     () => ({
       hasBarcodeScanner,
+      isScanning,
       startScan,
       stopScan,
     }),
@@ -100,7 +116,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
       <>
         <GlobalStyles
           styles={
-            isScanning
+            isScanning && hasNativeBarcodeScanner
               ? {
                   body: {
                     backgroundColor: 'transparent!important',

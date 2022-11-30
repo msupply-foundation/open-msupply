@@ -15,6 +15,7 @@ import {
   IconButton,
   ScanIcon,
   useBarcodeScannerContext,
+  CircularProgress,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 
@@ -40,7 +41,8 @@ interface StockLineFormProps {
 }
 export const StockLineForm: FC<StockLineFormProps> = ({ draft, onUpdate }) => {
   const t = useTranslation('inventory');
-  const { hasBarcodeScanner, startScan } = useBarcodeScannerContext();
+  const { hasBarcodeScanner, isScanning, startScan } =
+    useBarcodeScannerContext();
 
   const scanBarcode = async () => {
     const result = await startScan();
@@ -144,8 +146,15 @@ export const StockLineForm: FC<StockLineFormProps> = ({ draft, onUpdate }) => {
               <BasicTextInput value={draft.barcode} onChange={() => {}} />
               {hasBarcodeScanner && (
                 <IconButton
+                  disabled={isScanning}
                   onClick={scanBarcode}
-                  icon={<ScanIcon />}
+                  icon={
+                    isScanning ? (
+                      <CircularProgress size={20} color="secondary" />
+                    ) : (
+                      <ScanIcon />
+                    )
+                  }
                   label={'Scan'}
                 />
               )}

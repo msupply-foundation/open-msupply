@@ -39,6 +39,10 @@ class BarcodeScanner {
   device: HID.HID | undefined;
 
   constructor() {
+    this.findDevice();
+  }
+
+  findDevice() {
     try {
       this.device = new HID.HID(1504, 2194);
     } catch {
@@ -47,11 +51,17 @@ class BarcodeScanner {
   }
 
   start() {
-    return !this.device ? undefined : this.device.readSync();
+    return new Promise((resolve, reject) => {
+      this.device?.read((err, data) => {
+        if (err) reject(err);
+        resolve(data);
+      });
+    });
   }
 
   stop() {
     this.device?.close();
+    this.findDevice();
   }
 }
 
