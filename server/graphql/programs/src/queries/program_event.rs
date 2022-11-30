@@ -1,4 +1,5 @@
 use async_graphql::*;
+use chrono::{DateTime, Utc};
 use graphql_core::{
     pagination::PaginationInput,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
@@ -26,8 +27,8 @@ pub enum ProgramEventResponse {
 #[graphql(rename_items = "camelCase")]
 pub enum ProgramEventSortFieldInput {
     Datetime,
-    Context,
-    Group,
+    DocumentType,
+    DocumentName,
     Type,
 }
 
@@ -44,6 +45,7 @@ pub fn program_events(
     ctx: &Context<'_>,
     store_id: String,
     patient_id: String,
+    at: Option<DateTime<Utc>>,
     page: Option<PaginationInput>,
     sort: Option<ProgramEventSortInput>,
     filter: Option<ProgramEventFilterInput>,
@@ -60,11 +62,11 @@ pub fn program_events(
     let mut filter = filter
         .map(|f| f.to_domain())
         .unwrap_or(ProgramEventFilter::new())
-        .name_id(EqualFilter::equal_to(&patient_id));
+        .patient_id(EqualFilter::equal_to(&patient_id));
     // restrict query results to allowed entries
-    filter.r#type = Some(
+    filter.document_type = Some(
         filter
-            .r#type
+            .document_type
             .unwrap_or_default()
             .restrict_results(&allowed_docs),
     );
@@ -74,8 +76,10 @@ pub fn program_events(
 
     let list_result = service_provider
         .program_event_service
-        .events(
+        .active_events(
             &context,
+            at.map(|at| at.naive_utc())
+                .unwrap_or(Utc::now().naive_utc()),
             page.map(PaginationOption::from),
             Some(filter),
             sort.map(ProgramEventSortInput::to_domain),
@@ -98,8 +102,8 @@ impl ProgramEventSortInput {
     pub fn to_domain(self) -> ProgramEventSort {
         let key = match self.key {
             ProgramEventSortFieldInput::Datetime => ProgramEventSortField::Datetime,
-            ProgramEventSortFieldInput::Context => ProgramEventSortField::Context,
-            ProgramEventSortFieldInput::Group => ProgramEventSortField::Group,
+            ProgramEventSortFieldInput::DocumentType => ProgramEventSortField::DocumentType,
+            ProgramEventSortFieldInput::DocumentName => ProgramEventSortField::DocumentName,
             ProgramEventSortFieldInput::Type => ProgramEventSortField::Type,
         };
 

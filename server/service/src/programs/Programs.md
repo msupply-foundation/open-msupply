@@ -24,22 +24,7 @@ However, the program module can help the practitioner to enter data correctly by
 
 ## Program Events
 
-While practitioners are the main driver for entering data there are certain use-cases where data is set in a predefined way.
-Currently this is done using program `events`.
-Events are stored in the document but are filled automatically (by the UI form controls while editing a form).
-For example, an encounter is labelled depending on the entered data.
-Events are currently used for the following purposes:
-
-1. Based on the dispensed pill count encounter, two events are scheduled in the future to change the status to "treatment interrupted" or "lost"
-2. Based on the encounter fields being set or not, an encounter is labelled as "Pending Lab Report" or "Lap Report Received"
-
-Program events have a context field which describes where the events belong, e.g. events can be scheduled from a DemoEncounter but be in the DemoProgram context.
-Moreover, events can be grouped within a context.
-This is useful when updating events since it makes it easier for the a UI control to replace the correct events.
-
-When updating a document (currently only encounter documents) the backend extracts events from the document and put these events into a `program_event` table.
-Events from previous encounter document versions are removed or replaced in this process.
-This table can, for example, be used to find the current encounter status by querying the latest status event which is not scheduled in the future.
+[Please see this document](./ProgramEvents.md)
 
 # Documents
 
