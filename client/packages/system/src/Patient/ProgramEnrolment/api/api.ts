@@ -15,7 +15,7 @@ export type ListParams = {
 };
 
 export const getProgramEnrolmentQueries = (sdk: Sdk, storeId: string) => ({
-  latestEventTime: new Date().toISOString(),
+  at: new Date().toISOString(),
   insertProgramEnrolment: async (
     input: InsertProgramEnrolmentInput
   ): Promise<ProgramEnrolmentDocumentFragment> => {

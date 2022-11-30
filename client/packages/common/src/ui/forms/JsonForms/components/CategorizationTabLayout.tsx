@@ -120,7 +120,7 @@ const UIComponent: FC<LayoutProps & AjvProps> = ({
         : categorization.elements[activeCategory]?.elements ?? [],
     schema,
     // assume the root path if not specified
-    path: path ?? '#',
+    path: path ?? '',
     direction: 'column',
     visible,
     renderers,
