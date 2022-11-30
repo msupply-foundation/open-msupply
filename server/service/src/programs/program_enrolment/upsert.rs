@@ -97,12 +97,13 @@ fn generate(user_id: &str, input: UpsertProgramEnrolment) -> Result<RawDocument,
         parents: input.parent.map(|p| vec![p]).unwrap_or(vec![]),
         author: user_id.to_string(),
         timestamp: Utc::now(),
-        r#type: input.r#type,
+        r#type: input.r#type.clone(),
         data: input.data,
         schema_id: Some(input.schema_id),
         status: DocumentStatus::Active,
         comment: None,
-        patient_id: Some(input.patient_id),
+        owner: Some(input.patient_id),
+        context: Some(input.r#type),
     })
 }
 

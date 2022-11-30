@@ -22,7 +22,8 @@ table! {
         schema_id -> Nullable<Text>,
         status -> crate::db_diesel::document::DocumentStatusMapping,
         comment -> Nullable<Text>,
-        patient_id -> Nullable<Text>,
+        owner -> Nullable<Text>,
+        context -> Nullable<Text>,
     }
 }
 
@@ -39,12 +40,13 @@ table! {
         schema_id -> Nullable<Text>,
         status -> crate::db_diesel::document::DocumentStatusMapping,
         comment -> Nullable<Text>,
-        patient_id -> Nullable<Text>,
+        owner -> Nullable<Text>,
+        context -> Nullable<Text>,
     }
 }
 
 joinable!(document -> form_schema (schema_id));
-joinable!(document -> name (patient_id));
+joinable!(document -> name (owner));
 
 allow_tables_to_appear_in_same_query!(document, form_schema);
 allow_tables_to_appear_in_same_query!(document, name);
@@ -80,7 +82,9 @@ pub struct DocumentRow {
     pub status: DocumentStatus,
     // Deletion comment
     pub comment: Option<String>,
-    pub patient_id: Option<String>,
+    // Patient who owns the document
+    pub owner: Option<String>,
+    pub context: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -102,13 +106,16 @@ pub struct Document {
     pub schema_id: Option<String>,
     pub status: DocumentStatus,
     pub comment: Option<String>,
-    pub patient_id: Option<String>,
+    pub owner: Option<String>,
+    pub context: Option<String>,
 }
 
 #[derive(Clone)]
 pub struct DocumentFilter {
     pub name: Option<StringFilter>,
     pub r#type: Option<EqualFilter<String>>,
+    pub owner: Option<EqualFilter<String>>,
+    pub context: Option<EqualFilter<String>>,
     pub data: Option<SimpleStringFilter>,
 }
 
@@ -118,6 +125,8 @@ impl DocumentFilter {
             name: None,
             r#type: None,
             data: None,
+            owner: None,
+            context: None,
         }
     }
 
@@ -127,6 +136,16 @@ impl DocumentFilter {
     }
 
     pub fn r#type(mut self, filter: EqualFilter<String>) -> Self {
+        self.r#type = Some(filter);
+        self
+    }
+
+    pub fn owner(mut self, filter: EqualFilter<String>) -> Self {
+        self.r#type = Some(filter);
+        self
+    }
+
+    pub fn context(mut self, filter: EqualFilter<String>) -> Self {
         self.r#type = Some(filter);
         self
     }
@@ -171,10 +190,18 @@ impl<'a> DocumentRepository<'a> {
     pub fn query(&self, filter: Option<DocumentFilter>) -> Result<Vec<Document>, RepositoryError> {
         let mut query = latest_document::dsl::latest_document.into_boxed();
         if let Some(f) = filter {
-            let DocumentFilter { name, r#type, data } = f;
+            let DocumentFilter {
+                name,
+                r#type,
+                owner,
+                context,
+                data,
+            } = f;
 
             apply_string_filter!(query, name, latest_document::dsl::name);
             apply_equal_filter!(query, r#type, latest_document::dsl::type_);
+            apply_equal_filter!(query, owner, latest_document::dsl::owner);
+            apply_equal_filter!(query, context, latest_document::dsl::context);
             apply_simple_string_filter!(query, data, latest_document::dsl::data);
         }
         let rows: Vec<DocumentRow> = query.load(&self.connection.connection)?;
@@ -193,10 +220,18 @@ impl<'a> DocumentRepository<'a> {
     ) -> Result<Vec<Document>, RepositoryError> {
         let mut query = document::dsl::document.into_boxed();
         if let Some(f) = filter {
-            let DocumentFilter { name, r#type, data } = f;
+            let DocumentFilter {
+                name,
+                r#type,
+                owner,
+                context,
+                data,
+            } = f;
 
             apply_string_filter!(query, name, document::dsl::name);
             apply_equal_filter!(query, r#type, document::dsl::type_);
+            apply_equal_filter!(query, owner, document::dsl::owner);
+            apply_equal_filter!(query, context, document::dsl::context);
             apply_simple_string_filter!(query, data, document::dsl::data);
         }
         let rows: Vec<DocumentRow> = query
@@ -234,7 +269,8 @@ fn document_from_row(row: DocumentRow) -> Result<Document, RepositoryError> {
         schema_id: row.schema_id,
         status: row.status,
         comment: row.comment,
-        patient_id: row.patient_id,
+        owner: row.owner,
+        context: row.context,
     };
 
     Ok(document)
@@ -261,6 +297,7 @@ fn row_from_document(doc: &Document) -> Result<DocumentRow, RepositoryError> {
         schema_id: doc.schema_id.clone(),
         status: doc.status.to_owned(),
         comment: doc.comment.to_owned(),
-        patient_id: doc.patient_id.to_owned(),
+        owner: doc.owner.to_owned(),
+        context: doc.context.to_owned(),
     })
 }
