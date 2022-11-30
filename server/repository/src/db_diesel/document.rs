@@ -2,8 +2,8 @@ use super::StorageConnection;
 
 use crate::db_diesel::form_schema_row::form_schema;
 use crate::db_diesel::name_row::name;
-use crate::diesel_macros::{apply_equal_filter, apply_string_filter};
-use crate::{EqualFilter, RepositoryError, StringFilter};
+use crate::diesel_macros::{apply_equal_filter, apply_simple_string_filter, apply_string_filter};
+use crate::{EqualFilter, RepositoryError, SimpleStringFilter, StringFilter};
 
 use chrono::{DateTime, NaiveDateTime, Utc};
 use diesel::prelude::*;
@@ -109,6 +109,7 @@ pub struct Document {
 pub struct DocumentFilter {
     pub name: Option<StringFilter>,
     pub r#type: Option<EqualFilter<String>>,
+    pub data: Option<SimpleStringFilter>,
 }
 
 impl DocumentFilter {
@@ -116,6 +117,7 @@ impl DocumentFilter {
         DocumentFilter {
             name: None,
             r#type: None,
+            data: None,
         }
     }
 
@@ -126,6 +128,11 @@ impl DocumentFilter {
 
     pub fn r#type(mut self, filter: EqualFilter<String>) -> Self {
         self.r#type = Some(filter);
+        self
+    }
+
+    pub fn data(mut self, filter: SimpleStringFilter) -> Self {
+        self.data = Some(filter);
         self
     }
 }
@@ -164,10 +171,11 @@ impl<'a> DocumentRepository<'a> {
     pub fn query(&self, filter: Option<DocumentFilter>) -> Result<Vec<Document>, RepositoryError> {
         let mut query = latest_document::dsl::latest_document.into_boxed();
         if let Some(f) = filter {
-            let DocumentFilter { name, r#type } = f;
+            let DocumentFilter { name, r#type, data } = f;
 
             apply_string_filter!(query, name, latest_document::dsl::name);
             apply_equal_filter!(query, r#type, latest_document::dsl::type_);
+            apply_simple_string_filter!(query, data, latest_document::dsl::data);
         }
         let rows: Vec<DocumentRow> = query.load(&self.connection.connection)?;
 
@@ -185,10 +193,11 @@ impl<'a> DocumentRepository<'a> {
     ) -> Result<Vec<Document>, RepositoryError> {
         let mut query = document::dsl::document.into_boxed();
         if let Some(f) = filter {
-            let DocumentFilter { name, r#type } = f;
+            let DocumentFilter { name, r#type, data } = f;
 
             apply_string_filter!(query, name, document::dsl::name);
             apply_equal_filter!(query, r#type, document::dsl::type_);
+            apply_simple_string_filter!(query, data, document::dsl::data);
         }
         let rows: Vec<DocumentRow> = query
             .order(document::dsl::timestamp.desc())
