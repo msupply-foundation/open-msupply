@@ -102,6 +102,7 @@
   "dependencies": {
     "@bugsnag/js": "^7.16.2",
     "@types/react-dom": "^18.0.1",
+    "autosuggest-highlight": "^3.3.4",
     "graphql": "^16.3.0",
     "lerna": "^5.0.0",
     "msw": "0.43.1",

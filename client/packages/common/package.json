@@ -49,6 +49,7 @@
     "zustand": "^3.6.7"
   },
   "devDependencies": {
+    "@types/autosuggest-highlight": "^3.2.0",
     "@types/css-mediaquery": "^0.1.1",
     "@types/dompurify": "^2.3.3",
     "@types/js-cookie": "^3.0.1",
