@@ -12,6 +12,7 @@ use crate::sync::{
     api::RemoteSyncRecordV5,
     sync_serde::{
         date_and_time_to_datatime, date_from_date_time, date_to_isostring, empty_str_as_option,
+        empty_str_as_option_datetime,
     },
 };
 
@@ -104,12 +105,15 @@ pub struct LegacyRequisitionRow {
     pub comment: Option<String>,
 
     #[serde(rename = "om_created_datetime")]
+    #[serde(deserialize_with = "empty_str_as_option_datetime")]
     pub created_datetime: Option<NaiveDateTime>,
 
     #[serde(rename = "om_sent_datetime")]
+    #[serde(deserialize_with = "empty_str_as_option_datetime")]
     pub sent_datetime: Option<NaiveDateTime>,
 
     #[serde(rename = "om_finalised_datetime")]
+    #[serde(deserialize_with = "empty_str_as_option_datetime")]
     pub finalised_datetime: Option<NaiveDateTime>,
 
     #[serde(rename = "om_expected_delivery_date")]
