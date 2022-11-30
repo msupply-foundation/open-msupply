@@ -43,7 +43,7 @@ const REQUISITION_REQUEST: (&'static str, &'static str) = (
       "om_created_datetime": "",
       "om_sent_datetime": "",
       "om_finalised_datetime": "",
-      "om_expected_delivery_date": null,
+      "om_expected_delivery_date": "0000-00-00", 
       "om_max_months_of_stock": 0,
       "om_status": "",
       "om_colour": "" 
