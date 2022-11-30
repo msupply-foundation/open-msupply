@@ -50,10 +50,8 @@ export const datetimeTester = rankWith(5, isDateTimeControl);
 const UIComponent = (props: ControlProps) => {
   const [error, setError] = React.useState('');
   const { data, handleChange, label, path, uischema } = props;
-  if (!props.visible) {
-    return null;
-  }
   const dateFormatter = useFormatDateTime().customDate;
+
   if (!props.visible) {
     return null;
   }
