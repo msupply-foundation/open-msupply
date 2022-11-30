@@ -2,7 +2,7 @@ use crate::sync::{
     api::RemoteSyncRecordV5,
     sync_serde::{
         date_from_date_time, date_option_to_isostring, date_to_isostring, empty_str_as_option,
-        naive_time, zero_date_as_option,
+        empty_str_as_option_datetime, naive_time, zero_date_as_option,
     },
 };
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
@@ -92,7 +92,9 @@ pub struct LegacyTransactRow {
     #[serde(deserialize_with = "empty_str_as_option")]
     pub their_ref: Option<String>,
 
+    #[serde(default)]
     #[serde(rename = "om_transport_reference")]
+    #[serde(deserialize_with = "empty_str_as_option")]
     pub transport_reference: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option")]
     pub requisition_ID: Option<String>,
@@ -122,22 +124,34 @@ pub struct LegacyTransactRow {
 
     pub mode: TransactMode,
 
+    #[serde(default)]
     #[serde(rename = "om_created_datetime")]
+    #[serde(deserialize_with = "empty_str_as_option_datetime")]
     pub created_datetime: Option<NaiveDateTime>,
 
+    #[serde(default)]
     #[serde(rename = "om_allocated_datetime")]
+    #[serde(deserialize_with = "empty_str_as_option_datetime")]
     pub allocated_datetime: Option<NaiveDateTime>,
 
+    #[serde(default)]
     #[serde(rename = "om_picked_datetime")]
+    #[serde(deserialize_with = "empty_str_as_option_datetime")]
     pub picked_datetime: Option<NaiveDateTime>,
 
+    #[serde(default)]
     #[serde(rename = "om_shipped_datetime")]
+    #[serde(deserialize_with = "empty_str_as_option_datetime")]
     pub shipped_datetime: Option<NaiveDateTime>,
 
+    #[serde(default)]
     #[serde(rename = "om_delivered_datetime")]
+    #[serde(deserialize_with = "empty_str_as_option_datetime")]
     pub delivered_datetime: Option<NaiveDateTime>,
 
+    #[serde(default)]
     #[serde(rename = "om_verified_datetime")]
+    #[serde(deserialize_with = "empty_str_as_option_datetime")]
     pub verified_datetime: Option<NaiveDateTime>,
 
     pub om_status: Option<InvoiceRowStatus>,
