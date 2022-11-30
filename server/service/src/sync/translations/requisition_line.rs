@@ -1,4 +1,7 @@
-use crate::sync::{api::RemoteSyncRecordV5, sync_serde::empty_str_as_option};
+use crate::sync::{
+    api::RemoteSyncRecordV5,
+    sync_serde::{empty_str_as_option, empty_str_as_option_datetime},
+};
 use chrono::NaiveDateTime;
 use repository::{
     ChangelogRow, ChangelogTableName, RequisitionLineRow, RequisitionLineRowRepository,
@@ -41,6 +44,7 @@ pub struct LegacyRequisitionLineRow {
     pub comment: Option<String>,
 
     #[serde(rename = "om_snapshot_datetime")]
+    #[serde(deserialize_with = "empty_str_as_option_datetime")]
     pub snapshot_datetime: Option<NaiveDateTime>,
 }
 
