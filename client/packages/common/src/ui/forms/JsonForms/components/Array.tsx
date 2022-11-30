@@ -37,6 +37,8 @@ import {
   FORM_INPUT_COLUMN_WIDTH,
 } from '../styleConstants';
 import { JsonData } from '../JsonForm';
+import parse from 'autosuggest-highlight/parse';
+import match from 'autosuggest-highlight/match';
 
 interface UISchemaWithCustomProps extends ControlElement {
   defaultNewItem?: JsonData;
@@ -143,6 +145,29 @@ const EnumArrayComponent: FC<EnumArrayControlCustomProps> = ({
             value={data}
             options={schema.enum ?? []}
             filterOptions={filterOptions}
+            renderOption={(props, option, { inputValue }) => {
+              const matches = match(option, inputValue, {
+                insideWords: true,
+              });
+              const parts = parse(option, matches);
+
+              return (
+                <li {...props}>
+                  <div>
+                    {parts.map((part, index) => (
+                      <span
+                        key={index}
+                        style={{
+                          fontWeight: part.highlight ? 600 : 400,
+                        }}
+                      >
+                        {part.text}
+                      </span>
+                    ))}
+                  </div>
+                </li>
+              );
+            }}
             renderInput={params => <TextField {...params} variant="standard" />}
             onChange={(_, value) => {
               if (value.length - 1 === data.length) {
