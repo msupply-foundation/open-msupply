@@ -2,10 +2,17 @@ use super::StorageConnection;
 
 use crate::db_diesel::form_schema_row::form_schema;
 use crate::db_diesel::name_row::name;
-use crate::diesel_macros::{apply_equal_filter, apply_simple_string_filter, apply_string_filter};
-use crate::{EqualFilter, RepositoryError, SimpleStringFilter, StringFilter};
+use crate::diesel_macros::{
+    apply_date_time_filter, apply_equal_filter, apply_simple_string_filter, apply_sort,
+    apply_string_filter,
+};
+use crate::{
+    DBType, DatetimeFilter, EqualFilter, Pagination, RepositoryError, SimpleStringFilter, Sort,
+    StringFilter,
+};
 
 use chrono::{DateTime, NaiveDateTime, Utc};
+use diesel::helper_types::IntoBoxed;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
@@ -114,6 +121,7 @@ pub struct Document {
 pub struct DocumentFilter {
     pub name: Option<StringFilter>,
     pub r#type: Option<EqualFilter<String>>,
+    pub datetime: Option<DatetimeFilter>,
     pub owner: Option<EqualFilter<String>>,
     pub context: Option<EqualFilter<String>>,
     pub data: Option<SimpleStringFilter>,
@@ -124,6 +132,7 @@ impl DocumentFilter {
         DocumentFilter {
             name: None,
             r#type: None,
+            datetime: None,
             data: None,
             owner: None,
             context: None,
@@ -137,6 +146,11 @@ impl DocumentFilter {
 
     pub fn r#type(mut self, filter: EqualFilter<String>) -> Self {
         self.r#type = Some(filter);
+        self
+    }
+
+    pub fn datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.datetime = Some(filter);
         self
     }
 
@@ -154,6 +168,41 @@ impl DocumentFilter {
         self.data = Some(filter);
         self
     }
+}
+
+pub enum DocumentSortField {
+    Name,
+    Type,
+    Owner,
+    Context,
+    Datetime,
+}
+
+pub type DocumentSort = Sort<DocumentSortField>;
+
+type BoxedDocumentQuery = IntoBoxed<'static, latest_document::table, DBType>;
+
+fn create_latest_filtered_query<'a>(filter: Option<DocumentFilter>) -> BoxedDocumentQuery {
+    let mut query = latest_document::dsl::latest_document.into_boxed();
+
+    if let Some(f) = filter {
+        let DocumentFilter {
+            name,
+            r#type,
+            datetime,
+            owner,
+            context,
+            data,
+        } = f;
+
+        apply_string_filter!(query, name, latest_document::dsl::name);
+        apply_equal_filter!(query, r#type, latest_document::dsl::type_);
+        apply_date_time_filter!(query, datetime, latest_document::dsl::timestamp);
+        apply_equal_filter!(query, owner, latest_document::dsl::owner);
+        apply_equal_filter!(query, context, latest_document::dsl::context);
+        apply_simple_string_filter!(query, data, latest_document::dsl::data);
+    }
+    query
 }
 
 pub struct DocumentRepository<'a> {
@@ -186,25 +235,43 @@ impl<'a> DocumentRepository<'a> {
         })
     }
 
-    /// Get the latest version of some documents
-    pub fn query(&self, filter: Option<DocumentFilter>) -> Result<Vec<Document>, RepositoryError> {
-        let mut query = latest_document::dsl::latest_document.into_boxed();
-        if let Some(f) = filter {
-            let DocumentFilter {
-                name,
-                r#type,
-                owner,
-                context,
-                data,
-            } = f;
+    pub fn count(&self, filter: Option<DocumentFilter>) -> Result<i64, RepositoryError> {
+        let query = create_latest_filtered_query(filter);
 
-            apply_string_filter!(query, name, latest_document::dsl::name);
-            apply_equal_filter!(query, r#type, latest_document::dsl::type_);
-            apply_equal_filter!(query, owner, latest_document::dsl::owner);
-            apply_equal_filter!(query, context, latest_document::dsl::context);
-            apply_simple_string_filter!(query, data, latest_document::dsl::data);
+        Ok(query.count().get_result(&self.connection.connection)?)
+    }
+
+    /// Get the latest version of some documents
+    pub fn query(
+        &self,
+        pagination: Pagination,
+        filter: Option<DocumentFilter>,
+        sort: Option<DocumentSort>,
+    ) -> Result<Vec<Document>, RepositoryError> {
+        let mut query = create_latest_filtered_query(filter);
+
+        if let Some(sort) = sort {
+            match sort.key {
+                DocumentSortField::Name => apply_sort!(query, sort, latest_document::dsl::name),
+                DocumentSortField::Type => {
+                    apply_sort!(query, sort, latest_document::dsl::type_)
+                }
+                DocumentSortField::Owner => apply_sort!(query, sort, latest_document::dsl::owner),
+                DocumentSortField::Context => {
+                    apply_sort!(query, sort, latest_document::dsl::context)
+                }
+                DocumentSortField::Datetime => {
+                    apply_sort!(query, sort, latest_document::dsl::timestamp)
+                }
+            }
+        } else {
+            query = query.order(latest_document::dsl::timestamp.desc())
         }
-        let rows: Vec<DocumentRow> = query.load(&self.connection.connection)?;
+
+        let rows: Vec<DocumentRow> = query
+            .offset(pagination.offset as i64)
+            .limit(pagination.limit as i64)
+            .load(&self.connection.connection)?;
 
         let mut result = Vec::<Document>::new();
         for row in rows {
@@ -223,6 +290,7 @@ impl<'a> DocumentRepository<'a> {
             let DocumentFilter {
                 name,
                 r#type,
+                datetime,
                 owner,
                 context,
                 data,
@@ -230,6 +298,7 @@ impl<'a> DocumentRepository<'a> {
 
             apply_string_filter!(query, name, document::dsl::name);
             apply_equal_filter!(query, r#type, document::dsl::type_);
+            apply_date_time_filter!(query, datetime, document::dsl::timestamp);
             apply_equal_filter!(query, owner, document::dsl::owner);
             apply_equal_filter!(query, context, document::dsl::context);
             apply_simple_string_filter!(query, data, document::dsl::data);
