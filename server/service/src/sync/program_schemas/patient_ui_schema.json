@@ -30,18 +30,12 @@
                       {
                         "type": "Field",
                         "field": "lastName",
-                        "mutations": [
-                          { "firstNChars": 2 },
-                          { "toUpperCase": true }
-                        ]
+                        "mutations": [{ "firstNChars": 2 }, { "toUpperCase": true }]
                       },
                       {
                         "type": "Field",
                         "field": ["birthPlace", "district"],
-                        "mutations": [
-                          { "firstNChars": 2 },
-                          { "toUpperCase": true }
-                        ]
+                        "mutations": [{ "firstNChars": 2 }, { "toUpperCase": true }]
                       },
                       {
                         "type": "Field",
@@ -58,10 +52,7 @@
                       {
                         "type": "Field",
                         "field": "birthOrder",
-                        "mutations": [
-                          { "firstNChars": 2 },
-                          { "toUpperCase": true }
-                        ]
+                        "mutations": [{ "firstNChars": 2 }, { "toUpperCase": true }]
                       },
                       {
                         "type": "Field",
@@ -83,10 +74,7 @@
                       {
                         "type": "Field",
                         "field": "firstName",
-                        "mutations": [
-                          { "lastNChars": 2 },
-                          { "toUpperCase": true }
-                        ]
+                        "mutations": [{ "lastNChars": 2 }, { "toUpperCase": true }]
                       }
                     ]
                   }
@@ -294,6 +282,7 @@
                 {
                   "type": "Control",
                   "scope": "#/properties/hand",
+                  "label": "Handedness",
                   "options": {
                     "show": [
                       ["LEFT", "Left"],
