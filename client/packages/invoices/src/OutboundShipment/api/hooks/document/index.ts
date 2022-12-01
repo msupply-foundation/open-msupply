@@ -7,6 +7,7 @@ import { useUpdateOutboundTax } from './useOutboundUpdateTax';
 ('./useOutboundUpdateTax');
 import { useOutboundInsert } from './useOutboundInsert';
 import { useOutboundUpdate } from './useOutboundUpdate';
+import { useOutboundUpdateName } from './useOutboundUpdateName';
 
 export const Document = {
   useOutbound,
@@ -17,4 +18,5 @@ export const Document = {
   useUpdateOutboundTax,
   useOutboundInsert,
   useOutboundUpdate,
+  useOutboundUpdateName,
 };

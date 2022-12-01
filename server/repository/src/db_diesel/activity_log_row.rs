@@ -15,6 +15,7 @@ table! {
         store_id -> Nullable<Text>,
         record_id -> Nullable<Text>,
         datetime -> Timestamp,
+        event -> Nullable<Text>,
     }
 }
 
@@ -39,6 +40,13 @@ pub enum ActivityLogType {
     RequisitionDeleted,
     RequisitionStatusSent,
     RequisitionStatusFinalised,
+    StockLocationChange,
+    StockCostPriceChange,
+    StockSellPriceChange,
+    StockExpiryDateChange,
+    StockBatchChange,
+    StockOnHold,
+    StockOffHold,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
@@ -52,6 +60,7 @@ pub struct ActivityLogRow {
     pub store_id: Option<String>,
     pub record_id: Option<String>,
     pub datetime: NaiveDateTime,
+    pub event: Option<String>,
 }
 
 pub struct ActivityLogRowRepository<'a> {

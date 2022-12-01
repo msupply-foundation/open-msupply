@@ -36,13 +36,13 @@ export const RegexUtils = {
   },
   // returns true if the search string is contained in any of the properties of a given object
   // the props can be specified, of left blank to match all
-  matchObjectProperties: function <T>(
+  matchObjectProperties: function <T extends object>(
     substring: string,
     object: T,
     keys?: Array<keyof T>
   ) {
     return (keys ?? (Object.keys(object) as Array<keyof T>)).some(key =>
-      RegexUtils.includes(substring, String(object[key]))
+      RegexUtils.includes(this.escapeChars(substring), String(object[key]))
     );
   },
   escapeChars: (regexString: string) =>

@@ -62,10 +62,8 @@ fn validate(
     store_id: &str,
     input: &ServiceInput,
 ) -> Result<InvoiceRow, InError> {
-    let invoice_row = match check_invoice_exists(&input.shipment_id, connection) {
-        Ok(row) => row,
-        Err(_error) => return Err(InError::ShipmentDoesNotExist),
-    };
+    let invoice_row = check_invoice_exists(&input.shipment_id, connection)?
+        .ok_or(InError::ShipmentDoesNotExist)?;
 
     if invoice_row.store_id != store_id {
         return Err(InError::NotThisStoreShipment);
