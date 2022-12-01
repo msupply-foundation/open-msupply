@@ -26,6 +26,7 @@ export const idGeneratorTester = rankWith(10, uiTypeIs('IdGenerator'));
 type GeneratorOptions = {
   targetField: string;
   parts: Part[];
+  canRegenerate?: boolean;
 };
 
 /**
@@ -119,6 +120,7 @@ const GeneratorOptions: z.ZodType<GeneratorOptions> = z
   .object({
     targetField: z.string(),
     parts: z.array(Part),
+    canRegenerate: z.boolean().optional().default(false),
   })
   .strict();
 
@@ -217,10 +219,16 @@ const UIComponent = (props: ControlProps) => {
   );
   const { mutateAsync: allocateNumber } = useDocument.utils.allocateNumber();
 
+  const { data: savedData } = useDocument.get.document(config.documentName);
+
   const { errors, options } = useZodOptionsValidation(
     GeneratorOptions,
     uischema.options
   );
+
+  // By default, after the ID is first saved, it cannot be re-generated, unless
+  // the "canRegenerate" option is set to "true"
+  const canGenerate = options?.canRegenerate ?? !savedData?.data?.code2;
 
   const value = options?.targetField
     ? extractProperty(data, options.targetField)
@@ -276,7 +284,11 @@ const UIComponent = (props: ControlProps) => {
         />
 
         <Box>
-          <Button disabled={error} onClick={generate} variant="outlined">
+          <Button
+            disabled={error || !canGenerate}
+            onClick={generate}
+            variant="outlined"
+          >
             {t('label.generate')}
           </Button>
         </Box>
