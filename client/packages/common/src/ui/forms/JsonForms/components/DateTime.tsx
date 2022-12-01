@@ -73,7 +73,6 @@ const UIComponent = (props: ControlProps) => {
       if (e) handleChange(path, dateString);
     } catch (err) {
       setError((err as Error).message);
-      console.error(err);
     }
   };
 
