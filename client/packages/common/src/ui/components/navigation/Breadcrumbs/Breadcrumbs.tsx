@@ -14,7 +14,7 @@ const Breadcrumb = styled(Link)({
 });
 
 export const Breadcrumbs = ({
-  topLevelPaths = [],
+  topLevelPaths = ['admin', 'sync'],
 }: {
   topLevelPaths?: string[];
 }) => {

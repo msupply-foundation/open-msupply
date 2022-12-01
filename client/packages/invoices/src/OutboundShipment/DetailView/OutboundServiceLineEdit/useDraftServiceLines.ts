@@ -41,7 +41,7 @@ export const useDraftServiceLines = () => {
   const { id } = useOutbound.document.fields('id');
   const { data: lines } = useOutbound.line.serviceLines();
   const { defaultServiceItem, isLoading } = useDefaultServiceItem();
-  const { mutate } = useOutbound.line.save();
+  const { mutateAsync } = useOutbound.line.save();
 
   const [draftLines, setDraftLines] = React.useState<DraftOutboundLine[]>([]);
 
@@ -93,7 +93,7 @@ export const useDraftServiceLines = () => {
 
   const save = async () => {
     if (draftLines.length) {
-      await mutate(draftLines);
+      await mutateAsync(draftLines);
     }
   };
 
