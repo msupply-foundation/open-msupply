@@ -3,7 +3,6 @@ CREATE TYPE language_type AS ENUM
     'ENGLISH',
     'FRENCH',
     'SPANISH',
-    'LATIN',
     'LAOS',
     'KHMER',
     'PORTUGUESE',
