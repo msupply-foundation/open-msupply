@@ -14,6 +14,7 @@ export const useResponse = {
   },
   line: {
     list: Lines.useResponseLines,
+    stats: Lines.useResponseLineStatsData,
 
     delete: Lines.useDeleteResponseLines,
     save: Lines.useSaveResponseLines,
