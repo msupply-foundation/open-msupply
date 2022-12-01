@@ -151,23 +151,10 @@
                   "options": {
                     "conditionField": "birthPlace.region",
                     "conditionalValues": {
-                      "Western": [
-                        "Middle Fly",
-                        "North Fly District",
-                        "South Fly"
-                      ],
+                      "Western": ["Middle Fly", "North Fly District", "South Fly"],
                       "Gulf": ["Kerema District", "Kikori District"],
-                      "Central": [
-                        "Abau District",
-                        "Goilala District",
-                        "Kairuku-Hiri District",
-                        "Rigo District"
-                      ],
-                      "National Capital District": [
-                        "Moresby North-East",
-                        "Moresby North_West",
-                        "Moresby South"
-                      ],
+                      "Central": ["Abau District", "Goilala District", "Kairuku-Hiri District", "Rigo District"],
+                      "National Capital District": ["Moresby North-East", "Moresby North_West", "Moresby South"],
                       "Milne Bay": [
                         "Alotau District",
                         "Esa'ala District",
@@ -254,16 +241,8 @@
                       ],
                       "Manus": ["Manus District"],
                       "New Ireland": ["Kavieng District", "Namatanai District"],
-                      "East New Britain": [
-                        "Gazelle District",
-                        "Kokopo District",
-                        "Pomio District",
-                        "Rabaul District"
-                      ],
-                      "West New Britain": [
-                        "Kandrian-Gloucester District",
-                        "Talasea District"
-                      ],
+                      "East New Britain": ["Gazelle District", "Kokopo District", "Pomio District", "Rabaul District"],
+                      "West New Britain": ["Kandrian-Gloucester District", "Talasea District"],
                       "North Solomon": [
                         "Central Bougainville District",
                         "North Bougainville District",
@@ -351,12 +330,27 @@
                   }
                 },
                 {
-                  "type": "Control",
-                  "scope": "#/properties/socioEconomics/properties/education"
+                  "type": "Autocomplete",
+                  "label": "Education",
+                  "scope": "#/properties/socioEconomics/properties/education",
+                  "options": {
+                    "freeText": false,
+                    "values": [
+                      "No Education",
+                      "Primary Education",
+                      "Secondary Education",
+                      "Vocational/Technical",
+                      "Tertiary Education"
+                    ]
+                  }
                 },
                 {
-                  "type": "Control",
-                  "scope": "#/properties/socioEconomics/properties/occupation"
+                  "type": "Autocomplete",
+                  "scope": "#/properties/socioEconomics/properties/occupation",
+                  "options": {
+                    "freeText": false,
+                    "values": ["Formally employed", "Informally employed", "Student", "Unemployed"]
+                  }
                 }
               ]
             },
