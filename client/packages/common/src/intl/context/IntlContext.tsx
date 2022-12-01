@@ -5,8 +5,8 @@ import LocalStorageBackend from 'i18next-localstorage-backend';
 import HttpApi from 'i18next-http-backend';
 import { I18nextProvider, initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
-import { PropsWithChildrenOnly } from '@common/types';
 import { browserLanguageDetector } from './browserLanguageDetector';
+import { PropsWithChildrenOnly } from '@common/types';
 import { EnvUtils, Platform } from '@common/utils';
 
 const defaultNS = 'common';
@@ -16,6 +16,7 @@ export const IntlProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
 
     const languageDetector = new LanguageDetector();
     languageDetector.addDetector(browserLanguageDetector);
+
     const minuteInMilliseconds = 60 * 1000;
     const isDevelopment = process.env['NODE_ENV'] === 'development';
     const expirationTime = isDevelopment

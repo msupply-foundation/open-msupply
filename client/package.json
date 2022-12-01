@@ -1,13 +1,13 @@
 {
   "name": "openmsupply-client",
-  "version": "1.0.1",
+  "version": "1.0.4",
   "private": true,
   "scripts": {
     "start-local": "lerna run --scope @openmsupply-client/* --parallel start-local",
     "start-remote": "lerna run --scope @openmsupply-client/* --parallel start-remote",
     "start": "yarn start-remote",
     "build": "lerna run --scope @openmsupply-client/* build",
-    "build-dev": "lerna run --scope @openmsupply-client/* build-dev",
+    "build-stats": "lerna run --scope @openmsupply-client/* build-stats",
     "serve": "lerna run --scope @openmsupply-client/* --parallel serve",
     "clean": "lerna run --scope @openmsupply-client/* --parallel clean",
     "compile": "lerna run --scope @openmsupply-client/* --parallel tsc --since HEAD",

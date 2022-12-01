@@ -7,6 +7,7 @@ import {
 } from '@openmsupply-client/common';
 import { LoginIcon } from './LoginIcon';
 import { Theme } from '@common/styles';
+import { AppVersion } from '../AppVersion';
 
 type LoginLayoutProps = {
   ServerInfo: React.ReactNode;
@@ -135,6 +136,7 @@ export const LoginLayout = ({
       >
         {ServerInfo}
       </Typography>
+      <AppVersion style={{ opacity: 0.4 }} />
     </Box>
   );
 };
