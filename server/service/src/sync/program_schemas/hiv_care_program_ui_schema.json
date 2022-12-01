@@ -11,7 +11,8 @@
       "scope": "#/properties/enrolmentDatetime",
       "label": "Enrolment Date",
       "options": {
-        "readonly": true
+        "readonly": true,
+        "dateOnly": true
       }
     },
     {
