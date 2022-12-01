@@ -38,6 +38,15 @@ const parseBarcodeData = (data: number[] | undefined) => {
     .reduce((barcode, curr) => barcode + String.fromCharCode(curr), '');
 };
 
+const parseGs1 = (barcode?: string) => {
+  if (!barcode) return undefined;
+  try {
+    return parseBarcode(barcode);
+  } catch {
+    return undefined;
+  }
+};
+
 export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
   children,
 }) => {
@@ -71,7 +80,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
         setIsScanning(false);
         return {
           hasContent: true,
-          gs1: parseBarcode(barcode),
+          gs1: parseGs1(barcode),
           content: barcode,
         };
       } catch (e) {
@@ -92,7 +101,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
       setIsScanning(false);
       BarcodeScanner.showBackground();
       const { hasContent, content } = result;
-      return { hasContent, content, gs1: parseBarcode(content) };
+      return { hasContent, content, gs1: parseGs1(content) };
     }
 
     return { hasContent: false };
