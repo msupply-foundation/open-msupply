@@ -1,8 +1,8 @@
 use crate::sync::{
     api::RemoteSyncRecordV5,
     sync_serde::{
-        date_from_date_time, date_option_to_isostring, date_to_isostring, empty_str_as_option,
-        empty_str_as_option_datetime, naive_time, zero_date_as_option,
+        date_from_date_time, date_option_to_isostring, date_to_isostring,
+        empty_str_as_option_generic, empty_str_as_option_string, naive_time, zero_date_as_option,
     },
 };
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
@@ -43,18 +43,18 @@ pub struct LegacyStocktakeRow {
     #[serde(rename = "created_by_ID")]
     pub user_id: String,
     pub status: LegacyStocktakeStatus,
-    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     pub Description: Option<String>,
-    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     pub comment: Option<String>,
     #[serde(rename = "Locked")]
     pub is_locked: bool,
 
-    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     pub invad_additions_ID: Option<String>,
 
     // Ignore invad_reductions_ID for V1
-    // #[serde(deserialize_with = "empty_str_as_option")]
+    // #[serde(deserialize_with = "empty_str_as_option_string")]
     // invad_reductions_ID: Option<String>,
     pub serial_number: i64,
     #[serde(serialize_with = "date_to_isostring")]
@@ -70,12 +70,12 @@ pub struct LegacyStocktakeRow {
     pub store_ID: String,
 
     #[serde(rename = "om_created_datetime")]
-    #[serde(deserialize_with = "empty_str_as_option_datetime")]
+    #[serde(deserialize_with = "empty_str_as_option_generic")]
     #[serde(default)]
     pub created_datetime: Option<NaiveDateTime>,
 
     #[serde(rename = "om_finalised_datetime")]
-    #[serde(deserialize_with = "empty_str_as_option_datetime")]
+    #[serde(deserialize_with = "empty_str_as_option_generic")]
     #[serde(default)]
     pub finalised_datetime: Option<NaiveDateTime>,
 }

@@ -12,7 +12,8 @@ use crate::sync::{
     api::RemoteSyncRecordV5,
     sync_serde::{
         date_and_time_to_datatime, date_from_date_time, date_option_to_isostring,
-        date_to_isostring, empty_str_as_option, empty_str_as_option_datetime, zero_date_as_option,
+        date_to_isostring, empty_str_as_option_generic, empty_str_as_option_string,
+        zero_date_as_option,
     },
 };
 
@@ -83,7 +84,7 @@ pub struct LegacyRequisitionRow {
     pub store_ID: String,
     pub r#type: LegacyRequisitionType,
     pub status: LegacyRequisitionStatus,
-    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(rename = "user_ID")]
     pub user_id: Option<String>,
     // created_datetime
@@ -92,31 +93,31 @@ pub struct LegacyRequisitionRow {
 
     #[serde(rename = "lastModifiedAt")]
     pub last_modified_at: i64,
-    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     pub requester_reference: Option<String>,
-    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     pub linked_requisition_id: Option<String>,
     /// min_months_of_stock
     pub thresholdMOS: f64,
     /// relates to max_months_of_stock
     pub daysToSupply: i64,
 
-    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     pub comment: Option<String>,
 
     #[serde(default)]
     #[serde(rename = "om_created_datetime")]
-    #[serde(deserialize_with = "empty_str_as_option_datetime")]
+    #[serde(deserialize_with = "empty_str_as_option_generic")]
     pub created_datetime: Option<NaiveDateTime>,
 
     #[serde(default)]
     #[serde(rename = "om_sent_datetime")]
-    #[serde(deserialize_with = "empty_str_as_option_datetime")]
+    #[serde(deserialize_with = "empty_str_as_option_generic")]
     pub sent_datetime: Option<NaiveDateTime>,
 
     #[serde(default)]
     #[serde(rename = "om_finalised_datetime")]
-    #[serde(deserialize_with = "empty_str_as_option_datetime")]
+    #[serde(deserialize_with = "empty_str_as_option_generic")]
     pub finalised_datetime: Option<NaiveDateTime>,
 
     #[serde(default)]
@@ -127,9 +128,12 @@ pub struct LegacyRequisitionRow {
 
     #[serde(rename = "om_max_months_of_stock")]
     pub max_months_of_stock: Option<f64>,
+
+    #[serde(deserialize_with = "empty_str_as_option_generic")]
+    #[serde(default)]
     pub om_status: Option<RequisitionRowStatus>,
     /// We ignore the legacy colour field
-    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(default)]
     pub om_colour: Option<String>,
 }
