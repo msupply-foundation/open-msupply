@@ -1,16 +1,19 @@
 import React, { createContext, useMemo, FC } from 'react';
 import { PropsWithChildrenOnly } from '@common/types';
-import {
-  BarcodeScanner,
-  ScanResult,
-} from '@capacitor-community/barcode-scanner';
+import { BarcodeScanner } from '@capacitor-community/barcode-scanner';
 import { Capacitor } from '@capacitor/core';
 import { GlobalStyles } from '@mui/material';
 import { useNotification } from '../hooks/useNotification';
 import { useTranslation } from '@common/intl';
+import { Gs1Barcode, parseBarcode } from 'gs1-barcode-parser-mod';
 
 const SCAN_TIMEOUT_IN_MS = 5000;
 
+export interface ScanResult {
+  hasContent: boolean;
+  content?: string;
+  gs1?: Gs1Barcode;
+}
 interface BarcodeScannerControl {
   hasBarcodeScanner: boolean;
   isScanning: boolean;
@@ -27,7 +30,7 @@ const BarcodeScannerContext = createContext<BarcodeScannerControl>({
 
 const { Provider } = BarcodeScannerContext;
 
-const parseBarcode = (data: number[] | undefined) => {
+const parseBarcodeData = (data: number[] | undefined) => {
   if (!data || data.length < 5) return undefined;
 
   return data
@@ -63,13 +66,18 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
       try {
         const { startBarcodeScan } = electronAPI;
         const data = await startBarcodeScan();
-        const barcode = parseBarcode(data);
+        const barcode = parseBarcodeData(data);
         clearTimeout(timeout);
         setIsScanning(false);
-        return { hasContent: true, content: barcode };
-      } catch {
+        return {
+          hasContent: true,
+          gs1: parseBarcode(barcode),
+          content: barcode,
+        };
+      } catch (e) {
         error(t('error.unable-to-read-barcode'))();
         clearTimeout(timeout);
+        console.error(e);
       }
     }
 
@@ -83,7 +91,8 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
       clearTimeout(timeout);
       setIsScanning(false);
       BarcodeScanner.showBackground();
-      return result;
+      const { hasContent, content } = result;
+      return { hasContent, content, gs1: parseBarcode(content) };
     }
 
     return { hasContent: false };
