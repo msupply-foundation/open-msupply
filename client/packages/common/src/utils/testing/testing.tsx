@@ -91,9 +91,7 @@ export const TestingRouterContext: FC<PropsWithChildrenOnly> = ({
 );
 
 export const TestingProvider: FC<
-  PropsWithChildren<{
-    locale?: 'en' | 'fr' | 'ar' | 'es' | 'tet';
-  }>
+  PropsWithChildren<{ locale?: SupportedLocales }>
 > = ({ children, locale = 'en' }) => (
   <React.Suspense fallback={<span>[suspended]</span>}>
     <QueryClientProvider client={queryClient}>
@@ -159,7 +157,7 @@ export const setScreenSize_ONLY_FOR_TESTING = (screenSize: number): void => {
 export const renderHookWithProvider = <Props, Result>(
   hook: (props: Props) => Result,
   options?: {
-    providerProps?: { locale: 'en' | 'fr' | 'ar' | 'es' | 'tet' };
+    providerProps?: { locale: SupportedLocales };
   }
 ) =>
   renderHook(hook, {
