@@ -6,7 +6,7 @@ use std::{
 use bcrypt::BcryptError;
 use log::info;
 use repository::{
-    ActivityLogType, Permission, RepositoryError, UserAccountRow, UserPermissionRow,
+    ActivityLogType, Language, Permission, RepositoryError, UserAccountRow, UserPermissionRow,
     UserStoreJoinRow,
 };
 use reqwest::{ClientBuilder, Url};
@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 use util::uuid::uuid;
 
 use crate::{
-    activity_log::activity_log_entry_without_record,
+    activity_log::activity_log_entry,
     apis::{
         login_v4::{
             LoginApiV4, LoginInputV4, LoginStatusV4, LoginUserInfoV4, LoginUserTypeV4, LoginV4Error,
@@ -135,7 +135,7 @@ impl LoginService {
         };
         service_ctx.user_id = user_account.id.clone();
 
-        activity_log_entry_without_record(&service_ctx, ActivityLogType::UserLoggedIn)?;
+        activity_log_entry(&service_ctx, ActivityLogType::UserLoggedIn, None, None)?;
 
         let mut token_service = TokenService::new(
             &auth_data.token_bucket,
@@ -230,6 +230,16 @@ impl LoginService {
                 "" => None,
                 _ => Some(user_info.user.e_mail.to_string()),
             },
+            language: match user_info.user.language {
+                0 => Language::English,
+                1 => Language::French,
+                2 => Language::Spanish,
+                3 => Language::Laos,
+                4 => Language::Khmer,
+                5 => Language::Portuguese,
+                6 => Language::Russian,
+                _ => Language::English,
+            },
         };
         let stores_permissions: Vec<StorePermissions> = user_info
             .user_stores
@@ -294,6 +304,9 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permission> {
             // stock line
             Permissions::ViewStock => {
                 output.insert(Permission::StockLineQuery);
+            }
+            Permissions::EditStock => {
+                output.insert(Permission::StockLineMutate);
             }
             // stocktake
             Permissions::CreateStocktake => {
