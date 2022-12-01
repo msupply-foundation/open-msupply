@@ -30,6 +30,7 @@ export const Select: FC<SelectProps> = React.forwardRef(
       size="small"
       InputProps={{
         ...InputProps,
+        color: 'secondary',
         sx: {
           backgroundColor: theme =>
             props.disabled

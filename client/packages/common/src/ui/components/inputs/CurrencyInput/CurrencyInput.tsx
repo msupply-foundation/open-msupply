@@ -22,11 +22,11 @@ const StyledCurrencyInput = styled(RCInput)(({ theme }) => ({
   border: 'none',
   '&:focus:not(hover)': {
     outline: 'none',
-    borderBottom: '2px solid #3e7bfa',
+    borderBottom: `2px solid ${theme.palette.secondary.main}`,
     borderRadius: '8px 8px 0px 0px',
   },
   '&:hover': {
-    borderBottom: '2px solid #4F4F4F',
+    borderBottom: `2px solid ${theme.palette.gray.main}`,
     borderRadius: '8px 8px 0px 0px',
   },
 }));
