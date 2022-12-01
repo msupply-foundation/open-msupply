@@ -47,7 +47,21 @@ export const StockLineForm: FC<StockLineFormProps> = ({ draft, onUpdate }) => {
   const scanBarcode = async () => {
     const result = await startScan();
     if (result.hasContent) {
-      onUpdate({ barcode: result.content ?? '' });
+      const { content, gs1 } = result;
+      const gtin = gs1?.parsedCodeItems?.find(item => item.ai === '01')
+        ?.data as string;
+      const batch = gs1?.parsedCodeItems?.find(item => item.ai === '10')
+        ?.data as string;
+      const expiry = gs1?.parsedCodeItems.find(item => item.ai === '17')
+        ?.data as Date;
+      const barcode = gtin ?? content;
+      const draft = {
+        barcode,
+        batch,
+        expiryDate: expiry ? Formatter.naiveDate(expiry) : undefined,
+      };
+
+      onUpdate(draft);
     }
   };
 
@@ -143,7 +157,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({ draft, onUpdate }) => {
           label={t('label.barcode')}
           Input={
             <Box>
-              <BasicTextInput value={draft.barcode} onChange={() => {}} />
+              <BasicTextInput value={draft.barcode ?? ''} onChange={() => {}} />
               {hasBarcodeScanner && (
                 <IconButton
                   disabled={isScanning}

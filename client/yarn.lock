@@ -11499,6 +11499,11 @@ graphql@^16.3.0:
   resolved "https://registry.yarnpkg.com/graphql/-/graphql-16.5.0.tgz#41b5c1182eaac7f3d47164fb247f61e4dfb69c85"
   integrity sha512-qbHgh8Ix+j/qY+a/ZcJnFQ+j8ezakqPiHwPiZhV/3PgGlgf96QMBB5/f2rkiC9sgLoy/xvT6TSiaf2nTHJh5iA==
 
+gs1-barcode-parser-mod@^1.0.6:
+  version "1.0.6"
+  resolved "https://registry.yarnpkg.com/gs1-barcode-parser-mod/-/gs1-barcode-parser-mod-1.0.6.tgz#296aadd4a2f08b5dd00b493551409a5cdc795c68"
+  integrity sha512-jhwA5DcIj6Gx80aPcUJHfiiOkakWVz8Zfq9w7ASdX9M2/bcnOGxHYPyMW6I1vPDmcfpO3HQ5F98S07xXRSJ4Xw==
+
 gzip-size@^6.0.0:
   version "6.0.0"
   resolved "https://registry.yarnpkg.com/gzip-size/-/gzip-size-6.0.0.tgz#065367fd50c239c0671cbcbad5be3e2eeb10e462"
