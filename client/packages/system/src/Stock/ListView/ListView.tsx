@@ -5,43 +5,69 @@ import {
   useColumns,
   createTableStore,
   useTranslation,
-  SortUtils,
-  RegexUtils,
   NothingHere,
-  useUrlQuery,
   useUrlQueryParams,
-  useNavigate,
-  RouteBuilder,
+  DateUtils,
+  useEditModal,
 } from '@openmsupply-client/common';
-import { AppRoute } from '@openmsupply-client/config';
-import { Toolbar } from '../Components';
-import { useStock } from '../api';
-import { StockRow } from '../types';
+import { StockLineEditModal, Toolbar } from '../Components';
+import { StockLineRowFragment, useStock } from '../api';
 
 const StockListComponent: FC = () => {
-  const { urlQuery, updateQuery } = useUrlQuery({ skipParse: ['filter'] });
   const {
+    filter,
     updatePaginationQuery,
     updateSortQuery,
     queryParams: { sortBy, page, first, offset },
-  } = useUrlQueryParams({ initialSort: { key: 'itemName', dir: 'asc' } });
+  } = useUrlQueryParams({
+    initialSort: { key: 'expiryDate', dir: 'asc' },
+    filterKey: 'itemCodeOrName',
+  });
   const pagination = { page, first, offset };
   const t = useTranslation('inventory');
-  const filterString = String(urlQuery.filter ?? '');
-  const navigate = useNavigate();
-
-  const { data, isLoading, isError } = useStock.document.list();
-
-  const columns = useColumns<StockRow>(
+  const { data, isLoading, isError } = useStock.line.list();
+  const columns = useColumns<StockLineRowFragment>(
     [
-      'itemCode',
-      'itemName',
-      'batch',
-      'expiryDate',
-      'locationName',
-      'itemUnit',
-      'packSize',
-      'numberOfPacks',
+      [
+        'itemCode',
+        { accessor: ({ rowData }) => rowData.item.code, sortable: false },
+      ],
+      [
+        'itemName',
+        { accessor: ({ rowData }) => rowData.item.name, sortable: false },
+      ],
+      ['batch', { sortable: false }],
+      [
+        'expiryDate',
+        {
+          accessor: ({ rowData }) =>
+            DateUtils.getDateOrNull(rowData.expiryDate),
+        },
+      ],
+      ['locationName', { sortable: false }],
+      [
+        'itemUnit',
+        { accessor: ({ rowData }) => rowData.item.unitName, sortable: false },
+      ],
+      ['packSize', { sortable: false }],
+      [
+        'numberOfPacks',
+        {
+          accessor: ({ rowData }) => rowData.totalNumberOfPacks,
+          width: 150,
+        },
+      ],
+      [
+        'stockOnHand',
+        {
+          accessor: ({ rowData }) =>
+            rowData.totalNumberOfPacks * rowData.packSize,
+          label: 'label.soh',
+          description: 'description.soh',
+          sortable: false,
+          width: 125,
+        },
+      ],
     ],
     {
       sortBy,
@@ -49,46 +75,31 @@ const StockListComponent: FC = () => {
     },
     [sortBy]
   );
-
-  const filterData = (row: StockRow) => {
-    const re = RegExp(`^${RegexUtils.escapeChars(filterString) ?? '.'}`, 'i');
-    return re.test(row.itemName) || re.test(row.itemCode);
-  };
-
-  const filteredSortedData =
-    data?.nodes
-      .filter(filterData)
-      .sort(SortUtils.getDataSorter(sortBy.key, !!sortBy.isDesc)) ?? [];
+  const { isOpen, entity, onClose, onOpen } =
+    useEditModal<StockLineRowFragment>();
 
   return (
     <>
-      <Toolbar
-        onChangeFilter={updateQuery}
-        filterString={urlQuery.filter ?? ''}
-      />
+      {isOpen && (
+        <StockLineEditModal
+          isOpen={isOpen}
+          onClose={onClose}
+          stockLine={entity}
+        />
+      )}
+
+      <Toolbar filter={filter} />
       <DataTable
         id="stock-list"
-        pagination={{ ...pagination, total: filteredSortedData.length }}
+        pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
         columns={columns}
-        data={filteredSortedData.slice(
-          pagination.offset,
-          pagination.offset + pagination.first
-        )}
+        data={data?.nodes ?? []}
         onChangePage={updatePaginationQuery}
         noDataElement={<NothingHere body={t('error.no-stock')} />}
         isError={isError}
         isLoading={isLoading}
-        generateRowTooltip={({ itemName }) =>
-          t('messages.click-to-view-item', { itemName })
-        }
-        onRowClick={row => {
-          navigate(
-            RouteBuilder.create(AppRoute.Catalogue)
-              .addPart(AppRoute.Items)
-              .addPart(row.itemId)
-              .build()
-          );
-        }}
+        onRowClick={onOpen}
+        enableColumnSelection
       />
     </>
   );

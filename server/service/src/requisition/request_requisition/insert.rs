@@ -56,7 +56,8 @@ pub fn insert_request_requisition(
             activity_log_entry(
                 &ctx,
                 ActivityLogType::RequisitionCreated,
-                &new_requisition.id,
+                Some(new_requisition.id.to_owned()),
+                None,
             )?;
 
             get_requisition(ctx, None, &new_requisition.id)

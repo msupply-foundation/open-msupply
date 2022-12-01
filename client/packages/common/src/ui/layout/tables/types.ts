@@ -28,6 +28,14 @@ export interface TableProps<T extends RecordWithId> {
   isLoading?: boolean;
   noDataMessage?: string;
   noDataElement?: JSX.Element;
+  overflowX?:
+    | 'auto'
+    | 'hidden'
+    | 'visible'
+    | 'scroll'
+    | 'inherit'
+    | 'initial'
+    | 'unset';
   pagination?: Pagination & { total?: number };
   onChangePage?: (page: number) => void;
   onRowClick?: null | ((row: T) => void);

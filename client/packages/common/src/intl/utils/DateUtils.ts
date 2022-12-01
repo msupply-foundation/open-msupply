@@ -39,11 +39,23 @@ const dateInputHandler = (date: Date | string | number): Date => {
   return date as Date;
 };
 
+const formatIfValid = (
+  date: Date | number,
+  dateFormat: string,
+  options?: {
+    locale?: Locale;
+    weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
+    firstWeekContainsDate?: number;
+    useAdditionalWeekYearTokens?: boolean;
+    useAdditionalDayOfYearTokens?: boolean;
+  }
+): string => (isValid(date) ? format(date, dateFormat, options) : '');
+
 export const DateUtils = {
   addMinutes,
   addDays,
   addYears,
-  getDateOrNull: (date: string | null): Date | null => {
+  getDateOrNull: (date?: string | null): Date | null => {
     if (!date) return null;
     const maybeDate = new Date(date);
     return isValid(maybeDate) ? maybeDate : null;
@@ -78,29 +90,34 @@ export const useFormatDateTime = () => {
       : getLocaleObj[language];
 
   const localisedDate = (date: Date | string | number): string =>
-    format(dateInputHandler(date), 'P', { locale });
+    formatIfValid(dateInputHandler(date), 'P', { locale });
 
   const localisedTime = (date: Date | string | number): string =>
-    format(dateInputHandler(date), 'p', { locale });
+    formatIfValid(dateInputHandler(date), 'p', { locale });
 
   const localisedDateTime = (date: Date | string | number): string =>
     format(dateInputHandler(date), 'P p', { locale });
 
   const dayMonthShort = (date: Date | string | number): string =>
-    format(dateInputHandler(date), 'dd MMM', { locale });
+    formatIfValid(dateInputHandler(date), 'dd MMM', { locale });
 
   const customDate = (
     date: Date | string | number,
     formatString: string
-  ): string => format(dateInputHandler(date), formatString, { locale });
+  ): string => formatIfValid(dateInputHandler(date), formatString, { locale });
 
   const relativeDateTime = (
     date: Date | string | number,
     baseDate: Date = new Date()
-  ): string => formatRelative(dateInputHandler(date), baseDate, { locale });
+  ): string => {
+    const d = dateInputHandler(date);
+    return isValid(d) ? formatRelative(d, baseDate, { locale }) : '';
+  };
 
-  const localisedDistanceToNow = (date: Date | string | number) =>
-    formatDistanceToNow(dateInputHandler(date), { locale });
+  const localisedDistanceToNow = (date: Date | string | number) => {
+    const d = dateInputHandler(date);
+    return isValid(d) ? formatDistanceToNow(d, { locale }) : '';
+  };
 
   return {
     customDate,

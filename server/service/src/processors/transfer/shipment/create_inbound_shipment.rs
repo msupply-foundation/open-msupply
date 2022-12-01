@@ -86,8 +86,6 @@ impl ShipmentTransferProcessor for CreateInboundShipmentProcessor {
             &new_inbound_shipment.id,
         )?;
 
-        println!("{:?}", outbound_shipment.invoice_row.status.clone());
-
         let invoice_line_repository = InvoiceLineRowRepository::new(connection);
 
         for line in new_inbound_lines.iter() {
@@ -129,19 +127,21 @@ fn generate_inbound_shipment(
         .as_ref()
         .map(|r| r.requisition_row.id.clone());
 
-    let formatted_ref = format!(
-        "From invoice number: {} ({})",
-        outbound_shipment_row.invoice_number,
-        outbound_shipment_row
-            .their_reference
-            .clone()
-            .unwrap_or_default()
-    );
+    let formatted_ref = match &outbound_shipment_row.their_reference {
+        Some(reference) => format!(
+            "From invoice number: {} ({})",
+            outbound_shipment_row.invoice_number, reference
+        ),
+        None => format!(
+            "From invoice number: {}",
+            outbound_shipment_row.invoice_number
+        ),
+    };
 
-    let formatted_comment = format!(
-        "Stock transfer ({})",
-        outbound_shipment_row.comment.clone().unwrap_or_default()
-    );
+    let formatted_comment = match &outbound_shipment_row.comment {
+        Some(comment) => format!("Stock transfer ({})", comment),
+        None => format!("Stock transfer"),
+    };
 
     let result = InvoiceRow {
         id: uuid(),
