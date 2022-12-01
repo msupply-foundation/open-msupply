@@ -30,6 +30,7 @@ import {
   ChevronDownIcon,
   useTranslation,
   ConfirmationModal,
+  useAppTheme,
 } from '@openmsupply-client/common';
 import { RegexUtils } from '@common/utils';
 import {
@@ -87,6 +88,7 @@ const EnumArrayComponent: FC<EnumArrayControlCustomProps> = ({
 }) => {
   const t = useTranslation('common');
   const [removeIndex, setRemoveIndex] = useState<number | undefined>();
+  const theme = useAppTheme();
 
   if (!visible) {
     return null;
@@ -111,6 +113,22 @@ const EnumArrayComponent: FC<EnumArrayControlCustomProps> = ({
         <Box flexBasis={FORM_INPUT_COLUMN_WIDTH}>
           <Autocomplete
             multiple
+            sx={{
+              '.rtl-w7osp1-MuiInputBase-root-MuiInput-root:before': {
+                border: 'none',
+                borderRadius: '8px',
+                height: '100%',
+                backgroundColor: theme.palette.background.drawer,
+             },
+              '.rtl-1fjcdrw-MuiButtonBase-root-MuiChip-root': {
+                backgroundColor: theme.palette.secondary.light,
+                height: 'inherit',
+                color: theme.typography.login.color,
+              },
+              '.rtl-1fjcdrw-MuiButtonBase-root-MuiChip-root .MuiChip-deleteIcon': {
+                color: theme.palette.background.white,
+              },
+            }}
             value={data}
             options={schema.enum ?? []}
             renderInput={params => <TextField {...params} variant="standard" />}
