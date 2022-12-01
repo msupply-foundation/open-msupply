@@ -1,8 +1,8 @@
 use crate::sync::{
     api::RemoteSyncRecordV5,
     sync_serde::{
-        date_from_date_time, date_option_to_isostring, date_to_isostring, empty_str_as_option,
-        empty_str_as_option_datetime, naive_time, zero_date_as_option,
+        date_from_date_time, date_option_to_isostring, date_to_isostring,
+        empty_str_as_option_generic, empty_str_as_option_string, naive_time, zero_date_as_option,
     },
 };
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
@@ -83,22 +83,22 @@ pub struct LegacyTransactRow {
     #[serde(rename = "type")]
     pub _type: LegacyTransactType,
     pub status: LegacyTransactStatus,
-    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(rename = "user_ID")]
     pub user_id: Option<String>,
     pub hold: bool,
-    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     pub comment: Option<String>,
-    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     pub their_ref: Option<String>,
 
     #[serde(default)]
     #[serde(rename = "om_transport_reference")]
-    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     pub transport_reference: Option<String>,
-    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     pub requisition_ID: Option<String>,
-    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     pub linked_transaction_id: Option<String>,
 
     /// creation time
@@ -126,39 +126,43 @@ pub struct LegacyTransactRow {
 
     #[serde(default)]
     #[serde(rename = "om_created_datetime")]
-    #[serde(deserialize_with = "empty_str_as_option_datetime")]
+    #[serde(deserialize_with = "empty_str_as_option_generic")]
     pub created_datetime: Option<NaiveDateTime>,
 
     #[serde(default)]
     #[serde(rename = "om_allocated_datetime")]
-    #[serde(deserialize_with = "empty_str_as_option_datetime")]
+    #[serde(deserialize_with = "empty_str_as_option_generic")]
     pub allocated_datetime: Option<NaiveDateTime>,
 
     #[serde(default)]
     #[serde(rename = "om_picked_datetime")]
-    #[serde(deserialize_with = "empty_str_as_option_datetime")]
+    #[serde(deserialize_with = "empty_str_as_option_generic")]
     pub picked_datetime: Option<NaiveDateTime>,
 
     #[serde(default)]
     #[serde(rename = "om_shipped_datetime")]
-    #[serde(deserialize_with = "empty_str_as_option_datetime")]
+    #[serde(deserialize_with = "empty_str_as_option_generic")]
     pub shipped_datetime: Option<NaiveDateTime>,
 
     #[serde(default)]
     #[serde(rename = "om_delivered_datetime")]
-    #[serde(deserialize_with = "empty_str_as_option_datetime")]
+    #[serde(deserialize_with = "empty_str_as_option_generic")]
     pub delivered_datetime: Option<NaiveDateTime>,
 
     #[serde(default)]
     #[serde(rename = "om_verified_datetime")]
-    #[serde(deserialize_with = "empty_str_as_option_datetime")]
+    #[serde(deserialize_with = "empty_str_as_option_generic")]
     pub verified_datetime: Option<NaiveDateTime>,
 
+    #[serde(deserialize_with = "empty_str_as_option_generic")]
+    #[serde(default)]
     pub om_status: Option<InvoiceRowStatus>,
+    #[serde(deserialize_with = "empty_str_as_option_generic")]
+    #[serde(default)]
     pub om_type: Option<InvoiceRowType>,
 
     /// We ignore the legacy colour field
-    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(default)]
     pub om_colour: Option<String>,
 }
