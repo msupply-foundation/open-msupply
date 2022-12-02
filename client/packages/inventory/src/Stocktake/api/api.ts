@@ -225,11 +225,9 @@ const getInsertStocktakeLines = (
   items: { itemId: string; stockLines?: StockLineFragment[] | undefined }[]
 ) => {
   const insertStocktakeLines = [] as InsertStocktakeLineInput[];
-
   items.forEach(item => {
     const { itemId, stockLines } = item;
-
-    if (stockLines) {
+    if (stockLines && stockLines.length > 0) {
       stockLines.forEach(stockLine => {
         insertStocktakeLines.push({
           id: FnUtils.generateUUID(),
