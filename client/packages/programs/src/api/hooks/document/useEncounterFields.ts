@@ -1,12 +1,12 @@
 import { useQuery } from '@openmsupply-client/common';
-import { usePatientDocumentApi } from '../utils/useDocumentApi';
+import { useEncounterApi } from '../utils/useEncounterApi';
 
 export const useEncounterFields = (
   patientId: string,
   fields: string[],
   enabled?: boolean
 ) => {
-  const api = usePatientDocumentApi();
+  const api = useEncounterApi();
 
   return useQuery(
     api.keys.encounterFields(patientId, fields),

@@ -99,3 +99,62 @@ query encounterFields(
     }
   }
 }
+
+fragment EncounterDocumentRegistry on DocumentRegistryNode {
+  context
+  documentType
+  formSchemaId
+  id
+  jsonSchema
+  name
+  parentId
+  uiSchema
+  uiSchemaType
+  children {
+    id
+  }
+}
+
+fragment EncounterDocument on DocumentNode {
+  id
+  name
+  parents
+  author
+  timestamp
+  type
+  data
+  documentRegistry {
+    ...EncounterDocumentRegistry
+  }
+}
+
+fragment Encounter on EncounterNode {
+  id
+  type
+  name
+  status
+  patient {
+    id
+    firstName
+    lastName
+    name
+  }
+  program
+  startDatetime
+  endDatetime
+  document {
+    ...EncounterDocument
+  }
+}
+
+query encounterById($storeId: String!, $encounterId: String!) {
+  encounters(storeId: $storeId, filter: { id: { equalTo: $encounterId } }) {
+    ... on EncounterConnector {
+      __typename
+      nodes {
+        ...Encounter
+      }
+      totalCount
+    }
+  }
+}
