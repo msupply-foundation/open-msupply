@@ -14,7 +14,7 @@ import {
 import { withJsonFormsLayoutProps } from '@jsonforms/react';
 import { Button, Grid, Hidden } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { DialogButton } from '../../../components/buttons';
+import { DialogButton } from '@openmsupply-client/common';
 import { ModalProps, useDialog } from '@common/hooks';
 import {
   AjvProps,

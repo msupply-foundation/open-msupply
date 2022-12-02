@@ -4,12 +4,14 @@ import { withJsonFormsControlProps } from '@jsonforms/react';
 import {
   Autocomplete as MuiAutocomplete,
   Box,
-  FORM_INPUT_COLUMN_WIDTH,
-  FORM_LABEL_COLUMN_WIDTH,
 } from '@openmsupply-client/common';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../useZodOptionsValidation';
 import { FormLabel } from '@mui/material';
+import {
+  FORM_INPUT_COLUMN_WIDTH,
+  FORM_LABEL_COLUMN_WIDTH,
+} from '../styleConstants';
 
 type Options = {
   freeText?: boolean;

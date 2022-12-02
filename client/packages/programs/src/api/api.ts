@@ -3,6 +3,7 @@ import {
   DocumentFragment,
   DocumentRegistryFragment,
   EncounterFieldsFragment,
+  EncounterFragment,
   Sdk,
 } from './operations.generated';
 
@@ -18,6 +19,9 @@ export const getDocumentQueries = (sdk: Sdk, storeId: string) => ({
       throw new Error('Error querying document');
     },
   },
+});
+
+export const getEncounterQueries = (sdk: Sdk, storeId: string) => ({
   encounterFields: async (
     patientId: string,
     fields: string[]
@@ -29,6 +33,19 @@ export const getDocumentQueries = (sdk: Sdk, storeId: string) => ({
       return data.nodes;
     }
     throw new Error('Error querying document');
+  },
+  byId: async (encounterId: string): Promise<EncounterFragment> => {
+    const result = await sdk.encounterById({ encounterId, storeId });
+    const encounters = result?.encounters;
+
+    if (
+      encounters?.__typename === 'EncounterConnector' &&
+      !!encounters.nodes[0]
+    ) {
+      return encounters.nodes[0];
+    } else {
+      throw new Error('Could not find encounter');
+    }
   },
 });
 

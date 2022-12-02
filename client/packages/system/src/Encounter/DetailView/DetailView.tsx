@@ -11,7 +11,7 @@ import {
 } from '@openmsupply-client/common';
 import { EncounterFragment, useEncounter } from '../api';
 
-import { useJsonForms } from '../../Patient/JsonForms';
+import { useJsonForms } from '@openmsupply-client/programs';
 import { AppRoute } from '@openmsupply-client/config';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';

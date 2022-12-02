@@ -3,10 +3,9 @@ import {
   useTranslation,
   useNotification,
   useConfirmOnLeaving,
-  JsonData,
-  JsonForm,
 } from '@openmsupply-client/common';
-import { DocumentRegistryFragment } from './api/operations.generated';
+import { JsonData, JsonForm } from './common';
+import { DocumentRegistryFragment } from '@openmsupply-client/programs/src/api/operations.generated';
 import { useDocumentLoader } from './useDocumentLoader';
 import _ from 'lodash';
 import { JsonFormsRendererRegistryEntry } from '@jsonforms/core';

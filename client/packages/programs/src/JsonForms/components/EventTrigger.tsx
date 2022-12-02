@@ -7,15 +7,12 @@ import {
 } from '@jsonforms/core';
 import { withJsonFormsControlProps, useJsonForms } from '@jsonforms/react';
 import { FormLabel } from '@mui/material';
-import {
-  useDebounceCallback,
-  DateUtils,
-  useZodOptionsValidation,
-} from '@openmsupply-client/common';
+import { useDebounceCallback, DateUtils } from '@openmsupply-client/common';
 import { get as extractProperty } from 'lodash';
 import { z } from 'zod';
 import _ from 'lodash';
 import { EncounterEvent } from './encounter_event';
+import { useZodOptionsValidation } from '../common';
 
 type OptionEvent = {
   scheduleIn?: {

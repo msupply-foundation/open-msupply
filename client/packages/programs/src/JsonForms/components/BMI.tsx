@@ -6,11 +6,8 @@ import {
   uiTypeIs,
 } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import {
-  DetailInputWithLabelRow,
-  FORM_LABEL_WIDTH,
-  NumUtils,
-} from '@openmsupply-client/common';
+import { DetailInputWithLabelRow, NumUtils } from '@openmsupply-client/common';
+import { FORM_LABEL_WIDTH } from '../common';
 
 export const bmiTester = rankWith(10, uiTypeIs('BMI'));
 

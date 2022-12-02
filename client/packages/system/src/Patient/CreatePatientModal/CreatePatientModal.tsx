@@ -16,7 +16,10 @@ import {
 import { PatientFormTab } from './PatientFormTab';
 import { PatientResultsTab } from './PatientResultsTab';
 import { CreateNewPatient, usePatientCreateStore } from '../hooks';
-import { DocumentRegistryFragment, useDocument } from '../JsonForms/api';
+import {
+  DocumentRegistryFragment,
+  useDocument,
+} from '@openmsupply-client/programs/src/api';
 
 enum Tabs {
   Form = 'Form',

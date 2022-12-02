@@ -13,9 +13,8 @@ import {
   NonNegativeIntegerInput,
   useFormatDateTime,
   useTranslation,
-  FORM_LABEL_COLUMN_WIDTH,
-  FORM_INPUT_COLUMN_WIDTH,
 } from '@openmsupply-client/common';
+import { FORM_INPUT_COLUMN_WIDTH, FORM_LABEL_COLUMN_WIDTH } from '../common';
 
 export const dateOfBirthTester = rankWith(10, uiTypeIs('DateOfBirth'));
 
