@@ -54,7 +54,7 @@ const createDraftFromRequestLine = (
 export const useDraftRequisitionLine = (item: ItemWithStatsFragment | null) => {
   const { lines } = useRequest.line.list();
   const { data } = useRequest.document.get();
-  const { mutate: save, isLoading } = useRequest.line.save();
+  const { mutateAsync: save, isLoading } = useRequest.line.save();
 
   const [draft, setDraft] = useState<DraftRequestLine | null>(null);
 
