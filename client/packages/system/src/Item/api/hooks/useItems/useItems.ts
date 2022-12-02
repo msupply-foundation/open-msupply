@@ -9,7 +9,7 @@ export const useItems = () => {
 
   return {
     ...useQuery(api.keys.paramList(queryParams), () =>
-      api.get.list(queryParams)
+      api.get.stockItems(queryParams)
     ),
   };
 };

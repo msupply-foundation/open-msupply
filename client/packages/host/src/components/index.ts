@@ -6,3 +6,4 @@ export * from './Footer';
 export * from './AppDrawer';
 export * from './Login';
 export * from './Initialise';
+export * from './AppVersion';

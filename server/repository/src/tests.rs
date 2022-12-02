@@ -235,6 +235,7 @@ mod repository_test {
                 username: "user 1".to_string(),
                 hashed_password: "p1".to_string(),
                 email: Some("email".to_string()),
+                language: Default::default(),
             }
         }
 
@@ -244,6 +245,7 @@ mod repository_test {
                 username: "user 2".to_string(),
                 hashed_password: "p2".to_string(),
                 email: None,
+                language: Default::default(),
             }
         }
 
@@ -255,6 +257,7 @@ mod repository_test {
                 store_id: None,
                 record_id: None,
                 datetime: NaiveDateTime::from_timestamp(2000, 0),
+                event: None,
             }
         }
     }

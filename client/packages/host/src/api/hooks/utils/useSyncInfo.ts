@@ -5,7 +5,6 @@ export const useSyncInfo = (refetchInterval: number | false = false) => {
   const api = useHostApi();
 
   const { data, ...rest } = useQuery(api.keys.syncInfo(), api.get.syncInfo, {
-    cacheTime: 0,
     refetchInterval,
   });
 

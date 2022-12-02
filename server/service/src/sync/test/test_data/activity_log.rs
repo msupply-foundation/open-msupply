@@ -14,7 +14,8 @@ const ACTIVITY_LOG_1: (&'static str, &'static str) = (
     "user_ID": "user_account_a",
     "store_ID": "store_b",
     "record_ID": "outbound_shipment_a",
-    "datetime": "2020-01-01T00:00:00"
+    "datetime": "2020-01-01T00:00:00",
+    "event": ""
     }"#,
 );
 
@@ -26,7 +27,8 @@ const ACTIVITY_LOG_2: (&'static str, &'static str) = (
     "user_ID": "user_account_a",
     "store_ID": "store_b",
     "record_ID": "inbound_shipment_a",
-    "datetime": "2020-01-01T00:00:00"
+    "datetime": "2020-01-01T00:00:00",
+    "event": ""
     }"#,
 );
 
@@ -42,6 +44,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                 store_id: Some("store_b".to_string()),
                 record_id: Some("outbound_shipment_a".to_string()),
                 datetime: NaiveDate::from_ymd(2020, 1, 1).and_hms(0, 0, 0),
+                event: None,
             }),
         ),
         TestSyncPullRecord::new_pull_upsert(
@@ -54,6 +57,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                 store_id: Some("store_b".to_string()),
                 record_id: Some("inbound_shipment_a".to_string()),
                 datetime: NaiveDate::from_ymd(2020, 1, 1).and_hms(0, 0, 0),
+                event: None,
             }),
         ),
     ]
@@ -71,6 +75,7 @@ pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
                 store_id: "store_b".to_string(),
                 record_id: "outbound_shipment_a".to_string(),
                 datetime: NaiveDate::from_ymd(2020, 1, 1).and_hms(0, 0, 0),
+                event: None,
             }),
         },
         TestSyncPushRecord {
@@ -83,6 +88,7 @@ pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
                 store_id: "store_b".to_string(),
                 record_id: "inbound_shipment_a".to_string(),
                 datetime: NaiveDate::from_ymd(2020, 1, 1).and_hms(0, 0, 0),
+                event: None,
             }),
         },
     ]

@@ -22,7 +22,6 @@ import {
   useLocation,
   EnvUtils,
   UserPermission,
-  RadioIcon,
 } from '@openmsupply-client/common';
 import { AppRoute, ExternalURL } from '@openmsupply-client/config';
 import {
@@ -33,6 +32,7 @@ import {
   ReplenishmentNav,
 } from '../Navigation';
 import { AppDrawerIcon } from './AppDrawerIcon';
+import { SyncNavLink } from './SyncNavLink';
 
 const ToolbarIconContainer = styled(Box)({
   display: 'flex',
@@ -211,7 +211,7 @@ export const AppDrawer: React.FC = () => {
           /> */}
         </List>
       </UpperListContainer>
-      <LowerListContainer>
+      <LowerListContainer onMouseEnter={onHoverOver} onMouseLeave={onHoverOut}>
         <List>
           {drawer.isOpen && <StyledDivider color="drawerDivider" />}
           <ExternalNavLink
@@ -220,11 +220,7 @@ export const AppDrawer: React.FC = () => {
             text={t('docs')}
             trustedSite={true}
           />
-          <AppNavLink
-            to={AppRoute.Sync}
-            icon={<RadioIcon fontSize="small" color="primary" />}
-            text={t('sync')}
-          />
+          <SyncNavLink />
           <AppNavLink
             to={AppRoute.Admin}
             icon={<SettingsIcon fontSize="small" color="primary" />}

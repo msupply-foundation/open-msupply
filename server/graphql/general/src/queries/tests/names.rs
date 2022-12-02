@@ -126,9 +126,7 @@ mod graphql {
             },
             "isVisible": false,
             "isSystemName": true,
-            "type": {
-              "equalTo": "PATIENT"
-            },
+            "type": { "equalTo": "STORE" },
             "firstName": {
               "equalTo": "first"
             },
@@ -226,8 +224,10 @@ mod graphql {
             );
             assert_eq!(is_visible, Some(false));
             assert_eq!(is_system_name, Some(true));
-            assert_eq!(r#type, Some(NameType::Patient.equal_to()));
-
+            assert_eq!(
+                r#type,
+                Some(EqualFilter::equal_to_name_type(&NameType::Store))
+            );
             assert_eq!(first_name, Some(SimpleStringFilter::equal_to("first")));
             assert_eq!(last_name, Some(SimpleStringFilter::equal_to("last")));
             assert_eq!(gender, Some(Gender::Female.equal_to()));

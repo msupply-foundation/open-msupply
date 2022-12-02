@@ -37,6 +37,13 @@ pub enum ActivityLogNodeType {
     RequisitionDeleted,
     RequisitionStatusSent,
     RequisitionStatusFinalised,
+    StockLocationChange,
+    StockCostPriceChange,
+    StockSellPriceChange,
+    StockExpiryDateChange,
+    StockBatchChange,
+    StockOnHold,
+    StockOffHold,
 }
 
 #[Object]
@@ -59,6 +66,10 @@ impl ActivityLogNode {
 
     pub async fn datetime(&self) -> &NaiveDateTime {
         &self.row().datetime
+    }
+
+    pub async fn event(&self) -> &Option<String> {
+        &self.row().event
     }
 
     pub async fn user(&self, ctx: &Context<'_>) -> Result<Option<UserNode>> {
@@ -103,50 +114,62 @@ impl ActivityLogNode {
 
 impl ActivityLogNodeType {
     pub fn from_domain(from: &ActivityLogType) -> ActivityLogNodeType {
+        use ActivityLogNodeType as to;
+        use ActivityLogType as from;
+
         match from {
-            ActivityLogType::UserLoggedIn => ActivityLogNodeType::UserLoggedIn,
-            ActivityLogType::InvoiceCreated => ActivityLogNodeType::InvoiceCreated,
-            ActivityLogType::InvoiceDeleted => ActivityLogNodeType::InvoiceDeleted,
-            ActivityLogType::InvoiceStatusAllocated => ActivityLogNodeType::InvoiceStatusAllocated,
-            ActivityLogType::InvoiceStatusPicked => ActivityLogNodeType::InvoiceStatusPicked,
-            ActivityLogType::InvoiceStatusShipped => ActivityLogNodeType::InvoiceStatusShipped,
-            ActivityLogType::InvoiceStatusDelivered => ActivityLogNodeType::InvoiceStatusDelivered,
-            ActivityLogType::InvoiceStatusVerified => ActivityLogNodeType::InvoiceStatusVerified,
-            ActivityLogType::StocktakeCreated => ActivityLogNodeType::StocktakeCreated,
-            ActivityLogType::StocktakeDeleted => ActivityLogNodeType::StocktakeDeleted,
-            ActivityLogType::StocktakeStatusFinalised => {
-                ActivityLogNodeType::StocktakeStatusFinalised
-            }
-            ActivityLogType::RequisitionCreated => ActivityLogNodeType::RequisitionCreated,
-            ActivityLogType::RequisitionDeleted => ActivityLogNodeType::RequisitionDeleted,
-            ActivityLogType::RequisitionStatusSent => ActivityLogNodeType::RequisitionStatusSent,
-            ActivityLogType::RequisitionStatusFinalised => {
-                ActivityLogNodeType::RequisitionStatusFinalised
-            }
+            from::UserLoggedIn => to::UserLoggedIn,
+            from::InvoiceCreated => to::InvoiceCreated,
+            from::InvoiceDeleted => to::InvoiceDeleted,
+            from::InvoiceStatusAllocated => to::InvoiceStatusAllocated,
+            from::InvoiceStatusPicked => to::InvoiceStatusPicked,
+            from::InvoiceStatusShipped => to::InvoiceStatusShipped,
+            from::InvoiceStatusDelivered => to::InvoiceStatusDelivered,
+            from::InvoiceStatusVerified => to::InvoiceStatusVerified,
+            from::StocktakeCreated => to::StocktakeCreated,
+            from::StocktakeDeleted => to::StocktakeDeleted,
+            from::StocktakeStatusFinalised => to::StocktakeStatusFinalised,
+            from::RequisitionCreated => to::RequisitionCreated,
+            from::RequisitionDeleted => to::RequisitionDeleted,
+            from::RequisitionStatusSent => to::RequisitionStatusSent,
+            from::RequisitionStatusFinalised => to::RequisitionStatusFinalised,
+            from::StockLocationChange => to::StockLocationChange,
+            from::StockCostPriceChange => to::StockCostPriceChange,
+            from::StockSellPriceChange => to::StockSellPriceChange,
+            from::StockExpiryDateChange => to::StockExpiryDateChange,
+            from::StockBatchChange => to::StockBatchChange,
+            from::StockOnHold => to::StockOnHold,
+            from::StockOffHold => to::StockOffHold,
         }
     }
 
     pub fn to_domain(self) -> ActivityLogType {
+        use ActivityLogNodeType as from;
+        use ActivityLogType as to;
+
         match self {
-            ActivityLogNodeType::UserLoggedIn => ActivityLogType::UserLoggedIn,
-            ActivityLogNodeType::InvoiceCreated => ActivityLogType::InvoiceCreated,
-            ActivityLogNodeType::InvoiceDeleted => ActivityLogType::InvoiceDeleted,
-            ActivityLogNodeType::InvoiceStatusAllocated => ActivityLogType::InvoiceStatusAllocated,
-            ActivityLogNodeType::InvoiceStatusPicked => ActivityLogType::InvoiceStatusPicked,
-            ActivityLogNodeType::InvoiceStatusShipped => ActivityLogType::InvoiceStatusShipped,
-            ActivityLogNodeType::InvoiceStatusDelivered => ActivityLogType::InvoiceStatusDelivered,
-            ActivityLogNodeType::InvoiceStatusVerified => ActivityLogType::InvoiceStatusVerified,
-            ActivityLogNodeType::StocktakeCreated => ActivityLogType::StocktakeCreated,
-            ActivityLogNodeType::StocktakeDeleted => ActivityLogType::StocktakeDeleted,
-            ActivityLogNodeType::StocktakeStatusFinalised => {
-                ActivityLogType::StocktakeStatusFinalised
-            }
-            ActivityLogNodeType::RequisitionCreated => ActivityLogType::RequisitionCreated,
-            ActivityLogNodeType::RequisitionDeleted => ActivityLogType::RequisitionDeleted,
-            ActivityLogNodeType::RequisitionStatusSent => ActivityLogType::RequisitionStatusSent,
-            ActivityLogNodeType::RequisitionStatusFinalised => {
-                ActivityLogType::RequisitionStatusFinalised
-            }
+            from::UserLoggedIn => to::UserLoggedIn,
+            from::InvoiceCreated => to::InvoiceCreated,
+            from::InvoiceDeleted => to::InvoiceDeleted,
+            from::InvoiceStatusAllocated => to::InvoiceStatusAllocated,
+            from::InvoiceStatusPicked => to::InvoiceStatusPicked,
+            from::InvoiceStatusShipped => to::InvoiceStatusShipped,
+            from::InvoiceStatusDelivered => to::InvoiceStatusDelivered,
+            from::InvoiceStatusVerified => to::InvoiceStatusVerified,
+            from::StocktakeCreated => to::StocktakeCreated,
+            from::StocktakeDeleted => to::StocktakeDeleted,
+            from::StocktakeStatusFinalised => to::StocktakeStatusFinalised,
+            from::RequisitionCreated => to::RequisitionCreated,
+            from::RequisitionDeleted => to::RequisitionDeleted,
+            from::RequisitionStatusSent => to::RequisitionStatusSent,
+            from::RequisitionStatusFinalised => to::RequisitionStatusFinalised,
+            from::StockLocationChange => to::StockLocationChange,
+            from::StockCostPriceChange => to::StockCostPriceChange,
+            from::StockSellPriceChange => to::StockSellPriceChange,
+            from::StockExpiryDateChange => to::StockExpiryDateChange,
+            from::StockBatchChange => to::StockBatchChange,
+            from::StockOnHold => to::StockOnHold,
+            from::StockOffHold => to::StockOffHold,
         }
     }
 }

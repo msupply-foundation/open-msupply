@@ -220,9 +220,12 @@ pub async fn start_server(
     let closure_settings = settings.clone();
     let mut http_server = HttpServer::new(move || {
         App::new()
+            .app_data(Data::new(closure_settings.clone()))
             .wrap(logger_middleware())
             .wrap(cors_policy(&closure_settings))
             .wrap(compress_middleware())
+            // needed for static files service
+            .app_data(Data::new(closure_settings.clone()))
             .configure(attach_graphql_schema(graphql_schema.clone()))
             .configure(config_static_files)
             .configure(config_server_frontend)
