@@ -80,7 +80,12 @@ pub fn delete_stocktake(
                 })?;
             }
             // End TODO
-            activity_log_entry(&ctx, ActivityLogType::StocktakeDeleted, &stocktake_id)?;
+            activity_log_entry(
+                &ctx,
+                ActivityLogType::StocktakeDeleted,
+                Some(stocktake_id.to_owned()),
+                None,
+            )?;
 
             StocktakeRowRepository::new(&connection).delete(&stocktake_id)?;
             Ok(())

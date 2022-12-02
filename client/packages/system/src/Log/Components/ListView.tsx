@@ -35,9 +35,13 @@ export const LogList: FC<{ recordId: string }> = ({ recordId }) => {
     },
     {
       key: 'type',
-      label: 'label.details',
+      label: 'label.event',
       accessor: ({ rowData }) =>
         t(Formatter.logTypeTranslation(rowData.type), rowData.type),
+    },
+    {
+      key: 'event',
+      label: 'label.details',
     },
   ]);
 
@@ -49,6 +53,7 @@ export const LogList: FC<{ recordId: string }> = ({ recordId }) => {
       isLoading={isLoading}
       isError={isError}
       noDataMessage={t('messages.no-log-entries')}
+      overflowX="auto"
     />
   );
 };
