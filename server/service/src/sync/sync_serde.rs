@@ -11,7 +11,7 @@ pub fn empty_str_as_option_string<'de, D: Deserializer<'de>>(
     Ok(s.filter(|s| !s.is_empty()))
 }
 
-pub fn empty_str_as_option_generic<'de, T: Deserialize<'de>, D: Deserializer<'de>>(
+pub fn empty_str_as_option<'de, T: Deserialize<'de>, D: Deserializer<'de>>(
     d: D,
 ) -> Result<Option<T>, D::Error> {
     let s: Option<String> = empty_str_as_option_string(d)?;
