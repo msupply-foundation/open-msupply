@@ -1,9 +1,25 @@
 use chrono::{Datelike, Duration, NaiveDate, NaiveDateTime, NaiveTime};
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::{
+    de::{value::StrDeserializer, IntoDeserializer},
+    Deserialize, Deserializer, Serialize, Serializer,
+};
 
-pub fn empty_str_as_option<'de, D: Deserializer<'de>>(d: D) -> Result<Option<String>, D::Error> {
+pub fn empty_str_as_option_string<'de, D: Deserializer<'de>>(
+    d: D,
+) -> Result<Option<String>, D::Error> {
     let s: Option<String> = Option::deserialize(d)?;
     Ok(s.filter(|s| !s.is_empty()))
+}
+
+pub fn empty_str_as_option<'de, T: Deserialize<'de>, D: Deserializer<'de>>(
+    d: D,
+) -> Result<Option<T>, D::Error> {
+    let s: Option<String> = empty_str_as_option_string(d)?;
+
+    let Some(s) = s else { return Ok(None)};
+
+    let str_d: StrDeserializer<D::Error> = s.as_str().into_deserializer();
+    Ok(Some(T::deserialize(str_d)?))
 }
 
 pub fn zero_date_as_option<'de, D: Deserializer<'de>>(d: D) -> Result<Option<NaiveDate>, D::Error> {

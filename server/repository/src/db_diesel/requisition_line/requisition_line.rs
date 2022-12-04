@@ -88,6 +88,7 @@ fn create_filtered_query(
 
     if let Some(f) = filter {
         apply_equal_filter!(query, f.id, requisition_line_dsl::id);
+        apply_equal_filter!(query, f.store_id, requisition_dsl::store_id);
         apply_equal_filter!(
             query,
             f.requisition_id,
@@ -99,6 +100,8 @@ fn create_filtered_query(
             requisition_line_dsl::requested_quantity
         );
         apply_equal_filter!(query, f.item_id, requisition_line_dsl::item_id);
+        apply_equal_filter!(query, f.r#type, requisition_dsl::type_);
+        apply_equal_filter!(query, f.status, requisition_dsl::status);
     }
 
     Ok(query)
