@@ -192,6 +192,15 @@ impl GeneralQueries {
     ) -> Result<DisplaySettingsNode> {
         display_settings(ctx, input)
     }
+
+    pub async fn response_requisition_stats(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        requisition_line_id: String,
+    ) -> Result<RequisitionStatsResponse> {
+        response_requisition_stats(ctx, &store_id, &requisition_line_id)
+    }
 }
 
 #[derive(Default, Clone)]

@@ -29,8 +29,8 @@ export const Select: FC<SelectProps> = React.forwardRef(
       variant="standard"
       size="small"
       InputProps={{
-        disableUnderline: true,
         ...InputProps,
+        color: 'secondary',
         sx: {
           backgroundColor: theme =>
             props.disabled
