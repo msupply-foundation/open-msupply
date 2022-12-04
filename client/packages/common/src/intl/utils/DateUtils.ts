@@ -1,4 +1,4 @@
-import { IntlUtils } from '@common/intl';
+import { IntlUtils, SupportedLocales } from '@common/intl';
 import {
   addMinutes,
   addDays,
@@ -24,10 +24,10 @@ import {
   formatRelative,
   formatDistanceToNow,
 } from 'date-fns';
-import { enGB, enUS, fr, ar } from 'date-fns/locale';
+import { enGB, enUS, fr, ar, es } from 'date-fns/locale';
 
 // Map locale string (from i18n) to locale object (from date-fns)
-const getLocaleObj = { fr, ar };
+const getLocaleObj = { fr, ar, es };
 
 export const MINIMUM_EXPIRY_MONTHS = 3;
 
@@ -80,14 +80,20 @@ export const DateUtils = {
   formatRFC3339,
 };
 
+const getLocale = (language: SupportedLocales) => {
+  switch (language) {
+    case 'en':
+      return navigator.language === 'en-US' ? enUS : enGB;
+    case 'tet':
+      return enGB;
+    default:
+      return getLocaleObj[language];
+  }
+};
+
 export const useFormatDateTime = () => {
   const language = IntlUtils.useCurrentLanguage();
-  const locale =
-    language === 'en'
-      ? navigator.language === 'en-US'
-        ? enUS
-        : enGB
-      : getLocaleObj[language];
+  const locale = getLocale(language);
 
   const localisedDate = (date: Date | string | number): string =>
     formatIfValid(dateInputHandler(date), 'P', { locale });
