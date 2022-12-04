@@ -55,6 +55,7 @@ const StyledPopper = styled(Popper)(({ theme }) => ({
 export function Autocomplete<T>({
   defaultValue,
   filterOptionConfig,
+  filterOptions,
   getOptionDisabled,
   loading,
   loadingText,
@@ -76,7 +77,7 @@ export function Autocomplete<T>({
   inputProps,
   ...restOfAutocompleteProps
 }: PropsWithChildren<AutocompleteProps<T>>): JSX.Element {
-  const filterOptions = createFilterOptions(filterOptionConfig);
+  const filterOption = filterOptions ?? createFilterOptions(filterOptionConfig);
 
   const defaultRenderInput = (props: AutocompleteRenderInputParams) => (
     <BasicTextInput
@@ -114,7 +115,7 @@ export function Autocomplete<T>({
       disableClearable={!clearable}
       value={value}
       getOptionDisabled={getOptionDisabled}
-      filterOptions={filterOptions}
+      filterOptions={filterOption}
       loading={loading}
       loadingText={loadingText}
       noOptionsText={noOptionsText}

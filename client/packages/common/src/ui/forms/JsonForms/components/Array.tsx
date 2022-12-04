@@ -78,12 +78,10 @@ const findIndexOfRemoved = (base: string[], newList: string[]): number => {
   return base.length - 1;
 };
 
-const sortOptions = (
-  options: string[]
-) => {
+const sortOptions = (options: string[]) => {
   const sortedOptions = options.sort((a, b) => a.localeCompare(b));
   return sortedOptions;
-}
+};
 
 const searchRanking = {
   STARTS_WITH: 2,
