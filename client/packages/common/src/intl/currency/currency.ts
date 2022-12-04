@@ -95,6 +95,24 @@ const currencyOptions = {
     negativePattern: '-!#',
     format,
   },
+  es: {
+    symbol: '$',
+    separator: ',',
+    decimal: '.',
+    precision: 2,
+    pattern: '!#',
+    negativePattern: '-!#',
+    format,
+  },
+  tet: {
+    symbol: '$',
+    separator: ',',
+    decimal: '.',
+    precision: 2,
+    pattern: '!#',
+    negativePattern: '-!#',
+    format,
+  },
 };
 
 export const useCurrency = (dp?: number) => {
@@ -104,8 +122,8 @@ export const useCurrency = (dp?: number) => {
   return {
     c: (value: currency.Any) => currency(value, { ...options, precision }),
     options,
-    language
-  }
+    language,
+  };
 };
 
 export const useFormatCurrency = (dp?: number) => {

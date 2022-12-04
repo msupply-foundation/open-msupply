@@ -1,4 +1,6 @@
-use crate::sync::sync_serde::{date_option_to_isostring, empty_str_as_option, zero_date_as_option};
+use crate::sync::sync_serde::{
+    date_option_to_isostring, empty_str_as_option_string, zero_date_as_option,
+};
 use chrono::NaiveDate;
 use repository::{Gender, NameRow, NameType, StorageConnection, SyncBufferRow};
 
@@ -63,13 +65,13 @@ pub struct LegacyNameRow {
     pub customer: bool,
     pub supplier: bool,
 
-    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     pub supplying_store_id: Option<String>,
 
-    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(rename = "first")]
     pub first_name: Option<String>,
-    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(rename = "last")]
     pub last_name: Option<String>,
 
@@ -78,29 +80,29 @@ pub struct LegacyNameRow {
     #[serde(serialize_with = "date_option_to_isostring")]
     pub date_of_birth: Option<NaiveDate>,
 
-    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     pub phone: Option<String>,
 
-    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(rename = "charge code")]
     pub charge_code: Option<String>,
 
-    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     pub comment: Option<String>,
-    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     pub country: Option<String>,
 
-    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(rename = "bill_address1")]
     pub address1: Option<String>,
-    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(rename = "bill_address2")]
     pub address2: Option<String>,
 
-    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     pub email: Option<String>,
 
-    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(rename = "url")]
     pub website: Option<String>,
 
