@@ -9,6 +9,8 @@ import {
 } from '../styleConstants';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../useZodOptionsValidation';
+import parse from 'autosuggest-highlight/parse';
+import match from 'autosuggest-highlight/match';
 
 export const selectTester = rankWith(4, isEnumControl);
 
@@ -58,8 +60,36 @@ const getDisplayOptions = (
       return prev;
     }
     prev.push({ value: key, label: value ?? key });
+    prev.sort((a, b) => a.label.localeCompare(b.label));
     return prev;
   }, []);
+};
+
+const searchRanking = {
+  STARTS_WITH: 2,
+  CONTAINS: 1,
+  NO_MATCH: 0,
+} as const;
+
+const filterOptions = (
+  options: DisplayOption[],
+  { inputValue }: { inputValue: string }
+) => {
+  const searchTerm = inputValue.toLowerCase();
+  const filteredOptions = options
+    .map(option => {
+      const lowerCaseOption = option.label.toLowerCase();
+
+      const rank = lowerCaseOption.startsWith(searchTerm)
+        ? searchRanking.STARTS_WITH
+        : lowerCaseOption.includes(searchTerm)
+        ? searchRanking.CONTAINS
+        : searchRanking.NO_MATCH;
+      return { ...option, rank };
+    }).filter(({ rank }) => rank !== searchRanking.NO_MATCH)
+    .sort((a, b) => b.rank - a.rank);
+        
+  return filteredOptions;
 };
 
 const UIComponent = (props: ControlProps) => {
@@ -98,6 +128,30 @@ const UIComponent = (props: ControlProps) => {
           options={options}
           value={value}
           onChange={onChange}
+          filterOptions={filterOptions}
+          renderOption={(props, option, { inputValue }) => {
+            const matches = match(option.label, inputValue, {
+              insideWords: true,
+            });
+            const parts = parse(option.label, matches);
+
+            return (
+              <li {...props}>
+                <div>
+                  {parts.map((part, index) => (
+                    <span
+                      key={index}
+                      style={{
+                        fontWeight: part.highlight ? 600 : 400,
+                      }}
+                    >
+                      {part.text}
+                    </span>
+                  ))}
+                </div>
+              </li>
+            );
+          }}
           clearable={!props.config?.required}
           inputProps={{
             error: !!zErrors || !!props.errors,
