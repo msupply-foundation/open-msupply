@@ -12,6 +12,7 @@ use validate::validate;
 use crate::activity_log::{activity_log_entry, log_type_from_invoice_status};
 use crate::invoice::outbound_shipment::update::generate::GenerateResult;
 use crate::invoice::query::get_invoice;
+use crate::invoice_line::ShipmentTaxUpdate;
 use crate::service_provider::ServiceContext;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -29,6 +30,7 @@ pub struct UpdateOutboundShipment {
     pub their_reference: Option<String>,
     pub colour: Option<String>,
     pub transport_reference: Option<String>,
+    pub tax: Option<ShipmentTaxUpdate>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -63,9 +65,11 @@ pub fn update_outbound_shipment(
                 update_invoice,
                 unallocated_lines_to_trim,
                 location_movements,
+                update_tax_for_lines,
             } = generate(&ctx.store_id, invoice, patch.clone(), connection)?;
 
             InvoiceRowRepository::new(connection).upsert_one(&update_invoice)?;
+            let invoice_line_repo = InvoiceLineRowRepository::new(connection);
 
             if let Some(stock_lines) = batches_to_update {
                 let repository = StockLineRowRepository::new(connection);
@@ -75,15 +79,20 @@ pub fn update_outbound_shipment(
             }
 
             if let Some(lines) = unallocated_lines_to_trim {
-                let repository = InvoiceLineRowRepository::new(connection);
                 for line in lines {
-                    repository.delete(&line.id)?;
+                    invoice_line_repo.delete(&line.id)?;
                 }
             }
 
             if let Some(movements) = location_movements {
                 for movement in movements {
                     LocationMovementRowRepository::new(&connection).upsert_one(&movement)?;
+                }
+            }
+
+            if let Some(update_tax) = update_tax_for_lines {
+                for line in update_tax {
+                    invoice_line_repo.upsert_one(&line)?;
                 }
             }
 
@@ -417,6 +426,7 @@ mod test {
                 their_reference: Some("their_reference".to_string()),
                 colour: Some("colour".to_string()),
                 transport_reference: Some("transport_reference".to_string()),
+                tax: None,
             }
         }
 
@@ -439,6 +449,7 @@ mod test {
                     their_reference,
                     colour,
                     transport_reference,
+                    tax: _,
                 } = get_update();
                 u.on_hold = on_hold.unwrap();
                 u.comment = comment;

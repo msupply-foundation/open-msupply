@@ -26,7 +26,6 @@ pub struct InsertInput {
     pub expiry_date: Option<NaiveDate>,
     pub number_of_packs: f64,
     pub total_before_tax: Option<f64>,
-    pub tax: Option<f64>,
 }
 
 #[derive(SimpleObject)]
@@ -83,7 +82,6 @@ impl InsertInput {
             cost_price_per_pack,
             number_of_packs,
             total_before_tax,
-            tax,
         } = self;
 
         ServiceInput {
@@ -98,7 +96,6 @@ impl InsertInput {
             cost_price_per_pack,
             number_of_packs,
             total_before_tax,
-            tax,
         }
     }
 }
@@ -427,7 +424,6 @@ mod test {
                     expiry_date: Some(NaiveDate::from_ymd(2022, 01, 01)),
                     number_of_packs: 1.0,
                     total_before_tax: Some(1.1),
-                    tax: Some(5.0)
                 }
             );
             Ok(InvoiceLine {
@@ -451,7 +447,6 @@ mod test {
                 "expiryDate": "2022-01-01",
                 "numberOfPacks": 1.0,
                 "totalBeforeTax": 1.1,
-                "tax": 5.0
             },
             "storeId": "store_a"
         });

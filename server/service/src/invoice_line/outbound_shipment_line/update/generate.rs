@@ -1,4 +1,3 @@
-use crate::invoice::common::calculate_total_after_tax;
 use repository::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow};
 
 use super::{BatchPair, UpdateOutboundShipmentLine, UpdateOutboundShipmentLineError};
@@ -135,12 +134,9 @@ fn generate_line(
         update_line.total_before_tax
     };
 
-    if let Some(tax) = input.tax {
-        update_line.tax = tax.percentage;
-    }
-
-    update_line.total_after_tax =
-        calculate_total_after_tax(update_line.total_before_tax, update_line.tax);
+    // Implement back when tax for invoice lines has been discussed
+    // update_line.total_after_tax =
+    //     calculate_total_after_tax(update_line.total_before_tax, update_line.tax);
 
     update_line
 }

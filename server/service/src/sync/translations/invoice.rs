@@ -121,6 +121,7 @@ pub struct LegacyTransactRow {
     pub confirm_time: NaiveTime,
 
     pub mode: TransactMode,
+    pub tax: Option<f64>,
 
     #[serde(rename = "om_created_datetime")]
     pub created_datetime: Option<NaiveDateTime>,
@@ -196,6 +197,7 @@ impl SyncTranslation for InvoiceTranslation {
             on_hold: data.hold,
             comment: data.comment,
             their_reference: data.their_ref,
+            tax: data.tax,
 
             // new om field mappings
             created_datetime: mapping.created_datetime,
@@ -260,6 +262,7 @@ impl SyncTranslation for InvoiceTranslation {
             requisition_id,
             linked_invoice_id,
             transport_reference,
+            tax,
         } = InvoiceRowRepository::new(connection).find_one_by_id(&changelog.record_id)?;
 
         let _type = legacy_invoice_type(&r#type).ok_or(anyhow::Error::msg(format!(
@@ -291,6 +294,7 @@ impl SyncTranslation for InvoiceTranslation {
                 .map(|delivered_datetime| date_from_date_time(&delivered_datetime)),
             confirm_date: confirm_datetime.0,
             confirm_time: confirm_datetime.1,
+            tax,
 
             mode: TransactMode::Store,
             transport_reference,

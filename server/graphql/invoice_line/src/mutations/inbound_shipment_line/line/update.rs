@@ -1,6 +1,5 @@
 use async_graphql::*;
 use chrono::NaiveDate;
-use graphql_core::generic_inputs::TaxInput;
 use graphql_core::simple_generic_errors::{
     CannotEditInvoice, ForeignKey, ForeignKeyError, NotAnInboundShipment, RecordNotFound,
 };
@@ -13,7 +12,6 @@ use service::auth::{Resource, ResourceAccessRequest};
 use service::invoice_line::inbound_shipment_line::{
     UpdateInboundShipmentLine as ServiceInput, UpdateInboundShipmentLineError as ServiceError,
 };
-use service::invoice_line::ShipmentTaxUpdate;
 
 use super::BatchIsReserved;
 
@@ -30,7 +28,6 @@ pub struct UpdateInput {
     pub expiry_date: Option<NaiveDate>,
     pub number_of_packs: Option<f64>,
     pub total_before_tax: Option<f64>,
-    pub tax: Option<TaxInput>,
 }
 
 #[derive(SimpleObject)]
@@ -95,7 +92,6 @@ impl UpdateInput {
             cost_price_per_pack,
             number_of_packs,
             total_before_tax,
-            tax,
         } = self;
 
         ServiceInput {
@@ -109,11 +105,6 @@ impl UpdateInput {
             cost_price_per_pack,
             number_of_packs,
             total_before_tax,
-            tax: tax.and_then(|tax| {
-                Some(ShipmentTaxUpdate {
-                    percentage: tax.percentage,
-                })
-            }),
         }
     }
 }
@@ -471,7 +462,6 @@ mod test {
                     expiry_date: Some(NaiveDate::from_ymd(2022, 01, 01)),
                     number_of_packs: Some(1.0),
                     total_before_tax: None,
-                    tax: None,
                 }
             );
             Ok(InvoiceLine {

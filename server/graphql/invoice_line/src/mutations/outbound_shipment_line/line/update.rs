@@ -1,6 +1,5 @@
 use async_graphql::*;
 
-use graphql_core::generic_inputs::TaxInput;
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::{
     simple_generic_errors::{CannotEditInvoice, ForeignKey, ForeignKeyError, RecordNotFound},
@@ -13,7 +12,6 @@ use service::auth::{Resource, ResourceAccessRequest};
 use service::invoice_line::outbound_shipment_line::{
     UpdateOutboundShipmentLine as ServiceInput, UpdateOutboundShipmentLineError as ServiceError,
 };
-use service::invoice_line::ShipmentTaxUpdate;
 
 use super::{
     LocationIsOnHold, LocationNotFound, NotEnoughStockForReduction,
@@ -28,7 +26,6 @@ pub struct UpdateInput {
     stock_line_id: Option<String>,
     number_of_packs: Option<f64>,
     total_before_tax: Option<f64>,
-    tax: Option<TaxInput>,
 }
 
 pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<UpdateResponse> {
@@ -96,7 +93,6 @@ impl UpdateInput {
             stock_line_id,
             number_of_packs,
             total_before_tax,
-            tax,
         } = self;
 
         ServiceInput {
@@ -105,11 +101,6 @@ impl UpdateInput {
             stock_line_id,
             number_of_packs,
             total_before_tax,
-            tax: tax.and_then(|tax| {
-                Some(ShipmentTaxUpdate {
-                    percentage: tax.percentage,
-                })
-            }),
         }
     }
 }
@@ -202,7 +193,7 @@ mod test {
                 UpdateOutboundShipmentLine as ServiceInput,
                 UpdateOutboundShipmentLineError as ServiceError,
             },
-            InvoiceLineServiceTrait, ShipmentTaxUpdate,
+            InvoiceLineServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };
@@ -240,9 +231,6 @@ mod test {
             "stockLineId": "n/a",
             "numberOfPacks": 0,
             "totalBeforeTax": 0,
-            "tax": {
-              "percentage": 0
-            }
           }
         })
     }
@@ -587,9 +575,6 @@ mod test {
                     stock_line_id: Some("stock_line_id input".to_string()),
                     number_of_packs: Some(1.0),
                     total_before_tax: Some(1.0),
-                    tax: Some(ShipmentTaxUpdate {
-                        percentage: Some(1.0),
-                    })
                 }
             );
             Ok(InvoiceLine {
@@ -607,9 +592,6 @@ mod test {
             "stockLineId": "stock_line_id input",
             "numberOfPacks": 1.0,
             "totalBeforeTax": 1.0,
-            "tax": {
-              "percentage": 1.0
-            }
           },
           "storeId": "store_a"
         });
