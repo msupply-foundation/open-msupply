@@ -24,7 +24,6 @@ pub struct InsertInboundShipmentLine {
     pub expiry_date: Option<NaiveDate>,
     pub number_of_packs: f64,
     pub total_before_tax: Option<f64>,
-    pub tax: Option<f64>,
 }
 
 type OutError = InsertInboundShipmentLineError;

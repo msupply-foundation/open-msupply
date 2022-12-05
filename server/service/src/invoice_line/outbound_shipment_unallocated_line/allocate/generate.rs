@@ -44,7 +44,7 @@ pub fn generate(
         });
         return Ok(result);
     }
-// Asc, by expiry date, nulls last
+    // Asc, by expiry date, nulls last
     let sorted_available_stock_lines =
         get_sorted_available_stock_lines(connection, store_id, &unallocated_line)?;
     // Use FEFO to allocate
@@ -157,7 +157,6 @@ fn generate_new_line(
         stock_line_id: stock_line_row.id.clone(),
         number_of_packs: packs_to_allocate,
         total_before_tax: None,
-        tax: None,
     }
 }
 
@@ -177,7 +176,6 @@ fn try_allocate_existing_line(
                 item_id: None,
                 stock_line_id: None,
                 total_before_tax: None,
-                tax: None,
             }
         })
 }

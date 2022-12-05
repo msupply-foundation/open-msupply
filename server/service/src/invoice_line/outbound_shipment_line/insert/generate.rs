@@ -14,7 +14,7 @@ pub fn generate(
     let adjust_total_number_of_packs = invoice.status == InvoiceRowStatus::Picked;
 
     let update_batch = generate_batch_update(&input, batch.clone(), adjust_total_number_of_packs);
-    let new_line = generate_line(input, item_row, batch);
+    let new_line = generate_line(input, item_row, batch, invoice);
 
     Ok((new_line, update_batch))
 }
@@ -44,7 +44,6 @@ fn generate_line(
         stock_line_id,
         number_of_packs,
         total_before_tax,
-        tax,
     }: InsertOutboundShipmentLine,
     ItemRow {
         name: item_name,
@@ -61,6 +60,7 @@ fn generate_line(
         note,
         ..
     }: StockLineRow,
+    InvoiceRow { tax, .. }: InvoiceRow,
 ) -> InvoiceLineRow {
     let total_before_tax = total_before_tax.unwrap_or(cost_price_per_pack * number_of_packs as f64);
     let total_after_tax = calculate_total_after_tax(total_before_tax, tax);

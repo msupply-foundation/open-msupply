@@ -234,7 +234,7 @@ impl InvoiceNode {
             stock_total_after_tax: 0.0,
             service_total_before_tax: 0.0,
             service_total_after_tax: 0.0,
-            tax_percentage: None,
+            tax_percentage: self.row().tax,
         };
 
         let result_option = loader.load_one(self.row().id.to_string()).await?;

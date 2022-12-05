@@ -33,7 +33,7 @@ pub(crate) fn generate_inbound_shipment_lines(
                  r#type,
                  total_after_tax: _,
                  total_before_tax: _,
-                 tax: _,
+                 tax,
              }| {
                 let cost_price_per_pack = sell_price_per_pack;
                 InvoiceLineRow {
@@ -47,7 +47,8 @@ pub(crate) fn generate_inbound_shipment_lines(
                     pack_size,
                     // TODO clarify this
                     total_before_tax: cost_price_per_pack * number_of_packs as f64,
-                    total_after_tax: cost_price_per_pack * number_of_packs as f64,
+                    total_after_tax: (cost_price_per_pack * number_of_packs)
+                        * (1.0 + tax.unwrap_or(0.0) / 100.0) as f64,
                     cost_price_per_pack,
                     r#type: match r#type {
                         InvoiceLineRowType::Service => InvoiceLineRowType::Service,
@@ -55,11 +56,11 @@ pub(crate) fn generate_inbound_shipment_lines(
                     },
                     number_of_packs,
                     note,
+                    tax,
                     // Default
                     stock_line_id: None,
                     location_id: None,
                     sell_price_per_pack: 0.0,
-                    tax: Some(0.0),
                 }
             },
         )

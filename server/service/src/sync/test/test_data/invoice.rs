@@ -116,6 +116,7 @@ fn transact_1_pull_record() -> TestSyncPullRecord {
             colour: None,
             requisition_id: None,
             linked_invoice_id: None,
+            tax: Some(0.0),
         }),
     )
 }
@@ -154,7 +155,8 @@ fn transact_1_push_record() -> TestSyncPushRecord {
             verified_datetime: None,
             om_status: Some(InvoiceRowStatus::Delivered),
             om_type: Some(InvoiceRowType::InboundShipment),
-            om_colour: None
+            om_colour: None,
+            tax: Some(0.0),
         }),
     }
 }
@@ -263,6 +265,7 @@ fn transact_2_pull_record() -> TestSyncPullRecord {
             colour: None,
             requisition_id: None,
             linked_invoice_id: None,
+            tax: Some(0.0),
         }),
     )
 }
@@ -302,7 +305,8 @@ fn transact_2_push_record() -> TestSyncPushRecord {
             verified_datetime: None,
             om_status: Some(InvoiceRowStatus::Shipped),
             om_type: Some(InvoiceRowType::OutboundShipment),
-            om_colour: None
+            om_colour: None,
+            tax: Some(0.0),
         }),
     }
 }
@@ -419,6 +423,7 @@ fn transact_om_fields_pull_record() -> TestSyncPullRecord {
             colour: Some("SomeColour".to_string()),
             requisition_id: None,
             linked_invoice_id: None,
+            tax: Some(0.0),
         }),
     )
 }
@@ -456,7 +461,8 @@ fn transact_om_fields_push_record() -> TestSyncPushRecord {
             verified_datetime: Some(NaiveDate::from_ymd(2022, 8, 29).and_hms(14, 33, 0)),
             om_status: Some(InvoiceRowStatus::Shipped),
             om_type: Some(InvoiceRowType::InventoryAdjustment),
-            om_colour: Some("SomeColour".to_string())
+            om_colour: Some("SomeColour".to_string()),
+            tax: Some(0.0),
         }),
     }
 }

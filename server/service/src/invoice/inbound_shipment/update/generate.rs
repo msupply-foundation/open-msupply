@@ -10,6 +10,8 @@ use repository::{
 };
 use util::uuid::uuid;
 
+use crate::invoice::common::calculate_total_after_tax;
+
 use super::{UpdateInboundShipment, UpdateInboundShipmentError, UpdateInboundShipmentStatus};
 
 pub struct LineAndStockLine {
@@ -42,6 +44,10 @@ pub(crate) fn generate(
     update_invoice.their_reference = patch.their_reference.or(update_invoice.their_reference);
     update_invoice.on_hold = patch.on_hold.unwrap_or(update_invoice.on_hold);
     update_invoice.colour = patch.colour.or(update_invoice.colour);
+    update_invoice.tax = patch
+        .tax
+        .map(|tax| tax.percentage)
+        .unwrap_or(update_invoice.tax);
 
     if let Some(status) = patch.status.clone() {
         update_invoice.status = status.full_status().into()
@@ -57,6 +63,7 @@ pub(crate) fn generate(
             connection,
             &update_invoice.store_id,
             &update_invoice.id,
+            update_invoice.tax,
         )?)
     } else {
         None
@@ -159,6 +166,7 @@ pub fn generate_lines_and_stock_lines(
     connection: &StorageConnection,
     store_id: &str,
     id: &str,
+    tax: Option<f64>,
 ) -> Result<Vec<LineAndStockLine>, UpdateInboundShipmentError> {
     let lines = InvoiceLineRowRepository::new(connection).find_many_by_invoice_id(id)?;
     let mut result = Vec::new();
@@ -188,6 +196,11 @@ pub fn generate_lines_and_stock_lines(
             number_of_packs,
             note,
         }: InvoiceLineRow = invoice_lines;
+        if tax.is_some() {
+            line.tax = tax;
+            line.total_after_tax = calculate_total_after_tax(line.total_before_tax, tax);
+        }
+
         if number_of_packs > 0.0 {
             let stock_line = StockLineRow {
                 id: stock_line_id,

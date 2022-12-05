@@ -15,7 +15,7 @@ pub fn generate(
     item_row: ItemRow,
     existing_invoice_row: InvoiceRow,
 ) -> (Option<InvoiceRow>, InvoiceLineRow, Option<StockLineRow>) {
-    let mut new_line = generate_line(input, item_row);
+    let mut new_line = generate_line(input, item_row, existing_invoice_row.clone());
 
     let new_batch_option = if existing_invoice_row.status != InvoiceRowStatus::New {
         let new_batch = generate_batch(&existing_invoice_row.store_id, new_line.clone(), false);
@@ -45,13 +45,13 @@ fn generate_line(
         number_of_packs,
         location_id,
         total_before_tax,
-        tax,
     }: InsertInboundShipmentLine,
     ItemRow {
         name: item_name,
         code: item_code,
         ..
     }: ItemRow,
+    InvoiceRow { tax, .. }: InvoiceRow,
 ) -> InvoiceLineRow {
     let total_before_tax = total_before_tax.unwrap_or(cost_price_per_pack * number_of_packs as f64);
     let total_after_tax = calculate_total_after_tax(total_before_tax, tax);
