@@ -207,7 +207,7 @@
     "sync-status.prepare": "Préparation",
     "sync-status.pull-central": "Réception (Central)",
     "sync-status.pull-remote": "Réception (Remote)",
-    "sync-status.push": "Pousser",
+    "sync-status.push": "Envoi",
     "messages.select-rows-to-delete": "Sélectionner les lignes pour les supprimer",
     "table.show-columns": "Montrer / cacher les colonnes",
     "warning.caps-lock": "Avertissement: Verrouillage majuscule activé",
