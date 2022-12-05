@@ -110,7 +110,7 @@ const EnumArrayComponent: FC<EnumArrayControlCustomProps> = ({
         >
           <FormLabel sx={{ fontWeight: 'bold' }}>{label}:</FormLabel>
         </Box>
-        <Box flexBasis={FORM_INPUT_COLUMN_WIDTH}>
+        <Box sx={{width: FORM_INPUT_COLUMN_WIDTH}}>
           <Autocomplete
             multiple
             sx={{
