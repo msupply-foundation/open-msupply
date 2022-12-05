@@ -72,7 +72,7 @@ const currencyOptions = {
     symbol: '$',
     separator: ',',
     decimal: '.',
-    precision: 10,
+    precision: 2,
     pattern: '!#',
     negativePattern: '-!#',
     format,
@@ -81,7 +81,7 @@ const currencyOptions = {
     symbol: 'XOF',
     separator: '.',
     decimal: ',',
-    precision: 10,
+    precision: 2,
     pattern: '# !',
     negativePattern: '-# !',
     format,
@@ -90,25 +90,44 @@ const currencyOptions = {
     symbol: 'ر.ق.',
     separator: ',',
     decimal: '.',
-    precision: 10,
+    precision: 2,
+    pattern: '!#',
+    negativePattern: '-!#',
+    format,
+  },
+  es: {
+    symbol: '$',
+    separator: ',',
+    decimal: '.',
+    precision: 2,
+    pattern: '!#',
+    negativePattern: '-!#',
+    format,
+  },
+  tet: {
+    symbol: '$',
+    separator: ',',
+    decimal: '.',
+    precision: 2,
     pattern: '!#',
     negativePattern: '-!#',
     format,
   },
 };
 
-export const useCurrency = () => {
+export const useCurrency = (dp?: number) => {
   const language = IntlUtils.useCurrentLanguage();
   const options = currencyOptions[language];
+  const precision = dp ?? options.precision;
   return {
-    c: (value: currency.Any) => currency(value, options),
+    c: (value: currency.Any) => currency(value, { ...options, precision }),
     options,
     language,
   };
 };
 
-export const useFormatCurrency = () => {
-  const { c } = useCurrency();
+export const useFormatCurrency = (dp?: number) => {
+  const { c } = useCurrency(dp);
   return (value: currency.Any) => c(value).format();
 };
 

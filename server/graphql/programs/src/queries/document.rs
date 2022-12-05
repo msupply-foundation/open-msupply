@@ -16,6 +16,8 @@ pub enum DocumentResponse {
 pub struct DocumentFilterInput {
     pub name: Option<EqualFilterStringInput>,
     pub r#type: Option<EqualFilterStringInput>,
+    pub owner: Option<EqualFilterStringInput>,
+    pub context: Option<EqualFilterStringInput>,
 }
 
 impl DocumentFilterInput {
@@ -31,6 +33,8 @@ impl DocumentFilterInput {
                 ends_with: None,
             }),
             r#type: self.r#type.map(EqualFilter::from),
+            owner: self.owner.map(EqualFilter::from),
+            context: self.context.map(EqualFilter::from),
         }
     }
 }

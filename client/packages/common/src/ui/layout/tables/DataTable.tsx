@@ -33,6 +33,7 @@ const DataTableComponent = <T extends RecordWithId>({
   isLoading = false,
   noDataElement,
   noDataMessage,
+  overflowX = 'unset',
   pagination,
   onChangePage,
   onRowClick,
@@ -117,7 +118,7 @@ const DataTableComponent = <T extends RecordWithId>({
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
-        overflowX: 'unset',
+        overflowX,
       }}
     >
       <MuiTable>

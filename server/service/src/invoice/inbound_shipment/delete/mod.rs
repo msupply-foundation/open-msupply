@@ -1,4 +1,4 @@
-use repository::{ActivityLogType, InvoiceLine, InvoiceRowRepository, RepositoryError};
+use repository::{ActivityLogType, InvoiceRowRepository, RepositoryError};
 
 mod validate;
 
@@ -30,8 +30,6 @@ pub fn delete_inbound_shipment(
         .transaction_sync(|connection| {
             validate(connection, &input, &ctx.store_id)?;
 
-            // Note that lines are not deleted when an invoice is deleted, due to issues with batch deletes.
-            // TODO: implement delete lines. See https://github.com/openmsupply/remote-server/issues/839 for details.
             let lines = get_lines_for_invoice(connection, &input.id)?;
             for line in lines {
                 delete_inbound_shipment_line(
@@ -46,7 +44,12 @@ pub fn delete_inbound_shipment(
                 })?;
             }
             // End TODO
-            activity_log_entry(&ctx, ActivityLogType::InvoiceDeleted, &input.id)?;
+            activity_log_entry(
+                &ctx,
+                ActivityLogType::InvoiceDeleted,
+                Some(input.id.to_owned()),
+                None,
+            )?;
 
             match InvoiceRowRepository::new(&connection).delete(&input.id.clone()) {
                 Ok(_) => Ok(input.id.clone()),
@@ -69,7 +72,6 @@ pub enum DeleteInboundShipmentError {
         line_id: String,
         error: DeleteInboundShipmentLineError,
     },
-    InvoiceLinesExists(Vec<InvoiceLine>),
 }
 
 impl From<RepositoryError> for DeleteInboundShipmentError {

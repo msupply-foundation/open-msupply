@@ -21,6 +21,7 @@ export const useOutbound = {
 
     fields: Document.useOutboundFields,
     updateTax: Document.useUpdateOutboundTax,
+    updateName: Document.useOutboundUpdateName,
   },
 
   line: {

@@ -1,12 +1,13 @@
 import React, { FC, ReactNode } from 'react';
-import { FormLabel, Box, FormLabelProps } from '@mui/material';
+import { FormLabel, Box, FormLabelProps, SxProps, Theme } from '@mui/material';
 import { BasicTextInput } from './BasicTextInput';
 
-interface InputWithLabelRowProps {
+export interface InputWithLabelRowProps {
   Input: ReactNode;
   label: string;
   labelProps?: FormLabelProps;
   labelWidth?: string | null;
+  sx?: SxProps<Theme>;
 }
 
 export const InputWithLabelRow: FC<InputWithLabelRowProps> = ({
@@ -14,13 +15,14 @@ export const InputWithLabelRow: FC<InputWithLabelRowProps> = ({
   Input = <BasicTextInput />,
   labelProps,
   labelWidth = '120px',
+  sx,
 }) => {
-  const { sx, ...labelPropsRest } = labelProps || {};
+  const { sx: labelSx, ...labelPropsRest } = labelProps || {};
 
   return (
-    <Box display="flex" alignItems="center" gap={1}>
+    <Box display="flex" alignItems="center" gap={1} sx={sx}>
       <FormLabel
-        sx={{ width: labelWidth, fontWeight: 'bold', ...sx }}
+        sx={{ width: labelWidth, fontWeight: 'bold', ...labelSx }}
         {...labelPropsRest}
       >
         {label}:

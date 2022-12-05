@@ -116,7 +116,7 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
         key: itemParsers.toSortField(sortBy),
         desc: sortBy.isDesc,
         storeId,
-        filter: { ...filterBy, isVisible: true },
+        filter: { ...filterBy },
       });
 
       const items = result?.items;
