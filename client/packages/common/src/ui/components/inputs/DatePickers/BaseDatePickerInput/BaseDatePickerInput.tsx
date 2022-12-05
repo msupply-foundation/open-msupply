@@ -9,6 +9,32 @@ export const BaseDatePickerInput: FC<
   return (
     <DatePicker
       disabled={props.disabled}
+      PopperProps={{
+        sx: {
+          '& .MuiTypography-root.Mui-selected': {
+            backgroundColor: 'secondary.main',
+          },
+          '& .Mui-selected:focus': {
+            backgroundColor: 'secondary.main',
+          },
+          '& .MuiPickersDay-root.Mui-selected': {
+            backgroundColor: 'secondary.main',
+          },
+        },
+      }}
+      PaperProps={{
+        sx: {
+          '& .Mui-selected': {
+            backgroundColor: 'secondary.main',
+          },
+          '& .Mui-selected:focus': {
+            backgroundColor: 'secondary.main',
+          },
+          '& .Mui-selected:hover': {
+            backgroundColor: 'secondary.main',
+          },
+        },
+      }}
       renderInput={(params: TextFieldProps) => {
         const textInputProps: StandardTextFieldProps = {
           ...params,
