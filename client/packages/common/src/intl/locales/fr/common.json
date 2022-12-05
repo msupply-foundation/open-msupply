@@ -217,5 +217,6 @@
     "app.initialise": "Initialiser",
     "heading.settings-display": "Paramètres d'affichage",
     "info.server-restarting": "Redémarrage du serveur...",
-    "heading.settings-sync": "Synchronisation"
+    "heading.settings-sync": "Synchronisation",
+    "label.soh": "en stock"
 }
