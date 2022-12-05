@@ -60,7 +60,11 @@ pub fn get_patients(
         .map(|f| f.to_name_filter())
         .or(Some(NameFilter::new()))
         // always filter by patient:
-        .map(|f| f.r#type(NameType::Patient));
+        .map(|f| {
+            f.r#type(EqualFilter::<NameType>::equal_to_name_type(
+                &NameType::Patient,
+            ))
+        });
     let sort = sort.map(|v| NameSort {
         desc: v.desc,
         key: match v.key {

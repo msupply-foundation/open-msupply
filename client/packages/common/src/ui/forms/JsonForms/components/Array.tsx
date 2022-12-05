@@ -30,6 +30,7 @@ import {
   ChevronDownIcon,
   useTranslation,
   ConfirmationModal,
+  useAppTheme,
 } from '@openmsupply-client/common';
 import { RegexUtils } from '@common/utils';
 import {
@@ -123,6 +124,7 @@ const EnumArrayComponent: FC<EnumArrayControlCustomProps> = ({
 }) => {
   const t = useTranslation('common');
   const [removeIndex, setRemoveIndex] = useState<number | undefined>();
+  const theme = useAppTheme();
 
   if (!visible) {
     return null;
@@ -144,9 +146,37 @@ const EnumArrayComponent: FC<EnumArrayControlCustomProps> = ({
         >
           <FormLabel sx={{ fontWeight: 'bold' }}>{label}:</FormLabel>
         </Box>
-        <Box flexBasis={FORM_INPUT_COLUMN_WIDTH}>
+        <Box sx={{width: FORM_INPUT_COLUMN_WIDTH}}>
           <Autocomplete
             multiple
+            sx={{
+              '& .MuiInput-root': {
+                borderRadius: '8px',
+                height: '100%',
+                backgroundColor: theme.palette.background.menu,
+                padding: '5px',
+              },
+              '& .MuiInput-root:before': {
+                border: 'none'
+              },
+              '& .MuiInput-root:after': {
+                color: theme.palette.gray.dark,
+              },
+              '& .MuiInput-root:focus:before': {
+                borderRadius: '8px 8px 0px 0px',
+              },
+              '& .MuiInput-root:hover:before': {
+                borderRadius: '8px 8px 0px 0px',
+              },
+              '& .MuiChip-root': {
+                backgroundColor: theme.palette.secondary.light,
+                height: 'inherit',
+                color: theme.typography.login.color,
+              },
+              '& .MuiChip-deleteIcon': {
+                color: `${theme.palette.background.white} !important`,
+              },
+            }}
             value={data}
             options={sortOptions(schema.enum ?? [])}
             filterOptions={filterOptions}

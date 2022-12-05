@@ -9,8 +9,10 @@
     {
       "type": "Control",
       "scope": "#/properties/enrolmentDatetime",
+      "label": "Enrolment Date",
       "options": {
-        "readonly": true
+        "readonly": true,
+        "dateOnly": true
       }
     },
     {
@@ -46,24 +48,13 @@
     },
     {
       "type": "Control",
-      "scope": "#/properties/priorART",
-      "options": {
-        "show": [
-          ["TRANSFER_IN_WITH_RECORDS", "Transfer in with records"],
-          ["TRANSFER_IN_WITHOUT_RECORDS", "Transfer in without records"],
-          ["PPTCT_PROPHYLAXIS", "PPTCT Prophylaxis"],
-          ["PEP", "PEP"],
-          ["PrEP", "PrEP"]
-        ]
-      }
+      "scope": "#/properties/hivConfirmationDate",
+      "label": "HIV Confirmation Date"
     },
     {
       "type": "Control",
-      "scope": "#/properties/hivConfirmationDate"
-    },
-    {
-      "type": "Control",
-      "scope": "#/properties/hivTestType"
+      "scope": "#/properties/hivTestType",
+      "label": "HIV Test Type"
     },
     {
       "type": "Control",
@@ -72,11 +63,13 @@
     {
       "type": "Control",
       "scope": "#/properties/partnerHivStatus",
+      "label": "Partner HIV Status",
       "options": {
         "show": [
           ["POSITIVE", "Positive"],
           ["NEGATIVE", "Negative"],
-          ["UNKNOWN", "Unknown"]
+          ["UNKNOWN", "Unknown"],
+          ["NOT_DONE", "Not Done"]
         ]
       }
     },
@@ -117,6 +110,45 @@
                 }
               ]
             }
+          }
+        }
+      ]
+    },
+    {
+      "type": "Group",
+      "label": "Referral Details",
+      "elements": [
+        {
+          "type": "Control",
+          "scope": "#/properties/referredFrom",
+          "label": "Referred from",
+          "options": {
+            "show": [
+              ["HCT_OTHER_PICT", "HCT other PICT"],
+              ["INDEX", "Index"],
+              ["LABOUR", "Labour"],
+              ["POST_NATAL", "Post Natal"],
+              ["TB", "TB"],
+              ["COMMUNITY", "Community"],
+              ["TRANSFER_IN", "Transfer in"],
+              ["STI", "STI"],
+              ["ANC", "ANC"],
+              ["EXPOSED_INFANT_WELL_BABY_CLINIC", "Exposed infant well baby clinic"],
+              ["IN_PATIENT", "In patient"]
+            ]
+          }
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/priorART",
+          "options": {
+            "show": [
+              ["TRANSFER_IN_WITH_RECORDS", "Transfer in with records"],
+              ["TRANSFER_IN_WITHOUT_RECORDS", "Transfer in without records"],
+              ["PPTCT_PROPHYLAXIS", "PPTCT Prophylaxis"],
+              ["PEP", "PEP"],
+              ["PrEP", "PrEP"]
+            ]
           }
         }
       ]

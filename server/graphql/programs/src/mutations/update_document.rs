@@ -178,12 +178,13 @@ fn input_to_raw_document(
         parents,
         author,
         timestamp,
-        r#type,
+        r#type: r#type.clone(),
         data,
         schema_id,
         status: DocumentStatus::Active,
         comment: None,
-        patient_id,
+        owner: patient_id,
+        context: Some(r#type),
     }
 }
 

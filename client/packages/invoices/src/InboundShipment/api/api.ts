@@ -90,7 +90,6 @@ const inboundParsers = {
         : null,
       packSize: line.packSize,
       numberOfPacks: line.numberOfPacks,
-      totalBeforeTax: 0,
       invoiceId: line.invoiceId,
       locationId: line.location?.id,
     };

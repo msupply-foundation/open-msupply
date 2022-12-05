@@ -18,7 +18,7 @@ use diesel::{
     prelude::*,
     query_source::joins::OnClauseWrapper,
 };
-use util::constants::SYSTEM_NAME_CODES;
+use util::{constants::SYSTEM_NAME_CODES, inline_init};
 
 #[derive(PartialEq, Debug, Clone, Default)]
 pub struct Name {
@@ -50,6 +50,12 @@ pub struct NameFilter {
     pub address2: Option<SimpleStringFilter>,
     pub country: Option<SimpleStringFilter>,
     pub email: Option<SimpleStringFilter>,
+}
+
+impl EqualFilter<NameType> {
+    pub fn equal_to_name_type(value: &NameType) -> Self {
+        inline_init(|r: &mut Self| r.equal_to = Some(value.to_owned()))
+    }
 }
 
 #[derive(PartialEq, Debug)]
@@ -277,11 +283,6 @@ impl NameFilter {
         self
     }
 
-    pub fn r#type(mut self, value: NameType) -> Self {
-        self.r#type = Some(value.equal_to());
-        self
-    }
-
     pub fn code(mut self, filter: SimpleStringFilter) -> Self {
         self.code = Some(filter);
         self
@@ -324,6 +325,11 @@ impl NameFilter {
 
     pub fn is_customer(mut self, value: bool) -> Self {
         self.is_customer = Some(value);
+        self
+    }
+
+    pub fn r#type(mut self, filter: EqualFilter<NameType>) -> Self {
+        self.r#type = Some(filter);
         self
     }
 }

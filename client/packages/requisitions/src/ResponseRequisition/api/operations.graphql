@@ -238,3 +238,37 @@ mutation supplyRequestedQuantity($responseId: String!, $storeId: String!) {
     }
   }
 }
+
+query responseRequisitionStats($storeId: String!, $requisitionLineId: String!) {
+  responseRequisitionStats(
+    requisitionLineId: $requisitionLineId
+    storeId: $storeId
+  ) {
+    ... on ResponseRequisitionStatsNode {
+      __typename
+      requestStoreStats {
+        averageMonthlyConsumption
+        stockOnHand
+        maxMonthsOfStock
+        suggestedQuantity
+      }
+      responseStoreStats {
+        incomingStock
+        otherRequestedQuantity
+        requestedQuantity
+        stockOnHand
+        stockOnOrder
+      }
+    }
+    ... on RequisitionLineStatsError {
+      __typename
+      error {
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+        description
+      }
+    }
+  }
+}

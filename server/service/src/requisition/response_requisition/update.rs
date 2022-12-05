@@ -54,7 +54,8 @@ pub fn update_response_requisition(
                 activity_log_entry(
                     &ctx,
                     ActivityLogType::RequisitionStatusFinalised,
-                    &updated_requisition.id,
+                    Some(updated_requisition.id.to_owned()),
+                    None,
                 )?;
             }
 

@@ -10,6 +10,7 @@ import {
   Widget,
   FnUtils,
   useToggle,
+  useAuthContext,
 } from '@openmsupply-client/common';
 import { useFormatNumber, useTranslation } from '@common/intl';
 import { useOutbound } from '../api';
@@ -20,10 +21,11 @@ export const OutboundShipmentWidget: React.FC = () => {
   const t = useTranslation(['app', 'dashboard']);
   const formatNumber = useFormatNumber();
   const [hasError, setHasError] = React.useState(false);
+  const { store } = useAuthContext();
 
   const api = useOutbound.utils.api();
   const { data, isLoading } = useQuery(
-    ['outbound-shipment', 'count'],
+    ['outbound-shipment', 'count', store?.id],
     api.dashboard.shipmentCount,
     { retry: false, onError: () => setHasError(true) }
   );

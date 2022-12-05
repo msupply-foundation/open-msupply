@@ -54,6 +54,9 @@ pub use self::activity_log::*;
 pub mod permissions;
 pub use self::permissions::*;
 
+pub mod response_requisition_stats;
+pub use self::response_requisition_stats::*;
+
 use async_graphql::*;
 pub struct DeleteResponse(pub String);
 #[Object]

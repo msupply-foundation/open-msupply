@@ -61,6 +61,8 @@ mod hiv_care_program {
                 risk_group: Default::default(),
                 status: Default::default(),
                 treatment_supporter: Default::default(),
+                // note: Default::default(),
+                referred_from: Default::default(),
             }
         }
     }
@@ -805,7 +807,7 @@ pub fn init_program_data(
         id: hiv_care_program_id.clone(),
         document_type: "HIVCareProgram".to_string(),
         context: DocumentContext::Program,
-        name: Some("HIV Care Program".to_string()),
+        name: Some("HIV Care and Treatment".to_string()),
         parent_id: None,
         form_schema_id: Some(hiv_care_program_schema_id.clone()),
     })?;

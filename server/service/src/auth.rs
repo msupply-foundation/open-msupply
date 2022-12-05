@@ -49,6 +49,8 @@ pub enum Resource {
     QueryItems,
     // stock
     StockCount,
+    QueryStockLine,
+    MutateStockLine,
     // stocktake
     QueryStocktake,
     MutateStocktake,
@@ -56,6 +58,7 @@ pub enum Resource {
     QueryRequisition,
     MutateRequisition,
     RequisitionChart,
+    RequisitionStats,
     // stock take line
     InsertStocktakeLine,
     UpdateStocktakeLine,
@@ -131,7 +134,20 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
             PermissionDSL::HasPermission(Permission::StockLineQuery),
         ]),
     );
-
+    map.insert(
+        Resource::QueryStockLine,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(Permission::StockLineQuery),
+        ]),
+    );
+    map.insert(
+        Resource::MutateStockLine,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(Permission::StockLineMutate),
+        ]),
+    );
     // stocktake
     map.insert(
         Resource::QueryStocktake,
@@ -191,7 +207,13 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
             PermissionDSL::HasPermission(Permission::RequisitionQuery),
         ]),
     );
-
+    map.insert(
+        Resource::RequisitionStats,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(Permission::RequisitionQuery),
+        ]),
+    );
     // invoice
     map.insert(
         Resource::QueryInvoice,
@@ -1063,21 +1085,17 @@ mod permission_validation_test {
         }
 
         fn user() -> UserAccountRow {
-            UserAccountRow {
-                id: "user".to_string(),
-                username: "user".to_string(),
-                hashed_password: "n/a".to_string(),
-                email: None,
-            }
+            inline_init(|r: &mut UserAccountRow| {
+                r.id = "user".to_string();
+                r.username = "user".to_string();
+            })
         }
 
         fn user_without_permission() -> UserAccountRow {
-            UserAccountRow {
-                id: "user_without_permission".to_string(),
-                username: "user".to_string(),
-                hashed_password: "n/a".to_string(),
-                email: None,
-            }
+            inline_init(|r: &mut UserAccountRow| {
+                r.id = "user_without_permission".to_string();
+                r.username = "user".to_string();
+            })
         }
 
         fn permissions() -> Vec<UserPermissionRow> {

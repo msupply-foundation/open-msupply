@@ -168,6 +168,7 @@ const UIComponent = (props: ControlProps) => {
         required: props.required,
       }}
       labelWidthPercentage={FORM_LABEL_WIDTH}
+      inputAlignment={'start'}
     />
   );
 };
