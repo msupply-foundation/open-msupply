@@ -40,7 +40,9 @@ We have some automations to build windows installers based on git tags. To creat
 
 #### Test builds
 
-For test builds feel welcome to just create the tag based off the current version of your base branch, but with whatever. For example a test build of `develop` might be [v1.0.4-test1](https://github.com/openmsupply/open-msupply/releases/tag/v1.0.3-test3). Continue incrementing the test version as builds are done.
+For test builds feel welcome to just create the tag based off the current version of your base branch.
+For example a test build of `develop` might be [v1.0.4-test1](https://github.com/openmsupply/open-msupply/releases/tag/v1.0.3-test3).
+Continue incrementing the test version as builds are done.
 
 If you want to build your own branch, anything such as `v1.0.4-PR123-t1` will work great.
 
