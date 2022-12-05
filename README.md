@@ -36,7 +36,7 @@ We have some automations to build windows installers based on git tags. To creat
 1. Update the package version in `client/package.json` appropriately and commit it. [v1.0.4 example](https://github.com/openmsupply/open-msupply/blob/18b193ae0ecd16a5c48190a2a346cb459eeed30d/client/package.json#L3)
 2. Create a tag on your commit stating the version/build you're doing, but add `v` to the start. [v1.0.4 example](https://github.com/openmsupply/open-msupply/tree/v1.0.4)
 3. Our [Jenkins server]([url](https://jenkins.msupply.org:8443/)) will pickup this tag and start the build process against the repo for the tagged commit
-4. A TMF staff member can grab the executables generated and share them on the [releases](https://github.com/openmsupply/open-msupply/releases) page.
+4. A TMF staff member can download the generated executables from the Jenkins server and share them on the [releases](https://github.com/openmsupply/open-msupply/releases) page.
 
 #### Test builds
 
