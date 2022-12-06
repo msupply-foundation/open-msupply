@@ -38,6 +38,8 @@ import {
   FORM_INPUT_COLUMN_WIDTH,
 } from '../styleConstants';
 import { JsonData } from '../JsonForm';
+import parse from 'autosuggest-highlight/parse';
+import match from 'autosuggest-highlight/match';
 
 interface UISchemaWithCustomProps extends ControlElement {
   defaultNewItem?: JsonData;
@@ -75,6 +77,40 @@ const findIndexOfRemoved = (base: string[], newList: string[]): number => {
   }
   // last item must have been removed
   return base.length - 1;
+};
+
+const sortOptions = (options: string[]) => {
+  const sortedOptions = options.sort((a, b) => a.localeCompare(b));
+  return sortedOptions;
+};
+
+const searchRanking = {
+  STARTS_WITH: 2,
+  CONTAINS: 1,
+  NO_MATCH: 0,
+} as const;
+
+const filterOptions = (
+  options: string[],
+  { inputValue }: { inputValue: string }
+) => {
+  const searchTerm = inputValue.toLowerCase();
+  const filteredOptions = options
+    .map(option => {
+      const lowerCaseOption = option.toLowerCase();
+
+      const rank = lowerCaseOption.startsWith(searchTerm)
+        ? searchRanking.STARTS_WITH
+        : lowerCaseOption.includes(searchTerm)
+        ? searchRanking.CONTAINS
+        : searchRanking.NO_MATCH;
+      return { option, rank };
+    })
+    .filter(({ rank }) => rank !== searchRanking.NO_MATCH)
+    .sort((a, b) => b.rank - a.rank)
+    .map(({ option }) => option);
+
+  return filteredOptions;
 };
 
 const EnumArrayComponent: FC<EnumArrayControlCustomProps> = ({
@@ -142,10 +178,32 @@ const EnumArrayComponent: FC<EnumArrayControlCustomProps> = ({
               },
             }}
             value={data}
-            options={schema.enum ?? []}
-            renderInput={params => (
-              <TextField {...params} variant="standard" color="secondary" />
-            )}
+            options={sortOptions(schema.enum ?? [])}
+            filterOptions={filterOptions}
+            renderOption={(props, option, { inputValue }) => {
+              const matches = match(option, inputValue, {
+                insideWords: true,
+              });
+              const parts = parse(option, matches);
+
+              return (
+                <li {...props}>
+                  <div>
+                    {parts.map((part, index) => (
+                      <span
+                        key={index}
+                        style={{
+                          fontWeight: part.highlight ? 600 : 400,
+                        }}
+                      >
+                        {part.text}
+                      </span>
+                    ))}
+                  </div>
+                </li>
+              );
+            }}
+            renderInput={params => <TextField {...params} variant="standard" />}
             onChange={(_, value) => {
               if (value.length - 1 === data.length) {
                 addItem(path, value[value.length - 1])();
