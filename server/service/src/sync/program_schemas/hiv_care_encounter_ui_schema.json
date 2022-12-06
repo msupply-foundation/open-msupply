@@ -144,10 +144,7 @@
             ]
           }
         },
-        {
-          "scope": "#/properties/arvMedication/properties/regimen",
-          "type": "Control"
-        },
+
         {
           "scope": "#/properties/arvMedication/properties/regimenStatus",
           "type": "Control",
@@ -164,9 +161,28 @@
           }
         },
         {
-          "scope": "#/properties/arvMedication/properties/reason",
-          "type": "Control"
+          "type": "Group",
+          "elements": [
+            {
+              "scope": "#/properties/arvMedication/properties/regimen",
+              "type": "Control"
+            },
+            {
+              "scope": "#/properties/arvMedication/properties/reason",
+              "type": "Control"
+            }
+          ],
+          "rule": {
+            "effect": "ENABLE",
+            "condition": {
+              "scope": "#/properties/arvMedication/properties/regimenStatus",
+              "schema": {
+                "enum": ["START_ARV", "CHANGES_TO_ART_REGIMEN"]
+              }
+            }
+          }
         },
+
         {
           "scope": "#/properties/arvMedication/properties/relevantCoMedication",
           "type": "Control"
