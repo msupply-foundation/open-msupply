@@ -52,7 +52,7 @@ Where `[export name]` is name of exported data in `data/` folder
 cargo run --bin remote_server_cli -- initialise-from-export -n reference1
 ```
 
-Above will create sqlite database in root folder with the name specified in `configuration/*.toml` and will populate it with data. Towards the end of console output of the cli command user:password list is presented (those users can be used to log in vi client/api)
+Above will create sqlite database in root folder with the name specified in `configuration/*.yaml` and will populate it with data. Towards the end of console output of the cli command user:password list is presented (those users can be used to log in vi client/api)
 
 Now we can start server with 
 
@@ -60,7 +60,7 @@ Now we can start server with
 cargo run
 ```
 
-`NOTE` make sure that sync configurations in configuration/*.toml file is commented out, otherwise may get an error that database and yaml sync configurations differ (in which case remote server will try to contact central server)
+`NOTE` make sure that sync configurations in configuration/*.yaml file is commented out, otherwise may get an error that database and yaml sync configurations differ (in which case remote server will try to contact central server)
 
 Explore API available on `http://localhost:8000/graphql` with build in playground or try [online graphiql explorer](https://graphiql-online.com/)
 
