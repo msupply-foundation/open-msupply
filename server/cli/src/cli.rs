@@ -7,7 +7,8 @@ use fast_log;
 use graphql::{Mutations, OperationalSchema, Queries};
 use log::info;
 use repository::{
-    get_storage_connection_manager, test_db, StorageConnectionManager, SyncBufferRowRepository,
+    get_storage_connection_manager, test_db, KeyValueStoreRepository, KeyValueType,
+    SyncBufferRowRepository,
 };
 use serde::{Deserialize, Serialize};
 use server::configuration;
@@ -15,11 +16,11 @@ use service::{
     apis::login_v4::LoginUserInfoV4,
     auth_data::AuthData,
     login::{LoginInput, LoginService},
-    service_provider::ServiceProvider,
+    service_provider::{ServiceContext, ServiceProvider},
     settings::Settings,
     sync::{
-        settings::SyncSettings, synchroniser::integrate_and_translate_sync_buffer,
-        synchroniser_driver::SynchroniserDriver,
+        settings::SyncSettings, sync_status::logger::SyncLogger,
+        synchroniser::integrate_and_translate_sync_buffer, synchroniser_driver::SynchroniserDriver,
     },
     token_bucket::TokenBucket,
 };
@@ -54,7 +55,7 @@ enum Action {
         users: String,
     },
     /// Export initialisation data from running mSupply server (uses configuration/.*yaml for sync credentials).
-    /// Can use env variables to override .yaml configurations, i.e. to override sync username `APP_SYNC__USERNAME='demo' remote_server_cli initalise-from-central -u "user1:user1password,user2:user2password" -f "demoexport.json"
+    /// Can use env variables to override .yaml configurations, i.e. to override sync username `APP_SYNC__USERNAME='demo' remote_server_cli export-initialisation -u "user1:user1password,user2:user2password" -n "demoexport"
     ExportInitialisation {
         /// Name for export of initialisation data (will be saved inside `data` folder)
         #[clap(short, long)]
@@ -83,9 +84,13 @@ enum Action {
 struct InitialisationData {
     sync_buffer_rows: Vec<repository::SyncBufferRow>,
     users: Vec<(LoginInput, LoginUserInfoV4)>,
+    site_id: i32,
 }
 
-async fn initialise_from_central(settings: Settings, users: &str) -> StorageConnectionManager {
+async fn initialise_from_central(
+    settings: Settings,
+    users: &str,
+) -> (Arc<ServiceProvider>, ServiceContext) {
     info!("Reseting database");
     test_db::setup(&settings.database).await;
     info!("Finished database reset");
@@ -107,7 +112,17 @@ async fn initialise_from_central(settings: Settings, users: &str) -> StorageConn
         debug_no_access_control: false,
     };
 
+    let service_context = service_provider.basic_context().unwrap();
     info!("Initialising from central");
+    service_provider
+        .site_info_service
+        .request_and_set_site_info(&service_provider, &sync_settings)
+        .await
+        .unwrap();
+    service_provider
+        .settings
+        .update_sync_settings(&service_context, &sync_settings)
+        .unwrap();
     let (_, sync_driver) = SynchroniserDriver::init();
     sync_driver.sync(service_provider.clone()).await;
 
@@ -124,7 +139,11 @@ async fn initialise_from_central(settings: Settings, users: &str) -> StorageConn
             .expect(&format!("Cannot login with user {:?}", input));
     }
     info!("Initialisation finished");
-    connection_manager
+    (service_provider, service_context)
+}
+
+fn set_server_is_initialised(ctx: &ServiceContext) {
+    SyncLogger::start(&ctx.connection).unwrap().done().unwrap()
 }
 
 #[tokio::main]
@@ -158,7 +177,7 @@ async fn main() {
             pretty,
         } => {
             let url = settings.sync.clone().unwrap().url;
-            let connection_manager = initialise_from_central(settings, &users).await;
+            let (service_provider, ctx) = initialise_from_central(settings, &users).await;
 
             info!("Syncing users");
             let mut synced_user_info_rows = Vec::new();
@@ -175,12 +194,17 @@ async fn main() {
                 ));
             }
 
-            let connection = connection_manager.connection().unwrap();
-
             let data = InitialisationData {
                 // Sync Buffer Rows
-                sync_buffer_rows: SyncBufferRowRepository::new(&connection).get_all().unwrap(),
+                sync_buffer_rows: SyncBufferRowRepository::new(&ctx.connection)
+                    .get_all()
+                    .unwrap(),
                 users: synced_user_info_rows,
+                site_id: service_provider
+                    .site_info_service
+                    .get_site_id(&ctx)
+                    .unwrap()
+                    .unwrap(),
             };
 
             let data_string = if pretty {
@@ -218,6 +242,10 @@ async fn main() {
                 serde_json::from_slice(&fs::read(import_file).unwrap()).unwrap();
 
             info!("Integrate sync buffer");
+            // Need to set site_id before integration
+            KeyValueStoreRepository::new(&ctx.connection)
+                .set_i32(KeyValueType::SettingsSyncSiteId, Some(data.site_id))
+                .unwrap();
             let buffer_repo = SyncBufferRowRepository::new(&ctx.connection);
             let buffer_rows = data
                 .sync_buffer_rows
@@ -259,6 +287,9 @@ async fn main() {
                 )
                 .unwrap();
             service.disable_sync(&ctx).unwrap();
+
+            // Allows server to start without initialisation or accessing central server
+            set_server_is_initialised(&ctx);
 
             info!(
                 "Initialisation done, available users: {}",

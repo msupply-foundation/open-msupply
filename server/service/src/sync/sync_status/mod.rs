@@ -1,6 +1,6 @@
 use repository::SyncLogRowErrorCode;
 
-pub(crate) mod logger;
+pub mod logger;
 pub mod status;
 
 #[cfg(test)]

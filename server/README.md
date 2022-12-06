@@ -60,6 +60,8 @@ Now we can start server with
 cargo run
 ```
 
+`NOTE` make sure that sync configurations in configuration/*.toml file is commented out, otherwise may get an error that database and yaml sync configurations differ (in which case remote server will try to contact central server)
+
 Explore API available on `http://localhost:8000/graphql` with build in playground or try [online graphiql explorer](https://graphiql-online.com/)
 
 # Run with postgres
