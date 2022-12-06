@@ -117,14 +117,15 @@ const UIComponent = (props: ControlProps) => {
       gap={2}
       justifyContent="space-around"
       style={{ minWidth: 300 }}
-      marginTop={1}
+      margin={0.5}
+      marginLeft={0}
     >
       <Box style={{ textAlign: 'end' }} flexBasis={FORM_LABEL_COLUMN_WIDTH}>
         <FormLabel sx={{ fontWeight: 'bold' }}>{label}:</FormLabel>
       </Box>
-      <Box flexBasis={FORM_INPUT_COLUMN_WIDTH}>
+      <Box flexBasis={FORM_INPUT_COLUMN_WIDTH} justifyContent="flex-start">
         <Autocomplete
-          sx={{ '.MuiFormControl-root': { minWidth: '135px' } }}
+          sx={{ '.MuiFormControl-root': { minWidth: '100%' } }}
           options={options}
           disabled={!enabled}
           value={value}
