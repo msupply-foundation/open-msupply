@@ -109,8 +109,9 @@
           "label": "Remaining Pill Count"
         },
         {
-          "label": "Number Of Days Dispensed",
+          "label": "Quantity prescribed",
           "options": {
+            "quantityPerDay": 1,
             "baseDatetimeField": "startDatetime",
             "events": [
               {
@@ -127,10 +128,10 @@
               }
             ],
             "scheduleEventsNow": true,
-            "targetField": "arvMedication.numberOfDaysDispensed"
+            "targetField": "arvMedication.quantityPrescribed"
           },
           "scope": "#",
-          "type": "DispensedDuration"
+          "type": "QuantityPrescribed"
         },
         {
           "scope": "#/properties/arvMedication/properties/adherenceStatus",
