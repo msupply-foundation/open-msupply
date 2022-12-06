@@ -22,6 +22,10 @@ const UIComponent = (props: LayoutProps) => {
   if (!props.visible) {
     return null;
   }
+  if (!(uischema as GroupLayout).label) {
+    // without label just return the normal layout
+    return <MaterialLayoutRenderer {...layoutProps} />;
+  }
   return (
     <Box
       sx={{
