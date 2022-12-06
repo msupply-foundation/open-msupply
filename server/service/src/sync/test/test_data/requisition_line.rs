@@ -41,7 +41,8 @@ const REQUISITION_LINE_1: (&'static str, &'static str) = (
         "DOSforAMCadjustment": 0,
         "requestedPackSize": 0,
         "approved_quantity": 0,
-        "authoriser_comment": ""
+        "authoriser_comment": "",
+        "om_snapshot_datetime": ""
     }"#,
 );
 fn requisition_line_request_pull_record() -> TestSyncPullRecord {

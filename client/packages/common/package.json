@@ -43,9 +43,11 @@
     "stylis": "^4.0.13",
     "stylis-plugin-rtl": "^2.1.1",
     "uuid": "^8.3.2",
-    "zustand": "^3.6.7"
+    "zustand": "^3.6.7",
+    "autosuggest-highlight": "^3.3.4"
   },
   "devDependencies": {
+    "@types/autosuggest-highlight": "^3.2.0",
     "@types/css-mediaquery": "^0.1.1",
     "@types/dompurify": "^2.3.3",
     "@types/js-cookie": "^3.0.1",

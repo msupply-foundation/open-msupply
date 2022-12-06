@@ -8,8 +8,8 @@ use super::{
 };
 
 use crate::{
-    diesel_macros::apply_equal_filter, repository_error::RepositoryError, EqualFilter, Pagination,
-    StockLineRow,
+    diesel_macros::apply_equal_filter, repository_error::RepositoryError, EqualFilter,
+    InvoiceRowStatus, InvoiceRowType, Pagination, StockLineRow,
 };
 
 use diesel::{
@@ -54,29 +54,40 @@ pub struct InvoiceLine {
 
 pub struct InvoiceLineFilter {
     pub id: Option<EqualFilter<String>>,
+    pub store_id: Option<EqualFilter<String>>,
     pub invoice_id: Option<EqualFilter<String>>,
     pub item_id: Option<EqualFilter<String>>,
     pub r#type: Option<EqualFilter<InvoiceLineRowType>>,
     pub location_id: Option<EqualFilter<String>>,
     pub requisition_id: Option<EqualFilter<String>>,
     pub number_of_packs: Option<EqualFilter<f64>>,
+    pub invoice_type: Option<EqualFilter<InvoiceRowType>>,
+    pub invoice_status: Option<EqualFilter<InvoiceRowStatus>>,
 }
 
 impl InvoiceLineFilter {
     pub fn new() -> InvoiceLineFilter {
         InvoiceLineFilter {
             id: None,
+            store_id: None,
             invoice_id: None,
             r#type: None,
             item_id: None,
             location_id: None,
             requisition_id: None,
             number_of_packs: None,
+            invoice_type: None,
+            invoice_status: None,
         }
     }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {
         self.id = Some(filter);
+        self
+    }
+
+    pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.store_id = Some(filter);
         self
     }
 
@@ -107,6 +118,16 @@ impl InvoiceLineFilter {
 
     pub fn number_of_packs(mut self, filter: EqualFilter<f64>) -> Self {
         self.number_of_packs = Some(filter);
+        self
+    }
+
+    pub fn invoice_type(mut self, filter: EqualFilter<InvoiceRowType>) -> Self {
+        self.invoice_type = Some(filter);
+        self
+    }
+
+    pub fn invoice_status(mut self, filter: EqualFilter<InvoiceRowStatus>) -> Self {
+        self.invoice_status = Some(filter);
         self
     }
 }
@@ -192,21 +213,27 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
     if let Some(f) = filter {
         let InvoiceLineFilter {
             id,
+            store_id,
             invoice_id,
             item_id,
             r#type,
             location_id,
             requisition_id,
             number_of_packs,
+            invoice_type,
+            invoice_status,
         } = f;
 
         apply_equal_filter!(query, id, invoice_line_dsl::id);
+        apply_equal_filter!(query, store_id, invoice_dsl::store_id);
         apply_equal_filter!(query, requisition_id, invoice_dsl::requisition_id);
         apply_equal_filter!(query, invoice_id, invoice_line_dsl::invoice_id);
         apply_equal_filter!(query, location_id, invoice_line_dsl::location_id);
         apply_equal_filter!(query, item_id, invoice_line_dsl::item_id);
         apply_equal_filter!(query, r#type, invoice_line_dsl::type_);
         apply_equal_filter!(query, number_of_packs, invoice_line_dsl::number_of_packs);
+        apply_equal_filter!(query, invoice_type, invoice_dsl::type_);
+        apply_equal_filter!(query, invoice_status, invoice_dsl::status);
     }
 
     query
