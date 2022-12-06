@@ -1,21 +1,22 @@
 import React, { FC, useState } from 'react';
 import { TabContext } from '@mui/lab';
-import { Box } from '@mui/material';
+import { Box, SxProps, Theme } from '@mui/material';
 import { LocaleKey, useTranslation } from '@common/intl';
 import { ShortTabList, Tab } from './Tabs';
 import { ModalTab } from './ModalTab';
 import { TabDefinition } from './DetailTabs';
 
 interface DetailTabsProps {
+  sx?: SxProps<Theme>;
   tabs: TabDefinition[];
 }
-export const ModalTabs: FC<DetailTabsProps> = ({ tabs }) => {
+export const ModalTabs: FC<DetailTabsProps> = ({ sx, tabs }) => {
   const [currentTab, setCurrentTab] = useState<string>(tabs[0]?.value ?? '');
   const t = useTranslation('common');
 
   return (
     <TabContext value={currentTab}>
-      <Box flex={1} display="flex" justifyContent="center">
+      <Box flex={1} display="flex" justifyContent="center" sx={sx}>
         <ShortTabList
           value={currentTab}
           centered

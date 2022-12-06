@@ -60,7 +60,7 @@ export const ResponseLineEditFormLayout = ({
       justifyContent="space-between"
       bgcolor="background.toolbar"
       padding={4}
-      boxShadow={theme => theme.shadows[2]}
+      paddingBottom={2}
     >
       <Grid item xs={4}>
         {Left}
@@ -138,7 +138,7 @@ export const ResponseLineEditForm = ({
             {t('heading.comment')}
           </Typography>
           <TextArea
-            value={draftLine.comment}
+            value={draftLine.comment ?? ''}
             onChange={e => update({ comment: e.target.value })}
             InputProps={{
               sx: { backgroundColor: theme => theme.palette.background.menu },

@@ -30,6 +30,7 @@ import {
   ChevronDownIcon,
   useTranslation,
   ConfirmationModal,
+  useAppTheme,
 } from '@openmsupply-client/common';
 import { RegexUtils } from '@common/utils';
 import {
@@ -37,6 +38,8 @@ import {
   FORM_INPUT_COLUMN_WIDTH,
 } from '../styleConstants';
 import { JsonData } from '../JsonForm';
+import parse from 'autosuggest-highlight/parse';
+import match from 'autosuggest-highlight/match';
 
 interface UISchemaWithCustomProps extends ControlElement {
   defaultNewItem?: JsonData;
@@ -76,6 +79,40 @@ const findIndexOfRemoved = (base: string[], newList: string[]): number => {
   return base.length - 1;
 };
 
+const sortOptions = (options: string[]) => {
+  const sortedOptions = options.sort((a, b) => a.localeCompare(b));
+  return sortedOptions;
+};
+
+const searchRanking = {
+  STARTS_WITH: 2,
+  CONTAINS: 1,
+  NO_MATCH: 0,
+} as const;
+
+const filterOptions = (
+  options: string[],
+  { inputValue }: { inputValue: string }
+) => {
+  const searchTerm = inputValue.toLowerCase();
+  const filteredOptions = options
+    .map(option => {
+      const lowerCaseOption = option.toLowerCase();
+
+      const rank = lowerCaseOption.startsWith(searchTerm)
+        ? searchRanking.STARTS_WITH
+        : lowerCaseOption.includes(searchTerm)
+        ? searchRanking.CONTAINS
+        : searchRanking.NO_MATCH;
+      return { option, rank };
+    })
+    .filter(({ rank }) => rank !== searchRanking.NO_MATCH)
+    .sort((a, b) => b.rank - a.rank)
+    .map(({ option }) => option);
+
+  return filteredOptions;
+};
+
 const EnumArrayComponent: FC<EnumArrayControlCustomProps> = ({
   data,
   label,
@@ -87,6 +124,7 @@ const EnumArrayComponent: FC<EnumArrayControlCustomProps> = ({
 }) => {
   const t = useTranslation('common');
   const [removeIndex, setRemoveIndex] = useState<number | undefined>();
+  const theme = useAppTheme();
 
   if (!visible) {
     return null;
@@ -108,11 +146,63 @@ const EnumArrayComponent: FC<EnumArrayControlCustomProps> = ({
         >
           <FormLabel sx={{ fontWeight: 'bold' }}>{label}:</FormLabel>
         </Box>
-        <Box flexBasis={FORM_INPUT_COLUMN_WIDTH}>
+        <Box sx={{width: FORM_INPUT_COLUMN_WIDTH}}>
           <Autocomplete
             multiple
+            sx={{
+              '& .MuiInput-root': {
+                borderRadius: '8px',
+                height: '100%',
+                backgroundColor: theme.palette.background.menu,
+                padding: '5px',
+              },
+              '& .MuiInput-root:before': {
+                border: 'none'
+              },
+              '& .MuiInput-root:after': {
+                color: theme.palette.gray.dark,
+              },
+              '& .MuiInput-root:focus:before': {
+                borderRadius: '8px 8px 0px 0px',
+              },
+              '& .MuiInput-root:hover:before': {
+                borderRadius: '8px 8px 0px 0px',
+              },
+              '& .MuiChip-root': {
+                backgroundColor: theme.palette.secondary.light,
+                height: 'inherit',
+                color: theme.typography.login.color,
+              },
+              '& .MuiChip-deleteIcon': {
+                color: `${theme.palette.background.white} !important`,
+              },
+            }}
             value={data}
-            options={schema.enum ?? []}
+            options={sortOptions(schema.enum ?? [])}
+            filterOptions={filterOptions}
+            renderOption={(props, option, { inputValue }) => {
+              const matches = match(option, inputValue, {
+                insideWords: true,
+              });
+              const parts = parse(option, matches);
+
+              return (
+                <li {...props}>
+                  <div>
+                    {parts.map((part, index) => (
+                      <span
+                        key={index}
+                        style={{
+                          fontWeight: part.highlight ? 600 : 400,
+                        }}
+                      >
+                        {part.text}
+                      </span>
+                    ))}
+                  </div>
+                </li>
+              );
+            }}
             renderInput={params => <TextField {...params} variant="standard" />}
             onChange={(_, value) => {
               if (value.length - 1 === data.length) {
