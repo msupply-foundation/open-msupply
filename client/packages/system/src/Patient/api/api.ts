@@ -13,7 +13,7 @@ import {
   DocumentRegistryFilterInput,
   DocumentRegistrySortFieldInput,
 } from '@openmsupply-client/common';
-import { DocumentRegistryFragment } from '../JsonForms/api';
+import { DocumentRegistryFragment } from '@openmsupply-client/programs/src/api';
 import {
   Sdk,
   PatientRowFragment,

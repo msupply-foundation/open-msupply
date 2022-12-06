@@ -1,11 +1,7 @@
-import { useDocument } from './api';
-import { DocumentRegistryFragment } from './api/operations.generated';
+import { useDocument } from '@openmsupply-client/programs/src/api';
+import { DocumentRegistryFragment } from '@openmsupply-client/programs/src/api/operations.generated';
 import { useEffect, useState } from 'react';
-import {
-  JsonData,
-  JsonSchema,
-  UISchemaElement,
-} from '@openmsupply-client/common';
+import { JsonData, JsonSchema, UISchemaElement } from './common';
 
 export interface DocumentRegistry {
   formSchemaId: string;

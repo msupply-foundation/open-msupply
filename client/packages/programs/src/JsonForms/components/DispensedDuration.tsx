@@ -8,13 +8,15 @@ import {
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { FormLabel, Box } from '@mui/material';
 import {
-  FORM_LABEL_COLUMN_WIDTH,
-  FORM_INPUT_COLUMN_WIDTH,
   useDebounceCallback,
   NumericTextInput,
   DateUtils,
-  useZodOptionsValidation,
 } from '@openmsupply-client/common';
+import {
+  FORM_LABEL_COLUMN_WIDTH,
+  FORM_INPUT_COLUMN_WIDTH,
+  useZodOptionsValidation,
+} from '../common';
 import { get as extractProperty } from 'lodash';
 import { z } from 'zod';
 import { EncounterEvent } from './encounter_event';

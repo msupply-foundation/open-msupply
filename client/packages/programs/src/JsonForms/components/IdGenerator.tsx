@@ -11,14 +11,16 @@ import {
   Box,
   useMutation,
   useTranslation,
+} from '@openmsupply-client/common';
+import {
   FORM_LABEL_COLUMN_WIDTH,
   FORM_INPUT_COLUMN_WIDTH,
   JsonFormsConfig,
   useZodOptionsValidation,
-} from '@openmsupply-client/common';
+} from '@openmsupply-client/programs';
 import { Button, FormLabel } from '@mui/material';
 import { get as extractProperty } from 'lodash';
-import { useDocument } from '../api';
+import { useDocument } from '@openmsupply-client/programs/src/api';
 import { z } from 'zod';
 
 export const idGeneratorTester = rankWith(10, uiTypeIs('IdGenerator'));

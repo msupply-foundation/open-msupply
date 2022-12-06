@@ -8,12 +8,11 @@ import {
   useFormatDateTime,
   XAxis,
   YAxis,
-  useZodOptionsValidation,
 } from '@openmsupply-client/common';
+import { useZodOptionsValidation } from '../common';
 import { CartesianGrid, Tooltip, TooltipProps, Label } from 'recharts';
-import { useDocument } from '../api';
+import { useEncounter } from '../../api';
 import { z } from 'zod';
-import { useEncounter } from '../../../Encounter/api/hooks';
 
 export const encounterLineChartTester = rankWith(
   4,
@@ -69,9 +68,9 @@ const UIComponent = (props: ControlProps) => {
   const { visible, uischema } = props;
   const { dayMonthShort } = useFormatDateTime();
 
-  const id = useEncounter.utils.id();
+  const id = useEncounter.utils.idFromUrl();
   const { data: encounter, mutate: fetchEncounter } =
-    useEncounter.document.get();
+    useEncounter.document.byId();
 
   const { errors, options } = useZodOptionsValidation(
     Options,
@@ -80,7 +79,7 @@ const UIComponent = (props: ControlProps) => {
   const option = options?.values[0];
 
   const [data, setData] = useState([] as DataType[]);
-  const { data: encounterFields } = useDocument.encounterFields(
+  const { data: encounterFields } = useEncounter.encounterFields(
     encounter?.patient.id ?? '',
     [option?.field ?? ''],
     !!option
