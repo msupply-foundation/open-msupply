@@ -119,6 +119,7 @@ const UIComponent = (props: ControlProps) => {
             }
             return option.label === value.label;
           }}
+          disabled={!props.enabled}
         />
       </Box>
     </Box>

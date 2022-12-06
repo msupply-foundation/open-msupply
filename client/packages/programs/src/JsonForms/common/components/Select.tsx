@@ -93,10 +93,10 @@ const filterOptions = (
 };
 
 const UIComponent = (props: ControlProps) => {
-  const { data, handleChange, label, schema, path } = props;
+  const { data, handleChange, label, schema, path, uischema, enabled } = props;
   const { errors: zErrors, options: schemaOptions } = useZodOptionsValidation(
     Options,
-    props.uischema.options
+    uischema.options
   );
   if (!props.visible) {
     return null;
@@ -126,6 +126,7 @@ const UIComponent = (props: ControlProps) => {
         <Autocomplete
           sx={{ '.MuiFormControl-root': { minWidth: '135px' } }}
           options={options}
+          disabled={!enabled}
           value={value}
           onChange={onChange}
           filterOptions={filterOptions}

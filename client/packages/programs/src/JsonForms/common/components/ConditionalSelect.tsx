@@ -84,6 +84,7 @@ const UIComponent = (props: ControlProps) => {
             helperText: zErrors ?? props.errors,
           }}
           isOptionEqualToValue={option => option.label === data}
+          disabled={!props.enabled}
         />
       </Box>
     </Box>
