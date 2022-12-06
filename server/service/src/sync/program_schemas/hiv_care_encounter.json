@@ -66,9 +66,6 @@
               "description": "Weight at start of antiretroviral treatment",
               "type": "number"
             },
-            "numberOfDaysDispensed": {
-              "type": "number"
-            },
             "previousRegimen": {
               "description": "Previous antiretroviral treatment regimen",
               "type": "string"
@@ -78,6 +75,10 @@
                 "type": "string"
               },
               "type": "array"
+            },
+            "quantityPrescribed": {
+              "description": "Number of pills prescribed",
+              "type": "number"
             },
             "reason": {
               "enum": [
