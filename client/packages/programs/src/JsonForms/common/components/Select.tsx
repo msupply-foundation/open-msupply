@@ -30,16 +30,38 @@ type Options = {
    *   ["YES"]
    * ]
    */
-  show?: [string, string | undefined][];
+  show?: [string, string | undefined, ...(string | undefined)[]][];
+  /**
+   * Show three columns.
+   * For example,
+   * "show": [
+   *   ["FIRST", "First", "Description", "Right"],
+   *   ["SECOND", "Second", undefined, "Right2"],
+   * ]
+   * would show:
+   * "First     Description   Right"
+   * "Second                 Right2"
+   */
+  multiColumn?: boolean;
 };
 const Options: z.ZodType<Options | undefined> = z
   .object({
-    show: z.array(z.tuple([z.string(), z.string().optional()])).optional(),
+    show: z
+      .array(
+        z.tuple([z.string(), z.string().optional()]).rest(z.string().optional())
+      )
+      .optional(),
+    multiColumn: z.boolean().optional(),
   })
   .strict()
   .optional();
 
-type DisplayOption = { label: string; value: string };
+type DisplayOption = {
+  label: string;
+  value: string;
+  description?: string;
+  right?: string;
+};
 
 const getDisplayOptions = (
   schemaEnum: string[],
@@ -52,17 +74,19 @@ const getDisplayOptions = (
     }));
   }
 
-  return options.show.reduce<DisplayOption[]>((prev, [key, value]) => {
-    if (!schemaEnum.includes(key)) {
-      console.warn(
-        `Invalid select control config: key ${key} is not in the enum`
-      );
+  return options.show.reduce<DisplayOption[]>(
+    (prev, [key, value, description, right]) => {
+      if (!schemaEnum.includes(key)) {
+        console.warn(
+          `Invalid select control config: key ${key} is not in the enum`
+        );
+        return prev;
+      }
+      prev.push({ value: key, label: value ?? key, description, right });
       return prev;
-    }
-    prev.push({ value: key, label: value ?? key });
-    prev.sort((a, b) => a.label.localeCompare(b.label));
-    return prev;
-  }, []);
+    },
+    []
+  );
 };
 
 const searchRanking = {
@@ -86,10 +110,33 @@ const filterOptions = (
         ? searchRanking.CONTAINS
         : searchRanking.NO_MATCH;
       return { ...option, rank };
-    }).filter(({ rank }) => rank !== searchRanking.NO_MATCH)
+    })
+    .filter(({ rank }) => rank !== searchRanking.NO_MATCH)
     .sort((a, b) => b.rank - a.rank);
-        
+
   return filteredOptions;
+};
+
+const TextHighlight = (props: {
+  parts: {
+    text: string;
+    highlight: boolean;
+  }[];
+}) => {
+  return (
+    <div>
+      {props.parts.map((part, index) => (
+        <span
+          key={index}
+          style={{
+            fontWeight: part.highlight ? 600 : 400,
+          }}
+        >
+          {part.text}
+        </span>
+      ))}
+    </div>
+  );
 };
 
 const UIComponent = (props: ControlProps) => {
@@ -131,28 +178,44 @@ const UIComponent = (props: ControlProps) => {
           value={value}
           onChange={onChange}
           filterOptions={filterOptions}
+          getOptionLabel={option =>
+            `${option.label}     ${option.description ?? ''}`
+          }
           renderOption={(props, option, { inputValue }) => {
             const matches = match(option.label, inputValue, {
               insideWords: true,
             });
             const parts = parse(option.label, matches);
 
-            return (
-              <li {...props}>
-                <div>
-                  {parts.map((part, index) => (
-                    <span
-                      key={index}
-                      style={{
-                        fontWeight: part.highlight ? 600 : 400,
-                      }}
-                    >
-                      {part.text}
-                    </span>
-                  ))}
-                </div>
-              </li>
-            );
+            if (schemaOptions?.multiColumn) {
+              return (
+                <li {...props} key={option.value}>
+                  <span
+                    style={{ whiteSpace: 'nowrap', width: 100, minWidth: 50 }}
+                  >
+                    <TextHighlight {...props} parts={parts} />
+                  </span>
+                  <span style={{ whiteSpace: 'nowrap', width: 500 }}>
+                    {option.description}
+                  </span>
+                  <span
+                    style={{
+                      width: 200,
+                      textAlign: 'right',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {option.right}
+                  </span>
+                </li>
+              );
+            } else {
+              return (
+                <li {...props} key={option.value}>
+                  <TextHighlight parts={parts} />
+                </li>
+              );
+            }
           }}
           clearable={!props.config?.required}
           inputProps={{
