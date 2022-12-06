@@ -1,5 +1,5 @@
 {
-    "button.add-from-master-list": "Ajouter à la liste maîtresse",
+    "button.add-from-master-list": "Ajouter une liste maîtresse",
     "label.requisition": "Réquisition",
     "messages.service-charges-description": "Montant total des frais de service. Le montant de la taxe calculée est un taux de taxe effectif utilisant la taxe totale payée sur le sous-total de tous les frais de service.",
     "messages.on-hold-confirmation": "Cela empêchera tout autre changement de statut jusqu'à ce que le blocage soit supprimé",
