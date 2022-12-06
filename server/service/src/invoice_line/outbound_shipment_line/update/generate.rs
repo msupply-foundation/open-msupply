@@ -1,5 +1,7 @@
 use repository::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow};
 
+use crate::invoice::common::calculate_total_after_tax;
+
 use super::{BatchPair, UpdateOutboundShipmentLine, UpdateOutboundShipmentLineError};
 
 pub fn generate(
@@ -134,9 +136,8 @@ fn generate_line(
         update_line.total_before_tax
     };
 
-    // Implement back when tax for invoice lines has been discussed
-    // update_line.total_after_tax =
-    //     calculate_total_after_tax(update_line.total_before_tax, update_line.tax);
+    update_line.total_after_tax =
+        calculate_total_after_tax(update_line.total_before_tax, update_line.tax);
 
     update_line
 }

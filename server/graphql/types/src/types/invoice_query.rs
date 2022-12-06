@@ -244,6 +244,10 @@ impl InvoiceNode {
         })
     }
 
+    pub async fn tax_percentage(&self) -> &Option<f64> {
+        &self.row().tax
+    }
+
     pub async fn other_party(&self, ctx: &Context<'_>, store_id: String) -> Result<NameNode> {
         let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
 

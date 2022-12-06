@@ -1,6 +1,7 @@
 use crate::{
-    invoice::common::generate_invoice_user_id_update,
-    invoice_line::inbound_shipment_line::generate_batch, u32_to_i32,
+    invoice::common::{calculate_total_after_tax, generate_invoice_user_id_update},
+    invoice_line::inbound_shipment_line::generate_batch,
+    u32_to_i32,
 };
 use repository::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow};
 
@@ -96,9 +97,8 @@ fn generate_line(
         update_line.total_before_tax
     };
 
-    // Implement back when tax for invoice lines has been discussed
-    // update_line.total_after_tax =
-    //     calculate_total_after_tax(update_line.total_before_tax, update_line.tax);
+    update_line.total_after_tax =
+        calculate_total_after_tax(update_line.total_before_tax, update_line.tax);
 
     update_line
 }
