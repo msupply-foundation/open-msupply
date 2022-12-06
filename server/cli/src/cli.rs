@@ -56,6 +56,7 @@ enum Action {
     },
     /// Export initialisation data from running mSupply server (uses configuration/.*yaml for sync credentials).
     /// Can use env variables to override .yaml configurations, i.e. to override sync username `APP_SYNC__USERNAME='demo' remote_server_cli export-initialisation -u "user1:user1password,user2:user2password" -n "demoexport"
+    /// IMPORTANT: Should not be used on large data files
     ExportInitialisation {
         /// Name for export of initialisation data (will be saved inside `data` folder)
         #[clap(short, long)]
