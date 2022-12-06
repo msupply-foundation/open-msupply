@@ -24,6 +24,7 @@ pub(crate) struct GenerateResult {
     pub(crate) update_invoice: InvoiceRow,
     pub(crate) empty_lines_to_trim: Option<Vec<InvoiceLineRow>>,
     pub(crate) location_movements: Option<Vec<LocationMovementRow>>,
+    pub(crate) update_tax_for_lines: Option<Vec<InvoiceLineRow>>,
 }
 
 pub(crate) fn generate(
@@ -83,12 +84,28 @@ pub(crate) fn generate(
         None
     };
 
+    let tax_updated = tax_updated(&update_invoice.tax);
+    let update_tax_for_lines = if tax_updated {
+        Some(generate_tax_update_for_lines(
+            connection,
+            &update_invoice.id,
+            update_invoice.tax,
+        )?)
+    } else {
+        None
+    };
+
     Ok(GenerateResult {
         batches_to_update,
         empty_lines_to_trim: empty_lines_to_trim(connection, &existing_invoice, &patch.status)?,
         update_invoice,
         location_movements,
+        update_tax_for_lines,
     })
+}
+
+fn tax_updated(tax: &Option<f64>) -> bool {
+    tax.is_some()
 }
 
 pub fn should_create_batches(invoice: &InvoiceRow, patch: &UpdateInboundShipment) -> bool {
@@ -101,6 +118,29 @@ pub fn should_create_batches(invoice: &InvoiceRow, patch: &UpdateInboundShipment
     } else {
         false
     }
+}
+
+fn generate_tax_update_for_lines(
+    connection: &StorageConnection,
+    invoice_id: &str,
+    tax: Option<f64>,
+) -> Result<Vec<InvoiceLineRow>, UpdateInboundShipmentError> {
+    let invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
+        InvoiceLineFilter::new()
+            .invoice_id(EqualFilter::equal_to(invoice_id))
+            .r#type(InvoiceLineRowType::StockIn.equal_to()),
+    )?;
+
+    let mut result = Vec::new();
+    for invoice_line in invoice_lines {
+        let mut invoice_line_row = invoice_line.invoice_line_row;
+        invoice_line_row.tax = tax;
+        invoice_line_row.total_after_tax =
+            calculate_total_after_tax(invoice_line_row.total_before_tax, tax);
+        result.push(invoice_line_row);
+    }
+
+    Ok(result)
 }
 
 // If status changed to Delivered and above, remove empty lines
@@ -175,6 +215,10 @@ pub fn generate_lines_and_stock_lines(
         let mut line = invoice_lines.clone();
         let stock_line_id = line.stock_line_id.unwrap_or(uuid());
         line.stock_line_id = Some(stock_line_id.clone());
+        if tax.is_some() {
+            line.tax = tax;
+            line.total_after_tax = calculate_total_after_tax(line.total_before_tax, tax);
+        }
 
         let InvoiceLineRow {
             id: _,
@@ -196,10 +240,6 @@ pub fn generate_lines_and_stock_lines(
             number_of_packs,
             note,
         }: InvoiceLineRow = invoice_lines;
-        if tax.is_some() {
-            line.tax = tax;
-            line.total_after_tax = calculate_total_after_tax(line.total_before_tax, tax);
-        }
 
         if number_of_packs > 0.0 {
             let stock_line = StockLineRow {
