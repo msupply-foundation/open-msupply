@@ -58,18 +58,6 @@
               "enum": ["GOOD", "MEDIUM", "POOR"],
               "type": "string"
             },
-            "change": {
-              "enum": ["SUBSTITUTION", "SWITCHING"],
-              "type": "string"
-            },
-            "initialWeight": {
-              "description": "Weight at start of antiretroviral treatment",
-              "type": "number"
-            },
-            "previousRegimen": {
-              "description": "Previous antiretroviral treatment regimen",
-              "type": "string"
-            },
             "prophylaxisMedication": {
               "items": {
                 "type": "string"
@@ -79,29 +67,6 @@
             "quantityPrescribed": {
               "description": "Number of pills prescribed",
               "type": "number"
-            },
-            "reason": {
-              "enum": [
-                "101",
-                "102",
-                "103",
-                "104",
-                "105",
-                "106",
-                "107",
-                "108",
-                "109",
-                "151"
-              ],
-              "type": "string"
-            },
-            "reasonFirstToSecondLine": {
-              "description": "Reasons for switch from first line treatment to second line treatment",
-              "type": "string"
-            },
-            "reasonSubstitutionWithinFirstLine": {
-              "description": "Reasons for substitution within first line treatment",
-              "type": "string"
             },
             "regimen": {
               "description": "Antiretroviral treatment regimen",
@@ -140,29 +105,61 @@
               ],
               "type": "string"
             },
-            "regimenStatus": {
-              "description": "Antiretroviral treatment status",
+            "regimenChangeNote": {
+              "type": "string"
+            },
+            "regimenChangeReason": {
               "enum": [
-                "NO_ARV",
-                "START_ARV",
-                "CONTINUE_ARV",
-                "STOP_ARV",
-                "RECOMMENCED_ARV",
-                "ARV_ON_HOLD",
-                "CHANGES_TO_ART_REGIMEN"
+                "51",
+                "52",
+                "53",
+                "54",
+                "55",
+                "56",
+                "57",
+                "58",
+                "99",
+                "101",
+                "102",
+                "103",
+                "104",
+                "105",
+                "106",
+                "107",
+                "108",
+                "109",
+                "110",
+                "111",
+                "112",
+                "113",
+                "114",
+                "115",
+                "116",
+                "117",
+                "118",
+                "119",
+                "120",
+                "121",
+                "122",
+                "123",
+                "131",
+                "132",
+                "141",
+                "142",
+                "143",
+                "144",
+                "145",
+                "146",
+                "147",
+                "148",
+                "149",
+                "151"
               ],
               "type": "string"
             },
-            "regimenType": {
-              "description": "Antiretroviral treatment line",
-              "enum": [
-                "FIRST_LINE_ADULT",
-                "FIRST_LINE_PAEDS_20_30_KG",
-                "FIRST_LINE_PAEDS_0_20_KG",
-                "SECOND_LINE_ADULT",
-                "SECOND_LINE_PAEDS_20_30_KG",
-                "SECOND_LINE_PAEDS_0_20_KG"
-              ],
+            "regimenStatus": {
+              "description": "Antiretroviral treatment status",
+              "enum": ["NO", "START", "CONTINUE", "CHANGE", "STOP"],
               "type": "string"
             },
             "relevantCoMedication": {
@@ -178,10 +175,6 @@
             "remainingPillCount": {
               "description": "Number of units pills that the patient has left from the last dispensing event (last encounter)",
               "type": "number"
-            },
-            "stopReason": {
-              "description": "Reasons to stop antiretroviral treatment",
-              "type": "string"
             }
           },
           "type": "object"

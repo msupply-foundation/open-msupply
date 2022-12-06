@@ -150,13 +150,11 @@
           "type": "Control",
           "options": {
             "show": [
-              ["NO_ARV", "No ARV"],
-              ["START_ARV", "Start ARV"],
-              ["CONTINUE_ARV", "Continue ARV"],
-              ["STOP_ARV", "Stop ARV"],
-              ["RECOMMENCED_ARV", "Recommenced ARV"],
-              ["ARV_ON_HOLD", "ARV on Hold"],
-              ["CHANGES_TO_ART_REGIMEN", "Changes to ART Regimen"]
+              ["NO", "No ARV"],
+              ["START", "Start ARV"],
+              ["CONTINUE", "Continue ARV"],
+              ["CHANGE", "Changes to ART Regimen"],
+              ["STOP", "Stop ARV"]
             ]
           }
         },
@@ -168,7 +166,11 @@
               "type": "Control"
             },
             {
-              "scope": "#/properties/arvMedication/properties/reason",
+              "scope": "#/properties/arvMedication/properties/regimenChangeReason",
+              "type": "Control"
+            },
+            {
+              "scope": "#/properties/arvMedication/properties/regimenChangeNote",
               "type": "Control"
             }
           ],
@@ -177,58 +179,17 @@
             "condition": {
               "scope": "#/properties/arvMedication/properties/regimenStatus",
               "schema": {
-                "enum": ["START_ARV", "CHANGES_TO_ART_REGIMEN"]
+                "enum": ["START", "CHANGE"]
               }
             }
           }
         },
-
         {
           "scope": "#/properties/arvMedication/properties/relevantCoMedication",
           "type": "Control"
         },
         {
           "scope": "#/properties/arvMedication/properties/prophylaxisMedication",
-          "type": "Control"
-        },
-        {
-          "scope": "#/properties/arvMedication/properties/regimenType",
-          "type": "Control",
-          "options": {
-            "show": [
-              ["FIRST_LINE_ADULT", "First Line - Adult"],
-              ["FIRST_LINE_PAEDS_20_30_KG", "First Line - Paeds 20-30kg"],
-              ["FIRST_LINE_PAEDS_0_20_KG", "First Line - Paeds <20kg"],
-              ["SECOND_LINE_ADULT", "Second Line - Adult"],
-              ["SECOND_LINE_PAEDS_20_30_KG", "Second Line - Paeds 20-30kg"],
-              ["SECOND_LINE_PAEDS_0_20_KG", "Second Line - Paeds <20kg"]
-            ]
-          }
-        },
-        {
-          "scope": "#/properties/arvMedication/properties/change",
-          "type": "Control",
-          "options": {
-            "show": [
-              ["SUBSTITUTION", "Substitution of ART Regimen"],
-              ["SWITCHING", "Switching of ART regimen"]
-            ]
-          }
-        },
-        {
-          "scope": "#/properties/arvMedication/properties/previousRegimen",
-          "type": "Control"
-        },
-        {
-          "scope": "#/properties/arvMedication/properties/reasonSubstitutionWithinFirstLine",
-          "type": "Control"
-        },
-        {
-          "scope": "#/properties/arvMedication/properties/reasonFirstToSecondLine",
-          "type": "Control"
-        },
-        {
-          "scope": "#/properties/arvMedication/properties/stopReason",
           "type": "Control"
         }
       ]
