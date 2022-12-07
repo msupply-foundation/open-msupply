@@ -39,7 +39,6 @@ export const PricingSectionComponent = () => {
     pricing?.serviceTotalBeforeTax,
     pricing?.serviceTotalAfterTax
   );
-  console.log('Tax: ', taxPercentage);
 
   return (
     <DetailPanelSection title={t('heading.charges')}>
