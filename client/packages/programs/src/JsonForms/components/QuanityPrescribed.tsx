@@ -9,8 +9,8 @@ import { withJsonFormsControlProps } from '@jsonforms/react';
 import { FormLabel, Box } from '@mui/material';
 import {
   useDebounceCallback,
-  NumericTextInput,
   DateUtils,
+  PositiveNumberInput,
 } from '@openmsupply-client/common';
 import {
   FORM_LABEL_COLUMN_WIDTH,
@@ -101,7 +101,7 @@ export const quantityPrescribedTester = rankWith(
 
 const UIComponent = (props: ControlProps) => {
   const { data, handleChange, label, path, uischema } = props;
-  const [localData, setLocalData] = useState<number>();
+  const [localData, setLocalData] = useState<number | undefined>();
   const [baseTime, setBaseTime] = useState<string | undefined>();
   const { errors, options } = useZodOptionsValidation(
     Options,
@@ -150,7 +150,7 @@ const UIComponent = (props: ControlProps) => {
 
   useEffect(() => {
     if (options) {
-      setLocalData(extractProperty(data, options.targetField) ?? 0);
+      setLocalData(extractProperty(data, options.targetField) ?? undefined);
     }
   }, [data, options]);
   useEffect(() => {
@@ -172,7 +172,7 @@ const UIComponent = (props: ControlProps) => {
         <FormLabel sx={{ fontWeight: 'bold' }}>{label}:</FormLabel>
       </Box>
       <Box flexBasis={FORM_INPUT_COLUMN_WIDTH}>
-        <NumericTextInput
+        <PositiveNumberInput
           type="number"
           InputProps={{
             sx: { '& .MuiInput-input': { textAlign: 'right' } },
