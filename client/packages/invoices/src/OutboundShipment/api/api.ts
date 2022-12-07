@@ -83,7 +83,10 @@ const outboundParsers = {
     onHold: 'onHold' in patch ? patch.onHold : undefined,
     theirReference: patch.theirReference,
     transportReference: patch.transportReference,
-    tax: { percentage: patch.taxPercentage }
+    tax:
+      'taxPercentage' in patch
+        ? { percentage: patch.taxPercentage }
+        : undefined,
   }),
   toUpdateName: (
     patch: RecordPatch<OutboundRowFragment> | RecordPatch<OutboundFragment>
