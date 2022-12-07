@@ -148,6 +148,7 @@ where
 }
 
 /// Macro will create and run SQL query, it's a less verbose way of running SQL in migrations
+/// $($arg:tt)* is taken directly from format! macro
 macro_rules! sql {
     ($connection:expr, $($arg:tt)*) => {{
         let query = diesel::sql_query(&format!($($arg)*));
