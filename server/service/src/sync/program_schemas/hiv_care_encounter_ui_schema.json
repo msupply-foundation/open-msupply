@@ -152,7 +152,7 @@
               ["NO", "No ARV"],
               ["START", "Start ARV"],
               ["CONTINUE", "Continue ARV"],
-              ["CHANGE", "Changes to ART Regimen"],
+              ["CHANGE", "Changes to ARV Regimen"],
               ["STOP", "Stop ARV"]
             ]
           }
