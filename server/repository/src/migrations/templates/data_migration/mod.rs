@@ -11,7 +11,7 @@ use diesel::prelude::*;
 // Here we would use simple invoice diesel definitions, for actual migration, since diesel
 // knows how to handle NaiveDateTime serialisation for both sqlite and postgres
 
-// In tests we use SQL statements for insterting test data, can also use new diesel definitions
+// In tests we use SQL statements for inserting test data, can also use new diesel definitions
 // but this could bloat compile time and is quite a lot of boilerplate for the task
 
 // We only need definitions for update and select of id and created_datetime
