@@ -22,7 +22,7 @@ pub(crate) trait Migration {
 
 #[derive(Debug, Error)]
 pub enum MigrationError {
-    #[error("Database version ({0}) is above app version ({1})")]
+    #[error("The database you are connecting to is a later version ({0}) than the server ({1}). It is unsafe to run with this configuration, the server is stopping")]
     DatabaseVersionAboveAppVersion(Version, Version),
     #[error("Database version is pre release ({0}), it cannot be upgraded")]
     DatabaseVersionIsPreRelease(Version),
