@@ -4,9 +4,9 @@ Rust (manual) migrations were introduced in version 1.0.4 of omSupply, as per [t
 
 ## Migration Examples and Templates
 
-It's a good idea to explore `/templates` folder for examples of schema, data and data + schema migrations, you can copy and paste them as a starting point for a new migration.
+It's a good idea to explore `./templates` folder for examples of schema, data and data + schema migrations, you can copy and paste them as a starting point for a new migration.
 
-If you are exploring `/templates` folder it's best to look at them in this order: `adding_table`, `data_migration`, `data_and_schema`, `add_data_from_sync_buffer`.
+If you are exploring `./templates` folder it's best to look at them in this order: `adding_table`, `data_migration`, `data_and_schema`, `add_data_from_sync_buffer`.
 
 ## Manual migrations overview
 
@@ -35,7 +35,7 @@ Add new version mod to [root migrations mode](mod.rs) and add new version to `ve
 
 ## Raw SQL vs Diesel
 
-Ideally we would be using existing repositories for data migrations, but this will break as soon as new migrations change schema and repositories are updated. We can achieve almost any type of migration with raw sql statement, both data and schema, but some raw sql logic is hard to either read/write or keep consistent between sqlite and postgres. On the other hard, using diesel definitions comes with a lot of boilerplate, and can also be hard to read/write but it can help with serialisation and difference in sqlite and postgres syntax. Although at the time of writing this README.md there is no defined standard or guideline of when to use raw sql vs diesel dsl, some effort was made to show when one is better then the other in `/templates`. A quick summary:
+Ideally we would be using existing repositories for data migrations, but this will break as soon as new migrations change schema and repositories are updated. We can achieve almost any type of migration with raw sql statement, both data and schema, but some raw sql logic is hard to either read/write or keep consistent between sqlite and postgres. On the other hard, using diesel definitions comes with a lot of boilerplate, and can also be hard to read/write but it can help with serialisation and difference in sqlite and postgres syntax. Although at the time of writing this README.md there is no defined standard or guideline of when to use raw sql vs diesel dsl, some effort was made to show when one is better then the other in `./templates`. A quick summary:
 * In most cases, for schema migrations its easier to use raw sql statements, there is small variation in syntax, mainly types, but with a help of simple `sql!` macro and common [types](types.rs) it looks clean and trivial, see [adding table](templates/adding_table/mod.rs)
 * Inserting mock data sql looks the same, and we can use use diesel `.bind` to serialise more complex types like `NaiveDateTime`, as demonstrated in [data migration template](templates/data_migrations/mod.rs)
 * Since raw sql query still require a struct to save a result in, I found that adding diesel `table!` with minimum fields has about the same amount of code and allows for a way to select a result into a tuple and opens a way to use diesel dsl for queries and updates, [again in data migration template, query/update in migration and query in test](templates/data_migrations/mod.rs)
