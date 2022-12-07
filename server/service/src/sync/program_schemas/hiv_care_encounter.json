@@ -66,6 +66,7 @@
             },
             "quantityPrescribed": {
               "description": "Number of pills prescribed",
+              "minimum": 0,
               "type": "number"
             },
             "regimen": {
@@ -174,6 +175,7 @@
             },
             "remainingPillCount": {
               "description": "Number of units pills that the patient has left from the last dispensing event (last encounter)",
+              "minimum": 0,
               "type": "number"
             }
           },
@@ -470,6 +472,7 @@
             },
             "viralLoadResult": {
               "description": "If not suppressed [copies/ml]",
+              "minimum": 0,
               "type": "number"
             }
           },

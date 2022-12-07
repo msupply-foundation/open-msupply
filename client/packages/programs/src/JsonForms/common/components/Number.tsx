@@ -3,6 +3,8 @@ import { ControlProps, rankWith, schemaTypeIs } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import {
   NumericTextInput,
+  NumericTextInputProps,
+  PositiveNumberInput,
   useDebounceCallback,
 } from '@openmsupply-client/common';
 import {
@@ -15,7 +17,7 @@ import { FormLabel } from '@mui/material';
 export const numberTester = rankWith(3, schemaTypeIs('number'));
 
 const UIComponent = (props: ControlProps) => {
-  const { data, handleChange, label, path, errors } = props;
+  const { data, handleChange, label, path, errors, schema } = props;
   const [localData, setLocalData] = useState<number | undefined>(data);
   const onChange = useDebounceCallback(
     (value: number) => handleChange(path, value),
@@ -26,6 +28,22 @@ const UIComponent = (props: ControlProps) => {
   if (!props.visible) {
     return null;
   }
+  const inputProps: NumericTextInputProps & {
+    onChange: (newValue: number) => void;
+  } = {
+    type: 'number',
+    InputProps: {
+      sx: { '& .MuiInput-input': { textAlign: 'right' } },
+    },
+    onChange: value => {
+      setLocalData(value);
+      onChange(value);
+    },
+    disabled: !props.enabled,
+    error: error,
+    helperText: errors,
+    value: localData ?? '',
+  };
   return (
     <Box
       display="flex"
@@ -39,20 +57,11 @@ const UIComponent = (props: ControlProps) => {
         <FormLabel sx={{ fontWeight: 'bold' }}>{label}:</FormLabel>
       </Box>
       <Box flexBasis={FORM_INPUT_COLUMN_WIDTH}>
-        <NumericTextInput
-          type="number"
-          InputProps={{
-            sx: { '& .MuiInput-input': { textAlign: 'right' } },
-          }}
-          onChange={value => {
-            setLocalData(value);
-            onChange(value);
-          }}
-          disabled={!props.enabled}
-          error={error}
-          helperText={errors}
-          value={localData ?? ''}
-        />
+        {schema.minimum !== undefined && schema.minimum >= 0 ? (
+          <PositiveNumberInput {...inputProps} />
+        ) : (
+          <NumericTextInput {...inputProps} />
+        )}
       </Box>
     </Box>
   );
