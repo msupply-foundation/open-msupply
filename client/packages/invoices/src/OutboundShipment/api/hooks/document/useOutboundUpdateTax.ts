@@ -17,7 +17,6 @@ export const useUpdateOutboundTax = () => {
     },
   });
 
-  // Will need to implement this back when invoice line tax has been decided
   const updateServiceLineTax = useCallback(
     (tax: number) =>
       mutateAsync({
@@ -28,6 +27,7 @@ export const useUpdateOutboundTax = () => {
     [lines.nodes, mutateAsync]
   );
 
+  // Will need to implement this back when invoice line tax has been decided
   const updateStockLineTax = useCallback(
     (tax: number) =>
       mutateAsync({
