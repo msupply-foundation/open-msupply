@@ -179,7 +179,9 @@ const UIComponent = (props: ControlProps) => {
           onChange={onChange}
           filterOptions={filterOptions}
           getOptionLabel={option =>
-            `${option.label}     ${option.description ?? ''}`
+            option.description
+              ? `${option.label}     ${option.description ?? ''}`
+              : `${option.label}`
           }
           renderOption={(props, option, { inputValue }) => {
             const matches = match(option.label, inputValue, {
