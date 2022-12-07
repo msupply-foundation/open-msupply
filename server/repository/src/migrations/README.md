@@ -45,3 +45,6 @@ A quick note about type safety in migrations, since the schema (before/after) is
 
 We've also considered using [SeaQL](https://github.com/SeaQL/sea-query), but haven't made any examples, mainly because it's another tool and pattern to learn and refine vs learning a bit more about diesel dsl and also there wasn't that much difference in schema sql syntax (which SeaQL also provides vs diesel), lastly couldn't find `CREATE VIEW` in SeaQL so thought we would at the very least have to use raw sql for that.
 
+## Long Lived/Feature branch migrations
+
+For feature branches it's a good idea to add migrations as some `future` major version, this version should be much higher then base branch version. This allows updating from base branch while keeping base branch migrations before feature branch migrations and when feature branch is merged to base branch we can set exact version for feature update.
