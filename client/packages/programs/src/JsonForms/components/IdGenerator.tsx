@@ -20,7 +20,7 @@ import {
 } from '@openmsupply-client/programs';
 import { Button, FormLabel } from '@mui/material';
 import { get as extractProperty } from 'lodash';
-import { useDocument } from '@openmsupply-client/programs/src/api';
+import { useDocument } from '@openmsupply-client/programs';
 import { z } from 'zod';
 
 export const idGeneratorTester = rankWith(10, uiTypeIs('IdGenerator'));

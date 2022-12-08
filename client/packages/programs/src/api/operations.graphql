@@ -57,6 +57,7 @@ query documentRegistries(
         uiSchema
         uiSchemaType
       }
+      totalCount
     }
   }
 }
@@ -115,20 +116,7 @@ fragment EncounterDocumentRegistry on DocumentRegistryNode {
   }
 }
 
-fragment EncounterDocument on DocumentNode {
-  id
-  name
-  parents
-  author
-  timestamp
-  type
-  data
-  documentRegistry {
-    ...EncounterDocumentRegistry
-  }
-}
-
-fragment Encounter on EncounterNode {
+fragment EncounterBase on EncounterNode {
   id
   type
   name
@@ -143,7 +131,7 @@ fragment Encounter on EncounterNode {
   startDatetime
   endDatetime
   document {
-    ...EncounterDocument
+    ...Document
   }
 }
 
@@ -152,7 +140,30 @@ query encounterById($storeId: String!, $encounterId: String!) {
     ... on EncounterConnector {
       __typename
       nodes {
-        ...Encounter
+        ...EncounterBase
+      }
+      totalCount
+    }
+  }
+}
+
+query encounters(
+  $storeId: String!
+  $key: EncounterSortFieldInput
+  $desc: Boolean
+  $filter: EncounterFilterInput
+  $page: PaginationInput
+) {
+  encounters(
+    storeId: $storeId
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+    page: $page
+  ) {
+    ... on EncounterConnector {
+      __typename
+      nodes {
+        ...EncounterBase
       }
       totalCount
     }

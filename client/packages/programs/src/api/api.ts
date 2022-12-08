@@ -1,9 +1,14 @@
-import { DocumentRegistryNodeContext } from '@common/types';
+import {
+  DocumentRegistryFilterInput,
+  DocumentRegistryNodeContext,
+  DocumentRegistrySortFieldInput,
+  EncounterSortFieldInput,
+} from '@common/types';
 import {
   DocumentFragment,
   DocumentRegistryFragment,
+  EncounterBaseFragment,
   EncounterFieldsFragment,
-  EncounterFragment,
   Sdk,
 } from './operations.generated';
 
@@ -21,6 +26,10 @@ export const getDocumentQueries = (sdk: Sdk, storeId: string) => ({
   },
 });
 
+export type DocumentRegistryParams = {
+  filter?: DocumentRegistryFilterInput;
+};
+
 export const getEncounterQueries = (sdk: Sdk, storeId: string) => ({
   encounterFields: async (
     patientId: string,
@@ -34,8 +43,37 @@ export const getEncounterQueries = (sdk: Sdk, storeId: string) => ({
     }
     throw new Error('Error querying document');
   },
-  byId: async (encounterId: string): Promise<EncounterFragment> => {
+  byId: async (encounterId: string): Promise<EncounterBaseFragment> => {
     const result = await sdk.encounterById({ encounterId, storeId });
+    const encounters = result?.encounters;
+
+    if (
+      encounters?.__typename === 'EncounterConnector' &&
+      !!encounters.nodes[0]
+    ) {
+      return encounters.nodes[0];
+    } else {
+      throw new Error('Could not find encounter');
+    }
+  },
+  previousEncounters: async (
+    patientId: string,
+    current: Date
+  ): Promise<EncounterBaseFragment> => {
+    const result = await sdk.encounters({
+      storeId,
+      key: EncounterSortFieldInput.StartDatetime,
+      desc: true,
+      filter: {
+        startDatetime: {
+          beforeOrEqualTo: new Date(current.getTime() - 1).toISOString(),
+        },
+        patientId: {
+          equalTo: patientId,
+        },
+      },
+      page: { first: 1 },
+    });
     const encounters = result?.encounters;
 
     if (
@@ -74,6 +112,22 @@ export const getDocumentRegistryQueries = (sdk: Sdk) => ({
         return entries.nodes;
       }
       throw new Error('Error querying document registry by context');
+    },
+    documentRegistries: async ({
+      filter,
+    }: DocumentRegistryParams): Promise<{
+      nodes: DocumentRegistryFragment[];
+      totalCount: number;
+    }> => {
+      const result = await sdk.documentRegistries({
+        filter,
+        sort: {
+          key: DocumentRegistrySortFieldInput.DocumentType,
+          desc: false,
+        },
+      });
+
+      return result?.documentRegistries;
     },
   },
 });
