@@ -120,6 +120,19 @@
           }
         },
         {
+          "type": "EncounterLineChart",
+          "scope": "#",
+          "options": {
+            "values": [
+              {
+                "field": "arvMedication.adherenceStatus",
+                "label": "Adherence Status",
+                "unit": "%"
+              }
+            ]
+          }
+        },
+        {
           "label": "Quantity prescribed",
           "options": {
             "quantityPerDay": 1,
