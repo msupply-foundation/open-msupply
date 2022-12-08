@@ -1,7 +1,7 @@
 import { useQuery } from '@openmsupply-client/common';
-import { DocumentRegistryFragment } from '@openmsupply-client/programs/src/api';
+import { DocumentRegistryFragment } from '@openmsupply-client/programs';
+import { useDocumentRegistryApi } from 'packages/programs/src/api/hooks/utils/useDocumentRegistryApi';
 import { ProgramEnrolmentRowFragmentWithId } from '../../../ProgramEnrolment/api';
-import { usePatientApi } from '../utils/usePatientApi';
 
 export type EncounterRegistry = {
   program: ProgramEnrolmentRowFragmentWithId;
@@ -12,12 +12,12 @@ export type EncounterRegistry = {
 export const useProgramEncounters = (
   programs: ProgramEnrolmentRowFragmentWithId[]
 ) => {
-  const api = usePatientApi();
+  const api = useDocumentRegistryApi();
   const programIds = programs
     .map(it => it.document.documentRegistry?.id)
     .filter((it): it is string => !!it);
   return {
-    ...useQuery(api.keys.programEncountersParamList(programIds), () =>
+    ...useQuery(api.keys.programRegistries(programIds), () =>
       api.get
         .documentRegistries({
           filter: {
