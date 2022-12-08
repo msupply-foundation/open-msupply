@@ -54,9 +54,8 @@
         "arvMedication": {
           "properties": {
             "adherenceStatus": {
-              "description": "Antiretroviral adherence status",
-              "enum": ["GOOD", "MEDIUM", "POOR"],
-              "type": "string"
+              "description": "Antiretroviral adherence status [%]",
+              "type": "number"
             },
             "prophylaxisMedication": {
               "items": {

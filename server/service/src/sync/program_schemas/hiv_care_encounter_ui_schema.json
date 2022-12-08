@@ -109,6 +109,17 @@
           "label": "Remaining Pill Count"
         },
         {
+          "scope": "#",
+          "type": "AdherenceStatus",
+          "label": "Adherence Status",
+          "options": {
+            "previousCountField": "arvMedication.quantityPrescribed",
+            "remainingCountField": "arvMedication.remainingPillCount",
+            "countPerDay": 1,
+            "targetField": "arvMedication.adherenceStatus"
+          }
+        },
+        {
           "label": "Quantity prescribed",
           "options": {
             "quantityPerDay": 1,
@@ -132,17 +143,6 @@
           },
           "scope": "#",
           "type": "QuantityPrescribed"
-        },
-        {
-          "scope": "#/properties/arvMedication/properties/adherenceStatus",
-          "type": "Control",
-          "options": {
-            "show": [
-              ["GOOD", "Good"],
-              ["MEDIUM", "Medium"],
-              ["POOR", "Poor"]
-            ]
-          }
         },
         {
           "scope": "#/properties/arvMedication/properties/regimenStatus",
