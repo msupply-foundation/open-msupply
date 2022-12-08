@@ -4,6 +4,7 @@ import { NumUtils } from '@common/utils';
 import { NumericTextInputProps } from './NumericTextInput';
 
 interface PositiveNumberProps extends Omit<NumericTextInputProps, 'onChange'> {
+  min?: number;
   max?: number;
   onChange: (newValue: number) => void;
 }
@@ -15,6 +16,7 @@ export const PositiveNumberInput = React.forwardRef(
       sx,
       disabled = false,
       value,
+      min = 1,
       max = 999999999,
       onChange,
       ...rest
@@ -28,7 +30,7 @@ export const PositiveNumberInput = React.forwardRef(
         InputProps={{
           sx: { ...sx, '& .MuiInput-input': { textAlign: 'right' } },
         }}
-        onChange={value => onChange(NumUtils.constrain(value, 1, max))}
+        onChange={value => onChange(NumUtils.constrain(value, min, max))}
         disabled={disabled}
         value={value}
         {...rest}
