@@ -24,7 +24,7 @@
                 {
                   "type": "Control",
                   "scope": "#/properties/code",
-                  "label": "National Health Id",
+                  "label": "National ID (NID)",
                   "options": {
                     "pattern": "^[0-9]{10}$",
                     "examples": ["1234567890"]
@@ -361,6 +361,10 @@
               "elements": [
                 {
                   "type": "Control",
+                  "scope": "#/properties/family/properties/nextOfKin/properties/relationship"
+                },
+                {
+                  "type": "Control",
                   "scope": "#/properties/family/properties/nextOfKin/properties/firstName"
                 },
                 {
@@ -416,6 +420,7 @@
                 },
                 {
                   "type": "Control",
+                  "label": "Education Status",
                   "scope": "#/properties/socioEconomics/properties/education"
                 }
               ]
