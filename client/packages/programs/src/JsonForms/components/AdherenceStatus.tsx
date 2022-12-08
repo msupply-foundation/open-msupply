@@ -6,11 +6,16 @@ import {
   uiTypeIs,
 } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import { DetailInputWithLabelRow } from '@openmsupply-client/common';
-import { FORM_LABEL_WIDTH, useZodOptionsValidation } from '../common';
+import { BasicTextInput, Box } from '@openmsupply-client/common';
+import {
+  FORM_INPUT_COLUMN_WIDTH,
+  FORM_LABEL_COLUMN_WIDTH,
+  useZodOptionsValidation,
+} from '../common';
 import { z } from 'zod';
 import { useEncounter } from '../../api';
 import { get as extractProperty } from 'lodash';
+import { FormLabel } from '@mui/material';
 
 export const adherenceStatusTester = rankWith(10, uiTypeIs('AdherenceStatus'));
 
@@ -135,20 +140,32 @@ const UIComponent = (props: ControlProps) => {
     return null;
   }
 
+  const inputProps = {
+    InputProps: {
+      sx: { width: '90px', '& .MuiInput-input': { textAlign: 'right' } },
+    },
+    disabled: true,
+    error: !!errors,
+    helperText: errors,
+    value:
+      adherenceStatus !== undefined ? `${adherenceStatus.toFixed(1)}%` : '',
+  };
   return (
-    <DetailInputWithLabelRow
-      label={label}
-      inputProps={{
-        value:
-          adherenceStatus !== undefined ? `${adherenceStatus.toFixed(1)}` : '',
-        sx: { margin: 0.5, width: '100px' },
-        disabled: true,
-        error: !!errors,
-        helperText: errors,
-      }}
-      labelWidthPercentage={FORM_LABEL_WIDTH}
-      inputAlignment="start"
-    />
+    <Box
+      display="flex"
+      alignItems="center"
+      gap={2}
+      justifyContent="space-around"
+      style={{ minWidth: 300 }}
+      marginTop={1}
+    >
+      <Box style={{ textAlign: 'end' }} flexBasis={FORM_LABEL_COLUMN_WIDTH}>
+        <FormLabel sx={{ fontWeight: 'bold' }}>{label}:</FormLabel>
+      </Box>
+      <Box flexBasis={FORM_INPUT_COLUMN_WIDTH}>
+        <BasicTextInput {...inputProps} />
+      </Box>
+    </Box>
   );
 };
 
