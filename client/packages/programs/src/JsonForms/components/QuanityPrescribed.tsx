@@ -173,6 +173,7 @@ const UIComponent = (props: ControlProps) => {
       </Box>
       <Box flexBasis={FORM_INPUT_COLUMN_WIDTH}>
         <PositiveNumberInput
+          min={0}
           type="number"
           InputProps={{
             sx: { '& .MuiInput-input': { textAlign: 'right' } },
