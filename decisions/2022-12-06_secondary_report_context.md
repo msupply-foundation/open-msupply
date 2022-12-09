@@ -1,9 +1,9 @@
 # Secondary report context
 
 - _Date_: 2022-12-06
-- _Deciders_:
-- _Status_:
-- _Outcome_:
+- _Deciders_: Andrei, Clemens
+- _Status_: Decided
+- _Outcome_: Option 2
 
 ## Context
 
@@ -34,7 +34,7 @@ _Cons:_
 Add a `context2` column to the report table.
 This new context column would need to be a custom string and not a predefined enum (e.g. programs are user definable)
 
-_Progs:_
+_Pros:_
 
 - Be able to be more accurate to suggest applicable reports in the UI
 
@@ -46,4 +46,18 @@ _Cons:_
 
 ## Decision
 
-## Consequences
+Option 2
+
+However, there is an ongoing discussion about whether or the secondary context should refer to a programs table rather than using a simple string identifier.
+
+_Pros:_
+
+- would provide strong typing on how context2 is used
+
+_Cons:_
+
+- context2 can only be used for programs, other use-cases would require a new column
+
+Another alternative is to have a special programs_report table.
+
+This decision has been deferred till there is a program table implemented.
