@@ -2167,6 +2167,7 @@ export type Queries = {
   requisitionByNumber: RequisitionResponse;
   requisitionLineChart: RequisitionLineChartResponse;
   requisitions: RequisitionsResponse;
+  responseRequisitionStats: RequisitionLineStatsResponse;
   stockCounts: StockCounts;
   /** Query for "stock_line" entries */
   stockLines: StockLinesResponse;
@@ -2309,6 +2310,12 @@ export type QueriesRequisitionsArgs = {
 };
 
 
+export type QueriesResponseRequisitionStatsArgs = {
+  requisitionLineId: Scalars['String'];
+  storeId: Scalars['String'];
+};
+
+
 export type QueriesStockCountsArgs = {
   daysTillExpired?: InputMaybe<Scalars['Int']>;
   storeId: Scalars['String'];
@@ -2365,7 +2372,7 @@ export type RecordBelongsToAnotherStore = DeleteLocationErrorInterface & UpdateL
   description: Scalars['String'];
 };
 
-export type RecordNotFound = AddFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & NodeErrorInterface & RequisitionLineChartErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateLocationErrorInterface & UpdateNameErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UpdateStockLineErrorInterface & UseSuggestedQuantityErrorInterface & {
+export type RecordNotFound = AddFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & NodeErrorInterface & RequisitionLineChartErrorInterface & RequisitionLineStatsErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateLocationErrorInterface & UpdateNameErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UpdateStockLineErrorInterface & UseSuggestedQuantityErrorInterface & {
   __typename: 'RecordNotFound';
   description: Scalars['String'];
 };
@@ -2431,6 +2438,14 @@ export type ReportSortInput = {
 };
 
 export type ReportsResponse = ReportConnector;
+
+export type RequestStoreStatsNode = {
+  __typename: 'RequestStoreStatsNode';
+  averageMonthlyConsumption: Scalars['Int'];
+  maxMonthsOfStock: Scalars['Float'];
+  stockOnHand: Scalars['Int'];
+  suggestedQuantity: Scalars['Int'];
+};
 
 export type RequisitionConnector = {
   __typename: 'RequisitionConnector';
@@ -2509,6 +2524,17 @@ export type RequisitionLineNode = {
 export type RequisitionLineNodeItemStatsArgs = {
   amcLookbackMonths?: InputMaybe<Scalars['Int']>;
 };
+
+export type RequisitionLineStatsError = {
+  __typename: 'RequisitionLineStatsError';
+  error: RequisitionLineStatsErrorInterface;
+};
+
+export type RequisitionLineStatsErrorInterface = {
+  description: Scalars['String'];
+};
+
+export type RequisitionLineStatsResponse = RequisitionLineStatsError | ResponseRequisitionStatsNode;
 
 export type RequisitionLineWithItemIdExists = InsertRequestRequisitionLineErrorInterface & {
   __typename: 'RequisitionLineWithItemIdExists';
@@ -2604,6 +2630,21 @@ export type RequisitionSortInput = {
 };
 
 export type RequisitionsResponse = RequisitionConnector;
+
+export type ResponseRequisitionStatsNode = {
+  __typename: 'ResponseRequisitionStatsNode';
+  requestStoreStats: RequestStoreStatsNode;
+  responseStoreStats: ResponseStoreStatsNode;
+};
+
+export type ResponseStoreStatsNode = {
+  __typename: 'ResponseStoreStatsNode';
+  incomingStock: Scalars['Int'];
+  otherRequestedQuantity: Scalars['Int'];
+  requestedQuantity: Scalars['Int'];
+  stockOnHand: Scalars['Float'];
+  stockOnOrder: Scalars['Int'];
+};
 
 export type SimpleStringFilterInput = {
   /** Search term must be an exact match (case sensitive) */

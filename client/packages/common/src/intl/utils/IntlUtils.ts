@@ -5,7 +5,13 @@ import { LanguageType } from '../../types/schema';
 
 export { useTranslationNext };
 
-const locales = ['en' as const, 'ar' as const, 'fr' as const] as const;
+const locales = [
+  'ar' as const,
+  'en' as const,
+  'es' as const,
+  'fr' as const,
+  'tet' as const,
+] as const;
 
 export type SupportedLocales = typeof locales[number];
 
@@ -38,8 +44,9 @@ export const IntlUtils = {
   useCurrentLanguage: (): SupportedLocales => {
     const { i18n } = useTranslationNext();
     const { language } = i18n;
-    if (language === 'en' || language === 'fr' || language === 'ar') {
-      return language;
+    const supportedLanguage = language as SupportedLocales;
+    if (locales.includes(supportedLanguage)) {
+      return supportedLanguage;
     }
     if (!EnvUtils.isProduction()) {
       throw new Error(`Language '${language}' not supported`);
