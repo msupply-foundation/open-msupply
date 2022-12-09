@@ -220,13 +220,13 @@ export const getStocktakeQueries = (sdk: Sdk, storeId: string) => ({
   },
 });
 
-const getInsertStocktakeLines = (
-  stocktakeId: string,
-  items: { itemId: string; stockLines?: StockLineFragment[] | undefined }[]
-) => {
+type Item = { itemId: string; stockLines?: StockLineFragment[] };
+
+const getInsertStocktakeLines = (stocktakeId: string, items: Item[]) => {
   const insertStocktakeLines = [] as InsertStocktakeLineInput[];
   items.forEach(item => {
     const { itemId, stockLines } = item;
+    // if the item has stock lines, add a stocktake line for each stock line
     if (stockLines && stockLines.length > 0) {
       stockLines.forEach(stockLine => {
         insertStocktakeLines.push({
@@ -240,6 +240,7 @@ const getInsertStocktakeLines = (
           sellPricePerPack: stockLine.sellPricePerPack,
         });
       });
+      // if no stock lines, add a placeholder stocktake line for the item
     } else {
       insertStocktakeLines.push({
         id: FnUtils.generateUUID(),
