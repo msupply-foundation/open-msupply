@@ -125,18 +125,17 @@ pub fn documents(
             Some(&allowed_docs),
         )
         .map_err(StandardGraphqlError::from_list_error)?;
-    let nodes: Vec<DocumentNode> = result
-        .rows
-        .into_iter()
-        .map(|document| DocumentNode {
-            allowed_docs: allowed_docs.clone(),
-            document,
-        })
-        .collect();
 
     Ok(DocumentResponse::Response(DocumentConnector {
         total_count: result.count,
-        nodes,
+        nodes: result
+            .rows
+            .into_iter()
+            .map(|document| DocumentNode {
+                allowed_docs: allowed_docs.clone(),
+                document,
+            })
+            .collect(),
     }))
 }
 
