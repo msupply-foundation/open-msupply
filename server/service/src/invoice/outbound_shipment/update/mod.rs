@@ -185,6 +185,7 @@ mod test {
         invoice::outbound_shipment::{
             update::UpdateOutboundShipmentStatus, UpdateOutboundShipment,
         },
+        invoice_line::ShipmentTaxUpdate,
         service_provider::ServiceProvider,
     };
 
@@ -426,7 +427,9 @@ mod test {
                 their_reference: Some("their_reference".to_string()),
                 colour: Some("colour".to_string()),
                 transport_reference: Some("transport_reference".to_string()),
-                tax: None,
+                tax: Some(ShipmentTaxUpdate {
+                    percentage: Some(15.0),
+                }),
             }
         }
 
@@ -449,13 +452,14 @@ mod test {
                     their_reference,
                     colour,
                     transport_reference,
-                    tax: _,
+                    tax,
                 } = get_update();
                 u.on_hold = on_hold.unwrap();
                 u.comment = comment;
                 u.their_reference = their_reference;
                 u.colour = colour;
                 u.transport_reference = transport_reference;
+                u.tax = tax.map(|tax| tax.percentage.unwrap());
                 u
             })
         );
