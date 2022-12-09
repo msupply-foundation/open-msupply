@@ -22,7 +22,7 @@ pub(crate) trait Migration {
 
 #[derive(Debug, Error)]
 pub enum MigrationError {
-    #[error("Database version ({0}) is above app version ({1})")]
+    #[error("The database you are connecting to is a later version ({0}) than the server ({1}). It is unsafe to run with this configuration, the server is stopping")]
     DatabaseVersionAboveAppVersion(Version, Version),
     #[error("Database version is pre release ({0}), it cannot be upgraded")]
     DatabaseVersionIsPreRelease(Version),
@@ -116,6 +116,8 @@ fn get_database_version(connection: &StorageConnection) -> Version {
     match KeyValueStoreRepository::new(connection).get_string(KeyValueType::DatabaseVersion) {
         Ok(Some(version_str)) => Version::from_str(&version_str),
         // Rust migrations start at "1.0.3"
+        // DatabaseVersion key is introduced in 1.0.4 and first app version to have manual rust migrations
+        // is in 1.1.0 (there is intential gap between 1.0.4 and 1.1.0 to allow example migrations to be runnable and testable)
         _ => Version::from_str("1.0.3"),
     }
 }
@@ -139,13 +141,14 @@ pub(crate) fn execute_sql_with_error<'a, Q>(
 ) -> Result<usize, SqlError>
 where
     Q: methods::ExecuteDsl<DBConnection>,
-    Q: QueryFragment<DBType>, // DebugQuery<'a, Q, DBType>: std::fmt::Display,
+    Q: QueryFragment<DBType>,
 {
     let debug_query = diesel::debug_query::<DBType, _>(&query).to_string();
     Q::execute(query, &connection.connection).map_err(|source| SqlError(debug_query, source.into()))
 }
 
 /// Macro will create and run SQL query, it's a less verbose way of running SQL in migrations
+/// $($arg:tt)* is taken directly from format! macro
 macro_rules! sql {
     ($connection:expr, $($arg:tt)*) => {{
         let query = diesel::sql_query(&format!($($arg)*));
