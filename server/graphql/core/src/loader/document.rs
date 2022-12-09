@@ -55,11 +55,11 @@ impl Loader<DocumentLoaderInput> for DocumentLoader {
                 .map_err(|err| match err {
                     ListError::DatabaseError(err) => err,
                     ListError::LimitBelowMin(_) => RepositoryError::DBError {
-                        msg: "LimitBelowMin".to_string(),
+                        msg: "Internal error: pagination was not specified".to_string(),
                         extra: "".to_string(),
                     },
                     ListError::LimitAboveMax(_) => RepositoryError::DBError {
-                        msg: "LimitAboveMax".to_string(),
+                        msg: "Internal error: pagination was not specified".to_string(),
                         extra: "".to_string(),
                     },
                 })?;
