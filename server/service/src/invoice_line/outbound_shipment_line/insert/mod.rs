@@ -14,6 +14,7 @@ pub struct InsertOutboundShipmentLine {
     pub stock_line_id: String,
     pub number_of_packs: f64,
     pub total_before_tax: Option<f64>,
+    pub tax: Option<f64>,
 }
 
 type OutError = InsertOutboundShipmentLineError;

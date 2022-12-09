@@ -67,6 +67,7 @@ fn generate_line(
         id: _,
         item_id: _,
         total_before_tax,
+        tax,
     }: UpdateInboundShipmentLine,
     current_line: InvoiceLineRow,
     new_item_option: Option<ItemRow>,
@@ -82,6 +83,7 @@ fn generate_line(
     update_line.cost_price_per_pack =
         cost_price_per_pack.unwrap_or(update_line.cost_price_per_pack);
     update_line.number_of_packs = number_of_packs.unwrap_or(update_line.number_of_packs);
+    update_line.tax = tax.map(|tax| tax.percentage).unwrap_or(update_line.tax);
 
     if let Some(item) = new_item_option {
         update_line.item_id = item.id;
