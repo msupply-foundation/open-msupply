@@ -18,7 +18,7 @@ const createDraftLine = (
 
 export const useDraftRequisitionLine = (line: ResponseLineFragment) => {
   const { id: reqId } = useResponse.document.fields('id');
-  const { mutate: save, isLoading } = useResponse.line.save();
+  const { mutateAsync: save, isLoading } = useResponse.line.save();
 
   const [draft, setDraft] = useState<DraftResponseLine>(
     createDraftLine(line, reqId)

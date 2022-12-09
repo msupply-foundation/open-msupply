@@ -46,7 +46,7 @@ export const ResponseLineEdit = ({
           }
         />
       ),
-      value: t('label.my-store')
+      value: t('label.my-store'),
     },
     {
       Component: (
@@ -72,7 +72,8 @@ export const ResponseLineEdit = ({
         <DialogButton
           disabled={!hasNext}
           variant="next"
-          onClick={() => {
+          onClick={async () => {
+            await save();
             next && setCurrentLine(next);
             // Returning true triggers the animation/slide out
             return true;
