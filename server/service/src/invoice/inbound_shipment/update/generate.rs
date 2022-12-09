@@ -84,8 +84,7 @@ pub(crate) fn generate(
         None
     };
 
-    let tax_updated = tax_updated(&update_invoice.tax);
-    let update_tax_for_lines = if tax_updated {
+    let update_tax_for_lines = if update_invoice.tax.is_some() {
         Some(generate_tax_update_for_lines(
             connection,
             &update_invoice.id,
@@ -102,10 +101,6 @@ pub(crate) fn generate(
         location_movements,
         update_tax_for_lines,
     })
-}
-
-fn tax_updated(tax: &Option<f64>) -> bool {
-    tax.is_some()
 }
 
 pub fn should_create_batches(invoice: &InvoiceRow, patch: &UpdateInboundShipment) -> bool {
