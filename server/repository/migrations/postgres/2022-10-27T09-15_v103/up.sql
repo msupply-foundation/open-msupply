@@ -1,5 +1,4 @@
-CREATE TYPE language_type AS ENUM
-(
+CREATE TYPE language_type AS ENUM (
     'ENGLISH',
     'FRENCH',
     'SPANISH',
@@ -9,4 +8,6 @@ CREATE TYPE language_type AS ENUM
     'RUSSIAN'
 );
 
-ALTER TABLE user_account ADD COLUMN IF NOT EXISTS "language" language_type NOT NULL DEFAULT 'ENGLISH';
+ALTER TABLE user_account
+    ADD COLUMN IF NOT EXISTS "language" language_type NOT NULL DEFAULT 'ENGLISH';
+
