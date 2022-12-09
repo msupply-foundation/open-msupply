@@ -44,6 +44,7 @@ fn generate_line(
         stock_line_id,
         number_of_packs,
         total_before_tax,
+        tax: _,
     }: InsertOutboundShipmentLine,
     ItemRow {
         name: item_name,
