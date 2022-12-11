@@ -12,7 +12,7 @@ pub fn zero_date_as_option<'de, D: Deserializer<'de>>(d: D) -> Result<Option<Nai
         .and_then(|s| NaiveDate::parse_from_str(&s, "%Y-%m-%d").ok()))
 }
 
-pub fn date_and_time_to_datatime(date: NaiveDate, seconds: i64) -> NaiveDateTime {
+pub fn date_and_time_to_datetime(date: NaiveDate, seconds: i64) -> NaiveDateTime {
     NaiveDateTime::new(
         date,
         NaiveTime::from_hms(0, 0, 0) + Duration::seconds(seconds),
@@ -43,5 +43,5 @@ where
 /// change on our side.
 pub fn naive_time<'de, D: Deserializer<'de>>(d: D) -> Result<NaiveTime, D::Error> {
     let secs = u32::deserialize(d)?;
-    Ok(NaiveTime::from_num_seconds_from_midnight(secs, 0))
+    Ok(NaiveTime::from_hms_opt(0, 0, secs).unwrap_or(NaiveTime::from_hms(0, 0, 0)))
 }
