@@ -1,0 +1,50 @@
+import React, { useEffect } from 'react';
+import {
+  composePaths,
+  ControlProps,
+  rankWith,
+  uiTypeIs,
+} from '@jsonforms/core';
+import { withJsonFormsControlProps } from '@jsonforms/react';
+import { DetailInputWithLabelRow, NumUtils } from '@openmsupply-client/common';
+import { FORM_LABEL_WIDTH } from '../common';
+
+export const bmiTester = rankWith(10, uiTypeIs('BMI'));
+
+const round = (value: number) => Math.round(value * 100) / 100;
+
+const UIComponent = (props: ControlProps) => {
+  const { data, handleChange, label, path } = props;
+  const { height, weight } = data ?? {};
+
+  useEffect(() => {
+    if (!data) return;
+
+    const h = NumUtils.parseString(height);
+    const w = NumUtils.parseString(weight);
+
+    if (!handleChange || !w) return;
+
+    const bmi = w && h ? round(w / (h * h)) : undefined;
+    handleChange(composePaths(path, 'bodyMassIndex'), bmi);
+  }, [height, weight]);
+
+  if (!props.visible) {
+    return null;
+  }
+
+  return (
+    <DetailInputWithLabelRow
+      label={label}
+      inputProps={{
+        value: data?.bodyMassIndex ?? '',
+        sx: { margin: 0.5, width: '100px' },
+        disabled: true,
+      }}
+      labelWidthPercentage={FORM_LABEL_WIDTH}
+      inputAlignment="start"
+    />
+  );
+};
+
+export const BMI = withJsonFormsControlProps(UIComponent);

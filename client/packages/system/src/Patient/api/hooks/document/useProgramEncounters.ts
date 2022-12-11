@@ -1,5 +1,5 @@
 import { useQuery } from '@openmsupply-client/common';
-import { DocumentRegistryFragment } from '../../../JsonForms/api';
+import { DocumentRegistryFragment } from '@openmsupply-client/programs/src/api';
 import { ProgramEnrolmentRowFragmentWithId } from '../../../ProgramEnrolment/api';
 import { usePatientApi } from '../utils/usePatientApi';
 

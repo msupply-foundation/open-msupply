@@ -9,7 +9,10 @@ import { useProgramEnrolment } from '../api/hooks';
 import { usePatientModalStore } from '../../hooks';
 import { PatientModal } from '../../PatientView';
 import { usePatient } from '../../api';
-import { SaveDocumentMutation, useJsonForms } from '../../JsonForms';
+import {
+  SaveDocumentMutation,
+  useJsonForms,
+} from '@openmsupply-client/programs';
 
 const useUpsertProgramEnrolment = (
   patientId: string,

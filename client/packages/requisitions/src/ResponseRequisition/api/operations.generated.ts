@@ -60,6 +60,14 @@ export type SupplyRequestedQuantityMutationVariables = Types.Exact<{
 
 export type SupplyRequestedQuantityMutation = { __typename: 'Mutations', supplyRequestedQuantity: { __typename: 'RequisitionLineConnector', nodes: Array<{ __typename: 'RequisitionLineNode', id: string }> } | { __typename: 'SupplyRequestedQuantityError', error: { __typename: 'CannotEditRequisition', description: string } | { __typename: 'RecordNotFound', description: string } } };
 
+export type ResponseRequisitionStatsQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String'];
+  requisitionLineId: Types.Scalars['String'];
+}>;
+
+
+export type ResponseRequisitionStatsQuery = { __typename: 'Queries', responseRequisitionStats: { __typename: 'RequisitionLineStatsError', error: { __typename: 'RecordNotFound', description: string } } | { __typename: 'ResponseRequisitionStatsNode', requestStoreStats: { __typename: 'RequestStoreStatsNode', averageMonthlyConsumption: number, stockOnHand: number, maxMonthsOfStock: number, suggestedQuantity: number }, responseStoreStats: { __typename: 'ResponseStoreStatsNode', incomingStock: number, otherRequestedQuantity: number, requestedQuantity: number, stockOnHand: number, stockOnOrder: number } } };
+
 export const ResponseLineFragmentDoc = gql`
     fragment ResponseLine on RequisitionLineNode {
   id
@@ -293,6 +301,41 @@ export const SupplyRequestedQuantityDocument = gql`
   }
 }
     `;
+export const ResponseRequisitionStatsDocument = gql`
+    query responseRequisitionStats($storeId: String!, $requisitionLineId: String!) {
+  responseRequisitionStats(
+    requisitionLineId: $requisitionLineId
+    storeId: $storeId
+  ) {
+    ... on ResponseRequisitionStatsNode {
+      __typename
+      requestStoreStats {
+        averageMonthlyConsumption
+        stockOnHand
+        maxMonthsOfStock
+        suggestedQuantity
+      }
+      responseStoreStats {
+        incomingStock
+        otherRequestedQuantity
+        requestedQuantity
+        stockOnHand
+        stockOnOrder
+      }
+    }
+    ... on RequisitionLineStatsError {
+      __typename
+      error {
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+        description
+      }
+    }
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -318,6 +361,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     supplyRequestedQuantity(variables: SupplyRequestedQuantityMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<SupplyRequestedQuantityMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<SupplyRequestedQuantityMutation>(SupplyRequestedQuantityDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'supplyRequestedQuantity', 'mutation');
+    },
+    responseRequisitionStats(variables: ResponseRequisitionStatsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ResponseRequisitionStatsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ResponseRequisitionStatsQuery>(ResponseRequisitionStatsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'responseRequisitionStats', 'query');
     }
   };
 }
@@ -422,5 +468,22 @@ export const mockCreateOutboundFromResponseMutation = (resolver: ResponseResolve
 export const mockSupplyRequestedQuantityMutation = (resolver: ResponseResolver<GraphQLRequest<SupplyRequestedQuantityMutationVariables>, GraphQLContext<SupplyRequestedQuantityMutation>, any>) =>
   graphql.mutation<SupplyRequestedQuantityMutation, SupplyRequestedQuantityMutationVariables>(
     'supplyRequestedQuantity',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockResponseRequisitionStatsQuery((req, res, ctx) => {
+ *   const { storeId, requisitionLineId } = req.variables;
+ *   return res(
+ *     ctx.data({ responseRequisitionStats })
+ *   )
+ * })
+ */
+export const mockResponseRequisitionStatsQuery = (resolver: ResponseResolver<GraphQLRequest<ResponseRequisitionStatsQueryVariables>, GraphQLContext<ResponseRequisitionStatsQuery>, any>) =>
+  graphql.query<ResponseRequisitionStatsQuery, ResponseRequisitionStatsQueryVariables>(
+    'responseRequisitionStats',
     resolver
   )
