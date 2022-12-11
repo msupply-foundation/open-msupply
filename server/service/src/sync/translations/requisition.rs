@@ -11,7 +11,7 @@ use util::constants::NUMBER_OF_DAYS_IN_A_MONTH;
 use crate::sync::{
     api::RemoteSyncRecordV5,
     sync_serde::{
-        date_and_time_to_datatime, date_from_date_time, date_to_isostring, empty_str_as_option,
+        date_and_time_to_datetime, date_from_date_time, date_to_isostring, empty_str_as_option,
     },
 };
 
@@ -160,7 +160,7 @@ impl SyncTranslation for RequisitionTranslation {
                 data.om_colour,
             ),
             None => (
-                date_and_time_to_datatime(data.date_entered, 0),
+                date_and_time_to_datetime(data.date_entered, 0),
                 from_legacy_sent_datetime(data.last_modified_at, &r#type),
                 from_legacy_finalised_datetime(data.last_modified_at, &r#type),
                 data.daysToSupply as f64 / NUMBER_OF_DAYS_IN_A_MONTH,
