@@ -11,6 +11,10 @@ use self::{
         InsertRequestRequisitionLineError, UpdateRequestRequisitionLine,
         UpdateRequestRequisitionLineError,
     },
+    response_line_stats::{
+        get_response_requisition_line_stats, ResponseRequisitionStats,
+        ResponseRequisitionStatsError,
+    },
     response_requisition_line::{
         update_response_requisition_line, UpdateResponseRequisitionLine,
         UpdateResponseRequisitionLineError,
@@ -27,6 +31,7 @@ pub mod chart;
 pub mod common;
 pub mod query;
 pub mod request_requisition_line;
+pub mod response_line_stats;
 pub mod response_requisition_line;
 
 pub trait RequisitionLineServiceTrait: Sync + Send {
@@ -84,6 +89,14 @@ pub trait RequisitionLineServiceTrait: Sync + Send {
             consumption_history_options,
             stock_evolution_options,
         )
+    }
+
+    fn get_response_requisition_line_stats(
+        &self,
+        ctx: &ServiceContext,
+        requisition_line_id: &str,
+    ) -> Result<ResponseRequisitionStats, ResponseRequisitionStatsError> {
+        get_response_requisition_line_stats(ctx, requisition_line_id)
     }
 }
 

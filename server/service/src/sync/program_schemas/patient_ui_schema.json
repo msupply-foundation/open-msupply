@@ -13,8 +13,18 @@
               "elements": [
                 {
                   "type": "Control",
+                  "scope": "#/properties/firstName",
+                  "label": "First Name"
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/properties/lastName",
+                  "label": "Last Name"
+                },
+                {
+                  "type": "Control",
                   "scope": "#/properties/code",
-                  "label": "National Health Id",
+                  "label": "National ID (NID)",
                   "options": {
                     "pattern": "^[0-9]{10}$",
                     "examples": ["1234567890"]
@@ -78,16 +88,6 @@
                       }
                     ]
                   }
-                },
-                {
-                  "type": "Control",
-                  "scope": "#/properties/firstName",
-                  "label": "First Name"
-                },
-                {
-                  "type": "Control",
-                  "scope": "#/properties/lastName",
-                  "label": "Last Name"
                 },
                 {
                   "type": "Control",
@@ -270,24 +270,81 @@
                   }
                 },
                 {
+                  "type": "Group",
+                  "label": "Address and Contact Details",
+                  "elements": [
+                    {
+                      "type": "FirstItemArray",
+                      "scope": "#/properties/contactDetails",
+                      "options": {
+                        "detail": {
+                          "type": "VerticalLayout",
+                          "elements": [
+                            {
+                              "type": "Control",
+                              "scope": "/properties/address1"
+                            },
+                            {
+                              "type": "Control",
+                              "scope": "/properties/address2"
+                            },
+                            {
+                              "type": "Control",
+                              "label": "Province",
+                              "scope": "/properties/region"
+                            },
+                            {
+                              "type": "Control",
+                              "scope": "/properties/district"
+                            },
+                            {
+                              "type": "Control",
+                              "scope": "/properties/phone"
+                            },
+                            {
+                              "type": "Control",
+                              "scope": "/properties/mobile"
+                            },
+                            {
+                              "type": "Control",
+                              "scope": "/properties/email"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "VerticalLayout",
+          "elements": [
+            {
+              "type": "Group",
+              "label": "Next of Kin",
+              "elements": [
+                {
+                  "type": "Control",
+                  "scope": "#/properties/family/properties/nextOfKin/properties/relationship"
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/properties/family/properties/nextOfKin/properties/firstName"
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/properties/family/properties/nextOfKin/properties/lastName"
+                },
+                {
                   "type": "FirstItemArray",
-                  "scope": "#/properties/contactDetails",
+                  "scope": "#/properties/family/properties/nextOfKin/properties/contactDetails",
                   "options": {
                     "detail": {
                       "type": "VerticalLayout",
                       "elements": [
-                        {
-                          "type": "Control",
-                          "scope": "/properties/address1"
-                        },
-                        {
-                          "type": "Control",
-                          "scope": "/properties/address2"
-                        },
-                        {
-                          "type": "Control",
-                          "scope": "/properties/district"
-                        },
                         {
                           "type": "Control",
                           "scope": "/properties/phone"
@@ -305,12 +362,7 @@
                   }
                 }
               ]
-            }
-          ]
-        },
-        {
-          "type": "VerticalLayout",
-          "elements": [
+            },
             {
               "type": "Group",
               "label": "Demographics",
@@ -355,65 +407,28 @@
               ]
             },
             {
-              "type": "Control",
-              "scope": "#/properties/allergies/properties/drugAllergies",
-              "itemLabel": "${index}: ${drug}",
-              "options": {
-                "detail": {
-                  "type": "VerticalLayout",
-                  "elements": [
-                    {
-                      "type": "Control",
-                      "scope": "/properties/drug"
-                    },
-                    {
-                      "type": "Control",
-                      "scope": "/properties/description"
-                    }
-                  ]
-                }
-              }
-            },
-            {
               "type": "Group",
-              "label": "Family Information",
+              "label": "Health",
               "elements": [
                 {
-                  "type": "AccordionGroup",
-                  "label": "Next of Kin",
-                  "elements": [
-                    {
-                      "type": "Control",
-                      "scope": "#/properties/family/properties/nextOfKin/properties/firstName"
-                    },
-                    {
-                      "type": "Control",
-                      "scope": "#/properties/family/properties/nextOfKin/properties/lastName"
-                    },
-                    {
-                      "type": "FirstItemArray",
-                      "scope": "#/properties/family/properties/nextOfKin/properties/contactDetails",
-                      "options": {
-                        "detail": {
-                          "type": "VerticalLayout",
-                          "elements": [
-                            {
-                              "type": "Control",
-                              "scope": "/properties/phone"
-                            },
-                            {
-                              "type": "Control",
-                              "scope": "/properties/mobile"
-                            },
-                            {
-                              "type": "Control",
-                              "scope": "/properties/email"
-                            }
-                          ]
+                  "type": "Control",
+                  "scope": "#/properties/allergies/properties/drugAllergies",
+                  "itemLabel": "${index}: ${drug}",
+                  "options": {
+                    "detail": {
+                      "type": "VerticalLayout",
+                      "elements": [
+                        {
+                          "type": "Control",
+                          "scope": "/properties/drug"
+                        },
+                        {
+                          "type": "Control",
+                          "scope": "/properties/description"
                         }
-                      }
+                      ]
                     }
-                  ]
+                  }
                 }
               ]
             },
