@@ -116,7 +116,8 @@ fn generate(
         schema_id: Some(input.schema_id),
         status: existing.status,
         comment: None,
-        patient_id: existing.patient_id,
+        owner: existing.owner,
+        context: existing.context,
     })
 }
 
@@ -349,7 +350,7 @@ mod test {
             .unwrap();
         let found = service_provider
             .document_service
-            .get_document(&ctx, &result.name, None)
+            .document(&ctx, &result.name, None)
             .unwrap()
             .unwrap();
         assert_eq!(found.parent_ids, vec![initial_encounter.id]);
