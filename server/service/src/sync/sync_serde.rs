@@ -59,5 +59,6 @@ where
 /// change on our side.
 pub fn naive_time<'de, D: Deserializer<'de>>(d: D) -> Result<NaiveTime, D::Error> {
     let secs = u32::deserialize(d)?;
-    Ok(NaiveTime::from_hms_opt(0, 0, secs).unwrap_or(NaiveTime::from_hms(0, 0, 0)))
+    Ok(NaiveTime::from_num_seconds_from_midnight_opt(secs, 0)
+        .unwrap_or(NaiveTime::from_hms(0, 0, 0)))
 }
