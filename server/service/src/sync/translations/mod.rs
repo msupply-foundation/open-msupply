@@ -8,7 +8,6 @@ pub(crate) mod master_list_line;
 pub(crate) mod master_list_name_join;
 pub(crate) mod name;
 pub(crate) mod name_store_join;
-pub(crate) mod number;
 pub(crate) mod report;
 pub(crate) mod requisition;
 pub(crate) mod requisition_line;
@@ -38,7 +37,6 @@ pub(crate) fn all_translators() -> SyncTanslators {
         Box::new(master_list_name_join::MasterListNameJoinTranslation {}),
         Box::new(report::ReportTranslation {}),
         // Remote
-        Box::new(number::NumberTranslation {}),
         Box::new(location::LocationTranslation {}),
         Box::new(stock_line::StockLineTranslation {}),
         Box::new(invoice::InvoiceTranslation {}),
@@ -67,7 +65,6 @@ pub(crate) mod LegacyTableName {
     pub(crate) const LIST_MASTER_NAME_JOIN: &str = "list_master_name_join";
     pub(crate) const REPORT: &str = "report";
     // Remote
-    pub(crate) const NUMBER: &str = "number";
     pub(crate) const LOCATION: &str = "Location";
     pub(crate) const ITEM_LINE: &str = "item_line";
     pub(crate) const TRANSACT: &str = "transact";
@@ -91,7 +88,6 @@ pub(crate) enum PullUpsertRecord {
     MasterListLine(MasterListLineRow),
     MasterListNameJoin(MasterListNameJoinRow),
     Report(ReportRow),
-    Number(NumberRow),
     Location(LocationRow),
     StockLine(StockLineRow),
     NameStoreJoin(NameStoreJoinRow),
