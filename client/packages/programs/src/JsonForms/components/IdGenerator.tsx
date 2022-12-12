@@ -11,6 +11,7 @@ import {
   Box,
   useMutation,
   useTranslation,
+  useConfirmationModal,
 } from '@openmsupply-client/common';
 import {
   FORM_LABEL_COLUMN_WIDTH,
@@ -28,7 +29,8 @@ export const idGeneratorTester = rankWith(10, uiTypeIs('IdGenerator'));
 type GeneratorOptions = {
   targetField: string;
   parts: Part[];
-  canRegenerate?: boolean;
+  confirmRegenerate?: boolean;
+  preventRegenAfterSave?: boolean;
 };
 
 /**
@@ -215,7 +217,7 @@ const generateId = async (input: GenerateIdInput): Promise<string> => {
 
 const UIComponent = (props: ControlProps) => {
   const { label, path, data, visible, handleChange, uischema, config } = props;
-  const t = useTranslation('common');
+  const t = useTranslation(['patients', 'common']);
   const { mutateAsync: mutateGenerateId } = useMutation(
     async (input: GenerateIdInput): Promise<string> => generateId(input)
   );
@@ -228,9 +230,20 @@ const UIComponent = (props: ControlProps) => {
     uischema.options
   );
 
-  // By default, after the ID is first saved, it cannot be re-generated, unless
-  // the "canRegenerate" option is set to "true"
-  const canGenerate = options?.canRegenerate ?? !savedData?.data?.code2;
+  /*
+  Regeneration behaviour:
+  - By default, after ID is first saved, a confirmation will be displayed
+    whenever the user subsequently clicks the "Generate" button
+  - This can be suppressed by setting the "confirmRegenerate" option to `false`
+    (default `true`)
+  - To prevent the ID from *ever* being regenerated after first save, set the
+    "preventRegenAfterSave" option to `true` (default `false`)
+  */
+  const canGenerate =
+    !options?.preventRegenAfterSave || !savedData?.data?.code2;
+
+  const requireConfirmation =
+    options?.confirmRegenerate === false ? false : !!savedData?.data?.code2;
 
   const value = options?.targetField
     ? extractProperty(data, options.targetField)
@@ -256,6 +269,12 @@ const UIComponent = (props: ControlProps) => {
     const fullPath = composePaths(path, options?.targetField);
     handleChange(fullPath, id);
   }, [options, path, data, handleChange]);
+
+  const confirmRegenerate = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: t('messages.regenerate-id-confirm'),
+    onConfirm: generate,
+  });
 
   if (!visible) {
     return null;
@@ -288,7 +307,7 @@ const UIComponent = (props: ControlProps) => {
         <Box>
           <Button
             disabled={error || !canGenerate}
-            onClick={generate}
+            onClick={requireConfirmation ? () => confirmRegenerate() : generate}
             variant="outlined"
           >
             {t('label.generate')}

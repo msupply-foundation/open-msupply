@@ -26,5 +26,6 @@
   "messages.patients-found_one": "1 patient found matching the supplied details",
   "messages.patients-found_other": "{{count}} patients found matching the supplied details",
   "messages.patients-create": "Click [Create] to add a new patient with the details entered, or click an existing patient below to view their details.",
+  "messages.regenerate-id-confirm": "This will create a new ID and cannot be undone.",
   "placeholder.search-by-last-name": "Search by last name"
 }
