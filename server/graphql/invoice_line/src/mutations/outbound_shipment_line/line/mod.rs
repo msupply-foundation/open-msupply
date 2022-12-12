@@ -101,10 +101,14 @@ impl NotEnoughStockForReduction {
         Ok(Some(InvoiceLineNode::from_domain(invoice_line)))
     }
 
-    pub async fn batch(&self, ctx: &Context<'_>) -> StockLineResponse {
-        let connection_manager = ctx.get_connection_manager();
+    pub async fn batch(&self, ctx: &Context<'_>) -> Result<StockLineResponse> {
+        let service_provider = ctx.service_provider();
+        let service_context = service_provider.basic_context()?;
 
-        get_stock_line_response(connection_manager, self.stock_line_id.clone())
+        Ok(get_stock_line_response(
+            &service_context,
+            self.stock_line_id.clone(),
+        ))
     }
 }
 

@@ -10,8 +10,26 @@ const BundleAnalyzerPlugin =
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const PluginTransformImport = require('swc-plugin-transform-import').default;
 
+class DummyWebpackPlugin {
+  apply(compiler) {
+    compiler.hooks.run.tap('DummyWebpackPlugin', () => {});
+  }
+}
+
 module.exports = env => {
   const isProduction = !!env.production;
+  const bundleAnalyzerPlugin = !!env.stats
+    ? new BundleAnalyzerPlugin({
+        /**
+         * In "server" mode analyzer will start HTTP server to show bundle report.
+         * In "static" mode single HTML file with bundle report will be generated.
+         * In "json" mode single JSON file with bundle report will be generated
+         */
+        analyzerMode: 'disabled',
+        generateStatsFile: true,
+      })
+    : new DummyWebpackPlugin();
+
   return {
     entry: './src/index',
     mode: isProduction ? 'production' : 'development',
@@ -88,16 +106,7 @@ module.exports = env => {
     plugins: [
       new ReactRefreshWebpackPlugin(),
       new webpack.DefinePlugin({ API_HOST: JSON.stringify(env.API_HOST) }),
-      new BundleAnalyzerPlugin({
-        /**
-         * In "server" mode analyzer will start HTTP server to show bundle report.
-         * In "static" mode single HTML file with bundle report will be generated.
-         * In "json" mode single JSON file with bundle report will be generated
-         */
-        analyzerMode: 'disabled',
-        generateStatsFile: !isProduction,
-      }),
-
+      bundleAnalyzerPlugin,
       new HtmlWebpackPlugin({
         favicon: './public/favicon.ico',
         template: './public/index.html',

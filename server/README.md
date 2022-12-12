@@ -82,7 +82,7 @@ When using Postgres, Postgres 12 or higher is required.
 - To persist `Path` and `PQ_LIB_DIR` for all future sessions, paste the following into a powershell terminal (requires administrator privileges):
 
 ```
-# CAUTION: this is irreversable!
+# CAUTION: this is irreversible!
 Set-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment' -Name PATH -Value $env:Path
 Set-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment' -Name PQ_LIB_DIR -Value $env:PQ_LIB_DIR
 ```
@@ -103,7 +103,7 @@ Set-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Co
 
 Remote server by default will run with sqlite database (`sqlite` rust feature), postgres can be turned on with `postgres` feature. 
 
-i.e. to run withouth mSupply central, as per above
+i.e. to run without mSupply central, as per above
 
 * Make sure that postgres credentials are correct in `configuration/*.yaml` (database will be automatically created)
 
@@ -136,9 +136,9 @@ If you want to ensure all your changes have been written to the main sqlite data
 
 `note`: yaml configurations are likely to be deprecated to .env, thus documentations is limited for .yaml.
 
-In `configurations` folder you'll find `.yaml` config files, there is `base`, `local` (will overwrite/expand `base` in dev mode), `producation` (will overwrite/expand other configs when `APP_ENVIRONMENT=production ).
+In `configurations` folder you'll find `.yaml` config files, there is `base`, `local` (will overwrite/expand `base` in dev mode), `production` (will overwrite/expand other configs when `APP_ENVIRONMENT=production ).
 
-You can use env variable to overwrite any configurations, can use dot notation with `__` (two underscorse) to specify nested value. Env vars configuration overrides start with `APP_`.
+You can use env variable to overwrite any configurations, can use dot notation with `__` (two underscore) to specify nested value. Env vars configuration overrides start with `APP_`.
 
 ```bash
 # example, will overwrite sync.url config in yaml
@@ -219,17 +219,17 @@ server:
 
 # Serving front end
 
-Server will server front end files from (client/packages/host/dist), if the client was not build and the folder is empty, server will return an error message: Cannot find index.html. See https://github.com/openmsupply/open-msupply#serving-front-end.
+Server will server front end files from (client/packages/host/dist), if the client was not build and the folder is empty, server will return an error message: Cannot find index.html. See https://github.com/openmsupply/open-msupply#serving-front-end. 
 
 You can build front end by running `yarn build` from `client` directory in the root of the project. After that if you run the server you can navigate to `http://localhost:port` to see this feature in action.
 
-When app is built in production mode (with build --release) static files will be embeded in the binary. There is `yarn build` command at the root of repository.
+When app is built in production mode (with build --release) static files will be embedded in the binary. To build, run `yarn build` command from the root of repository. This will build the client application and then build the release version of the server, bundling in the client so that it can be hosted.
 
-TODO build instructions
+
 
 # Cli
 
-Some common operations are availalbe via cli `remote_server_cli`, the `--help` flag should give a detailed explanation of how to use `cli`. Here are example of all of the currently available commands. `note:` configurations from `configurations/*.yaml` or env vars will be used when running cli commands.
+Some common operations are available via cli `remote_server_cli`, the `--help` flag should give a detailed explanation of how to use `cli`. Here are example of all of the currently available commands. `note:` configurations from `configurations/*.yaml` or env vars will be used when running cli commands.
 
 `note:` All of the cli commands are meant for development purposes, some commands are dangerous to run in production
 
@@ -254,8 +254,49 @@ cargo run --bin remote_server_cli -- initialise-from-central -u 'user1:password1
 cargo run --bin remote_server_cli -- refresh-dates
 ```
 
-## Logging
+# Logging
 
 By default, the server logs to console with a logging level of `Info`
 You can configure this, to log to a file, for example, with a rollover of log files based on file size.
 See the `example.yaml` file for the available options.
+
+# Directory structure
+
+An overview of how files are organised in the server repo is shown below, with annotations as noted.
+The files have been split in this way, grouped in crates, partly to improve build times - as well as a logical organisation of grouped concerns.
+
+```
+server
+├─ android (hoisting for the android implementation)
+├─ cli
+├─ configuration (runtime configuration files)
+├─ data (contains reference data which can be used by the cli to initialise the database)
+├─ docs
+├─ graphql
+│  ├─ batch_mutations (batch mutations are grouped here)
+│  ├─ core (the loaders, filters, errors, pagination and test helpers)
+│  ├─ general (mutations and queries which are shared or small enough to not require separate implementation)
+│  ├─ types (each database table has its types defined in a file)
+│  ├─ [data type]
+│  │  ├─ src
+│  │  │  ├─ lib.rs (queries are in here, if not in a separate file, as below)
+│  │  │  ├─ [data type]_queries.rs
+│  │  │  └─ mutations
+│  │  └─ test_output
+├─ report_builder
+├─ repository
+│  ├─ migrations
+│  ├─ src
+│  │  ├─ db_diesel (definitions for the database objects)
+│  │  └─ mock
+│  └─ test_output
+├─ scripts
+├─ server (includes the logging, front-end hosting, certificates, mDNS discovery, configuration)
+├─ service (these functions provide an intermediary between GraphQL and the repository and houses most of the business logic)
+├─ target
+├─ test_output
+├─ util
+└─ windows (windows service hosting for the server)
+```
+
+The `batch_mutations` case is a special one - the crate is fairly slow to compile, so has been split out. There are also some dependency issues, as it combines other objects, such as `invoice` and `invoice_line`.

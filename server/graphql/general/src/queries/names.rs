@@ -100,8 +100,8 @@ pub struct NameFilterInput {
     /// System names don't have name_store_join thus if queried with true filter, is_visible filter should also be true or null
     /// if is_visible is set to true and is_system_name is also true no system names will be returned
     pub is_system_name: Option<bool>,
-    /// Filter by name type
-    pub r#type: Option<EqualFilterNameTypeInput>,
+    /// Filter by the name type
+    pub r#type: Option<EqualFilterTypeInput>,
 
     pub first_name: Option<SimpleStringFilterInput>,
     pub last_name: Option<SimpleStringFilterInput>,
@@ -123,6 +123,13 @@ pub struct NameConnector {
 #[derive(Union)]
 pub enum NamesResponse {
     Response(NameConnector),
+}
+
+#[derive(InputObject, Clone)]
+pub struct EqualFilterTypeInput {
+    pub equal_to: Option<NameNodeType>,
+    pub equal_any: Option<Vec<NameNodeType>>,
+    pub not_equal_to: Option<NameNodeType>,
 }
 
 pub fn get_names(

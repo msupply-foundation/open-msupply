@@ -5,7 +5,7 @@ use repository::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::sync::api::RemoteSyncRecordV5;
+use crate::sync::{api::RemoteSyncRecordV5, sync_serde::empty_str_as_option_string};
 
 use super::{IntegrationRecords, LegacyTableName, PullUpsertRecord, SyncTranslation};
 
@@ -32,6 +32,8 @@ pub struct LegacyActivityLogRow {
     #[serde(rename = "record_ID")]
     pub record_id: String,
     pub datetime: NaiveDateTime,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub event: Option<String>,
 }
 
 pub(crate) struct ActivityLogTranslation {}
@@ -54,6 +56,7 @@ impl SyncTranslation for ActivityLogTranslation {
             store_id: Some(data.store_id),
             record_id: Some(data.record_id),
             datetime: data.datetime,
+            event: data.event,
         };
 
         Ok(Some(IntegrationRecords::from_upsert(
@@ -77,6 +80,7 @@ impl SyncTranslation for ActivityLogTranslation {
             store_id,
             record_id,
             datetime,
+            event,
         } = ActivityLogRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
@@ -96,6 +100,7 @@ impl SyncTranslation for ActivityLogTranslation {
             store_id,
             record_id,
             datetime,
+            event,
         };
         Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
             changelog,

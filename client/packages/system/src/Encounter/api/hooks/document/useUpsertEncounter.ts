@@ -1,4 +1,4 @@
-import { SaveDocumentMutation } from '../../../../Patient/JsonForms';
+import { SaveDocumentMutation } from '@openmsupply-client/programs';
 import { EncounterFragment } from '../../operations.generated';
 import { useInsertEncounter } from './useInsertEncounter';
 import { useUpdateEncounter } from './useUpdateEncounter';

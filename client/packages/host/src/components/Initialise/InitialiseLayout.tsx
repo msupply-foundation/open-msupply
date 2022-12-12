@@ -7,6 +7,7 @@ import {
 } from '@openmsupply-client/common';
 import { LoginIcon } from '../Login/LoginIcon';
 import { Theme } from '@common/styles';
+import { AppVersion } from '../AppVersion';
 
 type LoginLayoutProps = {
   UsernameInput: ReactNode;
@@ -117,6 +118,7 @@ export const InitialiseLayout = ({
           {SyncProgress}
         </Box>
       </Box>
+      <AppVersion style={{ opacity: 0.4 }} />
     </Box>
   );
 };

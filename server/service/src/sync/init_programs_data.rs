@@ -62,6 +62,8 @@ mod hiv_care_program {
                 risk_group: Default::default(),
                 status: Default::default(),
                 treatment_supporter: Default::default(),
+                // note: Default::default(),
+                referred_from: Default::default(),
             }
         }
     }
@@ -163,8 +165,8 @@ const IMMUNISATION_ENCOUNTER_5MONTH_UI_SCHEMA: &'static str =
 const PATIENT_REPORT: &'static str =
     std::include_str!("./program_schemas/patient_hiv_care_report.json");
 
-fn person_1() -> Person {
-    Person {
+fn person_1() -> RelatedPerson {
+    RelatedPerson {
         id: Some("person1".to_string()),
         code: Some("id34568".to_string()),
         first_name: Some("Tom".to_string()),
@@ -185,11 +187,12 @@ fn person_1() -> Person {
         code_2: None,
         middle_name: None,
         notes: None,
+        relationship: Some("Caregiver".to_string()),
     }
 }
 
-fn person_2() -> Person {
-    Person {
+fn person_2() -> RelatedPerson {
+    RelatedPerson {
         id: Some("person2".to_string()),
         code: Some("id41325".to_string()),
         first_name: Some("Eli".to_string()),
@@ -210,11 +213,12 @@ fn person_2() -> Person {
         code_2: None,
         middle_name: None,
         notes: None,
+        relationship: Some("Brother".to_string()),
     }
 }
 
-fn person_3() -> Person {
-    Person {
+fn person_3() -> RelatedPerson {
+    RelatedPerson {
         id: Some("person3".to_string()),
         code: Some("id12245".to_string()),
         first_name: Some("Heidi".to_string()),
@@ -235,6 +239,7 @@ fn person_3() -> Person {
         code_2: None,
         middle_name: None,
         notes: None,
+        relationship: Some("Mother".to_string()),
     }
 }
 
@@ -809,7 +814,7 @@ pub fn init_program_data(
         id: hiv_care_program_id.clone(),
         document_type: "HIVCareProgram".to_string(),
         context: DocumentContext::Program,
-        name: Some("HIV Care Program".to_string()),
+        name: Some("HIV Care and Treatment".to_string()),
         parent_id: None,
         form_schema_id: Some(hiv_care_program_schema_id.clone()),
     })?;

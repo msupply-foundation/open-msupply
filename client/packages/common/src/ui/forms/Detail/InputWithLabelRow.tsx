@@ -14,11 +14,14 @@ interface InputWithLabelRowProps {
   labelWidthPercentage?: number;
   labelProps?: FormLabelProps;
   inputProps?: StandardTextFieldProps;
+  /** flex-{$inputAlignment} alignment of the input field  */
+  inputAlignment?: 'start' | 'end';
 }
 
 export const DetailInputWithLabelRow: FC<InputWithLabelRowProps> = ({
   label,
   labelWidthPercentage = 40,
+  inputAlignment,
   inputProps,
   Input = <BasicTextInput {...inputProps} />,
   DisabledInput = <BasicTextInput {...inputProps} />,
@@ -30,19 +33,17 @@ export const DetailInputWithLabelRow: FC<InputWithLabelRowProps> = ({
   const inputFlexBasis = `${100 - labelWidthPercentage}%`;
 
   return (
-    <Box
-      display="flex"
-      alignItems="center"
-      gap={1}
-      justifyContent="space-around"
-      style={{ minWidth: 300 }}
-    >
-      <Box flex={1} style={{ textAlign: 'end' }} flexBasis={labelFlexBasis}>
+    <Box display="flex" alignItems="center" gap={1}>
+      <Box style={{ textAlign: 'end' }} flexBasis={labelFlexBasis}>
         <FormLabel sx={{ fontWeight: 'bold', ...sx }} {...labelPropsRest}>
           {label}:
         </FormLabel>
       </Box>
-      <Box flex={1} flexBasis={inputFlexBasis}>
+      <Box
+        flexBasis={inputFlexBasis}
+        justifyContent={inputAlignment ? `flex-${inputAlignment}` : 'flex-end'}
+        display="flex"
+      >
         {!isDisabled ? Input : DisabledInput}
       </Box>
     </Box>
