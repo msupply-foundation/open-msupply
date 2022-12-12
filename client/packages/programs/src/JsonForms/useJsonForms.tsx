@@ -17,9 +17,9 @@ import { BMI, bmiTester } from './components/BMI';
 import { DateOfBirth, dateOfBirthTester } from './components/DateOfBirth';
 import { IdGenerator, idGeneratorTester } from './components/IdGenerator';
 import {
-  DispensedDuration,
-  dispensedDurationTester,
-} from './components/DispensedDuration';
+  QuantityPrescribed,
+  quantityPrescribedTester,
+} from './components/QuanityPrescribed';
 import { EventTrigger, eventTriggerTester } from './components/EventTrigger';
 
 // https://stackoverflow.com/questions/57874879/how-to-treat-missing-undefined-properties-as-equivalent-in-lodashs-isequalwit
@@ -73,7 +73,7 @@ const additionalRenderers: JsonFormsRendererRegistryEntry[] = [
   { tester: idGeneratorTester, renderer: IdGenerator },
   { tester: dateOfBirthTester, renderer: DateOfBirth },
   { tester: encounterLineChartTester, renderer: EncounterLineChart },
-  { tester: dispensedDurationTester, renderer: DispensedDuration },
+  { tester: quantityPrescribedTester, renderer: QuantityPrescribed },
   { tester: eventTriggerTester, renderer: EventTrigger },
   { tester: bmiTester, renderer: BMI },
 ];

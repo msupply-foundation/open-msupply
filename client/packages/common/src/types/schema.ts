@@ -3082,6 +3082,7 @@ export type ReportConnector = {
 export enum ReportContext {
   InboundShipment = 'INBOUND_SHIPMENT',
   OutboundShipment = 'OUTBOUND_SHIPMENT',
+  Patient = 'PATIENT',
   Requisition = 'REQUISITION',
   Resource = 'RESOURCE',
   Stocktake = 'STOCKTAKE'
