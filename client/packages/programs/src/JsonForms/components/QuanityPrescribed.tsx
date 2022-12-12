@@ -11,6 +11,8 @@ import {
   useDebounceCallback,
   NumericTextInput,
   DateUtils,
+  useFormatDateTime,
+  useTranslation,
 } from '@openmsupply-client/common';
 import {
   FORM_LABEL_COLUMN_WIDTH,
@@ -107,6 +109,9 @@ const UIComponent = (props: ControlProps) => {
     Options,
     uischema.options
   );
+  const dateFormat = useFormatDateTime();
+  const t = useTranslation('common');
+
   const onChange = useDebounceCallback(
     (value: number) => {
       // update events
@@ -156,6 +161,13 @@ const UIComponent = (props: ControlProps) => {
   useEffect(() => {
     setBaseTime(extractProperty(data, options?.baseDatetimeField ?? ''));
   }, [data, options]);
+
+  const baseTimeDate = baseTime ? new Date(baseTime).getTime() : undefined;
+  const endOfSupplySec = baseTimeDate
+    ? baseTimeDate / 1000 +
+      ((localData ?? 0) / (options?.quantityPerDay ?? 1)) * 24 * 60 * 60
+    : undefined;
+
   if (!props.visible) {
     return null;
   }
@@ -171,7 +183,12 @@ const UIComponent = (props: ControlProps) => {
       <Box style={{ textAlign: 'end' }} flexBasis={FORM_LABEL_COLUMN_WIDTH}>
         <FormLabel sx={{ fontWeight: 'bold' }}>{label}:</FormLabel>
       </Box>
-      <Box flexBasis={FORM_INPUT_COLUMN_WIDTH}>
+      <Box
+        flexBasis={FORM_INPUT_COLUMN_WIDTH}
+        display="flex"
+        alignItems="center"
+        gap={2}
+      >
         <NumericTextInput
           type="number"
           InputProps={{
@@ -186,6 +203,18 @@ const UIComponent = (props: ControlProps) => {
           helperText={errors}
           value={localData ?? ''}
         />
+        <Box
+          flex={0}
+          style={{ textAlign: 'end' }}
+          flexBasis={FORM_LABEL_COLUMN_WIDTH}
+        >
+          <FormLabel sx={{ fontWeight: 'bold' }}>
+            {t('label.end-of-supply')}:
+          </FormLabel>
+        </Box>
+        <FormLabel>
+          {endOfSupplySec ? `${dateFormat.localisedDate(endOfSupplySec)}` : ''}
+        </FormLabel>
       </Box>
     </Box>
   );
