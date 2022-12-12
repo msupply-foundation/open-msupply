@@ -1,6 +1,6 @@
 use crate::sync::{
     api::RemoteSyncRecordV5,
-    sync_serde::{date_option_to_isostring, empty_str_as_option, zero_date_as_option},
+    sync_serde::{date_option_to_isostring, empty_str_as_option_string, zero_date_as_option},
 };
 use chrono::NaiveDate;
 use repository::{
@@ -26,20 +26,20 @@ pub struct LegacyStockLineRow {
     pub ID: String,
     pub store_ID: String,
     pub item_ID: String,
-    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     pub batch: Option<String>,
     #[serde(deserialize_with = "zero_date_as_option")]
     #[serde(serialize_with = "date_option_to_isostring")]
     pub expiry_date: Option<NaiveDate>,
     pub hold: bool,
-    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     pub location_ID: Option<String>,
     pub pack_size: i32,
     pub available: f64,
     pub quantity: f64,
     pub cost_price: f64,
     pub sell_price: f64,
-    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     pub note: Option<String>,
 }
 

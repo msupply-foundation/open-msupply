@@ -1,6 +1,6 @@
 use crate::sync::{
     api::RemoteSyncRecordV5,
-    sync_serde::{date_option_to_isostring, empty_str_as_option, zero_date_as_option},
+    sync_serde::{date_option_to_isostring, empty_str_as_option_string, zero_date_as_option},
 };
 use chrono::NaiveDate;
 use repository::{
@@ -50,12 +50,12 @@ pub struct LegacyTransLineRow {
     pub item_id: String,
     pub item_name: String,
     #[serde(rename = "item_line_ID")]
-    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     pub stock_line_id: Option<String>,
     #[serde(rename = "location_ID")]
-    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     pub location_id: Option<String>,
-    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     pub batch: Option<String>,
     #[serde(deserialize_with = "zero_date_as_option")]
     #[serde(serialize_with = "date_option_to_isostring")]
@@ -69,7 +69,7 @@ pub struct LegacyTransLineRow {
     pub r#type: LegacyTransLineType,
     #[serde(rename = "quantity")]
     pub number_of_packs: f64,
-    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     pub note: Option<String>,
 
     #[serde(rename = "om_item_code")]

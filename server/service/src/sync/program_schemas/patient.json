@@ -111,18 +111,18 @@
     "Family": {
       "properties": {
         "caregiver": {
-          "$ref": "#/definitions/Person"
+          "$ref": "#/definitions/RelatedPerson"
         },
         "maritalStatus": {
           "$ref": "#/definitions/MaritalStatus",
           "description": "125680007 Marital Status"
         },
         "mother": {
-          "$ref": "#/definitions/Person",
+          "$ref": "#/definitions/RelatedPerson",
           "description": "Mother (if infant)"
         },
         "nextOfKin": {
-          "$ref": "#/definitions/Person",
+          "$ref": "#/definitions/RelatedPerson",
           "description": "Patient's next of kin 184142008 Patient's next of kin"
         }
       },
@@ -140,7 +140,7 @@
       ],
       "type": "string"
     },
-    "Handiness": {
+    "Handedness": {
       "enum": ["LEFT", "RIGHT"],
       "type": "string"
     },
@@ -276,6 +276,83 @@
       "required": ["isDeceased", "contactDetails", "socioEconomics"],
       "type": "object"
     },
+    "RelatedPerson": {
+      "properties": {
+        "birthPlace": {
+          "$ref": "#/definitions/Address",
+          "description": "Place of birth"
+        },
+        "code": {
+          "description": "Patient code, e.g. national id or other patient identifier",
+          "type": "string"
+        },
+        "code2": {
+          "description": "Secondary patient code, e.g. another type of health id",
+          "type": "string"
+        },
+        "contactDetails": {
+          "items": {
+            "$ref": "#/definitions/ContactDetails"
+          },
+          "type": "array"
+        },
+        "dateOfBirth": {
+          "description": "184099003 Date of birth",
+          "format": "date",
+          "type": "string"
+        },
+        "dateOfBirthIsEstimated": {
+          "description": "Date of birth is estimated",
+          "type": "boolean"
+        },
+        "dateOfDeath": {
+          "description": "Date of death",
+          "format": "date",
+          "type": "string"
+        },
+        "firstName": {
+          "type": "string"
+        },
+        "gender": {
+          "$ref": "#/definitions/Gender",
+          "description": "394744001 Gender unspecified"
+        },
+        "id": {
+          "description": "mSupply Patient id",
+          "type": "string"
+        },
+        "isDeceased": {
+          "description": "Person is deceased",
+          "type": "boolean"
+        },
+        "lastName": {
+          "description": "184096005 Patient Surname",
+          "type": "string"
+        },
+        "middleName": {
+          "type": "string"
+        },
+        "notes": {
+          "items": {
+            "$ref": "#/definitions/Note"
+          },
+          "type": "array"
+        },
+        "passportNumber": {
+          "description": "1601000122107 Passport Number",
+          "type": "string"
+        },
+        "relationship": {
+          "description": "Relationship with patient",
+          "type": "string"
+        },
+        "socioEconomics": {
+          "$ref": "#/definitions/SocioEconomics"
+        }
+      },
+      "required": ["contactDetails", "isDeceased", "socioEconomics"],
+      "type": "object"
+    },
     "SocioEconomics": {
       "properties": {
         "education": {
@@ -346,7 +423,7 @@
           "description": "394744001 Gender unspecified"
         },
         "hand": {
-          "$ref": "#/definitions/Handiness"
+          "$ref": "#/definitions/Handedness"
         },
         "healthCenter": {
           "$ref": "#/definitions/HealthCenter",

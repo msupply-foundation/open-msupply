@@ -18,12 +18,14 @@ import { useOutbound } from '../api';
 export const Toolbar: FC = () => {
   const onDelete = useOutbound.line.deleteSelected();
   const { onAllocate } = useOutbound.line.allocateSelected();
-  const { otherParty, theirReference, update } = useOutbound.document.fields([
+  const { id, otherParty, theirReference, update } = useOutbound.document.fields([
+    'id',
     'otherParty',
     'theirReference',
   ]);
   const [theirReferenceBuffer, setTheirReferenceBuffer] =
     useBufferState(theirReference);
+  const { mutateAsync: updateName } = useOutbound.document.updateName();
 
   const isDisabled = useOutbound.utils.isDisabled();
   const t = useTranslation('distribution');
@@ -46,8 +48,8 @@ export const Toolbar: FC = () => {
                   <CustomerSearchInput
                     disabled={isDisabled}
                     value={otherParty}
-                    onChange={otherParty => {
-                      update({ otherParty });
+                    onChange={async ({ id: otherPartyId }) => {
+                      await updateName({ id, otherPartyId });
                     }}
                   />
                 }

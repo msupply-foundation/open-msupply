@@ -8,8 +8,10 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::{StockLine, StockLineRow, StorageConnectionManager};
-use service::{stock_line::get_stock_line, usize_to_u32, ListResult};
+use repository::{StockLine, StockLineRow};
+use service::{
+    service_provider::ServiceContext, stock_line::query::get_stock_line, usize_to_u32, ListResult,
+};
 
 pub struct StockLineNode {
     pub stock_line: StockLine,
@@ -103,11 +105,8 @@ pub enum StockLineResponse {
     Response(StockLineNode),
 }
 
-pub fn get_stock_line_response(
-    connection_manager: &StorageConnectionManager,
-    id: String,
-) -> StockLineResponse {
-    match get_stock_line(connection_manager, id) {
+pub fn get_stock_line_response(ctx: &ServiceContext, id: String) -> StockLineResponse {
+    match get_stock_line(ctx, id) {
         Ok(stock_line) => StockLineResponse::Response(StockLineNode::from_domain(stock_line)),
         Err(error) => StockLineResponse::Error(error.into()),
     }

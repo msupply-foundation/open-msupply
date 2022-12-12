@@ -1,6 +1,6 @@
 use repository::{
     Invoice, InvoiceLine, InvoiceLineRowRepository, InvoiceRowRepository, InvoiceRowStatus,
-    RepositoryError, StockLineRowRepository, TransactionError,
+    LocationMovementRowRepository, RepositoryError, StockLineRowRepository, TransactionError,
 };
 
 pub mod generate;
@@ -23,7 +23,6 @@ pub enum UpdateOutboundShipmentStatus {
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct UpdateOutboundShipment {
     pub id: String,
-    pub other_party_id: Option<String>,
     pub status: Option<UpdateOutboundShipmentStatus>,
     pub on_hold: Option<bool>,
     pub comment: Option<String>,
@@ -42,10 +41,6 @@ pub enum UpdateOutboundShipmentError {
     NotThisStoreInvoice,
     // Error applies to unallocated lines with above zero quantity
     CanOnlyChangeToAllocatedWhenNoUnallocatedLines(Vec<InvoiceLine>),
-    // Name validation
-    OtherPartyNotACustomer,
-    OtherPartyNotVisible,
-    OtherPartyDoesNotExist,
     // Internal
     UpdatedInvoiceDoesNotExist,
     DatabaseError(RepositoryError),
@@ -62,13 +57,13 @@ pub fn update_outbound_shipment(
     let invoice = ctx
         .connection
         .transaction_sync(|connection| {
-            let (invoice, other_party_option, status_changed) =
-                validate(connection, &ctx.store_id, &patch)?;
+            let (invoice, status_changed) = validate(connection, &ctx.store_id, &patch)?;
             let GenerateResult {
                 batches_to_update,
                 update_invoice,
                 unallocated_lines_to_trim,
-            } = generate(invoice, other_party_option, patch.clone(), connection)?;
+                location_movements,
+            } = generate(&ctx.store_id, invoice, patch.clone(), connection)?;
 
             InvoiceRowRepository::new(connection).upsert_one(&update_invoice)?;
 
@@ -86,11 +81,18 @@ pub fn update_outbound_shipment(
                 }
             }
 
+            if let Some(movements) = location_movements {
+                for movement in movements {
+                    LocationMovementRowRepository::new(&connection).upsert_one(&movement)?;
+                }
+            }
+
             if status_changed {
                 activity_log_entry(
                     &ctx,
                     log_type_from_invoice_status(&update_invoice.status),
-                    &update_invoice.id,
+                    Some(update_invoice.id.to_owned()),
+                    None,
                 )?;
             }
 
@@ -159,10 +161,9 @@ mod test {
     use chrono::NaiveDate;
     use repository::{
         mock::{
-            mock_inbound_shipment_a, mock_item_a, mock_name_a, mock_outbound_shipment_a,
-            mock_outbound_shipment_b, mock_outbound_shipment_c, mock_outbound_shipment_on_hold,
-            mock_outbound_shipment_picked, mock_store_a, mock_store_b, mock_store_c, MockData,
-            MockDataInserts,
+            mock_inbound_shipment_a, mock_item_a, mock_name_a, mock_outbound_shipment_b,
+            mock_outbound_shipment_c, mock_outbound_shipment_on_hold,
+            mock_outbound_shipment_picked, mock_store_a, mock_store_c, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
         ActivityLogRowRepository, ActivityLogType, InvoiceLineRow, InvoiceLineRowRepository,
@@ -184,27 +185,6 @@ mod test {
 
     #[actix_rt::test]
     async fn update_outbound_shipment_errors() {
-        fn not_visible() -> NameRow {
-            inline_init(|r: &mut NameRow| {
-                r.id = "not_visible".to_string();
-            })
-        }
-
-        fn not_a_customer() -> NameRow {
-            inline_init(|r: &mut NameRow| {
-                r.id = "not_a_customer".to_string();
-            })
-        }
-
-        fn not_a_customer_join() -> NameStoreJoinRow {
-            inline_init(|r: &mut NameStoreJoinRow| {
-                r.id = "not_a_customer_join".to_string();
-                r.name_id = not_a_customer().id;
-                r.store_id = mock_store_b().id;
-                r.name_is_customer = false;
-            })
-        }
-
         fn outbound_shipment_no_stock() -> InvoiceRow {
             inline_init(|r: &mut InvoiceRow| {
                 r.id = String::from("outbound_shipment_no_stock");
@@ -234,8 +214,6 @@ mod test {
             "update_outbound_shipment_errors",
             MockDataInserts::all(),
             inline_init(|r: &mut MockData| {
-                r.names = vec![not_visible(), not_a_customer()];
-                r.name_store_joins = vec![not_a_customer_join()];
                 r.invoices = vec![outbound_shipment_no_stock()];
                 r.invoice_lines = vec![invoice_line_no_stock()];
             }),
@@ -288,40 +266,6 @@ mod test {
                 })
             ),
             Err(ServiceError::NotAnOutboundShipment)
-        );
-        // OtherPartyDoesNotExist
-        context.store_id = mock_store_b().id;
-        assert_eq!(
-            service.update_outbound_shipment(
-                &context,
-                inline_init(|r: &mut UpdateOutboundShipment| {
-                    r.id = mock_outbound_shipment_a().id;
-                    r.other_party_id = Some("invalid".to_string());
-                })
-            ),
-            Err(ServiceError::OtherPartyDoesNotExist)
-        );
-        // OtherPartyNotVisible
-        assert_eq!(
-            service.update_outbound_shipment(
-                &context,
-                inline_init(|r: &mut UpdateOutboundShipment| {
-                    r.id = mock_outbound_shipment_a().id;
-                    r.other_party_id = Some(not_visible().id);
-                })
-            ),
-            Err(ServiceError::OtherPartyNotVisible)
-        );
-        // OtherPartyNotACustomer
-        assert_eq!(
-            service.update_outbound_shipment(
-                &context,
-                inline_init(|r: &mut UpdateOutboundShipment| {
-                    r.id = mock_outbound_shipment_a().id;
-                    r.other_party_id = Some(not_a_customer().id);
-                })
-            ),
-            Err(ServiceError::OtherPartyNotACustomer)
         );
         // InvoiceLineHasNoStockLine
         context.store_id = mock_store_a().id;
@@ -467,7 +411,6 @@ mod test {
         fn get_update() -> UpdateOutboundShipment {
             UpdateOutboundShipment {
                 id: invoice().id,
-                other_party_id: Some(customer().id),
                 status: None,
                 on_hold: Some(true),
                 comment: Some("comment".to_string()),
@@ -490,7 +433,6 @@ mod test {
             inline_edit(&invoice(), |mut u| {
                 let UpdateOutboundShipment {
                     id: _,
-                    other_party_id: _,
                     status: _,
                     on_hold,
                     comment,
@@ -498,7 +440,6 @@ mod test {
                     colour,
                     transport_reference,
                 } = get_update();
-                u.name_id = customer().id;
                 u.on_hold = on_hold.unwrap();
                 u.comment = comment;
                 u.their_reference = their_reference;

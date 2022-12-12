@@ -4,8 +4,10 @@ import {
   ListIcon,
   LocaleKey,
   matchPath,
+  RadioIcon,
   ReportsIcon,
   RouteBuilder,
+  SettingsIcon,
   StockIcon,
   SuppliersIcon,
   Tooltip,
@@ -32,6 +34,10 @@ const getIcon = (section?: AppRoute) => {
       return <SuppliersIcon color="primary" fontSize="small" />;
     case AppRoute.Reports:
       return <ReportsIcon color="primary" fontSize="small" />;
+    case AppRoute.Admin:
+      return <SettingsIcon color="primary" fontSize="small" />;
+    case AppRoute.Sync:
+      return <RadioIcon color="primary" fontSize="small" />;
     case AppRoute.Dispensary:
       return <CustomersIcon color="primary" fontSize="small" />;
     default:
@@ -46,6 +52,8 @@ const getSection = (): Section | undefined => {
     AppRoute.Inventory,
     AppRoute.Replenishment,
     AppRoute.Reports,
+    AppRoute.Admin,
+    AppRoute.Sync,
     AppRoute.Dispensary,
   ];
   const location = useLocation();

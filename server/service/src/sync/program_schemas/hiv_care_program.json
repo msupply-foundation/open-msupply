@@ -83,15 +83,7 @@
       "type": "object"
     },
     "Gender": {
-      "enum": [
-        "FEMALE",
-        "MALE",
-        "TRANSGENDER",
-        "TRANSGENDER_MALE",
-        "TRANSGENDER_FEMALE",
-        "UNKNOWN",
-        "NON_BINARY"
-      ],
+      "enum": ["FEMALE", "MALE", "TRANSGENDER", "TRANSGENDER_MALE", "TRANSGENDER_FEMALE", "UNKNOWN", "NON_BINARY"],
       "type": "string"
     },
     "HIVCareProgramEnrolment": {
@@ -116,17 +108,14 @@
           "$ref": "#/definitions/HIVRelation"
         },
         "partnerHivStatus": {
-          "$ref": "#/definitions/HIVStatus"
+          "$ref": "#/definitions/HIVPartnerStatus"
         },
         "priorART": {
-          "enum": [
-            "TRANSFER_IN_WITH_RECORDS",
-            "TRANSFER_IN_WITHOUT_RECORDS",
-            "PPTCT_PROPHYLAXIS",
-            "PEP",
-            "PrEP"
-          ],
+          "enum": ["TRANSFER_IN_WITH_RECORDS", "TRANSFER_IN_WITHOUT_RECORDS", "PPTCT_PROPHYLAXIS", "PEP", "PrEP"],
           "type": "string"
+        },
+        "referredFrom": {
+          "$ref": "#/definitions/ReferredFrom"
         },
         "riskGroup": {
           "$ref": "#/definitions/HIVRiskGroup"
@@ -139,8 +128,19 @@
           "$ref": "#/definitions/Person"
         }
       },
-      "required": ["enrolmentDatetime"],
+      "required": [
+        "enrolmentDatetime"
+      ],
       "type": "object"
+    },
+    "HIVPartnerStatus": {
+      "enum": [
+        "POSITIVE",
+        "NEGATIVE",
+        "UNKNOWN",
+        "NOT_DONE"
+      ],
+      "type": "string"
     },
     "HIVRelation": {
       "properties": {
@@ -154,15 +154,21 @@
       "type": "object"
     },
     "HIVRiskGroup": {
-      "enum": ["GP", "HR", "MSM", "TG", "FSW", "MSW"],
-      "type": "string"
-    },
-    "HIVStatus": {
-      "enum": ["POSITIVE", "NEGATIVE", "UNKNOWN"],
+      "enum": [
+        "GP",
+        "HR",
+        "MSM",
+        "TG",
+        "FSW",
+        "MSW"
+      ],
       "type": "string"
     },
     "HIVTestType": {
-      "enum": ["PCR", "ANTIBODY"],
+      "enum": [
+        "PCR",
+        "ANTIBODY"
+      ],
       "type": "string"
     },
     "Note": {
@@ -176,7 +182,9 @@
               "type": "number"
             }
           },
-          "required": ["length"],
+          "required": [
+            "length"
+          ],
           "type": "object"
         },
         "created": {
@@ -190,14 +198,20 @@
               "type": "number"
             }
           },
-          "required": ["length"],
+          "required": [
+            "length"
+          ],
           "type": "object"
         },
         "text": {
           "type": "string"
         }
       },
-      "required": ["text", "created", "authorId"],
+      "required": [
+        "text",
+        "created",
+        "authorId"
+      ],
       "type": "object"
     },
     "Person": {
@@ -270,11 +284,36 @@
           "$ref": "#/definitions/SocioEconomics"
         }
       },
-      "required": ["isDeceased", "contactDetails", "socioEconomics"],
+      "required": [
+        "isDeceased",
+        "contactDetails",
+        "socioEconomics"
+      ],
       "type": "object"
     },
     "ProgramEnrolmentStatus": {
-      "enum": ["ACTIVE", "OPTED_OUT", "TRANSFERRED_OUT", "PAUSED"],
+      "enum": [
+        "ACTIVE",
+        "OPTED_OUT",
+        "TRANSFERRED_OUT",
+        "PAUSED"
+      ],
+      "type": "string"
+    },
+    "ReferredFrom": {
+      "enum": [
+        "HCT_OTHER_PICT",
+        "INDEX",
+        "LABOUR",
+        "POST_NATAL",
+        "TB",
+        "COMMUNITY",
+        "TRANSFER_IN",
+        "STI",
+        "ANC",
+        "EXPOSED_INFANT_WELL_BABY_CLINIC",
+        "IN_PATIENT"
+      ],
       "type": "string"
     },
     "SocioEconomics": {

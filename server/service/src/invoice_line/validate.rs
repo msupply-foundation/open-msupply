@@ -1,26 +1,9 @@
-use crate::WithDBError;
 use repository::{
     InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, ItemRow, ItemRowRepository,
     RepositoryError, StorageConnection,
 };
 
-pub struct LineAlreadyExists;
-
-pub fn check_line_does_not_exists(
-    id: &str,
-    connection: &StorageConnection,
-) -> Result<(), WithDBError<LineAlreadyExists>> {
-    let result = InvoiceLineRowRepository::new(connection).find_one_by_id(id);
-
-    match result {
-        Ok(_) => Err(WithDBError::err(LineAlreadyExists {})),
-        Err(RepositoryError::NotFound) => Ok(()),
-        Err(error) => Err(WithDBError::db(error)),
-    }
-}
-
-// TODO use this one instead of check_line_does_not_exists
-pub fn check_line_does_not_exists_new(
+pub fn check_line_does_not_exist(
     connection: &StorageConnection,
     id: &str,
 ) -> Result<bool, RepositoryError> {
@@ -33,59 +16,22 @@ pub fn check_line_does_not_exists_new(
     }
 }
 
-pub struct NumberOfPacksBelowOne;
-
-pub fn check_number_of_packs(
-    number_of_packs_option: Option<f64>,
-) -> Result<(), NumberOfPacksBelowOne> {
+pub fn check_number_of_packs(number_of_packs_option: Option<f64>) -> bool {
     if let Some(number_of_packs) = number_of_packs_option {
         if number_of_packs < 1.0 {
-            Err(NumberOfPacksBelowOne {})
-        } else {
-            Ok(())
+            return false;
         }
-    } else {
-        Ok(())
     }
+    return true;
 }
 
-pub struct ItemNotFound;
-
-pub fn check_item(
-    item_id: &str,
-    connection: &StorageConnection,
-) -> Result<ItemRow, WithDBError<ItemNotFound>> {
-    let item_result = ItemRowRepository::new(connection).find_one_by_id(item_id)?;
-
-    match item_result {
-        Some(item) => Ok(item),
-        None => Err(WithDBError::err(ItemNotFound {})),
-    }
-}
-
-// TODO use this one instead of check_item
-pub fn check_item_exists_option(
+pub fn check_item_exists(
     connection: &StorageConnection,
     id: &str,
 ) -> Result<Option<ItemRow>, RepositoryError> {
     ItemRowRepository::new(connection).find_one_by_id(id)
 }
 
-pub struct LineDoesNotExist;
-
-pub fn check_line_exists(
-    id: &str,
-    connection: &StorageConnection,
-) -> Result<InvoiceLineRow, WithDBError<LineDoesNotExist>> {
-    let result = InvoiceLineRowRepository::new(connection).find_one_by_id(id);
-
-    match result {
-        Ok(line) => Ok(line),
-        Err(RepositoryError::NotFound) => Err(WithDBError::err(LineDoesNotExist)),
-        Err(error) => Err(WithDBError::db(error)),
-    }
-}
-// TODO use this one instead of check_line_exists
 pub fn check_line_exists_option(
     connection: &StorageConnection,
     id: &str,
@@ -99,15 +45,9 @@ pub fn check_line_exists_option(
     }
 }
 
-pub struct NotInvoiceLine(pub String);
-
-pub fn check_line_belongs_to_invoice(
-    line: &InvoiceLineRow,
-    invoice: &InvoiceRow,
-) -> Result<(), NotInvoiceLine> {
+pub fn check_line_belongs_to_invoice(line: &InvoiceLineRow, invoice: &InvoiceRow) -> bool {
     if line.invoice_id != invoice.id {
-        Err(NotInvoiceLine(line.invoice_id.clone()))
-    } else {
-        Ok(())
+        return false;
     }
+    return true;
 }
