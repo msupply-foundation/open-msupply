@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use repository::{
     DocumentFilter, DocumentRepository, Encounter, EncounterFilter, EncounterRepository,
-    EncounterSort, PaginationOption, RepositoryError, StringFilter,
+    EncounterSort, Pagination, PaginationOption, RepositoryError, StringFilter,
 };
 
 use crate::{
@@ -47,9 +47,11 @@ pub(crate) fn encounter_fields(
         .iter()
         .map(|row| row.name.clone())
         .collect::<Vec<_>>();
-    let documents = DocumentRepository::new(&ctx.connection).query(Some(
-        DocumentFilter::new().name(StringFilter::equal_any(doc_names)),
-    ))?;
+    let documents = DocumentRepository::new(&ctx.connection).query(
+        Pagination::all(),
+        Some(DocumentFilter::new().name(StringFilter::equal_any(doc_names))),
+        None,
+    )?;
     let mut doc_map = documents
         .into_iter()
         .map(|d| (d.name.clone(), d))
