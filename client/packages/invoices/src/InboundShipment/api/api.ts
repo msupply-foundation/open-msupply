@@ -243,15 +243,15 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
   },
   updateServiceTax: async ({
     lines,
-    tax,
+    taxPercentage,
     type,
   }: {
     lines: InboundLineFragment[];
-    tax: number;
+    taxPercentage: number;
     type: InvoiceLineNodeType.StockIn | InvoiceLineNodeType.Service;
   }) => {
     const toUpdateServiceLine = (line: InboundLineFragment) =>
-      inboundParsers.toUpdateServiceCharge({ ...line, taxPercentage: tax });
+      inboundParsers.toUpdateServiceCharge({ ...line, taxPercentage });
 
     const result =
       (await sdk.upsertInboundShipment({

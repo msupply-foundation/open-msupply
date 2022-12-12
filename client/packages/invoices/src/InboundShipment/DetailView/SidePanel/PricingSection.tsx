@@ -100,10 +100,10 @@ export const PricingSectionComponent = () => {
             <TaxEdit
               disabled={false}
               tax={tax}
-              onChange={tax => {
+              onChange={taxPercentage => {
                 updateTax({
                   lines: lines.nodes,
-                  tax,
+                  taxPercentage,
                   type: InvoiceLineNodeType.Service,
                 });
               }}
