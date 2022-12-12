@@ -81,6 +81,7 @@ const UIComponent = (props: ControlProps) => {
     onChange: (e: Date | null) => onChange(e),
     inputFormat,
     readOnly: !!props.uischema.options?.['readonly'],
+    disabled: !props.enabled,
   };
 
   return (

@@ -42,7 +42,7 @@ const UIComponent = (props: ControlProps) => {
         <NumericTextInput
           type="number"
           InputProps={{
-            sx: { '& .MuiInput-input': { textAlign: 'right' }, minWidth: 100 },
+            sx: { '& .MuiInput-input': { textAlign: 'right' } },
           }}
           onChange={value => {
             setLocalData(value);
