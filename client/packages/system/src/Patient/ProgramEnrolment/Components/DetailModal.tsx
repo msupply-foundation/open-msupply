@@ -67,7 +67,7 @@ export const ProgramDetailModal: FC = () => {
   const isCreating = document?.name === undefined;
 
   const history = (
-    <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
+    <Box display="flex" flexDirection="column" alignItems="center" gap={2} height={750}>
       <Typography sx={{ fontSize: 18, fontWeight: 700 }}>
         Document Edit History
       </Typography>
