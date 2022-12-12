@@ -102,7 +102,9 @@ const filterOptions = (
   const searchTerm = inputValue.toLowerCase();
   const filteredOptions = options
     .map(option => {
-      const lowerCaseOption = option.label.toLowerCase();
+      const lowerCaseOption = `${option.label} ${option.description ?? ''} ${
+        option.right ?? ''
+      }`.toLowerCase();
 
       const rank = lowerCaseOption.startsWith(searchTerm)
         ? searchRanking.STARTS_WITH
@@ -136,6 +138,33 @@ const TextHighlight = (props: {
         </span>
       ))}
     </div>
+  );
+};
+
+const getOptionLabel = (option: DisplayOption) =>
+  option.description
+    ? `${option.label}     ${option.description ?? ''}`
+    : `${option.label}`;
+
+const getHighlightParts = (
+  value: DisplayOption | undefined | null,
+  option: string | undefined,
+  inputValue: string
+) => {
+  // check if text input equals the selected value
+  if (value && getOptionLabel(value) === inputValue) {
+    return [
+      {
+        text: option ?? '',
+        highlight: false,
+      },
+    ];
+  }
+  return parse(
+    option ?? '',
+    match(option ?? '', inputValue, {
+      insideWords: true,
+    })
   );
 };
 
@@ -178,18 +207,21 @@ const UIComponent = (props: ControlProps) => {
           value={value}
           onChange={onChange}
           filterOptions={filterOptions}
-          getOptionLabel={option =>
-            option.description
-              ? `${option.label}     ${option.description ?? ''}`
-              : `${option.label}`
-          }
+          getOptionLabel={getOptionLabel}
           renderOption={(props, option, { inputValue }) => {
-            const matches = match(option.label, inputValue, {
-              insideWords: true,
-            });
-            const parts = parse(option.label, matches);
+            const parts = getHighlightParts(value, option.label, inputValue);
 
             if (schemaOptions?.multiColumn) {
+              const descriptionParts = getHighlightParts(
+                value,
+                option.description,
+                inputValue
+              );
+              const rightParts = getHighlightParts(
+                value,
+                option.right,
+                inputValue
+              );
               return (
                 <li {...props} key={option.value}>
                   <span
@@ -198,7 +230,7 @@ const UIComponent = (props: ControlProps) => {
                     <TextHighlight {...props} parts={parts} />
                   </span>
                   <span style={{ whiteSpace: 'nowrap', width: 500 }}>
-                    {option.description}
+                    <TextHighlight {...props} parts={descriptionParts} />
                   </span>
                   <span
                     style={{
@@ -207,7 +239,7 @@ const UIComponent = (props: ControlProps) => {
                       whiteSpace: 'nowrap',
                     }}
                   >
-                    {option.right}
+                    <TextHighlight {...props} parts={rightParts} />
                   </span>
                 </li>
               );
