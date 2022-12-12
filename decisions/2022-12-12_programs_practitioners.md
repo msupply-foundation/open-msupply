@@ -28,7 +28,7 @@ _Cons:_
 
 ### Option 2
 
-Add option to flag users to a practitioner.
+In the `name` table add a column to flag a user as a practitioner.
 Moreover, use the clinician table for practitioner that don't have an mSupply user account.
 
 _Cons:_
@@ -37,7 +37,7 @@ _Cons:_
 
 ### Option 3
 
-Manage practitioners that are no user through a config file.
+Manage practitioners that are not users through a config file.
 
 _Cons:_
 
