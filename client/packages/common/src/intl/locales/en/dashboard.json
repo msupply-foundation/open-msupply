@@ -1,15 +1,15 @@
 {
-  "button.new-outbound-shipment": "New Outbound Shipment",
-  "button.order-more": "Order more",
-  "heading.expiring-stock": "Expiring stock",
-  "heading.shipments-to-be-picked": "Shipments to be picked",
-  "heading-stock": "Stock",
-  "heading.stock-levels": "Stock levels",
-  "label.expired": "Expired",
-  "label.expiring-soon": "Expiring soon",
-  "label.low-stock-items": "Less than 3 months of stock",
-  "label.items-no-stock": "Items with no stock",
-  "label.this-week": "This week",
-  "label.today": "Today",
-  "label.total-items": "Total items"
+    "button.new-outbound-shipment": "New Outbound Shipment",
+    "button.order-more": "Order more",
+    "heading.expiring-stock": "Expiring stock",
+    "heading.shipments-to-be-picked": "Shipments to be picked",
+    "heading-stock": "Stock",
+    "heading.stock-levels": "Stock levels",
+    "label.expired": "Expired batch(es)",
+    "label.expiring-soon": "batches close to expiry",
+    "label.low-stock-items": "Item with less than 3 months of stock",
+    "label.items-no-stock": "Items with no stock",
+    "label.this-week": "This week",
+    "label.today": "Today",
+    "label.total-items": "Total items"
 }
