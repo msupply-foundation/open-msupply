@@ -39,6 +39,7 @@ const UIComponent = (props: ControlProps) => {
             if (e) handleChange(path, dateFormatter(e, 'yyyy-MM-dd'));
           }}
           inputFormat="dd/MM/yyyy"
+          disabled={!props.enabled}
         />
       </Box>
     </Box>

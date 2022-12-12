@@ -146,7 +146,7 @@ const EnumArrayComponent: FC<EnumArrayControlCustomProps> = ({
         >
           <FormLabel sx={{ fontWeight: 'bold' }}>{label}:</FormLabel>
         </Box>
-        <Box sx={{width: FORM_INPUT_COLUMN_WIDTH}}>
+        <Box sx={{ width: FORM_INPUT_COLUMN_WIDTH }}>
           <Autocomplete
             multiple
             sx={{
@@ -157,7 +157,7 @@ const EnumArrayComponent: FC<EnumArrayControlCustomProps> = ({
                 padding: '5px',
               },
               '& .MuiInput-root:before': {
-                border: 'none'
+                border: 'none',
               },
               '& .MuiInput-root:after': {
                 color: theme.palette.gray.dark,
