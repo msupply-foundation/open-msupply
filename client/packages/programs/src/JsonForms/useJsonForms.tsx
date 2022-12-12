@@ -19,7 +19,7 @@ import { IdGenerator, idGeneratorTester } from './components/IdGenerator';
 import {
   QuantityPrescribed,
   quantityPrescribedTester,
-} from './components/QuanityPrescribed';
+} from './components/QuantityPrescribed';
 import { EventTrigger, eventTriggerTester } from './components/EventTrigger';
 
 // https://stackoverflow.com/questions/57874879/how-to-treat-missing-undefined-properties-as-equivalent-in-lodashs-isequalwit

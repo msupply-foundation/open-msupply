@@ -101,6 +101,19 @@ export const quantityPrescribedTester = rankWith(
   uiTypeIs('QuantityPrescribed')
 );
 
+const getEndOfSupply = (
+  baseTime: string,
+  pillCount: number,
+  options: Options | undefined
+): Date => {
+  return DateUtils.startOfDay(
+    DateUtils.addDays(
+      new Date(baseTime),
+      pillCount * (options?.quantityPerDay ?? 1)
+    )
+  );
+};
+
 const UIComponent = (props: ControlProps) => {
   const { data, handleChange, label, path, uischema } = props;
   const [localData, setLocalData] = useState<number>();
@@ -135,12 +148,7 @@ const UIComponent = (props: ControlProps) => {
       if (value > 0) {
         const scheduleStartTime = options.scheduleEventsNow
           ? new Date()
-          : DateUtils.startOfDay(
-              DateUtils.addDays(
-                new Date(baseTime),
-                value * (options.quantityPerDay ?? 1)
-              )
-            );
+          : getEndOfSupply(baseTime, value, options);
         events.push(
           ...options.events.map(e => scheduleEvent(e, scheduleStartTime))
         );
@@ -162,10 +170,8 @@ const UIComponent = (props: ControlProps) => {
     setBaseTime(extractProperty(data, options?.baseDatetimeField ?? ''));
   }, [data, options]);
 
-  const baseTimeDate = baseTime ? new Date(baseTime).getTime() : undefined;
-  const endOfSupplySec = baseTimeDate
-    ? baseTimeDate / 1000 +
-      ((localData ?? 0) / (options?.quantityPerDay ?? 1)) * 24 * 60 * 60
+  const endOfSupplySec = baseTime
+    ? getEndOfSupply(baseTime, localData ?? 0, options).getTime() / 1000
     : undefined;
 
   if (!props.visible) {
