@@ -1,4 +1,7 @@
-use repository::{NumberRowRepository, NumberRowType, RepositoryError, StorageConnection};
+use repository::{
+    InvoiceRowRepository, InvoiceRowType, NumberRowRepository, NumberRowType, RepositoryError,
+    RequisitionRowRepository, RequisitionRowType, StocktakeRowRepository, StorageConnection,
+};
 
 pub fn next_number(
     connection: &StorageConnection,
@@ -8,9 +11,74 @@ pub fn next_number(
     // Should be done in transaction
     let next_number = connection.transaction_sync(|connection_tx| {
         let repo = NumberRowRepository::new(&connection_tx);
-        let next_number = repo.get_next_number_for_type_and_store(r#type, store_id)?;
+        let number = repo.find_one_by_type_and_store(r#type, store_id)?;
 
-        Ok(next_number.number)
+        if number.is_some() {
+            let next_number = repo.get_next_number_for_type_and_store(r#type, store_id, None)?;
+            Ok(next_number.number)
+        } else {
+            match r#type {
+                NumberRowType::InboundShipment => {
+                    let find_number = InvoiceRowRepository::new(&connection_tx)
+                        .find_max_invoice_number(InvoiceRowType::InboundShipment, store_id)?
+                        .map(|n| n + 1);
+                    let next_number =
+                        repo.get_next_number_for_type_and_store(r#type, store_id, find_number)?;
+
+                    return Ok(next_number.number);
+                }
+                NumberRowType::OutboundShipment => {
+                    let find_number = InvoiceRowRepository::new(&connection_tx)
+                        .find_max_invoice_number(InvoiceRowType::OutboundShipment, store_id)?
+                        .map(|n| n + 1);
+                    let next_number =
+                        repo.get_next_number_for_type_and_store(r#type, store_id, find_number)?;
+
+                    return Ok(next_number.number);
+                }
+                NumberRowType::InventoryAdjustment => {
+                    let find_number = InvoiceRowRepository::new(&connection_tx)
+                        .find_max_invoice_number(InvoiceRowType::InventoryAdjustment, store_id)?
+                        .map(|n| n + 1);
+                    let next_number =
+                        repo.get_next_number_for_type_and_store(r#type, store_id, find_number)?;
+
+                    return Ok(next_number.number);
+                }
+                NumberRowType::RequestRequisition => {
+                    let find_number = RequisitionRowRepository::new(&connection_tx)
+                        .find_max_requisition_number(RequisitionRowType::Request, store_id)?
+                        .map(|n| n + 1);
+                    let next_number =
+                        repo.get_next_number_for_type_and_store(r#type, store_id, find_number)?;
+
+                    return Ok(next_number.number);
+                }
+                NumberRowType::ResponseRequisition => {
+                    let find_number = RequisitionRowRepository::new(&connection_tx)
+                        .find_max_requisition_number(RequisitionRowType::Response, store_id)?
+                        .map(|n| n + 1);
+                    let next_number =
+                        repo.get_next_number_for_type_and_store(r#type, store_id, find_number)?;
+
+                    return Ok(next_number.number);
+                }
+                NumberRowType::Stocktake => {
+                    let find_number = StocktakeRowRepository::new(&connection_tx)
+                        .find_max_stocktake_number(store_id)?
+                        .map(|n| n + 1);
+                    let next_number =
+                        repo.get_next_number_for_type_and_store(r#type, store_id, find_number)?;
+
+                    return Ok(next_number.number);
+                }
+                NumberRowType::Program(_) => {
+                    let next_number =
+                        repo.get_next_number_for_type_and_store(r#type, store_id, None)?;
+                    return Ok(next_number.number);
+                }
+            };
+        }
     })?;
     Ok(next_number)
 }

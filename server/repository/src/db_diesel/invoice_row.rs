@@ -5,7 +5,7 @@ use super::{
 
 use crate::repository_error::RepositoryError;
 
-use diesel::prelude::*;
+use diesel::{dsl::max, prelude::*};
 
 use chrono::NaiveDateTime;
 use diesel_derive_enum::DbEnum;
@@ -179,6 +179,18 @@ impl<'a> InvoiceRowRepository<'a> {
         let result = invoice
             .filter(id.eq_any(ids))
             .load(&self.connection.connection)?;
+        Ok(result)
+    }
+
+    pub fn find_max_invoice_number(
+        &self,
+        r#type: InvoiceRowType,
+        store: &str,
+    ) -> Result<Option<i64>, RepositoryError> {
+        let result = invoice
+            .filter(type_.eq(r#type).and(store_id.eq(store)))
+            .select(max(invoice_number))
+            .first(&self.connection.connection)?;
         Ok(result)
     }
 }
