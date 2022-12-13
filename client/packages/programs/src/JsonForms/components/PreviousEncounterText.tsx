@@ -47,5 +47,8 @@ const UIComponent = (props: ControlProps) => {
   );
 };
 
+/**
+ * Shows a field from the previous encounter
+ */
 export const PreviousEncounterTextField =
   withJsonFormsControlProps(UIComponent);
