@@ -5,7 +5,8 @@ on:
       - develop
     paths:
       - "server/**"
-  workflow_dispatch
+  workflow_dispatch:
+
 name: CI
 
 jobs:
