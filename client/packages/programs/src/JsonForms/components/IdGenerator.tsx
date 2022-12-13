@@ -29,8 +29,17 @@ export const idGeneratorTester = rankWith(10, uiTypeIs('IdGenerator'));
 type GeneratorOptions = {
   targetField: string;
   parts: Part[];
+  /*
+  Regeneration behaviour:
+  - By default, after ID is first saved, a confirmation will be displayed
+    whenever the user subsequently clicks the "Generate" button
+  - This can be suppressed by setting the "confirmRegenerate" option to `false`
+    (default `true`)
+  - To prevent the ID from *ever* being regenerated after first save, set the
+    "preventRegenAfterSave" option to `true` (default `false`)
+  */
   confirmRegenerate?: boolean;
-  preventRegenAfterSave?: boolean;
+  preventRegenerate?: boolean;
 };
 
 /**
@@ -124,7 +133,8 @@ const GeneratorOptions: z.ZodType<GeneratorOptions> = z
   .object({
     targetField: z.string(),
     parts: z.array(Part),
-    canRegenerate: z.boolean().optional().default(false),
+    confirmRegenerate: z.boolean().optional().default(true),
+    preventRegenerate: z.boolean().optional().default(false),
   })
   .strict();
 
@@ -230,17 +240,7 @@ const UIComponent = (props: ControlProps) => {
     uischema.options
   );
 
-  /*
-  Regeneration behaviour:
-  - By default, after ID is first saved, a confirmation will be displayed
-    whenever the user subsequently clicks the "Generate" button
-  - This can be suppressed by setting the "confirmRegenerate" option to `false`
-    (default `true`)
-  - To prevent the ID from *ever* being regenerated after first save, set the
-    "preventRegenAfterSave" option to `true` (default `false`)
-  */
-  const canGenerate =
-    !options?.preventRegenAfterSave || !savedData?.data?.code2;
+  const canGenerate = !savedData?.data?.code2 || !options?.preventRegenerate;
 
   const requireConfirmation =
     options?.confirmRegenerate === false ? false : !!savedData?.data?.code2;
