@@ -246,7 +246,7 @@ cargo run --bin remote_server_cli -- export-graphql-schema
 cargo run --bin remote_server_cli -- initialise-database
 # by default all commands will run with sqlite database, use --features postgres to use postgres database (not applicable to export-initialisation or export-graphql-schema action)
 cargo run --bin remote_server_cli --features postgres -- initialise-database
-# export initialisation data from mSupply central to `data/export_name` folder (IMPORTANT: Should not be used on large data files)
+# export initialisation data from mSupply central to `data/export_name` folder (IMPORTANT: Should not be used on large data files, as single JSON format is not suited for large set of data)
 cargo run --bin remote_server_cli -- export-initialisation -n 'export_name' -u 'user1:password1,user2:password2' -p 'sync_password'
 # initialise database from initialisation export (will replace current data), and in this case -r flag will attempt to advance all historic date and date/times forward.
 cargo run --bin remote_server_cli -- initialise-from-export -n 'export_name' -r
