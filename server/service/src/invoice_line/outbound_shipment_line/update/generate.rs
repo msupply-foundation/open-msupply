@@ -1,5 +1,6 @@
-use crate::invoice::common::calculate_total_after_tax;
 use repository::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow};
+
+use crate::invoice::common::calculate_total_after_tax;
 
 use super::{BatchPair, UpdateOutboundShipmentLine, UpdateOutboundShipmentLineError};
 
