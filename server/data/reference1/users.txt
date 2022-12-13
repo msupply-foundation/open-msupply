@@ -1,1 +1,1 @@
-Demo:pass
+Admin:pass,Dispensary:pass,Kamo:pass,Kopu:pass,Otuatahi:pass
