@@ -7,11 +7,12 @@ use crate::{
 };
 
 use self::middleware::{compress as compress_middleware, logger as logger_middleware};
+use anyhow::Context;
 use graphql_core::loader::{get_loaders, LoaderRegistry};
 
 use graphql::{attach_graphql_schema, GraphSchemaData, GraphqlSchema};
 use log::info;
-use repository::{get_storage_connection_manager, run_db_migrations};
+use repository::{get_storage_connection_manager, migrations::migrate};
 
 use service::{
     auth_data::AuthData,
@@ -64,8 +65,9 @@ pub async fn start_server(
         connection_manager.execute(init_sql).unwrap();
     }
     info!("Run DB migrations...");
-    run_db_migrations(&connection_manager.connection().unwrap(), true)
-        .expect("Failed to run DB migrations");
+    let version = migrate(&connection_manager.connection().unwrap(), None)
+        .context("Failed to run DB migrations")
+        .unwrap();
     info!("Run DB migrations...done");
 
     // INITIALISE CONTEXT
@@ -242,7 +244,10 @@ pub async fn start_server(
 
     let running_server = http_server.run();
     let server_handle = running_server.handle();
-    info!("Server started, running on port: {}", settings.server.port);
+    info!(
+        "Server started, running on port: {}, version: {}",
+        settings.server.port, version
+    );
     // run server in another task so that we can handle restart/off events here
     actix_web::rt::spawn(running_server);
 

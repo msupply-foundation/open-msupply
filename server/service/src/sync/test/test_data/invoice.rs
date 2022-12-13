@@ -84,7 +84,14 @@ const TRANSACT_1: (&'static str, &'static str) = (
       "user4": "",
       "user_ID": "",
       "wardID": "",
-      "waybill_number": ""
+      "waybill_number": "",
+      "om_allocated_datetime": "",
+      "om_picked_datetime": null,
+      "om_shipped_datetime": "",
+      "om_delivered_datetime": "",
+      "om_verified_datetime": "",
+      "om_created_datetime": "",
+      "om_transport_reference": ""
   }"#,
 );
 fn transact_1_pull_record() -> TestSyncPullRecord {
