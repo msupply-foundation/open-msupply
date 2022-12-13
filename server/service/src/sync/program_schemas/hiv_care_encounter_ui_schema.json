@@ -104,27 +104,14 @@
       "options": { "icon": "medicine" },
       "elements": [
         {
-          "scope": "#/properties/arvMedication/properties/regimen",
-          "type": "Control"
-        },
-        {
-          "scope": "#/properties/arvMedication/properties/pillCount",
-          "type": "Control"
-        },
-        {
-          "scope": "#/properties/arvMedication/properties/adherenceStatus",
+          "scope": "#/properties/arvMedication/properties/remainingPillCount",
           "type": "Control",
-          "options": {
-            "show": [
-              ["GOOD", "Good"],
-              ["MEDIUM", "Medium"],
-              ["POOR", "Poor"]
-            ]
-          }
+          "label": "Remaining Pill Count"
         },
         {
-          "label": "Number Of Days Dispensed",
+          "label": "Quantity prescribed",
           "options": {
+            "quantityPerDay": 1,
             "baseDatetimeField": "startDatetime",
             "events": [
               {
@@ -141,29 +128,141 @@
               }
             ],
             "scheduleEventsNow": true,
-            "targetField": "arvMedication.numberOfDaysDispensed"
+            "targetField": "arvMedication.quantityPrescribed"
           },
           "scope": "#",
-          "type": "DispensedDuration"
+          "type": "QuantityPrescribed"
         },
         {
-          "scope": "#/properties/arvMedication/properties/regimeStatus",
+          "scope": "#/properties/arvMedication/properties/adherenceStatus",
           "type": "Control",
           "options": {
             "show": [
-              ["NO_ARV", "No ARV"],
-              ["START_ARV", "Start ARV"],
-              ["CONTINUE_ARV", "Continue ARV"],
-              ["STOP_ARV", "Stop ARV"],
-              ["RECOMMENCED_ARV", "Recommenced ARV"],
-              ["ARV_ON_HOLD", "ARV on Hold"],
-              ["CHANGES_TO_ART_REGIMEN", "Changes to ART Regimen"]
+              ["GOOD", "Good"],
+              ["MEDIUM", "Medium"],
+              ["POOR", "Poor"]
             ]
           }
         },
         {
-          "scope": "#/properties/arvMedication/properties/reason",
-          "type": "Control"
+          "scope": "#/properties/arvMedication/properties/regimenStatus",
+          "type": "Control",
+          "options": {
+            "show": [
+              ["NO", "No ARV"],
+              ["START", "Start ARV"],
+              ["CONTINUE", "Continue ARV"],
+              ["CHANGE", "Changes to ARV Regimen"],
+              ["STOP", "Stop ARV"]
+            ]
+          }
+        },
+        {
+          "type": "Group",
+          "elements": [
+            {
+              "scope": "#/properties/arvMedication/properties/regimen",
+              "type": "Control"
+            },
+            {
+              "scope": "#/properties/arvMedication/properties/regimenChangeReason",
+              "type": "Control",
+              "options": {
+                "multiColumn": true,
+                "show": [
+                  ["51", "51", "Patient does not fulfill criteria"],
+                  [
+                    "52",
+                    "52",
+                    "Patient fulfils criteria, but counseling for ARVs is ongoing"
+                  ],
+                  [
+                    "53",
+                    "53",
+                    "Patient fulfils criteria, but no ARVs available"
+                  ],
+                  [
+                    "54",
+                    "54",
+                    "Patient fulfils criteria, but is not willing to start"
+                  ],
+                  [
+                    "55",
+                    "55",
+                    "Patient fulfils criteria, but is on TB treatment"
+                  ],
+                  [
+                    "56",
+                    "56",
+                    "Patient fulfils criteria but does not start for other reason"
+                  ],
+                  [
+                    "57",
+                    "57",
+                    "Patient fulfills criteria, but awaits lab results"
+                  ],
+                  [
+                    "58",
+                    "58",
+                    "Fulfills criteria but has OI and is too sick to start"
+                  ],
+                  [
+                    "99",
+                    "99",
+                    "Patient fulfils criteria but does not start for other reason"
+                  ],
+                  ["101", "101", "Adult CD4 < 200"],
+                  ["102", "102", "Adult WHO Stage IV"],
+                  ["103", "103", "Adult WHO Stage III, if CD4 < 350"],
+                  ["104", "104", "Children Pediatric WHO Stage III"],
+                  ["105", "105", "Children > 18 months, CD4% < 15%"],
+                  ["106", "106", "Infants < 18 months CD4% < 20%"],
+                  ["107", "107", "Pregnant women for PMCT (plus)"],
+                  ["108", "108", "Other reason to start"],
+                  ["109", "109", "Test and Treat"],
+                  ["110", "110", "Start TB treatment"],
+                  ["111", "111", "Nausea / vomiting"],
+                  ["112", "112", "Diarrhoea"],
+                  ["113", "113", "Headache"],
+                  ["114", "114", "Fever"],
+                  ["115", "115", "Skin rash"],
+                  ["116", "116", "Peripheral neuropathy"],
+                  ["117", "117", "Hepatitis"],
+                  ["118", "118", "Jaundice"],
+                  ["119", "119", "Dementia"],
+                  ["120", "120", "Anaemia"],
+                  ["121", "121", "Pancreatitis"],
+                  ["122", "122", "CNS adverse event"],
+                  ["123", "123", "Other adverse event, specify"],
+                  ["131", "131", "Treatment failure, clinical"],
+                  ["132", "132", "Treatment failure, immunological"],
+                  ["141", "141", "Poor adherence"],
+                  ["142", "142", "Patient decision"],
+                  ["143", "143", "Pregnancy"],
+                  ["144", "144", "End of PMTCT (plus)"],
+                  ["145", "145", "Transferred out, specify where"],
+                  ["146", "146", "Lost to follow-up"],
+                  ["147", "147", "Patient died"],
+                  ["148", "148", "Stock-out"],
+                  ["149", "149", "Other reason, specify"],
+                  ["151", "151", "Restart ARV after 3 or months not on ARV"]
+                ]
+              }
+            },
+            {
+              "scope": "#/properties/arvMedication/properties/regimenChangeNote",
+              "type": "Control"
+            }
+          ],
+          "rule": {
+            "effect": "ENABLE",
+            "condition": {
+              "scope": "#/properties/arvMedication/properties/regimenStatus",
+              "schema": {
+                "enum": ["START", "CHANGE"]
+              }
+            }
+          }
         },
         {
           "scope": "#/properties/arvMedication/properties/relevantCoMedication",
@@ -171,46 +270,6 @@
         },
         {
           "scope": "#/properties/arvMedication/properties/prophylaxisMedication",
-          "type": "Control"
-        },
-        {
-          "scope": "#/properties/arvMedication/properties/regimeType",
-          "type": "Control",
-          "options": {
-            "show": [
-              ["FIRST_LINE_ADULT", "First Line - Adult"],
-              ["FIRST_LINE_PAEDS_20_30_KG", "First Line - Paeds 20-30kg"],
-              ["FIRST_LINE_PAEDS_0_20_KG", "First Line - Paeds <20kg"],
-              ["SECOND_LINE_ADULT", "Second Line - Adult"],
-              ["SECOND_LINE_PAEDS_20_30_KG", "Second Line - Paeds 20-30kg"],
-              ["SECOND_LINE_PAEDS_0_20_KG", "Second Line - Paeds <20kg"]
-            ]
-          }
-        },
-        {
-          "scope": "#/properties/arvMedication/properties/change",
-          "type": "Control",
-          "options": {
-            "show": [
-              ["SUBSTITUTION", "Substitution of ART Regimen"],
-              ["SWITCHING", "Switching of ART regimen"]
-            ]
-          }
-        },
-        {
-          "scope": "#/properties/arvMedication/properties/previousRegimen",
-          "type": "Control"
-        },
-        {
-          "scope": "#/properties/arvMedication/properties/reasonSubstitutionWithinFirstLine",
-          "type": "Control"
-        },
-        {
-          "scope": "#/properties/arvMedication/properties/reasonFirstToSecondLine",
-          "type": "Control"
-        },
-        {
-          "scope": "#/properties/arvMedication/properties/stopReason",
           "type": "Control"
         }
       ]

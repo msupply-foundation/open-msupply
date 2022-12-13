@@ -79,6 +79,7 @@ export const RequestLineEdit = ({
           variant="next"
           onClick={async () => {
             await save();
+            setPreviousItemLineId(null);
             if (mode === ModalMode.Update && next) setCurrentItem(next);
             else if (mode === ModalMode.Create) setCurrentItem(null);
             else onClose();

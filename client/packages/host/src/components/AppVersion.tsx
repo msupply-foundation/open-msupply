@@ -1,6 +1,7 @@
 import React, { FC, CSSProperties } from 'react';
 import { Grid, Typography, useTranslation } from '@openmsupply-client/common';
-import packageJson from 'package.json';
+// Version is shared for client and server and is located in repo root package.json
+import packageJson from '../../package.json';
 
 interface AppVersionProps {
   style?: CSSProperties;

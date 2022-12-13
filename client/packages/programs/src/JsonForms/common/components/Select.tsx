@@ -30,16 +30,38 @@ type Options = {
    *   ["YES"]
    * ]
    */
-  show?: [string, string | undefined][];
+  show?: [string, string | undefined, ...(string | undefined)[]][];
+  /**
+   * Show three columns.
+   * For example,
+   * "show": [
+   *   ["FIRST", "First", "Description", "Right"],
+   *   ["SECOND", "Second", undefined, "Right2"],
+   * ]
+   * would show:
+   * "First     Description   Right"
+   * "Second                 Right2"
+   */
+  multiColumn?: boolean;
 };
 const Options: z.ZodType<Options | undefined> = z
   .object({
-    show: z.array(z.tuple([z.string(), z.string().optional()])).optional(),
+    show: z
+      .array(
+        z.tuple([z.string(), z.string().optional()]).rest(z.string().optional())
+      )
+      .optional(),
+    multiColumn: z.boolean().optional(),
   })
   .strict()
   .optional();
 
-type DisplayOption = { label: string; value: string };
+type DisplayOption = {
+  label: string;
+  value: string;
+  description?: string;
+  right?: string;
+};
 
 const getDisplayOptions = (
   schemaEnum: string[],
@@ -52,17 +74,19 @@ const getDisplayOptions = (
     }));
   }
 
-  return options.show.reduce<DisplayOption[]>((prev, [key, value]) => {
-    if (!schemaEnum.includes(key)) {
-      console.warn(
-        `Invalid select control config: key ${key} is not in the enum`
-      );
+  return options.show.reduce<DisplayOption[]>(
+    (prev, [key, value, description, right]) => {
+      if (!schemaEnum.includes(key)) {
+        console.warn(
+          `Invalid select control config: key ${key} is not in the enum`
+        );
+        return prev;
+      }
+      prev.push({ value: key, label: value ?? key, description, right });
       return prev;
-    }
-    prev.push({ value: key, label: value ?? key });
-    prev.sort((a, b) => a.label.localeCompare(b.label));
-    return prev;
-  }, []);
+    },
+    []
+  );
 };
 
 const searchRanking = {
@@ -78,7 +102,9 @@ const filterOptions = (
   const searchTerm = inputValue.toLowerCase();
   const filteredOptions = options
     .map(option => {
-      const lowerCaseOption = option.label.toLowerCase();
+      const lowerCaseOption = `${option.label} ${option.description ?? ''} ${
+        option.right ?? ''
+      }`.toLowerCase();
 
       const rank = lowerCaseOption.startsWith(searchTerm)
         ? searchRanking.STARTS_WITH
@@ -86,17 +112,67 @@ const filterOptions = (
         ? searchRanking.CONTAINS
         : searchRanking.NO_MATCH;
       return { ...option, rank };
-    }).filter(({ rank }) => rank !== searchRanking.NO_MATCH)
+    })
+    .filter(({ rank }) => rank !== searchRanking.NO_MATCH)
     .sort((a, b) => b.rank - a.rank);
-        
+
   return filteredOptions;
 };
 
+const TextHighlight = (props: {
+  parts: {
+    text: string;
+    highlight: boolean;
+  }[];
+}) => {
+  return (
+    <div>
+      {props.parts.map((part, index) => (
+        <span
+          key={index}
+          style={{
+            fontWeight: part.highlight ? 600 : 400,
+          }}
+        >
+          {part.text}
+        </span>
+      ))}
+    </div>
+  );
+};
+
+const getOptionLabel = (option: DisplayOption) =>
+  option.description
+    ? `${option.label}     ${option.description ?? ''}`
+    : `${option.label}`;
+
+const getHighlightParts = (
+  value: DisplayOption | undefined | null,
+  option: string | undefined,
+  inputValue: string
+) => {
+  // check if text input equals the selected value
+  if (value && getOptionLabel(value) === inputValue) {
+    return [
+      {
+        text: option ?? '',
+        highlight: false,
+      },
+    ];
+  }
+  return parse(
+    option ?? '',
+    match(option ?? '', inputValue, {
+      insideWords: true,
+    })
+  );
+};
+
 const UIComponent = (props: ControlProps) => {
-  const { data, handleChange, label, schema, path } = props;
+  const { data, handleChange, label, schema, path, uischema, enabled } = props;
   const { errors: zErrors, options: schemaOptions } = useZodOptionsValidation(
     Options,
-    props.uischema.options
+    uischema.options
   );
   if (!props.visible) {
     return null;
@@ -117,40 +193,68 @@ const UIComponent = (props: ControlProps) => {
       gap={2}
       justifyContent="space-around"
       style={{ minWidth: 300 }}
-      marginTop={1}
+      margin={0.5}
+      marginLeft={0}
     >
       <Box style={{ textAlign: 'end' }} flexBasis={FORM_LABEL_COLUMN_WIDTH}>
         <FormLabel sx={{ fontWeight: 'bold' }}>{label}:</FormLabel>
       </Box>
-      <Box flexBasis={FORM_INPUT_COLUMN_WIDTH}>
+      <Box flexBasis={FORM_INPUT_COLUMN_WIDTH} justifyContent="flex-start">
         <Autocomplete
-          sx={{ '.MuiFormControl-root': { minWidth: '135px' } }}
+          sx={{ '.MuiFormControl-root': { minWidth: '100%' } }}
           options={options}
+          disabled={!enabled}
           value={value}
           onChange={onChange}
           filterOptions={filterOptions}
+          getOptionLabel={getOptionLabel}
           renderOption={(props, option, { inputValue }) => {
-            const matches = match(option.label, inputValue, {
-              insideWords: true,
-            });
-            const parts = parse(option.label, matches);
+            const parts = getHighlightParts(value, option.label, inputValue);
 
-            return (
-              <li {...props}>
-                <div>
-                  {parts.map((part, index) => (
-                    <span
-                      key={index}
-                      style={{
-                        fontWeight: part.highlight ? 600 : 400,
-                      }}
-                    >
-                      {part.text}
-                    </span>
-                  ))}
-                </div>
-              </li>
-            );
+            if (schemaOptions?.multiColumn) {
+              const descriptionParts = getHighlightParts(
+                value,
+                option.description,
+                inputValue
+              );
+              const rightParts = getHighlightParts(
+                value,
+                option.right,
+                inputValue
+              );
+              return (
+                <li {...props} key={option.value}>
+                  <span
+                    style={{ whiteSpace: 'nowrap', width: 100, minWidth: 50 }}
+                  >
+                    <TextHighlight {...props} parts={parts} />
+                  </span>
+                  <span
+                    style={{
+                      whiteSpace: 'normal',
+                      width: 500,
+                    }}
+                  >
+                    <TextHighlight {...props} parts={descriptionParts} />
+                  </span>
+                  <span
+                    style={{
+                      width: 200,
+                      textAlign: 'right',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    <TextHighlight {...props} parts={rightParts} />
+                  </span>
+                </li>
+              );
+            } else {
+              return (
+                <li {...props} key={option.value}>
+                  <TextHighlight parts={parts} />
+                </li>
+              );
+            }
           }}
           clearable={!props.config?.required}
           inputProps={{

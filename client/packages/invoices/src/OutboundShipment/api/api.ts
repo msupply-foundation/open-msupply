@@ -83,6 +83,10 @@ const outboundParsers = {
     onHold: 'onHold' in patch ? patch.onHold : undefined,
     theirReference: patch.theirReference,
     transportReference: patch.transportReference,
+    tax:
+      'taxPercentage' in patch
+        ? { percentage: patch.taxPercentage }
+        : undefined,
   }),
   toUpdateName: (
     patch: RecordPatch<OutboundRowFragment> | RecordPatch<OutboundFragment>
@@ -97,7 +101,6 @@ const outboundParsers = {
       numberOfPacks: line.numberOfPacks,
       stockLineId: line.stockLine?.id ?? '',
       invoiceId: line.invoiceId,
-      tax: 0.0,
       totalBeforeTax: get.stockLineSubtotal(line),
     };
   },
@@ -106,7 +109,6 @@ const outboundParsers = {
       id: line.id,
       numberOfPacks: line.numberOfPacks,
       stockLineId: line.stockLine?.id ?? '',
-      tax: { percentage: line.taxPercentage },
       totalBeforeTax: get.stockLineSubtotal(line),
     };
   },
