@@ -160,6 +160,7 @@ fn generate_inbound_shipment(
         shipped_datetime: outbound_shipment_row.shipped_datetime,
         transport_reference: outbound_shipment_row.transport_reference.clone(),
         comment: Some(formatted_comment),
+        tax: outbound_shipment_row.tax,
         // Default
         colour: None,
         user_id: None,
