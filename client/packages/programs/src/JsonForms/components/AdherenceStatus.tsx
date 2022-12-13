@@ -70,25 +70,15 @@ const UIComponent = (props: ControlProps) => {
 
   // fetch current encounter
   const encounterId = useEncounter.utils.idFromUrl();
-  const { data: currentEncounter, mutate: fetchEncounter } =
-    useEncounter.document.byId(encounterId);
-  useEffect(() => {
-    fetchEncounter();
-  }, [encounterId]);
+  const { data: currentEncounter } = useEncounter.document.byId(encounterId);
 
   // fetch previous encounter
-  const { data: previousEncounter, mutate: fetchPreviousEncounter } =
-    useEncounter.document.previous(
-      currentEncounter?.patient.id ?? '',
-      currentEncounter?.startDatetime
-        ? new Date(currentEncounter?.startDatetime)
-        : new Date()
-    );
-  useEffect(() => {
-    if (currentEncounter) {
-      fetchPreviousEncounter();
-    }
-  }, [currentEncounter]);
+  const { data: previousEncounter } = useEncounter.document.previous(
+    currentEncounter?.patient.id,
+    currentEncounter?.startDatetime
+      ? new Date(currentEncounter?.startDatetime)
+      : new Date()
+  );
 
   const params:
     | {

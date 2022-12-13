@@ -1,10 +1,14 @@
-import { useMutation } from '@openmsupply-client/common';
+import { useQuery } from '@openmsupply-client/common';
 import { useEncounterApi } from '../utils/useEncounterApi';
 
-export const useEncounterById = (encounterId: string) => {
+export const useEncounterById = (encounterId: string | undefined) => {
   const api = useEncounterApi();
 
   return {
-    ...useMutation(api.keys.detail(encounterId), () => api.byId(encounterId)),
+    ...useQuery(
+      api.keys.detail(encounterId ?? ''),
+      () => api.byId(encounterId ?? ''),
+      { enabled: !!encounterId }
+    ),
   };
 };
