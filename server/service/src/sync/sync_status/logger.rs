@@ -32,17 +32,17 @@ pub(crate) enum SyncStepProgress {
     Push,
 }
 
-pub(crate) struct SyncLogger<'a> {
+pub struct SyncLogger<'a> {
     sync_log_repo: SyncLogRowRepository<'a>,
     row: SyncLogRow,
 }
 
 #[derive(Error, Debug)]
 #[error("Problem writing to sync log")]
-pub(crate) struct SyncLoggerError(#[from] RepositoryError);
+pub struct SyncLoggerError(#[from] RepositoryError);
 
 impl<'a> SyncLogger<'a> {
-    pub(crate) fn start(connection: &'a StorageConnection) -> Result<SyncLogger, SyncLoggerError> {
+    pub fn start(connection: &'a StorageConnection) -> Result<SyncLogger, SyncLoggerError> {
         info!("Sync started");
         let row = SyncLogRow {
             id: util::uuid::uuid(),
@@ -55,7 +55,7 @@ impl<'a> SyncLogger<'a> {
         Ok(SyncLogger { sync_log_repo, row })
     }
 
-    pub(crate) fn done(&mut self) -> Result<(), SyncLoggerError> {
+    pub fn done(&mut self) -> Result<(), SyncLoggerError> {
         self.row = SyncLogRow {
             finished_datetime: Some(chrono::Utc::now().naive_utc()),
             ..self.row.clone()
