@@ -158,6 +158,11 @@
           "type": "QuantityPrescribed"
         },
         {
+          "scope": "#/properties/arvMedication/properties/regimen",
+          "type": "PreviousEncounterText",
+          "label": "Current Regimen"
+        },
+        {
           "scope": "#/properties/arvMedication/properties/regimenStatus",
           "type": "Control",
           "options": {
