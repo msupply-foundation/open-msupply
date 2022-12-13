@@ -106,7 +106,7 @@
         {
           "scope": "#/properties/arvMedication/properties/remainingPillCount",
           "type": "Control",
-          "label": "Remaining Pill Count"
+          "label": "Pill Count before Visit"
         },
         {
           "scope": "#",
@@ -133,7 +133,7 @@
           }
         },
         {
-          "label": "Quantity prescribed",
+          "label": "Pill Count after Visit",
           "options": {
             "quantityPerDay": 1,
             "baseDatetimeField": "startDatetime",
