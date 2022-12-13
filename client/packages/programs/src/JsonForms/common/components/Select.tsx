@@ -229,7 +229,12 @@ const UIComponent = (props: ControlProps) => {
                   >
                     <TextHighlight {...props} parts={parts} />
                   </span>
-                  <span style={{ whiteSpace: 'nowrap', width: 500 }}>
+                  <span
+                    style={{
+                      whiteSpace: 'normal',
+                      width: 500,
+                    }}
+                  >
                     <TextHighlight {...props} parts={descriptionParts} />
                   </span>
                   <span
