@@ -139,11 +139,14 @@ query itemsWithStats(
   $key: ItemSortFieldInput
   $isDesc: Boolean
   $filter: ItemFilterInput
+  $first: Int
+  $offset: Int
 ) {
   items(
     storeId: $storeId
     sort: { key: $key, desc: $isDesc }
     filter: $filter
+    page: { first: $first, offset: $offset }
   ) {
     ... on ItemConnector {
       __typename

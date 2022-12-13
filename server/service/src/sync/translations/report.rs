@@ -1,4 +1,4 @@
-use crate::sync::sync_serde::empty_str_as_option;
+use crate::sync::sync_serde::empty_str_as_option_string;
 use repository::{ReportContext, ReportRow, ReportType, StorageConnection, SyncBufferRow};
 
 use serde::{Deserialize, Serialize};
@@ -40,7 +40,7 @@ pub struct LegacyReportRow {
     pub context: LegacyReportContext,
     pub template: String,
 
-    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(rename = "Comment")]
     pub comment: Option<String>,
 }

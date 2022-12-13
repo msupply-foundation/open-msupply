@@ -27,6 +27,8 @@ serde = { version = "1.0.126", features = ["derive"] }
 serde_json = "1.0.66"
 thiserror = "1"
 log = "0.4.14"
+rust-embed = "6.4.0"
+anyhow = "1.0.56"
 
 [dev-dependencies]
 tokio = { version = "1.17.0", features = ["time", "rt-multi-thread", "macros"] }
