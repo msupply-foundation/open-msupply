@@ -6,6 +6,7 @@ import { useInboundsAll } from './useInboundsAll';
 import { useInsertInbound } from './useInsertInbound';
 import { useNextItem } from './useNextItem';
 import { useUpdateInbound } from './useUpdateInbound';
+import { useUpdateInboundServiceTax } from './useInboundUpdateServiceTax';
 
 export const Document = {
   useInboundDelete,
@@ -16,4 +17,5 @@ export const Document = {
   useInsertInbound,
   useNextItem,
   useUpdateInbound,
+  useUpdateInboundServiceTax,
 };

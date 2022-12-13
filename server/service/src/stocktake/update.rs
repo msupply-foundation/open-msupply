@@ -494,6 +494,7 @@ fn generate(
         colour: None,
         requisition_id: None,
         linked_invoice_id: None,
+        tax: None,
     };
 
     Ok(StocktakeGenerateJob {

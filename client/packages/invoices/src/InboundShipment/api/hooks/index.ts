@@ -11,6 +11,7 @@ export const useInbound = {
     delete: Document.useInboundDelete,
     insert: Document.useInsertInbound,
     update: Document.useUpdateInbound,
+    updateTax: Document.useUpdateInboundServiceTax,
 
     fields: Document.useInboundFields,
     next: Document.useNextItem,

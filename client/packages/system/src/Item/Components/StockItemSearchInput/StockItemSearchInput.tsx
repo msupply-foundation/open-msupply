@@ -17,7 +17,7 @@ const ItemOption = styled('li')(({ theme }) => ({
 
 const filterOptions = {
   stringify: (item: ItemRowWithStatsFragment) => `${item.code} ${item.name}`,
-  limit: 100,
+  // limit: 100, // unsure why we had the limit, and why so low. performance is ok for me
 };
 
 const getOptionRenderer =
