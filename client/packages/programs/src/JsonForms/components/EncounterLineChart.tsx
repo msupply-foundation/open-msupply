@@ -69,8 +69,7 @@ const UIComponent = (props: ControlProps) => {
   const { dayMonthShort } = useFormatDateTime();
 
   const id = useEncounter.utils.idFromUrl();
-  const { data: encounter, mutate: fetchEncounter } =
-    useEncounter.document.byId(id);
+  const { data: encounter } = useEncounter.document.byId(id);
 
   const { errors, options } = useZodOptionsValidation(
     Options,
@@ -84,8 +83,6 @@ const UIComponent = (props: ControlProps) => {
     [option?.field ?? ''],
     !!option
   );
-
-  useEffect(() => fetchEncounter(), [id]);
 
   useEffect(() => {
     const data =

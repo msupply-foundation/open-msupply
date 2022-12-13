@@ -1,16 +1,17 @@
-import { useMutation } from '@openmsupply-client/common';
+import { useQuery } from '@openmsupply-client/common';
 import { useEncounterApi } from '../utils/useEncounterApi';
 
 export const useEncounterPrevious = (
-  patientId: string,
+  patientId: string | undefined,
   currentEncounter: Date
 ) => {
   const api = useEncounterApi();
 
   return {
-    ...useMutation(
-      api.keys.previous(patientId, currentEncounter.getTime()),
-      () => api.previousEncounters(patientId, currentEncounter)
+    ...useQuery(
+      api.keys.previous(patientId ?? '', currentEncounter.getTime()),
+      () => api.previousEncounters(patientId ?? '', currentEncounter),
+      { enabled: !!patientId }
     ),
   };
 };
