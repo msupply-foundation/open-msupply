@@ -210,6 +210,23 @@ impl<'a> NumberRowRepository<'a> {
         final_query.execute(&self.connection.connection)?;
         Ok(())
     }
+
+    pub fn delete(&self, number_id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(number_dsl::number)
+            .filter(number_dsl::id.eq(number_id))
+            .execute(&self.connection.connection)?;
+        Ok(())
+    }
+
+    pub fn find_many_by_store_id(
+        &self,
+        store_ids: &[String],
+    ) -> Result<Vec<NumberRow>, RepositoryError> {
+        let result = number_dsl::number
+            .filter(number_dsl::store_id.eq_any(store_ids))
+            .load(&self.connection.connection)?;
+        Ok(result)
+    }
 }
 
 #[cfg(test)]
