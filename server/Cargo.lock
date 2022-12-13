@@ -1068,6 +1068,7 @@ name = "cli"
 version = "0.1.0"
 dependencies = [
  "actix-rt",
+ "anyhow",
  "async-graphql",
  "chrono",
  "clap",
@@ -3878,6 +3879,7 @@ name = "repository"
 version = "0.1.0"
 dependencies = [
  "actix-rt",
+ "anyhow",
  "chrono",
  "diesel",
  "diesel-derive-enum",
@@ -3885,6 +3887,7 @@ dependencies = [
  "futures-util",
  "libsqlite3-sys",
  "log 0.4.16",
+ "rust-embed",
  "serde 1.0.137",
  "serde_json",
  "strum",
