@@ -240,7 +240,7 @@ async fn main() {
             info!("Initialising from {}", import_file.to_str().unwrap());
 
             let data: InitialisationData =
-                serde_json::from_slice(&fs::read(import_file).unwrap()).unwrap();
+                serde_json::from_slice(&fs::read(import_file).expect("File not found")).unwrap();
 
             info!("Integrate sync buffer");
             // Need to set site_id before integration
