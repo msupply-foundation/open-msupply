@@ -1,6 +1,6 @@
 use crate::{
     service_provider::{ServiceContext, ServiceProvider},
-    sync::sync_status::logger::SyncStep,
+    sync::{delete_numbers::delete_inactive_store_numbers, sync_status::logger::SyncStep},
 };
 use log::{info, warn};
 use repository::{RepositoryError, StorageConnection, SyncBufferAction};
@@ -11,6 +11,7 @@ use util::format_error;
 use super::{
     api::SyncApiV5,
     central_data_synchroniser::{CentralDataSynchroniser, CentralPullError},
+    delete_numbers::DeleteNumbersError,
     remote_data_synchroniser::{
         PostInitialisationError, RemoteDataSynchroniser, RemotePullError, RemotePushError,
         WaitForIntegrationError,
@@ -49,6 +50,8 @@ pub(crate) enum SyncError {
     RemotePullError(#[from] RemotePullError),
     #[error("Error while integrating records")]
     IntegrationError(anyhow::Error),
+    #[error("Error while deleting number records")]
+    DeleteNumbersError(#[from] DeleteNumbersError),
 }
 
 // For unwrap and expect debug implementation is used
@@ -184,6 +187,8 @@ impl Synchroniser {
             self.remote.advance_push_cursor(&ctx.connection)?;
             self.service_provider.site_is_initialised_trigger.trigger();
         }
+
+        delete_inactive_store_numbers(&ctx.connection)?;
 
         ctx.processors_trigger
             .trigger_requisition_transfer_processors();

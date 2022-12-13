@@ -1,6 +1,5 @@
 use super::{get_inactive_store_ids, GetInactiveStoresOnSiteError};
-use crate::service_provider::ServiceProvider;
-use repository::{NumberRowRepository, RepositoryError};
+use repository::{NumberRowRepository, RepositoryError, StorageConnection};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -11,18 +10,25 @@ pub(crate) enum DeleteNumbersError {
     DatabaseError(RepositoryError),
 }
 
-pub fn delete_inactive_store_numbers(
-    service_provider: &ServiceProvider,
+pub(crate) fn delete_inactive_store_numbers(
+    connection: &StorageConnection,
 ) -> Result<(), DeleteNumbersError> {
     use DeleteNumbersError as Error;
 
-    let ctx = service_provider
-        .basic_context()
-        .map_err(Error::DatabaseError)?;
-    let number_repository = NumberRowRepository::new(&ctx.connection);
+    let number_repository = NumberRowRepository::new(&connection);
 
     let inactive_stores =
-        get_inactive_store_ids(&ctx.connection).map_err(Error::GetInactiveStoresOnSiteError)?;
+        get_inactive_store_ids(&connection).map_err(Error::GetInactiveStoresOnSiteError)?;
 
-    let inactive_store_numbers = number_repository.find_many_by_store_id(inactive_stores);
+    let inactive_store_number_rows = number_repository
+        .find_many_by_store_id(&inactive_stores)
+        .map_err(Error::DatabaseError)?;
+
+    for number_row in inactive_store_number_rows {
+        number_repository
+            .delete(&number_row.id)
+            .map_err(Error::DatabaseError)?;
+    }
+
+    Ok(())
 }

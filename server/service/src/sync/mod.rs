@@ -91,7 +91,7 @@ pub(crate) enum GetInactiveStoresOnSiteError {
 
 pub(crate) fn get_inactive_store_ids(
     connection: &StorageConnection,
-) -> Result<&[String], GetInactiveStoresOnSiteError> {
+) -> Result<Vec<String>, GetInactiveStoresOnSiteError> {
     use GetInactiveStoresOnSiteError as Error;
 
     let site_id = KeyValueStoreRepository::new(connection)
