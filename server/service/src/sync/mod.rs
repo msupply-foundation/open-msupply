@@ -3,6 +3,7 @@ pub(crate) mod test;
 
 pub mod api;
 pub(crate) mod central_data_synchroniser;
+pub(crate) mod delete_numbers;
 pub(crate) mod remote_data_synchroniser;
 pub mod settings;
 pub mod site_info;
@@ -33,7 +34,7 @@ pub(crate) fn get_active_records_on_site_filter(
 ) -> Result<Option<ChangelogFilter>, GetActiveStoresOnSiteError> {
     let active_stores = ActiveStoresOnSite::get(&connection)?;
 
-Ok(Some(ChangelogFilter::new().store_id(
+    Ok(Some(ChangelogFilter::new().store_id(
         EqualFilter::equal_any_or_null(active_stores.store_ids()),
     )))
 }
@@ -78,4 +79,32 @@ impl ActiveStoresOnSite {
     pub(crate) fn store_ids(&self) -> Vec<String> {
         self.stores.iter().map(|r| r.store_row.id.clone()).collect()
     }
+}
+
+#[derive(Error, Debug)]
+pub(crate) enum GetInactiveStoresOnSiteError {
+    #[error("Database error while getting inactive store on site")]
+    DatabaseError(RepositoryError),
+    #[error("Site id is not set in database")]
+    SiteIdNotSet,
+}
+
+pub(crate) fn get_inactive_store_ids(
+    connection: &StorageConnection,
+) -> Result<&[String], GetInactiveStoresOnSiteError> {
+    use GetInactiveStoresOnSiteError as Error;
+
+    let site_id = KeyValueStoreRepository::new(connection)
+        .get_i32(repository::KeyValueType::SettingsSyncSiteId)
+        .map_err(Error::DatabaseError)?
+        .ok_or(Error::SiteIdNotSet)?;
+
+    let store_ids = StoreRepository::new(connection)
+        .query_by_filter(StoreFilter::new().site_id(EqualFilter::not_equal_to_i32(site_id)))
+        .map_err(Error::DatabaseError)?
+        .iter()
+        .map(|r| r.store_row.id.clone())
+        .collect();
+
+    Ok(store_ids)
 }
