@@ -415,6 +415,7 @@ fn encounter_hiv_care_2(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncou
             |e: &mut hiv_care_encounter::HivcareEncounterArvMedication| {
                 e.remaining_pill_count = Some(2.0);
                 e.quantity_prescribed = Some(8.0);
+                e.adherence_status = Some(85.7142835884354);
                 e.regimen = Some("1a-New".to_string());
                 e.regimen_status = Some("CONTINUE".to_string());
             },
@@ -460,6 +461,7 @@ fn encounter_hiv_care_3(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncou
             |e: &mut hiv_care_encounter::HivcareEncounterArvMedication| {
                 e.remaining_pill_count = Some(5.0);
                 e.quantity_prescribed = Some(8.0);
+                e.adherence_status = Some(42.85714108560097);
                 e.regimen = Some("2a-New".to_string());
                 e.regimen_status = Some("CHANGE".to_string());
             },
