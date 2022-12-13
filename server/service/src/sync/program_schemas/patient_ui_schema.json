@@ -36,6 +36,7 @@
                   "scope": "#/",
                   "options": {
                     "targetField": "code2",
+                    "confirmRegenerate": true,
                     "parts": [
                       {
                         "type": "Field",
