@@ -17,7 +17,7 @@ pub(crate) fn is_latest_doc(
 ) -> Result<bool, RepositoryError> {
     let latest_existing = service_provider
         .document_service
-        .get_document(ctx, &doc.name, None)?;
+        .document(ctx, &doc.name, None)?;
     if let Some(lastest_existing) = latest_existing {
         if lastest_existing.timestamp > doc.timestamp {
             // newer doc already exist

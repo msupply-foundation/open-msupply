@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use repository::{
-    Document, DocumentFilter, DocumentRepository, DocumentStatus, RepositoryError, StringFilter,
-    TransactionError,
+    Document, DocumentFilter, DocumentRepository, DocumentStatus, Pagination, RepositoryError,
+    StringFilter, TransactionError,
 };
 
 use crate::{
@@ -143,9 +143,11 @@ fn validate_patient_program_exists(
 ) -> Result<bool, RepositoryError> {
     let doc_name = patient_doc_name(patient_id, program);
     let document = DocumentRepository::new(&ctx.connection)
-        .query(Some(
-            DocumentFilter::new().name(StringFilter::equal_to(&doc_name)),
-        ))?
+        .query(
+            Pagination::one(),
+            Some(DocumentFilter::new().name(StringFilter::equal_to(&doc_name))),
+            None,
+        )?
         .pop();
     Ok(document.is_some())
 }
@@ -353,7 +355,7 @@ mod test {
             .unwrap();
         let found = service_provider
             .document_service
-            .get_document(&ctx, &result.name, None)
+            .document(&ctx, &result.name, None)
             .unwrap()
             .unwrap();
         assert!(found.parent_ids.is_empty());

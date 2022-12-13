@@ -21,20 +21,16 @@ export const getProgramOptionRenderer =
     return (
       <DefaultAutocompleteItemOption {...props} key={props.id}>
         <Box display="flex" alignItems="flex-end" gap={1} height={25}>
-          <Box display="flex" flexDirection="row" gap={1} width={110}>
+          <Box
+            display="flex"
+            flexDirection="row"
+            justifyContent="center"
+            gap={1}
+            width={50}
+          >
             <Box flex={0} style={{ height: 24, minWidth: 20 }}>
               {props['aria-disabled'] && <CheckIcon fontSize="small" />}
             </Box>
-            <Typography
-              overflow="hidden"
-              fontWeight="bold"
-              textOverflow="ellipsis"
-              sx={{
-                whiteSpace: 'no-wrap',
-              }}
-            >
-              {name?.substring(0, 3)}
-            </Typography>
           </Box>
           <Typography>{name}</Typography>
         </Box>

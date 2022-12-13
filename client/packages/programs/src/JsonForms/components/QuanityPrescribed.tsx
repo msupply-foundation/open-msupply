@@ -9,8 +9,8 @@ import { withJsonFormsControlProps } from '@jsonforms/react';
 import { FormLabel, Box } from '@mui/material';
 import {
   useDebounceCallback,
-  NumericTextInput,
   DateUtils,
+  PositiveNumberInput,
 } from '@openmsupply-client/common';
 import {
   FORM_LABEL_COLUMN_WIDTH,
@@ -32,6 +32,11 @@ type OptionEvent = {
 };
 
 type Options = {
+  /**
+   * Expected quantity to be used per day.
+   * If not specified it is set to one.
+   */
+  quantityPerDay?: number;
   /** Field name of the target data field */
   targetField: string;
   /**
@@ -58,6 +63,7 @@ const OptionEvent: z.ZodType<OptionEvent> = z
 
 const Options: z.ZodType<Options> = z
   .object({
+    quantityPerDay: z.number().optional(),
     targetField: z.string(),
     baseDatetimeField: z.string(),
     scheduleEventsNow: z.boolean().optional(),
@@ -65,7 +71,7 @@ const Options: z.ZodType<Options> = z
   })
   .strict();
 
-const DISPENSED_DURATION_GROUP = 'DispensedDuration';
+const QUANTITY_PRESCRIBED_GROUP = 'QuantityPrescribed';
 const scheduleEvent = (
   event: OptionEvent,
   baseDatetime: Date
@@ -82,20 +88,20 @@ const scheduleEvent = (
   return {
     activeDatetime: datetime.toISOString(),
     documentType: event.documentType,
-    group: DISPENSED_DURATION_GROUP,
+    group: QUANTITY_PRESCRIBED_GROUP,
     name: event.name,
     type: event.type,
   };
 };
 
-export const dispensedDurationTester = rankWith(
+export const quantityPrescribedTester = rankWith(
   10,
-  uiTypeIs('DispensedDuration')
+  uiTypeIs('QuantityPrescribed')
 );
 
 const UIComponent = (props: ControlProps) => {
   const { data, handleChange, label, path, uischema } = props;
-  const [localData, setLocalData] = useState<number>();
+  const [localData, setLocalData] = useState<number | undefined>();
   const [baseTime, setBaseTime] = useState<string | undefined>();
   const { errors, options } = useZodOptionsValidation(
     Options,
@@ -119,12 +125,17 @@ const UIComponent = (props: ControlProps) => {
       }
       // Remove existing events for the group
       const events = existingEvents.filter(
-        it => it.group !== DISPENSED_DURATION_GROUP
+        it => it.group !== QUANTITY_PRESCRIBED_GROUP
       );
       if (value > 0) {
         const scheduleStartTime = options.scheduleEventsNow
           ? new Date()
-          : DateUtils.startOfDay(DateUtils.addDays(new Date(baseTime), value));
+          : DateUtils.startOfDay(
+              DateUtils.addDays(
+                new Date(baseTime),
+                value * (options.quantityPerDay ?? 1)
+              )
+            );
         events.push(
           ...options.events.map(e => scheduleEvent(e, scheduleStartTime))
         );
@@ -139,7 +150,7 @@ const UIComponent = (props: ControlProps) => {
 
   useEffect(() => {
     if (options) {
-      setLocalData(extractProperty(data, options.targetField) ?? 0);
+      setLocalData(extractProperty(data, options.targetField) ?? undefined);
     }
   }, [data, options]);
   useEffect(() => {
@@ -161,7 +172,7 @@ const UIComponent = (props: ControlProps) => {
         <FormLabel sx={{ fontWeight: 'bold' }}>{label}:</FormLabel>
       </Box>
       <Box flexBasis={FORM_INPUT_COLUMN_WIDTH}>
-        <NumericTextInput
+        <PositiveNumberInput
           type="number"
           InputProps={{
             sx: { '& .MuiInput-input': { textAlign: 'right' } },
@@ -180,4 +191,4 @@ const UIComponent = (props: ControlProps) => {
   );
 };
 
-export const DispensedDuration = withJsonFormsControlProps(UIComponent);
+export const QuantityPrescribed = withJsonFormsControlProps(UIComponent);

@@ -50,9 +50,11 @@ impl ProgramsQueries {
         &self,
         ctx: &Context<'_>,
         #[graphql(desc = "Store id")] store_id: String,
+        page: Option<PaginationInput>,
         #[graphql(desc = "The document filter")] filter: Option<DocumentFilterInput>,
+        sort: Option<DocumentSortInput>,
     ) -> Result<DocumentResponse> {
-        documents(ctx, store_id, filter)
+        documents(ctx, store_id, page, filter, sort)
     }
 
     pub async fn document(

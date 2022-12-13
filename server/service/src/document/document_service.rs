@@ -1,13 +1,19 @@
 use chrono::Utc;
 use jsonschema::JSONSchema;
 use repository::{
-    Document, DocumentFilter, DocumentRepository, DocumentStatus, EqualFilter,
-    FormSchemaRowRepository, RepositoryError, StorageConnection, StringFilter,
+    Document, DocumentFilter, DocumentRepository, DocumentSort, DocumentStatus, EqualFilter,
+    FormSchemaRowRepository, Pagination, PaginationOption, RepositoryError, StorageConnection,
+    StringFilter,
 };
 
-use crate::service_provider::ServiceContext;
+use crate::{
+    get_default_pagination, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
+};
 
 use super::raw_document::RawDocument;
+
+pub const MAX_LIMIT: u32 = 1000;
+pub const MIN_LIMIT: u32 = 1;
 
 #[derive(Debug, PartialEq)]
 pub enum DocumentInsertError {
@@ -75,7 +81,7 @@ impl From<RepositoryError> for DocumentUndeleteError {
 }
 
 pub trait DocumentServiceTrait: Sync + Send {
-    fn get_document(
+    fn document(
         &self,
         ctx: &ServiceContext,
         name: &str,
@@ -86,16 +92,18 @@ pub trait DocumentServiceTrait: Sync + Send {
             filter = filter.r#type(EqualFilter::default().restrict_results(allowed_docs));
         }
         Ok(DocumentRepository::new(&ctx.connection)
-            .query(Some(filter))?
+            .query(Pagination::one(), Some(filter), None)?
             .pop())
     }
 
-    fn get_documents(
+    fn documents(
         &self,
         ctx: &ServiceContext,
+        pagination: Option<PaginationOption>,
         filter: Option<DocumentFilter>,
+        sort: Option<DocumentSort>,
         allowed_docs: Option<&[String]>,
-    ) -> Result<Vec<Document>, RepositoryError> {
+    ) -> Result<ListResult<Document>, ListError> {
         let mut filter = filter.unwrap_or(DocumentFilter::new());
         if let Some(allowed_docs) = allowed_docs {
             filter.r#type = Some(
@@ -105,10 +113,15 @@ pub trait DocumentServiceTrait: Sync + Send {
                     .restrict_results(allowed_docs),
             );
         }
-        DocumentRepository::new(&ctx.connection).query(Some(filter))
+        let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
+        let repository = DocumentRepository::new(&ctx.connection);
+        Ok(ListResult {
+            rows: repository.query(pagination, Some(filter.clone()), sort)?,
+            count: i64_to_u32(repository.count(Some(filter))?),
+        })
     }
 
-    fn get_document_history(
+    fn document_history(
         &self,
         ctx: &ServiceContext,
         name: &str,
@@ -445,10 +458,7 @@ mod document_service_test {
                 &vec!["test_data".to_string()],
             )
             .unwrap();
-        let found = service
-            .get_document(&context, doc_name, None)
-            .unwrap()
-            .unwrap();
+        let found = service.document(&context, doc_name, None).unwrap().unwrap();
         assert_eq!(found, v1);
 
         // invalid parents
@@ -499,10 +509,7 @@ mod document_service_test {
             )
             .unwrap();
         assert_eq!(v2.parent_ids[0], v1.id);
-        let found = service
-            .get_document(&context, doc_name, None)
-            .unwrap()
-            .unwrap();
+        let found = service.document(&context, doc_name, None).unwrap().unwrap();
         assert_eq!(found, v2);
         assert_eq!(found.data["version"], 2);
 
@@ -532,10 +539,7 @@ mod document_service_test {
             )
             .unwrap();
         // should still find the correct document
-        let found = service
-            .get_document(&context, doc_name, None)
-            .unwrap()
-            .unwrap();
+        let found = service.document(&context, doc_name, None).unwrap().unwrap();
         assert_eq!(found.id, v2.id);
     }
 
@@ -715,7 +719,7 @@ mod document_service_test {
             )
             .unwrap();
         let document = service
-            .get_document(&context, &document_a().name, None)
+            .document(&context, &document_a().name, None)
             .unwrap()
             .unwrap();
         assert_eq!(document.status, DocumentStatus::Deleted);
@@ -759,7 +763,7 @@ mod document_service_test {
             )
             .unwrap();
         let undeleted_document = service
-            .get_document(&context, &document_a().name, None)
+            .document(&context, &document_a().name, None)
             .unwrap()
             .unwrap();
         assert_eq!(undeleted_document.status, DocumentStatus::Active);

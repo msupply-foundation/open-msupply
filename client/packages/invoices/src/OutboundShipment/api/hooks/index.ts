@@ -20,6 +20,7 @@ export const useOutbound = {
     insert: Document.useOutboundInsert,
 
     fields: Document.useOutboundFields,
+    updateInvoiceTax: Document.useOutboundUpdateInvoiceTax,
     updateTax: Document.useUpdateOutboundTax,
     updateName: Document.useOutboundUpdateName,
   },

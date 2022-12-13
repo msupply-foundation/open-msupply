@@ -1,6 +1,7 @@
 use super::{CannotChangeStatusOfInvoiceOnHold, InvoiceIsNotEditable, NotAnOutboundShipmentError};
 
 use async_graphql::*;
+use graphql_core::generic_inputs::TaxInput;
 use graphql_core::simple_generic_errors::{CannotReverseInvoiceStatus, NodeError, RecordNotFound};
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
@@ -12,6 +13,7 @@ use service::invoice::outbound_shipment::{
     UpdateOutboundShipment as ServiceInput, UpdateOutboundShipmentError as ServiceError,
     UpdateOutboundShipmentStatus,
 };
+use service::invoice_line::ShipmentTaxUpdate;
 
 #[derive(InputObject)]
 #[graphql(name = "UpdateOutboundShipmentInput")]
@@ -27,6 +29,7 @@ pub struct UpdateInput {
     their_reference: Option<String>,
     transport_reference: Option<String>,
     colour: Option<String>,
+    tax: Option<TaxInput>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -101,6 +104,7 @@ impl UpdateInput {
             their_reference,
             colour,
             transport_reference,
+            tax,
         } = self;
 
         ServiceInput {
@@ -111,6 +115,11 @@ impl UpdateInput {
             their_reference,
             colour,
             transport_reference,
+            tax: tax.and_then(|tax| {
+                Some(ShipmentTaxUpdate {
+                    percentage: tax.percentage,
+                })
+            }),
         }
     }
 }

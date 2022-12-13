@@ -33,7 +33,7 @@ pub fn document_history(
 
     let documents = service_provider
         .document_service
-        .get_document_history(&context, &document_name, &allowed_docs)
+        .document_history(&context, &document_name, &allowed_docs)
         .map_err(|err| {
             let formated_err = format! {"{:?}", err};
             let error = match err {

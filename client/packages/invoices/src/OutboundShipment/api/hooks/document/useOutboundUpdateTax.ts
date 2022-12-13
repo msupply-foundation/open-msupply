@@ -27,6 +27,8 @@ export const useUpdateOutboundTax = () => {
     [lines.nodes, mutateAsync]
   );
 
+  // Currently unsure about use cases for invoice line tax. 
+  // Code below can be implemented back once this has been discussed or a KDD has been created.
   const updateStockLineTax = useCallback(
     (tax: number) =>
       mutateAsync({

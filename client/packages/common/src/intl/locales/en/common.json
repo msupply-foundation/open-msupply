@@ -71,6 +71,8 @@
   "heading.settings-display": "Display settings",
   "heading.settings-sync": "Synchronisation",
   "heading.shipments-to-be-picked": "Shipments to be picked",
+  "heading.details": "Details",
+  "heading.history": "History",
   "info.server-restarting": "Server restarting...",
   "label.actions": "Actions",
   "label.address": "Address",
