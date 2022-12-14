@@ -5,7 +5,7 @@ import {
   useConfirmOnLeaving,
 } from '@openmsupply-client/common';
 import { JsonData, JsonForm } from './common';
-import { DocumentRegistryFragment } from '@openmsupply-client/programs/src/api/operations.generated';
+import { DocumentRegistryFragment } from '@openmsupply-client/programs';
 import { useDocumentLoader } from './useDocumentLoader';
 import _ from 'lodash';
 import { JsonFormsRendererRegistryEntry } from '@jsonforms/core';
@@ -21,6 +21,10 @@ import {
   quantityPrescribedTester,
 } from './components/QuanityPrescribed';
 import { EventTrigger, eventTriggerTester } from './components/EventTrigger';
+import {
+  AdherenceStatus,
+  adherenceStatusTester,
+} from './components/AdherenceStatus';
 
 // https://stackoverflow.com/questions/57874879/how-to-treat-missing-undefined-properties-as-equivalent-in-lodashs-isequalwit
 // TODO: handle undefined and empty string as equal? e.g. initial data is undefined and current data is ""
@@ -76,6 +80,7 @@ const additionalRenderers: JsonFormsRendererRegistryEntry[] = [
   { tester: quantityPrescribedTester, renderer: QuantityPrescribed },
   { tester: eventTriggerTester, renderer: EventTrigger },
   { tester: bmiTester, renderer: BMI },
+  { tester: adherenceStatusTester, renderer: AdherenceStatus },
 ];
 
 export const useJsonForms = (

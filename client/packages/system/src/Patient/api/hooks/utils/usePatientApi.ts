@@ -19,8 +19,6 @@ export const usePatientApi = () => {
       [...keys.list(), sortBy] as const,
     enrolmentParamList: (params: ProgramEnrolmentListParams) =>
       ['program-enrolment', storeId, 'list', params] as const,
-    programEncountersParamList: (programs: string[]) =>
-      ['program-encounters', storeId, 'list', ...programs] as const,
     listEncounter: () => ['encounter', storeId, 'list'] as const,
     paramListEncounter: (params: EncounterListParams) =>
       [...keys.listEncounter(), params] as const,

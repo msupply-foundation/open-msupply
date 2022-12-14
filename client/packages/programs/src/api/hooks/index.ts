@@ -18,5 +18,6 @@ export const useEncounter = {
   encounterFields: Document.useEncounterFields,
   document: {
     byId: Document.useEncounterById,
+    previous: Document.useEncounterPrevious,
   },
 };
