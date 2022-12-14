@@ -13,6 +13,7 @@ fragment InboundLine on InvoiceLineNode {
   invoiceId
   totalBeforeTax
   totalAfterTax
+  taxPercentage
 
   item {
     __typename
@@ -67,6 +68,8 @@ fragment Inbound on InvoiceNode {
   theirReference
   transportReference
   type
+  taxPercentage
+
   linkedShipment {
     __typename
     id
@@ -116,6 +119,7 @@ fragment Inbound on InvoiceNode {
     stockTotalAfterTax
     serviceTotalAfterTax
     serviceTotalBeforeTax
+    taxPercentage
   }
 }
 
@@ -130,9 +134,12 @@ fragment InboundRow on InvoiceNode {
   status
   colour
   theirReference
+  taxPercentage
+
   pricing {
     __typename
     totalAfterTax
+    taxPercentage
   }
   linkedShipment {
     id

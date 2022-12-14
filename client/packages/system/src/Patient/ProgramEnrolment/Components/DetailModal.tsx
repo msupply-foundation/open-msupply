@@ -3,7 +3,10 @@ import {
   BasicSpinner,
   Box,
   DialogButton,
+  ModalTabs,
+  Typography,
   useDialog,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { useProgramEnrolment } from '../api/hooks';
 import { usePatientModalStore } from '../../hooks';
@@ -13,6 +16,7 @@ import {
   SaveDocumentMutation,
   useJsonForms,
 } from '@openmsupply-client/programs';
+import { DocumentHistory } from '../../DocumentHistory';
 
 const useUpsertProgramEnrolment = (
   patientId: string,
@@ -41,6 +45,7 @@ const useUpsertProgramEnrolment = (
 };
 
 export const ProgramDetailModal: FC = () => {
+  const t = useTranslation('common');
   const patientId = usePatient.utils.id();
 
   const { current, document, reset } = usePatientModalStore();
@@ -60,6 +65,28 @@ export const ProgramDetailModal: FC = () => {
   });
 
   const isCreating = document?.name === undefined;
+
+  const history = (
+    <Box display="flex" flexDirection="column" alignItems="center" gap={2} height={750}>
+      <Typography sx={{ fontSize: 18, fontWeight: 700 }}>
+        Document Edit History
+      </Typography>
+      {document?.name ? (
+        <DocumentHistory documentName={document?.name} />
+      ) : null}
+    </Box>
+  );
+
+  const tabs = [
+    {
+      Component: JsonForm,
+      value: t('heading.details'),
+    },
+    {
+      Component: history,
+      value: t('heading.history'),
+    },
+  ];
 
   return (
     <Modal
@@ -83,7 +110,7 @@ export const ProgramDetailModal: FC = () => {
             <BasicSpinner />
           </Box>
         ) : (
-          JsonForm
+          <ModalTabs tabs={tabs} />
         )}
       </React.Suspense>
     </Modal>

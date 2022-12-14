@@ -44,7 +44,7 @@ pub fn generate(
         });
         return Ok(result);
     }
-// Asc, by expiry date, nulls last
+    // Asc, by expiry date, nulls last
     let sorted_available_stock_lines =
         get_sorted_available_stock_lines(connection, store_id, &unallocated_line)?;
     // Use FEFO to allocate

@@ -13,8 +13,18 @@
               "elements": [
                 {
                   "type": "Control",
+                  "scope": "#/properties/firstName",
+                  "label": "First Name"
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/properties/lastName",
+                  "label": "Last Name"
+                },
+                {
+                  "type": "Control",
                   "scope": "#/properties/code",
-                  "label": "National Health Id",
+                  "label": "National ID (NID)",
                   "options": {
                     "pattern": "^[0-9]{10}$",
                     "examples": ["1234567890"]
@@ -81,16 +91,6 @@
                 },
                 {
                   "type": "Control",
-                  "scope": "#/properties/firstName",
-                  "label": "First Name"
-                },
-                {
-                  "type": "Control",
-                  "scope": "#/properties/lastName",
-                  "label": "Last Name"
-                },
-                {
-                  "type": "Control",
                   "scope": "#/properties/gender",
                   "label": "Sex",
                   "options": {
@@ -151,23 +151,10 @@
                   "options": {
                     "conditionField": "birthPlace.region",
                     "conditionalValues": {
-                      "Western": [
-                        "Middle Fly",
-                        "North Fly District",
-                        "South Fly"
-                      ],
+                      "Western": ["Middle Fly", "North Fly District", "South Fly"],
                       "Gulf": ["Kerema District", "Kikori District"],
-                      "Central": [
-                        "Abau District",
-                        "Goilala District",
-                        "Kairuku-Hiri District",
-                        "Rigo District"
-                      ],
-                      "National Capital District": [
-                        "Moresby North-East",
-                        "Moresby North_West",
-                        "Moresby South"
-                      ],
+                      "Central": ["Abau District", "Goilala District", "Kairuku-Hiri District", "Rigo District"],
+                      "National Capital District": ["Moresby North-East", "Moresby North_West", "Moresby South"],
                       "Milne Bay": [
                         "Alotau District",
                         "Esa'ala District",
@@ -254,16 +241,8 @@
                       ],
                       "Manus": ["Manus District"],
                       "New Ireland": ["Kavieng District", "Namatanai District"],
-                      "East New Britain": [
-                        "Gazelle District",
-                        "Kokopo District",
-                        "Pomio District",
-                        "Rabaul District"
-                      ],
-                      "West New Britain": [
-                        "Kandrian-Gloucester District",
-                        "Talasea District"
-                      ],
+                      "East New Britain": ["Gazelle District", "Kokopo District", "Pomio District", "Rabaul District"],
+                      "West New Britain": ["Kandrian-Gloucester District", "Talasea District"],
                       "North Solomon": [
                         "Central Bougainville District",
                         "North Bougainville District",
@@ -291,24 +270,81 @@
                   }
                 },
                 {
+                  "type": "Group",
+                  "label": "Address and Contact Details",
+                  "elements": [
+                    {
+                      "type": "FirstItemArray",
+                      "scope": "#/properties/contactDetails",
+                      "options": {
+                        "detail": {
+                          "type": "VerticalLayout",
+                          "elements": [
+                            {
+                              "type": "Control",
+                              "scope": "/properties/address1"
+                            },
+                            {
+                              "type": "Control",
+                              "scope": "/properties/address2"
+                            },
+                            {
+                              "type": "Control",
+                              "label": "Province",
+                              "scope": "/properties/region"
+                            },
+                            {
+                              "type": "Control",
+                              "scope": "/properties/district"
+                            },
+                            {
+                              "type": "Control",
+                              "scope": "/properties/phone"
+                            },
+                            {
+                              "type": "Control",
+                              "scope": "/properties/mobile"
+                            },
+                            {
+                              "type": "Control",
+                              "scope": "/properties/email"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "VerticalLayout",
+          "elements": [
+            {
+              "type": "Group",
+              "label": "Next of Kin",
+              "elements": [
+                {
+                  "type": "Control",
+                  "scope": "#/properties/family/properties/nextOfKin/properties/relationship"
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/properties/family/properties/nextOfKin/properties/firstName"
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/properties/family/properties/nextOfKin/properties/lastName"
+                },
+                {
                   "type": "FirstItemArray",
-                  "scope": "#/properties/contactDetails",
+                  "scope": "#/properties/family/properties/nextOfKin/properties/contactDetails",
                   "options": {
                     "detail": {
                       "type": "VerticalLayout",
                       "elements": [
-                        {
-                          "type": "Control",
-                          "scope": "/properties/address1"
-                        },
-                        {
-                          "type": "Control",
-                          "scope": "/properties/address2"
-                        },
-                        {
-                          "type": "Control",
-                          "scope": "/properties/district"
-                        },
                         {
                           "type": "Control",
                           "scope": "/properties/phone"
@@ -326,12 +362,7 @@
                   }
                 }
               ]
-            }
-          ]
-        },
-        {
-          "type": "VerticalLayout",
-          "elements": [
+            },
             {
               "type": "Group",
               "label": "Demographics",
@@ -351,75 +382,53 @@
                   }
                 },
                 {
-                  "type": "Control",
-                  "scope": "#/properties/socioEconomics/properties/education"
+                  "type": "Autocomplete",
+                  "label": "Education",
+                  "scope": "#/properties/socioEconomics/properties/education",
+                  "options": {
+                    "freeText": false,
+                    "values": [
+                      "No Education",
+                      "Primary Education",
+                      "Secondary Education",
+                      "Vocational/Technical",
+                      "Tertiary Education"
+                    ]
+                  }
                 },
                 {
-                  "type": "Control",
-                  "scope": "#/properties/socioEconomics/properties/occupation"
+                  "type": "Autocomplete",
+                  "scope": "#/properties/socioEconomics/properties/occupation",
+                  "options": {
+                    "freeText": false,
+                    "values": ["Formally employed", "Informally employed", "Student", "Unemployed"]
+                  }
                 }
               ]
             },
             {
-              "type": "Control",
-              "scope": "#/properties/allergies/properties/drugAllergies",
-              "itemLabel": "${index}: ${drug}",
-              "options": {
-                "detail": {
-                  "type": "VerticalLayout",
-                  "elements": [
-                    {
-                      "type": "Control",
-                      "scope": "/properties/drug"
-                    },
-                    {
-                      "type": "Control",
-                      "scope": "/properties/description"
-                    }
-                  ]
-                }
-              }
-            },
-            {
               "type": "Group",
-              "label": "Family Information",
+              "label": "Health",
               "elements": [
                 {
-                  "type": "AccordionGroup",
-                  "label": "Next of Kin",
-                  "elements": [
-                    {
-                      "type": "Control",
-                      "scope": "#/properties/family/properties/nextOfKin/properties/firstName"
-                    },
-                    {
-                      "type": "Control",
-                      "scope": "#/properties/family/properties/nextOfKin/properties/lastName"
-                    },
-                    {
-                      "type": "FirstItemArray",
-                      "scope": "#/properties/family/properties/nextOfKin/properties/contactDetails",
-                      "options": {
-                        "detail": {
-                          "type": "VerticalLayout",
-                          "elements": [
-                            {
-                              "type": "Control",
-                              "scope": "/properties/phone"
-                            },
-                            {
-                              "type": "Control",
-                              "scope": "/properties/mobile"
-                            },
-                            {
-                              "type": "Control",
-                              "scope": "/properties/email"
-                            }
-                          ]
+                  "type": "Control",
+                  "scope": "#/properties/allergies/properties/drugAllergies",
+                  "itemLabel": "${index}: ${drug}",
+                  "options": {
+                    "detail": {
+                      "type": "VerticalLayout",
+                      "elements": [
+                        {
+                          "type": "Control",
+                          "scope": "/properties/drug"
+                        },
+                        {
+                          "type": "Control",
+                          "scope": "/properties/description"
                         }
-                      }
+                      ]
                     }
-                  ]
+                  }
                 }
               ]
             },

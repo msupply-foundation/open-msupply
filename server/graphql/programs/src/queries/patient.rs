@@ -1,6 +1,6 @@
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
-use chrono::NaiveDate;
+use chrono::{Local, NaiveDate};
 use graphql_core::generic_filters::{
     DateFilterInput, EqualFilterStringInput, SimpleStringFilterInput,
 };
@@ -64,6 +64,13 @@ impl PatientNode {
 
     pub async fn date_of_birth(&self) -> Option<NaiveDate> {
         self.patient.name_row.date_of_birth.clone()
+    }
+
+    pub async fn age(&self) -> Option<i64> {
+        self.patient.name_row.date_of_birth.clone().map(|dob| {
+            let diff = Local::now().date_naive().signed_duration_since(dob);
+            diff.num_days() / 365
+        })
     }
 
     pub async fn phone(&self) -> Option<String> {

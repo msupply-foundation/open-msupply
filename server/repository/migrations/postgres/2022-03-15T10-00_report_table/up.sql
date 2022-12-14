@@ -7,7 +7,8 @@ CREATE TYPE context_type AS ENUM (
     'OUTBOUND_SHIPMENT',
     'REQUISITION',
     'STOCKTAKE',
-    'RESOURCE'
+    'RESOURCE',
+    'PATIENT'
 );
 
 
