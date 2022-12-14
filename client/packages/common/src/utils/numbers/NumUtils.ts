@@ -1,6 +1,7 @@
 const constrain = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max);
 
+// Time constants in [ms]
 const SECOND = 1000;
 const MINUTE = 60 * SECOND;
 const HOUR = 60 * MINUTE;
