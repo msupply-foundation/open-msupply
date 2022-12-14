@@ -398,6 +398,13 @@ fn encounter_hiv_care_1(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncou
                 exam.blood_pressure = Some("120/80".to_string());
             },
         ));
+        e.arv_medication = Some(inline_init(
+            |e: &mut hiv_care_encounter::HivcareEncounterArvMedication| {
+                e.quantity_prescribed = Some(8.0);
+                e.regimen = Some("1a-New".to_string());
+                e.regimen_status = Some("START".to_string());
+            },
+        ));
     })
 }
 
@@ -409,6 +416,15 @@ fn encounter_hiv_care_2(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncou
             |exam: &mut HivcareEncounterPhysicalExamination| {
                 exam.weight = Some("52.00".to_string());
                 exam.blood_pressure = Some("125/90".to_string());
+            },
+        ));
+        e.arv_medication = Some(inline_init(
+            |e: &mut hiv_care_encounter::HivcareEncounterArvMedication| {
+                e.remaining_pill_count = Some(2.0);
+                e.quantity_prescribed = Some(8.0);
+                e.adherence_status = Some(85.7142835884354);
+                e.regimen = Some("1a-New".to_string());
+                e.regimen_status = Some("CONTINUE".to_string());
             },
         ));
         e.events = Some(vec![
@@ -446,6 +462,15 @@ fn encounter_hiv_care_3(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncou
             |exam: &mut HivcareEncounterPhysicalExamination| {
                 exam.weight = Some("52.50".to_string());
                 exam.blood_pressure = Some("128/00".to_string());
+            },
+        ));
+        e.arv_medication = Some(inline_init(
+            |e: &mut hiv_care_encounter::HivcareEncounterArvMedication| {
+                e.remaining_pill_count = Some(5.0);
+                e.quantity_prescribed = Some(8.0);
+                e.adherence_status = Some(42.85714108560097);
+                e.regimen = Some("2a-New".to_string());
+                e.regimen_status = Some("CHANGE".to_string());
             },
         ));
     })

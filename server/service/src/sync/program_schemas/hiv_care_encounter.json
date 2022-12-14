@@ -52,6 +52,13 @@
     "HIVCareEncounter": {
       "properties": {
         "arvMedication": {
+          "if": {
+            "properties": {
+              "regimenStatus": {
+                "enum": ["START", "CHANGE"]
+              }
+            }
+          },
           "properties": {
             "adherenceStatus": {
               "description": "Antiretroviral adherence status [%]",
@@ -177,6 +184,9 @@
               "minimum": 0,
               "type": "number"
             }
+          },
+          "then": {
+            "required": ["regimen"]
           },
           "type": "object"
         },

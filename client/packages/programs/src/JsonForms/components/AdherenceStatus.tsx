@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   composePaths,
   ControlProps,
@@ -69,34 +69,17 @@ const UIComponent = (props: ControlProps) => {
 
   // fetch current encounter
   const encounterId = useEncounter.utils.idFromUrl();
-  const { data: currentEncounter, mutate: fetchEncounter } =
-    useEncounter.document.byId(encounterId);
-  useEffect(() => {
-    fetchEncounter();
-  }, [encounterId]);
+  const { data: currentEncounter } = useEncounter.document.byId(encounterId);
 
   // fetch previous encounter
-  const { data: previousEncounter, mutate: fetchPreviousEncounter } =
-    useEncounter.document.previous(
-      currentEncounter?.patient.id ?? '',
-      currentEncounter?.startDatetime
-        ? new Date(currentEncounter?.startDatetime)
-        : new Date()
-    );
-  useEffect(() => {
-    if (currentEncounter) {
-      fetchPreviousEncounter();
-    }
-  }, [currentEncounter]);
+  const { data: previousEncounter } = useEncounter.document.previous(
+    currentEncounter?.patient.id,
+    currentEncounter?.startDatetime
+      ? new Date(currentEncounter?.startDatetime)
+      : new Date()
+  );
 
-  const params:
-    | {
-        previousCountOnHand: number;
-        remainingCount: number;
-        countPerDay: number;
-        timeDiffMs: number;
-      }
-    | undefined = useMemo(() => {
+  useEffect(() => {
     if (!options || !currentEncounter || !previousEncounter || !targetPath) {
       return undefined;
     }
@@ -120,20 +103,7 @@ const UIComponent = (props: ControlProps) => {
       handleChange(targetPath, status);
       setAdherenceStatus(status);
     }
-
-    return {
-      previousCountOnHand,
-      remainingCount,
-      countPerDay: options.countPerDay,
-      timeDiffMs,
-    };
   }, [options, previousEncounter, currentEncounter, data, targetPath]);
-
-  useEffect(() => {
-    if (!params || targetPath === undefined) {
-      return;
-    }
-  }, [params, targetPath]);
 
   if (!props.visible) {
     return null;

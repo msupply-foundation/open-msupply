@@ -52,7 +52,7 @@ export const useDocumentLoader = (
     data: databaseResponse,
     isLoading,
     isError,
-  } = useDocument.get.document(docName ?? '', !!docName);
+  } = useDocument.get.document(docName);
 
   useEffect(() => {
     if (isError) {
