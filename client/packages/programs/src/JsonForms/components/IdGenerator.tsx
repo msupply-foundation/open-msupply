@@ -35,10 +35,12 @@ type GeneratorOptions = {
     whenever the user subsequently clicks the "Generate" button
   - This can be suppressed by setting the "confirmRegenerate" option to `false`
     (default `true`)
-  - To prevent the ID from *ever* being regenerated after first save, set the
-    "preventRegenAfterSave" option to `true` (default `false`)
   */
   confirmRegenerate?: boolean;
+  /*
+  - To prevent the ID from *ever* being regenerated after first save, set the
+  "preventRegenAfterSave" option to `true` (default `false`)
+  */
   preventRegenerate?: boolean;
 };
 
@@ -242,8 +244,9 @@ const UIComponent = (props: ControlProps) => {
 
   const canGenerate = !savedData?.data?.code2 || !options?.preventRegenerate;
 
-  const requireConfirmation =
-    options?.confirmRegenerate === false ? false : !!savedData?.data?.code2;
+  const requireConfirmation = !options?.confirmRegenerate
+    ? false
+    : !!savedData?.data?.code2;
 
   const value = options?.targetField
     ? extractProperty(data, options.targetField)
