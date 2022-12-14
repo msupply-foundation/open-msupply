@@ -6,7 +6,7 @@ import {
   uiTypeIs,
 } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import { BasicTextInput, Box, NumUtils } from '@openmsupply-client/common';
+import { BasicTextInput, Box, DateUtils } from '@openmsupply-client/common';
 import {
   FORM_INPUT_COLUMN_WIDTH,
   FORM_LABEL_COLUMN_WIDTH,
@@ -94,7 +94,7 @@ const UIComponent = (props: ControlProps) => {
       new Date(previousEncounter.startDatetime).getTime();
 
     // Target pill count needed for the whole timespan from last till current encounter
-    const timeDiffDays = timeDiffMs / NumUtils.DAY;
+    const timeDiffDays = timeDiffMs / DateUtils.DAY;
     const targetPillCount = timeDiffDays * options.countPerDay;
     const status =
       ((previousCountOnHand - remainingCount) / targetPillCount) * 100;
