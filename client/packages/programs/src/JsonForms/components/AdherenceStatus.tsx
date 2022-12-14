@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   composePaths,
   ControlProps,
@@ -79,14 +79,7 @@ const UIComponent = (props: ControlProps) => {
       : new Date()
   );
 
-  const params:
-    | {
-        previousCountOnHand: number;
-        remainingCount: number;
-        countPerDay: number;
-        timeDiffMs: number;
-      }
-    | undefined = useMemo(() => {
+  useEffect(() => {
     if (!options || !currentEncounter || !previousEncounter || !targetPath) {
       return undefined;
     }
@@ -110,20 +103,7 @@ const UIComponent = (props: ControlProps) => {
       handleChange(targetPath, status);
       setAdherenceStatus(status);
     }
-
-    return {
-      previousCountOnHand,
-      remainingCount,
-      countPerDay: options.countPerDay,
-      timeDiffMs,
-    };
   }, [options, previousEncounter, currentEncounter, data, targetPath]);
-
-  useEffect(() => {
-    if (!params || targetPath === undefined) {
-      return;
-    }
-  }, [params, targetPath]);
 
   if (!props.visible) {
     return null;
