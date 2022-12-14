@@ -89,12 +89,13 @@ mod test {
 
     use repository::{
         mock::{
-            mock_inbound_shipment_number_store_a, mock_outbound_shipment_number_store_a,
-            MockDataInserts,
+            mock_inbound_shipment_number_store_a, mock_name_c,
+            mock_outbound_shipment_number_store_a, mock_store_c, MockData, MockDataInserts,
         },
-        test_db::{self, setup_all},
-        NumberRowType, RepositoryError, TransactionError,
+        test_db::{self, setup_all, setup_all_with_data},
+        InvoiceRow, InvoiceRowType, NumberRowType, RepositoryError, TransactionError,
     };
+    use util::inline_init;
 
     const TEST_SLEEP_TIME: u64 = 100;
     const MAX_CONCURRENCY: u64 = 10;
@@ -103,13 +104,29 @@ mod test {
 
     #[actix_rt::test]
     async fn test_number_service() {
-        let (_, connection, _, _) = setup_all("test_number_service", MockDataInserts::all()).await;
+        fn invoice1() -> InvoiceRow {
+            inline_init(|r: &mut InvoiceRow| {
+                r.id = "invoice1".to_string();
+                r.name_id = mock_name_c().id;
+                r.store_id = mock_store_c().id;
+                r.r#type = InvoiceRowType::OutboundShipment;
+                r.invoice_number = 100;
+            })
+        }
+
+        let (_, connection, _, _) = setup_all_with_data(
+            "test_number_service",
+            MockDataInserts::none().stores().names().numbers(),
+            inline_init(|r: &mut MockData| {
+                r.invoices = vec![invoice1()];
+            }),
+        )
+        .await;
 
         let inbound_shipment_store_a_number = mock_inbound_shipment_number_store_a();
         let outbound_shipment_store_b_number = mock_outbound_shipment_number_store_a();
 
         // Test existing
-
         let result = next_number(&connection, &NumberRowType::InboundShipment, "store_a").unwrap();
         assert_eq!(result, inbound_shipment_store_a_number.value + 1);
 
@@ -119,13 +136,16 @@ mod test {
         let result = next_number(&connection, &NumberRowType::OutboundShipment, "store_a").unwrap();
         assert_eq!(result, outbound_shipment_store_b_number.value + 1);
 
-        // Test new
-
+        // Test new with store that has no invoices
         let result = next_number(&connection, &NumberRowType::OutboundShipment, "store_b").unwrap();
         assert_eq!(result, 1);
 
         let result = next_number(&connection, &NumberRowType::OutboundShipment, "store_b").unwrap();
         assert_eq!(result, 2);
+
+        // Test new with store that has existing invoice
+        let result = next_number(&connection, &NumberRowType::OutboundShipment, "store_c").unwrap();
+        assert_eq!(result, 101);
     }
 
     #[actix_rt::test]
