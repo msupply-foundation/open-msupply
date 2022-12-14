@@ -255,8 +255,9 @@
                   }
                 },
                 {
-                  "type": "Control",
-                  "scope": "#/properties/birthOrder"
+                  "type": "Number",
+                  "scope": "#/properties/birthOrder",
+                  "options": { "output": "string", "sigFig": 2 }
                 },
                 {
                   "type": "Control",

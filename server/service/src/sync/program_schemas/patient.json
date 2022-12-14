@@ -129,15 +129,7 @@
       "type": "object"
     },
     "Gender": {
-      "enum": [
-        "FEMALE",
-        "MALE",
-        "TRANSGENDER",
-        "TRANSGENDER_MALE",
-        "TRANSGENDER_FEMALE",
-        "UNKNOWN",
-        "NON_BINARY"
-      ],
+      "enum": ["FEMALE", "MALE", "TRANSGENDER", "TRANSGENDER_MALE", "TRANSGENDER_FEMALE", "UNKNOWN", "NON_BINARY"],
       "type": "string"
     },
     "Handedness": {
@@ -158,14 +150,7 @@
       "type": "object"
     },
     "MaritalStatus": {
-      "enum": [
-        "SINGLE",
-        "MARRIED",
-        "DIVORCED",
-        "WIDOWED",
-        "SEPARATED",
-        "REGISTERED_PARTNERSHIP"
-      ],
+      "enum": ["SINGLE", "MARRIED", "DIVORCED", "WIDOWED", "SEPARATED", "REGISTERED_PARTNERSHIP"],
       "type": "string"
     },
     "Note": {
@@ -376,8 +361,6 @@
         },
         "birthOrder": {
           "description": "Birth order, e.g. \"02\" for second child",
-          "examples": ["01", "02", "03"],
-          "pattern": "^[0-9]{2}$",
           "type": "string"
         },
         "birthPlace": {

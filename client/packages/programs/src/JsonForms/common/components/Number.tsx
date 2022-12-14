@@ -1,5 +1,11 @@
 import React, { useState } from 'react';
-import { ControlProps, rankWith, schemaTypeIs } from '@jsonforms/core';
+import {
+  or,
+  ControlProps,
+  rankWith,
+  schemaTypeIs,
+  uiTypeIs,
+} from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import {
   NumericTextInput,
@@ -14,16 +20,41 @@ import {
 import { Box } from '@mui/system';
 import { FormLabel } from '@mui/material';
 
-export const numberTester = rankWith(3, schemaTypeIs('number'));
+export const numberTester = rankWith(
+  5,
+  or(schemaTypeIs('number'), uiTypeIs('Number'))
+);
+
+type NumberOptions = {
+  /*
+  Options only required if the saved data should be converted to a string
+  representation of the number
+  */
+  output?: 'string';
+  /*
+  The output string will be padded with leading 0's up to the number of significant figures specified
+  */
+  sigFigs?: number;
+};
 
 const UIComponent = (props: ControlProps) => {
-  const { data, handleChange, label, path, errors, schema } = props;
-  const [localData, setLocalData] = useState<number | undefined>(data);
+  const { data, handleChange, label, path, errors, schema, uischema } = props;
+
+  const options: NumberOptions = uischema?.options ?? {};
+
+  const [localData, setLocalData] = useState<number | undefined>(Number(data));
   const onChange = useDebounceCallback(
-    (value: number) => handleChange(path, value),
+    (value: number | string) => handleChange(path, value),
     [path]
   );
   const error = !!errors;
+
+  // The selected number can be saved as a string (with optional leading zeroes)
+  // using the "output: string" and "sigFig" options
+  const formatValue = (value: number): number | string => {
+    if (options?.['output'] !== 'string') return value;
+    return String(value).padStart(options?.['sigFigs'] ?? 0, '0');
+  };
 
   if (!props.visible) {
     return null;
@@ -37,7 +68,7 @@ const UIComponent = (props: ControlProps) => {
     },
     onChange: value => {
       setLocalData(value);
-      onChange(value);
+      onChange(formatValue(value));
     },
     disabled: !props.enabled,
     error: error,
