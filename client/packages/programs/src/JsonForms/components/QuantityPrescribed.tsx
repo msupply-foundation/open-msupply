@@ -170,9 +170,10 @@ const UIComponent = (props: ControlProps) => {
     setBaseTime(extractProperty(data, options?.baseDatetimeField ?? ''));
   }, [data, options]);
 
-  const endOfSupplySec = baseTime
-    ? getEndOfSupply(baseTime, localData ?? 0, options).getTime() / 1000
-    : undefined;
+  const endOfSupplySec =
+    baseTime && localData
+      ? getEndOfSupply(baseTime, localData ?? 0, options).getTime() / 1000
+      : undefined;
 
   if (!props.visible) {
     return null;
