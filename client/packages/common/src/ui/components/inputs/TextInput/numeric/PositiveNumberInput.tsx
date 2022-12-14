@@ -17,7 +17,7 @@ export const PositiveNumberInput = React.forwardRef(
       disabled = false,
       value,
       min = 1,
-      max = 999999999,
+      max = Number.MAX_SAFE_INTEGER,
       onChange,
       ...rest
     }: PositiveNumberProps,
@@ -30,7 +30,9 @@ export const PositiveNumberInput = React.forwardRef(
         InputProps={{
           sx: { ...sx, '& .MuiInput-input': { textAlign: 'right' } },
         }}
-        onChange={value => onChange(NumUtils.constrain(value, min, max))}
+        onChange={value =>
+          onChange(NumUtils.constrain(value, Math.max(0, min), max))
+        }
         disabled={disabled}
         value={value}
         {...rest}
