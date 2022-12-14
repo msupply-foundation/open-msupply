@@ -35,6 +35,8 @@ pub enum KeyValueType {
     SettingsSyncIsDisabled,
     SettingsTokenSecret,
 
+    DatabaseVersion,
+
     SettingsDisplayCustomLogo,
     SettingsDisplayCustomLogoHash,
     SettingsDisplayCustomTheme,

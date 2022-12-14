@@ -1,6 +1,7 @@
 use crate::mutations::outbound_shipment::CannotChangeStatusOfInvoiceOnHold;
 use async_graphql::*;
 
+use graphql_core::generic_inputs::TaxInput;
 use graphql_core::simple_generic_errors::{
     CannotEditInvoice, OtherPartyNotASupplier, OtherPartyNotVisible,
 };
@@ -14,6 +15,7 @@ use service::invoice::inbound_shipment::{
     UpdateInboundShipment as ServiceInput, UpdateInboundShipmentError as ServiceError,
     UpdateInboundShipmentStatus,
 };
+use service::invoice_line::ShipmentTaxUpdate;
 
 #[derive(InputObject)]
 #[graphql(name = "UpdateInboundShipmentInput")]
@@ -25,6 +27,7 @@ pub struct UpdateInput {
     pub comment: Option<String>,
     pub their_reference: Option<String>,
     pub colour: Option<String>,
+    pub tax: Option<TaxInput>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -87,6 +90,7 @@ impl UpdateInput {
             comment,
             their_reference,
             colour,
+            tax,
         } = self;
 
         ServiceInput {
@@ -97,6 +101,11 @@ impl UpdateInput {
             comment,
             their_reference,
             colour,
+            tax: tax.and_then(|tax| {
+                Some(ShipmentTaxUpdate {
+                    percentage: tax.percentage,
+                })
+            }),
         }
     }
 }
@@ -474,7 +483,8 @@ mod test {
                     on_hold: Some(false),
                     comment: Some("comment input".to_string()),
                     their_reference: Some("their reference input".to_string()),
-                    colour: Some("colour input".to_string())
+                    colour: Some("colour input".to_string()),
+                    tax: None,
                 }
             );
             Ok(Invoice {

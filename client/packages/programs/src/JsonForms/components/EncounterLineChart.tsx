@@ -70,7 +70,7 @@ const UIComponent = (props: ControlProps) => {
 
   const id = useEncounter.utils.idFromUrl();
   const { data: encounter, mutate: fetchEncounter } =
-    useEncounter.document.byId();
+    useEncounter.document.byId(id);
 
   const { errors, options } = useZodOptionsValidation(
     Options,

@@ -14,11 +14,13 @@ import {
   UpdateInboundShipmentStatusInput,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from './../../types';
+import { isA } from '../../utils';
 import {
   Sdk,
   InboundFragment,
   InboundRowFragment,
   InsertInboundShipmentMutationVariables,
+  InboundLineFragment,
 } from './operations.generated';
 
 export type ListParams = {
@@ -76,6 +78,10 @@ const inboundParsers = {
       otherPartyId: 'otherParty' in patch ? patch.otherParty?.id : undefined,
       theirReference:
         'theirReference' in patch ? patch.theirReference : undefined,
+      tax:
+        'taxPercentage' in patch
+          ? { percentage: patch.taxPercentage }
+          : undefined,
     };
   },
   toInsertLine: (line: DraftInboundLine): InsertInboundShipmentLineInput => {
@@ -115,12 +121,14 @@ const inboundParsers = {
     invoiceId: line.invoiceId,
     itemId: line.item.id,
     totalBeforeTax: line.totalBeforeTax,
+    tax: line.taxPercentage,
     note: line.note,
   }),
   toUpdateServiceCharge: (line: DraftInboundLine) => ({
     id: line.id,
     itemId: line.item.id,
     totalBeforeTax: line.totalBeforeTax,
+    tax: { percentage: line.taxPercentage },
     note: line.note,
   }),
   toDeleteServiceCharge: (line: DraftInboundLine) => ({
@@ -232,6 +240,37 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
         deleteInboundShipmentLines: lines.map(inboundParsers.toDeleteLine),
       },
     });
+  },
+  updateServiceTax: async ({
+    lines,
+    taxPercentage,
+    type,
+  }: {
+    lines: InboundLineFragment[];
+    taxPercentage: number;
+    type: InvoiceLineNodeType.StockIn | InvoiceLineNodeType.Service;
+  }) => {
+    const toUpdateServiceLine = (line: InboundLineFragment) =>
+      inboundParsers.toUpdateServiceCharge({ ...line, taxPercentage });
+
+    const result =
+      (await sdk.upsertInboundShipment({
+        storeId,
+        input: {
+          updateInboundShipmentServiceLines:
+            type === InvoiceLineNodeType.Service
+              ? lines.filter(isA.serviceLine).map(toUpdateServiceLine)
+              : [],
+        },
+      })) || {};
+
+    const { batchInboundShipment } = result;
+
+    if (batchInboundShipment?.__typename === 'BatchInboundShipmentResponse') {
+      return batchInboundShipment;
+    }
+
+    throw new Error('Unable to update invoice');
   },
   updateLines: async (draftInboundLine: DraftInboundLine[]) => {
     const input = {
