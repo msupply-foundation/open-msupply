@@ -57,8 +57,8 @@ const UIComponent = (props: ControlProps) => {
         <FormLabel sx={{ fontWeight: 'bold' }}>{label}:</FormLabel>
       </Box>
       <Box flexBasis={FORM_INPUT_COLUMN_WIDTH}>
-        {schema.minimum !== undefined && schema.minimum >= 0 ? (
-          <PositiveNumberInput {...inputProps} />
+        {schema.minimum !== undefined ? (
+          <PositiveNumberInput {...inputProps} min={schema.minimum} />
         ) : (
           <NumericTextInput {...inputProps} />
         )}

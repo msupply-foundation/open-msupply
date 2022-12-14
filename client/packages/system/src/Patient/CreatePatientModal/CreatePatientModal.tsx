@@ -19,7 +19,7 @@ import { CreateNewPatient, usePatientCreateStore } from '../hooks';
 import {
   DocumentRegistryFragment,
   useDocument,
-} from '@openmsupply-client/programs/src/api';
+} from '@openmsupply-client/programs';
 
 enum Tabs {
   Form = 'Form',
