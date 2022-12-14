@@ -11,6 +11,7 @@ import {
   Box,
   useMutation,
   useTranslation,
+  useConfirmationModal,
 } from '@openmsupply-client/common';
 import {
   FORM_LABEL_COLUMN_WIDTH,
@@ -28,6 +29,19 @@ export const idGeneratorTester = rankWith(10, uiTypeIs('IdGenerator'));
 type GeneratorOptions = {
   targetField: string;
   parts: Part[];
+  /*
+  Regeneration behaviour:
+  - By default, after ID is first saved, a confirmation will be displayed
+    whenever the user subsequently clicks the "Generate" button
+  - This can be suppressed by setting the "confirmRegenerate" option to `false`
+    (default `true`)
+  */
+  confirmRegenerate?: boolean;
+  /*
+  - To prevent the ID from *ever* being regenerated after first save, set the
+  "preventRegenAfterSave" option to `true` (default `false`)
+  */
+  preventRegenerate?: boolean;
 };
 
 /**
@@ -121,6 +135,8 @@ const GeneratorOptions: z.ZodType<GeneratorOptions> = z
   .object({
     targetField: z.string(),
     parts: z.array(Part),
+    confirmRegenerate: z.boolean().optional().default(true),
+    preventRegenerate: z.boolean().optional().default(false),
   })
   .strict();
 
@@ -213,16 +229,24 @@ const generateId = async (input: GenerateIdInput): Promise<string> => {
 
 const UIComponent = (props: ControlProps) => {
   const { label, path, data, visible, handleChange, uischema, config } = props;
-  const t = useTranslation('common');
+  const t = useTranslation(['patients', 'common']);
   const { mutateAsync: mutateGenerateId } = useMutation(
     async (input: GenerateIdInput): Promise<string> => generateId(input)
   );
   const { mutateAsync: allocateNumber } = useDocument.utils.allocateNumber();
 
+  const { data: savedData } = useDocument.get.document(config.documentName);
+
   const { errors, options } = useZodOptionsValidation(
     GeneratorOptions,
     uischema.options
   );
+
+  const canGenerate = !savedData?.data?.code2 || !options?.preventRegenerate;
+
+  const requireConfirmation = !options?.confirmRegenerate
+    ? false
+    : !!savedData?.data?.code2;
 
   const value = options?.targetField
     ? extractProperty(data, options.targetField)
@@ -248,6 +272,12 @@ const UIComponent = (props: ControlProps) => {
     const fullPath = composePaths(path, options?.targetField);
     handleChange(fullPath, id);
   }, [options, path, data, handleChange]);
+
+  const confirmRegenerate = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: t('messages.regenerate-id-confirm'),
+    onConfirm: generate,
+  });
 
   if (!visible) {
     return null;
@@ -278,7 +308,11 @@ const UIComponent = (props: ControlProps) => {
         />
 
         <Box>
-          <Button disabled={error} onClick={generate} variant="outlined">
+          <Button
+            disabled={error || !canGenerate}
+            onClick={requireConfirmation ? () => confirmRegenerate() : generate}
+            variant="outlined"
+          >
             {t('label.generate')}
           </Button>
         </Box>
