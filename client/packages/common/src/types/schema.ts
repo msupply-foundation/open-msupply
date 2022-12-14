@@ -1091,7 +1091,6 @@ export type InsertInboundShipmentLineInput = {
   numberOfPacks: Scalars['Float'];
   packSize: Scalars['Int'];
   sellPricePerPack: Scalars['Float'];
-  tax?: InputMaybe<Scalars['Float']>;
   totalBeforeTax?: InputMaybe<Scalars['Float']>;
 };
 
@@ -1187,7 +1186,6 @@ export type InsertOutboundShipmentLineInput = {
   itemId: Scalars['String'];
   numberOfPacks: Scalars['Float'];
   stockLineId: Scalars['String'];
-  tax?: InputMaybe<Scalars['Float']>;
   totalBeforeTax?: InputMaybe<Scalars['Float']>;
 };
 
@@ -1511,6 +1509,7 @@ export type InvoiceNode = {
   requisition?: Maybe<RequisitionNode>;
   shippedDatetime?: Maybe<Scalars['DateTime']>;
   status: InvoiceNodeStatus;
+  taxPercentage?: Maybe<Scalars['Float']>;
   theirReference?: Maybe<Scalars['String']>;
   transportReference?: Maybe<Scalars['String']>;
   type: InvoiceNodeType;
@@ -3089,6 +3088,7 @@ export type ReportConnector = {
 export enum ReportContext {
   InboundShipment = 'INBOUND_SHIPMENT',
   OutboundShipment = 'OUTBOUND_SHIPMENT',
+  Patient = 'PATIENT',
   Requisition = 'REQUISITION',
   Resource = 'RESOURCE',
   Stocktake = 'STOCKTAKE'
@@ -3762,6 +3762,7 @@ export type UpdateInboundShipmentInput = {
   onHold?: InputMaybe<Scalars['Boolean']>;
   otherPartyId?: InputMaybe<Scalars['String']>;
   status?: InputMaybe<UpdateInboundShipmentStatusInput>;
+  tax?: InputMaybe<TaxInput>;
   theirReference?: InputMaybe<Scalars['String']>;
 };
 
@@ -3784,7 +3785,6 @@ export type UpdateInboundShipmentLineInput = {
   numberOfPacks?: InputMaybe<Scalars['Float']>;
   packSize?: InputMaybe<Scalars['Int']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']>;
-  tax?: InputMaybe<TaxInput>;
   totalBeforeTax?: InputMaybe<Scalars['Float']>;
 };
 
@@ -3873,6 +3873,7 @@ export type UpdateOutboundShipmentInput = {
    * existing invoice items gets updated.
    */
   status?: InputMaybe<UpdateOutboundShipmentStatusInput>;
+  tax?: InputMaybe<TaxInput>;
   /** External invoice reference, e.g. purchase or shipment number */
   theirReference?: InputMaybe<Scalars['String']>;
   transportReference?: InputMaybe<Scalars['String']>;
@@ -3892,7 +3893,6 @@ export type UpdateOutboundShipmentLineInput = {
   itemId?: InputMaybe<Scalars['String']>;
   numberOfPacks?: InputMaybe<Scalars['Float']>;
   stockLineId?: InputMaybe<Scalars['String']>;
-  tax?: InputMaybe<TaxInput>;
   totalBeforeTax?: InputMaybe<Scalars['Float']>;
 };
 

@@ -11,6 +11,8 @@ import {
   useDebounceCallback,
   DateUtils,
   PositiveNumberInput,
+  useFormatDateTime,
+  useTranslation,
 } from '@openmsupply-client/common';
 import {
   FORM_LABEL_COLUMN_WIDTH,
@@ -99,6 +101,19 @@ export const quantityPrescribedTester = rankWith(
   uiTypeIs('QuantityPrescribed')
 );
 
+const getEndOfSupply = (
+  baseTime: string,
+  pillCount: number,
+  options: Options | undefined
+): Date => {
+  return DateUtils.startOfDay(
+    DateUtils.addDays(
+      new Date(baseTime),
+      pillCount * (options?.quantityPerDay ?? 1)
+    )
+  );
+};
+
 const UIComponent = (props: ControlProps) => {
   const { data, handleChange, label, path, uischema } = props;
   const [localData, setLocalData] = useState<number | undefined>();
@@ -107,6 +122,9 @@ const UIComponent = (props: ControlProps) => {
     Options,
     uischema.options
   );
+  const dateFormat = useFormatDateTime();
+  const t = useTranslation('common');
+
   const onChange = useDebounceCallback(
     (value: number) => {
       // update events
@@ -130,12 +148,7 @@ const UIComponent = (props: ControlProps) => {
       if (value > 0) {
         const scheduleStartTime = options.scheduleEventsNow
           ? new Date()
-          : DateUtils.startOfDay(
-              DateUtils.addDays(
-                new Date(baseTime),
-                value * (options.quantityPerDay ?? 1)
-              )
-            );
+          : getEndOfSupply(baseTime, value, options);
         events.push(
           ...options.events.map(e => scheduleEvent(e, scheduleStartTime))
         );
@@ -156,6 +169,12 @@ const UIComponent = (props: ControlProps) => {
   useEffect(() => {
     setBaseTime(extractProperty(data, options?.baseDatetimeField ?? ''));
   }, [data, options]);
+
+  const endOfSupplySec =
+    baseTime && localData
+      ? getEndOfSupply(baseTime, localData ?? 0, options).getTime() / 1000
+      : undefined;
+
   if (!props.visible) {
     return null;
   }
@@ -171,7 +190,12 @@ const UIComponent = (props: ControlProps) => {
       <Box style={{ textAlign: 'end' }} flexBasis={FORM_LABEL_COLUMN_WIDTH}>
         <FormLabel sx={{ fontWeight: 'bold' }}>{label}:</FormLabel>
       </Box>
-      <Box flexBasis={FORM_INPUT_COLUMN_WIDTH}>
+      <Box
+        flexBasis={FORM_INPUT_COLUMN_WIDTH}
+        display="flex"
+        alignItems="center"
+        gap={2}
+      >
         <PositiveNumberInput
           min={0}
           type="number"
@@ -187,6 +211,18 @@ const UIComponent = (props: ControlProps) => {
           helperText={errors}
           value={localData ?? ''}
         />
+        <Box
+          flex={0}
+          style={{ textAlign: 'end' }}
+          flexBasis={FORM_LABEL_COLUMN_WIDTH}
+        >
+          <FormLabel sx={{ fontWeight: 'bold' }}>
+            {t('label.end-of-supply')}:
+          </FormLabel>
+        </Box>
+        <FormLabel>
+          {endOfSupplySec ? `${dateFormat.localisedDate(endOfSupplySec)}` : ''}
+        </FormLabel>
       </Box>
     </Box>
   );

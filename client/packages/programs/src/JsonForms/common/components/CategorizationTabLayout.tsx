@@ -133,8 +133,8 @@ const UIComponent: FC<LayoutProps & AjvProps> = ({
     <Grid
       item
       display="flex"
-      justifyContent="space-evenly"
-      alignContent="space-evenly"
+      justifyContent="center"
+      alignContent="center"
       flex={1}
       flexWrap="wrap"
       gap={2}

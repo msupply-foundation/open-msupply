@@ -66,7 +66,6 @@ const UIComponent = (props: ControlProps) => {
     setTargetPath(targetPath);
     setAdherenceStatus(extractProperty(data, targetPath));
   }, [options, path]);
-  useEffect(() => {}, [targetPath]);
 
   // fetch current encounter
   const encounterId = useEncounter.utils.idFromUrl();

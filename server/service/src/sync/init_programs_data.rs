@@ -16,8 +16,9 @@ use chrono::{DateTime, Duration, Utc};
 use repository::{
     DocumentContext, DocumentRegistryRow, DocumentRegistryRowRepository, EqualFilter, FormSchema,
     FormSchemaRowRepository, NameRow, NameRowRepository, NameStoreJoinRepository, NameStoreJoinRow,
-    NameType, Permission, RepositoryError, StorageConnection, StoreFilter, StoreRepository,
-    UserPermissionRow, UserPermissionRowRepository, UserStoreJoinRowRepository,
+    NameType, Permission, ReportContext, ReportRow, ReportRowRepository, RepositoryError,
+    StorageConnection, StoreFilter, StoreRepository, UserPermissionRow,
+    UserPermissionRowRepository, UserStoreJoinRowRepository,
 };
 use serde::{Deserialize, Serialize};
 use util::{inline_init, uuid::uuid};
@@ -161,8 +162,11 @@ const IMMUNISATION_ENCOUNTER_5MONTH_SCHEMA: &'static str =
 const IMMUNISATION_ENCOUNTER_5MONTH_UI_SCHEMA: &'static str =
     std::include_str!("./program_schemas/routine_immunisation_5month_encounter_ui_schema.json");
 
-fn person_1() -> Person {
-    Person {
+const PATIENT_REPORT: &'static str =
+    std::include_str!("./program_schemas/patient_hiv_care_report.json");
+
+fn person_1() -> RelatedPerson {
+    RelatedPerson {
         id: Some("person1".to_string()),
         code: Some("id34568".to_string()),
         first_name: Some("Tom".to_string()),
@@ -183,11 +187,12 @@ fn person_1() -> Person {
         code_2: None,
         middle_name: None,
         notes: None,
+        relationship: Some("Caregiver".to_string()),
     }
 }
 
-fn person_2() -> Person {
-    Person {
+fn person_2() -> RelatedPerson {
+    RelatedPerson {
         id: Some("person2".to_string()),
         code: Some("id41325".to_string()),
         first_name: Some("Eli".to_string()),
@@ -208,11 +213,12 @@ fn person_2() -> Person {
         code_2: None,
         middle_name: None,
         notes: None,
+        relationship: Some("Brother".to_string()),
     }
 }
 
-fn person_3() -> Person {
-    Person {
+fn person_3() -> RelatedPerson {
+    RelatedPerson {
         id: Some("person3".to_string()),
         code: Some("id12245".to_string()),
         first_name: Some("Heidi".to_string()),
@@ -233,6 +239,7 @@ fn person_3() -> Person {
         code_2: None,
         middle_name: None,
         notes: None,
+        relationship: Some("Mother".to_string()),
     }
 }
 
@@ -1087,6 +1094,19 @@ pub fn init_program_data(
             },
             vec!["HIVCareEncounter".to_string()],
         )
+        .unwrap();
+
+    // reports
+    let report_repo = ReportRowRepository::new(&connection);
+    report_repo
+        .upsert_one(&ReportRow {
+            id: uuid(),
+            name: "Patient HIV Care Report".to_string(),
+            r#type: repository::ReportType::OmSupply,
+            template: PATIENT_REPORT.to_string(),
+            context: ReportContext::Patient,
+            comment: None,
+        })
         .unwrap();
 
     Ok(())

@@ -1,0 +1,18 @@
+{
+    "auth.unauthenticated-message": "Actualmente no ha iniciado sesión. Haga clic en OK para volver a la pantalla de inicio de sesión.",
+    "auth.server-error": "¡El servidor ha devuelto un error al obtener los detalles del usuario!\nNo se puede continuar, por favor póngase en contacto con soporte.",
+    "auth.no-store-assigned": "No estás asignado a ninguna almacén. Inicie sesión como un usuario diferente o comuníquese con su administrador.",
+    "app": "mSupply",
+    "auth.alert-title": "Error de autenticación",
+    "auth.permission-denied": "Permiso denegado",
+    "auth.timeout-message": "Ha sido desconectado de su sesión debido a la inactividad. Haga clic en OK para volver a la pantalla de inicio de sesión.",
+    "button.close-the-menu": "Cerrar el menú",
+    "button.open-the-menu": "Abrir el menú",
+    "catalogue": "Catálogo",
+    "customer-requisition": "Requisiciones",
+    "customers": "Clientes",
+    "dashboard": "Tablero",
+    "distribution": "Distribución",
+    "docs": "Documentos",
+    "auth.timeout-title": ""
+}
