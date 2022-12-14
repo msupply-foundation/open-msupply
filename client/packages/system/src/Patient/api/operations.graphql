@@ -16,25 +16,6 @@ fragment PatientRow on PatientNode {
   isDeceased
 }
 
-fragment PatientDocument on DocumentRegistryNode {
-  id
-  documentType
-  formSchemaId
-  jsonSchema
-  name
-  context
-  parentId
-  uiSchema
-  uiSchemaType
-}
-
-fragment PatientDocumentRegistry on DocumentRegistryNode {
-  ...PatientDocument
-  children {
-    ...PatientDocument
-  }
-}
-
 fragment ProgramEvent on ProgramEventNode {
   activeDatetime
   name
@@ -167,21 +148,6 @@ query programEnrolments(
       __typename
       nodes {
         ...ProgramEnrolmentRow
-      }
-      totalCount
-    }
-  }
-}
-
-query documentRegistries(
-  $filter: DocumentRegistryFilterInput
-  $key: DocumentRegistrySortFieldInput
-  $desc: Boolean
-) {
-  documentRegistries(filter: $filter, sort: { key: $key, desc: $desc }) {
-    ... on DocumentRegistryConnector {
-      nodes {
-        ...EncounterDocumentRegistry
       }
       totalCount
     }

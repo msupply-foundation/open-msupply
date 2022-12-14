@@ -93,6 +93,7 @@ const ItemPrices = ({ pricing, isDisabled }: PricingGroupProps) => {
   const c = useFormatCurrency();
 
   const { data: outboundLines } = useOutbound.line.stockLines();
+  const { updateInvoiceTax } = useOutbound.document.updateInvoiceTax();
 
   const { stockTotalBeforeTax, stockTotalAfterTax } = pricing;
 
@@ -104,8 +105,6 @@ const ItemPrices = ({ pricing, isDisabled }: PricingGroupProps) => {
     stockTotalBeforeTax,
     stockTotalAfterTax
   );
-
-  const { updateStockLineTax } = useOutbound.document.updateTax();
 
   return (
     <>
@@ -125,7 +124,7 @@ const ItemPrices = ({ pricing, isDisabled }: PricingGroupProps) => {
           <TaxEdit
             disabled={!outboundLines?.length || isDisabled}
             tax={tax}
-            update={updateStockLineTax}
+            update={updateInvoiceTax}
           />
         </PanelField>
         <PanelField>{c(totalTax)}</PanelField>

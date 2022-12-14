@@ -1,5 +1,7 @@
-import { useDocument } from '@openmsupply-client/programs/src/api';
-import { DocumentRegistryFragment } from '@openmsupply-client/programs/src/api/operations.generated';
+import {
+  useDocument,
+  DocumentRegistryFragment,
+} from '@openmsupply-client/programs';
 import { useEffect, useState } from 'react';
 import { JsonData, JsonSchema, UISchemaElement } from './common';
 

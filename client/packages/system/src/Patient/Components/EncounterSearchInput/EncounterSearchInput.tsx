@@ -23,18 +23,6 @@ export const getEncounterOptionRenderer =
     return (
       <DefaultAutocompleteItemOption {...props} key={props.id}>
         <Box display="flex" alignItems="flex-end" gap={1} height={25}>
-          <Box display="flex" flexDirection="row" gap={1} width={110}>
-            <Typography
-              overflow="hidden"
-              fontWeight="bold"
-              textOverflow="ellipsis"
-              sx={{
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {name?.substring(0, 3)}
-            </Typography>
-          </Box>
           <Typography>{name}</Typography>
         </Box>
       </DefaultAutocompleteItemOption>

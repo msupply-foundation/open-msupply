@@ -33,6 +33,7 @@ pub fn generate(
         on_hold: input.on_hold.unwrap_or(false),
         colour: input.colour,
         // Default
+        tax: None,
         transport_reference: None,
         allocated_datetime: None,
         picked_datetime: None,

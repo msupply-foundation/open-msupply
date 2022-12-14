@@ -9,8 +9,8 @@ import { withJsonFormsControlProps } from '@jsonforms/react';
 import { FormLabel, Box } from '@mui/material';
 import {
   useDebounceCallback,
-  NumericTextInput,
   DateUtils,
+  PositiveNumberInput,
   useFormatDateTime,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -116,7 +116,7 @@ const getEndOfSupply = (
 
 const UIComponent = (props: ControlProps) => {
   const { data, handleChange, label, path, uischema } = props;
-  const [localData, setLocalData] = useState<number>();
+  const [localData, setLocalData] = useState<number | undefined>();
   const [baseTime, setBaseTime] = useState<string | undefined>();
   const { errors, options } = useZodOptionsValidation(
     Options,
@@ -163,7 +163,7 @@ const UIComponent = (props: ControlProps) => {
 
   useEffect(() => {
     if (options) {
-      setLocalData(extractProperty(data, options.targetField) ?? 0);
+      setLocalData(extractProperty(data, options.targetField) ?? undefined);
     }
   }, [data, options]);
   useEffect(() => {
@@ -195,7 +195,8 @@ const UIComponent = (props: ControlProps) => {
         alignItems="center"
         gap={2}
       >
-        <NumericTextInput
+        <PositiveNumberInput
+          min={0}
           type="number"
           InputProps={{
             sx: { '& .MuiInput-input': { textAlign: 'right' } },

@@ -9,6 +9,8 @@ use repository::{
     StorageConnection,
 };
 
+use crate::invoice::common::calculate_total_after_tax;
+
 use super::{UpdateOutboundShipment, UpdateOutboundShipmentError, UpdateOutboundShipmentStatus};
 
 pub(crate) struct GenerateResult {
@@ -16,6 +18,7 @@ pub(crate) struct GenerateResult {
     pub(crate) update_invoice: InvoiceRow,
     pub(crate) unallocated_lines_to_trim: Option<Vec<InvoiceLineRow>>,
     pub(crate) location_movements: Option<Vec<LocationMovementRow>>,
+    pub(crate) update_tax_for_lines: Option<Vec<InvoiceLineRow>>,
 }
 
 pub(crate) fn generate(
@@ -29,6 +32,7 @@ pub(crate) fn generate(
         their_reference: input_their_reference,
         colour: input_colour,
         transport_reference: input_transport_reference,
+        tax: input_tax,
     }: UpdateOutboundShipment,
     connection: &StorageConnection,
 ) -> Result<GenerateResult, UpdateOutboundShipmentError> {
@@ -44,6 +48,9 @@ pub(crate) fn generate(
     update_invoice.colour = input_colour.or(update_invoice.colour);
     update_invoice.transport_reference =
         input_transport_reference.or(update_invoice.transport_reference);
+    update_invoice.tax = input_tax
+        .map(|tax| tax.percentage)
+        .unwrap_or(update_invoice.tax);
 
     if let Some(status) = input_status.clone() {
         update_invoice.status = status.full_status().into()
@@ -64,6 +71,16 @@ pub(crate) fn generate(
         None
     };
 
+    let update_tax_for_lines = if update_invoice.tax.is_some() {
+        Some(generate_tax_update_for_lines(
+            connection,
+            &update_invoice.id,
+            update_invoice.tax,
+        )?)
+    } else {
+        None
+    };
+
     Ok(GenerateResult {
         batches_to_update,
         unallocated_lines_to_trim: unallocated_lines_to_trim(
@@ -73,6 +90,7 @@ pub(crate) fn generate(
         )?,
         update_invoice,
         location_movements,
+        update_tax_for_lines,
     })
 }
 
@@ -199,6 +217,29 @@ fn generate_batches_total_number_of_packs_update(
             stock_line.total_number_of_packs - invoice_line_row.number_of_packs;
         result.push(stock_line);
     }
+    Ok(result)
+}
+
+fn generate_tax_update_for_lines(
+    connection: &StorageConnection,
+    invoice_id: &str,
+    tax: Option<f64>,
+) -> Result<Vec<InvoiceLineRow>, UpdateOutboundShipmentError> {
+    let invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
+        InvoiceLineFilter::new()
+            .invoice_id(EqualFilter::equal_to(invoice_id))
+            .r#type(InvoiceLineRowType::StockOut.equal_to()),
+    )?;
+
+    let mut result = Vec::new();
+    for invoice_line in invoice_lines {
+        let mut invoice_line_row = invoice_line.invoice_line_row;
+        invoice_line_row.tax = tax;
+        invoice_line_row.total_after_tax =
+            calculate_total_after_tax(invoice_line_row.total_before_tax, tax);
+        result.push(invoice_line_row);
+    }
+
     Ok(result)
 }
 
