@@ -39,15 +39,15 @@ type NumberOptions = {
 
 const UIComponent = (props: ControlProps) => {
   const { data, handleChange, label, path, errors, schema, uischema } = props;
-
-  const options: NumberOptions = uischema?.options ?? {};
-
   const [localData, setLocalData] = useState<number | undefined>(Number(data));
+
   const onChange = useDebounceCallback(
     (value: number | string) => handleChange(path, value),
     [path]
   );
   const error = !!errors;
+
+  const options: NumberOptions = uischema?.options ?? {};
 
   // The selected number can be saved as a string (with optional leading zeroes)
   // using the "output: string" and "sigFig" options
