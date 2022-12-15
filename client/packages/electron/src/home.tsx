@@ -11,7 +11,7 @@ import { Viewport } from '@openmsupply-client/host/src/components';
 
 const ClientHomeScreen = () => (
   <React.Suspense fallback={<div />}>
-    <IntlProvider>
+    <IntlProvider isElectron={true}>
       <React.Suspense fallback={<RandomLoader />}>
         <AppThemeProvider>
           <Viewport>
