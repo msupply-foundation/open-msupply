@@ -4,13 +4,28 @@ import {
   Typography,
   useTranslation,
   Stack,
+  useNativeClient,
 } from '@openmsupply-client/common';
 import { LoginIcon } from '@openmsupply-client/host/src/components/Login/LoginIcon';
 import { Theme } from '@common/styles';
 import { DiscoveredServers } from './DiscoveredServers';
 
+// When discovery is opened with ?autoconnect=true URL parameter, useNativeClient will try to connect to previously
+// connected server, this is useful when navigating back to discovery from login or initialisation screen
+// to prevent autoconnecting if discovery is desired
+const isAutoconnect = () => {
+  const url = new URL(window.location.href);
+  const params = new URLSearchParams(url.search);
+  return params.get('autoconnect') === 'true';
+};
+
 export const ServerDiscovery = () => {
+  const { servers, discoveryTimedOut, connectToServer } = useNativeClient({
+    discovery: true,
+    autoconnect: isAutoconnect(),
+  });
   const t = useTranslation('app');
+
   return (
     <Stack display="flex" style={{ minHeight: '100%' }}>
       <Box display="flex" flex="0 0 50%" alignSelf="center">
@@ -86,7 +101,11 @@ export const ServerDiscovery = () => {
           {t('discovery.body')}
         </Typography>
         <Box display="flex" flex={1} justifyContent="center">
-          <DiscoveredServers />
+          <DiscoveredServers
+            servers={servers}
+            connect={connectToServer}
+            discoveryTimedOut={discoveryTimedOut}
+          />
         </Box>
       </Box>
     </Stack>

@@ -62,11 +62,11 @@ async fn sync_status() {
         .unwrap();
     tester_data.lock().await.try_route("final".to_string());
 
-    assert_eq!(
+    assert_matches!(
         service_provider
             .sync_status_service
             .get_initialisation_status(&service_context),
-        Ok(InitialisationStatus::Initialised)
+        Ok(InitialisationStatus::Initialised(_))
     );
 
     // Test PUSH and ERROR

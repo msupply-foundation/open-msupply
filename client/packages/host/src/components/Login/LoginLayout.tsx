@@ -10,20 +10,20 @@ import { Theme } from '@common/styles';
 import { AppVersion } from '../AppVersion';
 
 type LoginLayoutProps = {
-  ServerInfo: React.ReactNode;
   UsernameInput: React.ReactNode;
   PasswordInput: React.ReactNode;
   LoginButton: React.ReactNode;
   ErrorMessage: React.ReactNode;
+  SiteInfo: React.ReactNode;
   onLogin: () => Promise<void>;
 };
 
 export const LoginLayout = ({
-  ServerInfo,
   UsernameInput,
   PasswordInput,
   LoginButton,
   ErrorMessage,
+  SiteInfo,
   onLogin,
 }: LoginLayoutProps) => {
   const t = useTranslation('app');
@@ -48,6 +48,7 @@ export const LoginLayout = ({
         flexDirection="column"
       >
         <Box>
+          {SiteInfo}
           <Typography
             sx={{
               color: (theme: Theme) => theme.typography.login.color,
@@ -118,24 +119,6 @@ export const LoginLayout = ({
           </Box>
         </Box>
       </Box>
-      <Typography
-        component="div"
-        sx={{
-          fontSize: {
-            xs: '12px',
-            sm: '12px',
-            md: '12px',
-            lg: '14px',
-            xl: '14px',
-          },
-          color: 'gray.main',
-          position: 'absolute',
-          bottom: '10px',
-          right: '30px',
-        }}
-      >
-        {ServerInfo}
-      </Typography>
       <AppVersion style={{ opacity: 0.4 }} />
     </Box>
   );

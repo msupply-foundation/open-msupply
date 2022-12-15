@@ -8,6 +8,7 @@ use util::Defaults;
 use crate::{
     i32_to_u32,
     service_provider::ServiceContext,
+    settings_service::{SettingsService, SettingsServiceTrait},
     sync::{
         get_active_records_on_site_filter, remote_data_synchroniser, GetActiveStoresOnSiteError,
     },
@@ -53,8 +54,8 @@ pub enum SyncStatusType {
 
 #[derive(PartialEq, Debug)]
 pub enum InitialisationStatus {
-    /// Fuly initialised
-    Initialised,
+    /// Fully initialised (name)
+    Initialised(String),
     /// Sync settings were set and sync was attempted at least once
     Initialising,
     /// Sync settings are not set and sync was not attempted
@@ -77,7 +78,10 @@ pub trait SyncStatusTrait: Sync + Send {
     }
 
     fn is_initialised(&self, ctx: &ServiceContext) -> Result<bool, RepositoryError> {
-        Ok(self.get_initialisation_status(ctx)? == InitialisationStatus::Initialised)
+        Ok(matches!(
+            self.get_initialisation_status(ctx)?,
+            InitialisationStatus::Initialised(_)
+        ))
     }
 
     fn is_sync_queue_initialised(&self, ctx: &ServiceContext) -> Result<bool, RepositoryError> {
@@ -106,19 +110,24 @@ fn get_initialisation_status(
         key: SyncLogSortField::DoneDatetime,
         desc: Some(true),
     };
+
     let latest_log_sorted_by_finished_datetime = SyncLogRepository::new(&ctx.connection)
         .query(Pagination::one(), None, Some(sort))?
         .pop();
 
-    let initialisation_status = match latest_log_sorted_by_finished_datetime {
-        None => InitialisationStatus::PreInitialisation,
-        Some(sync_log) => match sync_log.sync_log_row.finished_datetime {
-            Some(_) => InitialisationStatus::Initialised,
-            None => InitialisationStatus::Initialising,
-        },
+    let Some(sync_log) = latest_log_sorted_by_finished_datetime else {
+            return Ok(InitialisationStatus::PreInitialisation)
+        };
+
+    if sync_log.sync_log_row.finished_datetime == None {
+        return Ok(InitialisationStatus::Initialising);
     };
 
-    Ok(initialisation_status)
+    // Get sync site name
+    // Safe to unwrap since sync settings will be available after initialisation
+    let site_name = SettingsService.sync_settings(ctx)?.unwrap().username;
+
+    Ok(InitialisationStatus::Initialised(site_name))
 }
 
 /// During initial sync remote server asks central server to initialise remote data
@@ -277,7 +286,7 @@ mod test {
         mock::{insert_extra_mock_data, MockData, MockDataInserts},
         SyncLogRow, SyncLogRowRepository,
     };
-    use util::inline_init;
+    use util::{assert_matches, inline_init};
 
     #[actix_rt::test]
     async fn initialisation_status() {
@@ -330,11 +339,11 @@ mod test {
             }),
         );
 
-        assert_eq!(
+        assert_matches!(
             service_provider
                 .sync_status_service
                 .get_initialisation_status(&service_context),
-            Ok(InitialisationStatus::Initialised)
+            Ok(InitialisationStatus::Initialised(_))
         );
     }
 
