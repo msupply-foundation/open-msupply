@@ -360,7 +360,7 @@
           "$ref": "#/definitions/Allergies"
         },
         "birthOrder": {
-          "description": "Birth order, e.g. \"02\" for second child",
+          "description": "Birth order, e.g. second child = 2",
           "type": "number"
         },
         "birthPlace": {
