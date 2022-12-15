@@ -1,5 +1,6 @@
 import { uniqWith } from 'lodash';
 import { useState, useEffect } from 'react';
+import { registerPlugin, Capacitor } from '@capacitor/core';
 
 const DISCOVERY_TIMEOUT = 5000;
 const DISCOVERED_SERVER_POLL = 1000;
@@ -22,7 +23,7 @@ export type FrontEndHost = {
 
 export interface NativeAPI {
   // Method used in polling for found servers
-  discoveredServers: () => Promise<FrontEndHost[]>;
+  discoveredServers: () => Promise<{ servers: FrontEndHost[] }>;
   // Starts server discovery (connectToServer stops server discovery)
   startServerDiscovery: () => void;
   // Asks client to connect to server (causing window to navigate to server url and stops discovery)
@@ -38,7 +39,12 @@ declare global {
   }
 }
 
+const androidNativeAPI = registerPlugin<NativeAPI>('NativeApi');
+
 export const getNativeAPI = (): NativeAPI | null => {
+  // Android
+  if (Capacitor.isNativePlatform()) return androidNativeAPI;
+
   // Electron
   if (!!window.electronNativeAPI) return window.electronNativeAPI;
 
@@ -94,7 +100,7 @@ export const useNativeClient = ({
     const timeoutTimer = setTimeout(() => setTimedOut(true), DISCOVERY_TIMEOUT);
 
     const pollTimer = setInterval(async () => {
-      const servers = await nativeAPI.discoveredServers();
+      const servers = (await nativeAPI.discoveredServers()).servers;
       setState(state => {
         return {
           ...state,
