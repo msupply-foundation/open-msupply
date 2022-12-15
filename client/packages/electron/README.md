@@ -41,3 +41,10 @@ In `packages/common`
 * `hooks/useElectronClient:` provides common types and interface for IPC communication with electron client (used both in `package/electron - ServerDiscovery` and in `packages/host - Login.tsx`, to display server info)
 
 Since front end for client is server through remote server, it needs to be rebuilt if you are adding functionality that interacts with client, you can change  `ipcMain.on(IPC_MESSAGES.CONNECT_TO_SERVER` in `electron.ts`, see comment in code
+
+
+### Debugigng
+
+Similar to [android](../android/README.MD#debugging), to speed up development we can serve both discovery and main web app through webpack server. Running `yarn start-local` and `yarn electron:start-local` from client would allow for hot reload and debugging typescript (can open developer tools with the same shortcut as chrome).
+
+Please note that when debuggin with life reload, connections to a discovered server will always go through to the webpack server (regardless of which server is being selected). Also the discovery may not show any servers when hot reloaded and may require stoping and starting electron
