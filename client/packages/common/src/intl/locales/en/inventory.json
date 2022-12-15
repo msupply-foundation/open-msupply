@@ -9,6 +9,8 @@
   "error.stocktake-not-found": "Stocktake not found",
   "label.add-batch": "Add batch",
   "label.add-new-line": "Add a new line",
+  "label.cost-price": "Cost price",
+  "label.sell-price": "Sell price",
   "label.counted-num-of-packs": "Counted # of Packs",
   "label.create-location": "Create Location",
   "label.edit-location": "Edit Location",
@@ -26,7 +28,6 @@
   "messages.cant-delete-stocktakes": "Can only delete stocktakes with a status of 'New'",
   "messages.select-rows-to-delete": "Select rows to delete",
   "messages.click-to-return": "Unable to find a stocktake with that ID. Click OK to return to the stocktake list",
-  "messages.click-to-view-item": "Click to view the item details for '{{itemName}}'",
   "messages.confirm-delete-stocktakes_one": "This will permanently remove 1 stocktake",
   "messages.confirm-delete-stocktakes_other": "This will permanently remove {{count}} stocktakes",
   "messages.confirm-delete-stocktake_lines_one": "This will permanently remove 1 stocktake line",
@@ -41,7 +42,9 @@
   "messages.error-deleting-locations_other": "{{count}} locations could not be deleted",
   "placeholder.enter-an-item-code-or-name": "Enter item code or name",
   "messages.deleted-lines": "Deleted {{count}} lines",
+  "messages.confirm-save-stock-line": "Do you want to save the changes to this stock line? All changes will be logged and can be reviewed later from this screen.",
   "messages.select-rows-to-delete-them": "Select rows to delete them",
   "status.new": "New",
-  "status.finalised": "Finalised"
+  "status.finalised": "Finalised",
+  "title.stock-line-details": "Stock Line Details"
 }

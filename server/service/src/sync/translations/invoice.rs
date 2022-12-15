@@ -2,7 +2,7 @@ use crate::sync::{
     api::RemoteSyncRecordV5,
     sync_serde::{
         date_from_date_time, date_option_to_isostring, date_to_isostring, empty_str_as_option,
-        naive_time, zero_date_as_option,
+        empty_str_as_option_string, naive_time, zero_date_as_option,
     },
 };
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
@@ -83,20 +83,22 @@ pub struct LegacyTransactRow {
     #[serde(rename = "type")]
     pub _type: LegacyTransactType,
     pub status: LegacyTransactStatus,
-    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(rename = "user_ID")]
     pub user_id: Option<String>,
     pub hold: bool,
-    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     pub comment: Option<String>,
-    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     pub their_ref: Option<String>,
 
+    #[serde(default)]
     #[serde(rename = "om_transport_reference")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     pub transport_reference: Option<String>,
-    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     pub requisition_ID: Option<String>,
-    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     pub linked_transaction_id: Option<String>,
 
     /// creation time
@@ -121,30 +123,47 @@ pub struct LegacyTransactRow {
     pub confirm_time: NaiveTime,
 
     pub mode: TransactMode,
+    pub tax: Option<f64>,
 
+    #[serde(default)]
     #[serde(rename = "om_created_datetime")]
+    #[serde(deserialize_with = "empty_str_as_option")]
     pub created_datetime: Option<NaiveDateTime>,
 
+    #[serde(default)]
     #[serde(rename = "om_allocated_datetime")]
+    #[serde(deserialize_with = "empty_str_as_option")]
     pub allocated_datetime: Option<NaiveDateTime>,
 
+    #[serde(default)]
     #[serde(rename = "om_picked_datetime")]
+    #[serde(deserialize_with = "empty_str_as_option")]
     pub picked_datetime: Option<NaiveDateTime>,
 
+    #[serde(default)]
     #[serde(rename = "om_shipped_datetime")]
+    #[serde(deserialize_with = "empty_str_as_option")]
     pub shipped_datetime: Option<NaiveDateTime>,
 
+    #[serde(default)]
     #[serde(rename = "om_delivered_datetime")]
+    #[serde(deserialize_with = "empty_str_as_option")]
     pub delivered_datetime: Option<NaiveDateTime>,
 
+    #[serde(default)]
     #[serde(rename = "om_verified_datetime")]
+    #[serde(deserialize_with = "empty_str_as_option")]
     pub verified_datetime: Option<NaiveDateTime>,
 
+    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(default)]
     pub om_status: Option<InvoiceRowStatus>,
+    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(default)]
     pub om_type: Option<InvoiceRowType>,
 
     /// We ignore the legacy colour field
-    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(default)]
     pub om_colour: Option<String>,
 }
@@ -196,6 +215,7 @@ impl SyncTranslation for InvoiceTranslation {
             on_hold: data.hold,
             comment: data.comment,
             their_reference: data.their_ref,
+            tax: data.tax,
 
             // new om field mappings
             created_datetime: mapping.created_datetime,
@@ -260,6 +280,7 @@ impl SyncTranslation for InvoiceTranslation {
             requisition_id,
             linked_invoice_id,
             transport_reference,
+            tax,
         } = InvoiceRowRepository::new(connection).find_one_by_id(&changelog.record_id)?;
 
         let _type = legacy_invoice_type(&r#type).ok_or(anyhow::Error::msg(format!(
@@ -291,6 +312,7 @@ impl SyncTranslation for InvoiceTranslation {
                 .map(|delivered_datetime| date_from_date_time(&delivered_datetime)),
             confirm_date: confirm_datetime.0,
             confirm_time: confirm_datetime.1,
+            tax,
 
             mode: TransactMode::Store,
             transport_reference,

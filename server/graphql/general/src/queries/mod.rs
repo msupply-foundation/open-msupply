@@ -1,4 +1,5 @@
 pub mod login;
+
 pub use self::login::*;
 pub mod logout;
 pub use self::logout::*;
@@ -26,6 +27,8 @@ pub mod sync_status;
 pub use self::sync_status::*;
 pub mod display_settings;
 pub mod initialisation_status;
+pub mod response_requisition_line_stats;
+pub use self::response_requisition_line_stats::*;
 
 #[cfg(test)]
 mod tests;

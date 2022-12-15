@@ -40,6 +40,7 @@ pub fn generate(
         on_hold: on_hold.unwrap_or(false),
         colour,
         // Default
+        tax: None,
         transport_reference: None,
         allocated_datetime: None,
         picked_datetime: None,

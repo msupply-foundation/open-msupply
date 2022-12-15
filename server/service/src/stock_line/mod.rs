@@ -2,15 +2,12 @@ use self::query::{get_stock_line, get_stock_lines};
 
 use super::{ListError, ListResult};
 use crate::{service_provider::ServiceContext, SingleRecordError};
-use repository::{
-    PaginationOption, StockLine, StockLineFilter, StockLineSort, StorageConnectionManager,
-};
+use repository::{PaginationOption, StockLine, StockLineFilter, StockLineSort};
 
-// pub mod delete;
-// pub mod insert;
 pub mod query;
-// pub mod update;
-// mod validate;
+pub mod update;
+pub use self::update::*;
+mod validate;
 
 pub trait StockLineServiceTrait: Sync + Send {
     fn get_stock_lines(
@@ -25,10 +22,18 @@ pub trait StockLineServiceTrait: Sync + Send {
 
     fn get_stock_line(
         &self,
-        connection_manager: &StorageConnectionManager,
+        ctx: &ServiceContext,
         id: String,
     ) -> Result<StockLine, SingleRecordError> {
-        get_stock_line(connection_manager, id)
+        get_stock_line(ctx, id)
+    }
+
+    fn update_stock_line(
+        &self,
+        ctx: &ServiceContext,
+        input: UpdateStockLine,
+    ) -> Result<StockLine, UpdateStockLineError> {
+        update_stock_line(ctx, input)
     }
 }
 
