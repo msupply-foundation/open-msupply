@@ -29,9 +29,7 @@ type NumberOptions = {
   /*
   Options only required if the saved data should be converted to a string
   representation of the number
-  */
-  output?: 'string';
-  /*
+
   The output string will be padded with leading 0's up to the number of significant figures specified
   */
   sigFigs?: number;
@@ -52,7 +50,7 @@ const UIComponent = (props: ControlProps) => {
   // The selected number can be saved as a string (with optional leading zeroes)
   // using the "output: string" and "sigFig" options
   const formatValue = (value: number): number | string => {
-    if (options?.['output'] !== 'string') return value;
+    if (schema?.type !== 'string') return value;
     return String(value).padStart(options?.['sigFigs'] ?? 0, '0');
   };
 
