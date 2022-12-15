@@ -28,8 +28,8 @@ public class ExtendedWebViewClient extends BridgeWebViewClient {
     // and plugin definitions etc is not injected
     @Override
     public void onPageStarted(WebView webView,
-                              String url,
-                              Bitmap favicon) {
+            String url,
+            Bitmap favicon) {
         // TODO make sure this is only injected for pages in native bundle
         // There is no way to get the full list of plugins from bridge, use 'debug' and
         // see what plugins to add
@@ -64,6 +64,7 @@ public class ExtendedWebViewClient extends BridgeWebViewClient {
                     "\n\n";
 
             // From JSInjector.getScriptString()
+            // .post to run on UI thread
             webView.post(() -> webView.evaluateJavascript(fullScript, null));
         } catch (Exception ex) {
             Logger.error("Unable to export Capacitor JS. App will not function!", ex);
