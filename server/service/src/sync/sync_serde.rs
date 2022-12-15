@@ -59,6 +59,9 @@ where
 /// change on our side.
 pub fn naive_time<'de, D: Deserializer<'de>>(d: D) -> Result<NaiveTime, D::Error> {
     let secs = u32::deserialize(d)?;
+    /// using the _opt version of the method and on error returning a time of 00:00:00
+    /// as there have been some invalid time values returned by 4D - unsure of the origin of these
+    /// if the deserialisation panics then the whole server crashes, so have used the error & default
     Ok(NaiveTime::from_num_seconds_from_midnight_opt(secs, 0)
         .unwrap_or(NaiveTime::from_hms(0, 0, 0)))
 }
