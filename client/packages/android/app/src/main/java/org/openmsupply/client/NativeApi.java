@@ -41,8 +41,8 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     @Override
     protected void handleOnStart() {
         WebView webView = this.getBridge().getWebView();
-        webView.addJavascriptInterface(this, "checkCapacitor");
         advertiseService();
+        // .post to run on UI thread
         webView.post(() -> webView.loadUrl(localUrl + "/discovery?autoconnect=true"));
     }
 
@@ -55,6 +55,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     public void goBackToDiscovery(PluginCall call) {
         Bridge bridge = this.getBridge();
         WebView webView = bridge.getWebView();
+        // .post to run on UI thread
         webView.post(() -> webView.loadUrl(localUrl + "/discovery?autoconnect=false"));
     }
 
@@ -94,8 +95,8 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     private void stopServerDiscovery() {
         try {
             discoveryManager.stopServiceDiscovery(this);
-        } catch(Exception e) {
-            Logger.error("Service discovery cannot be stopped " + e );
+        } catch (Exception e) {
+            Logger.error("Service discovery cannot be stopped " + e);
         }
     }
 
@@ -105,9 +106,10 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
 
         // Some navigation events may cause server discovery to still be ongoing
         try {
-            // `this` would be NsdManager.DiscoveryListener, and main method is onServiceFound
+            // `this` would be NsdManager.DiscoveryListener, and main method is
+            // onServiceFound
             discoveryManager.discoverServices(discoveryConstants.SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, this);
-        } catch(Exception e) {
+        } catch (Exception e) {
             Logger.error("Cannot start server discovery " + e);
         }
     }
@@ -141,6 +143,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
 
         Bridge bridge = this.getBridge();
         WebView webView = bridge.getWebView();
+        // .post to run on UI thread
         webView.post(() -> webView.loadUrl(url));
     }
 
