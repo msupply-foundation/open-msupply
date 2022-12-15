@@ -6,7 +6,11 @@ import {
   uiTypeIs,
 } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import { BasicTextInput, Box } from '@openmsupply-client/common';
+import {
+  BasicTextInput,
+  Box,
+  useTranslation,
+} from '@openmsupply-client/common';
 import {
   FORM_INPUT_COLUMN_WIDTH,
   FORM_LABEL_COLUMN_WIDTH,
@@ -51,7 +55,9 @@ const Options: z.ZodType<Options> = z
 const UIComponent = (props: ControlProps) => {
   const { data, handleChange, label, uischema, path } = props;
   const [targetPath, setTargetPath] = useState<string | undefined>();
+  const [warning, setWarning] = useState<string | undefined>();
   const [adherenceStatus, setAdherenceStatus] = useState<number | undefined>();
+  const t = useTranslation('programs');
 
   const { errors, options } = useZodOptionsValidation(
     Options,
@@ -89,6 +95,19 @@ const UIComponent = (props: ControlProps) => {
       options.previousCountField
     );
     const remainingCount = extractProperty(data, options.remainingCountField);
+
+    if (previousCountOnHand < remainingCount) {
+      setAdherenceStatus(undefined);
+      setWarning(
+        t('control.adherence-status-warning', {
+          remainingCount,
+          previousCountOnHand,
+        })
+      );
+      return;
+    } else {
+      setWarning(undefined);
+    }
     const timeDiffMs =
       new Date(currentEncounter.startDatetime).getTime() -
       new Date(previousEncounter.startDatetime).getTime();
@@ -96,6 +115,7 @@ const UIComponent = (props: ControlProps) => {
     // Target pill count needed for the whole timespan from last till current encounter
     const timeDiffDays = timeDiffMs / 1000 / 60 / 60 / 24;
     const targetPillCount = timeDiffDays * options.countPerDay;
+
     const status =
       ((previousCountOnHand - remainingCount) / targetPillCount) * 100;
 
@@ -131,8 +151,17 @@ const UIComponent = (props: ControlProps) => {
       <Box style={{ textAlign: 'end' }} flexBasis={FORM_LABEL_COLUMN_WIDTH}>
         <FormLabel sx={{ fontWeight: 'bold' }}>{label}:</FormLabel>
       </Box>
-      <Box flexBasis={FORM_INPUT_COLUMN_WIDTH}>
+      <Box
+        flexBasis={FORM_INPUT_COLUMN_WIDTH}
+        display="flex"
+        alignItems="center"
+      >
         <BasicTextInput {...inputProps} />
+        <FormLabel
+          sx={{ color: 'warning.main', fontSize: '12px', marginLeft: '10px' }}
+        >
+          {warning}
+        </FormLabel>
       </Box>
     </Box>
   );
