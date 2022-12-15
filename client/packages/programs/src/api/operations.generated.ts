@@ -14,6 +14,16 @@ export type DocumentByNameQueryVariables = Types.Exact<{
 
 export type DocumentByNameQuery = { __typename: 'Queries', document?: { __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, author: string, timestamp: string, type: string, data: any, documentRegistry?: { __typename: 'DocumentRegistryNode', uiSchemaType: string, documentType: string, context: Types.DocumentRegistryNodeContext, formSchemaId: string, jsonSchema: any, uiSchema: any } | null } | null };
 
+export type DocumentsQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String'];
+  page?: Types.InputMaybe<Types.PaginationInput>;
+  filter?: Types.InputMaybe<Types.DocumentFilterInput>;
+  sort?: Types.InputMaybe<Types.DocumentSortInput>;
+}>;
+
+
+export type DocumentsQuery = { __typename: 'Queries', documents: { __typename: 'DocumentConnector', nodes: Array<{ __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, author: string, timestamp: string, type: string, data: any, documentRegistry?: { __typename: 'DocumentRegistryNode', uiSchemaType: string, documentType: string, context: Types.DocumentRegistryNodeContext, formSchemaId: string, jsonSchema: any, uiSchema: any } | null }> } };
+
 export type DocumentRegistryFragment = { __typename: 'DocumentRegistryNode', id: string, documentType: string, context: Types.DocumentRegistryNodeContext, name?: string | null, parentId?: string | null, formSchemaId: string, jsonSchema: any, uiSchemaType: string, uiSchema: any };
 
 export type DocumentRegistriesQueryVariables = Types.Exact<{
@@ -155,6 +165,18 @@ export const DocumentByNameDocument = gql`
   }
 }
     ${DocumentFragmentDoc}`;
+export const DocumentsDocument = gql`
+    query documents($storeId: String!, $page: PaginationInput, $filter: DocumentFilterInput, $sort: DocumentSortInput) {
+  documents(storeId: $storeId, page: $page, filter: $filter, sort: $sort) {
+    __typename
+    ... on DocumentConnector {
+      nodes {
+        ...Document
+      }
+    }
+  }
+}
+    ${DocumentFragmentDoc}`;
 export const DocumentRegistriesDocument = gql`
     query documentRegistries($filter: DocumentRegistryFilterInput, $sort: DocumentRegistrySortInput) {
   documentRegistries(filter: $filter, sort: $sort) {
@@ -247,6 +269,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     documentByName(variables: DocumentByNameQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DocumentByNameQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<DocumentByNameQuery>(DocumentByNameDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'documentByName', 'query');
     },
+    documents(variables: DocumentsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DocumentsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DocumentsQuery>(DocumentsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'documents', 'query');
+    },
     documentRegistries(variables?: DocumentRegistriesQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DocumentRegistriesQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<DocumentRegistriesQuery>(DocumentRegistriesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'documentRegistries', 'query');
     },
@@ -280,6 +305,23 @@ export type Sdk = ReturnType<typeof getSdk>;
 export const mockDocumentByNameQuery = (resolver: ResponseResolver<GraphQLRequest<DocumentByNameQueryVariables>, GraphQLContext<DocumentByNameQuery>, any>) =>
   graphql.query<DocumentByNameQuery, DocumentByNameQueryVariables>(
     'documentByName',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockDocumentsQuery((req, res, ctx) => {
+ *   const { storeId, page, filter, sort } = req.variables;
+ *   return res(
+ *     ctx.data({ documents })
+ *   )
+ * })
+ */
+export const mockDocumentsQuery = (resolver: ResponseResolver<GraphQLRequest<DocumentsQueryVariables>, GraphQLContext<DocumentsQuery>, any>) =>
+  graphql.query<DocumentsQuery, DocumentsQueryVariables>(
+    'documents',
     resolver
   )
 

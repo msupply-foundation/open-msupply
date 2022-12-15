@@ -687,6 +687,12 @@ export type DocumentConnector = {
 
 export type DocumentFilterInput = {
   context?: InputMaybe<EqualFilterStringInput>;
+  /**
+   * 	This filter makes it possible to search the raw text json data.
+   * Be beware of potential performance issues.
+   */
+  data?: InputMaybe<SimpleStringFilterInput>;
+  datetime?: InputMaybe<DatetimeFilterInput>;
   name?: InputMaybe<EqualFilterStringInput>;
   owner?: InputMaybe<EqualFilterStringInput>;
   type?: InputMaybe<EqualFilterStringInput>;
@@ -759,6 +765,24 @@ export type DocumentRegistrySortInput = {
 };
 
 export type DocumentResponse = DocumentConnector;
+
+export enum DocumentSortFieldInput {
+  Context = 'context',
+  Datetime = 'datetime',
+  Name = 'name',
+  Owner = 'owner',
+  Type = 'type'
+}
+
+export type DocumentSortInput = {
+  /**
+   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']>;
+  /** Sort query result by `key` */
+  key: DocumentSortFieldInput;
+};
 
 export type EncounterConnector = {
   __typename: 'EncounterConnector';
@@ -1091,6 +1115,7 @@ export type InsertInboundShipmentLineInput = {
   numberOfPacks: Scalars['Float'];
   packSize: Scalars['Int'];
   sellPricePerPack: Scalars['Float'];
+  tax?: InputMaybe<Scalars['Float']>;
   totalBeforeTax?: InputMaybe<Scalars['Float']>;
 };
 
@@ -1186,6 +1211,7 @@ export type InsertOutboundShipmentLineInput = {
   itemId: Scalars['String'];
   numberOfPacks: Scalars['Float'];
   stockLineId: Scalars['String'];
+  tax?: InputMaybe<Scalars['Float']>;
   totalBeforeTax?: InputMaybe<Scalars['Float']>;
 };
 
@@ -2497,6 +2523,7 @@ export type PatientNode = {
   __typename: 'PatientNode';
   address1?: Maybe<Scalars['String']>;
   address2?: Maybe<Scalars['String']>;
+  age?: Maybe<Scalars['Int']>;
   code: Scalars['String'];
   code2?: Maybe<Scalars['String']>;
   country?: Maybe<Scalars['String']>;
@@ -2809,6 +2836,8 @@ export type QueriesDocumentRegistriesArgs = {
 
 export type QueriesDocumentsArgs = {
   filter?: InputMaybe<DocumentFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<DocumentSortInput>;
   storeId: Scalars['String'];
 };
 
@@ -3785,6 +3814,7 @@ export type UpdateInboundShipmentLineInput = {
   numberOfPacks?: InputMaybe<Scalars['Float']>;
   packSize?: InputMaybe<Scalars['Int']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']>;
+  tax?: InputMaybe<TaxInput>;
   totalBeforeTax?: InputMaybe<Scalars['Float']>;
 };
 
@@ -3893,6 +3923,7 @@ export type UpdateOutboundShipmentLineInput = {
   itemId?: InputMaybe<Scalars['String']>;
   numberOfPacks?: InputMaybe<Scalars['Float']>;
   stockLineId?: InputMaybe<Scalars['String']>;
+  tax?: InputMaybe<TaxInput>;
   totalBeforeTax?: InputMaybe<Scalars['Float']>;
 };
 

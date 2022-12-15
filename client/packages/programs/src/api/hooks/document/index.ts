@@ -1,4 +1,5 @@
-import { useDocument } from './useDocument';
+import { useDocumentByName } from './useDocumentByName';
+import { usePatientDocument } from './usePatientDocument';
 import { useDocumentRegistryByContext } from './useDocumentRegistryByContext';
 import { useAllocateNumber } from './useAllocateNumber';
 import { useEncounterFields } from './useEncounterFields';
@@ -6,7 +7,8 @@ import { useEncounterById } from './useEncounterById';
 import { useEncounterPrevious } from './useEncounterPrevious';
 
 export const Document = {
-  useDocument,
+  useDocumentByName,
+  usePatientDocument,
   useDocumentRegistryByContext,
   useAllocateNumber,
   useEncounterById,
