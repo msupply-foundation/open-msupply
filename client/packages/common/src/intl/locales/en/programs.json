@@ -1,0 +1,3 @@
+{
+  "control.adherence-status-warning": "Pill Count: after last visit = {{previousCountOnHand}} < before visit = {{remainingCount}}"
+}
