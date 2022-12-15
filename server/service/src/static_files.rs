@@ -28,8 +28,9 @@ impl StaticFileService {
     pub fn new(base_dir: &Option<String>) -> anyhow::Result<Self> {
         let file_dir = match base_dir {
             Some(file_dir) => PathBuf::from_str(file_dir)?.join(STATIC_FILE_DIR),
-            None => std::env::current_dir()?.join(STATIC_FILE_DIR),
+            None => PathBuf::from_str(STATIC_FILE_DIR)?,
         };
+
         Ok(StaticFileService {
             dir: file_dir,
             max_lifetime_millis: 60 * 60 * 1000, // 1 hours

@@ -100,7 +100,7 @@ impl OutboundInvoiceCounts {
         })?;
         let service = &service_provider.invoice_count_service;
         let to_by_picked = service
-            .outbound_invoices_pickable_count(&service_ctx)
+            .outbound_invoices_pickable_count(&service_ctx, &self.store_id)
             .map_err(|_| Error {
                 message: "InternalError".to_string(),
                 source: None,

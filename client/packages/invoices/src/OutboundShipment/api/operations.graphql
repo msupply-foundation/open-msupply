@@ -81,6 +81,7 @@ fragment Outbound on InvoiceNode {
   theirReference
   transportReference
   type
+  taxPercentage
 
   user {
     __typename
@@ -126,6 +127,7 @@ fragment Outbound on InvoiceNode {
     stockTotalAfterTax
     serviceTotalAfterTax
     serviceTotalBeforeTax
+    taxPercentage
   }
 }
 
@@ -147,9 +149,11 @@ fragment OutboundRow on InvoiceNode {
   type
   status
   colour
+  taxPercentage
   pricing {
     __typename
     totalAfterTax
+    taxPercentage
   }
 }
 
@@ -349,6 +353,44 @@ mutation updateOutboundShipment(
     ... on InvoiceNode {
       id
       invoiceNumber
+    }
+  }
+}
+
+mutation updateOutboundShipmentName(
+  $input: UpdateOutboundShipmentNameInput!
+  $storeId: String!
+) {
+  updateOutboundShipmentName(input: $input, storeId: $storeId) {
+    ... on UpdateOutboundShipmentNameError {
+      __typename
+      error {
+        description
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+        ... on InvoiceIsNotEditable {
+          __typename
+          description
+        }
+        ... on NotAnOutboundShipmentError {
+          __typename
+          description
+        }
+        ... on OtherPartyNotVisible {
+          __typename
+          description
+        }
+        ... on OtherPartyNotACustomer {
+          __typename
+          description
+        }
+      }
+    }
+    ... on InvoiceNode {
+      __typename
+      id
     }
   }
 }

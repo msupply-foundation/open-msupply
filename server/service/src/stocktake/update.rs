@@ -1,11 +1,12 @@
 use chrono::{NaiveDate, Utc};
 use repository::{
-    ActivityLogType, EqualFilter, InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType,
-    InvoiceRow, InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType, ItemRowRepository,
-    NameRowRepository, NumberRowType, RepositoryError, StockLineRow, StockLineRowRepository,
-    Stocktake, StocktakeLine, StocktakeLineFilter, StocktakeLineRepository, StocktakeLineRow,
-    StocktakeLineRowRepository, StocktakeRow, StocktakeRowRepository, StocktakeStatus,
-    StorageConnection,
+    ActivityLogType, DatetimeFilter, EqualFilter, InvoiceLineRow, InvoiceLineRowRepository,
+    InvoiceLineRowType, InvoiceRow, InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType,
+    ItemRowRepository, LocationMovementFilter, LocationMovementRepository, LocationMovementRow,
+    LocationMovementRowRepository, NameRowRepository, NumberRowType, RepositoryError, StockLineRow,
+    StockLineRowRepository, Stocktake, StocktakeLine, StocktakeLineFilter, StocktakeLineRepository,
+    StocktakeLineRow, StocktakeLineRowRepository, StocktakeRow, StocktakeRowRepository,
+    StocktakeStatus, StorageConnection,
 };
 use util::{constants::INVENTORY_ADJUSTMENT_NAME_CODE, inline_edit, uuid::uuid};
 
@@ -136,6 +137,8 @@ struct StocktakeGenerateJob {
 
     // list of stock_line upserts
     stock_lines: Vec<StockLineRow>,
+
+    location_movements: Option<Vec<LocationMovementRow>>,
 }
 
 /// Contains entities to be updated when a stock line is update/created
@@ -143,11 +146,13 @@ struct StockLineJob {
     stock_line: StockLineRow,
     invoice_line: Option<InvoiceLineRow>,
     stocktake_line: Option<StocktakeLineRow>,
+    location_movement: Option<LocationMovementRow>,
 }
 
 /// Returns new stock line and matching invoice line
 fn generate_stock_line_update(
     connection: &StorageConnection,
+    store_id: &str,
     invoice_id: &str,
     stocktake_line: &StocktakeLine,
     stock_line: &StockLineRow,
@@ -214,10 +219,18 @@ fn generate_stock_line_update(
     } else {
         None
     };
+
+    let location_movement = if counted_number_of_packs <= 0.0 {
+        generate_exit_location_movements(connection, &store_id, updated_line.clone())?
+    } else {
+        None
+    };
+
     Ok(StockLineJob {
         stock_line: updated_line,
         invoice_line: shipment_line,
         stocktake_line: None,
+        location_movement,
     })
 }
 
@@ -292,11 +305,69 @@ fn generate_new_stock_line(
         None
     };
 
+    let location_movement = if new_line.location_id.is_some() {
+        Some(generate_enter_location_movements(
+            store_id.to_owned(),
+            new_line.id.to_owned(),
+            new_line.location_id.to_owned(),
+        ))
+    } else {
+        None
+    };
+
     Ok(StockLineJob {
         stock_line: new_line,
         invoice_line: shipment_line,
         stocktake_line: Some(updated_stocktake_line),
+        location_movement,
     })
+}
+
+fn generate_enter_location_movements(
+    store_id: String,
+    stock_line_id: String,
+    location_id: Option<String>,
+) -> LocationMovementRow {
+    LocationMovementRow {
+        id: uuid(),
+        store_id,
+        stock_line_id,
+        location_id,
+        enter_datetime: Some(Utc::now().naive_utc()),
+        exit_datetime: None,
+    }
+}
+
+fn generate_exit_location_movements(
+    connection: &StorageConnection,
+    store_id: &str,
+    stock_line: StockLineRow,
+) -> Result<Option<LocationMovementRow>, RepositoryError> {
+    match stock_line.location_id {
+        Some(location_id) => {
+            let filter = LocationMovementRepository::new(connection)
+                .query_by_filter(
+                    LocationMovementFilter::new()
+                        .enter_datetime(DatetimeFilter::is_null(false))
+                        .exit_datetime(DatetimeFilter::is_null(true))
+                        .location_id(EqualFilter::equal_to(&location_id))
+                        .stock_line_id(EqualFilter::equal_to(&stock_line.id))
+                        .store_id(EqualFilter::equal_to(&store_id)),
+                )?
+                .into_iter()
+                .map(|l| l.location_movement_row)
+                .min_by_key(|l| l.enter_datetime);
+
+            if filter.is_some() {
+                let mut location_movement = filter.unwrap();
+                location_movement.exit_datetime = Some(Utc::now().naive_utc());
+                return Ok(Some(location_movement));
+            } else {
+                return Ok(None);
+            }
+        }
+        None => return Ok(None),
+    };
 }
 
 fn generate(
@@ -336,6 +407,7 @@ fn generate(
             inventory_adjustment: None,
             inventory_adjustment_lines: vec![],
             stock_lines: vec![],
+            location_movements: None,
         });
     }
 
@@ -352,16 +424,19 @@ fn generate(
     let mut inventory_adjustment_lines: Vec<InvoiceLineRow> = Vec::new();
     let mut stock_lines: Vec<StockLineRow> = Vec::new();
     let mut stocktake_line_updates: Vec<StocktakeLineRow> = Vec::new();
+    let mut location_movements: Vec<LocationMovementRow> = Vec::new();
 
     for stocktake_line in stocktake_lines {
         let StockLineJob {
             stock_line,
             invoice_line,
             stocktake_line,
+            location_movement,
         } = if let Some(ref stock_line) = stocktake_line.stock_line {
             // adjust existing stock line
             generate_stock_line_update(
                 connection,
+                store_id,
                 &inventory_adjustment_id,
                 &stocktake_line,
                 stock_line,
@@ -370,7 +445,7 @@ fn generate(
             // create new stock line
             generate_new_stock_line(
                 connection,
-                store_id,
+                &store_id,
                 &inventory_adjustment_id,
                 stocktake_line,
             )?
@@ -381,6 +456,9 @@ fn generate(
         }
         if let Some(stocktake_line) = stocktake_line {
             stocktake_line_updates.push(stocktake_line);
+        }
+        if let Some(location_movement) = location_movement {
+            location_movements.push(location_movement);
         }
     }
 
@@ -416,6 +494,7 @@ fn generate(
         colour: None,
         requisition_id: None,
         linked_invoice_id: None,
+        tax: None,
     };
 
     Ok(StocktakeGenerateJob {
@@ -424,6 +503,7 @@ fn generate(
         inventory_adjustment: Some(shipment),
         inventory_adjustment_lines,
         stock_lines,
+        location_movements: Some(location_movements),
     })
 }
 
@@ -461,11 +541,19 @@ pub fn update_stocktake(
             }
             StocktakeRowRepository::new(connection).upsert_one(&result.stocktake)?;
 
+            if let Some(location_movements) = result.location_movements {
+                let location_movement_repo = LocationMovementRowRepository::new(connection);
+                for location_movement in location_movements {
+                    location_movement_repo.upsert_one(&location_movement)?;
+                }
+            }
+
             if status_changed {
                 activity_log_entry(
                     &ctx,
                     ActivityLogType::StocktakeStatusFinalised,
-                    &stocktake_id,
+                    Some(stocktake_id.to_owned()),
+                    None,
                 )?;
             }
 

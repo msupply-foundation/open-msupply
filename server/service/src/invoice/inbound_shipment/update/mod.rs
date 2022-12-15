@@ -1,6 +1,7 @@
 use crate::activity_log::{activity_log_entry, log_type_from_invoice_status};
+use crate::invoice_line::ShipmentTaxUpdate;
 use crate::{invoice::query::get_invoice, service_provider::ServiceContext, WithDBError};
-use repository::Invoice;
+use repository::{Invoice, LocationMovementRowRepository};
 use repository::{
     InvoiceLineRowRepository, InvoiceRowRepository, InvoiceRowStatus, RepositoryError,
     StockLineRowRepository,
@@ -30,6 +31,7 @@ pub struct UpdateInboundShipment {
     pub comment: Option<String>,
     pub their_reference: Option<String>,
     pub colour: Option<String>,
+    pub tax: Option<ShipmentTaxUpdate>,
 }
 
 type OutError = UpdateInboundShipmentError;
@@ -47,8 +49,11 @@ pub fn update_inbound_shipment(
                 batches_to_update,
                 update_invoice,
                 empty_lines_to_trim,
+                location_movements,
+                update_tax_for_lines,
             } = generate(
                 connection,
+                &ctx.store_id,
                 &ctx.user_id,
                 invoice,
                 other_party,
@@ -56,14 +61,14 @@ pub fn update_inbound_shipment(
             )?;
 
             InvoiceRowRepository::new(connection).upsert_one(&update_invoice)?;
+            let invoice_line_repository = InvoiceLineRowRepository::new(connection);
 
             if let Some(lines_and_invoice_lines) = batches_to_update {
                 let stock_line_repository = StockLineRowRepository::new(connection);
-                let invoice_line_respository = InvoiceLineRowRepository::new(connection);
 
                 for LineAndStockLine { line, stock_line } in lines_and_invoice_lines.into_iter() {
                     stock_line_repository.upsert_one(&stock_line)?;
-                    invoice_line_respository.upsert_one(&line)?;
+                    invoice_line_repository.upsert_one(&line)?;
                 }
             }
 
@@ -74,11 +79,26 @@ pub fn update_inbound_shipment(
                 }
             }
 
+            if update_invoice.status == InvoiceRowStatus::Verified {
+                if let Some(movements) = location_movements {
+                    for movement in movements {
+                        LocationMovementRowRepository::new(&connection).upsert_one(&movement)?;
+                    }
+                }
+            }
+
+            if let Some(update_tax) = update_tax_for_lines {
+                for line in update_tax {
+                    invoice_line_repository.upsert_one(&line)?;
+                }
+            }
+
             if status_changed {
                 activity_log_entry(
                     &ctx,
                     log_type_from_invoice_status(&update_invoice.status),
-                    &update_invoice.id,
+                    Some(update_invoice.id.to_owned()),
+                    None,
                 )?;
             }
 

@@ -10,6 +10,7 @@ export const useResponseApi = () => {
     paramList: (params: ListParams) => [...keys.list(), params] as const,
     sortedList: (sortBy: SortBy<ResponseRowFragment>) =>
       [...keys.list(), sortBy] as const,
+    statsData: (lineId: string) => [...keys.base(), lineId, storeId] as const,
   };
 
   const { client } = useGql();

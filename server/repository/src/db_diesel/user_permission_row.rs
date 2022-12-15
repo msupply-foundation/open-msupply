@@ -31,6 +31,7 @@ pub enum Permission {
     LocationMutate,
     // stock line
     StockLineQuery,
+    StockLineMutate,
     // stocktake
     StocktakeQuery,
     StocktakeMutate,

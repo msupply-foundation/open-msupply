@@ -29,6 +29,7 @@ tokio = { version = "1.17.0", features = ["macros"] }
 fast_log = { version = "1.5" }
 log = "0.4.14"
 async-graphql = "3.0.35"
+anyhow = "1.0.56"
 
 [dev-dependencies]
 actix-rt = "2.6.0"

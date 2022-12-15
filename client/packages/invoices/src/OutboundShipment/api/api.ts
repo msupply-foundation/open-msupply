@@ -13,6 +13,7 @@ import {
   UpdateOutboundShipmentLineInput,
   InvoiceLineNodeType,
   InvoiceSortFieldInput,
+  UpdateOutboundShipmentNameInput,
 } from '@openmsupply-client/common';
 import { DraftOutboundLine } from '../../types';
 import { get, isA } from '../../utils';
@@ -80,9 +81,18 @@ const outboundParsers = {
     comment: patch.comment,
     status: outboundParsers.toStatus(patch),
     onHold: 'onHold' in patch ? patch.onHold : undefined,
-    otherPartyId: 'otherParty' in patch ? patch.otherParty?.id : undefined,
     theirReference: patch.theirReference,
     transportReference: patch.transportReference,
+    tax:
+      'taxPercentage' in patch
+        ? { percentage: patch.taxPercentage }
+        : undefined,
+  }),
+  toUpdateName: (
+    patch: RecordPatch<OutboundRowFragment> | RecordPatch<OutboundFragment>
+  ): UpdateOutboundShipmentNameInput => ({
+    id: patch.id,
+    otherPartyId: patch.otherPartyId,
   }),
   toInsertLine: (line: DraftOutboundLine): InsertOutboundShipmentLineInput => {
     return {
@@ -91,7 +101,6 @@ const outboundParsers = {
       numberOfPacks: line.numberOfPacks,
       stockLineId: line.stockLine?.id ?? '',
       invoiceId: line.invoiceId,
-      tax: 0.0,
       totalBeforeTax: get.stockLineSubtotal(line),
     };
   },
@@ -100,7 +109,6 @@ const outboundParsers = {
       id: line.id,
       numberOfPacks: line.numberOfPacks,
       stockLineId: line.stockLine?.id ?? '',
-      tax: { percentage: line.taxPercentage },
       totalBeforeTax: get.stockLineSubtotal(line),
     };
   },
@@ -262,6 +270,26 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
     }
 
     throw new Error('Unable to update invoice');
+  },
+  updateName: async (
+    patch: RecordPatch<OutboundRowFragment> | RecordPatch<OutboundFragment>
+  ) => {
+    const result =
+      (await sdk.updateOutboundShipmentName({
+        storeId,
+        input: {
+          id: patch.id,
+          otherPartyId: patch.otherPartyId,
+        },
+      })) || {};
+
+    const { updateOutboundShipmentName } = result;
+
+    if (updateOutboundShipmentName?.__typename === 'InvoiceNode') {
+      return updateOutboundShipmentName.id;
+    }
+
+    throw new Error('Could not update customer name');
   },
   updateLines: async (draftOutboundLines: DraftOutboundLine[]) => {
     const input = {

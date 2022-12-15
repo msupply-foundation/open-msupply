@@ -29,7 +29,8 @@ const STOCKTAKE_1: (&'static str, &'static str) = (
       "stock_take_date": "2021-07-30",
       "stock_take_time": 47061,
       "store_ID": "store_a",
-      "type": ""
+      "type": "",
+      "om_created_datetime": ""
     }"#,
 );
 fn stocktake_pull_record() -> TestSyncPullRecord {

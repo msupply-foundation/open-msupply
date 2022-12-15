@@ -10,6 +10,7 @@ pub fn activity_log_a() -> ActivityLogRow {
         store_id: None,
         record_id: None,
         datetime: NaiveDate::from_ymd(2020, 1, 1).and_hms(0, 0, 0),
+        event: None,
     }
 }
 
@@ -21,6 +22,7 @@ pub fn activity_log_b() -> ActivityLogRow {
         store_id: Some(String::from("store_b")),
         record_id: Some(String::from("outbound_shipment_a")),
         datetime: NaiveDate::from_ymd(2020, 1, 1).and_hms(0, 0, 0),
+        event: None,
     }
 }
 
@@ -32,6 +34,7 @@ pub fn activity_log_c() -> ActivityLogRow {
         store_id: Some(String::from("store_b")),
         record_id: Some(String::from("inbound_shipment_a")),
         datetime: NaiveDate::from_ymd(2020, 1, 1).and_hms(0, 0, 0),
+        event: None,
     }
 }
 

@@ -1,14 +1,16 @@
 use chrono::Utc;
 
 use repository::{
-    EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowType, Name,
-    RepositoryError,
+    EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowType, LocationMovementRow,
+    Name, RepositoryError,
 };
 use repository::{
     InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceRowStatus, StockLineRow,
     StorageConnection,
 };
 use util::uuid::uuid;
+
+use crate::invoice::common::calculate_total_after_tax;
 
 use super::{UpdateInboundShipment, UpdateInboundShipmentError, UpdateInboundShipmentStatus};
 
@@ -21,10 +23,13 @@ pub(crate) struct GenerateResult {
     pub(crate) batches_to_update: Option<Vec<LineAndStockLine>>,
     pub(crate) update_invoice: InvoiceRow,
     pub(crate) empty_lines_to_trim: Option<Vec<InvoiceLineRow>>,
+    pub(crate) location_movements: Option<Vec<LocationMovementRow>>,
+    pub(crate) update_tax_for_lines: Option<Vec<InvoiceLineRow>>,
 }
 
 pub(crate) fn generate(
     connection: &StorageConnection,
+    store_id: &str,
     user_id: &str,
     existing_invoice: InvoiceRow,
     other_party_option: Option<Name>,
@@ -40,6 +45,10 @@ pub(crate) fn generate(
     update_invoice.their_reference = patch.their_reference.or(update_invoice.their_reference);
     update_invoice.on_hold = patch.on_hold.unwrap_or(update_invoice.on_hold);
     update_invoice.colour = patch.colour.or(update_invoice.colour);
+    update_invoice.tax = patch
+        .tax
+        .map(|tax| tax.percentage)
+        .unwrap_or(update_invoice.tax);
 
     if let Some(status) = patch.status.clone() {
         update_invoice.status = status.full_status().into()
@@ -55,6 +64,31 @@ pub(crate) fn generate(
             connection,
             &update_invoice.store_id,
             &update_invoice.id,
+            update_invoice.tax,
+        )?)
+    } else {
+        None
+    };
+
+    let location_movements = if let Some(batches) = &batches_to_update {
+        let generate_movement = batches
+            .iter()
+            .filter_map(|batch| match batch.line.location_id {
+                Some(_) => Some(generate_location_movements(store_id.to_owned(), batch)),
+                None => None,
+            })
+            .collect();
+
+        Some(generate_movement)
+    } else {
+        None
+    };
+
+    let update_tax_for_lines = if update_invoice.tax.is_some() {
+        Some(generate_tax_update_for_lines(
+            connection,
+            &update_invoice.id,
+            update_invoice.tax,
         )?)
     } else {
         None
@@ -64,6 +98,8 @@ pub(crate) fn generate(
         batches_to_update,
         empty_lines_to_trim: empty_lines_to_trim(connection, &existing_invoice, &patch.status)?,
         update_invoice,
+        location_movements,
+        update_tax_for_lines,
     })
 }
 
@@ -77,6 +113,29 @@ pub fn should_create_batches(invoice: &InvoiceRow, patch: &UpdateInboundShipment
     } else {
         false
     }
+}
+
+fn generate_tax_update_for_lines(
+    connection: &StorageConnection,
+    invoice_id: &str,
+    tax: Option<f64>,
+) -> Result<Vec<InvoiceLineRow>, UpdateInboundShipmentError> {
+    let invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
+        InvoiceLineFilter::new()
+            .invoice_id(EqualFilter::equal_to(invoice_id))
+            .r#type(InvoiceLineRowType::StockIn.equal_to()),
+    )?;
+
+    let mut result = Vec::new();
+    for invoice_line in invoice_lines {
+        let mut invoice_line_row = invoice_line.invoice_line_row;
+        invoice_line_row.tax = tax;
+        invoice_line_row.total_after_tax =
+            calculate_total_after_tax(invoice_line_row.total_before_tax, tax);
+        result.push(invoice_line_row);
+    }
+
+    Ok(result)
 }
 
 // If status changed to Delivered and above, remove empty lines
@@ -142,6 +201,7 @@ pub fn generate_lines_and_stock_lines(
     connection: &StorageConnection,
     store_id: &str,
     id: &str,
+    tax: Option<f64>,
 ) -> Result<Vec<LineAndStockLine>, UpdateInboundShipmentError> {
     let lines = InvoiceLineRowRepository::new(connection).find_many_by_invoice_id(id)?;
     let mut result = Vec::new();
@@ -150,6 +210,10 @@ pub fn generate_lines_and_stock_lines(
         let mut line = invoice_lines.clone();
         let stock_line_id = line.stock_line_id.unwrap_or(uuid());
         line.stock_line_id = Some(stock_line_id.clone());
+        if tax.is_some() {
+            line.tax = tax;
+            line.total_after_tax = calculate_total_after_tax(line.total_before_tax, tax);
+        }
 
         let InvoiceLineRow {
             id: _,
@@ -171,6 +235,7 @@ pub fn generate_lines_and_stock_lines(
             number_of_packs,
             note,
         }: InvoiceLineRow = invoice_lines;
+
         if number_of_packs > 0.0 {
             let stock_line = StockLineRow {
                 id: stock_line_id,
@@ -191,4 +256,18 @@ pub fn generate_lines_and_stock_lines(
         }
     }
     Ok(result)
+}
+
+pub fn generate_location_movements(
+    store_id: String,
+    batch: &LineAndStockLine,
+) -> LocationMovementRow {
+    LocationMovementRow {
+        id: uuid(),
+        store_id,
+        stock_line_id: batch.stock_line.id.clone(),
+        location_id: batch.line.location_id.clone(),
+        enter_datetime: Some(Utc::now().naive_utc()),
+        exit_datetime: None,
+    }
 }

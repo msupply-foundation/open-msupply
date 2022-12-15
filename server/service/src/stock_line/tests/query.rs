@@ -51,15 +51,16 @@ mod query {
             setup_all("test_stock_line_single_record", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
+        let context = service_provider.basic_context().unwrap();
         let service = service_provider.stock_line_service;
 
         assert_eq!(
-            service.get_stock_line(&connection_manager.clone(), "invalid_id".to_owned()),
+            service.get_stock_line(&context, "invalid_id".to_owned()),
             Err(SingleRecordError::NotFound("invalid_id".to_owned()))
         );
 
         let result = service
-            .get_stock_line(&connection_manager, "stock_line_on_hold".to_owned())
+            .get_stock_line(&context, "stock_line_on_hold".to_owned())
             .unwrap();
 
         assert_eq!(result.stock_line_row.id, "stock_line_on_hold");
@@ -143,6 +144,7 @@ mod query {
             is_available: None,
             expiry_date: None,
             store_id: None,
+            item_code_or_name: None,
         });
 
         // Test ExpiryDate sort with default sort order
@@ -192,6 +194,7 @@ mod query {
             is_available: None,
             expiry_date: None,
             store_id: None,
+            item_code_or_name: None,
         });
 
         // Test ExpiryDate sort with desc sort order
