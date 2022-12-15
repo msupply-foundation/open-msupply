@@ -1,0 +1,14 @@
+# Make sure to add bin of prebuilt llvm to PATH, and use ndk 22
+
+# For example
+
+# NDK_BIN=~/Library/Android/sdk/ndk/22.1.7171670/toolchains/llvm/prebuilt/darwin-x86_64/bin/
+# PATH=$PATH:$NDK_BIN cargo build --target aarch64-linux-android --release
+
+[build]
+target = ["aarch64-linux-android", "armv7-linux-androideabi"]
+
+[target.aarch64-linux-android]
+linker = "aarch64-linux-android22-clang"
+[target.armv7-linux-androideabi]
+linker = "armv7a-linux-androideabi22-clang"
