@@ -1,37 +1,25 @@
 package org.openmsupply.client;
 
 public class RemoteServer {
-    private long handle = -1;
-
     static {
+        // This will load libremote_server_android, from app/src/main/jniLib/ directory matching hardware architecture
         System.loadLibrary("remote_server_android");
     }
 
-    public String getName() {
-        return "RemoteServer";
-    }
-
     public RemoteServer() {
-    }
 
-    public String sayHelloWorld(String name) {
-        return rustHelloWorld(name);
     }
 
     public void start(int port, String filesDir, String cacheDir, String androidId) {
-        handle = startServer(port, filesDir, cacheDir, androidId);
+       startServer(port, filesDir, cacheDir, androidId);
     }
 
     public void stop() {
-        if (handle > 0) {
-            stopServer(handle);
-            handle = 1;
-        }
+        stopServer();
     }
 
-    private static native String rustHelloWorld(String seed);
+    // Mapping to methods in server/android/src/android.lib
+    private static native void startServer(int port, String filesDir, String cacheDir, String androidId);
 
-    private static native long startServer(int port, String filesDir, String cacheDir, String androidId);
-
-    private static native int stopServer(long handle);
+    private static native void stopServer();
 }

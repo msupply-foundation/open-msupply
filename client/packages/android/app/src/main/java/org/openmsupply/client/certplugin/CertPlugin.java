@@ -1,7 +1,6 @@
 package org.openmsupply.client.certplugin;
 
 import com.getcapacitor.Bridge;
-import com.getcapacitor.BridgeWebViewClient;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.annotation.CapacitorPlugin;
 
@@ -15,6 +14,8 @@ import android.webkit.WebView;
 
 import androidx.annotation.Nullable;
 
+import org.openmsupply.client.ExtendedWebViewClient;
+
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -25,7 +26,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 
-class CertWebViewClient extends BridgeWebViewClient {
+class CertWebViewClient extends ExtendedWebViewClient {
     public static final String TAG = "CertWebViewClient";
 
     File filesDir;
@@ -74,6 +75,11 @@ class CertWebViewClient extends BridgeWebViewClient {
     @Override
     public void onReceivedSslError(WebView view, SslErrorHandler handler,
                                    SslError error) {
+        // TODO store and trust previous cert
+        if (!error.getUrl().contains("localhost")) {
+            handler.proceed();
+            return;
+        }
         // If there is a ssl error, check if the request was trying to reach our local trusted
         // remote server. For this:
         // 1) load self signed remote server certificate from local storage
