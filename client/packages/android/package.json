@@ -6,8 +6,19 @@
     "@capacitor/android": "^3.5.1",
     "@capacitor/cli": "^3.5.1",
     "@capacitor/core": "^3.5.1",
-    "cordova-android": "^10.1.1"
+    "cordova-android": "^10.1.1",
+    "cordova-plugin-printer": "^0.8.0"
   },
-  "scripts": {},
+  "workspaces": {
+    "packages": [
+      "packages/*"
+    ]
+  },
+  "scripts": {
+    "build:server": "./build_remote_server_libs.sh",
+    "build:debug": "yarn build:server && ./assembleRelease debug",
+    "build:release": "yarn build:server && ./assembleRelease release",
+    "apply-config": "npx cap copy"
+  },
   "dependencies": {}
 }
