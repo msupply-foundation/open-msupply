@@ -128,12 +128,9 @@
                     {
                       "dataField": "prostitution",
                       "equalTo": true,
-                      "node": "maleMaleSexWorker"
+                      "value": "MSMSW"
                     }
                   ]
-                },
-                "maleMaleSexWorker": {
-                  "value": "MSMSW"
                 },
                 "maleHadSexWithFemale": {
                   "value": "LRM",
@@ -151,12 +148,9 @@
                     {
                       "dataField": "prostitution",
                       "equalTo": true,
-                      "node": "maleHadSexWithMultiFemaleSexWorker"
+                      "value": "MSW"
                     }
                   ]
-                },
-                "maleHadSexWithMultiFemaleSexWorker": {
-                  "value": "MSW"
                 },
                 "isFemale": {
                   "value": "LRW",
@@ -214,12 +208,9 @@
                     {
                       "dataField": "prostitution",
                       "equalTo": true,
-                      "node": "femaleSexWorker"
+                      "value": "FSW"
                     }
                   ]
-                },
-                "femaleSexWorker": {
-                  "value": "FSW"
                 },
                 "isTransgender": {
                   "value": "TG",
@@ -227,12 +218,9 @@
                     {
                       "dataField": "prostitution",
                       "equalTo": true,
-                      "node": "tgSexWorker"
+                      "value": "TGSW"
                     }
                   ]
-                },
-                "tgSexWorker": {
-                  "value": "TGSW"
                 }
               }
             }
