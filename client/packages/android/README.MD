@@ -30,14 +30,18 @@ The following scripts are available
 # Builds remote server binaries for android and copies them to android package
 yarn build:server
 # Assembles android apk
-yarn android:build:debug
+yarn build:debug
 # Assembles android release apk, requires key store information, see below
-yarn android:build:release
+yarn build:release
 # Copies over configurations and other assets
 yarn apply-config
 ```
 
 As per earlier comment, please make sure to build front end with `yarn build` from client directory prior to runner the above or run `yarn android:{command here}` from client directory to do both with one command. 
+
+### Know script issues
+
+When building apk `properties.local` files is required (it can be empty). Also can sometime get a lock on gradle build, can run `find ~/.gradle -type f -name "*.lock" -delete` to fix it
 
 ## Release build
 
