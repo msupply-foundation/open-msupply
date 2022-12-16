@@ -18,8 +18,13 @@ type DecisionBranch = {
   dataField?: string;
   /** If set apply condition on a field from the patient document a*/
   patientField?: string;
-  /** The id of the next tree node that should be checked if the condition evaluated to true */
-  node: string;
+  /** The id of the next tree node that should be checked if the condition evaluates to true */
+  node?: string;
+  /**
+   * The result value of the tree when the condition evaluates to true.
+   * This can be used to avoid a value only leaf node, i.e. make the config less verbose.
+   */
+  value?: string;
 } & Condition;
 
 type DecisionNode = {
@@ -62,15 +67,25 @@ const Condition = z
 const DecisionBranch: z.ZodType<DecisionBranch> = Condition.extend({
   dataField: z.string().optional(),
   patientField: z.string().optional(),
-  node: z.string(),
-}).strict();
+  node: z.string().optional(),
+  value: z.string().optional(),
+})
+  .strict()
+  .refine(
+    data => !!data.node || data.value !== undefined,
+    'Either a node or a value must be specified.'
+  );
 
-const DecisionNode = z
+const DecisionNode: z.ZodType<DecisionNode> = z
   .object({
     value: z.string().optional(),
     branches: z.array(DecisionBranch).optional(),
   })
-  .strict();
+  .strict()
+  .refine(
+    data => data.branches || data.value !== undefined,
+    'Either a value or branches must be specified.'
+  );
 
 const DecisionTree = z
   .object({
@@ -106,6 +121,9 @@ const prepareTreeValidation = (
       parents[key] = [];
     }
     for (const child of node.branches ?? []) {
+      if (!child.node) {
+        continue;
+      }
       if (nodes[child.node] === undefined) {
         missingNodes.push(child.node);
         continue;
@@ -148,6 +166,9 @@ const topologicalSort = (
     // add to sorted list
     sortedNodes.push(currentId);
     for (const child of current.branches ?? []) {
+      if (!child.node) {
+        continue;
+      }
       // remove current parent from the child parents, also remove ourself if there is a direct
       // circular dependency
       const childParents =
@@ -221,6 +242,15 @@ const evaluateDecisionTree = (
     for (const branch of current.branches ?? []) {
       const field = getBranchField(branch, data, patientDoc);
       if (matchCondition(branch, field)) {
+        if (branch.value !== undefined) {
+          return branch.value;
+        }
+        if (!branch.node) {
+          console.error(
+            'Invalid tree config either value or node must be specified (should have been validated by zod)'
+          );
+          break;
+        }
         if (visitedNodes.has(branch.node)) {
           console.error('Invalid tree with circular node connections');
           break;
