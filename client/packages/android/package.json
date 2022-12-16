@@ -16,8 +16,8 @@
   },
   "scripts": {
     "build:server": "./build_remote_server_libs.sh",
-    "build:debug": "yarn build:server && ./assembleRelease debug",
-    "build:release": "yarn build:server && ./assembleRelease release",
+    "build:debug": "yarn build:server && ./gradlew assembleDebug",
+    "build:release": "yarn build:server && ./gradlew assembleReleases",
     "apply-config": "npx cap copy"
   },
   "dependencies": {}
