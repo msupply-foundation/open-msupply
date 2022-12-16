@@ -361,7 +361,9 @@
         },
         "birthOrder": {
           "description": "Birth order, e.g. second child = 2",
-          "type": "number"
+          "type": "number",
+          "minimum": 0,
+          "maximum": 99
         },
         "birthPlace": {
           "$ref": "#/definitions/Address",
