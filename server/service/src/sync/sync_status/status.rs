@@ -278,7 +278,7 @@ impl SyncLogError {
 #[cfg(test)]
 mod test {
     use crate::{
-        sync::sync_status::status::InitialisationStatus,
+        sync::{settings::SyncSettings, sync_status::status::InitialisationStatus},
         test_helpers::{setup_all_and_service_provider, ServiceTestContext},
     };
     use chrono::Utc;
@@ -338,6 +338,19 @@ mod test {
                 ]
             }),
         );
+
+        // Need to add sync settings so that Initialised returns site name
+        service_provider
+            .settings
+            .update_sync_settings(
+                &service_context,
+                &SyncSettings {
+                    username: "site_name".to_string(),
+                    url: "http://test.com".to_string(),
+                    ..SyncSettings::default()
+                },
+            )
+            .unwrap();
 
         assert_matches!(
             service_provider
