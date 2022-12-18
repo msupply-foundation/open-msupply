@@ -50,9 +50,9 @@ pub struct PrintArgs {
     /// The data to be printed
     #[clap(long)]
     pub data_id: String,
-    /// The report name
+    /// The output file path
     #[clap(long)]
-    pub name: Option<String>,
+    pub output: Option<String>,
     /// The YAML config data to connected to the remote server.
     /// Containing:
     /// - url
