@@ -33,21 +33,21 @@ Cross platform native runtime for web apps. Very popular with extendable plugin 
 
 *Cons:*
 - Harder to control internals if they need to be modified
-- Extra time to set up dev environment
-- It looks like we can only serve a bundled app (although it can be served from url, url needs to be know at compile time), this affects requirement number `6`
+- Extra tools to learn
+- In order to achieve 6. need a few work arounds
 
 ### Option 2 - Barebone native app with WebView
 
-Capacitor also uses WebView, but it's only pre-configured for `3`.
+Capacitor also uses WebView, but it's already pre-configured for `3`.
 
 We can achieve the same with a barebone mobile app and a WebView.
 
 *Pros:*
 - Full and direct control over native code
-- Can serve bundled from external server addresses requirement `6`
 
 *Cons:*
 - Have to implement features that are already available in Capacitor (addresses `3` and `1`)
+- Porting plugins that are available in Capacitor is not trivial
 
 ### Option 3 - Desktop client and Web client as one app
 
@@ -59,5 +59,6 @@ Requirement `2` hasn't been mentioned in both options, since I think it's indepe
 
 ## Decision
 
-I suggest going with Option 2, since I like direct control over native code and any of the plugins that are available in Capacitor are open source and can be ported to barebone app. I have a small concern that a framework may help us get going quicker but maybe harder to modify certain niche functionality.
-Also I think it would be a big ask to upgrade all clients when server upgrades.
+Original suggestion was to go with `Option 2`, but after some research we realised that being able to serve bundle from arbitary server was possible with Capacitor (although it's a bi hacky), and trying to port a plugin to Native barebone application was quite difficult. Would now suggest `Option 1`, the cons can be metigated by better explanation of what Capacitor is and how we use it. Also the `cons` of `Option 2` can lead to quite a lot of extra work
+
+Lastly woudl suggest keeping an eye on Option 3 and re-writting this KDD when Option 3 becomes feasible (tauri mobile available and stable)
