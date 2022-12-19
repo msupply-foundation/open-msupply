@@ -1,6 +1,6 @@
 # Mobile App with Discovery
 
-It's bundled with server, server always start and allows for one app for both client and client/server. Mobile app will broadcast via dns sd and will be reachable by both Mobile and Electron clients on local network. We are using Capacitor to make use of existing optimisations and large library of nativ plugins. All UI is served by bundled server, including discovery.
+The client app is bundled with the server. On android, the server always starts and this allows for one mobile app for both client and client/server. The mobile app will broadcast via dns sd and will be reachable by both Mobile and Electron clients on the local network. We are using Capacitor to make use of existing optimisations and large library of native plugins. All UI is served by bundled server, including discovery.
 
 ## Getting started
 
