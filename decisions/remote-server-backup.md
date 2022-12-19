@@ -8,22 +8,23 @@
 
 ## Context
 
-It's important to back up remote server data so that it can be restored in case of corruption/loss. This KDD is to discuss remote synchronised server backup.
+It's important to back up remote server data so that it can be restored in case of corruption/loss. This KDD is to discuss backup of remote server in syncrhonisation context.
 
-In existing 4d mSupply, for remote servers, we have backup files and current journal file. There is no way to re-initialise remote desktop mSupply sites, thus we must rely on local/dropbox backups. There have been cases with quite catastrophic outcomes where backup was restored incorrectly, causing major data synchronisation issues.
+In existing 4d mSupply, for remote servers, we have backup files and current journal file. There is no way to directly re-initialise remote desktop mSupply sites, there is a way to export initialisation data and create a new remote data file, but this process is quite slow and cumbersome, thus we mainly rely on local/dropbox backups. There have been cases where local backup restores for remote sites have caused inconsistencies in remote and central data, which in turn caused hard to solve issues (like ledger discrepancies)
 
-### Wrongly Restored
+### Wrongly Restored Example
+
 * Wrong backup (not the latest)
 * Forget to integrate journal
 * Journal data corruption
 
-### Major data syncrhonisation issues
+### Data Issues
 
-When remote data is not `in sync` with central data (i.e. older backup was used), we almost certainly have a ledge discrepancy that can persist and is hard to fix correctly. 
+When remote data is not `in sync` with central data (i.e. older backup was used), we almost certainly have a ledger discrepancy that can persist and is hard to fix correctly. 
 
 **Example:**
 
-Consider that remote and central server data is synchronised, and we have the following ledger for stockline: stockline quantity = 10, transaction1 = +15, transaction2 = -2 transaction3 = -3. 15 - 2 - 3 = 10 thus ledge is correct. Now if remote server backup was restored not including transaction 3, stockline quantity would be 13, and any further transaction or create ledger discrepancy for this stockline on central server.
+Consider that remote and central server data is synchronised, and we have the following ledger for stockline: stockline quantity = 10, transaction1 = +15, transaction2 = -2 transaction3 = -3. 15 - 2 - 3 = 10 thus ledger is correct. Now if remote server backup was restored not including transaction 3, stockline quantity would be 13, and any further transaction and syncrhonisation will create ledger discrepancy for this stockline on central server.
 
 ## Options
 
@@ -36,8 +37,8 @@ Local backup with journal
 - Reduce data loss if done correctly in cases where internet was not available and sync not possible
 
 *Cons:*
-- Hard to set up correctly and to maintain (for both sqlite and postgres)
-- Large disc space requirement
+- Harder to set up correctly and to maintain (for both sqlite and postgres)
+- Larger disc space requirement 
 - Risk of incorrect restore and being `out of sync`
 
 ### Option 2 - Backup via sync
@@ -49,9 +50,27 @@ Re initialise in case of data loss. We can deploy some strategies to improve thi
 - No extra setup and maintenance needed
 
 *Cons:*
-- Can loose data if there was no internet for syncrhonisation (or if we had sync errors)
+- Can loose data if there was no internet for sync (or if we had sync errors)
 - Challenging in low bandwidth environment
+- Much slower for big data files
+
+### Option 2 - Backup with Wal and Sync Realignment
+
+Setting up postgres and sqlite to backup with journal (wal). And a mechanism to re-align data between central and remote (would need some sort of changelog on central server, to know what remote data to send to remote)
+
+*Pros:*
+- Fast to restore up to date data
+- Minimum data loss (if any)
+- Consistency between central and remote data
+
+*Cons:*
+- Quite a bit of work needed to make sure re-alignment mechanism is implemented
+- Would also need to make sure correct proceedures are in place for setting up and restoring wal backup
 
 ## Decision
 
-I suggest going with Option 2, I think it would be quite hard to setup failsafe and maintenance free local backups for both sqlite and postgres. I also hold an assumption that data corruption scenarior is very low risk and if there is data corruption it's likely to be hardware related at which point it's likely local backups are damaged.
+I suggest going with Option 2 but aiming to transition to Option 3. Current projected deployments would be small to mid level facilities with small amount of data, thus I think Option 2 would be enough to meet current demand.
+
+Option 3 should be researched further and speced out as a long term solution
+
+Btw I still hold an assumption that data corruption scenario is very low risk and if there is data corruption it's likely to be hardware/physical damage at which point it's likely local backups are damaged.
