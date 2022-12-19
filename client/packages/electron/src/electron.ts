@@ -152,14 +152,14 @@ process.on('uncaughtException', error => {
 
   /* Uncaught Exception:
         TypeError: t[this.constructor.name] is not a constructor
-        at e.value (/Users/andreievg/Documents/repo/work/open-msupply/client/packages/electron/out/open mSupply-darwin-arm64/open mSupply.app/Contents/Resources/app/.webpack/main/index.js:2:48513)
-        at /Users/andreievg/Documents/repo/work/open-msupply/client/packages/electron/out/open mSupply-darwin-arm64/open mSupply.app/Contents/Resources/app/.webpack/main/index.js:2:20805
+        at e.value (..open mSupply-darwin-arm64/open mSupply.app/Contents/Resources/app/.webpack/main/index.js:2:48513)
+        at ..open mSupply-darwin-arm64/open mSupply.app/Contents/Resources/app/.webpack/main/index.js:2:20805
         at Array.reduce (<anonymous>)
-        at e.value (/Users/andreievg/Documents/repo/work/open-msupply/client/packages/electron/out/open mSupply-darwin-arm64/open mSupply.app/Contents/Resources/app/.webpack/main/index.js:2:20662)
-        at e.value (/Users/andreievg/Documents/repo/work/open-msupply/client/packages/electron/out/open mSupply-darwin-arm64/open mSupply.app/Contents/Resources/app/.webpack/main/index.js:2:20277)
-        at v._addKnownAnswers (/Users/andreievg/Documents/repo/work/open-msupply/client/packages/electron/out/open mSupply-darwin-arm64/open mSupply.app/Contents/Resources/app/.webpack/main/index.js:2:39980)
-        at v._send (/Users/andreievg/Documents/repo/work/open-msupply/client/packages/electron/out/open mSupply-darwin-arm64/open mSupply.app/Contents/Resources/app/.webpack/main/index.js:2:39523)
-        at Timeout._onTimeout (/Users/andreievg/Documents/repo/work/open-msupply/client/packages/electron/out/open mSupply-darwin-arm64/open mSupply.app/Contents/Resources/app/.webpack/main/index.js:2:82424)
+        at e.value (..open mSupply-darwin-arm64/open mSupply.app/Contents/Resources/app/.webpack/main/index.js:2:20662)
+        at e.value (..open mSupply-darwin-arm64/open mSupply.app/Contents/Resources/app/.webpack/main/index.js:2:20277)
+        at v._addKnownAnswers (..open mSupply-darwin-arm64/open mSupply.app/Contents/Resources/app/.webpack/main/index.js:2:39980)
+        at v._send (..open mSupply-darwin-arm64/open mSupply.app/Contents/Resources/app/.webpack/main/index.js:2:39523)
+        at Timeout._onTimeout (..open mSupply-darwin-arm64/open mSupply.app/Contents/Resources/app/.webpack/main/index.js:2:82424)
         at listOnTimeout (node:internal/timers:559:17)
         at process.processTimers (node:internal/timers:502:7)
   */
