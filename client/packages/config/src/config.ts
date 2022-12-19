@@ -8,7 +8,7 @@ declare const API_HOST: string;
 // by default we assume development API server is launched on the same domain/ip and on port 8000. We can overwrite this
 // with API_HOST which is available through webpack.DefinePlugin (i.e. webpack server --env API_PORT=800 --env API_IP 'localhost')
 
-// Important to note, if we overwrite API_HOST in development, we should use ip/domain that is know outside of localhost
+// Important to note, if we overwrite API_HOST in development, we should use ip/domain that is known outsideof localhost
 // because web app in development mode may be accessed by clients on different machine (i.e. when debugin Android app)
 
 const isProductionBuild = process.env['NODE_ENV'] === 'production';

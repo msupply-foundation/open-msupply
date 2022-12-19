@@ -47,4 +47,5 @@ Since front end for client is server through remote server, it needs to be rebui
 
 Similar to [android](../android/README.MD#debugging), to speed up development we can serve both discovery and main web app through webpack server. Running `yarn start-local` and `yarn electron:start-local` from client would allow for hot reload and debugging typescript (can open developer tools with the same shortcut as chrome).
 
-Please note that when debugging with life reload, connections to a discovered server will always go through to the webpack server (regardless of which server is being selected). Also the discovery may not show any servers when hot reloaded and may require stoping and starting electron
+Please note that when debugging with live reload, connections to a discovered server will always go through to the webpack server (regardless of which server is being selected). 
+Also the discovery may not show any servers when hot reloaded and may require stopping and starting electron
