@@ -1,6 +1,5 @@
  # Android build
 
- # Mac
 
 * Install Android Studio
 * Install NDK (as per screenshot below)  **important to use version 22**
