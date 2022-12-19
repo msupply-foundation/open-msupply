@@ -45,8 +45,6 @@ fn get_timestamp_fields() -> Vec<TableAndFieldName> {
         ("sync_log", "integration_started_datetime"),
         ("sync_log", "integration_finished_datetime"),
         ("activity_log", "datetime"),
-        ("location_movement", "enter_datetime"),
-        ("location_movement", "exit_datetime"),
     ]
     .iter()
     .map(|(table_name, field_name)| TableAndFieldName {
