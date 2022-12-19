@@ -83,7 +83,7 @@ A few configuration/modifications were made to make sure we can serve Android bu
 
 The cert plugin (`app/src/main/java/org/openmsupply/client/certplugin/CertPlugin.java`) allows the web client to make https request to the remote-server using a self signed certificate. It needs to extend `ExtendedWebViewClient` rathern then `WebViewClient` to allow for Capacitor Modification 2. to work.
 
-`RemoteServer.java` is jni mapping to functions defined in `server/android/src/android.rs`
+`RemoteServer.java` is jni mapping to functions defined in `server/android/src/android.rs`, it is started and stopped in `MainActivity.java`
 
 ## CAP
 
