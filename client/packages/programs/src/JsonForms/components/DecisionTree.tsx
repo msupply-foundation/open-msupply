@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { rankWith, uiTypeIs, ControlProps } from '@jsonforms/core';
 import { useJsonForms, withJsonFormsControlProps } from '@jsonforms/react';
 import { DetailInputWithLabelRow } from '@openmsupply-client/common';
@@ -184,38 +184,40 @@ const useTreeValidation = (
   errors: string | undefined,
   options: Options | undefined
 ): { errors?: string; options?: Options } => {
-  if (errors || !options) {
-    return { errors, options };
-  }
-  const validationData = prepareTreeValidation(options.tree.nodes);
-  if (validationData.missingNodes.length > 0) {
-    return { errors: `Missing tree nodes: ${validationData.missingNodes}` };
-  }
-  if (validationData.roots.length === 0) {
-    return { errors: `No tree root found (circular dependency to root?)` };
-  }
-  if (validationData.roots.length > 1) {
-    return { errors: `Tree has multiple roots: ${validationData.roots}` };
-  }
-  if (validationData.roots[0] !== options.tree.root) {
-    return {
-      errors: `Invalid root: ${validationData.roots[0]} but ${options.tree.root} expected`,
-    };
-  }
+  return useMemo(() => {
+    if (errors || !options) {
+      return { errors, options };
+    }
+    const validationData = prepareTreeValidation(options.tree.nodes);
+    if (validationData.missingNodes.length > 0) {
+      return { errors: `Missing tree nodes: ${validationData.missingNodes}` };
+    }
+    if (validationData.roots.length === 0) {
+      return { errors: `No tree root found (circular dependency to root?)` };
+    }
+    if (validationData.roots.length > 1) {
+      return { errors: `Tree has multiple roots: ${validationData.roots}` };
+    }
+    if (validationData.roots[0] !== options.tree.root) {
+      return {
+        errors: `Invalid root: ${validationData.roots[0]} but ${options.tree.root} expected`,
+      };
+    }
 
-  /** Do a topological sort to detect circular dependencies */
-  const { errorNodes } = topologicalSort(
-    options.tree.root,
-    options.tree.nodes,
-    validationData.parents
-  );
-  if (errorNodes) {
-    return {
-      errors: `Circular dependency detected for node(s): ${errorNodes}`,
-    };
-  }
+    /** Do a topological sort to detect circular dependencies */
+    const { errorNodes } = topologicalSort(
+      options.tree.root,
+      options.tree.nodes,
+      validationData.parents
+    );
+    if (errorNodes) {
+      return {
+        errors: `Circular dependency detected for node(s): ${errorNodes}`,
+      };
+    }
 
-  return { options };
+    return { options };
+  }, [errors, options]);
 };
 
 const UIComponent = (props: ControlProps) => {
