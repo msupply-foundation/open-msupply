@@ -6,7 +6,7 @@ It's bundled with server, server always start and allows for one app for both cl
 
 First of all, need to make sure that you can build [server binaries](../../../server/android/README.md)
 
-When you are confident they are building, can use `yarn build:server` form this directoy, this builds `libremote_server_lib.so` binaries and relocated them to `app/src/main/jniLibs`, see `RemoteServer.java` for more details of how these libs are loaded. It's important to note that web app is bundled in the remote server binary, and web app needs to be built from `client` directory with `yarn build` command, so it's best to use `yarn android:build:server` from client directory as it does both (builds web app and then build android remote server).
+When you are confident they are building, can use `yarn build:server` form this directoy, this builds `libremote_server_lib.so` binaries and relocate them to `app/src/main/jniLibs`, see `RemoteServer.java` for more details of how these libs are loaded. It's important to note that web app is bundled in the remote server binary, and web app needs to be built from `client` directory with `yarn build` command, so it's best to use `yarn android:build:server` from client directory as it does both (builds web app and then build android remote server).
 
 Next step is to open this directory in Android Studio, this will engage gradle sync process (initialising pre-requisites etc.), if you get an error during 'sync' process Android Studio should outline the issue with suggested fix. Usually you will need to either set `ANDROID_SDK_ROOT` or add `sdk.dir` in `local.properties` file, and skd is usually located in `/Users/{user}/Library/Android/sdk/`. Pressing play (run) should restart sync process.
 
