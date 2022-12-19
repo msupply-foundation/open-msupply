@@ -34,21 +34,21 @@ mod graphql {
             "activityLogs": {
                 "nodes": [
                     {
-                        "datetime": "2020-01-01T00:00:00",
+                        "datetime": "2020-01-01T00:00:00+00:00",
                         "id": "log_a",
                         "type": "USER_LOGGED_IN",
                         "recordId": null,
                         "storeId": null,
                     },
                     {
-                        "datetime": "2020-01-01T00:00:00",
+                        "datetime": "2020-01-01T00:00:00+00:00",
                         "id": "log_b",
                         "type": "INVOICE_CREATED",
                         "recordId": "outbound_shipment_a",
                         "storeId": "store_b",
                     },
                     {
-                        "datetime": "2020-01-01T00:00:00",
+                        "datetime": "2020-01-01T00:00:00+00:00",
                         "id": "log_c",
                         "type": "INVOICE_STATUS_ALLOCATED",
                         "recordId": "inbound_shipment_a",
@@ -106,7 +106,7 @@ mod graphql {
                         "id": "log_b",
                         "type": "INVOICE_CREATED",
                         "recordId": "outbound_shipment_a",
-                        "datetime": "2020-01-01T00:00:00",
+                        "datetime": "2020-01-01T00:00:00+00:00",
                         "store": {
                             "id": "store_b"
                         },
