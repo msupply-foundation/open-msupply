@@ -1,6 +1,7 @@
-import React, { FC, ReactNode, useState } from 'react';
+import React, { FC, ReactNode, useState, useEffect } from 'react';
 import { TabContext } from '@mui/lab';
 import { Box } from '@mui/material';
+import { useDetailPanelStore } from '@common/hooks';
 import { LocaleKey, useTranslation } from '@common/intl';
 import { AppBarTabsPortal } from '../../portals';
 import { DetailTab } from './DetailTab';
@@ -16,6 +17,15 @@ interface DetailTabsProps {
 export const DetailTabs: FC<DetailTabsProps> = ({ tabs }) => {
   const [currentTab, setCurrentTab] = useState<string>(tabs[0]?.value ?? '');
   const t = useTranslation('common');
+
+  const { isOpen } = useDetailPanelStore();
+
+  // Ugly hack to force the "Underline" indicator for the currently active tab
+  // to re-render when the "More" details panel is expanded. See issue #777 for
+  // more detail.
+  useEffect(() => {
+    window.dispatchEvent(new Event('resize'));
+  }, [isOpen]);
 
   return (
     <TabContext value={currentTab}>
