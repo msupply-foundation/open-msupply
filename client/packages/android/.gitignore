@@ -94,7 +94,7 @@ lint/tmp/
 # capacitor-cordova-android-plugins
 
 # Copied web assets
-# commented out, easier to setup and bundle is not packaged, see README.md
+# commented out, easier to setup when bundle is not packaged, see README.md
 #app/src/main/assets/public
 
 # Server android build, see beuild_remote_server_libs.sh
