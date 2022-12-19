@@ -67,11 +67,11 @@ It's best to run `yarn android:build:release` from client directory to make sure
 
 ## Adding plugins
 
-Apart from usual local/packaged plugin setup for Capacitor, make sure to add plugin name to `onPageStarted` method in `ExtendedWebViewClient.java` (you can see what plugin names are available by using Android Studio debug and inspecting `bridge.plugins`).
+Apart from usual local/packaged plugin setup for Capacitor, make sure to add plugin name to `onPageStarted` method in `ExtendedWebViewClient.java` (you can see what plugin names are available by using Android Studio debug and inspecting `bridge.plugins`). See point 2. in Capacitor Modifications (below).
 
-Example of expanding local native functionality.
+Example of expanding local native functionality (TODO)
 
-## Capacitor modifications
+## Capacitor Modifications
 
 A few configuration/modifications were made to make sure we can serve Android bundle from the server rather then static bundle with the app (this allows upgrades to server to reflect in the android app when android app is connected as a client to external server, we would still need to upgrade android app when native functionality is added).
 
