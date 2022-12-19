@@ -9,6 +9,7 @@ import { withJsonFormsControlProps } from '@jsonforms/react';
 import {
   BasicTextInput,
   Box,
+  DateUtils,
   useTranslation,
 } from '@openmsupply-client/common';
 import {
@@ -113,7 +114,7 @@ const UIComponent = (props: ControlProps) => {
       new Date(previousEncounter.startDatetime).getTime();
 
     // Target pill count needed for the whole timespan from last till current encounter
-    const timeDiffDays = timeDiffMs / 1000 / 60 / 60 / 24;
+    const timeDiffDays = timeDiffMs / DateUtils.DAY;
     const targetPillCount = timeDiffDays * options.countPerDay;
 
     const status =
