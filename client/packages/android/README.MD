@@ -18,7 +18,7 @@ Debugging native code is straight forward, breakpoint in Android Studio and pres
 
 Debugging web app code is done by opening `chrome://inspect`, you should see Web View when app is running in emulator. When bundled is served from remote server (default setup), js bunlde is minimised and this makes debugging very hard, however we can run the bundle from webpack server by commenting out plugins section in `capacitor.config.ts` and entering your local ip in the debugUrl field and running `yarn apply-config`. Please make sure that you start front end server with `yarn start-local` from 'client' directory for this to work.
 
-Please note that when debugging with life reload, connections to a discovered server will always go through to the webpack server (regardless of which server is being selected).
+Please note that when debugging with live reload, connections to a discovered server will always go through to the webpack server (regardless of which server is being selected).
 
 When running android app in emulator, service discovery will not work outside of the emulator network, to test this you will need to run on a device.
 
