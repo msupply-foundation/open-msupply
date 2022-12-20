@@ -151,7 +151,7 @@ const validateFields = (
     const field = extractProperty(data, part.field);
     const fieldName =
       typeof part.field === 'string' ? part.field : part.field.join('.');
-    if (field === undefined || typeof field !== 'string' || field === '') {
+    if (field === undefined || field === '') {
       return `Missing required field: ${fieldName}`;
     }
   }
@@ -186,10 +186,10 @@ const valueFromPart = async (
   switch (part.type) {
     case 'Field': {
       const field = extractProperty(data, part.field);
-      if (field === undefined || typeof field !== 'string') {
+      if (field === undefined) {
         return undefined;
       }
-      return field;
+      return String(field);
     }
     case 'StoreCode': {
       return config.store?.code;

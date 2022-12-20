@@ -104,6 +104,11 @@
       "options": { "icon": "medicine" },
       "elements": [
         {
+          "scope": "#/properties/arvMedication/properties/quantityPrescribed",
+          "type": "PreviousEncounterField",
+          "label": "Pill Count after last Visit"
+        },
+        {
           "scope": "#/properties/arvMedication/properties/remainingPillCount",
           "type": "Control",
           "label": "Pill Count before Visit"
@@ -159,7 +164,7 @@
         },
         {
           "scope": "#/properties/arvMedication/properties/regimen",
-          "type": "PreviousEncounterText",
+          "type": "PreviousEncounterField",
           "label": "Current Regimen"
         },
         {
