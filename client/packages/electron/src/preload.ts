@@ -1,15 +1,15 @@
-import { ElectronAPI } from '@common/hooks';
+import { NativeAPI } from '@common/hooks';
 import { contextBridge, ipcRenderer } from 'electron';
 import { IPC_MESSAGES } from './shared';
 
-const electronAPI: ElectronAPI = {
+const electronNativeAPI: NativeAPI = {
   startServerDiscovery: () =>
     ipcRenderer.send(IPC_MESSAGES.START_SERVER_DISCOVERY),
   connectedServer: () => ipcRenderer.invoke(IPC_MESSAGES.CONNECTED_SERVER),
   connectToServer: server =>
     ipcRenderer.send(IPC_MESSAGES.CONNECT_TO_SERVER, server),
-  serverDiscovered: callback =>
-    ipcRenderer.on(IPC_MESSAGES.SERVER_DISCOVERED, callback),
+  discoveredServers: () => ipcRenderer.invoke(IPC_MESSAGES.DISCOVERED_SERVERS),
+  goBackToDiscovery: () => ipcRenderer.send(IPC_MESSAGES.GO_BACK_TO_DISCOVERY),
 };
 
-contextBridge.exposeInMainWorld('electronAPI', electronAPI);
+contextBridge.exposeInMainWorld('electronNativeAPI', electronNativeAPI);

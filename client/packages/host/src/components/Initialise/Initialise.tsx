@@ -10,6 +10,7 @@ import { LoginTextInput } from '../Login/LoginTextInput';
 import { InitialiseLayout } from './InitialiseLayout';
 import { useInitialiseForm } from './hooks';
 import { SyncProgress } from '../SyncProgress';
+import { SiteInfo } from '../SiteInfo';
 
 export const Initialise = () => {
   const t = useTranslation('app');
@@ -29,6 +30,7 @@ export const Initialise = () => {
     setUrl,
     siteCredentialsError: error,
     syncStatus,
+    siteName,
   } = useInitialiseForm();
 
   useEffect(() => {
@@ -103,6 +105,7 @@ export const Initialise = () => {
         /* onInitialise from layout only happens on form key event, form is disabled when isInitialising */
         if (isValid) await onInitialise();
       }}
+      SiteInfo={<SiteInfo siteName={siteName} />}
     />
   );
 };

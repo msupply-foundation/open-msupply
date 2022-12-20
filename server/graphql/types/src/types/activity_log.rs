@@ -1,5 +1,6 @@
 use async_graphql::{dataloader::DataLoader, *};
-use chrono::NaiveDateTime;
+use chrono::DateTime;
+use chrono::Utc;
 use graphql_core::{
     loader::{StoreByIdLoader, UserLoader},
     ContextExt,
@@ -64,8 +65,8 @@ impl ActivityLogNode {
         &self.row().record_id
     }
 
-    pub async fn datetime(&self) -> &NaiveDateTime {
-        &self.row().datetime
+    pub async fn datetime(&self) -> DateTime<Utc> {
+        DateTime::<Utc>::from_utc(self.row().datetime.clone(), Utc)
     }
 
     pub async fn event(&self) -> &Option<String> {

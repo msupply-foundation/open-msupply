@@ -1,0 +1,6 @@
+query initialisationStatus {
+  initialisationStatus {
+    status
+    siteName
+  }
+}

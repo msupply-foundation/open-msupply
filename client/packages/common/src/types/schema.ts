@@ -789,6 +789,12 @@ export type InboundInvoiceCounts = {
   created: InvoiceCountsSummary;
 };
 
+export type InitialisationStatusNode = {
+  __typename: 'InitialisationStatusNode';
+  siteName?: Maybe<Scalars['String']>;
+  status: InitialisationStatusType;
+};
+
 export enum InitialisationStatusType {
   Initialised = 'INITIALISED',
   Initialising = 'INITIALISING',
@@ -839,6 +845,7 @@ export type InsertInboundShipmentLineInput = {
   numberOfPacks: Scalars['Float'];
   packSize: Scalars['Int'];
   sellPricePerPack: Scalars['Float'];
+  tax?: InputMaybe<Scalars['Float']>;
   totalBeforeTax?: InputMaybe<Scalars['Float']>;
 };
 
@@ -934,6 +941,7 @@ export type InsertOutboundShipmentLineInput = {
   itemId: Scalars['String'];
   numberOfPacks: Scalars['Float'];
   stockLineId: Scalars['String'];
+  tax?: InputMaybe<Scalars['Float']>;
   totalBeforeTax?: InputMaybe<Scalars['Float']>;
 };
 
@@ -2129,7 +2137,7 @@ export type Queries = {
   authToken: AuthTokenResponse;
   displaySettings: DisplaySettingsNode;
   /** Available without authorisation in operational and initialisation states */
-  initialisationStatus: InitialisationStatusType;
+  initialisationStatus: InitialisationStatusNode;
   invoice: InvoiceResponse;
   invoiceByNumber: InvoiceResponse;
   invoiceCounts: InvoiceCounts;
@@ -3055,6 +3063,7 @@ export type UpdateInboundShipmentLineInput = {
   numberOfPacks?: InputMaybe<Scalars['Float']>;
   packSize?: InputMaybe<Scalars['Int']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']>;
+  tax?: InputMaybe<TaxInput>;
   totalBeforeTax?: InputMaybe<Scalars['Float']>;
 };
 
@@ -3163,6 +3172,7 @@ export type UpdateOutboundShipmentLineInput = {
   itemId?: InputMaybe<Scalars['String']>;
   numberOfPacks?: InputMaybe<Scalars['Float']>;
   stockLineId?: InputMaybe<Scalars['String']>;
+  tax?: InputMaybe<TaxInput>;
   totalBeforeTax?: InputMaybe<Scalars['Float']>;
 };
 
