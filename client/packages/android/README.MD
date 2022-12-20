@@ -80,7 +80,10 @@ Example of expanding local native functionality (TODO)
 A few configuration/modifications were made to make sure we can serve Android bundle from the server rather then static bundle with the app (this allows upgrades to server to reflect in the android app when android app is connected as a client to external server, we would still need to upgrade android app when native functionality is added).
 
 1. capacitor.config.ts (see comment in that file)
-2. Capacitor `proxies` fetches and tries to modify html files to include pre-requisite <scripts>, since this proxy is done manually using java.net.URL and our servers generate self signe certs, and error is thrown and pre requisite scripts are not inserted, `ExtendedWebViewClient` was created for that reason. [Discussion](https://github.com/ionic-team/capacitor/discussions/6166) was made on capacitor github to see if there is another way to overcome this.
+2. Capacitor `proxies` inject some pre-requisite <scripts> into the target webpage.
+Since the mSupply servers uses self signed certs, fetching the target webpage fails and the pre-requisite scripts are not inserted.
+For this reason `ExtendedWebViewClient` was created to manually inject the required <script> tags.
+[Discussion](https://github.com/ionic-team/capacitor/discussions/6166) was made on capacitor github to see if there is another way to overcome this.
 3. Base url is loaded manually in `handleOnStart()` method in `NativeApi.java` 
 
 ## Extra
