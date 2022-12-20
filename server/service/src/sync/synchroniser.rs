@@ -208,13 +208,13 @@ pub fn integrate_and_translate_sync_buffer(
             let sync_buffer = SyncBuffer::new(connection);
             let translation_and_integration =
                 TranslationAndIntegration::new(connection, &sync_buffer);
-            // Translate and integrate upserts (ordered by referencial database constraints)
+            // Translate and integrate upserts (ordered by referential database constraints)
             let upsert_sync_buffer_records =
                 sync_buffer.get_ordered_sync_buffer_records(SyncBufferAction::Upsert)?;
             let upsert_integration_result = translation_and_integration
                 .translate_and_integrate_sync_records(upsert_sync_buffer_records)?;
 
-            // Translate and integrate delete (ordered by referencial database constraints, in reverse)
+            // Translate and integrate delete (ordered by referential database constraints, in reverse)
             let delete_sync_buffer_records =
                 sync_buffer.get_ordered_sync_buffer_records(SyncBufferAction::Delete)?;
             let delete_integration_result = translation_and_integration
