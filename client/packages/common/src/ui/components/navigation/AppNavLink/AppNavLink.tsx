@@ -22,7 +22,7 @@ const useSelectedNavMenuItem = (
   // are selected. For example, the route /outbound-shipment/{id} should
   // highlight the nav menu item for outbound-shipments.
   // If the drawer is closed, highlight the higher level elements.
-  const highlightLowerLevels = !isOpen ? false : !end || to.endsWith('*');
+  const highlightLowerLevels = isOpen ? !end || to.endsWith('*') : false;
   // If we need to highlight the higher levels append a wildcard to the match path.
   const path = highlightLowerLevels ? to : `${to}/*`;
   const selected = useMatch({ path });
@@ -77,6 +77,7 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
   const drawer = useDrawer();
 
   const selected = useSelectedNavMenuItem(to, !!end, drawer.isOpen);
+  const isSelectedParentItem = inactive && !!useMatch({ path: `${to}/*` });
   const handleClick = () => {
     if (onClick) onClick();
     drawer.onClick();
@@ -127,7 +128,14 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
           <ListItemIcon sx={{ minWidth: 20 }}>{icon}</ListItemIcon>
           <Box className="navLinkText">
             <Box width={10} />
-            <ListItemText primary={text} />
+            <ListItemText
+              primary={text}
+              sx={
+                isSelectedParentItem
+                  ? { '& .MuiTypography-root': { fontWeight: 'bold' } }
+                  : {}
+              }
+            />
           </Box>
         </Badge>
       </ListItemButton>
