@@ -1,5 +1,9 @@
 {
   "type": "Categorization",
+  "omSupply": {
+    "some": "extra",
+    "data": 1
+  },
   "elements": [
     {
       "type": "Category",
@@ -309,6 +313,41 @@
         {
           "type": "Control",
           "scope": "#/properties/familyPlanning/properties/contraception"
+        }
+      ]
+    },
+    {
+      "type": "Category",
+      "label": "GBV",
+      "options": { "icon": "gender-based-violence" },
+      "elements": [
+        {
+          "type": "Control",
+          "scope": "#/properties/genderBasedViolence/properties/screened"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/genderBasedViolence/properties/type"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/genderBasedViolence/properties/referredForExternalServices"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/genderBasedViolence/properties/intimatePartnerViolence"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/genderBasedViolence/properties/rape"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/genderBasedViolence/properties/postServiceProvided"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/genderBasedViolence/properties/receivedServiceType"
         }
       ]
     },
