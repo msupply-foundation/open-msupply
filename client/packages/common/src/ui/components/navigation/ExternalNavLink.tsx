@@ -9,6 +9,7 @@ import {
   ListItemProps,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import { ExternalLinkIcon } from '@common/icons';
 
 const getListItemCommonStyles = () => ({
   height: 40,
@@ -79,7 +80,24 @@ export const ExternalNavLink: FC<ExternalNavLinkProps> = props => {
           <ListItemIcon sx={{ minWidth: 20 }}>{icon}</ListItemIcon>
           <Box className="navLinkText">
             <Box width={10} />
-            <ListItemText primary={text} />
+            <ListItemText
+              primary={
+                <>
+                  {text}
+                  <sup>
+                    <ExternalLinkIcon
+                      sx={{
+                        height: '16px',
+                        marginLeft: 2,
+                        stroke: theme => theme.palette.gray.main,
+                        strokeWidth: '1px',
+                        width: '16px',
+                      }}
+                    />
+                  </sup>
+                </>
+              }
+            />
           </Box>
         </ListItemButton>
       </StyledListItem>

@@ -24,6 +24,7 @@ import { DashboardIcon } from './Dashboard';
 import { DeleteIcon } from './Delete';
 import { DownloadIcon } from './Download';
 import { EditIcon } from './Edit';
+import { ExternalLinkIcon } from './ExternalLink';
 import { EyeIcon } from './Eye';
 import { EyeOffIcon } from './EyeOff';
 import { FilterIcon } from './Filter';
@@ -103,6 +104,7 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <DeleteIcon {...args} />, name: 'Delete' },
     { icon: <DownloadIcon {...args} />, name: 'Download' },
     { icon: <EditIcon {...args} />, name: 'Edit' },
+    { icon: <ExternalLinkIcon {...args} />, name: 'External Link' },
     { icon: <EyeIcon {...args} />, name: 'Eye' },
     { icon: <EyeOffIcon {...args} />, name: 'EyeOff' },
     { icon: <FilterIcon {...args} />, name: 'Filter' },
