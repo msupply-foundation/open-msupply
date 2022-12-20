@@ -11,7 +11,7 @@ import { useDebounceCallback, DateUtils } from '@openmsupply-client/common';
 import { get as extractProperty } from 'lodash';
 import { z } from 'zod';
 import _ from 'lodash';
-import { EncounterEvent } from './encounter_event';
+import { EncounterEvent } from './EncounterEvent';
 import { useZodOptionsValidation } from '../common';
 
 type OptionEvent = {

@@ -235,7 +235,9 @@ const UIComponent = (props: ControlProps) => {
   );
   const { mutateAsync: allocateNumber } = useDocument.utils.allocateNumber();
 
-  const { data: savedData } = useDocument.get.document(config.documentName);
+  const { data: savedData } = useDocument.get.documentByName(
+    config.documentName
+  );
 
   const { errors, options } = useZodOptionsValidation(
     GeneratorOptions,
