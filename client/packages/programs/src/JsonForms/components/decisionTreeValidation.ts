@@ -42,6 +42,8 @@ export const prepareTreeValidation = (
 };
 
 // Topologically sort the tree and return an error node if there is a circular dependency
+// Probably closed to Kahn's algorithm:
+// https://en.wikipedia.org/wiki/Topological_sorting
 export const topologicalSort = (
   root: string,
   nodes: Record<string, DecisionNode>,
