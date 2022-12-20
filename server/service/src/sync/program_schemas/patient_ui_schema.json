@@ -62,7 +62,7 @@
                       {
                         "type": "Field",
                         "field": "birthOrder",
-                        "mutations": [{ "firstNChars": 2 }, { "toUpperCase": true }]
+                        "mutations": [{ "firstNChars": 2 }, { "padString": "00" }]
                       },
                       {
                         "type": "Field",

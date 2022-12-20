@@ -51,6 +51,12 @@ const formatIfValid = (
   }
 ): string => (isValid(date) ? format(date, dateFormat, options) : '');
 
+// Time constants in [ms]
+const SECOND = 1000;
+const MINUTE = 60 * SECOND;
+const HOUR = 60 * MINUTE;
+const DAY = 24 * HOUR;
+
 export const DateUtils = {
   addMinutes,
   addDays,
@@ -78,6 +84,15 @@ export const DateUtils = {
   startOfDay,
   startOfYear,
   formatRFC3339,
+
+  /** Number of milliseconds in one second, i.e. SECOND = 1000*/
+  SECOND,
+  /** Number of milliseconds in one minute */
+  MINUTE,
+  /** Number of milliseconds in one hour */
+  HOUR,
+  /** Number of milliseconds in one day */
+  DAY,
 };
 
 const getLocale = (language: SupportedLocales) => {

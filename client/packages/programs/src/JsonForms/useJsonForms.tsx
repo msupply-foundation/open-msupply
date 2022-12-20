@@ -26,9 +26,9 @@ import {
   adherenceStatusTester,
 } from './components/AdherenceStatus';
 import {
-  PreviousEncounterTextField,
-  previousEncounterTextTester,
-} from './components/PreviousEncounterText';
+  PreviousEncounterField,
+  previousEncounterFieldTester,
+} from './components/PreviousEncounterField';
 import {
   DecisionTreeControl,
   decisionTreeTester,
@@ -89,7 +89,10 @@ const additionalRenderers: JsonFormsRendererRegistryEntry[] = [
   { tester: eventTriggerTester, renderer: EventTrigger },
   { tester: bmiTester, renderer: BMI },
   { tester: adherenceStatusTester, renderer: AdherenceStatus },
-  { tester: previousEncounterTextTester, renderer: PreviousEncounterTextField },
+  {
+    tester: previousEncounterFieldTester,
+    renderer: PreviousEncounterField,
+  },
   { tester: decisionTreeTester, renderer: DecisionTreeControl },
 ];
 

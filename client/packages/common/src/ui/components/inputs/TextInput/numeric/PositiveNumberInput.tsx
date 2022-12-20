@@ -17,7 +17,7 @@ export const PositiveNumberInput = React.forwardRef(
       disabled = false,
       value,
       min = 1,
-      max = Number.MAX_SAFE_INTEGER,
+      max = NumUtils.MAX_SAFE_API_INTEGER,
       onChange,
       ...rest
     }: PositiveNumberProps,
