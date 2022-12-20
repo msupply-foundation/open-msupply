@@ -434,6 +434,39 @@
             },
             {
               "type": "Group",
+              "label": "Notes",
+              "elements": [
+                {
+                  "type": "Control",
+                  "scope": "#/properties/notes",
+                  "itemLabel": "${index}: ${text}",
+                  "options": {
+                    "detail": {
+                      "type": "VerticalLayout",
+                      "elements": [
+                        {
+                          "type": "Control",
+                          "scope": "/properties/authorId"
+                        },
+                        {
+                          "type": "Control",
+                          "scope": "/properties/created",
+                          "options": {
+                            "readonly": true
+                          }
+                        },
+                        {
+                          "type": "Control",
+                          "scope": "/properties/text"
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "Group",
               "label": "Death",
               "elements": [
                 {
