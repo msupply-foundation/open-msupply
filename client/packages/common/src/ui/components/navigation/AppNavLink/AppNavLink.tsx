@@ -13,11 +13,16 @@ import { styled } from '@mui/material/styles';
 import { useMatch, Link } from 'react-router-dom';
 import { useDrawer } from '@common/hooks';
 
-const useSelectedNavMenuItem = (to: string, end: boolean): boolean => {
+const useSelectedNavMenuItem = (
+  to: string,
+  end: boolean,
+  isOpen: boolean
+): boolean => {
   // This nav menu item should be selected when lower level elements
   // are selected. For example, the route /outbound-shipment/{id} should
   // highlight the nav menu item for outbound-shipments.
-  const highlightLowerLevels = !end || to.endsWith('*');
+  // If the drawer is closed, highlight the higher level elements.
+  const highlightLowerLevels = !isOpen ? false : !end || to.endsWith('*');
   // If we need to highlight the higher levels append a wildcard to the match path.
   const path = highlightLowerLevels ? to : `${to}/*`;
   const selected = useMatch({ path });
@@ -71,7 +76,7 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
   } = props;
   const drawer = useDrawer();
 
-  const selected = useSelectedNavMenuItem(to, !!end);
+  const selected = useSelectedNavMenuItem(to, !!end, drawer.isOpen);
   const handleClick = () => {
     if (onClick) onClick();
     drawer.onClick();
