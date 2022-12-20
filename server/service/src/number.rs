@@ -3,6 +3,9 @@ use repository::{
     RequisitionRowRepository, RequisitionRowType, StocktakeRowRepository, StorageConnection,
 };
 
+/// Get next number for record type and store
+/// If number for record type and store exists in number table, increment it and return next number
+/// Otherwise find max number for record type and store, increment by one, add to number table and return it
 pub fn next_number(
     connection: &StorageConnection,
     r#type: &NumberRowType,
@@ -11,74 +14,38 @@ pub fn next_number(
     // Should be done in transaction
     let next_number = connection.transaction_sync(|connection_tx| {
         let repo = NumberRowRepository::new(&connection_tx);
-        let number = repo.find_one_by_type_and_store(r#type, store_id)?;
+        let number_exists = repo.find_one_by_type_and_store(r#type, store_id)?.is_some();
 
-        if number.is_some() {
+        if number_exists {
             let next_number = repo.get_next_number_for_type_and_store(r#type, store_id, None)?;
-            Ok(next_number.number)
-        } else {
-            match r#type {
-                NumberRowType::InboundShipment => {
-                    let find_number = InvoiceRowRepository::new(&connection_tx)
-                        .find_max_invoice_number(InvoiceRowType::InboundShipment, store_id)?
-                        .map(|n| n + 1);
-                    let next_number =
-                        repo.get_next_number_for_type_and_store(r#type, store_id, find_number)?;
+            return Ok(next_number.number);
+        };
 
-                    return Ok(next_number.number);
-                }
-                NumberRowType::OutboundShipment => {
-                    let find_number = InvoiceRowRepository::new(&connection_tx)
-                        .find_max_invoice_number(InvoiceRowType::OutboundShipment, store_id)?
-                        .map(|n| n + 1);
-                    let next_number =
-                        repo.get_next_number_for_type_and_store(r#type, store_id, find_number)?;
+        let max_number = match r#type {
+            NumberRowType::InboundShipment => InvoiceRowRepository::new(&connection_tx)
+                .find_max_invoice_number(InvoiceRowType::InboundShipment, store_id)?,
+            NumberRowType::OutboundShipment => InvoiceRowRepository::new(&connection_tx)
+                .find_max_invoice_number(InvoiceRowType::OutboundShipment, store_id)?,
+            NumberRowType::InventoryAdjustment => InvoiceRowRepository::new(&connection_tx)
+                .find_max_invoice_number(InvoiceRowType::InventoryAdjustment, store_id)?,
+            NumberRowType::RequestRequisition => RequisitionRowRepository::new(&connection_tx)
+                .find_max_requisition_number(RequisitionRowType::Request, store_id)?,
+            NumberRowType::ResponseRequisition => RequisitionRowRepository::new(&connection_tx)
+                .find_max_requisition_number(RequisitionRowType::Response, store_id)?,
+            NumberRowType::Stocktake => {
+                StocktakeRowRepository::new(&connection_tx).find_max_stocktake_number(store_id)?
+            }
+            NumberRowType::Program(_) => {
+                let next_number =
+                    repo.get_next_number_for_type_and_store(r#type, store_id, None)?;
+                return Ok(next_number.number);
+            }
+        };
 
-                    return Ok(next_number.number);
-                }
-                NumberRowType::InventoryAdjustment => {
-                    let find_number = InvoiceRowRepository::new(&connection_tx)
-                        .find_max_invoice_number(InvoiceRowType::InventoryAdjustment, store_id)?
-                        .map(|n| n + 1);
-                    let next_number =
-                        repo.get_next_number_for_type_and_store(r#type, store_id, find_number)?;
+        let max_next_number = max_number.map(|n| n + 1);
 
-                    return Ok(next_number.number);
-                }
-                NumberRowType::RequestRequisition => {
-                    let find_number = RequisitionRowRepository::new(&connection_tx)
-                        .find_max_requisition_number(RequisitionRowType::Request, store_id)?
-                        .map(|n| n + 1);
-                    let next_number =
-                        repo.get_next_number_for_type_and_store(r#type, store_id, find_number)?;
-
-                    return Ok(next_number.number);
-                }
-                NumberRowType::ResponseRequisition => {
-                    let find_number = RequisitionRowRepository::new(&connection_tx)
-                        .find_max_requisition_number(RequisitionRowType::Response, store_id)?
-                        .map(|n| n + 1);
-                    let next_number =
-                        repo.get_next_number_for_type_and_store(r#type, store_id, find_number)?;
-
-                    return Ok(next_number.number);
-                }
-                NumberRowType::Stocktake => {
-                    let find_number = StocktakeRowRepository::new(&connection_tx)
-                        .find_max_stocktake_number(store_id)?
-                        .map(|n| n + 1);
-                    let next_number =
-                        repo.get_next_number_for_type_and_store(r#type, store_id, find_number)?;
-
-                    return Ok(next_number.number);
-                }
-                NumberRowType::Program(_) => {
-                    let next_number =
-                        repo.get_next_number_for_type_and_store(r#type, store_id, None)?;
-                    return Ok(next_number.number);
-                }
-            };
-        }
+        repo.get_next_number_for_type_and_store(r#type, store_id, max_next_number)
+            .map(|r| r.number)
     })?;
     Ok(next_number)
 }
