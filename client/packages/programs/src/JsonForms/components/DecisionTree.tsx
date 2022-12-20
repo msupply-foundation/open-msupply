@@ -9,7 +9,7 @@ import { DocumentFragment, useEncounter, usePatient } from '../../api';
 import {
   prepareTreeValidation,
   topologicalSort,
-} from './decision_tree_validation';
+} from './decisionTreeValidation';
 
 /** The condition that should be evaluated on the specified field */
 export type Condition = {
