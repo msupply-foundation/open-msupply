@@ -1,7 +1,8 @@
-import { DecisionNode } from './DecisionTree';
+import { useMemo } from 'react';
+import { DecisionNode, Options } from './DecisionTree';
 
 // Collect node parents and collect all roots and missing nodes while doing that
-export const prepareTreeValidation = (
+const prepareTreeValidation = (
   nodes: Record<string, DecisionNode>
 ): {
   roots: string[];
@@ -44,7 +45,7 @@ export const prepareTreeValidation = (
 // Topologically sort the tree and return an error node if there is a circular dependency
 // Probably closed to Kahn's algorithm:
 // https://en.wikipedia.org/wiki/Topological_sorting
-export const topologicalSort = (
+const topologicalSort = (
   root: string,
   nodes: Record<string, DecisionNode>,
   parents: Record<string, string[]>
@@ -93,4 +94,44 @@ export const topologicalSort = (
     return { sortedNodes: [], errorNodes: Object.keys(parents) };
   }
   return { sortedNodes };
+};
+
+export const useDecisionTreeValidation = (
+  errors: string | undefined,
+  options: Options | undefined
+): { errors?: string; options?: Options } => {
+  return useMemo(() => {
+    if (errors || !options) {
+      return { errors, options };
+    }
+    const validationData = prepareTreeValidation(options.tree.nodes);
+    if (validationData.missingNodes.length > 0) {
+      return { errors: `Missing tree nodes: ${validationData.missingNodes}` };
+    }
+    if (validationData.roots.length === 0) {
+      return { errors: `No tree root found (circular dependency to root?)` };
+    }
+    if (validationData.roots.length > 1) {
+      return { errors: `Tree has multiple roots: ${validationData.roots}` };
+    }
+    if (validationData.roots[0] !== options.tree.root) {
+      return {
+        errors: `Invalid root: ${validationData.roots[0]} but ${options.tree.root} expected`,
+      };
+    }
+
+    /** Do a topological sort to detect circular dependencies */
+    const { errorNodes } = topologicalSort(
+      options.tree.root,
+      options.tree.nodes,
+      validationData.parents
+    );
+    if (errorNodes) {
+      return {
+        errors: `Circular dependency detected for node(s): ${errorNodes}`,
+      };
+    }
+
+    return { options };
+  }, [errors, options]);
 };

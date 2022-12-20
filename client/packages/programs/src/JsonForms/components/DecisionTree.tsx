@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect } from 'react';
 import { rankWith, uiTypeIs, ControlProps } from '@jsonforms/core';
 import { useJsonForms, withJsonFormsControlProps } from '@jsonforms/react';
 import { DetailInputWithLabelRow } from '@openmsupply-client/common';
@@ -6,10 +6,7 @@ import { FORM_LABEL_WIDTH, useZodOptionsValidation } from '../common';
 import { z } from 'zod';
 import { get as extractProperty } from 'lodash';
 import { DocumentFragment, useEncounter, usePatient } from '../../api';
-import {
-  prepareTreeValidation,
-  topologicalSort,
-} from './decisionTreeValidation';
+import { useDecisionTreeValidation } from './useDecisionTreeValidation';
 
 /** The condition that should be evaluated on the specified field */
 export type Condition = {
@@ -45,14 +42,14 @@ export type DecisionNode = {
   branches?: DecisionBranch[];
 };
 
-type DecisionTree = {
+export type DecisionTree = {
   /** The id of the root node */
   root: string;
   /** All nodes in the tree, nodes can refer other nodes int this record */
   nodes: Record<string, DecisionNode>;
 };
 
-type Options = {
+export type Options = {
   /**
    * The base path within the full data object.
    * Tree nodes refer to fields based on the basePath.
@@ -180,53 +177,13 @@ const evaluateDecisionTree = (
   }
 };
 
-const useTreeValidation = (
-  errors: string | undefined,
-  options: Options | undefined
-): { errors?: string; options?: Options } => {
-  return useMemo(() => {
-    if (errors || !options) {
-      return { errors, options };
-    }
-    const validationData = prepareTreeValidation(options.tree.nodes);
-    if (validationData.missingNodes.length > 0) {
-      return { errors: `Missing tree nodes: ${validationData.missingNodes}` };
-    }
-    if (validationData.roots.length === 0) {
-      return { errors: `No tree root found (circular dependency to root?)` };
-    }
-    if (validationData.roots.length > 1) {
-      return { errors: `Tree has multiple roots: ${validationData.roots}` };
-    }
-    if (validationData.roots[0] !== options.tree.root) {
-      return {
-        errors: `Invalid root: ${validationData.roots[0]} but ${options.tree.root} expected`,
-      };
-    }
-
-    /** Do a topological sort to detect circular dependencies */
-    const { errorNodes } = topologicalSort(
-      options.tree.root,
-      options.tree.nodes,
-      validationData.parents
-    );
-    if (errorNodes) {
-      return {
-        errors: `Circular dependency detected for node(s): ${errorNodes}`,
-      };
-    }
-
-    return { options };
-  }, [errors, options]);
-};
-
 const UIComponent = (props: ControlProps) => {
   const { data, handleChange, label, visible, uischema, path } = props;
   const { errors: zodErrors, options: zodOptions } = useZodOptionsValidation(
     Options,
     uischema.options
   );
-  const { errors, options } = useTreeValidation(zodErrors, zodOptions);
+  const { errors, options } = useDecisionTreeValidation(zodErrors, zodOptions);
 
   const { core } = useJsonForms();
 
