@@ -13,7 +13,7 @@ export const TimePickerInput: FC<
         const textInputProps: StandardTextFieldProps = {
           ...params,
           variant: 'standard',
-          sx: { width: '120px', ...params.sx },
+          sx: { width: '150px', ...params.sx },
         };
         return (
           <BasicTextInput disabled={!!props.disabled} {...textInputProps} />
