@@ -9,6 +9,7 @@ import {
   DatePickerInput,
   DateUtils,
   TimePickerInput,
+  UserIcon,
 } from '@openmsupply-client/common';
 import { EncounterFragment, useEncounter } from '../api';
 
@@ -43,8 +44,25 @@ export const Toolbar: FC<ToolbarProps> = ({ onChange }) => {
         flexDirection="row"
         display="flex"
         flex={1}
-        alignItems="flex-end"
+        alignItems="center"
       >
+        <Grid
+          item
+          sx={{
+            alignItems: 'center',
+            backgroundColor: 'background.menu',
+            borderRadius: '50%',
+            display: 'flex',
+            height: '100px',
+            justifyContent: 'center',
+            marginRight: 2,
+            width: '100px',
+          }}
+        >
+          <Box>
+            <UserIcon fontSize="large" style={{ flex: 1 }} />
+          </Box>
+        </Grid>
         <Grid item display="flex" flex={1}>
           <Box display="flex" flex={1} flexDirection="column" gap={0.5}>
             <Row
