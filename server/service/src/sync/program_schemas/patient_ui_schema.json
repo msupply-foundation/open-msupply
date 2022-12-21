@@ -282,11 +282,13 @@
                           "elements": [
                             {
                               "type": "Control",
-                              "scope": "/properties/address1"
+                              "scope": "/properties/address1",
+                              "options": { "rows": 3 }
                             },
                             {
                               "type": "Control",
-                              "scope": "/properties/address2"
+                              "scope": "/properties/address2",
+                              "options": { "rows": 3 }
                             },
                             {
                               "type": "Control",

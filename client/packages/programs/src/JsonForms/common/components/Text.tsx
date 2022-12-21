@@ -10,25 +10,32 @@ import { FORM_LABEL_WIDTH } from '../styleConstants';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../useZodOptionsValidation';
 
-type Options = {
-  /**
-   * Additional pattern to be matched that can be defined in ui schema
-   */
-  pattern?: string;
-  /**
-   * Examples for the correct pattern
-   */
-  examples?: string[];
-  width?: string;
-};
-const Options: z.ZodType<Options | undefined> = z
+const Options = z
   .object({
+    /**
+     * Additional pattern to be matched that can be defined in ui schema
+     */
     pattern: z.string().optional(),
+    /**
+     * Examples for the correct pattern
+     */
     examples: z.array(z.string()).optional(),
     width: z.string().optional(),
+    /**
+     * If true, text input will expand to multiple lines if required (default:
+     * true)
+     */
+    multiline: z.boolean().optional(),
+    /**
+     * How many rows should the textbox display initially (default: 1, ignored
+     * if `multiline === false`)
+     */
+    rows: z.number().optional(),
   })
   .strict()
   .optional();
+
+type Options = z.infer<typeof Options>;
 
 // Validates the option and parses the pattern into RegEx
 const useOptions = (
@@ -147,6 +154,8 @@ const UIComponent = (props: ControlProps) => {
   }
 
   const width = schemaOptions?.width ?? '100%';
+  const multiline = schemaOptions?.multiline !== false;
+  const rows = schemaOptions?.rows;
 
   return (
     <DetailInputWithLabelRow
@@ -166,6 +175,8 @@ const UIComponent = (props: ControlProps) => {
           ? { sx: { color: 'error.main' } }
           : undefined,
         required: props.required,
+        multiline,
+        rows,
       }}
       labelWidthPercentage={FORM_LABEL_WIDTH}
       inputAlignment={'start'}
