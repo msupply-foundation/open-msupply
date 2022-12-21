@@ -21,11 +21,15 @@ const Options = z
      */
     examples: z.array(z.string()).optional(),
     width: z.string().optional(),
-    // If true, text input will expand to multiple lines if required
+    /**
+     * If true, text input will expand to multiple lines if required (default:
+     * true)
+     */
     multiline: z.boolean().optional(),
-    /*
-    How many rows should the textbox display initially (default: 1)
-    */
+    /**
+     * How many rows should the textbox display initially (default: 1, ignored
+     * if `multiline === false`)
+     */
     rows: z.number().optional(),
   })
   .strict()
