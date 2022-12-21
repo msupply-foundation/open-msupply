@@ -30,6 +30,7 @@ import {
   ChevronDownIcon,
   useTranslation,
   ConfirmationModal,
+  useAppTheme,
 } from '@openmsupply-client/common';
 import { RegexUtils } from '@common/utils';
 import {
@@ -123,6 +124,7 @@ const EnumArrayComponent: FC<EnumArrayControlCustomProps> = ({
 }) => {
   const t = useTranslation('common');
   const [removeIndex, setRemoveIndex] = useState<number | undefined>();
+  const theme = useAppTheme();
 
   if (!visible) {
     return null;
@@ -151,15 +153,14 @@ const EnumArrayComponent: FC<EnumArrayControlCustomProps> = ({
               '& .MuiInput-root': {
                 borderRadius: '8px',
                 height: '100%',
-                backgroundColor: 'background.menu',
+                backgroundColor: theme.palette.background.menu,
                 padding: '5px',
               },
               '& .MuiInput-root:before': {
                 border: 'none',
               },
               '& .MuiInput-root:after': {
-                color: 'gray.dark',
-                borderBottomColor: 'secondary.main',
+                color: theme.palette.gray.dark,
               },
               '& .MuiInput-root:focus:before': {
                 borderRadius: '8px 8px 0px 0px',
@@ -168,12 +169,12 @@ const EnumArrayComponent: FC<EnumArrayControlCustomProps> = ({
                 borderRadius: '8px 8px 0px 0px',
               },
               '& .MuiChip-root': {
-                backgroundColor: 'secondary.light',
+                backgroundColor: theme.palette.secondary.light,
                 height: 'inherit',
-                color: theme => theme.typography.login.color,
+                color: theme.typography.login.color,
               },
               '& .MuiChip-deleteIcon': {
-                color: theme => `${theme.palette.background.white} !important`,
+                color: `${theme.palette.background.white} !important`,
               },
             }}
             value={data}
