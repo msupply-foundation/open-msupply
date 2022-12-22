@@ -1,9 +1,9 @@
 use chrono::{DateTime, Duration, NaiveDateTime, Utc};
-use repository::{Document, RepositoryError, TransactionError};
+use repository::RepositoryError;
 use serde_json::{Map, Value};
 
 use crate::{
-    document::{document_service::DocumentInsertError, raw_document::RawDocument},
+    document::raw_document::RawDocument,
     service_provider::{ServiceContext, ServiceProvider},
 };
 
@@ -13,12 +13,8 @@ use super::{
 };
 
 pub enum UpdateProgramDocumentError {
-    NotAllowedToMutateDocument,
-    InvalidDataSchema(Vec<String>),
     DatabaseError(RepositoryError),
     InternalError(String),
-    DataSchemaDoesNotExist,
-    InvalidParentId,
 }
 
 fn extract_events(
@@ -26,7 +22,7 @@ fn extract_events(
     service_provider: &ServiceProvider,
     base_time: NaiveDateTime,
     doc: &RawDocument,
-    allowed_docs: &Vec<String>,
+    allowed_docs: &[String],
 ) -> Result<Vec<EventInput>, UpdateProgramDocumentError> {
     let Some(registry_entries) = service_provider
         .document_registry_service
@@ -121,65 +117,37 @@ fn extract_events(
 }
 
 /// * `base_time` - the document time, e.g. for encounters it's the start_datetime
-pub fn update_program_document(
+pub fn update_program_events(
     ctx: &ServiceContext,
     service_provider: &ServiceProvider,
     patient_id: &str,
     base_time: NaiveDateTime,
     previous_base_time: Option<NaiveDateTime>,
-    doc: RawDocument,
-    allowed_docs: Vec<String>,
-) -> Result<Document, UpdateProgramDocumentError> {
-    ctx.connection
-        .transaction_sync(|_| {
-            let event_inputs =
-                extract_events(ctx, service_provider, base_time, &doc, &allowed_docs)?;
-            if let Some(previous_base_time) = previous_base_time {
-                // the base time has changed, remove all events for the old base time
-                // Example of the problem, if the previous_base_time was accidentally set a year
-                // into the future and is than fixed, old event from the previous_base_time would
-                // take precedence for a long time.
-                if previous_base_time != base_time {
-                    service_provider.program_event_service.upsert_events(
-                        ctx,
-                        patient_id.to_string(),
-                        base_time,
-                        vec![],
-                    )?;
-                }
-            }
+    doc: &RawDocument,
+    allowed_docs: &[String],
+) -> Result<(), UpdateProgramDocumentError> {
+    let event_inputs = extract_events(ctx, service_provider, base_time, &doc, allowed_docs)?;
+    if let Some(previous_base_time) = previous_base_time {
+        // the base time has changed, remove all events for the old base time
+        // Example of the problem, if the previous_base_time was accidentally set a year
+        // into the future and is than fixed, old event from the previous_base_time would
+        // take precedence for a long time.
+        if previous_base_time != base_time {
             service_provider.program_event_service.upsert_events(
                 ctx,
                 patient_id.to_string(),
                 base_time,
-                event_inputs,
+                vec![],
             )?;
-            let result = service_provider
-                .document_service
-                .update_document(ctx, doc, &allowed_docs)
-                .map_err(|err| match err {
-                    DocumentInsertError::NotAllowedToMutateDocument => {
-                        UpdateProgramDocumentError::NotAllowedToMutateDocument
-                    }
-                    DocumentInsertError::InvalidDataSchema(err) => {
-                        UpdateProgramDocumentError::InvalidDataSchema(err)
-                    }
-                    DocumentInsertError::DatabaseError(err) => {
-                        UpdateProgramDocumentError::DatabaseError(err)
-                    }
-                    DocumentInsertError::InternalError(err) => {
-                        UpdateProgramDocumentError::InternalError(err)
-                    }
-                    DocumentInsertError::DataSchemaDoesNotExist => {
-                        UpdateProgramDocumentError::DataSchemaDoesNotExist
-                    }
-                    DocumentInsertError::InvalidParent(_) => {
-                        UpdateProgramDocumentError::InvalidParentId
-                    }
-                })?;
-            Ok(result)
-        })
-        .map_err(|err: TransactionError<UpdateProgramDocumentError>| err.to_inner_error())
+        }
+    }
+    service_provider.program_event_service.upsert_events(
+        ctx,
+        patient_id.to_string(),
+        base_time,
+        event_inputs,
+    )?;
+    Ok(())
 }
 
 fn is_truthy(value: &Value) -> bool {
