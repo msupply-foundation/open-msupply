@@ -1,5 +1,5 @@
 use chrono::{DateTime, Duration, NaiveDateTime, Utc};
-use repository::RepositoryError;
+use repository::{Condition, EventConfig, RepositoryError, Target};
 use serde_json::{Map, Value};
 
 use crate::{
@@ -7,10 +7,7 @@ use crate::{
     service_provider::{ServiceContext, ServiceProvider},
 };
 
-use super::{
-    program_event::EventInput,
-    program_event_config::{deserialize_config, Condition, Config, Target},
-};
+use super::program_event::EventInput;
 
 pub enum UpdateProgramDocumentError {
     DatabaseError(RepositoryError),
@@ -29,18 +26,14 @@ fn extract_events(
         .get_entries_by_doc_type(ctx, vec![doc.r#type.clone()], allowed_docs)?
         .pop() else { return Ok(vec![])};
 
-    let Some(ui_schema) = registry_entries.ui_schema.as_object() else {
+    let Some(config) = registry_entries.config else {
         return Ok(vec![])
     };
-    let Some(config_list) = deserialize_config(ui_schema)
-        .map_err(|err| UpdateProgramDocumentError::InternalError(format!("Failed to deserialize event config: {:?}", err)))? else {
-            return Ok(vec![]);
-        };
 
     let mut output = vec![];
-    for config in config_list {
+    for config in config.events {
         match config {
-            Config::Schedule(schedule_config) => {
+            EventConfig::Schedule(schedule_config) => {
                 if !match_all_conditions(schedule_config.conditions, doc) {
                     continue;
                 }
@@ -90,7 +83,7 @@ fn extract_events(
                     name: data,
                 });
             }
-            Config::Field(field_config) => {
+            EventConfig::Field(field_config) => {
                 if !match_all_conditions(field_config.conditions, doc) {
                     continue;
                 }
