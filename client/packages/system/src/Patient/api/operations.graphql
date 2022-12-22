@@ -18,8 +18,8 @@ fragment PatientRow on PatientNode {
 
 fragment ProgramEvent on ProgramEventNode {
   activeDatetime
-  name
   type
+  data
 }
 
 fragment ProgramEnrolmentRow on ProgramEnrolmentNode {

@@ -11,7 +11,7 @@ import { EncounterProgramEventFragment } from '../api/operations.generated';
 
 const encounterEventCellValue = (events: EncounterProgramEventFragment[]) => {
   // just take the name of the first event
-  return events[0]?.name ?? '';
+  return events[0]?.data ?? '';
 };
 
 interface useEncounterListColumnsProps {

@@ -2698,10 +2698,10 @@ export type ProgramEventFilterInput = {
 export type ProgramEventNode = {
   __typename: 'ProgramEventNode';
   activeDatetime: Scalars['DateTime'];
+  data?: Maybe<Scalars['String']>;
   datetime: Scalars['DateTime'];
   documentName?: Maybe<Scalars['String']>;
   documentType: Scalars['String'];
-  name?: Maybe<Scalars['String']>;
   patientId?: Maybe<Scalars['String']>;
   type: Scalars['String'];
 };

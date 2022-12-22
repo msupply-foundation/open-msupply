@@ -201,7 +201,7 @@ pub trait ProgramEventServiceTrait: Sync + Send {
                             document_type: target.document_type.clone(),
                             document_name: target.document_name.clone(),
                             r#type: target.r#type.clone(),
-                            name: it.name,
+                            data: it.name,
                         })
                         .collect::<Vec<_>>();
                     // adjust end times within the stack
@@ -253,7 +253,7 @@ mod test {
             let mut actual_names = events
                 .rows
                 .iter()
-                .map(|it| it.name.clone().unwrap())
+                .map(|it| it.data.clone().unwrap())
                 .collect::<Vec<_>>();
             actual_names.sort();
             assert_eq!(expected, actual_names);
