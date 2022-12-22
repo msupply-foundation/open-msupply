@@ -319,7 +319,10 @@
     {
       "type": "Category",
       "label": "GBV",
-      "options": { "icon": "gender-based-violence" },
+      "options": {
+        "title": "Gender Based Violence",
+        "icon": "gender-based-violence"
+      },
       "elements": [
         {
           "type": "Control",
