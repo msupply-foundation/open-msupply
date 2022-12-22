@@ -218,7 +218,7 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
       store,
       token,
       user: {
-        id: '',
+        id: userDetails?.userId ?? '',
         name: username,
         permissions,
       },

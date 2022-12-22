@@ -440,26 +440,16 @@
               "elements": [
                 {
                   "type": "Control",
+                  "label": "Patient Notes",
                   "scope": "#/properties/notes",
-                  "itemLabel": "${index}: ${text}",
+                  "itemLabel": "Testing",
                   "options": {
                     "detail": {
                       "type": "VerticalLayout",
                       "elements": [
                         {
-                          "type": "Control",
-                          "scope": "/properties/authorId"
-                        },
-                        {
-                          "type": "Control",
-                          "scope": "/properties/created",
-                          "options": {
-                            "readonly": true
-                          }
-                        },
-                        {
-                          "type": "Control",
-                          "scope": "/properties/text"
+                          "type": "Note",
+                          "scope": "/properties"
                         }
                       ]
                     }
