@@ -33,6 +33,7 @@ import {
   DecisionTreeControl,
   decisionTreeTester,
 } from './components/DecisionTree';
+import { Note, noteTester } from './components/Note';
 
 // https://stackoverflow.com/questions/57874879/how-to-treat-missing-undefined-properties-as-equivalent-in-lodashs-isequalwit
 // TODO: handle undefined and empty string as equal? e.g. initial data is undefined and current data is ""
@@ -94,6 +95,7 @@ const additionalRenderers: JsonFormsRendererRegistryEntry[] = [
     renderer: PreviousEncounterField,
   },
   { tester: decisionTreeTester, renderer: DecisionTreeControl },
+  { tester: noteTester, renderer: Note },
 ];
 
 export const useJsonForms = (
