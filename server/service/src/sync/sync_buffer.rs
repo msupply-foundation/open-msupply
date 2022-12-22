@@ -68,8 +68,8 @@ impl<'a> SyncBuffer<'a> {
         &self,
         action: SyncBufferAction,
     ) -> Result<Vec<SyncBufferRow>, RepositoryError> {
-        // Get ordered table names, for  upsert we sort in referencial constraint order
-        // and for delete in reverse of referencial constraint order
+        // Get ordered table names, for  upsert we sort in referential constraint order
+        // and for delete in reverse of referential constraint order
         let ordered_table_names = TRANSLATION_AND_INTEGRATION_ORDER.iter().map(|r| *r);
         let order: Vec<&str> = match action {
             SyncBufferAction::Upsert => ordered_table_names.collect(),
