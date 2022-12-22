@@ -5,14 +5,16 @@ import { Capacitor } from '@capacitor/core';
 import { GlobalStyles } from '@mui/material';
 import { useNotification } from '../hooks/useNotification';
 import { useTranslation } from '@common/intl';
-import { Gs1Barcode, parseBarcode } from 'gs1-barcode-parser-mod';
+import { parseBarcode } from 'gs1-barcode-parser-mod';
+import { Formatter } from './formatters';
 
 const SCAN_TIMEOUT_IN_MS = 5000;
 
 export interface ScanResult {
-  hasContent: boolean;
+  batch?: string;
   content?: string;
-  gs1?: Gs1Barcode;
+  expiryDate?: string | null;
+  gtin?: string;
 }
 interface BarcodeScannerControl {
   hasBarcodeScanner: boolean;
@@ -24,7 +26,7 @@ interface BarcodeScannerControl {
 const BarcodeScannerContext = createContext<BarcodeScannerControl>({
   hasBarcodeScanner: false,
   isScanning: false,
-  startScan: async () => ({ hasContent: false }),
+  startScan: async () => ({}),
   stopScan: () => {},
 });
 
@@ -38,12 +40,25 @@ const parseBarcodeData = (data: number[] | undefined) => {
     .reduce((barcode, curr) => barcode + String.fromCharCode(curr), '');
 };
 
-const parseGs1 = (barcode?: string) => {
-  if (!barcode) return undefined;
+const parseResult = (content?: string): ScanResult => {
+  if (!content) return {};
   try {
-    return parseBarcode(barcode);
+    const gs1 = parseBarcode(content);
+    const gtin = gs1?.parsedCodeItems?.find(item => item.ai === '01')
+      ?.data as string;
+    const batch = gs1?.parsedCodeItems?.find(item => item.ai === '10')
+      ?.data as string;
+    const expiry = gs1?.parsedCodeItems.find(item => item.ai === '17')
+      ?.data as Date;
+
+    return {
+      batch,
+      content,
+      expiryDate: expiry ? Formatter.naiveDate(expiry) : undefined,
+      gtin,
+    };
   } catch {
-    return undefined;
+    return {};
   }
 };
 
@@ -78,11 +93,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
         const barcode = parseBarcodeData(data);
         clearTimeout(timeout);
         setIsScanning(false);
-        return {
-          hasContent: true,
-          gs1: parseGs1(barcode),
-          content: barcode,
-        };
+        return parseResult(barcode);
       } catch (e) {
         error(t('error.unable-to-read-barcode'))();
         clearTimeout(timeout);
@@ -100,11 +111,11 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
       clearTimeout(timeout);
       setIsScanning(false);
       BarcodeScanner.showBackground();
-      const { hasContent, content } = result;
-      return { hasContent, content, gs1: parseGs1(content) };
+      const { content } = result;
+      return parseResult(content);
     }
 
-    return { hasContent: false };
+    return {};
   };
 
   const stopScan = () => {

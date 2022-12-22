@@ -46,19 +46,13 @@ export const StockLineForm: FC<StockLineFormProps> = ({ draft, onUpdate }) => {
 
   const scanBarcode = async () => {
     const result = await startScan();
-    if (result.hasContent) {
-      const { content, gs1 } = result;
-      const gtin = gs1?.parsedCodeItems?.find(item => item.ai === '01')
-        ?.data as string;
-      const batch = gs1?.parsedCodeItems?.find(item => item.ai === '10')
-        ?.data as string;
-      const expiry = gs1?.parsedCodeItems.find(item => item.ai === '17')
-        ?.data as Date;
+    if (!!result.content) {
+      const { batch, content, expiryDate, gtin } = result;
       const barcode = gtin ?? content;
       const draft = {
         barcode,
         batch,
-        expiryDate: expiry ? Formatter.naiveDate(expiry) : undefined,
+        expiryDate,
       };
 
       onUpdate(draft);
