@@ -1,15 +1,15 @@
 # Program Practitioners
 
 - _Date_: 2022-12-12
-- _Deciders_:
-- _Status_:
-- _Outcome_:
+- _Deciders_: Chris, Clemens, Mark
+- _Status_: DECIDED
+- _Outcome_: Option 1
 
 ## Context
 
 Program encounters need to store the practitioner who actually saw a patient.
-The practitioner is not necessarily the currently logged in user, e.g. a data clerk could enter an encounter on behave of a practitioner.
-Furthermore, for the UI it would be nice to have a drop down list of existing practitioners.
+The practitioner is not necessarily the currently logged-in user, e.g. a data clerk could enter an encounter on behalf of a practitioner.
+Furthermore, for the UI it would be nice to have a dropdown list of existing practitioners.
 
 Currently there is also no way to figure out if a user is a practitioner or just a normal mSupply user.
 If a user is a practitioner the users should be used as a default practitioner for a new encounter.
@@ -19,8 +19,12 @@ If a user is a practitioner the users should be used as a default practitioner f
 ### Option 1
 
 Use existing `clinician` table to manage clinicians.
-What missing is the ability to map a user to a clinician entry (to be able find the clinician entry of the currently logged in user).
-Could the `clinician.code` column be used? or better a new `clinician.user_id` column?
+What missing is the ability to map a user to a clinician entry (to be able to find the clinician entry of the currently logged-in user).
+This could be done by creating a link between the clinician to the user table.
+
+Note:
+If a clinician works on multiple sites, we'd likely want to sync both their user and clinician records to the site in some manner.
+Otherwise, a limitation of clinicians and users created centrally might be worth noting as a con here (some might say this is desirable wink).
 
 _Cons:_
 
