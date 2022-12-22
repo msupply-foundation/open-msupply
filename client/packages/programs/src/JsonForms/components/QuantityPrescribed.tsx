@@ -21,7 +21,6 @@ import {
 } from '../common';
 import { get as extractProperty } from 'lodash';
 import { z } from 'zod';
-import { EncounterEvent } from './EncounterEvent';
 
 type OptionEvent = {
   scheduleIn: {
@@ -39,16 +38,15 @@ type Options = {
    * If not specified it is set to one.
    */
   quantityPerDay?: number;
-  /** Field name of the target data field */
-  targetField: string;
+  /** Field name of the target quantity prescribed field */
+  quantityPrescribedField: string;
+  /** Field name of the target end of supply field */
+  endOfSupplyField: string;
   /**
    * Field name of a datetime value in the data. This field is used as the base datetime to
    * calculate the datetime when the patient runs out of medicine: baseDatetime + daysDispensed.
    */
   baseDatetimeField: string;
-  /** For testing: schedule an event now instead based on the baseDatetimeField */
-  scheduleEventsNow?: boolean;
-  events: OptionEvent[];
 };
 
 const OptionEvent: z.ZodType<OptionEvent> = z
@@ -66,35 +64,11 @@ const OptionEvent: z.ZodType<OptionEvent> = z
 const Options: z.ZodType<Options> = z
   .object({
     quantityPerDay: z.number().optional(),
-    targetField: z.string(),
+    quantityPrescribedField: z.string(),
+    endOfSupplyField: z.string(),
     baseDatetimeField: z.string(),
-    scheduleEventsNow: z.boolean().optional(),
-    events: z.array(OptionEvent),
   })
   .strict();
-
-const QUANTITY_PRESCRIBED_GROUP = 'QuantityPrescribed';
-const scheduleEvent = (
-  event: OptionEvent,
-  baseDatetime: Date
-): EncounterEvent => {
-  const datetimeDays = DateUtils.addDays(
-    baseDatetime,
-    event.scheduleIn?.days ?? 0
-  );
-  const datetime = DateUtils.addMinutes(
-    datetimeDays,
-    event.scheduleIn?.minutes ?? 0
-  );
-
-  return {
-    activeDatetime: datetime.toISOString(),
-    documentType: event.documentType,
-    group: QUANTITY_PRESCRIBED_GROUP,
-    name: event.name,
-    type: event.type,
-  };
-};
 
 export const quantityPrescribedTester = rankWith(
   10,
@@ -131,31 +105,19 @@ const UIComponent = (props: ControlProps) => {
       if (!options) {
         return;
       }
-
-      const fullPath = composePaths(path, options.targetField);
-      handleChange(fullPath, value);
-
-      const existingEvents: EncounterEvent[] =
-        extractProperty(data, 'events') ?? [];
-
       if (baseTime === undefined) {
         throw Error('Unexpected error');
       }
-      // Remove existing events for the group
-      const events = existingEvents.filter(
-        it => it.group !== QUANTITY_PRESCRIBED_GROUP
-      );
-      if (value > 0) {
-        const scheduleStartTime = options.scheduleEventsNow
-          ? new Date()
-          : getEndOfSupply(baseTime, value, options);
-        events.push(
-          ...options.events.map(e => scheduleEvent(e, scheduleStartTime))
-        );
-      }
 
-      const eventsPath = composePaths(path, 'events');
-      handleChange(eventsPath, events);
+      const fullPath = composePaths(path, options.quantityPrescribedField);
+      handleChange(fullPath, value);
+
+      const scheduleStartTime =
+        value > 0 ? getEndOfSupply(baseTime, value, options) : undefined;
+      handleChange(
+        composePaths(path, options.endOfSupplyField),
+        scheduleStartTime?.toISOString()
+      );
     },
     [path, options, baseTime]
   );
@@ -163,7 +125,9 @@ const UIComponent = (props: ControlProps) => {
 
   useEffect(() => {
     if (options) {
-      setLocalData(extractProperty(data, options.targetField) ?? undefined);
+      setLocalData(
+        extractProperty(data, options.quantityPrescribedField) ?? undefined
+      );
     }
   }, [data, options]);
   useEffect(() => {
