@@ -101,6 +101,7 @@ mod tests {
                 json_schema: json!({}),
                 ui_schema_type: "type".to_string(),
                 ui_schema: json!({}),
+                config: None,
             })
         );
 
@@ -128,6 +129,7 @@ mod tests {
                 json_schema: json!({}),
                 ui_schema_type: "type".to_string(),
                 ui_schema: json!({}),
+                config: None,
             })
         );
 

@@ -139,6 +139,8 @@ const HIV_CARE_ENCOUNTER_SCHEMA: &'static str =
     std::include_str!("./program_schemas/hiv_care_encounter.json");
 const HIV_CARE_ENCOUNTER_UI_SCHEMA: &'static str =
     std::include_str!("./program_schemas/hiv_care_encounter_ui_schema.json");
+const HIV_CARE_ENCOUNTER_CONFIG: &'static str =
+    std::include_str!("./program_schemas/hiv_care_encounter_config.json");
 
 const IMMUNISATION_PROGRAM_SCHEMA: &'static str =
     std::include_str!("./program_schemas/routine_immunisation_program.json");
@@ -745,6 +747,7 @@ pub fn init_program_data(
         name: Some("Patient".to_string()),
         parent_id: None,
         form_schema_id: Some(patient_schema_id.clone()),
+        config: None,
     })?;
 
     // program
@@ -763,6 +766,7 @@ pub fn init_program_data(
         name: Some("Placeholder program 1".to_string()),
         parent_id: None,
         form_schema_id: Some(program_schema_id.clone()),
+        config: None,
     })?;
 
     // hiv testing program
@@ -781,6 +785,7 @@ pub fn init_program_data(
         name: Some("HIV Testing Program".to_string()),
         parent_id: None,
         form_schema_id: Some(hiv_testing_program_schema_id.clone()),
+        config: None,
     })?;
 
     // hiv testing encounter
@@ -798,6 +803,7 @@ pub fn init_program_data(
         name: Some("HIV Testing Encounter".to_string()),
         parent_id: Some(hiv_testing_program_id.clone()),
         form_schema_id: Some(hiv_testing_encounter_schema_id.clone()),
+        config: None,
     })?;
 
     // hiv care program
@@ -816,6 +822,7 @@ pub fn init_program_data(
         name: Some("HIV Care and Treatment".to_string()),
         parent_id: None,
         form_schema_id: Some(hiv_care_program_schema_id.clone()),
+        config: None,
     })?;
 
     // hiv care encounter
@@ -833,6 +840,7 @@ pub fn init_program_data(
         name: Some("HIV Care Encounter".to_string()),
         parent_id: Some(hiv_care_program_id.clone()),
         form_schema_id: Some(hiv_care_encounter_schema_id.clone()),
+        config: Some(HIV_CARE_ENCOUNTER_CONFIG.to_string()),
     })?;
 
     let immunisation_schema_id = uuid();
@@ -850,6 +858,7 @@ pub fn init_program_data(
         name: Some("Routine Immunisation Program".to_string()),
         parent_id: None,
         form_schema_id: Some(immunisation_schema_id.clone()),
+        config: None,
     })?;
     let immunisation_schema_id = uuid();
     FormSchemaRowRepository::new(connection).upsert_one(&FormSchema {
@@ -865,6 +874,7 @@ pub fn init_program_data(
         name: Some("Routine Immunisation 6 Weeks Encounter".to_string()),
         parent_id: Some(immunisation_program_id.clone()),
         form_schema_id: Some(immunisation_schema_id.clone()),
+        config: None,
     })?;
     let immunisation_schema_id = uuid();
     FormSchemaRowRepository::new(connection).upsert_one(&FormSchema {
@@ -880,6 +890,7 @@ pub fn init_program_data(
         name: Some("Routine Immunisation 3 Month Encounter".to_string()),
         parent_id: Some(immunisation_program_id.clone()),
         form_schema_id: Some(immunisation_schema_id.clone()),
+        config: None,
     })?;
     let immunisation_schema_id = uuid();
     FormSchemaRowRepository::new(connection).upsert_one(&FormSchema {
@@ -895,6 +906,7 @@ pub fn init_program_data(
         name: Some("Routine Immunisation 5 Month Encounter".to_string()),
         parent_id: Some(immunisation_program_id.clone()),
         form_schema_id: Some(immunisation_schema_id.clone()),
+        config: None,
     })?;
 
     // patients
