@@ -12,6 +12,13 @@ import HID from 'node-hid';
 const QUERY_INTERVAL = 1000;
 const SERVICE_NAME = '_omsupply._tcp.local';
 const SERVICE_TYPE = 'TXT';
+const SUPPORTED_SCANNERS = [
+  {
+    vendorId: 1504,
+    vendorName: 'Zebra',
+    products: [{ id: 2194, model: 'DS2208' }],
+  },
+];
 
 class DiscoveryRunner {
   intervalHandle?: NodeJS.Timer;
@@ -43,10 +50,17 @@ class BarcodeScanner {
   }
 
   findDevice() {
-    try {
-      this.device = new HID.HID(1504, 2194);
-    } catch {
-      this.device = undefined;
+    const devices = HID.devices();
+    for (const scanner of SUPPORTED_SCANNERS) {
+      const productIds = scanner.products.map(p => p.id);
+      const deviceInfo = devices.find(d => {
+        d.vendorId === scanner.vendorId &&
+          productIds.some(pid => d.productId === pid);
+      });
+      if (deviceInfo && !!deviceInfo.path) {
+        this.device = new HID.HID(deviceInfo.path);
+        break;
+      }
     }
   }
 
