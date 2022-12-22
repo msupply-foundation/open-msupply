@@ -11,8 +11,8 @@ use crate::{
 };
 
 use super::{
-    encounter_schema::SchemaEncounter,
     encounter_updated::{encounter_updated, EncounterTableUpdateError},
+    validate_misc::{validate_encounter_schema, ValidatedSchemaEncounter},
 };
 
 #[derive(PartialEq, Debug)]
@@ -130,12 +130,6 @@ fn generate(
     })
 }
 
-fn validate_encounter_schema(
-    input: &InsertEncounter,
-) -> Result<SchemaEncounter, serde_json::Error> {
-    serde_json::from_value(input.data.clone())
-}
-
 fn validate_patient_program_exists(
     ctx: &ServiceContext,
     patient_id: &str,
@@ -155,12 +149,12 @@ fn validate_patient_program_exists(
 fn validate(
     ctx: &ServiceContext,
     input: &InsertEncounter,
-) -> Result<SchemaEncounter, InsertEncounterError> {
+) -> Result<ValidatedSchemaEncounter, InsertEncounterError> {
     if !validate_patient_program_exists(ctx, &input.patient_id, &input.program)? {
         return Err(InsertEncounterError::InvalidPatientOrProgram);
     }
 
-    let encounter = validate_encounter_schema(input).map_err(|err| {
+    let encounter = validate_encounter_schema(&input.data).map_err(|err| {
         InsertEncounterError::InvalidDataSchema(vec![format!("Invalid program data: {}", err)])
     })?;
 
