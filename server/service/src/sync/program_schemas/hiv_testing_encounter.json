@@ -1,37 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
-    "EncounterEvent": {
-      "properties": {
-        "activeDatetime": {
-          "description": "Time when the event becomes active. This can be in the future. For example, a status could be set to become active after a certain period of time.",
-          "format": "date-time",
-          "type": "string"
-        },
-        "documentName": {
-          "description": "The event target document name, if event is associated with a specific document",
-          "type": "string"
-        },
-        "documentType": {
-          "description": "The document type this event is associated with",
-          "type": "string"
-        },
-        "group": {
-          "description": "Field to group events.\n\nMotivation: UI components usually only update a subset of \"their\" events. The group field can be used to group or \"tag\" events so that the UI component knows which events to update. Note, the event type is in general not enough since multiple UI components could update events of the same type.",
-          "type": "string"
-        },
-        "name": {
-          "description": "Name of this specific event. There could be multiple events of the same type but with different names. For example, two event could have type 'status' and name \"Status name 1\" and \"Status name 2\"",
-          "type": "string"
-        },
-        "type": {
-          "description": "For example, encounter 'status'.",
-          "type": "string"
-        }
-      },
-      "required": ["activeDatetime", "documentType", "type"],
-      "type": "object"
-    },
     "EncounterStatus": {
       "enum": ["SCHEDULED", "DONE", "CANCELLED"],
       "type": "string"
@@ -78,12 +47,6 @@
           "description": "Encounter end date and time",
           "format": "date-time",
           "type": "string"
-        },
-        "events": {
-          "items": {
-            "$ref": "#/definitions/EncounterEvent"
-          },
-          "type": "array"
         },
         "familyPlanning": {
           "$ref": "#/definitions/FamilyPlanning"

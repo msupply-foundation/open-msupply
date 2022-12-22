@@ -82,7 +82,6 @@ mod hiv_testing_encounter {
                 risk_behaviour: Default::default(),
                 start_datetime: Default::default(),
                 status: Default::default(),
-                events: Default::default(),
                 hiv_testing: Default::default(),
             }
         }
@@ -104,7 +103,6 @@ mod hiv_care_encounter {
                 start_datetime: Default::default(),
                 status: Default::default(),
                 tuberculosis: Default::default(),
-                events: Default::default(),
                 biochem: Default::default(),
                 haem: Default::default(),
                 tb_hcv: Default::default(),
@@ -427,30 +425,6 @@ fn encounter_hiv_care_2(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncou
                 e.regimen_status = Some("CONTINUE".to_string());
             },
         ));
-        e.events = Some(vec![
-            hiv_care_encounter::EncounterEvent {
-                active_datetime: time
-                    .checked_add_signed(Duration::weeks(1))
-                    .unwrap()
-                    .to_rfc3339(),
-                document_type: "HIVCareProgram".to_string(),
-                document_name: None,
-                group: Some("DispensedDuration".to_string()),
-                type_: "programStatus".to_string(),
-                name: Some("Interrupted".to_string()),
-            },
-            hiv_care_encounter::EncounterEvent {
-                active_datetime: time
-                    .checked_add_signed(Duration::weeks(2))
-                    .unwrap()
-                    .to_rfc3339(),
-                document_type: "HIVCareProgram".to_string(),
-                document_name: None,
-                group: Some("DispensedDuration".to_string()),
-                type_: "programStatus".to_string(),
-                name: Some("Lost to follow up".to_string()),
-            },
-        ])
     })
 }
 
