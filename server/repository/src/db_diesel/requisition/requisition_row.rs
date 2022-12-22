@@ -4,6 +4,7 @@ use crate::db_diesel::{name_row::name, store_row::store, user_row::user_account}
 use crate::repository_error::RepositoryError;
 use crate::StorageConnection;
 
+use diesel::dsl::max;
 use diesel::prelude::*;
 
 use chrono::{NaiveDate, NaiveDateTime};
@@ -141,6 +142,22 @@ impl<'a> RequisitionRowRepository<'a> {
             .filter(requisition_dsl::id.eq(id))
             .first(&self.connection.connection)
             .optional()?;
+        Ok(result)
+    }
+
+    pub fn find_max_requisition_number(
+        &self,
+        r#type: RequisitionRowType,
+        store_id: &str,
+    ) -> Result<Option<i64>, RepositoryError> {
+        let result = requisition_dsl::requisition
+            .filter(
+                requisition_dsl::type_
+                    .eq(r#type)
+                    .and(requisition_dsl::store_id.eq(store_id)),
+            )
+            .select(max(requisition_dsl::requisition_number))
+            .first(&self.connection.connection)?;
         Ok(result)
     }
 }

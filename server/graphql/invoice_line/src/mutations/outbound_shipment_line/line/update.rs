@@ -98,7 +98,6 @@ impl UpdateInput {
             total_before_tax,
             tax,
         } = self;
-
         ServiceInput {
             id,
             item_id,

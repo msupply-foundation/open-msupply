@@ -5,6 +5,7 @@ import {
   useTranslation,
   ErrorWithDetailsProps,
   InitialisationStatusType,
+  useInitialisationStatus,
 } from '@openmsupply-client/common';
 import { useHost } from '../../api/hooks';
 import { mapSyncError } from '../../api/api';
@@ -94,8 +95,7 @@ export const useInitialiseForm = () => {
   // Both initialisationStatus and syncStatus are polled because we want to navigate
   // to login when initialisation is finished, but syncStatus will be behind auth after
   // initialisation has finished, whereas syncStatus is always an open API
-  const { data: initStatus } =
-    useHost.utils.initialisationStatus(refetchInterval);
+  const { data: initStatus } = useInitialisationStatus(refetchInterval);
   const { data: syncStatus } = useHost.utils.syncStatus(refetchInterval);
   const { data: syncSettings } = useHost.settings.syncSettings();
 
@@ -136,7 +136,7 @@ export const useInitialiseForm = () => {
   useEffect(() => {
     if (!initStatus) return;
 
-    switch (initStatus) {
+    switch (initStatus.status) {
       case InitialisationStatusType.Initialised:
         return navigate(`/${AppRoute.Login}`, { replace: true });
       case InitialisationStatusType.Initialising:
@@ -156,7 +156,7 @@ export const useInitialiseForm = () => {
     // If page is loaded or reloaded when isInitialising
     // url and username should be set from api result
     if (
-      initStatus === InitialisationStatusType.Initialising &&
+      initStatus?.status === InitialisationStatusType.Initialising &&
       !!syncSettings
     ) {
       setUsername(syncSettings.username);
@@ -170,5 +170,6 @@ export const useInitialiseForm = () => {
     onRetry,
     ...state,
     syncStatus,
+    siteName: initStatus?.siteName,
   };
 };

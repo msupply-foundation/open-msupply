@@ -5,7 +5,7 @@ use repository::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::sync::{api::RemoteSyncRecordV5, sync_serde::empty_str_as_option};
+use crate::sync::{api::RemoteSyncRecordV5, sync_serde::empty_str_as_option_string};
 
 use super::{IntegrationRecords, LegacyTableName, PullUpsertRecord, SyncTranslation};
 
@@ -32,7 +32,7 @@ pub struct LegacyActivityLogRow {
     #[serde(rename = "record_ID")]
     pub record_id: String,
     pub datetime: NaiveDateTime,
-    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     pub event: Option<String>,
 }
 

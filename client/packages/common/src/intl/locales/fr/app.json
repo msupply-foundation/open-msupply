@@ -59,7 +59,7 @@
     "cmdk.placeholder": "Saisir une commande ou rechercher",
     "login.body": "Que vous dirigiez un entrepôt de distribution pharmaceutique, ou que vous soyez un fabricant ayant besoin de dizaines d'utilisateurs connectés, ou un petit dispensaire, mSupply est un partenaire précieux.",
     "cmdk.drawer-toggle": "Menu à bascule",
-    "auth.server-error": "Le serveur a renvoyé une erreur lors de la récupération des détails utilisateurs. \nImpossible de continuer, veuillez contacter le support.",
+    "auth.server-error": "Le serveur a renvoyé une erreur lors de la récupération des détails utilisateurs ! \nImpossible de continuer, veuillez contacter le support (support@msupply.foundation)",
     "auth.timeout-message": "Vous avez été déconnecté de votre session pour cause d'inactivité. Cliquez sur OK pour revenir à la page d'accueil.",
     "searching": "Recherche en cours...",
     "initialise.body": "Pour commender, nous allons configurer les paramètres pour synchroniser avec mSupply. Veuillez remplir les champs et cliquer sur Sauvegarder. \n\nSi vous ne savez pas quoi saisir, veuillez contacter support@msupply.foundation.",

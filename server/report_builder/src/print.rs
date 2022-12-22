@@ -2,7 +2,7 @@ use regex::Regex;
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
 
-use std::fs;
+use std::{fs, path::Path};
 
 const AUTH_QUERY: &str = r#"
 query AuthToken($username: String!, $password: String) {
@@ -120,7 +120,7 @@ fn fetch_file(
     url: Url,
     token: &str,
     file_id: &str,
-    name: &Option<String>,
+    output_filename: &Option<String>,
 ) -> anyhow::Result<String> {
     let result = reqwest::blocking::Client::new()
         .get(url)
@@ -142,8 +142,17 @@ fn fetch_file(
         .as_str()
         .to_string();
 
-    let output_filename = match name {
-        Some(name) => format!("{}.pdf", name),
+    let output_filename = match output_filename {
+        Some(output_filename) => {
+            let parent_dir = Path::new(output_filename)
+                .parent()
+                .ok_or(anyhow::Error::msg(format!(
+                    "Invalid output path: {:?}",
+                    output_filename
+                )))?;
+            fs::create_dir_all(parent_dir)?;
+            output_filename.to_string()
+        }
         None => filename,
     };
     println!("> Write report to: {}", output_filename);
@@ -154,7 +163,7 @@ fn fetch_file(
 pub fn print_report(
     config_path: String,
     store_id: String,
-    name: Option<String>,
+    output_filename: Option<String>,
     report_file: String,
     data_id: String,
 ) -> anyhow::Result<()> {
@@ -187,11 +196,26 @@ pub fn print_report(
     })?;
 
     println!("> Send report print request ");
-    let file_id = print_request(gql_url.clone(), &token, &store_id, &name, report, &data_id)
-        .map_err(|err| anyhow::Error::msg(format!("Failed to fetch report data: {}", err)))?;
+    let file_name = output_filename
+        .as_ref()
+        .map(|p| {
+            Path::new(&p)
+                .file_name()
+                .map(|n| n.to_string_lossy().to_string())
+        })
+        .flatten();
+    let file_id = print_request(
+        gql_url.clone(),
+        &token,
+        &store_id,
+        &file_name,
+        report,
+        &data_id,
+    )
+    .map_err(|err| anyhow::Error::msg(format!("Failed to fetch report data: {}", err)))?;
 
     println!("> Download report from {}", files_url);
-    fetch_file(files_url, &token, &file_id, &name)?;
+    fetch_file(files_url, &token, &file_id, &output_filename)?;
 
     Ok(())
 }

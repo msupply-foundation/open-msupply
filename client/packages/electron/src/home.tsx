@@ -5,9 +5,9 @@ import {
   AppThemeProvider,
   IntlProvider,
   RandomLoader,
+  ServerDiscovery,
 } from '@openmsupply-client/common';
 import { Viewport } from '@openmsupply-client/host/src/components';
-import { ServerDiscovery } from './discovery/ServerDiscovery';
 
 const ClientHomeScreen = () => (
   <React.Suspense fallback={<div />}>
@@ -27,3 +27,5 @@ const container = document.getElementById('root');
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 const root = createRoot(container!);
 root.render(<ClientHomeScreen />);
+
+export { ServerDiscovery };

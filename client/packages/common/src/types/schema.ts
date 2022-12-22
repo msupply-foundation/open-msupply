@@ -789,6 +789,12 @@ export type InboundInvoiceCounts = {
   created: InvoiceCountsSummary;
 };
 
+export type InitialisationStatusNode = {
+  __typename: 'InitialisationStatusNode';
+  siteName?: Maybe<Scalars['String']>;
+  status: InitialisationStatusType;
+};
+
 export enum InitialisationStatusType {
   Initialised = 'INITIALISED',
   Initialising = 'INITIALISING',
@@ -1238,6 +1244,7 @@ export type InvoiceNode = {
   requisition?: Maybe<RequisitionNode>;
   shippedDatetime?: Maybe<Scalars['DateTime']>;
   status: InvoiceNodeStatus;
+  taxPercentage?: Maybe<Scalars['Float']>;
   theirReference?: Maybe<Scalars['String']>;
   transportReference?: Maybe<Scalars['String']>;
   type: InvoiceNodeType;
@@ -2130,7 +2137,7 @@ export type Queries = {
   authToken: AuthTokenResponse;
   displaySettings: DisplaySettingsNode;
   /** Available without authorisation in operational and initialisation states */
-  initialisationStatus: InitialisationStatusType;
+  initialisationStatus: InitialisationStatusNode;
   invoice: InvoiceResponse;
   invoiceByNumber: InvoiceResponse;
   invoiceCounts: InvoiceCounts;
@@ -2167,6 +2174,7 @@ export type Queries = {
   requisitionByNumber: RequisitionResponse;
   requisitionLineChart: RequisitionLineChartResponse;
   requisitions: RequisitionsResponse;
+  responseRequisitionStats: RequisitionLineStatsResponse;
   stockCounts: StockCounts;
   /** Query for "stock_line" entries */
   stockLines: StockLinesResponse;
@@ -2309,6 +2317,12 @@ export type QueriesRequisitionsArgs = {
 };
 
 
+export type QueriesResponseRequisitionStatsArgs = {
+  requisitionLineId: Scalars['String'];
+  storeId: Scalars['String'];
+};
+
+
 export type QueriesStockCountsArgs = {
   daysTillExpired?: InputMaybe<Scalars['Int']>;
   storeId: Scalars['String'];
@@ -2365,7 +2379,7 @@ export type RecordBelongsToAnotherStore = DeleteLocationErrorInterface & UpdateL
   description: Scalars['String'];
 };
 
-export type RecordNotFound = AddFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & NodeErrorInterface & RequisitionLineChartErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateLocationErrorInterface & UpdateNameErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UpdateStockLineErrorInterface & UseSuggestedQuantityErrorInterface & {
+export type RecordNotFound = AddFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & NodeErrorInterface & RequisitionLineChartErrorInterface & RequisitionLineStatsErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateLocationErrorInterface & UpdateNameErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UpdateStockLineErrorInterface & UseSuggestedQuantityErrorInterface & {
   __typename: 'RecordNotFound';
   description: Scalars['String'];
 };
@@ -2431,6 +2445,14 @@ export type ReportSortInput = {
 };
 
 export type ReportsResponse = ReportConnector;
+
+export type RequestStoreStatsNode = {
+  __typename: 'RequestStoreStatsNode';
+  averageMonthlyConsumption: Scalars['Int'];
+  maxMonthsOfStock: Scalars['Float'];
+  stockOnHand: Scalars['Int'];
+  suggestedQuantity: Scalars['Int'];
+};
 
 export type RequisitionConnector = {
   __typename: 'RequisitionConnector';
@@ -2509,6 +2531,17 @@ export type RequisitionLineNode = {
 export type RequisitionLineNodeItemStatsArgs = {
   amcLookbackMonths?: InputMaybe<Scalars['Int']>;
 };
+
+export type RequisitionLineStatsError = {
+  __typename: 'RequisitionLineStatsError';
+  error: RequisitionLineStatsErrorInterface;
+};
+
+export type RequisitionLineStatsErrorInterface = {
+  description: Scalars['String'];
+};
+
+export type RequisitionLineStatsResponse = RequisitionLineStatsError | ResponseRequisitionStatsNode;
 
 export type RequisitionLineWithItemIdExists = InsertRequestRequisitionLineErrorInterface & {
   __typename: 'RequisitionLineWithItemIdExists';
@@ -2604,6 +2637,21 @@ export type RequisitionSortInput = {
 };
 
 export type RequisitionsResponse = RequisitionConnector;
+
+export type ResponseRequisitionStatsNode = {
+  __typename: 'ResponseRequisitionStatsNode';
+  requestStoreStats: RequestStoreStatsNode;
+  responseStoreStats: ResponseStoreStatsNode;
+};
+
+export type ResponseStoreStatsNode = {
+  __typename: 'ResponseStoreStatsNode';
+  incomingStock: Scalars['Int'];
+  otherRequestedQuantity: Scalars['Int'];
+  requestedQuantity: Scalars['Int'];
+  stockOnHand: Scalars['Float'];
+  stockOnOrder: Scalars['Int'];
+};
 
 export type SimpleStringFilterInput = {
   /** Search term must be an exact match (case sensitive) */
@@ -2992,6 +3040,7 @@ export type UpdateInboundShipmentInput = {
   onHold?: InputMaybe<Scalars['Boolean']>;
   otherPartyId?: InputMaybe<Scalars['String']>;
   status?: InputMaybe<UpdateInboundShipmentStatusInput>;
+  tax?: InputMaybe<TaxInput>;
   theirReference?: InputMaybe<Scalars['String']>;
 };
 
@@ -3103,6 +3152,7 @@ export type UpdateOutboundShipmentInput = {
    * existing invoice items gets updated.
    */
   status?: InputMaybe<UpdateOutboundShipmentStatusInput>;
+  tax?: InputMaybe<TaxInput>;
   /** External invoice reference, e.g. purchase or shipment number */
   theirReference?: InputMaybe<Scalars['String']>;
   transportReference?: InputMaybe<Scalars['String']>;

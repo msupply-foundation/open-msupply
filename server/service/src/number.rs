@@ -1,5 +1,11 @@
-use repository::{NumberRowRepository, NumberRowType, RepositoryError, StorageConnection};
+use repository::{
+    InvoiceRowRepository, InvoiceRowType, NumberRowRepository, NumberRowType, RepositoryError,
+    RequisitionRowRepository, RequisitionRowType, StocktakeRowRepository, StorageConnection,
+};
 
+/// Get next number for record type and store
+/// If number for record type and store exists in number table, increment it and return next number
+/// Otherwise find max number for record type and store, increment by one, add to number table and return it
 pub fn next_number(
     connection: &StorageConnection,
     r#type: &NumberRowType,
@@ -8,9 +14,38 @@ pub fn next_number(
     // Should be done in transaction
     let next_number = connection.transaction_sync(|connection_tx| {
         let repo = NumberRowRepository::new(&connection_tx);
-        let next_number = repo.get_next_number_for_type_and_store(r#type, store_id)?;
+        let number_exists = repo.find_one_by_type_and_store(r#type, store_id)?.is_some();
 
-        Ok(next_number.number)
+        if number_exists {
+            let next_number = repo.get_next_number_for_type_and_store(r#type, store_id, None)?;
+            return Ok(next_number.number);
+        };
+
+        let max_number = match r#type {
+            NumberRowType::InboundShipment => InvoiceRowRepository::new(&connection_tx)
+                .find_max_invoice_number(InvoiceRowType::InboundShipment, store_id)?,
+            NumberRowType::OutboundShipment => InvoiceRowRepository::new(&connection_tx)
+                .find_max_invoice_number(InvoiceRowType::OutboundShipment, store_id)?,
+            NumberRowType::InventoryAdjustment => InvoiceRowRepository::new(&connection_tx)
+                .find_max_invoice_number(InvoiceRowType::InventoryAdjustment, store_id)?,
+            NumberRowType::RequestRequisition => RequisitionRowRepository::new(&connection_tx)
+                .find_max_requisition_number(RequisitionRowType::Request, store_id)?,
+            NumberRowType::ResponseRequisition => RequisitionRowRepository::new(&connection_tx)
+                .find_max_requisition_number(RequisitionRowType::Response, store_id)?,
+            NumberRowType::Stocktake => {
+                StocktakeRowRepository::new(&connection_tx).find_max_stocktake_number(store_id)?
+            }
+            NumberRowType::Program(_) => {
+                let next_number =
+                    repo.get_next_number_for_type_and_store(r#type, store_id, None)?;
+                return Ok(next_number.number);
+            }
+        };
+
+        let max_next_number = max_number.map(|n| n + 1);
+
+        repo.get_next_number_for_type_and_store(r#type, store_id, max_next_number)
+            .map(|r| r.number)
     })?;
     Ok(next_number)
 }
@@ -21,12 +56,13 @@ mod test {
 
     use repository::{
         mock::{
-            mock_inbound_shipment_number_store_a, mock_outbound_shipment_number_store_a,
-            MockDataInserts,
+            mock_inbound_shipment_number_store_a, mock_name_c,
+            mock_outbound_shipment_number_store_a, mock_store_c, MockData, MockDataInserts,
         },
-        test_db::{self, setup_all},
-        NumberRowType, RepositoryError, TransactionError,
+        test_db::{self, setup_all, setup_all_with_data},
+        InvoiceRow, InvoiceRowType, NumberRowType, RepositoryError, TransactionError,
     };
+    use util::inline_init;
 
     const TEST_SLEEP_TIME: u64 = 100;
     const MAX_CONCURRENCY: u64 = 10;
@@ -35,13 +71,29 @@ mod test {
 
     #[actix_rt::test]
     async fn test_number_service() {
-        let (_, connection, _, _) = setup_all("test_number_service", MockDataInserts::all()).await;
+        fn invoice1() -> InvoiceRow {
+            inline_init(|r: &mut InvoiceRow| {
+                r.id = "invoice1".to_string();
+                r.name_id = mock_name_c().id;
+                r.store_id = mock_store_c().id;
+                r.r#type = InvoiceRowType::OutboundShipment;
+                r.invoice_number = 100;
+            })
+        }
+
+        let (_, connection, _, _) = setup_all_with_data(
+            "test_number_service",
+            MockDataInserts::none().stores().names().numbers(),
+            inline_init(|r: &mut MockData| {
+                r.invoices = vec![invoice1()];
+            }),
+        )
+        .await;
 
         let inbound_shipment_store_a_number = mock_inbound_shipment_number_store_a();
         let outbound_shipment_store_b_number = mock_outbound_shipment_number_store_a();
 
         // Test existing
-
         let result = next_number(&connection, &NumberRowType::InboundShipment, "store_a").unwrap();
         assert_eq!(result, inbound_shipment_store_a_number.value + 1);
 
@@ -51,13 +103,16 @@ mod test {
         let result = next_number(&connection, &NumberRowType::OutboundShipment, "store_a").unwrap();
         assert_eq!(result, outbound_shipment_store_b_number.value + 1);
 
-        // Test new
-
+        // Test new with store that has no invoices
         let result = next_number(&connection, &NumberRowType::OutboundShipment, "store_b").unwrap();
         assert_eq!(result, 1);
 
         let result = next_number(&connection, &NumberRowType::OutboundShipment, "store_b").unwrap();
         assert_eq!(result, 2);
+
+        // Test new with store that has existing invoice
+        let result = next_number(&connection, &NumberRowType::OutboundShipment, "store_c").unwrap();
+        assert_eq!(result, 101);
     }
 
     #[actix_rt::test]

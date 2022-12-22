@@ -1,9 +1,25 @@
 use chrono::{Datelike, Duration, NaiveDate, NaiveDateTime, NaiveTime};
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::{
+    de::{value::StrDeserializer, IntoDeserializer},
+    Deserialize, Deserializer, Serialize, Serializer,
+};
 
-pub fn empty_str_as_option<'de, D: Deserializer<'de>>(d: D) -> Result<Option<String>, D::Error> {
+pub fn empty_str_as_option_string<'de, D: Deserializer<'de>>(
+    d: D,
+) -> Result<Option<String>, D::Error> {
     let s: Option<String> = Option::deserialize(d)?;
     Ok(s.filter(|s| !s.is_empty()))
+}
+
+pub fn empty_str_as_option<'de, T: Deserialize<'de>, D: Deserializer<'de>>(
+    d: D,
+) -> Result<Option<T>, D::Error> {
+    let s: Option<String> = empty_str_as_option_string(d)?;
+
+    let Some(s) = s else { return Ok(None)};
+
+    let str_d: StrDeserializer<D::Error> = s.as_str().into_deserializer();
+    Ok(Some(T::deserialize(str_d)?))
 }
 
 pub fn zero_date_as_option<'de, D: Deserializer<'de>>(d: D) -> Result<Option<NaiveDate>, D::Error> {
@@ -43,5 +59,9 @@ where
 /// change on our side.
 pub fn naive_time<'de, D: Deserializer<'de>>(d: D) -> Result<NaiveTime, D::Error> {
     let secs = u32::deserialize(d)?;
-    Ok(NaiveTime::from_hms_opt(0, 0, secs).unwrap_or(NaiveTime::from_hms(0, 0, 0)))
+    // using the _opt version of the method and on error returning a time of 00:00:00
+    // as there have been some invalid time values returned by 4D - unsure of the origin of these
+    // if the deserialisation panics then the whole server crashes, so have used the error & default
+    Ok(NaiveTime::from_num_seconds_from_midnight_opt(secs, 0)
+        .unwrap_or(NaiveTime::from_hms(0, 0, 0)))
 }

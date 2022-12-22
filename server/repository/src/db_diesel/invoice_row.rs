@@ -5,7 +5,7 @@ use super::{
 
 use crate::repository_error::RepositoryError;
 
-use diesel::prelude::*;
+use diesel::{dsl::max, prelude::*};
 
 use chrono::NaiveDateTime;
 use diesel_derive_enum::DbEnum;
@@ -35,6 +35,7 @@ table! {
         colour -> Nullable<Text>,
         requisition_id -> Nullable<Text>,
         linked_invoice_id -> Nullable<Text>,
+        tax -> Nullable<Double>,
     }
 }
 
@@ -63,7 +64,7 @@ pub enum InvoiceRowStatus {
     Verified,
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Eq)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
 #[changeset_options(treat_none_as_null = "true")]
 #[table_name = "invoice"]
 pub struct InvoiceRow {
@@ -89,6 +90,7 @@ pub struct InvoiceRow {
     pub colour: Option<String>,
     pub requisition_id: Option<String>,
     pub linked_invoice_id: Option<String>,
+    pub tax: Option<f64>,
 }
 
 impl Default for InvoiceRow {
@@ -116,6 +118,7 @@ impl Default for InvoiceRow {
             colour: Default::default(),
             requisition_id: Default::default(),
             linked_invoice_id: Default::default(),
+            tax: Default::default(),
         }
     }
 }
@@ -176,6 +179,18 @@ impl<'a> InvoiceRowRepository<'a> {
         let result = invoice
             .filter(id.eq_any(ids))
             .load(&self.connection.connection)?;
+        Ok(result)
+    }
+
+    pub fn find_max_invoice_number(
+        &self,
+        r#type: InvoiceRowType,
+        store: &str,
+    ) -> Result<Option<i64>, RepositoryError> {
+        let result = invoice
+            .filter(type_.eq(r#type).and(store_id.eq(store)))
+            .select(max(invoice_number))
+            .first(&self.connection.connection)?;
         Ok(result)
     }
 }
