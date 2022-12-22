@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct Condition {
+pub struct EventCondition {
     pub field: String,
 
     #[serde(rename = "isFalsy")]
@@ -13,7 +13,7 @@ pub struct Condition {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct Target {
+pub struct EventTarget {
     /// If not set the current document type and document name is used
     /// If set the specified document type is used but the document name is not set
     #[serde(rename = "documentType")]
@@ -28,20 +28,20 @@ pub struct Target {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct ProgramEventConfig<T> {
-    pub conditions: Option<Vec<Condition>>,
+pub struct EventConfig<T> {
+    pub conditions: Option<Vec<EventCondition>>,
     pub config: T,
-    pub event: Target,
+    pub event: EventTarget,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct ProgramEventScheduleInConfig {
+pub struct EventScheduleInConfig {
     pub days: Option<i64>,
     pub minutes: Option<i64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct ProgramEventScheduleConfig {
+pub struct EventScheduleConfig {
     /// Field with the scheduled base time.
     /// If not specified the document base time is used.
     #[serde(rename = "datetimeField")]
@@ -50,17 +50,17 @@ pub struct ProgramEventScheduleConfig {
     #[serde(rename = "scheduleFromNow")]
     pub schedule_from_now: Option<bool>,
     #[serde(rename = "scheduleIn")]
-    pub schedule_in: ProgramEventScheduleInConfig,
+    pub schedule_in: EventScheduleInConfig,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(tag = "type")]
-pub enum EventConfig {
-    Schedule(ProgramEventConfig<ProgramEventScheduleConfig>),
-    Field(ProgramEventConfig<Option<()>>),
+pub enum EventConfigEnum {
+    Schedule(EventConfig<EventScheduleConfig>),
+    Field(EventConfig<Option<()>>),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct DocumentRegistryConfig {
-    pub events: Vec<EventConfig>,
+    pub events: Vec<EventConfigEnum>,
 }

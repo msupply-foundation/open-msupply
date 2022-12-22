@@ -1,5 +1,5 @@
 use chrono::{DateTime, Duration, NaiveDateTime, Utc};
-use repository::{Condition, EventConfig, RepositoryError, Target};
+use repository::{EventCondition, EventConfigEnum, EventTarget, RepositoryError};
 use serde_json::{Map, Value};
 
 use crate::{
@@ -33,7 +33,7 @@ fn extract_events(
     let mut output = vec![];
     for config in config.events {
         match config {
-            EventConfig::Schedule(schedule_config) => {
+            EventConfigEnum::Schedule(schedule_config) => {
                 if !match_all_conditions(schedule_config.conditions, doc) {
                     continue;
                 }
@@ -83,7 +83,7 @@ fn extract_events(
                     name: data,
                 });
             }
-            EventConfig::Field(field_config) => {
+            EventConfigEnum::Field(field_config) => {
                 if !match_all_conditions(field_config.conditions, doc) {
                     continue;
                 }
@@ -162,7 +162,7 @@ fn is_truthy(value: &Value) -> bool {
     return true;
 }
 
-fn match_condition(condition: &Condition, doc: &RawDocument) -> bool {
+fn match_condition(condition: &EventCondition, doc: &RawDocument) -> bool {
     let Some(field) = extract_value_field(&doc.data, &condition.field) else {
         if condition.is_falsy.is_some() {
             return true;
@@ -179,7 +179,7 @@ fn match_condition(condition: &Condition, doc: &RawDocument) -> bool {
     false
 }
 
-fn match_all_conditions(conditions: Option<Vec<Condition>>, doc: &RawDocument) -> bool {
+fn match_all_conditions(conditions: Option<Vec<EventCondition>>, doc: &RawDocument) -> bool {
     let Some(conditions) = conditions else {
         return false;
     };
@@ -188,7 +188,7 @@ fn match_all_conditions(conditions: Option<Vec<Condition>>, doc: &RawDocument) -
         .all(|condition| match_condition(&condition, doc))
 }
 
-fn extract_config_data(target: &Target, data: &Value) -> Option<String> {
+fn extract_config_data(target: &EventTarget, data: &Value) -> Option<String> {
     target
         .data_field
         .as_ref()
