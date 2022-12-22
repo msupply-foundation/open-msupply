@@ -6,12 +6,15 @@ use repository::{
 
 use crate::{
     document::{document_service::DocumentInsertError, is_latest_doc, raw_document::RawDocument},
-    programs::patient::{patient_doc_name, patient_doc_name_with_id},
+    programs::{
+        patient::{patient_doc_name, patient_doc_name_with_id},
+        update_program_document::{update_program_events, UpdateProgramDocumentError},
+    },
     service_provider::{ServiceContext, ServiceProvider},
 };
 
 use super::{
-    encounter_updated::{encounter_updated, EncounterTableUpdateError},
+    encounter_updated::update_encounter_row,
     validate_misc::{validate_encounter_schema, ValidatedSchemaEncounter},
 };
 
@@ -50,23 +53,27 @@ pub fn insert_encounter(
             let program = input.program.clone();
             let event_datetime = input.event_datetime;
             let doc = generate(user_id, input, event_datetime)?;
+            let encounter_start_datetime = encounter.start_datetime;
 
             if is_latest_doc(ctx, service_provider, &doc)
                 .map_err(InsertEncounterError::DatabaseError)?
             {
-                encounter_updated(
+                update_encounter_row(ctx, &patient_id, &program, &doc, encounter)?;
+
+                update_program_events(
                     ctx,
                     service_provider,
                     &patient_id,
-                    &program,
+                    encounter_start_datetime,
+                    None,
                     &doc,
-                    encounter,
+                    &allowed_docs,
                 )
                 .map_err(|err| match err {
-                    EncounterTableUpdateError::RepositoryError(err) => {
+                    UpdateProgramDocumentError::DatabaseError(err) => {
                         InsertEncounterError::DatabaseError(err)
                     }
-                    EncounterTableUpdateError::InternalError(err) => {
+                    UpdateProgramDocumentError::InternalError(err) => {
                         InsertEncounterError::InternalError(err)
                     }
                 })?;

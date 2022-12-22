@@ -5,13 +5,13 @@ use repository::{
 };
 
 use crate::{
-    document::{is_latest_doc, raw_document::RawDocument},
-    programs::update_program_document::{update_program_document, UpdateProgramDocumentError},
+    document::{document_service::DocumentInsertError, is_latest_doc, raw_document::RawDocument},
+    programs::update_program_document::{update_program_events, UpdateProgramDocumentError},
     service_provider::{ServiceContext, ServiceProvider},
 };
 
 use super::{
-    encounter_updated::{encounter_updated, EncounterTableUpdateError},
+    encounter_updated::update_encounter_row,
     validate_misc::{validate_encounter_schema, ValidatedSchemaEncounter},
 };
 
@@ -43,61 +43,61 @@ pub fn update_encounter(
     let patient = ctx
         .connection
         .transaction_sync(|_| {
-            let (existing, validated_encounter, existing_encounter_row) = validate(ctx, &input)?;
-
-            let encounter_start_datetime = validated_encounter.start_datetime;
+            let (existing, encounter, existing_encounter_row) = validate(ctx, &input)?;
+            let encounter_start_datetime = encounter.start_datetime;
             let doc = generate(user_id, input, existing)?;
 
             if is_latest_doc(ctx, service_provider, &doc)
                 .map_err(UpdateEncounterError::DatabaseError)?
             {
-                encounter_updated(
+                update_encounter_row(
                     ctx,
-                    service_provider,
                     &existing_encounter_row.patient_id,
                     &existing_encounter_row.program,
                     &doc,
-                    validated_encounter,
+                    encounter,
+                )?;
+
+                update_program_events(
+                    ctx,
+                    service_provider,
+                    &existing_encounter_row.patient_id,
+                    encounter_start_datetime,
+                    Some(existing_encounter_row.start_datetime),
+                    &doc,
+                    &allowed_docs,
                 )
                 .map_err(|err| match err {
-                    EncounterTableUpdateError::RepositoryError(err) => {
+                    UpdateProgramDocumentError::DatabaseError(err) => {
                         UpdateEncounterError::DatabaseError(err)
                     }
-                    EncounterTableUpdateError::InternalError(err) => {
+                    UpdateProgramDocumentError::InternalError(err) => {
                         UpdateEncounterError::InternalError(err)
                     }
                 })?;
             }
 
-            let result = update_program_document(
-                ctx,
-                service_provider,
-                &existing_encounter_row.patient_id,
-                encounter_start_datetime,
-                Some(existing_encounter_row.start_datetime),
-                doc,
-                allowed_docs,
-            )
-            .map_err(|err| match err {
-                UpdateProgramDocumentError::NotAllowedToMutateDocument => {
-                    UpdateEncounterError::NotAllowedToMutateDocument
-                }
-                UpdateProgramDocumentError::InvalidDataSchema(err) => {
-                    UpdateEncounterError::InvalidDataSchema(err)
-                }
-                UpdateProgramDocumentError::DatabaseError(err) => {
-                    UpdateEncounterError::DatabaseError(err)
-                }
-                UpdateProgramDocumentError::InternalError(err) => {
-                    UpdateEncounterError::InternalError(err)
-                }
-                UpdateProgramDocumentError::DataSchemaDoesNotExist => {
-                    UpdateEncounterError::DataSchemaDoesNotExist
-                }
-                UpdateProgramDocumentError::InvalidParentId => {
-                    UpdateEncounterError::InvalidParentId
-                }
-            })?;
+            let result = service_provider
+                .document_service
+                .update_document(ctx, doc, &allowed_docs)
+                .map_err(|err| match err {
+                    DocumentInsertError::NotAllowedToMutateDocument => {
+                        UpdateEncounterError::NotAllowedToMutateDocument
+                    }
+                    DocumentInsertError::InvalidDataSchema(err) => {
+                        UpdateEncounterError::InvalidDataSchema(err)
+                    }
+                    DocumentInsertError::DatabaseError(err) => {
+                        UpdateEncounterError::DatabaseError(err)
+                    }
+                    DocumentInsertError::InternalError(err) => {
+                        UpdateEncounterError::InternalError(err)
+                    }
+                    DocumentInsertError::DataSchemaDoesNotExist => {
+                        UpdateEncounterError::DataSchemaDoesNotExist
+                    }
+                    DocumentInsertError::InvalidParent(_) => UpdateEncounterError::InvalidParentId,
+                })?;
 
             Ok(result)
         })
