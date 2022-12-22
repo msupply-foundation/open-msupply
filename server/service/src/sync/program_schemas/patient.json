@@ -156,6 +156,11 @@
     "Note": {
       "properties": {
         "authorId": {
+          "description": "authorId should be captured automatically from app state",
+          "type": "string"
+        },
+        "authorName": {
+          "description": "Practitioner's \"real\" name. Currently needs to be entered, but would ideally default to local state (but we don't yet have this in the database)",
           "type": "string"
         },
         "created": {
@@ -389,7 +394,7 @@
           "$ref": "#/definitions/Gender",
           "description": "394744001 Gender unspecified"
         },
-        "hand": {
+        "handedness": {
           "$ref": "#/definitions/Handedness"
         },
         "healthCenter": {
