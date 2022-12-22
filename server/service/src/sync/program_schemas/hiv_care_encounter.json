@@ -64,6 +64,10 @@
               "description": "Antiretroviral adherence status [%]",
               "type": "number"
             },
+            "endOfSupply": {
+              "format": "date-time",
+              "type": "string"
+            },
             "prophylaxisMedication": {
               "items": {
                 "type": "string"

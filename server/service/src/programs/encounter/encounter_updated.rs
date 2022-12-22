@@ -11,7 +11,10 @@ use crate::{
     service_provider::{ServiceContext, ServiceProvider},
 };
 
-use super::encounter_schema::{self, EncounterEvent, SchemaEncounter};
+use super::{
+    encounter_schema::{self, EncounterEvent},
+    validate_misc::ValidatedSchemaEncounter,
+};
 
 pub(crate) enum EncounterTableUpdateError {
     RepositoryError(RepositoryError),
@@ -25,33 +28,11 @@ pub(crate) fn encounter_updated(
     patient_id: &str,
     program: &str,
     doc: &RawDocument,
-    encounter: SchemaEncounter,
+    validated_encounter: ValidatedSchemaEncounter,
 ) -> Result<(), EncounterTableUpdateError> {
     let con = &ctx.connection;
 
-    let start_datetime = DateTime::parse_from_rfc3339(&encounter.start_datetime)
-        .map_err(|err| {
-            EncounterTableUpdateError::InternalError(format!(
-                "Invalid encounter datetime format: {}",
-                err
-            ))
-        })?
-        .naive_utc();
-    let end_datetime = if let Some(end_datetime) = encounter.end_datetime {
-        Some(
-            DateTime::parse_from_rfc3339(&end_datetime)
-                .map_err(|err| {
-                    EncounterTableUpdateError::InternalError(format!(
-                        "Invalid encounter datetime format: {}",
-                        err
-                    ))
-                })?
-                .naive_utc(),
-        )
-    } else {
-        None
-    };
-    let status = if let Some(status) = encounter.status {
+    let status = if let Some(status) = validated_encounter.encounter.status {
         Some(match status {
             encounter_schema::EncounterStatus::Scheduled => EncounterStatus::Scheduled,
             encounter_schema::EncounterStatus::Done => EncounterStatus::Done,
@@ -61,7 +42,7 @@ pub(crate) fn encounter_updated(
         None
     };
 
-    if let Some(events) = encounter.events {
+    if let Some(events) = validated_encounter.encounter.events {
         update_program_events(
             ctx,
             service_provider,
@@ -86,8 +67,8 @@ pub(crate) fn encounter_updated(
         name: doc.name.clone(),
         patient_id: patient_id.to_string(),
         program: program.to_string(),
-        start_datetime,
-        end_datetime,
+        start_datetime: validated_encounter.start_datetime,
+        end_datetime: validated_encounter.end_datetime,
         status,
     };
     EncounterRowRepository::new(con)
