@@ -165,7 +165,7 @@ impl<'a> ProgramEventRepository<'a> {
                 }
                 ProgramEventSortField::Type => apply_sort!(query, sort, program_event_dsl::type_),
                 ProgramEventSortField::Name => {
-                    apply_sort!(query, sort, program_event_dsl::name)
+                    apply_sort!(query, sort, program_event_dsl::data)
                 }
             }
         } else {

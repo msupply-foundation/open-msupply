@@ -7,6 +7,6 @@ CREATE TABLE program_event (
     document_type TEXT NOT NULL,
     document_name TEXT,
     type TEXT NOT NULL,
-    name TEXT,
+    data TEXT,
     FOREIGN KEY(patient_id) REFERENCES name(id)
 );
