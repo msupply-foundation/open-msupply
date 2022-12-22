@@ -24,6 +24,7 @@ table! {
         name -> Nullable<Text>,
         parent_id -> Nullable<Text>,
         form_schema_id -> Nullable<Text>,
+        config -> Nullable<Text>,
     }
 }
 
@@ -36,6 +37,7 @@ pub struct DocumentRegistryRow {
     pub name: Option<String>,
     pub parent_id: Option<String>,
     pub form_schema_id: Option<String>,
+    pub config: Option<String>,
 }
 
 joinable!(document_registry -> form_schema (form_schema_id));
