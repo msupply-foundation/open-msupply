@@ -7,11 +7,12 @@ use crate::{
 };
 
 use self::middleware::{compress as compress_middleware, logger as logger_middleware};
+use anyhow::Context;
 use graphql_core::loader::{get_loaders, LoaderRegistry};
 
 use graphql::{attach_graphql_schema, GraphSchemaData, GraphqlSchema};
 use log::info;
-use repository::{get_storage_connection_manager, run_db_migrations};
+use repository::{get_storage_connection_manager, migrations::migrate};
 
 use service::{
     auth_data::AuthData,
@@ -64,8 +65,9 @@ pub async fn start_server(
         connection_manager.execute(init_sql).unwrap();
     }
     info!("Run DB migrations...");
-    run_db_migrations(&connection_manager.connection().unwrap(), true)
-        .expect("Failed to run DB migrations");
+    let version = migrate(&connection_manager.connection().unwrap(), None)
+        .context("Failed to run DB migrations")
+        .unwrap();
     info!("Run DB migrations...done");
 
     // INITIALISE CONTEXT
@@ -102,7 +104,7 @@ pub async fn start_server(
         .unwrap_or("".to_string());
     service_provider
         .app_data_service
-        .set_hardware_id(machine_uid)
+        .set_hardware_id(machine_uid.clone())
         .unwrap();
     info!("Setting hardware uuid..done");
 
@@ -197,10 +199,7 @@ pub async fn start_server(
     #[cfg(not(target_os = "android"))]
     {
         info!("Starting server discovery",);
-        let _ = discovery::Discovery::start(discovery::ServerInfo::new(
-            certificates.protocol(),
-            &settings.server,
-        ));
+        discovery::start_discovery(certificates.protocol(), settings.server.port, machine_uid);
     }
 
     // ADD SYSTEM USER
@@ -224,6 +223,8 @@ pub async fn start_server(
             .wrap(logger_middleware())
             .wrap(cors_policy(&closure_settings))
             .wrap(compress_middleware())
+            // needed for static files service
+            .app_data(Data::new(closure_settings.clone()))
             .configure(attach_graphql_schema(graphql_schema.clone()))
             .configure(config_static_files)
             .configure(config_server_frontend)
@@ -240,7 +241,10 @@ pub async fn start_server(
 
     let running_server = http_server.run();
     let server_handle = running_server.handle();
-    info!("Server started, running on port: {}", settings.server.port);
+    info!(
+        "Server started, running on port: {}, version: {}",
+        settings.server.port, version
+    );
     // run server in another task so that we can handle restart/off events here
     actix_web::rt::spawn(running_server);
 

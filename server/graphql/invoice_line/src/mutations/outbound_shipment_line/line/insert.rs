@@ -569,7 +569,7 @@ mod test {
                     stock_line_id: "stock line input".to_string(),
                     number_of_packs: 1.0,
                     total_before_tax: Some(1.1),
-                    tax: Some(5.0)
+                    tax: Some(5.0),
                 }
             );
             Ok(InvoiceLine {
@@ -588,7 +588,7 @@ mod test {
                 "stockLineId": "stock line input",
                 "numberOfPacks": 1.0,
                 "totalBeforeTax": 1.1,
-                "tax": 5.0
+                "tax": 5.0,
             },
             "storeId": "store_a"
         });

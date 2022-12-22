@@ -45,6 +45,8 @@ export type ItemsWithStatsQueryVariables = Types.Exact<{
   key?: Types.InputMaybe<Types.ItemSortFieldInput>;
   isDesc?: Types.InputMaybe<Types.Scalars['Boolean']>;
   filter?: Types.InputMaybe<Types.ItemFilterInput>;
+  first?: Types.InputMaybe<Types.Scalars['Int']>;
+  offset?: Types.InputMaybe<Types.Scalars['Int']>;
 }>;
 
 
@@ -190,8 +192,13 @@ export const ItemsDocument = gql`
 }
     ${ItemRowFragmentDoc}`;
 export const ItemsWithStatsDocument = gql`
-    query itemsWithStats($storeId: String!, $key: ItemSortFieldInput, $isDesc: Boolean, $filter: ItemFilterInput) {
-  items(storeId: $storeId, sort: {key: $key, desc: $isDesc}, filter: $filter) {
+    query itemsWithStats($storeId: String!, $key: ItemSortFieldInput, $isDesc: Boolean, $filter: ItemFilterInput, $first: Int, $offset: Int) {
+  items(
+    storeId: $storeId
+    sort: {key: $key, desc: $isDesc}
+    filter: $filter
+    page: {first: $first, offset: $offset}
+  ) {
     ... on ItemConnector {
       __typename
       nodes {
@@ -303,7 +310,7 @@ export const mockItemsQuery = (resolver: ResponseResolver<GraphQLRequest<ItemsQu
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockItemsWithStatsQuery((req, res, ctx) => {
- *   const { storeId, key, isDesc, filter } = req.variables;
+ *   const { storeId, key, isDesc, filter, first, offset } = req.variables;
  *   return res(
  *     ctx.data({ items })
  *   )

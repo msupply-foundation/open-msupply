@@ -52,13 +52,15 @@ Where `[export name]` is name of exported data in `data/` folder
 cargo run --bin remote_server_cli -- initialise-from-export -n reference1
 ```
 
-Above will create sqlite database in root folder with the name specified in `configuration/*.toml` and will populate it with data. Towards the end of console output of the cli command user:password list is presented (those users can be used to log in vi client/api)
+Above will create sqlite database in root folder with the name specified in `configuration/*.yaml` and will populate it with data. Towards the end of console output of the cli command user:password list is presented (those users can be used to log in vi client/api)
 
 Now we can start server with 
 
 ```
 cargo run
 ```
+
+`NOTE` make sure that sync configurations in configuration/*.yaml file is commented out, otherwise may get an error that database and yaml sync configurations differ (in which case remote server will try to contact central server)
 
 Explore API available on `http://localhost:8000/graphql` with build in playground or try [online graphiql explorer](https://graphiql-online.com/)
 
@@ -93,6 +95,7 @@ Set-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Co
 
 ### Ubuntu
 
+- Install libavahi-compat-libdnssd-dev (dnssd dependency): `sudo apt install libavahi-compat-libdnssd-dev`
 - Install Postgres dev libs: `sudo apt install postgresql-server-dev-13`
 
 ### Optional
@@ -244,7 +247,7 @@ cargo run --bin remote_server_cli -- export-graphql-schema
 cargo run --bin remote_server_cli -- initialise-database
 # by default all commands will run with sqlite database, use --features postgres to use postgres database (not applicable to export-initialisation or export-graphql-schema action)
 cargo run --bin remote_server_cli --features postgres -- initialise-database
-# export initialisation data from mSupply central to `data/export_name` folder
+# export initialisation data from mSupply central to `data/export_name` folder (IMPORTANT: Should not be used on large data files, as single JSON format is not suited for large set of data)
 cargo run --bin remote_server_cli -- export-initialisation -n 'export_name' -u 'user1:password1,user2:password2' -p 'sync_password'
 # initialise database from initialisation export (will replace current data), and in this case -r flag will attempt to advance all historic date and date/times forward.
 cargo run --bin remote_server_cli -- initialise-from-export -n 'export_name' -r

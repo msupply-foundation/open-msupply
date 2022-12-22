@@ -1,11 +1,14 @@
 use repository::{KeyValueStoreRepository, KeyValueType, RepositoryError};
 use reqwest::Url;
+use thiserror::Error;
 
 use crate::{service_provider::ServiceContext, sync::settings::SyncSettings};
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum UpdateSettingsError {
+    #[error(transparent)]
     RepositoryError(RepositoryError),
+    #[error("Invalid settings: {0}")]
     InvalidSettings(String),
 }
 
@@ -95,5 +98,5 @@ pub trait SettingsServiceTrait: Sync + Send {
     }
 }
 
-pub struct SettingsService {}
+pub struct SettingsService;
 impl SettingsServiceTrait for SettingsService {}

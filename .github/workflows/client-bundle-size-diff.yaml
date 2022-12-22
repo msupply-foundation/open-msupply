@@ -21,7 +21,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{secrets.TOKEN_REPO}}
 
       - name: Build
-        run: cd ./client && yarn build-dev
+        run: cd ./client && yarn build-stats
 
       - name: Upload base stats.json
         uses: actions/upload-artifact@v2
@@ -43,7 +43,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{secrets.TOKEN_REPO}}
 
       - name: Build
-        run: cd ./client && yarn build-dev
+        run: cd ./client && yarn build-stats
 
       - name: Upload base stats.json
         uses: actions/upload-artifact@v2
