@@ -68,12 +68,12 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
   const t = useTranslation('common');
   const [isScanning, setIsScanning] = React.useState(false);
   const { error } = useNotification();
-  const { electronAPI } = window;
+  const { electronNativeAPI } = window;
 
   const hasNativeBarcodeScanner =
     Capacitor.isPluginAvailable('BarcodeScanner') &&
     Capacitor.isNativePlatform();
-  const hasElectronApi = !!electronAPI;
+  const hasElectronApi = !!electronNativeAPI;
   const hasBarcodeScanner = hasNativeBarcodeScanner || hasElectronApi;
 
   const startScan = async () => {
@@ -88,7 +88,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
 
     if (hasElectronApi) {
       try {
-        const { startBarcodeScan } = electronAPI;
+        const { startBarcodeScan } = electronNativeAPI;
         const data = await startBarcodeScan();
         const barcode = parseBarcodeData(data);
         clearTimeout(timeout);
@@ -121,7 +121,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
   const stopScan = () => {
     setIsScanning(false);
     if (hasElectronApi) {
-      electronAPI.stopBarcodeScan();
+      electronNativeAPI.stopBarcodeScan();
     }
 
     if (hasNativeBarcodeScanner) {
