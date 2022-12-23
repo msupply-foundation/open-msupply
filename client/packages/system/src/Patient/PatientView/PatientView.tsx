@@ -25,6 +25,7 @@ import {
 } from '@openmsupply-client/programs';
 import { PatientModal } from '.';
 import { Footer } from './Footer';
+import { ProgramSearchModal } from '../../Program';
 
 const useUpsertPatient = (): SaveDocumentMutation => {
   const { mutateAsync: insertPatient } = usePatient.document.insert();
@@ -140,7 +141,9 @@ const PatientDetailView: FC = () => {
 };
 
 export const PatientView: FC = () => {
-  const { current } = usePatientModalStore();
+  const { current, setCreationModal, reset } = usePatientModalStore();
+  const { data } = usePatient.document.programEnrolments();
+
   const tabs = [
     {
       Component: <PatientDetailView />,
@@ -162,6 +165,25 @@ export const PatientView: FC = () => {
     <React.Suspense fallback={<DetailViewSkeleton />}>
       {current === PatientModal.Program ? <ProgramDetailModal /> : null}
       {current === PatientModal.Encounter ? <EncounterDetailModal /> : null}
+      {current === PatientModal.ProgramSearch ? (
+        <ProgramSearchModal
+          disabledPrograms={data?.nodes?.map(program => program.type)}
+          open={true}
+          onClose={reset}
+          onChange={async documentRegistry => {
+            const createDocument = {
+              data: { enrolmentDatetime: new Date().toISOString() },
+              documentRegistry,
+            };
+            setCreationModal(
+              PatientModal.Program,
+              documentRegistry.documentType,
+              createDocument,
+              documentRegistry.documentType
+            );
+          }}
+        />
+      ) : null}
       <AppBarButtons />
       <PatientSummary />
       <DetailTabs tabs={tabs} />
