@@ -1,5 +1,7 @@
+import { SortBy } from '@common/hooks';
 import {
   DocumentRegistryFilterInput,
+  DocumentRegistryNode,
   DocumentRegistryNodeContext,
   DocumentRegistrySortFieldInput,
   EncounterSortFieldInput,
@@ -7,6 +9,7 @@ import {
 import {
   DocumentFragment,
   DocumentRegistryFragment,
+  DocumentRegistryWithChildrenFragment,
   EncounterBaseFragment,
   EncounterFieldsFragment,
   Sdk,
@@ -47,6 +50,7 @@ export const getDocumentQueries = (sdk: Sdk, storeId: string) => ({
 
 export type DocumentRegistryParams = {
   filter?: DocumentRegistryFilterInput;
+  sortBy?: SortBy<DocumentRegistryNode>;
 };
 
 export const getEncounterQueries = (sdk: Sdk, storeId: string) => ({
@@ -133,6 +137,7 @@ export const getDocumentRegistryQueries = (sdk: Sdk) => ({
       throw new Error('Error querying document registry by context');
     },
     documentRegistries: async ({
+      sortBy,
       filter,
     }: DocumentRegistryParams): Promise<{
       nodes: DocumentRegistryFragment[];
@@ -141,8 +146,32 @@ export const getDocumentRegistryQueries = (sdk: Sdk) => ({
       const result = await sdk.documentRegistries({
         filter,
         sort: {
-          key: DocumentRegistrySortFieldInput.DocumentType,
-          desc: false,
+          key:
+            (sortBy?.key as DocumentRegistrySortFieldInput) ??
+            DocumentRegistrySortFieldInput.DocumentType,
+          desc: sortBy?.isDesc ?? false,
+        },
+      });
+
+      return result?.documentRegistries;
+    },
+    programRegistries: async (
+      sortBy?: SortBy<DocumentRegistryNode>
+    ): Promise<{
+      nodes: DocumentRegistryWithChildrenFragment[];
+      totalCount: number;
+    }> => {
+      const result = await sdk.documentRegistriesWithChildren({
+        filter: {
+          context: {
+            equalTo: DocumentRegistryNodeContext.Program,
+          },
+        },
+        sort: {
+          key:
+            (sortBy?.key as DocumentRegistrySortFieldInput) ??
+            DocumentRegistrySortFieldInput.DocumentType,
+          desc: sortBy?.isDesc ?? false,
         },
       });
 

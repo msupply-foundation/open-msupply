@@ -18,14 +18,14 @@ import {
 import { AppBarButtons } from './AppBarButtons';
 import { PatientSummary } from './PatientSummary';
 import { ProgramDetailModal, ProgramListView } from '../ProgramEnrolment';
-import { EncounterDetailModal, EncounterListView } from '../Encounter';
+import { CreateEncounterModal, EncounterListView } from '../Encounter';
 import {
+  ProgramSearchModal,
   SaveDocumentMutation,
   useJsonForms,
 } from '@openmsupply-client/programs';
 import { PatientModal } from '.';
 import { Footer } from './Footer';
-import { ProgramSearchModal } from '../../Program';
 
 const useUpsertPatient = (): SaveDocumentMutation => {
   const { mutateAsync: insertPatient } = usePatient.document.insert();
@@ -164,7 +164,7 @@ export const PatientView: FC = () => {
   return (
     <React.Suspense fallback={<DetailViewSkeleton />}>
       {current === PatientModal.Program ? <ProgramDetailModal /> : null}
-      {current === PatientModal.Encounter ? <EncounterDetailModal /> : null}
+      {current === PatientModal.Encounter ? <CreateEncounterModal /> : null}
       {current === PatientModal.ProgramSearch ? (
         <ProgramSearchModal
           disabledPrograms={data?.nodes?.map(program => program.type)}

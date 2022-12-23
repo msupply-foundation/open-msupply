@@ -17,7 +17,7 @@ export const useProgramEncounters = (
     .map(it => it.document.documentRegistry?.id)
     .filter((it): it is string => !!it);
   return {
-    ...useQuery(api.keys.programRegistries(programIds), () =>
+    ...useQuery(api.keys.encountersByPrograms(programIds), () =>
       api.get
         .documentRegistries({
           filter: {

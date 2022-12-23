@@ -1,2 +1,2 @@
-export * from './DetailModal';
+export * from './CreateEncounterModal';
 export * from './ListView';
