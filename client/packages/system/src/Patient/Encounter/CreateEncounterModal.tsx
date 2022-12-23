@@ -20,17 +20,17 @@ import { useEncounter } from '../../Encounter';
 import { usePatientModalStore } from '../hooks';
 import { PatientModal } from '../PatientView';
 import { usePatient } from '../api';
-import { EncounterSearchInput } from '../Components';
 import { EncounterFragment } from '../../Encounter/api/operations.generated';
 import { AppRoute } from 'packages/config/src';
 import { EncounterRegistry } from '../api/hooks/document/useProgramEncounters';
+import { EncounterSearchInput } from './EncounterSearchInput';
 
 type Encounter = Pick<
   EncounterFragment,
   'startDatetime' | 'endDatetime' | 'status'
 >;
 
-export const EncounterDetailModal: FC = () => {
+export const CreateEncounterModal: FC = () => {
   const patientId = usePatient.utils.id();
   const t = useTranslation('patients');
   const { current, setModal: selectModal } = usePatientModalStore();

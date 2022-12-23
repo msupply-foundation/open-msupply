@@ -18,7 +18,7 @@ import { PatientResultsTab } from './PatientResultsTab';
 import { CreateNewPatient, usePatientCreateStore } from '../hooks';
 import {
   DocumentRegistryFragment,
-  useDocument,
+  useDocumentRegistry,
 } from '@openmsupply-client/programs';
 
 enum Tabs {
@@ -40,9 +40,10 @@ const newPatient = (
 };
 
 export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
-  const { data: documentRegistryResponse } = useDocument.get.documentRegistry(
-    DocumentRegistryNodeContext.Patient
-  );
+  const { data: documentRegistryResponse } =
+    useDocumentRegistry.get.documentRegistry(
+      DocumentRegistryNodeContext.Patient
+    );
   const [documentRegistry, setDocumentRegistry] = useState<
     DocumentRegistryFragment | undefined
   >();
