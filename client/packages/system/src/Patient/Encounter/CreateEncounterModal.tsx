@@ -17,8 +17,10 @@ import {
 } from '@openmsupply-client/common';
 import { DateUtils, useTranslation } from '@common/intl';
 import { useEncounter } from '../../Encounter';
-import { usePatientModalStore } from '../hooks';
-import { PatientModal } from '../PatientView';
+import {
+  PatientModal,
+  usePatientModalStore,
+} from '@openmsupply-client/programs';
 import { usePatient } from '../api';
 import { EncounterFragment } from '../../Encounter/api/operations.generated';
 import { AppRoute } from 'packages/config/src';

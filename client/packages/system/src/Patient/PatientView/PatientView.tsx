@@ -10,21 +10,19 @@ import {
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { usePatient } from '../api';
-import {
-  usePatientCreateStore,
-  usePatientModalStore,
-  usePatientStore,
-} from '../hooks';
 import { AppBarButtons } from './AppBarButtons';
 import { PatientSummary } from './PatientSummary';
 import { ProgramDetailModal, ProgramListView } from '../ProgramEnrolment';
 import { CreateEncounterModal, EncounterListView } from '../Encounter';
 import {
+  PatientModal,
   ProgramSearchModal,
   SaveDocumentMutation,
   useJsonForms,
+  usePatientCreateStore,
+  usePatientModalStore,
+  usePatientStore,
 } from '@openmsupply-client/programs';
-import { PatientModal } from '.';
 import { Footer } from './Footer';
 
 const useUpsertPatient = (): SaveDocumentMutation => {
