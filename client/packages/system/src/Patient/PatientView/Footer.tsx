@@ -11,8 +11,7 @@ import {
   useDialog,
   LoadingButton,
 } from '@openmsupply-client/common';
-import { DocumentHistory } from '../../Patient/DocumentHistory';
-import { CreateDocument } from 'packages/programs/src/JsonForms/useJsonForms';
+import { CreateDocument, DocumentHistory } from '@openmsupply-client/programs';
 
 interface FooterProps {
   documentName?: string;
