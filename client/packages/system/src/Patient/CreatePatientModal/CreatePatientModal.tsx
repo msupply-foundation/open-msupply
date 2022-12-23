@@ -15,8 +15,9 @@ import {
 } from '@openmsupply-client/common';
 import { PatientFormTab } from './PatientFormTab';
 import { PatientResultsTab } from './PatientResultsTab';
-import { CreateNewPatient, usePatientCreateStore } from '../hooks';
 import {
+  CreateNewPatient,
+  usePatientCreateStore,
   DocumentRegistryFragment,
   useDocumentRegistry,
 } from '@openmsupply-client/programs';

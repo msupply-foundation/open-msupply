@@ -9,7 +9,7 @@ import {
   useFormatDateTime,
   useTranslation,
 } from '@openmsupply-client/common';
-import { Gender, usePatientCreateStore } from '../hooks';
+import { Gender, usePatientCreateStore } from '@openmsupply-client/programs';
 import { PatientPanel } from './PatientPanel';
 
 export const PatientFormTab: FC<PatientPanel> = ({ patient, value }) => {

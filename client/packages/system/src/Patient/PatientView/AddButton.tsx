@@ -5,8 +5,10 @@ import {
   SplitButtonOption,
   PlusCircleIcon,
 } from '@openmsupply-client/common';
-import { usePatientModalStore } from '../hooks';
-import { PatientModal } from '.';
+import {
+  PatientModal,
+  usePatientModalStore,
+} from '@openmsupply-client/programs';
 
 export const AddButton = () => {
   const t = useTranslation('patients');

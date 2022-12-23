@@ -9,13 +9,13 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { useProgramEnrolment } from '../api/hooks';
-import { usePatientModalStore } from '../../hooks';
-import { PatientModal } from '../../PatientView';
 import { usePatient } from '../../api';
 import {
   DocumentHistory,
+  PatientModal,
   SaveDocumentMutation,
   useJsonForms,
+  usePatientModalStore,
 } from '@openmsupply-client/programs';
 
 const useUpsertProgramEnrolment = (

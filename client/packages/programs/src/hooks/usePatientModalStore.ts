@@ -1,11 +1,17 @@
 import { zustand } from '@openmsupply-client/common';
 import { CreateDocument } from '@openmsupply-client/programs';
-import { PatientModal } from '../PatientView';
 
 interface PatientModalDocument {
   name?: string;
   type?: string;
   createDocument?: CreateDocument;
+}
+
+export enum PatientModal {
+  Prescription = 'PRESCRIPTION',
+  Program = 'PROGRAM',
+  ProgramSearch = 'PROGRAM_SEARCH',
+  Encounter = 'ENCOUNTER',
 }
 
 /**
