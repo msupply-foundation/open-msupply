@@ -442,7 +442,7 @@
                   "type": "Control",
                   "label": "Patient Notes",
                   "scope": "#/properties/notes",
-                  "itemLabel": "Testing",
+                  "itemLabel": "Note #${index}",
                   "options": {
                     "detail": {
                       "type": "VerticalLayout",
@@ -452,7 +452,9 @@
                           "scope": "/properties"
                         }
                       ]
-                    }
+                    },
+                    "editRestrictions": { "latest": true, "authorId": true, "maxAge": 1 },
+                    "reverse": true
                   }
                 }
               ]
