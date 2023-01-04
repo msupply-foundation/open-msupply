@@ -1,11 +1,11 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Actions, ControlProps, rankWith, uiTypeIs } from '@jsonforms/core';
-import { useJsonForms, withJsonFormsControlProps } from '@jsonforms/react';
+import React, { useEffect, useState } from 'react';
+import { ControlProps, rankWith, uiTypeIs } from '@jsonforms/core';
+import { withJsonFormsControlProps } from '@jsonforms/react';
 import {
   DetailInputWithLabelRow,
   useDebounceCallback,
-  useTranslation,
-  useAuthContext,
+  // useTranslation,
+  useFormatDateTime,
 } from '@openmsupply-client/common';
 import { FORM_LABEL_WIDTH } from '../common/styleConstants';
 import { z } from 'zod';
@@ -39,14 +39,16 @@ type Options = z.infer<typeof Options>;
 export const noteTester = rankWith(5, uiTypeIs('Note'));
 
 const UIComponent = (props: ControlProps) => {
-  const { data, handleChange, label, path, errors, uischema } = props;
+  const { data, handleChange, path, errors, uischema, config, enabled } = props;
   const [localText, setLocalText] = useState<string | undefined>(data?.text);
   const [localAuthor, setLocalAuthor] = useState<string | undefined>(
-    data?.authorName
+    data?.authorName ??
+      // TO-DO: Use full name for default once available in database
+      config.user?.name
   );
   // timestamp of the last key stroke
   const [latestKey, setLatestKey] = useState<number>(0);
-  const { user } = useAuthContext();
+  const { localisedDateTime } = useFormatDateTime();
 
   const { errors: zErrors, options: schemaOptions } = useZodOptionsValidation(
     Options,
@@ -59,8 +61,8 @@ const UIComponent = (props: ControlProps) => {
     text: string | undefined,
     authorName: string | undefined
   ) => {
-    const authorId = user?.id;
-    const created = new Date().toISOString();
+    const authorId = config.user?.id;
+    const created = data?.created ?? new Date().toISOString();
     handleChange(
       path,
       error
@@ -85,7 +87,7 @@ const UIComponent = (props: ControlProps) => {
     [path, error, localText]
   );
 
-  const t = useTranslation('common');
+  // const t = useTranslation('common');
 
   const helperText = zErrors ?? errors;
 
@@ -117,10 +119,10 @@ const UIComponent = (props: ControlProps) => {
   const multiline = schemaOptions?.multiline !== false;
   const rows = schemaOptions?.rows ?? 5;
 
-  return (
+  return enabled ? (
     <div>
       <DetailInputWithLabelRow
-        label={label}
+        label="Text"
         inputProps={{
           value: localText ?? '',
           name: 'text',
@@ -165,8 +167,12 @@ const UIComponent = (props: ControlProps) => {
         labelWidthPercentage={FORM_LABEL_WIDTH}
         inputAlignment={'start'}
       />
-      <p>Date and time</p>
-      <p>Author</p>
+      {data.created && <p>{localisedDateTime(data.created)}</p>}
+    </div>
+  ) : (
+    <div>
+      <p>{data.text}</p>
+      <p>{`${data.authorName} (${localisedDateTime(data.created)})`}</p>
     </div>
   );
 };

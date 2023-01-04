@@ -255,7 +255,47 @@ const ArrayComponent = (props: ArrayControlCustomProps) => {
     label,
     rootSchema,
     renderers,
+    config,
   } = props;
+
+  const isElementEditable = (child: any, index: number) => {
+    if (!enabled) return false;
+    if (!uischema.options?.['editRestrictions']) return true;
+
+    const restrictions = uischema.options['editRestrictions'];
+
+    /*
+    The "editRestrictions" option is an object containing any number of the
+    following properties:
+    - "latest": (true/false) -- Only the latest array element can be
+      edited/removed
+    - "authorId": (true/false) --  The element's data.authorId field must match
+      the currently logged-in user
+    - maxAge: (number in days) -- timestamp (created) must be less than this
+      many days in the past
+    - Add more as required...
+    */
+
+    console.log('Restrictions', restrictions);
+    console.log('index', index);
+    console.log('data', data);
+    console.log('child', child);
+    // console.log('latest', restrictions.includes('latest'));
+    console.log('length', data.length - 1);
+
+    if (restrictions?.latest && index !== data.length - 1) return false;
+
+    if (
+      restrictions?.authorId &&
+      child?.authorId &&
+      child.authorId !== config.user.id
+    )
+      return false;
+
+    // MAX AGE CHECK
+
+    return true;
+  };
 
   const childUiSchema = useMemo(
     () =>
@@ -275,10 +315,14 @@ const ArrayComponent = (props: ArrayControlCustomProps) => {
     return null;
   }
 
+  // console.log('Options', uischema.options);
+  // console.log('childUiSchema', childUiSchema);
+
   const data = inputData ?? [];
   if (isStringEnum(schema, data)) {
     return <EnumArrayComponent {...props} data={data} />;
   }
+
   return (
     <Box display="flex" flexDirection="column" gap={0.5} marginTop={2}>
       <Box display="flex" width="100%" alignItems="center">
@@ -299,93 +343,102 @@ const ArrayComponent = (props: ArrayControlCustomProps) => {
           />
         </Box>
       </Box>
-      {data.map((child, index) => {
-        const childPath = composePaths(path, `${index}`);
-        return (
-          <Accordion
-            key={index}
-            defaultExpanded={index === data.length - 1}
-            sx={{
-              mt: '0 !important',
-              mb: index === data.length - 1 ? '20px !important' : 1,
-            }}
-          >
-            <AccordionSummary
-              expandIcon={<ChevronDownIcon />}
+      {data
+        .map((child, index) => {
+          const childPath = composePaths(path, `${index}`);
+          const isEditable = isElementEditable(child, index);
+          return (
+            <Accordion
+              key={index}
+              defaultExpanded={index === data.length - 1}
               sx={{
-                '&:hover .array-remove-icon': { visibility: 'visible' },
-                '.MuiAccordionSummary-content': {
-                  margin: '5px !important',
-                },
-                '.Mui-expanded': {
-                  marginBottom: '0 !important',
-                },
+                mt: '0 !important',
+                mb: index === data.length - 1 ? '20px !important' : 1,
               }}
-              style={{ margin: 0, minHeight: 0 }}
             >
-              <Box
-                display="flex"
-                width={FORM_LABEL_COLUMN_WIDTH}
-                justifyContent="space-between"
-                alignItems="center"
+              <AccordionSummary
+                expandIcon={<ChevronDownIcon />}
+                sx={{
+                  '&:hover .array-remove-icon': { visibility: 'visible' },
+                  '.MuiAccordionSummary-content': {
+                    margin: '5px !important',
+                  },
+                  '.Mui-expanded': {
+                    marginBottom: '0 !important',
+                  },
+                }}
+                style={{ margin: 0, minHeight: 0 }}
               >
-                <ConfirmationModal
-                  open={removeIndex !== undefined}
-                  onConfirm={() => {
-                    if (removeIndex !== undefined) {
-                      removeItems(path, [removeIndex])();
-                      setRemoveIndex(undefined);
-                    }
-                  }}
-                  onCancel={() => setRemoveIndex(undefined)}
-                  title={t('label.remove')}
-                  message={t('messages.confirm-remove-item')}
-                />
-                <IconButton
-                  icon={<MinusCircleIcon />}
-                  label={t('label.remove')}
-                  color="primary"
-                  className="array-remove-icon"
-                  sx={{ visibility: 'hidden' }}
-                  onClick={e => {
-                    setRemoveIndex(index);
-                    // Don't toggle the accordion:
-                    e.stopPropagation();
-                  }}
-                />
-                <Typography
-                  sx={{
-                    fontWeight: 'bold',
-                    textAlign: 'end',
-                    whiteSpace: 'nowrap',
-                  }}
+                <Box
+                  display="flex"
+                  width={FORM_LABEL_COLUMN_WIDTH}
+                  justifyContent="space-between"
+                  alignItems="center"
                 >
-                  {uischema?.itemLabel
-                    ? RegexUtils.formatTemplateString(
-                        uischema?.itemLabel,
-                        {
-                          ...(typeof child === 'object' ? child : {}),
-                          index: index + 1,
-                        },
-                        ''
-                      )
-                    : index + 1}
-                </Typography>
-              </Box>
-            </AccordionSummary>
-            <AccordionDetails>
-              <JsonFormsDispatch
-                key={childPath}
-                schema={schema}
-                uischema={childUiSchema || uischema}
-                enabled={enabled}
-                path={childPath}
-                renderers={renderers}
-              />
-            </AccordionDetails>
-          </Accordion>
-        );
-      })}
+                  <ConfirmationModal
+                    open={removeIndex !== undefined}
+                    onConfirm={() => {
+                      if (removeIndex !== undefined) {
+                        removeItems(path, [removeIndex])();
+                        setRemoveIndex(undefined);
+                      }
+                    }}
+                    onCancel={() => setRemoveIndex(undefined)}
+                    title={t('label.remove')}
+                    message={t('messages.confirm-remove-item')}
+                  />
+
+                  <IconButton
+                    icon={isEditable ? <MinusCircleIcon /> : null}
+                    label={t('label.remove')}
+                    color="primary"
+                    className="array-remove-icon"
+                    sx={{ visibility: 'hidden' }}
+                    onClick={e => {
+                      setRemoveIndex(index);
+                      // Don't toggle the accordion:
+                      e.stopPropagation();
+                    }}
+                  />
+
+                  <Typography
+                    sx={{
+                      fontWeight: 'bold',
+                      textAlign: 'end',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {uischema?.itemLabel
+                      ? RegexUtils.formatTemplateString(
+                          uischema?.itemLabel,
+                          {
+                            ...(typeof child === 'object' ? child : {}),
+                            index: index + 1,
+                          },
+                          ''
+                        )
+                      : index + 1}
+                  </Typography>
+                </Box>
+              </AccordionSummary>
+              <AccordionDetails>
+                <JsonFormsDispatch
+                  key={childPath}
+                  schema={schema}
+                  uischema={childUiSchema || uischema}
+                  enabled={isEditable}
+                  path={childPath}
+                  renderers={renderers}
+                />
+              </AccordionDetails>
+            </Accordion>
+          );
+        })
+        .sort((a, b) =>
+          uischema.options?.['reverse']
+            ? (b.key as number) - (a.key as number)
+            : (a.key as number) - (b.key as number)
+        )}
     </Box>
   );
 };
