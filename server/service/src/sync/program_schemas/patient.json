@@ -156,30 +156,12 @@
     "Note": {
       "properties": {
         "authorId": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "properties": {
-            "length": {
-              "type": "number"
-            }
-          },
-          "required": ["length"],
-          "type": "object"
+          "type": "string"
         },
         "created": {
-          "additionalProperties": {
-            "type": "string"
-          },
           "description": "Datetime when the note has been created",
           "format": "date-time",
-          "properties": {
-            "length": {
-              "type": "number"
-            }
-          },
-          "required": ["length"],
-          "type": "object"
+          "type": "string"
         },
         "text": {
           "type": "string"
