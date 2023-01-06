@@ -10,6 +10,7 @@ import {
   ClockIcon,
   useDialog,
   LoadingButton,
+  useNavigate,
 } from '@openmsupply-client/common';
 import { DocumentHistory } from '../../Patient/DocumentHistory';
 import { CreateDocument } from 'packages/programs/src/JsonForms/useJsonForms';
@@ -21,7 +22,6 @@ interface FooterProps {
   validationError?: string | boolean;
   createDoc?: CreateDocument;
   showSaveConfirmation: () => void;
-  showCancelConfirmation: () => void;
 }
 
 export const Footer: FC<FooterProps> = ({
@@ -31,10 +31,10 @@ export const Footer: FC<FooterProps> = ({
   validationError,
   createDoc,
   showSaveConfirmation,
-  showCancelConfirmation,
 }) => {
   const t = useTranslation('common');
   const { Modal, showDialog, hideDialog } = useDialog();
+  const navigate = useNavigate();
 
   return (
     <AppFooterPortal
@@ -64,7 +64,7 @@ export const Footer: FC<FooterProps> = ({
               variant="cancel"
               disabled={!isDirty || isSaving}
               onClick={() => {
-                showCancelConfirmation();
+                navigate(-1);
               }}
             />
             <LoadingButton
