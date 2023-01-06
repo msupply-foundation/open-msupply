@@ -227,6 +227,50 @@
         "familyPlanning": {
           "$ref": "#/definitions/FamilyPlanning"
         },
+        "genderBasedViolence": {
+          "properties": {
+            "intimatePartnerViolence": {
+              "description": "Victim of intimate partner abuse 706893006",
+              "enum": ["Yes", "No", "N/A"],
+              "type": "string"
+            },
+            "postServiceProvided": {
+              "description": "Post GBV Services provided?",
+              "enum": ["Yes", "No", "Declined", "N/A"],
+              "type": "string"
+            },
+            "rape": {
+              "description": "Victim of rape 42085001",
+              "enum": ["Yes", "No", "N/A"],
+              "type": "string"
+            },
+            "receivedServiceType": {
+              "description": "Service Type",
+              "enum": [
+                "Received at least service (not min. package per type of violence)",
+                "Received min package per type of violence",
+                "N/A"
+              ],
+              "type": "string"
+            },
+            "referredForExternalServices": {
+              "description": "Referred for external services?",
+              "enum": ["Yes", "No", "N/A"],
+              "type": "string"
+            },
+            "screened": {
+              "description": "Screened for Gender Based Violence",
+              "enum": ["Positive", "Negative", "Declined", "NotDone"],
+              "type": "string"
+            },
+            "type": {
+              "description": "Type of Gender Based Violence",
+              "enum": ["Physical", "Psychological", "Sexual", "N/A"],
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
         "haem": {
           "properties": {
             "fbeHb": {
