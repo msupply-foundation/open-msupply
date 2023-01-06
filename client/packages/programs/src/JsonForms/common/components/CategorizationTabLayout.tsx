@@ -162,7 +162,7 @@ const UIComponent: FC<LayoutProps & AjvProps> = ({
           <CategoryModal
             onClose={onClose}
             isOpen={activeCategory === idx}
-            title={category.label}
+            title={category.options?.['title'] ?? category.label}
             okButton={<DialogButton variant="ok" onClick={onClose} />}
             width={700}
           >

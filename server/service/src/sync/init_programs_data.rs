@@ -99,6 +99,7 @@ mod hiv_care_encounter {
                 arv_medication: Default::default(),
                 end_datetime: Default::default(),
                 family_planning: Default::default(),
+                gender_based_violence: Default::default(),
                 physical_examination: Default::default(),
                 practitioner: Default::default(),
                 start_datetime: Default::default(),
