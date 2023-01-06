@@ -6,8 +6,15 @@ export const useDocument = {
     allocateNumber: Document.useAllocateNumber,
   },
   get: {
-    document: Document.useDocument,
+    documentByName: Document.useDocumentByName,
+
     documentRegistry: Document.useDocumentRegistryByContext,
+  },
+};
+
+export const usePatient = {
+  get: {
+    patientDocument: Document.usePatientDocument,
   },
 };
 

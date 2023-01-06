@@ -5,8 +5,9 @@ import { getSdk } from '../../operations.generated';
 export const usePatientDocumentApi = () => {
   const { storeId } = useAuthContext();
   const keys = {
-    base: () => ['patient'] as const,
-    detail: (name: string) => [...keys.base(), storeId, name] as const,
+    base: () => ['patient', storeId] as const,
+    byPatient: (patientId: string) => [...keys.base(), 'p', patientId] as const,
+    byName: (name: string) => [...keys.base(), 'n', name] as const,
   };
   const { client } = useGql();
   const queries = getDocumentQueries(getSdk(client), storeId);

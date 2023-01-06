@@ -21,7 +21,7 @@ import {
 } from '../common';
 import { get as extractProperty } from 'lodash';
 import { z } from 'zod';
-import { EncounterEvent } from './encounter_event';
+import { EncounterEvent } from './EncounterEvent';
 
 type OptionEvent = {
   scheduleIn: {

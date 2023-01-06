@@ -23,6 +23,25 @@ export const getDocumentQueries = (sdk: Sdk, storeId: string) => ({
       }
       throw new Error('Error querying document');
     },
+    byPatient: async (patientId: string): Promise<DocumentFragment> => {
+      const result = await sdk.documents({
+        storeId,
+        filter: {
+          owner: { equalTo: patientId },
+          type: { equalTo: 'Patient' },
+        },
+      });
+      const documents = result?.documents;
+      if (documents?.__typename !== 'DocumentConnector') {
+        throw new Error('Error querying document');
+      }
+
+      const patientDoc = documents.nodes[0];
+      if (patientDoc) {
+        return patientDoc;
+      }
+      throw new Error('Patient document does not exist');
+    },
   },
 });
 

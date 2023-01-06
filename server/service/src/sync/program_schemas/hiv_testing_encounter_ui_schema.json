@@ -23,10 +23,6 @@
       "elements": [
         {
           "type": "Control",
-          "scope": "#/properties/riskBehaviour/properties/riskGroup"
-        },
-        {
-          "type": "Control",
           "scope": "#/properties/riskBehaviour/properties/receivedBloodTransfusion"
         },
         {
@@ -68,6 +64,167 @@
         {
           "type": "Control",
           "scope": "#/properties/riskBehaviour/properties/numberFemaleSexualPartners6Month"
+        },
+        {
+          "type": "DecisionTree",
+          "scope": "#/properties/riskBehaviour/properties/riskGroup",
+          "options": {
+            "basePath": "riskBehaviour",
+            "tree": {
+              "root": "root",
+              "nodes": {
+                "root": {
+                  "branches": [
+                    {
+                      "patientField": "gender",
+                      "equalTo": "MALE",
+                      "node": "isMale"
+                    },
+                    {
+                      "patientField": "gender",
+                      "equalTo": "FEMALE",
+                      "node": "isFemale"
+                    },
+                    {
+                      "patientField": "gender",
+                      "equalTo": "TRANSGENDER",
+                      "node": "isTransgender"
+                    }
+                  ]
+                },
+                "isMale": {
+                  "value": "LRM",
+                  "branches": [
+                    {
+                      "dataField": "sexWithSameSex",
+                      "equalTo": true,
+                      "node": "maleSexWithSameSex"
+                    },
+                    {
+                      "dataField": "unprotectedAnalSex",
+                      "equalTo": true,
+                      "node": "maleSexWithSameSex"
+                    },
+                    {
+                      "dataField": "numberMaleSexualPartners6Month",
+                      "greaterThan": 0,
+                      "node": "maleSexWithSameSex"
+                    },
+                    {
+                      "dataField": "forcedSexWithoutConsent",
+                      "equalTo": true,
+                      "node": "maleHadSexWithFemale"
+                    },
+                    {
+                      "dataField": "numberFemaleSexualPartners6Month",
+                      "greaterThan": 0,
+                      "node": "maleHadSexWithFemale"
+                    }
+                  ]
+                },
+                "maleSexWithSameSex": {
+                  "value": "MSM",
+                  "branches": [
+                    {
+                      "dataField": "prostitution",
+                      "equalTo": true,
+                      "value": "MSMSW"
+                    }
+                  ]
+                },
+                "maleHadSexWithFemale": {
+                  "value": "LRM",
+                  "branches": [
+                    {
+                      "dataField": "numberFemaleSexualPartners6Month",
+                      "greaterThan": 1,
+                      "node": "maleHadSexWithMultiFemale"
+                    }
+                  ]
+                },
+                "maleHadSexWithMultiFemale": {
+                  "value": "HRM",
+                  "branches": [
+                    {
+                      "dataField": "prostitution",
+                      "equalTo": true,
+                      "value": "MSW"
+                    }
+                  ]
+                },
+                "isFemale": {
+                  "value": "LRW",
+                  "branches": [
+                    {
+                      "dataField": "unprotectedVaginalSex",
+                      "equalTo": true,
+                      "node": "femaleHadSex"
+                    },
+                    {
+                      "dataField": "unprotectedAnalSex",
+                      "equalTo": true,
+                      "node": "femaleHadSex"
+                    },
+                    {
+                      "dataField": "sexWithSameSex",
+                      "equalTo": true,
+                      "node": "femaleHadSex"
+                    },
+                    {
+                      "dataField": "forcedSexWithoutConsent",
+                      "equalTo": true,
+                      "node": "femaleHadSex"
+                    },
+                    {
+                      "dataField": "numberMaleSexualPartners6Month",
+                      "greaterThan": 0,
+                      "node": "femaleHadSex"
+                    },
+                    {
+                      "dataField": "numberFemaleSexualPartners6Month",
+                      "greaterThan": 0,
+                      "node": "femaleHadSex"
+                    }
+                  ]
+                },
+                "femaleHadSex": {
+                  "value": "LRW",
+                  "branches": [
+                    {
+                      "dataField": "numberMaleSexualPartners6Month",
+                      "greaterThan": 1,
+                      "node": "femaleHadSexMulti"
+                    },
+                    {
+                      "dataField": "numberFemaleSexualPartners6Month",
+                      "greaterThan": 1,
+                      "node": "femaleHadSexMulti"
+                    }
+                  ]
+                },
+                "femaleHadSexMulti": {
+                  "value": "HRW",
+                  "branches": [
+                    {
+                      "dataField": "prostitution",
+                      "equalTo": true,
+                      "value": "FSW"
+                    }
+                  ]
+                },
+                "isTransgender": {
+                  "value": "TG",
+                  "branches": [
+                    {
+                      "dataField": "prostitution",
+                      "equalTo": true,
+                      "value": "TGSW"
+                    }
+                  ]
+                }
+              }
+            }
+          }
         }
       ]
     },

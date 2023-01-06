@@ -25,6 +25,22 @@ query documentByName($name: String!, $storeId: String!) {
   }
 }
 
+query documents(
+  $storeId: String!
+  $page: PaginationInput
+  $filter: DocumentFilterInput
+  $sort: DocumentSortInput
+) {
+  documents(storeId: $storeId, page: $page, filter: $filter, sort: $sort) {
+    __typename
+    ... on DocumentConnector {
+      nodes {
+        ...Document
+      }
+    }
+  }
+}
+
 fragment DocumentRegistry on DocumentRegistryNode {
   __typename
   id
