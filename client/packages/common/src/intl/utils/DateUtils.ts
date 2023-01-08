@@ -4,8 +4,10 @@ import {
   addDays,
   addYears,
   isValid,
+  differenceInDays,
   differenceInMonths,
   differenceInYears,
+  intervalToDuration,
   isPast,
   isFuture,
   isThisWeek,
@@ -66,6 +68,7 @@ export const DateUtils = {
     const maybeDate = new Date(date);
     return isValid(maybeDate) ? maybeDate : null;
   },
+  intervalToDuration,
   isPast,
   isFuture,
   isExpired: (expiryDate: Date): boolean => isPast(expiryDate),
@@ -81,6 +84,8 @@ export const DateUtils = {
   isEqual,
   isValid,
   age: (date: Date) => differenceInYears(startOfToday(), startOfDay(date)),
+  ageInDays: (date: Date | string) =>
+    differenceInDays(Date.now(), dateInputHandler(date)),
   startOfDay,
   startOfYear,
   formatRFC3339,

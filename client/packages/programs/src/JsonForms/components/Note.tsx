@@ -7,13 +7,12 @@ import {
   // useTranslation,
   useFormatDateTime,
 } from '@openmsupply-client/common';
+import { Typography } from '@mui/material';
 import { FORM_LABEL_WIDTH } from '../common/styleConstants';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../common/useZodOptionsValidation';
 
 // TO-DO:
-// - Array ordering (Most recent open)
-// - Most recent editable
 // - "Required" errors
 // - Options
 
@@ -119,6 +118,12 @@ const UIComponent = (props: ControlProps) => {
   const multiline = schemaOptions?.multiline !== false;
   const rows = schemaOptions?.rows ?? 5;
 
+  const authorStyle = {
+    textAlign: 'right',
+    fontSize: '90%',
+    color: 'gray.dark',
+  };
+
   return enabled ? (
     <div>
       <DetailInputWithLabelRow
@@ -167,12 +172,18 @@ const UIComponent = (props: ControlProps) => {
         labelWidthPercentage={FORM_LABEL_WIDTH}
         inputAlignment={'start'}
       />
-      {data.created && <p>{localisedDateTime(data.created)}</p>}
+      {data.created && (
+        <Typography sx={authorStyle}>
+          {localisedDateTime(data.created)}
+        </Typography>
+      )}
     </div>
   ) : (
     <div>
-      <p>{data.text}</p>
-      <p>{`${data.authorName} (${localisedDateTime(data.created)})`}</p>
+      <Typography>{data.text}</Typography>
+      <Typography sx={authorStyle}>
+        {`${data.authorName} (${localisedDateTime(data.created)})`}
+      </Typography>
     </div>
   );
 };

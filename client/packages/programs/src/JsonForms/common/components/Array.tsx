@@ -37,6 +37,7 @@ import {
   FORM_LABEL_COLUMN_WIDTH,
   FORM_INPUT_COLUMN_WIDTH,
 } from '../styleConstants';
+import { DateUtils } from '@common/intl';
 import { JsonData } from '../JsonForm';
 import parse from 'autosuggest-highlight/parse';
 import match from 'autosuggest-highlight/match';
@@ -276,15 +277,13 @@ const ArrayComponent = (props: ArrayControlCustomProps) => {
     - Add more as required...
     */
 
-    console.log('Restrictions', restrictions);
-    console.log('index', index);
-    console.log('data', data);
-    console.log('child', child);
-    // console.log('latest', restrictions.includes('latest'));
-    console.log('length', data.length - 1);
+    // Must be editable if no timestamp (means it's just created)
+    if (!child.created) return true;
 
+    // Only allow the latest element to be edited
     if (restrictions?.latest && index !== data.length - 1) return false;
 
+    // Author must match the current user
     if (
       restrictions?.authorId &&
       child?.authorId &&
@@ -292,7 +291,8 @@ const ArrayComponent = (props: ArrayControlCustomProps) => {
     )
       return false;
 
-    // MAX AGE CHECK
+    // Must not be older than `maxAge` days
+    if (DateUtils.ageInDays(child.created) >= 1) return false;
 
     return true;
   };
@@ -314,9 +314,6 @@ const ArrayComponent = (props: ArrayControlCustomProps) => {
   if (!props.visible) {
     return null;
   }
-
-  // console.log('Options', uischema.options);
-  // console.log('childUiSchema', childUiSchema);
 
   const data = inputData ?? [];
   if (isStringEnum(schema, data)) {
