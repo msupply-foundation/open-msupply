@@ -1,6 +1,6 @@
 # Mobile App with Discovery
 
-The client app is bundled with the server, on Android app can run as standalone site with a local server, as a client connecting to another server or as a server for other clients.
+The Android app can run as standalone site with a local server, as a client connecting to another server or as a server for other clients.
 On android, the server always starts and this allows for one mobile app for both client and client/server. 
 The mobile app will broadcast via dns sd and will be reachable by both Mobile and Electron clients on the local network. 
 We are using Capacitor to make use of existing optimisations and large library of native plugins. 
