@@ -442,7 +442,7 @@
                   "type": "Control",
                   "label": "Patient Notes",
                   "scope": "#/properties/notes",
-                  "itemLabel": "Note #${index}",
+                  "itemLabel": "Note ${index}",
                   "options": {
                     "detail": {
                       "type": "VerticalLayout",
