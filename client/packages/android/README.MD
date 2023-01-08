@@ -24,7 +24,7 @@ Debugging web app code is done by opening `chrome://inspect`, you should see Web
 
 Please note that when debugging with live reload, connections to a discovered server will always go through to the webpack server (regardless of which server is being selected).
 
-When running android app in emulator, service discovery will not work outside of the emulator network, to test this you will need to run on a device.
+When running the Android app in an emulator the service discovery will not work outside of the emulator network, to test discovery you will need to run the app on a physical device.
 
 ## Scripts
 
