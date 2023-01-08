@@ -31,22 +31,25 @@ This KDD tries to answer the following questions:
 **Transfer Programs Requirements**
 In general, a patient can have a list of programs and each program can be treated at different stores/clinic.
 A patient may change the clinic where the program is treated.
-Thus we need to be able to record the program store affiliation.
-Potentially a program can be treated at multiple stores(?).
-Its probably also useful to have a clinic transfer history.
+Thus, we need to be able to record the program store affiliation.
+Potentially a program can be treated at multiple stores.
+It's probably also useful to have a clinic transfer history.
 
 There are three types of transfers:
 
 - External in transfers: program transfer from an external clinic to mSupply
-- External out transfers: program is not manage by mSupply anymore
+- External out transfers: program is not manage by mSupply any more
 - Internal transfers, a program is transferred to a different store/clinic within mSupply
 
 **Patient visit**
 A patient might have a program encounter at another store.
-To be clarified first:
 
-- user at visited store doesn't has access to the program data?
-- user can add a program encounter but not access other patient program and encounter data?
+Patient Visit Permissions:
+
+- Required patient access during a visit should be minimal.
+- Practitioner needs access to base patient information
+- A visit should show up at the patient's clinic (and resets the "lost to follow up" status)
+- There was the idea to have a special visit program or encounter to record the visit
 
 ## Options
 
@@ -75,7 +78,7 @@ To keep track which programs are associated with a store introduce a new `progra
 - from_datetime (transfer time)
 - to (details columns about where the patient has been transferred)
 - to_datetime (if set the row is is "inactive" because the patients has been transferred out)
-- sync_type (future work: e.g. `FULL_SYNC | SHALLOW_SYNC` where SHALLOW_SYNC just )
+- sync_type (future work: e.g. `FULL_SYNC | SHALLOW_SYNC` where SHALLOW_SYNC syncs just the latest version without document history)
 
 The central server syncs documents based on the `program_store_join` table.
 
