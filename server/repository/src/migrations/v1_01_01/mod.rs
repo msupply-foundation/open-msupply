@@ -89,7 +89,9 @@ impl Migration for V1_01_01 {
             CREATE INDEX "index_changelog_name_id_fkey" ON "changelog" ("name_id");
             CREATE INDEX "index_changelog_store_id_fkey" ON "changelog" ("store_id");
             -- Report
-            CREATE INDEX "index_report_type" ON "report" ("type")
+            CREATE INDEX "index_report_type" ON "report" ("type");
+            -- Activity log
+            CREATE INDEX "index_activity_log_record_id_fkey" ON "activity_log" ("record_id");
             "#
         )?;
 
