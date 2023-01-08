@@ -77,7 +77,6 @@ fn get_date_fields() -> Vec<TableAndFieldName> {
         ("invoice_line", "expiry_date"),
         ("stocktake", "stocktake_date"),
         ("stocktake_line", "expiry_date"),
-        ("sync_out", "created_at"),
     ]
     .iter()
     .map(|(table_name, field_name)| TableAndFieldName {
