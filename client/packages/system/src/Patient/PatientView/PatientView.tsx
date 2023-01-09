@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { FC, useCallback, useEffect, useMemo } from 'react';
 import {
   DetailTabs,
   DetailViewSkeleton,
@@ -46,9 +46,7 @@ const useUpsertPatient = (): SaveDocumentMutation => {
   };
 };
 
-const PatientDetailView: FC<{
-  setIsExistingPatient: React.Dispatch<React.SetStateAction<boolean>>;
-}> = ({ setIsExistingPatient }) => {
+const PatientDetailView: FC = () => {
   const t = useTranslation('patients');
   const { documentName, setDocumentName } = usePatientStore();
   const { patient, setNewPatient } = usePatientCreateStore();
@@ -58,7 +56,6 @@ const PatientDetailView: FC<{
   // we have to memo createDoc to avoid an infinite render loop
   const createDoc = useMemo(() => {
     if (patient) {
-      setIsExistingPatient(true);
       return {
         documentRegistry: patient.documentRegistry,
         data: {
@@ -75,10 +72,7 @@ const PatientDetailView: FC<{
           isDeceased: false,
         },
       };
-    } else {
-      setIsExistingPatient(false);
-      return undefined;
-    }
+    } else return undefined;
   }, [patient]);
 
   const handleSave = useUpsertPatient();
@@ -125,28 +119,21 @@ const PatientDetailView: FC<{
 
 export const PatientView: FC = () => {
   const { current } = usePatientModalStore();
-  const [isExistingPatient, setIsExistingPatient] = useState<boolean>(true);
+  const { patient } = usePatientCreateStore();
   const tabs = [
     {
-      Component: (
-        <PatientDetailView setIsExistingPatient={setIsExistingPatient} />
-      ),
+      Component: <PatientDetailView />,
       value: 'Details',
     },
+    {
+      Component: <ProgramListView />,
+      value: 'Programs',
+    },
+    {
+      Component: <EncounterListView />,
+      value: 'Encounters',
+    },
   ];
-
-  // For new patients, we don't want to display other tabs at all
-  if (!isExistingPatient)
-    tabs.push(
-      {
-        Component: <ProgramListView />,
-        value: 'Programs',
-      },
-      {
-        Component: <EncounterListView />,
-        value: 'Encounters',
-      }
-    );
 
   // Note: unmount modals when not used because they have some internal state
   // that shouldn't be reused across calls.
@@ -156,7 +143,8 @@ export const PatientView: FC = () => {
       {current === PatientModal.Encounter ? <EncounterDetailModal /> : null}
       <AppBarButtons />
       <PatientSummary />
-      <DetailTabs tabs={tabs} />
+      {/* Only show tabs for saved patients */}
+      {!!patient ? <PatientDetailView /> : <DetailTabs tabs={tabs} />}
     </React.Suspense>
   );
 };
