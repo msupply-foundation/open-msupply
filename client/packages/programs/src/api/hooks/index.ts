@@ -7,8 +7,13 @@ export const useDocument = {
   },
   get: {
     documentByName: Document.useDocumentByName,
+  },
+};
 
+export const useDocumentRegistry = {
+  get: {
     documentRegistry: Document.useDocumentRegistryByContext,
+    programRegistries: Document.useProgramRegistries,
   },
 };
 

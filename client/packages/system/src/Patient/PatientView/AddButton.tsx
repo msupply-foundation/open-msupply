@@ -5,20 +5,14 @@ import {
   SplitButtonOption,
   PlusCircleIcon,
 } from '@openmsupply-client/common';
-import { usePatientModalStore } from '../hooks';
-import { PatientModal } from '.';
-import { ProgramSearchModal } from '../../Program/Components';
-import { usePatient } from '../api';
+import {
+  PatientModal,
+  usePatientModalStore,
+} from '@openmsupply-client/programs';
 
 export const AddButton = () => {
   const t = useTranslation('patients');
-  const {
-    current,
-    setCreationModal,
-    setModal: selectModal,
-    reset,
-  } = usePatientModalStore();
-  const { data } = usePatient.document.programEnrolments();
+  const { setModal: selectModal, reset } = usePatientModalStore();
   const options = [
     {
       value: PatientModal.Prescription,
@@ -61,23 +55,6 @@ export const AddButton = () => {
         onSelectOption={onSelectOption}
         Icon={<PlusCircleIcon />}
         onClick={onClick}
-      />
-      <ProgramSearchModal
-        disabledPrograms={data?.nodes?.map(program => program.type)}
-        open={current === PatientModal.ProgramSearch}
-        onClose={reset}
-        onChange={async documentRegistry => {
-          const createDocument = {
-            data: { enrolmentDatetime: new Date().toISOString() },
-            documentRegistry,
-          };
-          setCreationModal(
-            PatientModal.Program,
-            documentRegistry.documentType,
-            createDocument,
-            documentRegistry.documentType
-          );
-        }}
       />
     </>
   );

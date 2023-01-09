@@ -1,7 +1,7 @@
 import React, { FC, PropsWithChildren } from 'react';
 
 import { styled, TabPanel, Box } from '@openmsupply-client/common';
-import { CreateNewPatient } from '../hooks';
+import { CreateNewPatient } from '@openmsupply-client/programs';
 
 const StyledTabPanel = styled(TabPanel)({
   height: '100%',

@@ -9,14 +9,14 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { useProgramEnrolment } from '../api/hooks';
-import { usePatientModalStore } from '../../hooks';
-import { PatientModal } from '../../PatientView';
 import { usePatient } from '../../api';
 import {
+  DocumentHistory,
+  PatientModal,
   SaveDocumentMutation,
   useJsonForms,
+  usePatientModalStore,
 } from '@openmsupply-client/programs';
-import { DocumentHistory } from '../../DocumentHistory';
 
 const useUpsertProgramEnrolment = (
   patientId: string,
@@ -67,7 +67,13 @@ export const ProgramDetailModal: FC = () => {
   const isCreating = document?.name === undefined;
 
   const history = (
-    <Box display="flex" flexDirection="column" alignItems="center" gap={2} height={750}>
+    <Box
+      display="flex"
+      flexDirection="column"
+      alignItems="center"
+      gap={2}
+      height={750}
+    >
       <Typography sx={{ fontSize: 18, fontWeight: 700 }}>
         Document Edit History
       </Typography>
