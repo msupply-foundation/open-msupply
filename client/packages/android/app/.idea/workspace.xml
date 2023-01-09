@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="NONE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="1119067a-2522-481b-a777-561c21f96956" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/capacitor.build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/capacitor.build.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/assets/capacitor.plugins.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/assets/capacitor.plugins.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/jniLibs/arm64-v8a/libremote_server_android.so" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/jniLibs/arm64-v8a/libremote_server_android.so" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../capacitor-cordova-android-plugins/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/../capacitor-cordova-android-plugins/build.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../capacitor-cordova-android-plugins/src/main/java/de/appplant/cordova/plugin/printer/PrintAdapter.java" beforeDir="false" afterPath="$PROJECT_DIR$/../capacitor-cordova-android-plugins/src/main/java/de/appplant/cordova/plugin/printer/PrintAdapter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../capacitor-cordova-android-plugins/src/main/java/de/appplant/cordova/plugin/printer/PrintContent.java" beforeDir="false" afterPath="$PROJECT_DIR$/../capacitor-cordova-android-plugins/src/main/java/de/appplant/cordova/plugin/printer/PrintContent.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../capacitor-cordova-android-plugins/src/main/java/de/appplant/cordova/plugin/printer/PrintIO.java" beforeDir="false" afterPath="$PROJECT_DIR$/../capacitor-cordova-android-plugins/src/main/java/de/appplant/cordova/plugin/printer/PrintIO.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../capacitor-cordova-android-plugins/src/main/java/de/appplant/cordova/plugin/printer/PrintManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/../capacitor-cordova-android-plugins/src/main/java/de/appplant/cordova/plugin/printer/PrintManager.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../capacitor-cordova-android-plugins/src/main/java/de/appplant/cordova/plugin/printer/PrintOptions.java" beforeDir="false" afterPath="$PROJECT_DIR$/../capacitor-cordova-android-plugins/src/main/java/de/appplant/cordova/plugin/printer/PrintOptions.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../capacitor-cordova-android-plugins/src/main/java/de/appplant/cordova/plugin/printer/PrintProxy.java" beforeDir="false" afterPath="$PROJECT_DIR$/../capacitor-cordova-android-plugins/src/main/java/de/appplant/cordova/plugin/printer/PrintProxy.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../capacitor-cordova-android-plugins/src/main/java/de/appplant/cordova/plugin/printer/Printer.java" beforeDir="false" afterPath="$PROJECT_DIR$/../capacitor-cordova-android-plugins/src/main/java/de/appplant/cordova/plugin/printer/Printer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../capacitor.settings.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/../capacitor.settings.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../mobile/app/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../../mobile/app/.idea/workspace.xml" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../../../.." />
+  </component>
+  <component name="ProjectId" id="2I0bXIYsR3Xo3kgTUZgSbnolqmI" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="RunOnceActivity.cidr.known.project.marker" value="true" />
+    <property name="cidr.known.project.marker" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="1119067a-2522-481b-a777-561c21f96956" name="Changes" comment="" />
+      <created>1669321485841</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1669321485841</updated>
+    </task>
+    <servers />
+  </component>
+</project>

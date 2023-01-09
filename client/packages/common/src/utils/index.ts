@@ -11,3 +11,4 @@ export * from './environment';
 export * from './object';
 export * from './types';
 export * from './files';
+export * from './BarcodeScannerContext';
