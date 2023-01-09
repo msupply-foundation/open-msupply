@@ -19,7 +19,9 @@ export const AppNavSection: FC<
               '& .MuiCollapse-wrapperInner > ul > li.MuiListItem-root': {
                 height: 30,
                 marginLeft: 1,
-                // boxShadow: 'none',
+              },
+              '& .navLinkText': {
+                flex: 1,
               },
               '& .MuiListItem-root:hover .chevron': {
                 display: 'flex',
