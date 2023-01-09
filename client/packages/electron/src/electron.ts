@@ -16,8 +16,11 @@ const HARDWARE_ID_KEY = 'hardware_id';
 const SUPPORTED_SCANNERS = [
   {
     vendorId: 1504,
-    vendorName: 'Zebra',
-    products: [{ id: 2194, model: 'DS2208' }],
+    vendorName: 'Zebra / Symbol Technologies, Inc, 2008',
+    products: [
+      { id: 2194, model: 'DS2208' },
+      { id: 4864, model: 'DS2208' },
+    ],
   },
 ];
 
@@ -25,36 +28,42 @@ class BarcodeScanner {
   device: HID.HID | undefined;
 
   constructor() {
-    this.findDevice();
+    this.device = this.findDevice();
   }
 
-  findDevice() {
+  private findDevice() {
     const devices = HID.devices();
     for (const scanner of SUPPORTED_SCANNERS) {
-      const productIds = scanner.products.map(p => p.id);
-      const deviceInfo = devices.find(d => {
-        d.vendorId === scanner.vendorId &&
-          productIds.some(pid => d.productId === pid);
-      });
+      // const productIds = scanner.products.map(p => p.id);
+      const deviceInfo = devices.find(
+        d => d.vendorId === scanner.vendorId // &&
+        // productIds.some(pid => d.productId === pid);
+      );
+
       if (deviceInfo && !!deviceInfo.path) {
-        this.device = new HID.HID(deviceInfo.path);
-        break;
+        return new HID.HID(deviceInfo.path);
       }
     }
+    return undefined;
   }
 
   start() {
     return new Promise((resolve, reject) => {
-      this.device?.read((err, data) => {
-        if (err) reject(err);
-        resolve(data);
-      });
+      if (!this.device) reject(new Error('No scanners found'));
+      try {
+        this.device?.read((err, data) => {
+          if (err) reject(err);
+          resolve(data);
+        });
+      } catch (e) {
+        reject(e);
+      }
     });
   }
 
   stop() {
     this.device?.close();
-    this.findDevice();
+    this.device = this.findDevice();
   }
 }
 
