@@ -1,18 +1,37 @@
 import React, { FC, PropsWithChildren } from 'react';
-import { Box, Theme } from '@mui/material';
-import { useMatch } from 'react-router-dom';
+import { Box } from '@mui/material';
 import { useDrawer } from '@common/hooks';
 
 export const AppNavSection: FC<
   PropsWithChildren<{ isActive: boolean; to: string }>
-> = ({ children, isActive, to }) => {
+> = ({ children, isActive }) => {
   const { isOpen } = useDrawer();
-  const backgroundColor = (theme: Theme) =>
-    useMatch({ path: `${to}/*` })
-      ? theme.palette.background.toolbar
-      : 'transparent';
-  const sx = isActive ? { borderRadius: 2, boxShadow: 3, backgroundColor } : {};
 
   // the div is picking up styles from parent objects and ends up wider than it should be
-  return isOpen ? <Box sx={sx}>{children}</Box> : <>{children}</>;
+  return isOpen ? (
+    <Box
+      sx={
+        isActive
+          ? {
+              '& .MuiCollapse-root': {
+                marginTop: -1.5,
+              },
+              '& .MuiCollapse-wrapperInner > ul > li.MuiListItem-root': {
+                height: 30,
+                marginLeft: 1,
+                // boxShadow: 'none',
+              },
+              '& .MuiListItem-root:hover .chevron': {
+                display: 'flex',
+              },
+            }
+          : {}
+      }
+      className="nav-section"
+    >
+      {children}
+    </Box>
+  ) : (
+    <>{children}</>
+  );
 };

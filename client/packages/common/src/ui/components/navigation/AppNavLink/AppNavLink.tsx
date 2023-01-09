@@ -12,6 +12,7 @@ import {
 import { styled } from '@mui/material/styles';
 import { useMatch, Link } from 'react-router-dom';
 import { useDrawer } from '@common/hooks';
+import { ChevronDownIcon } from '@common/icons';
 
 const useSelectedNavMenuItem = (
   to: string,
@@ -139,6 +140,24 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
                   : {}
               }
             />
+            {end && (
+              <ListItemIcon
+                sx={{
+                  minWidth: 20,
+                  display: selected ? 'flex' : 'none',
+                  alignItems: 'center',
+                }}
+                className="chevron"
+              >
+                <ChevronDownIcon
+                  sx={{
+                    transform: 'rotate(-90deg)',
+                    fontSize: '1rem',
+                    color: 'primary.main',
+                  }}
+                />
+              </ListItemIcon>
+            )}
           </Box>
         </Badge>
       </ListItemButton>
