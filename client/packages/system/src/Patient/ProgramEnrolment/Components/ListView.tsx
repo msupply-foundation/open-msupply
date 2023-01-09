@@ -13,9 +13,11 @@ import {
   ProgramEnrolmentSortFieldInput,
 } from '@openmsupply-client/common';
 import { ProgramEventFragment } from '../api';
-import { usePatientModalStore } from '../../hooks';
-import { PatientModal } from '../../PatientView';
 import { ProgramRowFragmentWithId, usePatient } from '../../api';
+import {
+  PatientModal,
+  usePatientModalStore,
+} from '@openmsupply-client/programs';
 
 const programEventCellValue = (events: ProgramEventFragment[]) => {
   // just take the name of the first event
