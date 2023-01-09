@@ -84,17 +84,15 @@ export const ExternalNavLink: FC<ExternalNavLinkProps> = props => {
               primary={
                 <>
                   {text}
-                  <sup>
-                    <ExternalLinkIcon
-                      sx={{
-                        height: '16px',
-                        marginLeft: 2,
-                        stroke: theme => theme.palette.gray.main,
-                        strokeWidth: '1px',
-                        width: '16px',
-                      }}
-                    />
-                  </sup>
+                  <ExternalLinkIcon
+                    sx={{
+                      height: '16px',
+                      marginLeft: 2,
+                      stroke: theme => theme.palette.gray.main,
+                      strokeWidth: '1px',
+                      width: '16px',
+                    }}
+                  />
                 </>
               }
             />
