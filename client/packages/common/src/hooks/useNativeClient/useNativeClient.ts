@@ -30,6 +30,8 @@ export interface NativeAPI {
   // Will return currently connected client (to display in UI)
   connectedServer: () => Promise<FrontEndHost | null>;
   goBackToDiscovery: () => void;
+  startBarcodeScan: () => Promise<number[]>;
+  stopBarcodeScan: () => void;
 }
 
 declare global {
