@@ -4,7 +4,7 @@ import { withJsonFormsControlProps } from '@jsonforms/react';
 import {
   DetailInputWithLabelRow,
   useDebounceCallback,
-  // useTranslation,
+  useTranslation,
   useFormatDateTime,
 } from '@openmsupply-client/common';
 import { Typography } from '@mui/material';
@@ -12,21 +12,11 @@ import { FORM_LABEL_WIDTH } from '../common/styleConstants';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../common/useZodOptionsValidation';
 
-// TO-DO:
-// - "Required" errors
-// - Options
-
 const Options = z
   .object({
     width: z.string().optional(),
     /**
-     * If true, text input will expand to multiple lines if required (default:
-     * true)
-     */
-    multiline: z.boolean().optional(),
-    /**
-     * How many rows should the textbox display initially (default: 1, ignored
-     * if `multiline === false`)
+     * How many rows should the textbox display initially (default: 5)
      */
     rows: z.number().optional(),
   })
@@ -86,17 +76,9 @@ const UIComponent = (props: ControlProps) => {
     [path, error, localText]
   );
 
-  // const t = useTranslation('common');
+  const t = useTranslation('programs');
 
   const helperText = zErrors ?? errors;
-
-  // const { core, dispatch } = useJsonForms();
-  // useEffect(() => {
-  //   if (!core || !dispatch) {
-  //     return;
-  //   }
-  //   const currentErrors = core?.errors ?? [];
-  // }, [core, dispatch]);
 
   useEffect(() => {
     // Using debounce, the actual data is set after 500ms after the last key
@@ -115,7 +97,6 @@ const UIComponent = (props: ControlProps) => {
   }
 
   const width = schemaOptions?.width ?? '100%';
-  const multiline = schemaOptions?.multiline !== false;
   const rows = schemaOptions?.rows ?? 5;
 
   const authorStyle = {
@@ -127,7 +108,7 @@ const UIComponent = (props: ControlProps) => {
   return enabled ? (
     <div>
       <DetailInputWithLabelRow
-        label="Text"
+        label={t('control.note.text-label')}
         inputProps={{
           value: localText ?? '',
           name: 'text',
@@ -144,14 +125,14 @@ const UIComponent = (props: ControlProps) => {
             ? { sx: { color: 'error.main' } }
             : undefined,
           required: props.required,
-          multiline,
+          multiline: true,
           rows,
         }}
         labelWidthPercentage={FORM_LABEL_WIDTH}
         inputAlignment={'start'}
       />
       <DetailInputWithLabelRow
-        label={'Author'}
+        label={t('control.note.author-label')}
         inputProps={{
           value: localAuthor ?? '',
           name: 'author',
