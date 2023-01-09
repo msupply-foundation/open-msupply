@@ -33,7 +33,6 @@ const useSelectedNavMenuItem = (
 const getListItemCommonStyles = () => ({
   height: 40,
   borderRadius: 20,
-  justifyContent: 'center',
   alignItems: 'center',
 });
 
@@ -116,6 +115,7 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
       <ListItemButton
         sx={{
           ...getListItemCommonStyles(),
+          justifyContent: drawer.isOpen ? 'flex-start' : 'center',
           '&.MuiListItemButton-root:hover': {
             backgroundColor: 'transparent',
           },
@@ -128,38 +128,56 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
         disableGutters
         component={CustomLink}
       >
-        <Badge {...badgeProps} sx={{ alignItems: 'center', flexGrow: 1 }}>
-          <ListItemIcon sx={{ minWidth: 20 }}>{icon}</ListItemIcon>
-          <Box className="navLinkText">
-            <Box width={10} />
+        <ListItemIcon sx={{ minWidth: 20 }}>{icon}</ListItemIcon>
+        <Box className="navLinkText">
+          <Box width={10} />
+
+          <Badge
+            {...badgeProps}
+            sx={{
+              alignItems: 'center',
+              flexGrow: 1,
+              '& .MuiBadge-badge': drawer.isOpen
+                ? {
+                    transform: 'scale(0.75) translate(75%, -25%)',
+                  }
+                : {
+                    top: 'unset',
+                    transform: 'scale(0.75) translate(50%, -50%)',
+                  },
+            }}
+          >
             <ListItemText
               primary={text}
               sx={
                 isSelectedParentItem
-                  ? { '& .MuiTypography-root': { fontWeight: 'bold' } }
-                  : {}
+                  ? {
+                      '& .MuiTypography-root': { fontWeight: 'bold' },
+                      flexGrow: 0,
+                    }
+                  : { flexGrow: 0 }
               }
             />
-            {end && (
-              <ListItemIcon
+          </Badge>
+          {end && (
+            <ListItemIcon
+              sx={{
+                minWidth: 20,
+                display: selected ? 'flex' : 'none',
+                alignItems: 'center',
+              }}
+              className="chevron"
+            >
+              <ChevronDownIcon
                 sx={{
-                  minWidth: 20,
-                  display: selected ? 'flex' : 'none',
-                  alignItems: 'center',
+                  transform: 'rotate(-90deg)',
+                  fontSize: '1rem',
+                  color: 'primary.main',
                 }}
-                className="chevron"
-              >
-                <ChevronDownIcon
-                  sx={{
-                    transform: 'rotate(-90deg)',
-                    fontSize: '1rem',
-                    color: 'primary.main',
-                  }}
-                />
-              </ListItemIcon>
-            )}
-          </Box>
-        </Badge>
+              />
+            </ListItemIcon>
+          )}
+        </Box>
       </ListItemButton>
     </StyledListItem>
   ) : null;

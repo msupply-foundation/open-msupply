@@ -115,7 +115,6 @@ const StyledDrawer = styled(Box, {
     '& .MuiDrawer-paper': openedMixin(theme),
     '& .navLinkText': {
       display: 'inline-flex',
-      flex: 1,
     },
     '& div > ul > li': {
       width: 220,
@@ -125,6 +124,9 @@ const StyledDrawer = styled(Box, {
     ...closedMixin(theme),
     '& .MuiDrawer-paper': closedMixin(theme),
     '& .navLinkText': {
+      width: 0,
+    },
+    '& .navLinkText .MuiListItemText-root': {
       display: 'none',
     },
     '& div > ul > li': {
