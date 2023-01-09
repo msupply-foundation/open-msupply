@@ -7,7 +7,6 @@ import {
   differenceInDays,
   differenceInMonths,
   differenceInYears,
-  intervalToDuration,
   isPast,
   isFuture,
   isThisWeek,
@@ -68,7 +67,6 @@ export const DateUtils = {
     const maybeDate = new Date(date);
     return isValid(maybeDate) ? maybeDate : null;
   },
-  intervalToDuration,
   isPast,
   isFuture,
   isExpired: (expiryDate: Date): boolean => isPast(expiryDate),
