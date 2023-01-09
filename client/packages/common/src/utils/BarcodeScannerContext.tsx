@@ -58,7 +58,7 @@ const parseResult = (content?: string): ScanResult => {
       gtin,
     };
   } catch {
-    return {};
+    return { content };
   }
 };
 
@@ -97,6 +97,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
       } catch (e) {
         error(t('error.unable-to-read-barcode'))();
         clearTimeout(timeout);
+        setIsScanning(false);
         console.error(e);
       }
     }
