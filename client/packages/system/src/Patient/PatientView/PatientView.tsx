@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useEffect, useMemo } from 'react';
+import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   DetailTabs,
   DetailViewSkeleton,
@@ -46,7 +46,9 @@ const useUpsertPatient = (): SaveDocumentMutation => {
   };
 };
 
-const PatientDetailView: FC = () => {
+const PatientDetailView: FC<{
+  setIsExistingPatient: React.Dispatch<React.SetStateAction<boolean>>;
+}> = ({ setIsExistingPatient }) => {
   const t = useTranslation('patients');
   const { documentName, setDocumentName } = usePatientStore();
   const { patient, setNewPatient } = usePatientCreateStore();
@@ -56,6 +58,7 @@ const PatientDetailView: FC = () => {
   // we have to memo createDoc to avoid an infinite render loop
   const createDoc = useMemo(() => {
     if (patient) {
+      setIsExistingPatient(true);
       return {
         documentRegistry: patient.documentRegistry,
         data: {
@@ -72,7 +75,10 @@ const PatientDetailView: FC = () => {
           isDeceased: false,
         },
       };
-    } else return undefined;
+    } else {
+      setIsExistingPatient(false);
+      return undefined;
+    }
   }, [patient]);
 
   const handleSave = useUpsertPatient();
@@ -119,23 +125,31 @@ const PatientDetailView: FC = () => {
 
 export const PatientView: FC = () => {
   const { current } = usePatientModalStore();
+  const [isExistingPatient, setIsExistingPatient] = useState<boolean>(true);
   const tabs = [
     {
-      Component: <PatientDetailView />,
+      Component: (
+        <PatientDetailView setIsExistingPatient={setIsExistingPatient} />
+      ),
       value: 'Details',
-    },
-    {
-      Component: <ProgramListView />,
-      value: 'Programs',
-    },
-    {
-      Component: <EncounterListView />,
-      value: 'Encounters',
     },
   ];
 
-  // Note: unmount modals when not used because they have some internal state that shouldn't be
-  // reused across calls.
+  // For new patients, we don't want to display other tabs at all
+  if (!isExistingPatient)
+    tabs.push(
+      {
+        Component: <ProgramListView />,
+        value: 'Programs',
+      },
+      {
+        Component: <EncounterListView />,
+        value: 'Encounters',
+      }
+    );
+
+  // Note: unmount modals when not used because they have some internal state
+  // that shouldn't be reused across calls.
   return (
     <React.Suspense fallback={<DetailViewSkeleton />}>
       {current === PatientModal.Program ? <ProgramDetailModal /> : null}
