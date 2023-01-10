@@ -20,7 +20,6 @@ export const BasicTextInput: FC<BasicTextInputProps> = React.forwardRef(
       }}
       variant="standard"
       size="small"
-      onFocus={e => e.target.select()}
       InputProps={{
         disableUnderline: error ? true : false,
         ...InputProps,
