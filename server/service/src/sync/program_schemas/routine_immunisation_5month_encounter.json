@@ -2,12 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
     "BodyLocation": {
-      "enum": [
-        "Left Arm",
-        "Right Arm",
-        "Left Leg",
-        "Right Leg"
-      ],
+      "enum": ["Left Arm", "Right Arm", "Left Leg", "Right Leg"],
       "type": "string"
     },
     "DiphtheriaTetanusPertussisPolioHepatitisBHaemophilus": {
@@ -22,10 +17,7 @@
       "type": "object"
     },
     "DiphtheriaTetanusPertussisPolioHepatitisBHaemophilusVaccine": {
-      "enum": [
-        "Infanrix-hexa",
-        "None"
-      ],
+      "enum": ["Infanrix-hexa", "None"],
       "type": "string"
     },
     "EncounterEvent": {
@@ -51,26 +43,15 @@
           "type": "string"
         }
       },
-      "required": [
-        "datetime",
-        "type"
-      ],
+      "required": ["datetime", "type"],
       "type": "object"
     },
     "EncounterStatus": {
-      "enum": [
-        "SCHEDULED",
-        "DONE",
-        "CANCELLED"
-      ],
+      "enum": ["SCHEDULED", "DONE", "CANCELLED"],
       "type": "string"
     },
     "FakeVaccinator": {
-      "enum": [
-        "Dr Frank",
-        "Dr Peters",
-        "Mrs Shaw"
-      ],
+      "enum": ["Dr Frank", "Dr Peters", "Mrs Shaw"],
       "type": "string"
     },
     "Pneumococcal": {
@@ -85,10 +66,7 @@
       "type": "object"
     },
     "PneumococcalVaccine": {
-      "enum": [
-        "Synflorix",
-        "None"
-      ],
+      "enum": ["Synflorix", "None"],
       "type": "string"
     },
     "Practitioner": {
@@ -142,9 +120,7 @@
           "$ref": "#/definitions/FakeVaccinator"
         }
       },
-      "required": [
-        "startDatetime"
-      ],
+      "required": ["startDatetime"],
       "type": "object"
     }
   },

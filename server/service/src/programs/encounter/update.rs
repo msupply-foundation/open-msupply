@@ -6,12 +6,13 @@ use repository::{
 
 use crate::{
     document::{document_service::DocumentInsertError, is_latest_doc, raw_document::RawDocument},
+    programs::update_program_document::{update_program_events, UpdateProgramDocumentError},
     service_provider::{ServiceContext, ServiceProvider},
 };
 
 use super::{
-    encounter_schema::SchemaEncounter,
-    encounter_updated::{encounter_updated, EncounterTableUpdateError},
+    encounter_updated::update_encounter_row,
+    validate_misc::{validate_encounter_schema, ValidatedSchemaEncounter},
 };
 
 #[derive(PartialEq, Debug)]
@@ -42,26 +43,35 @@ pub fn update_encounter(
     let patient = ctx
         .connection
         .transaction_sync(|_| {
-            let (existing, encounter, encounter_row) = validate(ctx, &input)?;
-
+            let (existing, encounter, existing_encounter_row) = validate(ctx, &input)?;
+            let encounter_start_datetime = encounter.start_datetime;
             let doc = generate(user_id, input, existing)?;
 
             if is_latest_doc(ctx, service_provider, &doc)
                 .map_err(UpdateEncounterError::DatabaseError)?
             {
-                encounter_updated(
+                update_encounter_row(
                     ctx,
-                    service_provider,
-                    &encounter_row.patient_id,
-                    &encounter_row.program,
+                    &existing_encounter_row.patient_id,
+                    &existing_encounter_row.program,
                     &doc,
                     encounter,
+                )?;
+
+                update_program_events(
+                    ctx,
+                    service_provider,
+                    &existing_encounter_row.patient_id,
+                    encounter_start_datetime,
+                    Some(existing_encounter_row.start_datetime),
+                    &doc,
+                    &allowed_docs,
                 )
                 .map_err(|err| match err {
-                    EncounterTableUpdateError::RepositoryError(err) => {
+                    UpdateProgramDocumentError::DatabaseError(err) => {
                         UpdateEncounterError::DatabaseError(err)
                     }
-                    EncounterTableUpdateError::InternalError(err) => {
+                    UpdateProgramDocumentError::InternalError(err) => {
                         UpdateEncounterError::InternalError(err)
                     }
                 })?;
@@ -121,16 +131,6 @@ fn generate(
     })
 }
 
-fn validate_encounter_schema(
-    input: &UpdateEncounter,
-) -> Result<SchemaEncounter, serde_json::Error> {
-    // Check that we can parse the data into a default encounter object, i.e. that it's following
-    // the default encounter JSON schema.
-    // If the encounter data uses a derived encounter schema, the derived schema is validated in the
-    // document service.
-    serde_json::from_value(input.data.clone())
-}
-
 fn validate_exiting_encounter(
     ctx: &ServiceContext,
     name: &str,
@@ -152,10 +152,9 @@ fn validate_parent(
 fn validate(
     ctx: &ServiceContext,
     input: &UpdateEncounter,
-) -> Result<(Document, SchemaEncounter, EncounterRow), UpdateEncounterError> {
-    let encounter = validate_encounter_schema(input).map_err(|err| {
-        UpdateEncounterError::InvalidDataSchema(vec![format!("Invalid program data: {}", err)])
-    })?;
+) -> Result<(Document, ValidatedSchemaEncounter, EncounterRow), UpdateEncounterError> {
+    let encounter = validate_encounter_schema(&input.data)
+        .map_err(|err| UpdateEncounterError::InvalidDataSchema(vec![err]))?;
 
     let doc = match validate_parent(ctx, &input.parent)? {
         Some(doc) => doc,

@@ -21,7 +21,7 @@ import {
 
 const programEventCellValue = (events: ProgramEventFragment[]) => {
   // just take the name of the first event
-  return events[0]?.name ?? '';
+  return events[0]?.data ?? '';
 };
 
 const ProgramListComponent: FC = () => {

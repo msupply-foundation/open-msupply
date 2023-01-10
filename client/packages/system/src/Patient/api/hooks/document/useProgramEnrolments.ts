@@ -27,7 +27,7 @@ export const useProgramEnrolments = (
         nodes: programs.nodes.map(node => {
           // only take the latest status event
           const events = node.events
-            .filter(e => e.type === 'programStatus' && e.name)
+            .filter(e => e.type === 'programStatus' && e.data)
             .slice(0, 1);
           return { ...node, events, id: node.name } as ProgramRowFragmentWithId;
         }),

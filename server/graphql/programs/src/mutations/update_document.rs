@@ -266,6 +266,7 @@ mod graphql {
                 name: None,
                 parent_id: None,
                 form_schema_id: Some(schema.id),
+                config: None,
             })
             .unwrap();
         let query = r#"mutation MyMutation($data: JSON!, $storeId: String!) {
@@ -318,6 +319,7 @@ mod graphql {
                 name: None,
                 parent_id: None,
                 form_schema_id: Some(schema.id),
+                config: None,
             })
             .unwrap();
         let query = r#"mutation MyMutation($data: JSON!, $storeId: String!) {
