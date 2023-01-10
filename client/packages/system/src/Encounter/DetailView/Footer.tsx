@@ -13,7 +13,7 @@ import {
   ClockIcon,
   useDialog,
 } from '@openmsupply-client/common';
-import { DocumentHistory } from '../../Patient/DocumentHistory';
+import { DocumentHistory } from '@openmsupply-client/programs';
 
 interface FooterProps {
   documentName?: string;

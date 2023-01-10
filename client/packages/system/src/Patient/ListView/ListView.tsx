@@ -16,7 +16,7 @@ import {
 import { usePatient, PatientRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 import { Toolbar } from './Toolbar';
-import { usePatientStore } from '../hooks';
+import { usePatientStore } from '@openmsupply-client/programs';
 
 const PatientListComponent: FC = () => {
   const {

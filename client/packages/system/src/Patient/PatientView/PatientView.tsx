@@ -7,20 +7,19 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
-import {
-  usePatientCreateStore,
-  usePatientModalStore,
-  usePatientStore,
-} from '../hooks';
 import { AppBarButtons } from './AppBarButtons';
 import { PatientSummary } from './PatientSummary';
 import { ProgramDetailModal, ProgramListView } from '../ProgramEnrolment';
-import { EncounterDetailModal, EncounterListView } from '../Encounter';
+import { CreateEncounterModal, EncounterListView } from '../Encounter';
 import {
+  PatientModal,
+  ProgramSearchModal,
   SaveDocumentMutation,
   useJsonForms,
+  usePatientCreateStore,
+  usePatientModalStore,
+  usePatientStore,
 } from '@openmsupply-client/programs';
-import { PatientModal } from '.';
 import { Footer } from './Footer';
 
 const useUpsertPatient = (): SaveDocumentMutation => {
@@ -118,8 +117,10 @@ const PatientDetailView: FC = () => {
 };
 
 export const PatientView: FC = () => {
-  const { current } = usePatientModalStore();
+  const { current, setCreationModal, reset } = usePatientModalStore();
+  const { data } = usePatient.document.programEnrolments();
   const { patient } = usePatientCreateStore();
+
   const tabs = [
     {
       Component: <PatientDetailView />,
@@ -140,7 +141,26 @@ export const PatientView: FC = () => {
   return (
     <React.Suspense fallback={<DetailViewSkeleton />}>
       {current === PatientModal.Program ? <ProgramDetailModal /> : null}
-      {current === PatientModal.Encounter ? <EncounterDetailModal /> : null}
+      {current === PatientModal.Encounter ? <CreateEncounterModal /> : null}
+      {current === PatientModal.ProgramSearch ? (
+        <ProgramSearchModal
+          disabledPrograms={data?.nodes?.map(program => program.type)}
+          open={true}
+          onClose={reset}
+          onChange={async documentRegistry => {
+            const createDocument = {
+              data: { enrolmentDatetime: new Date().toISOString() },
+              documentRegistry,
+            };
+            setCreationModal(
+              PatientModal.Program,
+              documentRegistry.documentType,
+              createDocument,
+              documentRegistry.documentType
+            );
+          }}
+        />
+      ) : null}
       <AppBarButtons />
       <PatientSummary />
       {/* Only show tabs for saved patients */}

@@ -7,8 +7,8 @@ import {
   Typography,
   useBufferState,
 } from '@openmsupply-client/common';
-import { usePatient } from '../../api';
-import { EncounterRegistry } from '../../api/hooks/document/useProgramEncounters';
+import { usePatient } from '../api';
+import { EncounterRegistry } from '../api/hooks/document/useProgramEncounters';
 
 interface EncounterSearchInputProps {
   onChange: (type: EncounterRegistry) => void;
