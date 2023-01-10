@@ -25,6 +25,7 @@ pub(crate) mod extract_fields;
 mod insert;
 mod query;
 mod update;
+mod validate_misc;
 
 pub trait EncounterServiceTrait: Sync + Send {
     fn insert_encounter(

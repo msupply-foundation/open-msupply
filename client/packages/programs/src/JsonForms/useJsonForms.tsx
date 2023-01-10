@@ -20,7 +20,6 @@ import {
   QuantityPrescribed,
   quantityPrescribedTester,
 } from './components/QuantityPrescribed';
-import { EventTrigger, eventTriggerTester } from './components/EventTrigger';
 import {
   AdherenceStatus,
   adherenceStatusTester,
@@ -86,7 +85,6 @@ const additionalRenderers: JsonFormsRendererRegistryEntry[] = [
   { tester: dateOfBirthTester, renderer: DateOfBirth },
   { tester: encounterLineChartTester, renderer: EncounterLineChart },
   { tester: quantityPrescribedTester, renderer: QuantityPrescribed },
-  { tester: eventTriggerTester, renderer: EventTrigger },
   { tester: bmiTester, renderer: BMI },
   { tester: adherenceStatusTester, renderer: AdherenceStatus },
   {

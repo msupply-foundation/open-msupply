@@ -64,6 +64,7 @@ fn generate(input: InsertDocumentRegistry) -> DocumentRegistryRow {
         name: input.name,
         parent_id: input.parent_id,
         form_schema_id: Some(input.form_schema_id),
+        config: None,
     }
 }
 
