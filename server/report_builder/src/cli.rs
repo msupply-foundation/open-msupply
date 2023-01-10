@@ -11,7 +11,7 @@ fn main() -> anyhow::Result<()> {
             print_report(
                 args.config,
                 args.store_id,
-                args.name,
+                args.output,
                 args.report,
                 args.data_id,
             )?;

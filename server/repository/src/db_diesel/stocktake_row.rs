@@ -4,7 +4,7 @@ use super::{
 
 use crate::repository_error::RepositoryError;
 
-use diesel::prelude::*;
+use diesel::{dsl::max, prelude::*};
 
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel_derive_enum::DbEnum;
@@ -126,6 +126,17 @@ impl<'a> StocktakeRowRepository<'a> {
         let result = stocktake_dsl::stocktake
             .filter(stocktake_dsl::id.eq_any(ids))
             .load(&self.connection.connection)?;
+        Ok(result)
+    }
+
+    pub fn find_max_stocktake_number(
+        &self,
+        store_id: &str,
+    ) -> Result<Option<i64>, RepositoryError> {
+        let result = stocktake_dsl::stocktake
+            .filter(stocktake_dsl::store_id.eq(store_id))
+            .select(max(stocktake_dsl::stocktake_number))
+            .first(&self.connection.connection)?;
         Ok(result)
     }
 }

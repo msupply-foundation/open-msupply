@@ -49,7 +49,7 @@ If you've set configurations in rust analyzer, can use inlay hint play and debug
 * integration/remote/test
 * integration/central/test
 * integration/transfer/requisition
-* integration/transfer/shiipment
+* integration/transfer/shipment
 
 # How do they work (Central and Remote)
 
