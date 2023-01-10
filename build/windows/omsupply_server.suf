@@ -4190,6 +4190,28 @@ if not hasOmsupplyInstalled then
 	Registry.CreateKey(HKEY_LOCAL_MACHINE, "Software\\omSupply Server");
 	Registry.SetValue(HKEY_LOCAL_MACHINE, "Software\\omSupply Server", "Path", omSupplyServerPath, REG_SZ);
 	Registry.SetValue(HKEY_LOCAL_MACHINE, "Software\\omSupply Server", "Database", omSupplyServerDatabase, REG_SZ);
+	
+	-- Create environment variable for postgres libraries required for diesel orm (backend)
+	if (omSupplyServerDatabase == "postgres") then
+		local envKey = "System\\CurrentControlSet\\Control\\Session Manager\\Environment";
+		local path = Registry.GetValue(HKEY_LOCAL_MACHINE, envKey, "Path", true);
+		local binPath = "C:\\Program Files\\PostgreSQL\\14\\bin";
+		local libPath = "C:\\Program Files\\PostgreSQL\\14\\lib";
+		local binTargetIndex = String.Find(path, binPath, 1, false);
+		local libTargetIndex = String.Find(path, libPath, 1, false);
+		
+		if (binTargetIndex == -1) then
+			-- postgres bin path not found, add it
+			path = path .. ";" .. binPath;
+		end
+		if (libTargetIndex == -1) then
+			-- postgres lib path not found, add it
+			path = path .. ";" .. libPath;
+		end
+		
+		-- Update registry
+		Registry.SetValue(HKEY_LOCAL_MACHINE, envKey, "Path", path, REG_EXPAND_SZ);
+	end
 end
 
 if (omSupplyServerDatabase == "sqlite") then
