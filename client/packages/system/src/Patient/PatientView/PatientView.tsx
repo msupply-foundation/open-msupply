@@ -3,27 +3,23 @@ import {
   DetailTabs,
   DetailViewSkeleton,
   useConfirmationModal,
-  useNavigate,
-  RouteBuilder,
   Box,
   useTranslation,
 } from '@openmsupply-client/common';
-import { AppRoute } from '@openmsupply-client/config';
 import { usePatient } from '../api';
-import {
-  usePatientCreateStore,
-  usePatientModalStore,
-  usePatientStore,
-} from '../hooks';
 import { AppBarButtons } from './AppBarButtons';
 import { PatientSummary } from './PatientSummary';
 import { ProgramDetailModal, ProgramListView } from '../ProgramEnrolment';
-import { EncounterDetailModal, EncounterListView } from '../Encounter';
+import { CreateEncounterModal, EncounterListView } from '../Encounter';
 import {
+  PatientModal,
+  ProgramSearchModal,
   SaveDocumentMutation,
   useJsonForms,
+  usePatientCreateStore,
+  usePatientModalStore,
+  usePatientStore,
 } from '@openmsupply-client/programs';
-import { PatientModal } from '.';
 import { Footer } from './Footer';
 
 const useUpsertPatient = (): SaveDocumentMutation => {
@@ -51,7 +47,6 @@ const useUpsertPatient = (): SaveDocumentMutation => {
 
 const PatientDetailView: FC = () => {
   const t = useTranslation('patients');
-  const navigate = useNavigate();
   const { documentName, setDocumentName } = usePatientStore();
   const { patient, setNewPatient } = usePatientCreateStore();
   const patientId = usePatient.utils.id();
@@ -80,7 +75,7 @@ const PatientDetailView: FC = () => {
   }, [patient]);
 
   const handleSave = useUpsertPatient();
-  const { JsonForm, saveData, revert, isSaving, isDirty, validationError } =
+  const { JsonForm, saveData, isSaving, isDirty, validationError } =
     useJsonForms(patient ? undefined : documentName, { handleSave }, createDoc);
   useEffect(() => {
     return () => setNewPatient(undefined);
@@ -106,23 +101,6 @@ const PatientDetailView: FC = () => {
     title: t('heading.are-you-sure'),
   });
 
-  const showCancelConfirmation = useConfirmationModal({
-    onConfirm: () => {
-      if (createDoc) {
-        setNewPatient(undefined);
-        navigate(
-          RouteBuilder.create(AppRoute.Dispensary)
-            .addPart(AppRoute.Patients)
-            .build()
-        );
-      } else {
-        revert();
-      }
-    },
-    message: t('messages.confirm-cancel-generic'),
-    title: t('heading.are-you-sure'),
-  });
-
   return (
     <Box flex={1} display="flex" justifyContent="center">
       <Box style={{ maxWidth: 1200, flex: 1 }}>{JsonForm}</Box>
@@ -133,14 +111,16 @@ const PatientDetailView: FC = () => {
         validationError={validationError}
         createDoc={createDoc}
         showSaveConfirmation={showSaveConfirmation}
-        showCancelConfirmation={showCancelConfirmation}
       />
     </Box>
   );
 };
 
 export const PatientView: FC = () => {
-  const { current } = usePatientModalStore();
+  const { current, setCreationModal, reset } = usePatientModalStore();
+  const { data } = usePatient.document.programEnrolments();
+  const { patient } = usePatientCreateStore();
+
   const tabs = [
     {
       Component: <PatientDetailView />,
@@ -156,15 +136,35 @@ export const PatientView: FC = () => {
     },
   ];
 
-  // Note: unmount modals when not used because they have some internal state that shouldn't be
-  // reused across calls.
+  // Note: unmount modals when not used because they have some internal state
+  // that shouldn't be reused across calls.
   return (
     <React.Suspense fallback={<DetailViewSkeleton />}>
       {current === PatientModal.Program ? <ProgramDetailModal /> : null}
-      {current === PatientModal.Encounter ? <EncounterDetailModal /> : null}
+      {current === PatientModal.Encounter ? <CreateEncounterModal /> : null}
+      {current === PatientModal.ProgramSearch ? (
+        <ProgramSearchModal
+          disabledPrograms={data?.nodes?.map(program => program.type)}
+          open={true}
+          onClose={reset}
+          onChange={async documentRegistry => {
+            const createDocument = {
+              data: { enrolmentDatetime: new Date().toISOString() },
+              documentRegistry,
+            };
+            setCreationModal(
+              PatientModal.Program,
+              documentRegistry.documentType,
+              createDocument,
+              documentRegistry.documentType
+            );
+          }}
+        />
+      ) : null}
       <AppBarButtons />
       <PatientSummary />
-      <DetailTabs tabs={tabs} />
+      {/* Only show tabs for saved patients */}
+      {!!patient ? <PatientDetailView /> : <DetailTabs tabs={tabs} />}
     </React.Suspense>
   );
 };
