@@ -73,7 +73,7 @@ This means a user can only access documents at a certain store when having the m
 
 **Patient transfers**
 
-To keep track of the current active store for a program a new `program_store_join` table is used.
+To keep track of the current active store for a program a new `patient_transfer` table is used.
 For example (details to be worked out):
 
 ```typescript
@@ -81,26 +81,18 @@ For example (details to be worked out):
   id: string,
   patient_id: string,
   program_id: string,
-  store_id: string,
-  // Primary store for this program (might not be needed?)
-  is_main_store: boolean,
-  // Row from where the patient has been transferred
-  transfer_in_id?: string,
-  // Details about external transfers
-  transfer_in_external?: string,
-  // transfer in time
-  transfer_in_datetime: Date,
-  // details columns about where the patient has been transferred
-  transfer_out_id?: string,
-  // Details about external transfers
-  transfer_out_external?: string,
-  // If set the row is "inactive" because the patients has been transferred out
-  transfer_out_datetime?: Date,
+  // Time of the transfer
+  datetime: Date,
+  // Name of the internal store where the patient has been transferred too
+  name_id?: string,
+  // Name of the external store. Set if the patient has been transferred out to an external store.
+  external_out_name?: string,
+  // Name of the external store. Set if the patient has been transferred in from an external store.
+  external_in_name?: string,
 }
 ```
 
 This table can also be used to derive a transfer history.
-Furthermore, this table can also be used to decide if further edits are allowed, e.g. if the patient has been transferred out and thus a program is "inactive" at a certain store.
 
 **Patient visits**
 
