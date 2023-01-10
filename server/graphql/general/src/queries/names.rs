@@ -91,6 +91,39 @@ pub fn get_names(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.clone(), user.user_id)?;
 
+    // exclude the current store from the list of names
+    // if requesting for customers or suppliers
+    let filter = {
+        if let Some(name_filter) = filter {
+            let is_customer = name_filter.is_customer.unwrap_or(false);
+            let is_supplier = name_filter.is_supplier.unwrap_or(false);
+            let has_id_filter = name_filter.id.is_some();
+
+            let filter = if (is_customer || is_supplier) && !has_id_filter {
+                let store_row = repository::StoreRowRepository::new(&service_context.connection)
+                    .find_one_by_id(&store_id)?;
+                let store_name_id = match store_row {
+                    Some(store) => Some(store.name_id),
+                    None => None,
+                };
+
+                Some(NameFilterInput {
+                    id: Some(EqualFilterStringInput {
+                        equal_to: None,
+                        equal_any: None,
+                        not_equal_to: store_name_id,
+                    }),
+                    ..name_filter
+                })
+            } else {
+                Some(name_filter)
+            };
+            filter
+        } else {
+            None
+        }
+    };
+
     let names = service_provider
         .general_service
         .get_names(
