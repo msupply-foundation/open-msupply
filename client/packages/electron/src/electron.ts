@@ -1,7 +1,7 @@
 import { app, BrowserWindow, dialog, ipcMain } from 'electron';
 import dnssd from 'dnssd';
 import { IPC_MESSAGES } from './shared';
-import thisIp from 'ip';
+import { address, isV4Format } from 'ip';
 import {
   FrontEndHost,
   frontEndHostUrl,
@@ -144,15 +144,16 @@ const start = (): void => {
   discovery.on('serviceUp', function ({ type, port, addresses, txt }) {
     if (type?.name !== SERVICE_TYPE) return;
     if (typeof txt != 'object') return;
+
     const protocol = txt[PROTOCOL_KEY];
     const clientVersion = txt[CLIENT_VERSION_KEY];
     const hardwareId = txt[HARDWARE_ID_KEY];
+
     if (!isProtocol(protocol)) return;
     if (!(typeof clientVersion === 'string')) return;
     if (!(typeof hardwareId === 'string')) return;
 
-    // TODO fiter our ipv6 addresses and just get one ipv4 (it's usually the first one)
-    const ip = addresses[0];
+    const ip = addresses.find(isV4Format);
 
     if (!ip) return;
 
@@ -161,7 +162,7 @@ const start = (): void => {
       protocol,
       ip,
       clientVersion: clientVersion || '',
-      isLocal: ip === thisIp.address() || ip === '127.0.0.1',
+      isLocal: ip === address() || ip === '127.0.0.1',
       hardwareId,
     });
   });
@@ -179,7 +180,7 @@ app.on(
     event.preventDefault();
     return callback(true);
 
-    // TODO store an object with this shape: { [hardware_id + port]: cert }, retreive this object on startup
+    // TODO store an object with this shape: { [hardware_id + port]: cert }, retrieve this object on startup
     // update/save this object when connecting to 'new' server that is not in the object
     // if server is in the object make sure cert matches
 
@@ -196,7 +197,7 @@ app.on(
 );
 
 process.on('uncaughtException', error => {
-  // See coment below
+  // See comment below
   if (
     error.message.includes('t[this.constructor.name] is not a constructor') &&
     error.stack?.includes('v._addKnownAnswers')
