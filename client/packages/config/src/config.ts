@@ -1,26 +1,31 @@
-import { Capacitor } from '@capacitor/core';
-
 declare const API_HOST: string;
 
-// For production we get URL relative to web app
+// For production, API is on the same domain/ip and port as web app, available through sub-route
+// i.e. web app is on https://my.openmsupply.com/, then graphql will be available https://my.openmsupply.com/graphql 
+// and files on https://my.openmsupply.com/files 
+
+// For development, API server and front end are launched seperately on different ports and possible different IPs
+// by default we assume development API server is launched on the same domain/ip and on port 8000. We can overwrite this
+// with API_HOST which is available through webpack.DefinePlugin (i.e. webpack server --env API_PORT=800 --env API_IP 'localhost')
+
+// Important to note, if we overwrite API_HOST in development, we should use ip/domain that is known outsideof localhost
+// because web app in development mode may be accessed by clients on different machine (i.e. when debugin Android app)
+
 const isProductionBuild = process.env['NODE_ENV'] === 'production';
-// http://localhost:8000 is default for remote server
-// API_HOST is available through webpack.DefinePlugin (i.e. webpack server --env API_HOST='http://localhost:8001')
-
-const devServerURL =
-  (typeof API_HOST !== 'undefined' && API_HOST) || 'http://localhost:8000';
-
-// const devServerURL = 'http://localhost:8000'; // - default URL for the backend graphql server
 const { port, hostname, protocol } = window.location;
 
-// For mobile always use https://localhost:8000, as per MainActivity.java
-const productionServerUrl =
-  Capacitor.getPlatform() === 'web'
-    ? `${protocol}//${hostname}:${port}`
-    : 'https://localhost:8000';
+const defaultDevelopmentApiHost = `${protocol}//${hostname}:8000`;
+const productionApiHost = `${protocol}//${hostname}:${port}`;
 
-const config = {
-  API_HOST: isProductionBuild ? productionServerUrl : devServerURL,
-};
+const developmentApiHost = 
+  (typeof API_HOST !== 'undefined' && API_HOST) || defaultDevelopmentApiHost;
 
-export default config;
+const apiHost = isProductionBuild ? productionApiHost : developmentApiHost;
+
+export const Environment = {
+  API_HOST: apiHost,
+  FILE_URL: `${apiHost}/files?id=`,
+  GRAPHQL_URL: `${apiHost}/graphql`,
+}
+
+export default Environment;

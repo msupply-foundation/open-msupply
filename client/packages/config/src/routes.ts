@@ -6,6 +6,8 @@ export enum AppRoute {
   CustomerRequisition = 'customer-requisition',
   Customer = 'customers',
 
+  Discovery = 'discovery',
+
   Dashboard = 'dashboard',
 
   Replenishment = 'replenishment',

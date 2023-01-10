@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, PropsWithChildren } from 'react';
 import i18next from 'i18next';
 import Backend from 'i18next-chained-backend';
 import LocalStorageBackend from 'i18next-localstorage-backend';
@@ -6,11 +6,15 @@ import HttpApi from 'i18next-http-backend';
 import { I18nextProvider, initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import { browserLanguageDetector } from './browserLanguageDetector';
-import { PropsWithChildrenOnly } from '@common/types';
-import { EnvUtils, Platform } from '@common/utils';
 
 const defaultNS = 'common';
-export const IntlProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
+
+type IntlProviderProps = PropsWithChildren<{ isElectron?: boolean }>;
+
+export const IntlProvider: FC<IntlProviderProps> = ({
+  isElectron,
+  children,
+}) => {
   React.useEffect(() => {
     if (i18next.isInitialized) return;
 
@@ -24,12 +28,8 @@ export const IntlProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
       : // TODO: change back to a week when things are stable
         60 * minuteInMilliseconds; // 7 * 24 * 60 * minuteInMilliseconds;
 
-    // backend path for loading locale files
-    // electron app: requires a relative path
-    // browser: requires an absolute path
-    const loadPath = `${
-      EnvUtils.platform === Platform.Desktop ? '.' : ''
-    }/locales/{{lng}}/{{ns}}.json`;
+    // Electron `main` window translations should be served with relative path
+    const loadPath = `${!!isElectron ? '.' : ''}/locales/{{lng}}/{{ns}}.json`;
 
     i18next
       .use(initReactI18next) // passes i18n down to react-i18next

@@ -28,6 +28,7 @@ import { Initialise, Login, Viewport } from './components';
 import { Site } from './Site';
 import { AuthenticationAlert } from './components/AuthenticationAlert';
 import packageJson from 'package.json';
+import { Discovery } from './components/Discovery';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -84,6 +85,12 @@ const Host = () => (
                                   AppRoute.Login
                                 ).build()}
                                 element={<Login />}
+                              />
+                                 <Route
+                                path={RouteBuilder.create(
+                                  AppRoute.Discovery
+                                ).build()}
+                                element={<Discovery />}
                               />
                               <Route path="*" element={<Site />} />
                             </Routes>

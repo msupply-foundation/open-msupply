@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain } from 'electron';
 import dnssd from 'dnssd';
 import { IPC_MESSAGES } from './shared';
 import thisIp from 'ip';
@@ -79,6 +79,16 @@ let discoveredServers: FrontEndHost[] = [];
 declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
 declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
 
+const getDebugHost = () => {
+  const { ELECTRON_HOST } = process.env;
+  return (typeof ELECTRON_HOST !== 'undefined' && ELECTRON_HOST) || '';
+};
+
+// Can debug by opening chrome chrome://inspect and open inspect under 'devices'
+const START_URL = getDebugHost()
+  ? `${getDebugHost()}/discovery`
+  : MAIN_WINDOW_WEBPACK_ENTRY;
+
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
   // eslint-disable-line global-require
@@ -87,10 +97,8 @@ if (require('electron-squirrel-startup')) {
 
 const connectToServer = (window: BrowserWindow, server: FrontEndHost) => {
   discovery.stop();
-  const { ELECTRON_HOST } = process.env;
-  const url =
-    (typeof ELECTRON_HOST !== 'undefined' && ELECTRON_HOST) ||
-    frontEndHostUrl(server);
+
+  const url = getDebugHost() || frontEndHostUrl(server);
 
   window.loadURL(url);
 
@@ -106,10 +114,9 @@ const start = (): void => {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
     },
   });
-  // and load the index.html of the app.
-  window.loadURL(`${MAIN_WINDOW_WEBPACK_ENTRY}?autoconnect=true`);
 
-  // window.webContents.openDevTools();
+  // and load discovery (with autoconnect=true by default)
+  window.loadURL(START_URL);
 
   ipcMain.on(IPC_MESSAGES.START_SERVER_DISCOVERY, () => {
     discoveredServers = [];
@@ -117,8 +124,7 @@ const start = (): void => {
   });
 
   ipcMain.on(IPC_MESSAGES.GO_BACK_TO_DISCOVERY, () => {
-    // Just navigate, discovery UI requests discovery start
-    window.loadURL(`${MAIN_WINDOW_WEBPACK_ENTRY}?autoconnect=false`);
+    window.loadURL(`${START_URL}?autoconnect=false`);
   });
 
   ipcMain.on(IPC_MESSAGES.CONNECT_TO_SERVER, (_event, server: FrontEndHost) =>
@@ -132,7 +138,7 @@ const start = (): void => {
   ipcMain.handle(IPC_MESSAGES.DISCOVERED_SERVERS, async () => {
     const servers = discoveredServers;
     discoveredServers = [];
-    return servers;
+    return { servers };
   });
 
   discovery.on('serviceUp', function ({ type, port, addresses, txt }) {
@@ -188,3 +194,32 @@ app.on(
     // }
   }
 );
+
+process.on('uncaughtException', error => {
+  // See coment below
+  if (
+    error.message.includes('t[this.constructor.name] is not a constructor') &&
+    error.stack?.includes('v._addKnownAnswers')
+  ) {
+    return;
+  }
+
+  // TODO bugsnag ?
+  dialog.showErrorBox('Error', error.stack || error.message);
+
+  // The following error sometime occurs, it's dnssd related, it doesn't stop or break discovery, electron catching it and displays in error message, it's ignore by above if condition
+
+  /* Uncaught Exception:
+        TypeError: t[this.constructor.name] is not a constructor
+        at e.value (..open mSupply-darwin-arm64/open mSupply.app/Contents/Resources/app/.webpack/main/index.js:2:48513)
+        at ..open mSupply-darwin-arm64/open mSupply.app/Contents/Resources/app/.webpack/main/index.js:2:20805
+        at Array.reduce (<anonymous>)
+        at e.value (..open mSupply-darwin-arm64/open mSupply.app/Contents/Resources/app/.webpack/main/index.js:2:20662)
+        at e.value (..open mSupply-darwin-arm64/open mSupply.app/Contents/Resources/app/.webpack/main/index.js:2:20277)
+        at v._addKnownAnswers (..open mSupply-darwin-arm64/open mSupply.app/Contents/Resources/app/.webpack/main/index.js:2:39980)
+        at v._send (..open mSupply-darwin-arm64/open mSupply.app/Contents/Resources/app/.webpack/main/index.js:2:39523)
+        at Timeout._onTimeout (..open mSupply-darwin-arm64/open mSupply.app/Contents/Resources/app/.webpack/main/index.js:2:82424)
+        at listOnTimeout (node:internal/timers:559:17)
+        at process.processTimers (node:internal/timers:502:7)
+  */
+});
