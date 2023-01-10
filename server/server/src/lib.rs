@@ -104,7 +104,7 @@ pub async fn start_server(
         .unwrap_or("".to_string());
     service_provider
         .app_data_service
-        .set_hardware_id(machine_uid)
+        .set_hardware_id(machine_uid.clone())
         .unwrap();
     info!("Setting hardware uuid..done");
 
@@ -199,10 +199,7 @@ pub async fn start_server(
     #[cfg(not(target_os = "android"))]
     {
         info!("Starting server discovery",);
-        let _ = discovery::Discovery::start(discovery::ServerInfo::new(
-            certificates.protocol(),
-            &settings.server,
-        ));
+        discovery::start_discovery(certificates.protocol(), settings.server.port, machine_uid);
     }
 
     // ADD SYSTEM USER

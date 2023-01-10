@@ -9,6 +9,8 @@ export enum AppRoute {
   Patients = 'patients',
   Encounter = 'encounter',
 
+  Discovery = 'discovery',
+
   Dashboard = 'dashboard',
 
   Replenishment = 'replenishment',

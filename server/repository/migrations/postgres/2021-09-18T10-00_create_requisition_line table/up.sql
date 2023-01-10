@@ -3,7 +3,7 @@
 CREATE TABLE requisition_line (
     id TEXT NOT NULL PRIMARY KEY,
     requisition_id TEXT NOT NULL REFERENCES requisition (id),
-    item_id TEXT NOT NULL,
+    item_id TEXT NOT NULL REFERENCES item(id),
     requested_quantity INTEGER NOT NULL,
     suggested_quantity INTEGER NOT NULL,
     supply_quantity INTEGER NOT NULL,

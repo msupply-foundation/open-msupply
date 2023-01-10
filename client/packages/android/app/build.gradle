@@ -18,14 +18,20 @@ android {
     }
     signingConfigs {
         release {
-            def Properties localProps = new Properties()
-            localProps.load(new FileInputStream(file('../local.properties')))
+            // Check for release and if in release mode try to load signing info
+            if (project.gradle.startParameter.taskNames.any { it.toLowerCase().contains('release') }) {
+                def Properties localProps = new Properties()
+                localProps.load(new FileInputStream(file('../local.properties')))
 
-            storeFile file(localProps['storeFile'])
-            keyAlias localProps['keyAlias']
-            storePassword localProps['storePassword']
-            keyPassword localProps['keyPassword']
+                if (localProps['storeFile'] == null || localProps['keyAlias'] == null || localProps['keyAlias'] == null || localProps['keyAlias'] == null) {
+                    throw new Exception('Signing info missing in local.properties')
+                }
 
+                storeFile file(localProps['storeFile'])
+                keyAlias localProps['keyAlias']
+                storePassword localProps['storePassword']
+                keyPassword localProps['keyPassword']
+            }
         }
     }
     buildTypes {

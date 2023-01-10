@@ -1,14 +1,10 @@
 #[cfg(test)]
 mod tests;
 
-use std::sync::Arc;
-
 use actix_web::web::{self, Data};
 use actix_web::HttpResponse;
 use actix_web::{guard, HttpRequest};
-use async_graphql::extensions::{
-    Extension, ExtensionContext, ExtensionFactory, Logger, NextExecute,
-};
+
 use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
 use async_graphql::{EmptySubscription, Schema};
 use async_graphql::{MergedObject, Response};
@@ -30,7 +26,6 @@ use graphql_stock_line::{StockLineMutations, StockLineQueries};
 use graphql_stocktake::{StocktakeMutations, StocktakeQueries};
 use graphql_stocktake_line::StocktakeLineMutations;
 
-use log::info;
 use repository::StorageConnectionManager;
 use service::auth_data::AuthData;
 use service::service_provider::ServiceProvider;
@@ -154,9 +149,7 @@ impl GraphqlSchema {
                 .data(auth.clone())
                 .data(settings.clone())
                 // Add self requester to operational
-                .data(Data::new(SelfRequestImpl::new_boxed(self_requester_schema)))
-                .extension(Logger)
-                .extension(ResponseLogger);
+                .data(Data::new(SelfRequestImpl::new_boxed(self_requester_schema)));
 
         // Initialisation schema should ony need service_provider
         let initialisiation_builder = InitialisationSchema::build(
@@ -164,9 +157,7 @@ impl GraphqlSchema {
             InitialisationMutations,
             EmptySubscription,
         )
-        .data(service_provider.clone())
-        .extension(Logger)
-        .extension(ResponseLogger);
+        .data(service_provider.clone());
 
         GraphqlSchema {
             operational: operational_builder.finish(),
@@ -222,30 +213,6 @@ async fn graphql_playground() -> HttpResponse {
     HttpResponse::Ok()
         .content_type("text/html; charset=utf-8")
         .body(playground_source(GraphQLPlaygroundConfig::new("/graphql")))
-}
-
-pub struct ResponseLogger;
-impl ExtensionFactory for ResponseLogger {
-    fn create(&self) -> Arc<dyn Extension> {
-        Arc::new(ResponseLoggerExtension)
-    }
-}
-struct ResponseLoggerExtension;
-#[async_trait::async_trait]
-impl Extension for ResponseLoggerExtension {
-    async fn execute(
-        &self,
-        ctx: &ExtensionContext<'_>,
-        operation_name: Option<&str>,
-        next: NextExecute<'_>,
-    ) -> async_graphql::Response {
-        let resp = next.run(ctx, operation_name).await;
-        info!(
-            target: "async-graphql",
-            "[Execute Response] {:?}\nresponse_length: {}", operation_name, format!("{:?}", resp).len()
-        );
-        resp
-    }
 }
 
 // TODO remove this and just do reqwest query to self

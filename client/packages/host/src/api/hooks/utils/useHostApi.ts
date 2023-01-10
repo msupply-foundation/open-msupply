@@ -7,8 +7,6 @@ export const useHostApi = () => {
     base: () => ['host'] as const,
     displaySettings: () => [...keys.base(), 'displaySettings'] as const,
     syncSettings: () => [...keys.base(), 'syncSettings'] as const,
-    initialisationStatus: () =>
-      [...keys.base(), 'initialisationStatus'] as const,
     syncStatus: () => [...keys.base(), 'syncStatus'] as const,
     syncInfo: () => [...keys.base(), 'syncStatus'] as const,
   };
