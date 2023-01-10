@@ -2,13 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { ControlProps, rankWith, uiTypeIs } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import {
-  DetailInputWithLabelRow,
   useDebounceCallback,
   useTranslation,
   useFormatDateTime,
+  BasicTextInput,
+  FlatButton,
+  EditIcon,
 } from '@openmsupply-client/common';
 import { Typography } from '@mui/material';
-import { FORM_LABEL_WIDTH } from '../common/styleConstants';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../common/useZodOptionsValidation';
 
@@ -30,13 +31,9 @@ export const noteTester = rankWith(5, uiTypeIs('Note'));
 const UIComponent = (props: ControlProps) => {
   const { data, handleChange, path, errors, uischema, config, enabled } = props;
   const [localText, setLocalText] = useState<string | undefined>(data?.text);
-  const [localAuthor, setLocalAuthor] = useState<string | undefined>(
-    data?.authorName ??
-      // TO-DO: Use full name for default once available in database
-      config.user?.name
-  );
   // timestamp of the last key stroke
   const [latestKey, setLatestKey] = useState<number>(0);
+  const [editMode, setEditMode] = useState(!localText);
   const { localisedDateTime } = useFormatDateTime();
 
   const { errors: zErrors, options: schemaOptions } = useZodOptionsValidation(
@@ -46,37 +43,30 @@ const UIComponent = (props: ControlProps) => {
 
   const error = !!errors || !!zErrors;
 
-  const onChange = (
-    text: string | undefined,
-    authorName: string | undefined
-  ) => {
-    const authorId = config.user?.id;
-    const created = data?.created ?? new Date().toISOString();
-    handleChange(
-      path,
-      error
-        ? undefined
-        : {
-            text,
-            authorId,
-            authorName,
-            created,
-          }
-    );
-  };
-
-  // debounce avoid rerendering the form on every key stroke which becomes a performance issue
-  const onChangeText = useDebounceCallback(
-    (value: string) => value && onChange(value, localAuthor),
-    [path, error, localAuthor]
+  // debounce avoid rerendering the form on every key stroke which becomes a
+  // performance issue
+  const onChange = useDebounceCallback(
+    (text: string | undefined) => {
+      const authorId = config.user?.id;
+      // TO-DO: Use full name for default once available in database
+      const authorName = config.user?.name;
+      const created = data?.created ?? new Date().toISOString();
+      handleChange(
+        path,
+        error
+          ? undefined
+          : {
+              text,
+              authorId,
+              authorName,
+              created,
+            }
+      );
+    },
+    [path, error]
   );
 
-  const onChangeAuthor = useDebounceCallback(
-    (value: string) => value && onChange(localText, value),
-    [path, error, localText]
-  );
-
-  const t = useTranslation('programs');
+  const t = useTranslation('common');
 
   const helperText = zErrors ?? errors;
 
@@ -105,19 +95,24 @@ const UIComponent = (props: ControlProps) => {
     color: 'gray.dark',
   };
 
-  return enabled ? (
+  return editMode ? (
     <div>
-      <DetailInputWithLabelRow
-        label={t('control.note.text-label')}
+      <BasicTextInput
+        autoFocus
+        fullWidth
+        multiline
+        rows={rows}
+        onChange={e => {
+          setLatestKey(Date.now());
+          setLocalText(e.target.value);
+          onChange(e.target.value);
+        }}
+        onBlur={() => setEditMode(false)}
+        onFocus={e => (e.target.selectionStart = localText?.length ?? 0)}
         inputProps={{
           value: localText ?? '',
           name: 'text',
           sx: { margin: 0.5, width },
-          onChange: e => {
-            setLatestKey(Date.now());
-            setLocalText(e.target.value);
-            onChangeText(e.target.value);
-          },
           disabled: !props.enabled,
           error,
           helperText,
@@ -128,40 +123,29 @@ const UIComponent = (props: ControlProps) => {
           multiline: true,
           rows,
         }}
-        labelWidthPercentage={FORM_LABEL_WIDTH}
-        inputAlignment={'start'}
-      />
-      <DetailInputWithLabelRow
-        label={t('control.note.author-label')}
-        inputProps={{
-          value: localAuthor ?? '',
-          name: 'author',
-          sx: { margin: 0.5, width },
-          onChange: e => {
-            setLatestKey(Date.now());
-            setLocalAuthor(e.target.value);
-            onChangeAuthor(e.target.value);
-          },
-          disabled: !props.enabled,
-          error,
-          helperText,
-          FormHelperTextProps: error
-            ? { sx: { color: 'error.main' } }
-            : undefined,
-          required: props.required,
-        }}
-        labelWidthPercentage={FORM_LABEL_WIDTH}
-        inputAlignment={'start'}
       />
       {data.created && (
         <Typography sx={authorStyle}>
-          {localisedDateTime(data.created)}
+          {`${data.authorName} (${localisedDateTime(data.created)})`}
         </Typography>
       )}
     </div>
   ) : (
     <div>
       <Typography>{data.text}</Typography>
+      {enabled && (
+        <div
+          style={{ width: '100%', display: 'flex', justifyContent: 'flex-end' }}
+        >
+          <FlatButton
+            label={t('label.edit')}
+            startIcon={<EditIcon style={{ fontSize: 16, fill: 'none' }} />}
+            onClick={() => {
+              setEditMode(true);
+            }}
+          />
+        </div>
+      )}
       <Typography sx={authorStyle}>
         {`${data.authorName} (${localisedDateTime(data.created)})`}
       </Typography>
