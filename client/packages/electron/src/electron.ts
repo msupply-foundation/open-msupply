@@ -1,7 +1,7 @@
 import { app, BrowserWindow, dialog, ipcMain } from 'electron';
 import dnssd from 'dnssd';
 import { IPC_MESSAGES } from './shared';
-import { address, isV4Format } from 'ip';
+import { address as getIpAddress, isV4Format } from 'ip';
 import {
   FrontEndHost,
   frontEndHostUrl,
@@ -162,7 +162,7 @@ const start = (): void => {
       protocol,
       ip,
       clientVersion: clientVersion || '',
-      isLocal: ip === address() || ip === '127.0.0.1',
+      isLocal: ip === getIpAddress() || ip === '127.0.0.1',
       hardwareId,
     });
   });
