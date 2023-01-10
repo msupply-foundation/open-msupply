@@ -3,11 +3,9 @@ import {
   ArrowRightIcon,
   useTranslation,
   LoadingButton,
-  Box,
-  Typography,
-  AlertIcon,
   useHostContext,
   LocalStorage,
+  ErrorWithDetails,
 } from '@openmsupply-client/common';
 import { useHost } from '../../api/hooks';
 import { LoginTextInput } from './LoginTextInput';
@@ -98,16 +96,10 @@ export const Login = () => {
       }
       ErrorMessage={
         error && (
-          <Box display="flex" sx={{ color: 'error.main' }} gap={1}>
-            <Box>
-              <AlertIcon />
-            </Box>
-            <Box>
-              <Typography sx={{ color: 'inherit' }}>
-                {error.message || t('error.login')}
-              </Typography>
-            </Box>
-          </Box>
+          <ErrorWithDetails
+            error={error.message}
+            details={error.detail || ''}
+          />
         )
       }
       onLogin={async () => {
