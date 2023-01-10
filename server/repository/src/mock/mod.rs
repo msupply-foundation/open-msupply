@@ -206,6 +206,11 @@ impl MockDataInserts {
         self
     }
 
+    pub fn numbers(mut self) -> Self {
+        self.numbers = true;
+        self
+    }
+
     pub fn stores(mut self) -> Self {
         self.stores = true;
         self

@@ -56,6 +56,15 @@ pub fn mock_name_b() -> NameRow {
     })
 }
 
+pub fn mock_name_c() -> NameRow {
+    inline_init(|r: &mut NameRow| {
+        r.id = String::from("name_c");
+        r.name = String::from("name_c");
+        r.code = String::from("name_c");
+        r.is_supplier = true;
+    })
+}
+
 // Inventory adjustment name
 pub fn mock_name_invad() -> NameRow {
     inline_init(|r: &mut NameRow| {
@@ -76,12 +85,13 @@ pub fn mock_name_master_list_filter_test() -> NameRow {
 
 pub fn mock_names() -> Vec<NameRow> {
     vec![
-        mock_name_store_a(),
-        mock_name_b(),
-        mock_name_store_b(),
-        mock_name_store_c(),
         mock_name_a(),
+        mock_name_b(),
+        mock_name_c(),
         mock_name_invad(),
         mock_name_master_list_filter_test(),
+        mock_name_store_a(),
+        mock_name_store_b(),
+        mock_name_store_c(),
     ]
 }

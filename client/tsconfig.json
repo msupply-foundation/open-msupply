@@ -39,6 +39,7 @@
     "noPropertyAccessFromIndexSignature": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "typeRoots": ["./typings", "./node_modules/@types"]
   }
 }

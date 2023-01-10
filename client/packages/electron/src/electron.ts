@@ -7,12 +7,68 @@ import {
   frontEndHostUrl,
   isProtocol,
 } from '@openmsupply-client/common/src/hooks/useNativeClient';
+import HID from 'node-hid';
+
 const SERVICE_TYPE = 'omsupply';
 const PROTOCOL_KEY = 'protocol';
 const CLIENT_VERSION_KEY = 'client_version';
 const HARDWARE_ID_KEY = 'hardware_id';
+const SUPPORTED_SCANNERS = [
+  {
+    vendorId: 1504,
+    vendorName: 'Zebra / Symbol Technologies, Inc, 2008',
+    products: [
+      { id: 2194, model: 'DS2208' },
+      { id: 4864, model: 'DS2208' },
+    ],
+  },
+];
+
+class BarcodeScanner {
+  device: HID.HID | undefined;
+
+  constructor() {
+    this.device = this.findDevice();
+  }
+
+  private findDevice() {
+    const devices = HID.devices();
+    for (const scanner of SUPPORTED_SCANNERS) {
+      // const productIds = scanner.products.map(p => p.id);
+      const deviceInfo = devices.find(
+        d => d.vendorId === scanner.vendorId // &&
+        // productIds.some(pid => d.productId === pid);
+      );
+
+      if (deviceInfo && !!deviceInfo.path) {
+        return new HID.HID(deviceInfo.path);
+      }
+    }
+    return undefined;
+  }
+
+  start() {
+    return new Promise((resolve, reject) => {
+      if (!this.device) reject(new Error('No scanners found'));
+      try {
+        this.device?.read((err, data) => {
+          if (err) reject(err);
+          resolve(data);
+        });
+      } catch (e) {
+        reject(e);
+      }
+    });
+  }
+
+  stop() {
+    this.device?.close();
+    this.device = this.findDevice();
+  }
+}
 
 const discovery = new dnssd.Browser(dnssd.tcp(SERVICE_TYPE));
+const barcodeScanner = new BarcodeScanner();
 
 let connectedServer: FrontEndHost | null = null;
 let discoveredServers: FrontEndHost[] = [];
@@ -58,6 +114,7 @@ const start = (): void => {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
     },
   });
+
   // and load discovery (with autoconnect=true by default)
   window.loadURL(START_URL);
 
@@ -75,6 +132,8 @@ const start = (): void => {
   );
 
   ipcMain.handle(IPC_MESSAGES.CONNECTED_SERVER, async () => connectedServer);
+  ipcMain.handle(IPC_MESSAGES.START_BARCODE_SCAN, () => barcodeScanner.start());
+  ipcMain.on(IPC_MESSAGES.STOP_BARCODE_SCAN, () => barcodeScanner.stop());
 
   ipcMain.handle(IPC_MESSAGES.DISCOVERED_SERVERS, async () => {
     const servers = discoveredServers;

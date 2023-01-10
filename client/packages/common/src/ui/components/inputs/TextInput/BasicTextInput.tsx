@@ -12,7 +12,7 @@ export const BasicTextInput: FC<BasicTextInputProps> = React.forwardRef(
   ({ sx, InputProps, error, ...props }, ref) => (
     <TextField
       ref={ref}
-      color='secondary'
+      color="secondary"
       sx={{
         '& .MuiInput-underline:before': { borderBottomWidth: 0 },
         '& .MuiInput-input': { color: 'gray.dark' },

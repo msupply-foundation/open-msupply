@@ -23,6 +23,7 @@ impl SyncRecordTester for ActivityLogRecordTester {
             store_id: Some(store_id.to_string()),
             record_id: Some("outbound_shipment_a".to_string()),
             datetime: NaiveDate::from_ymd(2020, 1, 1).and_hms(0, 0, 0),
+            event: None,
         };
 
         let log_2 = inline_edit(&log_1, |mut l| {

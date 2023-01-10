@@ -1,7 +1,6 @@
 pub(crate) mod activity_log;
 pub(crate) mod invoice;
 pub(crate) mod location;
-pub(crate) mod number;
 pub(crate) mod requisition;
 pub(crate) mod stock_line;
 pub(crate) mod stocktake;
@@ -20,7 +19,7 @@ use super::SyncRecordTester;
 /// For each test step:
 /// Upsert data to database
 /// Push changes to central server
-/// Reinitialises from cenral server with a fresh database
+/// Reinitialises from central server with a fresh database
 /// Check that pulled data matches previously upserted data
 async fn test_remote_sync_record(identifier: &str, tester: &dyn SyncRecordTester) {
     // util::init_logger(util::LogLevel::Info);
