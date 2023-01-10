@@ -119,6 +119,7 @@ const PatientDetailView: FC = () => {
 export const PatientView: FC = () => {
   const { current, setCreationModal, reset } = usePatientModalStore();
   const { data } = usePatient.document.programEnrolments();
+  const { patient } = usePatientCreateStore();
 
   const tabs = [
     {
@@ -135,8 +136,8 @@ export const PatientView: FC = () => {
     },
   ];
 
-  // Note: unmount modals when not used because they have some internal state that shouldn't be
-  // reused across calls.
+  // Note: unmount modals when not used because they have some internal state
+  // that shouldn't be reused across calls.
   return (
     <React.Suspense fallback={<DetailViewSkeleton />}>
       {current === PatientModal.Program ? <ProgramDetailModal /> : null}
@@ -162,7 +163,8 @@ export const PatientView: FC = () => {
       ) : null}
       <AppBarButtons />
       <PatientSummary />
-      <DetailTabs tabs={tabs} />
+      {/* Only show tabs for saved patients */}
+      {!!patient ? <PatientDetailView /> : <DetailTabs tabs={tabs} />}
     </React.Suspense>
   );
 };
