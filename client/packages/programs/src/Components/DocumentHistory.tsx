@@ -8,7 +8,7 @@ import { ChevronDownIcon } from '@common/icons';
 import { DocumentNode } from 'packages/common/src/types/schema';
 import React, { FC } from 'react';
 import ReactDiffViewer from 'react-diff-viewer';
-import { usePatient } from '../api';
+import { usePatient } from '../../../system/src/Patient/api';
 import { BasicSpinner, Box, useFormatDateTime } from 'packages/common/src';
 
 export const DocumentHistory: FC<{ documentName: string }> = ({

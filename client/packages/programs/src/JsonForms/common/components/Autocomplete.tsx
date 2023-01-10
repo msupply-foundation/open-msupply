@@ -113,6 +113,7 @@ const UIComponent = (props: ControlProps) => {
           inputProps={{
             error: !!zErrors || !!errors,
             helperText: zErrors ?? errors,
+            color: 'secondary',
           }}
           isOptionEqualToValue={(option, value) => {
             if (typeof value === 'string') {

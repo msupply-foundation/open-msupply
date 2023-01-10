@@ -62,18 +62,32 @@ query documentRegistries(
     ... on DocumentRegistryConnector {
       __typename
       nodes {
-        __typename
-        context
-        documentType
-        formSchemaId
-        id
-        jsonSchema
-        name
-        parentId
-        uiSchema
-        uiSchemaType
+        ...DocumentRegistry
       }
       totalCount
+    }
+  }
+}
+
+fragment DocumentRegistryWithChildren on DocumentRegistryNode {
+  ...DocumentRegistry
+  children {
+    ...DocumentRegistry
+  }
+}
+
+query documentRegistriesWithChildren(
+  $filter: DocumentRegistryFilterInput
+  $sort: DocumentRegistrySortInput
+) {
+  documentRegistries(sort: $sort, filter: $filter) {
+    ... on DocumentRegistryConnector {
+      __typename
+      totalCount
+      nodes {
+        __typename
+        ...DocumentRegistryWithChildren
+      }
     }
   }
 }

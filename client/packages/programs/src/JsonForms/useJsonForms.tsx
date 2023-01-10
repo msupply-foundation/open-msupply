@@ -153,6 +153,7 @@ export const useJsonForms = (
   };
 
   const revert = () => {
+    setIsDirty(false);
     setData(initialData);
   };
 
