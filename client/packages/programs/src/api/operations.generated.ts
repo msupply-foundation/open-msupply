@@ -32,7 +32,17 @@ export type DocumentRegistriesQueryVariables = Types.Exact<{
 }>;
 
 
-export type DocumentRegistriesQuery = { __typename: 'Queries', documentRegistries: { __typename: 'DocumentRegistryConnector', totalCount: number, nodes: Array<{ __typename: 'DocumentRegistryNode', context: Types.DocumentRegistryNodeContext, documentType: string, formSchemaId: string, id: string, jsonSchema: any, name?: string | null, parentId?: string | null, uiSchema: any, uiSchemaType: string }> } };
+export type DocumentRegistriesQuery = { __typename: 'Queries', documentRegistries: { __typename: 'DocumentRegistryConnector', totalCount: number, nodes: Array<{ __typename: 'DocumentRegistryNode', id: string, documentType: string, context: Types.DocumentRegistryNodeContext, name?: string | null, parentId?: string | null, formSchemaId: string, jsonSchema: any, uiSchemaType: string, uiSchema: any }> } };
+
+export type DocumentRegistryWithChildrenFragment = { __typename: 'DocumentRegistryNode', id: string, documentType: string, context: Types.DocumentRegistryNodeContext, name?: string | null, parentId?: string | null, formSchemaId: string, jsonSchema: any, uiSchemaType: string, uiSchema: any, children: Array<{ __typename: 'DocumentRegistryNode', id: string, documentType: string, context: Types.DocumentRegistryNodeContext, name?: string | null, parentId?: string | null, formSchemaId: string, jsonSchema: any, uiSchemaType: string, uiSchema: any }> };
+
+export type DocumentRegistriesWithChildrenQueryVariables = Types.Exact<{
+  filter?: Types.InputMaybe<Types.DocumentRegistryFilterInput>;
+  sort?: Types.InputMaybe<Types.DocumentRegistrySortInput>;
+}>;
+
+
+export type DocumentRegistriesWithChildrenQuery = { __typename: 'Queries', documentRegistries: { __typename: 'DocumentRegistryConnector', totalCount: number, nodes: Array<{ __typename: 'DocumentRegistryNode', id: string, documentType: string, context: Types.DocumentRegistryNodeContext, name?: string | null, parentId?: string | null, formSchemaId: string, jsonSchema: any, uiSchemaType: string, uiSchema: any, children: Array<{ __typename: 'DocumentRegistryNode', id: string, documentType: string, context: Types.DocumentRegistryNodeContext, name?: string | null, parentId?: string | null, formSchemaId: string, jsonSchema: any, uiSchemaType: string, uiSchema: any }> }> } };
 
 export type AllocateProgramNumberMutationVariables = Types.Exact<{
   numberName: Types.Scalars['String'];
@@ -90,6 +100,14 @@ export const DocumentRegistryFragmentDoc = gql`
   uiSchema
 }
     `;
+export const DocumentRegistryWithChildrenFragmentDoc = gql`
+    fragment DocumentRegistryWithChildren on DocumentRegistryNode {
+  ...DocumentRegistry
+  children {
+    ...DocumentRegistry
+  }
+}
+    ${DocumentRegistryFragmentDoc}`;
 export const EncounterFieldsFragmentDoc = gql`
     fragment EncounterFields on EncounterFieldsNode {
   fields
@@ -183,22 +201,27 @@ export const DocumentRegistriesDocument = gql`
     ... on DocumentRegistryConnector {
       __typename
       nodes {
-        __typename
-        context
-        documentType
-        formSchemaId
-        id
-        jsonSchema
-        name
-        parentId
-        uiSchema
-        uiSchemaType
+        ...DocumentRegistry
       }
       totalCount
     }
   }
 }
-    `;
+    ${DocumentRegistryFragmentDoc}`;
+export const DocumentRegistriesWithChildrenDocument = gql`
+    query documentRegistriesWithChildren($filter: DocumentRegistryFilterInput, $sort: DocumentRegistrySortInput) {
+  documentRegistries(sort: $sort, filter: $filter) {
+    ... on DocumentRegistryConnector {
+      __typename
+      totalCount
+      nodes {
+        __typename
+        ...DocumentRegistryWithChildren
+      }
+    }
+  }
+}
+    ${DocumentRegistryWithChildrenFragmentDoc}`;
 export const AllocateProgramNumberDocument = gql`
     mutation allocateProgramNumber($numberName: String!, $storeId: String!) {
   allocateProgramNumber(input: {numberName: $numberName}, storeId: $storeId) {
@@ -275,6 +298,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     documentRegistries(variables?: DocumentRegistriesQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DocumentRegistriesQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<DocumentRegistriesQuery>(DocumentRegistriesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'documentRegistries', 'query');
     },
+    documentRegistriesWithChildren(variables?: DocumentRegistriesWithChildrenQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DocumentRegistriesWithChildrenQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DocumentRegistriesWithChildrenQuery>(DocumentRegistriesWithChildrenDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'documentRegistriesWithChildren', 'query');
+    },
     allocateProgramNumber(variables: AllocateProgramNumberMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<AllocateProgramNumberMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<AllocateProgramNumberMutation>(AllocateProgramNumberDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'allocateProgramNumber', 'mutation');
     },
@@ -339,6 +365,23 @@ export const mockDocumentsQuery = (resolver: ResponseResolver<GraphQLRequest<Doc
 export const mockDocumentRegistriesQuery = (resolver: ResponseResolver<GraphQLRequest<DocumentRegistriesQueryVariables>, GraphQLContext<DocumentRegistriesQuery>, any>) =>
   graphql.query<DocumentRegistriesQuery, DocumentRegistriesQueryVariables>(
     'documentRegistries',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockDocumentRegistriesWithChildrenQuery((req, res, ctx) => {
+ *   const { filter, sort } = req.variables;
+ *   return res(
+ *     ctx.data({ documentRegistries })
+ *   )
+ * })
+ */
+export const mockDocumentRegistriesWithChildrenQuery = (resolver: ResponseResolver<GraphQLRequest<DocumentRegistriesWithChildrenQueryVariables>, GraphQLContext<DocumentRegistriesWithChildrenQuery>, any>) =>
+  graphql.query<DocumentRegistriesWithChildrenQuery, DocumentRegistriesWithChildrenQueryVariables>(
+    'documentRegistriesWithChildren',
     resolver
   )
 

@@ -11,7 +11,7 @@ import {
 } from '@openmsupply-client/common';
 import { PatientPanel } from './PatientPanel';
 import { usePatient } from '../api';
-import { Gender, usePatientCreateStore } from '../hooks';
+import { Gender, usePatientCreateStore } from '@openmsupply-client/programs';
 import { PatientFragment } from '../api/operations.generated';
 
 const genderToGenderInput = (gender: Gender): GenderInput => {
