@@ -20,6 +20,7 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
         const parsed = Number(e.target.value);
         if (!Number.isNaN(parsed) && !!onChange) onChange(parsed);
       }}
+      onFocus={e => e.target.select()}
       type="number"
       {...props}
     />

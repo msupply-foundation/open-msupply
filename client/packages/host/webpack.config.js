@@ -56,7 +56,7 @@ module.exports = env => {
       plugins: [new TsconfigPathsPlugin()],
     },
     output: {
-      publicPath: isProduction ? '/' : 'http://localhost:3003/',
+      publicPath: '/',
       filename: '[name].[contenthash].js',
       chunkFilename: '[contenthash].js',
       clean: {

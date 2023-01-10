@@ -1,7 +1,9 @@
-import React, { FC, ReactNode, useEffect, useState } from 'react';
+import React, { FC, ReactNode, useState, useEffect } from 'react';
 import { TabContext } from '@mui/lab';
 import { Box } from '@mui/material';
+import { useDetailPanelStore, useDrawer } from '@common/hooks';
 import { LocaleKey, useTranslation } from '@common/intl';
+import { debounce } from 'lodash';
 import { AppBarTabsPortal } from '../../portals';
 import { DetailTab } from './DetailTab';
 import { ShortTabList, Tab } from './Tabs';
@@ -18,6 +20,19 @@ export const DetailTabs: FC<DetailTabsProps> = ({ tabs }) => {
   const { urlQuery, updateQuery } = useUrlQuery();
   const [currentTab, setCurrentTab] = useState<string>(tabs[0]?.value ?? '');
   const t = useTranslation('common');
+
+  // Inelegant hack to force the "Underline" indicator for the currently active
+  // tab to re-render in the correct position when one of the side "drawers" is
+  // expanded. See issue #777 for more detail.
+  const { isOpen: detailPanelOpen } = useDetailPanelStore();
+  const { isOpen: drawerOpen } = useDrawer();
+  const handleResize = debounce(
+    () => window.dispatchEvent(new Event('resize')),
+    100
+  );
+  useEffect(() => {
+    handleResize();
+  }, [detailPanelOpen, drawerOpen]);
 
   const onChange = (_: React.SyntheticEvent, tab: string) => {
     updateQuery({ tab });

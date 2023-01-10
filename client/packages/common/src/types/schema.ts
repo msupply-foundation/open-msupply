@@ -1031,6 +1031,12 @@ export type InboundInvoiceCounts = {
   created: InvoiceCountsSummary;
 };
 
+export type InitialisationStatusNode = {
+  __typename: 'InitialisationStatusNode';
+  siteName?: Maybe<Scalars['String']>;
+  status: InitialisationStatusType;
+};
+
 export enum InitialisationStatusType {
   Initialised = 'INITIALISED',
   Initialising = 'INITIALISING',
@@ -2743,7 +2749,7 @@ export type Queries = {
   encounters: EncounterResponse;
   formSchema?: Maybe<FormSchemaNode>;
   /** Available without authorisation in operational and initialisation states */
-  initialisationStatus: InitialisationStatusType;
+  initialisationStatus: InitialisationStatusNode;
   invoice: InvoiceResponse;
   invoiceByNumber: InvoiceResponse;
   invoiceCounts: InvoiceCounts;

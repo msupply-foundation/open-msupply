@@ -167,7 +167,6 @@ impl PullUpsertRecord {
             MasterListLine(record) => MasterListLineRowRepository::new(con).upsert_one(record),
             MasterListNameJoin(record) => MasterListNameJoinRepository::new(con).upsert_one(record),
             Report(record) => ReportRowRepository::new(con).upsert_one(record),
-            Number(record) => NumberRowRepository::new(con).upsert_one(record),
             Location(record) => LocationRowRepository::new(con).upsert_one(record),
             StockLine(record) => StockLineRowRepository::new(con).upsert_one(record),
             NameStoreJoin(record) => NameStoreJoinRepository::new(con).upsert_one(record),

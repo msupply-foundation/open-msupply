@@ -23,6 +23,7 @@
     "dompurify": "^2.3.5",
     "graphql-import-node": "^0.0.5",
     "graphql-request": "^4.2.0",
+    "gs1-barcode-parser-mod": "^1.0.6",
     "history": "^5.1.0",
     "i18next": "^21.6.16",
     "i18next-browser-languagedetector": "^6.1.4",
