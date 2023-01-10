@@ -19,9 +19,8 @@ export const DetailTabs: FC<DetailTabsProps> = ({ tabs }) => {
   const [currentTab, setCurrentTab] = useState<string>(tabs[0]?.value ?? '');
   const t = useTranslation('common');
 
-  const onChange  = (_: React.SyntheticEvent, tab: string) => {
+  const onChange = (_: React.SyntheticEvent, tab: string) => {
     updateQuery({ tab });
-    setCurrentTab(tab);
   };
 
   const isValidTab = (tab?: string) =>
@@ -30,7 +29,7 @@ export const DetailTabs: FC<DetailTabsProps> = ({ tabs }) => {
   useEffect(() => {
     const tab = urlQuery['tab'];
     if (isValidTab(tab)) setCurrentTab(tab);
-  }, []);
+  }, [urlQuery]);
 
   return (
     <TabContext value={currentTab}>
