@@ -15,7 +15,7 @@ table! {
         document_type -> Text,
         document_name -> Nullable<Text>,
         #[sql_name = "type"] type_ -> Text,
-        name -> Nullable<Text>,
+        data -> Nullable<Text>,
     }
 }
 
@@ -49,8 +49,8 @@ pub struct ProgramEventRow {
     /// The type the event, e.g. stat
     #[column_name = "type_"]
     pub r#type: String,
-    /// Name or description of the event
-    pub name: Option<String>,
+    /// The event data
+    pub data: Option<String>,
 }
 
 pub struct ProgramEventRowRepository<'a> {

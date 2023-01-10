@@ -52,8 +52,6 @@ fn get_timestamp_fields() -> Vec<TableAndFieldName> {
         ("sync_log", "integration_started_datetime"),
         ("sync_log", "integration_finished_datetime"),
         ("activity_log", "datetime"),
-        ("location_movement", "enter_datetime"),
-        ("location_movement", "exit_datetime"),
     ]
     .iter()
     .map(|(table_name, field_name)| TableAndFieldName {
@@ -86,7 +84,6 @@ fn get_date_fields() -> Vec<TableAndFieldName> {
         ("invoice_line", "expiry_date"),
         ("stocktake", "stocktake_date"),
         ("stocktake_line", "expiry_date"),
-        ("sync_out", "created_at"),
     ]
     .iter()
     .map(|(table_name, field_name)| TableAndFieldName {

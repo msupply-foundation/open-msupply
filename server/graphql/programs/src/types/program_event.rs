@@ -29,8 +29,8 @@ impl ProgramEventNode {
         &self.row.document_name
     }
 
-    pub async fn name(&self) -> &Option<String> {
-        &self.row.name
+    pub async fn data(&self) -> &Option<String> {
+        &self.row.data
     }
 
     pub async fn r#type(&self) -> &str {

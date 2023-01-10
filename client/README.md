@@ -24,7 +24,7 @@ To see it in action, check out the [demo server](https://demo-open.msupply.org/)
 
 `yarn start-local` (using localhost:8000 as API)
 
-`cd packages/host && yarn start -- --env API_HOST='http://localhost:8001'` (using custom API url)
+`cd packages/host && yarn start -- --env API_HOST='http://localhost:8001'` (using custom API url, see [config.ts for more info](./packages/config/src/config.ts))
 
 - Bundle for production:
 
@@ -227,112 +227,18 @@ You can also specify multiple namespaces when using the hook:
 
 ## Android App
 
-Short version to build an Android apk (if everything is already set up correctly):
+Please see android folder in server and android folder in react for further details, including prerequisite setup steps required for commands below
+
+It's recommended to use Android Studio to run and debug Android App, the following command are available from `client` directory:
 
 ```bash
-# Compile the remote server and copy libs over:
-yarn android:build-remote_server
-# Create the apk
+# Builds remote server binaries for android and copies them to android package
+yarn android:build:server
+# Assembles android apk
 yarn android:build:debug
-```
-
-### Pre requisites
-
-This is using capacitor, and the `cordova-android` plugin. These are in `package.json`, so you'll install when you `yarn install`.
-However, capacitor would also like you to
-
-```
-npx cap sync
-```
-
-after the cordova plugin is installed.. this will create the `./packages/android/capacitor-cordova-android-plugins` dir, which you'll need.
-
-### Build the remote server lib
-
-The Android app needs the remote server build as a shared lib.
-
-Make sure the Android NDK is installed and the env var `NDK_HOME` is set, for example to `~Android/Sdk/ndk/22.1.7171670`.
-Currently the build script requires the Android API 26, make sure this version is installed.
-
-For Mac OS, the version of NDK installed by Android Studio does not have all of the required linkers prebuilt: instead use:
-
-`~/Library/Android/sdk/tools/bin/sdkmanager "ndk-bundle"`
-
-and set the `NDK_HOME` to `$ANDROID_SDK_ROOT/ndk-bundle`
-
-You may need to install `armv7` i.e. `rustup target add armv7-linux-androideabi`
-
-```bash
-# Compile the remote server and copy libs over:
-yarn android:build-remote_server
-```
-
-#### MacOS
-
-Have been unable to build the aarch64-linux-android target of remote-server on macOS running on apple silicon. Configuration when using an x86 based macOS is also difficult and we recommend building on a linux host if at all possible.
-
-Here are some issues encountered when building on macOS:
-
-1. If you have the error: `fatal error: 'stdio.h' file not found`. If so, specify a location for the headers using the`CPATH`env var, for example`/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/`or`/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/`
-
-2. If the `C_INCLUDE_PATH` env var is set, that may cause compilation issues, as it will include the macOS headers and give you `warning: #error architecture not supported` and `warning: fatal error: too many errors emitted, stopping now [-ferror-limit=]`. In which case `unset C_INCLUDE_PATH`
-
-3. `thread 'rustc' panicked at 'called `Option::unwrap()`on a`None` value', compiler/rustc_codegen_llvm/src/back/archive.rs:358:67`: Install openssl (`brew install openssl`) and set the env var for `OPENSSL_DIR` e.g. `export OPENSSL_DIR=/usr/local/opt/openssl@3`
-
-#### Unsolved issue that will hopefully be fixed at some point:
-
-1. The x86 target seem to be broken and crashes when loading the server lib
-2. On Mac OS the `armv7-linux-androideabi` target fails to build, you may need to comment out from the makefile and build script
-
-### Run the Android app
-
-Run:
-
-```
-yarn android:build:debug
-```
-
-This will:
-
-- build the react app
-- copy the built files for capacitor
-- build the apk
-
-The steps, if you need to run them manually are:
-
-```
-yarn build
-npx cap copy
-```
-
-Open the `android` folder in Android Studio and start the app.
-
-
-### Release build
-
-Make sure you have an Android keystore for signing the release apk.
-Create a file `packages/android/local.properties` and add the required key store parameters:
-
-```
-storeFile=path/to/key/store.jks
-keyAlias={mykey}
-storePassword={password}
-keyPassword={password}
-```
-
-and run:
-
-```
+# Assembles android release apk
 yarn android:build:release
 ```
-
-The apk will be located in `packages/android/app/build/outputs/apk/release`.
-
-### Java bits
-
-The remote server is started and stopped in: `android/app/src/main/java/org/openmsupply/client/MainActivity.java`
-
-The cert plugin (`packages/android/app/src/main/java/org/openmsupply/client/certplugin/CertPlugin.java`) allows the web client to make https request to the remote-server using a self signed certificate.
 
 ## Desktop App
 

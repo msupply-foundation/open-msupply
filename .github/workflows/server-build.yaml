@@ -1,0 +1,27 @@
+on: workflow_dispatch
+
+name: Remote Server Mac Build
+
+jobs:
+  build_and_test:
+    name: Remote Server Mac Build
+    runs-on: mac-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: server
+      - name: Initialise
+        working-directory: ./server
+        run: cargo run --bin remote_server_cli -- initialise-from-export -n 'reference1' -r
+      - name: Build
+        run: ./build/mac/build.sh
+      - uses: actions/upload-artifact@v3
+        with:
+          name: mac_sqlite
+          path: |
+            **_mac_sqlite
+            server/omsupply-database

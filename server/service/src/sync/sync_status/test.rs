@@ -62,11 +62,24 @@ async fn sync_status() {
         .unwrap();
     tester_data.lock().await.try_route("final".to_string());
 
+    // Need to add sync settings so that Initialised returns site name
+    service_provider
+        .settings
+        .update_sync_settings(
+            &service_context,
+            &SyncSettings {
+                username: "site_name".to_string(),
+                url: "http://test.com".to_string(),
+                ..SyncSettings::default()
+            },
+        )
+        .unwrap();
+
     assert_eq!(
         service_provider
             .sync_status_service
             .get_initialisation_status(&service_context),
-        Ok(InitialisationStatus::Initialised)
+        Ok(InitialisationStatus::Initialised("site_name".to_string()))
     );
 
     // Test PUSH and ERROR

@@ -16,6 +16,7 @@ type LoginLayoutProps = {
   Button: ReactNode;
   SyncProgress: ReactNode;
   ErrorMessage: ReactNode;
+  SiteInfo: React.ReactNode;
   onInitialise: () => Promise<void>;
 };
 
@@ -26,6 +27,7 @@ export const InitialiseLayout = ({
   Button,
   ErrorMessage,
   SyncProgress,
+  SiteInfo,
   onInitialise,
 }: LoginLayoutProps) => {
   const t = useTranslation('app');
@@ -50,6 +52,7 @@ export const InitialiseLayout = ({
         flexDirection="column"
       >
         <Box>
+          {SiteInfo}
           <Typography
             sx={{
               color: (theme: Theme) => theme.typography.login.color,

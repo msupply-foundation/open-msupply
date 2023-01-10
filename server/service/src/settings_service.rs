@@ -98,5 +98,5 @@ pub trait SettingsServiceTrait: Sync + Send {
     }
 }
 
-pub struct SettingsService {}
+pub struct SettingsService;
 impl SettingsServiceTrait for SettingsService {}
