@@ -301,7 +301,14 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
         location.pathname
       );
 
-      if (!token && !isInitScreen) {
+      const isDiscoveryScreen = matchPath(
+        RouteBuilder.create(AppRoute.Discovery).addWildCard().build(),
+        location.pathname
+      );
+
+      const isNotAuthPath = isDiscoveryScreen || isInitScreen;
+
+      if (!token && !isNotAuthPath) {
         setError(AuthError.Timeout);
         window.clearInterval(timer);
       }

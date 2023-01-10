@@ -24,8 +24,8 @@ fragment EncounterRow on EncounterNode {
 
 fragment EncounterProgramEvent on ProgramEventNode {
   activeDatetime
-  name
   type
+  data
 }
 
 fragment EncounterDocumentRegistry on DocumentRegistryNode {

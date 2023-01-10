@@ -46,6 +46,7 @@ impl SyncRecordTester for InvoiceRecordTester {
             colour: None,
             requisition_id: None,
             linked_invoice_id: None,
+            tax: None,
         };
         let base_invoice_line_row = InvoiceLineRow {
             id: uuid(),

@@ -6,7 +6,7 @@ use super::{
 
 use crate::{
     diesel_macros::{apply_equal_filter, apply_sort_no_case},
-    DocumentContext, DocumentRegistryRow, FormSchemaRow,
+    DocumentContext, DocumentRegistryConfig, DocumentRegistryRow, FormSchemaRow,
 };
 
 use crate::{repository_error::RepositoryError, DBType, EqualFilter, Pagination, Sort};
@@ -46,6 +46,7 @@ pub struct DocumentRegistry {
     pub json_schema: serde_json::Value,
     pub ui_schema_type: String,
     pub ui_schema: serde_json::Value,
+    pub config: Option<DocumentRegistryConfig>,
 }
 
 impl<'a> DocumentRegistryRepository<'a> {
@@ -167,6 +168,16 @@ fn to_domain(data: DocumentRegistrySchemaJoin) -> Result<DocumentRegistry, Repos
             msg: "Invalid ui schema".to_string(),
             extra: format!("{}", err),
         })?;
+    let config = if let Some(config) = row.config {
+        let config = serde_json::from_str(&config).map_err(|err| RepositoryError::DBError {
+            msg: "Invalid document config".to_string(),
+            extra: format!("{}", err),
+        })?;
+        Some(config)
+    } else {
+        None
+    };
+
     Ok(DocumentRegistry {
         id: row.id,
         parent_id: row.parent_id,
@@ -177,6 +188,7 @@ fn to_domain(data: DocumentRegistrySchemaJoin) -> Result<DocumentRegistry, Repos
         json_schema,
         ui_schema_type: form_schema.r#type,
         ui_schema,
+        config,
     })
 }
 

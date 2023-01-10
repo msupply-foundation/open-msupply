@@ -1031,6 +1031,12 @@ export type InboundInvoiceCounts = {
   created: InvoiceCountsSummary;
 };
 
+export type InitialisationStatusNode = {
+  __typename: 'InitialisationStatusNode';
+  siteName?: Maybe<Scalars['String']>;
+  status: InitialisationStatusType;
+};
+
 export enum InitialisationStatusType {
   Initialised = 'INITIALISED',
   Initialising = 'INITIALISING',
@@ -2698,10 +2704,10 @@ export type ProgramEventFilterInput = {
 export type ProgramEventNode = {
   __typename: 'ProgramEventNode';
   activeDatetime: Scalars['DateTime'];
+  data?: Maybe<Scalars['String']>;
   datetime: Scalars['DateTime'];
   documentName?: Maybe<Scalars['String']>;
   documentType: Scalars['String'];
-  name?: Maybe<Scalars['String']>;
   patientId?: Maybe<Scalars['String']>;
   type: Scalars['String'];
 };
@@ -2743,7 +2749,7 @@ export type Queries = {
   encounters: EncounterResponse;
   formSchema?: Maybe<FormSchemaNode>;
   /** Available without authorisation in operational and initialisation states */
-  initialisationStatus: InitialisationStatusType;
+  initialisationStatus: InitialisationStatusNode;
   invoice: InvoiceResponse;
   invoiceByNumber: InvoiceResponse;
   invoiceCounts: InvoiceCounts;

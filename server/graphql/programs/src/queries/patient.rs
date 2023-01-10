@@ -68,7 +68,7 @@ impl PatientNode {
 
     pub async fn age(&self) -> Option<i64> {
         self.patient.name_row.date_of_birth.clone().map(|dob| {
-            let diff = Local::now().date_naive().signed_duration_since(dob);
+            let diff = Local::now().naive_utc().date().signed_duration_since(dob);
             diff.num_days() / 365
         })
     }

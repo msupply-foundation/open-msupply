@@ -54,6 +54,7 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
       }}
       defaultValue={defaultValue}
       onValueChange={newValue => onChangeNumber(c(newValue || '').value)}
+      onFocus={e => e.target.select()}
       allowNegativeValue={allowNegativeValue}
       prefix={prefix}
       suffix={suffix}

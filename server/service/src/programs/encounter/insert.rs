@@ -6,13 +6,16 @@ use repository::{
 
 use crate::{
     document::{document_service::DocumentInsertError, is_latest_doc, raw_document::RawDocument},
-    programs::patient::{patient_doc_name, patient_doc_name_with_id},
+    programs::{
+        patient::{patient_doc_name, patient_doc_name_with_id},
+        update_program_document::{update_program_events, UpdateProgramDocumentError},
+    },
     service_provider::{ServiceContext, ServiceProvider},
 };
 
 use super::{
-    encounter_schema::SchemaEncounter,
-    encounter_updated::{encounter_updated, EncounterTableUpdateError},
+    encounter_updated::update_encounter_row,
+    validate_misc::{validate_encounter_schema, ValidatedSchemaEncounter},
 };
 
 #[derive(PartialEq, Debug)]
@@ -50,23 +53,27 @@ pub fn insert_encounter(
             let program = input.program.clone();
             let event_datetime = input.event_datetime;
             let doc = generate(user_id, input, event_datetime)?;
+            let encounter_start_datetime = encounter.start_datetime;
 
             if is_latest_doc(ctx, service_provider, &doc)
                 .map_err(InsertEncounterError::DatabaseError)?
             {
-                encounter_updated(
+                update_encounter_row(ctx, &patient_id, &program, &doc, encounter)?;
+
+                update_program_events(
                     ctx,
                     service_provider,
                     &patient_id,
-                    &program,
+                    encounter_start_datetime,
+                    None,
                     &doc,
-                    encounter,
+                    &allowed_docs,
                 )
                 .map_err(|err| match err {
-                    EncounterTableUpdateError::RepositoryError(err) => {
+                    UpdateProgramDocumentError::DatabaseError(err) => {
                         InsertEncounterError::DatabaseError(err)
                     }
-                    EncounterTableUpdateError::InternalError(err) => {
+                    UpdateProgramDocumentError::InternalError(err) => {
                         InsertEncounterError::InternalError(err)
                     }
                 })?;
@@ -130,12 +137,6 @@ fn generate(
     })
 }
 
-fn validate_encounter_schema(
-    input: &InsertEncounter,
-) -> Result<SchemaEncounter, serde_json::Error> {
-    serde_json::from_value(input.data.clone())
-}
-
 fn validate_patient_program_exists(
     ctx: &ServiceContext,
     patient_id: &str,
@@ -155,12 +156,12 @@ fn validate_patient_program_exists(
 fn validate(
     ctx: &ServiceContext,
     input: &InsertEncounter,
-) -> Result<SchemaEncounter, InsertEncounterError> {
+) -> Result<ValidatedSchemaEncounter, InsertEncounterError> {
     if !validate_patient_program_exists(ctx, &input.patient_id, &input.program)? {
         return Err(InsertEncounterError::InvalidPatientOrProgram);
     }
 
-    let encounter = validate_encounter_schema(input).map_err(|err| {
+    let encounter = validate_encounter_schema(&input.data).map_err(|err| {
         InsertEncounterError::InvalidDataSchema(vec![format!("Invalid program data: {}", err)])
     })?;
 
