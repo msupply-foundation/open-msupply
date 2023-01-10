@@ -97,7 +97,7 @@ export const Login = () => {
       ErrorMessage={
         error && (
           <ErrorWithDetails
-            error={error.message}
+            error={error.message || t('error.login')}
             details={error.detail || ''}
           />
         )
