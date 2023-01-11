@@ -4044,7 +4044,7 @@ g_HandleSystemReboot();
 <DependencyModules/>
 <PrimerFiles>
 <PrimerFile>
-<SourcePath>C:\Users\Administrator\Downloads\RefreshEnvironment.exe</SourcePath>
+<SourcePath>#PROJECTFILEDIR#\tools\RefreshEnvironment.exe</SourcePath>
 <DeleteOnExit>1</DeleteOnExit>
 <NeededByUninstall>0</NeededByUninstall>
 <BuildConfigs>
