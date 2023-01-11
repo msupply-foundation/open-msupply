@@ -7,11 +7,9 @@ import {
   ListItemButton,
   Box,
   ListItemProps,
-  Badge,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { ExternalLinkIcon } from '@common/icons';
-import { useDrawer } from '@common/hooks';
 
 const getListItemCommonStyles = () => ({
   height: 40,
@@ -39,7 +37,6 @@ export interface ExternalNavLinkProps {
 }
 
 export const ExternalNavLink: FC<ExternalNavLinkProps> = props => {
-  const drawer = useDrawer();
   const { icon = <span style={{ width: 2 }} />, text, to, trustedSite } = props;
 
   const CustomLink = React.useMemo(
@@ -67,7 +64,6 @@ export const ExternalNavLink: FC<ExternalNavLinkProps> = props => {
         <ListItemButton
           sx={{
             ...getListItemCommonStyles(),
-            justifyContent: drawer.isOpen ? 'flex-start' : 'center',
             '&.MuiListItemButton-root:hover': {
               backgroundColor: 'transparent',
             },
@@ -83,31 +79,21 @@ export const ExternalNavLink: FC<ExternalNavLinkProps> = props => {
           <ListItemIcon sx={{ minWidth: 20 }}>{icon}</ListItemIcon>
           <Box className="navLinkText">
             <Box width={10} />
-            <Badge
-              color="default"
-              badgeContent={
-                <ExternalLinkIcon
-                  sx={{
-                    stroke: theme => theme.palette.gray.main,
-                    strokeWidth: '1px',
-                  }}
-                />
+            <ListItemText
+              primary={
+                <>
+                  {text}
+                  <ExternalLinkIcon
+                    sx={{
+                      height: '14px',
+                      marginLeft: 1,
+                      strokeWidth: '1px',
+                      width: '14px',
+                    }}
+                  />
+                </>
               }
-              sx={{
-                alignItems: 'center',
-                flexGrow: 1,
-                '& .MuiBadge-badge': drawer.isOpen
-                  ? {
-                      transform: 'scale(0.6) translate(75%, -25%)',
-                    }
-                  : {
-                      top: 'unset',
-                      transform: 'scale(0.5) translate(50%, -50%)',
-                    },
-              }}
-            >
-              <ListItemText primary={text} />
-            </Badge>
+            />
           </Box>
         </ListItemButton>
       </StyledListItem>
