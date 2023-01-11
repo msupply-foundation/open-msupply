@@ -6,6 +6,7 @@ import {
   useTranslation,
   RouteBuilder,
   AppNavLink,
+  AppNavSection,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { useNestedNav } from './useNestedNav';
@@ -17,7 +18,7 @@ export const DistributionNav: FC = () => {
   const t = useTranslation('app');
 
   return (
-    <>
+    <AppNavSection isActive={isActive} to={AppRoute.Distribution}>
       <AppNavLink
         end={false}
         to={AppRoute.Distribution}
@@ -50,6 +51,6 @@ export const DistributionNav: FC = () => {
           />
         </List>
       </Collapse>
-    </>
+    </AppNavSection>
   );
 };
