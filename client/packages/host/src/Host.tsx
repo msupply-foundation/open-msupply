@@ -27,8 +27,9 @@ import { AppRoute, Environment } from '@openmsupply-client/config';
 import { Initialise, Login, Viewport } from './components';
 import { Site } from './Site';
 import { AuthenticationAlert } from './components/AuthenticationAlert';
-import packageJson from 'package.json';
 import { Discovery } from './components/Discovery';
+
+const appVersion = require('../../../../package.json').version; // eslint-disable-line @typescript-eslint/no-var-requires
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -49,7 +50,7 @@ const queryClient = new QueryClient({
 
 Bugsnag.start({
   apiKey: 'a09ce9e95c27ac1b70ecf3c311e684ab',
-  appVersion: packageJson.version,
+  appVersion: appVersion,
 });
 
 const skipRequest = () =>
@@ -86,7 +87,7 @@ const Host = () => (
                                 ).build()}
                                 element={<Login />}
                               />
-                                 <Route
+                              <Route
                                 path={RouteBuilder.create(
                                   AppRoute.Discovery
                                 ).build()}
