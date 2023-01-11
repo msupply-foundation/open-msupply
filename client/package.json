@@ -1,7 +1,7 @@
 {
   "name": "openmsupply-client",
   "//": "Version is shared between client and remote server and is located in repo root package.json",
-  "version": "1.1.1",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
     "start-local": "lerna run --scope @openmsupply-client/* --parallel start-local",
