@@ -95,6 +95,12 @@ const UIComponent = (props: ControlProps) => {
     color: 'gray.dark',
   };
 
+  const signature = data.created && (
+    <Typography sx={authorStyle}>
+      {`${data.authorName} (${localisedDateTime(data.created)})`}
+    </Typography>
+  );
+
   return editMode ? (
     <div>
       <BasicTextInput
@@ -124,15 +130,11 @@ const UIComponent = (props: ControlProps) => {
           rows,
         }}
       />
-      {data.created && (
-        <Typography sx={authorStyle}>
-          {`${data.authorName} (${localisedDateTime(data.created)})`}
-        </Typography>
-      )}
+      {signature}
     </div>
   ) : (
     <div>
-      <Typography>{data.text}</Typography>
+      <Typography style={{ whiteSpace: 'pre-wrap' }}>{data.text}</Typography>
       {enabled && (
         <div
           style={{ width: '100%', display: 'flex', justifyContent: 'flex-end' }}
@@ -146,9 +148,7 @@ const UIComponent = (props: ControlProps) => {
           />
         </div>
       )}
-      <Typography sx={authorStyle}>
-        {`${data.authorName} (${localisedDateTime(data.created)})`}
-      </Typography>
+      {signature}
     </div>
   );
 };

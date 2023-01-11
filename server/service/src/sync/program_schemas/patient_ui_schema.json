@@ -442,7 +442,6 @@
                   "type": "Control",
                   "label": "Patient Notes",
                   "scope": "#/properties/notes",
-                  "itemLabel": "Note ${index}",
                   "options": {
                     "detail": {
                       "type": "VerticalLayout",
@@ -453,8 +452,9 @@
                         }
                       ]
                     },
-                    "editRestrictions": { "latest": true, "authorId": true, "maxAge": 1 },
-                    "reverse": true
+                    "editRestrictions": { "latest": true, "isCurrentUser": true, "maxAge": 1 },
+                    "reverse": true,
+                    "defaultExpanded": true
                   }
                 }
               ]

@@ -30,8 +30,11 @@ import {
   ChevronDownIcon,
   useTranslation,
   ConfirmationModal,
+  useFormatDateTime,
 } from '@openmsupply-client/common';
 import { RegexUtils } from '@common/utils';
+import { z } from 'zod';
+import { useZodOptionsValidation } from '../useZodOptionsValidation';
 import {
   FORM_LABEL_COLUMN_WIDTH,
   FORM_INPUT_COLUMN_WIDTH,
@@ -58,11 +61,50 @@ interface EnumArrayControlCustomProps extends ArrayControlProps {
   data: string[];
 }
 
+const Options = z
+  .object({
+    detail: z.object({ type: z.string(), elements: z.array(z.any()) }),
+    /**
+     * If true, display items in reverse order (newest first)
+     */
+    reverse: z.boolean().optional(),
+    /**
+     * If true, all elements will be expanded (Accordions) on load. Otherwise,
+     * they'll start closed and only new items will start expanded
+     */
+    defaultExpanded: z.boolean().optional(),
+    /**
+     * Restrictions for which elements can be edited
+     */
+    editRestrictions: z
+      .object({
+        /**
+         * If true, only the newest note can be edited
+         */
+        latest: z.boolean().optional(),
+        /**
+         * If true, the element's data.authorId field must match the currently logged-in user (used for Notes)
+         */
+        isCurrentUser: z.boolean().optional(),
+        /**
+         * Number in days. Timestamp (data.created) must be less than this many
+         * days in the past (used for Notes)
+         */
+        maxAge: z.number().optional(),
+        // Add more as required
+      })
+      .optional(),
+  })
+  .strict()
+  .optional();
+
+type Options = z.infer<typeof Options>;
+
 export const arrayTester = rankWith(5, schemaTypeIs('array'));
 
-// Finds the index where an item has been removed from newList.
-// It is assumed that the removal of an item is the only change between both lists.
-// Thus, length of newList must be one less than the length of the base list
+// Finds the index where an item has been removed from newList. It is assumed
+// that the removal of an item is the only change between both lists. Thus,
+// length of newList must be one less than the length of the base list
 const findIndexOfRemoved = (base: string[], newList: string[]): number => {
   if (base.length - 1 !== newList.length) {
     throw Error(
@@ -242,7 +284,7 @@ const isStringEnum = (
 const ArrayComponent = (props: ArrayControlCustomProps) => {
   const t = useTranslation('common');
   const [removeIndex, setRemoveIndex] = useState<number | undefined>();
-
+  const { localisedDateTime } = useFormatDateTime();
   const {
     uischema,
     uischemas,
@@ -257,24 +299,24 @@ const ArrayComponent = (props: ArrayControlCustomProps) => {
     renderers,
     config,
   } = props;
+  const { errors: zErrors, options } = useZodOptionsValidation(
+    Options,
+    props.uischema.options
+  );
+
+  const defaultExpanded = props.uischema?.options?.['defaultExpanded'] ?? false;
+
+  const [expandedItems, setExpandedItems] = useState<boolean[]>(
+    new Array(inputData?.length ?? 0).fill(defaultExpanded)
+  );
+
+  const isNotesArray = options?.detail?.elements[0]?.type === 'Note';
 
   const isElementEditable = (child: any, index: number) => {
     if (!enabled) return false;
-    if (!uischema.options?.['editRestrictions']) return true;
+    if (!options?.editRestrictions) return true;
 
-    const restrictions = uischema.options['editRestrictions'];
-
-    /*
-    The "editRestrictions" option is an object containing any number of the
-    following properties:
-    - "latest": (true/false) -- Only the latest array element can be
-      edited/removed
-    - "authorId": (true/false) --  The element's data.authorId field must match
-      the currently logged-in user
-    - maxAge: (number in days) -- timestamp (created) must be less than this
-      many days in the past
-    - Add more as required...
-    */
+    const restrictions = options.editRestrictions;
 
     // Must be editable if no timestamp (means it's just created)
     if (!child.created) return true;
@@ -284,7 +326,7 @@ const ArrayComponent = (props: ArrayControlCustomProps) => {
 
     // Author must match the current user
     if (
-      restrictions?.authorId &&
+      restrictions?.isCurrentUser &&
       child?.authorId &&
       child.authorId !== config.user.id
     )
@@ -294,6 +336,73 @@ const ArrayComponent = (props: ArrayControlCustomProps) => {
     if (DateUtils.ageInDays(child.created) >= 1) return false;
 
     return true;
+  };
+
+  const getItemLabel = (child: any, index: number) => {
+    const isExpanded = expandedItems[index];
+
+    // For most arrays, or Notes with and explicit itemLabel pattern
+    if (uischema.itemLabel || !isNotesArray)
+      return (
+        <Typography
+          sx={{
+            fontWeight: 'bold',
+            textAlign: 'end',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {uischema.itemLabel
+            ? RegexUtils.formatTemplateString(
+                uischema?.itemLabel,
+                {
+                  ...(typeof child === 'object' ? child : {}),
+                  index: index + 1,
+                },
+                ''
+              )
+            : index + 1}
+        </Typography>
+      );
+
+    // For Notes:
+    const {
+      text = '',
+      created,
+      authorName,
+    } = (inputData ? inputData[index] : {}) as {
+      text?: string;
+      created?: string;
+      authorName?: string;
+    };
+
+    return (
+      <div>
+        {!isExpanded ? (
+          <Typography
+            sx={{
+              textAlign: 'right',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              maxWidth: 350,
+            }}
+          >
+            {inputData && text}
+            <br />
+            <Typography
+              component="span"
+              sx={{
+                textAlign: 'right',
+                fontSize: '90%',
+                color: 'gray.dark',
+              }}
+            >
+              {created && `${authorName} (${localisedDateTime(created)})`}
+            </Typography>
+          </Typography>
+        ) : null}
+      </div>
+    );
   };
 
   const childUiSchema = useMemo(
@@ -319,11 +428,33 @@ const ArrayComponent = (props: ArrayControlCustomProps) => {
     return <EnumArrayComponent {...props} data={data} />;
   }
 
+  const handleToggle = (index: number) => {
+    const newValues = [...expandedItems];
+    newValues[index] = !expandedItems[index];
+    setExpandedItems(newValues);
+  };
+
+  const handleRemoveItem = (index: number) => {
+    const newValues = expandedItems.filter((_, i) => i !== index);
+    removeItems(path, [index])();
+    setExpandedItems(newValues);
+    setRemoveIndex(undefined);
+  };
+
+  if (zErrors)
+    return (
+      <Box display="flex" justifyContent="flex-end">
+        <Typography color="red">{zErrors}</Typography>
+      </Box>
+    );
+
   return (
     <Box display="flex" flexDirection="column" gap={0.5} marginTop={2}>
       <Box display="flex" width="100%" alignItems="center">
         <Box width={FORM_LABEL_COLUMN_WIDTH}>
-          <Typography sx={{ fontWeight: 'bold', textAlign: 'end' }}>
+          <Typography
+            sx={{ fontWeight: 'bold', textAlign: 'end', maxWidth: '100%' }}
+          >
             {label}:
           </Typography>
         </Box>
@@ -332,10 +463,13 @@ const ArrayComponent = (props: ArrayControlCustomProps) => {
             icon={<PlusCircleIcon />}
             label={t('label.add-another')}
             color="primary"
-            onClick={addItem(
-              path,
-              uischema.defaultNewItem ?? createDefaultValue(schema)
-            )}
+            onClick={() => {
+              setExpandedItems([...expandedItems, true]);
+              addItem(
+                path,
+                uischema.defaultNewItem ?? createDefaultValue(schema)
+              )();
+            }}
           />
         </Box>
       </Box>
@@ -343,10 +477,13 @@ const ArrayComponent = (props: ArrayControlCustomProps) => {
         .map((child, index) => {
           const childPath = composePaths(path, `${index}`);
           const isEditable = isElementEditable(child, index);
+          const itemLabelComponent = getItemLabel(child, index);
           return (
             <Accordion
               key={index}
               defaultExpanded={index === data.length - 1}
+              expanded={expandedItems[index]}
+              onChange={() => handleToggle(index)}
               sx={{
                 mt: '0 !important',
                 mb: index === data.length - 1 ? '20px !important' : 1,
@@ -365,19 +502,12 @@ const ArrayComponent = (props: ArrayControlCustomProps) => {
                 }}
                 style={{ margin: 0, minHeight: 0 }}
               >
-                <Box
-                  display="flex"
-                  width={FORM_LABEL_COLUMN_WIDTH}
-                  justifyContent="space-between"
-                  alignItems="center"
-                >
+                <Box display="flex" justifyContent="space-between" width="100%">
                   <ConfirmationModal
                     open={removeIndex !== undefined}
                     onConfirm={() => {
-                      if (removeIndex !== undefined) {
-                        removeItems(path, [removeIndex])();
-                        setRemoveIndex(undefined);
-                      }
+                      if (removeIndex !== undefined)
+                        handleRemoveItem(removeIndex);
                     }}
                     onCancel={() => setRemoveIndex(undefined)}
                     title={t('label.remove')}
@@ -396,25 +526,7 @@ const ArrayComponent = (props: ArrayControlCustomProps) => {
                       e.stopPropagation();
                     }}
                   />
-
-                  <Typography
-                    sx={{
-                      fontWeight: 'bold',
-                      textAlign: 'end',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {uischema?.itemLabel
-                      ? RegexUtils.formatTemplateString(
-                          uischema?.itemLabel,
-                          {
-                            ...(typeof child === 'object' ? child : {}),
-                            index: index + 1,
-                          },
-                          ''
-                        )
-                      : index + 1}
-                  </Typography>
+                  {itemLabelComponent}
                 </Box>
               </AccordionSummary>
               <AccordionDetails>
@@ -439,6 +551,6 @@ const ArrayComponent = (props: ArrayControlCustomProps) => {
   );
 };
 
-export const Array = withJsonFormsArrayControlProps(
+export const ArrayControl = withJsonFormsArrayControlProps(
   ArrayComponent as ComponentType<ArrayControlProps>
 );
