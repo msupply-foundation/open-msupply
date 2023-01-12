@@ -40,17 +40,25 @@ const StyledListItem = styled<
   FC<ListItemProps & { isSelected: boolean; to: string }>
 >(ListItem, {
   shouldForwardProp: prop => prop !== 'isSelected',
-})(({ theme, isSelected }) => ({
-  ...getListItemCommonStyles(),
-  backgroundColor: isSelected
-    ? theme.mixins.drawer.selectedBackgroundColor
-    : 'transparent',
-  boxShadow: isSelected ? theme.shadows[3] : 'none',
-  marginTop: 5,
-  '&:hover': {
-    boxShadow: theme.shadows[8],
-  },
-}));
+})(({ theme, isSelected }) =>
+  isSelected
+    ? {
+        ...getListItemCommonStyles(),
+        backgroundColor: theme.mixins.drawer.selectedBackgroundColor,
+        boxShadow: theme.shadows[5],
+        fontWeight: 'bold',
+        marginTop: 5,
+      }
+    : {
+        ...getListItemCommonStyles(),
+        backgroundColor: 'transparent',
+        marginTop: 5,
+        '&:hover': {
+          boxShadow: theme.shadows[3],
+          backgroundColor: theme.palette.background.toolbar,
+        },
+      }
+);
 
 export interface AppNavLinkProps {
   badgeProps?: BadgeProps;
@@ -149,34 +157,33 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
           >
             <ListItemText
               primary={text}
-              sx={
-                isSelectedParentItem
-                  ? {
-                      '& .MuiTypography-root': { fontWeight: 'bold' },
-                      flexGrow: 0,
-                    }
-                  : { flexGrow: 0 }
-              }
+              sx={{
+                '& .MuiTypography-root': {
+                  fontWeight:
+                    selected || isSelectedParentItem ? 'bold' : 'normal',
+                  color: isSelectedParentItem ? 'primary.main' : undefined,
+                },
+                flexGrow: 0,
+              }}
             />
           </Badge>
-          {end && (
-            <ListItemIcon
+
+          <ListItemIcon
+            sx={{
+              minWidth: 20,
+              display: selected && drawer.isOpen ? 'flex' : 'none',
+              alignItems: 'center',
+            }}
+            className="chevron"
+          >
+            <ChevronDownIcon
               sx={{
-                minWidth: 20,
-                display: selected ? 'flex' : 'none',
-                alignItems: 'center',
+                transform: 'rotate(-90deg)',
+                fontSize: '1rem',
+                color: 'primary.main',
               }}
-              className="chevron"
-            >
-              <ChevronDownIcon
-                sx={{
-                  transform: 'rotate(-90deg)',
-                  fontSize: '1rem',
-                  color: 'primary.main',
-                }}
-              />
-            </ListItemIcon>
-          )}
+            />
+          </ListItemIcon>
         </Box>
       </ListItemButton>
     </StyledListItem>
