@@ -51,7 +51,7 @@ impl ItemCountServiceTrait for ItemServiceCount {
             .filter(|item| {
                 item.average_monthly_consumption != 0.0
                     && item.available_stock_on_hand as f64 / item.average_monthly_consumption
-                        <= low_stock_threshold as f64
+                        < low_stock_threshold as f64
             });
 
         item_stats.count().try_into()

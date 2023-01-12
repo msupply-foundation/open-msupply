@@ -3,6 +3,7 @@ use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 
 use service::auth::{Resource, ResourceAccessRequest};
 
+const DEFAULT_LOW_STOCK_THRESHOLD: i32 = 3;
 pub struct ItemCounts {
     low_stock_threshold: Option<i32>,
     store_id: String,
@@ -28,7 +29,9 @@ impl ItemCounts {
         let service_provider = ctx.service_provider();
         let service_ctx = service_provider.basic_context()?;
         let service = &service_provider.item_count_service;
-        let low_stock_threshold_in_months = self.low_stock_threshold.unwrap_or(3);
+        let low_stock_threshold_in_months = self
+            .low_stock_threshold
+            .unwrap_or(DEFAULT_LOW_STOCK_THRESHOLD);
         Ok(service.count_low_stock(&service_ctx, &self.store_id, low_stock_threshold_in_months)?)
     }
 }
