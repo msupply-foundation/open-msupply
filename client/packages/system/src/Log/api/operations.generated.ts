@@ -4,7 +4,7 @@ import { GraphQLClient } from 'graphql-request';
 import * as Dom from 'graphql-request/dist/types.dom';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type ActivityLogRowFragment = { __typename: 'ActivityLogNode', id: string, datetime: any, event?: string | null, recordId?: string | null, storeId?: string | null, type: Types.ActivityLogNodeType, user?: { __typename: 'UserNode', username: string } | null };
+export type ActivityLogRowFragment = { __typename: 'ActivityLogNode', id: string, datetime: string, event?: string | null, recordId?: string | null, storeId?: string | null, type: Types.ActivityLogNodeType, user?: { __typename: 'UserNode', username: string } | null };
 
 export type ActivityLogsQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']>;
@@ -14,7 +14,7 @@ export type ActivityLogsQueryVariables = Types.Exact<{
 }>;
 
 
-export type ActivityLogsQuery = { __typename: 'Queries', activityLogs: { __typename: 'ActivityLogConnector', totalCount: number, nodes: Array<{ __typename: 'ActivityLogNode', id: string, datetime: any, event?: string | null, recordId?: string | null, storeId?: string | null, type: Types.ActivityLogNodeType, user?: { __typename: 'UserNode', username: string } | null }> } };
+export type ActivityLogsQuery = { __typename: 'Queries', activityLogs: { __typename: 'ActivityLogConnector', totalCount: number, nodes: Array<{ __typename: 'ActivityLogNode', id: string, datetime: string, event?: string | null, recordId?: string | null, storeId?: string | null, type: Types.ActivityLogNodeType, user?: { __typename: 'UserNode', username: string } | null }> } };
 
 export const ActivityLogRowFragmentDoc = gql`
     fragment ActivityLogRow on ActivityLogNode {
