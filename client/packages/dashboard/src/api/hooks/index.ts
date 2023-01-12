@@ -7,7 +7,7 @@ export const useDashboard = {
   },
 
   statistics: {
-    item: Statistics.useItemStats,
+    item: Statistics.useItemCounts,
     stock: Statistics.useStockCounts,
   },
 };

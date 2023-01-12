@@ -4,8 +4,6 @@ import { GraphQLClient } from 'graphql-request';
 import * as Dom from 'graphql-request/dist/types.dom';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type ItemStatsFragment = { __typename: 'ItemNode', stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null } };
-
 export type StockCountsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
   daysTillExpired?: Types.InputMaybe<Types.Scalars['Int']>;
@@ -15,22 +13,15 @@ export type StockCountsQueryVariables = Types.Exact<{
 
 export type StockCountsQuery = { __typename: 'Queries', stockCounts: { __typename: 'StockCounts', expired: number, expiringSoon: number } };
 
-export type ItemStatsQueryVariables = Types.Exact<{
+export type ItemCountsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
+  lowStockThreshold: Types.Scalars['Int'];
 }>;
 
 
-export type ItemStatsQuery = { __typename: 'Queries', items: { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null } }> } };
+export type ItemCountsQuery = { __typename: 'Queries', itemCounts: { __typename: 'ItemCounts', total: number, noStock: number, lowStock: number } };
 
-export const ItemStatsFragmentDoc = gql`
-    fragment ItemStats on ItemNode {
-  stats(storeId: $storeId) {
-    averageMonthlyConsumption
-    availableStockOnHand
-    availableMonthsOfStockOnHand
-  }
-}
-    `;
+
 export const StockCountsDocument = gql`
     query stockCounts($storeId: String!, $daysTillExpired: Int, $timezoneOffset: Int) {
   stockCounts(
@@ -43,18 +34,15 @@ export const StockCountsDocument = gql`
   }
 }
     `;
-export const ItemStatsDocument = gql`
-    query itemStats($storeId: String!) {
-  items(storeId: $storeId, filter: {isVisible: true}) {
-    ... on ItemConnector {
-      nodes {
-        ...ItemStats
-      }
-      totalCount
-    }
+export const ItemCountsDocument = gql`
+    query itemCounts($storeId: String!, $lowStockThreshold: Int!) {
+  itemCounts(storeId: $storeId, lowStockThreshold: $lowStockThreshold) {
+    total
+    noStock
+    lowStock
   }
 }
-    ${ItemStatsFragmentDoc}`;
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -66,8 +54,8 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     stockCounts(variables: StockCountsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<StockCountsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<StockCountsQuery>(StockCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'stockCounts', 'query');
     },
-    itemStats(variables: ItemStatsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ItemStatsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ItemStatsQuery>(ItemStatsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemStats', 'query');
+    itemCounts(variables: ItemCountsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ItemCountsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ItemCountsQuery>(ItemCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemCounts', 'query');
     }
   };
 }
@@ -94,15 +82,15 @@ export const mockStockCountsQuery = (resolver: ResponseResolver<GraphQLRequest<S
  * @param resolver a function that accepts a captured request and may return a mocked response.
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
- * mockItemStatsQuery((req, res, ctx) => {
- *   const { storeId } = req.variables;
+ * mockItemCountsQuery((req, res, ctx) => {
+ *   const { storeId, lowStockThreshold } = req.variables;
  *   return res(
- *     ctx.data({ items })
+ *     ctx.data({ itemCounts })
  *   )
  * })
  */
-export const mockItemStatsQuery = (resolver: ResponseResolver<GraphQLRequest<ItemStatsQueryVariables>, GraphQLContext<ItemStatsQuery>, any>) =>
-  graphql.query<ItemStatsQuery, ItemStatsQueryVariables>(
-    'itemStats',
+export const mockItemCountsQuery = (resolver: ResponseResolver<GraphQLRequest<ItemCountsQueryVariables>, GraphQLContext<ItemCountsQuery>, any>) =>
+  graphql.query<ItemCountsQuery, ItemCountsQueryVariables>(
+    'itemCounts',
     resolver
   )
