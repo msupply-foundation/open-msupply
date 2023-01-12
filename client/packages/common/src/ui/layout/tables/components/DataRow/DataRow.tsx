@@ -1,6 +1,7 @@
 import React, { FC, useEffect } from 'react';
 import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
+import { alpha } from '@mui/material/styles';
 import { Column } from '../../columns/types';
 import { RecordWithId } from '@common/types';
 import {
@@ -60,19 +61,27 @@ export const DataRow = <T extends RecordWithId>({
         >
           <TableRow
             sx={{
+              backgroundColor: isFocused
+                ? theme => alpha(theme.palette.secondary.main, 0.1)
+                : null,
               '&.MuiTableRow-root': {
+                '&:nth-of-type(even)': {
+                  backgroundColor: 'background.toolbar',
+                },
                 '&:hover': hasOnClick
-                  ? { backgroundColor: 'background.menu' }
+                  ? theme => ({
+                      backgroundColor: alpha(theme.palette.secondary.main, 0.1),
+                    })
                   : {},
               },
               color: isDisabled ? 'gray.main' : 'black',
-              backgroundColor: isFocused ? 'background.menu' : null,
               alignItems: 'center',
               height: '40px',
               maxHeight: '45px',
               boxShadow: dense
                 ? 'none'
-                : 'inset 0 0.5px 0 0 rgba(143, 144, 166, 0.5)',
+                : theme =>
+                    `inset 0 0.5px 0 0 ${alpha(theme.palette.gray.main, 0.5)}`,
               ...rowStyle,
             }}
             onClick={onRowClick}

@@ -132,7 +132,7 @@ export const themeOptions = {
       },
     },
     drawer: {
-      selectedBackgroundColor: '#fff',
+      selectedBackgroundColor: 'transparent',
     },
     saveButtonRow: { height: 40 },
     footer: { height: 32 },
