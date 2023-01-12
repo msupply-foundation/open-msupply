@@ -17,17 +17,19 @@ export const Toolbar: FC = () => {
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
       <Grid container>
         <Grid item display="flex" flex={1} flexDirection="column" gap={1}>
-          <InputWithLabelRow
-            label={t('heading.description')}
-            Input={
-              <BufferedTextInput
-                disabled={true}
-                size="small"
-                sx={{ width: 250 }}
-                value={description}
-              />
-            }
-          />
+          {description && (
+            <InputWithLabelRow
+              label={t('heading.description')}
+              Input={
+                <BufferedTextInput
+                  disabled={true}
+                  size="small"
+                  sx={{ width: 250 }}
+                  value={description}
+                />
+              }
+            />
+          )}
         </Grid>
         <Grid
           item
