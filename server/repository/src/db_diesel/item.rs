@@ -2,6 +2,7 @@ use super::{
     item_row::{
         item, item::dsl as item_dsl, item_is_visible, item_is_visible::dsl as item_is_visible_dsl,
     },
+    stock_line_row::{stock_line, stock_line::dsl as stock_line_dsl},
     unit_row::{unit, unit::dsl as unit_dsl},
     DBType, ItemIsVisibleRow, ItemRow, ItemRowType, StorageConnection, UnitRow,
 };
@@ -98,6 +99,19 @@ impl<'a> ItemRepository<'a> {
     pub fn count(&self, filter: Option<ItemFilter>) -> Result<i64, RepositoryError> {
         // TODO (beyond M1), check that store_id matches current store
         let query = create_filtered_query(filter);
+
+        Ok(query.count().get_result(&self.connection.connection)?)
+    }
+
+    pub fn count_no_stock(
+        &self,
+        filter: Option<ItemFilter>,
+        store_id: &str,
+    ) -> Result<i64, RepositoryError> {
+        let stock_lines = stock_line_dsl::stock_line
+            .select(stock_line::item_id)
+            .filter(stock_line::store_id.eq(store_id));
+        let query = create_filtered_query(filter).filter(item::id.ne_all(stock_lines));
 
         Ok(query.count().get_result(&self.connection.connection)?)
     }

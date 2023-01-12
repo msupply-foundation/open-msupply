@@ -28,14 +28,6 @@ export type Scalars = {
    * * `2000-02-24`
    */
   NaiveDate: string;
-  /**
-   * ISO 8601 combined date and time without timezone.
-   *
-   * # Examples
-   *
-   * * `2015-07-01T08:59:60.123`,
-   */
-  NaiveDateTime: string;
 };
 
 export type ActivityLogConnector = {
@@ -54,7 +46,7 @@ export type ActivityLogFilterInput = {
 
 export type ActivityLogNode = {
   __typename: 'ActivityLogNode';
-  datetime: Scalars['NaiveDateTime'];
+  datetime: Scalars['DateTime'];
   event?: Maybe<Scalars['String']>;
   id: Scalars['String'];
   recordId?: Maybe<Scalars['String']>;
@@ -1321,6 +1313,13 @@ export type ItemConnector = {
   totalCount: Scalars['Int'];
 };
 
+export type ItemCounts = {
+  __typename: 'ItemCounts';
+  lowStock: Scalars['Int'];
+  noStock: Scalars['Int'];
+  total: Scalars['Int'];
+};
+
 export type ItemFilterInput = {
   code?: InputMaybe<SimpleStringFilterInput>;
   codeOrName?: InputMaybe<SimpleStringFilterInput>;
@@ -2142,6 +2141,7 @@ export type Queries = {
   invoiceByNumber: InvoiceResponse;
   invoiceCounts: InvoiceCounts;
   invoices: InvoicesResponse;
+  itemCounts: ItemCounts;
   /** Query omSupply "item" entries */
   items: ItemsResponse;
   latestSyncStatus?: Maybe<FullSyncStatusNode>;
@@ -2228,6 +2228,12 @@ export type QueriesInvoicesArgs = {
   filter?: InputMaybe<InvoiceFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<InvoiceSortInput>>;
+  storeId: Scalars['String'];
+};
+
+
+export type QueriesItemCountsArgs = {
+  lowStockThreshold?: InputMaybe<Scalars['Int']>;
   storeId: Scalars['String'];
 };
 
