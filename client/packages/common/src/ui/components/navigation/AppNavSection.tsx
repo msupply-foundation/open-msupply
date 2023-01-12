@@ -20,12 +20,6 @@ export const AppNavSection: FC<
                 height: 30,
                 marginLeft: 1,
               },
-              '& .navLinkText': {
-                flex: 1,
-              },
-              '& .MuiListItem-root:hover .chevron': {
-                display: 'flex',
-              },
             }
           : {}
       }
