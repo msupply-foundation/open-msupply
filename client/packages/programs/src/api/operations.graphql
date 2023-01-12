@@ -199,3 +199,48 @@ query encounters(
     }
   }
 }
+
+fragment ProgramEvent on ProgramEventNode {
+  activeDatetime
+  type
+  data
+}
+
+fragment ProgramEnrolmentRow on ProgramEnrolmentNode {
+  enrolmentDatetime
+  name
+  patientId
+  programPatientId
+  type
+  document {
+    documentRegistry {
+      id
+      name
+    }
+  }
+  events(at: $eventTime) {
+    ...ProgramEvent
+  }
+}
+
+query programEnrolments(
+  $storeId: String!
+  $key: ProgramEnrolmentSortFieldInput!
+  $desc: Boolean
+  $filter: ProgramEnrolmentFilterInput
+  $eventTime: String!
+) {
+  programEnrolments(
+    storeId: $storeId
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+  ) {
+    ... on ProgramEnrolmentConnector {
+      __typename
+      nodes {
+        ...ProgramEnrolmentRow
+      }
+      totalCount
+    }
+  }
+}

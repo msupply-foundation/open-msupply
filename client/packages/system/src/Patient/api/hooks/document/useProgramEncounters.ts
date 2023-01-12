@@ -1,7 +1,9 @@
 import { useQuery } from '@openmsupply-client/common';
-import { DocumentRegistryFragment } from '@openmsupply-client/programs';
-import { useDocumentRegistryApi } from 'packages/programs/src/api/hooks/utils/useDocumentRegistryApi';
-import { ProgramEnrolmentRowFragmentWithId } from '../../../ProgramEnrolment/api';
+import {
+  DocumentRegistryFragment,
+  useDocumentRegistryApi,
+  ProgramEnrolmentRowFragmentWithId,
+} from '@openmsupply-client/programs';
 
 export type EncounterRegistry = {
   program: ProgramEnrolmentRowFragmentWithId;

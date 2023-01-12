@@ -9,6 +9,7 @@ import {
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
 import { EncounterRegistry } from '../api/hooks/document/useProgramEncounters';
+import { useProgramEnrolments } from '@openmsupply-client/programs';
 
 interface EncounterSearchInputProps {
   onChange: (type: EncounterRegistry) => void;
@@ -35,8 +36,11 @@ export const EncounterSearchInput: FC<EncounterSearchInputProps> = ({
   value,
   disabled = false,
 }) => {
+  const patientId = usePatient.utils.id();
   const { data: enrolmentData, isLoading: isEnrolmentDataLoading } =
-    usePatient.document.programEnrolments();
+    useProgramEnrolments.document.programEnrolments({
+      filterBy: { patientId: { equalTo: patientId } },
+    });
   const { data: encounterData, isLoading: isEncounterLoading } =
     usePatient.document.programEncounters(enrolmentData?.nodes ?? []);
   const [buffer, setBuffer] = useBufferState(value);
