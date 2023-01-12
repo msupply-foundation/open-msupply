@@ -46,16 +46,13 @@ impl SyncTranslation for NameStoreJoinTranslation {
             }
         };
 
-        let name_is_customer = data.name_is_customer.unwrap_or(name.is_customer);
-        let name_is_supplier = data.name_is_supplier.unwrap_or(name.is_supplier);
-
         if let Some(store) = StoreRowRepository::new(connection)
             .find_one_by_id(&data.store_ID)
             .unwrap_or(None)
         {
             // if the name_store_join is referencing itself, then exclude it
             // this is an invalid configuration which shouldn't be possible.. but is
-            if store.name_id == data.name_ID && (name_is_customer || name_is_supplier) {
+            if store.name_id == data.name_ID {
                 return Ok(None);
             }
         }
@@ -64,8 +61,8 @@ impl SyncTranslation for NameStoreJoinTranslation {
             id: data.ID,
             name_id: data.name_ID,
             store_id: data.store_ID,
-            name_is_customer,
-            name_is_supplier,
+            name_is_customer: data.name_is_customer.unwrap_or(name.is_customer),
+            name_is_supplier: data.name_is_supplier.unwrap_or(name.is_supplier),
         };
 
         Ok(Some(IntegrationRecords::from_upsert(
