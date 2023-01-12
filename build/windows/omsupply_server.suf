@@ -4199,29 +4199,49 @@ if not hasOmsupplyInstalled then
 	if (omSupplyServerDatabase == "postgres") then
 		local envKey = "System\\CurrentControlSet\\Control\\Session Manager\\Environment";
 		local path = Registry.GetValue(HKEY_LOCAL_MACHINE, envKey, "Path", true);
-		local binPath = "C:\\Program Files\\PostgreSQL\\14\\bin";
-		local libPath = "C:\\Program Files\\PostgreSQL\\14\\lib";
-		local binTargetIndex = String.Find(path, binPath, 1, false);
-		local libTargetIndex = String.Find(path, libPath, 1, false);
-		
-		if (binTargetIndex == -1) then
-			-- postgres bin path not found, add it
-			path = path .. ";" .. binPath;
+
+		-- Get pg installation folder
+		local pgBinPath = "";
+		local pgLibPath = "";
+		local tblPgInstalls = Registry.GetKeyNames(HKEY_LOCAL_MACHINE, "Software\\PostgreSQL\\Installations");
+		if (Table.Count(tblPgInstalls) &gt; 0) then
+			local higherPgVersion = "0.0.0";
+			for index, value in pairs(tblPgInstalls) do
+				local pgVersion = Registry.GetValue(HKEY_LOCAL_MACHINE, "Software\\PostgreSQL\\Installations\\" .. value, "CLT_Version", true);
+				if ((String.CompareFileVersions(pgVersion, "14.0.0") ~= -1) and (String.CompareFileVersions(pgVersion, higherPgVersion) ~= -1)) then
+					local pgInstallPath = Registry.GetValue(HKEY_LOCAL_MACHINE, "Software\\PostgreSQL\\Installations\\" .. value, "Base Directory", true);
+					pgBinPath = pgInstallPath .. "\\bin"
+					pgLibPath = pgInstallPath .. "\\lib"
+					higherPgVersion = pgVersion;
+				end
+			end
 		end
-		if (libTargetIndex == -1) then
-			-- postgres lib path not found, add it
-			path = path .. ";" .. libPath;
-		end
 		
-		-- Update registry
-		Registry.SetValue(HKEY_LOCAL_MACHINE, envKey, "Path", path, REG_EXPAND_SZ);
-		SetupData.WriteToLogFile("Info\tNew Path=" .. path .. "\r\n", true);
-		-- Refresh the 'Path' environment variable
-		File.Run(SessionVar.Expand("%TempLaunchFolder%\\RefreshEnvironment.exe"), "", "", SW_MINIMIZE, true);
-		local error = Application.GetLastError();
-	    if (error ~= 0) then
-	        SetupData.WriteToLogFile("Error\tCould not execute utility!\r\n", true);
-	    end
+		-- Postgres bin path has been found, set it to environment variable
+		if (pgBinPath ~= "") then
+			local pgBinTargetIndex = String.Find(path, pgBinPath, 1, false);
+			local pgLibTargetIndex = String.Find(path, pgLibPath, 1, false);
+			
+			if (pgBinTargetIndex == -1) then
+				-- postgres bin path not found, add it
+				path = path .. ";" .. pgBinPath;
+			end
+			if (pgLibTargetIndex == -1) then
+				-- postgres lib path not found, add it
+				path = path .. ";" .. pgLibPath;
+			end
+			
+			-- Update registry
+			Registry.SetValue(HKEY_LOCAL_MACHINE, envKey, "Path", path, REG_EXPAND_SZ);
+			SetupData.WriteToLogFile("Info\tNew Path=" .. path .. "\r\n", true);
+			
+			-- Refresh the 'Path' environment variable
+			File.Run(SessionVar.Expand("%TempLaunchFolder%\\RefreshEnvironment.exe"), "", "", SW_MINIMIZE, true);
+			local error = Application.GetLastError();
+		    if (error ~= 0) then
+		        SetupData.WriteToLogFile("Error: Could not execute utility!\r\n", true);
+		    end
+		end
 	end
 end
 
