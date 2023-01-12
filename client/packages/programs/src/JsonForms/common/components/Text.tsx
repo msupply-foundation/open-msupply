@@ -1,14 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Actions, ControlProps, rankWith, schemaTypeIs } from '@jsonforms/core';
 import { useJsonForms, withJsonFormsControlProps } from '@jsonforms/react';
-import {
-  DetailInputWithLabelRow,
-  useDebounceCallback,
-  useTranslation,
-} from '@openmsupply-client/common';
-import { FORM_LABEL_WIDTH } from '../styleConstants';
+import { Box, FormLabel, useTranslation } from '@openmsupply-client/common';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../useZodOptionsValidation';
+import { DebouncedTextInput } from './DebouncedTextInput';
+import { FORM_LABEL_WIDTH } from '../styleConstants';
 
 const Options = z
   .object({
@@ -86,24 +83,15 @@ const usePatternValidation = (
 export const stringTester = rankWith(3, schemaTypeIs('string'));
 
 const UIComponent = (props: ControlProps) => {
-  const { data, handleChange, label, path, errors } = props;
-  const [localData, setLocalData] = useState<string | undefined>(data);
-  // timestamp of the last key stroke
-  const [latestKey, setLatestKey] = useState<number>(0);
+  const { data, path, handleChange, errors, label } = props;
   const {
     errors: zErrors,
     options: schemaOptions,
     pattern,
   } = useOptions(props.uischema.options);
-  const customErrors = usePatternValidation(pattern, localData);
+  const customErrors = usePatternValidation(pattern, data);
 
   const error = !!errors || !!zErrors || !!customErrors;
-  // debounce avoid rerendering the form on every key stroke which becomes a performance issue
-  const onChange = useDebounceCallback(
-    (value: string) =>
-      handleChange(path, error && value === '' ? undefined : value),
-    [path, error]
-  );
   const t = useTranslation('common');
 
   const examples =
@@ -138,49 +126,45 @@ const UIComponent = (props: ControlProps) => {
     }
   }, [core, dispatch, customErrors]);
 
-  useEffect(() => {
-    // Using debounce, the actual data is set after 500ms after the last key stroke (localDataTime).
-    // If data is set from the outside, e.g. through a reset, we want to update our local data as
-    // well.
-    // To distinguish between debounced events and external data updates we only take data that
-    // comes in at least 500ms after the last key stoke, i.e. it must be set from the outside.
-    if (Date.now() > latestKey + 500) {
-      setLocalData(data);
-    }
-  }, [data]);
-
   if (!props.visible) {
     return null;
   }
 
-  const width = schemaOptions?.width ?? '100%';
   const multiline = schemaOptions?.multiline !== false;
   const rows = schemaOptions?.rows;
 
+  const width = schemaOptions?.width ?? '100%';
+  const labelFlexBasis = `${FORM_LABEL_WIDTH}%`;
+  const inputFlexBasis = `${100 - FORM_LABEL_WIDTH}%`;
   return (
-    <DetailInputWithLabelRow
-      label={label}
-      inputProps={{
-        value: localData ?? '',
-        sx: { margin: 0.5, width },
-        onChange: e => {
-          setLatestKey(Date.now());
-          setLocalData(e.target.value);
-          onChange(e.target.value);
-        },
-        disabled: !props.enabled,
-        error,
-        helperText,
-        FormHelperTextProps: error
-          ? { sx: { color: 'error.main' } }
-          : undefined,
-        required: props.required,
-        multiline,
-        rows,
-      }}
-      labelWidthPercentage={FORM_LABEL_WIDTH}
-      inputAlignment={'start'}
-    />
+    <Box display="flex" alignItems="center" gap={1}>
+      <Box style={{ textAlign: 'end' }} flexBasis={labelFlexBasis}>
+        <FormLabel sx={{ fontWeight: 'bold' }}>{label}:</FormLabel>
+      </Box>
+      <Box
+        flexBasis={inputFlexBasis}
+        justifyContent={'flex-start'}
+        display="flex"
+      >
+        <DebouncedTextInput
+          data={data}
+          onChange={value => handleChange(path, value)}
+          inputProps={{
+            sx: { margin: 0.5, width },
+            disabled: !props.enabled,
+
+            FormHelperTextProps: error
+              ? { sx: { color: 'error.main' } }
+              : undefined,
+            required: props.required,
+            multiline,
+            rows,
+            error,
+            helperText,
+          }}
+        />
+      </Box>
+    </Box>
   );
 };
 
