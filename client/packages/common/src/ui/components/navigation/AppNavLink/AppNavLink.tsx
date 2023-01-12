@@ -12,12 +12,18 @@ import {
 import { styled } from '@mui/material/styles';
 import { useMatch, Link } from 'react-router-dom';
 import { useDrawer } from '@common/hooks';
+import { ChevronDownIcon } from '@common/icons';
 
-const useSelectedNavMenuItem = (to: string, end: boolean): boolean => {
+const useSelectedNavMenuItem = (
+  to: string,
+  end: boolean,
+  isOpen: boolean
+): boolean => {
   // This nav menu item should be selected when lower level elements
   // are selected. For example, the route /outbound-shipment/{id} should
   // highlight the nav menu item for outbound-shipments.
-  const highlightLowerLevels = !end || to.endsWith('*');
+  // If the drawer is closed, highlight the higher level elements.
+  const highlightLowerLevels = isOpen ? !end || to.endsWith('*') : false;
   // If we need to highlight the higher levels append a wildcard to the match path.
   const path = highlightLowerLevels ? to : `${to}/*`;
   const selected = useMatch({ path });
@@ -27,7 +33,6 @@ const useSelectedNavMenuItem = (to: string, end: boolean): boolean => {
 const getListItemCommonStyles = () => ({
   height: 40,
   borderRadius: 20,
-  justifyContent: 'center',
   alignItems: 'center',
 });
 
@@ -71,8 +76,12 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
   } = props;
   const drawer = useDrawer();
 
-  const selected = useSelectedNavMenuItem(to, !!end);
+  const selected = useSelectedNavMenuItem(to, !!end, drawer.isOpen);
+  const isSelectedParentItem = inactive && !!useMatch({ path: `${to}/*` });
   const handleClick = () => {
+    // reset the clicked nav path when navigating
+    // otherwise the child menu remains open
+    drawer.setClickedNavPath(undefined);
     if (onClick) onClick();
     drawer.onClick();
   };
@@ -106,6 +115,7 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
       <ListItemButton
         sx={{
           ...getListItemCommonStyles(),
+          justifyContent: drawer.isOpen ? 'flex-start' : 'center',
           '&.MuiListItemButton-root:hover': {
             backgroundColor: 'transparent',
           },
@@ -118,13 +128,56 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
         disableGutters
         component={CustomLink}
       >
-        <Badge {...badgeProps} sx={{ alignItems: 'center', flexGrow: 1 }}>
-          <ListItemIcon sx={{ minWidth: 20 }}>{icon}</ListItemIcon>
-          <Box className="navLinkText">
-            <Box width={10} />
-            <ListItemText primary={text} />
-          </Box>
-        </Badge>
+        <ListItemIcon sx={{ minWidth: 20 }}>{icon}</ListItemIcon>
+        <Box className="navLinkText">
+          <Box width={10} />
+
+          <Badge
+            {...badgeProps}
+            sx={{
+              alignItems: 'center',
+              flexGrow: 1,
+              '& .MuiBadge-badge': drawer.isOpen
+                ? {
+                    transform: 'scale(0.75) translate(75%, -25%)',
+                  }
+                : {
+                    top: 'unset',
+                    transform: 'scale(0.75) translate(50%, -50%)',
+                  },
+            }}
+          >
+            <ListItemText
+              primary={text}
+              sx={
+                isSelectedParentItem
+                  ? {
+                      '& .MuiTypography-root': { fontWeight: 'bold' },
+                      flexGrow: 0,
+                    }
+                  : { flexGrow: 0 }
+              }
+            />
+          </Badge>
+          {end && (
+            <ListItemIcon
+              sx={{
+                minWidth: 20,
+                display: selected ? 'flex' : 'none',
+                alignItems: 'center',
+              }}
+              className="chevron"
+            >
+              <ChevronDownIcon
+                sx={{
+                  transform: 'rotate(-90deg)',
+                  fontSize: '1rem',
+                  color: 'primary.main',
+                }}
+              />
+            </ListItemIcon>
+          )}
+        </Box>
       </ListItemButton>
     </StyledListItem>
   ) : null;
