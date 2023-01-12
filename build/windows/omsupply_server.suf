@@ -4195,6 +4195,11 @@ if not hasOmsupplyInstalled then
 	config = config .. "  max_file_size: 10\r\n";
 	TextFile.WriteFromString(SessionVar.Expand("%AppFolder%\\configuration\\local.yaml"), config, false);
 
+	-- Create omSupply Server keys in registry
+	Registry.CreateKey(HKEY_LOCAL_MACHINE, "Software\\omSupply Server");
+	Registry.SetValue(HKEY_LOCAL_MACHINE, "Software\\omSupply Server", "Path", omSupplyServerPath, REG_SZ);
+	Registry.SetValue(HKEY_LOCAL_MACHINE, "Software\\omSupply Server", "Database", omSupplyServerDatabase, REG_SZ);
+	
 	-- Create environment variable for postgres libraries required for diesel orm (backend)
 	if (omSupplyServerDatabase == "postgres") then
 		local envKey = "System\\CurrentControlSet\\Control\\Session Manager\\Environment";
