@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Actions, ControlProps, rankWith, schemaTypeIs } from '@jsonforms/core';
-import { useJsonForms, withJsonFormsControlProps } from '@jsonforms/react';
+import { ControlProps, rankWith, schemaTypeIs } from '@jsonforms/core';
+import { withJsonFormsControlProps } from '@jsonforms/react';
 import { Box, FormLabel, useTranslation } from '@openmsupply-client/common';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../useZodOptionsValidation';
 import { DebouncedTextInput } from './DebouncedTextInput';
 import { FORM_LABEL_WIDTH } from '../styleConstants';
+import { useJSONFormsCustomError } from './useJSONFormsCustomError';
 
 const Options = z
   .object({
@@ -60,24 +61,25 @@ const useOptions = (
 
 // Returns error if value doesn't match the pattern
 const usePatternValidation = (
+  path: string,
   pattern?: RegExp,
   value?: string
 ): string | undefined => {
-  const [error, setError] = useState<string | undefined>();
+  const { customError, setCustomError } = useJSONFormsCustomError(path, 'Text');
 
   useEffect(() => {
     if (!pattern || !value) {
-      setError(undefined);
+      setCustomError(undefined);
       return;
     }
     const result = pattern.exec(value);
     if (result == null) {
-      setError('Invalid format');
+      setCustomError('Invalid format');
     } else {
-      setError(undefined);
+      setCustomError(undefined);
     }
   }, [pattern, value]);
-  return error;
+  return customError;
 };
 
 export const stringTester = rankWith(3, schemaTypeIs('string'));
@@ -89,7 +91,7 @@ const UIComponent = (props: ControlProps) => {
     options: schemaOptions,
     pattern,
   } = useOptions(props.uischema.options);
-  const customErrors = usePatternValidation(pattern, data);
+  const customErrors = usePatternValidation(path, pattern, data);
 
   const error = !!errors || !!zErrors || !!customErrors;
   const t = useTranslation('common');
@@ -103,28 +105,6 @@ const UIComponent = (props: ControlProps) => {
           examples: examples.join('", "'),
         })
       : zErrors ?? errors ?? customErrors;
-
-  const { core, dispatch } = useJsonForms();
-  useEffect(() => {
-    if (!core || !dispatch) {
-      return;
-    }
-    const currentErrors = core?.errors ?? [];
-    if (customErrors) {
-      dispatch(
-        Actions.updateErrors([
-          ...currentErrors,
-          {
-            instancePath: path,
-            message: customErrors,
-            schemaPath: path,
-            keyword: '',
-            params: {},
-          },
-        ])
-      );
-    }
-  }, [core, dispatch, customErrors]);
 
   if (!props.visible) {
     return null;
