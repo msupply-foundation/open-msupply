@@ -33,9 +33,8 @@
                 {
                   "type": "IdGenerator",
                   "label": "NUIC",
-                  "scope": "#/",
+                  "scope": "#/properties/code2",
                   "options": {
-                    "targetField": "code2",
                     "parts": [
                       {
                         "type": "Field",
