@@ -18,9 +18,8 @@
     {
       "type": "IdGenerator",
       "label": "Enrolment Patient Id",
-      "scope": "#/",
+      "scope": "#/properties/enrolmentPatientId",
       "options": {
-        "targetField": "enrolmentPatientId",
         "parts": [
           {
             "type": "StoreName",
@@ -28,8 +27,14 @@
           },
           {
             "type": "Number",
-            "numberName": "HIVCare",
+            "numberName": "HIVProgram",
             "mutations": [{ "padString": "0000" }]
+          }
+        ],
+        "allowManualEntry": true,
+        "validations": [
+          {
+            "type": "UniqueEnrolmentId"
           }
         ]
       }
@@ -133,7 +138,10 @@
               ["TRANSFER_IN", "Transfer in"],
               ["STI", "STI"],
               ["ANC", "ANC"],
-              ["EXPOSED_INFANT_WELL_BABY_CLINIC", "Exposed infant well baby clinic"],
+              [
+                "EXPOSED_INFANT_WELL_BABY_CLINIC",
+                "Exposed infant well baby clinic"
+              ],
               ["IN_PATIENT", "In patient"]
             ]
           }
