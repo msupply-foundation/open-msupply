@@ -95,6 +95,14 @@ impl Migration for V1_01_01 {
             "#
         )?;
 
+        // Remove self-referencing name_store_joins
+        sql!(
+            connection,
+            r#"DELETE
+                FROM name_store_join 
+                WHERE name_store_join.name_id IN (SELECT name_id FROM store WHERE store.id = name_store_join.store_id);"#
+        )?;
+
         Ok(())
     }
 }
