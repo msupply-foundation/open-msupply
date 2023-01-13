@@ -1,3 +1,4 @@
+import { FormLabel } from '@mui/material';
 import { SnackbarProvider } from 'notistack';
 
 export * from 'clsx';
@@ -7,4 +8,4 @@ export * from './forms';
 export * from './icons';
 export * from './layout';
 export * from './discovery';
-export { SnackbarProvider };
+export { SnackbarProvider, FormLabel };
