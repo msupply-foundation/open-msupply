@@ -12,12 +12,14 @@ import {
   useQueryParamsStore,
   ProgramEnrolmentSortFieldInput,
 } from '@openmsupply-client/common';
-import { ProgramEventFragment } from '../api';
-import { ProgramRowFragmentWithId, usePatient } from '../../api';
 import {
   PatientModal,
+  ProgramEnrolmentRowFragmentWithId,
   usePatientModalStore,
+  useProgramEnrolments,
+  ProgramEventFragment,
 } from '@openmsupply-client/programs';
+import { usePatient } from '../../api';
 
 const programEventCellValue = (events: ProgramEventFragment[]) => {
   // just take the name of the first event
@@ -30,17 +32,23 @@ const ProgramListComponent: FC = () => {
     pagination: { page, first, offset, onChangePage },
   } = useQueryParamsStore();
 
-  const { data, isError, isLoading } = usePatient.document.programEnrolments({
-    key: sortBy.key as ProgramEnrolmentSortFieldInput,
-    isDesc: sortBy.isDesc,
-  });
+  const patientId = usePatient.utils.id();
+
+  const { data, isError, isLoading } =
+    useProgramEnrolments.document.programEnrolments({
+      sortBy: {
+        key: sortBy.key as ProgramEnrolmentSortFieldInput,
+        isDesc: sortBy.isDesc,
+      },
+      filterBy: { patientId: { equalTo: patientId } },
+    });
   const pagination = { page, first, offset };
   const { localisedDate } = useFormatDateTime();
   const t = useTranslation('patients');
   const { setEditModal: setEditingModal, setModal: selectModal } =
     usePatientModalStore();
 
-  const columns = useColumns<ProgramRowFragmentWithId>(
+  const columns = useColumns<ProgramEnrolmentRowFragmentWithId>(
     [
       {
         key: 'type',
@@ -96,9 +104,11 @@ const ProgramListComponent: FC = () => {
 export const ProgramListView: FC = () => (
   <TableProvider
     createStore={createTableStore}
-    queryParamsStore={createQueryParamsStore<ProgramRowFragmentWithId>({
-      initialSortBy: { key: 'type' },
-    })}
+    queryParamsStore={createQueryParamsStore<ProgramEnrolmentRowFragmentWithId>(
+      {
+        initialSortBy: { key: 'type' },
+      }
+    )}
   >
     <ProgramListComponent />
   </TableProvider>

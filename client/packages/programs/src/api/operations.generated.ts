@@ -86,6 +86,21 @@ export type EncountersQueryVariables = Types.Exact<{
 
 export type EncountersQuery = { __typename: 'Queries', encounters: { __typename: 'EncounterConnector', totalCount: number, nodes: Array<{ __typename: 'EncounterNode', id: string, type: string, name: string, status?: Types.EncounterNodeStatus | null, program: string, startDatetime: string, endDatetime?: string | null, patient: { __typename: 'NameNode', id: string, firstName?: string | null, lastName?: string | null, name: string }, document: { __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, author: string, timestamp: string, type: string, data: any, documentRegistry?: { __typename: 'DocumentRegistryNode', uiSchemaType: string, documentType: string, context: Types.DocumentRegistryNodeContext, formSchemaId: string, jsonSchema: any, uiSchema: any } | null } }> } };
 
+export type ProgramEventFragment = { __typename: 'ProgramEventNode', activeDatetime: string, type: string, data?: string | null };
+
+export type ProgramEnrolmentRowFragment = { __typename: 'ProgramEnrolmentNode', enrolmentDatetime: string, name: string, patientId: string, programPatientId?: string | null, type: string, document: { __typename: 'DocumentNode', documentRegistry?: { __typename: 'DocumentRegistryNode', id: string, name?: string | null } | null }, events: Array<{ __typename: 'ProgramEventNode', activeDatetime: string, type: string, data?: string | null }> };
+
+export type ProgramEnrolmentsQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String'];
+  key: Types.ProgramEnrolmentSortFieldInput;
+  desc?: Types.InputMaybe<Types.Scalars['Boolean']>;
+  filter?: Types.InputMaybe<Types.ProgramEnrolmentFilterInput>;
+  eventTime: Types.Scalars['String'];
+}>;
+
+
+export type ProgramEnrolmentsQuery = { __typename: 'Queries', programEnrolments: { __typename: 'ProgramEnrolmentConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramEnrolmentNode', enrolmentDatetime: string, name: string, patientId: string, programPatientId?: string | null, type: string, document: { __typename: 'DocumentNode', documentRegistry?: { __typename: 'DocumentRegistryNode', id: string, name?: string | null } | null }, events: Array<{ __typename: 'ProgramEventNode', activeDatetime: string, type: string, data?: string | null }> }> } };
+
 export const DocumentRegistryFragmentDoc = gql`
     fragment DocumentRegistry on DocumentRegistryNode {
   __typename
@@ -173,6 +188,31 @@ export const EncounterBaseFragmentDoc = gql`
   }
 }
     ${DocumentFragmentDoc}`;
+export const ProgramEventFragmentDoc = gql`
+    fragment ProgramEvent on ProgramEventNode {
+  activeDatetime
+  type
+  data
+}
+    `;
+export const ProgramEnrolmentRowFragmentDoc = gql`
+    fragment ProgramEnrolmentRow on ProgramEnrolmentNode {
+  enrolmentDatetime
+  name
+  patientId
+  programPatientId
+  type
+  document {
+    documentRegistry {
+      id
+      name
+    }
+  }
+  events(at: $eventTime) {
+    ...ProgramEvent
+  }
+}
+    ${ProgramEventFragmentDoc}`;
 export const DocumentByNameDocument = gql`
     query documentByName($name: String!, $storeId: String!) {
   document(name: $name, storeId: $storeId) {
@@ -281,6 +321,23 @@ export const EncountersDocument = gql`
   }
 }
     ${EncounterBaseFragmentDoc}`;
+export const ProgramEnrolmentsDocument = gql`
+    query programEnrolments($storeId: String!, $key: ProgramEnrolmentSortFieldInput!, $desc: Boolean, $filter: ProgramEnrolmentFilterInput, $eventTime: String!) {
+  programEnrolments(
+    storeId: $storeId
+    sort: {key: $key, desc: $desc}
+    filter: $filter
+  ) {
+    ... on ProgramEnrolmentConnector {
+      __typename
+      nodes {
+        ...ProgramEnrolmentRow
+      }
+      totalCount
+    }
+  }
+}
+    ${ProgramEnrolmentRowFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -312,6 +369,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     encounters(variables: EncountersQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<EncountersQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<EncountersQuery>(EncountersDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'encounters', 'query');
+    },
+    programEnrolments(variables: ProgramEnrolmentsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ProgramEnrolmentsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ProgramEnrolmentsQuery>(ProgramEnrolmentsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'programEnrolments', 'query');
     }
   };
 }
@@ -450,5 +510,22 @@ export const mockEncounterByIdQuery = (resolver: ResponseResolver<GraphQLRequest
 export const mockEncountersQuery = (resolver: ResponseResolver<GraphQLRequest<EncountersQueryVariables>, GraphQLContext<EncountersQuery>, any>) =>
   graphql.query<EncountersQuery, EncountersQueryVariables>(
     'encounters',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockProgramEnrolmentsQuery((req, res, ctx) => {
+ *   const { storeId, key, desc, filter, eventTime } = req.variables;
+ *   return res(
+ *     ctx.data({ programEnrolments })
+ *   )
+ * })
+ */
+export const mockProgramEnrolmentsQuery = (resolver: ResponseResolver<GraphQLRequest<ProgramEnrolmentsQueryVariables>, GraphQLContext<ProgramEnrolmentsQuery>, any>) =>
+  graphql.query<ProgramEnrolmentsQuery, ProgramEnrolmentsQueryVariables>(
+    'programEnrolments',
     resolver
   )
