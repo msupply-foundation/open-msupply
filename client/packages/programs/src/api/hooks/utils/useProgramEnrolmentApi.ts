@@ -8,7 +8,7 @@ import { getSdk } from '../../operations.generated';
 export const useProgramEnrolmentApi = () => {
   const { storeId } = useAuthContext();
   const keys = {
-    base: () => ['programEnrolment'] as const,
+    base: () => ['program-enrolment'] as const,
     list: (params: ProgramEnrolmentListParams) =>
       [...keys.base(), storeId, 'list', params] as const,
   };
