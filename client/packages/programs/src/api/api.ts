@@ -1,10 +1,11 @@
-import { SortBy } from '@common/hooks';
+import { FilterBy, SortBy, SortRule } from '@common/hooks';
 import {
   DocumentRegistryFilterInput,
   DocumentRegistryNode,
   DocumentRegistryNodeContext,
   DocumentRegistrySortFieldInput,
   EncounterSortFieldInput,
+  ProgramEnrolmentSortFieldInput,
 } from '@common/types';
 import {
   DocumentFragment,
@@ -12,6 +13,7 @@ import {
   DocumentRegistryWithChildrenFragment,
   EncounterBaseFragment,
   EncounterFieldsFragment,
+  ProgramEnrolmentRowFragment,
   Sdk,
 } from './operations.generated';
 
@@ -192,5 +194,32 @@ export const getAllocateProgramNumber = (sdk: Sdk, storeId: string) => ({
       return numberNode.number;
     }
     throw new Error('Error allocating a new number');
+  },
+});
+
+export type ProgramEnrolmentListParams = {
+  sortBy?: SortRule<ProgramEnrolmentSortFieldInput>;
+  filterBy?: FilterBy;
+};
+
+export const getProgramEnrolmentQueries = (sdk: Sdk, storeId: string) => ({
+  programEnrolments: async ({
+    sortBy,
+    filterBy,
+  }: ProgramEnrolmentListParams): Promise<{
+    nodes: ProgramEnrolmentRowFragment[];
+    totalCount: number;
+  }> => {
+    const result = await sdk.programEnrolments({
+      storeId,
+      key:
+        (sortBy?.key as ProgramEnrolmentSortFieldInput) ??
+        ProgramEnrolmentSortFieldInput.EnrolmentDatetime,
+      desc: sortBy?.isDesc,
+      filter: filterBy,
+      eventTime: new Date().toISOString(),
+    });
+
+    return result?.programEnrolments;
   },
 });

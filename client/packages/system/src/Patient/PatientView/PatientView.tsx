@@ -19,6 +19,7 @@ import {
   usePatientCreateStore,
   usePatientModalStore,
   usePatientStore,
+  useProgramEnrolments,
 } from '@openmsupply-client/programs';
 import { Footer } from './Footer';
 
@@ -118,7 +119,10 @@ const PatientDetailView: FC = () => {
 
 export const PatientView: FC = () => {
   const { current, setCreationModal, reset } = usePatientModalStore();
-  const { data } = usePatient.document.programEnrolments();
+  const patientId = usePatient.utils.id();
+  const { data } = useProgramEnrolments.document.programEnrolments({
+    filterBy: { patientId: { equalTo: patientId } },
+  });
   const { patient } = usePatientCreateStore();
 
   const tabs = [

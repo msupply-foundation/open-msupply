@@ -15,7 +15,6 @@ import {
   Sdk,
   PatientRowFragment,
   PatientFragment,
-  ProgramEnrolmentRowFragment,
   PatientEncounterRowFragment,
 } from './operations.generated';
 
@@ -97,25 +96,6 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
         name: documentName,
       });
       return result.documentHistory.nodes;
-    },
-    programEnrolments: async ({
-      sortBy,
-      filterBy,
-    }: ProgramEnrolmentListParams): Promise<{
-      nodes: ProgramEnrolmentRowFragment[];
-      totalCount: number;
-    }> => {
-      const result = await sdk.programEnrolments({
-        storeId,
-        key:
-          (sortBy?.key as ProgramEnrolmentSortFieldInput) ??
-          ProgramEnrolmentSortFieldInput.EnrolmentDatetime,
-        desc: sortBy?.isDesc,
-        filter: filterBy,
-        eventTime: new Date().toISOString(),
-      });
-
-      return result?.programEnrolments;
     },
     search: async (
       input: PatientSearchInput
