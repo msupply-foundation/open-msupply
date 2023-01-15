@@ -41,3 +41,24 @@ _Pros:_
 _Cons:_
 
 - Defining UI schema is more involved. (Common UI schema for common argument could be reused though?)
+
+### Option 2 - Configurable config for capturing report arguments
+
+For example, have a config for recording a list of arguments like:
+
+```json
+[
+  { "name": "start1", "type": "Datetime" },
+  { "name": "start2", "type": "Datetime", "required": false },
+  { "name": "range1", "type": "DatetimeRange" }
+]
+```
+
+_Pros:_
+
+- Simpler than JSONForms for supported arguments
+
+_Cons:_
+
+- This option basically reinvents a UI schema like JSONForms or react-jsonschema-form
+- Custom renderer required
