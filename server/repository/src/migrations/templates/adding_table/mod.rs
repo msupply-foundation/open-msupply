@@ -74,7 +74,7 @@ impl Migration for V1_00_05 {
                     id {serial}
                 );
                 "#,
-            serial = if cfg!(features = "postgres") {
+            serial = if cfg!(feature = "postgres") {
                 "BIGSERIAL NOT NULL PRIMARY KEY"
             } else {
                 "INTEGER PRIMARY KEY"
