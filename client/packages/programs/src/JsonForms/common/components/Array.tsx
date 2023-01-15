@@ -341,8 +341,8 @@ const ArrayComponent = (props: ArrayControlCustomProps) => {
   const getItemLabel = (child: any, index: number) => {
     const isExpanded = expandedItems[index];
 
-    // For most arrays, or Notes with and explicit itemLabel pattern
-    if (uischema.itemLabel || !isNotesArray)
+    // For most arrays, or Notes with an explicit itemLabel pattern
+    if (uischema.itemLabel || !isNotesArray) {
       return (
         <Typography
           sx={{
@@ -363,6 +363,7 @@ const ArrayComponent = (props: ArrayControlCustomProps) => {
             : index + 1}
         </Typography>
       );
+    }
 
     // For Notes:
     const {
