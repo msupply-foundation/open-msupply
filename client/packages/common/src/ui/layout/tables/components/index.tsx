@@ -20,7 +20,6 @@ export const BasicCell = <T extends RecordWithId>({
       overflow: 'hidden',
       textOverflow: 'ellipsis',
     }}
-    className="basic-cell"
   >
     {column.formatter(column.accessor({ rowData, rows }), { t, d })}
   </div>
