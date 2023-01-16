@@ -4,7 +4,7 @@ import { GraphQLClient } from 'graphql-request';
 import * as Dom from 'graphql-request/dist/types.dom';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type ReportRowFragment = { __typename: 'ReportNode', context: Types.ReportContext, id: string, name: string };
+export type ReportRowFragment = { __typename: 'ReportNode', context: Types.ReportContext, id: string, name: string, context2?: string | null, argumentSchema?: { __typename: 'FormSchemaNode', id: string, type: string, jsonSchema: any, uiSchema: any } | null };
 
 export type ReportsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -14,12 +14,13 @@ export type ReportsQueryVariables = Types.Exact<{
 }>;
 
 
-export type ReportsQuery = { __typename: 'Queries', reports: { __typename: 'ReportConnector', totalCount: number, nodes: Array<{ __typename: 'ReportNode', context: Types.ReportContext, id: string, name: string }> } };
+export type ReportsQuery = { __typename: 'Queries', reports: { __typename: 'ReportConnector', totalCount: number, nodes: Array<{ __typename: 'ReportNode', context: Types.ReportContext, id: string, name: string, context2?: string | null, argumentSchema?: { __typename: 'FormSchemaNode', id: string, type: string, jsonSchema: any, uiSchema: any } | null }> } };
 
 export type PrintReportQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
-  dataId: Types.Scalars['String'];
   reportId: Types.Scalars['String'];
+  dataId?: Types.InputMaybe<Types.Scalars['String']>;
+  arguments?: Types.InputMaybe<Types.Scalars['JSON']>;
   format?: Types.InputMaybe<Types.PrintFormat>;
 }>;
 
@@ -31,6 +32,13 @@ export const ReportRowFragmentDoc = gql`
   context
   id
   name
+  context2
+  argumentSchema {
+    id
+    type
+    jsonSchema
+    uiSchema
+  }
 }
     `;
 export const ReportsDocument = gql`
@@ -47,12 +55,13 @@ export const ReportsDocument = gql`
 }
     ${ReportRowFragmentDoc}`;
 export const PrintReportDocument = gql`
-    query printReport($storeId: String!, $dataId: String!, $reportId: String!, $format: PrintFormat) {
+    query printReport($storeId: String!, $reportId: String!, $dataId: String, $arguments: JSON, $format: PrintFormat) {
   printReport(
     dataId: $dataId
     reportId: $reportId
     storeId: $storeId
     format: $format
+    arguments: $arguments
   ) {
     ... on PrintReportNode {
       __typename
@@ -112,7 +121,7 @@ export const mockReportsQuery = (resolver: ResponseResolver<GraphQLRequest<Repor
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockPrintReportQuery((req, res, ctx) => {
- *   const { storeId, dataId, reportId, format } = req.variables;
+ *   const { storeId, reportId, dataId, arguments, format } = req.variables;
  *   return res(
  *     ctx.data({ printReport })
  *   )
