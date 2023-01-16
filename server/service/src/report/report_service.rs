@@ -100,8 +100,9 @@ pub trait ReportServiceTrait: Sync + Send {
         &self,
         report: &ResolvedReportDefinition,
         report_data: serde_json::Value,
+        arguments: Option<serde_json::Value>,
     ) -> Result<GeneratedReport, ReportError> {
-        generate_report(report, report_data)
+        generate_report(report, report_data, arguments)
     }
 
     /// Returns the printed pdf file id
@@ -110,9 +111,10 @@ pub trait ReportServiceTrait: Sync + Send {
         base_dir: &Option<String>,
         report: &ResolvedReportDefinition,
         report_data: serde_json::Value,
+        arguments: Option<serde_json::Value>,
         format: Option<PrintFormat>,
     ) -> Result<String, ReportError> {
-        let document = self.generate_report(report, report_data)?;
+        let document = self.generate_report(report, report_data, arguments)?;
 
         match format {
             Some(PrintFormat::Html) => {
@@ -348,10 +350,14 @@ fn resolve_report_definition(
 fn generate_report(
     report: &ResolvedReportDefinition,
     report_data: serde_json::Value,
+    arguments: Option<serde_json::Value>,
 ) -> Result<GeneratedReport, ReportError> {
     let mut context = tera::Context::new();
     context.insert("data", &report_data);
     context.insert("res", &report.resources);
+    if let Some(arguments) = arguments {
+        context.insert("arguments", &arguments);
+    }
     let mut tera = tera::Tera::default();
     let mut templates: HashMap<String, String> = report
         .templates
@@ -619,6 +625,7 @@ mod report_service_test {
                 serde_json::json!({
                     "test": "Hello"
                 }),
+                None,
             )
             .unwrap();
         assert_eq!(doc.document, "Template: Hello Footer");
