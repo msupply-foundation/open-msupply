@@ -36,6 +36,7 @@ pub struct ReportFilter {
     pub name: Option<SimpleStringFilter>,
     pub r#type: Option<EqualFilter<ReportType>>,
     pub context: Option<EqualFilter<ReportContext>>,
+    pub context2: Option<EqualFilter<String>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -146,12 +147,14 @@ fn create_filtered_query(filter: Option<ReportFilter>) -> BoxedStoreQuery {
             name,
             r#type,
             context,
+            context2,
         } = f;
 
         apply_equal_filter!(query, id, report_dsl::id);
         apply_simple_string_filter!(query, name, report_dsl::name);
         apply_equal_filter!(query, r#type, report_dsl::type_);
         apply_equal_filter!(query, context, report_dsl::context);
+        apply_equal_filter!(query, context2, report_dsl::context2);
     }
 
     query
