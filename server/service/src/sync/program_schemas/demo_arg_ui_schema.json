@@ -1,0 +1,10 @@
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "Control",
+      "scope": "#/properties/firstNameLike",
+      "label": "Patients with first name like"
+    }
+  ]
+}

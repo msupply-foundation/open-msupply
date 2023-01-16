@@ -1,0 +1,28 @@
+{
+  "index": {
+    "template": "template.html",
+    "header": null,
+    "footer": null,
+    "query": "query.graphql"
+  },
+  "entries": {
+    "query.graphql": {
+      "type": "GraphGLQuery",
+      "data": {
+        "query": "query MyQuery($storeId: String!, $firstNameLike: String!) {\n  patients(storeId: $storeId, filter: { firstName: { like: $firstNameLike } }) {\n    ... on PatientConnector {\n      nodes {\n        firstName\n        lastName\n        gender\n      }\n    }\n  }\n}\n",
+        "variables": null
+      }
+    },
+    "style.css": {
+      "type": "Resource",
+      "data": "table,\nth,\ntd {\n  border: 1px dotted #fc9208;\n  border-collapse: collapse;\n}\n\nbody {\n  margin: 10px 5% 10px 5%;\n  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;\n}\n"
+    },
+    "template.html": {
+      "type": "TeraTemplate",
+      "data": {
+        "output": "Html",
+        "template": "<style>\n  {% include \"style.css\" %}\n</style>\n\n<body>\n  <h1>Patient(s) with first name like</h1>\n\n  Arguments:\n  <pre>{{ arguments | json_encode(pretty=true) }}</pre>\n  Patient(s):\n  <pre>\"data\": {{ data | json_encode(pretty=true) }}</pre>\n</body>\n"
+      }
+    }
+  }
+}
