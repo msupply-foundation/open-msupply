@@ -1,5 +1,9 @@
 import { Document } from './document';
+import { ProgramEnrolmentRowFragmentWithId } from './document/useProgramEnrolments';
+import { useDocumentRegistryApi } from './utils/useDocumentRegistryApi';
 import { useEncounterIdFromUrl } from './utils/useEncounterIdFromUrl';
+
+export { ProgramEnrolmentRowFragmentWithId, useDocumentRegistryApi };
 
 export const useDocument = {
   utils: {
@@ -31,5 +35,12 @@ export const useEncounter = {
   document: {
     byId: Document.useEncounterById,
     previous: Document.useEncounterPrevious,
+  },
+};
+
+export const useProgramEnrolments = {
+  document: {
+    programEnrolments: Document.useProgramEnrolments,
+    programEnrolmentsPromise: Document.useProgramEnrolmentsPromise,
   },
 };

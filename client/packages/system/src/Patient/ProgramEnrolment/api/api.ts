@@ -1,18 +1,8 @@
 import {
-  SortBy,
-  FilterBy,
   InsertProgramEnrolmentInput,
   UpdateProgramEnrolmentInput,
 } from '@openmsupply-client/common';
-import { ProgramEnrolmentRowFragment } from '../../api';
 import { ProgramEnrolmentDocumentFragment, Sdk } from './operations.generated';
-
-export type ListParams = {
-  first?: number;
-  offset?: number;
-  sortBy?: SortBy<ProgramEnrolmentRowFragment>;
-  filterBy?: FilterBy | null;
-};
 
 export const getProgramEnrolmentQueries = (sdk: Sdk, storeId: string) => ({
   at: new Date().toISOString(),

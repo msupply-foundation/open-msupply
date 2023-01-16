@@ -28,14 +28,6 @@ export type Scalars = {
    * * `2000-02-24`
    */
   NaiveDate: string;
-  /**
-   * ISO 8601 combined date and time without timezone.
-   *
-   * # Examples
-   *
-   * * `2015-07-01T08:59:60.123`,
-   */
-  NaiveDateTime: string;
 };
 
 export type ActivityLogConnector = {
@@ -54,7 +46,7 @@ export type ActivityLogFilterInput = {
 
 export type ActivityLogNode = {
   __typename: 'ActivityLogNode';
-  datetime: Scalars['NaiveDateTime'];
+  datetime: Scalars['DateTime'];
   event?: Maybe<Scalars['String']>;
   id: Scalars['String'];
   recordId?: Maybe<Scalars['String']>;

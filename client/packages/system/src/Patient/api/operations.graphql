@@ -16,29 +16,6 @@ fragment PatientRow on PatientNode {
   isDeceased
 }
 
-fragment ProgramEvent on ProgramEventNode {
-  activeDatetime
-  type
-  data
-}
-
-fragment ProgramEnrolmentRow on ProgramEnrolmentNode {
-  enrolmentDatetime
-  name
-  patientId
-  programPatientId
-  type
-  document {
-    documentRegistry {
-      id
-      name
-    }
-  }
-  events(at: $eventTime) {
-    ...ProgramEvent
-  }
-}
-
 fragment Patient on PatientNode {
   address1
   address2
@@ -132,28 +109,6 @@ query getDocumentHistory($storeId: String!, $name: String!) {
   }
 }
 
-query programEnrolments(
-  $storeId: String!
-  $key: ProgramEnrolmentSortFieldInput!
-  $desc: Boolean
-  $filter: ProgramEnrolmentFilterInput
-  $eventTime: String!
-) {
-  programEnrolments(
-    storeId: $storeId
-    sort: { key: $key, desc: $desc }
-    filter: $filter
-  ) {
-    ... on ProgramEnrolmentConnector {
-      __typename
-      nodes {
-        ...ProgramEnrolmentRow
-      }
-      totalCount
-    }
-  }
-}
-
 mutation insertPatient($storeId: String!, $input: InsertPatientInput!) {
   insertPatient(storeId: $storeId, input: $input) {
     ... on PatientNode {
@@ -170,6 +125,12 @@ mutation updatePatient($storeId: String!, $input: UpdatePatientInput!) {
       ...PatientRow
     }
   }
+}
+
+fragment PatientEncounterProgramEvent on ProgramEventNode {
+  activeDatetime
+  type
+  data
 }
 
 fragment PatientEncounterRow on EncounterNode {
@@ -192,7 +153,7 @@ fragment PatientEncounterRow on EncounterNode {
     name
   }
   events(at: $eventTime) {
-    ...ProgramEvent
+    ...PatientEncounterProgramEvent
   }
 }
 
