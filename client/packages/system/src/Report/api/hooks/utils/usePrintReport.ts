@@ -8,10 +8,12 @@ import {
 import { Environment } from '@openmsupply-client/config';
 import { useReportApi } from './useReportApi';
 import { Printer } from '@awesome-cordova-plugins/printer';
+import { JsonData } from '@openmsupply-client/programs';
 
 type PrintReportParams = {
   reportId: string;
-  dataId: string;
+  dataId: string | undefined;
+  args: JsonData | undefined;
 };
 
 const setClose = (frame: HTMLIFrameElement) => () => {
