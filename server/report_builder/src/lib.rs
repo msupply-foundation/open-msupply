@@ -49,7 +49,9 @@ pub struct PrintArgs {
     pub store_id: String,
     /// The data to be printed
     #[clap(long)]
-    pub data_id: String,
+    pub data_id: Option<String>,
+    #[clap(long)]
+    pub arguments_file: Option<String>,
     /// The output file path
     #[clap(long)]
     pub output: Option<String>,
