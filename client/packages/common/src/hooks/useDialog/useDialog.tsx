@@ -37,6 +37,7 @@ export interface DialogProps {
   onClose?: () => void;
   isOpen?: boolean;
   animationTimeout?: number;
+  disableBackdrop?: boolean;
 }
 
 interface DialogState {
@@ -76,7 +77,12 @@ const useSlideAnimation = (isRtl: boolean, timeout: number) => {
 };
 
 export const useDialog = (dialogProps?: DialogProps): DialogState => {
-  const { isOpen, animationTimeout = 500 } = dialogProps ?? {};
+  const {
+    onClose,
+    isOpen,
+    animationTimeout = 500,
+    disableBackdrop,
+  } = dialogProps ?? {};
   const [open, setOpen] = React.useState(false);
   const showDialog = () => setOpen(true);
   const hideDialog = () => setOpen(false);
@@ -85,6 +91,15 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
   useEffect(() => {
     if (isOpen != null) setOpen(isOpen);
   }, [isOpen]);
+
+  const handleClose = () => {
+    if (disableBackdrop) {
+      setOpen(true);
+    } else {
+      onClose && onClose();
+      hideDialog();
+    }
+  };
 
   const ModalComponent: React.FC<ModalProps> = ({
     cancelButton,
@@ -133,11 +148,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
     return (
       <BasicModal
         open={open}
-        onClose={reason => {
-          if (reason === 'backdropClick') {
-            setOpen(true);
-          }
-        }}
+        onClose={handleClose}
         width={dimensions.width}
         height={dimensions.height}
         sx={sx}

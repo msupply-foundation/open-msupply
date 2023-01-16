@@ -121,14 +121,6 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
         setter: patch => update({ ...patch, countThisLine: true }),
       },
     ],
-    {
-      key: 'comment',
-      label: 'label.stocktake-comment',
-      Cell: TextInputCell,
-      width: 100,
-      setter: patch => update({ ...patch, countThisLine: true }),
-      accessor: ({ rowData }) => rowData.comment || '',
-    },
   ]);
 
   return (
@@ -196,8 +188,18 @@ export const LocationTable: FC<StocktakeLineEditTableProps> = ({
     [
       getLocationInputColumn(),
       {
-        width: 400,
+        width: 300,
         setter: patch => update({ ...patch, countThisLine: true }),
+      },
+    ],
+    [
+      'comment',
+      {
+        label: 'label.stocktake-comment',
+        Cell: TextInputCell,
+        width: 200,
+        setter: patch => update({ ...patch, countThisLine: true }),
+        accessor: ({ rowData }) => rowData.comment || '',
       },
     ],
   ]);
