@@ -81,6 +81,8 @@ impl SyncTranslation for ReportTranslation {
             template: data.template,
             context,
             comment: data.comment,
+            context2: None,
+            argument_schema_id: None,
         };
 
         Ok(Some(IntegrationRecords::from_upsert(

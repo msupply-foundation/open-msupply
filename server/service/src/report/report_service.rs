@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 use repository::{
-    PaginationOption, ReportFilter, ReportRepository, ReportRow, ReportRowRepository, ReportSort,
+    PaginationOption, Report, ReportFilter, ReportRepository, ReportRowRepository, ReportSort,
     ReportType, RepositoryError,
 };
 use std::{collections::HashMap, time::SystemTime};
@@ -73,7 +73,7 @@ pub trait ReportServiceTrait: Sync + Send {
         pagination: Option<PaginationOption>,
         filter: Option<ReportFilter>,
         sort: Option<ReportSort>,
-    ) -> Result<Vec<ReportRow>, ListError> {
+    ) -> Result<Vec<Report>, ListError> {
         query_reports(ctx, pagination, filter, sort)
     }
 
@@ -246,7 +246,7 @@ fn query_reports(
     pagination: Option<PaginationOption>,
     filter: Option<ReportFilter>,
     sort: Option<ReportSort>,
-) -> Result<Vec<ReportRow>, ListError> {
+) -> Result<Vec<Report>, ListError> {
     let repo = ReportRepository::new(&ctx.connection);
     let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
     let filter = filter
@@ -590,6 +590,8 @@ mod report_service_test {
             template: serde_json::to_string(&report_1).unwrap(),
             context: ReportContext::InboundShipment,
             comment: None,
+            context2: None,
+            argument_schema_id: None,
         })
         .unwrap();
         repo.upsert_one(&ReportRow {
@@ -599,6 +601,8 @@ mod report_service_test {
             template: serde_json::to_string(&report_base_1).unwrap(),
             context: ReportContext::Resource,
             comment: None,
+            context2: None,
+            argument_schema_id: None,
         })
         .unwrap();
 
