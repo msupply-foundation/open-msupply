@@ -213,6 +213,22 @@ export const useStocktakeColumns = ({
           }
         },
       },
+      {
+        key: 'comment',
+        label: 'label.stocktake-comment',
+        accessor: ({ rowData }) => {
+          if ('lines' in rowData) {
+            const { lines } = rowData;
+            return ArrayUtils.ifTheSameElseDefault(
+              lines,
+              'comment',
+              '[multiple]'
+            );
+          } else {
+            return rowData.comment;
+          }
+        },
+      },
       expandColumn,
       GenericColumnKey.Selection,
     ],
@@ -239,4 +255,5 @@ export const useExpansionColumns = (): Column<StocktakeLineFragment>[] =>
       align: ColumnAlign.Right,
       accessor: ({ rowData }) => rowData.countedNumberOfPacks,
     },
+    'comment',
   ]);
