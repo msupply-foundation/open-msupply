@@ -110,7 +110,28 @@ The remote-server needs a store id and a data id to print the report.
 For example, to print a report for a stocktake with id "d734fd45-064e-4ddd-9886-ea71a2797640" from store "80004C94067A4CE5A34FC343EB1B4306":
 
 ```bash
-> report_build print --report output.json --config config.yaml --store-id 80004C94067A4CE5A34FC343EB1B4306 --data-id d734fd45-064e-4ddd-9886-ea71a2797640 --output report_pdf_name.pdf
+> report_build print --report generated/output.json --config config.yaml --store-id 80004C94067A4CE5A34FC343EB1B4306 --data-id d734fd45-064e-4ddd-9886-ea71a2797640 --output report_pdf_name.pdf
+```
+
+### Report templates with arguments
+
+Some reports need additional arguments such as a time range.
+Report arguments are passed on as variable to the used graphql query.
+
+There is an example for a report with arguments in the `example_arguments` directory.
+To specify the arguments create a `argument.json` file in the `report_builder` directory with the content:
+
+```json
+{
+  "creationDatetimeBeforeOrEqual": "2023-01-16T01:35:39.770Z"
+}
+```
+
+Then run
+
+```bash
+report_build -- build --dir ./example_arguments/ --template template.html --query-gql query.graphql
+report_build -- print --report generated/output.json --config config.yaml --store-id 80004C94067A4CE5A34FC343EB1B4306 --arguments-file ./arguments.json --output report_pdf_name.pdf
 ```
 
 ## References to other template definitions
