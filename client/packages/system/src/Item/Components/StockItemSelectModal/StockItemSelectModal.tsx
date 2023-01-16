@@ -112,6 +112,9 @@ export const StockItemSelectModal = ({
             onChange={onChangeSelectedItems}
             options={options}
             renderOption={renderOption}
+            height={
+              screen.height > 700 ? 365 : 0
+            }
           />
         ) : (
           <Box sx={{ height: '100%' }}>
