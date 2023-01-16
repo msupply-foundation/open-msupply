@@ -15,7 +15,6 @@ use mutations::encounter::update::update_encounter;
 use mutations::encounter::update::UpdateEncounterInput;
 use mutations::encounter::update::UpdateEncounterResponse;
 use mutations::insert_document_registry::*;
-use mutations::insert_form_schema::*;
 use mutations::patient::insert::*;
 use mutations::patient::update::update_patient;
 use mutations::patient::update::UpdatePatientInput;
@@ -31,7 +30,6 @@ use mutations::undelete_document::UndeleteDocumentInput;
 use mutations::undelete_document::UndeleteDocumentResponse;
 use mutations::update_document::*;
 use types::document::DocumentNode;
-use types::json_schema::FormSchemaNode;
 use types::program_enrolment::ProgramEventFilterInput;
 
 mod mutations;
@@ -82,14 +80,6 @@ impl ProgramsQueries {
         sort: Option<Vec<DocumentRegistrySortInput>>,
     ) -> Result<DocumentRegistryResponse> {
         document_registries(ctx, filter, sort)
-    }
-
-    pub async fn form_schema(
-        &self,
-        ctx: &Context<'_>,
-        id: String,
-    ) -> Result<Option<FormSchemaNode>> {
-        form_schema(ctx, id)
     }
 
     pub async fn patients(
@@ -204,15 +194,6 @@ impl ProgramsMutations {
         input: InsertDocumentRegistryInput,
     ) -> Result<InsertDocumentResponse> {
         insert_document_registry(ctx, input)
-    }
-
-    async fn insert_form_schema(
-        &self,
-        ctx: &Context<'_>,
-
-        input: InsertFormSchemaInput,
-    ) -> Result<InsertFormSchemaResponse> {
-        insert_form_schema(ctx, input)
     }
 
     pub async fn insert_patient(

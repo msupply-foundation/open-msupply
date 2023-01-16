@@ -1,4 +1,5 @@
 use async_graphql::*;
+use graphql_types::types::FormSchemaNode;
 use repository::FormSchema;
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -9,8 +10,6 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-
-use crate::types::json_schema::FormSchemaNode;
 
 #[derive(InputObject)]
 pub struct InsertFormSchemaInput {
