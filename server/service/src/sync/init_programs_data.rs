@@ -1093,6 +1093,8 @@ pub fn init_program_data(
             template: PATIENT_REPORT.to_string(),
             context: ReportContext::Patient,
             comment: None,
+            context2: None,
+            argument_schema_id: None,
         })
         .unwrap();
 
