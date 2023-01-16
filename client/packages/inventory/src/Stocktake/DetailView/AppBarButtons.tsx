@@ -16,6 +16,7 @@ import {
   ReportSelector,
   useReport,
 } from '@openmsupply-client/system';
+import { JsonData } from '@openmsupply-client/programs';
 
 interface AppBarButtonProps {
   onAddItem: (newState: boolean) => void;
@@ -30,9 +31,12 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   const { data } = useStocktake.document.get();
   const { print, isPrinting } = useReport.utils.print();
 
-  const printReport = (report: ReportRowFragment) => {
+  const printReport = (
+    report: ReportRowFragment,
+    args: JsonData | undefined
+  ) => {
     if (!data) return;
-    print({ reportId: report.id, dataId: data?.id || '' });
+    print({ reportId: report.id, dataId: data?.id, args });
   };
 
   return (
@@ -44,10 +48,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
           Icon={<PlusCircleIcon />}
           onClick={() => onAddItem(true)}
         />
-        <ReportSelector
-          context={ReportContext.Stocktake}
-          onClick={printReport}
-        >
+        <ReportSelector context={ReportContext.Stocktake} onClick={printReport}>
           <LoadingButton
             variant="outlined"
             startIcon={<PrinterIcon />}

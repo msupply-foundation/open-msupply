@@ -18,6 +18,7 @@ import {
 import { useRequest } from '../../api';
 import { UseSuggestedQuantityButton } from './UseSuggestedQuantityButton';
 import { AddFromMasterListButton } from './AddFromMasterListButton';
+import { JsonData } from '@openmsupply-client/programs';
 
 interface AppBarButtonProps {
   isDisabled: boolean;
@@ -33,9 +34,12 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   const { data } = useRequest.document.get();
   const { print, isPrinting } = useReport.utils.print();
 
-  const printReport = (report: ReportRowFragment) => {
+  const printReport = (
+    report: ReportRowFragment,
+    args: JsonData | undefined
+  ) => {
     if (!data) return;
-    print({ reportId: report.id, dataId: data?.id || '' });
+    print({ reportId: report.id, dataId: data?.id, args });
   };
 
   return (

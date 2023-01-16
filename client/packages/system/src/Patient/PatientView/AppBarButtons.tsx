@@ -10,13 +10,17 @@ import React, { FC } from 'react';
 import { AddButton } from './AddButton';
 import { ReportRowFragment, ReportSelector, useReport } from '../../Report';
 import { usePatient } from '../api';
+import { JsonData } from 'packages/programs/src';
 
 export const AppBarButtons: FC = () => {
   const t = useTranslation('common');
   const { print, isPrinting } = useReport.utils.print();
   const patientId = usePatient.utils.id();
-  const printReport = (report: ReportRowFragment) => {
-    print({ reportId: report.id, dataId: patientId });
+  const printReport = (
+    report: ReportRowFragment,
+    args: JsonData | undefined
+  ) => {
+    print({ reportId: report.id, dataId: patientId, args });
   };
 
   return (
