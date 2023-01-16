@@ -6,6 +6,10 @@ import { useAllocateNumber } from './useAllocateNumber';
 import { useEncounterFields } from './useEncounterFields';
 import { useEncounterById } from './useEncounterById';
 import { useEncounterPrevious } from './useEncounterPrevious';
+import {
+  useProgramEnrolments,
+  useProgramEnrolmentsPromise,
+} from './useProgramEnrolments';
 
 export const Document = {
   useDocumentByName,
@@ -16,4 +20,6 @@ export const Document = {
   useEncounterById,
   useEncounterFields,
   useEncounterPrevious,
+  useProgramEnrolments,
+  useProgramEnrolmentsPromise,
 };

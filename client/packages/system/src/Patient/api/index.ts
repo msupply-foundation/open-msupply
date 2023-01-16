@@ -1,15 +1,4 @@
-import {
-  PatientRowFragment,
-  ProgramEnrolmentRowFragment,
-} from './operations.generated';
-
-type ProgramEnrolmentRowFragmentWithId = {
-  id: string;
-} & ProgramEnrolmentRowFragment;
+import { PatientRowFragment } from './operations.generated';
 
 export * from './hooks';
-export {
-  PatientRowFragment,
-  ProgramEnrolmentRowFragment,
-  ProgramEnrolmentRowFragmentWithId as ProgramRowFragmentWithId,
-};
+export { PatientRowFragment };
