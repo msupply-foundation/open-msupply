@@ -2073,6 +2073,7 @@ dependencies = [
  "chrono",
  "graphql_batch_mutations",
  "graphql_core",
+ "graphql_form_schema",
  "graphql_general",
  "graphql_invoice",
  "graphql_invoice_line",
@@ -2143,6 +2144,30 @@ dependencies = [
  "service",
  "thiserror",
  "tokio",
+ "util",
+]
+
+[[package]]
+name = "graphql_form_schema"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "actix-web",
+ "anyhow",
+ "anymap",
+ "assert-json-diff",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
+ "chrono",
+ "graphql_core",
+ "graphql_types",
+ "repository",
+ "reqwest",
+ "serde 1.0.137",
+ "serde_json",
+ "service",
+ "thiserror",
  "util",
 ]
 

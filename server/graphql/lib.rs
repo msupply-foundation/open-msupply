@@ -12,6 +12,7 @@ use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
 use graphql_batch_mutations::BatchMutations;
 use graphql_core::loader::LoaderRegistry;
 use graphql_core::{auth_data_from_request, BoxedSelfRequest, RequestUserData, SelfRequest};
+use graphql_form_schema::{FormSchemaMutations, FormSchemaQueries};
 use graphql_general::{
     GeneralMutations, GeneralQueries, InitialisationMutations, InitialisationQueries,
 };
@@ -50,6 +51,7 @@ pub struct Queries(
     pub ReportQueries,
     pub StockLineQueries,
     pub ProgramsQueries,
+    pub FormSchemaQueries,
 );
 
 impl Queries {
@@ -63,6 +65,7 @@ impl Queries {
             ReportQueries,
             StockLineQueries,
             ProgramsQueries,
+            FormSchemaQueries,
         )
     }
 }
@@ -80,6 +83,7 @@ pub struct Mutations(
     pub StockLineMutations,
     pub GeneralMutations,
     pub ProgramsMutations,
+    pub FormSchemaMutations,
 );
 
 impl Mutations {
@@ -96,6 +100,7 @@ impl Mutations {
             StockLineMutations,
             GeneralMutations,
             ProgramsMutations,
+            FormSchemaMutations,
         )
     }
 }

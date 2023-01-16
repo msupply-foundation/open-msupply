@@ -7,8 +7,9 @@ use graphql_core::{
     standard_graphql_error::validate_auth,
 };
 use graphql_core::{map_filter, ContextExt};
+use graphql_types::types::FormSchemaNode;
 use repository::{
-    EqualFilter, PaginationOption, ReportContext as ReportContextDomain, ReportFilter, ReportRow,
+    EqualFilter, PaginationOption, Report, ReportContext as ReportContextDomain, ReportFilter,
     ReportSort, ReportSortField, SimpleStringFilter,
 };
 use service::auth::{Resource, ResourceAccessRequest};
@@ -67,7 +68,7 @@ pub struct ReportConnector {
 
 #[derive(PartialEq, Debug)]
 pub struct ReportNode {
-    row: ReportRow,
+    row: Report,
 }
 
 #[Object]
@@ -80,8 +81,20 @@ impl ReportNode {
     pub async fn name(&self) -> &str {
         &self.row.name
     }
+
     pub async fn context(&self) -> ReportContext {
         ReportContext::from_domain(&self.row.context)
+    }
+
+    pub async fn context2(&self) -> &Option<String> {
+        &self.row.context2
+    }
+
+    pub async fn argument_schema(&self) -> Option<FormSchemaNode> {
+        self.row
+            .argument_schema
+            .clone()
+            .map(|schema| FormSchemaNode { schema })
     }
 }
 
