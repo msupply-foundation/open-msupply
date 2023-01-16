@@ -9,7 +9,7 @@ const NAME_STORE_JOIN_1: (&'static str, &'static str) = (
     r#"{
       "ID": "66607B6E7F2A47E782B8AC6743F71A8A",
       "inactive": false,
-      "name_ID": "name_store_a",
+      "name_ID": "name_store_c",
       "spare_Category_ID": 0,
       "spare_Category_optional2_id": 0,
       "spare_Category_optional_id": 0,
@@ -24,7 +24,7 @@ fn name_store_join_1_pull_record() -> TestSyncPullRecord {
         PullUpsertRecord::NameStoreJoin(NameStoreJoinRow {
             id: NAME_STORE_JOIN_1.0.to_string(),
             store_id: "store_a".to_string(),
-            name_id: "name_store_a".to_string(),
+            name_id: "name_store_c".to_string(),
             name_is_customer: false,
             name_is_supplier: true,
         }),
@@ -36,7 +36,7 @@ const NAME_STORE_JOIN_2: (&'static str, &'static str) = (
     r#"{
       "ID": "BE65A4A05E4D47E88303D6105A7872CC",
       "inactive": false,
-      "name_ID": "name_store_b",
+      "name_ID": "name_store_a",
       "spare_Category_ID": 0,
       "spare_Category_optional2_id": 0,
       "spare_Category_optional_id": 0,
@@ -50,9 +50,9 @@ fn name_store_join_2_pull_record() -> TestSyncPullRecord {
         PullUpsertRecord::NameStoreJoin(NameStoreJoinRow {
             id: NAME_STORE_JOIN_2.0.to_string(),
             store_id: "store_b".to_string(),
-            name_id: "name_store_b".to_string(),
+            name_id: "name_store_a".to_string(),
             name_is_customer: false,
-            name_is_supplier: false,
+            name_is_supplier: true,
         }),
     )
 }
@@ -63,7 +63,7 @@ const NAME_STORE_JOIN_3: (&'static str, &'static str) = (
     r#"{
       "ID": "BE65A4A05E4D47E88303D6105A7872C2",
       "inactive": false,
-      "name_ID": "name_store_b",
+      "name_ID": "name_store_c",
       "spare_Category_ID": 0,
       "spare_Category_optional2_id": 0,
       "spare_Category_optional_id": 0,
@@ -79,7 +79,7 @@ fn name_store_join_3_pull_record() -> TestSyncPullRecord {
         PullUpsertRecord::NameStoreJoin(NameStoreJoinRow {
             id: NAME_STORE_JOIN_3.0.to_string(),
             store_id: "store_b".to_string(),
-            name_id: "name_store_b".to_string(),
+            name_id: "name_store_c".to_string(),
             name_is_customer: true,
             name_is_supplier: true,
         }),

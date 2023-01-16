@@ -1,4 +1,6 @@
-use repository::{NameRowRepository, NameStoreJoinRow, StorageConnection, SyncBufferRow};
+use repository::{
+    NameRowRepository, NameStoreJoinRow, StorageConnection, StoreRowRepository, SyncBufferRow,
+};
 
 use serde::{Deserialize, Serialize};
 
@@ -43,6 +45,17 @@ impl SyncTranslation for NameStoreJoinTranslation {
                 ))
             }
         };
+
+        if let Some(store) = StoreRowRepository::new(connection)
+            .find_one_by_id(&data.store_ID)
+            .unwrap_or(None)
+        {
+            // if the name_store_join is referencing itself, then exclude it
+            // this is an invalid configuration which shouldn't be possible.. but is
+            if store.name_id == data.name_ID {
+                return Ok(None);
+            }
+        }
 
         let result = NameStoreJoinRow {
             id: data.ID,
