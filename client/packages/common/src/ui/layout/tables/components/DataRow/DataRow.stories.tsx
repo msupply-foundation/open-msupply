@@ -3,6 +3,7 @@ import { ComponentMeta, Story } from '@storybook/react';
 import { TableBody, Table } from '@mui/material';
 import { DataRow } from './DataRow';
 import { useColumns } from '../../hooks';
+import { useFormatDateTime, useTranslation } from '@common/intl';
 
 export default {
   title: 'Table/DataRow',
@@ -12,12 +13,16 @@ export default {
   },
 } as ComponentMeta<typeof DataRow>;
 
+interface StoryRow {
+  id: string;
+  status?: string;
+  comment?: string;
+}
+
 const Template: Story = ({ onClick, generateRowTooltip = () => '' }) => {
-  const columns = useColumns<{ id: string; status: string; comment: string }>([
-    'type',
-    'status',
-    'comment',
-  ]);
+  const t = useTranslation();
+  const { localisedDate } = useFormatDateTime();
+  const columns = useColumns<StoryRow>(['type', 'status', 'comment']);
 
   return (
     <Table>
@@ -27,13 +32,18 @@ const Template: Story = ({ onClick, generateRowTooltip = () => '' }) => {
           rowKey="rowKey"
           rowIndex={0}
           rows={[]}
-          rowData={{
-            id: '',
-            status: 'Finalised',
-            comment: 'Supplier invoice',
-          }}
+          rowData={
+            {
+              id: '',
+              status: 'Finalised',
+              comment: 'Supplier invoice',
+            } as StoryRow
+          }
           onClick={onClick}
           generateRowTooltip={generateRowTooltip}
+          t={t}
+          localisedDate={localisedDate}
+          isAnimated={false}
         />
       </TableBody>
     </Table>

@@ -1,4 +1,4 @@
-import React, { FC, useEffect } from 'react';
+import React, { FC, PropsWithChildren, ReactElement, useEffect } from 'react';
 import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
 import { alpha } from '@mui/material/styles';
@@ -11,6 +11,7 @@ import {
   useRowStyle,
 } from '../../context';
 import { Fade, Tooltip } from '@mui/material';
+import { TypedTFunction, LocaleKey } from '@common/intl';
 
 interface DataRowProps<T extends RecordWithId> {
   columns: Column<T>[];
@@ -23,6 +24,9 @@ interface DataRowProps<T extends RecordWithId> {
   rowIndex: number;
   keyboardActivated?: boolean;
   generateRowTooltip: (row: T) => string;
+  t: TypedTFunction<LocaleKey>;
+  localisedDate: (date: string | number | Date) => string;
+  isAnimated: boolean;
 }
 
 export const DataRow = <T extends RecordWithId>({
@@ -36,6 +40,9 @@ export const DataRow = <T extends RecordWithId>({
   rows,
   keyboardActivated,
   generateRowTooltip,
+  t,
+  localisedDate,
+  isAnimated,
 }: DataRowProps<T>): JSX.Element => {
   const hasOnClick = !!onClick;
   const { isExpanded } = useExpanded(rowData.id);
@@ -46,6 +53,14 @@ export const DataRow = <T extends RecordWithId>({
   const onRowClick = () => onClick && onClick(rowData);
   const paddingX = dense ? '12px' : '16px';
   const paddingY = dense ? '4px' : 0;
+  const Animation: FC<PropsWithChildren> = ({ children }) =>
+    isAnimated ? (
+      <Fade in={true} timeout={500}>
+        {children as ReactElement}
+      </Fade>
+    ) : (
+      <>{children}</>
+    );
 
   useEffect(() => {
     if (isFocused) onRowClick();
@@ -53,7 +68,7 @@ export const DataRow = <T extends RecordWithId>({
 
   return (
     <>
-      <Fade in={true} timeout={500}>
+      <Animation>
         <Tooltip
           title={generateRowTooltip(rowData)}
           followCursor
@@ -109,23 +124,27 @@ export const DataRow = <T extends RecordWithId>({
                     fontWeight: 'normal',
                   }}
                 >
-                  <column.Cell
-                    isDisabled={isDisabled}
-                    rows={rows}
-                    rowData={rowData}
-                    columns={columns}
-                    column={column}
-                    rowKey={rowKey}
-                    columnIndex={columnIndex}
-                    rowIndex={rowIndex}
-                    autocompleteName={column.autocompleteProvider?.(rowData)}
-                  />
+                  {
+                    <column.Cell
+                      isDisabled={isDisabled}
+                      rows={rows}
+                      rowData={rowData}
+                      columns={columns}
+                      column={column}
+                      rowKey={rowKey}
+                      columnIndex={columnIndex}
+                      rowIndex={rowIndex}
+                      autocompleteName={column.autocompleteProvider?.(rowData)}
+                      t={t}
+                      d={localisedDate}
+                    />
+                  }
                 </TableCell>
               );
             })}
           </TableRow>
         </Tooltip>
-      </Fade>
+      </Animation>
       {isExpanded && !!ExpandContent ? (
         <tr>
           <td colSpan={columns.length}>

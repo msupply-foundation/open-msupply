@@ -17,7 +17,7 @@ import { DataRow } from './components/DataRow/DataRow';
 import { PaginationRow } from './columns/PaginationRow';
 import { ColumnPicker, HeaderCell, HeaderRow } from './components/Header';
 import { RecordWithId } from '@common/types';
-import { useTranslation } from '@common/intl';
+import { useFormatDateTime, useTranslation } from '@common/intl';
 import { useTableStore } from './context';
 
 const DataTableComponent = <T extends RecordWithId>({
@@ -31,6 +31,7 @@ const DataTableComponent = <T extends RecordWithId>({
   isDisabled = false,
   isError = false,
   isLoading = false,
+  isRowAnimated = false,
   noDataElement,
   noDataMessage,
   overflowX = 'unset',
@@ -45,6 +46,7 @@ const DataTableComponent = <T extends RecordWithId>({
   const columnsToDisplay = columns.filter(c =>
     displayColumns.map(({ key }) => key).includes(c.key)
   );
+  const { localisedDate } = useFormatDateTime();
 
   useRegisterActions([
     {
@@ -171,6 +173,9 @@ const DataTableComponent = <T extends RecordWithId>({
               dense={dense}
               keyboardActivated={clickFocusedRow}
               generateRowTooltip={generateRowTooltip}
+              t={t}
+              localisedDate={localisedDate}
+              isAnimated={isRowAnimated}
             />
           ))}
         </TableBody>
