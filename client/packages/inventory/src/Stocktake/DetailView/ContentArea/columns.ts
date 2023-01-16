@@ -214,6 +214,46 @@ export const useStocktakeColumns = ({
         },
       },
       {
+        key: 'difference',
+        label: 'label.difference',
+        align: ColumnAlign.Right,
+        getSortValue: row => {
+          if ('lines' in row) {
+            const { lines } = row;
+            let total = lines.reduce(
+              (total, line) =>
+              total +
+                  (line.snapshotNumberOfPacks -
+                    (line.countedNumberOfPacks ?? line.snapshotNumberOfPacks)),
+                0
+              ) ?? 0;
+            return (total < 0 ? Math.abs(total) : -total).toString();
+          } else {
+            return row.snapshotNumberOfPacks -
+              (row.countedNumberOfPacks ?? row.snapshotNumberOfPacks) ?? '';
+          }
+        },
+        accessor: ({ rowData }) => {
+          if ('lines' in rowData) {
+            const { lines } = rowData;
+            let total =
+              lines.reduce(
+                (total, line) =>
+                  total +
+                  (line.snapshotNumberOfPacks -
+                    (line.countedNumberOfPacks ?? line.snapshotNumberOfPacks)),
+                0
+              ) ?? 0;
+            return (total < 0 ? Math.abs(total) : -total).toString();
+          } else {
+            return (
+              rowData.snapshotNumberOfPacks -
+              (rowData.countedNumberOfPacks ?? rowData.snapshotNumberOfPacks)
+            );
+          }
+        },
+      },
+      {
         key: 'comment',
         label: 'label.stocktake-comment',
         accessor: ({ rowData }) => {
