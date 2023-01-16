@@ -22,7 +22,8 @@ use service::{usize_to_u32, ListResult};
 pub enum InvoiceNodeType {
     OutboundShipment,
     InboundShipment,
-    InventoryAdjustment,
+    InventoryAddition,
+    InventoryReduction,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
@@ -345,7 +346,8 @@ impl InvoiceNodeType {
         match self {
             OutboundShipment => InvoiceRowType::OutboundShipment,
             InboundShipment => InvoiceRowType::InboundShipment,
-            InventoryAdjustment => InvoiceRowType::InventoryAdjustment,
+            InventoryAddition => InvoiceRowType::InventoryAddition,
+            InventoryReduction => InvoiceRowType::InventoryReduction,
         }
     }
 
@@ -354,7 +356,8 @@ impl InvoiceNodeType {
         match r#type {
             OutboundShipment => InvoiceNodeType::OutboundShipment,
             InboundShipment => InvoiceNodeType::InboundShipment,
-            InventoryAdjustment => InvoiceNodeType::InventoryAdjustment,
+            InventoryAddition => InvoiceNodeType::InventoryAddition,
+            InventoryReduction => InvoiceNodeType::InventoryReduction,
         }
     }
 }
