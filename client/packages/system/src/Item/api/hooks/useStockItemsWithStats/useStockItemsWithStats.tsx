@@ -5,7 +5,7 @@ export const useStockItemsWithStats = () => {
   const queryParams = {
     sortBy: { key: 'name', isDesc: false, direction: 'asc' as 'asc' | 'desc' },
     offset: 0,
-    first: 1000, // TODO: remove arbitrary limit
+    first: 5000, // TODO: remove arbitrary limit
   };
   const api = useItemApi();
   return useQuery(api.keys.paramList(queryParams), () =>
