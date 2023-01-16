@@ -13,6 +13,8 @@ impl Migration for V1_01_01 {
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        use crate::migrations::sql;
+
         // Remove Check
         #[cfg(not(feature = "postgres"))]
         remove_sqlite_check::migrate(connection)?;
