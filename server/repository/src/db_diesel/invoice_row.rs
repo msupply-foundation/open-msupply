@@ -49,7 +49,11 @@ joinable!(invoice -> user_account (user_id));
 pub enum InvoiceRowType {
     OutboundShipment,
     InboundShipment,
-    InventoryAdjustment,
+    // Initially we had single inventory adjustment InvoiceRowType, this was changed to two seperate types
+    // central server may have old inventory adjustement type, thus map it to inventory additions
+    #[serde(alias = "INVENTORY_ADJUSTMENT")]
+    InventoryAddition,
+    InventoryReduction,
 }
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
