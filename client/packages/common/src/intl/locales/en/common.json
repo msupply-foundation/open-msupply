@@ -158,6 +158,7 @@
   "label.settings-username": "Site name",
   "label.shipped": "Shipped",
   "label.snapshot-num-of-packs": "Snapshot # of Packs",
+  "label.stocktake-comment": "Comment",
   "label.soh": "SOH",
   "label.status": "Status",
   "label.stock-on-hand": "SoH (Est. remaining)",
