@@ -3,7 +3,7 @@ use repository::{Item, ItemFilter, ItemRepository, ItemSort, StorageConnectionMa
 
 use super::{get_default_pagination, i64_to_u32, ListError, ListResult};
 
-pub const MAX_LIMIT: u32 = 1000;
+pub const MAX_LIMIT: u32 = 5000;
 pub const MIN_LIMIT: u32 = 1;
 
 pub fn get_items(
