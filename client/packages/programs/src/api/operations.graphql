@@ -1,3 +1,16 @@
+fragment DocumentRegistry on DocumentRegistryNode {
+  __typename
+  id
+  documentType
+  context
+  name
+  parentId
+  formSchemaId
+  jsonSchema
+  uiSchemaType
+  uiSchema
+}
+
 fragment Document on DocumentNode {
   id
   name
@@ -7,12 +20,7 @@ fragment Document on DocumentNode {
   type
   data
   documentRegistry {
-    uiSchemaType
-    documentType
-    context
-    formSchemaId
-    jsonSchema
-    uiSchema
+    ...DocumentRegistry
   }
 }
 
@@ -39,19 +47,6 @@ query documents(
       }
     }
   }
-}
-
-fragment DocumentRegistry on DocumentRegistryNode {
-  __typename
-  id
-  documentType
-  context
-  name
-  parentId
-  formSchemaId
-  jsonSchema
-  uiSchemaType
-  uiSchema
 }
 
 query documentRegistries(
@@ -92,6 +87,25 @@ query documentRegistriesWithChildren(
   }
 }
 
+query getDocumentHistory($storeId: String!, $name: String!) {
+  documentHistory(storeId: $storeId, name: $name) {
+    __typename
+    ... on DocumentConnector {
+      totalCount
+      nodes {
+        __typename
+        author
+        data
+        id
+        name
+        parents
+        timestamp
+        type
+      }
+    }
+  }
+}
+
 mutation allocateProgramNumber($numberName: String!, $storeId: String!) {
   allocateProgramNumber(input: { numberName: $numberName }, storeId: $storeId) {
     ... on NumberNode {
@@ -108,6 +122,12 @@ fragment EncounterFields on EncounterFieldsNode {
     startDatetime
     endDatetime
   }
+}
+
+fragment ProgramEvent on ProgramEventNode {
+  activeDatetime
+  type
+  data
 }
 
 query encounterFields(
@@ -146,7 +166,7 @@ fragment EncounterDocumentRegistry on DocumentRegistryNode {
   }
 }
 
-fragment EncounterBase on EncounterNode {
+fragment Encounter on EncounterNode {
   id
   type
   name
@@ -165,19 +185,7 @@ fragment EncounterBase on EncounterNode {
   }
 }
 
-query encounterById($storeId: String!, $encounterId: String!) {
-  encounters(storeId: $storeId, filter: { id: { equalTo: $encounterId } }) {
-    ... on EncounterConnector {
-      __typename
-      nodes {
-        ...EncounterBase
-      }
-      totalCount
-    }
-  }
-}
-
-query encounters(
+query encountersWithDocument(
   $storeId: String!
   $key: EncounterSortFieldInput
   $desc: Boolean
@@ -193,17 +201,91 @@ query encounters(
     ... on EncounterConnector {
       __typename
       nodes {
-        ...EncounterBase
+        __typename
+        ...Encounter
       }
       totalCount
     }
   }
 }
 
-fragment ProgramEvent on ProgramEventNode {
-  activeDatetime
+query encounterById($storeId: String!, $encounterId: String!) {
+  encounters(storeId: $storeId, filter: { id: { equalTo: $encounterId } }) {
+    ... on EncounterConnector {
+      __typename
+      nodes {
+        ...Encounter
+      }
+      totalCount
+    }
+  }
+}
+
+fragment EncounterRow on EncounterNode {
+  id
+  document {
+    documentRegistry {
+      name
+    }
+  }
+  program
+  startDatetime
+  endDatetime
+  status
+  name
   type
-  data
+  patient {
+    id
+    firstName
+    lastName
+    name
+  }
+  events(at: $eventTime) {
+    ...ProgramEvent
+  }
+}
+
+query encounters(
+  $storeId: String!
+  $key: EncounterSortFieldInput
+  $desc: Boolean
+  $filter: EncounterFilterInput
+  $page: PaginationInput
+  $eventTime: String!
+) {
+  encounters(
+    storeId: $storeId
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+    page: $page
+  ) {
+    ... on EncounterConnector {
+      __typename
+      nodes {
+        __typename
+        ...EncounterRow
+      }
+      totalCount
+    }
+  }
+}
+
+mutation insertEncounter($storeId: String!, $input: InsertEncounterInput!) {
+  insertEncounter(storeId: $storeId, input: $input) {
+    ... on EncounterNode {
+      __typename
+      ...Encounter
+    }
+  }
+}
+
+mutation updateEncounter($storeId: String!, $input: UpdateEncounterInput!) {
+  updateEncounter(storeId: $storeId, input: $input) {
+    ... on EncounterNode {
+      __typename
+      ...Encounter
+    }
+  }
 }
 
 # program enrolment without document data but with events

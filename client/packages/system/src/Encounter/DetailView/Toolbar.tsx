@@ -11,7 +11,7 @@ import {
   TimePickerInput,
   UserIcon,
 } from '@openmsupply-client/common';
-import { EncounterFragment, useEncounter } from '../api';
+import { EncounterFragment, useEncounter } from '@openmsupply-client/programs';
 
 const Row = ({ label, Input }: { label: string; Input: ReactNode }) => (
   <InputWithLabelRow labelWidth="90px" label={label} Input={Input} />
@@ -20,8 +20,9 @@ interface ToolbarProps {
   onChange: (patch: Partial<EncounterFragment>) => void;
 }
 export const Toolbar: FC<ToolbarProps> = ({ onChange }) => {
+  const id = useEncounter.utils.idFromUrl();
   const { mutate: fetchEncounter, data: encounter } =
-    useEncounter.document.get();
+    useEncounter.document.byIdPromise(id);
   const [startDatetime, setStartDatetime] = useState<string | undefined>();
   const [endDatetime, setEndDatetime] = useState<string | undefined | null>();
   const t = useTranslation('patients');
