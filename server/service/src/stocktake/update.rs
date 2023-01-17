@@ -177,6 +177,7 @@ fn generate_stock_line_update(
         expiry_date: stocktake_line.line.expiry_date.or(stock_line.expiry_date),
         on_hold: stock_line.on_hold,
         note: stock_line.note.clone(),
+        name_id: stock_line.name_id.clone(),
     };
 
     let item = match ItemRowRepository::new(connection).find_one_by_id(&stock_line.item_id)? {
@@ -254,6 +255,12 @@ fn generate_new_stock_line(
         l
     });
 
+    let name_id = if let Some(stock_line) = stocktake_line.stock_line {
+        stock_line.name_id
+    } else {
+        None
+    };
+
     let item_id = row.item_id;
     let new_line = StockLineRow {
         id: stock_line_id,
@@ -269,6 +276,7 @@ fn generate_new_stock_line(
         expiry_date: row.expiry_date,
         on_hold: false,
         note: row.note.clone(),
+        name_id,
     };
 
     let item = match ItemRowRepository::new(connection).find_one_by_id(&item_id)? {

@@ -18,7 +18,12 @@ pub fn generate(
     let mut new_line = generate_line(input, item_row, existing_invoice_row.clone());
 
     let new_batch_option = if existing_invoice_row.status != InvoiceRowStatus::New {
-        let new_batch = generate_batch(&existing_invoice_row.store_id, new_line.clone(), false);
+        let new_batch = generate_batch(
+            &existing_invoice_row.store_id,
+            new_line.clone(),
+            false,
+            &existing_invoice_row.name_id,
+        );
         new_line.stock_line_id = Some(new_batch.id.clone());
         Some(new_batch)
     } else {
