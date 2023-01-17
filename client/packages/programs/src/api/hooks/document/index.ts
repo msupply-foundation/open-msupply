@@ -1,15 +1,21 @@
 import { useDocumentByName } from './useDocumentByName';
-import { usePatientDocument } from './usePatientDocument';
 import { useDocumentRegistryByContext } from './useDocumentRegistryByContext';
+
 import { useProgramRegistries } from './useProgramRegistries';
+
+import { usePatientDocument } from './usePatientDocument';
 import { useAllocateNumber } from './useAllocateNumber';
+
 import { useEncounterFields } from './useEncounterFields';
 import { useEncounterById } from './useEncounterById';
 import { useEncounterPrevious } from './useEncounterPrevious';
+
 import {
   useProgramEnrolments,
   useProgramEnrolmentsPromise,
 } from './useProgramEnrolments';
+import { useInsertProgramEnrolment } from './useInsertProgramEnrolment';
+import { useUpdateProgramEnrolment } from './useUpdateProgramEnrolment';
 
 export const Document = {
   useDocumentByName,
@@ -22,4 +28,6 @@ export const Document = {
   useEncounterPrevious,
   useProgramEnrolments,
   useProgramEnrolmentsPromise,
+  useInsertProgramEnrolment,
+  useUpdateProgramEnrolment,
 };

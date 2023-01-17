@@ -206,12 +206,13 @@ fragment ProgramEvent on ProgramEventNode {
   data
 }
 
+# program enrolment without document data but with events
 fragment ProgramEnrolmentRow on ProgramEnrolmentNode {
-  enrolmentDatetime
-  name
-  patientId
-  programPatientId
   type
+  programPatientId
+  patientId
+  name
+  enrolmentDatetime
   document {
     documentRegistry {
       id
@@ -241,6 +242,57 @@ query programEnrolments(
         ...ProgramEnrolmentRow
       }
       totalCount
+    }
+  }
+}
+
+# program enrolment with document
+fragment ProgramEnrolment on ProgramEnrolmentNode {
+  type
+  programPatientId
+  patientId
+  name
+  enrolmentDatetime
+  document {
+    ...Document
+  }
+}
+
+query programEnrolmentById($storeId: String!, $programId: String!) {
+  programEnrolments(
+    storeId: $storeId
+    filter: { id: { equalTo: $programId } }
+  ) {
+    ... on ProgramEnrolmentConnector {
+      __typename
+      nodes {
+        ...ProgramEnrolment
+      }
+      totalCount
+    }
+  }
+}
+
+mutation insertProgramEnrolment(
+  $storeId: String!
+  $input: InsertProgramEnrolmentInput!
+) {
+  insertProgramEnrolment(storeId: $storeId, input: $input) {
+    ... on ProgramEnrolmentNode {
+      __typename
+      ...ProgramEnrolment
+    }
+  }
+}
+
+mutation updateProgramEnrolment(
+  $storeId: String!
+  $input: UpdateProgramEnrolmentInput!
+) {
+  updateProgramEnrolment(storeId: $storeId, input: $input) {
+    ... on ProgramEnrolmentNode {
+      __typename
+      ...ProgramEnrolment
     }
   }
 }
