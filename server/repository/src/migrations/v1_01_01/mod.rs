@@ -30,6 +30,12 @@ impl Migration for V1_01_01 {
                 WHERE name_store_join.name_id IN (SELECT name_id FROM store WHERE store.id = name_store_join.store_id);"#
         )?;
 
+        sql!(
+            connection,
+            r#"ALTER TABLE stock_line
+                ADD name_id TEXT REFERENCES name(id);"#
+        )?;
+
         Ok(())
     }
 }

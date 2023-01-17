@@ -1,6 +1,6 @@
 use super::{
-    item_row::item, location_row::location, stock_line_row::stock_line::dsl as stock_line_dsl,
-    store_row::store, StorageConnection,
+    item_row::item, location_row::location, name_row::name,
+    stock_line_row::stock_line::dsl as stock_line_dsl, store_row::store, StorageConnection,
 };
 
 use crate::repository_error::RepositoryError;
@@ -24,12 +24,14 @@ table! {
         expiry_date -> Nullable<Date>,
         on_hold -> Bool,
         note -> Nullable<Text>,
+        name_id -> Nullable<Text>,
     }
 }
 
 joinable!(stock_line -> item (item_id));
 joinable!(stock_line -> store (store_id));
 joinable!(stock_line -> location (location_id));
+joinable!(stock_line -> name (name_id));
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[changeset_options(treat_none_as_null = "true")]
@@ -48,6 +50,7 @@ pub struct StockLineRow {
     pub expiry_date: Option<NaiveDate>,
     pub on_hold: bool,
     pub note: Option<String>,
+    pub name_id: Option<String>,
 }
 
 pub struct StockLineRowRepository<'a> {
