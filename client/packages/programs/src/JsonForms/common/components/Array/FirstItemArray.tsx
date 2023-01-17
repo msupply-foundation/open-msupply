@@ -13,8 +13,8 @@ import {
 } from '@jsonforms/react';
 import { Box, Typography } from '@mui/material';
 
-import { FORM_LABEL_COLUMN_WIDTH } from '../styleConstants';
-import { JsonData } from '../JsonForm';
+import { FORM_LABEL_COLUMN_WIDTH } from '../../styleConstants';
+import { JsonData } from '../../JsonForm';
 
 interface UISchemaWithCustomProps extends ControlElement {
   defaultNewItem?: JsonData;

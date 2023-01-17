@@ -2,10 +2,10 @@ import React, { useEffect } from 'react';
 import { rankWith, uiTypeIs, ControlProps } from '@jsonforms/core';
 import { useJsonForms, withJsonFormsControlProps } from '@jsonforms/react';
 import { DetailInputWithLabelRow } from '@openmsupply-client/common';
-import { FORM_LABEL_WIDTH, useZodOptionsValidation } from '../common';
+import { FORM_LABEL_WIDTH, useZodOptionsValidation } from '../../common';
 import { z } from 'zod';
 import { get as extractProperty } from 'lodash';
-import { DocumentFragment, useEncounter, usePatient } from '../../api';
+import { DocumentFragment, useEncounter, usePatient } from '../../../api';
 import { useDecisionTreeValidation } from './useDecisionTreeValidation';
 
 /** The condition that should be evaluated on the specified field */

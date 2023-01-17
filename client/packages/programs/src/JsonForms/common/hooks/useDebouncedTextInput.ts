@@ -31,7 +31,7 @@ export const useDebouncedTextInput = (
   error: boolean,
   handleChange: (path: string, value: string | undefined) => void
 ) => {
-  const [localData, setLocalData] = useState<string | undefined>(data);
+  const [text, setText] = useState<string | undefined>(data);
 
   // timestamp of the last key stroke
   const [latestKey, setLatestKey] = useState<number>(0);
@@ -44,15 +44,14 @@ export const useDebouncedTextInput = (
   );
 
   const onChange = (value: string) => {
-    console.log('value', value);
     setLatestKey(Date.now());
-    setLocalData(value);
+    setText(value);
     onChangeDebounced(value);
   };
 
   useEffect(() => {
-    if (Date.now() > latestKey + 500) setLocalData(data);
+    if (Date.now() > latestKey + 500) setText(data);
   }, [data]);
 
-  return { localData, onChange };
+  return { text, onChange };
 };

@@ -438,19 +438,10 @@
               "label": "Notes",
               "elements": [
                 {
-                  "type": "Control",
+                  "type": "Notes",
                   "label": "Patient Notes",
                   "scope": "#/properties/notes",
                   "options": {
-                    "detail": {
-                      "type": "VerticalLayout",
-                      "elements": [
-                        {
-                          "type": "Note",
-                          "scope": "/properties"
-                        }
-                      ]
-                    },
                     "editRestrictions": { "latest": true, "isCurrentUser": true, "maxAge": 1 },
                     "reverse": true,
                     "defaultExpanded": true

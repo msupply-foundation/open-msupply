@@ -20,8 +20,8 @@ import { Button, FormLabel } from '@mui/material';
 import { get as extractProperty } from 'lodash';
 import { z } from 'zod';
 import { useJsonForms } from '@jsonforms/react';
-import { useJSONFormsCustomError } from '../common/components/useJSONFormsCustomError';
-import { useDebouncedTextInput } from '../common/components/useDebouncedTextInput';
+import { useJSONFormsCustomError } from '../common/hooks/useJSONFormsCustomError';
+import { useDebouncedTextInput } from '../common/hooks/useDebouncedTextInput';
 
 export const idGeneratorTester = rankWith(10, uiTypeIs('IdGenerator'));
 
@@ -317,7 +317,7 @@ const UIComponent = (props: ControlProps) => {
     [options, path]
   );
 
-  const { localData, onChange } = useDebouncedTextInput(
+  const { text, onChange } = useDebouncedTextInput(
     data,
     path,
     error,
@@ -392,7 +392,7 @@ const UIComponent = (props: ControlProps) => {
       >
         <BasicTextInput
           disabled={!props.enabled || !options?.allowManualEntry}
-          value={localData}
+          value={text}
           style={{ flex: 1 }}
           helperText={errors ?? customError}
           onChange={e => onChange(e.target.value)}

@@ -29,6 +29,10 @@ import {
   Date,
   arrayTester,
   ArrayControl,
+  notesTester,
+  NotesControl,
+  noteTester,
+  Note,
   FirstItemArray,
   firstItemArrayTester,
   CategorizationTabLayout,
@@ -162,6 +166,8 @@ const renderers = [
   { tester: categorizationTabLayoutTester, renderer: CategorizationTabLayout },
   { tester: autocompleteTester, renderer: Autocomplete },
   { tester: conditionalSelectTester, renderer: ConditionalSelect },
+  { tester: notesTester, renderer: NotesControl },
+  { tester: noteTester, renderer: Note },
   // We should be able to remove materialRenderers once we are sure we have custom components to cover all cases.
   ...materialRenderers,
 ];

@@ -6,10 +6,10 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { z } from 'zod';
-import { useZodOptionsValidation } from '../useZodOptionsValidation';
-import { useDebouncedTextInput } from './useDebouncedTextInput';
+import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
+import { useDebouncedTextInput } from '../hooks/useDebouncedTextInput';
 import { FORM_LABEL_WIDTH } from '../styleConstants';
-import { useJSONFormsCustomError } from './useJSONFormsCustomError';
+import { useJSONFormsCustomError } from '../hooks/useJSONFormsCustomError';
 
 const Options = z
   .object({
@@ -96,7 +96,7 @@ const UIComponent = (props: ControlProps) => {
   } = useOptions(props.uischema.options);
   const customErrors = usePatternValidation(path, pattern, data);
   const error = !!errors || !!zErrors || !!customErrors;
-  const { localData, onChange } = useDebouncedTextInput(
+  const { text, onChange } = useDebouncedTextInput(
     data,
     path,
     error,
@@ -127,7 +127,7 @@ const UIComponent = (props: ControlProps) => {
     <DetailInputWithLabelRow
       label={label}
       inputProps={{
-        value: localData ?? '',
+        value: text ?? '',
         sx: { margin: 0.5, width },
         onChange: e => onChange(e.target.value || ''),
         disabled: !props.enabled,
