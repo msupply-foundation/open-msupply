@@ -364,6 +364,7 @@ mod tests {
                 r.item_id = mock_item_a().id;
                 r.store_id = mock_store_a().id;
                 r.expiry_date = Some(NaiveDate::from_ymd(2023, 02, 01));
+                r.name_id = Some(String::from("name_store_b"));
             })
         }
 

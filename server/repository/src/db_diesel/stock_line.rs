@@ -245,7 +245,8 @@ mod test {
                 r.id = "line1".to_string();
                 r.store_id = mock_store_a().id;
                 r.item_id = mock_item_a().id;
-                r.expiry_date = Some(NaiveDate::from_ymd(2021, 01, 01))
+                r.expiry_date = Some(NaiveDate::from_ymd(2021, 01, 01));
+                r.name_id = Some(String::from("name_store_b"));
             })
         }
         // expiry two
@@ -254,7 +255,8 @@ mod test {
                 r.id = "line2".to_string();
                 r.store_id = mock_store_a().id;
                 r.item_id = mock_item_a().id;
-                r.expiry_date = Some(NaiveDate::from_ymd(2021, 02, 01))
+                r.expiry_date = Some(NaiveDate::from_ymd(2021, 02, 01));
+                r.name_id = Some(String::from("name_store_b"));
             })
         }
         // expiry one (expiry null)
@@ -264,6 +266,7 @@ mod test {
                 r.store_id = mock_store_a().id;
                 r.item_id = mock_item_a().id;
                 r.expiry_date = None;
+                r.name_id = Some(String::from("name_store_b"));
             })
         }
 
@@ -310,6 +313,7 @@ mod test {
                 r.item_id = mock_item_a().id;
                 r.expiry_date = Some(NaiveDate::from_ymd(2021, 01, 01));
                 r.available_number_of_packs = 0.0;
+                r.name_id = Some(String::from("name_store_b"));
             })
         }
 
@@ -321,6 +325,7 @@ mod test {
                 r.item_id = mock_item_a().id;
                 r.expiry_date = Some(NaiveDate::from_ymd(2021, 02, 01));
                 r.available_number_of_packs = 1.0;
+                r.name_id = Some(String::from("name_store_b"));
             })
         }
 

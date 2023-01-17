@@ -208,6 +208,7 @@ impl ShipmentTransferTester {
             r.pack_size = 10;
             r.total_number_of_packs = 200.0;
             r.available_number_of_packs = 200.0;
+            r.name_id = Some(String::from("name_store_b"));
         });
 
         let outbound_shipment_line1 = inline_init(|r: &mut InvoiceLineRow| {
@@ -237,6 +238,7 @@ impl ShipmentTransferTester {
             r.total_number_of_packs = 200.0;
             r.available_number_of_packs = 200.0;
             r.expiry_date = Some(NaiveDate::from_ymd(2023, 1, 5));
+            r.name_id = Some(String::from("name_store_b"));
         });
 
         let outbound_shipment_line2 = inline_init(|r: &mut InvoiceLineRow| {

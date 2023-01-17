@@ -565,6 +565,7 @@ mod test {
                 r.total_number_of_packs = 10.0;
                 r.pack_size = 1;
                 r.item_id = mock_item_a().id;
+                r.name_id = Some(String::from("name_store_b"));
             })
         }
 

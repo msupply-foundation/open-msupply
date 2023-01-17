@@ -19,6 +19,7 @@ pub fn mock_new_stock_line_for_stocktake_a() -> StockLineRow {
         expiry_date: None,
         on_hold: false,
         note: None,
+        name_id: Some(String::from("name_store_b")),
     }
 }
 

@@ -95,6 +95,7 @@ pub fn mock_stock_line_stocktake_surplus() -> StockLineRow {
         expiry_date: None,
         on_hold: false,
         note: None,
+        name_id: Some(String::from("name_store_c")),
     }
 }
 
@@ -136,6 +137,7 @@ pub fn mock_stock_line_stocktake_deficit() -> StockLineRow {
         expiry_date: None,
         on_hold: false,
         note: None,
+        name_id: Some(String::from("name_store_c")),
     }
 }
 
