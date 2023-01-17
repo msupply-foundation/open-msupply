@@ -4,7 +4,9 @@ import { GraphQLClient } from 'graphql-request';
 import * as Dom from 'graphql-request/dist/types.dom';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type DocumentFragment = { __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, author: string, timestamp: string, type: string, data: any, documentRegistry?: { __typename: 'DocumentRegistryNode', uiSchemaType: string, documentType: string, context: Types.DocumentRegistryNodeContext, formSchemaId: string, jsonSchema: any, uiSchema: any } | null };
+export type DocumentRegistryFragment = { __typename: 'DocumentRegistryNode', id: string, documentType: string, context: Types.DocumentRegistryNodeContext, name?: string | null, parentId?: string | null, formSchemaId: string, jsonSchema: any, uiSchemaType: string, uiSchema: any };
+
+export type DocumentFragment = { __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, author: string, timestamp: string, type: string, data: any, documentRegistry?: { __typename: 'DocumentRegistryNode', id: string, documentType: string, context: Types.DocumentRegistryNodeContext, name?: string | null, parentId?: string | null, formSchemaId: string, jsonSchema: any, uiSchemaType: string, uiSchema: any } | null };
 
 export type DocumentByNameQueryVariables = Types.Exact<{
   name: Types.Scalars['String'];
@@ -12,7 +14,7 @@ export type DocumentByNameQueryVariables = Types.Exact<{
 }>;
 
 
-export type DocumentByNameQuery = { __typename: 'Queries', document?: { __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, author: string, timestamp: string, type: string, data: any, documentRegistry?: { __typename: 'DocumentRegistryNode', uiSchemaType: string, documentType: string, context: Types.DocumentRegistryNodeContext, formSchemaId: string, jsonSchema: any, uiSchema: any } | null } | null };
+export type DocumentByNameQuery = { __typename: 'Queries', document?: { __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, author: string, timestamp: string, type: string, data: any, documentRegistry?: { __typename: 'DocumentRegistryNode', id: string, documentType: string, context: Types.DocumentRegistryNodeContext, name?: string | null, parentId?: string | null, formSchemaId: string, jsonSchema: any, uiSchemaType: string, uiSchema: any } | null } | null };
 
 export type DocumentsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -22,9 +24,7 @@ export type DocumentsQueryVariables = Types.Exact<{
 }>;
 
 
-export type DocumentsQuery = { __typename: 'Queries', documents: { __typename: 'DocumentConnector', nodes: Array<{ __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, author: string, timestamp: string, type: string, data: any, documentRegistry?: { __typename: 'DocumentRegistryNode', uiSchemaType: string, documentType: string, context: Types.DocumentRegistryNodeContext, formSchemaId: string, jsonSchema: any, uiSchema: any } | null }> } };
-
-export type DocumentRegistryFragment = { __typename: 'DocumentRegistryNode', id: string, documentType: string, context: Types.DocumentRegistryNodeContext, name?: string | null, parentId?: string | null, formSchemaId: string, jsonSchema: any, uiSchemaType: string, uiSchema: any };
+export type DocumentsQuery = { __typename: 'Queries', documents: { __typename: 'DocumentConnector', nodes: Array<{ __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, author: string, timestamp: string, type: string, data: any, documentRegistry?: { __typename: 'DocumentRegistryNode', id: string, documentType: string, context: Types.DocumentRegistryNodeContext, name?: string | null, parentId?: string | null, formSchemaId: string, jsonSchema: any, uiSchemaType: string, uiSchema: any } | null }> } };
 
 export type DocumentRegistriesQueryVariables = Types.Exact<{
   filter?: Types.InputMaybe<Types.DocumentRegistryFilterInput>;
@@ -44,6 +44,14 @@ export type DocumentRegistriesWithChildrenQueryVariables = Types.Exact<{
 
 export type DocumentRegistriesWithChildrenQuery = { __typename: 'Queries', documentRegistries: { __typename: 'DocumentRegistryConnector', totalCount: number, nodes: Array<{ __typename: 'DocumentRegistryNode', id: string, documentType: string, context: Types.DocumentRegistryNodeContext, name?: string | null, parentId?: string | null, formSchemaId: string, jsonSchema: any, uiSchemaType: string, uiSchema: any, children: Array<{ __typename: 'DocumentRegistryNode', id: string, documentType: string, context: Types.DocumentRegistryNodeContext, name?: string | null, parentId?: string | null, formSchemaId: string, jsonSchema: any, uiSchemaType: string, uiSchema: any }> }> } };
 
+export type GetDocumentHistoryQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String'];
+  name: Types.Scalars['String'];
+}>;
+
+
+export type GetDocumentHistoryQuery = { __typename: 'Queries', documentHistory: { __typename: 'DocumentConnector', totalCount: number, nodes: Array<{ __typename: 'DocumentNode', author: string, data: any, id: string, name: string, parents: Array<string>, timestamp: string, type: string }> } };
+
 export type AllocateProgramNumberMutationVariables = Types.Exact<{
   numberName: Types.Scalars['String'];
   storeId: Types.Scalars['String'];
@@ -53,6 +61,8 @@ export type AllocateProgramNumberMutationVariables = Types.Exact<{
 export type AllocateProgramNumberMutation = { __typename: 'Mutations', allocateProgramNumber: { __typename: 'NumberNode', number: number } };
 
 export type EncounterFieldsFragment = { __typename: 'EncounterFieldsNode', fields: Array<any>, encounter: { __typename: 'EncounterNode', name: string, startDatetime: string, endDatetime?: string | null } };
+
+export type ProgramEventFragment = { __typename: 'ProgramEventNode', activeDatetime: string, type: string, data?: string | null };
 
 export type EncounterFieldsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -65,17 +75,9 @@ export type EncounterFieldsQuery = { __typename: 'Queries', encounterFields: { _
 
 export type EncounterDocumentRegistryFragment = { __typename: 'DocumentRegistryNode', context: Types.DocumentRegistryNodeContext, documentType: string, formSchemaId: string, id: string, jsonSchema: any, name?: string | null, parentId?: string | null, uiSchema: any, uiSchemaType: string, children: Array<{ __typename: 'DocumentRegistryNode', id: string }> };
 
-export type EncounterBaseFragment = { __typename: 'EncounterNode', id: string, type: string, name: string, status?: Types.EncounterNodeStatus | null, program: string, startDatetime: string, endDatetime?: string | null, patient: { __typename: 'NameNode', id: string, firstName?: string | null, lastName?: string | null, name: string }, document: { __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, author: string, timestamp: string, type: string, data: any, documentRegistry?: { __typename: 'DocumentRegistryNode', uiSchemaType: string, documentType: string, context: Types.DocumentRegistryNodeContext, formSchemaId: string, jsonSchema: any, uiSchema: any } | null } };
+export type EncounterFragment = { __typename: 'EncounterNode', id: string, type: string, name: string, status?: Types.EncounterNodeStatus | null, program: string, startDatetime: string, endDatetime?: string | null, patient: { __typename: 'NameNode', id: string, firstName?: string | null, lastName?: string | null, name: string }, document: { __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, author: string, timestamp: string, type: string, data: any, documentRegistry?: { __typename: 'DocumentRegistryNode', id: string, documentType: string, context: Types.DocumentRegistryNodeContext, name?: string | null, parentId?: string | null, formSchemaId: string, jsonSchema: any, uiSchemaType: string, uiSchema: any } | null } };
 
-export type EncounterByIdQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
-  encounterId: Types.Scalars['String'];
-}>;
-
-
-export type EncounterByIdQuery = { __typename: 'Queries', encounters: { __typename: 'EncounterConnector', totalCount: number, nodes: Array<{ __typename: 'EncounterNode', id: string, type: string, name: string, status?: Types.EncounterNodeStatus | null, program: string, startDatetime: string, endDatetime?: string | null, patient: { __typename: 'NameNode', id: string, firstName?: string | null, lastName?: string | null, name: string }, document: { __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, author: string, timestamp: string, type: string, data: any, documentRegistry?: { __typename: 'DocumentRegistryNode', uiSchemaType: string, documentType: string, context: Types.DocumentRegistryNodeContext, formSchemaId: string, jsonSchema: any, uiSchema: any } | null } }> } };
-
-export type EncountersQueryVariables = Types.Exact<{
+export type EncountersWithDocumentQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
   key?: Types.InputMaybe<Types.EncounterSortFieldInput>;
   desc?: Types.InputMaybe<Types.Scalars['Boolean']>;
@@ -84,9 +86,45 @@ export type EncountersQueryVariables = Types.Exact<{
 }>;
 
 
-export type EncountersQuery = { __typename: 'Queries', encounters: { __typename: 'EncounterConnector', totalCount: number, nodes: Array<{ __typename: 'EncounterNode', id: string, type: string, name: string, status?: Types.EncounterNodeStatus | null, program: string, startDatetime: string, endDatetime?: string | null, patient: { __typename: 'NameNode', id: string, firstName?: string | null, lastName?: string | null, name: string }, document: { __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, author: string, timestamp: string, type: string, data: any, documentRegistry?: { __typename: 'DocumentRegistryNode', uiSchemaType: string, documentType: string, context: Types.DocumentRegistryNodeContext, formSchemaId: string, jsonSchema: any, uiSchema: any } | null } }> } };
+export type EncountersWithDocumentQuery = { __typename: 'Queries', encounters: { __typename: 'EncounterConnector', totalCount: number, nodes: Array<{ __typename: 'EncounterNode', id: string, type: string, name: string, status?: Types.EncounterNodeStatus | null, program: string, startDatetime: string, endDatetime?: string | null, patient: { __typename: 'NameNode', id: string, firstName?: string | null, lastName?: string | null, name: string }, document: { __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, author: string, timestamp: string, type: string, data: any, documentRegistry?: { __typename: 'DocumentRegistryNode', id: string, documentType: string, context: Types.DocumentRegistryNodeContext, name?: string | null, parentId?: string | null, formSchemaId: string, jsonSchema: any, uiSchemaType: string, uiSchema: any } | null } }> } };
 
-export type ProgramEventFragment = { __typename: 'ProgramEventNode', activeDatetime: string, type: string, data?: string | null };
+export type EncounterByIdQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String'];
+  encounterId: Types.Scalars['String'];
+}>;
+
+
+export type EncounterByIdQuery = { __typename: 'Queries', encounters: { __typename: 'EncounterConnector', totalCount: number, nodes: Array<{ __typename: 'EncounterNode', id: string, type: string, name: string, status?: Types.EncounterNodeStatus | null, program: string, startDatetime: string, endDatetime?: string | null, patient: { __typename: 'NameNode', id: string, firstName?: string | null, lastName?: string | null, name: string }, document: { __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, author: string, timestamp: string, type: string, data: any, documentRegistry?: { __typename: 'DocumentRegistryNode', id: string, documentType: string, context: Types.DocumentRegistryNodeContext, name?: string | null, parentId?: string | null, formSchemaId: string, jsonSchema: any, uiSchemaType: string, uiSchema: any } | null } }> } };
+
+export type EncounterRowFragment = { __typename: 'EncounterNode', id: string, program: string, startDatetime: string, endDatetime?: string | null, status?: Types.EncounterNodeStatus | null, name: string, type: string, document: { __typename: 'DocumentNode', documentRegistry?: { __typename: 'DocumentRegistryNode', name?: string | null } | null }, patient: { __typename: 'NameNode', id: string, firstName?: string | null, lastName?: string | null, name: string }, events: Array<{ __typename: 'ProgramEventNode', activeDatetime: string, type: string, data?: string | null }> };
+
+export type EncountersQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String'];
+  key?: Types.InputMaybe<Types.EncounterSortFieldInput>;
+  desc?: Types.InputMaybe<Types.Scalars['Boolean']>;
+  filter?: Types.InputMaybe<Types.EncounterFilterInput>;
+  page?: Types.InputMaybe<Types.PaginationInput>;
+  eventTime: Types.Scalars['String'];
+}>;
+
+
+export type EncountersQuery = { __typename: 'Queries', encounters: { __typename: 'EncounterConnector', totalCount: number, nodes: Array<{ __typename: 'EncounterNode', id: string, program: string, startDatetime: string, endDatetime?: string | null, status?: Types.EncounterNodeStatus | null, name: string, type: string, document: { __typename: 'DocumentNode', documentRegistry?: { __typename: 'DocumentRegistryNode', name?: string | null } | null }, patient: { __typename: 'NameNode', id: string, firstName?: string | null, lastName?: string | null, name: string }, events: Array<{ __typename: 'ProgramEventNode', activeDatetime: string, type: string, data?: string | null }> }> } };
+
+export type InsertEncounterMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String'];
+  input: Types.InsertEncounterInput;
+}>;
+
+
+export type InsertEncounterMutation = { __typename: 'Mutations', insertEncounter: { __typename: 'EncounterNode', id: string, type: string, name: string, status?: Types.EncounterNodeStatus | null, program: string, startDatetime: string, endDatetime?: string | null, patient: { __typename: 'NameNode', id: string, firstName?: string | null, lastName?: string | null, name: string }, document: { __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, author: string, timestamp: string, type: string, data: any, documentRegistry?: { __typename: 'DocumentRegistryNode', id: string, documentType: string, context: Types.DocumentRegistryNodeContext, name?: string | null, parentId?: string | null, formSchemaId: string, jsonSchema: any, uiSchemaType: string, uiSchema: any } | null } } };
+
+export type UpdateEncounterMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String'];
+  input: Types.UpdateEncounterInput;
+}>;
+
+
+export type UpdateEncounterMutation = { __typename: 'Mutations', updateEncounter: { __typename: 'EncounterNode', id: string, type: string, name: string, status?: Types.EncounterNodeStatus | null, program: string, startDatetime: string, endDatetime?: string | null, patient: { __typename: 'NameNode', id: string, firstName?: string | null, lastName?: string | null, name: string }, document: { __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, author: string, timestamp: string, type: string, data: any, documentRegistry?: { __typename: 'DocumentRegistryNode', id: string, documentType: string, context: Types.DocumentRegistryNodeContext, name?: string | null, parentId?: string | null, formSchemaId: string, jsonSchema: any, uiSchemaType: string, uiSchema: any } | null } } };
 
 export type ProgramEnrolmentRowFragment = { __typename: 'ProgramEnrolmentNode', type: string, programPatientId?: string | null, patientId: string, name: string, enrolmentDatetime: string, document: { __typename: 'DocumentNode', documentRegistry?: { __typename: 'DocumentRegistryNode', id: string, name?: string | null } | null }, events: Array<{ __typename: 'ProgramEventNode', activeDatetime: string, type: string, data?: string | null }> };
 
@@ -101,7 +139,7 @@ export type ProgramEnrolmentsQueryVariables = Types.Exact<{
 
 export type ProgramEnrolmentsQuery = { __typename: 'Queries', programEnrolments: { __typename: 'ProgramEnrolmentConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramEnrolmentNode', type: string, programPatientId?: string | null, patientId: string, name: string, enrolmentDatetime: string, document: { __typename: 'DocumentNode', documentRegistry?: { __typename: 'DocumentRegistryNode', id: string, name?: string | null } | null }, events: Array<{ __typename: 'ProgramEventNode', activeDatetime: string, type: string, data?: string | null }> }> } };
 
-export type ProgramEnrolmentFragment = { __typename: 'ProgramEnrolmentNode', type: string, programPatientId?: string | null, patientId: string, name: string, enrolmentDatetime: string, document: { __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, author: string, timestamp: string, type: string, data: any, documentRegistry?: { __typename: 'DocumentRegistryNode', uiSchemaType: string, documentType: string, context: Types.DocumentRegistryNodeContext, formSchemaId: string, jsonSchema: any, uiSchema: any } | null } };
+export type ProgramEnrolmentFragment = { __typename: 'ProgramEnrolmentNode', type: string, programPatientId?: string | null, patientId: string, name: string, enrolmentDatetime: string, document: { __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, author: string, timestamp: string, type: string, data: any, documentRegistry?: { __typename: 'DocumentRegistryNode', id: string, documentType: string, context: Types.DocumentRegistryNodeContext, name?: string | null, parentId?: string | null, formSchemaId: string, jsonSchema: any, uiSchemaType: string, uiSchema: any } | null } };
 
 export type ProgramEnrolmentByIdQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -109,7 +147,7 @@ export type ProgramEnrolmentByIdQueryVariables = Types.Exact<{
 }>;
 
 
-export type ProgramEnrolmentByIdQuery = { __typename: 'Queries', programEnrolments: { __typename: 'ProgramEnrolmentConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramEnrolmentNode', type: string, programPatientId?: string | null, patientId: string, name: string, enrolmentDatetime: string, document: { __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, author: string, timestamp: string, type: string, data: any, documentRegistry?: { __typename: 'DocumentRegistryNode', uiSchemaType: string, documentType: string, context: Types.DocumentRegistryNodeContext, formSchemaId: string, jsonSchema: any, uiSchema: any } | null } }> } };
+export type ProgramEnrolmentByIdQuery = { __typename: 'Queries', programEnrolments: { __typename: 'ProgramEnrolmentConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramEnrolmentNode', type: string, programPatientId?: string | null, patientId: string, name: string, enrolmentDatetime: string, document: { __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, author: string, timestamp: string, type: string, data: any, documentRegistry?: { __typename: 'DocumentRegistryNode', id: string, documentType: string, context: Types.DocumentRegistryNodeContext, name?: string | null, parentId?: string | null, formSchemaId: string, jsonSchema: any, uiSchemaType: string, uiSchema: any } | null } }> } };
 
 export type InsertProgramEnrolmentMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -117,7 +155,7 @@ export type InsertProgramEnrolmentMutationVariables = Types.Exact<{
 }>;
 
 
-export type InsertProgramEnrolmentMutation = { __typename: 'Mutations', insertProgramEnrolment: { __typename: 'ProgramEnrolmentNode', type: string, programPatientId?: string | null, patientId: string, name: string, enrolmentDatetime: string, document: { __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, author: string, timestamp: string, type: string, data: any, documentRegistry?: { __typename: 'DocumentRegistryNode', uiSchemaType: string, documentType: string, context: Types.DocumentRegistryNodeContext, formSchemaId: string, jsonSchema: any, uiSchema: any } | null } } };
+export type InsertProgramEnrolmentMutation = { __typename: 'Mutations', insertProgramEnrolment: { __typename: 'ProgramEnrolmentNode', type: string, programPatientId?: string | null, patientId: string, name: string, enrolmentDatetime: string, document: { __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, author: string, timestamp: string, type: string, data: any, documentRegistry?: { __typename: 'DocumentRegistryNode', id: string, documentType: string, context: Types.DocumentRegistryNodeContext, name?: string | null, parentId?: string | null, formSchemaId: string, jsonSchema: any, uiSchemaType: string, uiSchema: any } | null } } };
 
 export type UpdateProgramEnrolmentMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -125,7 +163,7 @@ export type UpdateProgramEnrolmentMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateProgramEnrolmentMutation = { __typename: 'Mutations', updateProgramEnrolment: { __typename: 'ProgramEnrolmentNode', type: string, programPatientId?: string | null, patientId: string, name: string, enrolmentDatetime: string, document: { __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, author: string, timestamp: string, type: string, data: any, documentRegistry?: { __typename: 'DocumentRegistryNode', uiSchemaType: string, documentType: string, context: Types.DocumentRegistryNodeContext, formSchemaId: string, jsonSchema: any, uiSchema: any } | null } } };
+export type UpdateProgramEnrolmentMutation = { __typename: 'Mutations', updateProgramEnrolment: { __typename: 'ProgramEnrolmentNode', type: string, programPatientId?: string | null, patientId: string, name: string, enrolmentDatetime: string, document: { __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, author: string, timestamp: string, type: string, data: any, documentRegistry?: { __typename: 'DocumentRegistryNode', id: string, documentType: string, context: Types.DocumentRegistryNodeContext, name?: string | null, parentId?: string | null, formSchemaId: string, jsonSchema: any, uiSchemaType: string, uiSchema: any } | null } } };
 
 export const DocumentRegistryFragmentDoc = gql`
     fragment DocumentRegistry on DocumentRegistryNode {
@@ -185,17 +223,12 @@ export const DocumentFragmentDoc = gql`
   type
   data
   documentRegistry {
-    uiSchemaType
-    documentType
-    context
-    formSchemaId
-    jsonSchema
-    uiSchema
+    ...DocumentRegistry
   }
 }
-    `;
-export const EncounterBaseFragmentDoc = gql`
-    fragment EncounterBase on EncounterNode {
+    ${DocumentRegistryFragmentDoc}`;
+export const EncounterFragmentDoc = gql`
+    fragment Encounter on EncounterNode {
   id
   type
   name
@@ -221,6 +254,31 @@ export const ProgramEventFragmentDoc = gql`
   data
 }
     `;
+export const EncounterRowFragmentDoc = gql`
+    fragment EncounterRow on EncounterNode {
+  id
+  document {
+    documentRegistry {
+      name
+    }
+  }
+  program
+  startDatetime
+  endDatetime
+  status
+  name
+  type
+  patient {
+    id
+    firstName
+    lastName
+    name
+  }
+  events(at: $eventTime) {
+    ...ProgramEvent
+  }
+}
+    ${ProgramEventFragmentDoc}`;
 export const ProgramEnrolmentRowFragmentDoc = gql`
     fragment ProgramEnrolmentRow on ProgramEnrolmentNode {
   type
@@ -300,6 +358,26 @@ export const DocumentRegistriesWithChildrenDocument = gql`
   }
 }
     ${DocumentRegistryWithChildrenFragmentDoc}`;
+export const GetDocumentHistoryDocument = gql`
+    query getDocumentHistory($storeId: String!, $name: String!) {
+  documentHistory(storeId: $storeId, name: $name) {
+    __typename
+    ... on DocumentConnector {
+      totalCount
+      nodes {
+        __typename
+        author
+        data
+        id
+        name
+        parents
+        timestamp
+        type
+      }
+    }
+  }
+}
+    `;
 export const AllocateProgramNumberDocument = gql`
     mutation allocateProgramNumber($numberName: String!, $storeId: String!) {
   allocateProgramNumber(input: {numberName: $numberName}, storeId: $storeId) {
@@ -328,21 +406,8 @@ export const EncounterFieldsDocument = gql`
   }
 }
     ${EncounterFieldsFragmentDoc}`;
-export const EncounterByIdDocument = gql`
-    query encounterById($storeId: String!, $encounterId: String!) {
-  encounters(storeId: $storeId, filter: {id: {equalTo: $encounterId}}) {
-    ... on EncounterConnector {
-      __typename
-      nodes {
-        ...EncounterBase
-      }
-      totalCount
-    }
-  }
-}
-    ${EncounterBaseFragmentDoc}`;
-export const EncountersDocument = gql`
-    query encounters($storeId: String!, $key: EncounterSortFieldInput, $desc: Boolean, $filter: EncounterFilterInput, $page: PaginationInput) {
+export const EncountersWithDocumentDocument = gql`
+    query encountersWithDocument($storeId: String!, $key: EncounterSortFieldInput, $desc: Boolean, $filter: EncounterFilterInput, $page: PaginationInput) {
   encounters(
     storeId: $storeId
     sort: {key: $key, desc: $desc}
@@ -352,13 +417,66 @@ export const EncountersDocument = gql`
     ... on EncounterConnector {
       __typename
       nodes {
-        ...EncounterBase
+        __typename
+        ...Encounter
       }
       totalCount
     }
   }
 }
-    ${EncounterBaseFragmentDoc}`;
+    ${EncounterFragmentDoc}`;
+export const EncounterByIdDocument = gql`
+    query encounterById($storeId: String!, $encounterId: String!) {
+  encounters(storeId: $storeId, filter: {id: {equalTo: $encounterId}}) {
+    ... on EncounterConnector {
+      __typename
+      nodes {
+        ...Encounter
+      }
+      totalCount
+    }
+  }
+}
+    ${EncounterFragmentDoc}`;
+export const EncountersDocument = gql`
+    query encounters($storeId: String!, $key: EncounterSortFieldInput, $desc: Boolean, $filter: EncounterFilterInput, $page: PaginationInput, $eventTime: String!) {
+  encounters(
+    storeId: $storeId
+    sort: {key: $key, desc: $desc}
+    filter: $filter
+    page: $page
+  ) {
+    ... on EncounterConnector {
+      __typename
+      nodes {
+        __typename
+        ...EncounterRow
+      }
+      totalCount
+    }
+  }
+}
+    ${EncounterRowFragmentDoc}`;
+export const InsertEncounterDocument = gql`
+    mutation insertEncounter($storeId: String!, $input: InsertEncounterInput!) {
+  insertEncounter(storeId: $storeId, input: $input) {
+    ... on EncounterNode {
+      __typename
+      ...Encounter
+    }
+  }
+}
+    ${EncounterFragmentDoc}`;
+export const UpdateEncounterDocument = gql`
+    mutation updateEncounter($storeId: String!, $input: UpdateEncounterInput!) {
+  updateEncounter(storeId: $storeId, input: $input) {
+    ... on EncounterNode {
+      __typename
+      ...Encounter
+    }
+  }
+}
+    ${EncounterFragmentDoc}`;
 export const ProgramEnrolmentsDocument = gql`
     query programEnrolments($storeId: String!, $key: ProgramEnrolmentSortFieldInput!, $desc: Boolean, $filter: ProgramEnrolmentFilterInput, $eventTime: String!) {
   programEnrolments(
@@ -429,17 +547,29 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     documentRegistriesWithChildren(variables?: DocumentRegistriesWithChildrenQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DocumentRegistriesWithChildrenQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<DocumentRegistriesWithChildrenQuery>(DocumentRegistriesWithChildrenDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'documentRegistriesWithChildren', 'query');
     },
+    getDocumentHistory(variables: GetDocumentHistoryQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<GetDocumentHistoryQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<GetDocumentHistoryQuery>(GetDocumentHistoryDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'getDocumentHistory', 'query');
+    },
     allocateProgramNumber(variables: AllocateProgramNumberMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<AllocateProgramNumberMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<AllocateProgramNumberMutation>(AllocateProgramNumberDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'allocateProgramNumber', 'mutation');
     },
     encounterFields(variables: EncounterFieldsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<EncounterFieldsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<EncounterFieldsQuery>(EncounterFieldsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'encounterFields', 'query');
     },
+    encountersWithDocument(variables: EncountersWithDocumentQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<EncountersWithDocumentQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<EncountersWithDocumentQuery>(EncountersWithDocumentDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'encountersWithDocument', 'query');
+    },
     encounterById(variables: EncounterByIdQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<EncounterByIdQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<EncounterByIdQuery>(EncounterByIdDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'encounterById', 'query');
     },
     encounters(variables: EncountersQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<EncountersQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<EncountersQuery>(EncountersDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'encounters', 'query');
+    },
+    insertEncounter(variables: InsertEncounterMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InsertEncounterMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertEncounterMutation>(InsertEncounterDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertEncounter', 'mutation');
+    },
+    updateEncounter(variables: UpdateEncounterMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateEncounterMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateEncounterMutation>(UpdateEncounterDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateEncounter', 'mutation');
     },
     programEnrolments(variables: ProgramEnrolmentsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ProgramEnrolmentsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ProgramEnrolmentsQuery>(ProgramEnrolmentsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'programEnrolments', 'query');
@@ -529,6 +659,23 @@ export const mockDocumentRegistriesWithChildrenQuery = (resolver: ResponseResolv
  * @param resolver a function that accepts a captured request and may return a mocked response.
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
+ * mockGetDocumentHistoryQuery((req, res, ctx) => {
+ *   const { storeId, name } = req.variables;
+ *   return res(
+ *     ctx.data({ documentHistory })
+ *   )
+ * })
+ */
+export const mockGetDocumentHistoryQuery = (resolver: ResponseResolver<GraphQLRequest<GetDocumentHistoryQueryVariables>, GraphQLContext<GetDocumentHistoryQuery>, any>) =>
+  graphql.query<GetDocumentHistoryQuery, GetDocumentHistoryQueryVariables>(
+    'getDocumentHistory',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
  * mockAllocateProgramNumberMutation((req, res, ctx) => {
  *   const { numberName, storeId } = req.variables;
  *   return res(
@@ -563,6 +710,23 @@ export const mockEncounterFieldsQuery = (resolver: ResponseResolver<GraphQLReque
  * @param resolver a function that accepts a captured request and may return a mocked response.
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
+ * mockEncountersWithDocumentQuery((req, res, ctx) => {
+ *   const { storeId, key, desc, filter, page } = req.variables;
+ *   return res(
+ *     ctx.data({ encounters })
+ *   )
+ * })
+ */
+export const mockEncountersWithDocumentQuery = (resolver: ResponseResolver<GraphQLRequest<EncountersWithDocumentQueryVariables>, GraphQLContext<EncountersWithDocumentQuery>, any>) =>
+  graphql.query<EncountersWithDocumentQuery, EncountersWithDocumentQueryVariables>(
+    'encountersWithDocument',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
  * mockEncounterByIdQuery((req, res, ctx) => {
  *   const { storeId, encounterId } = req.variables;
  *   return res(
@@ -581,7 +745,7 @@ export const mockEncounterByIdQuery = (resolver: ResponseResolver<GraphQLRequest
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockEncountersQuery((req, res, ctx) => {
- *   const { storeId, key, desc, filter, page } = req.variables;
+ *   const { storeId, key, desc, filter, page, eventTime } = req.variables;
  *   return res(
  *     ctx.data({ encounters })
  *   )
@@ -590,6 +754,40 @@ export const mockEncounterByIdQuery = (resolver: ResponseResolver<GraphQLRequest
 export const mockEncountersQuery = (resolver: ResponseResolver<GraphQLRequest<EncountersQueryVariables>, GraphQLContext<EncountersQuery>, any>) =>
   graphql.query<EncountersQuery, EncountersQueryVariables>(
     'encounters',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockInsertEncounterMutation((req, res, ctx) => {
+ *   const { storeId, input } = req.variables;
+ *   return res(
+ *     ctx.data({ insertEncounter })
+ *   )
+ * })
+ */
+export const mockInsertEncounterMutation = (resolver: ResponseResolver<GraphQLRequest<InsertEncounterMutationVariables>, GraphQLContext<InsertEncounterMutation>, any>) =>
+  graphql.mutation<InsertEncounterMutation, InsertEncounterMutationVariables>(
+    'insertEncounter',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockUpdateEncounterMutation((req, res, ctx) => {
+ *   const { storeId, input } = req.variables;
+ *   return res(
+ *     ctx.data({ updateEncounter })
+ *   )
+ * })
+ */
+export const mockUpdateEncounterMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateEncounterMutationVariables>, GraphQLContext<UpdateEncounterMutation>, any>) =>
+  graphql.mutation<UpdateEncounterMutation, UpdateEncounterMutationVariables>(
+    'updateEncounter',
     resolver
   )
 

@@ -9,16 +9,19 @@ import {
   useBreadcrumbs,
   useFormatDateTime,
 } from '@openmsupply-client/common';
-import { EncounterFragment, useEncounter } from '../api';
 
-import { useJsonForms } from '@openmsupply-client/programs';
+import {
+  useEncounter,
+  useJsonForms,
+  EncounterFragment,
+} from '@openmsupply-client/programs';
 import { AppRoute } from '@openmsupply-client/config';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 
 export const DetailView: FC = () => {
   const t = useTranslation('patients');
-  const id = useEncounter.utils.id();
+  const id = useEncounter.utils.idFromUrl();
   const navigate = useNavigate();
   const { setSuffix } = useBreadcrumbs([AppRoute.Encounter]);
   const dateFormat = useFormatDateTime();
@@ -28,9 +31,9 @@ export const DetailView: FC = () => {
     mutate: fetchEncounter,
     isSuccess,
     isError,
-  } = useEncounter.document.get();
+  } = useEncounter.document.byIdPromise(id);
 
-  const handleSave = useEncounter.document.upsertDocument(
+  const handleSave = useEncounter.document.upsert(
     encounter?.patient.id ?? '',
     encounter?.program ?? '',
     encounter?.type ?? ''
