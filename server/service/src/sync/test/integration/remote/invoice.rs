@@ -163,6 +163,7 @@ impl SyncRecordTester for InvoiceRecordTester {
             r.pack_size = 20;
             r.cost_price_per_pack = 0.5;
             r.sell_price_per_pack = 0.2;
+            r.name_id = String::from("name_store_b");
         });
         // create requisition and linked invoice
         let requisition_row = inline_edit(&mock_request_draft_requisition(), |mut r| {

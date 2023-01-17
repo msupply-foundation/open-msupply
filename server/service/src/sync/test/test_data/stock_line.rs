@@ -49,7 +49,8 @@ const ITEM_LINE_1: (&'static str, &'static str) = (
       "user_8_ID": "",
       "volume_per_pack": 0,
       "vvm_status": "",
-      "weight_per_pack": 0
+      "weight_per_pack": 0,
+      "name_id": "name_store_b"
     }"#,
 );
 fn item_line_1_pull_record() -> TestSyncPullRecord {
@@ -70,6 +71,7 @@ fn item_line_1_pull_record() -> TestSyncPullRecord {
             expiry_date: Some(NaiveDate::from_ymd(2022, 2, 17)),
             on_hold: false,
             note: Some("test note".to_string()),
+            name_id: Some("name_store_b".to_string()),
         }),
     )
 }
@@ -90,7 +92,8 @@ fn item_line_1_push_record() -> TestSyncPushRecord {
             quantity: 694.0,
             cost_price: 5.0,
             sell_price: 10.0,
-            note: Some("test note".to_string())
+            note: Some("test note".to_string()),
+            name_id: Some("name_store_b".to_string()),
         }),
     }
 }
@@ -135,7 +138,8 @@ const ITEM_LINE_2: (&'static str, &'static str) = (
       "user_8_ID": "",
       "volume_per_pack": 0,
       "vvm_status": "",
-      "weight_per_pack": 0
+      "weight_per_pack": 0,
+      "name_id": "name_store_b"
   }"#,
 );
 fn item_line_2_pull_record() -> TestSyncPullRecord {
@@ -156,6 +160,7 @@ fn item_line_2_pull_record() -> TestSyncPullRecord {
             expiry_date: None,
             on_hold: false,
             note: None,
+            name_id: Some("name_store_b".to_string()),
         }),
     )
 }
@@ -177,6 +182,7 @@ fn item_line_2_push_record() -> TestSyncPushRecord {
             cost_price: 0.0,
             sell_price: 0.0,
             note: None,
+            name_id: Some("name_store_b".to_string()),
         }),
     }
 }
