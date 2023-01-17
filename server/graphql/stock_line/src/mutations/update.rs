@@ -266,6 +266,7 @@ mod test {
             Ok(StockLine {
                 stock_line_row: mock_stock_line_a(),
                 location_row: None,
+                name_row: None,
             })
         }));
 
