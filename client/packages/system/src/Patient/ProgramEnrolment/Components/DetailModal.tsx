@@ -8,7 +8,6 @@ import {
   useDialog,
   useTranslation,
 } from '@openmsupply-client/common';
-import { useProgramEnrolment } from '../api/hooks';
 import { usePatient } from '../../api';
 import {
   DocumentHistory,
@@ -16,6 +15,7 @@ import {
   SaveDocumentMutation,
   useJsonForms,
   usePatientModalStore,
+  useProgramEnrolments,
 } from '@openmsupply-client/programs';
 
 const useUpsertProgramEnrolment = (
@@ -23,9 +23,9 @@ const useUpsertProgramEnrolment = (
   type: string
 ): SaveDocumentMutation => {
   const { mutateAsync: insertProgramEnrolment } =
-    useProgramEnrolment.document.insert();
+    useProgramEnrolments.document.insert();
   const { mutateAsync: updateProgramEnrolment } =
-    useProgramEnrolment.document.update();
+    useProgramEnrolments.document.update();
 
   return async (jsonData: unknown, formSchemaId: string, parent?: string) =>
     parent === undefined

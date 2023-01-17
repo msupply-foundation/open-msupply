@@ -42,5 +42,7 @@ export const useProgramEnrolments = {
   document: {
     programEnrolments: Document.useProgramEnrolments,
     programEnrolmentsPromise: Document.useProgramEnrolmentsPromise,
+    insert: Document.useInsertProgramEnrolment,
+    update: Document.useUpdateProgramEnrolment,
   },
 };

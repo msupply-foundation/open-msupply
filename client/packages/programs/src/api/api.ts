@@ -5,7 +5,9 @@ import {
   DocumentRegistryNodeContext,
   DocumentRegistrySortFieldInput,
   EncounterSortFieldInput,
+  InsertProgramEnrolmentInput,
   ProgramEnrolmentSortFieldInput,
+  UpdateProgramEnrolmentInput,
 } from '@common/types';
 import {
   DocumentFragment,
@@ -221,5 +223,35 @@ export const getProgramEnrolmentQueries = (sdk: Sdk, storeId: string) => ({
     });
 
     return result?.programEnrolments;
+  },
+
+  insertProgramEnrolment: async (
+    input: InsertProgramEnrolmentInput
+  ): Promise<DocumentFragment> => {
+    const result = await sdk.insertProgramEnrolment({
+      storeId,
+      input,
+    });
+
+    if (result.insertProgramEnrolment.__typename === 'ProgramEnrolmentNode') {
+      return result.insertProgramEnrolment.document;
+    }
+
+    throw new Error('Could not insert program');
+  },
+
+  updateProgramEnrolment: async (
+    input: UpdateProgramEnrolmentInput
+  ): Promise<DocumentFragment> => {
+    const result = await sdk.updateProgramEnrolment({
+      storeId,
+      input,
+    });
+
+    if (result.updateProgramEnrolment.__typename === 'ProgramEnrolmentNode') {
+      return result.updateProgramEnrolment.document;
+    }
+
+    throw new Error('Could not update program');
   },
 });
