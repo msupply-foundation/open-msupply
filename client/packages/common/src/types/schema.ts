@@ -1315,6 +1315,11 @@ export type ItemConnector = {
 
 export type ItemCounts = {
   __typename: 'ItemCounts';
+  itemCounts: ItemCountsResponse;
+};
+
+export type ItemCountsResponse = {
+  __typename: 'ItemCountsResponse';
   lowStock: Scalars['Int'];
   noStock: Scalars['Int'];
   total: Scalars['Int'];

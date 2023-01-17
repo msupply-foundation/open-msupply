@@ -14,9 +14,11 @@ query stockCounts(
 }
 
 query itemCounts($storeId: String!, $lowStockThreshold: Int!) {
-  itemCounts(storeId: $storeId, lowStockThreshold: $lowStockThreshold) {
-    total
-    noStock
-    lowStock
+  itemCounts(lowStockThreshold: $lowStockThreshold, storeId: $storeId) {
+    itemCounts {
+      lowStock
+      noStock
+      total
+    }
   }
 }
