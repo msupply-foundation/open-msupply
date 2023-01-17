@@ -1,50 +1,50 @@
-use std::{convert::TryInto, num::TryFromIntError};
+use std::convert::TryInto;
 
 use repository::{ItemFilter, ItemRepository, RepositoryError};
 
 use crate::{item_stats::get_item_stats, service_provider::ServiceContext};
 
+pub struct ItemCounts {
+    pub total: i64,
+    pub no_stock: i64,
+    pub low_stock: i64,
+}
+
 pub trait ItemCountServiceTrait: Send + Sync {
-    fn count_total(&self, ctx: &ServiceContext) -> Result<i64, RepositoryError> {
-        ItemServiceCount {}.count_total(ctx)
-    }
-
-    fn count_no_stock(&self, ctx: &ServiceContext, store_id: &str) -> Result<i64, RepositoryError> {
-        ItemServiceCount {}.count_no_stock(ctx, store_id)
-    }
-
     /// # Arguments
     ///
     /// * i32 threshold number of months below which is considered low stock
-    fn count_low_stock(
+    fn get_item_counts(
         &self,
         ctx: &ServiceContext,
         store_id: &str,
         low_stock_threshold: i32,
-    ) -> Result<i64, TryFromIntError> {
-        ItemServiceCount {}.count_low_stock(ctx, store_id, low_stock_threshold)
+    ) -> Result<ItemCounts, RepositoryError> {
+        ItemServiceCount {}.get_item_counts(ctx, store_id, low_stock_threshold)
     }
 }
 
 pub struct ItemServiceCount {}
 
 impl ItemCountServiceTrait for ItemServiceCount {
-    fn count_total(&self, ctx: &ServiceContext) -> Result<i64, RepositoryError> {
-        let repo = ItemRepository::new(&ctx.connection);
-        repo.count(Some(ItemFilter::new().match_is_visible(true)))
-    }
-
-    fn count_no_stock(&self, ctx: &ServiceContext, store_id: &str) -> Result<i64, RepositoryError> {
-        let repo = ItemRepository::new(&ctx.connection);
-        repo.count_no_stock(Some(ItemFilter::new().match_is_visible(true)), store_id)
-    }
-
-    fn count_low_stock(
+    fn get_item_counts(
         &self,
         ctx: &ServiceContext,
         store_id: &str,
         low_stock_threshold: i32,
-    ) -> Result<i64, TryFromIntError> {
+    ) -> Result<ItemCounts, RepositoryError> {
+        let repo = ItemRepository::new(&ctx.connection);
+        let total = match repo.count(Some(ItemFilter::new().match_is_visible(true))) {
+            Ok(total) => total,
+            Err(error) => return Err(error),
+        };
+
+        let no_stock =
+            match repo.count_no_stock(Some(ItemFilter::new().match_is_visible(true)), store_id) {
+                Ok(no_stock) => no_stock,
+                Err(error) => return Err(error),
+            };
+
         let item_stats = get_item_stats(ctx, store_id, None, None)
             .unwrap()
             .into_iter()
@@ -54,6 +54,20 @@ impl ItemCountServiceTrait for ItemServiceCount {
                         < low_stock_threshold as f64
             });
 
-        item_stats.count().try_into()
+        let low_stock: i64 = match item_stats.count().try_into() {
+            Ok(low_stock) => low_stock,
+            Err(error) => {
+                return Err(RepositoryError::DBError {
+                    msg: error.to_string(),
+                    extra: "".to_string(),
+                })
+            }
+        };
+
+        Ok(ItemCounts {
+            total,
+            no_stock,
+            low_stock,
+        })
     }
 }

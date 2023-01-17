@@ -19,7 +19,7 @@ export type ItemCountsQueryVariables = Types.Exact<{
 }>;
 
 
-export type ItemCountsQuery = { __typename: 'Queries', itemCounts: { __typename: 'ItemCounts', total: number, noStock: number, lowStock: number } };
+export type ItemCountsQuery = { __typename: 'Queries', itemCounts: { __typename: 'ItemCounts', itemCounts: { __typename: 'ItemCountsResponse', lowStock: number, noStock: number, total: number } } };
 
 
 export const StockCountsDocument = gql`
@@ -36,10 +36,12 @@ export const StockCountsDocument = gql`
     `;
 export const ItemCountsDocument = gql`
     query itemCounts($storeId: String!, $lowStockThreshold: Int!) {
-  itemCounts(storeId: $storeId, lowStockThreshold: $lowStockThreshold) {
-    total
-    noStock
-    lowStock
+  itemCounts(lowStockThreshold: $lowStockThreshold, storeId: $storeId) {
+    itemCounts {
+      lowStock
+      noStock
+      total
+    }
   }
 }
     `;

@@ -22,7 +22,7 @@ export const getDashboardQueries = (
     },
     itemCounts: async (lowStockThreshold: number) => {
       const result = await queries.itemCounts({ storeId, lowStockThreshold });
-      return result?.itemCounts ?? {};
+      return result?.itemCounts?.itemCounts ?? {};
     },
   },
 });
