@@ -3,7 +3,7 @@ use super::{
     location_row::location, stock_line_row::stock_line, StorageConnection,
 };
 
-use crate::repository_error::RepositoryError;
+use crate::{inventory_adjustment_reason, repository_error::RepositoryError};
 
 use diesel::prelude::*;
 
@@ -30,6 +30,7 @@ table! {
         #[sql_name = "type"] type_ -> crate::db_diesel::invoice_line_row::InvoiceLineRowTypeMapping,
         number_of_packs -> Double,
         note -> Nullable<Text>,
+        inventory_adjustment_reason_id -> Nullable<Text>,
     }
 }
 
@@ -37,6 +38,7 @@ joinable!(invoice_line -> item (item_id));
 joinable!(invoice_line -> stock_line (stock_line_id));
 joinable!(invoice_line -> invoice (invoice_id));
 joinable!(invoice_line -> location (location_id));
+joinable!(invoice_line -> inventory_adjustment_reason (inventory_adjustment_reason_id));
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
@@ -78,6 +80,7 @@ pub struct InvoiceLineRow {
     pub r#type: InvoiceLineRowType,
     pub number_of_packs: f64,
     pub note: Option<String>,
+    pub inventory_adjustment_reason_id: Option<String>,
 }
 
 pub struct InvoiceLineRowRepository<'a> {

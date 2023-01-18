@@ -234,6 +234,7 @@ pub fn generate_lines_and_stock_lines(
             r#type: _,
             number_of_packs,
             note,
+            inventory_adjustment_reason_id,
         }: InvoiceLineRow = invoice_lines;
 
         if number_of_packs > 0.0 {

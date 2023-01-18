@@ -76,5 +76,6 @@ fn generate_line(
         total_after_tax,
         tax,
         note: None,
+        inventory_adjustment_reason_id: None,
     }
 }
