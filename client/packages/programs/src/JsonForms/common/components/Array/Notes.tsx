@@ -50,6 +50,10 @@ const NotesOptions = CommonOptions.extend({
       // Add more as required
     })
     .optional(),
+  /**
+   * How many rows should the textbox display initially (default: 5)
+   */
+  rows: z.number().optional(),
 });
 
 const NotesComponent = (props: ArrayControlCustomProps) => {
@@ -71,6 +75,9 @@ const NotesComponent = (props: ArrayControlCustomProps) => {
         {
           type: 'Note',
           scope: '/properties',
+          options: {
+            rows: props.uischema.options?.['rows'],
+          },
         },
       ],
     };
@@ -161,7 +168,6 @@ export const NotesControl = withJsonFormsArrayControlProps(
 
 const NoteOptions = z
   .object({
-    width: z.string().optional(),
     /**
      * How many rows should the textbox display initially (default: 5)
      */
@@ -175,7 +181,7 @@ export const noteTester = rankWith(5, uiTypeIs('Note'));
 const NoteComponent = (props: ControlProps) => {
   const { data, handleChange, path, errors, uischema, config, enabled } = props;
   const { localisedDateTime } = useFormatDateTime();
-  const { errors: zErrors, options: schemaOptions } = useZodOptionsValidation(
+  const { errors: zErrors, options } = useZodOptionsValidation(
     NoteOptions,
     uischema.options
   );
@@ -212,8 +218,7 @@ const NoteComponent = (props: ControlProps) => {
     return null;
   }
 
-  const width = schemaOptions?.width ?? '100%';
-  const rows = schemaOptions?.rows ?? 5;
+  const rows = options?.rows ?? 5;
 
   const authorStyle = {
     textAlign: 'right',
@@ -240,7 +245,7 @@ const NoteComponent = (props: ControlProps) => {
         inputProps={{
           value: text ?? '',
           name: 'text',
-          sx: { margin: 0.5, width },
+          sx: { margin: 0.5 },
           disabled: !props.enabled,
           error,
           helperText,
