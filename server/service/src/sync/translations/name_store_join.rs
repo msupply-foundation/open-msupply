@@ -1,4 +1,6 @@
-use repository::{NameRowRepository, NameStoreJoinRow, StorageConnection, SyncBufferRow};
+use repository::{
+    NameRowRepository, NameStoreJoinRow, StorageConnection, StoreRowRepository, SyncBufferRow,
+};
 
 use serde::{Deserialize, Serialize};
 
@@ -44,12 +46,28 @@ impl SyncTranslation for NameStoreJoinTranslation {
             }
         };
 
+        if let Some(store) = StoreRowRepository::new(connection)
+            .find_one_by_id(&data.store_ID)
+            .unwrap_or(None)
+        {
+            // if the name_store_join is referencing itself, then exclude it
+            // this is an invalid configuration which shouldn't be possible.. but is
+            if store.name_id == data.name_ID {
+                return Ok(None);
+            }
+        }
+
         let result = NameStoreJoinRow {
             id: data.ID,
             name_id: data.name_ID,
             store_id: data.store_ID,
-            name_is_customer: data.name_is_customer.unwrap_or(name.is_customer),
-            name_is_supplier: data.name_is_supplier.unwrap_or(name.is_supplier),
+            // name_is_customer: data.name_is_customer.unwrap_or(name.is_customer),
+            // name_is_supplier: data.name_is_supplier.unwrap_or(name.is_supplier),
+            // TODO in mirror setup primary server sends name_store_join to central with previous sync
+            // api, and name_is_customer or name_is_supplier on name_store_join are set to `false` rather then
+            // remaining as null, for now always names properties for name_is_supplier/customer
+            name_is_customer: name.is_customer,
+            name_is_supplier: name.is_supplier,
         };
 
         Ok(Some(IntegrationRecords::from_upsert(

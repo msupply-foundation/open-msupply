@@ -19,16 +19,15 @@ export const ErrorWithDetails: React.FC<ErrorWithDetailsProps> = ({
     display="flex"
     sx={{ color: 'error.main' }}
     gap={1}
-    padding={2}
     justifyContent="center"
   >
-    <Box>
+    <Box display="flex" flexWrap="wrap" alignContent="center">
       <AlertIcon />
     </Box>
-    <Box>
-      <Typography sx={{ color: 'inherit' }}>{error}</Typography>
-    </Box>
-    <Box>
+    <Box sx={{ '& > div': { display: 'inline-block' } }}>
+      <Typography sx={{ color: 'inherit' }} component="span">
+        {error}
+      </Typography>
       <InfoTooltipIcon title={details} />
     </Box>
   </Box>
