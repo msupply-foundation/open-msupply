@@ -47,6 +47,8 @@ pub struct LegacyStocktakeLineRow {
 
     #[serde(rename = "om_note")]
     pub note: Option<String>,
+    #[serde(rename = "optionID")]
+    pub inventory_adjustment_reason_id: Option<String>,
 }
 
 pub(crate) struct StocktakeLineTranslation {}
@@ -83,6 +85,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             cost_price_per_pack: Some(data.cost_price),
             sell_price_per_pack: Some(data.sell_price),
             note: data.note,
+            inventory_adjustment_reason_id: data.inventory_adjustment_reason_id,
         };
 
         Ok(Some(IntegrationRecords::from_upsert(
@@ -114,6 +117,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             cost_price_per_pack,
             sell_price_per_pack,
             note,
+            inventory_adjustment_reason_id,
         } = StocktakeLineRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg("Stocktake row not found"))?;
@@ -141,6 +145,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             cost_price: cost_price_per_pack.unwrap_or(0.0),
             sell_price: sell_price_per_pack.unwrap_or(0.0),
             note,
+            inventory_adjustment_reason_id,
         };
 
         Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
