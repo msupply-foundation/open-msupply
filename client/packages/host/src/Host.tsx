@@ -51,6 +51,7 @@ const queryClient = new QueryClient({
 Bugsnag.start({
   apiKey: 'a09ce9e95c27ac1b70ecf3c311e684ab',
   appVersion: appVersion,
+  enabledBreadcrumbTypes: ['error'],
 });
 
 const skipRequest = () =>
