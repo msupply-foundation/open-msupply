@@ -41,6 +41,7 @@ pub struct LegacyStockLineRow {
     pub sell_price: f64,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub note: Option<String>,
+    #[serde(rename = "name_ID")]
     pub name_id: Option<String>,
 }
 
