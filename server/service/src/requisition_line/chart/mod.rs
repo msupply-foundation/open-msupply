@@ -503,7 +503,7 @@ mod test {
                 // + 15 (Inventory Adjustment)
                 u.invoices[0].verified_datetime =
                     Some(NaiveDate::from_ymd(2021, 1, 1).and_hms(2, 0, 0));
-                u.invoices[0].r#type = InvoiceRowType::InventoryAdjustment;
+                u.invoices[0].r#type = InvoiceRowType::InventoryAddition;
                 u.invoice_lines[0].number_of_packs = 15.0;
                 u.invoice_lines[0].r#type = InvoiceLineRowType::StockIn;
                 u
@@ -521,7 +521,7 @@ mod test {
                 // - 11 (Inventory Adjustment)
                 u.invoices[0].verified_datetime =
                     Some(NaiveDate::from_ymd(2021, 1, 1).and_hms(2, 0, 0));
-                u.invoices[0].r#type = InvoiceRowType::InventoryAdjustment;
+                u.invoices[0].r#type = InvoiceRowType::InventoryReduction;
                 u.invoice_lines[0].number_of_packs = 11.0;
                 u.invoice_lines[0].r#type = InvoiceLineRowType::StockOut;
                 u
@@ -539,7 +539,7 @@ mod test {
                 // Not Counted
                 u.invoices[0].verified_datetime =
                     Some(NaiveDate::from_ymd(2020, 12, 31).and_hms(2, 0, 0));
-                u.invoices[0].r#type = InvoiceRowType::InventoryAdjustment;
+                u.invoices[0].r#type = InvoiceRowType::InventoryReduction;
                 u.invoice_lines[0].number_of_packs = 11.0;
                 u.invoice_lines[0].r#type = InvoiceLineRowType::StockOut;
                 u

@@ -78,17 +78,37 @@ impl StocktakeNode {
             .map(|dt| DateTime::<Utc>::from_utc(dt, Utc))
     }
 
-    pub async fn inventory_adjustment_id(&self) -> &Option<String> {
-        &self.stocktake.inventory_adjustment_id
+    pub async fn inventory_addition_id(&self) -> &Option<String> {
+        &self.stocktake.inventory_addition_id
     }
 
-    pub async fn inventory_adjustment(&self, ctx: &Context<'_>) -> Result<Option<InvoiceNode>> {
-        if let Some(ref adjustment_id) = self.stocktake.inventory_adjustment_id {
+    pub async fn inventory_reduction_id(&self) -> &Option<String> {
+        &self.stocktake.inventory_reduction_id
+    }
+
+    pub async fn inventory_addition(&self, ctx: &Context<'_>) -> Result<Option<InvoiceNode>> {
+        if let Some(ref addition_id) = self.stocktake.inventory_addition_id {
             let loader = ctx.get_loader::<DataLoader<InvoiceByIdLoader>>();
-            let invoice = loader.load_one(adjustment_id.clone()).await?.ok_or(
+            let invoice = loader.load_one(addition_id.clone()).await?.ok_or(
                 StandardGraphqlError::InternalError(format!(
-                    "Cannot find inventory adjustment {}",
-                    adjustment_id
+                    "Cannot find inventory addition {}",
+                    addition_id
+                ))
+                .extend(),
+            )?;
+            Ok(Some(InvoiceNode { invoice }))
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub async fn inventory_reduction(&self, ctx: &Context<'_>) -> Result<Option<InvoiceNode>> {
+        if let Some(ref reduction_id) = self.stocktake.inventory_reduction_id {
+            let loader = ctx.get_loader::<DataLoader<InvoiceByIdLoader>>();
+            let invoice = loader.load_one(reduction_id.clone()).await?.ok_or(
+                StandardGraphqlError::InternalError(format!(
+                    "Cannot find inventory reduction {}",
+                    reduction_id
                 ))
                 .extend(),
             )?;
