@@ -12,27 +12,21 @@ import { JsonFormsRendererRegistryEntry } from '@jsonforms/core';
 import {
   EncounterLineChart,
   encounterLineChartTester,
-} from './components/EncounterLineChart';
-import { BMI, bmiTester } from './components/BMI';
-import { DateOfBirth, dateOfBirthTester } from './components/DateOfBirth';
-import { IdGenerator, idGeneratorTester } from './components/IdGenerator';
-import {
+  BMI,
+  bmiTester,
+  DateOfBirth,
+  dateOfBirthTester,
+  IdGenerator,
+  idGeneratorTester,
   QuantityPrescribed,
   quantityPrescribedTester,
-} from './components/QuantityPrescribed';
-import {
   AdherenceStatus,
   adherenceStatusTester,
-} from './components/AdherenceStatus';
-import {
   PreviousEncounterField,
   previousEncounterFieldTester,
-} from './components/PreviousEncounterField';
-import {
   DecisionTreeControl,
   decisionTreeTester,
-} from './components/DecisionTree';
-import { Note, noteTester } from './components/Note';
+} from './components';
 
 // https://stackoverflow.com/questions/57874879/how-to-treat-missing-undefined-properties-as-equivalent-in-lodashs-isequalwit
 // TODO: handle undefined and empty string as equal? e.g. initial data is undefined and current data is ""
@@ -93,7 +87,6 @@ const additionalRenderers: JsonFormsRendererRegistryEntry[] = [
     renderer: PreviousEncounterField,
   },
   { tester: decisionTreeTester, renderer: DecisionTreeControl },
-  { tester: noteTester, renderer: Note },
 ];
 
 export const useJsonForms = (

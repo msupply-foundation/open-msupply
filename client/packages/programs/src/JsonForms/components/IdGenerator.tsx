@@ -6,6 +6,7 @@ import {
   useConfirmationModal,
   useMutation,
   useTranslation,
+  BasicTextInput,
 } from '@openmsupply-client/common';
 import {
   FORM_LABEL_COLUMN_WIDTH,
@@ -18,9 +19,9 @@ import {
 import { Button, FormLabel } from '@mui/material';
 import { get as extractProperty } from 'lodash';
 import { z } from 'zod';
-import { DebouncedTextInput } from '../common/components/DebouncedTextInput';
 import { useJsonForms } from '@jsonforms/react';
-import { useJSONFormsCustomError } from '../common/components/useJSONFormsCustomError';
+import { useJSONFormsCustomError } from '../common/hooks/useJSONFormsCustomError';
+import { useDebouncedTextInput } from '../common/hooks/useDebouncedTextInput';
 
 export const idGeneratorTester = rankWith(10, uiTypeIs('IdGenerator'));
 
@@ -303,6 +304,21 @@ const UIComponent = (props: ControlProps) => {
   }, [options, core?.data]);
   const error = !!validationError || !!errors;
 
+  const manualUpdate = useCallback(
+    async (value: string | undefined) => {
+      if (!options) return;
+
+      if (value) {
+        const error = await validateId(options, value);
+        setCustomError(error);
+      }
+      handleChange(path, value);
+    },
+    [options, path]
+  );
+
+  const { text, onChange } = useDebouncedTextInput(data, error, manualUpdate);
+
   const validateId = async (
     options: GeneratorOptions,
     id: string
@@ -341,21 +357,6 @@ const UIComponent = (props: ControlProps) => {
     setCustomError(undefined);
     handleChange(path, id);
   }, [options, path, core?.data, handleChange]);
-  const manualUpdate = useCallback(
-    async (value: string | undefined) => {
-      if (!options) {
-        return;
-      }
-
-      if (value) {
-        const error = await validateId(options, value);
-        setCustomError(error);
-      }
-
-      handleChange(path, value);
-    },
-    [options, path]
-  );
 
   const confirmRegenerate = useConfirmationModal({
     title: t('heading.are-you-sure'),
@@ -384,15 +385,13 @@ const UIComponent = (props: ControlProps) => {
         alignItems="center"
         gap={2}
       >
-        <DebouncedTextInput
-          data={data}
-          onChange={manualUpdate}
-          inputProps={{
-            disabled: !props.enabled || !options?.allowManualEntry,
-            required: props.required,
-            error: !!customError,
-            helperText: errors ?? customError,
-          }}
+        <BasicTextInput
+          disabled={!props.enabled || !options?.allowManualEntry}
+          value={text}
+          style={{ flex: 1 }}
+          helperText={errors ?? customError}
+          onChange={e => onChange(e.target.value)}
+          error={!!errors || !!customError}
         />
 
         <Box>

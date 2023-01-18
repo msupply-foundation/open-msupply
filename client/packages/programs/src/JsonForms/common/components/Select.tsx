@@ -8,7 +8,7 @@ import {
   FORM_INPUT_COLUMN_WIDTH,
 } from '../styleConstants';
 import { z } from 'zod';
-import { useZodOptionsValidation } from '../useZodOptionsValidation';
+import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
 import parse from 'autosuggest-highlight/parse';
 import match from 'autosuggest-highlight/match';
 

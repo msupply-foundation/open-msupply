@@ -8,7 +8,7 @@ import {
   FORM_INPUT_COLUMN_WIDTH,
 } from '../styleConstants';
 import { z } from 'zod';
-import { useZodOptionsValidation } from '../useZodOptionsValidation';
+import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
 import { get as extractProperty } from 'lodash';
 
 export const conditionalSelectTester = rankWith(
