@@ -4,6 +4,7 @@ import {
   addDays,
   addYears,
   isValid,
+  differenceInDays,
   differenceInMonths,
   differenceInYears,
   isPast,
@@ -81,6 +82,8 @@ export const DateUtils = {
   isEqual,
   isValid,
   age: (date: Date) => differenceInYears(startOfToday(), startOfDay(date)),
+  ageInDays: (date: Date | string) =>
+    differenceInDays(Date.now(), dateInputHandler(date)),
   startOfDay,
   startOfYear,
   formatRFC3339,

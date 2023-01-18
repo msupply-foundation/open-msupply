@@ -6,7 +6,7 @@ import {
   Box,
 } from '@openmsupply-client/common';
 import { z } from 'zod';
-import { useZodOptionsValidation } from '../useZodOptionsValidation';
+import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
 import { FormLabel } from '@mui/material';
 import {
   FORM_INPUT_COLUMN_WIDTH,

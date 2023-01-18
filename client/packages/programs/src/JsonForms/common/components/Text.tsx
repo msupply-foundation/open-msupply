@@ -1,12 +1,15 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ControlProps, rankWith, schemaTypeIs } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import { Box, FormLabel, useTranslation } from '@openmsupply-client/common';
+import {
+  DetailInputWithLabelRow,
+  useTranslation,
+} from '@openmsupply-client/common';
 import { z } from 'zod';
-import { useZodOptionsValidation } from '../useZodOptionsValidation';
-import { DebouncedTextInput } from './DebouncedTextInput';
+import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
+import { useDebouncedTextInput } from '../hooks/useDebouncedTextInput';
 import { FORM_LABEL_WIDTH } from '../styleConstants';
-import { useJSONFormsCustomError } from './useJSONFormsCustomError';
+import { useJSONFormsCustomError } from '../hooks/useJSONFormsCustomError';
 
 const Options = z
   .object({
@@ -92,8 +95,12 @@ const UIComponent = (props: ControlProps) => {
     pattern,
   } = useOptions(props.uischema.options);
   const customErrors = usePatternValidation(path, pattern, data);
-
   const error = !!errors || !!zErrors || !!customErrors;
+  const { text, onChange } = useDebouncedTextInput(
+    data,
+    error,
+    (value: string | undefined) => handleChange(path, value)
+  );
   const t = useTranslation('common');
 
   const examples =
@@ -114,37 +121,27 @@ const UIComponent = (props: ControlProps) => {
   const rows = schemaOptions?.rows;
 
   const width = schemaOptions?.width ?? '100%';
-  const labelFlexBasis = `${FORM_LABEL_WIDTH}%`;
-  const inputFlexBasis = `${100 - FORM_LABEL_WIDTH}%`;
-  return (
-    <Box display="flex" alignItems="center" gap={1}>
-      <Box style={{ textAlign: 'end' }} flexBasis={labelFlexBasis}>
-        <FormLabel sx={{ fontWeight: 'bold' }}>{label}:</FormLabel>
-      </Box>
-      <Box
-        flexBasis={inputFlexBasis}
-        justifyContent={'flex-start'}
-        display="flex"
-      >
-        <DebouncedTextInput
-          data={data}
-          onChange={value => handleChange(path, value)}
-          inputProps={{
-            sx: { margin: 0.5, width },
-            disabled: !props.enabled,
 
-            FormHelperTextProps: error
-              ? { sx: { color: 'error.main' } }
-              : undefined,
-            required: props.required,
-            multiline,
-            rows,
-            error,
-            helperText,
-          }}
-        />
-      </Box>
-    </Box>
+  return (
+    <DetailInputWithLabelRow
+      label={label}
+      inputProps={{
+        value: text ?? '',
+        sx: { margin: 0.5, width },
+        onChange: e => onChange(e.target.value || ''),
+        disabled: !props.enabled,
+        error,
+        helperText,
+        FormHelperTextProps: error
+          ? { sx: { color: 'error.main' } }
+          : undefined,
+        required: props.required,
+        multiline,
+        rows,
+      }}
+      labelWidthPercentage={FORM_LABEL_WIDTH}
+      inputAlignment={'start'}
+    />
   );
 };
 

@@ -48,7 +48,7 @@
                       },
                       {
                         "type": "Field",
-                        "field": "hand",
+                        "field": "handedness",
                         "mutations": [
                           {
                             "mapping": {
@@ -259,7 +259,7 @@
                 },
                 {
                   "type": "Control",
-                  "scope": "#/properties/hand",
+                  "scope": "#/properties/handedness",
                   "label": "Handedness",
                   "options": {
                     "show": [
@@ -429,6 +429,22 @@
                         }
                       ]
                     }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "Group",
+              "label": "Notes",
+              "elements": [
+                {
+                  "type": "Notes",
+                  "label": "Patient Notes",
+                  "scope": "#/properties/notes",
+                  "options": {
+                    "editRestrictions": { "latest": true, "isCurrentUser": true, "maxAge": 1 },
+                    "reverse": true,
+                    "defaultExpanded": true
                   }
                 }
               ]
