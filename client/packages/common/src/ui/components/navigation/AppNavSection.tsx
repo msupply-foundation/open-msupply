@@ -13,12 +13,17 @@ export const AppNavSection: FC<
       sx={
         isActive
           ? {
+              '& .menu_section_icon': { transform: 'unset' },
               '& .MuiCollapse-root': {
+                marginLeft: '48px',
                 marginTop: -1.5,
+                borderLeft: '1px solid',
+                borderColor: 'gray.light',
+                paddingLeft: 1,
               },
               '& .MuiCollapse-wrapperInner > ul > li.MuiListItem-root': {
                 height: 30,
-                marginLeft: 1,
+                '& .MuiListItemIcon-root': { minWidth: 0 },
               },
             }
           : {}
