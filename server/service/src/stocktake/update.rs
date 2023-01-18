@@ -894,6 +894,7 @@ mod test {
             stocktake_line.sell_price_per_pack.unwrap()
         );
         assert_eq!(stock_line.note, stocktake_line.note);
+        assert_eq!(stock_line.name_id, None);
 
         // assert stocktake_line has been updated
         let updated_stocktake_line = StocktakeLineRowRepository::new(&context.connection)
