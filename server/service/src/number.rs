@@ -26,8 +26,10 @@ pub fn next_number(
                 .find_max_invoice_number(InvoiceRowType::InboundShipment, store_id)?,
             NumberRowType::OutboundShipment => InvoiceRowRepository::new(&connection_tx)
                 .find_max_invoice_number(InvoiceRowType::OutboundShipment, store_id)?,
-            NumberRowType::InventoryAdjustment => InvoiceRowRepository::new(&connection_tx)
-                .find_max_invoice_number(InvoiceRowType::InventoryAdjustment, store_id)?,
+            NumberRowType::InventoryAddition => InvoiceRowRepository::new(&connection_tx)
+                .find_max_invoice_number(InvoiceRowType::InventoryAddition, store_id)?,
+            NumberRowType::InventoryReduction => InvoiceRowRepository::new(&connection_tx)
+                .find_max_invoice_number(InvoiceRowType::InventoryReduction, store_id)?,
             NumberRowType::RequestRequisition => RequisitionRowRepository::new(&connection_tx)
                 .find_max_requisition_number(RequisitionRowType::Request, store_id)?,
             NumberRowType::ResponseRequisition => RequisitionRowRepository::new(&connection_tx)

@@ -118,7 +118,6 @@ export const useStocktakeColumns = ({
       [
         'packSize',
         {
-          width: 125,
           getSortValue: row => {
             if ('lines' in row) {
               const { lines } = row;
@@ -149,8 +148,8 @@ export const useStocktakeColumns = ({
       ],
       {
         key: 'snapshotNumPacks',
-        width: 180,
         label: 'label.snapshot-num-of-packs',
+        description: 'description.snapshot-num-of-packs',
         align: ColumnAlign.Right,
         Cell: PositiveNumberCell,
         getSortValue: row => {
@@ -183,7 +182,7 @@ export const useStocktakeColumns = ({
       {
         key: 'countedNumPacks',
         label: 'label.counted-num-of-packs',
-        width: 180,
+        description: 'description.counted-num-of-packs',
         align: ColumnAlign.Right,
         Cell: PositiveNumberCell,
         getSortValue: row => {
@@ -213,6 +212,76 @@ export const useStocktakeColumns = ({
           }
         },
       },
+      {
+        key: 'difference',
+        label: 'label.difference',
+        align: ColumnAlign.Right,
+        getSortValue: row => {
+          if ('lines' in row) {
+            const { lines } = row;
+            let total =
+              lines.reduce(
+                (total, line) =>
+                  total +
+                  (line.snapshotNumberOfPacks -
+                    (line.countedNumberOfPacks ?? line.snapshotNumberOfPacks)),
+                0
+              ) ?? 0;
+            return (total < 0 ? Math.abs(total) : -total).toString();
+          } else {
+            return (
+              row.snapshotNumberOfPacks -
+                (row.countedNumberOfPacks ?? row.snapshotNumberOfPacks) ?? ''
+            );
+          }
+        },
+        accessor: ({ rowData }) => {
+          if ('lines' in rowData) {
+            const { lines } = rowData;
+            let total =
+              lines.reduce(
+                (total, line) =>
+                  total +
+                  (line.snapshotNumberOfPacks -
+                    (line.countedNumberOfPacks ?? line.snapshotNumberOfPacks)),
+                0
+              ) ?? 0;
+            return (total < 0 ? Math.abs(total) : -total).toString();
+          } else {
+            return (
+              rowData.snapshotNumberOfPacks -
+              (rowData.countedNumberOfPacks ?? rowData.snapshotNumberOfPacks)
+            );
+          }
+        },
+      },
+      {
+        key: 'comment',
+        label: 'label.stocktake-comment',
+        getSortValue: row => {
+          if ('lines' in row) {
+            const { lines } = row;
+            return (
+              ArrayUtils.ifTheSameElseDefault(lines, 'comment', '[multiple]') ??
+              ''
+            );
+          } else {
+            return row.comment ?? '';
+          }
+        },
+        accessor: ({ rowData }) => {
+          if ('lines' in rowData) {
+            const { lines } = rowData;
+            return ArrayUtils.ifTheSameElseDefault(
+              lines,
+              'comment',
+              '[multiple]'
+            );
+          } else {
+            return rowData.comment;
+          }
+        },
+      },
       expandColumn,
       GenericColumnKey.Selection,
     ],
@@ -239,4 +308,5 @@ export const useExpansionColumns = (): Column<StocktakeLineFragment>[] =>
       align: ColumnAlign.Right,
       accessor: ({ rowData }) => rowData.countedNumberOfPacks,
     },
+    'comment',
   ]);

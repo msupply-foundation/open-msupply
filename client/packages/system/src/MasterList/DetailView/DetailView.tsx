@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect } from 'react';
 import {
   TableProvider,
   createTableStore,
@@ -7,11 +7,10 @@ import {
   RouteBuilder,
   useNavigate,
   useTranslation,
+  useBreadcrumbs,
 } from '@openmsupply-client/common';
 import { useMasterList } from '../api';
 import { Toolbar } from './Toolbar';
-import { AppBarButtons } from './AppBarButtons';
-import { SidePanel } from './SidePanel';
 import { ContentArea } from './ContentArea';
 import { AppRoute } from '@openmsupply-client/config';
 
@@ -19,15 +18,18 @@ export const MasterListDetailView: FC = () => {
   const { data, isLoading } = useMasterList.document.get();
   const navigate = useNavigate();
   const t = useTranslation('catalogue');
+  const { setSuffix } = useBreadcrumbs();
+
+  useEffect(() => {
+    setSuffix(data?.name ?? '');
+  }, [data]);
 
   if (isLoading) return <DetailViewSkeleton />;
 
   return !!data ? (
     <TableProvider createStore={createTableStore}>
-      <AppBarButtons />
       <Toolbar />
       <ContentArea />
-      <SidePanel />
     </TableProvider>
   ) : (
     <AlertModal

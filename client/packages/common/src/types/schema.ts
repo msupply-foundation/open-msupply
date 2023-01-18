@@ -1562,7 +1562,8 @@ export enum InvoiceNodeStatus {
 
 export enum InvoiceNodeType {
   InboundShipment = 'INBOUND_SHIPMENT',
-  InventoryAdjustment = 'INVENTORY_ADJUSTMENT',
+  InventoryAddition = 'INVENTORY_ADDITION',
+  InventoryReduction = 'INVENTORY_REDUCTION',
   OutboundShipment = 'OUTBOUND_SHIPMENT'
 }
 
@@ -3481,7 +3482,6 @@ export type StocktakeFilterInput = {
   description?: InputMaybe<SimpleStringFilterInput>;
   finalisedDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
-  inventoryAdjustmentId?: InputMaybe<EqualFilterStringInput>;
   isLocked?: InputMaybe<Scalars['Boolean']>;
   status?: InputMaybe<EqualFilterStocktakeStatusInput>;
   stocktakeDate?: InputMaybe<DateFilterInput>;
@@ -3526,8 +3526,10 @@ export type StocktakeNode = {
   description?: Maybe<Scalars['String']>;
   finalisedDatetime?: Maybe<Scalars['DateTime']>;
   id: Scalars['String'];
-  inventoryAdjustment?: Maybe<InvoiceNode>;
-  inventoryAdjustmentId?: Maybe<Scalars['String']>;
+  inventoryAddition?: Maybe<InvoiceNode>;
+  inventoryAdditionId?: Maybe<Scalars['String']>;
+  inventoryReduction?: Maybe<InvoiceNode>;
+  inventoryReductionId?: Maybe<Scalars['String']>;
   isLocked: Scalars['Boolean'];
   lines: StocktakeLineConnector;
   status: StocktakeNodeStatus;

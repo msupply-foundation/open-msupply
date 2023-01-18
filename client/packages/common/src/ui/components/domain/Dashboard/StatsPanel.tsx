@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { Grid, Paper, Tooltip, Typography } from '@mui/material';
-import { BarChartIcon, InlineSpinner, StockIcon } from '../../../';
+import { InlineSpinner, StockIcon } from '../../../';
 import { useTranslation } from '@common/intl';
 
 export type Stat = {
@@ -48,6 +48,7 @@ export const StatsPanel: FC<StatsPanelProps> = ({
         item
         sx={{
           color: 'gray.main',
+          flex: 1,
           fontSize: '12px',
           fontWeight: 500,
           marginInlineStart: '8px',
@@ -66,7 +67,6 @@ export const StatsPanel: FC<StatsPanelProps> = ({
         marginBottom: '21px',
         boxShadow: theme => theme.shadows[1],
         padding: '14px 24px',
-        minWidth: '300px',
         width: width ? `${width}px` : undefined,
       }}
     >
@@ -101,12 +101,6 @@ export const StatsPanel: FC<StatsPanelProps> = ({
               ))}
             </Grid>
           )}
-          <Grid item>
-            <BarChartIcon
-              sx={{ height: '50px', width: '125px' }}
-              color="secondary"
-            />
-          </Grid>
         </Grid>
       </Grid>
     </Paper>

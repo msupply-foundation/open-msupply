@@ -206,7 +206,7 @@ mod test {
                 u
             }))
             .join(inline_edit(&stock_movement_point(), |mut u| {
-                u.invoices[0].r#type = InvoiceRowType::InventoryAdjustment;
+                u.invoices[0].r#type = InvoiceRowType::InventoryAddition;
                 u.invoices[0].verified_datetime =
                     Some(NaiveDate::from_ymd(2021, 01, 20).and_hms(0, 0, 0));
                 u.invoice_lines[0].r#type = InvoiceLineRowType::StockIn;
@@ -214,7 +214,7 @@ mod test {
                 u
             }))
             .join(inline_edit(&stock_movement_point(), |mut u| {
-                u.invoices[0].r#type = InvoiceRowType::InventoryAdjustment;
+                u.invoices[0].r#type = InvoiceRowType::InventoryReduction;
                 u.invoices[0].verified_datetime =
                     Some(NaiveDate::from_ymd(2021, 02, 01).and_hms(0, 0, 0));
                 u.invoice_lines[0].r#type = InvoiceLineRowType::StockOut;
@@ -222,7 +222,7 @@ mod test {
                 u
             }))
             .join(inline_edit(&stock_movement_point(), |mut u| {
-                u.invoices[0].r#type = InvoiceRowType::InventoryAdjustment;
+                u.invoices[0].r#type = InvoiceRowType::InventoryReduction;
                 // Should not be counted
                 u.invoices[0].verified_datetime = None;
                 u.invoice_lines[0].r#type = InvoiceLineRowType::StockOut;

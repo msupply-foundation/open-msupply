@@ -30,7 +30,8 @@ pub enum NumberRowTypeError {
 pub enum NumberRowType {
     InboundShipment,
     OutboundShipment,
-    InventoryAdjustment,
+    InventoryReduction,
+    InventoryAddition,
     RequestRequisition,
     ResponseRequisition,
     Stocktake,
@@ -42,7 +43,8 @@ impl fmt::Display for NumberRowType {
         match self {
             NumberRowType::InboundShipment => write!(f, "INBOUND_SHIPMENT"),
             NumberRowType::OutboundShipment => write!(f, "OUTBOUND_SHIPMENT"),
-            NumberRowType::InventoryAdjustment => write!(f, "INVENTORY_ADJUSTMENT"),
+            NumberRowType::InventoryReduction => write!(f, "INVENTORY_REDUCTION"),
+            NumberRowType::InventoryAddition => write!(f, "INVENTORY_ADDITION"),
             NumberRowType::RequestRequisition => write!(f, "REQUEST_REQUISITION"),
             NumberRowType::ResponseRequisition => write!(f, "RESPONSE_REQUISITION"),
             NumberRowType::Stocktake => write!(f, "STOCKTAKE"),
@@ -58,7 +60,8 @@ impl TryFrom<String> for NumberRowType {
         match s.as_str() {
             "INBOUND_SHIPMENT" => Ok(NumberRowType::InboundShipment),
             "OUTBOUND_SHIPMENT" => Ok(NumberRowType::OutboundShipment),
-            "INVENTORY_ADJUSTMENT" => Ok(NumberRowType::InventoryAdjustment),
+            "INVENTORY_ADDITION" => Ok(NumberRowType::InventoryAddition),
+            "INVENTORY_REDUCTION" => Ok(NumberRowType::InventoryReduction),
             "REQUEST_REQUISITION" => Ok(NumberRowType::RequestRequisition),
             "RESPONSE_REQUISITION" => Ok(NumberRowType::ResponseRequisition),
             "STOCKTAKE" => Ok(NumberRowType::Stocktake),
@@ -254,11 +257,16 @@ mod number_row_mapping_test {
                         == NumberRowType::OutboundShipment
                 )
             }
-            NumberRowType::InventoryAdjustment => {
+            NumberRowType::InventoryAddition => {
                 assert!(
-                    NumberRowType::try_from(NumberRowType::InventoryAdjustment.to_string())
-                        .unwrap()
-                        == NumberRowType::InventoryAdjustment
+                    NumberRowType::try_from(NumberRowType::InventoryAddition.to_string()).unwrap()
+                        == NumberRowType::InventoryAddition
+                )
+            }
+            NumberRowType::InventoryReduction => {
+                assert!(
+                    NumberRowType::try_from(NumberRowType::InventoryReduction.to_string()).unwrap()
+                        == NumberRowType::InventoryReduction
                 )
             }
             NumberRowType::RequestRequisition => {

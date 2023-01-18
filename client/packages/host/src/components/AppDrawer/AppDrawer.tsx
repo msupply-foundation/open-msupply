@@ -66,7 +66,7 @@ const StyledDivider = styled(Divider)({
   width: 152,
 });
 
-const drawerWidth = 240;
+const drawerWidth = 260;
 
 const getDrawerCommonStyles = (theme: Theme) => ({
   backgroundColor: theme.palette.background.drawer,
@@ -119,13 +119,16 @@ const StyledDrawer = styled(Box, {
       flex: 1,
     },
     '& div > ul > li': {
-      width: 200,
+      width: 220,
     },
   }),
   ...(!isOpen && {
     ...closedMixin(theme),
     '& .MuiDrawer-paper': closedMixin(theme),
     '& .navLinkText': {
+      width: 0,
+    },
+    '& .navLinkText .MuiListItemText-root': {
       display: 'none',
     },
     '& div > ul > li': {

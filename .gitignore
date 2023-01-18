@@ -1,5 +1,4 @@
 .DS_Store
-.vscode/launch.json
 # common location for local config file containing connection credentials
 server/report_builder/config.yaml
-.vscode/settings.json
+.vscode/*
