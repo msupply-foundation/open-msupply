@@ -15,6 +15,10 @@ import {
   StockLineFragment,
 } from '../../api/operations.generated';
 
+const MODAL_HEIGHT = 600;
+const MODAL_WIDTH = 650;
+const MODAL_COMPONENTS_HEIGHT = 235;
+
 export type ItemWithStockLines = {
   itemId: string;
   stockLines?: StockLineFragment[];
@@ -24,6 +28,7 @@ interface StockItemSelectModalProps {
   isOpen: boolean;
   onClose: () => void;
   onChange: (items?: ItemWithStockLines[]) => Promise<any>;
+  disableBackdrop: boolean;
 }
 
 const renderOption: AutocompleteOptionRenderer<ItemRowWithStatsFragment> = (
@@ -59,8 +64,9 @@ export const StockItemSelectModal = ({
   isOpen,
   onChange,
   onClose,
+  disableBackdrop
 }: StockItemSelectModalProps) => {
-  const { Modal } = useDialog({ isOpen, onClose });
+  const { Modal } = useDialog({ isOpen, onClose, disableBackdrop });
   const t = useTranslation('inventory');
   const { data, isLoading } = useStockItemsWithStockLines();
   const [saving, setSaving] = useState(false);
@@ -84,8 +90,8 @@ export const StockItemSelectModal = ({
     <Modal
       slideAnimation={false}
       title={t('heading.select-items')}
-      width={650}
-      height={600}
+      width={MODAL_WIDTH}
+      height={MODAL_HEIGHT}
       cancelButton={
         <DialogButton disabled={isLoading} variant="cancel" onClick={onClose} />
       }
@@ -112,6 +118,10 @@ export const StockItemSelectModal = ({
             onChange={onChangeSelectedItems}
             options={options}
             renderOption={renderOption}
+            height={
+              Math.min(window.innerHeight - 50, MODAL_HEIGHT) -
+              MODAL_COMPONENTS_HEIGHT
+            }
           />
         ) : (
           <Box sx={{ height: '100%' }}>

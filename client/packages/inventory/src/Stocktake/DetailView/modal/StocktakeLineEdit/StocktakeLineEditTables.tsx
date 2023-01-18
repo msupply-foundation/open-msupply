@@ -102,7 +102,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
     {
       key: 'packSize',
       label: 'label.pack-size',
-      width: 125,
+      width: 100,
       Cell: PackSizeCell,
       setter: patch => update({ ...patch, countThisLine: true }),
     },
@@ -117,7 +117,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
     [
       expiryDateColumn,
       {
-        width: 100,
+        width: 120,
         setter: patch => update({ ...patch, countThisLine: true }),
       },
     ],
@@ -188,8 +188,18 @@ export const LocationTable: FC<StocktakeLineEditTableProps> = ({
     [
       getLocationInputColumn(),
       {
-        width: 400,
+        width: 300,
         setter: patch => update({ ...patch, countThisLine: true }),
+      },
+    ],
+    [
+      'comment',
+      {
+        label: 'label.stocktake-comment',
+        Cell: TextInputCell,
+        width: 200,
+        setter: patch => update({ ...patch, countThisLine: true }),
+        accessor: ({ rowData }) => rowData.comment || '',
       },
     ],
   ]);
