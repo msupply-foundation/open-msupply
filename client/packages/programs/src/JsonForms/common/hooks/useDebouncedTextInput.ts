@@ -27,9 +27,8 @@ import { useDebounceCallback } from '@openmsupply-client/common';
 
 export const useDebouncedTextInput = (
   data: string,
-  path: string,
   error: boolean,
-  handleChange: (path: string, value: string | undefined) => void
+  handleChange: (value: string | undefined) => void
 ) => {
   const [text, setText] = useState<string | undefined>(data);
 
@@ -39,8 +38,10 @@ export const useDebouncedTextInput = (
   // debounce to avoid rerendering the form on every key stroke which becomes a
   // performance issue
   const onChangeDebounced = useDebounceCallback(
-    (value: string) => handleChange(path, error ? undefined : value),
-    [path, error, handleChange]
+    (value: string) => {
+      handleChange(error ? undefined : value);
+    },
+    [error, handleChange]
   );
 
   const onChange = (value: string) => {
