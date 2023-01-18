@@ -172,7 +172,7 @@ const NoteOptions = z
 
 export const noteTester = rankWith(5, uiTypeIs('Note'));
 
-const UIComponent = (props: ControlProps) => {
+const NoteComponent = (props: ControlProps) => {
   const { data, handleChange, path, errors, uischema, config, enabled } = props;
   const { localisedDateTime } = useFormatDateTime();
   const { errors: zErrors, options: schemaOptions } = useZodOptionsValidation(
@@ -182,7 +182,7 @@ const UIComponent = (props: ControlProps) => {
   const error = !!errors || !!zErrors;
   const handleNoteChange = (text: string | undefined) => {
     const authorId = config.user?.id;
-    // TO-DO: Use full name for default once available in database
+    // TO-DO: Use full name for Author name once available in database
     const authorName = config.user?.name;
     const created = data?.created ?? new Date().toISOString();
     handleChange(
@@ -198,8 +198,7 @@ const UIComponent = (props: ControlProps) => {
     );
   };
   const { text, onChange } = useDebouncedTextInput(
-    data,
-    path,
+    data.text,
     error,
     handleNoteChange
   );
@@ -276,4 +275,4 @@ const UIComponent = (props: ControlProps) => {
   );
 };
 
-export const Note = withJsonFormsControlProps(UIComponent);
+export const Note = withJsonFormsControlProps(NoteComponent);
