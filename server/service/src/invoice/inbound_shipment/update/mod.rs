@@ -172,11 +172,11 @@ mod test {
     use chrono::{Duration, Utc};
     use repository::{
         mock::{
-            mock_inbound_shipment_a, mock_inbound_shipment_b, mock_inbound_shipment_c,
-            mock_inbound_shipment_e, mock_name_a, mock_name_linked_to_store_join,
-            mock_name_not_linked_to_store_join, mock_outbound_shipment_e, mock_store_a,
-            mock_store_b, mock_store_linked_to_name, mock_user_account_a, MockData,
-            MockDataInserts,
+            mock_inbound_shipment_a, mock_inbound_shipment_a_invoice_lines,
+            mock_inbound_shipment_b, mock_inbound_shipment_c, mock_inbound_shipment_e, mock_name_a,
+            mock_name_linked_to_store_join, mock_name_not_linked_to_store_join,
+            mock_outbound_shipment_e, mock_store_a, mock_store_b, mock_store_linked_to_name,
+            mock_user_account_a, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
         ActivityLogRowRepository, ActivityLogType, EqualFilter, InvoiceLineFilter,
@@ -493,6 +493,10 @@ mod test {
             )
             .unwrap();
 
+        let stock_line_id = mock_inbound_shipment_a_invoice_lines()[0]
+            .clone()
+            .stock_line_id
+            .unwrap();
         let invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&mock_inbound_shipment_a().id)
             .unwrap();
@@ -501,6 +505,9 @@ mod test {
             .unwrap()
             .into_iter()
             .find(|l| l.r#type == ActivityLogType::InvoiceStatusVerified)
+            .unwrap();
+        let stock_line = StockLineRowRepository::new(&connection)
+            .find_one_by_id(&stock_line_id)
             .unwrap();
 
         assert!(invoice.verified_datetime.unwrap() > now);
@@ -514,5 +521,6 @@ mod test {
             })
         );
         assert_eq!(log.r#type, ActivityLogType::InvoiceStatusVerified);
+        assert_eq!(Some(invoice.name_id), stock_line.name_id);
     }
 }

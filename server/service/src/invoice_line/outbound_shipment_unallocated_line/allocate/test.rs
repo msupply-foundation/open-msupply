@@ -318,7 +318,7 @@ mod test {
                 r.item_id = mock_item_a().id;
                 r.pack_size = 1;
                 r.available_number_of_packs = 1.0;
-                r.name_id = Some(String::from("name_store_b"));
+                r.name_id = None;
             })
         }
 
