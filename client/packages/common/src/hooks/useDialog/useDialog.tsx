@@ -37,6 +37,7 @@ export interface DialogProps {
   onClose?: () => void;
   isOpen?: boolean;
   animationTimeout?: number;
+  disableBackdrop?: boolean;
 }
 
 interface DialogState {
@@ -76,7 +77,12 @@ const useSlideAnimation = (isRtl: boolean, timeout: number) => {
 };
 
 export const useDialog = (dialogProps?: DialogProps): DialogState => {
-  const { onClose, isOpen, animationTimeout = 500 } = dialogProps ?? {};
+  const {
+    onClose,
+    isOpen,
+    animationTimeout = 500,
+    disableBackdrop,
+  } = dialogProps ?? {};
   const [open, setOpen] = React.useState(false);
   const showDialog = () => setOpen(true);
   const hideDialog = () => setOpen(false);
@@ -87,8 +93,12 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
   }, [isOpen]);
 
   const handleClose = () => {
-    onClose && onClose();
-    hideDialog();
+    if (disableBackdrop) {
+      setOpen(true);
+    } else {
+      onClose && onClose();
+      hideDialog();
+    }
   };
 
   const ModalComponent: React.FC<ModalProps> = ({
