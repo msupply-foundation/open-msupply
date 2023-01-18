@@ -22,7 +22,7 @@ export const CatalogueNav: FC = () => {
       <AppNavLink
         end={false}
         to={AppRoute.Catalogue}
-        icon={<ListIcon color="primary" />}
+        icon={<ListIcon color="primary" style={{ width: 20 }} />}
         text={t('catalogue')}
         inactive
       />
