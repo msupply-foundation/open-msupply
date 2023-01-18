@@ -59,6 +59,6 @@ Requirement `2` hasn't been mentioned in both options, since I think it's indepe
 
 ## Decision
 
-Original suggestion was to go with `Option 2`, but after some research we realised that being able to serve bundle from arbitary server was possible with Capacitor (although it's a bi hacky), and trying to port a plugin to Native barebone application was quite difficult. Would now suggest `Option 1`, the cons can be metigated by better explanation of what Capacitor is and how we use it. Also the `cons` of `Option 2` can lead to quite a lot of extra work
+Original suggestion was to go with `Option 2`, but after some research we realised that being able to serve bundle from arbitrary server was possible with Capacitor (although it's a bi hacky), and trying to port a plugin to Native barebone application was quite difficult. Would now suggest `Option 1`, the cons can be mitigated by better explanation of what Capacitor is and how we use it. Also the `cons` of `Option 2` can lead to quite a lot of extra work
 
-Lastly woudl suggest keeping an eye on Option 3 and re-writting this KDD when Option 3 becomes feasible (tauri mobile available and stable)
+Lastly would suggest keeping an eye on Option 3 and re-writing this KDD when Option 3 becomes feasible (tauri mobile available and stable)
