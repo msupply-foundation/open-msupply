@@ -11,23 +11,25 @@ import { useMasterList } from '../../api';
 export const Toolbar: FC = () => {
   const t = useTranslation('catalogue');
 
-  const { name } = useMasterList.document.fields();
+  const { description } = useMasterList.document.fields();
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
       <Grid container>
         <Grid item display="flex" flex={1} flexDirection="column" gap={1}>
-          <InputWithLabelRow
-            label={t('label.master-list-name')}
-            Input={
-              <BufferedTextInput
-                disabled={true}
-                size="small"
-                sx={{ width: 250 }}
-                value={name}
-              />
-            }
-          />
+          {description && (
+            <InputWithLabelRow
+              label={t('heading.description')}
+              Input={
+                <BufferedTextInput
+                  disabled={true}
+                  size="small"
+                  sx={{ width: 250 }}
+                  value={description}
+                />
+              }
+            />
+          )}
         </Grid>
         <Grid
           item
