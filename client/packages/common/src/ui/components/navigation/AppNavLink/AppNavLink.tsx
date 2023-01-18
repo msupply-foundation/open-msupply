@@ -86,6 +86,7 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
 
   const selected = useSelectedNavMenuItem(to, !!end, drawer.isOpen);
   const isSelectedParentItem = inactive && !!useMatch({ path: `${to}/*` });
+  const showMenuSectionIcon = inactive && drawer.isOpen;
   const handleClick = () => {
     // reset the clicked nav path when navigating
     // otherwise the child menu remains open
@@ -119,20 +120,7 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
   );
 
   return visible ? (
-    <StyledListItem
-      isSelected={selected}
-      to={to}
-      sx={
-        inactive
-          ? { width: '220px' }
-          : {
-              maxWidth: 165,
-              '& .MuiTypography-root': {
-                maxWidth: 130,
-              },
-            }
-      }
-    >
+    <StyledListItem isSelected={selected} to={to}>
       <ListItemButton
         sx={{
           ...getListItemCommonStyles(),
@@ -150,7 +138,7 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
         component={CustomLink}
       >
         <ListItemIcon sx={{ minWidth: 20 }}>{icon}</ListItemIcon>
-        {inactive && drawer.isOpen && (
+        {showMenuSectionIcon && (
           <ChevronDownIcon
             className="menu_section_icon"
             sx={{
@@ -165,7 +153,7 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
         )}
         <Box className="navLinkText">
           {!end && <Box width={4} />}
-
+          {!showMenuSectionIcon && <Box width={4} />}
           <Badge
             {...badgeProps}
             sx={{

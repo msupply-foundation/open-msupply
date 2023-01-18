@@ -23,7 +23,15 @@ export const AppNavSection: FC<
               },
               '& .MuiCollapse-wrapperInner > ul > li.MuiListItem-root': {
                 height: 30,
+                paddingLeft: 1,
+                paddingRight: 2,
                 '& .MuiListItemIcon-root': { minWidth: 0 },
+              },
+              '& div > ul > li.MuiListItem-root': {
+                width: 165,
+                '& .MuiTypography-root': {
+                  maxWidth: 135,
+                },
               },
             }
           : {}
