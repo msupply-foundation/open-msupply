@@ -32,7 +32,7 @@ export const AutocompleteMultiList = <T extends { id: string }>({
   filterPlaceholder,
   filterProperties,
   getOptionLabel,
-  height = 365,
+  height,
   isLoading,
   onChange,
   options,

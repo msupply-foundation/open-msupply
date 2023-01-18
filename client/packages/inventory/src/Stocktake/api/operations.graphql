@@ -23,6 +23,7 @@ fragment StocktakeLine on StocktakeLineNode {
   countedNumberOfPacks
   sellPricePerPack
   costPricePerPack
+  comment
 
   location {
     __typename
