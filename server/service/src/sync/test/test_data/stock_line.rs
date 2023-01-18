@@ -26,7 +26,7 @@ const ITEM_LINE_1: (&'static str, &'static str) = (
       "kit_data": null,
       "location_ID": "",
       "manufacturer_ID": "",
-      "name_ID": "name_store_a",
+      "name_ID": "name_store_b",
       "note": "test note",
       "pack_inners_per_outer": 0,
       "pack_quan_per_inner": 0,
@@ -49,8 +49,7 @@ const ITEM_LINE_1: (&'static str, &'static str) = (
       "user_8_ID": "",
       "volume_per_pack": 0,
       "vvm_status": "",
-      "weight_per_pack": 0,
-      "name_id": "name_store_b"
+      "weight_per_pack": 0
     }"#,
 );
 fn item_line_1_pull_record() -> TestSyncPullRecord {
@@ -115,7 +114,7 @@ const ITEM_LINE_2: (&'static str, &'static str) = (
       "kit_data": null,
       "location_ID": "",
       "manufacturer_ID": "",
-      "name_ID": "",
+      "name_ID": "name_store_b",
       "note": "",
       "pack_inners_per_outer": 0,
       "pack_quan_per_inner": 0,
@@ -138,8 +137,7 @@ const ITEM_LINE_2: (&'static str, &'static str) = (
       "user_8_ID": "",
       "volume_per_pack": 0,
       "vvm_status": "",
-      "weight_per_pack": 0,
-      "name_id": "name_store_b"
+      "weight_per_pack": 0
   }"#,
 );
 fn item_line_2_pull_record() -> TestSyncPullRecord {
