@@ -444,8 +444,7 @@
                   "options": {
                     "editRestrictions": { "latest": true, "isCurrentUser": true, "maxAge": 1 },
                     "reverse": true,
-                    "defaultExpanded": true,
-                    "rows": 10
+                    "defaultExpanded": true
                   }
                 }
               ]
