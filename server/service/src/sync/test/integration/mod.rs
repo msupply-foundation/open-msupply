@@ -34,6 +34,7 @@ async fn init_test_context(
         connection,
         service_provider,
         processors_task,
+        service_context,
         ..
     } = setup_all_and_service_provider(
         &format!("sync_integration_{}_tests", identifier),
@@ -46,6 +47,11 @@ async fn init_test_context(
         .request_and_set_site_info(&service_provider, &sync_settings)
         .await
         .unwrap();
+    service_provider
+        .settings
+        .update_sync_settings(&service_context, sync_settings)
+        .unwrap();
+
     let synchroniser =
         Synchroniser::new(sync_settings.clone(), service_provider.clone().into()).unwrap();
 
