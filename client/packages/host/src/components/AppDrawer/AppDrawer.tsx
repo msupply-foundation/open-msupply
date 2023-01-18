@@ -47,6 +47,9 @@ const commonListContainerStyles = {
 
 const LowerListContainer = styled(Box)({
   ...commonListContainerStyles,
+  '& .MuiListItem-root': {
+    width: 220,
+  },
 });
 
 const UpperListContainer = styled(Box)({
@@ -116,9 +119,6 @@ const StyledDrawer = styled(Box, {
     '& .navLinkText': {
       display: 'inline-flex',
       flex: 1,
-    },
-    '& div > ul > li': {
-      width: 220,
     },
   }),
   ...(!isOpen && {

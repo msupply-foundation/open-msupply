@@ -45,7 +45,7 @@ const StyledListItem = styled<
     ? {
         ...getListItemCommonStyles(),
         backgroundColor: theme.mixins.drawer.selectedBackgroundColor,
-        boxShadow: theme.shadows[5],
+        boxShadow: theme.shadows[3],
         fontWeight: 'bold',
         marginTop: 5,
       }
@@ -119,7 +119,20 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
   );
 
   return visible ? (
-    <StyledListItem isSelected={selected} to={to}>
+    <StyledListItem
+      isSelected={selected}
+      to={to}
+      sx={
+        inactive
+          ? { width: '220px' }
+          : {
+              maxWidth: 165,
+              '& .MuiTypography-root': {
+                maxWidth: 130,
+              },
+            }
+      }
+    >
       <ListItemButton
         sx={{
           ...getListItemCommonStyles(),
@@ -137,8 +150,21 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
         component={CustomLink}
       >
         <ListItemIcon sx={{ minWidth: 20 }}>{icon}</ListItemIcon>
+        {inactive && drawer.isOpen && (
+          <ChevronDownIcon
+            className="menu_section_icon"
+            sx={{
+              color: 'gray.main',
+              fontSize: '1rem',
+              marginLeft: 0.5,
+              stroke: theme => theme.palette.gray.main,
+              strokeWidth: 1.5,
+              transform: 'rotate(-90deg)',
+            }}
+          />
+        )}
         <Box className="navLinkText">
-          <Box width={10} />
+          {!end && <Box width={4} />}
 
           <Badge
             {...badgeProps}
