@@ -106,12 +106,11 @@ mod item_count_service_test {
                 r.id = format!("stock_line_id_{:05}", index);
                 r.item_id = format!("item_id_{:05}", index);
                 r.store_id = store_id.to_string();
-                r.available_number_of_packs = 5.0;
+                r.available_number_of_packs = match index < 25 {
+                    true => 5.0, // index.into(),
+                    false => 0.0,
+                };
                 r.pack_size = 1;
-                // match index < 25 {
-                //     true => index.into(),
-                //     false => 0.0,
-                // };
             }));
             master_list_lines.push(MasterListLineRow {
                 id: format!("master_list_line_id_{:05}", index),
@@ -184,7 +183,7 @@ mod item_count_service_test {
     #[actix_rt::test]
     async fn test_no_stock_items_count() {
         let (_, connection, _, _) = test_db::setup_all(
-            "omsupply-database-total-items-count",
+            "omsupply-database-no-stock-items-count",
             MockDataInserts::none()
                 .names()
                 .stores()
@@ -224,7 +223,7 @@ mod item_count_service_test {
     #[actix_rt::test]
     async fn test_low_stock_items_count() {
         let (_, connection, _, _) = test_db::setup_all(
-            "omsupply-database-total-items-count",
+            "omsupply-database-low-stock-items-count",
             MockDataInserts::none()
                 .names()
                 .stores()
@@ -274,5 +273,6 @@ mod item_count_service_test {
             .unwrap();
 
         assert_eq!(1, counts.low_stock);
+        // test_db::
     }
 }
