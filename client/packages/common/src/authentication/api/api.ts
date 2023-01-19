@@ -3,6 +3,7 @@ import { Sdk, AuthTokenQuery, RefreshTokenQuery } from './operations.generated';
 
 export type AuthenticationError = {
   message: string;
+  detail?: string;
 };
 
 export interface AuthenticationResponse {
@@ -73,6 +74,7 @@ export const getAuthQueries = (sdk: Sdk, t: TypedTFunction<LocaleKey>) => ({
           token: '',
           error: {
             message: t('error.authentication-error'),
+            detail: error.message,
           },
         };
       }

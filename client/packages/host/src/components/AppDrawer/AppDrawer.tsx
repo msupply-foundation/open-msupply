@@ -115,6 +115,7 @@ const StyledDrawer = styled(Box, {
     '& .MuiDrawer-paper': openedMixin(theme),
     '& .navLinkText': {
       display: 'inline-flex',
+      flex: 1,
     },
     '& div > ul > li': {
       width: 220,
