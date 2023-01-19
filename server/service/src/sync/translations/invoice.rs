@@ -37,9 +37,10 @@ pub enum LegacyTransactType {
     Ci,
     /// Supplier credit
     #[serde(rename = "sc")]
+    #[serde(alias = "Sc")]
     Sc,
     /// Bucket to catch all other variants
-    /// E.g. "cc" (customer credit), "sc" (supplier credit), "sr" (repack), "bu" (build),
+    /// E.g. "cc" (customer credit), "sr" (repack), "bu" (build),
     /// "rc" (cash receipt), "ps" (cash payment)
     #[serde(other)]
     Others,
