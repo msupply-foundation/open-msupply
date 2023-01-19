@@ -1,4 +1,6 @@
-use super::StorageConnection;
+use super::{
+    name_row::name, name_store_join::name_store_join, store_row::store, StorageConnection,
+};
 
 use crate::repository_error::RepositoryError;
 
@@ -15,6 +17,11 @@ table! {
         program_patient_id -> Nullable<Text>,
     }
 }
+
+joinable!(program_enrolment -> name (patient_id));
+allow_tables_to_appear_in_same_query!(program_enrolment, name);
+allow_tables_to_appear_in_same_query!(program_enrolment, name_store_join);
+allow_tables_to_appear_in_same_query!(program_enrolment, store);
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset)]
 #[table_name = "program_enrolment"]

@@ -22,6 +22,7 @@ pub struct PatientFilter {
     pub country: Option<SimpleStringFilter>,
     pub email: Option<SimpleStringFilter>,
     pub is_visible: Option<bool>,
+    pub identifier: Option<SimpleStringFilter>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -112,6 +113,7 @@ impl PatientFilter {
             country,
             email,
             is_visible,
+            identifier,
         } = self;
 
         NameFilter {
@@ -135,6 +137,7 @@ impl PatientFilter {
             address2,
             country,
             email,
+            identifier,
         }
     }
 }
