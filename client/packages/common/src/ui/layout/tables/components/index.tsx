@@ -13,7 +13,7 @@ export const BasicCell = <T extends RecordWithId>({
   rowData,
   rows,
   t,
-  d,
+  localisedDate,
 }: CellProps<T>): ReactElement => (
   <div
     style={{
@@ -21,7 +21,10 @@ export const BasicCell = <T extends RecordWithId>({
       textOverflow: 'ellipsis',
     }}
   >
-    {column.formatter(column.accessor({ rowData, rows }), { t, d })}
+    {column.formatter(column.accessor({ rowData, rows }), {
+      t,
+      d: localisedDate,
+    })}
   </div>
 );
 
