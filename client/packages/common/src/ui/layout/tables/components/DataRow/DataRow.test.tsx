@@ -31,7 +31,7 @@ describe('DataRow', () => {
             rowData={{ id: 'josh' }}
             generateRowTooltip={() => ''}
             isAnimated={false}
-            t={t}
+            localisedText={t}
             localisedDate={localisedDate}
           />
         </TableBody>

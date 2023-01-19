@@ -184,7 +184,7 @@ const DataTableComponent = <T extends RecordWithId>({
                 dense={dense}
                 keyboardActivated={clickFocusedRow}
                 generateRowTooltip={generateRowTooltip}
-                t={t}
+                localisedText={t}
                 localisedDate={localisedDate}
                 isAnimated={isRowAnimated}
               />

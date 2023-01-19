@@ -14,7 +14,7 @@ export interface CellProps<T extends RecordWithId> {
   isDisabled?: boolean;
   // Unique name for browser autocomplete (to remember previously entered values for that name)
   autocompleteName?: string;
-  t: TypedTFunction<LocaleKey>;
+  localisedText: TypedTFunction<LocaleKey>;
   localisedDate: (date: string | number | Date) => string;
 }
 

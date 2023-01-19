@@ -12,7 +12,7 @@ export const BasicCell = <T extends RecordWithId>({
   column,
   rowData,
   rows,
-  t,
+  localisedText,
   localisedDate,
 }: CellProps<T>): ReactElement => (
   <div
@@ -22,7 +22,7 @@ export const BasicCell = <T extends RecordWithId>({
     }}
   >
     {column.formatter(column.accessor({ rowData, rows }), {
-      t,
+      t: localisedText,
       d: localisedDate,
     })}
   </div>
