@@ -58,7 +58,6 @@ pub struct StocktakeFilterInput {
     pub created_datetime: Option<DatetimeFilterInput>,
     pub stocktake_date: Option<DateFilterInput>,
     pub finalised_datetime: Option<DatetimeFilterInput>,
-    pub inventory_adjustment_id: Option<EqualFilterStringInput>,
     pub is_locked: Option<bool>,
 }
 
@@ -235,7 +234,6 @@ impl From<StocktakeFilterInput> for StocktakeFilter {
             created_datetime: f.created_datetime.map(DatetimeFilter::from),
             stocktake_date: f.stocktake_date.map(DateFilter::from),
             finalised_datetime: f.finalised_datetime.map(DatetimeFilter::from),
-            inventory_adjustment_id: f.inventory_adjustment_id.map(EqualFilter::from),
             is_locked: f.is_locked,
         }
     }
@@ -322,7 +320,8 @@ mod test {
                         stocktakeDate
                         finalisedDatetime
                         isLocked
-                        inventoryAdjustmentId
+                        inventoryAdditionId
+                        inventoryReductionId
                         lines {
                             totalCount
                         }
@@ -347,7 +346,8 @@ mod test {
                     r.is_locked = true;
                     r.finalised_datetime =
                         Some(NaiveDate::from_ymd(2022, 1, 23).and_hms(15, 16, 0));
-                    r.inventory_adjustment_id = Some("inv id".to_string());
+                    r.inventory_addition_id = Some("inv a id".to_string());
+                    r.inventory_reduction_id = Some("inv r id".to_string());
                 })],
             })
         }));
@@ -368,7 +368,8 @@ mod test {
               "createdDatetime": "2022-01-22T15:16:00+00:00",
               "stocktakeDate": "2022-01-23",
               "finalisedDatetime": "2022-01-23T15:16:00+00:00",
-              "inventoryAdjustmentId": "inv id",
+              "inventoryAdditionId": "inv a id",
+              "inventoryReductionId": "inv r id",
               "isLocked": true,
               "lines": {
                 "totalCount": 0

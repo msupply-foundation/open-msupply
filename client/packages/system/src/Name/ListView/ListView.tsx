@@ -27,7 +27,7 @@ const NameListComponent: FC<{ type: 'customer' | 'supplier' }> = ({ type }) => {
   const { Modal, showDialog, hideDialog } = useDialog();
 
   const columns = useColumns<NameRowFragment>(
-    ['name', 'code'],
+    ['code', 'name'],
     {
       sortBy,
       onChangeSortBy: updateSortQuery,
