@@ -104,7 +104,7 @@
     },
     {
       "type": "Category",
-      "label": "Medication",
+      "label": "ARV / Medication",
       "options": { "icon": "medicine" },
       "elements": [
         {
@@ -155,7 +155,7 @@
         {
           "scope": "#/properties/arvMedication/properties/regimen",
           "type": "PreviousEncounterField",
-          "label": "Current Regimen"
+          "label": "Current ARV Regimen"
         },
         {
           "scope": "#/properties/arvMedication/properties/regimenStatus",
@@ -175,7 +175,8 @@
           "elements": [
             {
               "scope": "#/properties/arvMedication/properties/regimen",
-              "type": "Control"
+              "type": "Control",
+              "label": "ARV Regimen"
             },
             {
               "scope": "#/properties/arvMedication/properties/regimenChangeReason",
