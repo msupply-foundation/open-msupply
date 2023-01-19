@@ -53,7 +53,9 @@ export interface ArrayControlCustomProps extends ArrayControlProps {
 
 export const CommonOptions = z
   .object({
-    detail: z.object({ type: z.string(), elements: z.array(z.any()) }),
+    detail: z
+      .object({ type: z.string(), elements: z.array(z.any()) })
+      .optional(),
     /**
      * If true, display items in reverse order (newest first)
      */
