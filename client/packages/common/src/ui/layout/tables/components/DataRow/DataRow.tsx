@@ -136,7 +136,7 @@ export const DataRow = <T extends RecordWithId>({
                       rowIndex={rowIndex}
                       autocompleteName={column.autocompleteProvider?.(rowData)}
                       t={t}
-                      d={localisedDate}
+                      localisedDate={localisedDate}
                     />
                   }
                 </TableCell>

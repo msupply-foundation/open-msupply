@@ -15,7 +15,7 @@ export interface CellProps<T extends RecordWithId> {
   // Unique name for browser autocomplete (to remember previously entered values for that name)
   autocompleteName?: string;
   t: TypedTFunction<LocaleKey>;
-  d: (date: string | number | Date) => string;
+  localisedDate: (date: string | number | Date) => string;
 }
 
 export interface HeaderProps<T extends RecordWithId> {

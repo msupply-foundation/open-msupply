@@ -1,6 +1,7 @@
 /* eslint-disable react/jsx-key */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
+import { ViewportList } from 'react-viewport-list';
 import {
   Box,
   TableBody,
@@ -90,6 +91,8 @@ const DataTableComponent = <T extends RecordWithId>({
     if (page * first > total) onChangePage(0);
   }, [pagination]);
 
+  const ref = useRef<HTMLDivElement>(null);
+
   if (isLoading) return <BasicSpinner />;
 
   if (isError) {
@@ -116,11 +119,13 @@ const DataTableComponent = <T extends RecordWithId>({
 
   return (
     <TableContainer
+      ref={ref}
       sx={{
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
         overflowX,
+        overflowY: 'auto',
       }}
     >
       <MuiTable>
@@ -160,24 +165,31 @@ const DataTableComponent = <T extends RecordWithId>({
           </HeaderRow>
         </TableHead>
         <TableBody>
-          {data.map((row, idx) => (
-            <DataRow
-              key={row.id}
-              rows={data}
-              ExpandContent={ExpandContent}
-              rowIndex={idx}
-              columns={columnsToDisplay}
-              onClick={onRowClick ? onRowClick : undefined}
-              rowData={row}
-              rowKey={String(idx)}
-              dense={dense}
-              keyboardActivated={clickFocusedRow}
-              generateRowTooltip={generateRowTooltip}
-              t={t}
-              localisedDate={localisedDate}
-              isAnimated={isRowAnimated}
-            />
-          ))}
+          <ViewportList
+            viewportRef={ref}
+            items={data}
+            axis="y"
+            itemMinSize={40}
+          >
+            {(row, idx) => (
+              <DataRow
+                key={row.id}
+                rows={data}
+                ExpandContent={ExpandContent}
+                rowIndex={idx}
+                columns={columnsToDisplay}
+                onClick={onRowClick ? onRowClick : undefined}
+                rowData={row}
+                rowKey={String(idx)}
+                dense={dense}
+                keyboardActivated={clickFocusedRow}
+                generateRowTooltip={generateRowTooltip}
+                t={t}
+                localisedDate={localisedDate}
+                isAnimated={isRowAnimated}
+              />
+            )}
+          </ViewportList>
         </TableBody>
       </MuiTable>
       <Box
