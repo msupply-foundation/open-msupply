@@ -1,6 +1,6 @@
 import { JSXElementConstructor } from 'react';
 import { SortBy } from '@common/hooks';
-import { useTranslation, LocaleKey } from '@common/intl';
+import { useTranslation, LocaleKey, TypedTFunction } from '@common/intl';
 import { RecordWithId } from '@common/types';
 
 export interface CellProps<T extends RecordWithId> {
@@ -14,6 +14,8 @@ export interface CellProps<T extends RecordWithId> {
   isDisabled?: boolean;
   // Unique name for browser autocomplete (to remember previously entered values for that name)
   autocompleteName?: string;
+  localisedText: TypedTFunction<LocaleKey>;
+  localisedDate: (date: string | number | Date) => string;
 }
 
 export interface HeaderProps<T extends RecordWithId> {
