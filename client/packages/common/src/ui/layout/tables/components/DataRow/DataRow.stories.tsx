@@ -41,7 +41,7 @@ const Template: Story = ({ onClick, generateRowTooltip = () => '' }) => {
           }
           onClick={onClick}
           generateRowTooltip={generateRowTooltip}
-          t={t}
+          localisedText={t}
           localisedDate={localisedDate}
           isAnimated={false}
         />

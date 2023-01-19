@@ -24,7 +24,7 @@ interface DataRowProps<T extends RecordWithId> {
   rowIndex: number;
   keyboardActivated?: boolean;
   generateRowTooltip: (row: T) => string;
-  t: TypedTFunction<LocaleKey>;
+  localisedText: TypedTFunction<LocaleKey>;
   localisedDate: (date: string | number | Date) => string;
   isAnimated: boolean;
 }
@@ -40,7 +40,7 @@ export const DataRow = <T extends RecordWithId>({
   rows,
   keyboardActivated,
   generateRowTooltip,
-  t,
+  localisedText,
   localisedDate,
   isAnimated,
 }: DataRowProps<T>): JSX.Element => {
@@ -135,7 +135,7 @@ export const DataRow = <T extends RecordWithId>({
                       columnIndex={columnIndex}
                       rowIndex={rowIndex}
                       autocompleteName={column.autocompleteProvider?.(rowData)}
-                      t={t}
+                      localisedText={localisedText}
                       localisedDate={localisedDate}
                     />
                   }
