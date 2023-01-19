@@ -153,6 +153,9 @@ mod graphql {
             },
             "email": {
               "equalTo": "email"
+            },
+            "identifier": {
+              "equalTo": "identifier"
             }
           }
         });
@@ -204,6 +207,7 @@ mod graphql {
                 address2,
                 country,
                 email,
+                identifier,
             } = filter.unwrap();
 
             assert_eq!(id, Some(EqualFilter::not_equal_to("id_not_equal_to")));
@@ -240,6 +244,8 @@ mod graphql {
             assert_eq!(address2, Some(SimpleStringFilter::equal_to("address2")));
             assert_eq!(country, Some(SimpleStringFilter::equal_to("country")));
             assert_eq!(email, Some(SimpleStringFilter::equal_to("email")));
+
+            assert_eq!(identifier, Some(SimpleStringFilter::equal_to("identifier")));
 
             Ok(ListResult {
                 rows: vec![Name {
