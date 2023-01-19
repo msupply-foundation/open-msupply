@@ -26,7 +26,7 @@ const MasterListComponent: FC = () => {
   const navigate = useNavigate();
   const t = useTranslation('catalogue');
   const columns = useColumns<MasterListRowFragment>(
-    ['code', 'name', 'description'],
+    ['name', 'description'],
     {
       onChangeSortBy: updateSortQuery,
       sortBy,

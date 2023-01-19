@@ -156,11 +156,8 @@ impl UpdateStocktakeStatusInput {
 #[cfg(test)]
 mod graphql {
     use async_graphql::EmptyMutation;
-    use chrono::NaiveDate;
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
-    use repository::{
-        mock::MockDataInserts, StocktakeRow, StocktakeStatus, StorageConnectionManager,
-    };
+    use repository::{mock::MockDataInserts, StocktakeRow, StorageConnectionManager};
     use serde_json::json;
     use service::{
         service_provider::{ServiceContext, ServiceProvider},
@@ -273,17 +270,7 @@ mod graphql {
         let test_service = TestService(Box::new(|_, _| {
             Ok(StocktakeRow {
                 id: "id1".to_string(),
-                user_id: "".to_string(),
-                stocktake_number: 123,
-                store_id: "store id".to_string(),
-                comment: Some("comment".to_string()),
-                description: Some("description".to_string()),
-                status: StocktakeStatus::Finalised,
-                created_datetime: NaiveDate::from_ymd(2022, 1, 22).and_hms(15, 16, 0),
-                stocktake_date: Some(NaiveDate::from_ymd(2022, 01, 24)),
-                finalised_datetime: Some(NaiveDate::from_ymd(2022, 1, 23).and_hms(15, 16, 0)),
-                inventory_adjustment_id: Some("inv id".to_string()),
-                is_locked: false,
+                ..Default::default()
             })
         }));
 

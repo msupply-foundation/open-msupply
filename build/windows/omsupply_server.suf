@@ -4042,7 +4042,16 @@ g_HandleSystemReboot();
 <SkinSubStyle/>
 <ActionPlugins/>
 <DependencyModules/>
-<PrimerFiles/>
+<PrimerFiles>
+<PrimerFile>
+<SourcePath>#PROJECTFILEDIR#\tools\RefreshEnvironment.exe</SourcePath>
+<DeleteOnExit>1</DeleteOnExit>
+<NeededByUninstall>0</NeededByUninstall>
+<BuildConfigs>
+<Cfg>All</Cfg>
+</BuildConfigs>
+</PrimerFile>
+</PrimerFiles>
 <Events>
 <Event>
 <Name>Global Functions</Name>
@@ -4190,6 +4199,55 @@ if not hasOmsupplyInstalled then
 	Registry.CreateKey(HKEY_LOCAL_MACHINE, "Software\\omSupply Server");
 	Registry.SetValue(HKEY_LOCAL_MACHINE, "Software\\omSupply Server", "Path", omSupplyServerPath, REG_SZ);
 	Registry.SetValue(HKEY_LOCAL_MACHINE, "Software\\omSupply Server", "Database", omSupplyServerDatabase, REG_SZ);
+	
+	-- Create environment variable for postgres libraries required for diesel orm (backend)
+	if (omSupplyServerDatabase == "postgres") then
+		local envKey = "System\\CurrentControlSet\\Control\\Session Manager\\Environment";
+		local path = Registry.GetValue(HKEY_LOCAL_MACHINE, envKey, "Path", true);
+
+		-- Get pg installation folder
+		local pgBinPath = "";
+		local pgLibPath = "";
+		local tblPgInstalls = Registry.GetKeyNames(HKEY_LOCAL_MACHINE, "Software\\PostgreSQL\\Installations");
+		if (Table.Count(tblPgInstalls) &gt; 0) then
+			local higherPgVersion = "0.0.0";
+			for index, value in pairs(tblPgInstalls) do
+				local pgVersion = Registry.GetValue(HKEY_LOCAL_MACHINE, "Software\\PostgreSQL\\Installations\\" .. value, "CLT_Version", true);
+				if ((String.CompareFileVersions(pgVersion, "14.0.0") ~= -1) and (String.CompareFileVersions(pgVersion, higherPgVersion) ~= -1)) then
+					local pgInstallPath = Registry.GetValue(HKEY_LOCAL_MACHINE, "Software\\PostgreSQL\\Installations\\" .. value, "Base Directory", true);
+					pgBinPath = pgInstallPath .. "\\bin"
+					pgLibPath = pgInstallPath .. "\\lib"
+					higherPgVersion = pgVersion;
+				end
+			end
+		end
+		
+		-- Postgres bin path has been found, set it to environment variable
+		if (pgBinPath ~= "") then
+			local pgBinTargetIndex = String.Find(path, pgBinPath, 1, false);
+			local pgLibTargetIndex = String.Find(path, pgLibPath, 1, false);
+			
+			if (pgBinTargetIndex == -1) then
+				-- postgres bin path not found, add it
+				path = path .. ";" .. pgBinPath;
+			end
+			if (pgLibTargetIndex == -1) then
+				-- postgres lib path not found, add it
+				path = path .. ";" .. pgLibPath;
+			end
+			
+			-- Update registry
+			Registry.SetValue(HKEY_LOCAL_MACHINE, envKey, "Path", path, REG_EXPAND_SZ);
+			SetupData.WriteToLogFile("Info\tNew Path=" .. path .. "\r\n", true);
+			
+			-- Refresh the 'Path' environment variable
+			File.Run(SessionVar.Expand("%TempLaunchFolder%\\RefreshEnvironment.exe"), "", "", SW_MINIMIZE, true);
+			local error = Application.GetLastError();
+		    if (error ~= 0) then
+		        SetupData.WriteToLogFile("Error: Could not execute utility!\r\n", true);
+		    end
+		end
+	end
 end
 
 if (omSupplyServerDatabase == "sqlite") then
