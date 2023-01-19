@@ -26,6 +26,7 @@ export interface TableProps<T extends RecordWithId> {
   isDisabled?: boolean;
   isError?: boolean;
   isLoading?: boolean;
+  isRowAnimated?: boolean;
   noDataMessage?: string;
   noDataElement?: JSX.Element;
   overflowX?:
