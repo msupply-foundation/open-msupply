@@ -78,7 +78,8 @@ fn generate(
         is_locked: is_locked.unwrap_or(false),
         // Default
         finalised_datetime: None,
-        inventory_adjustment_id: None,
+        inventory_addition_id: None,
+        inventory_reduction_id: None,
     })
 }
 

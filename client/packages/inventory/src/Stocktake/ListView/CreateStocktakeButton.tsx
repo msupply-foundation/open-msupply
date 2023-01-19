@@ -34,6 +34,7 @@ export const CreateStocktakeButton: React.FC<{
           isOpen={modalController.isOn}
           onChange={onChange}
           onClose={modalController.toggleOff}
+          disableBackdrop={true}
         />
       )}
       <ButtonWithIcon
