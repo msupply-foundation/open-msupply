@@ -174,6 +174,8 @@ macro_rules! apply_simple_string_filter {
     }};
 }
 
+/// Warning: All OR filters need to be called before AND filters to work correctly.
+///
 /// Example expand, when called with:
 ///
 /// ```
