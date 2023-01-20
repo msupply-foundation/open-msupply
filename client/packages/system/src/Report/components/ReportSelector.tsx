@@ -121,7 +121,7 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
       <ReportArgumentsModal
         report={reportWithArgs}
         onReset={() => setReportWithArgs(undefined)}
-        onArgumentsSelected={(report, args) => onClick(report, args)}
+        onArgumentsSelected={onClick}
       ></ReportArgumentsModal>
     </>
   );
