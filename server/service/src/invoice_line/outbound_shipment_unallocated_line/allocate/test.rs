@@ -77,7 +77,6 @@ mod test {
                 r.item_id = mock_item_a().id;
                 r.pack_size = 2;
                 r.available_number_of_packs = 30.0;
-                r.name_id = Some(String::from("name_store_b"));
             })
         }
 
@@ -89,7 +88,6 @@ mod test {
                 r.item_id = mock_item_a().id;
                 r.pack_size = 2;
                 r.available_number_of_packs = 30.0;
-                r.name_id = None;
             })
         }
 
@@ -101,7 +99,6 @@ mod test {
                 r.item_id = mock_item_b().id;
                 r.pack_size = 2;
                 r.available_number_of_packs = 30.0;
-                r.name_id = None;
             })
         }
 
@@ -181,7 +178,6 @@ mod test {
                 r.pack_size = 3;
                 r.available_number_of_packs = 10.0;
                 r.expiry_date = Some(NaiveDate::from_ymd(3021, 01, 01));
-                r.name_id = Some(String::from("name_store_b"));
             })
         }
 
@@ -193,7 +189,6 @@ mod test {
                 r.pack_size = 3;
                 r.available_number_of_packs = 2.0;
                 r.expiry_date = Some(NaiveDate::from_ymd(3021, 02, 01));
-                r.name_id = Some(String::from("name_store_b"));
             })
         }
 
@@ -205,7 +200,6 @@ mod test {
                 r.pack_size = 1;
                 r.available_number_of_packs = 2.0;
                 r.expiry_date = None;
-                r.name_id = Some(String::from("name_store_b"));
             })
         }
 
@@ -318,7 +312,6 @@ mod test {
                 r.item_id = mock_item_a().id;
                 r.pack_size = 1;
                 r.available_number_of_packs = 1.0;
-                r.name_id = None;
             })
         }
 
@@ -465,7 +458,6 @@ mod test {
                 r.pack_size = 1;
                 r.available_number_of_packs = 30.0;
                 r.expiry_date = Some(NaiveDate::from_ymd(3021, 02, 01));
-                r.name_id = Some(String::from("name_store_b"));
             })
         }
 
@@ -488,7 +480,6 @@ mod test {
                 r.item_id = mock_item_a().id;
                 r.pack_size = 1;
                 r.available_number_of_packs = 5.0;
-                r.name_id = Some(String::from("name_store_b"));
             })
         }
 
@@ -511,7 +502,6 @@ mod test {
                 r.item_id = mock_item_a().id;
                 r.pack_size = 1;
                 r.available_number_of_packs = 100.0;
-                r.name_id = Some(String::from("name_store_b"));
             })
         }
 
@@ -599,7 +589,6 @@ mod test {
                 r.item_id = mock_item_a().id;
                 r.pack_size = 3;
                 r.available_number_of_packs = 3.0;
-                r.name_id = Some(String::from("name_store_b"));
             })
         }
 

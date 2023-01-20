@@ -70,7 +70,7 @@ fn item_line_1_pull_record() -> TestSyncPullRecord {
             expiry_date: Some(NaiveDate::from_ymd(2022, 2, 17)),
             on_hold: false,
             note: Some("test note".to_string()),
-            name_id: Some("name_store_b".to_string()),
+            supplier_id: Some("name_store_b".to_string()),
         }),
     )
 }
@@ -92,7 +92,7 @@ fn item_line_1_push_record() -> TestSyncPushRecord {
             cost_price: 5.0,
             sell_price: 10.0,
             note: Some("test note".to_string()),
-            name_id: Some("name_store_b".to_string()),
+            supplier_id: Some("name_store_b".to_string()),
         }),
     }
 }
@@ -158,7 +158,7 @@ fn item_line_2_pull_record() -> TestSyncPullRecord {
             expiry_date: None,
             on_hold: false,
             note: None,
-            name_id: Some("name_store_b".to_string()),
+            supplier_id: Some("name_store_b".to_string()),
         }),
     )
 }
@@ -180,7 +180,7 @@ fn item_line_2_push_record() -> TestSyncPushRecord {
             cost_price: 0.0,
             sell_price: 0.0,
             note: None,
-            name_id: Some("name_store_b".to_string()),
+            supplier_id: Some("name_store_b".to_string()),
         }),
     }
 }

@@ -45,7 +45,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({ draft, onUpdate }) => {
     useBarcodeScannerContext();
   const supplierName = draft.supplierName
     ? draft.supplierName
-    : t('label.no-supplier');
+    : t('message.no-supplier');
 
   const scanBarcode = async () => {
     const result = await startScan();

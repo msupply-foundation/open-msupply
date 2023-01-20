@@ -177,7 +177,7 @@ fn generate_stock_line_update(
         expiry_date: stocktake_line.line.expiry_date.or(stock_line.expiry_date),
         on_hold: stock_line.on_hold,
         note: stock_line.note.clone(),
-        name_id: stock_line.name_id.clone(),
+        supplier_id: stock_line.supplier_id.clone(),
     };
 
     let item = match ItemRowRepository::new(connection).find_one_by_id(&stock_line.item_id)? {
@@ -255,8 +255,8 @@ fn generate_new_stock_line(
         l
     });
 
-    let name_id = if let Some(stock_line) = stocktake_line.stock_line {
-        stock_line.name_id
+    let supplier_id = if let Some(stock_line) = stocktake_line.stock_line {
+        stock_line.supplier_id
     } else {
         None
     };
@@ -276,7 +276,7 @@ fn generate_new_stock_line(
         expiry_date: row.expiry_date,
         on_hold: false,
         note: row.note.clone(),
-        name_id,
+        supplier_id,
     };
 
     let item = match ItemRowRepository::new(connection).find_one_by_id(&item_id)? {
@@ -894,7 +894,7 @@ mod test {
             stocktake_line.sell_price_per_pack.unwrap()
         );
         assert_eq!(stock_line.note, stocktake_line.note);
-        assert_eq!(stock_line.name_id, None);
+        assert_eq!(stock_line.supplier_id, None);
 
         // assert stocktake_line has been updated
         let updated_stocktake_line = StocktakeLineRowRepository::new(&context.connection)

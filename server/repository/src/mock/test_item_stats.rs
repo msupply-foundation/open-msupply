@@ -117,7 +117,7 @@ pub fn stock_line1() -> StockLineRow {
         r.pack_size = 10;
         r.available_number_of_packs = 1.0;
         r.total_number_of_packs = 40.0;
-        r.name_id = Some(String::from("name_store_b"));
+        r.supplier_id = Some(String::from("name_store_b"));
     })
 }
 
@@ -130,7 +130,7 @@ pub fn stock_line2() -> StockLineRow {
         r.available_number_of_packs = 20.0;
         r.pack_size = 10;
         r.total_number_of_packs = 40.0;
-        r.name_id = Some(String::from("name_store_b"));
+        r.supplier_id = Some(String::from("name_store_b"));
     })
 }
 
@@ -143,7 +143,7 @@ pub fn stock_line3() -> StockLineRow {
         r.available_number_of_packs = 10.0;
         r.pack_size = 1;
         r.total_number_of_packs = 40.0;
-        r.name_id = Some(String::from("name_store_b"));
+        r.supplier_id = Some(String::from("name_store_b"));
     })
 }
 
@@ -160,7 +160,7 @@ pub fn stock_line_1_store_b() -> StockLineRow {
         r.available_number_of_packs = 1.0;
         r.pack_size = 10;
         r.total_number_of_packs = 40.0;
-        r.name_id = Some(String::from("name_store_b"));
+        r.supplier_id = Some(String::from("name_store_b"));
     })
 }
 
@@ -187,7 +187,7 @@ pub fn stock_line1_item2() -> StockLineRow {
         r.available_number_of_packs = 11.0;
         r.pack_size = 2;
         r.total_number_of_packs = 40.0;
-        r.name_id = Some(String::from("name_store_b"));
+        r.supplier_id = Some(String::from("name_store_b"));
     })
 }
 

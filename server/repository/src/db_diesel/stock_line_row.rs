@@ -24,14 +24,14 @@ table! {
         expiry_date -> Nullable<Date>,
         on_hold -> Bool,
         note -> Nullable<Text>,
-        name_id -> Nullable<Text>,
+        supplier_id -> Nullable<Text>,
     }
 }
 
 joinable!(stock_line -> item (item_id));
 joinable!(stock_line -> store (store_id));
 joinable!(stock_line -> location (location_id));
-joinable!(stock_line -> name (name_id));
+joinable!(stock_line -> name (supplier_id));
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[changeset_options(treat_none_as_null = "true")]
@@ -50,7 +50,7 @@ pub struct StockLineRow {
     pub expiry_date: Option<NaiveDate>,
     pub on_hold: bool,
     pub note: Option<String>,
-    pub name_id: Option<String>,
+    pub supplier_id: Option<String>,
 }
 
 pub struct StockLineRowRepository<'a> {

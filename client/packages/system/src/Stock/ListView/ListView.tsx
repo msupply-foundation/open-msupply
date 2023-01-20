@@ -72,7 +72,7 @@ const StockListComponent: FC = () => {
         key: 'supplierName',
         label: 'label.supplier',
         accessor: ({ rowData }) =>
-          rowData.supplierName ? rowData.supplierName : t('label.no-supplier'),
+          rowData.supplierName ? rowData.supplierName : t('message.no-supplier'),
         sortable: false,
       },
     ],
