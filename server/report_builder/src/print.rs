@@ -22,8 +22,8 @@ query AuthToken($username: String!, $password: String) {
 "#;
 
 const PRINT_QUERY: &str = r#"
-query PrintReportDefinition($storeId: String!, $name: String, $report: JSON!, $dataId: String!) {
-  printReportDefinition(dataId: $dataId, name: $name, report: $report, storeId: $storeId) {
+query PrintReportDefinition($storeId: String!, $name: String, $report: JSON!, $dataId: String, $arguments: JSON) {
+  printReportDefinition(dataId: $dataId, name: $name, report: $report, storeId: $storeId, arguments: $arguments) {
     ... on PrintReportNode {
       __typename
       fileId
@@ -86,7 +86,8 @@ fn print_request(
     store_id: &str,
     name: &Option<String>,
     report: serde_json::Value,
-    data_id: &str,
+    data_id: Option<String>,
+    arguments: Option<serde_json::Value>,
 ) -> anyhow::Result<String> {
     let body = serde_json::json!({
       "query": PRINT_QUERY,
@@ -94,7 +95,8 @@ fn print_request(
         "storeId": store_id,
         "dataId": data_id,
         "name": name,
-        "report": report
+        "report": report,
+        "arguments": arguments
       }
     });
     let response = reqwest::blocking::Client::new()
@@ -165,8 +167,18 @@ pub fn print_report(
     store_id: String,
     output_filename: Option<String>,
     report_file: String,
-    data_id: String,
+    data_id: Option<String>,
+    arguments_file: Option<String>,
 ) -> anyhow::Result<()> {
+    let arguments = if let Some(arguments_file) = arguments_file {
+        println!("> Load arguments from: {}", arguments_file);
+        let report_data = fs::read_to_string(arguments_file)
+            .map_err(|err| anyhow::Error::msg(format!("Failed to load argument file: {}", err)))?;
+        Some(serde_json::from_str(&report_data)?)
+    } else {
+        None
+    };
+
     println!("> Load report data from: {}", report_file);
     let report_data = fs::read_to_string(report_file).map_err(|err| {
         anyhow::Error::msg(format!("Failed to load report definition file: {}", err))
@@ -210,7 +222,8 @@ pub fn print_report(
         &store_id,
         &file_name,
         report,
-        &data_id,
+        data_id,
+        arguments,
     )
     .map_err(|err| anyhow::Error::msg(format!("Failed to fetch report data: {}", err)))?;
 

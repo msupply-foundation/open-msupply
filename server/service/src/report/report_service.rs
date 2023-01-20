@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 use repository::{
-    PaginationOption, ReportFilter, ReportRepository, ReportRow, ReportRowRepository, ReportSort,
+    PaginationOption, Report, ReportFilter, ReportRepository, ReportRowRepository, ReportSort,
     ReportType, RepositoryError,
 };
 use std::{collections::HashMap, time::SystemTime};
@@ -73,7 +73,7 @@ pub trait ReportServiceTrait: Sync + Send {
         pagination: Option<PaginationOption>,
         filter: Option<ReportFilter>,
         sort: Option<ReportSort>,
-    ) -> Result<Vec<ReportRow>, ListError> {
+    ) -> Result<Vec<Report>, ListError> {
         query_reports(ctx, pagination, filter, sort)
     }
 
@@ -100,8 +100,9 @@ pub trait ReportServiceTrait: Sync + Send {
         &self,
         report: &ResolvedReportDefinition,
         report_data: serde_json::Value,
+        arguments: Option<serde_json::Value>,
     ) -> Result<GeneratedReport, ReportError> {
-        generate_report(report, report_data)
+        generate_report(report, report_data, arguments)
     }
 
     /// Returns the printed pdf file id
@@ -110,9 +111,10 @@ pub trait ReportServiceTrait: Sync + Send {
         base_dir: &Option<String>,
         report: &ResolvedReportDefinition,
         report_data: serde_json::Value,
+        arguments: Option<serde_json::Value>,
         format: Option<PrintFormat>,
     ) -> Result<String, ReportError> {
-        let document = self.generate_report(report, report_data)?;
+        let document = self.generate_report(report, report_data, arguments)?;
 
         match format {
             Some(PrintFormat::Html) => {
@@ -246,7 +248,7 @@ fn query_reports(
     pagination: Option<PaginationOption>,
     filter: Option<ReportFilter>,
     sort: Option<ReportSort>,
-) -> Result<Vec<ReportRow>, ListError> {
+) -> Result<Vec<Report>, ListError> {
     let repo = ReportRepository::new(&ctx.connection);
     let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
     let filter = filter
@@ -348,10 +350,14 @@ fn resolve_report_definition(
 fn generate_report(
     report: &ResolvedReportDefinition,
     report_data: serde_json::Value,
+    arguments: Option<serde_json::Value>,
 ) -> Result<GeneratedReport, ReportError> {
     let mut context = tera::Context::new();
     context.insert("data", &report_data);
     context.insert("res", &report.resources);
+    if let Some(arguments) = arguments {
+        context.insert("arguments", &arguments);
+    }
     let mut tera = tera::Tera::default();
     let mut templates: HashMap<String, String> = report
         .templates
@@ -590,6 +596,8 @@ mod report_service_test {
             template: serde_json::to_string(&report_1).unwrap(),
             context: ReportContext::InboundShipment,
             comment: None,
+            context2: None,
+            argument_schema_id: None,
         })
         .unwrap();
         repo.upsert_one(&ReportRow {
@@ -599,6 +607,8 @@ mod report_service_test {
             template: serde_json::to_string(&report_base_1).unwrap(),
             context: ReportContext::Resource,
             comment: None,
+            context2: None,
+            argument_schema_id: None,
         })
         .unwrap();
 
@@ -615,6 +625,7 @@ mod report_service_test {
                 serde_json::json!({
                     "test": "Hello"
                 }),
+                None,
             )
             .unwrap();
         assert_eq!(doc.document, "Template: Hello Footer");

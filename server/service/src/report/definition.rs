@@ -12,7 +12,12 @@ pub struct GraphQlQuery {
 
 impl GraphQlQuery {
     /// Create query variables for the query
-    pub fn query_variables(&self, store_id: &str, data_id: &str) -> Value {
+    pub fn query_variables(
+        &self,
+        store_id: &str,
+        data_id: Option<String>,
+        arguments: Option<Value>,
+    ) -> Value {
         let mut variables = match &self.variables {
             Some(variables) => {
                 if matches!(variables, Value::Object(_)) {
@@ -24,8 +29,19 @@ impl GraphQlQuery {
             }
             None => serde_json::json!({}),
         };
+
+        if let Some(data_id) = data_id {
+            variables["dataId"] = Value::String(data_id);
+        }
+        // allow the arguments to overwrite the dataId but not the storeId (to reduce the attack
+        // vector)
+        if let Some(Value::Object(arguments)) = arguments {
+            for (key, value) in arguments {
+                variables[key] = value;
+            }
+        };
         variables["storeId"] = Value::String(store_id.to_string());
-        variables["dataId"] = Value::String(data_id.to_string());
+
         variables
     }
 }

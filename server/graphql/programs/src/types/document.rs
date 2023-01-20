@@ -4,11 +4,11 @@ use chrono::{DateTime, Utc};
 
 use graphql_core::loader::{DocumentRegistryLoader, DocumentRegistryLoaderInput, JsonSchemaLoader};
 use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
+use graphql_types::types::JSONSchemaNode;
 use repository::Document;
 use service::document::raw_document::RawDocument;
 
 use super::document_registry::DocumentRegistryNode;
-use super::json_schema::JSONSchemaNode;
 
 pub struct DocumentNode {
     pub allowed_docs: Vec<String>,
