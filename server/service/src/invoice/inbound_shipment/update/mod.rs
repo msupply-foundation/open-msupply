@@ -521,6 +521,6 @@ mod test {
             })
         );
         assert_eq!(log.r#type, ActivityLogType::InvoiceStatusVerified);
-        assert_eq!(Some(invoice.name_id), stock_line.name_id);
+        assert_eq!(Some(invoice.name_id), stock_line.supplier_id);
     }
 }

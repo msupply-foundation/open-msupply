@@ -53,7 +53,6 @@ pub fn mock_full_draft_outbound_shipment_a() -> FullMockInvoice {
                     r.cost_price_per_pack = 43.0;
                     r.sell_price_per_pack = 32.0;
                     r.total_number_of_packs = 30.0;
-                    r.name_id = Some(String::from("name_store_b"));
                 }),
             },
             FullMockInvoiceLine {
@@ -81,7 +80,6 @@ pub fn mock_full_draft_outbound_shipment_a() -> FullMockInvoice {
                     r.cost_price_per_pack = 41.0;
                     r.sell_price_per_pack = 21.0;
                     r.total_number_of_packs = 12.0;
-                    r.name_id = Some(String::from("name_store_b"));
                 }),
             },
         ],

@@ -283,7 +283,6 @@ mod test {
                     r.store_id = store().id;
                     r.item_id = mock_item_a().id;
                     r.pack_size = 1;
-                    r.name_id = Some(String::from("name_store_b"));
                 })];
             })
         }
@@ -471,7 +470,6 @@ mod test {
                     r.store_id = store().id;
                     r.item_id = mock_item_a().id;
                     r.pack_size = 1;
-                    r.name_id = Some(String::from("name_store_b"));
                 })];
             })
         }
