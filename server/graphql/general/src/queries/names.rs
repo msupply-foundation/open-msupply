@@ -112,6 +112,7 @@ pub struct NameFilterInput {
     pub address2: Option<SimpleStringFilterInput>,
     pub country: Option<SimpleStringFilterInput>,
     pub email: Option<SimpleStringFilterInput>,
+    pub identifier: Option<SimpleStringFilterInput>,
 }
 
 #[derive(SimpleObject)]
@@ -190,6 +191,7 @@ impl NameFilterInput {
             address2,
             country,
             email,
+            identifier,
         } = self;
 
         NameFilter {
@@ -213,6 +215,7 @@ impl NameFilterInput {
             address2: address2.map(SimpleStringFilter::from),
             country: country.map(SimpleStringFilter::from),
             email: email.map(SimpleStringFilter::from),
+            identifier: identifier.map(SimpleStringFilter::from),
         }
     }
 }
