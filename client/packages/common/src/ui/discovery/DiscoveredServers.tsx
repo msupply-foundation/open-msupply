@@ -4,8 +4,6 @@ import {
   Box,
   HomeIcon,
   InlineSpinner,
-  ListItemIcon,
-  ListItemText,
   MenuItem,
   MenuList,
   Typography,
@@ -20,6 +18,8 @@ import {
   frontEndHostGraphql,
   useInitialisationStatus,
   InitialisationStatusType,
+  IconButton,
+  RefreshIcon,
 } from '@openmsupply-client/common';
 
 type ConnectToServer = ReturnType<typeof useNativeClient>['connectToServer'];
@@ -28,26 +28,16 @@ type DiscoverServersProps = {
   servers: FrontEndHost[];
   connect: ConnectToServer;
   discoveryTimedOut: boolean;
+  discover: () => void;
 };
 
 export const DiscoveredServers = ({
   servers,
   connect,
   discoveryTimedOut,
+  discover,
 }: DiscoverServersProps) => {
   const t = useTranslation('app');
-
-  if (servers.length === 0)
-    return (
-      <Box
-        display="flex"
-        flex={1}
-        justifyContent="center"
-        alignContent="center"
-      >
-        <InlineSpinner messageKey="searching" />
-      </Box>
-    );
 
   if (discoveryTimedOut)
     return (
@@ -70,23 +60,42 @@ export const DiscoveredServers = ({
       </Box>
     );
 
-  return (
-    <Box sx={{ minWidth: '300px', color: 'gray.dark' }}>
-      <Typography
-        sx={{
-          fontSize: {
-            xs: '19px',
-            sm: '19px',
-            md: '24px',
-            lg: '32px',
-            xl: '32px',
-          },
-          fontWeight: 700,
-          color: 'primary.main',
-        }}
+  if (servers.length === 0)
+    return (
+      <Box
+        display="flex"
+        flex={1}
+        justifyContent="center"
+        alignContent="center"
       >
-        {t('discovery.select-server')}
-      </Typography>
+        <InlineSpinner messageKey="searching" />
+      </Box>
+    );
+
+  return (
+    <Box sx={{ minWidth: '325px', color: 'gray.dark' }}>
+      <Box display="flex" gap={1}>
+        <Typography
+          sx={{
+            fontSize: {
+              xs: '19px',
+              sm: '19px',
+              md: '24px',
+              lg: '32px',
+              xl: '32px',
+            },
+            fontWeight: 700,
+            color: 'primary.main',
+          }}
+        >
+          {t('discovery.select-server')}
+        </Typography>
+        <IconButton
+          icon={<RefreshIcon color="primary" fontSize="small" />}
+          onClick={discover}
+          label={t('button.refresh')}
+        />
+      </Box>
       <MenuList style={{ overflowY: 'auto', maxHeight: '200px' }}>
         {servers.map(server => (
           <DiscoveredServerWrapper
@@ -120,7 +129,7 @@ const DiscoveredServer: React.FC<DiscoveredServerProps> = ({
   const getSiteName = () => {
     if (initStatus?.status == InitialisationStatusType.Initialised)
       return initStatus?.siteName;
-    return t('app.initialise');
+    return t('messages.not-initialised');
   };
 
   return (
@@ -130,13 +139,30 @@ const DiscoveredServer: React.FC<DiscoveredServerProps> = ({
       }}
       sx={{ color: 'inherit' }}
     >
-      <ListItemIcon sx={{ color: 'inherit' }}>
-        <CheckboxEmptyIcon fontSize="small" color="inherit" />
-      </ListItemIcon>
-      <ListItemText primaryTypographyProps={{ sx: { color: 'inherit' } }}>
-        {`${frontEndHostDisplay(server)} ${getSiteName()} `}
-      </ListItemText>
-      {server.isLocal && <HomeIcon fontSize="small" color="inherit" />}
+      <Box alignItems="center" display="flex" gap={2}>
+        <Box flex={0}>
+          <CheckboxEmptyIcon fontSize="small" color="primary" />
+        </Box>
+        <Box flexShrink={0} flexBasis="200px">
+          <Typography
+            sx={{
+              color:
+                initStatus?.status == InitialisationStatusType.Initialised
+                  ? 'inherit'
+                  : 'gray.light',
+              fontSize: 20,
+              fontWeight: 'bold',
+              lineHeight: 1,
+            }}
+          >
+            {getSiteName()}
+          </Typography>
+          <Typography sx={{ fontSize: 11 }}>
+            {frontEndHostDisplay(server)}
+          </Typography>
+        </Box>
+        {server.isLocal && <HomeIcon fontSize="small" color="primary" />}
+      </Box>
     </MenuItem>
   );
 };
