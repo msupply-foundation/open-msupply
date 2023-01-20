@@ -90,25 +90,6 @@ query patientSearch($input: PatientSearchInput!, $storeId: String!) {
   }
 }
 
-query getDocumentHistory($storeId: String!, $name: String!) {
-  documentHistory(storeId: $storeId, name: $name) {
-    __typename
-    ... on DocumentConnector {
-      totalCount
-      nodes {
-        __typename
-        author
-        data
-        id
-        name
-        parents
-        timestamp
-        type
-      }
-    }
-  }
-}
-
 mutation insertPatient($storeId: String!, $input: InsertPatientInput!) {
   insertPatient(storeId: $storeId, input: $input) {
     ... on PatientNode {
@@ -123,59 +104,6 @@ mutation updatePatient($storeId: String!, $input: UpdatePatientInput!) {
     ... on PatientNode {
       __typename
       ...PatientRow
-    }
-  }
-}
-
-fragment PatientEncounterProgramEvent on ProgramEventNode {
-  activeDatetime
-  type
-  data
-}
-
-fragment PatientEncounterRow on EncounterNode {
-  id
-  document {
-    documentRegistry {
-      name
-    }
-  }
-  program
-  startDatetime
-  endDatetime
-  status
-  name
-  type
-  patient {
-    id
-    firstName
-    lastName
-    name
-  }
-  events(at: $eventTime) {
-    ...PatientEncounterProgramEvent
-  }
-}
-
-query encounters(
-  $storeId: String!
-  $key: EncounterSortFieldInput!
-  $desc: Boolean
-  $filter: EncounterFilterInput
-  $page: PaginationInput
-  $eventTime: String!
-) {
-  encounters(
-    storeId: $storeId
-    sort: { key: $key, desc: $desc }
-    filter: $filter
-    page: $page
-  ) {
-    ... on EncounterConnector {
-      nodes {
-        ...PatientEncounterRow
-      }
-      totalCount
     }
   }
 }
