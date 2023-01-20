@@ -8,18 +8,22 @@ import {
   useBufferState,
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
-import { EncounterRegistry } from '../api/hooks/document/useProgramEncounters';
-import { useProgramEnrolments } from '@openmsupply-client/programs';
+import {
+  useProgramEnrolments,
+  useDocumentRegistry,
+  EncounterRegistryByProgram,
+} from '@openmsupply-client/programs';
 
 interface EncounterSearchInputProps {
-  onChange: (type: EncounterRegistry) => void;
+  onChange: (type: EncounterRegistryByProgram) => void;
   width?: number;
-  value: EncounterRegistry | null;
+  value: EncounterRegistryByProgram | null;
   disabled?: boolean;
 }
 
 export const getEncounterOptionRenderer =
-  (): AutocompleteOptionRenderer<EncounterRegistry> => (props, node) => {
+  (): AutocompleteOptionRenderer<EncounterRegistryByProgram> =>
+  (props, node) => {
     const name = node.encounter.name ?? '';
     return (
       <DefaultAutocompleteItemOption {...props} key={props.id}>
@@ -42,7 +46,9 @@ export const EncounterSearchInput: FC<EncounterSearchInputProps> = ({
       filterBy: { patientId: { equalTo: patientId } },
     });
   const { data: encounterData, isLoading: isEncounterLoading } =
-    usePatient.document.programEncounters(enrolmentData?.nodes ?? []);
+    useDocumentRegistry.get.encounterRegistriesByPrograms(
+      enrolmentData?.nodes ?? []
+    );
   const [buffer, setBuffer] = useBufferState(value);
   const EncounterOptionRenderer = getEncounterOptionRenderer();
 

@@ -5,14 +5,20 @@ import {
   DocumentRegistryNodeContext,
   DocumentRegistrySortFieldInput,
   EncounterSortFieldInput,
+  InsertEncounterInput,
+  InsertProgramEnrolmentInput,
   ProgramEnrolmentSortFieldInput,
+  UpdateEncounterInput,
+  UpdateProgramEnrolmentInput,
 } from '@common/types';
+import { EncounterListParams } from './hooks/utils/useEncounterApi';
 import {
   DocumentFragment,
   DocumentRegistryFragment,
   DocumentRegistryWithChildrenFragment,
-  EncounterBaseFragment,
   EncounterFieldsFragment,
+  EncounterFragment,
+  EncounterRowFragment,
   ProgramEnrolmentRowFragment,
   Sdk,
 } from './operations.generated';
@@ -47,6 +53,15 @@ export const getDocumentQueries = (sdk: Sdk, storeId: string) => ({
       }
       throw new Error('Patient document does not exist');
     },
+    documentHistory: async (
+      documentName: string
+    ): Promise<DocumentFragment[]> => {
+      const result = await sdk.getDocumentHistory({
+        storeId,
+        name: documentName,
+      });
+      return result.documentHistory.nodes;
+    },
   },
 });
 
@@ -56,6 +71,25 @@ export type DocumentRegistryParams = {
 };
 
 export const getEncounterQueries = (sdk: Sdk, storeId: string) => ({
+  list: async ({
+    sortBy,
+    filterBy,
+    pagination,
+  }: EncounterListParams): Promise<{
+    nodes: EncounterRowFragment[];
+    totalCount: number;
+  }> => {
+    const result = await sdk.encounters({
+      storeId,
+      key: sortBy?.key as EncounterSortFieldInput | undefined,
+      desc: sortBy?.isDesc,
+      filter: filterBy,
+      page: pagination,
+      eventTime: new Date().toISOString(),
+    });
+
+    return result?.encounters;
+  },
   encounterFields: async (
     patientId: string,
     fields: string[]
@@ -68,7 +102,7 @@ export const getEncounterQueries = (sdk: Sdk, storeId: string) => ({
     }
     throw new Error('Error querying document');
   },
-  byId: async (encounterId: string): Promise<EncounterBaseFragment> => {
+  byId: async (encounterId: string): Promise<EncounterFragment> => {
     const result = await sdk.encounterById({ encounterId, storeId });
     const encounters = result?.encounters;
 
@@ -84,8 +118,8 @@ export const getEncounterQueries = (sdk: Sdk, storeId: string) => ({
   previousEncounters: async (
     patientId: string,
     current: Date
-  ): Promise<EncounterBaseFragment> => {
-    const result = await sdk.encounters({
+  ): Promise<EncounterFragment> => {
+    const result = await sdk.encountersWithDocument({
       storeId,
       key: EncounterSortFieldInput.StartDatetime,
       desc: true,
@@ -109,6 +143,36 @@ export const getEncounterQueries = (sdk: Sdk, storeId: string) => ({
     } else {
       throw new Error('Could not find encounter');
     }
+  },
+
+  insertEncounter: async (
+    input: InsertEncounterInput
+  ): Promise<EncounterFragment> => {
+    const result = await sdk.insertEncounter({
+      storeId,
+      input,
+    });
+
+    if (result.insertEncounter.__typename === 'EncounterNode') {
+      return result.insertEncounter;
+    }
+
+    throw new Error('Could not insert encounter');
+  },
+
+  updateEncounter: async (
+    input: UpdateEncounterInput
+  ): Promise<EncounterFragment> => {
+    const result = await sdk.updateEncounter({
+      storeId,
+      input,
+    });
+
+    if (result.updateEncounter.__typename === 'EncounterNode') {
+      return result.updateEncounter;
+    }
+
+    throw new Error('Could not update encounter');
   },
 });
 
@@ -221,5 +285,35 @@ export const getProgramEnrolmentQueries = (sdk: Sdk, storeId: string) => ({
     });
 
     return result?.programEnrolments;
+  },
+
+  insertProgramEnrolment: async (
+    input: InsertProgramEnrolmentInput
+  ): Promise<DocumentFragment> => {
+    const result = await sdk.insertProgramEnrolment({
+      storeId,
+      input,
+    });
+
+    if (result.insertProgramEnrolment.__typename === 'ProgramEnrolmentNode') {
+      return result.insertProgramEnrolment.document;
+    }
+
+    throw new Error('Could not insert program');
+  },
+
+  updateProgramEnrolment: async (
+    input: UpdateProgramEnrolmentInput
+  ): Promise<DocumentFragment> => {
+    const result = await sdk.updateProgramEnrolment({
+      storeId,
+      input,
+    });
+
+    if (result.updateProgramEnrolment.__typename === 'ProgramEnrolmentNode') {
+      return result.updateProgramEnrolment.document;
+    }
+
+    throw new Error('Could not update program');
   },
 });

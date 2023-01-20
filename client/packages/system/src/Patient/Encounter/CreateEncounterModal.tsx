@@ -16,15 +16,14 @@ import {
   useNotification,
 } from '@openmsupply-client/common';
 import { DateUtils, useTranslation } from '@common/intl';
-import { useEncounter } from '../../Encounter';
 import {
+  EncounterRegistryByProgram,
   PatientModal,
   usePatientModalStore,
 } from '@openmsupply-client/programs';
 import { usePatient } from '../api';
-import { EncounterFragment } from '../../Encounter/api/operations.generated';
 import { AppRoute } from 'packages/config/src';
-import { EncounterRegistry } from '../api/hooks/document/useProgramEncounters';
+import { EncounterFragment, useEncounter } from '@openmsupply-client/programs';
 import { EncounterSearchInput } from './EncounterSearchInput';
 
 type Encounter = Pick<
@@ -37,7 +36,7 @@ export const CreateEncounterModal: FC = () => {
   const t = useTranslation('patients');
   const { current, setModal: selectModal } = usePatientModalStore();
   const [encounterRegistry, setEncounterRegistry] = useState<
-    EncounterRegistry | undefined
+    EncounterRegistryByProgram | undefined
   >();
   const [isError, setIsError] = useState(false);
 
@@ -63,7 +62,7 @@ export const CreateEncounterModal: FC = () => {
     onClose: reset,
   });
 
-  const onChangeEncounter = (entry: EncounterRegistry) => {
+  const onChangeEncounter = (entry: EncounterRegistryByProgram) => {
     setIsError(false);
     setEncounterRegistry(entry);
   };

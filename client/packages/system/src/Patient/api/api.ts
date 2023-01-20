@@ -4,7 +4,6 @@ import {
   InsertPatientInput,
   UpdatePatientInput,
   FilterBy,
-  DocumentNode,
   PatientSearchInput,
   ProgramEnrolmentSortFieldInput,
   SortRule,
@@ -15,7 +14,6 @@ import {
   Sdk,
   PatientRowFragment,
   PatientFragment,
-  PatientEncounterRowFragment,
 } from './operations.generated';
 
 export type ListParams = {
@@ -90,13 +88,6 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
 
       return result?.patients;
     },
-    documentHistory: async (documentName: string): Promise<DocumentNode[]> => {
-      const result = await sdk.getDocumentHistory({
-        storeId,
-        name: documentName,
-      });
-      return result.documentHistory.nodes;
-    },
     search: async (
       input: PatientSearchInput
     ): Promise<{ score: number; patient: PatientFragment }[]> => {
@@ -110,25 +101,6 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
       }
 
       throw new Error('Could not search for patients');
-    },
-    listEncounter: async ({
-      sortBy,
-      filterBy,
-      pagination,
-    }: EncounterListParams): Promise<{
-      nodes: PatientEncounterRowFragment[];
-      totalCount: number;
-    }> => {
-      const result = await sdk.encounters({
-        storeId,
-        key: sortBy.key as EncounterSortFieldInput,
-        desc: sortBy.isDesc,
-        filter: filterBy,
-        page: pagination,
-        eventTime: new Date().toISOString(),
-      });
-
-      return result?.encounters;
     },
   },
   insertPatient: async (

@@ -5,13 +5,13 @@ import {
   ProgramEnrolmentRowFragmentWithId,
 } from '@openmsupply-client/programs';
 
-export type EncounterRegistry = {
+export type EncounterRegistryByProgram = {
   program: ProgramEnrolmentRowFragmentWithId;
   encounter: DocumentRegistryFragment;
 };
 
 // Fetches available encounters for a list of programs (e.g. for the enrolled programs)
-export const useProgramEncounters = (
+export const useEncounterRegistriesByPrograms = (
   programs: ProgramEnrolmentRowFragmentWithId[]
 ) => {
   const api = useDocumentRegistryApi();
@@ -19,7 +19,7 @@ export const useProgramEncounters = (
     .map(it => it.document.documentRegistry?.id)
     .filter((it): it is string => !!it);
   return {
-    ...useQuery(api.keys.encountersByPrograms(programIds), () =>
+    ...useQuery(api.keys.registriesByParents(programIds), () =>
       api.get
         .documentRegistries({
           filter: {
@@ -35,13 +35,13 @@ export const useProgramEncounters = (
                 p => p.document?.documentRegistry?.id === encounter.parentId
               );
               if (!program) return undefined;
-              const entry: EncounterRegistry = {
+              const entry: EncounterRegistryByProgram = {
                 program,
                 encounter,
               };
               return entry;
             })
-            .filter((it): it is EncounterRegistry => !!it)
+            .filter((it): it is EncounterRegistryByProgram => !!it)
         )
     ),
   };

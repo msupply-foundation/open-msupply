@@ -9,14 +9,15 @@ import {
   RouteBuilder,
   useQueryParamsStore,
   EncounterSortFieldInput,
+  useUrlQueryParams,
 } from '@openmsupply-client/common';
-import { usePatient } from '../api';
 import { AppRoute } from 'packages/config/src';
 import {
   EncounterFragmentWithStatus,
   useEncounterFragmentWithStatus,
 } from '../../Encounter';
 import { useEncounterListColumns } from '../../Encounter/ListView/columns';
+import { useEncounter } from '@openmsupply-client/programs';
 
 const EncounterListComponent: FC = () => {
   const {
@@ -24,9 +25,17 @@ const EncounterListComponent: FC = () => {
     pagination: { page, first, offset, onChangePage },
   } = useQueryParamsStore();
 
-  const { data, isError, isLoading } = usePatient.document.encounters({
-    key: sortBy.key as EncounterSortFieldInput,
-    isDesc: sortBy.isDesc,
+  const { queryParams } = useUrlQueryParams({
+    initialSort: { key: 'startDatetime', dir: 'desc' },
+  });
+
+  const { data, isError, isLoading } = useEncounter.document.list({
+    ...queryParams,
+    sortBy: {
+      key: sortBy.key as EncounterSortFieldInput,
+      isDesc: sortBy.isDesc,
+      direction: sortBy.isDesc ? 'desc' : 'asc',
+    },
   });
   const dataWithStatus: EncounterFragmentWithStatus[] | undefined =
     useEncounterFragmentWithStatus(data?.nodes);

@@ -17,8 +17,8 @@ export const useDocumentRegistryApi = () => {
       [...keys.base(), 'documentRegistries', params] as const,
     programRegistries: (sort?: SortBy<DocumentRegistryNode>) =>
       [...keys.base(), 'programRegistries', sort] as const,
-    encountersByPrograms: (programs: string[]) =>
-      [...keys.base(), 'encountersByPrograms', ...programs] as const,
+    registriesByParents: (programs: string[]) =>
+      [...keys.base(), 'registriesByParents', ...programs] as const,
   };
   const { client } = useGql();
   const queries = getDocumentRegistryQueries(getSdk(client));
