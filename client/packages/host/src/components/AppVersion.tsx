@@ -1,7 +1,7 @@
 import React, { FC, CSSProperties } from 'react';
 import { Grid, Typography, useTranslation } from '@openmsupply-client/common';
 // Version is shared for client and server and is located in repo root package.json
-import packageJson from '../../package.json';
+const appVersion = require('../../../../../package.json').version; // eslint-disable-line @typescript-eslint/no-var-requires
 
 interface AppVersionProps {
   style?: CSSProperties;
@@ -17,7 +17,7 @@ export const AppVersion: FC<AppVersionProps> = ({ style }) => {
             <Typography fontWeight={700}>{t('label.app-version')}</Typography>
           </Grid>
           <Grid item flex={1}>
-            <Typography whiteSpace="nowrap">{packageJson.version}</Typography>
+            <Typography whiteSpace="nowrap">{appVersion}</Typography>
           </Grid>
         </Grid>
       </Grid>

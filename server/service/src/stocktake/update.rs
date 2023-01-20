@@ -125,6 +125,7 @@ pub fn check_stocktake_is_not_locked(input: &UpdateStocktake, existing: &Stockta
     }
 }
 
+#[derive(Default)]
 struct StocktakeGenerateJob {
     stocktake: StocktakeRow,
     // list of stocktake lines to be updated, e.g. to link newly created stock_lines during
@@ -132,7 +133,8 @@ struct StocktakeGenerateJob {
     stocktake_lines: Vec<StocktakeLineRow>,
 
     // new inventory adjustment
-    inventory_adjustment: Option<InvoiceRow>,
+    inventory_addition: Option<InvoiceRow>,
+    inventory_reduction: Option<InvoiceRow>,
     inventory_adjustment_lines: Vec<InvoiceLineRow>,
 
     // list of stock_line upserts
@@ -153,7 +155,8 @@ struct StockLineJob {
 fn generate_stock_line_update(
     connection: &StorageConnection,
     store_id: &str,
-    invoice_id: &str,
+    inventory_addition_id: &str,
+    inventory_reduction_id: &str,
     stocktake_line: &StocktakeLine,
     stock_line: &StockLineRow,
 ) -> Result<StockLineJob, UpdateStocktakeError> {
@@ -192,15 +195,21 @@ fn generate_stock_line_update(
 
     let quantity_change = f64::abs(delta);
     let shipment_line = if quantity_change > 0.0 {
-        let line_type = if delta > 0.0 {
-            InvoiceLineRowType::StockIn
+        let (invoice_id, r#type) = if delta > 0.0 {
+            (
+                inventory_addition_id.to_string(),
+                InvoiceLineRowType::StockIn,
+            )
         } else {
-            InvoiceLineRowType::StockOut
+            (
+                inventory_reduction_id.to_string(),
+                InvoiceLineRowType::StockOut,
+            )
         };
         Some(InvoiceLineRow {
             id: uuid(),
-            r#type: line_type,
-            invoice_id: invoice_id.to_string(),
+            r#type,
+            invoice_id,
             item_id: stock_line.item_id.clone(),
             item_name: item.name,
             item_code: item.code,
@@ -239,7 +248,7 @@ fn generate_stock_line_update(
 fn generate_new_stock_line(
     connection: &StorageConnection,
     store_id: &str,
-    invoice_id: &str,
+    inventory_addition_id: &str,
     stocktake_line: StocktakeLine,
 ) -> Result<StockLineJob, UpdateStocktakeError> {
     let counted_number_of_packs = stocktake_line.line.counted_number_of_packs.unwrap_or(0.0);
@@ -292,7 +301,7 @@ fn generate_new_stock_line(
         Some(InvoiceLineRow {
             id: uuid(),
             r#type: InvoiceLineRowType::StockIn,
-            invoice_id: invoice_id.to_string(),
+            invoice_id: inventory_addition_id.to_string(),
             item_id,
             item_name: item.name,
             item_code: item.code,
@@ -408,28 +417,20 @@ fn generate(
     });
 
     if !is_finalised {
-        // just update the existing stocktake
+        // just update the existing stocktakes
         return Ok(StocktakeGenerateJob {
             stocktake,
-            stocktake_lines: vec![],
-            inventory_adjustment: None,
-            inventory_adjustment_lines: vec![],
-            stock_lines: vec![],
-            location_movements: None,
+            ..Default::default()
         });
     }
 
     let now = Utc::now().naive_utc();
-    let inventory_adjustment_id = uuid();
-    let stocktake = inline_edit(&existing, |mut u: StocktakeRow| {
-        u.status = StocktakeStatus::Finalised;
-        u.finalised_datetime = Some(now);
-        u.inventory_adjustment_id = Some(inventory_adjustment_id.clone());
-        u
-    });
+    let inventory_addition_id = uuid();
+    let inventory_reduction_id = uuid();
 
     // finalise the stocktake
-    let mut inventory_adjustment_lines: Vec<InvoiceLineRow> = Vec::new();
+    let mut inventory_addition_lines: Vec<InvoiceLineRow> = Vec::new();
+    let mut inventory_reduction_lines: Vec<InvoiceLineRow> = Vec::new();
     let mut stock_lines: Vec<StockLineRow> = Vec::new();
     let mut stocktake_line_updates: Vec<StocktakeLineRow> = Vec::new();
     let mut location_movements: Vec<LocationMovementRow> = Vec::new();
@@ -445,7 +446,8 @@ fn generate(
             generate_stock_line_update(
                 connection,
                 store_id,
-                &inventory_adjustment_id,
+                &inventory_addition_id,
+                &inventory_reduction_id,
                 &stocktake_line,
                 stock_line,
             )?
@@ -454,13 +456,17 @@ fn generate(
             generate_new_stock_line(
                 connection,
                 &store_id,
-                &inventory_adjustment_id,
+                &inventory_addition_id,
                 stocktake_line,
             )?
         };
         stock_lines.push(stock_line);
         if let Some(shipment_line) = invoice_line {
-            inventory_adjustment_lines.push(shipment_line);
+            if shipment_line.r#type == InvoiceLineRowType::StockIn {
+                inventory_addition_lines.push(shipment_line)
+            } else {
+                inventory_reduction_lines.push(shipment_line)
+            }
         }
         if let Some(stocktake_line) = stocktake_line {
             stocktake_line_updates.push(stocktake_line);
@@ -471,24 +477,26 @@ fn generate(
     }
 
     // find inventory adjustment name:
-    let invalid_name = NameRowRepository::new(connection)
+    let inventory_adjustment_name = NameRowRepository::new(connection)
         .find_one_by_code(INVENTORY_ADJUSTMENT_NAME_CODE)?
         .ok_or(UpdateStocktakeError::InternalError(
             "Missing inventory adjustment name".to_string(),
         ))?;
 
-    // create a shipment even if there are no shipment lines
-
-    let shipment = InvoiceRow {
-        id: inventory_adjustment_id,
+    // Create adjustments
+    let template_adjustment = InvoiceRow {
+        // Different between addition and reduction
+        id: "".to_string(),
+        invoice_number: 0,
+        r#type: InvoiceRowType::InventoryAddition,
+        // Same for addition and reduction
         user_id: Some(user_id.to_string()),
-        name_id: invalid_name.id,
+        name_id: inventory_adjustment_name.id,
         store_id: store_id.to_string(),
-        invoice_number: next_number(connection, &NumberRowType::InventoryAdjustment, store_id)?,
-        name_store_id: None,
-        r#type: InvoiceRowType::InventoryAdjustment,
         status: InvoiceRowStatus::Verified,
+        verified_datetime: Some(now),
         // Default
+        name_store_id: None,
         transport_reference: None,
         on_hold: false,
         comment: None,
@@ -498,18 +506,47 @@ fn generate(
         picked_datetime: None,
         shipped_datetime: None,
         delivered_datetime: None,
-        verified_datetime: Some(now),
         colour: None,
         requisition_id: None,
         linked_invoice_id: None,
         tax: None,
     };
 
+    let inventory_addition = if !inventory_addition_lines.is_empty() {
+        Some(InvoiceRow {
+            id: inventory_addition_id,
+            invoice_number: next_number(connection, &NumberRowType::InventoryAddition, store_id)?,
+            r#type: InvoiceRowType::InventoryAddition,
+            ..template_adjustment.clone()
+        })
+    } else {
+        None
+    };
+    let inventory_reduction = if !inventory_reduction_lines.is_empty() {
+        Some(InvoiceRow {
+            id: inventory_reduction_id,
+            invoice_number: next_number(connection, &NumberRowType::InventoryReduction, store_id)?,
+            r#type: InvoiceRowType::InventoryReduction,
+            ..template_adjustment.clone()
+        })
+    } else {
+        None
+    };
+
+    let stocktake = inline_edit(&existing, |mut u: StocktakeRow| {
+        u.status = StocktakeStatus::Finalised;
+        u.finalised_datetime = Some(now);
+        u.inventory_addition_id = inventory_addition.as_ref().map(|i| i.id.clone());
+        u.inventory_reduction_id = inventory_reduction.as_ref().map(|i| i.id.clone());
+        u
+    });
+
     Ok(StocktakeGenerateJob {
         stocktake,
         stocktake_lines: stocktake_line_updates,
-        inventory_adjustment: Some(shipment),
-        inventory_adjustment_lines,
+        inventory_addition,
+        inventory_reduction,
+        inventory_adjustment_lines: [inventory_addition_lines, inventory_reduction_lines].concat(),
         stock_lines,
         location_movements: Some(location_movements),
     })
@@ -539,10 +576,15 @@ pub fn update_stocktake(
                 stocktake_line_repo.upsert_one(&stocktake_line)?;
             }
             // write inventory adjustment
-            if let Some(inventory_adjustment) = result.inventory_adjustment {
+            if let Some(inventory_addition) = result.inventory_addition {
                 let shipment_repo = InvoiceRowRepository::new(connection);
-                shipment_repo.upsert_one(&inventory_adjustment)?;
+                shipment_repo.upsert_one(&inventory_addition)?;
             }
+            if let Some(inventory_reduction) = result.inventory_reduction {
+                let shipment_repo = InvoiceRowRepository::new(connection);
+                shipment_repo.upsert_one(&inventory_reduction)?;
+            }
+            // write inventory adjustment lines
             let shipment_line_repo = InvoiceLineRowRepository::new(connection);
             for line in result.inventory_adjustment_lines {
                 shipment_line_repo.upsert_one(&line)?;
@@ -595,8 +637,9 @@ mod test {
             MockDataInserts,
         },
         test_db::setup_all,
-        InvoiceLineRowRepository, InvoiceLineRowType, StockLineRowRepository, StocktakeLine,
-        StocktakeLineRowRepository, StocktakeRepository, StocktakeRow,
+        InvoiceLineRepository, InvoiceLineRowRepository, InvoiceLineRowType,
+        StockLineRowRepository, StocktakeLine, StocktakeLineRowRepository, StocktakeRepository,
+        StocktakeRow,
     };
     use util::{inline_edit, inline_init};
 
@@ -725,13 +768,14 @@ mod test {
                 }),
             )
             .unwrap();
-        let shipment = InvoiceLineRowRepository::new(&context.connection)
-            .find_many_by_invoice_id(&result.inventory_adjustment_id.unwrap())
+        let invoice_line = InvoiceLineRowRepository::new(&context.connection)
+            .find_many_by_invoice_id(&result.inventory_addition_id.unwrap())
             .unwrap()
             .pop()
             .unwrap();
-        assert_eq!(shipment.r#type, InvoiceLineRowType::StockIn);
-        assert_eq!(shipment.number_of_packs, surplus_amount);
+        assert_eq!(invoice_line.r#type, InvoiceLineRowType::StockIn);
+        assert_eq!(invoice_line.number_of_packs, surplus_amount);
+        assert_eq!(result.inventory_reduction_id, None);
 
         // success deficit should result in StockOut shipment line
         let stocktake = mock_stocktake_stock_deficit();
@@ -749,16 +793,20 @@ mod test {
                 }),
             )
             .unwrap();
-        let shipment = InvoiceLineRowRepository::new(&context.connection)
-            .find_many_by_invoice_id(&result.inventory_adjustment_id.unwrap())
+        let invoice_line = InvoiceLineRowRepository::new(&context.connection)
+            .find_many_by_invoice_id(&result.inventory_reduction_id.unwrap())
             .unwrap()
             .pop()
             .unwrap();
-        assert_eq!(shipment.r#type, InvoiceLineRowType::StockOut);
-        assert_eq!(shipment.number_of_packs, f64::abs(deficit_amount));
+        assert_eq!(invoice_line.r#type, InvoiceLineRowType::StockOut);
+        assert_eq!(invoice_line.number_of_packs, f64::abs(deficit_amount));
+        assert_eq!(result.inventory_addition_id, None);
 
         // success: no count change should not generate shipment line
         let stocktake = mock_stocktake_no_count_change();
+        let invoice_line_count = InvoiceLineRepository::new(&context.connection)
+            .count(None)
+            .unwrap();
         let result = service
             .update_stocktake(
                 &context,
@@ -768,11 +816,12 @@ mod test {
                 }),
             )
             .unwrap();
-        let shipment_lines = InvoiceLineRowRepository::new(&context.connection)
-            .find_many_by_invoice_id(&result.inventory_adjustment_id.unwrap())
-            .unwrap()
-            .pop();
-        assert_eq!(shipment_lines, None);
+        assert_eq!(
+            InvoiceLineRepository::new(&context.connection).count(None),
+            Ok(invoice_line_count)
+        );
+        assert_eq!(result.inventory_addition_id, None);
+        assert_eq!(result.inventory_reduction_id, None);
 
         // success: no changes (not finalised)
         let stocktake = mock_stocktake_a();
@@ -874,7 +923,7 @@ mod test {
             )
             .unwrap();
         let shipment_line = InvoiceLineRowRepository::new(&context.connection)
-            .find_many_by_invoice_id(&result.inventory_adjustment_id.unwrap())
+            .find_many_by_invoice_id(&result.inventory_addition_id.unwrap())
             .unwrap()
             .pop()
             .unwrap();

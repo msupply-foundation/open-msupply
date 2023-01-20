@@ -61,7 +61,8 @@ httpmock = "0.6"
 winres = "0.1"
 
 [features]
-default = ["sqlite", "dep:async-dnssd", "dep:machine-uid"]
+default = ["sqlite", "dep:machine-uid"]
+discovery = ["dep:async-dnssd"]
 sqlite = ["repository/sqlite"]
 postgres = ["repository/postgres"]
 # See openssl comment regarding the "openssl/vendored" feature

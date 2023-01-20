@@ -46,7 +46,8 @@ impl SyncRecordTester for InvoiceRecordTester {
             colour: None,
             requisition_id: None,
             linked_invoice_id: None,
-            tax: None,
+            // Tax on invoice/transact is not nullable in mSupply
+            tax: Some(0.0),
         };
         let base_invoice_line_row = InvoiceLineRow {
             id: uuid(),
@@ -103,21 +104,28 @@ impl SyncRecordTester for InvoiceRecordTester {
         });
         let invoice_row_3 = inline_edit(&base_invoice_row, |mut d| {
             d.id = uuid();
-            d.r#type = InvoiceRowType::InventoryAdjustment;
-            d.status = InvoiceRowStatus::Picked;
-            d
-        });
-        let invoice_row_4 = inline_edit(&base_invoice_row, |mut d| {
-            d.id = uuid();
             d.r#type = InvoiceRowType::OutboundShipment;
             d.status = InvoiceRowStatus::Shipped;
             d
         });
 
-        let invoice_row_5 = inline_edit(&base_invoice_row, |mut d| {
+        let invoice_row_4 = inline_edit(&base_invoice_row, |mut d| {
             d.id = uuid();
             d.r#type = InvoiceRowType::OutboundShipment;
             d.status = InvoiceRowStatus::Delivered;
+            d
+        });
+        // Inventory adjustments should link to correct name
+        let invoice_row_5 = inline_edit(&base_invoice_row, |mut d| {
+            d.id = uuid();
+            d.r#type = InvoiceRowType::InventoryAddition;
+            d.status = InvoiceRowStatus::Picked;
+            d
+        });
+        let invoice_row_6 = inline_edit(&base_invoice_row, |mut d| {
+            d.id = uuid();
+            d.r#type = InvoiceRowType::InventoryReduction;
+            d.status = InvoiceRowStatus::Picked;
             d
         });
 
@@ -147,6 +155,7 @@ impl SyncRecordTester for InvoiceRecordTester {
                 PullUpsertRecord::Invoice(invoice_row_3),
                 PullUpsertRecord::Invoice(invoice_row_4),
                 PullUpsertRecord::Invoice(invoice_row_5),
+                PullUpsertRecord::Invoice(invoice_row_6),
                 PullUpsertRecord::InvoiceLine(invoice_line_row_1.clone()),
                 PullUpsertRecord::InvoiceLine(invoice_line_row_2),
                 PullUpsertRecord::InvoiceLine(invoice_line_row_3),
@@ -207,9 +216,6 @@ impl SyncRecordTester for InvoiceRecordTester {
             d.sell_price_per_pack = 15.0;
             d.total_before_tax = 10.0;
             d.total_after_tax = 15.0;
-            // TODO test to unset the tax, this is currently not working but should
-            // work with the new push endpoint
-            // d.tax = None;
             d.tax = Some(0.0);
             d.number_of_packs = 15.120;
             d.note = Some("invoice line note".to_string());

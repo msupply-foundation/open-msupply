@@ -115,6 +115,7 @@ export const ContentArea: FC<ContentAreaProps> = ({
       <DataTable<StocktakeSummaryItem | StocktakeLineFragment>
         onRowClick={onRowClick}
         ExpandContent={Expando}
+        isRowAnimated={true}
         columns={columns}
         data={rows}
         id="stocktake-detail"

@@ -50,8 +50,12 @@ pub struct LegacyStocktakeRow {
     #[serde(rename = "Locked")]
     pub is_locked: bool,
 
+    #[serde(rename = "invad_additions_ID")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
-    pub invad_additions_ID: Option<String>,
+    pub inventory_addition_id: Option<String>,
+    #[serde(rename = "invad_reductions_ID")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub inventory_reduction_id: Option<String>,
 
     // Ignore invad_reductions_ID for V1
     // #[serde(deserialize_with = "empty_str_as_option_string")]
@@ -116,7 +120,8 @@ impl SyncTranslation for StocktakeTranslation {
             )))?,
             created_datetime,
             finalised_datetime,
-            inventory_adjustment_id: data.invad_additions_ID,
+            inventory_addition_id: data.inventory_addition_id,
+            inventory_reduction_id: data.inventory_reduction_id,
             stocktake_date: data.stocktake_date,
             is_locked: data.is_locked,
         };
@@ -145,9 +150,10 @@ impl SyncTranslation for StocktakeTranslation {
             status,
             created_datetime,
             finalised_datetime,
-            inventory_adjustment_id,
             is_locked,
             stocktake_date,
+            inventory_addition_id,
+            inventory_reduction_id,
         } = StocktakeRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg("Stocktake row not found"))?;
@@ -161,7 +167,8 @@ impl SyncTranslation for StocktakeTranslation {
             comment,
             is_locked,
             stocktake_date,
-            invad_additions_ID: inventory_adjustment_id,
+            inventory_addition_id,
+            inventory_reduction_id,
             serial_number: stocktake_number,
             stock_take_created_date: date_from_date_time(&created_datetime),
             stock_take_time: created_datetime.time(),
