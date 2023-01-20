@@ -1,0 +1,15 @@
+query MyQuery($storeId: String!, $creationDatetimeBeforeOrEqual: String!) {
+  invoices(
+    storeId: $storeId
+    filter: {
+      createdDatetime: { beforeOrEqualTo: $creationDatetimeBeforeOrEqual }
+    }
+  ) {
+    ... on InvoiceConnector {
+      nodes {
+        comment
+        id
+      }
+    }
+  }
+}

@@ -43,7 +43,8 @@ impl ReportQueries {
         #[graphql(
             desc = "The data id that should be used for the report, e.g. the invoice id when printing an invoice"
         )]
-        data_id: String,
+        data_id: Option<String>,
+        arguments: Option<serde_json::Value>,
         format: Option<PrintFormat>,
     ) -> Result<PrintReportResponse> {
         let report_format = match format {
@@ -52,7 +53,7 @@ impl ReportQueries {
                 Some(service::report::report_service::PrintFormat::Pdf)
             }
         };
-        print_report(ctx, store_id, report_id, data_id, report_format).await
+        print_report(ctx, store_id, report_id, data_id, arguments, report_format).await
     }
 
     pub async fn print_report_definition(
@@ -61,8 +62,9 @@ impl ReportQueries {
         store_id: String,
         #[graphql(desc = "Name of the report")] name: Option<String>,
         #[graphql(desc = "The report definition to be printed")] report: serde_json::Value,
-        data_id: String,
+        data_id: Option<String>,
+        arguments: Option<serde_json::Value>,
     ) -> Result<PrintReportResponse> {
-        print_report_definition(ctx, store_id, name, report, data_id).await
+        print_report_definition(ctx, store_id, name, report, data_id, arguments).await
     }
 }

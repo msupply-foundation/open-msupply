@@ -2943,7 +2943,8 @@ export type QueriesPatientsArgs = {
 
 
 export type QueriesPrintReportArgs = {
-  dataId: Scalars['String'];
+  arguments?: InputMaybe<Scalars['JSON']>;
+  dataId?: InputMaybe<Scalars['String']>;
   format?: InputMaybe<PrintFormat>;
   reportId: Scalars['String'];
   storeId: Scalars['String'];
@@ -2951,7 +2952,8 @@ export type QueriesPrintReportArgs = {
 
 
 export type QueriesPrintReportDefinitionArgs = {
-  dataId: Scalars['String'];
+  arguments?: InputMaybe<Scalars['JSON']>;
+  dataId?: InputMaybe<Scalars['String']>;
   name?: InputMaybe<Scalars['String']>;
   report: Scalars['JSON'];
   storeId: Scalars['String'];
@@ -3124,13 +3126,16 @@ export enum ReportContext {
 
 export type ReportFilterInput = {
   context?: InputMaybe<EqualFilterReportContextInput>;
+  context2?: InputMaybe<EqualFilterStringInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   name?: InputMaybe<SimpleStringFilterInput>;
 };
 
 export type ReportNode = {
   __typename: 'ReportNode';
+  argumentSchema?: Maybe<FormSchemaNode>;
   context: ReportContext;
+  context2?: Maybe<Scalars['String']>;
   id: Scalars['String'];
   /** Human readable name of the report */
   name: Scalars['String'];

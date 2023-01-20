@@ -2,6 +2,13 @@ fragment ReportRow on ReportNode {
   context
   id
   name
+  context2
+  argumentSchema {
+    id
+    type
+    jsonSchema
+    uiSchema
+  }
 }
 
 query reports(
@@ -27,8 +34,9 @@ query reports(
 
 query printReport(
   $storeId: String!
-  $dataId: String!
   $reportId: String!
+  $dataId: String
+  $arguments: JSON
   $format: PrintFormat
 ) {
   printReport(
@@ -36,6 +44,7 @@ query printReport(
     reportId: $reportId
     storeId: $storeId
     format: $format
+    arguments: $arguments
   ) {
     ... on PrintReportNode {
       __typename

@@ -16,6 +16,7 @@ import {
 import { CreateShipmentButton } from './CreateShipmentButton';
 import { SupplyRequestedQuantityButton } from './SupplyRequestedQuantityButton';
 import { useResponse } from '../../api';
+import { JsonData } from '@openmsupply-client/programs';
 
 export const AppBarButtonsComponent = () => {
   const { OpenButton } = useDetailPanel();
@@ -23,9 +24,12 @@ export const AppBarButtonsComponent = () => {
   const { print, isPrinting } = useReport.utils.print();
   const t = useTranslation('common');
 
-  const printReport = (report: ReportRowFragment) => {
+  const printReport = (
+    report: ReportRowFragment,
+    args: JsonData | undefined
+  ) => {
     if (!data) return;
-    print({ reportId: report.id, dataId: data?.id || '' });
+    print({ reportId: report.id, dataId: data?.id, args });
   };
 
   return (

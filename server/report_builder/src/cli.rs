@@ -14,6 +14,7 @@ fn main() -> anyhow::Result<()> {
                 args.output,
                 args.report,
                 args.data_id,
+                args.arguments_file,
             )?;
         }
     };

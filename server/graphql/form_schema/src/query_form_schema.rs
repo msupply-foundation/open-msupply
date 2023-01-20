@@ -1,10 +1,9 @@
 use async_graphql::*;
 
+use graphql_types::types::FormSchemaNode;
 use service::auth::{Resource, ResourceAccessRequest};
 
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
-
-use crate::types::json_schema::FormSchemaNode;
 
 pub fn form_schema(ctx: &Context<'_>, id: String) -> Result<Option<FormSchemaNode>> {
     validate_auth(
