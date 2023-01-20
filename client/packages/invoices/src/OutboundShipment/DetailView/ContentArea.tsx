@@ -148,6 +148,7 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
             buttonText={t('button.add-item')}
           />
         }
+        isRowAnimated={true}
       />
     </Box>
   );

@@ -151,9 +151,9 @@ const STOCKTAKE_QUERY: &str = r#"query StocktakeQuery($storeId: String, $dataId:
       createdDatetime
       description
       finalisedDatetime
-      inventoryAdjustmentId
+      inventoryAdjustmentId: inventoryAdditionId
       isLocked
-      inventoryAdjustment {
+      inventoryAdjustment: inventoryAddition {
         allocatedDatetime
         colour
         comment

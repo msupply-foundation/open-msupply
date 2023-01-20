@@ -1,4 +1,20 @@
 apply plugin: 'com.android.application'
+import groovy.json.JsonSlurper
+
+def getVersionFromPackageJson() {
+   def inputFile = new File("$rootDir/../../../package.json")
+   def packageJson = new JsonSlurper().parseText(inputFile.text)
+
+   return packageJson["version"]
+}
+
+def getVersionCodeFromVersionName(versionName) {
+    // trimmed version = version without candidate (only consider first part of version, before any `-`)
+    def (trimmedVersion) = versionName.tokenize('-')
+    def (major, minor, patch) = trimmedVersion.tokenize('.')
+    return (major.toInteger() * 1000000) + (minor.toInteger() * 10000) + (patch.toInteger() * 100)
+}
+
 
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
@@ -6,8 +22,9 @@ android {
         applicationId "org.openmsupply.client"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        // Get version from package.json in the repo root
+        versionName getVersionFromPackageJson() 
+        versionCode getVersionCodeFromVersionName(versionName)
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -15,6 +32,8 @@ android {
             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
         setProperty("archivesBaseName", "open-msupply-$versionName")
+
+        project.logger.lifecycle("versionName: $versionName versionCode: $versionCode")
     }
     signingConfigs {
         release {

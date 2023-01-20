@@ -26,7 +26,6 @@ pub struct StocktakeFilter {
     pub created_datetime: Option<DatetimeFilter>,
     pub stocktake_date: Option<DateFilter>,
     pub finalised_datetime: Option<DatetimeFilter>,
-    pub inventory_adjustment_id: Option<EqualFilter<String>>,
     pub is_locked: Option<bool>,
 }
 
@@ -43,7 +42,6 @@ impl StocktakeFilter {
             created_datetime: None,
             stocktake_date: None,
             finalised_datetime: None,
-            inventory_adjustment_id: None,
             is_locked: None,
         }
     }
@@ -98,11 +96,6 @@ impl StocktakeFilter {
         self
     }
 
-    pub fn inventory_adjustment_id(mut self, filter: EqualFilter<String>) -> Self {
-        self.inventory_adjustment_id = Some(filter);
-        self
-    }
-
     pub fn is_locked(mut self, filter: bool) -> Self {
         self.is_locked = Some(filter);
         self
@@ -145,11 +138,6 @@ fn create_filtered_query<'a>(filter: Option<StocktakeFilter>) -> BoxedStocktakeQ
         apply_date_time_filter!(query, f.created_datetime, stocktake::created_datetime);
         apply_date_filter!(query, f.stocktake_date, stocktake::stocktake_date);
         apply_date_time_filter!(query, f.finalised_datetime, stocktake::finalised_datetime);
-        apply_equal_filter!(
-            query,
-            f.inventory_adjustment_id,
-            stocktake::inventory_adjustment_id
-        );
 
         if let Some(value) = f.is_locked {
             query = query.filter(stocktake::is_locked.eq(value));

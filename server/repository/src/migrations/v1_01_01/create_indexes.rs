@@ -14,7 +14,8 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         CREATE INDEX "index_invoice_line_item_id_fkey" ON "invoice_line" ("item_id");
         CREATE INDEX "index_invoice_line_invoice_id_fkey" ON "invoice_line" ("invoice_id");
         CREATE INDEX "index_activity_log_store_id_fkey" ON "activity_log" ("store_id");
-        CREATE INDEX "index_stocktake_inventory_adjustment_id_fkey" ON "stocktake" ("inventory_adjustment_id");
+        CREATE INDEX "index_stocktake_inventory_addition_id_fkey" ON "stocktake" ("inventory_addition_id");
+        CREATE INDEX "index_stocktake_inventory_reduction_id_fkey" ON "stocktake" ("inventory_reduction_id");
         CREATE INDEX "index_stocktake_store_id_fkey" ON "stocktake" ("store_id");
         CREATE INDEX "index_location_store_id_fkey" ON "location" ("store_id");
         CREATE INDEX "index_user_permission_store_id_fkey" ON "user_permission" ("store_id");
