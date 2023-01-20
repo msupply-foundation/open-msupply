@@ -116,10 +116,10 @@ For example, to print a report for a stocktake with id "d734fd45-064e-4ddd-9886-
 ### Report templates with arguments
 
 Some reports need additional arguments such as a time range.
-Report arguments are passed on as variable to the used graphql query.
+Report arguments are passed on as variable to the used GraphGl query.
 
 There is an example for a report with arguments in the `example_arguments` directory.
-To specify the arguments create a `argument.json` file in the `report_builder` directory with the content:
+To specify the arguments create a `arguments.json` file in the `report_builder` directory with the content:
 
 ```json
 {
@@ -127,7 +127,10 @@ To specify the arguments create a `argument.json` file in the `report_builder` d
 }
 ```
 
-Then run
+The required arguments are the same as the variables one would pass to the underlying GraphGl query,
+i.e. to learn about available parameters and types please look at the GraphGl query definition.
+
+To build the report run:
 
 ```bash
 report_build -- build --dir ./example_arguments/ --template template.html --query-gql query.graphql
