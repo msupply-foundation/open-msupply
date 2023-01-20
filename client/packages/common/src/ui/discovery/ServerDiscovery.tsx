@@ -22,10 +22,11 @@ const isAutoconnect = () => {
 };
 
 export const ServerDiscovery = () => {
-  const { servers, discoveryTimedOut, connectToServer } = useNativeClient({
-    discovery: true,
-    autoconnect: isAutoconnect(),
-  });
+  const { servers, discoveryTimedOut, connectToServer, discover } =
+    useNativeClient({
+      discovery: true,
+      autoconnect: isAutoconnect(),
+    });
   const t = useTranslation('app');
 
   return (
@@ -107,6 +108,7 @@ export const ServerDiscovery = () => {
             servers={servers}
             connect={connectToServer}
             discoveryTimedOut={discoveryTimedOut}
+            discover={discover}
           />
         </Box>
       </Box>

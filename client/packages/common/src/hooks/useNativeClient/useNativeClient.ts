@@ -75,12 +75,14 @@ export const useNativeClient = ({
     discoveryTimedOut: false,
   });
 
+  const timers: { poll?: NodeJS.Timer; timeout?: NodeJS.Timer } = {};
+
   const connectToServer = (server: FrontEndHost) => {
     localStorage.setItem(PREVIOUS_SERVER_KEY, JSON.stringify(server));
     nativeAPI?.connectToServer(server);
   };
 
-  useEffect(() => {
+  const discover = () => {
     const nativeAPI = getNativeAPI();
 
     if (!nativeAPI) return;
@@ -97,11 +99,22 @@ export const useNativeClient = ({
 
     if (!discovery) return;
 
+    clearTimeout(timers.timeout);
+    clearTimeout(timers.poll);
+
+    setState(state => {
+      return {
+        ...state,
+        servers: [],
+        discoveryTimedOut: false,
+      };
+    });
+
     nativeAPI.startServerDiscovery();
 
     const timeoutTimer = setTimeout(() => setTimedOut(true), DISCOVERY_TIMEOUT);
 
-    const pollTimer = setInterval(async () => {
+    timers.poll = setInterval(async () => {
       const servers = (await nativeAPI.discoveredServers()).servers;
       setState(state => {
         return {
@@ -113,10 +126,13 @@ export const useNativeClient = ({
 
       clearTimeout(timeoutTimer);
     }, DISCOVERED_SERVER_POLL);
+  };
 
+  useEffect(() => {
+    discover();
     return () => {
-      clearTimeout(timeoutTimer);
-      clearTimeout(pollTimer);
+      clearTimeout(timers.timeout);
+      clearTimeout(timers.poll);
     };
   }, []);
 
@@ -142,6 +158,7 @@ export const useNativeClient = ({
     ...state,
     connectToServer,
     goBackToDiscovery: () => nativeAPI?.goBackToDiscovery(),
+    discover,
   };
 };
 

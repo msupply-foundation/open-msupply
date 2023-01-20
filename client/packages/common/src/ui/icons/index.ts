@@ -37,6 +37,7 @@ export { PowerIcon } from './Power';
 export { PrinterIcon } from './Printer';
 export { RadioIcon } from './Radio';
 export { ReportsIcon } from './Reports';
+export { RefreshIcon } from './Refresh';
 export { RewindIcon } from './Rewind';
 export { SaveIcon } from './Save';
 export { ScanIcon } from './Scan';
