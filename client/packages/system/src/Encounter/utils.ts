@@ -5,8 +5,8 @@ import {
   TypedTFunction,
   useTranslation,
 } from '@common/intl';
-import { EncounterRowFragment } from './api';
 import { EncounterNodeStatus } from '@common/types';
+import { EncounterRowFragment } from '@openmsupply-client/programs';
 
 const effectiveStatus = (
   encounter: EncounterRowFragment,

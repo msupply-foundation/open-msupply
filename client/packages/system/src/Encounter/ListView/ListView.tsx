@@ -8,12 +8,12 @@ import {
   useNavigate,
   createQueryParamsStore,
 } from '@openmsupply-client/common';
-import { useEncounter, EncounterFragmentWithId } from '../api';
 import { useEncounterListColumns } from './columns';
 import {
   EncounterFragmentWithStatus,
   useEncounterFragmentWithStatus,
 } from '../utils';
+import { EncounterFragment, useEncounter } from '@openmsupply-client/programs';
 
 const EncounterListComponent: FC = () => {
   const {
@@ -21,7 +21,12 @@ const EncounterListComponent: FC = () => {
     updatePaginationQuery,
     queryParams: { sortBy, page, first, offset },
   } = useUrlQueryParams();
-  const { data, isError, isLoading } = useEncounter.document.list();
+  const { queryParams } = useUrlQueryParams({
+    initialSort: { key: 'startDatetime', dir: 'desc' },
+  });
+  const { data, isError, isLoading } = useEncounter.document.list({
+    ...queryParams,
+  });
   const pagination = { page, first, offset };
   const navigate = useNavigate();
   const columns = useEncounterListColumns({
@@ -52,7 +57,7 @@ const EncounterListComponent: FC = () => {
 export const EncounterListView: FC = () => (
   <TableProvider
     createStore={createTableStore}
-    queryParamsStore={createQueryParamsStore<EncounterFragmentWithId>({
+    queryParamsStore={createQueryParamsStore<EncounterFragment>({
       initialSortBy: { key: 'startDatetime' },
     })}
   >

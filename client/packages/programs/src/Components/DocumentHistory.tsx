@@ -5,28 +5,27 @@ import {
   AccordionDetails,
 } from '@mui/material';
 import { ChevronDownIcon } from '@common/icons';
-import { DocumentNode } from 'packages/common/src/types/schema';
 import React, { FC } from 'react';
 import ReactDiffViewer from 'react-diff-viewer';
-import { usePatient } from '../../../system/src/Patient/api';
 import { BasicSpinner, Box, useFormatDateTime } from 'packages/common/src';
+import { DocumentFragment, useDocument } from '../api';
 
 export const DocumentHistory: FC<{ documentName: string }> = ({
   documentName,
 }) => {
-  const { data: history } = usePatient.document.history(documentName);
+  const { data: history } = useDocument.get.history(documentName);
 
   const findFirstParent = (
-    head: DocumentNode,
-    history: DocumentNode[]
-  ): DocumentNode | undefined => {
+    head: DocumentFragment,
+    history: DocumentFragment[]
+  ): DocumentFragment | undefined => {
     const parentId = head.parents[0];
     if (parentId === undefined) {
       return undefined;
     }
     return history.find(node => node.id === parentId);
   };
-  const toString = (node: DocumentNode | undefined): string => {
+  const toString = (node: DocumentFragment | undefined): string => {
     if (node === undefined) {
       return '';
     }

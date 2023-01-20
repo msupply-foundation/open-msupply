@@ -1,13 +1,15 @@
 import { useDocumentByName } from './useDocumentByName';
 import { useDocumentRegistryByContext } from './useDocumentRegistryByContext';
+import { useDocumentHistory } from './useDocumentHistory';
 
 import { useProgramRegistries } from './useProgramRegistries';
+import { useEncounterRegistriesByPrograms } from './useEncounterRegistriesByPrograms';
 
 import { usePatientDocument } from './usePatientDocument';
 import { useAllocateNumber } from './useAllocateNumber';
 
 import { useEncounterFields } from './useEncounterFields';
-import { useEncounterById } from './useEncounterById';
+import { useEncounterById, useEncounterByIdPromise } from './useEncounterById';
 import { useEncounterPrevious } from './useEncounterPrevious';
 
 import {
@@ -17,17 +19,29 @@ import {
 import { useInsertProgramEnrolment } from './useInsertProgramEnrolment';
 import { useUpdateProgramEnrolment } from './useUpdateProgramEnrolment';
 
+import { useEncounters } from './useEncounters';
+import { useUpsertEncounter } from './useUpsertEncounter';
+
 export const Document = {
   useDocumentByName,
   usePatientDocument,
+  useDocumentHistory,
+
   useDocumentRegistryByContext,
   useProgramRegistries,
+  useEncounterRegistriesByPrograms,
+
   useAllocateNumber,
-  useEncounterById,
-  useEncounterFields,
-  useEncounterPrevious,
+
   useProgramEnrolments,
   useProgramEnrolmentsPromise,
   useInsertProgramEnrolment,
   useUpdateProgramEnrolment,
+
+  useEncounters,
+  useEncounterById,
+  useEncounterByIdPromise,
+  useEncounterFields,
+  useEncounterPrevious,
+  useUpsertEncounter,
 };

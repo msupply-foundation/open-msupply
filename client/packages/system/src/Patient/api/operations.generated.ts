@@ -36,14 +36,6 @@ export type PatientSearchQueryVariables = Types.Exact<{
 
 export type PatientSearchQuery = { __typename: 'Queries', patientSearch: { __typename: 'PatientSearchConnector', totalCount: number, nodes: Array<{ __typename: 'PatientSearchNode', score: number, patient: { __typename: 'PatientNode', address1?: string | null, address2?: string | null, code: string, code2?: string | null, country?: string | null, dateOfBirth?: string | null, email?: string | null, firstName?: string | null, lastName?: string | null, gender?: Types.GenderType | null, id: string, name: string, phone?: string | null, website?: string | null, isDeceased: boolean, document?: { __typename: 'DocumentNode', id: string, name: string, type: string } | null } }> } };
 
-export type GetDocumentHistoryQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
-  name: Types.Scalars['String'];
-}>;
-
-
-export type GetDocumentHistoryQuery = { __typename: 'Queries', documentHistory: { __typename: 'DocumentConnector', totalCount: number, nodes: Array<{ __typename: 'DocumentNode', author: string, data: any, id: string, name: string, parents: Array<string>, timestamp: string, type: string }> } };
-
 export type InsertPatientMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
   input: Types.InsertPatientInput;
@@ -59,22 +51,6 @@ export type UpdatePatientMutationVariables = Types.Exact<{
 
 
 export type UpdatePatientMutation = { __typename: 'Mutations', updatePatient: { __typename: 'PatientNode', id: string, code: string, code2?: string | null, firstName?: string | null, lastName?: string | null, name: string, dateOfBirth?: string | null, gender?: Types.GenderType | null, email?: string | null, isDeceased: boolean, document?: { __typename: 'DocumentNode', id: string, name: string, type: string } | null } };
-
-export type PatientEncounterProgramEventFragment = { __typename: 'ProgramEventNode', activeDatetime: string, type: string, data?: string | null };
-
-export type PatientEncounterRowFragment = { __typename: 'EncounterNode', id: string, program: string, startDatetime: string, endDatetime?: string | null, status?: Types.EncounterNodeStatus | null, name: string, type: string, document: { __typename: 'DocumentNode', documentRegistry?: { __typename: 'DocumentRegistryNode', name?: string | null } | null }, patient: { __typename: 'NameNode', id: string, firstName?: string | null, lastName?: string | null, name: string }, events: Array<{ __typename: 'ProgramEventNode', activeDatetime: string, type: string, data?: string | null }> };
-
-export type EncountersQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
-  key: Types.EncounterSortFieldInput;
-  desc?: Types.InputMaybe<Types.Scalars['Boolean']>;
-  filter?: Types.InputMaybe<Types.EncounterFilterInput>;
-  page?: Types.InputMaybe<Types.PaginationInput>;
-  eventTime: Types.Scalars['String'];
-}>;
-
-
-export type EncountersQuery = { __typename: 'Queries', encounters: { __typename: 'EncounterConnector', totalCount: number, nodes: Array<{ __typename: 'EncounterNode', id: string, program: string, startDatetime: string, endDatetime?: string | null, status?: Types.EncounterNodeStatus | null, name: string, type: string, document: { __typename: 'DocumentNode', documentRegistry?: { __typename: 'DocumentRegistryNode', name?: string | null } | null }, patient: { __typename: 'NameNode', id: string, firstName?: string | null, lastName?: string | null, name: string }, events: Array<{ __typename: 'ProgramEventNode', activeDatetime: string, type: string, data?: string | null }> }> } };
 
 export const PatientRowFragmentDoc = gql`
     fragment PatientRow on PatientNode {
@@ -119,38 +95,6 @@ export const PatientFragmentDoc = gql`
   isDeceased
 }
     `;
-export const PatientEncounterProgramEventFragmentDoc = gql`
-    fragment PatientEncounterProgramEvent on ProgramEventNode {
-  activeDatetime
-  type
-  data
-}
-    `;
-export const PatientEncounterRowFragmentDoc = gql`
-    fragment PatientEncounterRow on EncounterNode {
-  id
-  document {
-    documentRegistry {
-      name
-    }
-  }
-  program
-  startDatetime
-  endDatetime
-  status
-  name
-  type
-  patient {
-    id
-    firstName
-    lastName
-    name
-  }
-  events(at: $eventTime) {
-    ...PatientEncounterProgramEvent
-  }
-}
-    ${PatientEncounterProgramEventFragmentDoc}`;
 export const PatientsDocument = gql`
     query patients($storeId: String!, $key: PatientSortFieldInput!, $desc: Boolean, $first: Int, $offset: Int, $filter: PatientFilterInput) {
   patients(
@@ -198,26 +142,6 @@ export const PatientSearchDocument = gql`
   }
 }
     ${PatientFragmentDoc}`;
-export const GetDocumentHistoryDocument = gql`
-    query getDocumentHistory($storeId: String!, $name: String!) {
-  documentHistory(storeId: $storeId, name: $name) {
-    __typename
-    ... on DocumentConnector {
-      totalCount
-      nodes {
-        __typename
-        author
-        data
-        id
-        name
-        parents
-        timestamp
-        type
-      }
-    }
-  }
-}
-    `;
 export const InsertPatientDocument = gql`
     mutation insertPatient($storeId: String!, $input: InsertPatientInput!) {
   insertPatient(storeId: $storeId, input: $input) {
@@ -238,23 +162,6 @@ export const UpdatePatientDocument = gql`
   }
 }
     ${PatientRowFragmentDoc}`;
-export const EncountersDocument = gql`
-    query encounters($storeId: String!, $key: EncounterSortFieldInput!, $desc: Boolean, $filter: EncounterFilterInput, $page: PaginationInput, $eventTime: String!) {
-  encounters(
-    storeId: $storeId
-    sort: {key: $key, desc: $desc}
-    filter: $filter
-    page: $page
-  ) {
-    ... on EncounterConnector {
-      nodes {
-        ...PatientEncounterRow
-      }
-      totalCount
-    }
-  }
-}
-    ${PatientEncounterRowFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -272,17 +179,11 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     patientSearch(variables: PatientSearchQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<PatientSearchQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<PatientSearchQuery>(PatientSearchDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'patientSearch', 'query');
     },
-    getDocumentHistory(variables: GetDocumentHistoryQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<GetDocumentHistoryQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<GetDocumentHistoryQuery>(GetDocumentHistoryDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'getDocumentHistory', 'query');
-    },
     insertPatient(variables: InsertPatientMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InsertPatientMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertPatientMutation>(InsertPatientDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertPatient', 'mutation');
     },
     updatePatient(variables: UpdatePatientMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdatePatientMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpdatePatientMutation>(UpdatePatientDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updatePatient', 'mutation');
-    },
-    encounters(variables: EncountersQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<EncountersQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<EncountersQuery>(EncountersDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'encounters', 'query');
     }
   };
 }
@@ -343,23 +244,6 @@ export const mockPatientSearchQuery = (resolver: ResponseResolver<GraphQLRequest
  * @param resolver a function that accepts a captured request and may return a mocked response.
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
- * mockGetDocumentHistoryQuery((req, res, ctx) => {
- *   const { storeId, name } = req.variables;
- *   return res(
- *     ctx.data({ documentHistory })
- *   )
- * })
- */
-export const mockGetDocumentHistoryQuery = (resolver: ResponseResolver<GraphQLRequest<GetDocumentHistoryQueryVariables>, GraphQLContext<GetDocumentHistoryQuery>, any>) =>
-  graphql.query<GetDocumentHistoryQuery, GetDocumentHistoryQueryVariables>(
-    'getDocumentHistory',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
  * mockInsertPatientMutation((req, res, ctx) => {
  *   const { storeId, input } = req.variables;
  *   return res(
@@ -387,22 +271,5 @@ export const mockInsertPatientMutation = (resolver: ResponseResolver<GraphQLRequ
 export const mockUpdatePatientMutation = (resolver: ResponseResolver<GraphQLRequest<UpdatePatientMutationVariables>, GraphQLContext<UpdatePatientMutation>, any>) =>
   graphql.mutation<UpdatePatientMutation, UpdatePatientMutationVariables>(
     'updatePatient',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockEncountersQuery((req, res, ctx) => {
- *   const { storeId, key, desc, filter, page, eventTime } = req.variables;
- *   return res(
- *     ctx.data({ encounters })
- *   )
- * })
- */
-export const mockEncountersQuery = (resolver: ResponseResolver<GraphQLRequest<EncountersQueryVariables>, GraphQLContext<EncountersQuery>, any>) =>
-  graphql.query<EncountersQuery, EncountersQueryVariables>(
-    'encounters',
     resolver
   )
