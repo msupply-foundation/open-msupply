@@ -30,8 +30,13 @@ export const ServerDiscovery = () => {
   const t = useTranslation('app');
 
   return (
-    <Stack display="flex" style={{ minHeight: '100%' }}>
-      <Box display="flex" flex="0 0 50%" alignSelf="center">
+    <Stack display="flex" style={{ minHeight: '100%' }} alignItems="center">
+      <Box
+        display="flex"
+        flex="0 0 40%"
+        alignSelf="center"
+        style={{ marginLeft: '-10%' }}
+      >
         <Box
           display="flex"
           alignItems="center"
@@ -98,7 +103,7 @@ export const ServerDiscovery = () => {
             color: 'gray.main',
             fontWeight: 600,
             whiteSpace: 'pre-line',
-            paddingBottom: '2%',
+            paddingBottom: '10%',
           }}
         >
           {t('discovery.body')}
