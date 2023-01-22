@@ -85,12 +85,13 @@ pub struct DocumentRow {
     pub data: String,
     /// JSON schema id containing the schema for the data
     pub schema_id: Option<String>,
-    // Soft deletion status
+    /// Soft deletion status
     pub status: DocumentStatus,
-    // Deletion comment
+    /// Deletion comment
     pub comment: Option<String>,
-    // Patient who owns the document
+    /// For example, the patient who owns the document
     pub owner: Option<String>,
+    /// For example, program this document belongs to
     pub context: Option<String>,
 }
 
