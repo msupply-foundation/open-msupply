@@ -119,6 +119,7 @@ const start = (): void => {
   window.loadURL(START_URL);
 
   ipcMain.on(IPC_MESSAGES.START_SERVER_DISCOVERY, () => {
+    discovery.stop();
     discoveredServers = [];
     discovery.start();
   });

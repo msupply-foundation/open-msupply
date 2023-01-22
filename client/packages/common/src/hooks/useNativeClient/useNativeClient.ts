@@ -102,6 +102,7 @@ export const useNativeClient = ({
     clearTimeout(timers.timeout);
     clearTimeout(timers.poll);
 
+    setTimedOut(false);
     setState(state => {
       return {
         ...state,
@@ -116,13 +117,11 @@ export const useNativeClient = ({
 
     timers.poll = setInterval(async () => {
       const servers = (await nativeAPI.discoveredServers()).servers;
-      setState(state => {
-        return {
-          ...state,
-          servers: uniqWith([...state.servers, ...servers], matchUniqueServer),
-          discoveryTimedOut: false,
-        };
-      });
+      setState(state => ({
+        ...state,
+        servers: uniqWith([...state.servers, ...servers], matchUniqueServer),
+        discoveryTimedOut: false,
+      }));
 
       clearTimeout(timeoutTimer);
     }, DISCOVERED_SERVER_POLL);
