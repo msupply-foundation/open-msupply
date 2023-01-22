@@ -113,7 +113,7 @@ impl<'a> TranslationAndIntegration<'a> {
             match integration_result {
                 Ok(_) => {
                     self.sync_buffer
-                        .record_successfull_integration(&sync_record)?;
+                        .record_successful_integration(&sync_record)?;
                     result.insert_success(&sync_record.table_name)
                 }
                 // Record database_error in sync buffer and in result
@@ -177,6 +177,9 @@ impl PullUpsertRecord {
             Requisition(record) => RequisitionRowRepository::new(con).upsert_one(record),
             RequisitionLine(record) => RequisitionLineRowRepository::new(con).upsert_one(record),
             ActivityLog(record) => ActivityLogRowRepository::new(con).insert_one(record),
+            InventoryAdjustmentReason(record) => {
+                InventoryAdjustmentReasonRowRepository::new(con).upsert_one(record)
+            }
         }
     }
 }
@@ -199,6 +202,9 @@ impl PullDeleteRecord {
             InvoiceLine => InvoiceLineRowRepository::new(con).delete(id),
             Requisition => RequisitionRowRepository::new(con).delete(id),
             RequisitionLine => RequisitionLineRowRepository::new(con).delete(id),
+            InventoryAdjustmentReason => {
+                InventoryAdjustmentReasonRowRepository::new(con).delete(id)
+            }
             #[cfg(all(test, feature = "integration_test"))]
             Location => LocationRowRepository::new(con).delete(id),
             #[cfg(all(test, feature = "integration_test"))]

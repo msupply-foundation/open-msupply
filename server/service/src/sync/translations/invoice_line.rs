@@ -81,6 +81,7 @@ pub struct LegacyTransLineRow {
     #[serde(rename = "om_total_after_tax")]
     pub total_after_tax: Option<f64>,
     #[serde(rename = "optionID")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     pub inventory_adjustment_reason_id: Option<String>,
 }
 

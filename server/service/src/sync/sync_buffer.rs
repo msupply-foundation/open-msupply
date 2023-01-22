@@ -26,6 +26,7 @@ const TRANSLATION_AND_INTEGRATION_ORDER: &[&str] = &[
     LegacyTableName::REQUISITION_LINE,
     LegacyTableName::NAME_STORE_JOIN,
     LegacyTableName::OM_ACTIVITY_LOG,
+    LegacyTableName::INVENTORY_ADJUSTMENT_REASON,
 ];
 
 pub(crate) struct SyncBuffer<'a> {
@@ -41,7 +42,7 @@ impl<'a> SyncBuffer<'a> {
         }
     }
 
-    pub(crate) fn record_successfull_integration(
+    pub(crate) fn record_successful_integration(
         &self,
         row: &SyncBufferRow,
     ) -> Result<(), RepositoryError> {
@@ -207,7 +208,7 @@ mod test {
         assert_eq!(row_1.integration_error, Some("Error 1".to_string()));
 
         // INTEGRATED
-        buffer.record_successfull_integration(&row_3()).unwrap();
+        buffer.record_successful_integration(&row_3()).unwrap();
 
         let result = buffer
             .get_ordered_sync_buffer_records(repository::SyncBufferAction::Upsert)
@@ -215,7 +216,7 @@ mod test {
 
         assert_eq!(result, vec![row_4()]);
 
-        buffer.record_successfull_integration(&row_4()).unwrap();
+        buffer.record_successful_integration(&row_4()).unwrap();
 
         let result = buffer
             .get_ordered_sync_buffer_records(repository::SyncBufferAction::Upsert)

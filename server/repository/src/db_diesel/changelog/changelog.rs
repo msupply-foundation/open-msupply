@@ -49,6 +49,7 @@ pub enum ChangelogTableName {
     Requisition,
     RequisitionLine,
     ActivityLog,
+    InventoryAdjustmentReason,
 }
 
 #[derive(Clone, Queryable, Debug, PartialEq, Insertable)]
