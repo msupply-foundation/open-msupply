@@ -1,9 +1,10 @@
 use super::{
+    inventory_adjustment_reason_row::inventory_adjustment_reason,
     invoice_line_row::invoice_line::dsl::*, invoice_row::invoice, item_row::item,
     location_row::location, stock_line_row::stock_line, StorageConnection,
 };
 
-use crate::{inventory_adjustment_reason, repository_error::RepositoryError};
+use crate::repository_error::RepositoryError;
 
 use diesel::prelude::*;
 
