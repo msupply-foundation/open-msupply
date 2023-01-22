@@ -21,7 +21,7 @@ table! {
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum InventoryAdjustmentReasonType {
-    Postive,
+    Positive,
     Negative,
 }
 
@@ -45,20 +45,40 @@ impl<'a> InventoryAdjustmentReasonRowRepository<'a> {
         InventoryAdjustmentReasonRowRepository { connection }
     }
 
-    pub fn insert_one(&self, row: &InventoryAdjustmentReasonRow) -> Result<(), RepositoryError> {
+    #[cfg(feature = "postgres")]
+    pub fn upsert_one(&self, row: &InventoryAdjustmentReasonRow) -> Result<(), RepositoryError> {
         diesel::insert_into(inventory_adjustment_reason_dsl::inventory_adjustment_reason)
+            .values(row)
+            .on_conflict(id)
+            .do_update()
+            .set(row)
+            .execute(&self.connection.connection)?;
+        Ok(())
+    }
+
+    #[cfg(not(feature = "postgres"))]
+    pub fn upsert_one(&self, row: &InventoryAdjustmentReasonRow) -> Result<(), RepositoryError> {
+        diesel::replace_into(inventory_adjustment_reason_dsl::inventory_adjustment_reason)
             .values(row)
             .execute(&self.connection.connection)?;
         Ok(())
     }
 
-    pub fn find_many_by_type(
+    pub fn find_one_by_id(
         &self,
-        r#type: InventoryAdjustmentReasonType,
-    ) -> Result<Vec<InventoryAdjustmentReasonRow>, RepositoryError> {
+        id: &str,
+    ) -> Result<Option<InventoryAdjustmentReasonRow>, RepositoryError> {
         let result = inventory_adjustment_reason_dsl::inventory_adjustment_reason
-            .filter(inventory_adjustment_reason_dsl::type_.eq(r#type))
-            .get_results(&self.connection.connection)?;
+            .filter(inventory_adjustment_reason_dsl::id.eq(id))
+            .first(&self.connection.connection)
+            .optional()?;
         Ok(result)
+    }
+
+    pub fn delete(&self, inventory_adjustment_reason_id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(inventory_adjustment_reason_dsl::inventory_adjustment_reason)
+            .filter(inventory_adjustment_reason_dsl::id.eq(inventory_adjustment_reason_id))
+            .execute(&self.connection.connection)?;
+        Ok(())
     }
 }
