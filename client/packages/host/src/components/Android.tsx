@@ -113,7 +113,7 @@ export const Android = () => {
 
   useEffect(() => {
     if (mode === NativeMode.Server) {
-      // set server discovery mode
+      // TODO: set server discovery mode / start discovery
     }
   }, [mode]);
 
