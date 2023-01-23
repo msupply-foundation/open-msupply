@@ -2333,6 +2333,7 @@ export type NameFilterInput = {
   firstName?: InputMaybe<SimpleStringFilterInput>;
   gender?: InputMaybe<EqualFilterGenderInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  identifier?: InputMaybe<SimpleStringFilterInput>;
   /** Filter by customer property */
   isCustomer?: InputMaybe<Scalars['Boolean']>;
   /** Is this name a store */
@@ -2513,6 +2514,7 @@ export type PatientFilterInput = {
   firstName?: InputMaybe<SimpleStringFilterInput>;
   gender?: InputMaybe<EqualFilterGenderInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  identifier?: InputMaybe<SimpleStringFilterInput>;
   isVisible?: InputMaybe<Scalars['Boolean']>;
   lastName?: InputMaybe<SimpleStringFilterInput>;
   phone?: InputMaybe<SimpleStringFilterInput>;

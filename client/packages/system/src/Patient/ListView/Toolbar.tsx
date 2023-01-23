@@ -4,6 +4,7 @@ import {
   AppBarContentPortal,
   SearchBar,
   FilterController,
+  Box,
 } from '@openmsupply-client/common';
 import { PatientRowFragment } from '../api';
 
@@ -24,13 +25,29 @@ export const Toolbar: FC<{
         display: 'flex',
       }}
     >
-      <SearchBar
-        placeholder={t('placeholder.search-by-last-name')}
-        value={filterString}
-        onChange={newValue => {
-          filter.onChangeStringFilterRule('lastName', 'like', newValue);
-        }}
-      />
+      <Box display="flex" gap={1}>
+        <SearchBar
+          placeholder={t('placeholder.search-by-first-name')}
+          value={filterString}
+          onChange={newValue => {
+            filter.onChangeStringFilterRule('firstName', 'like', newValue);
+          }}
+        />
+        <SearchBar
+          placeholder={t('placeholder.search-by-last-name')}
+          value={filterString}
+          onChange={newValue => {
+            filter.onChangeStringFilterRule('lastName', 'like', newValue);
+          }}
+        />
+        <SearchBar
+          placeholder={t('placeholder.search-by-identifier')}
+          value={filterString}
+          onChange={newValue => {
+            filter.onChangeStringFilterRule('identifier', 'like', newValue);
+          }}
+        />
+      </Box>
     </AppBarContentPortal>
   );
 };
