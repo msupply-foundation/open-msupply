@@ -1,7 +1,6 @@
 use super::{
     name_row::{name, name::dsl as name_dsl},
     name_store_join::{name_store_join, name_store_join::dsl as name_store_join_dsl},
-    program_enrolment_row::{program_enrolment, program_enrolment::dsl as program_enrolment_dsl},
     store_row::{store, store::dsl as store_dsl},
     DBType, NameRow, NameStoreJoinRow, StorageConnection, StoreRow,
 };
@@ -12,8 +11,7 @@ use crate::{
         apply_simple_string_or_filter, apply_sort_no_case,
     },
     repository_error::RepositoryError,
-    DateFilter, EqualFilter, Gender, NameType, Pagination, ProgramEnrolmentRow, SimpleStringFilter,
-    Sort,
+    DateFilter, EqualFilter, Gender, NameType, Pagination, SimpleStringFilter, Sort,
 };
 
 use diesel::{
@@ -86,12 +84,7 @@ pub enum NameSortField {
 
 pub type NameSort = Sort<NameSortField>;
 
-type NameAndNameStoreJoin = (
-    NameRow,
-    Option<NameStoreJoinRow>,
-    Option<StoreRow>,
-    Option<ProgramEnrolmentRow>,
-);
+type NameAndNameStoreJoin = (NameRow, Option<NameStoreJoinRow>, Option<StoreRow>);
 
 pub struct NameRepository<'a> {
     connection: &'a StorageConnection,
@@ -182,7 +175,7 @@ impl<'a> NameRepository<'a> {
     }
 }
 
-fn to_domain((name_row, name_store_join_row, store_row, _): NameAndNameStoreJoin) -> Name {
+fn to_domain((name_row, name_store_join_row, store_row): NameAndNameStoreJoin) -> Name {
     Name {
         name_row,
         name_store_join_row,
@@ -203,18 +196,9 @@ type StoreNameIdEqualToId = Eq<store_dsl::name_id, name_dsl::id>;
 // store.on(id.eq(store_id))
 type OnStoreJoinToNameStoreJoin = OnClauseWrapper<store::table, StoreNameIdEqualToId>;
 
-// program_enrolment_dsl::patient_id.eq(name_dsl::id)
-type ProgramEnrolmentPatientIdEqualToNameId = Eq<program_enrolment_dsl::patient_id, name_dsl::id>;
-// name_id_view.on(name_id_view_dsl::id.eq(name_dsl::id))
-type OnProgramEnrolmentJoinToName =
-    OnClauseWrapper<program_enrolment::table, ProgramEnrolmentPatientIdEqualToNameId>;
-
 type BoxedNameQuery = IntoBoxed<
     'static,
-    LeftJoin<
-        LeftJoin<LeftJoin<name::table, OnNameStoreJoinToNameJoin>, OnStoreJoinToNameStoreJoin>,
-        OnProgramEnrolmentJoinToName,
-    >,
+    LeftJoin<LeftJoin<name::table, OnNameStoreJoinToNameJoin>, OnStoreJoinToNameStoreJoin>,
     DBType,
 >;
 
@@ -226,10 +210,6 @@ fn create_filtered_query(store_id: String, filter: Option<NameFilter>) -> BoxedN
                 .and(name_store_join_dsl::store_id.eq(store_id.clone()))),
         )
         .left_join(store_dsl::store.on(store_dsl::name_id.eq(name_dsl::id)))
-        .left_join(
-            program_enrolment_dsl::program_enrolment
-                .on(program_enrolment_dsl::patient_id.eq(name_dsl::id)),
-        )
         .into_boxed();
 
     if let Some(f) = filter {
@@ -264,11 +244,6 @@ fn create_filtered_query(store_id: String, filter: Option<NameFilter>) -> BoxedN
                 query,
                 identifier.clone(),
                 name_dsl::national_health_number
-            );
-            apply_simple_string_or_filter!(
-                query,
-                identifier,
-                program_enrolment_dsl::program_patient_id
             );
         }
 
