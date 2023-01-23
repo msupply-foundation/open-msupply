@@ -35,12 +35,12 @@ export const SiteInfo: FC<{ siteName?: string | null }> = ({ siteName }) => {
     <>
       {siteName && (
         <RowWithLabel
-          label={t('label.site')}
+          label={`${t('label.site')}:`}
           contents={<Typography whiteSpace="nowrap">{siteName}</Typography>}
         />
       )}
       <RowWithLabel
-        label={t('label.server')}
+        label={`${t('label.server')}:`}
         contents={
           <>
             <Typography whiteSpace="nowrap">

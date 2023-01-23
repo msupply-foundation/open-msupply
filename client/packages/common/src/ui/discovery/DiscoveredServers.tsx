@@ -55,6 +55,11 @@ export const DiscoveredServers = ({
             <Typography sx={{ color: 'inherit' }}>
               {t('error.server-not-found')}
             </Typography>
+            <IconButton
+              icon={<RefreshIcon color="primary" fontSize="small" />}
+              onClick={discover}
+              label={t('button.refresh')}
+            />
           </Box>
         </Box>
       </Box>

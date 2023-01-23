@@ -43,7 +43,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         WebView webView = this.getBridge().getWebView();
         advertiseService();
         // .post to run on UI thread
-        webView.post(() -> webView.loadUrl(localUrl + "/discovery?autoconnect=true"));
+        webView.post(() -> webView.loadUrl(localUrl + "/android"));
     }
 
     @Override

@@ -5,6 +5,7 @@ import {
   useTranslation,
   Stack,
   useNativeClient,
+  ErrorWithDetails,
 } from '@openmsupply-client/common';
 import { LoginIcon } from '@openmsupply-client/host/src/components/Login/LoginIcon';
 import { Theme } from '@common/styles';
@@ -22,15 +23,25 @@ const isAutoconnect = () => {
 };
 
 export const ServerDiscovery = () => {
-  const { servers, discoveryTimedOut, connectToServer, discover } =
-    useNativeClient({
-      discovery: true,
-      autoconnect: isAutoconnect(),
-    });
+  const {
+    servers,
+    discoveryTimedOut,
+    connectToServer,
+    discover,
+    connectToPreviousTimedOut,
+  } = useNativeClient({
+    discovery: true,
+    autoconnect: isAutoconnect(),
+  });
   const t = useTranslation('app');
 
   return (
-    <Stack display="flex" style={{ minHeight: '100%' }} alignItems="center">
+    <Stack
+      display="flex"
+      style={{ minHeight: '100%' }}
+      alignItems="center"
+      flex={1}
+    >
       <Box
         display="flex"
         flex="0 0 40%"
@@ -108,6 +119,11 @@ export const ServerDiscovery = () => {
         >
           {t('discovery.body')}
         </Typography>
+        {connectToPreviousTimedOut && (
+          <Box padding={2}>
+            <ErrorWithDetails error={t('error.unable-to-connect')} details="" />
+          </Box>
+        )}
         <Box display="flex" flex={1} justifyContent="center">
           <DiscoveredServers
             servers={servers}
