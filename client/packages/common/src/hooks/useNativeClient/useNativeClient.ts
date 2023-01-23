@@ -6,7 +6,7 @@ import { useLocalStorage } from '../../localStorage';
 const DISCOVERY_TIMEOUT = 5000;
 const DISCOVERED_SERVER_POLL = 1000;
 export const PREVIOUS_SERVER_KEY = '/discovery/previous-server';
-const NATIVE_MODE_KEY = '/native/mode';
+export const NATIVE_MODE_KEY = '/native/mode';
 
 export enum NativeMode {
   Client,
