@@ -16,6 +16,7 @@ import {
   NativeMode,
   RouteBuilder,
   Switch,
+  PREVIOUS_SERVER_KEY,
 } from '@openmsupply-client/common';
 import { Capacitor } from '@capacitor/core';
 import { themeOptions } from '@common/styles';
@@ -123,6 +124,8 @@ export const Settings: React.FC = () => {
   const toggleNativeMode = () => {
     const mode =
       nativeMode === NativeMode.Server ? NativeMode.Client : NativeMode.Server;
+
+    localStorage.removeItem(PREVIOUS_SERVER_KEY);
     setNativeMode(mode);
     navigate(RouteBuilder.create(AppRoute.Android).build());
   };
