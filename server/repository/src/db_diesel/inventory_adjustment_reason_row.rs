@@ -36,6 +36,17 @@ pub struct InventoryAdjustmentReasonRow {
     pub reason: String,
 }
 
+impl Default for InventoryAdjustmentReasonRow {
+    fn default() -> Self {
+        Self {
+            r#type: InventoryAdjustmentReasonType::Positive,
+            id: Default::default(),
+            is_active: false,
+            reason: Default::default(),
+        }
+    }
+}
+
 pub struct InventoryAdjustmentReasonRowRepository<'a> {
     connection: &'a StorageConnection,
 }
