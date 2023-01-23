@@ -224,6 +224,7 @@ fn generate_stock_line_update(
             tax: None,
             number_of_packs: quantity_change,
             note: stock_line.note.clone(),
+            inventory_adjustment_reason_id: None,
         })
     } else {
         None
@@ -309,6 +310,7 @@ fn generate_new_stock_line(
             tax: None,
             number_of_packs: counted_number_of_packs,
             note: row.note,
+            inventory_adjustment_reason_id: None,
         })
     } else {
         None

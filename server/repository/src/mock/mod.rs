@@ -67,7 +67,8 @@ pub use test_unallocated_line::*;
 pub use user_account::*;
 
 use crate::{
-    ActivityLogRow, ActivityLogRowRepository, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow,
+    ActivityLogRow, ActivityLogRowRepository, InventoryAdjustmentReasonRow,
+    InventoryAdjustmentReasonRowRepository, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow,
     ItemRow, KeyValueStoreRepository, KeyValueStoreRow, LocationRow, LocationRowRepository,
     NumberRow, NumberRowRepository, RequisitionLineRow, RequisitionLineRowRepository,
     RequisitionRow, RequisitionRowRepository, StockLineRowRepository, StocktakeLineRowRepository,
@@ -110,6 +111,7 @@ pub struct MockData {
     pub key_value_store_rows: Vec<KeyValueStoreRow>,
     pub activity_logs: Vec<ActivityLogRow>,
     pub sync_logs: Vec<SyncLogRow>,
+    pub inventory_adjustment_reasons: Vec<InventoryAdjustmentReasonRow>,
 }
 
 impl MockData {
@@ -150,6 +152,7 @@ pub struct MockDataInserts {
     pub key_value_store_rows: bool,
     pub activity_logs: bool,
     pub sync_logs: bool,
+    pub inventory_adjustment_reasons: bool,
 }
 
 impl MockDataInserts {
@@ -179,6 +182,7 @@ impl MockDataInserts {
             key_value_store_rows: true,
             activity_logs: true,
             sync_logs: true,
+            inventory_adjustment_reasons: true,
         }
     }
 
@@ -290,6 +294,11 @@ impl MockDataInserts {
         self.sync_logs = true;
         self
     }
+
+    pub fn inventory_adjustment_reasons(mut self) -> Self {
+        self.inventory_adjustment_reasons = true;
+        self
+    }
 }
 
 #[derive(Default)]
@@ -351,6 +360,7 @@ fn all_mock_data() -> MockDataCollection {
             key_value_store_rows: vec![],
             activity_logs: mock_activity_logs(),
             sync_logs: vec![],
+            inventory_adjustment_reasons: vec![],
         },
     );
     data.insert(
@@ -579,6 +589,13 @@ pub fn insert_mock_data(
                 repo.upsert_one(row).unwrap();
             }
         }
+
+        if inserts.inventory_adjustment_reasons {
+            for row in &mock_data.inventory_adjustment_reasons {
+                let repo = InventoryAdjustmentReasonRowRepository::new(connection);
+                repo.upsert_one(row).unwrap();
+            }
+        }
     }
 
     mock_data
@@ -611,6 +628,7 @@ impl MockData {
             mut key_value_store_rows,
             mut activity_logs,
             mut sync_logs,
+            mut inventory_adjustment_reasons,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
@@ -634,6 +652,8 @@ impl MockData {
         self.key_value_store_rows.append(&mut key_value_store_rows);
         self.activity_logs.append(&mut activity_logs);
         self.sync_logs.append(&mut sync_logs);
+        self.inventory_adjustment_reasons
+            .append(&mut inventory_adjustment_reasons);
 
         self
     }

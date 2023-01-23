@@ -32,6 +32,7 @@ pub struct InventoryAdjustmentReasonFilter {
 pub enum InventoryAdjustmentReasonSortField {
     Id,
     InventoryAdjustmentReasonType,
+    Reason,
 }
 
 pub type InventoryAdjustmentReasonSort = Sort<InventoryAdjustmentReasonSortField>;
@@ -74,6 +75,9 @@ impl<'a> InventoryAdjustmentReasonRepository<'a> {
                 }
                 InventoryAdjustmentReasonSortField::InventoryAdjustmentReasonType => {
                     apply_sort_no_case!(query, sort, inventory_adjustment_reason_dsl::type_)
+                }
+                InventoryAdjustmentReasonSortField::Reason => {
+                    apply_sort_no_case!(query, sort, inventory_adjustment_reason_dsl::reason)
                 }
             }
         }
