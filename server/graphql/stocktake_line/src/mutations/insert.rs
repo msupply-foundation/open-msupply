@@ -29,6 +29,7 @@ pub struct InsertInput {
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
     pub note: Option<String>,
+    pub inventory_adjustment_reason_id: Option<String>,
 }
 
 #[derive(Union)]
@@ -105,6 +106,8 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
             formatted_error
         )),
         ServiceError::ItemDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::AdjustmentReasonNotProvided => BadUserInput(formatted_error),
+        ServiceError::AdjustmentReasonNotValid => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::InternalError(err) => InternalError(err),
     };
@@ -128,6 +131,7 @@ impl InsertInput {
             cost_price_per_pack,
             sell_price_per_pack,
             note,
+            inventory_adjustment_reason_id,
         } = self;
 
         ServiceInput {
@@ -144,6 +148,7 @@ impl InsertInput {
             cost_price_per_pack,
             sell_price_per_pack,
             note,
+            inventory_adjustment_reason_id,
         }
     }
 }
@@ -262,6 +267,7 @@ mod test {
                     cost_price_per_pack: Some(10.0),
                     sell_price_per_pack: Some(12.0),
                     note: Some("note".to_string()),
+                    inventory_adjustment_reason_id: None,
                 },
                 stock_line: Some(mock_stock_line_a()),
                 location: Some(mock_location_1()),
