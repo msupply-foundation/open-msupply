@@ -1,4 +1,6 @@
 export enum AppRoute {
+  Android = 'android',
+
   Initialise = 'initialise',
   Login = 'login',
   Distribution = 'distribution',
