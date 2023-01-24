@@ -87,6 +87,7 @@ fn validate(
         stocktake_difference(&input.counted_number_of_packs, &stocktake_line);
     if check_active_adjustment_reasons(connection, stocktake_difference)?.is_some()
         && input.inventory_adjustment_reason_id.is_none()
+        && stocktake_difference != 0.0
     {
         return Err(UpdateStocktakeLineError::AdjustmentReasonNotProvided);
     }
@@ -208,11 +209,21 @@ mod stocktake_line_test {
             })
         }
 
+        fn mock_stocktake_line() -> StocktakeLineRow {
+            inline_init(|r: &mut StocktakeLineRow| {
+                r.id = "mock_stocktake_line".to_string();
+                r.stocktake_id = "stocktake_a".to_string();
+                r.snapshot_number_of_packs = 10.0;
+                r.item_id = "item_a".to_string();
+            })
+        }
+
         let (_, _, connection_manager, _) = setup_all_with_data(
             "update_stocktake_line",
             MockDataInserts::all(),
             inline_init(|r: &mut MockData| {
                 r.inventory_adjustment_reasons = vec![positive_reason(), negative_reason()];
+                r.stocktake_lines = vec![mock_stocktake_line()];
             }),
         )
         .await;
@@ -427,6 +438,29 @@ mod stocktake_line_test {
         assert_ne!(
             result.line.inventory_adjustment_reason_id,
             Some(positive_reason().id)
+        );
+
+        // test success update with no change in counted_number_of_packs
+        let stocktake_line = mock_stocktake_line();
+        let result = service
+            .update_stocktake_line(
+                &context,
+                inline_init(|r: &mut UpdateStocktakeLine| {
+                    r.id = stocktake_line.id.clone();
+                    r.comment = Some("Some comment".to_string());
+                }),
+            )
+            .unwrap();
+
+        assert_eq!(
+            result.line,
+            inline_init(|r: &mut StocktakeLineRow| {
+                r.id = stocktake_line.id.clone();
+                r.stocktake_id = result.line.stocktake_id.clone();
+                r.snapshot_number_of_packs = 10.0;
+                r.item_id = stocktake_line.item_id;
+                r.comment = Some("Some comment".to_string());
+            })
         );
     }
 }

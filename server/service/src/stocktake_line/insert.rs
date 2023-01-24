@@ -186,6 +186,7 @@ fn validate(
     let stocktake_difference = stocktake_difference(&input.counted_number_of_packs, &stock_line);
     if check_active_adjustment_reasons(connection, stocktake_difference)?.is_some()
         && input.inventory_adjustment_reason_id.is_none()
+        && stocktake_difference != 0.0
     {
         return Err(InsertStocktakeLineError::AdjustmentReasonNotProvided);
     }
@@ -312,9 +313,9 @@ mod stocktake_line_test {
             })
         }
 
-        fn mock_stock_line() -> StockLineRow {
+        fn mock_stock_line_c() -> StockLineRow {
             inline_init(|r: &mut StockLineRow| {
-                r.id = "mock_stock_line".to_string();
+                r.id = "mock_stock_line_c".to_string();
                 r.item_id = "item_a".to_string();
                 r.store_id = "store_a".to_string();
                 r.available_number_of_packs = 50.0;
@@ -326,12 +327,26 @@ mod stocktake_line_test {
             })
         }
 
+        fn mock_stock_line_d() -> StockLineRow {
+            inline_init(|r: &mut StockLineRow| {
+                r.id = "mock_stock_line_d".to_string();
+                r.item_id = "item_a".to_string();
+                r.store_id = "store_a".to_string();
+                r.available_number_of_packs = 20.0;
+                r.pack_size = 1;
+                r.cost_price_per_pack = 0.0;
+                r.sell_price_per_pack = 0.0;
+                r.total_number_of_packs = 30.0;
+                r.on_hold = false;
+            })
+        }
+
         let (_, _, connection_manager, _) = setup_all_with_data(
             "insert_stocktake_line",
             MockDataInserts::all(),
             inline_init(|r: &mut MockData| {
                 r.inventory_adjustment_reasons = vec![positive_reason(), negative_reason()];
-                r.stock_lines = vec![mock_stock_line()]
+                r.stock_lines = vec![mock_stock_line_c(), mock_stock_line_d()]
             }),
         )
         .await;
@@ -593,7 +608,7 @@ mod stocktake_line_test {
                     r.id = uuid();
                     r.stocktake_id = stocktake_a.id;
                     r.counted_number_of_packs = Some(20.0);
-                    r.stock_line_id = Some(mock_stock_line().id);
+                    r.stock_line_id = Some(mock_stock_line_c().id);
                     r.inventory_adjustment_reason_id = Some(negative_reason().id);
                 }),
             )
@@ -601,6 +616,32 @@ mod stocktake_line_test {
         assert_ne!(
             result.line.inventory_adjustment_reason_id,
             Some(positive_reason().id)
+        );
+
+        // test success update with no change in counted_number_of_packs
+        let stocktake_a = mock_stocktake_a();
+        let stock_line = mock_stock_line_d();
+        let result = service
+            .insert_stocktake_line(
+                &context,
+                inline_init(|r: &mut InsertStocktakeLine| {
+                    r.id = uuid();
+                    r.stocktake_id = stocktake_a.id.clone();
+                    r.comment = Some("Some comment".to_string());
+                    r.stock_line_id = Some(mock_stock_line_d().id);
+                }),
+            )
+            .unwrap();
+        assert_eq!(
+            result.line,
+            inline_init(|r: &mut StocktakeLineRow| {
+                r.id = result.line.id.clone();
+                r.stocktake_id = stocktake_a.id;
+                r.stock_line_id = Some(stock_line.id);
+                r.snapshot_number_of_packs = 30.0;
+                r.item_id = stock_line.item_id;
+                r.comment = Some("Some comment".to_string());
+            })
         );
     }
 }
