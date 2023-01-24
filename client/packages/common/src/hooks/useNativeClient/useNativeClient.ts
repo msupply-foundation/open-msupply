@@ -37,6 +37,7 @@ export interface NativeAPI {
   // Will return currently connected client (to display in UI)
   connectedServer: () => Promise<FrontEndHost | null>;
   goBackToDiscovery: () => void;
+  advertiseService?: () => void;
   startBarcodeScan: () => Promise<number[]>;
   stopBarcodeScan: () => void;
 }
@@ -188,7 +189,8 @@ export const useNativeClient = ({
   return {
     ...state,
     connectToServer,
-    goBackToDiscovery: () => nativeAPI?.goBackToDiscovery(),
+    goBackToDiscovery: nativeAPI?.goBackToDiscovery,
+    advertiseService: nativeAPI?.advertiseService ?? (() => {}),
     discover,
     setMode,
     previousServer,

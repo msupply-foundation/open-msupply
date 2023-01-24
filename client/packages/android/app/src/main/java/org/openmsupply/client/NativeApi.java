@@ -41,7 +41,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     @Override
     protected void handleOnStart() {
         WebView webView = this.getBridge().getWebView();
-        advertiseService();
+        // advertiseService();
         // .post to run on UI thread
         webView.post(() -> webView.loadUrl(localUrl + "/android"));
     }
@@ -60,7 +60,8 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     }
 
     // Advertise local remote server on network
-    void advertiseService() {
+    @PluginMethod()
+    public void advertiseService() {
         NsdServiceInfo serviceInfo = new NsdServiceInfo();
         serviceInfo.setServiceName(discoveryConstants.SERVICE_NAME);
         serviceInfo.setServiceType(discoveryConstants.SERVICE_TYPE);

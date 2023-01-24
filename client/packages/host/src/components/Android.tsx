@@ -74,6 +74,7 @@ export const Android = () => {
     previousServer,
     servers,
     connectToServer,
+    advertiseService,
   } = useNativeClient({
     discovery: true,
     autoconnect: true,
@@ -113,7 +114,7 @@ export const Android = () => {
 
   useEffect(() => {
     if (mode === NativeMode.Server) {
-      // TODO: set server discovery mode / start discovery
+      advertiseService();
     }
   }, [mode]);
 
