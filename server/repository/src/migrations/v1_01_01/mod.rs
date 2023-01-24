@@ -38,8 +38,8 @@ impl Migration for V1_01_01 {
             connection,
             r#"
                 CREATE TYPE {INVENTORY_ADJUSTMENT_REASON_TYPE} AS ENUM (
-                    'positive',
-                    'negative',
+                    'POSITIVE',
+                    'NEGATIVE'
                 );
                 "#
         )?;

@@ -32,7 +32,7 @@ pub fn check_item_exists(
     Ok(count == 1)
 }
 
-pub fn stocktake_difference(
+pub fn stocktake_reduction_amount(
     counted_number_of_packs: &Option<f64>,
     stocktake_line: &StocktakeLineRow,
 ) -> f64 {
@@ -45,9 +45,9 @@ pub fn stocktake_difference(
 
 pub fn check_active_adjustment_reasons(
     connection: &StorageConnection,
-    stocktake_difference: f64,
+    stocktake_reduction_amount: f64,
 ) -> Result<Option<Vec<InventoryAdjustmentReason>>, RepositoryError> {
-    let inventory_adjustment_reasons = if stocktake_difference < 0.0 {
+    let inventory_adjustment_reasons = if stocktake_reduction_amount < 0.0 {
         InventoryAdjustmentReasonRepository::new(&connection).query_by_filter(
             InventoryAdjustmentReasonFilter::new()
                 .r#type(InventoryAdjustmentReasonType::Positive.equal_to())
@@ -71,9 +71,9 @@ pub fn check_active_adjustment_reasons(
 pub fn check_reason_is_valid(
     connection: &StorageConnection,
     inventory_adjustment_reason_id: Option<String>,
-    stocktake_difference: f64,
+    stocktake_reduction_amount: f64,
 ) -> Result<bool, RepositoryError> {
-    if stocktake_difference < 0.0 {
+    if stocktake_reduction_amount < 0.0 {
         if let Some(reason_id) = &inventory_adjustment_reason_id {
             let reason = InventoryAdjustmentReasonRepository::new(&connection).query_by_filter(
                 InventoryAdjustmentReasonFilter::new()

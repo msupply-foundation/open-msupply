@@ -117,7 +117,7 @@ fn check_stock_line_exists(
         .pop())
 }
 
-pub fn stocktake_difference(
+pub fn stocktake_reduction_amount(
     counted_number_of_packs: &Option<f64>,
     stock_line: &Option<StockLine>,
 ) -> f64 {
@@ -183,10 +183,11 @@ fn validate(
         }
     }
 
-    let stocktake_difference = stocktake_difference(&input.counted_number_of_packs, &stock_line);
-    if check_active_adjustment_reasons(connection, stocktake_difference)?.is_some()
+    let stocktake_reduction_amount =
+        stocktake_reduction_amount(&input.counted_number_of_packs, &stock_line);
+    if check_active_adjustment_reasons(connection, stocktake_reduction_amount)?.is_some()
         && input.inventory_adjustment_reason_id.is_none()
-        && stocktake_difference != 0.0
+        && stocktake_reduction_amount != 0.0
     {
         return Err(InsertStocktakeLineError::AdjustmentReasonNotProvided);
     }
@@ -195,7 +196,7 @@ fn validate(
         if !check_reason_is_valid(
             connection,
             input.inventory_adjustment_reason_id.clone(),
-            stocktake_difference,
+            stocktake_reduction_amount,
         )? {
             return Err(InsertStocktakeLineError::AdjustmentReasonNotValid);
         }

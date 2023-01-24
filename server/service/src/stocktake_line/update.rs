@@ -15,7 +15,7 @@ use crate::{
 };
 
 use super::validate::{
-    check_active_adjustment_reasons, check_reason_is_valid, stocktake_difference,
+    check_active_adjustment_reasons, check_reason_is_valid, stocktake_reduction_amount,
 };
 
 #[derive(Default, Debug, Clone)]
@@ -83,11 +83,11 @@ fn validate(
         }
     }
 
-    let stocktake_difference =
-        stocktake_difference(&input.counted_number_of_packs, &stocktake_line);
-    if check_active_adjustment_reasons(connection, stocktake_difference)?.is_some()
+    let stocktake_reduction_amount =
+        stocktake_reduction_amount(&input.counted_number_of_packs, &stocktake_line);
+    if check_active_adjustment_reasons(connection, stocktake_reduction_amount)?.is_some()
         && input.inventory_adjustment_reason_id.is_none()
-        && stocktake_difference != 0.0
+        && stocktake_reduction_amount != 0.0
     {
         return Err(UpdateStocktakeLineError::AdjustmentReasonNotProvided);
     }
@@ -96,7 +96,7 @@ fn validate(
         if !check_reason_is_valid(
             connection,
             input.inventory_adjustment_reason_id.clone(),
-            stocktake_difference,
+            stocktake_reduction_amount,
         )? {
             return Err(UpdateStocktakeLineError::AdjustmentReasonNotValid);
         }
