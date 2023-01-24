@@ -9,9 +9,10 @@ import {
 import { useResponse } from '../../api';
 
 export const CreateShipmentButtonComponent = () => {
-  const { linesRemainingToSupply } = useResponse.document.fields(
-    'linesRemainingToSupply'
-  );
+  const { lines, linesRemainingToSupply } = useResponse.document.fields([
+    'lines',
+    'linesRemainingToSupply',
+  ]);
   const t = useTranslation('distribution');
   const { mutate: createOutbound } = useResponse.utils.createOutbound();
   const getConfirmation = useConfirmationModal({
@@ -21,10 +22,13 @@ export const CreateShipmentButtonComponent = () => {
   });
   const alert = useAlertModal({
     title: t('heading.cannot-do-that'),
-    message: t('message.all-lines-have-been-fulfilled'),
+    message: t(
+      lines?.nodes.every(line => !line?.remainingQuantityToSupply)
+        ? 'message.all-lines-have-no-supply-quantity'
+        : 'message.all-lines-have-been-fulfilled'
+    ),
     onOk: () => {},
   });
-
   const onCreateShipment = () => {
     if (linesRemainingToSupply.totalCount > 0) {
       getConfirmation();
