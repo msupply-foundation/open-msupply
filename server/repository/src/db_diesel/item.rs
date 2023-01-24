@@ -2,7 +2,6 @@ use super::{
     item_row::{
         item, item::dsl as item_dsl, item_is_visible, item_is_visible::dsl as item_is_visible_dsl,
     },
-    stock_line_row::{stock_line, stock_line::dsl as stock_line_dsl},
     unit_row::{unit, unit::dsl as unit_dsl},
     DBType, ItemIsVisibleRow, ItemRow, ItemRowType, StorageConnection, UnitRow,
 };
@@ -101,34 +100,6 @@ impl<'a> ItemRepository<'a> {
         let query = create_filtered_query(filter);
 
         Ok(query.count().get_result(&self.connection.connection)?)
-    }
-
-    pub fn count_no_stock(
-        &self,
-        filter: Option<ItemFilter>,
-        store_id: &str,
-    ) -> Result<i64, RepositoryError> {
-        let stock_lines = stock_line_dsl::stock_line
-            .select(stock_line::item_id)
-            .filter(stock_line::store_id.eq(store_id));
-        let query = create_filtered_query(filter.clone()).filter(item::id.ne_all(stock_lines));
-        let no_stock_lines_count: i64 = match query.count().get_result(&self.connection.connection)
-        {
-            Ok(count) => count,
-            Err(error) => return Err(RepositoryError::from(error)),
-        };
-
-        let stock_lines = stock_line_dsl::stock_line
-            .select(stock_line::item_id)
-            .filter(stock_line::store_id.eq(store_id))
-            .filter(stock_line::available_number_of_packs.eq(0.0));
-        let query = create_filtered_query(filter).filter(item::id.eq_any(stock_lines));
-        let no_stock_count: i64 = match query.count().get_result(&self.connection.connection) {
-            Ok(count) => count,
-            Err(error) => return Err(RepositoryError::from(error)),
-        };
-
-        Ok(no_stock_count + no_stock_lines_count)
     }
 
     pub fn query_one(&self, filter: ItemFilter) -> Result<Option<Item>, RepositoryError> {

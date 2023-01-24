@@ -1,8 +1,9 @@
-use std::convert::TryInto;
+use repository::{EqualFilter, ItemFilter, ItemRepository, RepositoryError};
 
-use repository::{ItemFilter, ItemRepository, RepositoryError};
-
-use crate::{item_stats::get_item_stats, service_provider::ServiceContext};
+use crate::{
+    item_stats::{get_item_stats, ItemStatsFilter},
+    service_provider::ServiceContext,
+};
 
 pub struct ItemCounts {
     pub total: i64,
@@ -33,39 +34,33 @@ impl ItemCountServiceTrait for ItemServiceCount {
         store_id: &str,
         low_stock_threshold: i32,
     ) -> Result<ItemCounts, RepositoryError> {
-        let repo = ItemRepository::new(&ctx.connection);
-        let total = match repo.count(Some(ItemFilter::new().match_is_visible(true))) {
-            Ok(total) => total,
-            Err(error) => return Err(error),
-        };
+        let visible_items = ItemRepository::new(&ctx.connection)
+            .query_by_filter(ItemFilter::new().match_is_visible(true))?;
 
-        let no_stock =
-            match repo.count_no_stock(Some(ItemFilter::new().match_is_visible(true)), store_id) {
-                Ok(no_stock) => no_stock,
-                Err(error) => return Err(error),
-            };
+        let visible_items_count = visible_items.len() as i64;
 
-        let item_stats = get_item_stats(ctx, store_id, None, None)
-            .unwrap()
-            .into_iter()
-            .filter(|item| {
-                item.average_monthly_consumption != 0.0
-                    && item.available_stock_on_hand as f64 / item.average_monthly_consumption
-                        < low_stock_threshold as f64
-            });
+        let item_id_filter =
+            EqualFilter::equal_any(visible_items.into_iter().map(|i| i.item_row.id).collect());
+        let item_id_filter = Some(ItemStatsFilter::new().item_id(item_id_filter));
 
-        let low_stock: i64 = match item_stats.count().try_into() {
-            Ok(low_stock) => low_stock,
-            Err(error) => {
-                return Err(RepositoryError::DBError {
-                    msg: error.to_string(),
-                    extra: "".to_string(),
-                })
-            }
-        };
+        let item_stats = get_item_stats(ctx, store_id, None, item_id_filter)?;
+
+        let no_stock = item_stats
+            .iter()
+            .filter(|i| i.available_stock_on_hand <= 0)
+            .count() as i64;
+
+        let low_stock = item_stats
+            .iter()
+            .filter_map(|i| {
+                (i.available_stock_on_hand > 0)
+                    .then(|| i.available_stock_on_hand as f64 / i.average_monthly_consumption)
+            })
+            .filter(|months_of_stock| *months_of_stock < low_stock_threshold as f64)
+            .count() as i64;
 
         Ok(ItemCounts {
-            total,
+            total: visible_items_count,
             no_stock,
             low_stock,
         })
@@ -76,99 +71,87 @@ impl ItemCountServiceTrait for ItemServiceCount {
 mod item_count_service_test {
     use chrono::{Duration, Utc};
     use repository::{
-        mock::{mock_master_list_item_query_test1, mock_store_b, MockDataInserts},
-        test_db, InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRow,
-        InvoiceRowRepository, InvoiceRowType, ItemRow, ItemRowRepository, ItemRowType,
-        MasterListLineRow, MasterListLineRowRepository, StockLineRow, StockLineRowRepository,
+        mock::{common::FullMockMasterList, mock_store_b, MockData, MockDataInserts},
+        InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRow,
+        InvoiceRowRepository, InvoiceRowType, ItemRow, ItemRowType, MasterListLineRow,
+        MasterListNameJoinRow, MasterListRow, StockLineRow, StockLineRowRepository,
     };
     use util::inline_init;
 
     use crate::{
         dashboard::item_count::{ItemCountServiceTrait, ItemServiceCount},
-        service_provider::ServiceContext,
+        test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
     };
 
-    fn data(
-        store_id: &str,
-        master_list_id: &str,
-    ) -> (Vec<ItemRow>, Vec<StockLineRow>, Vec<MasterListLineRow>) {
-        let mut items = Vec::new();
-        let mut stock_lines = Vec::new();
-        let mut master_list_lines = Vec::new();
-        for index in 0..50 {
-            items.push(inline_init(|r: &mut ItemRow| {
-                r.id = format!("item_id_{:05}", index);
-                r.name = format!("name{}", index);
-                r.code = format!("code{}", index);
-                r.r#type = ItemRowType::Stock;
-            }));
-            stock_lines.push(inline_init(|r: &mut StockLineRow| {
-                r.id = format!("stock_line_id_{:05}", index);
-                r.item_id = format!("item_id_{:05}", index);
-                r.store_id = store_id.to_string();
-                r.available_number_of_packs = match index < 25 {
-                    true => 5.0, // index.into(),
-                    false => 0.0,
-                };
-                r.pack_size = 1;
-            }));
-            master_list_lines.push(MasterListLineRow {
-                id: format!("master_list_line_id_{:05}", index),
-                item_id: format!("item_id_{:05}", index),
-                master_list_id: master_list_id.to_string(),
-            });
-        }
-        for index in 50..100 {
-            items.push(inline_init(|r: &mut ItemRow| {
-                r.id = format!("item_id_{:05}", index);
-                r.name = format!("name{}", index);
-                r.code = format!("code{}", index);
-                r.r#type = ItemRowType::Stock;
-            }));
-        }
-
-        (items, stock_lines, master_list_lines)
-    }
-
-    fn insert_data(service_context: &ServiceContext) {
-        let master_list = mock_master_list_item_query_test1().master_list;
-        let item_row_repository = ItemRowRepository::new(&service_context.connection);
-        let master_list_line_repository =
-            MasterListLineRowRepository::new(&service_context.connection);
-        let stock_line_repository = StockLineRowRepository::new(&service_context.connection);
-
-        let store_1 = mock_store_b();
-        let (items, stock_lines, master_list_lines) = data(&store_1.id, &master_list.id);
-
-        for row in items.iter() {
-            item_row_repository.upsert_one(row).unwrap();
-        }
-
-        for master_list_line in master_list_lines.iter() {
-            master_list_line_repository
-                .upsert_one(&master_list_line)
-                .unwrap();
-        }
-
-        for stock_line in stock_lines.iter() {
-            stock_line_repository.upsert_one(&stock_line).unwrap();
-        }
-    }
     #[actix_rt::test]
     async fn test_total_items_count() {
-        let (_, connection, _, _) = test_db::setup_all(
+        let ServiceTestContext {
+            service_context, ..
+        } = setup_all_with_data_and_service_provider(
             "omsupply-database-total-items-count",
-            MockDataInserts::none()
-                .names()
-                .stores()
-                .name_store_joins()
-                .units()
-                .items()
-                .full_master_list(),
+            MockDataInserts::none().stores().names(),
+            MockData {
+                items: vec![
+                    ItemRow {
+                        id: "item1".to_string(),
+                        r#type: ItemRowType::Stock,
+                        ..ItemRow::default()
+                    },
+                    ItemRow {
+                        id: "item2".to_string(),
+                        r#type: ItemRowType::Stock,
+                        ..ItemRow::default()
+                    },
+                    ItemRow {
+                        id: "item3".to_string(),
+                        r#type: ItemRowType::Stock,
+                        ..ItemRow::default()
+                    },
+                    ItemRow {
+                        id: "item4".to_string(),
+                        r#type: ItemRowType::Stock,
+                        ..ItemRow::default()
+                    },
+                    ItemRow {
+                        id: "item5".to_string(),
+                        r#type: ItemRowType::Stock,
+                        ..ItemRow::default()
+                    },
+                ],
+                full_master_lists: vec![FullMockMasterList {
+                    master_list: MasterListRow {
+                        id: "list1".to_string(),
+                        name: String::new(),
+                        code: String::new(),
+                        description: String::new(),
+                    },
+                    joins: vec![MasterListNameJoinRow {
+                        id: "join1".to_string(),
+                        master_list_id: "list1".to_string(),
+                        name_id: mock_store_b().name_id,
+                    }],
+                    lines: vec![
+                        MasterListLineRow {
+                            id: "listline1".to_string(),
+                            item_id: "item1".to_string(),
+                            master_list_id: "list1".to_string(),
+                        },
+                        MasterListLineRow {
+                            id: "listline2".to_string(),
+                            item_id: "item2".to_string(),
+                            master_list_id: "list1".to_string(),
+                        },
+                        MasterListLineRow {
+                            id: "listline3".to_string(),
+                            item_id: "item3".to_string(),
+                            master_list_id: "list1".to_string(),
+                        },
+                    ],
+                }],
+                ..MockData::default()
+            },
         )
         .await;
-        let service_context = ServiceContext::new_without_triggers(connection);
-        insert_data(&service_context);
 
         let service = ItemServiceCount {};
         let counts = service
@@ -177,24 +160,96 @@ mod item_count_service_test {
 
         // count of total items which are visible to store b
         // with visibility determined by master list & master list name join
-        assert_eq!(51, counts.total);
+        assert_eq!(3, counts.total);
     }
 
     #[actix_rt::test]
     async fn test_no_stock_items_count() {
-        let (_, connection, _, _) = test_db::setup_all(
+        let ServiceTestContext {
+            service_context, ..
+        } = setup_all_with_data_and_service_provider(
             "omsupply-database-no-stock-items-count",
-            MockDataInserts::none()
-                .names()
-                .stores()
-                .name_store_joins()
-                .units()
-                .items()
-                .full_master_list(),
+            MockDataInserts::none().stores().names(),
+            MockData {
+                items: vec![
+                    ItemRow {
+                        id: "item1".to_string(),
+                        r#type: ItemRowType::Stock,
+                        ..ItemRow::default()
+                    },
+                    ItemRow {
+                        id: "item2".to_string(),
+                        r#type: ItemRowType::Stock,
+                        ..ItemRow::default()
+                    },
+                    ItemRow {
+                        id: "item3".to_string(),
+                        r#type: ItemRowType::Stock,
+                        ..ItemRow::default()
+                    },
+                    ItemRow {
+                        id: "item4".to_string(),
+                        r#type: ItemRowType::Stock,
+                        ..ItemRow::default()
+                    },
+                    ItemRow {
+                        id: "item5".to_string(),
+                        r#type: ItemRowType::Stock,
+                        ..ItemRow::default()
+                    },
+                ],
+                full_master_lists: vec![FullMockMasterList {
+                    master_list: MasterListRow {
+                        id: "list1".to_string(),
+                        name: String::new(),
+                        code: String::new(),
+                        description: String::new(),
+                    },
+                    joins: vec![MasterListNameJoinRow {
+                        id: "join1".to_string(),
+                        master_list_id: "list1".to_string(),
+                        name_id: mock_store_b().name_id,
+                    }],
+                    lines: vec![
+                        MasterListLineRow {
+                            id: "listline1".to_string(),
+                            item_id: "item1".to_string(),
+                            master_list_id: "list1".to_string(),
+                        },
+                        MasterListLineRow {
+                            id: "listline2".to_string(),
+                            item_id: "item2".to_string(),
+                            master_list_id: "list1".to_string(),
+                        },
+                        MasterListLineRow {
+                            id: "listline3".to_string(),
+                            item_id: "item3".to_string(),
+                            master_list_id: "list1".to_string(),
+                        },
+                    ],
+                }],
+                stock_lines: vec![
+                    StockLineRow {
+                        id: "stock_line1".to_string(),
+                        item_id: "item1".to_string(),
+                        store_id: mock_store_b().id,
+                        available_number_of_packs: 5.0,
+                        pack_size: 1,
+                        ..StockLineRow::default()
+                    },
+                    StockLineRow {
+                        id: "stock_line2".to_string(),
+                        item_id: "item2".to_string(),
+                        store_id: mock_store_b().id,
+                        available_number_of_packs: 0.0,
+                        pack_size: 1,
+                        ..StockLineRow::default()
+                    },
+                ],
+                ..MockData::default()
+            },
         )
         .await;
-        let service_context = ServiceContext::new_without_triggers(connection);
-        insert_data(&service_context);
 
         let service = ItemServiceCount {};
         let counts = service
@@ -202,39 +257,164 @@ mod item_count_service_test {
             .unwrap();
 
         // count of items with no stock
-        // total items: 200+
-        // items visible to store b: 51
-        // items with no stock: 26
+        // total items: 5
+        // items visible to store b: 3
+        // items with no stock: 2
         // where no stock = available_number_of_packs == 0 or no stock line exists
-        assert_eq!(26, counts.no_stock);
+        assert_eq!(2, counts.no_stock);
 
         // delete a stock line and check that the count is updated
         let stock_line_repository = StockLineRowRepository::new(&service_context.connection);
-        stock_line_repository.delete("stock_line_id_00000").unwrap();
+        stock_line_repository.delete("stock_line1").unwrap();
 
         let counts = service
             .get_item_counts(&service_context, "store_b", 0)
             .unwrap();
 
         // a stock line with available_number_of_packs > 0 has been removed
-        assert_eq!(27, counts.no_stock);
+        assert_eq!(3, counts.no_stock);
+
+        // Add some stock lines of 0.0 to existing item that has stock_line with 5.0, shouldn't change result
+        stock_line_repository
+            .upsert_one(&StockLineRow {
+                id: "stock_line3".to_string(),
+                item_id: "item1".to_string(),
+                available_number_of_packs: 0.0,
+                store_id: mock_store_b().id,
+                ..StockLineRow::default()
+            })
+            .unwrap();
+        stock_line_repository
+            .upsert_one(&StockLineRow {
+                id: "stock_line4".to_string(),
+                item_id: "item1".to_string(),
+                available_number_of_packs: 0.0,
+                store_id: mock_store_b().id,
+                ..StockLineRow::default()
+            })
+            .unwrap();
+        stock_line_repository
+            .upsert_one(&StockLineRow {
+                id: "stock_line5".to_string(),
+                item_id: "item1".to_string(),
+                available_number_of_packs: 0.0,
+                store_id: mock_store_b().id,
+                ..StockLineRow::default()
+            })
+            .unwrap();
+
+        let counts = service
+            .get_item_counts(&service_context, "store_b", 0)
+            .unwrap();
+
+        assert_eq!(3, counts.no_stock);
     }
 
     #[actix_rt::test]
     async fn test_low_stock_items_count() {
-        let (_, connection, _, _) = test_db::setup_all(
+        let ServiceTestContext {
+            service_context, ..
+        } = setup_all_with_data_and_service_provider(
             "omsupply-database-low-stock-items-count",
-            MockDataInserts::none()
-                .names()
-                .stores()
-                .name_store_joins()
-                .units()
-                .items()
-                .full_master_list(),
+            MockDataInserts::none().stores().names(),
+            MockData {
+                items: vec![
+                    ItemRow {
+                        id: "item1".to_string(),
+                        r#type: ItemRowType::Stock,
+                        ..ItemRow::default()
+                    },
+                    ItemRow {
+                        id: "item2".to_string(),
+                        r#type: ItemRowType::Stock,
+                        ..ItemRow::default()
+                    },
+                    ItemRow {
+                        id: "item3".to_string(),
+                        r#type: ItemRowType::Stock,
+                        ..ItemRow::default()
+                    },
+                    ItemRow {
+                        id: "item4".to_string(),
+                        r#type: ItemRowType::Stock,
+                        ..ItemRow::default()
+                    },
+                    ItemRow {
+                        id: "item5".to_string(),
+                        r#type: ItemRowType::Stock,
+                        ..ItemRow::default()
+                    },
+                ],
+                full_master_lists: vec![FullMockMasterList {
+                    master_list: MasterListRow {
+                        id: "list1".to_string(),
+                        name: String::new(),
+                        code: String::new(),
+                        description: String::new(),
+                    },
+                    joins: vec![MasterListNameJoinRow {
+                        id: "join1".to_string(),
+                        master_list_id: "list1".to_string(),
+                        name_id: mock_store_b().name_id,
+                    }],
+                    lines: vec![
+                        MasterListLineRow {
+                            id: "listline1".to_string(),
+                            item_id: "item1".to_string(),
+                            master_list_id: "list1".to_string(),
+                        },
+                        MasterListLineRow {
+                            id: "listline2".to_string(),
+                            item_id: "item2".to_string(),
+                            master_list_id: "list1".to_string(),
+                        },
+                        MasterListLineRow {
+                            id: "listline3".to_string(),
+                            item_id: "item3".to_string(),
+                            master_list_id: "list1".to_string(),
+                        },
+                    ],
+                }],
+                stock_lines: vec![
+                    StockLineRow {
+                        id: "stock_line1".to_string(),
+                        item_id: "item1".to_string(),
+                        store_id: mock_store_b().id,
+                        available_number_of_packs: 5.0,
+                        pack_size: 1,
+                        ..StockLineRow::default()
+                    },
+                    StockLineRow {
+                        id: "stock_line2".to_string(),
+                        item_id: "item2".to_string(),
+                        store_id: mock_store_b().id,
+                        available_number_of_packs: 40.0,
+                        pack_size: 1,
+                        ..StockLineRow::default()
+                    },
+                ],
+                invoices: vec![InvoiceRow {
+                    id: "invoice1".to_string(),
+                    name_id: "name_store_a".to_string(),
+                    name_store_id: Some("store_a".to_string()),
+                    store_id: mock_store_b().id,
+                    picked_datetime: Some(Utc::now().naive_utc() - Duration::days(10)),
+                    r#type: InvoiceRowType::OutboundShipment,
+                    ..InvoiceRow::default()
+                }],
+                invoice_lines: vec![InvoiceLineRow {
+                    id: "invoice_line1".to_string(),
+                    invoice_id: "invoice1".to_string(),
+                    item_id: "item2".to_string(),
+                    number_of_packs: 5.0,
+                    pack_size: 1,
+                    r#type: InvoiceLineRowType::StockOut,
+                    ..InvoiceLineRow::default()
+                }],
+                ..MockData::default()
+            },
         )
         .await;
-        let service_context = ServiceContext::new_without_triggers(connection);
-        insert_data(&service_context);
 
         let service = ItemServiceCount {};
         let counts = service
@@ -248,7 +428,7 @@ mod item_count_service_test {
         let invoice_line_repository = InvoiceLineRowRepository::new(&service_context.connection);
         invoice_repository
             .upsert_one(&inline_init(|r: &mut InvoiceRow| {
-                r.id = "invoice_00000".to_string();
+                r.id = "invoice2".to_string();
                 r.name_id = "name_store_a".to_string();
                 r.name_store_id = Some("store_a".to_string());
                 r.store_id = "store_b".to_string();
@@ -259,9 +439,9 @@ mod item_count_service_test {
 
         invoice_line_repository
             .upsert_one(&inline_init(|r: &mut InvoiceLineRow| {
-                r.id = "invoice_line_row_id_00000".to_string();
-                r.invoice_id = "invoice_00000".to_string();
-                r.item_id = "item_id_00000".to_string();
+                r.id = "invoice_line_row_2".to_string();
+                r.invoice_id = "invoice2".to_string();
+                r.item_id = "item1".to_string();
                 r.number_of_packs = 20.0;
                 r.pack_size = 1;
                 r.r#type = InvoiceLineRowType::StockOut;
