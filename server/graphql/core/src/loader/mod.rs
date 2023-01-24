@@ -1,3 +1,4 @@
+mod inventory_adjustment_reason;
 mod invoice;
 mod invoice_line;
 mod item;
@@ -17,6 +18,7 @@ mod user;
 
 use std::{collections::HashSet, hash::Hasher};
 
+pub use inventory_adjustment_reason::*;
 pub use invoice::*;
 pub use invoice_line::*;
 pub use item::ItemLoader;
