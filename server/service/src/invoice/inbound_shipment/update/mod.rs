@@ -89,7 +89,7 @@ pub fn update_inbound_shipment(
 
             if let Some(update_tax) = update_tax_for_lines {
                 for line in update_tax {
-                    invoice_line_repository.upsert_one(&line)?;
+                    invoice_line_repository.upsert_tax(&line.id, line.tax, line.total_after_tax)?;
                 }
             }
 
