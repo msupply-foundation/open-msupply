@@ -189,7 +189,7 @@ export const useNativeClient = ({
   return {
     ...state,
     connectToServer,
-    goBackToDiscovery: nativeAPI?.goBackToDiscovery,
+    goBackToDiscovery: nativeAPI?.goBackToDiscovery ?? (() => {}),
     advertiseService: nativeAPI?.advertiseService ?? (() => {}),
     discover,
     setMode,
