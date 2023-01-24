@@ -52,7 +52,7 @@ export const DiscoveredServers = ({
             <AlertIcon />
           </Box>
           <Box>
-            <Typography sx={{ color: 'inherit' }}>
+            <Typography sx={{ color: 'inherit' }} display="inline-flex">
               {t('error.server-not-found')}
             </Typography>
             <IconButton
