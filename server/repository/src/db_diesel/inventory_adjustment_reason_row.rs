@@ -60,7 +60,7 @@ impl<'a> InventoryAdjustmentReasonRowRepository<'a> {
     pub fn upsert_one(&self, row: &InventoryAdjustmentReasonRow) -> Result<(), RepositoryError> {
         diesel::insert_into(inventory_adjustment_reason_dsl::inventory_adjustment_reason)
             .values(row)
-            .on_conflict(id)
+            .on_conflict(inventory_adjustment_reason_dsl::id)
             .do_update()
             .set(row)
             .execute(&self.connection.connection)?;
