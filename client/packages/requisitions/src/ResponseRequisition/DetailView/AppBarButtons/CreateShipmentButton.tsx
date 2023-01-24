@@ -23,7 +23,7 @@ export const CreateShipmentButtonComponent = () => {
   const alert = useAlertModal({
     title: t('heading.cannot-do-that'),
     message: t(
-      lines?.nodes.every(line => !line?.remainingQuantityToSupply)
+      lines?.nodes.every(line => !line?.supplyQuantity)
         ? 'message.all-lines-have-no-supply-quantity'
         : 'message.all-lines-have-been-fulfilled'
     ),
