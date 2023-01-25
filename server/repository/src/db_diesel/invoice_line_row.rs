@@ -108,7 +108,7 @@ impl<'a> InvoiceLineRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_tax(
+    pub fn update_tax(
         &self,
         record_id: &str,
         tax_input: Option<f64>,
