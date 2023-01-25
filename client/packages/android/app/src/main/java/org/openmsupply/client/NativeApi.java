@@ -24,6 +24,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     JSObject connectedServer;
     NsdManager discoveryManager;
     boolean isDebug;
+    boolean isAdvertising;
     String localUrl;
 
     @Override
@@ -36,6 +37,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         String debugUrl = getConfig().getString("debugUrl");
         isDebug = debugUrl != null && !debugUrl.equals("");
         localUrl = isDebug ? debugUrl : "https://localhost:" + discoveryConstants.PORT;
+        isAdvertising = false;
     }
 
     @Override
@@ -62,6 +64,9 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     // Advertise local remote server on network
     @PluginMethod()
     public void advertiseService() {
+        if (isAdvertising) {
+            return;
+        }
         NsdServiceInfo serviceInfo = new NsdServiceInfo();
         serviceInfo.setServiceName(discoveryConstants.SERVICE_NAME);
         serviceInfo.setServiceType(discoveryConstants.SERVICE_TYPE);
@@ -91,6 +96,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
                     public void onUnregistrationFailed(NsdServiceInfo serviceInfo, int errorCode) {
                     }
                 });
+        isAdvertising = true;
     }
 
     private void stopServerDiscovery() {
