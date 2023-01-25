@@ -12,6 +12,7 @@ pub mod auth;
 pub mod auth_data;
 pub mod dashboard;
 pub mod display_settings_service;
+pub mod inventory_adjustment_reason;
 pub mod invoice;
 pub mod invoice_line;
 pub mod item;
