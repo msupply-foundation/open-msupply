@@ -82,6 +82,7 @@ impl SyncRecordTester for StocktakeRecordTester {
             r.id = uuid();
             r.item_id = uuid();
             r.store_id = store_id.clone();
+            r.name_id = String::from("name_store_b");
         });
 
         let stocktake_row = inline_edit(&stocktake_row, |mut d| {
