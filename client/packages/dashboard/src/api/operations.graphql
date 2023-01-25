@@ -1,11 +1,3 @@
-fragment ItemStats on ItemNode {
-  stats(storeId: $storeId) {
-    averageMonthlyConsumption
-    availableStockOnHand
-    availableMonthsOfStockOnHand
-  }
-}
-
 query stockCounts(
   $storeId: String!
   $daysTillExpired: Int
@@ -21,13 +13,12 @@ query stockCounts(
   }
 }
 
-query itemStats($storeId: String!) {
-  items(storeId: $storeId, filter: { isVisible: true }) {
-    ... on ItemConnector {
-      nodes {
-        ...ItemStats
-      }
-      totalCount
+query itemCounts($storeId: String!, $lowStockThreshold: Int!) {
+  itemCounts(lowStockThreshold: $lowStockThreshold, storeId: $storeId) {
+    itemCounts {
+      lowStock
+      noStock
+      total
     }
   }
 }

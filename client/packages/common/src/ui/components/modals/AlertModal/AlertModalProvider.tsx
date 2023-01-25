@@ -59,7 +59,7 @@ export const AlertModalProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
       setMessage: (message: string | React.ReactNode) =>
         setState(state => ({ ...state, message })),
       setTitle: (title: string) => setState(state => ({ ...state, title })),
-      setOnOk: () => {},
+      setOnOk: (onOk: () => void) => setState(state => ({ ...state, onOk })),
       setOpen: (open: boolean) => setState(state => ({ ...state, open })),
       ...alertModalState,
       setImportant: (important: boolean) =>

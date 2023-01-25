@@ -29,43 +29,6 @@ impl Migration for V1_01_01 {
                 WHERE name_store_join.name_id IN (SELECT name_id FROM store WHERE store.id = name_store_join.store_id);"#
         )?;
 
-        #[cfg(not(feature = "postgres"))]
-        const INVENTORY_ADJUSTMENT_REASON_TYPE: &'static str = "TEXT";
-        #[cfg(feature = "postgres")]
-        const INVENTORY_ADJUSTMENT_REASON_TYPE: &'static str = "inventory_adjustment_type";
-        #[cfg(feature = "postgres")]
-        sql!(
-            connection,
-            r#"
-                CREATE TYPE {INVENTORY_ADJUSTMENT_REASON_TYPE} AS ENUM (
-                    'POSITIVE',
-                    'NEGATIVE'
-                );
-                "#
-        )?;
-
-        sql!(
-            connection,
-            r#"CREATE TABLE inventory_adjustment_reason (
-                id TEXT NOT NULL PRIMARY KEY,
-                type {INVENTORY_ADJUSTMENT_REASON_TYPE},
-                is_active BOOLEAN,
-                reason TEXT NOT NULL
-            );"#
-        )?;
-
-        sql!(
-            connection,
-            r#"ALTER TABLE invoice_line 
-                ADD inventory_adjustment_reason_id TEXT REFERENCES inventory_adjustment_reason(id);"#
-        )?;
-
-        sql!(
-            connection,
-            r#"ALTER TABLE stocktake_line 
-                ADD inventory_adjustment_reason_id TEXT REFERENCES inventory_adjustment_reason(id);"#
-        )?;
-
         Ok(())
     }
 }

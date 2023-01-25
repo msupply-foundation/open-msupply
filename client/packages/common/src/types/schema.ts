@@ -1314,6 +1314,18 @@ export type ItemConnector = {
   totalCount: Scalars['Int'];
 };
 
+export type ItemCounts = {
+  __typename: 'ItemCounts';
+  itemCounts: ItemCountsResponse;
+};
+
+export type ItemCountsResponse = {
+  __typename: 'ItemCountsResponse';
+  lowStock: Scalars['Int'];
+  noStock: Scalars['Int'];
+  total: Scalars['Int'];
+};
+
 export type ItemFilterInput = {
   code?: InputMaybe<SimpleStringFilterInput>;
   codeOrName?: InputMaybe<SimpleStringFilterInput>;
@@ -2135,6 +2147,7 @@ export type Queries = {
   invoiceByNumber: InvoiceResponse;
   invoiceCounts: InvoiceCounts;
   invoices: InvoicesResponse;
+  itemCounts: ItemCounts;
   /** Query omSupply "item" entries */
   items: ItemsResponse;
   latestSyncStatus?: Maybe<FullSyncStatusNode>;
@@ -2221,6 +2234,12 @@ export type QueriesInvoicesArgs = {
   filter?: InputMaybe<InvoiceFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<InvoiceSortInput>>;
+  storeId: Scalars['String'];
+};
+
+
+export type QueriesItemCountsArgs = {
+  lowStockThreshold?: InputMaybe<Scalars['Int']>;
   storeId: Scalars['String'];
 };
 
@@ -2732,6 +2751,7 @@ export type StockLineNode = {
   packSize: Scalars['Int'];
   sellPricePerPack: Scalars['Float'];
   storeId: Scalars['String'];
+  supplierName?: Maybe<Scalars['String']>;
   totalNumberOfPacks: Scalars['Float'];
 };
 
