@@ -45,6 +45,12 @@ fragment StocktakeLine on StocktakeLineNode {
     name
     unitName
   }
+
+  inventoryAdjustmentReason {
+    __typename
+    id
+    reason
+  }
 }
 
 fragment Stocktake on StocktakeNode {
