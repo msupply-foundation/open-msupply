@@ -167,6 +167,7 @@ pub fn mock_invoice1_linked_to_requisition() -> FullMockInvoice {
                     r#type: InvoiceLineRowType::StockOut,
                     number_of_packs: 10.0,
                     note: None,
+                    inventory_adjustment_reason_id: None,
                 },
                 stock_line: StockLineRow {
                     id: line1_id.clone(),
@@ -205,6 +206,7 @@ pub fn mock_invoice1_linked_to_requisition() -> FullMockInvoice {
                     r#type: InvoiceLineRowType::StockOut,
                     number_of_packs: 10.0,
                     note: None,
+                    inventory_adjustment_reason_id: None,
                 },
                 stock_line: StockLineRow {
                     id: line2_id.clone(),
@@ -262,6 +264,7 @@ pub fn mock_invoice2_linked_to_requisition() -> FullMockInvoice {
                 r#type: InvoiceLineRowType::StockOut,
                 number_of_packs: 10.0,
                 note: None,
+                inventory_adjustment_reason_id: None,
             },
             stock_line: StockLineRow {
                 id: line1_id.clone(),
@@ -318,6 +321,7 @@ pub fn mock_invoice3_linked_to_requisition() -> FullMockInvoice {
                 r#type: InvoiceLineRowType::StockOut,
                 number_of_packs: 10.0,
                 note: None,
+                inventory_adjustment_reason_id: None,
             },
             stock_line: StockLineRow {
                 id: line1_id.clone(),

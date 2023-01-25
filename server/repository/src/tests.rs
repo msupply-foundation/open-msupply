@@ -159,6 +159,7 @@ mod repository_test {
                 number_of_packs: 1.0,
                 note: None,
                 location_id: None,
+                inventory_adjustment_reason_id: None,
             }
         }
         pub fn invoice_line_2() -> InvoiceLineRow {
@@ -181,6 +182,7 @@ mod repository_test {
                 number_of_packs: 1.0,
                 note: None,
                 location_id: None,
+                inventory_adjustment_reason_id: None,
             }
         }
 
@@ -204,6 +206,7 @@ mod repository_test {
                 number_of_packs: 1.0,
                 note: None,
                 location_id: None,
+                inventory_adjustment_reason_id: None,
             }
         }
 
@@ -227,6 +230,7 @@ mod repository_test {
                 number_of_packs: 1.0,
                 note: None,
                 location_id: None,
+                inventory_adjustment_reason_id: None,
             }
         }
 

@@ -33,6 +33,7 @@ pub fn generate_empty_invoice_lines(
                     r#type: InvoiceLineRowType::StockIn,
                     number_of_packs: 0.0,
                     note: None,
+                    inventory_adjustment_reason_id: None,
                 });
             }
             Ok(None) => {}

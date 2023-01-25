@@ -14,6 +14,10 @@ use crate::{
     validate::check_store_id_matches,
 };
 
+use super::validate::{
+    check_active_adjustment_reasons, check_reason_is_valid, stocktake_reduction_amount,
+};
+
 #[derive(Default, Debug, Clone)]
 pub struct UpdateStocktakeLine {
     pub id: String,
@@ -28,6 +32,7 @@ pub struct UpdateStocktakeLine {
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
     pub note: Option<String>,
+    pub inventory_adjustment_reason_id: Option<String>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -39,6 +44,8 @@ pub enum UpdateStocktakeLineError {
     LocationDoesNotExist,
     CannotEditFinalised,
     StocktakeIsLocked,
+    AdjustmentReasonNotProvided,
+    AdjustmentReasonNotValid,
 }
 
 fn validate(
@@ -76,6 +83,25 @@ fn validate(
         }
     }
 
+    let stocktake_reduction_amount =
+        stocktake_reduction_amount(&input.counted_number_of_packs, &stocktake_line);
+    if check_active_adjustment_reasons(connection, stocktake_reduction_amount)?.is_some()
+        && input.inventory_adjustment_reason_id.is_none()
+        && stocktake_reduction_amount != 0.0
+    {
+        return Err(UpdateStocktakeLineError::AdjustmentReasonNotProvided);
+    }
+
+    if input.inventory_adjustment_reason_id.is_some() {
+        if !check_reason_is_valid(
+            connection,
+            input.inventory_adjustment_reason_id.clone(),
+            stocktake_reduction_amount,
+        )? {
+            return Err(UpdateStocktakeLineError::AdjustmentReasonNotValid);
+        }
+    }
+
     Ok(stocktake_line)
 }
 
@@ -93,6 +119,7 @@ fn generate(
         cost_price_per_pack,
         sell_price_per_pack,
         note,
+        inventory_adjustment_reason_id,
     }: UpdateStocktakeLine,
 ) -> Result<StocktakeLineRow, UpdateStocktakeLineError> {
     Ok(StocktakeLineRow {
@@ -113,6 +140,8 @@ fn generate(
         cost_price_per_pack: cost_price_per_pack.or(existing.cost_price_per_pack),
         sell_price_per_pack: sell_price_per_pack.or(existing.sell_price_per_pack),
         note: note.or(existing.note),
+        inventory_adjustment_reason_id: inventory_adjustment_reason_id
+            .or(existing.inventory_adjustment_reason_id),
     })
 }
 
@@ -147,10 +176,11 @@ mod stocktake_line_test {
     use repository::{
         mock::{
             mock_locations, mock_locked_stocktake_line, mock_stocktake_line_a,
-            mock_stocktake_line_finalised, mock_store_a, MockDataInserts,
+            mock_stocktake_line_finalised, mock_store_a, MockData, MockDataInserts,
         },
-        test_db::setup_all,
-        StocktakeLineRow,
+        test_db::setup_all_with_data,
+        InventoryAdjustmentReasonRow, InventoryAdjustmentReasonRowRepository,
+        InventoryAdjustmentReasonType, StocktakeLineRow,
     };
     use util::inline_init;
 
@@ -161,14 +191,82 @@ mod stocktake_line_test {
 
     #[actix_rt::test]
     async fn update_stocktake_line() {
-        let (_, _, connection_manager, _) =
-            setup_all("update_stocktake_line", MockDataInserts::all()).await;
+        fn positive_reason() -> InventoryAdjustmentReasonRow {
+            inline_init(|r: &mut InventoryAdjustmentReasonRow| {
+                r.id = "positive_reason".to_string();
+                r.is_active = true;
+                r.r#type = InventoryAdjustmentReasonType::Positive;
+                r.reason = "Found".to_string();
+            })
+        }
+
+        fn negative_reason() -> InventoryAdjustmentReasonRow {
+            inline_init(|r: &mut InventoryAdjustmentReasonRow| {
+                r.id = "negative_reason".to_string();
+                r.is_active = true;
+                r.r#type = InventoryAdjustmentReasonType::Negative;
+                r.reason = "Lost".to_string();
+            })
+        }
+
+        fn mock_stocktake_line() -> StocktakeLineRow {
+            inline_init(|r: &mut StocktakeLineRow| {
+                r.id = "mock_stocktake_line".to_string();
+                r.stocktake_id = "stocktake_a".to_string();
+                r.snapshot_number_of_packs = 10.0;
+                r.item_id = "item_a".to_string();
+            })
+        }
+
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "update_stocktake_line",
+            MockDataInserts::all(),
+            inline_init(|r: &mut MockData| {
+                r.inventory_adjustment_reasons = vec![positive_reason(), negative_reason()];
+                r.stocktake_lines = vec![mock_stocktake_line()];
+            }),
+        )
+        .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let mut context = service_provider
             .context(mock_store_a().id, "".to_string())
             .unwrap();
         let service = service_provider.stocktake_line_service;
+
+        // error: AdjustmentReasonNotProvided
+        let stocktake_line_a = mock_stocktake_line_a();
+        let error = service
+            .update_stocktake_line(
+                &context,
+                inline_init(|r: &mut UpdateStocktakeLine| {
+                    r.id = stocktake_line_a.id;
+                    r.counted_number_of_packs = Some(1.0)
+                }),
+            )
+            .unwrap_err();
+        assert_eq!(error, UpdateStocktakeLineError::AdjustmentReasonNotProvided);
+
+        // error: AdjustmentReasonNotValid
+        let stocktake_line_a = mock_stocktake_line_a();
+        let error = service
+            .update_stocktake_line(
+                &context,
+                inline_init(|r: &mut UpdateStocktakeLine| {
+                    r.id = stocktake_line_a.id;
+                    r.counted_number_of_packs = Some(100.0);
+                    r.inventory_adjustment_reason_id = Some(negative_reason().id);
+                }),
+            )
+            .unwrap_err();
+        assert_eq!(error, UpdateStocktakeLineError::AdjustmentReasonNotValid);
+
+        InventoryAdjustmentReasonRowRepository::new(&context.connection)
+            .delete(&positive_reason().id)
+            .unwrap();
+        InventoryAdjustmentReasonRowRepository::new(&context.connection)
+            .delete(&negative_reason().id)
+            .unwrap();
 
         // error: StocktakeLineDoesNotExist
         let error = service
@@ -297,7 +395,72 @@ mod stocktake_line_test {
                 expiry_date: None,
                 pack_size: None,
                 note: None,
+                inventory_adjustment_reason_id: None,
             }
+        );
+
+        // test positive adjustment reason
+        InventoryAdjustmentReasonRowRepository::new(&context.connection)
+            .upsert_one(&positive_reason())
+            .unwrap();
+        InventoryAdjustmentReasonRowRepository::new(&context.connection)
+            .upsert_one(&negative_reason())
+            .unwrap();
+
+        let stocktake_line_a = mock_stocktake_line_a();
+        let result = service
+            .update_stocktake_line(
+                &context,
+                inline_init(|r: &mut UpdateStocktakeLine| {
+                    r.id = stocktake_line_a.id.clone();
+                    r.counted_number_of_packs = Some(140.0);
+                    r.inventory_adjustment_reason_id = Some(positive_reason().id)
+                }),
+            )
+            .unwrap();
+        assert_ne!(
+            result.line.inventory_adjustment_reason_id,
+            Some(negative_reason().id)
+        );
+
+        // test negative adjustment reason
+        let stocktake_line_a = mock_stocktake_line_a();
+        let result = service
+            .update_stocktake_line(
+                &context,
+                inline_init(|r: &mut UpdateStocktakeLine| {
+                    r.id = stocktake_line_a.id.clone();
+                    r.counted_number_of_packs = Some(10.0);
+                    r.inventory_adjustment_reason_id = Some(negative_reason().id)
+                }),
+            )
+            .unwrap();
+        assert_ne!(
+            result.line.inventory_adjustment_reason_id,
+            Some(positive_reason().id)
+        );
+
+        // test success update with no change in counted_number_of_packs
+        let stocktake_line = mock_stocktake_line();
+        let result = service
+            .update_stocktake_line(
+                &context,
+                inline_init(|r: &mut UpdateStocktakeLine| {
+                    r.id = stocktake_line.id.clone();
+                    r.comment = Some("Some comment".to_string());
+                }),
+            )
+            .unwrap();
+
+        assert_eq!(
+            result.line,
+            inline_init(|r: &mut StocktakeLineRow| {
+                r.id = stocktake_line.id.clone();
+                r.stocktake_id = result.line.stocktake_id.clone();
+                r.snapshot_number_of_packs = 10.0;
+                r.item_id = stocktake_line.item_id;
+                r.comment = Some("Some comment".to_string());
+            })
         );
     }
 }
