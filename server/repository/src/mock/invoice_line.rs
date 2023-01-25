@@ -22,6 +22,7 @@ pub fn mock_outbound_shipment_a_invoice_lines() -> Vec<InvoiceLineRow> {
         r#type: InvoiceLineRowType::StockOut,
         number_of_packs: 10.0,
         note: None,
+        inventory_adjustment_reason_id: None,
     };
 
     let mock_outbound_shipment_a_invoice_line_b: InvoiceLineRow = InvoiceLineRow {
@@ -43,6 +44,7 @@ pub fn mock_outbound_shipment_a_invoice_lines() -> Vec<InvoiceLineRow> {
         r#type: InvoiceLineRowType::StockOut,
         number_of_packs: 4.0,
         note: None,
+        inventory_adjustment_reason_id: None,
     };
 
     vec![
@@ -71,6 +73,7 @@ pub fn mock_outbound_shipment_b_invoice_lines() -> Vec<InvoiceLineRow> {
         r#type: InvoiceLineRowType::StockOut,
         number_of_packs: 3.0,
         note: None,
+        inventory_adjustment_reason_id: None,
     };
 
     let mock_outbound_shipment_b_invoice_line_b: InvoiceLineRow = InvoiceLineRow {
@@ -92,6 +95,7 @@ pub fn mock_outbound_shipment_b_invoice_lines() -> Vec<InvoiceLineRow> {
         r#type: InvoiceLineRowType::StockOut,
         number_of_packs: 5.0,
         note: None,
+        inventory_adjustment_reason_id: None,
     };
 
     vec![
@@ -120,6 +124,7 @@ pub fn mock_outbound_shipment_c_invoice_lines() -> Vec<InvoiceLineRow> {
         r#type: InvoiceLineRowType::StockOut,
         number_of_packs: 3.0,
         note: None,
+        inventory_adjustment_reason_id: None,
     };
 
     let mock_outbound_shipment_c_invoice_line_b: InvoiceLineRow = InvoiceLineRow {
@@ -141,6 +146,7 @@ pub fn mock_outbound_shipment_c_invoice_lines() -> Vec<InvoiceLineRow> {
         r#type: InvoiceLineRowType::StockOut,
         number_of_packs: 1.0,
         note: None,
+        inventory_adjustment_reason_id: None,
     };
 
     vec![
@@ -169,6 +175,7 @@ pub fn mock_outbound_shipment_d_invoice_lines() -> Vec<InvoiceLineRow> {
         r#type: InvoiceLineRowType::StockOut,
         number_of_packs: 2.0,
         note: None,
+        inventory_adjustment_reason_id: None,
     };
 
     vec![mock_outbound_shipment_d_invoice_line_a]
@@ -194,6 +201,7 @@ pub fn mock_outbound_shipment_no_stock_line() -> Vec<InvoiceLineRow> {
         r#type: InvoiceLineRowType::StockOut,
         number_of_packs: 2.0,
         note: None,
+        inventory_adjustment_reason_id: None,
     };
 
     vec![mock_outbound_shipment_no_stock_line]
@@ -219,6 +227,7 @@ pub fn mock_inbound_shipment_a_invoice_lines() -> Vec<InvoiceLineRow> {
         r#type: InvoiceLineRowType::StockIn,
         number_of_packs: 1.0,
         note: None,
+        inventory_adjustment_reason_id: None,
     };
 
     let mock_inbound_shipment_a_invoice_line_b: InvoiceLineRow = InvoiceLineRow {
@@ -240,6 +249,7 @@ pub fn mock_inbound_shipment_a_invoice_lines() -> Vec<InvoiceLineRow> {
         r#type: InvoiceLineRowType::StockIn,
         number_of_packs: 1.0,
         note: None,
+        inventory_adjustment_reason_id: None,
     };
 
     vec![
@@ -268,6 +278,7 @@ pub fn mock_inbound_shipment_b_invoice_lines() -> Vec<InvoiceLineRow> {
         r#type: InvoiceLineRowType::StockIn,
         number_of_packs: 1.0,
         note: None,
+        inventory_adjustment_reason_id: None,
     };
 
     let mock_inbound_shipment_b_invoice_line_b: InvoiceLineRow = InvoiceLineRow {
@@ -289,6 +300,7 @@ pub fn mock_inbound_shipment_b_invoice_lines() -> Vec<InvoiceLineRow> {
         r#type: InvoiceLineRowType::StockIn,
         number_of_packs: 1.0,
         note: None,
+        inventory_adjustment_reason_id: None,
     };
 
     vec![
@@ -317,6 +329,7 @@ pub fn mock_inbound_shipment_c_invoice_lines() -> Vec<InvoiceLineRow> {
         r#type: InvoiceLineRowType::StockIn,
         number_of_packs: 3.0,
         note: None,
+        inventory_adjustment_reason_id: None,
     };
 
     let mock_inbound_shipment_c_invoice_line_b: InvoiceLineRow = InvoiceLineRow {
@@ -338,6 +351,7 @@ pub fn mock_inbound_shipment_c_invoice_lines() -> Vec<InvoiceLineRow> {
         r#type: InvoiceLineRowType::StockIn,
         number_of_packs: 2.0,
         note: None,
+        inventory_adjustment_reason_id: None,
     };
 
     vec![
@@ -366,6 +380,7 @@ pub fn mock_inbound_shipment_d_invoice_lines() -> Vec<InvoiceLineRow> {
         r#type: InvoiceLineRowType::StockIn,
         number_of_packs: 7.0,
         note: None,
+        inventory_adjustment_reason_id: None,
     };
 
     let mock_inbound_shipment_d_invoice_line_b: InvoiceLineRow = InvoiceLineRow {
@@ -387,6 +402,7 @@ pub fn mock_inbound_shipment_d_invoice_lines() -> Vec<InvoiceLineRow> {
         r#type: InvoiceLineRowType::StockIn,
         number_of_packs: 2.0,
         note: None,
+        inventory_adjustment_reason_id: None,
     };
 
     vec![
