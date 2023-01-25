@@ -1,5 +1,6 @@
 use super::{
     location_row::{location, location::dsl as location_dsl},
+    name_row::{name, name::dsl as name_dsl},
     stock_line_row::{stock_line, stock_line::dsl as stock_line_dsl},
     DBType, LocationRow, StockLineRow, StorageConnection,
 };
@@ -7,7 +8,8 @@ use super::{
 use crate::{
     diesel_macros::{apply_date_filter, apply_equal_filter, apply_sort, apply_sort_asc_nulls_last},
     repository_error::RepositoryError,
-    DateFilter, EqualFilter, ItemFilter, ItemRepository, Pagination, SimpleStringFilter, Sort,
+    DateFilter, EqualFilter, ItemFilter, ItemRepository, NameRow, Pagination, SimpleStringFilter,
+    Sort,
 };
 
 use diesel::{
@@ -19,6 +21,7 @@ use diesel::{
 pub struct StockLine {
     pub stock_line_row: StockLineRow,
     pub location_row: Option<LocationRow>,
+    pub name_row: Option<NameRow>,
 }
 
 pub enum StockLineSortField {
@@ -39,7 +42,7 @@ pub struct StockLineFilter {
 
 pub type StockLineSort = Sort<StockLineSortField>;
 
-type StockLineJoin = (StockLineRow, Option<LocationRow>);
+type StockLineJoin = (StockLineRow, Option<LocationRow>, Option<NameRow>);
 pub struct StockLineRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -102,11 +105,13 @@ impl<'a> StockLineRepository<'a> {
     }
 }
 
-type BoxedStockLineQuery = IntoBoxed<'static, LeftJoin<stock_line::table, location::table>, DBType>;
+type BoxedStockLineQuery =
+    IntoBoxed<'static, LeftJoin<LeftJoin<stock_line::table, location::table>, name::table>, DBType>;
 
 fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery {
     let mut query = stock_line_dsl::stock_line
         .left_join(location_dsl::location)
+        .left_join(name_dsl::name)
         .into_boxed();
 
     if let Some(f) = filter {
@@ -156,10 +161,11 @@ fn apply_item_filter(
     query
 }
 
-pub fn to_domain((stock_line_row, location_row): StockLineJoin) -> StockLine {
+pub fn to_domain((stock_line_row, location_row, name_row): StockLineJoin) -> StockLine {
     StockLine {
         stock_line_row,
         location_row,
+        name_row,
     }
 }
 
@@ -217,6 +223,12 @@ impl StockLine {
     pub fn available_quantity(&self) -> f64 {
         self.stock_line_row.available_number_of_packs * self.stock_line_row.pack_size as f64
     }
+
+    pub fn supplier_name(&self) -> Option<&str> {
+        self.name_row
+            .as_ref()
+            .map(|name_row| name_row.name.as_str())
+    }
 }
 
 #[cfg(test)]
@@ -245,7 +257,7 @@ mod test {
                 r.id = "line1".to_string();
                 r.store_id = mock_store_a().id;
                 r.item_id = mock_item_a().id;
-                r.expiry_date = Some(NaiveDate::from_ymd(2021, 01, 01))
+                r.expiry_date = Some(NaiveDate::from_ymd(2021, 01, 01));
             })
         }
         // expiry two
@@ -254,7 +266,7 @@ mod test {
                 r.id = "line2".to_string();
                 r.store_id = mock_store_a().id;
                 r.item_id = mock_item_a().id;
-                r.expiry_date = Some(NaiveDate::from_ymd(2021, 02, 01))
+                r.expiry_date = Some(NaiveDate::from_ymd(2021, 02, 01));
             })
         }
         // expiry one (expiry null)

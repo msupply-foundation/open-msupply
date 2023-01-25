@@ -2,14 +2,14 @@
     "button.new-outbound-shipment": "Nouvelle Livraison sortante",
     "button.order-more": "Nouvelle commande",
     "heading-stock": "Stock",
-    "heading.expiring-stock": "Expiration des stocks",
+    "heading.expiring-stock": "Lots sur le point d'expirer",
     "heading.shipments-to-be-picked": "Livraisons sortantes à prélever",
-    "heading.stock-levels": "Niveaux de Stock",
-    "label.expired": "Expiré(s)",
-    "label.expiring-soon": "Stock expirant",
-    "label.items-no-stock": "Articles sans stock",
-    "label.low-stock-items": "Stock de moins de 3 mois",
+    "heading.stock-levels": "États des Stocks",
+    "label.expired": "Lots expiré(s)",
+    "label.expiring-soon": "lots sur le points d'expirer",
+    "label.items-no-stock": "Articles en rupture de stock",
+    "label.low-stock-items": "Article(s) avec moins de 3 mois de stock",
     "label.this-week": "Cette Semaine",
     "label.today": "Aujourd'hui",
-    "label.total-items": "Total articles"
+    "label.total-items": "articles"
 }

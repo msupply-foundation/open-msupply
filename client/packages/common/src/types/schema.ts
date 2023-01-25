@@ -2732,6 +2732,7 @@ export type StockLineNode = {
   packSize: Scalars['Int'];
   sellPricePerPack: Scalars['Float'];
   storeId: Scalars['String'];
+  supplierName?: Maybe<Scalars['String']>;
   totalNumberOfPacks: Scalars['Float'];
 };
 

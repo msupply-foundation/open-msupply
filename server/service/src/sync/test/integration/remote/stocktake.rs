@@ -38,7 +38,8 @@ impl SyncRecordTester for StocktakeRecordTester {
             created_datetime: NaiveDate::from_ymd(2022, 03, 22).and_hms(9, 51, 0),
             stocktake_date: None,
             finalised_datetime: None,
-            inventory_adjustment_id: None,
+            inventory_addition_id: None,
+            inventory_reduction_id: None,
             is_locked: true,
         };
         let stocktake_line_row = StocktakeLineRow {
@@ -81,6 +82,7 @@ impl SyncRecordTester for StocktakeRecordTester {
             r.id = uuid();
             r.item_id = uuid();
             r.store_id = store_id.clone();
+            r.name_id = String::from("name_store_b");
         });
 
         let stocktake_row = inline_edit(&stocktake_row, |mut d| {
@@ -90,7 +92,9 @@ impl SyncRecordTester for StocktakeRecordTester {
             d.status = StocktakeStatus::Finalised;
             d.stocktake_date = Some(NaiveDate::from_ymd(2022, 03, 23));
             d.finalised_datetime = Some(NaiveDate::from_ymd(2022, 03, 24).and_hms(8, 15, 30));
-            d.inventory_adjustment_id = Some(invoice_row.id.clone());
+            // Not testing that logically invoices are correct inventory adjustments just testing they sync corrrectly
+            d.inventory_addition_id = Some(invoice_row.id.clone());
+            d.inventory_reduction_id = Some(invoice_row.id.clone());
             d.is_locked = true;
             d
         });
