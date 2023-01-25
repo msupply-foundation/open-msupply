@@ -5,6 +5,7 @@ import {
   BasicSpinner,
   Box,
   ButtonWithIcon,
+  ErrorWithDetails,
   ExternalLinkIcon,
   getNativeAPI,
   NativeMode,
@@ -173,6 +174,27 @@ export const Android = () => {
             />
           </Stack>
         </Stack>
+      </Viewport>
+    );
+
+  if (mode === NativeMode.Server && connectToPreviousTimedOut)
+    return (
+      <Viewport>
+        <Box
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexDirection: 'column',
+            width: '100vw',
+            height: '100vh',
+          }}
+        >
+          <ErrorWithDetails
+            error={t('error.server-failed-to-start')}
+            details=""
+          />
+        </Box>
       </Viewport>
     );
 

@@ -170,7 +170,6 @@ export const useNativeClient = ({
     if (!nativeAPI) return;
     if (!autoconnect) return;
     if (!previousServer) return;
-    if (mode !== NativeMode.Client) return;
 
     const server = servers.find(server =>
       matchUniqueServer(server, previousServer)

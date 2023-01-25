@@ -41,6 +41,7 @@
   "error.integration-timeout-reached": "Central server integration timeout reached",
   "error.invalid-url": "Invalid url",
   "error.login": "Invalid username or password",
+  "error.server-failed-to-start": "Error! The server failed to start",
   "error.server-not-found": "Problem finding local omSupply server",
   "error.site-auth-timeout": "Site authentication timed out, please try again later",
   "error.site-has-no-store": "Site has no store",
