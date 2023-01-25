@@ -52,7 +52,7 @@ export const SearchBar: FC<SearchBarProps> = ({
       }}
     >
       <SearchIcon
-        sx={{ color: 'gray.main', marginBottom: 0.5 }}
+        sx={{ color: 'gray.main', marginBottom: 1 }}
         fontSize="small"
       />
       <BasicTextInput
