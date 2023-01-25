@@ -40,17 +40,25 @@ const StyledListItem = styled<
   FC<ListItemProps & { isSelected: boolean; to: string }>
 >(ListItem, {
   shouldForwardProp: prop => prop !== 'isSelected',
-})(({ theme, isSelected }) => ({
-  ...getListItemCommonStyles(),
-  backgroundColor: isSelected
-    ? theme.mixins.drawer.selectedBackgroundColor
-    : 'transparent',
-  boxShadow: isSelected ? theme.shadows[3] : 'none',
-  marginTop: 5,
-  '&:hover': {
-    boxShadow: theme.shadows[8],
-  },
-}));
+})(({ theme, isSelected }) =>
+  isSelected
+    ? {
+        ...getListItemCommonStyles(),
+        backgroundColor: theme.mixins.drawer.selectedBackgroundColor,
+        boxShadow: theme.shadows[3],
+        fontWeight: 'bold',
+        marginTop: 5,
+      }
+    : {
+        ...getListItemCommonStyles(),
+        backgroundColor: 'transparent',
+        marginTop: 5,
+        '&:hover': {
+          boxShadow: theme.shadows[3],
+          backgroundColor: theme.palette.background.toolbar,
+        },
+      }
+);
 
 export interface AppNavLinkProps {
   badgeProps?: BadgeProps;
@@ -78,6 +86,7 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
 
   const selected = useSelectedNavMenuItem(to, !!end, drawer.isOpen);
   const isSelectedParentItem = inactive && !!useMatch({ path: `${to}/*` });
+  const showMenuSectionIcon = inactive && drawer.isOpen;
   const handleClick = () => {
     // reset the clicked nav path when navigating
     // otherwise the child menu remains open
@@ -129,9 +138,22 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
         component={CustomLink}
       >
         <ListItemIcon sx={{ minWidth: 20 }}>{icon}</ListItemIcon>
+        {showMenuSectionIcon && (
+          <ChevronDownIcon
+            className="menu_section_icon"
+            sx={{
+              color: 'gray.main',
+              fontSize: '1rem',
+              marginLeft: 0.5,
+              stroke: theme => theme.palette.gray.main,
+              strokeWidth: 1.5,
+              transform: 'rotate(-90deg)',
+            }}
+          />
+        )}
         <Box className="navLinkText">
-          <Box width={10} />
-
+          {!end && <Box width={4} />}
+          {!showMenuSectionIcon && <Box width={4} />}
           <Badge
             {...badgeProps}
             sx={{
@@ -149,34 +171,33 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
           >
             <ListItemText
               primary={text}
-              sx={
-                isSelectedParentItem
-                  ? {
-                      '& .MuiTypography-root': { fontWeight: 'bold' },
-                      flexGrow: 0,
-                    }
-                  : { flexGrow: 0 }
-              }
+              sx={{
+                '& .MuiTypography-root': {
+                  fontWeight:
+                    selected || isSelectedParentItem ? 'bold' : 'normal',
+                  color: isSelectedParentItem ? 'primary.main' : undefined,
+                },
+                flexGrow: 0,
+              }}
             />
           </Badge>
-          {end && (
-            <ListItemIcon
+
+          <ListItemIcon
+            sx={{
+              minWidth: 20,
+              display: selected && drawer.isOpen ? 'flex' : 'none',
+              alignItems: 'center',
+            }}
+            className="chevron"
+          >
+            <ChevronDownIcon
               sx={{
-                minWidth: 20,
-                display: selected ? 'flex' : 'none',
-                alignItems: 'center',
+                transform: 'rotate(-90deg)',
+                fontSize: '1rem',
+                color: 'primary.main',
               }}
-              className="chevron"
-            >
-              <ChevronDownIcon
-                sx={{
-                  transform: 'rotate(-90deg)',
-                  fontSize: '1rem',
-                  color: 'primary.main',
-                }}
-              />
-            </ListItemIcon>
-          )}
+            />
+          </ListItemIcon>
         </Box>
       </ListItemButton>
     </StyledListItem>

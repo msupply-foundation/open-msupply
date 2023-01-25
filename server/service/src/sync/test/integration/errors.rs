@@ -73,6 +73,11 @@ mod tests {
             .request_and_set_site_info(&service_provider, &sync_settings)
             .await
             .unwrap();
+        service_provider
+            .settings
+            .update_sync_settings(&service_context, &sync_settings)
+            .unwrap();
+
         let synchroniser =
             get_synchroniser_with_hardware_id(&connection_manager, &sync_settings, "id1");
         synchroniser.sync().await.unwrap();

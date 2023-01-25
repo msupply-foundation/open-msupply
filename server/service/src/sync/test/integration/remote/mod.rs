@@ -6,12 +6,18 @@ pub(crate) mod stock_line;
 pub(crate) mod stocktake;
 mod test;
 
-use crate::sync::test::{
-    check_records_against_database,
-    integration::{
-        central_server_configurations::{ConfigureCentralServer, SiteConfiguration},
-        init_test_context, SyncIntegrationContext,
+use repository::{InvoiceRowType, NameRowRepository, StorageConnection};
+use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
+
+use crate::sync::{
+    test::{
+        check_records_against_database,
+        integration::{
+            central_server_configurations::{ConfigureCentralServer, SiteConfiguration},
+            init_test_context, SyncIntegrationContext,
+        },
     },
+    translations::{IntegrationRecords, PullUpsertRecord},
 };
 
 use super::SyncRecordTester;
@@ -60,11 +66,14 @@ async fn test_remote_sync_record(identifier: &str, tester: &dyn SyncRecordTester
 
         // Pull required central data
         previous_synchroniser.sync().await.unwrap();
+
+        let mut integration_records = step_data.integration_records;
+        // Replace system name codes (for inventory adjustment name etc..)
+        replace_system_name_ids(&mut integration_records, &previous_connection);
+
         // Integrate
-        step_data
-            .integration_records
-            .integrate(&previous_connection)
-            .unwrap();
+
+        integration_records.integrate(&previous_connection).unwrap();
         // Push integrated changes
         previous_synchroniser.sync().await.unwrap();
         // Re initialise
@@ -77,6 +86,24 @@ async fn test_remote_sync_record(identifier: &str, tester: &dyn SyncRecordTester
         previous_synchroniser = synchroniser;
         previous_synchroniser.sync().await.unwrap();
         // Confirm records have synced back correctly
-        check_records_against_database(&previous_connection, step_data.integration_records).await;
+        check_records_against_database(&previous_connection, integration_records).await;
+    }
+}
+
+fn replace_system_name_ids(records: &mut IntegrationRecords, connection: &StorageConnection) {
+    let inventory_adjustment_name = NameRowRepository::new(connection)
+        .find_one_by_code(INVENTORY_ADJUSTMENT_NAME_CODE)
+        .unwrap()
+        .expect("Cannont find intenvory adjustment name");
+
+    for mut record in records.upserts.iter_mut() {
+        if let PullUpsertRecord::Invoice(invoice) = &mut record {
+            if invoice.r#type == InvoiceRowType::InventoryAddition
+                || invoice.r#type == InvoiceRowType::InventoryReduction
+            {
+                invoice.name_id = inventory_adjustment_name.id.clone();
+                invoice.name_store_id = None;
+            }
+        }
     }
 }

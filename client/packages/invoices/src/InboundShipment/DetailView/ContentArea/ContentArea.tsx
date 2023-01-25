@@ -109,6 +109,7 @@ export const ContentArea: FC<ContentAreaProps> = React.memo(
               buttonText={t('button.add-item')}
             />
           }
+          isRowAnimated={true}
         />
       </Box>
     );

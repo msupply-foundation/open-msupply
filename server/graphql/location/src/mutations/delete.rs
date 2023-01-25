@@ -258,6 +258,7 @@ mod test {
                 stock_lines: vec![StockLine {
                     stock_line_row: mock_stock_line_a(),
                     location_row: None,
+                    name_row: None,
                 }],
                 invoice_lines: vec![successfull_invoice_line()],
             }))

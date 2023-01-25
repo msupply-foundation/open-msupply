@@ -180,6 +180,7 @@ fn generate_stock_line_update(
         expiry_date: stocktake_line.line.expiry_date.or(stock_line.expiry_date),
         on_hold: stock_line.on_hold,
         note: stock_line.note.clone(),
+        supplier_id: stock_line.supplier_id.clone(),
     };
 
     let item = match ItemRowRepository::new(connection).find_one_by_id(&stock_line.item_id)? {
@@ -267,6 +268,12 @@ fn generate_new_stock_line(
         l
     });
 
+    let supplier_id = if let Some(stock_line) = stocktake_line.stock_line {
+        stock_line.supplier_id
+    } else {
+        None
+    };
+
     let item_id = row.item_id;
     let new_line = StockLineRow {
         id: stock_line_id,
@@ -282,6 +289,7 @@ fn generate_new_stock_line(
         expiry_date: row.expiry_date,
         on_hold: false,
         note: row.note.clone(),
+        supplier_id,
     };
 
     let item = match ItemRowRepository::new(connection).find_one_by_id(&item_id)? {
@@ -625,18 +633,19 @@ mod test {
     use chrono::NaiveDate;
     use repository::{
         mock::{
-            mock_locked_stocktake, mock_stock_line_a, mock_stock_line_b, mock_stocktake_a,
-            mock_stocktake_finalised_without_lines, mock_stocktake_full_edit,
+            mock_item_a, mock_locked_stocktake, mock_stock_line_a, mock_stock_line_b,
+            mock_stocktake_a, mock_stocktake_finalised_without_lines, mock_stocktake_full_edit,
             mock_stocktake_line_a, mock_stocktake_line_new_stock_line,
             mock_stocktake_line_stock_deficit, mock_stocktake_line_stock_surplus,
             mock_stocktake_new_stock_line, mock_stocktake_no_count_change, mock_stocktake_no_lines,
-            mock_stocktake_stock_deficit, mock_stocktake_stock_surplus, mock_store_a,
+            mock_stocktake_stock_deficit, mock_stocktake_stock_surplus, mock_store_a, MockData,
             MockDataInserts,
         },
-        test_db::setup_all,
-        InvoiceLineRepository, InvoiceLineRowRepository, InvoiceLineRowType,
-        StockLineRowRepository, StocktakeLine, StocktakeLineRowRepository, StocktakeRepository,
-        StocktakeRow,
+        test_db::setup_all_with_data,
+        EqualFilter, InvoiceLineRepository, InvoiceLineRowRepository, InvoiceLineRowType,
+        StockLineRow, StockLineRowRepository, StocktakeLine, StocktakeLineFilter,
+        StocktakeLineRepository, StocktakeLineRow, StocktakeLineRowRepository, StocktakeRepository,
+        StocktakeRow, StocktakeStatus,
     };
     use util::{inline_edit, inline_init};
 
@@ -650,8 +659,54 @@ mod test {
 
     #[actix_rt::test]
     async fn update_stocktake() {
-        let (_, connection, connection_manager, _) =
-            setup_all("update_stocktake", MockDataInserts::all()).await;
+        fn mock_stocktake_existing_line() -> StocktakeRow {
+            inline_init(|r: &mut StocktakeRow| {
+                r.id = "mock_stocktake_existing_line".to_string();
+                r.store_id = "store_a".to_string();
+                r.stocktake_number = 10;
+                r.created_datetime = NaiveDate::from_ymd(2021, 12, 14).and_hms_milli(12, 33, 0, 0);
+                r.status = StocktakeStatus::New;
+            })
+        }
+
+        fn mock_stocktake_line_existing_line() -> StocktakeLineRow {
+            inline_init(|r: &mut StocktakeLineRow| {
+                r.id = "mock_stocktake_line_existing_line".to_string();
+                r.stocktake_id = mock_stocktake_existing_line().id;
+                r.stock_line_id = Some(mock_existing_stock_line().id);
+                r.counted_number_of_packs = Some(20.0);
+                r.snapshot_number_of_packs = 20.0;
+                r.item_id = mock_item_a().id;
+                r.cost_price_per_pack = Some(1.0);
+                r.sell_price_per_pack = Some(2.0);
+            })
+        }
+
+        fn mock_existing_stock_line() -> StockLineRow {
+            inline_init(|r: &mut StockLineRow| {
+                r.id = "existing_stock_a".to_string();
+                r.item_id = "item_a".to_string();
+                r.store_id = "store_a".to_string();
+                r.available_number_of_packs = 20.0;
+                r.pack_size = 1;
+                r.cost_price_per_pack = 0.0;
+                r.sell_price_per_pack = 0.0;
+                r.total_number_of_packs = 20.0;
+                r.on_hold = false;
+                r.supplier_id = Some("name_store_b".to_string());
+            })
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "update_stocktake",
+            MockDataInserts::all(),
+            inline_init(|r: &mut MockData| {
+                r.stocktakes = vec![mock_stocktake_existing_line()];
+                r.stocktake_lines = vec![mock_stocktake_line_existing_line()];
+                r.stock_lines = vec![mock_existing_stock_line()];
+            }),
+        )
+        .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let mut context = service_provider
@@ -940,6 +995,7 @@ mod test {
             stocktake_line.sell_price_per_pack.unwrap()
         );
         assert_eq!(stock_line.note, stocktake_line.note);
+        assert_eq!(stock_line.supplier_id, None);
 
         // assert stocktake_line has been updated
         let updated_stocktake_line = StocktakeLineRowRepository::new(&context.connection)
@@ -947,5 +1003,23 @@ mod test {
             .unwrap()
             .unwrap();
         assert_eq!(updated_stocktake_line.stock_line_id, Some(stock_line.id));
+
+        // success same supplier id
+        let result = service
+            .update_stocktake(
+                &context,
+                inline_init(|i: &mut UpdateStocktake| {
+                    i.id = mock_stocktake_existing_line().id.clone();
+                    i.status = Some(UpdateStocktakeStatus::Finalised);
+                }),
+            )
+            .unwrap();
+        let stocktake_line = StocktakeLineRepository::new(&context.connection)
+            .query_by_filter(
+                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to(&result.id)),
+            )
+            .unwrap();
+        let stock_line = stocktake_line[0].stock_line.clone().unwrap();
+        assert_eq!(stock_line.supplier_id, mock_stock_line_b().supplier_id);
     }
 }
