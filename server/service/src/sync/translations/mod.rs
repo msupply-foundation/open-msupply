@@ -1,4 +1,6 @@
 pub(crate) mod activity_log;
+pub(crate) mod clinician;
+pub(crate) mod clinician_store_join;
 pub(crate) mod invoice;
 pub(crate) mod invoice_line;
 pub(crate) mod item;
@@ -46,6 +48,8 @@ pub(crate) fn all_translators() -> SyncTanslators {
         Box::new(requisition::RequisitionTranslation {}),
         Box::new(requisition_line::RequisitionLineTranslation {}),
         Box::new(activity_log::ActivityLogTranslation {}),
+        Box::new(clinician::ClinicianTranslation {}),
+        Box::new(clinician_store_join::ClinicianStoreJoinTranslation {}),
         // Remote-Central (site specific)
         Box::new(name_store_join::NameStoreJoinTranslation {}),
         // Special translations
@@ -76,6 +80,8 @@ pub(crate) mod LegacyTableName {
     pub(crate) const OM_ACTIVITY_LOG: &str = "om_activity_log";
     // Remote-Central (site specific)
     pub(crate) const NAME_STORE_JOIN: &str = "name_store_join";
+    pub(crate) const CLINICIAN: &str = "clinician";
+    pub(crate) const CLINICIAN_STORE_JOIN: &str = "clinician_store_join";
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -98,6 +104,8 @@ pub(crate) enum PullUpsertRecord {
     Requisition(RequisitionRow),
     RequisitionLine(RequisitionLineRow),
     ActivityLog(ActivityLogRow),
+    Clinician(ClinicianRow),
+    ClinicianStoreJoin(ClinicianStoreJoinRow),
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -134,6 +142,10 @@ pub(crate) enum PullDeleteRecordTable {
     StocktakeLine,
     #[cfg(all(test, feature = "integration_test"))]
     ActivityLog,
+    #[cfg(all(test, feature = "integration_test"))]
+    Clinician,
+    #[cfg(all(test, feature = "integration_test"))]
+    ClinicianStoreJoin,
 }
 
 #[derive(Debug, PartialEq, Clone)]
