@@ -453,6 +453,5 @@ mod item_count_service_test {
             .unwrap();
 
         assert_eq!(1, counts.low_stock);
-        // test_db::
     }
 }
