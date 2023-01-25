@@ -1,0 +1,23 @@
+fragment InventoryAdjustmentReasonRow on InventoryAdjustmentReasonNode {
+  __typename
+  id
+  reason
+}
+
+query inventoryAdjustmentReasons(
+  $sort: [InventoryAdjustmentReasonSortInput!]
+  $filter: InventoryAdjustmentReasonFilterInput
+) {
+  inventoryAdjustmentReasons(sort: $sort, filter: $filter) {
+    __typename
+    ... on InventoryAdjustmentReasonConnector {
+      __typename
+      totalCount
+      nodes {
+        __typename
+        id
+        reason
+      }
+    }
+  }
+}
