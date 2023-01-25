@@ -12,6 +12,7 @@ fragment StockLineRow on StockLineNode {
   sellPricePerPack
   storeId
   totalNumberOfPacks
+  supplierName
   item {
     code
     name

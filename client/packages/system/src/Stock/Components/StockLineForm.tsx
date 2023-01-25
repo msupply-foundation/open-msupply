@@ -43,6 +43,9 @@ export const StockLineForm: FC<StockLineFormProps> = ({ draft, onUpdate }) => {
   const t = useTranslation('inventory');
   const { hasBarcodeScanner, isScanning, startScan } =
     useBarcodeScannerContext();
+  const supplierName = draft.supplierName
+    ? draft.supplierName
+    : t('message.no-supplier');
 
   const scanBarcode = async () => {
     const result = await startScan();
@@ -168,6 +171,11 @@ export const StockLineForm: FC<StockLineFormProps> = ({ draft, onUpdate }) => {
               )}
             </Box>
           }
+        />
+        <TextWithLabelRow
+          label={t('label.supplier')}
+          text={String(supplierName)}
+          textProps={{ textAlign: 'end' }}
         />
       </Grid>
     </Grid>

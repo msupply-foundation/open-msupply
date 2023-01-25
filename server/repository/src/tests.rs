@@ -64,6 +64,7 @@ mod repository_test {
                 on_hold: false,
                 note: None,
                 location_id: None,
+                supplier_id: Some(String::from("name1")),
             }
         }
 

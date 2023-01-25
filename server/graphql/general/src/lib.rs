@@ -209,6 +209,15 @@ impl GeneralQueries {
     ) -> Result<InventoryAdjustmentReasonResponse> {
         inventory_adjustment_reasons(ctx, page, filter, sort)
     }
+
+    pub async fn item_counts(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        #[graphql(desc = "Low stock threshold in months")] low_stock_threshold: Option<i32>,
+    ) -> Result<ItemCounts> {
+        item_counts(ctx, store_id, low_stock_threshold)
+    }
 }
 
 #[derive(Default, Clone)]

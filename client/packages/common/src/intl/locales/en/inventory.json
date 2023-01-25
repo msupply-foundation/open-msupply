@@ -23,6 +23,8 @@
   "label.locked": "Locked",
   "label.batch": "Batch",
   "label.pricing": "Pricing",
+  "label.supplier": "Supplier",
+  "message.no-supplier": "Inventory Adjustment",
   "messages.locked-description": "This will prevent further changes to the stocktake until it is unlocked.",
   "messages.unlocked-description": "This will re-enable changes to the stocktake.",
   "messages.cant-delete-stocktakes": "Can only delete stocktakes with a status of 'New'",

@@ -6,8 +6,11 @@ import { TableBody, Table } from '@mui/material';
 import { DataRow } from './DataRow';
 import { useColumns } from '../../hooks';
 import { TestingProvider } from '../../../../../utils';
+import { useFormatDateTime, useTranslation } from '@common/intl';
 
 describe('DataRow', () => {
+  const t = useTranslation();
+  const { localisedDate } = useFormatDateTime();
   const Example = () => {
     const columns = useColumns([
       {
@@ -27,6 +30,9 @@ describe('DataRow', () => {
             rowIndex={0}
             rowData={{ id: 'josh' }}
             generateRowTooltip={() => ''}
+            isAnimated={false}
+            localisedText={t}
+            localisedDate={localisedDate}
           />
         </TableBody>
       </Table>
