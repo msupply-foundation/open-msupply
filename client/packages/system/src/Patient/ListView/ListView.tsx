@@ -24,7 +24,7 @@ const PatientListComponent: FC = () => {
     updatePaginationQuery,
     filter,
     queryParams: { sortBy, page, first, offset },
-  } = useUrlQueryParams();
+  } = useUrlQueryParams({ filterKey: ['firstName', 'lastName', 'identifier'] });
   const { setDocumentName } = usePatientStore();
   const { data, isError, isLoading } = usePatient.document.list();
   const pagination = { page, first, offset };
