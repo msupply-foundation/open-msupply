@@ -58,6 +58,7 @@ const stocktakeParser = {
         ? Formatter.naiveDate(new Date(line.expiryDate))
         : undefined,
       comment: line.comment ?? '',
+      inventoryAdjustmentReasonId: line.inventoryAdjustmentReason?.id,
     }),
     toInsert: (line: DraftStocktakeLine): InsertStocktakeLineInput => ({
       locationId: line.location?.id,
@@ -74,6 +75,7 @@ const stocktakeParser = {
         ? Formatter.naiveDate(new Date(line.expiryDate))
         : undefined,
       comment: line.comment ?? '',
+      inventoryAdjustmentReasonId: line.inventoryAdjustmentReason?.id,
     }),
   },
 };

@@ -9,6 +9,7 @@ import {
   SortBy,
   PositiveNumberCell,
 } from '@openmsupply-client/common';
+import { InventoryAdjustmentReasonRowFragment } from '@openmsupply-client/system';
 import { StocktakeSummaryItem } from '../../../types';
 import { StocktakeLineFragment } from '../../api';
 
@@ -256,6 +257,44 @@ export const useStocktakeColumns = ({
         },
       },
       {
+        key: 'inventoryAdjustmentReason',
+        label: 'label.reason',
+        accessor: ({ rowData }) => {
+          if ('lines' in rowData) {
+            const { lines } = rowData;
+            const inventoryAdjustmentReasons = lines
+              .map(({ inventoryAdjustmentReason }) => inventoryAdjustmentReason)
+              .filter(Boolean) as InventoryAdjustmentReasonRowFragment[];
+            return (
+              ArrayUtils.ifTheSameElseDefault(
+                inventoryAdjustmentReasons,
+                'reason',
+                '[multiple]'
+              ) ?? ''
+            );
+          } else {
+            return rowData.inventoryAdjustmentReason?.reason ?? '';
+          }
+        },
+        getSortValue: rowData => {
+          if ('lines' in rowData) {
+            const { lines } = rowData;
+            const inventoryAdjustmentReasons = lines
+              .map(({ inventoryAdjustmentReason }) => inventoryAdjustmentReason)
+              .filter(Boolean) as InventoryAdjustmentReasonRowFragment[];
+            return (
+              ArrayUtils.ifTheSameElseDefault(
+                inventoryAdjustmentReasons,
+                'reason',
+                '[multiple]'
+              ) ?? ''
+            );
+          } else {
+            return rowData.inventoryAdjustmentReason?.reason ?? '';
+          }
+        },
+      },
+      {
         key: 'comment',
         label: 'label.stocktake-comment',
         getSortValue: row => {
@@ -296,7 +335,7 @@ export const useExpansionColumns = (): Column<StocktakeLineFragment>[] =>
     'packSize',
     {
       key: 'snapshotNumPacks',
-      width: 200,
+      width: 150,
       label: 'label.snapshot-num-of-packs',
       align: ColumnAlign.Right,
       accessor: ({ rowData }) => rowData.snapshotNumberOfPacks,
@@ -304,9 +343,15 @@ export const useExpansionColumns = (): Column<StocktakeLineFragment>[] =>
     {
       key: 'countedNumPacks',
       label: 'label.counted-num-of-packs',
-      width: 200,
+      width: 150,
       align: ColumnAlign.Right,
       accessor: ({ rowData }) => rowData.countedNumberOfPacks,
     },
     'comment',
+    {
+      key: 'inventoryAdjustmentReason',
+      label: 'label.reason',
+      accessor: ({ rowData }) =>
+        rowData.inventoryAdjustmentReason?.reason || '',
+    },
   ]);
