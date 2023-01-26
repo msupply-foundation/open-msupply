@@ -63,3 +63,9 @@ export const useProgramEnrolments = {
     update: Document.useUpdateProgramEnrolment,
   },
 };
+
+export const useClinicians = {
+  document: {
+    list: Document.useClinicians,
+  },
+};

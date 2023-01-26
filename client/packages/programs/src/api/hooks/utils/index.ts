@@ -1,3 +1,4 @@
+import { useClinicianApi } from './useClinicianApi';
 import { usePatientDocumentApi } from './useDocumentApi';
 import { useDocumentRegistryApi } from './useDocumentRegistryApi';
 import { useEncounterApi } from './useEncounterApi';
@@ -10,4 +11,5 @@ export const Utils = {
   useEncounterApi,
   useEncounterIdFromUrl,
   useProgramEnrolmentApi,
+  useClinicianApi,
 };
