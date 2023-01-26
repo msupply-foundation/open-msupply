@@ -136,7 +136,7 @@ impl<'a> ClinicianRepository<'a> {
                 }
                 ClinicianSortField::Email => apply_sort_no_case!(query, sort, clinician_dsl::email),
                 ClinicianSortField::Female => {
-                    apply_sort_no_case!(query, sort, clinician_dsl::female)
+                    apply_sort_no_case!(query, sort, clinician_dsl::is_female)
                 }
             }
         } else {
@@ -221,7 +221,7 @@ fn create_filtered_query(store_id: String, filter: Option<ClinicianFilter>) -> B
         apply_simple_string_filter!(query, mobile, clinician_dsl::mobile);
         apply_simple_string_filter!(query, email, clinician_dsl::email);
         if let Some(female) = female {
-            query = query.filter(clinician_dsl::female.eq(female));
+            query = query.filter(clinician_dsl::is_female.eq(female));
         }
     };
 
