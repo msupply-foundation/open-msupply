@@ -50,7 +50,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
   const [currentItem, setCurrentItem] = useState(item);
   const isMediumScreen = useIsMediumScreen();
   const t = useTranslation(['common', 'inventory']);
-  const { draftLines, update, addLine, isLoading, save, nextItem } =
+  const { draftLines, update, addLine, isLoading, save, nextItem, isError } =
     useStocktakeLineEdit(currentItem);
   const { setRowStyle } = useRowStyle();
 
@@ -129,6 +129,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
                           isDisabled={isDisabled}
                           batches={draftLines}
                           update={update}
+                          isError={isError}
                         />
                       </StyledTabContainer>
                     </StyledTabPanel>
