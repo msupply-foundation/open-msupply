@@ -22,6 +22,8 @@ import { useUpdateProgramEnrolment } from './useUpdateProgramEnrolment';
 import { useEncounters } from './useEncounters';
 import { useUpsertEncounter } from './useUpsertEncounter';
 
+import { useClinicians } from './useClinicians';
+
 export const Document = {
   useDocumentByName,
   usePatientDocument,
@@ -44,4 +46,6 @@ export const Document = {
   useEncounterFields,
   useEncounterPrevious,
   useUpsertEncounter,
+
+  useClinicians,
 };

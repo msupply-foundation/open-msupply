@@ -340,6 +340,73 @@ export type CannotReverseInvoiceStatus = UpdateErrorInterface & UpdateInboundShi
   description: Scalars['String'];
 };
 
+export type ClinicianConnector = {
+  __typename: 'ClinicianConnector';
+  nodes: Array<ClinicianNode>;
+  totalCount: Scalars['Int'];
+};
+
+export type ClinicianFilterInput = {
+  address1?: InputMaybe<SimpleStringFilterInput>;
+  address2?: InputMaybe<SimpleStringFilterInput>;
+  category?: InputMaybe<SimpleStringFilterInput>;
+  code?: InputMaybe<SimpleStringFilterInput>;
+  email?: InputMaybe<SimpleStringFilterInput>;
+  female?: InputMaybe<Scalars['Boolean']>;
+  firstName?: InputMaybe<SimpleStringFilterInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  initials?: InputMaybe<SimpleStringFilterInput>;
+  lastName?: InputMaybe<SimpleStringFilterInput>;
+  mobile?: InputMaybe<SimpleStringFilterInput>;
+  phone?: InputMaybe<SimpleStringFilterInput>;
+  registrationCode?: InputMaybe<SimpleStringFilterInput>;
+};
+
+export type ClinicianNode = {
+  __typename: 'ClinicianNode';
+  address1?: Maybe<Scalars['String']>;
+  address2?: Maybe<Scalars['String']>;
+  category?: Maybe<Scalars['String']>;
+  code: Scalars['String'];
+  email?: Maybe<Scalars['String']>;
+  firstName?: Maybe<Scalars['String']>;
+  id: Scalars['String'];
+  initials: Scalars['String'];
+  isFemale: Scalars['Boolean'];
+  lastName: Scalars['String'];
+  mobile?: Maybe<Scalars['String']>;
+  phone?: Maybe<Scalars['String']>;
+  registrationCode?: Maybe<Scalars['String']>;
+  store?: Maybe<StoreNode>;
+};
+
+export enum ClinicianSortFieldInput {
+  Address1 = 'address1',
+  Address2 = 'address2',
+  Category = 'category',
+  Code = 'code',
+  Email = 'email',
+  Female = 'female',
+  FirstName = 'firstName',
+  Initials = 'initials',
+  LastName = 'lastName',
+  Mobile = 'mobile',
+  Phone = 'phone',
+  RegistrationCode = 'registrationCode'
+}
+
+export type ClinicianSortInput = {
+  /**
+   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']>;
+  /** Sort query result by `key` */
+  key: ClinicianSortFieldInput;
+};
+
+export type CliniciansResponse = ClinicianConnector;
+
 export type ConsumptionHistoryConnector = {
   __typename: 'ConsumptionHistoryConnector';
   nodes: Array<ConsumptionHistoryNode>;
@@ -2735,6 +2802,7 @@ export type Queries = {
    * The refresh token is returned as a cookie
    */
   authToken: AuthTokenResponse;
+  clinicians: CliniciansResponse;
   displaySettings: DisplaySettingsNode;
   document?: Maybe<DocumentNode>;
   documentHistory: DocumentHistoryResponse;
@@ -2809,6 +2877,14 @@ export type QueriesActivityLogsArgs = {
 export type QueriesAuthTokenArgs = {
   password: Scalars['String'];
   username: Scalars['String'];
+};
+
+
+export type QueriesCliniciansArgs = {
+  filter?: InputMaybe<ClinicianFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<ClinicianSortInput>>;
+  storeId: Scalars['String'];
 };
 
 
