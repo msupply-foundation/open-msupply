@@ -28,8 +28,8 @@ impl SyncRecordTester for ClinicianRecordTester {
             phone: None,
             mobile: None,
             email: None,
-            female: false,
-            active: true,
+            is_female: false,
+            is_active: true,
         };
         let join_row = ClinicianStoreJoinRow {
             id: uuid(),
@@ -58,7 +58,7 @@ impl SyncRecordTester for ClinicianRecordTester {
             d.phone = Some("phone".to_string());
             d.mobile = Some("mobile".to_string());
             d.email = Some("email".to_string());
-            d.female = true;
+            d.is_female = true;
             d
         });
         result.push(TestStepData {

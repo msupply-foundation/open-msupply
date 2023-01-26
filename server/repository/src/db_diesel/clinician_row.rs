@@ -19,8 +19,8 @@ table! {
     phone -> Nullable<Text>,
     mobile -> Nullable<Text>,
     email -> Nullable<Text>,
-    female -> Bool,
-    active -> Bool,
+    is_female -> Bool,
+    is_active -> Bool,
   }
 }
 
@@ -40,8 +40,8 @@ pub struct ClinicianRow {
     pub phone: Option<String>,
     pub mobile: Option<String>,
     pub email: Option<String>,
-    pub female: bool,
-    pub active: bool,
+    pub is_female: bool,
+    pub is_active: bool,
 }
 
 pub struct ClinicianRowRepository<'a> {
