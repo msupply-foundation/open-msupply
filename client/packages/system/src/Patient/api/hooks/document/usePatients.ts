@@ -4,7 +4,7 @@ import { usePatientApi } from '../utils/usePatientApi';
 export const usePatients = () => {
   const api = usePatientApi();
   const { queryParams } = useUrlQueryParams({
-    filterKey: 'lastName',
+    filterKey: ['lastName', 'firstName', 'identifier'],
     initialSort: { key: 'code', dir: 'asc' },
   });
   return {

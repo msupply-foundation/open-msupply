@@ -1,6 +1,7 @@
 use super::{
     name_row::{name, name::dsl as name_dsl},
     name_store_join::{name_store_join, name_store_join::dsl as name_store_join_dsl},
+    program_enrolment_row::program_enrolment::dsl as program_enrolment_dsl,
     store_row::{store, store::dsl as store_dsl},
     DBType, NameRow, NameStoreJoinRow, StorageConnection, StoreRow,
 };
@@ -245,6 +246,16 @@ fn create_filtered_query(store_id: String, filter: Option<NameFilter>) -> BoxedN
                 identifier.clone(),
                 name_dsl::national_health_number
             );
+
+            let mut sub_query = program_enrolment_dsl::program_enrolment
+                .select(program_enrolment_dsl::patient_id)
+                .into_boxed();
+            apply_simple_string_filter!(
+                sub_query,
+                identifier,
+                program_enrolment_dsl::program_patient_id
+            );
+            query = query.or_filter(name_dsl::id.eq_any(sub_query))
         }
 
         apply_equal_filter!(query, id, name_dsl::id);
