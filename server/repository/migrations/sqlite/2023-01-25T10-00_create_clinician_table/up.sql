@@ -13,6 +13,6 @@ CREATE TABLE clinician
     phone TEXT,
     mobile TEXT,
     email TEXT,
-    female BOOLEAN NOT NULL,
-    active BOOLEAN NOT NULL
+    is_female BOOLEAN NOT NULL,
+    is_active BOOLEAN NOT NULL
 )

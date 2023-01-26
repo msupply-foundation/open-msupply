@@ -91,8 +91,8 @@ impl SyncTranslation for ClinicianTranslation {
             phone,
             mobile,
             email,
-            female,
-            active,
+            is_female: female,
+            is_active: active,
         };
         Ok(Some(IntegrationRecords::from_upsert(
             PullUpsertRecord::Clinician(result),
@@ -122,8 +122,8 @@ impl SyncTranslation for ClinicianTranslation {
             phone,
             mobile,
             email,
-            female,
-            active,
+            is_female,
+            is_active,
         } = ClinicianRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
@@ -145,8 +145,8 @@ impl SyncTranslation for ClinicianTranslation {
             phone,
             mobile,
             email,
-            female,
-            active,
+            female: is_female,
+            active: is_active,
         };
 
         Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
