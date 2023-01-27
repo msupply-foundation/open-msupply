@@ -9,6 +9,7 @@ use super::{
 use log::warn;
 use repository::*;
 use std::collections::HashMap;
+
 pub(crate) struct TranslationAndIntegration<'a> {
     connection: &'a StorageConnection,
     sync_buffer: &'a SyncBuffer<'a>,
@@ -177,6 +178,10 @@ impl PullUpsertRecord {
             Requisition(record) => RequisitionRowRepository::new(con).upsert_one(record),
             RequisitionLine(record) => RequisitionLineRowRepository::new(con).upsert_one(record),
             ActivityLog(record) => ActivityLogRowRepository::new(con).insert_one(record),
+            Clinician(record) => ClinicianRowRepository::new(con).upsert_one(record),
+            ClinicianStoreJoin(record) => {
+                ClinicianStoreJoinRowRepository::new(con).upsert_one(record)
+            }
         }
     }
 }
@@ -209,6 +214,10 @@ impl PullDeleteRecord {
             StocktakeLine => StocktakeLineRowRepository::new(con).delete(id),
             #[cfg(all(test, feature = "integration_test"))]
             ActivityLog => Ok(()),
+            #[cfg(all(test, feature = "integration_test"))]
+            Clinician => ClinicianRowRepository::new(con).delete(id),
+            #[cfg(all(test, feature = "integration_test"))]
+            ClinicianStoreJoin => ClinicianStoreJoinRowRepository::new(con).delete(id),
         }
     }
 }
