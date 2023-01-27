@@ -49,6 +49,8 @@ pub enum ChangelogTableName {
     Requisition,
     RequisitionLine,
     ActivityLog,
+    Clinician,
+    ClinicianStoreJoin,
 }
 
 #[derive(Clone, Queryable, Debug, PartialEq, Insertable)]
