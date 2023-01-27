@@ -120,7 +120,7 @@ fn generate(
         schema_id: Some(input.schema_id),
         status: DocumentStatus::Active,
         comment: None,
-        owner: Some(patient.id.clone()),
+        owner_name_id: Some(patient.id.clone()),
         context: None,
     })
 }

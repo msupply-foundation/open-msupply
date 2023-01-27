@@ -126,7 +126,7 @@ fn generate(
         schema_id: Some(input.schema_id),
         status: existing.status,
         comment: None,
-        owner: existing.owner,
+        owner_name_id: existing.owner_name_id,
         context: existing.context,
     })
 }
