@@ -40,7 +40,6 @@ const useDebouncedValue = <T>(value: T, wait = 500): T => {
  */
 export const useDebouncedTextInput = (
   data: string,
-  error: boolean,
   handleChange: (value: string | undefined) => void
 ) => {
   // current text from user input
@@ -49,8 +48,8 @@ export const useDebouncedTextInput = (
   // performance issue
   const debouncedText = useDebouncedValue(text, 500);
   useEffect(() => {
-    handleChange(error ? undefined : debouncedText);
-  }, [error, debouncedText]);
+    handleChange(debouncedText);
+  }, [handleChange, debouncedText]);
 
   // timestamp of the last key stroke
   const latestKey = useRef(0);
