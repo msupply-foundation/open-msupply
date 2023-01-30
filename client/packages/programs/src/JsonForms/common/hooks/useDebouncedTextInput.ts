@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 const useDebouncedValue = <T>(value: T, wait = 500): T => {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
@@ -53,13 +53,13 @@ export const useDebouncedTextInput = (
   }, [error, debouncedText]);
 
   // timestamp of the last key stroke
-  const [latestKey, setLatestKey] = useState<number>(0);
+  const latestKey = useRef(0);
   useEffect(() => {
-    if (Date.now() > latestKey + 500) setText(data);
+    if (Date.now() > latestKey.current + 500) setText(data);
   }, [data]);
 
   const onChange = (value: string) => {
-    setLatestKey(Date.now());
+    latestKey.current = Date.now();
     setText(value);
   };
   return { text, onChange };
