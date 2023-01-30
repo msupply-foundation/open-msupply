@@ -203,11 +203,7 @@ const NoteComponent = (props: ControlProps) => {
           }
     );
   };
-  const { text, onChange } = useDebouncedTextInput(
-    data.text,
-    error,
-    handleNoteChange
-  );
+  const { text, onChange } = useDebouncedTextInput(data.text, handleNoteChange);
   const [editMode, setEditMode] = useState(!text);
 
   const t = useTranslation('common');

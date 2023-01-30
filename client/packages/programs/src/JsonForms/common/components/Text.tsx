@@ -98,7 +98,6 @@ const UIComponent = (props: ControlProps) => {
   const error = !!errors || !!zErrors || !!customErrors;
   const { text, onChange } = useDebouncedTextInput(
     data,
-    error,
     (value: string | undefined) => handleChange(path, value)
   );
   const t = useTranslation('common');
