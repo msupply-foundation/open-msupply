@@ -29,7 +29,7 @@ table! {
         schema_id -> Nullable<Text>,
         status -> crate::db_diesel::document::DocumentStatusMapping,
         comment -> Nullable<Text>,
-        owner -> Nullable<Text>,
+        owner_name_id -> Nullable<Text>,
         context -> Nullable<Text>,
     }
 }
@@ -47,13 +47,13 @@ table! {
         schema_id -> Nullable<Text>,
         status -> crate::db_diesel::document::DocumentStatusMapping,
         comment -> Nullable<Text>,
-        owner -> Nullable<Text>,
+        owner_name_id -> Nullable<Text>,
         context -> Nullable<Text>,
     }
 }
 
 joinable!(document -> form_schema (schema_id));
-joinable!(document -> name (owner));
+joinable!(document -> name (owner_name_id));
 
 allow_tables_to_appear_in_same_query!(document, form_schema);
 allow_tables_to_appear_in_same_query!(document, name);
@@ -90,7 +90,7 @@ pub struct DocumentRow {
     /// Deletion comment
     pub comment: Option<String>,
     /// For example, the patient who owns the document
-    pub owner: Option<String>,
+    pub owner_name_id: Option<String>,
     /// For example, program this document belongs to
     pub context: Option<String>,
 }
@@ -114,7 +114,7 @@ pub struct Document {
     pub schema_id: Option<String>,
     pub status: DocumentStatus,
     pub comment: Option<String>,
-    pub owner: Option<String>,
+    pub owner_name_id: Option<String>,
     pub context: Option<String>,
 }
 
@@ -199,7 +199,7 @@ fn create_latest_filtered_query<'a>(filter: Option<DocumentFilter>) -> BoxedDocu
         apply_string_filter!(query, name, latest_document::dsl::name);
         apply_equal_filter!(query, r#type, latest_document::dsl::type_);
         apply_date_time_filter!(query, datetime, latest_document::dsl::timestamp);
-        apply_equal_filter!(query, owner, latest_document::dsl::owner);
+        apply_equal_filter!(query, owner, latest_document::dsl::owner_name_id);
         apply_equal_filter!(query, context, latest_document::dsl::context);
         apply_simple_string_filter!(query, data, latest_document::dsl::data);
     }
@@ -257,7 +257,9 @@ impl<'a> DocumentRepository<'a> {
                 DocumentSortField::Type => {
                     apply_sort!(query, sort, latest_document::dsl::type_)
                 }
-                DocumentSortField::Owner => apply_sort!(query, sort, latest_document::dsl::owner),
+                DocumentSortField::Owner => {
+                    apply_sort!(query, sort, latest_document::dsl::owner_name_id)
+                }
                 DocumentSortField::Context => {
                     apply_sort!(query, sort, latest_document::dsl::context)
                 }
@@ -300,7 +302,7 @@ impl<'a> DocumentRepository<'a> {
             apply_string_filter!(query, name, document::dsl::name);
             apply_equal_filter!(query, r#type, document::dsl::type_);
             apply_date_time_filter!(query, datetime, document::dsl::timestamp);
-            apply_equal_filter!(query, owner, document::dsl::owner);
+            apply_equal_filter!(query, owner, document::dsl::owner_name_id);
             apply_equal_filter!(query, context, document::dsl::context);
             apply_simple_string_filter!(query, data, document::dsl::data);
         }
@@ -339,7 +341,7 @@ fn document_from_row(row: DocumentRow) -> Result<Document, RepositoryError> {
         schema_id: row.schema_id,
         status: row.status,
         comment: row.comment,
-        owner: row.owner,
+        owner_name_id: row.owner_name_id,
         context: row.context,
     };
 
@@ -367,7 +369,7 @@ fn row_from_document(doc: &Document) -> Result<DocumentRow, RepositoryError> {
         schema_id: doc.schema_id.clone(),
         status: doc.status.to_owned(),
         comment: doc.comment.to_owned(),
-        owner: doc.owner.to_owned(),
+        owner_name_id: doc.owner_name_id.to_owned(),
         context: doc.context.to_owned(),
     })
 }
