@@ -183,7 +183,7 @@ fn input_to_raw_document(
         schema_id,
         status: DocumentStatus::Active,
         comment: None,
-        owner: patient_id,
+        owner_name_id: patient_id,
         context: Some(r#type),
     }
 }
