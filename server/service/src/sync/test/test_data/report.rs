@@ -36,7 +36,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
             template: "template data".to_string(),
             context: ReportContext::Stocktake,
             comment: Some("Test comment".to_string()),
-            context2: None,
+            sub_context: None,
             argument_schema_id: None,
         }),
     )]
