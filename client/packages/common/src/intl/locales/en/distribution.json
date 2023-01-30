@@ -70,6 +70,7 @@
   "label.units_other": "units",
   "label.units-in-pack-size-of_one": "unit in packs of",
   "label.units-in-pack-size-of_other": "units in packs of",
+  "message.placeholder-line": "Placeholder line has been created for unallocated line.",
   "messages.allocated-lines_one": "Allocated {{count}} line",
   "messages.allocated-lines_other": "Allocated {{count}} lines",
   "messages.allocated-lines-failed_one": "{{count}} line not allocated",
