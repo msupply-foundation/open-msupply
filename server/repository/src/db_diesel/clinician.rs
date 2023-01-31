@@ -75,9 +75,7 @@ impl<'a> ClinicianRepository<'a> {
         store_id: &str,
         filter: Option<ClinicianFilter>,
     ) -> Result<i64, RepositoryError> {
-        // TODO (beyond M1), check that store_id matches current store
         let query = create_filtered_query(store_id.to_string(), filter);
-
         Ok(query.count().get_result(&self.connection.connection)?)
     }
 
