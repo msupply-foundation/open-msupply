@@ -6,8 +6,6 @@ CREATE TABLE clinician
     last_name TEXT NOT NULL,
     initials TEXT NOT NULL,
     first_name TEXT,
-    registration_code TEXT,
-    category TEXT,
     address1 TEXT,
     address2 TEXT,
     phone TEXT,

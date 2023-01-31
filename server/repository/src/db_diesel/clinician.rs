@@ -19,8 +19,6 @@ pub struct ClinicianFilter {
     pub first_name: Option<SimpleStringFilter>,
     pub last_name: Option<SimpleStringFilter>,
     pub initials: Option<SimpleStringFilter>,
-    pub registration_code: Option<SimpleStringFilter>,
-    pub category: Option<SimpleStringFilter>,
     pub address1: Option<SimpleStringFilter>,
     pub address2: Option<SimpleStringFilter>,
     pub phone: Option<SimpleStringFilter>,
@@ -35,8 +33,6 @@ pub enum ClinicianSortField {
     FirstName,
     LastName,
     Initials,
-    RegistrationCode,
-    Category,
     Address1,
     Address2,
     Phone,
@@ -104,12 +100,7 @@ impl<'a> ClinicianRepository<'a> {
                 ClinicianSortField::Initials => {
                     apply_sort_no_case!(query, sort, clinician_dsl::initials)
                 }
-                ClinicianSortField::RegistrationCode => {
-                    apply_sort_no_case!(query, sort, clinician_dsl::registration_code)
-                }
-                ClinicianSortField::Category => {
-                    apply_sort_no_case!(query, sort, clinician_dsl::category)
-                }
+
                 ClinicianSortField::Address1 => {
                     apply_sort_no_case!(query, sort, clinician_dsl::address1)
                 }
@@ -157,8 +148,6 @@ fn create_filtered_query(store_id: String, filter: Option<ClinicianFilter>) -> B
             first_name,
             last_name,
             initials,
-            registration_code,
-            category,
             address1,
             address2,
             phone,
@@ -172,8 +161,6 @@ fn create_filtered_query(store_id: String, filter: Option<ClinicianFilter>) -> B
         apply_simple_string_filter!(query, first_name, clinician_dsl::first_name);
         apply_simple_string_filter!(query, last_name, clinician_dsl::last_name);
         apply_simple_string_filter!(query, initials, clinician_dsl::initials);
-        apply_simple_string_filter!(query, registration_code, clinician_dsl::registration_code);
-        apply_simple_string_filter!(query, category, clinician_dsl::category);
         apply_simple_string_filter!(query, address1, clinician_dsl::address1);
         apply_simple_string_filter!(query, address2, clinician_dsl::address2);
         apply_simple_string_filter!(query, phone, clinician_dsl::phone);
@@ -222,16 +209,6 @@ impl ClinicianFilter {
 
     pub fn initials(mut self, value: SimpleStringFilter) -> Self {
         self.initials = Some(value);
-        self
-    }
-
-    pub fn registration_code(mut self, value: SimpleStringFilter) -> Self {
-        self.registration_code = Some(value);
-        self
-    }
-
-    pub fn category(mut self, value: SimpleStringFilter) -> Self {
-        self.category = Some(value);
         self
     }
 

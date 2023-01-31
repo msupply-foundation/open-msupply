@@ -349,7 +349,6 @@ export type ClinicianConnector = {
 export type ClinicianFilterInput = {
   address1?: InputMaybe<SimpleStringFilterInput>;
   address2?: InputMaybe<SimpleStringFilterInput>;
-  category?: InputMaybe<SimpleStringFilterInput>;
   code?: InputMaybe<SimpleStringFilterInput>;
   email?: InputMaybe<SimpleStringFilterInput>;
   female?: InputMaybe<Scalars['Boolean']>;
@@ -359,14 +358,12 @@ export type ClinicianFilterInput = {
   lastName?: InputMaybe<SimpleStringFilterInput>;
   mobile?: InputMaybe<SimpleStringFilterInput>;
   phone?: InputMaybe<SimpleStringFilterInput>;
-  registrationCode?: InputMaybe<SimpleStringFilterInput>;
 };
 
 export type ClinicianNode = {
   __typename: 'ClinicianNode';
   address1?: Maybe<Scalars['String']>;
   address2?: Maybe<Scalars['String']>;
-  category?: Maybe<Scalars['String']>;
   code: Scalars['String'];
   email?: Maybe<Scalars['String']>;
   firstName?: Maybe<Scalars['String']>;
@@ -376,14 +373,12 @@ export type ClinicianNode = {
   lastName: Scalars['String'];
   mobile?: Maybe<Scalars['String']>;
   phone?: Maybe<Scalars['String']>;
-  registrationCode?: Maybe<Scalars['String']>;
   store?: Maybe<StoreNode>;
 };
 
 export enum ClinicianSortFieldInput {
   Address1 = 'address1',
   Address2 = 'address2',
-  Category = 'category',
   Code = 'code',
   Email = 'email',
   Female = 'female',
@@ -391,8 +386,7 @@ export enum ClinicianSortFieldInput {
   Initials = 'initials',
   LastName = 'lastName',
   Mobile = 'mobile',
-  Phone = 'phone',
-  RegistrationCode = 'registrationCode'
+  Phone = 'phone'
 }
 
 export type ClinicianSortInput = {
