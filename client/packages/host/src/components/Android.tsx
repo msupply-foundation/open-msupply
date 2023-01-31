@@ -82,7 +82,6 @@ export const Android = () => {
   });
   const t = useTranslation('app');
   const navigate = useNavigate();
-
   const ModeOption = ({
     label,
     mode,
@@ -129,11 +128,19 @@ export const Android = () => {
   }, [mode, servers]);
 
   useEffect(() => {
+    console.log(
+      `mode is client and timeout is ${!!connectToPreviousTimedOut}`,
+      connectToPreviousTimedOut
+    );
     if (
       mode === NativeMode.Client &&
       (!previousServer || connectToPreviousTimedOut)
     ) {
-      navigate(RouteBuilder.create(AppRoute.Discovery).build());
+      navigate(
+        RouteBuilder.create(AppRoute.Discovery)
+          .addPart(`?timedout=${!!connectToPreviousTimedOut}`)
+          .build()
+      );
     }
   }, [mode, previousServer, connectToPreviousTimedOut]);
 

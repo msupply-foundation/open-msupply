@@ -26,6 +26,8 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     boolean isDebug;
     boolean isAdvertising;
     String localUrl;
+    boolean isDiscovering;
+    boolean shouldRestartDiscovery;
 
     @Override
     public void load() {
@@ -38,6 +40,8 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         isDebug = debugUrl != null && !debugUrl.equals("");
         localUrl = isDebug ? debugUrl : "https://localhost:" + discoveryConstants.PORT;
         isAdvertising = false;
+        isDiscovering = false;
+        shouldRestartDiscovery = false;
     }
 
     @Override
@@ -63,7 +67,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
 
     // Advertise local remote server on network
     @PluginMethod()
-    public void advertiseService() {
+    public void advertiseService(PluginCall call) {
         if (isAdvertising) {
             return;
         }
@@ -100,6 +104,10 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     }
 
     private void stopServerDiscovery() {
+        if (!isDiscovering) {
+            return;
+        }
+
         try {
             discoveryManager.stopServiceDiscovery(this);
         } catch (Exception e) {
@@ -109,6 +117,13 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
 
     @PluginMethod()
     public void startServerDiscovery(PluginCall call) {
+        if (isDiscovering) {
+            shouldRestartDiscovery = true;
+            stopServerDiscovery();
+            return;
+        }
+
+        shouldRestartDiscovery = false;
         discoveredServers = new JSArray();
 
         // Some navigation events may cause server discovery to still be ongoing
@@ -121,9 +136,9 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         }
     }
 
-    // Return discoveredServers and reset discoveredServers array (to avoid large
-    // array being sent
-    // to client, since duplicates in discoveredServers are frequent)
+    // Return discoveredServers and reset discoveredServers array
+    // (to avoid large array being sent to client,
+    // since duplicates in discoveredServers are frequent)
     @PluginMethod()
     public void discoveredServers(PluginCall call) {
         JSObject result = new JSObject();
@@ -221,10 +236,15 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     // NsdManager.DiscoveryListener
     @Override
     public void onDiscoveryStarted(String serviceType) {
+        isDiscovering = true;
     }
 
     // NsdManager.DiscoveryListener
     @Override
     public void onDiscoveryStopped(String serviceType) {
+        isDiscovering = false;
+        if (shouldRestartDiscovery) {
+            startServerDiscovery(null);
+        }
     }
 }

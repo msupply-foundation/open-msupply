@@ -49,7 +49,7 @@ export const SiteInfo: FC<{ siteName?: string | null }> = ({ siteName }) => {
             <IconButton
               label={t('messages.change-server')}
               icon={<EditIcon style={{ height: 16, width: 16 }} />}
-              onClick={goBackToDiscovery}
+              onClick={() => goBackToDiscovery()}
             />
           </>
         }
