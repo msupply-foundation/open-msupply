@@ -129,7 +129,15 @@
       "type": "object"
     },
     "Gender": {
-      "enum": ["FEMALE", "MALE", "TRANSGENDER", "TRANSGENDER_MALE", "TRANSGENDER_FEMALE", "UNKNOWN", "NON_BINARY"],
+      "enum": [
+        "FEMALE",
+        "MALE",
+        "TRANSGENDER",
+        "TRANSGENDER_MALE",
+        "TRANSGENDER_FEMALE",
+        "UNKNOWN",
+        "NON_BINARY"
+      ],
       "type": "string"
     },
     "Handedness": {
@@ -150,7 +158,14 @@
       "type": "object"
     },
     "MaritalStatus": {
-      "enum": ["SINGLE", "MARRIED", "DIVORCED", "WIDOWED", "SEPARATED", "REGISTERED_PARTNERSHIP"],
+      "enum": [
+        "SINGLE",
+        "MARRIED",
+        "DIVORCED",
+        "WIDOWED",
+        "SEPARATED",
+        "REGISTERED_PARTNERSHIP"
+      ],
       "type": "string"
     },
     "Note": {
@@ -172,80 +187,7 @@
           "type": "string"
         }
       },
-      "required": ["text", "created", "authorId"],
-      "type": "object"
-    },
-    "Person": {
-      "properties": {
-        "birthPlace": {
-          "$ref": "#/definitions/Address",
-          "description": "Place of birth"
-        },
-        "code": {
-          "description": "Patient code, e.g. national id or other patient identifier",
-          "type": "string"
-        },
-        "code2": {
-          "description": "Secondary patient code, e.g. another type of health id",
-          "type": "string"
-        },
-        "contactDetails": {
-          "items": {
-            "$ref": "#/definitions/ContactDetails"
-          },
-          "type": "array"
-        },
-        "dateOfBirth": {
-          "description": "184099003 Date of birth",
-          "format": "date",
-          "type": "string"
-        },
-        "dateOfBirthIsEstimated": {
-          "description": "Date of birth is estimated",
-          "type": "boolean"
-        },
-        "dateOfDeath": {
-          "description": "Date of death",
-          "format": "date",
-          "type": "string"
-        },
-        "firstName": {
-          "type": "string"
-        },
-        "gender": {
-          "$ref": "#/definitions/Gender",
-          "description": "394744001 Gender unspecified"
-        },
-        "id": {
-          "description": "mSupply Patient id",
-          "type": "string"
-        },
-        "isDeceased": {
-          "description": "Person is deceased",
-          "type": "boolean"
-        },
-        "lastName": {
-          "description": "184096005 Patient Surname",
-          "type": "string"
-        },
-        "middleName": {
-          "type": "string"
-        },
-        "notes": {
-          "items": {
-            "$ref": "#/definitions/Note"
-          },
-          "type": "array"
-        },
-        "passportNumber": {
-          "description": "1601000122107 Passport Number",
-          "type": "string"
-        },
-        "socioEconomics": {
-          "$ref": "#/definitions/SocioEconomics"
-        }
-      },
-      "required": ["isDeceased", "contactDetails", "socioEconomics"],
+      "required": ["text", "created", "authorId", "authorName"],
       "type": "object"
     },
     "RelatedPerson": {
@@ -322,7 +264,7 @@
           "$ref": "#/definitions/SocioEconomics"
         }
       },
-      "required": ["contactDetails", "isDeceased", "socioEconomics"],
+      "required": ["contactDetails"],
       "type": "object"
     },
     "SocioEconomics": {
@@ -348,9 +290,9 @@
         },
         "birthOrder": {
           "description": "Birth order, e.g. second child = 2",
-          "type": "number",
+          "maximum": 99,
           "minimum": 0,
-          "maximum": 99
+          "type": "number"
         },
         "birthPlace": {
           "$ref": "#/definitions/Address",
@@ -430,7 +372,7 @@
           "$ref": "#/definitions/SocioEconomics"
         }
       },
-      "required": ["contactDetails", "id", "isDeceased", "socioEconomics"],
+      "required": ["contactDetails", "id"],
       "type": "object"
     }
   },
