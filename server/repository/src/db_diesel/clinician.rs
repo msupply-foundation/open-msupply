@@ -47,7 +47,7 @@ pub enum ClinicianSortField {
 
 pub type ClinicianSort = Sort<ClinicianSortField>;
 
-type Clinician = ClinicianRow;
+pub type Clinician = ClinicianRow;
 
 pub struct ClinicianRepository<'a> {
     connection: &'a StorageConnection,

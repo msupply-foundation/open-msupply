@@ -194,7 +194,7 @@ impl ClinicianNode {
     }
 
     pub fn row(&self) -> &ClinicianRow {
-        &self.clinician.clinician_row
+        &self.clinician
     }
 }
 
