@@ -18,6 +18,7 @@ import {
 } from '../../Encounter';
 import { useEncounterListColumns } from '../../Encounter/ListView/columns';
 import { useEncounter } from '@openmsupply-client/programs';
+import { usePatient } from '../api';
 
 const EncounterListComponent: FC = () => {
   const {
@@ -28,6 +29,12 @@ const EncounterListComponent: FC = () => {
   const { queryParams } = useUrlQueryParams({
     initialSort: { key: 'startDatetime', dir: 'desc' },
   });
+  const patientId = usePatient.utils.id();
+  const filterBy = queryParams.filterBy ?? {};
+  filterBy['patientId'] = {
+    equalTo: patientId,
+  };
+  queryParams.filterBy = filterBy;
 
   const { data, isError, isLoading } = useEncounter.document.list({
     ...queryParams,
