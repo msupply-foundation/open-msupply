@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useUrlQuery } from './useUrlQuery';
 import { Column, useLocalStorage } from '@openmsupply-client/common';
-import { FilterController } from '../useQueryParams';
+import { FilterBy, FilterController } from '../useQueryParams';
 
 // This hook uses the state of the url query parameters (from useUrlQuery hook)
 // to provide query parameters and update methods to tables.
@@ -9,7 +9,7 @@ import { FilterController } from '../useQueryParams';
 export const DEFAULT_RECORDS_PER_PAGE = 20;
 
 interface UrlQueryParams {
-  filterKey?: string;
+  filterKey?: string | string[];
   initialSort?: { key: string; dir: 'desc' | 'asc' };
   filterCondition?: string;
 }
@@ -59,19 +59,26 @@ export const useUrlQueryParams = ({
     updateQuery({ [key]: value });
   };
 
+  const filterKeyArray: string[] = !filterKey
+    ? []
+    : typeof filterKey === 'string'
+    ? [filterKey]
+    : filterKey;
+
   const filter: FilterController = {
     onChangeStringFilterRule: (key: string, _, value: string) =>
       updateFilterQuery(key, value),
     onChangeDateFilterRule: () => {},
     onClearFilterRule: key => updateFilterQuery(key, ''),
-    filterBy:
-      filterKey && urlQuery[filterKey]
-        ? {
-            [filterKey]: {
-              [filterCondition]: String(urlQuery[filterKey]) ?? '',
-            },
-          }
-        : {},
+    filterBy: filterKeyArray.reduce<FilterBy>((prev, key) => {
+      const queryValue = urlQuery[key];
+      if (!queryValue) return prev;
+
+      prev[key] = {
+        [filterCondition]: String(queryValue),
+      };
+      return prev;
+    }, {}),
   };
   const queryParams = {
     page: urlQuery.page ? urlQuery.page - 1 : 0,

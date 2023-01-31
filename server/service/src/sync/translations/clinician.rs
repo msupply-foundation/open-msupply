@@ -39,8 +39,10 @@ pub struct LegacyClinicianRow {
 
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub email: Option<String>,
-    pub female: bool,
-    pub active: bool,
+    #[serde(rename = "female")]
+    pub is_female: bool,
+    #[serde(rename = "active")]
+    pub is_active: bool,
 }
 
 fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
@@ -72,8 +74,8 @@ impl SyncTranslation for ClinicianTranslation {
             phone,
             mobile,
             email,
-            female,
-            active,
+            is_female,
+            is_active,
         } = serde_json::from_str::<LegacyClinicianRow>(&sync_record.data)?;
 
         let result = ClinicianRow {
@@ -88,8 +90,8 @@ impl SyncTranslation for ClinicianTranslation {
             phone,
             mobile,
             email,
-            is_female: female,
-            is_active: active,
+            is_female,
+            is_active,
         };
         Ok(Some(IntegrationRecords::from_upsert(
             PullUpsertRecord::Clinician(result),
@@ -138,8 +140,8 @@ impl SyncTranslation for ClinicianTranslation {
             phone,
             mobile,
             email,
-            female: is_female,
-            active: is_active,
+            is_female,
+            is_active,
         };
 
         Ok(Some(vec![RemoteSyncRecordV5::new_upsert(

@@ -19,7 +19,7 @@ pub struct RawDocument {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub owner: Option<String>,
+    pub owner_name_id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub context: Option<String>,
 }
@@ -45,7 +45,7 @@ impl RawDocument {
             schema_id,
             status,
             comment,
-            owner,
+            owner_name_id: owner,
             context,
         } = self;
         Ok(Document {
@@ -59,7 +59,7 @@ impl RawDocument {
             schema_id,
             status,
             comment,
-            owner,
+            owner_name_id: owner,
             context,
         })
     }
@@ -88,7 +88,7 @@ mod document_id_test {
             schema_id: None,
             status: DocumentStatus::Active,
             comment: None,
-            owner: None,
+            owner_name_id: None,
             context: None,
         };
         let document = raw.finalise().unwrap();

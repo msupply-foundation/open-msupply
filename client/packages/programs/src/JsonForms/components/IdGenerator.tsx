@@ -317,7 +317,7 @@ const UIComponent = (props: ControlProps) => {
     [options, path]
   );
 
-  const { text, onChange } = useDebouncedTextInput(data, error, manualUpdate);
+  const { text, onChange } = useDebouncedTextInput(data, manualUpdate);
 
   const validateId = async (
     options: GeneratorOptions,

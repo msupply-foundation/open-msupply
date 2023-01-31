@@ -132,7 +132,7 @@ fn generate(
         schema_id: Some(input.schema_id),
         status: DocumentStatus::Active,
         comment: None,
-        owner: Some(input.patient_id),
+        owner_name_id: Some(input.patient_id),
         context: Some(input.program),
     })
 }
