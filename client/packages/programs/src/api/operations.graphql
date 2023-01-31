@@ -382,7 +382,6 @@ mutation updateProgramEnrolment(
 fragment Clinician on ClinicianNode {
   address1
   address2
-  category
   code
   email
   firstName
@@ -392,7 +391,6 @@ fragment Clinician on ClinicianNode {
   lastName
   mobile
   phone
-  registrationCode
 }
 
 query clinicians(

@@ -25,8 +25,6 @@ pub enum ClinicianSortFieldInput {
     FirstName,
     LastName,
     Initials,
-    RegistrationCode,
-    Category,
     Address1,
     Address2,
     Phone,
@@ -52,8 +50,6 @@ pub struct ClinicianFilterInput {
     pub first_name: Option<SimpleStringFilterInput>,
     pub last_name: Option<SimpleStringFilterInput>,
     pub initials: Option<SimpleStringFilterInput>,
-    pub registration_code: Option<SimpleStringFilterInput>,
-    pub category: Option<SimpleStringFilterInput>,
     pub address1: Option<SimpleStringFilterInput>,
     pub address2: Option<SimpleStringFilterInput>,
     pub phone: Option<SimpleStringFilterInput>,
@@ -123,8 +119,6 @@ impl ClinicianFilterInput {
             first_name,
             last_name,
             initials,
-            registration_code,
-            category,
             address1,
             address2,
             phone,
@@ -139,8 +133,6 @@ impl ClinicianFilterInput {
             first_name: first_name.map(SimpleStringFilter::from),
             last_name: last_name.map(SimpleStringFilter::from),
             initials: initials.map(SimpleStringFilter::from),
-            registration_code: registration_code.map(SimpleStringFilter::from),
-            category: category.map(SimpleStringFilter::from),
             address1: address1.map(SimpleStringFilter::from),
             address2: address2.map(SimpleStringFilter::from),
             phone: phone.map(SimpleStringFilter::from),
@@ -171,8 +163,6 @@ impl ClinicianSortInput {
             ClinicianSortFieldInput::FirstName => ClinicianSortField::FirstName,
             ClinicianSortFieldInput::LastName => ClinicianSortField::LastName,
             ClinicianSortFieldInput::Initials => ClinicianSortField::Initials,
-            ClinicianSortFieldInput::RegistrationCode => ClinicianSortField::RegistrationCode,
-            ClinicianSortFieldInput::Category => ClinicianSortField::Category,
             ClinicianSortFieldInput::Address1 => ClinicianSortField::Address1,
             ClinicianSortFieldInput::Address2 => ClinicianSortField::Address2,
             ClinicianSortFieldInput::Phone => ClinicianSortField::Phone,
@@ -226,14 +216,6 @@ impl ClinicianNode {
 
     pub async fn first_name(&self) -> &Option<String> {
         &self.row().first_name
-    }
-
-    pub async fn registration_code(&self) -> &Option<String> {
-        &self.row().registration_code
-    }
-
-    pub async fn category(&self) -> &Option<String> {
-        &self.row().category
     }
 
     pub async fn address1(&self) -> &Option<String> {
