@@ -1,14 +1,10 @@
-use async_graphql::{
-    dataloader::DataLoader, Context, Enum, InputObject, Object, Result, SimpleObject, Union,
-};
+use async_graphql::{Context, Enum, InputObject, Object, Result, SimpleObject, Union};
 use graphql_core::{
     generic_filters::{EqualFilterStringInput, SimpleStringFilterInput},
-    loader::StoreByIdLoader,
     pagination::PaginationInput,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use graphql_types::types::StoreNode;
 use repository::{
     Clinician, ClinicianFilter, ClinicianRow, ClinicianSort, ClinicianSortField, EqualFilter,
     PaginationOption, SimpleStringFilter,
@@ -192,14 +188,6 @@ impl ClinicianNode {
 impl ClinicianNode {
     pub async fn id(&self) -> &str {
         &self.row().id
-    }
-
-    pub async fn store(&self, ctx: &Context<'_>) -> Result<Option<StoreNode>> {
-        let loader = ctx.get_loader::<DataLoader<StoreByIdLoader>>();
-        Ok(loader
-            .load_one(self.row().store_id.to_string())
-            .await?
-            .map(StoreNode::from_domain))
     }
 
     pub async fn code(&self) -> &str {
