@@ -1,6 +1,20 @@
-import { useEffect, useState } from 'react';
-import { useDebounceCallback } from '@openmsupply-client/common';
+import { useEffect, useRef, useState } from 'react';
 
+const useDebouncedValue = <T>(value: T, wait = 500): T => {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedValue(value);
+    }, wait);
+
+    return () => clearTimeout(timer);
+  }, [value, wait]);
+
+  return debouncedValue;
+};
+
+// eslint-disable-next-line valid-jsdoc
 /**
  * JSONForms-specific hook for debounced text input.
  *
@@ -24,35 +38,28 @@ import { useDebounceCallback } from '@openmsupply-client/common';
  * is reset.
  *
  */
-
 export const useDebouncedTextInput = (
   data: string,
-  error: boolean,
   handleChange: (value: string | undefined) => void
 ) => {
+  // current text from user input
   const [text, setText] = useState<string | undefined>(data);
-
-  // timestamp of the last key stroke
-  const [latestKey, setLatestKey] = useState<number>(0);
-
   // debounce to avoid rerendering the form on every key stroke which becomes a
   // performance issue
-  const onChangeDebounced = useDebounceCallback(
-    (value: string) => {
-      handleChange(error ? undefined : value);
-    },
-    [error, handleChange]
-  );
-
-  const onChange = (value: string) => {
-    setLatestKey(Date.now());
-    setText(value);
-    onChangeDebounced(value);
-  };
-
+  const debouncedText = useDebouncedValue(text, 500);
   useEffect(() => {
-    if (Date.now() > latestKey + 500) setText(data);
+    handleChange(debouncedText);
+  }, [debouncedText]);
+
+  // timestamp of the last key stroke
+  const latestKey = useRef(0);
+  useEffect(() => {
+    if (Date.now() > latestKey.current + 500) setText(data);
   }, [data]);
 
+  const onChange = (value: string) => {
+    latestKey.current = Date.now();
+    setText(value);
+  };
   return { text, onChange };
 };
