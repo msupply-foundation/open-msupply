@@ -29,15 +29,17 @@ const EncounterListComponent: FC = () => {
   const { queryParams } = useUrlQueryParams({
     initialSort: { key: 'startDatetime', dir: 'desc' },
   });
+
   const patientId = usePatient.utils.id();
-  const filterBy = queryParams.filterBy ?? {};
+  // enforce filtering by patient id
+  const filterBy = queryParams.filterBy ? { ...queryParams.filterBy } : {};
   filterBy['patientId'] = {
     equalTo: patientId,
   };
-  queryParams.filterBy = filterBy;
 
   const { data, isError, isLoading } = useEncounter.document.list({
     ...queryParams,
+    filterBy,
     sortBy: {
       key: sortBy.key as EncounterSortFieldInput,
       isDesc: sortBy.isDesc,
