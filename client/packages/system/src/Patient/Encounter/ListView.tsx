@@ -31,15 +31,10 @@ const EncounterListComponent: FC = () => {
   });
 
   const patientId = usePatient.utils.id();
-  // enforce filtering by patient id
-  const filterBy = queryParams.filterBy ? { ...queryParams.filterBy } : {};
-  filterBy['patientId'] = {
-    equalTo: patientId,
-  };
-
   const { data, isError, isLoading } = useEncounter.document.list({
     ...queryParams,
-    filterBy,
+    // enforce filtering by patient id
+    filterBy: { ...queryParams.filterBy, patientId: { equalTo: patientId } },
     sortBy: {
       key: sortBy.key as EncounterSortFieldInput,
       isDesc: sortBy.isDesc,
