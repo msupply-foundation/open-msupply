@@ -373,7 +373,6 @@ export type ClinicianNode = {
   lastName: Scalars['String'];
   mobile?: Maybe<Scalars['String']>;
   phone?: Maybe<Scalars['String']>;
-  store?: Maybe<StoreNode>;
 };
 
 export enum ClinicianSortFieldInput {
