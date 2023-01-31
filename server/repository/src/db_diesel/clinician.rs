@@ -1,28 +1,16 @@
 use super::{
     clinician_row::{clinician, clinician::dsl as clinician_dsl},
-    clinician_store_join_row::{
-        clinician_store_join, clinician_store_join::dsl as clinician_store_join_dsl,
-    },
+    clinician_store_join_row::clinician_store_join::dsl as clinician_store_join_dsl,
     DBType, StorageConnection,
 };
 
 use crate::{
     diesel_macros::{apply_equal_filter, apply_simple_string_filter, apply_sort_no_case},
     repository_error::RepositoryError,
-    ClinicianRow, ClinicianStoreJoinRow, EqualFilter, Pagination, SimpleStringFilter, Sort,
+    ClinicianRow, EqualFilter, Pagination, SimpleStringFilter, Sort,
 };
 
-use diesel::{
-    dsl::{And, Eq, IntoBoxed, LeftJoin},
-    prelude::*,
-    query_source::joins::OnClauseWrapper,
-};
-
-#[derive(PartialEq, Debug, Clone, Default)]
-pub struct Clinician {
-    pub clinician_row: ClinicianRow,
-    pub clinician_store_join_row: Option<ClinicianStoreJoinRow>,
-}
+use diesel::{dsl::IntoBoxed, prelude::*};
 
 #[derive(Clone, Default)]
 pub struct ClinicianFilter {
@@ -59,7 +47,7 @@ pub enum ClinicianSortField {
 
 pub type ClinicianSort = Sort<ClinicianSortField>;
 
-type ClinicianAndClinicianStoreJoin = (ClinicianRow, Option<ClinicianStoreJoinRow>);
+type Clinician = ClinicianRow;
 
 pub struct ClinicianRepository<'a> {
     connection: &'a StorageConnection,
@@ -151,43 +139,16 @@ impl<'a> ClinicianRepository<'a> {
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
-        let result =
-            final_query.load::<ClinicianAndClinicianStoreJoin>(&self.connection.connection)?;
+        let result = final_query.load::<Clinician>(&self.connection.connection)?;
 
-        Ok(result.into_iter().map(to_domain).collect())
+        Ok(result)
     }
 }
 
-fn to_domain(
-    (clinician_row, clinician_store_join_row): ClinicianAndClinicianStoreJoin,
-) -> Clinician {
-    Clinician {
-        clinician_row,
-        clinician_store_join_row,
-    }
-}
-
-// clinician_store_join_dsl::clinician_id.eq(clinician_dsl::id)
-type ClinicianIdEqualToId = Eq<clinician_store_join_dsl::clinician_id, clinician_dsl::id>;
-// clinician_store_join_dsl::store_id.eq(store_id)
-type StoreIdEqualToStr = Eq<clinician_store_join_dsl::store_id, String>;
-// clinician_store_join_dsl::clinician_store_join.on(clinician_id.eq(clinician_dsl::id))
-type OnClinicianStoreJoinToClinicianJoin =
-    OnClauseWrapper<clinician_store_join::table, And<ClinicianIdEqualToId, StoreIdEqualToStr>>;
-
-type BoxedClinicianQuery =
-    IntoBoxed<'static, LeftJoin<clinician::table, OnClinicianStoreJoinToClinicianJoin>, DBType>;
+type BoxedClinicianQuery = IntoBoxed<'static, clinician::table, DBType>;
 
 fn create_filtered_query(store_id: String, filter: Option<ClinicianFilter>) -> BoxedClinicianQuery {
-    let mut query = clinician_dsl::clinician
-        .left_join(
-            clinician_store_join_dsl::clinician_store_join.on(
-                clinician_store_join_dsl::clinician_id
-                    .eq(clinician_dsl::id)
-                    .and(clinician_store_join_dsl::store_id.eq(store_id.clone())),
-            ),
-        )
-        .into_boxed();
+    let mut query = clinician_dsl::clinician.into_boxed();
 
     if let Some(f) = filter {
         let ClinicianFilter {
@@ -222,6 +183,14 @@ fn create_filtered_query(store_id: String, filter: Option<ClinicianFilter>) -> B
             query = query.filter(clinician_dsl::is_female.eq(female));
         }
     };
+
+    // Restrict results to clinicians belonging to the store as specified in the
+    // clinician_store_join.
+    // Note, add AND filter last, after all potential future OR filters.
+    let sub_query = clinician_store_join_dsl::clinician_store_join
+        .select(clinician_store_join_dsl::clinician_id)
+        .filter(clinician_store_join_dsl::store_id.eq(store_id.clone()));
+    query = query.filter(clinician_dsl::id.eq_any(sub_query));
 
     query
 }
@@ -294,5 +263,67 @@ impl ClinicianFilter {
     pub fn female(mut self, value: bool) -> Self {
         self.female = Some(value);
         self
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        mock::{mock_store_a, mock_store_b, MockDataInserts},
+        test_db, ClinicianFilter, ClinicianRepository, ClinicianRow, ClinicianRowRepository,
+        ClinicianStoreJoinRow, ClinicianStoreJoinRowRepository, SimpleStringFilter,
+    };
+    use util::inline_init;
+
+    #[actix_rt::test]
+    async fn test_clinician_repository() {
+        // Prepare
+        let (_, storage_connection, _, _) = test_db::setup_all(
+            "test_clinician_repository",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+        let repository = ClinicianRepository::new(&storage_connection);
+
+        ClinicianRowRepository::new(&storage_connection)
+            .upsert_one(&inline_init(|r: &mut ClinicianRow| {
+                r.id = "clinician_store_a".to_string();
+                r.store_id = mock_store_a().id;
+                r.first_name = Some("First".to_string());
+            }))
+            .unwrap();
+        ClinicianRowRepository::new(&storage_connection)
+            .upsert_one(&inline_init(|r: &mut ClinicianRow| {
+                r.id = "clinician_store_b".to_string();
+                r.store_id = mock_store_b().id;
+                r.first_name = Some("First".to_string());
+            }))
+            .unwrap();
+
+        // no store join no results:
+        let result = repository
+            .query_by_filter(
+                &mock_store_a().id,
+                ClinicianFilter::new().first_name(SimpleStringFilter::equal_to("First")),
+            )
+            .unwrap();
+        assert!(result.is_empty());
+
+        // add clinician store join to get query results:
+        ClinicianStoreJoinRowRepository::new(&storage_connection)
+            .upsert_one(&ClinicianStoreJoinRow {
+                id: "JoinId1".to_string(),
+                store_id: mock_store_a().id,
+                clinician_id: "clinician_store_a".to_string(),
+            })
+            .unwrap();
+
+        let result = repository
+            .query_by_filter(
+                &mock_store_a().id,
+                ClinicianFilter::new().first_name(SimpleStringFilter::equal_to("First")),
+            )
+            .unwrap();
+        assert_eq!(result[0].id, "clinician_store_a");
     }
 }
