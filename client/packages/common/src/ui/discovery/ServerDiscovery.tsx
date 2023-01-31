@@ -22,18 +22,29 @@ const isAutoconnect = () => {
   return params.get('autoconnect') === 'true';
 };
 
+const isTimedOut = () => {
+  const url = new URL(window.location.href);
+  const params = new URLSearchParams(url.search);
+  return params.get('timedout') === 'true';
+};
+
 export const ServerDiscovery = () => {
   const {
     servers,
     discoveryTimedOut,
     connectToServer,
-    discover,
+    startDiscovery,
+    stopDiscovery,
     connectToPreviousTimedOut,
   } = useNativeClient({
     discovery: true,
     autoconnect: isAutoconnect(),
   });
   const t = useTranslation('app');
+  const discover = () => {
+    stopDiscovery();
+    startDiscovery();
+  };
 
   return (
     <Stack
@@ -119,7 +130,7 @@ export const ServerDiscovery = () => {
         >
           {t('discovery.body')}
         </Typography>
-        {connectToPreviousTimedOut && (
+        {(connectToPreviousTimedOut || isTimedOut()) && (
           <Box padding={2}>
             <ErrorWithDetails error={t('error.unable-to-connect')} details="" />
           </Box>

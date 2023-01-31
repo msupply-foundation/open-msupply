@@ -4,7 +4,7 @@ import { registerPlugin, Capacitor } from '@capacitor/core';
 import { useLocalStorage } from '../../localStorage';
 
 const DISCOVERY_TIMEOUT = 5000;
-const DISCOVERED_SERVER_POLL = 1000;
+const DISCOVERED_SERVER_POLL = 2000;
 export const PREVIOUS_SERVER_KEY = '/discovery/previous-server';
 export const NATIVE_MODE_KEY = '/native/mode';
 
@@ -61,60 +61,50 @@ export const getNativeAPI = (): NativeAPI | null => {
 };
 
 type NativeClientState = {
-  servers: FrontEndHost[];
+  // A previous server is set in local storage, but was not returned in the list of available servers
+  connectToPreviousTimedOut: boolean;
   connectedServer: FrontEndHost | null;
   // Indicate that server discovery has taken too long without finding server
   discoveryTimedOut: boolean;
-  connectToPreviousTimedOut: boolean;
+  isDiscovering: boolean;
   mode: NativeMode | null;
+  previousServer: FrontEndHost | null;
+  servers: FrontEndHost[];
 };
 
 export const useNativeClient = ({
   autoconnect,
   discovery,
 }: { discovery?: boolean; autoconnect?: boolean } = {}) => {
-  const [timedOut, setTimedOut] = useState(false);
-  const [previousServer, setPreviousServer] = useState<FrontEndHost | null>(
-    null
-  );
-  const [nativeAPI, setNativeAPI] = useState<NativeAPI | null>(null);
+  const nativeAPI = getNativeAPI();
   const [nativeMode, setNativeMode] = useLocalStorage(NATIVE_MODE_KEY);
   // the desktop app only supports running in client mode
   const mode = !!window.electronNativeAPI ? NativeMode.Client : nativeMode;
+  const previousServerJson = localStorage.getItem(PREVIOUS_SERVER_KEY);
+
   const setMode = (mode: NativeMode) => {
     setNativeMode(mode);
     setState(state => ({ ...state, mode }));
   };
-
   const [state, setState] = useState<NativeClientState>({
-    servers: [],
+    connectToPreviousTimedOut: false,
     connectedServer: null,
     discoveryTimedOut: false,
-    connectToPreviousTimedOut: false,
+    isDiscovering: false,
     mode,
+    previousServer: previousServerJson ? JSON.parse(previousServerJson) : null,
+    servers: [],
   });
-
-  const timers: {
-    poll?: NodeJS.Timer;
-    timeout?: NodeJS.Timer;
-    connectToPrevious?: NodeJS.Timer;
-  } = {};
 
   const connectToServer = (server: FrontEndHost) => {
     localStorage.setItem(PREVIOUS_SERVER_KEY, JSON.stringify(server));
     nativeAPI?.connectToServer(server);
   };
+  const stopDiscovery = () =>
+    setState(state => ({ ...state, isDiscovering: false }));
 
-  const discover = () => {
-    const nativeAPI = getNativeAPI();
-
+  const startDiscovery = () => {
     if (!nativeAPI) return;
-
-    setNativeAPI(nativeAPI);
-
-    // Can use localStorage
-    const previousServerJson = localStorage.getItem(PREVIOUS_SERVER_KEY);
-    if (previousServerJson) setPreviousServer(JSON.parse(previousServerJson));
 
     nativeAPI.connectedServer().then(connectedServer => {
       setState(state => ({ ...state, connectedServer }));
@@ -122,28 +112,39 @@ export const useNativeClient = ({
 
     if (!discovery) return;
 
-    clearTimeout(timers.timeout);
-    clearTimeout(timers.poll);
-
-    setTimedOut(false);
     setState(state => ({
       ...state,
       servers: [],
       discoveryTimedOut: false,
+      isDiscovering: true,
     }));
 
     nativeAPI.startServerDiscovery();
+  };
+
+  useEffect(() => {
+    if (!state.isDiscovering) return;
+
+    let connectToPreviousTimer: NodeJS.Timer | undefined = undefined;
 
     if (autoconnect) {
-      timers.connectToPrevious = setTimeout(
+      connectToPreviousTimer = setTimeout(
         () =>
           setState(state => ({ ...state, connectToPreviousTimedOut: true })),
         DISCOVERY_TIMEOUT
       );
     }
-    timers.timeout = setTimeout(() => setTimedOut(true), DISCOVERY_TIMEOUT);
-    timers.poll = setInterval(async () => {
-      const servers = (await nativeAPI.discoveredServers()).servers;
+
+    const timeoutTimer = setTimeout(() => {
+      setState(state => ({
+        ...state,
+        discoveryTimedOut: true,
+      }));
+      clearInterval(pollInterval);
+    }, DISCOVERY_TIMEOUT);
+
+    const pollInterval = setInterval(async () => {
+      const servers = (await nativeAPI?.discoveredServers())?.servers || [];
       if (servers.length === 0) return;
 
       setState(state => ({
@@ -152,47 +153,43 @@ export const useNativeClient = ({
         discoveryTimedOut: false,
       }));
 
-      clearTimeout(timers.timeout);
+      clearTimeout(timeoutTimer);
     }, DISCOVERED_SERVER_POLL);
-  };
+
+    return () => {
+      clearTimeout(connectToPreviousTimer);
+      clearTimeout(timeoutTimer);
+      clearInterval(pollInterval);
+    };
+  }, [state.isDiscovering]);
 
   useEffect(() => {
-    discover();
-    return () => {
-      clearTimeout(timers.timeout);
-      clearTimeout(timers.poll);
-    };
+    startDiscovery();
   }, []);
 
   // Auto connect if autoconnect=true and server found matching previousConnectedServer
   useEffect(() => {
-    const { servers } = state;
+    const { servers, previousServer } = state;
     if (!nativeAPI) return;
     if (!autoconnect) return;
-    if (!previousServer) return;
+    if (previousServer === null) return;
 
     const server = servers.find(server =>
       matchUniqueServer(server, previousServer)
     );
     if (server) {
-      clearTimeout(timers.connectToPrevious);
       connectToServer(server);
     }
-  }, [previousServer, state.servers, autoconnect]);
-
-  useEffect(
-    () => setState(state => ({ ...state, ...{ discoveryTimedOut: timedOut } })),
-    [timedOut]
-  );
+  }, [state.previousServer, state.servers, autoconnect]);
 
   return {
     ...state,
     connectToServer,
     goBackToDiscovery: nativeAPI?.goBackToDiscovery ?? (() => {}),
     advertiseService: nativeAPI?.advertiseService ?? (() => {}),
-    discover,
+    startDiscovery,
+    stopDiscovery,
     setMode,
-    previousServer,
   };
 };
 
