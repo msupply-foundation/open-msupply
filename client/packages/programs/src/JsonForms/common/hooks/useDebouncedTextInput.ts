@@ -49,7 +49,7 @@ export const useDebouncedTextInput = (
   const debouncedText = useDebouncedValue(text, 500);
   useEffect(() => {
     handleChange(debouncedText);
-  }, [handleChange, debouncedText]);
+  }, [debouncedText]);
 
   // timestamp of the last key stroke
   const latestKey = useRef(0);
