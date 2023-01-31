@@ -399,7 +399,11 @@ query clinicians(
   $desc: Boolean
   $filter: ClinicianFilterInput
 ) {
-  clinicians(storeId: $storeId, filter: $filter) {
+  clinicians(
+    storeId: $storeId
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+  ) {
     ... on ClinicianConnector {
       nodes {
         __typename
