@@ -194,6 +194,7 @@ const TableWrapper: React.FC<TableProps> = ({
         packSizeController={packSizeController}
         onChange={updateQuantity}
         rows={draftOutboundLines}
+        item={currentItem}
       />
     </TableProvider>
   );
