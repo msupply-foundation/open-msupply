@@ -49,9 +49,17 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
   const { error } = useNotification();
   const [currentItem, setCurrentItem] = useState(item);
   const isMediumScreen = useIsMediumScreen();
-  const t = useTranslation(['common', 'inventory']);
-  const { draftLines, update, addLine, isLoading, save, nextItem } =
-    useStocktakeLineEdit(currentItem);
+  const t = useTranslation(['inventory']);
+  const {
+    draftLines,
+    update,
+    mutableUpdate,
+    addLine,
+    isLoading,
+    save,
+    nextItem,
+    isError,
+  } = useStocktakeLineEdit(currentItem);
   const { setRowStyle } = useRowStyle();
 
   const onNext = async () => {
@@ -75,7 +83,11 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
       }
       onClose();
     } catch (e) {
-      error(t('error.cant-save'))();
+      const msg =
+        `${e}`.indexOf('AdjustmentReasonNotProvided') !== -1
+          ? t('error.provide-reason')
+          : t('error.cant-save');
+      error(msg)();
     }
   };
 
@@ -129,6 +141,8 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
                           isDisabled={isDisabled}
                           batches={draftLines}
                           update={update}
+                          mutableUpdate={mutableUpdate}
+                          isError={isError}
                         />
                       </StyledTabContainer>
                     </StyledTabPanel>
@@ -139,6 +153,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
                           isDisabled={isDisabled}
                           batches={draftLines}
                           update={update}
+                          mutableUpdate={mutableUpdate}
                         />
                       </StyledTabContainer>
                     </StyledTabPanel>
@@ -156,6 +171,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
                             isDisabled={isDisabled}
                             batches={draftLines}
                             update={update}
+                            mutableUpdate={mutableUpdate}
                           />
                         </QueryParamsProvider>
                       </StyledTabContainer>

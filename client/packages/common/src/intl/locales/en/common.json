@@ -128,6 +128,7 @@
   "label.line": "Line {{line, number}}",
   "label.line-total": "Line total",
   "label.location": "Location",
+  "label.reason": "Reason",
   "label.log": "Log",
   "label.manufacturer": "Manufacturer",
   "label.mode": "Mode",
