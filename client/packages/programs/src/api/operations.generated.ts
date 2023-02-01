@@ -165,6 +165,18 @@ export type UpdateProgramEnrolmentMutationVariables = Types.Exact<{
 
 export type UpdateProgramEnrolmentMutation = { __typename: 'Mutations', updateProgramEnrolment: { __typename: 'ProgramEnrolmentNode', type: string, programPatientId?: string | null, patientId: string, name: string, enrolmentDatetime: string, document: { __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, author: string, timestamp: string, type: string, data: any, documentRegistry?: { __typename: 'DocumentRegistryNode', id: string, documentType: string, context: Types.DocumentRegistryNodeContext, name?: string | null, parentId?: string | null, formSchemaId: string, jsonSchema: any, uiSchemaType: string, uiSchema: any } | null } } };
 
+export type ClinicianFragment = { __typename: 'ClinicianNode', address1?: string | null, address2?: string | null, code: string, email?: string | null, firstName?: string | null, id: string, initials: string, isFemale: boolean, lastName: string, mobile?: string | null, phone?: string | null };
+
+export type CliniciansQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String'];
+  key: Types.ClinicianSortFieldInput;
+  desc?: Types.InputMaybe<Types.Scalars['Boolean']>;
+  filter?: Types.InputMaybe<Types.ClinicianFilterInput>;
+}>;
+
+
+export type CliniciansQuery = { __typename: 'Queries', clinicians: { __typename: 'ClinicianConnector', totalCount: number, nodes: Array<{ __typename: 'ClinicianNode', address1?: string | null, address2?: string | null, code: string, email?: string | null, firstName?: string | null, id: string, initials: string, isFemale: boolean, lastName: string, mobile?: string | null, phone?: string | null }> } };
+
 export const DocumentRegistryFragmentDoc = gql`
     fragment DocumentRegistry on DocumentRegistryNode {
   __typename
@@ -309,6 +321,21 @@ export const ProgramEnrolmentFragmentDoc = gql`
   }
 }
     ${DocumentFragmentDoc}`;
+export const ClinicianFragmentDoc = gql`
+    fragment Clinician on ClinicianNode {
+  address1
+  address2
+  code
+  email
+  firstName
+  id
+  initials
+  isFemale
+  lastName
+  mobile
+  phone
+}
+    `;
 export const DocumentByNameDocument = gql`
     query documentByName($name: String!, $storeId: String!) {
   document(name: $name, storeId: $storeId) {
@@ -527,6 +554,20 @@ export const UpdateProgramEnrolmentDocument = gql`
   }
 }
     ${ProgramEnrolmentFragmentDoc}`;
+export const CliniciansDocument = gql`
+    query clinicians($storeId: String!, $key: ClinicianSortFieldInput!, $desc: Boolean, $filter: ClinicianFilterInput) {
+  clinicians(storeId: $storeId, sort: {key: $key, desc: $desc}, filter: $filter) {
+    ... on ClinicianConnector {
+      __typename
+      nodes {
+        __typename
+        ...Clinician
+      }
+      totalCount
+    }
+  }
+}
+    ${ClinicianFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -582,6 +623,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     updateProgramEnrolment(variables: UpdateProgramEnrolmentMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateProgramEnrolmentMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpdateProgramEnrolmentMutation>(UpdateProgramEnrolmentDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateProgramEnrolment', 'mutation');
+    },
+    clinicians(variables: CliniciansQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<CliniciansQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<CliniciansQuery>(CliniciansDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'clinicians', 'query');
     }
   };
 }
@@ -856,5 +900,22 @@ export const mockInsertProgramEnrolmentMutation = (resolver: ResponseResolver<Gr
 export const mockUpdateProgramEnrolmentMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateProgramEnrolmentMutationVariables>, GraphQLContext<UpdateProgramEnrolmentMutation>, any>) =>
   graphql.mutation<UpdateProgramEnrolmentMutation, UpdateProgramEnrolmentMutationVariables>(
     'updateProgramEnrolment',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockCliniciansQuery((req, res, ctx) => {
+ *   const { storeId, key, desc, filter } = req.variables;
+ *   return res(
+ *     ctx.data({ clinicians })
+ *   )
+ * })
+ */
+export const mockCliniciansQuery = (resolver: ResponseResolver<GraphQLRequest<CliniciansQueryVariables>, GraphQLContext<CliniciansQuery>, any>) =>
+  graphql.query<CliniciansQuery, CliniciansQueryVariables>(
+    'clinicians',
     resolver
   )

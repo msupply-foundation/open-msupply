@@ -10,6 +10,7 @@ use async_graphql::{EmptySubscription, Schema};
 use async_graphql::{MergedObject, Response};
 use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
 use graphql_batch_mutations::BatchMutations;
+use graphql_clinician::ClinicianQueries;
 use graphql_core::loader::LoaderRegistry;
 use graphql_core::{auth_data_from_request, BoxedSelfRequest, RequestUserData, SelfRequest};
 use graphql_form_schema::{FormSchemaMutations, FormSchemaQueries};
@@ -52,6 +53,7 @@ pub struct Queries(
     pub StockLineQueries,
     pub ProgramsQueries,
     pub FormSchemaQueries,
+    pub ClinicianQueries,
 );
 
 impl Queries {
@@ -66,6 +68,7 @@ impl Queries {
             StockLineQueries,
             ProgramsQueries,
             FormSchemaQueries,
+            ClinicianQueries,
         )
     }
 }

@@ -24,18 +24,19 @@ pub struct LegacyClinicianRow {
 
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub first_name: Option<String>,
-    #[serde(deserialize_with = "empty_str_as_option_string")]
-    pub registration_code: Option<String>,
-    #[serde(deserialize_with = "empty_str_as_option_string")]
-    pub category: Option<String>,
+
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub address1: Option<String>,
+
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub address2: Option<String>,
+
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub phone: Option<String>,
+
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub mobile: Option<String>,
+
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub email: Option<String>,
     #[serde(rename = "female")]
@@ -68,8 +69,6 @@ impl SyncTranslation for ClinicianTranslation {
             last_name,
             initials,
             first_name,
-            registration_code,
-            category,
             address1,
             address2,
             phone,
@@ -86,8 +85,6 @@ impl SyncTranslation for ClinicianTranslation {
             last_name,
             initials,
             first_name,
-            registration_code,
-            category,
             address1,
             address2,
             phone,
@@ -117,8 +114,6 @@ impl SyncTranslation for ClinicianTranslation {
             last_name,
             initials,
             first_name,
-            registration_code,
-            category,
             address1,
             address2,
             phone,
@@ -140,8 +135,6 @@ impl SyncTranslation for ClinicianTranslation {
             last_name,
             initials,
             first_name,
-            registration_code,
-            category,
             address1,
             address2,
             phone,
