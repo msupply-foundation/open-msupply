@@ -75,6 +75,8 @@ pub enum Resource {
     // view/edit server setting
     QueryLog,
     ServerAdmin,
+    // clinician
+    QueryClinician,
 
     // document
     QueryDocument,
@@ -261,6 +263,8 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         Resource::QueryLog,
         PermissionDSL::HasPermission(Permission::LogQuery),
     );
+
+    map.insert(Resource::QueryClinician, PermissionDSL::HasStoreAccess);
 
     // TODO add permissions from central
     map.insert(

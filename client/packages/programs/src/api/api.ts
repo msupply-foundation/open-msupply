@@ -1,5 +1,6 @@
 import { FilterBy, SortBy, SortRule } from '@common/hooks';
 import {
+  ClinicianSortFieldInput,
   DocumentRegistryFilterInput,
   DocumentRegistryNode,
   DocumentRegistryNodeContext,
@@ -13,6 +14,7 @@ import {
 } from '@common/types';
 import { EncounterListParams } from './hooks/utils/useEncounterApi';
 import {
+  ClinicianFragment,
   DocumentFragment,
   DocumentRegistryFragment,
   DocumentRegistryWithChildrenFragment,
@@ -315,5 +317,34 @@ export const getProgramEnrolmentQueries = (sdk: Sdk, storeId: string) => ({
     }
 
     throw new Error('Could not update program');
+  },
+});
+
+export type ClinicianListParams = {
+  sortBy?: SortRule<ProgramEnrolmentSortFieldInput>;
+  filterBy?: FilterBy;
+};
+
+export const getClinicianQueries = (sdk: Sdk, storeId: string) => ({
+  clinicians: async ({
+    sortBy,
+    filterBy,
+  }: ClinicianListParams): Promise<{
+    nodes: ClinicianFragment[];
+    totalCount: number;
+  }> => {
+    const result = await sdk.clinicians({
+      storeId,
+      key:
+        (sortBy?.key as ClinicianSortFieldInput) ??
+        ClinicianSortFieldInput.LastName,
+      desc: sortBy?.isDesc,
+      filter: filterBy,
+    });
+
+    if (result.clinicians.__typename === 'ClinicianConnector') {
+      return result.clinicians;
+    }
+    throw new Error('Error querying clinicians');
   },
 });

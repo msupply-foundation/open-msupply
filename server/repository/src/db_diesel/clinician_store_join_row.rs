@@ -1,4 +1,4 @@
-use super::StorageConnection;
+use super::{clinician_row::clinician, StorageConnection};
 
 use crate::RepositoryError;
 
@@ -11,6 +11,9 @@ table! {
     clinician_id -> Text,
   }
 }
+
+joinable!(clinician_store_join -> clinician (clinician_id));
+allow_tables_to_appear_in_same_query!(clinician, clinician_store_join);
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
 #[table_name = "clinician_store_join"]

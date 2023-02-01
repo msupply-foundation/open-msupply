@@ -12,8 +12,6 @@ table! {
     last_name -> Text,
     initials -> Text,
     first_name -> Nullable<Text>,
-    registration_code -> Nullable<Text>,
-    category -> Nullable<Text>,
     address1 -> Nullable<Text>,
     address2 -> Nullable<Text>,
     phone -> Nullable<Text>,
@@ -24,7 +22,7 @@ table! {
   }
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[table_name = "clinician"]
 pub struct ClinicianRow {
     pub id: String,
@@ -33,8 +31,6 @@ pub struct ClinicianRow {
     pub last_name: String,
     pub initials: String,
     pub first_name: Option<String>,
-    pub registration_code: Option<String>,
-    pub category: Option<String>,
     pub address1: Option<String>,
     pub address2: Option<String>,
     pub phone: Option<String>,
