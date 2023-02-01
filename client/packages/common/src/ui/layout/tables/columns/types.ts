@@ -12,6 +12,7 @@ export interface CellProps<T extends RecordWithId> {
   columnIndex: number;
   rowIndex: number;
   isDisabled?: boolean;
+  isRequired?: boolean;
   // Unique name for browser autocomplete (to remember previously entered values for that name)
   autocompleteName?: string;
   localisedText: TypedTFunction<LocaleKey>;
