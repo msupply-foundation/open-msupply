@@ -404,6 +404,7 @@ query clinicians(
     sort: { key: $key, desc: $desc }
     filter: $filter
   ) {
+    __typename
     ... on ClinicianConnector {
       nodes {
         __typename
