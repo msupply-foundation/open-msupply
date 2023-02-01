@@ -5,6 +5,7 @@ import {
   Box,
   defaultOptionMapper,
   getDefaultOptionRenderer,
+  InventoryAdjustmentReasonNodeType,
   Typography,
 } from '@openmsupply-client/common';
 import {
@@ -36,19 +37,29 @@ export const InventoryAdjustmentReasonSearchInput: FC<
   const { data, isLoading } =
     useInventoryAdjustmentReason.document.listAllActive();
   const disabled = data?.totalCount === 0;
+  const isRequired = !disabled && stockReduction !== 0;
+  const reasonFilter = (reason: InventoryAdjustmentReasonRowFragment) => {
+    if (stockReduction === 0 || !stockReduction) return true;
+    if (stockReduction < 0)
+      return reason.type === InventoryAdjustmentReasonNodeType.Positive;
+    return reason.type === InventoryAdjustmentReasonNodeType.Negative;
+  };
+  const reasons = (data?.nodes ?? []).filter(reasonFilter);
 
   return (
     <Box display="flex" flexDirection="row" width={120}>
-      <Autocomplete<InventoryAdjustmentReasonRowFragment>
+      <Autocomplete
         autoFocus={autoFocus}
         disabled={disabled}
         width={`${width}px`}
         clearable={false}
         value={
-          value && {
-            ...value,
-            label: value.reason,
-          }
+          value
+            ? {
+                ...value,
+                label: value.reason,
+              }
+            : null
         }
         loading={isLoading}
         onChange={(_, reason) => {
@@ -64,14 +75,14 @@ export const InventoryAdjustmentReasonSearchInput: FC<
               ...props.InputProps,
             }}
             sx={{ width }}
-            error={isError}
+            error={isError && isRequired}
           />
         )}
-        options={defaultOptionMapper(data?.nodes ?? [], 'reason')}
+        options={defaultOptionMapper(reasons, 'reason')}
         renderOption={getDefaultOptionRenderer('reason')}
         isOptionEqualToValue={(option, value) => option?.id === value?.id}
       />
-      {!disabled && stockReduction !== 0 && (
+      {isRequired && (
         <Typography
           sx={{
             color: 'primary.light',

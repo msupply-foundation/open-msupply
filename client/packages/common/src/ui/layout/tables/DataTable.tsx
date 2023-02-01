@@ -170,6 +170,7 @@ const DataTableComponent = <T extends RecordWithId>({
             items={data}
             axis="y"
             itemMinSize={40}
+            spacerElement="tr"
           >
             {(row, idx) => (
               <DataRow

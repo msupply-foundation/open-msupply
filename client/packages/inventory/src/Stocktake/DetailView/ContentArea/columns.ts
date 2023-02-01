@@ -24,6 +24,26 @@ const expandColumn = getRowExpandColumn<
   StocktakeLineFragment | StocktakeSummaryItem
 >();
 
+const getStocktakeReasons = (
+  rowData: StocktakeLineFragment | StocktakeSummaryItem
+) => {
+  if ('lines' in rowData) {
+    const { lines } = rowData;
+    const inventoryAdjustmentReasons = lines
+      .map(({ inventoryAdjustmentReason }) => inventoryAdjustmentReason)
+      .filter(Boolean) as InventoryAdjustmentReasonRowFragment[];
+    return (
+      ArrayUtils.ifTheSameElseDefault(
+        inventoryAdjustmentReasons,
+        'reason',
+        '[multiple]'
+      ) ?? ''
+    );
+  } else {
+    return rowData.inventoryAdjustmentReason?.reason ?? '';
+  }
+};
+
 export const useStocktakeColumns = ({
   sortBy,
   onChangeSortBy,
@@ -220,7 +240,7 @@ export const useStocktakeColumns = ({
         getSortValue: row => {
           if ('lines' in row) {
             const { lines } = row;
-            let total =
+            const total =
               lines.reduce(
                 (total, line) =>
                   total +
@@ -239,7 +259,7 @@ export const useStocktakeColumns = ({
         accessor: ({ rowData }) => {
           if ('lines' in rowData) {
             const { lines } = rowData;
-            let total =
+            const total =
               lines.reduce(
                 (total, line) =>
                   total +
@@ -250,8 +270,8 @@ export const useStocktakeColumns = ({
             return (total < 0 ? Math.abs(total) : -total).toString();
           } else {
             return (
-              rowData.snapshotNumberOfPacks -
-              (rowData.countedNumberOfPacks ?? rowData.snapshotNumberOfPacks)
+              (rowData.countedNumberOfPacks ?? rowData.snapshotNumberOfPacks) -
+              rowData.snapshotNumberOfPacks
             );
           }
         },
@@ -259,40 +279,8 @@ export const useStocktakeColumns = ({
       {
         key: 'inventoryAdjustmentReason',
         label: 'label.reason',
-        accessor: ({ rowData }) => {
-          if ('lines' in rowData) {
-            const { lines } = rowData;
-            const inventoryAdjustmentReasons = lines
-              .map(({ inventoryAdjustmentReason }) => inventoryAdjustmentReason)
-              .filter(Boolean) as InventoryAdjustmentReasonRowFragment[];
-            return (
-              ArrayUtils.ifTheSameElseDefault(
-                inventoryAdjustmentReasons,
-                'reason',
-                '[multiple]'
-              ) ?? ''
-            );
-          } else {
-            return rowData.inventoryAdjustmentReason?.reason ?? '';
-          }
-        },
-        getSortValue: rowData => {
-          if ('lines' in rowData) {
-            const { lines } = rowData;
-            const inventoryAdjustmentReasons = lines
-              .map(({ inventoryAdjustmentReason }) => inventoryAdjustmentReason)
-              .filter(Boolean) as InventoryAdjustmentReasonRowFragment[];
-            return (
-              ArrayUtils.ifTheSameElseDefault(
-                inventoryAdjustmentReasons,
-                'reason',
-                '[multiple]'
-              ) ?? ''
-            );
-          } else {
-            return rowData.inventoryAdjustmentReason?.reason ?? '';
-          }
-        },
+        accessor: ({ rowData }) => getStocktakeReasons(rowData),
+        getSortValue: rowData => getStocktakeReasons(rowData),
       },
       {
         key: 'comment',

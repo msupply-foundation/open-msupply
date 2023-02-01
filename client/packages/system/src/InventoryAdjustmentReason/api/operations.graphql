@@ -1,6 +1,7 @@
 fragment InventoryAdjustmentReasonRow on InventoryAdjustmentReasonNode {
   __typename
   id
+  type
   reason
 }
 
@@ -16,6 +17,7 @@ query inventoryAdjustmentReasons(
       nodes {
         __typename
         id
+        type
         reason
       }
     }
