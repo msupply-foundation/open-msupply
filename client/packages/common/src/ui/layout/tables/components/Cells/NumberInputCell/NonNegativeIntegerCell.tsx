@@ -10,6 +10,7 @@ export const NonNegativeIntegerCell = <T extends RecordWithId>({
   column,
   rows,
   isDisabled = false,
+  isRequired = false,
 }: CellProps<T>): React.ReactElement<CellProps<T>> => {
   const [buffer, setBuffer] = useBufferState(
     column.accessor({ rowData, rows })
@@ -20,6 +21,7 @@ export const NonNegativeIntegerCell = <T extends RecordWithId>({
   return (
     <NonNegativeNumberInput
       disabled={isDisabled}
+      required={isRequired}
       InputProps={{ sx: { '& .MuiInput-input': { textAlign: 'right' } } }}
       type="number"
       value={buffer}
