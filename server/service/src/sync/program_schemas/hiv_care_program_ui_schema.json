@@ -67,7 +67,7 @@
     },
     {
       "type": "Control",
-      "scope": "#/properties/partnerHivStatus",
+      "scope": "#/properties/partnerHIVStatus",
       "label": "Partner HIV Status",
       "options": {
         "show": [
