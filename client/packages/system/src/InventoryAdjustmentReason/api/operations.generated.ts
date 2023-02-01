@@ -4,7 +4,7 @@ import { GraphQLClient } from 'graphql-request';
 import * as Dom from 'graphql-request/dist/types.dom';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type InventoryAdjustmentReasonRowFragment = { __typename: 'InventoryAdjustmentReasonNode', id: string, reason: string };
+export type InventoryAdjustmentReasonRowFragment = { __typename: 'InventoryAdjustmentReasonNode', id: string, type: Types.InventoryAdjustmentReasonNodeType, reason: string };
 
 export type InventoryAdjustmentReasonsQueryVariables = Types.Exact<{
   sort?: Types.InputMaybe<Array<Types.InventoryAdjustmentReasonSortInput> | Types.InventoryAdjustmentReasonSortInput>;
@@ -12,12 +12,13 @@ export type InventoryAdjustmentReasonsQueryVariables = Types.Exact<{
 }>;
 
 
-export type InventoryAdjustmentReasonsQuery = { __typename: 'Queries', inventoryAdjustmentReasons: { __typename: 'InventoryAdjustmentReasonConnector', totalCount: number, nodes: Array<{ __typename: 'InventoryAdjustmentReasonNode', id: string, reason: string }> } };
+export type InventoryAdjustmentReasonsQuery = { __typename: 'Queries', inventoryAdjustmentReasons: { __typename: 'InventoryAdjustmentReasonConnector', totalCount: number, nodes: Array<{ __typename: 'InventoryAdjustmentReasonNode', id: string, type: Types.InventoryAdjustmentReasonNodeType, reason: string }> } };
 
 export const InventoryAdjustmentReasonRowFragmentDoc = gql`
     fragment InventoryAdjustmentReasonRow on InventoryAdjustmentReasonNode {
   __typename
   id
+  type
   reason
 }
     `;
@@ -31,6 +32,7 @@ export const InventoryAdjustmentReasonsDocument = gql`
       nodes {
         __typename
         id
+        type
         reason
       }
     }

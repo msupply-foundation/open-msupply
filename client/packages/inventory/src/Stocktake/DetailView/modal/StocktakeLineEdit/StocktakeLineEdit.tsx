@@ -49,7 +49,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
   const { error } = useNotification();
   const [currentItem, setCurrentItem] = useState(item);
   const isMediumScreen = useIsMediumScreen();
-  const t = useTranslation(['common', 'inventory']);
+  const t = useTranslation(['inventory']);
   const { draftLines, update, addLine, isLoading, save, nextItem, isError } =
     useStocktakeLineEdit(currentItem);
   const { setRowStyle } = useRowStyle();
@@ -75,7 +75,11 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
       }
       onClose();
     } catch (e) {
-      error(t('error.cant-save'))();
+      const msg =
+        `${e}`.indexOf('AdjustmentReasonNotProvided') !== -1
+          ? t('error.provide-reason')
+          : t('error.cant-save');
+      error(msg)();
     }
   };
 
