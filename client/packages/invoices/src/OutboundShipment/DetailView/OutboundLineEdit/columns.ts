@@ -12,8 +12,10 @@ import { DraftOutboundLine } from '../../../types';
 
 export const useOutboundLineEditColumns = ({
   onChange,
+  unit,
 }: {
   onChange: (key: string, value: number, packSize: number) => void;
+  unit: string;
 }) => {
   const columns = useColumns<DraftOutboundLine>(
     [
@@ -31,6 +33,7 @@ export const useOutboundLineEditColumns = ({
       [
         'unitQuantity',
         {
+          labelProps: { unit },
           accessor: ({ rowData }) => rowData.numberOfPacks * rowData.packSize,
           width: 90,
         },
@@ -52,10 +55,10 @@ export const useOutboundLineEditColumns = ({
         accessor: ({ rowData }) => rowData.stockLine?.totalNumberOfPacks,
       },
       [
-      'batch',
-      {
-        accessor: ({ rowData }) => rowData.stockLine?.batch,
-      }
+        'batch',
+        {
+          accessor: ({ rowData }) => rowData.stockLine?.batch,
+        },
       ],
       [
         'expiryDate',

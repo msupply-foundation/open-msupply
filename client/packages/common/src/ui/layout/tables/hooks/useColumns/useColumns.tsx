@@ -126,6 +126,7 @@ export const createColumnWithDefaults = <T extends RecordWithId>(
 ): Column<T> => {
   const defaults: Omit<Column<T>, 'key'> = {
     label: '',
+    labelProps: {},
     description: '',
     format: ColumnFormat.Text,
 
