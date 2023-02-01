@@ -12,11 +12,7 @@ import {
   QueryParamsProvider,
   createQueryParamsStore,
   NonNegativeIntegerCell,
-  NonNegativeNumberInput,
-  useBufferState,
-  useDebounceCallback,
-  Box,
-  Typography,
+  CellProps,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import {
@@ -60,52 +56,17 @@ const getExpiryColumn = (
     backgroundColor: alpha(theme.palette.background.menu, 0.4),
   },
 ];
-const getNumberOfPacksColumn = (
-  updateDraftLine: (patch: Partial<DraftInboundLine> & { id: string }) => void,
-  isDisabled = false
-): ColumnDescription<DraftInboundLine> => [
-  'numberOfPacks',
-  {
-    Cell: ({ rowData, column, rows }) => {
-      const [buffer, setBuffer] = useBufferState(
-        column.accessor({ rowData, rows })
-      );
-      const updater = useDebounceCallback(column.setter, [column.setter], 250);
 
-      return (
-        <Box display="flex" justifyContent="flex-end" alignItems="center">
-          <NonNegativeNumberInput
-            disabled={isDisabled}
-            InputProps={{ sx: { '& .MuiInput-input': { textAlign: 'right' } } }}
-            type="number"
-            value={buffer}
-            onChange={newValue => {
-              const intValue = Math.round(newValue);
-              setBuffer(intValue.toString());
-              updater({ ...rowData, [column.key]: intValue });
-            }}
-          />
-          <Box width={2}>
-           {rowData.numberOfPacks === 0 && (
-            <Typography
-              sx={{
-                color: 'primary.light',
-                fontSize: '17px',
-                marginRight: 0.5,
-              }}
-            >
-              *
-            </Typography>
-          )}
-          </Box>
-        </Box>
-      );
-    },
-    width: 100,
-    label: 'label.num-packs',
-    setter: updateDraftLine,
-  },
-];
+const NumberOfPacksCell: React.FC<CellProps<DraftInboundLine>> = ({
+  rowData,
+  ...props
+}) => (
+  <NonNegativeIntegerCell
+    {...props}
+    isRequired={rowData.numberOfPacks === 0}
+    rowData={rowData}
+  />
+);
 
 export const QuantityTableComponent: FC<TableProps> = ({
   lines,
@@ -117,7 +78,15 @@ export const QuantityTableComponent: FC<TableProps> = ({
     [
       getBatchColumn(updateDraftLine, theme),
       getExpiryColumn(updateDraftLine, theme),
-      getNumberOfPacksColumn(updateDraftLine, isDisabled),
+      [
+        'numberOfPacks',
+        {
+          Cell: NumberOfPacksCell,
+          width: 100,
+          label: 'label.num-packs',
+          setter: updateDraftLine,
+        },
+      ],
       ['packSize', { Cell: NonNegativeIntegerCell, setter: updateDraftLine }],
       [
         'unitQuantity',
