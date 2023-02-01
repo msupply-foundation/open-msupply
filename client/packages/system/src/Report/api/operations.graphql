@@ -2,7 +2,7 @@ fragment ReportRow on ReportNode {
   context
   id
   name
-  context2
+  subContext
   argumentSchema {
     id
     type
