@@ -26,7 +26,7 @@ pub struct Report {
     /// Used to store the report context
     pub context: ReportContext,
     pub comment: Option<String>,
-    pub context2: Option<String>,
+    pub sub_context: Option<String>,
     pub argument_schema: Option<FormSchema>,
 }
 
@@ -36,7 +36,7 @@ pub struct ReportFilter {
     pub name: Option<SimpleStringFilter>,
     pub r#type: Option<EqualFilter<ReportType>>,
     pub context: Option<EqualFilter<ReportContext>>,
-    pub context2: Option<EqualFilter<String>>,
+    pub sub_context: Option<EqualFilter<String>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -147,14 +147,14 @@ fn create_filtered_query(filter: Option<ReportFilter>) -> BoxedStoreQuery {
             name,
             r#type,
             context,
-            context2,
+            sub_context,
         } = f;
 
         apply_equal_filter!(query, id, report_dsl::id);
         apply_simple_string_filter!(query, name, report_dsl::name);
         apply_equal_filter!(query, r#type, report_dsl::type_);
         apply_equal_filter!(query, context, report_dsl::context);
-        apply_equal_filter!(query, context2, report_dsl::context2);
+        apply_equal_filter!(query, sub_context, report_dsl::sub_context);
     }
 
     query
@@ -170,7 +170,7 @@ fn map_report_row_join_to_report(
         template,
         context,
         comment,
-        context2,
+        sub_context,
         argument_schema_id: _,
     } = result.0;
     let argument_schema = match result.1 {
@@ -184,7 +184,7 @@ fn map_report_row_join_to_report(
         template,
         context,
         comment,
-        context2,
+        sub_context,
         argument_schema,
     })
 }

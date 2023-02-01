@@ -33,7 +33,7 @@ table! {
       template -> Text,
       context -> crate::db_diesel::report_row::ReportContextMapping,
       comment -> Nullable<Text>,
-      context2 -> Nullable<Text>,
+      sub_context -> Nullable<Text>,
       argument_schema_id -> Nullable<Text>,
   }
 }
@@ -54,7 +54,7 @@ pub struct ReportRow {
     /// Used to store the report context
     pub context: ReportContext,
     pub comment: Option<String>,
-    pub context2: Option<String>,
+    pub sub_context: Option<String>,
     pub argument_schema_id: Option<String>,
 }
 
@@ -67,7 +67,7 @@ impl Default for ReportRow {
             template: Default::default(),
             context: ReportContext::InboundShipment,
             comment: Default::default(),
-            context2: Default::default(),
+            sub_context: Default::default(),
             argument_schema_id: Default::default(),
         }
     }

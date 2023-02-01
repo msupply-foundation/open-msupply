@@ -596,7 +596,7 @@ mod report_service_test {
             template: serde_json::to_string(&report_1).unwrap(),
             context: ReportContext::InboundShipment,
             comment: None,
-            context2: None,
+            sub_context: None,
             argument_schema_id: None,
         })
         .unwrap();
@@ -607,7 +607,7 @@ mod report_service_test {
             template: serde_json::to_string(&report_base_1).unwrap(),
             context: ReportContext::Resource,
             comment: None,
-            context2: None,
+            sub_context: None,
             argument_schema_id: None,
         })
         .unwrap();
