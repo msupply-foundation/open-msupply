@@ -8,9 +8,6 @@
 	},
 	"server": {
 		"url": "https://localhost:8000",
-		"hostname": "should.notmatch.localhost",
-		"allowNavigation": [
-			"*"
-		]
+		"hostname": "should.notmatch.localhost"
 	}
 }
