@@ -1,6 +1,7 @@
 import React, { FC, useState } from 'react';
 import {
   AlertIcon,
+  Autocomplete,
   BasicSpinner,
   Box,
   DatePickerInput,
@@ -19,12 +20,15 @@ import { DateUtils, useTranslation } from '@common/intl';
 import {
   EncounterRegistryByProgram,
   PatientModal,
+  useClinicians,
   usePatientModalStore,
+  EncounterFragment,
+  useEncounter,
 } from '@openmsupply-client/programs';
 import { usePatient } from '../api';
 import { AppRoute } from 'packages/config/src';
-import { EncounterFragment, useEncounter } from '@openmsupply-client/programs';
 import { EncounterSearchInput } from './EncounterSearchInput';
+import { ClinicianFragment } from 'packages/programs/src/api/operations.generated';
 
 type Encounter = Pick<
   EncounterFragment,
@@ -43,6 +47,9 @@ export const CreateEncounterModal: FC = () => {
   const [draft, setDraft] = useState<Encounter | undefined>(undefined);
   const navigate = useNavigate();
   const { error } = useNotification();
+
+  const { data: clinicianData } = useClinicians.document.list({});
+  const clinicians = clinicianData?.nodes ?? [];
 
   const handleSave = useEncounter.document.upsert(
     patientId,
@@ -85,6 +92,10 @@ export const CreateEncounterModal: FC = () => {
     const endDatetime = date ? DateUtils.formatRFC3339(date) : null;
     if (endDatetime && draft?.startDatetime)
       setDraft({ ...draft, endDatetime });
+  };
+
+  const setClinician = (clinicianIndex: number) => {
+    setDraft({ ...draft, clinician: clinicians[clinicianIndex] });
   };
 
   return (
@@ -164,6 +175,23 @@ export const CreateEncounterModal: FC = () => {
                     />
                   }
                 />
+                <InputWithLabelRow
+                  label={t('label.seen-by')}
+                  Input={
+                    <Autocomplete
+                      value={{
+                        label: getClinicianName(draft?.clinician),
+                        value: draft?.clinician,
+                      }}
+                      width={'200'}
+                      onChange={e => setClinician(e.target.value)}
+                      options={clinicians.map(clinician => ({
+                        label: `${clinician.firstName} ${clinician.lastName}`,
+                        value: clinician,
+                      }))}
+                    />
+                  }
+                />
               </>
             }
           />
@@ -196,4 +224,9 @@ const RenderForm = ({
   if (isLoading) return <BasicSpinner />;
 
   return <>{form}</>;
+};
+
+export const getClinicianName = (clinician: ClinicianFragment | undefined) => {
+  if (clinician === undefined) return '';
+  return `${clinician.firstName} ${clinician.lastName}`;
 };
