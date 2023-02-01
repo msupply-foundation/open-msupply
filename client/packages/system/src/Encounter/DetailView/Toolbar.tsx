@@ -28,8 +28,6 @@ export const Toolbar: FC<ToolbarProps> = ({ onChange }) => {
   const [endDatetime, setEndDatetime] = useState<string | undefined | null>();
   const t = useTranslation('patients');
 
-  console.log('encounter', encounter);
-
   useEffect(() => fetchEncounter(), []);
 
   useEffect(() => {
@@ -70,13 +68,13 @@ export const Toolbar: FC<ToolbarProps> = ({ onChange }) => {
         <Grid item display="flex" flex={1}>
           <Box display="flex" flex={1} flexDirection="column" gap={0.5}>
             <Box display="flex" gap={1}>
-              <InputWithLabelRow
+              <Row
                 label={t('label.patient')}
                 Input={
                   <BasicTextInput disabled value={encounter?.patient.name} />
                 }
               />
-              <InputWithLabelRow
+              <Row
                 label={'Seen by'}
                 Input={
                   <BasicTextInput
