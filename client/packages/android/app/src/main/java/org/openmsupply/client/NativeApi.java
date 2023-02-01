@@ -14,24 +14,29 @@ import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 import java.nio.charset.StandardCharsets;
-import java.util.Random;
+import java.util.ArrayDeque;
+import java.util.Deque;
 
 @CapacitorPlugin(name = "NativeApi")
 public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
 
     DiscoveryConstants discoveryConstants;
     JSArray discoveredServers;
+    Deque<NsdServiceInfo> serversToResolve;
     JSObject connectedServer;
     NsdManager discoveryManager;
     boolean isDebug;
     boolean isAdvertising;
     String localUrl;
     boolean isDiscovering;
+    boolean isResolvingServer;
     boolean shouldRestartDiscovery;
 
     @Override
     public void load() {
         super.load();
+        serversToResolve = new ArrayDeque<NsdServiceInfo>();
+        isResolvingServer = false;
         discoveryConstants = new DiscoveryConstants(this.getActivity().getContentResolver());
         discoveryManager = (NsdManager) this.getActivity()
                 .getSystemService(NSD_SERVICE);
@@ -172,12 +177,27 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     // NsdManager.DiscoveryListener
     @Override
     public void onServiceFound(NsdServiceInfo serviceInfo) {
-        try {
-            // Otherwise conflicting resolve causing onResolveFailed
-            Thread.sleep(new Random().nextInt(50) + 50);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        if (!serviceInfo.getServiceName().startsWith(discoveryConstants.SERVICE_NAME)) {
+            return;
         }
+
+        serversToResolve.push(serviceInfo);
+        tryResolveServer();
+    }
+
+    private void tryResolveServer() {
+        if (isResolvingServer) {
+            return;
+        }
+
+        isResolvingServer = true;
+
+        if (serversToResolve.peek() == null) {
+            isResolvingServer = false;
+            return;
+        }
+
+        NsdServiceInfo serviceInfo = serversToResolve.pop();
 
         discoveryManager.resolveService(serviceInfo, new NsdManager.ResolveListener() {
             @Override
@@ -189,11 +209,15 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
                 JSObject server = serviceInfoToObject(serviceInfo);
 
                 discoveredServers.put(server);
+                isResolvingServer = false;
+                tryResolveServer();
             }
 
             // NsdManager.ResolveListener
             @Override
             public void onResolveFailed(NsdServiceInfo serviceInfo, int errorCode) {
+                isResolvingServer = false;
+                tryResolveServer();
             }
         });
     }
