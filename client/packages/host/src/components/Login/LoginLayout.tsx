@@ -48,7 +48,6 @@ export const LoginLayout = ({
         flexDirection="column"
       >
         <Box>
-          {SiteInfo}
           <Typography
             sx={{
               color: (theme: Theme) => theme.typography.login.color,
@@ -119,7 +118,7 @@ export const LoginLayout = ({
           </Box>
         </Box>
       </Box>
-      <AppVersion style={{ opacity: 0.4 }} />
+      <AppVersion style={{ opacity: 0.4 }} SiteInfo={SiteInfo} />
     </Box>
   );
 };

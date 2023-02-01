@@ -11,13 +11,23 @@ import {
   UserPermission,
   usePermissionCheck,
   LocalStorage,
+  useInitialisationStatus,
+  NATIVE_MODE_KEY,
+  NativeMode,
+  RouteBuilder,
+  Switch,
+  PREVIOUS_SERVER_KEY,
 } from '@openmsupply-client/common';
+import { Capacitor } from '@capacitor/core';
 import { themeOptions } from '@common/styles';
+import { AppRoute } from '@openmsupply-client/config';
+
 import { AppVersion, LanguageMenu } from '../components';
 import { Setting } from './Setting';
 import { SettingTextArea, TextValue } from './SettingTextArea';
 import { SyncSettings } from './SyncSettings';
 import { useHost } from '../api/hooks';
+import { SiteInfo } from '../components/SiteInfo';
 
 export const Settings: React.FC = () => {
   const t = useTranslation('common');
@@ -29,6 +39,8 @@ export const Settings: React.FC = () => {
   usePermissionCheck(UserPermission.ServerAdmin);
   const customThemeEnabled =
     !!customTheme && Object.keys(customTheme).length > 0;
+  const { data: initStatus } = useInitialisationStatus();
+  const [nativeMode, setNativeMode] = useLocalStorage(NATIVE_MODE_KEY);
 
   const customThemeValue = {
     enabled: customThemeEnabled,
@@ -109,6 +121,47 @@ export const Settings: React.FC = () => {
     }
   };
 
+  const toggleNativeMode = () => {
+    const mode =
+      nativeMode === NativeMode.Server ? NativeMode.Client : NativeMode.Server;
+
+    localStorage.removeItem(PREVIOUS_SERVER_KEY);
+    setNativeMode(mode);
+    navigate(RouteBuilder.create(AppRoute.Android).build());
+  };
+
+  const ModeSettings = () =>
+    Capacitor.isNativePlatform() ? (
+      <>
+        <Typography variant="h5" color="primary" style={{ paddingBottom: 25 }}>
+          {t('heading.settings-android')}
+        </Typography>
+        <Setting
+          title={t('label.mode')}
+          component={
+            <>
+              <Switch
+                label={t('label.client')}
+                onChange={toggleNativeMode}
+                checked={nativeMode === NativeMode.Server}
+              />
+              <Typography
+                component="div"
+                sx={{
+                  alignItems: 'center',
+                  display: 'inline-flex',
+                  fontSize: '14px',
+                  paddingLeft: 1,
+                }}
+              >
+                {t('label.server')}
+              </Typography>
+            </>
+          }
+        />
+      </>
+    ) : null;
+
   return (
     <Grid
       container
@@ -138,7 +191,11 @@ export const Settings: React.FC = () => {
         title={t('heading.custom-logo')}
       />
       <SyncSettings />
-      <AppVersion style={{ bottom: 30, right: 15 }} />
+      <ModeSettings />
+      <AppVersion
+        style={{ bottom: 30, right: 15 }}
+        SiteInfo={<SiteInfo siteName={initStatus?.siteName} />}
+      />
     </Grid>
   );
 };

@@ -86,7 +86,7 @@ const getDebugHost = () => {
 
 // Can debug by opening chrome chrome://inspect and open inspect under 'devices'
 const START_URL = getDebugHost()
-  ? `${getDebugHost()}/discovery`
+  ? `${getDebugHost()}/android`
   : MAIN_WINDOW_WEBPACK_ENTRY;
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
@@ -119,6 +119,7 @@ const start = (): void => {
   window.loadURL(START_URL);
 
   ipcMain.on(IPC_MESSAGES.START_SERVER_DISCOVERY, () => {
+    discovery.stop();
     discoveredServers = [];
     discovery.start();
   });
