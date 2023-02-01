@@ -1079,7 +1079,7 @@ pub fn init_program_data(
             template: PATIENT_REPORT.to_string(),
             context: ReportContext::Patient,
             comment: None,
-            context2: Some("HIVCareProgram".to_string()),
+            sub_context: Some("HIVCareProgram".to_string()),
             argument_schema_id: None,
         })
         .unwrap();
@@ -1100,7 +1100,7 @@ pub fn init_program_data(
             template: DEMO_PATIENT_REPORT.to_string(),
             context: ReportContext::Patient,
             comment: None,
-            context2: Some("HIVCareProgram".to_string()),
+            sub_context: Some("HIVCareProgram".to_string()),
             argument_schema_id: Some(demo_arg_schema_id),
         })
         .unwrap();

@@ -1,13 +1,13 @@
 import { useQuery, ReportContext } from '@openmsupply-client/common';
 import { useReportApi } from '../utils/useReportApi';
 
-export const useReports = (context?: ReportContext, context2?: string) => {
+export const useReports = (context?: ReportContext, subContext?: string) => {
   const api = useReportApi();
   const filterBy =
-    context || context2
+    context || subContext
       ? {
           context: context ? { equalTo: context } : null,
-          context2: context2 ? { equalTo: context2 } : null,
+          subContext: subContext ? { equalTo: subContext } : null,
         }
       : null;
   const queryParams = {
