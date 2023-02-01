@@ -56,6 +56,8 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
     );
   };
 
+  const unit = item?.unitName ?? t('label.units');
+
   return (
     <Grid container gap="4px">
       <ModalRow>
@@ -134,7 +136,10 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
                 >
                   <InputLabel sx={{ fontSize: '12px' }}>
                     {packSizeController.selected?.value === -1
-                      ? t('label.units-in-pack-size-of', { count: quantity })
+                      ? t('label.units-in-pack-size-of', {
+                          unit,
+                          count: quantity,
+                        })
                       : t('label.packs-of', { count: quantity })}
                   </InputLabel>
                 </Grid>
@@ -158,8 +163,9 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
                     justifyContent="flex-start"
                   >
                     <InputLabel style={{ fontSize: 12, marginLeft: 8 }}>
-                      {t('label.units', {
+                      {t('label.unit', {
                         count: packSizeController.selected?.value,
+                        unit,
                       })}
                     </InputLabel>
                   </Grid>

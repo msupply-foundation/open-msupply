@@ -169,11 +169,20 @@ fn generate_stock_line_update(
         id: stock_line.id.clone(),
         item_id: stock_line.item_id.clone(),
         store_id: stock_line.store_id.clone(),
-        location_id: stock_line.location_id.clone(),
-        batch: stock_line.batch.clone(),
-        pack_size: stock_line.pack_size,
-        cost_price_per_pack: stock_line.cost_price_per_pack,
-        sell_price_per_pack: stock_line.sell_price_per_pack,
+        location_id: stocktake_line.line.location_id.clone(),
+        batch: stocktake_line.line.batch.clone(),
+        pack_size: stocktake_line
+            .line
+            .pack_size
+            .unwrap_or(stock_line.pack_size),
+        cost_price_per_pack: stocktake_line
+            .line
+            .cost_price_per_pack
+            .unwrap_or(stock_line.cost_price_per_pack),
+        sell_price_per_pack: stocktake_line
+            .line
+            .sell_price_per_pack
+            .unwrap_or(stock_line.sell_price_per_pack),
         // TODO might get negative!
         available_number_of_packs: stock_line.available_number_of_packs + delta,
         total_number_of_packs: stock_line.total_number_of_packs + delta,
