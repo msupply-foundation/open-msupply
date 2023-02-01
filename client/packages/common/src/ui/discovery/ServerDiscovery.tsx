@@ -5,6 +5,7 @@ import {
   useTranslation,
   Stack,
   useNativeClient,
+  ErrorWithDetails,
 } from '@openmsupply-client/common';
 import { LoginIcon } from '@openmsupply-client/host/src/components/Login/LoginIcon';
 import { Theme } from '@common/styles';
@@ -21,16 +22,43 @@ const isAutoconnect = () => {
   return params.get('autoconnect') === 'true';
 };
 
+const isTimedOut = () => {
+  const url = new URL(window.location.href);
+  const params = new URLSearchParams(url.search);
+  return params.get('timedout') === 'true';
+};
+
 export const ServerDiscovery = () => {
-  const { servers, discoveryTimedOut, connectToServer } = useNativeClient({
+  const {
+    servers,
+    discoveryTimedOut,
+    connectToServer,
+    startDiscovery,
+    stopDiscovery,
+    connectToPreviousTimedOut,
+  } = useNativeClient({
     discovery: true,
     autoconnect: isAutoconnect(),
   });
   const t = useTranslation('app');
+  const discover = () => {
+    stopDiscovery();
+    startDiscovery();
+  };
 
   return (
-    <Stack display="flex" style={{ minHeight: '100%' }}>
-      <Box display="flex" flex="0 0 50%" alignSelf="center">
+    <Stack
+      display="flex"
+      style={{ minHeight: '100%' }}
+      alignItems="center"
+      flex={1}
+    >
+      <Box
+        display="flex"
+        flex="0 0 40%"
+        alignSelf="center"
+        style={{ marginLeft: '-10%' }}
+      >
         <Box
           display="flex"
           alignItems="center"
@@ -97,16 +125,22 @@ export const ServerDiscovery = () => {
             color: 'gray.main',
             fontWeight: 600,
             whiteSpace: 'pre-line',
-            paddingBottom: '2%',
+            paddingBottom: '10%',
           }}
         >
           {t('discovery.body')}
         </Typography>
+        {(connectToPreviousTimedOut || isTimedOut()) && (
+          <Box padding={2}>
+            <ErrorWithDetails error={t('error.unable-to-connect')} details="" />
+          </Box>
+        )}
         <Box display="flex" flex={1} justifyContent="center">
           <DiscoveredServers
             servers={servers}
             connect={connectToServer}
             discoveryTimedOut={discoveryTimedOut}
+            discover={discover}
           />
         </Box>
       </Box>
