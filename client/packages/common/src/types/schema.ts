@@ -3197,19 +3197,19 @@ export enum ReportContext {
 
 export type ReportFilterInput = {
   context?: InputMaybe<EqualFilterReportContextInput>;
-  context2?: InputMaybe<EqualFilterStringInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   name?: InputMaybe<SimpleStringFilterInput>;
+  subContext?: InputMaybe<EqualFilterStringInput>;
 };
 
 export type ReportNode = {
   __typename: 'ReportNode';
   argumentSchema?: Maybe<FormSchemaNode>;
   context: ReportContext;
-  context2?: Maybe<Scalars['String']>;
   id: Scalars['String'];
   /** Human readable name of the report */
   name: Scalars['String'];
+  subContext?: Maybe<Scalars['String']>;
 };
 
 export enum ReportSortFieldInput {

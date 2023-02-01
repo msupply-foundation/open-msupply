@@ -14,7 +14,7 @@ import { JsonData } from 'packages/programs/src';
 
 interface ReportSelectorProps {
   context?: ReportContext;
-  context2?: string;
+  subContext?: string;
   onClick: (report: ReportRowFragment, args: JsonData | undefined) => void;
 }
 
@@ -38,12 +38,12 @@ const NoReports = ({ hasPermission }: { hasPermission: boolean }) => {
 
 export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
   context,
-  context2,
+  subContext,
   children,
   onClick,
 }) => {
   const { hide, PaperClickPopover } = usePaperClickPopover();
-  const { data, isLoading } = useReport.document.list(context, context2);
+  const { data, isLoading } = useReport.document.list(context, subContext);
   const t = useTranslation('app');
   const [reportWithArgs, setReportWithArgs] = useState<
     ReportRowFragment | undefined

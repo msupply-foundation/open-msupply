@@ -53,7 +53,7 @@ pub struct ReportFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub name: Option<SimpleStringFilterInput>,
     pub context: Option<EqualFilterReportContextInput>,
-    pub context2: Option<EqualFilterStringInput>,
+    pub sub_context: Option<EqualFilterStringInput>,
 }
 
 #[derive(Union)]
@@ -87,8 +87,8 @@ impl ReportNode {
         ReportContext::from_domain(&self.row.context)
     }
 
-    pub async fn context2(&self) -> &Option<String> {
-        &self.row.context2
+    pub async fn sub_context(&self) -> &Option<String> {
+        &self.row.sub_context
     }
 
     pub async fn argument_schema(&self) -> Option<FormSchemaNode> {
@@ -142,7 +142,7 @@ impl ReportFilterInput {
             context: self
                 .context
                 .map(|t| map_filter!(t, ReportContext::to_domain)),
-            context2: self.context2.map(EqualFilter::from),
+            sub_context: self.sub_context.map(EqualFilter::from),
         }
     }
 }

@@ -557,8 +557,8 @@ export const UpdateProgramEnrolmentDocument = gql`
 export const CliniciansDocument = gql`
     query clinicians($storeId: String!, $key: ClinicianSortFieldInput!, $desc: Boolean, $filter: ClinicianFilterInput) {
   clinicians(storeId: $storeId, sort: {key: $key, desc: $desc}, filter: $filter) {
-    __typename
     ... on ClinicianConnector {
+      __typename
       nodes {
         __typename
         ...Clinician
