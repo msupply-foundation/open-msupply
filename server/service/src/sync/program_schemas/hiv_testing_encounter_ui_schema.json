@@ -3,6 +3,19 @@
   "elements": [
     {
       "type": "Category",
+      "label": "HTC Register",
+      "options": { "icon": "document" },
+      "elements": [
+        {
+          "type": "Control",
+          "scope": "#/properties/htcRegisterSerialNumber",
+          "label": "HTC Register Serial No.",
+          "options": { "width": "100px" }
+        }
+      ]
+    },
+    {
+      "type": "Category",
       "label": "Family Planning",
       "options": { "icon": "condom" },
       "elements": [
@@ -21,6 +34,29 @@
       "label": "Risk Behaviour",
       "options": { "icon": "document" },
       "elements": [
+        {
+          "type": "Control",
+          "scope": "#/properties/riskBehaviour/properties/previousHIVTestResult",
+          "options": {
+            "show": [
+              ["POSITIVE", "Positive"],
+              ["NEGATIVE", "Negative"],
+              ["UNKNOWN", "Unknown"],
+              ["NOT_DONE", "Not done"]
+            ]
+          }
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/riskBehaviour/properties/previousHIVTestDate",
+          "rule": {
+            "effect": "ENABLE",
+            "condition": {
+              "scope": "#/properties/riskBehaviour/properties/previousHIVTestResult",
+              "schema": { "enum": ["POSITIVE", "NEGATIVE", "UNKNOWN"] }
+            }
+          }
+        },
         {
           "type": "Control",
           "scope": "#/properties/riskBehaviour/properties/receivedBloodTransfusion"
@@ -225,6 +261,47 @@
               }
             }
           }
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/riskBehaviour/properties/screeningOutcomeGBV",
+          "label": "GBV Screening Outcome",
+          "options": {
+            "show": [
+              ["POSITIVE", "Positive"],
+              ["NEGATIVE", "Negative"],
+              ["NOT_DONE", "Not done"],
+              ["DECLINED", "Declined"]
+            ]
+          }
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/riskBehaviour/properties/referredToGBVService",
+          "rule": {
+            "effect": "ENABLE",
+            "condition": {
+              "scope": "#/properties/riskBehaviour/properties/screeningOutcomeGBV",
+              "schema": { "enum": ["POSITIVE"] }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "Category",
+      "label": "Informed Consent",
+      "options": { "icon": "document" },
+      "elements": [
+        {
+          "type": "Control",
+          "scope": "#/properties/informedConsent/properties/preTestCounsellingDone",
+          "label": "Was pre-test counselling done?"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/informedConsent/properties/consentFormSigned",
+          "label": "Was the consent form signed?"
         }
       ]
     },
@@ -251,6 +328,123 @@
               ["UNKNOWN", "Unknown"]
             ]
           }
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/hivTesting/properties/postTestCounsellingDone",
+          "label": "Post-test counselling done?"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/hivTesting/properties/referredForARTServices",
+          "label": "Did you refer the patient for ART services?"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/hivTesting/properties/referredARTFacility",
+          "label": "Where?"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/hivTesting/properties/referredARTFacilityName",
+          "label": "If another facility, name of the facility",
+          "rule": {
+            "effect": "ENABLE",
+            "condition": {
+              "scope": "#/properties/hivTesting/properties/referredARTFacility",
+              "schema": { "enum": ["EXTERNAL_FACILITY"] }
+            }
+          }
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/hivTesting/properties/clientEscorted",
+          "label": "Was the client escorted?"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/hivTesting/properties/serodiscordantCoupleCounsellingProvided",
+          "label": "If serodiscordant, was couple counselling provided?"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/hivTesting/properties/screenedAndReferredForOtherServices",
+          "label": "Was client screened and referred for other services?"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/hivTesting/properties/otherServices",
+          "label": "If yes, which one(s)?",
+          "rule": {
+            "effect": "ENABLE",
+            "condition": {
+              "scope": "#/properties/hivTesting/properties/screenedAndReferredForOtherServices",
+              "schema": {
+                "const": true
+              }
+            }
+          }
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/hivTesting/properties/otherServiceName",
+          "label": "If other, specify",
+          "rule": {
+            "effect": "ENABLE",
+            "condition": {
+              "scope": "#/properties/hivTesting/properties/otherServices",
+              "schema": { "contains": { "const": "OTHER" } }
+            }
+          }
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/hivTesting/properties/condomsLubricantsOffered",
+          "label": "Where condoms and/or lubricants offered to the client?"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/hivTesting/properties/numberOfMaleCondoms",
+          "rule": {
+            "effect": "ENABLE",
+            "condition": {
+              "scope": "#/properties/hivTesting/properties/condomsLubricantsOffered",
+              "schema": {
+                "const": true
+              }
+            }
+          }
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/hivTesting/properties/numberOfFemaleCondoms",
+          "rule": {
+            "effect": "ENABLE",
+            "condition": {
+              "scope": "#/properties/hivTesting/properties/condomsLubricantsOffered",
+              "schema": {
+                "const": true
+              }
+            }
+          }
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/hivTesting/properties/numberOfLubricants",
+          "rule": {
+            "effect": "ENABLE",
+            "condition": {
+              "scope": "#/properties/hivTesting/properties/condomsLubricantsOffered",
+              "schema": {
+                "const": true
+              }
+            }
+          }
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/hivTesting/properties/condomDemonstration",
+          "label": "Did you conduct condom demonstration?"
         }
       ]
     }

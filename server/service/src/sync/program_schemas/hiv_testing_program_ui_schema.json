@@ -69,7 +69,7 @@
     },
     {
       "type": "Control",
-      "scope": "#/properties/partnerHivStatus",
+      "scope": "#/properties/partnerHIVStatus",
       "options": {
         "show": [
           ["POSITIVE", "Positive"],

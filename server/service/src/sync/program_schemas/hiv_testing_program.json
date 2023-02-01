@@ -30,7 +30,7 @@
         "mother": {
           "$ref": "#/definitions/HIVRelation"
         },
-        "partnerHivStatus": {
+        "partnerHIVStatus": {
           "$ref": "#/definitions/HIVStatus"
         },
         "referredFrom": {
