@@ -14,21 +14,29 @@ import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 import java.nio.charset.StandardCharsets;
-import java.util.Random;
+import java.util.ArrayDeque;
+import java.util.Deque;
 
 @CapacitorPlugin(name = "NativeApi")
 public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
 
     DiscoveryConstants discoveryConstants;
     JSArray discoveredServers;
+    Deque<NsdServiceInfo> serversToResolve;
     JSObject connectedServer;
     NsdManager discoveryManager;
     boolean isDebug;
+    boolean isAdvertising;
     String localUrl;
+    boolean isDiscovering;
+    boolean isResolvingServer;
+    boolean shouldRestartDiscovery;
 
     @Override
     public void load() {
         super.load();
+        serversToResolve = new ArrayDeque<NsdServiceInfo>();
+        isResolvingServer = false;
         discoveryConstants = new DiscoveryConstants(this.getActivity().getContentResolver());
         discoveryManager = (NsdManager) this.getActivity()
                 .getSystemService(NSD_SERVICE);
@@ -36,14 +44,17 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         String debugUrl = getConfig().getString("debugUrl");
         isDebug = debugUrl != null && !debugUrl.equals("");
         localUrl = isDebug ? debugUrl : "https://localhost:" + discoveryConstants.PORT;
+        isAdvertising = false;
+        isDiscovering = false;
+        shouldRestartDiscovery = false;
     }
 
     @Override
     protected void handleOnStart() {
         WebView webView = this.getBridge().getWebView();
-        advertiseService();
+        // advertiseService();
         // .post to run on UI thread
-        webView.post(() -> webView.loadUrl(localUrl + "/discovery?autoconnect=true"));
+        webView.post(() -> webView.loadUrl(localUrl + "/android"));
     }
 
     @Override
@@ -60,7 +71,11 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     }
 
     // Advertise local remote server on network
-    void advertiseService() {
+    @PluginMethod()
+    public void advertiseService(PluginCall call) {
+        if (isAdvertising) {
+            return;
+        }
         NsdServiceInfo serviceInfo = new NsdServiceInfo();
         serviceInfo.setServiceName(discoveryConstants.SERVICE_NAME);
         serviceInfo.setServiceType(discoveryConstants.SERVICE_TYPE);
@@ -90,9 +105,14 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
                     public void onUnregistrationFailed(NsdServiceInfo serviceInfo, int errorCode) {
                     }
                 });
+        isAdvertising = true;
     }
 
     private void stopServerDiscovery() {
+        if (!isDiscovering) {
+            return;
+        }
+
         try {
             discoveryManager.stopServiceDiscovery(this);
         } catch (Exception e) {
@@ -102,6 +122,13 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
 
     @PluginMethod()
     public void startServerDiscovery(PluginCall call) {
+        if (isDiscovering) {
+            shouldRestartDiscovery = true;
+            stopServerDiscovery();
+            return;
+        }
+
+        shouldRestartDiscovery = false;
         discoveredServers = new JSArray();
 
         // Some navigation events may cause server discovery to still be ongoing
@@ -114,9 +141,9 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         }
     }
 
-    // Return discoveredServers and reset discoveredServers array (to avoid large
-    // array being sent
-    // to client, since duplicates in discoveredServers are frequent)
+    // Return discoveredServers and reset discoveredServers array
+    // (to avoid large array being sent to client,
+    // since duplicates in discoveredServers are frequent)
     @PluginMethod()
     public void discoveredServers(PluginCall call) {
         JSObject result = new JSObject();
@@ -150,12 +177,27 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     // NsdManager.DiscoveryListener
     @Override
     public void onServiceFound(NsdServiceInfo serviceInfo) {
-        try {
-            // Otherwise conflicting resolve causing onResolveFailed
-            Thread.sleep(new Random().nextInt(50) + 50);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        if (!serviceInfo.getServiceName().startsWith(discoveryConstants.SERVICE_NAME)) {
+            return;
         }
+
+        serversToResolve.push(serviceInfo);
+        tryResolveServer();
+    }
+
+    private void tryResolveServer() {
+        if (isResolvingServer) {
+            return;
+        }
+
+        isResolvingServer = true;
+
+        if (serversToResolve.peek() == null) {
+            isResolvingServer = false;
+            return;
+        }
+
+        NsdServiceInfo serviceInfo = serversToResolve.pop();
 
         discoveryManager.resolveService(serviceInfo, new NsdManager.ResolveListener() {
             @Override
@@ -167,11 +209,15 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
                 JSObject server = serviceInfoToObject(serviceInfo);
 
                 discoveredServers.put(server);
+                isResolvingServer = false;
+                tryResolveServer();
             }
 
             // NsdManager.ResolveListener
             @Override
             public void onResolveFailed(NsdServiceInfo serviceInfo, int errorCode) {
+                isResolvingServer = false;
+                tryResolveServer();
             }
         });
     }
@@ -214,10 +260,15 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     // NsdManager.DiscoveryListener
     @Override
     public void onDiscoveryStarted(String serviceType) {
+        isDiscovering = true;
     }
 
     // NsdManager.DiscoveryListener
     @Override
     public void onDiscoveryStopped(String serviceType) {
+        isDiscovering = false;
+        if (shouldRestartDiscovery) {
+            startServerDiscovery(null);
+        }
     }
 }

@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import DatePicker, { DatePickerProps } from '@mui/lab/DatePicker';
+import { DatePicker, DatePickerProps } from '@mui/x-date-pickers';
 import { BasicTextInput } from '../../TextInput/BasicTextInput';
 import { StandardTextFieldProps, TextFieldProps } from '@mui/material';
 import { useAppTheme } from '@common/styles';
@@ -8,7 +8,7 @@ export const BaseDatePickerInput: FC<
   Omit<DatePickerProps<Date>, 'renderInput'>
 > = props => {
   const theme = useAppTheme();
-  
+
   return (
     <DatePicker
       disabled={props.disabled}

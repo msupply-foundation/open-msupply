@@ -42,6 +42,7 @@ import { PrinterIcon } from './Printer';
 import { RadioIcon } from './Radio';
 import { ReportsIcon } from './Reports';
 import { RewindIcon } from './Rewind';
+import { RefreshIcon } from './Refresh';
 import { SaveIcon } from './Save';
 import { ScanIcon } from './Scan';
 import { SearchIcon } from './Search';
@@ -126,6 +127,7 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <PrinterIcon {...args} />, name: 'Printer' },
     { icon: <RadioIcon {...args} />, name: 'Radio' },
     { icon: <ReportsIcon {...args} />, name: 'Reports' },
+    { icon: <RefreshIcon {...args} />, name: 'Refresh' },
     { icon: <RewindIcon {...args} />, name: 'Rewind' },
     { icon: <SaveIcon {...args} />, name: 'Save' },
     { icon: <ScanIcon {...args} />, name: 'Scan' },

@@ -106,7 +106,7 @@ pub async fn start_server(
         .app_data_service
         .set_hardware_id(machine_uid.clone())
         .unwrap();
-    info!("Setting hardware uuid..done");
+    info!("Setting hardware uuid..done [{}]", machine_uid.clone());
 
     // CHECK SYNC STATUS
     info!("Checking sync status..");
