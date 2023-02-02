@@ -51,6 +51,7 @@
   "error.unable-to-read-barcode": "Unable to read a barcode",
   "error.problem-saving": "An error occurred: there was a problem saving the data.",
   "error.json-bad-format-with-examples": "Incorrect format. Use: \"{{examples}}\"",
+  "error.missing-inputs": "{{count}} missing",
   "filename.inbounds": "inbound-shipments",
   "filename.locations": "locations",
   "filename.master-lists": "master-lists",
