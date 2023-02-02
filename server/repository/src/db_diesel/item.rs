@@ -1,9 +1,16 @@
 use super::{
-    item_row::{
-        item, item::dsl as item_dsl, item_is_visible, item_is_visible::dsl as item_is_visible_dsl,
-    },
+    item_row::{item, item::dsl as item_dsl},
+    master_list_line_row::master_list_line::dsl as master_list_line_dsl,
+    master_list_name_join::master_list_name_join::dsl as master_list_name_join_dsl,
+    master_list_row::master_list::dsl as master_list_dsl,
+    store_row::store::dsl as store_dsl,
     unit_row::{unit, unit::dsl as unit_dsl},
-    DBType, ItemIsVisibleRow, ItemRow, ItemRowType, StorageConnection, UnitRow,
+    DBType, ItemRow, ItemRowType, StorageConnection, UnitRow,
+};
+
+use diesel::{
+    dsl::{IntoBoxed, LeftJoin},
+    prelude::*,
 };
 
 use crate::{
@@ -18,7 +25,6 @@ use crate::{
 #[derive(PartialEq, Debug, Clone, Default)]
 pub struct Item {
     pub item_row: ItemRow,
-    pub item_is_visible_row: ItemIsVisibleRow,
     pub unit_row: Option<UnitRow>,
 }
 
@@ -79,12 +85,7 @@ impl ItemFilter {
     }
 }
 
-use diesel::{
-    dsl::{InnerJoin, IntoBoxed, LeftJoin},
-    prelude::*,
-};
-
-type ItemAndMasterList = (ItemRow, ItemIsVisibleRow, Option<UnitRow>);
+type ItemAndMasterList = (ItemRow, Option<UnitRow>);
 
 pub struct ItemRepository<'a> {
     connection: &'a StorageConnection,
@@ -95,19 +96,31 @@ impl<'a> ItemRepository<'a> {
         ItemRepository { connection }
     }
 
-    pub fn count(&self, filter: Option<ItemFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(
+        &self,
+        store_id: String,
+        filter: Option<ItemFilter>,
+    ) -> Result<i64, RepositoryError> {
         // TODO (beyond M1), check that store_id matches current store
-        let query = create_filtered_query(filter);
+        let query = create_filtered_query(store_id, filter);
 
         Ok(query.count().get_result(&self.connection.connection)?)
     }
 
-    pub fn query_one(&self, filter: ItemFilter) -> Result<Option<Item>, RepositoryError> {
-        Ok(self.query_by_filter(filter)?.pop())
+    pub fn query_one(
+        &self,
+        store_id: Option<String>,
+        filter: ItemFilter,
+    ) -> Result<Option<Item>, RepositoryError> {
+        Ok(self.query_by_filter(filter, store_id)?.pop())
     }
 
-    pub fn query_by_filter(&self, filter: ItemFilter) -> Result<Vec<Item>, RepositoryError> {
-        self.query(Pagination::new(), Some(filter), None)
+    pub fn query_by_filter(
+        &self,
+        filter: ItemFilter,
+        store_id: Option<String>,
+    ) -> Result<Vec<Item>, RepositoryError> {
+        self.query(Pagination::new(), Some(filter), None, store_id)
     }
 
     pub fn query(
@@ -115,8 +128,9 @@ impl<'a> ItemRepository<'a> {
         pagination: Pagination,
         filter: Option<ItemFilter>,
         sort: Option<ItemSort>,
+        store_id: Option<String>,
     ) -> Result<Vec<Item>, RepositoryError> {
-        let mut query = create_filtered_query(filter);
+        let mut query = create_filtered_query(store_id.unwrap_or_default(), filter);
 
         if let Some(sort) = sort {
             match sort.key {
@@ -143,26 +157,14 @@ impl<'a> ItemRepository<'a> {
     }
 }
 
-fn to_domain((item_row, item_is_visible_row, unit_row): ItemAndMasterList) -> Item {
-    Item {
-        item_row,
-        item_is_visible_row,
-        unit_row,
-    }
+fn to_domain((item_row, unit_row): ItemAndMasterList) -> Item {
+    Item { item_row, unit_row }
 }
 
-type BoxedItemQuery = IntoBoxed<
-    'static,
-    LeftJoin<InnerJoin<item::table, item_is_visible::table>, unit::table>,
-    DBType,
->;
+type BoxedItemQuery = IntoBoxed<'static, LeftJoin<item::table, unit::table>, DBType>;
 
-fn create_filtered_query(filter: Option<ItemFilter>) -> BoxedItemQuery {
-    // Join master_list_line
-    let mut query = item_dsl::item
-        .inner_join(item_is_visible_dsl::item_is_visible)
-        .left_join(unit_dsl::unit)
-        .into_boxed();
+fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedItemQuery {
+    let mut query = item_dsl::item.left_join(unit_dsl::unit).into_boxed();
 
     if let Some(f) = filter {
         let ItemFilter {
@@ -180,19 +182,33 @@ fn create_filtered_query(filter: Option<ItemFilter>) -> BoxedItemQuery {
         apply_equal_filter!(query, r#type, item_dsl::type_);
         apply_simple_string_or_filter!(query, code_or_name, item_dsl::code, item_dsl::name);
 
-        if let Some(is_visible) = is_visible {
-            query = query.filter(item_is_visible::is_visible.eq(is_visible));
+        let is_visible_in_store = master_list_line_dsl::master_list_line
+            .select(master_list_line_dsl::item_id)
+            .inner_join(
+                master_list_dsl::master_list
+                    .on(master_list_line_dsl::master_list_id.eq(master_list_dsl::id)),
+            )
+            .inner_join(
+                master_list_name_join_dsl::master_list_name_join
+                    .on(master_list_name_join_dsl::master_list_id.eq(master_list_dsl::id)),
+            )
+            .inner_join(
+                store_dsl::store.on(store_dsl::name_id
+                    .eq(master_list_name_join_dsl::name_id)
+                    .and(store_dsl::id.eq(store_id))),
+            )
+            .into_boxed();
+
+        query = match is_visible {
+            Some(true) => query.filter(item_dsl::id.eq_any(is_visible_in_store)),
+            Some(false) => query.filter(item_dsl::id.ne_all(is_visible_in_store)),
+            None => query,
         }
     }
     query
 }
 
 impl Item {
-    // From master list
-    pub fn is_visible(&self) -> bool {
-        self.item_is_visible_row.is_visible
-    }
-
     pub fn unit_name(&self) -> Option<&str> {
         self.unit_row
             .as_ref()
