@@ -1,8 +1,17 @@
 import React, { FC, useState } from 'react';
 import { ArrayControlProps } from '@jsonforms/core';
 
-import { Box, FormLabel, TextField, Autocomplete } from '@mui/material';
-import { useTranslation, ConfirmationModal } from '@openmsupply-client/common';
+import {
+  Box,
+  FormLabel,
+  Autocomplete,
+  AutocompleteRenderInputParams,
+} from '@mui/material';
+import {
+  useTranslation,
+  ConfirmationModal,
+  BasicTextInput,
+} from '@openmsupply-client/common';
 import {
   FORM_LABEL_COLUMN_WIDTH,
   FORM_INPUT_COLUMN_WIDTH,
@@ -76,11 +85,24 @@ export const EnumArrayComponent: FC<EnumArrayControlCustomProps> = ({
   path,
   schema,
   visible,
+  enabled,
   addItem,
   removeItems,
 }) => {
   const t = useTranslation('common');
   const [removeIndex, setRemoveIndex] = useState<number | undefined>();
+
+  const renderInput = (props: AutocompleteRenderInputParams) => (
+    <BasicTextInput
+      {...props}
+      color="secondary"
+      InputProps={{
+        disableUnderline: false,
+        style: props.disabled ? { paddingLeft: 0 } : {},
+        ...props.InputProps,
+      }}
+    />
+  );
 
   if (!visible) {
     return null;
@@ -94,7 +116,7 @@ export const EnumArrayComponent: FC<EnumArrayControlCustomProps> = ({
         gap={2}
         justifyContent="space-around"
         style={{ minWidth: 300 }}
-        marginTop={1}
+        margin={0.5}
       >
         <Box
           style={{ textAlign: 'end', alignSelf: 'start', paddingTop: 5 }}
@@ -104,35 +126,10 @@ export const EnumArrayComponent: FC<EnumArrayControlCustomProps> = ({
         </Box>
         <Box sx={{ width: FORM_INPUT_COLUMN_WIDTH }}>
           <Autocomplete
+            disabled={!enabled}
             multiple
             sx={{
-              '& .MuiInput-root': {
-                borderRadius: '8px',
-                height: '100%',
-                backgroundColor: 'background.menu',
-                padding: '5px',
-              },
-              '& .MuiInput-root:before': {
-                border: 'none',
-              },
-              '& .MuiInput-root:after': {
-                color: 'gray.dark',
-                borderBottomColor: 'secondary.main',
-              },
-              '& .MuiInput-root:focus:before': {
-                borderRadius: '8px 8px 0px 0px',
-              },
-              '& .MuiInput-root:hover:before': {
-                borderRadius: '8px 8px 0px 0px',
-              },
-              '& .MuiChip-root': {
-                backgroundColor: 'secondary.light',
-                height: 'inherit',
-                color: theme => theme.typography.login.color,
-              },
-              '& .MuiChip-deleteIcon': {
-                color: theme => `${theme.palette.background.white} !important`,
-              },
+              '& .MuiFormControl-root': { minWidth: '100%' },
             }}
             value={data}
             options={sortOptions(schema.enum ?? [])}
@@ -160,7 +157,7 @@ export const EnumArrayComponent: FC<EnumArrayControlCustomProps> = ({
                 </li>
               );
             }}
-            renderInput={params => <TextField {...params} variant="standard" />}
+            renderInput={renderInput}
             onChange={(_, value) => {
               if (value.length - 1 === data.length) {
                 addItem(path, value[value.length - 1])();
