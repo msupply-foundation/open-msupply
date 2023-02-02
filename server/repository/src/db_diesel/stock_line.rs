@@ -52,9 +52,18 @@ impl<'a> StockLineRepository<'a> {
         StockLineRepository { connection }
     }
 
-    pub fn count(&self, filter: Option<StockLineFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(
+        &self,
+        filter: Option<StockLineFilter>,
+        store_id: Option<String>,
+    ) -> Result<i64, RepositoryError> {
         let mut query = create_filtered_query(filter.clone());
-        query = apply_item_filter(query, filter, &self.connection);
+        query = apply_item_filter(
+            query,
+            filter,
+            &self.connection,
+            store_id.unwrap_or_default(),
+        );
 
         Ok(query.count().get_result(&self.connection.connection)?)
     }
@@ -62,8 +71,9 @@ impl<'a> StockLineRepository<'a> {
     pub fn query_by_filter(
         &self,
         filter: StockLineFilter,
+        store_id: Option<String>,
     ) -> Result<Vec<StockLine>, RepositoryError> {
-        self.query(Pagination::new(), Some(filter), None)
+        self.query(Pagination::new(), Some(filter), None, store_id)
     }
 
     pub fn query(
@@ -71,9 +81,15 @@ impl<'a> StockLineRepository<'a> {
         pagination: Pagination,
         filter: Option<StockLineFilter>,
         sort: Option<StockLineSort>,
+        store_id: Option<String>,
     ) -> Result<Vec<StockLine>, RepositoryError> {
         let mut query = create_filtered_query(filter.clone());
-        query = apply_item_filter(query, filter, &self.connection);
+        query = apply_item_filter(
+            query,
+            filter,
+            &self.connection,
+            store_id.unwrap_or_default(),
+        );
 
         if let Some(sort) = sort {
             match sort.key {
@@ -145,13 +161,14 @@ fn apply_item_filter(
     query: BoxedStockLineQuery,
     filter: Option<StockLineFilter>,
     connection: &StorageConnection,
+    store_id: String,
 ) -> BoxedStockLineQuery {
     if let Some(f) = filter {
         if let Some(item_code_or_name) = &f.item_code_or_name {
             let mut item_filter = ItemFilter::new();
             item_filter.code_or_name = Some(item_code_or_name.clone());
             let items = ItemRepository::new(connection)
-                .query_by_filter(item_filter)
+                .query_by_filter(item_filter, Some(store_id))
                 .unwrap();
             let item_ids: Vec<String> = items.into_iter().map(|item| item.item_row.id).collect();
 
