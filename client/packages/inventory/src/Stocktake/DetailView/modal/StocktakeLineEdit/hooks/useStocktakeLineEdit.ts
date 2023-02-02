@@ -28,23 +28,21 @@ export const useStocktakeLineEdit = (
   const [draftLines, setDraftLines] = useDraftStocktakeLines(item);
   const { mutateAsync: save, isLoading, isError } = useStocktake.line.save();
 
-  const update = (patch: RecordPatch<DraftStocktakeLine>) => {
+  const update = (patch: RecordPatch<DraftStocktakeLine>) =>
     setDraftLines(lines =>
       ArrayUtils.immutablePatch(lines, {
         ...patch,
         isUpdated: !patch.isCreated,
       })
     );
-  };
 
-  const mutableUpdate = (patch: RecordPatch<DraftStocktakeLine>) => {
+  const mutableUpdate = (patch: RecordPatch<DraftStocktakeLine>) =>
     setDraftLines(lines =>
       ArrayUtils.mutablePatch(lines, {
         ...patch,
         isUpdated: !patch.isCreated,
       })
     );
-  };
 
   const addLine = () => {
     if (item) {

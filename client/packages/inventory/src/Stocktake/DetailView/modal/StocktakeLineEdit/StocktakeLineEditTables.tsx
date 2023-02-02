@@ -89,10 +89,9 @@ const getInventoryAdjustmentReasonInputColumn = (
     sortable: false,
     width: 120,
     accessor: ({ rowData }) => rowData.inventoryAdjustmentReason || '',
-    Cell: ({ rowData, column, rows, columnIndex, rowIndex }) => {
+    Cell: ({ rowData, column, columnIndex, rowIndex }) => {
       const value = column.accessor({
         rowData,
-        rows,
       }) as InventoryAdjustmentReasonRowFragment | null;
 
       const onChange = (
@@ -145,7 +144,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
       key: 'snapshotNumberOfPacks',
       label: 'label.num-packs',
       width: 100,
-      setter: patch => update({ ...patch, countThisLine: true }),
+      setter: patch => mutableUpdate({ ...patch, countThisLine: true }),
       accessor: ({ rowData }) => rowData.snapshotNumberOfPacks || '',
     },
     {
@@ -160,7 +159,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
       label: 'label.counted-num-of-packs',
       width: 100,
       Cell: NonNegativeDecimalCell,
-      setter: patch => mutableUpdate({ ...patch, countThisLine: true }),
+      setter: patch => update({ ...patch, countThisLine: true }),
       accessor: ({ rowData }) => rowData.countedNumberOfPacks || '',
     },
     [

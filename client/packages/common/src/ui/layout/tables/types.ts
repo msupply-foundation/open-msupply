@@ -19,7 +19,7 @@ export interface TableProps<T extends RecordWithId> {
   columns: Column<T>[];
   data?: T[];
   dense?: boolean;
-  ExpandContent?: FC<{ rowData: T }>;
+  ExpandContent?: FC<{ rowData: T; isExpanded: boolean }>;
   enableColumnSelection?: boolean;
   generateRowTooltip?: (row: T) => string;
   id: string;
