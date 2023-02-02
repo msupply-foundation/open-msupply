@@ -39,10 +39,6 @@ impl ItemNode {
         &self.row().code
     }
 
-    pub async fn is_visible(&self) -> bool {
-        self.item.is_visible()
-    }
-
     pub async fn unit_name(&self) -> Option<&str> {
         self.item.unit_name()
     }

@@ -27,14 +27,17 @@ impl StockExpiryCountServiceTrait for StockExpiryServiceCount {
         date_time: NaiveDate,
     ) -> Result<i64, RepositoryError> {
         let repo = StockLineRepository::new(&ctx.connection);
-        repo.count(Some(
-            StockLineFilter::new()
-                .expiry_date(DateFilter {
-                    equal_to: None,
-                    before_or_equal_to: Some(date_time),
-                    after_or_equal_to: None,
-                })
-                .store_id(EqualFilter::equal_to(&store_id)),
-        ))
+        repo.count(
+            Some(
+                StockLineFilter::new()
+                    .expiry_date(DateFilter {
+                        equal_to: None,
+                        before_or_equal_to: Some(date_time),
+                        after_or_equal_to: None,
+                    })
+                    .store_id(EqualFilter::equal_to(&store_id)),
+            ),
+            None,
+        )
     }
 }
