@@ -18,7 +18,7 @@ import {
 import { useJsonForms, withJsonFormsLayoutProps } from '@jsonforms/react';
 import { Button, Grid, Hidden, Typography } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { DialogButton } from '@openmsupply-client/common';
+import { DialogButton, useTranslation } from '@openmsupply-client/common';
 import { ModalProps, useDialog } from '@common/hooks';
 import {
   AjvProps,
@@ -145,6 +145,8 @@ const ErrorStringComponent: FC<{
   category: Category;
   errorPaths: string[];
 }> = ({ category, errorPaths }) => {
+  const t = useTranslation('common');
+
   if (errorPaths.length === 0) {
     return null;
   }
@@ -160,7 +162,9 @@ const ErrorStringComponent: FC<{
         borderRadius: '16px',
         padding: '0px 8px',
       }}
-    >{`${foundPaths.length} errors`}</Typography>
+    >
+      {t('error.missing-inputs', { count: foundPaths.length })}
+    </Typography>
   );
 };
 
