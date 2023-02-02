@@ -510,7 +510,7 @@ mod tests {
 
         assert_eq!(results0, item_rows);
 
-        // item1, item2, item3 and item4 visible
+        // item1 and item2 visible
         MasterListNameJoinRepository::new(&storage_connection)
             .upsert_one(&master_list_name_join_1)
             .unwrap();
@@ -531,7 +531,7 @@ mod tests {
                 Some("name1_store".to_string()),
             )
             .unwrap();
-        println!("{:?}", results);
+        assert_eq!(results.len(), 3);
         // get visible rows
         let results = item_query_repository
             .query(
