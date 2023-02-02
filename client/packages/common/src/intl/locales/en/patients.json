@@ -18,7 +18,7 @@
   "label.visit-date": "Visit Date",
   "label.visit-start": "Start",
   "label.visit-end": "End",
-  "label.seen-by": "Seen by",
+  "label.clinician": "Clinician",
   "messages.click-to-return-to-encounters": "Unable to find an encounter with that ID. Click OK to return to the encounter list",
   "messages.click-to-view": "Click to view the patient record for {{firstName}} {{lastName}}",
   "messages.no-matching-patients": "No matching patients! 😁",
