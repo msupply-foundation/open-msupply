@@ -176,7 +176,7 @@ export const CreateEncounterModal: FC = () => {
                   }
                 />
                 <InputWithLabelRow
-                  label={t('label.seen-by')}
+                  label={t('label.clinician')}
                   Input={
                     <Autocomplete
                       value={{
