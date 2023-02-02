@@ -10,6 +10,7 @@ table! {
         name_id -> Text,
         code -> Text,
         site_id -> Integer,
+        logo -> Text,
     }
 }
 
@@ -22,6 +23,7 @@ pub struct StoreRow {
     pub name_id: String,
     pub code: String,
     pub site_id: i32,
+    pub logo: String,
 }
 
 pub struct StoreRowRepository<'a> {
