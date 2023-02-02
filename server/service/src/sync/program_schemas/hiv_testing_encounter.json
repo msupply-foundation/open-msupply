@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
     "ARTFacilityLocation": {
-      "enum": ["CURRENT_FACILITY", "EXTERNAL_FACILITY"],
+      "enum": ["THIS_FACILITY", "OTHER_FACILITY"],
       "type": "string"
     },
     "EncounterStatus": {
