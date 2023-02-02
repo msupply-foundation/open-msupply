@@ -315,7 +315,8 @@ mod test {
         // Make sure NULLS are last
         assert_eq!(
             vec![from_row(line1()), from_row(line2()), from_row(line3())],
-            repo.query(Pagination::new(), None, Some(sort)).unwrap()
+            repo.query(Pagination::new(), None, Some(sort), Some(mock_store_a().id))
+                .unwrap()
         );
         // Desc by expiry date
         let sort = StockLineSort {
@@ -325,7 +326,8 @@ mod test {
         // Make sure NULLS are first
         assert_eq!(
             vec![from_row(line3()), from_row(line2()), from_row(line1())],
-            repo.query(Pagination::new(), None, Some(sort)).unwrap()
+            repo.query(Pagination::new(), None, Some(sort), Some(mock_store_a().id))
+                .unwrap()
         );
     }
 
@@ -370,7 +372,8 @@ mod test {
             repo.query(
                 Pagination::new(),
                 Some(StockLineFilter::new().is_available(false)),
-                None
+                None,
+                Some(mock_store_a().id)
             )
             .unwrap()
         );
@@ -381,7 +384,8 @@ mod test {
             repo.query(
                 Pagination::new(),
                 Some(StockLineFilter::new().is_available(true)),
-                None
+                None,
+                Some(mock_store_a().id)
             )
             .unwrap()
         );

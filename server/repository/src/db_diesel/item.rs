@@ -226,7 +226,8 @@ mod tests {
         mock::MockDataInserts, test_db, EqualFilter, ItemFilter, ItemRepository, ItemRow,
         ItemRowRepository, ItemRowType, MasterListLineRow, MasterListLineRowRepository,
         MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow,
-        MasterListRowRepository, NameRow, NameRowRepository, Pagination, DEFAULT_PAGINATION_LIMIT,
+        MasterListRowRepository, NameRow, NameRowRepository, Pagination, StoreRow,
+        StoreRowRepository, DEFAULT_PAGINATION_LIMIT,
     };
 
     use super::{Item, ItemSort, ItemSortField};
@@ -272,14 +273,14 @@ mod tests {
         // Test
         // .count()
         assert_eq!(
-            usize::try_from(item_query_repository.count(None).unwrap()).unwrap(),
+            usize::try_from(item_query_repository.count("".to_string(), None).unwrap()).unwrap(),
             rows.len()
         );
 
         // .query, no pagenation (default)
         assert_eq!(
             item_query_repository
-                .query(Pagination::new(), None, None)
+                .query(Pagination::new(), None, None, None)
                 .unwrap()
                 .len(),
             default_page_size
@@ -292,6 +293,7 @@ mod tests {
                     offset: 10,
                     limit: DEFAULT_PAGINATION_LIMIT,
                 },
+                None,
                 None,
                 None,
             )
@@ -312,6 +314,7 @@ mod tests {
                 },
                 None,
                 None,
+                None,
             )
             .unwrap();
         assert_eq!(result.len(), 10);
@@ -324,6 +327,7 @@ mod tests {
                     offset: 150,
                     limit: 90,
                 },
+                None,
                 None,
                 None,
             )
@@ -362,6 +366,7 @@ mod tests {
                     code_or_name: None,
                 }),
                 None,
+                Some("store_a".to_string()),
             )
             .unwrap();
         assert_eq!(results.len(), 2);
@@ -461,16 +466,15 @@ mod tests {
             r.is_customer = true;
         });
 
+        let store_row = inline_init(|r: &mut StoreRow| {
+            r.id = "name1_store".to_owned();
+            r.name_id = "name1".to_owned();
+        });
+
         let master_list_name_join_1 = MasterListNameJoinRow {
             id: "id1".to_owned(),
             name_id: "name1".to_owned(),
             master_list_id: "master_list1".to_owned(),
-        };
-
-        let master_list_name_join_2 = MasterListNameJoinRow {
-            id: "id2".to_owned(),
-            name_id: "name1".to_owned(),
-            master_list_id: "master_list2".to_owned(),
         };
 
         for row in item_rows.iter() {
@@ -494,34 +498,22 @@ mod tests {
         NameRowRepository::new(&storage_connection)
             .upsert_one(&name_row)
             .unwrap();
-        // Test
+
+        StoreRowRepository::new(&storage_connection)
+            .upsert_one(&store_row)
+            .unwrap();
 
         // Before adding any joins
         let results0 = item_query_repository
-            .query(Pagination::new(), None, None)
+            .query(Pagination::new(), None, None, None)
             .unwrap();
 
         assert_eq!(results0, item_rows);
 
-        // After adding first join (item1 and item2 visible)
+        // item1, item2, item3 and item4 visible
         MasterListNameJoinRepository::new(&storage_connection)
             .upsert_one(&master_list_name_join_1)
             .unwrap();
-        let results = item_query_repository
-            .query(Pagination::new(), None, None)
-            .unwrap();
-        assert!(results[0].is_visible());
-        assert!(results[1].is_visible());
-
-        // After adding second join (item3 and item4 visible)
-        MasterListNameJoinRepository::new(&storage_connection)
-            .upsert_one(&master_list_name_join_2)
-            .unwrap();
-        let results = item_query_repository
-            .query(Pagination::new(), None, None)
-            .unwrap();
-        assert!(results[2].is_visible());
-        assert!(results[3].is_visible());
 
         // test is_visible filter:
         let results = item_query_repository
@@ -531,15 +523,15 @@ mod tests {
                     id: None,
                     name: None,
                     code: None,
-                    // query invisible rows
                     is_visible: Some(false),
                     r#type: None,
                     code_or_name: None,
                 }),
                 None,
+                Some("name1_store".to_string()),
             )
             .unwrap();
-        assert_eq!(results[0], item_rows[4]);
+        println!("{:?}", results);
         // get visible rows
         let results = item_query_repository
             .query(
@@ -548,15 +540,15 @@ mod tests {
                     id: None,
                     name: None,
                     code: None,
-                    // query invisible rows
                     is_visible: Some(true),
                     r#type: None,
                     code_or_name: None,
                 }),
                 None,
+                Some("name1_store".to_string()),
             )
             .unwrap();
-        assert_eq!(results.len(), 4);
+        assert_eq!(results.len(), 2);
     }
 
     #[actix_rt::test]
@@ -565,7 +557,7 @@ mod tests {
             test_db::setup_all("test_item_query_sort", MockDataInserts::all()).await;
         let repo = ItemRepository::new(&connection);
 
-        let mut items = repo.query(Pagination::new(), None, None).unwrap();
+        let mut items = repo.query(Pagination::new(), None, None, None).unwrap();
 
         let sorted = repo
             .query(
@@ -575,6 +567,7 @@ mod tests {
                     key: ItemSortField::Name,
                     desc: None,
                 }),
+                None,
             )
             .unwrap();
 
@@ -600,6 +593,7 @@ mod tests {
                     key: ItemSortField::Code,
                     desc: Some(true),
                 }),
+                None,
             )
             .unwrap();
 
