@@ -47,6 +47,10 @@ impl StoreNode {
     pub async fn site_id(&self) -> i32 {
         self.row().site_id
     }
+
+    pub async fn logo(&self) -> &str {
+        &self.row().logo
+    }
 }
 
 impl StoreNode {
