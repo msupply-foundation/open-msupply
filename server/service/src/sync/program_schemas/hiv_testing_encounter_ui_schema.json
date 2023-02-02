@@ -342,7 +342,22 @@
         {
           "type": "Control",
           "scope": "#/properties/hivTesting/properties/referredARTFacility",
-          "label": "Where?"
+          "label": "Where?",
+          "options": {
+            "show": [
+              ["THIS_FACILITY", "This facility"],
+              ["OTHER_FACILITY", "Other facility"]
+            ]
+          },
+          "rule": {
+            "effect": "ENABLE",
+            "condition": {
+              "scope": "#/properties/hivTesting/properties/referredForARTServices",
+              "schema": {
+                "const": true
+              }
+            }
+          }
         },
         {
           "type": "Control",
@@ -352,7 +367,7 @@
             "effect": "ENABLE",
             "condition": {
               "scope": "#/properties/hivTesting/properties/referredARTFacility",
-              "schema": { "enum": ["EXTERNAL_FACILITY"] }
+              "schema": { "enum": ["OTHER_FACILITY"] }
             }
           }
         },
@@ -392,8 +407,10 @@
           "rule": {
             "effect": "ENABLE",
             "condition": {
-              "scope": "#/properties/hivTesting/properties/otherServices",
-              "schema": { "contains": { "const": "OTHER" } }
+              "scope": "#/properties/hivTesting/properties/screenedAndReferredForOtherServices",
+              "schema": {
+                "const": true
+              }
             }
           }
         },
