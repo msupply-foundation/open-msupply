@@ -34,7 +34,7 @@ export const Initialise = () => {
   } = useInitialiseForm();
 
   useEffect(() => {
-    setPageTitle(`${t('app.initialise')} | ${t('app')} `);
+    setPageTitle(`${t('messages.not-initialised')} | ${t('app')} `);
   }, []);
 
   const isInputDisabled = isInitialising || isLoading;

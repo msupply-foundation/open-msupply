@@ -7,6 +7,7 @@
   "error.no-stocktakes": "There are no Stocktakes to display.",
   "error.no-stocktake-items": "No items have been added to this stocktake.",
   "error.stocktake-not-found": "Stocktake not found",
+  "error.provide-reason": "A reason must be provided for any rows which have a difference in the counted number of packs.",
   "label.add-batch": "Add batch",
   "label.add-new-line": "Add a new line",
   "label.cost-price": "Cost price",
