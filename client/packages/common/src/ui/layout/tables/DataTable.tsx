@@ -28,7 +28,7 @@ const DataTableComponent = <T extends RecordWithId>({
   data = [],
   dense = false,
   enableColumnSelection,
-  generateRowTooltip = () => '',
+  generateRowTooltip,
   isDisabled = false,
   isError = false,
   isLoading = false,
@@ -44,10 +44,14 @@ const DataTableComponent = <T extends RecordWithId>({
   const { setRows, setDisabledRows, setFocus } = useTableStore();
   const [clickFocusedRow, setClickFocusedRow] = useState(false);
   const [displayColumns, setDisplayColumns] = useState(columns);
-  const columnsToDisplay = columns.filter(c =>
-    displayColumns.map(({ key }) => key).includes(c.key)
+  const columnsToDisplay = React.useMemo(
+    () =>
+      columns.filter(c => displayColumns.map(({ key }) => key).includes(c.key)),
+    [displayColumns, columns]
   );
   const { localisedDate } = useFormatDateTime();
+  // TODO lift out the memoisation of localisedDate
+  const memoisedLocalisedDate = React.useMemo(() => localisedDate, []);
 
   useRegisterActions([
     {
@@ -175,7 +179,6 @@ const DataTableComponent = <T extends RecordWithId>({
             {(row, idx) => (
               <DataRow
                 key={row.id}
-                rows={data}
                 ExpandContent={ExpandContent}
                 rowIndex={idx}
                 columns={columnsToDisplay}
@@ -186,7 +189,7 @@ const DataTableComponent = <T extends RecordWithId>({
                 keyboardActivated={clickFocusedRow}
                 generateRowTooltip={generateRowTooltip}
                 localisedText={t}
-                localisedDate={localisedDate}
+                localisedDate={memoisedLocalisedDate}
                 isAnimated={isRowAnimated}
               />
             )}

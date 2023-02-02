@@ -8,9 +8,8 @@ import { CellProps } from '../../../columns/types';
 export const ExpiryDateCell = <T extends RecordWithId>({
   column,
   rowData,
-  rows,
 }: CellProps<T>) => {
-  const expiryDate = column.accessor({ rowData, rows }) as string;
+  const expiryDate = column.accessor({ rowData }) as string;
 
   const isExpired = expiryDate
     ? DateUtils.isAlmostExpired(new Date(expiryDate))

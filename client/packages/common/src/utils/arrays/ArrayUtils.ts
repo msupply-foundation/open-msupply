@@ -35,7 +35,7 @@ export const ArrayUtils = {
   ): number => {
     return arr.reduce((sum, someEntity) => sum + someEntity[key], 0);
   },
-  immutablePatch: <T extends RecordWithId>(arr: T[], patch: RecordPatch<T>) => {
+  mutablePatch: <T extends RecordWithId>(arr: T[], patch: RecordPatch<T>) => {
     const index = arr.findIndex(entity => entity.id === patch.id);
     if (index === -1) return arr;
     arr[index] = {
@@ -44,8 +44,8 @@ export const ArrayUtils = {
     } as T;
     return arr;
   },
-  mutablePatch: <T extends RecordWithId>(arr: T[], patch: RecordPatch<T>) => {
-    return arr.map(entity => {
+  immutablePatch: <T extends RecordWithId>(arr: T[], patch: RecordPatch<T>) =>
+    arr.map(entity => {
       if (entity.id === patch.id) {
         return {
           ...entity,
@@ -53,8 +53,7 @@ export const ArrayUtils = {
         };
       }
       return entity;
-    });
-  },
+    }),
   groupBy,
   uniqBy,
 };
