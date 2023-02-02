@@ -4,15 +4,19 @@ import {
   Categorization,
   categorizationHasCategory,
   Category,
+  isLayout,
+  isScoped,
   isVisible,
+  Layout,
   LayoutProps,
   optionIs,
   RankedTester,
   rankWith,
+  toDataPathSegments,
   uiTypeIs,
 } from '@jsonforms/core';
-import { withJsonFormsLayoutProps } from '@jsonforms/react';
-import { Button, Grid, Hidden } from '@mui/material';
+import { useJsonForms, withJsonFormsLayoutProps } from '@jsonforms/react';
+import { Button, Grid, Hidden, Typography } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { DialogButton } from '@openmsupply-client/common';
 import { ModalProps, useDialog } from '@common/hooks';
@@ -95,6 +99,71 @@ const CategoryLayoutRendererComponent = ({
 };
 const CategoryLayoutRenderer = React.memo(CategoryLayoutRendererComponent);
 
+// Try to extract a more precise error path
+const propertyPathFromError = (error: {
+  instancePath: string;
+  keyword: string;
+  params: Record<string, any>;
+}): string => {
+  // see https://ajv.js.org/api.html#error-objects
+  switch (error.keyword) {
+    case 'dependencies':
+      return `${error.instancePath}/${error.params['missingProperty']}`;
+    case 'required':
+      return `${error.instancePath}/${error.params['missingProperty']}`;
+    case 'propertyNames':
+      return `${error.instancePath}/${error.params['propertyName']}`;
+    default:
+      return error.instancePath;
+  }
+};
+
+// Recursively goes through a layout and collects all element paths that have errors
+const containsErrors = (layout: Layout, errorPaths: string[]): string[] => {
+  const results = [];
+  for (const element of layout.elements) {
+    if (isScoped(element)) {
+      const scopePath = toDataPathSegments(element.scope).reduce(
+        (prev, current) => {
+          return `${prev}/${current}`;
+        },
+        ''
+      );
+      for (const errorPath of errorPaths) {
+        if (scopePath.startsWith(errorPath)) {
+          results.push(errorPath);
+        }
+      }
+    } else if (isLayout(element)) {
+      results.push(...containsErrors(element, errorPaths));
+    }
+  }
+  return results;
+};
+
+const ErrorStringComponent: FC<{
+  category: Category;
+  errorPaths: string[];
+}> = ({ category, errorPaths }) => {
+  if (errorPaths.length === 0) {
+    return null;
+  }
+  const foundPaths = containsErrors(category, errorPaths);
+  if (foundPaths.length === 0) {
+    return null;
+  }
+  return (
+    <Typography
+      sx={{
+        color: theme => theme.palette.error.main,
+        backgroundColor: theme => theme.palette.background.login,
+        borderRadius: '16px',
+        padding: '0px 8px',
+      }}
+    >{`${foundPaths.length} errors`}</Typography>
+  );
+};
+
 const UIComponent: FC<LayoutProps & AjvProps> = ({
   ajv,
   data,
@@ -112,6 +181,9 @@ const UIComponent: FC<LayoutProps & AjvProps> = ({
     (category: Category | Categorization): category is Category =>
       isVisible(category, data, '', ajv) && category.type === 'Category'
   );
+
+  const { core } = useJsonForms();
+  const errorPaths = core?.errors?.map(e => propertyPathFromError(e)) ?? [];
 
   const childProps: MaterialLayoutRendererProps = {
     elements:
@@ -158,6 +230,7 @@ const UIComponent: FC<LayoutProps & AjvProps> = ({
             }}
           >
             {category.label}
+            <ErrorStringComponent category={category} errorPaths={errorPaths} />
           </Button>
           <CategoryModal
             onClose={onClose}
