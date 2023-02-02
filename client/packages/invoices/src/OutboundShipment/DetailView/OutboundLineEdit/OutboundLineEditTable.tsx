@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Divider,
   Box,
@@ -36,6 +36,10 @@ const PlaceholderRow = ({
   const [placeholderBuffer, setPlaceholderBuffer] = useState(
     line?.numberOfPacks ?? 0
   );
+
+  useEffect(() => {
+    setPlaceholderBuffer(line.numberOfPacks);
+  }, [line.numberOfPacks]);
 
   return (
     <Box display="flex">
