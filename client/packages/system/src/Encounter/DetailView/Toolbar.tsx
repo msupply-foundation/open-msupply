@@ -75,7 +75,7 @@ export const Toolbar: FC<ToolbarProps> = ({ onChange }) => {
                 }
               />
               <Row
-                label={'Seen by'}
+                label={t('label.clinician')}
                 Input={
                   <BasicTextInput
                     disabled
