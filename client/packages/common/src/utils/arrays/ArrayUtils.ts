@@ -35,15 +35,6 @@ export const ArrayUtils = {
   ): number => {
     return arr.reduce((sum, someEntity) => sum + someEntity[key], 0);
   },
-  mutablePatch: <T extends RecordWithId>(arr: T[], patch: RecordPatch<T>) => {
-    const index = arr.findIndex(entity => entity.id === patch.id);
-    if (index === -1) return arr;
-    arr[index] = {
-      ...arr[index],
-      ...patch,
-    } as T;
-    return arr;
-  },
   immutablePatch: <T extends RecordWithId>(arr: T[], patch: RecordPatch<T>) =>
     arr.map(entity => {
       if (entity.id === patch.id) {

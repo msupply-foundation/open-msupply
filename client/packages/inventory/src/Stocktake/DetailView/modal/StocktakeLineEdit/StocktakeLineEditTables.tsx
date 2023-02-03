@@ -28,7 +28,6 @@ interface StocktakeLineEditTableProps {
   isDisabled?: boolean;
   batches: DraftStocktakeLine[];
   update: (patch: RecordPatch<DraftStocktakeLine>) => void;
-  mutableUpdate: (patch: RecordPatch<DraftStocktakeLine>) => void;
   isError?: boolean;
 }
 
@@ -122,7 +121,6 @@ const getInventoryAdjustmentReasonInputColumn = (
 export const BatchTable: FC<StocktakeLineEditTableProps> = ({
   batches,
   update,
-  mutableUpdate,
   isDisabled = false,
   isError = false,
 }) => {
@@ -144,8 +142,8 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
       key: 'snapshotNumberOfPacks',
       label: 'label.num-packs',
       width: 100,
-      setter: patch => mutableUpdate({ ...patch, countThisLine: true }),
-      accessor: ({ rowData }) => rowData.snapshotNumberOfPacks || '',
+      setter: patch => update({ ...patch, countThisLine: true }),
+      accessor: ({ rowData }) => rowData.snapshotNumberOfPacks || '0',
     },
     {
       key: 'packSize',
