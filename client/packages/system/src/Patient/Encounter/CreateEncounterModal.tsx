@@ -32,13 +32,15 @@ interface Encounter {
   status?: EncounterNodeStatus;
   startDatetime?: string;
   endDatetime?: string;
-  clinician?: ClinicianFragment;
+  clinician?: Clinician;
 }
 
 type ClinicianAutocompleteOption = {
   label: string;
-  value?: ClinicianFragment;
+  value?: Clinician;
 };
+
+type Clinician = Pick<ClinicianFragment, 'firstName' | 'lastName' | 'id'>;
 
 export const CreateEncounterModal: FC = () => {
   const patientId = usePatient.utils.id();
@@ -199,8 +201,12 @@ export const CreateEncounterModal: FC = () => {
                       }}
                       options={clinicians.map(
                         (clinician): ClinicianAutocompleteOption => ({
-                          label: `${clinician.firstName} ${clinician.lastName}`,
-                          value: clinician,
+                          label: getClinicianName(clinician),
+                          value: {
+                            firstName: clinician.firstName ?? '',
+                            lastName: clinician.lastName ?? '',
+                            id: clinician.id,
+                          },
                         })
                       )}
                     />
@@ -240,7 +246,9 @@ const RenderForm = ({
   return <>{form}</>;
 };
 
-export const getClinicianName = (clinician: ClinicianFragment | undefined) => {
+export const getClinicianName = (
+  clinician: ClinicianFragment | Clinician | undefined
+) => {
   if (clinician === undefined) return '';
-  return `${clinician.firstName} ${clinician.lastName}`;
+  return `${clinician.firstName || ''} ${clinician.lastName || ''}`;
 };
