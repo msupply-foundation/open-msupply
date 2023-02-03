@@ -22,18 +22,23 @@ import {
   PatientModal,
   useClinicians,
   usePatientModalStore,
-  EncounterFragment,
   useEncounter,
 } from '@openmsupply-client/programs';
 import { usePatient } from '../api';
 import { AppRoute } from 'packages/config/src';
 import { EncounterSearchInput } from './EncounterSearchInput';
 import { ClinicianFragment } from 'packages/programs/src/api/operations.generated';
+interface Encounter {
+  status?: EncounterNodeStatus;
+  startDatetime?: string;
+  endDatetime?: string;
+  clinician?: ClinicianFragment;
+}
 
-type Encounter = Pick<
-  EncounterFragment,
-  'startDatetime' | 'endDatetime' | 'status'
->;
+type ClinicianAutocompleteOption = {
+  label: string;
+  value?: ClinicianFragment;
+};
 
 export const CreateEncounterModal: FC = () => {
   const patientId = usePatient.utils.id();
@@ -49,7 +54,7 @@ export const CreateEncounterModal: FC = () => {
   const { error } = useNotification();
 
   const { data: clinicianData } = useClinicians.document.list({});
-  const clinicians = clinicianData?.nodes ?? [];
+  const clinicians: ClinicianFragment[] = clinicianData?.nodes ?? [];
 
   const handleSave = useEncounter.document.upsert(
     patientId,
@@ -94,8 +99,13 @@ export const CreateEncounterModal: FC = () => {
       setDraft({ ...draft, endDatetime });
   };
 
-  const setClinician = (clinicianIndex: number) => {
-    setDraft({ ...draft, clinician: clinicians[clinicianIndex] });
+  const setClinician = (option: ClinicianAutocompleteOption | null): void => {
+    if (option === null) {
+      setDraft({ ...draft, clinician: undefined });
+      return;
+    }
+    const clinician = option.value;
+    setDraft({ ...draft, clinician });
   };
 
   return (
@@ -184,11 +194,15 @@ export const CreateEncounterModal: FC = () => {
                         value: draft?.clinician,
                       }}
                       width={'200'}
-                      onChange={e => setClinician(e.target.value)}
-                      options={clinicians.map(clinician => ({
-                        label: `${clinician.firstName} ${clinician.lastName}`,
-                        value: clinician,
-                      }))}
+                      onChange={(_, option) => {
+                        setClinician(option);
+                      }}
+                      options={clinicians.map(
+                        (clinician): ClinicianAutocompleteOption => ({
+                          label: `${clinician.firstName} ${clinician.lastName}`,
+                          value: clinician,
+                        })
+                      )}
                     />
                   }
                 />
