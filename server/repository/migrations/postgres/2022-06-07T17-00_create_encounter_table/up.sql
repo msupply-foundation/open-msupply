@@ -12,5 +12,6 @@ CREATE TABLE encounter (
     program TEXT NOT NULL,
     start_datetime TIMESTAMP NOT NULL,
     end_datetime TIMESTAMP,
-    status encounter_status
+    status encounter_status,
+    clinician_id TEXT REFERENCES clinician(id)
 )
