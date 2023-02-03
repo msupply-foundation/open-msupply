@@ -1,3 +1,4 @@
+mod clinician;
 mod document;
 mod document_registry;
 mod invoice;
@@ -20,6 +21,7 @@ mod user;
 
 use std::{collections::HashSet, hash::Hasher};
 
+pub use clinician::*;
 pub use document::*;
 pub use document_registry::*;
 pub use invoice::*;

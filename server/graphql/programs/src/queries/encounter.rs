@@ -62,6 +62,7 @@ pub struct EncounterFilterInput {
     pub start_datetime: Option<DatetimeFilterInput>,
     pub end_datetime: Option<DatetimeFilterInput>,
     pub status: Option<EqualFilterEncounterStatusInput>,
+    pub clinician_id: Option<EqualFilterStringInput>,
 }
 
 impl EncounterFilterInput {
@@ -77,6 +78,7 @@ impl EncounterFilterInput {
                 .status
                 .map(|s| map_filter!(s, EncounterNodeStatus::to_domain)),
             end_datetime: self.end_datetime.map(DatetimeFilter::from),
+            clinician_id: self.clinician_id.map(EqualFilter::from),
         }
     }
 }
