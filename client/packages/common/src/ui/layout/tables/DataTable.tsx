@@ -50,8 +50,6 @@ const DataTableComponent = <T extends RecordWithId>({
     [displayColumns, columns]
   );
   const { localisedDate } = useFormatDateTime();
-  // TODO lift out the memoisation of localisedDate
-  const memoisedLocalisedDate = React.useMemo(() => localisedDate, []);
 
   useRegisterActions([
     {
@@ -189,7 +187,7 @@ const DataTableComponent = <T extends RecordWithId>({
                 keyboardActivated={clickFocusedRow}
                 generateRowTooltip={generateRowTooltip}
                 localisedText={t}
-                localisedDate={memoisedLocalisedDate}
+                localisedDate={localisedDate}
                 isAnimated={isRowAnimated}
               />
             )}
