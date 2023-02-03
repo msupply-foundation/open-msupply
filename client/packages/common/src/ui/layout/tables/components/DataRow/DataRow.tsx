@@ -27,6 +27,17 @@ interface DataRowProps<T extends RecordWithId> {
   localisedDate: (date: string | number | Date) => string;
   isAnimated: boolean;
 }
+const Animation: FC<PropsWithChildren<{ isAnimated: boolean }>> = ({
+  children,
+  isAnimated,
+}) =>
+  isAnimated ? (
+    <Fade in={true} timeout={500}>
+      {children as ReactElement}
+    </Fade>
+  ) : (
+    <>{children}</>
+  );
 
 const DataRowComponent = <T extends RecordWithId>({
   columns,
@@ -51,14 +62,6 @@ const DataRowComponent = <T extends RecordWithId>({
   const onRowClick = () => onClick && onClick(rowData);
   const paddingX = dense ? '12px' : '16px';
   const paddingY = dense ? '4px' : 0;
-  const Animation: FC<PropsWithChildren> = ({ children }) =>
-    isAnimated ? (
-      <Fade in={true} timeout={500}>
-        {children as ReactElement}
-      </Fade>
-    ) : (
-      <>{children}</>
-    );
   const rowTitle = generateRowTooltip?.(rowData) ?? '';
 
   useEffect(() => {
@@ -67,10 +70,10 @@ const DataRowComponent = <T extends RecordWithId>({
 
   return (
     <>
-      <Animation>
+      <Animation isAnimated={isAnimated}>
         <Tooltip title={rowTitle} followCursor placement="bottom-start">
           <TableRow
-            key={`${rowKey}`}
+            key={`tr-${rowKey}`}
             sx={{
               backgroundColor: isFocused
                 ? theme => alpha(theme.palette.secondary.main, 0.1)

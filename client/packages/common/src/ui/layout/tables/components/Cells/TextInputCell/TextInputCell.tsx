@@ -16,7 +16,7 @@ export const TextInputCell = <T extends RecordWithId>({
   const updater = useDebounceCallback(column.setter, [column.setter], 500);
   const { maxLength } = column;
   const autoFocus = rowIndex === 0 && columnIndex === 0;
-  // This enables browser autocomplete for suggesting previously enetered input
+  // This enables browser autocomplete for suggesting previously entered input
   // (input needs to be wrapped in form with autoComplete="on", doesn't quite work in firefox)
   // see https://github.com/openmsupply/open-msupply/pull/305
   const autocompleteProps = autocompleteName
