@@ -1,13 +1,14 @@
-use async_graphql::{Context, Enum, InputObject, Object, Result, SimpleObject, Union};
+use async_graphql::{Context, Enum, InputObject, Result, SimpleObject, Union};
 use graphql_core::{
     generic_filters::{EqualFilterStringInput, SimpleStringFilterInput},
     pagination::PaginationInput,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
+use graphql_types::types::ClinicianNode;
 use repository::{
-    Clinician, ClinicianFilter, ClinicianRow, ClinicianSort, ClinicianSortField, EqualFilter,
-    PaginationOption, SimpleStringFilter,
+    Clinician, ClinicianFilter, ClinicianSort, ClinicianSortField, EqualFilter, PaginationOption,
+    SimpleStringFilter,
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -52,11 +53,6 @@ pub struct ClinicianFilterInput {
     pub mobile: Option<SimpleStringFilterInput>,
     pub email: Option<SimpleStringFilterInput>,
     pub female: Option<bool>,
-}
-
-#[derive(PartialEq, Debug)]
-pub struct ClinicianNode {
-    pub clinician: Clinician,
 }
 
 #[derive(SimpleObject)]
@@ -171,62 +167,5 @@ impl ClinicianSortInput {
             key,
             desc: self.desc,
         }
-    }
-}
-
-impl ClinicianNode {
-    pub fn from_domain(clinician: Clinician) -> Self {
-        ClinicianNode { clinician }
-    }
-
-    pub fn row(&self) -> &ClinicianRow {
-        &self.clinician
-    }
-}
-
-#[Object]
-impl ClinicianNode {
-    pub async fn id(&self) -> &str {
-        &self.row().id
-    }
-
-    pub async fn code(&self) -> &str {
-        &self.row().code
-    }
-
-    pub async fn last_name(&self) -> &str {
-        &self.row().last_name
-    }
-
-    pub async fn initials(&self) -> &str {
-        &self.row().initials
-    }
-
-    pub async fn first_name(&self) -> &Option<String> {
-        &self.row().first_name
-    }
-
-    pub async fn address1(&self) -> &Option<String> {
-        &self.row().address1
-    }
-
-    pub async fn address2(&self) -> &Option<String> {
-        &self.row().address2
-    }
-
-    pub async fn phone(&self) -> &Option<String> {
-        &self.row().phone
-    }
-
-    pub async fn mobile(&self) -> &Option<String> {
-        &self.row().mobile
-    }
-
-    pub async fn email(&self) -> &Option<String> {
-        &self.row().email
-    }
-
-    pub async fn is_female(&self) -> bool {
-        self.row().is_female
     }
 }
