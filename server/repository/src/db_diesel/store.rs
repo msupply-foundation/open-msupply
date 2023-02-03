@@ -25,7 +25,7 @@ pub struct StoreFilter {
     pub name: Option<SimpleStringFilter>,
     pub name_code: Option<SimpleStringFilter>,
     pub site_id: Option<EqualFilter<i32>>,
-    pub logo: Option<SimpleStringFilter>,
+    pub logo: Option<String>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -66,11 +66,6 @@ impl StoreFilter {
 
     pub fn site_id(mut self, filter: EqualFilter<i32>) -> Self {
         self.site_id = Some(filter);
-        self
-    }
-
-    pub fn logo(mut self, filter: SimpleStringFilter)->Self{
-        self.logo = Some(filter);
         self
     }
 }
@@ -141,7 +136,7 @@ fn create_filtered_query(filter: Option<StoreFilter>) -> BoxedStoreQuery {
             name,
             name_code,
             site_id,
-            logo,
+            ..
         } = f;
 
         apply_equal_filter!(query, id, store_dsl::id);
@@ -149,7 +144,6 @@ fn create_filtered_query(filter: Option<StoreFilter>) -> BoxedStoreQuery {
         apply_simple_string_filter!(query, name, name_dsl::name_);
         apply_simple_string_filter!(query, name_code, name_dsl::code);
         apply_equal_filter!(query, site_id, store_dsl::site_id);
-        apply_simple_string_filter!(query, logo, store_dsl::logo);
     }
 
     query
