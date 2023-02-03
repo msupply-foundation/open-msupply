@@ -99,7 +99,7 @@ export const ArrayCommonComponent = (props: ArrayControlCustomProps) => {
   } = props;
   const { errors: zErrors, options } = useZodOptionsValidation(
     zOptions,
-    props.uischema.options ?? {}
+    props.uischema.options
   );
 
   const defaultExpanded = props.uischema?.options?.['defaultExpanded'] ?? false;
