@@ -5,7 +5,6 @@ import { RecordWithId } from '@common/types';
 
 export interface CellProps<T extends RecordWithId> {
   rowData: T;
-  rows: T[];
   columns: Column<T>[];
   column: Column<T>;
   rowKey: string;
@@ -39,7 +38,6 @@ export enum ColumnAlign {
 
 export type ColumnDataAccessor<T extends RecordWithId> = (params: {
   rowData: T;
-  rows: T[];
 }) => unknown;
 
 export type Translators = {

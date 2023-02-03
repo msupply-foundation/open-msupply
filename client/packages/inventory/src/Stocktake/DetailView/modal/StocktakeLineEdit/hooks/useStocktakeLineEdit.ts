@@ -12,7 +12,6 @@ import { useDraftStocktakeLines } from './useDraftStocktakeLines';
 interface useStocktakeLineEditController {
   draftLines: DraftStocktakeLine[];
   update: (patch: RecordPatch<StocktakeLineFragment>) => void;
-  mutableUpdate: (patch: RecordPatch<StocktakeLineFragment>) => void;
   addLine: () => void;
   save: (lines: DraftStocktakeLine[]) => Promise<UpsertStocktakeLinesMutation>;
   isLoading: boolean;
@@ -28,23 +27,13 @@ export const useStocktakeLineEdit = (
   const [draftLines, setDraftLines] = useDraftStocktakeLines(item);
   const { mutateAsync: save, isLoading, isError } = useStocktake.line.save();
 
-  const update = (patch: RecordPatch<DraftStocktakeLine>) => {
+  const update = (patch: RecordPatch<DraftStocktakeLine>) =>
     setDraftLines(lines =>
       ArrayUtils.immutablePatch(lines, {
         ...patch,
         isUpdated: !patch.isCreated,
       })
     );
-  };
-
-  const mutableUpdate = (patch: RecordPatch<DraftStocktakeLine>) => {
-    setDraftLines(lines =>
-      ArrayUtils.mutablePatch(lines, {
-        ...patch,
-        isUpdated: !patch.isCreated,
-      })
-    );
-  };
 
   const addLine = () => {
     if (item) {
@@ -55,7 +44,6 @@ export const useStocktakeLineEdit = (
   return {
     draftLines,
     update,
-    mutableUpdate,
     addLine,
     save,
     isError,
