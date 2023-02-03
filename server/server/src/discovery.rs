@@ -1,8 +1,12 @@
 use crate::certs::Protocol;
-use async_dnssd::{RegisterData, TxtRecord};
+use astro_dnssd::DNSServiceBuilder;
+// use async_dnssd::{RegisterData, TxtRecord};
+use std::collections::HashMap;
+use std::thread::sleep;
+use std::time::Duration;
 
 const SERVICE_NAME: &'static str = "_omsupply._tcp";
-const NAME: &'static str = "omSupplyServer";
+// const NAME: &'static str = "omSupplyServer";
 
 const PROTOCOL_KEY: &'static str = "protocol";
 const CLIENT_VERSION_KEY: &'static str = "client_version";
@@ -12,28 +16,50 @@ const CLIENT_VERSION: &'static str = "unspecified";
 
 pub(crate) fn start_discovery(protocol: Protocol, port: u16, hardware_id: String) {
     tokio::task::spawn(async move {
-        let mut txt: TxtRecord = TxtRecord::new();
-        txt.set_value(HARDWARE_ID_KEY.as_bytes(), hardware_id.as_bytes())
-            .unwrap();
-        txt.set_value(CLIENT_VERSION_KEY.as_bytes(), CLIENT_VERSION.as_bytes())
-            .unwrap();
-        txt.set_value(PROTOCOL_KEY.as_bytes(), protocol.to_string().as_bytes())
-            .unwrap();
+        // let mut txt: TxtRecord = TxtRecord::new();
+        // txt.set_value(HARDWARE_ID_KEY.as_bytes(), hardware_id.as_bytes())
+        //     .unwrap();
+        // txt.set_value(CLIENT_VERSION_KEY.as_bytes(), CLIENT_VERSION.as_bytes())
+        //     .unwrap();
+        // txt.set_value(PROTOCOL_KEY.as_bytes(), protocol.to_string().as_bytes())
+        //     .unwrap();
 
-        let (_registration, _) = async_dnssd::register_extended(
-            SERVICE_NAME,
-            port,
-            RegisterData {
-                txt: txt.rdata(),
-                name: Some(NAME),
-                ..Default::default()
-            },
-        )
-        .unwrap()
-        .await
-        .unwrap();
+        let mut text_record = HashMap::<String, String>::new();
+        text_record.insert(HARDWARE_ID_KEY.to_string(), hardware_id.to_string());
+        text_record.insert(CLIENT_VERSION_KEY.to_string(), CLIENT_VERSION.to_string());
+        text_record.insert(PROTOCOL_KEY.to_string(), protocol.to_string());
+
+        let service = DNSServiceBuilder::new(SERVICE_NAME, port)
+            .with_txt_record(text_record)
+            .register();
+
+        {
+            match service {
+                Ok(_service) => {
+                    println!("Registered... waiting 20s");
+                    sleep(Duration::from_secs(20));
+                }
+                Err(e) => {
+                    println!("Error registering: {:?}", e);
+                }
+            }
+        }
+        //         let (_registration, _) = async_dnssd::register_extended(
+        //     SERVICE_NAME,
+        //     port,
+        //     RegisterData {
+        //         txt: txt.rdata(),
+        //         name: Some(NAME),
+        //         ..Default::default()
+        //     },
+        // )
+        // .unwrap()
+        // .await
+        // .unwrap();
 
         // Without this discovery stops (even if result of register_extended is kept and passed to caller)
         futures::future::pending::<()>().await;
+
+        println!("Discovery says bye now");
     });
 }
