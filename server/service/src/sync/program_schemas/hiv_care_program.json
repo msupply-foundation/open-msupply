@@ -107,8 +107,8 @@
         "mother": {
           "$ref": "#/definitions/HIVRelation"
         },
-        "partnerHivStatus": {
-          "$ref": "#/definitions/HIVPartnerStatus"
+        "partnerHIVStatus": {
+          "$ref": "#/definitions/HIVTestingStatus"
         },
         "priorART": {
           "enum": ["TRANSFER_IN_WITH_RECORDS", "TRANSFER_IN_WITHOUT_RECORDS", "PPTCT_PROPHYLAXIS", "PEP", "PrEP"],
@@ -131,10 +131,6 @@
       "required": ["enrolmentDatetime"],
       "type": "object"
     },
-    "HIVPartnerStatus": {
-      "enum": ["POSITIVE", "NEGATIVE", "UNKNOWN", "NOT_DONE"],
-      "type": "string"
-    },
     "HIVRelation": {
       "properties": {
         "clinic": {
@@ -152,6 +148,10 @@
     },
     "HIVTestType": {
       "enum": ["PCR", "ANTIBODY"],
+      "type": "string"
+    },
+    "HIVTestingStatus": {
+      "enum": ["POSITIVE", "NEGATIVE", "UNKNOWN", "NOT_DONE"],
       "type": "string"
     },
     "Note": {
@@ -173,7 +173,7 @@
           "type": "string"
         }
       },
-      "required": ["text", "created", "authorId"],
+      "required": ["text", "created", "authorId", "authorName"],
       "type": "object"
     },
     "Person": {
@@ -246,7 +246,7 @@
           "$ref": "#/definitions/SocioEconomics"
         }
       },
-      "required": ["isDeceased", "contactDetails", "socioEconomics"],
+      "required": ["contactDetails"],
       "type": "object"
     },
     "ProgramEnrolmentStatus": {

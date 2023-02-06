@@ -78,7 +78,7 @@ mod hiv_testing_encounter {
             Self {
                 end_datetime: Default::default(),
                 family_planning: Default::default(),
-                practitioner: Default::default(),
+                clinician: Default::default(),
                 risk_behaviour: Default::default(),
                 start_datetime: Default::default(),
                 status: Default::default(),
@@ -100,7 +100,7 @@ mod hiv_care_encounter {
                 family_planning: Default::default(),
                 gender_based_violence: Default::default(),
                 physical_examination: Default::default(),
-                practitioner: Default::default(),
+                clinician: Default::default(),
                 start_datetime: Default::default(),
                 status: Default::default(),
                 tuberculosis: Default::default(),
