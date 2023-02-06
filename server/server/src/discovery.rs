@@ -1,5 +1,5 @@
 use crate::certs::Protocol;
-#[cfg(target_os = "macos")]
+#[cfg(any(target_os = "macos", target_os = "linux"))]
 use async_dnssd::{RegisterData, TxtRecord};
 #[cfg(target_os = "windows")]
 use {astro_dnssd::DNSServiceBuilder, std::collections::HashMap};
@@ -13,7 +13,7 @@ const CLIENT_VERSION: &'static str = "unspecified";
 
 pub(crate) fn start_discovery(protocol: Protocol, port: u16, hardware_id: String) {
     tokio::task::spawn(async move {
-        #[cfg(target_os = "macos")]
+        #[cfg(any(target_os = "macos", target_os = "linux"))]
         {
             let mut txt: TxtRecord = TxtRecord::new();
             txt.set_value(HARDWARE_ID_KEY.as_bytes(), hardware_id.as_bytes())
