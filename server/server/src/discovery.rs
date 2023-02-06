@@ -45,20 +45,23 @@ pub(crate) fn start_discovery(protocol: Protocol, port: u16, hardware_id: String
             text_record.insert(HARDWARE_ID_KEY.to_string(), hardware_id.to_string());
             text_record.insert(CLIENT_VERSION_KEY.to_string(), CLIENT_VERSION.to_string());
             text_record.insert(PROTOCOL_KEY.to_string(), protocol.to_string());
-            let service = DNSServiceBuilder::new(SERVICE_NAME, port)
-                .with_txt_record(text_record)
-                .with_name(NAME)
-                .register();
-            {
-                match service {
-                    Ok(_service) => {
-                        log::info!("Discovery registered");
-                        loop {
+            // need to keep the thread running
+            // found that the discovery client in electron did not pick up the server at times
+            // and running register again was necessary for the server to be found
+            loop {
+                let service = DNSServiceBuilder::new(SERVICE_NAME, port)
+                    .with_txt_record(text_record.clone())
+                    .with_name(NAME)
+                    .register();
+                {
+                    match service {
+                        Ok(_service) => {
                             tokio::time::sleep(std::time::Duration::from_secs(60)).await;
                         }
-                    }
-                    Err(e) => {
-                        log::error!("Error registering discovery: {:?}", e);
+                        Err(e) => {
+                            log::error!("Error registering discovery: {:?}", e);
+                            break;
+                        }
                     }
                 }
             }
