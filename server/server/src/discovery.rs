@@ -55,7 +55,7 @@ pub(crate) fn start_discovery(protocol: Protocol, port: u16, hardware_id: String
                         log::info!("Discovery registered");
                         loop {
                             tokio::time::sleep(std::time::Duration::from_secs(60)).await;
-\                        }
+                        }
                     }
                     Err(e) => {
                         log::error!("Error registering discovery: {:?}", e);
