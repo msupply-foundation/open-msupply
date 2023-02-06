@@ -47,8 +47,6 @@ thiserror = "1"
 clap = { version = "3.1.8", features = ["derive"] }
 rust-embed = "6.4.0"
 mime_guess = "2.0.4"
-# async-dnssd = { version = "0.5.0", optional = true }
-# astro-dnssd = { version = "0.3.2", optional = true }
 futures = "0.3"
 fast_log = { version = "1.5" }
 rcgen = "0.9.2"
@@ -69,7 +67,6 @@ astro-dnssd = { version = "0.3.2" }
 
 [features]
 default = ["sqlite", "dep:machine-uid"]
-# discovery = ["dep:async-dnssd", "dep:astro-dnssd"]
 sqlite = ["repository/sqlite"]
 postgres = ["repository/postgres"]
 # See openssl comment regarding the "openssl/vendored" feature
