@@ -15,6 +15,7 @@ Remote server can use `sqlite` or `postgres`, quick start guide is for `sqlite` 
 ### Windows
 - [Follow this guide](https://docs.microsoft.com/en-us/windows/dev-environment/rust/setup)
 - Install [perl](https://learn.perl.org/installing/windows.html)
+- For building the windows binary, you'll need to install the [Bonjour Windows SDK](https://developer.apple.com/bonjour/) and configure the environment variable `BONJOUR_SDK_HOME` to point to the installation location. This is required for the dns-sd implementation on windows, used for server discovery.
 
 ### Mac
 
