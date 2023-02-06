@@ -5,7 +5,6 @@ use async_dnssd::{RegisterData, TxtRecord};
 use {astro_dnssd::DNSServiceBuilder, std::collections::HashMap};
 
 const SERVICE_NAME: &'static str = "_omsupply._tcp";
-#[cfg(target_os = "macos")]
 const NAME: &'static str = "omSupplyServer";
 const PROTOCOL_KEY: &'static str = "protocol";
 const CLIENT_VERSION_KEY: &'static str = "client_version";
@@ -35,6 +34,9 @@ pub(crate) fn start_discovery(protocol: Protocol, port: u16, hardware_id: String
             .unwrap()
             .await
             .unwrap();
+
+            // Without this discovery stops (even if result of register_extended is kept and passed to caller)
+            futures::future::pending::<()>().await;
         }
 
         #[cfg(target_os = "windows")]
@@ -45,19 +47,21 @@ pub(crate) fn start_discovery(protocol: Protocol, port: u16, hardware_id: String
             text_record.insert(PROTOCOL_KEY.to_string(), protocol.to_string());
             let service = DNSServiceBuilder::new(SERVICE_NAME, port)
                 .with_txt_record(text_record)
+                .with_name(NAME)
                 .register();
             {
                 match service {
                     Ok(_service) => {
-                        println!("Discovery registered");
+                        log::info!("Discovery registered");
+                        loop {
+                            tokio::time::sleep(std::time::Duration::from_secs(60)).await;
+\                        }
                     }
                     Err(e) => {
-                        println!("Error registering: {:?}", e);
+                        log::error!("Error registering discovery: {:?}", e);
                     }
                 }
             }
         }
-        // Without this discovery stops (even if result of register_extended is kept and passed to caller)
-        futures::future::pending::<()>().await;
     });
 }

@@ -63,6 +63,8 @@ async-dnssd = { version = "0.5.0" }
 
 [target.'cfg(windows)'.build-dependencies]
 winres = "0.1"
+
+[target.'cfg(windows)'.dependencies]
 astro-dnssd = { version = "0.3.2" }
 
 [features]
