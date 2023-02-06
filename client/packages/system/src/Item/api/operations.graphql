@@ -39,6 +39,10 @@ fragment ItemWithPackSize on ItemNode {
   ...ItemRow
   defaultPackSize
 }
+fragment ItemStockOnHand on ItemNode {
+  ...ItemWithPackSize
+  availableStockOnHand(storeId: $storeId)
+}
 fragment ItemRowWithStats on ItemNode {
   ...ItemWithPackSize
   stats(storeId: $storeId) {
@@ -69,6 +73,7 @@ fragment Item on ItemNode {
   volumePerOuterPack
   volumePerPack
   weight
+  availableStockOnHand(storeId: $storeId)
   availableBatches(storeId: $storeId) {
     __typename
     totalCount
@@ -129,6 +134,35 @@ query items(
         ...ItemRow
       }
       totalCount
+    }
+  }
+}
+
+query itemStockOnHand(
+  $storeId: String!
+  $key: ItemSortFieldInput
+  $isDesc: Boolean
+  $filter: ItemFilterInput
+  $first: Int
+  $offset: Int
+) {
+  items(
+    storeId: $storeId
+    sort: { key: $key, desc: $isDesc }
+    filter: $filter
+    page: { first: $first, offset: $offset }
+  ) {
+    ... on ItemConnector {
+      __typename
+      nodes {
+        __typename
+        code
+        id
+        name
+        unitName
+        defaultPackSize
+        availableStockOnHand(storeId: $storeId)
+      }
     }
   }
 }

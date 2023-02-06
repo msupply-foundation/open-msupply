@@ -7,8 +7,8 @@ import {
   Autocomplete,
   defaultOptionMapper,
 } from '@openmsupply-client/common';
-import { useStockItemsWithStats } from '../../api';
-import { ItemRowWithStatsFragment } from '../../api/operations.generated';
+import { useItemStockOnHand } from '../../api';
+import { ItemStockOnHandFragment } from '../../api/operations.generated';
 
 const ItemOption = styled('li')(({ theme }) => ({
   color: theme.palette.gray.main,
@@ -16,16 +16,13 @@ const ItemOption = styled('li')(({ theme }) => ({
 }));
 
 const filterOptions = {
-  stringify: (item: ItemRowWithStatsFragment) => `${item.code} ${item.name}`,
+  stringify: (item: ItemStockOnHandFragment) => `${item.code} ${item.name}`,
   // limit: 100, // unsure why we had the limit, and why so low. performance is ok for me
 };
 
 const getOptionRenderer =
   (label: string, formatNumber: (value: number) => string) =>
-  (
-    props: React.HTMLAttributes<HTMLLIElement>,
-    item: ItemRowWithStatsFragment
-  ) =>
+  (props: React.HTMLAttributes<HTMLLIElement>, item: ItemStockOnHandFragment) =>
     (
       <ItemOption {...props} key={item.code}>
         <span style={{ whiteSpace: 'nowrap', width: 100 }}>{item.code}</span>
@@ -36,15 +33,15 @@ const getOptionRenderer =
             textAlign: 'right',
             whiteSpace: 'nowrap',
           }}
-        >{`${formatNumber(item.stats.availableStockOnHand)} ${label}`}</span>
+        >{`${formatNumber(item.availableStockOnHand)} ${label}`}</span>
       </ItemOption>
     );
 
 interface StockItemSearchInputProps {
-  onChange: (item: ItemRowWithStatsFragment | null) => void;
+  onChange: (item: ItemStockOnHandFragment | null) => void;
   currentItemId?: string | null;
   disabled?: boolean;
-  extraFilter?: (item: ItemRowWithStatsFragment) => boolean;
+  extraFilter?: (item: ItemStockOnHandFragment) => boolean;
   width?: number;
   autoFocus?: boolean;
   openOnFocus?: boolean;
@@ -59,7 +56,7 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   autoFocus = false,
   openOnFocus,
 }) => {
-  const { data, isLoading } = useStockItemsWithStats();
+  const { data, isLoading } = useItemStockOnHand();
   const t = useTranslation('common');
   const formatNumber = useFormatNumber();
 
