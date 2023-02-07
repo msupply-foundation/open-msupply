@@ -159,8 +159,8 @@ const ErrorStringComponent: FC<{
       sx={{
         color: theme => theme.palette.error.main,
         backgroundColor: theme => theme.palette.background.login,
-        borderRadius: '16px',
-        padding: '0px 8px',
+        borderRadius: 4,
+        paddingX: 2,
       }}
     >
       {t('error.missing-inputs', { count: foundPaths.length })}
