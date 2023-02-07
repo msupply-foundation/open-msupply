@@ -6,7 +6,6 @@ import { useDebounceCallback } from '@common/hooks';
 
 export const CurrencyInputCell = <T extends RecordWithId>({
   rowData,
-  rows,
   column,
   rowIndex,
   columnIndex,
@@ -21,7 +20,7 @@ export const CurrencyInputCell = <T extends RecordWithId>({
       disabled={isDisabled}
       autoFocus={autoFocus}
       maxWidth={column.width}
-      defaultValue={String(column.accessor({ rowData, rows }))}
+      defaultValue={String(column.accessor({ rowData }))}
       onChangeNumber={newValue =>
         updater({ ...rowData, [column.key]: newValue })
       }

@@ -28,7 +28,6 @@ interface StocktakeLineEditTableProps {
   isDisabled?: boolean;
   batches: DraftStocktakeLine[];
   update: (patch: RecordPatch<DraftStocktakeLine>) => void;
-  mutableUpdate: (patch: RecordPatch<DraftStocktakeLine>) => void;
   isError?: boolean;
 }
 
@@ -89,10 +88,9 @@ const getInventoryAdjustmentReasonInputColumn = (
     sortable: false,
     width: 120,
     accessor: ({ rowData }) => rowData.inventoryAdjustmentReason || '',
-    Cell: ({ rowData, column, rows, columnIndex, rowIndex }) => {
+    Cell: ({ rowData, column, columnIndex, rowIndex }) => {
       const value = column.accessor({
         rowData,
-        rows,
       }) as InventoryAdjustmentReasonRowFragment | null;
 
       const onChange = (
@@ -123,7 +121,6 @@ const getInventoryAdjustmentReasonInputColumn = (
 export const BatchTable: FC<StocktakeLineEditTableProps> = ({
   batches,
   update,
-  mutableUpdate,
   isDisabled = false,
   isError = false,
 }) => {
@@ -146,7 +143,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
       label: 'label.num-packs',
       width: 100,
       setter: patch => update({ ...patch, countThisLine: true }),
-      accessor: ({ rowData }) => rowData.snapshotNumberOfPacks || '',
+      accessor: ({ rowData }) => rowData.snapshotNumberOfPacks || '0',
     },
     {
       key: 'packSize',
@@ -160,7 +157,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
       label: 'label.counted-num-of-packs',
       width: 100,
       Cell: NonNegativeDecimalCell,
-      setter: patch => mutableUpdate({ ...patch, countThisLine: true }),
+      setter: patch => update({ ...patch, countThisLine: true }),
       accessor: ({ rowData }) => rowData.countedNumberOfPacks || '',
     },
     [
