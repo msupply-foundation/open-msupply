@@ -1,5 +1,4 @@
-CREATE TABLE clinician
-(
+CREATE TABLE clinician (
     id TEXT NOT NULL PRIMARY KEY,
     store_id TEXT NOT NULL REFERENCES store(id),
     code TEXT NOT NULL,
@@ -11,6 +10,6 @@ CREATE TABLE clinician
     phone TEXT,
     mobile TEXT,
     email TEXT,
-    is_female BOOLEAN NOT NULL,
+    gender gender_type,
     is_active BOOLEAN NOT NULL
 )
