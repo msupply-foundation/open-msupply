@@ -39,7 +39,7 @@ Use [preference] and [preference_store_join] table
 
 The idea is taken from [this comment issue](https://github.com/openmsupply/open-msupply/issues/973#issuecomment-1401165427).
 
-[preference] table is populated with preference types and values are store on [preference_store_join], [preference_store_join] would need to have optional value columns of all of the different types (similar to key value store)
+[preference] table is populated with preference types and values are stored on [preference_store_join], [preference_store_join] would need to have optional value columns of all of the different types (similar to key value store)
 
 *Pros:*
 
