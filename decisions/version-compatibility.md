@@ -157,7 +157,7 @@ It seems that compatibility formula for this example is pretty self explanatory:
 compatible =  client API version >= backward compatible from AND client API version <= current API version.
 
 *Pros:*
-- Simpler then `Option 3` and arguable simpler then `Option 1`, this seems the simplest and the most direct way to achieve the requirement
+- Simpler than `Option 3` and arguable simpler than `Option 1`, this seems the simplest and the most direct way to achieve the requirement
 
 *Cons:*
 - Have to maintain another version for sync (arguable could also be a pro, simplifies sync versioning by making it more direct and decoupled form main app version)
@@ -170,7 +170,7 @@ I suggest to go with `Option 4`, seems simple and direct way to meet the require
 
 ### For sync
 
-We already use `major` versioning with seperate routes, omSupply is currently using v5. We can still introduce backwards incompatible change on central server (like tweaking the shape of API), in this case instead of re-defining the route we should just increment the minor (even though technically it shouldn't' be a breaking change according to semantic versioning).
+We already use `major` versioning with seperate routes, omSupply is currently using v5. We can still introduce backwards incompatible change on central server (like tweaking the shape of API), in this case instead of re-defining the route we should just increment the minor (even though technically it shouldn't be a breaking change according to semantic versioning).
 
 Some realistic examples of `Option 4`:
 
