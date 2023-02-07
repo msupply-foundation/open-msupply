@@ -842,6 +842,16 @@ export type EncounterConnector = {
   totalCount: Scalars['Int'];
 };
 
+export type EncounterEventFilterInput = {
+  /**
+   * 	Only include events that are for the current encounter, i.e. have matching encounter type
+   * and matching encounter name of the current encounter. If not set all events for with
+   * matching encounter type are returned.
+   */
+  isCurrentEncounter?: InputMaybe<Scalars['Boolean']>;
+  type?: InputMaybe<EqualFilterStringInput>;
+};
+
 export type EncounterFieldsConnector = {
   __typename: 'EncounterFieldsConnector';
   nodes: Array<EncounterFieldsNode>;
@@ -890,7 +900,7 @@ export type EncounterNode = {
 
 export type EncounterNodeEventsArgs = {
   at?: InputMaybe<Scalars['DateTime']>;
-  filter?: InputMaybe<ProgramEventFilterInput>;
+  filter?: InputMaybe<EncounterEventFilterInput>;
 };
 
 export enum EncounterNodeStatus {
