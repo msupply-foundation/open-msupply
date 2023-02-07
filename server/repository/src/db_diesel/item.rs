@@ -119,7 +119,7 @@ impl<'a> ItemRepository<'a> {
         filter: ItemFilter,
         store_id: Option<String>,
     ) -> Result<Vec<Item>, RepositoryError> {
-        self.query(Pagination::new(), Some(filter), None, store_id)
+        self.query(Pagination::all(), Some(filter), None, store_id)
     }
 
     pub fn query(
