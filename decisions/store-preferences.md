@@ -1,9 +1,9 @@
 # Store Preferences
 
-- *Date*: 
-- *Deciders*:
-- *Status*: 
-- *Outcome*:
+- *Date*: 08/02/23
+- *Deciders*: Mark, Clemens, James, Andrei
+- *Status*: DECIDED
+- *Outcome*: Option 2 (store preference table with store_id as primary key and columns as preferences)
 - *Related Material*: issue comment [Option 1](https://github.com/openmsupply/open-msupply/issues/973#issuecomment-1401165427), [Option 2](https://github.com/openmsupply/open-msupply/issues/973#issuecomment-1397753763) 
 
 ## Background
