@@ -79,7 +79,7 @@ impl ItemFilter {
         self
     }
 
-    pub fn match_is_visible(mut self, value: bool) -> Self {
+    pub fn is_visible(mut self, value: bool) -> Self {
         self.is_visible = Some(value);
         self
     }
@@ -101,7 +101,6 @@ impl<'a> ItemRepository<'a> {
         store_id: String,
         filter: Option<ItemFilter>,
     ) -> Result<i64, RepositoryError> {
-        // TODO (beyond M1), check that store_id matches current store
         let query = create_filtered_query(store_id, filter);
 
         Ok(query.count().get_result(&self.connection.connection)?)
@@ -182,7 +181,7 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
         apply_equal_filter!(query, r#type, item_dsl::type_);
         apply_simple_string_or_filter!(query, code_or_name, item_dsl::code, item_dsl::name);
 
-        let is_visible_in_store = master_list_line_dsl::master_list_line
+        let visible_item_ids = master_list_line_dsl::master_list_line
             .select(master_list_line_dsl::item_id)
             .inner_join(
                 master_list_dsl::master_list
@@ -200,8 +199,8 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
             .into_boxed();
 
         query = match is_visible {
-            Some(true) => query.filter(item_dsl::id.eq_any(is_visible_in_store)),
-            Some(false) => query.filter(item_dsl::id.ne_all(is_visible_in_store)),
+            Some(true) => query.filter(item_dsl::id.eq_any(visible_item_ids)),
+            Some(false) => query.filter(item_dsl::id.ne_all(visible_item_ids)),
             None => query,
         }
     }

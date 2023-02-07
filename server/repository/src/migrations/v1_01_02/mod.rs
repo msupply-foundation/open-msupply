@@ -54,6 +54,8 @@ impl Migration for V1_01_02 {
                 ADD inventory_adjustment_reason_id TEXT REFERENCES inventory_adjustment_reason(id);"#
         )?;
 
+        sql!(connection, r#"DROP VIEW IF EXISTS item_is_visible;"#)?;
+
         Ok(())
     }
 }
