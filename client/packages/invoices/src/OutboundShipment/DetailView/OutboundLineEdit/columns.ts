@@ -104,8 +104,18 @@ export const useExpansionColumns = (): Column<OutboundLineFragment>[] =>
   useColumns([
     'batch',
     'expiryDate',
-    'locationName',
-    'itemUnit',
+    [
+      'locationName',
+      {
+        accessor: ({ rowData }) => rowData.location?.name,
+      },
+    ],
+    [
+      'itemUnit',
+      {
+        accessor: ({ rowData }) => rowData.item?.unitName,
+      },
+    ],
     'numberOfPacks',
     'packSize',
     [
@@ -114,5 +124,10 @@ export const useExpansionColumns = (): Column<OutboundLineFragment>[] =>
         accessor: ({ rowData }) => rowData.packSize * rowData.numberOfPacks,
       },
     ],
-    'sellPricePerUnit',
+    [
+      'sellPricePerUnit',
+      {
+        accessor: ({ rowData }) => rowData.sellPricePerPack,
+      },
+    ],
   ]);
