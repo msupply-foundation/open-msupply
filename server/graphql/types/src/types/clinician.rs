@@ -1,6 +1,8 @@
 use async_graphql::*;
 use repository::{Clinician, ClinicianRow};
 
+use super::GenderType;
+
 #[derive(PartialEq, Debug)]
 pub struct ClinicianNode {
     pub clinician: Clinician,
@@ -58,7 +60,7 @@ impl ClinicianNode {
         &self.row().email
     }
 
-    pub async fn is_female(&self) -> bool {
-        self.row().is_female
+    pub async fn gender(&self) -> Option<GenderType> {
+        self.row().gender.as_ref().map(GenderType::from_domain)
     }
 }
