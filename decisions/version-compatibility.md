@@ -206,5 +206,7 @@ Option 4 of compatibility should apply to other areas:
 
 #### Native Client
 
-The client itself (electron app or android app) knows it's current version and remote server knows which native client it's compatible with and backwards compatible with, this information is encoded in broadcast attribute which client can check before connecting.
+The remote server knows its current version and the versions it is compatible with. 
+The server sends this list of versions to the client and the client decide if it can work with the remote server.
+
 
