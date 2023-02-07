@@ -1,7 +1,7 @@
 # Versions and Compatibility
 
-- *Date*: 2022-10-19
-- *Deciders*: Mark Prins, Andrei Evguenov
+- *Date*: 2023-01-08
+- *Deciders*: Mark Prins, Andrei Evguenov, Clemens
 - *Status*: DECIDED
 - *Outcome*: Option 4 - Seperate sync version and server knows which previous version it is compatible with
 
