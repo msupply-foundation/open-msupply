@@ -8,6 +8,7 @@ import {
   isProtocol,
 } from '@openmsupply-client/common/src/hooks/useNativeClient';
 import HID from 'node-hid';
+import ElectronStore from 'electron-store';
 
 const SERVICE_TYPE = 'omsupply';
 const PROTOCOL_KEY = 'protocol';
@@ -86,7 +87,7 @@ const getDebugHost = () => {
 
 // Can debug by opening chrome chrome://inspect and open inspect under 'devices'
 const START_URL = getDebugHost()
-  ? `${getDebugHost()}/android`
+  ? `${getDebugHost()}/discovery`
   : MAIN_WINDOW_WEBPACK_ENTRY;
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
@@ -97,12 +98,11 @@ if (require('electron-squirrel-startup')) {
 
 const connectToServer = (window: BrowserWindow, server: FrontEndHost) => {
   discovery.stop();
+  connectedServer = server;
 
   const url = getDebugHost() || frontEndHostUrl(server);
 
   window.loadURL(url);
-
-  connectedServer = server;
 };
 
 const start = (): void => {
@@ -125,6 +125,7 @@ const start = (): void => {
   });
 
   ipcMain.on(IPC_MESSAGES.GO_BACK_TO_DISCOVERY, () => {
+    console.log('going here', `${START_URL}?autoconnect=false`);
     window.loadURL(`${START_URL}?autoconnect=false`);
   });
 
@@ -168,34 +169,11 @@ const start = (): void => {
     });
   });
 };
-
 app.on('ready', start);
 
 app.on('window-all-closed', () => {
   app.quit();
 });
-
-app.on(
-  'certificate-error',
-  (event, _webContents, _url, _error, _certificate, callback) => {
-    event.preventDefault();
-    return callback(true);
-
-    // TODO store an object with this shape: { [hardware_id + port]: cert }, retrieve this object on startup
-    // update/save this object when connecting to 'new' server that is not in the object
-    // if server is in the object make sure cert matches
-
-    //   if (!connectedServer) return callback(false);
-
-    //   if (url.startsWith(frontEndHostUrl(connectedServer))) {
-    //     event.preventDefault();
-    //     callback(true);
-    //   } else {
-    //     callback(false);
-    //   }
-    // }
-  }
-);
 
 process.on('uncaughtException', error => {
   // See comment below
@@ -209,7 +187,7 @@ process.on('uncaughtException', error => {
   // TODO bugsnag ?
   dialog.showErrorBox('Error', error.stack || error.message);
 
-  // The following error sometime occurs, it's dnssd related, it doesn't stop or break discovery, electron catching it and displays in error message, it's ignore by above if condition
+  // The following error sometime occurs, it's dnssd related, it doesn't stop or break discovery, electron catching it and displays in error message, it's ignored by above if condition
 
   /* Uncaught Exception:
         TypeError: t[this.constructor.name] is not a constructor
@@ -225,3 +203,55 @@ process.on('uncaughtException', error => {
         at process.processTimers (node:internal/timers:502:7)
   */
 });
+
+// App data store
+type StoreType = {
+  [key: string]: string | null;
+};
+const store = new ElectronStore<StoreType>();
+// /Users/andreievg/Library/Application Support/open mSupply
+// make CLI for generating certs
+app.addListener(
+  'certificate-error',
+  (event, _webContents, url, _error, certificate, callback) => {
+    // Ignore SSL checks in debug mode
+    if (getDebugHost()) {
+      event.preventDefault();
+      return callback(true);
+    }
+
+    // Default behaviour if not connected to a server or if url is not connectedServer
+
+    if (!connectedServer) return callback(false);
+
+    if (!url.startsWith(frontEndHostUrl(connectedServer))) {
+      return callback(false);
+    }
+
+    // Match SSL fingerprint for server stored in app data
+
+    // Match by hardware id and port
+    let identifier = `${connectedServer.hardwareId}-${connectedServer.port}`;
+    let storedFingerprint = store.get(identifier, null);
+
+    // If fingerprint does not exists for server add it
+    if (!storedFingerprint) {
+      storedFingerprint = certificate.fingerprint;
+      store.set(identifier, storedFingerprint);
+      // If fingerprint does not match
+    } else if (storedFingerprint != certificate.fingerprint) {
+      // Display error message and go back to discovery
+      dialog.showErrorBox(
+        'SSL Error',
+        'Certificate fingerprint for server was changed'
+      );
+      ipcMain.emit(IPC_MESSAGES.GO_BACK_TO_DISCOVERY);
+
+      return callback(false);
+    }
+
+    // storedFingerprint did not exist or it matched certificaite fingerprint
+    event.preventDefault();
+    return callback(true);
+  }
+);

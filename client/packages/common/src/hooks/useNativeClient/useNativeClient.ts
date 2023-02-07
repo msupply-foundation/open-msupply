@@ -200,8 +200,12 @@ const matchUniqueServer = (a: FrontEndHost, b: FrontEndHost) =>
 export const frontEndHostUrl = ({ protocol, ip, port }: FrontEndHost) =>
   `${protocol}://${ip}:${port}`;
 
-export const frontEndHostGraphql = (server: FrontEndHost) =>
-  `${frontEndHostUrl(server)}/graphql`;
+export const frontEndHostDiscoveryGraphql = (server: FrontEndHost) =>
+  `${frontEndHostUrl({
+    ...server,
+    port: server.port + 1,
+    protocol: 'http',
+  })}/graphql`;
 
 export const frontEndHostDisplay = ({ protocol, ip, port }: FrontEndHost) => {
   switch (protocol) {

@@ -257,6 +257,10 @@ cargo run --bin remote_server_cli -- initialise-from-central -u 'user1:password1
 cargo run --bin remote_server_cli -- refresh-dates
 ```
 
+# Discovery
+
+mDNS is available with `discovery` feature (current discovery crate supports linux and mac os only), `discovery` feature will also start a graphql server with `initialisationStatus` query endpoint, in http mode with permissive cors. This allows site information (initialised/site) to be presented during discovery. For Android grahpql server is always started, since mDNS discovery can be toggled at at runtime.
+
 # Logging
 
 By default, the server logs to console with a logging level of `Info`
