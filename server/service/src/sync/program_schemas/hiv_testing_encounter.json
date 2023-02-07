@@ -53,18 +53,7 @@
       "type": "string"
     },
     "HIVRiskGroup": {
-      "enum": [
-        "LRM",
-        "MSM",
-        "MSW",
-        "MSMSW",
-        "HRM",
-        "LRW",
-        "HRW",
-        "FSW",
-        "TG",
-        "TGSW"
-      ],
+      "enum": ["LRM", "MSM", "MSW", "MSMSW", "HRM", "LRW", "HRW", "FSW", "TG", "TGSW"],
       "type": "string"
     },
     "HIVStatus": {

@@ -522,11 +522,7 @@
               "type": "string"
             },
             "tbGeneXpert": {
-              "enum": [
-                "NOT_DETECTED",
-                "POSITIVE_RIF_SENSITIVE",
-                "POSITIVE_RIF_RESISTANT"
-              ],
+              "enum": ["NOT_DETECTED", "POSITIVE_RIF_SENSITIVE", "POSITIVE_RIF_RESISTANT"],
               "type": "string"
             },
             "tbSputum": {
