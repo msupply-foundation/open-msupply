@@ -12,6 +12,7 @@ import {
   UserIcon,
 } from '@openmsupply-client/common';
 import { EncounterFragment, useEncounter } from '@openmsupply-client/programs';
+import { getClinicianName } from '../../Patient/Encounter';
 
 const Row = ({ label, Input }: { label: string; Input: ReactNode }) => (
   <InputWithLabelRow labelWidth="90px" label={label} Input={Input} />
@@ -66,12 +67,24 @@ export const Toolbar: FC<ToolbarProps> = ({ onChange }) => {
         </Grid>
         <Grid item display="flex" flex={1}>
           <Box display="flex" flex={1} flexDirection="column" gap={0.5}>
-            <Row
-              label={t('label.patient')}
-              Input={
-                <BasicTextInput disabled value={encounter?.patient.name} />
-              }
-            />
+            <Box display="flex" gap={1}>
+              <Row
+                label={t('label.patient')}
+                Input={
+                  <BasicTextInput disabled value={encounter?.patient.name} />
+                }
+              />
+              <Row
+                label={t('label.clinician')}
+                Input={
+                  <BasicTextInput
+                    disabled
+                    value={getClinicianName(encounter?.document.data.clinician)}
+                  />
+                }
+              />
+            </Box>
+
             <Box display="flex" gap={1}>
               <Row
                 label={t('label.visit-date')}
