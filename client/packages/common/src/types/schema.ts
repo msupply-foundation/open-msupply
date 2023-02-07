@@ -2816,8 +2816,13 @@ export type StockLineNode = {
 export type StockLineResponse = NodeError | StockLineNode;
 
 export enum StockLineSortFieldInput {
+  Batch = 'batch',
   ExpiryDate = 'expiryDate',
-  NumberOfPacks = 'numberOfPacks'
+  ItemCode = 'itemCode',
+  ItemName = 'itemName',
+  NumberOfPacks = 'numberOfPacks',
+  PackSize = 'packSize',
+  SupplierName = 'supplierName'
 }
 
 export type StockLineSortInput = {
