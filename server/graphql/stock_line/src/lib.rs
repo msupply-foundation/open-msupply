@@ -20,6 +20,11 @@ pub struct StockLineQueries;
 pub enum StockLineSortFieldInput {
     ExpiryDate,
     NumberOfPacks,
+    ItemCode,
+    ItemName,
+    Batch,
+    PackSize,
+    SupplierName,
 }
 #[derive(InputObject)]
 pub struct StockLineSortInput {
@@ -62,6 +67,11 @@ impl StockLineSortInput {
         let key = match self.key {
             from::NumberOfPacks => to::NumberOfPacks,
             from::ExpiryDate => to::ExpiryDate,
+            from::ItemCode => to::ItemCode,
+            from::ItemName => to::ItemName,
+            from::Batch => to::Batch,
+            from::PackSize => to::PackSize,
+            from::SupplierName => to::SupplierName,
         };
 
         StockLineSort {
