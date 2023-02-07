@@ -26,7 +26,7 @@ export const getNameAndColorColumn = <
   },
   accessor: ({ rowData }) => rowData.otherPartyName,
   key: 'otherPartyName',
-  Cell: ({ rowData, column, rows, isDisabled }) => (
+  Cell: ({ rowData, column, isDisabled }) => (
     <Box
       sx={{
         flexDirection: 'row',
@@ -42,7 +42,7 @@ export const getNameAndColorColumn = <
           color={rowData.colour}
         />
         <Box ml={1} />
-        {column.accessor({ rowData, rows })}
+        {column.accessor({ rowData })}
       </>
     </Box>
   ),

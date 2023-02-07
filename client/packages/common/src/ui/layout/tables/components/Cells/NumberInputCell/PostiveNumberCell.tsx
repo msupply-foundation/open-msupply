@@ -7,9 +7,8 @@ import { CellProps } from '../../../columns/types';
 export const PositiveNumberCell = <T extends RecordWithId>({
   column,
   rowData,
-  rows,
 }: CellProps<T>) => {
-  const value = column.accessor({ rowData, rows }) as number;
+  const value = column.accessor({ rowData }) as number;
   const formattedValue = useFormatNumber().round(value, 2);
 
   return (

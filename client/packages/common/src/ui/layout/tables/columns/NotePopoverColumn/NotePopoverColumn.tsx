@@ -61,9 +61,9 @@ export const getNotePopoverColumn = <T extends RecordWithId>(
     return null;
   },
 
-  Cell: ({ column, rowData, rows }) => {
+  Cell: ({ column, rowData }) => {
     const t = useTranslation('common');
-    const value = column.accessor({ rowData, rows });
+    const value = column.accessor({ rowData });
 
     let content: NoteObject[] = value as NoteObject[];
     if (!Array.isArray(value)) {

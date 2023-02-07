@@ -6,9 +6,8 @@ import { CellProps } from '../../../columns/types';
 export const CheckCell = <T extends RecordWithId>({
   column,
   rowData,
-  rows,
 }: CellProps<T>) => {
-  const check = column.accessor({ rowData, rows }) as boolean;
+  const check = column.accessor({ rowData }) as boolean;
 
   return (
     <Typography
