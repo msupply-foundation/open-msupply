@@ -1,0 +1,20 @@
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "Control",
+      "scope": "#/properties/startDatetime",
+      "label": "Start date time"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/endDatetime",
+      "label": "End date time"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/status",
+      "label": "Encounter status"
+    }
+  ]
+}
