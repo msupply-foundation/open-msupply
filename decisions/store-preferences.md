@@ -11,7 +11,7 @@
 Preferences are used to configure behaviour of application, there are multiple preferences in mSupply. 
 Preferences apply to different areas (i.e. by store, globally, etc..). 
 Preferences in mSupply are stored in [pref] table with preference values in [pref]data and 'area' where they apply in other columns i.e. [pref]store_id. 
-This KDD is focused on Store Preferences but a wider preferences context should be considered, see Appending at the bottom of KDD for an example of store preference record in mSupply.
+This KDD is focused on Store Preferences but a wider preferences context should be considered, see Appendix at the bottom of KDD for an example of store preference record in mSupply.
 
 ## Preferences and sync
 
