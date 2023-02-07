@@ -1,0 +1,28 @@
+{
+  "index": {
+    "template": "template.html",
+    "header": null,
+    "footer": null,
+    "query": "query.graphql"
+  },
+  "entries": {
+    "template.html": {
+      "type": "TeraTemplate",
+      "data": {
+        "output": "Html",
+        "template": "{% set_global timezone = \"Pacific/Port_Moresby\" %}\n\n<style>\n  {% include \"style.css\" %}\n</style>\n\n<body>\n  <h1>List of Appointments:</h1>\n\n  Arguments:\n  <pre>{{ arguments | json_encode(pretty=true) }}</pre>\n  Data:\n  <pre>\"data\": {{ data | json_encode(pretty=true) }}</pre>\n</body>\n"
+      }
+    },
+    "query.graphql": {
+      "type": "GraphGLQuery",
+      "data": {
+        "query": "query ListOfAppointments(\n  $storeId: String\n  $startDatetime: String!\n  $endDatetime: String!\n  $status: String\n) {\n  encounters(\n    storeId: $storeId\n    filter: {\n      program: { equalTo: \"HIVCareProgram\" }\n      status: { equalTo: $status }\n      startDatetime: {\n        afterOrEqualTo: $startDatetime\n        beforeOrEqualTo: $endDatetime\n      }\n    }\n  ) {\n    ... on EncounterConnector {\n      nodes {\n        events(\n          at: $endDatetime\n          filter: { type: { equalAny: [\"viralLoadResultDatetime\"] } }\n        ) {\n          type\n          data\n        }\n        startDatetime\n        patient {\n          name\n          id\n          dateOfBirth\n          gender\n        }\n        status\n      }\n      totalCount\n    }\n  }\n}\n",
+        "variables": null
+      }
+    },
+    "style.css": {
+      "type": "Resource",
+      "data": "table,\nth,\ntd {\n  border: 1px dotted #fc9208;\n  border-collapse: collapse;\n}\n\nbody {\n  margin: 10px 5% 10px 5%;\n  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;\n}\n"
+    }
+  }
+}
