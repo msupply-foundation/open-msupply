@@ -4,7 +4,7 @@ use crate::sync::{
     },
     translations::{IntegrationRecords, PullDeleteRecord, PullDeleteRecordTable, PullUpsertRecord},
 };
-use repository::{ClinicianRow, ClinicianStoreJoinRow};
+use repository::{ClinicianRow, ClinicianStoreJoinRow, Gender};
 use serde_json::json;
 use util::{inline_edit, uuid::uuid};
 
@@ -21,14 +21,12 @@ impl SyncRecordTester for ClinicianRecordTester {
             last_name: "last".to_string(),
             initials: "initials".to_string(),
             first_name: None,
-            registration_code: None,
-            category: None,
             address1: None,
             address2: None,
             phone: None,
             mobile: None,
             email: None,
-            is_female: false,
+            gender: Some(Gender::Male),
             is_active: true,
         };
         let join_row = ClinicianStoreJoinRow {
@@ -51,14 +49,12 @@ impl SyncRecordTester for ClinicianRecordTester {
             d.last_name = "last2".to_string();
             d.initials = "initials2".to_string();
             d.first_name = Some("first".to_string());
-            d.registration_code = Some("registration_code".to_string());
-            d.category = Some("category".to_string());
             d.address1 = Some("address1".to_string());
             d.address2 = Some("address2".to_string());
             d.phone = Some("phone".to_string());
             d.mobile = Some("mobile".to_string());
             d.email = Some("email".to_string());
-            d.is_female = true;
+            d.gender = Some(Gender::Female);
             d
         });
         result.push(TestStepData {
