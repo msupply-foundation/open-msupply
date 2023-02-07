@@ -32,6 +32,11 @@ impl ServerSettings {
     pub fn address(&self) -> String {
         format!("0.0.0.0:{}", self.port)
     }
+
+    /// Http server port for graphql used in discovery, defaults to port + 1
+    pub fn discovery_address(&self) -> String {
+        format!("0.0.0.0:{}", self.port + 1)
+    }
 }
 
 pub fn is_develop() -> bool {
