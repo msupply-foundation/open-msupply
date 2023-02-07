@@ -172,7 +172,7 @@ I suggest to go with `Option 4`, seems simple and direct way to meet the require
 
 We already use `major` versioning with seperate routes, omSupply is currently using v5. We can still introduce backwards incompatible change on central server (like tweaking the shape of API), in this case instead of re-defining the route we should just increment the minor (even though technically it shouldn't' be a breaking change according to semantic versioning).
 
-Some realistic examples of `Option 3`:
+Some realistic examples of `Option 4`:
 
 #### Example V5.0.2
 
