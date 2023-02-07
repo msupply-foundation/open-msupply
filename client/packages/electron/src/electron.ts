@@ -125,7 +125,6 @@ const start = (): void => {
   });
 
   ipcMain.on(IPC_MESSAGES.GO_BACK_TO_DISCOVERY, () => {
-    console.log('going here', `${START_URL}?autoconnect=false`);
     window.loadURL(`${START_URL}?autoconnect=false`);
   });
 
