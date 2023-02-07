@@ -11,5 +11,15 @@
     "label.items-no-stock": "Items ne'ebe laiha stock",
     "label.this-week": "Semana Ne'e",
     "label.today": "Loron Ohin",
-    "label.total-items": "Items ohin loron nian"
+    "label.total-items": "Items ohin loron nian",
+    "label.expiring-soon_one": "Lotes ne'ebe besik atu expira",
+    "label.expired_one": "Lote(es) ne'ebe expirado",
+    "label.expiring-soon_other": "Lotes ne'ebe besik atu expira",
+    "label.expired_other": "Lotes ne'ebe expira ona",
+    "label.low-stock-items_one": "Item ne'ebe stock hela menus husi fulan 3",
+    "label.low-stock-items_other": "Items ne'ebe stock hela menus husi fulan 3",
+    "label.items-no-stock_one": "Item ne'ebe laiha Stock",
+    "label.items-no-stock_other": "Items ne'ebe laiha Stock",
+    "label.total-items_one": "Total Item",
+    "label.total-items_other": "Total Items"
 }
