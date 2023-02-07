@@ -139,7 +139,7 @@ This is similar to Option 3, but it would be more generic (server doesn't need t
 
 Basically the server know which API version it is on and which API version it is backwards compatible with, and the consumer states which API version it uses.
 
-Compatibility matrix would look like this (same compatibility matrxi but now with api version):
+Compatibility matrix would look like this (same compatibility matrix but now with API version):
 
 |            |                 | CENTRAL                            |                                    |                                    |                                    |                                    |
 |------------|-----------------|------------------------------------|------------------------------------|------------------------------------|------------------------------------|------------------------------------|
