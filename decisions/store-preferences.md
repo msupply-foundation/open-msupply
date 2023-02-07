@@ -20,7 +20,7 @@ Store Preferences are centrally controlled and will sync to corresponding stores
 
 ## Requirements
 
-1. Sync, store and use preferences for a store
+1. Sync, store and user preferences for a store
 2. Store will have multiple preferences, each of different type
 3. Preferences are known at compile time
 4. Preference for store may not exist (should have default value)
