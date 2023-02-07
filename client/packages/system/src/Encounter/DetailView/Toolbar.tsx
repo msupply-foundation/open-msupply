@@ -10,6 +10,7 @@ import {
   DateUtils,
   TimePickerInput,
   UserIcon,
+  PatientNode,
 } from '@openmsupply-client/common';
 import { EncounterFragment, useEncounter } from '@openmsupply-client/programs';
 import { getClinicianName } from '../../Patient/Encounter';
@@ -19,16 +20,18 @@ const Row = ({ label, Input }: { label: string; Input: ReactNode }) => (
 );
 interface ToolbarProps {
   onChange: (patch: Partial<EncounterFragment>) => void;
+  patient: PatientNode;
+  encounter: EncounterFragment;
 }
-export const Toolbar: FC<ToolbarProps> = ({ onChange }) => {
-  const id = useEncounter.utils.idFromUrl();
-  const { mutate: fetchEncounter, data: encounter } =
-    useEncounter.document.byIdPromise(id);
+export const Toolbar: FC<ToolbarProps> = ({ patient, encounter, onChange }) => {
+  // const id = useEncounter.utils.idFromUrl();
+  // const { mutate: fetchEncounter, data: encounter } =
+  //   useEncounter.document.byIdPromise(id);
   const [startDatetime, setStartDatetime] = useState<string | undefined>();
   const [endDatetime, setEndDatetime] = useState<string | undefined | null>();
   const t = useTranslation('patients');
 
-  useEffect(() => fetchEncounter(), []);
+  // useEffect(() => fetchEncounter(), []);
 
   useEffect(() => {
     if (!encounter) return;
@@ -75,6 +78,16 @@ export const Toolbar: FC<ToolbarProps> = ({ onChange }) => {
                 }
               />
               <Row
+                label={t('label.patient')}
+                Input={<DatePickerInput disabled value={patient.dateOfBirth} />}
+              />
+            </Box>
+            <Box display="flex" gap={1}>
+              <Row
+                label={t('label.program')}
+                Input={<BasicTextInput disabled value={encounter?.program} />}
+              />
+              <Row
                 label={t('label.clinician')}
                 Input={
                   <BasicTextInput
@@ -84,7 +97,6 @@ export const Toolbar: FC<ToolbarProps> = ({ onChange }) => {
                 }
               />
             </Box>
-
             <Box display="flex" gap={1}>
               <Row
                 label={t('label.visit-date')}
@@ -140,10 +152,6 @@ export const Toolbar: FC<ToolbarProps> = ({ onChange }) => {
                 }
               />
             </Box>
-            <Row
-              label={t('label.program')}
-              Input={<BasicTextInput disabled value={encounter?.program} />}
-            />
           </Box>
         </Grid>
       </Grid>

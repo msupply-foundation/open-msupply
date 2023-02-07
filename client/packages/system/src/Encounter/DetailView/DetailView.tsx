@@ -9,15 +9,17 @@ import {
   useBreadcrumbs,
   useFormatDateTime,
 } from '@openmsupply-client/common';
-
 import {
   useEncounter,
   useJsonForms,
   EncounterFragment,
 } from '@openmsupply-client/programs';
+import { usePatient } from '../../Patient';
 import { AppRoute } from '@openmsupply-client/config';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
+import { SidePanel } from './SidePanel';
+import { AppBarButtons } from './AppBarButtons';
 
 export const DetailView: FC = () => {
   const t = useTranslation('patients');
@@ -32,6 +34,12 @@ export const DetailView: FC = () => {
     isSuccess,
     isError,
   } = useEncounter.document.byIdPromise(id);
+
+  const { data: patient } = usePatient.document.get(
+    encounter?.patient.id ?? ''
+  );
+  console.log('patient', patient);
+  // const { data: patient } = usePatient.document.get(patientId);
 
   const handleSave = useEncounter.document.upsert(
     encounter?.patient.id ?? '',
@@ -84,7 +92,14 @@ export const DetailView: FC = () => {
   return (
     <React.Suspense fallback={<DetailViewSkeleton />}>
       <link rel="stylesheet" href="/medical-icons.css" media="all"></link>
-      <Toolbar onChange={updateEncounter} />
+      <AppBarButtons />
+      {encounter && patient && (
+        <Toolbar
+          onChange={updateEncounter}
+          patient={patient}
+          encounter={encounter}
+        />
+      )}
       {encounter ? (
         JsonForm
       ) : (
@@ -100,6 +115,9 @@ export const DetailView: FC = () => {
           title={t('error.encounter-not-found')}
           message={t('messages.click-to-return-to-encounters')}
         />
+      )}
+      {encounter && (
+        <SidePanel encounter={encounter} onChange={updateEncounter} />
       )}
       <Footer
         documentName={encounter?.document?.name}
