@@ -9,7 +9,6 @@ import {
   Route,
   RouteBuilder,
   Navigate,
-  Typography,
   useLocation,
   useHostContext,
   useGetPageTitle,
@@ -19,7 +18,6 @@ import {
   SnackbarProvider,
   BarcodeScannerProvider,
 } from '@openmsupply-client/common';
-import { PropsWithChildrenOnly } from '@common/types';
 import { AppDrawer, AppBar, Footer, NotFound } from './components';
 import { CommandK } from './CommandK';
 import { AppRoute } from '@openmsupply-client/config';
@@ -34,12 +32,6 @@ import {
 import { RequireAuthentication } from './components/Navigation/RequireAuthentication';
 import { QueryErrorHandler } from './QueryErrorHandler';
 import { Sync } from './components/Sync';
-
-const Heading: FC<PropsWithChildrenOnly> = ({ children }) => (
-  <div style={{ margin: 50 }}>
-    <Typography>[ Placeholder page: {children} ]</Typography>
-  </div>
-);
 
 const NotifyOnLogin = () => {
   const { success } = useNotification();
@@ -103,43 +95,17 @@ export const Site: FC = () => {
                     element={<ReplenishmentRouter />}
                   />
                   <Route
-                    path={RouteBuilder.create(AppRoute.Suppliers)
-                      .addWildCard()
-                      .build()}
-                    element={<Heading>suppliers</Heading>}
-                  />
-                  <Route
                     path={RouteBuilder.create(AppRoute.Inventory)
                       .addWildCard()
                       .build()}
                     element={<InventoryRouter />}
                   />
                   <Route
-                    path={RouteBuilder.create(AppRoute.Tools)
-                      .addWildCard()
-                      .build()}
-                    element={<Heading>tools</Heading>}
-                  />
-                  <Route
-                    path={RouteBuilder.create(AppRoute.Reports)
-                      .addWildCard()
-                      .build()}
-                    element={<Heading>reports</Heading>}
-                  />
-                  <Route
-                    path={RouteBuilder.create(AppRoute.Messages)
-                      .addWildCard()
-                      .build()}
-                    element={<Heading>messages</Heading>}
-                  />
-
-                  <Route
                     path={RouteBuilder.create(AppRoute.Admin)
                       .addWildCard()
                       .build()}
                     element={<Settings />}
                   />
-
                   <Route
                     path={RouteBuilder.create(AppRoute.Sync)
                       .addWildCard()

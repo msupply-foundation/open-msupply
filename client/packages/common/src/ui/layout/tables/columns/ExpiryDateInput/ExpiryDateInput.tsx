@@ -32,8 +32,8 @@ export const getExpiryDateInputColumn = <
       }
     }
   },
-  Cell: ({ rowData, column, rows, isDisabled }) => {
-    const value = column.accessor({ rowData, rows }) as Date | null;
+  Cell: ({ rowData, column, isDisabled }) => {
+    const value = column.accessor({ rowData }) as Date | null;
 
     const onChange = (newValue: Date | null) => {
       column.setter({ ...rowData, expiryDate: newValue });
