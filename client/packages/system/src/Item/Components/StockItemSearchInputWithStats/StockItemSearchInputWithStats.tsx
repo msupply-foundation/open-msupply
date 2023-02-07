@@ -3,52 +3,12 @@ import {
   useToggle,
   useFormatNumber,
   useTranslation,
-  styled,
   Autocomplete,
   defaultOptionMapper,
 } from '@openmsupply-client/common';
 import { useStockItemsWithStats } from '../../api';
-import { ItemRowWithStatsFragment } from '../../api/operations.generated';
-
-const ItemOption = styled('li')(({ theme }) => ({
-  color: theme.palette.gray.main,
-  backgroundColor: theme.palette.background.toolbar,
-}));
-
-const filterOptions = {
-  stringify: (item: ItemRowWithStatsFragment) => `${item.code} ${item.name}`,
-  // limit: 100, // unsure why we had the limit, and why so low. performance is ok for me
-};
-
-const getOptionRenderer =
-  (label: string, formatNumber: (value: number) => string) =>
-  (
-    props: React.HTMLAttributes<HTMLLIElement>,
-    item: ItemRowWithStatsFragment
-  ) =>
-    (
-      <ItemOption {...props} key={item.code}>
-        <span style={{ whiteSpace: 'nowrap', width: 100 }}>{item.code}</span>
-        <span style={{ whiteSpace: 'nowrap', width: 500 }}>{item.name}</span>
-        <span
-          style={{
-            width: 200,
-            textAlign: 'right',
-            whiteSpace: 'nowrap',
-          }}
-        >{`${formatNumber(item.stats.availableStockOnHand)} ${label}`}</span>
-      </ItemOption>
-    );
-
-interface StockItemSearchInputWithStatsProps {
-  onChange: (item: ItemRowWithStatsFragment | null) => void;
-  currentItemId?: string | null;
-  disabled?: boolean;
-  extraFilter?: (item: ItemRowWithStatsFragment) => boolean;
-  width?: number;
-  autoFocus?: boolean;
-  openOnFocus?: boolean;
-}
+import { itemFilterOptions, StockItemSearchInputWithStatsProps } from '../../utils';
+import { getItemOptionRenderer } from '../ItemOptionRenderer';
 
 export const StockItemSearchInputWithStats: FC<
   StockItemSearchInputWithStatsProps
@@ -86,14 +46,14 @@ export const StockItemSearchInputWithStats: FC<
       disabled={disabled}
       onOpen={selectControl.toggleOn}
       onClose={selectControl.toggleOff}
-      filterOptionConfig={filterOptions}
+      filterOptionConfig={itemFilterOptions}
       loading={isLoading}
       value={value ? { ...value, label: value.name ?? '' } : null}
       noOptionsText={t('error.no-items')}
       onChange={(_, item) => onChange(item)}
       options={defaultOptionMapper(options, 'name')}
       getOptionLabel={option => `${option.code}     ${option.name}`}
-      renderOption={getOptionRenderer(t('label.units'), formatNumber.format)}
+      renderOption={getItemOptionRenderer(t('label.units'), formatNumber.format)}
       width={width ? `${width}px` : '100%'}
       popperMinWidth={width}
       isOptionEqualToValue={(option, value) => option?.id === value?.id}
