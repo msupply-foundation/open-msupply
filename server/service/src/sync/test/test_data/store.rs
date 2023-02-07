@@ -46,7 +46,8 @@ const STORE_1: (&'static str, &'static str) = (
     "spare_user_15": "",
     "spare_user_16": "",
     "custom_data": null,
-    "created_date": "2021-09-03"
+    "created_date": "2021-09-03",
+    "logo":"",
 }"#,
 );
 
@@ -59,6 +60,7 @@ fn store_1() -> TestSyncPullRecord {
             s.name_id = "1FB32324AF8049248D929CFB35F255BA".to_string();
             s.code = "GEN".to_string();
             s.site_id = 1;
+            s.logo="";
         })),
     )
 }
@@ -104,7 +106,8 @@ const STORE_2: (&'static str, &'static str) = (
     "spare_user_15": "",
     "spare_user_16": "",
     "custom_data": null,
-    "created_date": "0000-00-00"
+    "created_date": "0000-00-00",
+    "logo":"",
 }"#,
 );
 
@@ -161,7 +164,8 @@ const STORE_3: (&'static str, &'static str) = (
     "spare_user_15": "",
     "spare_user_16": "",
     "custom_data": null,
-    "created_date": "0000-00-00"
+    "created_date": "0000-00-00",
+    "logo":"",
 }"#,
 );
 
@@ -218,7 +222,8 @@ const STORE_4: (&'static str, &'static str) = (
     "spare_user_15": "",
     "spare_user_16": "",
     "custom_data": null,
-    "created_date": "2021-09-03"
+    "created_date": "2021-09-03",
+    "logo":"",
 }"#,
 );
 

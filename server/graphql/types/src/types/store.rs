@@ -47,10 +47,9 @@ impl StoreNode {
     pub async fn site_id(&self) -> i32 {
         self.row().site_id
     }
-    
     /// Returns the associated store logo.
     /// The logo is returned as a data URL schema, e.g. "data:image/png;base64,..."
-    pub async fn logo(&self) -> &str {
+    pub async fn logo(&self) -> &Option<String> {
         &self.row().logo
     }
 }
