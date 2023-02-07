@@ -50,7 +50,10 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
     stockItems: async (params: ListParams<ItemRowFragment>) => {
       const result = await getItemQueries(sdk, storeId).get.list({
         ...params,
-        filterBy: { ...params.filterBy, type: { equalTo: ItemNodeType.Stock } },
+        filterBy: {
+          ...params.filterBy,
+          type: { equalTo: ItemNodeType.Stock },
+        },
       });
       return result;
     },
@@ -120,7 +123,7 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
         key: itemParsers.toSortField(sortBy),
         desc: sortBy.isDesc,
         storeId,
-        filter: { ...filterBy },
+        filter: { ...filterBy, isVisible: true },
       });
 
       const items = result?.items;
