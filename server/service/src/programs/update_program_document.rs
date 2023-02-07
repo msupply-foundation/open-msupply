@@ -192,8 +192,7 @@ fn extract_config_data(target: &EventTarget, data: &Value) -> Option<String> {
     target
         .data_field
         .as_ref()
-        .map(|field| extract_string_field(data, field))
-        .flatten()
+        .and_then(|field| extract_simple_field(data, field))
         .or(target.data.clone())
 }
 
@@ -210,8 +209,7 @@ where
     let mut reference: &Map<String, Value> = data;
     let parts_len = parts.len();
     for (index, part) in parts.into_iter().enumerate() {
-        let Some(next) = reference
-        .get(&part) else {
+        let Some(next) = reference.get(&part) else {
             return None;
         };
         if index + 1 == parts_len {
@@ -230,8 +228,26 @@ fn extract_value_field(data: &Value, path: &str) -> Option<Value> {
     extract_field(data, path, &|v| Some(v.clone()))
 }
 
-fn extract_string_field(data: &Value, path: &str) -> Option<String> {
-    extract_field(data, path, &|v| v.as_str().map(|s| s.to_string()))
+/// extracts a string, number of bool as a string
+fn extract_simple_field(data: &Value, path: &str) -> Option<String> {
+    extract_field(data, path, &|v| {
+        if let Some(s) = v.as_str() {
+            return Some(s.to_string());
+        }
+        if let Some(number) = v.as_i64() {
+            return Some(format!("{number}"));
+        }
+        if let Some(number) = v.as_u64() {
+            return Some(format!("{number}"));
+        }
+        if let Some(number) = v.as_f64() {
+            return Some(format!("{number}"));
+        }
+        if let Some(v) = v.as_bool() {
+            return Some(format!("{v}"));
+        }
+        None
+    })
 }
 
 fn extract_naivedatetime_field(data: &Value, path: &str) -> Option<NaiveDateTime> {
