@@ -44,7 +44,7 @@ fragment ItemStockOnHand on ItemNode {
   availableStockOnHand(storeId: $storeId)
 }
 fragment ItemRowWithStats on ItemNode {
-  ...ItemWithPackSize
+  ...ItemStockOnHand
   stats(storeId: $storeId) {
     __typename
     averageMonthlyConsumption
@@ -190,6 +190,7 @@ query itemsWithStats(
         name
         unitName
         defaultPackSize
+        availableStockOnHand(storeId: $storeId)
         stats(storeId: $storeId) {
           __typename
           averageMonthlyConsumption
