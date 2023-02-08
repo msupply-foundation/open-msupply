@@ -204,10 +204,13 @@ pub fn integrate_and_translate_sync_buffer(
     TranslationAndIntegrationResults,
     TranslationAndIntegrationResults,
 )> {
-    // Integration is done inside of transaction, to make sure all records are available at the same time
+    // Integration is done inside a transaction, to make sure all records are available at the same time
     // and maintain logical data integrity. During initialisation nested transactions cause significant
-    // reduction in speed of this operation, since the system is not available during initialisation don't need
-    // overall transaction.
+    // reduction in speed of this operation, since the system is not available during initialisation we don't need
+    // overall transaction to enforce logical data integrity:
+    // - initialised: create outer transaction and sub transaction for every upsert and every delete
+    //               (sub transaction is needed to 'skip' errors in postgres, see IntegrationRecords.integrate)
+    // - not initialised: no transactions at all
 
     // Closure, to be run in a transaction or without a transaction
     let integrate_and_translate = |connection: &StorageConnection| -> Result<
