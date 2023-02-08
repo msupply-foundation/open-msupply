@@ -20,7 +20,11 @@
       "type": "object"
     },
     "EncounterStatus": {
+<<<<<<< HEAD
       "enum": ["SCHEDULED", "COMPLETED", "CANCELLED"],
+=======
+      "enum": ["SCHEDULED", "DONE", "CANCELLED"],
+>>>>>>> feature/programs
       "type": "string"
     },
     "FamilyPlanning": {
@@ -41,7 +45,18 @@
       "type": "string"
     },
     "HIVRiskGroup": {
-      "enum": ["LRM", "MSM", "MSW", "MSMSW", "HRM", "LRW", "HRW", "FSW", "TG", "TGSW"],
+      "enum": [
+        "LRM",
+        "MSM",
+        "MSW",
+        "MSMSW",
+        "HRM",
+        "LRW",
+        "HRW",
+        "FSW",
+        "TG",
+        "TGSW"
+      ],
       "type": "string"
     },
     "HIVStatus": {
@@ -137,6 +152,25 @@
             }
           },
           "required": ["datetime", "type", "result"],
+<<<<<<< HEAD
+=======
+          "type": "object"
+        },
+        "htcRegisterSerialNumber": {
+          "type": "string"
+        },
+        "informedConsent": {
+          "properties": {
+            "consentFormSigned": {
+              "description": "Was the consent form signed?",
+              "type": "boolean"
+            },
+            "preTestCounsellingDone": {
+              "description": "Was pre-test counselling done?",
+              "type": "boolean"
+            }
+          },
+>>>>>>> feature/programs
           "type": "object"
         },
         "note": {
@@ -223,7 +257,11 @@
           "description": "The user who logged the Encounter -- automatic by current user"
         }
       },
+<<<<<<< HEAD
       "required": ["startDatetime", "user"],
+=======
+      "required": ["startDatetime"],
+>>>>>>> feature/programs
       "type": "object"
     },
     "HIVTestingStatus": {
