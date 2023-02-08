@@ -59,7 +59,7 @@ fn store_1() -> TestSyncPullRecord {
             s.name_id = "1FB32324AF8049248D929CFB35F255BA".to_string();
             s.code = "GEN".to_string();
             s.site_id = 1;
-            s.logo=Some("No logo".to_string());
+            s.logo = Some("No logo".to_string());
         })),
     )
 }
