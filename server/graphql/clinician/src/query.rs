@@ -27,7 +27,6 @@ pub enum ClinicianSortFieldInput {
     Phone,
     Mobile,
     Email,
-    Female,
 }
 
 #[derive(InputObject)]
@@ -52,7 +51,6 @@ pub struct ClinicianFilterInput {
     pub phone: Option<SimpleStringFilterInput>,
     pub mobile: Option<SimpleStringFilterInput>,
     pub email: Option<SimpleStringFilterInput>,
-    pub female: Option<bool>,
 }
 
 #[derive(SimpleObject)]
@@ -116,7 +114,6 @@ impl ClinicianFilterInput {
             phone,
             mobile,
             email,
-            female,
         } = self;
 
         ClinicianFilter {
@@ -130,7 +127,6 @@ impl ClinicianFilterInput {
             phone: phone.map(SimpleStringFilter::from),
             mobile: mobile.map(SimpleStringFilter::from),
             email: email.map(SimpleStringFilter::from),
-            female: female.or(Some(false)),
         }
     }
 }
@@ -160,7 +156,6 @@ impl ClinicianSortInput {
             ClinicianSortFieldInput::Phone => ClinicianSortField::Phone,
             ClinicianSortFieldInput::Mobile => ClinicianSortField::Mobile,
             ClinicianSortFieldInput::Email => ClinicianSortField::Email,
-            ClinicianSortFieldInput::Female => ClinicianSortField::Female,
         };
 
         ClinicianSort {
