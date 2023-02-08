@@ -16,7 +16,6 @@ impl SyncRecordTester for ClinicianRecordTester {
         let store_id = &new_site_properties.store_id;
         let row = ClinicianRow {
             id: uuid(),
-            store_id: store_id.to_string(),
             code: "code".to_string(),
             last_name: "last".to_string(),
             initials: "initials".to_string(),
