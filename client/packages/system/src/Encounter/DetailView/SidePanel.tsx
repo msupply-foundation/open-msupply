@@ -1,19 +1,22 @@
-import React, { FC } from 'react';
+import React, { FC, useState, useEffect } from 'react';
 import {
   CopyIcon,
   DetailPanelAction,
   DetailPanelSection,
   ColorSelectButton,
   Grid,
-  PanelField,
   PanelLabel,
+  PanelField,
   PanelRow,
   DetailPanelPortal,
   useNotification,
   useTranslation,
   InfoTooltipIcon,
+  TextArea,
 } from '@openmsupply-client/common';
-import { EncounterFragment } from 'packages/programs/src';
+import { EncounterFragment, useEncounter } from 'packages/programs/src';
+import { getClinicianName } from '../../Patient/Encounter';
+import { useFormatDateTime } from '@openmsupply-client/common';
 // import { useInbound } from '../../api';
 // import { AdditionalInfoSection } from './AdditionalInfoSection';
 // import { PricingSection } from './PricingSection';
@@ -26,57 +29,69 @@ interface SidePanelProps {
 }
 
 export const SidePanel: FC<SidePanelProps> = ({ encounter, onChange }) => {
-  //   const { data } = useInbound.document.get();
+  const [encounterNote, setEncounterNote] = useState('');
   const { success } = useNotification();
+  const { localisedDate } = useFormatDateTime();
   const t = useTranslation('common');
   console.log('Encounter', encounter);
+  const {
+    data: otherEncounters,
+    isError,
+    isLoading,
+  } = useEncounter.document.list({
+    filterBy: { patientId: { equalTo: encounter.patient.id } },
+    sortBy: {
+      key: 'startDatetime',
+      isDesc: false,
+      direction: 'asc',
+    },
+  });
 
   return (
-    <DetailPanelPortal
-    // Actions={
-    //   <>
-    //     <DetailPanelAction
-    //       icon={<CopyIcon />}
-    //       title={t('link.copy-to-clipboard')}
-    //       onClick={() => {}}
-    //     />
-    //   </>
-    // }
-    >
+    <DetailPanelPortal>
       <DetailPanelSection title="Additional Info">
         <Grid container gap={0.5} key="additional-info">
           <PanelRow>
             <PanelLabel>{'Entered by:'}</PanelLabel>
-            {/* <PanelField>{encounter.document.clinician.id}</PanelField> */}
+            <PanelField>
+              {getClinicianName(encounter.document.data.clinician)}
+            </PanelField>
           </PanelRow>
 
           <PanelRow>
-            <PanelLabel>{t('label.color')}</PanelLabel>
-            {/* <PanelField>
-            <ColorSelectButton
-              disabled={isDisabled}
-              onChange={({ hex }) => {
-                setBufferedColor(hex);
-                update({ colour: hex });
-              }}
-              color={bufferedColor}
-            />
-          </PanelField> */}
+            <PanelLabel>{'Entered on:'}</PanelLabel>
+            <PanelField>{localisedDate(encounter.startDatetime)}</PanelField>
           </PanelRow>
-
-          <PanelLabel>{t('heading.comment')}</PanelLabel>
-          {/* <BufferedTextArea
-          disabled={isDisabled}
-          onChange={e => update({ comment: e.target.value })}
-          value={comment || ''}
-        /> */}
+          <PanelRow>
+            <PanelLabel>{'Visit notes, other problems'}</PanelLabel>
+          </PanelRow>
+          <PanelRow>
+            <PanelLabel>
+              <TextArea
+                value={encounterNote}
+                onChange={e => setEncounterNote(e.target.value)}
+              />
+            </PanelLabel>
+          </PanelRow>
         </Grid>
       </DetailPanelSection>
-      <p>THis is a side panel</p>
-      {/* <AdditionalInfoSection />
-      <RelatedDocumentsSection />
-      <PricingSection />
-      {isTransfer && <TransportSection />} */}
+      <DetailPanelSection title="Previous encounters">
+        {isError ? (
+          <p>ERROR</p>
+        ) : isLoading ? (
+          <>LOading</>
+        ) : (
+          otherEncounters?.nodes
+            .filter(encounter => encounter)
+            .map(encounter => (
+              <PanelRow key={encounter.id}>
+                <PanelLabel>
+                  {localisedDate(encounter.startDatetime)}
+                </PanelLabel>
+              </PanelRow>
+            ))
+        )}
+      </DetailPanelSection>
     </DetailPanelPortal>
   );
 };
