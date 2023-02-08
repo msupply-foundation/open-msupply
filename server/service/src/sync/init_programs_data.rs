@@ -77,12 +77,14 @@ mod hiv_testing_encounter {
         fn default() -> Self {
             Self {
                 end_datetime: Default::default(),
-                family_planning: Default::default(),
                 clinician: Default::default(),
-                risk_behaviour: Default::default(),
                 start_datetime: Default::default(),
                 status: Default::default(),
+                htc_register_serial_number: None,
+                risk_behaviour: Default::default(),
+                family_planning: Default::default(),
                 hiv_testing: Default::default(),
+                informed_consent: Default::default(),
             }
         }
     }
