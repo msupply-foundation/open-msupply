@@ -12,6 +12,7 @@ const TRANSLATION_AND_INTEGRATION_ORDER: &[&str] = &[
     LegacyTableName::UNIT,
     LegacyTableName::ITEM,
     LegacyTableName::STORE,
+    LegacyTableName::STORE_PREFERENCE,
     LegacyTableName::LIST_MASTER,
     LegacyTableName::LIST_MASTER_LINE,
     LegacyTableName::LIST_MASTER_NAME_JOIN,
@@ -27,7 +28,6 @@ const TRANSLATION_AND_INTEGRATION_ORDER: &[&str] = &[
     LegacyTableName::NAME_STORE_JOIN,
     LegacyTableName::OM_ACTIVITY_LOG,
     LegacyTableName::INVENTORY_ADJUSTMENT_REASON,
-    LegacyTableName::STORE_PREFERENCE,
 ];
 
 pub(crate) struct SyncBuffer<'a> {
