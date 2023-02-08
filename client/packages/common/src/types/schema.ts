@@ -1389,6 +1389,7 @@ export type ItemNode = {
   __typename: 'ItemNode';
   atcCategory: Scalars['String'];
   availableBatches: StockLineConnector;
+  availableStockOnHand: Scalars['Int'];
   code: Scalars['String'];
   ddd: Scalars['String'];
   defaultPackSize: Scalars['Int'];
@@ -1411,6 +1412,11 @@ export type ItemNode = {
 
 
 export type ItemNodeAvailableBatchesArgs = {
+  storeId: Scalars['String'];
+};
+
+
+export type ItemNodeAvailableStockOnHandArgs = {
   storeId: Scalars['String'];
 };
 
