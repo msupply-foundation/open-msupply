@@ -127,12 +127,10 @@ export const useNativeClient = ({
 
     let connectToPreviousTimer: NodeJS.Timer | undefined = undefined;
 
-    if (autoconnect) {
-      connectToPreviousTimer = setTimeout(
-        () =>
-          setState(state => ({ ...state, connectToPreviousTimedOut: true })),
-        DISCOVERY_TIMEOUT
-      );
+    if (autoconnect && !!previousServerJson) {
+      connectToPreviousTimer = setTimeout(() => {
+        setState(state => ({ ...state, connectToPreviousTimedOut: true }));
+      }, DISCOVERY_TIMEOUT);
     }
 
     const timeoutTimer = setTimeout(() => {
