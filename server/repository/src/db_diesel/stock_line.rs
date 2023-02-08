@@ -286,13 +286,14 @@ mod test {
     use crate::{
         mock::MockDataInserts,
         mock::{mock_item_a, mock_store_a, MockData},
-        test_db, Pagination, StockLine, StockLineFilter, StockLineRepository, StockLineRow,
-        StockLineSort, StockLineSortField,
+        test_db, ItemRow, Pagination, StockLine, StockLineFilter, StockLineRepository,
+        StockLineRow, StockLineSort, StockLineSortField,
     };
 
-    fn from_row(stock_line_row: StockLineRow) -> StockLine {
+    fn from_row(stock_line_row: StockLineRow, item_row: ItemRow) -> StockLine {
         inline_init(|r: &mut StockLine| {
             r.stock_line_row = stock_line_row;
+            r.item_row = item_row;
         })
     }
 
@@ -344,7 +345,11 @@ mod test {
         };
         // Make sure NULLS are last
         assert_eq!(
-            vec![from_row(line1()), from_row(line2()), from_row(line3())],
+            vec![
+                from_row(line1(), mock_item_a()),
+                from_row(line2(), mock_item_a()),
+                from_row(line3(), mock_item_a())
+            ],
             repo.query(Pagination::new(), None, Some(sort), Some(mock_store_a().id))
                 .unwrap()
         );
@@ -355,7 +360,11 @@ mod test {
         };
         // Make sure NULLS are first
         assert_eq!(
-            vec![from_row(line3()), from_row(line2()), from_row(line1())],
+            vec![
+                from_row(line3(), mock_item_a()),
+                from_row(line2(), mock_item_a()),
+                from_row(line1(), mock_item_a())
+            ],
             repo.query(Pagination::new(), None, Some(sort), Some(mock_store_a().id))
                 .unwrap()
         );
@@ -398,7 +407,7 @@ mod test {
 
         // Stock not available
         assert_eq!(
-            vec![from_row(line1())],
+            vec![from_row(line1(), mock_item_a())],
             repo.query(
                 Pagination::new(),
                 Some(StockLineFilter::new().is_available(false)),
@@ -410,7 +419,7 @@ mod test {
 
         // Stock available
         assert_eq!(
-            vec![from_row(line2())],
+            vec![from_row(line2(), mock_item_a())],
             repo.query(
                 Pagination::new(),
                 Some(StockLineFilter::new().is_available(true)),
