@@ -157,6 +157,9 @@ const ErrorStringComponent: FC<{
   return (
     <Typography
       sx={{
+        position: 'absolute',
+        right: 2,
+        bottom: 2,
         color: theme => theme.palette.error.main,
         backgroundColor: theme => theme.palette.background.login,
         borderRadius: 4,
