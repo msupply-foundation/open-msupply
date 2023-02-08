@@ -21,7 +21,7 @@ impl SyncRecordTester for ReportTester {
             template: "".to_string(),
             context: ReportContext::InboundShipment,
             comment: Some(uuid()),
-            context2: None,
+            sub_context: None,
             argument_schema_id: None,
         };
         let report_json1 = json!({
