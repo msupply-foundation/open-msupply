@@ -165,7 +165,7 @@ export type UpdateProgramEnrolmentMutationVariables = Types.Exact<{
 
 export type UpdateProgramEnrolmentMutation = { __typename: 'Mutations', updateProgramEnrolment: { __typename: 'ProgramEnrolmentNode', type: string, programPatientId?: string | null, patientId: string, name: string, enrolmentDatetime: string, document: { __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, author: string, timestamp: string, type: string, data: any, documentRegistry?: { __typename: 'DocumentRegistryNode', id: string, documentType: string, context: Types.DocumentRegistryNodeContext, name?: string | null, parentId?: string | null, formSchemaId: string, jsonSchema: any, uiSchemaType: string, uiSchema: any } | null } } };
 
-export type ClinicianFragment = { __typename: 'ClinicianNode', address1?: string | null, address2?: string | null, code: string, email?: string | null, firstName?: string | null, id: string, initials: string, isFemale: boolean, lastName: string, mobile?: string | null, phone?: string | null };
+export type ClinicianFragment = { __typename: 'ClinicianNode', address1?: string | null, address2?: string | null, code: string, email?: string | null, firstName?: string | null, id: string, initials: string, gender?: Types.GenderType | null, lastName: string, mobile?: string | null, phone?: string | null };
 
 export type CliniciansQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -175,7 +175,7 @@ export type CliniciansQueryVariables = Types.Exact<{
 }>;
 
 
-export type CliniciansQuery = { __typename: 'Queries', clinicians: { __typename: 'ClinicianConnector', totalCount: number, nodes: Array<{ __typename: 'ClinicianNode', address1?: string | null, address2?: string | null, code: string, email?: string | null, firstName?: string | null, id: string, initials: string, isFemale: boolean, lastName: string, mobile?: string | null, phone?: string | null }> } };
+export type CliniciansQuery = { __typename: 'Queries', clinicians: { __typename: 'ClinicianConnector', totalCount: number, nodes: Array<{ __typename: 'ClinicianNode', address1?: string | null, address2?: string | null, code: string, email?: string | null, firstName?: string | null, id: string, initials: string, gender?: Types.GenderType | null, lastName: string, mobile?: string | null, phone?: string | null }> } };
 
 export const DocumentRegistryFragmentDoc = gql`
     fragment DocumentRegistry on DocumentRegistryNode {
@@ -330,7 +330,7 @@ export const ClinicianFragmentDoc = gql`
   firstName
   id
   initials
-  isFemale
+  gender
   lastName
   mobile
   phone
