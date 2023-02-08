@@ -123,10 +123,11 @@ const UIComponent = (props: ControlProps) => {
 
   return (
     <DetailInputWithLabelRow
+      sx={{ margin: 0.5, marginLeft: 0, gap: 2 }}
       label={label}
       inputProps={{
         value: text ?? '',
-        sx: { margin: 0.5, width },
+        sx: { width },
         onChange: e => onChange(e.target.value || ''),
         disabled: !props.enabled,
         error,
