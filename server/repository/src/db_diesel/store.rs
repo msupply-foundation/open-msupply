@@ -25,7 +25,6 @@ pub struct StoreFilter {
     pub name: Option<SimpleStringFilter>,
     pub name_code: Option<SimpleStringFilter>,
     pub site_id: Option<EqualFilter<i32>>,
-    pub logo: Option<String>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -135,8 +134,7 @@ fn create_filtered_query(filter: Option<StoreFilter>) -> BoxedStoreQuery {
             code,
             name,
             name_code,
-            site_id,
-            ..
+            site_id
         } = f;
 
         apply_equal_filter!(query, id, store_dsl::id);

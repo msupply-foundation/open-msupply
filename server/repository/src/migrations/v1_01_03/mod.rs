@@ -8,8 +8,6 @@ impl Migration for V1_01_03 {
     fn version(&self) -> Version {
         Version::from_str("1.1.3")
     }
-
-    #[cfg(feature = "postgres")]
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         use crate::migrations::sql;
 
@@ -18,10 +16,6 @@ impl Migration for V1_01_03 {
             r#"ALTER TABLE store 
                 ADD logo TEXT;"#
         )?;
-        Ok(())
-    }
-    #[cfg(not(feature = "postgres"))]
-    fn migrate(&self, _: &StorageConnection) -> anyhow::Result<()> {
         Ok(())
     }
 }

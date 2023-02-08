@@ -1,6 +1,6 @@
 use repository::{StorageConnection, StoreRow, SyncBufferRow};
 
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize};
 use crate::sync::sync_serde::empty_str_as_option_string;
 
 use super::{
@@ -8,7 +8,7 @@ use super::{
 };
 
 #[allow(non_snake_case)]
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize)]
 pub struct LegacyStoreRow {
     #[serde(rename = "ID")]
     id: String,
