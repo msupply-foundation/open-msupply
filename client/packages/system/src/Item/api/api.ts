@@ -57,6 +57,33 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
       });
       return result;
     },
+    itemStockOnHand: async ({
+      filterBy,
+      first,
+      offset,
+      sortBy,
+    }: ListParams<ItemRowFragment>) => {
+      const result = await sdk.itemStockOnHand({
+        key: itemParsers.toSortField(sortBy),
+        first,
+        isDesc: sortBy.isDesc,
+        offset,
+        storeId,
+        filter: {
+          ...filterBy,
+          type: { equalTo: ItemNodeType.Stock },
+          isVisible: true,
+        },
+      });
+
+      const { items } = result;
+
+      if (result?.items?.__typename === 'ItemConnector') {
+        return items;
+      }
+
+      throw new Error('Could not fetch items');
+    },
     stockItemsWithStats: async ({
       filterBy,
       first,
