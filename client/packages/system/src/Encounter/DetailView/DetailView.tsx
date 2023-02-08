@@ -38,8 +38,6 @@ export const DetailView: FC = () => {
   const { data: patient } = usePatient.document.get(
     encounter?.patient.id ?? ''
   );
-  console.log('patient', patient);
-  // const { data: patient } = usePatient.document.get(patientId);
 
   const handleSave = useEncounter.document.upsert(
     encounter?.patient.id ?? '',

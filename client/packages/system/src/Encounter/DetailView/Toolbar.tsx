@@ -10,28 +10,25 @@ import {
   DateUtils,
   TimePickerInput,
   UserIcon,
-  PatientNode,
+  useFormatDateTime,
 } from '@openmsupply-client/common';
-import { EncounterFragment, useEncounter } from '@openmsupply-client/programs';
+import { EncounterFragment } from '@openmsupply-client/programs';
 import { getClinicianName } from '../../Patient/Encounter';
+import { PatientFragment } from '../../Patient/api/operations.generated';
 
 const Row = ({ label, Input }: { label: string; Input: ReactNode }) => (
   <InputWithLabelRow labelWidth="90px" label={label} Input={Input} />
 );
 interface ToolbarProps {
   onChange: (patch: Partial<EncounterFragment>) => void;
-  patient: PatientNode;
+  patient: PatientFragment;
   encounter: EncounterFragment;
 }
 export const Toolbar: FC<ToolbarProps> = ({ patient, encounter, onChange }) => {
-  // const id = useEncounter.utils.idFromUrl();
-  // const { mutate: fetchEncounter, data: encounter } =
-  //   useEncounter.document.byIdPromise(id);
   const [startDatetime, setStartDatetime] = useState<string | undefined>();
   const [endDatetime, setEndDatetime] = useState<string | undefined | null>();
   const t = useTranslation('patients');
-
-  // useEffect(() => fetchEncounter(), []);
+  const { localisedDate } = useFormatDateTime();
 
   useEffect(() => {
     if (!encounter) return;
@@ -78,8 +75,13 @@ export const Toolbar: FC<ToolbarProps> = ({ patient, encounter, onChange }) => {
                 }
               />
               <Row
-                label={t('label.patient')}
-                Input={<DatePickerInput disabled value={patient.dateOfBirth} />}
+                label={t('label.date-of-birth')}
+                Input={
+                  <BasicTextInput
+                    disabled
+                    value={localisedDate(patient.dateOfBirth ?? '')}
+                  />
+                }
               />
             </Box>
             <Box display="flex" gap={1}>

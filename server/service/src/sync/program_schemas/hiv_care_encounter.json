@@ -491,10 +491,6 @@
           },
           "type": "object"
         },
-        "user": {
-          "$ref": "#/definitions/User",
-          "description": "The user who logged the Encounter -- automatic by current user"
-        },
         "viralLoad": {
           "properties": {
             "eacDone": {
@@ -517,19 +513,7 @@
           "type": "object"
         }
       },
-      "required": ["startDatetime", "user"],
-      "type": "object"
-    },
-    "User": {
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "username": {
-          "type": "string"
-        }
-      },
-      "required": ["id", "username"],
+      "required": ["startDatetime"],
       "type": "object"
     }
   },
