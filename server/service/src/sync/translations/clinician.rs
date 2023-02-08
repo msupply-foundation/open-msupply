@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
 
 use repository::{
-    ChangelogRow, ChangelogTableName, ClinicianRow, ClinicianRowRepository, StorageConnection,
-    SyncBufferRow,
+    ChangelogRow, ChangelogTableName, ClinicianRow, ClinicianRowRepository, Gender,
+    StorageConnection, SyncBufferRow,
 };
 
 use crate::sync::{
@@ -16,26 +16,25 @@ pub struct LegacyClinicianRow {
     #[serde(rename = "ID")]
     pub id: String,
 
-    #[serde(rename = "store_ID")]
-    pub store_id: String,
     pub code: String,
     pub last_name: String,
     pub initials: String,
 
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub first_name: Option<String>,
-    #[serde(deserialize_with = "empty_str_as_option_string")]
-    pub registration_code: Option<String>,
-    #[serde(deserialize_with = "empty_str_as_option_string")]
-    pub category: Option<String>,
+
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub address1: Option<String>,
+
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub address2: Option<String>,
+
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub phone: Option<String>,
+
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub mobile: Option<String>,
+
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub email: Option<String>,
     #[serde(rename = "female")]
@@ -63,13 +62,10 @@ impl SyncTranslation for ClinicianTranslation {
         }
         let LegacyClinicianRow {
             id,
-            store_id,
             code,
             last_name,
             initials,
             first_name,
-            registration_code,
-            category,
             address1,
             address2,
             phone,
@@ -81,19 +77,20 @@ impl SyncTranslation for ClinicianTranslation {
 
         let result = ClinicianRow {
             id,
-            store_id,
             code,
             last_name,
             initials,
             first_name,
-            registration_code,
-            category,
             address1,
             address2,
             phone,
             mobile,
             email,
-            is_female,
+            gender: if is_female {
+                Some(Gender::Female)
+            } else {
+                Some(Gender::Male)
+            },
             is_active,
         };
         Ok(Some(IntegrationRecords::from_upsert(
@@ -112,19 +109,16 @@ impl SyncTranslation for ClinicianTranslation {
 
         let ClinicianRow {
             id,
-            store_id,
             code,
             last_name,
             initials,
             first_name,
-            registration_code,
-            category,
             address1,
             address2,
             phone,
             mobile,
             email,
-            is_female,
+            gender,
             is_active,
         } = ClinicianRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
@@ -133,15 +127,18 @@ impl SyncTranslation for ClinicianTranslation {
                 changelog.record_id
             )))?;
 
+        let is_female = gender
+            .map(|gender| match gender {
+                Gender::Female => true,
+                _ => false,
+            })
+            .unwrap_or(false);
         let legacy_row = LegacyClinicianRow {
             id: id.clone(),
-            store_id,
             code,
             last_name,
             initials,
             first_name,
-            registration_code,
-            category,
             address1,
             address2,
             phone,

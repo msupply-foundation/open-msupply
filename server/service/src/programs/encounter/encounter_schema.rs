@@ -12,9 +12,9 @@ impl Default for SchemaEncounter {
     fn default() -> Self {
         Self {
             end_datetime: Default::default(),
-            practitioner: Default::default(),
             start_datetime: Default::default(),
             status: Default::default(),
+            clinician: Default::default(),
         }
     }
 }

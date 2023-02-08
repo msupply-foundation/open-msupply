@@ -71,6 +71,9 @@ pub fn insert_encounter(
                 InsertEncounterError::InvalidPatientOrProgram => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
+                InsertEncounterError::InvalidClinicianId => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
+                }
                 InsertEncounterError::InvalidDataSchema(_) => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }

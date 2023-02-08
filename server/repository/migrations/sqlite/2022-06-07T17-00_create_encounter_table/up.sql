@@ -10,5 +10,6 @@ CREATE TABLE encounter (
         'SCHEDULED',
         'DONE',
         'CANCELLED'
-    ))
+    )),
+    clinician_id TEXT REFERENCES clinician(id)
 )

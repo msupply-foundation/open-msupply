@@ -1,6 +1,7 @@
 use crate::{
     app_data::{AppDataService, AppDataServiceTrait},
     auth::{AuthService, AuthServiceTrait},
+    clinician::{ClinicianService, ClinicianServiceTrait},
     dashboard::{
         invoice_count::{InvoiceCountService, InvoiceCountServiceTrait},
         stock_expiry_count::{StockExpiryCountServiceTrait, StockExpiryServiceCount},
@@ -58,6 +59,7 @@ pub struct ServiceProvider {
     pub requisition_service: Box<dyn RequisitionServiceTrait>,
     pub requisition_line_service: Box<dyn RequisitionLineServiceTrait>,
     pub general_service: Box<dyn GeneralServiceTrait>,
+    pub clinician_service: Box<dyn ClinicianServiceTrait>,
     // Dashboard:
     pub invoice_count_service: Box<dyn InvoiceCountServiceTrait>,
     pub stock_expiry_count_service: Box<dyn StockExpiryCountServiceTrait>,
@@ -134,6 +136,7 @@ impl ServiceProvider {
             requisition_service: Box::new(RequisitionService {}),
             requisition_line_service: Box::new(RequisitionLineService {}),
             item_stats_service: Box::new(ItemStatsService {}),
+            clinician_service: Box::new(ClinicianService {}),
             general_service: Box::new(GeneralService {}),
             report_service: Box::new(ReportService {}),
             settings: Box::new(SettingsService),

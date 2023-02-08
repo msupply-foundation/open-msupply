@@ -1,11 +1,14 @@
 use async_graphql::{dataloader::DataLoader, *};
 use chrono::{DateTime, Utc};
 use graphql_core::{
-    loader::{DocumentLoader, DocumentLoaderInput, NameByIdLoader, NameByIdLoaderInput},
+    loader::{
+        ClinicianLoader, ClinicianLoaderInput, DocumentLoader, DocumentLoaderInput, NameByIdLoader,
+        NameByIdLoaderInput,
+    },
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use graphql_types::types::NameNode;
+use graphql_types::types::{ClinicianNode, NameNode};
 use repository::{
     EncounterRow, EncounterStatus, EqualFilter, ProgramEventFilter, ProgramEventSortField, Sort,
 };
@@ -71,6 +74,24 @@ impl EncounterNode {
             .ok_or(Error::new("Encounter without patient"))?;
 
         Ok(result)
+    }
+
+    pub async fn clinician(&self, ctx: &Context<'_>) -> Result<Option<ClinicianNode>> {
+        let Some(clinician_id) = self.encounter_row.clinician_id.as_ref() else {
+            return Ok(None)
+        };
+        let loader = ctx.get_loader::<DataLoader<ClinicianLoader>>();
+
+        let result = loader
+            .load_one(ClinicianLoaderInput::new(&self.store_id, &clinician_id))
+            .await?
+            .map(ClinicianNode::from_domain)
+            .ok_or(Error::new(format!(
+                "Failed to load clinician: {}",
+                clinician_id
+            )))?;
+
+        Ok(Some(result))
     }
 
     pub async fn program(&self) -> &str {

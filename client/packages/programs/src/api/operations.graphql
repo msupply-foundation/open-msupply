@@ -378,3 +378,39 @@ mutation updateProgramEnrolment(
     }
   }
 }
+
+fragment Clinician on ClinicianNode {
+  address1
+  address2
+  code
+  email
+  firstName
+  id
+  initials
+  isFemale
+  lastName
+  mobile
+  phone
+}
+
+query clinicians(
+  $storeId: String!
+  $key: ClinicianSortFieldInput!
+  $desc: Boolean
+  $filter: ClinicianFilterInput
+) {
+  clinicians(
+    storeId: $storeId
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+  ) {
+    ... on ClinicianConnector {
+      __typename
+      nodes {
+        __typename
+        ...Clinician
+      }
+      totalCount
+    }
+  }
+}
