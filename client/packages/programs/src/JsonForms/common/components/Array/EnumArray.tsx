@@ -79,6 +79,18 @@ const findIndexOfRemoved = (base: string[], newList: string[]): number => {
   return base.length - 1;
 };
 
+const renderInput = (props: AutocompleteRenderInputParams) => (
+  <BasicTextInput
+    {...props}
+    color="secondary"
+    InputProps={{
+      disableUnderline: false,
+      style: props.disabled ? { paddingLeft: 0 } : {},
+      ...props.InputProps,
+    }}
+  />
+);
+
 export const EnumArrayComponent: FC<EnumArrayControlCustomProps> = ({
   data,
   label,
@@ -91,18 +103,6 @@ export const EnumArrayComponent: FC<EnumArrayControlCustomProps> = ({
 }) => {
   const t = useTranslation('common');
   const [removeIndex, setRemoveIndex] = useState<number | undefined>();
-
-  const renderInput = (props: AutocompleteRenderInputParams) => (
-    <BasicTextInput
-      {...props}
-      color="secondary"
-      InputProps={{
-        disableUnderline: false,
-        style: props.disabled ? { paddingLeft: 0 } : {},
-        ...props.InputProps,
-      }}
-    />
-  );
 
   if (!visible) {
     return null;
