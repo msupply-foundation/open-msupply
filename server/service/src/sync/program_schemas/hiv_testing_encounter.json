@@ -2,10 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
     "ARTFacilityLocation": {
-      "enum": [
-        "THIS_FACILITY",
-        "OTHER_FACILITY"
-      ],
+      "enum": ["THIS_FACILITY", "OTHER_FACILITY"],
       "type": "string"
     },
     "Clinician": {
@@ -23,11 +20,7 @@
       "type": "object"
     },
     "EncounterStatus": {
-      "enum": [
-        "SCHEDULED",
-        "DONE",
-        "CANCELLED"
-      ],
+      "enum": ["SCHEDULED", "DONE", "CANCELLED"],
       "type": "string"
     },
     "FamilyPlanning": {
@@ -47,31 +40,27 @@
       "enum": ["POSITIVE", "NEGATIVE", "NOT_DONE", "DECLINED"],
       "type": "string"
     },
-      "enum": [
-        "POSITIVE",
-        "NEGATIVE",
-        "NOT_DONE",
-        "DECLINED"
-      ],
-      "type": "string"
-    },
     "HIVRiskGroup": {
-      "enum": ["LRM", "MSM", "MSW", "MSMSW", "HRM", "LRW", "HRW", "FSW", "TG", "TGSW"],
+      "enum": [
+        "LRM",
+        "MSM",
+        "MSW",
+        "MSMSW",
+        "HRM",
+        "LRW",
+        "HRW",
+        "FSW",
+        "TG",
+        "TGSW"
+      ],
       "type": "string"
     },
     "HIVStatus": {
-      "enum": [
-        "POSITIVE",
-        "NEGATIVE",
-        "UNKNOWN"
-      ],
+      "enum": ["POSITIVE", "NEGATIVE", "UNKNOWN"],
       "type": "string"
     },
     "HIVTestType": {
-      "enum": [
-        "PCR",
-        "ANTIBODY"
-      ],
+      "enum": ["PCR", "ANTIBODY"],
       "type": "string"
     },
     "HIVTestingEncounter": {
@@ -158,11 +147,7 @@
               "$ref": "#/definitions/HIVTestType"
             }
           },
-          "required": [
-            "datetime",
-            "type",
-            "result"
-          ],
+          "required": ["datetime", "type", "result"],
           "type": "object"
         },
         "htcRegisterSerialNumber": {
@@ -257,43 +242,22 @@
           "$ref": "#/definitions/EncounterStatus"
         }
       },
-      "required": [
-        "startDatetime"
-      ],
+      "required": ["startDatetime"],
       "type": "object"
     },
     "HIVTestingStatus": {
-      "enum": [
-        "POSITIVE",
-        "NEGATIVE",
-        "UNKNOWN",
-        "NOT_DONE"
-      ],
+      "enum": ["POSITIVE", "NEGATIVE", "UNKNOWN", "NOT_DONE"],
       "type": "string"
     },
     "OtherServiceType": {
-      "enum": [
-        "TB",
-        "STI",
-        "GBV",
-        "PEP",
-        "OTHER"
-      ],
+      "enum": ["TB", "STI", "GBV", "PEP", "OTHER"],
       "type": "string"
-    },
-    "YesNoNA": {
-      "enum": [
-        "Yes",
-        "No",
-        "N/A"
-      ],
-      "type": "string"
-    }
-  },
     },
     "YesNoNA": {
       "enum": ["Yes", "No", "N/A"],
       "type": "string"
+    }
+  },
   "type": "object",
   "allOf": [
     {
