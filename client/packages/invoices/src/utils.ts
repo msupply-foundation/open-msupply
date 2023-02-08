@@ -126,6 +126,8 @@ export const isInboundPlaceholderRow = (row: InboundLineFragment): boolean =>
 export const useIsInboundStatusChangeDisabled = (
   inbound: InboundFragment
 ): boolean => {
+  if (inbound.onHold) return true;
+
   const isManuallyCreated = !inbound.linkedShipment?.id;
   return isManuallyCreated
     ? inbound.status === InvoiceNodeStatus.Verified
