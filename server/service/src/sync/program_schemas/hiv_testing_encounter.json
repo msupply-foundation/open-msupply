@@ -20,11 +20,7 @@
       "type": "object"
     },
     "EncounterStatus": {
-<<<<<<< HEAD
       "enum": ["SCHEDULED", "COMPLETED", "CANCELLED"],
-=======
-      "enum": ["SCHEDULED", "DONE", "CANCELLED"],
->>>>>>> feature/programs
       "type": "string"
     },
     "FamilyPlanning": {
@@ -45,18 +41,7 @@
       "type": "string"
     },
     "HIVRiskGroup": {
-      "enum": [
-        "LRM",
-        "MSM",
-        "MSW",
-        "MSMSW",
-        "HRM",
-        "LRW",
-        "HRW",
-        "FSW",
-        "TG",
-        "TGSW"
-      ],
+      "enum": ["LRM", "MSM", "MSW", "MSMSW", "HRM", "LRW", "HRW", "FSW", "TG", "TGSW"],
       "type": "string"
     },
     "HIVStatus": {
@@ -152,8 +137,6 @@
             }
           },
           "required": ["datetime", "type", "result"],
-<<<<<<< HEAD
-=======
           "type": "object"
         },
         "htcRegisterSerialNumber": {
@@ -170,7 +153,6 @@
               "type": "boolean"
             }
           },
->>>>>>> feature/programs
           "type": "object"
         },
         "note": {
@@ -251,17 +233,9 @@
         },
         "status": {
           "$ref": "#/definitions/EncounterStatus"
-        },
-        "user": {
-          "$ref": "#/definitions/User",
-          "description": "The user who logged the Encounter -- automatic by current user"
         }
       },
-<<<<<<< HEAD
-      "required": ["startDatetime", "user"],
-=======
       "required": ["startDatetime"],
->>>>>>> feature/programs
       "type": "object"
     },
     "HIVTestingStatus": {
@@ -271,18 +245,6 @@
     "OtherServiceType": {
       "enum": ["TB", "STI", "GBV", "PEP", "OTHER"],
       "type": "string"
-    },
-    "User": {
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "username": {
-          "type": "string"
-        }
-      },
-      "required": ["id", "username"],
-      "type": "object"
     },
     "YesNoNA": {
       "enum": ["Yes", "No", "N/A"],
