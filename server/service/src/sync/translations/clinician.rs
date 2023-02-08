@@ -16,8 +16,6 @@ pub struct LegacyClinicianRow {
     #[serde(rename = "ID")]
     pub id: String,
 
-    #[serde(rename = "store_ID")]
-    pub store_id: String,
     pub code: String,
     pub last_name: String,
     pub initials: String,
@@ -64,7 +62,6 @@ impl SyncTranslation for ClinicianTranslation {
         }
         let LegacyClinicianRow {
             id,
-            store_id,
             code,
             last_name,
             initials,
@@ -80,7 +77,6 @@ impl SyncTranslation for ClinicianTranslation {
 
         let result = ClinicianRow {
             id,
-            store_id,
             code,
             last_name,
             initials,
@@ -113,7 +109,6 @@ impl SyncTranslation for ClinicianTranslation {
 
         let ClinicianRow {
             id,
-            store_id,
             code,
             last_name,
             initials,
@@ -140,7 +135,6 @@ impl SyncTranslation for ClinicianTranslation {
             .unwrap_or(false);
         let legacy_row = LegacyClinicianRow {
             id: id.clone(),
-            store_id,
             code,
             last_name,
             initials,

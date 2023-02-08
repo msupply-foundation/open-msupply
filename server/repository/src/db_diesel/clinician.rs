@@ -232,7 +232,7 @@ impl ClinicianFilter {
 #[cfg(test)]
 mod tests {
     use crate::{
-        mock::{mock_store_a, mock_store_b, MockDataInserts},
+        mock::{mock_store_a, MockDataInserts},
         test_db, ClinicianFilter, ClinicianRepository, ClinicianRow, ClinicianRowRepository,
         ClinicianStoreJoinRow, ClinicianStoreJoinRowRepository, SimpleStringFilter,
     };
@@ -251,14 +251,12 @@ mod tests {
         ClinicianRowRepository::new(&storage_connection)
             .upsert_one(&inline_init(|r: &mut ClinicianRow| {
                 r.id = "clinician_store_a".to_string();
-                r.store_id = mock_store_a().id;
                 r.first_name = Some("First".to_string());
             }))
             .unwrap();
         ClinicianRowRepository::new(&storage_connection)
             .upsert_one(&inline_init(|r: &mut ClinicianRow| {
                 r.id = "clinician_store_b".to_string();
-                r.store_id = mock_store_b().id;
                 r.first_name = Some("First".to_string());
             }))
             .unwrap();

@@ -7,7 +7,6 @@ use diesel::prelude::*;
 table! {
   clinician (id) {
     id -> Text,
-    store_id -> Text,
     code  -> Text,
     last_name -> Text,
     initials -> Text,
@@ -26,7 +25,6 @@ table! {
 #[table_name = "clinician"]
 pub struct ClinicianRow {
     pub id: String,
-    pub store_id: String,
     pub code: String,
     pub last_name: String,
     pub initials: String,
