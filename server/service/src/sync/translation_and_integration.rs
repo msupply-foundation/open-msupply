@@ -135,7 +135,7 @@ impl<'a> TranslationAndIntegration<'a> {
 
 impl IntegrationRecords {
     pub(crate) fn integrate(&self, connection: &StorageConnection) -> Result<(), RepositoryError> {
-        // Only start nested transaction is transaction is already ongoing. See integrate_and_translate_sync_buffer
+        // Only start nested transaction if transaction is already ongoing. See integrate_and_translate_sync_buffer
         let start_nested_transaction = { connection.transaction_level.get() > 0 };
 
         for upsert in self.upserts.iter() {
