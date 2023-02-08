@@ -2,10 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
     "ARTFacilityLocation": {
-      "enum": [
-        "THIS_FACILITY",
-        "OTHER_FACILITY"
-      ],
+      "enum": ["THIS_FACILITY", "OTHER_FACILITY"],
       "type": "string"
     },
     "Clinician": {
@@ -23,11 +20,7 @@
       "type": "object"
     },
     "EncounterStatus": {
-      "enum": [
-        "SCHEDULED",
-        "DONE",
-        "CANCELLED"
-      ],
+      "enum": ["SCHEDULED", "COMPLETED", "CANCELLED"],
       "type": "string"
     },
     "FamilyPlanning": {
@@ -44,12 +37,7 @@
       "type": "object"
     },
     "GBVScreeningOutcome": {
-      "enum": [
-        "POSITIVE",
-        "NEGATIVE",
-        "NOT_DONE",
-        "DECLINED"
-      ],
+      "enum": ["POSITIVE", "NEGATIVE", "NOT_DONE", "DECLINED"],
       "type": "string"
     },
     "HIVRiskGroup": {
@@ -57,18 +45,11 @@
       "type": "string"
     },
     "HIVStatus": {
-      "enum": [
-        "POSITIVE",
-        "NEGATIVE",
-        "UNKNOWN"
-      ],
+      "enum": ["POSITIVE", "NEGATIVE", "UNKNOWN"],
       "type": "string"
     },
     "HIVTestType": {
-      "enum": [
-        "PCR",
-        "ANTIBODY"
-      ],
+      "enum": ["PCR", "ANTIBODY"],
       "type": "string"
     },
     "HIVTestingEncounter": {
@@ -155,12 +136,12 @@
               "$ref": "#/definitions/HIVTestType"
             }
           },
-          "required": [
-            "datetime",
-            "type",
-            "result"
-          ],
+          "required": ["datetime", "type", "result"],
           "type": "object"
+        },
+        "note": {
+          "description": "An overall note for additional comments about the encounter",
+          "type": "string"
         },
         "riskBehaviour": {
           "properties": {
@@ -236,38 +217,37 @@
         },
         "status": {
           "$ref": "#/definitions/EncounterStatus"
+        },
+        "user": {
+          "$ref": "#/definitions/User",
+          "description": "The user who logged the Encounter -- automatic by current user"
         }
       },
-      "required": [
-        "startDatetime"
-      ],
+      "required": ["startDatetime", "user"],
       "type": "object"
     },
     "HIVTestingStatus": {
-      "enum": [
-        "POSITIVE",
-        "NEGATIVE",
-        "UNKNOWN",
-        "NOT_DONE"
-      ],
+      "enum": ["POSITIVE", "NEGATIVE", "UNKNOWN", "NOT_DONE"],
       "type": "string"
     },
     "OtherServiceType": {
-      "enum": [
-        "TB",
-        "STI",
-        "GBV",
-        "PEP",
-        "OTHER"
-      ],
+      "enum": ["TB", "STI", "GBV", "PEP", "OTHER"],
       "type": "string"
     },
+    "User": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        }
+      },
+      "required": ["id", "username"],
+      "type": "object"
+    },
     "YesNoNA": {
-      "enum": [
-        "Yes",
-        "No",
-        "N/A"
-      ],
+      "enum": ["Yes", "No", "N/A"],
       "type": "string"
     }
   },
