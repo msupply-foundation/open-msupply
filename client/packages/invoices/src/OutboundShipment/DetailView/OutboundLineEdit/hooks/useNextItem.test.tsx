@@ -72,7 +72,6 @@ const getLines = (): InvoiceLineNode[] => [
         totalCount: 0,
       },
       code: '',
-      isVisible: true,
       name: '',
       stats: {
         __typename: 'ItemStatsNode',
@@ -129,7 +128,6 @@ const getLines = (): InvoiceLineNode[] => [
         totalCount: 0,
       },
       code: '',
-      isVisible: true,
       name: '',
       stats: {
         __typename: 'ItemStatsNode',
@@ -186,7 +184,6 @@ const getLines = (): InvoiceLineNode[] => [
         totalCount: 0,
       },
       code: '',
-      isVisible: true,
       name: '',
       stats: {
         __typename: 'ItemStatsNode',

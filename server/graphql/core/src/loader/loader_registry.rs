@@ -189,6 +189,13 @@ pub async fn get_loaders(
         async_std::task::spawn,
     );
 
+    let stock_on_hand = DataLoader::new(
+        ItemsStockOnHandLoader {
+            service_provider: service_provider.clone(),
+        },
+        async_std::task::spawn,
+    );
+
     loaders.insert(item_loader);
     loaders.insert(name_by_id_loader);
     loaders.insert(store_by_id_loader);
@@ -212,6 +219,7 @@ pub async fn get_loaders(
     loaders.insert(requisition_lines_remaining_to_supply_loader);
     loaders.insert(name_row_loader);
     loaders.insert(inventory_adjustment_reason_loader);
+    loaders.insert(stock_on_hand);
 
     loaders
 }

@@ -59,7 +59,6 @@ fragment Item on ItemNode {
   defaultPackSize
   doses
   isVaccine
-  isVisible
   margin
   msupplyUniversalCode
   msupplyUniversalName
@@ -154,7 +153,6 @@ query itemsWithStats(
         __typename
         code
         id
-        isVisible
         name
         unitName
         defaultPackSize
