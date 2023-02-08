@@ -1,7 +1,7 @@
 use chrono::Utc;
 use repository::{
-    Document, DocumentRepository, EncounterFilter, EncounterRepository, EncounterRow, EqualFilter,
-    RepositoryError, TransactionError,
+    ClinicianRow, Document, DocumentRepository, Encounter, EncounterFilter, EncounterRepository,
+    EqualFilter, RepositoryError, TransactionError,
 };
 
 use crate::{
@@ -12,7 +12,9 @@ use crate::{
 
 use super::{
     encounter_updated::update_encounter_row,
-    validate_misc::{validate_encounter_schema, ValidatedSchemaEncounter},
+    validate_misc::{
+        validate_clinician_exists, validate_encounter_schema, ValidatedSchemaEncounter,
+    },
 };
 
 #[derive(PartialEq, Debug)]
@@ -24,6 +26,7 @@ pub enum UpdateEncounterError {
     DataSchemaDoesNotExist,
     InternalError(String),
     DatabaseError(RepositoryError),
+    InvalidClinicianId,
 }
 
 pub struct UpdateEncounter {
@@ -43,7 +46,8 @@ pub fn update_encounter(
     let patient = ctx
         .connection
         .transaction_sync(|_| {
-            let (existing, encounter, existing_encounter_row) = validate(ctx, &input)?;
+            let (existing, encounter, existing_encounter_row, clinician_row) =
+                validate(ctx, &input)?;
             let encounter_start_datetime = encounter.start_datetime;
             let doc = generate(user_id, input, existing)?;
 
@@ -56,6 +60,7 @@ pub fn update_encounter(
                     &existing_encounter_row.program,
                     &doc,
                     encounter,
+                    clinician_row,
                 )?;
 
                 update_program_events(
@@ -134,7 +139,7 @@ fn generate(
 fn validate_exiting_encounter(
     ctx: &ServiceContext,
     name: &str,
-) -> Result<Option<EncounterRow>, RepositoryError> {
+) -> Result<Option<Encounter>, RepositoryError> {
     let result = EncounterRepository::new(&ctx.connection)
         .query_by_filter(EncounterFilter::new().name(EqualFilter::equal_to(name)))?
         .pop();
@@ -152,9 +157,33 @@ fn validate_parent(
 fn validate(
     ctx: &ServiceContext,
     input: &UpdateEncounter,
-) -> Result<(Document, ValidatedSchemaEncounter, EncounterRow), UpdateEncounterError> {
+) -> Result<
+    (
+        Document,
+        ValidatedSchemaEncounter,
+        Encounter,
+        Option<ClinicianRow>,
+    ),
+    UpdateEncounterError,
+> {
     let encounter = validate_encounter_schema(&input.data)
         .map_err(|err| UpdateEncounterError::InvalidDataSchema(vec![err]))?;
+
+    let clinician_row = if let Some(clinician_id) = encounter
+        .encounter
+        .clinician
+        .as_ref()
+        .map(|c| c.id.clone())
+        .flatten()
+    {
+        let clinician_row = validate_clinician_exists(&ctx.connection, &clinician_id)?;
+        if clinician_row.is_none() {
+            return Err(UpdateEncounterError::InvalidClinicianId);
+        }
+        clinician_row
+    } else {
+        None
+    };
 
     let doc = match validate_parent(ctx, &input.parent)? {
         Some(doc) => doc,
@@ -166,7 +195,7 @@ fn validate(
         None => return Err(UpdateEncounterError::EncounterRowNotFound),
     };
 
-    Ok((doc, encounter, encounter_row))
+    Ok((doc, encounter, encounter_row, clinician_row))
 }
 
 #[cfg(test)]

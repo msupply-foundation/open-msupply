@@ -1,6 +1,6 @@
 use repository::{
-    EncounterFilter, EncounterRepository, EncounterRow, EncounterRowRepository, EncounterStatus,
-    EqualFilter, RepositoryError,
+    ClinicianRow, EncounterFilter, EncounterRepository, EncounterRow, EncounterRowRepository,
+    EncounterStatus, EqualFilter, RepositoryError,
 };
 use util::uuid::uuid;
 
@@ -18,6 +18,7 @@ pub(crate) fn update_encounter_row(
     program: &str,
     doc: &RawDocument,
     validated_encounter: ValidatedSchemaEncounter,
+    clinician_row: Option<ClinicianRow>,
 ) -> Result<(), RepositoryError> {
     let con = &ctx.connection;
 
@@ -48,6 +49,7 @@ pub(crate) fn update_encounter_row(
         start_datetime: validated_encounter.start_datetime,
         end_datetime: validated_encounter.end_datetime,
         status,
+        clinician_id: clinician_row.map(|c| c.id),
     };
     EncounterRowRepository::new(con).upsert_one(&row)?;
 

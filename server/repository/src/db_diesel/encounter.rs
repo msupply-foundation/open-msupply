@@ -21,6 +21,7 @@ pub struct EncounterFilter {
     pub start_datetime: Option<DatetimeFilter>,
     pub end_datetime: Option<DatetimeFilter>,
     pub status: Option<EqualFilter<EncounterStatus>>,
+    pub clinician_id: Option<EqualFilter<String>>,
 }
 
 impl EncounterFilter {
@@ -34,6 +35,7 @@ impl EncounterFilter {
             start_datetime: None,
             end_datetime: None,
             status: None,
+            clinician_id: None,
         }
     }
 
@@ -76,6 +78,11 @@ impl EncounterFilter {
         self.status = Some(filter);
         self
     }
+
+    pub fn clinician_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.clinician_id = Some(filter);
+        self
+    }
 }
 
 pub enum EncounterSortField {
@@ -106,6 +113,7 @@ fn create_filtered_query<'a>(filter: Option<EncounterFilter>) -> BoxedProgramQue
             start_datetime,
             end_datetime,
             status,
+            clinician_id,
         } = f;
 
         apply_equal_filter!(query, id, encounter_dsl::id);
@@ -116,6 +124,7 @@ fn create_filtered_query<'a>(filter: Option<EncounterFilter>) -> BoxedProgramQue
         apply_date_time_filter!(query, start_datetime, encounter_dsl::start_datetime);
         apply_date_time_filter!(query, end_datetime, encounter_dsl::end_datetime);
         apply_equal_filter!(query, status, encounter_dsl::status);
+        apply_equal_filter!(query, clinician_id, encounter_dsl::clinician_id);
     }
     query
 }
