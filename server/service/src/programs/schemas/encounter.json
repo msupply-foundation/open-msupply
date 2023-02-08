@@ -1,33 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
-    "Encounter": {
-      "properties": {
-        "endDatetime": {
-          "description": "Encounter end date and time",
-          "format": "date-time",
-          "type": "string"
-        },
-        "practitioner": {
-          "$ref": "#/definitions/Practitioner"
-        },
-        "startDatetime": {
-          "description": "Encounter start date and time",
-          "format": "date-time",
-          "type": "string"
-        },
-        "status": {
-          "$ref": "#/definitions/EncounterStatus"
-        }
-      },
-      "required": ["startDatetime"],
-      "type": "object"
-    },
-    "EncounterStatus": {
-      "enum": ["SCHEDULED", "DONE", "CANCELLED"],
-      "type": "string"
-    },
-    "Practitioner": {
+    "Clinician": {
       "properties": {
         "firstName": {
           "type": "string"
@@ -40,6 +14,38 @@
         }
       },
       "type": "object"
+    },
+    "Encounter": {
+      "properties": {
+        "clinician": {
+          "$ref": "#/definitions/Clinician"
+        },
+        "endDatetime": {
+          "description": "Encounter end date and time",
+          "format": "date-time",
+          "type": "string"
+        },
+        "startDatetime": {
+          "description": "Encounter start date and time",
+          "format": "date-time",
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/EncounterStatus"
+        }
+      },
+      "required": [
+        "startDatetime"
+      ],
+      "type": "object"
+    },
+    "EncounterStatus": {
+      "enum": [
+        "SCHEDULED",
+        "DONE",
+        "CANCELLED"
+      ],
+      "type": "string"
     }
   },
   "type": "object",

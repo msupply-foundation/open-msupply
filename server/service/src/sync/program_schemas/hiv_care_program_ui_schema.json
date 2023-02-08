@@ -138,10 +138,7 @@
               ["TRANSFER_IN", "Transfer in"],
               ["STI", "STI"],
               ["ANC", "ANC"],
-              [
-                "EXPOSED_INFANT_WELL_BABY_CLINIC",
-                "Exposed infant well baby clinic"
-              ],
+              ["EXPOSED_INFANT_WELL_BABY_CLINIC", "Exposed infant well baby clinic"],
               ["IN_PATIENT", "In patient"]
             ]
           }

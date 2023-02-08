@@ -27,6 +27,7 @@ graphql_stocktake_line = { path = "stocktake_line" }
 graphql_batch_mutations = { path = "batch_mutations" }
 graphql_stock_line = { path = "stock_line" }
 graphql_form_schema = { path = "form_schema" }
+graphql_clinician = { path = "clinician" }
 
 actix-web = { version = "4.0.1", default-features = false, features = [
     "macros",

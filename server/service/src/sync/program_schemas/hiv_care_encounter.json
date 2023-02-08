@@ -1,8 +1,26 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
+    "Clinician": {
+      "properties": {
+        "firstName": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "lastName": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "EncounterStatus": {
-      "enum": ["SCHEDULED", "DONE", "CANCELLED"],
+      "enum": [
+        "SCHEDULED",
+        "DONE",
+        "CANCELLED"
+      ],
       "type": "string"
     },
     "FamilyPlanning": {
@@ -24,7 +42,10 @@
           "if": {
             "properties": {
               "regimenStatus": {
-                "enum": ["START", "CHANGE"]
+                "enum": [
+                  "START",
+                  "CHANGE"
+                ]
               }
             }
           },
@@ -139,7 +160,13 @@
             },
             "regimenStatus": {
               "description": "Antiretroviral treatment status",
-              "enum": ["NO", "START", "CONTINUE", "CHANGE", "STOP"],
+              "enum": [
+                "NO",
+                "START",
+                "CONTINUE",
+                "CHANGE",
+                "STOP"
+              ],
               "type": "string"
             },
             "relevantCoMedication": {
@@ -159,7 +186,9 @@
             }
           },
           "then": {
-            "required": ["regimen"]
+            "required": [
+              "regimen"
+            ]
           },
           "type": "object"
         },
@@ -186,6 +215,9 @@
           },
           "type": "object"
         },
+        "clinician": {
+          "$ref": "#/definitions/Clinician"
+        },
         "endDatetime": {
           "description": "Encounter end date and time",
           "format": "date-time",
@@ -198,17 +230,30 @@
           "properties": {
             "intimatePartnerViolence": {
               "description": "Victim of intimate partner abuse 706893006",
-              "enum": ["Yes", "No", "N/A"],
+              "enum": [
+                "Yes",
+                "No",
+                "N/A"
+              ],
               "type": "string"
             },
             "postServiceProvided": {
               "description": "Post GBV Services provided?",
-              "enum": ["Yes", "No", "Declined", "N/A"],
+              "enum": [
+                "Yes",
+                "No",
+                "Declined",
+                "N/A"
+              ],
               "type": "string"
             },
             "rape": {
               "description": "Victim of rape 42085001",
-              "enum": ["Yes", "No", "N/A"],
+              "enum": [
+                "Yes",
+                "No",
+                "N/A"
+              ],
               "type": "string"
             },
             "receivedServiceType": {
@@ -222,17 +267,31 @@
             },
             "referredForExternalServices": {
               "description": "Referred for external services?",
-              "enum": ["Yes", "No", "N/A"],
+              "enum": [
+                "Yes",
+                "No",
+                "N/A"
+              ],
               "type": "string"
             },
             "screened": {
               "description": "Screened for Gender Based Violence",
-              "enum": ["Positive", "Negative", "Declined", "NotDone"],
+              "enum": [
+                "Positive",
+                "Negative",
+                "Declined",
+                "NotDone"
+              ],
               "type": "string"
             },
             "type": {
               "description": "Type of Gender Based Violence",
-              "enum": ["Physical", "Psychological", "Sexual", "N/A"],
+              "enum": [
+                "Physical",
+                "Psychological",
+                "Sexual",
+                "N/A"
+              ],
               "type": "string"
             }
           },
@@ -253,7 +312,10 @@
               "type": "number"
             },
             "hepBSAg": {
-              "enum": ["Pos", "Neg"],
+              "enum": [
+                "Pos",
+                "Neg"
+              ],
               "type": "string"
             },
             "rbslToFbsl": {
@@ -265,7 +327,10 @@
               "type": "number"
             },
             "tpha": {
-              "enum": ["Pos", "Neg"],
+              "enum": [
+                "Pos",
+                "Neg"
+              ],
               "type": "string"
             }
           },
@@ -275,7 +340,10 @@
           "properties": {
             "bloodPressure": {
               "description": "75367002\tBlood pressure [mmHg]",
-              "examples": ["90/60", "120/80"],
+              "examples": [
+                "90/60",
+                "120/80"
+              ],
               "pattern": "^\\d{3}\\/\\d{2}$",
               "title": "BP in mmHg",
               "type": "string"
@@ -286,21 +354,32 @@
             },
             "height": {
               "description": "50373000\tBody height measure [m]",
-              "examples": ["1.55", "0.92", "1.75"],
+              "examples": [
+                "1.55",
+                "0.92",
+                "1.75"
+              ],
               "pattern": "^\\d\\.\\d{2}$",
               "title": "Height in m",
               "type": "string"
             },
             "midUpperArmCircumference": {
               "description": "284473002\tMid upper arm circumference (MUAC) [cm]",
-              "examples": ["23.0", "21.4"],
+              "examples": [
+                "23.0",
+                "21.4"
+              ],
               "pattern": "^\\d+\\.\\d+$",
               "title": "MUAC in cm",
               "type": "string"
             },
             "nutritionalStatus": {
               "description": "366364004  nutritional status",
-              "enum": ["UNDER_NOURISHED", "WELL_NOURISHED", "OVERWEIGHT"],
+              "enum": [
+                "UNDER_NOURISHED",
+                "WELL_NOURISHED",
+                "OVERWEIGHT"
+              ],
               "type": "string"
             },
             "opportunisticInfections": {
@@ -399,7 +478,10 @@
             },
             "weight": {
               "description": "735395000\tCurrent body weight [kg]",
-              "examples": ["75.1", "60.0"],
+              "examples": [
+                "75.1",
+                "60.0"
+              ],
               "pattern": "^\\d+\\.\\d+$",
               "title": "Weight in kg",
               "type": "string"
@@ -418,9 +500,6 @@
           },
           "type": "object"
         },
-        "practitioner": {
-          "$ref": "#/definitions/Practitioner"
-        },
         "startDatetime": {
           "description": "Encounter start date and time",
           "format": "date-time",
@@ -436,19 +515,23 @@
             },
             "hcv": {
               "description": "HCV",
-              "enum": ["Pos", "Neg"],
-              "type": "string"
-            },
-            "tbGeneXpert": {
               "enum": [
-                "NOT_DETECTED",
-                "POSITIVE_RIF_SENSITIVE",
-                "POSITIVE_RIF_RESISTANT"
+                "Pos",
+                "Neg"
               ],
               "type": "string"
             },
+            "tbGeneXpert": {
+              "enum": ["NOT_DETECTED", "POSITIVE_RIF_SENSITIVE", "POSITIVE_RIF_RESISTANT"],
+              "type": "string"
+            },
             "tbSputum": {
-              "enum": ["NO_AFB", "POS_1", "POS_2", "POS_3"],
+              "enum": [
+                "NO_AFB",
+                "POS_1",
+                "POS_2",
+                "POS_3"
+              ],
               "type": "string"
             }
           },
@@ -484,7 +567,10 @@
               "type": "boolean"
             },
             "targetting": {
-              "enum": ["TARGETED", "SCHEDULED"],
+              "enum": [
+                "TARGETED",
+                "SCHEDULED"
+              ],
               "type": "string"
             },
             "tested": {
@@ -499,21 +585,9 @@
           "type": "object"
         }
       },
-      "required": ["startDatetime"],
-      "type": "object"
-    },
-    "Practitioner": {
-      "properties": {
-        "firstName": {
-          "type": "string"
-        },
-        "id": {
-          "type": "string"
-        },
-        "lastName": {
-          "type": "string"
-        }
-      },
+      "required": [
+        "startDatetime"
+      ],
       "type": "object"
     }
   },

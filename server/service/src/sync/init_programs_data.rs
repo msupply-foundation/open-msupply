@@ -77,7 +77,7 @@ mod hiv_testing_encounter {
         fn default() -> Self {
             Self {
                 end_datetime: Default::default(),
-                practitioner: Default::default(),
+                clinician: Default::default(),
                 start_datetime: Default::default(),
                 status: Default::default(),
                 htc_register_serial_number: None,
@@ -102,7 +102,7 @@ mod hiv_care_encounter {
                 family_planning: Default::default(),
                 gender_based_violence: Default::default(),
                 physical_examination: Default::default(),
-                practitioner: Default::default(),
+                clinician: Default::default(),
                 start_datetime: Default::default(),
                 status: Default::default(),
                 tuberculosis: Default::default(),
