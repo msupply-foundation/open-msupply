@@ -351,7 +351,6 @@ export type ClinicianFilterInput = {
   address2?: InputMaybe<SimpleStringFilterInput>;
   code?: InputMaybe<SimpleStringFilterInput>;
   email?: InputMaybe<SimpleStringFilterInput>;
-  female?: InputMaybe<Scalars['Boolean']>;
   firstName?: InputMaybe<SimpleStringFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   initials?: InputMaybe<SimpleStringFilterInput>;
@@ -367,9 +366,9 @@ export type ClinicianNode = {
   code: Scalars['String'];
   email?: Maybe<Scalars['String']>;
   firstName?: Maybe<Scalars['String']>;
+  gender?: Maybe<GenderType>;
   id: Scalars['String'];
   initials: Scalars['String'];
-  isFemale: Scalars['Boolean'];
   lastName: Scalars['String'];
   mobile?: Maybe<Scalars['String']>;
   phone?: Maybe<Scalars['String']>;
@@ -380,7 +379,6 @@ export enum ClinicianSortFieldInput {
   Address2 = 'address2',
   Code = 'code',
   Email = 'email',
-  Female = 'female',
   FirstName = 'firstName',
   Initials = 'initials',
   LastName = 'lastName',
@@ -861,6 +859,7 @@ export type EncounterFieldsNode = {
 export type EncounterFieldsResponse = EncounterFieldsConnector;
 
 export type EncounterFilterInput = {
+  clinicianId?: InputMaybe<EqualFilterStringInput>;
   endDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   name?: InputMaybe<EqualFilterStringInput>;
@@ -873,6 +872,7 @@ export type EncounterFilterInput = {
 
 export type EncounterNode = {
   __typename: 'EncounterNode';
+  clinician?: Maybe<ClinicianNode>;
   /** The encounter document */
   document: DocumentNode;
   endDatetime?: Maybe<Scalars['DateTime']>;
