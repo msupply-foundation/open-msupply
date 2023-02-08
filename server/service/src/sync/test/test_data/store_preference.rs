@@ -73,7 +73,7 @@ const STORE_PREFERENCE_2: (&'static str, &'static str) = (
     "store_preference_2",
     r#"{
     "ID": "store_preference_2",
-    "store_ID": "store_a",
+    "store_ID": "store_b",
     "item": "store_preferences",
     "network_ID": "",
     "user_ID": "",
@@ -149,7 +149,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
             LegacyTableName::STORE_PREFERENCE,
             STORE_PREFERENCE_2,
             PullUpsertRecord::StorePreference(StorePreferenceRow {
-                id: "store_a".to_string(),
+                id: "store_b".to_string(),
                 r#type: StorePreferenceType::StorePreferences,
                 pack_to_one: false,
             }),
