@@ -113,7 +113,7 @@ fn check_stock_line_exists(
     id: &str,
 ) -> Result<Option<StockLine>, RepositoryError> {
     Ok(StockLineRepository::new(connection)
-        .query_by_filter(StockLineFilter::new().id(EqualFilter::equal_to(id)))?
+        .query_by_filter(StockLineFilter::new().id(EqualFilter::equal_to(id)), None)?
         .pop())
 }
 
@@ -172,7 +172,7 @@ fn validate(
     let item_id = check_stock_line_xor_item(&stock_line, input)
         .ok_or(InsertStocktakeLineError::StockLineXOrItem)?;
     if let Some(item_id) = &input.item_id {
-        if !check_item_exists(connection, &item_id)? {
+        if !check_item_exists(connection, &item_id, store_id)? {
             return Err(InsertStocktakeLineError::ItemDoesNotExist);
         }
     }

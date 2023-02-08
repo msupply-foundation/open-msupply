@@ -1395,7 +1395,6 @@ export type ItemNode = {
   doses: Scalars['Int'];
   id: Scalars['String'];
   isVaccine: Scalars['Boolean'];
-  isVisible: Scalars['Boolean'];
   margin: Scalars['Float'];
   msupplyUniversalCode: Scalars['String'];
   msupplyUniversalName: Scalars['String'];

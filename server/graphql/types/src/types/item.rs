@@ -3,7 +3,8 @@ use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use graphql_core::{
     loader::{
-        ItemStatsLoaderInput, ItemsStatsForItemLoader, StockLineByItemAndStoreIdLoader,
+        ItemStatsLoaderInput, ItemsStatsForItemLoader, ItemsStockOnHandLoader,
+        ItemsStockOnHandLoaderInput, StockLineByItemAndStoreIdLoader,
         StockLineByItemAndStoreIdLoaderInput,
     },
     simple_generic_errors::InternalError,
@@ -37,10 +38,6 @@ impl ItemNode {
 
     pub async fn code(&self) -> &str {
         &self.row().code
-    }
-
-    pub async fn is_visible(&self) -> bool {
-        self.item.is_visible()
     }
 
     pub async fn unit_name(&self) -> Option<&str> {
@@ -93,6 +90,27 @@ impl ItemNode {
         Ok(StockLineConnector::from_vec(
             result_option.unwrap_or(vec![]),
         ))
+    }
+
+    pub async fn available_stock_on_hand(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<u32> {
+        let loader = ctx.get_loader::<DataLoader<ItemsStockOnHandLoader>>();
+        let result = loader
+            .load_one(ItemsStockOnHandLoaderInput::new(&store_id, &self.row().id))
+            .await?
+            .ok_or(
+                StandardGraphqlError::InternalError(format!(
+                    "Cannot calculate stock on hand for item {} at store {}",
+                    &self.row().id,
+                    store_id
+                ))
+                .extend(),
+            )?;
+
+        Ok(result)
     }
 
     // Mock
