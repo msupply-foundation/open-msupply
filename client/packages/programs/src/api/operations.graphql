@@ -387,7 +387,7 @@ fragment Clinician on ClinicianNode {
   firstName
   id
   initials
-  isFemale
+  gender
   lastName
   mobile
   phone
