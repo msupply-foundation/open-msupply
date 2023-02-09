@@ -11,6 +11,7 @@ import {
   TextArea,
   Link,
   RouteBuilder,
+  InlineSpinner,
 } from '@openmsupply-client/common';
 import { EncounterFragment, useEncounter } from 'packages/programs/src';
 import { getClinicianName } from '../../Patient/Encounter';
@@ -80,9 +81,9 @@ export const SidePanel: FC<SidePanelProps> = ({ encounter, onChange }) => {
       </DetailPanelSection>
       <DetailPanelSection title={t('label.previous-encounters')}>
         {isError ? (
-          <p>ERROR</p>
+          ''
         ) : isLoading ? (
-          <>LOading</>
+          <InlineSpinner />
         ) : (
           otherEncounters?.nodes
             .filter(encounter => encounter)
