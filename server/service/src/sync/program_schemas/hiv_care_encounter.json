@@ -18,7 +18,7 @@
     "EncounterStatus": {
       "enum": [
         "SCHEDULED",
-        "DONE",
+        "COMPLETED",
         "CANCELLED"
       ],
       "type": "string"
@@ -217,6 +217,11 @@
         },
         "clinician": {
           "$ref": "#/definitions/Clinician"
+        },
+        "createdDatetime": {
+          "description": "Date time when the encounter was made, e.g. when an clinician schedule the encounter.",
+          "format": "date-time",
+          "type": "string"
         },
         "endDatetime": {
           "description": "Encounter end date and time",
@@ -522,7 +527,11 @@
               "type": "string"
             },
             "tbGeneXpert": {
-              "enum": ["NOT_DETECTED", "POSITIVE_RIF_SENSITIVE", "POSITIVE_RIF_RESISTANT"],
+              "enum": [
+                "NOT_DETECTED",
+                "POSITIVE_RIF_SENSITIVE",
+                "POSITIVE_RIF_RESISTANT"
+              ],
               "type": "string"
             },
             "tbSputum": {
@@ -586,6 +595,7 @@
         }
       },
       "required": [
+        "createdDatetime",
         "startDatetime"
       ],
       "type": "object"
