@@ -30,6 +30,7 @@ import { EncounterSearchInput } from './EncounterSearchInput';
 import { ClinicianFragment } from 'packages/programs/src/api/operations.generated';
 interface Encounter {
   status?: EncounterNodeStatus;
+  createdDatetime: string;
   startDatetime?: string;
   endDatetime?: string;
   clinician?: Clinician;
@@ -49,6 +50,7 @@ export const CreateEncounterModal: FC = () => {
   const [encounterRegistry, setEncounterRegistry] = useState<
     EncounterRegistryByProgram | undefined
   >();
+  const [createdDatetime] = useState(new Date().toISOString());
   const [isError, setIsError] = useState(false);
 
   const [draft, setDraft] = useState<Encounter | undefined>(undefined);
@@ -87,6 +89,7 @@ export const CreateEncounterModal: FC = () => {
     const startDatetime = DateUtils.formatRFC3339(date);
 
     setDraft({
+      createdDatetime,
       ...draft,
       startDatetime,
       status: DateUtils.isFuture(date)
@@ -103,11 +106,11 @@ export const CreateEncounterModal: FC = () => {
 
   const setClinician = (option: ClinicianAutocompleteOption | null): void => {
     if (option === null) {
-      setDraft({ ...draft, clinician: undefined });
+      setDraft({ createdDatetime, ...draft, clinician: undefined });
       return;
     }
     const clinician = option.value;
-    setDraft({ ...draft, clinician });
+    setDraft({ createdDatetime, ...draft, clinician });
   };
 
   return (

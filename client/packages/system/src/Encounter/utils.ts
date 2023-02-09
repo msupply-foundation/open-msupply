@@ -19,7 +19,7 @@ const effectiveStatus = (
   switch (status) {
     case EncounterNodeStatus.Cancelled:
       return t('label.encounter-status-cancelled');
-    case EncounterNodeStatus.Done:
+    case EncounterNodeStatus.Completed:
       return t('label.encounter-status-done');
     case EncounterNodeStatus.Scheduled:
       if (DateUtils.isBefore(new Date(encounter.startDatetime), Date.now())) {
