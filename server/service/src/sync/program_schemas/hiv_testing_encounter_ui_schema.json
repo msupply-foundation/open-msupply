@@ -405,13 +405,20 @@
           "scope": "#/properties/hivTesting/properties/otherServiceName",
           "label": "If other, specify",
           "rule": {
-            "effect": "ENABLE",
             "condition": {
-              "scope": "#/properties/hivTesting/properties/screenedAndReferredForOtherServices",
               "schema": {
-                "const": true
-              }
-            }
+                "properties": {
+                  "otherServices": {
+                    "contains": {
+                      "const": "OTHER"
+                    }
+                  }
+                },
+                "required": ["otherServices"]
+              },
+              "scope": "#/properties/hivTesting"
+            },
+            "effect": "ENABLE"
           }
         },
         {
