@@ -3,7 +3,7 @@ use chrono::{DateTime, Utc};
 use graphql_core::{
     loader::{
         ClinicianLoader, ClinicianLoaderInput, DocumentLoader, DocumentLoaderInput, NameByIdLoader,
-        NameByIdLoaderInput,
+        NameByIdLoaderInput, ProgramEnrolmentLoader, ProgramEnrolmentLoaderInput,
     },
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
@@ -15,7 +15,8 @@ use repository::{
 use serde::Serialize;
 
 use super::{
-    document::DocumentNode, program_enrolment::ProgramEventFilterInput,
+    document::DocumentNode,
+    program_enrolment::{ProgramEnrolmentNode, ProgramEventFilterInput},
     program_event::ProgramEventNode,
 };
 
@@ -96,6 +97,33 @@ impl EncounterNode {
 
     pub async fn program(&self) -> &str {
         &self.encounter_row.program
+    }
+
+    /// Returns the matching program enrolment for the patient of this encounter
+    pub async fn program_enrolment(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<ProgramEnrolmentNode>> {
+        let loader = ctx.get_loader::<DataLoader<ProgramEnrolmentLoader>>();
+
+        let result = loader
+            .load_one(ProgramEnrolmentLoaderInput::new(
+                &self.encounter_row.patient_id,
+                &self.encounter_row.program,
+                self.allowed_docs.clone(),
+            ))
+            .await?
+            .map(|program_row| ProgramEnrolmentNode {
+                store_id: self.store_id.clone(),
+                program_row,
+                allowed_docs: self.allowed_docs.clone(),
+            })
+            .ok_or(Error::new(format!(
+                "Failed to load program enrolment: {}",
+                self.encounter_row.program
+            )))?;
+
+        Ok(Some(result))
     }
 
     pub async fn r#type(&self) -> &str {
