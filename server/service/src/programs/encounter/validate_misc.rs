@@ -14,6 +14,7 @@ pub fn validate_clinician_exists(
 
 pub struct ValidatedSchemaEncounter {
     pub encounter: SchemaEncounter,
+    pub created_datetime: NaiveDateTime,
     pub start_datetime: NaiveDateTime,
     pub end_datetime: Option<NaiveDateTime>,
 }
@@ -28,6 +29,9 @@ pub fn validate_encounter_schema(
     let encounter: SchemaEncounter = serde_json::from_value(encounter_data.clone())
         .map_err(|err| format!("Invalid program data: {}", err))?;
 
+    let created_datetime = DateTime::parse_from_rfc3339(&encounter.created_datetime)
+        .map_err(|err| format!("Invalid encounter datetime format: {}", err))?
+        .naive_utc();
     let start_datetime = DateTime::parse_from_rfc3339(&encounter.start_datetime)
         .map_err(|err| format!("Invalid encounter datetime format: {}", err))?
         .naive_utc();
@@ -43,6 +47,7 @@ pub fn validate_encounter_schema(
 
     Ok(ValidatedSchemaEncounter {
         encounter,
+        created_datetime,
         start_datetime,
         end_datetime,
     })
