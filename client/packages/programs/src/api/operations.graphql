@@ -15,7 +15,11 @@ fragment Document on DocumentNode {
   id
   name
   parents
-  author
+  user {
+    userId
+    username
+    email
+  }
   timestamp
   type
   data
@@ -94,7 +98,11 @@ query getDocumentHistory($storeId: String!, $name: String!) {
       totalCount
       nodes {
         __typename
-        author
+        user {
+          userId
+          username
+          email
+        }
         data
         id
         name
