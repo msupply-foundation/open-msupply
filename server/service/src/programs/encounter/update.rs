@@ -360,7 +360,7 @@ mod test {
         // success update
         let encounter = inline_init(|e: &mut SchemaEncounter| {
             e.start_datetime = Utc::now().to_rfc3339();
-            e.status = Some(EncounterStatus::Done);
+            e.status = Some(EncounterStatus::Completed);
         });
         let result = service
             .update_encounter(

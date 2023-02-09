@@ -142,7 +142,9 @@
           "$ref": "#/definitions/Person"
         }
       },
-      "required": ["enrolmentDatetime"],
+      "required": [
+        "enrolmentDatetime"
+      ],
       "type": "object"
     },
     "HIVRelation": {
@@ -172,11 +174,19 @@
       "type": "string"
     },
     "HIVTestType": {
-      "enum": ["PCR", "ANTIBODY"],
+      "enum": [
+        "PCR",
+        "ANTIBODY"
+      ],
       "type": "string"
     },
     "HIVTestingStatus": {
-      "enum": ["POSITIVE", "NEGATIVE", "UNKNOWN", "NOT_DONE"],
+      "enum": [
+        "POSITIVE",
+        "NEGATIVE",
+        "UNKNOWN",
+        "NOT_DONE"
+      ],
       "type": "string"
     },
     "Note": {
@@ -198,7 +208,12 @@
           "type": "string"
         }
       },
-      "required": ["text", "created", "authorId", "authorName"],
+      "required": [
+        "text",
+        "created",
+        "authorId",
+        "authorName"
+      ],
       "type": "object"
     },
     "Person": {
@@ -271,11 +286,18 @@
           "$ref": "#/definitions/SocioEconomics"
         }
       },
-      "required": ["contactDetails"],
+      "required": [
+        "contactDetails"
+      ],
       "type": "object"
     },
     "ProgramEnrolmentStatus": {
-      "enum": ["ACTIVE", "OPTED_OUT", "TRANSFERRED_OUT", "PAUSED"],
+      "enum": [
+        "ACTIVE",
+        "OPTED_OUT",
+        "TRANSFERRED_OUT",
+        "PAUSED"
+      ],
       "type": "string"
     },
     "ReferredFrom": {
