@@ -64,7 +64,7 @@ impl Loader<ProgramEnrolmentLoaderInput> for ProgramEnrolmentLoader {
                         None,
                         Some(
                             ProgramEnrolmentFilter::new()
-                                .r#type(EqualFilter::equal_to(&program))
+                                .program(EqualFilter::equal_to(&program))
                                 .patient_id(EqualFilter::equal_any(patient_id)),
                         ),
                         allowed_docs.clone(),
