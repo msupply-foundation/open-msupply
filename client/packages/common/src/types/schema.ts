@@ -752,7 +752,6 @@ export type DocumentHistoryResponse = DocumentConnector;
 
 export type DocumentNode = {
   __typename: 'DocumentNode';
-  author: Scalars['String'];
   data: Scalars['JSON'];
   documentRegistry?: Maybe<DocumentRegistryNode>;
   id: Scalars['String'];
@@ -761,6 +760,8 @@ export type DocumentNode = {
   schema?: Maybe<JsonschemaNode>;
   timestamp: Scalars['DateTime'];
   type: Scalars['String'];
+  user: UserNode;
+  userId: Scalars['String'];
 };
 
 export type DocumentRegistryConnector = {
