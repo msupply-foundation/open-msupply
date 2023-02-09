@@ -882,6 +882,8 @@ export type EncounterNode = {
   patient: NameNode;
   patientId: Scalars['String'];
   program: Scalars['String'];
+  /** Returns the matching program enrolment for the patient of this encounter */
+  programEnrolment?: Maybe<ProgramEnrolmentNode>;
   startDatetime: Scalars['DateTime'];
   status?: Maybe<EncounterNodeStatus>;
   type: Scalars['String'];
@@ -2699,8 +2701,8 @@ export type ProgramEnrolmentConnector = {
 export type ProgramEnrolmentFilterInput = {
   enrolmentDatetime?: InputMaybe<DatetimeFilterInput>;
   patientId?: InputMaybe<EqualFilterStringInput>;
+  program?: InputMaybe<EqualFilterStringInput>;
   programPatientId?: InputMaybe<EqualFilterStringInput>;
-  type?: InputMaybe<EqualFilterStringInput>;
 };
 
 export type ProgramEnrolmentNode = {
@@ -2714,9 +2716,9 @@ export type ProgramEnrolmentNode = {
   /** The program document name */
   name: Scalars['String'];
   patientId: Scalars['String'];
-  programPatientId?: Maybe<Scalars['String']>;
   /** The program type */
-  type: Scalars['String'];
+  program: Scalars['String'];
+  programPatientId?: Maybe<Scalars['String']>;
 };
 
 
@@ -2753,6 +2755,7 @@ export type ProgramEventConnector = {
 export type ProgramEventFilterInput = {
   documentName?: InputMaybe<EqualFilterStringInput>;
   documentType?: InputMaybe<EqualFilterStringInput>;
+  /** The event type */
   type?: InputMaybe<EqualFilterStringInput>;
 };
 
