@@ -25,7 +25,7 @@ pub(crate) fn update_encounter_row(
     let status = if let Some(status) = validated_encounter.encounter.status {
         Some(match status {
             encounter_schema::EncounterStatus::Scheduled => EncounterStatus::Scheduled,
-            encounter_schema::EncounterStatus::Done => EncounterStatus::Done,
+            encounter_schema::EncounterStatus::Completed => EncounterStatus::Completed,
             encounter_schema::EncounterStatus::Cancelled => EncounterStatus::Cancelled,
         })
     } else {
@@ -46,6 +46,7 @@ pub(crate) fn update_encounter_row(
         name: doc.name.clone(),
         patient_id: patient_id.to_string(),
         program: program.to_string(),
+        created_datetime: validated_encounter.created_datetime,
         start_datetime: validated_encounter.start_datetime,
         end_datetime: validated_encounter.end_datetime,
         status,
