@@ -2,10 +2,12 @@ use async_graphql::*;
 use async_graphql::{dataloader::DataLoader, Context};
 use chrono::{DateTime, Utc};
 
-use graphql_core::loader::{DocumentRegistryLoader, DocumentRegistryLoaderInput, JsonSchemaLoader};
+use graphql_core::loader::{
+    DocumentRegistryLoader, DocumentRegistryLoaderInput, JsonSchemaLoader, UserLoader,
+};
 use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
-use graphql_types::types::JSONSchemaNode;
-use repository::Document;
+use graphql_types::types::{JSONSchemaNode, UserNode};
+use repository::{unknown_user, Document};
 use service::document::raw_document::RawDocument;
 
 use super::document_registry::DocumentRegistryNode;
@@ -29,8 +31,19 @@ impl DocumentNode {
         &self.document.parent_ids
     }
 
-    pub async fn author(&self) -> &str {
+    pub async fn user_id(&self) -> &str {
         &self.document.user_id
+    }
+
+    pub async fn user(&self, ctx: &Context<'_>) -> Result<UserNode> {
+        let loader = ctx.get_loader::<DataLoader<UserLoader>>();
+
+        let user = loader
+            .load_one(self.document.user_id.clone())
+            .await?
+            .unwrap_or(unknown_user());
+
+        Ok(UserNode::from_domain(user))
     }
 
     pub async fn timestamp(&self) -> &DateTime<Utc> {

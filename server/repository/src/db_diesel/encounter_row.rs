@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum EncounterStatus {
     Scheduled,
-    Done,
+    Completed,
     Cancelled,
 }
 
@@ -24,6 +24,7 @@ table! {
         name -> Text,
         patient_id -> Text,
         program -> Text,
+        created_datetime -> Timestamp,
         start_datetime -> Timestamp,
         end_datetime -> Nullable<Timestamp>,
         status -> Nullable<crate::db_diesel::encounter_row::EncounterStatusMapping>,
@@ -43,6 +44,7 @@ pub struct EncounterRow {
     pub name: String,
     pub patient_id: String,
     pub program: String,
+    pub created_datetime: NaiveDateTime,
     pub start_datetime: NaiveDateTime,
     pub end_datetime: Option<NaiveDateTime>,
     pub status: Option<EncounterStatus>,
