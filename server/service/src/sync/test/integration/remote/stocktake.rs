@@ -57,6 +57,7 @@ impl SyncRecordTester for StocktakeRecordTester {
             cost_price_per_pack: Some(0.0),
             sell_price_per_pack: Some(0.0),
             note: None,
+            inventory_adjustment_reason_id: None,
         };
         result.push(TestStepData {
             central_upsert: json!({"item": [{
@@ -76,13 +77,13 @@ impl SyncRecordTester for StocktakeRecordTester {
             r.name_id = new_site_properties.name_id.clone();
             r.store_id = store_id.clone();
             r.name_store_id = Some(store_id.clone());
+            r.tax = Some(0.0);
         });
 
         let stock_line_row = inline_init(|r: &mut StockLineRow| {
             r.id = uuid();
             r.item_id = uuid();
             r.store_id = store_id.clone();
-            r.name_id = String::from("name_store_b");
         });
 
         let stocktake_row = inline_edit(&stocktake_row, |mut d| {
