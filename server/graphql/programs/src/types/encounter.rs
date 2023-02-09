@@ -29,7 +29,7 @@ pub struct EncounterNode {
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
 pub enum EncounterNodeStatus {
     Scheduled,
-    Done,
+    Completed,
     Cancelled,
 }
 
@@ -37,7 +37,7 @@ impl EncounterNodeStatus {
     pub fn to_domain(self) -> EncounterStatus {
         match self {
             EncounterNodeStatus::Scheduled => EncounterStatus::Scheduled,
-            EncounterNodeStatus::Done => EncounterStatus::Done,
+            EncounterNodeStatus::Completed => EncounterStatus::Completed,
             EncounterNodeStatus::Cancelled => EncounterStatus::Cancelled,
         }
     }
@@ -45,7 +45,7 @@ impl EncounterNodeStatus {
     pub fn from_domain(status: &EncounterStatus) -> EncounterNodeStatus {
         match status {
             EncounterStatus::Scheduled => EncounterNodeStatus::Scheduled,
-            EncounterStatus::Done => EncounterNodeStatus::Done,
+            EncounterStatus::Completed => EncounterNodeStatus::Completed,
             EncounterStatus::Cancelled => EncounterNodeStatus::Cancelled,
         }
     }
@@ -111,6 +111,10 @@ impl EncounterNode {
             .status
             .as_ref()
             .map(|status| EncounterNodeStatus::from_domain(status))
+    }
+
+    pub async fn created_datetime(&self) -> DateTime<Utc> {
+        DateTime::<Utc>::from_utc(self.encounter_row.created_datetime, Utc)
     }
 
     pub async fn start_datetime(&self) -> DateTime<Utc> {
