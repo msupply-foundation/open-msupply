@@ -12,7 +12,7 @@ use diesel::{dsl::IntoBoxed, prelude::*};
 
 #[derive(Clone)]
 pub struct ProgramEnrolmentFilter {
-    pub r#type: Option<EqualFilter<String>>,
+    pub program: Option<EqualFilter<String>>,
     pub patient_id: Option<EqualFilter<String>>,
     pub enrolment_datetime: Option<DatetimeFilter>,
     pub program_patient_id: Option<EqualFilter<String>>,
@@ -22,14 +22,14 @@ impl ProgramEnrolmentFilter {
     pub fn new() -> ProgramEnrolmentFilter {
         ProgramEnrolmentFilter {
             patient_id: None,
-            r#type: None,
+            program: None,
             enrolment_datetime: None,
             program_patient_id: None,
         }
     }
 
-    pub fn r#type(mut self, filter: EqualFilter<String>) -> Self {
-        self.r#type = Some(filter);
+    pub fn program(mut self, filter: EqualFilter<String>) -> Self {
+        self.program = Some(filter);
         self
     }
 
@@ -67,7 +67,7 @@ fn create_filtered_query<'a>(filter: Option<ProgramEnrolmentFilter>) -> BoxedPro
 
     if let Some(f) = filter {
         apply_equal_filter!(query, f.patient_id, program_dsl::patient_id);
-        apply_equal_filter!(query, f.r#type, program_dsl::type_);
+        apply_equal_filter!(query, f.program, program_dsl::program);
         apply_date_time_filter!(query, f.enrolment_datetime, program_dsl::enrolment_datetime);
         apply_equal_filter!(query, f.program_patient_id, program_dsl::program_patient_id);
     }
@@ -110,7 +110,7 @@ impl<'a> ProgramEnrolmentRepository<'a> {
                     apply_sort!(query, sort, program_dsl::patient_id)
                 }
                 ProgramEnrolmentSortField::Type => {
-                    apply_sort!(query, sort, program_dsl::type_)
+                    apply_sort!(query, sort, program_dsl::program)
                 }
                 ProgramEnrolmentSortField::EnrolmentDatetime => {
                     apply_sort!(query, sort, program_dsl::enrolment_datetime)
@@ -120,7 +120,7 @@ impl<'a> ProgramEnrolmentRepository<'a> {
                 }
             }
         } else {
-            query = query.order(program_dsl::type_.asc())
+            query = query.order(program_dsl::program.asc())
         }
 
         let result = query
@@ -137,7 +137,7 @@ impl<'a> ProgramEnrolmentRepository<'a> {
         patient_id: &str,
     ) -> Result<Option<ProgramEnrolment>, RepositoryError> {
         Ok(program_dsl::program_enrolment
-            .filter(program_dsl::type_.eq(r#type))
+            .filter(program_dsl::program.eq(r#type))
             .filter(program_dsl::patient_id.eq(patient_id))
             .first(&self.connection.connection)
             .optional()?)
