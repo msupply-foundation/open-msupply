@@ -60,6 +60,9 @@ pub use self::response_requisition_stats::*;
 pub mod json_schema;
 pub use self::json_schema::*;
 
+pub mod clinician;
+pub use self::clinician::*;
+
 use async_graphql::*;
 pub struct DeleteResponse(pub String);
 #[Object]

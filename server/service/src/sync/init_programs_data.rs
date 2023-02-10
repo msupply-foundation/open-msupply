@@ -77,12 +77,15 @@ mod hiv_testing_encounter {
         fn default() -> Self {
             Self {
                 end_datetime: Default::default(),
-                family_planning: Default::default(),
-                practitioner: Default::default(),
-                risk_behaviour: Default::default(),
+                clinician: Default::default(),
+                created_datetime: Default::default(),
                 start_datetime: Default::default(),
                 status: Default::default(),
+                htc_register_serial_number: None,
+                risk_behaviour: Default::default(),
+                family_planning: Default::default(),
                 hiv_testing: Default::default(),
+                informed_consent: Default::default(),
             }
         }
     }
@@ -100,7 +103,8 @@ mod hiv_care_encounter {
                 family_planning: Default::default(),
                 gender_based_violence: Default::default(),
                 physical_examination: Default::default(),
-                practitioner: Default::default(),
+                clinician: Default::default(),
+                created_datetime: Default::default(),
                 start_datetime: Default::default(),
                 status: Default::default(),
                 tuberculosis: Default::default(),
@@ -378,6 +382,7 @@ fn program_hiv_testing() -> hiv_testing_program::HivtestingProgramEnrolment {
 fn encounter_hiv_testing_1(time: DateTime<Utc>) -> hiv_testing_encounter::HivtestingEncounter {
     inline_init(|e: &mut hiv_testing_encounter::HivtestingEncounter| {
         e.status = Some(hiv_testing_encounter::EncounterStatus::Scheduled);
+        e.created_datetime = time.to_rfc3339();
         e.start_datetime = time.to_rfc3339();
     })
 }
@@ -385,6 +390,7 @@ fn encounter_hiv_testing_1(time: DateTime<Utc>) -> hiv_testing_encounter::Hivtes
 fn encounter_hiv_care_1(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncounter {
     inline_init(|e: &mut hiv_care_encounter::HivcareEncounter| {
         e.status = Some(hiv_care_encounter::EncounterStatus::Scheduled);
+        e.created_datetime = time.to_rfc3339();
         e.start_datetime = time.to_rfc3339();
         e.physical_examination = Some(inline_init(
             |exam: &mut HivcareEncounterPhysicalExamination| {
@@ -405,6 +411,7 @@ fn encounter_hiv_care_1(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncou
 fn encounter_hiv_care_2(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncounter {
     inline_init(|e: &mut hiv_care_encounter::HivcareEncounter| {
         e.status = Some(hiv_care_encounter::EncounterStatus::Scheduled);
+        e.created_datetime = time.to_rfc3339();
         e.start_datetime = time.to_rfc3339();
         e.physical_examination = Some(inline_init(
             |exam: &mut HivcareEncounterPhysicalExamination| {
@@ -427,6 +434,7 @@ fn encounter_hiv_care_2(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncou
 fn encounter_hiv_care_3(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncounter {
     inline_init(|e: &mut hiv_care_encounter::HivcareEncounter| {
         e.status = Some(hiv_care_encounter::EncounterStatus::Scheduled);
+        e.created_datetime = time.to_rfc3339();
         e.start_datetime = time.to_rfc3339();
         e.physical_examination = Some(inline_init(
             |exam: &mut HivcareEncounterPhysicalExamination| {
@@ -449,6 +457,7 @@ fn encounter_hiv_care_3(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncou
 fn encounter_hiv_care_4(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncounter {
     inline_init(|e: &mut hiv_care_encounter::HivcareEncounter| {
         e.status = Some(hiv_care_encounter::EncounterStatus::Scheduled);
+        e.created_datetime = time.to_rfc3339();
         e.start_datetime = time.to_rfc3339();
         e.physical_examination = Some(inline_init(
             |exam: &mut HivcareEncounterPhysicalExamination| {
@@ -462,6 +471,7 @@ fn encounter_hiv_care_4(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncou
 fn encounter_hiv_care_5(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncounter {
     inline_init(|e: &mut hiv_care_encounter::HivcareEncounter| {
         e.status = Some(hiv_care_encounter::EncounterStatus::Scheduled);
+        e.created_datetime = time.to_rfc3339();
         e.start_datetime = time.to_rfc3339();
         e.physical_examination = Some(inline_init(
             |exam: &mut HivcareEncounterPhysicalExamination| {

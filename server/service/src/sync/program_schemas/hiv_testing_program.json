@@ -13,7 +13,11 @@
       "type": "object"
     },
     "HIVStatus": {
-      "enum": ["POSITIVE", "NEGATIVE", "UNKNOWN"],
+      "enum": [
+        "POSITIVE",
+        "NEGATIVE",
+        "UNKNOWN"
+      ],
       "type": "string"
     },
     "HIVTestingProgramEnrolment": {
@@ -30,7 +34,7 @@
         "mother": {
           "$ref": "#/definitions/HIVRelation"
         },
-        "partnerHivStatus": {
+        "partnerHIVStatus": {
           "$ref": "#/definitions/HIVStatus"
         },
         "referredFrom": {
@@ -41,11 +45,18 @@
           "description": "Current status of the program enrolment"
         }
       },
-      "required": ["enrolmentDatetime"],
+      "required": [
+        "enrolmentDatetime"
+      ],
       "type": "object"
     },
     "ProgramEnrolmentStatus": {
-      "enum": ["ACTIVE", "OPTED_OUT", "TRANSFERRED_OUT", "PAUSED"],
+      "enum": [
+        "ACTIVE",
+        "OPTED_OUT",
+        "TRANSFERRED_OUT",
+        "PAUSED"
+      ],
       "type": "string"
     },
     "ReferredFrom": {

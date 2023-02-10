@@ -1,13 +1,12 @@
 use super::StorageConnection;
 
-use crate::RepositoryError;
+use crate::{Gender, RepositoryError};
 
 use diesel::prelude::*;
 
 table! {
   clinician (id) {
     id -> Text,
-    store_id -> Text,
     code  -> Text,
     last_name -> Text,
     initials -> Text,
@@ -17,7 +16,7 @@ table! {
     phone -> Nullable<Text>,
     mobile -> Nullable<Text>,
     email -> Nullable<Text>,
-    is_female -> Bool,
+    gender -> Nullable<crate::db_diesel::name_row::GenderMapping>,
     is_active -> Bool,
   }
 }
@@ -26,7 +25,6 @@ table! {
 #[table_name = "clinician"]
 pub struct ClinicianRow {
     pub id: String,
-    pub store_id: String,
     pub code: String,
     pub last_name: String,
     pub initials: String,
@@ -36,7 +34,7 @@ pub struct ClinicianRow {
     pub phone: Option<String>,
     pub mobile: Option<String>,
     pub email: Option<String>,
-    pub is_female: bool,
+    pub gender: Option<Gender>,
     pub is_active: bool,
 }
 

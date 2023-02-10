@@ -24,7 +24,6 @@ pub struct ClinicianFilter {
     pub phone: Option<SimpleStringFilter>,
     pub mobile: Option<SimpleStringFilter>,
     pub email: Option<SimpleStringFilter>,
-    pub female: Option<bool>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -38,7 +37,6 @@ pub enum ClinicianSortField {
     Phone,
     Mobile,
     Email,
-    Female,
 }
 
 pub type ClinicianSort = Sort<ClinicianSortField>;
@@ -112,9 +110,6 @@ impl<'a> ClinicianRepository<'a> {
                     apply_sort_no_case!(query, sort, clinician_dsl::mobile)
                 }
                 ClinicianSortField::Email => apply_sort_no_case!(query, sort, clinician_dsl::email),
-                ClinicianSortField::Female => {
-                    apply_sort_no_case!(query, sort, clinician_dsl::is_female)
-                }
             }
         } else {
             query = query.order(clinician_dsl::id.asc())
@@ -153,7 +148,6 @@ fn create_filtered_query(store_id: String, filter: Option<ClinicianFilter>) -> B
             phone,
             mobile,
             email,
-            female,
         } = f;
 
         apply_equal_filter!(query, id, clinician_dsl::id);
@@ -166,9 +160,6 @@ fn create_filtered_query(store_id: String, filter: Option<ClinicianFilter>) -> B
         apply_simple_string_filter!(query, phone, clinician_dsl::phone);
         apply_simple_string_filter!(query, mobile, clinician_dsl::mobile);
         apply_simple_string_filter!(query, email, clinician_dsl::email);
-        if let Some(female) = female {
-            query = query.filter(clinician_dsl::is_female.eq(female));
-        }
     };
 
     // Restrict results to clinicians belonging to the store as specified in the
@@ -236,17 +227,12 @@ impl ClinicianFilter {
         self.email = Some(filter);
         self
     }
-
-    pub fn female(mut self, value: bool) -> Self {
-        self.female = Some(value);
-        self
-    }
 }
 
 #[cfg(test)]
 mod tests {
     use crate::{
-        mock::{mock_store_a, mock_store_b, MockDataInserts},
+        mock::{mock_store_a, MockDataInserts},
         test_db, ClinicianFilter, ClinicianRepository, ClinicianRow, ClinicianRowRepository,
         ClinicianStoreJoinRow, ClinicianStoreJoinRowRepository, SimpleStringFilter,
     };
@@ -265,14 +251,12 @@ mod tests {
         ClinicianRowRepository::new(&storage_connection)
             .upsert_one(&inline_init(|r: &mut ClinicianRow| {
                 r.id = "clinician_store_a".to_string();
-                r.store_id = mock_store_a().id;
                 r.first_name = Some("First".to_string());
             }))
             .unwrap();
         ClinicianRowRepository::new(&storage_connection)
             .upsert_one(&inline_init(|r: &mut ClinicianRow| {
                 r.id = "clinician_store_b".to_string();
-                r.store_id = mock_store_b().id;
                 r.first_name = Some("First".to_string());
             }))
             .unwrap();

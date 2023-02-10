@@ -2,17 +2,23 @@ use async_graphql::{dataloader::DataLoader, *};
 use chrono::{DateTime, Utc};
 use graphql_core::{
     generic_filters::EqualFilterStringInput,
-    loader::{DocumentLoader, DocumentLoaderInput, NameByIdLoader, NameByIdLoaderInput},
+    loader::{
+        ClinicianLoader, ClinicianLoaderInput, DocumentLoader, DocumentLoaderInput, NameByIdLoader,
+        NameByIdLoaderInput, ProgramEnrolmentLoader, ProgramEnrolmentLoaderInput,
+    },
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use graphql_types::types::NameNode;
+use graphql_types::types::{ClinicianNode, NameNode};
 use repository::{
     EncounterRow, EncounterStatus, EqualFilter, ProgramEventFilter, ProgramEventSortField, Sort,
 };
 use serde::Serialize;
 
-use super::{document::DocumentNode, program_event::ProgramEventNode};
+use super::{
+    document::DocumentNode, program_enrolment::ProgramEnrolmentNode,
+    program_event::ProgramEventNode,
+};
 
 pub struct EncounterNode {
     pub store_id: String,
@@ -24,7 +30,7 @@ pub struct EncounterNode {
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
 pub enum EncounterNodeStatus {
     Scheduled,
-    Done,
+    Completed,
     Cancelled,
 }
 
@@ -32,7 +38,7 @@ impl EncounterNodeStatus {
     pub fn to_domain(self) -> EncounterStatus {
         match self {
             EncounterNodeStatus::Scheduled => EncounterStatus::Scheduled,
-            EncounterNodeStatus::Done => EncounterStatus::Done,
+            EncounterNodeStatus::Completed => EncounterStatus::Completed,
             EncounterNodeStatus::Cancelled => EncounterStatus::Cancelled,
         }
     }
@@ -40,7 +46,7 @@ impl EncounterNodeStatus {
     pub fn from_domain(status: &EncounterStatus) -> EncounterNodeStatus {
         match status {
             EncounterStatus::Scheduled => EncounterNodeStatus::Scheduled,
-            EncounterStatus::Done => EncounterNodeStatus::Done,
+            EncounterStatus::Completed => EncounterNodeStatus::Completed,
             EncounterStatus::Cancelled => EncounterNodeStatus::Cancelled,
         }
     }
@@ -94,8 +100,53 @@ impl EncounterNode {
         Ok(result)
     }
 
+    pub async fn clinician(&self, ctx: &Context<'_>) -> Result<Option<ClinicianNode>> {
+        let Some(clinician_id) = self.encounter_row.clinician_id.as_ref() else {
+            return Ok(None)
+        };
+        let loader = ctx.get_loader::<DataLoader<ClinicianLoader>>();
+
+        let result = loader
+            .load_one(ClinicianLoaderInput::new(&self.store_id, &clinician_id))
+            .await?
+            .map(ClinicianNode::from_domain)
+            .ok_or(Error::new(format!(
+                "Failed to load clinician: {}",
+                clinician_id
+            )))?;
+
+        Ok(Some(result))
+    }
+
     pub async fn program(&self) -> &str {
         &self.encounter_row.program
+    }
+
+    /// Returns the matching program enrolment for the patient of this encounter
+    pub async fn program_enrolment(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<ProgramEnrolmentNode>> {
+        let loader = ctx.get_loader::<DataLoader<ProgramEnrolmentLoader>>();
+
+        let result = loader
+            .load_one(ProgramEnrolmentLoaderInput::new(
+                &self.encounter_row.patient_id,
+                &self.encounter_row.program,
+                self.allowed_docs.clone(),
+            ))
+            .await?
+            .map(|program_row| ProgramEnrolmentNode {
+                store_id: self.store_id.clone(),
+                program_row,
+                allowed_docs: self.allowed_docs.clone(),
+            })
+            .ok_or(Error::new(format!(
+                "Failed to load program enrolment: {}",
+                self.encounter_row.program
+            )))?;
+
+        Ok(Some(result))
     }
 
     pub async fn r#type(&self) -> &str {
@@ -111,6 +162,10 @@ impl EncounterNode {
             .status
             .as_ref()
             .map(|status| EncounterNodeStatus::from_domain(status))
+    }
+
+    pub async fn created_datetime(&self) -> DateTime<Utc> {
+        DateTime::<Utc>::from_utc(self.encounter_row.created_datetime, Utc)
     }
 
     pub async fn start_datetime(&self) -> DateTime<Utc> {

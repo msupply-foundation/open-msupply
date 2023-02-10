@@ -42,7 +42,9 @@
           "type": "array"
         }
       },
-      "required": ["drugAllergies"],
+      "required": [
+        "drugAllergies"
+      ],
       "type": "object"
     },
     "ContactDetails": {
@@ -183,7 +185,12 @@
           "type": "string"
         }
       },
-      "required": ["text", "created", "authorId", "authorName"],
+      "required": [
+        "text",
+        "created",
+        "authorId",
+        "authorName"
+      ],
       "type": "object"
     },
     "Patient": {
@@ -266,7 +273,10 @@
           "$ref": "#/definitions/SocioEconomics"
         }
       },
-      "required": ["contactDetails", "id"],
+      "required": [
+        "contactDetails",
+        "id"
+      ],
       "type": "object"
     },
     "RelatedPerson": {
@@ -343,7 +353,9 @@
           "$ref": "#/definitions/SocioEconomics"
         }
       },
-      "required": ["contactDetails"],
+      "required": [
+        "contactDetails"
+      ],
       "type": "object"
     },
     "SocioEconomics": {

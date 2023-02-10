@@ -1,6 +1,7 @@
 import React, { FC, useState } from 'react';
 import {
   AlertIcon,
+  Autocomplete,
   BasicSpinner,
   Box,
   DatePickerInput,
@@ -19,17 +20,28 @@ import { DateUtils, useTranslation } from '@common/intl';
 import {
   EncounterRegistryByProgram,
   PatientModal,
+  useClinicians,
   usePatientModalStore,
+  useEncounter,
 } from '@openmsupply-client/programs';
 import { usePatient } from '../api';
 import { AppRoute } from 'packages/config/src';
-import { EncounterFragment, useEncounter } from '@openmsupply-client/programs';
 import { EncounterSearchInput } from './EncounterSearchInput';
+import { ClinicianFragment } from 'packages/programs/src/api/operations.generated';
+interface Encounter {
+  status?: EncounterNodeStatus;
+  createdDatetime: string;
+  startDatetime?: string;
+  endDatetime?: string;
+  clinician?: Clinician;
+}
 
-type Encounter = Pick<
-  EncounterFragment,
-  'startDatetime' | 'endDatetime' | 'status'
->;
+type ClinicianAutocompleteOption = {
+  label: string;
+  value?: Clinician;
+};
+
+type Clinician = Pick<ClinicianFragment, 'firstName' | 'lastName' | 'id'>;
 
 export const CreateEncounterModal: FC = () => {
   const patientId = usePatient.utils.id();
@@ -38,15 +50,19 @@ export const CreateEncounterModal: FC = () => {
   const [encounterRegistry, setEncounterRegistry] = useState<
     EncounterRegistryByProgram | undefined
   >();
+  const [createdDatetime] = useState(new Date().toISOString());
   const [isError, setIsError] = useState(false);
 
   const [draft, setDraft] = useState<Encounter | undefined>(undefined);
   const navigate = useNavigate();
   const { error } = useNotification();
 
+  const { data: clinicianData } = useClinicians.document.list({});
+  const clinicians: ClinicianFragment[] = clinicianData?.nodes ?? [];
+
   const handleSave = useEncounter.document.upsert(
     patientId,
-    encounterRegistry?.program?.type ?? '',
+    encounterRegistry?.program?.program ?? '',
     encounterRegistry?.encounter.documentType ?? ''
   );
 
@@ -73,6 +89,7 @@ export const CreateEncounterModal: FC = () => {
     const startDatetime = DateUtils.formatRFC3339(date);
 
     setDraft({
+      createdDatetime,
       ...draft,
       startDatetime,
       status: DateUtils.isFuture(date)
@@ -85,6 +102,15 @@ export const CreateEncounterModal: FC = () => {
     const endDatetime = date ? DateUtils.formatRFC3339(date) : null;
     if (endDatetime && draft?.startDatetime)
       setDraft({ ...draft, endDatetime });
+  };
+
+  const setClinician = (option: ClinicianAutocompleteOption | null): void => {
+    if (option === null) {
+      setDraft({ createdDatetime, ...draft, clinician: undefined });
+      return;
+    }
+    const clinician = option.value;
+    setDraft({ createdDatetime, ...draft, clinician });
   };
 
   return (
@@ -164,6 +190,31 @@ export const CreateEncounterModal: FC = () => {
                     />
                   }
                 />
+                <InputWithLabelRow
+                  label={t('label.clinician')}
+                  Input={
+                    <Autocomplete
+                      value={{
+                        label: getClinicianName(draft?.clinician),
+                        value: draft?.clinician,
+                      }}
+                      width={'200'}
+                      onChange={(_, option) => {
+                        setClinician(option);
+                      }}
+                      options={clinicians.map(
+                        (clinician): ClinicianAutocompleteOption => ({
+                          label: getClinicianName(clinician),
+                          value: {
+                            firstName: clinician.firstName ?? '',
+                            lastName: clinician.lastName ?? '',
+                            id: clinician.id,
+                          },
+                        })
+                      )}
+                    />
+                  }
+                />
               </>
             }
           />
@@ -196,4 +247,11 @@ const RenderForm = ({
   if (isLoading) return <BasicSpinner />;
 
   return <>{form}</>;
+};
+
+export const getClinicianName = (
+  clinician: ClinicianFragment | Clinician | undefined
+) => {
+  if (clinician === undefined) return '';
+  return `${clinician.firstName || ''} ${clinician.lastName || ''}`;
 };

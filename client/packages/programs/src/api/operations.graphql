@@ -15,7 +15,11 @@ fragment Document on DocumentNode {
   id
   name
   parents
-  author
+  user {
+    userId
+    username
+    email
+  }
   timestamp
   type
   data
@@ -94,7 +98,11 @@ query getDocumentHistory($storeId: String!, $name: String!) {
       totalCount
       nodes {
         __typename
-        author
+        user {
+          userId
+          username
+          email
+        }
         data
         id
         name
@@ -290,7 +298,7 @@ mutation updateEncounter($storeId: String!, $input: UpdateEncounterInput!) {
 
 # program enrolment without document data but with events
 fragment ProgramEnrolmentRow on ProgramEnrolmentNode {
-  type
+  program
   programPatientId
   patientId
   name
@@ -330,7 +338,7 @@ query programEnrolments(
 
 # program enrolment with document
 fragment ProgramEnrolment on ProgramEnrolmentNode {
-  type
+  program
   programPatientId
   patientId
   name
@@ -387,7 +395,7 @@ fragment Clinician on ClinicianNode {
   firstName
   id
   initials
-  isFemale
+  gender
   lastName
   mobile
   phone

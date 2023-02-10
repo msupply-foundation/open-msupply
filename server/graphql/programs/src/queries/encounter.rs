@@ -38,6 +38,7 @@ pub enum EncounterSortFieldInput {
     Type,
     PatientId,
     Program,
+    CreatedDatetime,
     StartDatetime,
     EndDatetime,
     Status,
@@ -59,9 +60,11 @@ pub struct EncounterFilterInput {
     pub patient_id: Option<EqualFilterStringInput>,
     pub program: Option<EqualFilterStringInput>,
     pub name: Option<EqualFilterStringInput>,
+    pub created_datetime: Option<DatetimeFilterInput>,
     pub start_datetime: Option<DatetimeFilterInput>,
     pub end_datetime: Option<DatetimeFilterInput>,
     pub status: Option<EqualFilterEncounterStatusInput>,
+    pub clinician_id: Option<EqualFilterStringInput>,
 }
 
 impl EncounterFilterInput {
@@ -72,11 +75,13 @@ impl EncounterFilterInput {
             patient_id: self.patient_id.map(EqualFilter::from),
             program: self.program.map(EqualFilter::from),
             name: self.name.map(EqualFilter::from),
+            created_datetime: self.created_datetime.map(DatetimeFilter::from),
             start_datetime: self.start_datetime.map(DatetimeFilter::from),
             status: self
                 .status
                 .map(|s| map_filter!(s, EncounterNodeStatus::to_domain)),
             end_datetime: self.end_datetime.map(DatetimeFilter::from),
+            clinician_id: self.clinician_id.map(EqualFilter::from),
         }
     }
 }
@@ -132,6 +137,7 @@ impl EncounterSortInput {
             EncounterSortFieldInput::Type => EncounterSortField::Type,
             EncounterSortFieldInput::PatientId => EncounterSortField::PatientId,
             EncounterSortFieldInput::Program => EncounterSortField::Program,
+            EncounterSortFieldInput::CreatedDatetime => EncounterSortField::CreatedDatetime,
             EncounterSortFieldInput::StartDatetime => EncounterSortField::StartDatetime,
             EncounterSortFieldInput::EndDatetime => EncounterSortField::EndDatetime,
             EncounterSortFieldInput::Status => EncounterSortField::Status,

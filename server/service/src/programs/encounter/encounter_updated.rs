@@ -1,6 +1,6 @@
 use repository::{
-    EncounterFilter, EncounterRepository, EncounterRow, EncounterRowRepository, EncounterStatus,
-    EqualFilter, RepositoryError,
+    ClinicianRow, EncounterFilter, EncounterRepository, EncounterRow, EncounterRowRepository,
+    EncounterStatus, EqualFilter, RepositoryError,
 };
 use util::uuid::uuid;
 
@@ -18,13 +18,14 @@ pub(crate) fn update_encounter_row(
     program: &str,
     doc: &RawDocument,
     validated_encounter: ValidatedSchemaEncounter,
+    clinician_row: Option<ClinicianRow>,
 ) -> Result<(), RepositoryError> {
     let con = &ctx.connection;
 
     let status = if let Some(status) = validated_encounter.encounter.status {
         Some(match status {
             encounter_schema::EncounterStatus::Scheduled => EncounterStatus::Scheduled,
-            encounter_schema::EncounterStatus::Done => EncounterStatus::Done,
+            encounter_schema::EncounterStatus::Completed => EncounterStatus::Completed,
             encounter_schema::EncounterStatus::Cancelled => EncounterStatus::Cancelled,
         })
     } else {
@@ -45,9 +46,11 @@ pub(crate) fn update_encounter_row(
         name: doc.name.clone(),
         patient_id: patient_id.to_string(),
         program: program.to_string(),
+        created_datetime: validated_encounter.created_datetime,
         start_datetime: validated_encounter.start_datetime,
         end_datetime: validated_encounter.end_datetime,
         status,
+        clinician_id: clinician_row.map(|c| c.id),
     };
     EncounterRowRepository::new(con).upsert_one(&row)?;
 

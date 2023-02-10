@@ -1,8 +1,33 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
+    "ARTFacilityLocation": {
+      "enum": [
+        "THIS_FACILITY",
+        "OTHER_FACILITY"
+      ],
+      "type": "string"
+    },
+    "Clinician": {
+      "properties": {
+        "firstName": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "lastName": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "EncounterStatus": {
-      "enum": ["SCHEDULED", "DONE", "CANCELLED"],
+      "enum": [
+        "SCHEDULED",
+        "COMPLETED",
+        "CANCELLED"
+      ],
       "type": "string"
     },
     "FamilyPlanning": {
@@ -17,6 +42,15 @@
         }
       },
       "type": "object"
+    },
+    "GBVScreeningOutcome": {
+      "enum": [
+        "POSITIVE",
+        "NEGATIVE",
+        "NOT_DONE",
+        "DECLINED"
+      ],
+      "type": "string"
     },
     "HIVRiskGroup": {
       "enum": [
@@ -34,15 +68,30 @@
       "type": "string"
     },
     "HIVStatus": {
-      "enum": ["POSITIVE", "NEGATIVE", "UNKNOWN"],
+      "enum": [
+        "POSITIVE",
+        "NEGATIVE",
+        "UNKNOWN"
+      ],
       "type": "string"
     },
     "HIVTestType": {
-      "enum": ["PCR", "ANTIBODY"],
+      "enum": [
+        "PCR",
+        "ANTIBODY"
+      ],
       "type": "string"
     },
     "HIVTestingEncounter": {
       "properties": {
+        "clinician": {
+          "$ref": "#/definitions/Clinician"
+        },
+        "createdDatetime": {
+          "description": "Date time when the encounter was made, e.g. when an clinician schedule the encounter.",
+          "format": "date-time",
+          "type": "string"
+        },
         "endDatetime": {
           "description": "Encounter end date and time",
           "format": "date-time",
@@ -53,23 +102,97 @@
         },
         "hivTesting": {
           "properties": {
+            "clientEscorted": {
+              "description": "Was the client escorted?",
+              "type": "boolean"
+            },
+            "condomDemonstration": {
+              "description": "Did you conduct condom demonstration?",
+              "type": "boolean"
+            },
+            "condomsLubricantsOffered": {
+              "description": "6. Where condoms and/or lubricants offered to the client?",
+              "type": "boolean"
+            },
             "datetime": {
               "description": "Date of HIV Test done",
               "format": "date-time",
               "type": "string"
             },
+            "numberOfFemaleCondoms": {
+              "type": "number"
+            },
+            "numberOfLubricants": {
+              "type": "number"
+            },
+            "numberOfMaleCondoms": {
+              "description": "6a. If yes number of males condoms provided?",
+              "type": "number"
+            },
+            "otherServiceName": {
+              "description": "5aa. If other, specify:",
+              "type": "string"
+            },
+            "otherServices": {
+              "description": "5a. If yes, which one(s): TB, STI, GBV, PEP, Other",
+              "items": {
+                "$ref": "#/definitions/OtherServiceType"
+              },
+              "type": "array"
+            },
+            "postTestCounsellingDone": {
+              "description": "Post-test counselling done?",
+              "type": "boolean"
+            },
+            "referredARTFacility": {
+              "$ref": "#/definitions/ARTFacilityLocation",
+              "description": "2aa. Where ? This facility or Another Facility"
+            },
+            "referredARTFacilityName": {
+              "description": "2aaa. If another facility, name of the facility",
+              "type": "string"
+            },
+            "referredForARTServices": {
+              "description": "2. Did you refer the patient for ART services?",
+              "type": "boolean"
+            },
             "result": {
               "$ref": "#/definitions/HIVStatus"
+            },
+            "screenedAndReferredForOtherServices": {
+              "description": "5. Was client screened and referred for other services?",
+              "type": "boolean"
+            },
+            "serodiscordantCoupleCounsellingProvided": {
+              "$ref": "#/definitions/YesNoNA",
+              "description": "If serodiscordant, was couple counselling provided?"
             },
             "type": {
               "$ref": "#/definitions/HIVTestType"
             }
           },
-          "required": ["datetime", "type", "result"],
+          "required": [
+            "datetime",
+            "type",
+            "result"
+          ],
           "type": "object"
         },
-        "practitioner": {
-          "$ref": "#/definitions/Practitioner"
+        "htcRegisterSerialNumber": {
+          "type": "string"
+        },
+        "informedConsent": {
+          "properties": {
+            "consentFormSigned": {
+              "description": "Was the consent form signed?",
+              "type": "boolean"
+            },
+            "preTestCounsellingDone": {
+              "description": "Was pre-test counselling done?",
+              "type": "boolean"
+            }
+          },
+          "type": "object"
         },
         "riskBehaviour": {
           "properties": {
@@ -93,6 +216,14 @@
               "description": "How many male sexual partners have you had in the last 6 months ?",
               "type": "number"
             },
+            "previousHIVTestDate": {
+              "description": "Date of a previous HIV test",
+              "format": "date",
+              "type": "string"
+            },
+            "previousHIVTestResult": {
+              "$ref": "#/definitions/HIVTestingStatus"
+            },
             "prostitution": {
               "description": "Have you received any of the following in the past 12 months ?: Sex in exchange for money/goods/services ?",
               "type": "boolean"
@@ -101,8 +232,15 @@
               "description": "Have you received any of the following in the past 12 months ?: Received a blood transfusion ?",
               "type": "boolean"
             },
+            "referredToGBVService": {
+              "description": "If GBV screening = positive, referred for GBV services ? Yes or No",
+              "type": "boolean"
+            },
             "riskGroup": {
               "$ref": "#/definitions/HIVRiskGroup"
+            },
+            "screeningOutcomeGBV": {
+              "$ref": "#/definitions/GBVScreeningOutcome"
             },
             "sexWithSameSex": {
               "description": "Have you received any of the following in the past 12 months ?: Had sex with someone of the same sex ?",
@@ -132,22 +270,38 @@
           "$ref": "#/definitions/EncounterStatus"
         }
       },
-      "required": ["startDatetime"],
+      "required": [
+        "createdDatetime",
+        "startDatetime"
+      ],
       "type": "object"
     },
-    "Practitioner": {
-      "properties": {
-        "firstName": {
-          "type": "string"
-        },
-        "id": {
-          "type": "string"
-        },
-        "lastName": {
-          "type": "string"
-        }
-      },
-      "type": "object"
+    "HIVTestingStatus": {
+      "enum": [
+        "POSITIVE",
+        "NEGATIVE",
+        "UNKNOWN",
+        "NOT_DONE"
+      ],
+      "type": "string"
+    },
+    "OtherServiceType": {
+      "enum": [
+        "TB",
+        "STI",
+        "GBV",
+        "PEP",
+        "OTHER"
+      ],
+      "type": "string"
+    },
+    "YesNoNA": {
+      "enum": [
+        "Yes",
+        "No",
+        "N/A"
+      ],
+      "type": "string"
     }
   },
   "type": "object",
