@@ -4,12 +4,18 @@
     {
       "type": "Control",
       "scope": "#/properties/startDatetime",
-      "label": "Start date time"
+      "label": "Start date",
+      "options": {
+        "dateOnly": true
+      }
     },
     {
       "type": "Control",
       "scope": "#/properties/endDatetime",
-      "label": "End date time"
+      "label": "End date",
+      "options": {
+        "dateOnly": true
+      }
     },
     {
       "type": "Control",
