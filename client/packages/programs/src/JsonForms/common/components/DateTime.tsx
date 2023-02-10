@@ -91,6 +91,7 @@ const UIComponent = (props: ControlProps) => {
     inputFormat,
     readOnly: !!props.uischema.options?.['readonly'],
     disabled: !props.enabled,
+    error: zErrors ?? error ?? props.errors,
   };
 
   return (
@@ -110,13 +111,9 @@ const UIComponent = (props: ControlProps) => {
           <DateTimePickerInput
             // undefined is displayed as "now" and null as unset
             {...sharedComponentProps}
-            error={zErrors ?? error ?? props.errors}
           />
         ) : (
-          <DatePickerInput
-            {...sharedComponentProps}
-            error={zErrors ?? error ?? props.errors}
-          />
+          <DatePickerInput {...sharedComponentProps} />
         )}
       </Box>
     </Box>
