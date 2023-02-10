@@ -10,13 +10,26 @@ import {
 import {
   BasicTextInput,
   BaseDatePickerInput,
-  useFormatDateTime,
 } from '@openmsupply-client/common';
 import {
   FORM_LABEL_COLUMN_WIDTH,
   FORM_INPUT_COLUMN_WIDTH,
 } from '../styleConstants';
 import { DateTimePicker, DateTimePickerProps } from '@mui/x-date-pickers';
+import { z } from 'zod';
+import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
+
+const Options = z
+  .object({
+    /**
+     *
+     */
+    dateOnly: z.boolean().optional(),
+  })
+  .strict()
+  .optional();
+
+type Options = z.infer<typeof Options>;
 
 const BaseDateTimePickerInput: FC<
   Omit<DateTimePickerProps<Date>, 'renderInput'> & { error: string }
@@ -48,15 +61,18 @@ const BaseDateTimePickerInput: FC<
 export const datetimeTester = rankWith(5, isDateTimeControl);
 
 const UIComponent = (props: ControlProps) => {
-  const [error, setError] = React.useState('');
+  const [error, setError] = React.useState<string | undefined>(undefined);
   const { data, handleChange, label, path, uischema } = props;
-  const dateFormatter = useFormatDateTime().customDate;
+  const { errors: zErrors, options } = useZodOptionsValidation(
+    Options,
+    uischema.options
+  );
 
   if (!props.visible) {
     return null;
   }
 
-  const dateOnly = uischema.options?.['dateOnly'] ?? false;
+  const dateOnly = options?.dateOnly ?? false;
 
   const inputFormat = !dateOnly ? 'dd/MM/yyyy hh:mm' : 'dd/MM/yyyy';
 
@@ -64,13 +80,8 @@ const UIComponent = (props: ControlProps) => {
     if (!e) return;
 
     try {
-      const dateString = !dateOnly
-        ? e.toISOString()
-        : // By default, will use current date-time. However, if a
-          // different date is selected, the time will be considered "midnight"
-          dateFormatter(e, 'yyyy-MM-dd') + ' 00:00:00';
-      setError('');
-      if (e) handleChange(path, dateString);
+      setError(undefined);
+      if (e) handleChange(path, e.toISOString());
     } catch (err) {
       setError((err as Error).message);
     }
@@ -101,7 +112,7 @@ const UIComponent = (props: ControlProps) => {
           <BaseDateTimePickerInput
             // undefined is displayed as "now" and null as unset
             {...sharedComponentProps}
-            error={error || props.errors}
+            error={zErrors ?? error ?? props.errors}
           />
         ) : (
           <BaseDatePickerInput {...sharedComponentProps} />
