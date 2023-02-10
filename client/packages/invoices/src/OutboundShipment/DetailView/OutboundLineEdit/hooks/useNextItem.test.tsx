@@ -73,6 +73,7 @@ const getLines = (): InvoiceLineNode[] => [
       },
       code: '',
       name: '',
+      availableStockOnHand: 0,
       stats: {
         __typename: 'ItemStatsNode',
         availableStockOnHand: 0,
@@ -136,6 +137,7 @@ const getLines = (): InvoiceLineNode[] => [
         availableMonthsOfStockOnHand: 0,
         averageMonthlyConsumption: 0,
       },
+      availableStockOnHand: 0,
       atcCategory: '',
       availableStockOnHand: 0,
       ddd: '0',
@@ -208,6 +210,7 @@ const getLines = (): InvoiceLineNode[] => [
       volumePerOuterPack: 0,
       volumePerPack: 0,
       weight: 0,
+      availableStockOnHand: 0,
     },
   },
 ];
