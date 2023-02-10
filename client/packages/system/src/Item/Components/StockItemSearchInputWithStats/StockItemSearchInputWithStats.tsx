@@ -6,11 +6,13 @@ import {
   Autocomplete,
   defaultOptionMapper,
 } from '@openmsupply-client/common';
-import { useItemStockOnHand } from '../../api';
-import { itemFilterOptions, StockItemSearchInputProps } from '../../utils';
+import { useStockItemsWithStats } from '../../api';
+import { itemFilterOptions, StockItemSearchInputWithStatsProps } from '../../utils';
 import { getItemOptionRenderer } from '../ItemOptionRenderer';
 
-export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
+export const StockItemSearchInputWithStats: FC<
+  StockItemSearchInputWithStatsProps
+> = ({
   onChange,
   currentItemId,
   disabled = false,
@@ -19,7 +21,7 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   autoFocus = false,
   openOnFocus,
 }) => {
-  const { data, isLoading } = useItemStockOnHand();
+  const { data, isLoading } = useStockItemsWithStats();
   const t = useTranslation('common');
   const formatNumber = useFormatNumber();
 
