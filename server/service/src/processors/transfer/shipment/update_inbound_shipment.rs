@@ -69,6 +69,7 @@ impl ShipmentTransferProcessor for UpdateInboundShipmentProcessor {
         let new_inbound_lines = generate_inbound_shipment_lines(
             connection,
             &inbound_shipment.invoice_row.id,
+            &inbound_shipment.invoice_row.store_id,
             &outbound_shipment,
         )?;
 
