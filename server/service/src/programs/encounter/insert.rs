@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use repository::{
-    Document, DocumentFilter, DocumentRepository, DocumentStatus, Pagination, RepositoryError,
-    StringFilter, TransactionError,
+    ClinicianRow, Document, DocumentFilter, DocumentRepository, DocumentStatus, Pagination,
+    RepositoryError, StringFilter, TransactionError,
 };
 
 use crate::{
@@ -15,7 +15,9 @@ use crate::{
 
 use super::{
     encounter_updated::update_encounter_row,
-    validate_misc::{validate_encounter_schema, ValidatedSchemaEncounter},
+    validate_misc::{
+        validate_clinician_exists, validate_encounter_schema, ValidatedSchemaEncounter,
+    },
 };
 
 #[derive(PartialEq, Debug)]
@@ -26,6 +28,7 @@ pub enum InsertEncounterError {
     DataSchemaDoesNotExist,
     InternalError(String),
     DatabaseError(RepositoryError),
+    InvalidClinicianId,
 }
 
 pub struct InsertEncounter {
@@ -48,7 +51,7 @@ pub fn insert_encounter(
     let patient = ctx
         .connection
         .transaction_sync(|_| {
-            let encounter = validate(ctx, &input)?;
+            let (encounter, clinician) = validate(ctx, &input)?;
             let patient_id = input.patient_id.clone();
             let program = input.program.clone();
             let event_datetime = input.event_datetime;
@@ -58,7 +61,7 @@ pub fn insert_encounter(
             if is_latest_doc(ctx, service_provider, &doc)
                 .map_err(InsertEncounterError::DatabaseError)?
             {
-                update_encounter_row(ctx, &patient_id, &program, &doc, encounter)?;
+                update_encounter_row(ctx, &patient_id, &program, &doc, encounter, clinician)?;
 
                 update_program_events(
                     ctx,
@@ -156,7 +159,7 @@ fn validate_patient_program_exists(
 fn validate(
     ctx: &ServiceContext,
     input: &InsertEncounter,
-) -> Result<ValidatedSchemaEncounter, InsertEncounterError> {
+) -> Result<(ValidatedSchemaEncounter, Option<ClinicianRow>), InsertEncounterError> {
     if !validate_patient_program_exists(ctx, &input.patient_id, &input.program)? {
         return Err(InsertEncounterError::InvalidPatientOrProgram);
     }
@@ -165,7 +168,23 @@ fn validate(
         InsertEncounterError::InvalidDataSchema(vec![format!("Invalid program data: {}", err)])
     })?;
 
-    Ok(encounter)
+    let clinician_row = if let Some(clinician_id) = encounter
+        .encounter
+        .clinician
+        .as_ref()
+        .map(|c| c.id.clone())
+        .flatten()
+    {
+        let clinician_row = validate_clinician_exists(&ctx.connection, &clinician_id)?;
+        if clinician_row.is_none() {
+            return Err(InsertEncounterError::InvalidClinicianId);
+        }
+        clinician_row
+    } else {
+        None
+    };
+
+    Ok((encounter, clinician_row))
 }
 
 #[cfg(test)]

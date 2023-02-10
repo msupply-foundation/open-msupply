@@ -97,7 +97,7 @@ pub fn update_program_enrolment(
         .program_enrolment_service
         .program_enrolment(
             &service_context,
-            ProgramEnrolmentFilter::new().r#type(EqualFilter::equal_to(&document.r#type)),
+            ProgramEnrolmentFilter::new().program(EqualFilter::equal_to(&document.r#type)),
             allowed_docs.clone(),
         )?
         .ok_or(

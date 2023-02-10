@@ -83,7 +83,15 @@
       "type": "object"
     },
     "Gender": {
-      "enum": ["FEMALE", "MALE", "TRANSGENDER", "TRANSGENDER_MALE", "TRANSGENDER_FEMALE", "UNKNOWN", "NON_BINARY"],
+      "enum": [
+        "FEMALE",
+        "MALE",
+        "TRANSGENDER",
+        "TRANSGENDER_MALE",
+        "TRANSGENDER_FEMALE",
+        "UNKNOWN",
+        "NON_BINARY"
+      ],
       "type": "string"
     },
     "HIVCareProgramEnrolment": {
@@ -107,11 +115,17 @@
         "mother": {
           "$ref": "#/definitions/HIVRelation"
         },
-        "partnerHivStatus": {
-          "$ref": "#/definitions/HIVPartnerStatus"
+        "partnerHIVStatus": {
+          "$ref": "#/definitions/HIVTestingStatus"
         },
         "priorART": {
-          "enum": ["TRANSFER_IN_WITH_RECORDS", "TRANSFER_IN_WITHOUT_RECORDS", "PPTCT_PROPHYLAXIS", "PEP", "PrEP"],
+          "enum": [
+            "TRANSFER_IN_WITH_RECORDS",
+            "TRANSFER_IN_WITHOUT_RECORDS",
+            "PPTCT_PROPHYLAXIS",
+            "PEP",
+            "PrEP"
+          ],
           "type": "string"
         },
         "referredFrom": {
@@ -128,12 +142,10 @@
           "$ref": "#/definitions/Person"
         }
       },
-      "required": ["enrolmentDatetime"],
+      "required": [
+        "enrolmentDatetime"
+      ],
       "type": "object"
-    },
-    "HIVPartnerStatus": {
-      "enum": ["POSITIVE", "NEGATIVE", "UNKNOWN", "NOT_DONE"],
-      "type": "string"
     },
     "HIVRelation": {
       "properties": {
@@ -147,11 +159,34 @@
       "type": "object"
     },
     "HIVRiskGroup": {
-      "enum": ["LRM", "MSM", "MSW", "MSMSW", "HRM", "LRW", "HRW", "FSW", "TG", "TGSW"],
+      "enum": [
+        "LRM",
+        "MSM",
+        "MSW",
+        "MSMSW",
+        "HRM",
+        "LRW",
+        "HRW",
+        "FSW",
+        "TG",
+        "TGSW"
+      ],
       "type": "string"
     },
     "HIVTestType": {
-      "enum": ["PCR", "ANTIBODY"],
+      "enum": [
+        "PCR",
+        "ANTIBODY"
+      ],
+      "type": "string"
+    },
+    "HIVTestingStatus": {
+      "enum": [
+        "POSITIVE",
+        "NEGATIVE",
+        "UNKNOWN",
+        "NOT_DONE"
+      ],
       "type": "string"
     },
     "Note": {
@@ -173,7 +208,12 @@
           "type": "string"
         }
       },
-      "required": ["text", "created", "authorId"],
+      "required": [
+        "text",
+        "created",
+        "authorId",
+        "authorName"
+      ],
       "type": "object"
     },
     "Person": {
@@ -246,11 +286,18 @@
           "$ref": "#/definitions/SocioEconomics"
         }
       },
-      "required": ["isDeceased", "contactDetails", "socioEconomics"],
+      "required": [
+        "contactDetails"
+      ],
       "type": "object"
     },
     "ProgramEnrolmentStatus": {
-      "enum": ["ACTIVE", "OPTED_OUT", "TRANSFERRED_OUT", "PAUSED"],
+      "enum": [
+        "ACTIVE",
+        "OPTED_OUT",
+        "TRANSFERRED_OUT",
+        "PAUSED"
+      ],
       "type": "string"
     },
     "ReferredFrom": {

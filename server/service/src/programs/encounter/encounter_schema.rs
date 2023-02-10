@@ -11,10 +11,11 @@ pub type SchemaEncounter = Encounter;
 impl Default for SchemaEncounter {
     fn default() -> Self {
         Self {
-            end_datetime: Default::default(),
-            practitioner: Default::default(),
+            created_datetime: Default::default(),
             start_datetime: Default::default(),
+            end_datetime: Default::default(),
             status: Default::default(),
+            clinician: Default::default(),
         }
     }
 }

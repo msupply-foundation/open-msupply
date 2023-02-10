@@ -11,30 +11,23 @@ use crate::{
 
 use diesel::{dsl::IntoBoxed, prelude::*};
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct EncounterFilter {
     pub id: Option<EqualFilter<String>>,
     pub r#type: Option<EqualFilter<String>>,
     pub patient_id: Option<EqualFilter<String>>,
     pub program: Option<EqualFilter<String>>,
     pub name: Option<EqualFilter<String>>,
+    pub created_datetime: Option<DatetimeFilter>,
     pub start_datetime: Option<DatetimeFilter>,
     pub end_datetime: Option<DatetimeFilter>,
     pub status: Option<EqualFilter<EncounterStatus>>,
+    pub clinician_id: Option<EqualFilter<String>>,
 }
 
 impl EncounterFilter {
     pub fn new() -> EncounterFilter {
-        EncounterFilter {
-            id: None,
-            r#type: None,
-            patient_id: None,
-            program: None,
-            name: None,
-            start_datetime: None,
-            end_datetime: None,
-            status: None,
-        }
+        Default::default()
     }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {
@@ -62,6 +55,11 @@ impl EncounterFilter {
         self
     }
 
+    pub fn created_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.created_datetime = Some(filter);
+        self
+    }
+
     pub fn start_datetime(mut self, filter: DatetimeFilter) -> Self {
         self.start_datetime = Some(filter);
         self
@@ -76,12 +74,18 @@ impl EncounterFilter {
         self.status = Some(filter);
         self
     }
+
+    pub fn clinician_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.clinician_id = Some(filter);
+        self
+    }
 }
 
 pub enum EncounterSortField {
     Type,
     PatientId,
     Program,
+    CreatedDatetime,
     StartDatetime,
     EndDatetime,
     Status,
@@ -103,9 +107,11 @@ fn create_filtered_query<'a>(filter: Option<EncounterFilter>) -> BoxedProgramQue
             patient_id,
             program,
             name,
+            created_datetime,
             start_datetime,
             end_datetime,
             status,
+            clinician_id,
         } = f;
 
         apply_equal_filter!(query, id, encounter_dsl::id);
@@ -113,9 +119,11 @@ fn create_filtered_query<'a>(filter: Option<EncounterFilter>) -> BoxedProgramQue
         apply_equal_filter!(query, patient_id, encounter_dsl::patient_id);
         apply_equal_filter!(query, program, encounter_dsl::program);
         apply_equal_filter!(query, name, encounter_dsl::name);
+        apply_date_time_filter!(query, created_datetime, encounter_dsl::created_datetime);
         apply_date_time_filter!(query, start_datetime, encounter_dsl::start_datetime);
         apply_date_time_filter!(query, end_datetime, encounter_dsl::end_datetime);
         apply_equal_filter!(query, status, encounter_dsl::status);
+        apply_equal_filter!(query, clinician_id, encounter_dsl::clinician_id);
     }
     query
 }
@@ -159,6 +167,9 @@ impl<'a> EncounterRepository<'a> {
                     apply_sort!(query, sort, encounter_dsl::patient_id)
                 }
                 EncounterSortField::Program => apply_sort!(query, sort, encounter_dsl::program),
+                EncounterSortField::CreatedDatetime => {
+                    apply_sort!(query, sort, encounter_dsl::created_datetime)
+                }
                 EncounterSortField::StartDatetime => {
                     apply_sort!(query, sort, encounter_dsl::start_datetime)
                 }

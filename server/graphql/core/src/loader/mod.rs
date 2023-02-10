@@ -1,3 +1,4 @@
+mod clinician;
 mod document;
 mod document_registry;
 mod invoice;
@@ -10,6 +11,7 @@ mod location;
 mod master_list_line;
 mod name;
 mod name_row;
+mod program_enrolment;
 mod requisition;
 mod requisition_line;
 mod requisition_supply_status;
@@ -20,6 +22,7 @@ mod user;
 
 use std::{collections::HashSet, hash::Hasher};
 
+pub use clinician::*;
 pub use document::*;
 pub use document_registry::*;
 pub use invoice::*;
@@ -32,6 +35,7 @@ pub use location::LocationByIdLoader;
 pub use master_list_line::MasterListLineByMasterListId;
 pub use name::*;
 pub use name_row::*;
+pub use program_enrolment::*;
 pub use requisition::*;
 pub use requisition_line::*;
 pub use requisition_supply_status::*;
