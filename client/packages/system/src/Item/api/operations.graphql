@@ -198,6 +198,7 @@ query itemsWithStats(
           availableMonthsOfStockOnHand
         }
       }
+      totalCount
     }
   }
 }

@@ -11,6 +11,7 @@ export type ListParams<T> = {
   offset: number;
   sortBy: SortBy<T>;
   filterBy?: FilterBy | null;
+  isVisible?: boolean;
 };
 
 const itemParsers = {
@@ -53,6 +54,7 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
         filterBy: {
           ...params.filterBy,
           type: { equalTo: ItemNodeType.Stock },
+          isVisible: { equalTo: true },
         },
       });
       return result;
