@@ -14,7 +14,14 @@
     {
       "type": "Control",
       "scope": "#/properties/status",
-      "label": "Encounter status"
+      "label": "Encounter status",
+      "options": {
+        "show": [
+          ["SCHEDULED", "Scheduled"],
+          ["COMPLETED", "Completed"],
+          ["CANCELLED", "Cancelled"]
+        ]
+      }
     }
   ]
 }
