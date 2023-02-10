@@ -5,6 +5,9 @@ use repository::{
 pub fn get_store_preferences(
     connection: &StorageConnection,
     store_id: &str,
-) -> Result<Option<StorePreferenceRow>, RepositoryError> {
-    Ok(StorePreferenceRowRepository::new(&connection).find_one_by_id(store_id)?)
+) -> Result<StorePreferenceRow, RepositoryError> {
+    let store_preferences = StorePreferenceRowRepository::new(&connection)
+        .find_one_by_id(store_id)?
+        .unwrap_or_default();
+    Ok(store_preferences)
 }
