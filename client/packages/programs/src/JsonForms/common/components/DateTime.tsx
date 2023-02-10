@@ -7,10 +7,7 @@ import {
   TextFieldProps,
   StandardTextFieldProps,
 } from '@mui/material';
-import {
-  BasicTextInput,
-  BaseDatePickerInput,
-} from '@openmsupply-client/common';
+import { BasicTextInput } from '@openmsupply-client/common';
 import {
   FORM_LABEL_COLUMN_WIDTH,
   FORM_INPUT_COLUMN_WIDTH,
@@ -18,6 +15,7 @@ import {
 import { DateTimePicker, DateTimePickerProps } from '@mui/x-date-pickers';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
+import { BaseDatePickerInput as DatePickerInput } from './Date';
 
 const Options = z
   .object({
@@ -31,7 +29,7 @@ const Options = z
 
 type Options = z.infer<typeof Options>;
 
-const BaseDateTimePickerInput: FC<
+const DateTimePickerInput: FC<
   Omit<DateTimePickerProps<Date>, 'renderInput'> & { error: string }
 > = props => {
   return (
@@ -109,13 +107,16 @@ const UIComponent = (props: ControlProps) => {
       </Box>
       <Box flexBasis={FORM_INPUT_COLUMN_WIDTH}>
         {!dateOnly ? (
-          <BaseDateTimePickerInput
+          <DateTimePickerInput
             // undefined is displayed as "now" and null as unset
             {...sharedComponentProps}
             error={zErrors ?? error ?? props.errors}
           />
         ) : (
-          <BaseDatePickerInput {...sharedComponentProps} />
+          <DatePickerInput
+            {...sharedComponentProps}
+            error={zErrors ?? error ?? props.errors}
+          />
         )}
       </Box>
     </Box>
