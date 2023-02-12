@@ -1,7 +1,7 @@
 import React from 'react';
 import { ControlProps, rankWith, uiTypeIs } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import { Box, Divider } from '@openmsupply-client/common';
+import { Box, Divider, Typography } from '@openmsupply-client/common';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
 
@@ -28,7 +28,15 @@ const UIComponent = ({ uischema, errors }: ControlProps) => {
   const margin = schemaOptions?.margin ?? 20;
   const showDivider = !schemaOptions?.hideDivider;
 
-  if (error) return <Divider margin={margin} color="red" />;
+  if (error)
+    return (
+      <>
+        <Divider margin={margin} color="red" />
+        <Typography color="red">
+          {errors} {zErrors}
+        </Typography>
+      </>
+    );
 
   return showDivider ? (
     <Divider margin={margin} />
