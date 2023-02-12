@@ -55,6 +55,8 @@ To avoid error being thrown by electron when certificate is self signed, we over
 * In debug mode (`yarn start-local`)
 * For all connections to selected server where stored SSL fingerprint matches server fingerprint
 
-For above to work we store SSL fingerprint when we first connect to the server and then check that fingerprint on consecutive connections. SSL fingeprint is stored in app data and is associated with `hardwareId` and `port` of the server.
+For above to work we store SSL fingerprint when we first connect to the server and then check that fingerprint on consecutive connections. 
+The SSL fingeprint is stored in app data and is associated with `hardwareId` and `port` of the server. 
+This works very similar to ssh client, but we associate fingerprint with hardwareId and port instead of domain or ip since local ip can change for the server.
 
 To clear electron app data you would need to delete or edit `/Users/{user}/Library/Application Support/open mSupply/config.json`

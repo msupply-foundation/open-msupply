@@ -107,7 +107,9 @@ To avoid an error being thrown by the native web view when the server certificat
 * The connection is local after verifying the certificate against the local `cert.pem` file : this is for discovery or when connecting to a local server
 *The stored SSL fingerprint matches the server fingerprint
 
-For the above to work we store the SSL fingerprint when we first connect to the server and then check that fingerprint on consecutive connections. The SSL fingerprint is stored in app data and is associated with the `hardwareId` and `port` of the server.
+For the above to work we store the SSL fingerprint when we first connect to the server and then check that fingerprint on consecutive connections. 
+The SSL fingerprint is stored in app data and is associated with the `hardwareId` and `port` of the server.
+This works very similar to ssh client, but we associate fingerprint with hardwareId and port instead of domain or ip since local ip can change for the server.
 
 App data would need to be cleared if the local certificate was changed.
 
