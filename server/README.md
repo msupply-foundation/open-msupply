@@ -259,7 +259,7 @@ cargo run --bin remote_server_cli -- refresh-dates
 
 # Discovery
 
-mDNS is available with `discovery` feature (current discovery crate supports linux and mac os only), `discovery` feature will also start a graphql server with `initialisationStatus` query endpoint, in http mode with permissive cors. This allows site information (initialised/site) to be presented during discovery. For Android grahpql server is always started, since mDNS discovery can be toggled at at runtime.
+DNS-SD is available with `discovery` feature (current discovery crate supports linux and mac os only), `discovery` feature will also start a graphql server with `initialisationStatus` query endpoint, in http mode with permissive cors. This allows site information (initialised/site) to be presented during discovery. For Android grahpql server is always started, since DNS-SD discovery can be toggled at at runtime.
 
 # Logging
 
@@ -298,7 +298,7 @@ server
 │  │  └─ mock
 │  └─ test_output
 ├─ scripts
-├─ server (includes the logging, front-end hosting, certificates, mDNS discovery, configuration)
+├─ server (includes the logging, front-end hosting, certificates, DNS-SD discovery, configuration)
 ├─ service (these functions provide an intermediary between GraphQL and the repository and houses most of the business logic)
 ├─ target
 ├─ test_output

@@ -194,10 +194,10 @@ pub async fn start_server(
     }
     info!("Creating graphql schema..done",);
 
-    // START mDNS DISCOVERY
+    // START DNS-SD DISCOVERY
     #[cfg(all(not(target_os = "android"), feature = "discovery"))]
     {
-        info!("Starting server mDNS discovery",);
+        info!("Starting server DNS-SD discovery",);
         discovery::start_discovery(certificates.protocol(), settings.server.port, machine_uid);
     }
 

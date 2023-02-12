@@ -5,7 +5,7 @@ When the server is running as an 'offline' sync server on the local network, the
 * SSL ( self-signed certificates do not play nicely with browsers )
 
 The most robust way we've found to solve this issue is with a client app:
-* Discover local servers with mDNS
+* Discover local servers with DNS-SD
 * Trust certificates coming from the discovered server
 * Display web content served by remote server (no need to upgrade client when server upgrades)
 * Allow for native functionality in the future (potentially we can use another bundler when time comes to implement native functionality, like Tauri)
@@ -32,7 +32,7 @@ yarn electron:start
 
 In `packages/electron`
 
-* `electron.ts:` entrypoint for electron app, opens `home` window, discovers servers with mDNS, exchanges IPC messages with browser window (for both `home` page and `login` page served by server)
+* `electron.ts:` entrypoint for electron app, opens `home` window, discovers servers with DNS-SD, exchanges IPC messages with browser window (for both `home` page and `login` page served by server)
 * `preload.ts:` loads IPC interface to `window` so that front end can interact with electron client
 * `rendered.ts`: electron will bundle one page that doesn't need connection to server, the `home.tsx` page, this page will show discovered servers and will allow user to connect to discovered servers. 
 
