@@ -438,6 +438,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "astro-dnssd"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cba40a960b341f156b5123e823c7589d0850f4e6bd46a206106f5b2a5b8a73de"
+dependencies = [
+ "libc",
+ "log 0.4.16",
+ "pkg-config",
+ "thiserror",
+ "widestring",
+ "winapi",
+]
+
+[[package]]
 name = "async-channel"
 version = "1.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4188,6 +4202,7 @@ dependencies = [
  "actix-web",
  "anyhow",
  "assert-json-diff",
+ "astro-dnssd",
  "async-dnssd",
  "chrono",
  "clap",
