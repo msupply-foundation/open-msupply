@@ -329,11 +329,13 @@
             ]
           }
         },
+        { "type": "Spacer", "options": { "margin": 10 } },
         {
           "type": "Control",
           "scope": "#/properties/hivTesting/properties/postTestCounsellingDone",
           "label": "Post-test counselling done?"
         },
+        { "type": "Spacer" },
         {
           "type": "Control",
           "scope": "#/properties/hivTesting/properties/referredForARTServices",
@@ -371,6 +373,7 @@
             }
           }
         },
+        { "type": "Spacer" },
         {
           "type": "Control",
           "scope": "#/properties/hivTesting/properties/clientEscorted",
@@ -381,6 +384,7 @@
           "scope": "#/properties/hivTesting/properties/serodiscordantCoupleCounsellingProvided",
           "label": "If serodiscordant, was couple counselling provided?"
         },
+        { "type": "Spacer" },
         {
           "type": "Control",
           "scope": "#/properties/hivTesting/properties/screenedAndReferredForOtherServices",
@@ -414,6 +418,7 @@
             }
           }
         },
+        { "type": "Spacer" },
         {
           "type": "Control",
           "scope": "#/properties/hivTesting/properties/condomsLubricantsOffered",
