@@ -43,6 +43,18 @@ const NAME_STORE_JOIN_2: (&'static str, &'static str) = (
       "store_ID": "store_b"
   }"#,
 );
+const NAME_STORE_JOIN_INACTIVE_2: (&'static str, &'static str) = (
+    "BE65A4A05E4D47E88303D6105A7872CC",
+    r#"{
+      "ID": "BE65A4A05E4D47E88303D6105A7872CC",
+      "inactive": true,
+      "name_ID": "name_store_a",
+      "spare_Category_ID": 0,
+      "spare_Category_optional2_id": 0,
+      "spare_Category_optional_id": 0,
+      "store_ID": "store_b"
+  }"#,
+);
 fn name_store_join_2_pull_record() -> TestSyncPullRecord {
     TestSyncPullRecord::new_pull_upsert(
         LegacyTableName::NAME_STORE_JOIN,
@@ -55,6 +67,19 @@ fn name_store_join_2_pull_record() -> TestSyncPullRecord {
             name_is_supplier: true,
         }),
     )
+}
+fn name_store_join_2_delete_record() -> TestSyncPullRecord {
+    TestSyncPullRecord::new_pull_delete(
+        LegacyTableName::NAME_STORE_JOIN,
+        NAME_STORE_JOIN_2.0,
+        PullDeleteRecordTable::NameStoreJoin,
+    )
+}
+
+fn name_store_join_2_inactive_pull_record() -> TestSyncPullRecord {
+    let mut record = name_store_join_2_delete_record();
+    record.sync_buffer_row.data = NAME_STORE_JOIN_INACTIVE_2.1.to_string();
+    record
 }
 
 // same as NAME_STORE_JOIN_2 but with new om fields
@@ -96,9 +121,9 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
 }
 
 pub(crate) fn test_pull_delete_records() -> Vec<TestSyncPullRecord> {
-    vec![TestSyncPullRecord::new_pull_delete(
-        LegacyTableName::NAME_STORE_JOIN,
-        NAME_STORE_JOIN_2.0,
-        PullDeleteRecordTable::NameStoreJoin,
-    )]
+    vec![name_store_join_2_delete_record()]
+}
+
+pub(crate) fn test_pull_upsert_inactive_records() -> Vec<TestSyncPullRecord> {
+    vec![name_store_join_2_inactive_pull_record()]
 }
