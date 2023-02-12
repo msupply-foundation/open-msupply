@@ -7,13 +7,10 @@ use crate::{
 };
 
 use self::middleware::{compress as compress_middleware, logger as logger_middleware};
-use actix_cors::Cors;
 use anyhow::Context;
 use graphql_core::loader::{get_loaders, LoaderRegistry};
 
-use graphql::{
-    attach_discovery_graphql_schema, attach_graphql_schema, GraphSchemaData, GraphqlSchema,
-};
+use graphql::{attach_graphql_schema, GraphSchemaData, GraphqlSchema};
 use log::info;
 use repository::{get_storage_connection_manager, migrations::migrate};
 
@@ -213,11 +210,9 @@ pub async fn start_server(
         // See attach_discovery_graphql_schema for more details
         actix_web::rt::spawn(
             HttpServer::new(move || {
-                App::new()
-                    .wrap(Cors::permissive())
-                    .configure(attach_discovery_graphql_schema(
-                        closure_service_provider.clone(),
-                    ))
+                App::new().wrap(actix_cors::Cors::permissive()).configure(
+                    graphql::attach_discovery_graphql_schema(closure_service_provider.clone()),
+                )
             })
             .bind(settings.server.discovery_address())?
             .run(),
