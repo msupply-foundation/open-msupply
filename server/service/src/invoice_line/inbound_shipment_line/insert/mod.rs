@@ -99,7 +99,8 @@ mod test {
             mock_store_a, mock_store_b, mock_user_account_a, MockDataInserts,
         },
         test_db::setup_all,
-        InvoiceLineRowRepository,
+        InvoiceLineRowRepository, StorePreferenceRow, StorePreferenceRowRepository,
+        StorePreferenceType,
     };
     use util::{inline_edit, inline_init};
 
@@ -296,6 +297,48 @@ mod test {
                 u.item_id = mock_item_a().id.clone();
                 u.pack_size = 1;
                 u.number_of_packs = 1.0;
+                u
+            })
+        );
+
+        // pack to one preference is set
+        let pack_to_one = StorePreferenceRow {
+            id: mock_store_a().id.clone(),
+            r#type: StorePreferenceType::StorePreferences,
+            pack_to_one: true,
+        };
+        StorePreferenceRowRepository::new(&connection)
+            .upsert_one(&pack_to_one)
+            .unwrap();
+
+        service
+            .insert_inbound_shipment_line(
+                &context,
+                inline_init(|r: &mut InsertInboundShipmentLine| {
+                    r.id = "new invoice line pack to one".to_string();
+                    r.invoice_id = mock_inbound_shipment_c_invoice_lines()[0]
+                        .invoice_id
+                        .clone();
+                    r.item_id = mock_item_a().id.clone();
+                    r.pack_size = 10;
+                    r.number_of_packs = 20.0;
+                    r.sell_price_per_pack = 100.0;
+                }),
+            )
+            .unwrap();
+
+        let inbound_line = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id("new invoice line pack to one")
+            .unwrap();
+
+        assert_eq!(
+            inbound_line,
+            inline_edit(&inbound_line, |mut u| {
+                u.id = "new invoice line pack to one".to_string();
+                u.item_id = mock_item_a().id.clone();
+                u.pack_size = 1;
+                u.number_of_packs = 200.0;
+                u.sell_price_per_pack = 10.0;
                 u
             })
         );
