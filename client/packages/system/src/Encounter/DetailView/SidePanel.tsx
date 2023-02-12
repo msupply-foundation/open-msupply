@@ -36,7 +36,7 @@ export const SidePanel: FC<SidePanelProps> = ({ encounter, onChange }) => {
   } = useEncounter.document.list({
     filterBy: {
       patientId: { equalTo: encounter.patient.id },
-      id: { notEqualTo: encounter.id },
+      type: { equalTo: encounter.type },
     },
     sortBy: {
       key: 'startDatetime',
@@ -86,17 +86,20 @@ export const SidePanel: FC<SidePanelProps> = ({ encounter, onChange }) => {
           <InlineSpinner />
         ) : (
           otherEncounters?.nodes
-            .filter(encounter => encounter)
-            .map(encounter => (
-              <PanelRow key={encounter.id}>
+            .filter(enc => enc)
+            .map(enc => (
+              <PanelRow key={enc.id}>
                 <PanelLabel>
                   <Link
                     to={RouteBuilder.create(AppRoute.Dispensary)
                       .addPart(AppRoute.Encounter)
-                      .addPart(encounter.id)
+                      .addPart(enc.id)
                       .build()}
+                    style={
+                      enc.id === encounter.id ? { fontWeight: 'bold' } : {}
+                    }
                   >
-                    {localisedDate(encounter.startDatetime)}
+                    {localisedDate(enc.startDatetime)}
                   </Link>
                 </PanelLabel>
               </PanelRow>
