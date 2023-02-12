@@ -22,7 +22,7 @@ impl Migration for V1_01_03 {
             connection,
             r#"
                 CREATE TYPE {STORE_PREFERENCE_TYPE} AS ENUM (
-                    'STORE_PREFERENCES',
+                    'STORE_PREFERENCES'
                 );
                 "#
         )?;
