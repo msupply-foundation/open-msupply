@@ -77,6 +77,10 @@ class CertWebViewClient extends ExtendedWebViewClient {
         this.filesDir = filesDir;
     }
 
+    /** 
+       * In this scenario, the server runs on the same device and we have direct access to the server's public key.
+       * It needs be validated that we indeed connecting to the local server by validating the locally stored certificate.
+       */
     private boolean validateLocalCertificate(SslCertificate targetCert) {
         // If there is a ssl error, check if the request was trying to reach our local trusted
         // remote server. For this:
@@ -103,6 +107,10 @@ class CertWebViewClient extends ExtendedWebViewClient {
         return false;
     }
 
+    /**
+      * In this scenario, we are connecting to a non-local server with uses a self-signed certificate.
+      * It needs to be checked that we know/trust the server before performing the certificate validation.
+      */
     private boolean validateNonLocalCertificate(SslCertificate targetCert, NativeApi.omSupplyServer connectedServer) {
         // Calculate SSL fingerprint
         PublicKey publicKey = get_x509(targetCert).getPublicKey();
