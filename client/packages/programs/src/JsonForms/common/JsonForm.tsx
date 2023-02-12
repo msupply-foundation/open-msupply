@@ -41,6 +41,8 @@ import {
   autocompleteTester,
   conditionalSelectTester,
   ConditionalSelect,
+  spacerTester,
+  Spacer,
 } from './components';
 import {
   AccordionGroup,
@@ -168,6 +170,7 @@ const renderers = [
   { tester: conditionalSelectTester, renderer: ConditionalSelect },
   { tester: notesTester, renderer: NotesControl },
   { tester: noteTester, renderer: Note },
+  { tester: spacerTester, renderer: Spacer },
   // We should be able to remove materialRenderers once we are sure we have custom components to cover all cases.
   ...materialRenderers,
 ];
