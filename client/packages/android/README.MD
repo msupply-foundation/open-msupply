@@ -102,12 +102,14 @@ Capacitor comes with cli, we mainly use `npx cap copy` (or `yarn apply-config`),
 
 ## Self signed cert SSL security
 
-To avoid error being thrown by native web view when certificate is self signed, we override web view certificate error listener and allow connection when:
+To avoid an error being thrown by the native web view when the server certificate is self-signed, we override the web view certificate error listener and allow connection when:
 * In debug mode
-* For local connections (for discovery or when connecting to local server), verify certificate against local `cert.pem`
-* For all connections to selected server where stored SSL fingerprint matches server fingerprint
+* The connection is local after verifying the certificate against the local `cert.pem` file : this is for discovery or when connecting to a local server
+*The stored SSL fingerprint matches the server fingerprint
 
-For above to work we store SSL fingerprint when we first connect to the server and then check that fingerprint on consecutive connections. SSL fingeprint is stored in app data and is associated with `hardwareId` and `port` of the server.
+For the above to work we store the SSL fingerprint when we first connect to the server and then check that fingerprint on consecutive connections. 
+The SSL fingerprint is stored in app data and is associated with the `hardwareId` and `port` of the server.
+This works very similar to ssh client, but we associate fingerprint with hardwareId and port instead of domain or ip since local ip can change for the server.
 
-App data would need to be cleared if local certificate was changed.
+App data would need to be cleared if the local certificate was changed.
 

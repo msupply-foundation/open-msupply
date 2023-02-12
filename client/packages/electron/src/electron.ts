@@ -208,8 +208,7 @@ type StoreType = {
   [key: string]: string | null;
 };
 const store = new ElectronStore<StoreType>();
-// /Users/andreievg/Library/Application Support/open mSupply
-// make CLI for generating certs
+
 app.addListener(
   'certificate-error',
   (event, _webContents, url, _error, certificate, callback) => {
