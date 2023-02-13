@@ -173,9 +173,13 @@ impl From<RepositoryError> for InsertStocktakeError {
 mod test {
     use chrono::{NaiveDate, Utc};
     use repository::{
-        mock::{mock_stocktake_a, mock_store_a, mock_user_account_a, MockDataInserts},
+        mock::{
+            mock_master_list_item_query_test1, mock_stocktake_a, mock_store_a, mock_user_account_a,
+            MockDataInserts,
+        },
         test_db::setup_all,
-        StocktakeRow, StocktakeRowRepository, StocktakeStatus,
+        StocktakeLineFilter, StocktakeLineRepository, StocktakeRow, StocktakeRowRepository,
+        StocktakeStatus,
     };
     use util::{inline_edit, inline_init};
 
@@ -262,5 +266,54 @@ mod test {
         assert!(
             new_row.created_datetime > before_insert && new_row.created_datetime < after_insert
         );
+    }
+
+    #[actix_rt::test]
+    async fn insert_stocktake_with_master_list() {
+        let (_, connection, connection_manager, _) =
+            setup_all("insert_stocktake_with_master_list", MockDataInserts::all()).await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service = service_provider.stocktake_service;
+        let mut context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+
+        context.store_id = mock_store_a().id;
+        service
+            .insert_stocktake(
+                &context,
+                InsertStocktake {
+                    id: "new_stocktake".to_string(),
+                    comment: Some("comment".to_string()),
+                    description: Some("description".to_string()),
+                    stocktake_date: Some(NaiveDate::from_ymd(2020, 01, 02)),
+                    is_locked: Some(true),
+                    location_id: None,
+                    master_list_id: Some(mock_master_list_item_query_test1().master_list.id),
+                },
+            )
+            .unwrap();
+
+        let stocktake_rows = StocktakeLineRepository::new(&connection)
+            .query_by_filter(StocktakeLineFilter::new().stocktake_id("new_stocktake".to_string()))
+            .unwrap();
+
+        assert_eq!(stocktake_rows.len(), 1);
+
+        // assert_eq!(
+        //     new_row,
+        //     inline_edit(&new_row, |mut i: StocktakeRow| {
+        //         i.user_id = mock_user_account_a().id;
+        //         i.id = "new_stocktake".to_string();
+        //         i.comment = Some("comment".to_string());
+        //         i.description = Some("description".to_string());
+        //         i.stocktake_date = Some(NaiveDate::from_ymd(2020, 01, 02));
+        //         i.is_locked = true;
+        //         i.status = StocktakeStatus::New;
+        //         i.store_id = mock_store_a().id;
+        //         i
+        //     }),
+        // );
     }
 }
