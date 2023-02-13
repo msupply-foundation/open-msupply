@@ -17,6 +17,8 @@ import { EncounterFragment, useEncounter } from 'packages/programs/src';
 import { getClinicianName } from '../../Patient/Encounter';
 import { AppRoute } from 'packages/config/src';
 
+const NUM_RECENT_ENCOUNTERS = 5;
+
 interface SidePanelProps {
   encounter: EncounterFragment;
   onChange: (patch: Partial<EncounterFragment> & { note?: string }) => void;
@@ -43,7 +45,7 @@ export const SidePanel: FC<SidePanelProps> = ({ encounter, onChange }) => {
       isDesc: true,
       direction: 'desc',
     },
-    pagination: { first: 5 },
+    pagination: { first: NUM_RECENT_ENCOUNTERS },
   });
 
   return (
@@ -85,26 +87,38 @@ export const SidePanel: FC<SidePanelProps> = ({ encounter, onChange }) => {
         ) : isLoading ? (
           <InlineSpinner />
         ) : (
-          otherEncounters?.nodes
-            .filter(enc => enc)
-            .map(enc => (
-              <PanelRow key={enc.id}>
-                <PanelLabel>
-                  <Link
-                    to={RouteBuilder.create(AppRoute.Dispensary)
-                      .addPart(AppRoute.Encounter)
-                      .addPart(enc.id)
-                      .build()}
-                    style={
-                      enc.id === encounter.id ? { fontWeight: 'bold' } : {}
-                    }
-                  >
-                    {localisedDate(enc.startDatetime)}
-                  </Link>
-                </PanelLabel>
-              </PanelRow>
-            ))
+          otherEncounters?.nodes.map(enc => (
+            <PanelRow key={enc.id}>
+              <PanelLabel>
+                <Link
+                  to={RouteBuilder.create(AppRoute.Dispensary)
+                    .addPart(AppRoute.Encounter)
+                    .addPart(enc.id)
+                    .build()}
+                  style={enc.id === encounter.id ? { fontWeight: 'bold' } : {}}
+                >
+                  {localisedDate(enc.startDatetime)}
+                </Link>
+              </PanelLabel>
+            </PanelRow>
+          ))
         )}
+        {otherEncounters &&
+        otherEncounters?.totalCount > NUM_RECENT_ENCOUNTERS ? (
+          <PanelRow key={'more'}>
+            <PanelLabel>
+              <Link
+                to={RouteBuilder.create(AppRoute.Dispensary)
+                  .addPart(AppRoute.Patients)
+                  .addPart(encounter.patient.id)
+                  .addQuery({ tab: 'Encounters' })
+                  .build()}
+              >
+                {t('label.more')}
+              </Link>
+            </PanelLabel>
+          </PanelRow>
+        ) : null}
       </DetailPanelSection>
     </DetailPanelPortal>
   );

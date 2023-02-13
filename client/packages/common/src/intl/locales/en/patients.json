@@ -22,6 +22,7 @@
   "label.additional-info": "Additional Info",
   "label.visit-notes": "Visit notes, other problems",
   "label.previous-encounters": "Previous Encounters",
+  "label.more": "More...",
   "messages.click-to-return-to-encounters": "Unable to find an encounter with that ID. Click OK to return to the encounter list",
   "messages.click-to-view": "Click to view the patient record for {{firstName}} {{lastName}}",
   "messages.no-matching-patients": "No matching patients! 😁",
