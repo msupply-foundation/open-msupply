@@ -408,6 +408,7 @@
             "condition": {
               "schema": {
                 "properties": {
+                  "screenedAndReferredForOtherServices": { "const": true },
                   "otherServices": {
                     "contains": {
                       "const": "OTHER"
