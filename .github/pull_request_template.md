@@ -1,7 +1,6 @@
 <!-- IMPORTANT!
   - Every PR must reference an issue.
   - PR titles should begin with "#issueNumber".
-  - PRs should be concise. Do not add information not contained in the issue, update the issue instead.
  -->
 
 Fixes #X. 
