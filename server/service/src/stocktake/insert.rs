@@ -1,8 +1,10 @@
 use chrono::{NaiveDate, Utc};
 use repository::{
-    ActivityLogType, EqualFilter, NumberRowType, RepositoryError, Stocktake, StocktakeFilter,
+    ActivityLogType, EqualFilter, MasterListLineFilter, MasterListLineRepository, NumberRowType,
+    RepositoryError, Stocktake, StocktakeFilter, StocktakeLineRow, StocktakeLineRowRepository,
     StocktakeRepository, StocktakeRow, StocktakeRowRepository, StocktakeStatus, StorageConnection,
 };
+use util::uuid::uuid;
 
 use crate::{
     activity_log::activity_log_entry, number::next_number, service_provider::ServiceContext,
@@ -18,6 +20,8 @@ pub struct InsertStocktake {
     pub description: Option<String>,
     pub stocktake_date: Option<NaiveDate>,
     pub is_locked: Option<bool>,
+    pub master_list_id: Option<String>,
+    pub location_id: Option<String>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -61,6 +65,8 @@ fn generate(
         description,
         stocktake_date,
         is_locked,
+        location_id: _,
+        master_list_id: _,
     }: InsertStocktake,
 ) -> Result<StocktakeRow, RepositoryError> {
     let stocktake_number = next_number(connection, &NumberRowType::Stocktake, store_id)?;
@@ -91,8 +97,55 @@ pub fn insert_stocktake(
         .connection
         .transaction_sync(|connection| {
             validate(connection, &ctx.store_id, &input)?;
-            let new_stocktake = generate(connection, &ctx.store_id, &ctx.user_id, input)?;
+            let new_stocktake = generate(connection, &ctx.store_id, &ctx.user_id, input.clone())?;
             StocktakeRowRepository::new(&connection).upsert_one(&new_stocktake)?;
+
+            let mut item_ids = Vec::<String>::new();
+            if let Some(master_list_id) = input.master_list_id {
+                let master_list_items = MasterListLineRepository::new(&connection)
+                    .query_by_filter(MasterListLineFilter {
+                        master_list_id: Some(EqualFilter::equal_to(&master_list_id)),
+                        id: None,
+                        item_id: None,
+                    })?;
+                master_list_items.iter().for_each(|line| {
+                    item_ids.push(line.item_id.clone());
+                });
+            }
+
+            // if let Some(location_id) = input.location_id {
+            //     let location_items = StockLineRepository::new(&connection).query_by_filter(StockLineFilter { location_id: EqualFilter::equal_to(&location_id) })?;
+            //     location_items.iter().for_each(|line| {
+            //         item_ids.push(line.item_id);
+            //     });
+            // }
+
+            let stocktake_line_row_repo = StocktakeLineRowRepository::new(&connection);
+            // let stock_line_repo = StockLineRepository::new(&connection);
+
+            item_ids.iter().for_each(|item_id| {
+                // let stock_line = stock_line_repo.find_one_by_filter(StockLineFilter { item_id: EqualFilter::equal_to(item_id), location_id: EqualFilter::equal_to(&input.location_id) })?;
+
+                // ignore errors
+                let _result = stocktake_line_row_repo.upsert_one(&StocktakeLineRow {
+                    id: uuid(),
+                    stocktake_id: new_stocktake.id.clone(),
+                    stock_line_id: None,
+                    location_id: None,
+                    comment: None,
+                    snapshot_number_of_packs: 0.0,
+                    counted_number_of_packs: None,
+
+                    item_id: item_id.to_string(),
+                    batch: None,
+                    expiry_date: None,
+                    pack_size: None,
+                    cost_price_per_pack: None,
+                    sell_price_per_pack: None,
+                    note: None,
+                    inventory_adjustment_reason_id: None,
+                });
+            });
 
             activity_log_entry(
                 &ctx,
@@ -178,6 +231,8 @@ mod test {
                     description: Some("description".to_string()),
                     stocktake_date: Some(NaiveDate::from_ymd(2020, 01, 02)),
                     is_locked: Some(true),
+                    location_id: None,
+                    master_list_id: None,
                 },
             )
             .unwrap();

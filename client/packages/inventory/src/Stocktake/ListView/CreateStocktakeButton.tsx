@@ -1,22 +1,40 @@
-import React from 'react';
-import { ButtonWithIcon } from '@common/components';
+import React, { ChangeEventHandler, useState } from 'react';
+import {
+  BasicSpinner,
+  ButtonWithIcon,
+  DialogButton,
+  InputWithLabelRow,
+  Select,
+  Typography,
+} from '@common/components';
 import { PlusCircleIcon } from '@common/icons';
 import { useFormatDateTime, useTranslation } from '@common/intl';
-import { ToggleState } from '@common/hooks';
+import { ToggleState, useDialog } from '@common/hooks';
 import { useStocktake } from '../api';
-import {
-  ItemWithStockLines,
-  StockItemSelectModal,
-} from '@openmsupply-client/system';
-import { useAuthContext } from '@openmsupply-client/common';
+import { ItemWithStockLines, useMasterList } from '@openmsupply-client/system';
+import { Box, useAuthContext } from '@openmsupply-client/common';
+
+interface CreateStocktakeArgs {
+  masterListId?: string;
+  locationId?: string;
+}
+
+const DEFAULT_ARGS: CreateStocktakeArgs = {
+  masterListId: 'undefined',
+  locationId: 'undefined',
+};
 
 export const CreateStocktakeButton: React.FC<{
   modalController: ToggleState;
 }> = ({ modalController }) => {
-  const t = useTranslation(['distribution', 'common']);
-  const { mutateAsync } = useStocktake.document.insert();
+  const t = useTranslation('inventory');
+  const { mutateAsync, isLoading: isSaving } = useStocktake.document.insert();
+  const { data: masterListData, isLoading: isLoadingMasterLists } =
+    useMasterList.document.list();
   const { user } = useAuthContext();
   const { localisedDate } = useFormatDateTime();
+  const [createStocktakeArgs, setCreateStocktakeArgs] =
+    useState<CreateStocktakeArgs>(DEFAULT_ARGS);
 
   const onChange = async (items?: ItemWithStockLines[]) => {
     const description = t('stocktake.description-template', {
@@ -27,15 +45,90 @@ export const CreateStocktakeButton: React.FC<{
     await mutateAsync({ description, items });
   };
 
+  const onClose = () => {
+    modalController.toggleOff();
+    setCreateStocktakeArgs(DEFAULT_ARGS);
+  };
+  const { Modal } = useDialog({
+    isOpen: modalController.isOn,
+    onClose,
+    disableBackdrop: true,
+  });
+  const isLoading = isLoadingMasterLists;
+  const handleMasterListChange: ChangeEventHandler<
+    HTMLInputElement | HTMLTextAreaElement
+  > = event => {
+    setCreateStocktakeArgs({
+      ...createStocktakeArgs,
+      masterListId: event.target.value?.toString(),
+    });
+  };
+  const masterLists = [
+    { label: t('label.please-select'), value: 'undefined' },
+    ...(masterListData
+      ? masterListData.nodes.map(list => ({
+          label: list.name,
+          value: list.id,
+        }))
+      : []),
+  ];
+
   return (
     <>
       {modalController.isOn && (
-        <StockItemSelectModal
-          isOpen={modalController.isOn}
-          onChange={onChange}
-          onClose={modalController.toggleOff}
-          disableBackdrop={true}
-        />
+        <Modal
+          slideAnimation={false}
+          title={t('label.new-stocktake')}
+          cancelButton={
+            <DialogButton
+              disabled={isLoading}
+              variant="cancel"
+              onClick={onClose}
+            />
+          }
+          okButton={
+            <DialogButton
+              disabled={isSaving}
+              variant="ok"
+              onClick={async () => {
+                await onChange([]);
+                onClose();
+              }}
+            />
+          }
+        >
+          <Box flex={1} display="flex" justifyContent="center">
+            {!isSaving ? (
+              <Box paddingLeft={2}>
+                <Typography padding={1}>
+                  You can create a stocktake based on items currently assigned
+                  to a location, items assigned to a master list or a
+                  combination of both.
+                </Typography>
+                <Typography padding={1} paddingBottom={4}>
+                  To create an empty stocktake, simply click <b>OK</b> to
+                  continue
+                </Typography>
+                <InputWithLabelRow
+                  Input={
+                    <Select
+                      fullWidth
+                      onChange={handleMasterListChange}
+                      options={masterLists}
+                      value={createStocktakeArgs.masterListId}
+                      // renderOption={renderOption}
+                    />
+                  }
+                  label={t('label.master-list')}
+                />
+              </Box>
+            ) : (
+              <Box sx={{ height: '100%' }}>
+                <BasicSpinner messageKey="saving" />
+              </Box>
+            )}
+          </Box>
+        </Modal>
       )}
       <ButtonWithIcon
         Icon={<PlusCircleIcon />}

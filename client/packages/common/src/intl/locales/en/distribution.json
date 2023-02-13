@@ -114,6 +114,5 @@
   "messages.must-allocate-all-lines": "Cannot change the status until all lines have been allocated.",
   "messages.select-rows-to-delete-them": "Select rows to delete them",
   "messages.shipment-saved": "Shipment saved 🥳",
-  "stocktake.description-template": "Created by {{username}} on {{date}}",
   "warning.nothing-to-supply": "Nothing left to supply!"
 }
