@@ -35,6 +35,7 @@ pub mod stock_line;
 pub mod stocktake;
 pub mod stocktake_line;
 pub mod store;
+pub mod store_preference;
 pub mod sync;
 pub mod system_user;
 pub mod token;

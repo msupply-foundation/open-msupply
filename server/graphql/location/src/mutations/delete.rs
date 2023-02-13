@@ -121,8 +121,8 @@ mod test {
     };
     use repository::{
         mock::{
-            mock_outbound_shipment_a, mock_outbound_shipment_a_invoice_lines, mock_stock_line_a,
-            MockDataInserts,
+            mock_item_a, mock_outbound_shipment_a, mock_outbound_shipment_a_invoice_lines,
+            mock_stock_line_a, MockDataInserts,
         },
         InvoiceLine, StockLine, StorageConnectionManager,
     };
@@ -257,6 +257,7 @@ mod test {
             Err(DeleteLocationError::LocationInUse(LocationInUse {
                 stock_lines: vec![StockLine {
                     stock_line_row: mock_stock_line_a(),
+                    item_row: mock_item_a(),
                     location_row: None,
                     name_row: None,
                 }],

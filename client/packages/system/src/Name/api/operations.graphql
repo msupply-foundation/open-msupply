@@ -27,7 +27,6 @@ fragment Name on NameNode {
   isOnHold
   isSupplier
   isSystemName
-  isVisible
   name
   phone
   website

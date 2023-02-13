@@ -3,13 +3,12 @@ import { useItemApi } from '../useItemApi';
 
 export const useItems = () => {
   const { queryParams } = useUrlQueryParams({
-    initialSort: { key: 'name', dir: 'asc' },
+    filterKey: 'codeOrName',
   });
   const api = useItemApi();
-
   return {
     ...useQuery(api.keys.paramList(queryParams), () =>
-      api.get.stockItems(queryParams)
+      api.get.stockItemsWithStats(queryParams)
     ),
   };
 };
