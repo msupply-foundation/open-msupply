@@ -1,12 +1,14 @@
 use crate::{
     invoice::common::{calculate_total_after_tax, generate_invoice_user_id_update},
-    invoice_line::generate_batch,
+    invoice_line::{
+        generate_batch, inbound_shipment_line::generate::convert_stock_line_to_single_pack,
+    },
     store_preference::get_store_preferences,
     u32_to_i32,
 };
 use repository::{
     InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, ItemRow, RepositoryError,
-    StockLineRow, StorageConnection, StorePreferenceRow,
+    StockLineRow, StorageConnection,
 };
 
 use super::InsertInboundShipmentLine;
@@ -20,22 +22,27 @@ pub fn generate(
 ) -> Result<(Option<InvoiceRow>, InvoiceLineRow, Option<StockLineRow>), RepositoryError> {
     let store_preferences = get_store_preferences(connection, &existing_invoice_row.store_id)?;
 
-    let mut new_line = generate_line(
-        store_preferences.clone(),
-        input,
-        item_row,
-        existing_invoice_row.clone(),
-    );
+    let new_line = generate_line(input, item_row, existing_invoice_row.clone());
+
+    let mut new_line = match store_preferences.pack_to_one {
+        true => convert_invoice_line_to_single_pack(new_line),
+        false => new_line,
+    };
 
     let new_batch_option = if existing_invoice_row.status != InvoiceRowStatus::New {
         let new_batch = generate_batch(
-            Some(store_preferences),
             &existing_invoice_row.store_id,
             new_line.clone(),
             false,
             &existing_invoice_row.name_id,
         );
         new_line.stock_line_id = Some(new_batch.id.clone());
+
+        let new_batch = match store_preferences.pack_to_one {
+            true => convert_stock_line_to_single_pack(new_batch, &new_line),
+            false => new_batch,
+        };
+
         Some(new_batch)
     } else {
         None
@@ -49,17 +56,16 @@ pub fn generate(
 }
 
 fn generate_line(
-    store_preferences: StorePreferenceRow,
     InsertInboundShipmentLine {
         id,
         invoice_id,
         item_id,
-        mut pack_size,
+        pack_size,
         batch,
         expiry_date,
-        mut sell_price_per_pack,
-        mut cost_price_per_pack,
-        mut number_of_packs,
+        sell_price_per_pack,
+        cost_price_per_pack,
+        number_of_packs,
         location_id,
         total_before_tax,
         tax: _,
@@ -71,13 +77,6 @@ fn generate_line(
     }: ItemRow,
     InvoiceRow { tax, .. }: InvoiceRow,
 ) -> InvoiceLineRow {
-    if store_preferences.pack_to_one {
-        number_of_packs = number_of_packs * pack_size as f64;
-        sell_price_per_pack = sell_price_per_pack / pack_size as f64;
-        cost_price_per_pack = cost_price_per_pack / pack_size as f64;
-        pack_size = 1;
-    }
-
     let total_before_tax = total_before_tax.unwrap_or(cost_price_per_pack * number_of_packs as f64);
     let total_after_tax = calculate_total_after_tax(total_before_tax, tax);
 
@@ -101,5 +100,15 @@ fn generate_line(
         tax,
         note: None,
         inventory_adjustment_reason_id: None,
+    }
+}
+
+fn convert_invoice_line_to_single_pack(invoice_line: InvoiceLineRow) -> InvoiceLineRow {
+    InvoiceLineRow {
+        number_of_packs: invoice_line.number_of_packs * invoice_line.pack_size as f64,
+        sell_price_per_pack: invoice_line.sell_price_per_pack / invoice_line.pack_size as f64,
+        cost_price_per_pack: invoice_line.cost_price_per_pack / invoice_line.pack_size as f64,
+        pack_size: 1,
+        ..invoice_line
     }
 }
