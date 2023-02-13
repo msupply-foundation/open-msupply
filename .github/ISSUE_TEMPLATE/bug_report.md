@@ -8,7 +8,6 @@ assignees: ''
 ---
 
 ## What went wrong? 😲
-
 <!-- Provide a clear and concise description of what the bug is. Screenshots are helpful! --> 
 
 ## Expected behaviour 🤔
@@ -24,6 +23,6 @@ Steps to reproduce the behaviour:
 4. See error
 
 ## Your environment 🌱
- - Version [e.g. 22]
- - Platform [e.g. tablet, browser, single user]
+ - Version [e.g. 1.2.3]
+ - Platform [e.g. tablet, browser, windows desktop, macOS desktop, server]
  
