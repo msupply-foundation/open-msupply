@@ -410,6 +410,7 @@ mod test {
             result.skipped_expired_stock_lines[0],
             inline_init(|r: &mut StockLine| {
                 r.stock_line_row = stock_line_expired();
+                r.item_row = mock_item_a();
             })
         );
 
@@ -417,6 +418,7 @@ mod test {
             result.skipped_on_hold_stock_lines[0],
             inline_init(|r: &mut StockLine| {
                 r.stock_line_row = stock_line_on_hold();
+                r.item_row = mock_item_a();
             })
         );
 
@@ -424,6 +426,7 @@ mod test {
             result.issued_expiring_soon_stock_lines[0],
             inline_init(|r: &mut StockLine| {
                 r.stock_line_row = stock_line_expiring_soon();
+                r.item_row = mock_item_a();
             })
         );
     }

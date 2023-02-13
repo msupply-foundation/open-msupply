@@ -15,6 +15,7 @@ Remote server can use `sqlite` or `postgres`, quick start guide is for `sqlite` 
 ### Windows
 - [Follow this guide](https://docs.microsoft.com/en-us/windows/dev-environment/rust/setup)
 - Install [perl](https://learn.perl.org/installing/windows.html)
+- For building the windows binary, you'll need to install the [Bonjour Windows SDK](https://developer.apple.com/bonjour/) and configure the environment variable `BONJOUR_SDK_HOME` to point to the installation location. This is required for the dns-sd implementation on windows, used for server discovery.
 
 ### Mac
 
@@ -259,7 +260,9 @@ cargo run --bin remote_server_cli -- refresh-dates
 
 # Discovery
 
-DNS-SD is available with `discovery` feature (current discovery crate supports linux and mac os only), `discovery` feature will also start a graphql server with `initialisationStatus` query endpoint, in http mode with permissive cors. This allows site information (initialised/site) to be presented during discovery. For Android grahpql server is always started, since DNS-SD discovery can be toggled at at runtime.
+DNS-SD is available for all targets except for Android (for Android DNS-SD is toggled at runtime and is done in native java code).
+We also start another graphql server with `initialisationStatus` query endpoint, in http mode with permissive cors. 
+This allows site information (initialised/site) to be presented during discovery. 
 
 # Logging
 

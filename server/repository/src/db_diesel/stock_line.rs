@@ -1,4 +1,5 @@
 use super::{
+    item_row::{item, item::dsl as item_dsl},
     location_row::{location, location::dsl as location_dsl},
     name_row::{name, name::dsl as name_dsl},
     stock_line_row::{stock_line, stock_line::dsl as stock_line_dsl},
@@ -6,20 +7,24 @@ use super::{
 };
 
 use crate::{
-    diesel_macros::{apply_date_filter, apply_equal_filter, apply_sort, apply_sort_asc_nulls_last},
+    diesel_macros::{
+        apply_date_filter, apply_equal_filter, apply_sort, apply_sort_asc_nulls_last,
+        apply_sort_no_case,
+    },
     repository_error::RepositoryError,
-    DateFilter, EqualFilter, ItemFilter, ItemRepository, NameRow, Pagination, SimpleStringFilter,
-    Sort,
+    DateFilter, EqualFilter, ItemFilter, ItemRepository, ItemRow, NameRow, Pagination,
+    SimpleStringFilter, Sort,
 };
 
 use diesel::{
-    dsl::{IntoBoxed, LeftJoin},
+    dsl::{InnerJoin, IntoBoxed, LeftJoin},
     prelude::*,
 };
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct StockLine {
     pub stock_line_row: StockLineRow,
+    pub item_row: ItemRow,
     pub location_row: Option<LocationRow>,
     pub name_row: Option<NameRow>,
 }
@@ -27,6 +32,11 @@ pub struct StockLine {
 pub enum StockLineSortField {
     ExpiryDate,
     NumberOfPacks,
+    ItemCode,
+    ItemName,
+    Batch,
+    PackSize,
+    SupplierName,
 }
 
 #[derive(Debug, Clone)]
@@ -42,7 +52,7 @@ pub struct StockLineFilter {
 
 pub type StockLineSort = Sort<StockLineSortField>;
 
-type StockLineJoin = (StockLineRow, Option<LocationRow>, Option<NameRow>);
+type StockLineJoin = (StockLineRow, ItemRow, Option<LocationRow>, Option<NameRow>);
 pub struct StockLineRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -52,9 +62,18 @@ impl<'a> StockLineRepository<'a> {
         StockLineRepository { connection }
     }
 
-    pub fn count(&self, filter: Option<StockLineFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(
+        &self,
+        filter: Option<StockLineFilter>,
+        store_id: Option<String>,
+    ) -> Result<i64, RepositoryError> {
         let mut query = create_filtered_query(filter.clone());
-        query = apply_item_filter(query, filter, &self.connection);
+        query = apply_item_filter(
+            query,
+            filter,
+            &self.connection,
+            store_id.unwrap_or_default(),
+        );
 
         Ok(query.count().get_result(&self.connection.connection)?)
     }
@@ -62,8 +81,9 @@ impl<'a> StockLineRepository<'a> {
     pub fn query_by_filter(
         &self,
         filter: StockLineFilter,
+        store_id: Option<String>,
     ) -> Result<Vec<StockLine>, RepositoryError> {
-        self.query(Pagination::new(), Some(filter), None)
+        self.query(Pagination::new(), Some(filter), None, store_id)
     }
 
     pub fn query(
@@ -71,9 +91,15 @@ impl<'a> StockLineRepository<'a> {
         pagination: Pagination,
         filter: Option<StockLineFilter>,
         sort: Option<StockLineSort>,
+        store_id: Option<String>,
     ) -> Result<Vec<StockLine>, RepositoryError> {
         let mut query = create_filtered_query(filter.clone());
-        query = apply_item_filter(query, filter, &self.connection);
+        query = apply_item_filter(
+            query,
+            filter,
+            &self.connection,
+            store_id.unwrap_or_default(),
+        );
 
         if let Some(sort) = sort {
             match sort.key {
@@ -83,6 +109,21 @@ impl<'a> StockLineRepository<'a> {
                 StockLineSortField::ExpiryDate => {
                     // TODO: would prefer to have extra parameter on Sort.nulls_last
                     apply_sort_asc_nulls_last!(query, sort, stock_line_dsl::expiry_date);
+                }
+                StockLineSortField::ItemCode => {
+                    apply_sort_no_case!(query, sort, item_dsl::code);
+                }
+                StockLineSortField::ItemName => {
+                    apply_sort_no_case!(query, sort, item_dsl::name);
+                }
+                StockLineSortField::Batch => {
+                    apply_sort_no_case!(query, sort, stock_line_dsl::batch);
+                }
+                StockLineSortField::PackSize => {
+                    apply_sort!(query, sort, stock_line_dsl::pack_size);
+                }
+                StockLineSortField::SupplierName => {
+                    apply_sort_no_case!(query, sort, name_dsl::name_);
                 }
             }
         } else {
@@ -105,11 +146,15 @@ impl<'a> StockLineRepository<'a> {
     }
 }
 
-type BoxedStockLineQuery =
-    IntoBoxed<'static, LeftJoin<LeftJoin<stock_line::table, location::table>, name::table>, DBType>;
+type BoxedStockLineQuery = IntoBoxed<
+    'static,
+    LeftJoin<LeftJoin<InnerJoin<stock_line::table, item::table>, location::table>, name::table>,
+    DBType,
+>;
 
 fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery {
     let mut query = stock_line_dsl::stock_line
+        .inner_join(item_dsl::item)
         .left_join(location_dsl::location)
         .left_join(name_dsl::name)
         .into_boxed();
@@ -145,13 +190,14 @@ fn apply_item_filter(
     query: BoxedStockLineQuery,
     filter: Option<StockLineFilter>,
     connection: &StorageConnection,
+    store_id: String,
 ) -> BoxedStockLineQuery {
     if let Some(f) = filter {
         if let Some(item_code_or_name) = &f.item_code_or_name {
             let mut item_filter = ItemFilter::new();
             item_filter.code_or_name = Some(item_code_or_name.clone());
             let items = ItemRepository::new(connection)
-                .query_by_filter(item_filter)
+                .query_by_filter(item_filter, Some(store_id))
                 .unwrap();
             let item_ids: Vec<String> = items.into_iter().map(|item| item.item_row.id).collect();
 
@@ -161,9 +207,10 @@ fn apply_item_filter(
     query
 }
 
-pub fn to_domain((stock_line_row, location_row, name_row): StockLineJoin) -> StockLine {
+pub fn to_domain((stock_line_row, item_row, location_row, name_row): StockLineJoin) -> StockLine {
     StockLine {
         stock_line_row,
+        item_row,
         location_row,
         name_row,
     }
@@ -239,13 +286,14 @@ mod test {
     use crate::{
         mock::MockDataInserts,
         mock::{mock_item_a, mock_store_a, MockData},
-        test_db, Pagination, StockLine, StockLineFilter, StockLineRepository, StockLineRow,
-        StockLineSort, StockLineSortField,
+        test_db, ItemRow, Pagination, StockLine, StockLineFilter, StockLineRepository,
+        StockLineRow, StockLineSort, StockLineSortField,
     };
 
-    fn from_row(stock_line_row: StockLineRow) -> StockLine {
+    fn from_row(stock_line_row: StockLineRow, item_row: ItemRow) -> StockLine {
         inline_init(|r: &mut StockLine| {
             r.stock_line_row = stock_line_row;
+            r.item_row = item_row;
         })
     }
 
@@ -297,8 +345,13 @@ mod test {
         };
         // Make sure NULLS are last
         assert_eq!(
-            vec![from_row(line1()), from_row(line2()), from_row(line3())],
-            repo.query(Pagination::new(), None, Some(sort)).unwrap()
+            vec![
+                from_row(line1(), mock_item_a()),
+                from_row(line2(), mock_item_a()),
+                from_row(line3(), mock_item_a())
+            ],
+            repo.query(Pagination::new(), None, Some(sort), Some(mock_store_a().id))
+                .unwrap()
         );
         // Desc by expiry date
         let sort = StockLineSort {
@@ -307,8 +360,13 @@ mod test {
         };
         // Make sure NULLS are first
         assert_eq!(
-            vec![from_row(line3()), from_row(line2()), from_row(line1())],
-            repo.query(Pagination::new(), None, Some(sort)).unwrap()
+            vec![
+                from_row(line3(), mock_item_a()),
+                from_row(line2(), mock_item_a()),
+                from_row(line1(), mock_item_a())
+            ],
+            repo.query(Pagination::new(), None, Some(sort), Some(mock_store_a().id))
+                .unwrap()
         );
     }
 
@@ -349,22 +407,24 @@ mod test {
 
         // Stock not available
         assert_eq!(
-            vec![from_row(line1())],
+            vec![from_row(line1(), mock_item_a())],
             repo.query(
                 Pagination::new(),
                 Some(StockLineFilter::new().is_available(false)),
-                None
+                None,
+                Some(mock_store_a().id)
             )
             .unwrap()
         );
 
         // Stock available
         assert_eq!(
-            vec![from_row(line2())],
+            vec![from_row(line2(), mock_item_a())],
             repo.query(
                 Pagination::new(),
                 Some(StockLineFilter::new().is_available(true)),
-                None
+                None,
+                Some(mock_store_a().id)
             )
             .unwrap()
         );

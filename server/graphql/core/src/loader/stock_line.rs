@@ -27,6 +27,7 @@ impl Loader<String> for StockLineByLocationIdLoader {
 
         let result = repo.query_by_filter(
             StockLineFilter::new().location_id(EqualFilter::equal_any(location_ids.to_owned())),
+            None,
         )?;
 
         let mut result_map = HashMap::new();
@@ -83,6 +84,7 @@ impl Loader<StockLineByItemAndStoreIdLoaderInput> for StockLineByItemAndStoreIdL
                     &item_and_store_ids,
                 )))
                 .store_id(EqualFilter::equal_to(store_id)),
+            None,
         )?;
 
         let mut result_map = HashMap::new();
@@ -112,8 +114,10 @@ impl Loader<String> for StockLineByIdLoader {
         let connection = self.connection_manager.connection()?;
         let repo = StockLineRepository::new(&connection);
 
-        let result = repo
-            .query_by_filter(StockLineFilter::new().id(EqualFilter::equal_any(ids.to_owned())))?;
+        let result = repo.query_by_filter(
+            StockLineFilter::new().id(EqualFilter::equal_any(ids.to_owned())),
+            None,
+        )?;
 
         Ok(result
             .into_iter()
