@@ -78,19 +78,19 @@ export const SidePanel: FC<SidePanelProps> = ({ encounter, onChange }) => {
             <PanelLabel>
               <TextArea
                 value={encounterNote}
-                onChange={e => setEncounterNote(e.target.value)}
-                onBlur={() =>
+                onChange={e => {
+                  setEncounterNote(e.target.value);
                   onChange({
                     notes: [
                       {
                         authorId: user?.id ?? '',
                         authorName: user?.name ?? '',
                         created: encounter.startDatetime,
-                        text: encounterNote ?? '',
+                        text: e.target.value ?? '',
                       } ?? null,
                     ],
-                  })
-                }
+                  });
+                }}
               />
             </PanelLabel>
           </PanelRow>
