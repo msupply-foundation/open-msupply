@@ -68,10 +68,9 @@ const UIComponent = (props: ControlProps) => {
     <Box
       display="flex"
       alignItems="center"
-      gap={2}
       justifyContent="space-around"
       style={{ minWidth: 300 }}
-      marginTop={1}
+      sx={{ margin: 0.5, marginLeft: 0, gap: 2 }}
     >
       <Box style={{ textAlign: 'end' }} flexBasis={FORM_LABEL_COLUMN_WIDTH}>
         <FormLabel sx={{ fontWeight: 'bold' }}>{label}:</FormLabel>
@@ -80,7 +79,6 @@ const UIComponent = (props: ControlProps) => {
         flexBasis={FORM_INPUT_COLUMN_WIDTH}
         display="flex"
         alignItems="center"
-        gap={2}
       >
         <BaseDatePickerInput
           // undefined is displayed as "now" and null as unset
