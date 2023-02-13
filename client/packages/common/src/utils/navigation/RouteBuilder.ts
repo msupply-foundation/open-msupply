@@ -1,6 +1,8 @@
+type Query = Record<string, string | number | boolean>;
+
 export class RouteBuilder {
   parts: string[];
-  query: { [key: string]: string | number | boolean };
+  query: Query;
 
   constructor(part: string) {
     this.parts = [part];
@@ -21,7 +23,7 @@ export class RouteBuilder {
     return this;
   }
 
-  addQuery(params: { [key: string]: string | number | boolean }): RouteBuilder {
+  addQuery(params: Query): RouteBuilder {
     this.query = { ...this.query, ...params };
     return this;
   }
