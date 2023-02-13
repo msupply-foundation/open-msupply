@@ -12,6 +12,7 @@ import {
   Link,
   RouteBuilder,
   InlineSpinner,
+  useAuthContext,
 } from '@openmsupply-client/common';
 import { EncounterFragment, useEncounter } from 'packages/programs/src';
 import { getClinicianName } from '../../Patient/Encounter';
@@ -21,13 +22,20 @@ const NUM_RECENT_ENCOUNTERS = 5;
 
 interface SidePanelProps {
   encounter: EncounterFragment;
-  onChange: (patch: Partial<EncounterFragment> & { note?: [string] }) => void;
+  onChange: (
+    patch: Partial<EncounterFragment> & {
+      notes?: [
+        { authorId?: string; authorName: string; created: string; text: string }
+      ];
+    }
+  ) => void;
 }
 
 export const SidePanel: FC<SidePanelProps> = ({ encounter, onChange }) => {
   const [encounterNote, setEncounterNote] = useState(
-    encounter.document.data?.note ?? ''
+    encounter.document.data?.notes?.[0]?.text ?? ''
   );
+  const { user } = useAuthContext();
   const { localisedDate } = useFormatDateTime();
   const t = useTranslation('patients');
 
@@ -73,7 +81,14 @@ export const SidePanel: FC<SidePanelProps> = ({ encounter, onChange }) => {
                 onChange={e => setEncounterNote(e.target.value)}
                 onBlur={() =>
                   onChange({
-                    note: [encounterNote ?? ''],
+                    notes: [
+                      {
+                        authorId: user?.id ?? '',
+                        authorName: user?.name ?? '',
+                        created: encounter.startDatetime,
+                        text: encounterNote ?? '',
+                      } ?? null,
+                    ],
                   })
                 }
               />
