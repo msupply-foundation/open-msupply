@@ -1,11 +1,5 @@
 import { ItemLike } from './types';
-import {
-  ItemRowFragment,
-  ItemRowWithStatsFragment,
-  ItemStockOnHandFragment,
-  ItemWithPackSizeFragment,
-} from './api';
-import { styled } from '@common/styles';
+import { ItemRowFragment, ItemWithPackSizeFragment } from './api';
 
 export const toItemRow = (line: ItemLike): ItemRowFragment => ({
   __typename: 'ItemNode',
@@ -23,33 +17,3 @@ export const toItemWithPackSize = (
   ...toItemRow(line),
   defaultPackSize: 1,
 });
-
-interface GenericStockItemSearchInputProps {
-  currentItemId?: string | null;
-  disabled?: boolean;
-  width?: number;
-  autoFocus?: boolean;
-  openOnFocus?: boolean;
-}
-
-export interface StockItemSearchInputProps
-  extends GenericStockItemSearchInputProps {
-  onChange: (item: ItemStockOnHandFragment | null) => void;
-  extraFilter?: (item: ItemStockOnHandFragment) => boolean;
-}
-
-export interface StockItemSearchInputWithStatsProps
-  extends GenericStockItemSearchInputProps {
-  onChange: (item: ItemRowWithStatsFragment | null) => void;
-  extraFilter?: (item: ItemRowWithStatsFragment) => boolean;
-}
-
-export const ItemOption = styled('li')(({ theme }) => ({
-  color: theme.palette.gray.main,
-  backgroundColor: theme.palette.background.toolbar,
-}));
-
-export const itemFilterOptions = {
-  stringify: (item: ItemStockOnHandFragment | ItemRowWithStatsFragment) =>
-    `${item.code} ${item.name}`,
-};

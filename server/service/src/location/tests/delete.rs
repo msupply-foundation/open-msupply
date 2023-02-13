@@ -59,7 +59,6 @@ mod query {
         let stock_lines = stock_line_repository
             .query_by_filter(
                 StockLineFilter::new().location_id(EqualFilter::equal_to(&location_id)),
-                None,
             )
             .unwrap();
         let invoice_lines = invoice_line_repository
@@ -81,7 +80,6 @@ mod query {
         let stock_lines = stock_line_repository
             .query_by_filter(
                 StockLineFilter::new().location_id(EqualFilter::equal_to(&location_id)),
-                None,
             )
             .unwrap();
         let invoice_lines = invoice_line_repository

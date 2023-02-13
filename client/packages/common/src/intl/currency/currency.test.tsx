@@ -5,20 +5,20 @@ describe('currency formatting - en', () => {
   it('formats a string with up to the precision number of decimal places, dropping decimal places where needed', () => {
     const { result } = renderHookWithProvider(useCurrency);
     const f1 = result.current.c(1.11111111111).format();
-    expect(f1).toBe('$1.11');
+    expect(f1).toBe('$1.1111111111');
   });
   it('formats a string with up to the precision number of decimal places, dropping decimal places where needed even with large numbers', () => {
     const { result } = renderHookWithProvider(useCurrency);
 
     const f1 = result.current.c(111_111.11111111111).format();
-    expect(f1).toBe('$111,111.11');
+    expect(f1).toBe('$111,111.1111111111');
   });
 
   it('does not drop non-trailing zeroes', () => {
     const { result } = renderHookWithProvider(useCurrency);
 
-    const f1 = result.current.c(111.01).format();
-    expect(f1).toBe('$111.01');
+    const f1 = result.current.c(111.10001).format();
+    expect(f1).toBe('$111.10001');
   });
 
   it('does drop trailing zeroes', () => {
@@ -47,7 +47,7 @@ describe('currency formatting - fr', () => {
       providerProps: { locale: 'fr' },
     });
     const f1 = result.current.c(1.11111111111).format();
-    expect(f1).toBe('1,11 XOF');
+    expect(f1).toBe('1,1111111111 XOF');
   });
   it('formats a string with up to the precision number of decimal places, dropping decimal places where needed even with large numbers', () => {
     const { result } = renderHookWithProvider(useCurrency, {
@@ -55,7 +55,16 @@ describe('currency formatting - fr', () => {
     });
 
     const f1 = result.current.c(111_111.11111111111).format();
-    expect(f1).toBe('111.111,11 XOF');
+    expect(f1).toBe('111.111,1111111111 XOF');
+  });
+
+  it('does not drop non-trailing zeroes', () => {
+    const { result } = renderHookWithProvider(useCurrency, {
+      providerProps: { locale: 'fr' },
+    });
+
+    const f1 = result.current.c(111.10001).format();
+    expect(f1).toBe('111,10001 XOF');
   });
 
   it('does drop trailing zeroes', () => {

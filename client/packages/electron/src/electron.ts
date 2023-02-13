@@ -211,12 +211,7 @@ const store = new ElectronStore<StoreType>();
 
 app.addListener(
   'certificate-error',
-  (event, _webContents, url, error, certificate, callback) => {
-    // We are only handling self signed certificate errors
-    if (error != "net::ERR_CERT_INVALID") {
-      return callback(false);
-    }
-
+  (event, _webContents, url, _error, certificate, callback) => {
     // Ignore SSL checks in debug mode
     if (getDebugHost()) {
       event.preventDefault();

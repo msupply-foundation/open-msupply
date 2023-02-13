@@ -127,7 +127,7 @@ fragment InboundRow on InvoiceNode {
   __typename
   comment
   createdDatetime
-  deliveredDatetime
+  allocatedDatetime
   id
   invoiceNumber
   otherPartyName
@@ -135,7 +135,7 @@ fragment InboundRow on InvoiceNode {
   colour
   theirReference
   taxPercentage
-  onHold
+
   pricing {
     __typename
     totalAfterTax

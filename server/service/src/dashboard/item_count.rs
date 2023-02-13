@@ -34,10 +34,8 @@ impl ItemCountServiceTrait for ItemServiceCount {
         store_id: &str,
         low_stock_threshold: i32,
     ) -> Result<ItemCounts, RepositoryError> {
-        let visible_items = ItemRepository::new(&ctx.connection).query_by_filter(
-            ItemFilter::new().is_visible(true),
-            Some(store_id.to_owned()),
-        )?;
+        let visible_items = ItemRepository::new(&ctx.connection)
+            .query_by_filter(ItemFilter::new().match_is_visible(true))?;
 
         let visible_items_count = visible_items.len() as i64;
 

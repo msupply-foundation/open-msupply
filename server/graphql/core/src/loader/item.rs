@@ -25,7 +25,6 @@ impl Loader<String> for ItemLoader {
                 },
                 Some(ItemFilter::new().id(EqualFilter::equal_any(keys.to_vec()))),
                 None,
-                None,
             )?
             .into_iter()
             .map(|item| {

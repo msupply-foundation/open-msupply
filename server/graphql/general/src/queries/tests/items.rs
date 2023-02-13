@@ -23,6 +23,7 @@ mod graphql {
                       id
                       name
                       code
+                      isVisible
                       unitName
                       availableBatches(storeId: \"store_a\") {
                          ... on StockLineConnector {
@@ -51,6 +52,7 @@ mod graphql {
                           "id": "item_query_test1",
                           "name": "name_item_query_test1",
                           "code": "code_item_query_test1",
+                          "isVisible": true,
                           "unitName": null,
                           "availableBatches": {
                               "nodes": [ { "id": "item_query_test1" } ]
@@ -60,6 +62,7 @@ mod graphql {
                           "id": "item_query_test2",
                           "name": "name_item_query_test2",
                           "code": "code_item_query_test2",
+                          "isVisible": false,
                           "unitName": "name_item_query_test2",
                            "availableBatches": {
                               "nodes": []

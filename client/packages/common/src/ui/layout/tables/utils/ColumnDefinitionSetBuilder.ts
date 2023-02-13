@@ -17,7 +17,6 @@ export type ColumnKey =
   | 'status'
   | 'createdDatetime'
   | 'allocatedDatetime'
-  | 'deliveredDatetime'
   | 'totalAfterTax'
   | 'comment'
   | 'selection'
@@ -142,12 +141,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     width: 100,
     sortable: false,
   },
-  deliveredDatetime: {
-    label: 'label.delivered',
-    key: 'deliveredDatetime',
-    format: ColumnFormat.Date,
-    width: 100,
-  },
+
   totalAfterTax: {
     description: 'description.total',
     label: 'label.total',

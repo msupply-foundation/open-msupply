@@ -1389,13 +1389,13 @@ export type ItemNode = {
   __typename: 'ItemNode';
   atcCategory: Scalars['String'];
   availableBatches: StockLineConnector;
-  availableStockOnHand: Scalars['Int'];
   code: Scalars['String'];
   ddd: Scalars['String'];
   defaultPackSize: Scalars['Int'];
   doses: Scalars['Int'];
   id: Scalars['String'];
   isVaccine: Scalars['Boolean'];
+  isVisible: Scalars['Boolean'];
   margin: Scalars['Float'];
   msupplyUniversalCode: Scalars['String'];
   msupplyUniversalName: Scalars['String'];
@@ -1412,11 +1412,6 @@ export type ItemNode = {
 
 
 export type ItemNodeAvailableBatchesArgs = {
-  storeId: Scalars['String'];
-};
-
-
-export type ItemNodeAvailableStockOnHandArgs = {
   storeId: Scalars['String'];
 };
 
@@ -2821,13 +2816,8 @@ export type StockLineNode = {
 export type StockLineResponse = NodeError | StockLineNode;
 
 export enum StockLineSortFieldInput {
-  Batch = 'batch',
   ExpiryDate = 'expiryDate',
-  ItemCode = 'itemCode',
-  ItemName = 'itemName',
-  NumberOfPacks = 'numberOfPacks',
-  PackSize = 'packSize',
-  SupplierName = 'supplierName'
+  NumberOfPacks = 'numberOfPacks'
 }
 
 export type StockLineSortInput = {

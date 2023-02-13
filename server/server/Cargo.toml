@@ -47,6 +47,7 @@ thiserror = "1"
 clap = { version = "3.1.8", features = ["derive"] }
 rust-embed = "6.4.0"
 mime_guess = "2.0.4"
+async-dnssd = { version = "0.5.0", optional = true }
 futures = "0.3"
 fast_log = { version = "1.5" }
 rcgen = "0.9.2"
@@ -56,17 +57,12 @@ actix-rt = "2.6.0"
 assert-json-diff = "2.0.1"
 httpmock = "0.6"
 
-[target.'cfg(any(target_os = "macos", target_os = "linux"))'.dependencies]
-async-dnssd = { version = "0.5.0" }
-
 [target.'cfg(windows)'.build-dependencies]
 winres = "0.1"
 
-[target.'cfg(windows)'.dependencies]
-astro-dnssd = { version = "0.3.2" }
-
 [features]
 default = ["sqlite", "dep:machine-uid"]
+discovery = ["dep:async-dnssd"]
 sqlite = ["repository/sqlite"]
 postgres = ["repository/postgres"]
 # See openssl comment regarding the "openssl/vendored" feature

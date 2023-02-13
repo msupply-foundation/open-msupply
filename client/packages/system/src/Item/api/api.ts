@@ -11,7 +11,6 @@ export type ListParams<T> = {
   offset: number;
   sortBy: SortBy<T>;
   filterBy?: FilterBy | null;
-  isVisible?: boolean;
 };
 
 const itemParsers = {
@@ -51,40 +50,9 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
     stockItems: async (params: ListParams<ItemRowFragment>) => {
       const result = await getItemQueries(sdk, storeId).get.list({
         ...params,
-        filterBy: {
-          ...params.filterBy,
-          type: { equalTo: ItemNodeType.Stock },
-          isVisible: { equalTo: true },
-        },
+        filterBy: { ...params.filterBy, type: { equalTo: ItemNodeType.Stock } },
       });
       return result;
-    },
-    itemStockOnHand: async ({
-      filterBy,
-      first,
-      offset,
-      sortBy,
-    }: ListParams<ItemRowFragment>) => {
-      const result = await sdk.itemStockOnHand({
-        key: itemParsers.toSortField(sortBy),
-        first,
-        isDesc: sortBy.isDesc,
-        offset,
-        storeId,
-        filter: {
-          ...filterBy,
-          type: { equalTo: ItemNodeType.Stock },
-          isVisible: true,
-        },
-      });
-
-      const { items } = result;
-
-      if (result?.items?.__typename === 'ItemConnector') {
-        return items;
-      }
-
-      throw new Error('Could not fetch items');
     },
     stockItemsWithStats: async ({
       filterBy,
@@ -152,7 +120,7 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
         key: itemParsers.toSortField(sortBy),
         desc: sortBy.isDesc,
         storeId,
-        filter: { ...filterBy, isVisible: true },
+        filter: { ...filterBy },
       });
 
       const items = result?.items;

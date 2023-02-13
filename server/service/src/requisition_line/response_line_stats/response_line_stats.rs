@@ -48,7 +48,6 @@ pub fn response_store_stats(
                 &requisition_line.requisition_line_row.item_id,
             ))
             .store_id(EqualFilter::equal_to(&store_id)),
-        None,
     )?;
 
     let stock_on_hand = stock_lines.iter().fold(0.0, |sum, stock_line| {

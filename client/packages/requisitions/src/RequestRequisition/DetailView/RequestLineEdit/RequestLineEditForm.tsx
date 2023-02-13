@@ -9,7 +9,7 @@ import {
 } from '@openmsupply-client/common';
 import { useFormatNumber, useTranslation } from '@common/intl';
 import {
-  StockItemSearchInputWithStats,
+  StockItemSearchInput,
   ItemRowWithStatsFragment,
 } from '@openmsupply-client/system';
 import { useRequest } from '../../api';
@@ -93,7 +93,7 @@ export const RequestLineEditForm = ({
     <RequestLineEditFormLayout
       Left={
         <>
-          <StockItemSearchInputWithStats
+          <StockItemSearchInput
             autoFocus={!item}
             openOnFocus={!item}
             width={300}

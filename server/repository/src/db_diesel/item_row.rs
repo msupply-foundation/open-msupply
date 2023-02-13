@@ -64,6 +64,12 @@ impl Default for ItemRow {
     }
 }
 
+#[derive(Clone, Queryable, Debug, PartialEq, Eq, Default)]
+pub struct ItemIsVisibleRow {
+    pub id: String,
+    pub is_visible: bool,
+}
+
 pub struct ItemRowRepository<'a> {
     connection: &'a StorageConnection,
 }

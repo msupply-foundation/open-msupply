@@ -4,11 +4,13 @@ import {
   useTranslation,
   Box,
   Switch,
+  useColumns,
   MiniTable,
   useIsGrouped,
   InvoiceLineNodeType,
   useRowStyle,
   AppSxProp,
+  ArrayUtils,
   NothingHere,
   useUrlQueryParams,
 } from '@openmsupply-client/common';
@@ -16,7 +18,6 @@ import { OutboundItem } from '../../types';
 import { useOutbound } from '../api';
 import { useOutboundColumns } from './columns';
 import { OutboundLineFragment } from '../api/operations.generated';
-import { useExpansionColumns } from './OutboundLineEdit/columns';
 
 interface ContentAreaProps {
   onAddItem: () => void;
@@ -26,10 +27,31 @@ interface ContentAreaProps {
 const Expand: FC<{
   rowData: OutboundLineFragment | OutboundItem;
 }> = ({ rowData }) => {
-  const expandoColumns = useExpansionColumns();
+  const columns = useColumns([
+    'batch',
+    'expiryDate',
+    'locationName',
+    'itemUnit',
+    'numberOfPacks',
+    'packSize',
+    [
+      'unitQuantity',
+      {
+        accessor: () => {
+          if ('lines' in rowData) {
+            const { lines } = rowData;
+            return ArrayUtils.getUnitQuantity(lines);
+          } else {
+            return rowData.packSize * rowData.numberOfPacks;
+          }
+        },
+      },
+    ],
+    'sellPricePerUnit',
+  ]);
 
   if ('lines' in rowData && rowData.lines.length > 1) {
-    return <MiniTable rows={rowData.lines} columns={expandoColumns} />;
+    return <MiniTable rows={rowData.lines} columns={columns} />;
   } else {
     return null;
   }

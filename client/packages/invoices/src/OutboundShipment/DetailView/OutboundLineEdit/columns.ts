@@ -7,10 +7,8 @@ import {
   CheckCell,
   CurrencyCell,
   NonNegativeIntegerCell,
-  Column,
 } from '@openmsupply-client/common';
 import { DraftOutboundLine } from '../../../types';
-import { OutboundLineFragment } from '../../api';
 
 export const useOutboundLineEditColumns = ({
   onChange,
@@ -99,35 +97,3 @@ export const useOutboundLineEditColumns = ({
 
   return columns;
 };
-
-export const useExpansionColumns = (): Column<OutboundLineFragment>[] =>
-  useColumns([
-    'batch',
-    'expiryDate',
-    [
-      'locationName',
-      {
-        accessor: ({ rowData }) => rowData.location?.name,
-      },
-    ],
-    [
-      'itemUnit',
-      {
-        accessor: ({ rowData }) => rowData.item?.unitName,
-      },
-    ],
-    'numberOfPacks',
-    'packSize',
-    [
-      'unitQuantity',
-      {
-        accessor: ({ rowData }) => rowData.packSize * rowData.numberOfPacks,
-      },
-    ],
-    [
-      'sellPricePerUnit',
-      {
-        accessor: ({ rowData }) => rowData.sellPricePerPack,
-      },
-    ],
-  ]);

@@ -26,12 +26,9 @@ pub fn check_location_exists(
 pub fn check_item_exists(
     connection: &StorageConnection,
     id: &str,
-    store_id: &str,
 ) -> Result<bool, RepositoryError> {
-    let count = ItemRepository::new(connection).count(
-        store_id.to_owned(),
-        Some(ItemFilter::new().id(EqualFilter::equal_to(id))),
-    )?;
+    let count = ItemRepository::new(connection)
+        .count(Some(ItemFilter::new().id(EqualFilter::equal_to(id))))?;
     Ok(count == 1)
 }
 

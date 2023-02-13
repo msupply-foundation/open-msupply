@@ -126,8 +126,6 @@ export const isInboundPlaceholderRow = (row: InboundLineFragment): boolean =>
 export const useIsInboundStatusChangeDisabled = (
   inbound: InboundFragment
 ): boolean => {
-  if (inbound.onHold) return true;
-
   const isManuallyCreated = !inbound.linkedShipment?.id;
   return isManuallyCreated
     ? inbound.status === InvoiceNodeStatus.Verified
@@ -228,7 +226,7 @@ export const inboundsToCsv = (
     node.status,
     node.invoiceNumber,
     Formatter.csvDateString(node.createdDatetime),
-    Formatter.csvDateString(node.deliveredDatetime),
+    Formatter.csvDateString(node.allocatedDatetime),
     node.comment,
     node.pricing.totalAfterTax,
   ]);
