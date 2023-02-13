@@ -40,7 +40,10 @@ describe('Formatters', () => {
       RouteBuilder.create(AppRoute.Distribution)
         .addPart(AppRoute.OutboundShipment)
         .addQuery({ param: 'test', more: 3, third: true })
+        .addQuery({ extra: 'one' })
         .build()
-    ).toBe('/distribution/outbound-shipment?param=test&more=3&third=true');
+    ).toBe(
+      '/distribution/outbound-shipment?param=test&more=3&third=true&extra=one'
+    );
   });
 });
