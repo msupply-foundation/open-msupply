@@ -86,7 +86,7 @@ mod hiv_testing_encounter {
                 family_planning: Default::default(),
                 hiv_testing: Default::default(),
                 informed_consent: Default::default(),
-                note: Default::default(),
+                notes: Default::default(),
             }
         }
     }
@@ -113,7 +113,7 @@ mod hiv_care_encounter {
                 haem: Default::default(),
                 tb_hcv: Default::default(),
                 viral_load: Default::default(),
-                note: Default::default(),
+                notes: Default::default(),
             }
         }
     }

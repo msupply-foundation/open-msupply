@@ -293,10 +293,10 @@
           },
           "type": "object"
         },
-        "note": {
+        "notes": {
           "description": "An overall note for additional comments about the encounter",
           "items": {
-            "type": "string"
+            "$ref": "#/definitions/Note"
           },
           "type": "array"
         },
@@ -522,6 +522,28 @@
         }
       },
       "required": ["createdDatetime", "startDatetime"],
+      "type": "object"
+    },
+    "Note": {
+      "properties": {
+        "authorId": {
+          "description": "authorId should be captured automatically from app state",
+          "type": "string"
+        },
+        "authorName": {
+          "description": "Practitioner's \"real\" name. Currently needs to be entered, but would ideally default to local state (but we don't yet have this in the database)",
+          "type": "string"
+        },
+        "created": {
+          "description": "Datetime when the note has been created",
+          "format": "date-time",
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        }
+      },
+      "required": ["text", "created", "authorId", "authorName"],
       "type": "object"
     }
   },
