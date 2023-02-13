@@ -20,7 +20,7 @@
   "label.visit-end": "End",
   "label.clinician": "Clinician",
   "label.additional-info": "Additional Info",
-  "label.visit-notes": "Visit notes, other problems",
+  "label.visit-notes": "Notes",
   "label.previous-encounters": "Previous Encounters",
   "label.more": "More...",
   "messages.click-to-return-to-encounters": "Unable to find an encounter with that ID. Click OK to return to the encounter list",
