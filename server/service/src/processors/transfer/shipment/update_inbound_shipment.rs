@@ -6,11 +6,12 @@ use repository::{
 use crate::{
     activity_log::{log_type_from_invoice_status, system_activity_log_entry},
     invoice::common::get_lines_for_invoice,
+    store_preference::get_store_preferences,
 };
 
 use super::{
-    common::generate_inbound_shipment_lines, Operation, ShipmentTransferProcessor,
-    ShipmentTransferProcessorRecord,
+    common::{convert_invoice_line_to_single_pack, generate_inbound_shipment_lines},
+    Operation, ShipmentTransferProcessor, ShipmentTransferProcessorRecord,
 };
 
 const DESCRIPTION: &'static str = "Update inbound shipment from outbound shipment";
@@ -69,9 +70,15 @@ impl ShipmentTransferProcessor for UpdateInboundShipmentProcessor {
         let new_inbound_lines = generate_inbound_shipment_lines(
             connection,
             &inbound_shipment.invoice_row.id,
-            &inbound_shipment.invoice_row.store_id,
             &outbound_shipment,
         )?;
+
+        let store_preferences =
+            get_store_preferences(connection, &&inbound_shipment.invoice_row.store_id)?;
+        let new_inbound_lines = match store_preferences.pack_to_one {
+            true => convert_invoice_line_to_single_pack(new_inbound_lines),
+            false => new_inbound_lines,
+        };
 
         let invoice_line_repository = InvoiceLineRowRepository::new(connection);
 

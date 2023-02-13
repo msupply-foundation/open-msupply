@@ -3,16 +3,13 @@ use repository::{InvoiceLineRow, InvoiceLineRowType, RepositoryError, StorageCon
 use util::uuid::uuid;
 
 use crate::invoice::common::get_lines_for_invoice;
-use crate::store_preference::get_store_preferences;
 
 pub(crate) fn generate_inbound_shipment_lines(
     connection: &StorageConnection,
     inbound_shipment_id: &str,
-    inbound_shipment_store_id: &str,
     source_invoice: &Invoice,
 ) -> Result<Vec<InvoiceLineRow>, RepositoryError> {
     let outbound_lines = get_lines_for_invoice(connection, &source_invoice.invoice_row.id)?;
-    let store_preferences = get_store_preferences(connection, &inbound_shipment_store_id)?;
 
     let inbound_lines = outbound_lines
         .into_iter()
@@ -28,10 +25,10 @@ pub(crate) fn generate_inbound_shipment_lines(
                  location_id: _,
                  batch,
                  expiry_date,
-                 mut pack_size,
+                 pack_size,
                  cost_price_per_pack: _,
                  sell_price_per_pack,
-                 mut number_of_packs,
+                 number_of_packs,
                  note,
                  r#type,
                  total_after_tax: _,
@@ -39,13 +36,7 @@ pub(crate) fn generate_inbound_shipment_lines(
                  tax,
                  inventory_adjustment_reason_id: _,
              }| {
-                let mut cost_price_per_pack = sell_price_per_pack;
-
-                if store_preferences.pack_to_one {
-                    number_of_packs = number_of_packs * pack_size as f64;
-                    cost_price_per_pack = cost_price_per_pack / pack_size as f64;
-                    pack_size = 1;
-                }
+                let cost_price_per_pack = sell_price_per_pack;
 
                 InvoiceLineRow {
                     id: uuid(),
@@ -79,4 +70,18 @@ pub(crate) fn generate_inbound_shipment_lines(
         .collect();
 
     Ok(inbound_lines)
+}
+
+pub(crate) fn convert_invoice_line_to_single_pack(
+    invoice_lines: Vec<InvoiceLineRow>,
+) -> Vec<InvoiceLineRow> {
+    invoice_lines
+        .into_iter()
+        .map(|mut line| {
+            line.number_of_packs = line.number_of_packs * line.pack_size as f64;
+            line.cost_price_per_pack = line.cost_price_per_pack / line.pack_size as f64;
+            line.pack_size = 1;
+            line
+        })
+        .collect()
 }
