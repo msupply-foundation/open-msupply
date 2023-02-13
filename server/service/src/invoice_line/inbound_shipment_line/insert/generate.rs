@@ -39,7 +39,7 @@ pub fn generate(
         new_line.stock_line_id = Some(new_batch.id.clone());
 
         let new_batch = match store_preferences.pack_to_one {
-            true => convert_stock_line_to_single_pack(new_batch, &new_line),
+            true => convert_stock_line_to_single_pack(new_batch),
             false => new_batch,
         };
 
