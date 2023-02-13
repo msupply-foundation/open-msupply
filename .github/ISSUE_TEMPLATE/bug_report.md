@@ -2,7 +2,7 @@
 name: Bug report
 about: Create a report for a bug or to help us improve
 title: A brief clear title explaining the bug
-labels: 'bug'
+labels: 'bug, needs triage'
 assignees: ''
 
 ---
@@ -25,6 +25,5 @@ Steps to reproduce the behaviour:
 
 ## Your environment 🌱
  - Version [e.g. 22]
- - Application Type [e.g. tablet, browser, single user]
- - Browser [e.g. chrome, safari]
+ - Platform [e.g. tablet, browser, single user]
  
