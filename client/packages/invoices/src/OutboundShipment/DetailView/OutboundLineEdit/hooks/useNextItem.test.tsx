@@ -81,7 +81,6 @@ const getLines = (): InvoiceLineNode[] => [
         averageMonthlyConsumption: 0,
       },
       atcCategory: '',
-      availableStockOnHand: 0,
       ddd: '0',
       defaultPackSize: 0,
       doses: 0,
@@ -139,7 +138,6 @@ const getLines = (): InvoiceLineNode[] => [
       },
       availableStockOnHand: 0,
       atcCategory: '',
-      availableStockOnHand: 0,
       ddd: '0',
       defaultPackSize: 0,
       doses: 0,
@@ -210,7 +208,6 @@ const getLines = (): InvoiceLineNode[] => [
       volumePerOuterPack: 0,
       volumePerPack: 0,
       weight: 0,
-      availableStockOnHand: 0,
     },
   },
 ];
