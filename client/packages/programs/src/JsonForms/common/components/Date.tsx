@@ -14,32 +14,28 @@ import {
 } from '../styleConstants';
 import { DatePicker, DatePickerProps } from '@mui/x-date-pickers';
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const DatePickerTextInput = ({ variant, ...props }: TextFieldProps) => (
+  <BasicTextInput
+    error={!!props.error}
+    helperText={props.error}
+    FormHelperTextProps={
+      !!props.error ? { sx: { color: 'error.main' } } : undefined
+    }
+    {...props}
+    variant="standard"
+  />
+);
+
 export const BaseDatePickerInput: FC<
   Omit<DatePickerProps<Date>, 'renderInput'> & { error: string }
-> = props => {
-  return (
-    <DatePicker
-      disabled={props.disabled}
-      renderInput={(params: TextFieldProps) => {
-        const textInputProps: StandardTextFieldProps = {
-          ...params,
-          variant: 'standard',
-        };
-        return (
-          <BasicTextInput
-            error={!!props.error}
-            helperText={props.error}
-            FormHelperTextProps={
-              !!props.error ? { sx: { color: 'error.main' } } : undefined
-            }
-            {...textInputProps}
-          />
-        );
-      }}
-      {...props}
-    />
-  );
-};
+> = props => (
+  <DatePicker
+    disabled={props.disabled}
+    renderInput={DatePickerTextInput}
+    {...props}
+  />
+);
 
 export const dateTester = rankWith(5, isDateControl);
 
