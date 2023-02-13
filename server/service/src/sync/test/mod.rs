@@ -213,6 +213,10 @@ pub(crate) async fn check_records_against_database(
                 record,
                 "InventoryAdjustmentReason"
             ),
+
+            StorePreference(record) => {
+                check_record_by_id!(StorePreferenceRowRepository, con, record, "StorePreference")
+            }
         }
     }
 
