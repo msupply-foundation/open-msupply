@@ -1,8 +1,10 @@
 export class RouteBuilder {
   parts: string[];
+  query: { [key: string]: string | number | boolean };
 
   constructor(part: string) {
     this.parts = [part];
+    this.query = {};
   }
 
   static create(part: string): RouteBuilder {
@@ -19,7 +21,16 @@ export class RouteBuilder {
     return this;
   }
 
+  addQuery(params: { [key: string]: string | number | boolean }): RouteBuilder {
+    this.query = { ...this.query, ...params };
+    return this;
+  }
+
   build(): string {
-    return `/${this.parts.join('/')}`;
+    const queryString = Object.entries(this.query)
+      .reduce((str, [key, value]) => `${str}&${key}=${value}`, '')
+      // Should start with a "?" not "&"
+      .replace('&', '?');
+    return `/${this.parts.join('/')}${queryString}`;
   }
 }
