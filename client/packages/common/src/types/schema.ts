@@ -861,6 +861,7 @@ export type EncounterFieldsResponse = EncounterFieldsConnector;
 
 export type EncounterFilterInput = {
   clinicianId?: InputMaybe<EqualFilterStringInput>;
+  createdDatetime?: InputMaybe<DatetimeFilterInput>;
   endDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   name?: InputMaybe<EqualFilterStringInput>;
@@ -874,6 +875,7 @@ export type EncounterFilterInput = {
 export type EncounterNode = {
   __typename: 'EncounterNode';
   clinician?: Maybe<ClinicianNode>;
+  createdDatetime: Scalars['DateTime'];
   /** The encounter document */
   document: DocumentNode;
   endDatetime?: Maybe<Scalars['DateTime']>;
@@ -883,6 +885,8 @@ export type EncounterNode = {
   patient: NameNode;
   patientId: Scalars['String'];
   program: Scalars['String'];
+  /** Returns the matching program enrolment for the patient of this encounter */
+  programEnrolment?: Maybe<ProgramEnrolmentNode>;
   startDatetime: Scalars['DateTime'];
   status?: Maybe<EncounterNodeStatus>;
   type: Scalars['String'];
@@ -896,13 +900,14 @@ export type EncounterNodeEventsArgs = {
 
 export enum EncounterNodeStatus {
   Cancelled = 'CANCELLED',
-  Done = 'DONE',
+  Completed = 'COMPLETED',
   Scheduled = 'SCHEDULED'
 }
 
 export type EncounterResponse = EncounterConnector;
 
 export enum EncounterSortFieldInput {
+  CreatedDatetime = 'createdDatetime',
   EndDatetime = 'endDatetime',
   PatientId = 'patientId',
   Program = 'program',
@@ -2700,8 +2705,8 @@ export type ProgramEnrolmentConnector = {
 export type ProgramEnrolmentFilterInput = {
   enrolmentDatetime?: InputMaybe<DatetimeFilterInput>;
   patientId?: InputMaybe<EqualFilterStringInput>;
+  program?: InputMaybe<EqualFilterStringInput>;
   programPatientId?: InputMaybe<EqualFilterStringInput>;
-  type?: InputMaybe<EqualFilterStringInput>;
 };
 
 export type ProgramEnrolmentNode = {
@@ -2715,9 +2720,9 @@ export type ProgramEnrolmentNode = {
   /** The program document name */
   name: Scalars['String'];
   patientId: Scalars['String'];
-  programPatientId?: Maybe<Scalars['String']>;
   /** The program type */
-  type: Scalars['String'];
+  program: Scalars['String'];
+  programPatientId?: Maybe<Scalars['String']>;
 };
 
 
@@ -2754,6 +2759,7 @@ export type ProgramEventConnector = {
 export type ProgramEventFilterInput = {
   documentName?: InputMaybe<EqualFilterStringInput>;
   documentType?: InputMaybe<EqualFilterStringInput>;
+  /** The event type */
   type?: InputMaybe<EqualFilterStringInput>;
 };
 

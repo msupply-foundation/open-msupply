@@ -62,7 +62,7 @@ export const CreateEncounterModal: FC = () => {
 
   const handleSave = useEncounter.document.upsert(
     patientId,
-    encounterRegistry?.program?.type ?? '',
+    encounterRegistry?.program?.program ?? '',
     encounterRegistry?.encounter.documentType ?? ''
   );
 
