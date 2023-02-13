@@ -114,7 +114,7 @@ const ITEM_LINE_2: (&'static str, &'static str) = (
       "kit_data": null,
       "location_ID": "",
       "manufacturer_ID": "",
-      "name_ID": "name_store_b",
+      "name_ID": "",
       "note": "",
       "pack_inners_per_outer": 0,
       "pack_quan_per_inner": 0,
@@ -158,7 +158,7 @@ fn item_line_2_pull_record() -> TestSyncPullRecord {
             expiry_date: None,
             on_hold: false,
             note: None,
-            supplier_id: Some("name_store_b".to_string()),
+            supplier_id: None,
         }),
     )
 }
@@ -180,7 +180,7 @@ fn item_line_2_push_record() -> TestSyncPushRecord {
             cost_price: 0.0,
             sell_price: 0.0,
             note: None,
-            supplier_id: Some("name_store_b".to_string()),
+            supplier_id: None,
         }),
     }
 }
