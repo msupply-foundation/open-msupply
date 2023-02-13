@@ -15,7 +15,8 @@ use crate::{
 };
 
 use super::validate::{
-    check_active_adjustment_reasons, check_reason_is_valid, stocktake_reduction_amount,
+    check_active_adjustment_reasons, check_reason_is_valid, check_stock_line_reduced_below_zero,
+    stocktake_reduction_amount,
 };
 
 #[derive(Default, Debug, Clone)]
@@ -46,6 +47,7 @@ pub enum UpdateStocktakeLineError {
     StocktakeIsLocked,
     AdjustmentReasonNotProvided,
     AdjustmentReasonNotValid,
+    StockLineReducedBelowZero(String),
 }
 
 fn validate(
@@ -99,6 +101,24 @@ fn validate(
             stocktake_reduction_amount,
         )? {
             return Err(UpdateStocktakeLineError::AdjustmentReasonNotValid);
+        }
+    }
+
+    if let (Some(counted_number_of_packs), Some(stock_line_id)) =
+        (input.counted_number_of_packs, &stocktake_line.stock_line_id)
+    {
+        if check_stock_line_reduced_below_zero(
+            connection,
+            store_id,
+            &stock_line_id,
+            &counted_number_of_packs,
+        )? {
+            return Err(UpdateStocktakeLineError::StockLineReducedBelowZero(
+                format!(
+                    "Stock line {} has been issued in new outbound shipments",
+                    &stock_line_id,
+                ),
+            ));
         }
     }
 
