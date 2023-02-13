@@ -861,6 +861,7 @@ export type EncounterFieldsResponse = EncounterFieldsConnector;
 
 export type EncounterFilterInput = {
   clinicianId?: InputMaybe<EqualFilterStringInput>;
+  createdDatetime?: InputMaybe<DatetimeFilterInput>;
   endDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   name?: InputMaybe<EqualFilterStringInput>;
@@ -874,6 +875,7 @@ export type EncounterFilterInput = {
 export type EncounterNode = {
   __typename: 'EncounterNode';
   clinician?: Maybe<ClinicianNode>;
+  createdDatetime: Scalars['DateTime'];
   /** The encounter document */
   document: DocumentNode;
   endDatetime?: Maybe<Scalars['DateTime']>;
@@ -896,13 +898,14 @@ export type EncounterNodeEventsArgs = {
 
 export enum EncounterNodeStatus {
   Cancelled = 'CANCELLED',
-  Done = 'DONE',
+  Completed = 'COMPLETED',
   Scheduled = 'SCHEDULED'
 }
 
 export type EncounterResponse = EncounterConnector;
 
 export enum EncounterSortFieldInput {
+  CreatedDatetime = 'createdDatetime',
   EndDatetime = 'endDatetime',
   PatientId = 'patientId',
   Program = 'program',

@@ -14,17 +14,15 @@ import {
 } from '@openmsupply-client/common';
 import { EncounterFragment } from '@openmsupply-client/programs';
 import { getClinicianName } from '../../Patient/Encounter';
-import { PatientFragment } from '../../Patient/api/operations.generated';
 
 const Row = ({ label, Input }: { label: string; Input: ReactNode }) => (
   <InputWithLabelRow labelWidth="90px" label={label} Input={Input} />
 );
 interface ToolbarProps {
   onChange: (patch: Partial<EncounterFragment>) => void;
-  patient: PatientFragment;
   encounter: EncounterFragment;
 }
-export const Toolbar: FC<ToolbarProps> = ({ patient, encounter, onChange }) => {
+export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
   const [startDatetime, setStartDatetime] = useState<string | undefined>();
   const [endDatetime, setEndDatetime] = useState<string | undefined | null>();
   const t = useTranslation('patients');
@@ -38,6 +36,7 @@ export const Toolbar: FC<ToolbarProps> = ({ patient, encounter, onChange }) => {
   }, [encounter]);
 
   if (!encounter) return null;
+  const { patient } = encounter;
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>

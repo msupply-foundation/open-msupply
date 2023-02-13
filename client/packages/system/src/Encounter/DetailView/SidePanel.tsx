@@ -21,7 +21,7 @@ const NUM_RECENT_ENCOUNTERS = 5;
 
 interface SidePanelProps {
   encounter: EncounterFragment;
-  onChange: (patch: Partial<EncounterFragment> & { note?: string }) => void;
+  onChange: (patch: Partial<EncounterFragment> & { note?: [string] }) => void;
 }
 
 export const SidePanel: FC<SidePanelProps> = ({ encounter, onChange }) => {
@@ -73,7 +73,7 @@ export const SidePanel: FC<SidePanelProps> = ({ encounter, onChange }) => {
                 onChange={e => setEncounterNote(e.target.value)}
                 onBlur={() =>
                   onChange({
-                    note: encounterNote ?? '',
+                    note: [encounterNote ?? ''],
                   })
                 }
               />

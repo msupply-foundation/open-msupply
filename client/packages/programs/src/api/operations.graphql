@@ -184,6 +184,7 @@ fragment Encounter on EncounterNode {
     firstName
     lastName
     name
+    dateOfBirth
   }
   program
   startDatetime

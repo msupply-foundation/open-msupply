@@ -14,7 +14,6 @@ import {
   useJsonForms,
   EncounterFragment,
 } from '@openmsupply-client/programs';
-import { usePatient } from '../../Patient';
 import { AppRoute } from '@openmsupply-client/config';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
@@ -34,10 +33,6 @@ export const DetailView: FC = () => {
     isSuccess,
     isError,
   } = useEncounter.document.byIdPromise(id);
-
-  const { data: patient } = usePatient.document.get(
-    encounter?.patient.id ?? ''
-  );
 
   const handleSave = useEncounter.document.upsert(
     encounter?.patient.id ?? '',
@@ -91,12 +86,8 @@ export const DetailView: FC = () => {
     <React.Suspense fallback={<DetailViewSkeleton />}>
       <link rel="stylesheet" href="/medical-icons.css" media="all"></link>
       <AppBarButtons />
-      {encounter && patient && (
-        <Toolbar
-          onChange={updateEncounter}
-          patient={patient}
-          encounter={encounter}
-        />
+      {encounter && (
+        <Toolbar onChange={updateEncounter} encounter={encounter} />
       )}
       {encounter ? (
         JsonForm

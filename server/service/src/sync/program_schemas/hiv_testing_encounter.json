@@ -162,7 +162,10 @@
         },
         "note": {
           "description": "An overall note for additional comments about the encounter",
-          "type": "string"
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "riskBehaviour": {
           "properties": {
