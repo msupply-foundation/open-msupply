@@ -25,4 +25,22 @@ describe('Formatters', () => {
     );
     expect(RouteBuilder.create(AppRoute.Suppliers).build()).toBe('/suppliers');
   });
+
+  it('adds a single query to url', () => {
+    expect(
+      RouteBuilder.create(AppRoute.Distribution)
+        .addPart(AppRoute.OutboundShipment)
+        .addQuery({ param: 'test' })
+        .build()
+    ).toBe('/distribution/outbound-shipment?param=test');
+  });
+
+  it('adds multiple queries to url', () => {
+    expect(
+      RouteBuilder.create(AppRoute.Distribution)
+        .addPart(AppRoute.OutboundShipment)
+        .addQuery({ param: 'test', more: 3, third: true })
+        .build()
+    ).toBe('/distribution/outbound-shipment?param=test&more=3&third=true');
+  });
 });
