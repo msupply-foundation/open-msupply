@@ -11,9 +11,9 @@ pub(crate) fn program_enrolment(
     allowed_docs: Vec<String>,
 ) -> Result<Option<ProgramEnrolment>, RepositoryError> {
     // restrict query results to allowed entries
-    filter.r#type = Some(
+    filter.program = Some(
         filter
-            .r#type
+            .program
             .unwrap_or_default()
             .restrict_results(&allowed_docs),
     );
@@ -32,9 +32,9 @@ pub(crate) fn program_enrolments(
 ) -> Result<Vec<ProgramEnrolment>, RepositoryError> {
     // restrict query results to allowed entries
     let mut filter = filter.unwrap_or(ProgramEnrolmentFilter::new());
-    filter.r#type = Some(
+    filter.program = Some(
         filter
-            .r#type
+            .program
             .unwrap_or_default()
             .restrict_results(&allowed_docs),
     );
