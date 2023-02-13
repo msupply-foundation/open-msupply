@@ -1,18 +1,31 @@
-use repository::{InvoiceLineRow, StockLineRow, StorePreferenceRow};
+use repository::{InvoiceLineRow, StockLineRow};
 use util::uuid::uuid;
 
+pub fn convert_stock_line_to_single_pack(
+    stock_line: StockLineRow,
+    invoice_line: &InvoiceLineRow,
+) -> StockLineRow {
+    StockLineRow {
+        total_number_of_packs: invoice_line.number_of_packs * invoice_line.pack_size as f64,
+        available_number_of_packs: invoice_line.number_of_packs * invoice_line.pack_size as f64,
+        cost_price_per_pack: invoice_line.cost_price_per_pack / invoice_line.pack_size as f64,
+        sell_price_per_pack: invoice_line.sell_price_per_pack / invoice_line.pack_size as f64,
+        pack_size: 1,
+        ..stock_line
+    }
+}
+
 pub fn generate_batch(
-    store_preferences: Option<StorePreferenceRow>,
     store_id: &str,
     InvoiceLineRow {
         stock_line_id,
         item_id,
-        mut pack_size,
+        pack_size,
         batch,
         expiry_date,
-        mut sell_price_per_pack,
-        mut cost_price_per_pack,
-        mut number_of_packs,
+        sell_price_per_pack,
+        cost_price_per_pack,
+        number_of_packs,
         location_id,
         note,
         ..
@@ -25,13 +38,6 @@ pub fn generate_batch(
         (Some(stock_line_id), true) => stock_line_id,
         _ => uuid(),
     };
-
-    if store_preferences.unwrap_or_default().pack_to_one {
-        number_of_packs = number_of_packs * pack_size as f64;
-        sell_price_per_pack = sell_price_per_pack / pack_size as f64;
-        cost_price_per_pack = cost_price_per_pack / pack_size as f64;
-        pack_size = 1;
-    }
 
     StockLineRow {
         id: stock_line_id,

@@ -25,7 +25,6 @@ pub fn generate(
 
     let upsert_batch_option = if existing_invoice_row.status != InvoiceRowStatus::New {
         let new_batch = generate_batch(
-            None,
             &existing_invoice_row.store_id,
             update_line.clone(),
             batch_to_delete_id.is_none(),
