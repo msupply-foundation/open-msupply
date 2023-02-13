@@ -11,8 +11,13 @@ import { PlusCircleIcon } from '@common/icons';
 import { useFormatDateTime, useTranslation } from '@common/intl';
 import { ToggleState, useDialog } from '@common/hooks';
 import { useStocktake } from '../api';
-import { ItemWithStockLines, useMasterList } from '@openmsupply-client/system';
-import { Box, useAuthContext } from '@openmsupply-client/common';
+import { useMasterList } from '@openmsupply-client/system';
+import {
+  Box,
+  FnUtils,
+  InsertStocktakeInput,
+  useAuthContext,
+} from '@openmsupply-client/common';
 
 interface CreateStocktakeArgs {
   masterListId?: string;
@@ -36,13 +41,20 @@ export const CreateStocktakeButton: React.FC<{
   const [createStocktakeArgs, setCreateStocktakeArgs] =
     useState<CreateStocktakeArgs>(DEFAULT_ARGS);
 
-  const onChange = async (items?: ItemWithStockLines[]) => {
+  const onChange = async () => {
     const description = t('stocktake.description-template', {
       username: user ? user.name : 'unknown user',
       date: localisedDate(new Date()),
     });
-
-    await mutateAsync({ description, items });
+    const input: InsertStocktakeInput = {
+      id: FnUtils.generateUUID(),
+      description,
+      masterListId:
+        createStocktakeArgs.masterListId === 'undefined'
+          ? undefined
+          : createStocktakeArgs.masterListId,
+    };
+    await mutateAsync(input);
   };
 
   const onClose = () => {
@@ -91,7 +103,7 @@ export const CreateStocktakeButton: React.FC<{
               disabled={isSaving}
               variant="ok"
               onClick={async () => {
-                await onChange([]);
+                await onChange();
                 onClose();
               }}
             />
