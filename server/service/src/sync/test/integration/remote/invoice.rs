@@ -1,13 +1,8 @@
-use crate::{
-    inventory_adjustment_reason,
-    sync::{
-        test::integration::{
-            central_server_configurations::NewSiteProperties, SyncRecordTester, TestStepData,
-        },
-        translations::{
-            IntegrationRecords, PullDeleteRecord, PullDeleteRecordTable, PullUpsertRecord,
-        },
+use crate::sync::{
+    test::integration::{
+        central_server_configurations::NewSiteProperties, SyncRecordTester, TestStepData,
     },
+    translations::{IntegrationRecords, PullDeleteRecord, PullDeleteRecordTable, PullUpsertRecord},
 };
 use chrono::NaiveDate;
 use repository::mock::mock_request_draft_requisition;
