@@ -209,9 +209,8 @@ impl EncounterNode {
             .as_ref()
             .map(|f| f.to_domain())
             .unwrap_or(ProgramEventFilter::new())
-            .patient_id(EqualFilter::equal_to(&self.encounter_row.patient_id));
-        program_filter =
-            program_filter.document_type(EqualFilter::equal_to(&self.encounter_row.r#type));
+            .patient_id(EqualFilter::equal_to(&self.encounter_row.patient_id))
+            .document_type(EqualFilter::equal_to(&self.encounter_row.r#type));
         if filter.and_then(|f| f.is_current_encounter).unwrap_or(false) {
             program_filter =
                 program_filter.document_name(EqualFilter::equal_to(&self.encounter_row.name))
