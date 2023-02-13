@@ -78,6 +78,8 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
       const msg =
         `${e}`.indexOf('AdjustmentReasonNotProvided') !== -1
           ? t('error.provide-reason')
+          : `${e}`.indexOf('StockLineReducedBelowZero') !== -1
+          ? t('error.reduced-below-zero')
           : t('error.cant-save');
       error(msg)();
     }
