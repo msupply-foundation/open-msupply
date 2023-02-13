@@ -107,6 +107,5 @@
   "messages.must-allocate-all-lines": "Impossible de changer le statut tant que toutes les lignes n'ont pas été allouées (ou supprimées).",
   "messages.select-rows-to-delete-them": "Sélectionner les lignes pour les supprimer",
   "messages.shipment-saved": "Livraison sauvegardée 🥳",
-  "stocktake.description-template": "Créé(e) par {{username}} le {{date}}",
   "warning.nothing-to-supply": "La quantité demandée à été fournie !"
 }

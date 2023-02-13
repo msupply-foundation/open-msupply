@@ -19,6 +19,8 @@ pub struct InsertInput {
     pub description: Option<String>,
     pub is_locked: Option<bool>,
     pub stocktake_date: Option<NaiveDate>,
+    pub master_list_id: Option<String>,
+    pub location_id: Option<String>,
 }
 
 #[derive(Union)]
@@ -87,6 +89,8 @@ impl InsertInput {
             description,
             stocktake_date,
             is_locked,
+            location_id,
+            master_list_id,
         } = self;
 
         ServiceInput {
@@ -95,6 +99,8 @@ impl InsertInput {
             description,
             stocktake_date,
             is_locked,
+            location_id,
+            master_list_id,
         }
     }
 }
@@ -169,6 +175,8 @@ mod test {
                     description: Some("description".to_string()),
                     stocktake_date: Some(NaiveDate::from_ymd(2022, 01, 03)),
                     is_locked: Some(true)
+                    location_id: None,
+                    master_list_id: None,
                 }
             );
             // StocktakeNode result is checked in queries

@@ -25,6 +25,8 @@
   "label.batch": "Batch",
   "label.pricing": "Pricing",
   "label.supplier": "Supplier",
+  "label.location": "Location",
+  "label.master-list": "Master List",
   "message.no-supplier": "Inventory Adjustment",
   "messages.locked-description": "This will prevent further changes to the stocktake until it is unlocked.",
   "messages.unlocked-description": "This will re-enable changes to the stocktake.",
@@ -49,5 +51,6 @@
   "messages.select-rows-to-delete-them": "Select rows to delete them",
   "status.new": "New",
   "status.finalised": "Finalised",
+  "stocktake.description-template": "Created by {{username}} on {{date}}",
   "title.stock-line-details": "Stock Line Details"
 }
