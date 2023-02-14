@@ -1,4 +1,4 @@
-import React, { ChangeEventHandler, useState } from 'react';
+import React, { ChangeEventHandler, useEffect, useState } from 'react';
 import {
   BasicSpinner,
   ButtonWithIcon,
@@ -34,8 +34,11 @@ export const CreateStocktakeButton: React.FC<{
 }> = ({ modalController }) => {
   const t = useTranslation('inventory');
   const { mutateAsync, isLoading: isSaving } = useStocktake.document.insert();
-  const { data: masterListData, isLoading: isLoadingMasterLists } =
-    useMasterList.document.listAll({ key: 'name', direction: 'asc' });
+  const {
+    data: masterListData,
+    isLoading: isLoadingMasterLists,
+    mutate: fetchMasterLists,
+  } = useMasterList.document.listAll({ key: 'name', direction: 'asc' });
   const { user } = useAuthContext();
   const { localisedDate } = useFormatDateTime();
   const [createStocktakeArgs, setCreateStocktakeArgs] =
@@ -84,6 +87,10 @@ export const CreateStocktakeButton: React.FC<{
         }))
       : []),
   ];
+
+  useEffect(() => {
+    fetchMasterLists();
+  }, []);
 
   return (
     <>
