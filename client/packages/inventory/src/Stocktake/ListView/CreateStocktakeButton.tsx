@@ -4,11 +4,17 @@ import {
   ButtonWithIcon,
   DialogButton,
   InputWithLabelRow,
+  Option,
   Select,
   Typography,
 } from '@common/components';
 import { PlusCircleIcon } from '@common/icons';
-import { useFormatDateTime, useTranslation } from '@common/intl';
+import {
+  LocaleKey,
+  TypedTFunction,
+  useFormatDateTime,
+  useTranslation,
+} from '@common/intl';
 import { ToggleState, useDialog } from '@common/hooks';
 import { useStocktake } from '../api';
 import { useMasterList, useLocation } from '@openmsupply-client/system';
@@ -20,13 +26,78 @@ import {
 } from '@openmsupply-client/common';
 
 interface CreateStocktakeArgs {
-  masterListId?: string;
-  locationId?: string;
+  masterListId: string;
+  locationId: string;
+}
+
+interface IdName {
+  id: string;
+  name: string;
+  lines?: {
+    totalCount: number;
+  };
 }
 
 const DEFAULT_ARGS: CreateStocktakeArgs = {
   masterListId: 'undefined',
   locationId: 'undefined',
+};
+
+const parseId = (id: string) => (id === 'undefined' ? undefined : id);
+
+const generateOptions = (
+  data: IdName[],
+  labelFormatter: (datum: IdName) => string,
+  t: TypedTFunction<LocaleKey>
+) => [
+  { label: t('label.please-select'), value: 'undefined' },
+  ...data.map(datum => ({
+    label: labelFormatter(datum),
+    value: datum.id,
+  })),
+];
+
+interface SelectInputProps {
+  argument: keyof CreateStocktakeArgs;
+  options: Option[];
+  value: string;
+  label: LocaleKey;
+  t: TypedTFunction<LocaleKey>;
+  setArgs: (args: CreateStocktakeArgs) => void;
+}
+
+const SelectInput: React.FC<SelectInputProps> = ({
+  argument,
+  options,
+  value,
+  label,
+  t,
+  setArgs,
+}) => {
+  const handleChange: ChangeEventHandler<
+    HTMLInputElement | HTMLTextAreaElement
+  > = event =>
+    setArgs({
+      ...DEFAULT_ARGS,
+      [argument]: event.target.value?.toString(),
+    });
+
+  return (
+    <>
+      <InputWithLabelRow
+        Input={
+          <Select
+            fullWidth
+            onChange={handleChange}
+            options={options}
+            value={value}
+          />
+        }
+        label={t(label)}
+      />
+      <Box sx={{ height: 16 }} />
+    </>
+  );
 };
 
 export const CreateStocktakeButton: React.FC<{
@@ -57,14 +128,8 @@ export const CreateStocktakeButton: React.FC<{
     const input: InsertStocktakeInput = {
       id: FnUtils.generateUUID(),
       description,
-      masterListId:
-        createStocktakeArgs.masterListId === 'undefined'
-          ? undefined
-          : createStocktakeArgs.masterListId,
-      locationId:
-        createStocktakeArgs.locationId === 'undefined'
-          ? undefined
-          : createStocktakeArgs.locationId,
+      masterListId: parseId(createStocktakeArgs.masterListId),
+      locationId: parseId(createStocktakeArgs.locationId),
     };
     await mutateAsync(input);
   };
@@ -78,43 +143,23 @@ export const CreateStocktakeButton: React.FC<{
     onClose,
     disableBackdrop: true,
   });
+
+  const masterLists = generateOptions(
+    masterListData?.nodes ?? [],
+    list =>
+      `${list.name} (${list.lines?.totalCount} ${t('label.item', {
+        count: list.lines?.totalCount,
+      })})`,
+    t
+  );
+
+  const locations = generateOptions(
+    locationData?.nodes ?? [],
+    location => location.name,
+    t
+  );
+
   const isLoading = isLoadingMasterLists || isLoadingLocations;
-  const handleMasterListChange: ChangeEventHandler<
-    HTMLInputElement | HTMLTextAreaElement
-  > = event => {
-    setCreateStocktakeArgs({
-      locationId: 'undefined',
-      masterListId: event.target.value?.toString(),
-    });
-  };
-  const handleLocationChange: ChangeEventHandler<
-    HTMLInputElement | HTMLTextAreaElement
-  > = event => {
-    setCreateStocktakeArgs({
-      locationId: event.target.value?.toString(),
-      masterListId: 'undefined',
-    });
-  };
-  const masterLists = [
-    { label: t('label.please-select'), value: 'undefined' },
-    ...(masterListData
-      ? masterListData.nodes.map(list => ({
-          label: `${list.name} (${list.lines.totalCount} ${t('label.item', {
-            count: list.lines.totalCount,
-          })})`,
-          value: list.id,
-        }))
-      : []),
-  ];
-  const locations = [
-    { label: t('label.please-select'), value: 'undefined' },
-    ...(locationData
-      ? locationData.nodes.map(location => ({
-          label: location.name,
-          value: location.id,
-        }))
-      : []),
-  ];
 
   useEffect(() => {
     fetchMasterLists();
@@ -154,28 +199,21 @@ export const CreateStocktakeButton: React.FC<{
                 <Typography padding={1} paddingBottom={4}>
                   {t('messages.create-stocktake-2')}
                 </Typography>
-                <InputWithLabelRow
-                  Input={
-                    <Select
-                      fullWidth
-                      onChange={handleMasterListChange}
-                      options={masterLists}
-                      value={createStocktakeArgs.masterListId}
-                    />
-                  }
-                  label={t('label.master-list')}
+                <SelectInput
+                  argument="masterListId"
+                  options={masterLists}
+                  value={createStocktakeArgs.masterListId}
+                  t={t}
+                  setArgs={setCreateStocktakeArgs}
+                  label="label.master-list"
                 />
-                <Box sx={{ height: 16 }} />
-                <InputWithLabelRow
-                  Input={
-                    <Select
-                      fullWidth
-                      onChange={handleLocationChange}
-                      options={locations}
-                      value={createStocktakeArgs.locationId}
-                    />
-                  }
-                  label={t('label.location')}
+                <SelectInput
+                  argument="locationId"
+                  options={locations}
+                  value={createStocktakeArgs.locationId}
+                  t={t}
+                  setArgs={setCreateStocktakeArgs}
+                  label="label.location"
                 />
               </Box>
             ) : (
