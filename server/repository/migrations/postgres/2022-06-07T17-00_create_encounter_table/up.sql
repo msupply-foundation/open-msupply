@@ -1,6 +1,6 @@
 CREATE TYPE encounter_status AS ENUM (
     'SCHEDULED',
-    'DONE',
+    'COMPLETED',
     'CANCELLED'
 );
 
