@@ -82,6 +82,7 @@ export const DropdownMenu: FC<PropsWithChildren<DropdownMenuProps>> = ({
   disabled = false,
 }) => {
   const [open, setOpen] = useState(false);
+  const onClick = disabled ? undefined : () => setOpen(curr => !curr);
   return (
     <FormControl size="small">
       <InputLabel
@@ -99,7 +100,7 @@ export const DropdownMenu: FC<PropsWithChildren<DropdownMenuProps>> = ({
         labelId={`action-drop-down-label-${label}`}
         variant="outlined"
         IconComponent={ChevronDownIcon}
-        onClick={() => setOpen(curr => !curr)}
+        onClick={onClick}
       >
         {children}
       </StyledSelect>
