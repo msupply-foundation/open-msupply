@@ -115,5 +115,6 @@
   "messages.select-rows-to-delete-them": "Select rows to delete them",
   "messages.shipment-saved": "Shipment saved 🥳",
   "stocktake.description-template": "Created by {{username}} on {{date}}",
-  "warning.nothing-to-supply": "Nothing left to supply!"
+  "warning.nothing-to-supply": "Nothing left to supply!",
+  "info.no-shipment": "Finalising this requisition will prevent you from creating a shipment for it."
 }
