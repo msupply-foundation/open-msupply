@@ -11,6 +11,7 @@ import {
   InputWithLabelRow,
   DatePickerInput,
   Formatter,
+  InfoPanel,
 } from '@openmsupply-client/common';
 import { useStocktake } from '../api';
 
@@ -63,6 +64,9 @@ export const Toolbar: FC = () => {
               />
             }
           />
+          {isDisabled && (
+            <InfoPanel message={t('messages.finalised-stock-take')} />
+          )}
         </Grid>
 
         <Grid item>
