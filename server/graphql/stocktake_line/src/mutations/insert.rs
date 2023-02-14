@@ -4,7 +4,7 @@ use chrono::NaiveDate;
 use graphql_core::simple_generic_errors::CannotEditStocktake;
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
-use graphql_types::types::StocktakeLineNode;
+use graphql_types::types::{StockLineConnector, StocktakeLineNode};
 use repository::StocktakeLine;
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -12,6 +12,8 @@ use service::{
         InsertStocktakeLine as ServiceInput, InsertStocktakeLineError as ServiceError,
     },
 };
+
+use crate::mutations::StockLineReducedBelowZero;
 
 #[derive(InputObject)]
 #[graphql(name = "InsertStocktakeLineInput")]
@@ -44,6 +46,7 @@ pub enum InsertResponse {
 #[graphql(field(name = "description", type = "String"))]
 pub enum InsertErrorInterface {
     CannotEditStocktake(CannotEditStocktake),
+    StockLineReducedBelowZero(StockLineReducedBelowZero),
 }
 
 #[derive(SimpleObject)]
@@ -92,6 +95,11 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
                 CannotEditStocktake {},
             ))
         }
+        ServiceError::StockLineReducedBelowZero(line) => {
+            return Ok(InsertErrorInterface::StockLineReducedBelowZero(
+                StockLineReducedBelowZero(StockLineConnector::from_row(line)),
+            ))
+        }
         // Standard Graphql Errors
         // TODO some are structured errors (where can be changed concurrently)
         ServiceError::InvalidStore => BadUserInput(formatted_error),
@@ -110,7 +118,6 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         ServiceError::AdjustmentReasonNotValid => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::InternalError(err) => InternalError(err),
-        ServiceError::StockLineReducedBelowZero(_) => BadUserInput(formatted_error),
     };
 
     Err(graphql_error.extend())

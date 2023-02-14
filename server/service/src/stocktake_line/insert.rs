@@ -57,7 +57,7 @@ pub enum InsertStocktakeLineError {
     StocktakeIsLocked,
     AdjustmentReasonNotProvided,
     AdjustmentReasonNotValid,
-    StockLineReducedBelowZero(String),
+    StockLineReducedBelowZero(StockLine),
 }
 
 fn check_stocktake_line_does_not_exist(
@@ -206,19 +206,15 @@ fn validate(
     }
 
     if let (Some(counted_number_of_packs), Some(stock_line)) =
-        (input.counted_number_of_packs, &stock_line)
+        (input.counted_number_of_packs, stock_line.clone())
     {
         if check_stock_line_reduced_below_zero(
-            connection,
-            store_id,
-            &stock_line.stock_line_row.id,
+            &stock_line.stock_line_row.total_number_of_packs,
             &counted_number_of_packs,
-        )? {
+            &stock_line.stock_line_row.available_number_of_packs,
+        ) {
             return Err(InsertStocktakeLineError::StockLineReducedBelowZero(
-                format!(
-                    "Stock line {} has been issued in new outbound shipments",
-                    &stock_line.stock_line_row.id,
-                ),
+                stock_line,
             ));
         }
     }
@@ -306,9 +302,9 @@ mod stocktake_line_test {
             MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
-        InventoryAdjustmentReasonRow, InventoryAdjustmentReasonRowRepository,
+        EqualFilter, InventoryAdjustmentReasonRow, InventoryAdjustmentReasonRowRepository,
         InventoryAdjustmentReasonType, InvoiceLineRow, InvoiceRow, InvoiceRowStatus,
-        InvoiceRowType, StockLineRow, StocktakeLineRow,
+        InvoiceRowType, StockLineFilter, StockLineRepository, StockLineRow, StocktakeLineRow,
     };
     use util::{inline_init, uuid::uuid};
 
@@ -574,12 +570,15 @@ mod stocktake_line_test {
                 }),
             )
             .unwrap_err();
+        let stock_line = StockLineRepository::new(&context.connection)
+            .query_by_filter(
+                StockLineFilter::new().id(EqualFilter::equal_to(&mock_stock_line_b().id)),
+                Some(mock_store_a().id.clone()),
+            )
+            .unwrap();
         assert_eq!(
             error,
-            InsertStocktakeLineError::StockLineReducedBelowZero(format!(
-                "Stock line {} has been issued in new outbound shipments",
-                mock_stock_line_b().id
-            ))
+            InsertStocktakeLineError::StockLineReducedBelowZero(stock_line[0].clone())
         );
 
         // success with stock_line_id
