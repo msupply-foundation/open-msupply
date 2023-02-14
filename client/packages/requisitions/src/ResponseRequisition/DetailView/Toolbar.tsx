@@ -10,6 +10,7 @@ import {
   DeleteIcon,
   useTranslation,
   SearchBar,
+  InfoPanel,
 } from '@openmsupply-client/common';
 import { CustomerSearchInput } from '@openmsupply-client/system';
 
@@ -19,12 +20,14 @@ export const Toolbar: FC = () => {
   const t = useTranslation(['distribution', 'common']);
   const isDisabled = useResponse.utils.isDisabled();
   const { itemFilter, setItemFilter } = useResponse.line.list();
-  const { otherParty, theirReference, update } = useResponse.document.fields([
+  const { otherParty, theirReference, shipments, update } = useResponse.document.fields([
     'lines',
     'otherParty',
     'theirReference',
+    'shipments'
   ]);
   const { onDelete } = useResponse.line.delete();
+  const linkedToShipment = shipments?.totalCount > 0;
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
@@ -65,6 +68,11 @@ export const Toolbar: FC = () => {
                   />
                 }
               />
+              { !linkedToShipment && (
+                <InfoPanel
+                  message={t('info.no-shipment')}
+                />
+              )}
             </Box>
           </Box>
         </Grid>
