@@ -35,7 +35,7 @@ export const CreateStocktakeButton: React.FC<{
   const t = useTranslation('inventory');
   const { mutateAsync, isLoading: isSaving } = useStocktake.document.insert();
   const { data: masterListData, isLoading: isLoadingMasterLists } =
-    useMasterList.document.list();
+    useMasterList.document.listAll({ key: 'name', direction: 'asc' });
   const { user } = useAuthContext();
   const { localisedDate } = useFormatDateTime();
   const [createStocktakeArgs, setCreateStocktakeArgs] =
