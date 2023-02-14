@@ -146,4 +146,11 @@ impl StockLineConnector {
                 .collect(),
         }
     }
+
+    pub fn from_row(stock_line: StockLine) -> StockLineConnector {
+        StockLineConnector {
+            total_count: 1,
+            nodes: vec![StockLineNode::from_domain(stock_line)],
+        }
+    }
 }
