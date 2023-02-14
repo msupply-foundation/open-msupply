@@ -125,7 +125,29 @@ fn insert_rows(
     ctx: &ServiceContext,
     stocktake_id: &str,
 ) -> Result<(), InsertStocktakeError> {
-    let mut item_ids = Vec::<String>::new();
+    // check for location
+    if let Some(location_id) = input.location_id {
+        let stock_lines = StockLineRepository::new(&connection).query_by_filter(
+            StockLineFilter {
+                location_id: Some(EqualFilter::equal_to(&location_id)),
+                id: None,
+                item_id: None,
+                item_code_or_name: None,
+                is_available: None,
+                expiry_date: None,
+                store_id: None,
+            },
+            Some(ctx.store_id.clone()),
+        )?;
+        stock_lines.iter().for_each(|stock_line| {
+            insert_stocktake_line(
+                &connection,
+                stocktake_id,
+                &stock_line.item_row.id,
+                Some(stock_line),
+            );
+        });
+    }
     // check for master list
     if let Some(master_list_id) = input.master_list_id {
         let master_list_items =
@@ -134,27 +156,26 @@ fn insert_rows(
                 id: None,
                 item_id: None,
             })?;
-        master_list_items.iter().for_each(|line| {
-            item_ids.push(line.item_id.clone());
-        });
-    }
-    // insert a stocktake row for each item & stock_line
-    item_ids.iter().for_each(|item_id| {
-        let stock_lines = StockLineRepository::new(&connection)
-            .query_by_filter(
-                StockLineFilter::new().item_id(EqualFilter::equal_to(item_id)),
-                Some(ctx.store_id.clone()),
-            )
-            .unwrap();
 
-        if stock_lines.len() == 0 {
-            insert_stocktake_line(&connection, stocktake_id, &item_id, None);
-        } else {
-            stock_lines.iter().for_each(|stock_line| {
-                insert_stocktake_line(&connection, stocktake_id, &item_id, Some(stock_line));
-            });
-        }
-    });
+        // insert a stocktake row for each item & stock_line
+        master_list_items.iter().for_each(|line| {
+            let item_id = line.item_id.clone();
+            let stock_lines = StockLineRepository::new(&connection)
+                .query_by_filter(
+                    StockLineFilter::new().item_id(EqualFilter::equal_to(&item_id)),
+                    Some(ctx.store_id.clone()),
+                )
+                .unwrap();
+
+            if stock_lines.len() == 0 {
+                insert_stocktake_line(&connection, stocktake_id, &item_id, None);
+            } else {
+                stock_lines.iter().for_each(|stock_line| {
+                    insert_stocktake_line(&connection, stocktake_id, &item_id, Some(stock_line));
+                });
+            }
+        });
+    };
     Ok(())
 }
 
@@ -191,6 +212,7 @@ fn insert_stocktake_line(
         stocktake_line_row.pack_size = Some(stock_line_row.pack_size);
         stocktake_line_row.cost_price_per_pack = Some(stock_line_row.cost_price_per_pack);
         stocktake_line_row.sell_price_per_pack = Some(stock_line_row.sell_price_per_pack);
+        stocktake_line_row.location_id = stock_line_row.location_id;
     }
 
     if let Err(e) = StocktakeLineRowRepository::new(connection).upsert_one(&stocktake_line_row) {
@@ -214,12 +236,13 @@ mod test {
     use chrono::{NaiveDate, Utc};
     use repository::{
         mock::{
-            mock_master_list_item_query_test1, mock_stocktake_a, mock_store_a, mock_user_account_a,
-            MockDataInserts,
+            mock_item_a, mock_location_1, mock_master_list_item_query_test1, mock_stocktake_a,
+            mock_store_a, mock_user_account_a, MockDataInserts,
         },
         test_db::setup_all,
-        EqualFilter, MasterListLineRow, MasterListLineRowRepository, StocktakeLineFilter,
-        StocktakeLineRepository, StocktakeRow, StocktakeRowRepository, StocktakeStatus,
+        EqualFilter, MasterListLineRow, MasterListLineRowRepository, StockLineRow,
+        StockLineRowRepository, StocktakeLineFilter, StocktakeLineRepository, StocktakeRow,
+        StocktakeRowRepository, StocktakeStatus,
     };
     use util::{inline_edit, inline_init};
 
@@ -394,6 +417,87 @@ mod test {
                 .line
                 .stock_line_id,
             None
+        );
+    }
+
+    #[actix_rt::test]
+    async fn insert_stocktake_with_location() {
+        let (_, connection, connection_manager, _) =
+            setup_all("insert_stocktake_with_location", MockDataInserts::all()).await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let mut context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let service = service_provider.stocktake_service;
+        let location_id = mock_location_1().id;
+
+        context.store_id = mock_store_a().id;
+        service
+            .insert_stocktake(
+                &context,
+                InsertStocktake {
+                    id: "stocktake_1".to_string(),
+                    comment: Some("comment".to_string()),
+                    description: Some("description".to_string()),
+                    stocktake_date: Some(NaiveDate::from_ymd(2020, 01, 02)),
+                    is_locked: Some(true),
+                    location_id: Some(location_id.clone()),
+                    master_list_id: None,
+                },
+            )
+            .unwrap();
+
+        // check that no rows were created for the stocktake
+        let stocktake_rows = StocktakeLineRepository::new(&connection)
+            .query_by_filter(
+                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("stocktake_1")),
+            )
+            .unwrap();
+
+        // do we have a stocktake row?
+        assert_eq!(stocktake_rows.len(), 0);
+
+        // add a stock_line for that location and try again
+        let _ = StockLineRowRepository::new(&connection).upsert_one({
+            &inline_init(|r: &mut StockLineRow| {
+                r.id = "stock_line_row_1".to_string();
+                r.store_id = mock_store_a().id;
+                r.item_id = mock_item_a().id;
+                r.location_id = Some(location_id.clone());
+            })
+        });
+
+        service
+            .insert_stocktake(
+                &context,
+                InsertStocktake {
+                    id: "stocktake_2".to_string(),
+                    comment: Some("comment".to_string()),
+                    description: Some("description".to_string()),
+                    stocktake_date: Some(NaiveDate::from_ymd(2020, 01, 02)),
+                    is_locked: Some(true),
+                    location_id: Some(location_id.clone()),
+                    master_list_id: None,
+                },
+            )
+            .unwrap();
+
+        let stocktake_rows = StocktakeLineRepository::new(&connection)
+            .query_by_filter(
+                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("stocktake_2")),
+            )
+            .unwrap();
+
+        assert_eq!(stocktake_rows.len(), 1);
+        // and that it does have a stock_line linked
+        let stock_line_row = stocktake_rows
+            .iter()
+            .find(|r| r.line.stock_line_id == Some("stock_line_row_1".to_string()));
+        assert_eq!(stock_line_row.is_some(), true);
+        assert_eq!(
+            stock_line_row.unwrap().line.stock_line_id,
+            Some("stock_line_row_1".to_string())
         );
     }
 }
