@@ -20,14 +20,16 @@ export const Toolbar: FC = () => {
   const t = useTranslation(['distribution', 'common']);
   const isDisabled = useResponse.utils.isDisabled();
   const { itemFilter, setItemFilter } = useResponse.line.list();
-  const { otherParty, theirReference, shipments, update } = useResponse.document.fields([
-    'lines',
-    'otherParty',
-    'theirReference',
-    'shipments'
-  ]);
+  const { otherParty, theirReference, shipments, update } =
+    useResponse.document.fields([
+      'lines',
+      'otherParty',
+      'theirReference',
+      'shipments',
+    ]);
   const { onDelete } = useResponse.line.delete();
-  const linkedToShipment = shipments?.totalCount > 0;
+  const noLinkedShipments = (shipments?.totalCount ?? 0) === 0;
+  const showInfo = noLinkedShipments && !isDisabled;
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
@@ -68,10 +70,8 @@ export const Toolbar: FC = () => {
                   />
                 }
               />
-              { !linkedToShipment && (
-                <InfoPanel
-                  message={t('info.no-shipment')}
-                />
+              {showInfo && (
+                <InfoPanel message={t('info.no-shipment')} />
               )}
             </Box>
           </Box>
