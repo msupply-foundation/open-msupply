@@ -134,6 +134,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         ServiceError::AdjustmentReasonNotValid => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::InternalError(err) => InternalError(err),
+        ServiceError::StockLineReducedBelowZero(_) => BadUserInput(formatted_error),
     };
 
     Err(graphql_error.extend())
