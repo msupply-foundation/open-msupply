@@ -13,6 +13,7 @@
   "error.no-stocktake-items": "Aucun article n'a été ajouté à cet inventaire.",
   "error.stocktake-not-found": "Inventaire introuvable",
   "label.add-new-line": "Ajouter une ligne",
+  "label.cant-delete-disabled": "Il n'est possible de supprimer des lignes que lorsque le statut est 'Nouvel(le)'",
   "label.counted-num-of-packs": "Nbre de Packs comptés",
   "label.create-location": "Créer emplacement",
   "label.edit-location": "Éditer emplacement",

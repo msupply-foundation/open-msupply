@@ -23,6 +23,7 @@
   "heading.description": "Description",
   "label.locked": "Locked",
   "label.batch": "Batch",
+  "label.cant-delete-disabled": "Can only delete lines when status is New",
   "label.pricing": "Pricing",
   "label.supplier": "Supplier",
   "label.location": "Location",
