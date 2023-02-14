@@ -16,6 +16,7 @@ import {
   createQueryParamsStore,
   QueryParamsProvider,
   useRowStyle,
+  LocaleKey,
 } from '@openmsupply-client/common';
 import { StocktakeLineEditForm } from './StocktakeLineEditForm';
 import { useStocktakeLineEdit } from './hooks';
@@ -63,6 +64,16 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
     return true;
   };
 
+  const parseError = (error: string): LocaleKey => {
+    switch (true) {
+      case error.indexOf('AdjustmentReasonNotProvided') !== -1:
+        return 'error.provide-reason';
+      case error.indexOf('StockLineReducedBelowZero') !== -1:
+        return 'error.reduced-below-zero';
+    }
+    return 'error.cant-save';
+  };
+
   const onOk = async () => {
     try {
       await save(draftLines);
@@ -75,12 +86,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
       }
       onClose();
     } catch (e) {
-      const msg =
-        `${e}`.indexOf('AdjustmentReasonNotProvided') !== -1
-          ? t('error.provide-reason')
-          : `${e}`.indexOf('StockLineReducedBelowZero') !== -1
-          ? t('error.reduced-below-zero')
-          : t('error.cant-save');
+      const msg = t(parseError(`${e}`));
       error(msg)();
     }
   };
