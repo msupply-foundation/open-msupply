@@ -7,10 +7,6 @@ CREATE TABLE encounter (
     created_datetime TIMESTAMP NOT NULL,
     start_datetime TIMESTAMP NOT NULL,
     end_datetime TIMESTAMP,
-    status TEXT CHECK (status IN (
-        'SCHEDULED',
-        'DONE',
-        'CANCELLED'
-    )),
+    status TEXT,
     clinician_id TEXT REFERENCES clinician(id)
 )
