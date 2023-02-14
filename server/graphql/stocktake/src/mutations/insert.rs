@@ -174,7 +174,7 @@ mod test {
                     comment: Some("comment".to_string()),
                     description: Some("description".to_string()),
                     stocktake_date: Some(NaiveDate::from_ymd(2022, 01, 03)),
-                    is_locked: Some(true)
+                    is_locked: Some(true),
                     location_id: None,
                     master_list_id: None,
                 }
