@@ -1,7 +1,10 @@
 use crate::{
     invoice::common::{calculate_total_after_tax, generate_invoice_user_id_update},
     invoice_line::{
-        generate_batch, inbound_shipment_line::generate::convert_stock_line_to_single_pack,
+        generate_batch,
+        inbound_shipment_line::generate::{
+            convert_invoice_line_to_single_pack, convert_stock_line_to_single_pack,
+        },
     },
     store_preference::get_store_preferences,
     u32_to_i32,
@@ -100,15 +103,5 @@ fn generate_line(
         tax,
         note: None,
         inventory_adjustment_reason_id: None,
-    }
-}
-
-fn convert_invoice_line_to_single_pack(invoice_line: InvoiceLineRow) -> InvoiceLineRow {
-    InvoiceLineRow {
-        number_of_packs: invoice_line.number_of_packs * invoice_line.pack_size as f64,
-        sell_price_per_pack: invoice_line.sell_price_per_pack / invoice_line.pack_size as f64,
-        cost_price_per_pack: invoice_line.cost_price_per_pack / invoice_line.pack_size as f64,
-        pack_size: 1,
-        ..invoice_line
     }
 }
