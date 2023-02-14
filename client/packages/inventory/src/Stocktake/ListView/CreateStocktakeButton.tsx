@@ -120,13 +120,10 @@ export const CreateStocktakeButton: React.FC<{
             {!isSaving ? (
               <Box paddingLeft={2}>
                 <Typography padding={1}>
-                  You can create a stocktake based on items currently assigned
-                  to a location, items assigned to a master list or a
-                  combination of both.
+                  {t('messages.create-stocktake-1')}
                 </Typography>
                 <Typography padding={1} paddingBottom={4}>
-                  To create an empty stocktake, simply click <b>OK</b> to
-                  continue
+                  {t('messages.create-stocktake-2')}
                 </Typography>
                 <InputWithLabelRow
                   Input={
