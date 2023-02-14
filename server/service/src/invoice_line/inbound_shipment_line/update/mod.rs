@@ -42,7 +42,7 @@ pub fn update_inbound_shipment_line(
             let (line, item, invoice) = validate(&input, &ctx.store_id, &connection)?;
 
             let (invoice_row_option, updated_line, upsert_batch_option, delete_batch_id_option) =
-                generate(&ctx.user_id, input, line, item, invoice);
+                generate(connection, &ctx.user_id, input, line, item, invoice)?;
 
             let stock_line_respository = StockLineRowRepository::new(&connection);
 
@@ -113,7 +113,8 @@ mod test {
             mock_user_account_a, MockDataInserts,
         },
         test_db::setup_all,
-        InvoiceLineRowRepository,
+        InvoiceLineRowRepository, StorePreferenceRow, StorePreferenceRowRepository,
+        StorePreferenceType,
     };
     use util::{inline_edit, inline_init};
 
@@ -284,6 +285,45 @@ mod test {
                 u.item_id = mock_item_a().id.clone();
                 u.pack_size = 2;
                 u.number_of_packs = 3.0;
+                u
+            })
+        );
+
+        // pack to one preference is set
+        let pack_to_one = StorePreferenceRow {
+            id: mock_store_a().id.clone(),
+            r#type: StorePreferenceType::StorePreferences,
+            pack_to_one: true,
+        };
+        StorePreferenceRowRepository::new(&connection)
+            .upsert_one(&pack_to_one)
+            .unwrap();
+
+        service
+            .update_inbound_shipment_line(
+                &context,
+                inline_init(|r: &mut UpdateInboundShipmentLine| {
+                    r.id = mock_inbound_shipment_c_invoice_lines()[0].id.clone();
+                    r.pack_size = Some(20);
+                    r.number_of_packs = Some(20.0);
+                    r.sell_price_per_pack = Some(100.0);
+                    r.cost_price_per_pack = Some(60.0);
+                }),
+            )
+            .unwrap();
+
+        let inbound_line = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id(&mock_inbound_shipment_c_invoice_lines()[0].id.clone())
+            .unwrap();
+
+        assert_eq!(
+            inbound_line,
+            inline_edit(&inbound_line, |mut u| {
+                u.id = mock_inbound_shipment_c_invoice_lines()[0].id.clone();
+                u.pack_size = 1;
+                u.number_of_packs = 400.0;
+                u.sell_price_per_pack = 5.0;
+                u.cost_price_per_pack = 3.0;
                 u
             })
         );
