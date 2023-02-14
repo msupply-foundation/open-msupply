@@ -736,7 +736,7 @@ mod tests {
                 id: util::uuid::uuid(),
                 name: "doc_name".to_string(),
                 patient_id: mock_name_2().id,
-                r#type: "ProgramType".to_string(),
+                program: "ProgramType".to_string(),
                 enrolment_datetime: Utc::now().naive_utc(),
                 program_patient_id: Some("program_patient_id".to_string()),
             })
