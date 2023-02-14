@@ -353,6 +353,7 @@ mod test {
 
         // success insert
         let encounter = inline_init(|e: &mut SchemaEncounter| {
+            e.created_datetime = Utc::now().to_rfc3339();
             e.start_datetime = Utc::now().to_rfc3339();
             e.status = Some(EncounterStatus::Scheduled);
         });

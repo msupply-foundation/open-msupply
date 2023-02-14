@@ -22,6 +22,7 @@ fn get_timestamp_fields() -> Vec<TableAndFieldName> {
         ("program_event", "datetime"),
         ("program_event", "active_start_datetime"),
         ("program_event", "active_end_datetime"),
+        ("encounter", "created_datetime"),
         ("encounter", "start_datetime"),
         ("encounter", "end_datetime"),
         ("name", "created_datetime"),
