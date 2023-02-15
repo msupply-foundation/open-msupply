@@ -1,0 +1,33 @@
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "Control",
+      "scope": "#/properties/startDatetime",
+      "label": "Start date",
+      "options": {
+        "dateOnly": true
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/endDatetime",
+      "label": "End date",
+      "options": {
+        "dateOnly": true
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/status",
+      "label": "Encounter status",
+      "options": {
+        "show": [
+          ["SCHEDULED", "Scheduled"],
+          ["COMPLETED", "Completed"],
+          ["CANCELLED", "Cancelled"]
+        ]
+      }
+    }
+  ]
+}

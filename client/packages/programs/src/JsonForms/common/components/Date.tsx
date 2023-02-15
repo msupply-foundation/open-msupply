@@ -1,15 +1,36 @@
-import React from 'react';
+import React, { FC } from 'react';
 import { rankWith, ControlProps, isDateControl } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import { FormLabel, Box } from '@mui/material';
-import {
-  BaseDatePickerInput,
-  useFormatDateTime,
-} from '@openmsupply-client/common';
+import { FormLabel, Box, TextFieldProps } from '@mui/material';
+import { BasicTextInput, useFormatDateTime } from '@openmsupply-client/common';
 import {
   FORM_LABEL_COLUMN_WIDTH,
   FORM_INPUT_COLUMN_WIDTH,
 } from '../styleConstants';
+import { DatePicker, DatePickerProps } from '@mui/x-date-pickers';
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const DatePickerTextInput = ({ variant, ...props }: TextFieldProps) => (
+  <BasicTextInput
+    error={!!props.error}
+    helperText={props.error}
+    FormHelperTextProps={
+      !!props.error ? { sx: { color: 'error.main' } } : undefined
+    }
+    {...props}
+    variant="standard"
+  />
+);
+
+export const BaseDatePickerInput: FC<
+  Omit<DatePickerProps<Date>, 'renderInput'> & { error: string }
+> = props => (
+  <DatePicker
+    disabled={props.disabled}
+    renderInput={DatePickerTextInput}
+    {...props}
+  />
+);
 
 export const dateTester = rankWith(5, isDateControl);
 
@@ -40,6 +61,7 @@ const UIComponent = (props: ControlProps) => {
           }}
           inputFormat="dd/MM/yyyy"
           disabled={!props.enabled}
+          error={props.errors}
         />
       </Box>
     </Box>

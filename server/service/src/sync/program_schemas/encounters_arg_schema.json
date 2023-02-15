@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "EncounterStatus": {
+      "enum": ["SCHEDULED", "COMPLETED", "CANCELLED"],
+      "type": "string"
+    }
+  },
+  "type": "object",
+  "allOf": [
+    {
+      "properties": {
+        "endDatetime": {
+          "description": "Encounter end date and time",
+          "format": "date-time",
+          "type": "string"
+        },
+        "startDatetime": {
+          "description": "Encounter start date and time",
+          "format": "date-time",
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/EncounterStatus"
+        }
+      },
+      "required": ["startDatetime", "endDatetime"],
+      "type": "object"
+    }
+  ]
+}

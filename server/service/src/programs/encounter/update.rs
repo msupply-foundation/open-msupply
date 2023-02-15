@@ -282,6 +282,7 @@ mod test {
             .unwrap();
         let service = &service_provider.encounter_service;
         let encounter = inline_init(|e: &mut SchemaEncounter| {
+            e.created_datetime = Utc::now().to_rfc3339();
             e.start_datetime = Utc::now().to_rfc3339();
             e.status = Some(EncounterStatus::Scheduled);
         });
@@ -359,6 +360,7 @@ mod test {
 
         // success update
         let encounter = inline_init(|e: &mut SchemaEncounter| {
+            e.created_datetime = Utc::now().to_rfc3339();
             e.start_datetime = Utc::now().to_rfc3339();
             e.status = Some(EncounterStatus::Completed);
         });

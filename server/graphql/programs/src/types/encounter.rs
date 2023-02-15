@@ -1,6 +1,7 @@
 use async_graphql::{dataloader::DataLoader, *};
 use chrono::{DateTime, Utc};
 use graphql_core::{
+    generic_filters::EqualFilterStringInput,
     loader::{
         ClinicianLoader, ClinicianLoaderInput, DocumentLoader, DocumentLoaderInput, NameByIdLoader,
         NameByIdLoaderInput, ProgramEnrolmentLoader, ProgramEnrolmentLoaderInput,
@@ -15,8 +16,7 @@ use repository::{
 use serde::Serialize;
 
 use super::{
-    document::DocumentNode,
-    program_enrolment::{ProgramEnrolmentNode, ProgramEventFilterInput},
+    document::DocumentNode, program_enrolment::ProgramEnrolmentNode,
     program_event::ProgramEventNode,
 };
 
@@ -48,6 +48,29 @@ impl EncounterNodeStatus {
             EncounterStatus::Scheduled => EncounterNodeStatus::Scheduled,
             EncounterStatus::Completed => EncounterNodeStatus::Completed,
             EncounterStatus::Cancelled => EncounterNodeStatus::Cancelled,
+        }
+    }
+}
+
+#[derive(InputObject, Clone)]
+pub struct EncounterEventFilterInput {
+    pub r#type: Option<EqualFilterStringInput>,
+    /// Only include events that are for the current encounter, i.e. have matching encounter type
+    /// and matching encounter name of the current encounter. If not set all events with matching
+    /// encounter type are returned.
+    pub is_current_encounter: Option<bool>,
+}
+
+impl EncounterEventFilterInput {
+    pub fn to_domain(&self) -> ProgramEventFilter {
+        ProgramEventFilter {
+            datetime: None,
+            active_start_datetime: None,
+            active_end_datetime: None,
+            patient_id: None,
+            document_type: None,
+            document_name: None,
+            r#type: self.r#type.clone().map(EqualFilter::from),
         }
     }
 }
@@ -178,16 +201,20 @@ impl EncounterNode {
         &self,
         ctx: &Context<'_>,
         at: Option<DateTime<Utc>>,
-        filter: Option<ProgramEventFilterInput>,
+        filter: Option<EncounterEventFilterInput>,
     ) -> Result<Vec<ProgramEventNode>> {
         // TODO use loader?
         let context = ctx.service_provider().basic_context()?;
-        let filter = filter
+        let mut program_filter = filter
+            .as_ref()
             .map(|f| f.to_domain())
             .unwrap_or(ProgramEventFilter::new())
             .patient_id(EqualFilter::equal_to(&self.encounter_row.patient_id))
-            .document_type(EqualFilter::equal_to(&self.encounter_row.r#type))
-            .document_name(EqualFilter::equal_to(&self.encounter_row.name));
+            .document_type(EqualFilter::equal_to(&self.encounter_row.r#type));
+        if filter.and_then(|f| f.is_current_encounter).unwrap_or(false) {
+            program_filter =
+                program_filter.document_name(EqualFilter::equal_to(&self.encounter_row.name))
+        };
         let entries = ctx
             .service_provider()
             .program_event_service
@@ -196,7 +223,7 @@ impl EncounterNode {
                 at.map(|at| at.naive_utc())
                     .unwrap_or(Utc::now().naive_utc()),
                 None,
-                Some(filter),
+                Some(program_filter),
                 Some(Sort {
                     key: ProgramEventSortField::Datetime,
                     desc: Some(true),

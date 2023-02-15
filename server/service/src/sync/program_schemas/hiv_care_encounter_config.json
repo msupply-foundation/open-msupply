@@ -59,6 +59,32 @@
         "type": "encounterStatus",
         "data": "VL Result"
       }
+    },
+    {
+      "type": "Field",
+      "conditions": [
+        {
+          "field": "viralLoad.viralLoadResult",
+          "isTruthy": true
+        }
+      ],
+      "event": {
+        "type": "viralLoadResult",
+        "dataField": "viralLoad.viralLoadResult"
+      }
+    },
+    {
+      "type": "Field",
+      "conditions": [
+        {
+          "field": "viralLoad.viralLoadResult",
+          "isTruthy": true
+        }
+      ],
+      "event": {
+        "type": "viralLoadResultDatetime",
+        "dataField": "startDatetime"
+      }
     }
   ]
 }
