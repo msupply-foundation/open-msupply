@@ -138,8 +138,9 @@ export const usePackSizeController = (lines: DraftOutboundLine[]) => {
       // If so, select that pack size. Otherwise, select `any`.
       if (validPackSizes.length > 1) {
         const packSizes = allPackSizes.filter(
-          ({ hasAllocated, packSize }) =>
+          ({ hasAllocated, packSize, isPlaceholder }) =>
             hasAllocated &&
+            !isPlaceholder &&
             validPackSizes.some(valid => valid.packSize === packSize)
         );
         const sameAllocated = ArrayUtils.ifTheSameElseDefault(

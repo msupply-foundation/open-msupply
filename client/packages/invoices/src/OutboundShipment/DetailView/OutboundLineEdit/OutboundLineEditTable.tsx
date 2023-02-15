@@ -53,7 +53,7 @@ const PlaceholderRow = ({
   );
 
   useEffect(() => {
-    if (line?.numberOfPacks) setPlaceholderBuffer(line?.numberOfPacks);
+    setPlaceholderBuffer(line?.numberOfPacks ?? 0);
   }, [line?.numberOfPacks]);
 
   return !line ? null : (
