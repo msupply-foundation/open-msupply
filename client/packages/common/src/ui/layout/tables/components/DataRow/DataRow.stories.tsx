@@ -31,7 +31,6 @@ const Template: Story = ({ onClick, generateRowTooltip = () => '' }) => {
           columns={columns}
           rowKey="rowKey"
           rowIndex={0}
-          rows={[]}
           rowData={
             {
               id: '',

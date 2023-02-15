@@ -1,4 +1,5 @@
 pub(crate) mod activity_log;
+pub(crate) mod inventory_adjustment_reason;
 pub(crate) mod clinician;
 pub(crate) mod clinician_store_join;
 pub(crate) mod invoice;
@@ -18,6 +19,7 @@ pub(crate) mod stock_line;
 pub(crate) mod stocktake;
 pub(crate) mod stocktake_line;
 pub(crate) mod store;
+pub(crate) mod store_preference;
 pub(crate) mod unit;
 
 use repository::*;
@@ -38,6 +40,8 @@ pub(crate) fn all_translators() -> SyncTanslators {
         Box::new(master_list_line::MasterListLineTranslation {}),
         Box::new(master_list_name_join::MasterListNameJoinTranslation {}),
         Box::new(report::ReportTranslation {}),
+        Box::new(inventory_adjustment_reason::InventoryAdjustmentReasonTranslation {}),
+        Box::new(store_preference::StorePreferenceTranslation {}),
         // Remote
         Box::new(location::LocationTranslation {}),
         Box::new(stock_line::StockLineTranslation {}),
@@ -68,6 +72,8 @@ pub(crate) mod LegacyTableName {
     pub(crate) const LIST_MASTER_LINE: &str = "list_master_line";
     pub(crate) const LIST_MASTER_NAME_JOIN: &str = "list_master_name_join";
     pub(crate) const REPORT: &str = "report";
+    pub(crate) const INVENTORY_ADJUSTMENT_REASON: &str = "options";
+    pub(crate) const STORE_PREFERENCE: &str = "pref";
     // Remote
     pub(crate) const LOCATION: &str = "Location";
     pub(crate) const ITEM_LINE: &str = "item_line";
@@ -104,6 +110,8 @@ pub(crate) enum PullUpsertRecord {
     Requisition(RequisitionRow),
     RequisitionLine(RequisitionLineRow),
     ActivityLog(ActivityLogRow),
+    InventoryAdjustmentReason(InventoryAdjustmentReasonRow),
+    StorePreference(StorePreferenceRow),
     Clinician(ClinicianRow),
     ClinicianStoreJoin(ClinicianStoreJoinRow),
 }
@@ -125,6 +133,7 @@ pub(crate) enum PullDeleteRecordTable {
     MasterListNameJoin,
     Report,
     Name,
+    InventoryAdjustmentReason,
     // Remote-Central (site specific)
     NameStoreJoin,
     // Remote (for other party of transfers)

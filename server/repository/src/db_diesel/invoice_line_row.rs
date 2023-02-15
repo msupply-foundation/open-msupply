@@ -1,4 +1,5 @@
 use super::{
+    inventory_adjustment_reason_row::inventory_adjustment_reason,
     invoice_line_row::invoice_line::dsl::*, invoice_row::invoice, item_row::item,
     location_row::location, stock_line_row::stock_line, StorageConnection,
 };
@@ -30,6 +31,7 @@ table! {
         #[sql_name = "type"] type_ -> crate::db_diesel::invoice_line_row::InvoiceLineRowTypeMapping,
         number_of_packs -> Double,
         note -> Nullable<Text>,
+        inventory_adjustment_reason_id -> Nullable<Text>,
     }
 }
 
@@ -37,6 +39,7 @@ joinable!(invoice_line -> item (item_id));
 joinable!(invoice_line -> stock_line (stock_line_id));
 joinable!(invoice_line -> invoice (invoice_id));
 joinable!(invoice_line -> location (location_id));
+joinable!(invoice_line -> inventory_adjustment_reason (inventory_adjustment_reason_id));
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
@@ -78,6 +81,7 @@ pub struct InvoiceLineRow {
     pub r#type: InvoiceLineRowType,
     pub number_of_packs: f64,
     pub note: Option<String>,
+    pub inventory_adjustment_reason_id: Option<String>,
 }
 
 pub struct InvoiceLineRowRepository<'a> {
@@ -104,6 +108,22 @@ impl<'a> InvoiceLineRowRepository<'a> {
     pub fn upsert_one(&self, row: &InvoiceLineRow) -> Result<(), RepositoryError> {
         diesel::replace_into(invoice_line)
             .values(row)
+            .execute(&self.connection.connection)?;
+        Ok(())
+    }
+
+    pub fn update_tax(
+        &self,
+        record_id: &str,
+        tax_input: Option<f64>,
+        total_after_tax_calculation: f64,
+    ) -> Result<(), RepositoryError> {
+        diesel::update(invoice_line)
+            .filter(id.eq(record_id))
+            .set((
+                tax.eq(tax_input),
+                total_after_tax.eq(total_after_tax_calculation),
+            ))
             .execute(&self.connection.connection)?;
         Ok(())
     }

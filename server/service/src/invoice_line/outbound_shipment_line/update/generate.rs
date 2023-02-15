@@ -120,6 +120,7 @@ fn generate_line(
         tax,
         r#type,
         note,
+        inventory_adjustment_reason_id: None,
     };
 
     if let Some(number_of_packs) = input.number_of_packs {

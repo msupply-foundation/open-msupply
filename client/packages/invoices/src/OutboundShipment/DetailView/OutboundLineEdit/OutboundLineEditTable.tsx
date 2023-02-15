@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Divider,
   Box,
@@ -9,6 +9,7 @@ import {
   useDebounceCallback,
   InvoiceNodeStatus,
 } from '@openmsupply-client/common';
+import { ItemRowFragment } from '@openmsupply-client/system';
 import { DraftOutboundLine } from '../../../types';
 import { PackSizeController, useOutboundLineEditRows } from './hooks';
 import { useOutbound } from '../../api';
@@ -19,6 +20,7 @@ export interface OutboundLineEditTableProps {
   onChange: (key: string, value: number, packSize: number) => void;
   packSizeController: PackSizeController;
   rows: DraftOutboundLine[];
+  item: ItemRowFragment | null;
 }
 
 const PlaceholderRow = ({
@@ -34,6 +36,10 @@ const PlaceholderRow = ({
   const [placeholderBuffer, setPlaceholderBuffer] = useState(
     line?.numberOfPacks ?? 0
   );
+
+  useEffect(() => {
+    setPlaceholderBuffer(line.numberOfPacks);
+  }, [line.numberOfPacks]);
 
   return (
     <Box display="flex">
@@ -67,7 +73,9 @@ export const OutboundLineEditTable: React.FC<OutboundLineEditTableProps> = ({
   onChange,
   packSizeController,
   rows,
+  item,
 }) => {
+  const t = useTranslation('distribution');
   const { orderedRows, placeholderRow } = useOutboundLineEditRows(
     rows,
     packSizeController
@@ -80,8 +88,12 @@ export const OutboundLineEditTable: React.FC<OutboundLineEditTableProps> = ({
       // this allows removal of the placeholder row
       placeholderRow.isUpdated = true;
   };
+  const unit = item?.unitName ?? t('label.unit');
 
-  const columns = useOutboundLineEditColumns({ onChange: onEditStockLine });
+  const columns = useOutboundLineEditColumns({
+    onChange: onEditStockLine,
+    unit,
+  });
 
   return (
     <Box style={{ width: '100%' }}>

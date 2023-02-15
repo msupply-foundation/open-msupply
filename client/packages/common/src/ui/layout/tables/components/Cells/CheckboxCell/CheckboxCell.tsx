@@ -7,12 +7,9 @@ import { useBufferState } from '@common/hooks';
 export const CheckboxCell = <T extends RecordWithId>({
   rowData,
   column,
-  rows,
   isDisabled,
 }: CellProps<T>): React.ReactElement<CellProps<T>> => {
-  const [buffer, setBuffer] = useBufferState(
-    column.accessor({ rowData, rows })
-  );
+  const [buffer, setBuffer] = useBufferState(column.accessor({ rowData }));
 
   return (
     <Checkbox

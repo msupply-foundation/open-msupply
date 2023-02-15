@@ -1,7 +1,7 @@
 use super::{
-    location_row::location, stock_line_row::stock_line,
-    stocktake_line_row::stocktake_line::dsl as stocktake_line_dsl, stocktake_row::stocktake,
-    StorageConnection,
+    inventory_adjustment_reason_row::inventory_adjustment_reason, location_row::location,
+    stock_line_row::stock_line, stocktake_line_row::stocktake_line::dsl as stocktake_line_dsl,
+    stocktake_row::stocktake, StorageConnection,
 };
 
 use crate::repository_error::RepositoryError;
@@ -28,12 +28,14 @@ table! {
         cost_price_per_pack -> Nullable<Double>,
         sell_price_per_pack -> Nullable<Double>,
         note -> Nullable<Text>,
+        inventory_adjustment_reason_id -> Nullable<Text>,
     }
 }
 
 joinable!(stocktake_line -> location (location_id));
 joinable!(stocktake_line -> stocktake (stocktake_id));
 joinable!(stocktake_line -> stock_line (stock_line_id));
+joinable!(stocktake_line -> inventory_adjustment_reason (inventory_adjustment_reason_id));
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[changeset_options(treat_none_as_null = "true")]
@@ -58,6 +60,7 @@ pub struct StocktakeLineRow {
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
     pub note: Option<String>,
+    pub inventory_adjustment_reason_id: Option<String>,
 }
 
 pub struct StocktakeLineRowRepository<'a> {

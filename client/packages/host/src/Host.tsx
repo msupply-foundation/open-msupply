@@ -28,6 +28,7 @@ import { Initialise, Login, Viewport } from './components';
 import { Site } from './Site';
 import { AuthenticationAlert } from './components/AuthenticationAlert';
 import { Discovery } from './components/Discovery';
+import { Android } from './components/Android';
 
 const appVersion = require('../../../../package.json').version; // eslint-disable-line @typescript-eslint/no-var-requires
 
@@ -93,6 +94,12 @@ const Host = () => (
                                   AppRoute.Discovery
                                 ).build()}
                                 element={<Discovery />}
+                              />
+                              <Route
+                                path={RouteBuilder.create(
+                                  AppRoute.Android
+                                ).build()}
+                                element={<Android />}
                               />
                               <Route path="*" element={<Site />} />
                             </Routes>

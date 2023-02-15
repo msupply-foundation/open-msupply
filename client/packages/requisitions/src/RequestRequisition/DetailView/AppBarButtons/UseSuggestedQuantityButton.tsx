@@ -11,6 +11,8 @@ export const UseSuggestedQuantityButtonComponent = () => {
   const t = useTranslation('replenishment');
   const { mutate: setRequestedToSuggested } =
     useRequest.utils.suggestedQuantity();
+  const isDisabled = useRequest.utils.isDisabled();
+
   const getConfirmation = useConfirmationModal({
     onConfirm: setRequestedToSuggested,
     message: t('messages.requested-to-suggested'),
@@ -22,6 +24,7 @@ export const UseSuggestedQuantityButtonComponent = () => {
       Icon={<ZapIcon />}
       label={t('button.requested-to-suggested')}
       onClick={() => getConfirmation()}
+      disabled={isDisabled}
     />
   );
 };

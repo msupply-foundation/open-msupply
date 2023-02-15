@@ -29,29 +29,22 @@ graphql_stock_line = { path = "stock_line" }
 graphql_form_schema = { path = "form_schema" }
 graphql_clinician = { path = "clinician" }
 
-actix-web = { version = "4.0.1", default-features = false, features = [
-    "macros",
-] }
-anymap = "0.12"
-async-graphql = { version = "3.0.35", features = [
-    "dataloader",
-    "chrono",
-    "log",
-] }
-async-graphql-actix-web = "3.0.35"
-async-trait = "0.1.30"
-chrono = { version = "0.4", features = ["serde"] }
-reqwest = { version = "0.11.10", features = ["json"] }
-serde = "1.0.126"
-serde_json = "1.0.66"
-thiserror = "1.0.30"
-tokio = { version = "1.17.0", features = ["macros"] }
-log = "0.4.14"
+actix-web = { workspace = true }
+anymap= { workspace = true }
+async-graphql = { workspace = true }
+async-graphql-actix-web = { workspace = true }
+async-trait = { workspace = true }
+chrono = { workspace = true }
+reqwest = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
 
+tokio = { version = "1.17.0", features = ["macros"] }
 
 [dev-dependencies]
-actix-rt = "2.6.0"
-assert-json-diff = "2.0.1"
+actix-rt = { workspace = true }
+assert-json-diff = { workspace = true }
 
 [features]
 default = ["sqlite"]

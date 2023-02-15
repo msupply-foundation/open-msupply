@@ -16,8 +16,9 @@ pub trait StockLineServiceTrait: Sync + Send {
         pagination: Option<PaginationOption>,
         filter: Option<StockLineFilter>,
         sort: Option<StockLineSort>,
+        store_id: Option<String>,
     ) -> Result<ListResult<StockLine>, ListError> {
-        get_stock_lines(ctx, pagination, filter, sort)
+        get_stock_lines(ctx, pagination, filter, sort, store_id)
     }
 
     fn get_stock_line(

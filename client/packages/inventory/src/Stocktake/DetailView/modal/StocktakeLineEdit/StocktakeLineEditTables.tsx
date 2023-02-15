@@ -17,13 +17,18 @@ import {
   useTableStore,
   CellProps,
 } from '@openmsupply-client/common';
-import { getLocationInputColumn } from '@openmsupply-client/system';
+import {
+  getLocationInputColumn,
+  InventoryAdjustmentReasonRowFragment,
+  InventoryAdjustmentReasonSearchInput,
+} from '@openmsupply-client/system';
 import { DraftStocktakeLine } from './utils';
 
 interface StocktakeLineEditTableProps {
   isDisabled?: boolean;
   batches: DraftStocktakeLine[];
   update: (patch: RecordPatch<DraftStocktakeLine>) => void;
+  isError?: boolean;
 }
 
 const expiryDateColumn = getExpiryDateInputColumn<DraftStocktakeLine>();
@@ -66,10 +71,50 @@ const getCountThisLineColumn = (
   return {
     key: 'countThisLine',
     label: 'label.count-this-line',
-    width: 100,
+    width: 80,
     Cell: EnabledCheckboxCell,
     setter: patch => setter({ ...patch }),
     backgroundColor: alpha(theme.palette.background.menu, 0.4),
+  };
+};
+
+const getInventoryAdjustmentReasonInputColumn = (
+  setter: DraftLineSetter,
+  isError: boolean
+): ColumnDescription<DraftStocktakeLine> => {
+  return {
+    key: 'inventoryAdjustmentReasonInput',
+    label: 'label.reason',
+    sortable: false,
+    width: 120,
+    accessor: ({ rowData }) => rowData.inventoryAdjustmentReason || '',
+    Cell: ({ rowData, column, columnIndex, rowIndex }) => {
+      const value = column.accessor({
+        rowData,
+      }) as InventoryAdjustmentReasonRowFragment | null;
+
+      const onChange = (
+        inventoryAdjustmentReason: InventoryAdjustmentReasonRowFragment | null
+      ) => {
+        setter({ ...rowData, inventoryAdjustmentReason });
+      };
+
+      const autoFocus = columnIndex === 0 && rowIndex === 0;
+      const stockReduction =
+        rowData.snapshotNumberOfPacks -
+        (rowData.countedNumberOfPacks || rowData.snapshotNumberOfPacks);
+
+      return (
+        <InventoryAdjustmentReasonSearchInput
+          autoFocus={autoFocus}
+          value={value}
+          width={column.width}
+          onChange={onChange}
+          stockReduction={stockReduction}
+          isError={isError}
+        />
+      );
+    },
   };
 };
 
@@ -77,6 +122,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
   batches,
   update,
   isDisabled = false,
+  isError = false,
 }) => {
   const t = useTranslation('inventory');
   const theme = useTheme();
@@ -97,7 +143,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
       label: 'label.num-packs',
       width: 100,
       setter: patch => update({ ...patch, countThisLine: true }),
-      accessor: ({ rowData }) => rowData.snapshotNumberOfPacks || '',
+      accessor: ({ rowData }) => rowData.snapshotNumberOfPacks || '0',
     },
     {
       key: 'packSize',
@@ -121,6 +167,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
         setter: patch => update({ ...patch, countThisLine: true }),
       },
     ],
+    getInventoryAdjustmentReasonInputColumn(update, isError),
   ]);
 
   return (

@@ -214,7 +214,7 @@ fn get_sorted_available_stock_lines(
         desc: Some(false),
     };
 
-    StockLineRepository::new(connection).query(Pagination::new(), Some(filter), Some(sort))
+    StockLineRepository::new(connection).query(Pagination::new(), Some(filter), Some(sort), None)
 }
 
 fn get_allocated_lines(

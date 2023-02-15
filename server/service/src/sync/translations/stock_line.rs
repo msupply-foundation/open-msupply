@@ -41,6 +41,9 @@ pub struct LegacyStockLineRow {
     pub sell_price: f64,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub note: Option<String>,
+    #[serde(rename = "name_ID")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub supplier_id: Option<String>,
 }
 
 pub(crate) struct StockLineTranslation {}
@@ -70,6 +73,7 @@ impl SyncTranslation for StockLineTranslation {
             expiry_date: data.expiry_date,
             on_hold: data.hold,
             note: data.note,
+            supplier_id: data.supplier_id,
         };
 
         Ok(Some(IntegrationRecords::from_upsert(
@@ -100,6 +104,7 @@ impl SyncTranslation for StockLineTranslation {
             expiry_date,
             on_hold,
             note,
+            supplier_id,
         } = StockLineRowRepository::new(connection).find_one_by_id(&changelog.record_id)?;
 
         let legacy_row = LegacyStockLineRow {
@@ -116,6 +121,7 @@ impl SyncTranslation for StockLineTranslation {
             cost_price: cost_price_per_pack,
             sell_price: sell_price_per_pack,
             note,
+            supplier_id,
         };
 
         Ok(Some(vec![RemoteSyncRecordV5::new_upsert(

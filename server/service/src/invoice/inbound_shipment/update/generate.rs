@@ -65,6 +65,7 @@ pub(crate) fn generate(
             &update_invoice.store_id,
             &update_invoice.id,
             update_invoice.tax,
+            &update_invoice.name_id,
         )?)
     } else {
         None
@@ -202,6 +203,7 @@ pub fn generate_lines_and_stock_lines(
     store_id: &str,
     id: &str,
     tax: Option<f64>,
+    supplier_id: &str,
 ) -> Result<Vec<LineAndStockLine>, UpdateInboundShipmentError> {
     let lines = InvoiceLineRowRepository::new(connection).find_many_by_invoice_id(id)?;
     let mut result = Vec::new();
@@ -234,6 +236,7 @@ pub fn generate_lines_and_stock_lines(
             r#type: _,
             number_of_packs,
             note,
+            inventory_adjustment_reason_id: _,
         }: InvoiceLineRow = invoice_lines;
 
         if number_of_packs > 0.0 {
@@ -251,6 +254,7 @@ pub fn generate_lines_and_stock_lines(
                 expiry_date,
                 on_hold: false,
                 note,
+                supplier_id: Some(supplier_id.to_string()),
             };
             result.push(LineAndStockLine { line, stock_line });
         }

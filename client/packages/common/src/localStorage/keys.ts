@@ -1,3 +1,4 @@
+import { NativeMode } from '@common/hooks';
 import { SupportedLocales } from '@common/intl';
 import { ThemeOptions } from '@mui/material';
 import { UserStoreNodeFragment } from '../authentication/api/operations.generated';
@@ -26,6 +27,7 @@ export type LocalStorageRecord = {
   '/auth/error': AuthError | undefined;
   '/pagination/rowsperpage': number;
   '/columns/hidden': Record<string, string[]> | undefined;
+  '/native/mode': NativeMode | null;
 };
 
 export type LocalStorageKey = keyof LocalStorageRecord;

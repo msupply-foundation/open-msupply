@@ -46,7 +46,7 @@ pub struct ProgramEnrolmentSortInput {
 
 #[derive(InputObject, Clone)]
 pub struct ProgramEnrolmentFilterInput {
-    pub r#type: Option<EqualFilterStringInput>,
+    pub program: Option<EqualFilterStringInput>,
     pub patient_id: Option<EqualFilterStringInput>,
     pub enrolment_datetime: Option<DatetimeFilterInput>,
     pub program_patient_id: Option<EqualFilterStringInput>,
@@ -54,7 +54,7 @@ pub struct ProgramEnrolmentFilterInput {
 impl ProgramEnrolmentFilterInput {
     fn to_domain_filter(self) -> ProgramEnrolmentFilter {
         ProgramEnrolmentFilter {
-            r#type: self.r#type.map(EqualFilter::from),
+            program: self.program.map(EqualFilter::from),
             patient_id: self.patient_id.map(EqualFilter::from),
             enrolment_datetime: self.enrolment_datetime.map(DatetimeFilter::from),
             program_patient_id: self.program_patient_id.map(EqualFilter::from),
