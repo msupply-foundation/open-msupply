@@ -26,6 +26,7 @@ export { EyeOffIcon } from './EyeOff';
 export { FilterIcon } from './Filter';
 export { HomeIcon } from './Home';
 export { InfoIcon } from './Info';
+export { InfoOutlineIcon } from './InfoOutline';
 export { InvoiceIcon } from './Invoice';
 export { ListIcon } from './ListIcon';
 export { MenuDotsIcon } from './MenuDots';
