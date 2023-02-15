@@ -26,7 +26,7 @@ export const StocktakeLockButton: FC = () => {
     message: t(message),
   });
 
-  if (isDisabled) return null;
+  if (isDisabled && !isLocked) return null;
 
   return (
     <ToggleButton
