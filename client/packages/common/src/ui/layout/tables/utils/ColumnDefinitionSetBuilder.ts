@@ -201,7 +201,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
   sellPricePerPack: {
     label: 'label.sell',
     key: 'sellPricePerPack',
-    width: 100,
+    width: 120,
     align: ColumnAlign.Right,
     format: ColumnFormat.Currency,
   },

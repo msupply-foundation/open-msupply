@@ -1,6 +1,6 @@
 import React, { FC, PropsWithChildren } from 'react';
 import { TableCell, TableRow, TableSortLabel, Tooltip } from '@mui/material';
-import { Column, ColumnAlign } from '../../columns/types';
+import { Column } from '../../columns/types';
 import { InfoOutlineIcon, SortDescIcon } from '@common/icons';
 import { RecordWithId } from '@common/types';
 import { useDebounceCallback } from '@common/hooks';
@@ -22,17 +22,6 @@ interface HeaderCellProps<T extends RecordWithId> {
   column: Column<T>;
   dense?: boolean;
 }
-
-const getDirection = (align: ColumnAlign) => {
-  switch (align) {
-    case ColumnAlign.Center:
-      return 'center';
-    case ColumnAlign.Right:
-      return 'flex-end';
-    default:
-      return 'flex-start';
-  }
-};
 
 export const HeaderCell = <T extends RecordWithId>({
   column,
@@ -70,7 +59,7 @@ export const HeaderCell = <T extends RecordWithId>({
   ) : (
     ''
   );
-  const infoIcon = showTooltip ? (
+  const infoIcon = !!description ? (
     <InfoOutlineIcon
       sx={{
         color: 'gray.light',
@@ -80,28 +69,30 @@ export const HeaderCell = <T extends RecordWithId>({
       }}
     />
   ) : null;
-  const HeaderLabel = sortable ? (
-    <TableSortLabel
-      sx={{ flexDirection: getDirection(column.align), display: 'flex' }}
-      hideSortIcon={false}
-      active={isSorted}
-      direction={direction}
-      IconComponent={SortDescIcon}
-    >
-      <Header column={column} />
-      {infoIcon}
-    </TableSortLabel>
-  ) : (
+  const child = (
     <div
       style={{
-        display: 'flex',
+        display: 'inline-flex',
+        flexWrap: 'nowrap',
         alignItems: 'center',
-        justifyContent: getDirection(column.align),
       }}
     >
       <Header column={column} />
       {infoIcon}
     </div>
+  );
+
+  const HeaderLabel = sortable ? (
+    <TableSortLabel
+      hideSortIcon={false}
+      active={isSorted}
+      direction={direction}
+      IconComponent={SortDescIcon}
+    >
+      {child}
+    </TableSortLabel>
+  ) : (
+    child
   );
 
   return (
@@ -120,7 +111,7 @@ export const HeaderCell = <T extends RecordWithId>({
         maxWidth,
         fontWeight: 'bold',
         fontSize: dense ? '12px' : '14px',
-        flexDirection: 'row',
+        verticalAlign: 'bottom',
       }}
       aria-label={String(key)}
       sortDirection={isSorted ? direction : false}
