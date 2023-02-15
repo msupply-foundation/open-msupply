@@ -89,7 +89,7 @@ pub fn update_inbound_shipment(
 
             if let Some(update_tax) = update_tax_for_lines {
                 for line in update_tax {
-                    invoice_line_repository.upsert_one(&line)?;
+                    invoice_line_repository.update_tax(&line.id, line.tax, line.total_after_tax)?;
                 }
             }
 
@@ -169,24 +169,25 @@ impl UpdateInboundShipment {
 
 #[cfg(test)]
 mod test {
-    use chrono::{Duration, Utc};
+    use chrono::{Duration, NaiveDate, Utc};
     use repository::{
         mock::{
-            mock_inbound_shipment_a, mock_inbound_shipment_b, mock_inbound_shipment_c,
-            mock_inbound_shipment_e, mock_name_a, mock_name_linked_to_store_join,
-            mock_name_not_linked_to_store_join, mock_outbound_shipment_e, mock_store_a,
-            mock_store_b, mock_store_linked_to_name, mock_user_account_a, MockData,
-            MockDataInserts,
+            mock_inbound_shipment_a, mock_inbound_shipment_a_invoice_lines,
+            mock_inbound_shipment_b, mock_inbound_shipment_c, mock_inbound_shipment_e, mock_name_a,
+            mock_name_linked_to_store_join, mock_name_not_linked_to_store_join,
+            mock_outbound_shipment_e, mock_store_a, mock_store_b, mock_store_linked_to_name,
+            mock_user_account_a, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
-        ActivityLogRowRepository, ActivityLogType, EqualFilter, InvoiceLineFilter,
-        InvoiceRowRepository, InvoiceRowStatus, NameRow, NameStoreJoinRow, StockLineRowRepository,
+        ActivityLogRowRepository, ActivityLogType, EqualFilter, InvoiceLineFilter, InvoiceLineRow,
+        InvoiceLineRowType, InvoiceRow, InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType,
+        NameRow, NameStoreJoinRow, StockLineRowRepository,
     };
     use util::{inline_edit, inline_init};
 
     use crate::{
         invoice::inbound_shipment::{UpdateInboundShipment, UpdateInboundShipmentStatus},
-        invoice_line::query::get_invoice_lines,
+        invoice_line::{query::get_invoice_lines, ShipmentTaxUpdate},
         service_provider::ServiceProvider,
     };
 
@@ -341,12 +342,36 @@ mod test {
             })
         }
 
+        fn invoice_tax_test() -> InvoiceRow {
+            inline_init(|r: &mut InvoiceRow| {
+                r.id = "invoice_tax_test".to_string();
+                r.name_id = "name_store_b".to_string();
+                r.store_id = "store_a".to_string();
+                r.invoice_number = 123;
+                r.r#type = InvoiceRowType::InboundShipment;
+                r.status = InvoiceRowStatus::New;
+                r.created_datetime = NaiveDate::from_ymd(1970, 1, 3).and_hms_milli(20, 30, 0, 0);
+            })
+        }
+
+        fn invoice_line_for_tax_test() -> InvoiceLineRow {
+            inline_init(|r: &mut InvoiceLineRow| {
+                r.id = "invoice_line_for_tax_test".to_string();
+                r.invoice_id = "invoice_tax_test".to_string();
+                r.item_id = "item_a".to_string();
+                r.pack_size = 1;
+                r.r#type = InvoiceLineRowType::StockIn;
+            })
+        }
+
         let (_, connection, connection_manager, _) = setup_all_with_data(
             "update_inbound_shipment_success",
             MockDataInserts::all(),
             inline_init(|r: &mut MockData| {
                 r.names = vec![supplier()];
                 r.name_store_joins = vec![supplier_join()];
+                r.invoices = vec![invoice_tax_test()];
+                r.invoice_lines = vec![invoice_line_for_tax_test()];
             }),
         )
         .await;
@@ -382,6 +407,114 @@ mod test {
                 u
             })
         );
+
+        // Success with tax change (no stock lines saved)
+        service
+            .update_inbound_shipment(
+                &context,
+                inline_init(|r: &mut UpdateInboundShipment| {
+                    r.id = invoice_tax_test().id;
+                    r.tax = Some(ShipmentTaxUpdate {
+                        percentage: Some(0.0),
+                    });
+                }),
+            )
+            .unwrap();
+
+        let invoice = InvoiceRowRepository::new(&connection)
+            .find_one_by_id(&invoice_tax_test().id)
+            .unwrap();
+
+        assert_eq!(
+            invoice,
+            inline_edit(&invoice, |mut u| {
+                u.tax = Some(0.0);
+                u.user_id = Some(mock_user_account_a().id);
+                u
+            })
+        );
+
+        let filter =
+            InvoiceLineFilter::new().invoice_id(EqualFilter::equal_any(vec![invoice.clone().id]));
+        let invoice_lines = get_invoice_lines(&context, Some(filter)).unwrap();
+
+        for line in invoice_lines {
+            assert_eq!(line.stock_line_option, None)
+        }
+
+        // Test delivered status change with tax
+        service
+            .update_inbound_shipment(
+                &context,
+                inline_init(|r: &mut UpdateInboundShipment| {
+                    r.id = invoice_tax_test().id;
+                    r.status = Some(UpdateInboundShipmentStatus::Delivered);
+                    r.tax = Some(ShipmentTaxUpdate {
+                        percentage: Some(10.0),
+                    });
+                }),
+            )
+            .unwrap();
+
+        let invoice = InvoiceRowRepository::new(&connection)
+            .find_one_by_id(&invoice_tax_test().id)
+            .unwrap();
+
+        assert_eq!(
+            invoice,
+            inline_edit(&invoice, |mut u| {
+                u.tax = Some(10.0);
+                u.user_id = Some(mock_user_account_a().id);
+                u.status = InvoiceRowStatus::Delivered;
+                u
+            })
+        );
+
+        let filter =
+            InvoiceLineFilter::new().invoice_id(EqualFilter::equal_any(vec![invoice.clone().id]));
+        let invoice_lines = get_invoice_lines(&context, Some(filter)).unwrap();
+        let mut stock_lines_delivered = Vec::new();
+
+        for lines in invoice_lines {
+            let stock_line_id = lines.invoice_line_row.stock_line_id.clone().unwrap();
+            let stock_line = StockLineRowRepository::new(&connection)
+                .find_one_by_id(&stock_line_id)
+                .unwrap();
+            stock_lines_delivered.push(stock_line.clone());
+            assert_eq!(lines.invoice_line_row.stock_line_id, Some(stock_line.id));
+        }
+
+        // Test verified status change with tax
+        service
+            .update_inbound_shipment(
+                &context,
+                inline_init(|r: &mut UpdateInboundShipment| {
+                    r.id = invoice_tax_test().id;
+                    r.status = Some(UpdateInboundShipmentStatus::Verified);
+                    r.tax = Some(ShipmentTaxUpdate {
+                        percentage: Some(10.0),
+                    });
+                }),
+            )
+            .unwrap();
+
+        let invoice = InvoiceRowRepository::new(&connection)
+            .find_one_by_id(&invoice_tax_test().id)
+            .unwrap();
+        let filter =
+            InvoiceLineFilter::new().invoice_id(EqualFilter::equal_any(vec![invoice.clone().id]));
+        let invoice_lines = get_invoice_lines(&context, Some(filter)).unwrap();
+        let mut stock_lines_verified = Vec::new();
+
+        for lines in invoice_lines {
+            let stock_line_id = lines.invoice_line_row.stock_line_id.clone().unwrap();
+            let stock_line = StockLineRowRepository::new(&connection)
+                .find_one_by_id(&stock_line_id)
+                .unwrap();
+            stock_lines_verified.push(stock_line.clone());
+        }
+
+        assert_eq!(stock_lines_delivered, stock_lines_verified);
 
         // Test Confirmed and logging
         service
@@ -493,6 +626,10 @@ mod test {
             )
             .unwrap();
 
+        let stock_line_id = mock_inbound_shipment_a_invoice_lines()[0]
+            .clone()
+            .stock_line_id
+            .unwrap();
         let invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&mock_inbound_shipment_a().id)
             .unwrap();
@@ -501,6 +638,9 @@ mod test {
             .unwrap()
             .into_iter()
             .find(|l| l.r#type == ActivityLogType::InvoiceStatusVerified)
+            .unwrap();
+        let stock_line = StockLineRowRepository::new(&connection)
+            .find_one_by_id(&stock_line_id)
             .unwrap();
 
         assert!(invoice.verified_datetime.unwrap() > now);
@@ -514,5 +654,6 @@ mod test {
             })
         );
         assert_eq!(log.r#type, ActivityLogType::InvoiceStatusVerified);
+        assert_eq!(Some(invoice.name_id), stock_line.supplier_id);
     }
 }

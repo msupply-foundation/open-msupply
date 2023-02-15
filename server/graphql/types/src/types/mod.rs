@@ -57,6 +57,9 @@ pub use self::permissions::*;
 pub mod response_requisition_stats;
 pub use self::response_requisition_stats::*;
 
+pub mod inventory_adjustment_reason;
+pub use self::inventory_adjustment_reason::*;
+
 pub mod json_schema;
 pub use self::json_schema::*;
 

@@ -6,3 +6,4 @@ export * from './Location';
 export * from './Store';
 export * from './MasterList';
 export * from './Report';
+export * from './InventoryAdjustmentReason'

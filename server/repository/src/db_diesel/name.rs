@@ -101,7 +101,6 @@ impl<'a> NameRepository<'a> {
         store_id: &str,
         filter: Option<NameFilter>,
     ) -> Result<i64, RepositoryError> {
-        // TODO (beyond M1), check that store_id matches current store
         let query = create_filtered_query(store_id.to_string(), filter);
 
         Ok(query.count().get_result(&self.connection.connection)?)
@@ -130,7 +129,6 @@ impl<'a> NameRepository<'a> {
         filter: Option<NameFilter>,
         sort: Option<NameSort>,
     ) -> Result<Vec<Name>, RepositoryError> {
-        // TODO (beyond M1), check that store_id matches current store
         let mut query = create_filtered_query(store_id.to_string(), filter);
 
         if let Some(sort) = sort {
@@ -736,7 +734,7 @@ mod tests {
                 id: util::uuid::uuid(),
                 name: "doc_name".to_string(),
                 patient_id: mock_name_2().id,
-                r#type: "ProgramType".to_string(),
+                program: "ProgramType".to_string(),
                 enrolment_datetime: Utc::now().naive_utc(),
                 program_patient_id: Some("program_patient_id".to_string()),
             })

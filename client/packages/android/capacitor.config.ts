@@ -15,9 +15,8 @@ const config: CapacitorConfig = {
   },
   server: {
     url: 'https://localhost:8000',
-    // If hostname is kept as localhost then Capacitor localServer will try to use bundled web app vs web app from remote/wepack server
+    // If hostname is kept as localhost then Capacitor localServer will try to use bundled web app vs web app from remote/webpack server
     hostname: 'should.notmatch.localhost',
-    allowNavigation: ['*'],
   },
   // Below will turn on debug (uncomment and run `yarn apply-config`)
   // plugins: {
@@ -28,4 +27,3 @@ const config: CapacitorConfig = {
 };
 
 export default config;
-

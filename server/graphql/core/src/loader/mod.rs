@@ -1,3 +1,4 @@
+mod inventory_adjustment_reason;
 mod clinician;
 mod document;
 mod document_registry;
@@ -5,6 +6,7 @@ mod invoice;
 mod invoice_line;
 mod item;
 mod item_stats;
+mod item_stock_on_hand;
 mod json_schema;
 mod loader_registry;
 mod location;
@@ -23,6 +25,7 @@ mod user;
 use std::{collections::HashSet, hash::Hasher};
 
 pub use clinician::*;
+pub use inventory_adjustment_reason::*;
 pub use document::*;
 pub use document_registry::*;
 pub use invoice::*;
@@ -30,6 +33,7 @@ pub use invoice_line::*;
 pub use item::ItemLoader;
 pub use item_stats::*;
 pub use json_schema::*;
+pub use item_stock_on_hand::*;
 pub use loader_registry::{get_loaders, LoaderMap, LoaderRegistry};
 pub use location::LocationByIdLoader;
 pub use master_list_line::MasterListLineByMasterListId;

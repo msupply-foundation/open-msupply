@@ -94,7 +94,7 @@ fn validate(
         return Err(OutError::ItemAlreadyExistInRequisition);
     }
 
-    if !check_item_exists(connection, &input.item_id)? {
+    if !check_item_exists(connection, &input.item_id, store_id)? {
         return Err(OutError::ItemDoesNotExist);
     }
 

@@ -64,6 +64,7 @@ mod repository_test {
                 on_hold: false,
                 note: None,
                 location_id: None,
+                supplier_id: Some(String::from("name1")),
             }
         }
 
@@ -158,6 +159,7 @@ mod repository_test {
                 number_of_packs: 1.0,
                 note: None,
                 location_id: None,
+                inventory_adjustment_reason_id: None,
             }
         }
         pub fn invoice_line_2() -> InvoiceLineRow {
@@ -180,6 +182,7 @@ mod repository_test {
                 number_of_packs: 1.0,
                 note: None,
                 location_id: None,
+                inventory_adjustment_reason_id: None,
             }
         }
 
@@ -203,6 +206,7 @@ mod repository_test {
                 number_of_packs: 1.0,
                 note: None,
                 location_id: None,
+                inventory_adjustment_reason_id: None,
             }
         }
 
@@ -226,6 +230,7 @@ mod repository_test {
                 number_of_packs: 1.0,
                 note: None,
                 location_id: None,
+                inventory_adjustment_reason_id: None,
             }
         }
 
@@ -366,27 +371,36 @@ mod repository_test {
         let expiry_date = stock_line.expiry_date.unwrap();
         let stock_line_repo = StockLineRepository::new(&connection);
         let result = stock_line_repo
-            .query_by_filter(StockLineFilter::new().expiry_date(DateFilter {
-                equal_to: None,
-                before_or_equal_to: Some(expiry_date - Duration::days(1)),
-                after_or_equal_to: None,
-            }))
+            .query_by_filter(
+                StockLineFilter::new().expiry_date(DateFilter {
+                    equal_to: None,
+                    before_or_equal_to: Some(expiry_date - Duration::days(1)),
+                    after_or_equal_to: None,
+                }),
+                Some(data::store_1().id),
+            )
             .unwrap();
         assert_eq!(result.len(), 0);
         let result = stock_line_repo
-            .query_by_filter(StockLineFilter::new().expiry_date(DateFilter {
-                equal_to: None,
-                before_or_equal_to: Some(expiry_date),
-                after_or_equal_to: None,
-            }))
+            .query_by_filter(
+                StockLineFilter::new().expiry_date(DateFilter {
+                    equal_to: None,
+                    before_or_equal_to: Some(expiry_date),
+                    after_or_equal_to: None,
+                }),
+                Some(data::store_1().id),
+            )
             .unwrap();
         assert_eq!(result.len(), 1);
         let result = stock_line_repo
-            .query_by_filter(StockLineFilter::new().expiry_date(DateFilter {
-                equal_to: None,
-                before_or_equal_to: Some(expiry_date + Duration::days(1)),
-                after_or_equal_to: None,
-            }))
+            .query_by_filter(
+                StockLineFilter::new().expiry_date(DateFilter {
+                    equal_to: None,
+                    before_or_equal_to: Some(expiry_date + Duration::days(1)),
+                    after_or_equal_to: None,
+                }),
+                Some(data::store_1().id),
+            )
             .unwrap();
         assert_eq!(result.len(), 1);
     }
@@ -811,9 +825,9 @@ mod repository_test {
             .unwrap();
 
         let raw_result = sql_query(
-            r#"select requisition.id 
-                    from requisition 
-                    join name on requisition.name_id = name.id 
+            r#"select requisition.id
+                    from requisition
+                    join name on requisition.name_id = name.id
                     where name.name = 'name_a'
                     order by requisition.id asc"#,
         )
@@ -1012,18 +1026,15 @@ mod repository_test {
             Connection B starts as a reader and wants to upgrade to a writer; it needs to wait for connectionA to finish.
             Connection A now wants to upgrade too. This is a deadlock...
         */
-
         /*
             NOTE: If you want to verify this test is working properly, you can set SQLITE_LOCKWAIT_MS to 0 in test_db.rs (It will only fail on sqlite, postgres should succeed)
         */
-
         /*
             Test Scenario
 
             Process A starts a transaction, does a read, then sleeps for a 1000 milliseconds before continuing to write from within the same transaction.
             Conncurrently Process B tries to do a similar thing.
         */
-
         /*
             Expected behaviour for this test in SQLite...
 
@@ -1044,7 +1055,6 @@ mod repository_test {
                 B: write 1
                 B: write 2
         */
-
         /*
             Expected behaviour for this test in Postgresql...
 
@@ -1061,7 +1071,6 @@ mod repository_test {
                 A: write
                 A: written
         */
-
         let manager_a = connection_manager.clone();
         let process_a = tokio::spawn(async move {
             let connection = manager_a.connection().unwrap();

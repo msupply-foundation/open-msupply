@@ -130,7 +130,7 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
     };
     use repository::{
-        mock::{mock_stock_line_a, MockDataInserts},
+        mock::{mock_item_a, mock_stock_line_a, MockDataInserts},
         StockLine, StorageConnectionManager,
     };
     use serde_json::json;
@@ -265,7 +265,9 @@ mod test {
             );
             Ok(StockLine {
                 stock_line_row: mock_stock_line_a(),
+                item_row: mock_item_a(),
                 location_row: None,
+                name_row: None,
             })
         }));
 

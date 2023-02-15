@@ -37,6 +37,7 @@ impl SyncRecordTester for StockLineRecordTester {
             expiry_date: Some(NaiveDate::from_ymd(2021, 03, 21)),
             on_hold: true,
             note: Some("some remote sync test note".to_string()),
+            supplier_id: Some(new_site_properties.name_id.clone()),
         };
 
         result.push(TestStepData {
@@ -63,6 +64,7 @@ impl SyncRecordTester for StockLineRecordTester {
             d.expiry_date = Some(NaiveDate::from_ymd(2021, 03, 22));
             d.on_hold = false;
             d.note = Some("some remote sync test note 2".to_string());
+            d.supplier_id = None;
             d
         });
         result.push(TestStepData {

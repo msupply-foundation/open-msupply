@@ -17,9 +17,9 @@ use crate::{
     StorageConnection, StorageConnectionManager,
 };
 
-/// Generic setup method to help setup test enviroment
+/// Generic setup method to help setup test environment
 /// - sets up database (create one and initialises schema), drops existing database
-/// - creates connectuion
+/// - creates connection
 /// - inserts mock data
 pub async fn setup_all(
     db_name: &str,

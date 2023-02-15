@@ -4,22 +4,36 @@ import { Grid, Typography, useTranslation } from '@openmsupply-client/common';
 const appVersion = require('../../../../../package.json').version; // eslint-disable-line @typescript-eslint/no-var-requires
 
 interface AppVersionProps {
+  SiteInfo?: React.ReactNode;
   style?: CSSProperties;
 }
 
-export const AppVersion: FC<AppVersionProps> = ({ style }) => {
+export const AppVersion: FC<AppVersionProps> = ({ SiteInfo, style }) => {
   const t = useTranslation('common');
   return (
-    <Grid style={{ position: 'absolute', right: 30, bottom: 15, ...style }}>
-      <Grid container padding={1} flexDirection="column">
-        <Grid item display="flex" flex={1} gap={1}>
-          <Grid item justifyContent="flex-end" flex={1} display="flex">
+    <Grid
+      style={{
+        position: 'absolute',
+        right: 30,
+        bottom: 15,
+        alignContent: 'flex-end',
+        display: 'flex',
+        flexDirection: 'column',
+        ...style,
+      }}
+    >
+      <Grid padding={1} paddingBottom={0}>
+        <Grid item display="flex" flex={1} gap={1} justifyContent="flex-end">
+          <Grid item justifyContent="flex-end" flex={0} display="flex">
             <Typography fontWeight={700}>{t('label.app-version')}</Typography>
           </Grid>
-          <Grid item flex={1}>
+          <Grid item flex={0}>
             <Typography whiteSpace="nowrap">{appVersion}</Typography>
           </Grid>
         </Grid>
+      </Grid>
+      <Grid padding={1} paddingTop={0}>
+        {SiteInfo}
       </Grid>
     </Grid>
   );

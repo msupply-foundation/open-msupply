@@ -1,9 +1,16 @@
 use super::{
-    item_row::{
-        item, item::dsl as item_dsl, item_is_visible, item_is_visible::dsl as item_is_visible_dsl,
-    },
+    item_row::{item, item::dsl as item_dsl},
+    master_list_line_row::master_list_line::dsl as master_list_line_dsl,
+    master_list_name_join::master_list_name_join::dsl as master_list_name_join_dsl,
+    master_list_row::master_list::dsl as master_list_dsl,
+    store_row::store::dsl as store_dsl,
     unit_row::{unit, unit::dsl as unit_dsl},
-    DBType, ItemIsVisibleRow, ItemRow, ItemRowType, StorageConnection, UnitRow,
+    DBType, ItemRow, ItemRowType, StorageConnection, UnitRow,
+};
+
+use diesel::{
+    dsl::{IntoBoxed, LeftJoin},
+    prelude::*,
 };
 
 use crate::{
@@ -18,7 +25,6 @@ use crate::{
 #[derive(PartialEq, Debug, Clone, Default)]
 pub struct Item {
     pub item_row: ItemRow,
-    pub item_is_visible_row: ItemIsVisibleRow,
     pub unit_row: Option<UnitRow>,
 }
 
@@ -73,7 +79,7 @@ impl ItemFilter {
         self
     }
 
-    pub fn match_is_visible(mut self, value: bool) -> Self {
+    pub fn is_visible(mut self, value: bool) -> Self {
         self.is_visible = Some(value);
         self
     }
@@ -84,12 +90,7 @@ impl ItemFilter {
     }
 }
 
-use diesel::{
-    dsl::{InnerJoin, IntoBoxed, LeftJoin},
-    prelude::*,
-};
-
-type ItemAndMasterList = (ItemRow, ItemIsVisibleRow, Option<UnitRow>);
+type ItemAndMasterList = (ItemRow, Option<UnitRow>);
 
 pub struct ItemRepository<'a> {
     connection: &'a StorageConnection,
@@ -100,19 +101,30 @@ impl<'a> ItemRepository<'a> {
         ItemRepository { connection }
     }
 
-    pub fn count(&self, filter: Option<ItemFilter>) -> Result<i64, RepositoryError> {
-        // TODO (beyond M1), check that store_id matches current store
-        let query = create_filtered_query(filter);
+    pub fn count(
+        &self,
+        store_id: String,
+        filter: Option<ItemFilter>,
+    ) -> Result<i64, RepositoryError> {
+        let query = create_filtered_query(store_id, filter);
 
         Ok(query.count().get_result(&self.connection.connection)?)
     }
 
-    pub fn query_one(&self, filter: ItemFilter) -> Result<Option<Item>, RepositoryError> {
-        Ok(self.query_by_filter(filter)?.pop())
+    pub fn query_one(
+        &self,
+        store_id: Option<String>,
+        filter: ItemFilter,
+    ) -> Result<Option<Item>, RepositoryError> {
+        Ok(self.query_by_filter(filter, store_id)?.pop())
     }
 
-    pub fn query_by_filter(&self, filter: ItemFilter) -> Result<Vec<Item>, RepositoryError> {
-        self.query(Pagination::new(), Some(filter), None)
+    pub fn query_by_filter(
+        &self,
+        filter: ItemFilter,
+        store_id: Option<String>,
+    ) -> Result<Vec<Item>, RepositoryError> {
+        self.query(Pagination::all(), Some(filter), None, store_id)
     }
 
     pub fn query(
@@ -120,8 +132,9 @@ impl<'a> ItemRepository<'a> {
         pagination: Pagination,
         filter: Option<ItemFilter>,
         sort: Option<ItemSort>,
+        store_id: Option<String>,
     ) -> Result<Vec<Item>, RepositoryError> {
-        let mut query = create_filtered_query(filter);
+        let mut query = create_filtered_query(store_id.unwrap_or_default(), filter);
 
         if let Some(sort) = sort {
             match sort.key {
@@ -155,26 +168,14 @@ impl<'a> ItemRepository<'a> {
     }
 }
 
-fn to_domain((item_row, item_is_visible_row, unit_row): ItemAndMasterList) -> Item {
-    Item {
-        item_row,
-        item_is_visible_row,
-        unit_row,
-    }
+fn to_domain((item_row, unit_row): ItemAndMasterList) -> Item {
+    Item { item_row, unit_row }
 }
 
-type BoxedItemQuery = IntoBoxed<
-    'static,
-    LeftJoin<InnerJoin<item::table, item_is_visible::table>, unit::table>,
-    DBType,
->;
+type BoxedItemQuery = IntoBoxed<'static, LeftJoin<item::table, unit::table>, DBType>;
 
-fn create_filtered_query(filter: Option<ItemFilter>) -> BoxedItemQuery {
-    // Join master_list_line
-    let mut query = item_dsl::item
-        .inner_join(item_is_visible_dsl::item_is_visible)
-        .left_join(unit_dsl::unit)
-        .into_boxed();
+fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedItemQuery {
+    let mut query = item_dsl::item.left_join(unit_dsl::unit).into_boxed();
 
     if let Some(f) = filter {
         let ItemFilter {
@@ -197,19 +198,33 @@ fn create_filtered_query(filter: Option<ItemFilter>) -> BoxedItemQuery {
         apply_simple_string_filter!(query, name, item_dsl::name);
         apply_equal_filter!(query, r#type, item_dsl::type_);
 
-        if let Some(is_visible) = is_visible {
-            query = query.filter(item_is_visible::is_visible.eq(is_visible));
+        let visible_item_ids = master_list_line_dsl::master_list_line
+            .select(master_list_line_dsl::item_id)
+            .inner_join(
+                master_list_dsl::master_list
+                    .on(master_list_line_dsl::master_list_id.eq(master_list_dsl::id)),
+            )
+            .inner_join(
+                master_list_name_join_dsl::master_list_name_join
+                    .on(master_list_name_join_dsl::master_list_id.eq(master_list_dsl::id)),
+            )
+            .inner_join(
+                store_dsl::store.on(store_dsl::name_id
+                    .eq(master_list_name_join_dsl::name_id)
+                    .and(store_dsl::id.eq(store_id))),
+            )
+            .into_boxed();
+
+        query = match is_visible {
+            Some(true) => query.filter(item_dsl::id.eq_any(visible_item_ids)),
+            Some(false) => query.filter(item_dsl::id.ne_all(visible_item_ids)),
+            None => query,
         }
     }
     query
 }
 
 impl Item {
-    // From master list
-    pub fn is_visible(&self) -> bool {
-        self.item_is_visible_row.is_visible
-    }
-
     pub fn unit_name(&self) -> Option<&str> {
         self.unit_row
             .as_ref()
@@ -228,7 +243,7 @@ mod tests {
         test_db, EqualFilter, ItemFilter, ItemRepository, ItemRow, ItemRowRepository, ItemRowType,
         MasterListLineRow, MasterListLineRowRepository, MasterListNameJoinRepository,
         MasterListNameJoinRow, MasterListRow, MasterListRowRepository, NameRow, NameRowRepository,
-        Pagination, SimpleStringFilter, DEFAULT_PAGINATION_LIMIT,
+        Pagination, SimpleStringFilter, StoreRow, StoreRowRepository, DEFAULT_PAGINATION_LIMIT,
     };
 
     use super::{Item, ItemSort, ItemSortField};
@@ -274,14 +289,14 @@ mod tests {
         // Test
         // .count()
         assert_eq!(
-            usize::try_from(item_query_repository.count(None).unwrap()).unwrap(),
+            usize::try_from(item_query_repository.count("".to_string(), None).unwrap()).unwrap(),
             rows.len()
         );
 
         // .query, no pagenation (default)
         assert_eq!(
             item_query_repository
-                .query(Pagination::new(), None, None)
+                .query(Pagination::new(), None, None, None)
                 .unwrap()
                 .len(),
             default_page_size
@@ -294,6 +309,7 @@ mod tests {
                     offset: 10,
                     limit: DEFAULT_PAGINATION_LIMIT,
                 },
+                None,
                 None,
                 None,
             )
@@ -314,6 +330,7 @@ mod tests {
                 },
                 None,
                 None,
+                None,
             )
             .unwrap();
         assert_eq!(result.len(), 10);
@@ -326,6 +343,7 @@ mod tests {
                     offset: 150,
                     limit: 90,
                 },
+                None,
                 None,
                 None,
             )
@@ -358,9 +376,10 @@ mod tests {
                             "item_c".to_string(),
                         ]))
                         // query invisible rows
-                        .match_is_visible(false),
+                        .is_visible(false),
                 ),
                 None,
+                Some("store_a".to_string()),
             )
             .unwrap();
         assert_eq!(results.len(), 2);
@@ -374,6 +393,7 @@ mod tests {
                         .code_or_name(SimpleStringFilter::equal_to(&mock_item_b().name)),
                 ),
                 None,
+                Some("store_a".to_string()),
             )
             .unwrap();
         assert_eq!(results[0].item_row.id, mock_item_b().id);
@@ -385,6 +405,7 @@ mod tests {
                         .code_or_name(SimpleStringFilter::equal_to(&mock_item_b().code)),
                 ),
                 None,
+                Some("store_a".to_string()),
             )
             .unwrap();
         assert_eq!(results[0].item_row.id, mock_item_b().id);
@@ -398,6 +419,7 @@ mod tests {
                         .code_or_name(SimpleStringFilter::equal_to(&mock_item_b().name)),
                 ),
                 None,
+                Some("store_a".to_string()),
             )
             .unwrap();
         assert_eq!(results.len(), 0);
@@ -497,16 +519,15 @@ mod tests {
             r.is_customer = true;
         });
 
+        let store_row = inline_init(|r: &mut StoreRow| {
+            r.id = "name1_store".to_owned();
+            r.name_id = "name1".to_owned();
+        });
+
         let master_list_name_join_1 = MasterListNameJoinRow {
             id: "id1".to_owned(),
             name_id: "name1".to_owned(),
             master_list_id: "master_list1".to_owned(),
-        };
-
-        let master_list_name_join_2 = MasterListNameJoinRow {
-            id: "id2".to_owned(),
-            name_id: "name1".to_owned(),
-            master_list_id: "master_list2".to_owned(),
         };
 
         for row in item_rows.iter() {
@@ -530,54 +551,44 @@ mod tests {
         NameRowRepository::new(&storage_connection)
             .upsert_one(&name_row)
             .unwrap();
-        // Test
+
+        StoreRowRepository::new(&storage_connection)
+            .upsert_one(&store_row)
+            .unwrap();
 
         // Before adding any joins
         let results0 = item_query_repository
-            .query(Pagination::new(), None, None)
+            .query(Pagination::new(), None, None, None)
             .unwrap();
 
         assert_eq!(results0, item_rows);
 
-        // After adding first join (item1 and item2 visible)
+        // item1 and item2 visible
         MasterListNameJoinRepository::new(&storage_connection)
             .upsert_one(&master_list_name_join_1)
             .unwrap();
-        let results = item_query_repository
-            .query(Pagination::new(), None, None)
-            .unwrap();
-        assert!(results[0].is_visible());
-        assert!(results[1].is_visible());
-
-        // After adding second join (item3 and item4 visible)
-        MasterListNameJoinRepository::new(&storage_connection)
-            .upsert_one(&master_list_name_join_2)
-            .unwrap();
-        let results = item_query_repository
-            .query(Pagination::new(), None, None)
-            .unwrap();
-        assert!(results[2].is_visible());
-        assert!(results[3].is_visible());
 
         // test is_visible filter:
         let results = item_query_repository
             .query(
                 Pagination::new(),
                 // query invisible rows
-                Some(ItemFilter::new().match_is_visible(false)),
+                Some(ItemFilter::new().is_visible(false)),
                 None,
+                Some("name1_store".to_string()),
             )
             .unwrap();
-        assert_eq!(results[0], item_rows[4]);
+        assert_eq!(results.len(), 3);
         // get visible rows
         let results = item_query_repository
             .query(
                 Pagination::new(),
-                Some(ItemFilter::new().match_is_visible(true)),
+                Some(ItemFilter::new().is_visible(true)),
                 None,
+                Some("name1_store".to_string()),
             )
             .unwrap();
-        assert_eq!(results.len(), 4);
+        assert_eq!(results.len(), 2);
     }
 
     #[actix_rt::test]
@@ -586,7 +597,7 @@ mod tests {
             test_db::setup_all("test_item_query_sort", MockDataInserts::all()).await;
         let repo = ItemRepository::new(&connection);
 
-        let mut items = repo.query(Pagination::new(), None, None).unwrap();
+        let mut items = repo.query(Pagination::new(), None, None, None).unwrap();
 
         let sorted = repo
             .query(
@@ -596,6 +607,7 @@ mod tests {
                     key: ItemSortField::Name,
                     desc: None,
                 }),
+                None,
             )
             .unwrap();
 
@@ -621,6 +633,7 @@ mod tests {
                     key: ItemSortField::Code,
                     desc: Some(true),
                 }),
+                None,
             )
             .unwrap();
 

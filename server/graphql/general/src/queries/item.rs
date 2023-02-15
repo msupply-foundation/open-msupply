@@ -65,7 +65,7 @@ pub fn items(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::QueryItems,
-            store_id: Some(store_id),
+            store_id: Some(store_id.clone()),
         },
     )?;
 
@@ -77,6 +77,7 @@ pub fn items(
         // Currently only one sort option is supported, use the first from the list.
         sort.and_then(|mut sort_list| sort_list.pop())
             .map(|sort| sort.to_domain()),
+        &store_id,
     )
     .map_err(StandardGraphqlError::from_list_error)?;
 

@@ -34,7 +34,8 @@ export const AuthenticationAlert = () => {
     matchPath(
       RouteBuilder.create(AppRoute.Initialise).addWildCard().build(),
       location.pathname
-    )
+    ) ||
+    matchPath(RouteBuilder.create(AppRoute.Android).build(), location.pathname)
   ) {
     return null;
   }

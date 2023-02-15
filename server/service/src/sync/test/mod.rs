@@ -207,9 +207,21 @@ pub(crate) async fn check_records_against_database(
                 check_record_by_id!(ActivityLogRowRepository, con, record, "ActivityLog")
             }
 
+            InventoryAdjustmentReason(record) => check_record_by_id!(
+                InventoryAdjustmentReasonRowRepository,
+                con,
+                record,
+                "InventoryAdjustmentReason"
+            ),
+
+            StorePreference(record) => {
+                check_record_by_id!(StorePreferenceRowRepository, con, record, "StorePreference")
+            },
+
             Clinician(record) => {
                 check_record_by_id!(ClinicianRowRepository, con, record, "Clinician")
-            }
+            },
+
             ClinicianStoreJoin(record) => check_record_by_id!(
                 ClinicianStoreJoinRowRepository,
                 con,
@@ -246,6 +258,9 @@ pub(crate) async fn check_records_against_database(
             }
             Requisition => check_delete_record_by_id!(ReportRowRepository, con, id),
             RequisitionLine => check_delete_record_by_id!(ReportRowRepository, con, id),
+            InventoryAdjustmentReason => {
+                check_delete_record_by_id!(InventoryAdjustmentReasonRowRepository, con, id)
+            }
             #[cfg(feature = "integration_test")]
             Location => check_delete_record_by_id!(LocationRowRepository, con, id),
             #[cfg(feature = "integration_test")]

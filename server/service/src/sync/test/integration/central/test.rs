@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod tests {
     use crate::sync::test::integration::central::{
+        inventory_adjustment_reason::InventoryAdjustmentReasonTester,
         master_list::MasterListTester,
         name_and_store_and_name_store_join::NameAndStoreAndNameStoreJoinTester,
         report::ReportTester, test_central_sync_record, unit_and_item::UnitAndItemTester,
@@ -24,5 +25,14 @@ mod tests {
     #[actix_rt::test]
     async fn integration_sync_central_report() {
         test_central_sync_record("report", &ReportTester).await;
+    }
+
+    #[actix_rt::test]
+    async fn integration_sync_central_inventory_adjustment_reason() {
+        test_central_sync_record(
+            "inventory_adjustment_reason",
+            &InventoryAdjustmentReasonTester,
+        )
+        .await;
     }
 }

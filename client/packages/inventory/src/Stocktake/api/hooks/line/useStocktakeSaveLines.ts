@@ -9,5 +9,6 @@ export const useSaveStocktakeLines = () => {
   return useMutation(api.updateLines, {
     onSuccess: () =>
       queryClient.invalidateQueries(api.keys.detail(stocktakeNumber)),
+    onError: () => {},
   });
 };

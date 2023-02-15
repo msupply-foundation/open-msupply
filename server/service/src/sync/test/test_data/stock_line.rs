@@ -26,7 +26,7 @@ const ITEM_LINE_1: (&'static str, &'static str) = (
       "kit_data": null,
       "location_ID": "",
       "manufacturer_ID": "",
-      "name_ID": "name_store_a",
+      "name_ID": "name_store_b",
       "note": "test note",
       "pack_inners_per_outer": 0,
       "pack_quan_per_inner": 0,
@@ -70,6 +70,7 @@ fn item_line_1_pull_record() -> TestSyncPullRecord {
             expiry_date: Some(NaiveDate::from_ymd(2022, 2, 17)),
             on_hold: false,
             note: Some("test note".to_string()),
+            supplier_id: Some("name_store_b".to_string()),
         }),
     )
 }
@@ -90,7 +91,8 @@ fn item_line_1_push_record() -> TestSyncPushRecord {
             quantity: 694.0,
             cost_price: 5.0,
             sell_price: 10.0,
-            note: Some("test note".to_string())
+            note: Some("test note".to_string()),
+            supplier_id: Some("name_store_b".to_string()),
         }),
     }
 }
@@ -156,6 +158,7 @@ fn item_line_2_pull_record() -> TestSyncPullRecord {
             expiry_date: None,
             on_hold: false,
             note: None,
+            supplier_id: None,
         }),
     )
 }
@@ -177,6 +180,7 @@ fn item_line_2_push_record() -> TestSyncPushRecord {
             cost_price: 0.0,
             sell_price: 0.0,
             note: None,
+            supplier_id: None,
         }),
     }
 }

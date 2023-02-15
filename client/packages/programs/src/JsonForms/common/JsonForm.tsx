@@ -12,7 +12,6 @@ import {
   JsonSchema,
   UISchemaElement,
 } from '@jsonforms/core';
-import { ErrorObject } from '@jsonforms/core/node_modules/ajv';
 import { materialRenderers } from '@jsonforms/material-renderers';
 import {
   BooleanField,
@@ -117,7 +116,11 @@ const FormComponent = ({
   };
 
   const mapErrors = (
-    errors?: ErrorObject<string, Record<string, any>, unknown>[]
+    errors?: {
+      keyword: string;
+      parentSchema?: Record<string, any>;
+      message?: string;
+    }[]
   ) =>
     errors?.map(error => {
       const { parentSchema, keyword } = error;

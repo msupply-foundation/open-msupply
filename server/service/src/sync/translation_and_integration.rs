@@ -114,7 +114,7 @@ impl<'a> TranslationAndIntegration<'a> {
             match integration_result {
                 Ok(_) => {
                     self.sync_buffer
-                        .record_successfull_integration(&sync_record)?;
+                        .record_successful_integration(&sync_record)?;
                     result.insert_success(&sync_record.table_name)
                 }
                 // Record database_error in sync buffer and in result
@@ -136,20 +136,31 @@ impl<'a> TranslationAndIntegration<'a> {
 
 impl IntegrationRecords {
     pub(crate) fn integrate(&self, connection: &StorageConnection) -> Result<(), RepositoryError> {
+        // Only start nested transaction if transaction is already ongoing. See integrate_and_translate_sync_buffer
+        let start_nested_transaction = { connection.transaction_level.get() > 0 };
+
         for upsert in self.upserts.iter() {
             // Integrate every record in a sub transaction. This is mainly for Postgres where the
             // whole transaction fails when there is a DB error (not a problem in sqlite).
-            connection
-                .transaction_sync_etc(|sub_tx| upsert.upsert(sub_tx), false)
-                .map_err(|e| e.to_inner_error())?;
+            if start_nested_transaction {
+                connection
+                    .transaction_sync_etc(|sub_tx| upsert.upsert(sub_tx), false)
+                    .map_err(|e| e.to_inner_error())?;
+            } else {
+                upsert.upsert(&connection)?;
+            }
         }
 
         for delete in self.deletes.iter() {
             // Integrate every record in a sub transaction. This is mainly for Postgres where the
             // whole transaction fails when there is a DB error (not a problem in sqlite).
-            connection
-                .transaction_sync_etc(|sub_tx| delete.delete(sub_tx), false)
-                .map_err(|e| e.to_inner_error())?;
+            if start_nested_transaction {
+                connection
+                    .transaction_sync_etc(|sub_tx| delete.delete(sub_tx), false)
+                    .map_err(|e| e.to_inner_error())?;
+            } else {
+                delete.delete(&connection)?;
+            }
         }
 
         Ok(())
@@ -178,6 +189,10 @@ impl PullUpsertRecord {
             Requisition(record) => RequisitionRowRepository::new(con).upsert_one(record),
             RequisitionLine(record) => RequisitionLineRowRepository::new(con).upsert_one(record),
             ActivityLog(record) => ActivityLogRowRepository::new(con).insert_one(record),
+            InventoryAdjustmentReason(record) => {
+                InventoryAdjustmentReasonRowRepository::new(con).upsert_one(record)
+            }
+            StorePreference(record) => StorePreferenceRowRepository::new(con).upsert_one(record),
             Clinician(record) => ClinicianRowRepository::new(con).upsert_one(record),
             ClinicianStoreJoin(record) => {
                 ClinicianStoreJoinRowRepository::new(con).upsert_one(record)
@@ -204,6 +219,9 @@ impl PullDeleteRecord {
             InvoiceLine => InvoiceLineRowRepository::new(con).delete(id),
             Requisition => RequisitionRowRepository::new(con).delete(id),
             RequisitionLine => RequisitionLineRowRepository::new(con).delete(id),
+            InventoryAdjustmentReason => {
+                InventoryAdjustmentReasonRowRepository::new(con).delete(id)
+            }
             #[cfg(all(test, feature = "integration_test"))]
             Location => LocationRowRepository::new(con).delete(id),
             #[cfg(all(test, feature = "integration_test"))]

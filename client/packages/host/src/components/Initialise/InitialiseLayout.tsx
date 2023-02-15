@@ -52,7 +52,6 @@ export const InitialiseLayout = ({
         flexDirection="column"
       >
         <Box>
-          {SiteInfo}
           <Typography
             sx={{
               color: (theme: Theme) => theme.typography.login.color,
@@ -121,7 +120,7 @@ export const InitialiseLayout = ({
           {SyncProgress}
         </Box>
       </Box>
-      <AppVersion style={{ opacity: 0.4 }} />
+      <AppVersion style={{ opacity: 0.4 }} SiteInfo={SiteInfo} />
     </Box>
   );
 };

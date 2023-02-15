@@ -50,6 +50,7 @@ fn stocktake_line_pull_record() -> TestSyncPullRecord {
             cost_price_per_pack: Some(12.0),
             sell_price_per_pack: Some(15.0),
             note: None,
+            inventory_adjustment_reason_id: None,
         }),
     )
 }
@@ -73,6 +74,7 @@ fn stocktake_line_push_record() -> TestSyncPushRecord {
             cost_price: 12.0,
             sell_price: 15.0,
             note: None,
+            inventory_adjustment_reason_id: None,
         }),
     }
 }
@@ -122,6 +124,7 @@ fn stocktake_line_om_field_pull_record() -> TestSyncPullRecord {
             cost_price_per_pack: Some(12.0),
             sell_price_per_pack: Some(15.0),
             note: Some("om note".to_string()),
+            inventory_adjustment_reason_id: None,
         }),
     )
 }
@@ -145,6 +148,7 @@ fn stocktake_line_om_field_push_record() -> TestSyncPushRecord {
             cost_price: 12.0,
             sell_price: 15.0,
             note: Some("om note".to_string()),
+            inventory_adjustment_reason_id: None,
         }),
     }
 }
