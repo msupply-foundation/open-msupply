@@ -13,7 +13,7 @@ use service::{
     },
 };
 
-use crate::mutations::StockLineReducedBelowZero;
+use super::{AdjustmentReasonNotProvided, StockLineReducedBelowZero};
 
 #[derive(InputObject)]
 #[graphql(name = "InsertStocktakeLineInput")]
@@ -47,6 +47,7 @@ pub enum InsertResponse {
 pub enum InsertErrorInterface {
     CannotEditStocktake(CannotEditStocktake),
     StockLineReducedBelowZero(StockLineReducedBelowZero),
+    AdjustmentReasonNotProvided(AdjustmentReasonNotProvided),
 }
 
 #[derive(SimpleObject)]
@@ -97,7 +98,12 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         }
         ServiceError::StockLineReducedBelowZero(line) => {
             return Ok(InsertErrorInterface::StockLineReducedBelowZero(
-                StockLineReducedBelowZero(StockLineConnector::from_row(line)),
+                StockLineReducedBelowZero(StockLineConnector::from_vec(vec![line])),
+            ))
+        }
+        ServiceError::AdjustmentReasonNotProvided => {
+            return Ok(InsertErrorInterface::AdjustmentReasonNotProvided(
+                AdjustmentReasonNotProvided {},
             ))
         }
         // Standard Graphql Errors
@@ -114,7 +120,6 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
             formatted_error
         )),
         ServiceError::ItemDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::AdjustmentReasonNotProvided => BadUserInput(formatted_error),
         ServiceError::AdjustmentReasonNotValid => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::InternalError(err) => InternalError(err),

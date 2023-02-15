@@ -13,7 +13,7 @@ use service::{
     },
 };
 
-use crate::mutations::StockLineReducedBelowZero;
+use super::{AdjustmentReasonNotProvided, StockLineReducedBelowZero};
 
 #[derive(InputObject)]
 #[graphql(name = "UpdateStocktakeLineInput")]
@@ -45,6 +45,7 @@ pub enum UpdateResponse {
 pub enum UpdateErrorInterface {
     CannotEditStocktake(CannotEditStocktake),
     StockLineReducedBelowZero(StockLineReducedBelowZero),
+    AdjustmentReasonNotProvided(AdjustmentReasonNotProvided),
 }
 
 #[derive(SimpleObject)]
@@ -129,7 +130,12 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         }
         ServiceError::StockLineReducedBelowZero(line) => {
             return Ok(UpdateErrorInterface::StockLineReducedBelowZero(
-                StockLineReducedBelowZero(StockLineConnector::from_row(line)),
+                StockLineReducedBelowZero(StockLineConnector::from_vec(vec![line])),
+            ))
+        }
+        ServiceError::AdjustmentReasonNotProvided => {
+            return Ok(UpdateErrorInterface::AdjustmentReasonNotProvided(
+                AdjustmentReasonNotProvided {},
             ))
         }
         // Standard Graphql Errors
@@ -138,7 +144,6 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         ServiceError::StocktakeLineDoesNotExist => BadUserInput(formatted_error),
         ServiceError::LocationDoesNotExist => BadUserInput(formatted_error),
         ServiceError::StocktakeIsLocked => BadUserInput(formatted_error),
-        ServiceError::AdjustmentReasonNotProvided => BadUserInput(formatted_error),
         ServiceError::AdjustmentReasonNotValid => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::InternalError(err) => InternalError(err),
@@ -146,7 +151,6 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
 
     Err(graphql_error.extend())
 }
-
 #[cfg(test)]
 mod test {
     use async_graphql::EmptyMutation;
