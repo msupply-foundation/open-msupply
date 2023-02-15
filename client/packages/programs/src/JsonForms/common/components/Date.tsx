@@ -1,12 +1,7 @@
 import React, { FC } from 'react';
 import { rankWith, ControlProps, isDateControl } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import {
-  FormLabel,
-  Box,
-  TextFieldProps,
-  StandardTextFieldProps,
-} from '@mui/material';
+import { FormLabel, Box, TextFieldProps } from '@mui/material';
 import { BasicTextInput, useFormatDateTime } from '@openmsupply-client/common';
 import {
   FORM_LABEL_COLUMN_WIDTH,
