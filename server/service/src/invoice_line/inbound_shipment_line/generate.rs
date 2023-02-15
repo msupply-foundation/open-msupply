@@ -1,6 +1,28 @@
 use repository::{InvoiceLineRow, StockLineRow};
 use util::uuid::uuid;
 
+pub fn convert_stock_line_to_single_pack(stock_line: StockLineRow) -> StockLineRow {
+    StockLineRow {
+        total_number_of_packs: stock_line.total_number_of_packs * stock_line.pack_size as f64,
+        available_number_of_packs: stock_line.available_number_of_packs
+            * stock_line.pack_size as f64,
+        cost_price_per_pack: stock_line.cost_price_per_pack / stock_line.pack_size as f64,
+        sell_price_per_pack: stock_line.sell_price_per_pack / stock_line.pack_size as f64,
+        pack_size: 1,
+        ..stock_line
+    }
+}
+
+pub fn convert_invoice_line_to_single_pack(invoice_line: InvoiceLineRow) -> InvoiceLineRow {
+    InvoiceLineRow {
+        number_of_packs: invoice_line.number_of_packs * invoice_line.pack_size as f64,
+        sell_price_per_pack: invoice_line.sell_price_per_pack / invoice_line.pack_size as f64,
+        cost_price_per_pack: invoice_line.cost_price_per_pack / invoice_line.pack_size as f64,
+        pack_size: 1,
+        ..invoice_line
+    }
+}
+
 pub fn generate_batch(
     store_id: &str,
     InvoiceLineRow {

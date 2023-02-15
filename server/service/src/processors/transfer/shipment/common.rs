@@ -37,6 +37,7 @@ pub(crate) fn generate_inbound_shipment_lines(
                  inventory_adjustment_reason_id: _,
              }| {
                 let cost_price_per_pack = sell_price_per_pack;
+
                 InvoiceLineRow {
                     id: uuid(),
                     invoice_id: inbound_shipment_id.to_string(),
@@ -69,4 +70,18 @@ pub(crate) fn generate_inbound_shipment_lines(
         .collect();
 
     Ok(inbound_lines)
+}
+
+pub(crate) fn convert_invoice_line_to_single_pack(
+    invoice_lines: Vec<InvoiceLineRow>,
+) -> Vec<InvoiceLineRow> {
+    invoice_lines
+        .into_iter()
+        .map(|mut line| {
+            line.number_of_packs = line.number_of_packs * line.pack_size as f64;
+            line.cost_price_per_pack = line.cost_price_per_pack / line.pack_size as f64;
+            line.pack_size = 1;
+            line
+        })
+        .collect()
 }
