@@ -14,7 +14,7 @@ pub struct StockLineReducedBelowZero(pub StockLineConnector);
 #[Object]
 impl StockLineReducedBelowZero {
     pub async fn description(&self) -> &'static str {
-        "Stock line exists in new outbound shipments. "
+        "Stock line exist in new outbound shipments. "
     }
 
     pub async fn stock_line(&self) -> &StockLineConnector {
