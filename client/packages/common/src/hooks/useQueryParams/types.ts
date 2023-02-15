@@ -2,7 +2,7 @@ import { RecordWithId } from '@common/types';
 import { Column } from '../../ui/layout/tables';
 
 export interface FilterByConditionByType {
-  string: 'equalTo' | 'like';
+  string: 'equalTo' | 'like' | 'notEqualTo';
   date: 'beforeOrEqualTo' | 'afterOrEqualTo' | 'equalTo';
 }
 

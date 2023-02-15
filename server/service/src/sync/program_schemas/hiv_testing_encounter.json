@@ -2,10 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
     "ARTFacilityLocation": {
-      "enum": [
-        "THIS_FACILITY",
-        "OTHER_FACILITY"
-      ],
+      "enum": ["THIS_FACILITY", "OTHER_FACILITY"],
       "type": "string"
     },
     "Clinician": {
@@ -23,11 +20,7 @@
       "type": "object"
     },
     "EncounterStatus": {
-      "enum": [
-        "SCHEDULED",
-        "COMPLETED",
-        "CANCELLED"
-      ],
+      "enum": ["SCHEDULED", "COMPLETED", "CANCELLED"],
       "type": "string"
     },
     "FamilyPlanning": {
@@ -44,42 +37,19 @@
       "type": "object"
     },
     "GBVScreeningOutcome": {
-      "enum": [
-        "POSITIVE",
-        "NEGATIVE",
-        "NOT_DONE",
-        "DECLINED"
-      ],
+      "enum": ["POSITIVE", "NEGATIVE", "NOT_DONE", "DECLINED"],
       "type": "string"
     },
     "HIVRiskGroup": {
-      "enum": [
-        "LRM",
-        "MSM",
-        "MSW",
-        "MSMSW",
-        "HRM",
-        "LRW",
-        "HRW",
-        "FSW",
-        "TG",
-        "TGSW"
-      ],
+      "enum": ["LRM", "MSM", "MSW", "MSMSW", "HRM", "LRW", "HRW", "FSW", "TG", "TGSW"],
       "type": "string"
     },
     "HIVStatus": {
-      "enum": [
-        "POSITIVE",
-        "NEGATIVE",
-        "UNKNOWN"
-      ],
+      "enum": ["POSITIVE", "NEGATIVE", "UNKNOWN"],
       "type": "string"
     },
     "HIVTestType": {
-      "enum": [
-        "PCR",
-        "ANTIBODY"
-      ],
+      "enum": ["PCR", "ANTIBODY"],
       "type": "string"
     },
     "HIVTestingEncounter": {
@@ -171,11 +141,7 @@
               "$ref": "#/definitions/HIVTestType"
             }
           },
-          "required": [
-            "datetime",
-            "type",
-            "result"
-          ],
+          "required": ["datetime", "type", "result"],
           "type": "object"
         },
         "htcRegisterSerialNumber": {
@@ -193,6 +159,13 @@
             }
           },
           "type": "object"
+        },
+        "notes": {
+          "description": "An overall note for additional comments about the encounter",
+          "items": {
+            "$ref": "#/definitions/Note"
+          },
+          "type": "array"
         },
         "riskBehaviour": {
           "properties": {
@@ -270,37 +243,41 @@
           "$ref": "#/definitions/EncounterStatus"
         }
       },
-      "required": [
-        "createdDatetime",
-        "startDatetime"
-      ],
+      "required": ["createdDatetime", "startDatetime"],
       "type": "object"
     },
     "HIVTestingStatus": {
-      "enum": [
-        "POSITIVE",
-        "NEGATIVE",
-        "UNKNOWN",
-        "NOT_DONE"
-      ],
+      "enum": ["POSITIVE", "NEGATIVE", "UNKNOWN", "NOT_DONE"],
       "type": "string"
     },
+    "Note": {
+      "properties": {
+        "authorId": {
+          "description": "authorId should be captured automatically from app state",
+          "type": "string"
+        },
+        "authorName": {
+          "description": "Practitioner's \"real\" name. Currently needs to be entered, but would ideally default to local state (but we don't yet have this in the database)",
+          "type": "string"
+        },
+        "created": {
+          "description": "Datetime when the note has been created",
+          "format": "date-time",
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        }
+      },
+      "required": ["text", "created", "authorId", "authorName"],
+      "type": "object"
+    },
     "OtherServiceType": {
-      "enum": [
-        "TB",
-        "STI",
-        "GBV",
-        "PEP",
-        "OTHER"
-      ],
+      "enum": ["TB", "STI", "GBV", "PEP", "OTHER"],
       "type": "string"
     },
     "YesNoNA": {
-      "enum": [
-        "Yes",
-        "No",
-        "N/A"
-      ],
+      "enum": ["Yes", "No", "N/A"],
       "type": "string"
     }
   },
