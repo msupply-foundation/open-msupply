@@ -38,6 +38,7 @@
   "heading.total": "Total",
   "heading.totals": "Totals",
   "heading.grand-total": "Grand total",
+  "label.total-quantity": "Total quantity",
   "label.incoming-stock": "Stock arriving",
   "label.stock-on-order": "Stock on order",
   "label.all-requested-quantity": "Other requested",
