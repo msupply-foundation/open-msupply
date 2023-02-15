@@ -80,14 +80,14 @@ export const useOutboundLineEditColumns = ({
           label: 'label.unit-quantity-issued',
           labelProps: { unit },
           accessor: ({ rowData }) => rowData.numberOfPacks * rowData.packSize,
-          width: 90,
+          width: 120,
         },
       ],
       [
         'numberOfPacks',
         {
           Cell: PackQuantityCell,
-          width: 100,
+          width: 120,
           label: 'label.pack-quantity-issued',
           setter: ({ packSize, id, numberOfPacks }) =>
             onChange(id, numberOfPacks ?? 0, packSize ?? 1),

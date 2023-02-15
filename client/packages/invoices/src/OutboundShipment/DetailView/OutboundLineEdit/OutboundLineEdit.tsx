@@ -131,7 +131,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
         />
       }
       height={height}
-      width={900}
+      width={1000}
     >
       <Grid container gap={0.5}>
         <OutboundLineEditForm
