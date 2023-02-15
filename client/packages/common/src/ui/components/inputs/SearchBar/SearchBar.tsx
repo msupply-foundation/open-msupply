@@ -1,9 +1,11 @@
 import React, { FC, useEffect, useState } from 'react';
 import { BasicTextInput } from '../TextInput';
-import { SearchIcon } from '@common/icons';
+import { CloseIcon, SearchIcon } from '@common/icons';
 import { useDebounceCallback } from '@common/hooks';
 import { InlineSpinner } from '../../loading';
 import { Box } from '@mui/material';
+import { IconButton } from '@common/components';
+import { useTranslation } from '@common/intl';
 
 interface SearchBarProps {
   value: string;
@@ -13,8 +15,25 @@ interface SearchBarProps {
   debounceTime?: number;
 }
 
-const Spin: FC<{ isLoading: boolean }> = ({ isLoading }) =>
-  isLoading ? <InlineSpinner /> : null;
+const SearchBarAction: FC<{
+  isLoading: boolean;
+  hasValue: boolean;
+  onClear: () => void;
+}> = ({ hasValue, isLoading, onClear }) => {
+  const t = useTranslation();
+  if (isLoading) return <InlineSpinner />;
+
+  if (hasValue)
+    return (
+      <IconButton
+        label={t('label.clear-filter')}
+        onClick={onClear}
+        icon={<CloseIcon />}
+      />
+    );
+
+  return null;
+};
 
 export const SearchBar: FC<SearchBarProps> = ({
   value,
@@ -44,6 +63,12 @@ export const SearchBar: FC<SearchBarProps> = ({
     debounceTime
   );
 
+  const handleChange = (value: string) => {
+    setBuffer(value);
+    debouncedOnChange(value);
+    setLoading(true);
+  };
+
   return (
     <Box
       sx={{
@@ -57,7 +82,13 @@ export const SearchBar: FC<SearchBarProps> = ({
       />
       <BasicTextInput
         InputProps={{
-          endAdornment: <Spin isLoading={isLoading || loading} />,
+          endAdornment: (
+            <SearchBarAction
+              isLoading={isLoading || loading}
+              hasValue={!!buffer}
+              onClear={() => handleChange('')}
+            />
+          ),
           sx: {
             paddingLeft: '6px',
             alignItems: 'center',
@@ -71,11 +102,7 @@ export const SearchBar: FC<SearchBarProps> = ({
           },
         }}
         value={buffer}
-        onChange={e => {
-          setBuffer(e.target.value);
-          debouncedOnChange(e.target.value);
-          setLoading(true);
-        }}
+        onChange={e => handleChange(e.target.value)}
         label={placeholder}
         sx={{
           '& .MuiInputLabel-root': {

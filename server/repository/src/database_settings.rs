@@ -1,6 +1,7 @@
 use crate::db_diesel::{DBBackendConnection, StorageConnectionManager};
 use diesel::connection::SimpleConnection;
 use diesel::r2d2::{ConnectionManager, Pool};
+use log::info;
 use serde;
 
 //WAIT up to 5 SECONDS for lock in SQLITE (https://www.sqlite.org/c3ref/busy_timeout.html)
@@ -109,6 +110,7 @@ impl diesel::r2d2::CustomizeConnection<diesel::SqliteConnection, diesel::r2d2::E
 #[cfg(feature = "postgres")]
 pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageConnectionManager {
     use diesel::r2d2::ManageConnection;
+
     let connection_manager =
         ConnectionManager::<DBBackendConnection>::new(&settings.connection_string());
 
@@ -116,7 +118,6 @@ pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageCon
     // Note: the build() call isn't failing when you have an incorrect server or database name
     // so we need to explicitly call connect() to test the connection
     if let Err(e) = connection_manager.connect() {
-        use log::info;
         if e.to_string()
             .contains(format!("database \"{}\" does not exist", &settings.database_name).as_str())
         {
@@ -142,6 +143,7 @@ pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageCon
             panic!("Failed to connect to database: {}", e);
         }
     }
+    info!("Connecting to database '{}'", settings.database_name);
     let pool = Pool::new(connection_manager).expect("Failed to connect to database");
     StorageConnectionManager::new(pool)
 }
@@ -149,6 +151,7 @@ pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageCon
 // feature sqlite
 #[cfg(not(feature = "postgres"))]
 pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageConnectionManager {
+    info!("Connecting to database '{}'", settings.database_name);
     let connection_manager =
         ConnectionManager::<DBBackendConnection>::new(&settings.connection_string());
     let pool = Pool::builder()

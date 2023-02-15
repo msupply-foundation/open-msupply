@@ -10,7 +10,7 @@ use diesel::prelude::*;
 table! {
     program_enrolment (id) {
         id -> Text,
-        #[sql_name = "type"] type_ -> Text,
+        program -> Text,
         name -> Text,
         patient_id -> Text,
         enrolment_datetime -> Timestamp,
@@ -28,9 +28,8 @@ allow_tables_to_appear_in_same_query!(program_enrolment, store);
 pub struct ProgramEnrolmentRow {
     /// The row id
     pub id: String,
-    /// The type of the program, same as the matching program document type.
-    #[column_name = "type_"]
-    pub r#type: String,
+    /// The program the patient is enrolled in.
+    pub program: String,
     /// The program document name
     pub name: String,
     /// The patient this program belongs to

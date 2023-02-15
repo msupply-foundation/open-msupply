@@ -25,8 +25,8 @@ export const useServiceLineColumns = (
       label: 'label.name',
       width: 200,
       accessor: ({ rowData }) => rowData?.item?.id,
-      Cell: ({ rowData, column, rows }) => {
-        const id = column.accessor({ rowData, rows }) as string;
+      Cell: ({ rowData, column }) => {
+        const id = column.accessor({ rowData }) as string;
         return (
           <ServiceItemSearchInput
             refetchOnMount={false}

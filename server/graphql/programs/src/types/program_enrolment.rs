@@ -17,6 +17,7 @@ use super::{document::DocumentNode, encounter::EncounterNode, program_event::Pro
 pub struct ProgramEventFilterInput {
     pub document_type: Option<EqualFilterStringInput>,
     pub document_name: Option<EqualFilterStringInput>,
+    /// The event type
     pub r#type: Option<EqualFilterStringInput>,
 }
 
@@ -43,8 +44,8 @@ pub struct ProgramEnrolmentNode {
 #[Object]
 impl ProgramEnrolmentNode {
     /// The program type
-    pub async fn r#type(&self) -> &str {
-        &self.program_row.r#type
+    pub async fn program(&self) -> &str {
+        &self.program_row.program
     }
 
     /// The program document name
@@ -96,7 +97,7 @@ impl ProgramEnrolmentNode {
                 Some(
                     EncounterFilter::new()
                         .patient_id(EqualFilter::equal_to(&self.program_row.patient_id))
-                        .program(EqualFilter::equal_to(&self.program_row.r#type)),
+                        .program(EqualFilter::equal_to(&self.program_row.program)),
                 ),
                 None,
                 self.allowed_docs.clone(),
@@ -125,7 +126,7 @@ impl ProgramEnrolmentNode {
             .map(|f| f.to_domain())
             .unwrap_or(ProgramEventFilter::new())
             .patient_id(EqualFilter::equal_to(&self.program_row.patient_id))
-            .document_type(EqualFilter::equal_to(&self.program_row.r#type));
+            .document_type(EqualFilter::equal_to(&self.program_row.program));
         let entries = ctx
             .service_provider()
             .program_event_service

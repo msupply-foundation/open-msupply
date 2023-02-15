@@ -121,6 +121,7 @@ fn generate(
         sell_price_per_pack: 0.0,
         cost_price_per_pack: 0.0,
         stock_line_id: None,
+        inventory_adjustment_reason_id: None,
     };
 
     Ok(new_line)
@@ -349,6 +350,7 @@ mod test_insert {
                 sell_price_per_pack: 0.0,
                 cost_price_per_pack: 0.0,
                 stock_line_id: None,
+                inventory_adjustment_reason_id: None,
             }
         )
     }

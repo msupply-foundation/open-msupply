@@ -6,11 +6,10 @@ import { TableBody, Table } from '@mui/material';
 import { DataRow } from './DataRow';
 import { useColumns } from '../../hooks';
 import { TestingProvider } from '../../../../../utils';
-import { useFormatDateTime, useTranslation } from '@common/intl';
 
 describe('DataRow', () => {
-  const t = useTranslation();
-  const { localisedDate } = useFormatDateTime();
+  const t = () => '';
+  const localisedDate = () => '';
   const Example = () => {
     const columns = useColumns([
       {
@@ -24,7 +23,6 @@ describe('DataRow', () => {
       <Table>
         <TableBody>
           <DataRow
-            rows={[]}
             columns={columns}
             rowKey="rowKey"
             rowIndex={0}

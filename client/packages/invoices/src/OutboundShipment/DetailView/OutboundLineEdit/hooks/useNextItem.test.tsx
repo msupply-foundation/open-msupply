@@ -72,8 +72,8 @@ const getLines = (): InvoiceLineNode[] => [
         totalCount: 0,
       },
       code: '',
-      isVisible: true,
       name: '',
+      availableStockOnHand: 0,
       stats: {
         __typename: 'ItemStatsNode',
         availableStockOnHand: 0,
@@ -129,7 +129,6 @@ const getLines = (): InvoiceLineNode[] => [
         totalCount: 0,
       },
       code: '',
-      isVisible: true,
       name: '',
       stats: {
         __typename: 'ItemStatsNode',
@@ -137,6 +136,7 @@ const getLines = (): InvoiceLineNode[] => [
         availableMonthsOfStockOnHand: 0,
         averageMonthlyConsumption: 0,
       },
+      availableStockOnHand: 0,
       atcCategory: '',
       ddd: '0',
       defaultPackSize: 0,
@@ -186,7 +186,6 @@ const getLines = (): InvoiceLineNode[] => [
         totalCount: 0,
       },
       code: '',
-      isVisible: true,
       name: '',
       stats: {
         __typename: 'ItemStatsNode',
@@ -195,6 +194,7 @@ const getLines = (): InvoiceLineNode[] => [
         averageMonthlyConsumption: 0,
       },
       atcCategory: '',
+      availableStockOnHand: 0,
       ddd: '0',
       defaultPackSize: 0,
       doses: 0,

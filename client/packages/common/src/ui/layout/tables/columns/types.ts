@@ -5,13 +5,13 @@ import { RecordWithId } from '@common/types';
 
 export interface CellProps<T extends RecordWithId> {
   rowData: T;
-  rows: T[];
   columns: Column<T>[];
   column: Column<T>;
   rowKey: string;
   columnIndex: number;
   rowIndex: number;
   isDisabled?: boolean;
+  isRequired?: boolean;
   // Unique name for browser autocomplete (to remember previously entered values for that name)
   autocompleteName?: string;
   localisedText: TypedTFunction<LocaleKey>;
@@ -38,7 +38,6 @@ export enum ColumnAlign {
 
 export type ColumnDataAccessor<T extends RecordWithId> = (params: {
   rowData: T;
-  rows: T[];
 }) => unknown;
 
 export type Translators = {
@@ -64,6 +63,7 @@ export interface Column<T extends RecordWithId> {
   accessor: ColumnDataAccessor<T>;
 
   label: LocaleKey | '';
+  labelProps: Record<string, unknown>;
   description: LocaleKey | '';
 
   format: ColumnFormat;

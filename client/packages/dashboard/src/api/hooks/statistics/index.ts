@@ -1,7 +1,7 @@
-import { useItemStats } from './useItemStats';
+import { useItemCounts } from './useItemCounts';
 import { useStockCounts } from './useStockCounts';
 
 export const Statistics = {
-  useItemStats,
+  useItemCounts,
   useStockCounts,
 };
