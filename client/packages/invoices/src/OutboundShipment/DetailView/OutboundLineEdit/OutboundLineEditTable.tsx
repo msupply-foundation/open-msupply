@@ -26,11 +26,23 @@ export interface OutboundLineEditTableProps {
   allocatedPacks: number;
 }
 
+const PlaceholderCell = styled(TableCell)(({ theme }) => ({
+  fontSize: 12,
+  padding: '4px 12px 4px 12px',
+  color: theme.palette.secondary.main,
+}));
+
+const TotalCell = styled(TableCell)({
+  fontSize: 14,
+  padding: '4px 12px 4px 12px',
+  fontWeight: 'bold',
+});
+
 const PlaceholderRow = ({
   line,
   onChange,
 }: {
-  line: DraftOutboundLine;
+  line?: DraftOutboundLine;
   onChange: (key: string, value: number, packSize: number) => void;
 }) => {
   const t = useTranslation('distribution');
@@ -39,27 +51,22 @@ const PlaceholderRow = ({
   const [placeholderBuffer, setPlaceholderBuffer] = useState(
     line?.numberOfPacks ?? 0
   );
-  const StyledTableCell = styled(TableCell)(({ theme }) => ({
-    fontSize: 12,
-    padding: '4px 12px 4px 12px',
-    color: theme.palette.secondary.main,
-  }));
 
   useEffect(() => {
-    setPlaceholderBuffer(line.numberOfPacks);
-  }, [line.numberOfPacks]);
+    if (line?.numberOfPacks) setPlaceholderBuffer(line?.numberOfPacks);
+  }, [line?.numberOfPacks]);
 
-  return (
+  return !line ? null : (
     <tr>
-      <StyledTableCell colSpan={3} sx={{ color: 'secondary.main' }}>
+      <PlaceholderCell colSpan={3} sx={{ color: 'secondary.main' }}>
         {t('label.placeholder')}
-      </StyledTableCell>
-      <StyledTableCell style={{ textAlign: 'right' }}>1</StyledTableCell>
-      <StyledTableCell colSpan={4}></StyledTableCell>
-      <StyledTableCell style={{ textAlign: 'right' }}>
+      </PlaceholderCell>
+      <PlaceholderCell style={{ textAlign: 'right' }}>1</PlaceholderCell>
+      <PlaceholderCell colSpan={4}></PlaceholderCell>
+      <PlaceholderCell style={{ textAlign: 'right' }}>
         {placeholderBuffer}
-      </StyledTableCell>
-      <StyledTableCell>
+      </PlaceholderCell>
+      <PlaceholderCell>
         <Box>
           <NonNegativeNumberInput
             onChange={value => {
@@ -70,7 +77,7 @@ const PlaceholderRow = ({
             disabled={status !== InvoiceNodeStatus.New}
           />
         </Box>
-      </StyledTableCell>
+      </PlaceholderCell>
     </tr>
   );
 };
@@ -83,32 +90,27 @@ const TotalRow = ({
   allocatedQuantity: number;
 }) => {
   const t = useTranslation('distribution');
-  const StyledTableCell = styled(TableCell)({
-    fontSize: 14,
-    padding: '4px 12px 4px 12px',
-    fontWeight: 'bold',
-  });
 
   return (
     <tr>
-      <StyledTableCell colSpan={3}>{t('label.total-quantity')}</StyledTableCell>
-      <StyledTableCell colSpan={5}></StyledTableCell>
-      <StyledTableCell
+      <TotalCell colSpan={3}>{t('label.total-quantity')}</TotalCell>
+      <TotalCell colSpan={5}></TotalCell>
+      <TotalCell
         style={{
           textAlign: 'right',
           paddingRight: 12,
         }}
       >
         {allocatedQuantity}
-      </StyledTableCell>
-      <StyledTableCell
+      </TotalCell>
+      <TotalCell
         style={{
           textAlign: 'right',
           paddingRight: 36,
         }}
       >
         {allocatedPacks}
-      </StyledTableCell>
+      </TotalCell>
     </tr>
   );
 };
@@ -141,30 +143,23 @@ export const OutboundLineEditTable: React.FC<OutboundLineEditTableProps> = ({
     unit,
   });
 
-  const additionalRows = [];
-  if (placeholderRow) {
-    additionalRows.push(
-      <PlaceholderRow
-        line={placeholderRow}
-        onChange={onChange}
-        key="placeholder-row"
-      />
-    );
-  }
-  additionalRows.push(
+  const additionalRows = [
+    <PlaceholderRow
+      line={placeholderRow}
+      onChange={onChange}
+      key="placeholder-row"
+    />,
     <tr key="divider-row">
       <td colSpan={10}>
         <Divider margin={10} />
       </td>
-    </tr>
-  );
-  additionalRows.push(
+    </tr>,
     <TotalRow
       key="total-row"
       allocatedQuantity={allocatedQuantity}
       allocatedPacks={allocatedPacks}
-    />
-  );
+    />,
+  ];
 
   return (
     <Box style={{ width: '100%' }}>
