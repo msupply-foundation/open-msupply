@@ -8,7 +8,6 @@ pub use delete::*;
 
 pub mod update;
 pub use update::*;
-
 pub struct StockLineReducedBelowZero(pub StockLineConnector);
 
 #[Object]
@@ -19,5 +18,13 @@ impl StockLineReducedBelowZero {
 
     pub async fn stock_line(&self) -> &StockLineConnector {
         &self.0
+    }
+}
+pub struct AdjustmentReasonNotProvided;
+
+#[Object]
+impl AdjustmentReasonNotProvided {
+    pub async fn description(&self) -> &'static str {
+        "Stocktake line has no adjustment reason"
     }
 }
