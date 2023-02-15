@@ -5,9 +5,10 @@ import {
   DataTable,
   NonNegativeNumberInput,
   useTranslation,
-  Typography,
   useDebounceCallback,
   InvoiceNodeStatus,
+  TableCell,
+  styled,
 } from '@openmsupply-client/common';
 import { ItemRowFragment } from '@openmsupply-client/system';
 import { DraftOutboundLine } from '../../../types';
@@ -21,6 +22,8 @@ export interface OutboundLineEditTableProps {
   packSizeController: PackSizeController;
   rows: DraftOutboundLine[];
   item: ItemRowFragment | null;
+  allocatedQuantity: number;
+  allocatedPacks: number;
 }
 
 const PlaceholderRow = ({
@@ -36,36 +39,77 @@ const PlaceholderRow = ({
   const [placeholderBuffer, setPlaceholderBuffer] = useState(
     line?.numberOfPacks ?? 0
   );
+  const StyledTableCell = styled(TableCell)(({ theme }) => ({
+    fontSize: 12,
+    padding: '4px 12px 4px 12px',
+    color: theme.palette.secondary.main,
+  }));
 
   useEffect(() => {
     setPlaceholderBuffer(line.numberOfPacks);
   }, [line.numberOfPacks]);
 
   return (
-    <Box display="flex">
-      <Typography
+    <tr>
+      <StyledTableCell colSpan={3} sx={{ color: 'secondary.main' }}>
+        {t('label.placeholder')}
+      </StyledTableCell>
+      <StyledTableCell style={{ textAlign: 'right' }}>1</StyledTableCell>
+      <StyledTableCell colSpan={4}></StyledTableCell>
+      <StyledTableCell style={{ textAlign: 'right' }}>
+        {placeholderBuffer}
+      </StyledTableCell>
+      <StyledTableCell>
+        <Box>
+          <NonNegativeNumberInput
+            onChange={value => {
+              setPlaceholderBuffer(value);
+              debouncedOnChange(line.id, value, 1);
+            }}
+            value={placeholderBuffer}
+            disabled={status !== InvoiceNodeStatus.New}
+          />
+        </Box>
+      </StyledTableCell>
+    </tr>
+  );
+};
+
+const TotalRow = ({
+  allocatedPacks,
+  allocatedQuantity,
+}: {
+  allocatedPacks: number;
+  allocatedQuantity: number;
+}) => {
+  const t = useTranslation('distribution');
+  const StyledTableCell = styled(TableCell)({
+    fontSize: 14,
+    padding: '4px 12px 4px 12px',
+    fontWeight: 'bold',
+  });
+
+  return (
+    <tr>
+      <StyledTableCell colSpan={3}>{t('label.total-quantity')}</StyledTableCell>
+      <StyledTableCell colSpan={5}></StyledTableCell>
+      <StyledTableCell
         style={{
-          alignItems: 'center',
-          display: 'flex',
-          flex: '0 1 100px',
-          fontSize: 12,
-          justifyContent: 'flex-end',
-          paddingRight: 8,
+          textAlign: 'right',
+          paddingRight: 12,
         }}
       >
-        {t('label.placeholder')}
-      </Typography>
-      <Box sx={{ paddingTop: '3px' }}>
-        <NonNegativeNumberInput
-          onChange={value => {
-            setPlaceholderBuffer(value);
-            debouncedOnChange(line.id, value, 1);
-          }}
-          value={placeholderBuffer}
-          disabled={status !== InvoiceNodeStatus.New}
-        />
-      </Box>
-    </Box>
+        {allocatedQuantity}
+      </StyledTableCell>
+      <StyledTableCell
+        style={{
+          textAlign: 'right',
+          paddingRight: 36,
+        }}
+      >
+        {allocatedPacks}
+      </StyledTableCell>
+    </tr>
   );
 };
 
@@ -74,6 +118,8 @@ export const OutboundLineEditTable: React.FC<OutboundLineEditTableProps> = ({
   packSizeController,
   rows,
   item,
+  allocatedQuantity,
+  allocatedPacks,
 }) => {
   const t = useTranslation('distribution');
   const { orderedRows, placeholderRow } = useOutboundLineEditRows(
@@ -95,6 +141,26 @@ export const OutboundLineEditTable: React.FC<OutboundLineEditTableProps> = ({
     unit,
   });
 
+  const additionalRows = [];
+  if (placeholderRow) {
+    additionalRows.push(
+      <PlaceholderRow line={placeholderRow} onChange={onChange} />
+    );
+  }
+  additionalRows.push(
+    <tr>
+      <td colSpan={10}>
+        <Divider margin={10} />
+      </td>
+    </tr>
+  );
+  additionalRows.push(
+    <TotalRow
+      allocatedQuantity={allocatedQuantity}
+      allocatedPacks={allocatedPacks}
+    />
+  );
+
   return (
     <Box style={{ width: '100%' }}>
       <Divider margin={10} />
@@ -112,11 +178,9 @@ export const OutboundLineEditTable: React.FC<OutboundLineEditTableProps> = ({
             columns={columns}
             data={orderedRows}
             dense
+            additionalRows={additionalRows}
           />
         )}
-        {placeholderRow ? (
-          <PlaceholderRow line={placeholderRow} onChange={onChange} />
-        ) : null}
       </Box>
     </Box>
   );
