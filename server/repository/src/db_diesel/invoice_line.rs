@@ -63,6 +63,7 @@ pub struct InvoiceLineFilter {
     pub number_of_packs: Option<EqualFilter<f64>>,
     pub invoice_type: Option<EqualFilter<InvoiceRowType>>,
     pub invoice_status: Option<EqualFilter<InvoiceRowStatus>>,
+    pub stock_line_id: Option<EqualFilter<String>>,
 }
 
 impl InvoiceLineFilter {
@@ -78,6 +79,7 @@ impl InvoiceLineFilter {
             number_of_packs: None,
             invoice_type: None,
             invoice_status: None,
+            stock_line_id: None,
         }
     }
 
@@ -128,6 +130,11 @@ impl InvoiceLineFilter {
 
     pub fn invoice_status(mut self, filter: EqualFilter<InvoiceRowStatus>) -> Self {
         self.invoice_status = Some(filter);
+        self
+    }
+
+    pub fn stock_line_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.stock_line_id = Some(filter);
         self
     }
 }
@@ -222,6 +229,7 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
             number_of_packs,
             invoice_type,
             invoice_status,
+            stock_line_id,
         } = f;
 
         apply_equal_filter!(query, id, invoice_line_dsl::id);
@@ -234,6 +242,7 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
         apply_equal_filter!(query, number_of_packs, invoice_line_dsl::number_of_packs);
         apply_equal_filter!(query, invoice_type, invoice_dsl::type_);
         apply_equal_filter!(query, invoice_status, invoice_dsl::status);
+        apply_equal_filter!(query, stock_line_id, stock_line_dsl::id);
     }
 
     query

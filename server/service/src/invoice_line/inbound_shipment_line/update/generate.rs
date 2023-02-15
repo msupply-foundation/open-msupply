@@ -1,27 +1,44 @@
 use crate::{
     invoice::common::{calculate_total_after_tax, generate_invoice_user_id_update},
-    invoice_line::inbound_shipment_line::generate_batch,
+    invoice_line::inbound_shipment_line::{
+        generate::convert_invoice_line_to_single_pack, generate_batch,
+    },
+    store_preference::get_store_preferences,
     u32_to_i32,
 };
-use repository::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow};
+use repository::{
+    InvoiceLineRow, InvoiceRow, InvoiceRowStatus, ItemRow, RepositoryError, StockLineRow,
+    StorageConnection,
+};
 
 use super::UpdateInboundShipmentLine;
 
 pub fn generate(
+    connection: &StorageConnection,
     user_id: &str,
     input: UpdateInboundShipmentLine,
     current_line: InvoiceLineRow,
     new_item_option: Option<ItemRow>,
     existing_invoice_row: InvoiceRow,
-) -> (
-    Option<InvoiceRow>,
-    InvoiceLineRow,
-    Option<StockLineRow>,
-    Option<String>,
-) {
+) -> Result<
+    (
+        Option<InvoiceRow>,
+        InvoiceLineRow,
+        Option<StockLineRow>,
+        Option<String>,
+    ),
+    RepositoryError,
+> {
+    let store_preferences = get_store_preferences(connection, &existing_invoice_row.store_id)?;
+
     let batch_to_delete_id = get_batch_to_delete_id(&current_line, &new_item_option);
 
-    let mut update_line = generate_line(input, current_line, new_item_option);
+    let update_line = generate_line(input, current_line, new_item_option);
+
+    let mut update_line = match store_preferences.pack_to_one {
+        true => convert_invoice_line_to_single_pack(update_line),
+        false => update_line,
+    };
 
     let upsert_batch_option = if existing_invoice_row.status != InvoiceRowStatus::New {
         let new_batch = generate_batch(
@@ -36,12 +53,12 @@ pub fn generate(
         None
     };
 
-    (
+    Ok((
         generate_invoice_user_id_update(user_id, existing_invoice_row),
         update_line,
         upsert_batch_option,
         batch_to_delete_id,
-    )
+    ))
 }
 
 fn get_batch_to_delete_id(

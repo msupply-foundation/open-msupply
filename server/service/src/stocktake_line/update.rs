@@ -15,7 +15,8 @@ use crate::{
 };
 
 use super::validate::{
-    check_active_adjustment_reasons, check_reason_is_valid, stocktake_reduction_amount,
+    check_active_adjustment_reasons, check_reason_is_valid, check_stock_line_reduced_below_zero,
+    stocktake_reduction_amount,
 };
 
 #[derive(Default, Debug, Clone)]
@@ -46,6 +47,7 @@ pub enum UpdateStocktakeLineError {
     StocktakeIsLocked,
     AdjustmentReasonNotProvided,
     AdjustmentReasonNotValid,
+    StockLineReducedBelowZero(String),
 }
 
 fn validate(
@@ -99,6 +101,24 @@ fn validate(
             stocktake_reduction_amount,
         )? {
             return Err(UpdateStocktakeLineError::AdjustmentReasonNotValid);
+        }
+    }
+
+    if let (Some(counted_number_of_packs), Some(stock_line_id)) =
+        (input.counted_number_of_packs, &stocktake_line.stock_line_id)
+    {
+        if check_stock_line_reduced_below_zero(
+            connection,
+            store_id,
+            &stock_line_id,
+            &counted_number_of_packs,
+        )? {
+            return Err(UpdateStocktakeLineError::StockLineReducedBelowZero(
+                format!(
+                    "Stock line {} has been issued in new outbound shipments",
+                    &stock_line_id,
+                ),
+            ));
         }
     }
 
@@ -173,14 +193,17 @@ impl From<RepositoryError> for UpdateStocktakeLineError {
 
 #[cfg(test)]
 mod stocktake_line_test {
+    use chrono::NaiveDate;
     use repository::{
         mock::{
-            mock_locations, mock_locked_stocktake_line, mock_stocktake_line_a,
-            mock_stocktake_line_finalised, mock_store_a, MockData, MockDataInserts,
+            mock_item_a, mock_locations, mock_locked_stocktake_line, mock_stock_line_b,
+            mock_stocktake_line_a, mock_stocktake_line_finalised, mock_store_a, MockData,
+            MockDataInserts,
         },
         test_db::setup_all_with_data,
         InventoryAdjustmentReasonRow, InventoryAdjustmentReasonRowRepository,
-        InventoryAdjustmentReasonType, StocktakeLineRow,
+        InventoryAdjustmentReasonType, InvoiceLineRow, InvoiceRow, InvoiceRowStatus,
+        InvoiceRowType, StocktakeLineRow,
     };
     use util::inline_init;
 
@@ -218,12 +241,46 @@ mod stocktake_line_test {
             })
         }
 
+        fn outbound_shipment() -> InvoiceRow {
+            inline_init(|r: &mut InvoiceRow| {
+                r.id = "reduced_stock_outbound_shipment".to_string();
+                r.name_id = "name_store_b".to_string();
+                r.store_id = "store_a".to_string();
+                r.invoice_number = 15;
+                r.r#type = InvoiceRowType::OutboundShipment;
+                r.status = InvoiceRowStatus::New;
+                r.created_datetime = NaiveDate::from_ymd(1970, 1, 3).and_hms_milli(20, 30, 0, 0);
+            })
+        }
+
+        fn outbound_shipment_line() -> InvoiceLineRow {
+            inline_init(|r: &mut InvoiceLineRow| {
+                r.id = "outbound_shipment_line".to_string();
+                r.invoice_id = outbound_shipment().id;
+                r.item_id = mock_item_a().id;
+                r.stock_line_id = Some(mock_stock_line_b().id);
+                r.number_of_packs = 29.0;
+            })
+        }
+
+        fn mock_reduced_stock() -> StocktakeLineRow {
+            inline_init(|r: &mut StocktakeLineRow| {
+                r.id = "mock_reduced_stock".to_string();
+                r.stocktake_id = "stocktake_a".to_string();
+                r.snapshot_number_of_packs = 10.0;
+                r.item_id = "item_a".to_string();
+                r.stock_line_id = Some(mock_stock_line_b().id);
+            })
+        }
+
         let (_, _, connection_manager, _) = setup_all_with_data(
             "update_stocktake_line",
             MockDataInserts::all(),
             inline_init(|r: &mut MockData| {
+                r.invoices = vec![outbound_shipment()];
+                r.invoice_lines = vec![outbound_shipment_line()];
                 r.inventory_adjustment_reasons = vec![positive_reason(), negative_reason()];
-                r.stocktake_lines = vec![mock_stocktake_line()];
+                r.stocktake_lines = vec![mock_stocktake_line(), mock_reduced_stock()];
             }),
         )
         .await;
@@ -348,6 +405,23 @@ mod stocktake_line_test {
             .unwrap_err();
         assert_eq!(error, UpdateStocktakeLineError::CannotEditFinalised);
 
+        // error: StockLineReducedBelowZero
+        let error = service
+            .update_stocktake_line(
+                &context,
+                inline_init(|r: &mut UpdateStocktakeLine| {
+                    r.id = mock_reduced_stock().id;
+                    r.counted_number_of_packs = Some(5.0);
+                }),
+            )
+            .unwrap_err();
+        assert_eq!(
+            error,
+            UpdateStocktakeLineError::StockLineReducedBelowZero(format!(
+                "Stock line {} has been issued in new outbound shipments",
+                mock_stock_line_b().id
+            ))
+        );
         // success: no update
         let stocktake_line_a = mock_stocktake_line_a();
         let result = service
