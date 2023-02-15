@@ -167,6 +167,7 @@ pub fn mock_invoice1_linked_to_requisition() -> FullMockInvoice {
                     r#type: InvoiceLineRowType::StockOut,
                     number_of_packs: 10.0,
                     note: None,
+                    inventory_adjustment_reason_id: None,
                 },
                 stock_line: StockLineRow {
                     id: line1_id.clone(),
@@ -182,6 +183,7 @@ pub fn mock_invoice1_linked_to_requisition() -> FullMockInvoice {
                     expiry_date: None,
                     on_hold: false,
                     note: None,
+                    supplier_id: Some(String::from("name_store_b")),
                 },
             },
             FullMockInvoiceLine {
@@ -204,6 +206,7 @@ pub fn mock_invoice1_linked_to_requisition() -> FullMockInvoice {
                     r#type: InvoiceLineRowType::StockOut,
                     number_of_packs: 10.0,
                     note: None,
+                    inventory_adjustment_reason_id: None,
                 },
                 stock_line: StockLineRow {
                     id: line2_id.clone(),
@@ -219,6 +222,7 @@ pub fn mock_invoice1_linked_to_requisition() -> FullMockInvoice {
                     expiry_date: None,
                     on_hold: false,
                     note: None,
+                    supplier_id: Some(String::from("name_store_b")),
                 },
             },
         ],
@@ -260,6 +264,7 @@ pub fn mock_invoice2_linked_to_requisition() -> FullMockInvoice {
                 r#type: InvoiceLineRowType::StockOut,
                 number_of_packs: 10.0,
                 note: None,
+                inventory_adjustment_reason_id: None,
             },
             stock_line: StockLineRow {
                 id: line1_id.clone(),
@@ -275,6 +280,7 @@ pub fn mock_invoice2_linked_to_requisition() -> FullMockInvoice {
                 expiry_date: None,
                 on_hold: false,
                 note: None,
+                supplier_id: Some(String::from("name_store_b")),
             },
         }],
     }
@@ -315,6 +321,7 @@ pub fn mock_invoice3_linked_to_requisition() -> FullMockInvoice {
                 r#type: InvoiceLineRowType::StockOut,
                 number_of_packs: 10.0,
                 note: None,
+                inventory_adjustment_reason_id: None,
             },
             stock_line: StockLineRow {
                 id: line1_id.clone(),
@@ -330,6 +337,7 @@ pub fn mock_invoice3_linked_to_requisition() -> FullMockInvoice {
                 expiry_date: None,
                 on_hold: false,
                 note: None,
+                supplier_id: Some(String::from("name_store_b")),
             },
         }],
     }

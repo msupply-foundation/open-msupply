@@ -11,7 +11,6 @@ export * from './Expand';
 export const BasicCell = <T extends RecordWithId>({
   column,
   rowData,
-  rows,
   localisedText,
   localisedDate,
 }: CellProps<T>): ReactElement => (
@@ -21,7 +20,7 @@ export const BasicCell = <T extends RecordWithId>({
       textOverflow: 'ellipsis',
     }}
   >
-    {column.formatter(column.accessor({ rowData, rows }), {
+    {column.formatter(column.accessor({ rowData }), {
       t: localisedText,
       d: localisedDate,
     })}
@@ -32,6 +31,6 @@ export const BasicHeader = <T extends RecordWithId>({
   column,
 }: HeaderProps<T>): ReactElement => {
   const t = useTranslation();
-  const header = column.label === '' ? '' : t(column.label);
+  const header = column.label === '' ? '' : t(column.label, column.labelProps);
   return <>{header}</>;
 };

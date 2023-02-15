@@ -14,6 +14,7 @@ pub struct LegacyNameStoreJoinRow {
     pub ID: String,
     pub store_ID: String,
     pub name_ID: String,
+    pub inactive: Option<bool>,
     #[serde(rename = "om_name_is_customer")]
     pub name_is_customer: Option<bool>,
     #[serde(rename = "om_name_is_supplier")]
@@ -34,6 +35,14 @@ impl SyncTranslation for NameStoreJoinTranslation {
             return Ok(None);
         }
         let data = serde_json::from_str::<LegacyNameStoreJoinRow>(&sync_record.data)?;
+
+        // in mSupply the inactive flag is used for soft-deletes.
+        // given that we don't handle soft deletes, translate to a hard-delete
+        if let Some(inactive) = data.inactive {
+            if inactive {
+                return self.try_translate_pull_delete(connection, sync_record);
+            }
+        }
 
         let name = match NameRowRepository::new(connection).find_one_by_id(&data.name_ID)? {
             Some(name) => name,
@@ -80,7 +89,8 @@ impl SyncTranslation for NameStoreJoinTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        // TODO is it possible for name store join to be set inactive ? Rather then being deleted ?
+        // it is possible for name store join to be set inactive
+        // this is handled in the upsert translation
         let result = match_pull_table(sync_record).then(|| {
             IntegrationRecords::from_delete(
                 &sync_record.record_id,
@@ -109,6 +119,14 @@ mod tests {
         .await;
 
         for record in test_data::test_pull_upsert_records() {
+            let translation_result = translator
+                .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
+                .unwrap();
+
+            assert_eq!(translation_result, record.translated_record);
+        }
+
+        for record in test_data::test_pull_upsert_inactive_records() {
             let translation_result = translator
                 .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
                 .unwrap();

@@ -21,20 +21,20 @@ graphql_stocktake_line = { path = "../stocktake_line" }
 graphql_requisition = { path = "../requisition" }
 graphql_requisition_line = { path = "../requisition_line" }
 
-actix-web = { version = "4.0.1", default-features = false, features = ["macros"] }
-anymap = "0.12"
-async-graphql = { version = "3.0.35", features = ["dataloader", "chrono"] }
-async-graphql-actix-web = "3.0.35"
-async-trait = "0.1.30"
-chrono = { version = "0.4", features = ["serde"] }
-reqwest = { version = "0.11.10", features = ["json"] } 
-serde = "1.0.126"
-serde_json = "1.0.66"
-thiserror = "1.0.30"
+actix-web = { workspace = true }
+anymap= { workspace = true }
+async-graphql = { workspace = true }
+async-graphql-actix-web = { workspace = true }
+async-trait = { workspace = true }
+chrono = { workspace = true }
+reqwest = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
 
 [dev-dependencies]
-actix-rt = "2.6.0"
-assert-json-diff = "2.0.1"
+actix-rt = { workspace = true }
+assert-json-diff = { workspace = true }
 
 [features]
 default = ["sqlite"]

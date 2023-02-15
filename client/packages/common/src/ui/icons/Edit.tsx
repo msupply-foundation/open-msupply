@@ -2,12 +2,14 @@ import React from 'react';
 import SvgIcon, { SvgIconProps } from '@mui/material/SvgIcon';
 
 export const EditIcon = (props: SvgIconProps): JSX.Element => {
+  const { style, ...rest } = props;
   const combinedProps: SvgIconProps = {
     style: {
+      ...style,
       fill: 'none',
     },
     stroke: 'currentColor',
-    ...props,
+    ...rest,
   };
   return (
     <SvgIcon {...combinedProps} viewBox="0 0 24 24" strokeWidth="2">

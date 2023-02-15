@@ -7,9 +7,8 @@ import { CellProps } from '../../../columns/types';
 export const CurrencyCell = <T extends RecordWithId>({
   column,
   rowData,
-  rows,
 }: CellProps<T>) => {
-  const currencyValue = column.accessor({ rowData, rows }) as string;
+  const currencyValue = column.accessor({ rowData }) as string;
   const formattedCurrency = useCurrencyFormat(currencyValue);
 
   return (

@@ -37,7 +37,7 @@ pub mod static_files;
 pub use self::logging::*;
 
 // Only import discovery for non android features (otherwise build for android targets would fail due to local-ip-address)
-#[cfg(all(not(target_os = "android"), feature = "discovery"))]
+#[cfg(any(target_os = "macos", target_os = "windows", target_os = "linux"))]
 mod discovery;
 
 /// Starts the server
@@ -106,7 +106,7 @@ pub async fn start_server(
         .app_data_service
         .set_hardware_id(machine_uid.clone())
         .unwrap();
-    info!("Setting hardware uuid..done");
+    info!("Setting hardware uuid..done [{}]", machine_uid.clone());
 
     // CHECK SYNC STATUS
     info!("Checking sync status..");
@@ -123,14 +123,14 @@ pub async fn start_server(
         // to confirm that site is still the same (request_and_set_site_info checks site UUID)
         (Some(database_sync_settings), Some(yaml_sync_settings)) => {
             if database_sync_settings.core_site_details_changed(&yaml_sync_settings) {
-                info!("Sync settings in configurations dont match database");
-                info!("Checking sync credentails are for the same site..");
+                info!("Sync settings in configurations don't match database");
+                info!("Checking sync credentials are for the same site..");
                 service_provider
                     .site_info_service
                     .request_and_set_site_info(&service_provider, &yaml_sync_settings)
                     .await
                     .unwrap();
-                info!("Checking sync credentails are for the same site..done");
+                info!("Checking sync credentials are for the same site..done");
             }
             service_provider
                 .settings
@@ -141,14 +141,14 @@ pub async fn start_server(
         }
         (None, Some(yaml_sync_settings)) => {
             info!("Sync settings in configurations and not in database");
-            info!("Checking sync credentails..");
+            info!("Checking sync credentials..");
             // If fresh sync settings provided in yaml, check credentials against central server and save them in database
             service_provider
                 .site_info_service
                 .request_and_set_site_info(&service_provider, &yaml_sync_settings)
                 .await
                 .unwrap();
-            info!("Checking sync credentails..done");
+            info!("Checking sync credentials..done");
             service_provider
                 .settings
                 .update_sync_settings(&service_context, &yaml_sync_settings)
@@ -196,7 +196,7 @@ pub async fn start_server(
 
     // START DISCOVERY
     // Don't do discovery in android
-    #[cfg(all(not(target_os = "android"), feature = "discovery"))]
+    #[cfg(any(target_os = "windows", target_os = "macos", target_os = "linux"))]
     {
         info!("Starting server discovery",);
         discovery::start_discovery(certificates.protocol(), settings.server.port, machine_uid);

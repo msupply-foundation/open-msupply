@@ -28,6 +28,7 @@ pub fn generate(
             &existing_invoice_row.store_id,
             update_line.clone(),
             batch_to_delete_id.is_none(),
+            &existing_invoice_row.name_id,
         );
         update_line.stock_line_id = Some(new_batch.id.clone());
         Some(new_batch)

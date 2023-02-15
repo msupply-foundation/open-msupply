@@ -14,6 +14,8 @@ import {
   createTableStore,
   createQueryParamsStore,
   useKeyboardHeightAdjustment,
+  InvoiceLineNodeType,
+  useNotification,
 } from '@openmsupply-client/common';
 import { ItemRowFragment } from '@openmsupply-client/system';
 import { OutboundLineEditTable } from './OutboundLineEditTable';
@@ -46,6 +48,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
   mode,
 }) => {
   const t = useTranslation(['distribution']);
+  const { info } = useNotification();
   const { Modal } = useDialog({ isOpen, onClose });
   const [currentItem, setCurrentItem] = useBufferState(item);
 
@@ -62,9 +65,17 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
   const { next, disabled: nextDisabled } = useNextItem(currentItem?.id);
   const { isDirty, setIsDirty } = useDirtyCheck();
   const height = useKeyboardHeightAdjustment(700);
+  const placeholder = draftOutboundLines?.find(
+    ({ type, numberOfPacks }) =>
+      type === InvoiceLineNodeType.UnallocatedStock && numberOfPacks !== 0
+  );
 
   const onNext = async () => {
     if (isDirty) await mutate(draftOutboundLines);
+    if (!!placeholder) {
+      const infoSnack = info(t('message.placeholder-line'));
+      infoSnack();
+    }
     if (mode === ModalMode.Update && next) setCurrentItem(next);
     else if (mode === ModalMode.Create) setCurrentItem(null);
     else onClose();
@@ -107,6 +118,10 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
             try {
               if (isDirty) await mutate(draftOutboundLines);
               setIsDirty(false);
+              if (!!placeholder) {
+                const infoSnack = info(t('message.placeholder-line'));
+                infoSnack();
+              }
               onClose();
             } catch (e) {
               // console.log(e);
@@ -194,6 +209,7 @@ const TableWrapper: React.FC<TableProps> = ({
         packSizeController={packSizeController}
         onChange={updateQuantity}
         rows={draftOutboundLines}
+        item={currentItem}
       />
     </TableProvider>
   );

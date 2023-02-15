@@ -95,6 +95,7 @@ pub enum Resource {
     MutateEncounter,
     SyncInfo,
     ManualSync,
+    QueryInventoryAdjustmentReasons,
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
@@ -366,6 +367,11 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     // sync info and manual sync, not permission needed
     map.insert(Resource::SyncInfo, PermissionDSL::NoPermissionRequired);
     map.insert(Resource::ManualSync, PermissionDSL::NoPermissionRequired);
+
+    map.insert(
+        Resource::QueryInventoryAdjustmentReasons,
+        PermissionDSL::NoPermissionRequired,
+    );
     map
 }
 

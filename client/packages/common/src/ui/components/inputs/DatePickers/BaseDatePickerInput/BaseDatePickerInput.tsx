@@ -8,7 +8,7 @@ export const BaseDatePickerInput: FC<
   Omit<DatePickerProps<Date>, 'renderInput'>
 > = props => {
   const theme = useAppTheme();
-  
+
   return (
     <DatePicker
       disabled={props.disabled}

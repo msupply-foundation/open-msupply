@@ -1,10 +1,14 @@
 mod types;
 mod v1_00_04;
 mod v1_01_01;
+mod v1_01_02;
+mod v1_01_03;
 mod version;
 pub(crate) use self::types::*;
 use self::v1_00_04::V1_00_04;
 use self::v1_01_01::V1_01_01;
+use self::v1_01_02::V1_01_02;
+use self::v1_01_03::V1_01_03;
 
 mod templates;
 
@@ -54,6 +58,8 @@ pub fn migrate(
         #[cfg(test)]
         Box::new(templates::add_data_from_sync_buffer::V1_00_08),
         Box::new(V1_01_01),
+        Box::new(V1_01_02),
+        Box::new(V1_01_03),
     ];
 
     // Historic diesel migrations

@@ -16,6 +16,7 @@ import {
   createQueryParamsStore,
   QueryParamsProvider,
   useRowStyle,
+  LocaleKey,
 } from '@openmsupply-client/common';
 import { StocktakeLineEditForm } from './StocktakeLineEditForm';
 import { useStocktakeLineEdit } from './hooks';
@@ -49,8 +50,8 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
   const { error } = useNotification();
   const [currentItem, setCurrentItem] = useState(item);
   const isMediumScreen = useIsMediumScreen();
-  const t = useTranslation(['common', 'inventory']);
-  const { draftLines, update, addLine, isLoading, save, nextItem } =
+  const t = useTranslation(['inventory']);
+  const { draftLines, update, addLine, isLoading, save, nextItem, isError } =
     useStocktakeLineEdit(currentItem);
   const { setRowStyle } = useRowStyle();
 
@@ -61,6 +62,16 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
     else onClose();
     // Returning true here triggers the slide animation
     return true;
+  };
+
+  const parseError = (error: string): LocaleKey => {
+    switch (true) {
+      case error.indexOf('AdjustmentReasonNotProvided') !== -1:
+        return 'error.provide-reason';
+      case error.indexOf('StockLineReducedBelowZero') !== -1:
+        return 'error.reduced-below-zero';
+    }
+    return 'error.cant-save';
   };
 
   const onOk = async () => {
@@ -75,7 +86,8 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
       }
       onClose();
     } catch (e) {
-      error(t('error.cant-save'))();
+      const msg = t(parseError(`${e}`));
+      error(msg)();
     }
   };
 
@@ -129,6 +141,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
                           isDisabled={isDisabled}
                           batches={draftLines}
                           update={update}
+                          isError={isError}
                         />
                       </StyledTabContainer>
                     </StyledTabPanel>

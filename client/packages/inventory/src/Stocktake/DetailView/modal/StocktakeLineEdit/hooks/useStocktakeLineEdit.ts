@@ -1,6 +1,10 @@
 import { RecordPatch, ArrayUtils } from '@openmsupply-client/common';
 import { ItemRowFragment } from '@openmsupply-client/system';
-import { StocktakeLineFragment, useStocktake } from './../../../../api';
+import {
+  StocktakeLineFragment,
+  UpsertStocktakeLinesMutation,
+  useStocktake,
+} from './../../../../api';
 import { DraftStocktakeLine, DraftLine } from '../utils';
 import { useNextItem } from './useNextItem';
 import { useDraftStocktakeLines } from './useDraftStocktakeLines';
@@ -9,9 +13,10 @@ interface useStocktakeLineEditController {
   draftLines: DraftStocktakeLine[];
   update: (patch: RecordPatch<StocktakeLineFragment>) => void;
   addLine: () => void;
-  save: (lines: DraftStocktakeLine[]) => void;
+  save: (lines: DraftStocktakeLine[]) => Promise<UpsertStocktakeLinesMutation>;
   isLoading: boolean;
   nextItem: ItemRowFragment | null;
+  isError: boolean;
 }
 
 export const useStocktakeLineEdit = (
@@ -20,16 +25,15 @@ export const useStocktakeLineEdit = (
   const { id } = useStocktake.document.fields('id');
   const nextItem = useNextItem(item?.id);
   const [draftLines, setDraftLines] = useDraftStocktakeLines(item);
-  const { mutate: save, isLoading } = useStocktake.line.save();
+  const { mutateAsync: save, isLoading, isError } = useStocktake.line.save();
 
-  const update = (patch: RecordPatch<DraftStocktakeLine>) => {
+  const update = (patch: RecordPatch<DraftStocktakeLine>) =>
     setDraftLines(lines =>
       ArrayUtils.immutablePatch(lines, {
         ...patch,
         isUpdated: !patch.isCreated,
       })
     );
-  };
 
   const addLine = () => {
     if (item) {
@@ -37,5 +41,13 @@ export const useStocktakeLineEdit = (
     }
   };
 
-  return { draftLines, update, addLine, save, isLoading, nextItem };
+  return {
+    draftLines,
+    update,
+    addLine,
+    save,
+    isError,
+    isLoading,
+    nextItem,
+  };
 };

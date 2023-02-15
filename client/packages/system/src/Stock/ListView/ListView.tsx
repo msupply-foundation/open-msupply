@@ -28,15 +28,9 @@ const StockListComponent: FC = () => {
   const { data, isLoading, isError } = useStock.line.list();
   const columns = useColumns<StockLineRowFragment>(
     [
-      [
-        'itemCode',
-        { accessor: ({ rowData }) => rowData.item.code, sortable: false },
-      ],
-      [
-        'itemName',
-        { accessor: ({ rowData }) => rowData.item.name, sortable: false },
-      ],
-      ['batch', { sortable: false }],
+      ['itemCode', { accessor: ({ rowData }) => rowData.item.code }],
+      ['itemName', { accessor: ({ rowData }) => rowData.item.name }],
+      'batch',
       [
         'expiryDate',
         {
@@ -49,7 +43,7 @@ const StockListComponent: FC = () => {
         'itemUnit',
         { accessor: ({ rowData }) => rowData.item.unitName, sortable: false },
       ],
-      ['packSize', { sortable: false }],
+      'packSize',
       [
         'numberOfPacks',
         {
@@ -68,6 +62,14 @@ const StockListComponent: FC = () => {
           width: 125,
         },
       ],
+      {
+        key: 'supplierName',
+        label: 'label.supplier',
+        accessor: ({ rowData }) =>
+          rowData.supplierName
+            ? rowData.supplierName
+            : t('message.no-supplier'),
+      },
     ],
     {
       sortBy,

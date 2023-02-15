@@ -182,15 +182,30 @@ pub async fn get_loaders(
         async_std::task::spawn,
     );
 
-    let document_loader = DataLoader::new(
-        DocumentLoader {
+    let inventory_adjustment_reason_loader = DataLoader::new(
+        InventoryAdjustmentReasonByIdLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        async_std::task::spawn,
+    );
+
+    let stock_on_hand = DataLoader::new(
+        ItemsStockOnHandLoader {
             service_provider: service_provider.clone(),
         },
         async_std::task::spawn,
     );
+
     let schema_loader = DataLoader::new(
         JsonSchemaLoader {
             connection_manager: connection_manager.clone(),
+        },
+        async_std::task::spawn,
+    );
+
+    let document_loader = DataLoader::new(
+        DocumentLoader {
+            service_provider: service_provider.clone(),
         },
         async_std::task::spawn,
     );
@@ -231,6 +246,8 @@ pub async fn get_loaders(
     loaders.insert(requisition_line_supply_status_loader);
     loaders.insert(requisition_lines_remaining_to_supply_loader);
     loaders.insert(name_row_loader);
+    loaders.insert(inventory_adjustment_reason_loader);
+    loaders.insert(stock_on_hand);
     loaders.insert(document_loader);
     loaders.insert(schema_loader);
     loaders.insert(doc_registry_loader);

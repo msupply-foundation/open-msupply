@@ -66,10 +66,13 @@
   "label.cant-delete-disabled-requisition": "Can only delete lines when requisition is in Draft",
   "label.cant-delete-disabled-shipment": "You cannot delete a line when status is Shipped, Delivered or Verified",
   "label.supply-quantity": "Quantity to supply",
+  "label.unit_one": "{{unit}}",
+  "label.unit_other": "{{unit}}s",
   "label.units_one": "unit",
   "label.units_other": "units",
-  "label.units-in-pack-size-of_one": "unit in packs of",
-  "label.units-in-pack-size-of_other": "units in packs of",
+  "label.units-in-pack-size-of_one": "{{unit}} in packs of",
+  "label.units-in-pack-size-of_other": "{{unit}}s in packs of",
+  "message.placeholder-line": "A placeholder line has been created for additional requested quantity",
   "messages.allocated-lines_one": "Allocated {{count}} line",
   "messages.allocated-lines_other": "Allocated {{count}} lines",
   "messages.allocated-lines-failed_one": "{{count}} line not allocated",
@@ -79,7 +82,8 @@
   "messages.edit-service-charges": "Edit service charges",
   "messages.stock-charges-description": "Total charges for stock lines. The calculated tax amount is an effective tax rate using the total tax paid over the subtotal of all stock lines.",
   "messages.service-charges-description": "Total amounts of service charges. The calculated tax amount is an effective tax rate using the total tax paid over the subtotal of all service charges.",
-  "message.all-lines-have-been-fulfilled": "All of the lines of this requisition already have a matching shipment line.",
+  "message.all-lines-have-been-fulfilled": "All of the lines of this requisition with a supply quantity specified already have a matching shipment line.",
+  "message.all-lines-have-no-supply-quantity": "There is no supply quantity specified for all of the unfulfilled lines of this requisition. Please specify a supply quantity for at least one line.",
   "messages.no-shipments-yet": "No shipments created yet.",
   "messages.no-related-documents": "No related documents.",
   "messages.by-user": "by {{username}}",
@@ -111,5 +115,6 @@
   "messages.select-rows-to-delete-them": "Select rows to delete them",
   "messages.shipment-saved": "Shipment saved 🥳",
   "stocktake.description-template": "Created by {{username}} on {{date}}",
-  "warning.nothing-to-supply": "Nothing left to supply!"
+  "warning.nothing-to-supply": "Nothing left to supply!",
+  "info.no-shipment": "Finalising this requisition will prevent you from creating a shipment for it."
 }

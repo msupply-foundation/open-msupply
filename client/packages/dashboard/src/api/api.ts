@@ -20,9 +20,9 @@ export const getDashboardQueries = (
         expiringSoon: result?.stockCounts.expiringSoon ?? 0,
       };
     },
-    itemStats: async () => {
-      const result = await queries.itemStats({ storeId });
-      return result?.items.nodes;
+    itemCounts: async (lowStockThreshold: number) => {
+      const result = await queries.itemCounts({ storeId, lowStockThreshold });
+      return result?.itemCounts?.itemCounts ?? {};
     },
   },
 });
