@@ -6,11 +6,11 @@ import {
   ExpiryDateCell,
   CheckCell,
   CurrencyCell,
-  NonNegativeIntegerCell,
   Column,
 } from '@openmsupply-client/common';
 import { DraftOutboundLine } from '../../../types';
 import { OutboundLineFragment } from '../../api';
+import { PackQuantityCell } from '../PackQuantityCell';
 
 export const useOutboundLineEditColumns = ({
   onChange,
@@ -86,7 +86,7 @@ export const useOutboundLineEditColumns = ({
       [
         'numberOfPacks',
         {
-          Cell: NonNegativeIntegerCell,
+          Cell: PackQuantityCell,
           width: 100,
           label: 'label.pack-quantity-issued',
           setter: ({ packSize, id, numberOfPacks }) =>

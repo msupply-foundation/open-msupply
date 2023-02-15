@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Grid,
   BasicTextInput,
@@ -43,10 +43,11 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
   canAutoAllocate,
 }) => {
   const t = useTranslation('distribution');
-  const [issueQuantity, setIssueQuantity] = useState(0);
   const quantity =
     allocatedQuantity /
     Math.abs(Number(packSizeController.selected?.value || 1));
+
+  const [issueQuantity, setIssueQuantity] = useState(0);
   const { items } = useOutbound.line.rows();
 
   const onChangePackSize = (newPackSize: number) => {
@@ -68,6 +69,10 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
         : Number(packSizeController.selected?.value)
     );
   };
+
+  useEffect(() => {
+    setIssueQuantity(quantity);
+  }, [packSizeController.selected?.value]);
 
   return (
     <Grid container gap="4px">
@@ -177,12 +182,14 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
                 <Box marginLeft="auto" />
               </>
             ) : null}
-            <ButtonWithIcon
-              disabled={issueQuantity === 0}
-              onClick={allocate}
-              label={t('button.allocate')}
-              Icon={<ZapIcon />}
-            />
+            <Box flex={1} display="flex" justifyContent="flex-end">
+              <ButtonWithIcon
+                disabled={issueQuantity === 0}
+                onClick={allocate}
+                label={t('button.allocate')}
+                Icon={<ZapIcon />}
+              />
+            </Box>
           </Grid>
         </>
       ) : (

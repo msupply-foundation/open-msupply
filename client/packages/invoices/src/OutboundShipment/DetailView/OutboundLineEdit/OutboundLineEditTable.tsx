@@ -144,11 +144,15 @@ export const OutboundLineEditTable: React.FC<OutboundLineEditTableProps> = ({
   const additionalRows = [];
   if (placeholderRow) {
     additionalRows.push(
-      <PlaceholderRow line={placeholderRow} onChange={onChange} />
+      <PlaceholderRow
+        line={placeholderRow}
+        onChange={onChange}
+        key="placeholder-row"
+      />
     );
   }
   additionalRows.push(
-    <tr>
+    <tr key="divider-row">
       <td colSpan={10}>
         <Divider margin={10} />
       </td>
@@ -156,6 +160,7 @@ export const OutboundLineEditTable: React.FC<OutboundLineEditTableProps> = ({
   );
   additionalRows.push(
     <TotalRow
+      key="total-row"
       allocatedQuantity={allocatedQuantity}
       allocatedPacks={allocatedPacks}
     />
