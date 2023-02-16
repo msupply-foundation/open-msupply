@@ -389,6 +389,6 @@ mod test {
             .unwrap()
             .pop()
             .unwrap();
-        assert_eq!(row.status, Some(repository::EncounterStatus::Done));
+        assert_eq!(row.status, Some(repository::EncounterStatus::Completed));
     }
 }
