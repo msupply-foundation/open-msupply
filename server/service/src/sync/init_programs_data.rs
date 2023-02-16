@@ -383,7 +383,7 @@ fn program_hiv_testing() -> hiv_testing_program::HivtestingProgramEnrolment {
 
 fn encounter_hiv_testing_1(time: DateTime<Utc>) -> hiv_testing_encounter::HivtestingEncounter {
     inline_init(|e: &mut hiv_testing_encounter::HivtestingEncounter| {
-        e.status = Some(hiv_testing_encounter::EncounterStatus::Scheduled);
+        e.status = Some(hiv_testing_encounter::EncounterStatus::Completed);
         e.created_datetime = time.to_rfc3339();
         e.start_datetime = time.to_rfc3339();
     })
@@ -391,7 +391,7 @@ fn encounter_hiv_testing_1(time: DateTime<Utc>) -> hiv_testing_encounter::Hivtes
 
 fn encounter_hiv_care_1(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncounter {
     inline_init(|e: &mut hiv_care_encounter::HivcareEncounter| {
-        e.status = Some(hiv_care_encounter::EncounterStatus::Scheduled);
+        e.status = Some(hiv_care_encounter::EncounterStatus::Completed);
         e.created_datetime = time.to_rfc3339();
         e.start_datetime = time.to_rfc3339();
         e.physical_examination = Some(inline_init(
@@ -412,7 +412,7 @@ fn encounter_hiv_care_1(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncou
 
 fn encounter_hiv_care_2(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncounter {
     inline_init(|e: &mut hiv_care_encounter::HivcareEncounter| {
-        e.status = Some(hiv_care_encounter::EncounterStatus::Scheduled);
+        e.status = Some(hiv_care_encounter::EncounterStatus::Cancelled);
         e.created_datetime = time.to_rfc3339();
         e.start_datetime = time.to_rfc3339();
         e.physical_examination = Some(inline_init(
@@ -435,7 +435,7 @@ fn encounter_hiv_care_2(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncou
 
 fn encounter_hiv_care_3(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncounter {
     inline_init(|e: &mut hiv_care_encounter::HivcareEncounter| {
-        e.status = Some(hiv_care_encounter::EncounterStatus::Scheduled);
+        e.status = Some(hiv_care_encounter::EncounterStatus::Completed);
         e.created_datetime = time.to_rfc3339();
         e.start_datetime = time.to_rfc3339();
         e.physical_examination = Some(inline_init(
@@ -458,7 +458,7 @@ fn encounter_hiv_care_3(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncou
 
 fn encounter_hiv_care_4(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncounter {
     inline_init(|e: &mut hiv_care_encounter::HivcareEncounter| {
-        e.status = Some(hiv_care_encounter::EncounterStatus::Scheduled);
+        e.status = Some(hiv_care_encounter::EncounterStatus::Completed);
         e.created_datetime = time.to_rfc3339();
         e.start_datetime = time.to_rfc3339();
         e.physical_examination = Some(inline_init(
@@ -470,9 +470,12 @@ fn encounter_hiv_care_4(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncou
     })
 }
 
-fn encounter_hiv_care_5(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncounter {
+fn encounter_hiv_care_5(
+    time: DateTime<Utc>,
+    status: hiv_care_encounter::EncounterStatus,
+) -> hiv_care_encounter::HivcareEncounter {
     inline_init(|e: &mut hiv_care_encounter::HivcareEncounter| {
-        e.status = Some(hiv_care_encounter::EncounterStatus::Scheduled);
+        e.status = Some(status);
         e.created_datetime = time.to_rfc3339();
         e.start_datetime = time.to_rfc3339();
         e.physical_examination = Some(inline_init(
@@ -1070,7 +1073,7 @@ pub fn init_program_data(
             vec!["HIVCareEncounter".to_string()],
         )
         .unwrap();
-    let time = Utc::now();
+    let time = Utc::now().checked_add_signed(Duration::weeks(1)).unwrap();
     service
         .insert_encounter(
             &ctx,
@@ -1079,7 +1082,11 @@ pub fn init_program_data(
             InsertEncounter {
                 patient_id: patient_1().id,
                 r#type: "HIVCareEncounter".to_string(),
-                data: serde_json::to_value(encounter_hiv_care_5(time)).unwrap(),
+                data: serde_json::to_value(encounter_hiv_care_5(
+                    time,
+                    hiv_care_encounter::EncounterStatus::Scheduled,
+                ))
+                .unwrap(),
                 schema_id: hiv_care_encounter_schema_id.clone(),
                 program: "HIVCareProgram".to_string(),
                 event_datetime: time,
