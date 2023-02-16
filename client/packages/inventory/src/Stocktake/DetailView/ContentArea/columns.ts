@@ -9,6 +9,7 @@ import {
   SortBy,
   PositiveNumberCell,
 } from '@openmsupply-client/common';
+import { InventoryAdjustmentReasonRowFragment } from '@openmsupply-client/system';
 import { StocktakeSummaryItem } from '../../../types';
 import { StocktakeLineFragment } from '../../api';
 
@@ -22,6 +23,26 @@ interface UseStocktakeColumnOptions {
 const expandColumn = getRowExpandColumn<
   StocktakeLineFragment | StocktakeSummaryItem
 >();
+
+const getStocktakeReasons = (
+  rowData: StocktakeLineFragment | StocktakeSummaryItem
+) => {
+  if ('lines' in rowData) {
+    const { lines } = rowData;
+    const inventoryAdjustmentReasons = lines
+      .map(({ inventoryAdjustmentReason }) => inventoryAdjustmentReason)
+      .filter(Boolean) as InventoryAdjustmentReasonRowFragment[];
+    return (
+      ArrayUtils.ifTheSameElseDefault(
+        inventoryAdjustmentReasons,
+        'reason',
+        '[multiple]'
+      ) ?? ''
+    );
+  } else {
+    return rowData.inventoryAdjustmentReason?.reason ?? '';
+  }
+};
 
 export const useStocktakeColumns = ({
   sortBy,
@@ -219,7 +240,7 @@ export const useStocktakeColumns = ({
         getSortValue: row => {
           if ('lines' in row) {
             const { lines } = row;
-            let total =
+            const total =
               lines.reduce(
                 (total, line) =>
                   total +
@@ -238,7 +259,7 @@ export const useStocktakeColumns = ({
         accessor: ({ rowData }) => {
           if ('lines' in rowData) {
             const { lines } = rowData;
-            let total =
+            const total =
               lines.reduce(
                 (total, line) =>
                   total +
@@ -249,11 +270,17 @@ export const useStocktakeColumns = ({
             return (total < 0 ? Math.abs(total) : -total).toString();
           } else {
             return (
-              rowData.snapshotNumberOfPacks -
-              (rowData.countedNumberOfPacks ?? rowData.snapshotNumberOfPacks)
+              (rowData.countedNumberOfPacks ?? rowData.snapshotNumberOfPacks) -
+              rowData.snapshotNumberOfPacks
             );
           }
         },
+      },
+      {
+        key: 'inventoryAdjustmentReason',
+        label: 'label.reason',
+        accessor: ({ rowData }) => getStocktakeReasons(rowData),
+        getSortValue: rowData => getStocktakeReasons(rowData),
       },
       {
         key: 'comment',
@@ -296,7 +323,7 @@ export const useExpansionColumns = (): Column<StocktakeLineFragment>[] =>
     'packSize',
     {
       key: 'snapshotNumPacks',
-      width: 200,
+      width: 150,
       label: 'label.snapshot-num-of-packs',
       align: ColumnAlign.Right,
       accessor: ({ rowData }) => rowData.snapshotNumberOfPacks,
@@ -304,9 +331,15 @@ export const useExpansionColumns = (): Column<StocktakeLineFragment>[] =>
     {
       key: 'countedNumPacks',
       label: 'label.counted-num-of-packs',
-      width: 200,
+      width: 150,
       align: ColumnAlign.Right,
       accessor: ({ rowData }) => rowData.countedNumberOfPacks,
     },
     'comment',
+    {
+      key: 'inventoryAdjustmentReason',
+      label: 'label.reason',
+      accessor: ({ rowData }) =>
+        rowData.inventoryAdjustmentReason?.reason || '',
+    },
   ]);

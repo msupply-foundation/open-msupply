@@ -2,8 +2,8 @@
 mod tests {
     use crate::sync::test::integration::remote::{
         activity_log::ActivityLogRecordTester, invoice::InvoiceRecordTester,
-        location::LocationRecordTester,
-        requisition::RequisitionRecordTester, stock_line::StockLineRecordTester,
+        location::LocationRecordTester, requisition::RequisitionRecordTester,
+        stock_line::StockLineRecordTester, stocktake::StocktakeRecordTester,
         test_remote_sync_record,
     };
 
@@ -19,7 +19,7 @@ mod tests {
 
     #[actix_rt::test]
     async fn integration_sync_remote_stocktake() {
-        test_remote_sync_record("stocktake", &StockLineRecordTester).await;
+        test_remote_sync_record("stocktake", &StocktakeRecordTester).await;
     }
 
     #[actix_rt::test]

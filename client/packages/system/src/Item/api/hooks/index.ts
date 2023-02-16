@@ -8,3 +8,4 @@ export * from './useStockItemsWithStockLines';
 export * from './useServiceItems';
 export * from './useStockItems';
 export * from './useDefaultServiceItem';
+export * from './useItemStockOnHand';

@@ -20,6 +20,11 @@ pub struct StockLineQueries;
 pub enum StockLineSortFieldInput {
     ExpiryDate,
     NumberOfPacks,
+    ItemCode,
+    ItemName,
+    Batch,
+    PackSize,
+    SupplierName,
 }
 #[derive(InputObject)]
 pub struct StockLineSortInput {
@@ -62,6 +67,11 @@ impl StockLineSortInput {
         let key = match self.key {
             from::NumberOfPacks => to::NumberOfPacks,
             from::ExpiryDate => to::ExpiryDate,
+            from::ItemCode => to::ItemCode,
+            from::ItemName => to::ItemName,
+            from::Batch => to::Batch,
+            from::PackSize => to::PackSize,
+            from::SupplierName => to::SupplierName,
         };
 
         StockLineSort {
@@ -109,6 +119,7 @@ impl StockLineQueries {
                 // Currently only one sort option is supported, use the first from the list.
                 sort.and_then(|mut sort_list| sort_list.pop())
                     .map(|sort| sort.to_domain()),
+                Some(store_id),
             )
             .map_err(StandardGraphqlError::from_list_error)?;
 

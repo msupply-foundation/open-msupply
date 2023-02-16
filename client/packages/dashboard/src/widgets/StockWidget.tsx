@@ -20,7 +20,7 @@ const LOW_MOS_THRESHOLD = 3;
 export const StockWidget: React.FC = () => {
   const modalControl = useToggle(false);
   const { error } = useNotification();
-  const t = useTranslation(['dashboard']);
+  const t = useTranslation('dashboard');
   const formatNumber = useFormatNumber();
   const { data: expiryData, isLoading: isExpiryLoading } =
     useDashboard.statistics.stock();
@@ -79,11 +79,15 @@ export const StockWidget: React.FC = () => {
                 title={t('heading.expiring-stock')}
                 stats={[
                   {
-                    label: t('label.expired', { ns: 'dashboard' }),
+                    label: t('label.expired', {
+                      count: Math.round(expiryData?.expired || 0),
+                    }),
                     value: formatNumber.round(expiryData?.expired),
                   },
                   {
-                    label: t('label.expiring-soon'),
+                    label: t('label.expiring-soon', {
+                      count: Math.round(expiryData?.expiringSoon || 0),
+                    }),
                     value: formatNumber.round(expiryData?.expiringSoon),
                   },
                 ]}
@@ -95,15 +99,21 @@ export const StockWidget: React.FC = () => {
                 title={t('heading.stock-levels')}
                 stats={[
                   {
-                    label: t('label.total-items', { ns: 'dashboard' }),
+                    label: t('label.total-items', {
+                      count: Math.round(itemCountsData?.total || 0),
+                    }),
                     value: formatNumber.round(itemCountsData?.total || 0),
                   },
                   {
-                    label: t('label.items-no-stock'),
+                    label: t('label.items-no-stock', {
+                      count: Math.round(itemCountsData?.noStock || 0),
+                    }),
                     value: formatNumber.round(itemCountsData?.noStock || 0),
                   },
                   {
-                    label: t('label.low-stock-items'),
+                    label: t('label.low-stock-items', {
+                      count: Math.round(itemCountsData?.lowStock || 0),
+                    }),
                     value: formatNumber.round(itemCountsData?.lowStock || 0),
                   },
                 ]}
