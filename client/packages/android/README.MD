@@ -96,8 +96,20 @@ The cert plugin (`app/src/main/java/org/openmsupply/client/certplugin/CertPlugin
 
 Capacitor comes with cli, we mainly use `npx cap copy` (or `yarn apply-config`), this moves bundled assets to app/src/main/assets/public. Usually capacitor would bundle web app within the APK, since we are serving front end bundle with server we don't need to move them (you will not that in capacitor.config.ts `webDir` is pointed to a notexistet directory). Capacitor also moves pre requisites to cordova plugins to that folder, which is automatically injected into served `html`. Another taks of `npx cap copy` is to copy configuration files `capacition.config.ts` is translated to JSON file and moved to app/src/main/assets
 
-
 `app/src/main/assets/public` directory is typically not commited, but since it's only going to have cordova artifacts, it is in our case (to reduce setup). 
 
-
 `npx cap copy` or `yarn apply-config` should only be run when cordova plugins are added or updated or when updating capacitor.config.ts
+
+## Self signed cert SSL security
+
+To avoid an error being thrown by the native web view when the server certificate is self-signed, we override the web view certificate error listener and allow connection when:
+* In debug mode
+* The connection is local after verifying the certificate against the local `cert.pem` file : this is for discovery or when connecting to a local server
+*The stored SSL fingerprint matches the server fingerprint
+
+For the above to work we store the SSL fingerprint when we first connect to the server and then check that fingerprint on consecutive connections. 
+The SSL fingerprint is stored in app data and is associated with the `hardwareId` and `port` of the server.
+This works very similar to ssh client, but we associate fingerprint with hardwareId and port instead of domain or ip since local ip can change for the server.
+
+App data would need to be cleared if the local certificate was changed.
+
