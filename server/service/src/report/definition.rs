@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -41,6 +42,7 @@ impl GraphQlQuery {
             }
         };
         variables["storeId"] = Value::String(store_id.to_string());
+        variables["now"] = Value::String(Utc::now().to_rfc3339());
 
         variables
     }
