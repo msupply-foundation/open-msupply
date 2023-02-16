@@ -337,6 +337,21 @@ mod test {
         let service = service_provider.stocktake_service;
         let master_list_id = mock_master_list_item_query_test1().master_list.id;
 
+        // Check that a valid masterlist is supplied
+        let invalid_result = service.insert_stocktake(
+            &context,
+            InsertStocktake {
+                id: "stocktake_2".to_string(),
+                comment: Some("comment".to_string()),
+                description: Some("description".to_string()),
+                stocktake_date: Some(NaiveDate::from_ymd(2020, 01, 02)),
+                is_locked: Some(true),
+                location_id: None,
+                master_list_id: Some("master_list_filter_test".to_string()),
+            },
+        );
+        assert!(invalid_result.is_err());
+
         context.store_id = mock_store_a().id;
         service
             .insert_stocktake(
