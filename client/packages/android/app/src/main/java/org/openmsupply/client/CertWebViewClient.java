@@ -113,15 +113,14 @@ class CertWebViewClient extends ExtendedWebViewClient {
       */
     private boolean validateNonLocalCertificate(SslCertificate targetCert, NativeApi.omSupplyServer connectedServer) {
         // Calculate SSL fingerprint
-        PublicKey publicKey = get_x509(targetCert).getPublicKey();
         MessageDigest md = null;
         try {
            md = MessageDigest.getInstance("SHA-256");
+           md.update(get_x509(targetCert).getEncoded());
         } catch (Exception e) {
-            Log.e(TAG, "SHA-256 algorithm is missing" + e);
+            Log.e(TAG, "Problem hashing certificate" + e);
             return false;
         }
-        md.update(publicKey.getEncoded());
         String fingerprint = Base64.encodeToString(md.digest(), Base64.DEFAULT).trim();
 
         // Match SSL fingerprint for server stored in app data
