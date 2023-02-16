@@ -5,6 +5,14 @@ import { LanguageType } from '../../types/schema';
 
 export { useTranslationNext };
 
+const languageOptions = [
+  { label: 'عربي', value: 'ar' },
+  { label: 'Français', value: 'fr' },
+  { label: 'English', value: 'en' },
+  { label: 'Española', value: 'es' },
+  { label: 'Tetum', value: 'tet' },
+];
+
 const locales = [
   'ar' as const,
   'en' as const,
@@ -53,6 +61,9 @@ export const IntlUtils = {
     }
     return 'en';
   },
+  languageOptions,
+  getLanguageName: (language: string) =>
+    languageOptions.find(option => option.value === language)?.label,
 };
 
 const parseLanguage = (language?: LanguageType) => {
