@@ -24,6 +24,8 @@ impl SyncRecordTester for InvoiceRecordTester {
             on_hold: false,
             store_id: store_id.to_string(),
         };
+        // test option (inventory adjustment reason)
+        let inventory_adjustment_reason_id = uuid();
         let base_invoice_row = InvoiceRow {
             id: uuid(),
             name_id: uuid(),
@@ -68,6 +70,7 @@ impl SyncRecordTester for InvoiceRecordTester {
             tax: Some(10.0),
             number_of_packs: 10.129,
             note: None,
+            inventory_adjustment_reason_id: Some(inventory_adjustment_reason_id.clone()),
         };
         let invoice_row_1 = base_invoice_row.clone();
         let invoice_line_row_1 = base_invoice_line_row.clone();
@@ -100,6 +103,7 @@ impl SyncRecordTester for InvoiceRecordTester {
             d.id = uuid();
             d.invoice_id = invoice_row_2.id.clone();
             d.r#type = InvoiceLineRowType::StockOut;
+            d.inventory_adjustment_reason_id = None;
             d
         });
         let invoice_row_3 = inline_edit(&base_invoice_row, |mut d| {
@@ -145,6 +149,12 @@ impl SyncRecordTester for InvoiceRecordTester {
                     "ID": base_invoice_row.name_store_id.as_ref().unwrap(),
                     "name_ID": base_invoice_row.name_id,
                     "store_mode": "store"
+                }],
+                "options": [{
+                    "ID": inventory_adjustment_reason_id,
+                    "isActive": true,
+                    "title": "POS 1",
+                    "type": "positiveInventoryAdjustment"
                 }]
             }),
             central_delete: json!({}),
@@ -172,7 +182,6 @@ impl SyncRecordTester for InvoiceRecordTester {
             r.pack_size = 20;
             r.cost_price_per_pack = 0.5;
             r.sell_price_per_pack = 0.2;
-            r.name_id = String::from("name_store_b");
         });
         // create requisition and linked invoice
         let requisition_row = inline_edit(&mock_request_draft_requisition(), |mut r| {
@@ -219,6 +228,7 @@ impl SyncRecordTester for InvoiceRecordTester {
             d.tax = Some(0.0);
             d.number_of_packs = 15.120;
             d.note = Some("invoice line note".to_string());
+            d.inventory_adjustment_reason_id = None;
             d
         });
 

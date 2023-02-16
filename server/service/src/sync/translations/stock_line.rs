@@ -42,6 +42,7 @@ pub struct LegacyStockLineRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub note: Option<String>,
     #[serde(rename = "name_ID")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     pub supplier_id: Option<String>,
 }
 
