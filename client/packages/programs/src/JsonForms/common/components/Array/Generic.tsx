@@ -10,7 +10,7 @@ import {
 export const arrayTester = rankWith(5, schemaTypeIs('array'));
 
 const ArrayComponent = (props: ArrayControlCustomProps) => {
-  return <ArrayCommonComponent {...props} zOptions={CommonOptions} />;
+  return <ArrayCommonComponent {...props} zOptions={CommonOptions.optional()} />;
 };
 
 export const ArrayControl = withJsonFormsArrayControlProps(
