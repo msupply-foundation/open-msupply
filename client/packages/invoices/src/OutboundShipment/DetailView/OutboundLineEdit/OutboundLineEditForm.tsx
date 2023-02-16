@@ -60,7 +60,7 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
     );
   };
 
-  const unit = item?.unitName ?? t('label.units');
+  const unit = item?.unitName ?? t('label.units', { count: 1 });
   const allocate = () => {
     onChangeQuantity(
       issueQuantity,
