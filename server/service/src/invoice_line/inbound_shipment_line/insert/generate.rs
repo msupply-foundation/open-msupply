@@ -1,21 +1,36 @@
 use crate::{
     invoice::common::{calculate_total_after_tax, generate_invoice_user_id_update},
-    invoice_line::generate_batch,
+    invoice_line::{
+        generate_batch,
+        inbound_shipment_line::generate::{
+            convert_invoice_line_to_single_pack, convert_stock_line_to_single_pack,
+        },
+    },
+    store_preference::get_store_preferences,
     u32_to_i32,
 };
 use repository::{
-    InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow,
+    InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, ItemRow, RepositoryError,
+    StockLineRow, StorageConnection,
 };
 
 use super::InsertInboundShipmentLine;
 
 pub fn generate(
+    connection: &StorageConnection,
     user_id: &str,
     input: InsertInboundShipmentLine,
     item_row: ItemRow,
     existing_invoice_row: InvoiceRow,
-) -> (Option<InvoiceRow>, InvoiceLineRow, Option<StockLineRow>) {
-    let mut new_line = generate_line(input, item_row, existing_invoice_row.clone());
+) -> Result<(Option<InvoiceRow>, InvoiceLineRow, Option<StockLineRow>), RepositoryError> {
+    let store_preferences = get_store_preferences(connection, &existing_invoice_row.store_id)?;
+
+    let new_line = generate_line(input, item_row, existing_invoice_row.clone());
+
+    let mut new_line = match store_preferences.pack_to_one {
+        true => convert_invoice_line_to_single_pack(new_line),
+        false => new_line,
+    };
 
     let new_batch_option = if existing_invoice_row.status != InvoiceRowStatus::New {
         let new_batch = generate_batch(
@@ -25,16 +40,22 @@ pub fn generate(
             &existing_invoice_row.name_id,
         );
         new_line.stock_line_id = Some(new_batch.id.clone());
+
+        let new_batch = match store_preferences.pack_to_one {
+            true => convert_stock_line_to_single_pack(new_batch),
+            false => new_batch,
+        };
+
         Some(new_batch)
     } else {
         None
     };
 
-    (
+    Ok((
         generate_invoice_user_id_update(user_id, existing_invoice_row),
         new_line,
         new_batch_option,
-    )
+    ))
 }
 
 fn generate_line(
