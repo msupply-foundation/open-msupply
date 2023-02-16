@@ -71,6 +71,8 @@ const parseLanguage = (language?: LanguageType) => {
       return 'ru';
     case LanguageType.Spanish:
       return 'es';
+    case LanguageType.Tetum:
+      return 'tet';
     default:
       return undefined;
   }
