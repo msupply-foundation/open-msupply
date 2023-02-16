@@ -60,6 +60,20 @@
             },
             "prophylaxisMedication": {
               "items": {
+                "enum": [
+                  "Albendazole",
+                  "Amoxicilin",
+                  "Artemeter Injection",
+                  "Chlorampanical",
+                  "Chloroquine",
+                  "Ciproxicilin",
+                  "CMP Injection",
+                  "Cotrimoxazole",
+                  "Crystopan",
+                  "Fansidar",
+                  "Flucloxicilin",
+                  "Fluconazole"
+                ],
                 "type": "string"
               },
               "type": "array"
