@@ -43,10 +43,9 @@ export const getLocationInputColumn = <
       }
     }
   },
-  Cell: ({ rowData, column, rows, columnIndex, rowIndex, isDisabled }) => {
+  Cell: ({ rowData, column, columnIndex, rowIndex, isDisabled }) => {
     const value = column.accessor({
       rowData,
-      rows,
     }) as LocationRowFragment | null;
 
     const onChange = (location: LocationRowFragment | null) => {

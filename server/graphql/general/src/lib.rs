@@ -305,3 +305,17 @@ impl MasterListNotFoundForThisStore {
         "Master list not found (might not be visible to this store)"
     }
 }
+
+/// Discovery queries
+#[derive(Default, Clone)]
+pub struct DiscoveryQueries;
+
+#[Object]
+impl DiscoveryQueries {
+    pub async fn initialisation_status(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<InitialisationStatusNode> {
+        initialisation_status(ctx)
+    }
+}

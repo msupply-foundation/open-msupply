@@ -8,11 +8,10 @@ import { useBufferState, useDebounceCallback } from '@common/hooks';
 export const NonNegativeDecimalCell = <T extends RecordWithId>({
   rowData,
   column,
-  rows,
   isDisabled = false,
 }: CellProps<T>): React.ReactElement<CellProps<T>> => {
   const [buffer, setBuffer] = useBufferState(
-    column.accessor({ rowData, rows }) || ''
+    column.accessor({ rowData }) || ''
   );
 
   const updater = useDebounceCallback(column.setter, [column.setter], 250);

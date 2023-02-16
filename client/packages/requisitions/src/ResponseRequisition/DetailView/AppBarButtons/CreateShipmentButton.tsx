@@ -15,6 +15,8 @@ export const CreateShipmentButtonComponent = () => {
   ]);
   const t = useTranslation('distribution');
   const { mutate: createOutbound } = useResponse.utils.createOutbound();
+  const isDisabled = useResponse.utils.isDisabled();
+
   const getConfirmation = useConfirmationModal({
     onConfirm: createOutbound,
     message: t('messages.create-outbound-from-requisition'),
@@ -42,6 +44,7 @@ export const CreateShipmentButtonComponent = () => {
       Icon={<PlusCircleIcon />}
       label={t('button.create-shipment')}
       onClick={onCreateShipment}
+      disabled={isDisabled}
     />
   );
 };

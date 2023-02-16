@@ -135,20 +135,31 @@ impl<'a> TranslationAndIntegration<'a> {
 
 impl IntegrationRecords {
     pub(crate) fn integrate(&self, connection: &StorageConnection) -> Result<(), RepositoryError> {
+        // Only start nested transaction if transaction is already ongoing. See integrate_and_translate_sync_buffer
+        let start_nested_transaction = { connection.transaction_level.get() > 0 };
+
         for upsert in self.upserts.iter() {
             // Integrate every record in a sub transaction. This is mainly for Postgres where the
             // whole transaction fails when there is a DB error (not a problem in sqlite).
-            connection
-                .transaction_sync_etc(|sub_tx| upsert.upsert(sub_tx), false)
-                .map_err(|e| e.to_inner_error())?;
+            if start_nested_transaction {
+                connection
+                    .transaction_sync_etc(|sub_tx| upsert.upsert(sub_tx), false)
+                    .map_err(|e| e.to_inner_error())?;
+            } else {
+                upsert.upsert(&connection)?;
+            }
         }
 
         for delete in self.deletes.iter() {
             // Integrate every record in a sub transaction. This is mainly for Postgres where the
             // whole transaction fails when there is a DB error (not a problem in sqlite).
-            connection
-                .transaction_sync_etc(|sub_tx| delete.delete(sub_tx), false)
-                .map_err(|e| e.to_inner_error())?;
+            if start_nested_transaction {
+                connection
+                    .transaction_sync_etc(|sub_tx| delete.delete(sub_tx), false)
+                    .map_err(|e| e.to_inner_error())?;
+            } else {
+                delete.delete(&connection)?;
+            }
         }
 
         Ok(())
@@ -180,6 +191,7 @@ impl PullUpsertRecord {
             InventoryAdjustmentReason(record) => {
                 InventoryAdjustmentReasonRowRepository::new(con).upsert_one(record)
             }
+            StorePreference(record) => StorePreferenceRowRepository::new(con).upsert_one(record),
         }
     }
 }

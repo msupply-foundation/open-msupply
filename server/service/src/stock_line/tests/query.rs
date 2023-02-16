@@ -27,6 +27,7 @@ mod query {
                 }),
                 None,
                 None,
+                None,
             ),
             Err(ListError::LimitAboveMax(1000))
         );
@@ -38,6 +39,7 @@ mod query {
                     limit: Some(0),
                     offset: None,
                 }),
+                None,
                 None,
                 None,
             ),
@@ -82,6 +84,7 @@ mod query {
                 None,
                 Some(StockLineFilter::new().id(EqualFilter::equal_to("item_a_line_a"))),
                 None,
+                None,
             )
             .unwrap();
 
@@ -96,6 +99,7 @@ mod query {
                     "item_a_line_a".to_owned(),
                     "item_a_line_b".to_owned(),
                 ]))),
+                None,
                 None,
             )
             .unwrap();
@@ -157,6 +161,7 @@ mod query {
                     key: StockLineSortField::ExpiryDate,
                     desc: None,
                 }),
+                None,
             )
             .unwrap();
 
@@ -207,6 +212,7 @@ mod query {
                     key: StockLineSortField::ExpiryDate,
                     desc: Some(true),
                 }),
+                None,
             )
             .unwrap();
 
