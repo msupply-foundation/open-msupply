@@ -1464,7 +1464,8 @@ export enum LanguageType {
   Laos = 'LAOS',
   Portuguese = 'PORTUGUESE',
   Russian = 'RUSSIAN',
-  Spanish = 'SPANISH'
+  Spanish = 'SPANISH',
+  Tetum = 'TETUM'
 }
 
 export type LocationConnector = {

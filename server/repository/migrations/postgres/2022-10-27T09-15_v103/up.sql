@@ -1,11 +1,13 @@
-CREATE TYPE language_type AS ENUM (
+CREATE TYPE language_type AS ENUM
+(
     'ENGLISH',
     'FRENCH',
     'SPANISH',
     'LAOS',
     'KHMER',
     'PORTUGUESE',
-    'RUSSIAN'
+    'RUSSIAN',
+    'TETUM'
 );
 
 ALTER TABLE user_account
