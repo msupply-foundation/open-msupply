@@ -249,12 +249,13 @@ mod test {
     use chrono::{NaiveDate, Utc};
     use repository::{
         mock::{
-            mock_master_list_item_query_test1, mock_stocktake_a, mock_store_a, mock_user_account_a,
-            MockDataInserts,
+            item_query_test1, mock_master_list_item_query_test1, mock_stocktake_a, mock_store_a,
+            mock_store_b, mock_user_account_a, MockDataInserts,
         },
         test_db::setup_all,
-        EqualFilter, MasterListLineRow, MasterListLineRowRepository, StocktakeLineFilter,
-        StocktakeLineRepository, StocktakeRow, StocktakeRowRepository, StocktakeStatus,
+        EqualFilter, MasterListLineRow, MasterListLineRowRepository, StockLineRow,
+        StockLineRowRepository, StocktakeLineFilter, StocktakeLineRepository, StocktakeRow,
+        StocktakeRowRepository, StocktakeStatus,
     };
     use util::{inline_edit, inline_init};
 
@@ -370,6 +371,15 @@ mod test {
         );
         assert!(invalid_result.is_err());
 
+        // add a stock line for another store and check that it is not added to the stocktake
+        let _ = StockLineRowRepository::new(&connection).upsert_one({
+            &inline_init(|r: &mut StockLineRow| {
+                r.id = "stock_line_row_1".to_string();
+                r.store_id = mock_store_b().id;
+                r.item_id = item_query_test1().id;
+            })
+        });
+
         context.store_id = mock_store_a().id;
         service
             .insert_stocktake(
@@ -405,6 +415,12 @@ mod test {
             stock_line_row.unwrap().line.stock_line_id,
             Some("item_query_test1".to_string())
         );
+
+        // and the stock line for store_b?
+        let stock_line_row = stocktake_rows
+            .iter()
+            .find(|r| r.line.stock_line_id == Some("stock_line_row_1".to_string()));
+        assert_eq!(stock_line_row.is_some(), false);
 
         // add another item to the master list and check that it is added to the stocktake
         let _ = MasterListLineRowRepository::new(&connection).upsert_one(&MasterListLineRow {
