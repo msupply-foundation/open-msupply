@@ -186,6 +186,7 @@ const ENCOUNTERS_REPORT: &'static str =
     std::include_str!("./program_schemas/report_encounters.json");
 const VL_ELIGIBILITY_REPORT: &'static str =
     std::include_str!("./program_schemas/report_vl_eligibility.json");
+const LTFU_REPORT: &'static str = std::include_str!("./program_schemas/report_ltfu.json");
 
 fn person_1() -> RelatedPerson {
     RelatedPerson {
@@ -1160,6 +1161,19 @@ pub fn init_program_data(
             name: "Viral Load Eligibility".to_string(),
             r#type: repository::ReportType::OmSupply,
             template: VL_ELIGIBILITY_REPORT.to_string(),
+            context: ReportContext::Patient,
+            comment: None,
+            sub_context: Some("HIVCareProgram".to_string()),
+            argument_schema_id: None,
+        })
+        .unwrap();
+
+    report_repo
+        .upsert_one(&ReportRow {
+            id: uuid(),
+            name: "Lost to follow up".to_string(),
+            r#type: repository::ReportType::OmSupply,
+            template: LTFU_REPORT.to_string(),
             context: ReportContext::Patient,
             comment: None,
             sub_context: Some("HIVCareProgram".to_string()),
