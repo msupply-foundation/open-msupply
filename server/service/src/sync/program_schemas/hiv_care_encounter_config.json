@@ -85,6 +85,19 @@
         "type": "viralLoadResultDatetime",
         "dataField": "startDatetime"
       }
+    },
+    {
+      "type": "Field",
+      "conditions": [
+        {
+          "field": "viralLoad.targetting",
+          "isTruthy": true
+        }
+      ],
+      "event": {
+        "type": "viralLoadTargetting",
+        "dataField": "viralLoad.targetting"
+      }
     }
   ]
 }
