@@ -315,8 +315,8 @@ mod test {
     use chrono::{NaiveDate, Utc};
     use repository::{
         mock::{
-            mock_item_a, mock_location_1, mock_master_list_item_query_test1, mock_stocktake_a,
-            mock_store_a, mock_user_account_a, MockDataInserts,
+            item_query_test1, mock_item_a, mock_location_1, mock_master_list_item_query_test1,
+            mock_stocktake_a, mock_store_a, mock_store_b, mock_user_account_a, MockDataInserts,
         },
         test_db::setup_all,
         EqualFilter, MasterListLineRow, MasterListLineRowRepository, StockLineRow,
@@ -422,6 +422,30 @@ mod test {
         let service = service_provider.stocktake_service;
         let master_list_id = mock_master_list_item_query_test1().master_list.id;
 
+        // Check that a valid masterlist is supplied
+        let invalid_result = service.insert_stocktake(
+            &context,
+            InsertStocktake {
+                id: "stocktake_2".to_string(),
+                comment: Some("comment".to_string()),
+                description: Some("description".to_string()),
+                stocktake_date: Some(NaiveDate::from_ymd(2020, 01, 02)),
+                is_locked: Some(true),
+                location_id: None,
+                master_list_id: Some("master_list_filter_test".to_string()),
+            },
+        );
+        assert!(invalid_result.is_err());
+
+        // add a stock line for another store and check that it is not added to the stocktake
+        let _ = StockLineRowRepository::new(&connection).upsert_one({
+            &inline_init(|r: &mut StockLineRow| {
+                r.id = "stock_line_row_1".to_string();
+                r.store_id = mock_store_b().id;
+                r.item_id = item_query_test1().id;
+            })
+        });
+
         context.store_id = mock_store_a().id;
         service
             .insert_stocktake(
@@ -457,6 +481,12 @@ mod test {
             stock_line_row.unwrap().line.stock_line_id,
             Some("item_query_test1".to_string())
         );
+
+        // and the stock line for store_b?
+        let stock_line_row = stocktake_rows
+            .iter()
+            .find(|r| r.line.stock_line_id == Some("stock_line_row_1".to_string()));
+        assert_eq!(stock_line_row.is_some(), false);
 
         // add another item to the master list and check that it is added to the stocktake
         let _ = MasterListLineRowRepository::new(&connection).upsert_one(&MasterListLineRow {
