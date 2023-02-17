@@ -170,9 +170,9 @@ const IMMUNISATION_ENCOUNTER_5MONTH_UI_SCHEMA: &'static str =
     std::include_str!("./program_schemas/routine_immunisation_5month_encounter_ui_schema.json");
 
 const PATIENT_REPORT: &'static str =
-    std::include_str!("./program_schemas/patient_hiv_care_report.json");
+    std::include_str!("./program_schemas/report_patient_hiv_care.json");
 const DEMO_PATIENT_REPORT: &'static str =
-    std::include_str!("./program_schemas/demo_patient_report.json");
+    std::include_str!("./program_schemas/report_demo_patient.json");
 
 const DEMO_ARG_SCHEMA: &'static str = std::include_str!("./program_schemas/demo_arg_schema.json");
 const DEMO_ARG_UI_SCHEMA: &'static str =
@@ -183,7 +183,9 @@ const ENCOUNTERS_ARG_SCHEMA: &'static str =
 const ENCOUNTERS_ARG_UI_SCHEMA: &'static str =
     std::include_str!("./program_schemas/encounters_arg_ui_schema.json");
 const ENCOUNTERS_REPORT: &'static str =
-    std::include_str!("./program_schemas/encounters_report.json");
+    std::include_str!("./program_schemas/report_encounters.json");
+const VL_ELIGIBILITY_REPORT: &'static str =
+    std::include_str!("./program_schemas/report_vl_eligibility.json");
 
 fn person_1() -> RelatedPerson {
     RelatedPerson {
@@ -1149,6 +1151,19 @@ pub fn init_program_data(
             comment: None,
             sub_context: Some("HIVCareProgram".to_string()),
             argument_schema_id: Some(encounters_arg_schema_id),
+        })
+        .unwrap();
+
+    report_repo
+        .upsert_one(&ReportRow {
+            id: uuid(),
+            name: "Viral Load Eligibility".to_string(),
+            r#type: repository::ReportType::OmSupply,
+            template: VL_ELIGIBILITY_REPORT.to_string(),
+            context: ReportContext::Patient,
+            comment: None,
+            sub_context: Some("HIVCareProgram".to_string()),
+            argument_schema_id: None,
         })
         .unwrap();
 
