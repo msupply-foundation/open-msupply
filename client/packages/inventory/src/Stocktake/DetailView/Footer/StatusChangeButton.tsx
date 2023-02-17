@@ -51,11 +51,13 @@ const getButtonLabel =
   };
 
 const useStatusChangeButton = () => {
-  const { lines, status, update } = useStocktake.document.fields([
+  const { id, lines, status } = useStocktake.document.fields([
+    'id',
     'status',
     'lines',
   ]);
-  const { success, error } = useNotification();
+  const { mutateAsync } = useStocktake.document.update();
+  const { success } = useNotification();
   const t = useTranslation('replenishment');
 
   const options = useMemo(
@@ -71,11 +73,11 @@ const useStatusChangeButton = () => {
   const onConfirmStatusChange = async () => {
     if (!selectedOption) return null;
     try {
-      await update({ status: selectedOption.value });
-      success(t('messages.saved'))();
-    } catch (e) {
-      error(t('messages.could-not-save'))();
-    }
+      const result = await mutateAsync({ id, status: selectedOption.value });
+      if (result.updateStocktake.__typename === 'StocktakeNode') {
+        success(t('messages.saved'))();
+      }
+    } catch (_) {}
   };
 
   const getConfirmation = useConfirmationModal({

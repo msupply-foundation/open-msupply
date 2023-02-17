@@ -44,7 +44,7 @@ export type UpsertStocktakeLinesMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpsertStocktakeLinesMutation = { __typename: 'Mutations', batchStocktake: { __typename: 'BatchStocktakeResponse', deleteStocktakeLines?: Array<{ __typename: 'DeleteStocktakeLineResponseWithId', id: string, response: { __typename: 'DeleteResponse', id: string } | { __typename: 'DeleteStocktakeLineError', error: { __typename: 'CannotEditStocktake', description: string } } }> | null, insertStocktakeLines?: Array<{ __typename: 'InsertStocktakeLineResponseWithId', id: string, response: { __typename: 'InsertStocktakeLineError', error: { __typename: 'CannotEditStocktake', description: string } } | { __typename: 'StocktakeLineNode' } }> | null, updateStocktakeLines?: Array<{ __typename: 'UpdateStocktakeLineResponseWithId', id: string, response: { __typename: 'StocktakeLineNode' } | { __typename: 'UpdateStocktakeLineError', error: { __typename: 'CannotEditStocktake', description: string } } }> | null } };
+export type UpsertStocktakeLinesMutation = { __typename: 'Mutations', batchStocktake: { __typename: 'BatchStocktakeResponse', deleteStocktakeLines?: Array<{ __typename: 'DeleteStocktakeLineResponseWithId', id: string, response: { __typename: 'DeleteResponse', id: string } | { __typename: 'DeleteStocktakeLineError', error: { __typename: 'CannotEditStocktake', description: string } } }> | null, insertStocktakeLines?: Array<{ __typename: 'InsertStocktakeLineResponseWithId', id: string, response: { __typename: 'InsertStocktakeLineError', error: { __typename: 'AdjustmentReasonNotProvided', description: string } | { __typename: 'CannotEditStocktake', description: string } | { __typename: 'StockLineReducedBelowZero', description: string } } | { __typename: 'StocktakeLineNode' } }> | null, updateStocktakeLines?: Array<{ __typename: 'UpdateStocktakeLineResponseWithId', id: string, response: { __typename: 'StocktakeLineNode' } | { __typename: 'UpdateStocktakeLineError', error: { __typename: 'AdjustmentReasonNotProvided', description: string } | { __typename: 'CannotEditStocktake', description: string } | { __typename: 'StockLineReducedBelowZero', description: string } } }> | null } };
 
 export type DeleteStocktakesMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -60,7 +60,7 @@ export type UpdateStocktakeMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateStocktakeMutation = { __typename: 'Mutations', updateStocktake: { __typename: 'StocktakeNode', id: string } | { __typename: 'UpdateStocktakeError' } };
+export type UpdateStocktakeMutation = { __typename: 'Mutations', updateStocktake: { __typename: 'StocktakeNode', id: string } | { __typename: 'UpdateStocktakeError', error: { __typename: 'CannotEditStocktake', description: string } | { __typename: 'SnapshotCountCurrentCountMismatch', description: string } | { __typename: 'StockLinesReducedBelowZero', description: string, stockLines: { __typename: 'StockLineConnector', nodes: Array<{ __typename: 'StockLineNode', id: string }> } } | { __typename: 'StocktakeIsLocked', description: string } } };
 
 export type InsertStocktakeMutationVariables = Types.Exact<{
   input: Types.InsertStocktakeInput;
@@ -265,6 +265,21 @@ export const DeleteStocktakesDocument = gql`
 export const UpdateStocktakeDocument = gql`
     mutation updateStocktake($input: UpdateStocktakeInput!, $storeId: String!) {
   updateStocktake(input: $input, storeId: $storeId) {
+    ... on UpdateStocktakeError {
+      __typename
+      error {
+        description
+        ... on StockLinesReducedBelowZero {
+          __typename
+          description
+          stockLines {
+            nodes {
+              id
+            }
+          }
+        }
+      }
+    }
     ... on StocktakeNode {
       __typename
       id
