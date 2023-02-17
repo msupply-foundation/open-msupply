@@ -152,16 +152,21 @@ export const getStocktakeQueries = (sdk: Sdk, storeId: string) => ({
 
     return result;
   },
-  update: async (
-    patch: RecordPatch<StocktakeFragment>
-  ): Promise<UpdateStocktakeInput> => {
+  update: async (patch: RecordPatch<StocktakeFragment>) => {
     const input = stocktakeParser.toUpdate(patch);
     const result = (await sdk.updateStocktake({ input, storeId })) || {};
 
     const { updateStocktake } = result;
 
+    if (
+      updateStocktake.__typename === 'UpdateStocktakeError' &&
+      updateStocktake.error.__typename === 'StockLinesReducedBelowZero'
+    ) {
+      throw new Error(updateStocktake.error.__typename);
+    }
+
     if (updateStocktake?.__typename === 'StocktakeNode') {
-      return input;
+      return result;
     }
 
     throw new Error('Could not update stocktake');
