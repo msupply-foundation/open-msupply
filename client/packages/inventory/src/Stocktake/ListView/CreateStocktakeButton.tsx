@@ -1,4 +1,4 @@
-import React, { ChangeEventHandler, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   BasicSpinner,
   ButtonWithIcon,
@@ -11,7 +11,7 @@ import { PlusCircleIcon } from '@common/icons';
 import { useFormatDateTime, useTranslation } from '@common/intl';
 import { ToggleState, useDialog } from '@common/hooks';
 import { useStocktake } from '../api';
-import { useMasterList } from '@openmsupply-client/system';
+import { useMasterList, useLocation } from '@openmsupply-client/system';
 import {
   Box,
   FnUtils,
@@ -39,6 +39,11 @@ export const CreateStocktakeButton: React.FC<{
     isLoading: isLoadingMasterLists,
     mutate: fetchMasterLists,
   } = useMasterList.document.listAll({ key: 'name', direction: 'asc' });
+  const {
+    data: locationData,
+    isLoading: isLoadingLocations,
+    mutate: fetchLocations,
+  } = useLocation.document.listAll({ key: 'name', direction: 'asc' });
   const { user } = useAuthContext();
   const { localisedDate } = useFormatDateTime();
   const [createStocktakeArgs, setCreateStocktakeArgs] =
@@ -49,11 +54,12 @@ export const CreateStocktakeButton: React.FC<{
       username: user ? user.name : 'unknown user',
       date: localisedDate(new Date()),
     });
-    const { masterListId } = createStocktakeArgs;
+    const { locationId, masterListId } = createStocktakeArgs;
     const input: InsertStocktakeInput = {
       id: FnUtils.generateUUID(),
       description,
       masterListId: masterListId ? masterListId : undefined,
+      locationId: locationId ? locationId : undefined,
     };
     await mutateAsync(input);
   };
@@ -67,24 +73,26 @@ export const CreateStocktakeButton: React.FC<{
     onClose,
     disableBackdrop: true,
   });
-  const isLoading = isLoadingMasterLists;
-  const handleMasterListChange: ChangeEventHandler<
-    HTMLInputElement | HTMLTextAreaElement
-  > = event => {
-    setCreateStocktakeArgs({
-      ...createStocktakeArgs,
-      masterListId: event.target.value?.toString(),
-    });
-  };
-  const masterLists = masterListData
-    ? masterListData.nodes.map(list => ({
-        label: list.name,
-        value: list.id,
-      }))
-    : [];
+
+  const masterLists =
+    masterListData?.nodes?.map(list => ({
+      label: `${list.name} (${list.lines?.totalCount} ${t('label.item', {
+        count: list.lines?.totalCount,
+      })})`,
+      value: list.id,
+    })) || [];
+
+  const locations =
+    locationData?.nodes.map(location => ({
+      label: location.name,
+      value: location.id,
+    })) || [];
+
+  const isLoading = isLoadingMasterLists || isLoadingLocations;
 
   useEffect(() => {
     fetchMasterLists();
+    fetchLocations();
   }, []);
 
   return (
@@ -124,12 +132,34 @@ export const CreateStocktakeButton: React.FC<{
                   Input={
                     <Select
                       fullWidth
-                      onChange={handleMasterListChange}
+                      onChange={event =>
+                        setCreateStocktakeArgs({
+                          ...DEFAULT_ARGS,
+                          masterListId: event.target.value?.toString(),
+                        })
+                      }
                       options={masterLists}
                       value={createStocktakeArgs.masterListId}
                     />
                   }
                   label={t('label.master-list')}
+                />
+                <Box sx={{ height: 16 }} />
+                <InputWithLabelRow
+                  Input={
+                    <Select
+                      fullWidth
+                      onChange={event =>
+                        setCreateStocktakeArgs({
+                          ...DEFAULT_ARGS,
+                          locationId: event.target.value?.toString(),
+                        })
+                      }
+                      options={locations}
+                      value={createStocktakeArgs.locationId}
+                    />
+                  }
+                  label={t('label.location')}
                 />
               </Box>
             ) : (
