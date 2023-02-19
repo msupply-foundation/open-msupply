@@ -1,9 +1,10 @@
 use chrono::{NaiveDate, Utc};
 use repository::{
-    ActivityLogType, EqualFilter, MasterListFilter, MasterListLineFilter, MasterListLineRepository,
-    MasterListRepository, NumberRowType, RepositoryError, StockLineFilter, StockLineRepository,
-    StockLineRow, Stocktake, StocktakeFilter, StocktakeLineRow, StocktakeLineRowRepository,
-    StocktakeRepository, StocktakeRow, StocktakeRowRepository, StocktakeStatus, StorageConnection,
+    ActivityLogType, EqualFilter, LocationFilter, LocationRepository, MasterListFilter,
+    MasterListLineFilter, MasterListLineRepository, MasterListRepository, NumberRowType,
+    RepositoryError, StockLineFilter, StockLineRepository, StockLineRow, Stocktake,
+    StocktakeFilter, StocktakeLineRow, StocktakeLineRowRepository, StocktakeRepository,
+    StocktakeRow, StocktakeRowRepository, StocktakeStatus, StorageConnection,
 };
 use util::uuid::uuid;
 
@@ -32,6 +33,8 @@ pub enum InsertStocktakeError {
     StocktakeAlreadyExists,
     InvalidStore,
     InvalidMasterList,
+    InvalidLocation,
+    InvalidArguments,
 }
 
 fn check_stocktake_does_not_exist(
@@ -56,6 +59,19 @@ fn check_master_list_exists(
     Ok(count > 0)
 }
 
+fn check_location_exists(
+    connection: &StorageConnection,
+    store_id: &str,
+    location_id: &str,
+) -> Result<bool, RepositoryError> {
+    let count = LocationRepository::new(connection).count(Some(
+        LocationFilter::new()
+            .id(EqualFilter::equal_to(location_id))
+            .store_id(EqualFilter::equal_to(store_id)),
+    ))?;
+    Ok(count > 0)
+}
+
 fn validate(
     connection: &StorageConnection,
     store_id: &str,
@@ -67,9 +83,17 @@ fn validate(
     if !check_store_exists(connection, store_id)? {
         return Err(InsertStocktakeError::InvalidStore);
     }
+    if stocktake.master_list_id.is_some() && stocktake.location_id.is_some() {
+        return Err(InsertStocktakeError::InvalidArguments);
+    }
     if let Some(master_list_id) = &stocktake.master_list_id {
         if !check_master_list_exists(connection, store_id, master_list_id)? {
             return Err(InsertStocktakeError::InvalidMasterList);
+        }
+    }
+    if let Some(location_id) = &stocktake.location_id {
+        if !check_location_exists(connection, store_id, location_id)? {
+            return Err(InsertStocktakeError::InvalidLocation);
         }
     }
     Ok(())

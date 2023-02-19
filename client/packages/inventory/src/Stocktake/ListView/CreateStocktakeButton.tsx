@@ -1,20 +1,14 @@
-import React, { ChangeEventHandler, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   BasicSpinner,
   ButtonWithIcon,
   DialogButton,
   InputWithLabelRow,
-  Option,
   Select,
   Typography,
 } from '@common/components';
 import { PlusCircleIcon } from '@common/icons';
-import {
-  LocaleKey,
-  TypedTFunction,
-  useFormatDateTime,
-  useTranslation,
-} from '@common/intl';
+import { useFormatDateTime, useTranslation } from '@common/intl';
 import { ToggleState, useDialog } from '@common/hooks';
 import { useStocktake } from '../api';
 import { useMasterList, useLocation } from '@openmsupply-client/system';
@@ -30,69 +24,9 @@ interface CreateStocktakeArgs {
   locationId: string;
 }
 
-interface IdName {
-  id: string;
-  name: string;
-  lines?: {
-    totalCount: number;
-  };
-}
-
 const DEFAULT_ARGS: CreateStocktakeArgs = {
   masterListId: '',
   locationId: '',
-};
-
-const generateOptions = (
-  data: IdName[],
-  labelFormatter: (datum: IdName) => string
-) =>
-  data.map(datum => ({
-    label: labelFormatter(datum),
-    value: datum.id,
-  }));
-
-interface SelectInputProps {
-  argument: keyof CreateStocktakeArgs;
-  options: Option[];
-  value: string;
-  label: LocaleKey;
-  t: TypedTFunction<LocaleKey>;
-  setArgs: (args: CreateStocktakeArgs) => void;
-}
-
-const SelectInput: React.FC<SelectInputProps> = ({
-  argument,
-  options,
-  value,
-  label,
-  t,
-  setArgs,
-}) => {
-  const handleChange: ChangeEventHandler<
-    HTMLInputElement | HTMLTextAreaElement
-  > = event =>
-    setArgs({
-      ...DEFAULT_ARGS,
-      [argument]: event.target.value?.toString(),
-    });
-
-  return (
-    <>
-      <InputWithLabelRow
-        Input={
-          <Select
-            fullWidth
-            onChange={handleChange}
-            options={options}
-            value={value}
-          />
-        }
-        label={t(label)}
-      />
-      <Box sx={{ height: 16 }} />
-    </>
-  );
 };
 
 export const CreateStocktakeButton: React.FC<{
@@ -140,18 +74,19 @@ export const CreateStocktakeButton: React.FC<{
     disableBackdrop: true,
   });
 
-  const masterLists = generateOptions(
-    masterListData?.nodes ?? [],
-    list =>
-      `${list.name} (${list.lines?.totalCount} ${t('label.item', {
+  const masterLists =
+    masterListData?.nodes?.map(list => ({
+      label: `${list.name} (${list.lines?.totalCount} ${t('label.item', {
         count: list.lines?.totalCount,
-      })})`
-  );
+      })})`,
+      value: list.id,
+    })) || [];
 
-  const locations = generateOptions(
-    locationData?.nodes ?? [],
-    location => location.name
-  );
+  const locations =
+    locationData?.nodes.map(location => ({
+      label: location.name,
+      value: location.id,
+    })) || [];
 
   const isLoading = isLoadingMasterLists || isLoadingLocations;
 
@@ -193,21 +128,38 @@ export const CreateStocktakeButton: React.FC<{
                 <Typography padding={1} paddingBottom={4}>
                   {t('messages.create-stocktake-2')}
                 </Typography>
-                <SelectInput
-                  argument="masterListId"
-                  options={masterLists}
-                  value={createStocktakeArgs.masterListId}
-                  t={t}
-                  setArgs={setCreateStocktakeArgs}
-                  label="label.master-list"
+                <InputWithLabelRow
+                  Input={
+                    <Select
+                      fullWidth
+                      onChange={event =>
+                        setCreateStocktakeArgs({
+                          ...DEFAULT_ARGS,
+                          masterListId: event.target.value?.toString(),
+                        })
+                      }
+                      options={masterLists}
+                      value={createStocktakeArgs.masterListId}
+                    />
+                  }
+                  label={t('label.master-list')}
                 />
-                <SelectInput
-                  argument="locationId"
-                  options={locations}
-                  value={createStocktakeArgs.locationId}
-                  t={t}
-                  setArgs={setCreateStocktakeArgs}
-                  label="label.location"
+                <Box sx={{ height: 16 }} />
+                <InputWithLabelRow
+                  Input={
+                    <Select
+                      fullWidth
+                      onChange={event =>
+                        setCreateStocktakeArgs({
+                          ...DEFAULT_ARGS,
+                          locationId: event.target.value?.toString(),
+                        })
+                      }
+                      options={locations}
+                      value={createStocktakeArgs.locationId}
+                    />
+                  }
+                  label={t('label.location')}
                 />
               </Box>
             ) : (
