@@ -75,6 +75,8 @@ pub fn map_response(from: Result<Stocktake, ServiceError>) -> Result<InsertRespo
                 ServiceError::InternalError(err) => InternalError(err),
                 ServiceError::DatabaseError(_) => InternalError(formatted_error),
                 ServiceError::InvalidMasterList => BadUserInput(formatted_error),
+                ServiceError::InvalidLocation => BadUserInput(formatted_error),
+                ServiceError::InvalidArguments => BadUserInput(formatted_error),
             };
 
             Err(graphql_error.extend())
