@@ -32,6 +32,19 @@
       "type": "Field",
       "conditions": [
         {
+          "field": "arvMedication.endOfSupply",
+          "isTruthy": true
+        }
+      ],
+      "event": {
+        "type": "arvMedicationEndOfSupply",
+        "dataField": "arvMedication.endOfSupply"
+      }
+    },
+    {
+      "type": "Field",
+      "conditions": [
+        {
           "field": "viralLoad.tested",
           "isTruthy": true
         },
