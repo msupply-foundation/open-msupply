@@ -150,6 +150,28 @@ export const getStocktakeQueries = (sdk: Sdk, storeId: string) => ({
         .map(stocktakeParser.line.toUpdate),
     });
 
+    const { batchStocktake } = result;
+
+    batchStocktake.insertStocktakeLines?.map(response => {
+      if (
+        response.response?.__typename === 'InsertStocktakeLineError' &&
+        (response.response?.error.__typename === 'StockLineReducedBelowZero' ||
+          response.response?.error.__typename === 'AdjustmentReasonNotProvided')
+      ) {
+        throw new Error(response.response?.error.__typename);
+      }
+    });
+
+    batchStocktake.updateStocktakeLines?.map(response => {
+      if (
+        response.response?.__typename === 'UpdateStocktakeLineError' &&
+        (response.response?.error.__typename === 'StockLineReducedBelowZero' ||
+          response.response?.error.__typename === 'AdjustmentReasonNotProvided')
+      ) {
+        throw new Error(response.response?.error.__typename);
+      }
+    });
+
     return result;
   },
   update: async (patch: RecordPatch<StocktakeFragment>) => {

@@ -6,17 +6,14 @@ import {
 import {
   BasicSpinner,
   Divider,
-  useTranslation,
   useIsMediumScreen,
   Box,
   ModalMode,
-  useNotification,
   TableProvider,
   createTableStore,
   createQueryParamsStore,
   QueryParamsProvider,
   useRowStyle,
-  LocaleKey,
 } from '@openmsupply-client/common';
 import { StocktakeLineEditForm } from './StocktakeLineEditForm';
 import { useStocktakeLineEdit } from './hooks';
@@ -47,10 +44,8 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
   isOpen,
 }) => {
   const isDisabled = useStocktake.utils.isDisabled();
-  const { error } = useNotification();
   const [currentItem, setCurrentItem] = useState(item);
   const isMediumScreen = useIsMediumScreen();
-  const t = useTranslation(['inventory']);
   const { draftLines, update, addLine, isLoading, save, nextItem, isError } =
     useStocktakeLineEdit(currentItem);
   const { setRowStyle } = useRowStyle();
@@ -64,16 +59,6 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
     return true;
   };
 
-  const parseError = (error: string): LocaleKey => {
-    switch (true) {
-      case error.indexOf('AdjustmentReasonNotProvided') !== -1:
-        return 'error.provide-reason';
-      case error.indexOf('StockLineReducedBelowZero') !== -1:
-        return 'error.reduced-below-zero';
-    }
-    return 'error.cant-save';
-  };
-
   const onOk = async () => {
     try {
       await save(draftLines);
@@ -85,10 +70,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
         rowIds.forEach(id => setRowStyle(id, highlight));
       }
       onClose();
-    } catch (e) {
-      const msg = t(parseError(`${e}`));
-      error(msg)();
-    }
+    } catch (_) {}
   };
 
   const hasValidBatches = draftLines.length > 0;
