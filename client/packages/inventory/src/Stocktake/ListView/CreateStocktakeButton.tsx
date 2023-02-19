@@ -20,13 +20,13 @@ import {
 } from '@openmsupply-client/common';
 
 interface CreateStocktakeArgs {
-  masterListId?: string;
-  locationId?: string;
+  masterListId: string;
+  locationId: string;
 }
 
 const DEFAULT_ARGS: CreateStocktakeArgs = {
-  masterListId: 'undefined',
-  locationId: 'undefined',
+  masterListId: '',
+  locationId: '',
 };
 
 export const CreateStocktakeButton: React.FC<{
@@ -49,13 +49,11 @@ export const CreateStocktakeButton: React.FC<{
       username: user ? user.name : 'unknown user',
       date: localisedDate(new Date()),
     });
+    const { masterListId } = createStocktakeArgs;
     const input: InsertStocktakeInput = {
       id: FnUtils.generateUUID(),
       description,
-      masterListId:
-        createStocktakeArgs.masterListId === 'undefined'
-          ? undefined
-          : createStocktakeArgs.masterListId,
+      masterListId: masterListId ? masterListId : undefined,
     };
     await mutateAsync(input);
   };
@@ -78,15 +76,12 @@ export const CreateStocktakeButton: React.FC<{
       masterListId: event.target.value?.toString(),
     });
   };
-  const masterLists = [
-    { label: t('label.please-select'), value: 'undefined' },
-    ...(masterListData
-      ? masterListData.nodes.map(list => ({
-          label: list.name,
-          value: list.id,
-        }))
-      : []),
-  ];
+  const masterLists = masterListData
+    ? masterListData.nodes.map(list => ({
+        label: list.name,
+        value: list.id,
+      }))
+    : [];
 
   useEffect(() => {
     fetchMasterLists();
@@ -132,7 +127,6 @@ export const CreateStocktakeButton: React.FC<{
                       onChange={handleMasterListChange}
                       options={masterLists}
                       value={createStocktakeArgs.masterListId}
-                      // renderOption={renderOption}
                     />
                   }
                   label={t('label.master-list')}
