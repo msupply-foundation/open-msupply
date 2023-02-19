@@ -3,13 +3,16 @@ use chrono::{DateTime, Utc};
 use graphql_core::{
     generic_filters::EqualFilterStringInput,
     loader::{DocumentLoader, DocumentLoaderInput},
+    pagination::PaginationInput,
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
 use repository::{
-    EncounterFilter, EqualFilter, ProgramEnrolmentRow, ProgramEventFilter, ProgramEventSortField,
-    Sort,
+    EncounterFilter, EqualFilter, PaginationOption, ProgramEnrolmentRow, ProgramEventFilter,
+    ProgramEventSortField, Sort,
 };
+
+use crate::queries::{EncounterConnector, EncounterFilterInput, EncounterSortInput};
 
 use super::{document::DocumentNode, encounter::EncounterNode, program_event::ProgramEventNode};
 
@@ -85,25 +88,33 @@ impl ProgramEnrolmentNode {
     }
 
     /// The program document
-    pub async fn encounters(&self, ctx: &Context<'_>) -> Result<Vec<EncounterNode>> {
+    pub async fn encounters(
+        &self,
+        ctx: &Context<'_>,
+        page: Option<PaginationInput>,
+        filter: Option<EncounterFilterInput>,
+        sort: Option<EncounterSortInput>,
+    ) -> Result<EncounterConnector> {
         // TODO use loader?
         let context = ctx.service_provider().basic_context()?;
+        let filter = filter
+            .map(|f| f.to_domain_filter())
+            .unwrap_or(EncounterFilter::new())
+            .patient_id(EqualFilter::equal_to(&self.program_row.patient_id))
+            .program(EqualFilter::equal_to(&self.program_row.program));
+
         let entries = ctx
             .service_provider()
             .encounter_service
             .encounters(
                 &context,
-                None,
-                Some(
-                    EncounterFilter::new()
-                        .patient_id(EqualFilter::equal_to(&self.program_row.patient_id))
-                        .program(EqualFilter::equal_to(&self.program_row.program)),
-                ),
-                None,
+                page.map(PaginationOption::from),
+                Some(filter),
+                sort.map(EncounterSortInput::to_domain),
                 self.allowed_docs.clone(),
             )
             .map_err(StandardGraphqlError::from_list_error)?;
-        Ok(entries
+        let nodes = entries
             .rows
             .into_iter()
             .map(|row| EncounterNode {
@@ -111,7 +122,11 @@ impl ProgramEnrolmentNode {
                 store_id: self.store_id.clone(),
                 encounter_row: row,
             })
-            .collect())
+            .collect();
+        Ok(EncounterConnector {
+            total_count: entries.count,
+            nodes,
+        })
     }
 
     pub async fn events(

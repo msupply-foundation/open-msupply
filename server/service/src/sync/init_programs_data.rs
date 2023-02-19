@@ -170,9 +170,9 @@ const IMMUNISATION_ENCOUNTER_5MONTH_UI_SCHEMA: &'static str =
     std::include_str!("./program_schemas/routine_immunisation_5month_encounter_ui_schema.json");
 
 const PATIENT_REPORT: &'static str =
-    std::include_str!("./program_schemas/patient_hiv_care_report.json");
+    std::include_str!("./program_schemas/report_patient_hiv_care.json");
 const DEMO_PATIENT_REPORT: &'static str =
-    std::include_str!("./program_schemas/demo_patient_report.json");
+    std::include_str!("./program_schemas/report_demo_patient.json");
 
 const DEMO_ARG_SCHEMA: &'static str = std::include_str!("./program_schemas/demo_arg_schema.json");
 const DEMO_ARG_UI_SCHEMA: &'static str =
@@ -183,7 +183,10 @@ const ENCOUNTERS_ARG_SCHEMA: &'static str =
 const ENCOUNTERS_ARG_UI_SCHEMA: &'static str =
     std::include_str!("./program_schemas/encounters_arg_ui_schema.json");
 const ENCOUNTERS_REPORT: &'static str =
-    std::include_str!("./program_schemas/encounters_report.json");
+    std::include_str!("./program_schemas/report_encounters.json");
+const VL_ELIGIBILITY_REPORT: &'static str =
+    std::include_str!("./program_schemas/report_vl_eligibility.json");
+const LTFU_REPORT: &'static str = std::include_str!("./program_schemas/report_ltfu.json");
 
 fn person_1() -> RelatedPerson {
     RelatedPerson {
@@ -383,7 +386,7 @@ fn program_hiv_testing() -> hiv_testing_program::HivtestingProgramEnrolment {
 
 fn encounter_hiv_testing_1(time: DateTime<Utc>) -> hiv_testing_encounter::HivtestingEncounter {
     inline_init(|e: &mut hiv_testing_encounter::HivtestingEncounter| {
-        e.status = Some(hiv_testing_encounter::EncounterStatus::Scheduled);
+        e.status = Some(hiv_testing_encounter::EncounterStatus::Completed);
         e.created_datetime = time.to_rfc3339();
         e.start_datetime = time.to_rfc3339();
     })
@@ -391,7 +394,7 @@ fn encounter_hiv_testing_1(time: DateTime<Utc>) -> hiv_testing_encounter::Hivtes
 
 fn encounter_hiv_care_1(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncounter {
     inline_init(|e: &mut hiv_care_encounter::HivcareEncounter| {
-        e.status = Some(hiv_care_encounter::EncounterStatus::Scheduled);
+        e.status = Some(hiv_care_encounter::EncounterStatus::Completed);
         e.created_datetime = time.to_rfc3339();
         e.start_datetime = time.to_rfc3339();
         e.physical_examination = Some(inline_init(
@@ -412,7 +415,7 @@ fn encounter_hiv_care_1(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncou
 
 fn encounter_hiv_care_2(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncounter {
     inline_init(|e: &mut hiv_care_encounter::HivcareEncounter| {
-        e.status = Some(hiv_care_encounter::EncounterStatus::Scheduled);
+        e.status = Some(hiv_care_encounter::EncounterStatus::Cancelled);
         e.created_datetime = time.to_rfc3339();
         e.start_datetime = time.to_rfc3339();
         e.physical_examination = Some(inline_init(
@@ -435,7 +438,7 @@ fn encounter_hiv_care_2(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncou
 
 fn encounter_hiv_care_3(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncounter {
     inline_init(|e: &mut hiv_care_encounter::HivcareEncounter| {
-        e.status = Some(hiv_care_encounter::EncounterStatus::Scheduled);
+        e.status = Some(hiv_care_encounter::EncounterStatus::Completed);
         e.created_datetime = time.to_rfc3339();
         e.start_datetime = time.to_rfc3339();
         e.physical_examination = Some(inline_init(
@@ -458,7 +461,7 @@ fn encounter_hiv_care_3(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncou
 
 fn encounter_hiv_care_4(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncounter {
     inline_init(|e: &mut hiv_care_encounter::HivcareEncounter| {
-        e.status = Some(hiv_care_encounter::EncounterStatus::Scheduled);
+        e.status = Some(hiv_care_encounter::EncounterStatus::Completed);
         e.created_datetime = time.to_rfc3339();
         e.start_datetime = time.to_rfc3339();
         e.physical_examination = Some(inline_init(
@@ -470,9 +473,12 @@ fn encounter_hiv_care_4(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncou
     })
 }
 
-fn encounter_hiv_care_5(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncounter {
+fn encounter_hiv_care_5(
+    time: DateTime<Utc>,
+    status: hiv_care_encounter::EncounterStatus,
+) -> hiv_care_encounter::HivcareEncounter {
     inline_init(|e: &mut hiv_care_encounter::HivcareEncounter| {
-        e.status = Some(hiv_care_encounter::EncounterStatus::Scheduled);
+        e.status = Some(status);
         e.created_datetime = time.to_rfc3339();
         e.start_datetime = time.to_rfc3339();
         e.physical_examination = Some(inline_init(
@@ -1070,7 +1076,7 @@ pub fn init_program_data(
             vec!["HIVCareEncounter".to_string()],
         )
         .unwrap();
-    let time = Utc::now();
+    let time = Utc::now().checked_add_signed(Duration::weeks(1)).unwrap();
     service
         .insert_encounter(
             &ctx,
@@ -1079,7 +1085,11 @@ pub fn init_program_data(
             InsertEncounter {
                 patient_id: patient_1().id,
                 r#type: "HIVCareEncounter".to_string(),
-                data: serde_json::to_value(encounter_hiv_care_5(time)).unwrap(),
+                data: serde_json::to_value(encounter_hiv_care_5(
+                    time,
+                    hiv_care_encounter::EncounterStatus::Scheduled,
+                ))
+                .unwrap(),
                 schema_id: hiv_care_encounter_schema_id.clone(),
                 program: "HIVCareProgram".to_string(),
                 event_datetime: time,
@@ -1142,6 +1152,32 @@ pub fn init_program_data(
             comment: None,
             sub_context: Some("HIVCareProgram".to_string()),
             argument_schema_id: Some(encounters_arg_schema_id),
+        })
+        .unwrap();
+
+    report_repo
+        .upsert_one(&ReportRow {
+            id: uuid(),
+            name: "Viral Load Eligibility".to_string(),
+            r#type: repository::ReportType::OmSupply,
+            template: VL_ELIGIBILITY_REPORT.to_string(),
+            context: ReportContext::Patient,
+            comment: None,
+            sub_context: Some("HIVCareProgram".to_string()),
+            argument_schema_id: None,
+        })
+        .unwrap();
+
+    report_repo
+        .upsert_one(&ReportRow {
+            id: uuid(),
+            name: "Lost to follow up".to_string(),
+            r#type: repository::ReportType::OmSupply,
+            template: LTFU_REPORT.to_string(),
+            context: ReportContext::Patient,
+            comment: None,
+            sub_context: Some("HIVCareProgram".to_string()),
+            argument_schema_id: None,
         })
         .unwrap();
 

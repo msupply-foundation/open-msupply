@@ -1,0 +1,28 @@
+{
+  "index": {
+    "template": "template.html",
+    "header": null,
+    "footer": null,
+    "query": "query.graphql"
+  },
+  "entries": {
+    "style.css": {
+      "type": "Resource",
+      "data": "table,\nth,\ntd {\n  border: 1px dotted #fc9208;\n  border-collapse: collapse;\n}\n\nbody {\n  margin: 10px 5% 10px 5%;\n  font-family: \"Segoe UI\", Tahoma, Geneva, Verdana, sans-serif;\n}\n"
+    },
+    "template.html": {
+      "type": "TeraTemplate",
+      "data": {
+        "output": "Html",
+        "template": "{% set_global timezone = \"Pacific/Port_Moresby\" %}\n\n<style>\n  {% include \"style.css\" %}\n</style>\n\n<body>\n  <h1>{{data.store.storeName}}</h1>\n  <h2>Viral Load Eligibility for</h2>\n\n  <table>\n    <tr>\n      <td>Next Scheduled Appointment</td>\n      <td>Patient ID</td>\n      <td>Last Viral Load Date</td>\n      <td>Last Viral Load</td>\n      <td>Type of VL Collection</td>\n      <td>First Name</td>\n      <td>Last Name</td>\n      <td>Sex</td>\n      <td>Last Visit Date</td>\n      <td>Contact</td>\n    </tr>\n    {% for patient in data.patients.nodes %}\n      {% if patient.programEnrolments | length > 0 %}\n        {% set enrolment = patient.programEnrolments.0 %}\n        {% set encounterNotNull = enrolment.encounters.nodes.0 | default(value=\"{}\") %}\n        {% set eventsByType = encounterNotNull.events | default(value=[]) | group_by(attribute=\"type\") %}\n        \n        <tr>\n          <td>\n            {% if enrolment.nextScheduledEncounters.nodes.0 %}\n              {{enrolment.nextScheduledEncounters.nodes.0.startDatetime | date(format=\"%d/%m/%Y\",timezone=timezone)}}\n            {% endif %}\n          </td>\n          <td>{{enrolment.programPatientId}}</td>\n          <td>\n            {% if eventsByType.viralLoadResultDatetime.0 %}\n              {{eventsByType.viralLoadResultDatetime.0.data | date(format=\"%d/%m/%Y\",timezone=timezone)}}\n            {% endif %}\n          </td>\n          <td>\n            {% if eventsByType.viralLoadResult.0 %}\n              {{eventsByType.viralLoadResult.0.data}}\n            {% endif %}\n          </td>\n          <td>\n            {% if eventsByType.viralLoadTargetting.0 %}\n              {{eventsByType.viralLoadTargetting.0.data}}\n            {% endif %}\n          </td>\n          <td>{{patient.firstName}}</td>\n          <td>{{patient.lastName}}</td>\n          <td>\n            {% if patient.gender == \"FEMALE\" %}\n              Female\n            {% elif patient.gender == \"MALE\" %}\n              Male\n            {% elif patient.gender == \"TRANSGENDER\" %}\n              Transgender\n            {% else %}\n              {{patient.gender}}\n            {% endif %}\n          </td>\n          <td>\n            {% if enrolment.encounters.nodes.0 %}\n              {{enrolment.encounters.nodes.0.startDatetime | date(format=\"%d/%m/%Y\",timezone=timezone)}}\n            {% endif %}\n          </td>\n          <td>{{patient.phone}}</td>\n        </tr>\n      {% endif %}\n    {% endfor %}\n  </table>\n</body>\n"
+      }
+    },
+    "query.graphql": {
+      "type": "GraphGLQuery",
+      "data": {
+        "query": "query ViralLoadEligibility($storeId: String, $now: String) {\n  store(id: $storeId) {\n    ... on StoreNode {\n      storeName\n    }\n  }\n\n  patients(storeId: $storeId) {\n    ... on PatientConnector {\n      nodes {\n        firstName\n        lastName\n        gender\n        phone\n        programEnrolments(filter: { program: { equalTo: \"HIVCareProgram\" } }) {\n          programPatientId\n          encounters(\n            page: { first: 1, offset: 0 }\n            sort: { key: startDatetime, desc: true }\n            filter: {\n              program: { equalTo: \"HIVCareProgram\" }\n              status: { equalTo: \"COMPLETED\" }\n              startDatetime: { beforeOrEqualTo: $now }\n            }\n          ) {\n            nodes {\n              events(\n                at: $now\n                filter: {\n                  type: {\n                    equalAny: [\n                      \"viralLoadResultDatetime\"\n                      \"viralLoadResult\"\n                      \"viralLoadTargetting\"\n                    ]\n                  }\n                }\n              ) {\n                type\n                data\n              }\n              startDatetime\n            }\n          }\n\n          nextScheduledEncounters: encounters(\n            page: { first: 1, offset: 0 }\n            sort: { key: startDatetime, desc: false }\n            filter: {\n              program: { equalTo: \"HIVCareProgram\" }\n              status: { equalTo: \"SCHEDULED\" }\n              startDatetime: { afterOrEqualTo: $now }\n            }\n          ) {\n            nodes {\n              startDatetime\n            }\n          }\n        }\n      }\n    }\n  }\n}\n",
+        "variables": null
+      }
+    }
+  }
+}
