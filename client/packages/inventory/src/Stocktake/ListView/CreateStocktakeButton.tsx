@@ -39,23 +39,18 @@ interface IdName {
 }
 
 const DEFAULT_ARGS: CreateStocktakeArgs = {
-  masterListId: 'undefined',
-  locationId: 'undefined',
+  masterListId: '',
+  locationId: '',
 };
-
-const parseId = (id: string) => (id === 'undefined' ? undefined : id);
 
 const generateOptions = (
   data: IdName[],
-  labelFormatter: (datum: IdName) => string,
-  t: TypedTFunction<LocaleKey>
-) => [
-  { label: t('label.please-select'), value: 'undefined' },
-  ...data.map(datum => ({
+  labelFormatter: (datum: IdName) => string
+) =>
+  data.map(datum => ({
     label: labelFormatter(datum),
     value: datum.id,
-  })),
-];
+  }));
 
 interface SelectInputProps {
   argument: keyof CreateStocktakeArgs;
@@ -125,11 +120,12 @@ export const CreateStocktakeButton: React.FC<{
       username: user ? user.name : 'unknown user',
       date: localisedDate(new Date()),
     });
+    const { locationId, masterListId } = createStocktakeArgs;
     const input: InsertStocktakeInput = {
       id: FnUtils.generateUUID(),
       description,
-      masterListId: parseId(createStocktakeArgs.masterListId),
-      locationId: parseId(createStocktakeArgs.locationId),
+      masterListId: masterListId ? masterListId : undefined,
+      locationId: locationId ? locationId : undefined,
     };
     await mutateAsync(input);
   };
@@ -149,14 +145,12 @@ export const CreateStocktakeButton: React.FC<{
     list =>
       `${list.name} (${list.lines?.totalCount} ${t('label.item', {
         count: list.lines?.totalCount,
-      })})`,
-    t
+      })})`
   );
 
   const locations = generateOptions(
     locationData?.nodes ?? [],
-    location => location.name,
-    t
+    location => location.name
   );
 
   const isLoading = isLoadingMasterLists || isLoadingLocations;
