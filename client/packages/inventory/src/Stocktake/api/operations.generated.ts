@@ -225,6 +225,14 @@ export const UpsertStocktakeLinesDocument = gql`
                 __typename
                 description
               }
+              ... on StockLineReducedBelowZero {
+                __typename
+                description
+              }
+              ... on AdjustmentReasonNotProvided {
+                __typename
+                description
+              }
             }
           }
         }
@@ -238,6 +246,14 @@ export const UpsertStocktakeLinesDocument = gql`
             error {
               description
               ... on CannotEditStocktake {
+                __typename
+                description
+              }
+              ... on StockLineReducedBelowZero {
+                __typename
+                description
+              }
+              ... on AdjustmentReasonNotProvided {
                 __typename
                 description
               }
