@@ -32,6 +32,19 @@
       "type": "Field",
       "conditions": [
         {
+          "field": "arvMedication.endOfSupply",
+          "isTruthy": true
+        }
+      ],
+      "event": {
+        "type": "arvMedicationEndOfSupply",
+        "dataField": "arvMedication.endOfSupply"
+      }
+    },
+    {
+      "type": "Field",
+      "conditions": [
+        {
           "field": "viralLoad.tested",
           "isTruthy": true
         },
@@ -84,6 +97,19 @@
       "event": {
         "type": "viralLoadResultDatetime",
         "dataField": "startDatetime"
+      }
+    },
+    {
+      "type": "Field",
+      "conditions": [
+        {
+          "field": "viralLoad.targetting",
+          "isTruthy": true
+        }
+      ],
+      "event": {
+        "type": "viralLoadTargetting",
+        "dataField": "viralLoad.targetting"
       }
     }
   ]

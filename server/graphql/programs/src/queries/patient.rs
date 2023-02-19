@@ -22,6 +22,8 @@ use service::programs::patient::{
 use crate::types::document::DocumentNode;
 use crate::types::program_enrolment::ProgramEnrolmentNode;
 
+use super::ProgramEnrolmentFilterInput;
+
 pub struct PatientNode {
     pub store_id: String,
     pub patient: Patient,
@@ -123,8 +125,17 @@ impl PatientNode {
         Ok(result)
     }
 
-    pub async fn program_enrolments(&self, ctx: &Context<'_>) -> Result<Vec<ProgramEnrolmentNode>> {
+    pub async fn program_enrolments(
+        &self,
+        ctx: &Context<'_>,
+        filter: Option<ProgramEnrolmentFilterInput>,
+    ) -> Result<Vec<ProgramEnrolmentNode>> {
         let context = ctx.service_provider().basic_context()?;
+        let filter = filter
+            .map(|f| f.to_domain_filter())
+            .unwrap_or(ProgramEnrolmentFilter::new())
+            .patient_id(EqualFilter::equal_to(&self.patient.name_row.id));
+
         let entries = ctx
             .service_provider()
             .program_enrolment_service
@@ -132,10 +143,7 @@ impl PatientNode {
                 &context,
                 Pagination::all(),
                 None,
-                Some(
-                    ProgramEnrolmentFilter::new()
-                        .patient_id(EqualFilter::equal_to(&self.patient.name_row.id)),
-                ),
+                Some(filter),
                 self.allowed_docs.clone(),
             )?;
         Ok(entries
