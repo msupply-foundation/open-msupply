@@ -53,6 +53,7 @@ const ProgramListComponent: FC = () => {
       {
         key: 'type',
         label: 'label.enrolment-program',
+        accessor: row => row.rowData.program
       },
       {
         key: 'programPatientId',
