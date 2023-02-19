@@ -104,24 +104,24 @@ fn generate_response_requisition(
 
     let their_ref = match &request_requisition_row.their_reference {
         Some(reference) => format!(
-            "From request requisition {} ({})",
+            "From internal order {} ({})",
             request_requisition_row.requisition_number.to_string(),
             reference
         ),
         None => format!(
-            "From request requisition {}",
+            "From internal order {}",
             request_requisition_row.requisition_number.to_string(),
         ),
     };
 
     let comment = match &request_requisition_row.comment {
         Some(comment) => format!(
-            "From request requisition {} ({})",
+            "From internal order {} ({})",
             request_requisition_row.requisition_number.to_string(),
             comment
         ),
         None => format!(
-            "From request requisition {}",
+            "From internal order {}",
             request_requisition_row.requisition_number.to_string(),
         ),
     };
