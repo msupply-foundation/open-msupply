@@ -19,6 +19,8 @@ pub struct InsertInput {
     pub description: Option<String>,
     pub is_locked: Option<bool>,
     pub stocktake_date: Option<NaiveDate>,
+    pub master_list_id: Option<String>,
+    pub location_id: Option<String>,
 }
 
 #[derive(Union)]
@@ -72,6 +74,7 @@ pub fn map_response(from: Result<Stocktake, ServiceError>) -> Result<InsertRespo
                 ServiceError::StocktakeAlreadyExists => BadUserInput(formatted_error),
                 ServiceError::InternalError(err) => InternalError(err),
                 ServiceError::DatabaseError(_) => InternalError(formatted_error),
+                ServiceError::InvalidMasterList => BadUserInput(formatted_error),
             };
 
             Err(graphql_error.extend())
@@ -87,6 +90,8 @@ impl InsertInput {
             description,
             stocktake_date,
             is_locked,
+            location_id,
+            master_list_id,
         } = self;
 
         ServiceInput {
@@ -95,6 +100,8 @@ impl InsertInput {
             description,
             stocktake_date,
             is_locked,
+            location_id,
+            master_list_id,
         }
     }
 }
@@ -168,7 +175,9 @@ mod test {
                     comment: Some("comment".to_string()),
                     description: Some("description".to_string()),
                     stocktake_date: Some(NaiveDate::from_ymd(2022, 01, 03)),
-                    is_locked: Some(true)
+                    is_locked: Some(true),
+                    location_id: None,
+                    master_list_id: None,
                 }
             );
             // StocktakeNode result is checked in queries

@@ -11,6 +11,7 @@ import {
   DeleteStocktakeLineInput,
   StocktakeNodeStatus,
   UpdateStocktakeStatusInput,
+  InsertStocktakeInput,
 } from '@openmsupply-client/common';
 import {
   Sdk,
@@ -184,8 +185,22 @@ export const getStocktakeQueries = (sdk: Sdk, storeId: string) => ({
     const result = await sdk.upsertStocktakeLines(input);
     return result;
   },
+  insertStocktake: async (input: InsertStocktakeInput) => {
+    const result =
+      (await sdk.insertStocktake({
+        input,
+        storeId,
+      })) || {};
 
-  insertStocktake: async ({
+    const { insertStocktake } = result;
+
+    if (insertStocktake?.__typename === 'StocktakeNode') {
+      return insertStocktake;
+    }
+
+    throw new Error('Could not create stocktake');
+  },
+  insertStocktakeWithItems: async ({
     description,
     items,
   }: {
