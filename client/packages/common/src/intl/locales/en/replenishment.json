@@ -24,7 +24,6 @@
   "heading.stock-charges": "Stock charges",
   "heading.sub-total": "Sub total",
   "heading.total": "Total",
-  "heading.totals": "Totals",
   "heading.tax": "Tax",
   "heading.grand-total": "Grand total",
   "heading.edit-tax-rate": "Edit tax rate percentage",
@@ -70,7 +69,6 @@
   "messages.internal-order-created-on": "Internal order created on {{date}}",
   "messages.off-hold-confirmation": "This will re-enable status changes",
   "messages.on-hold-confirmation": "This will prevent any further status changes until the hold is removed",
-  "messages.cant-delete-invoices": "Can only delete shipments with a status of 'New'",
   "messages.cant-delete-requisitions": "Can only delete requisitions with a status of 'Draft'",
   "messages.changing-max-mos": "This will change the maximum months of stock target.",
   "messages.changing-min-mos": "This will change the minimum months of stock threshold.",
@@ -98,6 +96,5 @@
   "messages.error-saving-shipment": "Error saving shipment 🥺",
   "messages.saved": "Saved",
   "messages.select-rows-to-delete-them": "Select rows to delete them",
-  "messages.shipment-saved": "Shipment saved 🥳",
-  "messages.delete-shipment-warning": "This will permanently delete shipment(s)"
+  "messages.shipment-saved": "Shipment saved 🥳"
 }
