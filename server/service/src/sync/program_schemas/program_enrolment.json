@@ -8,7 +8,7 @@
           "format": "date-time",
           "type": "string"
         },
-        "programId": {
+        "programEnrolmentId": {
           "description": "Patient's program id",
           "type": "string"
         },

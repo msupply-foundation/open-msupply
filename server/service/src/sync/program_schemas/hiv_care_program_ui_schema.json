@@ -80,7 +80,7 @@
     {
       "type": "Control",
       "label": "Mother's Program ID",
-      "scope": "#/properties/mothersProgramId"
+      "scope": "#/properties/mother/properties/patientId"
     },
     {
       "type": "Group",
