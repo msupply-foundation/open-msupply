@@ -41,6 +41,12 @@ impl Migration for V1_01_03 {
         );"#
         )?;
 
+        #[cfg(feature = "postgres")]
+        sql!(
+            connection,
+            r#"ALTER TYPE language_type ADD VALUE IF NOT EXISTS 'TETUM';"#
+        )?;
+
         Ok(())
     }
 }
