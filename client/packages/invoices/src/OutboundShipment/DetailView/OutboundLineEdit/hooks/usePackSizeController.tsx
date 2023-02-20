@@ -111,7 +111,12 @@ export const usePackSizeController = (lines: DraftOutboundLine[]) => {
   // - There are multiple valid pack sizes to choose from.
   // - There is an expired line with a different pack size.
   // - There are no valid options (i.e. there are no stock lines, only a placeholder).
-  if (ArrayUtils.uniqBy(allPackSizes, 'packSize').length !== 1) {
+  const numberOfPackSizes = ArrayUtils.uniqBy(allPackSizes, 'packSize').length;
+  if (
+    numberOfPackSizes !== 1 ||
+    (numberOfPackSizes === 1 &&
+      allPackSizes.every(({ isExpired }) => isExpired))
+  ) {
     validPackSizes.unshift(createAnyOption(t)());
   }
 
@@ -132,8 +137,14 @@ export const usePackSizeController = (lines: DraftOutboundLine[]) => {
       // If there are multiple, check if all the allocated lines have the same pack size.
       // If so, select that pack size. Otherwise, select `any`.
       if (validPackSizes.length > 1) {
+        const packSizes = allPackSizes.filter(
+          ({ hasAllocated, packSize, isPlaceholder }) =>
+            hasAllocated &&
+            !isPlaceholder &&
+            validPackSizes.some(valid => valid.packSize === packSize)
+        );
         const sameAllocated = ArrayUtils.ifTheSameElseDefault(
-          validPackSizes.filter(({ hasAllocated }) => hasAllocated),
+          packSizes,
           'packSize',
           -1
         );

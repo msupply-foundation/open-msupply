@@ -189,7 +189,7 @@ export const useInboundShipmentColumns = () => {
         label: 'label.sell',
         key: 'sellPricePerPack',
         align: ColumnAlign.Right,
-        width: 100,
+        width: 120,
         accessor: ({ rowData }) => {
           if ('lines' in rowData) {
             const { lines } = rowData;

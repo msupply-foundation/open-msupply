@@ -270,13 +270,13 @@ describe('usePackSizeController', () => {
     expect(result.current.selected).toEqual({ label: '1', value: 1 });
   });
 
-  it('has an initial value of 1 when only the placeholder row has assigned packs', () => {
+  it('has an initial value of Any when only the placeholder row has assigned packs', () => {
     const placeholder = makePlaceholder();
     placeholder.numberOfPacks = 10;
     const arr = [...singleLineWithNoneAssigned, placeholder];
     const { result } = renderHookWithProvider(() => usePackSizeController(arr));
 
-    expect(result.current.selected).toEqual({ label: '1', value: 1 });
+    expect(result.current.selected).toEqual({ label: 'label.any', value: -1 });
   });
 
   it('has an initial value of the unique pack size with no assigned packs', async () => {
@@ -361,6 +361,6 @@ describe('usePackSizeController', () => {
       usePackSizeController(lines)
     );
 
-    expect(result.current.options.map(({ value }) => value)).toEqual([]);
+    expect(result.current.options.map(({ value }) => value)).toEqual([-1]);
   });
 });
