@@ -15,9 +15,9 @@ import {
   GqlProvider,
   QueryClientProvider,
   QueryClient,
-  frontEndHostGraphql,
   useInitialisationStatus,
   InitialisationStatusType,
+  frontEndHostDiscoveryGraphql,
   IconButton,
   RefreshIcon,
 } from '@openmsupply-client/common';
@@ -118,7 +118,7 @@ type DiscoveredServerProps = { server: FrontEndHost; connect: ConnectToServer };
 
 const DiscoveredServerWrapper: React.FC<DiscoveredServerProps> = params => (
   <QueryClientProvider client={new QueryClient()}>
-    <GqlProvider url={frontEndHostGraphql(params.server)}>
+    <GqlProvider url={frontEndHostDiscoveryGraphql(params.server)}>
       <DiscoveredServer {...params} />
     </GqlProvider>
   </QueryClientProvider>

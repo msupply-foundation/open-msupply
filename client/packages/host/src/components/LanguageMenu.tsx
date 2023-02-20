@@ -16,14 +16,6 @@ export const LanguageMenu: React.FC = () => {
     navigate(0);
   };
 
-  const options = [
-    { label: 'عربي', value: 'ar' },
-    { label: 'Français', value: 'fr' },
-    { label: 'English', value: 'en' },
-    { label: 'Española', value: 'es' },
-    { label: 'Tetum', value: 'tet' },
-  ];
-
   const renderOption = (option: Option) => (
     <MenuItem
       key={option.value}
@@ -37,7 +29,7 @@ export const LanguageMenu: React.FC = () => {
   return (
     <Select
       onChange={handleChange}
-      options={options}
+      options={IntlUtils.languageOptions}
       value={i18n.language}
       renderOption={renderOption}
     />

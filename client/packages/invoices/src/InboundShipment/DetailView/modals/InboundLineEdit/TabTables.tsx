@@ -90,7 +90,9 @@ export const QuantityTableComponent: FC<TableProps> = ({
       ['packSize', { Cell: NonNegativeIntegerCell, setter: updateDraftLine }],
       [
         'unitQuantity',
-        { accessor: ({ rowData }) => rowData.numberOfPacks * rowData.packSize },
+        {
+          accessor: ({ rowData }) => rowData.numberOfPacks * rowData.packSize,
+        },
       ],
     ],
     {},
@@ -131,13 +133,15 @@ export const PricingTableComponent: FC<TableProps> = ({
       ],
       [
         'unitQuantity',
-        { accessor: ({ rowData }) => rowData.numberOfPacks * rowData.packSize },
+        {
+          accessor: ({ rowData }) => rowData.numberOfPacks * rowData.packSize,
+        },
       ],
       [
         'lineTotal',
         {
           accessor: ({ rowData }) =>
-            rowData.numberOfPacks * rowData.packSize * rowData.costPricePerPack,
+            rowData.numberOfPacks * rowData.costPricePerPack,
         },
       ],
     ],

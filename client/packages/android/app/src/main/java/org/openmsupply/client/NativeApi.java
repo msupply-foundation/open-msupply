@@ -19,11 +19,10 @@ import java.util.Deque;
 
 @CapacitorPlugin(name = "NativeApi")
 public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
-
     DiscoveryConstants discoveryConstants;
     JSArray discoveredServers;
     Deque<NsdServiceInfo> serversToResolve;
-    JSObject connectedServer;
+    omSupplyServer connectedServer;
     NsdManager discoveryManager;
     boolean isDebug;
     boolean isAdvertising;
@@ -35,6 +34,10 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     @Override
     public void load() {
         super.load();
+
+        CertWebViewClient client = new CertWebViewClient(this.getBridge(), this.getContext().getFilesDir(), this);
+        bridge.setWebViewClient(client);
+
         serversToResolve = new ArrayDeque<NsdServiceInfo>();
         isResolvingServer = false;
         discoveryConstants = new DiscoveryConstants(this.getActivity().getContentResolver());
@@ -47,6 +50,18 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         isAdvertising = false;
         isDiscovering = false;
         shouldRestartDiscovery = false;
+    }
+
+    public boolean getIsDebug() {
+        return isDebug;
+    }
+
+    public omSupplyServer getConnectedServer() {
+        return connectedServer;
+    }
+
+    public String getLocalUrl() {
+        return localUrl;
     }
 
     @Override
@@ -155,18 +170,18 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
 
     @PluginMethod()
     public void connectedServer(PluginCall call) {
-        call.resolve(connectedServer);
+        call.resolve(connectedServer == null ? null : connectedServer.data);
     }
 
     @PluginMethod()
     public void connectToServer(PluginCall call) {
-        JSObject server = call.getData();
+        omSupplyServer server = new omSupplyServer(call.getData());
 
         stopServerDiscovery();
         connectedServer = server;
 
         String url = isDebug ? localUrl
-                : server.getString("protocol") + "://" + server.getString("ip") + ":" + server.getString("port");
+                : server.getUrl();
 
         Bridge bridge = this.getBridge();
         WebView webView = bridge.getWebView();
@@ -269,6 +284,29 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         isDiscovering = false;
         if (shouldRestartDiscovery) {
             startServerDiscovery(null);
+        }
+    }
+
+    public class omSupplyServer {
+        JSObject data;
+        public omSupplyServer(JSObject data) {
+            this.data = data;
+        }
+
+        public String getUrl() {
+            return data.getString("protocol") + "://" + data.getString("ip") + ":" + data.getString("port");
+        }
+
+        public boolean isLocal() {
+            return data.getBool("isLocal");
+        }
+
+        public String getHardwareId() {
+            return data.getString("hardwareId");
+        }
+
+        public int getPort() {
+            return data.getInteger("port");
         }
     }
 }
