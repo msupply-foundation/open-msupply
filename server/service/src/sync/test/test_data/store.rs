@@ -20,7 +20,7 @@ const STORE_1: (&'static str, &'static str) = (
     "organisation_name": "",
     "address_1": "",
     "address_2": "",
-    "logo": "[object Picture]",
+    "logo": "No logo",
     "sync_id_remote_site": 1,
     "address_3": "",
     "address_4": "",
@@ -59,6 +59,7 @@ fn store_1() -> TestSyncPullRecord {
             s.name_id = "1FB32324AF8049248D929CFB35F255BA".to_string();
             s.code = "GEN".to_string();
             s.site_id = 1;
+            s.logo = Some("No logo".to_string());
         })),
     )
 }
@@ -78,7 +79,7 @@ const STORE_2: (&'static str, &'static str) = (
     "organisation_name": "",
     "address_1": "",
     "address_2": "",
-    "logo": "[object Picture]",
+    "logo": "",
     "sync_id_remote_site": 1,
     "address_3": "",
     "address_4": "",
@@ -135,7 +136,7 @@ const STORE_3: (&'static str, &'static str) = (
     "organisation_name": "",
     "address_1": "",
     "address_2": "",
-    "logo": "[object Picture]",
+    "logo": "",
     "sync_id_remote_site": 1,
     "address_3": "",
     "address_4": "",
@@ -192,7 +193,7 @@ const STORE_4: (&'static str, &'static str) = (
     "organisation_name": "",
     "address_1": "",
     "address_2": "",
-    "logo": "[object Picture]",
+    "logo": "",
     "sync_id_remote_site": 1,
     "address_3": "",
     "address_4": "",

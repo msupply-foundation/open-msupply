@@ -40,4 +40,5 @@ export interface TableProps<T extends RecordWithId> {
   pagination?: Pagination & { total?: number };
   onChangePage?: (page: number) => void;
   onRowClick?: null | ((row: T) => void);
+  additionalRows?: JSX.Element[];
 }

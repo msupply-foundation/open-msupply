@@ -50,6 +50,7 @@ pub enum LanguageType {
     Khmer,
     Portuguese,
     Russian,
+    Tetum,
 }
 
 #[derive(SimpleObject)]
@@ -133,6 +134,7 @@ impl LanguageType {
             Language::Khmer => Self::Khmer,
             Language::Portuguese => Self::Portuguese,
             Language::Russian => Self::Russian,
+            Language::Tetum => Self::Tetum,
         }
     }
 }

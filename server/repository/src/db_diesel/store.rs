@@ -134,7 +134,7 @@ fn create_filtered_query(filter: Option<StoreFilter>) -> BoxedStoreQuery {
             code,
             name,
             name_code,
-            site_id,
+            site_id
         } = f;
 
         apply_equal_filter!(query, id, store_dsl::id);

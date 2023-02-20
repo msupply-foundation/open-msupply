@@ -258,6 +258,12 @@ cargo run --bin remote_server_cli -- initialise-from-central -u 'user1:password1
 cargo run --bin remote_server_cli -- refresh-dates
 ```
 
+# Discovery
+
+DNS-SD is available for all targets except for Android (for Android DNS-SD is toggled at runtime and is done in native java code).
+We also start another graphql server with `initialisationStatus` query endpoint, in http mode with permissive cors. 
+This allows site information (initialised/site) to be presented during discovery. 
+
 # Logging
 
 By default, the server logs to console with a logging level of `Info`
@@ -295,7 +301,7 @@ server
 │  │  └─ mock
 │  └─ test_output
 ├─ scripts
-├─ server (includes the logging, front-end hosting, certificates, mDNS discovery, configuration)
+├─ server (includes the logging, front-end hosting, certificates, DNS-SD discovery, configuration)
 ├─ service (these functions provide an intermediary between GraphQL and the repository and houses most of the business logic)
 ├─ target
 ├─ test_output
