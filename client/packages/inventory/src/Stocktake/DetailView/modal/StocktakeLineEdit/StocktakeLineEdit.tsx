@@ -14,6 +14,8 @@ import {
   createQueryParamsStore,
   QueryParamsProvider,
   useRowStyle,
+  useTranslation,
+  useNotification,
 } from '@openmsupply-client/common';
 import { StocktakeLineEditForm } from './StocktakeLineEditForm';
 import { useStocktakeLineEdit } from './hooks';
@@ -49,6 +51,8 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
   const { draftLines, update, addLine, isLoading, save, nextItem, isError } =
     useStocktakeLineEdit(currentItem);
   const { setRowStyle } = useRowStyle();
+  const { error } = useNotification();
+  const t = useTranslation(['inventory']);
 
   const onNext = async () => {
     await save(draftLines);
@@ -60,17 +64,50 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
   };
 
   const onOk = async () => {
-    try {
-      await save(draftLines);
-      if (item) {
-        const highlight = {
-          animation: 'highlight 1.5s',
-        };
-        const rowIds = draftLines.map(line => line.id);
-        rowIds.forEach(id => setRowStyle(id, highlight));
+    const result = await save(draftLines);
+
+    result.batchStocktake?.insertStocktakeLines?.map(response => {
+      if (
+        response.response?.__typename === 'InsertStocktakeLineError' &&
+        response.response?.error?.__typename === 'StockLineReducedBelowZero'
+      ) {
+        return error(t('error.stocktake-has-stock-reduced-below-zero'))();
       }
-      onClose();
-    } catch (_) {}
+    });
+    result.batchStocktake.insertStocktakeLines?.map(response => {
+      if (
+        response.response?.__typename === 'InsertStocktakeLineError' &&
+        response.response?.error?.__typename === 'AdjustmentReasonNotProvided'
+      ) {
+        return error(t('error.provide-reason'))();
+      }
+    });
+
+    result.batchStocktake?.updateStocktakeLines?.map(response => {
+      if (
+        response?.response?.__typename === 'UpdateStocktakeLineError' &&
+        response?.response?.error?.__typename === 'StockLineReducedBelowZero'
+      ) {
+        return error(t('error.stocktake-has-stock-reduced-below-zero'))();
+      }
+    });
+    result.batchStocktake.updateStocktakeLines?.map(response => {
+      if (
+        response?.response?.__typename === 'UpdateStocktakeLineError' &&
+        response?.response?.error?.__typename === 'AdjustmentReasonNotProvided'
+      ) {
+        return error(t('error.provide-reason'))();
+      }
+    });
+
+    if (item) {
+      const highlight = {
+        animation: 'highlight 1.5s',
+      };
+      const rowIds = draftLines.map(line => line.id);
+      rowIds.forEach(id => setRowStyle(id, highlight));
+    }
+    onClose();
   };
 
   const hasValidBatches = draftLines.length > 0;

@@ -57,7 +57,7 @@ const useStatusChangeButton = () => {
     'lines',
   ]);
   const { mutateAsync } = useStocktake.document.update();
-  const { success } = useNotification();
+  const { success, error } = useNotification();
   const t = useTranslation('replenishment');
 
   const options = useMemo(
@@ -72,12 +72,17 @@ const useStatusChangeButton = () => {
 
   const onConfirmStatusChange = async () => {
     if (!selectedOption) return null;
-    try {
-      const result = await mutateAsync({ id, status: selectedOption.value });
-      if (result.updateStocktake.__typename === 'StocktakeNode') {
-        success(t('messages.saved'))();
-      }
-    } catch (_) {}
+        const result = await mutateAsync({ id, status: selectedOption.value });
+    if (result.__typename === 'StocktakeNode') {
+      return success(t('messages.saved'))();
+    }
+
+    switch (result.error.__typename) {
+      case 'StockLinesReducedBelowZero':
+        return error(t('error.stocktake-has-stock-reduced-below-zero'))();
+      default:
+        error(t('error.cant-save'))();
+    }
   };
 
   const getConfirmation = useConfirmationModal({
