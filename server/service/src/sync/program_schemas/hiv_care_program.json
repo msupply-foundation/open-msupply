@@ -115,8 +115,8 @@
         "hivTestType": {
           "$ref": "#/definitions/HIVTestType"
         },
-        "mothersProgramId": {
-          "type": "string"
+        "mother": {
+          "$ref": "#/definitions/HIVRelation"
         },
         "partnerHIVStatus": {
           "$ref": "#/definitions/HIVTestingStatus"
@@ -138,7 +138,7 @@
           ],
           "type": "string"
         },
-        "programId": {
+        "programEnrolmentId": {
           "description": "Patient's program id",
           "type": "string"
         },
@@ -157,6 +157,17 @@
         }
       },
       "required": ["enrolmentDatetime"],
+      "type": "object"
+    },
+    "HIVRelation": {
+      "properties": {
+        "clinic": {
+          "type": "string"
+        },
+        "patientId": {
+          "type": "string"
+        }
+      },
       "type": "object"
     },
     "HIVRiskGroup": {
