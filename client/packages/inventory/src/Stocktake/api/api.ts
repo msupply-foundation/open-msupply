@@ -150,48 +150,13 @@ export const getStocktakeQueries = (sdk: Sdk, storeId: string) => ({
         .map(stocktakeParser.line.toUpdate),
     });
 
-    const { batchStocktake } = result;
-
-    batchStocktake.insertStocktakeLines?.map(response => {
-      if (
-        response.response?.__typename === 'InsertStocktakeLineError' &&
-        (response.response?.error.__typename === 'StockLineReducedBelowZero' ||
-          response.response?.error.__typename === 'AdjustmentReasonNotProvided')
-      ) {
-        throw new Error(response.response?.error.__typename);
-      }
-    });
-
-    batchStocktake.updateStocktakeLines?.map(response => {
-      if (
-        response.response?.__typename === 'UpdateStocktakeLineError' &&
-        (response.response?.error.__typename === 'StockLineReducedBelowZero' ||
-          response.response?.error.__typename === 'AdjustmentReasonNotProvided')
-      ) {
-        throw new Error(response.response?.error.__typename);
-      }
-    });
-
     return result;
   },
   update: async (patch: RecordPatch<StocktakeFragment>) => {
     const input = stocktakeParser.toUpdate(patch);
     const result = (await sdk.updateStocktake({ input, storeId })) || {};
 
-    const { updateStocktake } = result;
-
-    if (
-      updateStocktake.__typename === 'UpdateStocktakeError' &&
-      updateStocktake.error.__typename === 'StockLinesReducedBelowZero'
-    ) {
-      throw new Error(updateStocktake.error.__typename);
-    }
-
-    if (updateStocktake?.__typename === 'StocktakeNode') {
-      return result;
-    }
-
-    throw new Error('Could not update stocktake');
+    return result.updateStocktake;
   },
   deleteStocktakes: async (stocktakes: StocktakeRowFragment[]) => {
     const result =
