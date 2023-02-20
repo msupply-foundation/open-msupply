@@ -32,7 +32,6 @@
   "message.no-supplier": "Inventory Adjustment",
   "messages.locked-description": "This will prevent further changes to the stocktake until it is unlocked.",
   "messages.unlocked-description": "This will re-enable changes to the stocktake.",
-  "messages.cant-delete-stocktakes": "Can only delete stocktakes with a status of 'New'",
   "messages.select-rows-to-delete": "Select rows to delete",
   "messages.click-to-return": "Unable to find a stocktake with that ID. Click OK to return to the stocktake list",
   "messages.confirm-delete-stocktakes_one": "This will permanently remove 1 stocktake",
