@@ -732,7 +732,7 @@ mod tests {
         ProgramEnrolmentRowRepository::new(&connection)
             .upsert_one(&ProgramEnrolmentRow {
                 id: util::uuid::uuid(),
-                name: "doc_name".to_string(),
+                document_name: "doc_name".to_string(),
                 patient_id: mock_name_2().id,
                 program: "ProgramType".to_string(),
                 enrolment_datetime: Utc::now().naive_utc(),

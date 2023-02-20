@@ -45,7 +45,7 @@ pub(crate) fn encounter_fields(
     let encounters = repository.query(pagination, Some(filter.clone()), sort)?;
     let doc_names = encounters
         .iter()
-        .map(|row| row.name.clone())
+        .map(|row| row.document_name.clone())
         .collect::<Vec<_>>();
     let documents = DocumentRepository::new(&ctx.connection).query(
         Pagination::all(),
@@ -59,7 +59,7 @@ pub(crate) fn encounter_fields(
     let rows = encounters
         .into_iter()
         .map(|row| {
-            let doc = match doc_map.remove(&row.name) {
+            let doc = match doc_map.remove(&row.document_name) {
                 Some(doc) => doc,
                 // should not happen:
                 None => return Err(RepositoryError::NotFound),
