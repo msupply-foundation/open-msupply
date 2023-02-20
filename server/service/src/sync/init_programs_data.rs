@@ -187,6 +187,7 @@ const ENCOUNTERS_REPORT: &'static str =
 const VL_ELIGIBILITY_REPORT: &'static str =
     std::include_str!("./program_schemas/report_vl_eligibility.json");
 const LTFU_REPORT: &'static str = std::include_str!("./program_schemas/report_ltfu.json");
+const GBV_REPORT: &'static str = std::include_str!("./program_schemas/report_gbv.json");
 
 fn person_1() -> RelatedPerson {
     RelatedPerson {
@@ -1174,6 +1175,19 @@ pub fn init_program_data(
             name: "Lost to follow up".to_string(),
             r#type: repository::ReportType::OmSupply,
             template: LTFU_REPORT.to_string(),
+            context: ReportContext::Patient,
+            comment: None,
+            sub_context: Some("HIVCareProgram".to_string()),
+            argument_schema_id: None,
+        })
+        .unwrap();
+
+    report_repo
+        .upsert_one(&ReportRow {
+            id: uuid(),
+            name: "Gender-based Violence Summary".to_string(),
+            r#type: repository::ReportType::OmSupply,
+            template: GBV_REPORT.to_string(),
             context: ReportContext::Patient,
             comment: None,
             sub_context: Some("HIVCareProgram".to_string()),

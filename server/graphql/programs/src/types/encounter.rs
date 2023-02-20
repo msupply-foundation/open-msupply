@@ -154,7 +154,7 @@ impl EncounterNode {
     }
 
     pub async fn name(&self) -> &str {
-        &self.encounter_row.name
+        &self.encounter_row.document_name
     }
 
     pub async fn status(&self) -> Option<EncounterNodeStatus> {
@@ -185,7 +185,7 @@ impl EncounterNode {
         let result = loader
             .load_one(DocumentLoaderInput {
                 store_id: self.store_id.clone(),
-                document_name: self.encounter_row.name.clone(),
+                document_name: self.encounter_row.document_name.clone(),
             })
             .await?
             .map(|document| DocumentNode {
@@ -212,8 +212,8 @@ impl EncounterNode {
             .patient_id(EqualFilter::equal_to(&self.encounter_row.patient_id))
             .document_type(EqualFilter::equal_to(&self.encounter_row.r#type));
         if filter.and_then(|f| f.is_current_encounter).unwrap_or(false) {
-            program_filter =
-                program_filter.document_name(EqualFilter::equal_to(&self.encounter_row.name))
+            program_filter = program_filter
+                .document_name(EqualFilter::equal_to(&self.encounter_row.document_name))
         };
         let entries = ctx
             .service_provider()
