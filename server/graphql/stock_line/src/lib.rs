@@ -108,7 +108,8 @@ impl StockLineQueries {
         let filter = filter
             .map(StockLineFilter::from)
             .unwrap_or(StockLineFilter::new())
-            .store_id(EqualFilter::equal_to(&store_id));
+            .store_id(EqualFilter::equal_to(&store_id))
+            .is_available(true);
 
         let stock_lines = service_provider
             .stock_line_service
