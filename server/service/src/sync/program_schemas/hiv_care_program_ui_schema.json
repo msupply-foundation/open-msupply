@@ -83,6 +83,13 @@
       "scope": "#/properties/mother"
     },
     {
+      "type": "Search",
+      "scope": "#/properties/mother",
+      "options": {
+        "query": "patientByCode"
+      }
+    },
+    {
       "type": "Group",
       "label": "Treatment Supporter",
       "elements": [
@@ -118,6 +125,14 @@
           }
         }
       ]
+    },
+    {
+      "type": "Search",
+      "scope": "#/properties/treatmentSupporter",
+      "options": {
+        "query": "currentPatient",
+        "scope": "family/nextOfKin"
+      }
     },
     {
       "type": "Group",
