@@ -214,6 +214,7 @@ const STOCKTAKE_QUERY: &str = r#"query StocktakeQuery($storeId: String, $dataId:
       }
       code
       storeName
+      logo
     }
     ... on NodeError {
       __typename

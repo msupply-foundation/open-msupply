@@ -141,7 +141,7 @@ export const PricingTableComponent: FC<TableProps> = ({
         'lineTotal',
         {
           accessor: ({ rowData }) =>
-            rowData.numberOfPacks * rowData.packSize * rowData.costPricePerPack,
+            rowData.numberOfPacks * rowData.costPricePerPack,
         },
       ],
     ],
