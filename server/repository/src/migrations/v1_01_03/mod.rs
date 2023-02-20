@@ -12,7 +12,12 @@ impl Migration for V1_01_03 {
         use crate::migrations::sql;
 
         sql!(connection, r#"DROP VIEW IF EXISTS item_is_visible;"#)?;
-
+        sql!(
+            connection,
+            r#"ALTER TABLE store 
+                ADD logo TEXT;"#
+        )?;
+        
         #[cfg(not(feature = "postgres"))]
         const STORE_PREFERENCE_TYPE: &'static str = "TEXT";
         #[cfg(feature = "postgres")]
@@ -34,6 +39,12 @@ impl Migration for V1_01_03 {
                 type {STORE_PREFERENCE_TYPE} DEFAULT 'STORE_PREFERENCES',
                 pack_to_one BOOLEAN NOT NULL DEFAULT false
         );"#
+        )?;
+
+        #[cfg(feature = "postgres")]
+        sql!(
+            connection,
+            r#"ALTER TYPE language_type ADD VALUE IF NOT EXISTS 'TETUM';"#
         )?;
 
         Ok(())

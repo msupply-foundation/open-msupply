@@ -30,6 +30,7 @@ import {
   allocateQuantities,
   sumAvailableQuantity,
   getAllocatedQuantity,
+  getAllocatedPacks,
 } from './utils';
 import { useOutbound } from '../../api';
 import { DraftOutboundLine } from '../../../types';
@@ -130,7 +131,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
         />
       }
       height={height}
-      width={900}
+      width={1000}
     >
       <Grid container gap={0.5}>
         <OutboundLineEditForm
@@ -151,6 +152,8 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
           packSizeController={packSizeController}
           updateQuantity={updateQuantity}
           draftOutboundLines={draftOutboundLines}
+          allocatedQuantity={getAllocatedQuantity(draftOutboundLines)}
+          allocatedPacks={getAllocatedPacks(draftOutboundLines)}
         />
       </Grid>
     </Modal>
@@ -164,6 +167,8 @@ interface TableProps {
   packSizeController: PackSizeController;
   updateQuantity: (batchId: string, updateQuantity: number) => void;
   draftOutboundLines: DraftOutboundLine[];
+  allocatedQuantity: number;
+  allocatedPacks: number;
 }
 
 const TableWrapper: React.FC<TableProps> = ({
@@ -173,6 +178,8 @@ const TableWrapper: React.FC<TableProps> = ({
   packSizeController,
   updateQuantity,
   draftOutboundLines,
+  allocatedQuantity,
+  allocatedPacks,
 }) => {
   const t = useTranslation('distribution');
 
@@ -210,6 +217,8 @@ const TableWrapper: React.FC<TableProps> = ({
         onChange={updateQuantity}
         rows={draftOutboundLines}
         item={currentItem}
+        allocatedQuantity={allocatedQuantity}
+        allocatedPacks={allocatedPacks}
       />
     </TableProvider>
   );

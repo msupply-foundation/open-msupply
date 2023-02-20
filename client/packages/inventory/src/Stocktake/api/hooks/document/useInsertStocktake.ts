@@ -2,6 +2,7 @@ import {
   useNavigate,
   useQueryClient,
   useMutation,
+  InsertStocktakeInput,
 } from '@openmsupply-client/common';
 import { useStocktakeApi } from '../utils/useStocktakeApi';
 
@@ -10,10 +11,13 @@ export const useInsertStocktake = () => {
   const navigate = useNavigate();
   const api = useStocktakeApi();
 
-  return useMutation(api.insertStocktake, {
-    onSuccess: ({ stocktakeNumber }) => {
-      navigate(String(stocktakeNumber));
-      return queryClient.invalidateQueries(api.keys.base());
-    },
-  });
+  return useMutation(
+    (input: InsertStocktakeInput) => api.insertStocktake(input),
+    {
+      onSuccess: ({ stocktakeNumber }) => {
+        navigate(String(stocktakeNumber));
+        return queryClient.invalidateQueries(api.keys.base());
+      },
+    }
+  );
 };

@@ -1,6 +1,7 @@
 use repository::{StorageConnection, StoreRow, SyncBufferRow};
 
-use serde::Deserialize;
+use serde::{Deserialize};
+use crate::sync::sync_serde::empty_str_as_option_string;
 
 use super::{
     IntegrationRecords, LegacyTableName, PullDeleteRecordTable, PullUpsertRecord, SyncTranslation,
@@ -16,6 +17,8 @@ pub struct LegacyStoreRow {
     code: String,
     #[serde(rename = "sync_id_remote_site")]
     site_id: i32,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    logo: Option<String>
 }
 
 fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
@@ -54,6 +57,7 @@ impl SyncTranslation for StoreTranslation {
             name_id: data.name_id,
             code: data.code,
             site_id: data.site_id,
+            logo: data.logo,
         };
 
         Ok(Some(IntegrationRecords::from_upsert(

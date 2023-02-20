@@ -13,13 +13,14 @@ import { DiscoveredServers } from './DiscoveredServers';
 
 // TODO should this be disabled if native client doesn't exist ? (since it's navigatable from host)
 
-// When discovery is opened with ?autoconnect=true URL parameter, useNativeClient will try to connect to previously
-// connected server, this is useful when navigating back to discovery from login or initialisation screen
-// to prevent autoconnecting if discovery is desired
+// When discovery is opened, by default, useNativeClient will try to connect to previously connected server
+// if ?autoconnect=false url parameter is present, auto connection will be disabled, this is useful when navigating
+// back to discovery from login or initialisation screen to prevent autoconnecting if discovery is desired
 const isAutoconnect = () => {
   const url = new URL(window.location.href);
   const params = new URLSearchParams(url.search);
-  return params.get('autoconnect') === 'true';
+  // autoconnect deafults to true
+  return params.get('autoconnect') !== 'false';
 };
 
 const isTimedOut = () => {

@@ -238,6 +238,7 @@ impl LoginService {
                 4 => Language::Khmer,
                 5 => Language::Portuguese,
                 6 => Language::Russian,
+                7 => Language::Tetum,
                 _ => Language::English,
             },
         };
