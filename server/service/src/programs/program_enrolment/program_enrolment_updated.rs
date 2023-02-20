@@ -37,7 +37,7 @@ pub(crate) fn program_enrolment_updated(
         name: document.name.clone(),
         patient_id: patient_id.to_string(),
         enrolment_datetime,
-        program_patient_id: program.enrolment_patient_id,
+        program_patient_id: program.program_id,
     };
     ProgramEnrolmentRowRepository::new(con).upsert_one(&program_row)?;
 

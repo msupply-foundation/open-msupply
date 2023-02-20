@@ -11,14 +11,13 @@
       "scope": "#/properties/enrolmentDatetime",
       "label": "Enrolment Date",
       "options": {
-        "readonly": true,
         "dateOnly": true
       }
     },
     {
       "type": "IdGenerator",
-      "label": "Enrolment Patient Id",
-      "scope": "#/properties/enrolmentPatientId",
+      "label": "Patient Program Id",
+      "scope": "#/properties/programId",
       "options": {
         "parts": [
           {
@@ -80,7 +79,8 @@
     },
     {
       "type": "Control",
-      "scope": "#/properties/mother"
+      "label": "Mother's Program ID",
+      "scope": "#/properties/mothersProgramId"
     },
     {
       "type": "Group",
@@ -121,7 +121,7 @@
     },
     {
       "type": "Group",
-      "label": "Referral Details",
+      "label": "Referral or Transfer in Details",
       "elements": [
         {
           "type": "Control",
@@ -138,7 +138,10 @@
               ["TRANSFER_IN", "Transfer in"],
               ["STI", "STI"],
               ["ANC", "ANC"],
-              ["EXPOSED_INFANT_WELL_BABY_CLINIC", "Exposed infant well baby clinic"],
+              [
+                "EXPOSED_INFANT_WELL_BABY_CLINIC",
+                "Exposed infant well baby clinic"
+              ],
               ["IN_PATIENT", "In patient"]
             ]
           }
@@ -155,6 +158,22 @@
               ["PrEP", "PrEP"]
             ]
           }
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/clinicTransferredFrom"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/previousClinicARTStartDate"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/dateTransferredIn"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/previousClinicId"
         }
       ]
     }
