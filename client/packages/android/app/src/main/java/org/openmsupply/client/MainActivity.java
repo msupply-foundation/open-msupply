@@ -2,7 +2,6 @@ package org.openmsupply.client;
 
 import android.os.Bundle;
 import com.getcapacitor.BridgeActivity;
-import org.openmsupply.client.certplugin.CertPlugin;
 
 public class MainActivity extends BridgeActivity {
     RemoteServer server = new RemoteServer();
@@ -11,7 +10,6 @@ public class MainActivity extends BridgeActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         registerPlugin(NativeApi.class);
-        registerPlugin(CertPlugin.class);
         super.onCreate(savedInstanceState);
 
         discoveryConstants = new DiscoveryConstants(getContentResolver());

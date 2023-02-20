@@ -1443,6 +1443,8 @@ export type InsertStocktakeInput = {
   description?: InputMaybe<Scalars['String']>;
   id: Scalars['String'];
   isLocked?: InputMaybe<Scalars['Boolean']>;
+  locationId?: InputMaybe<Scalars['String']>;
+  masterListId?: InputMaybe<Scalars['String']>;
   stocktakeDate?: InputMaybe<Scalars['NaiveDate']>;
 };
 
@@ -1844,7 +1846,8 @@ export enum LanguageType {
   Laos = 'LAOS',
   Portuguese = 'PORTUGUESE',
   Russian = 'RUSSIAN',
-  Spanish = 'SPANISH'
+  Spanish = 'SPANISH',
+  Tetum = 'TETUM'
 }
 
 export type LocationConnector = {

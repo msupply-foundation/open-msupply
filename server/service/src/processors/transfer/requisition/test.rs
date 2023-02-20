@@ -239,11 +239,11 @@ impl RequisitionTransferTester {
         assert_eq!(response_requisition.name_id, self.request_store.name_id);
         assert_eq!(
             response_requisition.their_reference,
-            Some("From request requisition 3 (some reference)".to_string())
+            Some("From internal order 3 (some reference)".to_string())
         );
         assert_eq!(
             response_requisition.comment,
-            Some("From request requisition 3 (some comment)".to_string())
+            Some("From internal order 3 (some comment)".to_string())
         );
         assert_eq!(
             response_requisition.max_months_of_stock,

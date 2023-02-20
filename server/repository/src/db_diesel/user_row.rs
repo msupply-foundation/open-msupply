@@ -26,6 +26,7 @@ pub enum Language {
     Khmer,
     Portuguese,
     Russian,
+    Tetum,
 }
 
 impl Default for Language {

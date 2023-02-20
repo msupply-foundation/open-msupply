@@ -6,11 +6,14 @@ use repository::{
 };
 use util::uuid::uuid;
 
-use crate::{activity_log::system_activity_log_entry, number::next_number};
+use crate::{
+    activity_log::system_activity_log_entry, number::next_number,
+    store_preference::get_store_preferences,
+};
 
 use super::{
-    common::generate_inbound_shipment_lines, Operation, ShipmentTransferProcessor,
-    ShipmentTransferProcessorRecord,
+    common::{convert_invoice_line_to_single_pack, generate_inbound_shipment_lines},
+    Operation, ShipmentTransferProcessor, ShipmentTransferProcessorRecord,
 };
 
 const DESCRIPTION: &'static str = "Create inbound shipment from outbound shipment";
@@ -76,6 +79,12 @@ impl ShipmentTransferProcessor for CreateInboundShipmentProcessor {
             &new_inbound_shipment.id,
             &outbound_shipment,
         )?;
+        let store_preferences = get_store_preferences(connection, &new_inbound_shipment.store_id)?;
+
+        let new_inbound_lines = match store_preferences.pack_to_one {
+            true => convert_invoice_line_to_single_pack(new_inbound_lines),
+            false => new_inbound_lines,
+        };
 
         InvoiceRowRepository::new(connection).upsert_one(&new_inbound_shipment)?;
 

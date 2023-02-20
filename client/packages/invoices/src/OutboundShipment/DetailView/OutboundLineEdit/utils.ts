@@ -24,6 +24,9 @@ export const getAllocatedQuantity = (draftOutboundLines: DraftOutboundLine[]) =>
     0
   );
 
+export const getAllocatedPacks = (draftOutboundLines: DraftOutboundLine[]) =>
+  draftOutboundLines.reduce((acc, { numberOfPacks }) => acc + numberOfPacks, 0);
+
 export const issueStock = (
   draftOutboundLines: DraftOutboundLine[],
   idToIssue: string,
@@ -162,7 +165,7 @@ const allocateToBatches = ({
     if (toAllocate < 0) return null;
 
     const availableUnits =
-      (Math.floor(draftOutboundLine.stockLine?.availableNumberOfPacks ?? 0)) *
+      Math.floor(draftOutboundLine.stockLine?.availableNumberOfPacks ?? 0) *
       draftOutboundLine.packSize;
     const unitsToAllocate = Math.min(toAllocate, availableUnits);
     const numberOfPacks = unitsToAllocate / draftOutboundLine.packSize;
