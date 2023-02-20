@@ -83,7 +83,8 @@ impl Loader<StockLineByItemAndStoreIdLoaderInput> for StockLineByItemAndStoreIdL
                 .item_id(EqualFilter::equal_any(IdPair::get_all_secondary_ids(
                     &item_and_store_ids,
                 )))
-                .store_id(EqualFilter::equal_to(store_id)),
+                .store_id(EqualFilter::equal_to(store_id))
+                .is_available(true),
             None,
         )?;
 
