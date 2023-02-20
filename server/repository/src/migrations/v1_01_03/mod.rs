@@ -12,7 +12,12 @@ impl Migration for V1_01_03 {
         use crate::migrations::sql;
 
         sql!(connection, r#"DROP VIEW IF EXISTS item_is_visible;"#)?;
-
+        sql!(
+            connection,
+            r#"ALTER TABLE store 
+                ADD logo TEXT;"#
+        )?;
+        
         #[cfg(not(feature = "postgres"))]
         const STORE_PREFERENCE_TYPE: &'static str = "TEXT";
         #[cfg(feature = "postgres")]

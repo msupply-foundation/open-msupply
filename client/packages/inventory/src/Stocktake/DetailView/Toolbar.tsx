@@ -11,19 +11,22 @@ import {
   InputWithLabelRow,
   DatePickerInput,
   Formatter,
+  InfoPanel,
 } from '@openmsupply-client/common';
 import { useStocktake } from '../api';
 
 export const Toolbar: FC = () => {
   const t = useTranslation('inventory');
   const isDisabled = useStocktake.utils.isDisabled();
-  const { stocktakeDate, description, update } = useStocktake.document.fields([
-    'description',
-    'stocktakeDate',
-  ]);
+  const { isLocked, stocktakeDate, description, update } =
+    useStocktake.document.fields(['isLocked', 'description', 'stocktakeDate']);
   const onDelete = useStocktake.line.deleteSelected();
   const [descriptionBuffer, setDescriptionBuffer] = useBufferState(description);
   const [bufferedDate, setBufferedDate] = useBufferState(stocktakeDate);
+  const infoMessage = isLocked
+    ? t('messages.on-hold-stock-take')
+    : t('messages.finalised-stock-take');
+
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
       <Grid
@@ -63,6 +66,7 @@ export const Toolbar: FC = () => {
               />
             }
           />
+          {isDisabled && <InfoPanel message={infoMessage} />}
         </Grid>
 
         <Grid item>
