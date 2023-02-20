@@ -53,7 +53,7 @@ impl ProgramEnrolmentNode {
 
     /// The program document name
     pub async fn name(&self) -> &str {
-        &self.program_row.name
+        &self.program_row.document_name
     }
 
     pub async fn patient_id(&self) -> &str {
@@ -75,7 +75,7 @@ impl ProgramEnrolmentNode {
         let result = loader
             .load_one(DocumentLoaderInput {
                 store_id: self.store_id.clone(),
-                document_name: self.program_row.name.clone(),
+                document_name: self.program_row.document_name.clone(),
             })
             .await?
             .map(|document| DocumentNode {

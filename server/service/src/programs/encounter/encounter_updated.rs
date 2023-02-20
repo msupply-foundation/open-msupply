@@ -34,7 +34,7 @@ pub(crate) fn update_encounter_row(
 
     let repo = EncounterRepository::new(con);
     let row = repo
-        .query_by_filter(EncounterFilter::new().name(EqualFilter::equal_to(&doc.name)))?
+        .query_by_filter(EncounterFilter::new().document_name(EqualFilter::equal_to(&doc.name)))?
         .pop();
     let id = match row {
         Some(row) => row.id,
@@ -43,7 +43,7 @@ pub(crate) fn update_encounter_row(
     let row = EncounterRow {
         id,
         r#type: doc.r#type.clone(),
-        name: doc.name.clone(),
+        document_name: doc.name.clone(),
         patient_id: patient_id.to_string(),
         program: program.to_string(),
         created_datetime: validated_encounter.created_datetime,

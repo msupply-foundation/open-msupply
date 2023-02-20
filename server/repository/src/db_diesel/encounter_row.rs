@@ -21,7 +21,7 @@ table! {
     encounter (id) {
         id -> Text,
         #[sql_name = "type"] type_ -> Text,
-        name -> Text,
+        document_name -> Text,
         patient_id -> Text,
         program -> Text,
         created_datetime -> Timestamp,
@@ -41,7 +41,7 @@ pub struct EncounterRow {
     #[column_name = "type_"]
     pub r#type: String,
     /// The encounter document name
-    pub name: String,
+    pub document_name: String,
     pub patient_id: String,
     pub program: String,
     pub created_datetime: NaiveDateTime,
