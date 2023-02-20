@@ -253,7 +253,9 @@ impl<'a> DocumentRepository<'a> {
 
         if let Some(sort) = sort {
             match sort.key {
-                DocumentSortField::Name => apply_sort!(query, sort, latest_document::dsl::name),
+                DocumentSortField::Name => {
+                    apply_sort!(query, sort, latest_document::dsl::name)
+                }
                 DocumentSortField::Type => {
                     apply_sort!(query, sort, latest_document::dsl::type_)
                 }

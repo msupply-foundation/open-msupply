@@ -353,6 +353,7 @@ mod test {
 
         // success insert
         let encounter = inline_init(|e: &mut SchemaEncounter| {
+            e.created_datetime = Utc::now().to_rfc3339();
             e.start_datetime = Utc::now().to_rfc3339();
             e.status = Some(EncounterStatus::Scheduled);
         });
@@ -382,7 +383,9 @@ mod test {
         assert_eq!(found.data, serde_json::to_value(encounter.clone()).unwrap());
         // check that encounter table has been updated
         let row = EncounterRepository::new(&ctx.connection)
-            .query_by_filter(EncounterFilter::new().name(EqualFilter::equal_to(&found.name)))
+            .query_by_filter(
+                EncounterFilter::new().document_name(EqualFilter::equal_to(&found.name)),
+            )
             .unwrap()
             .pop();
         assert!(row.is_some());

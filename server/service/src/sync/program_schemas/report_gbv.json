@@ -1,0 +1,28 @@
+{
+  "index": {
+    "template": "template.html",
+    "header": null,
+    "footer": null,
+    "query": "query.graphql"
+  },
+  "entries": {
+    "style.css": {
+      "type": "Resource",
+      "data": "table,\nth,\ntd {\n  border: 1px dotted #fc9208;\n  border-collapse: collapse;\n}\n\nbody {\n  margin: 10px 5% 10px 5%;\n  font-family: \"Segoe UI\", Tahoma, Geneva, Verdana, sans-serif;\n}\n"
+    },
+    "template.html": {
+      "type": "TeraTemplate",
+      "data": {
+        "output": "Html",
+        "template": "{% set_global timezone = \"Pacific/Port_Moresby\" %}\n\n<style>\n  {% include \"style.css\" %}\n</style>\n\n<body>\n  <h1>CT GBV Register For</h1>\n  <h2>{{data.store.storeName}}</h2>\n\n  <table>\n    <tr>\n      <td>Visit Date</td>\n      <td>Patient ID</td>\n      <td>Sex</td>\n      <td>Date Of Birth</td>\n      <td>GBV Screened</td>\n      <td>GBV Type</td>\n      <td>GBV Referred</td>\n      <td>IPV Case</td>\n      <td>Rape Case</td>\n      <td>GBV Services Provided</td>\n      <td>GBV Service Type</td>\n    </tr>\n    {% for patient in data.patients.nodes %}\n      {% if patient.programEnrolments | length > 0 %}\n        {% set enrolment = patient.programEnrolments.0 %}\n          {% if enrolment.encounters.nodes | length > 0 %}\n            {% set encounter = enrolment.encounters.nodes.0 %}\n            {% set gbv = encounter.document.data.genderBasedViolence %}\n            <tr>\n              <td>\n                {{encounter.startDatetime | date(format=\"%d/%m/%Y\",timezone=timezone)}}\n              </td>\n              <td>{{enrolment.programPatientId}}</td>\n              <td>\n                {% if patient.gender == \"FEMALE\" %}\n                  Female\n                {% elif patient.gender == \"MALE\" %}\n                  Male\n                {% elif patient.gender == \"TRANSGENDER\" %}\n                  Transgender\n                {% else %}\n                  {{patient.gender}}\n                {% endif %}\n              </td>\n              <td>\n                {{patient.dateOfBirth | date(format=\"%d/%m/%Y\",timezone=timezone)}}\n              </td>\n              <td>\n                {% if gbv.screened %}\n                  {{gbv.screened}}\n                {% endif %}\n              </td>\n              <td>\n                {% if gbv.type %}\n                  {{gbv.type}}\n                {% endif %}\n              </td>\n              <td>\n                {% if gbv.referredForExternalServices %}\n                  {{gbv.referredForExternalServices}}\n                {% endif %}\n              </td>\n              <td>\n                {% if gbv.intimatePartnerViolence %}\n                  {{gbv.intimatePartnerViolence}}\n                {% endif %}\n              </td>\n              <td>\n                {% if gbv.rape %}\n                  {{gbv.rape}}\n                {% endif %}\n              </td>             \n              <td>\n                {% if gbv.postServiceProvided %}\n                  {{gbv.postServiceProvided}}\n                {% endif %}\n              </td>\n              <td>\n                {% if gbv.receivedServiceType %}\n                  {{gbv.receivedServiceType}}\n                {% endif %}\n              </td>\n            </tr>\n          {% endif %}\n      {% endif %}\n    {% endfor %}\n  </table>\n</body>\n"
+      }
+    },
+    "query.graphql": {
+      "type": "GraphGLQuery",
+      "data": {
+        "query": "query GBVSummary($storeId: String, $now: String) {\n  store(id: $storeId) {\n    ... on StoreNode {\n      storeName\n    }\n  }\n\n  patients(storeId: $storeId) {\n    ... on PatientConnector {\n      nodes {\n        gender\n        dateOfBirth\n        programEnrolments(filter: { program: { equalTo: \"HIVCareProgram\" } }) {\n          programPatientId\n          encounters(\n            page: { first: 1, offset: 0 }\n            sort: { key: startDatetime, desc: true }\n            filter: {\n              program: { equalTo: \"HIVCareProgram\" }\n              startDatetime: { beforeOrEqualTo: $now }\n              documentData: { like: \"\\\"genderBasedViolence\\\":\" }\n            }\n          ) {\n            nodes {\n              startDatetime\n              document {\n                data\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n}\n",
+        "variables": null
+      }
+    }
+  }
+}

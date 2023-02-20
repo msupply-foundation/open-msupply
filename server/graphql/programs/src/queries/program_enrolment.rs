@@ -52,7 +52,7 @@ pub struct ProgramEnrolmentFilterInput {
     pub program_patient_id: Option<EqualFilterStringInput>,
 }
 impl ProgramEnrolmentFilterInput {
-    fn to_domain_filter(self) -> ProgramEnrolmentFilter {
+    pub fn to_domain_filter(self) -> ProgramEnrolmentFilter {
         ProgramEnrolmentFilter {
             program: self.program.map(EqualFilter::from),
             patient_id: self.patient_id.map(EqualFilter::from),

@@ -1,0 +1,28 @@
+{
+  "index": {
+    "template": "template.html",
+    "header": null,
+    "footer": null,
+    "query": "query.graphql"
+  },
+  "entries": {
+    "query.graphql": {
+      "type": "GraphGLQuery",
+      "data": {
+        "query": "query LTFU($storeId: String, $now: String) {\n  store(id: $storeId) {\n    ... on StoreNode {\n      storeName\n    }\n  }\n\n  patients(storeId: $storeId) {\n    ... on PatientConnector {\n      nodes {\n        firstName\n        lastName\n        gender\n        phone\n        programEnrolments(filter: { program: { equalTo: \"HIVCareProgram\" } }) {\n          programPatientId\n          events(at: $now, filter: { type: { equalTo: \"programStatus\" } }) {\n            type\n            data\n          }\n          encounters(\n            page: { first: 1, offset: 0 }\n            sort: { key: startDatetime, desc: true }\n            filter: {\n              program: { equalTo: \"HIVCareProgram\" }\n              status: { equalTo: \"COMPLETED\" }\n              startDatetime: { beforeOrEqualTo: $now }\n            }\n          ) {\n            nodes {\n              events(\n                at: $now\n                filter: { type: { equalTo: \"arvMedicationEndOfSupply\" } }\n              ) {\n                type\n                data\n              }\n\n              startDatetime\n            }\n          }\n\n          nextScheduledEncounters: encounters(\n            page: { first: 1, offset: 0 }\n            sort: { key: startDatetime, desc: false }\n            filter: {\n              program: { equalTo: \"HIVCareProgram\" }\n              status: { equalTo: \"SCHEDULED\" }\n              startDatetime: { afterOrEqualTo: $now }\n            }\n          ) {\n            nodes {\n              startDatetime\n            }\n          }\n        }\n      }\n    }\n  }\n}\n",
+        "variables": null
+      }
+    },
+    "style.css": {
+      "type": "Resource",
+      "data": "table,\nth,\ntd {\n  border: 1px dotted #fc9208;\n  border-collapse: collapse;\n}\n\nbody {\n  margin: 10px 5% 10px 5%;\n  font-family: \"Segoe UI\", Tahoma, Geneva, Verdana, sans-serif;\n}\n"
+    },
+    "template.html": {
+      "type": "TeraTemplate",
+      "data": {
+        "output": "Html",
+        "template": "{% set_global timezone = \"Pacific/Port_Moresby\" %}\n\n<style>\n  {% include \"style.css\" %}\n</style>\n\n<body>\n  <h1>Lost to Follow up for</h1>\n  <h2>{{data.store.storeName}}</h2>\n\n  <table>\n    <tr>\n      <td>Next Appt.</td>\n      <td>Patient ID</td>\n      <td>First Name</td> \n      <td>Last Name</td>\n      <td>Sex</td>\n      <td>LTFU Status</td>\n      <td>Last Visit Date</td>\n      <td>DWM</td>\n      <td>Contact</td>\n    </tr>\n    {% for patient in data.patients.nodes %}\n      {% if patient.programEnrolments | length > 0 %}\n        {% set enrolment = patient.programEnrolments.0 %}\n        {% set enrolmentEvents = enrolment.events | default(value=\"{}\") %}\n        {% set eventsByType = enrolmentEvents | default(value=[]) | group_by(attribute=\"type\") %}\n        \n        {% set encounterNotNull = enrolment.encounters.nodes.0 | default(value=\"{}\") %}\n        {% set encounterEventsByType = encounterNotNull.events | default(value=[]) | group_by(attribute=\"type\") %}\n\n        <tr>\n          <td>\n            {% if enrolment.nextScheduledEncounters.nodes.0 %}\n              {{enrolment.nextScheduledEncounters.nodes.0.startDatetime | date(format=\"%d/%m/%Y\",timezone=timezone)}}\n            {% endif %}\n          </td>\n          <td>{{enrolment.programPatientId}}</td>               \n          <td>{{patient.firstName}}</td>\n          <td>{{patient.lastName}}</td>\n          <td>\n            {% if patient.gender == \"FEMALE\" %}\n              Female\n            {% elif patient.gender == \"MALE\" %}\n              Male\n            {% elif patient.gender == \"TRANSGENDER\" %}\n              Transgender\n            {% else %}\n              {{patient.gender}}\n            {% endif %}\n          </td>\n          <td>\n            {% if eventsByType.programStatus.0 %}\n              {{eventsByType.programStatus.0.data}}\n            {% endif %}\n          </td>\n          <td>\n            {% if enrolment.encounters.nodes.0 %}\n              {{enrolment.encounters.nodes.0.startDatetime | date(format=\"%d/%m/%Y\",timezone=timezone)}}\n            {% endif %}\n          </td>\n          <td>           \n            {% if encounterEventsByType.arvMedicationEndOfSupply.0 %}\n              {% set endOfSupplySec = encounterEventsByType.arvMedicationEndOfSupply.0.data | date(format=\"%s\") | int %}\n              {% set nowSec = now() | date(format=\"%s\") | int %}\n              {% set diffDays = (nowSec - endOfSupplySec) / 60 / 60 / 24 | int %}             \n              {{diffDays}}\n            {% endif %}          \n          </td>\n          <td>{{patient.phone}}</td>\n        </tr>\n      {% endif %}\n    {% endfor %}\n  </table>\n</body>\n"
+      }
+    }
+  }
+}

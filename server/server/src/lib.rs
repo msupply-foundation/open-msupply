@@ -7,10 +7,13 @@ use crate::{
 };
 
 use self::middleware::{compress as compress_middleware, logger as logger_middleware};
+use actix_cors::Cors;
 use anyhow::Context;
 use graphql_core::loader::{get_loaders, LoaderRegistry};
 
-use graphql::{attach_graphql_schema, GraphSchemaData, GraphqlSchema};
+use graphql::{
+    attach_discovery_graphql_schema, attach_graphql_schema, GraphSchemaData, GraphqlSchema,
+};
 use log::info;
 use repository::{get_storage_connection_manager, migrations::migrate};
 
@@ -198,9 +201,24 @@ pub async fn start_server(
     // Don't do discovery in android
     #[cfg(any(target_os = "windows", target_os = "macos", target_os = "linux"))]
     {
-        info!("Starting server discovery",);
+        info!("Starting server DNS-SD discovery",);
         discovery::start_discovery(certificates.protocol(), settings.server.port, machine_uid);
     }
+
+    info!("Starting discovery graphql server",);
+    let closure_service_provider = service_provider.clone();
+    // See attach_discovery_graphql_schema for more details
+    actix_web::rt::spawn(
+        HttpServer::new(move || {
+            App::new()
+                .wrap(Cors::permissive())
+                .configure(attach_discovery_graphql_schema(
+                    closure_service_provider.clone(),
+                ))
+        })
+        .bind(settings.server.discovery_address())?
+        .run(),
+    );
 
     // ADD SYSTEM USER
     service_provider

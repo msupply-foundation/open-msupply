@@ -1,6 +1,6 @@
 use async_graphql::*;
 use graphql_core::{
-    generic_filters::{DatetimeFilterInput, EqualFilterStringInput},
+    generic_filters::{DatetimeFilterInput, EqualFilterStringInput, SimpleStringFilterInput},
     map_filter,
     pagination::PaginationInput,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
@@ -8,7 +8,7 @@ use graphql_core::{
 };
 use repository::{
     DatetimeFilter, EncounterFilter, EncounterSort, EncounterSortField, EqualFilter,
-    PaginationOption,
+    PaginationOption, SimpleStringFilter,
 };
 use service::auth::{CapabilityTag, Resource, ResourceAccessRequest};
 
@@ -59,12 +59,13 @@ pub struct EncounterFilterInput {
     pub r#type: Option<EqualFilterStringInput>,
     pub patient_id: Option<EqualFilterStringInput>,
     pub program: Option<EqualFilterStringInput>,
-    pub name: Option<EqualFilterStringInput>,
+    pub document_name: Option<EqualFilterStringInput>,
     pub created_datetime: Option<DatetimeFilterInput>,
     pub start_datetime: Option<DatetimeFilterInput>,
     pub end_datetime: Option<DatetimeFilterInput>,
     pub status: Option<EqualFilterEncounterStatusInput>,
     pub clinician_id: Option<EqualFilterStringInput>,
+    pub document_data: Option<SimpleStringFilterInput>,
 }
 
 impl EncounterFilterInput {
@@ -74,7 +75,7 @@ impl EncounterFilterInput {
             r#type: self.r#type.map(EqualFilter::from),
             patient_id: self.patient_id.map(EqualFilter::from),
             program: self.program.map(EqualFilter::from),
-            name: self.name.map(EqualFilter::from),
+            document_name: self.document_name.map(EqualFilter::from),
             created_datetime: self.created_datetime.map(DatetimeFilter::from),
             start_datetime: self.start_datetime.map(DatetimeFilter::from),
             status: self
@@ -82,6 +83,7 @@ impl EncounterFilterInput {
                 .map(|s| map_filter!(s, EncounterNodeStatus::to_domain)),
             end_datetime: self.end_datetime.map(DatetimeFilter::from),
             clinician_id: self.clinician_id.map(EqualFilter::from),
+            document_data: self.document_data.map(SimpleStringFilter::from),
         }
     }
 }

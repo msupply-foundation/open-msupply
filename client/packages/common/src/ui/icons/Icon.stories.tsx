@@ -30,6 +30,7 @@ import { EyeOffIcon } from './EyeOff';
 import { FilterIcon } from './Filter';
 import { HomeIcon } from './Home';
 import { InfoIcon } from './Info';
+import { InfoOutlineIcon } from './InfoOutline';
 import { InvoiceIcon } from './Invoice';
 import { MedicineIcon } from './MedicineIcon';
 import { MSupplyGuy, AnimatedMSupplyGuy } from './MSupplyGuy';
@@ -113,6 +114,7 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <FilterIcon {...args} />, name: 'Filter' },
     { icon: <HomeIcon {...args} />, name: 'Home' },
     { icon: <InfoIcon {...args} />, name: 'Info' },
+    { icon: <InfoOutlineIcon {...args} />, name: 'InfoOutline' },
     { icon: <InvoiceIcon {...args} />, name: 'Invoice' },
     { icon: <MSupplyGuy {...args} size="medium" />, name: 'MSupplyGuy' },
     {

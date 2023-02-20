@@ -22,8 +22,6 @@
   "label.weight": "Weight",
   "messages.click-to-return-to-item-list": "Unable to find an item with that ID. Click OK to return to the list of items.",
   "messages.click-to-return-to-master-lists": "Unable to find a master list with that ID. Click OK to return to the list of master lists",
-  "tab.general": "General",
-  "tab.master-lists": "Master Lists",
   "title.amc": "AMC",
   "title.categories": "Categories",
   "title.details": "Details",

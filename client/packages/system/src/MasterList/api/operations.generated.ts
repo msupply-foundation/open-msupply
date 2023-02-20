@@ -10,7 +10,7 @@ export type MasterListLineFragment = { __typename: 'MasterListLineNode', id: str
 
 export type MasterListFragment = { __typename: 'MasterListNode', name: string, code: string, description: string, id: string, lines: { __typename: 'MasterListLineConnector', nodes: Array<{ __typename: 'MasterListLineNode', id: string, item: { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null } }> } };
 
-export type MasterListRowFragment = { __typename: 'MasterListNode', name: string, code: string, description: string, id: string };
+export type MasterListRowFragment = { __typename: 'MasterListNode', name: string, code: string, description: string, id: string, lines: { __typename: 'MasterListLineConnector', totalCount: number } };
 
 export type MasterListsQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']>;
@@ -22,7 +22,7 @@ export type MasterListsQueryVariables = Types.Exact<{
 }>;
 
 
-export type MasterListsQuery = { __typename: 'Queries', masterLists: { __typename: 'MasterListConnector', totalCount: number, nodes: Array<{ __typename: 'MasterListNode', name: string, code: string, description: string, id: string }> } };
+export type MasterListsQuery = { __typename: 'Queries', masterLists: { __typename: 'MasterListConnector', totalCount: number, nodes: Array<{ __typename: 'MasterListNode', name: string, code: string, description: string, id: string, lines: { __typename: 'MasterListLineConnector', totalCount: number } }> } };
 
 export type MasterListQueryVariables = Types.Exact<{
   filter?: Types.InputMaybe<Types.MasterListFilterInput>;
@@ -71,6 +71,9 @@ export const MasterListRowFragmentDoc = gql`
   code
   description
   id
+  lines {
+    totalCount
+  }
 }
     `;
 export const MasterListsDocument = gql`

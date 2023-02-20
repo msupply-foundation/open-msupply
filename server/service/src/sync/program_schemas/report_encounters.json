@@ -1,0 +1,28 @@
+{
+  "index": {
+    "template": "template.html",
+    "header": null,
+    "footer": null,
+    "query": "query.graphql"
+  },
+  "entries": {
+    "style.css": {
+      "type": "Resource",
+      "data": "table,\nth,\ntd {\n  border: 1px dotted #fc9208;\n  border-collapse: collapse;\n}\n\nbody {\n  margin: 10px 5% 10px 5%;\n  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;\n}\n"
+    },
+    "query.graphql": {
+      "type": "GraphGLQuery",
+      "data": {
+        "query": "query ListOfAppointments(\n  $storeId: String\n  $startDatetime: String!\n  $endDatetime: String!\n  $status: String\n) {\n  store(id: $storeId) {\n    ... on StoreNode {\n      storeName\n    }\n  }\n  encounters(\n    storeId: $storeId\n    sort: { key: startDatetime, desc: true }\n    filter: {\n      program: { equalTo: \"HIVCareProgram\" }\n      status: { equalTo: $status }\n      startDatetime: {\n        afterOrEqualTo: $startDatetime\n        beforeOrEqualTo: $endDatetime\n      }\n    }\n  ) {\n    ... on EncounterConnector {\n      nodes {\n        events(\n          at: $endDatetime\n          filter: { type: { equalAny: [\"viralLoadResultDatetime\"] } }\n        ) {\n          type\n          data\n        }\n        createdDatetime\n        startDatetime\n        patient {\n          name\n          id\n          dateOfBirth\n          gender\n        }\n        status\n        programEnrolment {\n          programPatientId\n        }\n      }\n      totalCount\n    }\n  }\n  completedEncounters: encounters(\n    storeId: $storeId\n    sort: { key: startDatetime, desc: true }\n    filter: {\n      program: { equalTo: \"HIVCareProgram\" }\n      status: { equalTo: \"COMPLETED\" }\n      startDatetime: {\n        afterOrEqualTo: $startDatetime\n        beforeOrEqualTo: $endDatetime\n      }\n    }\n  ) {\n    ... on EncounterConnector {\n      totalCount\n    }\n  }\n}\n",
+        "variables": null
+      }
+    },
+    "template.html": {
+      "type": "TeraTemplate",
+      "data": {
+        "output": "Html",
+        "template": "{% set_global timezone = \"Pacific/Port_Moresby\" %}\n\n<style>\n  {% include \"style.css\" %}\n</style>\n\n<body>\n  <h1>{{data.store.storeName}}</h1>\n  <h2>Appointments for period</h2>\n  <h3>\n    {{arguments.startDatetime |\n    date(format=\"%d-%b-%y\",timezone=timezone)}} to {{arguments.endDatetime |\n    date(format=\"%d-%b-%y\",timezone=timezone)}}\n  </h3>\n\n  <table>\n    <tr>\n      <td>Appointment Date</td>\n      <td>Patient ID</td>\n      <td>Name</td>\n      <td>Date of Birth</td>\n      <td>Sex</td>\n      <td>Date appointment made</td>\n      <td>Cancelled</td>\n      <td>Visited</td>\n      <td>Num Month Since Last VL</td>\n    </tr>\n    {% for encounter in data.encounters.nodes %}\n    <tr>\n      <td>\n        {{encounter.startDatetime | date(format=\"%d-%b-%y\",timezone=timezone)}}\n      </td>\n      <td>{{encounter.programEnrolment.programPatientId}}</td>\n      <td>{{encounter.patient.name}}</td>\n      <td>{{encounter.patient.dateOfBirth | date(format=\"%d-%b-%y\")}}</td>\n      <td>\n        {% if encounter.patient.gender == \"FEMALE\" %}\n          Female\n        {% elif encounter.patient.gender == \"MALE\" %}\n          Male\n        {% elif encounter.patient.gender == \"TRANSGENDER\" %}\n          Transgender\n        {% else %}\n          {{encounter.patient.gender}}\n        {% endif %}\n      </td>\n      <td>\n        {{encounter.createdDatetime |\n        date(format=\"%d-%b-%y\",timezone=timezone)}}\n      </td>\n      <td>\n        {% if encounter.status == \"CANCELLED\" %}\n      true\n        {% endif %}\n      </td>\n      <td>{% if encounter.status == \"COMPLETED\" %}\n        true\n          {% endif %}\n      </td>\n        {% set viralLoadDatetime = encounter.events | filter(attribute=\"type\", value=\"viralLoadResultDatetime\") | map(attribute=\"data\") %}\n      {% if viralLoadDatetime[0] %}\n        {% set viralLoadDatetimeSec = viralLoadDatetime[0] | date(format=\"%s\") | int %}\n        {% set nowSec = now() | date(format=\"%s\") | int %}\n        {% set monthTimes10 = (nowSec - viralLoadDatetimeSec) / 2592000 * 10 | int %}\n      <td>{{monthTimes10 / 10}}</td>\n      {% else %}\n      <td></td>\n      {% endif %}\n    </tr>\n    {% endfor %}\n  </table>\n\n  Number of appointments for period: {{data.encounters.totalCount}}\n  <br/>\n  Number of appointments where patient visited : {{data.completedEncounters.totalCount}}\n</body>\n"
+      }
+    }
+  }
+}

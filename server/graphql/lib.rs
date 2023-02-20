@@ -6,7 +6,7 @@ use actix_web::HttpResponse;
 use actix_web::{guard, HttpRequest};
 
 use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
-use async_graphql::{EmptySubscription, Schema};
+use async_graphql::{EmptyMutation, EmptySubscription, Schema};
 use async_graphql::{MergedObject, Response};
 use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
 use graphql_batch_mutations::BatchMutations;
@@ -15,7 +15,8 @@ use graphql_core::loader::LoaderRegistry;
 use graphql_core::{auth_data_from_request, BoxedSelfRequest, RequestUserData, SelfRequest};
 use graphql_form_schema::{FormSchemaMutations, FormSchemaQueries};
 use graphql_general::{
-    GeneralMutations, GeneralQueries, InitialisationMutations, InitialisationQueries,
+    DiscoveryQueries, GeneralMutations, GeneralQueries, InitialisationMutations,
+    InitialisationQueries,
 };
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
 use graphql_invoice_line::InvoiceLineMutations;
@@ -246,4 +247,31 @@ impl SelfRequest for SelfRequestImpl {
         let query = request.data(user_data);
         self.schema.execute(query).await.into()
     }
+}
+
+/// During server discovery we display initialisation status and site name
+/// this needs to be queried from the server, to avoid self certificate and cors
+/// issues a separate http graphql server is launched with just DiscoveryQueries
+pub type DiscoverySchema =
+    async_graphql::Schema<DiscoveryQueries, EmptyMutation, EmptySubscription>;
+
+pub fn attach_discovery_graphql_schema(
+    service_provider: Data<ServiceProvider>,
+) -> impl FnOnce(&mut actix_web::web::ServiceConfig) {
+    |cfg| {
+        cfg.app_data(Data::new(
+            DiscoverySchema::build(DiscoveryQueries, EmptyMutation, EmptySubscription)
+                .data(service_provider)
+                .finish(),
+        ))
+        .service(
+            web::resource("/graphql")
+                .guard(guard::Post())
+                .to(discovery_index),
+        );
+    }
+}
+
+async fn discovery_index(schema: Data<DiscoverySchema>, req: GraphQLRequest) -> GraphQLResponse {
+    schema.execute(req.into_inner()).await.into()
 }

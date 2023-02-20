@@ -291,7 +291,7 @@ export const EncounterRowFragmentDoc = gql`
     lastName
     name
   }
-  events(at: $eventTime) {
+  events(at: $eventTime, filter: {isCurrentEncounter: true}) {
     ...ProgramEvent
   }
 }
