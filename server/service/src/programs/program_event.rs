@@ -180,10 +180,27 @@ pub trait ProgramEventServiceTrait: Sync + Send {
                             desc: Some(true),
                         }),
                     )?;
-                    let active_end_datetime = overlaps
-                        .get(0)
-                        .map(|it| it.active_end_datetime)
-                        .unwrap_or(max_datetime());
+
+                    let active_end_datetime = if let Some(active_end_datetime) =
+                        overlaps.get(0).map(|it| it.active_end_datetime)
+                    {
+                        active_end_datetime
+                    } else {
+                        // We inserting either before the first event or we inserting the very first
+                        // event.
+                        // First test if there is a next event:
+                        let next = repo
+                            .query_by_filter(
+                                event_target_filter(&target)
+                                    .datetime(DatetimeFilter::after_or_equal_to(datetime)),
+                            )?
+                            .pop()
+                            .map(|e| e.datetime);
+                        // If there is no next event we are inserting the very first event, thus
+                        // use max_datetime()
+                        next.unwrap_or(max_datetime())
+                    };
+
                     for mut overlap in overlaps {
                         overlap.active_end_datetime = datetime;
                         ProgramEventRowRepository::new(con).upsert_one(&overlap)?;
@@ -348,6 +365,62 @@ mod test {
             )
             .unwrap();
         assert_names!(service, ctx, 50, vec!["data3", "data4"]);
+    }
+
+    #[actix_rt::test]
+    async fn test_program_reverse_order_events() {
+        let (_, _, connection_manager, _) = setup_all(
+            "test_program_reverse_order_events",
+            MockDataInserts::none().names(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "");
+        let ctx = service_provider.basic_context().unwrap();
+
+        let service = service_provider.program_event_service;
+
+        // Test special case where the inserted event is the very first event
+
+        // try to insert a single event
+        // ----------x----------
+        //          10
+        service
+            .upsert_events(
+                &ctx,
+                "patient2".to_string(),
+                NaiveDateTime::from_timestamp(10, 0),
+                vec![EventInput {
+                    active_start_datetime: NaiveDateTime::from_timestamp(10, 0),
+                    document_type: "DocType".to_string(),
+                    document_name: None,
+                    r#type: "status".to_string(),
+                    name: Some("data1".to_string()),
+                }],
+            )
+            .unwrap();
+        assert_names!(service, ctx, 5, vec![]);
+        assert_names!(service, ctx, 15, vec!["data1"]);
+
+        // insert earlier event
+        // ----x------x--
+        //     5     10
+        service
+            .upsert_events(
+                &ctx,
+                "patient2".to_string(),
+                NaiveDateTime::from_timestamp(5, 0),
+                vec![EventInput {
+                    active_start_datetime: NaiveDateTime::from_timestamp(5, 0),
+                    document_type: "DocType".to_string(),
+                    document_name: None,
+                    r#type: "status".to_string(),
+                    name: Some("data2".to_string()),
+                }],
+            )
+            .unwrap();
+        assert_names!(service, ctx, 6, vec!["data2"]);
+        assert_names!(service, ctx, 15, vec!["data1"]);
     }
 
     #[actix_rt::test]

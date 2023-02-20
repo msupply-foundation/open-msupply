@@ -39,6 +39,7 @@ const DataTableComponent = <T extends RecordWithId>({
   pagination,
   onChangePage,
   onRowClick,
+  additionalRows,
 }: TableProps<T>): JSX.Element => {
   const t = useTranslation('common');
   const { setRows, setDisabledRows, setFocus } = useTableStore();
@@ -167,31 +168,34 @@ const DataTableComponent = <T extends RecordWithId>({
           </HeaderRow>
         </TableHead>
         <TableBody>
-          <ViewportList
-            viewportRef={ref}
-            items={data}
-            axis="y"
-            itemMinSize={40}
-            spacerElement="tr"
-          >
-            {(row, idx) => (
-              <DataRow
-                key={row.id}
-                ExpandContent={ExpandContent}
-                rowIndex={idx}
-                columns={columnsToDisplay}
-                onClick={onRowClick ? onRowClick : undefined}
-                rowData={row}
-                rowKey={String(idx)}
-                dense={dense}
-                keyboardActivated={clickFocusedRow}
-                generateRowTooltip={generateRowTooltip}
-                localisedText={t}
-                localisedDate={localisedDate}
-                isAnimated={isRowAnimated}
-              />
-            )}
-          </ViewportList>
+          <>
+            <ViewportList
+              viewportRef={ref}
+              items={data}
+              axis="y"
+              itemMinSize={40}
+              spacerElement="tr"
+            >
+              {(row, idx) => (
+                <DataRow
+                  key={row.id}
+                  ExpandContent={ExpandContent}
+                  rowIndex={idx}
+                  columns={columnsToDisplay}
+                  onClick={onRowClick ? onRowClick : undefined}
+                  rowData={row}
+                  rowKey={String(idx)}
+                  dense={dense}
+                  keyboardActivated={clickFocusedRow}
+                  generateRowTooltip={generateRowTooltip}
+                  localisedText={t}
+                  localisedDate={localisedDate}
+                  isAnimated={isRowAnimated}
+                />
+              )}
+            </ViewportList>
+            {additionalRows}
+          </>
         </TableBody>
       </MuiTable>
       <Box

@@ -8,9 +8,10 @@ import { useBufferState, useDebounceCallback } from '@common/hooks';
 export const NonNegativeIntegerCell = <T extends RecordWithId>({
   rowData,
   column,
+  max,
   isDisabled = false,
   isRequired = false,
-}: CellProps<T>): React.ReactElement<CellProps<T>> => {
+}: CellProps<T> & { max?: number }): React.ReactElement<CellProps<T>> => {
   const [buffer, setBuffer] = useBufferState(column.accessor({ rowData }));
 
   const updater = useDebounceCallback(column.setter, [column.setter], 250);
@@ -24,6 +25,7 @@ export const NonNegativeIntegerCell = <T extends RecordWithId>({
       value={buffer}
       onChange={newValue => {
         const intValue = Math.round(newValue);
+        if (max && intValue > max) return;
         setBuffer(intValue.toString());
         updater({ ...rowData, [column.key]: intValue });
       }}

@@ -7,18 +7,29 @@ import {
   TextFieldProps,
   StandardTextFieldProps,
 } from '@mui/material';
-import {
-  BasicTextInput,
-  BaseDatePickerInput,
-  useFormatDateTime,
-} from '@openmsupply-client/common';
+import { BasicTextInput } from '@openmsupply-client/common';
 import {
   FORM_LABEL_COLUMN_WIDTH,
   FORM_INPUT_COLUMN_WIDTH,
 } from '../styleConstants';
 import { DateTimePicker, DateTimePickerProps } from '@mui/x-date-pickers';
+import { z } from 'zod';
+import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
+import { BaseDatePickerInput as DatePickerInput } from './Date';
 
-const BaseDateTimePickerInput: FC<
+const Options = z
+  .object({
+    /**
+     *
+     */
+    dateOnly: z.boolean().optional(),
+  })
+  .strict()
+  .optional();
+
+type Options = z.infer<typeof Options>;
+
+const DateTimePickerInput: FC<
   Omit<DateTimePickerProps<Date>, 'renderInput'> & { error: string }
 > = props => {
   return (
@@ -48,15 +59,18 @@ const BaseDateTimePickerInput: FC<
 export const datetimeTester = rankWith(5, isDateTimeControl);
 
 const UIComponent = (props: ControlProps) => {
-  const [error, setError] = React.useState('');
+  const [error, setError] = React.useState<string | undefined>(undefined);
   const { data, handleChange, label, path, uischema } = props;
-  const dateFormatter = useFormatDateTime().customDate;
+  const { errors: zErrors, options } = useZodOptionsValidation(
+    Options,
+    uischema.options
+  );
 
   if (!props.visible) {
     return null;
   }
 
-  const dateOnly = uischema.options?.['dateOnly'] ?? false;
+  const dateOnly = options?.dateOnly ?? false;
 
   const inputFormat = !dateOnly ? 'dd/MM/yyyy hh:mm' : 'dd/MM/yyyy';
 
@@ -64,13 +78,8 @@ const UIComponent = (props: ControlProps) => {
     if (!e) return;
 
     try {
-      const dateString = !dateOnly
-        ? e.toISOString()
-        : // By default, will use current date-time. However, if a
-          // different date is selected, the time will be considered "midnight"
-          dateFormatter(e, 'yyyy-MM-dd') + ' 00:00:00';
-      setError('');
-      if (e) handleChange(path, dateString);
+      setError(undefined);
+      if (e) handleChange(path, e.toISOString());
     } catch (err) {
       setError((err as Error).message);
     }
@@ -82,6 +91,7 @@ const UIComponent = (props: ControlProps) => {
     inputFormat,
     readOnly: !!props.uischema.options?.['readonly'],
     disabled: !props.enabled,
+    error: zErrors ?? error ?? props.errors,
   };
 
   return (
@@ -98,13 +108,12 @@ const UIComponent = (props: ControlProps) => {
       </Box>
       <Box flexBasis={FORM_INPUT_COLUMN_WIDTH}>
         {!dateOnly ? (
-          <BaseDateTimePickerInput
+          <DateTimePickerInput
             // undefined is displayed as "now" and null as unset
             {...sharedComponentProps}
-            error={error || props.errors}
           />
         ) : (
-          <BaseDatePickerInput {...sharedComponentProps} />
+          <DatePickerInput {...sharedComponentProps} />
         )}
       </Box>
     </Box>

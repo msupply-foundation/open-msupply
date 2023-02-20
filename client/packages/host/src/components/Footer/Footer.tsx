@@ -2,18 +2,22 @@ import React from 'react';
 import {
   Box,
   HomeIcon,
+  IntlUtils,
   styled,
   Tooltip,
+  TranslateIcon,
   Typography,
   useAuthContext,
   UserIcon,
   useTranslation,
 } from '@openmsupply-client/common';
 import { StoreSelector } from './StoreSelector';
+import { LanguageSelector } from './LanguageSelector';
 
 export const Footer: React.FC = () => {
   const { user, store } = useAuthContext();
   const t = useTranslation('app');
+  const i18n = IntlUtils.useI18N();
   const PaddedCell = styled(Box)({ display: 'flex' });
   const iconStyles = { color: 'gray.main', height: '16px', width: '16px' };
   const textStyles = {
@@ -38,6 +42,16 @@ export const Footer: React.FC = () => {
           <Typography sx={textStyles}>{user.name}</Typography>
         </PaddedCell>
       ) : null}
+      <LanguageSelector>
+        <PaddedCell>
+          <TranslateIcon sx={iconStyles} />
+          <Tooltip title={t('select-language', { ...store })}>
+            <Typography sx={textStyles}>
+              {IntlUtils.getLanguageName(i18n.language)}
+            </Typography>
+          </Tooltip>
+        </PaddedCell>
+      </LanguageSelector>
     </Box>
   );
 };

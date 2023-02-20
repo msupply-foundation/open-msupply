@@ -1,13 +1,13 @@
 CREATE TYPE encounter_status AS ENUM (
     'SCHEDULED',
-    'DONE',
+    'COMPLETED',
     'CANCELLED'
 );
 
 CREATE TABLE encounter (
     id TEXT NOT NULL PRIMARY KEY,
     type TEXT NOT NULL,
-    name TEXT NOT NULL,
+    document_name TEXT NOT NULL,
     patient_id TEXT NOT NULL,
     program TEXT NOT NULL,
     created_datetime TIMESTAMP NOT NULL,

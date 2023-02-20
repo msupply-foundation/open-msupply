@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Grid,
   BasicTextInput,
@@ -11,6 +11,8 @@ import {
   Divider,
   Box,
   Typography,
+  ButtonWithIcon,
+  ZapIcon,
 } from '@openmsupply-client/common';
 import {
   StockItemSearchInput,
@@ -40,10 +42,12 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
   disabled,
   canAutoAllocate,
 }) => {
-  const t = useTranslation(['distribution', 'common']);
+  const t = useTranslation('distribution');
   const quantity =
     allocatedQuantity /
     Math.abs(Number(packSizeController.selected?.value || 1));
+
+  const [issueQuantity, setIssueQuantity] = useState(0);
   const { items } = useOutbound.line.rows();
 
   const onChangePackSize = (newPackSize: number) => {
@@ -56,7 +60,19 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
     );
   };
 
-  const unit = item?.unitName ?? t('label.units');
+  const unit = item?.unitName ?? t('label.units', { count: 1 });
+  const allocate = () => {
+    onChangeQuantity(
+      issueQuantity,
+      packSizeController.selected?.value === -1
+        ? null
+        : Number(packSizeController.selected?.value)
+    );
+  };
+
+  useEffect(() => {
+    setIssueQuantity(quantity);
+  }, [packSizeController.selected?.value]);
 
   return (
     <Grid container gap="4px">
@@ -112,15 +128,8 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
             <ModalLabel label={t('label.issue')} />
             <NonNegativeIntegerInput
               autoFocus
-              value={quantity}
-              onChange={value => {
-                onChangeQuantity(
-                  value,
-                  packSizeController.selected?.value === -1
-                    ? null
-                    : Number(packSizeController.selected?.value)
-                );
-              }}
+              value={issueQuantity}
+              onChange={setIssueQuantity}
             />
 
             <Box marginLeft={1} />
@@ -173,6 +182,14 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
                 <Box marginLeft="auto" />
               </>
             ) : null}
+            <Box flex={1} display="flex" justifyContent="flex-end">
+              <ButtonWithIcon
+                disabled={issueQuantity === 0}
+                onClick={allocate}
+                label={t('button.allocate')}
+                Icon={<ZapIcon />}
+              />
+            </Box>
           </Grid>
         </>
       ) : (

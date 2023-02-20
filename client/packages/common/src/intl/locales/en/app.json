@@ -80,6 +80,7 @@
   "searching": "Searching...",
   "select-report": "Select Template",
   "select-store": "Select store",
+  "select-language": "Select language",
   "stock": "View Stock",
   "stocktakes": "Stocktakes",
   "store-details": "Store code: {{code}}",

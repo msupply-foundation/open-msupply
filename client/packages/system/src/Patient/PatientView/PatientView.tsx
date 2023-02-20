@@ -124,6 +124,13 @@ export const PatientView: FC = () => {
     filterBy: { patientId: { equalTo: patientId } },
   });
   const { patient } = usePatientCreateStore();
+  const { setCurrentPatient } = usePatientStore();
+  const { data: currentPatient } = usePatient.document.get(patientId);
+
+  useEffect(() => {
+    if (!currentPatient) return;
+    setCurrentPatient(currentPatient);
+  }, [currentPatient]);
 
   const tabs = [
     {

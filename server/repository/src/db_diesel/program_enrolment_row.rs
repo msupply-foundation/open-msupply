@@ -11,7 +11,7 @@ table! {
     program_enrolment (id) {
         id -> Text,
         program -> Text,
-        name -> Text,
+        document_name -> Text,
         patient_id -> Text,
         enrolment_datetime -> Timestamp,
         program_patient_id -> Nullable<Text>,
@@ -31,7 +31,7 @@ pub struct ProgramEnrolmentRow {
     /// The program the patient is enrolled in.
     pub program: String,
     /// The program document name
-    pub name: String,
+    pub document_name: String,
     /// The patient this program belongs to
     pub patient_id: String,
     /// Time when the patient has been enrolled to this program
