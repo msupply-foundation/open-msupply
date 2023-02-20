@@ -844,8 +844,8 @@ export type EncounterConnector = {
 export type EncounterEventFilterInput = {
   /**
    * 	Only include events that are for the current encounter, i.e. have matching encounter type
-   * and matching encounter name of the current encounter. If not set all events for with
-   * matching encounter type are returned.
+   * and matching encounter name of the current encounter. If not set all events with matching
+   * encounter type are returned.
    */
   isCurrentEncounter?: InputMaybe<Scalars['Boolean']>;
   type?: InputMaybe<EqualFilterStringInput>;
@@ -872,9 +872,10 @@ export type EncounterFieldsResponse = EncounterFieldsConnector;
 export type EncounterFilterInput = {
   clinicianId?: InputMaybe<EqualFilterStringInput>;
   createdDatetime?: InputMaybe<DatetimeFilterInput>;
+  documentData?: InputMaybe<SimpleStringFilterInput>;
+  documentName?: InputMaybe<EqualFilterStringInput>;
   endDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
-  name?: InputMaybe<EqualFilterStringInput>;
   patientId?: InputMaybe<EqualFilterStringInput>;
   program?: InputMaybe<EqualFilterStringInput>;
   startDatetime?: InputMaybe<DatetimeFilterInput>;
@@ -2685,6 +2686,11 @@ export type PatientNode = {
   website?: Maybe<Scalars['String']>;
 };
 
+
+export type PatientNodeProgramEnrolmentsArgs = {
+  filter?: InputMaybe<ProgramEnrolmentFilterInput>;
+};
+
 export type PatientResponse = PatientConnector;
 
 export type PatientSearchConnector = {
@@ -2791,7 +2797,7 @@ export type ProgramEnrolmentNode = {
   /** The encounter document */
   document: DocumentNode;
   /** The program document */
-  encounters: Array<EncounterNode>;
+  encounters: EncounterConnector;
   enrolmentDatetime: Scalars['DateTime'];
   events: Array<ProgramEventNode>;
   /** The program document name */
@@ -2800,6 +2806,13 @@ export type ProgramEnrolmentNode = {
   /** The program type */
   program: Scalars['String'];
   programPatientId?: Maybe<Scalars['String']>;
+};
+
+
+export type ProgramEnrolmentNodeEncountersArgs = {
+  filter?: InputMaybe<EncounterFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<EncounterSortInput>;
 };
 
 
