@@ -3786,6 +3786,11 @@ export type StoreNode = {
   __typename: 'StoreNode';
   code: Scalars['String'];
   id: Scalars['String'];
+  /**
+   * Returns the associated store logo.
+   * The logo is returned as a data URL schema, e.g. "data:image/png;base64,..."
+   */
+  logo?: Maybe<Scalars['String']>;
   name: NameNode;
   siteId: Scalars['Int'];
   storeName: Scalars['String'];
