@@ -35,11 +35,11 @@ mod hiv_testing_program {
         fn default() -> Self {
             Self {
                 enrolment_datetime: Default::default(),
-                enrolment_patient_id: Default::default(),
-                mother: Default::default(),
-                partner_hiv_status: Default::default(),
-                referred_from: Default::default(),
+                program_enrolment_id: Default::default(),
                 status: Default::default(),
+                referred_from: Default::default(),
+                partner_hiv_status: Default::default(),
+                mother: Default::default(),
             }
         }
     }
@@ -53,7 +53,7 @@ mod hiv_care_program {
         fn default() -> Self {
             Self {
                 enrolment_datetime: Default::default(),
-                enrolment_patient_id: Default::default(),
+                program_enrolment_id: Default::default(),
                 hiv_confirmation_date: Default::default(),
                 hiv_test_type: Default::default(),
                 mother: Default::default(),
@@ -64,6 +64,10 @@ mod hiv_care_program {
                 treatment_supporter: Default::default(),
                 // note: Default::default(),
                 referred_from: Default::default(),
+                clinic_transferred_from: Default::default(),
+                previous_clinic_art_start_date: Default::default(),
+                date_transferred_in: Default::default(),
+                previous_clinic_id: Default::default(),
             }
         }
     }
@@ -365,7 +369,7 @@ fn patient_2() -> Patient {
 fn program_1() -> SchemaProgramEnrolment {
     SchemaProgramEnrolment {
         enrolment_datetime: Utc::now().to_rfc3339(),
-        enrolment_patient_id: Some("programpatientid1".to_string()),
+        program_enrolment_id: Some("programEnrolmentId1".to_string()),
         status: Some(ProgramEnrolmentStatus::Active),
     }
 }
@@ -373,7 +377,7 @@ fn program_1() -> SchemaProgramEnrolment {
 fn program_hiv_care() -> hiv_care_program::HivcareProgramEnrolment {
     inline_init(|p: &mut hiv_care_program::HivcareProgramEnrolment| {
         p.enrolment_datetime = Utc::now().to_rfc3339();
-        p.enrolment_patient_id = Some("STR0001".to_string());
+        p.program_enrolment_id = Some("STR0001".to_string());
         p.status = Some(hiv_care_program::ProgramEnrolmentStatus::Active);
     })
 }
@@ -381,7 +385,7 @@ fn program_hiv_care() -> hiv_care_program::HivcareProgramEnrolment {
 fn program_hiv_testing() -> hiv_testing_program::HivtestingProgramEnrolment {
     inline_init(|p: &mut hiv_testing_program::HivtestingProgramEnrolment| {
         p.enrolment_datetime = Utc::now().to_rfc3339();
-        p.enrolment_patient_id = Some("STR0002".to_string());
+        p.program_enrolment_id = Some("STR0002".to_string());
         p.status = Some(hiv_testing_program::ProgramEnrolmentStatus::Active);
     })
 }

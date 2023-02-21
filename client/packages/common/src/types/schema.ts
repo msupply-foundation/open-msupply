@@ -2792,7 +2792,7 @@ export type ProgramEnrolmentFilterInput = {
   enrolmentDatetime?: InputMaybe<DatetimeFilterInput>;
   patientId?: InputMaybe<EqualFilterStringInput>;
   program?: InputMaybe<EqualFilterStringInput>;
-  programPatientId?: InputMaybe<EqualFilterStringInput>;
+  programEnrolmentId?: InputMaybe<EqualFilterStringInput>;
 };
 
 export type ProgramEnrolmentNode = {
@@ -2808,7 +2808,14 @@ export type ProgramEnrolmentNode = {
   patientId: Scalars['String'];
   /** The program type */
   program: Scalars['String'];
-  programPatientId?: Maybe<Scalars['String']>;
+  programEnrolmentId?: Maybe<Scalars['String']>;
+};
+
+
+export type ProgramEnrolmentNodeEncountersArgs = {
+  filter?: InputMaybe<EncounterFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<EncounterSortInput>;
 };
 
 
@@ -2829,7 +2836,7 @@ export type ProgramEnrolmentResponse = ProgramEnrolmentConnector;
 export enum ProgramEnrolmentSortFieldInput {
   EnrolmentDatetime = 'enrolmentDatetime',
   PatientId = 'patientId',
-  ProgramPatientId = 'programPatientId',
+  ProgramEnrolmentId = 'programEnrolmentId',
   Type = 'type'
 }
 
@@ -3786,6 +3793,11 @@ export type StoreNode = {
   __typename: 'StoreNode';
   code: Scalars['String'];
   id: Scalars['String'];
+  /**
+   * Returns the associated store logo.
+   * The logo is returned as a data URL schema, e.g. "data:image/png;base64,..."
+   */
+  logo?: Maybe<Scalars['String']>;
   name: NameNode;
   siteId: Scalars['Int'];
   storeName: Scalars['String'];

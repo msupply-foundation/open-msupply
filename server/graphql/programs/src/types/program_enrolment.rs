@@ -64,8 +64,8 @@ impl ProgramEnrolmentNode {
         DateTime::<Utc>::from_utc(self.program_row.enrolment_datetime, Utc)
     }
 
-    pub async fn program_patient_id(&self) -> &Option<String> {
-        &self.program_row.program_patient_id
+    pub async fn program_enrolment_id(&self) -> &Option<String> {
+        &self.program_row.program_enrolment_id
     }
 
     /// The encounter document
