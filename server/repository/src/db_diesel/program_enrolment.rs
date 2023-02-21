@@ -53,7 +53,7 @@ pub enum ProgramEnrolmentSortField {
     Type,
     PatientId,
     EnrolmentDatetime,
-    ProgramPatientId,
+    ProgramEnrolmentId,
 }
 
 pub type ProgramEnrolment = ProgramEnrolmentRow;
@@ -119,7 +119,7 @@ impl<'a> ProgramEnrolmentRepository<'a> {
                 ProgramEnrolmentSortField::EnrolmentDatetime => {
                     apply_sort!(query, sort, program_dsl::enrolment_datetime)
                 }
-                ProgramEnrolmentSortField::ProgramPatientId => {
+                ProgramEnrolmentSortField::ProgramEnrolmentId => {
                     apply_sort!(query, sort, program_dsl::program_enrolment_id)
                 }
             }

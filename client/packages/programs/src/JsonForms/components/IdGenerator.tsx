@@ -252,7 +252,7 @@ const useUniqueProgramEnrolmentIdValidation = () => {
   ): Promise<string | undefined> => {
     const result = await fetchProgramEnrolments({
       filterBy: {
-        programPatientId: { equalTo: id },
+        programEnrolmentId: { equalTo: id },
       },
     });
     if (result.totalCount === 0) {
