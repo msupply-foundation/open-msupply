@@ -32,7 +32,7 @@ pub enum ProgramEnrolmentSortFieldInput {
     Type,
     PatientId,
     EnrolmentDatetime,
-    ProgramPatientId,
+    ProgramEnrolmentId,
 }
 
 #[derive(InputObject)]
@@ -49,7 +49,7 @@ pub struct ProgramEnrolmentFilterInput {
     pub program: Option<EqualFilterStringInput>,
     pub patient_id: Option<EqualFilterStringInput>,
     pub enrolment_datetime: Option<DatetimeFilterInput>,
-    pub program_patient_id: Option<EqualFilterStringInput>,
+    pub program_enrolment_id: Option<EqualFilterStringInput>,
 }
 impl ProgramEnrolmentFilterInput {
     pub fn to_domain_filter(self) -> ProgramEnrolmentFilter {
@@ -57,7 +57,7 @@ impl ProgramEnrolmentFilterInput {
             program: self.program.map(EqualFilter::from),
             patient_id: self.patient_id.map(EqualFilter::from),
             enrolment_datetime: self.enrolment_datetime.map(DatetimeFilter::from),
-            program_patient_id: self.program_patient_id.map(EqualFilter::from),
+            program_enrolment_id: self.program_enrolment_id.map(EqualFilter::from),
         }
     }
 }
@@ -113,8 +113,8 @@ impl ProgramEnrolmentSortInput {
             ProgramEnrolmentSortFieldInput::EnrolmentDatetime => {
                 ProgramEnrolmentSortField::EnrolmentDatetime
             }
-            ProgramEnrolmentSortFieldInput::ProgramPatientId => {
-                ProgramEnrolmentSortField::ProgramPatientId
+            ProgramEnrolmentSortFieldInput::ProgramEnrolmentId => {
+                ProgramEnrolmentSortField::ProgramEnrolmentId
             }
         };
 
