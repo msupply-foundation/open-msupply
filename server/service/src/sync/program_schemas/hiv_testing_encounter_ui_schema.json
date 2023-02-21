@@ -16,7 +16,7 @@
     },
     {
       "type": "Category",
-      "label": "Family Planning",
+      "label": "Pregnancy",
       "options": { "icon": "condom" },
       "elements": [
         {
