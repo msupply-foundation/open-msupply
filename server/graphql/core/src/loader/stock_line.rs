@@ -84,7 +84,7 @@ impl Loader<StockLineByItemAndStoreIdLoaderInput> for StockLineByItemAndStoreIdL
                     &item_and_store_ids,
                 )))
                 .store_id(EqualFilter::equal_to(store_id))
-                .is_available(true),
+                .has_packs(true),
             None,
         )?;
 

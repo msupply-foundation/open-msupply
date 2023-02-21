@@ -56,6 +56,7 @@ impl From<StockLineFilterInput> for StockLineFilter {
             item_id: f.item_id.map(EqualFilter::from),
             location_id: f.location_id.map(EqualFilter::from),
             store_id: None,
+            has_packs: None,
         }
     }
 }
@@ -109,7 +110,7 @@ impl StockLineQueries {
             .map(StockLineFilter::from)
             .unwrap_or(StockLineFilter::new())
             .store_id(EqualFilter::equal_to(&store_id))
-            .is_available(true);
+            .has_packs(true);
 
         let stock_lines = service_provider
             .stock_line_service
