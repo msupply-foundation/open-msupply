@@ -79,13 +79,10 @@
       }
     },
     {
-      "type": "Control",
-      "scope": "#/properties/mother"
-    },
-    {
       "type": "Search",
       "scope": "#/properties/mother",
       "options": {
+        "source": "user",
         "query": "patientByCode"
       }
     },
@@ -130,8 +127,9 @@
       "type": "Search",
       "scope": "#/properties/treatmentSupporter",
       "options": {
-        "query": "currentPatient",
-        "scope": "family/nextOfKin"
+        "source": "document",
+        "document": "currentPatient",
+        "path": "document.data.family.nextOfKin"
       }
     },
     {

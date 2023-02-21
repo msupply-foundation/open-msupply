@@ -2,37 +2,21 @@ import React, { useState } from 'react';
 import { getPatientQueries } from 'packages/system/src/Patient/api/api';
 import { getSdk } from 'packages/system/src/Patient/api/operations.generated';
 import { useGql, useAuthContext } from '@openmsupply-client/common';
+import { RegexUtils } from '@openmsupply-client/common';
 
-export const QueryValues = ['patientByCode', 'currentPatient'] as const;
+export const QueryValues = ['patientByCode'] as const;
 type QueryValue = typeof QueryValues[number];
 
 type GetDisplayElement = (result: Record<string, any>) => JSX.Element | null;
 
-interface BaseQuery {
+interface SearchQueryParams {
   runQuery: any;
-  source: SearchSource;
   saveFields?: string[];
-}
-
-interface PatientByCodeQuery extends BaseQuery {
-  source: 'input';
   getOptionLabel: (result: Record<string, any>) => string;
   getDisplayElement: GetDisplayElement;
 }
 
-interface CurrentPatientQuery extends BaseQuery {
-  source: 'document';
-  scope: 'string';
-  getDisplayElement: GetDisplayElement;
-}
-
-interface DocumentQuery extends BaseQuery {
-  source: 'document';
-}
-
 export type SearchSource = 'input' | 'document';
-
-type SearchQuery = PatientByCodeQuery | DocumentQuery | CurrentPatientQuery;
 
 export const useSearchQueries = (query?: QueryValue) => {
   const { storeId } = useAuthContext();
@@ -52,10 +36,13 @@ export const useSearchQueries = (query?: QueryValue) => {
 
   const patientQueries = getPatientQueries(getSdk(client), storeId);
 
-  const searchQueries: Record<QueryValue, SearchQuery> = {
+  const searchQueries: Record<QueryValue, SearchQueryParams> = {
     patientByCode: {
       runQuery: async (searchValue: string) => {
-        console.log('searchValue', searchValue);
+        if (searchValue === '') {
+          setResults([]);
+          return;
+        }
         setError(false);
         setLoading(true);
         patientQueries.get
@@ -66,61 +53,28 @@ export const useSearchQueries = (query?: QueryValue) => {
             filterBy: { code: { like: searchValue } },
           })
           .then((result: any) => {
-            // console.log(result);
             setResults(result.nodes);
             setLoading(false);
           })
           .catch(err => {
             console.log(err.message);
-            setError(true);
+            setError(err.message);
           });
       },
-      source: 'input',
       getOptionLabel: e => `${e['code']} - ${e['firstName']} ${e['lastName']}`,
       getDisplayElement: data => {
-        const { code, firstName, lastName, gender, email } = data;
+        if (!data) return null;
+        const { code } = data;
         if (!code) return null;
         return (
           <p>
-            {`${code} - ${firstName} ${lastName}`}
+            {RegexUtils.formatTemplateString(
+              '${code} - ${firstName} ${lastName}',
+              data,
+              ''
+            )}
             <br />
-            {`${gender} ${email}`}
-          </p>
-        );
-      },
-      saveFields: ['code', 'firstName', 'lastName', 'dateOfBirth'],
-    },
-    currentPatient: {
-      runQuery: async (searchValue: string) => {
-        console.log('searchValue', searchValue);
-        setError(false);
-        setLoading(true);
-        patientQueries.get
-          .list({
-            first: 10,
-            offset: 0,
-            sortBy: { key: 'lastName', direction: 'asc' },
-            filterBy: { code: { like: searchValue } },
-          })
-          .then((result: any) => {
-            // console.log(result);
-            setResults(result.nodes);
-            setLoading(false);
-          })
-          .catch(err => {
-            console.log(err.message);
-            setError(true);
-          });
-      },
-      source: 'document',
-      getDisplayElement: data => {
-        const { code, firstName, lastName, gender, email } = data;
-        if (!code) return null;
-        return (
-          <p>
-            {`${code} - ${firstName} ${lastName}`}
-            <br />
-            {`${gender} ${email}`}
+            {RegexUtils.formatTemplateString('${gender} ${email}', data, '')}
           </p>
         );
       },
@@ -132,7 +86,6 @@ export const useSearchQueries = (query?: QueryValue) => {
 
   return {
     runQuery: search.runQuery,
-    source: search.source,
     getOptionLabel: 'getOptionLabel' in search ? search.getOptionLabel : null,
     getDisplayElement:
       'getDisplayElement' in search ? search.getDisplayElement : null,
