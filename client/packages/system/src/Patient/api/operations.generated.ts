@@ -6,7 +6,7 @@ import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type PatientRowFragment = { __typename: 'PatientNode', id: string, code: string, code2?: string | null, firstName?: string | null, lastName?: string | null, name: string, dateOfBirth?: string | null, gender?: Types.GenderType | null, email?: string | null, isDeceased: boolean, document?: { __typename: 'DocumentNode', id: string, name: string, type: string } | null };
 
-export type PatientFragment = { __typename: 'PatientNode', address1?: string | null, address2?: string | null, code: string, code2?: string | null, country?: string | null, dateOfBirth?: string | null, email?: string | null, firstName?: string | null, lastName?: string | null, gender?: Types.GenderType | null, id: string, name: string, phone?: string | null, website?: string | null, isDeceased: boolean, document?: { __typename: 'DocumentNode', id: string, name: string, type: string } | null };
+export type PatientFragment = { __typename: 'PatientNode', address1?: string | null, address2?: string | null, code: string, code2?: string | null, country?: string | null, dateOfBirth?: string | null, email?: string | null, firstName?: string | null, lastName?: string | null, gender?: Types.GenderType | null, id: string, name: string, phone?: string | null, website?: string | null, isDeceased: boolean, document?: { __typename: 'DocumentNode', data: any, id: string, name: string, type: string } | null };
 
 export type PatientsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -26,7 +26,7 @@ export type PatientByIdQueryVariables = Types.Exact<{
 }>;
 
 
-export type PatientByIdQuery = { __typename: 'Queries', patients: { __typename: 'PatientConnector', totalCount: number, nodes: Array<{ __typename: 'PatientNode', address1?: string | null, address2?: string | null, code: string, code2?: string | null, country?: string | null, dateOfBirth?: string | null, email?: string | null, firstName?: string | null, lastName?: string | null, gender?: Types.GenderType | null, id: string, name: string, phone?: string | null, website?: string | null, isDeceased: boolean, document?: { __typename: 'DocumentNode', id: string, name: string, type: string } | null }> } };
+export type PatientByIdQuery = { __typename: 'Queries', patients: { __typename: 'PatientConnector', totalCount: number, nodes: Array<{ __typename: 'PatientNode', address1?: string | null, address2?: string | null, code: string, code2?: string | null, country?: string | null, dateOfBirth?: string | null, email?: string | null, firstName?: string | null, lastName?: string | null, gender?: Types.GenderType | null, id: string, name: string, phone?: string | null, website?: string | null, isDeceased: boolean, document?: { __typename: 'DocumentNode', data: any, id: string, name: string, type: string } | null }> } };
 
 export type PatientSearchQueryVariables = Types.Exact<{
   input: Types.PatientSearchInput;
@@ -34,7 +34,7 @@ export type PatientSearchQueryVariables = Types.Exact<{
 }>;
 
 
-export type PatientSearchQuery = { __typename: 'Queries', patientSearch: { __typename: 'PatientSearchConnector', totalCount: number, nodes: Array<{ __typename: 'PatientSearchNode', score: number, patient: { __typename: 'PatientNode', address1?: string | null, address2?: string | null, code: string, code2?: string | null, country?: string | null, dateOfBirth?: string | null, email?: string | null, firstName?: string | null, lastName?: string | null, gender?: Types.GenderType | null, id: string, name: string, phone?: string | null, website?: string | null, isDeceased: boolean, document?: { __typename: 'DocumentNode', id: string, name: string, type: string } | null } }> } };
+export type PatientSearchQuery = { __typename: 'Queries', patientSearch: { __typename: 'PatientSearchConnector', totalCount: number, nodes: Array<{ __typename: 'PatientSearchNode', score: number, patient: { __typename: 'PatientNode', address1?: string | null, address2?: string | null, code: string, code2?: string | null, country?: string | null, dateOfBirth?: string | null, email?: string | null, firstName?: string | null, lastName?: string | null, gender?: Types.GenderType | null, id: string, name: string, phone?: string | null, website?: string | null, isDeceased: boolean, document?: { __typename: 'DocumentNode', data: any, id: string, name: string, type: string } | null } }> } };
 
 export type InsertPatientMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -80,6 +80,7 @@ export const PatientFragmentDoc = gql`
   country
   dateOfBirth
   document {
+    data
     id
     name
     type
