@@ -17,7 +17,7 @@
     {
       "type": "IdGenerator",
       "label": "Patient Program Id",
-      "scope": "#/properties/programId",
+      "scope": "#/properties/programEnrolmentId",
       "options": {
         "parts": [
           {

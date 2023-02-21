@@ -300,7 +300,7 @@ mutation updateEncounter($storeId: String!, $input: UpdateEncounterInput!) {
 # program enrolment without document data but with events
 fragment ProgramEnrolmentRow on ProgramEnrolmentNode {
   program
-  programPatientId
+  programEnrolmentId
   patientId
   name
   enrolmentDatetime
@@ -340,7 +340,7 @@ query programEnrolments(
 # program enrolment with document
 fragment ProgramEnrolment on ProgramEnrolmentNode {
   program
-  programPatientId
+  programEnrolmentId
   patientId
   name
   enrolmentDatetime

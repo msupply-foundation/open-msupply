@@ -844,8 +844,8 @@ export type EncounterConnector = {
 export type EncounterEventFilterInput = {
   /**
    * 	Only include events that are for the current encounter, i.e. have matching encounter type
-   * and matching encounter name of the current encounter. If not set all events for with
-   * matching encounter type are returned.
+   * and matching encounter name of the current encounter. If not set all events with matching
+   * encounter type are returned.
    */
   isCurrentEncounter?: InputMaybe<Scalars['Boolean']>;
   type?: InputMaybe<EqualFilterStringInput>;
@@ -2685,6 +2685,11 @@ export type PatientNode = {
   website?: Maybe<Scalars['String']>;
 };
 
+
+export type PatientNodeProgramEnrolmentsArgs = {
+  filter?: InputMaybe<ProgramEnrolmentFilterInput>;
+};
+
 export type PatientResponse = PatientConnector;
 
 export type PatientSearchConnector = {
@@ -2783,7 +2788,7 @@ export type ProgramEnrolmentFilterInput = {
   enrolmentDatetime?: InputMaybe<DatetimeFilterInput>;
   patientId?: InputMaybe<EqualFilterStringInput>;
   program?: InputMaybe<EqualFilterStringInput>;
-  programPatientId?: InputMaybe<EqualFilterStringInput>;
+  programEnrolmentId?: InputMaybe<EqualFilterStringInput>;
 };
 
 export type ProgramEnrolmentNode = {
@@ -2791,7 +2796,7 @@ export type ProgramEnrolmentNode = {
   /** The encounter document */
   document: DocumentNode;
   /** The program document */
-  encounters: Array<EncounterNode>;
+  encounters: EncounterConnector;
   enrolmentDatetime: Scalars['DateTime'];
   events: Array<ProgramEventNode>;
   /** The program document name */
@@ -2799,7 +2804,14 @@ export type ProgramEnrolmentNode = {
   patientId: Scalars['String'];
   /** The program type */
   program: Scalars['String'];
-  programPatientId?: Maybe<Scalars['String']>;
+  programEnrolmentId?: Maybe<Scalars['String']>;
+};
+
+
+export type ProgramEnrolmentNodeEncountersArgs = {
+  filter?: InputMaybe<EncounterFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<EncounterSortInput>;
 };
 
 
@@ -2813,7 +2825,7 @@ export type ProgramEnrolmentResponse = ProgramEnrolmentConnector;
 export enum ProgramEnrolmentSortFieldInput {
   EnrolmentDatetime = 'enrolmentDatetime',
   PatientId = 'patientId',
-  ProgramPatientId = 'programPatientId',
+  ProgramEnrolmentId = 'programEnrolmentId',
   Type = 'type'
 }
 
