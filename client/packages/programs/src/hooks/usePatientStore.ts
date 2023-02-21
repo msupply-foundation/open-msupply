@@ -14,6 +14,6 @@ export const usePatientStore = zustand<PatientStoreState>(set => ({
   setDocumentName: (documentName: string | undefined) =>
     set(state => ({ ...state, documentName })),
   currentPatient: undefined,
-  setCurrentPatient: (patient: PatientRowFragment) =>
+  setCurrentPatient: (patient: PatientRowFragment | undefined) =>
     set(state => ({ ...state, currentPatient: patient })),
 }));
