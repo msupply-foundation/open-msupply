@@ -308,6 +308,22 @@
           },
           "type": "object"
         },
+        "hcvCrag": {
+          "properties": {
+            "crAgResult": {
+              "enum": ["Positive", "Negative", "Inc"],
+              "type": "string"
+            },
+            "crAgTitre": {
+              "type": "string"
+            },
+            "hcv": {
+              "enum": ["Positive", "Negative"],
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
         "indexTesting": {
           "properties": {
             "indexTestingAccepted": {
@@ -359,10 +375,18 @@
               "title": "MUAC in cm",
               "type": "string"
             },
-            "nutritionalStatus": {
-              "description": "366364004  nutritional status",
-              "enum": ["UNDER_NOURISHED", "WELL_NOURISHED", "OVERWEIGHT"],
-              "type": "string"
+            "nutrition": {
+              "properties": {
+                "nutritionalStatus": {
+                  "description": "366364004  nutritional status",
+                  "enum": ["UNDER_NOURISHED", "WELL_NOURISHED", "OVERWEIGHT"],
+                  "type": "string"
+                },
+                "nutritionalSupportNeeded": {
+                  "$ref": "#/definitions/YesNo"
+                }
+              },
+              "type": "object"
             },
             "opportunisticInfections": {
               "items": {
@@ -531,7 +555,7 @@
               "description": "If last VL unsuppressed",
               "type": "boolean"
             },
-            "targetting": {
+            "targeting": {
               "enum": ["TARGETED", "SCHEDULED"],
               "type": "string"
             },
@@ -542,6 +566,11 @@
               "description": "If not suppressed [copies/ml]",
               "minimum": 0,
               "type": "number"
+            },
+            "viralLoadStatus": {
+              "description": "Based on viral load result",
+              "enum": ["Supressed", "Unsurpressed"],
+              "type": "string"
             }
           },
           "type": "object"
