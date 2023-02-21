@@ -24,6 +24,7 @@ fragment Patient on PatientNode {
   country
   dateOfBirth
   document {
+    data
     id
     name
     type
