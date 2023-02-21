@@ -36,15 +36,27 @@
           "label": "Body Mass Index (BMI)"
         },
         {
-          "type": "Control",
-          "scope": "#/properties/physicalExamination/properties/nutritionalStatus",
-          "options": {
-            "show": [
-              ["UNDER_NOURISHED", "Under nourished"],
-              ["WELL_NOURISHED", "Well nourished"],
-              ["OVERWEIGHT", "Overweight"]
-            ]
-          }
+          "type": "Group",
+          "label": "Nutrition",
+          "elements": [
+            {
+              "type": "Control",
+              "label": "Nutritional Status:",
+              "scope": "#/properties/physicalExamination/properties/nutrition/properties/nutritionalStatus",
+              "options": {
+                "show": [
+                  ["UNDER_NOURISHED", "Under nourished"],
+                  ["WELL_NOURISHED", "Well nourished"],
+                  ["OVERWEIGHT", "Overweight"]
+                ]
+              }
+            },
+            {
+              "type": "Control",
+              "label": "Nutritional Support Needed:",
+              "scope": "#/properties/physicalExamination/properties/nutrition/properties/nutritionalSupportNeeded"
+            }
+          ]
         },
         {
           "type": "Control",
@@ -56,6 +68,7 @@
         },
         {
           "type": "Control",
+          "label": "WHO Staging:",
           "scope": "#/properties/physicalExamination/properties/whoStaging",
           "options": {
             "show": [
@@ -159,6 +172,7 @@
         },
         {
           "scope": "#/properties/arvMedication/properties/regimenStatus",
+          "label": "Regimen Status:",
           "type": "Control",
           "options": {
             "show": [
@@ -176,10 +190,11 @@
             {
               "scope": "#/properties/arvMedication/properties/regimen",
               "type": "Control",
-              "label": "ARV Regimen"
+              "label": "ARV Regimen:"
             },
             {
               "scope": "#/properties/arvMedication/properties/regimenChangeReason",
+              "label": "Regimen Change Reason:",
               "type": "Control",
               "options": {
                 "multiColumn": true,
@@ -280,6 +295,7 @@
         },
         {
           "scope": "#/properties/arvMedication/properties/relevantCoMedication",
+          "label": "Relevant Co Medication:",
           "type": "Control"
         },
         {
@@ -295,10 +311,12 @@
       "elements": [
         {
           "type": "Control",
+          "label": "Pregnant:",
           "scope": "#/properties/familyPlanning/properties/pregnant"
         },
         {
           "type": "Control",
+          "label": "Contraception:",
           "scope": "#/properties/familyPlanning/properties/contraception"
         }
       ]
@@ -313,30 +331,37 @@
       "elements": [
         {
           "type": "Control",
+          "label": "Screened?",
           "scope": "#/properties/genderBasedViolence/properties/screened"
         },
         {
           "type": "Control",
+          "label": "Type of GBV:",
           "scope": "#/properties/genderBasedViolence/properties/type"
         },
         {
           "type": "Control",
+          "label": "Referred for External Services:",
           "scope": "#/properties/genderBasedViolence/properties/referredForExternalServices"
         },
         {
           "type": "Control",
+          "label": "Intimate Partner Violence?",
           "scope": "#/properties/genderBasedViolence/properties/intimatePartnerViolence"
         },
         {
           "type": "Control",
+          "label": "Rape?",
           "scope": "#/properties/genderBasedViolence/properties/rape"
         },
         {
           "type": "Control",
+          "label": "Post GBV Services Provided?",
           "scope": "#/properties/genderBasedViolence/properties/postServiceProvided"
         },
         {
           "type": "Control",
+          "label": "Post GBV Service Type:",
           "scope": "#/properties/genderBasedViolence/properties/receivedServiceType"
         }
       ]
@@ -351,11 +376,13 @@
           "elements": [
             {
               "type": "Control",
+              "label": "Viral Load Done?",
               "scope": "#/properties/viralLoad/properties/tested"
             },
             {
               "type": "Control",
-              "scope": "#/properties/viralLoad/properties/targetting",
+              "scope": "#/properties/viralLoad/properties/targeting",
+              "label": "VL Targeting:",
               "options": {
                 "show": [
                   ["TARGETED", "Targeted"],
@@ -365,13 +392,18 @@
             },
             {
               "type": "Control",
-              "label": "EAC Done",
-              "scope": "#/properties/viralLoad/properties/eacDone"
+              "label": "Viral Load Result [copies/ml]",
+              "scope": "#/properties/viralLoad/properties/viralLoadResult"
             },
             {
               "type": "Control",
-              "label": "Viral Load Result [copies/ml]",
-              "scope": "#/properties/viralLoad/properties/viralLoadResult"
+              "label": "Viral Load Status:",
+              "scope": "#/properties/viralLoad/properties/viralLoadStatus"
+            },
+            {
+              "type": "Control",
+              "label": "EAC Done?",
+              "scope": "#/properties/viralLoad/properties/eacDone"
             },
             {
               "type": "EncounterLineChart",
@@ -392,17 +424,17 @@
     },
     {
       "type": "Category",
-      "label": "Biochem",
+      "label": "Biochemistry",
       "options": { "icon": "microscope" },
       "elements": [
         {
           "type": "Control",
-          "label": "AST:",
+          "label": "AST [UI/L]",
           "scope": "#/properties/biochem/properties/ast"
         },
         {
           "type": "Control",
-          "label": "ALT:",
+          "label": "ALT",
           "scope": "#/properties/biochem/properties/alt"
         },
         {
@@ -411,12 +443,12 @@
         },
         {
           "type": "Control",
-          "label": "UEC (Cr):",
+          "label": "UEC (Cr)",
           "scope": "#/properties/biochem/properties/uec"
         },
         {
           "type": "Control",
-          "label": "CD4 [+cells/mm^3]:",
+          "label": "CD4 [+cells/mm^3]",
           "scope": "#/properties/biochem/properties/cd4"
         },
         {
@@ -426,7 +458,7 @@
             "values": [
               {
                 "field": "biochem.cd4",
-                "label": "CD4:",
+                "label": "CD4",
                 "unit": "+cells/mm^3"
               }
             ]
@@ -436,12 +468,12 @@
     },
     {
       "type": "Category",
-      "label": "Haem",
+      "label": "Haematology",
       "options": { "icon": "test-tube" },
       "elements": [
         {
           "type": "Control",
-          "label": "Hep B SAg",
+          "label": "Hep B SAg:",
           "scope": "#/properties/haem/properties/hepBSAg"
         },
         {
@@ -451,7 +483,7 @@
         },
         {
           "type": "Control",
-          "label": "FBE Hb",
+          "label": "FBE Hb [g/dL]",
           "scope": "#/properties/haem/properties/fbeHb"
         },
         {
@@ -466,12 +498,12 @@
         },
         {
           "type": "Control",
-          "label": "TPHA",
+          "label": "TPHA:",
           "scope": "#/properties/haem/properties/tpha"
         },
         {
           "type": "Control",
-          "label": "TLC:",
+          "label": "TLC [+cells/mm3]",
           "scope": "#/properties/haem/properties/tlc"
         }
       ]
@@ -488,7 +520,7 @@
         },
         {
           "type": "Control",
-          "label": "TB-GeneXpert",
+          "label": "TB-GeneXpert:",
           "scope": "#/properties/tuberculosis/properties/tbGeneXpert",
           "options": {
             "show": [
@@ -505,7 +537,7 @@
         },
         {
           "type": "Control",
-          "label": "TB-Sputum",
+          "label": "TB-Sputum:",
           "scope": "#/properties/tuberculosis/properties/tbSputum",
           "options": {
             "show": [
@@ -518,7 +550,7 @@
         },
         {
           "type": "Control",
-          "label": "TB-Status",
+          "label": "TB-Status:",
           "scope": "#/properties/tuberculosis/properties/tbStatus"
         }
       ]
@@ -530,7 +562,7 @@
       "elements": [
         {
           "type": "Control",
-          "label": "Index testing offered:",
+          "label": "Index Testing Offered:",
           "scope": "#/properties/indexTesting/properties/indexTestingOffered"
         },
         {
@@ -540,8 +572,29 @@
         },
         {
           "type": "Control",
-          "label": "Index testing accepted?",
+          "label": "Index Testing Accepted?",
           "scope": "#/properties/indexTesting/properties/indexTestingAccepted"
+        }
+      ]
+    },
+    {
+      "type": "Category",
+      "label": "HCV / CrAg",
+      "options": { "icon": "liver" },
+      "elements": [
+        {
+          "type": "Control",
+          "label": "HCV:",
+          "scope": "#/properties/hcvCrag/properties/hcv"
+        },
+        {
+          "type": "Control",
+          "label": "CrAg Result:",
+          "scope": "#/properties/hcvCrag/properties/crAgResult"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/hcvCrag/properties/crAgTitre"
         }
       ]
     }

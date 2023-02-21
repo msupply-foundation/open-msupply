@@ -42,6 +42,7 @@
     {
       "type": "Control",
       "scope": "#/properties/status",
+      "label": "Status:",
       "options": {
         "show": [
           ["ACTIVE", "Active"],
@@ -59,16 +60,17 @@
     {
       "type": "Control",
       "scope": "#/properties/hivTestType",
-      "label": "HIV Test Type"
+      "label": "HIV Test Type:"
     },
     {
       "type": "Control",
+      "label": "Risk Group",
       "scope": "#/properties/riskGroup"
     },
     {
       "type": "Control",
       "scope": "#/properties/partnerHIVStatus",
-      "label": "Partner HIV Status",
+      "label": "Partner HIV Status:",
       "options": {
         "show": [
           ["POSITIVE", "Positive"],
