@@ -56,7 +56,7 @@ const ProgramListComponent: FC = () => {
         accessor: row => row.rowData?.document?.documentRegistry?.name,
       },
       {
-        key: 'programPatientId',
+        key: 'programEnrolmentId',
         label: 'label.enrolment-patient-id',
       },
       {
