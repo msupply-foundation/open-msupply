@@ -308,6 +308,23 @@
           },
           "type": "object"
         },
+        "indexTesting": {
+          "properties": {
+            "indexTestingAccepted": {
+              "enum": ["Yes", "No", "N/A"],
+              "type": "string"
+            },
+            "indexTestingOffered": {
+              "enum": ["Yes", "No", "Declined"],
+              "type": "string"
+            },
+            "ipvRisk": {
+              "$ref": "#/definitions/YesNo"
+            }
+          },
+          "required": ["indexTestingAccepted"],
+          "type": "object"
+        },
         "note": {
           "description": "An overall note for additional comments about the encounter",
           "items": {

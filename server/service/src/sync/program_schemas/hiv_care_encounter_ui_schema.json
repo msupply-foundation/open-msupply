@@ -397,12 +397,12 @@
       "elements": [
         {
           "type": "Control",
-          "label": "AST",
+          "label": "AST:",
           "scope": "#/properties/biochem/properties/ast"
         },
         {
           "type": "Control",
-          "label": "ALT",
+          "label": "ALT:",
           "scope": "#/properties/biochem/properties/alt"
         },
         {
@@ -411,12 +411,12 @@
         },
         {
           "type": "Control",
-          "label": "UEC (Cr)",
+          "label": "UEC (Cr):",
           "scope": "#/properties/biochem/properties/uec"
         },
         {
           "type": "Control",
-          "label": "CD4 [+cells/mm^3]",
+          "label": "CD4 [+cells/mm^3]:",
           "scope": "#/properties/biochem/properties/cd4"
         },
         {
@@ -426,7 +426,7 @@
             "values": [
               {
                 "field": "biochem.cd4",
-                "label": "CD4",
+                "label": "CD4:",
                 "unit": "+cells/mm^3"
               }
             ]
@@ -471,7 +471,7 @@
         },
         {
           "type": "Control",
-          "label": "TLC",
+          "label": "TLC:",
           "scope": "#/properties/haem/properties/tlc"
         }
       ]
@@ -520,6 +520,28 @@
           "type": "Control",
           "label": "TB-Status",
           "scope": "#/properties/tuberculosis/properties/tbStatus"
+        }
+      ]
+    },
+    {
+      "type": "Category",
+      "label": "Index Testing",
+      "options": { "icon": "index-testing" },
+      "elements": [
+        {
+          "type": "Control",
+          "label": "Index testing offered:",
+          "scope": "#/properties/indexTesting/properties/indexTestingOffered"
+        },
+        {
+          "type": "Control",
+          "label": "IPV Risk?",
+          "scope": "#/properties/indexTesting/properties/ipvRisk"
+        },
+        {
+          "type": "Control",
+          "label": "Index testing accepted?",
+          "scope": "#/properties/indexTesting/properties/indexTestingAccepted"
         }
       ]
     }
