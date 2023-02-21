@@ -113,6 +113,7 @@ mod hiv_care_encounter {
                 haem: Default::default(),
                 viral_load: Default::default(),
                 note: Default::default(),
+                index_testing: Default::default(),
             }
         }
     }
