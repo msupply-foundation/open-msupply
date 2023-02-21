@@ -520,8 +520,8 @@
       "options": { "icon": "lungs" },
       "elements": [
         {
-          "type": "Contol",
-          "label": "TB-Screening",
+          "type": "Control",
+          "label": "TB-Screening:",
           "scope": "#/properties/tuberculosis/properties/tbScreening"
         },
         {
