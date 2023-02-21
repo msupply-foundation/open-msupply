@@ -22,12 +22,13 @@
     "FamilyPlanning": {
       "properties": {
         "contraception": {
-          "description": "13197004 Contraception",
-          "type": "boolean"
+          "$ref": "#/definitions/YesNo",
+          "description": "13197004 Contraception"
         },
         "pregnant": {
           "description": "77386006 Pregnant",
-          "type": "boolean"
+          "enum": ["Yes", "No", "Breastfeeding"],
+          "type": "string"
         }
       },
       "type": "object"
@@ -307,7 +308,7 @@
           },
           "type": "object"
         },
-        "notes": {
+        "note": {
           "description": "An overall note for additional comments about the encounter",
           "items": {
             "$ref": "#/definitions/Note"
@@ -469,30 +470,27 @@
         "status": {
           "$ref": "#/definitions/EncounterStatus"
         },
-        "tbHcv": {
+        "tuberculosis": {
           "properties": {
             "cxr": {
-              "type": "number"
-            },
-            "hcv": {
-              "description": "HCV",
-              "enum": ["Pos", "Neg"],
               "type": "string"
             },
             "tbGeneXpert": {
-              "enum": ["NOT_DETECTED", "POSITIVE_RIF_SENSITIVE", "POSITIVE_RIF_RESISTANT"],
+              "enum": [
+                "NOT_DETECTED",
+                "POSITIVE_RIF_SENSITIVE",
+                "POSITIVE_RIF_RESISTANT"
+              ],
               "type": "string"
+            },
+            "tbScreening": {
+              "$ref": "#/definitions/YesNo"
             },
             "tbSputum": {
               "enum": ["NO_AFB", "POS_1", "POS_2", "POS_3"],
               "type": "string"
-            }
-          },
-          "type": "object"
-        },
-        "tuberculosis": {
-          "properties": {
-            "status": {
+            },
+            "tbStatus": {
               "enum": [
                 "TB confirmed clinically",
                 "TB confirmed by sputum",
@@ -506,9 +504,6 @@
                 "Has TB (code from old CTC form)"
               ],
               "type": "string"
-            },
-            "tbScreening": {
-              "type": "boolean"
             }
           },
           "type": "object"
@@ -559,6 +554,10 @@
       },
       "required": ["text", "created", "authorId", "authorName"],
       "type": "object"
+    },
+    "YesNo": {
+      "enum": ["Yes", "No"],
+      "type": "string"
     }
   },
   "type": "object",

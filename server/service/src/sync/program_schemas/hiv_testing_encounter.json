@@ -26,12 +26,13 @@
     "FamilyPlanning": {
       "properties": {
         "contraception": {
-          "description": "13197004 Contraception",
-          "type": "boolean"
+          "$ref": "#/definitions/YesNo",
+          "description": "13197004 Contraception"
         },
         "pregnant": {
           "description": "77386006 Pregnant",
-          "type": "boolean"
+          "enum": ["Yes", "No", "Breastfeeding"],
+          "type": "string"
         }
       },
       "type": "object"
@@ -41,7 +42,18 @@
       "type": "string"
     },
     "HIVRiskGroup": {
-      "enum": ["LRM", "MSM", "MSW", "MSMSW", "HRM", "LRW", "HRW", "FSW", "TG", "TGSW"],
+      "enum": [
+        "LRM",
+        "MSM",
+        "MSW",
+        "MSMSW",
+        "HRM",
+        "LRW",
+        "HRW",
+        "FSW",
+        "TG",
+        "TGSW"
+      ],
       "type": "string"
     },
     "HIVStatus": {
@@ -160,7 +172,7 @@
           },
           "type": "object"
         },
-        "notes": {
+        "note": {
           "description": "An overall note for additional comments about the encounter",
           "items": {
             "$ref": "#/definitions/Note"
@@ -274,6 +286,10 @@
     },
     "OtherServiceType": {
       "enum": ["TB", "STI", "GBV", "PEP", "OTHER"],
+      "type": "string"
+    },
+    "YesNo": {
+      "enum": ["Yes", "No"],
       "type": "string"
     },
     "YesNoNA": {

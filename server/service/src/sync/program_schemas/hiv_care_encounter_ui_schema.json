@@ -290,7 +290,7 @@
     },
     {
       "type": "Category",
-      "label": "Family Planning",
+      "label": "Pregnancy",
       "options": { "icon": "condom" },
       "elements": [
         {
@@ -478,13 +478,18 @@
     },
     {
       "type": "Category",
-      "label": "TB / HCV",
+      "label": "Tuberculosis",
       "options": { "icon": "lungs" },
       "elements": [
         {
+          "type": "Contol",
+          "label": "TB-Screening",
+          "scope": "#/properties/tuberculosis/properties/tbScreening"
+        },
+        {
           "type": "Control",
           "label": "TB-GeneXpert",
-          "scope": "#/properties/tbHcv/properties/tbGeneXpert",
+          "scope": "#/properties/tuberculosis/properties/tbGeneXpert",
           "options": {
             "show": [
               ["NOT_DETECTED", "Not Detected"],
@@ -496,12 +501,12 @@
         {
           "type": "Control",
           "label": "CXR",
-          "scope": "#/properties/tbHcv/properties/cxr"
+          "scope": "#/properties/tuberculosis/properties/cxr"
         },
         {
           "type": "Control",
           "label": "TB-Sputum",
-          "scope": "#/properties/tbHcv/properties/tbSputum",
+          "scope": "#/properties/tuberculosis/properties/tbSputum",
           "options": {
             "show": [
               ["NO_AFB", "No AFB"],
@@ -513,8 +518,8 @@
         },
         {
           "type": "Control",
-          "label": "HCV",
-          "scope": "#/properties/tbHcv/properties/hcv"
+          "label": "TB-Status",
+          "scope": "#/properties/tuberculosis/properties/tbStatus"
         }
       ]
     }
