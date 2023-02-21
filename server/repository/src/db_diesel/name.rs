@@ -57,7 +57,7 @@ pub struct NameFilter {
     /// Currently:
     /// - name::code
     /// - name::national_health_number
-    /// - program_enrolment::program_patient_id
+    /// - program_enrolment::program_enrolment_id
     pub identifier: Option<SimpleStringFilter>,
 }
 
@@ -251,7 +251,7 @@ fn create_filtered_query(store_id: String, filter: Option<NameFilter>) -> BoxedN
             apply_simple_string_filter!(
                 sub_query,
                 identifier,
-                program_enrolment_dsl::program_patient_id
+                program_enrolment_dsl::program_enrolment_id
             );
             query = query.or_filter(name_dsl::id.eq_any(sub_query))
         }
@@ -736,7 +736,7 @@ mod tests {
                 patient_id: mock_name_2().id,
                 program: "ProgramType".to_string(),
                 enrolment_datetime: Utc::now().naive_utc(),
-                program_patient_id: Some("program_patient_id".to_string()),
+                program_enrolment_id: Some("program_enrolment_id".to_string()),
             })
             .unwrap();
         let result = repo
@@ -756,7 +756,7 @@ mod tests {
         let result = repo
             .query_by_filter(
                 &store_id,
-                NameFilter::new().identifier(SimpleStringFilter::equal_to("program_patient_id")),
+                NameFilter::new().identifier(SimpleStringFilter::equal_to("program_enrolment_id")),
             )
             .unwrap();
         assert_eq!(result.get(0).unwrap().name_row.id, mock_name_2().id);
@@ -765,7 +765,7 @@ mod tests {
                 &store_id,
                 NameFilter::new()
                     .code(SimpleStringFilter::equal_to("code2"))
-                    .identifier(SimpleStringFilter::equal_to("program_patient_id")),
+                    .identifier(SimpleStringFilter::equal_to("program_enrolment_id")),
             )
             .unwrap();
         assert_eq!(result.get(0).unwrap().name_row.id, mock_name_2().id);
@@ -775,7 +775,7 @@ mod tests {
                 &store_id,
                 NameFilter::new()
                     .code(SimpleStringFilter::equal_to("code does not exist"))
-                    .identifier(SimpleStringFilter::equal_to("program_patient_id")),
+                    .identifier(SimpleStringFilter::equal_to("program_enrolment_id")),
             )
             .unwrap();
         assert_eq!(result.len(), 0);

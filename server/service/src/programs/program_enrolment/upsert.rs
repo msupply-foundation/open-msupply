@@ -392,7 +392,7 @@ mod test {
         );
         assert_eq!(
             program.program_enrolment_id,
-            found_program.program_patient_id
+            found_program.program_enrolment_id
         );
     }
 }
