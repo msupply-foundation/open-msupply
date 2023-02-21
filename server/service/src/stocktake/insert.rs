@@ -250,6 +250,7 @@ fn generate_lines_from_location(
             is_available: None,
             expiry_date: None,
             store_id: Some(EqualFilter::equal_to(store_id)),
+            has_packs: None,
         },
         Some(store_id.to_string()),
     )?;
