@@ -277,17 +277,22 @@
         },
         "haem": {
           "properties": {
-            "fbeHb": {
-              "description": "Hb [g/dL]",
-              "type": "number"
-            },
-            "fbePlt": {
-              "description": "Plt",
-              "type": "number"
-            },
-            "fbeWCC": {
-              "description": "WCC",
-              "type": "number"
+            "fbe": {
+              "properties": {
+                "fbeHb": {
+                  "description": "Hb [g/dL]",
+                  "type": "number"
+                },
+                "fbePlt": {
+                  "description": "Plt",
+                  "type": "number"
+                },
+                "fbeWCC": {
+                  "description": "WCC",
+                  "type": "number"
+                }
+              },
+              "type": "object"
             },
             "hepBSAg": {
               "enum": ["Pos", "Neg"],
@@ -306,6 +311,7 @@
               "type": "string"
             }
           },
+          "required": ["fbe"],
           "type": "object"
         },
         "hcvCrag": {

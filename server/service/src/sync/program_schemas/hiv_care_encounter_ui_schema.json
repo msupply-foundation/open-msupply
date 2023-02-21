@@ -482,19 +482,25 @@
           "scope": "#/properties/haem/properties/rbslToFbsl"
         },
         {
-          "type": "Control",
-          "label": "FBE Hb [g/dL]",
-          "scope": "#/properties/haem/properties/fbeHb"
-        },
-        {
-          "type": "Control",
-          "label": "FBE WCC",
-          "scope": "#/properties/haem/properties/fbeWCC"
-        },
-        {
-          "type": "Control",
-          "label": "FBE Plt",
-          "scope": "#/properties/haem/properties/fbePlt"
+          "type": "Group",
+          "label": "FBE",
+          "elements": [
+            {
+              "type": "Control",
+              "label": "FBE Hb [g/dL]",
+              "scope": "#/properties/haem/properties/fbe/properties/fbeHb"
+            },
+            {
+              "type": "Control",
+              "label": "FBE WCC",
+              "scope": "#/properties/haem/properties/fbe/properties/fbeWCC"
+            },
+            {
+              "type": "Control",
+              "label": "FBE Plt",
+              "scope": "#/properties/haem/properties/fbe/properties/fbePlt"
+            }
+          ]
         },
         {
           "type": "Control",
