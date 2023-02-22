@@ -145,7 +145,7 @@
           "type": "boolean"
         }
       },
-      "required": ["enrolmentDatetime", "treatmentSupporterIsNextOfKin"],
+      "required": ["enrolmentDatetime"],
       "type": "object"
     },
     "HIVRelation": {
