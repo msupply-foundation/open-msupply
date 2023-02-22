@@ -4,6 +4,7 @@ import { withJsonFormsControlProps } from '@jsonforms/react';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../../common/hooks/useZodOptionsValidation';
 import { SearchWithUserSource } from './SearchWithUserSource';
+import { SearchWithDocumentSource } from './SearchWithDocumentSource';
 
 const Options = z.object({
   /**
@@ -27,10 +28,10 @@ const UIComponent = (props: ControlProps) => {
   switch (options?.source) {
     case 'user':
       return <SearchWithUserSource {...childProps} />;
-    // case 'document':
-    //   return <SearchWithDocumentSource {...props} />;
+    case 'document':
+      return <SearchWithDocumentSource {...childProps} />;
     default:
-      return <p>Other</p>;
+      return null;
   }
 };
 
