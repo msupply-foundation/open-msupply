@@ -152,7 +152,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
 
         activity.runOnUiThread(
                 () -> {
-                    this.splashScreen = new Dialog(activity);
+                    this.splashScreen = new Dialog(activity, R.style.capacitor_immersive_style);
 
                     Drawable splash = getSplashDrawable(context);
                     LinearLayout parent = new LinearLayout(context);
