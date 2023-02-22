@@ -1,6 +1,6 @@
 use repository::{
     EqualFilter, InventoryAdjustmentReason, InventoryAdjustmentReasonFilter,
-    InventoryAdjustmentReasonRepository, InventoryAdjustmentReasonType,
+    InventoryAdjustmentReasonRepository, InventoryAdjustmentReasonType, StockLineRow,
 };
 use repository::{
     ItemFilter, ItemRepository, LocationFilter, LocationRepository, RepositoryError,
@@ -101,13 +101,12 @@ pub fn check_reason_is_valid(
 }
 
 pub fn check_stock_line_reduced_below_zero(
-    total_number_of_packs: &f64,
+    stock_line: &StockLineRow,
     counted_number_of_packs: &f64,
-    available_number_of_packs: &f64,
 ) -> bool {
-    let adjustment = total_number_of_packs - counted_number_of_packs;
+    let adjustment = stock_line.total_number_of_packs - counted_number_of_packs;
 
     return adjustment > 0.0
-        && (total_number_of_packs - adjustment < 0.0
-            || available_number_of_packs - adjustment < 0.0);
+        && (stock_line.total_number_of_packs - adjustment < 0.0
+            || stock_line.available_number_of_packs - adjustment < 0.0);
 }

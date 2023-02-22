@@ -4,7 +4,7 @@ use chrono::NaiveDate;
 use graphql_core::simple_generic_errors::CannotEditStocktake;
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
-use graphql_types::types::{StockLineConnector, StocktakeLineNode};
+use graphql_types::types::{StockLineNode, StocktakeLineNode};
 use repository::StocktakeLine;
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -130,7 +130,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         }
         ServiceError::StockLineReducedBelowZero(line) => {
             return Ok(UpdateErrorInterface::StockLineReducedBelowZero(
-                StockLineReducedBelowZero(StockLineConnector::from_vec(vec![line])),
+                StockLineReducedBelowZero(StockLineNode::from_domain(line)),
             ))
         }
         ServiceError::AdjustmentReasonNotProvided => {

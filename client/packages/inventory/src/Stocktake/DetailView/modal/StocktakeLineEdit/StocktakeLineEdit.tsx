@@ -71,7 +71,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
         response.response?.__typename === 'InsertStocktakeLineError' &&
         response.response?.error?.__typename === 'StockLineReducedBelowZero'
       ) {
-        return error(t('error.stocktake-has-stock-reduced-below-zero'))();
+        return error(t('error.reduced-below-zero'))();
       }
     });
     result.batchStocktake.insertStocktakeLines?.map(response => {
@@ -88,7 +88,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
         response?.response?.__typename === 'UpdateStocktakeLineError' &&
         response?.response?.error?.__typename === 'StockLineReducedBelowZero'
       ) {
-        return error(t('error.stocktake-has-stock-reduced-below-zero'))();
+        return error(t('error.reduced-below-zero'))();
       }
     });
     result.batchStocktake.updateStocktakeLines?.map(response => {
