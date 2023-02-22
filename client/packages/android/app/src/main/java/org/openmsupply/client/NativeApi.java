@@ -2,9 +2,17 @@ package org.openmsupply.client;
 
 import static android.content.Context.NSD_SERVICE;
 
+import android.app.Activity;
+import android.app.Dialog;
+import android.content.Context;
+import android.content.res.Resources;
+import android.graphics.drawable.Drawable;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
+import android.util.Log;
 import android.webkit.WebView;
+import android.widget.LinearLayout;
+
 import com.getcapacitor.Bridge;
 import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
@@ -13,9 +21,14 @@ import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
+
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.Deque;
+
+import javax.net.ssl.SSLHandshakeException;
 
 @CapacitorPlugin(name = "NativeApi")
 public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
@@ -30,6 +43,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     boolean isDiscovering;
     boolean isResolvingServer;
     boolean shouldRestartDiscovery;
+    Dialog splashScreen;
 
     @Override
     public void load() {
@@ -64,12 +78,114 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         return localUrl;
     }
 
+    private void sleep(int delay) {
+        try {
+            Thread.sleep(delay);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     @Override
     protected void handleOnStart() {
         WebView webView = this.getBridge().getWebView();
+        showSplashScreen();
         // advertiseService();
-        // .post to run on UI thread
-        webView.post(() -> webView.loadUrl(localUrl + "/android"));
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Boolean isServerRunning = false;
+                Integer retryCount = 5;
+                while (!isServerRunning && retryCount > 0) {
+                    try {
+                        URL url = new URL(localUrl);
+                        HttpURLConnection urlc = (HttpURLConnection) url.openConnection();
+                        // actually no point - the timeout only applies when trying to find a server
+                        // when using localhost it returns immediately even if the server isn't responding
+                        urlc.setConnectTimeout(1000);
+                        urlc.connect();
+                        if (urlc.getResponseCode() == 200) {
+                            isServerRunning = true;
+                        }
+                    } catch (SSLHandshakeException e) {
+                        // server is running and responding with an SSL error
+                        // which we will ignore, so ok to proceed
+                        isServerRunning = true;
+                    } catch (Exception e) {
+                        Log.e("omSupply", e.getMessage());
+                        isServerRunning = false;
+                    }
+                    retryCount--;
+                    sleep(1000);
+                }
+
+                // .post to run on UI thread in the two calls below
+                if (isServerRunning) {
+                    webView.post(() -> webView.loadUrl(localUrl + "/android"));
+                } else {
+                    webView.post(() -> webView.loadData(ErrorPage.encodedHtml, "text/html", "base64"));
+                }
+            }
+        });
+        thread.start();
+    }
+
+    private Drawable getSplashDrawable(Context context) {
+        int splashId = context.getResources().getIdentifier("splash", "drawable", context.getPackageName());
+        try {
+            Drawable drawable = context.getResources().getDrawable(splashId, context.getTheme());
+            return drawable;
+        } catch (Resources.NotFoundException ex) {
+            Log.w("omSupply", "No splash image found");
+            return null;
+        }
+    }
+
+    private void showSplashScreen() {
+        if (this.splashScreen != null) {
+            return;
+        }
+
+        Bridge bridge = this.getBridge();
+        Context context = bridge.getContext();
+        Activity activity = bridge.getActivity();
+
+        activity.runOnUiThread(
+                () -> {
+                    this.splashScreen = new Dialog(activity);
+
+                    Drawable splash = getSplashDrawable(context);
+                    LinearLayout parent = new LinearLayout(context);
+                    parent.setLayoutParams(
+                            new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                                    LinearLayout.LayoutParams.WRAP_CONTENT));
+                    parent.setOrientation(LinearLayout.VERTICAL);
+                    if (splash != null) {
+                        parent.setBackground(splash);
+                    }
+                    this.splashScreen.setContentView(parent);
+
+                    this.splashScreen.setCancelable(false);
+                    if (!this.splashScreen.isShowing()) {
+                        this.splashScreen.show();
+                    }
+                });
+    }
+
+    @PluginMethod()
+    public void hideSplashScreen(PluginCall call) {
+        Bridge bridge = this.getBridge();
+        WebView webView = bridge.getWebView();
+        Activity activity = bridge.getActivity();
+        webView.post(
+                () -> {
+                    if (this.splashScreen != null && this.splashScreen.isShowing()) {
+                        if (!activity.isFinishing() && !activity.isDestroyed()) {
+                            this.splashScreen.dismiss();
+                        }
+                        this.splashScreen = null;
+                    }
+                });
     }
 
     @Override
@@ -289,6 +405,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
 
     public class omSupplyServer {
         JSObject data;
+
         public omSupplyServer(JSObject data) {
             this.data = data;
         }
