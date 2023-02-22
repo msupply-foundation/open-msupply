@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ControlProps } from '@jsonforms/core';
 import {
   useDebounceCallback,
-  // useTranslation,
+  useTranslation,
   Box,
   FormLabel,
   Autocomplete,
@@ -27,6 +27,8 @@ const Options = z.object({
   query: z.enum(QueryValues),
   optionString: z.string().optional(),
   displayString: z.string().optional(),
+  saveFields: z.array(z.string()).optional(),
+  placeholderText: z.string().optional(),
 });
 
 type Options = z.infer<typeof Options>;
@@ -37,20 +39,20 @@ export const SearchWithUserSource = (props: ControlProps) => {
     Options,
     uischema.options
   );
+  const t = useTranslation('programs');
   const [searchText, setSearchText] = useState('');
   const [editMode, setEditMode] = useState(!data);
-
-  const { query, optionString, displayString } = options ?? {};
 
   const {
     runQuery,
     getOptionLabel,
     getDisplayElement,
     saveFields,
+    placeholderText,
     loading,
     error: queryError,
     results,
-  } = useSearchQueries(query, { optionString, displayString });
+  } = useSearchQueries(options ?? {});
 
   const debouncedOnChange = useDebounceCallback(
     value => {
@@ -65,7 +67,6 @@ export const SearchWithUserSource = (props: ControlProps) => {
 
   const handleDataUpdate = (selectedResult: Record<string, any> | null) => {
     if (selectedResult === null) return;
-    console.log('Selected', selectedResult);
     if (!saveFields) handleChange(path, selectedResult);
 
     const newObj: Record<string, any> = {};
@@ -111,9 +112,18 @@ export const SearchWithUserSource = (props: ControlProps) => {
                 error: !!zErrors || !!props.errors || !!queryError,
                 helperText: zErrors ?? props.errors ?? queryError,
               }}
-              noOptionsText={loading ? 'Searching...' : 'No results'}
+              noOptionsText={
+                loading
+                  ? t('control.search.searching-label')
+                  : t('control.search.no-results-label')
+              }
               renderInput={params => (
-                <BasicTextInput {...params} placeholder="Search..." />
+                <BasicTextInput
+                  {...params}
+                  placeholder={
+                    placeholderText ?? t('control.search.search-placeholder')
+                  }
+                />
               )}
             />
           </>
@@ -127,7 +137,7 @@ export const SearchWithUserSource = (props: ControlProps) => {
         >
           {getDisplayElement && getDisplayElement(data)}
           <IconButton
-            label="Edit"
+            label={t('label.edit')}
             icon={<EditIcon style={{ width: 16 }} />}
             onClick={() => {
               setEditMode(true);

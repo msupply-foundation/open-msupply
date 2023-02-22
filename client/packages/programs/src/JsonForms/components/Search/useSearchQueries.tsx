@@ -10,44 +10,40 @@ type QueryValue = typeof QueryValues[number];
 type GetDisplayElement = (result: Record<string, any>) => JSX.Element | null;
 
 interface SearchQueryOptions {
+  query?: QueryValue;
   optionString?: string;
   displayString?: string;
-}
-
-interface SearchQueryParams {
-  runQuery: any;
   saveFields?: string[];
-  getOptionLabel: (result: Record<string, any>) => string;
-  getDisplayElement: GetDisplayElement;
+  placeholderText?: string;
 }
 
-export type SearchSource = 'input' | 'document';
+interface SearchQueryOutput {
+  runQuery: (searchValue: string) => void;
+  saveFields: string[];
+  getOptionLabel?: (result: Record<string, any>) => string;
+  getDisplayElement?: GetDisplayElement;
+  placeholderText: string;
+}
 
 const { formatTemplateString } = RegexUtils;
 const { replaceHTMLlineBreaks } = JSXFormatters;
 
-export const useSearchQueries = (
-  query?: QueryValue,
-  { optionString, displayString }: SearchQueryOptions = {}
-) => {
+export const useSearchQueries = ({
+  query,
+  optionString,
+  displayString,
+  saveFields,
+  placeholderText,
+}: SearchQueryOptions = {}) => {
   const { storeId } = useAuthContext();
   const { client } = useGql();
   const [results, setResults] = useState<Record<string, any>[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
-
-  if (!query)
-    return {
-      runQuery: () => {},
-      source: 'input',
-      loading: true,
-      error: false,
-      results: [],
-    };
 
   const patientQueries = getPatientQueries(getSdk(client), storeId);
 
-  const searchQueries: Record<QueryValue, SearchQueryParams> = {
+  const searchQueries: Record<QueryValue, SearchQueryOutput> = {
     patientByCode: {
       runQuery: async (searchValue: string) => {
         if (searchValue === '') {
@@ -95,7 +91,7 @@ export const useSearchQueries = (
           </Typography>
         );
       },
-      saveFields: [
+      saveFields: saveFields ?? [
         'id',
         'code',
         'firstName',
@@ -105,17 +101,20 @@ export const useSearchQueries = (
         'email',
         'document',
       ],
+      placeholderText: placeholderText ?? 'Search by patient code...',
     },
   };
 
-  const search = searchQueries[query];
+  const returnObject = query
+    ? searchQueries[query]
+    : {
+        runQuery: () => {},
+        saveFields: [],
+        placeholderText: '',
+      };
 
   return {
-    runQuery: search.runQuery,
-    getOptionLabel: 'getOptionLabel' in search ? search.getOptionLabel : null,
-    getDisplayElement:
-      'getDisplayElement' in search ? search.getDisplayElement : null,
-    saveFields: search.saveFields,
+    ...returnObject,
     loading,
     error,
     results,
