@@ -401,11 +401,6 @@
               "scope": "#/properties/viralLoad/properties/viralLoadStatus"
             },
             {
-              "type": "Control",
-              "label": "EAC Done?",
-              "scope": "#/properties/viralLoad/properties/eacDone"
-            },
-            {
               "type": "EncounterLineChart",
               "scope": "#",
               "options": {
@@ -417,6 +412,11 @@
                   }
                 ]
               }
+            },
+            {
+              "type": "Control",
+              "label": "EAC Done?",
+              "scope": "#/properties/viralLoad/properties/eacDone"
             }
           ]
         }
