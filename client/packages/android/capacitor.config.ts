@@ -12,22 +12,32 @@ const config: CapacitorConfig = {
   bundledWebRuntime: false,
   android: {
     path: './',
-    // Required to access discovery graphql on http 
+    // Required to access discovery graphql on http
     allowMixedContent: true,
   },
   server: {
     url: 'https://localhost:8000',
     // If hostname is kept as localhost then Capacitor localServer will try to use bundled web app vs web app from remote/webpack server
     hostname: 'should.notmatch.localhost',
-    // Required to access discovery graphql on http 
+    // Required to access discovery graphql on http
     cleartext: true,
   },
-  // Below will turn on debug (uncomment and run `yarn apply-config`)
-  // plugins: {
-  //   NativeApi: {
-  //     debugUrl: 'http://192.168.178.146:3003',
-  //   },
-  // },
+  plugins: {
+    SplashScreen: {
+      launchShowDuration: 100,
+      launchAutoHide: true,
+      backgroundColor: '#f2f2f5',
+      androidScaleType: 'CENTER_INSIDE',
+      splashFullScreen: true,
+      splashImmersive: true,
+      layoutName: 'launch_screen',
+      useDialog: true,
+    },
+    // Below will turn on debug (uncomment and run `yarn apply-config`)
+    //   NativeApi: {
+    //     debugUrl: 'http://192.168.178.146:3003',
+    //   },
+  },
 };
 
 export default config;
