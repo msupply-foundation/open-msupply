@@ -125,7 +125,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
                     webView.post(() -> webView.loadUrl(localUrl + "/android"));
                 } else {
                     webView.post(() -> webView.loadData(ErrorPage.encodedHtml, "text/html", "base64"));
-                    hideSplashScreen();
+                    this.hideSplash();
                 }
             }
         });
@@ -176,6 +176,10 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
 
     @PluginMethod()
     public void hideSplashScreen(PluginCall call) {
+        this.hideSplash();
+    }
+
+    private void hideSplash() {
         Bridge bridge = this.getBridge();
         WebView webView = bridge.getWebView();
         Activity activity = bridge.getActivity();
