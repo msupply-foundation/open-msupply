@@ -603,6 +603,102 @@
           "scope": "#/properties/hcvCrag/properties/crAgTitre"
         }
       ]
+    },
+    {
+      "type": "Category",
+      "label": "General",
+      "options": { "icon": "general" },
+      "elements": [
+        {
+          "type": "Control",
+          "label": "Referred to:",
+          "scope": "#/properties/general/properties/referredTo"
+        },
+        {
+          "type": "Control",
+          "label": "Visit Type:",
+          "scope": "#/properties/general/properties/visitType"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/general/properties/location"
+        }
+      ]
+    },
+    {
+      "type": "Category",
+      "label": "Risk Behaviour",
+      "options": { "icon": "document" },
+      "elements": [
+        {
+          "type": "Control",
+          "label": "Previous HIV Test Result:",
+          "scope": "#/properties/riskBehaviour/properties/previousHIVTestResult",
+          "options": {
+            "show": [
+              ["POSITIVE", "Positive"],
+              ["NEGATIVE", "Negative"],
+              ["UNKNOWN", "Unknown"],
+              ["NOT_DONE", "Not done"]
+            ]
+          }
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/riskBehaviour/properties/previousHIVTestDate",
+          "rule": {
+            "effect": "ENABLE",
+            "condition": {
+              "scope": "#/properties/riskBehaviour/properties/previousHIVTestResult",
+              "schema": { "enum": ["POSITIVE", "NEGATIVE", "UNKNOWN"] }
+            }
+          }
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/riskBehaviour/properties/receivedBloodTransfusion"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/riskBehaviour/properties/injectedDrugsWithoutDoctorAdvice"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/riskBehaviour/properties/accidentalNeedlePick"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/riskBehaviour/properties/sexualTransmittedInfection"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/riskBehaviour/properties/unprotectedVaginalSex"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/riskBehaviour/properties/unprotectedAnalSex"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/riskBehaviour/properties/prostitution"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/riskBehaviour/properties/sexWithSameSex"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/riskBehaviour/properties/forcedSexWithoutConsent"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/riskBehaviour/properties/numberMaleSexualPartners6Month"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/riskBehaviour/properties/numberFemaleSexualPartners6Month"
+        }
+      ]
     }
   ],
   "options": {

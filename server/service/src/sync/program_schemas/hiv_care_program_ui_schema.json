@@ -128,7 +128,7 @@
         {
           "type": "Control",
           "scope": "#/properties/referredFrom",
-          "label": "Referred from",
+          "label": "Referred from:",
           "options": {
             "show": [
               ["HCT_OTHER_PICT", "HCT other PICT"],
@@ -151,6 +151,7 @@
         {
           "type": "Control",
           "scope": "#/properties/priorART",
+          "label": "Prior ART:",
           "options": {
             "show": [
               ["TRANSFER_IN_WITH_RECORDS", "Transfer in with records"],

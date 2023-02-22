@@ -33,6 +33,10 @@
       },
       "type": "object"
     },
+    "GBVScreeningOutcome": {
+      "enum": ["POSITIVE", "NEGATIVE", "NOT_DONE", "DECLINED"],
+      "type": "string"
+    },
     "HIVCareEncounter": {
       "properties": {
         "arvMedication": {
@@ -275,6 +279,34 @@
           },
           "type": "object"
         },
+        "general": {
+          "properties": {
+            "location": {
+              "description": "Location needed if visitType is 'Refill' or 'Outreach'",
+              "type": "string"
+            },
+            "referredTo": {
+              "enum": [
+                "PMTCT",
+                "HBC",
+                "PLHA Support Group/Club",
+                "Orphan and vulnerable children group",
+                "Medical specialty",
+                "Nutritional Support",
+                "Legal",
+                "Medical Ward",
+                "TB Ward",
+                "Other"
+              ],
+              "type": "string"
+            },
+            "visitType": {
+              "enum": ["Outreach", "Refill", "Standard"],
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
         "haem": {
           "properties": {
             "fbe": {
@@ -509,6 +541,9 @@
           },
           "type": "object"
         },
+        "riskBehaviour": {
+          "$ref": "#/definitions/RiskBehaviour"
+        },
         "startDatetime": {
           "description": "Encounter start date and time",
           "format": "date-time",
@@ -585,6 +620,25 @@
       "required": ["createdDatetime", "startDatetime"],
       "type": "object"
     },
+    "HIVRiskGroup": {
+      "enum": [
+        "LRM",
+        "MSM",
+        "MSW",
+        "MSMSW",
+        "HRM",
+        "LRW",
+        "HRW",
+        "FSW",
+        "TG",
+        "TGSW"
+      ],
+      "type": "string"
+    },
+    "HIVTestingStatus": {
+      "enum": ["POSITIVE", "NEGATIVE", "UNKNOWN", "NOT_DONE"],
+      "type": "string"
+    },
     "Note": {
       "properties": {
         "authorId": {
@@ -605,6 +659,73 @@
         }
       },
       "required": ["text", "created", "authorId", "authorName"],
+      "type": "object"
+    },
+    "RiskBehaviour": {
+      "properties": {
+        "accidentalNeedlePick": {
+          "description": "Have you received any of the following in the past 12 months ?: Accidental needle pick ?",
+          "type": "boolean"
+        },
+        "forcedSexWithoutConsent": {
+          "description": "Have you received any of the following in the past 12 months ?: Forced to have sex without consent ?",
+          "type": "boolean"
+        },
+        "injectedDrugsWithoutDoctorAdvice": {
+          "description": "Have you received any of the following in the past 12 months ?: Injected drugs without doctor's advice ?",
+          "type": "boolean"
+        },
+        "numberFemaleSexualPartners6Month": {
+          "description": "How many female sexual partners have you had in the last 6 months ?",
+          "type": "number"
+        },
+        "numberMaleSexualPartners6Month": {
+          "description": "How many male sexual partners have you had in the last 6 months ?",
+          "type": "number"
+        },
+        "previousHIVTestDate": {
+          "description": "Date of a previous HIV test",
+          "format": "date",
+          "type": "string"
+        },
+        "previousHIVTestResult": {
+          "$ref": "#/definitions/HIVTestingStatus"
+        },
+        "prostitution": {
+          "description": "Have you received any of the following in the past 12 months ?: Sex in exchange for money/goods/services ?",
+          "type": "boolean"
+        },
+        "receivedBloodTransfusion": {
+          "description": "Have you received any of the following in the past 12 months ?: Received a blood transfusion ?",
+          "type": "boolean"
+        },
+        "referredToGBVService": {
+          "description": "If GBV screening = positive, referred for GBV services ? Yes or No",
+          "type": "boolean"
+        },
+        "riskGroup": {
+          "$ref": "#/definitions/HIVRiskGroup"
+        },
+        "screeningOutcomeGBV": {
+          "$ref": "#/definitions/GBVScreeningOutcome"
+        },
+        "sexWithSameSex": {
+          "description": "Have you received any of the following in the past 12 months ?: Had sex with someone of the same sex ?",
+          "type": "boolean"
+        },
+        "sexualTransmittedInfection": {
+          "description": "Have you received any of the following in the past 12 months ?: Sexually transmitted infection (STI)",
+          "type": "boolean"
+        },
+        "unprotectedAnalSex": {
+          "description": "Have you received any of the following in the past 12 months ?: Unprotected anal sex ?",
+          "type": "boolean"
+        },
+        "unprotectedVaginalSex": {
+          "description": "Have you received any of the following in the past 12 months ?: Unprotected vaginal sex ?",
+          "type": "boolean"
+        }
+      },
       "type": "object"
     },
     "YesNo": {
