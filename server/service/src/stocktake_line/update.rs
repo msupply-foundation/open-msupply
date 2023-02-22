@@ -120,11 +120,8 @@ fn validate(
                 )
             })?;
 
-        if check_stock_line_reduced_below_zero(
-            &stock_line.stock_line_row.total_number_of_packs,
-            &counted_number_of_packs,
-            &stock_line.stock_line_row.available_number_of_packs,
-        ) {
+        if check_stock_line_reduced_below_zero(&stock_line.stock_line_row, &counted_number_of_packs)
+        {
             return Err(UpdateStocktakeLineError::StockLineReducedBelowZero(
                 stock_line.clone(),
             ));

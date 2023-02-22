@@ -1,6 +1,6 @@
 pub mod insert;
 use async_graphql::Object;
-use graphql_types::types::StockLineConnector;
+use graphql_types::types::StockLineNode;
 pub use insert::*;
 
 pub mod delete;
@@ -8,7 +8,7 @@ pub use delete::*;
 
 pub mod update;
 pub use update::*;
-pub struct StockLineReducedBelowZero(pub StockLineConnector);
+pub struct StockLineReducedBelowZero(pub StockLineNode);
 
 #[Object]
 impl StockLineReducedBelowZero {
@@ -16,7 +16,7 @@ impl StockLineReducedBelowZero {
         "Stock line exist in new outbound shipments. "
     }
 
-    pub async fn stock_line(&self) -> &StockLineConnector {
+    pub async fn stock_line(&self) -> &StockLineNode {
         &self.0
     }
 }
