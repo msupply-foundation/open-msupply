@@ -107,11 +107,7 @@ pub fn check_stock_line_reduced_below_zero(
 ) -> bool {
     let adjustment = total_number_of_packs - counted_number_of_packs;
 
-    if adjustment > 0.0
+    return adjustment > 0.0
         && (total_number_of_packs - adjustment < 0.0
-            || available_number_of_packs - adjustment < 0.0)
-    {
-        return true;
-    }
-    false
+            || available_number_of_packs - adjustment < 0.0);
 }
