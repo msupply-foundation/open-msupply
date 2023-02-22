@@ -58,7 +58,9 @@ export const RegexUtils = {
     data: { [key: string]: any },
     fallback = 'Not found'
   ) =>
-    parameterisedString.replace(/\${(.*?)}/gm, (_: string, match: string) =>
-      extractProperty(data, match, fallback)
+    parameterisedString.replace(
+      /\${(.*?)}/gm,
+      (_: string, match: string) =>
+        extractProperty(data, match, fallback) ?? fallback
     ),
 };
