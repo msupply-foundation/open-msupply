@@ -9,6 +9,7 @@ import {
   IconButton,
   EditIcon,
   BasicTextInput,
+  Typography,
 } from '@openmsupply-client/common';
 import {
   FORM_LABEL_COLUMN_WIDTH,
@@ -20,28 +21,31 @@ import { useSearchQueries, QueryValues } from './useSearchQueries';
 
 const MIN_CHARS = 3;
 
-const Options = z.object({
-  /**
-   * Which pre-defined query to use (in useSearchQueries)
-   */
-  query: z.enum(QueryValues),
-  /**
-   * Pattern for formatting options list items (e.g. "${firstName} ${lastName}")
-   */
-  optionString: z.string().optional(),
-  /**
-   * Pattern for formatting selected result (as above)
-   */
-  displayString: z.string().optional(),
-  /**
-   * List of fields to save in document data (from selected item object)
-   */
-  saveFields: z.array(z.string()).optional(),
-  /**
-   * Text to show in input field before user entry
-   */
-  placeholderText: z.string().optional(),
-});
+const Options = z
+  .object({
+    source: z.enum(['user']),
+    /**
+     * Which pre-defined query to use (in useSearchQueries)
+     */
+    query: z.enum(QueryValues),
+    /**
+     * Pattern for formatting options list items (e.g. "${firstName} ${lastName}")
+     */
+    optionString: z.string().optional(),
+    /**
+     * Pattern for formatting selected result (as above)
+     */
+    displayString: z.string().optional(),
+    /**
+     * List of fields to save in document data (from selected item object)
+     */
+    saveFields: z.array(z.string()).optional(),
+    /**
+     * Text to show in input field before user entry
+     */
+    placeholderText: z.string().optional(),
+  })
+  .strict();
 
 type Options = z.infer<typeof Options>;
 
@@ -80,16 +84,17 @@ export const SearchWithUserSource = (props: ControlProps) => {
   const handleDataUpdate = (selectedResult: Record<string, any> | null) => {
     if (selectedResult === null) return;
     if (!saveFields) handleChange(path, selectedResult);
-
-    const newObj: Record<string, any> = {};
-    saveFields?.forEach(
-      field => (newObj[field] = selectedResult[field] ?? null)
-    );
-    handleChange(path, newObj);
+    else {
+      const newObj: Record<string, any> = {};
+      saveFields?.forEach(
+        field => (newObj[field] = selectedResult[field] ?? null)
+      );
+      handleChange(path, newObj);
+    }
     setEditMode(false);
   };
 
-  if (!options) return null;
+  const error = zErrors ?? props.errors ?? queryError ?? null;
 
   return (
     <Box
@@ -121,8 +126,8 @@ export const SearchWithUserSource = (props: ControlProps) => {
               getOptionLabel={getOptionLabel ?? undefined}
               clearable={!props.config?.required}
               inputProps={{
-                error: !!zErrors || !!props.errors || !!queryError,
-                helperText: zErrors ?? props.errors ?? queryError,
+                error: !!error,
+                helperText: error,
               }}
               noOptionsText={
                 loading
@@ -147,17 +152,23 @@ export const SearchWithUserSource = (props: ControlProps) => {
           justifyContent="space-between"
           sx={{ width: FORM_INPUT_COLUMN_WIDTH }}
         >
-          {getDisplayElement && getDisplayElement(data)}
-          <IconButton
-            label={t('label.edit')}
-            icon={<EditIcon style={{ width: 16 }} />}
-            onClick={() => {
-              setEditMode(true);
-            }}
-            color="primary"
-            height={'20px'}
-            width={'20px'}
-          />
+          {!error ? (
+            <>
+              {getDisplayElement && getDisplayElement(data)}
+              <IconButton
+                label={t('label.edit')}
+                icon={<EditIcon style={{ width: 16 }} />}
+                onClick={() => {
+                  setEditMode(true);
+                }}
+                color="primary"
+                height={'20px'}
+                width={'20px'}
+              />
+            </>
+          ) : (
+            <Typography color="red">{error}</Typography>
+          )}
         </Box>
       )}
     </Box>

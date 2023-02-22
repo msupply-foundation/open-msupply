@@ -6,12 +6,14 @@ export const JSXFormatters = {
   */
   replaceHTMLlineBreaks: (input: string) => {
     const lines = input.split('\n');
-    return lines.map((line, i) => (
-      <span key={i}>
-        {line}
-        {/* Don't add line break to final line */}
-        {i === lines.length - 1 ? null : <br />}
-      </span>
-    ));
+    return lines.map((line, i) =>
+      line !== '' ? (
+        <span key={i}>
+          {line}
+          {/* Don't add line break to final line */}
+          {i === lines.length - 1 ? null : <br />}
+        </span>
+      ) : null
+    );
   },
 };

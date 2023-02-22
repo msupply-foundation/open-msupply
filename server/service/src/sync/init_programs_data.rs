@@ -61,6 +61,7 @@ mod hiv_care_program {
                 prior_art: Default::default(),
                 risk_group: Default::default(),
                 status: Default::default(),
+                treatment_supporter_is_next_of_kin: Default::default(),
                 treatment_supporter: Default::default(),
                 // note: Default::default(),
                 referred_from: Default::default(),
