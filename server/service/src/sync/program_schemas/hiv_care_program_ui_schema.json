@@ -127,7 +127,7 @@
       "scope": "#/properties/treatmentSupporter",
       "options": {
         "source": "document",
-        "document": "currentPatient",
+        "document": "patient",
         "path": "document.data.family.nextOfKin"
       }
     },
