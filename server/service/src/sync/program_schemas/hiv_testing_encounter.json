@@ -172,7 +172,7 @@
           },
           "type": "object"
         },
-        "note": {
+        "notes": {
           "description": "An overall note for additional comments about the encounter",
           "items": {
             "$ref": "#/definitions/Note"
@@ -180,71 +180,7 @@
           "type": "array"
         },
         "riskBehaviour": {
-          "properties": {
-            "accidentalNeedlePick": {
-              "description": "Have you received any of the following in the past 12 months ?: Accidental needle pick ?",
-              "type": "boolean"
-            },
-            "forcedSexWithoutConsent": {
-              "description": "Have you received any of the following in the past 12 months ?: Forced to have sex without consent ?",
-              "type": "boolean"
-            },
-            "injectedDrugsWithoutDoctorAdvice": {
-              "description": "Have you received any of the following in the past 12 months ?: Injected drugs without doctor's advice ?",
-              "type": "boolean"
-            },
-            "numberFemaleSexualPartners6Month": {
-              "description": "How many female sexual partners have you had in the last 6 months ?",
-              "type": "number"
-            },
-            "numberMaleSexualPartners6Month": {
-              "description": "How many male sexual partners have you had in the last 6 months ?",
-              "type": "number"
-            },
-            "previousHIVTestDate": {
-              "description": "Date of a previous HIV test",
-              "format": "date",
-              "type": "string"
-            },
-            "previousHIVTestResult": {
-              "$ref": "#/definitions/HIVTestingStatus"
-            },
-            "prostitution": {
-              "description": "Have you received any of the following in the past 12 months ?: Sex in exchange for money/goods/services ?",
-              "type": "boolean"
-            },
-            "receivedBloodTransfusion": {
-              "description": "Have you received any of the following in the past 12 months ?: Received a blood transfusion ?",
-              "type": "boolean"
-            },
-            "referredToGBVService": {
-              "description": "If GBV screening = positive, referred for GBV services ? Yes or No",
-              "type": "boolean"
-            },
-            "riskGroup": {
-              "$ref": "#/definitions/HIVRiskGroup"
-            },
-            "screeningOutcomeGBV": {
-              "$ref": "#/definitions/GBVScreeningOutcome"
-            },
-            "sexWithSameSex": {
-              "description": "Have you received any of the following in the past 12 months ?: Had sex with someone of the same sex ?",
-              "type": "boolean"
-            },
-            "sexualTransmittedInfection": {
-              "description": "Have you received any of the following in the past 12 months ?: Sexually transmitted infection (STI)",
-              "type": "boolean"
-            },
-            "unprotectedAnalSex": {
-              "description": "Have you received any of the following in the past 12 months ?: Unprotected anal sex ?",
-              "type": "boolean"
-            },
-            "unprotectedVaginalSex": {
-              "description": "Have you received any of the following in the past 12 months ?: Unprotected vaginal sex ?",
-              "type": "boolean"
-            }
-          },
-          "type": "object"
+          "$ref": "#/definitions/RiskBehaviourTesting"
         },
         "startDatetime": {
           "description": "Encounter start date and time",
@@ -287,6 +223,73 @@
     "OtherServiceType": {
       "enum": ["TB", "STI", "GBV", "PEP", "OTHER"],
       "type": "string"
+    },
+    "RiskBehaviourTesting": {
+      "properties": {
+        "accidentalNeedlePick": {
+          "description": "Have you received any of the following in the past 12 months ?: Accidental needle pick ?",
+          "type": "boolean"
+        },
+        "forcedSexWithoutConsent": {
+          "description": "Have you received any of the following in the past 12 months ?: Forced to have sex without consent ?",
+          "type": "boolean"
+        },
+        "injectedDrugsWithoutDoctorAdvice": {
+          "description": "Have you received any of the following in the past 12 months ?: Injected drugs without doctor's advice ?",
+          "type": "boolean"
+        },
+        "numberFemaleSexualPartners6Month": {
+          "description": "How many female sexual partners have you had in the last 6 months ?",
+          "type": "number"
+        },
+        "numberMaleSexualPartners6Month": {
+          "description": "How many male sexual partners have you had in the last 6 months ?",
+          "type": "number"
+        },
+        "previousHIVTestDate": {
+          "description": "Date of a previous HIV test",
+          "format": "date",
+          "type": "string"
+        },
+        "previousHIVTestResult": {
+          "$ref": "#/definitions/HIVTestingStatus"
+        },
+        "prostitution": {
+          "description": "Have you received any of the following in the past 12 months ?: Sex in exchange for money/goods/services ?",
+          "type": "boolean"
+        },
+        "receivedBloodTransfusion": {
+          "description": "Have you received any of the following in the past 12 months ?: Received a blood transfusion ?",
+          "type": "boolean"
+        },
+        "referredToGBVService": {
+          "description": "If GBV screening = positive, referred for GBV services ? Yes or No",
+          "type": "boolean"
+        },
+        "riskGroup": {
+          "$ref": "#/definitions/HIVRiskGroup"
+        },
+        "screeningOutcomeGBV": {
+          "$ref": "#/definitions/GBVScreeningOutcome"
+        },
+        "sexWithSameSex": {
+          "description": "Have you received any of the following in the past 12 months ?: Had sex with someone of the same sex ?",
+          "type": "boolean"
+        },
+        "sexualTransmittedInfection": {
+          "description": "Have you received any of the following in the past 12 months ?: Sexually transmitted infection (STI)",
+          "type": "boolean"
+        },
+        "unprotectedAnalSex": {
+          "description": "Have you received any of the following in the past 12 months ?: Unprotected anal sex ?",
+          "type": "boolean"
+        },
+        "unprotectedVaginalSex": {
+          "description": "Have you received any of the following in the past 12 months ?: Unprotected vaginal sex ?",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
     },
     "YesNo": {
       "enum": ["Yes", "No"],
