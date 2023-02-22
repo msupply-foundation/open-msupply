@@ -1,5 +1,8 @@
 {
   "control.adherence-status-warning": "Pill Count: after last visit = {{previousCountOnHand}} < before visit = {{remainingCount}}",
   "control.note.text-label": "Text",
-  "control.note.author-label": "Author"
+  "control.note.author-label": "Author",
+  "control.search.searching-label": "Searching...",
+  "control.search.no-results-label": "No results",
+  "control.search.search-placeholder": "Search..."
 }
