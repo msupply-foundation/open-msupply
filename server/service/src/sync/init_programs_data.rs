@@ -119,6 +119,8 @@ mod hiv_care_encounter {
                 note: Default::default(),
                 index_testing: Default::default(),
                 hcv_crag: Default::default(),
+                general: Default::default(),
+                risk_behaviour: Default::default(),
             }
         }
     }
