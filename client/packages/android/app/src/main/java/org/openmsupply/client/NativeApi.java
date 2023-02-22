@@ -101,7 +101,8 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
                         URL url = new URL(localUrl);
                         HttpURLConnection urlc = (HttpURLConnection) url.openConnection();
                         // actually no point - the timeout only applies when trying to find a server
-                        // when using localhost it returns immediately even if the server isn't responding
+                        // when using localhost it returns immediately even if the server isn't
+                        // responding
                         urlc.setConnectTimeout(1000);
                         urlc.connect();
                         if (urlc.getResponseCode() == 200) {
@@ -124,6 +125,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
                     webView.post(() -> webView.loadUrl(localUrl + "/android"));
                 } else {
                     webView.post(() -> webView.loadData(ErrorPage.encodedHtml, "text/html", "base64"));
+                    hideSplashScreen();
                 }
             }
         });
