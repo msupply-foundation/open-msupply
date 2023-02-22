@@ -91,6 +91,11 @@
       "elements": [
         {
           "type": "Control",
+          "scope": "#/properties/treatmentSupporterIsNextOfKin",
+          "label": "Is the Treatment Supporter the patient's next of kin?"
+        },
+        {
+          "type": "Control",
           "scope": "#/properties/treatmentSupporter/properties/firstName"
         },
         {
@@ -120,15 +125,40 @@
             }
           }
         }
-      ]
+      ],
+      "rule": {
+        "effect": "HIDE",
+        "condition": { "scope": "#/properties/treatmentSupporterIsNextOfKin", "schema": { "const": true } }
+      }
     },
     {
-      "type": "Search",
-      "scope": "#/properties/treatmentSupporter",
-      "options": {
-        "source": "document",
-        "document": "patient",
-        "path": "document.data.family.nextOfKin"
+      "type": "Group",
+      "label": "Treatment Supporter",
+      "elements": [
+        {
+          "type": "Control",
+          "scope": "#/properties/treatmentSupporterIsNextOfKin",
+          "label": "Is the Treatment Supporter the patient's next of kin?"
+        },
+        {
+          "type": "Search",
+          "scope": "#/properties/treatmentSupporter",
+          "options": {
+            "source": "document",
+            "document": "patient",
+            "path": "document.data.family.nextOfKin",
+            "displayString": "${firstName} ${lastName} (${relationship})\nPhone: ${contactDetails[0].phone}"
+          }
+        }
+      ],
+      "rule": {
+        "effect": "SHOW",
+        "condition": {
+          "scope": "#/properties/treatmentSupporterIsNextOfKin",
+          "schema": {
+            "const": true
+          }
+        }
       }
     },
     {

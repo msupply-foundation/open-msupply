@@ -11,6 +11,7 @@ import {
   JsonFormsRendererRegistryEntry,
   JsonSchema,
   UISchemaElement,
+  createAjv,
 } from '@jsonforms/core';
 import { materialRenderers } from '@jsonforms/material-renderers';
 import {
@@ -135,6 +136,8 @@ const FormComponent = ({
       return error.message ?? '';
     });
 
+  const handleDefaultsAjv = createAjv({ useDefaults: true });
+
   return !data ? null : (
     <JsonForms
       schema={jsonSchema}
@@ -152,6 +155,7 @@ const FormComponent = ({
           setError?.(false);
         }
       }}
+      ajv={handleDefaultsAjv}
     />
   );
 };
