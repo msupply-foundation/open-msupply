@@ -159,6 +159,7 @@ export const useDraftOutboundLines = (
           );
         }
         if (placeholder) {
+          placeholder.item = item;
           rows.push(
             createDraftOutboundLine({ invoiceId, invoiceLine: placeholder })
           );
