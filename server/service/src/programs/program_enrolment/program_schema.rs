@@ -12,7 +12,7 @@ impl Default for SchemaProgramEnrolment {
     fn default() -> Self {
         Self {
             enrolment_datetime: Default::default(),
-            enrolment_patient_id: Default::default(),
+            program_enrolment_id: Default::default(),
             status: Default::default(),
         }
     }

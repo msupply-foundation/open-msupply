@@ -96,13 +96,16 @@
     },
     "HIVCareProgramEnrolment": {
       "properties": {
+        "clinicTransferredFrom": {
+          "type": "string"
+        },
+        "dateTransferredIn": {
+          "format": "date",
+          "type": "string"
+        },
         "enrolmentDatetime": {
           "description": "Enrolment date and time",
           "format": "date-time",
-          "type": "string"
-        },
-        "enrolmentPatientId": {
-          "description": "Program enrolment specific patient id.",
           "type": "string"
         },
         "hivConfirmationDate": {
@@ -118,6 +121,13 @@
         "partnerHIVStatus": {
           "$ref": "#/definitions/HIVTestingStatus"
         },
+        "previousClinicARTStartDate": {
+          "format": "date",
+          "type": "string"
+        },
+        "previousClinicId": {
+          "type": "string"
+        },
         "priorART": {
           "enum": [
             "TRANSFER_IN_WITH_RECORDS",
@@ -126,6 +136,10 @@
             "PEP",
             "PrEP"
           ],
+          "type": "string"
+        },
+        "programEnrolmentId": {
+          "description": "Patient's program id",
           "type": "string"
         },
         "referredFrom": {
@@ -142,9 +156,7 @@
           "$ref": "#/definitions/Person"
         }
       },
-      "required": [
-        "enrolmentDatetime"
-      ],
+      "required": ["enrolmentDatetime"],
       "type": "object"
     },
     "HIVRelation": {
@@ -174,19 +186,11 @@
       "type": "string"
     },
     "HIVTestType": {
-      "enum": [
-        "PCR",
-        "ANTIBODY"
-      ],
+      "enum": ["PCR", "ANTIBODY"],
       "type": "string"
     },
     "HIVTestingStatus": {
-      "enum": [
-        "POSITIVE",
-        "NEGATIVE",
-        "UNKNOWN",
-        "NOT_DONE"
-      ],
+      "enum": ["POSITIVE", "NEGATIVE", "UNKNOWN", "NOT_DONE"],
       "type": "string"
     },
     "Note": {
@@ -208,12 +212,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "text",
-        "created",
-        "authorId",
-        "authorName"
-      ],
+      "required": ["text", "created", "authorId", "authorName"],
       "type": "object"
     },
     "Person": {
@@ -286,18 +285,11 @@
           "$ref": "#/definitions/SocioEconomics"
         }
       },
-      "required": [
-        "contactDetails"
-      ],
+      "required": ["contactDetails"],
       "type": "object"
     },
     "ProgramEnrolmentStatus": {
-      "enum": [
-        "ACTIVE",
-        "OPTED_OUT",
-        "TRANSFERRED_OUT",
-        "PAUSED"
-      ],
+      "enum": ["ACTIVE", "OPTED_OUT", "TRANSFERRED_OUT", "PAUSED"],
       "type": "string"
     },
     "ReferredFrom": {
