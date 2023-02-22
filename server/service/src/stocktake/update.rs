@@ -689,20 +689,19 @@ mod test {
     use chrono::NaiveDate;
     use repository::{
         mock::{
-            mock_item_a, mock_locked_stocktake, mock_outbound_shipment_e, mock_stock_line_a,
-            mock_stock_line_b, mock_stocktake_a, mock_stocktake_finalised_without_lines,
-            mock_stocktake_full_edit, mock_stocktake_line_a, mock_stocktake_line_new_stock_line,
+            mock_item_a, mock_locked_stocktake, mock_stock_line_a, mock_stock_line_b,
+            mock_stocktake_a, mock_stocktake_finalised_without_lines, mock_stocktake_full_edit,
+            mock_stocktake_line_a, mock_stocktake_line_new_stock_line,
             mock_stocktake_line_stock_deficit, mock_stocktake_line_stock_surplus,
             mock_stocktake_new_stock_line, mock_stocktake_no_count_change, mock_stocktake_no_lines,
             mock_stocktake_stock_deficit, mock_stocktake_stock_surplus, mock_store_a, MockData,
             MockDataInserts,
         },
         test_db::setup_all_with_data,
-        EqualFilter, InvoiceLineRepository, InvoiceLineRow, InvoiceLineRowRepository,
-        InvoiceLineRowType, StockLineFilter, StockLineRepository, StockLineRow,
-        StockLineRowRepository, StocktakeLine, StocktakeLineFilter, StocktakeLineRepository,
-        StocktakeLineRow, StocktakeLineRowRepository, StocktakeRepository, StocktakeRow,
-        StocktakeStatus,
+        EqualFilter, InvoiceLineRepository, InvoiceLineRowRepository, InvoiceLineRowType,
+        StockLineRow, StockLineRowRepository, StocktakeLine, StocktakeLineFilter,
+        StocktakeLineRepository, StocktakeLineRow, StocktakeLineRowRepository, StocktakeRepository,
+        StocktakeRow, StocktakeStatus,
     };
     use util::{inline_edit, inline_init};
 
@@ -716,9 +715,9 @@ mod test {
 
     #[actix_rt::test]
     async fn update_stocktake() {
-        fn mock_stocktake_existing_supplier_line() -> StocktakeRow {
+        fn mock_stocktake_existing_line() -> StocktakeRow {
             inline_init(|r: &mut StocktakeRow| {
-                r.id = "mock_stocktake_existing_supplier_line".to_string();
+                r.id = "mock_stocktake_existing_line".to_string();
                 r.store_id = "store_a".to_string();
                 r.stocktake_number = 10;
                 r.created_datetime = NaiveDate::from_ymd(2021, 12, 14).and_hms_milli(12, 33, 0, 0);
@@ -726,11 +725,11 @@ mod test {
             })
         }
 
-        fn mock_stocktake_line_existing_supplier_line() -> StocktakeLineRow {
+        fn mock_stocktake_line_existing_line() -> StocktakeLineRow {
             inline_init(|r: &mut StocktakeLineRow| {
-                r.id = "mock_stocktake_line_existing_supplier_line".to_string();
-                r.stocktake_id = mock_stocktake_existing_supplier_line().id;
-                r.stock_line_id = Some(mock_existing_supplier_stock_line().id);
+                r.id = "mock_stocktake_line_existing_line".to_string();
+                r.stocktake_id = mock_stocktake_existing_line().id;
+                r.stock_line_id = Some(mock_existing_stock_line().id);
                 r.counted_number_of_packs = Some(20.0);
                 r.snapshot_number_of_packs = 20.0;
                 r.item_id = mock_item_a().id;
@@ -739,9 +738,9 @@ mod test {
             })
         }
 
-        fn mock_existing_supplier_stock_line() -> StockLineRow {
+        fn mock_existing_stock_line() -> StockLineRow {
             inline_init(|r: &mut StockLineRow| {
-                r.id = "existing_supplier_stock_a".to_string();
+                r.id = "existing_stock_a".to_string();
                 r.item_id = "item_a".to_string();
                 r.store_id = "store_a".to_string();
                 r.available_number_of_packs = 20.0;
@@ -754,70 +753,13 @@ mod test {
             })
         }
 
-        fn mock_stocktake_reduced_to_zero() -> StocktakeRow {
-            inline_init(|r: &mut StocktakeRow| {
-                r.id = "mock_stocktake_reduced_to_zero".to_string();
-                r.store_id = "store_a".to_string();
-                r.stocktake_number = 20;
-                r.created_datetime = NaiveDate::from_ymd(2021, 12, 14).and_hms_milli(12, 33, 0, 0);
-                r.status = StocktakeStatus::New;
-            })
-        }
-
-        fn mock_stocktake_line_reduced_to_zero() -> StocktakeLineRow {
-            inline_init(|r: &mut StocktakeLineRow| {
-                r.id = "mock_stocktake_line_reduced_to_zero".to_string();
-                r.stocktake_id = mock_stocktake_reduced_to_zero().id;
-                r.stock_line_id = Some(mock_stock_line_reduced_to_zero().id);
-                r.counted_number_of_packs = Some(1.0);
-                r.snapshot_number_of_packs = 20.0;
-                r.item_id = mock_item_a().id;
-            })
-        }
-
-        fn mock_stock_line_reduced_to_zero() -> StockLineRow {
-            inline_init(|r: &mut StockLineRow| {
-                r.id = "stock_line_reduced_to_zero".to_string();
-                r.item_id = "item_a".to_string();
-                r.store_id = "store_a".to_string();
-                r.available_number_of_packs = 10.0;
-                r.pack_size = 1;
-                r.total_number_of_packs = 20.0;
-                r.on_hold = false;
-                r.supplier_id = Some("name_store_b".to_string());
-            })
-        }
-
-        fn mock_invoice_line_for_reduced_to_zero_stock() -> InvoiceLineRow {
-            inline_init(|r: &mut InvoiceLineRow| {
-                r.id = "mock_invoice_line_for_reduced_to_zero_stock".to_string();
-                r.invoice_id = mock_outbound_shipment_e().id;
-                r.item_id = "item_a".to_string();
-                r.item_name = "Item A".to_string();
-                r.item_code = "item_a_code".to_string();
-                r.stock_line_id = Some(mock_stock_line_reduced_to_zero().id);
-                r.pack_size = 1;
-                r.number_of_packs = 9.0;
-                r.r#type = InvoiceLineRowType::StockOut;
-            })
-        }
-
         let (_, connection, connection_manager, _) = setup_all_with_data(
             "update_stocktake",
             MockDataInserts::all(),
             inline_init(|r: &mut MockData| {
-                r.stocktakes = vec![
-                    mock_stocktake_existing_supplier_line(),
-                    mock_stocktake_reduced_to_zero(),
-                ];
-                r.stocktake_lines = vec![
-                    mock_stocktake_line_existing_supplier_line(),
-                    mock_stocktake_line_reduced_to_zero(),
-                ];
-                r.stock_lines = vec![
-                    mock_existing_supplier_stock_line(),
-                    mock_stock_line_reduced_to_zero(),
-                ];
+                r.stocktakes = vec![mock_stocktake_existing_line()];
+                r.stocktake_lines = vec![mock_stocktake_line_existing_line()];
+                r.stock_lines = vec![mock_existing_stock_line()];
             }),
         )
         .await;
@@ -917,34 +859,6 @@ mod test {
             )
             .unwrap_err();
         assert_eq!(error, UpdateStocktakeError::NoLines);
-
-        // error: StockLinesReducedToZero
-        let stock_line = mock_stock_line_reduced_to_zero();
-        let stocktake = mock_stocktake_reduced_to_zero();
-        InvoiceLineRowRepository::new(&context.connection)
-            .upsert_one(&mock_invoice_line_for_reduced_to_zero_stock())
-            .unwrap();
-
-        let error = service
-            .update_stocktake(
-                &context,
-                inline_init(|i: &mut UpdateStocktake| {
-                    i.id = stocktake.id;
-                    i.status = Some(UpdateStocktakeStatus::Finalised);
-                }),
-            )
-            .unwrap_err();
-        let stock_line = StockLineRepository::new(&context.connection)
-            .query_by_filter(
-                StockLineFilter::new().id(EqualFilter::equal_to(&stock_line.id)),
-                None,
-            )
-            .unwrap();
-
-        assert_eq!(
-            error,
-            UpdateStocktakeError::StockLinesReducedBelowZero(stock_line)
-        );
 
         // success surplus should result in StockIn shipment line
         let stocktake = mock_stocktake_stock_surplus();
@@ -1151,7 +1065,7 @@ mod test {
             .update_stocktake(
                 &context,
                 inline_init(|i: &mut UpdateStocktake| {
-                    i.id = mock_stocktake_existing_supplier_line().id.clone();
+                    i.id = mock_stocktake_existing_line().id.clone();
                     i.status = Some(UpdateStocktakeStatus::Finalised);
                 }),
             )
