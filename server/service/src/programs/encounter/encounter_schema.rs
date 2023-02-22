@@ -16,6 +16,7 @@ impl Default for SchemaEncounter {
             end_datetime: Default::default(),
             status: Default::default(),
             clinician: Default::default(),
+            notes: Default::default(),
         }
     }
 }

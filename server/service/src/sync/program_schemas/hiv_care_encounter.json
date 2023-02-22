@@ -33,10 +33,6 @@
       },
       "type": "object"
     },
-    "GBVScreeningOutcome": {
-      "enum": ["POSITIVE", "NEGATIVE", "NOT_DONE", "DECLINED"],
-      "type": "string"
-    },
     "HIVCareEncounter": {
       "properties": {
         "arvMedication": {
@@ -343,7 +339,6 @@
               "type": "string"
             }
           },
-          "required": ["fbe"],
           "type": "object"
         },
         "hcvCrag": {
@@ -379,7 +374,7 @@
           "required": ["indexTestingAccepted"],
           "type": "object"
         },
-        "note": {
+        "notes": {
           "description": "An overall note for additional comments about the encounter",
           "items": {
             "$ref": "#/definitions/Note"
@@ -635,10 +630,6 @@
       ],
       "type": "string"
     },
-    "HIVTestingStatus": {
-      "enum": ["POSITIVE", "NEGATIVE", "UNKNOWN", "NOT_DONE"],
-      "type": "string"
-    },
     "Note": {
       "properties": {
         "authorId": {
@@ -683,14 +674,6 @@
           "description": "How many male sexual partners have you had in the last 6 months ?",
           "type": "number"
         },
-        "previousHIVTestDate": {
-          "description": "Date of a previous HIV test",
-          "format": "date",
-          "type": "string"
-        },
-        "previousHIVTestResult": {
-          "$ref": "#/definitions/HIVTestingStatus"
-        },
         "prostitution": {
           "description": "Have you received any of the following in the past 12 months ?: Sex in exchange for money/goods/services ?",
           "type": "boolean"
@@ -699,15 +682,8 @@
           "description": "Have you received any of the following in the past 12 months ?: Received a blood transfusion ?",
           "type": "boolean"
         },
-        "referredToGBVService": {
-          "description": "If GBV screening = positive, referred for GBV services ? Yes or No",
-          "type": "boolean"
-        },
         "riskGroup": {
           "$ref": "#/definitions/HIVRiskGroup"
-        },
-        "screeningOutcomeGBV": {
-          "$ref": "#/definitions/GBVScreeningOutcome"
         },
         "sexWithSameSex": {
           "description": "Have you received any of the following in the past 12 months ?: Had sex with someone of the same sex ?",
