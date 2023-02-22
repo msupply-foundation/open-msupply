@@ -14,7 +14,7 @@ table! {
         document_name -> Text,
         patient_id -> Text,
         enrolment_datetime -> Timestamp,
-        program_patient_id -> Nullable<Text>,
+        program_enrolment_id -> Nullable<Text>,
     }
 }
 
@@ -37,7 +37,7 @@ pub struct ProgramEnrolmentRow {
     /// Time when the patient has been enrolled to this program
     pub enrolment_datetime: NaiveDateTime,
     /// Program specific patient id
-    pub program_patient_id: Option<String>,
+    pub program_enrolment_id: Option<String>,
 }
 
 pub struct ProgramEnrolmentRowRepository<'a> {

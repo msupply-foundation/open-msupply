@@ -291,7 +291,7 @@ mod test {
 
         let program = inline_init(|v: &mut SchemaProgramEnrolment| {
             v.enrolment_datetime = Utc::now().with_nanosecond(0).unwrap().to_rfc3339();
-            v.enrolment_patient_id = Some("patient id 1".to_string());
+            v.program_enrolment_id = Some("patient id 1".to_string());
         });
         let program_type = "ProgramType".to_string();
         service
@@ -391,8 +391,8 @@ mod test {
             DateTime::<Utc>::from_utc(found_program.enrolment_datetime, Utc).to_rfc3339()
         );
         assert_eq!(
-            program.enrolment_patient_id,
-            found_program.program_patient_id
+            program.program_enrolment_id,
+            found_program.program_enrolment_id
         );
     }
 }
