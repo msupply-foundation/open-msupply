@@ -50,7 +50,7 @@ const Options = z
 type Options = z.infer<typeof Options>;
 
 export const SearchWithUserSource = (props: ControlProps) => {
-  const { data, path, handleChange, label, uischema } = props;
+  const { data, path, handleChange, label, uischema, visible } = props;
   const { errors: zErrors, options } = useZodOptionsValidation(
     Options,
     uischema.options
@@ -95,6 +95,8 @@ export const SearchWithUserSource = (props: ControlProps) => {
   };
 
   const error = zErrors ?? props.errors ?? queryError ?? null;
+
+  if (!visible) return null;
 
   return (
     <Box
