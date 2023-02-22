@@ -34,8 +34,6 @@ export const DetailView: FC = () => {
     isError,
   } = useEncounter.document.byIdPromise(id);
 
-  console.log('encounter', encounter);
-
   const handleSave = useEncounter.document.upsert(
     encounter?.patient.id ?? '',
     encounter?.program ?? '',
