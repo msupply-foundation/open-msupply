@@ -22,12 +22,24 @@ const MIN_CHARS = 3;
 
 const Options = z.object({
   /**
-   * Source of the search data -- user input or extract it from document
+   * Which pre-defined query to use (in useSearchQueries)
    */
   query: z.enum(QueryValues),
+  /**
+   * Pattern for formatting options list items (e.g. "${firstName} ${lastName}")
+   */
   optionString: z.string().optional(),
+  /**
+   * Pattern for formatting selected result (as above)
+   */
   displayString: z.string().optional(),
+  /**
+   * List of fields to save in document data (from selected item object)
+   */
   saveFields: z.array(z.string()).optional(),
+  /**
+   * Text to show in input field before user entry
+   */
   placeholderText: z.string().optional(),
 });
 
