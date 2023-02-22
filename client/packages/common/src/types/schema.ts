@@ -2819,13 +2819,6 @@ export type ProgramEnrolmentNodeEncountersArgs = {
 };
 
 
-export type ProgramEnrolmentNodeEncountersArgs = {
-  filter?: InputMaybe<EncounterFilterInput>;
-  page?: InputMaybe<PaginationInput>;
-  sort?: InputMaybe<EncounterSortInput>;
-};
-
-
 export type ProgramEnrolmentNodeEventsArgs = {
   at?: InputMaybe<Scalars['DateTime']>;
   filter?: InputMaybe<ProgramEventFilterInput>;
