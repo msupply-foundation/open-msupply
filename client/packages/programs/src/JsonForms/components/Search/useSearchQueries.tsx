@@ -1,13 +1,18 @@
 import React, { useState } from 'react';
 import { getPatientQueries } from 'packages/system/src/Patient/api/api';
 import { getSdk } from 'packages/system/src/Patient/api/operations.generated';
-import { useGql, useAuthContext } from '@openmsupply-client/common';
-import { RegexUtils } from '@openmsupply-client/common';
+import { useGql, useAuthContext, Typography } from '@openmsupply-client/common';
+import { RegexUtils, JSXFormatters } from '@openmsupply-client/common';
 
 export const QueryValues = ['patientByCode'] as const;
 type QueryValue = typeof QueryValues[number];
 
 type GetDisplayElement = (result: Record<string, any>) => JSX.Element | null;
+
+interface SearchQueryOptions {
+  optionString?: string;
+  displayString?: string;
+}
 
 interface SearchQueryParams {
   runQuery: any;
@@ -18,7 +23,13 @@ interface SearchQueryParams {
 
 export type SearchSource = 'input' | 'document';
 
-export const useSearchQueries = (query?: QueryValue) => {
+const { formatTemplateString } = RegexUtils;
+const { replaceHTMLlineBreaks } = JSXFormatters;
+
+export const useSearchQueries = (
+  query?: QueryValue,
+  { optionString, displayString }: SearchQueryOptions = {}
+) => {
   const { storeId } = useAuthContext();
   const { client } = useGql();
   const [results, setResults] = useState<Record<string, any>[]>([]);
@@ -61,24 +72,39 @@ export const useSearchQueries = (query?: QueryValue) => {
             setError(err.message);
           });
       },
-      getOptionLabel: e => `${e['code']} - ${e['firstName']} ${e['lastName']}`,
+      getOptionLabel: data =>
+        optionString ??
+        `${data['code']} - ${data['firstName']} ${data['lastName']}`,
       getDisplayElement: data => {
         if (!data) return null;
         const { code } = data;
         if (!code) return null;
         return (
-          <p>
-            {RegexUtils.formatTemplateString(
-              '${code} - ${firstName} ${lastName}',
-              data,
-              ''
-            )}
-            <br />
-            {RegexUtils.formatTemplateString('${gender} ${email}', data, '')}
-          </p>
+          <Typography>
+            {displayString
+              ? replaceHTMLlineBreaks(
+                  formatTemplateString(displayString, data, '')
+                )
+              : replaceHTMLlineBreaks(
+                  formatTemplateString(
+                    '${firstName} ${lastName} (${code})\n${email}\n${document.data.contactDetails[0].address1}\n${document.data.contactDetails[0].address2}',
+                    data,
+                    ''
+                  )
+                )}
+          </Typography>
         );
       },
-      saveFields: ['code', 'firstName', 'lastName', 'dateOfBirth'],
+      saveFields: [
+        'id',
+        'code',
+        'firstName',
+        'lastName',
+        'dateOfBirth',
+        'gender',
+        'email',
+        'document',
+      ],
     },
   };
 

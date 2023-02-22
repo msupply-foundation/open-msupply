@@ -16,7 +16,6 @@ import {
 } from '../../common/styleConstants';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../../common/hooks/useZodOptionsValidation';
-// import { FORM_LABEL_WIDTH } from '../../common/styleConstants';
 import { useSearchQueries, QueryValues } from './useSearchQueries';
 
 const MIN_CHARS = 3;
@@ -26,6 +25,8 @@ const Options = z.object({
    * Source of the search data -- user input or extract it from document
    */
   query: z.enum(QueryValues),
+  optionString: z.string().optional(),
+  displayString: z.string().optional(),
 });
 
 type Options = z.infer<typeof Options>;
@@ -39,6 +40,8 @@ export const SearchWithUserSource = (props: ControlProps) => {
   const [searchText, setSearchText] = useState('');
   const [editMode, setEditMode] = useState(!data);
 
+  const { query, optionString, displayString } = options ?? {};
+
   const {
     runQuery,
     getOptionLabel,
@@ -47,7 +50,7 @@ export const SearchWithUserSource = (props: ControlProps) => {
     loading,
     error: queryError,
     results,
-  } = useSearchQueries(options?.query);
+  } = useSearchQueries(query, { optionString, displayString });
 
   const debouncedOnChange = useDebounceCallback(
     value => {
@@ -102,7 +105,6 @@ export const SearchWithUserSource = (props: ControlProps) => {
               onBlur={() => {
                 if (data) setEditMode(false);
               }}
-              // filterOptions={x => x}
               getOptionLabel={getOptionLabel ?? undefined}
               clearable={!props.config?.required}
               inputProps={{
