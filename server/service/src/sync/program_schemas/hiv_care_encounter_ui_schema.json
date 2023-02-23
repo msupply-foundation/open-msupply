@@ -632,19 +632,6 @@
       "elements": [
         {
           "type": "Control",
-          "label": "Previous HIV Test Result:",
-          "scope": "#/properties/riskBehaviour/properties/previousHIVTestResult",
-          "options": {
-            "show": [
-              ["POSITIVE", "Positive"],
-              ["NEGATIVE", "Negative"],
-              ["UNKNOWN", "Unknown"],
-              ["NOT_DONE", "Not done"]
-            ]
-          }
-        },
-        {
-          "type": "Control",
           "scope": "#/properties/riskBehaviour/properties/receivedBloodTransfusion"
         },
         {
