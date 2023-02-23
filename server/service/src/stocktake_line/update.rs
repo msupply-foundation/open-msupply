@@ -1,6 +1,7 @@
 use chrono::NaiveDate;
 use repository::{
-    RepositoryError, StocktakeLine, StocktakeLineRow, StocktakeLineRowRepository, StorageConnection,
+    EqualFilter, RepositoryError, StockLine, StockLineFilter, StockLineRepository, StocktakeLine,
+    StocktakeLineRow, StocktakeLineRowRepository, StorageConnection,
 };
 
 use crate::{
@@ -47,7 +48,7 @@ pub enum UpdateStocktakeLineError {
     StocktakeIsLocked,
     AdjustmentReasonNotProvided,
     AdjustmentReasonNotValid,
-    StockLineReducedBelowZero(String),
+    StockLineReducedBelowZero(StockLine),
 }
 
 fn validate(
@@ -107,17 +108,22 @@ fn validate(
     if let (Some(counted_number_of_packs), Some(stock_line_id)) =
         (input.counted_number_of_packs, &stocktake_line.stock_line_id)
     {
-        if check_stock_line_reduced_below_zero(
-            connection,
-            store_id,
-            &stock_line_id,
-            &counted_number_of_packs,
-        )? {
+        let stock_line = StockLineRepository::new(connection)
+            .query_by_filter(
+                StockLineFilter::new().id(EqualFilter::equal_to(stock_line_id)),
+                Some(store_id.to_string()),
+            )?
+            .pop()
+            .ok_or_else(|| {
+                UpdateStocktakeLineError::InternalError(
+                    "Stocktake line has invalid stock line!".to_string(),
+                )
+            })?;
+
+        if check_stock_line_reduced_below_zero(&stock_line.stock_line_row, &counted_number_of_packs)
+        {
             return Err(UpdateStocktakeLineError::StockLineReducedBelowZero(
-                format!(
-                    "Stock line {} has been issued in new outbound shipments",
-                    &stock_line_id,
-                ),
+                stock_line.clone(),
             ));
         }
     }
@@ -201,9 +207,9 @@ mod stocktake_line_test {
             MockDataInserts,
         },
         test_db::setup_all_with_data,
-        InventoryAdjustmentReasonRow, InventoryAdjustmentReasonRowRepository,
+        EqualFilter, InventoryAdjustmentReasonRow, InventoryAdjustmentReasonRowRepository,
         InventoryAdjustmentReasonType, InvoiceLineRow, InvoiceRow, InvoiceRowStatus,
-        InvoiceRowType, StocktakeLineRow,
+        InvoiceRowType, StockLineFilter, StockLineRepository, StocktakeLineRow,
     };
     use util::inline_init;
 
@@ -415,12 +421,15 @@ mod stocktake_line_test {
                 }),
             )
             .unwrap_err();
+        let stock_line = StockLineRepository::new(&context.connection)
+            .query_by_filter(
+                StockLineFilter::new().id(EqualFilter::equal_to(&mock_stock_line_b().id)),
+                Some(mock_store_a().id),
+            )
+            .unwrap();
         assert_eq!(
             error,
-            UpdateStocktakeLineError::StockLineReducedBelowZero(format!(
-                "Stock line {} has been issued in new outbound shipments",
-                mock_stock_line_b().id
-            ))
+            UpdateStocktakeLineError::StockLineReducedBelowZero(stock_line[0].clone())
         );
         // success: no update
         let stocktake_line_a = mock_stocktake_line_a();
