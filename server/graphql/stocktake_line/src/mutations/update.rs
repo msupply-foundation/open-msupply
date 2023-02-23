@@ -4,7 +4,7 @@ use chrono::NaiveDate;
 use graphql_core::simple_generic_errors::CannotEditStocktake;
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
-use graphql_types::types::StocktakeLineNode;
+use graphql_types::types::{StockLineNode, StocktakeLineNode};
 use repository::StocktakeLine;
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -12,6 +12,8 @@ use service::{
         UpdateStocktakeLine as ServiceInput, UpdateStocktakeLineError as ServiceError,
     },
 };
+
+use super::{AdjustmentReasonNotProvided, StockLineReducedBelowZero};
 
 #[derive(InputObject)]
 #[graphql(name = "UpdateStocktakeLineInput")]
@@ -42,6 +44,8 @@ pub enum UpdateResponse {
 #[graphql(field(name = "description", type = "String"))]
 pub enum UpdateErrorInterface {
     CannotEditStocktake(CannotEditStocktake),
+    StockLineReducedBelowZero(StockLineReducedBelowZero),
+    AdjustmentReasonNotProvided(AdjustmentReasonNotProvided),
 }
 
 #[derive(SimpleObject)]
@@ -124,22 +128,29 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
                 CannotEditStocktake {},
             ))
         }
+        ServiceError::StockLineReducedBelowZero(line) => {
+            return Ok(UpdateErrorInterface::StockLineReducedBelowZero(
+                StockLineReducedBelowZero(StockLineNode::from_domain(line)),
+            ))
+        }
+        ServiceError::AdjustmentReasonNotProvided => {
+            return Ok(UpdateErrorInterface::AdjustmentReasonNotProvided(
+                AdjustmentReasonNotProvided {},
+            ))
+        }
         // Standard Graphql Errors
         // TODO some are structured errors (where can be changed concurrently)
         ServiceError::InvalidStore => BadUserInput(formatted_error),
         ServiceError::StocktakeLineDoesNotExist => BadUserInput(formatted_error),
         ServiceError::LocationDoesNotExist => BadUserInput(formatted_error),
         ServiceError::StocktakeIsLocked => BadUserInput(formatted_error),
-        ServiceError::AdjustmentReasonNotProvided => BadUserInput(formatted_error),
         ServiceError::AdjustmentReasonNotValid => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::InternalError(err) => InternalError(err),
-        ServiceError::StockLineReducedBelowZero(_) => BadUserInput(formatted_error),
     };
 
     Err(graphql_error.extend())
 }
-
 #[cfg(test)]
 mod test {
     use async_graphql::EmptyMutation;
