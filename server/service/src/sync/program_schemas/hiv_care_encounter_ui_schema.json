@@ -391,14 +391,12 @@
               }
             },
             {
-              "type": "Control",
+              "type": "ViralLoadResult",
               "label": "Viral Load Result [copies/ml]",
-              "scope": "#/properties/viralLoad/properties/viralLoadResult"
-            },
-            {
-              "type": "Control",
-              "label": "Viral Load Status:",
-              "scope": "#/properties/viralLoad/properties/viralLoadStatus"
+              "options": {
+                "viralLoadResult": "viralLoad.viralLoadResult",
+                "viralLoadStatus": "viralLoad.viralLoadStatus"
+              }
             },
             {
               "type": "EncounterLineChart",
