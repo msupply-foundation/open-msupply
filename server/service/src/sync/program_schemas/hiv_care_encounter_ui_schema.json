@@ -36,15 +36,27 @@
           "label": "Body Mass Index (BMI)"
         },
         {
-          "type": "Control",
-          "scope": "#/properties/physicalExamination/properties/nutritionalStatus",
-          "options": {
-            "show": [
-              ["UNDER_NOURISHED", "Under nourished"],
-              ["WELL_NOURISHED", "Well nourished"],
-              ["OVERWEIGHT", "Overweight"]
-            ]
-          }
+          "type": "Group",
+          "label": "Nutrition",
+          "elements": [
+            {
+              "type": "Control",
+              "label": "Nutritional Status:",
+              "scope": "#/properties/physicalExamination/properties/nutrition/properties/nutritionalStatus",
+              "options": {
+                "show": [
+                  ["UNDER_NOURISHED", "Under nourished"],
+                  ["WELL_NOURISHED", "Well nourished"],
+                  ["OVERWEIGHT", "Overweight"]
+                ]
+              }
+            },
+            {
+              "type": "Control",
+              "label": "Nutritional Support Needed:",
+              "scope": "#/properties/physicalExamination/properties/nutrition/properties/nutritionalSupportNeeded"
+            }
+          ]
         },
         {
           "type": "Control",
@@ -56,6 +68,7 @@
         },
         {
           "type": "Control",
+          "label": "WHO Staging:",
           "scope": "#/properties/physicalExamination/properties/whoStaging",
           "options": {
             "show": [
@@ -159,6 +172,7 @@
         },
         {
           "scope": "#/properties/arvMedication/properties/regimenStatus",
+          "label": "Regimen Status:",
           "type": "Control",
           "options": {
             "show": [
@@ -176,10 +190,11 @@
             {
               "scope": "#/properties/arvMedication/properties/regimen",
               "type": "Control",
-              "label": "ARV Regimen"
+              "label": "ARV Regimen:"
             },
             {
               "scope": "#/properties/arvMedication/properties/regimenChangeReason",
+              "label": "Regimen Change Reason:",
               "type": "Control",
               "options": {
                 "multiColumn": true,
@@ -280,6 +295,7 @@
         },
         {
           "scope": "#/properties/arvMedication/properties/relevantCoMedication",
+          "label": "Relevant Co Medication:",
           "type": "Control"
         },
         {
@@ -290,15 +306,17 @@
     },
     {
       "type": "Category",
-      "label": "Family Planning",
+      "label": "Pregnancy",
       "options": { "icon": "condom" },
       "elements": [
         {
           "type": "Control",
+          "label": "Pregnant:",
           "scope": "#/properties/familyPlanning/properties/pregnant"
         },
         {
           "type": "Control",
+          "label": "Contraception:",
           "scope": "#/properties/familyPlanning/properties/contraception"
         }
       ]
@@ -313,30 +331,37 @@
       "elements": [
         {
           "type": "Control",
+          "label": "Screened?",
           "scope": "#/properties/genderBasedViolence/properties/screened"
         },
         {
           "type": "Control",
+          "label": "Type of GBV:",
           "scope": "#/properties/genderBasedViolence/properties/type"
         },
         {
           "type": "Control",
+          "label": "Referred for External Services:",
           "scope": "#/properties/genderBasedViolence/properties/referredForExternalServices"
         },
         {
           "type": "Control",
+          "label": "Intimate Partner Violence?",
           "scope": "#/properties/genderBasedViolence/properties/intimatePartnerViolence"
         },
         {
           "type": "Control",
+          "label": "Rape?",
           "scope": "#/properties/genderBasedViolence/properties/rape"
         },
         {
           "type": "Control",
+          "label": "Post GBV Services Provided?",
           "scope": "#/properties/genderBasedViolence/properties/postServiceProvided"
         },
         {
           "type": "Control",
+          "label": "Post GBV Service Type:",
           "scope": "#/properties/genderBasedViolence/properties/receivedServiceType"
         }
       ]
@@ -351,11 +376,13 @@
           "elements": [
             {
               "type": "Control",
+              "label": "Viral Load Done?",
               "scope": "#/properties/viralLoad/properties/tested"
             },
             {
               "type": "Control",
-              "scope": "#/properties/viralLoad/properties/targetting",
+              "scope": "#/properties/viralLoad/properties/targeting",
+              "label": "VL Targeting:",
               "options": {
                 "show": [
                   ["TARGETED", "Targeted"],
@@ -365,13 +392,13 @@
             },
             {
               "type": "Control",
-              "label": "EAC Done",
-              "scope": "#/properties/viralLoad/properties/eacDone"
+              "label": "Viral Load Result [copies/ml]",
+              "scope": "#/properties/viralLoad/properties/viralLoadResult"
             },
             {
               "type": "Control",
-              "label": "Viral Load Result [copies/ml]",
-              "scope": "#/properties/viralLoad/properties/viralLoadResult"
+              "label": "Viral Load Status:",
+              "scope": "#/properties/viralLoad/properties/viralLoadStatus"
             },
             {
               "type": "EncounterLineChart",
@@ -385,6 +412,11 @@
                   }
                 ]
               }
+            },
+            {
+              "type": "Control",
+              "label": "EAC Done?",
+              "scope": "#/properties/viralLoad/properties/eacDone"
             }
           ]
         }
@@ -392,12 +424,12 @@
     },
     {
       "type": "Category",
-      "label": "Biochem",
+      "label": "Biochemistry",
       "options": { "icon": "microscope" },
       "elements": [
         {
           "type": "Control",
-          "label": "AST",
+          "label": "AST [UI/L]",
           "scope": "#/properties/biochem/properties/ast"
         },
         {
@@ -436,12 +468,12 @@
     },
     {
       "type": "Category",
-      "label": "Haem",
+      "label": "Haematology",
       "options": { "icon": "test-tube" },
       "elements": [
         {
           "type": "Control",
-          "label": "Hep B SAg",
+          "label": "Hep B SAg:",
           "scope": "#/properties/haem/properties/hepBSAg"
         },
         {
@@ -450,41 +482,52 @@
           "scope": "#/properties/haem/properties/rbslToFbsl"
         },
         {
-          "type": "Control",
-          "label": "FBE Hb",
-          "scope": "#/properties/haem/properties/fbeHb"
+          "type": "Group",
+          "label": "FBE",
+          "elements": [
+            {
+              "type": "Control",
+              "label": "FBE Hb [g/dL]",
+              "scope": "#/properties/haem/properties/fbe/properties/fbeHb"
+            },
+            {
+              "type": "Control",
+              "label": "FBE WCC",
+              "scope": "#/properties/haem/properties/fbe/properties/fbeWCC"
+            },
+            {
+              "type": "Control",
+              "label": "FBE Plt",
+              "scope": "#/properties/haem/properties/fbe/properties/fbePlt"
+            }
+          ]
         },
         {
           "type": "Control",
-          "label": "FBE WCC",
-          "scope": "#/properties/haem/properties/fbeWCC"
-        },
-        {
-          "type": "Control",
-          "label": "FBE Plt",
-          "scope": "#/properties/haem/properties/fbePlt"
-        },
-        {
-          "type": "Control",
-          "label": "TPHA",
+          "label": "TPHA:",
           "scope": "#/properties/haem/properties/tpha"
         },
         {
           "type": "Control",
-          "label": "TLC",
+          "label": "TLC [+cells/mm3]",
           "scope": "#/properties/haem/properties/tlc"
         }
       ]
     },
     {
       "type": "Category",
-      "label": "TB / HCV",
+      "label": "Tuberculosis",
       "options": { "icon": "lungs" },
       "elements": [
         {
           "type": "Control",
-          "label": "TB-GeneXpert",
-          "scope": "#/properties/tbHcv/properties/tbGeneXpert",
+          "label": "TB-Screening:",
+          "scope": "#/properties/tuberculosis/properties/tbScreening"
+        },
+        {
+          "type": "Control",
+          "label": "TB-GeneXpert:",
+          "scope": "#/properties/tuberculosis/properties/tbGeneXpert",
           "options": {
             "show": [
               ["NOT_DETECTED", "Not Detected"],
@@ -496,12 +539,12 @@
         {
           "type": "Control",
           "label": "CXR",
-          "scope": "#/properties/tbHcv/properties/cxr"
+          "scope": "#/properties/tuberculosis/properties/cxr"
         },
         {
           "type": "Control",
-          "label": "TB-Sputum",
-          "scope": "#/properties/tbHcv/properties/tbSputum",
+          "label": "TB-Sputum:",
+          "scope": "#/properties/tuberculosis/properties/tbSputum",
           "options": {
             "show": [
               ["NO_AFB", "No AFB"],
@@ -513,8 +556,284 @@
         },
         {
           "type": "Control",
-          "label": "HCV",
-          "scope": "#/properties/tbHcv/properties/hcv"
+          "label": "TB-Status:",
+          "scope": "#/properties/tuberculosis/properties/tbStatus"
+        }
+      ]
+    },
+    {
+      "type": "Category",
+      "label": "Index Testing",
+      "options": { "icon": "index-testing" },
+      "elements": [
+        {
+          "type": "Control",
+          "label": "Index Testing Offered:",
+          "scope": "#/properties/indexTesting/properties/indexTestingOffered"
+        },
+        {
+          "type": "Control",
+          "label": "IPV Risk?",
+          "scope": "#/properties/indexTesting/properties/ipvRisk"
+        },
+        {
+          "type": "Control",
+          "label": "Index Testing Accepted?",
+          "scope": "#/properties/indexTesting/properties/indexTestingAccepted"
+        }
+      ]
+    },
+    {
+      "type": "Category",
+      "label": "HCV / CrAg",
+      "options": { "icon": "liver" },
+      "elements": [
+        {
+          "type": "Control",
+          "label": "HCV:",
+          "scope": "#/properties/hcvCrag/properties/hcv"
+        },
+        {
+          "type": "Control",
+          "label": "CrAg Result:",
+          "scope": "#/properties/hcvCrag/properties/crAgResult"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/hcvCrag/properties/crAgTitre"
+        }
+      ]
+    },
+    {
+      "type": "Category",
+      "label": "General",
+      "options": { "icon": "general" },
+      "elements": [
+        {
+          "type": "Control",
+          "label": "Referred to:",
+          "scope": "#/properties/general/properties/referredTo"
+        },
+        {
+          "type": "Control",
+          "label": "Visit Type:",
+          "scope": "#/properties/general/properties/visitType"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/general/properties/location"
+        }
+      ]
+    },
+    {
+      "type": "Category",
+      "label": "Risk Behaviour",
+      "options": { "icon": "document" },
+      "elements": [
+        {
+          "type": "Control",
+          "scope": "#/properties/riskBehaviour/properties/receivedBloodTransfusion"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/riskBehaviour/properties/injectedDrugsWithoutDoctorAdvice"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/riskBehaviour/properties/accidentalNeedlePick"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/riskBehaviour/properties/sexualTransmittedInfection"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/riskBehaviour/properties/unprotectedVaginalSex"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/riskBehaviour/properties/unprotectedAnalSex"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/riskBehaviour/properties/prostitution"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/riskBehaviour/properties/sexWithSameSex"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/riskBehaviour/properties/forcedSexWithoutConsent"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/riskBehaviour/properties/numberMaleSexualPartners6Month"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/riskBehaviour/properties/numberFemaleSexualPartners6Month"
+        },
+        {
+          "type": "DecisionTree",
+          "scope": "#/properties/riskBehaviour/properties/riskGroup",
+          "options": {
+            "basePath": "riskBehaviour",
+            "tree": {
+              "root": "root",
+              "nodes": {
+                "root": {
+                  "branches": [
+                    {
+                      "patientField": "gender",
+                      "equalTo": "MALE",
+                      "node": "isMale"
+                    },
+                    {
+                      "patientField": "gender",
+                      "equalTo": "FEMALE",
+                      "node": "isFemale"
+                    },
+                    {
+                      "patientField": "gender",
+                      "equalTo": "TRANSGENDER",
+                      "node": "isTransgender"
+                    }
+                  ]
+                },
+                "isMale": {
+                  "value": "LRM",
+                  "branches": [
+                    {
+                      "dataField": "sexWithSameSex",
+                      "equalTo": true,
+                      "node": "maleSexWithSameSex"
+                    },
+                    {
+                      "dataField": "unprotectedAnalSex",
+                      "equalTo": true,
+                      "node": "maleSexWithSameSex"
+                    },
+                    {
+                      "dataField": "numberMaleSexualPartners6Month",
+                      "greaterThan": 0,
+                      "node": "maleSexWithSameSex"
+                    },
+                    {
+                      "dataField": "forcedSexWithoutConsent",
+                      "equalTo": true,
+                      "node": "maleHadSexWithFemale"
+                    },
+                    {
+                      "dataField": "numberFemaleSexualPartners6Month",
+                      "greaterThan": 0,
+                      "node": "maleHadSexWithFemale"
+                    }
+                  ]
+                },
+                "maleSexWithSameSex": {
+                  "value": "MSM",
+                  "branches": [
+                    {
+                      "dataField": "prostitution",
+                      "equalTo": true,
+                      "value": "MSMSW"
+                    }
+                  ]
+                },
+                "maleHadSexWithFemale": {
+                  "value": "LRM",
+                  "branches": [
+                    {
+                      "dataField": "numberFemaleSexualPartners6Month",
+                      "greaterThan": 1,
+                      "node": "maleHadSexWithMultiFemale"
+                    }
+                  ]
+                },
+                "maleHadSexWithMultiFemale": {
+                  "value": "HRM",
+                  "branches": [
+                    {
+                      "dataField": "prostitution",
+                      "equalTo": true,
+                      "value": "MSW"
+                    }
+                  ]
+                },
+                "isFemale": {
+                  "value": "LRW",
+                  "branches": [
+                    {
+                      "dataField": "unprotectedVaginalSex",
+                      "equalTo": true,
+                      "node": "femaleHadSex"
+                    },
+                    {
+                      "dataField": "unprotectedAnalSex",
+                      "equalTo": true,
+                      "node": "femaleHadSex"
+                    },
+                    {
+                      "dataField": "sexWithSameSex",
+                      "equalTo": true,
+                      "node": "femaleHadSex"
+                    },
+                    {
+                      "dataField": "forcedSexWithoutConsent",
+                      "equalTo": true,
+                      "node": "femaleHadSex"
+                    },
+                    {
+                      "dataField": "numberMaleSexualPartners6Month",
+                      "greaterThan": 0,
+                      "node": "femaleHadSex"
+                    },
+                    {
+                      "dataField": "numberFemaleSexualPartners6Month",
+                      "greaterThan": 0,
+                      "node": "femaleHadSex"
+                    }
+                  ]
+                },
+                "femaleHadSex": {
+                  "value": "LRW",
+                  "branches": [
+                    {
+                      "dataField": "numberMaleSexualPartners6Month",
+                      "greaterThan": 1,
+                      "node": "femaleHadSexMulti"
+                    },
+                    {
+                      "dataField": "numberFemaleSexualPartners6Month",
+                      "greaterThan": 1,
+                      "node": "femaleHadSexMulti"
+                    }
+                  ]
+                },
+                "femaleHadSexMulti": {
+                  "value": "HRW",
+                  "branches": [
+                    {
+                      "dataField": "prostitution",
+                      "equalTo": true,
+                      "value": "FSW"
+                    }
+                  ]
+                },
+                "isTransgender": {
+                  "value": "TG",
+                  "branches": [
+                    {
+                      "dataField": "prostitution",
+                      "equalTo": true,
+                      "value": "TGSW"
+                    }
+                  ]
+                }
+              }
+            }
+          }
         }
       ]
     }
