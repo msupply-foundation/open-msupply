@@ -1,8 +1,6 @@
 import { create } from '@storybook/theming/create';
 
 export default create({
-  base: 'light',
-
   colorPrimary: '#e95c30',
   colorSecondary: '#CDCDCD',
 
@@ -17,7 +15,7 @@ export default create({
   fontCode: 'monospace',
 
   // Text colors
-  textColor: 'white',
+  textColor: '#ed7d59',
   textInverseColor: 'rgba(255,255,255,0.9)',
 
   brandTitle: 'mSupply Foundation',
