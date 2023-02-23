@@ -408,6 +408,12 @@
                     "label": "Viral Load",
                     "unit": "copies/ml"
                   }
+                ],
+                "horizontalRulers": [
+                  {
+                    "position": 1000,
+                    "colour": "red"
+                  }
                 ]
               }
             },
