@@ -397,11 +397,6 @@
             },
             {
               "type": "Control",
-              "label": "Viral Load Status:",
-              "scope": "#/properties/viralLoad/properties/viralLoadStatus"
-            },
-            {
-              "type": "Control",
               "label": "EAC Done?",
               "scope": "#/properties/viralLoad/properties/eacDone"
             },
@@ -621,7 +616,14 @@
         },
         {
           "type": "Control",
-          "scope": "#/properties/general/properties/location"
+          "scope": "#/properties/general/properties/location",
+          "rule": {
+            "effect": "ENABLE",
+            "condition": {
+              "scope": "#/properties/general/properties/visitType",
+              "schema": { "enum": ["Outreach", "Refill"] }
+            }
+          }
         }
       ]
     },
