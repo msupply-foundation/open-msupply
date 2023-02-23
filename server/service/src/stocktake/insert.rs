@@ -594,6 +594,7 @@ mod test {
                 r.store_id = mock_store_a().id;
                 r.item_id = mock_item_a().id;
                 r.location_id = Some(location_id.clone());
+                r.total_number_of_packs = 100.0;
             })
         });
 
