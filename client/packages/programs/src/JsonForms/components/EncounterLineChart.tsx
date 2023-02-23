@@ -10,7 +10,13 @@ import {
   YAxis,
 } from '@openmsupply-client/common';
 import { useZodOptionsValidation } from '../common';
-import { CartesianGrid, Tooltip, TooltipProps, Label } from 'recharts';
+import {
+  CartesianGrid,
+  Tooltip,
+  TooltipProps,
+  Label,
+  ReferenceLine,
+} from 'recharts';
 import { useEncounter } from '../../api';
 import { z } from 'zod';
 
@@ -21,12 +27,18 @@ export const encounterLineChartTester = rankWith(
 
 type Options = {
   values: ValueOption[];
+  horizontalRulers?: HorizontalRulers[];
 };
 
 type ValueOption = {
   field: string;
   label: string;
   unit: string;
+};
+
+type HorizontalRulers = {
+  position: number;
+  colour: string;
 };
 
 const ValueOption: z.ZodType<ValueOption> = z
@@ -37,9 +49,17 @@ const ValueOption: z.ZodType<ValueOption> = z
   })
   .strict();
 
+const horizontalRuler: z.ZodType<HorizontalRulers> = z
+  .object({
+    position: z.number(),
+    colour: z.string(),
+  })
+  .strict();
+
 const Options: z.ZodType<Options> = z
   .object({
     values: z.array(ValueOption),
+    horizontalRulers: z.array(horizontalRuler).optional(),
   })
   .strict();
 
@@ -139,6 +159,16 @@ const UIComponent = (props: ControlProps) => {
             />
           }
         />
+        {options?.horizontalRulers
+          ? options?.horizontalRulers?.map(ruler => (
+              <ReferenceLine
+                key={ruler.position}
+                y={ruler.position}
+                stroke={ruler.colour}
+                strokeDasharray="3 3"
+              />
+            ))
+          : null}
         <Line
           type="monotone"
           dataKey="y"
