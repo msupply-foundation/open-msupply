@@ -6,17 +6,16 @@ import {
 import {
   BasicSpinner,
   Divider,
-  useTranslation,
   useIsMediumScreen,
   Box,
   ModalMode,
-  useNotification,
   TableProvider,
   createTableStore,
   createQueryParamsStore,
   QueryParamsProvider,
   useRowStyle,
-  LocaleKey,
+  useTranslation,
+  useNotification,
 } from '@openmsupply-client/common';
 import { StocktakeLineEditForm } from './StocktakeLineEditForm';
 import { useStocktakeLineEdit } from './hooks';
@@ -47,13 +46,13 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
   isOpen,
 }) => {
   const isDisabled = useStocktake.utils.isDisabled();
-  const { error } = useNotification();
   const [currentItem, setCurrentItem] = useState(item);
   const isMediumScreen = useIsMediumScreen();
-  const t = useTranslation(['inventory']);
   const { draftLines, update, addLine, isLoading, save, nextItem, isError } =
     useStocktakeLineEdit(currentItem);
   const { setRowStyle } = useRowStyle();
+  const { error } = useNotification();
+  const t = useTranslation(['inventory']);
 
   const onNext = async () => {
     await save(draftLines);
@@ -64,31 +63,51 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
     return true;
   };
 
-  const parseError = (error: string): LocaleKey => {
-    switch (true) {
-      case error.indexOf('AdjustmentReasonNotProvided') !== -1:
-        return 'error.provide-reason';
-      case error.indexOf('StockLineReducedBelowZero') !== -1:
-        return 'error.reduced-below-zero';
-    }
-    return 'error.cant-save';
-  };
-
   const onOk = async () => {
-    try {
-      await save(draftLines);
-      if (item) {
-        const highlight = {
-          animation: 'highlight 1.5s',
-        };
-        const rowIds = draftLines.map(line => line.id);
-        rowIds.forEach(id => setRowStyle(id, highlight));
+    const result = await save(draftLines);
+
+    result.batchStocktake?.insertStocktakeLines?.map(response => {
+      if (
+        response.response?.__typename === 'InsertStocktakeLineError' &&
+        response.response?.error?.__typename === 'StockLineReducedBelowZero'
+      ) {
+        return error(t('error.reduced-below-zero'))();
       }
-      onClose();
-    } catch (e) {
-      const msg = t(parseError(`${e}`));
-      error(msg)();
+    });
+    result.batchStocktake.insertStocktakeLines?.map(response => {
+      if (
+        response.response?.__typename === 'InsertStocktakeLineError' &&
+        response.response?.error?.__typename === 'AdjustmentReasonNotProvided'
+      ) {
+        return error(t('error.provide-reason'))();
+      }
+    });
+
+    result.batchStocktake?.updateStocktakeLines?.map(response => {
+      if (
+        response?.response?.__typename === 'UpdateStocktakeLineError' &&
+        response?.response?.error?.__typename === 'StockLineReducedBelowZero'
+      ) {
+        return error(t('error.reduced-below-zero'))();
+      }
+    });
+    result.batchStocktake.updateStocktakeLines?.map(response => {
+      if (
+        response?.response?.__typename === 'UpdateStocktakeLineError' &&
+        response?.response?.error?.__typename === 'AdjustmentReasonNotProvided'
+      ) {
+        return error(t('error.provide-reason'))();
+      }
+    });
+
+    if (item) {
+      const highlight = {
+        animation: 'highlight 1.5s',
+      };
+      const rowIds = draftLines.map(line => line.id);
+      rowIds.forEach(id => setRowStyle(id, highlight));
     }
+    onClose();
   };
 
   const hasValidBatches = draftLines.length > 0;
