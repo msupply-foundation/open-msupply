@@ -2787,6 +2787,7 @@ export type StockLineConnector = {
 
 export type StockLineFilterInput = {
   expiryDate?: InputMaybe<DateFilterInput>;
+  hasPacksInStore?: InputMaybe<Scalars['Boolean']>;
   id?: InputMaybe<EqualFilterStringInput>;
   isAvailable?: InputMaybe<Scalars['Boolean']>;
   itemCodeOrName?: InputMaybe<SimpleStringFilterInput>;
@@ -2964,6 +2965,11 @@ export type StoreNode = {
   __typename: 'StoreNode';
   code: Scalars['String'];
   id: Scalars['String'];
+  /**
+   * Returns the associated store logo.
+   * The logo is returned as a data URL schema, e.g. "data:image/png;base64,..."
+   */
+  logo?: Maybe<Scalars['String']>;
   name: NameNode;
   siteId: Scalars['Int'];
   storeName: Scalars['String'];

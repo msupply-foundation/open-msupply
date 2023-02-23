@@ -44,6 +44,7 @@ pub struct StockLineFilterInput {
     pub item_id: Option<EqualFilterStringInput>,
     pub location_id: Option<EqualFilterStringInput>,
     pub store_id: Option<EqualFilterStringInput>,
+    pub has_packs_in_store: Option<bool>,
 }
 
 impl From<StockLineFilterInput> for StockLineFilter {
@@ -56,7 +57,7 @@ impl From<StockLineFilterInput> for StockLineFilter {
             item_id: f.item_id.map(EqualFilter::from),
             location_id: f.location_id.map(EqualFilter::from),
             store_id: None,
-            has_packs: None,
+            has_packs_in_store: f.has_packs_in_store,
         }
     }
 }
@@ -109,8 +110,7 @@ impl StockLineQueries {
         let filter = filter
             .map(StockLineFilter::from)
             .unwrap_or(StockLineFilter::new())
-            .store_id(EqualFilter::equal_to(&store_id))
-            .has_packs(true);
+            .store_id(EqualFilter::equal_to(&store_id));
 
         let stock_lines = service_provider
             .stock_line_service
