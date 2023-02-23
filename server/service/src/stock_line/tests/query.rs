@@ -149,7 +149,7 @@ mod query {
             expiry_date: None,
             store_id: None,
             item_code_or_name: None,
-            has_packs: None,
+            has_packs_in_store: None,
         });
 
         // Test ExpiryDate sort with default sort order
@@ -201,7 +201,7 @@ mod query {
             expiry_date: None,
             store_id: None,
             item_code_or_name: None,
-            has_packs: None,
+            has_packs_in_store: None,
         });
 
         // Test ExpiryDate sort with desc sort order
