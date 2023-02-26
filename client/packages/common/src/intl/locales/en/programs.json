@@ -1,8 +1,5 @@
 {
   "control.adherence-status-warning": "Pill Count: after last visit = {{previousCountOnHand}} < before visit = {{remainingCount}}",
   "control.note.text-label": "Text",
-  "control.note.author-label": "Author",
-  "label.viral-load-status": "Viral Load Status",
-  "text.suppressed": "Suppressed",
-  "text.unsuppressed": "Unsuppressed"
+  "control.note.author-label": "Author"
 }
