@@ -605,6 +605,7 @@
             },
             "viralLoadStatus": {
               "description": "Based on viral load result",
+              "enum": ["Suppressed", "Unsuppressed"],
               "type": "string"
             }
           },

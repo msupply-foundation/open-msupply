@@ -391,11 +391,34 @@
               }
             },
             {
-              "type": "ViralLoadResult",
+              "type": "Control",
               "label": "Viral Load Result [copies/ml]",
+              "scope": "#/properties/viralLoad/properties/viralLoadResult"
+            },
+            {
+              "type": "DecisionTree",
+              "scope": "#/properties/viralLoad/properties/viralLoadStatus",
               "options": {
-                "viralLoadResult": "viralLoad.viralLoadResult",
-                "viralLoadStatus": "viralLoad.viralLoadStatus"
+                "basePath": "viralLoad",
+                "tree": {
+                  "root": "root",
+                  "nodes": {
+                    "root": {
+                      "branches": [
+                        {
+                          "dataField": "viralLoadResult",
+                          "greaterThan": 1000,
+                          "value": "Unsuppressed"
+                        },
+                        {
+                          "dataField": "viralLoadResult",
+                          "lessThanOrEqualTo": 1000,
+                          "value": "Suppressed"
+                        }
+                      ]
+                    }
+                  }
+                }
               }
             },
             {
