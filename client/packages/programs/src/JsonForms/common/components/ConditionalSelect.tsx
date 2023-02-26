@@ -10,6 +10,7 @@ import {
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
 import { get as extractProperty } from 'lodash';
+import { DefaultFormRowSx } from '../../style';
 
 export const conditionalSelectTester = rankWith(
   10,
@@ -64,11 +65,9 @@ const UIComponent = (props: ControlProps) => {
     <Box
       display="flex"
       alignItems="center"
-      gap={2}
       justifyContent="space-around"
       style={{ minWidth: 300 }}
-      margin={0.5}
-      marginLeft={0}
+      sx={DefaultFormRowSx}
     >
       <Box style={{ textAlign: 'end' }} flexBasis={FORM_LABEL_COLUMN_WIDTH}>
         <FormLabel sx={{ fontWeight: 'bold' }}>{label}:</FormLabel>

@@ -12,6 +12,7 @@ import {
   FORM_INPUT_COLUMN_WIDTH,
   FORM_LABEL_COLUMN_WIDTH,
 } from '../styleConstants';
+import { DefaultFormRowSx } from '../../style';
 
 type Options = {
   freeText?: boolean;
@@ -90,11 +91,9 @@ const UIComponent = (props: ControlProps) => {
     <Box
       display="flex"
       alignItems="center"
-      gap={2}
       justifyContent="space-around"
       style={{ minWidth: 300 }}
-      margin={0.5}
-      marginLeft={0}
+      sx={DefaultFormRowSx}
     >
       <Box style={{ textAlign: 'end' }} flexBasis={FORM_LABEL_COLUMN_WIDTH}>
         <FormLabel sx={{ fontWeight: 'bold' }}>{label}:</FormLabel>

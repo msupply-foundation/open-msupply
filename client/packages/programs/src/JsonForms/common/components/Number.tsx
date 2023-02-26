@@ -11,8 +11,8 @@ import {
   FORM_INPUT_COLUMN_WIDTH,
   FORM_LABEL_COLUMN_WIDTH,
 } from '../styleConstants';
-import { Box } from '@mui/system';
-import { FormLabel } from '@mui/material';
+import { Box, FormLabel } from '@mui/material';
+import { DefaultFormRowSx } from '../../style';
 
 export const numberTester = rankWith(3, schemaTypeIs('number'));
 
@@ -50,7 +50,7 @@ const UIComponent = (props: ControlProps) => {
       alignItems="center"
       justifyContent="space-around"
       style={{ minWidth: 300 }}
-      sx={{ margin: 0.5, marginLeft: 0, gap: 2 }}
+      sx={DefaultFormRowSx}
     >
       <Box style={{ textAlign: 'end' }} flexBasis={FORM_LABEL_COLUMN_WIDTH}>
         <FormLabel sx={{ fontWeight: 'bold' }}>{label}:</FormLabel>
