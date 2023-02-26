@@ -1,4 +1,4 @@
-export * from './AdherenceStatus';
+export * from './AdherenceScore';
 export * from './BMI';
 export * from './DateOfBirth';
 export * from './DecisionTree/DecisionTree';

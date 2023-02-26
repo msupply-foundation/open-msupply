@@ -44,8 +44,8 @@
             }
           },
           "properties": {
-            "adherenceStatus": {
-              "description": "Antiretroviral adherence status [%]",
+            "adherenceScore": {
+              "description": "Antiretroviral adherence score [%]",
               "type": "number"
             },
             "endOfSupply": {

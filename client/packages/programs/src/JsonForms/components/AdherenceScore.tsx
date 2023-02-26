@@ -22,7 +22,7 @@ import { useEncounter } from '../../api';
 import { get as extractProperty } from 'lodash';
 import { FormLabel } from '@mui/material';
 
-export const adherenceStatusTester = rankWith(10, uiTypeIs('AdherenceStatus'));
+export const adherenceScoreTester = rankWith(10, uiTypeIs('AdherenceScore'));
 
 type Options = {
   /**
@@ -57,7 +57,7 @@ const UIComponent = (props: ControlProps) => {
   const { data, handleChange, label, uischema, path } = props;
   const [targetPath, setTargetPath] = useState<string | undefined>();
   const [warning, setWarning] = useState<string | undefined>();
-  const [adherenceStatus, setAdherenceStatus] = useState<number | undefined>();
+  const [adherenceScore, setAdherenceScore] = useState<number | undefined>();
   const t = useTranslation('programs');
 
   const { errors, options } = useZodOptionsValidation(
@@ -71,7 +71,7 @@ const UIComponent = (props: ControlProps) => {
     }
     const targetPath = composePaths(path, options.targetField);
     setTargetPath(targetPath);
-    setAdherenceStatus(extractProperty(data, targetPath));
+    setAdherenceScore(extractProperty(data, targetPath));
   }, [options, path]);
 
   // fetch current encounter
@@ -98,7 +98,7 @@ const UIComponent = (props: ControlProps) => {
     const remainingCount = extractProperty(data, options.remainingCountField);
 
     if (previousCountOnHand < remainingCount) {
-      setAdherenceStatus(undefined);
+      setAdherenceScore(undefined);
       setWarning(
         t('control.adherence-status-warning', {
           remainingCount,
@@ -120,9 +120,9 @@ const UIComponent = (props: ControlProps) => {
     const status =
       ((previousCountOnHand - remainingCount) / targetPillCount) * 100;
 
-    if (Number.isFinite(status) && status !== adherenceStatus) {
+    if (Number.isFinite(status) && status !== adherenceScore) {
       handleChange(targetPath, status);
-      setAdherenceStatus(status);
+      setAdherenceScore(status);
     }
   }, [options, previousEncounter, currentEncounter, data, targetPath]);
 
@@ -137,8 +137,7 @@ const UIComponent = (props: ControlProps) => {
     disabled: true,
     error: !!errors,
     helperText: errors,
-    value:
-      adherenceStatus !== undefined ? `${adherenceStatus.toFixed(1)}%` : '',
+    value: adherenceScore !== undefined ? `${adherenceScore.toFixed(1)}%` : '',
   };
   return (
     <Box
@@ -168,4 +167,4 @@ const UIComponent = (props: ControlProps) => {
   );
 };
 
-export const AdherenceStatus = withJsonFormsControlProps(UIComponent);
+export const AdherenceScore = withJsonFormsControlProps(UIComponent);
