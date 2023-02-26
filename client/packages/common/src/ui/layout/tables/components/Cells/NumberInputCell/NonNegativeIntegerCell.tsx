@@ -3,6 +3,7 @@ import { CellProps } from '../../../columns';
 import { NonNegativeNumberInput } from '@common/components';
 import { RecordWithId } from '@common/types';
 import { useBufferState, useDebounceCallback } from '@common/hooks';
+import { SxProps, Theme } from '@mui/material';
 
 // where NonNegative is n >=0
 export const NonNegativeIntegerCell = <T extends RecordWithId>({
@@ -11,13 +12,17 @@ export const NonNegativeIntegerCell = <T extends RecordWithId>({
   max,
   isDisabled = false,
   isRequired = false,
-}: CellProps<T> & { max?: number }): React.ReactElement<CellProps<T>> => {
+  boxSx,
+}: CellProps<T> & { max?: number; boxSx?: SxProps<Theme> }): React.ReactElement<
+  CellProps<T>
+> => {
   const [buffer, setBuffer] = useBufferState(column.accessor({ rowData }));
 
   const updater = useDebounceCallback(column.setter, [column.setter], 250);
 
   return (
     <NonNegativeNumberInput
+      boxSx={boxSx}
       disabled={isDisabled}
       required={isRequired}
       InputProps={{ sx: { '& .MuiInput-input': { textAlign: 'right' } } }}

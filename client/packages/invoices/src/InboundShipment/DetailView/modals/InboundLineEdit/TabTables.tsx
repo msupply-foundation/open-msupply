@@ -65,6 +65,11 @@ const NumberOfPacksCell: React.FC<CellProps<DraftInboundLine>> = ({
     {...props}
     isRequired={rowData.numberOfPacks === 0}
     rowData={rowData}
+    boxSx={{
+      display: 'flex',
+      justifyContent: 'flex-end',
+      alignItems: 'center',
+    }}
   />
 );
 

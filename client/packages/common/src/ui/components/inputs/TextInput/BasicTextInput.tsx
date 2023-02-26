@@ -2,11 +2,15 @@ import React, { FC } from 'react';
 import {
   Box,
   StandardTextFieldProps,
+  SxProps,
   TextField,
+  Theme,
   Typography,
 } from '@mui/material';
 
-export type BasicTextInputProps = StandardTextFieldProps;
+export interface BasicTextInputProps extends StandardTextFieldProps {
+  boxSx?: SxProps<Theme>;
+}
 
 /**
  * Very basic TextInput component with some simple styling applied where you can
@@ -14,8 +18,8 @@ export type BasicTextInputProps = StandardTextFieldProps;
  */
 
 export const BasicTextInput: FC<BasicTextInputProps> = React.forwardRef(
-  ({ sx, InputProps, error, required, ...props }, ref) => (
-    <Box display="flex" justifyContent="flex-end" alignItems="center">
+  ({ sx, InputProps, error, required, boxSx, ...props }, ref) => (
+    <Box sx={{ ...boxSx }}>
       <TextField
         ref={ref}
         color="secondary"
