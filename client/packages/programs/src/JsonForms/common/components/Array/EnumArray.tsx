@@ -19,6 +19,7 @@ import {
 import { UISchemaWithCustomProps } from './common';
 import parse from 'autosuggest-highlight/parse';
 import match from 'autosuggest-highlight/match';
+import { DefaultFormRowSx } from '../../../style';
 
 interface EnumArrayControlCustomProps extends ArrayControlProps {
   uischema: UISchemaWithCustomProps;
@@ -113,10 +114,9 @@ export const EnumArrayComponent: FC<EnumArrayControlCustomProps> = ({
       <Box
         display="flex"
         alignItems="center"
-        gap={2}
         justifyContent="space-around"
         style={{ minWidth: 300 }}
-        margin={0.5}
+        sx={DefaultFormRowSx}
       >
         <Box
           style={{ textAlign: 'end', alignSelf: 'start', paddingTop: 5 }}

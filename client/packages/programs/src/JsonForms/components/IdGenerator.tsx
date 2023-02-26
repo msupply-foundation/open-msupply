@@ -22,6 +22,7 @@ import { z } from 'zod';
 import { useJsonForms } from '@jsonforms/react';
 import { useJSONFormsCustomError } from '../common/hooks/useJSONFormsCustomError';
 import { useDebouncedTextInput } from '../common/hooks/useDebouncedTextInput';
+import { DefaultFormRowSx } from '../style';
 
 export const idGeneratorTester = rankWith(10, uiTypeIs('IdGenerator'));
 
@@ -373,7 +374,7 @@ const UIComponent = (props: ControlProps) => {
       alignItems="center"
       justifyContent="space-around"
       style={{ minWidth: 300 }}
-      sx={{ margin: 0.5, marginLeft: 0, gap: 2 }}
+      sx={DefaultFormRowSx}
     >
       <Box style={{ textAlign: 'end' }} flexBasis={FORM_LABEL_COLUMN_WIDTH}>
         <FormLabel sx={{ fontWeight: 'bold' }}>{label}:</FormLabel>
