@@ -396,9 +396,30 @@
               "scope": "#/properties/viralLoad/properties/viralLoadResult"
             },
             {
-              "type": "Control",
-              "label": "Viral Load Status:",
-              "scope": "#/properties/viralLoad/properties/viralLoadStatus"
+              "type": "DecisionTree",
+              "scope": "#/properties/viralLoad/properties/viralLoadStatus",
+              "options": {
+                "basePath": "viralLoad",
+                "tree": {
+                  "root": "root",
+                  "nodes": {
+                    "root": {
+                      "branches": [
+                        {
+                          "dataField": "viralLoadResult",
+                          "greaterThan": 1000,
+                          "value": "Unsuppressed"
+                        },
+                        {
+                          "dataField": "viralLoadResult",
+                          "lessThanOrEqualTo": 1000,
+                          "value": "Suppressed"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
             },
             {
               "type": "EncounterLineChart",
@@ -409,6 +430,12 @@
                     "field": "viralLoad.viralLoadResult",
                     "label": "Viral Load",
                     "unit": "copies/ml"
+                  }
+                ],
+                "horizontalRulers": [
+                  {
+                    "position": 1000,
+                    "colour": "red"
                   }
                 ]
               }
@@ -621,7 +648,14 @@
         },
         {
           "type": "Control",
-          "scope": "#/properties/general/properties/location"
+          "scope": "#/properties/general/properties/location",
+          "rule": {
+            "effect": "ENABLE",
+            "condition": {
+              "scope": "#/properties/general/properties/visitType",
+              "schema": { "enum": ["Outreach", "Refill"] }
+            }
+          }
         }
       ]
     },
