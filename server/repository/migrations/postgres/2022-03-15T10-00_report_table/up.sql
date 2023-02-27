@@ -1,18 +1,22 @@
-CREATE TYPE report_type AS ENUM (
+CREATE TYPE report_type AS ENUM
+(
     'OM_SUPPLY'
 );
 
-CREATE TYPE context_type AS ENUM (
+CREATE TYPE context_type AS ENUM
+(
     'INBOUND_SHIPMENT',
     'OUTBOUND_SHIPMENT',
     'REQUISITION',
     'STOCKTAKE',
     'RESOURCE',
-    'PATIENT'
+    'PATIENT',
+    'DISPENSARY'
 );
 
 
-CREATE TABLE report (
+CREATE TABLE report
+(
     id TEXT NOT NULL PRIMARY KEY,
     name TEXT NOT NULL,
     type report_type NOT NULL,

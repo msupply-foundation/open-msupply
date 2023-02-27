@@ -23,6 +23,7 @@ pub enum ReportContext {
     /// logos
     Resource,
     Patient,
+    Dispensary,
 }
 
 table! {
