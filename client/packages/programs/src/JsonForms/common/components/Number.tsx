@@ -2,17 +2,13 @@ import React, { useState } from 'react';
 import { ControlProps, rankWith, schemaTypeIs } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import {
+  DetailInputWithLabelRow,
   NumericTextInput,
   NumericTextInputProps,
   PositiveNumberInput,
   useDebounceCallback,
 } from '@openmsupply-client/common';
-import {
-  FORM_INPUT_COLUMN_WIDTH,
-  FORM_LABEL_COLUMN_WIDTH,
-} from '../styleConstants';
-import { Box } from '@mui/system';
-import { FormLabel } from '@mui/material';
+import { FORM_LABEL_WIDTH } from '../styleConstants';
 
 export const numberTester = rankWith(3, schemaTypeIs('number'));
 
@@ -45,24 +41,25 @@ const UIComponent = (props: ControlProps) => {
     value: localData ?? '',
   };
   return (
-    <Box
-      display="flex"
-      alignItems="center"
-      justifyContent="space-around"
-      style={{ minWidth: 300 }}
-      sx={{ margin: 0.5, marginLeft: 0, gap: 2 }}
-    >
-      <Box style={{ textAlign: 'end' }} flexBasis={FORM_LABEL_COLUMN_WIDTH}>
-        <FormLabel sx={{ fontWeight: 'bold' }}>{label}:</FormLabel>
-      </Box>
-      <Box flexBasis={FORM_INPUT_COLUMN_WIDTH}>
-        {schema.minimum !== undefined ? (
+    <DetailInputWithLabelRow
+      sx={{
+        margin: 0.5,
+        marginLeft: 0,
+        gap: 2,
+        minWidth: '300px',
+        justifyContent: 'space-around',
+      }}
+      label={label}
+      labelWidthPercentage={FORM_LABEL_WIDTH}
+      inputAlignment="start"
+      Input={
+        schema.minimum !== undefined ? (
           <PositiveNumberInput {...inputProps} min={schema.minimum} />
         ) : (
           <NumericTextInput {...inputProps} />
-        )}
-      </Box>
-    </Box>
+        )
+      }
+    />
   );
 };
 
