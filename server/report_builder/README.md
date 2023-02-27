@@ -62,17 +62,17 @@ There are two sub commands:
 
 ```bash
 # Build a report definition template
-> report_build build
+> report_builder build
 # Print a report definition template
-> report_build print
+> report_builder print
 ```
 
 To see a full list of command line argument options use the `--help` flag:
 
 ```bash
-> report_build build --help
+> report_builder build --help
 # Print a report definition template
-> report_build print --help
+> report_builder print --help
 ```
 
 ### Build a report template definition
@@ -80,13 +80,13 @@ To see a full list of command line argument options use the `--help` flag:
 For example, to build the example template including header and footer using the default stocktake query:
 
 ```bash
-> report_build build --dir path/to/project --template template.html --header header.html --footer footer.html --query-default stocktake
+> report_builder build --dir path/to/project --template template.html --header header.html --footer footer.html --query-default stocktake
 ```
 
 To use a custom query instead, do:
 
 ```bash
-> report_build build --dir path/to/project --template template.html --header header.html --footer footer.html --query-gql query.graphql
+> report_builder build --dir path/to/project --template template.html --header header.html --footer footer.html --query-gql query.graphql
 ```
 
 On default this will create an `output.json` template definition file which can be uploaded to the central server.
@@ -95,7 +95,7 @@ On default this will create an `output.json` template definition file which can 
 ### Print a report template definition
 
 To print a report definition template a running remote-server is required.
-Moreover, report_build requires config details for how to access the remote-server.
+Moreover, report_builder requires config details for how to access the remote-server.
 To provide this information create a config file, e.g. `config.yaml`:
 
 ```yaml
@@ -110,7 +110,7 @@ The remote-server needs a store id and a data id to print the report.
 For example, to print a report for a stocktake with id "d734fd45-064e-4ddd-9886-ea71a2797640" from store "80004C94067A4CE5A34FC343EB1B4306":
 
 ```bash
-> report_build print --report output.json --config config.yaml --store-id 80004C94067A4CE5A34FC343EB1B4306 --data-id d734fd45-064e-4ddd-9886-ea71a2797640 --output report_pdf_name.pdf
+> report_builder print --report output.json --config config.yaml --store-id 80004C94067A4CE5A34FC343EB1B4306 --data-id d734fd45-064e-4ddd-9886-ea71a2797640 --output report_pdf_name.pdf
 ```
 
 ## References to other template definitions

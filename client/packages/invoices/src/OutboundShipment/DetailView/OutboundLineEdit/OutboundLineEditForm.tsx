@@ -77,7 +77,7 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
   return (
     <Grid container gap="4px">
       <ModalRow>
-        <ModalLabel label={t('label.item')} />
+        <ModalLabel label={t('label.item', { count: 1 })} />
         <Grid item flex={1}>
           <StockItemSearchInput
             autoFocus={!item}
