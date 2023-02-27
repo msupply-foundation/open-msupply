@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { getPatientQueries } from 'packages/system/src/Patient/api/api';
 import { getSdk } from 'packages/system/src/Patient/api/operations.generated';
 import { useGql, useAuthContext, Typography } from '@openmsupply-client/common';
-import { RegexUtils, JSXFormatters } from '@openmsupply-client/common';
+import { RegexUtils } from '@openmsupply-client/common';
 
 export const QueryValues = ['patientByCode'] as const;
 type QueryValue = typeof QueryValues[number];
@@ -26,7 +26,6 @@ interface SearchQueryOutput {
 }
 
 const { formatTemplateString } = RegexUtils;
-const { replaceHTMLlineBreaks } = JSXFormatters;
 
 export const useSearchQueries = ({
   query,
@@ -76,17 +75,13 @@ export const useSearchQueries = ({
         const { code } = data;
         if (!code) return null;
         return (
-          <Typography>
+          <Typography style={{ whiteSpace: 'pre' }}>
             {displayString
-              ? replaceHTMLlineBreaks(
-                  formatTemplateString(displayString, data, '')
-                )
-              : replaceHTMLlineBreaks(
-                  formatTemplateString(
-                    '${firstName} ${lastName} (${code})\n${email}\n${document.data.contactDetails[0].address1}\n${document.data.contactDetails[0].address2}',
-                    data,
-                    ''
-                  )
+              ? formatTemplateString(displayString, data, '')
+              : formatTemplateString(
+                  '${firstName} ${lastName} (${code})\n${email}\n${document.data.contactDetails[0].address1}\n${document.data.contactDetails[0].address2}',
+                  data,
+                  ''
                 )}
           </Typography>
         );
