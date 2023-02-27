@@ -148,7 +148,16 @@
             {
               "scope": "#/properties/arvMedication/properties/regimen",
               "type": "Control",
-              "label": "New ARV Regimen:"
+              "label": "New ARV Regimen:",
+              "rule": {
+                "effect": "HIDE",
+                "condition": {
+                  "scope": "#/properties/arvMedication/properties/regimenStatus",
+                  "schema": {
+                    "enum": ["STOP"]
+                  }
+                }
+              }
             },
             {
               "scope": "#/properties/arvMedication/properties/regimenChangeReason",
@@ -246,7 +255,7 @@
             "condition": {
               "scope": "#/properties/arvMedication/properties/regimenStatus",
               "schema": {
-                "enum": ["START", "CHANGE"]
+                "enum": ["START", "CHANGE", "STOP"]
               }
             }
           }
