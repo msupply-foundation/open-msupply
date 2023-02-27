@@ -122,8 +122,11 @@
       "elements": [
         {
           "scope": "#/properties/arvMedication/properties/regimen",
-          "type": "PreviousEncounterField",
-          "label": "Current ARV Regimen"
+          "type": "EncounterProgramEvent",
+          "label": "Current ARV Regimen",
+          "options": {
+            "type": "arvMedicationRegimen"
+          }
         },
         {
           "scope": "#/properties/arvMedication/properties/regimenStatus",
@@ -145,7 +148,7 @@
             {
               "scope": "#/properties/arvMedication/properties/regimen",
               "type": "Control",
-              "label": "ARV Regimen:"
+              "label": "New ARV Regimen:"
             },
             {
               "scope": "#/properties/arvMedication/properties/regimenChangeReason",
@@ -239,7 +242,7 @@
             }
           ],
           "rule": {
-            "effect": "ENABLE",
+            "effect": "SHOW",
             "condition": {
               "scope": "#/properties/arvMedication/properties/regimenStatus",
               "schema": {
@@ -253,8 +256,11 @@
         },
         {
           "scope": "#/properties/arvMedication/properties/quantityPrescribed",
-          "type": "PreviousEncounterField",
-          "label": "Pill Count after last Visit"
+          "type": "EncounterProgramEvent",
+          "label": "Pill Count after last Visit",
+          "options": {
+            "type": "arvMedicationQuantityPrescribed"
+          }
         },
         {
           "scope": "#/properties/arvMedication/properties/remainingPillCount",
