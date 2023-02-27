@@ -6,7 +6,6 @@ import {
   defaultOptionMapper,
   getDefaultOptionRenderer,
   InventoryAdjustmentReasonNodeType,
-  Typography,
 } from '@openmsupply-client/common';
 import {
   useInventoryAdjustmentReason,
@@ -76,23 +75,13 @@ export const InventoryAdjustmentReasonSearchInput: FC<
             }}
             sx={{ width }}
             error={isError && isRequired}
+            required={isRequired}
           />
         )}
         options={defaultOptionMapper(reasons, 'reason')}
         renderOption={getDefaultOptionRenderer('reason')}
         isOptionEqualToValue={(option, value) => option?.id === value?.id}
       />
-      {isRequired && (
-        <Typography
-          sx={{
-            color: 'primary.light',
-            paddingLeft: 0.5,
-            fontSize: '17px',
-          }}
-        >
-          *
-        </Typography>
-      )}
     </Box>
   );
 };

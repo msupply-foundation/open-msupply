@@ -12,6 +12,7 @@ import { useDecisionTreeValidation } from './useDecisionTreeValidation';
 export type Condition = {
   equalTo?: string | number | boolean;
   greaterThan?: number;
+  lessThanOrEqualTo?: number;
 };
 
 export type DecisionBranch = {
@@ -62,6 +63,7 @@ const Condition = z
   .object({
     equalTo: z.union([z.string(), z.number(), z.boolean()]).optional(),
     greaterThan: z.number().optional(),
+    lessThanOrEqualTo: z.number().optional(),
   })
   .strict();
 
@@ -114,6 +116,9 @@ const matchCondition = (
   }
   if (branch.greaterThan !== undefined) {
     return branch.greaterThan < fieldData;
+  }
+  if (branch.lessThanOrEqualTo !== undefined) {
+    return branch.lessThanOrEqualTo >= fieldData;
   }
   return false;
 };
