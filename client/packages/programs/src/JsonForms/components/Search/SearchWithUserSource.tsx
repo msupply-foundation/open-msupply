@@ -70,6 +70,7 @@ export const SearchWithUserSource = (props: ControlProps) => {
     value => {
       if (value.length >= MIN_CHARS) runQuery(value);
       else {
+        // Clear the results if user input falls *below* `minChars`
         if (results.length) runQuery('');
       }
     },
