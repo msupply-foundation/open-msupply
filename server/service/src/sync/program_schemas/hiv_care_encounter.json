@@ -708,10 +708,7 @@
             },
             "viralLoadStatus": {
               "description": "Based on viral load result",
-              "enum": [
-                "Supressed",
-                "Unsurpressed"
-              ],
+              "enum": ["Suppressed", "Unsuppressed"],
               "type": "string"
             }
           },
