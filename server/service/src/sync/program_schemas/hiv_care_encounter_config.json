@@ -103,13 +103,13 @@
       "type": "Field",
       "conditions": [
         {
-          "field": "viralLoad.targetting",
+          "field": "viralLoad.targeting",
           "isTruthy": true
         }
       ],
       "event": {
         "type": "viralLoadTargetting",
-        "dataField": "viralLoad.targetting"
+        "dataField": "viralLoad.targeting"
       }
     }
   ]

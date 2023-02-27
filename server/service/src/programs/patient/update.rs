@@ -117,7 +117,7 @@ fn generate(
         timestamp: Utc::now(),
         r#type: PATIENT_TYPE.to_string(),
         data: input.data,
-        schema_id: Some(input.schema_id),
+        form_schema_id: Some(input.schema_id),
         status: DocumentStatus::Active,
         comment: None,
         owner_name_id: Some(patient.id.clone()),

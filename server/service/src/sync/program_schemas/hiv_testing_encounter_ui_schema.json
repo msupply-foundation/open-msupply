@@ -16,15 +16,17 @@
     },
     {
       "type": "Category",
-      "label": "Family Planning",
+      "label": "Pregnancy",
       "options": { "icon": "condom" },
       "elements": [
         {
           "type": "Control",
+          "label": "Pregnant:",
           "scope": "#/properties/familyPlanning/properties/pregnant"
         },
         {
           "type": "Control",
+          "label": "Contraception:",
           "scope": "#/properties/familyPlanning/properties/contraception"
         }
       ]
@@ -36,6 +38,7 @@
       "elements": [
         {
           "type": "Control",
+          "label": "Previous HIV Test Result:",
           "scope": "#/properties/riskBehaviour/properties/previousHIVTestResult",
           "options": {
             "show": [
@@ -265,7 +268,7 @@
         {
           "type": "Control",
           "scope": "#/properties/riskBehaviour/properties/screeningOutcomeGBV",
-          "label": "GBV Screening Outcome",
+          "label": "GBV Screening Outcome:",
           "options": {
             "show": [
               ["POSITIVE", "Positive"],
@@ -316,10 +319,12 @@
         },
         {
           "type": "Control",
+          "label": "Type:",
           "scope": "#/properties/hivTesting/properties/type"
         },
         {
           "type": "Control",
+          "label": "Result:",
           "scope": "#/properties/hivTesting/properties/result",
           "options": {
             "show": [

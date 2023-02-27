@@ -29,8 +29,7 @@ schemafy = "0.6.0"
 schemafy_core = "0.6.0"
 tera = "1"
 tokio = { version = "1.17.0", features = ["macros", "sync", "time"] }
-headless_chrome = "0.9"
-failure = "0.1.8"
+headless_chrome = "1.0.5"
 
 [dev-dependencies]
 actix-rt = "2.6.0"
