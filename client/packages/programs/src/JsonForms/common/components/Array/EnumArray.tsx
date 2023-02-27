@@ -15,11 +15,11 @@ import {
 import {
   FORM_LABEL_COLUMN_WIDTH,
   FORM_INPUT_COLUMN_WIDTH,
+  DefaultFormRowSx,
 } from '../../styleConstants';
 import { UISchemaWithCustomProps } from './common';
 import parse from 'autosuggest-highlight/parse';
 import match from 'autosuggest-highlight/match';
-import { DefaultFormRowSx } from '../../../style';
 
 interface EnumArrayControlCustomProps extends ArrayControlProps {
   uischema: UISchemaWithCustomProps;

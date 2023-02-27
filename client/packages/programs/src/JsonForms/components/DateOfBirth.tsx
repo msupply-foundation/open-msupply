@@ -14,8 +14,11 @@ import {
   useFormatDateTime,
   useTranslation,
 } from '@openmsupply-client/common';
-import { FORM_INPUT_COLUMN_WIDTH, FORM_LABEL_COLUMN_WIDTH } from '../common';
-import { DefaultFormRowSx } from '../style';
+import {
+  FORM_INPUT_COLUMN_WIDTH,
+  FORM_LABEL_COLUMN_WIDTH,
+  DefaultFormRowSx,
+} from '../common';
 
 export const dateOfBirthTester = rankWith(10, uiTypeIs('DateOfBirth'));
 

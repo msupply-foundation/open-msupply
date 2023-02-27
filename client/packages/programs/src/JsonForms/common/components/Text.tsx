@@ -8,9 +8,8 @@ import {
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
 import { useDebouncedTextInput } from '../hooks/useDebouncedTextInput';
-import { FORM_LABEL_WIDTH } from '../styleConstants';
+import { FORM_LABEL_WIDTH, DefaultFormRowSx } from '../styleConstants';
 import { useJSONFormsCustomError } from '../hooks/useJSONFormsCustomError';
-import { DefaultFormRowSx } from '../../style';
 
 const Options = z
   .object({

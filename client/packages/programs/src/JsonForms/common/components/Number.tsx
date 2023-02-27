@@ -10,9 +10,9 @@ import {
 import {
   FORM_INPUT_COLUMN_WIDTH,
   FORM_LABEL_COLUMN_WIDTH,
+  DefaultFormRowSx,
 } from '../styleConstants';
 import { Box, FormLabel } from '@mui/material';
-import { DefaultFormRowSx } from '../../style';
 
 export const numberTester = rankWith(3, schemaTypeIs('number'));
 
