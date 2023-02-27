@@ -1,5 +1,10 @@
 import React, { FC } from 'react';
-import { RouteBuilder, Navigate, useMatch } from '@openmsupply-client/common';
+import {
+  RouteBuilder,
+  Navigate,
+  useMatch,
+  ReportContext,
+} from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 
 const PatientService = React.lazy(
@@ -8,6 +13,10 @@ const PatientService = React.lazy(
 
 const EncounterService = React.lazy(
   () => import('@openmsupply-client/system/src/Encounter/Service')
+);
+
+const ReportService = React.lazy(
+  () => import('@openmsupply-client/system/src/Report/Service')
 );
 
 const fullPatientsPath = RouteBuilder.create(AppRoute.Dispensary)
@@ -20,9 +29,14 @@ const fullEncountersPath = RouteBuilder.create(AppRoute.Dispensary)
   .addWildCard()
   .build();
 
+const fullReportsPath = RouteBuilder.create(AppRoute.Dispensary)
+  .addPart(AppRoute.Reports)
+  .build();
+
 export const DispensaryRouter: FC = () => {
   const gotoPatients = useMatch(fullPatientsPath);
   const gotoEncounters = useMatch(fullEncountersPath);
+  const gotoReports = useMatch(fullReportsPath);
 
   if (gotoPatients) {
     return <PatientService />;
@@ -30,6 +44,10 @@ export const DispensaryRouter: FC = () => {
 
   if (gotoEncounters) {
     return <EncounterService />;
+  }
+
+  if (gotoReports) {
+    return <ReportService context={ReportContext.Dispensary} />;
   }
 
   const notFoundRoute = RouteBuilder.create(AppRoute.PageNotFound).build();

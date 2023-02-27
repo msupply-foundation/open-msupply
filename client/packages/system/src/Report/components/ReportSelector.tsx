@@ -43,7 +43,7 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
   onClick,
 }) => {
   const { hide, PaperClickPopover } = usePaperClickPopover();
-  const { data, isLoading } = useReport.document.list(context, subContext);
+  const { data, isLoading } = useReport.document.list({ context, subContext });
   const t = useTranslation('app');
   const [reportWithArgs, setReportWithArgs] = useState<
     ReportRowFragment | undefined
