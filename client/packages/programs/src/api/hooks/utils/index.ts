@@ -4,6 +4,7 @@ import { useDocumentRegistryApi } from './useDocumentRegistryApi';
 import { useEncounterApi } from './useEncounterApi';
 import { useEncounterIdFromUrl } from './useEncounterIdFromUrl';
 import { useProgramEnrolmentApi } from './useProgramEnrolmentApi';
+import { useProgramEventApi } from './useProgramEventApi';
 
 export const Utils = {
   useDocumentApi: usePatientDocumentApi,
@@ -12,4 +13,5 @@ export const Utils = {
   useEncounterIdFromUrl,
   useProgramEnrolmentApi,
   useClinicianApi,
+  useProgramEventApi,
 };
