@@ -4,5 +4,6 @@
   "control.note.author-label": "Author",
   "control.search.searching-label": "Searching...",
   "control.search.no-results-label": "No results",
+  "control.search.below-min-chars": "Please enter at least {{minChars}} characters",
   "control.search.search-placeholder": "Search..."
 }
