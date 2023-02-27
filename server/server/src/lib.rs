@@ -40,7 +40,7 @@ pub mod static_files;
 pub use self::logging::*;
 
 // Only import discovery for non android features (otherwise build for android targets would fail due to local-ip-address)
-#[cfg(any(target_os = "macos", target_os = "windows", target_os = "linux"))]
+#[cfg(not(target_os = "android"))]
 mod discovery;
 
 /// Starts the server
@@ -199,7 +199,7 @@ pub async fn start_server(
 
     // START DISCOVERY
     // Don't do discovery in android
-    #[cfg(any(target_os = "windows", target_os = "macos", target_os = "linux"))]
+    #[cfg(not(target_os = "android"))]
     {
         info!("Starting server DNS-SD discovery",);
         discovery::start_discovery(certificates.protocol(), settings.server.port, machine_uid);
