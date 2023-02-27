@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { getPatientQueries } from 'packages/system/src/Patient/api/api';
-import { getSdk } from 'packages/system/src/Patient/api/operations.generated';
-import { useGql, useAuthContext, Typography } from '@openmsupply-client/common';
+import { Typography } from '@openmsupply-client/common';
 import { RegexUtils } from '@openmsupply-client/common';
+import { usePatientApi } from 'packages/system/src/Patient/api/hooks/utils/usePatientApi';
 
 export const QueryValues = ['patientByCode'] as const;
 type QueryValue = typeof QueryValues[number];
@@ -34,13 +33,11 @@ export const useSearchQueries = ({
   saveFields,
   placeholderText,
 }: SearchQueryOptions = {}) => {
-  const { storeId } = useAuthContext();
-  const { client } = useGql();
   const [results, setResults] = useState<Record<string, any>[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
 
-  const patientQueries = getPatientQueries(getSdk(client), storeId);
+  const patientQueries = usePatientApi();
 
   const searchQueries: Record<QueryValue, SearchQueryOutput> = {
     patientByCode: {
