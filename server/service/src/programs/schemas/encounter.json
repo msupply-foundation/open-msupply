@@ -46,11 +46,18 @@
           "$ref": "#/definitions/EncounterStatus"
         }
       },
-      "required": ["createdDatetime", "startDatetime"],
+      "required": [
+        "createdDatetime",
+        "startDatetime"
+      ],
       "type": "object"
     },
     "EncounterStatus": {
-      "enum": ["SCHEDULED", "COMPLETED", "CANCELLED"],
+      "enum": [
+        "SCHEDULED",
+        "COMPLETED",
+        "CANCELLED"
+      ],
       "type": "string"
     },
     "Note": {
@@ -72,7 +79,12 @@
           "type": "string"
         }
       },
-      "required": ["text", "created", "authorId", "authorName"],
+      "required": [
+        "text",
+        "created",
+        "authorId",
+        "authorName"
+      ],
       "type": "object"
     }
   },
