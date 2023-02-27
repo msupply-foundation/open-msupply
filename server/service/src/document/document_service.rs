@@ -220,14 +220,14 @@ fn json_validator(
     connection: &StorageConnection,
     doc: &RawDocument,
 ) -> Result<Option<JSONSchema>, DocumentInsertError> {
-    let schema_id = match &doc.schema_id {
+    let form_schema_id = match &doc.form_schema_id {
         Some(schema_id) => schema_id,
         None => return Ok(None),
     };
 
     let schema_repo = FormSchemaRowRepository::new(connection);
     let schema = schema_repo
-        .find_one_by_id(&schema_id)?
+        .find_one_by_id(&form_schema_id)?
         .ok_or(DocumentInsertError::DataSchemaDoesNotExist)?;
     let compiled = match JSONSchema::compile(&schema.json_schema) {
         Ok(v) => Ok(v),
@@ -331,7 +331,7 @@ fn generate_deleted_document(
         timestamp: Utc::now(),
         r#type: current_document.r#type,
         data: serde_json::Value::Null,
-        schema_id: current_document.schema_id,
+        form_schema_id: current_document.form_schema_id,
         status: DocumentStatus::Deleted,
         comment: input.comment,
         owner_name_id: None,
@@ -355,7 +355,7 @@ fn generate_undeleted_document(
         timestamp: Utc::now(),
         r#type: deleted_document_parent.r#type,
         data: deleted_document_parent.data,
-        schema_id: deleted_document_parent.schema_id,
+        form_schema_id: deleted_document_parent.form_schema_id,
         status: DocumentStatus::Active,
         comment: None,
         owner_name_id: deleted_document_parent.owner_name_id,
@@ -420,7 +420,7 @@ mod document_service_test {
                 data: json!({
                   "version": 1,
                 }),
-                schema_id: None,
+                form_schema_id: None,
                 status: DocumentStatus::Active,
                 comment: None,
                 owner_name_id: None,
@@ -449,7 +449,7 @@ mod document_service_test {
                     data: json!({
                       "version": 1,
                     }),
-                    schema_id: None,
+                    form_schema_id: None,
                     status: DocumentStatus::Active,
                     comment: None,
                     owner_name_id: None,
@@ -473,7 +473,7 @@ mod document_service_test {
                 data: json!({
                   "version": 2,
                 }),
-                schema_id: None,
+                form_schema_id: None,
                 status: DocumentStatus::Active,
                 comment: None,
                 owner_name_id: None,
@@ -499,7 +499,7 @@ mod document_service_test {
                     data: json!({
                       "version": 2,
                     }),
-                    schema_id: None,
+                    form_schema_id: None,
                     status: DocumentStatus::Active,
                     comment: None,
                     owner_name_id: None,
@@ -529,7 +529,7 @@ mod document_service_test {
                     data: json!({
                       "version": 1,
                     }),
-                    schema_id: None,
+                    form_schema_id: None,
                     status: DocumentStatus::Active,
                     comment: None,
                     owner_name_id: None,
@@ -574,7 +574,7 @@ mod document_service_test {
                       "value1": "base",
                       "map": {},
                     }),
-                    schema_id: Some(schema.id),
+                    form_schema_id: Some(schema.id),
                     status: DocumentStatus::Active,
                     comment: None,
                     owner_name_id: None,
@@ -598,7 +598,7 @@ mod document_service_test {
                   "value1": "base",
                   "map": {},
                 }),
-                schema_id: Some(schema.id),
+                form_schema_id: Some(schema.id),
                 status: DocumentStatus::Active,
                 comment: None,
                 owner_name_id: None,
@@ -625,7 +625,7 @@ mod document_service_test {
                   "intValue": "base",
                   "strValue": 9,
                 }),
-                schema_id: Some(schema.id),
+                form_schema_id: Some(schema.id),
                 status: DocumentStatus::Active,
                 comment: None,
                 owner_name_id: None,
@@ -656,7 +656,7 @@ mod document_service_test {
                       "intValue": 3,
                       "strValue": "str",
                     }),
-                    schema_id: Some(schema.id),
+                    form_schema_id: Some(schema.id),
                     status: DocumentStatus::Active,
                     comment: None,
                     owner_name_id: None,

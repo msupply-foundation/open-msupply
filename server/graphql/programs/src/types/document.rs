@@ -59,7 +59,7 @@ impl DocumentNode {
     }
 
     pub async fn schema(&self, ctx: &Context<'_>) -> Result<Option<JSONSchemaNode>> {
-        Ok(match &self.document.schema_id {
+        Ok(match &self.document.form_schema_id {
             Some(schema_id) => {
                 let loader = ctx.get_loader::<DataLoader<JsonSchemaLoader>>();
                 let schema = loader.load_one(schema_id.clone()).await?.ok_or(
@@ -135,6 +135,6 @@ impl RawDocumentNode {
     }
 
     pub async fn schema_id(&self) -> &Option<String> {
-        &self.document.schema_id
+        &self.document.form_schema_id
     }
 }

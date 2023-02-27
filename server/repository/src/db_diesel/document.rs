@@ -26,7 +26,7 @@ table! {
         timestamp -> Timestamp,
         #[sql_name = "type"] type_ -> Text,
         data -> Text,
-        schema_id -> Nullable<Text>,
+        form_schema_id -> Nullable<Text>,
         status -> crate::db_diesel::document::DocumentStatusMapping,
         comment -> Nullable<Text>,
         owner_name_id -> Nullable<Text>,
@@ -44,7 +44,7 @@ table! {
         timestamp -> Timestamp,
         #[sql_name = "type"] type_ -> Text,
         data -> Text,
-        schema_id -> Nullable<Text>,
+        form_schema_id -> Nullable<Text>,
         status -> crate::db_diesel::document::DocumentStatusMapping,
         comment -> Nullable<Text>,
         owner_name_id -> Nullable<Text>,
@@ -52,7 +52,7 @@ table! {
     }
 }
 
-joinable!(document -> form_schema (schema_id));
+joinable!(document -> form_schema (form_schema_id));
 joinable!(document -> name (owner_name_id));
 
 allow_tables_to_appear_in_same_query!(document, form_schema);
@@ -84,7 +84,7 @@ pub struct DocumentRow {
     /// The actual document data
     pub data: String,
     /// JSON schema id containing the schema for the data
-    pub schema_id: Option<String>,
+    pub form_schema_id: Option<String>,
     /// Soft deletion status
     pub status: DocumentStatus,
     /// Deletion comment
@@ -111,7 +111,7 @@ pub struct Document {
     pub r#type: String,
     /// The actual document data
     pub data: serde_json::Value,
-    pub schema_id: Option<String>,
+    pub form_schema_id: Option<String>,
     pub status: DocumentStatus,
     pub comment: Option<String>,
     pub owner_name_id: Option<String>,
@@ -340,7 +340,7 @@ fn document_from_row(row: DocumentRow) -> Result<Document, RepositoryError> {
         timestamp: DateTime::<Utc>::from_utc(row.timestamp, Utc),
         r#type: row.r#type,
         data,
-        schema_id: row.schema_id,
+        form_schema_id: row.form_schema_id,
         status: row.status,
         comment: row.comment,
         owner_name_id: row.owner_name_id,
@@ -368,7 +368,7 @@ fn row_from_document(doc: &Document) -> Result<DocumentRow, RepositoryError> {
         timestamp: doc.timestamp.naive_utc(),
         r#type: doc.r#type.to_owned(),
         data,
-        schema_id: doc.schema_id.clone(),
+        form_schema_id: doc.form_schema_id.clone(),
         status: doc.status.to_owned(),
         comment: doc.comment.to_owned(),
         owner_name_id: doc.owner_name_id.to_owned(),

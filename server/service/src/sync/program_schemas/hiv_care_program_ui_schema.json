@@ -41,6 +41,7 @@
     {
       "type": "Control",
       "scope": "#/properties/status",
+      "label": "Status:",
       "options": {
         "show": [
           ["ACTIVE", "Active"],
@@ -58,16 +59,17 @@
     {
       "type": "Control",
       "scope": "#/properties/hivTestType",
-      "label": "HIV Test Type"
+      "label": "HIV Test Type:"
     },
     {
       "type": "Control",
+      "label": "Risk Group",
       "scope": "#/properties/riskGroup"
     },
     {
       "type": "Control",
       "scope": "#/properties/partnerHIVStatus",
-      "label": "Partner HIV Status",
+      "label": "Partner HIV Status:",
       "options": {
         "show": [
           ["POSITIVE", "Positive"],
@@ -138,7 +140,7 @@
         {
           "type": "Control",
           "scope": "#/properties/referredFrom",
-          "label": "Referred from",
+          "label": "Referred from:",
           "options": {
             "show": [
               ["HCT_OTHER_PICT", "HCT other PICT"],
@@ -158,6 +160,7 @@
         {
           "type": "Control",
           "scope": "#/properties/priorART",
+          "label": "Prior ART:",
           "options": {
             "show": [
               ["TRANSFER_IN_WITH_RECORDS", "Transfer in with records"],

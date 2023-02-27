@@ -22,12 +22,13 @@
     "FamilyPlanning": {
       "properties": {
         "contraception": {
-          "description": "13197004 Contraception",
-          "type": "boolean"
+          "$ref": "#/definitions/YesNo",
+          "description": "13197004 Contraception"
         },
         "pregnant": {
           "description": "77386006 Pregnant",
-          "type": "boolean"
+          "enum": ["Yes", "No", "Breastfeeding"],
+          "type": "string"
         }
       },
       "type": "object"
@@ -274,19 +275,52 @@
           },
           "type": "object"
         },
+        "general": {
+          "properties": {
+            "location": {
+              "description": "Location needed if visitType is 'Refill' or 'Outreach'",
+              "type": "string"
+            },
+            "referredTo": {
+              "enum": [
+                "PMTCT",
+                "HBC",
+                "PLHA Support Group/Club",
+                "Orphan and vulnerable children group",
+                "Medical specialty",
+                "Nutritional Support",
+                "Legal",
+                "Medical Ward",
+                "TB Ward",
+                "Other"
+              ],
+              "type": "string"
+            },
+            "visitType": {
+              "enum": ["Outreach", "Refill", "Standard"],
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
         "haem": {
           "properties": {
-            "fbeHb": {
-              "description": "Hb [g/dL]",
-              "type": "number"
-            },
-            "fbePlt": {
-              "description": "Plt",
-              "type": "number"
-            },
-            "fbeWCC": {
-              "description": "WCC",
-              "type": "number"
+            "fbe": {
+              "properties": {
+                "fbeHb": {
+                  "description": "Hb [g/dL]",
+                  "type": "number"
+                },
+                "fbePlt": {
+                  "description": "Plt",
+                  "type": "number"
+                },
+                "fbeWCC": {
+                  "description": "WCC",
+                  "type": "number"
+                }
+              },
+              "type": "object"
             },
             "hepBSAg": {
               "enum": ["Pos", "Neg"],
@@ -305,6 +339,39 @@
               "type": "string"
             }
           },
+          "type": "object"
+        },
+        "hcvCrag": {
+          "properties": {
+            "crAgResult": {
+              "enum": ["Positive", "Negative", "Inc"],
+              "type": "string"
+            },
+            "crAgTitre": {
+              "type": "string"
+            },
+            "hcv": {
+              "enum": ["Positive", "Negative"],
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "indexTesting": {
+          "properties": {
+            "indexTestingAccepted": {
+              "enum": ["Yes", "No", "N/A"],
+              "type": "string"
+            },
+            "indexTestingOffered": {
+              "enum": ["Yes", "No", "Declined"],
+              "type": "string"
+            },
+            "ipvRisk": {
+              "$ref": "#/definitions/YesNo"
+            }
+          },
+          "required": ["indexTestingAccepted"],
           "type": "object"
         },
         "notes": {
@@ -341,10 +408,18 @@
               "title": "MUAC in cm",
               "type": "string"
             },
-            "nutritionalStatus": {
-              "description": "366364004  nutritional status",
-              "enum": ["UNDER_NOURISHED", "WELL_NOURISHED", "OVERWEIGHT"],
-              "type": "string"
+            "nutrition": {
+              "properties": {
+                "nutritionalStatus": {
+                  "description": "366364004  nutritional status",
+                  "enum": ["UNDER_NOURISHED", "WELL_NOURISHED", "OVERWEIGHT"],
+                  "type": "string"
+                },
+                "nutritionalSupportNeeded": {
+                  "$ref": "#/definitions/YesNo"
+                }
+              },
+              "type": "object"
             },
             "opportunisticInfections": {
               "items": {
@@ -461,6 +536,9 @@
           },
           "type": "object"
         },
+        "riskBehaviour": {
+          "$ref": "#/definitions/RiskBehaviour"
+        },
         "startDatetime": {
           "description": "Encounter start date and time",
           "format": "date-time",
@@ -469,30 +547,27 @@
         "status": {
           "$ref": "#/definitions/EncounterStatus"
         },
-        "tbHcv": {
+        "tuberculosis": {
           "properties": {
             "cxr": {
-              "type": "number"
-            },
-            "hcv": {
-              "description": "HCV",
-              "enum": ["Pos", "Neg"],
               "type": "string"
             },
             "tbGeneXpert": {
-              "enum": ["NOT_DETECTED", "POSITIVE_RIF_SENSITIVE", "POSITIVE_RIF_RESISTANT"],
+              "enum": [
+                "NOT_DETECTED",
+                "POSITIVE_RIF_SENSITIVE",
+                "POSITIVE_RIF_RESISTANT"
+              ],
               "type": "string"
+            },
+            "tbScreening": {
+              "$ref": "#/definitions/YesNo"
             },
             "tbSputum": {
               "enum": ["NO_AFB", "POS_1", "POS_2", "POS_3"],
               "type": "string"
-            }
-          },
-          "type": "object"
-        },
-        "tuberculosis": {
-          "properties": {
-            "status": {
+            },
+            "tbStatus": {
               "enum": [
                 "TB confirmed clinically",
                 "TB confirmed by sputum",
@@ -506,9 +581,6 @@
                 "Has TB (code from old CTC form)"
               ],
               "type": "string"
-            },
-            "tbScreening": {
-              "type": "boolean"
             }
           },
           "type": "object"
@@ -519,7 +591,7 @@
               "description": "If last VL unsuppressed",
               "type": "boolean"
             },
-            "targetting": {
+            "targeting": {
               "enum": ["TARGETED", "SCHEDULED"],
               "type": "string"
             },
@@ -530,6 +602,11 @@
               "description": "If not suppressed [copies/ml]",
               "minimum": 0,
               "type": "number"
+            },
+            "viralLoadStatus": {
+              "description": "Based on viral load result",
+              "enum": ["Suppressed", "Unsuppressed"],
+              "type": "string"
             }
           },
           "type": "object"
@@ -537,6 +614,21 @@
       },
       "required": ["createdDatetime", "startDatetime"],
       "type": "object"
+    },
+    "HIVRiskGroup": {
+      "enum": [
+        "LRM",
+        "MSM",
+        "MSW",
+        "MSMSW",
+        "HRM",
+        "LRW",
+        "HRW",
+        "FSW",
+        "TG",
+        "TGSW"
+      ],
+      "type": "string"
     },
     "Note": {
       "properties": {
@@ -559,6 +651,62 @@
       },
       "required": ["text", "created", "authorId", "authorName"],
       "type": "object"
+    },
+    "RiskBehaviour": {
+      "properties": {
+        "accidentalNeedlePick": {
+          "description": "Have you received any of the following in the past 12 months ?: Accidental needle pick ?",
+          "type": "boolean"
+        },
+        "forcedSexWithoutConsent": {
+          "description": "Have you received any of the following in the past 12 months ?: Forced to have sex without consent ?",
+          "type": "boolean"
+        },
+        "injectedDrugsWithoutDoctorAdvice": {
+          "description": "Have you received any of the following in the past 12 months ?: Injected drugs without doctor's advice ?",
+          "type": "boolean"
+        },
+        "numberFemaleSexualPartners6Month": {
+          "description": "How many female sexual partners have you had in the last 6 months ?",
+          "type": "number"
+        },
+        "numberMaleSexualPartners6Month": {
+          "description": "How many male sexual partners have you had in the last 6 months ?",
+          "type": "number"
+        },
+        "prostitution": {
+          "description": "Have you received any of the following in the past 12 months ?: Sex in exchange for money/goods/services ?",
+          "type": "boolean"
+        },
+        "receivedBloodTransfusion": {
+          "description": "Have you received any of the following in the past 12 months ?: Received a blood transfusion ?",
+          "type": "boolean"
+        },
+        "riskGroup": {
+          "$ref": "#/definitions/HIVRiskGroup"
+        },
+        "sexWithSameSex": {
+          "description": "Have you received any of the following in the past 12 months ?: Had sex with someone of the same sex ?",
+          "type": "boolean"
+        },
+        "sexualTransmittedInfection": {
+          "description": "Have you received any of the following in the past 12 months ?: Sexually transmitted infection (STI)",
+          "type": "boolean"
+        },
+        "unprotectedAnalSex": {
+          "description": "Have you received any of the following in the past 12 months ?: Unprotected anal sex ?",
+          "type": "boolean"
+        },
+        "unprotectedVaginalSex": {
+          "description": "Have you received any of the following in the past 12 months ?: Unprotected vaginal sex ?",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "YesNo": {
+      "enum": ["Yes", "No"],
+      "type": "string"
     }
   },
   "type": "object",

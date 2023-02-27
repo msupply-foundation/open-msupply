@@ -128,7 +128,7 @@ fn generate(
         timestamp: Utc::now(),
         r#type: existing.r#type,
         data: input.data,
-        schema_id: Some(input.schema_id),
+        form_schema_id: Some(input.schema_id),
         status: existing.status,
         comment: None,
         owner_name_id: existing.owner_name_id,

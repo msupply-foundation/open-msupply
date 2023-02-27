@@ -132,7 +132,7 @@ fn generate(
         timestamp: event_datetime,
         r#type: input.r#type.clone(),
         data: input.data,
-        schema_id: Some(input.schema_id),
+        form_schema_id: Some(input.schema_id),
         status: DocumentStatus::Active,
         comment: None,
         owner_name_id: Some(input.patient_id),
