@@ -96,7 +96,7 @@ pub async fn print_report(
     };
 
     // print the report with the fetched data
-    let file_id = match service.print_report(
+    let file_id = match service.print_html_report(
         &ctx.get_settings().server.base_dir,
         &resolved_report,
         report_data,
@@ -165,7 +165,7 @@ pub async fn print_report_definition(
     };
 
     // print the report with the fetched data
-    let file_id = match service.print_report(
+    let file_id = match service.print_html_report(
         &ctx.get_settings().server.base_dir,
         &resolved_report,
         report_data,
