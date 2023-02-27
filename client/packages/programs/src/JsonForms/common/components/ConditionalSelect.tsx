@@ -17,16 +17,17 @@ export const conditionalSelectTester = rankWith(
   uiTypeIs('ConditionalSelect')
 );
 
-type Options = {
-  conditionField: string;
-  conditionalValues: Record<string, string[]>;
-};
-const Options: z.ZodType<Options> = z
+const Options = z
   .object({
     conditionField: z.string(),
+    /**
+     * Maps record keys to a list of available selections.
+     * The record key is compared to condition field value.
+     */
     conditionalValues: z.record(z.array(z.string())),
   })
   .strict();
+type Options = z.infer<typeof Options>;
 
 type DisplayOption = { label: string };
 
