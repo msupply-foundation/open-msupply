@@ -175,6 +175,12 @@ fn match_condition(condition: &EventCondition, doc: &RawDocument) -> bool {
         return !is_truthy(&field);
     } else if condition.is_truthy.is_some() {
         return is_truthy(&field);
+    } else if let Some(equal_to) = &condition.equal_to {
+        let Some(field_str) =  field.as_str() else { return false };
+        return equal_to == field_str;
+    } else if let Some(equal_any) = &condition.equal_any {
+        let Some(field_str) =  field.as_str() else { return false };
+        return equal_any.iter().any(|s| s == field_str);
     }
     false
 }

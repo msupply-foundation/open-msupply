@@ -10,6 +10,10 @@ pub struct EventCondition {
     pub is_truthy: Option<bool>,
     #[serde(rename = "isSet")]
     pub is_set: Option<bool>,
+    #[serde(rename = "equalTo")]
+    pub equal_to: Option<String>,
+    #[serde(rename = "equalAny")]
+    pub equal_any: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
