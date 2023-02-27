@@ -188,7 +188,7 @@
             }
           },
           "then": {
-            "required": ["regimen"]
+            "required": ["regimen", "regimenChangeReason"]
           },
           "type": "object"
         },
@@ -339,6 +339,7 @@
               "type": "string"
             }
           },
+          "required": ["fbe"],
           "type": "object"
         },
         "hcvCrag": {

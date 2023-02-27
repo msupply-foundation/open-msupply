@@ -416,6 +416,7 @@ fn encounter_hiv_care_1(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncou
                 e.quantity_prescribed = Some(8.0);
                 e.regimen = Some("1a-New".to_string());
                 e.regimen_status = Some("START".to_string());
+                e.regimen_change_reason = Some("51".to_string())
             },
         ));
     })
@@ -462,6 +463,7 @@ fn encounter_hiv_care_3(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncou
                 e.adherence_score = Some(42.85714108560097);
                 e.regimen = Some("2a-New".to_string());
                 e.regimen_status = Some("CHANGE".to_string());
+                e.regimen_change_reason = Some("52".to_string())
             },
         ));
     })
