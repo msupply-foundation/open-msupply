@@ -163,8 +163,8 @@ export const SearchWithUserSource = (props: ControlProps) => {
               setEditMode(true);
             }}
             color="primary"
-            height={'20px'}
-            width={'20px'}
+            height="20px"
+            width="20px"
           />
         </Box>
       )}
