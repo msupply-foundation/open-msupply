@@ -153,6 +153,7 @@ const useStatusChangePlaceholderCheck = () => {
   const alert = useAlertModal({
     title: t('heading.cannot-do-that'),
     message: t('messages.must-allocate-all-lines'),
+    onOk: () => {},
   });
 
   const hasPlaceholder = useMemo(
