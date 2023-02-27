@@ -54,6 +54,9 @@ export const SearchWithUserSource = (props: ControlProps) => {
   const t = useTranslation('programs');
   const [searchText, setSearchText] = useState('');
   const [editMode, setEditMode] = useState(!data);
+  const [noResultsText, setNoResultsText] = useState(
+    t('control.search.searching-label')
+  );
 
   const {
     runQuery,
@@ -73,6 +76,7 @@ export const SearchWithUserSource = (props: ControlProps) => {
         // Clear the results if user input falls *below* `minChars`
         if (results.length) runQuery('');
       }
+      setNoResultsText(t('control.search.no-results-label'));
     },
     [searchText],
     500
@@ -113,8 +117,9 @@ export const SearchWithUserSource = (props: ControlProps) => {
               disabled={!props.enabled}
               onChange={(_, option) => handleDataUpdate(option)}
               onInputChange={(_, value) => {
-                setSearchText(value);
                 debouncedOnChange(value);
+                setSearchText(value);
+                setNoResultsText(t('control.search.searching-label'));
               }}
               onBlur={() => {
                 if (data) setEditMode(false);
@@ -128,7 +133,9 @@ export const SearchWithUserSource = (props: ControlProps) => {
               noOptionsText={
                 loading
                   ? t('control.search.searching-label')
-                  : t('control.search.no-results-label')
+                  : searchText.length < MIN_CHARS
+                  ? t('control.search.below-min-chars', { minChars: MIN_CHARS })
+                  : noResultsText
               }
               renderInput={params => (
                 <BasicTextInput
