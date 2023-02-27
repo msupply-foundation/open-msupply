@@ -6,8 +6,8 @@ import { Switch } from '@openmsupply-client/common';
 import {
   FORM_LABEL_COLUMN_WIDTH,
   FORM_INPUT_COLUMN_WIDTH,
+  DefaultFormRowSx,
 } from '../styleConstants';
-import { DefaultFormRowSx } from '../../style';
 
 export const booleanTester = rankWith(4, isBooleanControl);
 

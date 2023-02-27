@@ -11,6 +11,7 @@ import {
 import {
   FORM_LABEL_COLUMN_WIDTH,
   FORM_INPUT_COLUMN_WIDTH,
+  DefaultFormRowSx,
   JsonFormsConfig,
   useZodOptionsValidation,
   useDocument,
@@ -22,7 +23,6 @@ import { z } from 'zod';
 import { useJsonForms } from '@jsonforms/react';
 import { useJSONFormsCustomError } from '../common/hooks/useJSONFormsCustomError';
 import { useDebouncedTextInput } from '../common/hooks/useDebouncedTextInput';
-import { DefaultFormRowSx } from '../style';
 
 export const idGeneratorTester = rankWith(10, uiTypeIs('IdGenerator'));
 

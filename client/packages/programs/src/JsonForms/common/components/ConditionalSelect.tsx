@@ -6,11 +6,11 @@ import { Autocomplete } from '@openmsupply-client/common';
 import {
   FORM_LABEL_COLUMN_WIDTH,
   FORM_INPUT_COLUMN_WIDTH,
+  DefaultFormRowSx,
 } from '../styleConstants';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
 import { get as extractProperty } from 'lodash';
-import { DefaultFormRowSx } from '../../style';
 
 export const conditionalSelectTester = rankWith(
   10,

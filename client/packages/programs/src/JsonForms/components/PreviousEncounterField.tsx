@@ -10,11 +10,11 @@ import {
   FORM_LABEL_COLUMN_WIDTH,
   FORM_INPUT_COLUMN_WIDTH,
   FORM_LABEL_WIDTH,
+  DefaultFormRowSx,
 } from '../common';
 import { useEncounter } from '../../api';
 import { get as extractProperty } from 'lodash';
 import { FormLabel } from '@mui/material';
-import { DefaultFormRowSx } from '../style';
 
 export const previousEncounterFieldTester = rankWith(
   10,

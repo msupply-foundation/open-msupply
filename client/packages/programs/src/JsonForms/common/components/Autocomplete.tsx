@@ -9,10 +9,10 @@ import { z } from 'zod';
 import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
 import { FormLabel } from '@mui/material';
 import {
+  DefaultFormRowSx,
   FORM_INPUT_COLUMN_WIDTH,
   FORM_LABEL_COLUMN_WIDTH,
 } from '../styleConstants';
-import { DefaultFormRowSx } from '../../style';
 
 type Options = {
   freeText?: boolean;
