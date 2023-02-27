@@ -423,3 +423,34 @@ query clinicians(
     }
   }
 }
+
+query programEvents(
+  $at: String
+  $patientId: String!
+  $storeId: String!
+  $filter: ProgramEventFilterInput
+  $page: PaginationInput
+) {
+  programEvents(
+    at: $at
+    patientId: $patientId
+    storeId: $storeId
+    filter: $filter
+    page: $page
+  ) {
+    ... on ProgramEventConnector {
+      __typename
+      totalCount
+      nodes {
+        __typename
+        type
+        patientId
+        documentType
+        documentName
+        datetime
+        data
+        activeDatetime
+      }
+    }
+  }
+}

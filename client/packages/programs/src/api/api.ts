@@ -8,7 +8,10 @@ import {
   EncounterSortFieldInput,
   InsertEncounterInput,
   InsertProgramEnrolmentInput,
+  PaginationInput,
   ProgramEnrolmentSortFieldInput,
+  ProgramEventFilterInput,
+  ProgramEventNode,
   UpdateEncounterInput,
   UpdateProgramEnrolmentInput,
 } from '@common/types';
@@ -346,5 +349,37 @@ export const getClinicianQueries = (sdk: Sdk, storeId: string) => ({
       return result.clinicians;
     }
     throw new Error('Error querying clinicians');
+  },
+});
+
+export type ProgramEventParams = {
+  patientId: string;
+  at?: Date;
+  filter?: ProgramEventFilterInput;
+  page?: PaginationInput;
+};
+
+export const getProgramEventQueries = (sdk: Sdk, storeId: string) => ({
+  programEvents: async ({
+    at,
+    patientId,
+    filter,
+    page,
+  }: ProgramEventParams): Promise<{
+    nodes: ProgramEventNode[];
+    totalCount: number;
+  }> => {
+    const result = await sdk.programEvents({
+      storeId,
+      patientId,
+      at: at?.toISOString(),
+      filter,
+      page,
+    });
+
+    if (result.programEvents.__typename === 'ProgramEventConnector') {
+      return result.programEvents;
+    }
+    throw new Error('Error querying program events');
   },
 });

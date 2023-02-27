@@ -69,3 +69,9 @@ export const useClinicians = {
     list: Document.useClinicians,
   },
 };
+
+export const useProgramEvents = {
+  document: {
+    list: Document.useProgramEvents,
+  },
+};
