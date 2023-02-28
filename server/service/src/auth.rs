@@ -247,7 +247,7 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     );
     map.insert(
         Resource::QueryStorePreferences,
-        PermissionDSL::NoPermissionRequired,
+        PermissionDSL::HasStoreAccess,
     );
 
     map
