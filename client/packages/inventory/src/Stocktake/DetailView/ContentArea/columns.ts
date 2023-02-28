@@ -176,8 +176,12 @@ export const useStocktakeColumns = ({
         description: 'description.snapshot-num-of-packs',
         align: ColumnAlign.Right,
         Cell: PositiveNumberCell,
-        isError: rowData =>
-          getError(rowData)?.__typename === 'SnapshotCountCurrentCountMismatch',
+        isError: row => {
+          let rows = 'lines' in row ? row.lines : [row];
+          return rows.some(
+            r => getError(r)?.__typename === 'SnapshotCountCurrentCountMismatch'
+          );
+        },
         getSortValue: row => {
           if ('lines' in row) {
             const { lines } = row;
@@ -211,8 +215,12 @@ export const useStocktakeColumns = ({
         description: 'description.counted-num-of-packs',
         align: ColumnAlign.Right,
         Cell: PositiveNumberCell,
-        isError: rowData =>
-          getError(rowData)?.__typename === 'StockLineReducedBelowZero',
+        isError: row => {
+          let rows = 'lines' in row ? row.lines : [row];
+          return rows.some(
+            r => getError(r)?.__typename === 'StockLineReducedBelowZero'
+          );
+        },
         getSortValue: row => {
           if ('lines' in row) {
             const { lines } = row;
@@ -324,8 +332,9 @@ export const useStocktakeColumns = ({
   );
 };
 
-export const useExpansionColumns = (): Column<StocktakeLineFragment>[] =>
-  useColumns([
+export const useExpansionColumns = (): Column<StocktakeLineFragment>[] => {
+  const { getError } = useStocktakeLineErrorContext();
+  return useColumns([
     'batch',
     'expiryDate',
     'packSize',
@@ -334,6 +343,8 @@ export const useExpansionColumns = (): Column<StocktakeLineFragment>[] =>
       width: 150,
       label: 'label.snapshot-num-of-packs',
       align: ColumnAlign.Right,
+      isError: rowData =>
+        getError(rowData)?.__typename === 'SnapshotCountCurrentCountMismatch',
       accessor: ({ rowData }) => rowData.snapshotNumberOfPacks,
     },
     {
@@ -341,6 +352,8 @@ export const useExpansionColumns = (): Column<StocktakeLineFragment>[] =>
       label: 'label.counted-num-of-packs',
       width: 150,
       align: ColumnAlign.Right,
+      isError: rowData =>
+        getError(rowData)?.__typename === 'StockLineReducedBelowZero',
       accessor: ({ rowData }) => rowData.countedNumberOfPacks,
     },
     'comment',
@@ -351,3 +364,4 @@ export const useExpansionColumns = (): Column<StocktakeLineFragment>[] =>
         rowData.inventoryAdjustmentReason?.reason || '',
     },
   ]);
+};
