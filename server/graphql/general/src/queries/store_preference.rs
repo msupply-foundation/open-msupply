@@ -1,6 +1,6 @@
 use async_graphql::*;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
-use repository::{StorePreferenceRow, StorePreferenceType};
+use repository::StorePreferenceRow;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     store_preference::get_store_preferences,
@@ -11,11 +11,6 @@ pub struct StorePreferenceNode {
     store_preference: StorePreferenceRow,
 }
 
-#[derive(Enum, Copy, Clone, PartialEq, Eq)]
-pub enum StorePreferenceNodeType {
-    StorePreference,
-}
-
 #[Object]
 impl StorePreferenceNode {
     pub async fn id(&self) -> &str {
@@ -24,20 +19,6 @@ impl StorePreferenceNode {
 
     pub async fn pack_to_one(&self) -> &bool {
         &self.store_preference.pack_to_one
-    }
-}
-
-impl StorePreferenceNodeType {
-    pub fn from_domain(from: &StorePreferenceType) -> StorePreferenceNodeType {
-        match from {
-            StorePreferenceType::StorePreferences => StorePreferenceNodeType::StorePreference,
-        }
-    }
-
-    pub fn to_domain(self) -> StorePreferenceType {
-        match self {
-            StorePreferenceNodeType::StorePreference => StorePreferenceType::StorePreferences,
-        }
     }
 }
 
