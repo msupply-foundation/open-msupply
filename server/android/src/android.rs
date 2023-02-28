@@ -9,7 +9,7 @@ pub mod android {
     use jni::sys::jchar;
     use repository::database_settings::DatabaseSettings;
     use server::start_server;
-    use service::settings::{ServerSettings, Settings};
+    use service::settings::{LogMode, LoggingSettings, ServerSettings, Settings};
     use tokio::sync::mpsc;
 
     use self::jni::objects::{JClass, JString};
@@ -34,7 +34,11 @@ pub mod android {
         cache_dir: JString,
         android_id: JString,
     ) {
-        android_logger::init_once(Config::default().with_min_level(Level::Info));
+        android_logger::init_once(
+            Config::default()
+                .with_min_level(Level::Info)
+                .with_tag("omSupply"),
+        );
         log_panics::init();
 
         let (off_switch, off_switch_receiver) = mpsc::channel(1);
@@ -64,7 +68,10 @@ pub mod android {
             },
             // sync settings need to be configured at runtime
             sync: None,
-            logging: None,
+            logging: Some(
+                LoggingSettings::new(LogMode::File, service::settings::Level::Info)
+                    .with_directory(files_dir.to_string_lossy().to_string()),
+            ),
         };
 
         // run server in background thread
