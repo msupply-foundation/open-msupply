@@ -33,7 +33,8 @@ const Options = z
      */
     displayString: z.string().optional(),
     /**
-     * List of fields to save in document data (from selected item object)
+     * List of fields to be saved in the document data (from selected source document)
+     * The fields are stored in an object at the `scope` path of this UI control.
      */
     saveFields: z.array(z.string()).optional(),
   })
