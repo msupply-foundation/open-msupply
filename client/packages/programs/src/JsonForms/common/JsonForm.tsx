@@ -136,6 +136,7 @@ const FormComponent = ({
       return error.message ?? '';
     });
 
+  // This allows "default" values to be set in the JSON schema
   const handleDefaultsAjv = createAjv({ useDefaults: true });
 
   return !data ? null : (
