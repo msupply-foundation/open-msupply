@@ -3,14 +3,13 @@ mod v1_00_04;
 mod v1_01_01;
 mod v1_01_02;
 mod v1_01_03;
-mod v1_01_04;
+
 mod version;
 pub(crate) use self::types::*;
 use self::v1_00_04::V1_00_04;
 use self::v1_01_01::V1_01_01;
 use self::v1_01_02::V1_01_02;
 use self::v1_01_03::V1_01_03;
-use self::v1_01_04::V1_01_04;
 
 mod templates;
 
@@ -62,7 +61,6 @@ pub fn migrate(
         Box::new(V1_01_01),
         Box::new(V1_01_02),
         Box::new(V1_01_03),
-        Box::new(V1_01_04),
     ];
 
     // Historic diesel migrations
