@@ -27,7 +27,7 @@ interface SearchQueryOutput {
   placeholderText: string;
 }
 
-const { formatTemplateString } = RegexUtils;
+const { formatTemplateString, removeEmptyLines } = RegexUtils;
 
 export const useSearchQueries = ({
   query,
@@ -77,11 +77,13 @@ export const useSearchQueries = ({
         return (
           <Typography style={{ whiteSpace: 'pre' }}>
             {displayString
-              ? formatTemplateString(displayString, data, '')
-              : formatTemplateString(
-                  '${firstName} ${lastName} (${code})\n${email}\n${document.data.contactDetails[0].address1}\n${document.data.contactDetails[0].address2}',
-                  data,
-                  ''
+              ? removeEmptyLines(formatTemplateString(displayString, data, ''))
+              : removeEmptyLines(
+                  formatTemplateString(
+                    '${firstName} ${lastName} (${code})\n${email}\n${document.data.contactDetails[0].address1}\n${document.data.contactDetails[0].address2}',
+                    data,
+                    ''
+                  )
                 )}
           </Typography>
         );

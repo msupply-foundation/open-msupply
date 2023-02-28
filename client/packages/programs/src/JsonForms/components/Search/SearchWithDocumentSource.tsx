@@ -42,7 +42,7 @@ const Options = z
 
 type Options = z.infer<typeof Options>;
 
-const { formatTemplateString } = RegexUtils;
+const { formatTemplateString, removeEmptyLines } = RegexUtils;
 
 export const SearchWithDocumentSource = (props: ControlProps) => {
   const {
@@ -94,7 +94,9 @@ export const SearchWithDocumentSource = (props: ControlProps) => {
   const displayElement = (
     <Typography style={{ whiteSpace: 'pre' }}>
       {options?.displayString ? (
-        formatTemplateString(options.displayString, requestedData ?? {}, '')
+        removeEmptyLines(
+          formatTemplateString(options.displayString, requestedData ?? {}, '')
+        )
       ) : (
         <pre>{JSON.stringify(requestedData, null, 2)}</pre>
       )}
