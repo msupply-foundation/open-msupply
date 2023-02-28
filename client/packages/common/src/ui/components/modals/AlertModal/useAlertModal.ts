@@ -3,7 +3,7 @@ import { PartialBy } from '@common/types';
 import { AlertModalContext, AlertModalState } from './AlertModalContext';
 
 export const useAlertModal = ({
-  onOk,
+  onOk = () => {},
   message,
   title,
 }: PartialBy<AlertModalState, 'open'>) => {
