@@ -84,7 +84,8 @@
       "scope": "#/properties/mother",
       "options": {
         "source": "user",
-        "query": "patientByCode"
+        "query": "patientByCode",
+        "saveFields": ["id", "code", "firstName", "lastName", "dateOfBirth", "gender"]
       }
     },
     {
