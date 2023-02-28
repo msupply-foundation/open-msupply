@@ -2,30 +2,28 @@ use std::{fs, path::PathBuf, str::FromStr};
 
 use headless_chrome::{types::PrintToPdfOptions, Browser, LaunchOptionsBuilder};
 
-use super::report_service::GeneratedReport;
-
 pub fn html_to_pdf(
     temp_dir: &Option<String>,
-    document: &GeneratedReport,
+    document: &str,
     document_id: &str,
 ) -> Result<Vec<u8>, anyhow::Error> {
     let pdf_options = Some(PrintToPdfOptions {
-        display_header_footer: Some(true),
-        prefer_css_page_size: Some(false),
-        landscape: Some(true),
+        display_header_footer: Some(false),
+        prefer_css_page_size: None,
+        landscape: None,
         print_background: None,
         scale: None,
         // Assuming 96 DPI (dots per inch)
-        paper_width: Some(8.0),
-        paper_height: Some(11.0),
-        margin_top: Some(1.0),
-        margin_bottom: Some(1.0),
-        margin_left: Some(0.0),
-        margin_right: Some(0.0),
+        paper_width: None,
+        paper_height: None,
+        margin_top: None,
+        margin_bottom: None,
+        margin_left: None,
+        margin_right: None,
         page_ranges: None,
         ignore_invalid_page_ranges: None,
-        header_template: document.header.clone(),
-        footer_template: document.footer.clone(),
+        header_template: None,
+        footer_template: None,
         transfer_mode: None,
     });
 
@@ -44,7 +42,7 @@ pub fn html_to_pdf(
 
     let document_name = format!("{}.html", document_id);
     let temp_html_doc_path = temp_dir.join(document_name);
-    fs::write(&temp_html_doc_path, &document.document)?;
+    fs::write(&temp_html_doc_path, document)?;
 
     // create a new browser and a tab in that browser using headless-chrome
     let launch_options = LaunchOptionsBuilder::default().headless(true).build()?;
