@@ -7,7 +7,11 @@ import {
 import { ChevronDownIcon } from '@common/icons';
 import React, { FC } from 'react';
 import ReactDiffViewer from 'react-diff-viewer';
-import { BasicSpinner, Box, useFormatDateTime } from 'packages/common/src';
+import {
+  BasicSpinner,
+  Box,
+  useFormatDateTime,
+} from '@openmsupply-client/common';
 import { DocumentFragment, useDocument } from '../api';
 
 export const DocumentHistory: FC<{ documentName: string }> = ({

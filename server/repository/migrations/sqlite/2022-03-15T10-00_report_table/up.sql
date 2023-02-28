@@ -1,4 +1,5 @@
-CREATE TABLE report (
+CREATE TABLE report
+(
     id TEXT NOT NULL PRIMARY KEY,
     name TEXT NOT NULL,
     type TEXT CHECK (type IN ('OM_SUPPLY')) NOT NULL,
@@ -9,7 +10,8 @@ CREATE TABLE report (
         'REQUISITION',
         'STOCKTAKE',
         'RESOURCE',
-        'PATIENT'
+        'PATIENT',
+        'DISPENSARY'
     )) NOT NULL,
     comment TEXT
 )
