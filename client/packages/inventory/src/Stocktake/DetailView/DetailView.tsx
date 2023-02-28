@@ -22,6 +22,7 @@ import { StocktakeLineEdit } from './modal/StocktakeLineEdit';
 import { ContentArea } from './ContentArea';
 import { AppRoute } from '@openmsupply-client/config';
 import { StocktakeLineFragment, useStocktake } from '../api';
+import { StocktakeLineErrorProvider } from '../context';
 
 export const DetailView: FC = () => {
   const isDisabled = useStocktake.utils.isDisabled();
@@ -68,20 +69,19 @@ export const DetailView: FC = () => {
       />
       <AppBarButtons onAddItem={() => onOpen()} />
       <Toolbar />
-
-      <DetailTabs tabs={tabs} />
-
-      <Footer />
-      <SidePanel />
-
-      {isOpen && (
-        <StocktakeLineEdit
-          isOpen={isOpen}
-          onClose={onClose}
-          mode={mode}
-          item={entity}
-        />
-      )}
+      <StocktakeLineErrorProvider>
+        <DetailTabs tabs={tabs} />
+        <Footer />
+        <SidePanel />
+        {isOpen && (
+          <StocktakeLineEdit
+            isOpen={isOpen}
+            onClose={onClose}
+            mode={mode}
+            item={entity}
+          />
+        )}{' '}
+      </StocktakeLineErrorProvider>
     </TableProvider>
   ) : (
     <AlertModal
