@@ -8,13 +8,41 @@ import {
   useTranslation,
   useUrlQueryParams,
   ReportContext,
-  LoadingButton,
   PrinterIcon,
+  BaseButton,
 } from '@openmsupply-client/common';
 import { JsonData } from '@openmsupply-client/programs';
 import { useReport, ReportRowFragment } from '../api';
 import { Toolbar } from './Toolbar';
 import { ReportArgumentsModal } from '../components/ReportArgumentsModal';
+
+const PrintButton = ({
+  report,
+  setArguments,
+}: {
+  report: ReportRowFragment;
+  setArguments: (report?: ReportRowFragment) => void;
+}) => {
+  const t = useTranslation();
+  const { print } = useReport.utils.print();
+  const onClick = () => {
+    if (report.argumentSchema) {
+      setArguments(report);
+    } else {
+      print({ reportId: report.id, dataId: '', args: undefined });
+    }
+  };
+
+  return (
+    <BaseButton
+      onClick={onClick}
+      startIcon={<PrinterIcon />}
+      sx={{ margin: 1 }}
+    >
+      {t('button.print')}
+    </BaseButton>
+  );
+};
 
 const ReportListComponent = ({ context }: { context: ReportContext }) => {
   const {
@@ -36,7 +64,7 @@ const ReportListComponent = ({ context }: { context: ReportContext }) => {
   const [reportWithArgs, setReportWithArgs] = useState<
     ReportRowFragment | undefined
   >();
-  const [currentReportId, setCurrentReportId] = useState<string>('');
+  const { print } = useReport.utils.print();
 
   const columns = useColumns<ReportRowFragment>(
     [
@@ -50,14 +78,7 @@ const ReportListComponent = ({ context }: { context: ReportContext }) => {
       },
       {
         Cell: ({ rowData }) => (
-          <LoadingButton
-            onClick={() => onReportSelected(rowData)}
-            isLoading={isPrinting && currentReportId === rowData.id}
-            startIcon={<PrinterIcon />}
-            sx={{ margin: 1 }}
-          >
-            {t('button.print')}
-          </LoadingButton>
+          <PrintButton setArguments={onReportSelected} report={rowData} />
         ),
         key: 'print',
         width: 150,
@@ -75,7 +96,6 @@ const ReportListComponent = ({ context }: { context: ReportContext }) => {
       if (report === undefined) {
         return;
       }
-      setCurrentReportId(report.id);
       if (report.argumentSchema) {
         setReportWithArgs(report);
       } else {
@@ -84,8 +104,6 @@ const ReportListComponent = ({ context }: { context: ReportContext }) => {
     },
     []
   );
-
-  const { print, isPrinting } = useReport.utils.print();
 
   const printReport = (
     report: ReportRowFragment,
