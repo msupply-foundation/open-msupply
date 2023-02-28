@@ -70,9 +70,12 @@ export const DetailView: FC = () => {
         />
         <AppBarButtons onAddItem={() => onOpen()} />
         <Toolbar />
+
         <DetailTabs tabs={tabs} />
+
         <Footer />
         <SidePanel />
+
         {isOpen && (
           <StocktakeLineEdit
             isOpen={isOpen}
@@ -80,7 +83,7 @@ export const DetailView: FC = () => {
             mode={mode}
             item={entity}
           />
-        )}{' '}
+        )}
       </StocktakeLineErrorProvider>
     </TableProvider>
   ) : (
