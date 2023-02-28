@@ -15,7 +15,7 @@ import { z } from 'zod';
 import { useZodOptionsValidation } from '../../common/hooks/useZodOptionsValidation';
 import { usePatientStore } from 'packages/programs/src/hooks';
 import { useEncounter } from '../../../api';
-import { RegexUtils, JSXFormatters } from '@openmsupply-client/common';
+import { RegexUtils } from '@openmsupply-client/common';
 
 const Options = z
   .object({
@@ -42,7 +42,6 @@ const Options = z
 type Options = z.infer<typeof Options>;
 
 const { formatTemplateString } = RegexUtils;
-const { replaceHTMLlineBreaks } = JSXFormatters;
 
 export const SearchWithDocumentSource = (props: ControlProps) => {
   const {
@@ -94,9 +93,7 @@ export const SearchWithDocumentSource = (props: ControlProps) => {
   const displayElement = (
     <Typography>
       {options?.displayString ? (
-        replaceHTMLlineBreaks(
-          formatTemplateString(options.displayString, requestedData ?? {}, '')
-        )
+        formatTemplateString(options.displayString, requestedData ?? {}, '')
       ) : (
         <pre>{JSON.stringify(requestedData, null, 2)}</pre>
       )}
