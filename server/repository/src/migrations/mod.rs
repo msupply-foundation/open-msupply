@@ -3,7 +3,6 @@ mod v1_00_04;
 mod v1_01_01;
 mod v1_01_02;
 mod v1_01_03;
-
 mod version;
 pub(crate) use self::types::*;
 use self::v1_00_04::V1_00_04;
