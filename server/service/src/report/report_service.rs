@@ -159,7 +159,7 @@ fn print_html_report_to_html(
 }
 
 /// Puts the document content, header and footer into a <html> template.
-/// Its assumed
+/// This assumes that the document contains the html body.
 fn format_html_document(document: GeneratedReport) -> String {
     format!(
         "
