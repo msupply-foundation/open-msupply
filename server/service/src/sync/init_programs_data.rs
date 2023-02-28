@@ -181,10 +181,6 @@ const PATIENT_REPORT: &'static str =
 const DEMO_PATIENT_REPORT: &'static str =
     std::include_str!("./program_schemas/report_demo_patient.json");
 
-const DEMO_ARG_SCHEMA: &'static str = std::include_str!("./program_schemas/demo_arg_schema.json");
-const DEMO_ARG_UI_SCHEMA: &'static str =
-    std::include_str!("./program_schemas/demo_arg_ui_schema.json");
-
 const ENCOUNTERS_ARG_SCHEMA: &'static str =
     std::include_str!("./program_schemas/encounters_arg_schema.json");
 const ENCOUNTERS_ARG_UI_SCHEMA: &'static str =
@@ -1118,27 +1114,6 @@ pub fn init_program_data(
             comment: None,
             sub_context: Some("HIVCareProgram".to_string()),
             argument_schema_id: None,
-        })
-        .unwrap();
-
-    // arg demo report
-    let demo_arg_schema_id = uuid();
-    FormSchemaRowRepository::new(connection).upsert_one(&FormSchema {
-        id: demo_arg_schema_id.clone(),
-        r#type: "JsonForms".to_string(),
-        json_schema: serde_json::from_str(DEMO_ARG_SCHEMA).unwrap(),
-        ui_schema: serde_json::from_str(DEMO_ARG_UI_SCHEMA).unwrap(),
-    })?;
-    report_repo
-        .upsert_one(&ReportRow {
-            id: uuid(),
-            name: "Patient with first name like".to_string(),
-            r#type: repository::ReportType::OmSupply,
-            template: DEMO_PATIENT_REPORT.to_string(),
-            context: ReportContext::Dispensary,
-            comment: None,
-            sub_context: Some("HIVCareProgram".to_string()),
-            argument_schema_id: Some(demo_arg_schema_id),
         })
         .unwrap();
 
