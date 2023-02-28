@@ -101,17 +101,17 @@ export const SearchWithDocumentSource = (props: ControlProps) => {
     </Typography>
   );
 
-  const error = zErrors
-    ? zErrors
-    : formErrors
-    ? formErrors
-    : isLoading
-    ? null
-    : isError || !documentData
-    ? t('control.search.error.no-document')
-    : !requestedData
-    ? t('control.search.error.no-data', { docPath: options?.path })
-    : null;
+  const getError = () => {
+    if (zErrors) return zErrors;
+    if (formErrors) return formErrors;
+    if (isLoading) return null;
+    if (isError || !documentData) return t('control.search.error.no-document');
+    if (!requestedData)
+      return t('control.search.error.no-data', { docPath: options?.path });
+    return null;
+  };
+
+  const error = getError();
 
   if (!visible) return null;
 
