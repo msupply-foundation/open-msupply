@@ -162,56 +162,29 @@ fn print_html_report_to_html(
 /// Its assumed
 fn format_html_document(document: GeneratedReport) -> String {
     format!(
-        "<html>
-<head>
-<style>
-  @media print {{
-    table.paging thead td,
-    table.paging tfoot td {{
-      height: 1.5cm;
-    }}
-  }}
-  header,
-  footer {{
-    width: 100%;
-    height: 1.5cm;
-  }}
-  header {{
-    top: 0;
-  }}
-  @media print {{
-    header,
-    footer {{
-      position: fixed;
-    }}
-    footer {{
-      bottom: 0;
-    }}
-  }}
-</style>
-</head>
-<body>
-<header>{}</header>
-<table class=\"paging\">
-  <thead>
-    <tr>
-      <td>&nbsp;</td>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>{}</td>
-    </tr>
-  </tbody>
-  <tfoot>
-    <tr>
-      <td>&nbsp;</td>
-    </tr>
-  </tfoot>
-</table>
-<footer>{}</footer>
-</body>
-</html>",
+        "
+<html>
+    <body>
+        <table class=\"paging\">
+        <thead>
+            <tr>
+            <td>{}</td>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+            <td>{}</td>
+            </tr>
+        </tbody>
+        <tfoot>
+            <tr>
+            <td>{}</td>
+            </tr>
+        </tfoot>
+        </table>
+    </body>
+</html>
+",
         document.header.unwrap_or("".to_string()),
         document.document,
         document.footer.unwrap_or("".to_string())
