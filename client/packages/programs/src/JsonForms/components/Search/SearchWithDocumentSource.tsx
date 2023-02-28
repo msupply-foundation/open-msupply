@@ -21,7 +21,7 @@ const Options = z
   .object({
     source: z.enum(['document']),
     /**
-     * Which pre-defined query to use (in useSearchQueries)
+     * Source document type. Either the current patient or the current encounter (if applicable).
      */
     document: z.enum(['patient', 'encounter']),
     /**
