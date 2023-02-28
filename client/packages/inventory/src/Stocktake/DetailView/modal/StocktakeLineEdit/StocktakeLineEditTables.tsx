@@ -166,7 +166,8 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
       Cell: NonNegativeDecimalCell,
       setter: patch => {
         // If counted number of packs was changed to result in no adjustment
-        // remove inventoryAdjustmentReson
+        // we should remove inventoryAdjustmentReason, otherwise could have a reason
+        // on a line with no adjustments
         let inventoryAdjustmentReason = patch.inventoryAdjustmentReason;
         if (
           !patch.countedNumberOfPacks ||
