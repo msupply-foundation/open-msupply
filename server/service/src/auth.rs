@@ -67,6 +67,7 @@ pub enum Resource {
     SyncInfo,
     ManualSync,
     QueryInventoryAdjustmentReasons,
+    QueryStorePreferences,
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
@@ -244,6 +245,11 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         Resource::QueryInventoryAdjustmentReasons,
         PermissionDSL::NoPermissionRequired,
     );
+    map.insert(
+        Resource::QueryStorePreferences,
+        PermissionDSL::NoPermissionRequired,
+    );
+
     map
 }
 
