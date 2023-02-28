@@ -56,7 +56,7 @@ const ReportListComponent = ({ context }: { context: ReportContext }) => {
             startIcon={<PrinterIcon />}
             sx={{ margin: 1 }}
           >
-            Print
+            {t('button.print')}
           </LoadingButton>
         ),
         key: 'print',
