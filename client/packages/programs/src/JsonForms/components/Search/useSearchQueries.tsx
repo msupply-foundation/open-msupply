@@ -1,13 +1,10 @@
 import React, { useState } from 'react';
-import { getPatientQueries } from 'packages/system/src/Patient/api/api';
-import { getSdk } from 'packages/system/src/Patient/api/operations.generated';
 import {
-  useGql,
-  useAuthContext,
   Typography,
   useTranslation,
+  RegexUtils,
 } from '@openmsupply-client/common';
-import { RegexUtils, JSXFormatters } from '@openmsupply-client/common';
+import { usePatientApi } from 'packages/system/src/Patient/api/hooks/utils/usePatientApi';
 
 export const QueryValues = ['patientByCode'] as const;
 type QueryValue = typeof QueryValues[number];
@@ -31,7 +28,6 @@ interface SearchQueryOutput {
 }
 
 const { formatTemplateString } = RegexUtils;
-const { replaceHTMLlineBreaks } = JSXFormatters;
 
 export const useSearchQueries = ({
   query,
@@ -40,15 +36,13 @@ export const useSearchQueries = ({
   saveFields,
   placeholderText,
 }: SearchQueryOptions = {}) => {
-  const { storeId } = useAuthContext();
-  const { client } = useGql();
   const [results, setResults] = useState<Record<string, any>[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
 
   const t = useTranslation('programs');
 
-  const patientQueries = getPatientQueries(getSdk(client), storeId);
+  const patientQueries = usePatientApi();
 
   const searchQueries: Record<QueryValue, SearchQueryOutput> = {
     patientByCode: {
@@ -81,17 +75,13 @@ export const useSearchQueries = ({
       getDisplayElement: data => {
         if (!data || !data?.['code']) return null;
         return (
-          <Typography>
+          <Typography style={{ whiteSpace: 'pre' }}>
             {displayString
-              ? replaceHTMLlineBreaks(
-                  formatTemplateString(displayString, data, '')
-                )
-              : replaceHTMLlineBreaks(
-                  formatTemplateString(
-                    '${firstName} ${lastName} (${code})\n${email}\n${document.data.contactDetails[0].address1}\n${document.data.contactDetails[0].address2}',
-                    data,
-                    ''
-                  )
+              ? formatTemplateString(displayString, data, '')
+              : formatTemplateString(
+                  '${firstName} ${lastName} (${code})\n${email}\n${document.data.contactDetails[0].address1}\n${document.data.contactDetails[0].address2}',
+                  data,
+                  ''
                 )}
           </Typography>
         );

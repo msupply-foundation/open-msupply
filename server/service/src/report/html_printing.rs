@@ -1,6 +1,6 @@
 use std::{fs, path::PathBuf, str::FromStr};
 
-use headless_chrome::{protocol::page::PrintToPdfOptions, Browser, LaunchOptionsBuilder};
+use headless_chrome::{types::PrintToPdfOptions, Browser, LaunchOptionsBuilder};
 
 use super::report_service::GeneratedReport;
 
@@ -8,7 +8,7 @@ pub fn html_to_pdf(
     temp_dir: &Option<String>,
     document: &GeneratedReport,
     document_id: &str,
-) -> Result<Vec<u8>, failure::Error> {
+) -> Result<Vec<u8>, anyhow::Error> {
     let pdf_options = Some(PrintToPdfOptions {
         display_header_footer: Some(true),
         prefer_css_page_size: Some(false),
@@ -26,6 +26,7 @@ pub fn html_to_pdf(
         ignore_invalid_page_ranges: None,
         header_template: document.header.clone(),
         footer_template: document.footer.clone(),
+        transfer_mode: None,
     });
 
     let temp_dir = match temp_dir {
@@ -46,13 +47,9 @@ pub fn html_to_pdf(
     fs::write(&temp_html_doc_path, &document.document)?;
 
     // create a new browser and a tab in that browser using headless-chrome
-    let launch_options = LaunchOptionsBuilder::default()
-        .headless(true)
-        .build()
-        .map_err(|err| failure::err_msg(err))?;
-    let browser = Browser::new(launch_options)?;
-    let tab = browser.wait_for_initial_tab()?;
-    let local_pdf = tab
+    let launch_options = LaunchOptionsBuilder::default().headless(true).build()?;
+    let local_pdf = Browser::new(launch_options)?
+        .new_tab()?
         .navigate_to(&format!("file:{}", temp_html_doc_path.to_string_lossy()))?
         .wait_until_navigated()?
         .print_to_pdf(pdf_options)?;
