@@ -91,7 +91,7 @@ export const SearchWithDocumentSource = (props: ControlProps) => {
   }, [requestedData]);
 
   const displayElement = (
-    <Typography>
+    <Typography style={{ whiteSpace: 'pre' }}>
       {options?.displayString ? (
         formatTemplateString(options.displayString, requestedData ?? {}, '')
       ) : (
