@@ -61,6 +61,10 @@ pub async fn start_server(
             false => "Production",
         }
     );
+    info!(
+        "omSupply log path is {}",
+        settings.clone().logging.unwrap().directory.unwrap(),
+    );
 
     // INITIALISE DATABASE AND CONNECTION
     let connection_manager = get_storage_connection_manager(&settings.database);
