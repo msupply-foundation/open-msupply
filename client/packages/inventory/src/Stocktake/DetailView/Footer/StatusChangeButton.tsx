@@ -105,7 +105,7 @@ const useStatusChangeButton = () => {
     }
 
     let stocktakeLineIdsWithErrors: {
-      [id: string]: StocktakeLineError;
+      [stocktakeLineId: string]: StocktakeLineError;
     } = {};
     // By line errors
     switch (error.__typename) {

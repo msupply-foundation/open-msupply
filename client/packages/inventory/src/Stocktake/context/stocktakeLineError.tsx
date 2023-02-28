@@ -15,7 +15,7 @@ export type StocktakeLineError =
 
 const useStocktakeLineErrors = () => {
   const [errors, setErrors] = useState<{
-    [id: string]: StocktakeLineError | undefined;
+    [stocktakeLineId: string]: StocktakeLineError | undefined;
   }>({});
 
   const getError = ({ id }: RecordWithId): StocktakeLineError | undefined => {
