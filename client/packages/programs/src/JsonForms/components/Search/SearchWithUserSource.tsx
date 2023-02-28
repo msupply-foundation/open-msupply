@@ -94,6 +94,17 @@ export const SearchWithUserSource = (props: ControlProps) => {
     setEditMode(false);
   };
 
+  const getNoOptionsText = () => {
+    switch (true) {
+      case loading:
+        return t('control.search.searching-label');
+      case searchText.length < MIN_CHARS:
+        return t('control.search.below-min-chars', { minChars: MIN_CHARS });
+      default:
+        return noResultsText;
+    }
+  };
+
   if (!options) return null;
 
   return (
@@ -130,13 +141,7 @@ export const SearchWithUserSource = (props: ControlProps) => {
                 error: !!zErrors || !!props.errors || !!queryError,
                 helperText: zErrors ?? props.errors ?? queryError,
               }}
-              noOptionsText={
-                loading
-                  ? t('control.search.searching-label')
-                  : searchText.length < MIN_CHARS
-                  ? t('control.search.below-min-chars', { minChars: MIN_CHARS })
-                  : noResultsText
-              }
+              noOptionsText={getNoOptionsText()}
               renderInput={params => (
                 <BasicTextInput
                   {...params}
