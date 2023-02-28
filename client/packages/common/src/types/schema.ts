@@ -148,6 +148,11 @@ export type AdjustmentReasonNotProvided = InsertStocktakeLineErrorInterface & Up
   description: Scalars['String'];
 };
 
+export type AdjustmentReasonNotValid = InsertStocktakeLineErrorInterface & UpdateStocktakeLineErrorInterface & {
+  __typename: 'AdjustmentReasonNotValid';
+  description: Scalars['String'];
+};
+
 export type AllocateOutboundShipmentUnallocatedLineError = {
   __typename: 'AllocateOutboundShipmentUnallocatedLineError';
   error: AllocateOutboundShipmentUnallocatedLineErrorInterface;
@@ -2830,7 +2835,7 @@ export type StockLineNode = {
 export type StockLineReducedBelowZero = InsertStocktakeLineErrorInterface & UpdateStocktakeLineErrorInterface & {
   __typename: 'StockLineReducedBelowZero';
   description: Scalars['String'];
-  stockLine: StockLineConnector;
+  stockLine: StockLineNode;
 };
 
 export type StockLineResponse = NodeError | StockLineNode;
@@ -2858,7 +2863,7 @@ export type StockLineSortInput = {
 export type StockLinesReducedBelowZero = UpdateStocktakeErrorInterface & {
   __typename: 'StockLinesReducedBelowZero';
   description: Scalars['String'];
-  stockLines: StockLineConnector;
+  errors: Array<StockLineReducedBelowZero>;
 };
 
 export type StockLinesResponse = StockLineConnector;
