@@ -143,6 +143,11 @@ export type AddToShipmentFromMasterListInput = {
   shipmentId: Scalars['String'];
 };
 
+export type AdjustmentReasonNotProvided = InsertStocktakeLineErrorInterface & UpdateStocktakeLineErrorInterface & {
+  __typename: 'AdjustmentReasonNotProvided';
+  description: Scalars['String'];
+};
+
 export type AllocateOutboundShipmentUnallocatedLineError = {
   __typename: 'AllocateOutboundShipmentUnallocatedLineError';
   error: AllocateOutboundShipmentUnallocatedLineErrorInterface;
@@ -3610,6 +3615,7 @@ export type StockLineConnector = {
 
 export type StockLineFilterInput = {
   expiryDate?: InputMaybe<DateFilterInput>;
+  hasPacksInStore?: InputMaybe<Scalars['Boolean']>;
   id?: InputMaybe<EqualFilterStringInput>;
   isAvailable?: InputMaybe<Scalars['Boolean']>;
   itemCodeOrName?: InputMaybe<SimpleStringFilterInput>;
@@ -3644,6 +3650,12 @@ export type StockLineNode = {
   totalNumberOfPacks: Scalars['Float'];
 };
 
+export type StockLineReducedBelowZero = InsertStocktakeLineErrorInterface & UpdateStocktakeLineErrorInterface & {
+  __typename: 'StockLineReducedBelowZero';
+  description: Scalars['String'];
+  stockLine: StockLineConnector;
+};
+
 export type StockLineResponse = NodeError | StockLineNode;
 
 export enum StockLineSortFieldInput {
@@ -3664,6 +3676,12 @@ export type StockLineSortInput = {
   desc?: InputMaybe<Scalars['Boolean']>;
   /** Sort query result by `key` */
   key: StockLineSortFieldInput;
+};
+
+export type StockLinesReducedBelowZero = UpdateStocktakeErrorInterface & {
+  __typename: 'StockLinesReducedBelowZero';
+  description: Scalars['String'];
+  stockLines: StockLineConnector;
 };
 
 export type StockLinesResponse = StockLineConnector;
