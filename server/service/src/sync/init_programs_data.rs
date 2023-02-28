@@ -116,9 +116,12 @@ mod hiv_care_encounter {
                 tuberculosis: Default::default(),
                 biochem: Default::default(),
                 haem: Default::default(),
-                tb_hcv: Default::default(),
                 viral_load: Default::default(),
                 notes: Default::default(),
+                index_testing: Default::default(),
+                hcv_crag: Default::default(),
+                general: Default::default(),
+                risk_behaviour: Default::default(),
             }
         }
     }

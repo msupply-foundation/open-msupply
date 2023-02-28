@@ -9,7 +9,7 @@ const Template: ComponentStory<typeof FlatButton> = args => (
     <FlatButton
       {...args}
       startIcon={<BookIcon color={args.color} />}
-      label="Docs"
+      label={args.label ?? 'Docs'}
       onClick={() => console.info('clicked')}
     />
   </Box>
@@ -20,7 +20,7 @@ const StyledTemplate: ComponentStory<typeof FlatButton> = args => (
     <FlatButton
       {...args}
       endIcon={<FilterIcon fontSize="small" />}
-      label="View Filters"
+      label={args.label ?? 'View Filters'}
       onClick={() => console.info('clicked')}
       sx={{
         color: 'gray.main',
