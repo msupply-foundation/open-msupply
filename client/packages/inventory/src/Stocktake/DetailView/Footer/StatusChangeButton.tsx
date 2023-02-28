@@ -7,9 +7,15 @@ import {
   SplitButtonOption,
   useConfirmationModal,
   StocktakeNodeStatus,
+  noOtherVariants,
 } from '@openmsupply-client/common';
 import { getNextStocktakeStatus, getStatusTranslation } from '../../../utils';
 import { useStocktake } from '../../api';
+import { errorMessage } from '../modal/StocktakeLineEdit/hooks';
+import {
+  StocktakeLineError,
+  useStocktakeLineErrorContext,
+} from '../../context';
 
 const getStatusOptions = (
   getButtonLabel: (status: StocktakeNodeStatus) => string
@@ -57,8 +63,10 @@ const useStatusChangeButton = () => {
     'lines',
   ]);
   const { mutateAsync } = useStocktake.document.update();
-  const { success, error } = useNotification();
-  const t = useTranslation('replenishment');
+  const { success, error: errorNotification } = useNotification();
+  const t = useTranslation(['replenishment', 'inventory']);
+
+  const errors = useStocktakeLineErrorContext();
 
   const options = useMemo(
     () => getStatusOptions(getButtonLabel(t)),
@@ -72,16 +80,61 @@ const useStatusChangeButton = () => {
 
   const onConfirmStatusChange = async () => {
     if (!selectedOption) return null;
-        const result = await mutateAsync({ id, status: selectedOption.value });
+
+    errors.unsetAll();
+    let result;
+    try {
+      result = await mutateAsync({ id, status: selectedOption.value });
+    } catch (e) {
+      return errorNotification(errorMessage(e))();
+    }
+
     if (result.__typename === 'StocktakeNode') {
       return success(t('messages.saved'))();
     }
 
-    switch (result.error.__typename) {
+    const { error } = result;
+
+    // General errors
+    if (error.__typename === 'CannotEditStocktake') {
+      return errorNotification(t('error.not-editable'))();
+    }
+
+    if (error.__typename === 'StocktakeIsLocked') {
+      return errorNotification(t('error.is-locked'))();
+    }
+
+    let stocktakeLineIdsWithErrors: {
+      [id: string]: StocktakeLineError;
+    } = {};
+    // By line errors
+    switch (error.__typename) {
       case 'StockLinesReducedBelowZero':
-        return error(t('error.stocktake-has-stock-reduced-below-zero'))();
+        // StockLinesReducedBelowZero.errors contains an array of StockLineReducedBelowZero which have StockLines
+        // we want to match StocktakeLine ids for those errors
+        stocktakeLineIdsWithErrors = error.errors.reduce((acc, innerError) => {
+          const stocktakeLine = lines.nodes.find(
+            line => line.stockLine?.id === innerError.stockLine.id
+          );
+          if (!stocktakeLine) return acc;
+          return { ...acc, [stocktakeLine.id]: innerError };
+        }, stocktakeLineIdsWithErrors);
+
+        errors.setErrors(stocktakeLineIdsWithErrors);
+        return errorNotification(
+          t('error.stocktake-has-stock-reduced-below-zero')
+        )();
+      case 'SnapshotCountCurrentCountMismatch':
+        stocktakeLineIdsWithErrors = error.lines.nodes.reduce(
+          (acc, innerError) => ({ ...acc, [innerError.id]: error }),
+          stocktakeLineIdsWithErrors
+        );
+        errors.setErrors(stocktakeLineIdsWithErrors);
+
+        return errorNotification(t('error.snapshot-total-mismatch'))();
+
       default:
-        error(t('error.cant-save'))();
+        noOtherVariants(error);
     }
   };
 
