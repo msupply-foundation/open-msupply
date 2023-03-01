@@ -16,11 +16,7 @@
       "type": "object"
     },
     "EncounterStatus": {
-      "enum": [
-        "SCHEDULED",
-        "COMPLETED",
-        "CANCELLED"
-      ],
+      "enum": ["SCHEDULED", "COMPLETED", "CANCELLED"],
       "type": "string"
     },
     "FamilyPlanning": {
@@ -31,11 +27,7 @@
         },
         "pregnant": {
           "description": "77386006 Pregnant",
-          "enum": [
-            "Yes",
-            "No",
-            "Breastfeeding"
-          ],
+          "enum": ["Yes", "No", "Breastfeeding"],
           "type": "string"
         }
       },
@@ -47,11 +39,7 @@
           "if": {
             "properties": {
               "regimenStatus": {
-                "enum": [
-                  "START",
-                  "CHANGE",
-                  "STOP"
-                ]
+                "enum": ["START", "CHANGE", "STOP"]
               }
             }
           },
@@ -84,9 +72,13 @@
               },
               "type": "array"
             },
-            "quantityPrescribed": {
-              "description": "Number of pills prescribed",
+            "quantityDispensed": {
+              "description": "Number of pills dispensed in this encounter",
               "minimum": 0,
+              "type": "number"
+            },
+            "quantityPrescribed": {
+              "description": "Number of pills on hand at the end of the encounter.",
               "type": "number"
             },
             "regimen": {
@@ -180,13 +172,7 @@
             },
             "regimenStatus": {
               "description": "Antiretroviral treatment status",
-              "enum": [
-                "NO",
-                "START",
-                "CONTINUE",
-                "CHANGE",
-                "STOP"
-              ],
+              "enum": ["NO", "START", "CONTINUE", "CHANGE", "STOP"],
               "type": "string"
             },
             "relevantCoMedication": {
@@ -206,10 +192,7 @@
             }
           },
           "then": {
-            "required": [
-              "regimen",
-              "regimenChangeReason"
-            ]
+            "required": ["regimen", "regimenChangeReason"]
           },
           "type": "object"
         },
@@ -256,30 +239,17 @@
           "properties": {
             "intimatePartnerViolence": {
               "description": "Victim of intimate partner abuse 706893006",
-              "enum": [
-                "Yes",
-                "No",
-                "N/A"
-              ],
+              "enum": ["Yes", "No", "N/A"],
               "type": "string"
             },
             "postServiceProvided": {
               "description": "Post GBV Services provided?",
-              "enum": [
-                "Yes",
-                "No",
-                "Declined",
-                "N/A"
-              ],
+              "enum": ["Yes", "No", "Declined", "N/A"],
               "type": "string"
             },
             "rape": {
               "description": "Victim of rape 42085001",
-              "enum": [
-                "Yes",
-                "No",
-                "N/A"
-              ],
+              "enum": ["Yes", "No", "N/A"],
               "type": "string"
             },
             "receivedServiceType": {
@@ -293,31 +263,17 @@
             },
             "referredForExternalServices": {
               "description": "Referred for external services?",
-              "enum": [
-                "Yes",
-                "No",
-                "N/A"
-              ],
+              "enum": ["Yes", "No", "N/A"],
               "type": "string"
             },
             "screened": {
               "description": "Screened for Gender Based Violence",
-              "enum": [
-                "Positive",
-                "Negative",
-                "Declined",
-                "NotDone"
-              ],
+              "enum": ["Positive", "Negative", "Declined", "NotDone"],
               "type": "string"
             },
             "type": {
               "description": "Type of Gender Based Violence",
-              "enum": [
-                "Physical",
-                "Psychological",
-                "Sexual",
-                "N/A"
-              ],
+              "enum": ["Physical", "Psychological", "Sexual", "N/A"],
               "type": "string"
             }
           },
@@ -345,11 +301,7 @@
               "type": "string"
             },
             "visitType": {
-              "enum": [
-                "Outreach",
-                "Refill",
-                "Standard"
-              ],
+              "enum": ["Outreach", "Refill", "Standard"],
               "type": "string"
             }
           },
@@ -375,10 +327,7 @@
               "type": "object"
             },
             "hepBSAg": {
-              "enum": [
-                "Pos",
-                "Neg"
-              ],
+              "enum": ["Pos", "Neg"],
               "type": "string"
             },
             "rbslToFbsl": {
@@ -390,36 +339,23 @@
               "type": "number"
             },
             "tpha": {
-              "enum": [
-                "Pos",
-                "Neg"
-              ],
+              "enum": ["Pos", "Neg"],
               "type": "string"
             }
           },
-          "required": [
-            "fbe"
-          ],
           "type": "object"
         },
         "hcvCrag": {
           "properties": {
             "crAgResult": {
-              "enum": [
-                "Positive",
-                "Negative",
-                "Inc"
-              ],
+              "enum": ["Positive", "Negative", "Inc"],
               "type": "string"
             },
             "crAgTitre": {
               "type": "string"
             },
             "hcv": {
-              "enum": [
-                "Positive",
-                "Negative"
-              ],
+              "enum": ["Positive", "Negative"],
               "type": "string"
             }
           },
@@ -428,28 +364,18 @@
         "indexTesting": {
           "properties": {
             "indexTestingAccepted": {
-              "enum": [
-                "Yes",
-                "No",
-                "N/A"
-              ],
+              "enum": ["Yes", "No", "N/A"],
               "type": "string"
             },
             "indexTestingOffered": {
-              "enum": [
-                "Yes",
-                "No",
-                "Declined"
-              ],
+              "enum": ["Yes", "No", "Declined"],
               "type": "string"
             },
             "ipvRisk": {
               "$ref": "#/definitions/YesNo"
             }
           },
-          "required": [
-            "indexTestingAccepted"
-          ],
+          "required": ["indexTestingAccepted"],
           "type": "object"
         },
         "notes": {
@@ -463,10 +389,7 @@
           "properties": {
             "bloodPressure": {
               "description": "75367002\tBlood pressure [mmHg]",
-              "examples": [
-                "90/60",
-                "120/80"
-              ],
+              "examples": ["90/60", "120/80"],
               "pattern": "^\\d{3}\\/\\d{2}$",
               "title": "BP in mmHg",
               "type": "string"
@@ -477,21 +400,14 @@
             },
             "height": {
               "description": "50373000\tBody height measure [m]",
-              "examples": [
-                "1.55",
-                "0.92",
-                "1.75"
-              ],
+              "examples": ["1.55", "0.92", "1.75"],
               "pattern": "^\\d\\.\\d{2}$",
               "title": "Height in m",
               "type": "string"
             },
             "midUpperArmCircumference": {
               "description": "284473002\tMid upper arm circumference (MUAC) [cm]",
-              "examples": [
-                "23.0",
-                "21.4"
-              ],
+              "examples": ["23.0", "21.4"],
               "pattern": "^\\d+\\.\\d+$",
               "title": "MUAC in cm",
               "type": "string"
@@ -500,11 +416,7 @@
               "properties": {
                 "nutritionalStatus": {
                   "description": "366364004  nutritional status",
-                  "enum": [
-                    "UNDER_NOURISHED",
-                    "WELL_NOURISHED",
-                    "OVERWEIGHT"
-                  ],
+                  "enum": ["UNDER_NOURISHED", "WELL_NOURISHED", "OVERWEIGHT"],
                   "type": "string"
                 },
                 "nutritionalSupportNeeded": {
@@ -609,10 +521,7 @@
             },
             "weight": {
               "description": "735395000\tCurrent body weight [kg]",
-              "examples": [
-                "75.1",
-                "60.0"
-              ],
+              "examples": ["75.1", "60.0"],
               "pattern": "^\\d+\\.\\d+$",
               "title": "Weight in kg",
               "type": "string"
@@ -659,12 +568,7 @@
               "$ref": "#/definitions/YesNo"
             },
             "tbSputum": {
-              "enum": [
-                "NO_AFB",
-                "POS_1",
-                "POS_2",
-                "POS_3"
-              ],
+              "enum": ["NO_AFB", "POS_1", "POS_2", "POS_3"],
               "type": "string"
             },
             "tbStatus": {
@@ -692,10 +596,7 @@
               "type": "boolean"
             },
             "targeting": {
-              "enum": [
-                "TARGETED",
-                "SCHEDULED"
-              ],
+              "enum": ["TARGETED", "SCHEDULED"],
               "type": "string"
             },
             "tested": {
@@ -715,10 +616,7 @@
           "type": "object"
         }
       },
-      "required": [
-        "createdDatetime",
-        "startDatetime"
-      ],
+      "required": ["createdDatetime", "startDatetime"],
       "type": "object"
     },
     "HIVRiskGroup": {
@@ -755,12 +653,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "text",
-        "created",
-        "authorId",
-        "authorName"
-      ],
+      "required": ["text", "created", "authorId", "authorName"],
       "type": "object"
     },
     "RiskBehaviour": {
@@ -816,10 +709,7 @@
       "type": "object"
     },
     "YesNo": {
-      "enum": [
-        "Yes",
-        "No"
-      ],
+      "enum": ["Yes", "No"],
       "type": "string"
     }
   },

@@ -264,21 +264,21 @@
           "type": "Spacer"
         },
         {
-          "scope": "#/properties/arvMedication/properties/quantityPrescribed",
           "type": "EncounterProgramEvent",
-          "label": "Pill Count after last Visit",
+          "scope": "#/properties/arvMedication/properties/quantityPrescribed",
+          "label": "Pill Count (at last visit end)",
           "options": {
             "type": "arvMedicationQuantityPrescribed"
           }
         },
         {
-          "scope": "#/properties/arvMedication/properties/remainingPillCount",
           "type": "Control",
-          "label": "Pill Count before Visit"
+          "scope": "#/properties/arvMedication/properties/remainingPillCount",
+          "label": "Pill Count (at visit start)"
         },
         {
-          "scope": "#",
           "type": "AdherenceScore",
+          "scope": "#",
           "label": "Adherence Score",
           "options": {
             "previousCountField": "arvMedication.quantityPrescribed",
@@ -288,14 +288,16 @@
           }
         },
         {
-          "type": "QuantityPrescribed",
-          "scope": "#",
-          "label": "Pill Count after Visit",
+          "type": "QuantityDispensed",
+          "scope": "#/properties/arvMedication/properties/quantityDispensed",
+          "label": "Quantity of pills dispensed",
           "options": {
             "quantityPerDay": 1,
             "baseDatetimeField": "startDatetime",
+            "remainingQuantityField": "arvMedication.remainingPillCount",
             "quantityPrescribedField": "arvMedication.quantityPrescribed",
-            "endOfSupplyField": "arvMedication.endOfSupply"
+            "endOfSupplyField": "arvMedication.endOfSupply",
+            "totalQuantityLabel": "Pill Count (at visit end)"
           }
         },
         {
