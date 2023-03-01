@@ -239,5 +239,6 @@
   "sync-info.number-to-push": "Numeru Registu ne'ebe atu ezekuta",
   "placeholder.search-by-name-or-code": "Buka bazeia ba naran ka kodigu",
   "success": "Susesu!",
-  "success.sync-settings": "Settings sinkronizasaun actualiza ho usesu!"
+  "success.sync-settings": "Settings sinkronizasaun actualiza ho usesu!",
+  "messages.saved": "Salva ona"
 }

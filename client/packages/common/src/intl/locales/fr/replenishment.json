@@ -91,7 +91,6 @@
   "messages.off-hold-confirmation": "Cela permettra de réactiver les changements de statut",
   "messages.on-hold-confirmation": "Cela empêchera tout changement de statut jusqu'au déverrouillage",
   "messages.requested-to-suggested": "Cela définira les quantités demandées avec les quantités suggérées.",
-  "messages.saved": "Sauvegardé(e)",
   "messages.select-rows-to-delete": "Sélectionner des lignes pour les supprimer",
   "messages.select-rows-to-delete-them": "Sélectionner les lignes pour les supprimer",
   "messages.confirm-inbound-status-as": "Confirmer le status comme $t({{status}}) ?\nNote : changer le statut va supprimer les lignes avec zéro quantité.",
