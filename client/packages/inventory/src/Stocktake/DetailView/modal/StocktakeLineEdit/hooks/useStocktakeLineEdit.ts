@@ -3,6 +3,7 @@ import {
   ArrayUtils,
   useTranslation,
   noOtherVariants,
+  getErrorMessage,
 } from '@openmsupply-client/common';
 import { ItemRowFragment } from '@openmsupply-client/system';
 import { StocktakeLineFragment, useStocktake } from './../../../../api';
@@ -19,12 +20,6 @@ interface useStocktakeLineEditController {
   isLoading: boolean;
   nextItem: ItemRowFragment | null;
 }
-
-export const errorMessage = (error: unknown): string => {
-  // Bugsnag it ?
-  if (error instanceof Error) return error.message;
-  return String(error);
-};
 
 export const useStocktakeLineEdit = (
   item: ItemRowFragment | null
@@ -49,7 +44,7 @@ export const useStocktakeLineEdit = (
     try {
       result = await mutateAsync(draftLines);
     } catch (e) {
-      return { errors: errorMessage(e) };
+      return { errors: getErrorMessage(e) };
     }
 
     const insertResults = result.batchStocktake?.insertStocktakeLines || [];
