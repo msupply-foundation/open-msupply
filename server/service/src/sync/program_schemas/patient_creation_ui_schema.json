@@ -1,0 +1,46 @@
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "Control",
+      "scope": "#/properties/code",
+      "label": "National Health ID",
+      "options": {
+        "pattern": "^[0-9]{10}$",
+        "examples": ["1234567890"]
+      }
+    },
+    {
+      "type": "Control",
+      "label": "NUIC",
+      "scope": "#/properties/code2"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/firstName",
+      "label": "First Name"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/lastName",
+      "label": "Last Name"
+    },
+    {
+      "type": "DateOfBirth",
+      "label": "Date of Birth",
+      "scope": "#"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/gender",
+      "label": "Gender",
+      "options": {
+        "show": [
+          ["MALE", "Male"],
+          ["FEMALE", "Female"],
+          ["TRANSGENDER", "Transgender"]
+        ]
+      }
+    }
+  ]
+}

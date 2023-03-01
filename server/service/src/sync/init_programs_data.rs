@@ -130,6 +130,9 @@ const PATIENT_SCHEMA: &'static str = std::include_str!("./program_schemas/patien
 const PATIENT_UI_SCHEMA: &'static str =
     std::include_str!("./program_schemas/patient_ui_schema.json");
 
+const PROGRAMS_PATIENT_CREATION_UI_SCHEMA: &'static str =
+    std::include_str!("./program_schemas/patient_creation_ui_schema.json");
+
 const PROGRAM_SCHEMA: &'static str = std::include_str!("./program_schemas/program_enrolment.json");
 const PROGRAM_UI_SCHEMA: &'static str =
     std::include_str!("./program_schemas/program_ui_schema.json");
@@ -180,6 +183,10 @@ const PATIENT_REPORT: &'static str =
     std::include_str!("./program_schemas/report_patient_hiv_care.json");
 const DEMO_PATIENT_REPORT: &'static str =
     std::include_str!("./program_schemas/report_demo_patient.json");
+
+const DEMO_ARG_SCHEMA: &'static str = std::include_str!("./program_schemas/demo_arg_schema.json");
+const DEMO_ARG_UI_SCHEMA: &'static str =
+    std::include_str!("./program_schemas/demo_arg_ui_schema.json");
 
 const ENCOUNTERS_ARG_SCHEMA: &'static str =
     std::include_str!("./program_schemas/encounters_arg_schema.json");
@@ -766,6 +773,15 @@ pub fn init_program_data(
         config: None,
     })?;
 
+    // png patient creation
+    let programs_program_creation_id = uuid();
+    FormSchemaRowRepository::new(connection).upsert_one(&FormSchema {
+        id: programs_program_creation_id.clone(),
+        r#type: "PatientCreationJSONForm".to_string(),
+        json_schema: serde_json::from_str(PATIENT_SCHEMA).unwrap(),
+        ui_schema: serde_json::from_str(PROGRAMS_PATIENT_CREATION_UI_SCHEMA).unwrap(),
+    })?;
+
     // program
     let program_schema_id = uuid();
     let placeholder_program_id = uuid();
@@ -1117,6 +1133,27 @@ pub fn init_program_data(
         })
         .unwrap();
 
+    // arg demo report
+    let demo_arg_schema_id = uuid();
+    FormSchemaRowRepository::new(connection).upsert_one(&FormSchema {
+        id: demo_arg_schema_id.clone(),
+        r#type: "JsonForms".to_string(),
+        json_schema: serde_json::from_str(DEMO_ARG_SCHEMA).unwrap(),
+        ui_schema: serde_json::from_str(DEMO_ARG_UI_SCHEMA).unwrap(),
+    })?;
+    report_repo
+        .upsert_one(&ReportRow {
+            id: uuid(),
+            name: "Patient with first name like".to_string(),
+            r#type: repository::ReportType::OmSupply,
+            template: DEMO_PATIENT_REPORT.to_string(),
+            context: ReportContext::Patient,
+            comment: None,
+            sub_context: Some("HIVCareProgram".to_string()),
+            argument_schema_id: Some(demo_arg_schema_id),
+        })
+        .unwrap();
+
     // encounter list report
     let encounters_arg_schema_id = uuid();
     FormSchemaRowRepository::new(connection).upsert_one(&FormSchema {
@@ -1131,7 +1168,7 @@ pub fn init_program_data(
             name: "List of Appointments".to_string(),
             r#type: repository::ReportType::OmSupply,
             template: ENCOUNTERS_REPORT.to_string(),
-            context: ReportContext::Dispensary,
+            context: ReportContext::Patient,
             comment: None,
             sub_context: Some("HIVCareProgram".to_string()),
             argument_schema_id: Some(encounters_arg_schema_id),
@@ -1144,7 +1181,7 @@ pub fn init_program_data(
             name: "Viral Load Eligibility".to_string(),
             r#type: repository::ReportType::OmSupply,
             template: VL_ELIGIBILITY_REPORT.to_string(),
-            context: ReportContext::Dispensary,
+            context: ReportContext::Patient,
             comment: None,
             sub_context: Some("HIVCareProgram".to_string()),
             argument_schema_id: None,
@@ -1157,7 +1194,7 @@ pub fn init_program_data(
             name: "Lost to follow up".to_string(),
             r#type: repository::ReportType::OmSupply,
             template: LTFU_REPORT.to_string(),
-            context: ReportContext::Dispensary,
+            context: ReportContext::Patient,
             comment: None,
             sub_context: Some("HIVCareProgram".to_string()),
             argument_schema_id: None,
@@ -1170,7 +1207,7 @@ pub fn init_program_data(
             name: "Gender-based Violence Summary".to_string(),
             r#type: repository::ReportType::OmSupply,
             template: GBV_REPORT.to_string(),
-            context: ReportContext::Dispensary,
+            context: ReportContext::Patient,
             comment: None,
             sub_context: Some("HIVCareProgram".to_string()),
             argument_schema_id: None,
