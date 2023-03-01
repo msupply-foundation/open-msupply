@@ -29,7 +29,7 @@ export const errorMessage = (error: unknown): string => {
 export const useStocktakeLineEdit = (
   item: ItemRowFragment | null
 ): useStocktakeLineEditController => {
-  const t = useTranslation(['inventory']);
+  const t = useTranslation('inventory');
   const { id } = useStocktake.document.fields('id');
   const nextItem = useNextItem(item?.id);
   const [draftLines, setDraftLines] = useDraftStocktakeLines(item);
