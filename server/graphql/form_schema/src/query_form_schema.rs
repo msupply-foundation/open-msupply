@@ -1,11 +1,14 @@
 use async_graphql::*;
 
-use graphql_types::types::FormSchemaNode;
+use graphql_types::types::{FormSchemaFilterInput, FormSchemaNode};
 use service::auth::{Resource, ResourceAccessRequest};
 
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 
-pub fn form_schema(ctx: &Context<'_>, id: String) -> Result<Option<FormSchemaNode>> {
+pub fn form_schema(
+    ctx: &Context<'_>,
+    filter: Option<FormSchemaFilterInput>,
+) -> Result<Option<FormSchemaNode>> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -19,6 +22,6 @@ pub fn form_schema(ctx: &Context<'_>, id: String) -> Result<Option<FormSchemaNod
 
     let schema = service_provider
         .form_schema_service
-        .get_schema(&context, &id)?;
+        .get_schema(&context, filter.map(|filter| filter.to_domain()))?;
     Ok(schema.map(|schema| FormSchemaNode { schema }))
 }
