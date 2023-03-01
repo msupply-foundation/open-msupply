@@ -230,5 +230,6 @@
   "log.stock-off-hold": "Stock débloqué",
   "log.stock-batch-change": "Lot modifié",
   "label.event": "Action",
-  "messages.saved": "Sauvegardé(e)"
+  "messages.saved": "Sauvegardé(e)",
+  "messages.confirm-status-as": "Confirmer le statut comme $t({{status}}) ?"
 }

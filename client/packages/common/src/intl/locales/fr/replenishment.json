@@ -74,7 +74,6 @@
   "messages.confirm-delete-shipment-lines_other": "Cela supprimera définitivement {{count}} lignes de livraison",
   "messages.confirm-delete-shipments_one": "Cette livraison sera définitivement supprimée",
   "messages.confirm-delete-shipments_other": "Cela supprimera définitivement {{count}} livraisons",
-  "messages.confirm-status-as": "Confirmer le statut comme $t({{status}}) ?",
   "messages.could-not-save": "Impossible de sauvegarder",
   "messages.deleted-lines": "{{number}} ligne(s) supprimée(s)",
   "messages.deleted-lines_one": "{{count}} ligne supprimée",
