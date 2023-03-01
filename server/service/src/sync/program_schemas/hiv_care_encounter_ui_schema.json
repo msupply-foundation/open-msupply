@@ -121,7 +121,6 @@
       "options": { "icon": "medicine" },
       "elements": [
         {
-          "scope": "#/properties/arvMedication/properties/regimen",
           "type": "EncounterProgramEvent",
           "label": "Current ARV Regimen",
           "options": {
