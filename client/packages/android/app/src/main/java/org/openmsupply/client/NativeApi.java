@@ -4,7 +4,9 @@ import static android.content.Context.NSD_SERVICE;
 
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
+import android.util.Log;
 import android.webkit.WebView;
+
 import com.getcapacitor.Bridge;
 import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
@@ -13,12 +15,18 @@ import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
+
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
+import javax.net.ssl.SSLHandshakeException;
+
 @CapacitorPlugin(name = "NativeApi")
 public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
+    public static final String OM_SUPPLY = "omSupply";
     DiscoveryConstants discoveryConstants;
     JSArray discoveredServers;
     Deque<NsdServiceInfo> serversToResolve;
@@ -64,12 +72,57 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         return localUrl;
     }
 
+    private void sleep(int delay) {
+        try {
+            Thread.sleep(delay);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     @Override
     protected void handleOnStart() {
         WebView webView = this.getBridge().getWebView();
+        webView.post(() -> webView.loadData(SplashPage.encodedHtml, "text/html", "base64"));
         // advertiseService();
-        // .post to run on UI thread
-        webView.post(() -> webView.loadUrl(localUrl + "/android"));
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Boolean isServerRunning = false;
+                Integer retryCount = 5;
+                while (!isServerRunning && retryCount > 0) {
+                    try {
+                        URL url = new URL(localUrl);
+                        HttpURLConnection urlc = (HttpURLConnection) url.openConnection();
+                        // actually no point - the timeout only applies when trying to find a server
+                        // when using localhost it returns immediately even if the server isn't
+                        // responding
+                        urlc.setConnectTimeout(1000);
+                        urlc.connect();
+                        if (urlc.getResponseCode() == 200) {
+                            isServerRunning = true;
+                        }
+                    } catch (SSLHandshakeException e) {
+                        // server is running and responding with an SSL error
+                        // which we will ignore, so ok to proceed
+                        isServerRunning = true;
+                    } catch (Exception e) {
+                        Log.e(OM_SUPPLY, e.getMessage());
+                        isServerRunning = false;
+                    }
+                    retryCount--;
+                    sleep(1000);
+                }
+
+                // .post to run on UI thread in the two calls below
+                if (isServerRunning) {
+                    webView.post(() -> webView.loadUrl(localUrl + "/android"));
+                } else {
+                    webView.post(() -> webView.loadData(ErrorPage.encodedHtml, "text/html", "base64"));
+                }
+            }
+        });
+        thread.start();
     }
 
     @Override
@@ -289,6 +342,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
 
     public class omSupplyServer {
         JSObject data;
+
         public omSupplyServer(JSObject data) {
             this.data = data;
         }
