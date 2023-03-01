@@ -299,7 +299,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     public void readLog(PluginCall call) {
 
         File file = new File(getContext().getFilesDir(),LOG_FILE_NAME);
-        ArrayList<String> log = new ArrayList<String>();
+        StringBuilder sb = new StringBuilder();
         JSObject response = new JSObject();
 
         try {
@@ -307,10 +307,11 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
             String line;
 
             while ((line = br.readLine()) != null) {
-                log.add(line);
+                sb.append(line);
+                sb.append("\n");
             }
             br.close();
-            response.put("log", log);
+            response.put("log", sb.toString());
         }
         catch (IOException e) {
             response.put("log", "Error: Unable to read log file!");
