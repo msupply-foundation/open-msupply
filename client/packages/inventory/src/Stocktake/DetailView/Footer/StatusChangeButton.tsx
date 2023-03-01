@@ -9,10 +9,10 @@ import {
   useConfirmationModal,
   StocktakeNodeStatus,
   noOtherVariants,
+  getErrorMessage,
 } from '@openmsupply-client/common';
 import { getNextStocktakeStatus, getStatusTranslation } from '../../../utils';
 import { useStocktake } from '../../api';
-import { errorMessage } from '../modal/StocktakeLineEdit/hooks';
 import { useStocktakeLineErrorContext } from '../../context';
 
 const getStatusOptions = (
@@ -84,7 +84,7 @@ const useStatusChangeButton = () => {
     try {
       result = await mutateAsync({ id, status: selectedOption.value });
     } catch (e) {
-      return errorNotification(errorMessage(e))();
+      return errorNotification(getErrorMessage(e))();
     }
 
     if (result.__typename === 'StocktakeNode') {
