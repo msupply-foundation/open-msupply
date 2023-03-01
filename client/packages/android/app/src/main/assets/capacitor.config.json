@@ -12,15 +12,5 @@
 		"hostname": "should.notmatch.localhost",
 		"cleartext": true
 	},
-	"plugins": {
-		"SplashScreen": {
-			"launchShowDuration": 0,
-			"backgroundColor": "#f2f2f5",
-			"androidScaleType": "CENTER_INSIDE",
-			"splashFullScreen": true,
-			"splashImmersive": true,
-			"layoutName": "launch_screen",
-			"useDialog": true
-		}
-	}
+	"plugins": {}
 }
