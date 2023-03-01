@@ -229,5 +229,6 @@
   "log.stock-sell-price-change": "Prix de vente modifié",
   "log.stock-off-hold": "Stock débloqué",
   "log.stock-batch-change": "Lot modifié",
-  "label.event": "Action"
+  "label.event": "Action",
+  "messages.saved": "Sauvegardé(e)"
 }
