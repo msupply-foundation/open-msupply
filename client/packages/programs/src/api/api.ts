@@ -21,6 +21,7 @@ import {
   EncounterFieldsFragment,
   EncounterFragment,
   EncounterRowFragment,
+  FormSchemaFragment,
   ProgramEnrolmentRowFragment,
   Sdk,
 } from './operations.generated';
@@ -346,5 +347,21 @@ export const getClinicianQueries = (sdk: Sdk, storeId: string) => ({
       return result.clinicians;
     }
     throw new Error('Error querying clinicians');
+  },
+});
+
+export const getFormSchemaQueries = (sdk: Sdk) => ({
+  get: {
+    byType: async (type: string): Promise<FormSchemaFragment> => {
+      const result = await sdk.formSchema({
+        filter: { type: { equalTo: type } },
+      });
+
+      if (result.formSchema?.__typename === 'FormSchemaNode') {
+        return result.formSchema;
+      }
+
+      throw new Error('Error querying form schema');
+    },
   },
 });

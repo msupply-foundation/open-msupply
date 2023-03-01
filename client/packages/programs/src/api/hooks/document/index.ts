@@ -23,6 +23,7 @@ import { useEncounters } from './useEncounters';
 import { useUpsertEncounter } from './useUpsertEncounter';
 
 import { useClinicians } from './useClinicians';
+import { useFormSchemaByType } from './useFormSchemaByType';
 
 export const Document = {
   useDocumentByName,
@@ -48,4 +49,6 @@ export const Document = {
   useUpsertEncounter,
 
   useClinicians,
+
+  useFormSchemaByType,
 };
