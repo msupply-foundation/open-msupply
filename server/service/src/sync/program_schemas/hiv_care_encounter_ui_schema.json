@@ -125,7 +125,7 @@
           "type": "EncounterProgramEvent",
           "label": "Current ARV Regimen",
           "options": {
-            "type": "arvMedicationRegimen"
+            "eventType": "arvMedicationRegimen"
           }
         },
         {
@@ -268,7 +268,8 @@
           "scope": "#/properties/arvMedication/properties/quantityPrescribed",
           "label": "Pill Count (at last visit end)",
           "options": {
-            "type": "arvMedicationQuantityPrescribed"
+            "eventType": "arvMedicationQuantityPrescribed",
+            "displayType": "number"
           }
         },
         {
