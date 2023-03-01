@@ -36,7 +36,7 @@ export const InventoryAdjustmentReasonSearchInput: FC<
 }) => {
   const { data, isLoading } =
     useInventoryAdjustmentReason.document.listAllActive();
-  const disabled = data?.totalCount === 0;
+  const disabled = data?.totalCount === 0 || stockReduction === 0;
   const isRequired = !disabled && stockReduction !== 0;
   const reasonFilter = (reason: InventoryAdjustmentReasonRowFragment) => {
     if (stockReduction === 0) return false;
