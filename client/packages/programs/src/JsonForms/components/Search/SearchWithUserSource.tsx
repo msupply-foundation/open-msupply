@@ -15,46 +15,15 @@ import {
   FORM_LABEL_COLUMN_WIDTH,
   FORM_INPUT_COLUMN_WIDTH,
 } from '../../common/styleConstants';
-import { z } from 'zod';
-import { useZodOptionsValidation } from '../../common/hooks/useZodOptionsValidation';
-import { useSearchQueries, QueryValues } from './useSearchQueries';
+import { useSearchQueries } from './useSearchQueries';
+import { UserOptions } from './Search';
 
 const MIN_CHARS = 3;
 
-const Options = z
-  .object({
-    source: z.enum(['user']),
-    /**
-     * Which pre-defined query to use (in useSearchQueries)
-     */
-    query: z.enum(QueryValues),
-    /**
-     * Pattern for formatting options list items (e.g. "${firstName} ${lastName}")
-     */
-    optionString: z.string().optional(),
-    /**
-     * Pattern for formatting selected result (as above)
-     */
-    displayString: z.string().optional(),
-    /**
-     * List of fields to save in document data (from selected item object)
-     */
-    saveFields: z.array(z.string()).optional(),
-    /**
-     * Text to show in input field before user entry
-     */
-    placeholderText: z.string().optional(),
-  })
-  .strict();
-
-type Options = z.infer<typeof Options>;
-
-export const SearchWithUserSource = (props: ControlProps) => {
-  const { data, path, handleChange, label, uischema, visible } = props;
-  const { errors: zErrors, options } = useZodOptionsValidation(
-    Options,
-    uischema.options
-  );
+export const SearchWithUserSource = (
+  props: ControlProps & { options: UserOptions }
+) => {
+  const { data, path, handleChange, label, visible, options } = props;
   const t = useTranslation('programs');
   const [searchText, setSearchText] = useState('');
   const [editMode, setEditMode] = useState(!data);
@@ -110,7 +79,7 @@ export const SearchWithUserSource = (props: ControlProps) => {
     }
   };
 
-  const error = zErrors ?? props.errors ?? queryError ?? null;
+  const error = props.errors ?? queryError ?? null;
 
   if (!visible) return null;
 
