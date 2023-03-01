@@ -40,7 +40,6 @@ export interface NativeAPI {
   advertiseService?: () => void;
   startBarcodeScan: () => Promise<number[]>;
   stopBarcodeScan: () => void;
-  hideSplashScreen: () => void;
 }
 
 declare global {
@@ -123,12 +122,6 @@ export const useNativeClient = ({
     nativeAPI.startServerDiscovery();
   };
 
-  const hideSplashScreen = () => {
-    if (Capacitor.isNativePlatform()) {
-      nativeAPI?.hideSplashScreen?.();
-    }
-  };
-
   useEffect(() => {
     if (!state.isDiscovering) return;
 
@@ -172,7 +165,6 @@ export const useNativeClient = ({
 
   useEffect(() => {
     startDiscovery();
-    hideSplashScreen();
   }, []);
 
   // Auto connect if autoconnect=true and server found matching previousConnectedServer

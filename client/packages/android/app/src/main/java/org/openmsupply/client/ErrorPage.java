@@ -1,6 +1,249 @@
 package org.openmsupply.client;
 
+import android.util.Base64;
+
 public class ErrorPage {
     // the unhappy man svg and the text "Oops! Something's gone wrong"
-    public static String encodedHtml = "PGRpdgogIHN0eWxlPSIKICAgIGFsaWduLWl0ZW1zOiBjZW50ZXI7CiAgICBkaXNwbGF5OiBmbGV4OwogICAgZmxleC1kaXJlY3Rpb246IGNvbHVtbjsKICAgIGhlaWdodDogMTAwJTsKICAgIGp1c3RpZnktY29udGVudDogY2VudGVyOwogICAgd2lkdGg6IDEwMCU7CiAgIgo+CiAgPGRpdj4KICAgIDxkaXY+CiAgICAgIDxzdmcKICAgICAgICB3aWR0aD0iMzAxIgogICAgICAgIGhlaWdodD0iMzAwIgogICAgICAgIHZpZXdCb3g9IjAgMCAzMDEgMzAwIgogICAgICAgIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIKICAgICAgICB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIKICAgICAgPgogICAgICAgIDx0aXRsZT5FcnJvciBpbGx1c3RyYXRpb248L3RpdGxlPgogICAgICAgIDxkZWZzPgogICAgICAgICAgPGxpbmVhckdyYWRpZW50IHgxPSIzMC42NjglIiB5MT0iNDAuMzg0JSIgeDI9IjY1Ljg4MSUiIHkyPSI1My40MTglIiBpZD0icHJlZml4X19jIj4KICAgICAgICAgICAgPHN0b3Agc3RvcC1jb2xvcj0iI0UxRTdFQSIgb2Zmc2V0PSIwJSI+PC9zdG9wPgogICAgICAgICAgICA8c3RvcCBzdG9wLWNvbG9yPSIjRDBENkRDIiBvZmZzZXQ9IjEwMCUiPjwvc3RvcD4KICAgICAgICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgICAgICAgICA8bGluZWFyR3JhZGllbnQgeDE9IjMxLjQzMiUiIHkxPSI0Mi4zNDklIiB4Mj0iNzIuMzEyJSIgeTI9IjU2LjYxNSUiIGlkPSJwcmVmaXhfX2UiPgogICAgICAgICAgICA8c3RvcCBzdG9wLWNvbG9yPSIjRTFFN0VBIiBvZmZzZXQ9IjAlIj48L3N0b3A+CiAgICAgICAgICAgIDxzdG9wIHN0b3AtY29sb3I9IiNEMEQ2REMiIG9mZnNldD0iMTAwJSI+PC9zdG9wPgogICAgICAgICAgPC9saW5lYXJHcmFkaWVudD4KICAgICAgICAgIDxsaW5lYXJHcmFkaWVudCB4MT0iNTAlIiB5MT0iNDUuODA4JSIgeDI9Ijc5LjE0MyUiIHkyPSI2NS4yMzIlIiBpZD0icHJlZml4X19mIj4KICAgICAgICAgICAgPHN0b3Agc3RvcC1jb2xvcj0iI0ZCRkJGQiIgb2Zmc2V0PSIwJSI+PC9zdG9wPgogICAgICAgICAgICA8c3RvcCBzdG9wLWNvbG9yPSIjRDlERkUzIiBvZmZzZXQ9IjEwMCUiPjwvc3RvcD4KICAgICAgICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgICAgICAgICA8bGluZWFyR3JhZGllbnQgeDE9IjI1LjE2JSIgeTE9IjMuMDY3JSIgeDI9IjQ5LjkyOCUiIHkyPSI4OS41MTQlIiBpZD0icHJlZml4X19nIj4KICAgICAgICAgICAgPHN0b3Agc3RvcC1jb2xvcj0iI0VDRUNFQyIgb2Zmc2V0PSIwJSI+PC9zdG9wPgogICAgICAgICAgICA8c3RvcCBzdG9wLWNvbG9yPSIjRTFFN0VBIiBvZmZzZXQ9IjcxLjc1NCUiPjwvc3RvcD4KICAgICAgICAgICAgPHN0b3Agc3RvcC1jb2xvcj0iI0JDQzNDQSIgb2Zmc2V0PSIxMDAlIj48L3N0b3A+CiAgICAgICAgICA8L2xpbmVhckdyYWRpZW50PgogICAgICAgICAgPGxpbmVhckdyYWRpZW50IHgxPSIyOS40ODklIiB5MT0iNTAlIiB4Mj0iMTAwJSIgeTI9IjUwJSIgaWQ9InByZWZpeF9faCI+CiAgICAgICAgICAgIDxzdG9wIHN0b3AtY29sb3I9IiNCQUM2RDIiIG9mZnNldD0iMCUiPjwvc3RvcD4KICAgICAgICAgICAgPHN0b3Agc3RvcC1jb2xvcj0iIzdGOEY5RiIgb2Zmc2V0PSIxMDAlIj48L3N0b3A+CiAgICAgICAgICA8L2xpbmVhckdyYWRpZW50PgogICAgICAgICAgPGxpbmVhckdyYWRpZW50IHgxPSI1MCUiIHkxPSI1MCUiIHgyPSI3Ni4zNTklIiB5Mj0iNzEuMjkzJSIgaWQ9InByZWZpeF9faSI+CiAgICAgICAgICAgIDxzdG9wIHN0b3AtY29sb3I9IiNFMUU3RUEiIG9mZnNldD0iMCUiPjwvc3RvcD4KICAgICAgICAgICAgPHN0b3Agc3RvcC1jb2xvcj0iI0QwRDZEQyIgb2Zmc2V0PSIxMDAlIj48L3N0b3A+CiAgICAgICAgICA8L2xpbmVhckdyYWRpZW50PgogICAgICAgICAgPGxpbmVhckdyYWRpZW50IHgxPSI3My4zNDElIiB5MT0iODkuODA0JSIgeDI9IjIzLjkwOSUiIHkyPSI1LjQ4NiUiIGlkPSJwcmVmaXhfX2oiPgogICAgICAgICAgICA8c3RvcCBzdG9wLWNvbG9yPSIjREFFMkU2IiBvZmZzZXQ9IjAlIj48L3N0b3A+CiAgICAgICAgICAgIDxzdG9wIHN0b3AtY29sb3I9IiNFM0VCRUYiIG9mZnNldD0iNTglIj48L3N0b3A+CiAgICAgICAgICAgIDxzdG9wIHN0b3AtY29sb3I9IiNFREY2RjkiIG9mZnNldD0iMTAwJSI+PC9zdG9wPgogICAgICAgICAgPC9saW5lYXJHcmFkaWVudD4KICAgICAgICAgIDxsaW5lYXJHcmFkaWVudCB4MT0iMjkuODE0JSIgeTE9IjQ3LjM2JSIgeDI9IjExMS4wNDglIiB5Mj0iNTAlIiBpZD0icHJlZml4X19rIj4KICAgICAgICAgICAgPHN0b3Agc3RvcC1jb2xvcj0iI0M0Q0REMSIgb2Zmc2V0PSIwJSI+PC9zdG9wPgogICAgICAgICAgICA8c3RvcCBzdG9wLWNvbG9yPSIjQzZDRkQzIiBzdG9wLW9wYWNpdHk9IjAiIG9mZnNldD0iMTAwJSI+PC9zdG9wPgogICAgICAgICAgPC9saW5lYXJHcmFkaWVudD4KICAgICAgICAgIDxsaW5lYXJHcmFkaWVudCB4MT0iNTAlIiB5MT0iMTAwJSIgeDI9IjUwJSIgeTI9IjAlIiBpZD0icHJlZml4X19sIj4KICAgICAgICAgICAgPHN0b3Agc3RvcC1jb2xvcj0iIzdBODdBRiIgb2Zmc2V0PSIwJSI+PC9zdG9wPgogICAgICAgICAgICA8c3RvcCBzdG9wLWNvbG9yPSIjNDQ0Rjc3IiBvZmZzZXQ9IjEwMCUiPjwvc3RvcD4KICAgICAgICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgICAgICAgICA8bGluZWFyR3JhZGllbnQgeDE9IjUwJSIgeTE9IjEwMCUiIHgyPSI1MCUiIHkyPSIwJSIgaWQ9InByZWZpeF9fbSI+CiAgICAgICAgICAgIDxzdG9wIHN0b3AtY29sb3I9IiM3QTg3QUYiIG9mZnNldD0iMCUiPjwvc3RvcD4KICAgICAgICAgICAgPHN0b3Agc3RvcC1jb2xvcj0iIzQ0NEY3NyIgb2Zmc2V0PSIxMDAlIj48L3N0b3A+CiAgICAgICAgICA8L2xpbmVhckdyYWRpZW50PgogICAgICAgICAgPGxpbmVhckdyYWRpZW50IHgxPSIxOC4xMyUiIHkxPSI0LjA4OCUiIHgyPSI3NC43MDMlIiB5Mj0iMTExLjU4OCUiIGlkPSJwcmVmaXhfX24iPgogICAgICAgICAgICA8c3RvcCBzdG9wLWNvbG9yPSIjRTVFOUYwIiBvZmZzZXQ9IjAlIj48L3N0b3A+CiAgICAgICAgICAgIDxzdG9wIHN0b3AtY29sb3I9IiNEMkRBRTgiIG9mZnNldD0iMTAwJSI+PC9zdG9wPgogICAgICAgICAgPC9saW5lYXJHcmFkaWVudD4KICAgICAgICAgIDxyYWRpYWxHcmFkaWVudAogICAgICAgICAgICBjeD0iNDMuMzclIgogICAgICAgICAgICBjeT0iMzQuNjglIgogICAgICAgICAgICBmeD0iNDMuMzclIgogICAgICAgICAgICBmeT0iMzQuNjglIgogICAgICAgICAgICByPSI1OC4xNDIlIgogICAgICAgICAgICBncmFkaWVudFRyYW5zZm9ybT0ibWF0cml4KDAgLTEgLjkwOTMzIDAgLjExOCAuNzgpIgogICAgICAgICAgICBpZD0icHJlZml4X19iIgogICAgICAgICAgPgogICAgICAgICAgICA8c3RvcCBzdG9wLWNvbG9yPSIjRUJFREYwIiBzdG9wLW9wYWNpdHk9IjAuMjQiIG9mZnNldD0iMCUiPjwvc3RvcD4KICAgICAgICAgICAgPHN0b3Agc3RvcC1jb2xvcj0iI0VCRURGMCIgc3RvcC1vcGFjaXR5PSIwLjg0NiIgb2Zmc2V0PSI1My42NzglIj48L3N0b3A+CiAgICAgICAgICAgIDxzdG9wIHN0b3AtY29sb3I9IiNFMEU0RTciIHN0b3Atb3BhY2l0eT0iMCIgb2Zmc2V0PSIxMDAlIj48L3N0b3A+CiAgICAgICAgICA8L3JhZGlhbEdyYWRpZW50PgogICAgICAgICAgPHBhdGgKICAgICAgICAgICAgZD0iTTI5Ny44MTggODYuMDc0QzMwNS4wMzEgNzEuNzI4IDI4NC40MTYgMCAxNDEuNDc5IDAgMzguMzA3IDAtOS4wNDYgNTguNzEgMS40MjMgODguNDY1IgogICAgICAgICAgICBpZD0icHJlZml4X19hIgogICAgICAgICAgPjwvcGF0aD4KICAgICAgICA8L2RlZnM+CiAgICAgICAgPGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj4KICAgICAgICAgIDxwYXRoIGQ9Ik0uNDY5IDBoMjk5LjA2M3YzMDBILjQ2OXoiPjwvcGF0aD4KICAgICAgICAgIDxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKC40NjkgMjcuMjczKSI+CiAgICAgICAgICAgIDxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAgMTU2LjIxMikiPgogICAgICAgICAgICAgIDxtYXNrIGlkPSJwcmVmaXhfX2QiIGZpbGw9IiNmZmYiPjx1c2UgeGxpbms6aHJlZj0iI3ByZWZpeF9fYSI+PC91c2U+PC9tYXNrPgogICAgICAgICAgICAgIDx1c2UgZmlsbD0idXJsKCNwcmVmaXhfX2IpIiBmaWxsLXJ1bGU9Im5vbnplcm8iIHhsaW5rOmhyZWY9IiNwcmVmaXhfX2EiPjwvdXNlPgogICAgICAgICAgICAgIDxlbGxpcHNlCiAgICAgICAgICAgICAgICBmaWxsPSJ1cmwoI3ByZWZpeF9fYykiCiAgICAgICAgICAgICAgICBmaWxsLXJ1bGU9Im5vbnplcm8iCiAgICAgICAgICAgICAgICBvcGFjaXR5PSIwLjY3MiIKICAgICAgICAgICAgICAgIG1hc2s9InVybCgjcHJlZml4X19kKSIKICAgICAgICAgICAgICAgIGN4PSIxMTkuNDM0IgogICAgICAgICAgICAgICAgY3k9IjQwLjIyNCIKICAgICAgICAgICAgICAgIHJ4PSI3Ljg2MSIKICAgICAgICAgICAgICAgIHJ5PSI0LjM4OCIKICAgICAgICAgICAgICA+PC9lbGxpcHNlPgogICAgICAgICAgICAgIDxlbGxpcHNlCiAgICAgICAgICAgICAgICBmaWxsPSJ1cmwoI3ByZWZpeF9fZSkiCiAgICAgICAgICAgICAgICBmaWxsLXJ1bGU9Im5vbnplcm8iCiAgICAgICAgICAgICAgICBvcGFjaXR5PSIwLjczIgogICAgICAgICAgICAgICAgbWFzaz0idXJsKCNwcmVmaXhfX2QpIgogICAgICAgICAgICAgICAgY3g9IjE5OS42NjYiCiAgICAgICAgICAgICAgICBjeT0iMzMuNTI1IgogICAgICAgICAgICAgICAgcng9IjEyLjQwMyIKICAgICAgICAgICAgICAgIHJ5PSI2Ljg0NSIKICAgICAgICAgICAgICA+PC9lbGxpcHNlPgogICAgICAgICAgICAgIDxlbGxpcHNlCiAgICAgICAgICAgICAgICBmaWxsPSJ1cmwoI3ByZWZpeF9fZikiCiAgICAgICAgICAgICAgICBmaWxsLXJ1bGU9Im5vbnplcm8iCiAgICAgICAgICAgICAgICBvcGFjaXR5PSIwLjczIgogICAgICAgICAgICAgICAgbWFzaz0idXJsKCNwcmVmaXhfX2QpIgogICAgICAgICAgICAgICAgY3g9IjU4LjUyIgogICAgICAgICAgICAgICAgY3k9IjE1LjI3MSIKICAgICAgICAgICAgICAgIHJ4PSIxMi40MDMiCiAgICAgICAgICAgICAgICByeT0iNi44NDUiCiAgICAgICAgICAgICAgPjwvZWxsaXBzZT4KICAgICAgICAgICAgPC9nPgogICAgICAgICAgICA8ZyBvcGFjaXR5PSIwLjMyMSIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMjE4LjU0NiAyNy40OTMpIiBmaWxsLXJ1bGU9Im5vbnplcm8iPgogICAgICAgICAgICAgIDxlbGxpcHNlCiAgICAgICAgICAgICAgICBmaWxsPSJ1cmwoI3ByZWZpeF9fZykiCiAgICAgICAgICAgICAgICBjeD0iMTMuNDE2IgogICAgICAgICAgICAgICAgY3k9IjkuMDc4IgogICAgICAgICAgICAgICAgcng9IjguMzg1IgogICAgICAgICAgICAgICAgcnk9IjguNDI1IgogICAgICAgICAgICAgID48L2VsbGlwc2U+CiAgICAgICAgICAgICAgPHBhdGgKICAgICAgICAgICAgICAgIGQ9Ik02LjM4NSA0Ljc0MUMyLjgyOCA1LjQ5My40OTMgNi43NjguNDk1IDguMjE4Yy4wMDQgMi4zMjUgNi4wMTcgNC4yMiAxMy40MyA0LjIzMSA3LjQxNC4wMTEgMTMuNDItMS44NjQgMTMuNDE3LTQuMTktLjAwMi0xLjQ2My0yLjgwNi0yLjQ5LTYuNDE5LTMuMjUiCiAgICAgICAgICAgICAgICBzdHJva2U9InVybCgjcHJlZml4X19oKSIKICAgICAgICAgICAgICAgIHN0cm9rZS13aWR0aD0iNS44ODgiCiAgICAgICAgICAgICAgICB0cmFuc2Zvcm09InJvdGF0ZSgyMCAxMy45MTkgOC41OTUpIgogICAgICAgICAgICAgID48L3BhdGg+CiAgICAgICAgICAgICAgPHBhdGgKICAgICAgICAgICAgICAgIGQ9Ik0yMS44MTggOS4wNzhjMC00LjY1My0zLjc1NC04LjQyNS04LjM4NS04LjQyNS00LjYzIDAtNy41MzEgMi45NzUtOC4xMyA2LjMzIDMuMjE0IDIuMDIxIDUuNTYyIDMuMjUgNy4wNDYgMy42ODQuNzEuMjA4IDEuNDEzLjQ3NyAyLjEzLjcxNmEzMi4xNiAzMi4xNiAwIDAwMi40NDMuNzA4Yy41NjUuMTQgMS4zNC4zNTcgMi4wNjQuNDkyLjk1My4xNzggMS44MDguMjU4IDEuODc1LjI1OC4xMTggMCAuMjQ4LS41My41MTUtMS4xNDguMTc4LS40MTEuMzI1LTEuMjgzLjQ0Mi0yLjYxNXoiCiAgICAgICAgICAgICAgICBmaWxsPSJ1cmwoI3ByZWZpeF9faSkiCiAgICAgICAgICAgICAgPjwvcGF0aD4KICAgICAgICAgICAgPC9nPgogICAgICAgICAgICA8ZWxsaXBzZQogICAgICAgICAgICAgIGZpbGw9InVybCgjcHJlZml4X19qKSIKICAgICAgICAgICAgICBvcGFjaXR5PSIwLjQxOCIKICAgICAgICAgICAgICBjeD0iNDcuNzM1IgogICAgICAgICAgICAgIGN5PSI4Ni4yNzUiCiAgICAgICAgICAgICAgcng9IjkuNzc3IgogICAgICAgICAgICAgIHJ5PSI5LjgyNiIKICAgICAgICAgICAgPjwvZWxsaXBzZT4KICAgICAgICAgICAgPGVsbGlwc2UKICAgICAgICAgICAgICBmaWxsPSJ1cmwoI3ByZWZpeF9faykiCiAgICAgICAgICAgICAgZmlsbC1ydWxlPSJub256ZXJvIgogICAgICAgICAgICAgIG9wYWNpdHk9IjAuNSIKICAgICAgICAgICAgICBjeD0iMTUzLjU1NyIKICAgICAgICAgICAgICBjeT0iMTcwLjA4NCIKICAgICAgICAgICAgICByeD0iMjkuMzMxIgogICAgICAgICAgICAgIHJ5PSI4LjA5MiIKICAgICAgICAgICAgPjwvZWxsaXBzZT4KICAgICAgICAgICAgPGcgZmlsbC1ydWxlPSJub256ZXJvIj4KICAgICAgICAgICAgICA8ZyB0cmFuc2Zvcm09InJvdGF0ZSgyMCA3MS4wMDIgNDAzLjkzNSkiPgogICAgICAgICAgICAgICAgPHBhdGgKICAgICAgICAgICAgICAgICAgZD0iTTEuMiAzLjIyMmgzLjQ1djE3Ni4yOTdhMS43MjUgMS43MjUgMCAwMS0zLjQ1IDBWMy4yMjJ6IgogICAgICAgICAgICAgICAgICBmaWxsPSIjRDhEOEQ4IgogICAgICAgICAgICAgICAgPjwvcGF0aD4KICAgICAgICAgICAgICAgIDxwYXRoCiAgICAgICAgICAgICAgICAgIGQ9Ik0xLjE1IDMuMzI1bDE5LjYyIDQuNjlhNzIuNjY2IDcyLjY2NiAwIDAwMjcuNzA1IDEuMTgyYzcuNzQ2LTEuMTY1IDE0Ljk5MSA0LjEwNyAxNi4yNjUgMTEuODM2bDYuNDIzIDM4Ljk3YS45Ny45NyAwIDAxLTEuNzYyLjY5NmwtMy4zMzctNC45ODdhMTIuMTE1IDEyLjExNSAwIDAwLTE1LjI4NS00LjE5NmwtMy40MDcgMS42MjVhMzEuNjA1IDMxLjYwNSAwIDAxLTI1Ljk4LjU1N0wxLjE1IDQ1LjA4N1YzLjMyNXoiCiAgICAgICAgICAgICAgICAgIGZpbGw9IiNFNTdBNzciCiAgICAgICAgICAgICAgICA+PC9wYXRoPgogICAgICAgICAgICAgICAgPHBhdGgKICAgICAgICAgICAgICAgICAgZD0iTTQ5LjM0NCAxOS42MjNhMy40NSAzLjQ1IDAgMDEwIDQuODhsLTguMTk5IDguMTk5IDguMiA4LjJhMy40NSAzLjQ1IDAgMTEtNC44OCA0Ljg4bC04LjItOC4yLTguMTk4IDguMTk4YTMuNDUgMy40NSAwIDExLTQuODgtNC44OGw4LjE5OC04LjE5OC04LjE5OC04LjE5N2EzLjQ1IDMuNDUgMCAxMTQuODgtNC44OGw4LjE5OCA4LjE5NyA4LjItOC4xOTlhMy40NSAzLjQ1IDAgMDE0Ljg4IDB6IgogICAgICAgICAgICAgICAgICBmaWxsPSIjRkZGIgogICAgICAgICAgICAgICAgPjwvcGF0aD4KICAgICAgICAgICAgICAgIDxlbGxpcHNlIGZpbGw9IiNEOEQ4RDgiIGN4PSIyLjMiIGN5PSIyLjMxMiIgcng9IjIuMyIgcnk9IjIuMzEyIj48L2VsbGlwc2U+CiAgICAgICAgICAgICAgPC9nPgogICAgICAgICAgICAgIDxwYXRoCiAgICAgICAgICAgICAgICBkPSJNMTA1LjEzMiAxMDIuNTMxYzEuMTUtLjU3OCAxLjcyNS0uNzcgMS43MjUtLjU3OHYzLjQ2OGwtMS4xNS41NzgtLjU3NS0zLjQ2OHoiCiAgICAgICAgICAgICAgICBmaWxsPSIjRkZFOUU5IgogICAgICAgICAgICAgID48L3BhdGg+CiAgICAgICAgICAgIDwvZz4KICAgICAgICAgICAgPGcgZmlsbC1ydWxlPSJub256ZXJvIj4KICAgICAgICAgICAgICA8cGF0aAogICAgICAgICAgICAgICAgZD0iTTEzNy44MSAxNjAuNDE3Yy0uMzg2LTEuNDE2LTEuMDg5LTIuMTctMi4xMDYtMi4yNjMtMS41MjctLjEzOC01LjgyNyA0LjQzNC02LjcyNSA2LjMyMS0uOSAxLjg4OCAxLjU1NiA0LjUzMyA0LjM1OSAxLjk5IDEuODY5LTEuNjk0IDMuMzYtMy43MSA0LjQ3Mi02LjA0OHoiCiAgICAgICAgICAgICAgICBmaWxsPSIjNjc3Mjg1IgogICAgICAgICAgICAgID48L3BhdGg+CiAgICAgICAgICAgICAgPHBhdGgKICAgICAgICAgICAgICAgIGQ9Ik0xMS43NTcgMTUuMDMxTDkuMjIxIDcuOTE5YTEuMzggMS4zOCAwIDAwLTIuNDkyLS4yMzJMNS4yMzQgMTAuMjVjLS4xNCA1LjY1LjkxMSA4LjggMy4xNTYgOS40NDkgMi4yNDUuNjQ5IDMuMzY3LS45MDcgMy4zNjctNC42Njh6IgogICAgICAgICAgICAgICAgZmlsbD0idXJsKCNwcmVmaXhfX2wpIgogICAgICAgICAgICAgICAgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTI3Ljg1IDE1MS41ODgpIgogICAgICAgICAgICAgID48L3BhdGg+CiAgICAgICAgICAgICAgPHBhdGgKICAgICAgICAgICAgICAgIGQ9Ik0xNjEuMjUyIDE2MC40MTdjLjM4Ny0xLjQxNiAxLjA5LTIuMTcgMi4xMDctMi4yNjMgMS41MjYtLjEzOCA1LjgyNiA0LjQzNCA2LjcyNSA2LjMyMS44OTkgMS44ODgtMS41NTYgNC41MzMtNC4zNiAxLjk5LTEuODY4LTEuNjk0LTMuMzU5LTMuNzEtNC40NzItNi4wNDh6IgogICAgICAgICAgICAgICAgZmlsbD0iIzY3NzI4NSIKICAgICAgICAgICAgICA+PC9wYXRoPgogICAgICAgICAgICAgIDxwYXRoCiAgICAgICAgICAgICAgICBkPSJNMTEuNzU3IDEwLjYzOEw5LjIyMSAzLjUyN2ExLjM4IDEuMzggMCAwMC0yLjQ5Mi0uMjMyTDUuMjM0IDUuODU3Yy0uMTQgNS42NS45MTEgOC44IDMuMTU2IDkuNDQ5IDIuMjQ1LjY1IDMuMzY3LS45MDcgMy4zNjctNC42Njh6IgogICAgICAgICAgICAgICAgZmlsbD0idXJsKCNwcmVmaXhfX2wpIgogICAgICAgICAgICAgICAgdHJhbnNmb3JtPSJtYXRyaXgoLTEgMCAwIDEgMTcxLjIxMyAxNTUuOTgxKSIKICAgICAgICAgICAgICA+PC9wYXRoPgogICAgICAgICAgICAgIDxwYXRoCiAgICAgICAgICAgICAgICBkPSJNMTIuMjUuMjY4Yy0uNjQgMS4yNjYtLjk2MSAyLjM0NC0uOTYxIDMuMjM0LS45NjIgMi4xNjUtMi41NDcgNS4wNzgtNS4yOTEgMTEuMTU1YTQuMjY4IDQuMjY4IDAgMDA2LjYwMyA1LjA1MWw4LjgxNS03LjI2MiA4LjY4NCA3LjIwNmE0LjMyNyA0LjMyNyAwIDAwNS41NTMtLjAyMiA0LjQ3MyA0LjQ3MyAwIDAwMS4xMy01LjM5NWMtMS4yMzMtMi41MDQtMi44MzYtNi4wODItNC44MTItMTAuNzMzIDAtLjg4LS4yOC0xLjc0My0uODM5LTIuNTg4TDEyLjI1MS4yNjh6IgogICAgICAgICAgICAgICAgZmlsbD0idXJsKCNwcmVmaXhfX20pIgogICAgICAgICAgICAgICAgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTI3Ljg1IDE1MS41ODgpIgogICAgICAgICAgICAgID48L3BhdGg+CiAgICAgICAgICAgIDwvZz4KICAgICAgICAgICAgPHBhdGgKICAgICAgICAgICAgICBkPSJNNy42NzMgMTkuMDc0Yy0xLjA0NiAxLjUzNS0xLjQzIDQuMjIyLTEuMTUgOC4wNjJoNC42MDFMOS4zNDggMzkuMTMzYTEuODMgMS44MyAwIDAwMS4xNyAxLjk4M2M0IDEuNDk0IDcuMjE1IDIuMzEzIDkuNjQ3IDIuNDU3IDIuNDIzLjE0NCA1LjgyNC0uNTI1IDEwLjIwNC0yLjAwN2ExLjgzIDEuODMgMCAwMDEuMTc3LTIuMjIzYy0uNzgyLTIuODIzLTIuMzY3LTYuODkyLTQuNzU2LTEyLjIwNy0uNjQuNzUyLjg0OC43NTIgNC40NjMgMC0uMjI1LTMuNDItLjgtNi4xMDctMS43MjUtOC4wNjItLjkyNS0xLjk1Ni0yLjQ1OC0zLjU4Ny00LjYwMS00Ljg5NEwxNi44IDEyLjk0Yy0yLjI1LjQ0MS0zLjk1Ljk3LTUuMSAxLjU4Ni0xLjcyNi45MjQtMi40NTggMi4yNDQtNC4wMjcgNC41NDh6IgogICAgICAgICAgICAgIGZpbGw9InVybCgjcHJlZml4X19uKSIKICAgICAgICAgICAgICBmaWxsLXJ1bGU9Im5vbnplcm8iCiAgICAgICAgICAgICAgdHJhbnNmb3JtPSJtYXRyaXgoLTEgMCAwIDEgMTY4LjcwNyAxMTcuNzU3KSIKICAgICAgICAgICAgPjwvcGF0aD4KICAgICAgICAgICAgPHBhdGgKICAgICAgICAgICAgICBkPSJNMTYxLjc1IDE0NC44N2wtLjE4NCA1LjQ3Ny0uNjE3IDIuNzQxLTQuMjQ3IDE3LjYwOC42NzcgMS40NjkuNDM4IDEuOTA3LS40MzggMS4yMTQtMS4xNS0uNDMxLTIuMy0xLjg4LS4zNTItMS4wNTlhMS42MTUgMS42MTUgMCAwMS4xMjQtMS4yOTdsMS4wMy0xLjg0IDMuMDg2LTE2LjQzOC0uMzEtNy4yNjUgNC4yNDItLjIwN3pNMTM3LjU2OSAxNDUuMDc2bC40OTYgNS4yNy42MTggMi43NDIgNC4yNDcgMTcuNjA4LS42NzcgMS40NjktLjQzOCAxLjkwNy40MzggMS4yMTQgMS4xNS0uNDMxIDIuMy0xLjg4LjM1MS0xLjA1OWMuMTQzLS40My4wOTgtLjkwMS0uMTIzLTEuMjk3bC0xLjAzLTEuODQtMy4wODYtMTYuNDM4LjI0LTcuMjY1aC00LjQ4NnoiCiAgICAgICAgICAgICAgZmlsbD0iI0ZERTdFNiIKICAgICAgICAgICAgICBmaWxsLXJ1bGU9Im5vbnplcm8iCiAgICAgICAgICAgID48L3BhdGg+CiAgICAgICAgICAgIDxwYXRoCiAgICAgICAgICAgICAgZD0iTTE0Ni44ODYgMTI2LjIxM2g0LjUzdjYuMTAybC0uMTYyLjI2Yy0xLjcwNCAyLjcxNC0yLjU1NiAzLjc5Mi0yLjU1NiAzLjIzMiAwLS41NzgtLjYwNC0xLjc0Mi0xLjgxMi0zLjQ5MnYtNi4xMDJ6IgogICAgICAgICAgICAgIGZpbGw9IiNGRUNFQ0QiCiAgICAgICAgICAgICAgZmlsbC1ydWxlPSJub256ZXJvIgogICAgICAgICAgICA+PC9wYXRoPgogICAgICAgICAgICA8cGF0aAogICAgICAgICAgICAgIGQ9Ik0xNDkuMDQ4IDEzMS4yMTNjMS42MDcuMDgyIDMuODU2LTMuMDA1IDMuODU2LTYuMDFzLS44MzktNi4wMTEtMy44NTYtNi4wMTFjLTMuMDE2IDAtNC4xNzcgMi42OTItNC4xNzcgNi4wMTEgMCAzLjMyIDIuNTcgNS45MjggNC4xNzcgNi4wMXoiCiAgICAgICAgICAgICAgZmlsbD0iI0ZGRTlFOSIKICAgICAgICAgICAgICBmaWxsLXJ1bGU9Im5vbnplcm8iCiAgICAgICAgICAgID48L3BhdGg+CiAgICAgICAgICAgIDxwYXRoCiAgICAgICAgICAgICAgZD0iTTE0NC40NzkgMTI2LjIwNWMuMzIxLTEuMTQ2LjMyMS0zLjY3Mi45NjQtMy43NTUuNjQzLS4wODIgMS45MjguMzk2IDMuMjEzLS41MzIuNjQzLS41MS45NjQtLjU3My45NjQtLjgzIDMuMjEzLjYxIDEuMjkyIDIuNDUgMi44OTIgNC40NzcuMTExLjE0MS4zMjYuMTQxLjY0MyAwIDAtMy4zMjctLjEwNy01LjEzOS0uMzIyLTUuNDM2LS4zMjEtLjQ0NS0xLjYwNi0yLjIzOC0yLjI0OS0uOTU5IDAtLjY0LTEuMjg1LTEuMy0yLjU3LS44MS0xLjI4Ni40OS0zLjIxNCAxLjQ1LTMuNTM1IDIuNzI5LS4zMjEgMS4yNzktLjY0MyAzLjgzNyAwIDUuMTE2eiIKICAgICAgICAgICAgICBmaWxsPSIjNTEzNDUwIgogICAgICAgICAgICA+PC9wYXRoPgogICAgICAgICAgPC9nPgogICAgICAgIDwvZz4KICAgICAgPC9zdmc+CiAgICA8L2Rpdj4KICA8L2Rpdj4KICA8ZGl2PgogICAgPGg1Pk9vcHMhIFNvbWV0aGluZydzIGdvbmUgd3JvbmcuPC9oNT4KICA8L2Rpdj4KPC9kaXY+Cg==";
+    // Simple HTML to show the SVG and some text, centred on the page
+
+    static String html = "<div\n" +
+            "  style=\"\n" +
+            "    align-items: center;\n" +
+            "    display: flex;\n" +
+            "    flex-direction: column;\n" +
+            "    height: 100%;\n" +
+            "    justify-content: center;\n" +
+            "    width: 100%;\n" +
+            "  \"\n" +
+            ">\n" +
+            "  <div>\n" +
+            "    <div>\n" +
+            "      <svg\n" +
+            "        width=\"301\"\n" +
+            "        height=\"300\"\n" +
+            "        viewBox=\"0 0 301 300\"\n" +
+            "        xmlns=\"http://www.w3.org/2000/svg\"\n" +
+            "        xmlns:xlink=\"http://www.w3.org/1999/xlink\"\n" +
+            "      >\n" +
+            "        <title>Error illustration</title>\n" +
+            "        <defs>\n" +
+            "          <linearGradient x1=\"30.668%\" y1=\"40.384%\" x2=\"65.881%\" y2=\"53.418%\" id=\"prefix__c\">\n" +
+            "            <stop stop-color=\"#E1E7EA\" offset=\"0%\"></stop>\n" +
+            "            <stop stop-color=\"#D0D6DC\" offset=\"100%\"></stop>\n" +
+            "          </linearGradient>\n" +
+            "          <linearGradient x1=\"31.432%\" y1=\"42.349%\" x2=\"72.312%\" y2=\"56.615%\" id=\"prefix__e\">\n" +
+            "            <stop stop-color=\"#E1E7EA\" offset=\"0%\"></stop>\n" +
+            "            <stop stop-color=\"#D0D6DC\" offset=\"100%\"></stop>\n" +
+            "          </linearGradient>\n" +
+            "          <linearGradient x1=\"50%\" y1=\"45.808%\" x2=\"79.143%\" y2=\"65.232%\" id=\"prefix__f\">\n" +
+            "            <stop stop-color=\"#FBFBFB\" offset=\"0%\"></stop>\n" +
+            "            <stop stop-color=\"#D9DFE3\" offset=\"100%\"></stop>\n" +
+            "          </linearGradient>\n" +
+            "          <linearGradient x1=\"25.16%\" y1=\"3.067%\" x2=\"49.928%\" y2=\"89.514%\" id=\"prefix__g\">\n" +
+            "            <stop stop-color=\"#ECECEC\" offset=\"0%\"></stop>\n" +
+            "            <stop stop-color=\"#E1E7EA\" offset=\"71.754%\"></stop>\n" +
+            "            <stop stop-color=\"#BCC3CA\" offset=\"100%\"></stop>\n" +
+            "          </linearGradient>\n" +
+            "          <linearGradient x1=\"29.489%\" y1=\"50%\" x2=\"100%\" y2=\"50%\" id=\"prefix__h\">\n" +
+            "            <stop stop-color=\"#BAC6D2\" offset=\"0%\"></stop>\n" +
+            "            <stop stop-color=\"#7F8F9F\" offset=\"100%\"></stop>\n" +
+            "          </linearGradient>\n" +
+            "          <linearGradient x1=\"50%\" y1=\"50%\" x2=\"76.359%\" y2=\"71.293%\" id=\"prefix__i\">\n" +
+            "            <stop stop-color=\"#E1E7EA\" offset=\"0%\"></stop>\n" +
+            "            <stop stop-color=\"#D0D6DC\" offset=\"100%\"></stop>\n" +
+            "          </linearGradient>\n" +
+            "          <linearGradient x1=\"73.341%\" y1=\"89.804%\" x2=\"23.909%\" y2=\"5.486%\" id=\"prefix__j\">\n" +
+            "            <stop stop-color=\"#DAE2E6\" offset=\"0%\"></stop>\n" +
+            "            <stop stop-color=\"#E3EBEF\" offset=\"58%\"></stop>\n" +
+            "            <stop stop-color=\"#EDF6F9\" offset=\"100%\"></stop>\n" +
+            "          </linearGradient>\n" +
+            "          <linearGradient x1=\"29.814%\" y1=\"47.36%\" x2=\"111.048%\" y2=\"50%\" id=\"prefix__k\">\n" +
+            "            <stop stop-color=\"#C4CDD1\" offset=\"0%\"></stop>\n" +
+            "            <stop stop-color=\"#C6CFD3\" stop-opacity=\"0\" offset=\"100%\"></stop>\n" +
+            "          </linearGradient>\n" +
+            "          <linearGradient x1=\"50%\" y1=\"100%\" x2=\"50%\" y2=\"0%\" id=\"prefix__l\">\n" +
+            "            <stop stop-color=\"#7A87AF\" offset=\"0%\"></stop>\n" +
+            "            <stop stop-color=\"#444F77\" offset=\"100%\"></stop>\n" +
+            "          </linearGradient>\n" +
+            "          <linearGradient x1=\"50%\" y1=\"100%\" x2=\"50%\" y2=\"0%\" id=\"prefix__m\">\n" +
+            "            <stop stop-color=\"#7A87AF\" offset=\"0%\"></stop>\n" +
+            "            <stop stop-color=\"#444F77\" offset=\"100%\"></stop>\n" +
+            "          </linearGradient>\n" +
+            "          <linearGradient x1=\"18.13%\" y1=\"4.088%\" x2=\"74.703%\" y2=\"111.588%\" id=\"prefix__n\">\n" +
+            "            <stop stop-color=\"#E5E9F0\" offset=\"0%\"></stop>\n" +
+            "            <stop stop-color=\"#D2DAE8\" offset=\"100%\"></stop>\n" +
+            "          </linearGradient>\n" +
+            "          <radialGradient\n" +
+            "            cx=\"43.37%\"\n" +
+            "            cy=\"34.68%\"\n" +
+            "            fx=\"43.37%\"\n" +
+            "            fy=\"34.68%\"\n" +
+            "            r=\"58.142%\"\n" +
+            "            gradientTransform=\"matrix(0 -1 .90933 0 .118 .78)\"\n" +
+            "            id=\"prefix__b\"\n" +
+            "          >\n" +
+            "            <stop stop-color=\"#EBEDF0\" stop-opacity=\"0.24\" offset=\"0%\"></stop>\n" +
+            "            <stop stop-color=\"#EBEDF0\" stop-opacity=\"0.846\" offset=\"53.678%\"></stop>\n" +
+            "            <stop stop-color=\"#E0E4E7\" stop-opacity=\"0\" offset=\"100%\"></stop>\n" +
+            "          </radialGradient>\n" +
+            "          <path\n" +
+            "            d=\"M297.818 86.074C305.031 71.728 284.416 0 141.479 0 38.307 0-9.046 58.71 1.423 88.465\"\n" +
+            "            id=\"prefix__a\"\n" +
+            "          ></path>\n" +
+            "        </defs>\n" +
+            "        <g fill=\"none\" fill-rule=\"evenodd\">\n" +
+            "          <path d=\"M.469 0h299.063v300H.469z\"></path>\n" +
+            "          <g transform=\"translate(.469 27.273)\">\n" +
+            "            <g transform=\"translate(0 156.212)\">\n" +
+            "              <mask id=\"prefix__d\" fill=\"#fff\"><use xlink:href=\"#prefix__a\"></use></mask>\n" +
+            "              <use fill=\"url(#prefix__b)\" fill-rule=\"nonzero\" xlink:href=\"#prefix__a\"></use>\n" +
+            "              <ellipse\n" +
+            "                fill=\"url(#prefix__c)\"\n" +
+            "                fill-rule=\"nonzero\"\n" +
+            "                opacity=\"0.672\"\n" +
+            "                mask=\"url(#prefix__d)\"\n" +
+            "                cx=\"119.434\"\n" +
+            "                cy=\"40.224\"\n" +
+            "                rx=\"7.861\"\n" +
+            "                ry=\"4.388\"\n" +
+            "              ></ellipse>\n" +
+            "              <ellipse\n" +
+            "                fill=\"url(#prefix__e)\"\n" +
+            "                fill-rule=\"nonzero\"\n" +
+            "                opacity=\"0.73\"\n" +
+            "                mask=\"url(#prefix__d)\"\n" +
+            "                cx=\"199.666\"\n" +
+            "                cy=\"33.525\"\n" +
+            "                rx=\"12.403\"\n" +
+            "                ry=\"6.845\"\n" +
+            "              ></ellipse>\n" +
+            "              <ellipse\n" +
+            "                fill=\"url(#prefix__f)\"\n" +
+            "                fill-rule=\"nonzero\"\n" +
+            "                opacity=\"0.73\"\n" +
+            "                mask=\"url(#prefix__d)\"\n" +
+            "                cx=\"58.52\"\n" +
+            "                cy=\"15.271\"\n" +
+            "                rx=\"12.403\"\n" +
+            "                ry=\"6.845\"\n" +
+            "              ></ellipse>\n" +
+            "            </g>\n" +
+            "            <g opacity=\"0.321\" transform=\"translate(218.546 27.493)\" fill-rule=\"nonzero\">\n" +
+            "              <ellipse\n" +
+            "                fill=\"url(#prefix__g)\"\n" +
+            "                cx=\"13.416\"\n" +
+            "                cy=\"9.078\"\n" +
+            "                rx=\"8.385\"\n" +
+            "                ry=\"8.425\"\n" +
+            "              ></ellipse>\n" +
+            "              <path\n" +
+            "                d=\"M6.385 4.741C2.828 5.493.493 6.768.495 8.218c.004 2.325 6.017 4.22 13.43 4.231 7.414.011 13.42-1.864 13.417-4.19-.002-1.463-2.806-2.49-6.419-3.25\"\n" +
+            "                stroke=\"url(#prefix__h)\"\n" +
+            "                stroke-width=\"5.888\"\n" +
+            "                transform=\"rotate(20 13.919 8.595)\"\n" +
+            "              ></path>\n" +
+            "              <path\n" +
+            "                d=\"M21.818 9.078c0-4.653-3.754-8.425-8.385-8.425-4.63 0-7.531 2.975-8.13 6.33 3.214 2.021 5.562 3.25 7.046 3.684.71.208 1.413.477 2.13.716a32.16 32.16 0 002.443.708c.565.14 1.34.357 2.064.492.953.178 1.808.258 1.875.258.118 0 .248-.53.515-1.148.178-.411.325-1.283.442-2.615z\"\n" +
+            "                fill=\"url(#prefix__i)\"\n" +
+            "              ></path>\n" +
+            "            </g>\n" +
+            "            <ellipse\n" +
+            "              fill=\"url(#prefix__j)\"\n" +
+            "              opacity=\"0.418\"\n" +
+            "              cx=\"47.735\"\n" +
+            "              cy=\"86.275\"\n" +
+            "              rx=\"9.777\"\n" +
+            "              ry=\"9.826\"\n" +
+            "            ></ellipse>\n" +
+            "            <ellipse\n" +
+            "              fill=\"url(#prefix__k)\"\n" +
+            "              fill-rule=\"nonzero\"\n" +
+            "              opacity=\"0.5\"\n" +
+            "              cx=\"153.557\"\n" +
+            "              cy=\"170.084\"\n" +
+            "              rx=\"29.331\"\n" +
+            "              ry=\"8.092\"\n" +
+            "            ></ellipse>\n" +
+            "            <g fill-rule=\"nonzero\">\n" +
+            "              <g transform=\"rotate(20 71.002 403.935)\">\n" +
+            "                <path\n" +
+            "                  d=\"M1.2 3.222h3.45v176.297a1.725 1.725 0 01-3.45 0V3.222z\"\n" +
+            "                  fill=\"#D8D8D8\"\n" +
+            "                ></path>\n" +
+            "                <path\n" +
+            "                  d=\"M1.15 3.325l19.62 4.69a72.666 72.666 0 0027.705 1.182c7.746-1.165 14.991 4.107 16.265 11.836l6.423 38.97a.97.97 0 01-1.762.696l-3.337-4.987a12.115 12.115 0 00-15.285-4.196l-3.407 1.625a31.605 31.605 0 01-25.98.557L1.15 45.087V3.325z\"\n" +
+            "                  fill=\"#E57A77\"\n" +
+            "                ></path>\n" +
+            "                <path\n" +
+            "                  d=\"M49.344 19.623a3.45 3.45 0 010 4.88l-8.199 8.199 8.2 8.2a3.45 3.45 0 11-4.88 4.88l-8.2-8.2-8.198 8.198a3.45 3.45 0 11-4.88-4.88l8.198-8.198-8.198-8.197a3.45 3.45 0 114.88-4.88l8.198 8.197 8.2-8.199a3.45 3.45 0 014.88 0z\"\n" +
+            "                  fill=\"#FFF\"\n" +
+            "                ></path>\n" +
+            "                <ellipse fill=\"#D8D8D8\" cx=\"2.3\" cy=\"2.312\" rx=\"2.3\" ry=\"2.312\"></ellipse>\n" +
+            "              </g>\n" +
+            "              <path\n" +
+            "                d=\"M105.132 102.531c1.15-.578 1.725-.77 1.725-.578v3.468l-1.15.578-.575-3.468z\"\n" +
+            "                fill=\"#FFE9E9\"\n" +
+            "              ></path>\n" +
+            "            </g>\n" +
+            "            <g fill-rule=\"nonzero\">\n" +
+            "              <path\n" +
+            "                d=\"M137.81 160.417c-.386-1.416-1.089-2.17-2.106-2.263-1.527-.138-5.827 4.434-6.725 6.321-.9 1.888 1.556 4.533 4.359 1.99 1.869-1.694 3.36-3.71 4.472-6.048z\"\n" +
+            "                fill=\"#677285\"\n" +
+            "              ></path>\n" +
+            "              <path\n" +
+            "                d=\"M11.757 15.031L9.221 7.919a1.38 1.38 0 00-2.492-.232L5.234 10.25c-.14 5.65.911 8.8 3.156 9.449 2.245.649 3.367-.907 3.367-4.668z\"\n" +
+            "                fill=\"url(#prefix__l)\"\n" +
+            "                transform=\"translate(127.85 151.588)\"\n" +
+            "              ></path>\n" +
+            "              <path\n" +
+            "                d=\"M161.252 160.417c.387-1.416 1.09-2.17 2.107-2.263 1.526-.138 5.826 4.434 6.725 6.321.899 1.888-1.556 4.533-4.36 1.99-1.868-1.694-3.359-3.71-4.472-6.048z\"\n" +
+            "                fill=\"#677285\"\n" +
+            "              ></path>\n" +
+            "              <path\n" +
+            "                d=\"M11.757 10.638L9.221 3.527a1.38 1.38 0 00-2.492-.232L5.234 5.857c-.14 5.65.911 8.8 3.156 9.449 2.245.65 3.367-.907 3.367-4.668z\"\n" +
+            "                fill=\"url(#prefix__l)\"\n" +
+            "                transform=\"matrix(-1 0 0 1 171.213 155.981)\"\n" +
+            "              ></path>\n" +
+            "              <path\n" +
+            "                d=\"M12.25.268c-.64 1.266-.961 2.344-.961 3.234-.962 2.165-2.547 5.078-5.291 11.155a4.268 4.268 0 006.603 5.051l8.815-7.262 8.684 7.206a4.327 4.327 0 005.553-.022 4.473 4.473 0 001.13-5.395c-1.233-2.504-2.836-6.082-4.812-10.733 0-.88-.28-1.743-.839-2.588L12.251.268z\"\n" +
+            "                fill=\"url(#prefix__m)\"\n" +
+            "                transform=\"translate(127.85 151.588)\"\n" +
+            "              ></path>\n" +
+            "            </g>\n" +
+            "            <path\n" +
+            "              d=\"M7.673 19.074c-1.046 1.535-1.43 4.222-1.15 8.062h4.601L9.348 39.133a1.83 1.83 0 001.17 1.983c4 1.494 7.215 2.313 9.647 2.457 2.423.144 5.824-.525 10.204-2.007a1.83 1.83 0 001.177-2.223c-.782-2.823-2.367-6.892-4.756-12.207-.64.752.848.752 4.463 0-.225-3.42-.8-6.107-1.725-8.062-.925-1.956-2.458-3.587-4.601-4.894L16.8 12.94c-2.25.441-3.95.97-5.1 1.586-1.726.924-2.458 2.244-4.027 4.548z\"\n" +
+            "              fill=\"url(#prefix__n)\"\n" +
+            "              fill-rule=\"nonzero\"\n" +
+            "              transform=\"matrix(-1 0 0 1 168.707 117.757)\"\n" +
+            "            ></path>\n" +
+            "            <path\n" +
+            "              d=\"M161.75 144.87l-.184 5.477-.617 2.741-4.247 17.608.677 1.469.438 1.907-.438 1.214-1.15-.431-2.3-1.88-.352-1.059a1.615 1.615 0 01.124-1.297l1.03-1.84 3.086-16.438-.31-7.265 4.242-.207zM137.569 145.076l.496 5.27.618 2.742 4.247 17.608-.677 1.469-.438 1.907.438 1.214 1.15-.431 2.3-1.88.351-1.059c.143-.43.098-.901-.123-1.297l-1.03-1.84-3.086-16.438.24-7.265h-4.486z\"\n" +
+            "              fill=\"#FDE7E6\"\n" +
+            "              fill-rule=\"nonzero\"\n" +
+            "            ></path>\n" +
+            "            <path\n" +
+            "              d=\"M146.886 126.213h4.53v6.102l-.162.26c-1.704 2.714-2.556 3.792-2.556 3.232 0-.578-.604-1.742-1.812-3.492v-6.102z\"\n" +
+            "              fill=\"#FECECD\"\n" +
+            "              fill-rule=\"nonzero\"\n" +
+            "            ></path>\n" +
+            "            <path\n" +
+            "              d=\"M149.048 131.213c1.607.082 3.856-3.005 3.856-6.01s-.839-6.011-3.856-6.011c-3.016 0-4.177 2.692-4.177 6.011 0 3.32 2.57 5.928 4.177 6.01z\"\n" +
+            "              fill=\"#FFE9E9\"\n" +
+            "              fill-rule=\"nonzero\"\n" +
+            "            ></path>\n" +
+            "            <path\n" +
+            "              d=\"M144.479 126.205c.321-1.146.321-3.672.964-3.755.643-.082 1.928.396 3.213-.532.643-.51.964-.573.964-.83 3.213.61 1.292 2.45 2.892 4.477.111.141.326.141.643 0 0-3.327-.107-5.139-.322-5.436-.321-.445-1.606-2.238-2.249-.959 0-.64-1.285-1.3-2.57-.81-1.286.49-3.214 1.45-3.535 2.729-.321 1.279-.643 3.837 0 5.116z\"\n" +
+            "              fill=\"#513450\"\n" +
+            "            ></path>\n" +
+            "          </g>\n" +
+            "        </g>\n" +
+            "      </svg>\n" +
+            "    </div>\n" +
+            "  </div>\n" +
+            "  <div>\n" +
+            "    <h5>Oops! Something's gone wrong.</h5>\n" +
+            "  </div>\n" +
+            "</div>\n";
+    public static String encodedHtml = Base64.encodeToString(html.getBytes(), Base64.NO_PADDING);
+
 }

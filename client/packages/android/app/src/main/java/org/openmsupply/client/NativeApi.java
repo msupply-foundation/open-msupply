@@ -2,16 +2,10 @@ package org.openmsupply.client;
 
 import static android.content.Context.NSD_SERVICE;
 
-import android.app.Activity;
-import android.app.Dialog;
-import android.content.Context;
-import android.content.res.Resources;
-import android.graphics.drawable.Drawable;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
 import android.util.Log;
 import android.webkit.WebView;
-import android.widget.LinearLayout;
 
 import com.getcapacitor.Bridge;
 import com.getcapacitor.JSArray;
@@ -32,6 +26,7 @@ import javax.net.ssl.SSLHandshakeException;
 
 @CapacitorPlugin(name = "NativeApi")
 public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
+    public static final String OM_SUPPLY = "omSupply";
     DiscoveryConstants discoveryConstants;
     JSArray discoveredServers;
     Deque<NsdServiceInfo> serversToResolve;
@@ -43,7 +38,6 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     boolean isDiscovering;
     boolean isResolvingServer;
     boolean shouldRestartDiscovery;
-    Dialog splashScreen;
 
     @Override
     public void load() {
@@ -89,7 +83,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     @Override
     protected void handleOnStart() {
         WebView webView = this.getBridge().getWebView();
-        showSplashScreen();
+        webView.post(() -> webView.loadData(SplashPage.encodedHtml, "text/html", "base64"));
         // advertiseService();
         Thread thread = new Thread(new Runnable() {
             @Override
@@ -113,7 +107,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
                         // which we will ignore, so ok to proceed
                         isServerRunning = true;
                     } catch (Exception e) {
-                        Log.e("omSupply", e.getMessage());
+                        Log.e(OM_SUPPLY, e.getMessage());
                         isServerRunning = false;
                     }
                     retryCount--;
@@ -125,73 +119,10 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
                     webView.post(() -> webView.loadUrl(localUrl + "/android"));
                 } else {
                     webView.post(() -> webView.loadData(ErrorPage.encodedHtml, "text/html", "base64"));
-                    hideSplash();
                 }
             }
         });
         thread.start();
-    }
-
-    private Drawable getSplashDrawable(Context context) {
-        int splashId = context.getResources().getIdentifier("splash", "drawable", context.getPackageName());
-        try {
-            Drawable drawable = context.getResources().getDrawable(splashId, context.getTheme());
-            return drawable;
-        } catch (Resources.NotFoundException ex) {
-            Log.w("omSupply", "No splash image found");
-            return null;
-        }
-    }
-
-    private void showSplashScreen() {
-        if (this.splashScreen != null) {
-            return;
-        }
-
-        Bridge bridge = this.getBridge();
-        Context context = bridge.getContext();
-        Activity activity = bridge.getActivity();
-
-        activity.runOnUiThread(
-                () -> {
-                    this.splashScreen = new Dialog(activity, R.style.capacitor_immersive_style);
-
-                    Drawable splash = getSplashDrawable(context);
-                    LinearLayout parent = new LinearLayout(context);
-                    parent.setLayoutParams(
-                            new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
-                                    LinearLayout.LayoutParams.WRAP_CONTENT));
-                    parent.setOrientation(LinearLayout.VERTICAL);
-                    if (splash != null) {
-                        parent.setBackground(splash);
-                    }
-                    this.splashScreen.setContentView(parent);
-
-                    this.splashScreen.setCancelable(false);
-                    if (!this.splashScreen.isShowing()) {
-                        this.splashScreen.show();
-                    }
-                });
-    }
-
-    @PluginMethod()
-    public void hideSplashScreen(PluginCall call) {
-        this.hideSplash();
-    }
-
-    private void hideSplash() {
-        Bridge bridge = this.getBridge();
-        WebView webView = bridge.getWebView();
-        Activity activity = bridge.getActivity();
-        webView.post(
-                () -> {
-                    if (this.splashScreen != null && this.splashScreen.isShowing()) {
-                        if (!activity.isFinishing() && !activity.isDestroyed()) {
-                            this.splashScreen.dismiss();
-                        }
-                        this.splashScreen = null;
-                    }
-                });
     }
 
     @Override
