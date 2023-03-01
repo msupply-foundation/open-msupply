@@ -240,5 +240,6 @@
   "placeholder.search-by-name-or-code": "Buka bazeia ba naran ka kodigu",
   "success": "Susesu!",
   "success.sync-settings": "Settings sinkronizasaun actualiza ho usesu!",
-  "messages.saved": "Salva ona"
+  "messages.saved": "Salva ona",
+  "messages.confirm-status-as": "Konfirma estatus hanesan $t({{estatus}})?"
 }
