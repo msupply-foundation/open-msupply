@@ -11,52 +11,25 @@ import {
   FORM_LABEL_COLUMN_WIDTH,
   FORM_INPUT_COLUMN_WIDTH,
 } from '../../common/styleConstants';
-import { z } from 'zod';
-import { useZodOptionsValidation } from '../../common/hooks/useZodOptionsValidation';
 import { usePatientStore } from 'packages/programs/src/hooks';
 import { useEncounter } from '../../../api';
 import { RegexUtils } from '@openmsupply-client/common';
-
-const Options = z
-  .object({
-    source: z.enum(['document']),
-    /**
-     * Source document type. Either the current patient or the current encounter (if applicable).
-     */
-    document: z.enum(['patient', 'encounter']),
-    /**
-     * Path in the specified document to extract
-     */
-    path: z.string(),
-    /**
-     * Pattern for formatting selected result (as above)
-     */
-    displayString: z.string().optional(),
-    /**
-     * List of fields to be saved in the document data (from selected source document)
-     * The fields are stored in an object at the `scope` path of this UI control.
-     */
-    saveFields: z.array(z.string()).optional(),
-  })
-  .strict();
-
-type Options = z.infer<typeof Options>;
+import { DocumentOptions } from './Search';
 
 const { formatTemplateString, removeEmptyLines } = RegexUtils;
 
-export const SearchWithDocumentSource = (props: ControlProps) => {
+export const SearchWithDocumentSource = (
+  props: ControlProps & { options: DocumentOptions }
+) => {
   const {
     errors: formErrors,
     path,
     handleChange,
     label,
-    uischema,
     visible,
+    options,
   } = props;
-  const { errors: zErrors, options } = useZodOptionsValidation(
-    Options,
-    uischema.options
-  );
+
   const { currentPatient = {} } = usePatientStore();
 
   const {
@@ -68,18 +41,18 @@ export const SearchWithDocumentSource = (props: ControlProps) => {
   const t = useTranslation('programs');
 
   const documentData =
-    options?.document === 'patient'
+    options?.['document'] === 'patient'
       ? currentPatient
-      : options?.document === 'encounter'
+      : options?.['document'] === 'encounter'
       ? currentEncounter
       : undefined;
 
-  const requestedData = extractProperty(documentData, options?.path ?? '');
+  const requestedData = extractProperty(documentData, options?.['path'] ?? '');
 
   useEffect(() => {
     if (!requestedData) return;
 
-    if (!options?.saveFields) {
+    if (!options?.['saveFields']) {
       handleChange(path, requestedData);
       return;
     }
@@ -93,9 +66,13 @@ export const SearchWithDocumentSource = (props: ControlProps) => {
 
   const displayElement = (
     <Typography style={{ whiteSpace: 'pre' }}>
-      {options?.displayString ? (
+      {options?.['displayString'] ? (
         removeEmptyLines(
-          formatTemplateString(options.displayString, requestedData ?? {}, '')
+          formatTemplateString(
+            options['displayString'],
+            requestedData ?? {},
+            ''
+          )
         )
       ) : (
         <pre>{JSON.stringify(requestedData, null, 2)}</pre>
@@ -104,12 +81,11 @@ export const SearchWithDocumentSource = (props: ControlProps) => {
   );
 
   const getError = () => {
-    if (zErrors) return zErrors;
     if (formErrors) return formErrors;
     if (isLoading) return null;
     if (isError || !documentData) return t('control.search.error.no-document');
     if (!requestedData)
-      return t('control.search.error.no-data', { docPath: options?.path });
+      return t('control.search.error.no-data', { docPath: options?.['path'] });
     return null;
   };
 
