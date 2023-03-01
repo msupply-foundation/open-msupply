@@ -44,8 +44,6 @@ fn file_logger(settings: &LoggingSettings) -> LogConfig {
     let max_file_count = settings.max_file_count.unwrap_or(default_max_file_count);
     let max_file_size = settings.max_file_size.unwrap_or(default_max_file_size);
 
-    log::info!("Logging to {}", &log_file);
-
     // file_loop will append to the specified log file until the max size is reached,
     // then create a new log file with the same name, with date and time appended
     // file_split will split the temp file when the max file size is reached
