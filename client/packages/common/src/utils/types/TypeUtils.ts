@@ -8,3 +8,7 @@ export const TypeUtils = {
 export const noOtherVariants = (variant: never): never => {
   throw new Error(`Should never match this variant: ${variant}`);
 };
+
+export const getLinesFromRow = <T extends object>(
+  row: T | ({ lines: T[] })
+) => ('lines' in row) ? row.lines : [row];
