@@ -8,15 +8,12 @@ pub mod android {
 
     use jni::sys::jchar;
     use repository::database_settings::DatabaseSettings;
-    use server::start_server;
+    use server::{logging_init, start_server};
     use service::settings::{LogMode, LoggingSettings, ServerSettings, Settings};
     use tokio::sync::mpsc;
 
     use self::jni::objects::{JClass, JString};
     use self::jni::JNIEnv;
-
-    use android_logger::Config;
-    use log::Level;
 
     struct ServerBucket {
         off_switch: mpsc::Sender<()>,
@@ -34,11 +31,6 @@ pub mod android {
         cache_dir: JString,
         android_id: JString,
     ) {
-        android_logger::init_once(
-            Config::default()
-                .with_min_level(Level::Info)
-                .with_tag("omSupply"),
-        );
         log_panics::init();
 
         let (off_switch, off_switch_receiver) = mpsc::channel(1);
@@ -73,6 +65,9 @@ pub mod android {
                     .with_directory(files_dir.to_string_lossy().to_string()),
             ),
         };
+
+        logging_init(settings.logging.clone());
+        log::info!("Starting server");
 
         // run server in background thread
         let thread = thread::spawn(move || {

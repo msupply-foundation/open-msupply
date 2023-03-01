@@ -4,6 +4,7 @@ import static android.content.Context.NSD_SERVICE;
 
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
+import android.os.Environment;
 import android.webkit.WebView;
 import com.getcapacitor.Bridge;
 import com.getcapacitor.JSArray;
@@ -13,12 +14,19 @@ import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
 
 @CapacitorPlugin(name = "NativeApi")
 public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
+    private static final String LOG_FILE_NAME = "remote_server.log";
     DiscoveryConstants discoveryConstants;
     JSArray discoveredServers;
     Deque<NsdServiceInfo> serversToResolve;
@@ -285,6 +293,30 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         if (shouldRestartDiscovery) {
             startServerDiscovery(null);
         }
+    }
+
+    @PluginMethod()
+    public void readLog(PluginCall call) {
+
+        File file = new File(getContext().getFilesDir(),LOG_FILE_NAME);
+        ArrayList<String> log = new ArrayList<String>();
+        JSObject response = new JSObject();
+
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(file));
+            String line;
+
+            while ((line = br.readLine()) != null) {
+                log.add(line);
+            }
+            br.close();
+            response.put("log", log);
+        }
+        catch (IOException e) {
+            response.put("log", "Error: Unable to read log file!");
+            response.put("error", e.getMessage());
+        }
+        call.resolve(response);
     }
 
     public class omSupplyServer {
