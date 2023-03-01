@@ -99,12 +99,13 @@ const CategoryLayoutRendererComponent = ({
 };
 const CategoryLayoutRenderer = React.memo(CategoryLayoutRendererComponent);
 
-// Try to extract a more precise error path
+// Try to extract a more precise error path.
+// If undefined is returned the error can be ignored.
 const propertyPathFromError = (error: {
   instancePath: string;
   keyword: string;
   params: Record<string, any>;
-}): string => {
+}): string | undefined => {
   // see https://ajv.js.org/api.html#error-objects
   switch (error.keyword) {
     case 'dependencies':
@@ -113,14 +114,21 @@ const propertyPathFromError = (error: {
       return `${error.instancePath}/${error.params['missingProperty']}`;
     case 'propertyNames':
       return `${error.instancePath}/${error.params['propertyName']}`;
+    case 'if':
+      // An `if` condition failed. This means some other properties failed as well. To avoid
+      // duplicated errors, this error is ignored.
+      // For example, if a required property `obj.field1` is missing as part of an if/then condition
+      // there will be two errors:
+      // The error for the 'required' `obj.field1` and this error for the failing 'if'.
+      return undefined;
     default:
       return error.instancePath;
   }
 };
 
 // Recursively goes through a layout and collects all element paths that have errors
-const containsErrors = (layout: Layout, errorPaths: string[]): string[] => {
-  const results = [];
+const containsErrors = (layout: Layout, errorPaths: string[]): Set<string> => {
+  const results = new Set<string>();
   for (const element of layout.elements) {
     if (isScoped(element)) {
       const scopePath = toDataPathSegments(element.scope).reduce(
@@ -130,12 +138,14 @@ const containsErrors = (layout: Layout, errorPaths: string[]): string[] => {
         ''
       );
       for (const errorPath of errorPaths) {
-        if (scopePath.startsWith(errorPath)) {
-          results.push(errorPath);
+        if (scopePath == errorPath) {
+          results.add(errorPath);
         }
       }
     } else if (isLayout(element)) {
-      results.push(...containsErrors(element, errorPaths));
+      containsErrors(element, errorPaths).forEach(err => {
+        results.add(err);
+      });
     }
   }
   return results;
@@ -151,7 +161,7 @@ const ErrorStringComponent: FC<{
     return null;
   }
   const foundPaths = containsErrors(category, errorPaths);
-  if (foundPaths.length === 0) {
+  if (foundPaths.size === 0) {
     return null;
   }
   return (
@@ -166,7 +176,7 @@ const ErrorStringComponent: FC<{
         paddingX: 2,
       }}
     >
-      {t('error.missing-inputs', { count: foundPaths.length })}
+      {t('error.missing-inputs', { count: foundPaths.size })}
     </Typography>
   );
 };
@@ -190,7 +200,10 @@ const UIComponent: FC<LayoutProps & AjvProps> = ({
   );
 
   const { core } = useJsonForms();
-  const errorPaths = core?.errors?.map(e => propertyPathFromError(e)) ?? [];
+  const errorPaths =
+    core?.errors
+      ?.map(e => propertyPathFromError(e))
+      .filter((it): it is string => !!it) ?? [];
 
   const childProps: MaterialLayoutRendererProps = {
     elements:
