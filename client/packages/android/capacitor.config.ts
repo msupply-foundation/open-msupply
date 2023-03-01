@@ -23,15 +23,6 @@ const config: CapacitorConfig = {
     cleartext: true,
   },
   plugins: {
-    SplashScreen: {
-      launchShowDuration: 0,
-      backgroundColor: '#f2f2f5',
-      androidScaleType: 'CENTER_INSIDE',
-      splashFullScreen: true,
-      splashImmersive: true,
-      layoutName: 'launch_screen',
-      useDialog: true,
-    },
     // Below will turn on debug (uncomment and run `yarn apply-config`)
     //   NativeApi: {
     //     debugUrl: 'http://192.168.178.146:3003',
