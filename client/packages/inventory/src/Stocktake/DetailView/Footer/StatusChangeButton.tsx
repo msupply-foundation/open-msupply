@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
+import { mapValues, keyBy, mapKeys } from 'lodash';
 import {
   ArrowRightIcon,
   useTranslation,
@@ -12,10 +13,7 @@ import {
 import { getNextStocktakeStatus, getStatusTranslation } from '../../../utils';
 import { useStocktake } from '../../api';
 import { errorMessage } from '../modal/StocktakeLineEdit/hooks';
-import {
-  StocktakeLineError,
-  useStocktakeLineErrorContext,
-} from '../../context';
+import { useStocktakeLineErrorContext } from '../../context';
 
 const getStatusOptions = (
   getButtonLabel: (status: StocktakeNodeStatus) => string
@@ -104,32 +102,31 @@ const useStatusChangeButton = () => {
       return errorNotification(t('error.is-locked'))();
     }
 
-    let stocktakeLineIdsWithErrors: {
-      [stocktakeLineId: string]: StocktakeLineError;
-    } = {};
     // By line errors
     switch (error.__typename) {
       case 'StockLinesReducedBelowZero':
         // StockLinesReducedBelowZero.errors contains an array of StockLineReducedBelowZero which have StockLines
         // we want to match StocktakeLine ids for those errors
-        stocktakeLineIdsWithErrors = error.errors.reduce((acc, innerError) => {
-          const stocktakeLine = lines.nodes.find(
-            line => line.stockLine?.id === innerError.stockLine.id
-          );
-          if (!stocktakeLine) return acc;
-          return { ...acc, [stocktakeLine.id]: innerError };
-        }, stocktakeLineIdsWithErrors);
 
-        errors.setErrors(stocktakeLineIdsWithErrors);
+        // ids = { stockLineId: stocktakeLineId }
+        const ids = mapValues(
+          mapKeys(lines.nodes, line => line.stockLine?.id),
+          'id'
+        );
+        // mappedErrors = { stockLineId: StockLineReducedBelowZero }
+        const mappedErrors = mapKeys(
+          error.errors,
+          line => ids[line.stockLine.id]
+        );
+
+        errors.setErrors(mappedErrors);
         return errorNotification(
           t('error.stocktake-has-stock-reduced-below-zero')
         )();
       case 'SnapshotCountCurrentCountMismatch':
-        stocktakeLineIdsWithErrors = error.lines.nodes.reduce(
-          (acc, innerError) => ({ ...acc, [innerError.id]: error }),
-          stocktakeLineIdsWithErrors
+        errors.setErrors(
+          mapValues(keyBy(error.lines.nodes, 'id'), () => error)
         );
-        errors.setErrors(stocktakeLineIdsWithErrors);
 
         return errorNotification(t('error.snapshot-total-mismatch'))();
 
