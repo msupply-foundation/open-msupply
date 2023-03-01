@@ -40,7 +40,7 @@ export interface NativeAPI {
   advertiseService?: () => void;
   startBarcodeScan: () => Promise<number[]>;
   stopBarcodeScan: () => void;
-  readLog: () => Promise<{ log: string[]; error: string }>;
+  readLog: () => Promise<{ log: string; error: string }>;
 }
 
 declare global {
@@ -125,7 +125,7 @@ export const useNativeClient = ({
   };
 
   const readLog = async () => {
-    const noResult = ['log unavailable'];
+    const noResult = 'log unavailable';
     const result = await nativeAPI?.readLog();
 
     if (!result) return noResult;
