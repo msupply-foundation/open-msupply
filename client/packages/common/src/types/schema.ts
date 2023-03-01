@@ -1059,6 +1059,11 @@ export type ForeignKeyError = DeleteInboundShipmentLineErrorInterface & DeleteIn
   key: ForeignKey;
 };
 
+export type FormSchemaFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  type?: InputMaybe<EqualFilterStringInput>;
+};
+
 export type FormSchemaNode = {
   __typename: 'FormSchemaNode';
   id: Scalars['String'];
@@ -3037,7 +3042,7 @@ export type QueriesEncountersArgs = {
 
 
 export type QueriesFormSchemaArgs = {
-  id: Scalars['String'];
+  filter?: InputMaybe<FormSchemaFilterInput>;
 };
 
 
@@ -3653,7 +3658,7 @@ export type StockLineNode = {
 export type StockLineReducedBelowZero = InsertStocktakeLineErrorInterface & UpdateStocktakeLineErrorInterface & {
   __typename: 'StockLineReducedBelowZero';
   description: Scalars['String'];
-  stockLine: StockLineConnector;
+  stockLine: StockLineNode;
 };
 
 export type StockLineResponse = NodeError | StockLineNode;
