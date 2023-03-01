@@ -8,6 +8,7 @@ import {
   Column,
   SortBy,
   PositiveNumberCell,
+  getLinesFromRow,
 } from '@openmsupply-client/common';
 import { InventoryAdjustmentReasonRowFragment } from '@openmsupply-client/system';
 import { StocktakeSummaryItem } from '../../../types';
@@ -176,12 +177,10 @@ export const useStocktakeColumns = ({
         description: 'description.snapshot-num-of-packs',
         align: ColumnAlign.Right,
         Cell: PositiveNumberCell,
-        getIsError: row => {
-          let rows = 'lines' in row ? row.lines : [row];
-          return rows.some(
+        getIsError: row =>
+          getLinesFromRow(row).some(
             r => getError(r)?.__typename === 'SnapshotCountCurrentCountMismatch'
-          );
-        },
+          ),
         getSortValue: row => {
           if ('lines' in row) {
             const { lines } = row;
@@ -215,12 +214,10 @@ export const useStocktakeColumns = ({
         description: 'description.counted-num-of-packs',
         align: ColumnAlign.Right,
         Cell: PositiveNumberCell,
-        getIsError: row => {
-          let rows = 'lines' in row ? row.lines : [row];
-          return rows.some(
-            r => getError(r)?.__typename === 'StockLineReducedBelowZero'
-          );
-        },
+        getIsError: row =>
+          getLinesFromRow(row).some(
+            r => getError(r)?.__typename === 'SnapshotCountCurrentCountMismatch'
+          ),
         getSortValue: row => {
           if ('lines' in row) {
             const { lines } = row;
