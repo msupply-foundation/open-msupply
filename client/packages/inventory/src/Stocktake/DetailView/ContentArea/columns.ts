@@ -176,7 +176,7 @@ export const useStocktakeColumns = ({
         description: 'description.snapshot-num-of-packs',
         align: ColumnAlign.Right,
         Cell: PositiveNumberCell,
-        isError: row => {
+        getIsError: row => {
           let rows = 'lines' in row ? row.lines : [row];
           return rows.some(
             r => getError(r)?.__typename === 'SnapshotCountCurrentCountMismatch'
@@ -215,7 +215,7 @@ export const useStocktakeColumns = ({
         description: 'description.counted-num-of-packs',
         align: ColumnAlign.Right,
         Cell: PositiveNumberCell,
-        isError: row => {
+        getIsError: row => {
           let rows = 'lines' in row ? row.lines : [row];
           return rows.some(
             r => getError(r)?.__typename === 'StockLineReducedBelowZero'
@@ -343,7 +343,7 @@ export const useExpansionColumns = (): Column<StocktakeLineFragment>[] => {
       width: 150,
       label: 'label.snapshot-num-of-packs',
       align: ColumnAlign.Right,
-      isError: rowData =>
+      getIsError: rowData =>
         getError(rowData)?.__typename === 'SnapshotCountCurrentCountMismatch',
       accessor: ({ rowData }) => rowData.snapshotNumberOfPacks,
     },
@@ -352,7 +352,7 @@ export const useExpansionColumns = (): Column<StocktakeLineFragment>[] => {
       label: 'label.counted-num-of-packs',
       width: 150,
       align: ColumnAlign.Right,
-      isError: rowData =>
+      getIsError: rowData =>
         getError(rowData)?.__typename === 'StockLineReducedBelowZero',
       accessor: ({ rowData }) => rowData.countedNumberOfPacks,
     },

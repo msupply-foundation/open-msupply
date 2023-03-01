@@ -102,6 +102,7 @@ const getInventoryAdjustmentReasonInputColumn = (
       };
 
       const autoFocus = columnIndex === 0 && rowIndex === 0;
+
       const stockReduction =
         rowData.snapshotNumberOfPacks -
         (rowData.countedNumberOfPacks || rowData.snapshotNumberOfPacks);
@@ -143,7 +144,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
       key: 'snapshotNumberOfPacks',
       label: 'label.num-packs',
       width: 100,
-      isError: rowData =>
+      getIsError: rowData =>
         errors.getError(rowData)?.__typename ===
         'SnapshotCountCurrentCountMismatch',
       setter: patch => update({ ...patch, countThisLine: true }),
@@ -153,7 +154,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
       key: 'packSize',
       label: 'label.pack-size',
       width: 100,
-      isDisabled: rowData => !!rowData.stockLine,
+      getIsDisabled: rowData => !!rowData.stockLine,
       Cell: PositiveNumberInputCell,
       setter: patch => update({ ...patch, countThisLine: true }),
     },
@@ -161,7 +162,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
       key: 'countedNumberOfPacks',
       label: 'label.counted-num-of-packs',
       width: 100,
-      isError: rowData =>
+      getIsError: rowData =>
         errors.getError(rowData)?.__typename === 'StockLineReducedBelowZero',
       Cell: NonNegativeDecimalCell,
       setter: patch => {

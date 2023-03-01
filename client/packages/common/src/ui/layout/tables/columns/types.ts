@@ -76,8 +76,8 @@ export interface Column<T extends RecordWithId> {
   sortInverted: boolean;
   getSortValue?: (row: T) => string | number;
 
-  isError?: (row: T) => boolean;
-  isDisabled?: (row: T) => boolean;
+  getIsError?: (row: T) => boolean;
+  getIsDisabled?: (row: T) => boolean;
 
   onChangeSortBy?: (column: Column<T>) => void;
   sortBy?: SortBy<T>;
