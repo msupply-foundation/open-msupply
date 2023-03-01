@@ -19,7 +19,7 @@ import {
   IdGenerator,
   idGeneratorTester,
   QuantityPrescribed,
-  quantityPrescribedTester,
+  quantityDispensedTester,
   AdherenceScore,
   adherenceScoreTester,
   PreviousEncounterField,
@@ -81,7 +81,7 @@ const additionalRenderers: JsonFormsRendererRegistryEntry[] = [
   { tester: idGeneratorTester, renderer: IdGenerator },
   { tester: dateOfBirthTester, renderer: DateOfBirth },
   { tester: encounterLineChartTester, renderer: EncounterLineChart },
-  { tester: quantityPrescribedTester, renderer: QuantityPrescribed },
+  { tester: quantityDispensedTester, renderer: QuantityPrescribed },
   { tester: bmiTester, renderer: BMI },
   { tester: adherenceScoreTester, renderer: AdherenceScore },
   {
