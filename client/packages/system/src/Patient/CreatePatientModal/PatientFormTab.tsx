@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC } from 'react';
 import {
   Gender,
   JsonData,
@@ -7,6 +7,7 @@ import {
   usePatientCreateStore,
 } from '@openmsupply-client/programs';
 import { PatientPanel } from './PatientPanel';
+import { createPatient, createPatientUI } from './DefaultCreatePatientJsonForm';
 
 type Patient = {
   code?: string;
@@ -19,10 +20,11 @@ type Patient = {
 
 export const PatientFormTab: FC<PatientPanel> = ({ patient, value }) => {
   const { updatePatient } = usePatientCreateStore();
-  const { data: patientCreationUI, isError, isLoading } = useFormSchema.document.byType(
-    'PatientCreationJSONForms'
-  );
-  const [data, setData] = useState<Patient | undefined>();
+  const {
+    data: patientCreationUI,
+    isError,
+    isLoading,
+  } = useFormSchema.document.byType('PatientCreationJSONForms');
 
   const setPatient = (newData: JsonData) => {
     if (
@@ -30,14 +32,14 @@ export const PatientFormTab: FC<PatientPanel> = ({ patient, value }) => {
       newData !== null &&
       !Array.isArray(newData)
     ) {
-      setData(newData);
+      const patientData = newData as Patient;
       updatePatient({
-        code: data?.code,
-        code2: data?.code2,
-        firstName: data?.firstName,
-        lastName: data?.lastName,
-        dateOfBirth: data?.dateOfBirth,
-        gender: data?.gender,
+        code: patientData?.code,
+        code2: patientData?.code2,
+        firstName: patientData?.firstName,
+        lastName: patientData?.lastName,
+        dateOfBirth: patientData?.dateOfBirth,
+        gender: patientData?.gender,
       });
     }
   };
@@ -45,11 +47,11 @@ export const PatientFormTab: FC<PatientPanel> = ({ patient, value }) => {
   return (
     <PatientPanel value={value} patient={patient}>
       <JsonForm
-        data={data || {}}
-        jsonSchema={patientCreationUI?.jsonSchema}
-        uiSchema={patientCreationUI?.uiSchema}
-        isError={isError}
-        isLoading={isLoading}
+        data={(patient as JsonData) || {}}
+        jsonSchema={patientCreationUI?.jsonSchema || createPatient}
+        uiSchema={patientCreationUI?.uiSchema || createPatientUI}
+        isError={patientCreationUI ? isError : false}
+        isLoading={patientCreationUI ? isLoading : false}
         updateData={setPatient}
       />
     </PatientPanel>
