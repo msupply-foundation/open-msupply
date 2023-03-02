@@ -130,6 +130,8 @@ const PATIENT_SCHEMA: &'static str = std::include_str!("./program_schemas/patien
 const PATIENT_UI_SCHEMA: &'static str =
     std::include_str!("./program_schemas/patient_ui_schema.json");
 
+const PROGRAMS_PATIENT_CREATION: &'static str =
+    std::include_str!("./program_schemas/patient_creation.json");
 const PROGRAMS_PATIENT_CREATION_UI_SCHEMA: &'static str =
     std::include_str!("./program_schemas/patient_creation_ui_schema.json");
 
@@ -778,7 +780,7 @@ pub fn init_program_data(
     FormSchemaRowRepository::new(connection).upsert_one(&FormSchema {
         id: programs_program_creation_id.clone(),
         r#type: "PatientCreationJSONForm".to_string(),
-        json_schema: serde_json::from_str(PATIENT_SCHEMA).unwrap(),
+        json_schema: serde_json::from_str(PROGRAMS_PATIENT_CREATION).unwrap(),
         ui_schema: serde_json::from_str(PROGRAMS_PATIENT_CREATION_UI_SCHEMA).unwrap(),
     })?;
 
