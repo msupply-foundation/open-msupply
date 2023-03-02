@@ -45,7 +45,7 @@ export const useStocktakeLineEdit = (
     const insertResults = result.batchStocktake?.insertStocktakeLines || [];
     const updateResults = result.batchStocktake?.updateStocktakeLines || [];
 
-    let errorMessagesMap: { [key: string]: string } = {};
+    const errorMessagesMap: { [key: string]: string } = {};
 
     for (const { response, id } of [...insertResults, ...updateResults]) {
       // First unset error
@@ -53,7 +53,7 @@ export const useStocktakeLineEdit = (
       // No error
       if (response.__typename === 'StocktakeLineNode') continue;
 
-      let { error } = response;
+      const { error } = response;
       // Common error for all lines
       if (error.__typename === 'CannotEditStocktake') {
         errorMessagesMap[error.__typename] = t('error.not-editable');
