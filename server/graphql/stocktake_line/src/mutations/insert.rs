@@ -4,7 +4,8 @@ use chrono::NaiveDate;
 use graphql_core::simple_generic_errors::CannotEditStocktake;
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
-use graphql_types::types::{StockLineNode, StocktakeLineNode};
+use graphql_types::generic_errors::StockLineReducedBelowZero;
+use graphql_types::types::StocktakeLineNode;
 use repository::StocktakeLine;
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -13,7 +14,7 @@ use service::{
     },
 };
 
-use super::{AdjustmentReasonNotProvided, StockLineReducedBelowZero};
+use super::{AdjustmentReasonNotProvided, AdjustmentReasonNotValid};
 
 #[derive(InputObject)]
 #[graphql(name = "InsertStocktakeLineInput")]
@@ -48,6 +49,7 @@ pub enum InsertErrorInterface {
     CannotEditStocktake(CannotEditStocktake),
     StockLineReducedBelowZero(StockLineReducedBelowZero),
     AdjustmentReasonNotProvided(AdjustmentReasonNotProvided),
+    AdjustmentReasonNotValid(AdjustmentReasonNotValid),
 }
 
 #[derive(SimpleObject)]
@@ -98,12 +100,17 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         }
         ServiceError::StockLineReducedBelowZero(line) => {
             return Ok(InsertErrorInterface::StockLineReducedBelowZero(
-                StockLineReducedBelowZero(StockLineNode::from_domain(line)),
+                StockLineReducedBelowZero::from_domain(line),
             ))
         }
         ServiceError::AdjustmentReasonNotProvided => {
             return Ok(InsertErrorInterface::AdjustmentReasonNotProvided(
-                AdjustmentReasonNotProvided {},
+                AdjustmentReasonNotProvided,
+            ))
+        }
+        ServiceError::AdjustmentReasonNotValid => {
+            return Ok(InsertErrorInterface::AdjustmentReasonNotValid(
+                AdjustmentReasonNotValid,
             ))
         }
         // Standard Graphql Errors
@@ -120,7 +127,6 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
             formatted_error
         )),
         ServiceError::ItemDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::AdjustmentReasonNotValid => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::InternalError(err) => InternalError(err),
     };
