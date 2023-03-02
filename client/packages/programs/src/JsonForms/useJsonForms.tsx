@@ -26,6 +26,8 @@ import {
   previousEncounterFieldTester,
   DecisionTreeControl,
   decisionTreeTester,
+  Search,
+  searchTester,
 } from './components';
 
 // https://stackoverflow.com/questions/57874879/how-to-treat-missing-undefined-properties-as-equivalent-in-lodashs-isequalwit
@@ -87,6 +89,7 @@ const additionalRenderers: JsonFormsRendererRegistryEntry[] = [
     renderer: PreviousEncounterField,
   },
   { tester: decisionTreeTester, renderer: DecisionTreeControl },
+  { tester: searchTester, renderer: Search },
 ];
 
 export const useJsonForms = (

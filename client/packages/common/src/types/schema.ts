@@ -2967,6 +2967,7 @@ export type Queries = {
   stocktakeByNumber: StocktakeResponse;
   stocktakes: StocktakesResponse;
   store: StoreResponse;
+  storePreferences: StorePreferenceNode;
   stores: StoresResponse;
   syncSettings?: Maybe<SyncSettingsNode>;
 };
@@ -3253,6 +3254,11 @@ export type QueriesStocktakesArgs = {
 
 export type QueriesStoreArgs = {
   id: Scalars['String'];
+};
+
+
+export type QueriesStorePreferencesArgs = {
+  storeId: Scalars['String'];
 };
 
 
@@ -3823,6 +3829,12 @@ export type StoreNode = {
 
 export type StoreNodeNameArgs = {
   storeId: Scalars['String'];
+};
+
+export type StorePreferenceNode = {
+  __typename: 'StorePreferenceNode';
+  id: Scalars['String'];
+  packToOne: Scalars['Boolean'];
 };
 
 export type StoreResponse = NodeError | StoreNode;

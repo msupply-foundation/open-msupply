@@ -10,7 +10,7 @@ UI is not bundled within Capacitor, it is served by the server the client connec
 
 First of all, need to make sure that you can build [server binaries](../../../server/android/README.md)
 
-When you are confident they are building, can use `yarn build:server` form this directoy, this builds `libremote_server_lib.so` binaries and relocate them to `app/src/main/jniLibs`, see `RemoteServer.java` for more details of how these libs are loaded. It's important to note that web app is bundled in the remote server binary, and web app needs to be built from `client` directory with `yarn build` command, so it's best to use `yarn android:build:server` from client directory as it does both (builds web app and then build android remote server).
+When you are confident they are building, can use `yarn build:server` form this directory, this builds `libremote_server_lib.so` binaries and relocate them to `app/src/main/jniLibs`, see `RemoteServer.java` for more details of how these libs are loaded. It's important to note that web app is bundled in the remote server binary, and web app needs to be built from `client` directory with `yarn build` command, so it's best to use `yarn android:build:server` from client directory as it does both (builds web app and then build android remote server).
 
 Next step is to open this directory in Android Studio, this will engage gradle sync process (initialising pre-requisites etc.), if you get an error during 'sync' process Android Studio should outline the issue with suggested fix. Usually you will need to either set `ANDROID_SDK_ROOT` or add `sdk.dir` in `local.properties` file, and skd is usually located in `/Users/{user}/Library/Android/sdk/`. Pressing play (run) should restart sync process.
 
@@ -20,7 +20,7 @@ It's recommended to use Android Studio for debugging and running Android App, th
 
 Debugging native code is straight forward, breakpoint in Android Studio and press debug. 
 
-Debugging web app code is done by opening `chrome://inspect`, you should see Web View when app is running in emulator. When bundled is served from remote server (default setup), js bunlde is minimised and this makes debugging very hard, however we can run the bundle from webpack server by commenting out plugins section in `capacitor.config.ts` and entering your local ip in the debugUrl field and running `yarn apply-config`. Please make sure that you start front end server with `yarn start-local` from 'client' directory for this to work.
+Debugging web app code is done by opening `chrome://inspect`, you should see Web View when app is running in emulator. When bundled is served from remote server (default setup), js bundle is minimised and this makes debugging very hard, however we can run the bundle from webpack server by commenting out plugins section in `capacitor.config.ts` and entering your local ip in the debugUrl field and running `yarn apply-config`. Please make sure that you start front end server with `yarn start-local` from 'client' directory for this to work.
 
 Please note that when debugging with live reload, connections to a discovered server will always go through to the webpack server (regardless of which server is being selected).
 
@@ -88,18 +88,41 @@ For this reason `ExtendedWebViewClient` was created to manually inject the requi
 
 ## Extra
 
-The cert plugin (`app/src/main/java/org/openmsupply/client/certplugin/CertPlugin.java`) allows the web client to make https request to the remote-server using a self signed certificate. It needs to extend `ExtendedWebViewClient` rathern then `WebViewClient` to allow for Capacitor Modification 2. to work.
+The cert plugin (`app/src/main/java/org/openmsupply/client/certplugin/CertPlugin.java`) allows the web client to make https request to the remote-server using a self signed certificate. It needs to extend `ExtendedWebViewClient` rather than `WebViewClient` to allow for Capacitor Modification 2. to work.
 
 `RemoteServer.java` is jni mapping to functions defined in `server/android/src/android.rs`, it is started and stopped in `MainActivity.java`
 
 ## CAP
 
-Capacitor comes with cli, we mainly use `npx cap copy` (or `yarn apply-config`), this moves bundled assets to app/src/main/assets/public. Usually capacitor would bundle web app within the APK, since we are serving front end bundle with server we don't need to move them (you will not that in capacitor.config.ts `webDir` is pointed to a notexistet directory). Capacitor also moves pre requisites to cordova plugins to that folder, which is automatically injected into served `html`. Another taks of `npx cap copy` is to copy configuration files `capacition.config.ts` is translated to JSON file and moved to app/src/main/assets
+Capacitor comes with cli, we mainly use `npx cap copy` (or `yarn apply-config`), this moves bundled assets to app/src/main/assets/public. Usually capacitor would bundle web app within the APK, since we are serving front end bundle with server we don't need to move them (you will not that in capacitor.config.ts `webDir` is pointed to a non-existant directory). Capacitor also moves pre requisites to cordova plugins to that folder, which is automatically injected into served `html`. Another task of `npx cap copy` is to copy configuration files `capacitor.config.ts` is translated to JSON file and moved to app/src/main/assets
 
-`app/src/main/assets/public` directory is typically not commited, but since it's only going to have cordova artifacts, it is in our case (to reduce setup). 
+`app/src/main/assets/public` directory is typically not committed, but since it's only going to have cordova artifacts, it is in our case (to reduce setup). 
 
 `npx cap copy` or `yarn apply-config` should only be run when cordova plugins are added or updated or when updating capacitor.config.ts
 
+### Plugins
+
+When adding plugins, the standard process (`npx cap sync` or `yarn apply-config`) is not working and I've had to manually add them:
+- from the `/client` folder run `yarn add -W -D @capacitor/[plugin-name]`
+- edit `/client/packages/android/app/capacitor.build.gradle` and add 
+```
+implementation project(':capacitor-[plugin-name]')
+```
+- edit `/client/packages/android/app/src/main/assets/capacitor.plugins.json` and add the plugin:
+```
+{
+    "pkg": "@capacitor/[plugin-name]",
+    "classpath": "com.capacitorjs.plugins.[pluginClassPath]"
+}
+```
+- edit `/client/packages/android/capacitor.settings.gradle` and add 
+```
+include ':capacitor-[plugin-name]'
+project(':capacitor-[plugin-name]').projectDir = new File('../../node_modules/@capacitor/[plugin-name]/android')
+```
+- Within android studio, open the project and click on the "Sync Project with Gradle Files" button in the top right of Android Studio (the icon looks like an elephant)
+
+ 
 ## Self signed cert SSL security
 
 To avoid an error being thrown by the native web view when the server certificate is self-signed, we override the web view certificate error listener and allow connection when:

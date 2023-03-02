@@ -128,10 +128,6 @@ export const Android = () => {
   }, [mode, servers]);
 
   useEffect(() => {
-    console.log(
-      `mode is client and timeout is ${!!connectToPreviousTimedOut}`,
-      connectToPreviousTimedOut
-    );
     if (
       mode === NativeMode.Client &&
       (!previousServer || connectToPreviousTimedOut)
