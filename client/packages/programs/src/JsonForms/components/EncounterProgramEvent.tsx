@@ -3,7 +3,7 @@ import { ControlProps, rankWith, uiTypeIs } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { DetailInputWithLabelRow } from '@openmsupply-client/common';
 import {
-  DefaultFormRowSx,
+  DefaultFormRowSpacing,
   FORM_LABEL_WIDTH,
   useZodOptionsValidation,
 } from '../common';
@@ -95,7 +95,7 @@ const UIComponent = (props: ControlProps) => {
         value: event?.data ?? '',
         disabled: true,
         required: props.required,
-        sx: DefaultFormRowSx,
+        sx: DefaultFormRowSpacing,
         error: !!errors,
         helperText: errors,
       }}

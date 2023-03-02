@@ -111,13 +111,7 @@ export const EnumArrayComponent: FC<EnumArrayControlCustomProps> = ({
 
   return (
     <>
-      <Box
-        display="flex"
-        alignItems="center"
-        justifyContent="space-around"
-        style={{ minWidth: 300 }}
-        sx={DefaultFormRowSx}
-      >
+      <Box sx={DefaultFormRowSx}>
         <Box
           style={{ textAlign: 'end', alignSelf: 'start', paddingTop: 5 }}
           flexBasis={FORM_LABEL_COLUMN_WIDTH}

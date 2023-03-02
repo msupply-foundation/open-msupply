@@ -179,9 +179,6 @@ const IMMUNISATION_ENCOUNTER_5MONTH_UI_SCHEMA: &'static str =
 
 const PATIENT_REPORT: &'static str =
     std::include_str!("./program_schemas/report_patient_hiv_care.json");
-const DEMO_PATIENT_REPORT: &'static str =
-    std::include_str!("./program_schemas/report_demo_patient.json");
-
 const ENCOUNTERS_ARG_SCHEMA: &'static str =
     std::include_str!("./program_schemas/encounters_arg_schema.json");
 const ENCOUNTERS_ARG_UI_SCHEMA: &'static str =
