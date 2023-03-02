@@ -54,7 +54,7 @@ const UIComponent = (props: ControlProps) => {
       label={label}
       inputProps={{
         ...inputProps,
-        sx: { ...inputProps.sx, margin: 0.5, marginLeft: 0, gap: 2 },
+        sx: { ...inputProps.sx, ...DefaultFormRowSx },
       }}
       labelWidthPercentage={FORM_LABEL_WIDTH}
       inputAlignment={'start'}
