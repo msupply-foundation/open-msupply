@@ -80,7 +80,7 @@ const UIComponent = (props: ControlProps) => {
     uischema.options
   );
   const dateFormat = useFormatDateTime();
-  const t = useTranslation(['common', 'programs']);
+  const t = useTranslation('programs');
 
   const { core } = useJsonForms();
   useEffect(() => {
