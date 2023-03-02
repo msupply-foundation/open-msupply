@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
-import { Typography } from '@openmsupply-client/common';
-import { RegexUtils } from '@openmsupply-client/common';
+import {
+  Typography,
+  useTranslation,
+  RegexUtils,
+} from '@openmsupply-client/common';
 import { usePatientApi } from 'packages/system/src/Patient/api/hooks/utils/usePatientApi';
 
 export const QueryValues = ['patientByCode'] as const;
@@ -18,13 +21,13 @@ interface SearchQueryOptions {
 
 interface SearchQueryOutput {
   runQuery: (searchValue: string) => void;
-  saveFields: string[];
+  saveFields: string[] | null;
   getOptionLabel?: (result: Record<string, any>) => string;
   getDisplayElement?: GetDisplayElement;
   placeholderText: string;
 }
 
-const { formatTemplateString } = RegexUtils;
+const { formatTemplateString, removeEmptyLines } = RegexUtils;
 
 export const useSearchQueries = ({
   query,
@@ -36,6 +39,8 @@ export const useSearchQueries = ({
   const [results, setResults] = useState<Record<string, any>[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
+
+  const t = useTranslation('programs');
 
   const patientQueries = usePatientApi();
 
@@ -68,32 +73,24 @@ export const useSearchQueries = ({
         optionString ??
         `${data['code']} - ${data['firstName']} ${data['lastName']}`,
       getDisplayElement: data => {
-        if (!data) return null;
-        const { code } = data;
-        if (!code) return null;
+        if (!data || !data?.['code']) return null;
         return (
           <Typography style={{ whiteSpace: 'pre' }}>
             {displayString
-              ? formatTemplateString(displayString, data, '')
-              : formatTemplateString(
-                  '${firstName} ${lastName} (${code})\n${email}\n${document.data.contactDetails[0].address1}\n${document.data.contactDetails[0].address2}',
-                  data,
-                  ''
+              ? removeEmptyLines(formatTemplateString(displayString, data, ''))
+              : removeEmptyLines(
+                  formatTemplateString(
+                    '${firstName} ${lastName} (${code})\n${email}\n${document.data.contactDetails[0].address1}\n${document.data.contactDetails[0].address2}',
+                    data,
+                    ''
+                  )
                 )}
           </Typography>
         );
       },
-      saveFields: saveFields ?? [
-        'id',
-        'code',
-        'firstName',
-        'lastName',
-        'dateOfBirth',
-        'gender',
-        'email',
-        'document',
-      ],
-      placeholderText: placeholderText ?? 'Search by patient code...',
+      saveFields: saveFields ?? null,
+      placeholderText:
+        placeholderText ?? t('control.search.search-patient-placeholder'),
     },
   };
 

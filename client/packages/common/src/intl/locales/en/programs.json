@@ -4,6 +4,9 @@
   "control.note.author-label": "Author",
   "control.search.searching-label": "Searching...",
   "control.search.no-results-label": "No results",
-  "control.search.below-min-chars": "Please enter at least {{minChars}} characters",
-  "control.search.search-placeholder": "Search..."
+  "control.search.search-placeholder": "Search...",
+  "control.search.search-patient-placeholder": "Search by patient code...",
+  "control.search.error.no-document": "Unable to access requested document",
+  "control.search.error.no-data": "Unable to extract path \"{{docPath}}\" from document",
+  "control.search.below-min-chars": "Please enter at least {{minChars}} characters"
 }

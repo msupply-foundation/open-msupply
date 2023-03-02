@@ -9,48 +9,21 @@ import {
   IconButton,
   EditIcon,
   BasicTextInput,
+  Typography,
 } from '@openmsupply-client/common';
 import {
   FORM_LABEL_COLUMN_WIDTH,
   FORM_INPUT_COLUMN_WIDTH,
 } from '../../common/styleConstants';
-import { z } from 'zod';
-import { useZodOptionsValidation } from '../../common/hooks/useZodOptionsValidation';
-import { useSearchQueries, QueryValues } from './useSearchQueries';
+import { useSearchQueries } from './useSearchQueries';
+import { UserOptions } from './Search';
 
 const MIN_CHARS = 3;
 
-const Options = z.object({
-  /**
-   * Which pre-defined query to use (in useSearchQueries)
-   */
-  query: z.enum(QueryValues),
-  /**
-   * Pattern for formatting options list items (e.g. "${firstName} ${lastName}")
-   */
-  optionString: z.string().optional(),
-  /**
-   * Pattern for formatting selected result (as above)
-   */
-  displayString: z.string().optional(),
-  /**
-   * List of fields to save in document data (from selected item object)
-   */
-  saveFields: z.array(z.string()).optional(),
-  /**
-   * Text to show in input field before user entry
-   */
-  placeholderText: z.string().optional(),
-});
-
-type Options = z.infer<typeof Options>;
-
-export const SearchWithUserSource = (props: ControlProps) => {
-  const { data, path, handleChange, label, uischema } = props;
-  const { errors: zErrors, options } = useZodOptionsValidation(
-    Options,
-    uischema.options
-  );
+export const SearchWithUserSource = (
+  props: ControlProps & { options: UserOptions }
+) => {
+  const { data, path, handleChange, label, visible, options } = props;
   const t = useTranslation('programs');
   const [searchText, setSearchText] = useState('');
   const [editMode, setEditMode] = useState(!data);
@@ -85,12 +58,13 @@ export const SearchWithUserSource = (props: ControlProps) => {
   const handleDataUpdate = (selectedResult: Record<string, any> | null) => {
     if (selectedResult === null) return;
     if (!saveFields) handleChange(path, selectedResult);
-
-    const newObj: Record<string, any> = {};
-    saveFields?.forEach(
-      field => (newObj[field] = selectedResult[field] ?? null)
-    );
-    handleChange(path, newObj);
+    else {
+      const newObj: Record<string, any> = {};
+      saveFields?.forEach(
+        field => (newObj[field] = selectedResult[field] ?? null)
+      );
+      handleChange(path, newObj);
+    }
     setEditMode(false);
   };
 
@@ -105,7 +79,9 @@ export const SearchWithUserSource = (props: ControlProps) => {
     }
   };
 
-  if (!options) return null;
+  const error = props.errors ?? queryError ?? null;
+
+  if (!visible) return null;
 
   return (
     <Box
@@ -138,8 +114,8 @@ export const SearchWithUserSource = (props: ControlProps) => {
               getOptionLabel={getOptionLabel ?? undefined}
               clearable={!props.config?.required}
               inputProps={{
-                error: !!zErrors || !!props.errors || !!queryError,
-                helperText: zErrors ?? props.errors ?? queryError,
+                error: !!error,
+                helperText: error,
               }}
               noOptionsText={getNoOptionsText()}
               renderInput={params => (
@@ -160,17 +136,23 @@ export const SearchWithUserSource = (props: ControlProps) => {
           justifyContent="space-between"
           sx={{ width: FORM_INPUT_COLUMN_WIDTH }}
         >
-          {getDisplayElement && getDisplayElement(data)}
-          <IconButton
-            label={t('label.edit')}
-            icon={<EditIcon style={{ width: 16 }} />}
-            onClick={() => {
-              setEditMode(true);
-            }}
-            color="primary"
-            height="20px"
-            width="20px"
-          />
+          {!error ? (
+            <>
+              {getDisplayElement && getDisplayElement(data)}
+              <IconButton
+                label={t('label.edit')}
+                icon={<EditIcon style={{ width: 16 }} />}
+                onClick={() => {
+                  setEditMode(true);
+                }}
+                color="primary"
+                height="20px"
+                width="20px"
+              />
+            </>
+          ) : (
+            <Typography color="red">{error}</Typography>
+          )}
         </Box>
       )}
     </Box>
