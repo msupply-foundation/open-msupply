@@ -54,8 +54,10 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
 
   const onNext = async () => {
     let { errorMessages } = await save();
-    if (errorMessages)
-      return errorMessages.forEach(errorMessage => error(errorMessage)());
+    if (errorMessages) {
+      errorMessages.forEach(errorMessage => error(errorMessage)());
+      return;
+    }
 
     if (mode === ModalMode.Update && nextItem) setCurrentItem(nextItem);
     else if (mode === ModalMode.Create) setCurrentItem(null);
@@ -66,8 +68,10 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
 
   const onOk = async () => {
     let { errorMessages } = await save();
-    if (errorMessages)
-      return errorMessages.forEach(errorMessage => error(errorMessage)());
+    if (errorMessages) {
+      errorMessages.forEach(errorMessage => error(errorMessage)());
+      return;
+    }
 
     if (item) {
       setRowStyles(
