@@ -89,7 +89,6 @@
   "messages.supply-to-requested": "Etes vous sûr(e) de vouloir définir les quantités à fournir avec les quantités demandées pour toutes les lignes ?",
   "messages.deleted-shipments_one": "{{count}} livraison supprimée",
   "messages.deleted-shipments_other": "{{count}} livraisons supprimées",
-  "messages.confirm-status-as": "Confirmer le statut comme $t({{status}}) ?",
   "messages.confirm-delete-shipments_one": "Cette livraison sera définitivement supprimée",
   "messages.confirm-delete-shipments_other": "Cela supprimera définitivement {{count}} livraisons",
   "messages.confirm-delete-lines_one": "Cela supprimera définitivement 1 ligne de cette livraison",

@@ -20,7 +20,7 @@ interface InventoryAdjustmentReasonSearchInputProps {
     inventoryAdjustmentReason: InventoryAdjustmentReasonRowFragment | null
   ) => void;
   autoFocus?: boolean;
-  stockReduction?: number;
+  stockReduction: number;
   isError?: boolean;
 }
 
@@ -36,10 +36,10 @@ export const InventoryAdjustmentReasonSearchInput: FC<
 }) => {
   const { data, isLoading } =
     useInventoryAdjustmentReason.document.listAllActive();
-  const disabled = data?.totalCount === 0;
+  const disabled = data?.totalCount === 0 || stockReduction === 0;
   const isRequired = !disabled && stockReduction !== 0;
   const reasonFilter = (reason: InventoryAdjustmentReasonRowFragment) => {
-    if (stockReduction === 0 || !stockReduction) return true;
+    if (stockReduction === 0) return false;
     if (stockReduction < 0)
       return reason.type === InventoryAdjustmentReasonNodeType.Positive;
     return reason.type === InventoryAdjustmentReasonNodeType.Negative;
@@ -75,7 +75,7 @@ export const InventoryAdjustmentReasonSearchInput: FC<
               ...props.InputProps,
             }}
             sx={{ width }}
-            error={isError && isRequired}
+            error={isError}
           />
         )}
         options={defaultOptionMapper(reasons, 'reason')}
