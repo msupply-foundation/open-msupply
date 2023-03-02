@@ -83,7 +83,7 @@ impl<'a> FormSchemaRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, schema: &FormSchema) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, schema: &FormSchemaJson) -> Result<(), RepositoryError> {
         let row = row_from_schema(schema)?;
         diesel::insert_into(form_schema::dsl::form_schema)
             .values(&row)

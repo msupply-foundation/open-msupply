@@ -30,7 +30,7 @@
       "label": "Date of Birth",
       "scope": "#/properties/dateOfBirth",
       "options": {
-        "dateOnly": true
+        "disableFuture": true
       }
     },
     {
