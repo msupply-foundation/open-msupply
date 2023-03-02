@@ -48,6 +48,7 @@ pub struct StockLineFilter {
     pub is_available: Option<bool>,
     pub expiry_date: Option<DateFilter>,
     pub store_id: Option<EqualFilter<String>>,
+    pub has_packs_in_store: Option<bool>,
 }
 
 pub type StockLineSort = Sort<StockLineSortField>;
@@ -168,6 +169,7 @@ fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery
             item_id,
             location_id,
             store_id,
+            has_packs_in_store,
         } = f;
 
         apply_equal_filter!(query, id, stock_line_dsl::id);
@@ -175,6 +177,12 @@ fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery
         apply_equal_filter!(query, location_id, stock_line_dsl::location_id);
         apply_date_filter!(query, expiry_date, stock_line_dsl::expiry_date);
         apply_equal_filter!(query, store_id, stock_line_dsl::store_id);
+
+        query = match has_packs_in_store {
+            Some(true) => query.filter(stock_line_dsl::total_number_of_packs.gt(0.0)),
+            Some(false) => query.filter(stock_line_dsl::total_number_of_packs.le(0.0)),
+            None => query,
+        };
 
         query = match is_available {
             Some(true) => query.filter(stock_line_dsl::available_number_of_packs.gt(0.0)),
@@ -227,6 +235,7 @@ impl StockLineFilter {
             item_id: None,
             location_id: None,
             store_id: None,
+            has_packs_in_store: None,
         }
     }
 
@@ -257,6 +266,11 @@ impl StockLineFilter {
 
     pub fn is_available(mut self, filter: bool) -> Self {
         self.is_available = Some(filter);
+        self
+    }
+
+    pub fn has_packs_in_store(mut self, filter: bool) -> Self {
+        self.has_packs_in_store = Some(filter);
         self
     }
 }

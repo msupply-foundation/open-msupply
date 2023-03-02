@@ -1,4 +1,5 @@
 export {
+  ClinicianFragment,
   DocumentFragment,
   DocumentRegistryFragment,
   ProgramEventFragment,

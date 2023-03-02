@@ -1,17 +1,12 @@
 import React, { FC } from 'react';
 import { rankWith, ControlProps, isDateTimeControl } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
+import { TextFieldProps, StandardTextFieldProps } from '@mui/material';
 import {
-  FormLabel,
-  Box,
-  TextFieldProps,
-  StandardTextFieldProps,
-} from '@mui/material';
-import { BasicTextInput } from '@openmsupply-client/common';
-import {
-  FORM_LABEL_COLUMN_WIDTH,
-  FORM_INPUT_COLUMN_WIDTH,
-} from '../styleConstants';
+  BasicTextInput,
+  DetailInputWithLabelRow,
+} from '@openmsupply-client/common';
+import { FORM_LABEL_WIDTH } from '../styleConstants';
 import { DateTimePicker, DateTimePickerProps } from '@mui/x-date-pickers';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
@@ -31,30 +26,28 @@ type Options = z.infer<typeof Options>;
 
 const DateTimePickerInput: FC<
   Omit<DateTimePickerProps<Date>, 'renderInput'> & { error: string }
-> = props => {
-  return (
-    <DateTimePicker
-      disabled={props.disabled}
-      renderInput={(params: TextFieldProps) => {
-        const textInputProps: StandardTextFieldProps = {
-          ...params,
-          variant: 'standard',
-        };
-        return (
-          <BasicTextInput
-            error={!!props.error}
-            helperText={props.error}
-            FormHelperTextProps={
-              !!props.error ? { sx: { color: 'error.main' } } : undefined
-            }
-            {...textInputProps}
-          />
-        );
-      }}
-      {...props}
-    />
-  );
-};
+> = props => (
+  <DateTimePicker
+    disabled={props.disabled}
+    renderInput={(params: TextFieldProps) => {
+      const textInputProps: StandardTextFieldProps = {
+        ...params,
+        variant: 'standard',
+      };
+      return (
+        <BasicTextInput
+          error={!!props.error}
+          helperText={props.error}
+          FormHelperTextProps={
+            !!props.error ? { sx: { color: 'error.main' } } : undefined
+          }
+          {...textInputProps}
+        />
+      );
+    }}
+    {...props}
+  />
+);
 
 export const datetimeTester = rankWith(5, isDateTimeControl);
 
@@ -95,28 +88,26 @@ const UIComponent = (props: ControlProps) => {
   };
 
   return (
-    <Box
-      display="flex"
-      alignItems="center"
-      gap={2}
-      justifyContent="space-around"
-      style={{ minWidth: 300 }}
-      marginTop={1}
-    >
-      <Box style={{ textAlign: 'end' }} flexBasis={FORM_LABEL_COLUMN_WIDTH}>
-        <FormLabel sx={{ fontWeight: 'bold' }}>{label}:</FormLabel>
-      </Box>
-      <Box flexBasis={FORM_INPUT_COLUMN_WIDTH}>
-        {!dateOnly ? (
+    <DetailInputWithLabelRow
+      sx={{
+        gap: 2,
+        minWidth: '300px',
+        justifyContent: 'space-around',
+      }}
+      label={label}
+      labelWidthPercentage={FORM_LABEL_WIDTH}
+      inputAlignment="start"
+      Input={
+        !dateOnly ? (
           <DateTimePickerInput
             // undefined is displayed as "now" and null as unset
             {...sharedComponentProps}
           />
         ) : (
           <DatePickerInput {...sharedComponentProps} />
-        )}
-      </Box>
-    </Box>
+        )
+      }
+    />
   );
 };
 
