@@ -13,7 +13,7 @@
   "error.provide-reason": "A reason must be provided for any rows which have a difference in the counted number of packs.",
   "error.provide-valid-reason": "Adjustment reason does not match adjustment direction",
   "error.reduced-below-zero": "Stock line exist in new outbound shipments. The quantity cannot be reduced below zero.",
-  "error.stocktake-has-stock-reduced-below-zero": "Stock take cannot be finalised because there are stock lines which exist in new outbound shipments.",
+  "error.stocktake-has-stock-reduced-below-zero": "Stock take cannot be finalised because some of the stock has been used in new outbound shipments.",
   "label.add-batch": "Add batch",
   "label.add-new-line": "Add a new line",
   "label.cost-price": "Cost price",
