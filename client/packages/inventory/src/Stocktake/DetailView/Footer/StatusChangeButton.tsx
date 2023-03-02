@@ -60,8 +60,8 @@ const useStatusChangeButton = () => {
     'status',
     'lines',
   ]);
-  const { mutateAsync } = useStocktake.document.update();
-  const { success, error: errorNotification } = useNotification();
+  const { mutateAsync: save } = useStocktake.document.update();
+  const { success, error } = useNotification();
   const t = useTranslation('inventory');
 
   const errors = useStocktakeLineErrorContext();
@@ -76,31 +76,20 @@ const useStatusChangeButton = () => {
       getNextStatusOption(status, options)
     );
 
-  const onConfirmStatusChange = async () => {
-    if (!selectedOption) return null;
-
-    errors.unsetAll();
-    let result;
-    try {
-      result = await mutateAsync({ id, status: selectedOption.value });
-    } catch (e) {
-      return errorNotification(getErrorMessage(e))();
-    }
-
+  const mapStructuredErrors = (
+    result: Awaited<ReturnType<typeof save>>
+  ): /*error*/ string | /*OK*/ undefined => {
     if (result.__typename === 'StocktakeNode') {
-      return success(t('messages.saved'))();
+      return /*OK*/ undefined;
     }
 
     const { error } = result;
 
     // General errors
-    if (error.__typename === 'CannotEditStocktake') {
-      return errorNotification(t('error.not-editable'))();
-    }
+    if (error.__typename === 'CannotEditStocktake')
+      return t('error.not-editable');
 
-    if (error.__typename === 'StocktakeIsLocked') {
-      return errorNotification(t('error.is-locked'))();
-    }
+    if (error.__typename === 'StocktakeIsLocked') return t('error.is-locked');
 
     // By line errors
     switch (error.__typename) {
@@ -120,18 +109,37 @@ const useStatusChangeButton = () => {
         );
 
         errors.setErrors(mappedErrors);
-        return errorNotification(
-          t('error.stocktake-has-stock-reduced-below-zero')
-        )();
+        return t('error.stocktake-has-stock-reduced-below-zero');
+
       case 'SnapshotCountCurrentCountMismatch':
         errors.setErrors(
           mapValues(keyBy(error.lines.nodes, 'id'), () => error)
         );
 
-        return errorNotification(t('error.snapshot-total-mismatch'))();
+        return t('error.snapshot-total-mismatch');
 
       default:
         noOtherVariants(error);
+    }
+  };
+
+  const onConfirmStatusChange = async () => {
+    if (!selectedOption) return null;
+
+    errors.unsetAll();
+    let result;
+    try {
+      result = await save({ id, status: selectedOption.value });
+
+      let errorMessage = mapStructuredErrors(result);
+
+      if (errorMessage) {
+        error(errorMessage)();
+      } else {
+        success(t('messages.saved'))();
+      }
+    } catch (e) {
+      error(getErrorMessage(e))();
     }
   };
 

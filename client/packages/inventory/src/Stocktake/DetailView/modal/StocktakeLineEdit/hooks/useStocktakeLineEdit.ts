@@ -28,7 +28,7 @@ export const useStocktakeLineEdit = (
   const { id } = useStocktake.document.fields('id');
   const nextItem = useNextItem(item?.id);
   const [draftLines, setDraftLines] = useDraftStocktakeLines(item);
-  const { mutateAsync, isLoading } = useStocktake.line.save();
+  const { mutateAsync: upsertLines, isLoading } = useStocktake.line.save();
   const errors = useStocktakeLineErrorContext();
 
   const update = (patch: RecordPatch<DraftStocktakeLine>) =>
@@ -39,14 +39,9 @@ export const useStocktakeLineEdit = (
       })
     );
 
-  const save = async () => {
-    let result;
-    try {
-      result = await mutateAsync(draftLines);
-    } catch (e) {
-      return { errors: getErrorMessage(e) };
-    }
-
+  const mapStructuredErrors = (
+    result: Awaited<ReturnType<typeof upsertLines>>
+  ) => {
     const insertResults = result.batchStocktake?.insertStocktakeLines || [];
     const updateResults = result.batchStocktake?.updateStocktakeLines || [];
 
@@ -89,6 +84,17 @@ export const useStocktakeLineEdit = (
     return {
       errorMessages: errorMessages.length === 0 ? undefined : errorMessages,
     };
+  };
+
+  const save = async () => {
+    let result;
+    try {
+      result = await upsertLines(draftLines);
+
+      return mapStructuredErrors(result);
+    } catch (e) {
+      return { errorMessages: [getErrorMessage(e)] };
+    }
   };
 
   const addLine = () => {
