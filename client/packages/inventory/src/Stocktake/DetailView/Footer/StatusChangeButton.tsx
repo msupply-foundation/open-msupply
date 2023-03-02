@@ -64,7 +64,7 @@ const useStatusChangeButton = () => {
   const { success, error } = useNotification();
   const t = useTranslation('inventory');
 
-  const errors = useStocktakeLineErrorContext();
+  const errorsContext = useStocktakeLineErrorContext();
 
   const options = useMemo(
     () => getStatusOptions(getButtonLabel(t)),
@@ -108,11 +108,11 @@ const useStatusChangeButton = () => {
           line => ids[line.stockLine.id]
         );
 
-        errors.setErrors(mappedErrors);
+        errorsContext.setErrors(mappedErrors);
         return t('error.stocktake-has-stock-reduced-below-zero');
 
       case 'SnapshotCountCurrentCountMismatch':
-        errors.setErrors(
+        errorsContext.setErrors(
           mapValues(keyBy(error.lines.nodes, 'id'), () => error)
         );
 
@@ -126,7 +126,7 @@ const useStatusChangeButton = () => {
   const onConfirmStatusChange = async () => {
     if (!selectedOption) return null;
 
-    errors.unsetAll();
+    errorsContext.unsetAll();
     let result;
     try {
       result = await save({ id, status: selectedOption.value });
