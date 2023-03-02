@@ -1,12 +1,13 @@
 import React, { FC } from 'react';
 import { rankWith, ControlProps, isDateControl } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import { FormLabel, Box, TextFieldProps } from '@mui/material';
-import { BasicTextInput, useFormatDateTime } from '@openmsupply-client/common';
+import { TextFieldProps } from '@mui/material';
 import {
-  FORM_LABEL_COLUMN_WIDTH,
-  FORM_INPUT_COLUMN_WIDTH,
-} from '../styleConstants';
+  BasicTextInput,
+  DetailInputWithLabelRow,
+  useFormatDateTime,
+} from '@openmsupply-client/common';
+import { FORM_LABEL_WIDTH } from '../styleConstants';
 import { DatePicker, DatePickerProps } from '@mui/x-date-pickers';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -41,18 +42,17 @@ const UIComponent = (props: ControlProps) => {
     return null;
   }
   return (
-    <Box
-      display="flex"
-      alignItems="center"
-      gap={2}
-      justifyContent="space-around"
-      style={{ minWidth: 300 }}
-      marginTop={1}
-    >
-      <Box style={{ textAlign: 'end' }} flexBasis={FORM_LABEL_COLUMN_WIDTH}>
-        <FormLabel sx={{ fontWeight: 'bold' }}>{label}:</FormLabel>
-      </Box>
-      <Box flexBasis={FORM_INPUT_COLUMN_WIDTH}>
+    <DetailInputWithLabelRow
+      sx={{
+        marginTop: 0.5,
+        gap: 2,
+        minWidth: '300px',
+        justifyContent: 'space-around',
+      }}
+      label={label}
+      labelWidthPercentage={FORM_LABEL_WIDTH}
+      inputAlignment="start"
+      Input={
         <BaseDatePickerInput
           // undefined is displayed as "now" and null as unset
           value={data ?? null}
@@ -63,8 +63,8 @@ const UIComponent = (props: ControlProps) => {
           disabled={!props.enabled}
           error={props.errors}
         />
-      </Box>
-    </Box>
+      }
+    />
   );
 };
 

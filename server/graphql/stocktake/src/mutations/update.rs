@@ -4,7 +4,7 @@ use chrono::NaiveDate;
 use graphql_core::simple_generic_errors::{CannotEditStocktake, StocktakeIsLocked};
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
-use graphql_types::types::{StocktakeLineConnector, StocktakeNode};
+use graphql_types::types::{StockLineConnector, StocktakeLineConnector, StocktakeNode};
 use repository::{Stocktake, StocktakeLine};
 use service::stocktake::UpdateStocktakeStatus;
 use service::{
@@ -40,6 +40,19 @@ impl SnapshotCountCurrentCountMismatch {
     }
 }
 
+pub struct StockLinesReducedBelowZero(pub StockLineConnector);
+
+#[Object]
+impl StockLinesReducedBelowZero {
+    pub async fn description(&self) -> &'static str {
+        "Stock lines exist in new outbound shipments. "
+    }
+
+    pub async fn stock_lines(&self) -> &StockLineConnector {
+        &self.0
+    }
+}
+
 #[derive(Interface)]
 #[graphql(name = "UpdateStocktakeErrorInterface")]
 #[graphql(field(name = "description", type = "String"))]
@@ -47,6 +60,7 @@ pub enum UpdateErrorInterface {
     SnapshotCountCurrentCountMismatch(SnapshotCountCurrentCountMismatch),
     StocktakeIsLocked(StocktakeIsLocked),
     CannotEditStocktake(CannotEditStocktake),
+    StockLinesReducedBelowZero(StockLinesReducedBelowZero),
 }
 
 #[derive(SimpleObject)]
@@ -109,6 +123,11 @@ fn map_error(err: ServiceError) -> Result<UpdateErrorInterface> {
         ServiceError::CannotEditFinalised => {
             return Ok(UpdateErrorInterface::CannotEditStocktake(
                 CannotEditStocktake {},
+            ))
+        }
+        ServiceError::StockLinesReducedBelowZero(lines) => {
+            return Ok(UpdateErrorInterface::StockLinesReducedBelowZero(
+                StockLinesReducedBelowZero(StockLineConnector::from_vec(lines)),
             ))
         }
         // Standard Graphql Errors

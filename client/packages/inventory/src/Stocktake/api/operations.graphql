@@ -166,6 +166,14 @@ mutation upsertStocktakeLines(
                 __typename
                 description
               }
+              ... on StockLineReducedBelowZero {
+                __typename
+                description
+              }
+              ... on AdjustmentReasonNotProvided {
+                __typename
+                description
+              }
             }
           }
         }
@@ -179,6 +187,14 @@ mutation upsertStocktakeLines(
             error {
               description
               ... on CannotEditStocktake {
+                __typename
+                description
+              }
+              ... on StockLineReducedBelowZero {
+                __typename
+                description
+              }
+              ... on AdjustmentReasonNotProvided {
                 __typename
                 description
               }
@@ -204,6 +220,21 @@ mutation deleteStocktakes($storeId: String!, $ids: [DeleteStocktakeInput!]) {
 
 mutation updateStocktake($input: UpdateStocktakeInput!, $storeId: String!) {
   updateStocktake(input: $input, storeId: $storeId) {
+    ... on UpdateStocktakeError {
+      __typename
+      error {
+        description
+        ... on StockLinesReducedBelowZero {
+          __typename
+          description
+          stockLines {
+            nodes {
+              id
+            }
+          }
+        }
+      }
+    }
     ... on StocktakeNode {
       __typename
       id

@@ -1,6 +1,7 @@
 export {
   ListView as RequestRequisitionListView,
   DetailView as RequestRequisitionDetailView,
+  useRequest,
 } from './RequestRequisition';
 export {
   ListView as ResponseRequisitionListView,

@@ -169,7 +169,8 @@ fn generate_lines_from_master_list(
             .query_by_filter(
                 StockLineFilter::new()
                     .item_id(EqualFilter::equal_to(item_id))
-                    .store_id(EqualFilter::equal_to(store_id)),
+                    .store_id(EqualFilter::equal_to(store_id))
+                    .has_packs_in_store(true),
                 Some(store_id.to_string()),
             )
             .unwrap();
@@ -242,15 +243,10 @@ fn generate_lines_from_location(
     location_id: &str,
 ) -> Result<Vec<StocktakeLineRow>, RepositoryError> {
     let stock_lines = StockLineRepository::new(&connection).query_by_filter(
-        StockLineFilter {
-            location_id: Some(EqualFilter::equal_to(&location_id)),
-            id: None,
-            item_id: None,
-            item_code_or_name: None,
-            is_available: None,
-            expiry_date: None,
-            store_id: Some(EqualFilter::equal_to(store_id)),
-        },
+        StockLineFilter::new()
+            .location_id(EqualFilter::equal_to(&location_id))
+            .store_id(EqualFilter::equal_to(store_id))
+            .has_packs_in_store(true),
         Some(store_id.to_string()),
     )?;
 
@@ -598,6 +594,7 @@ mod test {
                 r.store_id = mock_store_a().id;
                 r.item_id = mock_item_a().id;
                 r.location_id = Some(location_id.clone());
+                r.total_number_of_packs = 100.0;
             })
         });
 
