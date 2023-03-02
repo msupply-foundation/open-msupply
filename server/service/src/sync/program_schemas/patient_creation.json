@@ -1,0 +1,51 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "Gender": {
+      "enum": [
+        "FEMALE",
+        "MALE",
+        "TRANSGENDER",
+        "TRANSGENDER_MALE",
+        "TRANSGENDER_FEMALE",
+        "UNKNOWN",
+        "NON_BINARY"
+      ],
+      "type": "string"
+    },
+    "PatientEnrolment": {
+      "properties": {
+        "code": {
+          "description": "Patient code, e.g. national id or other patient identifier",
+          "type": "string"
+        },
+        "code2": {
+          "description": "Secondary patient code, e.g. another type of health id",
+          "type": "string"
+        },
+        "dateOfBirth": {
+          "description": "184099003 Date of birth",
+          "format": "date",
+          "type": "string"
+        },
+        "firstName": {
+          "type": "string"
+        },
+        "gender": {
+          "$ref": "#/definitions/Gender",
+          "description": "394744001 Gender unspecified"
+        },
+        "lastName": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "#/definitions/PatientEnrolment"
+    }
+  ]
+}

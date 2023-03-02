@@ -26,9 +26,12 @@
       "label": "Last Name"
     },
     {
-      "type": "DateOfBirth",
+      "type": "Control",
       "label": "Date of Birth",
-      "scope": "#"
+      "scope": "#/properties/dateOfBirth",
+      "options": {
+        "dateOnly": true
+      }
     },
     {
       "type": "Control",
