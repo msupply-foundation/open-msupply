@@ -10,7 +10,7 @@ import {
 } from '@common/components';
 import { ReportRowFragment, useReport } from '../api';
 import { ReportArgumentsModal } from './ReportArgumentsModal';
-import { JsonData } from 'packages/programs/src';
+import { JsonData } from '@openmsupply-client/programs';
 
 interface ReportSelectorProps {
   context?: ReportContext;
@@ -43,7 +43,7 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
   onClick,
 }) => {
   const { hide, PaperClickPopover } = usePaperClickPopover();
-  const { data, isLoading } = useReport.document.list(context, subContext);
+  const { data, isLoading } = useReport.document.list({ context, subContext });
   const t = useTranslation('app');
   const [reportWithArgs, setReportWithArgs] = useState<
     ReportRowFragment | undefined
@@ -122,7 +122,7 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
         report={reportWithArgs}
         onReset={() => setReportWithArgs(undefined)}
         onArgumentsSelected={onClick}
-      ></ReportArgumentsModal>
+      />
     </>
   );
 };

@@ -70,13 +70,17 @@ export const getStockQueries = (stockApi: StockApi, storeId: string) => ({
       nodes: StockLineRowFragment[];
       totalCount: number;
     }> => {
+      const filter = {
+        ...filterBy,
+        hasPacksInStore: true,
+      };
       const result = await stockApi.stockLines({
         storeId,
         first: first,
         offset: offset,
         key: stockLineParsers.toSortField(sortBy),
         desc: sortBy.isDesc,
-        filter: filterBy,
+        filter,
       });
       const { nodes, totalCount } = result?.stockLines;
       return { nodes, totalCount };

@@ -182,10 +182,6 @@ const PATIENT_REPORT: &'static str =
 const DEMO_PATIENT_REPORT: &'static str =
     std::include_str!("./program_schemas/report_demo_patient.json");
 
-const DEMO_ARG_SCHEMA: &'static str = std::include_str!("./program_schemas/demo_arg_schema.json");
-const DEMO_ARG_UI_SCHEMA: &'static str =
-    std::include_str!("./program_schemas/demo_arg_ui_schema.json");
-
 const ENCOUNTERS_ARG_SCHEMA: &'static str =
     std::include_str!("./program_schemas/encounters_arg_schema.json");
 const ENCOUNTERS_ARG_UI_SCHEMA: &'static str =
@@ -197,13 +193,30 @@ const VL_ELIGIBILITY_REPORT: &'static str =
 const LTFU_REPORT: &'static str = std::include_str!("./program_schemas/report_ltfu.json");
 const GBV_REPORT: &'static str = std::include_str!("./program_schemas/report_gbv.json");
 
+const EMPTY_CONTACT_DETAILS: ContactDetails = {
+    ContactDetails {
+        description: None,
+        address_1: None,
+        address_2: None,
+        city: None,
+        country: None,
+        district: None,
+        region: None,
+        zip_code: None,
+        mobile: None,
+        phone: None,
+        email: None,
+        website: None,
+    }
+};
+
 fn person_1() -> RelatedPerson {
     RelatedPerson {
         id: Some("person1".to_string()),
         code: Some("id34568".to_string()),
         first_name: Some("Tom".to_string()),
         last_name: Some("Smith".to_string()),
-        contact_details: vec![],
+        contact_details: vec![EMPTY_CONTACT_DETAILS.clone()],
         date_of_birth: None,
         date_of_birth_is_estimated: None,
         birth_place: None,
@@ -225,7 +238,7 @@ fn person_2() -> RelatedPerson {
         code: Some("id41325".to_string()),
         first_name: Some("Eli".to_string()),
         last_name: Some("Bond".to_string()),
-        contact_details: vec![],
+        contact_details: vec![EMPTY_CONTACT_DETAILS.clone()],
         date_of_birth: None,
         date_of_birth_is_estimated: None,
         birth_place: None,
@@ -247,7 +260,7 @@ fn person_3() -> RelatedPerson {
         code: Some("id12245".to_string()),
         first_name: Some("Heidi".to_string()),
         last_name: Some("Tomalla".to_string()),
-        contact_details: vec![],
+        contact_details: vec![EMPTY_CONTACT_DETAILS.clone()],
         date_of_birth: None,
         date_of_birth_is_estimated: None,
         birth_place: None,
@@ -1122,27 +1135,6 @@ pub fn init_program_data(
         })
         .unwrap();
 
-    // arg demo report
-    let demo_arg_schema_id = uuid();
-    FormSchemaRowRepository::new(connection).upsert_one(&FormSchema {
-        id: demo_arg_schema_id.clone(),
-        r#type: "JsonForms".to_string(),
-        json_schema: serde_json::from_str(DEMO_ARG_SCHEMA).unwrap(),
-        ui_schema: serde_json::from_str(DEMO_ARG_UI_SCHEMA).unwrap(),
-    })?;
-    report_repo
-        .upsert_one(&ReportRow {
-            id: uuid(),
-            name: "Patient with first name like".to_string(),
-            r#type: repository::ReportType::OmSupply,
-            template: DEMO_PATIENT_REPORT.to_string(),
-            context: ReportContext::Patient,
-            comment: None,
-            sub_context: Some("HIVCareProgram".to_string()),
-            argument_schema_id: Some(demo_arg_schema_id),
-        })
-        .unwrap();
-
     // encounter list report
     let encounters_arg_schema_id = uuid();
     FormSchemaRowRepository::new(connection).upsert_one(&FormSchema {
@@ -1157,7 +1149,7 @@ pub fn init_program_data(
             name: "List of Appointments".to_string(),
             r#type: repository::ReportType::OmSupply,
             template: ENCOUNTERS_REPORT.to_string(),
-            context: ReportContext::Patient,
+            context: ReportContext::Dispensary,
             comment: None,
             sub_context: Some("HIVCareProgram".to_string()),
             argument_schema_id: Some(encounters_arg_schema_id),
@@ -1170,7 +1162,7 @@ pub fn init_program_data(
             name: "Viral Load Eligibility".to_string(),
             r#type: repository::ReportType::OmSupply,
             template: VL_ELIGIBILITY_REPORT.to_string(),
-            context: ReportContext::Patient,
+            context: ReportContext::Dispensary,
             comment: None,
             sub_context: Some("HIVCareProgram".to_string()),
             argument_schema_id: None,
@@ -1183,7 +1175,7 @@ pub fn init_program_data(
             name: "Lost to follow up".to_string(),
             r#type: repository::ReportType::OmSupply,
             template: LTFU_REPORT.to_string(),
-            context: ReportContext::Patient,
+            context: ReportContext::Dispensary,
             comment: None,
             sub_context: Some("HIVCareProgram".to_string()),
             argument_schema_id: None,
@@ -1196,7 +1188,7 @@ pub fn init_program_data(
             name: "Gender-based Violence Summary".to_string(),
             r#type: repository::ReportType::OmSupply,
             template: GBV_REPORT.to_string(),
-            context: ReportContext::Patient,
+            context: ReportContext::Dispensary,
             comment: None,
             sub_context: Some("HIVCareProgram".to_string()),
             argument_schema_id: None,
