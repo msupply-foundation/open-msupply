@@ -1,7 +1,6 @@
 use repository::{
     EqualFilter, InventoryAdjustmentReason, InventoryAdjustmentReasonFilter,
-    InventoryAdjustmentReasonRepository, InventoryAdjustmentReasonType, InvoiceLineFilter,
-    InvoiceLineRepository, InvoiceRowStatus, InvoiceRowType,
+    InventoryAdjustmentReasonRepository, InventoryAdjustmentReasonType, StockLineRow,
 };
 use repository::{
     ItemFilter, ItemRepository, LocationFilter, LocationRepository, RepositoryError,
@@ -102,26 +101,12 @@ pub fn check_reason_is_valid(
 }
 
 pub fn check_stock_line_reduced_below_zero(
-    connection: &StorageConnection,
-    store_id: &str,
-    stock_line_id: &str,
+    stock_line: &StockLineRow,
     counted_number_of_packs: &f64,
-) -> Result<bool, RepositoryError> {
-    let outbound_shipments = InvoiceLineRepository::new(connection).query_by_filter(
-        InvoiceLineFilter::new()
-            .stock_line_id(EqualFilter::equal_to(&stock_line_id))
-            .store_id(EqualFilter::equal_to(store_id))
-            .invoice_status(InvoiceRowStatus::New.equal_to())
-            .invoice_type(InvoiceRowType::OutboundShipment.equal_to()),
-    )?;
+) -> bool {
+    let adjustment = stock_line.total_number_of_packs - counted_number_of_packs;
 
-    let total_outbound_shipment_number_of_packs: f64 = outbound_shipments
-        .iter()
-        .map(|line| line.invoice_line_row.number_of_packs as f64)
-        .sum();
-
-    if counted_number_of_packs - total_outbound_shipment_number_of_packs < 0.0 {
-        return Ok(true);
-    }
-    Ok(false)
+    return adjustment > 0.0
+        && (stock_line.total_number_of_packs - adjustment < 0.0
+            || stock_line.available_number_of_packs - adjustment < 0.0);
 }

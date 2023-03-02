@@ -3,10 +3,11 @@ use repository::{
     ActivityLogType, DatetimeFilter, EqualFilter, InvoiceLineRow, InvoiceLineRowRepository,
     InvoiceLineRowType, InvoiceRow, InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType,
     ItemRowRepository, LocationMovementFilter, LocationMovementRepository, LocationMovementRow,
-    LocationMovementRowRepository, NameRowRepository, NumberRowType, RepositoryError, StockLineRow,
-    StockLineRowRepository, Stocktake, StocktakeLine, StocktakeLineFilter, StocktakeLineRepository,
-    StocktakeLineRow, StocktakeLineRowRepository, StocktakeRow, StocktakeRowRepository,
-    StocktakeStatus, StorageConnection,
+    LocationMovementRowRepository, NameRowRepository, NumberRowType, RepositoryError, StockLine,
+    StockLineFilter, StockLineRepository, StockLineRow, StockLineRowRepository, Stocktake,
+    StocktakeLine, StocktakeLineFilter, StocktakeLineRepository, StocktakeLineRow,
+    StocktakeLineRowRepository, StocktakeRow, StocktakeRowRepository, StocktakeStatus,
+    StorageConnection,
 };
 use util::{constants::INVENTORY_ADJUSTMENT_NAME_CODE, inline_edit, uuid::uuid};
 
@@ -50,6 +51,7 @@ pub enum UpdateStocktakeError {
     NoLines,
     /// Holds list of affected stock lines
     SnapshotCountCurrentCountMismatch(Vec<StocktakeLine>),
+    StockLinesReducedBelowZero(Vec<StockLine>),
 }
 
 fn check_snapshot_matches_current_count(
@@ -69,6 +71,43 @@ fn check_snapshot_matches_current_count(
         return Some(mismatches);
     }
     None
+}
+
+fn check_stock_lines_reduced_to_zero(
+    connection: &StorageConnection,
+    stocktake_lines: &Vec<StocktakeLine>,
+) -> Result<Option<Vec<StockLine>>, RepositoryError> {
+    let mut lines_reduced_to_zero = Vec::new();
+
+    for line in stocktake_lines {
+        let stock_line_row = match &line.stock_line {
+            Some(stock_line) => stock_line,
+            None => continue,
+        };
+        if let Some(counted_number_of_packs) = line.line.counted_number_of_packs {
+            let adjustment = stock_line_row.total_number_of_packs - counted_number_of_packs;
+
+            if adjustment > 0.0
+                && (stock_line_row.total_number_of_packs - adjustment < 0.0
+                    || stock_line_row.available_number_of_packs - adjustment < 0.0)
+            {
+                let stock_line = StockLineRepository::new(connection)
+                    .query_by_filter(
+                        StockLineFilter::new().id(EqualFilter::equal_to(&stock_line_row.id)),
+                        None,
+                    )?
+                    .pop()
+                    .ok_or_else(|| RepositoryError::NotFound)?;
+
+                lines_reduced_to_zero.push(stock_line.clone())
+            }
+        }
+    }
+
+    if !lines_reduced_to_zero.is_empty() {
+        return Ok(Some(lines_reduced_to_zero));
+    }
+    Ok(None)
 }
 
 fn load_stocktake_lines(
@@ -106,6 +145,14 @@ fn validate(
     if status_changed {
         if stocktake_lines.len() == 0 {
             return Err(UpdateStocktakeError::NoLines);
+        }
+
+        if let Some(stock_reduced_to_zero) =
+            check_stock_lines_reduced_to_zero(connection, &stocktake_lines)?
+        {
+            return Err(UpdateStocktakeError::StockLinesReducedBelowZero(
+                stock_reduced_to_zero,
+            ));
         }
 
         if let Some(mismatches) = check_snapshot_matches_current_count(&stocktake_lines) {

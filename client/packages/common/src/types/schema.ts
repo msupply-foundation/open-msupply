@@ -143,6 +143,11 @@ export type AddToShipmentFromMasterListInput = {
   shipmentId: Scalars['String'];
 };
 
+export type AdjustmentReasonNotProvided = InsertStocktakeLineErrorInterface & UpdateStocktakeLineErrorInterface & {
+  __typename: 'AdjustmentReasonNotProvided';
+  description: Scalars['String'];
+};
+
 export type AllocateOutboundShipmentUnallocatedLineError = {
   __typename: 'AllocateOutboundShipmentUnallocatedLineError';
   error: AllocateOutboundShipmentUnallocatedLineErrorInterface;
@@ -2957,6 +2962,7 @@ export type Queries = {
   stocktakeByNumber: StocktakeResponse;
   stocktakes: StocktakesResponse;
   store: StoreResponse;
+  storePreferences: StorePreferenceNode;
   stores: StoresResponse;
   syncSettings?: Maybe<SyncSettingsNode>;
 };
@@ -3246,6 +3252,11 @@ export type QueriesStoreArgs = {
 };
 
 
+export type QueriesStorePreferencesArgs = {
+  storeId: Scalars['String'];
+};
+
+
 export type QueriesStoresArgs = {
   filter?: InputMaybe<StoreFilterInput>;
   page?: InputMaybe<PaginationInput>;
@@ -3302,6 +3313,7 @@ export type ReportConnector = {
 };
 
 export enum ReportContext {
+  Dispensary = 'DISPENSARY',
   InboundShipment = 'INBOUND_SHIPMENT',
   OutboundShipment = 'OUTBOUND_SHIPMENT',
   Patient = 'PATIENT',
@@ -3609,6 +3621,7 @@ export type StockLineConnector = {
 
 export type StockLineFilterInput = {
   expiryDate?: InputMaybe<DateFilterInput>;
+  hasPacksInStore?: InputMaybe<Scalars['Boolean']>;
   id?: InputMaybe<EqualFilterStringInput>;
   isAvailable?: InputMaybe<Scalars['Boolean']>;
   itemCodeOrName?: InputMaybe<SimpleStringFilterInput>;
@@ -3643,6 +3656,12 @@ export type StockLineNode = {
   totalNumberOfPacks: Scalars['Float'];
 };
 
+export type StockLineReducedBelowZero = InsertStocktakeLineErrorInterface & UpdateStocktakeLineErrorInterface & {
+  __typename: 'StockLineReducedBelowZero';
+  description: Scalars['String'];
+  stockLine: StockLineNode;
+};
+
 export type StockLineResponse = NodeError | StockLineNode;
 
 export enum StockLineSortFieldInput {
@@ -3663,6 +3682,12 @@ export type StockLineSortInput = {
   desc?: InputMaybe<Scalars['Boolean']>;
   /** Sort query result by `key` */
   key: StockLineSortFieldInput;
+};
+
+export type StockLinesReducedBelowZero = UpdateStocktakeErrorInterface & {
+  __typename: 'StockLinesReducedBelowZero';
+  description: Scalars['String'];
+  stockLines: StockLineConnector;
 };
 
 export type StockLinesResponse = StockLineConnector;
@@ -3799,6 +3824,12 @@ export type StoreNode = {
 
 export type StoreNodeNameArgs = {
   storeId: Scalars['String'];
+};
+
+export type StorePreferenceNode = {
+  __typename: 'StorePreferenceNode';
+  id: Scalars['String'];
+  packToOne: Scalars['Boolean'];
 };
 
 export type StoreResponse = NodeError | StoreNode;

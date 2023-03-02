@@ -96,17 +96,8 @@ pub trait ReportServiceTrait: Sync + Send {
         resolve_report_definition(ctx, name, report_definition)
     }
 
-    fn generate_report(
-        &self,
-        report: &ResolvedReportDefinition,
-        report_data: serde_json::Value,
-        arguments: Option<serde_json::Value>,
-    ) -> Result<GeneratedReport, ReportError> {
-        generate_report(report, report_data, arguments)
-    }
-
-    /// Returns the printed pdf file id
-    fn print_report(
+    /// Converts a HTML report to a file for the target PrintFormat and returns file id
+    fn print_html_report(
         &self,
         base_dir: &Option<String>,
         report: &ResolvedReportDefinition,
@@ -114,127 +105,91 @@ pub trait ReportServiceTrait: Sync + Send {
         arguments: Option<serde_json::Value>,
         format: Option<PrintFormat>,
     ) -> Result<String, ReportError> {
-        let document = self.generate_report(report, report_data, arguments)?;
+        let document = generate_report(report, report_data, arguments)?;
 
         match format {
             Some(PrintFormat::Html) => {
-                self.print_html_report(base_dir, document, report.name.clone())
+                print_html_report_to_html(base_dir, document, report.name.clone())
             }
             Some(PrintFormat::Pdf) | None => {
-                self.print_pdf_report(base_dir, document, report.name.clone())
+                print_html_report_to_pdf(base_dir, document, report.name.clone())
             }
         }
     }
+}
 
-    fn print_pdf_report(
-        &self,
-        base_dir: &Option<String>,
-        document: GeneratedReport,
-        report_name: String,
-    ) -> Result<String, ReportError> {
-        let id = uuid();
-        // TODO use a proper tmp dir here instead of base_dir?
-        let pdf = html_to_pdf(base_dir, &document, &id)
-            .map_err(|err| ReportError::HTMLToPDFError(format!("{}", err)))?;
+/// Converts a HTML report to a pdf file and returns the file id
+fn print_html_report_to_pdf(
+    base_dir: &Option<String>,
+    document: GeneratedReport,
+    report_name: String,
+) -> Result<String, ReportError> {
+    let id = uuid();
+    // TODO use a proper tmp dir here instead of base_dir?
+    let pdf = html_to_pdf(base_dir, &format_html_document(document), &id)
+        .map_err(|err| ReportError::HTMLToPDFError(format!("{}", err)))?;
 
-        let file_service = StaticFileService::new(base_dir)
-            .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
-        let now: DateTime<Utc> = SystemTime::now().into();
-        let file = file_service
-            .store_file(
-                &format!("{}_{}.pdf", now.format("%Y%m%d_%H%M%S"), report_name),
-                &pdf,
-            )
-            .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
-        Ok(file.id)
-    }
-
-    fn print_html_report(
-        &self,
-        base_dir: &Option<String>,
-        document: GeneratedReport,
-        report_name: String,
-    ) -> Result<String, ReportError> {
-        let file_service = StaticFileService::new(base_dir)
-            .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
-        let now: DateTime<Utc> = SystemTime::now().into();
-        let file = file_service
-            .store_file(
-                &format!("{}_{}.html", now.format("%Y%m%d_%H%M%S"), report_name),
-                self.format_html_document(document).as_bytes(),
-            )
-            .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
-        Ok(file.id)
-    }
-
-    fn format_html_document(&self, document: GeneratedReport) -> String {
-        format!(
-            "<html>
-  <head>
-    <style>
-      @page {{
-        size: A4;
-        margin: 1.5cm;
-      }}
-
-      @media print {{
-        table.paging thead td,
-        table.paging tfoot td {{
-          height: 1.5cm;
-        }}
-      }}
-
-      header,
-      footer {{
-        width: 100%;
-        height: 1.5cm;
-      }}
-
-      header {{
-        top: 0;
-      }}
-
-      @media print {{
-        header,
-        footer {{
-          position: fixed;
-        }}
-
-        footer {{
-          bottom: 0;
-        }}
-      }}
-    </style>
-  </head>
-  <body>
-    <header>{}</header>
-
-    <table class=\"paging\">
-      <thead>
-        <tr>
-          <td>&nbsp;</td>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>{}</td>
-        </tr>
-      </tbody>
-      <tfoot>
-        <tr>
-          <td>&nbsp;</td>
-        </tr>
-      </tfoot>
-    </table>
-
-    <footer>{}</footer>
-  </body>
-</html>",
-            document.header.unwrap_or("".to_string()),
-            document.document,
-            document.footer.unwrap_or("".to_string())
+    let file_service = StaticFileService::new(base_dir)
+        .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
+    let now: DateTime<Utc> = SystemTime::now().into();
+    let file = file_service
+        .store_file(
+            &format!("{}_{}.pdf", now.format("%Y%m%d_%H%M%S"), report_name),
+            &pdf,
         )
-    }
+        .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
+    Ok(file.id)
+}
+
+/// Converts the report to a HTML file and returns the file id
+fn print_html_report_to_html(
+    base_dir: &Option<String>,
+    document: GeneratedReport,
+    report_name: String,
+) -> Result<String, ReportError> {
+    let file_service = StaticFileService::new(base_dir)
+        .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
+    let now: DateTime<Utc> = SystemTime::now().into();
+    let file = file_service
+        .store_file(
+            &format!("{}_{}.html", now.format("%Y%m%d_%H%M%S"), report_name),
+            format_html_document(document).as_bytes(),
+        )
+        .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
+    Ok(file.id)
+}
+
+/// Puts the document content, header and footer into a <html> template.
+/// This assumes that the document contains the html body.
+fn format_html_document(document: GeneratedReport) -> String {
+    format!(
+        "
+<html>
+    <body>
+        <table class=\"paging\">
+        <thead>
+            <tr>
+            <td>{}</td>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+            <td>{}</td>
+            </tr>
+        </tbody>
+        <tfoot>
+            <tr>
+            <td>{}</td>
+            </tr>
+        </tfoot>
+        </table>
+    </body>
+</html>
+",
+        document.header.unwrap_or("".to_string()),
+        document.document,
+        document.footer.unwrap_or("".to_string())
+    )
 }
 
 pub struct ReportService;
@@ -532,9 +487,12 @@ mod report_service_test {
     };
 
     use crate::{
-        report::definition::{
-            DefaultQuery, ReportDefinition, ReportDefinitionEntry, ReportDefinitionIndex,
-            ReportOutputType, ReportRef, TeraTemplate,
+        report::{
+            definition::{
+                DefaultQuery, ReportDefinition, ReportDefinitionEntry, ReportDefinitionIndex,
+                ReportOutputType, ReportRef, TeraTemplate,
+            },
+            report_service::generate_report,
         },
         service_provider::ServiceProvider,
     };
@@ -619,15 +577,14 @@ mod report_service_test {
         let service = service_provider.report_service;
         let resolved_def = service.resolve_report(&context, "report_1").unwrap();
 
-        let doc = service
-            .generate_report(
-                &resolved_def,
-                serde_json::json!({
-                    "test": "Hello"
-                }),
-                None,
-            )
-            .unwrap();
+        let doc = generate_report(
+            &resolved_def,
+            serde_json::json!({
+                "test": "Hello"
+            }),
+            None,
+        )
+        .unwrap();
         assert_eq!(doc.document, "Template: Hello Footer");
     }
 }

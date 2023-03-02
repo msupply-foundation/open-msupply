@@ -14,9 +14,9 @@ import {
   InlineSpinner,
   useAuthContext,
 } from '@openmsupply-client/common';
-import { EncounterFragment, useEncounter } from 'packages/programs/src';
+import { EncounterFragment, useEncounter } from '@openmsupply-client/programs';
 import { getClinicianName } from '../../Patient/Encounter';
-import { AppRoute } from 'packages/config/src';
+import { AppRoute } from '@openmsupply-client/config';
 
 const NUM_RECENT_ENCOUNTERS = 5;
 
