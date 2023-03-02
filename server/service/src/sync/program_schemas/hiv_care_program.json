@@ -83,15 +83,7 @@
       "type": "object"
     },
     "Gender": {
-      "enum": [
-        "FEMALE",
-        "MALE",
-        "TRANSGENDER",
-        "TRANSGENDER_MALE",
-        "TRANSGENDER_FEMALE",
-        "UNKNOWN",
-        "NON_BINARY"
-      ],
+      "enum": ["FEMALE", "MALE", "TRANSGENDER", "TRANSGENDER_MALE", "TRANSGENDER_FEMALE", "UNKNOWN", "NON_BINARY"],
       "type": "string"
     },
     "HIVCareProgramEnrolment": {
@@ -129,13 +121,7 @@
           "type": "string"
         },
         "priorART": {
-          "enum": [
-            "TRANSFER_IN_WITH_RECORDS",
-            "TRANSFER_IN_WITHOUT_RECORDS",
-            "PPTCT_PROPHYLAXIS",
-            "PEP",
-            "PrEP"
-          ],
+          "enum": ["TRANSFER_IN_WITH_RECORDS", "TRANSFER_IN_WITHOUT_RECORDS", "PPTCT_PROPHYLAXIS", "PEP", "PrEP"],
           "type": "string"
         },
         "programEnrolmentId": {
@@ -154,6 +140,9 @@
         },
         "treatmentSupporter": {
           "$ref": "#/definitions/Person"
+        },
+        "treatmentSupporterIsNextOfKin": {
+          "type": "boolean"
         }
       },
       "required": ["enrolmentDatetime"],
@@ -171,18 +160,7 @@
       "type": "object"
     },
     "HIVRiskGroup": {
-      "enum": [
-        "LRM",
-        "MSM",
-        "MSW",
-        "MSMSW",
-        "HRM",
-        "LRW",
-        "HRW",
-        "FSW",
-        "TG",
-        "TGSW"
-      ],
+      "enum": ["LRM", "MSM", "MSW", "MSMSW", "HRM", "LRW", "HRW", "FSW", "TG", "TGSW"],
       "type": "string"
     },
     "HIVTestType": {

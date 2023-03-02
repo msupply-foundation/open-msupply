@@ -26,6 +26,8 @@ import {
   previousEncounterFieldTester,
   DecisionTreeControl,
   decisionTreeTester,
+  Search,
+  searchTester,
   encounterProgramEventTester,
   EncounterProgramEvent,
 } from './components';
@@ -89,6 +91,7 @@ const additionalRenderers: JsonFormsRendererRegistryEntry[] = [
     renderer: PreviousEncounterField,
   },
   { tester: decisionTreeTester, renderer: DecisionTreeControl },
+  { tester: searchTester, renderer: Search },
   { tester: encounterProgramEventTester, renderer: EncounterProgramEvent },
 ];
 
