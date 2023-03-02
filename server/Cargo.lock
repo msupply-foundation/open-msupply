@@ -476,25 +476,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "async-dnssd"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "98efc05996cc8d660e88841fcffb75aa71be5339c9ae559a8c8016c048420b82"
-dependencies = [
- "bitflags",
- "futures-channel",
- "futures-core",
- "futures-executor",
- "futures-util",
- "libc",
- "log",
- "pin-utils",
- "pkg-config",
- "tokio",
- "winapi",
-]
-
-[[package]]
 name = "async-executor"
 version = "1.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4255,7 +4236,6 @@ dependencies = [
  "anyhow",
  "assert-json-diff",
  "astro-dnssd",
- "async-dnssd",
  "chrono",
  "clap 3.1.8",
  "config",
