@@ -91,7 +91,7 @@
                 {
                   "type": "Control",
                   "scope": "#/properties/gender",
-                  "label": "Sex",
+                  "label": "Sex:",
                   "options": {
                     "show": [
                       ["MALE", "Male"],
@@ -260,7 +260,7 @@
                 {
                   "type": "Control",
                   "scope": "#/properties/handedness",
-                  "label": "Handedness",
+                  "label": "Handedness:",
                   "options": {
                     "show": [
                       ["LEFT", "Left"],

@@ -8,7 +8,7 @@ import {
   PositiveNumberInput,
   useDebounceCallback,
 } from '@openmsupply-client/common';
-import { FORM_LABEL_WIDTH } from '../styleConstants';
+import { FORM_LABEL_WIDTH, DefaultFormRowSx } from '../styleConstants';
 
 export const numberTester = rankWith(3, schemaTypeIs('number'));
 
@@ -42,13 +42,7 @@ const UIComponent = (props: ControlProps) => {
   };
   return (
     <DetailInputWithLabelRow
-      sx={{
-        margin: 0.5,
-        marginLeft: 0,
-        gap: 2,
-        minWidth: '300px',
-        justifyContent: 'space-around',
-      }}
+      sx={DefaultFormRowSx}
       label={label}
       labelWidthPercentage={FORM_LABEL_WIDTH}
       inputAlignment="start"

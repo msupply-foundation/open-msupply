@@ -186,6 +186,17 @@ export type FormSchemaQueryVariables = Types.Exact<{
 
 export type FormSchemaQuery = { __typename: 'Queries', formSchema?: { __typename: 'FormSchemaNode', id: string, jsonSchema: any, type: string, uiSchema: any } | null };
 
+export type ProgramEventsQueryVariables = Types.Exact<{
+  at?: Types.InputMaybe<Types.Scalars['String']>;
+  patientId: Types.Scalars['String'];
+  storeId: Types.Scalars['String'];
+  filter?: Types.InputMaybe<Types.ProgramEventFilterInput>;
+  page?: Types.InputMaybe<Types.PaginationInput>;
+}>;
+
+
+export type ProgramEventsQuery = { __typename: 'Queries', programEvents: { __typename: 'ProgramEventConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramEventNode', type: string, patientId?: string | null, documentType: string, documentName?: string | null, datetime: string, data?: string | null, activeDatetime: string }> } };
+
 export const DocumentRegistryFragmentDoc = gql`
     fragment DocumentRegistry on DocumentRegistryNode {
   __typename
@@ -602,6 +613,32 @@ export const FormSchemaDocument = gql`
   }
 }
     ${FormSchemaFragmentDoc}`;
+export const ProgramEventsDocument = gql`
+    query programEvents($at: String, $patientId: String!, $storeId: String!, $filter: ProgramEventFilterInput, $page: PaginationInput) {
+  programEvents(
+    at: $at
+    patientId: $patientId
+    storeId: $storeId
+    filter: $filter
+    page: $page
+  ) {
+    ... on ProgramEventConnector {
+      __typename
+      totalCount
+      nodes {
+        __typename
+        type
+        patientId
+        documentType
+        documentName
+        datetime
+        data
+        activeDatetime
+      }
+    }
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -663,6 +700,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     formSchema(variables?: FormSchemaQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<FormSchemaQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<FormSchemaQuery>(FormSchemaDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'formSchema', 'query');
+    },
+    programEvents(variables: ProgramEventsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ProgramEventsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ProgramEventsQuery>(ProgramEventsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'programEvents', 'query');
     }
   };
 }
@@ -971,5 +1011,22 @@ export const mockCliniciansQuery = (resolver: ResponseResolver<GraphQLRequest<Cl
 export const mockFormSchemaQuery = (resolver: ResponseResolver<GraphQLRequest<FormSchemaQueryVariables>, GraphQLContext<FormSchemaQuery>, any>) =>
   graphql.query<FormSchemaQuery, FormSchemaQueryVariables>(
     'formSchema',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockProgramEventsQuery((req, res, ctx) => {
+ *   const { at, patientId, storeId, filter, page } = req.variables;
+ *   return res(
+ *     ctx.data({ programEvents })
+ *   )
+ * })
+ */
+export const mockProgramEventsQuery = (resolver: ResponseResolver<GraphQLRequest<ProgramEventsQueryVariables>, GraphQLContext<ProgramEventsQuery>, any>) =>
+  graphql.query<ProgramEventsQuery, ProgramEventsQueryVariables>(
+    'programEvents',
     resolver
   )

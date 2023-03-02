@@ -6,6 +6,7 @@ import { Autocomplete } from '@openmsupply-client/common';
 import {
   FORM_LABEL_COLUMN_WIDTH,
   FORM_INPUT_COLUMN_WIDTH,
+  DefaultFormRowSx,
 } from '../styleConstants';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
@@ -16,16 +17,17 @@ export const conditionalSelectTester = rankWith(
   uiTypeIs('ConditionalSelect')
 );
 
-type Options = {
-  conditionField: string;
-  conditionalValues: Record<string, string[]>;
-};
-const Options: z.ZodType<Options> = z
+const Options = z
   .object({
     conditionField: z.string(),
+    /**
+     * Maps record keys to a list of available selections.
+     * The record key is compared to condition field value.
+     */
     conditionalValues: z.record(z.array(z.string())),
   })
   .strict();
+type Options = z.infer<typeof Options>;
 
 type DisplayOption = { label: string };
 
@@ -61,15 +63,7 @@ const UIComponent = (props: ControlProps) => {
   };
 
   return (
-    <Box
-      display="flex"
-      alignItems="center"
-      gap={2}
-      justifyContent="space-around"
-      style={{ minWidth: 300 }}
-      margin={0.5}
-      marginLeft={0}
-    >
+    <Box sx={DefaultFormRowSx}>
       <Box style={{ textAlign: 'end' }} flexBasis={FORM_LABEL_COLUMN_WIDTH}>
         <FormLabel sx={{ fontWeight: 'bold' }}>{label}:</FormLabel>
       </Box>

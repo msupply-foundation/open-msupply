@@ -11,10 +11,12 @@ import {
 import {
   FORM_LABEL_COLUMN_WIDTH,
   FORM_INPUT_COLUMN_WIDTH,
+  DefaultFormRowSx,
   JsonFormsConfig,
   useZodOptionsValidation,
   useDocument,
   useProgramEnrolments,
+  FORM_GAP,
 } from '@openmsupply-client/programs';
 import { Button, FormLabel } from '@mui/material';
 import { get as extractProperty } from 'lodash';
@@ -368,13 +370,7 @@ const UIComponent = (props: ControlProps) => {
     return null;
   }
   return (
-    <Box
-      display="flex"
-      alignItems="center"
-      justifyContent="space-around"
-      style={{ minWidth: 300 }}
-      sx={{ margin: 0.5, marginLeft: 0, gap: 2 }}
-    >
+    <Box sx={DefaultFormRowSx}>
       <Box style={{ textAlign: 'end' }} flexBasis={FORM_LABEL_COLUMN_WIDTH}>
         <FormLabel sx={{ fontWeight: 'bold' }}>{label}:</FormLabel>
       </Box>
@@ -382,6 +378,7 @@ const UIComponent = (props: ControlProps) => {
         flexBasis={FORM_INPUT_COLUMN_WIDTH}
         display="flex"
         alignItems="center"
+        gap={FORM_GAP}
       >
         <BasicTextInput
           disabled={!props.enabled || !options?.allowManualEntry}

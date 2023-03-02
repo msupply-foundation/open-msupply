@@ -75,3 +75,9 @@ export const useFormSchema = {
     byType: Document.useFormSchemaByType,
   },
 };
+
+export const useProgramEvents = {
+  document: {
+    list: Document.useProgramEvents,
+  },
+};

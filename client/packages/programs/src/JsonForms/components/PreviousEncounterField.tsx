@@ -10,6 +10,8 @@ import {
   FORM_LABEL_COLUMN_WIDTH,
   FORM_INPUT_COLUMN_WIDTH,
   FORM_LABEL_WIDTH,
+  DefaultFormRowSx,
+  DefaultFormRowSpacing,
 } from '../common';
 import { useEncounter } from '../../api';
 import { get as extractProperty } from 'lodash';
@@ -53,20 +55,13 @@ const UIComponent = (props: ControlProps) => {
       label={label}
       inputProps={{
         ...inputProps,
-        sx: { ...inputProps.sx, margin: 0.5, width: '100%' },
+        sx: { ...inputProps.sx, ...DefaultFormRowSpacing },
       }}
       labelWidthPercentage={FORM_LABEL_WIDTH}
       inputAlignment={'start'}
     />
   ) : (
-    <Box
-      display="flex"
-      alignItems="center"
-      gap={2}
-      justifyContent="space-around"
-      style={{ minWidth: 300 }}
-      marginTop={1}
-    >
+    <Box sx={DefaultFormRowSx}>
       <Box style={{ textAlign: 'end' }} flexBasis={FORM_LABEL_COLUMN_WIDTH}>
         <FormLabel sx={{ fontWeight: 'bold' }}>{label}:</FormLabel>
       </Box>

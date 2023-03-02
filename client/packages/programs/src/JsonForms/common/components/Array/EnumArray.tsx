@@ -15,6 +15,7 @@ import {
 import {
   FORM_LABEL_COLUMN_WIDTH,
   FORM_INPUT_COLUMN_WIDTH,
+  DefaultFormRowSx,
 } from '../../styleConstants';
 import { UISchemaWithCustomProps } from './common';
 import parse from 'autosuggest-highlight/parse';
@@ -110,14 +111,7 @@ export const EnumArrayComponent: FC<EnumArrayControlCustomProps> = ({
 
   return (
     <>
-      <Box
-        display="flex"
-        alignItems="center"
-        gap={2}
-        justifyContent="space-around"
-        style={{ minWidth: 300 }}
-        margin={0.5}
-      >
+      <Box sx={DefaultFormRowSx}>
         <Box
           style={{ textAlign: 'end', alignSelf: 'start', paddingTop: 5 }}
           flexBasis={FORM_LABEL_COLUMN_WIDTH}

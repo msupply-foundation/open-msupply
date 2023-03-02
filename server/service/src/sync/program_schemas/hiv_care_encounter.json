@@ -39,13 +39,13 @@
           "if": {
             "properties": {
               "regimenStatus": {
-                "enum": ["START", "CHANGE"]
+                "enum": ["START", "CHANGE", "STOP"]
               }
             }
           },
           "properties": {
-            "adherenceStatus": {
-              "description": "Antiretroviral adherence status [%]",
+            "adherenceScore": {
+              "description": "Antiretroviral adherence score [%]",
               "type": "number"
             },
             "endOfSupply": {
@@ -72,9 +72,13 @@
               },
               "type": "array"
             },
-            "quantityPrescribed": {
-              "description": "Number of pills prescribed",
+            "quantityDispensed": {
+              "description": "Number of pills dispensed in this encounter",
               "minimum": 0,
+              "type": "number"
+            },
+            "quantityPrescribed": {
+              "description": "Number of pills on hand at the end of the encounter.",
               "type": "number"
             },
             "regimen": {
@@ -188,7 +192,7 @@
             }
           },
           "then": {
-            "required": ["regimen"]
+            "required": ["regimen", "regimenChangeReason"]
           },
           "type": "object"
         },

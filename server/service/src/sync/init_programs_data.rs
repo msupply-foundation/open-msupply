@@ -184,7 +184,6 @@ const IMMUNISATION_ENCOUNTER_5MONTH_UI_SCHEMA: &'static str =
 
 const PATIENT_REPORT: &'static str =
     std::include_str!("./program_schemas/report_patient_hiv_care.json");
-
 const ENCOUNTERS_ARG_SCHEMA: &'static str =
     std::include_str!("./program_schemas/encounters_arg_schema.json");
 const ENCOUNTERS_ARG_UI_SCHEMA: &'static str =
@@ -433,6 +432,7 @@ fn encounter_hiv_care_1(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncou
                 e.quantity_prescribed = Some(8.0);
                 e.regimen = Some("1a-New".to_string());
                 e.regimen_status = Some("START".to_string());
+                e.regimen_change_reason = Some("51".to_string())
             },
         ));
     })
@@ -453,7 +453,7 @@ fn encounter_hiv_care_2(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncou
             |e: &mut hiv_care_encounter::HivcareEncounterArvMedication| {
                 e.remaining_pill_count = Some(2.0);
                 e.quantity_prescribed = Some(8.0);
-                e.adherence_status = Some(85.7142835884354);
+                e.adherence_score = Some(85.7142835884354);
                 e.regimen = Some("1a-New".to_string());
                 e.regimen_status = Some("CONTINUE".to_string());
             },
@@ -476,9 +476,10 @@ fn encounter_hiv_care_3(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncou
             |e: &mut hiv_care_encounter::HivcareEncounterArvMedication| {
                 e.remaining_pill_count = Some(5.0);
                 e.quantity_prescribed = Some(8.0);
-                e.adherence_status = Some(42.85714108560097);
+                e.adherence_score = Some(42.85714108560097);
                 e.regimen = Some("2a-New".to_string());
                 e.regimen_status = Some("CHANGE".to_string());
+                e.regimen_change_reason = Some("52".to_string())
             },
         ));
     })

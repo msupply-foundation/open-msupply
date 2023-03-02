@@ -8,7 +8,7 @@ import {
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
 import { useDebouncedTextInput } from '../hooks/useDebouncedTextInput';
-import { FORM_LABEL_WIDTH } from '../styleConstants';
+import { FORM_LABEL_WIDTH, DefaultFormRowSx } from '../styleConstants';
 import { useJSONFormsCustomError } from '../hooks/useJSONFormsCustomError';
 
 const Options = z
@@ -123,7 +123,7 @@ const UIComponent = (props: ControlProps) => {
 
   return (
     <DetailInputWithLabelRow
-      sx={{ margin: 0.5, marginLeft: 0, gap: 2 }}
+      sx={DefaultFormRowSx}
       label={label}
       inputProps={{
         value: text ?? '',

@@ -45,6 +45,45 @@
       "type": "Field",
       "conditions": [
         {
+          "field": "arvMedication.regimenStatus",
+          "equalAny": ["START", "CHANGE"]
+        }
+      ],
+      "event": {
+        "type": "arvMedicationRegimen",
+        "dataField": "arvMedication.regimen"
+      }
+    },
+    {
+      "type": "Field",
+      "conditions": [
+        {
+          "field": "arvMedication.regimenStatus",
+          "equalAny": ["STOP"]
+        }
+      ],
+      "event": {
+        "type": "arvMedicationRegimen",
+        "data": ""
+      }
+    },
+    {
+      "type": "Field",
+      "conditions": [
+        {
+          "field": "arvMedication.quantityPrescribed",
+          "isTruthy": true
+        }
+      ],
+      "event": {
+        "type": "arvMedicationQuantityPrescribed",
+        "dataField": "arvMedication.quantityPrescribed"
+      }
+    },
+    {
+      "type": "Field",
+      "conditions": [
+        {
           "field": "viralLoad.tested",
           "isTruthy": true
         },
