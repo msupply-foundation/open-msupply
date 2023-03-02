@@ -75,7 +75,7 @@ export interface CreateDocument {
   documentRegistry: DocumentRegistryFragment;
 }
 
-export const additionalRenderers: JsonFormsRendererRegistryEntry[] = [
+const additionalRenderers: JsonFormsRendererRegistryEntry[] = [
   { tester: idGeneratorTester, renderer: IdGenerator },
   { tester: dateOfBirthTester, renderer: DateOfBirth },
   { tester: encounterLineChartTester, renderer: EncounterLineChart },

@@ -1,6 +1,5 @@
 import React, { FC, useState } from 'react';
 import {
-  additionalRenderers,
   Gender,
   JsonData,
   JsonForm,
@@ -20,7 +19,7 @@ type Patient = {
 
 export const PatientFormTab: FC<PatientPanel> = ({ patient, value }) => {
   const { updatePatient } = usePatientCreateStore();
-  const { data: patientCreationUI } = useFormSchema.document.byType(
+  const { data: patientCreationUI, isError, isLoading } = useFormSchema.document.byType(
     'PatientCreationJSONForm'
   );
   const [data, setData] = useState<Patient | undefined>();
@@ -49,10 +48,9 @@ export const PatientFormTab: FC<PatientPanel> = ({ patient, value }) => {
         data={data || {}}
         jsonSchema={patientCreationUI?.jsonSchema}
         uiSchema={patientCreationUI?.uiSchema}
-        isError={false}
-        isLoading={false}
+        isError={isError}
+        isLoading={isLoading}
         updateData={setPatient}
-        additionalRenderers={additionalRenderers}
       />
     </PatientPanel>
   );
