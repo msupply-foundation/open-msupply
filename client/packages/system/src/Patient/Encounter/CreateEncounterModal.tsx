@@ -25,9 +25,9 @@ import {
   useEncounter,
 } from '@openmsupply-client/programs';
 import { usePatient } from '../api';
-import { AppRoute } from 'packages/config/src';
+import { AppRoute } from '@openmsupply-client/config';
 import { EncounterSearchInput } from './EncounterSearchInput';
-import { ClinicianFragment } from 'packages/programs/src/api/operations.generated';
+import { ClinicianFragment } from '@openmsupply-client/programs';
 interface Encounter {
   status?: EncounterNodeStatus;
   createdDatetime: string;

@@ -11,5 +11,6 @@
 		"url": "https://localhost:8000",
 		"hostname": "should.notmatch.localhost",
 		"cleartext": true
-	}
+	},
+	"plugins": {}
 }

@@ -80,14 +80,23 @@
       }
     },
     {
-      "type": "Control",
-      "label": "Mother's Program ID",
-      "scope": "#/properties/mother/properties/patientId"
+      "type": "Search",
+      "scope": "#/properties/mother",
+      "options": {
+        "source": "user",
+        "query": "patientByCode",
+        "saveFields": ["id", "code", "firstName", "lastName", "dateOfBirth", "gender"]
+      }
     },
     {
       "type": "Group",
       "label": "Treatment Supporter",
       "elements": [
+        {
+          "type": "Control",
+          "scope": "#/properties/treatmentSupporterIsNextOfKin",
+          "label": "Is the Treatment Supporter the patient's next of kin?"
+        },
         {
           "type": "Control",
           "scope": "#/properties/treatmentSupporter/properties/firstName"
@@ -119,7 +128,41 @@
             }
           }
         }
-      ]
+      ],
+      "rule": {
+        "effect": "HIDE",
+        "condition": { "scope": "#/properties/treatmentSupporterIsNextOfKin", "schema": { "const": true } }
+      }
+    },
+    {
+      "type": "Group",
+      "label": "Treatment Supporter",
+      "elements": [
+        {
+          "type": "Control",
+          "scope": "#/properties/treatmentSupporterIsNextOfKin",
+          "label": "Is the Treatment Supporter the patient's next of kin?"
+        },
+        {
+          "type": "Search",
+          "scope": "#/properties/treatmentSupporter",
+          "options": {
+            "source": "document",
+            "document": "patient",
+            "path": "document.data.family.nextOfKin",
+            "displayString": "${firstName} ${lastName} (${relationship})\nPhone: ${contactDetails[0].phone}"
+          }
+        }
+      ],
+      "rule": {
+        "effect": "SHOW",
+        "condition": {
+          "scope": "#/properties/treatmentSupporterIsNextOfKin",
+          "schema": {
+            "const": true
+          }
+        }
+      }
     },
     {
       "type": "Group",
@@ -140,10 +183,7 @@
               ["TRANSFER_IN", "Transfer in"],
               ["STI", "STI"],
               ["ANC", "ANC"],
-              [
-                "EXPOSED_INFANT_WELL_BABY_CLINIC",
-                "Exposed infant well baby clinic"
-              ],
+              ["EXPOSED_INFANT_WELL_BABY_CLINIC", "Exposed infant well baby clinic"],
               ["IN_PATIENT", "In patient"]
             ]
           }

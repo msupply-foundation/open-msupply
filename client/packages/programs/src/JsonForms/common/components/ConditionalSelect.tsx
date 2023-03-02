@@ -63,13 +63,7 @@ const UIComponent = (props: ControlProps) => {
   };
 
   return (
-    <Box
-      display="flex"
-      alignItems="center"
-      justifyContent="space-around"
-      style={{ minWidth: 300 }}
-      sx={DefaultFormRowSx}
-    >
+    <Box sx={DefaultFormRowSx}>
       <Box style={{ textAlign: 'end' }} flexBasis={FORM_LABEL_COLUMN_WIDTH}>
         <FormLabel sx={{ fontWeight: 'bold' }}>{label}:</FormLabel>
       </Box>

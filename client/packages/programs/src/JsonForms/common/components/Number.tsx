@@ -42,11 +42,7 @@ const UIComponent = (props: ControlProps) => {
   };
   return (
     <DetailInputWithLabelRow
-      sx={{
-        ...DefaultFormRowSx,
-        minWidth: '300px',
-        justifyContent: 'space-around',
-      }}
+      sx={DefaultFormRowSx}
       label={label}
       labelWidthPercentage={FORM_LABEL_WIDTH}
       inputAlignment="start"

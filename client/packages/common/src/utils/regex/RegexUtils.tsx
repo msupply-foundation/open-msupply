@@ -58,7 +58,15 @@ export const RegexUtils = {
     data: { [key: string]: any },
     fallback = 'Not found'
   ) =>
-    parameterisedString.replace(/\${(.*?)}/gm, (_: string, match: string) =>
-      extractProperty(data, match, fallback)
+    parameterisedString.replace(
+      /\${(.*?)}/gm,
+      (_: string, match: string) =>
+        extractProperty(data, match, fallback) ?? fallback
     ),
+
+  // Removes any empty lines from a multi-line string (an "empty line" is any
+  // line with no content or only white space)
+  removeEmptyLines: (input: string): string => {
+    return input.replace(/(^\W*$\n)/gm, '');
+  },
 };

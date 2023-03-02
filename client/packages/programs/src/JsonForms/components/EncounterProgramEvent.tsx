@@ -6,6 +6,7 @@ import {
   NumericTextInput,
 } from '@openmsupply-client/common';
 import {
+  DefaultFormRowSpacing,
   DefaultFormRowSx,
   FORM_LABEL_WIDTH,
   useZodOptionsValidation,
@@ -122,6 +123,7 @@ const UIComponent = (props: ControlProps) => {
           inputProps={{
             value: event?.data ?? '',
             disabled: true,
+            sx: DefaultFormRowSpacing,
             error: !!errors,
             helperText: errors,
           }}

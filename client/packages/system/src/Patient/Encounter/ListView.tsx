@@ -11,7 +11,7 @@ import {
   EncounterSortFieldInput,
   useUrlQueryParams,
 } from '@openmsupply-client/common';
-import { AppRoute } from 'packages/config/src';
+import { AppRoute } from '@openmsupply-client/config';
 import {
   EncounterFragmentWithStatus,
   useEncounterFragmentWithStatus,

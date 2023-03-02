@@ -10,7 +10,7 @@ import React, { FC } from 'react';
 import { AddButton } from './AddButton';
 import { ReportRowFragment, ReportSelector, useReport } from '../../Report';
 import { usePatient } from '../api';
-import { JsonData } from 'packages/programs/src';
+import { JsonData } from '@openmsupply-client/programs';
 
 export const AppBarButtons: FC = () => {
   const t = useTranslation('common');
