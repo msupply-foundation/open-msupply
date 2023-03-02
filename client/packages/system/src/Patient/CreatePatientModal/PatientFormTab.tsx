@@ -20,7 +20,7 @@ type Patient = {
 export const PatientFormTab: FC<PatientPanel> = ({ patient, value }) => {
   const { updatePatient } = usePatientCreateStore();
   const { data: patientCreationUI, isError, isLoading } = useFormSchema.document.byType(
-    'PatientCreationJSONForm'
+    'PatientCreationJSONForms'
   );
   const [data, setData] = useState<Patient | undefined>();
 
@@ -30,14 +30,14 @@ export const PatientFormTab: FC<PatientPanel> = ({ patient, value }) => {
       newData !== null &&
       !Array.isArray(newData)
     ) {
-      setData(newData as Patient);
+      setData(newData);
       updatePatient({
-        code: data?.code || undefined,
-        code2: data?.code2 || undefined,
-        firstName: data?.firstName || undefined,
-        lastName: data?.lastName || undefined,
-        dateOfBirth: data?.dateOfBirth || undefined,
-        gender: data?.gender || undefined,
+        code: data?.code,
+        code2: data?.code2,
+        firstName: data?.firstName,
+        lastName: data?.lastName,
+        dateOfBirth: data?.dateOfBirth,
+        gender: data?.gender,
       });
     }
   };

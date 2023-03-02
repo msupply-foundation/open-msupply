@@ -791,7 +791,7 @@ pub fn init_program_data(
     let programs_program_creation_id = uuid();
     FormSchemaRowRepository::new(connection).upsert_one(&FormSchema {
         id: programs_program_creation_id.clone(),
-        r#type: "PatientCreationJSONForm".to_string(),
+        r#type: "PatientCreationJSONForms".to_string(),
         json_schema: serde_json::from_str(PROGRAMS_PATIENT_CREATION).unwrap(),
         ui_schema: serde_json::from_str(PROGRAMS_PATIENT_CREATION_UI_SCHEMA).unwrap(),
     })?;
