@@ -1,117 +1,59 @@
-import React, { FC, useMemo } from 'react';
+import React, { FC, useState } from 'react';
 import {
-  BaseDatePickerInput,
-  BufferedTextInput,
-  DateUtils,
-  InputWithLabelRow,
-  Select,
-  Stack,
-  useFormatDateTime,
-  useTranslation,
-} from '@openmsupply-client/common';
-import { Gender, usePatientCreateStore } from '@openmsupply-client/programs';
+  additionalRenderers,
+  Gender,
+  JsonData,
+  JsonForm,
+  useFormSchema,
+  usePatientCreateStore,
+} from '@openmsupply-client/programs';
 import { PatientPanel } from './PatientPanel';
+
+type Patient = {
+  code?: string;
+  code2?: string;
+  firstName?: string;
+  lastName?: string;
+  dateOfBirth?: string;
+  gender?: Gender;
+};
 
 export const PatientFormTab: FC<PatientPanel> = ({ patient, value }) => {
   const { updatePatient } = usePatientCreateStore();
-  const t = useTranslation('patients');
-
-  const genderOptions = useMemo(
-    () =>
-      Object.keys(Gender).map(key => ({
-        label: key,
-        value: key,
-      })),
-    []
+  const { data: patientCreationUI } = useFormSchema.document.byType(
+    'PatientCreationJSONForm'
   );
-  const dateFormatter = useFormatDateTime().customDate;
+  const [data, setData] = useState<Patient | undefined>();
+
+  const setPatient = (newData: JsonData) => {
+    if (
+      typeof newData === 'object' &&
+      newData !== null &&
+      !Array.isArray(newData)
+    ) {
+      setData(newData as Patient);
+      updatePatient({
+        code: data?.code || undefined,
+        code2: data?.code2 || undefined,
+        firstName: data?.firstName || undefined,
+        lastName: data?.lastName || undefined,
+        dateOfBirth: data?.dateOfBirth || undefined,
+        gender: data?.gender || undefined,
+      });
+    }
+  };
 
   return (
     <PatientPanel value={value} patient={patient}>
-      <Stack spacing={2}>
-        <InputWithLabelRow
-          label={t('label.patient-id')}
-          Input={
-            <BufferedTextInput
-              size="small"
-              sx={{ width: 250 }}
-              value={patient?.code ?? ''}
-              onChange={event => updatePatient({ code: event.target.value })}
-              autoFocus
-            />
-          }
-        />
-        <InputWithLabelRow
-          label={t('label.patient-nuic')}
-          Input={
-            <BufferedTextInput
-              size="small"
-              sx={{ width: 250 }}
-              value={patient?.code2 ?? ''}
-              onChange={event => updatePatient({ code2: event.target.value })}
-              autoFocus
-            />
-          }
-        />
-        <InputWithLabelRow
-          label={t('label.first-name')}
-          Input={
-            <BufferedTextInput
-              size="small"
-              sx={{ width: 250 }}
-              value={patient?.firstName ?? ''}
-              onChange={event =>
-                updatePatient({ firstName: event.target.value })
-              }
-              autoFocus
-            />
-          }
-        />
-        <InputWithLabelRow
-          label={t('label.last-name')}
-          Input={
-            <BufferedTextInput
-              size="small"
-              sx={{ width: 250 }}
-              value={patient?.lastName ?? ''}
-              onChange={event =>
-                updatePatient({ lastName: event.target.value })
-              }
-            />
-          }
-        />
-        <InputWithLabelRow
-          label={t('label.date-of-birth')}
-          Input={
-            <BaseDatePickerInput
-              // undefined is displayed as "now" and null as unset
-              value={DateUtils.getDateOrNull(patient?.dateOfBirth ?? null)}
-              onChange={date => {
-                if (date && DateUtils.isValid(date)) {
-                  updatePatient({
-                    dateOfBirth: dateFormatter(date, 'yyyy-MM-dd'),
-                  });
-                }
-              }}
-              inputFormat="dd/MM/yyyy"
-              disableFuture
-            />
-          }
-        />
-        <InputWithLabelRow
-          label={t('label.gender')}
-          Input={
-            <Select
-              sx={{ minWidth: 100 }}
-              options={genderOptions}
-              value={patient?.gender}
-              onChange={event =>
-                updatePatient({ gender: event.target.value as Gender })
-              }
-            />
-          }
-        />
-      </Stack>
+      <JsonForm
+        data={data || {}}
+        jsonSchema={patientCreationUI?.jsonSchema}
+        uiSchema={patientCreationUI?.uiSchema}
+        isError={false}
+        isLoading={false}
+        updateData={setPatient}
+        additionalRenderers={additionalRenderers}
+      />
     </PatientPanel>
   );
 };
