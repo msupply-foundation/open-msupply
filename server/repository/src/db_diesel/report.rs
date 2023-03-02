@@ -1,6 +1,6 @@
 use super::{
-    form_schema,
-    form_schema::dsl as form_schema_dsl,
+    form_schema_row,
+    form_schema_row::form_schema::dsl as form_schema_dsl,
     report_row::{report, report::dsl as report_dsl},
     ReportContext, ReportRow, ReportType, StorageConnection,
 };
@@ -134,7 +134,8 @@ impl<'a> ReportRepository<'a> {
     }
 }
 
-type BoxedStoreQuery = IntoBoxed<'static, LeftJoin<report::table, form_schema::table>, DBType>;
+type BoxedStoreQuery =
+    IntoBoxed<'static, LeftJoin<report::table, form_schema_row::form_schema::table>, DBType>;
 
 fn create_filtered_query(filter: Option<ReportFilter>) -> BoxedStoreQuery {
     let mut query = report_dsl::report

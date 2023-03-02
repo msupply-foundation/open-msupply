@@ -24,6 +24,7 @@ import { useUpsertEncounter } from './useUpsertEncounter';
 
 import { useClinicians } from './useClinicians';
 import { useProgramEvents } from './useProgramEvents';
+import { useFormSchemaByType } from './useFormSchemaByType';
 
 export const Document = {
   useDocumentByName,
@@ -50,5 +51,6 @@ export const Document = {
 
   useClinicians,
 
+  useFormSchemaByType,
   useProgramEvents,
 };

@@ -26,7 +26,7 @@ pub struct FormSchemaRow {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
-pub struct FormSchema {
+pub struct FormSchemaJson {
     pub id: String,
     pub r#type: String,
     pub json_schema: serde_json::Value,
@@ -37,7 +37,9 @@ pub struct FormSchemaRowRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-pub(crate) fn schema_from_row(schema_row: FormSchemaRow) -> Result<FormSchema, RepositoryError> {
+pub(crate) fn schema_from_row(
+    schema_row: FormSchemaRow,
+) -> Result<FormSchemaJson, RepositoryError> {
     let json_schema: serde_json::Value =
         serde_json::from_str(&schema_row.json_schema).map_err(|err| RepositoryError::DBError {
             msg: "Can't deserialize json schema".to_string(),
@@ -48,7 +50,7 @@ pub(crate) fn schema_from_row(schema_row: FormSchemaRow) -> Result<FormSchema, R
             msg: "Can't deserialize json schema".to_string(),
             extra: format!("{}", err),
         })?;
-    Ok(FormSchema {
+    Ok(FormSchemaJson {
         id: schema_row.id,
         r#type: schema_row.r#type,
         json_schema,
@@ -56,7 +58,7 @@ pub(crate) fn schema_from_row(schema_row: FormSchemaRow) -> Result<FormSchema, R
     })
 }
 
-fn row_from_schema(schema: &FormSchema) -> Result<FormSchemaRow, RepositoryError> {
+fn row_from_schema(schema: &FormSchemaJson) -> Result<FormSchemaRow, RepositoryError> {
     let json_schema =
         serde_json::to_string(&schema.json_schema).map_err(|err| RepositoryError::DBError {
             msg: "Can't serialize json schema".to_string(),
@@ -81,7 +83,7 @@ impl<'a> FormSchemaRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, schema: &FormSchema) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, schema: &FormSchemaJson) -> Result<(), RepositoryError> {
         let row = row_from_schema(schema)?;
         diesel::insert_into(form_schema::dsl::form_schema)
             .values(&row)
@@ -93,7 +95,7 @@ impl<'a> FormSchemaRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, schema: &FormSchema) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, schema: &FormSchemaJson) -> Result<(), RepositoryError> {
         let row = row_from_schema(schema)?;
         diesel::replace_into(form_schema::dsl::form_schema)
             .values(row)
@@ -101,7 +103,10 @@ impl<'a> FormSchemaRowRepository<'a> {
         Ok(())
     }
 
-    pub fn find_one_by_id(&self, schema_id: &str) -> Result<Option<FormSchema>, RepositoryError> {
+    pub fn find_one_by_id(
+        &self,
+        schema_id: &str,
+    ) -> Result<Option<FormSchemaJson>, RepositoryError> {
         let row = form_schema::dsl::form_schema
             .filter(form_schema::dsl::id.eq(schema_id))
             .first(&self.connection.connection)
@@ -112,11 +117,11 @@ impl<'a> FormSchemaRowRepository<'a> {
         }
     }
 
-    pub fn find_many_by_ids(&self, ids: &[String]) -> Result<Vec<FormSchema>, RepositoryError> {
+    pub fn find_many_by_ids(&self, ids: &[String]) -> Result<Vec<FormSchemaJson>, RepositoryError> {
         let rows: Vec<FormSchemaRow> = form_schema::dsl::form_schema
             .filter(form_schema::dsl::id.eq_any(ids))
             .load(&self.connection.connection)?;
-        let mut result = Vec::<FormSchema>::new();
+        let mut result = Vec::<FormSchemaJson>::new();
         for row in rows {
             result.push(schema_from_row(row)?);
         }

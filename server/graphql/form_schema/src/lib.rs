@@ -1,5 +1,5 @@
 use async_graphql::*;
-use graphql_types::types::FormSchemaNode;
+use graphql_types::types::{FormSchemaFilterInput, FormSchemaNode};
 use insert_form_schema::{insert_form_schema, InsertFormSchemaInput, InsertFormSchemaResponse};
 use query_form_schema::form_schema;
 
@@ -11,8 +11,12 @@ pub struct FormSchemaQueries;
 
 #[Object]
 impl FormSchemaQueries {
-    async fn form_schema(&self, ctx: &Context<'_>, id: String) -> Result<Option<FormSchemaNode>> {
-        form_schema(ctx, id)
+    async fn form_schema(
+        &self,
+        ctx: &Context<'_>,
+        filter: Option<FormSchemaFilterInput>,
+    ) -> Result<Option<FormSchemaNode>> {
+        form_schema(ctx, filter)
     }
 }
 

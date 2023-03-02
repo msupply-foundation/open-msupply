@@ -70,6 +70,12 @@ export const useClinicians = {
   },
 };
 
+export const useFormSchema = {
+  document: {
+    byType: Document.useFormSchemaByType,
+  },
+};
+
 export const useProgramEvents = {
   document: {
     list: Document.useProgramEvents,

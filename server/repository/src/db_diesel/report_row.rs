@@ -1,4 +1,6 @@
-use super::{form_schema, report_row::report::dsl as report_dsl, StorageConnection};
+use super::{
+    form_schema_row::form_schema, report_row::report::dsl as report_dsl, StorageConnection,
+};
 
 use crate::repository_error::RepositoryError;
 
