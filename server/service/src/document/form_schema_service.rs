@@ -10,9 +10,6 @@ pub enum InsertFormSchemaError {
     SerializationError(String),
 }
 
-pub const MAX_LIMIT: u32 = 1000;
-pub const MIN_LIMIT: u32 = 1;
-
 pub trait FormSchemaServiceTrait: Sync + Send {
     fn get_schema(
         &self,
