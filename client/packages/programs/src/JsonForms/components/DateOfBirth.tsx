@@ -18,6 +18,7 @@ import {
   FORM_INPUT_COLUMN_WIDTH,
   FORM_LABEL_COLUMN_WIDTH,
   DefaultFormRowSx,
+  FORM_GAP,
 } from '../common';
 
 export const dateOfBirthTester = rankWith(10, uiTypeIs('DateOfBirth'));
@@ -77,6 +78,7 @@ const UIComponent = (props: ControlProps) => {
         flexBasis={FORM_INPUT_COLUMN_WIDTH}
         display="flex"
         alignItems="center"
+        gap={FORM_GAP}
       >
         <BaseDatePickerInput
           // undefined is displayed as "now" and null as unset

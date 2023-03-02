@@ -16,6 +16,7 @@ import {
   useZodOptionsValidation,
   useDocument,
   useProgramEnrolments,
+  FORM_GAP,
 } from '@openmsupply-client/programs';
 import { Button, FormLabel } from '@mui/material';
 import { get as extractProperty } from 'lodash';
@@ -377,6 +378,7 @@ const UIComponent = (props: ControlProps) => {
         flexBasis={FORM_INPUT_COLUMN_WIDTH}
         display="flex"
         alignItems="center"
+        gap={FORM_GAP}
       >
         <BasicTextInput
           disabled={!props.enabled || !options?.allowManualEntry}
