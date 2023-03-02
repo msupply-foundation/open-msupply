@@ -61,6 +61,7 @@ mod hiv_care_program {
                 prior_art: Default::default(),
                 risk_group: Default::default(),
                 status: Default::default(),
+                treatment_supporter_is_next_of_kin: Default::default(),
                 treatment_supporter: Default::default(),
                 // note: Default::default(),
                 referred_from: Default::default(),
@@ -195,13 +196,30 @@ const VL_ELIGIBILITY_REPORT: &'static str =
 const LTFU_REPORT: &'static str = std::include_str!("./program_schemas/report_ltfu.json");
 const GBV_REPORT: &'static str = std::include_str!("./program_schemas/report_gbv.json");
 
+const EMPTY_CONTACT_DETAILS: ContactDetails = {
+    ContactDetails {
+        description: None,
+        address_1: None,
+        address_2: None,
+        city: None,
+        country: None,
+        district: None,
+        region: None,
+        zip_code: None,
+        mobile: None,
+        phone: None,
+        email: None,
+        website: None,
+    }
+};
+
 fn person_1() -> RelatedPerson {
     RelatedPerson {
         id: Some("person1".to_string()),
         code: Some("id34568".to_string()),
         first_name: Some("Tom".to_string()),
         last_name: Some("Smith".to_string()),
-        contact_details: vec![],
+        contact_details: vec![EMPTY_CONTACT_DETAILS.clone()],
         date_of_birth: None,
         date_of_birth_is_estimated: None,
         birth_place: None,
@@ -223,7 +241,7 @@ fn person_2() -> RelatedPerson {
         code: Some("id41325".to_string()),
         first_name: Some("Eli".to_string()),
         last_name: Some("Bond".to_string()),
-        contact_details: vec![],
+        contact_details: vec![EMPTY_CONTACT_DETAILS.clone()],
         date_of_birth: None,
         date_of_birth_is_estimated: None,
         birth_place: None,
@@ -245,7 +263,7 @@ fn person_3() -> RelatedPerson {
         code: Some("id12245".to_string()),
         first_name: Some("Heidi".to_string()),
         last_name: Some("Tomalla".to_string()),
-        contact_details: vec![],
+        contact_details: vec![EMPTY_CONTACT_DETAILS.clone()],
         date_of_birth: None,
         date_of_birth_is_estimated: None,
         birth_place: None,
