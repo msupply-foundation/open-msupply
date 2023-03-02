@@ -1,9 +1,13 @@
 import React from 'react';
 import { ControlProps, rankWith, uiTypeIs } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import { DetailInputWithLabelRow } from '@openmsupply-client/common';
+import {
+  DetailInputWithLabelRow,
+  NumericTextInput,
+} from '@openmsupply-client/common';
 import {
   DefaultFormRowSpacing,
+  DefaultFormRowSx,
   FORM_LABEL_WIDTH,
   useZodOptionsValidation,
 } from '../common';
@@ -25,7 +29,8 @@ const Options = z
      * Default: `before`
      */
     at: z.enum(['before', 'start']).optional(),
-    type: z.string(),
+    eventType: z.string(),
+    displayType: z.enum(['string', 'number']).optional(),
   })
   .strict();
 type Options = z.infer<typeof Options>;
@@ -70,7 +75,7 @@ const UIComponent = (props: ControlProps) => {
       patientId: currentEncounter?.patient?.id ?? '',
       filter: {
         type: {
-          equalTo: options?.type,
+          equalTo: options?.eventType,
         },
         documentType: {
           equalTo: currentEncounter?.type,
@@ -89,19 +94,44 @@ const UIComponent = (props: ControlProps) => {
   }
 
   return (
-    <DetailInputWithLabelRow
-      label={label}
-      inputProps={{
-        value: event?.data ?? '',
-        disabled: true,
-        required: props.required,
-        sx: DefaultFormRowSpacing,
-        error: !!errors,
-        helperText: errors,
-      }}
-      labelWidthPercentage={FORM_LABEL_WIDTH}
-      inputAlignment={'start'}
-    />
+    <>
+      {options?.displayType && options?.displayType === 'number' ? (
+        <DetailInputWithLabelRow
+          label={label}
+          sx={{
+            ...DefaultFormRowSx,
+            minWidth: '300px',
+            justifyContent: 'space-around',
+          }}
+          labelWidthPercentage={FORM_LABEL_WIDTH}
+          inputAlignment="start"
+          Input={
+            <NumericTextInput
+              disabled={true}
+              inputProps={{
+                value: event?.data ?? '',
+                error: !!errors,
+                helperText: errors,
+              }}
+            />
+          }
+        />
+      ) : (
+        <DetailInputWithLabelRow
+          label={label}
+          sx={DefaultFormRowSx}
+          inputProps={{
+            value: event?.data ?? '',
+            disabled: true,
+            sx: DefaultFormRowSpacing,
+            error: !!errors,
+            helperText: errors,
+          }}
+          labelWidthPercentage={FORM_LABEL_WIDTH}
+          inputAlignment={'start'}
+        />
+      )}
+    </>
   );
 };
 

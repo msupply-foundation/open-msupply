@@ -5,6 +5,6 @@ export * from './DecisionTree/DecisionTree';
 export * from './EncounterLineChart';
 export * from './IdGenerator';
 export * from './PreviousEncounterField';
-export * from './QuantityPrescribed';
+export * from './QuantityDispensed';
 export * from './Search/Search';
 export * from './EncounterProgramEvent';
