@@ -27,6 +27,7 @@ import javax.net.ssl.SSLHandshakeException;
 @CapacitorPlugin(name = "NativeApi")
 public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     public static final String OM_SUPPLY = "omSupply";
+    private static final String DEFAULT_URL = "https://localhost:8000/";
     DiscoveryConstants discoveryConstants;
     JSArray discoveredServers;
     Deque<NsdServiceInfo> serversToResolve;
@@ -83,6 +84,11 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     @Override
     protected void handleOnStart() {
         WebView webView = this.getBridge().getWebView();
+        // this method (handleOnStart) is called when resuming and switching to the app
+        // the webView url will be DEFAULT_URL only on the initial load
+        // so this test is a quick check to see if we should be redirecting to the /android loader or not
+        if (!webView.getUrl().matches(DEFAULT_URL)) return;
+        // Initial load, display splash screen and wait for the server to start
         webView.post(() -> webView.loadData(SplashPage.encodedHtml, "text/html", "base64"));
         // advertiseService();
         Thread thread = new Thread(new Runnable() {
