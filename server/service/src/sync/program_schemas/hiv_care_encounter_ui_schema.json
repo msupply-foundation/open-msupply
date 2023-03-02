@@ -8,32 +8,51 @@
     {
       "type": "Category",
       "label": "Physical Exam",
-      "options": { "icon": "stethoscope" },
+      "options": {
+        "icon": "stethoscope"
+      },
       "elements": [
         {
           "type": "Control",
           "scope": "#/properties/physicalExamination/properties/height",
-          "options": { "width": "100px" }
+          "options": {
+            "width": "100px"
+          }
         },
         {
           "type": "Control",
           "scope": "#/properties/physicalExamination/properties/midUpperArmCircumference",
-          "options": { "width": "100px" }
+          "options": {
+            "width": "100px"
+          }
         },
         {
           "type": "Control",
           "scope": "#/properties/physicalExamination/properties/weight",
-          "options": { "width": "100px" }
-        },
-        {
-          "type": "Control",
-          "scope": "#/properties/physicalExamination/properties/bloodPressure",
-          "options": { "width": "100px" }
+          "options": {
+            "width": "100px"
+          }
         },
         {
           "type": "BMI",
           "scope": "#/properties/physicalExamination/properties",
           "label": "Body Mass Index (BMI)"
+        },
+        {
+          "type": "Group",
+          "label": "Blood Pressure",
+          "elements": [
+            {
+              "type": "Control",
+              "label": "Systolic",
+              "scope": "#/properties/physicalExamination/properties/bloodPressure/properties/systolic"
+            },
+            {
+              "type": "Control",
+              "label": "Diastolic",
+              "scope": "#/properties/physicalExamination/properties/bloodPressure/properties/diastolic"
+            }
+          ]
         },
         {
           "type": "Group",
@@ -45,9 +64,18 @@
               "scope": "#/properties/physicalExamination/properties/nutrition/properties/nutritionalStatus",
               "options": {
                 "show": [
-                  ["UNDER_NOURISHED", "Under nourished"],
-                  ["WELL_NOURISHED", "Well nourished"],
-                  ["OVERWEIGHT", "Overweight"]
+                  [
+                    "UNDER_NOURISHED",
+                    "Under nourished"
+                  ],
+                  [
+                    "WELL_NOURISHED",
+                    "Well nourished"
+                  ],
+                  [
+                    "OVERWEIGHT",
+                    "Overweight"
+                  ]
                 ]
               }
             },
@@ -72,13 +100,22 @@
           "scope": "#/properties/physicalExamination/properties/whoStaging",
           "options": {
             "show": [
-              ["STAGE_1_ASYMPTOMATIC", "Stage 1 - Asymptomatic"],
-              ["STAGE_2_MILDLY_SYMPTOMATIC", "Stage 2 - Mildly symptomatic"],
+              [
+                "STAGE_1_ASYMPTOMATIC",
+                "Stage 1 - Asymptomatic"
+              ],
+              [
+                "STAGE_2_MILDLY_SYMPTOMATIC",
+                "Stage 2 - Mildly symptomatic"
+              ],
               [
                 "STAGE_3_MODERATELY_SYMPTOMATIC",
                 "Stage 3 - Moderately symptomatic"
               ],
-              ["STAGE_4_SEVERELY_SYMPTOMATIC", "Stage 4 - Severely symptomatic"]
+              [
+                "STAGE_4_SEVERELY_SYMPTOMATIC",
+                "Stage 4 - Severely symptomatic"
+              ]
             ]
           }
         },
@@ -118,7 +155,9 @@
     {
       "type": "Category",
       "label": "ARV / Medication",
-      "options": { "icon": "medicine" },
+      "options": {
+        "icon": "medicine"
+      },
       "elements": [
         {
           "type": "EncounterProgramEvent",
@@ -133,11 +172,26 @@
           "type": "Control",
           "options": {
             "show": [
-              ["NO", "No ARV"],
-              ["START", "Start ARV"],
-              ["CONTINUE", "Continue ARV"],
-              ["CHANGE", "Changes to ARV Regimen"],
-              ["STOP", "Stop ARV"]
+              [
+                "NO",
+                "No ARV"
+              ],
+              [
+                "START",
+                "Start ARV"
+              ],
+              [
+                "CONTINUE",
+                "Continue ARV"
+              ],
+              [
+                "CHANGE",
+                "Changes to ARV Regimen"
+              ],
+              [
+                "STOP",
+                "Stop ARV"
+              ]
             ]
           }
         },
@@ -153,7 +207,9 @@
                 "condition": {
                   "scope": "#/properties/arvMedication/properties/regimenStatus",
                   "schema": {
-                    "enum": ["STOP"]
+                    "enum": [
+                      "STOP"
+                    ]
                   }
                 }
               }
@@ -165,7 +221,11 @@
               "options": {
                 "multiColumn": true,
                 "show": [
-                  ["51", "51", "Patient does not fulfill criteria"],
+                  [
+                    "51",
+                    "51",
+                    "Patient does not fulfill criteria"
+                  ],
                   [
                     "52",
                     "52",
@@ -206,41 +266,181 @@
                     "99",
                     "Patient fulfils criteria but does not start for other reason"
                   ],
-                  ["101", "101", "Adult CD4 < 200"],
-                  ["102", "102", "Adult WHO Stage IV"],
-                  ["103", "103", "Adult WHO Stage III, if CD4 < 350"],
-                  ["104", "104", "Children Pediatric WHO Stage III"],
-                  ["105", "105", "Children > 18 months, CD4% < 15%"],
-                  ["106", "106", "Infants < 18 months CD4% < 20%"],
-                  ["107", "107", "Pregnant women for PMCT (plus)"],
-                  ["108", "108", "Other reason to start"],
-                  ["109", "109", "Test and Treat"],
-                  ["110", "110", "Start TB treatment"],
-                  ["111", "111", "Nausea / vomiting"],
-                  ["112", "112", "Diarrhoea"],
-                  ["113", "113", "Headache"],
-                  ["114", "114", "Fever"],
-                  ["115", "115", "Skin rash"],
-                  ["116", "116", "Peripheral neuropathy"],
-                  ["117", "117", "Hepatitis"],
-                  ["118", "118", "Jaundice"],
-                  ["119", "119", "Dementia"],
-                  ["120", "120", "Anaemia"],
-                  ["121", "121", "Pancreatitis"],
-                  ["122", "122", "CNS adverse event"],
-                  ["123", "123", "Other adverse event, specify"],
-                  ["131", "131", "Treatment failure, clinical"],
-                  ["132", "132", "Treatment failure, immunological"],
-                  ["141", "141", "Poor adherence"],
-                  ["142", "142", "Patient decision"],
-                  ["143", "143", "Pregnancy"],
-                  ["144", "144", "End of PMTCT (plus)"],
-                  ["145", "145", "Transferred out, specify where"],
-                  ["146", "146", "Lost to follow-up"],
-                  ["147", "147", "Patient died"],
-                  ["148", "148", "Stock-out"],
-                  ["149", "149", "Other reason, specify"],
-                  ["151", "151", "Restart ARV after 3 or months not on ARV"]
+                  [
+                    "101",
+                    "101",
+                    "Adult CD4 < 200"
+                  ],
+                  [
+                    "102",
+                    "102",
+                    "Adult WHO Stage IV"
+                  ],
+                  [
+                    "103",
+                    "103",
+                    "Adult WHO Stage III, if CD4 < 350"
+                  ],
+                  [
+                    "104",
+                    "104",
+                    "Children Pediatric WHO Stage III"
+                  ],
+                  [
+                    "105",
+                    "105",
+                    "Children > 18 months, CD4% < 15%"
+                  ],
+                  [
+                    "106",
+                    "106",
+                    "Infants < 18 months CD4% < 20%"
+                  ],
+                  [
+                    "107",
+                    "107",
+                    "Pregnant women for PMCT (plus)"
+                  ],
+                  [
+                    "108",
+                    "108",
+                    "Other reason to start"
+                  ],
+                  [
+                    "109",
+                    "109",
+                    "Test and Treat"
+                  ],
+                  [
+                    "110",
+                    "110",
+                    "Start TB treatment"
+                  ],
+                  [
+                    "111",
+                    "111",
+                    "Nausea / vomiting"
+                  ],
+                  [
+                    "112",
+                    "112",
+                    "Diarrhoea"
+                  ],
+                  [
+                    "113",
+                    "113",
+                    "Headache"
+                  ],
+                  [
+                    "114",
+                    "114",
+                    "Fever"
+                  ],
+                  [
+                    "115",
+                    "115",
+                    "Skin rash"
+                  ],
+                  [
+                    "116",
+                    "116",
+                    "Peripheral neuropathy"
+                  ],
+                  [
+                    "117",
+                    "117",
+                    "Hepatitis"
+                  ],
+                  [
+                    "118",
+                    "118",
+                    "Jaundice"
+                  ],
+                  [
+                    "119",
+                    "119",
+                    "Dementia"
+                  ],
+                  [
+                    "120",
+                    "120",
+                    "Anaemia"
+                  ],
+                  [
+                    "121",
+                    "121",
+                    "Pancreatitis"
+                  ],
+                  [
+                    "122",
+                    "122",
+                    "CNS adverse event"
+                  ],
+                  [
+                    "123",
+                    "123",
+                    "Other adverse event, specify"
+                  ],
+                  [
+                    "131",
+                    "131",
+                    "Treatment failure, clinical"
+                  ],
+                  [
+                    "132",
+                    "132",
+                    "Treatment failure, immunological"
+                  ],
+                  [
+                    "141",
+                    "141",
+                    "Poor adherence"
+                  ],
+                  [
+                    "142",
+                    "142",
+                    "Patient decision"
+                  ],
+                  [
+                    "143",
+                    "143",
+                    "Pregnancy"
+                  ],
+                  [
+                    "144",
+                    "144",
+                    "End of PMTCT (plus)"
+                  ],
+                  [
+                    "145",
+                    "145",
+                    "Transferred out, specify where"
+                  ],
+                  [
+                    "146",
+                    "146",
+                    "Lost to follow-up"
+                  ],
+                  [
+                    "147",
+                    "147",
+                    "Patient died"
+                  ],
+                  [
+                    "148",
+                    "148",
+                    "Stock-out"
+                  ],
+                  [
+                    "149",
+                    "149",
+                    "Other reason, specify"
+                  ],
+                  [
+                    "151",
+                    "151",
+                    "Restart ARV after 3 or months not on ARV"
+                  ]
                 ]
               }
             },
@@ -254,7 +454,11 @@
             "condition": {
               "scope": "#/properties/arvMedication/properties/regimenStatus",
               "schema": {
-                "enum": ["START", "CHANGE", "STOP"]
+                "enum": [
+                  "START",
+                  "CHANGE",
+                  "STOP"
+                ]
               }
             }
           }
@@ -333,7 +537,9 @@
     {
       "type": "Category",
       "label": "Pregnancy",
-      "options": { "icon": "condom" },
+      "options": {
+        "icon": "condom"
+      },
       "elements": [
         {
           "type": "Control",
@@ -395,7 +601,9 @@
     {
       "type": "Category",
       "label": "Viral Load",
-      "options": { "icon": "virus" },
+      "options": {
+        "icon": "virus"
+      },
       "elements": [
         {
           "type": "VerticalLayout",
@@ -411,8 +619,14 @@
               "label": "VL Targeting:",
               "options": {
                 "show": [
-                  ["TARGETED", "Targeted"],
-                  ["SCHEDULED", "Scheduled"]
+                  [
+                    "TARGETED",
+                    "Targeted"
+                  ],
+                  [
+                    "SCHEDULED",
+                    "Scheduled"
+                  ]
                 ]
               }
             },
@@ -478,7 +692,9 @@
     {
       "type": "Category",
       "label": "Biochemistry",
-      "options": { "icon": "microscope" },
+      "options": {
+        "icon": "microscope"
+      },
       "elements": [
         {
           "type": "Control",
@@ -522,7 +738,9 @@
     {
       "type": "Category",
       "label": "Haematology",
-      "options": { "icon": "test-tube" },
+      "options": {
+        "icon": "test-tube"
+      },
       "elements": [
         {
           "type": "Control",
@@ -570,7 +788,9 @@
     {
       "type": "Category",
       "label": "Tuberculosis",
-      "options": { "icon": "lungs" },
+      "options": {
+        "icon": "lungs"
+      },
       "elements": [
         {
           "type": "Control",
@@ -583,9 +803,18 @@
           "scope": "#/properties/tuberculosis/properties/tbGeneXpert",
           "options": {
             "show": [
-              ["NOT_DETECTED", "Not Detected"],
-              ["POSITIVE_RIF_SENSITIVE", "Positive (Rif-Sensitive)"],
-              ["POSITIVE_RIF_RESISTANT", "Positive (Rif-Resistant)"]
+              [
+                "NOT_DETECTED",
+                "Not Detected"
+              ],
+              [
+                "POSITIVE_RIF_SENSITIVE",
+                "Positive (Rif-Sensitive)"
+              ],
+              [
+                "POSITIVE_RIF_RESISTANT",
+                "Positive (Rif-Resistant)"
+              ]
             ]
           }
         },
@@ -600,10 +829,22 @@
           "scope": "#/properties/tuberculosis/properties/tbSputum",
           "options": {
             "show": [
-              ["NO_AFB", "No AFB"],
-              ["POS_1", "+"],
-              ["POS_2", "++"],
-              ["POS_3", "+++"]
+              [
+                "NO_AFB",
+                "No AFB"
+              ],
+              [
+                "POS_1",
+                "+"
+              ],
+              [
+                "POS_2",
+                "++"
+              ],
+              [
+                "POS_3",
+                "+++"
+              ]
             ]
           }
         },
@@ -617,7 +858,9 @@
     {
       "type": "Category",
       "label": "Index Testing",
-      "options": { "icon": "index-testing" },
+      "options": {
+        "icon": "index-testing"
+      },
       "elements": [
         {
           "type": "Control",
@@ -639,7 +882,9 @@
     {
       "type": "Category",
       "label": "HCV / CrAg",
-      "options": { "icon": "liver" },
+      "options": {
+        "icon": "liver"
+      },
       "elements": [
         {
           "type": "Control",
@@ -660,7 +905,9 @@
     {
       "type": "Category",
       "label": "General",
-      "options": { "icon": "general" },
+      "options": {
+        "icon": "general"
+      },
       "elements": [
         {
           "type": "Control",
@@ -679,7 +926,12 @@
             "effect": "ENABLE",
             "condition": {
               "scope": "#/properties/general/properties/visitType",
-              "schema": { "enum": ["Outreach", "Refill"] }
+              "schema": {
+                "enum": [
+                  "Outreach",
+                  "Refill"
+                ]
+              }
             }
           }
         }
@@ -688,7 +940,9 @@
     {
       "type": "Category",
       "label": "Risk Behaviour",
-      "options": { "icon": "document" },
+      "options": {
+        "icon": "document"
+      },
       "elements": [
         {
           "type": "Control",
