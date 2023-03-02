@@ -106,8 +106,11 @@ Set-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Co
 
 ### Ubuntu
 
-- Install libavahi-compat-libdnssd-dev (dnssd dependency): `sudo apt install libavahi-compat-libdnssd-dev`
-- Install Postgres dev libs: `sudo apt install postgresql-server-dev-13`
+- Install Postgres:
+
+```bash
+sudo apt install postgresql
+```
 
 ### Optional
 
