@@ -137,7 +137,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
   const theme = useTheme();
   useDisableStocktakeRows(batches);
 
-  const errors = useStocktakeLineErrorContext();
+  const errorsContext = useStocktakeLineErrorContext();
 
   const columns = useColumns<DraftStocktakeLine>([
     getCountThisLineColumn(update, theme),
@@ -147,7 +147,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
       label: 'label.num-packs',
       width: 100,
       getIsError: rowData =>
-        errors.getError(rowData)?.__typename ===
+        errorsContext.getError(rowData)?.__typename ===
         'SnapshotCountCurrentCountMismatch',
       setter: patch => update({ ...patch, countThisLine: true }),
       accessor: ({ rowData }) => rowData.snapshotNumberOfPacks || '0',
@@ -165,7 +165,8 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
       label: 'label.counted-num-of-packs',
       width: 100,
       getIsError: rowData =>
-        errors.getError(rowData)?.__typename === 'StockLineReducedBelowZero',
+        errorsContext.getError(rowData)?.__typename ===
+        'StockLineReducedBelowZero',
       Cell: NonNegativeDecimalCell,
       setter: patch => {
         // If counted number of packs was changed to result in no adjustment
@@ -188,7 +189,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
         setter: patch => update({ ...patch, countThisLine: true }),
       },
     ],
-    getInventoryAdjustmentReasonInputColumn(update, errors),
+    getInventoryAdjustmentReasonInputColumn(update, errorsContext),
   ]);
 
   return (

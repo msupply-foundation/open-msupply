@@ -29,7 +29,7 @@ export const useStocktakeLineEdit = (
   const nextItem = useNextItem(item?.id);
   const [draftLines, setDraftLines] = useDraftStocktakeLines(item);
   const { mutateAsync: upsertLines, isLoading } = useStocktake.line.save();
-  const errors = useStocktakeLineErrorContext();
+  const errorsContext = useStocktakeLineErrorContext();
 
   const update = (patch: RecordPatch<DraftStocktakeLine>) =>
     setDraftLines(lines =>
@@ -49,7 +49,7 @@ export const useStocktakeLineEdit = (
 
     for (const { response, id } of [...insertResults, ...updateResults]) {
       // First unset error
-      errors.unsetError(id);
+      errorsContext.unsetError(id);
       // No error
       if (response.__typename === 'StocktakeLineNode') continue;
 
@@ -77,7 +77,7 @@ export const useStocktakeLineEdit = (
           noOtherVariants(error);
       }
 
-      errors.setError(id, error);
+      errorsContext.setError(id, error);
     }
 
     const errorMessages = Object.values(errorMessagesMap);
