@@ -424,6 +424,20 @@ query clinicians(
   }
 }
 
+fragment FormSchema on FormSchemaNode {
+  id
+  jsonSchema
+  type
+  uiSchema
+}
+
+query formSchema($filter: FormSchemaFilterInput) {
+  formSchema(filter: $filter) {
+    __typename
+    ...FormSchema
+  }
+}
+
 query programEvents(
   $at: String
   $patientId: String!

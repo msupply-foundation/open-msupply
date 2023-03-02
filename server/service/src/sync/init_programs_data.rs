@@ -131,6 +131,11 @@ const PATIENT_SCHEMA: &'static str = std::include_str!("./program_schemas/patien
 const PATIENT_UI_SCHEMA: &'static str =
     std::include_str!("./program_schemas/patient_ui_schema.json");
 
+const PROGRAMS_PATIENT_CREATION: &'static str =
+    std::include_str!("./program_schemas/patient_creation.json");
+const PROGRAMS_PATIENT_CREATION_UI_SCHEMA: &'static str =
+    std::include_str!("./program_schemas/patient_creation_ui_schema.json");
+
 const PROGRAM_SCHEMA: &'static str = std::include_str!("./program_schemas/program_enrolment.json");
 const PROGRAM_UI_SCHEMA: &'static str =
     std::include_str!("./program_schemas/program_ui_schema.json");
@@ -783,6 +788,15 @@ pub fn init_program_data(
         config: None,
     })?;
 
+    // png patient creation
+    let programs_program_creation_id = uuid();
+    FormSchemaRowRepository::new(connection).upsert_one(&FormSchema {
+        id: programs_program_creation_id.clone(),
+        r#type: "PatientCreationJSONForms".to_string(),
+        json_schema: serde_json::from_str(PROGRAMS_PATIENT_CREATION).unwrap(),
+        ui_schema: serde_json::from_str(PROGRAMS_PATIENT_CREATION_UI_SCHEMA).unwrap(),
+    })?;
+
     // program
     let program_schema_id = uuid();
     let placeholder_program_id = uuid();
@@ -1127,7 +1141,7 @@ pub fn init_program_data(
             name: "Patient HIV Care Report".to_string(),
             r#type: repository::ReportType::OmSupply,
             template: PATIENT_REPORT.to_string(),
-            context: ReportContext::Patient,
+            context: ReportContext::Dispensary,
             comment: None,
             sub_context: Some("HIVCareProgram".to_string()),
             argument_schema_id: None,

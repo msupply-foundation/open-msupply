@@ -9,6 +9,17 @@ import {
 } from '@openmsupply-client/common';
 import { FORM_LABEL_WIDTH } from '../styleConstants';
 import { DatePicker, DatePickerProps } from '@mui/x-date-pickers';
+import { z } from 'zod';
+import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
+
+const Options = z
+  .object({
+    disableFuture: z.boolean().optional(),
+  })
+  .strict()
+  .optional();
+
+type Options = z.infer<typeof Options>;
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const DatePickerTextInput = ({ variant, ...props }: TextFieldProps) => (
@@ -36,8 +47,15 @@ export const BaseDatePickerInput: FC<
 export const dateTester = rankWith(5, isDateControl);
 
 const UIComponent = (props: ControlProps) => {
-  const { data, handleChange, label, path } = props;
+  const { data, handleChange, label, path, uischema } = props;
   const dateFormatter = useFormatDateTime().customDate;
+    const { errors: zErrors, options } = useZodOptionsValidation(
+    Options,
+    uischema.options
+  );
+
+  const disableFuture = options?.disableFuture ?? false;
+
   if (!props.visible) {
     return null;
   }
@@ -61,7 +79,8 @@ const UIComponent = (props: ControlProps) => {
           }}
           inputFormat="dd/MM/yyyy"
           disabled={!props.enabled}
-          error={props.errors}
+          error={props.errors ?? zErrors}
+          disableFuture={disableFuture}
         />
       }
     />
