@@ -1,4 +1,4 @@
-import { uniqWith } from 'lodash';
+import uniqWith from 'lodash/uniqWith';
 import { useState, useEffect } from 'react';
 import { registerPlugin, Capacitor } from '@capacitor/core';
 import { useLocalStorage } from '../../localStorage';

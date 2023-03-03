@@ -15,7 +15,11 @@ import {
   formatRelative,
   formatDistanceToNow,
 } from 'date-fns';
-import { enGB, enUS, fr, ar, es } from 'date-fns/locale';
+import enGB from 'date-fns/locale/en-GB';
+import enUS from 'date-fns/locale/en-US';
+import fr from 'date-fns/locale/fr';
+import ar from 'date-fns/locale/ar';
+import es from 'date-fns/locale/es';
 
 // Map locale string (from i18n) to locale object (from date-fns)
 const getLocaleObj = { fr, ar, es };
