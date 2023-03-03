@@ -847,7 +847,6 @@ export type EncounterConnector = {
 };
 
 export type EncounterEventFilterInput = {
-  data?: InputMaybe<EqualFilterStringInput>;
   /**
    * 	Only include events that are for the current encounter, i.e. have matching encounter type
    * and matching encounter name of the current encounter. If not set all events with matching
@@ -2861,7 +2860,6 @@ export type ProgramEventConnector = {
 };
 
 export type ProgramEventFilterInput = {
-  data?: InputMaybe<EqualFilterStringInput>;
   documentName?: InputMaybe<EqualFilterStringInput>;
   documentType?: InputMaybe<EqualFilterStringInput>;
   /** The event type */
