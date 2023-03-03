@@ -387,11 +387,11 @@
               "description": "75367002\tBlood pressure [mmHg]",
               "properties": {
                 "diastolic": {
-                  "pattern": "^\\d{3}",
+                  "pattern": "^\\d{1,3}$",
                   "type": "number"
                 },
                 "systolic": {
-                  "pattern": "^\\d{3}",
+                  "pattern": "^\\d{1,3}$",
                   "type": "number"
                 }
               },
