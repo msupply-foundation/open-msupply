@@ -297,12 +297,11 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
 
     @PluginMethod()
     public void readLog(PluginCall call) {
-
-        File file = new File(getContext().getFilesDir(),LOG_FILE_NAME);
-        StringBuilder sb = new StringBuilder();
         JSObject response = new JSObject();
+        StringBuilder sb = new StringBuilder();
 
         try {
+            File file = new File(MainActivity.logPath,LOG_FILE_NAME);
             BufferedReader br = new BufferedReader(new FileReader(file));
             String line;
 
