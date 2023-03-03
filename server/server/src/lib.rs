@@ -54,6 +54,8 @@ pub async fn start_server(
     settings: Settings,
     mut off_switch: tokio::sync::mpsc::Receiver<()>,
 ) -> std::io::Result<()> {
+    logging_init(settings.logging.clone());
+
     info!(
         "Server starting in {} mode",
         match is_develop() {
