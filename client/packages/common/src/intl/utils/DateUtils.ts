@@ -15,6 +15,9 @@ import {
   formatRelative,
   formatDistanceToNow,
 } from 'date-fns';
+// importing individually to reduce bundle size
+// the date-fns methods are tree shaking correctly
+// but the locales are not. when adding, please add as below
 import enGB from 'date-fns/locale/en-GB';
 import enUS from 'date-fns/locale/en-US';
 import fr from 'date-fns/locale/fr';
