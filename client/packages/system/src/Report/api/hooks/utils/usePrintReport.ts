@@ -18,7 +18,7 @@ const setClose = (frame: HTMLIFrameElement) => () => {
   document.body.removeChild(frame);
 };
 
-const setPrint = (frame: HTMLIFrameElement) => () => {
+const print = (frame: HTMLIFrameElement) => {
   const { contentWindow } = frame;
   if (contentWindow) {
     contentWindow.onbeforeunload = setClose(frame);
@@ -36,14 +36,13 @@ const printPage = (url: string) => {
       Printer.print(html);
     } else {
       const frame = document.createElement('iframe');
-      frame.style.position = 'fixed';
-      frame.style.right = '0';
-      frame.style.bottom = '0';
-      frame.style.width = '0';
-      frame.style.height = '0';
-      frame.style.border = '0';
-      frame.onload = setPrint(frame);
-      frame.srcdoc = html;
+
+      frame.onload = () => {
+        if (frame.contentDocument)
+          frame.contentDocument.documentElement.innerHTML = html;
+
+        print(frame);
+      };
       document.body.appendChild(frame);
     }
   });

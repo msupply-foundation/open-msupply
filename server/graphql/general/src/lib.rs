@@ -218,6 +218,14 @@ impl GeneralQueries {
     ) -> Result<ItemCounts> {
         item_counts(ctx, store_id, low_stock_threshold)
     }
+
+    pub async fn store_preferences(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<StorePreferenceNode> {
+        store_preferences(ctx, &store_id)
+    }
 }
 
 #[derive(Default, Clone)]
