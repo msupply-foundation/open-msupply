@@ -148,6 +148,11 @@ export type AdjustmentReasonNotProvided = InsertStocktakeLineErrorInterface & Up
   description: Scalars['String'];
 };
 
+export type AdjustmentReasonNotValid = InsertStocktakeLineErrorInterface & UpdateStocktakeLineErrorInterface & {
+  __typename: 'AdjustmentReasonNotValid';
+  description: Scalars['String'];
+};
+
 export type AllocateOutboundShipmentUnallocatedLineError = {
   __typename: 'AllocateOutboundShipmentUnallocatedLineError';
   error: AllocateOutboundShipmentUnallocatedLineErrorInterface;
@@ -2252,6 +2257,7 @@ export type Queries = {
   stocktakeByNumber: StocktakeResponse;
   stocktakes: StocktakesResponse;
   store: StoreResponse;
+  storePreferences: StorePreferenceNode;
   stores: StoresResponse;
   syncSettings?: Maybe<SyncSettingsNode>;
 };
@@ -2443,6 +2449,11 @@ export type QueriesStocktakesArgs = {
 
 export type QueriesStoreArgs = {
   id: Scalars['String'];
+};
+
+
+export type QueriesStorePreferencesArgs = {
+  storeId: Scalars['String'];
 };
 
 
@@ -2830,7 +2841,7 @@ export type StockLineNode = {
 export type StockLineReducedBelowZero = InsertStocktakeLineErrorInterface & UpdateStocktakeLineErrorInterface & {
   __typename: 'StockLineReducedBelowZero';
   description: Scalars['String'];
-  stockLine: StockLineConnector;
+  stockLine: StockLineNode;
 };
 
 export type StockLineResponse = NodeError | StockLineNode;
@@ -2858,7 +2869,7 @@ export type StockLineSortInput = {
 export type StockLinesReducedBelowZero = UpdateStocktakeErrorInterface & {
   __typename: 'StockLinesReducedBelowZero';
   description: Scalars['String'];
-  stockLines: StockLineConnector;
+  errors: Array<StockLineReducedBelowZero>;
 };
 
 export type StockLinesResponse = StockLineConnector;
@@ -2995,6 +3006,12 @@ export type StoreNode = {
 
 export type StoreNodeNameArgs = {
   storeId: Scalars['String'];
+};
+
+export type StorePreferenceNode = {
+  __typename: 'StorePreferenceNode';
+  id: Scalars['String'];
+  packToOne: Scalars['Boolean'];
 };
 
 export type StoreResponse = NodeError | StoreNode;

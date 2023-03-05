@@ -5,7 +5,9 @@ import static android.content.Context.NSD_SERVICE;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
 import android.os.Environment;
+import android.util.Log;
 import android.webkit.WebView;
+
 import com.getcapacitor.Bridge;
 import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
@@ -19,14 +21,20 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 
+import javax.net.ssl.SSLHandshakeException;
+
 @CapacitorPlugin(name = "NativeApi")
 public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     private static final String LOG_FILE_NAME = "remote_server.log";
+    public static final String OM_SUPPLY = "omSupply";
+    private static final String DEFAULT_URL = "https://localhost:8000/";
     DiscoveryConstants discoveryConstants;
     JSArray discoveredServers;
     Deque<NsdServiceInfo> serversToResolve;
@@ -72,12 +80,64 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         return localUrl;
     }
 
+    private void sleep(int delay) {
+        try {
+            Thread.sleep(delay);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     @Override
     protected void handleOnStart() {
         WebView webView = this.getBridge().getWebView();
+        // this method (handleOnStart) is called when resuming and switching to the app
+        // the webView url will be DEFAULT_URL only on the initial load
+        // so this test is a quick check to see if we should be redirecting to the
+        // /android loader or not
+        if (!webView.getUrl().matches(DEFAULT_URL))
+            return;
+        // Initial load, display splash screen and wait for the server to start
+        webView.post(() -> webView.loadData(SplashPage.encodedHtml, "text/html", "base64"));
         // advertiseService();
-        // .post to run on UI thread
-        webView.post(() -> webView.loadUrl(localUrl + "/android"));
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Boolean isServerRunning = false;
+                Integer retryCount = 5;
+                while (!isServerRunning && retryCount > 0) {
+                    try {
+                        URL url = new URL(localUrl);
+                        HttpURLConnection urlc = (HttpURLConnection) url.openConnection();
+                        // actually no point - the timeout only applies when trying to find a server
+                        // when using localhost it returns immediately even if the server isn't
+                        // responding
+                        urlc.setConnectTimeout(1000);
+                        urlc.connect();
+                        if (urlc.getResponseCode() == 200) {
+                            isServerRunning = true;
+                        }
+                    } catch (SSLHandshakeException e) {
+                        // server is running and responding with an SSL error
+                        // which we will ignore, so ok to proceed
+                        isServerRunning = true;
+                    } catch (Exception e) {
+                        Log.e(OM_SUPPLY, e.getMessage());
+                        isServerRunning = false;
+                    }
+                    retryCount--;
+                    sleep(1000);
+                }
+
+                // .post to run on UI thread in the two calls below
+                if (isServerRunning) {
+                    webView.post(() -> webView.loadUrl(localUrl + "/android"));
+                } else {
+                    webView.post(() -> webView.loadData(ErrorPage.encodedHtml, "text/html", "base64"));
+                }
+            }
+        });
+        thread.start();
     }
 
     @Override
@@ -301,7 +361,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         StringBuilder sb = new StringBuilder();
 
         try {
-            File file = new File(MainActivity.logPath,LOG_FILE_NAME);
+            File file = new File(MainActivity.logPath, LOG_FILE_NAME);
             BufferedReader br = new BufferedReader(new FileReader(file));
             String line;
 
@@ -311,8 +371,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
             }
             br.close();
             response.put("log", sb.toString());
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             response.put("log", "Error: Unable to read log file!");
             response.put("error", e.getMessage());
         }
@@ -321,6 +380,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
 
     public class omSupplyServer {
         JSObject data;
+
         public omSupplyServer(JSObject data) {
             this.data = data;
         }

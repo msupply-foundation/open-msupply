@@ -23,14 +23,14 @@ export const StocktakeLineEditForm: FC<StocktakeLineEditProps> = ({
   mode,
   onChangeItem,
 }) => {
-  const t = useTranslation(['common', 'inventory']);
+  const t = useTranslation('inventory');
   const { items } = useStocktake.line.rows();
   const disabled = mode === ModalMode.Update;
 
   return (
     <>
       <ModalRow>
-        <ModalLabel label={t('label.item')} />
+        <ModalLabel label={t('label.item', { count: 1 })} />
         <Grid item flex={1} padding={1}>
           <StockItemSearchInput
             autoFocus={!item}
