@@ -17,6 +17,7 @@ import { EncounterFragment } from '@openmsupply-client/programs';
 import {
   ClinicianAutocompleteOption,
   ClinicianSearchInput,
+  getClinicianName,
 } from '../../Clinician';
 import { Clinician } from '../../Clinician/utils';
 
@@ -41,9 +42,7 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
     setStartDatetime(encounter.startDatetime);
     setEndDatetime(encounter.endDatetime);
     setClinician({
-      label: `${encounter.clinician?.firstName || ''} ${
-        encounter.clinician?.lastName || ''
-      }`,
+      label: getClinicianName(encounter.clinician as Clinician),
       value: encounter.clinician as Clinician,
     });
   }, [encounter]);
