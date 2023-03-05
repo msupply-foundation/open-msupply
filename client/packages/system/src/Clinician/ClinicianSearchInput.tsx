@@ -1,5 +1,5 @@
 import { Autocomplete } from '@openmsupply-client/common';
-import { ClinicianFragment, useClinicians } from 'packages/programs/src';
+import { ClinicianFragment, useClinicians } from '@openmsupply-client/programs';
 import React from 'react';
 import { FC } from 'react';
 import { ClinicianAutocompleteOption, Clinician } from './utils';
@@ -13,8 +13,9 @@ interface ClinicianSearchInputProps {
 export const getClinicianName = (
   clinician: ClinicianFragment | Clinician | undefined
 ) => {
-  if (clinician === undefined) return '';
-  return `${clinician.firstName || ''} ${clinician.lastName || ''}`;
+  return clinician === undefined
+    ? ''
+    : `${clinician?.firstName ?? ''} ${clinician?.lastName ?? ''}`.trim();
 };
 
 export const ClinicianSearchInput: FC<ClinicianSearchInputProps> = ({
