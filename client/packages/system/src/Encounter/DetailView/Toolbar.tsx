@@ -11,9 +11,14 @@ import {
   TimePickerInput,
   UserIcon,
   useFormatDateTime,
+  ClinicianNode,
 } from '@openmsupply-client/common';
 import { EncounterFragment } from '@openmsupply-client/programs';
-import { getClinicianName } from '../../Patient/Encounter';
+import {
+  ClinicianAutocompleteOption,
+  ClinicianSearchInput,
+} from '../../Clinician';
+import { Clinician } from '../../Clinician/utils';
 
 const Row = ({ label, Input }: { label: string; Input: ReactNode }) => (
   <InputWithLabelRow labelWidth="90px" label={label} Input={Input} />
@@ -27,12 +32,20 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
   const [endDatetime, setEndDatetime] = useState<string | undefined | null>();
   const t = useTranslation('patients');
   const { localisedDate } = useFormatDateTime();
+  const [clinician, setClinician] =
+    useState<ClinicianAutocompleteOption | null>();
 
   useEffect(() => {
     if (!encounter) return;
 
     setStartDatetime(encounter.startDatetime);
     setEndDatetime(encounter.endDatetime);
+    setClinician({
+      label: `${encounter.clinician?.firstName || ''} ${
+        encounter.clinician?.lastName || ''
+      }`,
+      value: encounter.clinician as Clinician,
+    });
   }, [encounter]);
 
   if (!encounter) return null;
@@ -91,9 +104,15 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
               <Row
                 label={t('label.clinician')}
                 Input={
-                  <BasicTextInput
-                    disabled
-                    value={getClinicianName(encounter?.document.data.clinician)}
+                  <ClinicianSearchInput
+                    onChange={clinician => {
+                      setClinician(clinician);
+                      onChange({
+                        clinician: clinician?.value as ClinicianNode,
+                      });
+                    }}
+                    clinicianLabel={clinician?.label || ''}
+                    clinicianValue={clinician?.value}
                   />
                 }
               />
