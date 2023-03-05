@@ -23,7 +23,10 @@ use repository::{
 use serde::{Deserialize, Serialize};
 use util::{inline_init, uuid::uuid};
 
-use self::hiv_care_encounter::HivcareEncounterPhysicalExamination;
+use self::{
+    hiv_care_encounter::HivcareEncounterPhysicalExamination,
+    hiv_care_encounter::HivcareEncounterPhysicalExaminationBloodPressure,
+};
 
 schemafy::schemafy!("src/sync/program_schemas/patient.json");
 
@@ -122,6 +125,15 @@ mod hiv_care_encounter {
                 hcv_crag: Default::default(),
                 general: Default::default(),
                 risk_behaviour: Default::default(),
+            }
+        }
+    }
+
+    impl Default for HivcareEncounterPhysicalExaminationBloodPressure {
+        fn default() -> Self {
+            Self {
+                systolic: Default::default(),
+                diastolic: Default::default(),
             }
         }
     }
@@ -424,7 +436,12 @@ fn encounter_hiv_care_1(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncou
         e.physical_examination = Some(inline_init(
             |exam: &mut HivcareEncounterPhysicalExamination| {
                 exam.weight = Some("51.00".to_string());
-                exam.blood_pressure = Some("120/80".to_string());
+                exam.blood_pressure = Some(inline_init(
+                    |blood_pressure: &mut HivcareEncounterPhysicalExaminationBloodPressure| {
+                        blood_pressure.systolic = 120.0;
+                        blood_pressure.diastolic = 80.0;
+                    },
+                ))
             },
         ));
         e.arv_medication = Some(inline_init(
@@ -446,7 +463,12 @@ fn encounter_hiv_care_2(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncou
         e.physical_examination = Some(inline_init(
             |exam: &mut HivcareEncounterPhysicalExamination| {
                 exam.weight = Some("52.00".to_string());
-                exam.blood_pressure = Some("125/90".to_string());
+                exam.blood_pressure = Some(inline_init(
+                    |blood_pressure: &mut HivcareEncounterPhysicalExaminationBloodPressure| {
+                        blood_pressure.systolic = 110.0;
+                        blood_pressure.diastolic = 60.0;
+                    },
+                ))
             },
         ));
         e.arv_medication = Some(inline_init(
@@ -469,7 +491,12 @@ fn encounter_hiv_care_3(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncou
         e.physical_examination = Some(inline_init(
             |exam: &mut HivcareEncounterPhysicalExamination| {
                 exam.weight = Some("52.50".to_string());
-                exam.blood_pressure = Some("128/00".to_string());
+                exam.blood_pressure = Some(inline_init(
+                    |blood_pressure: &mut HivcareEncounterPhysicalExaminationBloodPressure| {
+                        blood_pressure.systolic = 150.0;
+                        blood_pressure.diastolic = 100.0;
+                    },
+                ))
             },
         ));
         e.arv_medication = Some(inline_init(
@@ -493,7 +520,12 @@ fn encounter_hiv_care_4(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncou
         e.physical_examination = Some(inline_init(
             |exam: &mut HivcareEncounterPhysicalExamination| {
                 exam.weight = Some("51.00".to_string());
-                exam.blood_pressure = Some("121/00".to_string());
+                exam.blood_pressure = Some(inline_init(
+                    |blood_pressure: &mut HivcareEncounterPhysicalExaminationBloodPressure| {
+                        blood_pressure.systolic = 121.0;
+                        blood_pressure.diastolic = 66.0;
+                    },
+                ))
             },
         ));
     })
@@ -510,7 +542,12 @@ fn encounter_hiv_care_5(
         e.physical_examination = Some(inline_init(
             |exam: &mut HivcareEncounterPhysicalExamination| {
                 exam.weight = Some("54.00".to_string());
-                exam.blood_pressure = Some("118/00".to_string());
+                exam.blood_pressure = Some(inline_init(
+                    |blood_pressure: &mut HivcareEncounterPhysicalExaminationBloodPressure| {
+                        blood_pressure.systolic = 112.0;
+                        blood_pressure.diastolic = 85.0;
+                    },
+                ))
             },
         ));
     })

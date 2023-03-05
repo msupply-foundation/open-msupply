@@ -72,13 +72,9 @@
               },
               "type": "array"
             },
-            "quantityDispensed": {
-              "description": "Number of pills dispensed in this encounter",
-              "minimum": 0,
-              "type": "number"
-            },
             "quantityPrescribed": {
-              "description": "Number of pills on hand at the end of the encounter.",
+              "description": "Number of pills prescribed",
+              "minimum": 0,
               "type": "number"
             },
             "regimen": {
@@ -389,10 +385,18 @@
           "properties": {
             "bloodPressure": {
               "description": "75367002\tBlood pressure [mmHg]",
-              "examples": ["90/60", "120/80"],
-              "pattern": "^\\d{3}\\/\\d{2}$",
-              "title": "BP in mmHg",
-              "type": "string"
+              "properties": {
+                "diastolic": {
+                  "pattern": "^\\d{1,3}$",
+                  "type": "number"
+                },
+                "systolic": {
+                  "pattern": "^\\d{1,3}$",
+                  "type": "number"
+                }
+              },
+              "required": ["systolic", "diastolic"],
+              "type": "object"
             },
             "bodyMassIndex": {
               "description": "60621009\tBody mass index (BMI)",
