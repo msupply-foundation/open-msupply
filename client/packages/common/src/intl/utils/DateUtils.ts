@@ -86,7 +86,7 @@ export const DateUtils = {
     differenceInDays(Date.now(), dateInputHandler(date)),
   startOfDay,
   startOfYear,
-  formatRFC3339,
+  formatRFC3339: (date: Date) => (isValid(date) ? formatRFC3339(date) : null),
 
   /** Number of milliseconds in one second, i.e. SECOND = 1000*/
   SECOND,

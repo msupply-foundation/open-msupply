@@ -108,9 +108,9 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
                       const startDatetime = date
                         ? DateUtils.formatRFC3339(date)
                         : undefined;
-                      setStartDatetime(startDatetime);
+                      setStartDatetime(startDatetime ?? undefined);
                       onChange({
-                        startDatetime,
+                        startDatetime: startDatetime ?? undefined,
                         endDatetime: endDatetime ?? undefined,
                       });
                     }}
@@ -127,11 +127,13 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
                       const startDatetime = date
                         ? DateUtils.formatRFC3339(date)
                         : undefined;
-                      setStartDatetime(startDatetime);
-                      onChange({
-                        startDatetime,
-                        endDatetime: endDatetime ?? undefined,
-                      });
+                      if (startDatetime) {
+                        setStartDatetime(startDatetime);
+                        onChange({
+                          startDatetime,
+                          endDatetime: endDatetime ?? undefined,
+                        });
+                      }
                     }}
                   />
                 }
@@ -146,8 +148,10 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
                       const endDatetime = date
                         ? DateUtils.formatRFC3339(date)
                         : undefined;
-                      setEndDatetime(endDatetime);
-                      onChange({ endDatetime });
+                      if (endDatetime) {
+                        setEndDatetime(endDatetime);
+                        onChange({ endDatetime });
+                      }
                     }}
                   />
                 }
