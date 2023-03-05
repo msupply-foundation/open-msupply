@@ -1,8 +1,15 @@
-use crate::sync::sync_serde::{
-    date_option_to_isostring, empty_str_as_option, empty_str_as_option_string, zero_date_as_option,
+use crate::sync::{
+    api::RemoteSyncRecordV5,
+    sync_serde::{
+        date_option_to_isostring, empty_str_as_option, empty_str_as_option_string,
+        zero_date_as_option,
+    },
 };
 use chrono::NaiveDate;
-use repository::{Gender, NameRow, NameType, StorageConnection, SyncBufferRow};
+use repository::{
+    ChangelogRow, ChangelogTableName, Gender, NameRow, NameRowRepository, NameType,
+    StorageConnection, SyncBufferRow,
+};
 
 use serde::{Deserialize, Serialize};
 
@@ -41,29 +48,32 @@ impl LegacyNameType {
             LegacyNameType::Others => NameType::Others,
         }
     }
+}
 
-    // pub fn from_name_type(name_type: &NameType) -> Self {
-    //     match name_type {
-    //         NameType::Facility => LegacyNameType::Facility,
-    //         NameType::Patient => LegacyNameType::Patient,
-    //         NameType::Build => LegacyNameType::Build,
-    //         NameType::Invad => LegacyNameType::Invad,
-    //         NameType::Repack => LegacyNameType::Repack,
-    //         NameType::Store => LegacyNameType::Store,
-    //         NameType::Others => LegacyNameType::Others,
-    //     }
-    // }
+fn from_name_type(name_type: &NameType) -> LegacyNameType {
+    match name_type {
+        NameType::Facility => LegacyNameType::Facility,
+        NameType::Patient => LegacyNameType::Patient,
+        NameType::Build => LegacyNameType::Build,
+        NameType::Invad => LegacyNameType::Invad,
+        NameType::Repack => LegacyNameType::Repack,
+        NameType::Store => LegacyNameType::Store,
+        NameType::Others => LegacyNameType::Others,
+    }
 }
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
 pub struct LegacyNameRow {
-    pub ID: String,
+    #[serde(rename = "ID")]
+    pub id: String,
     pub name: String,
     pub code: String,
     pub r#type: LegacyNameType,
-    pub customer: bool,
-    pub supplier: bool,
+    #[serde(rename = "customer")]
+    pub is_customer: bool,
+    #[serde(rename = "supplier")]
+    pub is_supplier: bool,
 
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub supplying_store_id: Option<String>,
@@ -122,13 +132,21 @@ pub struct LegacyNameRow {
 
     #[serde(rename = "isDeceased")]
     pub is_deceased: bool,
-    // TODO not in mSupply:
-    //pub om_created_datetime: Option<NaiveDateTime>,
-    //pub om_gender: Option<Gender>,
+    // #[serde(rename = "om_created_datetime")]
+    // #[serde(deserialize_with = "empty_str_as_option")]
+    // pub created_datetime: Option<NaiveDateTime>,
+    // #[serde(rename = "om_gender")]
+    // pub gender: Option<Gender>,
 }
 
+const LEGACY_TABLE_NAME: &'static str = LegacyTableName::NAME;
+
 fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
-    sync_record.table_name == LegacyTableName::NAME
+    sync_record.table_name == LEGACY_TABLE_NAME
+}
+
+fn match_push_table(changelog: &ChangelogRow) -> bool {
+    changelog.table_name == ChangelogTableName::Name
 }
 
 pub(crate) struct NameTranslation {}
@@ -145,12 +163,12 @@ impl SyncTranslation for NameTranslation {
         let data = serde_json::from_str::<LegacyNameRow>(&sync_record.data)?;
 
         let result = NameRow {
-            id: data.ID.to_string(),
+            id: data.id.to_string(),
             name: data.name.to_string(),
             r#type: data.r#type.to_name_type(),
             code: data.code.to_string(),
-            is_customer: data.customer,
-            is_supplier: data.supplier,
+            is_customer: data.is_customer,
+            is_supplier: data.is_supplier,
 
             supplying_store_id: data.supplying_store_id,
             first_name: data.first_name,
@@ -182,7 +200,7 @@ impl SyncTranslation for NameTranslation {
             is_deceased: data.is_deceased,
             national_health_number: data.national_health_number,
             /*
-            gender: data.om_gender.or(if data.female {
+            gender: data.gender.or(if data.female {
                 Some(Gender::Female)
             } else {
                 Some(Gender::Male)
@@ -208,6 +226,109 @@ impl SyncTranslation for NameTranslation {
         });
 
         Ok(result)
+    }
+
+    fn try_translate_push_upsert(
+        &self,
+        connection: &StorageConnection,
+        changelog: &ChangelogRow,
+    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
+        if !match_push_table(changelog) {
+            return Ok(None);
+        }
+
+        let NameRow {
+            id,
+            name,
+            code,
+            r#type,
+            is_customer,
+            is_supplier,
+            supplying_store_id,
+            first_name,
+            last_name,
+            gender,
+            date_of_birth,
+            phone,
+            charge_code,
+            comment,
+            country,
+            address1,
+            address2,
+            email,
+            website,
+            is_manufacturer,
+            is_donor,
+            on_hold,
+            created_datetime,
+            is_deceased,
+            national_health_number,
+        } = NameRowRepository::new(connection)
+            .find_one_by_id(&changelog.record_id)?
+            .ok_or(anyhow::Error::msg(format!(
+                "Name row ({}) not found",
+                changelog.record_id
+            )))?;
+
+        let legacy_row = LegacyNameRow {
+            id,
+            name,
+            code,
+            r#type: from_name_type(&r#type),
+            is_customer,
+            is_supplier,
+            supplying_store_id,
+            first_name,
+            last_name,
+            female: is_female(gender.clone()),
+            date_of_birth,
+            phone,
+            charge_code,
+            comment,
+            country,
+            address1,
+            address2,
+            email,
+            website,
+            is_manufacturer,
+            is_donor,
+            on_hold,
+            created_date: created_datetime.map(|datetime| datetime.date()),
+            national_health_number,
+            is_deceased,
+            // created_datetime,
+            // gender,
+        };
+
+        Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
+            changelog,
+            LEGACY_TABLE_NAME,
+            serde_json::to_value(&legacy_row)?,
+        )]))
+    }
+
+    fn try_translate_push_delete(
+        &self,
+        _: &StorageConnection,
+        changelog: &ChangelogRow,
+    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
+        let result = match_push_table(changelog)
+            .then(|| vec![RemoteSyncRecordV5::new_delete(changelog, LEGACY_TABLE_NAME)]);
+
+        Ok(result)
+    }
+}
+
+fn is_female(gender: Option<Gender>) -> bool {
+    match gender {
+        Some(gender) => {
+            if gender == Gender::Female {
+                return true;
+            } else {
+                return false;
+            }
+        }
+        None => return false,
     }
 }
 
