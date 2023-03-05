@@ -10,7 +10,7 @@ import java.io.File;
 public class MainActivity extends BridgeActivity {
     RemoteServer server = new RemoteServer();
     DiscoveryConstants discoveryConstants;
-    static String logPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS) + File.separator + "omSupply";
+    static String logPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS) + File.separator + NativeApi.OM_SUPPLY;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
