@@ -88,14 +88,15 @@ export const CreateEncounterModal: FC = () => {
 
     const startDatetime = DateUtils.formatRFC3339(date);
 
-    setDraft({
-      createdDatetime,
-      ...draft,
-      startDatetime,
-      status: DateUtils.isFuture(date)
-        ? EncounterNodeStatus.Scheduled
-        : draft?.status,
-    });
+    if (startDatetime)
+      setDraft({
+        createdDatetime,
+        ...draft,
+        startDatetime,
+        status: DateUtils.isFuture(date)
+          ? EncounterNodeStatus.Scheduled
+          : draft?.status,
+      });
   };
 
   const setEndDatetime = (date: Date | null): void => {
