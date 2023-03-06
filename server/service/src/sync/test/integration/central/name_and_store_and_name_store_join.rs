@@ -85,6 +85,7 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
             name_id: name_row1.id.clone(),
             code: small_uuid(),
             site_id: new_site_properties.site_id as i32,
+            logo: None,
         };
         let store_json = json!({
             "ID": store_row.id,
