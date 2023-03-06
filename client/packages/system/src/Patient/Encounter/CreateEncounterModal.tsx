@@ -1,7 +1,6 @@
 import React, { FC, useState } from 'react';
 import {
   AlertIcon,
-  Autocomplete,
   BasicSpinner,
   Box,
   DatePickerInput,
@@ -20,14 +19,18 @@ import { DateUtils, useTranslation } from '@common/intl';
 import {
   EncounterRegistryByProgram,
   PatientModal,
-  useClinicians,
   usePatientModalStore,
   useEncounter,
 } from '@openmsupply-client/programs';
 import { usePatient } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
 import { EncounterSearchInput } from './EncounterSearchInput';
-import { ClinicianFragment } from '@openmsupply-client/programs';
+import {
+  Clinician,
+  ClinicianAutocompleteOption,
+  ClinicianSearchInput,
+  getClinicianName,
+} from '../../Clinician';
 interface Encounter {
   status?: EncounterNodeStatus;
   createdDatetime: string;
@@ -35,13 +38,6 @@ interface Encounter {
   endDatetime?: string;
   clinician?: Clinician;
 }
-
-type ClinicianAutocompleteOption = {
-  label: string;
-  value?: Clinician;
-};
-
-type Clinician = Pick<ClinicianFragment, 'firstName' | 'lastName' | 'id'>;
 
 export const CreateEncounterModal: FC = () => {
   const patientId = usePatient.utils.id();
@@ -56,9 +52,6 @@ export const CreateEncounterModal: FC = () => {
   const [draft, setDraft] = useState<Encounter | undefined>(undefined);
   const navigate = useNavigate();
   const { error } = useNotification();
-
-  const { data: clinicianData } = useClinicians.document.list({});
-  const clinicians: ClinicianFragment[] = clinicianData?.nodes ?? [];
 
   const handleSave = useEncounter.document.upsert(
     patientId,
@@ -193,25 +186,10 @@ export const CreateEncounterModal: FC = () => {
                 <InputWithLabelRow
                   label={t('label.clinician')}
                   Input={
-                    <Autocomplete
-                      value={{
-                        label: getClinicianName(draft?.clinician),
-                        value: draft?.clinician,
-                      }}
-                      width={'200'}
-                      onChange={(_, option) => {
-                        setClinician(option);
-                      }}
-                      options={clinicians.map(
-                        (clinician): ClinicianAutocompleteOption => ({
-                          label: getClinicianName(clinician),
-                          value: {
-                            firstName: clinician.firstName ?? '',
-                            lastName: clinician.lastName ?? '',
-                            id: clinician.id,
-                          },
-                        })
-                      )}
+                    <ClinicianSearchInput
+                      onChange={setClinician}
+                      clinicianLabel={getClinicianName(draft?.clinician)}
+                      clinicianValue={draft?.clinician}
                     />
                   }
                 />
@@ -247,11 +225,4 @@ const RenderForm = ({
   if (isLoading) return <BasicSpinner />;
 
   return <>{form}</>;
-};
-
-export const getClinicianName = (
-  clinician: ClinicianFragment | Clinician | undefined
-) => {
-  if (clinician === undefined) return '';
-  return `${clinician.firstName || ''} ${clinician.lastName || ''}`;
 };
