@@ -8,7 +8,7 @@ pub mod android {
 
     use jni::sys::jchar;
     use repository::database_settings::DatabaseSettings;
-    use server::start_server;
+    use server::{logging_init, start_server};
     use service::settings::{LogMode, LoggingSettings, ServerSettings, Settings};
     use tokio::sync::mpsc;
 
@@ -68,6 +68,8 @@ pub mod android {
                     .with_directory(log_dir.to_string_lossy().to_string()),
             ),
         };
+
+        logging_init(settings.logging.clone());
 
         // run server in background thread
         let thread = thread::spawn(move || {
