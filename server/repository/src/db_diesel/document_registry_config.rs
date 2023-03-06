@@ -14,6 +14,15 @@ pub struct EventCondition {
     pub equal_to: Option<String>,
     #[serde(rename = "equalAny")]
     pub equal_any: Option<Vec<String>>,
+
+    #[serde(rename = "lessThanOrEqualTo")]
+    pub less_than_or_equal_to: Option<f64>,
+    #[serde(rename = "lessThan")]
+    pub less_than: Option<f64>,
+    #[serde(rename = "greaterThanOrEqualTo")]
+    pub greater_than_or_equal_to: Option<f64>,
+    #[serde(rename = "greaterThan")]
+    pub greater_than: Option<f64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
