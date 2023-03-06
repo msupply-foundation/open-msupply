@@ -96,7 +96,9 @@ const NAME_1: (&'static str, &'static str) = (
     "maximum_credit": 0,
     "nationality_ID": "",
     "created_date": "2022-02-10",
-    "isDeceased": false
+    "isDeceased": false,
+    "om_created_datetime": "",
+    "om_gender": "FEMALE"
 }"#,
 );
 
@@ -226,7 +228,9 @@ const NAME_2: (&'static str, &'static str) = (
     "nationality_ID": "",
     "created_date": "0000-00-00",
     "isDeceased": false,
-    "national_health_number": ""
+    "national_health_number": "",
+    "om_created_datetime": "",
+    "om_gender": ""
 }"#,
 );
 
@@ -355,7 +359,9 @@ const NAME_3: (&'static str, &'static str) = (
     "maximum_credit": 0,
     "nationality_ID": "",
     "created_date": "0000-00-00",
-    "isDeceased": false
+    "isDeceased": false,
+    "om_created_datetime": "",
+    "om_gender": ""
 }"#,
 );
 
@@ -485,7 +491,9 @@ const NAME_4: (&'static str, &'static str) = (
       "nationality_ID": "",
       "created_date": "2022-05-22",
       "integration_ID": "",
-      "isDeceased": true  
+      "isDeceased": true,
+      "om_created_datetime": "",
+      "om_gender": "FEMALE"
   }"#,
 );
 
