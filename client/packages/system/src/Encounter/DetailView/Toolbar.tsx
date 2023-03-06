@@ -108,9 +108,9 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
                       const startDatetime = date
                         ? DateUtils.formatRFC3339(date)
                         : undefined;
-                      setStartDatetime(startDatetime ?? undefined);
+                      setStartDatetime(startDatetime);
                       onChange({
-                        startDatetime: startDatetime ?? undefined,
+                        startDatetime,
                         endDatetime: endDatetime ?? undefined,
                       });
                     }}
