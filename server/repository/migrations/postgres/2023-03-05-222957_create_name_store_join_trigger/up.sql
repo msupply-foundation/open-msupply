@@ -1,5 +1,3 @@
-ALTER TYPE changelog_table_name ADD VALUE 'name_store_join' AFTER 'name';
-
 CREATE FUNCTION upsert_name_store_join_changelog()
 RETURNS trigger AS
 $$
@@ -15,7 +13,7 @@ RETURNS trigger AS
 $$
   BEGIN
     INSERT INTO changelog (table_name, record_id, row_action, store_id)
-          VALUES ('name_store_join', OLD.id, 'DELETE'. OLD.store_id);
+          VALUES ('name_store_join', OLD.id, 'DELETE', OLD.store_id);
     RETURN NULL;
   END;
 $$ LANGUAGE 'plpgsql';
