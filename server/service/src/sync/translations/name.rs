@@ -50,15 +50,16 @@ impl LegacyNameType {
     }
 }
 
-fn from_name_type(name_type: &NameType) -> LegacyNameType {
+// Only allow patient for now
+fn patient_type(name_type: &NameType) -> Option<LegacyNameType> {
     match name_type {
-        NameType::Facility => LegacyNameType::Facility,
-        NameType::Patient => LegacyNameType::Patient,
-        NameType::Build => LegacyNameType::Build,
-        NameType::Invad => LegacyNameType::Invad,
-        NameType::Repack => LegacyNameType::Repack,
-        NameType::Store => LegacyNameType::Store,
-        NameType::Others => LegacyNameType::Others,
+        NameType::Facility => None,
+        NameType::Patient => Some(LegacyNameType::Patient),
+        NameType::Build => None,
+        NameType::Invad => None,
+        NameType::Repack => None,
+        NameType::Store => None,
+        NameType::Others => None,
     }
 }
 
@@ -270,11 +271,17 @@ impl SyncTranslation for NameTranslation {
                 changelog.record_id
             )))?;
 
+        // Only push name records that belong to patients, gracefully ignore the rest
+        let patient_type = match patient_type(&r#type) {
+            Some(_type) => _type,
+            _ => return Ok(Some(Vec::new())),
+        };
+
         let legacy_row = LegacyNameRow {
             id,
             name,
             code,
-            r#type: from_name_type(&r#type),
+            r#type: patient_type,
             is_customer,
             is_supplier,
             supplying_store_id,
