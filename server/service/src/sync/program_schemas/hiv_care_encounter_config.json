@@ -81,6 +81,57 @@
       }
     },
     {
+      "type": "Schedule",
+      "conditions": [
+        {
+          "field": "arvMedication.regimenStatus",
+          "equalTo": "START"
+        }
+      ],
+      "config": {
+        "datetimeField": "startDatetime",
+        "scheduleIn": { "minutes": 6 }
+      },
+      "event": {
+        "type": "LTFUEligibility",
+        "data": "Baseline"
+      }
+    },
+    {
+      "type": "Schedule",
+      "conditions": [
+        {
+          "field": "viralLoad.eacDone",
+          "isTruthy": true
+        }
+      ],
+      "config": {
+        "datetimeField": "startDatetime",
+        "scheduleIn": { "minutes": 3 }
+      },
+      "event": {
+        "type": "LTFUEligibility",
+        "data": "High Repeat"
+      }
+    },
+    {
+      "type": "Schedule",
+      "conditions": [
+        {
+          "field": "viralLoad.viralLoadResult",
+          "lessThanOrEqualTo": 1000
+        }
+      ],
+      "config": {
+        "datetimeField": "startDatetime",
+        "scheduleIn": { "minutes": 12 }
+      },
+      "event": {
+        "type": "LTFUEligibility",
+        "data": "Annual"
+      }
+    },
+    {
       "type": "Field",
       "conditions": [
         {
