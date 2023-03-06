@@ -171,16 +171,37 @@ fn match_condition(condition: &EventCondition, doc: &RawDocument) -> bool {
     };
     if condition.is_set.is_some() {
         return !field.is_null();
-    } else if condition.is_falsy.is_some() {
+    }
+    if condition.is_falsy.is_some() {
         return !is_truthy(&field);
     } else if condition.is_truthy.is_some() {
         return is_truthy(&field);
-    } else if let Some(equal_to) = &condition.equal_to {
-        let Some(field_str) =  field.as_str() else { return false };
-        return equal_to == field_str;
-    } else if let Some(equal_any) = &condition.equal_any {
-        let Some(field_str) =  field.as_str() else { return false };
-        return equal_any.iter().any(|s| s == field_str);
+    }
+
+    // string match
+    if let Some(field_str) = field.as_str() {
+        if let Some(equal_to) = &condition.equal_to {
+            return equal_to == field_str;
+        }
+        if let Some(equal_any) = &condition.equal_any {
+            return equal_any.iter().any(|s| s == field_str);
+        }
+    }
+
+    // compare numbers
+    if let Some(field_number) = field.as_f64() {
+        if let Some(less_than_or_equal_to) = condition.less_than_or_equal_to {
+            return less_than_or_equal_to <= field_number;
+        }
+        if let Some(less_than) = condition.less_than {
+            return less_than < field_number;
+        }
+        if let Some(greater_than_or_equal_to) = condition.greater_than_or_equal_to {
+            return greater_than_or_equal_to >= field_number;
+        }
+        if let Some(greater_than) = condition.greater_than {
+            return greater_than > field_number;
+        }
     }
     false
 }
