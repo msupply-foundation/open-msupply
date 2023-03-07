@@ -1,5 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { mapValues, keyBy, mapKeys } from 'lodash';
+import keyBy from 'lodash/keyBy';
+import mapKeys from 'lodash/mapKeys';
+import mapValues from 'lodash/mapValues';
 import {
   ArrowRightIcon,
   useTranslation,
@@ -78,9 +80,9 @@ const useStatusChangeButton = () => {
 
   const mapStructuredErrors = (
     result: Awaited<ReturnType<typeof save>>
-  ): /*error*/ string | /*OK*/ undefined => {
+  ): /* error */ string | /* OK */ undefined => {
     if (result.__typename === 'StocktakeNode') {
-      return /*OK*/ undefined;
+      return /* OK */ undefined;
     }
 
     const { error } = result;
@@ -131,7 +133,7 @@ const useStatusChangeButton = () => {
     try {
       result = await save({ id, status: selectedOption.value });
 
-      let errorMessage = mapStructuredErrors(result);
+      const errorMessage = mapStructuredErrors(result);
 
       if (errorMessage) {
         error(errorMessage)();
