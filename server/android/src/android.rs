@@ -30,7 +30,6 @@ pub mod android {
         files_dir: JString,
         cache_dir: JString,
         android_id: JString,
-        log_dir: JString,
     ) {
         log_panics::init();
 
@@ -40,8 +39,6 @@ pub mod android {
         let android_id: String = env.get_string(android_id).unwrap().into();
         let db_path = files_dir.join("omsupply-database");
         let cache_dir: String = env.get_string(cache_dir).unwrap().into();
-        let log_dir: String = env.get_string(log_dir).unwrap().into();
-        let log_dir = PathBuf::from(&log_dir);
 
         let settings = Settings {
             server: ServerSettings {
@@ -65,7 +62,7 @@ pub mod android {
             sync: None,
             logging: Some(
                 LoggingSettings::new(LogMode::File, service::settings::Level::Info)
-                    .with_directory(log_dir.to_string_lossy().to_string()),
+                    .with_directory(files_dir.to_string_lossy().to_string()),
             ),
         };
 
