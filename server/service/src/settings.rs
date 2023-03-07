@@ -88,6 +88,24 @@ pub struct LoggingSettings {
     pub max_file_size: Option<usize>,
 }
 
+impl LoggingSettings {
+    pub fn new(mode: LogMode, level: Level) -> Self {
+        LoggingSettings {
+            mode,
+            level,
+            directory: None,
+            filename: None,
+            max_file_count: None,
+            max_file_size: None,
+        }
+    }
+
+    pub fn with_directory(mut self, directory: String) -> Self {
+        self.directory = Some(directory);
+        self
+    }
+}
+
 #[derive(serde::Deserialize, Clone)]
 pub struct DisplaySettingNode {
     pub value: String,
