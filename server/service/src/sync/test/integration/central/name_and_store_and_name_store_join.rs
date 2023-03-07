@@ -8,9 +8,10 @@ use chrono::NaiveDate;
 use repository::{NameRow, NameStoreJoinRow, NameType, StoreRow};
 
 use serde_json::json;
-use util::{inline_init, merge_json, uuid::uuid};
-
-use super::small_uuid;
+use util::{
+    inline_init, merge_json,
+    uuid::{small_uuid, uuid},
+};
 
 pub(crate) struct NameAndStoreAndNameStoreJoinTester;
 
@@ -42,8 +43,8 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
             is_donor: true,
             on_hold: true,
             created_datetime: Some(NaiveDate::from_ymd(2022, 05, 22).and_hms(0, 0, 0)),
-            national_health_number: None,
             is_deceased: false,
+            national_health_number: None,
         };
         let name_json1 = json!({
             "ID": name_row1.id,
@@ -66,7 +67,9 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
             "manufacturer": true,
             "donor": true,
             "hold": true,
-            "created_date": "2022-05-22"
+            "created_date": "2022-05-22",
+            "is_deceased": false,
+            "national_health_number": ""
         });
 
         let name_row2 = inline_init(|r: &mut NameRow| {
@@ -99,7 +102,7 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
 
         result.push(TestStepData {
             central_upsert: json!({
-                "name": [name_json1,name_json2.clone()],
+                "name": [name_json1, name_json2.clone()],
                 "store": [store_json]
             }),
             central_delete: json!({}),
@@ -135,12 +138,11 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
             "ID": name_store_join_row2.id,
             "name_ID": name_store_join_row2.name_id,
             "store_ID": name_store_join_row2.store_id
-
         });
 
         result.push(TestStepData {
             central_upsert: json!({
-                "name_store_join": [name_store_join_json1,name_store_join_json2 ],
+                "name_store_join": [name_store_join_json1, name_store_join_json2],
             }),
             central_delete: json!({}),
             integration_records: IntegrationRecords::from_upserts(vec![

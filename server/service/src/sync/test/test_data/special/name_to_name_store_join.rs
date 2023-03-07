@@ -51,7 +51,7 @@ const NAME_1: (&'static str, &'static str) = (
         "custom3": "",
         "default_order_days": 0,
         "connection_type": 0,
-        "PATIENT_PHOTO": "data:image/png;base64,",
+        "PATIENT_PHOTO": "",
         "NEXT_OF_KIN_ID": "",
         "POBOX": "",
         "ZIP": 0,
