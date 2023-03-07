@@ -274,7 +274,7 @@ impl SyncTranslation for NameTranslation {
         // Only push name records that belong to patients, gracefully ignore the rest
         let patient_type = match patient_type(&r#type) {
             Some(_type) => _type,
-            _ => return Ok(Some(Vec::new())),
+            _ => return Ok(None),
         };
 
         let legacy_row = LegacyNameRow {

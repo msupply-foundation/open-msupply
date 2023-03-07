@@ -28,6 +28,14 @@ impl SyncRecordTester for ClinicianRecordTester {
             gender: Some(Gender::Male),
             is_active: true,
         };
+
+        let clinician_json = json!({
+            "id": row.id,
+            "code": row.code,
+            "last_name": row.last_name,
+            "om_gender": "MALE",
+            "is_active": true
+        });
         let join_row = ClinicianStoreJoinRow {
             id: uuid(),
             store_id: store_id.to_string(),
@@ -35,7 +43,9 @@ impl SyncRecordTester for ClinicianRecordTester {
         };
 
         result.push(TestStepData {
-            central_upsert: json!({}),
+            central_upsert: json!({
+                "clinician": [clinician_json],
+            }),
             central_delete: json!({}),
             integration_records: IntegrationRecords::from_upserts(vec![
                 PullUpsertRecord::Clinician(row.clone()),
