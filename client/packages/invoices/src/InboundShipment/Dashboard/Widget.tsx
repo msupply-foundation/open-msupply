@@ -6,7 +6,6 @@ import {
   PlusCircleIcon,
   StatsPanel,
   useNotification,
-  useQuery,
   useToggle,
   Widget,
 } from '@openmsupply-client/common';
@@ -18,18 +17,9 @@ import { InternalSupplierSearchModal } from '@openmsupply-client/system';
 export const InboundShipmentWidget: React.FC<PropsWithChildrenOnly> = () => {
   const modalControl = useToggle(false);
   const { error } = useNotification();
-  const api = useInbound.utils.api();
   const t = useTranslation(['app', 'dashboard']);
-  const [hasError, setHasError] = React.useState(false);
   const formatNumber = useFormatNumber();
-  const { data, isLoading } = useQuery(
-    ['inbound-shipment', 'count'],
-    api.dashboard.shipmentCount,
-    {
-      retry: false,
-      onError: () => setHasError(true),
-    }
-  );
+  const { data, isLoading, isError } = useInbound.utils.counts();
 
   const { mutateAsync: onCreate } = useInbound.document.insert();
   const onError = (e: unknown) => {
@@ -64,22 +54,21 @@ export const InboundShipmentWidget: React.FC<PropsWithChildrenOnly> = () => {
           flexDirection="column"
         >
           <Grid item>
-            {!hasError && (
-              <StatsPanel
-                isLoading={isLoading}
-                title={t('inbound-shipments')}
-                stats={[
-                  {
-                    label: t('label.today', { ns: 'dashboard' }),
-                    value: formatNumber.round(data?.today),
-                  },
-                  {
-                    label: t('label.this-week', { ns: 'dashboard' }),
-                    value: formatNumber.round(data?.thisWeek),
-                  },
-                ]}
-              />
-            )}
+            <StatsPanel
+              isError={isError}
+              isLoading={isLoading}
+              title={t('inbound-shipments')}
+              stats={[
+                {
+                  label: t('label.today', { ns: 'dashboard' }),
+                  value: formatNumber.round(data?.today),
+                },
+                {
+                  label: t('label.this-week', { ns: 'dashboard' }),
+                  value: formatNumber.round(data?.thisWeek),
+                },
+              ]}
+            />
           </Grid>
           <Grid
             item

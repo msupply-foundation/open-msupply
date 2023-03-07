@@ -20,7 +20,12 @@ import { RequestInit } from 'graphql-request/dist/types.dom';
 
 export type SkipRequest = (documentNode: DocumentNode) => boolean;
 
-const permissionExceptions = ['reports', 'stockCounts', 'invoiceCounts'];
+const permissionExceptions = [
+  'reports',
+  'stockCounts',
+  'invoiceCounts',
+  'itemCounts',
+];
 interface ResponseError {
   message?: string;
   path?: string[];

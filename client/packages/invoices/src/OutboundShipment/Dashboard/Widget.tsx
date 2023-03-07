@@ -5,12 +5,10 @@ import {
   Grid,
   PlusCircleIcon,
   useNotification,
-  useQuery,
   StatsPanel,
   Widget,
   FnUtils,
   useToggle,
-  useAuthContext,
 } from '@openmsupply-client/common';
 import { useFormatNumber, useTranslation } from '@common/intl';
 import { useOutbound } from '../api';
@@ -20,15 +18,7 @@ export const OutboundShipmentWidget: React.FC = () => {
   const { error } = useNotification();
   const t = useTranslation(['app', 'dashboard']);
   const formatNumber = useFormatNumber();
-  const [hasError, setHasError] = React.useState(false);
-  const { store } = useAuthContext();
-
-  const api = useOutbound.utils.api();
-  const { data, isLoading } = useQuery(
-    ['outbound-shipment', 'count', store?.id],
-    api.dashboard.shipmentCount,
-    { retry: false, onError: () => setHasError(true) }
-  );
+  const { data, isLoading, isError } = useOutbound.utils.count();
 
   const { mutateAsync: onCreate } = useOutbound.document.insert();
   const onError = (e: unknown) => {
@@ -63,18 +53,17 @@ export const OutboundShipmentWidget: React.FC = () => {
           flexDirection="column"
         >
           <Grid item>
-            {!hasError && (
-              <StatsPanel
-                isLoading={isLoading}
-                title={t('heading.shipments-to-be-picked')}
-                stats={[
-                  {
-                    label: t('label.today', { ns: 'dashboard' }),
-                    value: formatNumber.round(data?.toBePicked),
-                  },
-                ]}
-              />
-            )}
+            <StatsPanel
+              isError={isError}
+              isLoading={isLoading}
+              title={t('heading.shipments-to-be-picked')}
+              stats={[
+                {
+                  label: t('label.today', { ns: 'dashboard' }),
+                  value: formatNumber.round(data?.toBePicked),
+                },
+              ]}
+            />
           </Grid>
           <Grid
             item
