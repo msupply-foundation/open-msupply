@@ -2,12 +2,14 @@ import React, { FC } from 'react';
 import { Grid, Paper, Tooltip, Typography } from '@mui/material';
 import { InlineSpinner, StockIcon } from '../../../';
 import { useTranslation } from '@common/intl';
+import { isPermissionDeniedException } from '@common/types';
 
 export type Stat = {
   label: string;
   value?: string;
 };
 export interface StatsPanelProps {
+  error?: any;
   isError?: boolean;
   isLoading: boolean;
   stats: Stat[];
@@ -57,20 +59,24 @@ const Statistic: FC<Stat> = ({ label, value }) => {
 };
 
 const Content = ({
+  error,
   isError,
   isLoading,
   stats,
 }: {
+  error: any;
   isError: boolean;
   isLoading: boolean;
   stats: Stat[];
 }) => {
   const t = useTranslation();
+  const isPermissionDenied = isPermissionDeniedException(error);
+
   switch (true) {
     case isError:
       return (
         <Typography sx={{ color: 'gray.main', fontSize: 12, marginLeft: 3.2 }}>
-          {t('error.no-data')}
+          {t(isPermissionDenied ? 'error.no-permission' : 'error.no-data')}
         </Typography>
       );
     case isLoading:
@@ -87,6 +93,7 @@ const Content = ({
 };
 
 export const StatsPanel: FC<StatsPanelProps> = ({
+  error,
   isError = false,
   isLoading,
   stats,
@@ -125,7 +132,12 @@ export const StatsPanel: FC<StatsPanelProps> = ({
         </Grid>
       </Grid>
       <Grid container justifyContent="space-between" alignItems="flex-end">
-        <Content isError={isError} isLoading={isLoading} stats={stats} />
+        <Content
+          isError={isError}
+          isLoading={isLoading}
+          stats={stats}
+          error={error}
+        />
       </Grid>
     </Grid>
   </Paper>

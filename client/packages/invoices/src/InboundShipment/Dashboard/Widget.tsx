@@ -16,15 +16,17 @@ import { InternalSupplierSearchModal } from '@openmsupply-client/system';
 
 export const InboundShipmentWidget: React.FC<PropsWithChildrenOnly> = () => {
   const modalControl = useToggle(false);
-  const { error } = useNotification();
+  const { error: errorNotification } = useNotification();
   const t = useTranslation(['app', 'dashboard']);
   const formatNumber = useFormatNumber();
-  const { data, isLoading, isError } = useInbound.utils.counts();
+  const { data, isLoading, isError, error } = useInbound.utils.counts();
 
   const { mutateAsync: onCreate } = useInbound.document.insert();
   const onError = (e: unknown) => {
     const message = (e as Error).message ?? '';
-    const errorSnack = error(`Failed to create requisition! ${message}`);
+    const errorSnack = errorNotification(
+      `Failed to create requisition! ${message}`
+    );
     errorSnack();
   };
 
@@ -55,6 +57,7 @@ export const InboundShipmentWidget: React.FC<PropsWithChildrenOnly> = () => {
         >
           <Grid item>
             <StatsPanel
+              error={error}
               isError={isError}
               isLoading={isLoading}
               title={t('inbound-shipments')}
