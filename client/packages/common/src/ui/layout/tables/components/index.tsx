@@ -2,6 +2,7 @@ import React, { ReactElement } from 'react';
 import { CellProps, HeaderProps } from '../columns/types';
 import { RecordWithId } from '@common/types';
 import { useTranslation } from '@common/intl';
+import { Box } from '@mui/material';
 
 export * from './DataRow';
 export * from './Cells';
@@ -13,18 +14,28 @@ export const BasicCell = <T extends RecordWithId>({
   rowData,
   localisedText,
   localisedDate,
+  isError,
 }: CellProps<T>): ReactElement => (
-  <div
-    style={{
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
+  <Box
+    sx={{
+      border: theme =>
+        isError ? `2px solid ${theme.palette.error.main}` : 'none',
+      borderRadius: '8px',
+      padding: '4px 8px',
     }}
   >
-    {column.formatter(column.accessor({ rowData }), {
-      t: localisedText,
-      d: localisedDate,
-    })}
-  </div>
+    <div
+      style={{
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+      }}
+    >
+      {column.formatter(column.accessor({ rowData }), {
+        t: localisedText,
+        d: localisedDate,
+      })}
+    </div>
+  </Box>
 );
 
 export const BasicHeader = <T extends RecordWithId>({

@@ -22,7 +22,7 @@ interface AppBarButtonsProps {
 
 export const AppBarButtons: FC<AppBarButtonsProps> = ({ onCreate, sortBy }) => {
   const { success, error } = useNotification();
-  const t = useTranslation(['inventory', 'common']);
+  const t = useTranslation('inventory');
   const { isLoading, fetchAsync } = useLocation.document.listAll(sortBy);
 
   const csvExport = async () => {

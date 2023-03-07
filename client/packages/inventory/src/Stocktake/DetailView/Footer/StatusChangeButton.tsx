@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
+import { mapValues, keyBy, mapKeys } from 'lodash';
 import {
   ArrowRightIcon,
   useTranslation,
@@ -7,9 +8,12 @@ import {
   SplitButtonOption,
   useConfirmationModal,
   StocktakeNodeStatus,
+  noOtherVariants,
+  getErrorMessage,
 } from '@openmsupply-client/common';
 import { getNextStocktakeStatus, getStatusTranslation } from '../../../utils';
 import { useStocktake } from '../../api';
+import { useStocktakeLineErrorContext } from '../../context';
 
 const getStatusOptions = (
   getButtonLabel: (status: StocktakeNodeStatus) => string
@@ -56,9 +60,11 @@ const useStatusChangeButton = () => {
     'status',
     'lines',
   ]);
-  const { mutateAsync } = useStocktake.document.update();
+  const { mutateAsync: save } = useStocktake.document.update();
   const { success, error } = useNotification();
-  const t = useTranslation('replenishment');
+  const t = useTranslation('inventory');
+
+  const errorsContext = useStocktakeLineErrorContext();
 
   const options = useMemo(
     () => getStatusOptions(getButtonLabel(t)),
@@ -70,18 +76,70 @@ const useStatusChangeButton = () => {
       getNextStatusOption(status, options)
     );
 
-  const onConfirmStatusChange = async () => {
-    if (!selectedOption) return null;
-        const result = await mutateAsync({ id, status: selectedOption.value });
+  const mapStructuredErrors = (
+    result: Awaited<ReturnType<typeof save>>
+  ): /*error*/ string | /*OK*/ undefined => {
     if (result.__typename === 'StocktakeNode') {
-      return success(t('messages.saved'))();
+      return /*OK*/ undefined;
     }
 
-    switch (result.error.__typename) {
+    const { error } = result;
+
+    // General errors
+    if (error.__typename === 'CannotEditStocktake')
+      return t('error.not-editable');
+
+    if (error.__typename === 'StocktakeIsLocked') return t('error.is-locked');
+
+    // By line errors
+    switch (error.__typename) {
       case 'StockLinesReducedBelowZero':
-        return error(t('error.stocktake-has-stock-reduced-below-zero'))();
+        // StockLinesReducedBelowZero.errors contains an array of StockLineReducedBelowZero which have StockLines
+        // we want to match StocktakeLine ids for those errors
+
+        // ids = { stockLineId: stocktakeLineId }
+        const ids = mapValues(
+          mapKeys(lines.nodes, line => line.stockLine?.id),
+          'id'
+        );
+        // mappedErrors = { stockLineId: StockLineReducedBelowZero }
+        const mappedErrors = mapKeys(
+          error.errors,
+          line => ids[line.stockLine.id]
+        );
+
+        errorsContext.setErrors(mappedErrors);
+        return t('error.stocktake-has-stock-reduced-below-zero');
+
+      case 'SnapshotCountCurrentCountMismatch':
+        errorsContext.setErrors(
+          mapValues(keyBy(error.lines.nodes, 'id'), () => error)
+        );
+
+        return t('error.snapshot-total-mismatch');
+
       default:
-        error(t('error.cant-save'))();
+        noOtherVariants(error);
+    }
+  };
+
+  const onConfirmStatusChange = async () => {
+    if (!selectedOption) return null;
+
+    errorsContext.unsetAll();
+    let result;
+    try {
+      result = await save({ id, status: selectedOption.value });
+
+      let errorMessage = mapStructuredErrors(result);
+
+      if (errorMessage) {
+        error(errorMessage)();
+      } else {
+        success(t('messages.saved'))();
+      }
+    } catch (e) {
+      error(getErrorMessage(e))();
     }
   };
 
