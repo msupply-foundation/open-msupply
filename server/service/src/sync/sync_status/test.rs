@@ -110,7 +110,7 @@ async fn sync_status() {
             .sync_status_service
             .number_of_records_in_push_queue(&ctx)
             .unwrap(),
-        3
+        7
     );
 
     let tester = get_push_and_error_sync_status_tester(service_provider.clone());
@@ -389,25 +389,49 @@ fn get_push_and_error_sync_status_tester(service_provider: Arc<ServiceProvider>)
                         assert!(push_status.finished.is_none());
 
                         assert_eq!(push_status.done, Some(0));
-                        assert_eq!(push_status.total, Some(3));
+                        assert_eq!(push_status.total, Some(7));
 
                         false
                     }
                     1 => {
                         assert_eq!(push_status.done, Some(1));
-                        assert_eq!(push_status.total, Some(3));
+                        assert_eq!(push_status.total, Some(7));
 
                         false
                     }
                     2 => {
                         assert_eq!(push_status.done, Some(2));
-                        assert_eq!(push_status.total, Some(3));
+                        assert_eq!(push_status.total, Some(7));
 
                         false
                     }
                     3 => {
                         assert_eq!(push_status.done, Some(3));
-                        assert_eq!(push_status.total, Some(3));
+                        assert_eq!(push_status.total, Some(7));
+
+                        false
+                    }
+                    4 => {
+                        assert_eq!(push_status.done, Some(4));
+                        assert_eq!(push_status.total, Some(7));
+
+                        false
+                    }
+                    5 => {
+                        assert_eq!(push_status.done, Some(5));
+                        assert_eq!(push_status.total, Some(7));
+
+                        false
+                    }
+                    6 => {
+                        assert_eq!(push_status.done, Some(6));
+                        assert_eq!(push_status.total, Some(7));
+
+                        false
+                    }
+                    7 => {
+                        assert_eq!(push_status.done, Some(7));
+                        assert_eq!(push_status.total, Some(7));
 
                         true
                     }
