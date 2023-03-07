@@ -42,18 +42,7 @@
       "type": "string"
     },
     "HIVRiskGroup": {
-      "enum": [
-        "LRM",
-        "MSM",
-        "MSW",
-        "MSMSW",
-        "HRM",
-        "LRW",
-        "HRW",
-        "FSW",
-        "TG",
-        "TGSW"
-      ],
+      "enum": ["LRM", "MSM", "MSW", "MSMSW", "HRM", "LRW", "HRW", "FSW", "TG", "TGSW"],
       "type": "string"
     },
     "HIVStatus": {
@@ -68,6 +57,10 @@
       "properties": {
         "clinician": {
           "$ref": "#/definitions/Clinician"
+        },
+        "createdBy": {
+          "$ref": "#/definitions/User",
+          "description": "User who created the encounter (could be different to \"Clinician\")"
         },
         "createdDatetime": {
           "description": "Date time when the encounter was made, e.g. when an clinician schedule the encounter.",
@@ -287,6 +280,17 @@
         "unprotectedVaginalSex": {
           "description": "Have you received any of the following in the past 12 months ?: Unprotected vaginal sex ?",
           "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "User": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
         }
       },
       "type": "object"
