@@ -3,7 +3,7 @@ import TabContext from '@mui/lab/TabContext';
 import { Box } from '@mui/material';
 import { useDetailPanelStore, useDrawer } from '@common/hooks';
 import { LocaleKey, useTranslation } from '@common/intl';
-import debounce from 'lodash/debounce';
+import { debounce } from '@common/utils';
 import { AppBarTabsPortal } from '../../portals';
 import { DetailTab } from './DetailTab';
 import { ShortTabList, Tab } from './Tabs';

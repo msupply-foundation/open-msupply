@@ -1,7 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import keyBy from 'lodash/keyBy';
-import mapKeys from 'lodash/mapKeys';
-import mapValues from 'lodash/mapValues';
+import { keyBy, mapKeys, mapValues } from '@common/utils';
 import {
   ArrowRightIcon,
   useTranslation,
