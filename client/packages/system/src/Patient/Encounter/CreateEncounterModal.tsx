@@ -14,6 +14,7 @@ import {
   useDialog,
   useNavigate,
   useNotification,
+  useAuthContext,
 } from '@openmsupply-client/common';
 import { DateUtils, useTranslation } from '@common/intl';
 import {
@@ -34,6 +35,7 @@ import {
 interface Encounter {
   status?: EncounterNodeStatus;
   createdDatetime: string;
+  createdBy?: { id: string; username: string };
   startDatetime?: string;
   endDatetime?: string;
   clinician?: Clinician;
@@ -41,6 +43,7 @@ interface Encounter {
 
 export const CreateEncounterModal: FC = () => {
   const patientId = usePatient.utils.id();
+  const { user } = useAuthContext();
   const t = useTranslation('patients');
   const { current, setModal: selectModal } = usePatientModalStore();
   const [encounterRegistry, setEncounterRegistry] = useState<
@@ -49,7 +52,10 @@ export const CreateEncounterModal: FC = () => {
   const [createdDatetime] = useState(new Date().toISOString());
   const [isError, setIsError] = useState(false);
 
-  const [draft, setDraft] = useState<Encounter | undefined>(undefined);
+  const [draft, setDraft] = useState<Encounter | undefined>({
+    createdDatetime: new Date().toISOString(),
+    createdBy: { id: user?.id ?? '', username: user?.name ?? '' },
+  });
   const navigate = useNavigate();
   const { error } = useNotification();
 

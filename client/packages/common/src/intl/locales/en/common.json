@@ -159,7 +159,7 @@
   "label.line": "Line {{line, number}}",
   "label.line-total": "Line total",
   "label.program-status": "Program Status",
-  "label.encounter-status": "Encounter Status",
+  "label.additional-info": "Additional Info",
   "label.location": "Location",
   "label.reason": "Reason",
   "label.log": "Log",
