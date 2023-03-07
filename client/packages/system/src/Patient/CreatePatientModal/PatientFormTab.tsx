@@ -8,6 +8,7 @@ import {
 } from '@openmsupply-client/programs';
 import { PatientPanel } from './PatientPanel';
 import { createPatient, createPatientUI } from './DefaultCreatePatientJsonForm';
+import { isEqual } from 'lodash';
 
 type Patient = {
   code?: string;
@@ -32,6 +33,10 @@ export const PatientFormTab: FC<PatientPanel> = ({ patient, value }) => {
       newData !== null &&
       !Array.isArray(newData)
     ) {
+      // Prevents infinite re-render if data hasn't actually changed, but
+      // instance of "patient" has
+      if (isEqual(patient, newData)) return;
+
       const patientData = newData as Patient;
       updatePatient({
         code: patientData?.code,
