@@ -19,16 +19,18 @@ const LOW_MOS_THRESHOLD = 3;
 
 export const StockWidget: React.FC = () => {
   const modalControl = useToggle(false);
-  const { error } = useNotification();
+  const { error: errorNotification } = useNotification();
   const t = useTranslation('dashboard');
   const formatNumber = useFormatNumber();
   const {
     data: expiryData,
+    error: expiryError,
     isLoading: isExpiryLoading,
     isError: hasExpiryError,
   } = useDashboard.statistics.stock();
   const {
     data: itemCountsData,
+    error: itemCountsError,
     isLoading: isItemStatsLoading,
     isError: hasItemStatsError,
   } = useDashboard.statistics.item(LOW_MOS_THRESHOLD);
@@ -36,7 +38,9 @@ export const StockWidget: React.FC = () => {
   const { mutateAsync: onCreate } = useRequest.document.insert();
   const onError = (e: unknown) => {
     const message = (e as Error).message ?? '';
-    const errorSnack = error(`Failed to create requisition! ${message}`);
+    const errorSnack = errorNotification(
+      `Failed to create requisition! ${message}`
+    );
     errorSnack();
   };
 
@@ -67,6 +71,7 @@ export const StockWidget: React.FC = () => {
         >
           <Grid item>
             <StatsPanel
+              error={expiryError}
               isError={hasExpiryError}
               isLoading={isExpiryLoading}
               title={t('heading.expiring-stock')}
@@ -86,6 +91,7 @@ export const StockWidget: React.FC = () => {
               ]}
             />
             <StatsPanel
+              error={itemCountsError}
               isError={hasItemStatsError}
               isLoading={isItemStatsLoading}
               title={t('heading.stock-levels')}

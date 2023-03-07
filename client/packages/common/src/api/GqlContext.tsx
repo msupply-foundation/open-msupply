@@ -46,10 +46,10 @@ const handleResponseError = (errors: ResponseError[]) => {
     return;
   }
 
-  if (
-    hasError(errors, AuthError.PermissionDenied) &&
-    !hasPermissionException(errors)
-  ) {
+  if (hasError(errors, AuthError.PermissionDenied)) {
+    if (hasPermissionException(errors)) {
+      throw errors[0];
+    }
     LocalStorage.setItem('/auth/error', AuthError.PermissionDenied);
     return;
   }

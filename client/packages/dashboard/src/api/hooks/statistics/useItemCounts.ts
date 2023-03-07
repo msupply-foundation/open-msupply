@@ -6,6 +6,9 @@ export const useItemCounts = (lowStockThreshold: number) => {
   return useQuery(
     api.keys.items(),
     () => api.get.itemCounts(lowStockThreshold),
-    { retry: false, onError: () => {} }
+    {
+      retry: false,
+      onError: () => {},
+    }
   );
 };
