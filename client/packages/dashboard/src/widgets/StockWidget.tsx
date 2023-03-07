@@ -22,23 +22,16 @@ export const StockWidget: React.FC = () => {
   const { error } = useNotification();
   const t = useTranslation('dashboard');
   const formatNumber = useFormatNumber();
-  const { data: expiryData, isLoading: isExpiryLoading } =
-    useDashboard.statistics.stock();
-  const { data: itemCountsData, isLoading: isItemStatsLoading } =
-    useDashboard.statistics.item(LOW_MOS_THRESHOLD);
-  const [hasExpiryError, setHasExpiryError] = React.useState(false);
-  const [hasItemStatsError, setHasItemStatsError] = React.useState(false);
-
-  React.useEffect(() => {
-    if (!isExpiryLoading && expiryData === undefined) setHasExpiryError(true);
-    return () => setHasExpiryError(false);
-  }, [expiryData, isExpiryLoading]);
-
-  React.useEffect(() => {
-    if (!isItemStatsLoading && itemCountsData === undefined)
-      setHasItemStatsError(true);
-    return () => setHasItemStatsError(false);
-  }, [itemCountsData, isItemStatsLoading]);
+  const {
+    data: expiryData,
+    isLoading: isExpiryLoading,
+    isError: hasExpiryError,
+  } = useDashboard.statistics.stock();
+  const {
+    data: itemCountsData,
+    isLoading: isItemStatsLoading,
+    isError: hasItemStatsError,
+  } = useDashboard.statistics.item(LOW_MOS_THRESHOLD);
 
   const { mutateAsync: onCreate } = useRequest.document.insert();
   const onError = (e: unknown) => {
@@ -73,52 +66,50 @@ export const StockWidget: React.FC = () => {
           flexDirection="column"
         >
           <Grid item>
-            {!hasExpiryError && (
-              <StatsPanel
-                isLoading={isExpiryLoading}
-                title={t('heading.expiring-stock')}
-                stats={[
-                  {
-                    label: t('label.expired', {
-                      count: Math.round(expiryData?.expired || 0),
-                    }),
-                    value: formatNumber.round(expiryData?.expired),
-                  },
-                  {
-                    label: t('label.expiring-soon', {
-                      count: Math.round(expiryData?.expiringSoon || 0),
-                    }),
-                    value: formatNumber.round(expiryData?.expiringSoon),
-                  },
-                ]}
-              />
-            )}
-            {!hasItemStatsError && (
-              <StatsPanel
-                isLoading={isItemStatsLoading}
-                title={t('heading.stock-levels')}
-                stats={[
-                  {
-                    label: t('label.total-items', {
-                      count: Math.round(itemCountsData?.total || 0),
-                    }),
-                    value: formatNumber.round(itemCountsData?.total || 0),
-                  },
-                  {
-                    label: t('label.items-no-stock', {
-                      count: Math.round(itemCountsData?.noStock || 0),
-                    }),
-                    value: formatNumber.round(itemCountsData?.noStock || 0),
-                  },
-                  {
-                    label: t('label.low-stock-items', {
-                      count: Math.round(itemCountsData?.lowStock || 0),
-                    }),
-                    value: formatNumber.round(itemCountsData?.lowStock || 0),
-                  },
-                ]}
-              />
-            )}
+            <StatsPanel
+              isError={hasExpiryError}
+              isLoading={isExpiryLoading}
+              title={t('heading.expiring-stock')}
+              stats={[
+                {
+                  label: t('label.expired', {
+                    count: Math.round(expiryData?.expired || 0),
+                  }),
+                  value: formatNumber.round(expiryData?.expired),
+                },
+                {
+                  label: t('label.expiring-soon', {
+                    count: Math.round(expiryData?.expiringSoon || 0),
+                  }),
+                  value: formatNumber.round(expiryData?.expiringSoon),
+                },
+              ]}
+            />
+            <StatsPanel
+              isError={hasItemStatsError}
+              isLoading={isItemStatsLoading}
+              title={t('heading.stock-levels')}
+              stats={[
+                {
+                  label: t('label.total-items', {
+                    count: Math.round(itemCountsData?.total || 0),
+                  }),
+                  value: formatNumber.round(itemCountsData?.total || 0),
+                },
+                {
+                  label: t('label.items-no-stock', {
+                    count: Math.round(itemCountsData?.noStock || 0),
+                  }),
+                  value: formatNumber.round(itemCountsData?.noStock || 0),
+                },
+                {
+                  label: t('label.low-stock-items', {
+                    count: Math.round(itemCountsData?.lowStock || 0),
+                  }),
+                  value: formatNumber.round(itemCountsData?.lowStock || 0),
+                },
+              ]}
+            />
           </Grid>
           <Grid
             item
