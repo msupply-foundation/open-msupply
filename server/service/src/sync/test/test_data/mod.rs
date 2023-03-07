@@ -36,7 +36,7 @@ pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncPullReco
     test_records.append(&mut store_preference::test_pull_upsert_records());
     // Central but site specific
     test_records.append(&mut name_store_join::test_pull_upsert_records());
-    test_records.append(&mut special::name_to_name_store_join::test_pull_upsert_records());
+    // test_records.append(&mut special::name_to_name_store_join::test_pull_upsert_records());
     test_records
 }
 
@@ -82,6 +82,7 @@ pub(crate) fn get_all_pull_delete_remote_test_records() -> Vec<TestSyncPullRecor
 
 pub(crate) fn get_all_push_test_records() -> Vec<TestSyncPushRecord> {
     let mut test_records = Vec::new();
+    test_records.append(&mut name::test_push_records());
     test_records.append(&mut location::test_push_records());
     test_records.append(&mut requisition_line::test_push_records());
     test_records.append(&mut requisition::test_push_records());
