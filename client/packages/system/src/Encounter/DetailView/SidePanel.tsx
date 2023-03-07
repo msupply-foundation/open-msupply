@@ -15,8 +15,8 @@ import {
   useAuthContext,
 } from '@openmsupply-client/common';
 import { EncounterFragment, useEncounter } from '@openmsupply-client/programs';
-import { getClinicianName } from '../../Patient/Encounter';
 import { AppRoute } from '@openmsupply-client/config';
+import { getClinicianName } from '../../Clinician';
 
 const NUM_RECENT_ENCOUNTERS = 5;
 
