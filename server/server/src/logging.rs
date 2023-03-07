@@ -1,11 +1,12 @@
 use std::env;
 
 use fast_log::{
+    appender::{FastLogRecord, LogAppender},
     consts::LogSize,
     plugin::{file_split::RollingType, packer::LogPacker},
     Config as LogConfig,
 };
-use log::LevelFilter;
+use log::{LevelFilter, Record};
 use service::settings::{LogMode, LoggingSettings};
 
 pub fn logging_init(settings: Option<LoggingSettings>) {
@@ -18,8 +19,32 @@ pub fn logging_init(settings: Option<LoggingSettings>) {
         LogMode::Console => LogConfig::new().console(),
         LogMode::All => file_logger(&settings).console(),
     };
-    fast_log::init(config.level(LevelFilter::from(settings.level.clone())))
-        .expect("Unable to initialise logger");
+    fast_log::init(
+        config
+            .level(LevelFilter::from(settings.level.clone()))
+            .custom(NativeLogger {}),
+    )
+    .expect("Unable to initialise logger");
+    log::warn!("omSupply Logging initialised aaabbbccc");
+}
+
+struct NativeLogger {}
+impl LogAppender for NativeLogger {
+    fn do_logs(&self, records: &[FastLogRecord]) {
+        #[cfg(feature = "android")]
+        {
+            // logs to the android logcat in addition to the standard oms log file
+            records.iter().for_each(|record| {
+                android_logger::log(
+                    &Record::builder()
+                        .args(format_args!("{}", record.args))
+                        .target("omSupply")
+                        .level(record.level)
+                        .build(),
+                )
+            });
+        }
+    }
 }
 
 fn file_logger(settings: &LoggingSettings) -> LogConfig {

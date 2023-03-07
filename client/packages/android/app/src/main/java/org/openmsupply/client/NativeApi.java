@@ -361,7 +361,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         StringBuilder sb = new StringBuilder();
 
         try {
-            File file = new File(MainActivity.logPath, LOG_FILE_NAME);
+            File file = new File(getContext().getFilesDir(), LOG_FILE_NAME);
             BufferedReader br = new BufferedReader(new FileReader(file));
             String line;
 
