@@ -6,7 +6,9 @@ pub mod android {
     use std::sync::Mutex;
     use std::thread::{self, JoinHandle};
 
+    use fast_log::appender::{FastLogRecord, LogAppender};
     use jni::sys::jchar;
+    use log::Record;
     use repository::database_settings::DatabaseSettings;
     use server::{logging_init, start_server};
     use service::settings::{LogMode, LoggingSettings, ServerSettings, Settings};
@@ -22,6 +24,22 @@ pub mod android {
 
     static SERVER_BUCKET: Mutex<Option<ServerBucket>> = Mutex::new(None);
 
+    struct AndroidLogger {}
+    impl LogAppender for AndroidLogger {
+        fn do_logs(&self, records: &[FastLogRecord]) {
+            // logs to the android logcat in addition to the standard oms log file
+            records.iter().for_each(|record| {
+                android_logger::log(
+                    &Record::builder()
+                        .args(format_args!("{}", record.args))
+                        .target("omSupply")
+                        .level(record.level)
+                        .build(),
+                )
+            });
+        }
+    }
+
     #[no_mangle]
     pub unsafe extern "C" fn Java_org_openmsupply_client_RemoteServer_startServer(
         env: JNIEnv,
@@ -30,7 +48,6 @@ pub mod android {
         files_dir: JString,
         cache_dir: JString,
         android_id: JString,
-        log_dir: JString,
     ) {
         log_panics::init();
 
@@ -40,8 +57,6 @@ pub mod android {
         let android_id: String = env.get_string(android_id).unwrap().into();
         let db_path = files_dir.join("omsupply-database");
         let cache_dir: String = env.get_string(cache_dir).unwrap().into();
-        let log_dir: String = env.get_string(log_dir).unwrap().into();
-        let log_dir = PathBuf::from(&log_dir);
 
         let settings = Settings {
             server: ServerSettings {
@@ -65,11 +80,15 @@ pub mod android {
             sync: None,
             logging: Some(
                 LoggingSettings::new(LogMode::File, service::settings::Level::Info)
-                    .with_directory(log_dir.to_string_lossy().to_string()),
+                    .with_directory(files_dir.to_string_lossy().to_string()),
             ),
         };
 
-        logging_init(settings.logging.clone());
+        // logging_init_with_appender(settings.logging.clone(), &AndroidLogger {});
+        logging_init(
+            settings.logging.clone(),
+            Some(Box::new(|config| config.custom(AndroidLogger {}))),
+        );
 
         // run server in background thread
         let thread = thread::spawn(move || {
