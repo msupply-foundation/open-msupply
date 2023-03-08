@@ -1,13 +1,37 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import { DatePicker, DatePickerProps } from '@mui/x-date-pickers';
 import { BasicTextInput } from '../../TextInput/BasicTextInput';
 import { StandardTextFieldProps, TextFieldProps } from '@mui/material';
 import { useAppTheme } from '@common/styles';
+import { DateUtils } from '@common/intl';
+import { useDebounceCallback } from '@common/hooks';
 
 export const BaseDatePickerInput: FC<
   Omit<DatePickerProps<Date>, 'renderInput'>
 > = props => {
   const theme = useAppTheme();
+  const [internalValue, setInternalValue] = useState<
+    Date | string | number | null
+  >();
+
+  useEffect(() => {
+    setInternalValue(props.value);
+  }, [props.value]);
+
+  const isInvalid = (value: Date | string | number | null | undefined) => {
+    return !!value && !DateUtils.isValid(value);
+  };
+
+  const debouncedOnChange = useDebounceCallback(
+    date => {
+      // If the date is not valid just update the internal state. But if it is
+      // valid, we call the parent "onChange", which will cause the internal
+      // state to update via the `useEffect`.
+      if (DateUtils.isValid(date)) props.onChange(date);
+      else setInternalValue(date);
+    },
+    [props.onChange]
+  );
 
   return (
     <DatePicker
@@ -47,10 +71,16 @@ export const BaseDatePickerInput: FC<
           variant: 'standard',
         };
         return (
-          <BasicTextInput disabled={!!props.disabled} {...textInputProps} />
+          <BasicTextInput
+            disabled={!!props.disabled}
+            {...textInputProps}
+            error={isInvalid(internalValue)}
+          />
         );
       }}
       {...props}
+      onChange={debouncedOnChange}
+      value={internalValue}
     />
   );
 };
