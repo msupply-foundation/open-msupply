@@ -5,7 +5,8 @@ use util::{inline_edit, inline_init};
 use crate::{
     mock::{
         mock_item_a, mock_location_1, mock_location_2, mock_location_in_another_store,
-        mock_location_on_hold, MockData, MockDataInserts,
+        mock_location_on_hold, mock_name_store_a, mock_name_store_b, mock_store_a, mock_store_b,
+        MockData, MockDataInserts,
     },
     test_db::{self, setup_all, setup_all_with_data},
     ChangelogAction, ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogTableName,
@@ -16,8 +17,15 @@ use crate::{
 
 #[actix_rt::test]
 async fn test_changelog() {
-    let (_, connection, _, _) =
-        test_db::setup_all("test_changelog", MockDataInserts::none().names().stores()).await;
+    let (_, connection, _, _) = test_db::setup_all_with_data(
+        "test_changelog",
+        MockDataInserts::none(),
+        inline_init(|r: &mut MockData| {
+            r.names = vec![mock_name_store_a()];
+            r.stores = vec![mock_store_a()];
+        }),
+    )
+    .await;
 
     // Use location entries to populate the changelog (via the trigger)
     let location_repo = LocationRowRepository::new(&connection);
@@ -26,12 +34,12 @@ async fn test_changelog() {
     // single entry:
     location_repo.upsert_one(&mock_location_1()).unwrap();
     let mut result = repo.changelogs(0, 10, None).unwrap();
-    assert_eq!(1, result.len());
+    assert_eq!(2, result.len());
     let log_entry = result.pop().unwrap();
     assert_eq!(
         log_entry,
         inline_init(|r: &mut ChangelogRow| {
-            r.cursor = 1;
+            r.cursor = 2;
             r.table_name = ChangelogTableName::Location;
             r.record_id = mock_location_1().id.clone();
             r.row_action = ChangelogAction::Upsert;
@@ -59,7 +67,7 @@ async fn test_changelog() {
     assert_eq!(
         log_entry,
         inline_init(|r: &mut ChangelogRow| {
-            r.cursor = 2;
+            r.cursor = 3;
             r.table_name = ChangelogTableName::Location;
             r.record_id = mock_location_1().id.clone();
             r.row_action = ChangelogAction::Upsert;
@@ -69,12 +77,12 @@ async fn test_changelog() {
     // query the full list from cursor=0
     // because we use the changelog_deduped view, we should only get the latest changelog row for the record_id
     let mut result = repo.changelogs(0, 10, None).unwrap();
-    assert_eq!(1, result.len());
+    assert_eq!(2, result.len());
     let log_entry = result.pop().unwrap();
     assert_eq!(
         log_entry,
         inline_init(|r: &mut ChangelogRow| {
-            r.cursor = 2;
+            r.cursor = 3;
             r.table_name = ChangelogTableName::Location;
             r.record_id = mock_location_1().id.clone();
             r.row_action = ChangelogAction::Upsert;
@@ -84,18 +92,24 @@ async fn test_changelog() {
     // add another entry
     location_repo.upsert_one(&mock_location_on_hold()).unwrap();
     let result = repo.changelogs(0, 10, None).unwrap();
-    assert_eq!(2, result.len());
+    assert_eq!(3, result.len());
     assert_eq!(
         result,
         vec![
             inline_init(|r: &mut ChangelogRow| {
-                r.cursor = 2;
+                r.cursor = 1;
+                r.table_name = ChangelogTableName::Name;
+                r.record_id = mock_name_store_a().id.clone();
+                r.row_action = ChangelogAction::Upsert;
+            }),
+            inline_init(|r: &mut ChangelogRow| {
+                r.cursor = 3;
                 r.table_name = ChangelogTableName::Location;
                 r.record_id = mock_location_1().id.clone();
                 r.row_action = ChangelogAction::Upsert;
             }),
             inline_init(|r: &mut ChangelogRow| {
-                r.cursor = 3;
+                r.cursor = 4;
                 r.table_name = ChangelogTableName::Location;
                 r.record_id = mock_location_on_hold().id.clone();
                 r.row_action = ChangelogAction::Upsert;
@@ -106,18 +120,24 @@ async fn test_changelog() {
     // delete an entry
     location_repo.delete(&mock_location_on_hold().id).unwrap();
     let result = repo.changelogs(0, 10, None).unwrap();
-    assert_eq!(2, result.len());
+    assert_eq!(3, result.len());
     assert_eq!(
         result,
         vec![
             inline_init(|r: &mut ChangelogRow| {
-                r.cursor = 2;
+                r.cursor = 1;
+                r.table_name = ChangelogTableName::Name;
+                r.record_id = mock_name_store_a().id.clone();
+                r.row_action = ChangelogAction::Upsert;
+            }),
+            inline_init(|r: &mut ChangelogRow| {
+                r.cursor = 3;
                 r.table_name = ChangelogTableName::Location;
                 r.record_id = mock_location_1().id.clone();
                 r.row_action = ChangelogAction::Upsert;
             }),
             inline_init(|r: &mut ChangelogRow| {
-                r.cursor = 4;
+                r.cursor = 5;
                 r.table_name = ChangelogTableName::Location;
                 r.record_id = mock_location_on_hold().id.clone();
                 r.row_action = ChangelogAction::Delete;
@@ -128,8 +148,15 @@ async fn test_changelog() {
 
 #[actix_rt::test]
 async fn test_changelog_iteration() {
-    let (_, connection, _, _) =
-        test_db::setup_all("test_changelog_2", MockDataInserts::none().names().stores()).await;
+    let (_, connection, _, _) = test_db::setup_all_with_data(
+        "test_changelog_2",
+        MockDataInserts::none(),
+        inline_init(|r: &mut MockData| {
+            r.names = vec![mock_name_store_a(), mock_name_store_b()];
+            r.stores = vec![mock_store_a(), mock_store_b()];
+        }),
+    )
+    .await;
 
     // use names entries to populate the changelog (via the trigger)
     let location_repo = LocationRowRepository::new(&connection);
@@ -154,7 +181,7 @@ async fn test_changelog_iteration() {
         .unwrap();
 
     // test iterating through the change log
-    let changelogs = repo.changelogs(0, 3, None).unwrap();
+    let changelogs = repo.changelogs(3, 3, None).unwrap();
     let latest_id: u64 = changelogs.last().map(|r| r.cursor).unwrap() as u64;
     assert_eq!(
         changelogs
