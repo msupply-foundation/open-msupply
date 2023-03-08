@@ -9,7 +9,10 @@ pub fn activity_log_a() -> ActivityLogRow {
         user_id: Some(String::from("user_account_a")),
         store_id: None,
         record_id: None,
-        datetime: NaiveDate::from_ymd(2020, 1, 1).and_hms(0, 0, 0),
+        datetime: NaiveDate::from_ymd_opt(2020, 1, 1)
+            .unwrap()
+            .and_hms_opt(0, 0, 0)
+            .unwrap(),
         event: None,
     }
 }
@@ -21,7 +24,10 @@ pub fn activity_log_b() -> ActivityLogRow {
         user_id: Some(String::from("user_account_a")),
         store_id: Some(String::from("store_b")),
         record_id: Some(String::from("outbound_shipment_a")),
-        datetime: NaiveDate::from_ymd(2020, 1, 1).and_hms(0, 0, 0),
+        datetime: NaiveDate::from_ymd_opt(2020, 1, 1)
+            .unwrap()
+            .and_hms_opt(0, 0, 0)
+            .unwrap(),
         event: None,
     }
 }
@@ -33,7 +39,10 @@ pub fn activity_log_c() -> ActivityLogRow {
         user_id: Some(String::from("user_account_a")),
         store_id: Some(String::from("store_b")),
         record_id: Some(String::from("inbound_shipment_a")),
-        datetime: NaiveDate::from_ymd(2020, 1, 1).and_hms(0, 0, 0),
+        datetime: NaiveDate::from_ymd_opt(2020, 1, 1)
+            .unwrap()
+            .and_hms_opt(0, 0, 0)
+            .unwrap(),
         event: None,
     }
 }
