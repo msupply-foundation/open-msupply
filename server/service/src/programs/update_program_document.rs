@@ -155,6 +155,9 @@ fn is_truthy(value: &Value) -> bool {
     if value.is_null() {
         return false;
     }
+    if let Some(b) = value.as_bool() {
+        return b;
+    }
     if let Some(string) = value.as_str() {
         return string != "";
     }
