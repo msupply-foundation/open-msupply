@@ -53,13 +53,8 @@ impl LegacyNameType {
 // Only allow patient for now
 fn patient_type(name_type: &NameType) -> Option<LegacyNameType> {
     match name_type {
-        NameType::Facility => None,
         NameType::Patient => Some(LegacyNameType::Patient),
-        NameType::Build => None,
-        NameType::Invad => None,
-        NameType::Repack => None,
-        NameType::Store => None,
-        NameType::Others => None,
+        _ => None,
     }
 }
 
@@ -287,7 +282,7 @@ impl SyncTranslation for NameTranslation {
             supplying_store_id,
             first_name,
             last_name,
-            female: is_female(gender.clone()),
+            female: gender.map(|g| g == Gender::Female).unwrap_or(false),
             date_of_birth,
             phone,
             charge_code,
@@ -323,19 +318,6 @@ impl SyncTranslation for NameTranslation {
             .then(|| vec![RemoteSyncRecordV5::new_delete(changelog, LEGACY_TABLE_NAME)]);
 
         Ok(result)
-    }
-}
-
-fn is_female(gender: Option<Gender>) -> bool {
-    match gender {
-        Some(gender) => {
-            if gender == Gender::Female {
-                return true;
-            } else {
-                return false;
-            }
-        }
-        None => return false,
     }
 }
 
