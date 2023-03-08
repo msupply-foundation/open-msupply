@@ -123,9 +123,7 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
                   <DatePickerInput
                     value={DateUtils.getDateOrNull(startDatetime ?? null)}
                     onChange={date => {
-                      const startDatetime = date
-                        ? DateUtils.formatRFC3339(date)
-                        : undefined;
+                      const startDatetime = DateUtils.formatRFC3339(date);
                       setStartDatetime(startDatetime);
                       onChange({
                         startDatetime,
