@@ -82,6 +82,7 @@ pub(crate) fn get_all_pull_delete_remote_test_records() -> Vec<TestSyncPullRecor
 
 pub(crate) fn get_all_push_test_records() -> Vec<TestSyncPushRecord> {
     let mut test_records = Vec::new();
+    test_records.append(&mut name::test_push_records());
     test_records.append(&mut location::test_push_records());
     test_records.append(&mut requisition_line::test_push_records());
     test_records.append(&mut requisition::test_push_records());

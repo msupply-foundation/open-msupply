@@ -50,15 +50,11 @@ impl LegacyNameType {
     }
 }
 
-fn from_name_type(name_type: &NameType) -> LegacyNameType {
+// Only allow patient for now
+fn patient_type(name_type: &NameType) -> Option<LegacyNameType> {
     match name_type {
-        NameType::Facility => LegacyNameType::Facility,
-        NameType::Patient => LegacyNameType::Patient,
-        NameType::Build => LegacyNameType::Build,
-        NameType::Invad => LegacyNameType::Invad,
-        NameType::Repack => LegacyNameType::Repack,
-        NameType::Store => LegacyNameType::Store,
-        NameType::Others => LegacyNameType::Others,
+        NameType::Patient => Some(LegacyNameType::Patient),
+        _ => None,
     }
 }
 
@@ -261,17 +257,23 @@ impl SyncTranslation for NameTranslation {
                 changelog.record_id
             )))?;
 
+        // Only push name records that belong to patients, gracefully ignore the rest
+        let patient_type = match patient_type(&r#type) {
+            Some(_type) => _type,
+            _ => return Ok(None),
+        };
+
         let legacy_row = LegacyNameRow {
             id,
             name,
             code,
-            r#type: from_name_type(&r#type),
+            r#type: patient_type,
             is_customer,
             is_supplier,
             supplying_store_id,
             first_name,
             last_name,
-            female: is_female(gender.clone()),
+            female: gender.map(|g| g == Gender::Female).unwrap_or(false),
             date_of_birth,
             phone,
             charge_code,
@@ -307,19 +309,6 @@ impl SyncTranslation for NameTranslation {
             .then(|| vec![RemoteSyncRecordV5::new_delete(changelog, LEGACY_TABLE_NAME)]);
 
         Ok(result)
-    }
-}
-
-fn is_female(gender: Option<Gender>) -> bool {
-    match gender {
-        Some(gender) => {
-            if gender == Gender::Female {
-                return true;
-            } else {
-                return false;
-            }
-        }
-        None => return false,
     }
 }
 

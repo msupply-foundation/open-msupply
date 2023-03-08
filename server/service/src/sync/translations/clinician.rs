@@ -133,8 +133,9 @@ impl SyncTranslation for ClinicianTranslation {
                 _ => false,
             })
             .unwrap_or(false);
+
         let legacy_row = LegacyClinicianRow {
-            id: id.clone(),
+            id,
             code,
             last_name,
             initials,
