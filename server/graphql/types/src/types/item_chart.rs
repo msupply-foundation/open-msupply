@@ -199,25 +199,25 @@ mod test {
                         ConsumptionHistory {
                             consumption: 10,
                             average_monthly_consumption: 11.0,
-                            date: NaiveDate::from_ymd(2020, 12, 01),
+                            date: NaiveDate::from_ymd_opt(2020, 12, 01).unwrap(),
                         },
                         ConsumptionHistory {
                             consumption: 10,
                             average_monthly_consumption: 11.0,
-                            date: NaiveDate::from_ymd(2021, 01, 01),
+                            date: NaiveDate::from_ymd_opt(2021, 01, 01).unwrap(),
                         },
                     ]),
                     stock_evolution: Some(vec![
                         StockEvolution {
                             quantity: 30.5,
-                            date: NaiveDate::from_ymd(2021, 01, 01),
+                            date: NaiveDate::from_ymd_opt(2021, 01, 01).unwrap(),
                         },
                         StockEvolution {
                             quantity: 32.5,
-                            date: NaiveDate::from_ymd(2021, 01, 02),
+                            date: NaiveDate::from_ymd_opt(2021, 01, 02).unwrap(),
                         },
                     ]),
-                    reference_date: Some(NaiveDate::from_ymd(2021, 01, 01)),
+                    reference_date: Some(NaiveDate::from_ymd_opt(2021, 01, 01).unwrap()),
                     suggested_quantity_calculation: SuggestedQuantityCalculation {
                         average_monthly_consumption: 10.5,
                         stock_on_hand: 10,
