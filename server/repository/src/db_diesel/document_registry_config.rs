@@ -49,6 +49,7 @@ pub struct EventConfig<T> {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct EventScheduleInConfig {
+    pub months: Option<i32>,
     pub days: Option<i64>,
     pub minutes: Option<i64>,
 }

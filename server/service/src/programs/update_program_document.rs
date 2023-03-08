@@ -1,4 +1,4 @@
-use chrono::{DateTime, Duration, NaiveDateTime, Utc};
+use chrono::{DateTime, Duration, Months, NaiveDateTime, Utc};
 use repository::{EventCondition, EventConfigEnum, EventTarget, RepositoryError};
 use serde_json::{Map, Value};
 
@@ -50,8 +50,16 @@ fn extract_events(
                 };
                 let mut active_start_datetime = start_datetime;
 
+                if let Some(months) = schedule_config.config.schedule_in.months {
+                    active_start_datetime = active_start_datetime
+                        .checked_add_months(Months::new(months as u32))
+                        .ok_or(UpdateProgramDocumentError::InternalError(format!(
+                            "Invalid schedule months value: {}",
+                            months
+                        )))?;
+                }
                 if let Some(days) = schedule_config.config.schedule_in.days {
-                    active_start_datetime = start_datetime
+                    active_start_datetime = active_start_datetime
                         .checked_add_signed(Duration::days(days))
                         .ok_or(UpdateProgramDocumentError::InternalError(format!(
                             "Invalid schedule days value: {}",
@@ -59,7 +67,7 @@ fn extract_events(
                         )))?;
                 }
                 if let Some(minutes) = schedule_config.config.schedule_in.minutes {
-                    active_start_datetime = start_datetime
+                    active_start_datetime = active_start_datetime
                         .checked_add_signed(Duration::minutes(minutes))
                         .ok_or(UpdateProgramDocumentError::InternalError(format!(
                             "Invalid schedule minutes value: {}",
