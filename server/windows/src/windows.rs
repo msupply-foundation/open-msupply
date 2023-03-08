@@ -60,8 +60,6 @@ mod omsupply_service {
             configuration::get_configuration().expect("Failed to parse configuration settings");
         logging_init(settings.logging.clone());
 
-        info!("Starting service");
-
         panic::set_hook(Box::new(|panic_info| {
             error!("panic occurred {:?}", panic_info);
         }));

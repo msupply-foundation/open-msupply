@@ -36,7 +36,17 @@ rustflags = "-L /opt/homebrew/opt/libpq/lib"
 ### Ubuntu
 
 - Follow the [Rust installation guide](https://www.rust-lang.org/tools/install).
-- Install pkg-config `sudo apt install pkg-config` (needed to install/compile sqlx-cli)
+
+```bash
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+
+- After a fresh `rustup` installation start a new bash to make env variable available
+- Install packages (e.g. needed to install/compile openssl-sys):
+
+```bash
+sudo apt install make gcc pkg-config libavahi-compat-libdnssd-dev libpq-dev
+```
 
 # Run without mSupply central
 
@@ -96,8 +106,11 @@ Set-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Co
 
 ### Ubuntu
 
-- Install libavahi-compat-libdnssd-dev (dnssd dependency): `sudo apt install libavahi-compat-libdnssd-dev`
-- Install Postgres dev libs: `sudo apt install postgresql-server-dev-13`
+- Install Postgres:
+
+```bash
+sudo apt install postgresql
+```
 
 ### Optional
 
