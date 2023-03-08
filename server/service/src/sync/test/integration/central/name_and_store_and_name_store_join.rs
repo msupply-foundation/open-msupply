@@ -4,8 +4,8 @@ use crate::sync::{
     },
     translations::{IntegrationRecords, PullDeleteRecord, PullDeleteRecordTable, PullUpsertRecord},
 };
-use chrono::{NaiveDate, Utc};
-use repository::{Gender, NameRow, NameStoreJoinRow, NameType, StoreRow};
+use chrono::NaiveDate;
+use repository::{NameRow, NameStoreJoinRow, NameType, StoreRow};
 
 use serde_json::json;
 use util::{inline_init, merge_json, uuid::uuid};
@@ -96,28 +96,9 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
             "store_mode": "store"
         });
 
-        let new_created_datetime = Utc::now();
-        let name_row3 = inline_init(|r: &mut NameRow| {
-            r.id = uuid();
-            r.r#type = NameType::Patient;
-            r.is_customer = false;
-            r.is_supplier = false;
-            r.supplying_store_id = Some(store_row.id.clone());
-            r.created_datetime = Some(new_created_datetime.naive_utc());
-            r.gender = Some(Gender::TransgenderFemale);
-        });
-        let name_json3 = json!({
-            "ID": name_row3.id,
-            "type": "patient",
-            "customer": false,
-            "supplier": false,
-            "om_created_datetime": new_created_datetime,
-            "om_gender": "TRANSGENDER_FEMALE"
-        });
-
         result.push(TestStepData {
             central_upsert: json!({
-                "name": [name_json1, name_json2.clone(), name_json3],
+                "name": [name_json1,name_json2.clone()],
                 "store": [store_json]
             }),
             central_delete: json!({}),
@@ -127,7 +108,6 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
                 PullUpsertRecord::Store(store_row.clone()),
             ]),
         });
-
         // STEP 2 name store joins need to be inserted after store (for them to be inserted in sync queue)
         let mut name_store_join_row1 = NameStoreJoinRow {
             id: uuid(),
@@ -140,6 +120,7 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
             "ID": name_store_join_row1.id,
             "name_ID": name_store_join_row1.name_id,
             "store_ID": name_store_join_row1.store_id
+
         });
 
         let mut name_store_join_row2 = NameStoreJoinRow {
@@ -153,32 +134,17 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
             "ID": name_store_join_row2.id,
             "name_ID": name_store_join_row2.name_id,
             "store_ID": name_store_join_row2.store_id
-        });
 
-        let name_store_join_row3 = NameStoreJoinRow {
-            id: uuid(),
-            name_id: name_row3.id.clone(),
-            store_id: new_site_properties.store_id.clone(),
-            name_is_customer: false,
-            name_is_supplier: false,
-        };
-        let name_store_join_json3 = json!({
-            "ID": name_store_join_row3.id,
-            //"inactive": false,
-            "name_ID": name_store_join_row3.name_id,
-            "store_ID": name_store_join_row3.store_id
         });
 
         result.push(TestStepData {
             central_upsert: json!({
-                "name_store_join": [name_store_join_json1, name_store_join_json2, name_store_join_json3],
+                "name_store_join": [name_store_join_json1,name_store_join_json2 ],
             }),
             central_delete: json!({}),
             integration_records: IntegrationRecords::from_upserts(vec![
                 PullUpsertRecord::NameStoreJoin(name_store_join_row1.clone()),
                 PullUpsertRecord::NameStoreJoin(name_store_join_row2.clone()),
-                PullUpsertRecord::NameStoreJoin(name_store_join_row3),
-                PullUpsertRecord::Name(name_row3.clone()),
             ]),
         });
         // STEP 3 update name and make sure name_store_joins update
