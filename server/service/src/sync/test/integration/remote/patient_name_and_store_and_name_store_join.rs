@@ -4,7 +4,7 @@ use crate::sync::{
     },
     translations::{IntegrationRecords, PullUpsertRecord},
 };
-use repository::{NameRow, NameStoreJoinRow, NameType, StoreRow};
+use repository::{Gender, NameRow, NameStoreJoinRow, NameType, StoreRow};
 
 use serde_json::json;
 use util::{
@@ -12,17 +12,25 @@ use util::{
     uuid::{small_uuid, uuid},
 };
 
-pub(crate) struct NameAndStoreAndNameStoreJoinTester;
+pub(crate) struct PatientNameAndStoreAndNameStoreJoinTester;
 
-impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
+impl SyncRecordTester for PatientNameAndStoreAndNameStoreJoinTester {
     fn test_step_data(&self, new_site_properties: &NewSiteProperties) -> Vec<TestStepData> {
         let mut result = Vec::new();
         // STEP 1 - insert
         let facility_name_row = inline_init(|r: &mut NameRow| {
             r.id = uuid();
             r.r#type = NameType::Facility;
+            r.name = "facility".to_string();
             r.is_customer = true;
             r.is_supplier = true;
+        });
+        let facility_name_json = json!({
+            "ID": facility_name_row.id,
+            "type": "facility",
+            "name": "facility",
+            "customer": true,
+            "supplier": true,
         });
 
         let mut patient_name_row = inline_init(|r: &mut NameRow| {
@@ -30,12 +38,14 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
             r.r#type = NameType::Patient;
             r.is_customer = true;
             r.is_supplier = false;
+            r.gender = Some(Gender::Male);
         });
-        let mut patient_name_json = json!({
+        let patient_name_json = json!({
             "ID": patient_name_row.id,
             "type": "facility",
             "customer": true,
             "supplier": false,
+            "female": false,
         });
 
         let store_row = StoreRow {
@@ -55,13 +65,14 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
 
         result.push(TestStepData {
             central_upsert: json!({
-                "name": [patient_name_json],
+                "name": [patient_name_json, facility_name_json],
                 "store": [store_json]
             }),
             central_delete: json!({}),
             integration_records: IntegrationRecords::from_upserts(vec![
                 PullUpsertRecord::Name(patient_name_row.clone()),
                 PullUpsertRecord::Store(store_row.clone()),
+                PullUpsertRecord::Name(facility_name_row.clone()),
             ]),
         });
         // STEP 2 name store joins need to be inserted after store
@@ -76,9 +87,7 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
         let name_store_join_json = json!({
             "ID": name_store_join.id,
             "name_ID": name_store_join.name_id,
-            "store_ID": name_store_join.store_id,
-            "name_is_customer": name_store_join.name_is_customer,
-            "name_is_supplier": name_store_join.name_is_supplier,
+            "store_ID": name_store_join.store_id
         });
 
         let patient_name_store_join_row1 = NameStoreJoinRow {
@@ -92,7 +101,6 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
             "ID": patient_name_store_join_row1.id,
             "name_ID": patient_name_store_join_row1.name_id,
             "store_ID": patient_name_store_join_row1.id
-
         });
 
         let patient_name_store_join_row2 = NameStoreJoinRow {
@@ -106,7 +114,6 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
             "ID": patient_name_store_join_row2.id,
             "name_ID": patient_name_store_join_row2.name_id,
             "store_ID": patient_name_store_join_row2.store_id
-
         });
 
         result.push(TestStepData {
