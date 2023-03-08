@@ -218,7 +218,7 @@ impl<'a> DocumentRepository<'a> {
     /// Inserts a document
     pub fn insert(&self, doc: &Document) -> Result<(), RepositoryError> {
         diesel::insert_into(document::dsl::document)
-            .values(row_from_document(doc)?)
+            .values(doc.to_row()?)
             .execute(&self.connection.connection)?;
         Ok(())
     }
@@ -231,7 +231,7 @@ impl<'a> DocumentRepository<'a> {
             .optional()?;
 
         Ok(match row {
-            Some(row) => Some(document_from_row(row)?),
+            Some(row) => Some(row.to_document()?),
             None => None,
         })
     }
@@ -280,7 +280,7 @@ impl<'a> DocumentRepository<'a> {
 
         let mut result = Vec::<Document>::new();
         for row in rows {
-            result.push(document_from_row(row)?);
+            result.push(row.to_document()?);
         }
         Ok(result)
     }
@@ -314,64 +314,83 @@ impl<'a> DocumentRepository<'a> {
 
         let mut result = Vec::<Document>::new();
         for row in rows {
-            result.push(document_from_row(row)?);
+            result.push(row.to_document()?);
         }
         Ok(result)
     }
 }
 
-fn document_from_row(row: DocumentRow) -> Result<Document, RepositoryError> {
-    let parents: Vec<String> =
-        serde_json::from_str(&row.parent_ids).map_err(|err| RepositoryError::DBError {
-            msg: "Invalid parents data".to_string(),
-            extra: format!("{}", err),
-        })?;
-    let data: serde_json::Value =
-        serde_json::from_str(&row.data).map_err(|err| RepositoryError::DBError {
-            msg: "Invalid data".to_string(),
-            extra: format!("{}", err),
-        })?;
+impl DocumentRow {
+    pub fn to_document(self) -> Result<Document, RepositoryError> {
+        let DocumentRow {
+            id,
+            name,
+            parent_ids,
+            user_id,
+            datetime,
+            r#type,
+            data,
+            form_schema_id,
+            status,
+            comment,
+            owner_name_id,
+            context,
+        } = self;
 
-    let document = Document {
-        id: row.id,
-        name: row.name,
-        parent_ids: parents,
-        user_id: row.user_id,
-        datetime: DateTime::<Utc>::from_utc(row.datetime, Utc),
-        r#type: row.r#type,
-        data,
-        form_schema_id: row.form_schema_id,
-        status: row.status,
-        comment: row.comment,
-        owner_name_id: row.owner_name_id,
-        context: row.context,
-    };
+        let parents: Vec<String> =
+            serde_json::from_str(&parent_ids).map_err(|err| RepositoryError::DBError {
+                msg: "Invalid parents data".to_string(),
+                extra: format!("{}", err),
+            })?;
+        let data: serde_json::Value =
+            serde_json::from_str(&data).map_err(|err| RepositoryError::DBError {
+                msg: "Invalid data".to_string(),
+                extra: format!("{}", err),
+            })?;
 
-    Ok(document)
+        let document = Document {
+            id,
+            name,
+            parent_ids: parents,
+            user_id,
+            datetime: DateTime::<Utc>::from_utc(datetime, Utc),
+            r#type,
+            data,
+            form_schema_id,
+            status,
+            comment,
+            owner_name_id,
+            context,
+        };
+
+        Ok(document)
+    }
 }
 
-pub fn row_from_document(doc: &Document) -> Result<DocumentRow, RepositoryError> {
-    let parents =
-        serde_json::to_string(&doc.parent_ids).map_err(|err| RepositoryError::DBError {
-            msg: "Can't serialize parents".to_string(),
+impl Document {
+    pub fn to_row(&self) -> Result<DocumentRow, RepositoryError> {
+        let parents =
+            serde_json::to_string(&self.parent_ids).map_err(|err| RepositoryError::DBError {
+                msg: "Can't serialize parents".to_string(),
+                extra: format!("{}", err),
+            })?;
+        let data = serde_json::to_string(&self.data).map_err(|err| RepositoryError::DBError {
+            msg: "Can't serialize data".to_string(),
             extra: format!("{}", err),
         })?;
-    let data = serde_json::to_string(&doc.data).map_err(|err| RepositoryError::DBError {
-        msg: "Can't serialize data".to_string(),
-        extra: format!("{}", err),
-    })?;
-    Ok(DocumentRow {
-        id: doc.id.to_owned(),
-        name: doc.name.to_owned(),
-        parent_ids: parents,
-        user_id: doc.user_id.to_owned(),
-        datetime: doc.datetime.naive_utc(),
-        r#type: doc.r#type.to_owned(),
-        data,
-        form_schema_id: doc.form_schema_id.clone(),
-        status: doc.status.to_owned(),
-        comment: doc.comment.to_owned(),
-        owner_name_id: doc.owner_name_id.to_owned(),
-        context: doc.context.to_owned(),
-    })
+        Ok(DocumentRow {
+            id: self.id.to_owned(),
+            name: self.name.to_owned(),
+            parent_ids: parents,
+            user_id: self.user_id.to_owned(),
+            datetime: self.datetime.naive_utc(),
+            r#type: self.r#type.to_owned(),
+            data,
+            form_schema_id: self.form_schema_id.clone(),
+            status: self.status.to_owned(),
+            comment: self.comment.to_owned(),
+            owner_name_id: self.owner_name_id.to_owned(),
+            context: self.context.to_owned(),
+        })
+    }
 }
