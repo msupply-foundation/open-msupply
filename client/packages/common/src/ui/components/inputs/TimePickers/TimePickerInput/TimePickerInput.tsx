@@ -13,20 +13,19 @@ export const TimePickerInput: FC<
   >();
 
   useEffect(() => {
-    setInternalValue(props.value);
+    if (props.value) setInternalValue(props.value);
   }, [props.value]);
 
   const isInvalid = (value: Date | string | number | null | undefined) => {
-    return !!value && !DateUtils.isValid(value);
+    const dateValue =
+      typeof value === 'string' ? DateUtils.getDateOrNull(value) : value;
+    return !!value && !DateUtils.isValid(dateValue);
   };
 
   const debouncedOnChange = useDebounceCallback(
-    date => {
-      // If the date is not valid just update the internal state. But if it is
-      // valid, we call the parent "onChange", which will cause the internal
-      // state to update via the `useEffect`.
-      if (DateUtils.isValid(date)) props.onChange(date);
-      else setInternalValue(date);
+    value => {
+      if (DateUtils.isValid(value)) props.onChange(value);
+      else setInternalValue(value);
     },
     [props.onChange]
   );
@@ -50,7 +49,7 @@ export const TimePickerInput: FC<
       }}
       {...props}
       onChange={debouncedOnChange}
-      value={internalValue}
+      value={internalValue || null}
     />
   );
 };
