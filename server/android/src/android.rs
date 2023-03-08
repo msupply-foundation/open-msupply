@@ -33,6 +33,7 @@ pub mod android {
                     &Record::builder()
                         .args(format_args!("{}", record.args))
                         .target("omSupply")
+                        .module_path(Some("omSupply"))
                         .level(record.level)
                         .build(),
                 )
@@ -49,8 +50,6 @@ pub mod android {
         cache_dir: JString,
         android_id: JString,
     ) {
-        log_panics::init();
-
         let (off_switch, off_switch_receiver) = mpsc::channel(1);
         let files_dir: String = env.get_string(files_dir).unwrap().into();
         let files_dir = PathBuf::from(&files_dir);
@@ -84,11 +83,12 @@ pub mod android {
             ),
         };
 
-        // logging_init_with_appender(settings.logging.clone(), &AndroidLogger {});
         logging_init(
             settings.logging.clone(),
             Some(Box::new(|config| config.custom(AndroidLogger {}))),
         );
+        log_panics::init();
+        log::info!("omSupply server starting...");
 
         // run server in background thread
         let thread = thread::spawn(move || {
