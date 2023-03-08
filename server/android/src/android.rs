@@ -6,7 +6,9 @@ pub mod android {
     use std::sync::Mutex;
     use std::thread::{self, JoinHandle};
 
+    use fast_log::appender::{FastLogRecord, LogAppender};
     use jni::sys::jchar;
+    use log::Record;
     use repository::database_settings::DatabaseSettings;
     use server::{logging_init, start_server};
     use service::settings::{LogMode, LoggingSettings, ServerSettings, Settings};
@@ -21,6 +23,22 @@ pub mod android {
     }
 
     static SERVER_BUCKET: Mutex<Option<ServerBucket>> = Mutex::new(None);
+
+    struct AndroidLogger {}
+    impl LogAppender for AndroidLogger {
+        fn do_logs(&self, records: &[FastLogRecord]) {
+            // logs to the android logcat in addition to the standard oms log file
+            records.iter().for_each(|record| {
+                android_logger::log(
+                    &Record::builder()
+                        .args(format_args!("{}", record.args))
+                        .target("omSupply")
+                        .level(record.level)
+                        .build(),
+                )
+            });
+        }
+    }
 
     #[no_mangle]
     pub unsafe extern "C" fn Java_org_openmsupply_client_RemoteServer_startServer(
@@ -66,7 +84,11 @@ pub mod android {
             ),
         };
 
-        logging_init(settings.logging.clone());
+        // logging_init_with_appender(settings.logging.clone(), &AndroidLogger {});
+        logging_init(
+            settings.logging.clone(),
+            Some(Box::new(|config| config.custom(AndroidLogger {}))),
+        );
 
         // run server in background thread
         let thread = thread::spawn(move || {
