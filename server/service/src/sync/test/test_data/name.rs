@@ -548,7 +548,6 @@ fn name_push_record_1() -> TestSyncPushRecord {
             is_customer: true,
             is_deceased: false,
             national_health_number: Some("NHN001".to_string()),
-
             supplying_store_id: None,
             first_name: Some("first_name".to_string()),
             last_name: Some("last_name".to_string()),
@@ -566,6 +565,8 @@ fn name_push_record_1() -> TestSyncPushRecord {
             address2: Some("address2".to_string()),
             created_date: Some(NaiveDate::from_ymd(2022, 02, 10)),
             female: true,
+            created_datetime: Some(NaiveDate::from_ymd(2022, 05, 22).and_hms(0, 0, 0)),
+            gender: Some(Gender::Female)
         }),
     }
 }
@@ -600,6 +601,8 @@ fn name_push_record_2() -> TestSyncPushRecord {
             national_health_number: Some("NHN003".to_string()),
             female: true,
             created_date: Some(NaiveDate::from_ymd(2022, 05, 22)),
+            created_datetime: Some(NaiveDate::from_ymd(2022, 05, 22).and_hms(0, 0, 0)),
+            gender: Some(Gender::Female)
         }),
     }
 }
