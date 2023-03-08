@@ -172,7 +172,9 @@ impl SyncTranslation for NameTranslation {
             } else {
                 None
             },
-            created_datetime: data.created_date.map(|date| date.and_hms(0, 0, 0)),
+            created_datetime: data
+                .created_date
+                .map(|date| date.and_hms_opt(0, 0, 0).unwrap()),
             /*
             gender: data.om_gender.or(if data.female {
                 Some(Gender::Female)
