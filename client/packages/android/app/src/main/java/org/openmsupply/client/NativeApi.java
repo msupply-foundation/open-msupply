@@ -43,6 +43,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     boolean isDebug;
     boolean isAdvertising;
     String localUrl;
+    String serverUrl;
     boolean isDiscovering;
     boolean isResolvingServer;
     boolean shouldRestartDiscovery;
@@ -78,6 +79,9 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
 
     public String getLocalUrl() {
         return localUrl;
+    }
+    public String getServerUrl() {
+        return serverUrl;
     }
 
     private void sleep(int delay) {
@@ -254,6 +258,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
 
         Bridge bridge = this.getBridge();
         WebView webView = bridge.getWebView();
+        this.serverUrl = url;
         // .post to run on UI thread
         webView.post(() -> webView.loadUrl(url));
     }
