@@ -90,7 +90,7 @@
       ],
       "config": {
         "datetimeField": "startDatetime",
-        "scheduleIn": { "minutes": 6 }
+        "scheduleIn": { "months": 6 }
       },
       "event": {
         "type": "LTFUEligibility",
@@ -107,7 +107,7 @@
       ],
       "config": {
         "datetimeField": "startDatetime",
-        "scheduleIn": { "minutes": 3 }
+        "scheduleIn": { "months": 3 }
       },
       "event": {
         "type": "LTFUEligibility",
@@ -120,11 +120,15 @@
         {
           "field": "viralLoad.viralLoadResult",
           "lessThanOrEqualTo": 1000
+        },
+        {
+          "field": "viralLoad.eacDone",
+          "isFalsy": true
         }
       ],
       "config": {
         "datetimeField": "startDatetime",
-        "scheduleIn": { "minutes": 12 }
+        "scheduleIn": { "months": 12 }
       },
       "event": {
         "type": "LTFUEligibility",
