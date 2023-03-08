@@ -1,8 +1,11 @@
 use repository::{
-    NameRowRepository, NameStoreJoinRow, StorageConnection, StoreRowRepository, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, NameRowRepository, NameStoreJoinRepository, NameStoreJoinRow,
+    StorageConnection, StoreRowRepository, SyncBufferRow,
 };
 
 use serde::{Deserialize, Serialize};
+
+use crate::sync::api::RemoteSyncRecordV5;
 
 use super::{
     IntegrationRecords, LegacyTableName, PullDeleteRecordTable, PullUpsertRecord, SyncTranslation,
@@ -11,9 +14,12 @@ use super::{
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
 pub struct LegacyNameStoreJoinRow {
-    pub ID: String,
-    pub store_ID: String,
-    pub name_ID: String,
+    #[serde(rename = "ID")]
+    pub id: String,
+    #[serde(rename = "store_ID")]
+    pub store_id: String,
+    #[serde(rename = "name_ID")]
+    pub name_id: String,
     pub inactive: Option<bool>,
     #[serde(rename = "om_name_is_customer")]
     pub name_is_customer: Option<bool>,
@@ -24,6 +30,11 @@ pub struct LegacyNameStoreJoinRow {
 fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
     sync_record.table_name == LegacyTableName::NAME_STORE_JOIN
 }
+
+fn match_push_table(changelog: &ChangelogRow) -> bool {
+    changelog.table_name == ChangelogTableName::NameStoreJoin
+}
+
 pub(crate) struct NameStoreJoinTranslation {}
 impl SyncTranslation for NameStoreJoinTranslation {
     fn try_translate_pull_upsert(
@@ -44,32 +55,32 @@ impl SyncTranslation for NameStoreJoinTranslation {
             }
         }
 
-        let name = match NameRowRepository::new(connection).find_one_by_id(&data.name_ID)? {
+        let name = match NameRowRepository::new(connection).find_one_by_id(&data.name_id)? {
             Some(name) => name,
             None => {
                 return Err(anyhow::anyhow!(
                     "Failed to get name '{}' for name_store_join '{}'",
-                    data.name_ID,
-                    data.ID
+                    data.name_id,
+                    data.id
                 ))
             }
         };
 
         if let Some(store) = StoreRowRepository::new(connection)
-            .find_one_by_id(&data.store_ID)
+            .find_one_by_id(&data.store_id)
             .unwrap_or(None)
         {
             // if the name_store_join is referencing itself, then exclude it
             // this is an invalid configuration which shouldn't be possible.. but is
-            if store.name_id == data.name_ID {
+            if store.name_id == data.name_id {
                 return Ok(None);
             }
         }
 
         let result = NameStoreJoinRow {
-            id: data.ID,
-            name_id: data.name_ID,
-            store_id: data.store_ID,
+            id: data.id,
+            name_id: data.name_id,
+            store_id: data.store_id,
             // name_is_customer: data.name_is_customer.unwrap_or(name.is_customer),
             // name_is_supplier: data.name_is_supplier.unwrap_or(name.is_supplier),
             // TODO in mirror setup primary server sends name_store_join to central with previous sync
@@ -82,6 +93,44 @@ impl SyncTranslation for NameStoreJoinTranslation {
         Ok(Some(IntegrationRecords::from_upsert(
             PullUpsertRecord::NameStoreJoin(result),
         )))
+    }
+
+    fn try_translate_push_upsert(
+        &self,
+        connection: &StorageConnection,
+        changelog: &ChangelogRow,
+    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
+        if !match_push_table(changelog) {
+            return Ok(None);
+        }
+
+        let NameStoreJoinRow {
+            id,
+            name_id,
+            store_id,
+            name_is_customer,
+            name_is_supplier,
+        } = NameStoreJoinRepository::new(connection)
+            .find_one_by_id(&changelog.record_id)?
+            .ok_or(anyhow::Error::msg(format!(
+                "Clinician row ({}) not found",
+                changelog.record_id
+            )))?;
+
+        let legacy_row = LegacyNameStoreJoinRow {
+            id,
+            name_id,
+            store_id,
+            name_is_customer: Some(name_is_customer),
+            name_is_supplier: Some(name_is_supplier),
+            inactive: Some(false),
+        };
+
+        Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
+            changelog,
+            LegacyTableName::NAME_STORE_JOIN,
+            serde_json::to_value(&legacy_row)?,
+        )]))
     }
 
     fn try_translate_pull_delete(

@@ -36,6 +36,7 @@ impl SyncRecordTester for PatientNameAndStoreAndNameStoreJoinTester {
         let mut patient_name_row = inline_init(|r: &mut NameRow| {
             r.id = uuid();
             r.r#type = NameType::Patient;
+            r.first_name = Some("Random".to_string());
             r.is_customer = true;
             r.is_supplier = false;
             r.gender = Some(Gender::Male);
@@ -75,21 +76,8 @@ impl SyncRecordTester for PatientNameAndStoreAndNameStoreJoinTester {
                 PullUpsertRecord::Name(facility_name_row.clone()),
             ]),
         });
+
         // STEP 2 name store joins need to be inserted after store
-        let name_store_join = NameStoreJoinRow {
-            id: uuid(),
-            name_id: facility_name_row.id.clone(),
-            store_id: store_row.id.clone(),
-            name_is_customer: true,
-            name_is_supplier: true,
-        };
-
-        let name_store_join_json = json!({
-            "ID": name_store_join.id,
-            "name_ID": name_store_join.name_id,
-            "store_ID": name_store_join.store_id
-        });
-
         let patient_name_store_join_row1 = NameStoreJoinRow {
             id: uuid(),
             name_id: patient_name_row.id.clone(),
@@ -100,7 +88,7 @@ impl SyncRecordTester for PatientNameAndStoreAndNameStoreJoinTester {
         let patient_name_store_join_json1 = json!({
             "ID": patient_name_store_join_row1.id,
             "name_ID": patient_name_store_join_row1.name_id,
-            "store_ID": patient_name_store_join_row1.id
+            "store_ID": patient_name_store_join_row1.store_id
         });
 
         let patient_name_store_join_row2 = NameStoreJoinRow {
@@ -118,13 +106,12 @@ impl SyncRecordTester for PatientNameAndStoreAndNameStoreJoinTester {
 
         result.push(TestStepData {
             central_upsert: json!({
-                "name_store_join": [name_store_join_json, patient_name_store_join_json1, patient_name_store_join_json2],
+                "name_store_join": [patient_name_store_join_json1, patient_name_store_join_json2],
             }),
             central_delete: json!({}),
             integration_records: IntegrationRecords::from_upserts(vec![
-                PullUpsertRecord::NameStoreJoin(name_store_join),
-                PullUpsertRecord::NameStoreJoin(patient_name_store_join_row1.clone()),
-                PullUpsertRecord::NameStoreJoin(patient_name_store_join_row2.clone()),
+                PullUpsertRecord::NameStoreJoin(patient_name_store_join_row1),
+                PullUpsertRecord::NameStoreJoin(patient_name_store_join_row2),
             ]),
         });
 
