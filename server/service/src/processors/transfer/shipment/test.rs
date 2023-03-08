@@ -190,7 +190,10 @@ impl ShipmentTransferTester {
             r.status = InvoiceRowStatus::Allocated;
             r.their_reference = Some("some reference".to_string());
             r.comment = Some("some comment".to_string());
-            r.created_datetime = NaiveDate::from_ymd(1970, 1, 1).and_hms_milli(12, 30, 0, 0);
+            r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 1)
+                .unwrap()
+                .and_hms_milli_opt(12, 30, 0, 0)
+                .unwrap();
         });
 
         let location = inline_init(|r: &mut LocationRow| {
@@ -204,7 +207,7 @@ impl ShipmentTransferTester {
             r.store_id = outbound_store.id.clone();
             r.item_id = item1.id.clone();
             r.batch = Some(uuid());
-            r.expiry_date = Some(NaiveDate::from_ymd(2025, 3, 1));
+            r.expiry_date = Some(NaiveDate::from_ymd_opt(2025, 3, 1).unwrap());
             r.pack_size = 10;
             r.total_number_of_packs = 200.0;
             r.available_number_of_packs = 200.0;
@@ -236,7 +239,7 @@ impl ShipmentTransferTester {
             r.pack_size = 10;
             r.total_number_of_packs = 200.0;
             r.available_number_of_packs = 200.0;
-            r.expiry_date = Some(NaiveDate::from_ymd(2023, 1, 5));
+            r.expiry_date = Some(NaiveDate::from_ymd_opt(2023, 1, 5).unwrap());
         });
 
         let outbound_shipment_line2 = inline_init(|r: &mut InvoiceLineRow| {

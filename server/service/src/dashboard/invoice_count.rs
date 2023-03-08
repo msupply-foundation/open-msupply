@@ -72,13 +72,18 @@ fn to_utc(datetime: &NaiveDateTime, timezone: &FixedOffset) -> Option<DateTime<U
 }
 
 fn start_of_day(datetime: &NaiveDateTime) -> NaiveDateTime {
-    NaiveDate::from_ymd(datetime.year(), datetime.month(), datetime.day()).and_hms(0, 0, 0)
+    NaiveDate::from_ymd_opt(datetime.year(), datetime.month(), datetime.day())
+        .unwrap()
+        .and_hms_opt(0, 0, 0)
+        .unwrap()
 }
 
 fn start_of_week(datetime: &NaiveDateTime) -> NaiveDateTime {
     let current_year = datetime.year();
-    let mon = NaiveDate::from_isoywd(current_year, datetime.iso_week().week(), Weekday::Mon)
-        .and_hms(0, 0, 0);
+    let mon = NaiveDate::from_isoywd_opt(current_year, datetime.iso_week().week(), Weekday::Mon)
+        .unwrap()
+        .and_hms_opt(0, 0, 0)
+        .unwrap();
     mon
 }
 
@@ -284,7 +289,7 @@ mod invoice_count_service_test {
         let nz_tz_offset = offset_to_timezone(&Some(13)).unwrap();
         // Create UTC date that is already one day later in NZ time, i.e. both event should be
         // captured
-        let test_now = Utc.ymd(2021, 12, 7).and_hms_milli(15, 30, 0, 0);
+        let test_now = Utc.with_ymd_and_hms(2021, 12, 7, 15, 30, 0).unwrap();
         let today = service
             .invoices_count(
                 &ctx,
@@ -312,7 +317,7 @@ mod invoice_count_service_test {
 
         // Expect only one entry today in UTC tz
         let utc_offset = offset_to_timezone(&Some(0)).unwrap();
-        let test_now = Utc.ymd(2021, 12, 8).and_hms_milli(15, 30, 0, 0);
+        let test_now = Utc.with_ymd_and_hms(2021, 12, 8, 15, 30, 0).unwrap();
         let today = service
             .invoices_count(
                 &ctx,
