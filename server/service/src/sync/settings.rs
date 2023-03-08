@@ -1,5 +1,8 @@
 use serde::Deserialize;
 
+// See README.md for description of when this API version needs to be updated
+pub(crate) static SYNC_VERSION: u32 = 1;
+
 #[derive(Deserialize, Clone, Debug, PartialEq, Default)]
 pub struct SyncSettings {
     pub url: String,

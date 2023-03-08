@@ -2,6 +2,7 @@ use crate::{
     service_provider::ServiceProvider,
     sync::{settings::SyncSettings, sync_api_credentials::SyncCredentials},
 };
+use repository::migrations::Version;
 use reqwest::{
     header::{HeaderMap, HeaderName},
     Client, Response, Url,
@@ -20,21 +21,24 @@ pub(crate) struct SyncApiV5 {
     pub(crate) headers: HeaderMap,
 }
 
-fn generate_headers(hardware_id: &str) -> HeaderMap {
+fn generate_headers(hardware_id: &str, sync_version: u32) -> HeaderMap {
     let mut headers = HeaderMap::new();
     headers.insert(
         HeaderName::from_static("msupply-site-uuid"),
         format!("{}", hardware_id).parse().unwrap(),
     );
-    // TODO get version from version system
     headers.insert(
         HeaderName::from_static("app-version"),
-        "1.0".parse().unwrap(),
+        Version::from_package_json().to_string().parse().unwrap(),
     );
     // TODO omSupply ? And maybe seperate header for app-os etc..
     headers.insert(
         HeaderName::from_static("app-name"),
         "remote_server".parse().unwrap(),
+    );
+    headers.insert(
+        HeaderName::from_static("version"),
+        sync_version.to_string().parse().unwrap(),
     );
     headers
 }
@@ -51,6 +55,7 @@ impl SyncApiV5 {
     pub fn new(
         settings: &SyncSettings,
         service_provider: &ServiceProvider,
+        sync_version: u32,
     ) -> Result<Self, SyncApiV5CreatingError> {
         use SyncApiV5CreatingError as Error;
         let hardware_id = service_provider
@@ -65,12 +70,13 @@ impl SyncApiV5 {
                 username: settings.username.clone(),
                 password_sha256: settings.password_sha256.clone(),
             },
-            headers: generate_headers(&hardware_id),
+            headers: generate_headers(&hardware_id, sync_version),
         })
     }
 
     #[cfg(test)]
     pub(crate) fn new_test(url: &str, site_name: &str, password: &str, hardware_id: &str) -> Self {
+        use crate::sync::settings::SYNC_VERSION;
         use util::hash::sha256;
 
         SyncApiV5 {
@@ -79,7 +85,7 @@ impl SyncApiV5 {
                 username: site_name.to_string(),
                 password_sha256: sha256(&password),
             },
-            headers: generate_headers(hardware_id),
+            headers: generate_headers(hardware_id, SYNC_VERSION),
         }
     }
 
