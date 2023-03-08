@@ -23,7 +23,7 @@ table! {
         name -> Text,
         parent_ids -> Text,
         user_id -> Text,
-        timestamp -> Timestamp,
+        datetime -> Timestamp,
         #[sql_name = "type"] type_ -> Text,
         data -> Text,
         form_schema_id -> Nullable<Text>,
@@ -41,7 +41,7 @@ table! {
         name -> Text,
         parent_ids -> Text,
         user_id -> Text,
-        timestamp -> Timestamp,
+        datetime -> Timestamp,
         #[sql_name = "type"] type_ -> Text,
         data -> Text,
         form_schema_id -> Nullable<Text>,
@@ -77,7 +77,7 @@ pub struct DocumentRow {
     /// Id of the author who edited this document version
     pub user_id: String,
     /// The timestamp of this document version
-    pub timestamp: NaiveDateTime,
+    pub datetime: NaiveDateTime,
     /// Type of the containing data
     #[column_name = "type_"]
     pub r#type: String,
@@ -106,7 +106,7 @@ pub struct Document {
     /// Id of the author who edited this document version
     pub user_id: String,
     /// The timestamp of this document version
-    pub timestamp: DateTime<Utc>,
+    pub datetime: DateTime<Utc>,
     /// Type of the containing data
     pub r#type: String,
     /// The actual document data
@@ -198,7 +198,7 @@ fn create_latest_filtered_query<'a>(filter: Option<DocumentFilter>) -> BoxedDocu
 
         apply_string_filter!(query, name, latest_document::dsl::name);
         apply_equal_filter!(query, r#type, latest_document::dsl::type_);
-        apply_date_time_filter!(query, datetime, latest_document::dsl::timestamp);
+        apply_date_time_filter!(query, datetime, latest_document::dsl::datetime);
         apply_equal_filter!(query, owner, latest_document::dsl::owner_name_id);
         apply_equal_filter!(query, context, latest_document::dsl::context);
         apply_simple_string_filter!(query, data, latest_document::dsl::data);
@@ -266,11 +266,11 @@ impl<'a> DocumentRepository<'a> {
                     apply_sort!(query, sort, latest_document::dsl::context)
                 }
                 DocumentSortField::Datetime => {
-                    apply_sort!(query, sort, latest_document::dsl::timestamp)
+                    apply_sort!(query, sort, latest_document::dsl::datetime)
                 }
             }
         } else {
-            query = query.order(latest_document::dsl::timestamp.desc())
+            query = query.order(latest_document::dsl::datetime.desc())
         }
 
         let rows: Vec<DocumentRow> = query
@@ -303,13 +303,13 @@ impl<'a> DocumentRepository<'a> {
 
             apply_string_filter!(query, name, document::dsl::name);
             apply_equal_filter!(query, r#type, document::dsl::type_);
-            apply_date_time_filter!(query, datetime, document::dsl::timestamp);
+            apply_date_time_filter!(query, datetime, document::dsl::datetime);
             apply_equal_filter!(query, owner, document::dsl::owner_name_id);
             apply_equal_filter!(query, context, document::dsl::context);
             apply_simple_string_filter!(query, data, document::dsl::data);
         }
         let rows: Vec<DocumentRow> = query
-            .order(document::dsl::timestamp.desc())
+            .order(document::dsl::datetime.desc())
             .load(&self.connection.connection)?;
 
         let mut result = Vec::<Document>::new();
@@ -337,7 +337,7 @@ fn document_from_row(row: DocumentRow) -> Result<Document, RepositoryError> {
         name: row.name,
         parent_ids: parents,
         user_id: row.user_id,
-        timestamp: DateTime::<Utc>::from_utc(row.timestamp, Utc),
+        datetime: DateTime::<Utc>::from_utc(row.datetime, Utc),
         r#type: row.r#type,
         data,
         form_schema_id: row.form_schema_id,
@@ -350,7 +350,7 @@ fn document_from_row(row: DocumentRow) -> Result<Document, RepositoryError> {
     Ok(document)
 }
 
-fn row_from_document(doc: &Document) -> Result<DocumentRow, RepositoryError> {
+pub fn row_from_document(doc: &Document) -> Result<DocumentRow, RepositoryError> {
     let parents =
         serde_json::to_string(&doc.parent_ids).map_err(|err| RepositoryError::DBError {
             msg: "Can't serialize parents".to_string(),
@@ -365,7 +365,7 @@ fn row_from_document(doc: &Document) -> Result<DocumentRow, RepositoryError> {
         name: doc.name.to_owned(),
         parent_ids: parents,
         user_id: doc.user_id.to_owned(),
-        timestamp: doc.timestamp.naive_utc(),
+        datetime: doc.datetime.naive_utc(),
         r#type: doc.r#type.to_owned(),
         data,
         form_schema_id: doc.form_schema_id.clone(),
