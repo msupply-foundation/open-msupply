@@ -43,7 +43,7 @@ impl SyncRecordTester for PatientNameAndStoreAndNameStoreJoinTester {
         });
         let patient_name_json = json!({
             "ID": patient_name_row.id,
-            "type": "facility",
+            "type": "patient",
             "customer": true,
             "supplier": false,
             "female": false,
