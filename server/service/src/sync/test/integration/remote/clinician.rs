@@ -59,17 +59,15 @@ impl SyncRecordTester for ClinicianRecordTester {
             central_upsert: json!({
                 "clinician": [clinician_json],
                 "store": [store_json],
-                "clinician_store_join": [join_json],
             }),
             central_delete: json!({}),
             integration_records: IntegrationRecords::from_upserts(vec![
                 PullUpsertRecord::Clinician(clinician_row.clone()),
                 PullUpsertRecord::Store(store_row.clone()),
-                PullUpsertRecord::ClinicianStoreJoin(join_row.clone()),
-
             ]),
         });
 
+        // STEP 2 - store join for clinician
         let join_row = ClinicianStoreJoinRow {
             id: uuid(),
             store_id: store_row.id,
@@ -114,20 +112,20 @@ impl SyncRecordTester for ClinicianRecordTester {
             ]),
         });
         // STEP 3 - delete
-        // result.push(TestStepData {
-        //     central_upsert: json!({}),
-        //     central_delete: json!({}),
-        //     integration_records: IntegrationRecords::from_deletes(vec![
-        //         PullDeleteRecord {
-        //             id: join_row.id.clone(),
-        //             table: PullDeleteRecordTable::ClinicianStoreJoin,
-        //         },
-        //         PullDeleteRecord {
-        //             id: row.id.clone(),
-        //             table: PullDeleteRecordTable::Clinician,
-        //         },
-        //     ]),
-        // });
+        result.push(TestStepData {
+            central_upsert: json!({}),
+            central_delete: json!({}),
+            integration_records: IntegrationRecords::from_deletes(vec![
+                PullDeleteRecord {
+                    id: join_row.id.clone(),
+                    table: PullDeleteRecordTable::ClinicianStoreJoin,
+                },
+                PullDeleteRecord {
+                    id: row.id.clone(),
+                    table: PullDeleteRecordTable::Clinician,
+                },
+            ]),
+        });
         result
     }
 }
