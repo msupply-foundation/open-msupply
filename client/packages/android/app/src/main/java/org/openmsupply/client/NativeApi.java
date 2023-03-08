@@ -133,7 +133,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
                 if (isServerRunning) {
                     webView.post(() -> webView.loadUrl(localUrl + "/android"));
                 } else {
-                    Log.e(OM_SUPPLY, "Server not running, displaying error page")
+                    Log.e(OM_SUPPLY, "Server not running, displaying error page");
                     webView.post(() -> webView.loadData(ErrorPage.encodedHtml, "text/html", "base64"));
                 }
             }
