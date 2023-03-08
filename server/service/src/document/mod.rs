@@ -19,7 +19,7 @@ pub(crate) fn is_latest_doc(
         .document_service
         .document(ctx, &doc.name, None)?;
     if let Some(lastest_existing) = latest_existing {
-        if lastest_existing.timestamp > doc.timestamp {
+        if lastest_existing.datetime > doc.timestamp {
             // newer doc already exist
             return Ok(false);
         }

@@ -17,7 +17,7 @@ struct TableAndFieldName {
 
 fn get_timestamp_fields() -> Vec<TableAndFieldName> {
     vec![
-        ("document", "timestamp"),
+        ("document", "datetime"),
         ("program_enrolment", "enrolment_datetime"),
         ("program_event", "datetime"),
         ("program_event", "active_start_datetime"),

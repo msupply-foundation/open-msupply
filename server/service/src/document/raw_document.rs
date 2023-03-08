@@ -53,7 +53,7 @@ impl RawDocument {
             name,
             parent_ids: parents,
             user_id: author,
-            timestamp,
+            datetime: timestamp,
             r#type,
             data,
             form_schema_id,
