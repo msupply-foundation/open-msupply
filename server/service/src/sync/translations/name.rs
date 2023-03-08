@@ -273,7 +273,7 @@ impl SyncTranslation for NameTranslation {
             supplying_store_id,
             first_name,
             last_name,
-            female: gender.map(|g| g == Gender::Female).unwrap_or(false),
+            female: gender.clone().map(|g| g == Gender::Female).unwrap_or(false),
             date_of_birth,
             phone,
             charge_code,
