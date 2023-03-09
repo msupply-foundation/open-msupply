@@ -65,7 +65,7 @@ export const CreateStocktakeButton: React.FC<{
       );
       if (location)
         return t('stocktake.comment-location-template', {
-          list: location.label,
+          location: location.label,
         });
     }
   };
