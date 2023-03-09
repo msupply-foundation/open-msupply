@@ -21,7 +21,3 @@ $$ LANGUAGE 'plpgsql';
 CREATE TRIGGER name_store_join_upsert_trigger
   AFTER INSERT OR UPDATE ON name_store_join
   FOR EACH ROW EXECUTE FUNCTION upsert_name_store_join_changelog();
-
-CREATE TRIGGER name_store_join_delete_trigger
-  AFTER DELETE ON name_store_join
-  FOR EACH ROW EXECUTE FUNCTION delete_name_store_join_changelog();
