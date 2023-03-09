@@ -9,6 +9,7 @@ table! {
     id -> Text,
     store_id -> Text,
     clinician_id -> Text,
+    is_sync_update -> Bool,
   }
 }
 
@@ -21,6 +22,7 @@ pub struct ClinicianStoreJoinRow {
     pub id: String,
     pub store_id: String,
     pub clinician_id: String,
+    pub is_sync_update: bool,
 }
 
 pub struct ClinicianStoreJoinRowRepository<'a> {

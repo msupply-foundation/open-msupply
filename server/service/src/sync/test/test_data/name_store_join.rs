@@ -27,6 +27,7 @@ fn name_store_join_1_pull_record() -> TestSyncPullRecord {
             name_id: "name_store_c".to_string(),
             name_is_customer: false,
             name_is_supplier: true,
+            is_sync_update: true,
         }),
     )
 }
@@ -65,6 +66,7 @@ fn name_store_join_2_pull_record() -> TestSyncPullRecord {
             name_id: "name_store_a".to_string(),
             name_is_customer: false,
             name_is_supplier: true,
+            is_sync_update: true,
         }),
     )
 }

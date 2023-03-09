@@ -18,6 +18,7 @@ pub fn document_a() -> Document {
         comment: None,
         owner_name_id: None,
         context: None,
+        is_sync_update: false,
     }
 }
 

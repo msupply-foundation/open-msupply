@@ -22,6 +22,7 @@ pub struct RawDocument {
     pub owner_name_id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub context: Option<String>,
+    pub is_sync_update: bool,
 }
 
 impl RawDocument {
@@ -47,6 +48,7 @@ impl RawDocument {
             comment,
             owner_name_id: owner,
             context,
+            is_sync_update,
         } = self;
         Ok(Document {
             id,
@@ -61,6 +63,7 @@ impl RawDocument {
             comment,
             owner_name_id: owner,
             context,
+            is_sync_update,
         })
     }
 }
@@ -90,9 +93,10 @@ mod document_id_test {
             comment: None,
             owner_name_id: None,
             context: None,
+            is_sync_update: false,
         };
         let document = raw.finalise().unwrap();
-        let expected_json_string = r#"{"author":"author","data":{"a":"avalue","b":0.3453333},"name":"name","parents":["p1"],"status":"Active","timestamp":"1970-01-01T00:00:01Z","type":"test"}"#;
+        let expected_json_string = r#"{"author":"author","data":{"a":"avalue","b":0.3453333},"is_sync_update":false,"name":"name","parents":["p1"],"status":"Active","timestamp":"1970-01-01T00:00:01Z","type":"test"}"#;
         let expected_id = sha256(expected_json_string);
         assert_eq!(document.id, expected_id);
     }
