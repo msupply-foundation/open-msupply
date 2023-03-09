@@ -197,7 +197,8 @@ impl PullUpsertRecord {
             ClinicianStoreJoin(record) => {
                 ClinicianStoreJoinRowRepository::new(con).upsert_one(record)
             }
-            Document(document) => upsert_document(con, document),
+            Document(record) => upsert_document(con, record),
+            DocumentRegistry(record) => DocumentRegistryRowRepository::new(con).upsert_one(record),
         }
     }
 }
