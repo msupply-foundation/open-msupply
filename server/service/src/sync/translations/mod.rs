@@ -2,6 +2,7 @@ pub(crate) mod activity_log;
 pub(crate) mod clinician;
 pub(crate) mod clinician_store_join;
 pub(crate) mod document;
+pub(crate) mod document_registry;
 pub(crate) mod inventory_adjustment_reason;
 pub(crate) mod invoice;
 pub(crate) mod invoice_line;
@@ -43,6 +44,7 @@ pub(crate) fn all_translators() -> SyncTanslators {
         Box::new(report::ReportTranslation {}),
         Box::new(inventory_adjustment_reason::InventoryAdjustmentReasonTranslation {}),
         Box::new(store_preference::StorePreferenceTranslation {}),
+        Box::new(document_registry::DocumentRegistryTranslation {}),
         // Remote
         Box::new(location::LocationTranslation {}),
         Box::new(stock_line::StockLineTranslation {}),
@@ -90,6 +92,7 @@ pub(crate) mod LegacyTableName {
     pub(crate) const CLINICIAN: &str = "clinician";
     pub(crate) const CLINICIAN_STORE_JOIN: &str = "clinician_store_join";
     pub(crate) const DOCUMENT: &str = "document";
+    pub(crate) const DOCUMENT_REGISTRY: &str = "document_registry";
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -117,6 +120,7 @@ pub(crate) enum PullUpsertRecord {
     Clinician(ClinicianRow),
     ClinicianStoreJoin(ClinicianStoreJoinRow),
     Document(Document),
+    DocumentRegistry(DocumentRegistryRow),
 }
 
 #[derive(Debug, PartialEq, Clone)]
