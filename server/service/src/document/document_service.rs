@@ -328,7 +328,7 @@ fn generate_deleted_document(
         name: current_document.name,
         parents: vec![current_document.id.clone()],
         author: user_id.to_string(),
-        timestamp: Utc::now(),
+        datetime: Utc::now(),
         r#type: current_document.r#type,
         data: serde_json::Value::Null,
         form_schema_id: current_document.form_schema_id,
@@ -352,7 +352,7 @@ fn generate_undeleted_document(
         name: deleted_document_parent.name,
         parents: vec![id.to_string()],
         author: user_id.to_string(),
-        timestamp: Utc::now(),
+        datetime: Utc::now(),
         r#type: deleted_document_parent.r#type,
         data: deleted_document_parent.data,
         form_schema_id: deleted_document_parent.form_schema_id,
@@ -415,7 +415,7 @@ mod document_service_test {
                 name: doc_name.to_string(),
                 parents: vec![],
                 author: "me".to_string(),
-                timestamp: DateTime::<Utc>::from_utc(
+                datetime: DateTime::<Utc>::from_utc(
                     NaiveDateTime::from_timestamp_opt(5000, 0).unwrap(),
                     Utc,
                 ),
@@ -444,7 +444,7 @@ mod document_service_test {
                     name: doc_name.to_string(),
                     parents: vec![],
                     author: "me".to_string(),
-                    timestamp: DateTime::<Utc>::from_utc(
+                    datetime: DateTime::<Utc>::from_utc(
                         NaiveDateTime::from_timestamp_opt(5000, 0).unwrap(),
                         Utc,
                     ),
@@ -471,7 +471,7 @@ mod document_service_test {
                 name: doc_name.to_string(),
                 parents: vec!["invalid".to_string()],
                 author: "me".to_string(),
-                timestamp: DateTime::<Utc>::from_utc(
+                datetime: DateTime::<Utc>::from_utc(
                     NaiveDateTime::from_timestamp_opt(6000, 0).unwrap(),
                     Utc,
                 ),
@@ -497,7 +497,7 @@ mod document_service_test {
                     name: doc_name.to_string(),
                     parents: vec![v1.id.clone()],
                     author: "me".to_string(),
-                    timestamp: DateTime::<Utc>::from_utc(
+                    datetime: DateTime::<Utc>::from_utc(
                         NaiveDateTime::from_timestamp_opt(6000, 0).unwrap(),
                         Utc,
                     ),
@@ -527,7 +527,7 @@ mod document_service_test {
                     name: "test/noise".to_string(),
                     parents: vec![],
                     author: "me".to_string(),
-                    timestamp: DateTime::<Utc>::from_utc(
+                    datetime: DateTime::<Utc>::from_utc(
                         NaiveDateTime::from_timestamp_opt(8000, 0).unwrap(),
                         Utc,
                     ),
@@ -571,7 +571,7 @@ mod document_service_test {
                     name: "test/doc1".to_string(),
                     parents: vec![],
                     author: "me".to_string(),
-                    timestamp: DateTime::<Utc>::from_utc(
+                    datetime: DateTime::<Utc>::from_utc(
                         NaiveDateTime::from_timestamp_opt(5000, 0).unwrap(),
                         Utc,
                     ),
@@ -598,7 +598,7 @@ mod document_service_test {
                 name: "test/doc2".to_string(),
                 parents: vec![],
                 author: "me".to_string(),
-                timestamp: DateTime::<Utc>::from_utc(
+                datetime: DateTime::<Utc>::from_utc(
                     NaiveDateTime::from_timestamp_opt(5000, 0).unwrap(),
                     Utc,
                 ),
@@ -628,7 +628,7 @@ mod document_service_test {
                 name: "test/doc3".to_string(),
                 parents: vec![],
                 author: "me".to_string(),
-                timestamp: DateTime::<Utc>::from_utc(
+                datetime: DateTime::<Utc>::from_utc(
                     NaiveDateTime::from_timestamp_opt(5000, 0).unwrap(),
                     Utc,
                 ),
@@ -659,7 +659,7 @@ mod document_service_test {
                     name: "test/doc4".to_string(),
                     parents: vec![],
                     author: "me".to_string(),
-                    timestamp: DateTime::<Utc>::from_utc(
+                    datetime: DateTime::<Utc>::from_utc(
                         NaiveDateTime::from_timestamp_opt(5000, 0).unwrap(),
                         Utc,
                     ),

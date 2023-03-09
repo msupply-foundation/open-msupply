@@ -120,7 +120,7 @@ impl RawDocumentNode {
     }
 
     pub async fn timestamp(&self) -> &DateTime<Utc> {
-        &self.document.timestamp
+        &self.document.datetime
     }
 
     pub async fn r#type(&self) -> &str {
