@@ -55,6 +55,7 @@ pub fn mock_name_linked_to_store_join() -> NameStoreJoinRow {
         store_id: "store_a".to_owned(),
         name_is_customer: true,
         name_is_supplier: true,
+        is_active: true,
     }
 }
 
@@ -83,6 +84,7 @@ pub fn mock_name_linked_to_store_join_a() -> NameStoreJoinRow {
         store_id: "store_c".to_owned(),
         name_is_customer: true,
         name_is_supplier: true,
+        is_active: true,
     }
 }
 
@@ -103,6 +105,7 @@ pub fn mock_name_not_linked_to_store_join() -> NameStoreJoinRow {
         store_id: "store_a".to_owned(),
         name_is_customer: true,
         name_is_supplier: true,
+        is_active: true,
     }
 }
 
@@ -123,5 +126,6 @@ pub fn mock_name_not_linked_to_store_join_a() -> NameStoreJoinRow {
         store_id: "store_c".to_owned(),
         name_is_customer: true,
         name_is_supplier: true,
+        is_active: true,
     }
 }
