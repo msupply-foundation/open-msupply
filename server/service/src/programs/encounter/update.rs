@@ -51,38 +51,7 @@ pub fn update_encounter(
             let encounter_start_datetime = encounter.start_datetime;
             let doc = generate(user_id, input, existing)?;
 
-            if is_latest_doc(ctx, service_provider, &doc)
-                .map_err(UpdateEncounterError::DatabaseError)?
-            {
-                update_encounter_row(
-                    ctx,
-                    &existing_encounter_row.patient_id,
-                    &existing_encounter_row.program,
-                    &doc,
-                    encounter,
-                    clinician_row,
-                )?;
-
-                update_program_events(
-                    ctx,
-                    service_provider,
-                    &existing_encounter_row.patient_id,
-                    encounter_start_datetime,
-                    Some(existing_encounter_row.start_datetime),
-                    &doc,
-                    &allowed_docs,
-                )
-                .map_err(|err| match err {
-                    UpdateProgramDocumentError::DatabaseError(err) => {
-                        UpdateEncounterError::DatabaseError(err)
-                    }
-                    UpdateProgramDocumentError::InternalError(err) => {
-                        UpdateEncounterError::InternalError(err)
-                    }
-                })?;
-            }
-
-            let result = service_provider
+            let document = service_provider
                 .document_service
                 .update_document(ctx, doc, &allowed_docs)
                 .map_err(|err| match err {
@@ -104,7 +73,37 @@ pub fn update_encounter(
                     DocumentInsertError::InvalidParent(_) => UpdateEncounterError::InvalidParentId,
                 })?;
 
-            Ok(result)
+            if is_latest_doc(ctx, service_provider, &document)
+                .map_err(UpdateEncounterError::DatabaseError)?
+            {
+                update_encounter_row(
+                    &ctx.connection,
+                    &existing_encounter_row.patient_id,
+                    &existing_encounter_row.program,
+                    &document,
+                    encounter,
+                    clinician_row.map(|c| c.id),
+                )?;
+
+                update_program_events(
+                    ctx,
+                    service_provider,
+                    &existing_encounter_row.patient_id,
+                    encounter_start_datetime,
+                    Some(existing_encounter_row.start_datetime),
+                    &document,
+                    &allowed_docs,
+                )
+                .map_err(|err| match err {
+                    UpdateProgramDocumentError::DatabaseError(err) => {
+                        UpdateEncounterError::DatabaseError(err)
+                    }
+                    UpdateProgramDocumentError::InternalError(err) => {
+                        UpdateEncounterError::InternalError(err)
+                    }
+                })?;
+            }
+            Ok(document)
         })
         .map_err(|err: TransactionError<UpdateEncounterError>| err.to_inner_error())?;
     Ok(patient)
@@ -125,7 +124,7 @@ fn generate(
         name: existing.name,
         parents: vec![input.parent],
         author: user_id.to_string(),
-        timestamp: Utc::now(),
+        datetime: Utc::now(),
         r#type: existing.r#type,
         data: input.data,
         form_schema_id: Some(input.schema_id),
@@ -173,8 +172,7 @@ fn validate(
         .encounter
         .clinician
         .as_ref()
-        .map(|c| c.id.clone())
-        .flatten()
+        .and_then(|c| c.id.clone())
     {
         let clinician_row = validate_clinician_exists(&ctx.connection, &clinician_id)?;
         if clinician_row.is_none() {

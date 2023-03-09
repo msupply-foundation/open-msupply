@@ -11,10 +11,36 @@ use super::{
     UpdatePatientError,
 };
 
+// create name_store_join if not existing
+pub fn create_patient_name_store_join(
+    con: &StorageConnection,
+    store_id: &str,
+    name_id: &str,
+) -> Result<(), UpdatePatientError> {
+    let name_repo = NameRepository::new(con);
+    let name = name_repo.query_one(
+        store_id,
+        NameFilter::new()
+            .is_customer(true)
+            .id(EqualFilter::equal_to(name_id)),
+    )?;
+    if name.is_none() {
+        // add name store join
+        let name_store_join_repo = NameStoreJoinRepository::new(con);
+        name_store_join_repo.upsert_one(&NameStoreJoinRow {
+            id: uuid(),
+            name_id: name_id.to_string(),
+            store_id: store_id.to_string(),
+            name_is_customer: true,
+            name_is_supplier: false,
+        })?;
+    }
+    Ok(())
+}
+
 /// Callback called when the document has been updated
 pub fn patient_document_updated(
     con: &StorageConnection,
-    store_id: &str,
     update_timestamp: &DateTime<Utc>,
     patient: SchemaPatient,
 ) -> Result<(), UpdatePatientError> {
@@ -35,7 +61,7 @@ pub fn patient_document_updated(
         r#type: NameType::Patient,
         is_customer: true,
         is_supplier: false,
-        supplying_store_id: Some(store_id.to_string()),
+        supplying_store_id: None,
         first_name: patient.first_name,
         last_name: patient.last_name,
         gender: patient.gender.and_then(|g| match g {
@@ -66,24 +92,7 @@ pub fn patient_document_updated(
         is_deceased: patient.is_deceased.unwrap_or(false),
         national_health_number: patient.code_2,
     })?;
-    let name_repo = NameRepository::new(con);
-    let name = name_repo.query_one(
-        store_id,
-        NameFilter::new()
-            .is_customer(true)
-            .id(EqualFilter::equal_to(&patient.id)),
-    )?;
-    if name.is_none() {
-        // add name store join
-        let name_store_join_repo = NameStoreJoinRepository::new(con);
-        name_store_join_repo.upsert_one(&NameStoreJoinRow {
-            id: uuid(),
-            name_id: patient.id,
-            store_id: store_id.to_string(),
-            name_is_customer: true,
-            name_is_supplier: false,
-        })?;
-    }
+
     Ok(())
 }
 

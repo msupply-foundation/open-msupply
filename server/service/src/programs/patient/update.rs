@@ -9,8 +9,10 @@ use crate::{
 };
 
 use super::{
-    main_patient_doc_name, patient_schema::SchemaPatient,
-    patient_updated::patient_document_updated, Patient, PatientFilter, PATIENT_TYPE,
+    main_patient_doc_name,
+    patient_schema::SchemaPatient,
+    patient_updated::{create_patient_name_store_join, patient_document_updated},
+    Patient, PatientFilter, PATIENT_TYPE,
 };
 
 #[derive(PartialEq, Debug)]
@@ -45,16 +47,9 @@ pub fn update_patient(
             let patient = validate(ctx, service_provider, store_id, &input)?;
             let patient_id = patient.id.clone();
             let doc = generate(user_id, &patient, input)?;
-            let doc_timestamp = doc.timestamp.clone();
-            if is_latest_doc(ctx, service_provider, &doc)
-                .map_err(UpdatePatientError::DatabaseError)?
-            {
-                // update the names table
-                patient_document_updated(&ctx.connection, store_id, &doc_timestamp, patient)?;
-            }
+            let doc_timestamp = doc.datetime.clone();
 
-            // Updating the document will trigger an update in the patient (names) table
-            service_provider
+            let doc = service_provider
                 .document_service
                 .update_document(ctx, doc, &vec![PATIENT_TYPE.to_string()])
                 .map_err(|err| match err {
@@ -77,6 +72,15 @@ pub fn update_patient(
                     }
                     DocumentInsertError::InvalidParent(_) => UpdatePatientError::InvalidParentId,
                 })?;
+
+            if is_latest_doc(ctx, service_provider, &doc)
+                .map_err(UpdatePatientError::DatabaseError)?
+            {
+                // update the names table
+                patient_document_updated(&ctx.connection, &doc_timestamp, patient)?;
+
+                create_patient_name_store_join(&ctx.connection, store_id, &patient_id)?;
+            }
 
             let patient = service_provider
                 .patient_service
@@ -114,7 +118,7 @@ fn generate(
         name: main_patient_doc_name(&patient.id),
         parents: input.parent.map(|p| vec![p]).unwrap_or(vec![]),
         author: user_id.to_string(),
-        timestamp: Utc::now(),
+        datetime: Utc::now(),
         r#type: PATIENT_TYPE.to_string(),
         data: input.data,
         form_schema_id: Some(input.schema_id),

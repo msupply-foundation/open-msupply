@@ -13,7 +13,7 @@ use self::query::program_enrolment;
 use self::query::program_enrolments;
 pub use self::upsert::*;
 
-mod program_enrolment_updated;
+pub mod program_enrolment_updated;
 pub mod program_schema;
 mod query;
 mod upsert;
