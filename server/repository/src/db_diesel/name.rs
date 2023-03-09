@@ -34,9 +34,9 @@ pub struct NameFilter {
     pub is_supplier: Option<bool>,
     pub is_store: Option<bool>,
     pub store_code: Option<SimpleStringFilter>,
-    pub is_visible: Option<bool>,
     pub is_system_name: Option<bool>,
     pub r#type: Option<EqualFilter<NameType>>,
+    pub is_active: Option<bool>,
 }
 
 impl EqualFilter<NameType> {
@@ -169,8 +169,8 @@ fn create_filtered_query(store_id: String, filter: Option<NameFilter>) -> BoxedN
             is_supplier,
             is_store,
             store_code,
-            is_visible,
             is_system_name,
+            is_active,
             r#type,
         } = f;
 
@@ -186,12 +186,9 @@ fn create_filtered_query(store_id: String, filter: Option<NameFilter>) -> BoxedN
         if let Some(is_supplier) = is_supplier {
             query = query.filter(name_store_join_dsl::name_is_supplier.eq(is_supplier));
         }
-
-        query = match is_visible {
-            Some(true) => query.filter(name_store_join_dsl::id.is_not_null()),
-            Some(false) => query.filter(name_store_join_dsl::id.is_null()),
-            None => query,
-        };
+        if let Some(is_active) = is_active {
+            query = query.filter(name_store_join_dsl::is_active.eq(is_active));
+        }
 
         query = match is_system_name {
             Some(true) => query.filter(name_dsl::code.eq_any(SYSTEM_NAME_CODES)),
@@ -234,8 +231,8 @@ impl NameFilter {
         self
     }
 
-    pub fn is_visible(mut self, value: bool) -> Self {
-        self.is_visible = Some(value);
+    pub fn is_active(mut self, value: bool) -> Self {
+        self.is_active = Some(value);
         self
     }
 
@@ -508,7 +505,7 @@ mod tests {
             .query_by_filter(
                 store_id,
                 NameFilter::new()
-                    .is_visible(true)
+                    .is_active(true)
                     .name(SimpleStringFilter::like("me_")),
             )
             .unwrap();
@@ -521,7 +518,7 @@ mod tests {
             .query_by_filter(
                 store_id,
                 NameFilter::new()
-                    .is_visible(true)
+                    .is_active(true)
                     .name(SimpleStringFilter::like("mE_")),
             )
             .unwrap();
@@ -560,7 +557,7 @@ mod tests {
             .query_by_filter(
                 store_id,
                 NameFilter::new()
-                    .is_visible(true)
+                    .is_active(true)
                     .is_system_name(true)
                     .code(SimpleStringFilter::equal_to(INVENTORY_ADJUSTMENT_NAME_CODE)),
             )
@@ -570,7 +567,7 @@ mod tests {
         // Test is store
 
         let result = repo
-            .query_by_filter(store_id, NameFilter::new().is_visible(true).is_store(true))
+            .query_by_filter(store_id, NameFilter::new().is_active(true).is_store(true))
             .unwrap();
         assert_eq!(result.len(), 1);
         assert_eq!(
@@ -584,7 +581,7 @@ mod tests {
         let result = repo
             .query_by_filter(
                 &mock_test_name_query_store_2().id,
-                NameFilter::new().is_visible(true),
+                NameFilter::new().is_active(true),
             )
             .unwrap();
         assert_eq!(result.len(), 2);
@@ -611,7 +608,7 @@ mod tests {
             .query(
                 store_id,
                 Pagination::new(),
-                Some(NameFilter::new().is_visible(true)),
+                Some(NameFilter::new().is_active(true)),
                 Some(NameSort {
                     key: NameSortField::Code,
                     desc: Some(true),

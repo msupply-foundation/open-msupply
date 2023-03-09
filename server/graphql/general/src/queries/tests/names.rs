@@ -120,7 +120,7 @@ mod graphql {
             "storeCode": {
               "like": "store code like"
             },
-            "isVisible": false,
+            "isActive": false,
             "isSystemName": true,
             "type": { "equalTo": "STORE" },
           }
@@ -160,7 +160,7 @@ mod graphql {
                 is_supplier,
                 is_store,
                 store_code,
-                is_visible,
+                is_active,
                 is_system_name,
                 r#type,
             } = filter.unwrap();
@@ -175,7 +175,7 @@ mod graphql {
                 store_code,
                 Some(SimpleStringFilter::like("store code like"))
             );
-            assert_eq!(is_visible, Some(false));
+            assert_eq!(is_active, Some(false));
             assert_eq!(is_system_name, Some(true));
             assert_eq!(
                 r#type,
