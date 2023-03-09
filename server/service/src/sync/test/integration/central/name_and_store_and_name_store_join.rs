@@ -94,10 +94,9 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
             "sync_id_remote_site": store_row.site_id,
             "store_mode": "store"
         });
-
         result.push(TestStepData {
             central_upsert: json!({
-                "name": [name_json1,name_json2.clone()],
+                "name": [name_json1, name_json2.clone()],
                 "store": [store_json]
             }),
             central_delete: json!({}),
@@ -133,12 +132,11 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
             "ID": name_store_join_row2.id,
             "name_ID": name_store_join_row2.name_id,
             "store_ID": name_store_join_row2.store_id
-
         });
 
         result.push(TestStepData {
             central_upsert: json!({
-                "name_store_join": [name_store_join_json1,name_store_join_json2 ],
+                "name_store_join": [name_store_join_json1, name_store_join_json2],
             }),
             central_delete: json!({}),
             integration_records: IntegrationRecords::from_upserts(vec![

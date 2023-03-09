@@ -81,7 +81,8 @@ const ITEM_1: (&'static str, &'static str) = (
     "custom_data": null,
     "doses": 0,
     "is_vaccine": false,
-    "restricted_location_type_ID": ""
+    "restricted_location_type_ID": "",
+    "product_specifications": ""
 }"#,
 );
 
@@ -160,7 +161,8 @@ const ITEM_2: (&'static str, &'static str) = (
     "custom_data": null,
     "doses": 0,
     "is_vaccine": false,
-    "restricted_location_type_ID": ""
+    "restricted_location_type_ID": "",
+    "product_specifications": ""
 }"#,
 );
 
