@@ -1,7 +1,8 @@
 pub(crate) mod activity_log;
-pub(crate) mod inventory_adjustment_reason;
 pub(crate) mod clinician;
 pub(crate) mod clinician_store_join;
+pub(crate) mod document;
+pub(crate) mod inventory_adjustment_reason;
 pub(crate) mod invoice;
 pub(crate) mod invoice_line;
 pub(crate) mod item;
@@ -88,6 +89,7 @@ pub(crate) mod LegacyTableName {
     pub(crate) const NAME_STORE_JOIN: &str = "name_store_join";
     pub(crate) const CLINICIAN: &str = "clinician";
     pub(crate) const CLINICIAN_STORE_JOIN: &str = "clinician_store_join";
+    pub(crate) const DOCUMENT: &str = "document";
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -114,6 +116,7 @@ pub(crate) enum PullUpsertRecord {
     StorePreference(StorePreferenceRow),
     Clinician(ClinicianRow),
     ClinicianStoreJoin(ClinicianStoreJoinRow),
+    Document(Document),
 }
 
 #[derive(Debug, PartialEq, Clone)]

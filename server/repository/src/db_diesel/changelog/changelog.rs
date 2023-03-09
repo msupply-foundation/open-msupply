@@ -52,6 +52,7 @@ pub enum ChangelogTableName {
     InventoryAdjustmentReason,
     Clinician,
     ClinicianStoreJoin,
+    Document,
 }
 
 #[derive(Clone, Queryable, Debug, PartialEq, Insertable)]

@@ -1,4 +1,4 @@
-use crate::sync::translations::PullDeleteRecordTable;
+use crate::sync::{integrate_document::upsert_document, translations::PullDeleteRecordTable};
 
 use super::{
     sync_buffer::SyncBuffer,
@@ -197,6 +197,7 @@ impl PullUpsertRecord {
             ClinicianStoreJoin(record) => {
                 ClinicianStoreJoinRowRepository::new(con).upsert_one(record)
             }
+            Document(document) => upsert_document(con, document),
         }
     }
 }
