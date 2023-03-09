@@ -15,6 +15,7 @@ table! {
         row_action -> crate::db_diesel::changelog::ChangelogActionMapping,
         name_id -> Nullable<Text>,
         store_id -> Nullable<Text>,
+        is_sync_update -> Bool,
     }
 }
 
@@ -26,6 +27,7 @@ table! {
         row_action -> crate::db_diesel::changelog::ChangelogActionMapping,
         name_id -> Nullable<Text>,
         store_id -> Nullable<Text>,
+        is_sync_update -> Bool,
     }
 }
 
@@ -65,6 +67,7 @@ pub struct ChangelogRow {
     pub row_action: ChangelogAction,
     pub name_id: Option<String>,
     pub store_id: Option<String>,
+    pub is_sync_update: bool,
 }
 
 #[derive(Default, Clone)]
@@ -168,6 +171,7 @@ impl Default for ChangelogRow {
             record_id: Default::default(),
             name_id: Default::default(),
             store_id: Default::default(),
+            is_sync_update: Default::default(),
         }
     }
 }
