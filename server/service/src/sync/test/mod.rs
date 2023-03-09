@@ -216,11 +216,11 @@ pub(crate) async fn check_records_against_database(
 
             StorePreference(record) => {
                 check_record_by_id!(StorePreferenceRowRepository, con, record, "StorePreference")
-            },
+            }
 
             Clinician(record) => {
                 check_record_by_id!(ClinicianRowRepository, con, record, "Clinician")
-            },
+            }
 
             ClinicianStoreJoin(record) => check_record_by_id!(
                 ClinicianStoreJoinRowRepository,
@@ -228,6 +228,7 @@ pub(crate) async fn check_records_against_database(
                 record,
                 "ClinicianStoreJoin"
             ),
+            Document(record) => check_record_by_id!(DocumentRepository, con, record, "Document"),
         }
     }
 
