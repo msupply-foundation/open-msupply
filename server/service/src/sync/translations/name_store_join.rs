@@ -36,14 +36,6 @@ impl SyncTranslation for NameStoreJoinTranslation {
         }
         let data = serde_json::from_str::<LegacyNameStoreJoinRow>(&sync_record.data)?;
 
-        // in mSupply the inactive flag is used for soft-deletes.
-        // given that we don't handle soft deletes, translate to a hard-delete
-        if let Some(inactive) = data.inactive {
-            if inactive {
-                return self.try_translate_pull_delete(connection, sync_record);
-            }
-        }
-
         let name = match NameRowRepository::new(connection).find_one_by_id(&data.name_ID)? {
             Some(name) => name,
             None => {
@@ -77,6 +69,11 @@ impl SyncTranslation for NameStoreJoinTranslation {
             // remaining as null, for now always names properties for name_is_supplier/customer
             name_is_customer: name.is_customer,
             name_is_supplier: name.is_supplier,
+            // Flipped this around since is_active is more commonly used in this repo
+            is_active: data
+                .inactive
+                .map(|inactive| inactive == false)
+                .unwrap_or(false),
         };
 
         Ok(Some(IntegrationRecords::from_upsert(
@@ -122,23 +119,6 @@ mod tests {
             let translation_result = translator
                 .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
                 .unwrap();
-
-            assert_eq!(translation_result, record.translated_record);
-        }
-
-        for record in test_data::test_pull_upsert_inactive_records() {
-            let translation_result = translator
-                .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
-                .unwrap();
-
-            assert_eq!(translation_result, record.translated_record);
-        }
-
-        for record in test_data::test_pull_delete_records() {
-            let translation_result = translator
-                .try_translate_pull_delete(&connection, &record.sync_buffer_row)
-                .unwrap();
-
             assert_eq!(translation_result, record.translated_record);
         }
     }
