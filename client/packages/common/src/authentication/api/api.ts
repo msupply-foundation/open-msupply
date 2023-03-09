@@ -80,11 +80,14 @@ export const getAuthQueries = (sdk: Sdk, t: TypedTFunction<LocaleKey>) => ({
       }
     },
     refreshToken: async (): Promise<RefreshResponse> => {
+      console.info(`************ REFRESH TOKEN ************`);
+
       const result = await sdk.refreshToken();
       return refreshTokenGuard(result);
     },
     me: async (token?: string) => {
       try {
+        // console.info(`************ ME ************ token: ${token}`);
         const result = await sdk.me(
           {},
           {
@@ -117,14 +120,14 @@ export const getAuthQueries = (sdk: Sdk, t: TypedTFunction<LocaleKey>) => ({
         return { nodes: [] };
       }
     },
-    stores: () => async () => {
-      try {
-        const result = await sdk.me();
-        return result?.me?.stores?.nodes;
-      } catch (e) {
-        console.error(e);
-        LocalStorage.setItem('/auth/error', AuthError.ServerError);
-      }
-    },
+    // stores: async () => {
+    //   try {
+    //     const result = await sdk.me();
+    //     return result?.me?.stores?.nodes;
+    //   } catch (e) {
+    //     console.error(e);
+    //     LocalStorage.setItem('/auth/error', AuthError.ServerError);
+    //   }
+    // },
   },
 });
