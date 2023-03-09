@@ -58,32 +58,7 @@ pub fn insert_encounter(
             let doc = generate(user_id, input, event_datetime)?;
             let encounter_start_datetime = encounter.start_datetime;
 
-            if is_latest_doc(ctx, service_provider, &doc)
-                .map_err(InsertEncounterError::DatabaseError)?
-            {
-                update_encounter_row(ctx, &patient_id, &program, &doc, encounter, clinician)?;
-
-                update_program_events(
-                    ctx,
-                    service_provider,
-                    &patient_id,
-                    encounter_start_datetime,
-                    None,
-                    &doc,
-                    &allowed_docs,
-                )
-                .map_err(|err| match err {
-                    UpdateProgramDocumentError::DatabaseError(err) => {
-                        InsertEncounterError::DatabaseError(err)
-                    }
-                    UpdateProgramDocumentError::InternalError(err) => {
-                        InsertEncounterError::InternalError(err)
-                    }
-                })?;
-            }
-
-            // Updating the document will trigger an update in the patient (names) table
-            let result = service_provider
+            let document = service_provider
                 .document_service
                 .update_document(ctx, doc, &allowed_docs)
                 .map_err(|err| match err {
@@ -107,7 +82,38 @@ pub fn insert_encounter(
                     }
                 })?;
 
-            Ok(result)
+            if is_latest_doc(ctx, service_provider, &document)
+                .map_err(InsertEncounterError::DatabaseError)?
+            {
+                update_encounter_row(
+                    &ctx.connection,
+                    &patient_id,
+                    &program,
+                    &document,
+                    encounter,
+                    clinician.map(|c| c.id),
+                )?;
+
+                update_program_events(
+                    ctx,
+                    service_provider,
+                    &patient_id,
+                    encounter_start_datetime,
+                    None,
+                    &document,
+                    &allowed_docs,
+                )
+                .map_err(|err| match err {
+                    UpdateProgramDocumentError::DatabaseError(err) => {
+                        InsertEncounterError::DatabaseError(err)
+                    }
+                    UpdateProgramDocumentError::InternalError(err) => {
+                        InsertEncounterError::InternalError(err)
+                    }
+                })?;
+            }
+
+            Ok(document)
         })
         .map_err(|err: TransactionError<InsertEncounterError>| err.to_inner_error())?;
     Ok(patient)
@@ -129,7 +135,7 @@ fn generate(
         name: patient_doc_name_with_id(&input.patient_id, &input.r#type, &encounter_name),
         parents: vec![],
         author: user_id.to_string(),
-        timestamp: event_datetime,
+        datetime: event_datetime,
         r#type: input.r#type.clone(),
         data: input.data,
         form_schema_id: Some(input.schema_id),

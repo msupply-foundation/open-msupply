@@ -50,12 +50,6 @@ pub fn upsert_program_enrolment(
             let schema_program = validate(ctx, service_provider, &input)?;
             let doc = generate(user_id, input)?;
 
-            if is_latest_doc(ctx, service_provider, &doc)
-                .map_err(UpsertProgramEnrolmentError::DatabaseError)?
-            {
-                program_enrolment_updated(&ctx.connection, &patient_id, &doc, schema_program)?;
-            };
-
             let document = service_provider
                 .document_service
                 .update_document(ctx, doc, &allowed_docs)
@@ -79,6 +73,12 @@ pub fn upsert_program_enrolment(
                         UpsertProgramEnrolmentError::InvalidParentId
                     }
                 })?;
+
+            if is_latest_doc(ctx, service_provider, &document)
+                .map_err(UpsertProgramEnrolmentError::DatabaseError)?
+            {
+                program_enrolment_updated(&ctx.connection, &patient_id, &document, schema_program)?;
+            };
             Ok(document)
         })
         .map_err(|err: TransactionError<UpsertProgramEnrolmentError>| err.to_inner_error())?;
@@ -96,7 +96,7 @@ fn generate(user_id: &str, input: UpsertProgramEnrolment) -> Result<RawDocument,
         name: patient_doc_name(&input.patient_id, &input.r#type),
         parents: input.parent.map(|p| vec![p]).unwrap_or(vec![]),
         author: user_id.to_string(),
-        timestamp: Utc::now(),
+        datetime: Utc::now(),
         r#type: input.r#type.clone(),
         data: input.data,
         form_schema_id: Some(input.schema_id),
