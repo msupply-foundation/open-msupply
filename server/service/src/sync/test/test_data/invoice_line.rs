@@ -122,6 +122,7 @@ fn trans_line_1_push_record() -> TestSyncPushRecord {
             total_after_tax: Some(10.0 * 700.36363636),
             inventory_adjustment_reason_id: None,
         }),
+        is_sync_update: false,
     }
 }
 
@@ -234,6 +235,7 @@ fn trans_line_2_push_record() -> TestSyncPushRecord {
             total_after_tax: Some(2.0 * 1000.9124798),
             inventory_adjustment_reason_id: None,
         }),
+        is_sync_update: false,
     }
 }
 
@@ -349,6 +351,7 @@ fn trans_line_om_fields_push_record() -> TestSyncPushRecord {
             total_after_tax: Some(130.5),
             inventory_adjustment_reason_id: None,
         }),
+        is_sync_update: false,
     }
 }
 
@@ -464,6 +467,7 @@ fn trans_line_om_fields_unset_tax_push_record() -> TestSyncPushRecord {
             total_after_tax: Some(130.5),
             inventory_adjustment_reason_id: None,
         }),
+        is_sync_update: false,
     }
 }
 

@@ -77,6 +77,7 @@ pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
                 datetime: NaiveDate::from_ymd(2020, 1, 1).and_hms(0, 0, 0),
                 event: None,
             }),
+            is_sync_update: false,
         },
         TestSyncPushRecord {
             record_id: ACTIVITY_LOG_2.0.to_string(),
@@ -90,6 +91,7 @@ pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
                 datetime: NaiveDate::from_ymd(2020, 1, 1).and_hms(0, 0, 0),
                 event: None,
             }),
+            is_sync_update: false,
         },
     ]
 }

@@ -4,7 +4,7 @@ use crate::sync::{
     synchroniser::integrate_and_translate_sync_buffer,
     test::{
         check_test_records_against_database, extract_sync_buffer_rows,
-        test_data::get_all_push_test_records,
+        test_data::get_all_push_test_records, TestSyncPushRecord,
     },
     translations::translate_changelogs_to_push_records,
 };
@@ -64,7 +64,7 @@ async fn test_sync_pull_and_push() {
     check_test_records_against_database(&connection, test_records).await;
 
     // PUSH UPSERT
-    let mut test_records = get_all_push_test_records();
+    let test_records = get_all_push_test_records();
     let change_log_filter = get_active_records_on_site_filter(&connection).unwrap();
     // Records would have been inserted in test Pull Upsert and trigger should have inserted changelogs
     let changelogs = ChangelogRepository::new(&connection)
@@ -74,14 +74,20 @@ async fn test_sync_pull_and_push() {
     let mut translated =
         translate_changelogs_to_push_records(&connection, changelogs.clone()).unwrap();
     translated.sort_by(|a, b| a.record.record_id.cmp(&b.record.record_id));
-    test_records.sort_by(|a, b| a.record_id.cmp(&b.record_id));
+
+    let mut test_records_to_push = test_records
+        .iter()
+        .filter(|r| r.is_sync_update == false)
+        .collect::<Vec<&TestSyncPushRecord>>();
+    test_records_to_push.sort_by(|a, b| a.record_id.cmp(&b.record_id));
+
     // Test ids and table names
     assert_eq!(
         translated
             .iter()
             .map(|r| (r.record.record_id.clone(), r.record.table_name.clone()))
             .collect::<Vec<(String, String)>>(),
-        test_records
+        test_records_to_push
             .iter()
             .map(|r| (r.record_id.clone(), r.table_name.clone()))
             .collect::<Vec<(String, String)>>()

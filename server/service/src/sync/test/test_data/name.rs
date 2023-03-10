@@ -572,6 +572,7 @@ fn name_push_record_1() -> TestSyncPushRecord {
             created_datetime: Some(NaiveDate::from_ymd(2022, 05, 22).and_hms(0, 0, 0)),
             gender: Some(Gender::Female)
         }),
+        is_sync_update: true,
     }
 }
 
@@ -608,6 +609,7 @@ fn name_push_record_2() -> TestSyncPushRecord {
             created_datetime: Some(NaiveDate::from_ymd(2022, 05, 22).and_hms(0, 0, 0)),
             gender: Some(Gender::Female)
         }),
+        is_sync_update: true,
     }
 }
 
