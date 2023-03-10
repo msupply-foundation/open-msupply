@@ -141,6 +141,7 @@ fn create_filtered_query<'a>(
 ) -> BoxedChangelogQuery {
     let mut query = changelog_deduped::dsl::changelog_deduped
         .filter(changelog_deduped::dsl::cursor.ge(earliest.try_into().unwrap_or(0)))
+        .filter(changelog_deduped::dsl::is_sync_update.eq(false))
         .into_boxed();
 
     if let Some(f) = filter {
