@@ -91,8 +91,8 @@ pub(crate) mod LegacyTableName {
     pub(crate) const NAME_STORE_JOIN: &str = "name_store_join";
     pub(crate) const CLINICIAN: &str = "clinician";
     pub(crate) const CLINICIAN_STORE_JOIN: &str = "clinician_store_join";
-    pub(crate) const DOCUMENT: &str = "document";
-    pub(crate) const DOCUMENT_REGISTRY: &str = "document_registry";
+    pub(crate) const DOCUMENT: &str = "om_document";
+    pub(crate) const DOCUMENT_REGISTRY: &str = "om_document_registry";
 }
 
 #[derive(Debug, PartialEq, Clone)]

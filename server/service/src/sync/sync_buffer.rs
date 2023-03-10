@@ -6,7 +6,7 @@ use repository::{
 };
 use util::inline_edit;
 
-// Ordered by referencial constraints
+// Ordered by referential constraints
 const TRANSLATION_AND_INTEGRATION_ORDER: &[&str] = &[
     LegacyTableName::INVENTORY_ADJUSTMENT_REASON,
     LegacyTableName::NAME,
@@ -30,6 +30,8 @@ const TRANSLATION_AND_INTEGRATION_ORDER: &[&str] = &[
     LegacyTableName::OM_ACTIVITY_LOG,
     LegacyTableName::CLINICIAN,
     LegacyTableName::CLINICIAN_STORE_JOIN,
+    LegacyTableName::DOCUMENT_REGISTRY,
+    LegacyTableName::DOCUMENT,
 ];
 
 pub(crate) struct SyncBuffer<'a> {

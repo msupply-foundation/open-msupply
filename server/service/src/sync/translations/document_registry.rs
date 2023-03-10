@@ -1,5 +1,6 @@
 use repository::{DocumentContext, DocumentRegistryRow, StorageConnection, SyncBufferRow};
 use serde::Deserialize;
+use serde_json::Value;
 
 use super::{IntegrationRecords, LegacyTableName, PullUpsertRecord, SyncTranslation};
 
@@ -15,13 +16,14 @@ enum LegacyDocumentContext {
 #[allow(non_snake_case)]
 #[derive(Deserialize)]
 struct LegacyDocumentRegistryRow {
+    #[serde(rename = "ID")]
     pub id: String,
     pub document_type: String,
     pub context: LegacyDocumentContext,
     pub name: Option<String>,
     pub parent_id: Option<String>,
     pub form_schema_id: Option<String>,
-    pub config: Option<String>,
+    pub config: Option<Value>,
 }
 
 fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
@@ -38,6 +40,7 @@ impl SyncTranslation for DocumentRegistryTranslation {
         if !match_pull_table(sync_record) {
             return Ok(None);
         }
+
         let LegacyDocumentRegistryRow {
             id,
             document_type,
@@ -48,6 +51,10 @@ impl SyncTranslation for DocumentRegistryTranslation {
             config,
         } = serde_json::from_str::<LegacyDocumentRegistryRow>(&sync_record.data)?;
 
+        let config_str = match config {
+            Some(config) => Some(serde_json::to_string(&config)?),
+            None => None,
+        };
         let result = DocumentRegistryRow {
             id,
             document_type,
@@ -60,7 +67,7 @@ impl SyncTranslation for DocumentRegistryTranslation {
             name,
             parent_id,
             form_schema_id,
-            config,
+            config: config_str,
         };
 
         Ok(Some(IntegrationRecords::from_upsert(

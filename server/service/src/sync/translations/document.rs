@@ -21,6 +21,7 @@ enum LegacyDocumentStatus {
 
 #[derive(Deserialize, Serialize)]
 struct LegacyDocumentRow {
+    #[serde(rename = "ID")]
     pub id: String,
     pub name: String,
     pub parent_ids: String,
