@@ -98,7 +98,7 @@ export const PricingSectionComponent = () => {
           <PanelLabel>{`${t('heading.tax')} ${Formatter.tax(tax)}`}</PanelLabel>
           <PanelField>
             <TaxEdit
-              disabled={true}
+              disabled={!stockLines?.length}
               tax={tax}
               onChange={taxPercentage => {
                 updateTax({
