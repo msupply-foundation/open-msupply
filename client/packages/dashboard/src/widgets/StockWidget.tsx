@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  ApiException,
   ButtonWithIcon,
   FnUtils,
   Grid,
@@ -39,7 +40,7 @@ export const StockWidget: React.FC = () => {
   const onError = (e: unknown) => {
     const message = (e as Error).message ?? '';
     const errorSnack = errorNotification(
-      `Failed to create requisition! ${message}`
+      t('error.failed-to-create-requisition', { message })
     );
     errorSnack();
   };
@@ -71,7 +72,7 @@ export const StockWidget: React.FC = () => {
         >
           <Grid item>
             <StatsPanel
-              error={expiryError}
+              error={expiryError as ApiException}
               isError={hasExpiryError}
               isLoading={isExpiryLoading}
               title={t('heading.expiring-stock')}
@@ -91,7 +92,7 @@ export const StockWidget: React.FC = () => {
               ]}
             />
             <StatsPanel
-              error={itemCountsError}
+              error={itemCountsError as ApiException}
               isError={hasItemStatsError}
               isLoading={isItemStatsLoading}
               title={t('heading.stock-levels')}

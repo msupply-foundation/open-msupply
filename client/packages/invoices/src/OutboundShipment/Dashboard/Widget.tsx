@@ -9,6 +9,7 @@ import {
   Widget,
   FnUtils,
   useToggle,
+  ApiException,
 } from '@openmsupply-client/common';
 import { useFormatNumber, useTranslation } from '@common/intl';
 import { useOutbound } from '../api';
@@ -56,7 +57,7 @@ export const OutboundShipmentWidget: React.FC = () => {
         >
           <Grid item>
             <StatsPanel
-              error={error}
+              error={error as ApiException}
               isError={isError}
               isLoading={isLoading}
               title={t('heading.shipments-to-be-picked')}

@@ -9,12 +9,14 @@ interface Location {
   line: number;
 }
 
-interface ApiException {
+export interface ApiException {
   extensions: Extensions;
   locations: Location[];
   message: string;
   path: string[];
 }
 
-export const isPermissionDeniedException = (e?: any) =>
-  !!e && (e as ApiException).message === AuthError.PermissionDenied;
+export const isPermissionDeniedException = (e?: ApiException) =>
+  !!e &&
+  'message' in e &&
+  (e as ApiException).message === AuthError.PermissionDenied;
