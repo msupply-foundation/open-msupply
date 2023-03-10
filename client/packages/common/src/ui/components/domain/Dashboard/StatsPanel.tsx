@@ -2,14 +2,14 @@ import React, { FC } from 'react';
 import { Grid, Paper, Tooltip, Typography } from '@mui/material';
 import { InlineSpinner, StockIcon } from '../../../';
 import { useTranslation } from '@common/intl';
-import { isPermissionDeniedException } from '@common/types';
+import { ApiException, isPermissionDeniedException } from '@common/types';
 
 export type Stat = {
   label: string;
   value?: string;
 };
 export interface StatsPanelProps {
-  error?: any;
+  error?: ApiException;
   isError?: boolean;
   isLoading: boolean;
   stats: Stat[];
@@ -64,7 +64,7 @@ const Content = ({
   isLoading,
   stats,
 }: {
-  error: any;
+  error?: ApiException;
   isError: boolean;
   isLoading: boolean;
   stats: Stat[];

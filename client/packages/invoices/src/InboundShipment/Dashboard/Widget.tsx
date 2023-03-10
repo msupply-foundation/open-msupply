@@ -10,7 +10,7 @@ import {
   Widget,
 } from '@openmsupply-client/common';
 import { useFormatNumber, useTranslation } from '@common/intl';
-import { PropsWithChildrenOnly } from '@common/types';
+import { ApiException, PropsWithChildrenOnly } from '@common/types';
 import { useInbound } from '../api';
 import { InternalSupplierSearchModal } from '@openmsupply-client/system';
 
@@ -25,7 +25,7 @@ export const InboundShipmentWidget: React.FC<PropsWithChildrenOnly> = () => {
   const onError = (e: unknown) => {
     const message = (e as Error).message ?? '';
     const errorSnack = errorNotification(
-      `Failed to create requisition! ${message}`
+      t('error.failed-to-create-requisition', { message })
     );
     errorSnack();
   };
@@ -57,7 +57,7 @@ export const InboundShipmentWidget: React.FC<PropsWithChildrenOnly> = () => {
         >
           <Grid item>
             <StatsPanel
-              error={error}
+              error={error as ApiException}
               isError={isError}
               isLoading={isLoading}
               title={t('inbound-shipments')}
