@@ -17,6 +17,4 @@ export interface ApiException {
 }
 
 export const isPermissionDeniedException = (e?: ApiException) =>
-  !!e &&
-  'message' in e &&
-  (e as ApiException).message === AuthError.PermissionDenied;
+  !!e && 'message' in e && e.message === AuthError.PermissionDenied;
