@@ -3,7 +3,6 @@ import { useMutation, useQuery } from 'react-query';
 import { useAuthApi } from './useAuthApi';
 
 export const useGetUserDetails = () => {
-  console.info(`************ GET USER DETAILS ************ `);
   const api = useAuthApi();
   return useMutation<
     Partial<UserNode> | undefined,
@@ -14,7 +13,6 @@ export const useGetUserDetails = () => {
 };
 
 export const useUserDetails = (token: string) => {
-  console.log('---use---user---details---');
   const api = useAuthApi();
   return useQuery(api.keys.me(token), () => api.get.me(token), {
     enabled: !!token,
