@@ -2,6 +2,7 @@ import { IntlUtils, SupportedLocales } from '@common/intl';
 import {
   isValid,
   differenceInMonths,
+  differenceInMinutes,
   isPast,
   isThisWeek,
   isToday,
@@ -50,6 +51,7 @@ const formatIfValid = (
 ): string => (isValid(date) ? format(date, dateFormat, options) : '');
 
 export const DateUtils = {
+  differenceInMinutes,
   getDateOrNull: (date?: string | null): Date | null => {
     if (!date) return null;
     const maybeDate = new Date(date);

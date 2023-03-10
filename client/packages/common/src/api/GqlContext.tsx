@@ -59,16 +59,19 @@ class GQLClient extends GraphQLClient {
   private client: GraphQLClient;
   private emptyData: object;
   private skipRequest: SkipRequest;
+  private refreshToken: (documentNode?: DocumentNode) => void;
 
   constructor(
     url: string,
     options?: RequestInit | undefined,
-    skipRequest?: SkipRequest
+    skipRequest?: SkipRequest,
+    refreshToken?: (documentNode?: DocumentNode) => void
   ) {
     super(url, options);
     this.client = new GraphQLClient(url, options);
     this.emptyData = {};
     this.skipRequest = skipRequest || (() => false);
+    this.refreshToken = refreshToken ?? (() => {});
   }
 
   public request<T, V = Variables>(
@@ -82,6 +85,8 @@ class GQLClient extends GraphQLClient {
     if (this.skipRequest(document)) {
       return new Promise(() => this.emptyData);
     }
+
+    this.refreshToken(document);
 
     const response = options.document
       ? this.client.request(options)
@@ -112,13 +117,21 @@ class GQLClient extends GraphQLClient {
     this.client.setEndpoint(value);
   public setSkipRequest = (skipRequest: SkipRequest) =>
     (this.skipRequest = skipRequest);
+  public setRefreshToken = (refreshToken: () => void) =>
+    (this.refreshToken = refreshToken);
 }
 
 export const createGql = (
   url: string,
-  skipRequest?: SkipRequest
+  skipRequest?: SkipRequest,
+  refreshToken?: () => void
 ): { client: GQLClient } => {
-  const client = new GQLClient(url, { credentials: 'include' }, skipRequest);
+  const client = new GQLClient(
+    url,
+    { credentials: 'include' },
+    skipRequest,
+    refreshToken
+  );
   return { client };
 };
 
@@ -127,6 +140,9 @@ interface GqlControl {
   setHeader: (header: string, value: string) => void;
   setUrl: (url: string) => void;
   setSkipRequest: (skipRequest: SkipRequest) => void;
+  setRefreshToken: (
+    refreshToken: (documentNode?: DocumentNode) => void
+  ) => void;
 }
 
 const GqlContext = createContext<GqlControl>({
@@ -134,6 +150,7 @@ const GqlContext = createContext<GqlControl>({
   setHeader: () => {},
   setUrl: () => {},
   setSkipRequest: () => {},
+  setRefreshToken: () => {},
 });
 
 const { Provider } = GqlContext;
@@ -173,6 +190,13 @@ export const GqlProvider: FC<PropsWithChildren<ApiProviderProps>> = ({
     [client]
   );
 
+  const setRefreshToken = useCallback(
+    (refreshToken: (documentNode?: DocumentNode) => void) => {
+      client.setRefreshToken(refreshToken);
+    },
+    [client]
+  );
+
   useEffect(() => {
     setApi(createGql(url, skipRequest));
   }, [url, skipRequest]);
@@ -183,8 +207,9 @@ export const GqlProvider: FC<PropsWithChildren<ApiProviderProps>> = ({
       setUrl,
       setHeader,
       setSkipRequest,
+      setRefreshToken,
     }),
-    [client, setUrl, setHeader, setSkipRequest]
+    [client, setUrl, setHeader, setSkipRequest, setRefreshToken]
   );
 
   return <Provider value={val}>{children}</Provider>;

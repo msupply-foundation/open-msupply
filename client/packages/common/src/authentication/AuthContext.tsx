@@ -3,11 +3,7 @@ import { AppRoute } from '@openmsupply-client/config';
 import { useLocalStorage } from '../localStorage';
 import Cookies from 'js-cookie';
 import addMinutes from 'date-fns/addMinutes';
-import {
-  useLogin,
-  useGetUserPermissions,
-  useRefreshingAuth,
-} from './api/hooks';
+import { useLogin, useGetUserPermissions } from './api/hooks';
 
 import { AuthenticationResponse } from './api';
 import { UserStoreNodeFragment } from './api/operations.generated';
@@ -15,7 +11,7 @@ import { PropsWithChildrenOnly, UserPermission } from '@common/types';
 import { RouteBuilder } from '../utils/navigation';
 import { matchPath } from 'react-router-dom';
 
-export const COOKIE_LIFETIME_MINUTES = 2;
+export const COOKIE_LIFETIME_MINUTES = 60;
 const TOKEN_CHECK_INTERVAL = 60 * 1000;
 
 export enum AuthError {
@@ -107,11 +103,6 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
   const storeId = cookie?.store?.id ?? '';
   const { login, isLoggingIn } = useLogin(setCookie);
   const getUserPermissions = useGetUserPermissions();
-  const { newToken } = useRefreshingAuth({
-    token: cookie?.token,
-  });
-
-  console.log('========= AUTH PRO ===========');
 
   const setStore = async (store: UserStoreNodeFragment) => {
     if (!cookie?.token) return;
@@ -192,13 +183,6 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
     }, TOKEN_CHECK_INTERVAL);
     return () => window.clearInterval(timer);
   }, [cookie?.token]);
-
-  useEffect(() => {
-    console.log('-- setting new token --');
-    const authCookie = getAuthCookie();
-    const newCookie = { ...authCookie, token: newToken };
-    setCookie(newCookie);
-  }, [newToken]);
 
   return <Provider value={val}>{children}</Provider>;
 };
