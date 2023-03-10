@@ -72,6 +72,7 @@ pub struct TestSyncPushRecord {
     pub table_name: String,
     /// Expected record as pushed out to the server
     pub push_data: serde_json::Value,
+    pub is_sync_update: bool,
 }
 
 pub(crate) fn extract_sync_buffer_rows(records: &Vec<TestSyncPullRecord>) -> Vec<SyncBufferRow> {
@@ -216,11 +217,11 @@ pub(crate) async fn check_records_against_database(
 
             StorePreference(record) => {
                 check_record_by_id!(StorePreferenceRowRepository, con, record, "StorePreference")
-            },
+            }
 
             Clinician(record) => {
                 check_record_by_id!(ClinicianRowRepository, con, record, "Clinician")
-            },
+            }
 
             ClinicianStoreJoin(record) => check_record_by_id!(
                 ClinicianStoreJoinRowRepository,

@@ -76,6 +76,7 @@ fn stocktake_line_push_record() -> TestSyncPushRecord {
             note: None,
             inventory_adjustment_reason_id: None,
         }),
+        is_sync_update: false,
     }
 }
 
@@ -150,6 +151,7 @@ fn stocktake_line_om_field_push_record() -> TestSyncPushRecord {
             note: Some("om note".to_string()),
             inventory_adjustment_reason_id: None,
         }),
+        is_sync_update: false,
     }
 }
 

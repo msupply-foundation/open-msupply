@@ -94,6 +94,7 @@ fn item_line_1_push_record() -> TestSyncPushRecord {
             note: Some("test note".to_string()),
             supplier_id: Some("name_store_b".to_string()),
         }),
+        is_sync_update: false,
     }
 }
 
@@ -182,6 +183,7 @@ fn item_line_2_push_record() -> TestSyncPushRecord {
             note: None,
             supplier_id: None,
         }),
+        is_sync_update: false,
     }
 }
 

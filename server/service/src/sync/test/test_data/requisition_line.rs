@@ -79,6 +79,7 @@ fn requisition_line_request_push_record() -> TestSyncPushRecord {
             comment: None,
             snapshot_datetime: None,
         }),
+        is_sync_update: false,
     }
 }
 
@@ -152,6 +153,7 @@ fn requisition_line_om_fields_push_record() -> TestSyncPushRecord {
             comment: Some("Some comment".to_string()),
             snapshot_datetime: Some(NaiveDate::from_ymd(2022, 04, 04).and_hms(14, 48, 11)),
         }),
+        is_sync_update: false,
     }
 }
 

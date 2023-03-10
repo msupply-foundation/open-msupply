@@ -79,6 +79,7 @@ fn stocktake_push_record() -> TestSyncPushRecord {
             ),
             finalised_datetime: None,
         }),
+        is_sync_update: false,
     }
 }
 
@@ -147,6 +148,7 @@ fn stocktake_om_field_push_record() -> TestSyncPushRecord {
             created_datetime: Some(NaiveDate::from_ymd(2021, 07, 30).and_hms(15, 15, 15)),
             finalised_datetime: Some(NaiveDate::from_ymd(2021, 07, 31).and_hms(15, 15, 15)),
         }),
+        is_sync_update: false,
     }
 }
 
