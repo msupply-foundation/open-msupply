@@ -20,7 +20,12 @@ import { RequestInit } from 'graphql-request/dist/types.dom';
 
 export type SkipRequest = (documentNode: DocumentNode) => boolean;
 
-const permissionExceptions = ['reports', 'stockCounts', 'invoiceCounts'];
+const permissionExceptions = [
+  'reports',
+  'stockCounts',
+  'invoiceCounts',
+  'itemCounts',
+];
 interface ResponseError {
   message?: string;
   path?: string[];
@@ -41,10 +46,10 @@ const handleResponseError = (errors: ResponseError[]) => {
     return;
   }
 
-  if (
-    hasError(errors, AuthError.PermissionDenied) &&
-    !hasPermissionException(errors)
-  ) {
+  if (hasError(errors, AuthError.PermissionDenied)) {
+    if (hasPermissionException(errors)) {
+      throw errors[0];
+    }
     LocalStorage.setItem('/auth/error', AuthError.PermissionDenied);
     return;
   }
