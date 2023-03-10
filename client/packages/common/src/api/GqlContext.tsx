@@ -15,7 +15,7 @@ import {
 } from 'graphql-request';
 import { AuthError } from '../authentication/AuthContext';
 import { LocalStorage } from '../localStorage';
-import { DocumentNode } from 'graphql';
+import { DefinitionNode, DocumentNode, OperationDefinitionNode } from 'graphql';
 import { RequestInit } from 'graphql-request/dist/types.dom';
 
 export type SkipRequest = (documentNode: DocumentNode) => boolean;
@@ -55,23 +55,36 @@ const handleResponseError = (errors: ResponseError[]) => {
   throw new Error(details || error?.message || 'Unknown error');
 };
 
+const ignoredQueries = ['refreshToken', 'syncInfo'];
+
+const shouldIgnoreQuery = (definitionNode: DefinitionNode) => {
+  const operationNode = definitionNode as OperationDefinitionNode;
+  if (!operationNode) return false;
+  if (operationNode.operation !== 'query') return false;
+
+  return ignoredQueries.indexOf(operationNode.name?.value ?? '') !== -1;
+};
+
+const shouldSaveRequestTime = (documentNode?: DocumentNode) => {
+  return documentNode && !documentNode.definitions.some(shouldIgnoreQuery);
+};
+
 class GQLClient extends GraphQLClient {
   private client: GraphQLClient;
   private emptyData: object;
   private skipRequest: SkipRequest;
-  private refreshToken: (documentNode?: DocumentNode) => void;
+  private lastRequestTime: Date;
 
   constructor(
     url: string,
     options?: RequestInit | undefined,
-    skipRequest?: SkipRequest,
-    refreshToken?: (documentNode?: DocumentNode) => void
+    skipRequest?: SkipRequest
   ) {
     super(url, options);
     this.client = new GraphQLClient(url, options);
     this.emptyData = {};
     this.skipRequest = skipRequest || (() => false);
-    this.refreshToken = refreshToken ?? (() => {});
+    this.lastRequestTime = new Date();
   }
 
   public request<T, V = Variables>(
@@ -86,7 +99,7 @@ class GQLClient extends GraphQLClient {
       return new Promise(() => this.emptyData);
     }
 
-    this.refreshToken(document);
+    if (shouldSaveRequestTime(document)) this.lastRequestTime = new Date();
 
     const response = options.document
       ? this.client.request(options)
@@ -117,21 +130,14 @@ class GQLClient extends GraphQLClient {
     this.client.setEndpoint(value);
   public setSkipRequest = (skipRequest: SkipRequest) =>
     (this.skipRequest = skipRequest);
-  public setRefreshToken = (refreshToken: () => void) =>
-    (this.refreshToken = refreshToken);
+  public getLastRequestTime = () => this.lastRequestTime;
 }
 
 export const createGql = (
   url: string,
-  skipRequest?: SkipRequest,
-  refreshToken?: () => void
+  skipRequest?: SkipRequest
 ): { client: GQLClient } => {
-  const client = new GQLClient(
-    url,
-    { credentials: 'include' },
-    skipRequest,
-    refreshToken
-  );
+  const client = new GQLClient(url, { credentials: 'include' }, skipRequest);
   return { client };
 };
 
@@ -140,9 +146,6 @@ interface GqlControl {
   setHeader: (header: string, value: string) => void;
   setUrl: (url: string) => void;
   setSkipRequest: (skipRequest: SkipRequest) => void;
-  setRefreshToken: (
-    refreshToken: (documentNode?: DocumentNode) => void
-  ) => void;
 }
 
 const GqlContext = createContext<GqlControl>({
@@ -150,7 +153,6 @@ const GqlContext = createContext<GqlControl>({
   setHeader: () => {},
   setUrl: () => {},
   setSkipRequest: () => {},
-  setRefreshToken: () => {},
 });
 
 const { Provider } = GqlContext;
@@ -190,13 +192,6 @@ export const GqlProvider: FC<PropsWithChildren<ApiProviderProps>> = ({
     [client]
   );
 
-  const setRefreshToken = useCallback(
-    (refreshToken: (documentNode?: DocumentNode) => void) => {
-      client.setRefreshToken(refreshToken);
-    },
-    [client]
-  );
-
   useEffect(() => {
     setApi(createGql(url, skipRequest));
   }, [url, skipRequest]);
@@ -207,9 +202,8 @@ export const GqlProvider: FC<PropsWithChildren<ApiProviderProps>> = ({
       setUrl,
       setHeader,
       setSkipRequest,
-      setRefreshToken,
     }),
-    [client, setUrl, setHeader, setSkipRequest, setRefreshToken]
+    [client, setUrl, setHeader, setSkipRequest]
   );
 
   return <Provider value={val}>{children}</Provider>;

@@ -3,7 +3,7 @@ import { AppRoute } from '@openmsupply-client/config';
 import { useLocalStorage } from '../localStorage';
 import Cookies from 'js-cookie';
 import addMinutes from 'date-fns/addMinutes';
-import { useLogin, useGetUserPermissions } from './api/hooks';
+import { useLogin, useGetUserPermissions, useRefreshToken } from './api/hooks';
 
 import { AuthenticationResponse } from './api';
 import { UserStoreNodeFragment } from './api/operations.generated';
@@ -103,6 +103,7 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
   const storeId = cookie?.store?.id ?? '';
   const { login, isLoggingIn } = useLogin(setCookie);
   const getUserPermissions = useGetUserPermissions();
+  const { refreshToken } = useRefreshToken();
 
   const setStore = async (store: UserStoreNodeFragment) => {
     if (!cookie?.token) return;
@@ -175,11 +176,15 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
       );
 
       const isNotAuthPath = isDiscoveryScreen || isInitScreen;
+      if (isNotAuthPath) return;
 
-      if (!token && !isNotAuthPath) {
+      if (!token) {
         setError(AuthError.Timeout);
         window.clearInterval(timer);
+        return;
       }
+
+      refreshToken();
     }, TOKEN_CHECK_INTERVAL);
     return () => window.clearInterval(timer);
   }, [cookie?.token]);

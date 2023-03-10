@@ -9,7 +9,6 @@ import {
   useGql,
   useLocalStorage,
   useQueryClient,
-  useRefreshToken,
 } from '@openmsupply-client/common';
 import { UserNode } from '@common/types';
 
@@ -45,7 +44,7 @@ export const useLogin = (
 ) => {
   const { mutateAsync, isLoading: isLoggingIn } = useGetAuthToken();
   const changeLanguage = IntlUtils.useChangeLanguage();
-  const { setHeader, setSkipRequest, setRefreshToken } = useGql();
+  const { setHeader, setSkipRequest } = useGql();
   const { mutateAsync: getUserDetails } = useGetUserDetails();
   const queryClient = useQueryClient();
   const api = useAuthApi();
@@ -54,7 +53,6 @@ export const useLogin = (
   const getUserPermissions = useGetUserPermissions();
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_error, setError, removeError] = useLocalStorage('/auth/error');
-  const { refreshToken } = useRefreshToken();
 
   // returns MRU store, if set
   // or the first store in the list
@@ -105,7 +103,6 @@ export const useLogin = (
     const store = await getStore(userDetails);
     const permissions = await getUserPermissions(token, store);
     setSkipRequest(skipNoStoreRequests);
-    setRefreshToken(refreshToken);
     const authCookie = {
       store,
       token,
