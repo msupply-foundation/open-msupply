@@ -210,7 +210,7 @@ mod tests {
         let mock = mock_server.mock(|when, then| {
             when.method(POST)
                 .header("msupply-site-uuid", "site_id")
-                .header("app-version", "1.0")
+                .header("app-version", Version::from_package_json().to_string())
                 .header("app-name", "remote_server")
                 .path("/sync/v5/acknowledged_records");
             then.status(204);
