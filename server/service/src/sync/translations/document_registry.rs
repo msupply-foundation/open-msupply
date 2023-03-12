@@ -1,3 +1,4 @@
+use crate::sync::sync_serde::empty_str_as_option_string;
 use repository::{DocumentContext, DocumentRegistryRow, StorageConnection, SyncBufferRow};
 use serde::Deserialize;
 use serde_json::Value;
@@ -21,7 +22,11 @@ struct LegacyDocumentRegistryRow {
     pub document_type: String,
     pub context: LegacyDocumentContext,
     pub name: Option<String>,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(rename = "parent_ID")]
     pub parent_id: Option<String>,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(rename = "form_schema_ID")]
     pub form_schema_id: Option<String>,
     pub config: Option<Value>,
 }
