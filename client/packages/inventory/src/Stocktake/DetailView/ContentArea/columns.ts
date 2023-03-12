@@ -8,10 +8,12 @@ import {
   Column,
   SortBy,
   PositiveNumberCell,
+  getLinesFromRow,
 } from '@openmsupply-client/common';
 import { InventoryAdjustmentReasonRowFragment } from '@openmsupply-client/system';
 import { StocktakeSummaryItem } from '../../../types';
 import { StocktakeLineFragment } from '../../api';
+import { useStocktakeLineErrorContext } from '../../context';
 
 interface UseStocktakeColumnOptions {
   sortBy: SortBy<StocktakeLineFragment | StocktakeSummaryItem>;
@@ -49,8 +51,10 @@ export const useStocktakeColumns = ({
   onChangeSortBy,
 }: UseStocktakeColumnOptions): Column<
   StocktakeLineFragment | StocktakeSummaryItem
->[] =>
-  useColumns<StocktakeLineFragment | StocktakeSummaryItem>(
+>[] => {
+  const { getError } = useStocktakeLineErrorContext();
+
+  return useColumns<StocktakeLineFragment | StocktakeSummaryItem>(
     [
       [
         'itemCode',
@@ -173,6 +177,10 @@ export const useStocktakeColumns = ({
         description: 'description.snapshot-num-of-packs',
         align: ColumnAlign.Right,
         Cell: PositiveNumberCell,
+        getIsError: row =>
+          getLinesFromRow(row).some(
+            r => getError(r)?.__typename === 'SnapshotCountCurrentCountMismatch'
+          ),
         getSortValue: row => {
           if ('lines' in row) {
             const { lines } = row;
@@ -206,6 +214,10 @@ export const useStocktakeColumns = ({
         description: 'description.counted-num-of-packs',
         align: ColumnAlign.Right,
         Cell: PositiveNumberCell,
+        getIsError: row =>
+          getLinesFromRow(row).some(
+            r => getError(r)?.__typename === 'SnapshotCountCurrentCountMismatch'
+          ),
         getSortValue: row => {
           if ('lines' in row) {
             const { lines } = row;
@@ -315,9 +327,11 @@ export const useStocktakeColumns = ({
     { sortBy, onChangeSortBy },
     [sortBy, onChangeSortBy]
   );
+};
 
-export const useExpansionColumns = (): Column<StocktakeLineFragment>[] =>
-  useColumns([
+export const useExpansionColumns = (): Column<StocktakeLineFragment>[] => {
+  const { getError } = useStocktakeLineErrorContext();
+  return useColumns([
     'batch',
     'expiryDate',
     'packSize',
@@ -326,6 +340,8 @@ export const useExpansionColumns = (): Column<StocktakeLineFragment>[] =>
       width: 150,
       label: 'label.snapshot-num-of-packs',
       align: ColumnAlign.Right,
+      getIsError: rowData =>
+        getError(rowData)?.__typename === 'SnapshotCountCurrentCountMismatch',
       accessor: ({ rowData }) => rowData.snapshotNumberOfPacks,
     },
     {
@@ -333,6 +349,8 @@ export const useExpansionColumns = (): Column<StocktakeLineFragment>[] =>
       label: 'label.counted-num-of-packs',
       width: 150,
       align: ColumnAlign.Right,
+      getIsError: rowData =>
+        getError(rowData)?.__typename === 'StockLineReducedBelowZero',
       accessor: ({ rowData }) => rowData.countedNumberOfPacks,
     },
     'comment',
@@ -343,3 +361,4 @@ export const useExpansionColumns = (): Column<StocktakeLineFragment>[] =>
         rowData.inventoryAdjustmentReason?.reason || '',
     },
   ]);
+};

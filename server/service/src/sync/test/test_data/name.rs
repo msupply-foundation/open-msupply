@@ -136,8 +136,13 @@ fn name_1() -> TestSyncPullRecord {
             on_hold: true,
             address1: Some("address1".to_string()),
             address2: Some("address2".to_string()),
-            created_datetime: Some(NaiveDate::from_ymd(2022, 02, 10).and_hms(0, 0, 0)),
             is_sync_update: true,
+            created_datetime: Some(
+                NaiveDate::from_ymd_opt(2022, 02, 10)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap(),
+            ),
         }),
     )
 }
@@ -519,7 +524,7 @@ fn name_4() -> TestSyncPullRecord {
             first_name: Some("Alex".to_string()),
             last_name: Some("Moemoe".to_string()),
             gender: Some(Gender::Female),
-            date_of_birth: Some(NaiveDate::from_ymd(1998, 07, 29)),
+            date_of_birth: Some(NaiveDate::from_ymd_opt(1998, 07, 29).unwrap()),
             phone: Some("02345678".to_string()),
             charge_code: Some("00102/19/01".to_string()),
             comment: Some("name comment 1".to_string()),
@@ -531,7 +536,12 @@ fn name_4() -> TestSyncPullRecord {
             is_manufacturer: false,
             is_donor: false,
             on_hold: false,
-            created_datetime: Some(NaiveDate::from_ymd(2022, 05, 22).and_hms(0, 0, 0)),
+            created_datetime: Some(
+                NaiveDate::from_ymd_opt(2022, 05, 22)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap(),
+            ),
             is_deceased: true,
             national_health_number: Some("NHN003".to_string()),
             is_sync_update: true,

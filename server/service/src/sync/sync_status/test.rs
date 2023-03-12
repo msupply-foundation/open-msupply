@@ -7,7 +7,7 @@ use actix_web::{
 use chrono::{NaiveDateTime, Utc};
 use repository::{
     mock::{insert_extra_mock_data, mock_store_a, mock_store_b, MockData, MockDataInserts},
-    KeyValueStoreRow, KeyValueType, LocationRow,
+    ChangelogRepository, KeyValueStoreRow, KeyValueType, LocationRow,
 };
 use tokio::sync::Mutex;
 use util::{assert_matches, inline_edit, inline_init};
@@ -83,7 +83,8 @@ async fn sync_status() {
     );
 
     // Test PUSH and ERROR
-
+    // Clear change log
+    ChangelogRepository::new(&connection).drop_all().unwrap();
     // Insert some location rows to be pushed
     insert_extra_mock_data(
         &connection,
@@ -110,7 +111,7 @@ async fn sync_status() {
             .sync_status_service
             .number_of_records_in_push_queue(&ctx)
             .unwrap(),
-        7
+        3
     );
 
     let tester = get_push_and_error_sync_status_tester(service_provider.clone());
@@ -389,49 +390,25 @@ fn get_push_and_error_sync_status_tester(service_provider: Arc<ServiceProvider>)
                         assert!(push_status.finished.is_none());
 
                         assert_eq!(push_status.done, Some(0));
-                        assert_eq!(push_status.total, Some(7));
+                        assert_eq!(push_status.total, Some(3));
 
                         false
                     }
                     1 => {
                         assert_eq!(push_status.done, Some(1));
-                        assert_eq!(push_status.total, Some(7));
+                        assert_eq!(push_status.total, Some(3));
 
                         false
                     }
                     2 => {
                         assert_eq!(push_status.done, Some(2));
-                        assert_eq!(push_status.total, Some(7));
+                        assert_eq!(push_status.total, Some(3));
 
                         false
                     }
                     3 => {
                         assert_eq!(push_status.done, Some(3));
-                        assert_eq!(push_status.total, Some(7));
-
-                        false
-                    }
-                    4 => {
-                        assert_eq!(push_status.done, Some(4));
-                        assert_eq!(push_status.total, Some(7));
-
-                        false
-                    }
-                    5 => {
-                        assert_eq!(push_status.done, Some(5));
-                        assert_eq!(push_status.total, Some(7));
-
-                        false
-                    }
-                    6 => {
-                        assert_eq!(push_status.done, Some(6));
-                        assert_eq!(push_status.total, Some(7));
-
-                        false
-                    }
-                    7 => {
-                        assert_eq!(push_status.done, Some(7));
-                        assert_eq!(push_status.total, Some(7));
+                        assert_eq!(push_status.total, Some(3));
 
                         true
                     }

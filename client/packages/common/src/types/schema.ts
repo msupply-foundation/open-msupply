@@ -148,6 +148,11 @@ export type AdjustmentReasonNotProvided = InsertStocktakeLineErrorInterface & Up
   description: Scalars['String'];
 };
 
+export type AdjustmentReasonNotValid = InsertStocktakeLineErrorInterface & UpdateStocktakeLineErrorInterface & {
+  __typename: 'AdjustmentReasonNotValid';
+  description: Scalars['String'];
+};
+
 export type AllocateOutboundShipmentUnallocatedLineError = {
   __typename: 'AllocateOutboundShipmentUnallocatedLineError';
   error: AllocateOutboundShipmentUnallocatedLineErrorInterface;
@@ -847,7 +852,6 @@ export type EncounterConnector = {
 };
 
 export type EncounterEventFilterInput = {
-  data?: InputMaybe<EqualFilterStringInput>;
   /**
    * 	Only include events that are for the current encounter, i.e. have matching encounter type
    * and matching encounter name of the current encounter. If not set all events with matching
@@ -2861,7 +2865,6 @@ export type ProgramEventConnector = {
 };
 
 export type ProgramEventFilterInput = {
-  data?: InputMaybe<EqualFilterStringInput>;
   documentName?: InputMaybe<EqualFilterStringInput>;
   documentType?: InputMaybe<EqualFilterStringInput>;
   /** The event type */
@@ -3694,7 +3697,7 @@ export type StockLineSortInput = {
 export type StockLinesReducedBelowZero = UpdateStocktakeErrorInterface & {
   __typename: 'StockLinesReducedBelowZero';
   description: Scalars['String'];
-  stockLines: StockLineConnector;
+  errors: Array<StockLineReducedBelowZero>;
 };
 
 export type StockLinesResponse = StockLineConnector;

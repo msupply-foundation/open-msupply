@@ -133,7 +133,12 @@ fn requisition_line_om_fields_pull_record() -> TestSyncPullRecord {
             available_stock_on_hand: 10,
             average_monthly_consumption: 3 * NUMBER_OF_DAYS_IN_A_MONTH as i32,
             comment: Some("Some comment".to_string()),
-            snapshot_datetime: Some(NaiveDate::from_ymd(2022, 04, 04).and_hms(14, 48, 11)),
+            snapshot_datetime: Some(
+                NaiveDate::from_ymd_opt(2022, 04, 04)
+                    .unwrap()
+                    .and_hms_opt(14, 48, 11)
+                    .unwrap(),
+            ),
         }),
     )
 }
@@ -151,7 +156,12 @@ fn requisition_line_om_fields_push_record() -> TestSyncPushRecord {
             stock_on_hand: 10,
             daily_usage: 3.0,
             comment: Some("Some comment".to_string()),
-            snapshot_datetime: Some(NaiveDate::from_ymd(2022, 04, 04).and_hms(14, 48, 11)),
+            snapshot_datetime: Some(
+                NaiveDate::from_ymd_opt(2022, 04, 04)
+                    .unwrap()
+                    .and_hms_opt(14, 48, 11)
+                    .unwrap()
+            ),
         }),
         is_sync_update: false,
     }
