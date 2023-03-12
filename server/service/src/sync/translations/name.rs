@@ -50,14 +50,6 @@ impl LegacyNameType {
     }
 }
 
-// Only allow patient for now
-fn patient_type(name_type: &NameType) -> Option<LegacyNameType> {
-    match name_type {
-        NameType::Patient => Some(LegacyNameType::Patient),
-        _ => None,
-    }
-}
-
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
 pub struct LegacyNameRow {
@@ -258,8 +250,8 @@ impl SyncTranslation for NameTranslation {
             )))?;
 
         // Only push name records that belong to patients, gracefully ignore the rest
-        let patient_type = match patient_type(&r#type) {
-            Some(_type) => _type,
+        let patient_type = match r#type {
+            NameType::Patient => LegacyNameType::Patient,
             _ => return Ok(None),
         };
 
