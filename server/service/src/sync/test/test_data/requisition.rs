@@ -61,8 +61,16 @@ fn requisition_request_pull_record() -> TestSyncPullRecord {
             store_id: "store_b".to_string(),
             r#type: RequisitionRowType::Request,
             status: RequisitionRowStatus::Sent,
-            created_datetime: NaiveDate::from_ymd(2020, 7, 10).and_hms(0, 0, 0),
-            sent_datetime: Some(NaiveDate::from_ymd(2020, 07, 09).and_hms(05, 36, 46)),
+            created_datetime: NaiveDate::from_ymd_opt(2020, 7, 10)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap(),
+            sent_datetime: Some(
+                NaiveDate::from_ymd_opt(2020, 07, 09)
+                    .unwrap()
+                    .and_hms_opt(05, 36, 46)
+                    .unwrap(),
+            ),
             finalised_datetime: None,
             colour: None,
             comment: Some("comment 1".to_string()),
@@ -86,15 +94,25 @@ fn requisition_request_push_record() -> TestSyncPushRecord {
             store_ID: "store_b".to_string(),
             r#type: LegacyRequisitionType::Request,
             status: LegacyRequisitionStatus::Fn,
-            date_entered: NaiveDate::from_ymd(2020, 7, 10),
+            date_entered: NaiveDate::from_ymd_opt(2020, 7, 10).unwrap(),
             requester_reference: None,
             linked_requisition_id: Some("mock_request_draft_requisition2".to_string()),
             thresholdMOS: 3.0,
             daysToSupply: 150,
             comment: Some("comment 1".to_string()),
-            created_datetime: Some(NaiveDate::from_ymd(2020, 7, 10).and_hms(0, 0, 0)),
+            created_datetime: Some(
+                NaiveDate::from_ymd_opt(2020, 7, 10)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap()
+            ),
             last_modified_at: 1594273006,
-            sent_datetime: Some(NaiveDate::from_ymd(2020, 07, 09).and_hms(05, 36, 46)),
+            sent_datetime: Some(
+                NaiveDate::from_ymd_opt(2020, 07, 09)
+                    .unwrap()
+                    .and_hms_opt(05, 36, 46)
+                    .unwrap()
+            ),
             finalised_datetime: None,
             max_months_of_stock: Some(5.0),
             om_status: Some(RequisitionRowStatus::Sent),
@@ -149,9 +167,17 @@ fn requisition_response_pull_record() -> TestSyncPullRecord {
             store_id: "store_b".to_string(),
             r#type: RequisitionRowType::Response,
             status: RequisitionRowStatus::Finalised,
-            created_datetime: NaiveDate::from_ymd(2020, 7, 9).and_hms(0, 0, 0),
+            created_datetime: NaiveDate::from_ymd_opt(2020, 7, 9)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap(),
             sent_datetime: None,
-            finalised_datetime: Some(NaiveDate::from_ymd(2020, 07, 09).and_hms(05, 06, 20)),
+            finalised_datetime: Some(
+                NaiveDate::from_ymd_opt(2020, 07, 09)
+                    .unwrap()
+                    .and_hms_opt(05, 06, 20)
+                    .unwrap(),
+            ),
             colour: None,
             comment: Some("From request requisition 3".to_string()),
             their_reference: Some("From request requisition 3".to_string()),
@@ -174,16 +200,26 @@ fn requisition_response_push_record() -> TestSyncPushRecord {
             store_ID: "store_b".to_string(),
             r#type: LegacyRequisitionType::Response,
             status: LegacyRequisitionStatus::Fn,
-            date_entered: NaiveDate::from_ymd(2020, 7, 9),
+            date_entered: NaiveDate::from_ymd_opt(2020, 7, 9).unwrap(),
             requester_reference: Some("From request requisition 3".to_string()),
             linked_requisition_id: Some("mock_request_draft_requisition2".to_string()),
             thresholdMOS: 3.0,
             daysToSupply: 300,
             comment: Some("From request requisition 3".to_string()),
-            created_datetime: Some(NaiveDate::from_ymd(2020, 7, 9).and_hms(0, 0, 0)),
+            created_datetime: Some(
+                NaiveDate::from_ymd_opt(2020, 7, 9)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap()
+            ),
             last_modified_at: 1594271180,
             sent_datetime: None,
-            finalised_datetime: Some(NaiveDate::from_ymd(2020, 7, 9).and_hms(5, 6, 20)),
+            finalised_datetime: Some(
+                NaiveDate::from_ymd_opt(2020, 7, 9)
+                    .unwrap()
+                    .and_hms_opt(5, 6, 20)
+                    .unwrap()
+            ),
             max_months_of_stock: Some(10.0),
             om_status: Some(RequisitionRowStatus::Finalised),
             om_colour: None,
@@ -244,10 +280,23 @@ fn requisition_om_fields_pull_record() -> TestSyncPullRecord {
             store_id: "store_b".to_string(),
             r#type: RequisitionRowType::Response,
             status: RequisitionRowStatus::New,
-            created_datetime: NaiveDate::from_ymd(2020, 7, 9).and_hms(0, 0, 0),
-            sent_datetime: Some(NaiveDate::from_ymd(2022, 03, 24).and_hms(14, 48, 00)),
-            finalised_datetime: Some(NaiveDate::from_ymd(2022, 03, 25).and_hms(14, 48, 00)),
-            expected_delivery_date: Some(NaiveDate::from_ymd(2022, 03, 26)),
+            created_datetime: NaiveDate::from_ymd_opt(2020, 7, 9)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap(),
+            sent_datetime: Some(
+                NaiveDate::from_ymd_opt(2022, 03, 24)
+                    .unwrap()
+                    .and_hms_opt(14, 48, 00)
+                    .unwrap(),
+            ),
+            finalised_datetime: Some(
+                NaiveDate::from_ymd_opt(2022, 03, 25)
+                    .unwrap()
+                    .and_hms_opt(14, 48, 00)
+                    .unwrap(),
+            ),
+            expected_delivery_date: Some(NaiveDate::from_ymd_opt(2022, 03, 26).unwrap()),
             colour: Some("Colour".to_string()),
             comment: Some("From request requisition 3".to_string()),
             their_reference: Some("From request requisition 3".to_string()),
@@ -269,17 +318,32 @@ fn requisition_om_fields_push_record() -> TestSyncPushRecord {
             store_ID: "store_b".to_string(),
             r#type: LegacyRequisitionType::Response,
             status: LegacyRequisitionStatus::Cn,
-            date_entered: NaiveDate::from_ymd(2020, 7, 9),
+            date_entered: NaiveDate::from_ymd_opt(2020, 7, 9).unwrap(),
             requester_reference: Some("From request requisition 3".to_string()),
             linked_requisition_id: Some("mock_request_draft_requisition2".to_string()),
             thresholdMOS: 3.0,
             daysToSupply: 300,
             comment: Some("From request requisition 3".to_string()),
             last_modified_at: 1648219680,
-            created_datetime: Some(NaiveDate::from_ymd(2020, 07, 09).and_hms(0, 0, 0)),
-            sent_datetime: Some(NaiveDate::from_ymd(2022, 03, 24).and_hms(14, 48, 00)),
-            finalised_datetime: Some(NaiveDate::from_ymd(2022, 03, 25).and_hms(14, 48, 00)),
-            expected_delivery_date: Some(NaiveDate::from_ymd(2022, 03, 26)),
+            created_datetime: Some(
+                NaiveDate::from_ymd_opt(2020, 07, 09)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap()
+            ),
+            sent_datetime: Some(
+                NaiveDate::from_ymd_opt(2022, 03, 24)
+                    .unwrap()
+                    .and_hms_opt(14, 48, 00)
+                    .unwrap()
+            ),
+            finalised_datetime: Some(
+                NaiveDate::from_ymd_opt(2022, 03, 25)
+                    .unwrap()
+                    .and_hms_opt(14, 48, 00)
+                    .unwrap()
+            ),
+            expected_delivery_date: Some(NaiveDate::from_ymd_opt(2022, 03, 26).unwrap()),
             max_months_of_stock: Some(10.0),
             om_status: Some(RequisitionRowStatus::New),
             om_colour: Some("Colour".to_string()),

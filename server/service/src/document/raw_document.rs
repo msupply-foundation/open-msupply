@@ -82,7 +82,7 @@ mod document_id_test {
             name: "name".to_string(),
             parents: vec!["p1".to_string()],
             author: "author".to_string(),
-            timestamp: Utc.timestamp_millis(1000),
+            timestamp: Utc.timestamp_millis_opt(1000).unwrap(),
             r#type: "test".to_string(),
             data: json!({
               "b": 0.3453333,

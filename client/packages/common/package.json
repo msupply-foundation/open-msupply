@@ -1,6 +1,7 @@
 {
   "name": "@openmsupply-client/common",
   "version": "0.0.1",
+  "sideEffects": false,
   "private": true,
   "main": "./src/index.ts",
   "scripts": {

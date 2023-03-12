@@ -64,10 +64,23 @@ pub fn mock_request_draft_requisition_all_fields() -> FullMockRequisition {
             r.store_id = mock_store_a().id;
             r.r#type = RequisitionRowType::Request;
             r.status = RequisitionRowStatus::Draft;
-            r.created_datetime = NaiveDate::from_ymd(2021, 01, 01).and_hms(0, 0, 0);
-            r.sent_datetime = Some(NaiveDate::from_ymd(2021, 01, 02).and_hms(0, 0, 0));
-            r.finalised_datetime = Some(NaiveDate::from_ymd(2021, 01, 03).and_hms(0, 0, 0));
-            r.expected_delivery_date = Some(NaiveDate::from_ymd(2021, 01, 04));
+            r.created_datetime = NaiveDate::from_ymd_opt(2021, 01, 01)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap();
+            r.sent_datetime = Some(
+                NaiveDate::from_ymd_opt(2021, 01, 02)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap(),
+            );
+            r.finalised_datetime = Some(
+                NaiveDate::from_ymd_opt(2021, 01, 03)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap(),
+            );
+            r.expected_delivery_date = Some(NaiveDate::from_ymd_opt(2021, 01, 04).unwrap());
             r.colour = Some("colour".to_owned());
             r.comment = Some("comment".to_owned());
             r.their_reference = Some("their_reference".to_owned());
@@ -108,9 +121,22 @@ pub fn mock_response_draft_requisition_all_fields() -> FullMockRequisition {
             r.store_id = mock_store_a().id;
             r.r#type = RequisitionRowType::Response;
             r.status = RequisitionRowStatus::Draft;
-            r.created_datetime = NaiveDate::from_ymd(2021, 01, 01).and_hms(0, 0, 0);
-            r.sent_datetime = Some(NaiveDate::from_ymd(2021, 01, 02).and_hms(0, 0, 0));
-            r.finalised_datetime = Some(NaiveDate::from_ymd(2021, 01, 03).and_hms(0, 0, 0));
+            r.created_datetime = NaiveDate::from_ymd_opt(2021, 01, 01)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap();
+            r.sent_datetime = Some(
+                NaiveDate::from_ymd_opt(2021, 01, 02)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap(),
+            );
+            r.finalised_datetime = Some(
+                NaiveDate::from_ymd_opt(2021, 01, 03)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap(),
+            );
             r.colour = Some("colour".to_owned());
             r.comment = Some("comment".to_owned());
             r.their_reference = Some("their_reference".to_owned());
@@ -143,7 +169,10 @@ pub fn mock_invoice1_linked_to_requisition() -> FullMockInvoice {
             r.invoice_number = 20;
             r.r#type = InvoiceRowType::InboundShipment;
             r.status = InvoiceRowStatus::New;
-            r.created_datetime = NaiveDate::from_ymd(1970, 1, 1).and_hms_milli(12, 30, 0, 0);
+            r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 1)
+                .unwrap()
+                .and_hms_milli_opt(12, 30, 0, 0)
+                .unwrap();
             r.requisition_id = Some(mock_request_draft_requisition_all_fields().requisition.id);
         }),
         lines: vec![
@@ -241,7 +270,10 @@ pub fn mock_invoice2_linked_to_requisition() -> FullMockInvoice {
             r.invoice_number = 20;
             r.r#type = InvoiceRowType::InboundShipment;
             r.status = InvoiceRowStatus::New;
-            r.created_datetime = NaiveDate::from_ymd(1970, 1, 1).and_hms_milli(12, 30, 0, 0);
+            r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 1)
+                .unwrap()
+                .and_hms_milli_opt(12, 30, 0, 0)
+                .unwrap();
             r.requisition_id = Some(mock_request_draft_requisition_all_fields().requisition.id);
         }),
         lines: vec![FullMockInvoiceLine {
@@ -298,7 +330,10 @@ pub fn mock_invoice3_linked_to_requisition() -> FullMockInvoice {
             r.invoice_number = 20;
             r.r#type = InvoiceRowType::OutboundShipment;
             r.status = InvoiceRowStatus::New;
-            r.created_datetime = NaiveDate::from_ymd(1970, 1, 1).and_hms_milli(12, 30, 0, 0);
+            r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 1)
+                .unwrap()
+                .and_hms_milli_opt(12, 30, 0, 0)
+                .unwrap();
             r.requisition_id = Some(mock_response_draft_requisition_all_fields().requisition.id);
         }),
         lines: vec![FullMockInvoiceLine {

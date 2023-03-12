@@ -128,7 +128,7 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
       okButton={
         currentTab === Tabs.SearchResults ? (
           <DialogButton
-            variant="create"
+            variant="next"
             disabled={!patient?.canCreate}
             onClick={onOk}
           />

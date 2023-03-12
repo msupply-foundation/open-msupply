@@ -186,6 +186,11 @@ fragment Encounter on EncounterNode {
     name
     dateOfBirth
   }
+  clinician {
+    id
+    firstName
+    lastName
+  }
   program
   startDatetime
   endDatetime

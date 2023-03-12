@@ -417,7 +417,10 @@ mod document_service_test {
                 name: doc_name.to_string(),
                 parents: vec![],
                 author: "me".to_string(),
-                timestamp: DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(5000, 0), Utc),
+                timestamp: DateTime::<Utc>::from_utc(
+                    NaiveDateTime::from_timestamp_opt(5000, 0).unwrap(),
+                    Utc,
+                ),
                 r#type: "test_data".to_string(),
                 data: json!({
                   "version": 1,
@@ -445,7 +448,7 @@ mod document_service_test {
                     parents: vec![],
                     author: "me".to_string(),
                     timestamp: DateTime::<Utc>::from_utc(
-                        NaiveDateTime::from_timestamp(5000, 0),
+                        NaiveDateTime::from_timestamp_opt(5000, 0).unwrap(),
                         Utc,
                     ),
                     r#type: "test_data".to_string(),
@@ -472,7 +475,10 @@ mod document_service_test {
                 name: doc_name.to_string(),
                 parents: vec!["invalid".to_string()],
                 author: "me".to_string(),
-                timestamp: DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(6000, 0), Utc),
+                timestamp: DateTime::<Utc>::from_utc(
+                    NaiveDateTime::from_timestamp_opt(6000, 0).unwrap(),
+                    Utc,
+                ),
                 r#type: "test_data".to_string(),
                 data: json!({
                   "version": 2,
@@ -497,7 +503,7 @@ mod document_service_test {
                     parents: vec![v1.id.clone()],
                     author: "me".to_string(),
                     timestamp: DateTime::<Utc>::from_utc(
-                        NaiveDateTime::from_timestamp(6000, 0),
+                        NaiveDateTime::from_timestamp_opt(6000, 0).unwrap(),
                         Utc,
                     ),
                     r#type: "test_data".to_string(),
@@ -528,7 +534,7 @@ mod document_service_test {
                     parents: vec![],
                     author: "me".to_string(),
                     timestamp: DateTime::<Utc>::from_utc(
-                        NaiveDateTime::from_timestamp(8000, 0),
+                        NaiveDateTime::from_timestamp_opt(8000, 0).unwrap(),
                         Utc,
                     ),
                     r#type: "test_data2".to_string(),
@@ -573,7 +579,7 @@ mod document_service_test {
                     parents: vec![],
                     author: "me".to_string(),
                     timestamp: DateTime::<Utc>::from_utc(
-                        NaiveDateTime::from_timestamp(5000, 0),
+                        NaiveDateTime::from_timestamp_opt(5000, 0).unwrap(),
                         Utc,
                     ),
                     r#type: "test_data".to_string(),
@@ -600,7 +606,10 @@ mod document_service_test {
                 name: "test/doc2".to_string(),
                 parents: vec![],
                 author: "me".to_string(),
-                timestamp: DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(5000, 0), Utc),
+                timestamp: DateTime::<Utc>::from_utc(
+                    NaiveDateTime::from_timestamp_opt(5000, 0).unwrap(),
+                    Utc,
+                ),
                 r#type: "test_data".to_string(),
                 data: json!({
                   "value1": "base",
@@ -628,7 +637,10 @@ mod document_service_test {
                 name: "test/doc3".to_string(),
                 parents: vec![],
                 author: "me".to_string(),
-                timestamp: DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(5000, 0), Utc),
+                timestamp: DateTime::<Utc>::from_utc(
+                    NaiveDateTime::from_timestamp_opt(5000, 0).unwrap(),
+                    Utc,
+                ),
                 r#type: "test_data".to_string(),
                 data: json!({
                   "intValue": "base",
@@ -658,7 +670,7 @@ mod document_service_test {
                     parents: vec![],
                     author: "me".to_string(),
                     timestamp: DateTime::<Utc>::from_utc(
-                        NaiveDateTime::from_timestamp(5000, 0),
+                        NaiveDateTime::from_timestamp_opt(5000, 0).unwrap(),
                         Utc,
                     ),
                     r#type: "test_data".to_string(),

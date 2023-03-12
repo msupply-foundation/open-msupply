@@ -10,6 +10,7 @@ export const PositiveNumberInputCell = <T extends RecordWithId>({
   column,
   rowIndex,
   columnIndex,
+  isError,
   isDisabled = false,
 }: CellProps<T>): React.ReactElement<CellProps<T>> => {
   const [buffer, setBuffer] = useBufferState(column.accessor({ rowData }));
@@ -23,6 +24,7 @@ export const PositiveNumberInputCell = <T extends RecordWithId>({
       autoFocus={autoFocus}
       InputProps={{ sx: { '& .MuiInput-input': { textAlign: 'right' } } }}
       type="number"
+      error={isError}
       value={buffer}
       onChange={newValue => {
         setBuffer(newValue.toString());
