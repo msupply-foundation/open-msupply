@@ -5,7 +5,7 @@ use crate::sync::{
         zero_date_as_option,
     },
 };
-use chrono::NaiveDate;
+use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
     ChangelogRow, ChangelogTableName, Gender, NameRow, NameRowRepository, NameType,
     StorageConnection, SyncBufferRow,
@@ -120,11 +120,12 @@ pub struct LegacyNameRow {
 
     #[serde(rename = "isDeceased")]
     pub is_deceased: bool,
-    // #[serde(rename = "om_created_datetime")]
-    // #[serde(deserialize_with = "empty_str_as_option")]
-    // pub created_datetime: Option<NaiveDateTime>,
-    // #[serde(rename = "om_gender")]
-    // pub gender: Option<Gender>,
+    #[serde(rename = "om_created_datetime")]
+    #[serde(deserialize_with = "empty_str_as_option")]
+    pub created_datetime: Option<NaiveDateTime>,
+    #[serde(rename = "om_gender")]
+    #[serde(deserialize_with = "empty_str_as_option")]
+    pub gender: Option<Gender>,
 }
 
 const LEGACY_TABLE_NAME: &'static str = LegacyTableName::NAME;
@@ -173,9 +174,9 @@ impl SyncTranslation for NameTranslation {
             is_manufacturer: data.is_manufacturer,
             is_donor: data.is_donor,
             on_hold: data.on_hold,
-
-            // TODO replace once mSupply support new fields
-            gender: if data.r#type == LegacyNameType::Patient {
+            is_deceased: data.is_deceased,
+            national_health_number: data.national_health_number,
+            gender: data.gender.or(if data.r#type == LegacyNameType::Patient {
                 if data.female {
                     Some(Gender::Female)
                 } else {
@@ -183,20 +184,10 @@ impl SyncTranslation for NameTranslation {
                 }
             } else {
                 None
-            },
-            created_datetime: data.created_date.map(|date| date.and_hms(0, 0, 0)),
-            is_deceased: data.is_deceased,
-            national_health_number: data.national_health_number,
-            /*
-            gender: data.gender.or(if data.female {
-                Some(Gender::Female)
-            } else {
-                Some(Gender::Male)
             }),
             created_datetime: data
-                .om_created_datetime
+                .created_datetime
                 .or(data.created_date.map(|date| date.and_hms(0, 0, 0))),
-                */
         };
 
         Ok(Some(IntegrationRecords::from_upsert(
@@ -274,7 +265,7 @@ impl SyncTranslation for NameTranslation {
             supplying_store_id,
             first_name,
             last_name,
-            female: gender.map(|g| g == Gender::Female).unwrap_or(false),
+            female: gender.clone().map(|g| g == Gender::Female).unwrap_or(false),
             date_of_birth,
             phone,
             charge_code,
@@ -290,8 +281,8 @@ impl SyncTranslation for NameTranslation {
             created_date: created_datetime.map(|datetime| datetime.date()),
             national_health_number,
             is_deceased,
-            // created_datetime,
-            // gender,
+            created_datetime,
+            gender,
         };
 
         Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
