@@ -3,6 +3,7 @@ pub(crate) mod clinician;
 pub(crate) mod clinician_store_join;
 pub(crate) mod document;
 pub(crate) mod document_registry;
+pub(crate) mod form_schema;
 pub(crate) mod inventory_adjustment_reason;
 pub(crate) mod invoice;
 pub(crate) mod invoice_line;
@@ -44,6 +45,7 @@ pub(crate) fn all_translators() -> SyncTanslators {
         Box::new(report::ReportTranslation {}),
         Box::new(inventory_adjustment_reason::InventoryAdjustmentReasonTranslation {}),
         Box::new(store_preference::StorePreferenceTranslation {}),
+        Box::new(form_schema::FormSchemaTranslation {}),
         Box::new(document_registry::DocumentRegistryTranslation {}),
         // Remote
         Box::new(location::LocationTranslation {}),
@@ -59,6 +61,7 @@ pub(crate) fn all_translators() -> SyncTanslators {
         Box::new(clinician_store_join::ClinicianStoreJoinTranslation {}),
         // Remote-Central (site specific)
         Box::new(name_store_join::NameStoreJoinTranslation {}),
+        //Box::new(document::DocumentTranslation {}),
         // Special translations
         Box::new(special::NameToNameStoreJoinTranslation {}),
     ]
@@ -77,6 +80,7 @@ pub(crate) mod LegacyTableName {
     pub(crate) const REPORT: &str = "report";
     pub(crate) const INVENTORY_ADJUSTMENT_REASON: &str = "options";
     pub(crate) const STORE_PREFERENCE: &str = "pref";
+    pub(crate) const FORM_SCHEMA: &str = "form_schema";
     // Remote
     pub(crate) const LOCATION: &str = "Location";
     pub(crate) const ITEM_LINE: &str = "item_line";
@@ -119,6 +123,7 @@ pub(crate) enum PullUpsertRecord {
     StorePreference(StorePreferenceRow),
     Clinician(ClinicianRow),
     ClinicianStoreJoin(ClinicianStoreJoinRow),
+    FormSchema(FormSchemaJson),
     Document(Document),
     DocumentRegistry(DocumentRegistryRow),
 }

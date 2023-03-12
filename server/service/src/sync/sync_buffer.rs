@@ -17,6 +17,7 @@ const TRANSLATION_AND_INTEGRATION_ORDER: &[&str] = &[
     LegacyTableName::LIST_MASTER,
     LegacyTableName::LIST_MASTER_LINE,
     LegacyTableName::LIST_MASTER_NAME_JOIN,
+    LegacyTableName::FORM_SCHEMA,
     LegacyTableName::REPORT,
     LegacyTableName::LOCATION,
     LegacyTableName::ITEM_LINE,

@@ -199,6 +199,7 @@ impl PullUpsertRecord {
             }
             Document(record) => upsert_document(con, record),
             DocumentRegistry(record) => DocumentRegistryRowRepository::new(con).upsert_one(record),
+            FormSchema(record) => FormSchemaRowRepository::new(con).upsert_one(record),
         }
     }
 }
