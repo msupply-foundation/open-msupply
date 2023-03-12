@@ -87,7 +87,7 @@ export const LocationEditModal: FC<LocationEditModalProps> = ({
   location,
 }) => {
   const { Modal } = useDialog({ isOpen, onClose });
-  const t = useTranslation(['inventory', 'common']);
+  const t = useTranslation('inventory');
   const { draft, onUpdate, onChangeLocation, onSave, isLoading } =
     useDraftLocation(location, mode);
   const isInvalid = !draft.code || !draft.name;

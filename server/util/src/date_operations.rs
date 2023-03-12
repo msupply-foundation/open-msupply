@@ -62,7 +62,7 @@ pub fn date_with_months_offset(date: &NaiveDate, months_off_set: i32) -> NaiveDa
 
     let new_months = new_total_months as u32 % 12 + 1;
     let new_year = (new_total_months as f64 / 12.0).floor() as i32;
-    NaiveDate::from_ymd(new_year, new_months, 1)
+    NaiveDate::from_ymd_opt(new_year, new_months, 1).unwrap()
 }
 
 /// ```
@@ -84,9 +84,9 @@ pub fn date_with_months_offset(date: &NaiveDate, months_off_set: i32) -> NaiveDa
 /// ```
 ///
 pub fn last_day_of_the_month(date: &NaiveDate) -> NaiveDate {
-    date_with_months_offset(date, 1).pred()
+    date_with_months_offset(date, 1).pred_opt().unwrap()
 }
 
 pub fn first_day_of_the_month(date: &NaiveDate) -> NaiveDate {
-    NaiveDate::from_ymd(date.year(), date.month(), 1)
+    NaiveDate::from_ymd_opt(date.year(), date.month(), 1).unwrap()
 }

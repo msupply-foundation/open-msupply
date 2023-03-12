@@ -720,7 +720,10 @@ mod test {
                 r.id = "mock_stocktake_existing_line".to_string();
                 r.store_id = "store_a".to_string();
                 r.stocktake_number = 10;
-                r.created_datetime = NaiveDate::from_ymd(2021, 12, 14).and_hms_milli(12, 33, 0, 0);
+                r.created_datetime = NaiveDate::from_ymd_opt(2021, 12, 14)
+                    .unwrap()
+                    .and_hms_milli_opt(12, 33, 0, 0)
+                    .unwrap();
                 r.status = StocktakeStatus::New;
             })
         }
@@ -1002,7 +1005,7 @@ mod test {
                     comment: Some("comment_1".to_string()),
                     description: Some("description_1".to_string()),
                     status: None,
-                    stocktake_date: Some(NaiveDate::from_ymd(2019, 03, 20)),
+                    stocktake_date: Some(NaiveDate::from_ymd_opt(2019, 03, 20).unwrap()),
                     is_locked: Some(false),
                 },
             )
@@ -1013,7 +1016,7 @@ mod test {
             inline_edit(&stocktake, |mut i: StocktakeRow| {
                 i.comment = Some("comment_1".to_string());
                 i.description = Some("description_1".to_string());
-                i.stocktake_date = Some(NaiveDate::from_ymd(2019, 03, 20));
+                i.stocktake_date = Some(NaiveDate::from_ymd_opt(2019, 03, 20).unwrap());
                 i.is_locked = false;
                 i
             }),
