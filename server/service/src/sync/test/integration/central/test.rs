@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod tests {
     use crate::sync::test::integration::central::{
+        form_schema::FormSchemaTester,
         inventory_adjustment_reason::InventoryAdjustmentReasonTester,
         master_list::MasterListTester,
         name_and_store_and_name_store_join::NameAndStoreAndNameStoreJoinTester,
@@ -34,5 +35,10 @@ mod tests {
             &InventoryAdjustmentReasonTester,
         )
         .await;
+    }
+
+    #[actix_rt::test]
+    async fn integration_sync_central_form_schema() {
+        test_central_sync_record("form_schema", &FormSchemaTester).await;
     }
 }
