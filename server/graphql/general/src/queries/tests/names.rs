@@ -237,7 +237,9 @@ mod graphql {
             assert_eq!(gender, Some(Gender::Female.equal_to()));
             assert_eq!(
                 date_of_birth,
-                Some(DateFilter::equal_to(NaiveDate::from_ymd(2000, 02, 28)))
+                Some(DateFilter::equal_to(
+                    NaiveDate::from_ymd_opt(2000, 02, 28).unwrap()
+                ))
             );
             assert_eq!(phone, Some(SimpleStringFilter::equal_to("01234")));
             assert_eq!(address1, Some(SimpleStringFilter::equal_to("address1")));

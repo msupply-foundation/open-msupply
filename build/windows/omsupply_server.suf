@@ -152,14 +152,14 @@
 </FileData>
 <FileData>
 <FldRef>1</FldRef>
-<FullName>#PROJECTFILEDIR#\Server\configuration\*.*</FullName>
-<FileName>*.*</FileName>
+<FullName>#PROJECTFILEDIR#\Server\configuration\local.yaml</FullName>
+<FileName>local.yaml</FileName>
 <Source>#PROJECTFILEDIR#\Server\configuration</Source>
 <Ext>*</Ext>
 <RTSource>Archive</RTSource>
 <Desc/>
 <Recurse>1</Recurse>
-<MatchMode>0</MatchMode>
+<MatchMode>1</MatchMode>
 <Dest>%AppFolder%\configuration</Dest>
 <Overwrite>2</Overwrite>
 <Backup>0</Backup>
@@ -4177,7 +4177,18 @@ if (omSupplyServerDatabase == "postgres") then
 	omSupplyServerPath = SessionVar.Expand("%AppFolder%\\omSupply-postgres.exe"); 
 end
 
-if not hasOmsupplyInstalled then
+if hasOmsupplyInstalled then
+	local uninstallPath = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
+	local installedApps = Registry.GetKeyNames(HKEY_LOCAL_MACHINE, uninstallPath);
+	-- Remove previous versions of this app from the uninstall list
+	if (Table.Count(installedApps) &gt; 0) then
+		for index, value in pairs(installedApps) do
+			if ((String.Find(value, "omSupply Serverv", 1, false) ~= -1) and (value ~= SessionVar.Expand("omSupply Server%ProductVer%"))) then
+				Registry.DeleteKey(HKEY_LOCAL_MACHINE, uninstallPath .. "\\" .. value);
+			end
+		end
+	end
+else
 	local config = "server:\r\n"
 	config = config .. "  host: 192.168.178.68\r\n";
 	config = config .. "  port: " .. SessionVar.Get("%omsupply_port%") .. "\r\n";

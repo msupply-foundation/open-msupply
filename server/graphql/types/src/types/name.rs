@@ -258,9 +258,13 @@ mod test {
                             r.on_hold = true;
                             r.address1 = Some("address1".to_string());
                             r.address2 = Some("address2".to_string());
-                            r.created_datetime =
-                                Some(NaiveDate::from_ymd(2022, 05, 18).and_hms(12, 07, 12));
-                            r.date_of_birth = Some(NaiveDate::from_ymd(1995, 05, 15));
+                            r.created_datetime = Some(
+                                NaiveDate::from_ymd_opt(2022, 05, 18)
+                                    .unwrap()
+                                    .and_hms_opt(12, 07, 12)
+                                    .unwrap(),
+                            );
+                            r.date_of_birth = Some(NaiveDate::from_ymd_opt(1995, 05, 15).unwrap());
                         }),
                         name_store_join_row: None,
                         store_row: None,

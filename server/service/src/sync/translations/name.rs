@@ -186,8 +186,8 @@ impl SyncTranslation for NameTranslation {
                 None
             }),
             created_datetime: data
-                .created_datetime
-                .or(data.created_date.map(|date| date.and_hms(0, 0, 0))),
+                .created_date
+                .map(|date| date.and_hms_opt(0, 0, 0).unwrap()),
         };
 
         Ok(Some(IntegrationRecords::from_upsert(

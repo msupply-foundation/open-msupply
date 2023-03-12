@@ -1,4 +1,4 @@
-import { uniqWith } from 'lodash';
+import { uniqWith } from '@common/utils';
 import { useState, useEffect } from 'react';
 import { registerPlugin, Capacitor } from '@capacitor/core';
 import { useLocalStorage } from '../../localStorage';
@@ -40,6 +40,7 @@ export interface NativeAPI {
   advertiseService?: () => void;
   startBarcodeScan: () => Promise<number[]>;
   stopBarcodeScan: () => void;
+  readLog: () => Promise<{ log: string; error: string }>;
 }
 
 declare global {
@@ -100,6 +101,7 @@ export const useNativeClient = ({
     localStorage.setItem(PREVIOUS_SERVER_KEY, JSON.stringify(server));
     nativeAPI?.connectToServer(server);
   };
+
   const stopDiscovery = () =>
     setState(state => ({ ...state, isDiscovering: false }));
 
@@ -120,6 +122,16 @@ export const useNativeClient = ({
     }));
 
     nativeAPI.startServerDiscovery();
+  };
+
+  const readLog = async () => {
+    const noResult = 'log unavailable';
+    const result = await nativeAPI?.readLog();
+
+    if (!result) return noResult;
+    if (result.error) console.error(result.error);
+
+    return result.log || noResult;
   };
 
   useEffect(() => {
@@ -190,6 +202,7 @@ export const useNativeClient = ({
     startDiscovery,
     stopDiscovery,
     setMode,
+    readLog,
   };
 };
 

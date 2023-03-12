@@ -78,9 +78,11 @@ const PatientDetailView: FC = () => {
   const handleSave = useUpsertPatient();
   const { JsonForm, saveData, isSaving, isDirty, validationError } =
     useJsonForms(patient ? undefined : documentName, { handleSave }, createDoc);
+
   useEffect(() => {
     return () => setNewPatient(undefined);
   }, []);
+
   const save = useCallback(async () => {
     const documentName = await saveData();
     if (documentName) {

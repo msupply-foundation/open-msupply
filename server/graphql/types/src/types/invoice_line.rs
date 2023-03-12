@@ -244,7 +244,7 @@ mod test {
                             r.pack_size = 1;
                             r.number_of_packs = 2.0;
                             r.batch = Some("line_batch".to_string());
-                            r.expiry_date = Some(NaiveDate::from_ymd(2021, 01, 01));
+                            r.expiry_date = Some(NaiveDate::from_ymd_opt(2021, 01, 01).unwrap());
                             r.location_id = Some("line_location_id".to_string());
                             r.note = None;
                         }),

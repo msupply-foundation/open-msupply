@@ -1,6 +1,5 @@
 import { RecordPatch, RecordWithId } from '@common/types';
-import groupBy from 'lodash/groupBy';
-import uniqBy from 'lodash/uniqBy';
+import { groupBy, uniqBy } from '@common/utils';
 
 export const ArrayUtils = {
   ifTheSameElseDefault: <T, K extends keyof T, J>(

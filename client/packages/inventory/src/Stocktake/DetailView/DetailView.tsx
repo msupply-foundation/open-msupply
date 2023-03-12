@@ -22,6 +22,7 @@ import { StocktakeLineEdit } from './modal/StocktakeLineEdit';
 import { ContentArea } from './ContentArea';
 import { AppRoute } from '@openmsupply-client/config';
 import { StocktakeLineFragment, useStocktake } from '../api';
+import { StocktakeLineErrorProvider } from '../context';
 
 export const DetailView: FC = () => {
   const isDisabled = useStocktake.utils.isDisabled();
@@ -58,30 +59,32 @@ export const DetailView: FC = () => {
 
   return !!data ? (
     <TableProvider createStore={createTableStore}>
-      <GlobalStyles
-        styles={{
-          '@keyframes highlight': {
-            from: { backgroundColor: 'rgba(199, 201, 217, 1)' },
-            to: { backgroundColor: 'rgba(199, 201, 217, 0)' },
-          },
-        }}
-      />
-      <AppBarButtons onAddItem={() => onOpen()} />
-      <Toolbar />
-
-      <DetailTabs tabs={tabs} />
-
-      <Footer />
-      <SidePanel />
-
-      {isOpen && (
-        <StocktakeLineEdit
-          isOpen={isOpen}
-          onClose={onClose}
-          mode={mode}
-          item={entity}
+      <StocktakeLineErrorProvider>
+        <GlobalStyles
+          styles={{
+            '@keyframes highlight': {
+              from: { backgroundColor: 'rgba(199, 201, 217, 1)' },
+              to: { backgroundColor: 'rgba(199, 201, 217, 0)' },
+            },
+          }}
         />
-      )}
+        <AppBarButtons onAddItem={() => onOpen()} />
+        <Toolbar />
+
+        <DetailTabs tabs={tabs} />
+
+        <Footer />
+        <SidePanel />
+
+        {isOpen && (
+          <StocktakeLineEdit
+            isOpen={isOpen}
+            onClose={onClose}
+            mode={mode}
+            item={entity}
+          />
+        )}
+      </StocktakeLineErrorProvider>
     </TableProvider>
   ) : (
     <AlertModal
