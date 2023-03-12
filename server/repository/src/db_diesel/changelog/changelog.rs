@@ -128,6 +128,12 @@ impl<'a> ChangelogRepository<'a> {
             .first::<Option<i64>>(&self.connection.connection)?;
         Ok(result.unwrap_or(0) as u64)
     }
+
+    // Drop all change logs (for tests), can't set test flag as it's used in another crate
+    pub fn drop_all(&self) -> Result<(), RepositoryError> {
+        diesel::delete(changelog::dsl::changelog).execute(&self.connection.connection)?;
+        Ok(())
+    }
 }
 
 type BoxedChangelogQuery = IntoBoxed<'static, changelog_deduped::table, DBType>;
