@@ -1,6 +1,6 @@
 use super::StorageConnection;
 
-use crate::{Gender, RepositoryError};
+use crate::{db_diesel::store_row::store, Gender, RepositoryError};
 
 use diesel::prelude::*;
 
@@ -19,6 +19,7 @@ table! {
     gender -> Nullable<crate::db_diesel::name_row::GenderMapping>,
     is_active -> Bool,
     is_sync_update -> Bool,
+    store_id -> Text,
   }
 }
 
@@ -38,7 +39,10 @@ pub struct ClinicianRow {
     pub gender: Option<Gender>,
     pub is_active: bool,
     pub is_sync_update: bool,
+    pub store_id: String,
 }
+
+joinable!(clinician -> store (store_id));
 
 pub struct ClinicianRowRepository<'a> {
     connection: &'a StorageConnection,
