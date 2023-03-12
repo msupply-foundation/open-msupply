@@ -1,4 +1,4 @@
-use chrono::{DateTime, Duration, NaiveDateTime, Utc};
+use chrono::{DateTime, Duration, Months, NaiveDateTime, Utc};
 use repository::{Document, EventCondition, EventConfigEnum, EventTarget, RepositoryError};
 use serde_json::{Map, Value};
 
@@ -47,8 +47,16 @@ fn extract_events(
                 };
                 let mut active_start_datetime = start_datetime;
 
+                if let Some(months) = schedule_config.config.schedule_in.months {
+                    active_start_datetime = active_start_datetime
+                        .checked_add_months(Months::new(months as u32))
+                        .ok_or(UpdateProgramDocumentError::InternalError(format!(
+                            "Invalid schedule months value: {}",
+                            months
+                        )))?;
+                }
                 if let Some(days) = schedule_config.config.schedule_in.days {
-                    active_start_datetime = start_datetime
+                    active_start_datetime = active_start_datetime
                         .checked_add_signed(Duration::days(days))
                         .ok_or(UpdateProgramDocumentError::InternalError(format!(
                             "Invalid schedule days value: {}",
@@ -56,7 +64,7 @@ fn extract_events(
                         )))?;
                 }
                 if let Some(minutes) = schedule_config.config.schedule_in.minutes {
-                    active_start_datetime = start_datetime
+                    active_start_datetime = active_start_datetime
                         .checked_add_signed(Duration::minutes(minutes))
                         .ok_or(UpdateProgramDocumentError::InternalError(format!(
                             "Invalid schedule minutes value: {}",
@@ -144,6 +152,9 @@ fn is_truthy(value: &Value) -> bool {
     if value.is_null() {
         return false;
     }
+    if let Some(b) = value.as_bool() {
+        return b;
+    }
     if let Some(string) = value.as_str() {
         return string != "";
     }
@@ -168,16 +179,37 @@ fn match_condition(condition: &EventCondition, doc: &Document) -> bool {
     };
     if condition.is_set.is_some() {
         return !field.is_null();
-    } else if condition.is_falsy.is_some() {
+    }
+    if condition.is_falsy.is_some() {
         return !is_truthy(&field);
     } else if condition.is_truthy.is_some() {
         return is_truthy(&field);
-    } else if let Some(equal_to) = &condition.equal_to {
-        let Some(field_str) =  field.as_str() else { return false };
-        return equal_to == field_str;
-    } else if let Some(equal_any) = &condition.equal_any {
-        let Some(field_str) =  field.as_str() else { return false };
-        return equal_any.iter().any(|s| s == field_str);
+    }
+
+    // string match
+    if let Some(field_str) = field.as_str() {
+        if let Some(equal_to) = &condition.equal_to {
+            return equal_to == field_str;
+        }
+        if let Some(equal_any) = &condition.equal_any {
+            return equal_any.iter().any(|s| s == field_str);
+        }
+    }
+
+    // compare numbers
+    if let Some(field_number) = field.as_f64() {
+        if let Some(less_than_or_equal_to) = condition.less_than_or_equal_to {
+            return less_than_or_equal_to <= field_number;
+        }
+        if let Some(less_than) = condition.less_than {
+            return less_than < field_number;
+        }
+        if let Some(greater_than_or_equal_to) = condition.greater_than_or_equal_to {
+            return greater_than_or_equal_to >= field_number;
+        }
+        if let Some(greater_than) = condition.greater_than {
+            return greater_than > field_number;
+        }
     }
     false
 }
