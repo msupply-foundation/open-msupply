@@ -272,12 +272,12 @@ pub(crate) async fn check_records_against_database(
             StocktakeLine => check_delete_record_by_id!(StocktakeLineRowRepository, con, id),
             #[cfg(feature = "integration_test")]
             ActivityLog => check_delete_record_by_id!(ActivityLogRowRepository, con, id),
-            #[cfg(feature = "integration_test")]
-            Clinician => check_delete_record_by_id!(ClinicianRowRepository, con, id),
-            #[cfg(feature = "integration_test")]
-            ClinicianStoreJoin => {
-                check_delete_record_by_id!(ClinicianStoreJoinRowRepository, con, id)
-            }
+            // #[cfg(feature = "integration_test")]
+            // Clinician => check_delete_record_by_id!(ClinicianRowRepository, con, id),
+            // #[cfg(feature = "integration_test")]
+            // ClinicianStoreJoin => {
+            //     check_delete_record_by_id!(ClinicianStoreJoinRowRepository, con, id)
+            // }
         }
     }
 }

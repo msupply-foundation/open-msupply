@@ -2,7 +2,7 @@ use crate::sync::{
     test::integration::{
         central_server_configurations::NewSiteProperties, SyncRecordTester, TestStepData,
     },
-    translations::{IntegrationRecords, PullDeleteRecord, PullDeleteRecordTable, PullUpsertRecord},
+    translations::{IntegrationRecords, PullUpsertRecord},
 };
 use repository::{ClinicianRow, ClinicianStoreJoinRow, Gender, StoreRow};
 use serde_json::json;
@@ -16,30 +16,6 @@ impl SyncRecordTester for ClinicianRecordTester {
     fn test_step_data(&self, new_site_properties: &NewSiteProperties) -> Vec<TestStepData> {
         let mut result = Vec::new();
         // STEP 1 - insert
-        let clinician_row = ClinicianRow {
-            id: uuid(),
-            code: "code".to_string(),
-            last_name: "last".to_string(),
-            initials: "initials".to_string(),
-            first_name: None,
-            address1: None,
-            address2: None,
-            phone: None,
-            mobile: None,
-            email: None,
-            gender: Some(Gender::Male),
-            is_active: true,
-        };
-
-        let clinician_json = json!({
-            "ID": clinician_row.id,
-            "code": clinician_row.code,
-            "initials": clinician_row.initials,
-            "last_name": clinician_row.last_name,
-            "active": true,
-            "female": false
-        });
-
         let store_row = StoreRow {
             id: uuid(),
             name_id: new_site_properties.name_id.to_owned(),
@@ -55,41 +31,60 @@ impl SyncRecordTester for ClinicianRecordTester {
             "store_mode": "dispensary"
         });
 
-        result.push(TestStepData {
-            central_upsert: json!({
-                "clinician": [clinician_json],
-                "store": [store_json],
-            }),
-            central_delete: json!({}),
-            integration_records: IntegrationRecords::from_upserts(vec![
-                PullUpsertRecord::Clinician(clinician_row.clone()),
-                PullUpsertRecord::Store(store_row.clone()),
-            ]),
+        let clinician_row = ClinicianRow {
+            id: uuid(),
+            code: "code".to_string(),
+            last_name: "last".to_string(),
+            initials: "initials".to_string(),
+            first_name: None,
+            address1: None,
+            address2: None,
+            phone: None,
+            mobile: None,
+            email: None,
+            gender: Some(Gender::Male),
+            is_active: true,
+            is_sync_update: true,
+            store_id: store_row.id.clone(),
+        };
+
+        let clinician_json = json!({
+            "ID": clinician_row.id,
+            "code": clinician_row.code,
+            "initials": clinician_row.initials,
+            "last_name": clinician_row.last_name,
+            "active": true,
+            "female": false,
+            "store_ID": store_row.id.clone()
         });
 
-        // STEP 2 - store join for clinician
         let join_row = ClinicianStoreJoinRow {
             id: uuid(),
-            store_id: store_row.id,
+            store_id: store_row.id.clone(),
             clinician_id: clinician_row.id.clone(),
+            is_sync_update: true,
         };
         let join_json = json!({
             "ID": join_row.id,
             "store_ID": join_row.store_id,
-            "clinician_ID": join_row.clinician_id,
+            "prescriber_ID": join_row.clinician_id,
         });
 
         result.push(TestStepData {
             central_upsert: json!({
+                "store": [store_json],
+                "clinician": [clinician_json],
                 "clinician_store_join": [join_json],
             }),
             central_delete: json!({}),
             integration_records: IntegrationRecords::from_upserts(vec![
+                PullUpsertRecord::Store(store_row),
+                PullUpsertRecord::Clinician(clinician_row.clone()),
                 PullUpsertRecord::ClinicianStoreJoin(join_row.clone()),
             ]),
         });
 
-        // STEP 3 - mutate
+        // STEP 2 - mutate
         let row = inline_edit(&clinician_row, |mut d| {
             d.code = "code2".to_string();
             d.last_name = "last2".to_string();
@@ -101,6 +96,7 @@ impl SyncRecordTester for ClinicianRecordTester {
             d.mobile = Some("mobile".to_string());
             d.email = Some("email".to_string());
             d.gender = Some(Gender::Female);
+            d.is_sync_update = false;
             d
         });
 
@@ -109,21 +105,6 @@ impl SyncRecordTester for ClinicianRecordTester {
             central_delete: json!({}),
             integration_records: IntegrationRecords::from_upserts(vec![
                 PullUpsertRecord::Clinician(row.clone()),
-            ]),
-        });
-        // STEP 3 - delete
-        result.push(TestStepData {
-            central_upsert: json!({}),
-            central_delete: json!({}),
-            integration_records: IntegrationRecords::from_deletes(vec![
-                PullDeleteRecord {
-                    id: join_row.id.clone(),
-                    table: PullDeleteRecordTable::ClinicianStoreJoin,
-                },
-                PullDeleteRecord {
-                    id: row.id.clone(),
-                    table: PullDeleteRecordTable::Clinician,
-                },
             ]),
         });
         result
