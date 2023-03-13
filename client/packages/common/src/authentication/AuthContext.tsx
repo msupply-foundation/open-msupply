@@ -10,6 +10,7 @@ import { UserStoreNodeFragment } from './api/operations.generated';
 import { PropsWithChildrenOnly, UserPermission } from '@common/types';
 import { RouteBuilder } from '../utils/navigation';
 import { matchPath } from 'react-router-dom';
+import { useGql } from '../api';
 
 export const COOKIE_LIFETIME_MINUTES = 60;
 const TOKEN_CHECK_INTERVAL = 60 * 1000;
@@ -104,6 +105,10 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
   const { login, isLoggingIn } = useLogin(setCookie);
   const getUserPermissions = useGetUserPermissions();
   const { refreshToken } = useRefreshToken();
+  const { setHeader } = useGql();
+
+  // initialise the auth header with the cookie value i.e. on page refresh
+  setHeader('Authorization', `Bearer ${authCookie?.token}`);
 
   const setStore = async (store: UserStoreNodeFragment) => {
     if (!cookie?.token) return;
