@@ -21,9 +21,11 @@ pub(crate) mod stocktake_line;
 pub(crate) mod store;
 pub(crate) mod store_preference;
 pub(crate) mod unit;
+pub(crate) mod user_permission;
 
 pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncPullRecord> {
     let mut test_records = Vec::new();
+    test_records.append(&mut user_permission::test_pull_upsert_records());
     test_records.append(&mut item::test_pull_upsert_records());
     test_records.append(&mut master_list_line::test_pull_upsert_records());
     test_records.append(&mut master_list_name_join::test_pull_upsert_records());
@@ -56,6 +58,7 @@ pub(crate) fn get_all_pull_upsert_remote_test_records() -> Vec<TestSyncPullRecor
 
 pub(crate) fn get_all_pull_delete_central_test_records() -> Vec<TestSyncPullRecord> {
     let mut test_records = Vec::new();
+    test_records.append(&mut user_permission::test_pull_delete_records());
     test_records.append(&mut unit::test_pull_delete_records());
     test_records.append(&mut item::test_pull_delete_records());
     test_records.append(&mut master_list_line::test_pull_delete_records());
