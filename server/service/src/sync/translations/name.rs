@@ -185,9 +185,9 @@ impl SyncTranslation for NameTranslation {
             } else {
                 None
             }),
-            created_datetime: data
-                .created_datetime
-                .or(data.created_date.map(|date| date.and_hms(0, 0, 0))),
+            created_datetime: data.created_datetime.or(data
+                .created_date
+                .map(|date| date.and_hms_opt(0, 0, 0).unwrap())),
             is_sync_update: true,
         };
 
