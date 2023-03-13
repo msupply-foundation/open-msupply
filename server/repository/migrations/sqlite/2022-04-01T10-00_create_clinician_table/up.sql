@@ -11,6 +11,5 @@ CREATE TABLE clinician
     mobile TEXT,
     email TEXT,
     gender TEXT,
-    is_active BOOLEAN NOT NULL,
-    store_id TEXT NOT NULL
+    is_active BOOLEAN NOT NULL
 )
