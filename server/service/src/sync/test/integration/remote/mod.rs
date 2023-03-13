@@ -76,6 +76,7 @@ async fn test_remote_sync_record(identifier: &str, tester: &dyn SyncRecordTester
         // Integrate
 
         integration_records.integrate(&previous_connection).unwrap();
+        replace_is_sync_update(&mut integration_records);
         // Push integrated changes
         previous_synchroniser.sync().await.unwrap();
         // Re initialise
@@ -96,7 +97,7 @@ fn replace_system_name_ids(records: &mut IntegrationRecords, connection: &Storag
     let inventory_adjustment_name = NameRowRepository::new(connection)
         .find_one_by_code(INVENTORY_ADJUSTMENT_NAME_CODE)
         .unwrap()
-        .expect("Cannont find intenvory adjustment name");
+        .expect("Cannot find inventory adjustment name");
 
     for mut record in records.upserts.iter_mut() {
         if let PullUpsertRecord::Invoice(invoice) = &mut record {
@@ -106,6 +107,18 @@ fn replace_system_name_ids(records: &mut IntegrationRecords, connection: &Storag
                 invoice.name_id = inventory_adjustment_name.id.clone();
                 invoice.name_store_id = None;
             }
+        }
+    }
+}
+
+fn replace_is_sync_update(records: &mut IntegrationRecords) {
+    for mut record in records.upserts.iter_mut() {
+        if let PullUpsertRecord::Name(name) = &mut record {
+            name.is_sync_update = true;
+        }
+
+        if let PullUpsertRecord::Clinician(clinician) = &mut record {
+            clinician.is_sync_update = true;
         }
     }
 }
