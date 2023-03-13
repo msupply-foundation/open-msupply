@@ -59,7 +59,6 @@ const ignoredQueries = ['refreshToken', 'syncInfo'];
 
 const shouldIgnoreQuery = (definitionNode: DefinitionNode) => {
   const operationNode = definitionNode as OperationDefinitionNode;
-  if (!operationNode) return false;
   if (operationNode.operation !== 'query') return false;
 
   return ignoredQueries.indexOf(operationNode.name?.value ?? '') !== -1;
