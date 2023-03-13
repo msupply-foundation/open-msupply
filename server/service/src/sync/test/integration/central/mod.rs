@@ -4,6 +4,7 @@ mod name_and_store_and_name_store_join;
 mod report;
 mod test;
 mod unit_and_item;
+mod user_permission;
 
 use super::{central_server_configurations::ConfigureCentralServer, SyncRecordTester};
 use crate::sync::test::{
