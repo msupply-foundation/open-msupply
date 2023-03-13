@@ -54,16 +54,16 @@ $$
      DECLARE
      BEGIN
         IF (TG_OP = 'DELETE') THEN
-            INSERT INTO changelog (table_name, record_id, row_action, is_sync_update)
-              VALUES (TG_TABLE_NAME::changelog_table_name, OLD.id, 'DELETE', OLD.is_sync_update);
+            INSERT INTO changelog (table_name, record_id, row_action)
+              VALUES (TG_TABLE_NAME::changelog_table_name, OLD.id, 'DELETE');
             RETURN OLD;
         ELSIF (TG_OP = 'UPDATE') THEN
-            INSERT INTO changelog (table_name, record_id, row_action, is_sync_update)
-              VALUES (TG_TABLE_NAME::changelog_table_name, NEW.id, 'UPSERT', NEW.is_sync_update);
+            INSERT INTO changelog (table_name, record_id, row_action)
+              VALUES (TG_TABLE_NAME::changelog_table_name, NEW.id, 'UPSERT');
             RETURN NEW;
         ELSIF (TG_OP = 'INSERT') THEN
-            INSERT INTO changelog (table_name, record_id, row_action, is_sync_update)
-              VALUES (TG_TABLE_NAME::changelog_table_name, NEW.id, 'UPSERT', NEW.is_sync_update);
+            INSERT INTO changelog (table_name, record_id, row_action)
+              VALUES (TG_TABLE_NAME::changelog_table_name, NEW.id, 'UPSERT');
             RETURN NEW;
         END IF;
      END;

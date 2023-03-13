@@ -20,3 +20,24 @@ CREATE VIEW changelog_deduped AS
                     from changelog t2
                     where t2.record_id = t1.record_id)
     ORDER BY t1.cursor;
+
+CREATE OR REPLACE FUNCTION update_changelog()
+RETURNS trigger AS
+$$
+     DECLARE
+     BEGIN
+        IF (TG_OP = 'DELETE') THEN
+            INSERT INTO changelog (table_name, record_id, row_action, is_sync_update)
+              VALUES (TG_TABLE_NAME::changelog_table_name, OLD.id, 'DELETE', OLD.is_sync_update);
+            RETURN OLD;
+        ELSIF (TG_OP = 'UPDATE') THEN
+            INSERT INTO changelog (table_name, record_id, row_action, is_sync_update)
+              VALUES (TG_TABLE_NAME::changelog_table_name, NEW.id, 'UPSERT', NEW.is_sync_update);
+            RETURN NEW;
+        ELSIF (TG_OP = 'INSERT') THEN
+            INSERT INTO changelog (table_name, record_id, row_action, is_sync_update)
+              VALUES (TG_TABLE_NAME::changelog_table_name, NEW.id, 'UPSERT', NEW.is_sync_update);
+            RETURN NEW;
+        END IF;
+     END;
+$$ LANGUAGE 'plpgsql';

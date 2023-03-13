@@ -104,7 +104,6 @@ fn generate(user_id: &str, input: UpsertProgramEnrolment) -> Result<RawDocument,
         comment: None,
         owner_name_id: Some(input.patient_id),
         context: Some(input.r#type),
-        is_sync_update: false,
     })
 }
 
