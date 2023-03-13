@@ -18,7 +18,7 @@ fn mock_outbound_shipment_line_no_stock_line() -> InvoiceLineRow {
         item_code: String::from("item_b"),
         stock_line_id: None,
         batch: Some(String::from("item_a_line_a")),
-        expiry_date: Some(NaiveDate::from_ymd(2020, 8, 2)),
+        expiry_date: Some(NaiveDate::from_ymd_opt(2020, 8, 2).unwrap()),
         pack_size: 1,
         cost_price_per_pack: 0.0,
         sell_price_per_pack: 0.0,
@@ -52,7 +52,10 @@ fn mock_outbound_shipment_invalid_stock_line() -> InvoiceRow {
         r.status = InvoiceRowStatus::New;
         r.comment = Some("Sort comment test cA".to_owned());
         r.their_reference = Some(String::from(""));
-        r.created_datetime = NaiveDate::from_ymd(1970, 1, 6).and_hms_milli(15, 30, 0, 0);
+        r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 6)
+            .unwrap()
+            .and_hms_milli_opt(15, 30, 0, 0)
+            .unwrap();
     })
 }
 

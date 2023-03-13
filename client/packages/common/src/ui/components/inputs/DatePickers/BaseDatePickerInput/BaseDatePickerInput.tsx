@@ -1,5 +1,8 @@
 import React, { FC, useEffect, useState } from 'react';
-import { DatePicker, DatePickerProps } from '@mui/x-date-pickers';
+import {
+  DatePicker,
+  DatePickerProps,
+} from '@mui/x-date-pickers/DatePicker/DatePicker';
 import { BasicTextInput } from '../../TextInput/BasicTextInput';
 import { StandardTextFieldProps, TextFieldProps } from '@mui/material';
 import { useAppTheme } from '@common/styles';

@@ -17,6 +17,8 @@ import {
   RouteBuilder,
   Switch,
   PREVIOUS_SERVER_KEY,
+  useToggle,
+  BaseButton,
 } from '@openmsupply-client/common';
 import { Capacitor } from '@capacitor/core';
 import { themeOptions } from '@common/styles';
@@ -28,6 +30,7 @@ import { SettingTextArea, TextValue } from './SettingTextArea';
 import { SyncSettings } from './SyncSettings';
 import { useHost } from '../api/hooks';
 import { SiteInfo } from '../components/SiteInfo';
+import { LogFileModal } from './LogFileModal';
 
 export const Settings: React.FC = () => {
   const t = useTranslation('common');
@@ -41,6 +44,11 @@ export const Settings: React.FC = () => {
     !!customTheme && Object.keys(customTheme).length > 0;
   const { data: initStatus } = useInitialisationStatus();
   const [nativeMode, setNativeMode] = useLocalStorage(NATIVE_MODE_KEY);
+  const {
+    isOn: isLogShown,
+    toggleOn: showLog,
+    toggleOff: hideLog,
+  } = useToggle();
 
   const customThemeValue = {
     enabled: customThemeEnabled,
@@ -130,7 +138,7 @@ export const Settings: React.FC = () => {
     navigate(RouteBuilder.create(AppRoute.Android).build());
   };
 
-  const ModeSettings = () =>
+  const AndroidSettings = () =>
     Capacitor.isNativePlatform() ? (
       <>
         <Typography variant="h5" color="primary" style={{ paddingBottom: 25 }}>
@@ -156,6 +164,15 @@ export const Settings: React.FC = () => {
               >
                 {t('label.server')}
               </Typography>
+            </>
+          }
+        />
+        <Setting
+          title={t('label.server-log')}
+          component={
+            <>
+              <LogFileModal onClose={hideLog} isOpen={isLogShown} />
+              <BaseButton onClick={showLog}>View</BaseButton>
             </>
           }
         />
@@ -191,7 +208,7 @@ export const Settings: React.FC = () => {
         title={t('heading.custom-logo')}
       />
       <SyncSettings />
-      <ModeSettings />
+      <AndroidSettings />
       <AppVersion
         style={{ bottom: 30, right: 15 }}
         SiteInfo={<SiteInfo siteName={initStatus?.siteName} />}

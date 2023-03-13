@@ -8,15 +8,12 @@ pub mod android {
 
     use jni::sys::jchar;
     use repository::database_settings::DatabaseSettings;
-    use server::start_server;
-    use service::settings::{ServerSettings, Settings};
+    use server::{logging_init, start_server};
+    use service::settings::{LogMode, LoggingSettings, ServerSettings, Settings};
     use tokio::sync::mpsc;
 
     use self::jni::objects::{JClass, JString};
     use self::jni::JNIEnv;
-
-    use android_logger::Config;
-    use log::Level;
 
     struct ServerBucket {
         off_switch: mpsc::Sender<()>,
@@ -33,8 +30,8 @@ pub mod android {
         files_dir: JString,
         cache_dir: JString,
         android_id: JString,
+        log_dir: JString,
     ) {
-        android_logger::init_once(Config::default().with_min_level(Level::Info));
         log_panics::init();
 
         let (off_switch, off_switch_receiver) = mpsc::channel(1);
@@ -43,6 +40,8 @@ pub mod android {
         let android_id: String = env.get_string(android_id).unwrap().into();
         let db_path = files_dir.join("omsupply-database");
         let cache_dir: String = env.get_string(cache_dir).unwrap().into();
+        let log_dir: String = env.get_string(log_dir).unwrap().into();
+        let log_dir = PathBuf::from(&log_dir);
 
         let settings = Settings {
             server: ServerSettings {
@@ -64,8 +63,13 @@ pub mod android {
             },
             // sync settings need to be configured at runtime
             sync: None,
-            logging: None,
+            logging: Some(
+                LoggingSettings::new(LogMode::File, service::settings::Level::Info)
+                    .with_directory(log_dir.to_string_lossy().to_string()),
+            ),
         };
+
+        logging_init(settings.logging.clone());
 
         // run server in background thread
         let thread = thread::spawn(move || {
