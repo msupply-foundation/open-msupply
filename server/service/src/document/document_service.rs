@@ -336,7 +336,6 @@ fn generate_deleted_document(
         comment: input.comment,
         owner_name_id: None,
         context: None,
-        is_sync_update: false,
     }
     .finalise()
     .map_err(|err| DocumentDeleteError::InternalError(err))?;
@@ -361,7 +360,6 @@ fn generate_undeleted_document(
         comment: None,
         owner_name_id: deleted_document_parent.owner_name_id,
         context: deleted_document_parent.context,
-        is_sync_update: false,
     }
     .finalise()
     .map_err(|err| DocumentUndeleteError::InternalError(err))?;
@@ -430,7 +428,6 @@ mod document_service_test {
                 comment: None,
                 owner_name_id: None,
                 context: None,
-                is_sync_update: false,
             },
             &vec!["Wrong type".to_string()],
         );
@@ -460,7 +457,6 @@ mod document_service_test {
                     comment: None,
                     owner_name_id: None,
                     context: None,
-                    is_sync_update: false,
                 },
                 &vec!["test_data".to_string()],
             )
@@ -488,7 +484,6 @@ mod document_service_test {
                 comment: None,
                 owner_name_id: None,
                 context: None,
-                is_sync_update: false,
             },
             &vec!["test_data".to_string()],
         );
@@ -515,7 +510,6 @@ mod document_service_test {
                     comment: None,
                     owner_name_id: None,
                     context: None,
-                    is_sync_update: false,
                 },
                 &vec!["test_data".to_string()],
             )
@@ -546,7 +540,6 @@ mod document_service_test {
                     comment: None,
                     owner_name_id: None,
                     context: None,
-                    is_sync_update: false,
                 },
                 &vec!["test_data2".to_string()],
             )
@@ -592,7 +585,6 @@ mod document_service_test {
                     comment: None,
                     owner_name_id: None,
                     context: None,
-                    is_sync_update: false,
                 },
                 &vec!["test_data".to_string()],
             )
@@ -620,7 +612,6 @@ mod document_service_test {
                 comment: None,
                 owner_name_id: None,
                 context: None,
-                is_sync_update: false,
             },
             &vec!["test_data".to_string()],
         );
@@ -651,7 +642,6 @@ mod document_service_test {
                 comment: None,
                 owner_name_id: None,
                 context: None,
-                is_sync_update: false,
             },
             &vec!["test_data".to_string()],
         );
@@ -683,7 +673,6 @@ mod document_service_test {
                     comment: None,
                     owner_name_id: None,
                     context: None,
-                    is_sync_update: false,
                 },
                 &vec!["test_data".to_string()],
             )

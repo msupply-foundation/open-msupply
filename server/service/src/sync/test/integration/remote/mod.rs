@@ -76,10 +76,10 @@ async fn test_remote_sync_record(identifier: &str, tester: &dyn SyncRecordTester
         // Integrate
         integration_records.integrate(&previous_connection).unwrap();
 
-        replace_is_sync_update(&mut integration_records);
-
         // Push integrated changes
         previous_synchroniser.sync().await.unwrap();
+        // Changes is_sync_update to true for names and clinician to match records
+        replace_is_sync_update(&mut integration_records);
         // Re initialise
         let SyncIntegrationContext {
             connection,
@@ -89,6 +89,7 @@ async fn test_remote_sync_record(identifier: &str, tester: &dyn SyncRecordTester
         previous_connection = connection;
         previous_synchroniser = synchroniser;
         previous_synchroniser.sync().await.unwrap();
+
         // Confirm records have synced back correctly
         check_records_against_database(&previous_connection, integration_records).await;
     }

@@ -185,7 +185,6 @@ fn input_to_raw_document(
         comment: None,
         owner_name_id: patient_id,
         context: Some(r#type),
-        is_sync_update: false,
     }
 }
 

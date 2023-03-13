@@ -122,7 +122,6 @@ fn generate(
         comment: None,
         owner_name_id: Some(patient.id.clone()),
         context: None,
-        is_sync_update: false,
     })
 }
 

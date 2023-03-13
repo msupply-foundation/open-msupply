@@ -133,7 +133,6 @@ fn generate(
         comment: None,
         owner_name_id: existing.owner_name_id,
         context: existing.context,
-        is_sync_update: false,
     })
 }
 

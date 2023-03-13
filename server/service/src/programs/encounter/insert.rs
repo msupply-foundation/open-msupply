@@ -137,7 +137,6 @@ fn generate(
         comment: None,
         owner_name_id: Some(input.patient_id),
         context: Some(input.program),
-        is_sync_update: false,
     })
 }
 
