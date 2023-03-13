@@ -75,7 +75,6 @@
   "heading.grand-total": "Grand total",
   "messages.cant-delete-requisitions": "Bele deit hamos requizisaun ne'ebe ho estatus 'Draf'",
   "messages.click-to-return-to-shipments": "Labele atu identifika remessa ho ID ida ne'e. Klik OK atu fila fali ba lista remessa",
-  "messages.confirm-status-as": "Konfirma estatus hanesan $t({{estatus}})?",
   "messages.deleted-shipments_one": "Hamos ona {{count}} Remessa",
   "messages.deleted-shipments_other": "Hamos ona {{count}} Remessas",
   "messages.confirm-delete-shipments_one": "Ne'e sei hasai permanente remessa 1",
@@ -95,6 +94,5 @@
   "messages.confirm-delete-shipment-lines_other": "Ne'e sei hasai permanente {{count}} linas remessa",
   "messages.deleted-requisitions_one": "Hamos ona {{count}} pedidu",
   "messages.deleted-requisitions_other": "Hamos ona {{count}} pedidu sira",
-  "messages.saved": "Salva ona",
   "messages.changing-min-mos": "Ne'e sei muda threshold minimun stock ba fulan nian."
 }

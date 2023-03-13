@@ -15,7 +15,10 @@ pub fn mock_inbound_shipment_invoice_count_service_a() -> InvoiceRow {
         r.status = InvoiceRowStatus::New;
         r.comment = Some("Sort comment test Ac".to_owned());
         r.their_reference = Some(String::from(""));
-        r.created_datetime = NaiveDate::from_ymd(2021, 12, 7).and_hms_milli(13, 30, 0, 0);
+        r.created_datetime = NaiveDate::from_ymd_opt(2021, 12, 7)
+            .unwrap()
+            .and_hms_milli_opt(13, 30, 0, 0)
+            .unwrap();
     })
 }
 
@@ -29,7 +32,10 @@ pub fn mock_inbound_shipment_invoice_count_service_b() -> InvoiceRow {
         r.status = InvoiceRowStatus::New;
         r.comment = Some("Sort comment test Ac".to_owned());
         r.their_reference = Some(String::from(""));
-        r.created_datetime = NaiveDate::from_ymd(2021, 12, 8).and_hms_milli(8, 30, 0, 0);
+        r.created_datetime = NaiveDate::from_ymd_opt(2021, 12, 8)
+            .unwrap()
+            .and_hms_milli_opt(8, 30, 0, 0)
+            .unwrap();
     })
 }
 

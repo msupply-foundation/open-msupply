@@ -95,6 +95,11 @@ const additionalRenderers: JsonFormsRendererRegistryEntry[] = [
   { tester: encounterProgramEventTester, renderer: EncounterProgramEvent },
 ];
 
+/**
+ * @param docName the document name (if the document already exist)
+ * @param createDoc the initial data of of the document if the the document doesn't exist yet
+ */
+
 export const useJsonForms = (
   docName: string | undefined,
   options: JsonFormOptions = {},
@@ -162,16 +167,14 @@ export const useJsonForms = (
     const dirty =
       isSaving ||
       isLoading ||
-      // not sure why isDirty should be set if nothing has changed.. do we allow saving when the initial createDoc is presented?
-      // I've disabled, as this means that refreshing a page after rendering with createDoc set will prompt the user even
-      // when the modal is cancelled
-      // !!createDoc ||
+      // document doesn't exist yet; always set the isDirty flag
+      !!createDoc ||
       !isEqualIgnoreUndefined(initialData, data);
     setIsDirty(dirty);
     if (data === undefined) {
       setData(initialData);
     }
-  }, [initialData, data, isSaving, isLoading]);
+  }, [initialData, data, isSaving, isLoading, createDoc]);
 
   useEffect(() => {
     setData(initialData);
