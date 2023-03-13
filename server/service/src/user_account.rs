@@ -67,8 +67,9 @@ impl<'a> UserAccountService<'a> {
                 let user_store_repo = UserStoreJoinRowRepository::new(con);
                 let permission_repo = UserPermissionRowRepository::new(con);
 
-                // remove existing user (if exists)
+                // remove all permissions that don't have context
                 permission_repo.delete_by_user_id(&user.id)?;
+                // remove existing user (if exists)
                 user_store_repo.delete_by_user_id(&user.id)?;
                 user_repo.delete_by_id(&user.id)?;
                 // insert user
