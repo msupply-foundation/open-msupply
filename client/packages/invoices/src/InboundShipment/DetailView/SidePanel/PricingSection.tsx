@@ -29,6 +29,7 @@ export const PricingSectionComponent = () => {
   ]);
   const { data: stockLines } = useInbound.lines.list();
   const { mutateAsync: updateTax } = useInbound.document.updateTax();
+  const isInboundDisabled = useInbound.utils.isDisabled();
 
   const tax = PricingUtils.effectiveTax(
     pricing?.serviceTotalBeforeTax,
@@ -65,7 +66,7 @@ export const PricingSectionComponent = () => {
           )}`}</PanelLabel>
           <PanelField>
             <TaxEdit
-              disabled={!stockLines?.length}
+              disabled={!stockLines?.length || isInboundDisabled}
               tax={taxPercentage ?? 0}
               onChange={taxPercentage => {
                 update({ taxPercentage });
@@ -87,6 +88,7 @@ export const PricingSectionComponent = () => {
               icon={<EditIcon style={{ fontSize: 16, fill: 'none' }} />}
               label={t('label.edit')}
               onClick={serviceLineModal.toggleOn}
+              disabled={!stockLines?.length || isInboundDisabled}
             />
           </PanelField>
         </PanelRow>
@@ -98,8 +100,8 @@ export const PricingSectionComponent = () => {
           <PanelLabel>{`${t('heading.tax')} ${Formatter.tax(tax)}`}</PanelLabel>
           <PanelField>
             <TaxEdit
-              disabled={!stockLines?.length}
-              tax={tax}
+              disabled={!stockLines?.length || isInboundDisabled} 
+              tax={tax} 
               onChange={taxPercentage => {
                 updateTax({
                   lines: lines.nodes,
