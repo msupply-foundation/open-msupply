@@ -45,7 +45,6 @@ impl SyncRecordTester for ClinicianRecordTester {
             gender: Some(Gender::Male),
             is_active: true,
             is_sync_update: true,
-            store_id: store_row.id.clone(),
         };
 
         let clinician_json = json!({

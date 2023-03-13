@@ -41,8 +41,6 @@ pub struct LegacyClinicianRow {
     pub is_female: bool,
     #[serde(rename = "active")]
     pub is_active: bool,
-    #[serde(rename = "store_ID")]
-    pub store_id: String,
 }
 
 fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
@@ -75,7 +73,6 @@ impl SyncTranslation for ClinicianTranslation {
             email,
             is_female,
             is_active,
-            store_id,
         } = serde_json::from_str::<LegacyClinicianRow>(&sync_record.data)?;
 
         let result = ClinicianRow {
@@ -96,7 +93,6 @@ impl SyncTranslation for ClinicianTranslation {
             },
             is_active,
             is_sync_update: true,
-            store_id,
         };
         Ok(Some(IntegrationRecords::from_upsert(
             PullUpsertRecord::Clinician(result),
@@ -126,7 +122,6 @@ impl SyncTranslation for ClinicianTranslation {
             gender,
             is_active,
             is_sync_update: _,
-            store_id,
         } = ClinicianRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
@@ -154,7 +149,6 @@ impl SyncTranslation for ClinicianTranslation {
             email,
             is_female,
             is_active,
-            store_id,
         };
 
         Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
