@@ -74,8 +74,8 @@ async fn test_remote_sync_record(identifier: &str, tester: &dyn SyncRecordTester
         replace_system_name_ids(&mut integration_records, &previous_connection);
 
         // Integrate
-
         integration_records.integrate(&previous_connection).unwrap();
+        // change is_sync_update to true for names and clinicians
         replace_is_sync_update(&mut integration_records);
         // Push integrated changes
         previous_synchroniser.sync().await.unwrap();
