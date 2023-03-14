@@ -1,0 +1,11 @@
+### Overview
+The global application authentication handling - login & logout and the context which is shared across the entire application.
+
+
+### Authentication process
+
+The process is shown below. Login and Refreshing the token have much the same impact - in that a new token is returned and the auth cookie is updated with the new token, and the expiry of the token set to now+60 minutes.
+
+Within the graphQL context, the last access time of any query is kept, and used as a proxy indication of active usage on the site. There is an exception for `syncInfo` which runs on a timer and therefore doesn't require user intervention, and `refreshToken` as this is also called from a timer.
+
+[![](https://mermaid.ink/img/pako:eNptU8Fy2jAQ_ZUdnZwhzPTUA4d2CBTqBhIScsMcFHuJNdgSkVZtqOHfu5acjMPUJ41231u999aNyE2BYiRerDyU8DTNNPA3ThbmRekrGA6_wU2yRgLv0ILUBTgyFkFpGHsqJ0YTvtFVhDn_HHkCGki6vYuVm8A0CUySccaqv5KU0VCiLJiZ2-ev1We6SQBNP0CQG7NX2FWnofpwWQV8Oyh7BFI1Ahl4RqikIxivUpB5js7F0gC-foGaNUY21EU8_GilG09R-yyZVCjtf8b3tXJ7X-wsQOcdFK011l2O-ZnMW_TDAiy-enTdvLRJHd_sLLryyexRg7HgjjpP9c4AN9rj93NkSAPgpM0JHpN1CKWnr5v3a9NLacuIIdxuNp1FA_anHTGI4Q5itNtthN4G_kXTrElaCqT23M1exNn4m9_TmugJT7BslIvuY_H-yGVsPKI7wezTVfvuuxYhq9pwPhfAux7wvm37CDGYAH8UlbwzMUP3jrrvoVbJY_QxquwMWcWVzrS4Fiyolqrg7W_aYiaoxBozMeJjgTvpK8pEps_cyvmbNccgRmQ9Xgt_KCThVEnegVqMdrJyfIuFYgeX8Y8KP9b5H-yDFLQ?type=png)](https://mermaid.live/edit#pako:eNptU8Fy2jAQ_ZUdnZwhzPTUA4d2CBTqBhIScsMcFHuJNdgSkVZtqOHfu5acjMPUJ41231u999aNyE2BYiRerDyU8DTNNPA3ThbmRekrGA6_wU2yRgLv0ILUBTgyFkFpGHsqJ0YTvtFVhDn_HHkCGki6vYuVm8A0CUySccaqv5KU0VCiLJiZ2-ev1We6SQBNP0CQG7NX2FWnofpwWQV8Oyh7BFI1Ahl4RqikIxivUpB5js7F0gC-foGaNUY21EU8_GilG09R-yyZVCjtf8b3tXJ7X-wsQOcdFK011l2O-ZnMW_TDAiy-enTdvLRJHd_sLLryyexRg7HgjjpP9c4AN9rj93NkSAPgpM0JHpN1CKWnr5v3a9NLacuIIdxuNp1FA_anHTGI4Q5itNtthN4G_kXTrElaCqT23M1exNn4m9_TmugJT7BslIvuY_H-yGVsPKI7wezTVfvuuxYhq9pwPhfAux7wvm37CDGYAH8UlbwzMUP3jrrvoVbJY_QxquwMWcWVzrS4Fiyolqrg7W_aYiaoxBozMeJjgTvpK8pEps_cyvmbNccgRmQ9Xgt_KCThVEnegVqMdrJyfIuFYgeX8Y8KP9b5H-yDFLQ)
