@@ -10,7 +10,7 @@
     "find-up": "^6.3.0",
     "html-webpack-plugin": "^5.5.0",
     "husky": "^8.0.1",
-    "lint-staged": "13.0.3",
+    "lint-staged": "13.2.0",
     "prettier": "^2.3.2",
     "react-refresh": "0.14.0",
     "serve": "^13.0.2",
