@@ -215,7 +215,6 @@ const useFilteredItems = (
     }
   }, [options, current, conditionField]);
 
-  useEffect(() => {}, [current, visibleItems]);
   return [visibleItems, error];
 };
 
