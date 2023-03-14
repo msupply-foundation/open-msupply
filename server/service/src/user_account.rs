@@ -328,5 +328,17 @@ mod user_account_test {
             )
             .unwrap();
         assert!(permissions.len() > 0);
+
+        // test that permissions with context are still there when user is deleted
+        UserPermissionRowRepository::new(&context.connection)
+            .delete_by_user_id(&mock_user_account_a().id)
+            .unwrap();
+        let permission = user_permission_repo
+            .query_by_filter(
+                UserPermissionFilter::new()
+                    .user_id(EqualFilter::equal_to(&mock_user_account_a().id)),
+            )
+            .unwrap();
+        assert!(permission.len() == 1);
     }
 }
