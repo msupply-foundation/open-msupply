@@ -6,9 +6,8 @@ import {
   usePaperClickPopover,
   useTranslation,
   useNavigate,
-  LocalStorage,
 } from '@openmsupply-client/common';
-import { IntlUtils, SupportedLocales } from '@common/intl';
+import { IntlUtils, SupportedLocales, useUserName } from '@common/intl';
 
 import { PropsWithChildrenOnly } from '@common/types';
 
@@ -16,6 +15,7 @@ export const LanguageSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
   const navigate = useNavigate();
   const { hide, PaperClickPopover } = usePaperClickPopover();
   const t = useTranslation('app');
+  const username = useUserName();
 
   const i18n = IntlUtils.useI18N();
 
@@ -25,10 +25,7 @@ export const LanguageSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
       disabled={l.value === i18n.language}
       onClick={() => {
         i18n.changeLanguage(l.value);
-        LocalStorage.setItem(
-          '/localisation/locale',
-          l.value as SupportedLocales
-        );
+        IntlUtils.setUserLocale(username, l.value as SupportedLocales);
         hide();
         navigate(0);
       }}

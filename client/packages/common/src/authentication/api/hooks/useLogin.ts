@@ -113,8 +113,8 @@ export const useLogin = (
       },
     };
 
-    const localLanguage = LocalStorage.getItem('/localisation/locale');
-    if (localLanguage === null) {
+    const userLocale = IntlUtils.getUserLocale(username);
+    if (userLocale === undefined) {
       changeLanguage(userDetails?.language);
     }
     setMRUCredentials({ username, store });

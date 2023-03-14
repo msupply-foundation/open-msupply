@@ -2,6 +2,7 @@ import { i18n } from 'i18next';
 import { useTranslation as useTranslationNext } from 'react-i18next';
 import { EnvUtils } from '@common/utils';
 import { LanguageType } from '../../types/schema';
+import { LocalStorage } from '../../localStorage';
 
 export { useTranslationNext };
 
@@ -64,6 +65,15 @@ export const IntlUtils = {
   languageOptions,
   getLanguageName: (language: string) =>
     languageOptions.find(option => option.value === language)?.label,
+  getUserLocale: (username: string) => {
+    const locales = LocalStorage.getItem('/localisation/locale');
+    return !!locales ? locales[username] : undefined;
+  },
+  setUserLocale: (username: string, locale: SupportedLocales) => {
+    const locales = LocalStorage.getItem('/localisation/locale') ?? {};
+    locales[username] = locale;
+    LocalStorage.setItem('/localisation/locale', locales);
+  },
 };
 
 const parseLanguage = (language?: LanguageType) => {
