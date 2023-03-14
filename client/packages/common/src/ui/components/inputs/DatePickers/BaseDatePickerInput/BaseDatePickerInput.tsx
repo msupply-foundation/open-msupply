@@ -8,7 +8,7 @@ import { StandardTextFieldProps, TextFieldProps } from '@mui/material';
 import { useAppTheme } from '@common/styles';
 
 export const BaseDatePickerInput: FC<
-  Omit<DatePickerProps<Date>, 'renderInput'>
+  Omit<DatePickerProps<Date, Date>, 'renderInput'>
 > = props => {
   const theme = useAppTheme();
 
