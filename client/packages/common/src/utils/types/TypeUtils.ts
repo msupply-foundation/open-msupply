@@ -1,5 +1,5 @@
 export const TypeUtils = {
-  isTypeOf: <T>(
+  isTypeOf: <T extends object>(
     variableToCheck: unknown,
     field: string
   ): variableToCheck is T => field in (variableToCheck as T),
