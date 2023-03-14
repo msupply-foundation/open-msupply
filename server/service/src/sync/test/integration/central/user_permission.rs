@@ -51,7 +51,10 @@ impl SyncRecordTester for UserPermissionTester {
                 "user_permission": [user_permission_row_1_json, user_permission_row_2_json],
             }),
             central_delete: json!({}),
-            integration_records: IntegrationRecords::new(),
+            integration_records: IntegrationRecords::from_upserts(vec![
+                user_permission_row_1,
+                user_permission_row_2,
+            ]),
         });
 
         // STEP 2 - deletes
