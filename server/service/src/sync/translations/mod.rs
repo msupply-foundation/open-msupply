@@ -61,7 +61,7 @@ pub(crate) fn all_translators() -> SyncTanslators {
         Box::new(clinician_store_join::ClinicianStoreJoinTranslation {}),
         // Remote-Central (site specific)
         Box::new(name_store_join::NameStoreJoinTranslation {}),
-        //Box::new(document::DocumentTranslation {}),
+        Box::new(document::DocumentTranslation {}),
         // Special translations
         Box::new(special::NameToNameStoreJoinTranslation {}),
     ]
