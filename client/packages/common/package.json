@@ -49,10 +49,10 @@
   },
   "devDependencies": {
     "@types/css-mediaquery": "^0.1.1",
-    "@types/dompurify": "^2.3.3",
+    "@types/dompurify": "3.0.0",
     "@types/js-cookie": "^3.0.1",
     "@types/material-ui": "^0.21.12",
-    "@types/uuid": "^8.3.1",
+    "@types/uuid": "9.0.1",
     "css-mediaquery": "^0.1.2",
     "eslint-config-prettier": "^8.3.0",
     "husky": "^8.0.1",
