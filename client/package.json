@@ -87,7 +87,7 @@
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
     "storybook-addon-swc": "^1.1.7",
-    "ts-jest": "^28.0.3",
+    "ts-jest": "29.0.5",
     "tsconfig-paths-webpack-plugin": "^3.5.2",
     "webpack": "^5.73.0",
     "yarn-outdated-formatter": "^4.0.0"
@@ -106,7 +106,7 @@
     "@types/react-dom": "^18.0.1",
     "graphql": "^16.3.0",
     "lerna": "^5.0.0",
-    "msw": "0.43.1",
+    "msw": "1.1.0",
     "papaparse": "^5.3.2"
   },
   "msw": {
