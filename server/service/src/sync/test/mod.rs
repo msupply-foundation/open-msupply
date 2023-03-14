@@ -72,7 +72,6 @@ pub struct TestSyncPushRecord {
     pub table_name: String,
     /// Expected record as pushed out to the server
     pub push_data: serde_json::Value,
-    pub is_sync_update: bool,
 }
 
 pub(crate) fn extract_sync_buffer_rows(records: &Vec<TestSyncPullRecord>) -> Vec<SyncBufferRow> {
@@ -89,6 +88,28 @@ pub(crate) async fn insert_all_extra_data(
     for record in records {
         record.insert_extra_data(connection).await
     }
+}
+
+macro_rules! check_record_by_id_ignore_is_sync_update {
+    ($repository:ident, $connection:ident, $comparison_record:ident, $record_type:tt, $record_string:expr) => {{
+        let record = $repository::new(&$connection)
+            .find_one_by_id(&$comparison_record.id)
+            .unwrap()
+            .expect(&format!(
+                "{} row not found: {}",
+                $record_string, $comparison_record.id
+            ));
+        assert_eq!(
+            $record_type {
+                is_sync_update: false,
+                ..record
+            },
+            $record_type {
+                is_sync_update: false,
+                ..$comparison_record
+            }
+        )
+    }};
 }
 
 macro_rules! check_record_by_id {
@@ -154,10 +175,22 @@ pub(crate) async fn check_records_against_database(
                 check_record_by_option_id!(StockLineRowRepository, con, record, "StockLine");
             }
             Name(record) => {
-                check_record_by_id!(NameRowRepository, con, record, "Name");
+                check_record_by_id_ignore_is_sync_update!(
+                    NameRowRepository,
+                    con,
+                    record,
+                    NameRow,
+                    "Name"
+                );
             }
             NameStoreJoin(record) => {
-                check_record_by_id!(NameStoreJoinRepository, con, record, "NameStoreJoin");
+                check_record_by_id_ignore_is_sync_update!(
+                    NameStoreJoinRepository,
+                    con,
+                    record,
+                    NameStoreJoinRow,
+                    "NameStoreJoin"
+                );
             }
             Invoice(record) => {
                 check_record_by_option_id!(InvoiceRowRepository, con, record, "Invoice");
@@ -220,15 +253,24 @@ pub(crate) async fn check_records_against_database(
             }
 
             Clinician(record) => {
-                check_record_by_id!(ClinicianRowRepository, con, record, "Clinician")
+                check_record_by_id_ignore_is_sync_update!(
+                    ClinicianRowRepository,
+                    con,
+                    record,
+                    ClinicianRow,
+                    "Clinician"
+                )
             }
 
-            ClinicianStoreJoin(record) => check_record_by_id!(
-                ClinicianStoreJoinRowRepository,
-                con,
-                record,
-                "ClinicianStoreJoin"
-            ),
+            ClinicianStoreJoin(record) => {
+                check_record_by_id_ignore_is_sync_update!(
+                    ClinicianStoreJoinRowRepository,
+                    con,
+                    record,
+                    ClinicianStoreJoinRow,
+                    "ClinicianStoreJoin"
+                )
+            }
         }
     }
 
@@ -272,12 +314,6 @@ pub(crate) async fn check_records_against_database(
             StocktakeLine => check_delete_record_by_id!(StocktakeLineRowRepository, con, id),
             #[cfg(feature = "integration_test")]
             ActivityLog => check_delete_record_by_id!(ActivityLogRowRepository, con, id),
-            // #[cfg(feature = "integration_test")]
-            // Clinician => check_delete_record_by_id!(ClinicianRowRepository, con, id),
-            // #[cfg(feature = "integration_test")]
-            // ClinicianStoreJoin => {
-            //     check_delete_record_by_id!(ClinicianStoreJoinRowRepository, con, id)
-            // }
         }
     }
 }

@@ -232,10 +232,6 @@ impl PullDeleteRecord {
             StocktakeLine => StocktakeLineRowRepository::new(con).delete(id),
             #[cfg(all(test, feature = "integration_test"))]
             ActivityLog => Ok(()),
-            // #[cfg(all(test, feature = "integration_test"))]
-            // Clinician => ClinicianRowRepository::new(con).delete(id),
-            // #[cfg(all(test, feature = "integration_test"))]
-            // ClinicianStoreJoin => ClinicianStoreJoinRowRepository::new(con).delete(id),
         }
     }
 }

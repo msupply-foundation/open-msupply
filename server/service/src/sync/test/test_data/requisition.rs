@@ -119,7 +119,6 @@ fn requisition_request_push_record() -> TestSyncPushRecord {
             om_colour: None,
             expected_delivery_date: None,
         }),
-        is_sync_update: false,
     }
 }
 
@@ -225,7 +224,6 @@ fn requisition_response_push_record() -> TestSyncPushRecord {
             om_colour: None,
             expected_delivery_date: None,
         }),
-        is_sync_update: false,
     }
 }
 
@@ -348,7 +346,6 @@ fn requisition_om_fields_push_record() -> TestSyncPushRecord {
             om_status: Some(RequisitionRowStatus::New),
             om_colour: Some("Colour".to_string()),
         }),
-        is_sync_update: false,
     }
 }
 

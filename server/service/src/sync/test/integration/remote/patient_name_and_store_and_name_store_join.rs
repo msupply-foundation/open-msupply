@@ -91,7 +91,12 @@ impl SyncRecordTester for PatientNameAndStoreAndNameStoreJoinTester {
                 "name_store_join": [patient_name_store_join_json],
             }),
             central_delete: json!({}),
-            integration_records: IntegrationRecords::new(),
+            integration_records: IntegrationRecords::from_upserts(vec![
+                PullUpsertRecord::Name(patient_name_row.clone()),
+                PullUpsertRecord::Name(facility_name_row),
+                PullUpsertRecord::NameStoreJoin(patient_name_store_join_row),
+                PullUpsertRecord::Store(store_row),
+            ]),
         });
 
         // STEP 2 - update patient name

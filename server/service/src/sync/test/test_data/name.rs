@@ -99,7 +99,7 @@ const NAME_1: (&'static str, &'static str) = (
     "custom_data": null,
     "maximum_credit": 0,
     "nationality_ID": "",
-    "created_date": "2022-02-10",
+    "created_date": "2022-05-22",
     "isDeceased": false,
     "om_created_datetime": "",
     "om_gender": "FEMALE"
@@ -138,7 +138,7 @@ fn name_1() -> TestSyncPullRecord {
             address2: Some("address2".to_string()),
             is_sync_update: true,
             created_datetime: Some(
-                NaiveDate::from_ymd_opt(2022, 02, 10)
+                NaiveDate::from_ymd_opt(2022, 05, 22)
                     .unwrap()
                     .and_hms_opt(0, 0, 0)
                     .unwrap(),
@@ -577,12 +577,11 @@ fn name_push_record_1() -> TestSyncPushRecord {
             on_hold: true,
             address1: Some("address1".to_string()),
             address2: Some("address2".to_string()),
-            created_date: Some(NaiveDate::from_ymd(2022, 02, 10)),
+            created_date: Some(NaiveDate::from_ymd(2022, 05, 22)),
             female: true,
             created_datetime: Some(NaiveDate::from_ymd(2022, 05, 22).and_hms(0, 0, 0)),
             gender: Some(Gender::Female)
         }),
-        is_sync_update: true,
     }
 }
 
@@ -619,7 +618,6 @@ fn name_push_record_2() -> TestSyncPushRecord {
             created_datetime: Some(NaiveDate::from_ymd(2022, 05, 22).and_hms(0, 0, 0)),
             gender: Some(Gender::Female)
         }),
-        is_sync_update: true,
     }
 }
 

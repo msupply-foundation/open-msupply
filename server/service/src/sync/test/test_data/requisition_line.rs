@@ -79,7 +79,6 @@ fn requisition_line_request_push_record() -> TestSyncPushRecord {
             comment: None,
             snapshot_datetime: None,
         }),
-        is_sync_update: false,
     }
 }
 
@@ -163,7 +162,6 @@ fn requisition_line_om_fields_push_record() -> TestSyncPushRecord {
                     .unwrap()
             ),
         }),
-        is_sync_update: false,
     }
 }
 
