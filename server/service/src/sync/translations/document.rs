@@ -1,10 +1,11 @@
-use chrono::NaiveDateTime;
+use chrono::{DateTime, NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 use repository::{
-    ChangelogRow, ChangelogTableName, DocumentRepository, DocumentRow, DocumentStatus,
+    ChangelogRow, ChangelogTableName, Document, DocumentRepository, DocumentRow, DocumentStatus,
     StorageConnection, SyncBufferRow,
 };
+use serde_json::Value;
 
 use crate::sync::{
     api::RemoteSyncRecordV5, sync_serde::empty_str_as_option_string, translations::LegacyTableName,
@@ -24,16 +25,20 @@ struct LegacyDocumentRow {
     #[serde(rename = "ID")]
     pub id: String,
     pub name: String,
+    #[serde(rename = "parent_IDs")]
     pub parent_ids: String,
+    #[serde(rename = "user_ID")]
     pub user_id: String,
     pub datetime: NaiveDateTime,
     #[serde(rename = "type")]
     pub r#type: String,
-    pub data: String,
+    pub data: Value,
+    #[serde(rename = "form_schema_ID")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub form_schema_id: Option<String>,
     pub status: LegacyDocumentStatus,
     pub comment: Option<String>,
+    #[serde(rename = "owner_name_ID")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub owner_name_id: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
@@ -71,13 +76,12 @@ impl SyncTranslation for DocumentTranslation {
             owner_name_id,
             context,
         } = serde_json::from_str::<LegacyDocumentRow>(&sync_record.data)?;
-
-        let result = DocumentRow {
+        let result = Document {
             id,
             name,
-            parent_ids,
+            parent_ids: serde_json::from_str(&parent_ids)?,
             user_id,
-            datetime,
+            datetime: DateTime::<Utc>::from_utc(datetime, Utc),
             r#type,
             data,
             form_schema_id,
@@ -90,7 +94,7 @@ impl SyncTranslation for DocumentTranslation {
             context,
         };
         Ok(Some(IntegrationRecords::from_upsert(
-            PullUpsertRecord::Document(result.to_document()?),
+            PullUpsertRecord::Document(result),
         )))
     }
 
@@ -131,7 +135,7 @@ impl SyncTranslation for DocumentTranslation {
             user_id,
             datetime,
             r#type,
-            data,
+            data: serde_json::to_value(data)?,
             form_schema_id,
             status: match status {
                 DocumentStatus::Active => LegacyDocumentStatus::Active,
