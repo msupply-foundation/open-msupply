@@ -78,8 +78,6 @@ async fn test_remote_sync_record(identifier: &str, tester: &dyn SyncRecordTester
 
         // Push integrated changes
         previous_synchroniser.sync().await.unwrap();
-        // Changes is_sync_update to true for names and clinician to match records
-        replace_is_sync_update(&mut integration_records);
         // Re initialise
         let SyncIntegrationContext {
             connection,
@@ -109,18 +107,6 @@ fn replace_system_name_ids(records: &mut IntegrationRecords, connection: &Storag
                 invoice.name_id = inventory_adjustment_name.id.clone();
                 invoice.name_store_id = None;
             }
-        }
-    }
-}
-
-fn replace_is_sync_update(records: &mut IntegrationRecords) {
-    for mut record in records.upserts.iter_mut() {
-        if let PullUpsertRecord::Name(name) = &mut record {
-            name.is_sync_update = true;
-        }
-
-        if let PullUpsertRecord::Clinician(clinician) = &mut record {
-            clinician.is_sync_update = true;
         }
     }
 }

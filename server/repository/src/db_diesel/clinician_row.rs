@@ -1,6 +1,6 @@
 use super::StorageConnection;
 
-use crate::{db_diesel::store_row::store, Gender, RepositoryError};
+use crate::{Gender, RepositoryError};
 
 use diesel::prelude::*;
 

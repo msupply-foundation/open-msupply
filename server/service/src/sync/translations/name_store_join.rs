@@ -115,7 +115,7 @@ impl SyncTranslation for NameStoreJoinTranslation {
         } = NameStoreJoinRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
-                "Clinician row ({}) not found",
+                "Name store join row ({}) not found",
                 changelog.record_id
             )))?;
 

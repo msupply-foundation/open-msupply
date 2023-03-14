@@ -76,6 +76,7 @@ pub struct ChangelogFilter {
     pub name_id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
     pub record_id: Option<EqualFilter<String>>,
+    pub is_sync_update: Option<EqualFilter<bool>>,
 }
 
 pub struct ChangelogRepository<'a> {
@@ -147,7 +148,6 @@ fn create_filtered_query<'a>(
 ) -> BoxedChangelogQuery {
     let mut query = changelog_deduped::dsl::changelog_deduped
         .filter(changelog_deduped::dsl::cursor.ge(earliest.try_into().unwrap_or(0)))
-        .filter(changelog_deduped::dsl::is_sync_update.eq(false))
         .into_boxed();
 
     if let Some(f) = filter {
@@ -156,12 +156,18 @@ fn create_filtered_query<'a>(
             name_id,
             store_id,
             record_id,
+            is_sync_update,
         } = f;
 
         apply_equal_filter!(query, table_name, changelog_deduped::dsl::table_name);
         apply_equal_filter!(query, name_id, changelog_deduped::dsl::name_id);
         apply_equal_filter!(query, store_id, changelog_deduped::dsl::store_id);
         apply_equal_filter!(query, record_id, changelog_deduped::dsl::record_id);
+        apply_equal_filter!(
+            query,
+            is_sync_update,
+            changelog_deduped::dsl::is_sync_update
+        );
     }
 
     query
@@ -205,6 +211,11 @@ impl ChangelogFilter {
 
     pub fn record_id(mut self, filter: EqualFilter<String>) -> Self {
         self.record_id = Some(filter);
+        self
+    }
+
+    pub fn is_sync_update(mut self, filter: EqualFilter<bool>) -> Self {
+        self.is_sync_update = Some(filter);
         self
     }
 }

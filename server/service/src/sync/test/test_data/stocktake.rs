@@ -81,7 +81,6 @@ fn stocktake_push_record() -> TestSyncPushRecord {
             ),
             finalised_datetime: None,
         }),
-        is_sync_update: false,
     }
 }
 
@@ -168,7 +167,6 @@ fn stocktake_om_field_push_record() -> TestSyncPushRecord {
                     .unwrap()
             ),
         }),
-        is_sync_update: false,
     }
 }
 

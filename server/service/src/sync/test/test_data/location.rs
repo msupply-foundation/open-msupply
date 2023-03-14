@@ -52,6 +52,5 @@ pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
             on_hold: false,
             store_id: "store_a".to_string(),
         }),
-        is_sync_update: false,
     }]
 }

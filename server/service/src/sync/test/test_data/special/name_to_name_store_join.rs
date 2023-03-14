@@ -1,9 +1,13 @@
 use repository::{mock::MockData, NameRow, NameStoreJoinRow, StoreRow, SyncBufferRow};
+use serde_json::json;
 use util::{inline_edit, inline_init};
 
 use crate::sync::{
-    test::TestSyncPullRecord,
-    translations::{IntegrationRecords, LegacyTableName, PullUpsertRecord},
+    test::{TestSyncPullRecord, TestSyncPushRecord},
+    translations::{
+        name_store_join::LegacyNameStoreJoinRow, IntegrationRecords, LegacyTableName,
+        PullUpsertRecord,
+    },
 };
 
 const NAME_1: (&'static str, &'static str) = (
@@ -99,7 +103,9 @@ const NAME_1: (&'static str, &'static str) = (
         "created_date": "0000-00-00",
         "integration_ID": "",
         "isDeceased": false,
-        "is_deleted": false
+        "is_deleted": false,
+        "om_created_datetime": "",
+        "om_gender": ""
     }"#,
 );
 
@@ -180,4 +186,45 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
             r.name_store_joins = vec![name_store_join1(), name_store_join2(), name_store_join3()]
         })),
     }]
+}
+
+pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
+    vec![
+        TestSyncPushRecord {
+            record_id: name_store_join1().id,
+            table_name: LegacyTableName::NAME_STORE_JOIN.to_string(),
+            push_data: json!(LegacyNameStoreJoinRow {
+                id: name_store_join1().id,
+                store_id: name_store_join1().store_id,
+                name_id: name_store_join1().name_id,
+                inactive: Some(false),
+                name_is_customer: Some(true),
+                name_is_supplier: Some(false),
+            }),
+        },
+        TestSyncPushRecord {
+            record_id: name_store_join2().id,
+            table_name: LegacyTableName::NAME_STORE_JOIN.to_string(),
+            push_data: json!(LegacyNameStoreJoinRow {
+                id: name_store_join2().id,
+                store_id: name_store_join2().store_id,
+                name_id: name_store_join2().name_id,
+                inactive: Some(false),
+                name_is_customer: Some(true),
+                name_is_supplier: Some(false),
+            }),
+        },
+        TestSyncPushRecord {
+            record_id: name_store_join3().id,
+            table_name: LegacyTableName::NAME_STORE_JOIN.to_string(),
+            push_data: json!(LegacyNameStoreJoinRow {
+                id: name_store_join3().id,
+                store_id: name_store_join3().store_id,
+                name_id: name_store_join3().name_id,
+                inactive: Some(false),
+                name_is_customer: Some(true),
+                name_is_supplier: Some(true),
+            }),
+        },
+    ]
 }

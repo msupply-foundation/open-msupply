@@ -182,7 +182,6 @@ fn transact_1_push_record() -> TestSyncPushRecord {
             om_colour: None,
             tax: Some(0.0),
         }),
-        is_sync_update: false,
     }
 }
 
@@ -339,7 +338,6 @@ fn transact_2_push_record() -> TestSyncPushRecord {
             om_colour: None,
             tax: Some(0.0),
         }),
-        is_sync_update: false,
     }
 }
 
@@ -555,7 +553,6 @@ fn transact_om_fields_push_record() -> TestSyncPushRecord {
             om_colour: Some("SomeColour".to_string()),
             tax: Some(0.0),
         }),
-        is_sync_update: false,
     }
 }
 
@@ -734,7 +731,6 @@ fn inventory_addition_push_record() -> TestSyncPushRecord {
             requisition_ID: None,
             linked_transaction_id: None,
         }),
-        is_sync_update: false,
     }
 }
 
@@ -913,7 +909,6 @@ fn inventory_reduction_push_record() -> TestSyncPushRecord {
             requisition_ID: None,
             linked_transaction_id: None,
         }),
-        is_sync_update: false,
     }
 }
 

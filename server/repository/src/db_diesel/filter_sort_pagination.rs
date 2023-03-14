@@ -205,6 +205,15 @@ impl EqualFilter<String> {
     }
 }
 
+impl EqualFilter<bool> {
+    pub fn equal_or_null_bool(value: bool) -> Self {
+        Self {
+            equal_any_or_null: Some(vec![value]),
+            ..Default::default()
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct DatetimeFilter {
     pub equal_to: Option<NaiveDateTime>,
