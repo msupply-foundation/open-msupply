@@ -113,7 +113,10 @@ export const useLogin = (
       },
     };
 
-    changeLanguage(userDetails?.language);
+    const localLanguage = LocalStorage.getItem('/localisation/locale');
+    if (localLanguage === null) {
+      changeLanguage(userDetails?.language);
+    }
     setMRUCredentials({ username, store });
     setAuthCookie(authCookie);
     setCookie(authCookie);
