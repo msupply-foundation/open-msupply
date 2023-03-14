@@ -185,35 +185,45 @@ const getHighlightParts = (
   );
 };
 
-/** Either the full list or the narrowed list from conditional option */
+/**
+ * Returns either the full list or the narrowed list from conditional option.
+ *
+ * If, after applying the filter condition, the currentSelection is not in the filtered list
+ * the currentSelection item is added to the returned list and an error message is returned.
+ */
 
 const useFilteredItems = (
-  items: string[] | undefined,
-  current: string | undefined,
+  allItems: string[] | undefined,
+  currentSelection: string | undefined,
   options: Options | undefined
 ): [string[], string | undefined] => {
   const { core } = useJsonForms();
   const [error, setError] = useState<string | undefined>();
-  const [visibleItems, setVisibleItems] = useState(items ?? []);
+  const [visibleItems, setVisibleItems] = useState(allItems ?? []);
 
   const conditionField = extractProperty(
     core?.data ?? {},
     options?.fieldFilter?.field ?? ''
   );
   useEffect(() => {
-    if (!items || !options?.fieldFilter) {
+    if (!allItems || !options?.fieldFilter) {
+      setVisibleItems(allItems ?? []);
+      setError(undefined);
       return;
     }
     const mapping = options.fieldFilter.mapping[conditionField] ?? [];
-    const filtered = items.filter(item => mapping.includes(item));
-    if (current !== undefined && !filtered.includes(current)) {
-      setVisibleItems([current, ...filtered]);
+    const filtered = allItems.filter(item => mapping.includes(item));
+    if (
+      currentSelection !== undefined &&
+      !filtered.includes(currentSelection)
+    ) {
+      setVisibleItems([currentSelection, ...filtered]);
       setError('Please select a valid option');
     } else {
       setVisibleItems(filtered);
       setError(undefined);
     }
-  }, [options, current, conditionField]);
+  }, [options, currentSelection, conditionField]);
 
   return [visibleItems, error];
 };
