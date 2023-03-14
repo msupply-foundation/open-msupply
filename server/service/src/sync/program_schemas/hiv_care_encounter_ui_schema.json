@@ -357,7 +357,7 @@
             "condition": {
               "scope": "#/properties/arvMedication/properties/regimenStatus",
               "schema": {
-                "enum": ["NO", "START", "CONTINUE", "CHANGE", "STOP"]
+                "enum": ["NO", "START", "CHANGE", "STOP"]
               }
             }
           }
