@@ -5,9 +5,10 @@ import {
   PaperPopoverSection,
   usePaperClickPopover,
   useTranslation,
-  IntlUtils,
   useNavigate,
+  LocalStorage,
 } from '@openmsupply-client/common';
+import { IntlUtils, SupportedLocales } from '@common/intl';
 
 import { PropsWithChildrenOnly } from '@common/types';
 
@@ -24,6 +25,10 @@ export const LanguageSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
       disabled={l.value === i18n.language}
       onClick={() => {
         i18n.changeLanguage(l.value);
+        LocalStorage.setItem(
+          '/localisation/locale',
+          l.value as SupportedLocales
+        );
         hide();
         navigate(0);
       }}
