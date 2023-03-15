@@ -49,7 +49,16 @@ pub fn update_patient(
             let doc = generate(user_id, &patient, input)?;
             let doc_timestamp = doc.datetime.clone();
 
-            let doc = service_provider
+            // Update the name first because the doc is referring the name id
+            if is_latest_doc(ctx, service_provider, &doc.name, doc.datetime)
+                .map_err(UpdatePatientError::DatabaseError)?
+            {
+                // update the names table
+                patient_document_updated(&ctx.connection, &doc_timestamp, patient)?;
+                create_patient_name_store_join(&ctx.connection, store_id, &patient_id)?;
+            }
+
+            service_provider
                 .document_service
                 .update_document(ctx, doc, &vec![PATIENT_TYPE.to_string()])
                 .map_err(|err| match err {
@@ -72,15 +81,6 @@ pub fn update_patient(
                     }
                     DocumentInsertError::InvalidParent(_) => UpdatePatientError::InvalidParentId,
                 })?;
-
-            if is_latest_doc(ctx, service_provider, &doc)
-                .map_err(UpdatePatientError::DatabaseError)?
-            {
-                // update the names table
-                patient_document_updated(&ctx.connection, &doc_timestamp, patient)?;
-
-                create_patient_name_store_join(&ctx.connection, store_id, &patient_id)?;
-            }
 
             let patient = service_provider
                 .patient_service

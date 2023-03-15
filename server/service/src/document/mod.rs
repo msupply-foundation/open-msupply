@@ -1,4 +1,5 @@
-use repository::{Document, RepositoryError};
+use chrono::{DateTime, Utc};
+use repository::RepositoryError;
 
 use crate::service_provider::{ServiceContext, ServiceProvider};
 
@@ -11,10 +12,13 @@ pub mod raw_document;
 pub(crate) fn is_latest_doc(
     ctx: &ServiceContext,
     service_provider: &ServiceProvider,
-    doc: &Document,
+    doc_name: &str,
+    doc_timestamp: DateTime<Utc>,
 ) -> Result<bool, RepositoryError> {
     let latest_existing = service_provider
         .document_service
-        .document(ctx, &doc.name, None)?;
-    Ok(latest_existing.map(|e| e.id == doc.id).unwrap_or(false))
+        .document(ctx, doc_name, None)?;
+    Ok(latest_existing
+        .map(|e| e.datetime == doc_timestamp)
+        .unwrap_or(true))
 }

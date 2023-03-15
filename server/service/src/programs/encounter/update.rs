@@ -73,7 +73,7 @@ pub fn update_encounter(
                     DocumentInsertError::InvalidParent(_) => UpdateEncounterError::InvalidParentId,
                 })?;
 
-            if is_latest_doc(ctx, service_provider, &document)
+            if is_latest_doc(ctx, service_provider, &document.name, document.datetime)
                 .map_err(UpdateEncounterError::DatabaseError)?
             {
                 update_encounter_row(
