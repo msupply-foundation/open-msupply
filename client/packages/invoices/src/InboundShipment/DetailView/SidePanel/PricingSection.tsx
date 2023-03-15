@@ -28,6 +28,7 @@ export const PricingSectionComponent = () => {
     'taxPercentage',
   ]);
   const { data: stockLines } = useInbound.lines.list();
+  const { data: serviceLines } = useInbound.lines.serviceLines();
   const { mutateAsync: updateTax } = useInbound.document.updateTax();
 
   const tax = PricingUtils.effectiveTax(
@@ -39,6 +40,11 @@ export const PricingSectionComponent = () => {
     pricing?.serviceTotalBeforeTax,
     pricing?.serviceTotalAfterTax
   );
+
+  const disableServiceTax =
+    serviceLines
+      ?.map(line => line.totalBeforeTax)
+      .reduce((a, b) => a + b, 0) === 0;
 
   return (
     <DetailPanelSection title={t('heading.charges')}>
@@ -98,7 +104,7 @@ export const PricingSectionComponent = () => {
           <PanelLabel>{`${t('heading.tax')} ${Formatter.tax(tax)}`}</PanelLabel>
           <PanelField>
             <TaxEdit
-              disabled={false}
+              disabled={disableServiceTax}
               tax={tax}
               onChange={taxPercentage => {
                 updateTax({
