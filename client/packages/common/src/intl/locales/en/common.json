@@ -44,6 +44,7 @@
   "error.no-data": "No data available",
   "error.no-items": "No items",
   "error.no-items-filter-on": "No items to display. Try changing the filter criteria.",
+  "error.no-permission": "No permission to view this data",
   "error.no-report-permission": "No permission to view reports",
   "error.no-reports-available": "No reports available",
   "error.no-results": "Nothing here",

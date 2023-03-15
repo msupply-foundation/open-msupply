@@ -180,39 +180,38 @@ export const Settings: React.FC = () => {
     ) : null;
 
   return (
-    <Grid
-      container
-      flexDirection="column"
-      justifyContent="flex-start"
-      style={{ padding: 15, width: 500 }}
-      flexWrap="nowrap"
-    >
-      <Typography variant="h5" color="primary" style={{ paddingBottom: 25 }}>
-        {t('heading.settings-display')}
-      </Typography>
-      <Setting
-        component={<LanguageMenu />}
-        title={t('button.language')}
-        icon={<TranslateIcon />}
-      />
-      <SettingTextArea
-        defaultValue={customThemeValue}
-        onSave={saveTheme}
-        onToggle={onToggleCustomTheme}
-        title={t('heading.custom-theme')}
-      />
-      <SettingTextArea
-        defaultValue={customLogoValue}
-        onSave={saveLogo}
-        onToggle={onToggleCustomLogo}
-        title={t('heading.custom-logo')}
-      />
-      <SyncSettings />
-      <AndroidSettings />
-      <AppVersion
-        style={{ bottom: 30, right: 15 }}
-        SiteInfo={<SiteInfo siteName={initStatus?.siteName} />}
-      />
+    <Grid display="flex" flexDirection="column" flex={1}>
+      <Grid
+        container
+        flexDirection="column"
+        justifyContent="flex-start"
+        style={{ padding: 15, width: 500 }}
+        flexWrap="nowrap"
+      >
+        <Typography variant="h5" color="primary" style={{ paddingBottom: 25 }}>
+          {t('heading.settings-display')}
+        </Typography>
+        <Setting
+          component={<LanguageMenu />}
+          title={t('button.language')}
+          icon={<TranslateIcon />}
+        />
+        <SettingTextArea
+          defaultValue={customThemeValue}
+          onSave={saveTheme}
+          onToggle={onToggleCustomTheme}
+          title={t('heading.custom-theme')}
+        />
+        <SettingTextArea
+          defaultValue={customLogoValue}
+          onSave={saveLogo}
+          onToggle={onToggleCustomLogo}
+          title={t('heading.custom-logo')}
+        />
+        <SyncSettings />
+        <AndroidSettings />
+      </Grid>
+      <AppVersion SiteInfo={<SiteInfo siteName={initStatus?.siteName} />} />
     </Grid>
   );
 };
