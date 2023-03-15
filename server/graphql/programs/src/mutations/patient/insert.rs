@@ -40,7 +40,7 @@ pub fn insert_patient(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
 
-    match service_provider.patient_service.update_patient(
+    match service_provider.patient_service.upsert_patient(
         &service_context,
         service_provider,
         &store_id,

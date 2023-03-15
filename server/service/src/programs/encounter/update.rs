@@ -246,7 +246,7 @@ mod test {
         let patient = mock_patient_1();
         service_provider
             .patient_service
-            .update_patient(
+            .upsert_patient(
                 &ctx,
                 &service_provider,
                 "store_a",
