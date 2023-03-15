@@ -41,6 +41,10 @@ const ServiceCharges = ({ pricing, isDisabled }: PricingGroupProps) => {
   );
 
   const { updateServiceLineTax } = useOutbound.document.updateTax();
+  const disableServiceTax =
+    serviceLines
+      ?.map(line => line.totalBeforeTax)
+      .reduce((a, b) => a + b, 0) === 0;
 
   return (
     <>
@@ -73,7 +77,7 @@ const ServiceCharges = ({ pricing, isDisabled }: PricingGroupProps) => {
         <PanelLabel>{`${t('heading.tax')} ${Formatter.tax(tax)}`}</PanelLabel>
         <PanelField>
           <TaxEdit
-            disabled={!serviceLines?.length || isDisabled}
+            disabled={disableServiceTax || isDisabled}
             tax={tax}
             update={updateServiceLineTax}
           />
