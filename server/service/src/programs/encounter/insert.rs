@@ -82,7 +82,7 @@ pub fn insert_encounter(
                     }
                 })?;
 
-            if is_latest_doc(ctx, service_provider, &document)
+            if is_latest_doc(ctx, service_provider, &document.name, document.datetime)
                 .map_err(InsertEncounterError::DatabaseError)?
             {
                 update_encounter_row(

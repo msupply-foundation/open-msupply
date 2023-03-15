@@ -74,7 +74,7 @@ pub fn upsert_program_enrolment(
                     }
                 })?;
 
-            if is_latest_doc(ctx, service_provider, &document)
+            if is_latest_doc(ctx, service_provider, &document.name, document.datetime)
                 .map_err(UpsertProgramEnrolmentError::DatabaseError)?
             {
                 program_enrolment_updated(&ctx.connection, &patient_id, &document, schema_program)?;

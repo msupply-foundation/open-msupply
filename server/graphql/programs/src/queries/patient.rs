@@ -106,14 +106,9 @@ impl PatientNode {
     pub async fn document(&self, ctx: &Context<'_>) -> Result<Option<DocumentNode>> {
         let loader = ctx.get_loader::<DataLoader<DocumentLoader>>();
 
-        let store_id = match self.patient.name_row.supplying_store_id.clone() {
-            Some(store_id) => store_id,
-            None => return Ok(None),
-        };
-
         let result = loader
             .load_one(DocumentLoaderInput {
-                store_id,
+                store_id: self.store_id.clone(),
                 document_name: main_patient_doc_name(&self.patient.name_row.id),
             })
             .await?
