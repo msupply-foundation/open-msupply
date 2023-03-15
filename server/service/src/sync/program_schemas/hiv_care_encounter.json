@@ -621,6 +621,11 @@
           "properties": {
             "location": {
               "description": "Location needed if visitType is 'Refill' or 'Outreach'",
+              "enum": [
+                "9 Mile Clinic, NCD",
+                "Angelicare Newtown",
+                "Angelicare StopAIDS, NCD"
+              ],
               "type": "string"
             },
             "visitType": {

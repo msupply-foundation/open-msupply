@@ -21,7 +21,7 @@
           "type": "Control",
           "scope": "#/properties/visit/properties/location",
           "rule": {
-            "effect": "ENABLE",
+            "effect": "SHOW",
             "condition": {
               "scope": "#/properties/visit/properties/visitType",
               "schema": {
