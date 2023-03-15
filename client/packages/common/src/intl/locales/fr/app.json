@@ -1,7 +1,7 @@
 {
     "button.close-the-menu": "Fermer le menu",
     "button.open-the-menu": "Ouvrir le menu",
-    "customer-requisition": "Réquisitions Client",
+    "customer-requisition": "Commandes Client",
     "customers": "Clients",
     "dashboard": "Tableau de bord",
     "inventory": "Gestion de stock",
@@ -41,7 +41,7 @@
     "auth.timeout-title": "La session a expirée",
     "cmdk.goto-inbound": "Aller à : Livraisons Entrantes",
     "cmdk.goto-dashboard": "Aller à : Tableau de Bord",
-    "cmdk.goto-customer-requisition": "Aller à : Réquisitions Client",
+    "cmdk.goto-customer-requisition": "Aller à : Commande client",
     "cmdk.goto-internal-order": "Aller à : Commandes Internes",
     "cmdk.goto-stocktakes": "Aller à : Inventaires",
     "cmdk.goto-stock": "Aller à : Afficher stock",
