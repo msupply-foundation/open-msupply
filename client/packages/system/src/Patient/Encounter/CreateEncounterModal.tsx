@@ -3,7 +3,7 @@ import {
   AlertIcon,
   BasicSpinner,
   Box,
-  DatePickerInput,
+  DateTimePickerInput,
   DialogButton,
   EncounterNodeStatus,
   InputWithLabelRow,
@@ -108,6 +108,8 @@ export const CreateEncounterModal: FC = () => {
   const canSubmit = () =>
     !formError && draft !== undefined && draft.clinician && draft.startDatetime;
 
+  console.log('formError', formError);
+
   return (
     <Modal
       title={t('label.new-encounter')}
@@ -154,20 +156,13 @@ export const CreateEncounterModal: FC = () => {
                 <InputWithLabelRow
                   label={t('label.visit-date')}
                   Input={
-                    <DatePickerInput
+                    <DateTimePickerInput
                       value={draft?.startDatetime}
                       onChange={setStartDatetime}
-                      onError={() => setFormError(true)}
-                    />
-                  }
-                />
-                <InputWithLabelRow
-                  label={t('label.visit-start')}
-                  Input={
-                    <TimePickerInput
-                      value={draft?.startDatetime}
-                      onChange={setStartDatetime}
-                      onError={() => setFormError(true)}
+                      onError={() => {
+                        console.log('ERROROROR');
+                        setFormError(true);
+                      }}
                     />
                   }
                 />

@@ -1,13 +1,16 @@
 import React, { FC, useEffect, useState } from 'react';
-import { TimePicker, TimePickerProps } from '@mui/x-date-pickers';
+import { DateTimePicker, DateTimePickerProps } from '@mui/x-date-pickers';
 import { BasicTextInput } from '../../TextInput/BasicTextInput';
+import { useAppTheme } from '@common/styles';
 import { StandardTextFieldProps, TextFieldProps } from '@mui/material';
 import { DateUtils } from '@common/intl';
 import { useDebounceCallback } from '@common/hooks';
 
-export const TimePickerInput: FC<
-  Omit<TimePickerProps<Date>, 'renderInput'>
+export const DateTimePickerInput: FC<
+  Omit<DateTimePickerProps<Date>, 'renderInput'>
 > = props => {
+  const theme = useAppTheme();
+
   const [internalValue, setInternalValue] = useState<
     Date | string | number | null
   >();
@@ -31,9 +34,38 @@ export const TimePickerInput: FC<
   );
 
   return (
-    <TimePicker
+    <DateTimePicker
       disabled={props.disabled}
-      inputFormat="HH:mm"
+      inputFormat="dd/MM/yyyy HH:mm"
+      PopperProps={{
+        sx: {
+          '& .MuiTypography-root.Mui-selected': {
+            backgroundColor: `${theme.palette.secondary.main}`,
+          },
+          '& .MuiTypography-root.Mui-selected:hover': {
+            backgroundColor: `${theme.palette.secondary.main}`,
+          },
+          '& .Mui-selected:focus': {
+            backgroundColor: `${theme.palette.secondary.main}`,
+          },
+          '& .MuiPickersDay-root.Mui-selected': {
+            backgroundColor: `${theme.palette.secondary.main}`,
+          },
+        },
+      }}
+      PaperProps={{
+        sx: {
+          '& .Mui-selected': {
+            backgroundColor: `${theme.palette.secondary.main}!important`,
+          },
+          '& .Mui-selected:focus': {
+            backgroundColor: `${theme.palette.secondary.main}`,
+          },
+          '& .Mui-selected:hover': {
+            backgroundColor: `${theme.palette.secondary.main}`,
+          },
+        },
+      }}
       renderInput={(params: TextFieldProps) => {
         const textInputProps: StandardTextFieldProps = {
           ...params,
@@ -45,6 +77,7 @@ export const TimePickerInput: FC<
             disabled={!!props.disabled}
             {...textInputProps}
             error={isInvalid(internalValue)}
+            sx={{ width: 250 }}
           />
         );
       }}
