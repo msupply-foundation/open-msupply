@@ -188,8 +188,9 @@ const getHighlightParts = (
 /**
  * Returns either the full list or the narrowed list from conditional option.
  *
- * If, after applying the filter condition, the currentSelection is not in the filtered list
- * the currentSelection item is added to the returned list and an error message is returned.
+ * If, after applying the filter condition, the currentSelection is not in the
+ * filtered list the currentSelection item is added to the returned list and an
+ * error message is returned.
  */
 
 const useFilteredItems = (
