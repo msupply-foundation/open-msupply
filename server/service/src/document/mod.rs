@@ -15,10 +15,10 @@ pub(crate) fn is_latest_doc(
     doc_name: &str,
     doc_timestamp: DateTime<Utc>,
 ) -> Result<bool, RepositoryError> {
-    let latest_existing = service_provider
+    let Some(latest_existing) = service_provider
         .document_service
-        .document(ctx, doc_name, None)?;
-    Ok(latest_existing
-        .map(|e| e.datetime == doc_timestamp)
-        .unwrap_or(true))
+        .document(ctx, doc_name, None)? else {
+        return Ok(true);
+    };
+    Ok(latest_existing.datetime <= doc_timestamp)
 }
