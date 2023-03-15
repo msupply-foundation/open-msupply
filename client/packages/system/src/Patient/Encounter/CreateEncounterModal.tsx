@@ -48,7 +48,6 @@ export const CreateEncounterModal: FC = () => {
   >();
   const [createdDatetime] = useState(new Date().toISOString());
   const [dataError, setDataError] = useState(false);
-  const [formError, setFormError] = useState(false);
   const [draft, setDraft] = useState<Encounter | undefined>(undefined);
   const navigate = useNavigate();
   const { error } = useNotification();
@@ -78,7 +77,6 @@ export const CreateEncounterModal: FC = () => {
 
   const setStartDatetime = (date: Date | null): void => {
     const startDatetime = DateUtils.formatRFC3339(date);
-    setFormError(false);
     setDraft({
       createdDatetime,
       ...draft,
@@ -93,7 +91,6 @@ export const CreateEncounterModal: FC = () => {
   const setEndDatetime = (date: Date | null): void => {
     const endDatetime = DateUtils.formatRFC3339(date);
     setDraft({ createdDatetime, ...draft, endDatetime });
-    setFormError(false);
   };
 
   const setClinician = (option: ClinicianAutocompleteOption | null): void => {
@@ -106,9 +103,7 @@ export const CreateEncounterModal: FC = () => {
   };
 
   const canSubmit = () =>
-    !formError && draft !== undefined && draft.clinician && draft.startDatetime;
-
-  console.log('formError', formError);
+    draft !== undefined && draft.clinician && draft.startDatetime;
 
   return (
     <Modal
@@ -159,10 +154,6 @@ export const CreateEncounterModal: FC = () => {
                     <DateTimePickerInput
                       value={draft?.startDatetime}
                       onChange={setStartDatetime}
-                      onError={() => {
-                        console.log('ERROROROR');
-                        setFormError(true);
-                      }}
                     />
                   }
                 />
@@ -173,7 +164,6 @@ export const CreateEncounterModal: FC = () => {
                       value={draft?.endDatetime}
                       disabled={draft?.startDatetime === undefined}
                       onChange={setEndDatetime}
-                      onError={() => setFormError(true)}
                     />
                   }
                 />
