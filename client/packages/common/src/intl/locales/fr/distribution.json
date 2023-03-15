@@ -55,7 +55,7 @@
     "label.placeholder": "Placeholder",
     "label.delete": "Supprimer",
     "label.shipment": "Livraison",
-    "label.requested-quantity": "Quantité demandée",
+    "label.requested-quantity": "Qté demandée",
     "label.select-rows-to-allocate-them": "Sélectionner les lignes pour les allouer",
     "messages.create-outbound-from-requisition": "Êtes-vous sûr(e) de vouloir créer une livraison sortante pour cette réquisition client ?",
     "label.add-charges": "Ajouter frais",
