@@ -90,7 +90,7 @@ export const StocktakeListView: FC = () => {
 };
 
 export const ListView: FC = () => (
-  <TableProvider createStore={createTableStore}>
+  <TableProvider store={createTableStore()}>
     <StocktakeListView />
   </TableProvider>
 );

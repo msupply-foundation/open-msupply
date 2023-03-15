@@ -38,11 +38,9 @@ const InternalSupplierSearchComponent: FC<NameSearchProps> = ({
 
 export const InternalSupplierSearchModal: FC<NameSearchProps> = props => (
   <QueryParamsProvider
-    createStore={() =>
-      createQueryParamsStore<NameRowFragment>({
-        initialSortBy: { key: 'name' },
-      })
-    }
+    value={createQueryParamsStore<NameRowFragment>({
+      initialSortBy: { key: 'name' },
+    })}
   >
     <InternalSupplierSearchComponent {...props} />
   </QueryParamsProvider>

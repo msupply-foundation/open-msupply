@@ -1,5 +1,5 @@
 import {
-  useTableStore,
+  useTableStoreWithSelector,
   useTranslation,
   useQueryClient,
   useMutation,
@@ -16,7 +16,7 @@ export const useInboundDelete = () => {
   const { mutateAsync } = useMutation(api.delete);
   const t = useTranslation('replenishment');
 
-  const selectedRows = useTableStore(
+  const selectedRows = useTableStoreWithSelector(
     state =>
       rows?.nodes.filter(({ id }) => state.rowState[id]?.isSelected) ?? []
   );

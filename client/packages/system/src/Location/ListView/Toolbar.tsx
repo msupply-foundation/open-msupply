@@ -5,7 +5,7 @@ import {
   DropdownMenuItem,
   useTranslation,
   DeleteIcon,
-  useTableStore,
+  useTableStoreWithSelector,
   AppBarContentPortal,
   FilterController,
   AlertModal,
@@ -26,7 +26,7 @@ export const Toolbar: FC<{
   const { mutateAsync: deleteLocation } = useLocation.document.delete();
   const { success, info } = useNotification();
   const [deleteErrors, setDeleteErrors] = React.useState<DeleteError[]>([]);
-  const { selectedRows } = useTableStore(state => ({
+  const { selectedRows } = useTableStoreWithSelector(state => ({
     selectedRows: Object.keys(state.rowState)
       .filter(id => state.rowState[id]?.isSelected)
       .map(selectedId => data?.find(({ id }) => selectedId === id))

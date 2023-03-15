@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useTableStore, TableStore } from '../TableContext';
+import { TableStore, useTableStoreWithSelector } from '../TableContext';
 
 interface UseIsDisabledControl {
   isDisabled: boolean;
@@ -24,5 +24,5 @@ export const useIsDisabled = (rowId: string): UseIsDisabledControl => {
     oldState?.isDisabled === newState?.isDisabled &&
     oldState.rowId === newState.rowId;
 
-  return useTableStore(selector, equalityFn);
+  return useTableStoreWithSelector(selector, equalityFn);
 };

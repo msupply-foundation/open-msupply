@@ -1,8 +1,7 @@
+import React, { createContext, PropsWithChildren, useContext } from 'react';
 import { RecordWithId } from '@common/types';
 import { QueryParamsProvider, QueryParamsState } from '@common/hooks';
-import React, { PropsWithChildren } from 'react';
-import create, { UseBoundStore } from 'zustand';
-import createContext from 'zustand/context';
+import { create, StoreApi, UseBoundStore, useStore } from 'zustand';
 import { AppSxProp } from '../../../../styles';
 
 export interface RowState {
@@ -33,28 +32,41 @@ export interface TableStore {
   setRowStyles: (ids: string[], style: AppSxProp) => void;
 }
 
-const { Provider, useStore: useTableStore } = createContext<TableStore>();
+const tableContext = createContext<UseBoundStore<StoreApi<TableStore>>>(
+  {} as UseBoundStore<StoreApi<TableStore>>
+);
 
-const TableProvider = <T extends RecordWithId>({
+export const TableProvider = <T extends RecordWithId>({
   children,
+  store,
   queryParamsStore,
-  ...props
 }: PropsWithChildren<{
-  initialStore?: UseBoundStore<TableStore>;
-  createStore: () => UseBoundStore<TableStore>;
-  queryParamsStore?: UseBoundStore<QueryParamsState<T>>;
-}>) =>
-  queryParamsStore ? (
-    <Provider {...props}>
-      <QueryParamsProvider createStore={() => queryParamsStore}>
+  store: UseBoundStore<StoreApi<TableStore>>;
+  queryParamsStore?: QueryParamsState<T>;
+}>) => {
+  const { Provider } = tableContext;
+  return queryParamsStore ? (
+    <Provider value={store}>
+      <QueryParamsProvider value={queryParamsStore}>
         {children}
       </QueryParamsProvider>
     </Provider>
   ) : (
-    <Provider {...props}>{children}</Provider>
+    <Provider value={store}>{children}</Provider>
   );
+};
 
-export { TableProvider, useTableStore };
+export const useTableStore = () => useStore(useContext(tableContext));
+
+export function useTableStoreWithSelector<T>(
+  selector: (state: TableStore) => T,
+  equalityFn?: (a: T, b: T) => boolean
+): T {
+  const store = useContext(tableContext);
+  if (!equalityFn) return useStore(store, selector);
+
+  return useStore(store, selector, equalityFn);
+}
 
 const getRowState = (
   state: TableStore,
@@ -70,7 +82,7 @@ const getRowState = (
   ...updates,
 });
 
-export const createTableStore = (): UseBoundStore<TableStore> =>
+export const createTableStore = () =>
   create<TableStore>(set => ({
     rowState: {},
     numberSelected: 0,

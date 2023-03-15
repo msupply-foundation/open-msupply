@@ -58,7 +58,7 @@ export const DetailView: FC = () => {
   ];
 
   return !!data ? (
-    <TableProvider createStore={createTableStore}>
+    <TableProvider store={createTableStore()}>
       <StocktakeLineErrorProvider>
         <GlobalStyles
           styles={{

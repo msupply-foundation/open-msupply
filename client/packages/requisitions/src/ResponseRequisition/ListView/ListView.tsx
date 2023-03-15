@@ -85,7 +85,7 @@ export const ResponseRequisitionListView: FC = () => {
 
 export const ListView: FC = () => {
   return (
-    <TableProvider createStore={createTableStore}>
+    <TableProvider store={createTableStore()}>
       <ResponseRequisitionListView />
     </TableProvider>
   );

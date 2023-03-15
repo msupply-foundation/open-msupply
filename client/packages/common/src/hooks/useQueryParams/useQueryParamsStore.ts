@@ -1,5 +1,5 @@
-import create, { SetState, UseBoundStore } from 'zustand';
-import createContext from 'zustand/context';
+import { createContext, useContext } from 'react';
+import { create, StoreApi } from 'zustand';
 import { RecordWithId } from '@common/types';
 import {
   FilterBy,
@@ -24,8 +24,10 @@ export interface QueryParamsState<T extends RecordWithId> {
   };
 }
 
-export const { Provider: QueryParamsProvider, useStore: useQueryParamsStore } =
-  createContext<QueryParamsState<any>>();
+const queryParamsStoreContext = createContext<QueryParamsState<any>>({} as any);
+export const QueryParamsProvider = queryParamsStoreContext.Provider;
+
+export const useQueryParamsStore = () => useContext(queryParamsStoreContext);
 
 export const createQueryParamsStore = <T extends RecordWithId>({
   initialSortBy,
@@ -33,9 +35,10 @@ export const createQueryParamsStore = <T extends RecordWithId>({
 }: {
   initialSortBy: SortRule<T>;
   initialFilterBy?: FilterBy;
-}): UseBoundStore<QueryParamsState<T>> => {
+}) => {
   const setFilterBy =
-    (set: SetState<QueryParamsState<T>>) => (newFilterBy: FilterBy) =>
+    (set: StoreApi<QueryParamsState<T>>['setState']) =>
+    (newFilterBy: FilterBy) =>
       set(state => {
         const { filterBy: previousFilterBy, ...rest } = { ...state.filter };
         const filterBy = { ...previousFilterBy, ...newFilterBy };
@@ -143,7 +146,7 @@ export const createQueryParamsStore = <T extends RecordWithId>({
         filterBy: filter.filterBy,
       };
     },
-  }));
+  }))();
 };
 
 const getDirection = (isDesc: boolean): 'asc' | 'desc' =>

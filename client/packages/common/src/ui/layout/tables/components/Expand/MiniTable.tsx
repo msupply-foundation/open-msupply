@@ -4,13 +4,12 @@ import { Box, alpha } from '@mui/material';
 import { RecordWithId } from '@common/types';
 import { DataTable } from '../../DataTable';
 import { createTableStore, TableProvider } from '../../context/TableContext';
-import { UseBoundStore } from 'zustand';
 import { createQueryParamsStore, QueryParamsState } from '@common/hooks';
 
 interface MiniTableProps<T extends RecordWithId> {
   rows: T[];
   columns: Column<T>[];
-  queryParamsStore?: UseBoundStore<QueryParamsState<T>>;
+  queryParamsStore?: QueryParamsState<T>;
 }
 
 export const MiniTable = <T extends RecordWithId>({
@@ -36,7 +35,7 @@ export const MiniTable = <T extends RecordWithId>({
         }}
       >
         <TableProvider
-          createStore={createTableStore}
+          store={createTableStore()}
           queryParamsStore={
             queryParamsStore ||
             createQueryParamsStore<T>({ initialSortBy: { key: 'name' } })
