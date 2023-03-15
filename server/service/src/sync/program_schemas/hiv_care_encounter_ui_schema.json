@@ -208,10 +208,92 @@
             },
             {
               "scope": "#/properties/arvMedication/properties/regimenChangeReason",
-              "label": "Regimen Change Reason:",
+              "label": "Regimen Reason:",
               "type": "Control",
               "options": {
                 "multiColumn": true,
+                "fieldFilter": {
+                  "field": "arvMedication.regimenStatus",
+                  "mapping": {
+                    "NO": [
+                      "51",
+                      "52",
+                      "53",
+                      "54",
+                      "55",
+                      "56",
+                      "57",
+                      "58",
+                      "99"
+                    ],
+                    "START": [
+                      "101",
+                      "102",
+                      "103",
+                      "104",
+                      "105",
+                      "106",
+                      "107",
+                      "108",
+                      "109",
+                      "151"
+                    ],
+                    "CHANGE": [
+                      "110",
+                      "111",
+                      "112",
+                      "113",
+                      "114",
+                      "115",
+                      "116",
+                      "117",
+                      "118",
+                      "119",
+                      "120",
+                      "121",
+                      "122",
+                      "123",
+                      "131",
+                      "132",
+                      "141",
+                      "142",
+                      "143",
+                      "144",
+                      "145",
+                      "146",
+                      "147",
+                      "148",
+                      "149"
+                    ],
+                    "STOP": [
+                      "110",
+                      "111",
+                      "112",
+                      "113",
+                      "114",
+                      "115",
+                      "116",
+                      "117",
+                      "118",
+                      "119",
+                      "120",
+                      "121",
+                      "122",
+                      "123",
+                      "131",
+                      "132",
+                      "141",
+                      "142",
+                      "143",
+                      "144",
+                      "145",
+                      "146",
+                      "147",
+                      "148",
+                      "149"
+                    ]
+                  }
+                },
                 "show": [
                   ["51", "51", "Patient does not fulfill criteria"],
                   [
@@ -302,7 +384,7 @@
             "condition": {
               "scope": "#/properties/arvMedication/properties/regimenStatus",
               "schema": {
-                "enum": ["START", "CHANGE", "STOP"]
+                "enum": ["NO", "START", "CHANGE", "STOP"]
               }
             }
           }
