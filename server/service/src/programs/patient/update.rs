@@ -201,7 +201,8 @@ pub mod test {
     use repository::{
         mock::{mock_form_schema_empty, MockDataInserts},
         test_db::setup_all,
-        DocumentFilter, DocumentRepository, FormSchemaRowRepository, Pagination, StringFilter,
+        DocumentFilter, DocumentRepository, EqualFilter, FormSchemaRowRepository, NameFilter,
+        NameRepository, NameStoreJoinFilter, NameStoreJoinRepository, Pagination, StringFilter,
     };
     use serde_json::json;
     use util::inline_init;
@@ -284,6 +285,12 @@ pub mod test {
         matches!(err, UpdatePatientError::InvalidDataSchema(_));
 
         // success insert
+        NameRepository::new(&ctx.connection)
+            .query_by_filter(
+                "store_a",
+                NameFilter::new().id(EqualFilter::equal_to(&patient.id)),
+            )
+            .unwrap_err();
         let inserted_patient = service
             .update_patient(
                 &ctx,
@@ -296,6 +303,15 @@ pub mod test {
                     parent: None,
                 },
             )
+            .unwrap();
+        NameRepository::new(&ctx.connection)
+            .query_by_filter(
+                "store_a",
+                NameFilter::new().id(EqualFilter::equal_to(&patient.id)),
+            )
+            .unwrap();
+        NameStoreJoinRepository::new(&ctx.connection)
+            .query_by_filter(NameStoreJoinFilter::new().name_id(EqualFilter::equal_to(&patient.id)))
             .unwrap();
 
         // PatientDoesNotBelongToStore
