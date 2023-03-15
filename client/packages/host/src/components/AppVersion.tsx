@@ -13,14 +13,14 @@ export const AppVersion: FC<AppVersionProps> = ({ SiteInfo, style }) => {
   return (
     <Grid
       style={{
-        position: 'absolute',
-        right: 30,
-        bottom: 15,
+        flexGrow: 0,
+        alignSelf: 'flex-end',
         alignContent: 'flex-end',
         display: 'flex',
         flexDirection: 'column',
         ...style,
       }}
+      padding={1}
     >
       <Grid padding={1} paddingBottom={0}>
         <Grid item display="flex" flex={1} gap={1} justifyContent="flex-end">

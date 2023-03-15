@@ -93,34 +93,42 @@ export const InitialiseLayout = ({
         flex="1 0 50%"
         sx={{
           backgroundColor: 'background.login',
-          alignItems: 'center',
-          justifyContent: 'center',
           overflowY: 'scroll',
         }}
         display="flex"
         flexDirection="column"
       >
-        <Box style={{ width: 285 }}>
-          <form onSubmit={onInitialise} onKeyDown={handleKeyDown}>
-            <Stack spacing={5}>
-              <Box display="flex" justifyContent="center">
-                <LoginIcon small />
-              </Box>
-              {UrlInput}
-              {UsernameInput}
-              {PasswordInput}
-              {ErrorMessage}
-              <Box display="flex" justifyContent="flex-end">
-                {Button}
-              </Box>
-            </Stack>
-          </form>
+        <Box
+          sx={{
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+          display="flex"
+          flexDirection="column"
+          flex={1}
+        >
+          <Box style={{ width: 285 }}>
+            <form onSubmit={onInitialise} onKeyDown={handleKeyDown}>
+              <Stack spacing={5}>
+                <Box display="flex" justifyContent="center">
+                  <LoginIcon small />
+                </Box>
+                {UrlInput}
+                {UsernameInput}
+                {PasswordInput}
+                {ErrorMessage}
+                <Box display="flex" justifyContent="flex-end">
+                  {Button}
+                </Box>
+              </Stack>
+            </form>
+          </Box>
+          <Box paddingTop={2} width="100%">
+            {SyncProgress}
+          </Box>
         </Box>
-        <Box paddingTop={2} width="100%">
-          {SyncProgress}
-        </Box>
+        <AppVersion style={{ opacity: 0.4 }} SiteInfo={SiteInfo} />
       </Box>
-      <AppVersion style={{ opacity: 0.4 }} SiteInfo={SiteInfo} />
     </Box>
   );
 };
