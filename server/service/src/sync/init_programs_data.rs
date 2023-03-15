@@ -123,7 +123,8 @@ mod hiv_care_encounter {
                 notes: Default::default(),
                 index_testing: Default::default(),
                 hcv_crag: Default::default(),
-                general: Default::default(),
+                visit: Default::default(),
+                referral: Default::default(),
                 risk_behaviour: Default::default(),
             }
         }
