@@ -275,34 +275,6 @@
           },
           "type": "object"
         },
-        "general": {
-          "properties": {
-            "location": {
-              "description": "Location needed if visitType is 'Refill' or 'Outreach'",
-              "type": "string"
-            },
-            "referredTo": {
-              "enum": [
-                "PMTCT",
-                "HBC",
-                "PLHA Support Group/Club",
-                "Orphan and vulnerable children group",
-                "Medical specialty",
-                "Nutritional Support",
-                "Legal",
-                "Medical Ward",
-                "TB Ward",
-                "Other"
-              ],
-              "type": "string"
-            },
-            "visitType": {
-              "enum": ["Outreach", "Refill", "Standard"],
-              "type": "string"
-            }
-          },
-          "type": "object"
-        },
         "haem": {
           "properties": {
             "fbe": {
@@ -544,6 +516,32 @@
           },
           "type": "object"
         },
+        "referral": {
+          "properties": {
+            "note": {
+              "type": "string"
+            },
+            "referredTo": {
+              "items": {
+                "enum": [
+                  "PMTCT",
+                  "HBC",
+                  "PLHA Support Group/Club",
+                  "Orphan and vulnerable children group",
+                  "Medical specialty",
+                  "Nutritional Support",
+                  "Legal",
+                  "Medical Ward",
+                  "TB Ward",
+                  "Other"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "type": "object"
+        },
         "riskBehaviour": {
           "$ref": "#/definitions/RiskBehaviour"
         },
@@ -614,6 +612,24 @@
             "viralLoadStatus": {
               "description": "Based on viral load result",
               "enum": ["Suppressed", "Unsuppressed"],
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "visit": {
+          "properties": {
+            "location": {
+              "description": "Location needed if visitType is 'Refill' or 'Outreach'",
+              "enum": [
+                "9 Mile Clinic, NCD",
+                "Angelicare Newtown",
+                "Angelicare StopAIDS, NCD"
+              ],
+              "type": "string"
+            },
+            "visitType": {
+              "enum": ["Outreach", "Refill", "Standard"],
               "type": "string"
             }
           },

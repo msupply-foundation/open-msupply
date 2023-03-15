@@ -1,9 +1,13 @@
 use crate::sync::{
-    test::TestSyncPullRecord,
-    translations::{LegacyTableName, PullDeleteRecordTable, PullUpsertRecord},
+    test::{TestSyncPullRecord, TestSyncPushRecord},
+    translations::{
+        name::{LegacyNameRow, LegacyNameType},
+        LegacyTableName, PullDeleteRecordTable, PullUpsertRecord,
+    },
 };
 use chrono::NaiveDate;
 use repository::{Gender, NameRow, NameType};
+use serde_json::json;
 
 const NAME_1: (&'static str, &'static str) = (
     "1FB32324AF8049248D929CFB35F255BA",
@@ -96,7 +100,9 @@ const NAME_1: (&'static str, &'static str) = (
     "maximum_credit": 0,
     "nationality_ID": "",
     "created_date": "2022-02-10",
-    "isDeceased": false
+    "isDeceased": false,
+    "om_created_datetime": "",
+    "om_gender": "FEMALE"
 }"#,
 );
 
@@ -231,7 +237,9 @@ const NAME_2: (&'static str, &'static str) = (
     "nationality_ID": "",
     "created_date": "0000-00-00",
     "isDeceased": false,
-    "national_health_number": ""
+    "national_health_number": "",
+    "om_created_datetime": "",
+    "om_gender": ""
 }"#,
 );
 
@@ -360,7 +368,9 @@ const NAME_3: (&'static str, &'static str) = (
     "maximum_credit": 0,
     "nationality_ID": "",
     "created_date": "0000-00-00",
-    "isDeceased": false
+    "isDeceased": false,
+    "om_created_datetime": "",
+    "om_gender": ""
 }"#,
 );
 
@@ -443,7 +453,7 @@ const NAME_4: (&'static str, &'static str) = (
       "custom3": "",
       "default_order_days": 0,
       "connection_type": 0,
-      "PATIENT_PHOTO": "data:image/png;base64,",
+      "PATIENT_PHOTO": "",
       "NEXT_OF_KIN_ID": "",
       "POBOX": "",
       "ZIP": 0,
@@ -490,7 +500,9 @@ const NAME_4: (&'static str, &'static str) = (
       "nationality_ID": "",
       "created_date": "2022-05-22",
       "integration_ID": "",
-      "isDeceased": true  
+      "isDeceased": true,
+      "om_created_datetime": "",
+      "om_gender": "FEMALE"
   }"#,
 );
 
@@ -533,6 +545,78 @@ fn name_4() -> TestSyncPullRecord {
     )
 }
 
+fn name_push_record_1() -> TestSyncPushRecord {
+    TestSyncPushRecord {
+        table_name: LegacyTableName::NAME.to_string(),
+        record_id: NAME_1.0.to_string(),
+        push_data: json!(LegacyNameRow {
+            id: NAME_1.0.to_owned(),
+            name: "General".to_owned(),
+            code: "GEN".to_owned(),
+            r#type: LegacyNameType::Patient,
+            is_supplier: true,
+            is_customer: true,
+            is_deceased: false,
+            national_health_number: Some("NHN001".to_string()),
+            supplying_store_id: None,
+            first_name: Some("first_name".to_string()),
+            last_name: Some("last_name".to_string()),
+            date_of_birth: None,
+            phone: Some("0123456789".to_string()),
+            charge_code: Some("GEN".to_string()),
+            comment: Some("name comment".to_string()),
+            country: Some("name country".to_string()),
+            email: Some("name email".to_string()),
+            website: Some("name website".to_string()),
+            is_manufacturer: true,
+            is_donor: false,
+            on_hold: true,
+            address1: Some("address1".to_string()),
+            address2: Some("address2".to_string()),
+            created_date: Some(NaiveDate::from_ymd(2022, 02, 10)),
+            female: true,
+            created_datetime: Some(NaiveDate::from_ymd(2022, 05, 22).and_hms(0, 0, 0)),
+            gender: Some(Gender::Female)
+        }),
+    }
+}
+
+fn name_push_record_2() -> TestSyncPushRecord {
+    TestSyncPushRecord {
+        table_name: LegacyTableName::NAME.to_string(),
+        record_id: NAME_4.0.to_string(),
+        push_data: json!(LegacyNameRow {
+            id: NAME_4.0.to_string(),
+            name: "Moemoe, Alex".to_string(),
+            code: "00102/19/00".to_string(),
+            r#type: LegacyNameType::Patient,
+            is_customer: true,
+            is_supplier: false,
+            supplying_store_id: Some("store_a".to_string()),
+            first_name: Some("Alex".to_string()),
+            last_name: Some("Moemoe".to_string()),
+            date_of_birth: Some(NaiveDate::from_ymd(1998, 07, 29)),
+            phone: Some("02345678".to_string()),
+            charge_code: Some("00102/19/01".to_string()),
+            comment: Some("name comment 1".to_string()),
+            country: Some("NZ".to_string()),
+            address1: Some("Bikenibeu".to_string()),
+            address2: Some("Marakei".to_string()),
+            email: Some("email@some.com".to_string()),
+            website: Some("web1".to_string()),
+            is_manufacturer: false,
+            is_donor: false,
+            on_hold: false,
+            is_deceased: true,
+            national_health_number: Some("NHN003".to_string()),
+            female: true,
+            created_date: Some(NaiveDate::from_ymd(2022, 05, 22)),
+            created_datetime: Some(NaiveDate::from_ymd(2022, 05, 22).and_hms(0, 0, 0)),
+            gender: Some(Gender::Female)
+        }),
+    }
+}
+
 pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
     vec![name_1(), name_2(), name_3(), name_4()]
 }
@@ -543,4 +627,8 @@ pub(crate) fn test_pull_delete_records() -> Vec<TestSyncPullRecord> {
         NAME_4.0,
         PullDeleteRecordTable::Name,
     )]
+}
+
+pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
+    vec![name_push_record_1(), name_push_record_2()]
 }

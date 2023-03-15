@@ -3,8 +3,9 @@ mod tests {
     use crate::sync::test::integration::remote::{
         activity_log::ActivityLogRecordTester, clinician::ClinicianRecordTester,
         invoice::InvoiceRecordTester, location::LocationRecordTester,
-        stock_line::StockLineRecordTester, stocktake::StocktakeRecordTester,
-        test_remote_sync_record,
+        patient_name_and_store_and_name_store_join::PatientNameAndStoreAndNameStoreJoinTester,
+        requisition::RequisitionRecordTester, stock_line::StockLineRecordTester,
+        stocktake::StocktakeRecordTester, test_remote_sync_record,
     };
 
     #[actix_rt::test]
@@ -40,5 +41,14 @@ mod tests {
     #[actix_rt::test]
     async fn integration_sync_remote_clinician() {
         test_remote_sync_record("clinician", &ClinicianRecordTester).await;
+    }
+
+    #[actix_rt::test]
+    async fn integration_sync_remote_patient_name() {
+        test_remote_sync_record(
+            "patient_store_and_join",
+            &PatientNameAndStoreAndNameStoreJoinTester,
+        )
+        .await;
     }
 }

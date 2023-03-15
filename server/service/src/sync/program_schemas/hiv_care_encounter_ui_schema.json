@@ -7,6 +7,33 @@
   "elements": [
     {
       "type": "Category",
+      "label": "Visit Type",
+      "options": {
+        "icon": "visit"
+      },
+      "elements": [
+        {
+          "type": "Control",
+          "label": "Visit Type:",
+          "scope": "#/properties/visit/properties/visitType"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/visit/properties/location",
+          "rule": {
+            "effect": "SHOW",
+            "condition": {
+              "scope": "#/properties/visit/properties/visitType",
+              "schema": {
+                "enum": ["Outreach", "Refill"]
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "Category",
       "label": "Physical Exam",
       "options": {
         "icon": "stethoscope"
@@ -776,38 +803,6 @@
     },
     {
       "type": "Category",
-      "label": "General",
-      "options": {
-        "icon": "general"
-      },
-      "elements": [
-        {
-          "type": "Control",
-          "label": "Referred to:",
-          "scope": "#/properties/general/properties/referredTo"
-        },
-        {
-          "type": "Control",
-          "label": "Visit Type:",
-          "scope": "#/properties/general/properties/visitType"
-        },
-        {
-          "type": "Control",
-          "scope": "#/properties/general/properties/location",
-          "rule": {
-            "effect": "ENABLE",
-            "condition": {
-              "scope": "#/properties/general/properties/visitType",
-              "schema": {
-                "enum": ["Outreach", "Refill"]
-              }
-            }
-          }
-        }
-      ]
-    },
-    {
-      "type": "Category",
       "label": "Risk Behaviour",
       "options": {
         "icon": "document"
@@ -1016,6 +1011,29 @@
                 }
               }
             }
+          }
+        }
+      ]
+    },
+    {
+      "type": "Category",
+      "label": "Referrals",
+      "options": {
+        "icon": "referrals"
+      },
+      "elements": [
+        {
+          "type": "Control",
+          "label": "Referred to",
+          "scope": "#/properties/referral/properties/referredTo"
+        },
+        {
+          "type": "Control",
+          "label": "Note",
+          "scope": "#/properties/referral/properties/note",
+          "options": {
+            "multiline": true,
+            "rows": 5
           }
         }
       ]
