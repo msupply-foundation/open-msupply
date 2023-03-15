@@ -246,6 +246,7 @@ const UIComponent: FC<LayoutProps & AjvProps> = ({
               textTransform: 'none',
               '& .MuiButton-startIcon': {
                 paddingBottom: '8px',
+                margin: 0,
               },
             }}
           >
