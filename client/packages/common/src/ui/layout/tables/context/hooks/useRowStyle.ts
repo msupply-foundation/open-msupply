@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { ObjUtils } from '@openmsupply-client/common';
-import { useTableStore, TableStore } from '../TableContext';
+import { useTableStoreWithSelector, TableStore } from '../TableContext';
 import { AppSxProp } from '../../../../../styles';
 
 export interface UseRowStyleControl {
@@ -30,5 +30,5 @@ export const useRowStyle = (rowId?: string): UseRowStyleControl => {
     newState: ReturnType<typeof selector>
   ) => ObjUtils.isEqual(oldState.rowStyle, newState.rowStyle);
 
-  return useTableStore(selector, equalityFn);
+  return useTableStoreWithSelector(selector, equalityFn);
 };

@@ -103,7 +103,7 @@ const ItemListComponent: FC = () => {
 };
 
 export const ItemListView: FC = () => (
-  <TableProvider createStore={createTableStore}>
+  <TableProvider store={createTableStore()}>
     <ItemListComponent />
   </TableProvider>
 );

@@ -69,7 +69,7 @@ const LocationListComponent: FC = () => {
 };
 
 export const LocationListView: FC = () => (
-  <TableProvider createStore={createTableStore}>
+  <TableProvider store={createTableStore()}>
     <LocationListComponent />
   </TableProvider>
 );

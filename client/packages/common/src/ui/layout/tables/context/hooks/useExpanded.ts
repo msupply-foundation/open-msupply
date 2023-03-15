@@ -1,8 +1,9 @@
 import { useCallback } from 'react';
-import { useTableStore, TableStore } from '../TableContext';
+import { TableStore, useTableStoreWithSelector } from '../TableContext';
 
 interface UseExpandedControl {
   isExpanded: boolean;
+  rowId: string;
   toggleExpanded: () => void;
 }
 
@@ -17,11 +18,11 @@ export const useExpanded = (rowId: string): UseExpandedControl => {
   );
 
   const equalityFn = (
-    oldState: ReturnType<typeof selector>,
-    newState: ReturnType<typeof selector>
+    oldState: UseExpandedControl,
+    newState: UseExpandedControl
   ) =>
     oldState?.isExpanded === newState?.isExpanded &&
     oldState.rowId === newState.rowId;
 
-  return useTableStore(selector, equalityFn);
+  return useTableStoreWithSelector(selector, equalityFn);
 };

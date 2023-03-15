@@ -16,7 +16,7 @@
     "@emotion/react": "^11.7.1",
     "@emotion/styled": "^11.6.0",
     "@mui/lab": "^5.0.0-alpha.59",
-    "@mui/material": "^5.2.3",
+    "@mui/material": "^5.11.13",
     "@openmsupply-client/config": "^0.0.0",
     "currency.js": "^2.0.4",
     "date-fns": "^2.27.0",
@@ -45,7 +45,7 @@
     "stylis": "^4.0.13",
     "stylis-plugin-rtl": "^2.1.1",
     "uuid": "^9.0.0",
-    "zustand": "^3.6.7"
+    "zustand": "^4.3.6"
   },
   "devDependencies": {
     "@types/css-mediaquery": "^0.1.1",

@@ -38,11 +38,9 @@ const CustomerSearchComponent: FC<NameSearchProps> = ({
 
 export const CustomerSearchModal: FC<NameSearchProps> = props => (
   <QueryParamsProvider
-    createStore={() =>
-      createQueryParamsStore<NameRowFragment>({
-        initialSortBy: { key: 'name' },
-      })
-    }
+    value={createQueryParamsStore<NameRowFragment>({
+      initialSortBy: { key: 'name' },
+    })}
   >
     <CustomerSearchComponent {...props} />
   </QueryParamsProvider>

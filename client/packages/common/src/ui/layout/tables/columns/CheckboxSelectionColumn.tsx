@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import { RecordWithId } from '@common/types';
 import { Checkbox } from '@common/components';
-import { useTableStore, TableStore } from '../context';
+import { TableStore, useTableStoreWithSelector } from '../context';
 import { ColumnAlign, ColumnDefinition, GenericColumnKey } from './types';
 
 const useCheckbox = (rowId: string) => {
@@ -9,7 +9,7 @@ const useCheckbox = (rowId: string) => {
     (state: TableStore) => {
       return {
         rowId,
-        isSelected: state.rowState[rowId]?.isSelected,
+        isSelected: state.rowState[rowId]?.isSelected ?? false,
         toggleSelected: () => state.toggleSelected(rowId),
       };
     },
@@ -23,9 +23,15 @@ const useCheckbox = (rowId: string) => {
     oldState?.isSelected === newState?.isSelected &&
     oldState.rowId === newState.rowId;
 
-  const { isSelected, toggleSelected } = useTableStore(selector, equalityFn);
+  const { isSelected, toggleSelected } = useTableStoreWithSelector(
+    selector,
+    equalityFn
+  );
 
-  return { isSelected, toggleSelected };
+  return {
+    isSelected,
+    toggleSelected,
+  };
 };
 
 export const getCheckboxSelectionColumn = <
@@ -36,15 +42,17 @@ export const getCheckboxSelectionColumn = <
   align: ColumnAlign.Right,
   width: 60,
   Header: () => {
-    const { toggleAll, allSelected, someSelected } = useTableStore(state => {
-      const allSelected =
-        state.numberSelected === Object.keys(state.rowState).length;
-      return {
-        allSelected,
-        someSelected: state.numberSelected > 0,
-        toggleAll: state.toggleAll,
-      };
-    });
+    const { toggleAll, allSelected, someSelected } = useTableStoreWithSelector(
+      state => {
+        const allSelected =
+          state.numberSelected === Object.keys(state.rowState).length;
+        return {
+          allSelected,
+          someSelected: state.numberSelected > 0,
+          toggleAll: state.toggleAll,
+        };
+      }
+    );
 
     return (
       <Checkbox
