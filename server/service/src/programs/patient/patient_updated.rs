@@ -167,7 +167,7 @@ mod test {
         });
 
         service
-            .update_patient(
+            .upsert_patient(
                 &ctx,
                 &service_provider,
                 "store_a",
@@ -218,7 +218,7 @@ mod test {
         );
         assert!(patient.get("customData").is_some());
         service
-            .update_patient(
+            .upsert_patient(
                 &ctx,
                 &service_provider,
                 "store_a",

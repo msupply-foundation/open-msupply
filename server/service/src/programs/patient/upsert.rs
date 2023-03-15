@@ -34,7 +34,7 @@ pub struct UpdatePatient {
     pub parent: Option<String>,
 }
 
-pub fn update_patient(
+pub fn upsert_patient(
     ctx: &ServiceContext,
     service_provider: &ServiceProvider,
     store_id: &str,
@@ -211,6 +211,7 @@ pub mod test {
         programs::patient::{
             main_patient_doc_name,
             patient_schema::{ContactDetails, Gender, SchemaPatient},
+            upsert,
         },
         service_provider::ServiceProvider,
     };
@@ -233,7 +234,7 @@ pub mod test {
             zip_code: None,
         };
         inline_init(|p: &mut SchemaPatient| {
-            p.id = "testId".to_string();
+            p.id = "updatePatientId1".to_string();
             p.code = Some("national_id".to_string());
             p.contact_details = vec![contact_details.clone()];
             p.date_of_birth = Some("2000-03-04".to_string());
@@ -268,12 +269,12 @@ pub mod test {
 
         let service = &service_provider.patient_service;
         let err = service
-            .update_patient(
+            .upsert_patient(
                 &ctx,
                 &service_provider,
                 "store_a",
                 "user",
-                super::UpdatePatient {
+                upsert::UpdatePatient {
                     data: json!({"invalid": true}),
                     // TODO use a valid patient schema id
                     schema_id: schema.id.clone(),
@@ -285,19 +286,21 @@ pub mod test {
         matches!(err, UpdatePatientError::InvalidDataSchema(_));
 
         // success insert
-        NameRepository::new(&ctx.connection)
+        assert!(NameRepository::new(&ctx.connection)
             .query_by_filter(
                 "store_a",
                 NameFilter::new().id(EqualFilter::equal_to(&patient.id)),
             )
-            .unwrap_err();
+            .unwrap()
+            .pop()
+            .is_none());
         let inserted_patient = service
-            .update_patient(
+            .upsert_patient(
                 &ctx,
                 &service_provider,
                 "store_a",
                 "user",
-                super::UpdatePatient {
+                upsert::UpdatePatient {
                     data: serde_json::to_value(patient.clone()).unwrap(),
                     schema_id: schema.id.clone(),
                     parent: None,
@@ -309,19 +312,23 @@ pub mod test {
                 "store_a",
                 NameFilter::new().id(EqualFilter::equal_to(&patient.id)),
             )
+            .unwrap()
+            .pop()
             .unwrap();
         NameStoreJoinRepository::new(&ctx.connection)
             .query_by_filter(NameStoreJoinFilter::new().name_id(EqualFilter::equal_to(&patient.id)))
+            .unwrap()
+            .pop()
             .unwrap();
 
         // PatientDoesNotBelongToStore
         let err = service
-            .update_patient(
+            .upsert_patient(
                 &ctx,
                 &service_provider,
                 "store_b",
                 "user",
-                super::UpdatePatient {
+                upsert::UpdatePatient {
                     data: serde_json::to_value(patient.clone()).unwrap(),
                     schema_id: schema.id.clone(),
                     parent: Some(inserted_patient.name_row.id),
@@ -333,12 +340,12 @@ pub mod test {
 
         assert_eq!(
             service
-                .update_patient(
+                .upsert_patient(
                     &ctx,
                     &service_provider,
                     "store_a",
                     "user",
-                    super::UpdatePatient {
+                    upsert::UpdatePatient {
                         data: serde_json::to_value(patient.clone()).unwrap(),
                         schema_id: schema.id.clone(),
                         parent: None,
@@ -351,12 +358,12 @@ pub mod test {
 
         assert_eq!(
             service
-                .update_patient(
+                .upsert_patient(
                     &ctx,
                     &service_provider,
                     "store_a",
                     "user",
-                    super::UpdatePatient {
+                    upsert::UpdatePatient {
                         data: serde_json::to_value(patient.clone()).unwrap(),
                         schema_id: schema.id.clone(),
                         parent: Some("invalid".to_string()),
@@ -381,12 +388,12 @@ pub mod test {
             .pop()
             .unwrap();
         service
-            .update_patient(
+            .upsert_patient(
                 &ctx,
                 &service_provider,
                 "store_a",
                 "user",
-                super::UpdatePatient {
+                upsert::UpdatePatient {
                     data: serde_json::to_value(patient.clone()).unwrap(),
                     schema_id: schema.id.clone(),
                     parent: Some(v0.id),
