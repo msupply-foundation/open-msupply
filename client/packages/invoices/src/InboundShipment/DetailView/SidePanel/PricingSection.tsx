@@ -19,6 +19,7 @@ import { InboundServiceLineEdit, TaxEdit } from '../modals';
 
 export const PricingSectionComponent = () => {
   const t = useTranslation('replenishment');
+  const isDisabled = useInbound.utils.isDisabled();
   const serviceLineModal = useToggle(false);
   const { c } = useCurrency();
 
@@ -27,7 +28,6 @@ export const PricingSectionComponent = () => {
     'lines',
     'taxPercentage',
   ]);
-  const { data: stockLines } = useInbound.lines.list();
   const { data: serviceLines } = useInbound.lines.serviceLines();
   const { mutateAsync: updateTax } = useInbound.document.updateTax();
 
@@ -45,6 +45,7 @@ export const PricingSectionComponent = () => {
     serviceLines
       ?.map(line => line.totalBeforeTax)
       .reduce((a, b) => a + b, 0) === 0;
+  const disableStockTax = pricing?.stockTotalBeforeTax === 0 || isDisabled;
 
   return (
     <DetailPanelSection title={t('heading.charges')}>
@@ -71,7 +72,7 @@ export const PricingSectionComponent = () => {
           )}`}</PanelLabel>
           <PanelField>
             <TaxEdit
-              disabled={!stockLines?.length}
+              disabled={disableStockTax}
               tax={taxPercentage ?? 0}
               onChange={taxPercentage => {
                 update({ taxPercentage });
@@ -104,7 +105,7 @@ export const PricingSectionComponent = () => {
           <PanelLabel>{`${t('heading.tax')} ${Formatter.tax(tax)}`}</PanelLabel>
           <PanelField>
             <TaxEdit
-              disabled={disableServiceTax}
+              disabled={disableServiceTax || isDisabled}
               tax={tax}
               onChange={taxPercentage => {
                 updateTax({
