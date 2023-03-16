@@ -5,7 +5,7 @@ import { useHideOverStocked } from '../index';
 import { useRequestFields } from '../document/useRequestFields';
 
 const useItemFilter = () => {
-  const { urlQuery, updateQuery } = useUrlQuery();
+  const { urlQuery, updateQuery } = useUrlQuery({ skipParse: ['itemName'] });
   return {
     itemFilter: urlQuery.itemName ?? '',
     setItemFilter: (itemFilter: string) =>
