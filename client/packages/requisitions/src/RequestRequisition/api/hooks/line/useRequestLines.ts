@@ -1,17 +1,26 @@
 import { useMemo } from 'react';
-import { SortUtils, RegexUtils, useUrlQuery } from '@openmsupply-client/common';
+import {
+  SortUtils,
+  RegexUtils,
+  useUrlQuery,
+  ItemNode,
+} from '@openmsupply-client/common';
 import { useRequestColumns } from '../../../DetailView/columns';
 import { useHideOverStocked } from '../index';
 import { useRequestFields } from '../document/useRequestFields';
 
 const useItemFilter = () => {
-  const { urlQuery, updateQuery } = useUrlQuery({ skipParse: ['itemName'] });
+  const { urlQuery, updateQuery } = useUrlQuery({ skipParse: ['codeOrName'] });
   return {
-    itemFilter: urlQuery.itemName ?? '',
+    itemFilter: urlQuery.codeOrName ?? '',
     setItemFilter: (itemFilter: string) =>
-      updateQuery({ itemName: itemFilter }),
+      updateQuery({ codeOrName: itemFilter }),
   };
 };
+
+const matchItem = (itemFilter: string, { name, code }: Partial<ItemNode>) =>
+  RegexUtils.includes(itemFilter, name ?? '') ||
+  RegexUtils.includes(itemFilter, code ?? '');
 
 export const useRequestLines = () => {
   const { on } = useHideOverStocked();
@@ -36,12 +45,10 @@ export const useRequestLines = () => {
         item =>
           item.itemStats.availableStockOnHand <
             item.itemStats.averageMonthlyConsumption * minMonthsOfStock &&
-          RegexUtils.includes(itemFilter, item.item.name)
+          matchItem(itemFilter, item.item)
       );
     } else {
-      return sorted.filter(({ item: { name } }) =>
-        RegexUtils.includes(itemFilter, name)
-      );
+      return sorted.filter(item => matchItem(itemFilter, item.item));
     }
   }, [sortBy.key, sortBy.isDesc, lines, on, minMonthsOfStock, itemFilter]);
 
