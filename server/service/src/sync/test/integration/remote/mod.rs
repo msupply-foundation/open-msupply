@@ -1,5 +1,6 @@
 pub(crate) mod activity_log;
 pub(crate) mod clinician;
+pub(crate) mod document;
 pub(crate) mod invoice;
 pub(crate) mod location;
 pub(crate) mod patient_name_and_store_and_name_store_join;
