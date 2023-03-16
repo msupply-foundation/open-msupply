@@ -43,8 +43,7 @@
       "plugins": [
         {
           "name": "@electron-forge/plugin-webpack",
-          "config":
-          {
+          "config": {
             "mainConfig": "./webpack.main.config.js",
             "//": "needed for api requests during discovery",
             "devContentSecurityPolicy": "connect-src *",
@@ -88,7 +87,7 @@
     "node-loader": "^2.0.0",
     "style-loader": "^3.0.0",
     "ts-loader": "^9.2.2",
-    "typescript": "4.9.5"
+    "typescript": "^5.0.2"
   },
   "dependencies": {
     "@openmsupply-client/common": "^0.0.1",
