@@ -67,6 +67,32 @@
         "data": ""
       }
     },
+        {
+      "type": "Field",
+      "conditions": [
+        {
+          "field": "arvMedication.regimenStatus",
+          "equalAny": ["START", "CHANGE"]
+        }
+      ],
+      "event": {
+        "type": "arvMedicationRegimenType",
+        "dataField": "arvMedication.regimenType"
+      }
+    },
+    {
+      "type": "Field",
+      "conditions": [
+        {
+          "field": "arvMedication.regimenStatus",
+          "equalAny": ["STOP"]
+        }
+      ],
+      "event": {
+        "type": "arvMedicationRegimenType",
+        "data": ""
+      }
+    },
     {
       "type": "Field",
       "conditions": [

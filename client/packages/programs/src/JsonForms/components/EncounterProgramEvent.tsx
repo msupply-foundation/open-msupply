@@ -31,6 +31,8 @@ const Options = z
     at: z.enum(['before', 'start']).optional(),
     eventType: z.string(),
     displayType: z.enum(['string', 'number']).optional(),
+    multiline: z.boolean().optional(),
+    rows: z.number().optional(),
   })
   .strict();
 type Options = z.infer<typeof Options>;
@@ -89,6 +91,9 @@ const UIComponent = (props: ControlProps) => {
   );
   const event = events?.nodes[0];
 
+  const multiline = options?.multiline !== false;
+  const rows = options?.rows;
+
   if (!props.visible) {
     return null;
   }
@@ -126,6 +131,8 @@ const UIComponent = (props: ControlProps) => {
             sx: DefaultFormRowSpacing,
             error: !!errors,
             helperText: errors,
+            multiline,
+            rows,
           }}
           labelWidthPercentage={FORM_LABEL_WIDTH}
           inputAlignment={'start'}

@@ -448,7 +448,8 @@ fn encounter_hiv_care_1(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncou
         e.arv_medication = Some(inline_init(
             |e: &mut hiv_care_encounter::HivcareEncounterArvMedication| {
                 e.quantity_prescribed = Some(8.0);
-                e.regimen = Some("1a-New".to_string());
+                e.regimen = Some("1a-New TDF + 3TC + DTG".to_string());
+                e.regimen_type = Some("First Line - Adult".to_string());
                 e.regimen_status = Some("START".to_string());
                 e.regimen_change_reason = Some("51".to_string())
             },
@@ -477,7 +478,8 @@ fn encounter_hiv_care_2(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncou
                 e.remaining_pill_count = Some(2.0);
                 e.quantity_prescribed = Some(8.0);
                 e.adherence_score = Some(85.7142835884354);
-                e.regimen = Some("1a-New".to_string());
+                e.regimen = Some("1a-New TDF + 3TC + DTG".to_string());
+                e.regimen_type = Some("First Line - Adult".to_string());
                 e.regimen_status = Some("CONTINUE".to_string());
             },
         ));
@@ -505,7 +507,8 @@ fn encounter_hiv_care_3(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncou
                 e.remaining_pill_count = Some(5.0);
                 e.quantity_prescribed = Some(8.0);
                 e.adherence_score = Some(42.85714108560097);
-                e.regimen = Some("2a-New".to_string());
+                e.regimen = Some("2a-New AZT + 3TC + LPVr".to_string());
+                e.regimen_type = Some("Second Line - Adult".to_string());
                 e.regimen_status = Some("CHANGE".to_string());
                 e.regimen_change_reason = Some("52".to_string())
             },
