@@ -30,7 +30,12 @@ const variants: { [key in LabelVariant]: SxProps } = {
     paddingBottom: 2,
     paddingTop: 1,
   },
-  h2: { fontSize: '1.4em', fontWeight: 'bold', textAlign: 'center' },
+  h2: {
+    fontSize: '1.4em',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    paddingBottom: 2,
+  },
   h3: {
     fontWeight: 'bold',
     textAlign: 'right',
