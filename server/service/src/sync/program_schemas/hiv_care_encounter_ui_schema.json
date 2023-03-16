@@ -851,6 +851,9 @@
           "scope": "#/properties/riskBehaviour/properties/forcedSexWithoutConsent"
         },
         {
+          "type": "Spacer"
+        },
+        {
           "type": "Control",
           "scope": "#/properties/riskBehaviour/properties/numberMaleSexualPartners6Month"
         },
