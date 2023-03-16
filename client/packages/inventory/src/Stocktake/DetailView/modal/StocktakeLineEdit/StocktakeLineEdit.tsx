@@ -88,7 +88,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
 
   return (
     <TableProvider
-      store={createTableStore()}
+      createStore={createTableStore()}
       queryParamsStore={createQueryParamsStore({
         initialSortBy: { key: 'expiryDate' },
       })}
@@ -151,9 +151,11 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
                     <StyledTabPanel value={Tabs.Location}>
                       <StyledTabContainer>
                         <QueryParamsProvider
-                          value={createQueryParamsStore<LocationRowFragment>({
-                            initialSortBy: { key: 'name' },
-                          })}
+                          createStore={createQueryParamsStore<LocationRowFragment>(
+                            {
+                              initialSortBy: { key: 'name' },
+                            }
+                          )}
                         >
                           <LocationTable
                             isDisabled={isDisabled}

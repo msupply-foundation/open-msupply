@@ -106,7 +106,7 @@ const OutboundShipmentListViewComponent: FC = () => {
 };
 
 export const OutboundShipmentListView: FC = () => (
-  <TableProvider store={createTableStore()}>
+  <TableProvider createStore={createTableStore()}>
     <OutboundShipmentListViewComponent />
   </TableProvider>
 );

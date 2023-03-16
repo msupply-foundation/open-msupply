@@ -181,7 +181,7 @@ export const LocationTableComponent: FC<TableProps> = ({
 
   return (
     <QueryParamsProvider
-      value={createQueryParamsStore<LocationRowFragment>({
+      createStore={createQueryParamsStore<LocationRowFragment>({
         initialSortBy: { key: 'name' },
       })}
     >

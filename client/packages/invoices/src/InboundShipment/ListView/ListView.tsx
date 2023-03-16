@@ -98,7 +98,7 @@ export const InboundListView: FC = () => {
 };
 
 export const ListView: FC = () => (
-  <TableProvider store={createTableStore()}>
+  <TableProvider createStore={createTableStore()}>
     <InboundListView />
   </TableProvider>
 );

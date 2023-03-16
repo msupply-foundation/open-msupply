@@ -207,7 +207,7 @@ const TableWrapper: React.FC<TableProps> = ({
 
   return (
     <TableProvider
-      store={createTableStore()}
+      createStore={createTableStore()}
       queryParamsStore={createQueryParamsStore({
         initialSortBy: { key: 'expiryDate' },
       })}

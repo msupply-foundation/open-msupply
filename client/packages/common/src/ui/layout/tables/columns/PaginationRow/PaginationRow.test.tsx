@@ -14,7 +14,7 @@ describe('PaginationRow', () => {
     const { getByText } = render(
       <TestingProvider>
         <TableProvider
-          store={createTableStore()}
+          createStore={createTableStore()}
           queryParamsStore={createQueryParamsStore({
             initialSortBy: { key: 'id' },
           })}
@@ -45,7 +45,7 @@ describe('PaginationRow', () => {
     const { getByRole } = render(
       <TestingProvider>
         <TableProvider
-          store={createTableStore()}
+          createStore={createTableStore()}
           queryParamsStore={createQueryParamsStore({
             initialSortBy: { key: 'id' },
           })}
@@ -74,7 +74,7 @@ describe('PaginationRow', () => {
     const { queryByRole, getByRole } = render(
       <TestingProvider>
         <TableProvider
-          store={createTableStore()}
+          createStore={createTableStore()}
           queryParamsStore={createQueryParamsStore({
             initialSortBy: { key: 'id' },
           })}
@@ -115,7 +115,7 @@ describe('PaginationRow', () => {
     const { queryByRole, queryByText } = render(
       <TestingProvider>
         <TableProvider
-          store={createTableStore()}
+          createStore={createTableStore()}
           queryParamsStore={createQueryParamsStore({
             initialSortBy: { key: 'id' },
           })}
@@ -147,7 +147,7 @@ describe('PaginationRow', () => {
     const { getByRole } = render(
       <TestingProvider>
         <TableProvider
-          store={createTableStore()}
+          createStore={createTableStore()}
           queryParamsStore={createQueryParamsStore({
             initialSortBy: { key: 'id' },
           })}
@@ -180,7 +180,7 @@ describe('PaginationRow', () => {
     const { getByRole } = render(
       <TestingProvider>
         <TableProvider
-          store={createTableStore()}
+          createStore={createTableStore()}
           queryParamsStore={createQueryParamsStore({
             initialSortBy: { key: 'id' },
           })}
@@ -210,7 +210,7 @@ describe('PaginationRow', () => {
     const { getByRole } = render(
       <TestingProvider>
         <TableProvider
-          store={createTableStore()}
+          createStore={createTableStore()}
           queryParamsStore={createQueryParamsStore({
             initialSortBy: { key: 'id' },
           })}
@@ -240,7 +240,7 @@ describe('PaginationRow', () => {
     const { getByRole } = render(
       <TestingProvider>
         <TableProvider
-          store={createTableStore()}
+          createStore={createTableStore()}
           queryParamsStore={createQueryParamsStore({
             initialSortBy: { key: 'id' },
           })}

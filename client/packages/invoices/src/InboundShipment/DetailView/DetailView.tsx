@@ -63,7 +63,7 @@ export const DetailView: FC = () => {
     >
       {data ? (
         <TableProvider
-          store={createTableStore()}
+          createStore={createTableStore()}
           queryParamsStore={createQueryParamsStore<
             InboundLineFragment | InboundItem
           >({
