@@ -78,7 +78,7 @@ const ServiceItemSearchComponent: FC<ItemSearchInputProps> = ({
 
 export const ServiceItemSearchInput = (props: ItemSearchInputProps) => (
   <QueryParamsProvider
-    value={createQueryParamsStore<ServiceItemRowFragment>({
+    createStore={createQueryParamsStore<ServiceItemRowFragment>({
       initialSortBy: { key: 'name' },
     })}
   >

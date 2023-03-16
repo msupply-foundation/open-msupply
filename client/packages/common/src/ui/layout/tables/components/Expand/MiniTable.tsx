@@ -5,11 +5,12 @@ import { RecordWithId } from '@common/types';
 import { DataTable } from '../../DataTable';
 import { createTableStore, TableProvider } from '../../context/TableContext';
 import { createQueryParamsStore, QueryParamsState } from '@common/hooks';
+import { StoreApi, UseBoundStore } from 'zustand';
 
 interface MiniTableProps<T extends RecordWithId> {
   rows: T[];
   columns: Column<T>[];
-  queryParamsStore?: QueryParamsState<T>;
+  queryParamsStore?: UseBoundStore<StoreApi<QueryParamsState<T>>>;
 }
 
 export const MiniTable = <T extends RecordWithId>({
@@ -35,7 +36,7 @@ export const MiniTable = <T extends RecordWithId>({
         }}
       >
         <TableProvider
-          store={createTableStore()}
+          createStore={createTableStore()}
           queryParamsStore={
             queryParamsStore ||
             createQueryParamsStore<T>({ initialSortBy: { key: 'name' } })

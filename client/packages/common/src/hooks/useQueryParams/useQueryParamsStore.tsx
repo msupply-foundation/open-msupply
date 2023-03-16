@@ -1,4 +1,4 @@
-import { createContext, useContext } from 'react';
+import React, { ReactNode, createContext, useContext } from 'react';
 import { create, StoreApi } from 'zustand';
 import { RecordWithId } from '@common/types';
 import {
@@ -23,11 +23,10 @@ export interface QueryParamsState<T extends RecordWithId> {
     filterBy: FilterBy | null;
   };
 }
+const getDirection = (isDesc: boolean): 'asc' | 'desc' =>
+  isDesc ? 'desc' : 'asc';
 
 const queryParamsStoreContext = createContext<QueryParamsState<any>>({} as any);
-export const QueryParamsProvider = queryParamsStoreContext.Provider;
-
-export const useQueryParamsStore = () => useContext(queryParamsStoreContext);
 
 export const createQueryParamsStore = <T extends RecordWithId>({
   initialSortBy,
@@ -146,8 +145,19 @@ export const createQueryParamsStore = <T extends RecordWithId>({
         filterBy: filter.filterBy,
       };
     },
-  }))();
+  }));
 };
 
-const getDirection = (isDesc: boolean): 'asc' | 'desc' =>
-  isDesc ? 'desc' : 'asc';
+export const QueryParamsProvider = ({
+  children,
+  createStore,
+}: {
+  children: ReactNode;
+  createStore: () => QueryParamsState<any>;
+}) => {
+  const { Provider } = queryParamsStoreContext;
+  const store = createStore();
+  return <Provider value={store}>{children}</Provider>;
+};
+
+export const useQueryParamsStore = () => useContext(queryParamsStoreContext);

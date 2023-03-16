@@ -39,7 +39,7 @@ const StoreSearchComponent = ({
 
 export const StoreSearchInput = (props: StoreSearchInputProps) => (
   <QueryParamsProvider
-    value={createQueryParamsStore<StoreRowFragment>({
+    createStore={createQueryParamsStore<StoreRowFragment>({
       initialSortBy: { key: 'code' },
     })}
   >
