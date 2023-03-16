@@ -13,7 +13,8 @@ export const TimePickerInput: FC<
   >();
 
   useEffect(() => {
-    if (props.value) setInternalValue(props.value);
+    if (props.value && props.value !== internalValue)
+      setInternalValue(props.value);
   }, [props.value]);
 
   const isInvalid = (value: Date | string | number | null | undefined) => {
@@ -25,7 +26,8 @@ export const TimePickerInput: FC<
   const debouncedOnChange = useDebounceCallback(
     value => {
       if (DateUtils.isValid(value)) props.onChange(value);
-      else setInternalValue(value);
+      else props.onChange(null);
+      setInternalValue(value);
     },
     [props.onChange]
   );
