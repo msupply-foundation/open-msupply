@@ -451,8 +451,8 @@
           "options": {
             "values": [
               {
-                "field": "arvMedication.adherenceStatus",
-                "label": "Adherence Status",
+                "field": "arvMedication.adherenceScore",
+                "label": "Adherence Score",
                 "unit": "%"
               }
             ]
