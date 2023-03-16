@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from 'react';
 import { useLocalStorage, GroupByItem } from './../../../../../localStorage';
-import { useTableStoreWithSelector, TableStore } from '../TableContext';
+import { useTableStore, TableStore } from '../TableContext';
 
 interface IsGroupedControl {
   isGrouped: boolean;
@@ -11,7 +11,7 @@ export const useIsGrouped = (key: keyof GroupByItem): IsGroupedControl => {
   const selector = useCallback(({ setIsGrouped }: TableStore) => {
     return { setIsGrouped };
   }, []);
-  const { setIsGrouped } = useTableStoreWithSelector(selector);
+  const { setIsGrouped } = useTableStore(selector);
   const [groupByItem, setGroupByItem] = useLocalStorage('/groupbyitem', {
     outboundShipment: false,
     inboundShipment: false,

@@ -1,6 +1,6 @@
 import {
   useTranslation,
-  useTableStoreWithSelector,
+  useTableStore,
   useDeleteConfirmation,
 } from '@openmsupply-client/common';
 import { canDeleteStocktake } from '../../../../utils';
@@ -13,7 +13,7 @@ export const useStocktakeDeleteSelected = () => {
   const { data: rows } = useStocktakes();
   const { mutateAsync } = useStocktakeDelete();
 
-  const { selectedRows } = useTableStoreWithSelector(state => ({
+  const { selectedRows } = useTableStore(state => ({
     selectedRows: Object.keys(state.rowState)
       .filter(id => state.rowState[id]?.isSelected)
       .map(selectedId => rows?.nodes?.find(({ id }) => selectedId === id))

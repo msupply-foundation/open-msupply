@@ -4,7 +4,7 @@ import {
   useQueryClient,
   useTranslation,
   useMutation,
-  useTableStoreWithSelector,
+  useTableStore,
   useDeleteConfirmation,
 } from '@openmsupply-client/common';
 import { useOutbounds } from './useOutbounds';
@@ -17,7 +17,7 @@ export const useOutboundDelete = () => {
   const { mutateAsync } = useMutation(api.delete);
   const t = useTranslation('distribution');
 
-  const { selectedRows } = useTableStoreWithSelector(state => ({
+  const { selectedRows } = useTableStore(state => ({
     selectedRows: Object.keys(state.rowState)
       .filter(id => state.rowState[id]?.isSelected)
       .map(selectedId => rows?.nodes?.find(({ id }) => selectedId === id))
