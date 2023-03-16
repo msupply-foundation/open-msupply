@@ -3,10 +3,10 @@
   "version": "0.0.0",
   "private": true,
   "devDependencies": {
-    "@capacitor/android": "^3.5.1",
-    "@capacitor/cli": "^3.5.1",
-    "@capacitor/core": "^3.5.1",
-    "cordova-android": "^10.1.1",
+    "@capacitor/android": "^4.7.0",
+    "@capacitor/cli": "^4.7.0",
+    "@capacitor/core": "^4.7.0",
+    "cordova-android": "^11.0.0",
     "cordova-plugin-printer": "^0.8.0"
   },
   "workspaces": {
