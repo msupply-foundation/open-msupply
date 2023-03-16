@@ -1,5 +1,5 @@
 import {
-  useTableStoreWithSelector,
+  useTableStore,
   useTranslation,
   useDeleteConfirmation,
 } from '@openmsupply-client/common';
@@ -14,7 +14,7 @@ export const useDeleteSelectedLines = (): (() => void) => {
   const t = useTranslation('replenishment');
 
   const selectedRows =
-    useTableStoreWithSelector(state => {
+    useTableStore(state => {
       const { isGrouped } = state;
 
       return isGrouped

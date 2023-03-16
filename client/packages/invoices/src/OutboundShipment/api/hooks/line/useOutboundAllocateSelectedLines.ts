@@ -3,7 +3,7 @@ import {
   useMutation,
   useNotification,
   useTranslation,
-  useTableStoreWithSelector,
+  useTableStore,
 } from '@openmsupply-client/common';
 import { useOutboundApi } from './../utils/useOutboundApi';
 import { useOutboundNumber } from './../utils/useOutboundNumber';
@@ -38,7 +38,7 @@ export const useOutboundAllocateSelectedLines = (): {
   const t = useTranslation('distribution');
 
   const selectedRows =
-    useTableStoreWithSelector(state => {
+    useTableStore(state => {
       const { isGrouped } = state;
 
       return isGrouped

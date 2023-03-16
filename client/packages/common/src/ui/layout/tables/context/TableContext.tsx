@@ -56,17 +56,27 @@ export const TableProvider = <T extends RecordWithId>({
   );
 };
 
-export const useTableStore = () => useStore(useContext(tableContext));
-
-export function useTableStoreWithSelector<T>(
-  selector: (state: TableStore) => T,
+export function useTableStore<T = TableStore>(
+  selector?: (state: TableStore) => T,
   equalityFn?: (a: T, b: T) => boolean
 ): T {
+  if (!selector) return useStore(useContext(tableContext)) as T;
+
   const store = useContext(tableContext);
   if (!equalityFn) return useStore(store, selector);
 
   return useStore(store, selector, equalityFn);
 }
+
+// export function useTableStore<T>(
+//   selector: (state: TableStore) => T,
+//   equalityFn?: (a: T, b: T) => boolean
+// ): T {
+//   const store = useContext(tableContext);
+//   if (!equalityFn) return useStore(store, selector);
+
+//   return useStore(store, selector, equalityFn);
+// }
 
 const getRowState = (
   state: TableStore,

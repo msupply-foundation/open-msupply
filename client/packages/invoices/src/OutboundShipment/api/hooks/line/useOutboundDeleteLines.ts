@@ -2,7 +2,7 @@ import {
   useQueryClient,
   useMutation,
   useTranslation,
-  useTableStoreWithSelector,
+  useTableStore,
   useDeleteConfirmation,
 } from '@openmsupply-client/common';
 import { OutboundFragment } from './../../operations.generated';
@@ -57,7 +57,7 @@ export const useOutboundDeleteSelectedLines = (): (() => void) => {
   const t = useTranslation('distribution');
 
   const selectedRows =
-    useTableStoreWithSelector(state => {
+    useTableStore(state => {
       const { isGrouped } = state;
 
       return isGrouped

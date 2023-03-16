@@ -1,5 +1,5 @@
 import {
-  useTableStoreWithSelector,
+  useTableStore,
   useDeleteConfirmation,
 } from '@openmsupply-client/common';
 import { StocktakeSummaryItem } from '../../../../types';
@@ -15,7 +15,7 @@ export const useStocktakeDeleteSelectedLines = (): (() => void) => {
   const t = useTranslation('inventory');
   const isDisabled = useStocktake.utils.isDisabled();
 
-  const { selectedRows } = useTableStoreWithSelector(state => {
+  const { selectedRows } = useTableStore(state => {
     const { isGrouped } = state;
 
     if (isGrouped) {

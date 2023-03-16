@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import { RecordWithId } from '@common/types';
 import { Checkbox } from '@common/components';
-import { TableStore, useTableStoreWithSelector } from '../context';
+import { TableStore, useTableStore } from '../context';
 import { ColumnAlign, ColumnDefinition, GenericColumnKey } from './types';
 
 const useCheckbox = (rowId: string) => {
@@ -23,10 +23,7 @@ const useCheckbox = (rowId: string) => {
     oldState?.isSelected === newState?.isSelected &&
     oldState.rowId === newState.rowId;
 
-  const { isSelected, toggleSelected } = useTableStoreWithSelector(
-    selector,
-    equalityFn
-  );
+  const { isSelected, toggleSelected } = useTableStore(selector, equalityFn);
 
   return {
     isSelected,
@@ -42,17 +39,15 @@ export const getCheckboxSelectionColumn = <
   align: ColumnAlign.Right,
   width: 60,
   Header: () => {
-    const { toggleAll, allSelected, someSelected } = useTableStoreWithSelector(
-      state => {
-        const allSelected =
-          state.numberSelected === Object.keys(state.rowState).length;
-        return {
-          allSelected,
-          someSelected: state.numberSelected > 0,
-          toggleAll: state.toggleAll,
-        };
-      }
-    );
+    const { toggleAll, allSelected, someSelected } = useTableStore(state => {
+      const allSelected =
+        state.numberSelected === Object.keys(state.rowState).length;
+      return {
+        allSelected,
+        someSelected: state.numberSelected > 0,
+        toggleAll: state.toggleAll,
+      };
+    });
 
     return (
       <Checkbox

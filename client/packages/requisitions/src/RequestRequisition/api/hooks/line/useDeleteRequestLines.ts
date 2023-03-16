@@ -2,7 +2,7 @@ import {
   useTranslation,
   useQueryClient,
   useMutation,
-  useTableStoreWithSelector,
+  useTableStore,
   useDeleteConfirmation,
 } from '@openmsupply-client/common';
 import { useRequestNumber } from '../document/useRequest';
@@ -22,7 +22,7 @@ export const useDeleteRequestLines = () => {
   });
   const t = useTranslation('replenishment');
 
-  const selectedRows = useTableStoreWithSelector(state =>
+  const selectedRows = useTableStore(state =>
     lines.filter(({ id }) => state.rowState[id]?.isSelected)
   );
 

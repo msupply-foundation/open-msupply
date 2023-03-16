@@ -1,6 +1,6 @@
 import {
   useTranslation,
-  useTableStoreWithSelector,
+  useTableStore,
   RequisitionNodeStatus,
   useDeleteConfirmation,
 } from '@openmsupply-client/common';
@@ -12,7 +12,7 @@ export const useDeleteSelectedRequisitions = () => {
   const { data: rows } = useRequests({ enabled: false });
   const { mutateAsync } = useDeleteRequests();
   const t = useTranslation('replenishment');
-  const { selectedRows } = useTableStoreWithSelector(state => ({
+  const { selectedRows } = useTableStore(state => ({
     selectedRows: Object.keys(state.rowState)
       .filter(id => state.rowState[id]?.isSelected)
       .map(selectedId => rows?.nodes?.find(({ id }) => selectedId === id))

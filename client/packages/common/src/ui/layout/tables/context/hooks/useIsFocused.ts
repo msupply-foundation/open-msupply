@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useTableStoreWithSelector, TableStore } from '../TableContext';
+import { useTableStore, TableStore } from '../TableContext';
 
 interface UseIsFocusedControl {
   isFocused: boolean;
@@ -23,5 +23,5 @@ export const useIsFocused = (rowId: string): UseIsFocusedControl => {
     oldState?.isFocused === newState?.isFocused &&
     oldState.rowId === newState.rowId;
 
-  return useTableStoreWithSelector(selector, equalityFn);
+  return useTableStore(selector, equalityFn);
 };

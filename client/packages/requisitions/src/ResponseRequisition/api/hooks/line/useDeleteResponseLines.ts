@@ -3,7 +3,7 @@ import {
   useMutation,
   useNotification,
   useTranslation,
-  useTableStoreWithSelector,
+  useTableStore,
 } from '@openmsupply-client/common';
 import { useResponse } from '..';
 import { useResponseNumber } from '../document/useResponse';
@@ -23,7 +23,7 @@ export const useDeleteResponseLines = () => {
   });
   const t = useTranslation('distribution');
 
-  const selectedRows = useTableStoreWithSelector(state =>
+  const selectedRows = useTableStore(state =>
     lines.filter(({ id }) => state.rowState[id]?.isSelected)
   );
 
