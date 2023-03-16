@@ -123,7 +123,8 @@ mod hiv_care_encounter {
                 notes: Default::default(),
                 index_testing: Default::default(),
                 hcv_crag: Default::default(),
-                general: Default::default(),
+                visit: Default::default(),
+                referral: Default::default(),
                 risk_behaviour: Default::default(),
             }
         }
@@ -766,6 +767,7 @@ fn insert_patient(
             created_datetime: None,
             is_deceased: false,
             national_health_number: None,
+            is_sync_update: false,
         })
         .unwrap();
     let store_id = StoreRepository::new(connection)
@@ -782,6 +784,7 @@ fn insert_patient(
             store_id: store_id.clone(),
             name_is_customer: true,
             name_is_supplier: false,
+            is_sync_update: false,
         })
         .unwrap();
 

@@ -156,10 +156,6 @@ pub(crate) enum PullDeleteRecordTable {
     StocktakeLine,
     #[cfg(all(test, feature = "integration_test"))]
     ActivityLog,
-    #[cfg(all(test, feature = "integration_test"))]
-    Clinician,
-    #[cfg(all(test, feature = "integration_test"))]
-    ClinicianStoreJoin,
 }
 
 #[derive(Debug, PartialEq, Clone)]

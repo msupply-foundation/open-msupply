@@ -92,6 +92,7 @@ impl SyncTranslation for ClinicianTranslation {
                 Some(Gender::Male)
             },
             is_active,
+            is_sync_update: true,
         };
         Ok(Some(IntegrationRecords::from_upsert(
             PullUpsertRecord::Clinician(result),
@@ -120,6 +121,7 @@ impl SyncTranslation for ClinicianTranslation {
             email,
             gender,
             is_active,
+            is_sync_update: _,
         } = ClinicianRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
