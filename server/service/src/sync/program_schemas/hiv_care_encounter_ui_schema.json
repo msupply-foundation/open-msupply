@@ -172,7 +172,17 @@
           "type": "EncounterProgramEvent",
           "label": "Current ARV Regimen",
           "options": {
-            "eventType": "arvMedicationRegimen"
+            "eventType": "arvMedicationRegimen",
+            "multiline": true,
+            "rows": 2
+          }
+        },
+        {
+          "type": "EncounterProgramEvent",
+          "scope": "#/properties/arvMedication/properties/regimenType",
+          "label": "Current Regiment Type",
+          "options": {
+            "eventType": "arvMedicationRegimenType"
           }
         },
         {
@@ -202,6 +212,191 @@
                   "scope": "#/properties/arvMedication/properties/regimenStatus",
                   "schema": {
                     "enum": ["STOP"]
+                  }
+                }
+              }
+            },
+            {
+              "scope": "#/properties/arvMedication/properties/otherRegimen",
+              "type": "Control",
+              "label": "Other Regimen",
+              "rule": {
+                "effect": "SHOW",
+                "condition": {
+                  "scope": "#/properties/arvMedication/properties/regimen",
+                  "schema": {
+                    "enum": ["Other - please specify"]
+                  }
+                }
+              }
+            },
+            {
+              "type": "DecisionTree",
+              "scope": "#/properties/arvMedication/properties/regimenType",
+              "options": {
+                "basePath": "arvMedication",
+                "tree": {
+                  "root": "root",
+                  "nodes": {
+                    "root": {
+                      "branches": [
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "1a-New TDF + 3TC + DTG",
+                          "value": "First Line - Adult"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "1a-Old TDF + 3TC + EFV",
+                          "value": "First Line - Adult"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "1b-New ABC + 3TC + DTG",
+                          "value": "First Line - Adult"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "1b-Old AZT + 3TC + EFV/NVP or TDF+3TC+NVP",
+                          "value": "First Line - Adult"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "2a-New AZT + 3TC + LPVr",
+                          "value": "Second Line - Adult"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "2a-Old AZT + 3TC + LPVr",
+                          "value": "Second Line - Adult"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "2b-New AZT + 3TC + DTG",
+                          "value": "Second Line - Adult"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "2b-Old TDF + 3TC + LPVr",
+                          "value": "Second Line - Adult"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "2c-New TDF + 3TC + DTG",
+                          "value": "Second Line - Adult"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "3a-New ABC + 3TC + DTG",
+                          "value": "First Line - Paeds 20-30kg"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "3a-Old ABC + 3TC + EFV",
+                          "value": "First Line - Paeds 20-30kg"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "3b-New ABC + 3TC + LPVr",
+                          "value": "First Line - Paeds 20-30kg"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "3b-Old ABC + 3TC + NVP or AZT + 3TC + EFV/NVP or TDF + 3TC + EFV/NVP",
+                          "value": "First Line - Paeds 20-30kg"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "3c-New ABC + 3TC + RAL",
+                          "value": "First Line - Paeds 20-30kg"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "4a-New AZT + 3TC + LPVr",
+                          "value": "Second Line - Paeds 20-30kg"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "4a-Old TDF + 3TC + LPVr",
+                          "value": "Second Line - Paeds 20-30kg"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "4b-New AZT + 3TC + DTG",
+                          "value": "Second Line - Paeds 20-30kg"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "4b-Old ABC + 3TC + LPVr",
+                          "value": "Second Line - Paeds 20-30kg"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "4c-New ABC + 3TC + DTG",
+                          "value": "Second Line - Paeds 20-30kg"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "4c-Old TDF + 3TC + LPVr",
+                          "value": "Second Line - Paeds 20-30kg"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "5a-New ABC + 3TC + LPVr",
+                          "value": "First Line - Paeds <20kg"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "5a-Old ABC + 3TC + LPVr or AZT + 3TC + LPVr",
+                          "value": "First Line - Paeds <20kg"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "5b-New ABC + 3TC + RAL",
+                          "value": "First Line - Paeds <20kg"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "5b-Old ABC + 3TC + NVP or AZT + 3TC + NVP",
+                          "value": "First Line - Paeds <20kg"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "6a-New ABC + 3TC + RAL",
+                          "value": "Second Line - Paeds <20kg"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "6a-Old ABC + 3TC + NVP or AZT + 3TC + NVP",
+                          "value": "Second Line - Paeds <20kg"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "6b-New AZT + 3TC + RAL",
+                          "value": "Second Line - Paeds <20kg"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "6b-Old AZT + 3TC + LPVr",
+                          "value": "Second Line - Paeds <20kg"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "6c-New AZT + 3TC + LPVr",
+                          "value": "Second Line - Paeds <20kg"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "6c-Old ABC + 3TC + LPVr",
+                          "value": "Second Line - Paeds <20kg"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "Other - please specify",
+                          "value": "Other"
+                        }
+                      ]
+                    }
                   }
                 }
               }

@@ -52,6 +52,9 @@
               "format": "date-time",
               "type": "string"
             },
+            "otherRegimen": {
+              "type": "string"
+            },
             "prophylaxisMedication": {
               "items": {
                 "enum": [
@@ -72,45 +75,49 @@
               },
               "type": "array"
             },
-            "quantityPrescribed": {
-              "description": "Number of pills prescribed",
+            "quantityDispensed": {
+              "description": "Number of pills dispensed in this encounter",
               "minimum": 0,
+              "type": "number"
+            },
+            "quantityPrescribed": {
+              "description": "Number of pills on hand at the end of the encounter.",
               "type": "number"
             },
             "regimen": {
               "description": "Antiretroviral treatment regimen",
               "enum": [
-                "1a-New",
-                "1a-Old",
-                "1b-New",
-                "1b-Old",
-                "2a-New",
-                "2a-Old",
-                "2b-New",
-                "2b-Old",
-                "2c-New",
-                "3a-New",
-                "3a-Old",
-                "3b-New",
-                "3b-Old",
-                "3c-New",
-                "4a-New",
-                "4a-Old",
-                "4b-New",
-                "4b-Old",
-                "4c-New",
-                "4c-Old",
-                "5a-New",
-                "5a-Old",
-                "5b-New",
-                "5b-Old",
-                "6a-New",
-                "6a-Old",
-                "6b-New",
-                "6b-Old",
-                "6c-New",
-                "6c-Old",
-                "Other"
+                "1a-New TDF + 3TC + DTG",
+                "1a-Old TDF + 3TC + EFV",
+                "1b-New ABC + 3TC + DTG",
+                "1b-Old AZT + 3TC + EFV/NVP or TDF+3TC+NVP",
+                "2a-New AZT + 3TC + LPVr",
+                "2a-Old AZT + 3TC + LPVr",
+                "2b-New AZT + 3TC + DTG",
+                "2b-Old TDF + 3TC + LPVr",
+                "2c-New TDF + 3TC + DTG",
+                "3a-New ABC + 3TC + DTG",
+                "3a-Old ABC + 3TC + EFV",
+                "3b-New ABC + 3TC + LPVr",
+                "3b-Old ABC + 3TC + NVP or AZT + 3TC + EFV/NVP or TDF + 3TC + EFV/NVP",
+                "3c-New ABC + 3TC + RAL",
+                "4a-New AZT + 3TC + LPVr",
+                "4a-Old TDF + 3TC + LPVr",
+                "4b-New AZT + 3TC + DTG",
+                "4b-Old ABC + 3TC + LPVr",
+                "4c-New ABC + 3TC + DTG",
+                "4c-Old TDF + 3TC + LPVr",
+                "5a-New ABC + 3TC + LPVr",
+                "5a-Old ABC + 3TC + LPVr or AZT + 3TC + LPVr",
+                "5b-New ABC + 3TC + RAL",
+                "5b-Old ABC + 3TC + NVP or AZT + 3TC + NVP",
+                "6a-New ABC + 3TC + RAL",
+                "6a-Old ABC + 3TC + NVP or AZT + 3TC + NVP",
+                "6b-New AZT + 3TC + RAL",
+                "6b-Old AZT + 3TC + LPVr",
+                "6c-New AZT + 3TC + LPVr",
+                "6c-Old ABC + 3TC + LPVr",
+                "Other - please specify"
               ],
               "type": "string"
             },
@@ -169,6 +176,18 @@
             "regimenStatus": {
               "description": "Antiretroviral treatment status",
               "enum": ["NO", "START", "CONTINUE", "CHANGE", "STOP"],
+              "type": "string"
+            },
+            "regimenType": {
+              "enum": [
+                "First Line - Adult",
+                "Second Line - Adult",
+                "First Line - Paeds 20-30kg",
+                "Second Line - Paeds 20-30kg",
+                "First Line - Paeds <20kg",
+                "Second Line - Paeds <20kg",
+                "Other"
+              ],
               "type": "string"
             },
             "relevantCoMedication": {
@@ -359,11 +378,13 @@
               "description": "75367002\tBlood pressure [mmHg]",
               "properties": {
                 "diastolic": {
-                  "pattern": "^\\d{1,3}$",
+                  "maximum": 999,
+                  "minimum": 0,
                   "type": "number"
                 },
                 "systolic": {
-                  "pattern": "^\\d{1,3}$",
+                  "maximum": 999,
+                  "minimum": 0,
                   "type": "number"
                 }
               },
