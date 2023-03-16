@@ -16,14 +16,15 @@ pub(crate) fn upsert_document(
     con: &StorageConnection,
     document: &Document,
 ) -> Result<(), RepositoryError> {
-    let registry = DocumentRegistryRepository::new(con)
+    DocumentRepository::new(con).insert(document)?;
+
+    let Some(registry) = DocumentRegistryRepository::new(con)
         .query_by_filter(
             DocumentRegistryFilter::new().document_type(EqualFilter::equal_to(&document.r#type)),
         )?
-        .pop()
-        .ok_or(RepositoryError::NotFound)?;
-
-    DocumentRepository::new(con).insert(document)?;
+        .pop() else {
+        return Ok(());
+    };
 
     match registry.context {
         repository::DocumentContext::Patient => update_patient(con, document)?,
