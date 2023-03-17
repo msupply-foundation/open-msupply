@@ -1,8 +1,8 @@
 use repository::{
     EqualFilter, KeyValueStoreRepository, KeyValueType, RepositoryError, StorageConnection,
     TransactionError, User, UserAccountRow, UserAccountRowRepository, UserFilter,
-    UserPermissionRow, UserPermissionRowRepository, UserRepository, UserStoreJoinRow,
-    UserStoreJoinRowRepository,
+    UserPermissionFilter, UserPermissionRepository, UserPermissionRow, UserPermissionRowRepository,
+    UserRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
 };
 use util::uuid::uuid;
 
@@ -67,13 +67,17 @@ impl<'a> UserAccountService<'a> {
                 let user_store_repo = UserStoreJoinRowRepository::new(con);
                 let permission_repo = UserPermissionRowRepository::new(con);
 
-                // remove all permissions that don't have context
-                permission_repo.delete_by_user_id(&user.id)?;
-                // remove existing user (if exists)
+                let permissions_to_delete = UserPermissionRepository::new(con).query_by_filter(
+                    UserPermissionFilter::new()
+                        .user_id(EqualFilter::equal_to(&user.id))
+                        .has_context(false),
+                )?;
+                for permission in permissions_to_delete {
+                    permission_repo.delete(&permission.id)?;
+                }
                 user_store_repo.delete_by_user_id(&user.id)?;
-                user_repo.delete_by_id(&user.id)?;
-                // insert user
-                user_repo.insert_one(&user)?;
+                user_repo.upsert_one(&user)?;
+
                 for store in stores_permissions {
                     // The list may contain stores we don't know about; try to insert the store
                     // in a sub-transaction and ignore the store when there is an error
@@ -313,7 +317,8 @@ mod user_account_test {
                     .user_id(EqualFilter::equal_to(&mock_user_account_a().id)),
             )
             .unwrap();
-        assert!(permissions.len() == 1);
+        // new permission + context permission
+        assert!(permissions.len() == 2);
         // test that other user is still there
         let user = user_repo
             .query_by_filter(UserFilter::new().id(EqualFilter::equal_to(&mock_user_account_b().id)))
@@ -328,17 +333,5 @@ mod user_account_test {
             )
             .unwrap();
         assert!(permissions.len() > 0);
-
-        // test that permissions with context are still there when user is deleted
-        UserPermissionRowRepository::new(&context.connection)
-            .delete_by_user_id(&mock_user_account_a().id)
-            .unwrap();
-        let permission = user_permission_repo
-            .query_by_filter(
-                UserPermissionFilter::new()
-                    .user_id(EqualFilter::equal_to(&mock_user_account_a().id)),
-            )
-            .unwrap();
-        assert!(permission.len() == 1);
     }
 }
