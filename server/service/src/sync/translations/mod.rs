@@ -1,7 +1,7 @@
 pub(crate) mod activity_log;
-pub(crate) mod inventory_adjustment_reason;
 pub(crate) mod clinician;
 pub(crate) mod clinician_store_join;
+pub(crate) mod inventory_adjustment_reason;
 pub(crate) mod invoice;
 pub(crate) mod invoice_line;
 pub(crate) mod item;
@@ -151,10 +151,6 @@ pub(crate) enum PullDeleteRecordTable {
     StocktakeLine,
     #[cfg(all(test, feature = "integration_test"))]
     ActivityLog,
-    #[cfg(all(test, feature = "integration_test"))]
-    Clinician,
-    #[cfg(all(test, feature = "integration_test"))]
-    ClinicianStoreJoin,
 }
 
 #[derive(Debug, PartialEq, Clone)]
