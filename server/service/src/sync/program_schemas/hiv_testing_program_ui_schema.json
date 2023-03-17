@@ -3,8 +3,13 @@
   "elements": [
     {
       "type": "Label",
-      "text": "HIV Testing Program Enrolment",
-      "variant": "h1"
+      "text": "Enrolment Form",
+      "variant": "h1Modal"
+    },
+    {
+      "type": "Label",
+      "text": "HIV Testing and Counselling",
+      "variant": "h2"
     },
     {
       "type": "Control",

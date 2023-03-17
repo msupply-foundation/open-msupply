@@ -3,8 +3,21 @@
   "elements": [
     {
       "type": "Label",
-      "text": "Program Enrolment",
-      "variant": "h1"
+      "text": "Enrolment Form",
+      "variant": "h1Modal"
+    },
+    {
+      "type": "Label",
+      "text": "HIV Care and Treatment",
+      "variant": "h2"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/enrolmentDatetime",
+      "label": "Enrolment Date",
+      "options": {
+        "dateOnly": true
+      }
     },
     {
       "type": "Control",
@@ -85,7 +98,14 @@
       "options": {
         "source": "user",
         "query": "patientByCode",
-        "saveFields": ["id", "code", "firstName", "lastName", "dateOfBirth", "gender"]
+        "saveFields": [
+          "id",
+          "code",
+          "firstName",
+          "lastName",
+          "dateOfBirth",
+          "gender"
+        ]
       }
     },
     {
@@ -131,7 +151,10 @@
       ],
       "rule": {
         "effect": "HIDE",
-        "condition": { "scope": "#/properties/treatmentSupporterIsNextOfKin", "schema": { "const": true } }
+        "condition": {
+          "scope": "#/properties/treatmentSupporterIsNextOfKin",
+          "schema": { "const": true }
+        }
       }
     },
     {
@@ -183,7 +206,10 @@
               ["TRANSFER_IN", "Transfer in"],
               ["STI", "STI"],
               ["ANC", "ANC"],
-              ["EXPOSED_INFANT_WELL_BABY_CLINIC", "Exposed infant well baby clinic"],
+              [
+                "EXPOSED_INFANT_WELL_BABY_CLINIC",
+                "Exposed infant well baby clinic"
+              ],
               ["IN_PATIENT", "In patient"]
             ]
           }
