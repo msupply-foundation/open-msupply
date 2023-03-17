@@ -201,7 +201,7 @@
         },
         {
           "type": "Group",
-          "elements": [
+          "elements": [  
             {
               "scope": "#/properties/arvMedication/properties/regimen",
               "type": "Control",
@@ -211,7 +211,7 @@
                 "condition": {
                   "scope": "#/properties/arvMedication/properties/regimenStatus",
                   "schema": {
-                    "enum": ["STOP"]
+                    "enum": ["NO", "STOP"]
                   }
                 }
               }
@@ -579,7 +579,7 @@
             "condition": {
               "scope": "#/properties/arvMedication/properties/regimenStatus",
               "schema": {
-                "enum": ["NO", "START", "CHANGE", "STOP"]
+                "enum": ["START", "CHANGE", "STOP"]
               }
             }
           }
