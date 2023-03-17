@@ -411,7 +411,10 @@
           "scope": "#",
           "label": "Adherence Score",
           "options": {
-            "previousCountField": "arvMedication.quantityPrescribed",
+            "previousCount": {
+              "source": "EncounterEvent",
+              "eventType": "arvMedicationQuantityPrescribed"
+            },
             "remainingCountField": "arvMedication.remainingPillCount",
             "countPerDay": 1,
             "targetField": "arvMedication.adherenceScore"
@@ -451,8 +454,8 @@
           "options": {
             "values": [
               {
-                "field": "arvMedication.adherenceStatus",
-                "label": "Adherence Status",
+                "field": "arvMedication.adherenceScore",
+                "label": "Adherence Score",
                 "unit": "%"
               }
             ]
