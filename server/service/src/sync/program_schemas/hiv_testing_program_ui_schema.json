@@ -31,55 +31,6 @@
           }
         ]
       }
-    },
-    {
-      "type": "Control",
-      "scope": "#/properties/status",
-      "options": {
-        "show": [
-          ["ACTIVE", "Active"],
-          ["OPTED_OUT", "Opted out"],
-          ["TRANSFERRED_OUT", "Transferred out"],
-          ["PAUSED", "Paused"]
-        ]
-      }
-    },
-    {
-      "type": "Control",
-      "scope": "#/properties/referredFrom",
-      "options": {
-        "show": [
-          ["HCT_OTHER_PICT", "HCT other PICT"],
-          ["INDEX", "Index"],
-          ["LABOUR", "Labour"],
-          ["POST_NATAL", "Post Natal"],
-          ["TB", "TB"],
-          ["COMMUNITY", "Community"],
-          ["TRANSFER_IN", "Transfer in"],
-          ["STI", "STI"],
-          ["ANC", "ANC"],
-          [
-            "EXPOSED_INFANT_WELL_BABY_CLINIC",
-            "Exposed infant well baby clinic"
-          ],
-          ["IN_PATIENT", "In patient"]
-        ]
-      }
-    },
-    {
-      "type": "Control",
-      "scope": "#/properties/partnerHIVStatus",
-      "options": {
-        "show": [
-          ["POSITIVE", "Positive"],
-          ["NEGATIVE", "Negative"],
-          ["UNKNOWN", "Unknown"]
-        ]
-      }
-    },
-    {
-      "type": "Control",
-      "scope": "#/properties/mother"
     }
   ]
 }
