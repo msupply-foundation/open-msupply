@@ -753,7 +753,24 @@
         {
           "type": "Control",
           "label": "TB-Status:",
-          "scope": "#/properties/tuberculosis/properties/tbStatus"
+          "scope": "#/properties/tuberculosis/properties/tbStatus",
+          "options": {
+            "show": [
+              ["CONFMC", "TB confirmed clinically"],
+              ["CONFMS", "TB confirmed by Sputum"],
+              ["CONFMX", "TB confirmed by X-ray"],
+              ["INH", "Currently on INH prophylaxis (IPT)"],
+              ["NO", "Not suspected / no signs or symptoms"],
+              ["REFER", "TB suspected and referred for evaluation"],
+              [
+                "SP",
+                "TB suspected and sputums sample sent or results recorded"
+              ],
+              ["TBRX", "Currently on TB treatment"],
+              ["TBRXC", "Has completed TB treatment, no signs or symptoms"],
+              ["YES", "Has TB (code from old CTC form)"]
+            ]
+          }
         }
       ]
     },
