@@ -3,8 +3,21 @@
   "elements": [
     {
       "type": "Label",
-      "text": "Routine Immunisation Program Enrolment",
-      "variant": "h1"
+      "text": "Enrolment Form",
+      "variant": "h1Modal"
+    },
+    {
+      "type": "Label",
+      "text": "Routine Immunisation",
+      "variant": "h2"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/enrolmentDatetime",
+      "label": "Enrolment Date",
+      "options": {
+        "dateOnly": true
+      }
     },
     {
       "type": "Control",
