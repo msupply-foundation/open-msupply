@@ -576,16 +576,16 @@
             },
             "tbStatus": {
               "enum": [
-                "TB confirmed clinically",
-                "TB confirmed by sputum",
-                "TB confirmed by X-ray",
-                "Currently on INH prophylaxis (IPT)",
-                "Not suspected / no signs or symptoms",
-                "TB suspected and referred for evaluation",
-                "TB suspected and sputums sample sent or results recorded",
-                "Currently on TB treatment",
-                "Has completed TB treatment, no signs or symptoms",
-                "Has TB (code from old CTC form)"
+                "CONFMC",
+                "CONFMS",
+                "CONFMX",
+                "INH",
+                "NO",
+                "REFER",
+                "SP",
+                "TBRX",
+                "TBRXC",
+                "YES"
               ],
               "type": "string"
             }
