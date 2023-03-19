@@ -46,7 +46,6 @@ impl SyncRecordTester for DocumentRecordTester {
             data: json!({"some": "data"}),
             form_schema_id: Some(schema_id),
             status: DocumentStatus::Active,
-            comment: Some("comment".to_string()),
             owner_name_id: Some(patient_name_id),
             context: Some("program".to_string()),
         };

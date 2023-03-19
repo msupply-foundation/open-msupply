@@ -41,7 +41,6 @@ impl From<RepositoryError> for DocumentHistoryError {
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct DocumentDelete {
     pub id: String,
-    pub comment: Option<String>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -173,7 +172,7 @@ pub trait DocumentServiceTrait: Sync + Send {
         ctx.connection
             .transaction_sync(|con| {
                 let current_document = validate_document_delete(con, &input.id, allowed_docs)?;
-                let document = generate_deleted_document(input, current_document, user_id)?;
+                let document = generate_deleted_document(current_document, user_id)?;
 
                 match DocumentRepository::new(con).insert(&document) {
                     Ok(_) => Ok(()),
@@ -320,7 +319,6 @@ fn validate_document_undelete(
 }
 
 fn generate_deleted_document(
-    input: DocumentDelete,
     current_document: Document,
     user_id: &str,
 ) -> Result<Document, DocumentDeleteError> {
@@ -333,7 +331,6 @@ fn generate_deleted_document(
         data: serde_json::Value::Null,
         form_schema_id: current_document.form_schema_id,
         status: DocumentStatus::Deleted,
-        comment: input.comment,
         owner_name_id: None,
         context: None,
     }
@@ -357,7 +354,6 @@ fn generate_undeleted_document(
         data: deleted_document_parent.data,
         form_schema_id: deleted_document_parent.form_schema_id,
         status: DocumentStatus::Active,
-        comment: None,
         owner_name_id: deleted_document_parent.owner_name_id,
         context: deleted_document_parent.context,
     }
@@ -425,7 +421,6 @@ mod document_service_test {
                 }),
                 form_schema_id: None,
                 status: DocumentStatus::Active,
-                comment: None,
                 owner_name_id: None,
                 context: None,
             },
@@ -454,7 +449,6 @@ mod document_service_test {
                     }),
                     form_schema_id: None,
                     status: DocumentStatus::Active,
-                    comment: None,
                     owner_name_id: None,
                     context: None,
                 },
@@ -481,7 +475,6 @@ mod document_service_test {
                 }),
                 form_schema_id: None,
                 status: DocumentStatus::Active,
-                comment: None,
                 owner_name_id: None,
                 context: None,
             },
@@ -507,7 +500,6 @@ mod document_service_test {
                     }),
                     form_schema_id: None,
                     status: DocumentStatus::Active,
-                    comment: None,
                     owner_name_id: None,
                     context: None,
                 },
@@ -537,7 +529,6 @@ mod document_service_test {
                     }),
                     form_schema_id: None,
                     status: DocumentStatus::Active,
-                    comment: None,
                     owner_name_id: None,
                     context: None,
                 },
@@ -582,7 +573,6 @@ mod document_service_test {
                     }),
                     form_schema_id: Some(schema.id),
                     status: DocumentStatus::Active,
-                    comment: None,
                     owner_name_id: None,
                     context: None,
                 },
@@ -609,7 +599,6 @@ mod document_service_test {
                 }),
                 form_schema_id: Some(schema.id),
                 status: DocumentStatus::Active,
-                comment: None,
                 owner_name_id: None,
                 context: None,
             },
@@ -639,7 +628,6 @@ mod document_service_test {
                 }),
                 form_schema_id: Some(schema.id),
                 status: DocumentStatus::Active,
-                comment: None,
                 owner_name_id: None,
                 context: None,
             },
@@ -670,7 +658,6 @@ mod document_service_test {
                     }),
                     form_schema_id: Some(schema.id),
                     status: DocumentStatus::Active,
-                    comment: None,
                     owner_name_id: None,
                     context: None,
                 },
@@ -695,7 +682,6 @@ mod document_service_test {
             "",
             DocumentDelete {
                 id: "invalid".to_string(),
-                comment: None,
             },
             &vec!["SomeType".to_string()],
         );
@@ -711,7 +697,6 @@ mod document_service_test {
                 "",
                 DocumentDelete {
                     id: document_a().id,
-                    comment: Some("Testing deletion".to_string()),
                 },
                 &vec!["WrongType".to_string()],
             )
@@ -725,7 +710,6 @@ mod document_service_test {
                 "",
                 DocumentDelete {
                     id: document_a().id,
-                    comment: Some("Testing deletion".to_string()),
                 },
                 &vec![document_a().r#type],
             )
@@ -743,7 +727,6 @@ mod document_service_test {
             "",
             DocumentDelete {
                 id: document.id.clone(),
-                comment: None,
             },
             &vec![document.r#type.clone()],
         );

@@ -140,7 +140,6 @@ fn generate(
         data: input.data,
         form_schema_id: Some(input.schema_id),
         status: DocumentStatus::Active,
-        comment: None,
         owner_name_id: Some(input.patient_id),
         context: Some(input.program),
     })

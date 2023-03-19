@@ -28,7 +28,6 @@ table! {
         data -> Text,
         form_schema_id -> Nullable<Text>,
         status -> crate::db_diesel::document::DocumentStatusMapping,
-        comment -> Nullable<Text>,
         owner_name_id -> Nullable<Text>,
         context -> Nullable<Text>,
     }
@@ -46,7 +45,6 @@ table! {
         data -> Text,
         form_schema_id -> Nullable<Text>,
         status -> crate::db_diesel::document::DocumentStatusMapping,
-        comment -> Nullable<Text>,
         owner_name_id -> Nullable<Text>,
         context -> Nullable<Text>,
     }
@@ -87,8 +85,6 @@ pub struct DocumentRow {
     pub form_schema_id: Option<String>,
     /// Soft deletion status
     pub status: DocumentStatus,
-    /// Deletion comment
-    pub comment: Option<String>,
     /// For example, the patient who owns the document
     pub owner_name_id: Option<String>,
     /// For example, program this document belongs to
@@ -113,7 +109,6 @@ pub struct Document {
     pub data: serde_json::Value,
     pub form_schema_id: Option<String>,
     pub status: DocumentStatus,
-    pub comment: Option<String>,
     pub owner_name_id: Option<String>,
     pub context: Option<String>,
 }
@@ -332,7 +327,6 @@ impl DocumentRow {
             data,
             form_schema_id,
             status,
-            comment,
             owner_name_id,
             context,
         } = self;
@@ -358,7 +352,6 @@ impl DocumentRow {
             data,
             form_schema_id,
             status,
-            comment,
             owner_name_id,
             context,
         };
@@ -388,7 +381,6 @@ impl Document {
             data,
             form_schema_id: self.form_schema_id.clone(),
             status: self.status.to_owned(),
-            comment: self.comment.to_owned(),
             owner_name_id: self.owner_name_id.to_owned(),
             context: self.context.to_owned(),
         })

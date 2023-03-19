@@ -8,7 +8,6 @@ use service::document::document_service::{DocumentDelete, DocumentDeleteError};
 #[derive(InputObject)]
 pub struct DeleteDocumentInput {
     pub id: String,
-    pub comment: Option<String>,
 }
 
 #[derive(Union)]
@@ -38,7 +37,6 @@ pub fn delete_document(
         &user.user_id,
         DocumentDelete {
             id: input.id.clone(),
-            comment: input.comment,
         },
         &allowed_docs,
     ) {
