@@ -17,8 +17,6 @@ pub struct RawDocument {
     pub form_schema_id: Option<String>,
     pub status: DocumentStatus,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub comment: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub owner_name_id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub context: Option<String>,
@@ -44,7 +42,6 @@ impl RawDocument {
             data,
             form_schema_id,
             status,
-            comment,
             owner_name_id: owner,
             context,
         } = self;
@@ -58,7 +55,6 @@ impl RawDocument {
             data,
             form_schema_id,
             status,
-            comment,
             owner_name_id: owner,
             context,
         })
@@ -87,7 +83,6 @@ mod document_id_test {
             }),
             form_schema_id: None,
             status: DocumentStatus::Active,
-            comment: None,
             owner_name_id: None,
             context: None,
         };

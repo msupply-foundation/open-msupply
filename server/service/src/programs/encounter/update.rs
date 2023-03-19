@@ -129,7 +129,6 @@ fn generate(
         data: input.data,
         form_schema_id: Some(input.schema_id),
         status: existing.status,
-        comment: None,
         owner_name_id: existing.owner_name_id,
         context: existing.context,
     })

@@ -182,7 +182,6 @@ fn input_to_raw_document(
         data,
         form_schema_id: schema_id,
         status: DocumentStatus::Active,
-        comment: None,
         owner_name_id: patient_id,
         context: Some(r#type),
     }

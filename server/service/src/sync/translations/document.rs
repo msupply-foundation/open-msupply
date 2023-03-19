@@ -37,7 +37,6 @@ struct LegacyDocumentRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub form_schema_id: Option<String>,
     pub status: LegacyDocumentStatus,
-    pub comment: Option<String>,
     #[serde(rename = "owner_name_ID")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub owner_name_id: Option<String>,
@@ -72,7 +71,6 @@ impl SyncTranslation for DocumentTranslation {
             data,
             form_schema_id,
             status,
-            comment,
             owner_name_id,
             context,
         } = serde_json::from_str::<LegacyDocumentRow>(&sync_record.data)?;
@@ -89,7 +87,6 @@ impl SyncTranslation for DocumentTranslation {
                 LegacyDocumentStatus::Active => DocumentStatus::Active,
                 LegacyDocumentStatus::Deleted => DocumentStatus::Deleted,
             },
-            comment,
             owner_name_id,
             context,
         };
@@ -123,7 +120,6 @@ impl SyncTranslation for DocumentTranslation {
             data,
             form_schema_id,
             status,
-            comment,
             owner_name_id,
             context,
         } = document.to_row()?;
@@ -141,7 +137,6 @@ impl SyncTranslation for DocumentTranslation {
                 DocumentStatus::Active => LegacyDocumentStatus::Active,
                 DocumentStatus::Deleted => LegacyDocumentStatus::Deleted,
             },
-            comment,
             owner_name_id,
             context,
         };

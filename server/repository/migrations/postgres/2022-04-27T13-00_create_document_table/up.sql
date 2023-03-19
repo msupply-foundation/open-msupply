@@ -15,7 +15,6 @@ CREATE TABLE document
     data TEXT NOT NULL,
     form_schema_id TEXT REFERENCES form_schema(id),
     status document_status NOT NULL,
-    comment TEXT,
     owner_name_id TEXT REFERENCES name (id),
     context TEXT
 );
