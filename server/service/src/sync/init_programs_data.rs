@@ -90,6 +90,7 @@ mod hiv_testing_encounter {
                 start_datetime: Default::default(),
                 status: Default::default(),
                 htc_register_serial_number: None,
+                point_of_entry: Default::default(),
                 risk_behaviour: Default::default(),
                 family_planning: Default::default(),
                 hiv_testing: Default::default(),
