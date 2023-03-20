@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS update_changelog_upsert_with_sync CASCADE;
