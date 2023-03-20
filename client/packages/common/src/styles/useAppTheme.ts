@@ -3,7 +3,7 @@ import { Theme } from '@mui/material';
 import { themeOptions, createTheme } from './theme';
 import { IntlUtils } from '@common/intl';
 import { useLocalStorage } from '../localStorage';
-import merge from 'lodash/merge';
+import { merge } from '@common/utils';
 
 export const useAppTheme = (): Theme => {
   const isRtl = IntlUtils?.useRtl(); // IntlUtils returning undefined when hot reloading

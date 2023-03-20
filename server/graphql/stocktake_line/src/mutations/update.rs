@@ -266,7 +266,7 @@ mod test {
                     comment: Some("comment".to_string()),
                     item_id: "item id".to_string(),
                     batch: Some("batch".to_string()),
-                    expiry_date: Some(NaiveDate::from_ymd(2023, 1, 22)),
+                    expiry_date: Some(NaiveDate::from_ymd_opt(2023, 1, 22).unwrap()),
                     pack_size: Some(10),
                     cost_price_per_pack: Some(10.0),
                     sell_price_per_pack: Some(12.0),

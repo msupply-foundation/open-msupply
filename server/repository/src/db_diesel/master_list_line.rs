@@ -38,7 +38,14 @@ impl<'a> MasterListLineRepository<'a> {
         &self,
         filter: MasterListLineFilter,
     ) -> Result<Vec<MasterListLine>, RepositoryError> {
-        self.query(Pagination::new(), Some(filter))
+        // TODO (beyond M1), check that store_id matches current store
+        let mut query = create_filtered_query(Some(filter))?;
+
+        query = query.order(master_list_line_dsl::id.asc());
+
+        let result = query.load::<MasterListLineRow>(&self.connection.connection)?;
+
+        Ok(result)
     }
 
     pub fn query(
