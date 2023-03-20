@@ -54,7 +54,7 @@ pub fn upsert_patient(
                 .map_err(UpdatePatientError::DatabaseError)?
             {
                 // update the names table
-                patient_document_updated(&ctx.connection, &doc_timestamp, patient)?;
+                patient_document_updated(&ctx.connection, &doc_timestamp, patient, false)?;
                 create_patient_name_store_join(&ctx.connection, store_id, &patient_id)?;
             }
 

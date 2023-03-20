@@ -75,8 +75,8 @@ async fn test_remote_sync_record(identifier: &str, tester: &dyn SyncRecordTester
         replace_system_name_ids(&mut integration_records, &previous_connection);
 
         // Integrate
-
         integration_records.integrate(&previous_connection).unwrap();
+
         // Push integrated changes
         previous_synchroniser.sync().await.unwrap();
         // Re initialise
@@ -88,6 +88,7 @@ async fn test_remote_sync_record(identifier: &str, tester: &dyn SyncRecordTester
         previous_connection = connection;
         previous_synchroniser = synchroniser;
         previous_synchroniser.sync().await.unwrap();
+
         // Confirm records have synced back correctly
         check_records_against_database(&previous_connection, integration_records).await;
     }
@@ -97,7 +98,7 @@ fn replace_system_name_ids(records: &mut IntegrationRecords, connection: &Storag
     let inventory_adjustment_name = NameRowRepository::new(connection)
         .find_one_by_code(INVENTORY_ADJUSTMENT_NAME_CODE)
         .unwrap()
-        .expect("Cannont find intenvory adjustment name");
+        .expect("Cannot find inventory adjustment name");
 
     for mut record in records.upserts.iter_mut() {
         if let PullUpsertRecord::Invoice(invoice) = &mut record {

@@ -2,8 +2,8 @@ CREATE FUNCTION upsert_name_changelog()
 RETURNS trigger AS
 $$
   BEGIN
-    INSERT INTO changelog (table_name, record_id, row_action)
-          VALUES ('name', NEW.id, 'UPSERT');
+    INSERT INTO changelog (table_name, record_id, row_action, is_sync_update)
+          VALUES ('name', NEW.id, 'UPSERT', NEW.is_sync_update);
     RETURN NULL;
   END;
 $$ LANGUAGE 'plpgsql';

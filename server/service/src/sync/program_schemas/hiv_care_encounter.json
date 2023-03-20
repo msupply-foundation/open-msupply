@@ -73,8 +73,7 @@
               "type": "array"
             },
             "quantityPrescribed": {
-              "description": "Number of pills prescribed",
-              "minimum": 0,
+              "description": "Number of pills on hand at the end of the encounter.",
               "type": "number"
             },
             "regimen": {
@@ -275,34 +274,6 @@
           },
           "type": "object"
         },
-        "general": {
-          "properties": {
-            "location": {
-              "description": "Location needed if visitType is 'Refill' or 'Outreach'",
-              "type": "string"
-            },
-            "referredTo": {
-              "enum": [
-                "PMTCT",
-                "HBC",
-                "PLHA Support Group/Club",
-                "Orphan and vulnerable children group",
-                "Medical specialty",
-                "Nutritional Support",
-                "Legal",
-                "Medical Ward",
-                "TB Ward",
-                "Other"
-              ],
-              "type": "string"
-            },
-            "visitType": {
-              "enum": ["Outreach", "Refill", "Standard"],
-              "type": "string"
-            }
-          },
-          "type": "object"
-        },
         "haem": {
           "properties": {
             "fbe": {
@@ -387,11 +358,13 @@
               "description": "75367002\tBlood pressure [mmHg]",
               "properties": {
                 "diastolic": {
-                  "pattern": "^\\d{1,3}$",
+                  "maximum": 999,
+                  "minimum": 0,
                   "type": "number"
                 },
                 "systolic": {
-                  "pattern": "^\\d{1,3}$",
+                  "maximum": 999,
+                  "minimum": 0,
                   "type": "number"
                 }
               },
@@ -544,6 +517,32 @@
           },
           "type": "object"
         },
+        "referral": {
+          "properties": {
+            "note": {
+              "type": "string"
+            },
+            "referredTo": {
+              "items": {
+                "enum": [
+                  "PMTCT",
+                  "HBC",
+                  "PLHA Support Group/Club",
+                  "Orphan and vulnerable children group",
+                  "Medical specialty",
+                  "Nutritional Support",
+                  "Legal",
+                  "Medical Ward",
+                  "TB Ward",
+                  "Other"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "type": "object"
+        },
         "riskBehaviour": {
           "$ref": "#/definitions/RiskBehaviour"
         },
@@ -577,16 +576,16 @@
             },
             "tbStatus": {
               "enum": [
-                "TB confirmed clinically",
-                "TB confirmed by sputum",
-                "TB confirmed by X-ray",
-                "Currently on INH prophylaxis (IPT)",
-                "Not suspected / no signs or symptoms",
-                "TB suspected and referred for evaluation",
-                "TB suspected and sputums sample sent or results recorded",
-                "Currently on TB treatment",
-                "Has completed TB treatment, no signs or symptoms",
-                "Has TB (code from old CTC form)"
+                "CONFMC",
+                "CONFMS",
+                "CONFMX",
+                "INH",
+                "NO",
+                "REFER",
+                "SP",
+                "TBRX",
+                "TBRXC",
+                "YES"
               ],
               "type": "string"
             }
@@ -614,6 +613,24 @@
             "viralLoadStatus": {
               "description": "Based on viral load result",
               "enum": ["Suppressed", "Unsuppressed"],
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "visit": {
+          "properties": {
+            "location": {
+              "description": "Location needed if visitType is 'Refill' or 'Outreach'",
+              "enum": [
+                "9 Mile Clinic, NCD",
+                "Angelicare Newtown",
+                "Angelicare StopAIDS, NCD"
+              ],
+              "type": "string"
+            },
+            "visitType": {
+              "enum": ["Outreach", "Refill", "Standard"],
               "type": "string"
             }
           },

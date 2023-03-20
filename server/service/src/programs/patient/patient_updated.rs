@@ -33,6 +33,7 @@ pub fn create_patient_name_store_join(
             store_id: store_id.to_string(),
             name_is_customer: true,
             name_is_supplier: false,
+            is_sync_update: false,
         })?;
     }
     Ok(())
@@ -43,6 +44,7 @@ pub fn patient_document_updated(
     con: &StorageConnection,
     update_timestamp: &DateTime<Utc>,
     patient: SchemaPatient,
+    is_sync_update: bool,
 ) -> Result<(), UpdatePatientError> {
     let contact = patient.contact_details.get(0);
     let date_of_birth = match patient.date_of_birth {
@@ -91,6 +93,7 @@ pub fn patient_document_updated(
             .or(Some(update_timestamp.naive_utc())), // assume there is no earlier doc version
         is_deceased: patient.is_deceased.unwrap_or(false),
         national_health_number: patient.code_2,
+        is_sync_update,
     })?;
 
     Ok(())

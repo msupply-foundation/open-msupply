@@ -123,7 +123,8 @@ mod hiv_care_encounter {
                 notes: Default::default(),
                 index_testing: Default::default(),
                 hcv_crag: Default::default(),
-                general: Default::default(),
+                visit: Default::default(),
+                referral: Default::default(),
                 risk_behaviour: Default::default(),
             }
         }
@@ -474,7 +475,7 @@ fn encounter_hiv_care_2(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncou
         e.arv_medication = Some(inline_init(
             |e: &mut hiv_care_encounter::HivcareEncounterArvMedication| {
                 e.remaining_pill_count = Some(2.0);
-                e.quantity_prescribed = Some(8.0);
+                e.quantity_prescribed = Some(10.0);
                 e.adherence_score = Some(85.7142835884354);
                 e.regimen = Some("1a-New".to_string());
                 e.regimen_status = Some("CONTINUE".to_string());
@@ -502,7 +503,7 @@ fn encounter_hiv_care_3(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncou
         e.arv_medication = Some(inline_init(
             |e: &mut hiv_care_encounter::HivcareEncounterArvMedication| {
                 e.remaining_pill_count = Some(5.0);
-                e.quantity_prescribed = Some(8.0);
+                e.quantity_prescribed = Some(9.0);
                 e.adherence_score = Some(42.85714108560097);
                 e.regimen = Some("2a-New".to_string());
                 e.regimen_status = Some("CHANGE".to_string());
@@ -766,6 +767,7 @@ fn insert_patient(
             created_datetime: None,
             is_deceased: false,
             national_health_number: None,
+            is_sync_update: false,
         })
         .unwrap();
     let store_id = StoreRepository::new(connection)
@@ -782,6 +784,7 @@ fn insert_patient(
             store_id: store_id.clone(),
             name_is_customer: true,
             name_is_supplier: false,
+            is_sync_update: false,
         })
         .unwrap();
 

@@ -7,6 +7,33 @@
   "elements": [
     {
       "type": "Category",
+      "label": "Visit Type",
+      "options": {
+        "icon": "visit"
+      },
+      "elements": [
+        {
+          "type": "Control",
+          "label": "Visit Type:",
+          "scope": "#/properties/visit/properties/visitType"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/visit/properties/location",
+          "rule": {
+            "effect": "SHOW",
+            "condition": {
+              "scope": "#/properties/visit/properties/visitType",
+              "schema": {
+                "enum": ["Outreach", "Refill"]
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "Category",
       "label": "Physical Exam",
       "options": {
         "icon": "stethoscope"
@@ -64,18 +91,9 @@
               "scope": "#/properties/physicalExamination/properties/nutrition/properties/nutritionalStatus",
               "options": {
                 "show": [
-                  [
-                    "UNDER_NOURISHED",
-                    "Under nourished"
-                  ],
-                  [
-                    "WELL_NOURISHED",
-                    "Well nourished"
-                  ],
-                  [
-                    "OVERWEIGHT",
-                    "Overweight"
-                  ]
+                  ["UNDER_NOURISHED", "Under nourished"],
+                  ["WELL_NOURISHED", "Well nourished"],
+                  ["OVERWEIGHT", "Overweight"]
                 ]
               }
             },
@@ -100,22 +118,13 @@
           "scope": "#/properties/physicalExamination/properties/whoStaging",
           "options": {
             "show": [
-              [
-                "STAGE_1_ASYMPTOMATIC",
-                "Stage 1 - Asymptomatic"
-              ],
-              [
-                "STAGE_2_MILDLY_SYMPTOMATIC",
-                "Stage 2 - Mildly symptomatic"
-              ],
+              ["STAGE_1_ASYMPTOMATIC", "Stage 1 - Asymptomatic"],
+              ["STAGE_2_MILDLY_SYMPTOMATIC", "Stage 2 - Mildly symptomatic"],
               [
                 "STAGE_3_MODERATELY_SYMPTOMATIC",
                 "Stage 3 - Moderately symptomatic"
               ],
-              [
-                "STAGE_4_SEVERELY_SYMPTOMATIC",
-                "Stage 4 - Severely symptomatic"
-              ]
+              ["STAGE_4_SEVERELY_SYMPTOMATIC", "Stage 4 - Severely symptomatic"]
             ]
           }
         },
@@ -172,26 +181,11 @@
           "type": "Control",
           "options": {
             "show": [
-              [
-                "NO",
-                "No ARV"
-              ],
-              [
-                "START",
-                "Start ARV"
-              ],
-              [
-                "CONTINUE",
-                "Continue ARV"
-              ],
-              [
-                "CHANGE",
-                "Changes to ARV Regimen"
-              ],
-              [
-                "STOP",
-                "Stop ARV"
-              ]
+              ["NO", "No ARV"],
+              ["START", "Start ARV"],
+              ["CONTINUE", "Continue ARV"],
+              ["CHANGE", "Changes to ARV Regimen"],
+              ["STOP", "Stop ARV"]
             ]
           }
         },
@@ -207,25 +201,101 @@
                 "condition": {
                   "scope": "#/properties/arvMedication/properties/regimenStatus",
                   "schema": {
-                    "enum": [
-                      "STOP"
-                    ]
+                    "enum": ["STOP"]
                   }
                 }
               }
             },
             {
               "scope": "#/properties/arvMedication/properties/regimenChangeReason",
-              "label": "Regimen Change Reason:",
+              "label": "Regimen Reason:",
               "type": "Control",
               "options": {
                 "multiColumn": true,
+                "fieldFilter": {
+                  "field": "arvMedication.regimenStatus",
+                  "mapping": {
+                    "NO": [
+                      "51",
+                      "52",
+                      "53",
+                      "54",
+                      "55",
+                      "56",
+                      "57",
+                      "58",
+                      "99"
+                    ],
+                    "START": [
+                      "101",
+                      "102",
+                      "103",
+                      "104",
+                      "105",
+                      "106",
+                      "107",
+                      "108",
+                      "109",
+                      "151"
+                    ],
+                    "CHANGE": [
+                      "110",
+                      "111",
+                      "112",
+                      "113",
+                      "114",
+                      "115",
+                      "116",
+                      "117",
+                      "118",
+                      "119",
+                      "120",
+                      "121",
+                      "122",
+                      "123",
+                      "131",
+                      "132",
+                      "141",
+                      "142",
+                      "143",
+                      "144",
+                      "145",
+                      "146",
+                      "147",
+                      "148",
+                      "149"
+                    ],
+                    "STOP": [
+                      "110",
+                      "111",
+                      "112",
+                      "113",
+                      "114",
+                      "115",
+                      "116",
+                      "117",
+                      "118",
+                      "119",
+                      "120",
+                      "121",
+                      "122",
+                      "123",
+                      "131",
+                      "132",
+                      "141",
+                      "142",
+                      "143",
+                      "144",
+                      "145",
+                      "146",
+                      "147",
+                      "148",
+                      "149"
+                    ]
+                  }
+                },
                 "show": [
-                  [
-                    "51",
-                    "51",
-                    "Patient does not fulfill criteria"
-                  ],
+                  ["51", "51", "Patient does not fulfill criteria"],
                   [
                     "52",
                     "52",
@@ -266,181 +336,41 @@
                     "99",
                     "Patient fulfils criteria but does not start for other reason"
                   ],
-                  [
-                    "101",
-                    "101",
-                    "Adult CD4 < 200"
-                  ],
-                  [
-                    "102",
-                    "102",
-                    "Adult WHO Stage IV"
-                  ],
-                  [
-                    "103",
-                    "103",
-                    "Adult WHO Stage III, if CD4 < 350"
-                  ],
-                  [
-                    "104",
-                    "104",
-                    "Children Pediatric WHO Stage III"
-                  ],
-                  [
-                    "105",
-                    "105",
-                    "Children > 18 months, CD4% < 15%"
-                  ],
-                  [
-                    "106",
-                    "106",
-                    "Infants < 18 months CD4% < 20%"
-                  ],
-                  [
-                    "107",
-                    "107",
-                    "Pregnant women for PMCT (plus)"
-                  ],
-                  [
-                    "108",
-                    "108",
-                    "Other reason to start"
-                  ],
-                  [
-                    "109",
-                    "109",
-                    "Test and Treat"
-                  ],
-                  [
-                    "110",
-                    "110",
-                    "Start TB treatment"
-                  ],
-                  [
-                    "111",
-                    "111",
-                    "Nausea / vomiting"
-                  ],
-                  [
-                    "112",
-                    "112",
-                    "Diarrhoea"
-                  ],
-                  [
-                    "113",
-                    "113",
-                    "Headache"
-                  ],
-                  [
-                    "114",
-                    "114",
-                    "Fever"
-                  ],
-                  [
-                    "115",
-                    "115",
-                    "Skin rash"
-                  ],
-                  [
-                    "116",
-                    "116",
-                    "Peripheral neuropathy"
-                  ],
-                  [
-                    "117",
-                    "117",
-                    "Hepatitis"
-                  ],
-                  [
-                    "118",
-                    "118",
-                    "Jaundice"
-                  ],
-                  [
-                    "119",
-                    "119",
-                    "Dementia"
-                  ],
-                  [
-                    "120",
-                    "120",
-                    "Anaemia"
-                  ],
-                  [
-                    "121",
-                    "121",
-                    "Pancreatitis"
-                  ],
-                  [
-                    "122",
-                    "122",
-                    "CNS adverse event"
-                  ],
-                  [
-                    "123",
-                    "123",
-                    "Other adverse event, specify"
-                  ],
-                  [
-                    "131",
-                    "131",
-                    "Treatment failure, clinical"
-                  ],
-                  [
-                    "132",
-                    "132",
-                    "Treatment failure, immunological"
-                  ],
-                  [
-                    "141",
-                    "141",
-                    "Poor adherence"
-                  ],
-                  [
-                    "142",
-                    "142",
-                    "Patient decision"
-                  ],
-                  [
-                    "143",
-                    "143",
-                    "Pregnancy"
-                  ],
-                  [
-                    "144",
-                    "144",
-                    "End of PMTCT (plus)"
-                  ],
-                  [
-                    "145",
-                    "145",
-                    "Transferred out, specify where"
-                  ],
-                  [
-                    "146",
-                    "146",
-                    "Lost to follow-up"
-                  ],
-                  [
-                    "147",
-                    "147",
-                    "Patient died"
-                  ],
-                  [
-                    "148",
-                    "148",
-                    "Stock-out"
-                  ],
-                  [
-                    "149",
-                    "149",
-                    "Other reason, specify"
-                  ],
-                  [
-                    "151",
-                    "151",
-                    "Restart ARV after 3 or months not on ARV"
-                  ]
+                  ["101", "101", "Adult CD4 < 200"],
+                  ["102", "102", "Adult WHO Stage IV"],
+                  ["103", "103", "Adult WHO Stage III, if CD4 < 350"],
+                  ["104", "104", "Children Pediatric WHO Stage III"],
+                  ["105", "105", "Children > 18 months, CD4% < 15%"],
+                  ["106", "106", "Infants < 18 months CD4% < 20%"],
+                  ["107", "107", "Pregnant women for PMCT (plus)"],
+                  ["108", "108", "Other reason to start"],
+                  ["109", "109", "Test and Treat"],
+                  ["110", "110", "Start TB treatment"],
+                  ["111", "111", "Nausea / vomiting"],
+                  ["112", "112", "Diarrhoea"],
+                  ["113", "113", "Headache"],
+                  ["114", "114", "Fever"],
+                  ["115", "115", "Skin rash"],
+                  ["116", "116", "Peripheral neuropathy"],
+                  ["117", "117", "Hepatitis"],
+                  ["118", "118", "Jaundice"],
+                  ["119", "119", "Dementia"],
+                  ["120", "120", "Anaemia"],
+                  ["121", "121", "Pancreatitis"],
+                  ["122", "122", "CNS adverse event"],
+                  ["123", "123", "Other adverse event, specify"],
+                  ["131", "131", "Treatment failure, clinical"],
+                  ["132", "132", "Treatment failure, immunological"],
+                  ["141", "141", "Poor adherence"],
+                  ["142", "142", "Patient decision"],
+                  ["143", "143", "Pregnancy"],
+                  ["144", "144", "End of PMTCT (plus)"],
+                  ["145", "145", "Transferred out, specify where"],
+                  ["146", "146", "Lost to follow-up"],
+                  ["147", "147", "Patient died"],
+                  ["148", "148", "Stock-out"],
+                  ["149", "149", "Other reason, specify"],
+                  ["151", "151", "Restart ARV after 3 or months not on ARV"]
                 ]
               }
             },
@@ -454,11 +384,7 @@
             "condition": {
               "scope": "#/properties/arvMedication/properties/regimenStatus",
               "schema": {
-                "enum": [
-                  "START",
-                  "CHANGE",
-                  "STOP"
-                ]
+                "enum": ["NO", "START", "CHANGE", "STOP"]
               }
             }
           }
@@ -485,7 +411,10 @@
           "scope": "#",
           "label": "Adherence Score",
           "options": {
-            "previousCountField": "arvMedication.quantityPrescribed",
+            "previousCount": {
+              "source": "EncounterEvent",
+              "eventType": "arvMedicationQuantityPrescribed"
+            },
             "remainingCountField": "arvMedication.remainingPillCount",
             "countPerDay": 1,
             "targetField": "arvMedication.adherenceScore"
@@ -525,8 +454,8 @@
           "options": {
             "values": [
               {
-                "field": "arvMedication.adherenceStatus",
-                "label": "Adherence Status",
+                "field": "arvMedication.adherenceScore",
+                "label": "Adherence Score",
                 "unit": "%"
               }
             ]
@@ -619,14 +548,8 @@
               "label": "VL Targeting:",
               "options": {
                 "show": [
-                  [
-                    "TARGETED",
-                    "Targeted"
-                  ],
-                  [
-                    "SCHEDULED",
-                    "Scheduled"
-                  ]
+                  ["TARGETED", "Targeted"],
+                  ["SCHEDULED", "Scheduled"]
                 ]
               }
             },
@@ -803,18 +726,9 @@
           "scope": "#/properties/tuberculosis/properties/tbGeneXpert",
           "options": {
             "show": [
-              [
-                "NOT_DETECTED",
-                "Not Detected"
-              ],
-              [
-                "POSITIVE_RIF_SENSITIVE",
-                "Positive (Rif-Sensitive)"
-              ],
-              [
-                "POSITIVE_RIF_RESISTANT",
-                "Positive (Rif-Resistant)"
-              ]
+              ["NOT_DETECTED", "Not Detected"],
+              ["POSITIVE_RIF_SENSITIVE", "Positive (Rif-Sensitive)"],
+              ["POSITIVE_RIF_RESISTANT", "Positive (Rif-Resistant)"]
             ]
           }
         },
@@ -829,29 +743,34 @@
           "scope": "#/properties/tuberculosis/properties/tbSputum",
           "options": {
             "show": [
-              [
-                "NO_AFB",
-                "No AFB"
-              ],
-              [
-                "POS_1",
-                "+"
-              ],
-              [
-                "POS_2",
-                "++"
-              ],
-              [
-                "POS_3",
-                "+++"
-              ]
+              ["NO_AFB", "No AFB"],
+              ["POS_1", "+"],
+              ["POS_2", "++"],
+              ["POS_3", "+++"]
             ]
           }
         },
         {
           "type": "Control",
           "label": "TB-Status:",
-          "scope": "#/properties/tuberculosis/properties/tbStatus"
+          "scope": "#/properties/tuberculosis/properties/tbStatus",
+          "options": {
+            "show": [
+              ["CONFMC", "TB confirmed clinically"],
+              ["CONFMS", "TB confirmed by Sputum"],
+              ["CONFMX", "TB confirmed by X-ray"],
+              ["INH", "Currently on INH prophylaxis (IPT)"],
+              ["NO", "Not suspected / no signs or symptoms"],
+              ["REFER", "TB suspected and referred for evaluation"],
+              [
+                "SP",
+                "TB suspected and sputums sample sent or results recorded"
+              ],
+              ["TBRX", "Currently on TB treatment"],
+              ["TBRXC", "Has completed TB treatment, no signs or symptoms"],
+              ["YES", "Has TB (code from old CTC form)"]
+            ]
+          }
         }
       ]
     },
@@ -904,46 +823,16 @@
     },
     {
       "type": "Category",
-      "label": "General",
-      "options": {
-        "icon": "general"
-      },
-      "elements": [
-        {
-          "type": "Control",
-          "label": "Referred to:",
-          "scope": "#/properties/general/properties/referredTo"
-        },
-        {
-          "type": "Control",
-          "label": "Visit Type:",
-          "scope": "#/properties/general/properties/visitType"
-        },
-        {
-          "type": "Control",
-          "scope": "#/properties/general/properties/location",
-          "rule": {
-            "effect": "ENABLE",
-            "condition": {
-              "scope": "#/properties/general/properties/visitType",
-              "schema": {
-                "enum": [
-                  "Outreach",
-                  "Refill"
-                ]
-              }
-            }
-          }
-        }
-      ]
-    },
-    {
-      "type": "Category",
       "label": "Risk Behaviour",
       "options": {
         "icon": "document"
       },
       "elements": [
+        {
+          "type": "Label",
+          "text": "Have you experienced any of the following in the past 12 months?",
+          "variant": "h2"
+        },
         {
           "type": "Control",
           "scope": "#/properties/riskBehaviour/properties/receivedBloodTransfusion"
@@ -970,7 +859,8 @@
         },
         {
           "type": "Control",
-          "scope": "#/properties/riskBehaviour/properties/prostitution"
+          "scope": "#/properties/riskBehaviour/properties/prostitution",
+          "label": "Sex in exchange for money/goods/services"
         },
         {
           "type": "Control",
@@ -979,6 +869,9 @@
         {
           "type": "Control",
           "scope": "#/properties/riskBehaviour/properties/forcedSexWithoutConsent"
+        },
+        {
+          "type": "Spacer"
         },
         {
           "type": "Control",
@@ -1147,6 +1040,29 @@
                 }
               }
             }
+          }
+        }
+      ]
+    },
+    {
+      "type": "Category",
+      "label": "Referrals",
+      "options": {
+        "icon": "referrals"
+      },
+      "elements": [
+        {
+          "type": "Control",
+          "label": "Referred to",
+          "scope": "#/properties/referral/properties/referredTo"
+        },
+        {
+          "type": "Control",
+          "label": "Note",
+          "scope": "#/properties/referral/properties/note",
+          "options": {
+            "multiline": true,
+            "rows": 5
           }
         }
       ]
