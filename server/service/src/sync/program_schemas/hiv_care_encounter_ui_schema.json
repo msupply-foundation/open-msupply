@@ -208,10 +208,92 @@
             },
             {
               "scope": "#/properties/arvMedication/properties/regimenChangeReason",
-              "label": "Regimen Change Reason:",
+              "label": "Regimen Reason:",
               "type": "Control",
               "options": {
                 "multiColumn": true,
+                "fieldFilter": {
+                  "field": "arvMedication.regimenStatus",
+                  "mapping": {
+                    "NO": [
+                      "51",
+                      "52",
+                      "53",
+                      "54",
+                      "55",
+                      "56",
+                      "57",
+                      "58",
+                      "99"
+                    ],
+                    "START": [
+                      "101",
+                      "102",
+                      "103",
+                      "104",
+                      "105",
+                      "106",
+                      "107",
+                      "108",
+                      "109",
+                      "151"
+                    ],
+                    "CHANGE": [
+                      "110",
+                      "111",
+                      "112",
+                      "113",
+                      "114",
+                      "115",
+                      "116",
+                      "117",
+                      "118",
+                      "119",
+                      "120",
+                      "121",
+                      "122",
+                      "123",
+                      "131",
+                      "132",
+                      "141",
+                      "142",
+                      "143",
+                      "144",
+                      "145",
+                      "146",
+                      "147",
+                      "148",
+                      "149"
+                    ],
+                    "STOP": [
+                      "110",
+                      "111",
+                      "112",
+                      "113",
+                      "114",
+                      "115",
+                      "116",
+                      "117",
+                      "118",
+                      "119",
+                      "120",
+                      "121",
+                      "122",
+                      "123",
+                      "131",
+                      "132",
+                      "141",
+                      "142",
+                      "143",
+                      "144",
+                      "145",
+                      "146",
+                      "147",
+                      "148",
+                      "149"
+                    ]
+                  }
+                },
                 "show": [
                   ["51", "51", "Patient does not fulfill criteria"],
                   [
@@ -302,7 +384,7 @@
             "condition": {
               "scope": "#/properties/arvMedication/properties/regimenStatus",
               "schema": {
-                "enum": ["START", "CHANGE", "STOP"]
+                "enum": ["NO", "START", "CHANGE", "STOP"]
               }
             }
           }
@@ -329,7 +411,10 @@
           "scope": "#",
           "label": "Adherence Score",
           "options": {
-            "previousCountField": "arvMedication.quantityPrescribed",
+            "previousCount": {
+              "source": "EncounterEvent",
+              "eventType": "arvMedicationQuantityPrescribed"
+            },
             "remainingCountField": "arvMedication.remainingPillCount",
             "countPerDay": 1,
             "targetField": "arvMedication.adherenceScore"
@@ -369,8 +454,8 @@
           "options": {
             "values": [
               {
-                "field": "arvMedication.adherenceStatus",
-                "label": "Adherence Status",
+                "field": "arvMedication.adherenceScore",
+                "label": "Adherence Score",
                 "unit": "%"
               }
             ]
@@ -668,7 +753,24 @@
         {
           "type": "Control",
           "label": "TB-Status:",
-          "scope": "#/properties/tuberculosis/properties/tbStatus"
+          "scope": "#/properties/tuberculosis/properties/tbStatus",
+          "options": {
+            "show": [
+              ["CONFMC", "TB confirmed clinically"],
+              ["CONFMS", "TB confirmed by Sputum"],
+              ["CONFMX", "TB confirmed by X-ray"],
+              ["INH", "Currently on INH prophylaxis (IPT)"],
+              ["NO", "Not suspected / no signs or symptoms"],
+              ["REFER", "TB suspected and referred for evaluation"],
+              [
+                "SP",
+                "TB suspected and sputums sample sent or results recorded"
+              ],
+              ["TBRX", "Currently on TB treatment"],
+              ["TBRXC", "Has completed TB treatment, no signs or symptoms"],
+              ["YES", "Has TB (code from old CTC form)"]
+            ]
+          }
         }
       ]
     },
@@ -727,6 +829,11 @@
       },
       "elements": [
         {
+          "type": "Label",
+          "text": "Have you experienced any of the following in the past 12 months?",
+          "variant": "h2"
+        },
+        {
           "type": "Control",
           "scope": "#/properties/riskBehaviour/properties/receivedBloodTransfusion"
         },
@@ -752,7 +859,8 @@
         },
         {
           "type": "Control",
-          "scope": "#/properties/riskBehaviour/properties/prostitution"
+          "scope": "#/properties/riskBehaviour/properties/prostitution",
+          "label": "Sex in exchange for money/goods/services"
         },
         {
           "type": "Control",
@@ -761,6 +869,9 @@
         {
           "type": "Control",
           "scope": "#/properties/riskBehaviour/properties/forcedSexWithoutConsent"
+        },
+        {
+          "type": "Spacer"
         },
         {
           "type": "Control",

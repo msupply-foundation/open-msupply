@@ -61,6 +61,7 @@ impl RawDocument {
             comment,
             owner_name_id: owner,
             context,
+            is_sync_update: false,
         })
     }
 }
