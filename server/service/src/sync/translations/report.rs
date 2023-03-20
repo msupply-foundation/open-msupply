@@ -26,6 +26,11 @@ pub enum LegacyReportContext {
     #[serde(rename = "Stock Take")]
     Stocktake,
 
+    #[serde(rename = "Patient Details")]
+    Patient,
+    #[serde(rename = "Dispensary")]
+    Dispensary,
+
     #[serde(other)]
     Others,
 }
@@ -43,6 +48,11 @@ pub struct LegacyReportRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(rename = "Comment")]
     pub comment: Option<String>,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub sub_context: Option<String>,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(rename = "json_schema_ID")]
+    pub argument_schema_id: Option<String>,
 }
 
 fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
@@ -60,29 +70,40 @@ impl SyncTranslation for ReportTranslation {
             return Ok(None);
         }
 
-        let data = serde_json::from_str::<LegacyReportRow>(&sync_record.data)?;
+        let LegacyReportRow {
+            id,
+            report_name,
+            editor,
+            context,
+            template,
+            comment,
+            sub_context,
+            argument_schema_id,
+        } = serde_json::from_str::<LegacyReportRow>(&sync_record.data)?;
 
-        let r#type = match data.editor {
+        let r#type = match editor {
             LegacyReportEditor::OmSupply => ReportType::OmSupply,
             LegacyReportEditor::Others => return Ok(None),
         };
-        let context = match data.context {
+        let context = match context {
             LegacyReportContext::CustomerInvoice => ReportContext::OutboundShipment,
             LegacyReportContext::SupplierInvoice => ReportContext::InboundShipment,
             LegacyReportContext::Requisition => ReportContext::Requisition,
             LegacyReportContext::Stocktake => ReportContext::Stocktake,
+            LegacyReportContext::Patient => ReportContext::Patient,
+            LegacyReportContext::Dispensary => ReportContext::Dispensary,
             LegacyReportContext::Others => return Ok(None),
         };
 
         let result = ReportRow {
-            id: data.id.to_string(),
-            name: data.report_name.to_string(),
+            id,
+            name: report_name,
             r#type,
-            template: data.template,
+            template,
             context,
-            comment: data.comment,
-            sub_context: None,
-            argument_schema_id: None,
+            comment,
+            sub_context,
+            argument_schema_id,
         };
 
         Ok(Some(IntegrationRecords::from_upsert(
