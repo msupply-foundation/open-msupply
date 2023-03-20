@@ -5,6 +5,7 @@ mod tests {
         master_list::MasterListTester,
         name_and_store_and_name_store_join::NameAndStoreAndNameStoreJoinTester,
         report::ReportTester, test_central_sync_record, unit_and_item::UnitAndItemTester,
+        user_permission::UserPermissionTester,
     };
 
     #[actix_rt::test]
@@ -34,5 +35,10 @@ mod tests {
             &InventoryAdjustmentReasonTester,
         )
         .await;
+    }
+
+    #[actix_rt::test]
+    async fn integration_sync_central_user_permission() {
+        test_central_sync_record("user_permission", &UserPermissionTester).await;
     }
 }
