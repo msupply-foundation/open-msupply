@@ -2,14 +2,9 @@
   "type": "VerticalLayout",
   "elements": [
     {
-      "type": "Label",
-      "text": "Enrolment Form",
-      "variant": "h1Modal"
-    },
-    {
-      "type": "Label",
-      "text": "HIV Care and Treatment",
-      "variant": "h2"
+      "type": "Header",
+      "header": "Enrolment Form",
+      "subHeader": "HIV Care and Treatment"
     },
     {
       "type": "Control",

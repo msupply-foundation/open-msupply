@@ -347,17 +347,6 @@
             ]
           }
         },
-        { "type": "Spacer", "options": { "margin": 10 } },
-        {
-          "type": "Control",
-          "scope": "#/properties/hivTesting/properties/postTestCounsellingDone",
-          "label": "Post-test counselling done?"
-        },
-        {
-          "type": "Control",
-          "scope": "#/properties/hivTesting/properties/serodiscordantCoupleCounsellingProvided",
-          "label": "If serodiscordant, was couple counselling provided?"
-        },
         {
           "type": "Group",
           "elements": [
@@ -414,6 +403,17 @@
               }
             }
           }
+        },
+        { "type": "Spacer", "options": { "margin": 10 } },
+        {
+          "type": "Control",
+          "scope": "#/properties/hivTesting/properties/postTestCounsellingDone",
+          "label": "Post-test counselling done?"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/hivTesting/properties/serodiscordantCoupleCounsellingProvided",
+          "label": "If serodiscordant, was couple counselling provided?"
         },
         { "type": "Spacer" },
         {

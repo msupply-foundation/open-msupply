@@ -12,7 +12,7 @@ import { FORM_LABEL_COLUMN_WIDTH } from '../styleConstants';
 
 export const labelTester = rankWith(3, uiTypeIs('Label'));
 
-type LabelVariant = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p' | 'h1Modal';
+type LabelVariant = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p';
 
 type LayoutPropsExtended = LayoutProps & {
   uischema: UISchemaElement & {
@@ -28,12 +28,6 @@ const variants: { [key in LabelVariant]: SxProps } = {
     fontWeight: 'bold',
     textAlign: 'center',
     paddingBottom: 2,
-    paddingTop: 1,
-  },
-  h1Modal: {
-    fontSize: '1.8em',
-    fontWeight: 'bold',
-    textAlign: 'center',
     paddingTop: 1,
   },
   h2: {

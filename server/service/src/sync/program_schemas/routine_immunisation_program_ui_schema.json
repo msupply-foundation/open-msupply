@@ -2,14 +2,9 @@
   "type": "VerticalLayout",
   "elements": [
     {
-      "type": "Label",
-      "text": "Enrolment Form",
-      "variant": "h1Modal"
-    },
-    {
-      "type": "Label",
-      "text": "Routine Immunisation",
-      "variant": "h2"
+      "type": "Header",
+      "header": "Enrolment Form",
+      "subHeader": "Routine Immunisation"
     },
     {
       "type": "Control",
@@ -17,13 +12,6 @@
       "label": "Enrolment Date",
       "options": {
         "dateOnly": true
-      }
-    },
-    {
-      "type": "Control",
-      "scope": "#/properties/enrolmentDatetime",
-      "options": {
-        "readonly": true
       }
     },
     {
