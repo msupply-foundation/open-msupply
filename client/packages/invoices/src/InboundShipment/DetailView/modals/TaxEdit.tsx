@@ -5,6 +5,7 @@ import {
   IconButton,
   EditIcon,
   useToggle,
+  NumUtils,
 } from '@openmsupply-client/common';
 
 interface TaxEditProps {
@@ -31,8 +32,8 @@ export const TaxEdit = ({ disabled = false, tax, onChange }: TaxEditProps) => {
           max={100}
           isOpen={modalController.isOn}
           onClose={modalController.toggleOff}
-          onChange={onChange}
-          initialValue={tax}
+          onChange={value => onChange(NumUtils.round(value, 2))}
+          initialValue={NumUtils.round(tax, 2)}
           title={t('heading.edit-tax-rate')}
         />
       )}
