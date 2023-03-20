@@ -39,7 +39,10 @@ impl SyncRecordTester for InvoiceRecordTester {
             comment: None,
             their_reference: None,
             transport_reference: None,
-            created_datetime: NaiveDate::from_ymd(2022, 03, 24).and_hms(11, 35, 15),
+            created_datetime: NaiveDate::from_ymd_opt(2022, 03, 24)
+                .unwrap()
+                .and_hms_opt(11, 35, 15)
+                .unwrap(),
             allocated_datetime: None,
             picked_datetime: None,
             shipped_datetime: None,
@@ -199,11 +202,21 @@ impl SyncRecordTester for InvoiceRecordTester {
             d.comment = Some("invoice comment".to_string());
             d.their_reference = Some("invoice their ref".to_string());
             d.transport_reference = Some("transport reference".to_string());
-            d.allocated_datetime = Some(NaiveDate::from_ymd(2022, 03, 25).and_hms(11, 35, 15));
-            d.picked_datetime = Some(NaiveDate::from_ymd(2022, 03, 25).and_hms(11, 35, 15));
-            d.shipped_datetime = Some(NaiveDate::from_ymd(2022, 03, 26).and_hms(11, 35, 15));
-            d.delivered_datetime = Some(NaiveDate::from_ymd(2022, 03, 27).and_hms(11, 35, 15));
-            d.verified_datetime = Some(NaiveDate::from_ymd(2022, 03, 28).and_hms(11, 35, 15));
+            d.allocated_datetime = NaiveDate::from_ymd_opt(2022, 03, 25)
+                .unwrap()
+                .and_hms_opt(11, 35, 15);
+            d.picked_datetime = NaiveDate::from_ymd_opt(2022, 03, 25)
+                .unwrap()
+                .and_hms_opt(11, 35, 15);
+            d.shipped_datetime = NaiveDate::from_ymd_opt(2022, 03, 26)
+                .unwrap()
+                .and_hms_opt(11, 35, 15);
+            d.delivered_datetime = NaiveDate::from_ymd_opt(2022, 03, 27)
+                .unwrap()
+                .and_hms_opt(11, 35, 15);
+            d.verified_datetime = NaiveDate::from_ymd_opt(2022, 03, 28)
+                .unwrap()
+                .and_hms_opt(11, 35, 15);
             d.colour = Some("#1A1919".to_string());
             d.requisition_id = Some(requisition_row.id.clone());
             d.linked_invoice_id = Some(invoice_row_2.id.clone());
@@ -219,7 +232,7 @@ impl SyncRecordTester for InvoiceRecordTester {
             d.stock_line_id = Some(stock_line_row.id.clone());
             d.location_id = None;
             d.batch = Some("invoice line batch".to_string());
-            d.expiry_date = Some(NaiveDate::from_ymd(2024, 04, 04));
+            d.expiry_date = NaiveDate::from_ymd_opt(2024, 04, 04);
             d.pack_size = 10;
             d.cost_price_per_pack = 15.0;
             d.sell_price_per_pack = 15.0;
