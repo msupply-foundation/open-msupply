@@ -24,9 +24,8 @@ export const BaseDatePickerInput: FC<
       setInternalValue(DateUtils.getDateOrNull(props.value));
   }, [props.value]);
 
-  const isInvalid = (value: Date | string | number | null | undefined) => {
-    const dateValue =
-      typeof value === 'string' ? DateUtils.getDateOrNull(value) : value;
+  const isInvalid = (value: Date | null) => {
+    const dateValue = DateUtils.getDateOrNull(value);
     return !!value && !DateUtils.isValid(dateValue);
   };
 
