@@ -6,14 +6,16 @@ import { CapacitorConfig } from '@capacitor/cli';
 const config: CapacitorConfig = {
   appId: 'org.openmsupply.client',
   appName: 'openmsupply-client',
-  // This is only needed for `npx cap copy` to work, it doesn't have to point to actual bundle
+  // This is only needed for `npx cap copy` to work, and it does have to point to actual bundle
   // bundle is server by remote server (local or discovered) or through webpack if debugging (see comment below)
-  webDir: 'notexistent',
+  webDir: '../host/dist/',
   bundledWebRuntime: false,
   android: {
     path: './',
     // Required to access discovery graphql on http
     allowMixedContent: true,
+    // Required for getPlatform() to return 'android' rather than 'web' when serving a valid URL in the webview
+    useLegacyBridge: true,
   },
   server: {
     url: 'https://localhost:8000',
