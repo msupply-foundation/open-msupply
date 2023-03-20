@@ -15,8 +15,9 @@ use crate::programs::{
 pub(crate) fn upsert_document(
     con: &StorageConnection,
     document: &Document,
+    is_sync_update: bool,
 ) -> Result<(), RepositoryError> {
-    DocumentRepository::new(con).insert(document)?;
+    DocumentRepository::new(con).insert(document, is_sync_update)?;
 
     let Some(registry) = DocumentRegistryRepository::new(con)
         .query_by_filter(
@@ -40,7 +41,7 @@ fn update_patient(con: &StorageConnection, document: &Document) -> Result<(), Re
         RepositoryError::as_db_error(&format!("Invalid patient data: {}", err), "")
     })?;
 
-    patient_document_updated(con, &document.datetime, patient)
+    patient_document_updated(con, &document.datetime, patient, true)
         .map_err(|err| RepositoryError::as_db_error(&format!("{:?}", err), ""))?;
     Ok(())
 }

@@ -3,7 +3,8 @@ import { useEncounterApi } from '../utils/useEncounterApi';
 
 export const useEncounterPrevious = (
   patientId: string | undefined,
-  currentEncounter: Date
+  currentEncounter: Date,
+  enabled?: boolean
 ) => {
   const api = useEncounterApi();
 
@@ -11,7 +12,7 @@ export const useEncounterPrevious = (
     ...useQuery(
       api.keys.previous(patientId ?? '', currentEncounter.getTime()),
       () => api.previousEncounters(patientId ?? '', currentEncounter),
-      { enabled: !!patientId }
+      { enabled: enabled !== false && !!patientId }
     ),
   };
 };

@@ -122,7 +122,8 @@ impl SyncTranslation for DocumentTranslation {
             status,
             owner_name_id,
             context,
-        } = document.to_row()?;
+            is_sync_update: _,
+        } = document.to_row(false)?;
 
         let legacy_row = LegacyDocumentRow {
             id,

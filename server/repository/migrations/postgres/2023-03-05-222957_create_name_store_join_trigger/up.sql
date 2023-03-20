@@ -2,8 +2,8 @@ CREATE FUNCTION upsert_name_store_join_changelog()
 RETURNS trigger AS
 $$
   BEGIN
-    INSERT INTO changelog (table_name, record_id, row_action, store_id)
-          VALUES ('name_store_join', NEW.id, 'UPSERT', NEW.store_id);
+    INSERT INTO changelog (table_name, record_id, row_action, store_id, name_id, is_sync_update)
+          VALUES ('name_store_join', NEW.id, 'UPSERT', NEW.store_id, NEW.name_id, NEW.is_sync_update);
     RETURN NULL;
   END;
 $$ LANGUAGE 'plpgsql';

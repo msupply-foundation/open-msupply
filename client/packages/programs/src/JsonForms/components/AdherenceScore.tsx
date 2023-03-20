@@ -18,40 +18,143 @@ import {
   useZodOptionsValidation,
 } from '../common';
 import { z } from 'zod';
-import { useEncounter } from '../../api';
+import { EncounterFragment, useEncounter, useProgramEvents } from '../../api';
 import { get as extractProperty } from 'lodash';
 import { FormLabel } from '@mui/material';
 
 export const adherenceScoreTester = rankWith(10, uiTypeIs('AdherenceScore'));
 
-type Options = {
-  /**
-   * Field name for the dispense count is stored.
-   * This field is loaded from the previous encounter.
-   *
-   * For example: `previousDispensedCountField: 'arvMedication.numberOfDaysDispensed'`
-   */
-  previousCountField: string;
-  /**
-   * Field name of the remaining count field.
-   * For example: `remainingCountField: 'arvMedication.remainingPillCount'`
-   */
-  remainingCountField: string;
-  /** Expected number of pills per day that a patient is suppose to take. */
-  countPerDay: number;
-
-  /** Location where to store the adherence status */
-  targetField: string;
-};
-
-const Options: z.ZodType<Options> = z
+const Options = z
   .object({
-    previousCountField: z.string(),
+    /**
+     * Source of where to get the previous count.
+     * Either:
+     * - 'Field': A data field from the previous encounter
+     * - 'EncounterEvent': The latest event before the current encounter.
+     */
+    previousCount: z.discriminatedUnion('source', [
+      z.object({ source: z.literal('Field'), field: z.string() }),
+      z.object({ source: z.literal('EncounterEvent'), eventType: z.string() }),
+    ]),
+    /**
+     * Field name of the remaining count field.
+     * For example: `remainingCountField: 'medication.remainingPillCount'`
+     */
     remainingCountField: z.string(),
+    /** Expected number of pills per day that a patient is suppose to take. */
     countPerDay: z.number(),
+    /** Location where to store the adherence status */
     targetField: z.string(),
   })
   .strict();
+type Options = z.infer<typeof Options>;
+
+/** Returns [field, eventType] */
+
+const extractSource = (
+  options: Options | undefined
+): [string | undefined, string | undefined] => {
+  if (!options) return [undefined, undefined];
+
+  switch (options.previousCount.source) {
+    case 'Field':
+      return [options.previousCount.field, undefined];
+    case 'EncounterEvent':
+      return [undefined, options.previousCount.eventType];
+  }
+};
+
+type PreviousCount = {
+  count: number;
+  time: Date;
+};
+
+const usePreviousCountFromEvent = (
+  currentEncounter: EncounterFragment | undefined,
+  encounterEventType: string | undefined
+): PreviousCount | undefined => {
+  const beforeDate = currentEncounter
+    ? new Date(new Date(currentEncounter.startDatetime).getTime() - 1)
+    : undefined;
+  const { data: events } = useProgramEvents.document.list(
+    {
+      at: beforeDate,
+      patientId: currentEncounter?.patient?.id ?? '',
+      filter: {
+        type: {
+          equalTo: encounterEventType,
+        },
+        documentType: {
+          equalTo: currentEncounter?.type,
+        },
+      },
+      page: {
+        first: 1,
+      },
+    },
+    !!currentEncounter && !!encounterEventType
+  );
+  const event = events?.nodes[0];
+  if (event?.data === undefined || event?.data === null) {
+    return undefined;
+  }
+  const count = Number.parseFloat(event.data);
+  if (isNaN(count)) return undefined;
+
+  return {
+    count,
+    time: new Date(event.activeDatetime),
+  };
+};
+
+const usePreviousCountFromField = (
+  currentEncounter: EncounterFragment | undefined,
+  field: string | undefined
+): PreviousCount | undefined => {
+  const { data: previousEncounter } = useEncounter.document.previous(
+    currentEncounter?.patient.id,
+    currentEncounter?.startDatetime
+      ? new Date(currentEncounter?.startDatetime)
+      : new Date(),
+    !!field
+  );
+
+  if (!previousEncounter || field === undefined) {
+    return undefined;
+  }
+
+  const previousCountOnHand = extractProperty(
+    previousEncounter.document.data,
+    field
+  );
+
+  return {
+    count: previousCountOnHand,
+    time: new Date(previousEncounter.startDatetime),
+  };
+};
+
+const usePreviousCount = (
+  options: Options | undefined,
+  currentEncounter: EncounterFragment | undefined
+): PreviousCount | undefined => {
+  const [field, encounterEventType] = extractSource(options);
+
+  const countFormEvent = usePreviousCountFromEvent(
+    currentEncounter,
+    encounterEventType
+  );
+  const countFromField = usePreviousCountFromField(currentEncounter, field);
+
+  if (countFormEvent !== undefined) {
+    return countFormEvent;
+  }
+  if (countFromField !== undefined) {
+    return countFromField;
+  }
+
+  return undefined;
+};
 
 const UIComponent = (props: ControlProps) => {
   const { data, handleChange, label, uischema, path } = props;
@@ -78,31 +181,26 @@ const UIComponent = (props: ControlProps) => {
   const encounterId = useEncounter.utils.idFromUrl();
   const { data: currentEncounter } = useEncounter.document.byId(encounterId);
 
-  // fetch previous encounter
-  const { data: previousEncounter } = useEncounter.document.previous(
-    currentEncounter?.patient.id,
-    currentEncounter?.startDatetime
-      ? new Date(currentEncounter?.startDatetime)
-      : new Date()
-  );
+  const previousCount = usePreviousCount(options, currentEncounter);
 
   useEffect(() => {
-    if (!options || !currentEncounter || !previousEncounter || !targetPath) {
+    if (
+      !options ||
+      !currentEncounter ||
+      previousCount === undefined ||
+      !targetPath
+    ) {
       return undefined;
     }
 
-    const previousCountOnHand = extractProperty(
-      previousEncounter.document.data,
-      options.previousCountField
-    );
     const remainingCount = extractProperty(data, options.remainingCountField);
 
-    if (previousCountOnHand < remainingCount) {
+    if (previousCount.count < remainingCount) {
       setAdherenceScore(undefined);
       setWarning(
         t('control.adherence-status-warning', {
           remainingCount,
-          previousCountOnHand,
+          previousCountOnHand: previousCount.count,
         })
       );
       return;
@@ -111,20 +209,20 @@ const UIComponent = (props: ControlProps) => {
     }
     const timeDiffMs =
       new Date(currentEncounter.startDatetime).getTime() -
-      new Date(previousEncounter.startDatetime).getTime();
+      previousCount.time.getTime();
 
     // Target pill count needed for the whole timespan from last till current encounter
     const timeDiffDays = timeDiffMs / DateUtils.DAY;
     const targetPillCount = timeDiffDays * options.countPerDay;
 
     const status =
-      ((previousCountOnHand - remainingCount) / targetPillCount) * 100;
+      ((previousCount.count - remainingCount) / targetPillCount) * 100;
 
     if (Number.isFinite(status) && status !== adherenceScore) {
       handleChange(targetPath, status);
       setAdherenceScore(status);
     }
-  }, [options, previousEncounter, currentEncounter, data, targetPath]);
+  }, [options, previousCount, currentEncounter, data, targetPath]);
 
   if (!props.visible) {
     return null;

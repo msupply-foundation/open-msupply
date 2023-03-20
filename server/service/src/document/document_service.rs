@@ -174,7 +174,7 @@ pub trait DocumentServiceTrait: Sync + Send {
                 let current_document = validate_document_delete(con, &input.id, allowed_docs)?;
                 let document = generate_deleted_document(current_document, user_id)?;
 
-                match DocumentRepository::new(con).insert(&document) {
+                match DocumentRepository::new(con).insert(&document, false) {
                     Ok(_) => Ok(()),
                     Err(error) => Err(DocumentDeleteError::DatabaseError(error)),
                 }
@@ -196,7 +196,7 @@ pub trait DocumentServiceTrait: Sync + Send {
                 let parent_doc = validate_document_undelete(con, &input.id, allowed_docs)?;
                 let document = generate_undeleted_document(&input.id, parent_doc, user_id)?;
 
-                match DocumentRepository::new(con).insert(&document) {
+                match DocumentRepository::new(con).insert(&document, false) {
                     Ok(_) => Ok(document),
                     Err(error) => Err(DocumentUndeleteError::DatabaseError(error)),
                 }
@@ -372,7 +372,7 @@ fn insert_document(
         .finalise()
         .map_err(|err| DocumentInsertError::InternalError(err))?;
     let repo = DocumentRepository::new(connection);
-    repo.insert(&doc)?;
+    repo.insert(&doc, false)?;
     Ok(doc)
 }
 

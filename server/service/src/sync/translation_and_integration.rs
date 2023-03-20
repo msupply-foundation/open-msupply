@@ -199,7 +199,7 @@ impl PullUpsertRecord {
             }
             FormSchema(record) => FormSchemaRowRepository::new(con).upsert_one(record),
             DocumentRegistry(record) => DocumentRegistryRowRepository::new(con).upsert_one(record),
-            Document(record) => upsert_document(con, record),
+            Document(record) => upsert_document(con, record, true),
         }
     }
 }
@@ -235,10 +235,6 @@ impl PullDeleteRecord {
             StocktakeLine => StocktakeLineRowRepository::new(con).delete(id),
             #[cfg(all(test, feature = "integration_test"))]
             ActivityLog => Ok(()),
-            #[cfg(all(test, feature = "integration_test"))]
-            Clinician => ClinicianRowRepository::new(con).delete(id),
-            #[cfg(all(test, feature = "integration_test"))]
-            ClinicianStoreJoin => ClinicianStoreJoinRowRepository::new(con).delete(id),
         }
     }
 }

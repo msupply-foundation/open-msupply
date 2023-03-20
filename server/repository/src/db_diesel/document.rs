@@ -30,6 +30,7 @@ table! {
         status -> crate::db_diesel::document::DocumentStatusMapping,
         owner_name_id -> Nullable<Text>,
         context -> Nullable<Text>,
+        is_sync_update -> Bool,
     }
 }
 
@@ -47,6 +48,7 @@ table! {
         status -> crate::db_diesel::document::DocumentStatusMapping,
         owner_name_id -> Nullable<Text>,
         context -> Nullable<Text>,
+        is_sync_update -> Bool,
     }
 }
 
@@ -89,6 +91,7 @@ pub struct DocumentRow {
     pub owner_name_id: Option<String>,
     /// For example, program this document belongs to
     pub context: Option<String>,
+    pub is_sync_update: bool,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -211,9 +214,9 @@ impl<'a> DocumentRepository<'a> {
     }
 
     /// Inserts a document
-    pub fn insert(&self, doc: &Document) -> Result<(), RepositoryError> {
+    pub fn insert(&self, doc: &Document, is_sync_update: bool) -> Result<(), RepositoryError> {
         diesel::insert_into(document::dsl::document)
-            .values(doc.to_row()?)
+            .values(doc.to_row(is_sync_update)?)
             .execute(&self.connection.connection)?;
         Ok(())
     }
@@ -329,6 +332,7 @@ impl DocumentRow {
             status,
             owner_name_id,
             context,
+            is_sync_update: _,
         } = self;
 
         let parents: Vec<String> =
@@ -361,7 +365,7 @@ impl DocumentRow {
 }
 
 impl Document {
-    pub fn to_row(&self) -> Result<DocumentRow, RepositoryError> {
+    pub fn to_row(&self, is_sync_update: bool) -> Result<DocumentRow, RepositoryError> {
         let parents =
             serde_json::to_string(&self.parent_ids).map_err(|err| RepositoryError::DBError {
                 msg: "Can't serialize parents".to_string(),
@@ -383,6 +387,7 @@ impl Document {
             status: self.status.to_owned(),
             owner_name_id: self.owner_name_id.to_owned(),
             context: self.context.to_owned(),
+            is_sync_update,
         })
     }
 }

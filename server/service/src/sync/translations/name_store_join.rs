@@ -88,6 +88,7 @@ impl SyncTranslation for NameStoreJoinTranslation {
             // remaining as null, for now always names properties for name_is_supplier/customer
             name_is_customer: name.is_customer,
             name_is_supplier: name.is_supplier,
+            is_sync_update: true,
         };
 
         Ok(Some(IntegrationRecords::from_upsert(
@@ -110,10 +111,11 @@ impl SyncTranslation for NameStoreJoinTranslation {
             store_id,
             name_is_customer,
             name_is_supplier,
+            is_sync_update: _,
         } = NameStoreJoinRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
-                "Clinician row ({}) not found",
+                "Name store join row ({}) not found",
                 changelog.record_id
             )))?;
 
