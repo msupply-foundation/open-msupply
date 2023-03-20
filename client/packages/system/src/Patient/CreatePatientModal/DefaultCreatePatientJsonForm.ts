@@ -57,7 +57,7 @@ export const createPatientUI = {
     {
       type: 'Control',
       scope: '#/properties/code',
-      label: 'National Health ID',
+      label: 'National ID (NID)',
       options: {
         pattern: '^[0-9]{10}$',
         examples: ['1234567890'],
