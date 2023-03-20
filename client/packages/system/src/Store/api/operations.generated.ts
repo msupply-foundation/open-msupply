@@ -3,12 +3,8 @@ import * as Types from '@openmsupply-client/common';
 import { GraphQLClient } from 'graphql-request';
 import * as Dom from 'graphql-request/src/types.dom';
 import gql from 'graphql-tag';
-import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw';
-export type StoreRowFragment = {
-  __typename: 'StoreNode';
-  code: string;
-  id: string;
-};
+import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
+export type StoreRowFragment = { __typename: 'StoreNode', code: string, id: string };
 
 export type StoresQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']>;
@@ -16,71 +12,43 @@ export type StoresQueryVariables = Types.Exact<{
   filter?: Types.InputMaybe<Types.StoreFilterInput>;
 }>;
 
-export type StoresQuery = {
-  __typename: 'Queries';
-  stores: {
-    __typename: 'StoreConnector';
-    totalCount: number;
-    nodes: Array<{ __typename: 'StoreNode'; code: string; id: string }>;
-  };
-};
+
+export type StoresQuery = { __typename: 'Queries', stores: { __typename: 'StoreConnector', totalCount: number, nodes: Array<{ __typename: 'StoreNode', code: string, id: string }> } };
 
 export const StoreRowFragmentDoc = gql`
-  fragment StoreRow on StoreNode {
-    code
-    id
-  }
-`;
+    fragment StoreRow on StoreNode {
+  code
+  id
+}
+    `;
 export const StoresDocument = gql`
-  query stores($first: Int, $offset: Int, $filter: StoreFilterInput) {
-    stores(
-      page: { first: $first, offset: $offset }
-      filter: $filter
-      sort: { key: name }
-    ) {
-      ... on StoreConnector {
-        __typename
-        totalCount
-        nodes {
-          ...StoreRow
-        }
+    query stores($first: Int, $offset: Int, $filter: StoreFilterInput) {
+  stores(
+    page: {first: $first, offset: $offset}
+    filter: $filter
+    sort: {key: name}
+  ) {
+    ... on StoreConnector {
+      __typename
+      totalCount
+      nodes {
+        ...StoreRow
       }
     }
   }
-  ${StoreRowFragmentDoc}
-`;
+}
+    ${StoreRowFragmentDoc}`;
 
-export type SdkFunctionWrapper = <T>(
-  action: (requestHeaders?: Record<string, string>) => Promise<T>,
-  operationName: string,
-  operationType?: string
-) => Promise<T>;
+export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
-const defaultWrapper: SdkFunctionWrapper = (
-  action,
-  _operationName,
-  _operationType
-) => action();
 
-export function getSdk(
-  client: GraphQLClient,
-  withWrapper: SdkFunctionWrapper = defaultWrapper
-) {
+const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType) => action();
+
+export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
-    stores(
-      variables?: StoresQueryVariables,
-      requestHeaders?: Dom.RequestInit['headers']
-    ): Promise<StoresQuery> {
-      return withWrapper(
-        wrappedRequestHeaders =>
-          client.request<StoresQuery>(StoresDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
-          }),
-        'stores',
-        'query'
-      );
-    },
+    stores(variables?: StoresQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<StoresQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<StoresQuery>(StoresDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'stores', 'query');
+    }
   };
 }
 export type Sdk = ReturnType<typeof getSdk>;
@@ -96,10 +64,8 @@ export type Sdk = ReturnType<typeof getSdk>;
  *   )
  * })
  */
-export const mockStoresQuery = (
-  resolver: ResponseResolver<
-    GraphQLRequest<StoresQueryVariables>,
-    GraphQLContext<StoresQuery>,
-    any
-  >
-) => graphql.query<StoresQuery, StoresQueryVariables>('stores', resolver);
+export const mockStoresQuery = (resolver: ResponseResolver<GraphQLRequest<StoresQueryVariables>, GraphQLContext<StoresQuery>, any>) =>
+  graphql.query<StoresQuery, StoresQueryVariables>(
+    'stores',
+    resolver
+  )
