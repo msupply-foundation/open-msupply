@@ -1,16 +1,11 @@
 package org.openmsupply.client;
 
 import android.os.Bundle;
-import android.os.Environment;
-
 import com.getcapacitor.BridgeActivity;
-
-import java.io.File;
 
 public class MainActivity extends BridgeActivity {
     RemoteServer server = new RemoteServer();
     DiscoveryConstants discoveryConstants;
-    static String logPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS) + File.separator + NativeApi.OM_SUPPLY;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -21,9 +16,7 @@ public class MainActivity extends BridgeActivity {
 
         String path = getFilesDir().getAbsolutePath();
         String cache = getCacheDir().getAbsolutePath();
-        File logFolder = new File(logPath);
-        logFolder.mkdir();
-        server.start(discoveryConstants.PORT, path, cache, discoveryConstants.hardwareId, logFolder.getAbsolutePath());
+        server.start(discoveryConstants.PORT, path, cache, discoveryConstants.hardwareId);
     }
 
     @Override
@@ -32,4 +25,3 @@ public class MainActivity extends BridgeActivity {
         server.stop();
     }
 }
-

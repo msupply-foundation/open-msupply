@@ -1,6 +1,7 @@
 {
   "name": "@openmsupply-client/invoices",
   "version": "0.0.0",
+  "sideEffects": false,
   "private": true,
   "main": "./src/index.ts",
   "devDependencies": {

@@ -4,10 +4,11 @@ import { Document } from './document';
 
 export const useOutbound = {
   utils: {
+    addFromMasterList: Utils.useAddFromMasterList,
+    api: Utils.useOutboundApi,
+    count: Utils.useOutboundCounts,
     isDisabled: Utils.useOutboundIsDisabled,
     number: Utils.useOutboundNumber,
-    api: Utils.useOutboundApi,
-    addFromMasterList: Utils.useAddFromMasterList,
   },
 
   document: {

@@ -14,7 +14,7 @@ const ITEM_1: (&'static str, &'static str) = (
     "start_of_year_date": "0000-00-00",
     "manufacture_method": "",
     "default_pack_size": 1,
-    "dose_picture": "data:image/png;base64,",
+    "dose_picture": "",
     "atc_category": "",
     "medication_purpose": "",
     "instructions": "",
@@ -81,7 +81,8 @@ const ITEM_1: (&'static str, &'static str) = (
     "custom_data": null,
     "doses": 0,
     "is_vaccine": false,
-    "restricted_location_type_ID": ""
+    "restricted_location_type_ID": "",
+    "product_specifications": ""
 }"#,
 );
 
@@ -93,7 +94,7 @@ const ITEM_2: (&'static str, &'static str) = (
     "start_of_year_date": "0000-00-00",
     "manufacture_method": "",
     "default_pack_size": 2,
-    "dose_picture": "data:image/png;base64,",
+    "dose_picture": "",
     "atc_category": "",
     "medication_purpose": "",
     "instructions": "",
@@ -160,7 +161,8 @@ const ITEM_2: (&'static str, &'static str) = (
     "custom_data": null,
     "doses": 0,
     "is_vaccine": false,
-    "restricted_location_type_ID": ""
+    "restricted_location_type_ID": "",
+    "product_specifications": ""
 }"#,
 );
 
