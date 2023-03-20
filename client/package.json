@@ -38,7 +38,6 @@
   "devDependencies": {
     "@babel/core": "^7.21.3",
     "@babel/preset-env": "^7.18.2",
-    "@capacitor-community/barcode-scanner": "^3.0.3",
     "@capacitor/keyboard": "^4.1.1",
     "@graphql-codegen/cli": "^3.2.2",
     "@graphql-codegen/near-operation-file-preset": "^2.2.5",
