@@ -14,11 +14,15 @@ pub enum LegacyPermission {
 
 #[derive(Deserialize, Serialize)]
 pub struct LegacyUserPermissionTable {
+    #[serde(rename = "ID")]
     pub id: String,
+    #[serde(rename = "user_ID")]
     pub user_id: String,
+    #[serde(rename = "store_ID")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub store_id: Option<String>,
     pub permission: LegacyPermission,
+    #[serde(rename = "context_ID")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub context: Option<String>,
 }
