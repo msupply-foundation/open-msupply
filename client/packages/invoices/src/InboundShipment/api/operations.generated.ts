@@ -443,6 +443,7 @@ export const InvoiceCountsDocument = gql`
 export const UpsertInboundShipmentDocument = gql`
     mutation upsertInboundShipment($storeId: String!, $input: BatchInboundShipmentInput!) {
   batchInboundShipment(storeId: $storeId, input: $input) {
+    __typename
     updateInboundShipments {
       id
       response {
