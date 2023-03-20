@@ -16,7 +16,7 @@ import {
 import { AuthError } from '../authentication/AuthContext';
 import { LocalStorage } from '../localStorage';
 import { DocumentNode } from 'graphql';
-import { RequestInit } from 'graphql-request/dist/types.dom';
+import { RequestConfig } from 'graphql-request/build/esm/types';
 
 export type SkipRequest = (documentNode: DocumentNode) => boolean;
 
@@ -67,7 +67,7 @@ class GQLClient extends GraphQLClient {
 
   constructor(
     url: string,
-    options?: RequestInit | undefined,
+    options?: RequestConfig | undefined,
     skipRequest?: SkipRequest
   ) {
     super(url, options);
