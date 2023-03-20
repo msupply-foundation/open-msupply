@@ -289,4 +289,7 @@ impl InvoiceLineRowType {
     pub fn equal_to(&self) -> EqualFilter<Self> {
         inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
     }
+    pub fn not_equal_to(&self) -> EqualFilter<Self> {
+        inline_init(|r: &mut EqualFilter<Self>| r.not_equal_to = Some(self.clone()))
+    }
 }
