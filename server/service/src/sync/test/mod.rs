@@ -168,6 +168,9 @@ pub(crate) async fn check_records_against_database(
     for upsert in records.upserts {
         use PullUpsertRecord::*;
         match upsert {
+            UserPermission(record) => {
+                check_record_by_id!(UserPermissionRowRepository, con, record, "UserPermisson")
+            }
             Location(record) => {
                 check_record_by_id!(LocationRowRepository, con, record, "Location");
             }
@@ -278,6 +281,9 @@ pub(crate) async fn check_records_against_database(
         use PullDeleteRecordTable::*;
         let id = delete.id;
         match delete.table {
+            UserPermission => {
+                check_delete_record_by_id!(UserPermissionRowRepository, con, id)
+            }
             Name => {
                 check_delete_record_by_id!(NameRowRepository, con, id)
             }

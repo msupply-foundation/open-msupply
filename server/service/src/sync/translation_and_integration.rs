@@ -171,6 +171,7 @@ impl PullUpsertRecord {
     pub(crate) fn upsert(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
         use PullUpsertRecord::*;
         match self {
+            UserPermission(record) => UserPermissionRowRepository::new(con).upsert_one(record),
             Name(record) => NameRowRepository::new(con).upsert_one(record),
             Unit(record) => UnitRowRepository::new(con).upsert_one(record),
             Item(record) => ItemRowRepository::new(con).upsert_one(record),
@@ -206,6 +207,7 @@ impl PullDeleteRecord {
         use PullDeleteRecordTable::*;
         let id = &self.id;
         match self.table {
+            UserPermission => UserPermissionRowRepository::new(con).delete(id),
             Name => NameRowRepository::new(con).delete(id),
             Unit => UnitRowRepository::new(con).delete(id),
             Item => ItemRowRepository::new(con).delete(id),
