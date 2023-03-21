@@ -467,7 +467,7 @@ fn to_legacy_confirm_time(
     let date = datetime.map(|datetime| datetime.date());
     let time = datetime
         .map(|datetime| datetime.time())
-        .unwrap_or(NaiveTime::from_hms(0, 0, 0));
+        .unwrap_or(NaiveTime::from_hms_opt(0, 0, 0).unwrap());
     (date, time)
 }
 

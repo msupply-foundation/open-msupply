@@ -5,6 +5,7 @@
   "heading.shipments-to-be-picked": "Shipments to be picked",
   "heading-stock": "Stock",
   "heading.stock-levels": "Stock levels",
+  "error.failed-to-create-requisition": "Failed to create requisition! {{message}}",
   "label.expired_one": "Expired batch",
   "label.expired_other": "Expired batches",
   "label.expiring-soon_one": "Batch close to expiry",

@@ -29,6 +29,7 @@ export const useInbound = {
   utils: {
     addFromMasterList: Utils.useAddFromMasterList,
     api: Utils.useInboundApi,
+    counts: Utils.useInboundCounts,
     isDisabled: Utils.useIsInboundDisabled,
     isStatusChangeDisabled: Utils.useIsStatusChangeDisabled,
   },
