@@ -11,7 +11,7 @@ use crate::{
 use super::{
     main_patient_doc_name,
     patient_schema::SchemaPatient,
-    patient_updated::{create_patient_name_store_join, patient_document_updated},
+    patient_updated::{create_patient_name_store_join, update_patient_row},
     Patient, PatientFilter, PATIENT_TYPE,
 };
 
@@ -53,8 +53,7 @@ pub fn upsert_patient(
             if is_latest_doc(ctx, service_provider, &doc.name, doc.datetime)
                 .map_err(UpdatePatientError::DatabaseError)?
             {
-                // update the names table
-                patient_document_updated(&ctx.connection, &doc_timestamp, patient, false)?;
+                update_patient_row(&ctx.connection, &doc_timestamp, patient, false)?;
                 create_patient_name_store_join(&ctx.connection, store_id, &patient_id)?;
             }
 
