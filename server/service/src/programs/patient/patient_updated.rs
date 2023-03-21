@@ -39,8 +39,9 @@ pub fn create_patient_name_store_join(
     Ok(())
 }
 
-/// Callback called when the document has been updated
-pub fn patient_document_updated(
+/// Callback called when a patient document has been updated
+/// Updates the names table for the updated patient.
+pub fn update_patient_row(
     con: &StorageConnection,
     update_timestamp: &DateTime<Utc>,
     patient: SchemaPatient,
