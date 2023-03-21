@@ -26,7 +26,10 @@ impl SyncRecordTester for RequisitionRecordTester {
             name_id: uuid(),
             r#type: RequisitionRowType::Request,
             status: RequisitionRowStatus::Draft,
-            created_datetime: NaiveDate::from_ymd(2022, 03, 23).and_hms(8, 53, 0),
+            created_datetime: NaiveDate::from_ymd_opt(2022, 03, 23)
+                .unwrap()
+                .and_hms_opt(8, 53, 0)
+                .unwrap(),
             sent_datetime: None,
             finalised_datetime: None,
             expected_delivery_date: None,
@@ -97,9 +100,13 @@ impl SyncRecordTester for RequisitionRecordTester {
             d.comment = Some("requisition comment".to_string());
             d.their_reference = Some("requisition their ref".to_string());
             d.colour = Some("#1A1919".to_string());
-            d.sent_datetime = Some(NaiveDate::from_ymd(2022, 03, 24).and_hms(8, 53, 0));
-            d.finalised_datetime = Some(NaiveDate::from_ymd(2022, 03, 25).and_hms(8, 53, 0));
-            d.expected_delivery_date = Some(NaiveDate::from_ymd(2022, 03, 28));
+            d.sent_datetime = NaiveDate::from_ymd_opt(2022, 03, 24)
+                .unwrap()
+                .and_hms_opt(8, 53, 0);
+            d.finalised_datetime = NaiveDate::from_ymd_opt(2022, 03, 25)
+                .unwrap()
+                .and_hms_opt(8, 53, 0);
+            d.expected_delivery_date = NaiveDate::from_ymd_opt(2022, 03, 28);
             d.max_months_of_stock = 15.0;
             d.min_months_of_stock = 10.0;
             d.linked_requisition_id = Some(requisition_row_2.id.clone());
@@ -118,7 +125,9 @@ impl SyncRecordTester for RequisitionRecordTester {
             d.available_stock_on_hand = 15;
             d.average_monthly_consumption = 10;
             d.comment = Some("some comment".to_string());
-            d.snapshot_datetime = Some(NaiveDate::from_ymd(2022, 03, 20).and_hms(12, 13, 14));
+            d.snapshot_datetime = NaiveDate::from_ymd_opt(2022, 03, 20)
+                .unwrap()
+                .and_hms_opt(12, 13, 14);
             d
         });
 

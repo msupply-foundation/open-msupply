@@ -72,7 +72,7 @@ export const PricingSectionComponent = () => {
           )}`}</PanelLabel>
           <PanelField>
             <TaxEdit
-              disabled={disableStockTax}
+              disabled={disableStockTax || isDisabled}
               tax={taxPercentage ?? 0}
               onChange={taxPercentage => {
                 update({ taxPercentage });
