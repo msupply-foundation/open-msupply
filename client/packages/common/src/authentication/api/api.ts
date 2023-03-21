@@ -117,14 +117,5 @@ export const getAuthQueries = (sdk: Sdk, t: TypedTFunction<LocaleKey>) => ({
         return { nodes: [] };
       }
     },
-    stores: () => async () => {
-      try {
-        const result = await sdk.me();
-        return result?.me?.stores?.nodes;
-      } catch (e) {
-        console.error(e);
-        LocalStorage.setItem('/auth/error', AuthError.ServerError);
-      }
-    },
   },
 });
