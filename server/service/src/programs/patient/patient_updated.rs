@@ -56,14 +56,15 @@ pub fn patient_document_updated(
     let address = patient.contact_details.get(0);
     let name_repo = NameRowRepository::new(con);
     let existing_name = name_repo.find_one_by_id(&patient.id)?;
+    let existing_name = existing_name.as_ref();
     name_repo.upsert_one(&NameRow {
         id: patient.id.clone(),
         name: patient_name(&patient.first_name, &patient.last_name),
         code: patient.code.unwrap_or("".to_string()),
         r#type: NameType::Patient,
-        is_customer: true,
-        is_supplier: false,
-        supplying_store_id: None,
+        is_customer: existing_name.map(|n| n.is_customer).unwrap_or(true),
+        is_supplier: existing_name.map(|n| n.is_supplier).unwrap_or(false),
+        supplying_store_id: existing_name.and_then(|n| n.supplying_store_id.clone()),
         first_name: patient.first_name,
         last_name: patient.last_name,
         gender: patient.gender.and_then(|g| match g {
@@ -76,19 +77,18 @@ pub fn patient_document_updated(
             SchemaGender::NonBinary => Some(Gender::NonBinary),
         }),
         date_of_birth,
-        charge_code: None,
-        comment: None,
+        charge_code: existing_name.and_then(|n| n.charge_code.clone()),
+        comment: existing_name.and_then(|n| n.comment.clone()),
         country: address.and_then(|a| a.country.clone()),
         address1: address.and_then(|a| a.address_1.clone()),
         address2: address.and_then(|a| a.address_2.clone()),
         phone: contact.and_then(|c| c.phone.clone().or(c.mobile.clone())),
         email: contact.and_then(|c| c.email.clone()),
         website: contact.and_then(|c| c.website.clone()),
-        is_manufacturer: false,
-        is_donor: false,
-        on_hold: false,
+        is_manufacturer: existing_name.map(|n| n.is_manufacturer).unwrap_or(false),
+        is_donor: existing_name.map(|n| n.is_donor).unwrap_or(false),
+        on_hold: existing_name.map(|n| n.on_hold).unwrap_or(false),
         created_datetime: existing_name
-            .as_ref()
             .and_then(|n| n.created_datetime.clone())
             .or(Some(update_timestamp.naive_utc())), // assume there is no earlier doc version
         is_deceased: patient.is_deceased.unwrap_or(false),
