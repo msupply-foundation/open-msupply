@@ -15,14 +15,6 @@
       }
     },
     {
-      "type": "Control",
-      "scope": "#/properties/enrolmentDatetime",
-      "label": "Enrolment Date",
-      "options": {
-        "dateOnly": true
-      }
-    },
-    {
       "type": "IdGenerator",
       "label": "Patient Program Id",
       "scope": "#/properties/programEnrolmentId",
