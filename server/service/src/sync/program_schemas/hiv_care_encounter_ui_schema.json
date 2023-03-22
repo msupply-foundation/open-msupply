@@ -465,25 +465,6 @@
     },
     {
       "type": "Category",
-      "label": "Pregnancy",
-      "options": {
-        "icon": "condom"
-      },
-      "elements": [
-        {
-          "type": "Control",
-          "label": "Pregnant:",
-          "scope": "#/properties/familyPlanning/properties/pregnant"
-        },
-        {
-          "type": "Control",
-          "label": "Contraception:",
-          "scope": "#/properties/familyPlanning/properties/contraception"
-        }
-      ]
-    },
-    {
-      "type": "Category",
       "label": "GBV",
       "options": {
         "title": "Gender Based Violence",
