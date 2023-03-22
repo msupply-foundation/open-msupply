@@ -3,31 +3,21 @@
   "elements": [
     {
       "type": "Category",
-      "label": "HTC Register",
+      "label": "General",
       "options": { "icon": "document" },
       "elements": [
         {
           "type": "Control",
           "scope": "#/properties/htcRegisterSerialNumber",
-          "label": "HTC Register Serial No.",
-          "options": { "width": "100px" }
-        }
-      ]
-    },
-    {
-      "type": "Category",
-      "label": "Pregnancy",
-      "options": { "icon": "condom" },
-      "elements": [
+          "label": "HTC Serial No.",
+          "options": { "width": "400px" }
+        },
         {
-          "type": "Control",
-          "label": "Pregnant:",
-          "scope": "#/properties/familyPlanning/properties/pregnant"
+          "type": "Spacer"
         },
         {
           "type": "Control",
-          "label": "Contraception:",
-          "scope": "#/properties/familyPlanning/properties/contraception"
+          "scope": "#/properties/pointOfEntry"
         }
       ]
     },
@@ -321,7 +311,11 @@
       "elements": [
         {
           "type": "Control",
-          "scope": "#/properties/hivTesting/properties/datetime"
+          "scope": "#/properties/hivTesting/properties/datetime",
+          "label": "Date",
+          "options": {
+            "dateOnly": true
+          }
         },
         {
           "type": "Control",
@@ -336,8 +330,78 @@
             "show": [
               ["POSITIVE", "Positive"],
               ["NEGATIVE", "Negative"],
-              ["UNKNOWN", "Unknown"]
+              ["INCONCLUSIVE", "Inconclusive"]
             ]
+          }
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/hivTesting/properties/partnerStatus",
+          "label": "Partner HIV status:",
+          "options": {
+            "show": [
+              ["POSITIVE", "Positive"],
+              ["NEGATIVE", "Negative"],
+              ["UNKNOWN", "Unknown"],
+              ["NOT_DONE", "Not done"]
+            ]
+          }
+        },
+        {
+          "type": "Group",
+          "elements": [
+            { "type": "Spacer" },
+            {
+              "type": "Control",
+              "scope": "#/properties/hivTesting/properties/referredForARTServices",
+              "label": "Did you refer the patient for ART services?"
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/hivTesting/properties/referredARTFacility",
+              "label": "Where?",
+              "options": {
+                "show": [
+                  ["THIS_FACILITY", "This facility"],
+                  ["OTHER_FACILITY", "Other facility"]
+                ]
+              },
+              "rule": {
+                "effect": "ENABLE",
+                "condition": {
+                  "scope": "#/properties/hivTesting/properties/referredForARTServices",
+                  "schema": {
+                    "const": true
+                  }
+                }
+              }
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/hivTesting/properties/referredARTFacilityName",
+              "label": "If another facility, name of the facility",
+              "rule": {
+                "effect": "ENABLE",
+                "condition": {
+                  "scope": "#/properties/hivTesting/properties/referredARTFacility",
+                  "schema": { "enum": ["OTHER_FACILITY"] }
+                }
+              }
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/hivTesting/properties/clientEscorted",
+              "label": "Was the client escorted?"
+            }
+          ],
+          "rule": {
+            "effect": "SHOW",
+            "condition": {
+              "scope": "#/properties/hivTesting/properties/result",
+              "schema": {
+                "const": "POSITIVE"
+              }
+            }
           }
         },
         { "type": "Spacer", "options": { "margin": 10 } },
@@ -345,50 +409,6 @@
           "type": "Control",
           "scope": "#/properties/hivTesting/properties/postTestCounsellingDone",
           "label": "Post-test counselling done?"
-        },
-        { "type": "Spacer" },
-        {
-          "type": "Control",
-          "scope": "#/properties/hivTesting/properties/referredForARTServices",
-          "label": "Did you refer the patient for ART services?"
-        },
-        {
-          "type": "Control",
-          "scope": "#/properties/hivTesting/properties/referredARTFacility",
-          "label": "Where?",
-          "options": {
-            "show": [
-              ["THIS_FACILITY", "This facility"],
-              ["OTHER_FACILITY", "Other facility"]
-            ]
-          },
-          "rule": {
-            "effect": "ENABLE",
-            "condition": {
-              "scope": "#/properties/hivTesting/properties/referredForARTServices",
-              "schema": {
-                "const": true
-              }
-            }
-          }
-        },
-        {
-          "type": "Control",
-          "scope": "#/properties/hivTesting/properties/referredARTFacilityName",
-          "label": "If another facility, name of the facility",
-          "rule": {
-            "effect": "ENABLE",
-            "condition": {
-              "scope": "#/properties/hivTesting/properties/referredARTFacility",
-              "schema": { "enum": ["OTHER_FACILITY"] }
-            }
-          }
-        },
-        { "type": "Spacer" },
-        {
-          "type": "Control",
-          "scope": "#/properties/hivTesting/properties/clientEscorted",
-          "label": "Was the client escorted?"
         },
         {
           "type": "Control",
