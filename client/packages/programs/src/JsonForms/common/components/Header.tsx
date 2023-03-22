@@ -14,7 +14,7 @@ export const headerTester = rankWith(10, uiTypeIs('Header'));
 type HeaderProps = LayoutProps & {
   uischema: UISchemaElement & {
     header?: string;
-    subHeader?: string;
+    subheader?: string;
   };
 };
 
@@ -44,7 +44,7 @@ const UIComponent = (props: HeaderProps) => {
           paddingBottom: 2,
         }}
       >
-      {RegexUtils.formatTemplateString(uischema?.subHeader ?? '', data, '')}
+      {RegexUtils.formatTemplateString(uischema?.subheader ?? '', data, '')}
       </Typography>
     </>
   );
