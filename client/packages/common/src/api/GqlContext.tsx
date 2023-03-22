@@ -135,12 +135,7 @@ interface GqlControl {
   setSkipRequest: (skipRequest: SkipRequest) => void;
 }
 
-const GqlContext = createContext<GqlControl>({
-  ...createGql(''),
-  setHeader: () => {},
-  setUrl: () => {},
-  setSkipRequest: () => {},
-});
+const GqlContext = createContext<GqlControl>({} as any);
 
 const { Provider } = GqlContext;
 

@@ -94,18 +94,7 @@ const useRefreshingAuth = (
     if (isSuccess && enabled) callback(data?.token ?? '');
   }, [enabled, isSuccess, data]);
 };
-const AuthContext = createContext<AuthControl>({
-  token: '',
-  isLoggingIn: false,
-  login: () =>
-    new Promise(() => ({
-      token: '',
-    })),
-  logout: () => {},
-  storeId: '',
-  setStore: () => new Promise(() => ({})),
-  userHasPermission: () => false,
-});
+const AuthContext = createContext<AuthControl>({} as any);
 
 const { Provider } = AuthContext;
 
