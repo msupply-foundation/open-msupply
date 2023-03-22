@@ -172,17 +172,17 @@ fn is_truthy(value: &Value) -> bool {
 
 fn match_condition(condition: &EventCondition, doc: &Document) -> bool {
     let Some(field) = extract_value_field(&doc.data, &condition.field) else {
-        if condition.is_falsy.is_some() {
+        if condition.is_falsy.unwrap_or(false) {
             return true;
         }
         return false;
     };
-    if condition.is_set.is_some() {
+    if condition.is_set.unwrap_or(false) {
         return !field.is_null();
     }
-    if condition.is_falsy.is_some() {
+    if condition.is_falsy.unwrap_or(false) {
         return !is_truthy(&field);
-    } else if condition.is_truthy.is_some() {
+    } else if condition.is_truthy.unwrap_or(false) {
         return is_truthy(&field);
     }
 
