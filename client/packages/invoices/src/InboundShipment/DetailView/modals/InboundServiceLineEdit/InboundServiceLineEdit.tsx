@@ -75,7 +75,7 @@ const InboundServiceLineEditComponent = ({
             />
           </Box>
           <TableProvider
-            createStore={createTableStore}
+            createStore={createTableStore()}
             queryParamsStore={createQueryParamsStore({
               initialSortBy: { key: 'serviceItemName' },
             })}
@@ -95,11 +95,9 @@ const InboundServiceLineEditComponent = ({
 
 export const InboundServiceLineEdit = (props: InboundServiceLineEditProps) => (
   <QueryParamsProvider
-    createStore={() =>
-      createQueryParamsStore<ItemRowFragment>({
-        initialSortBy: { key: 'name' },
-      })
-    }
+    createStore={createQueryParamsStore<ItemRowFragment>({
+      initialSortBy: { key: 'name' },
+    })}
   >
     <InboundServiceLineEditComponent {...props} />
   </QueryParamsProvider>

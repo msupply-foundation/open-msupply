@@ -120,7 +120,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
 
   return (
     <TableProvider
-      createStore={createTableStore}
+      createStore={createTableStore()}
       queryParamsStore={createQueryParamsStore({
         initialSortBy: { key: 'expiryDate' },
       })}

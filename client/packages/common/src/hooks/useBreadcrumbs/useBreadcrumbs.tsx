@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { LocaleKey } from '@common/intl';
-import create from 'zustand';
+import { create } from 'zustand';
 
 export interface UrlPart {
   path: string;

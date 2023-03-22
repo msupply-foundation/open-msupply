@@ -80,19 +80,7 @@ export const setAuthCookie = (cookie: AuthCookie) => {
   Cookies.set('auth', JSON.stringify(authCookie), { expires });
 };
 
-const AuthContext = createContext<AuthControl>({
-  token: '',
-  isLoggingIn: false,
-  login: () =>
-    new Promise(() => ({
-      token: '',
-    })),
-  logout: () => {},
-  storeId: '',
-  setStore: () => new Promise(() => ({})),
-  userHasPermission: () => false,
-});
-
+const AuthContext = createContext<AuthControl>({} as any);
 const { Provider } = AuthContext;
 
 export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
