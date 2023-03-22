@@ -368,6 +368,7 @@ mutation upsertInboundShipment(
   $input: BatchInboundShipmentInput!
 ) {
   batchInboundShipment(storeId: $storeId, input: $input) {
+    __typename
     updateInboundShipments {
       id
       response {
