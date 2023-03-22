@@ -9,7 +9,7 @@
         "scheduleIn": { "days": 0, "minutes": 1 }
       },
       "event": {
-        "documentType": "HIVCareProgram",
+        "documentType": "HIV Care & Treatment",
         "type": "programStatus",
         "data": "Early LTFU"
       }
@@ -23,7 +23,7 @@
         "scheduleIn": { "days": 0, "minutes": 3 }
       },
       "event": {
-        "documentType": "HIVCareProgram",
+        "documentType": "HIV Care & Treatment",
         "type": "programStatus",
         "data": "LTFU"
       }
