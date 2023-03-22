@@ -15,8 +15,8 @@ import {
 } from 'graphql-request';
 import { AuthError } from '../authentication/AuthContext';
 import { LocalStorage } from '../localStorage';
-import { DocumentNode } from 'graphql';
-import { RequestInit } from 'graphql-request/dist/types.dom';
+import { DefinitionNode, DocumentNode, OperationDefinitionNode } from 'graphql';
+import { RequestConfig } from 'graphql-request/build/esm/types';
 
 export type SkipRequest = (documentNode: DocumentNode) => boolean;
 
@@ -60,20 +60,35 @@ const handleResponseError = (errors: ResponseError[]) => {
   throw new Error(details || error?.message || 'Unknown error');
 };
 
+const ignoredQueries = ['refreshToken', 'syncInfo'];
+
+const shouldIgnoreQuery = (definitionNode: DefinitionNode) => {
+  const operationNode = definitionNode as OperationDefinitionNode;
+  if (operationNode.operation !== 'query') return false;
+
+  return ignoredQueries.indexOf(operationNode.name?.value ?? '') !== -1;
+};
+
+const shouldSaveRequestTime = (documentNode?: DocumentNode) => {
+  return documentNode && !documentNode.definitions.some(shouldIgnoreQuery);
+};
+
 class GQLClient extends GraphQLClient {
   private client: GraphQLClient;
   private emptyData: object;
   private skipRequest: SkipRequest;
+  private lastRequestTime: Date;
 
   constructor(
     url: string,
-    options?: RequestInit | undefined,
+    options?: RequestConfig | undefined,
     skipRequest?: SkipRequest
   ) {
     super(url, options);
     this.client = new GraphQLClient(url, options);
     this.emptyData = {};
     this.skipRequest = skipRequest || (() => false);
+    this.lastRequestTime = new Date();
   }
 
   public request<T, V extends Variables | undefined>(
@@ -87,6 +102,8 @@ class GQLClient extends GraphQLClient {
     if (this.skipRequest(document)) {
       return new Promise(() => this.emptyData);
     }
+
+    if (shouldSaveRequestTime(document)) this.lastRequestTime = new Date();
 
     const response = options.document
       ? this.client.request(options)
@@ -118,6 +135,7 @@ class GQLClient extends GraphQLClient {
     this.client.setEndpoint(value);
   public setSkipRequest = (skipRequest: SkipRequest) =>
     (this.skipRequest = skipRequest);
+  public getLastRequestTime = () => this.lastRequestTime;
 }
 
 export const createGql = (

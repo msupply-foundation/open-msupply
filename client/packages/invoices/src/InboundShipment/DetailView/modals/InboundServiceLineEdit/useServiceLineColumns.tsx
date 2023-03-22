@@ -10,12 +10,17 @@ import {
   ColumnAlign,
   NonNegativeDecimalCell,
   useFormatCurrency,
+  CellProps,
 } from '@openmsupply-client/common';
 import {
   ServiceItemSearchInput,
   toItemWithPackSize,
 } from '@openmsupply-client/system';
 import { DraftInboundLine } from './../../../../types';
+
+const TaxPercentageCell = (props: CellProps<DraftInboundLine>) => (
+  <NonNegativeDecimalCell max={100} {...props} />
+);
 
 export const useServiceLineColumns = (
   setter: (patch: RecordPatch<DraftInboundLine>) => void
@@ -62,7 +67,7 @@ export const useServiceLineColumns = (
       label: 'label.tax',
       width: 75,
       setter,
-      Cell: NonNegativeDecimalCell,
+      Cell: TaxPercentageCell,
     },
     {
       key: 'totalAfterTax',

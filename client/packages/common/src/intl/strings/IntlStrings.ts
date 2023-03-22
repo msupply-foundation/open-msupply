@@ -3,7 +3,6 @@ import { Namespace, TOptions } from 'i18next';
 import { useTranslation as useTranslationNext } from 'react-i18next';
 import { LocaleKey } from '../locales';
 
-export { TFunction } from 'i18next';
 export { UseTranslationResponse } from 'react-i18next';
 
 export interface TypedTFunction<Keys> {
