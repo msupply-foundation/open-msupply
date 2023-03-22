@@ -90,7 +90,7 @@ const OutboundServiceLineEditComponent = ({
               dense
               noDataMessage={
                 !hasDefaultServiceItem.defaultServiceItem
-                  ? 'There are no service charges assigned to this store'
+                  ? t('error.no-service-charges')
                   : t('error.no-results')
               }
             />
