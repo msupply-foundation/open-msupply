@@ -48,7 +48,6 @@
   "error.no-report-permission": "No permission to view reports",
   "error.no-reports-available": "No reports available",
   "error.no-results": "Nothing here",
-  "error.no-service-charges": "There are no service charges assigned to this store",
   "error.something-wrong": "Oops! Something's gone wrong.",
   "error.unable-to-load-data": "An error has occurred: there was a problem loading the data.",
   "error.unable-to-read-barcode": "Unable to read a barcode",
