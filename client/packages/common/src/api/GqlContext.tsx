@@ -16,7 +16,7 @@ import {
 import { AuthError } from '../authentication/AuthContext';
 import { LocalStorage } from '../localStorage';
 import { DefinitionNode, DocumentNode, OperationDefinitionNode } from 'graphql';
-import { RequestInit } from 'graphql-request/dist/types.dom';
+import { RequestConfig } from 'graphql-request/build/esm/types';
 
 export type SkipRequest = (documentNode: DocumentNode) => boolean;
 
@@ -81,7 +81,7 @@ class GQLClient extends GraphQLClient {
 
   constructor(
     url: string,
-    options?: RequestInit | undefined,
+    options?: RequestConfig | undefined,
     skipRequest?: SkipRequest
   ) {
     super(url, options);
@@ -91,12 +91,12 @@ class GQLClient extends GraphQLClient {
     this.lastRequestTime = new Date();
   }
 
-  public request<T, V = Variables>(
-    documentOrOptions: RequestDocument | RequestOptions<V>,
+  public request<T, V extends Variables | undefined>(
+    documentOrOptions: RequestDocument | RequestOptions<Variables>,
     variables?: V,
     requestHeaders?: RequestInit['headers']
   ): Promise<T> {
-    const options = documentOrOptions as RequestOptions<V>;
+    const options = documentOrOptions as RequestOptions<Variables>;
     const document = (documentOrOptions as DocumentNode) || options.document;
 
     if (this.skipRequest(document)) {
@@ -115,10 +115,11 @@ class GQLClient extends GraphQLClient {
     // returning an empty object in order to give the caller a stable reference
     // without it, the page will re-render continuously
     return response.then(
-      data => data ?? this.emptyData,
+      data => (data ?? this.emptyData) as T,
       ({ response }) => {
         if (response && response.errors) {
           handleResponseError(response.errors);
+          return this.emptyData as T;
         } else {
           throw new Error('Unknown error');
         }

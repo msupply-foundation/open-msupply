@@ -173,8 +173,8 @@ const DataTableComponent = <T extends RecordWithId>({
               viewportRef={ref}
               items={data}
               axis="y"
-              itemMinSize={40}
-              spacerElement="tr"
+              itemSize={40}
+              renderSpacer={({ ref, style }) => <tr ref={ref} style={style} />}
             >
               {(row, idx) => (
                 <DataRow
