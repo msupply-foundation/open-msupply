@@ -4,7 +4,7 @@
     {
       "type": "Header",
       "header": "Enrolment Form",
-      "subHeader": "Routine Immunisation"
+      "subheader": "Routine Immunisation"
     },
     {
       "type": "Control",
