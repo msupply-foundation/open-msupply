@@ -9,11 +9,18 @@ import { useFormatDateTime } from '@common/intl';
 import {
   ProgramEventFragment,
   EncounterRowFragment,
+  useDocumentRegistry,
 } from '@openmsupply-client/programs';
 
 const encounterEventCellValue = (events: ProgramEventFragment[]) => {
   // just take the name of the first event
   return events[0]?.data ?? '';
+};
+
+const getProgramName = (program: string) => {
+  const { data } = useDocumentRegistry.get.documentRegistryByType(program);
+
+  return data?.[0]?.name;
 };
 
 interface useEncounterListColumnsProps {
@@ -40,6 +47,8 @@ export const useEncounterListColumns = ({
     {
       key: 'program',
       label: 'label.program',
+      accessor: ({ rowData }) => rowData?.program,
+      formatter: name => getProgramName(name as string) ?? '',
     },
     {
       key: 'startDatetime',
