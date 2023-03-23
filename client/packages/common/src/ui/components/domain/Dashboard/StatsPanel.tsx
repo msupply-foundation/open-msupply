@@ -2,26 +2,24 @@ import React, { FC } from 'react';
 import { Grid, Paper, Tooltip, Typography } from '@mui/material';
 import { InlineSpinner, StockIcon } from '../../../';
 import { useTranslation } from '@common/intl';
+import { ApiException, isPermissionDeniedException } from '@common/types';
 
 export type Stat = {
   label: string;
   value?: string;
 };
 export interface StatsPanelProps {
+  error?: ApiException;
+  isError?: boolean;
   isLoading: boolean;
   stats: Stat[];
   title: string;
   width?: number;
 }
 
-export const StatsPanel: FC<StatsPanelProps> = ({
-  isLoading,
-  stats,
-  title,
-  width,
-}) => {
+const Statistic: FC<Stat> = ({ label, value }) => {
   const t = useTranslation();
-  const Statistic: FC<Stat> = ({ label, value }) => (
+  return (
     <Grid container alignItems="center" style={{ height: 30 }}>
       <Grid item>
         {value ? (
@@ -58,51 +56,89 @@ export const StatsPanel: FC<StatsPanelProps> = ({
       </Grid>
     </Grid>
   );
+};
 
-  return (
-    <Paper
-      sx={{
-        borderRadius: '16px',
-        marginTop: '14px',
-        marginBottom: '21px',
-        boxShadow: theme => theme.shadows[1],
-        padding: '14px 24px',
-        width: width ? `${width}px` : undefined,
-      }}
-    >
-      <Grid container>
-        <Grid alignItems="center" display="flex">
-          <Grid item style={{ marginInlineEnd: 8 }}>
-            <StockIcon
-              color="secondary"
-              style={{
-                height: 16,
-                width: 16,
-                fill: '#3568d4',
-              }}
-            />
-          </Grid>
-          <Grid item>
-            <Typography
-              color="secondary"
-              style={{ fontSize: 12, fontWeight: 500 }}
-            >
-              {title}
-            </Typography>
-          </Grid>
+const Content = ({
+  error,
+  isError,
+  isLoading,
+  stats,
+}: {
+  error?: ApiException;
+  isError: boolean;
+  isLoading: boolean;
+  stats: Stat[];
+}) => {
+  const t = useTranslation();
+  const isPermissionDenied = isPermissionDeniedException(error);
+
+  switch (true) {
+    case isError:
+      return (
+        <Typography sx={{ color: 'gray.main', fontSize: 12, marginLeft: 3.2 }}>
+          {t(isPermissionDenied ? 'error.no-permission' : 'error.no-data')}
+        </Typography>
+      );
+    case isLoading:
+      return <InlineSpinner color="secondary" />;
+    default:
+      return (
+        <Grid item>
+          {stats.map(stat => (
+            <Statistic key={stat.label} {...stat} />
+          ))}
         </Grid>
-        <Grid container justifyContent="space-between" alignItems="flex-end">
-          {isLoading ? (
-            <InlineSpinner color="secondary" />
-          ) : (
-            <Grid item>
-              {stats.map(stat => (
-                <Statistic key={stat.label} {...stat} />
-              ))}
-            </Grid>
-          )}
+      );
+  }
+};
+
+export const StatsPanel: FC<StatsPanelProps> = ({
+  error,
+  isError = false,
+  isLoading,
+  stats,
+  title,
+  width,
+}) => (
+  <Paper
+    sx={{
+      borderRadius: '16px',
+      marginTop: '14px',
+      marginBottom: '21px',
+      boxShadow: theme => theme.shadows[1],
+      padding: '14px 24px',
+      width: width ? `${width}px` : undefined,
+    }}
+  >
+    <Grid container>
+      <Grid alignItems="center" display="flex">
+        <Grid item style={{ marginInlineEnd: 8 }}>
+          <StockIcon
+            color="secondary"
+            style={{
+              height: 16,
+              width: 16,
+              fill: '#3568d4',
+            }}
+          />
+        </Grid>
+        <Grid item>
+          <Typography
+            color="secondary"
+            style={{ fontSize: 12, fontWeight: 500 }}
+          >
+            {title}
+          </Typography>
         </Grid>
       </Grid>
-    </Paper>
-  );
-};
+      <Grid container justifyContent="space-between" alignItems="flex-end">
+        <Content
+          isError={isError}
+          isLoading={isLoading}
+          stats={stats}
+          error={error}
+        />
+      </Grid>
+    </Grid>
+  </Paper>
+);

@@ -399,7 +399,7 @@ mod test {
                     min_months_of_stock: Some(2.0),
                     other_party_id: Some("other_party_id".to_string()),
                     status: Some(UpdateRequestRequistionStatus::Sent),
-                    expected_delivery_date: Some(NaiveDate::from_ymd(2022, 01, 03))
+                    expected_delivery_date: Some(NaiveDate::from_ymd_opt(2022, 01, 03).unwrap())
                 }
             );
             Ok(inline_init(|r: &mut Requisition| {

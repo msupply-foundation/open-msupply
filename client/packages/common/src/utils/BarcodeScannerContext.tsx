@@ -23,12 +23,7 @@ interface BarcodeScannerControl {
   stopScan: () => void;
 }
 
-const BarcodeScannerContext = createContext<BarcodeScannerControl>({
-  hasBarcodeScanner: false,
-  isScanning: false,
-  startScan: async () => ({}),
-  stopScan: () => {},
-});
+const BarcodeScannerContext = createContext<BarcodeScannerControl>({} as any);
 
 const { Provider } = BarcodeScannerContext;
 
