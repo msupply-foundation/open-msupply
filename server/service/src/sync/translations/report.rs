@@ -45,13 +45,13 @@ pub struct LegacyReportRow {
     pub context: LegacyReportContext,
     pub template: String,
 
-    #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(rename = "Comment")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     pub comment: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub sub_context: Option<String>,
+    #[serde(rename = "form_schema_ID")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
-    #[serde(rename = "json_schema_ID")]
     pub argument_schema_id: Option<String>,
 }
 
