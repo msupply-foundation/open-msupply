@@ -5,12 +5,7 @@
   "private": true,
   "main": "./src/index.ts",
   "devDependencies": {
-    "eslint-config-prettier": "^8.3.0",
-    "find-up": "^6.3.0",
-    "husky": "^8.0.1",
-    "lint-staged": "13.2.0",
-    "prettier": "^2.3.2",
-    "typescript": "^5.0.2"
+    "find-up": "^6.3.0"
   },
   "scripts": {
     "tsc": "tsc"

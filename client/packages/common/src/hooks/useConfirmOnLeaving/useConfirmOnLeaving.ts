@@ -2,20 +2,19 @@ import { useContext, useEffect, useRef } from 'react';
 import { UNSAFE_NavigationContext as NavigationContext } from 'react-router-dom';
 import { useTranslation } from '@common/intl';
 
+const promptUser = (e: BeforeUnloadEvent) => {
+  // Cancel the event
+  e.preventDefault(); // If you prevent default behavior in Mozilla Firefox prompt will always be shown
+  // Chrome requires returnValue to be set
+  e.returnValue = '';
+};
+
 // Ideally we'd use the `Prompt` component instead ( or usePrompt or useBlocker ) to prompt when navigating away using react-router
 // however, these weren't implemented in react-router-dom v6 at the time of implementation
 export const useConfirmOnLeaving = (isUnsaved?: boolean) => {
   const unblockRef = useRef<any>(null);
   const { navigator } = useContext(NavigationContext);
   const t = useTranslation();
-
-  const promptUser = (e: BeforeUnloadEvent) => {
-    // Cancel the event
-    e.preventDefault(); // If you prevent default behavior in Mozilla Firefox prompt will always be shown
-    // Chrome requires returnValue to be set
-    e.returnValue = '';
-  };
-
   const showConfirmation = (onOk: () => void) => {
     if (
       confirm(
@@ -28,6 +27,7 @@ export const useConfirmOnLeaving = (isUnsaved?: boolean) => {
 
   useEffect(() => {
     if (isUnsaved) {
+      console.log('=========== ADD ============');
       window.addEventListener('beforeunload', promptUser, { capture: true });
       const push = navigator.push;
 
@@ -41,10 +41,12 @@ export const useConfirmOnLeaving = (isUnsaved?: boolean) => {
         navigator.push = push;
       };
     } else {
+      console.log('=========== REMOVE ============');
       window.removeEventListener('beforeunload', promptUser, { capture: true });
       unblockRef.current?.();
     }
     return () => {
+      console.log('=========== UNLOAD ============');
       window.removeEventListener('beforeunload', promptUser, { capture: true });
       unblockRef.current?.();
     };

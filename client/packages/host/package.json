@@ -6,22 +6,17 @@
   "private": true,
   "devDependencies": {
     "copy-webpack-plugin": "^11.0.0",
-    "eslint-config-prettier": "^8.3.0",
     "find-up": "^6.3.0",
     "html-webpack-plugin": "^5.5.0",
-    "husky": "^8.0.1",
-    "lint-staged": "13.2.0",
-    "prettier": "^2.3.2",
     "react-refresh": "0.14.0",
     "serve": "^14.2.0",
-    "typescript": "^5.0.2",
     "webpack": "^5.76.2",
     "webpack-cli": "^5.0.1",
     "webpack-dev-server": "^4.12.0"
   },
   "scripts": {
     "start": "webpack-cli serve",
-    "start-remote": "webpack-cli serve --env API_HOST='https://demo-open.msupply.org'",
+    "start-remote": "webpack-cli serve --env API_HOST=https://demo-open.msupply.org",
     "start-local": "webpack-cli serve",
     "build": "webpack --env production",
     "build-stats": "webpack --env stats --env production",

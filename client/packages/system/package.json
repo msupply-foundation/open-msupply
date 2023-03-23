@@ -6,12 +6,7 @@
   "private": true,
   "devDependencies": {
     "@awesome-cordova-plugins/core": "^6.3.0",
-    "@awesome-cordova-plugins/printer": "^6.3.0",
-    "eslint-config-prettier": "^8.3.0",
-    "husky": "^8.0.1",
-    "lint-staged": "13.2.0",
-    "prettier": "^2.3.2",
-    "typescript": "^5.0.2"
+    "@awesome-cordova-plugins/printer": "^6.3.0"
   },
   "scripts": {
     "tsc": "tsc"
