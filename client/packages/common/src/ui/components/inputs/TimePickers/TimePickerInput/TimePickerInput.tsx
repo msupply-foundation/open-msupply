@@ -1,5 +1,8 @@
 import React, { FC } from 'react';
-import { TimePicker, TimePickerProps } from '@mui/x-date-pickers';
+import {
+  TimePicker,
+  TimePickerProps,
+} from '@mui/x-date-pickers/TimePicker/TimePicker';
 import { BasicTextInput } from '../../TextInput/BasicTextInput';
 import { StandardTextFieldProps, TextFieldProps } from '@mui/material';
 

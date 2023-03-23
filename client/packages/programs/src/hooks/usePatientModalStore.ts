@@ -1,4 +1,4 @@
-import { zustand } from '@openmsupply-client/common';
+import { create } from 'zustand';
 import { CreateDocument } from '@openmsupply-client/programs';
 
 interface PatientModalDocument {
@@ -42,7 +42,7 @@ interface PatientModalState {
   ) => void;
 }
 
-export const usePatientModalStore = zustand<PatientModalState>(set => ({
+export const usePatientModalStore = create<PatientModalState>(set => ({
   current: undefined,
   document: undefined,
   reset: () =>
