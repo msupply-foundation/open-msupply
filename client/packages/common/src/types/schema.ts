@@ -3065,6 +3065,7 @@ export type SyncErrorNode = {
 };
 
 export enum SyncErrorVariant {
+  ApiVersionIncompatible = 'API_VERSION_INCOMPATIBLE',
   ConnectionError = 'CONNECTION_ERROR',
   HardwareIdMismatch = 'HARDWARE_ID_MISMATCH',
   IncorrectPassword = 'INCORRECT_PASSWORD',

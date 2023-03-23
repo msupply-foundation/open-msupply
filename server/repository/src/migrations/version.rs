@@ -56,7 +56,7 @@ impl Display for Version {
 // TODO no unwrap ?
 
 impl Version {
-    pub(crate) fn from_package_json() -> Self {
+    pub fn from_package_json() -> Self {
         Self::from_str(&PackageJsonAsset::version())
     }
 

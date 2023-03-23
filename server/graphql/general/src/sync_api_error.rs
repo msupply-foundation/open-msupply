@@ -28,6 +28,7 @@ pub enum Variant {
     IntegrationTimeoutReached,
     InvalidUrl,
     Unknown,
+    ApiVersionIncompatible,
 }
 
 impl SyncErrorNode {
@@ -95,6 +96,7 @@ impl SyncErrorNode {
             from::SiteIncorrectHardwareId => to::HardwareIdMismatch,
             from::SiteHasNoStore => to::SiteHasNoStore,
             from::SiteAuthTimeout => to::SiteAuthTimeout,
+            from::ApiVersionIncompatible => to::ApiVersionIncompatible,
             from::Other(_) => return Self::unknown_error(error),
         };
 
@@ -117,6 +119,7 @@ impl SyncErrorNode {
             from::SiteAuthTimeout => to::SiteAuthTimeout,
             from::ConnectionError => to::ConnectionError,
             from::IntegrationTimeoutReached => to::IntegrationTimeoutReached,
+            from::ApiVersionIncompatible => to::ApiVersionIncompatible,
         };
 
         Self::from_variant(variant, message)
@@ -162,7 +165,7 @@ mod test {
                 source: ParsedError {
                     code: SyncErrorCodeV5::SiteIncorrectHardwareId,
                     message: "n/a".to_string(),
-                    data: Some("n/a".to_string()),
+                    data: Some(json!("n/a")),
                 },
                 status: StatusCode::UNAUTHORIZED,
             })
