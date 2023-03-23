@@ -43,7 +43,10 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                 user_id: Some("user_account_a".to_string()),
                 store_id: Some("store_b".to_string()),
                 record_id: Some("outbound_shipment_a".to_string()),
-                datetime: NaiveDate::from_ymd(2020, 1, 1).and_hms(0, 0, 0),
+                datetime: NaiveDate::from_ymd_opt(2020, 1, 1)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap(),
                 event: None,
             }),
         ),
@@ -56,7 +59,10 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                 user_id: Some("user_account_a".to_string()),
                 store_id: Some("store_b".to_string()),
                 record_id: Some("inbound_shipment_a".to_string()),
-                datetime: NaiveDate::from_ymd(2020, 1, 1).and_hms(0, 0, 0),
+                datetime: NaiveDate::from_ymd_opt(2020, 1, 1)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap(),
                 event: None,
             }),
         ),
@@ -74,7 +80,10 @@ pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
                 user_id: "user_account_a".to_string(),
                 store_id: "store_b".to_string(),
                 record_id: "outbound_shipment_a".to_string(),
-                datetime: NaiveDate::from_ymd(2020, 1, 1).and_hms(0, 0, 0),
+                datetime: NaiveDate::from_ymd_opt(2020, 1, 1)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap(),
                 event: None,
             }),
         },
@@ -87,7 +96,10 @@ pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
                 user_id: "user_account_a".to_string(),
                 store_id: "store_b".to_string(),
                 record_id: "inbound_shipment_a".to_string(),
-                datetime: NaiveDate::from_ymd(2020, 1, 1).and_hms(0, 0, 0),
+                datetime: NaiveDate::from_ymd_opt(2020, 1, 1)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap(),
                 event: None,
             }),
         },

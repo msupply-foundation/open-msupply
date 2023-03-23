@@ -200,26 +200,35 @@ mod graphql {
             assert_eq!(
                 created_datetime,
                 Some(DatetimeFilter::equal_to(
-                    NaiveDate::from_ymd(2021, 01, 01).and_hms(0, 0, 0)
+                    NaiveDate::from_ymd_opt(2021, 01, 01)
+                        .unwrap()
+                        .and_hms_opt(0, 0, 0)
+                        .unwrap()
                 ))
             );
             assert_eq!(
                 sent_datetime,
                 Some(DatetimeFilter::after_or_equal_to(
-                    NaiveDate::from_ymd(2021, 01, 02).and_hms(0, 0, 0)
+                    NaiveDate::from_ymd_opt(2021, 01, 02)
+                        .unwrap()
+                        .and_hms_opt(0, 0, 0)
+                        .unwrap()
                 ))
             );
             assert_eq!(
                 finalised_datetime,
                 Some(DatetimeFilter::before_or_equal_to(
-                    NaiveDate::from_ymd(2021, 01, 03).and_hms(0, 0, 0)
+                    NaiveDate::from_ymd_opt(2021, 01, 03)
+                        .unwrap()
+                        .and_hms_opt(0, 0, 0)
+                        .unwrap()
                 ))
             );
             assert_eq!(
                 expected_delivery_date,
-                Some(DateFilter::after_or_equal_to(NaiveDate::from_ymd(
-                    2021, 01, 04
-                )))
+                Some(DateFilter::after_or_equal_to(
+                    NaiveDate::from_ymd_opt(2021, 01, 04).unwrap()
+                ))
             );
             assert_eq!(
                 name,

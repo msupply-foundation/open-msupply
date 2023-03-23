@@ -1,7 +1,7 @@
 import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient } from 'graphql-request';
-import * as Dom from 'graphql-request/dist/types.dom';
+import * as Dom from 'graphql-request/src/types.dom';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type ItemWithStatsFragment = { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, defaultPackSize: number, availableStockOnHand: number, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null } };

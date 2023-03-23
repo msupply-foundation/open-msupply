@@ -107,7 +107,12 @@ async fn migration_1_00_06() {
             ('invoice1_id', 'store_id', 'name_id', 1, 'INBOUND_SHIPMENT', 'NEW', false, $1);
         "#
         ))
-        .bind::<Timestamp, _>(NaiveDate::from_ymd(2011, 10, 09).and_hms(10, 10, 10)),
+        .bind::<Timestamp, _>(
+            NaiveDate::from_ymd_opt(2011, 10, 09)
+                .unwrap()
+                .and_hms_opt(10, 10, 10)
+                .unwrap(),
+        ),
     )
     .unwrap();
 
@@ -121,7 +126,12 @@ async fn migration_1_00_06() {
             ('invoice2_id', 'store_id', 'name_id', 2, 'INBOUND_SHIPMENT', 'NEW', false, $1);
         "#
         ))
-        .bind::<Timestamp, _>(NaiveDate::from_ymd(2022, 01, 03).and_hms(01, 02, 03)),
+        .bind::<Timestamp, _>(
+            NaiveDate::from_ymd_opt(2022, 01, 03)
+                .unwrap()
+                .and_hms_opt(01, 02, 03)
+                .unwrap(),
+        ),
     )
     .unwrap();
 
@@ -141,11 +151,17 @@ async fn migration_1_00_06() {
         vec![
             (
                 "invoice1_id".to_string(),
-                NaiveDate::from_ymd(2011, 10, 10).and_hms(10, 10, 10)
+                NaiveDate::from_ymd_opt(2011, 10, 10)
+                    .unwrap()
+                    .and_hms_opt(10, 10, 10)
+                    .unwrap()
             ),
             (
                 "invoice2_id".to_string(),
-                NaiveDate::from_ymd(2022, 01, 04).and_hms(01, 02, 03)
+                NaiveDate::from_ymd_opt(2022, 01, 04)
+                    .unwrap()
+                    .and_hms_opt(01, 02, 03)
+                    .unwrap()
             )
         ]
     )

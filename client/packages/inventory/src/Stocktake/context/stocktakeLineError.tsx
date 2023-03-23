@@ -38,8 +38,8 @@ const useStocktakeLineErrors = () => {
 };
 export type UseStocktakeLineErrors = ReturnType<typeof useStocktakeLineErrors>;
 
-const StocktakeLineErrorContext = createContext<UseStocktakeLineErrors | null>(
-  null
+const StocktakeLineErrorContext = createContext<UseStocktakeLineErrors>(
+  {} as any
 );
 
 export const useStocktakeLineErrorContext = () => {

@@ -27,7 +27,7 @@ export const StockEvolution: React.FC<StockEvolutionProps> = ({ id }) => {
   const { data, isLoading } = useRequest.line.chartData(id);
 
   const dateFormatter = (date: string) => dayMonthShort(date);
-  const tooltipFormatter = (value: number, name: string) => {
+  const tooltipFormatter = (value: number, name: string): [number, string] => {
     switch (name) {
       case 'stockOnHand':
         return [value, t('label.stock-level')];

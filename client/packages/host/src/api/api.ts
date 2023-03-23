@@ -24,7 +24,8 @@ export const getHostQueries = (sdk: Sdk) => ({
       const result = await sdk.syncStatus();
       return result?.syncStatus;
     },
-    syncInfo: () => sdk.syncInfo(),
+    syncInfo: (token?: string) =>
+      sdk.syncInfo({}, { Authorization: `Bearer ${token}` }),
   },
   // manualSync is a trigger that returns a string result (don't need to capture it)
   manualSync: async () => sdk.manualSync(),

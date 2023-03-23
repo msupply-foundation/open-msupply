@@ -8,7 +8,7 @@ import {
   usePaperClickPopover,
   useTranslation,
   useNavigate,
-  useUserStores,
+  useUserDetails,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { PropsWithChildrenOnly, UserStoreNodeFragment } from '@common/types';
@@ -17,7 +17,7 @@ export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
   const { store, setStore, token } = useAuthContext();
   const navigate = useNavigate();
   const { hide, PaperClickPopover } = usePaperClickPopover();
-  const { data, isLoading } = useUserStores(token);
+  const { data, isLoading } = useUserDetails(token);
   const t = useTranslation('app');
 
   const storeSorter = (a: UserStoreNodeFragment, b: UserStoreNodeFragment) => {
@@ -25,7 +25,7 @@ export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
     if (a.name > b.name) return 1;
     return 0;
   };
-  const stores = data?.sort(storeSorter) || [];
+  const stores = data?.stores?.nodes?.sort(storeSorter) || [];
   if (!store?.name) return null;
 
   if (stores.length < 2) return <>{children}</>;

@@ -87,8 +87,8 @@ export function Autocomplete<T>({
       sx={{ width }}
     />
   );
-  const defaultGetOptionLabel = (option: { label?: string } & T): string => {
-    return option.label ?? '';
+  const defaultGetOptionLabel = (option: T): string => {
+    return (option as { label?: string }).label ?? '';
   };
 
   const CustomPopper: React.FC<PopperProps> = props => (

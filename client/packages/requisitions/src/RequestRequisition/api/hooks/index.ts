@@ -1,9 +1,9 @@
-import { zustand } from '@openmsupply-client/common';
+import { create } from '@openmsupply-client/common';
 import { Document } from './document';
 import { Lines } from './line';
 import { Utils } from './utils';
 
-export const useHideOverStocked = zustand<{
+export const useHideOverStocked = create<{
   on: boolean;
   toggle: () => void;
 }>(set => ({

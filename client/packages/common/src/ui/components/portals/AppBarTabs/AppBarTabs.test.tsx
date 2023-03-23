@@ -36,7 +36,7 @@ describe('AppBarTabs', () => {
   it('Portal children dismount if the portal dismounts', () => {
     const { queryByText, getByRole } = render(<TestAppBarTabs initialShow />);
 
-    const button = getByRole(/button/);
+    const button = getByRole('button');
 
     fireEvent.click(button);
 
