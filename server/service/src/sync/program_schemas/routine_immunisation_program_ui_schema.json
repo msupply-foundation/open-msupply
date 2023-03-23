@@ -3,8 +3,10 @@
   "elements": [
     {
       "type": "Header",
-      "header": "Enrolment Form",
-      "subheader": "Routine Immunisation"
+      "options": {
+        "header": "Enrolment Form",
+        "subheader": "Routine Immunisation"
+      }
     },
     {
       "type": "Control",
