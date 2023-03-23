@@ -4,13 +4,7 @@
   "sideEffects": false,
   "main": "./src/index.ts",
   "private": true,
-  "devDependencies": {
-    "eslint-config-prettier": "^8.3.0",
-    "husky": "^8.0.1",
-    "lint-staged": "13.2.0",
-    "prettier": "^2.3.2",
-    "typescript": "^5.0.2"
-  },
+  "devDependencies": {},
   "scripts": {
     "tsc": "tsc"
   },

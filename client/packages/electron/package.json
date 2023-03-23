@@ -86,8 +86,7 @@
     "fork-ts-checker-webpack-plugin": "^8.0.0",
     "node-loader": "^2.0.0",
     "style-loader": "^3.0.0",
-    "ts-loader": "^9.2.2",
-    "typescript": "^5.0.2"
+    "ts-loader": "^9.2.2"
   },
   "dependencies": {
     "@openmsupply-client/common": "^0.0.1",

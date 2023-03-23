@@ -11,6 +11,7 @@ import {
   AppSxProp,
   NothingHere,
   useUrlQueryParams,
+  useConfirmOnLeaving,
 } from '@openmsupply-client/common';
 import { OutboundItem } from '../../types';
 import { useOutbound } from '../api';
@@ -95,6 +96,7 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
   });
   const isDisabled = useOutbound.utils.isDisabled();
   useHighlightPlaceholderRows(rows);
+  useConfirmOnLeaving(isGrouped);
 
   if (!rows) return null;
 
