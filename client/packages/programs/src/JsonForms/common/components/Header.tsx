@@ -13,9 +13,9 @@ import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
 export const headerTester = rankWith(10, uiTypeIs('Header'));
 
 const Options = z.object({
-  header: z.string().optional(),
-  subheader: z.string().optional(),
-}).strict().optional();
+  header: z.string(),
+  subheader: z.string(),
+}).strict();
 
 type Options = z.infer<typeof Options>;
 
