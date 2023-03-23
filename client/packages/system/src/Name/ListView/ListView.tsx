@@ -76,7 +76,7 @@ const NameListComponent: FC<{ type: 'customer' | 'supplier' }> = ({ type }) => {
 export const NameListView: FC<{ type: 'customer' | 'supplier' }> = ({
   type,
 }) => (
-  <TableProvider createStore={createTableStore}>
+  <TableProvider createStore={createTableStore()}>
     <NameListComponent type={type} />
   </TableProvider>
 );

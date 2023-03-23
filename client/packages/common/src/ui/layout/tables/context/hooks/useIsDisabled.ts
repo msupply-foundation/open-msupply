@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useTableStore, TableStore } from '../TableContext';
+import { TableStore, useTableStore } from '../TableContext';
 
 interface UseIsDisabledControl {
   isDisabled: boolean;

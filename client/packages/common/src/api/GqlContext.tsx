@@ -15,12 +15,17 @@ import {
 } from 'graphql-request';
 import { AuthError } from '../authentication/AuthContext';
 import { LocalStorage } from '../localStorage';
-import { DocumentNode } from 'graphql';
-import { RequestInit } from 'graphql-request/dist/types.dom';
+import { DefinitionNode, DocumentNode, OperationDefinitionNode } from 'graphql';
+import { RequestConfig } from 'graphql-request/build/esm/types';
 
 export type SkipRequest = (documentNode: DocumentNode) => boolean;
 
-const permissionExceptions = ['reports', 'stockCounts', 'invoiceCounts'];
+const permissionExceptions = [
+  'reports',
+  'stockCounts',
+  'invoiceCounts',
+  'itemCounts',
+];
 interface ResponseError {
   message?: string;
   path?: string[];
@@ -41,10 +46,10 @@ const handleResponseError = (errors: ResponseError[]) => {
     return;
   }
 
-  if (
-    hasError(errors, AuthError.PermissionDenied) &&
-    !hasPermissionException(errors)
-  ) {
+  if (hasError(errors, AuthError.PermissionDenied)) {
+    if (hasPermissionException(errors)) {
+      throw errors[0];
+    }
     LocalStorage.setItem('/auth/error', AuthError.PermissionDenied);
     return;
   }
@@ -55,33 +60,50 @@ const handleResponseError = (errors: ResponseError[]) => {
   throw new Error(details || error?.message || 'Unknown error');
 };
 
+const ignoredQueries = ['refreshToken', 'syncInfo'];
+
+const shouldIgnoreQuery = (definitionNode: DefinitionNode) => {
+  const operationNode = definitionNode as OperationDefinitionNode;
+  if (operationNode.operation !== 'query') return false;
+
+  return ignoredQueries.indexOf(operationNode.name?.value ?? '') !== -1;
+};
+
+const shouldSaveRequestTime = (documentNode?: DocumentNode) => {
+  return documentNode && !documentNode.definitions.some(shouldIgnoreQuery);
+};
+
 class GQLClient extends GraphQLClient {
   private client: GraphQLClient;
   private emptyData: object;
   private skipRequest: SkipRequest;
+  private lastRequestTime: Date;
 
   constructor(
     url: string,
-    options?: RequestInit | undefined,
+    options?: RequestConfig | undefined,
     skipRequest?: SkipRequest
   ) {
     super(url, options);
     this.client = new GraphQLClient(url, options);
     this.emptyData = {};
     this.skipRequest = skipRequest || (() => false);
+    this.lastRequestTime = new Date();
   }
 
-  public request<T, V = Variables>(
-    documentOrOptions: RequestDocument | RequestOptions<V>,
+  public request<T, V extends Variables | undefined>(
+    documentOrOptions: RequestDocument | RequestOptions<Variables>,
     variables?: V,
     requestHeaders?: RequestInit['headers']
   ): Promise<T> {
-    const options = documentOrOptions as RequestOptions<V>;
+    const options = documentOrOptions as RequestOptions<Variables>;
     const document = (documentOrOptions as DocumentNode) || options.document;
 
     if (this.skipRequest(document)) {
       return new Promise(() => this.emptyData);
     }
+
+    if (shouldSaveRequestTime(document)) this.lastRequestTime = new Date();
 
     const response = options.document
       ? this.client.request(options)
@@ -93,10 +115,11 @@ class GQLClient extends GraphQLClient {
     // returning an empty object in order to give the caller a stable reference
     // without it, the page will re-render continuously
     return response.then(
-      data => data ?? this.emptyData,
+      data => (data ?? this.emptyData) as T,
       ({ response }) => {
         if (response && response.errors) {
           handleResponseError(response.errors);
+          return this.emptyData as T;
         } else {
           throw new Error('Unknown error');
         }
@@ -112,6 +135,7 @@ class GQLClient extends GraphQLClient {
     this.client.setEndpoint(value);
   public setSkipRequest = (skipRequest: SkipRequest) =>
     (this.skipRequest = skipRequest);
+  public getLastRequestTime = () => this.lastRequestTime;
 }
 
 export const createGql = (
@@ -129,12 +153,7 @@ interface GqlControl {
   setSkipRequest: (skipRequest: SkipRequest) => void;
 }
 
-const GqlContext = createContext<GqlControl>({
-  ...createGql(''),
-  setHeader: () => {},
-  setUrl: () => {},
-  setSkipRequest: () => {},
-});
+const GqlContext = createContext<GqlControl>({} as any);
 
 const { Provider } = GqlContext;
 

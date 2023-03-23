@@ -18,4 +18,9 @@ export const NumUtils = {
    * For example, JS number max size is `2^53 - 1` while the Rust u32 size is `2^32 - 1`.
    */
   MAX_SAFE_API_INTEGER: 999999999,
+
+  round: (value: number, dp = 0): number => {
+    const multiplier = 10 ** dp;
+    return Math.round(value * multiplier) / multiplier;
+  },
 };

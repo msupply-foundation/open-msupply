@@ -24,16 +24,4 @@ export interface ConfirmationModalControllerState
 }
 
 export const ConfirmationModalContext =
-  createContext<ConfirmationModalControllerState>({
-    open: false,
-    message: '',
-    title: '',
-    iconType: 'info',
-    onConfirm: () => {},
-    setState: () => {},
-    setMessage: () => {},
-    setTitle: () => {},
-    setOnConfirm: () => {},
-    setOnCancel: () => {},
-    setOpen: () => {},
-  });
+  createContext<ConfirmationModalControllerState>({} as any);

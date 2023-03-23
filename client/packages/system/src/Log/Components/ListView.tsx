@@ -37,7 +37,9 @@ export const LogList: FC<{ recordId: string }> = ({ recordId }) => {
       key: 'type',
       label: 'label.event',
       accessor: ({ rowData }) =>
-        t(Formatter.logTypeTranslation(rowData.type), rowData.type),
+        t(Formatter.logTypeTranslation(rowData.type), {
+          defaultValue: rowData.type,
+        }),
     },
     {
       key: 'event',

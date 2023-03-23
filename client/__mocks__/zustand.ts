@@ -1,4 +1,4 @@
-import actualCreate from 'zustand';
+import { create as actualCreate, StateCreator, useStore } from 'zustand';
 import { act } from 'react-dom/test-utils';
 
 /**
@@ -9,11 +9,10 @@ import { act } from 'react-dom/test-utils';
 // eslint-disable-next-line @typescript-eslint/ban-types
 const stores = new Set<Function>();
 
-const create: typeof actualCreate = (createState: any) => {
-  const store = actualCreate(createState);
+const create = <S>(createState: StateCreator<S>) => {
+  const store = actualCreate<S>(createState);
   const initialState = store.getState();
   stores.add(() => act(() => store.setState(initialState, true)));
-
   return store;
 };
 
@@ -22,3 +21,4 @@ afterEach(() => {
 });
 
 export default create;
+export { create, useStore };

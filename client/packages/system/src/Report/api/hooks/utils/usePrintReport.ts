@@ -43,7 +43,14 @@ const printPage = (url: string) => {
         if (frame.contentDocument)
           frame.contentDocument.documentElement.innerHTML = html;
 
-        print(frame);
+        // Wait till images are loaded. There seem to be no callback for this and its hard to check
+        // if everything is loaded correctly for unknown html. For this reason, just wait a small
+        // amount of time.
+        // Note, while developing, even a timeout of 0ms worked but it has been raised o 30ms to
+        // have some buffer.
+        setTimeout(() => {
+          print(frame);
+        }, 30);
       };
       document.body.appendChild(frame);
     }
