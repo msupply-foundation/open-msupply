@@ -6,7 +6,7 @@
       "config": {
         "datetimeField": "arvMedication.endOfSupply",
         "scheduleFromNow": true,
-        "scheduleIn": { "days": 0, "minutes": 1 }
+        "scheduleIn": { "days": 28, "minutes": 0 }
       },
       "event": {
         "documentType": "HIVCareProgram",
@@ -20,7 +20,7 @@
       "config": {
         "datetimeField": "arvMedication.endOfSupply",
         "scheduleFromNow": true,
-        "scheduleIn": { "days": 0, "minutes": 3 }
+        "scheduleIn": { "days": 90, "minutes": 0 }
       },
       "event": {
         "documentType": "HIVCareProgram",

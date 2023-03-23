@@ -336,7 +336,7 @@
             "show": [
               ["POSITIVE", "Positive"],
               ["NEGATIVE", "Negative"],
-              ["UNKNOWN", "Unknown"]
+              ["INCONCLUSIVE", "Inconclusive"]
             ]
           }
         },
