@@ -3,8 +3,10 @@
   "elements": [
     {
       "type": "Header",
-      "header": "Enrolment Form",
-      "subheader": "HIV Care and Treatment"
+      "options": {
+        "header": "Enrolment Form",
+        "subheader": "HIV Care and Treatment"
+      }
     },
     {
       "type": "Control",
