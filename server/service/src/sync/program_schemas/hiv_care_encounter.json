@@ -206,6 +206,7 @@
               "type": "number"
             }
           },
+          "required": ["regimenStatus"],
           "then": {
             "required": ["regimen", "regimenChangeReason"]
           },
