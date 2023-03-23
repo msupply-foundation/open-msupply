@@ -41,7 +41,8 @@
               "regimenStatus": {
                 "enum": ["START", "CHANGE", "STOP"]
               }
-            }
+            },
+            "required": ["regimenStatus"]
           },
           "properties": {
             "adherenceScore": {
@@ -206,7 +207,6 @@
               "type": "number"
             }
           },
-          "required": ["regimenStatus"],
           "then": {
             "required": ["regimen", "regimenChangeReason"]
           },

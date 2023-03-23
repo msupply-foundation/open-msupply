@@ -139,26 +139,6 @@ mod hiv_care_encounter {
             }
         }
     }
-
-    impl Default for HivcareEncounterArvMedication {
-        fn default() -> Self {
-            Self {
-                regimen_status: Default::default(),
-                adherence_score: None,
-                end_of_supply: None,
-                prophylaxis_medication: None,
-                quantity_prescribed: None,
-                regimen: None,
-                regimen_change_note: None,
-                regimen_change_reason: None,
-                relevant_co_medication: None,
-                remaining_pill_count: None,
-                other_regimen: None,
-                quantity_dispensed: None,
-                regimen_type: None,
-            }
-        }
-    }
 }
 
 const PATIENT_SCHEMA: &'static str = std::include_str!("./program_schemas/patient.json");
@@ -471,7 +451,7 @@ fn encounter_hiv_care_1(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncou
                 e.quantity_prescribed = Some(8.0);
                 e.regimen = Some("1a-New".to_string());
                 e.regimen_type = Some("First Line - Adult".to_string());
-                e.regimen_status = "START".to_string();
+                e.regimen_status = Some("START".to_string());
                 e.regimen_change_reason = Some("51".to_string())
             },
         ));
@@ -501,7 +481,7 @@ fn encounter_hiv_care_2(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncou
                 e.adherence_score = Some(85.7142835884354);
                 e.regimen = Some("1a-New".to_string());
                 e.regimen_type = Some("First Line - Adult".to_string());
-                e.regimen_status = "CONTINUE".to_string();
+                e.regimen_status = Some("CONTINUE".to_string());
             },
         ));
     })
@@ -530,7 +510,7 @@ fn encounter_hiv_care_3(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncou
                 e.adherence_score = Some(42.85714108560097);
                 e.regimen = Some("2a-New".to_string());
                 e.regimen_type = Some("Second Line - Adult".to_string());
-                e.regimen_status = "CHANGE".to_string();
+                e.regimen_status = Some("CHANGE".to_string());
                 e.regimen_change_reason = Some("52".to_string())
             },
         ));
