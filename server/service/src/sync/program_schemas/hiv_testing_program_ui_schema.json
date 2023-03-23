@@ -3,8 +3,10 @@
   "elements": [
     {
       "type": "Header",
-      "header": "Enrolment Form",
-      "subheader": "HIV Testing and Counselling"
+      "options": {
+        "header": "Enrolment Form",
+        "subheader": "HIV Testing and Counselling"
+      }
     },
     {
       "type": "Control",
