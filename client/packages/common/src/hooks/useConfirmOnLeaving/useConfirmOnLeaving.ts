@@ -27,7 +27,6 @@ export const useConfirmOnLeaving = (isUnsaved?: boolean) => {
 
   useEffect(() => {
     if (isUnsaved) {
-      console.log('=========== ADD ============');
       window.addEventListener('beforeunload', promptUser, { capture: true });
       const push = navigator.push;
 
@@ -41,12 +40,10 @@ export const useConfirmOnLeaving = (isUnsaved?: boolean) => {
         navigator.push = push;
       };
     } else {
-      console.log('=========== REMOVE ============');
       window.removeEventListener('beforeunload', promptUser, { capture: true });
       unblockRef.current?.();
     }
     return () => {
-      console.log('=========== UNLOAD ============');
       window.removeEventListener('beforeunload', promptUser, { capture: true });
       unblockRef.current?.();
     };
