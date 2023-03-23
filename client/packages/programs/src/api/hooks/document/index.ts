@@ -25,6 +25,7 @@ import { useUpsertEncounter } from './useUpsertEncounter';
 import { useClinicians } from './useClinicians';
 import { useProgramEvents } from './useProgramEvents';
 import { useFormSchemaByType } from './useFormSchemaByType';
+import { useDocumentRegistryByType } from './useDocumentRegistriesByType';
 
 export const Document = {
   useDocumentByName,
@@ -32,6 +33,7 @@ export const Document = {
   useDocumentHistory,
 
   useDocumentRegistryByContext,
+  useDocumentRegistryByType,
   useProgramRegistries,
   useEncounterRegistriesByPrograms,
 

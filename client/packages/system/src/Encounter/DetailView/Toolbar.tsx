@@ -13,7 +13,10 @@ import {
   useFormatDateTime,
   ClinicianNode,
 } from '@openmsupply-client/common';
-import { EncounterFragment } from '@openmsupply-client/programs';
+import {
+  EncounterFragment,
+  useDocumentRegistry,
+} from '@openmsupply-client/programs';
 import {
   ClinicianAutocompleteOption,
   ClinicianSearchInput,
@@ -35,6 +38,8 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
   const { localisedDate } = useFormatDateTime();
   const [clinician, setClinician] =
     useState<ClinicianAutocompleteOption | null>();
+  const { data: programDocument } =
+    useDocumentRegistry.get.documentRegistryByType(encounter?.program);
 
   useEffect(() => {
     if (!encounter) return;
@@ -78,11 +83,14 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
         </Grid>
         <Grid item display="flex" flex={1}>
           <Box display="flex" flex={1} flexDirection="column" gap={0.5}>
-            <Box display="flex" gap={1}>
+            <Box display="flex" gap={1.5}>
               <Row
                 label={t('label.patient')}
                 Input={
-                  <BasicTextInput disabled value={encounter?.patient.name} />
+                  <BasicTextInput
+                    disabled
+                    value={encounter?.patient.name}
+                  />
                 }
               />
               <Row
@@ -95,10 +103,16 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
                 }
               />
             </Box>
-            <Box display="flex" gap={1}>
+            <Box display="flex" gap={0.5}>
               <Row
                 label={t('label.program')}
-                Input={<BasicTextInput disabled value={encounter?.program} />}
+                Input={
+                  <BasicTextInput
+                    disabled
+                    sx={{width: '190px'}}
+                    value={programDocument?.[0]?.name ?? ''}
+                  />
+                }
               />
               <Row
                 label={t('label.clinician')}
