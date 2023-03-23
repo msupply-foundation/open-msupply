@@ -1,25 +1,31 @@
 import { RegexUtils } from '@common/utils';
 import {
-  LayoutProps,
   uiTypeIs,
   rankWith,
-  UISchemaElement,
+  ControlProps,
 } from '@jsonforms/core';
-import { withJsonFormsLayoutProps } from '@jsonforms/react';
+import { withJsonFormsControlProps } from '@jsonforms/react';
 import { Typography } from '@mui/material';
 import React from 'react';
+import { z } from 'zod';
+import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
 
 export const headerTester = rankWith(10, uiTypeIs('Header'));
 
-type HeaderProps = LayoutProps & {
-  uischema: UISchemaElement & {
-    header?: string;
-    subheader?: string;
-  };
-};
+const Options = z.object({
+  header: z.string(),
+  subheader: z.string(),
+}).strict();
 
-const UIComponent = (props: HeaderProps) => {
-  const { uischema, data } = props;
+type Options = z.infer<typeof Options>;
+
+const UIComponent = (props: ControlProps) => {
+  const { data } = props;
+  const { options } = useZodOptionsValidation(
+    Options,
+    props.uischema.options
+  );
+
   if (!props.visible) {
     return null;
   }
@@ -34,7 +40,7 @@ const UIComponent = (props: HeaderProps) => {
           paddingTop: 1,
         }}
       >
-      {RegexUtils.formatTemplateString(uischema?.header ?? '', data, '')}
+      {RegexUtils.formatTemplateString(options?.header ?? '', data, '')}
       </Typography>
       <Typography
         sx={{
@@ -44,10 +50,10 @@ const UIComponent = (props: HeaderProps) => {
           paddingBottom: 2,
         }}
       >
-      {RegexUtils.formatTemplateString(uischema?.subheader ?? '', data, '')}
+      {RegexUtils.formatTemplateString(options?.subheader ?? '', data, '')}
       </Typography>
     </>
   );
 };
 
-export const Header = withJsonFormsLayoutProps(UIComponent);
+export const Header = withJsonFormsControlProps(UIComponent);
