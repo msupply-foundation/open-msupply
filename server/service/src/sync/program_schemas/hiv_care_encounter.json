@@ -52,6 +52,9 @@
               "format": "date-time",
               "type": "string"
             },
+            "otherRegimen": {
+              "type": "string"
+            },
             "prophylaxisMedication": {
               "items": {
                 "enum": [
@@ -71,6 +74,11 @@
                 "type": "string"
               },
               "type": "array"
+            },
+            "quantityDispensed": {
+              "description": "Number of pills dispensed in this encounter",
+              "minimum": 0,
+              "type": "number"
             },
             "quantityPrescribed": {
               "description": "Number of pills on hand at the end of the encounter.",
@@ -109,7 +117,7 @@
                 "6b-Old",
                 "6c-New",
                 "6c-Old",
-                "Other"
+                "Other - please specify"
               ],
               "type": "string"
             },
@@ -168,6 +176,18 @@
             "regimenStatus": {
               "description": "Antiretroviral treatment status",
               "enum": ["NO", "START", "CONTINUE", "CHANGE", "STOP"],
+              "type": "string"
+            },
+            "regimenType": {
+              "enum": [
+                "First Line - Adult",
+                "Second Line - Adult",
+                "First Line - Paeds 20-30kg",
+                "Second Line - Paeds 20-30kg",
+                "First Line - Paeds <20kg",
+                "Second Line - Paeds <20kg",
+                "Other"
+              ],
               "type": "string"
             },
             "relevantCoMedication": {
