@@ -57,7 +57,7 @@
       "type": "string"
     },
     "HIVStatus": {
-      "enum": ["POSITIVE", "NEGATIVE", "UNKNOWN"],
+      "enum": ["POSITIVE", "NEGATIVE", "INCONCLUSIVE"],
       "type": "string"
     },
     "HIVTestType": {

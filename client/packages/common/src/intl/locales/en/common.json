@@ -161,7 +161,7 @@
   "label.line": "Line {{line, number}}",
   "label.line-total": "Line total",
   "label.program-status": "Program Status",
-  "label.encounter-status": "Encounter Status",
+  "label.additional-info": "Additional Infomation",
   "label.location": "Location",
   "label.message": "Message",
   "label.reason": "Reason",

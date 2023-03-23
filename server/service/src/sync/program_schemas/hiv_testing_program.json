@@ -13,7 +13,7 @@
       "type": "object"
     },
     "HIVStatus": {
-      "enum": ["POSITIVE", "NEGATIVE", "UNKNOWN"],
+      "enum": ["POSITIVE", "NEGATIVE", "INCONCLUSIVE"],
       "type": "string"
     },
     "HIVTestingProgramEnrolment": {
