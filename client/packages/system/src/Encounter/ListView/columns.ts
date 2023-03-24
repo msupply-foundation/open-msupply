@@ -17,12 +17,6 @@ const encounterEventCellValue = (events: ProgramEventFragment[]) => {
   return events[0]?.data ?? '';
 };
 
-const getProgramName = (program: string) => {
-  const { data } = useDocumentRegistry.get.documentRegistryByType(program);
-
-  return data?.[0]?.name;
-};
-
 interface useEncounterListColumnsProps {
   onChangeSortBy: (column: Column<any>) => void;
   sortBy: SortBy<EncounterRowFragment>;
@@ -47,8 +41,13 @@ export const useEncounterListColumns = ({
     {
       key: 'program',
       label: 'label.program',
-      accessor: ({ rowData }) => rowData?.program,
-      formatter: name => getProgramName(name as string) ?? '',
+      accessor: ({ rowData }) => {
+        const { data } = useDocumentRegistry.get.documentRegistryByType(
+          rowData.program
+        );
+
+        return data?.[0]?.name;
+      },
     },
     {
       key: 'startDatetime',
