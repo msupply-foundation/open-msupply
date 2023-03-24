@@ -27,6 +27,10 @@ pub struct LegacyPrefRow {
 pub struct LegacyPrefData {
     #[serde(rename = "default_item_packsize_to_one")]
     pub pack_to_one: bool,
+    #[serde(rename = "shouldAuthoriseResponseRequisition")]
+    pub use_authorisation_for_customer_requisitions: bool,
+    #[serde(rename = "includeRequisitionsInSuppliersRemoteAuthorisationProcesses")]
+    pub requisitions_require_supplier_authorisation: bool,
 }
 
 pub(crate) struct StorePreferenceTranslation {}
@@ -50,6 +54,12 @@ impl SyncTranslation for StorePreferenceTranslation {
             id: data.id,
             r#type,
             pack_to_one: data.data.pack_to_one,
+            requisitions_require_supplier_authorisation: data
+                .data
+                .requisitions_require_supplier_authorisation,
+            use_authorisation_for_customer_requisitions: data
+                .data
+                .use_authorisation_for_customer_requisitions,
         };
 
         Ok(Some(IntegrationRecords::from_upsert(
