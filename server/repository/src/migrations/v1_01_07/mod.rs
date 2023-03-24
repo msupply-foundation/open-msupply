@@ -13,6 +13,18 @@ impl Migration for V1_01_07 {
             r#"
             ALTER TABLE store_preference ADD COLUMN use_authorisation_for_customer_requisitions bool NOT NULL DEFAULT false;
             ALTER TABLE store_preference ADD COLUMN requisitions_require_supplier_authorisation bool NOT NULL DEFAULT false;
+        "#
+        )?;
+
+        sql!(
+            connection,
+            r#"
+            CREATE TABLE authoriser (
+                id TEXT NOT NULL PRIMARY KEY,
+                is_active bool NOT NULL,
+                master_list_id text NOT NULL,
+                user_id text NOT NULL
+            );            
             "#
         )?;
 
