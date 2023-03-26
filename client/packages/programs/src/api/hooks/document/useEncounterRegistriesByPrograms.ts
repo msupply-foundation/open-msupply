@@ -22,10 +22,9 @@ export const useEncounterRegistriesByPrograms = (
     ...useQuery(api.keys.registriesByParents(programIds), () =>
       api.get
         .documentRegistries({
-          filter: {
-            parentId: {
-              equalAny: programIds,
-            },
+          sortBy: { key: 'context', direction: 'asc' },
+          filterBy: {
+            parentId: { equalAny: programIds },
           },
         })
         .then(result =>

@@ -3,12 +3,14 @@ import { Column } from '../../ui/layout/tables';
 
 export interface FilterByConditionByType {
   string: 'equalTo' | 'like' | 'notEqualTo';
+  stringArray: 'equalAny';
   date: 'beforeOrEqualTo' | 'afterOrEqualTo' | 'equalTo';
 }
 
 type FilterRule = {
   [P in
     | FilterByConditionByType['string']
+    | FilterByConditionByType['stringArray']
     | FilterByConditionByType['date']]?: unknown;
 };
 
@@ -27,6 +29,12 @@ export interface FilterController {
     key: string,
     condition: FilterByConditionByType['string'],
     value: string
+  ) => void;
+
+  onChangeStringArrayFilterRule: (
+    key: string,
+    condition: FilterByConditionByType['stringArray'],
+    value: string[]
   ) => void;
 
   onClearFilterRule: (key: string) => void;
