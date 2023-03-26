@@ -15,6 +15,7 @@ table! {
         row_action -> crate::db_diesel::changelog::ChangelogActionMapping,
         name_id -> Nullable<Text>,
         store_id -> Nullable<Text>,
+        is_sync_update -> Bool,
     }
 }
 
@@ -26,6 +27,7 @@ table! {
         row_action -> crate::db_diesel::changelog::ChangelogActionMapping,
         name_id -> Nullable<Text>,
         store_id -> Nullable<Text>,
+        is_sync_update -> Bool,
     }
 }
 
@@ -52,6 +54,8 @@ pub enum ChangelogTableName {
     InventoryAdjustmentReason,
     Clinician,
     ClinicianStoreJoin,
+    Name,
+    NameStoreJoin,
     Document,
 }
 
@@ -64,6 +68,7 @@ pub struct ChangelogRow {
     pub row_action: ChangelogAction,
     pub name_id: Option<String>,
     pub store_id: Option<String>,
+    pub is_sync_update: bool,
 }
 
 #[derive(Default, Clone)]
@@ -72,6 +77,7 @@ pub struct ChangelogFilter {
     pub name_id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
     pub record_id: Option<EqualFilter<String>>,
+    pub is_sync_update: Option<EqualFilter<bool>>,
 }
 
 pub struct ChangelogRepository<'a> {
@@ -127,6 +133,12 @@ impl<'a> ChangelogRepository<'a> {
             .first::<Option<i64>>(&self.connection.connection)?;
         Ok(result.unwrap_or(0) as u64)
     }
+
+    // Drop all change logs (for tests), can't set test flag as it's used in another crate
+    pub fn drop_all(&self) -> Result<(), RepositoryError> {
+        diesel::delete(changelog::dsl::changelog).execute(&self.connection.connection)?;
+        Ok(())
+    }
 }
 
 type BoxedChangelogQuery = IntoBoxed<'static, changelog_deduped::table, DBType>;
@@ -145,12 +157,18 @@ fn create_filtered_query<'a>(
             name_id,
             store_id,
             record_id,
+            is_sync_update,
         } = f;
 
         apply_equal_filter!(query, table_name, changelog_deduped::dsl::table_name);
         apply_equal_filter!(query, name_id, changelog_deduped::dsl::name_id);
         apply_equal_filter!(query, store_id, changelog_deduped::dsl::store_id);
         apply_equal_filter!(query, record_id, changelog_deduped::dsl::record_id);
+        apply_equal_filter!(
+            query,
+            is_sync_update,
+            changelog_deduped::dsl::is_sync_update
+        );
     }
 
     query
@@ -167,6 +185,7 @@ impl Default for ChangelogRow {
             record_id: Default::default(),
             name_id: Default::default(),
             store_id: Default::default(),
+            is_sync_update: Default::default(),
         }
     }
 }
@@ -193,6 +212,11 @@ impl ChangelogFilter {
 
     pub fn record_id(mut self, filter: EqualFilter<String>) -> Self {
         self.record_id = Some(filter);
+        self
+    }
+
+    pub fn is_sync_update(mut self, filter: EqualFilter<bool>) -> Self {
+        self.is_sync_update = Some(filter);
         self
     }
 }

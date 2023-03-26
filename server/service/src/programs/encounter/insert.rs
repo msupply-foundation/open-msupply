@@ -82,7 +82,7 @@ pub fn insert_encounter(
                     }
                 })?;
 
-            if is_latest_doc(ctx, service_provider, &document)
+            if is_latest_doc(ctx, service_provider, &document.name, document.datetime)
                 .map_err(InsertEncounterError::DatabaseError)?
             {
                 update_encounter_row(
@@ -140,7 +140,6 @@ fn generate(
         data: input.data,
         form_schema_id: Some(input.schema_id),
         status: DocumentStatus::Active,
-        comment: None,
         owner_name_id: Some(input.patient_id),
         context: Some(input.program),
     })
@@ -243,7 +242,7 @@ mod test {
         let patient = mock_patient_1();
         service_provider
             .patient_service
-            .update_patient(
+            .upsert_patient(
                 &ctx,
                 &service_provider,
                 "store_a",

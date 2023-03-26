@@ -37,6 +37,11 @@
       "options": { "icon": "document" },
       "elements": [
         {
+          "type": "Label",
+          "text": "Have you experienced any of the following in the past 12 months?",
+          "variant": "h2"
+        },
+        {
           "type": "Control",
           "label": "Previous HIV Test Result:",
           "scope": "#/properties/riskBehaviour/properties/previousHIVTestResult",
@@ -86,7 +91,8 @@
         },
         {
           "type": "Control",
-          "scope": "#/properties/riskBehaviour/properties/prostitution"
+          "scope": "#/properties/riskBehaviour/properties/prostitution",
+          "label": "Sex in exchange for money/goods/services"
         },
         {
           "type": "Control",

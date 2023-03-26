@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { rankWith, isEnumControl, ControlProps } from '@jsonforms/core';
-import { withJsonFormsControlProps } from '@jsonforms/react';
+import { useJsonForms, withJsonFormsControlProps } from '@jsonforms/react';
 import { FormLabel, Box } from '@mui/material';
 import { Autocomplete } from '@openmsupply-client/common';
 import {
@@ -11,50 +11,67 @@ import { z } from 'zod';
 import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
 import parse from 'autosuggest-highlight/parse';
 import match from 'autosuggest-highlight/match';
+import { get as extractProperty } from 'lodash';
+import { useJSONFormsCustomError } from '../hooks/useJSONFormsCustomError';
 
 export const selectTester = rankWith(4, isEnumControl);
 
-type Options = {
-  /**
-   * Option to set a display name and/or reorder enum item.
-   *
-   * For example, enum [YES, NO] can be displayed as [No, Yes] using:
-   * "show": [
-   *   ["NO", "No"],
-   *   ["YES", "Yes"]
-   * ]
-   *
-   * To only reorder the enum to [NO, YES] do:
-   * "show": [
-   *   ["NO"],
-   *   ["YES"]
-   * ]
-   */
-  show?: [string, string | undefined, ...(string | undefined)[]][];
-  /**
-   * Show three columns.
-   * For example,
-   * "show": [
-   *   ["FIRST", "First", "Description", "Right"],
-   *   ["SECOND", "Second", undefined, "Right2"],
-   * ]
-   * would show:
-   * "First     Description   Right"
-   * "Second                 Right2"
-   */
-  multiColumn?: boolean;
-};
-const Options: z.ZodType<Options | undefined> = z
+const Options = z
   .object({
+    /**
+     * Option to set a display name and/or reorder enum item.
+     *
+     * For example, enum [YES, NO] can be displayed as [No, Yes] using:
+     * "show": [
+     *   ["NO", "No"],
+     *   ["YES", "Yes"]
+     * ]
+     *
+     * To only reorder the enum to [NO, YES] do:
+     * "show": [
+     *   ["NO"],
+     *   ["YES"]
+     * ]
+     */
     show: z
       .array(
         z.tuple([z.string(), z.string().optional()]).rest(z.string().optional())
       )
       .optional(),
+    /**
+     * Show three columns.
+     * For example,
+     * "show": [
+     *   ["FIRST", "First", "Description", "Right"],
+     *   ["SECOND", "Second", undefined, "Right2"],
+     * ]
+     * would show:
+     * "First     Description   Right"
+     * "Second                 Right2"
+     */
     multiColumn: z.boolean().optional(),
+
+    /**
+     * Only show a subset of items depending on a field condition.
+     * For example, if the `fieldFilter.field` has a value of "A2", only items from
+     * `fieldFilter.mapping["A2"]` are shown.
+     */
+    fieldFilter: z
+      .object({
+        /** The absolute field name for the filter value */
+        field: z.string(),
+        /**
+         * Maps record keys to a list of available selections.
+         * The record key is compared to field value.
+         */
+        mapping: z.record(z.array(z.string())),
+      })
+      .optional(),
   })
   .strict()
   .optional();
+
+type Options = z.infer<typeof Options>;
 
 type DisplayOption = {
   label: string;
@@ -168,12 +185,69 @@ const getHighlightParts = (
   );
 };
 
+/**
+ * Returns either the full list or the narrowed list from conditional option.
+ *
+ * If, after applying the filter condition, the currentSelection is not in the
+ * filtered list the currentSelection item is added to the returned list and an
+ * error message is returned.
+ */
+
+const useFilteredItems = (
+  allItems: string[] | undefined,
+  currentSelection: string | undefined,
+  options: Options | undefined
+): [string[], string | undefined] => {
+  const { core } = useJsonForms();
+  const [error, setError] = useState<string | undefined>();
+  const [visibleItems, setVisibleItems] = useState(allItems ?? []);
+
+  const conditionField = extractProperty(
+    core?.data ?? {},
+    options?.fieldFilter?.field ?? ''
+  );
+  useEffect(() => {
+    if (!allItems || !options?.fieldFilter) {
+      setVisibleItems(allItems ?? []);
+      setError(undefined);
+      return;
+    }
+    const mapping = options.fieldFilter.mapping[conditionField] ?? [];
+    const filtered = allItems.filter(item => mapping.includes(item));
+    if (
+      currentSelection !== undefined &&
+      !filtered.includes(currentSelection)
+    ) {
+      setVisibleItems([currentSelection, ...filtered]);
+      setError('Please select a valid option');
+    } else {
+      setVisibleItems(filtered);
+      setError(undefined);
+    }
+  }, [options, currentSelection, conditionField]);
+
+  return [visibleItems, error];
+};
+
 const UIComponent = (props: ControlProps) => {
   const { data, handleChange, label, schema, path, uischema, enabled } = props;
   const { errors: zErrors, options: schemaOptions } = useZodOptionsValidation(
     Options,
     uischema.options
   );
+  const [items, validationError] = useFilteredItems(
+    schema.enum,
+    data,
+    schemaOptions
+  );
+  const { customError, setCustomError } = useJSONFormsCustomError(
+    path,
+    'Select'
+  );
+  useEffect(() => {
+    setCustomError(validationError);
+  }, [validationError]);
+
   if (!props.visible) {
     return null;
   }
@@ -181,9 +255,9 @@ const UIComponent = (props: ControlProps) => {
     _event: React.SyntheticEvent,
     value: DisplayOption | null
   ) => handleChange(path, value?.value);
-  const options = schema.enum
-    ? getDisplayOptions(schema.enum, schemaOptions)
-    : [];
+
+  const options = getDisplayOptions(items, schemaOptions);
+
   const value = data ? options.find(o => o.value === data) : null;
 
   return (
@@ -258,8 +332,8 @@ const UIComponent = (props: ControlProps) => {
           }}
           clearable={!props.config?.required}
           inputProps={{
-            error: !!zErrors || !!props.errors,
-            helperText: zErrors ?? props.errors,
+            error: !!zErrors || !!customError || !!props.errors,
+            helperText: zErrors ?? customError ?? props.errors,
           }}
           isOptionEqualToValue={option => option.value === data}
         />

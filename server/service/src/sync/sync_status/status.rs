@@ -9,9 +9,7 @@ use crate::{
     i32_to_u32,
     service_provider::ServiceContext,
     settings_service::{SettingsService, SettingsServiceTrait},
-    sync::{
-        get_active_records_on_site_filter, remote_data_synchroniser, GetActiveStoresOnSiteError,
-    },
+    sync::{get_sync_push_changelogs_filter, remote_data_synchroniser, GetActiveStoresOnSiteError},
 };
 
 use super::SyncLogError;
@@ -235,7 +233,7 @@ fn number_of_records_in_push_queue(
         remote_data_synchroniser::get_push_cursor(&ctx.connection).map_err(Error::DatabaseError)?;
 
     let changelog_filter =
-        get_active_records_on_site_filter(&ctx.connection).map_err(|error| match error {
+        get_sync_push_changelogs_filter(&ctx.connection).map_err(|error| match error {
             GetActiveStoresOnSiteError::DatabaseError(error) => Error::DatabaseError(error),
             GetActiveStoresOnSiteError::SiteIdNotSet => Error::SiteIdNotSet,
         })?;

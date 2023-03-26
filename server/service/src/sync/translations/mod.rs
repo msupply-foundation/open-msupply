@@ -61,7 +61,7 @@ pub(crate) fn all_translators() -> SyncTanslators {
         Box::new(clinician_store_join::ClinicianStoreJoinTranslation {}),
         // Remote-Central (site specific)
         Box::new(name_store_join::NameStoreJoinTranslation {}),
-        //Box::new(document::DocumentTranslation {}),
+        Box::new(document::DocumentTranslation {}),
         // Special translations
         Box::new(special::NameToNameStoreJoinTranslation {}),
     ]
@@ -163,10 +163,6 @@ pub(crate) enum PullDeleteRecordTable {
     StocktakeLine,
     #[cfg(all(test, feature = "integration_test"))]
     ActivityLog,
-    #[cfg(all(test, feature = "integration_test"))]
-    Clinician,
-    #[cfg(all(test, feature = "integration_test"))]
-    ClinicianStoreJoin,
 }
 
 #[derive(Debug, PartialEq, Clone)]

@@ -276,6 +276,7 @@ mod tests {
                 id: "JoinId1".to_string(),
                 store_id: mock_store_a().id,
                 clinician_id: "clinician_store_a".to_string(),
+                is_sync_update: false,
             })
             .unwrap();
 

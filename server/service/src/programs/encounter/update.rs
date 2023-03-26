@@ -73,7 +73,7 @@ pub fn update_encounter(
                     DocumentInsertError::InvalidParent(_) => UpdateEncounterError::InvalidParentId,
                 })?;
 
-            if is_latest_doc(ctx, service_provider, &document)
+            if is_latest_doc(ctx, service_provider, &document.name, document.datetime)
                 .map_err(UpdateEncounterError::DatabaseError)?
             {
                 update_encounter_row(
@@ -129,7 +129,6 @@ fn generate(
         data: input.data,
         form_schema_id: Some(input.schema_id),
         status: existing.status,
-        comment: None,
         owner_name_id: existing.owner_name_id,
         context: existing.context,
     })
@@ -246,7 +245,7 @@ mod test {
         let patient = mock_patient_1();
         service_provider
             .patient_service
-            .update_patient(
+            .upsert_patient(
                 &ctx,
                 &service_provider,
                 "store_a",

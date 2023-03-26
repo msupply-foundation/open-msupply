@@ -11,7 +11,7 @@ use crate::{
 };
 
 use super::{
-    program_enrolment_updated::program_enrolment_updated, program_schema::SchemaProgramEnrolment,
+    program_enrolment_updated::update_program_enrolment_row, program_schema::SchemaProgramEnrolment,
 };
 
 #[derive(PartialEq, Debug)]
@@ -74,10 +74,15 @@ pub fn upsert_program_enrolment(
                     }
                 })?;
 
-            if is_latest_doc(ctx, service_provider, &document)
+            if is_latest_doc(ctx, service_provider, &document.name, document.datetime)
                 .map_err(UpsertProgramEnrolmentError::DatabaseError)?
             {
-                program_enrolment_updated(&ctx.connection, &patient_id, &document, schema_program)?;
+                update_program_enrolment_row(
+                    &ctx.connection,
+                    &patient_id,
+                    &document,
+                    schema_program,
+                )?;
             };
             Ok(document)
         })
@@ -101,7 +106,6 @@ fn generate(user_id: &str, input: UpsertProgramEnrolment) -> Result<RawDocument,
         data: input.data,
         form_schema_id: Some(input.schema_id),
         status: DocumentStatus::Active,
-        comment: None,
         owner_name_id: Some(input.patient_id),
         context: Some(input.r#type),
     })
@@ -256,7 +260,7 @@ mod test {
         let patient = mock_patient_1();
         service_provider
             .patient_service
-            .update_patient(
+            .upsert_patient(
                 &ctx,
                 &service_provider,
                 "store_a",

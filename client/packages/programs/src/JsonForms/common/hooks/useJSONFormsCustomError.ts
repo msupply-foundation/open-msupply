@@ -26,7 +26,7 @@ export const useJSONFormsCustomError = (
         Actions.updateErrors([
           ...currentErrors,
           {
-            instancePath: path,
+            instancePath: `/${path}`.replace(/\./g, '/'),
             message: customError,
             schemaPath: path,
             keyword,
@@ -35,7 +35,7 @@ export const useJSONFormsCustomError = (
         ])
       );
     }
-  }, [core, dispatch, customError, path]);
+  }, [core, dispatch, customError, path, keyword]);
 
   return { customError, setCustomError };
 };

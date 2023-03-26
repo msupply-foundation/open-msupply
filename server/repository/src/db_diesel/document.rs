@@ -28,9 +28,9 @@ table! {
         data -> Text,
         form_schema_id -> Nullable<Text>,
         status -> crate::db_diesel::document::DocumentStatusMapping,
-        comment -> Nullable<Text>,
         owner_name_id -> Nullable<Text>,
         context -> Nullable<Text>,
+        is_sync_update -> Bool,
     }
 }
 
@@ -46,9 +46,9 @@ table! {
         data -> Text,
         form_schema_id -> Nullable<Text>,
         status -> crate::db_diesel::document::DocumentStatusMapping,
-        comment -> Nullable<Text>,
         owner_name_id -> Nullable<Text>,
         context -> Nullable<Text>,
+        is_sync_update -> Bool,
     }
 }
 
@@ -87,12 +87,11 @@ pub struct DocumentRow {
     pub form_schema_id: Option<String>,
     /// Soft deletion status
     pub status: DocumentStatus,
-    /// Deletion comment
-    pub comment: Option<String>,
     /// For example, the patient who owns the document
     pub owner_name_id: Option<String>,
     /// For example, program this document belongs to
     pub context: Option<String>,
+    pub is_sync_update: bool,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -113,7 +112,6 @@ pub struct Document {
     pub data: serde_json::Value,
     pub form_schema_id: Option<String>,
     pub status: DocumentStatus,
-    pub comment: Option<String>,
     pub owner_name_id: Option<String>,
     pub context: Option<String>,
 }
@@ -216,9 +214,9 @@ impl<'a> DocumentRepository<'a> {
     }
 
     /// Inserts a document
-    pub fn insert(&self, doc: &Document) -> Result<(), RepositoryError> {
+    pub fn insert(&self, doc: &Document, is_sync_update: bool) -> Result<(), RepositoryError> {
         diesel::insert_into(document::dsl::document)
-            .values(doc.to_row()?)
+            .values(doc.to_row(is_sync_update)?)
             .execute(&self.connection.connection)?;
         Ok(())
     }
@@ -332,9 +330,9 @@ impl DocumentRow {
             data,
             form_schema_id,
             status,
-            comment,
             owner_name_id,
             context,
+            is_sync_update: _,
         } = self;
 
         let parents: Vec<String> =
@@ -358,7 +356,6 @@ impl DocumentRow {
             data,
             form_schema_id,
             status,
-            comment,
             owner_name_id,
             context,
         };
@@ -368,7 +365,7 @@ impl DocumentRow {
 }
 
 impl Document {
-    pub fn to_row(&self) -> Result<DocumentRow, RepositoryError> {
+    pub fn to_row(&self, is_sync_update: bool) -> Result<DocumentRow, RepositoryError> {
         let parents =
             serde_json::to_string(&self.parent_ids).map_err(|err| RepositoryError::DBError {
                 msg: "Can't serialize parents".to_string(),
@@ -388,9 +385,9 @@ impl Document {
             data,
             form_schema_id: self.form_schema_id.clone(),
             status: self.status.to_owned(),
-            comment: self.comment.to_owned(),
             owner_name_id: self.owner_name_id.to_owned(),
             context: self.context.to_owned(),
+            is_sync_update,
         })
     }
 }

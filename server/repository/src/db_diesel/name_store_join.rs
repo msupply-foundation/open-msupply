@@ -16,6 +16,7 @@ table! {
         store_id -> Text,
         name_is_customer -> Bool,
         name_is_supplier -> Bool,
+        is_sync_update -> Bool,
     }
 }
 
@@ -27,6 +28,7 @@ pub struct NameStoreJoinRow {
     pub store_id: String,
     pub name_is_customer: bool,
     pub name_is_supplier: bool,
+    pub is_sync_update: bool,
 }
 
 joinable!(name_store_join -> store (store_id));
