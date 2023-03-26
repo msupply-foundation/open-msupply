@@ -125,6 +125,18 @@ export const createQueryParamsStore = <T extends RecordWithId>({
         setFilterBy(set)({ [key]: { [condition]: value } });
       },
 
+      onChangeStringArrayFilterRule: (
+        key: string,
+        condition: FilterByConditionByType['stringArray'],
+        value: string[]
+      ) => {
+        if (value.length === 0) {
+          get().filter.onClearFilterRule(key);
+        } else {
+          setFilterBy(set)({ [key]: { [condition]: value } });
+        }
+      },
+
       onClearFilterRule: (key: string) =>
         set(state => {
           const { filterBy: previousFilterBy, ...rest } = { ...state.filter };
