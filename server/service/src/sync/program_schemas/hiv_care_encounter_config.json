@@ -9,7 +9,7 @@
         "scheduleIn": { "days": 0, "minutes": 1 }
       },
       "event": {
-        "documentType": "HIVCareProgram",
+        "documentType": "HIV Care & Treatment",
         "type": "programStatus",
         "data": "Early LTFU"
       }
@@ -23,7 +23,7 @@
         "scheduleIn": { "days": 0, "minutes": 3 }
       },
       "event": {
-        "documentType": "HIVCareProgram",
+        "documentType": "HIV Care & Treatment",
         "type": "programStatus",
         "data": "LTFU"
       }
@@ -64,6 +64,32 @@
       ],
       "event": {
         "type": "arvMedicationRegimen",
+        "data": ""
+      }
+    },
+        {
+      "type": "Field",
+      "conditions": [
+        {
+          "field": "arvMedication.regimenStatus",
+          "equalAny": ["START", "CHANGE"]
+        }
+      ],
+      "event": {
+        "type": "arvMedicationRegimenType",
+        "dataField": "arvMedication.regimenType"
+      }
+    },
+    {
+      "type": "Field",
+      "conditions": [
+        {
+          "field": "arvMedication.regimenStatus",
+          "equalAny": ["STOP"]
+        }
+      ],
+      "event": {
+        "type": "arvMedicationRegimenType",
         "data": ""
       }
     },
