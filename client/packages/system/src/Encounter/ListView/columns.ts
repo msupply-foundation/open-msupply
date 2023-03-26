@@ -29,6 +29,12 @@ export const useEncounterListColumns = ({
   includePatient = false,
 }: useEncounterListColumnsProps) => {
   const { localisedDate, localisedTime } = useFormatDateTime();
+  const { data: documentRegistry } = useDocumentRegistry.get.documentRegistries(
+    {
+      key: 'context',
+      direction: 'asc',
+    }
+  );
   includePatient;
 
   const columnList: ColumnDescription<EncounterRowFragment>[] = [
@@ -42,11 +48,9 @@ export const useEncounterListColumns = ({
       key: 'program',
       label: 'label.program',
       accessor: ({ rowData }) => {
-        const { data } = useDocumentRegistry.get.documentRegistryByType(
-          rowData.program
-        );
-
-        return data?.[0]?.name;
+        return documentRegistry?.nodes?.find(
+          node => node.documentType === rowData.program
+        )?.name;
       },
     },
     {
