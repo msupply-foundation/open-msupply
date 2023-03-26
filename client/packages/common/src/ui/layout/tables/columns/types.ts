@@ -12,6 +12,7 @@ export interface CellProps<T extends RecordWithId> {
   rowIndex: number;
   isDisabled?: boolean;
   isRequired?: boolean;
+  isError?: boolean;
   // Unique name for browser autocomplete (to remember previously entered values for that name)
   autocompleteName?: string;
   localisedText: TypedTFunction<LocaleKey>;
@@ -74,6 +75,9 @@ export interface Column<T extends RecordWithId> {
   sortType: 'datetime' | 'numeric' | 'alphanumeric';
   sortInverted: boolean;
   getSortValue?: (row: T) => string | number;
+
+  getIsError?: (row: T) => boolean;
+  getIsDisabled?: (row: T) => boolean;
 
   onChangeSortBy?: (column: Column<T>) => void;
   sortBy?: SortBy<T>;

@@ -4,8 +4,7 @@ mod name_and_store_and_name_store_join;
 mod report;
 mod test;
 mod unit_and_item;
-
-use util::uuid::uuid;
+mod user_permission;
 
 use super::{central_server_configurations::ConfigureCentralServer, SyncRecordTester};
 use crate::sync::test::{
@@ -14,10 +13,6 @@ use crate::sync::test::{
         central_server_configurations::SiteConfiguration, init_test_context, SyncIntegrationContext,
     },
 };
-
-fn small_uuid() -> String {
-    uuid().split("-").next().unwrap().to_string()
-}
 
 /// Updates central server with data specified from each step of tester
 /// Synchronises after each step and checks against step data

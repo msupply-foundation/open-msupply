@@ -31,6 +31,7 @@ table! {
         comment -> Nullable<Text>,
         owner_name_id -> Nullable<Text>,
         context -> Nullable<Text>,
+        is_sync_update -> Bool,
     }
 }
 
@@ -49,6 +50,7 @@ table! {
         comment -> Nullable<Text>,
         owner_name_id -> Nullable<Text>,
         context -> Nullable<Text>,
+        is_sync_update -> Bool,
     }
 }
 
@@ -93,6 +95,7 @@ pub struct DocumentRow {
     pub owner_name_id: Option<String>,
     /// For example, program this document belongs to
     pub context: Option<String>,
+    pub is_sync_update: bool,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -116,6 +119,7 @@ pub struct Document {
     pub comment: Option<String>,
     pub owner_name_id: Option<String>,
     pub context: Option<String>,
+    pub is_sync_update: bool,
 }
 
 #[derive(Clone)]
@@ -345,6 +349,7 @@ fn document_from_row(row: DocumentRow) -> Result<Document, RepositoryError> {
         comment: row.comment,
         owner_name_id: row.owner_name_id,
         context: row.context,
+        is_sync_update: row.is_sync_update,
     };
 
     Ok(document)
@@ -373,5 +378,6 @@ fn row_from_document(doc: &Document) -> Result<DocumentRow, RepositoryError> {
         comment: doc.comment.to_owned(),
         owner_name_id: doc.owner_name_id.to_owned(),
         context: doc.context.to_owned(),
+        is_sync_update: doc.is_sync_update,
     })
 }

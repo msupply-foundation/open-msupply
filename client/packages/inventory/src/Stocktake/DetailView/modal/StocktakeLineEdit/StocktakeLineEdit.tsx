@@ -14,7 +14,6 @@ import {
   createQueryParamsStore,
   QueryParamsProvider,
   useRowStyle,
-  useTranslation,
   useNotification,
 } from '@openmsupply-client/common';
 import { StocktakeLineEditForm } from './StocktakeLineEditForm';
@@ -48,14 +47,18 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
   const isDisabled = useStocktake.utils.isDisabled();
   const [currentItem, setCurrentItem] = useState(item);
   const isMediumScreen = useIsMediumScreen();
-  const { draftLines, update, addLine, isLoading, save, nextItem, isError } =
+  const { draftLines, update, addLine, isLoading, save, nextItem } =
     useStocktakeLineEdit(currentItem);
-  const { setRowStyle } = useRowStyle();
+  const { setRowStyles } = useRowStyle();
   const { error } = useNotification();
-  const t = useTranslation(['inventory']);
 
   const onNext = async () => {
-    await save(draftLines);
+    let { errorMessages } = await save();
+    if (errorMessages) {
+      errorMessages.forEach(errorMessage => error(errorMessage)());
+      return;
+    }
+
     if (mode === ModalMode.Update && nextItem) setCurrentItem(nextItem);
     else if (mode === ModalMode.Create) setCurrentItem(null);
     else onClose();
@@ -64,48 +67,19 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
   };
 
   const onOk = async () => {
-    const result = await save(draftLines);
-
-    result.batchStocktake?.insertStocktakeLines?.map(response => {
-      if (
-        response.response?.__typename === 'InsertStocktakeLineError' &&
-        response.response?.error?.__typename === 'StockLineReducedBelowZero'
-      ) {
-        return error(t('error.reduced-below-zero'))();
-      }
-    });
-    result.batchStocktake.insertStocktakeLines?.map(response => {
-      if (
-        response.response?.__typename === 'InsertStocktakeLineError' &&
-        response.response?.error?.__typename === 'AdjustmentReasonNotProvided'
-      ) {
-        return error(t('error.provide-reason'))();
-      }
-    });
-
-    result.batchStocktake?.updateStocktakeLines?.map(response => {
-      if (
-        response?.response?.__typename === 'UpdateStocktakeLineError' &&
-        response?.response?.error?.__typename === 'StockLineReducedBelowZero'
-      ) {
-        return error(t('error.reduced-below-zero'))();
-      }
-    });
-    result.batchStocktake.updateStocktakeLines?.map(response => {
-      if (
-        response?.response?.__typename === 'UpdateStocktakeLineError' &&
-        response?.response?.error?.__typename === 'AdjustmentReasonNotProvided'
-      ) {
-        return error(t('error.provide-reason'))();
-      }
-    });
+    let { errorMessages } = await save();
+    if (errorMessages) {
+      errorMessages.forEach(errorMessage => error(errorMessage)());
+      return;
+    }
 
     if (item) {
-      const highlight = {
-        animation: 'highlight 1.5s',
-      };
-      const rowIds = draftLines.map(line => line.id);
-      rowIds.forEach(id => setRowStyle(id, highlight));
+      setRowStyles(
+        draftLines.map(line => line.id),
+        {
+          animation: 'highlight 1.5s',
+        }
+      );
     }
     onClose();
   };
@@ -160,7 +134,6 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
                           isDisabled={isDisabled}
                           batches={draftLines}
                           update={update}
-                          isError={isError}
                         />
                       </StyledTabContainer>
                     </StyledTabPanel>

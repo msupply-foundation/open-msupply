@@ -36,6 +36,12 @@ export type StocktakeByNumberQueryVariables = Types.Exact<{
 
 export type StocktakeByNumberQuery = { __typename: 'Queries', stocktakeByNumber: { __typename: 'NodeError' } | { __typename: 'StocktakeNode', id: string, stocktakeNumber: number, comment?: string | null, createdDatetime: string, finalisedDatetime?: string | null, stocktakeDate?: string | null, status: Types.StocktakeNodeStatus, description?: string | null, isLocked: boolean, user: { __typename: 'UserNode', username: string, email?: string | null }, lines: { __typename: 'StocktakeLineConnector', totalCount: number, nodes: Array<{ __typename: 'StocktakeLineNode', stocktakeId: string, batch?: string | null, itemId: string, id: string, expiryDate?: string | null, packSize?: number | null, snapshotNumberOfPacks: number, countedNumberOfPacks?: number | null, sellPricePerPack?: number | null, costPricePerPack?: number | null, comment?: string | null, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', id: string } | null, item: { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null }, inventoryAdjustmentReason?: { __typename: 'InventoryAdjustmentReasonNode', id: string, reason: string } | null }> } } };
 
+export type StockLineReducedBelowZeroErrorFragment = { __typename: 'StockLineReducedBelowZero', description: string, stockLine: { __typename: 'StockLineNode', id: string, totalNumberOfPacks: number, availableNumberOfPacks: number } };
+
+export type AdjustmentReasonNotProvidedErrorFragment = { __typename: 'AdjustmentReasonNotProvided', description: string };
+
+export type AdjustmentReasonNotValidErrorFragment = { __typename: 'AdjustmentReasonNotValid', description: string };
+
 export type UpsertStocktakeLinesMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
   deleteStocktakeLines?: Types.InputMaybe<Array<Types.DeleteStocktakeLineInput> | Types.DeleteStocktakeLineInput>;
@@ -44,7 +50,7 @@ export type UpsertStocktakeLinesMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpsertStocktakeLinesMutation = { __typename: 'Mutations', batchStocktake: { __typename: 'BatchStocktakeResponse', deleteStocktakeLines?: Array<{ __typename: 'DeleteStocktakeLineResponseWithId', id: string, response: { __typename: 'DeleteResponse', id: string } | { __typename: 'DeleteStocktakeLineError', error: { __typename: 'CannotEditStocktake', description: string } } }> | null, insertStocktakeLines?: Array<{ __typename: 'InsertStocktakeLineResponseWithId', id: string, response: { __typename: 'InsertStocktakeLineError', error: { __typename: 'AdjustmentReasonNotProvided', description: string } | { __typename: 'CannotEditStocktake', description: string } | { __typename: 'StockLineReducedBelowZero', description: string } } | { __typename: 'StocktakeLineNode' } }> | null, updateStocktakeLines?: Array<{ __typename: 'UpdateStocktakeLineResponseWithId', id: string, response: { __typename: 'StocktakeLineNode' } | { __typename: 'UpdateStocktakeLineError', error: { __typename: 'AdjustmentReasonNotProvided', description: string } | { __typename: 'CannotEditStocktake', description: string } | { __typename: 'StockLineReducedBelowZero', description: string } } }> | null } };
+export type UpsertStocktakeLinesMutation = { __typename: 'Mutations', batchStocktake: { __typename: 'BatchStocktakeResponse', deleteStocktakeLines?: Array<{ __typename: 'DeleteStocktakeLineResponseWithId', id: string, response: { __typename: 'DeleteResponse', id: string } | { __typename: 'DeleteStocktakeLineError', error: { __typename: 'CannotEditStocktake', description: string } } }> | null, insertStocktakeLines?: Array<{ __typename: 'InsertStocktakeLineResponseWithId', id: string, response: { __typename: 'InsertStocktakeLineError', error: { __typename: 'AdjustmentReasonNotProvided', description: string } | { __typename: 'AdjustmentReasonNotValid', description: string } | { __typename: 'CannotEditStocktake', description: string } | { __typename: 'StockLineReducedBelowZero', description: string, stockLine: { __typename: 'StockLineNode', id: string, totalNumberOfPacks: number, availableNumberOfPacks: number } } } | { __typename: 'StocktakeLineNode' } }> | null, updateStocktakeLines?: Array<{ __typename: 'UpdateStocktakeLineResponseWithId', id: string, response: { __typename: 'StocktakeLineNode' } | { __typename: 'UpdateStocktakeLineError', error: { __typename: 'AdjustmentReasonNotProvided', description: string } | { __typename: 'AdjustmentReasonNotValid', description: string } | { __typename: 'CannotEditStocktake', description: string } | { __typename: 'StockLineReducedBelowZero', description: string, stockLine: { __typename: 'StockLineNode', id: string, totalNumberOfPacks: number, availableNumberOfPacks: number } } } }> | null } };
 
 export type DeleteStocktakesMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -54,13 +60,17 @@ export type DeleteStocktakesMutationVariables = Types.Exact<{
 
 export type DeleteStocktakesMutation = { __typename: 'Mutations', batchStocktake: { __typename: 'BatchStocktakeResponse', deleteStocktakes?: Array<{ __typename: 'DeleteStocktakeResponseWithId', id: string }> | null } };
 
+export type StockLinesReducedBelowZeroErrorFragment = { __typename: 'StockLinesReducedBelowZero', description: string, errors: Array<{ __typename: 'StockLineReducedBelowZero', description: string, stockLine: { __typename: 'StockLineNode', id: string, totalNumberOfPacks: number, availableNumberOfPacks: number } }> };
+
+export type SnapshotCountCurrentCountMismatchErrorFragment = { __typename: 'SnapshotCountCurrentCountMismatch', lines: { __typename: 'StocktakeLineConnector', nodes: Array<{ __typename: 'StocktakeLineNode', id: string }> } };
+
 export type UpdateStocktakeMutationVariables = Types.Exact<{
   input: Types.UpdateStocktakeInput;
   storeId: Types.Scalars['String'];
 }>;
 
 
-export type UpdateStocktakeMutation = { __typename: 'Mutations', updateStocktake: { __typename: 'StocktakeNode', id: string } | { __typename: 'UpdateStocktakeError', error: { __typename: 'CannotEditStocktake', description: string } | { __typename: 'SnapshotCountCurrentCountMismatch', description: string } | { __typename: 'StockLinesReducedBelowZero', description: string, stockLines: { __typename: 'StockLineConnector', nodes: Array<{ __typename: 'StockLineNode', id: string }> } } | { __typename: 'StocktakeIsLocked', description: string } } };
+export type UpdateStocktakeMutation = { __typename: 'Mutations', updateStocktake: { __typename: 'StocktakeNode', id: string } | { __typename: 'UpdateStocktakeError', error: { __typename: 'CannotEditStocktake', description: string } | { __typename: 'SnapshotCountCurrentCountMismatch', description: string, lines: { __typename: 'StocktakeLineConnector', nodes: Array<{ __typename: 'StocktakeLineNode', id: string }> } } | { __typename: 'StockLinesReducedBelowZero', description: string, errors: Array<{ __typename: 'StockLineReducedBelowZero', description: string, stockLine: { __typename: 'StockLineNode', id: string, totalNumberOfPacks: number, availableNumberOfPacks: number } }> } | { __typename: 'StocktakeIsLocked', description: string } } };
 
 export type InsertStocktakeMutationVariables = Types.Exact<{
   input: Types.InsertStocktakeInput;
@@ -149,6 +159,47 @@ export const StocktakeFragmentDoc = gql`
   }
 }
     ${StocktakeLineFragmentDoc}`;
+export const AdjustmentReasonNotProvidedErrorFragmentDoc = gql`
+    fragment AdjustmentReasonNotProvidedError on AdjustmentReasonNotProvided {
+  __typename
+  description
+}
+    `;
+export const AdjustmentReasonNotValidErrorFragmentDoc = gql`
+    fragment AdjustmentReasonNotValidError on AdjustmentReasonNotValid {
+  __typename
+  description
+}
+    `;
+export const StockLineReducedBelowZeroErrorFragmentDoc = gql`
+    fragment StockLineReducedBelowZeroError on StockLineReducedBelowZero {
+  __typename
+  stockLine {
+    id
+    totalNumberOfPacks
+    availableNumberOfPacks
+  }
+  description
+}
+    `;
+export const StockLinesReducedBelowZeroErrorFragmentDoc = gql`
+    fragment StockLinesReducedBelowZeroError on StockLinesReducedBelowZero {
+  __typename
+  errors {
+    ...StockLineReducedBelowZeroError
+  }
+  description
+}
+    ${StockLineReducedBelowZeroErrorFragmentDoc}`;
+export const SnapshotCountCurrentCountMismatchErrorFragmentDoc = gql`
+    fragment SnapshotCountCurrentCountMismatchError on SnapshotCountCurrentCountMismatch {
+  lines {
+    nodes {
+      id
+    }
+  }
+}
+    `;
 export const StocktakesDocument = gql`
     query stocktakes($storeId: String!, $filter: StocktakeFilterInput, $page: PaginationInput, $sort: [StocktakeSortInput!]) {
   stocktakes(storeId: $storeId, filter: $filter, page: $page, sort: $sort) {
@@ -218,21 +269,12 @@ export const UpsertStocktakeLinesDocument = gql`
         response {
           __typename
           ... on InsertStocktakeLineError {
-            __typename
             error {
+              __typename
               description
-              ... on CannotEditStocktake {
-                __typename
-                description
-              }
-              ... on StockLineReducedBelowZero {
-                __typename
-                description
-              }
-              ... on AdjustmentReasonNotProvided {
-                __typename
-                description
-              }
+              ...StockLineReducedBelowZeroError
+              ...AdjustmentReasonNotProvidedError
+              ...AdjustmentReasonNotValidError
             }
           }
         }
@@ -241,22 +283,14 @@ export const UpsertStocktakeLinesDocument = gql`
         __typename
         id
         response {
+          __typename
           ... on UpdateStocktakeLineError {
-            __typename
             error {
+              __typename
               description
-              ... on CannotEditStocktake {
-                __typename
-                description
-              }
-              ... on StockLineReducedBelowZero {
-                __typename
-                description
-              }
-              ... on AdjustmentReasonNotProvided {
-                __typename
-                description
-              }
+              ...StockLineReducedBelowZeroError
+              ...AdjustmentReasonNotProvidedError
+              ...AdjustmentReasonNotValidError
             }
           }
         }
@@ -264,7 +298,9 @@ export const UpsertStocktakeLinesDocument = gql`
     }
   }
 }
-    `;
+    ${StockLineReducedBelowZeroErrorFragmentDoc}
+${AdjustmentReasonNotProvidedErrorFragmentDoc}
+${AdjustmentReasonNotValidErrorFragmentDoc}`;
 export const DeleteStocktakesDocument = gql`
     mutation deleteStocktakes($storeId: String!, $ids: [DeleteStocktakeInput!]) {
   batchStocktake(storeId: $storeId, input: {deleteStocktakes: $ids}) {
@@ -281,28 +317,26 @@ export const DeleteStocktakesDocument = gql`
 export const UpdateStocktakeDocument = gql`
     mutation updateStocktake($input: UpdateStocktakeInput!, $storeId: String!) {
   updateStocktake(input: $input, storeId: $storeId) {
+    __typename
     ... on UpdateStocktakeError {
-      __typename
       error {
+        __typename
         description
         ... on StockLinesReducedBelowZero {
-          __typename
-          description
-          stockLines {
-            nodes {
-              id
-            }
-          }
+          ...StockLinesReducedBelowZeroError
+        }
+        ... on SnapshotCountCurrentCountMismatch {
+          ...SnapshotCountCurrentCountMismatchError
         }
       }
     }
     ... on StocktakeNode {
-      __typename
       id
     }
   }
 }
-    `;
+    ${StockLinesReducedBelowZeroErrorFragmentDoc}
+${SnapshotCountCurrentCountMismatchErrorFragmentDoc}`;
 export const InsertStocktakeDocument = gql`
     mutation insertStocktake($input: InsertStocktakeInput!, $storeId: String!) {
   insertStocktake(input: $input, storeId: $storeId) {

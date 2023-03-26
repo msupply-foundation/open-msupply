@@ -19,10 +19,7 @@ impl StockCounts {
         let service_provider = ctx.service_provider();
         let service_ctx = service_provider.basic_context()?;
         let service = &service_provider.stock_expiry_count_service;
-        let date = Utc::now()
-            .with_timezone(&self.timezone_offset)
-            .date()
-            .naive_utc();
+        let date = Utc::now().with_timezone(&self.timezone_offset).date_naive();
         Ok(service.count_expired_stock(&service_ctx, &self.store_id, date)?)
     }
 
@@ -31,10 +28,7 @@ impl StockCounts {
         let service_ctx = service_provider.basic_context()?;
         let service = &service_provider.stock_expiry_count_service;
         let days_till_expired = self.days_till_expired.unwrap_or(7);
-        let date = Utc::now()
-            .with_timezone(&self.timezone_offset)
-            .date()
-            .naive_utc()
+        let date = Utc::now().with_timezone(&self.timezone_offset).date_naive()
             + Duration::days(days_till_expired as i64);
         Ok(service.count_expired_stock(&service_ctx, &self.store_id, date)?)
     }

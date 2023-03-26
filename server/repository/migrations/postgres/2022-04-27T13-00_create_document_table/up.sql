@@ -17,7 +17,8 @@ CREATE TABLE document
     status document_status NOT NULL,
     comment TEXT,
     owner_name_id TEXT REFERENCES name (id),
-    context TEXT
+    context TEXT,
+    is_sync_update BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 CREATE INDEX ix_document_name_unique ON document(name);

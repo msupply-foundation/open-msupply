@@ -1,7 +1,7 @@
 use std::time::{Duration, SystemTime};
 
 use crate::sync::{
-    get_active_records_on_site_filter, sync_status::logger::SyncStepProgress,
+    get_sync_push_changelogs_filter, sync_status::logger::SyncStepProgress,
     GetActiveStoresOnSiteError,
 };
 
@@ -127,7 +127,7 @@ impl RemoteDataSynchroniser {
         logger: &mut SyncLogger<'a>,
     ) -> Result<(), RemotePushError> {
         let changelog_repo = ChangelogRepository::new(connection);
-        let change_log_filter = get_active_records_on_site_filter(connection)?;
+        let change_log_filter = get_sync_push_changelogs_filter(connection)?;
 
         loop {
             // TODO inside transaction

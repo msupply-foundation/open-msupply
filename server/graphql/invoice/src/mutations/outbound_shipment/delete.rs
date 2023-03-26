@@ -122,11 +122,18 @@ mod graphql {
                 r.invoice_number = 3;
                 r.r#type = InvoiceRowType::OutboundShipment;
                 r.status = InvoiceRowStatus::Shipped;
-                r.created_datetime = NaiveDate::from_ymd(1970, 1, 5).and_hms_milli(15, 30, 0, 0);
+                r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 5)
+                    .unwrap()
+                    .and_hms_milli_opt(15, 30, 0, 0)
+                    .unwrap();
                 r.picked_datetime = Some(Utc::now().naive_utc());
                 r.shipped_datetime = Some(Utc::now().naive_utc());
-                r.allocated_datetime =
-                    Some(NaiveDate::from_ymd(1970, 1, 5).and_hms_milli(15, 30, 0, 0));
+                r.allocated_datetime = Some(
+                    NaiveDate::from_ymd_opt(1970, 1, 5)
+                        .unwrap()
+                        .and_hms_milli_opt(15, 30, 0, 0)
+                        .unwrap(),
+                );
             })
         }
 
@@ -137,10 +144,17 @@ mod graphql {
                 r.store_id = String::from("store_a");
                 r.r#type = InvoiceRowType::OutboundShipment;
                 r.status = InvoiceRowStatus::Picked;
-                r.created_datetime = NaiveDate::from_ymd(1970, 1, 6).and_hms_milli(15, 30, 0, 0);
+                r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 6)
+                    .unwrap()
+                    .and_hms_milli_opt(15, 30, 0, 0)
+                    .unwrap();
                 r.picked_datetime = Some(Utc::now().naive_utc());
-                r.allocated_datetime =
-                    Some(NaiveDate::from_ymd(1970, 1, 6).and_hms_milli(15, 30, 0, 0));
+                r.allocated_datetime = Some(
+                    NaiveDate::from_ymd_opt(1970, 1, 6)
+                        .unwrap()
+                        .and_hms_milli_opt(15, 30, 0, 0)
+                        .unwrap(),
+                );
             })
         }
 

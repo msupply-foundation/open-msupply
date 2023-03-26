@@ -60,7 +60,7 @@ mod repository_test {
                 cost_price_per_pack: 0.0,
                 sell_price_per_pack: 0.0,
                 total_number_of_packs: 1.0,
-                expiry_date: Some(NaiveDate::from_ymd(2021, 12, 13)),
+                expiry_date: Some(NaiveDate::from_ymd_opt(2021, 12, 13).unwrap()),
                 on_hold: false,
                 note: None,
                 location_id: None,
@@ -121,7 +121,7 @@ mod repository_test {
                 r.comment = Some("".to_string());
                 r.their_reference = Some("".to_string());
                 // Note: keep nsecs small enough for Postgres which has limited precision;
-                r.created_datetime = NaiveDateTime::from_timestamp(1000, 0);
+                r.created_datetime = NaiveDateTime::from_timestamp_opt(1000, 0).unwrap();
             })
         }
 
@@ -135,7 +135,7 @@ mod repository_test {
                 r.status = InvoiceRowStatus::New;
                 r.comment = Some("".to_string());
                 r.their_reference = Some("".to_string());
-                r.created_datetime = NaiveDateTime::from_timestamp(2000, 0);
+                r.created_datetime = NaiveDateTime::from_timestamp_opt(2000, 0).unwrap();
             })
         }
 
@@ -148,7 +148,7 @@ mod repository_test {
                 invoice_id: invoice_1().id.to_string(),
                 stock_line_id: None,
                 batch: Some("".to_string()),
-                expiry_date: Some(NaiveDate::from_ymd(2020, 9, 1)),
+                expiry_date: Some(NaiveDate::from_ymd_opt(2020, 9, 1).unwrap()),
                 pack_size: 1,
                 cost_price_per_pack: 0.0,
                 sell_price_per_pack: 0.0,
@@ -171,7 +171,7 @@ mod repository_test {
                 invoice_id: invoice_1().id.to_string(),
                 stock_line_id: None,
                 batch: Some("".to_string()),
-                expiry_date: Some(NaiveDate::from_ymd(2020, 9, 3)),
+                expiry_date: Some(NaiveDate::from_ymd_opt(2020, 9, 3).unwrap()),
                 pack_size: 1,
                 cost_price_per_pack: 0.0,
                 sell_price_per_pack: 0.0,
@@ -195,7 +195,7 @@ mod repository_test {
                 invoice_id: invoice_2().id.to_string(),
                 stock_line_id: None,
                 batch: Some("".to_string()),
-                expiry_date: Some(NaiveDate::from_ymd(2020, 9, 5)),
+                expiry_date: Some(NaiveDate::from_ymd_opt(2020, 9, 5).unwrap()),
                 pack_size: 1,
                 cost_price_per_pack: 0.0,
                 sell_price_per_pack: 0.0,
@@ -219,7 +219,7 @@ mod repository_test {
                 invoice_id: invoice_1().id.to_string(),
                 stock_line_id: None,
                 batch: Some("".to_string()),
-                expiry_date: Some(NaiveDate::from_ymd(2021, 12, 6)),
+                expiry_date: Some(NaiveDate::from_ymd_opt(2021, 12, 6).unwrap()),
                 pack_size: 1,
                 cost_price_per_pack: 0.0,
                 sell_price_per_pack: 0.0,
@@ -261,7 +261,7 @@ mod repository_test {
                 user_id: Some(user_account_1().id.to_string()),
                 store_id: None,
                 record_id: None,
-                datetime: NaiveDateTime::from_timestamp(2000, 0),
+                datetime: NaiveDateTime::from_timestamp_opt(2000, 0).unwrap(),
                 event: None,
             }
         }

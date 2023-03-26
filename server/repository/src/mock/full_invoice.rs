@@ -24,7 +24,10 @@ pub fn mock_full_draft_outbound_shipment_a() -> FullMockInvoice {
             r.invoice_number = 10;
             r.r#type = InvoiceRowType::OutboundShipment;
             r.status = InvoiceRowStatus::New;
-            r.created_datetime = NaiveDate::from_ymd(1970, 1, 1).and_hms_milli(12, 30, 0, 0);
+            r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 1)
+                .unwrap()
+                .and_hms_milli_opt(12, 30, 0, 0)
+                .unwrap();
         }),
         lines: vec![
             FullMockInvoiceLine {
@@ -98,7 +101,10 @@ pub fn mock_full_draft_inbound_shipment_on_hold() -> FullMockInvoice {
             r.r#type = InvoiceRowType::InboundShipment;
             r.status = InvoiceRowStatus::New;
             r.on_hold = true;
-            r.created_datetime = NaiveDate::from_ymd(1970, 1, 1).and_hms_milli(12, 30, 0, 0);
+            r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 1)
+                .unwrap()
+                .and_hms_milli_opt(12, 30, 0, 0)
+                .unwrap();
         }),
         lines: Vec::new(),
     }
@@ -116,7 +122,10 @@ pub fn mock_full_draft_outbound_shipment_on_hold() -> FullMockInvoice {
             r.r#type = InvoiceRowType::OutboundShipment;
             r.status = InvoiceRowStatus::New;
             r.on_hold = true;
-            r.created_datetime = NaiveDate::from_ymd(1970, 1, 1).and_hms_milli(12, 30, 0, 0);
+            r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 1)
+                .unwrap()
+                .and_hms_milli_opt(12, 30, 0, 0)
+                .unwrap();
         }),
         lines: Vec::new(),
     }

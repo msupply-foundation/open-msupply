@@ -13,7 +13,10 @@ pub fn mock_outbound_shipment_a() -> InvoiceRow {
         r.status = InvoiceRowStatus::Picked;
         r.comment = Some("Sort comment test ab".to_owned());
         r.their_reference = Some(String::from(""));
-        r.created_datetime = NaiveDate::from_ymd(1970, 1, 1).and_hms_milli(12, 30, 0, 0);
+        r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 1)
+            .unwrap()
+            .and_hms_milli_opt(12, 30, 0, 0)
+            .unwrap();
         r.picked_datetime = Some(Utc::now().naive_utc());
     })
 }
@@ -28,10 +31,18 @@ pub fn mock_outbound_shipment_b() -> InvoiceRow {
         r.status = InvoiceRowStatus::Shipped;
         r.comment = Some("Sort comment test Ab".to_owned());
         r.their_reference = Some(String::from(""));
-        r.created_datetime = NaiveDate::from_ymd(1970, 1, 2).and_hms_milli(15, 30, 0, 0);
+        r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 2)
+            .unwrap()
+            .and_hms_milli_opt(15, 30, 0, 0)
+            .unwrap();
         r.picked_datetime = Some(Utc::now().naive_utc());
         r.shipped_datetime = Some(Utc::now().naive_utc());
-        r.allocated_datetime = Some(NaiveDate::from_ymd(1970, 1, 2).and_hms_milli(15, 30, 0, 0));
+        r.allocated_datetime = Some(
+            NaiveDate::from_ymd_opt(1970, 1, 2)
+                .unwrap()
+                .and_hms_milli_opt(15, 30, 0, 0)
+                .unwrap(),
+        );
     })
 }
 
@@ -45,7 +56,10 @@ pub fn mock_outbound_shipment_c() -> InvoiceRow {
         r.status = InvoiceRowStatus::New;
         r.comment = Some("Sort comment test aB".to_owned());
         r.their_reference = Some(String::from(""));
-        r.created_datetime = NaiveDate::from_ymd(1970, 1, 2).and_hms_milli(15, 30, 0, 0);
+        r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 2)
+            .unwrap()
+            .and_hms_milli_opt(15, 30, 0, 0)
+            .unwrap();
     })
 }
 
@@ -59,9 +73,22 @@ pub fn mock_outbound_shipment_d() -> InvoiceRow {
         r.status = InvoiceRowStatus::Picked;
         r.comment = Some("Sort comment test ba".to_owned());
         r.their_reference = Some(String::from(""));
-        r.created_datetime = NaiveDate::from_ymd(1970, 1, 2).and_hms_milli(15, 30, 0, 0);
-        r.picked_datetime = Some(NaiveDate::from_ymd(1970, 1, 2).and_hms_milli(15, 30, 0, 0));
-        r.allocated_datetime = Some(NaiveDate::from_ymd(1970, 1, 2).and_hms_milli(15, 30, 0, 0));
+        r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 2)
+            .unwrap()
+            .and_hms_milli_opt(15, 30, 0, 0)
+            .unwrap();
+        r.picked_datetime = Some(
+            NaiveDate::from_ymd_opt(1970, 1, 2)
+                .unwrap()
+                .and_hms_milli_opt(15, 30, 0, 0)
+                .unwrap(),
+        );
+        r.allocated_datetime = Some(
+            NaiveDate::from_ymd_opt(1970, 1, 2)
+                .unwrap()
+                .and_hms_milli_opt(15, 30, 0, 0)
+                .unwrap(),
+        );
     })
 }
 
@@ -75,7 +102,10 @@ pub fn mock_outbound_shipment_e() -> InvoiceRow {
         r.status = InvoiceRowStatus::New;
         r.comment = Some("Sort comment test aB".to_owned());
         r.their_reference = Some(String::from(""));
-        r.created_datetime = NaiveDate::from_ymd(1970, 1, 2).and_hms_milli(15, 30, 0, 0);
+        r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 2)
+            .unwrap()
+            .and_hms_milli_opt(15, 30, 0, 0)
+            .unwrap();
     })
 }
 
@@ -90,9 +120,17 @@ pub fn mock_outbound_shipment_picked() -> InvoiceRow {
         r.status = InvoiceRowStatus::Picked;
         r.comment = Some("Sort comment test Ba".to_owned());
         r.their_reference = Some(String::from(""));
-        r.created_datetime = NaiveDate::from_ymd(1970, 1, 7).and_hms_milli(15, 30, 0, 0);
+        r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 7)
+            .unwrap()
+            .and_hms_milli_opt(15, 30, 0, 0)
+            .unwrap();
         r.picked_datetime = Some(Utc::now().naive_utc());
-        r.allocated_datetime = Some(NaiveDate::from_ymd(1970, 1, 7).and_hms_milli(15, 30, 0, 0));
+        r.allocated_datetime = Some(
+            NaiveDate::from_ymd_opt(1970, 1, 7)
+                .unwrap()
+                .and_hms_milli_opt(15, 30, 0, 0)
+                .unwrap(),
+        );
     })
 }
 
@@ -106,10 +144,18 @@ pub fn mock_outbound_shipment_shipped() -> InvoiceRow {
         r.status = InvoiceRowStatus::Shipped;
         r.comment = Some("Sort comment test bA".to_owned());
         r.their_reference = Some(String::from(""));
-        r.created_datetime = NaiveDate::from_ymd(1970, 1, 5).and_hms_milli(15, 30, 0, 0);
+        r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 5)
+            .unwrap()
+            .and_hms_milli_opt(15, 30, 0, 0)
+            .unwrap();
         r.picked_datetime = Some(Utc::now().naive_utc());
         r.shipped_datetime = Some(Utc::now().naive_utc());
-        r.allocated_datetime = Some(NaiveDate::from_ymd(1970, 1, 5).and_hms_milli(15, 30, 0, 0));
+        r.allocated_datetime = Some(
+            NaiveDate::from_ymd_opt(1970, 1, 5)
+                .unwrap()
+                .and_hms_milli_opt(15, 30, 0, 0)
+                .unwrap(),
+        );
     })
 }
 
@@ -124,9 +170,17 @@ pub fn mock_outbound_shipment_no_lines() -> InvoiceRow {
         r.status = InvoiceRowStatus::Picked;
         r.comment = Some("Sort comment test ac".to_owned());
         r.their_reference = Some(String::from(""));
-        r.created_datetime = NaiveDate::from_ymd(1970, 1, 6).and_hms_milli(15, 30, 0, 0);
+        r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 6)
+            .unwrap()
+            .and_hms_milli_opt(15, 30, 0, 0)
+            .unwrap();
         r.picked_datetime = Some(Utc::now().naive_utc());
-        r.allocated_datetime = Some(NaiveDate::from_ymd(1970, 1, 6).and_hms_milli(15, 30, 0, 0));
+        r.allocated_datetime = Some(
+            NaiveDate::from_ymd_opt(1970, 1, 6)
+                .unwrap()
+                .and_hms_milli_opt(15, 30, 0, 0)
+                .unwrap(),
+        );
     })
 }
 
@@ -147,7 +201,10 @@ pub fn mock_new_outbound_shipment_no_stockline() -> InvoiceRow {
         r.store_id = String::from("store_c");
         r.r#type = InvoiceRowType::OutboundShipment;
         r.status = InvoiceRowStatus::New;
-        r.created_datetime = NaiveDate::from_ymd(1970, 1, 6).and_hms_milli(15, 30, 0, 0);
+        r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 6)
+            .unwrap()
+            .and_hms_milli_opt(15, 30, 0, 0)
+            .unwrap();
     })
 }
 
@@ -162,8 +219,16 @@ pub fn mock_outbound_shipment_on_hold() -> InvoiceRow {
         r.status = InvoiceRowStatus::Allocated;
         r.comment = Some("Sort comment test Ba".to_owned());
         r.their_reference = Some(String::from(""));
-        r.created_datetime = NaiveDate::from_ymd(1970, 1, 7).and_hms_milli(15, 30, 0, 0);
-        r.allocated_datetime = Some(NaiveDate::from_ymd(1970, 1, 7).and_hms_milli(15, 30, 0, 0));
+        r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 7)
+            .unwrap()
+            .and_hms_milli_opt(15, 30, 0, 0)
+            .unwrap();
+        r.allocated_datetime = Some(
+            NaiveDate::from_ymd_opt(1970, 1, 7)
+                .unwrap()
+                .and_hms_milli_opt(15, 30, 0, 0)
+                .unwrap(),
+        );
     })
 }
 
@@ -177,7 +242,10 @@ pub fn mock_inbound_shipment_a() -> InvoiceRow {
         r.status = InvoiceRowStatus::Delivered;
         r.comment = Some("Sort comment test Ac".to_owned());
         r.their_reference = Some(String::from(""));
-        r.created_datetime = NaiveDate::from_ymd(1970, 1, 3).and_hms_milli(20, 30, 0, 0);
+        r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 3)
+            .unwrap()
+            .and_hms_milli_opt(20, 30, 0, 0)
+            .unwrap();
         r.delivered_datetime = Some(Utc::now().naive_utc());
     })
 }
@@ -192,8 +260,16 @@ pub fn mock_inbound_shipment_b() -> InvoiceRow {
         r.status = InvoiceRowStatus::Verified;
         r.comment = Some("Sort comment test aC".to_owned());
         r.their_reference = Some(String::from(""));
-        r.created_datetime = NaiveDate::from_ymd(1970, 1, 4).and_hms_milli(21, 30, 0, 0);
-        r.allocated_datetime = Some(NaiveDate::from_ymd(1970, 1, 4).and_hms_milli(21, 30, 0, 0));
+        r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 4)
+            .unwrap()
+            .and_hms_milli_opt(21, 30, 0, 0)
+            .unwrap();
+        r.allocated_datetime = Some(
+            NaiveDate::from_ymd_opt(1970, 1, 4)
+                .unwrap()
+                .and_hms_milli_opt(21, 30, 0, 0)
+                .unwrap(),
+        );
         r.delivered_datetime = Some(Utc::now().naive_utc());
         r.verified_datetime = Some(Utc::now().naive_utc());
     })
@@ -209,7 +285,10 @@ pub fn mock_inbound_shipment_c() -> InvoiceRow {
         r.status = InvoiceRowStatus::New;
         r.comment = Some("Sort comment test ca".to_owned());
         r.their_reference = Some(String::from(""));
-        r.created_datetime = NaiveDate::from_ymd(1970, 1, 4).and_hms_milli(21, 30, 0, 0);
+        r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 4)
+            .unwrap()
+            .and_hms_milli_opt(21, 30, 0, 0)
+            .unwrap();
     })
 }
 
@@ -223,8 +302,16 @@ pub fn mock_inbound_shipment_d() -> InvoiceRow {
         r.status = InvoiceRowStatus::Delivered;
         r.comment = Some("Sort comment test Ca".to_owned());
         r.their_reference = Some(String::from(""));
-        r.created_datetime = NaiveDate::from_ymd(1970, 1, 4).and_hms_milli(21, 30, 0, 0);
-        r.delivered_datetime = Some(NaiveDate::from_ymd(1970, 1, 4).and_hms_milli(21, 30, 0, 0));
+        r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 4)
+            .unwrap()
+            .and_hms_milli_opt(21, 30, 0, 0)
+            .unwrap();
+        r.delivered_datetime = Some(
+            NaiveDate::from_ymd_opt(1970, 1, 4)
+                .unwrap()
+                .and_hms_milli_opt(21, 30, 0, 0)
+                .unwrap(),
+        );
     })
 }
 
@@ -239,7 +326,10 @@ pub fn mock_inbound_shipment_e() -> InvoiceRow {
         r.on_hold = true;
         r.comment = Some("Sort comment test".to_owned());
         r.their_reference = Some(String::from(""));
-        r.created_datetime = NaiveDate::from_ymd(1970, 1, 4).and_hms_milli(21, 30, 0, 0);
+        r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 4)
+            .unwrap()
+            .and_hms_milli_opt(21, 30, 0, 0)
+            .unwrap();
     })
 }
 
@@ -253,7 +343,10 @@ pub fn mock_empty_draft_inbound_shipment() -> InvoiceRow {
         r.status = InvoiceRowStatus::New;
         r.comment = Some("Sort comment test AC".to_owned());
         r.their_reference = Some(String::from(""));
-        r.created_datetime = NaiveDate::from_ymd(1970, 1, 4).and_hms_milli(21, 30, 0, 0);
+        r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 4)
+            .unwrap()
+            .and_hms_milli_opt(21, 30, 0, 0)
+            .unwrap();
     })
 }
 
@@ -266,7 +359,10 @@ pub fn mock_unique_number_inbound_shipment() -> InvoiceRow {
         r.invoice_number = 9999999;
         r.r#type = InvoiceRowType::InboundShipment;
         r.status = InvoiceRowStatus::New;
-        r.created_datetime = NaiveDate::from_ymd(1970, 1, 4).and_hms_milli(21, 30, 0, 0);
+        r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 4)
+            .unwrap()
+            .and_hms_milli_opt(21, 30, 0, 0)
+            .unwrap();
     })
 }
 

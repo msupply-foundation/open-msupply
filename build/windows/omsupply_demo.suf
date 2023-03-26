@@ -3362,6 +3362,17 @@ g_HandleSystemReboot();
 <Name>On Post Install</Name>
 <Args/>
 <Script>Shell.CreateShortcut(Shell.GetFolder(SHF_DESKTOP), "Open mSupply Demo Server", SessionVar.Expand("%AppFolder%\\launch.bat"), "", SessionVar.Expand("%AppFolder%"), SessionVar.Expand("%AppFolder%\\omSupply-server-sqlite.exe"), 0, SW_SHOWNORMAL, nil, "", START_OPTION_DEFAULT);
+
+local uninstallPath = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
+local installedApps = Registry.GetKeyNames(HKEY_LOCAL_MACHINE, uninstallPath);
+-- Remove previous versions of this app from the uninstall list
+if (Table.Count(installedApps) &gt; 0) then
+	for index, value in pairs(installedApps) do
+		if ((String.Find(value, "omSupply Server Demov", 1, false) ~= -1) and (value ~= SessionVar.Expand("omSupply Server Demo%ProductVer%"))) then
+			Registry.DeleteKey(HKEY_LOCAL_MACHINE, uninstallPath .. "\\" .. value);
+		end
+	end
+end
 </Script>
 <BookMarks count="0">
 </BookMarks>

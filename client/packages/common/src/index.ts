@@ -11,10 +11,29 @@ export {
   useMatches,
 } from 'kbar';
 
-export * from 'graphql-request';
-export * from 'react-query';
-export * from 'react-query/devtools';
-export * from 'react-router-dom';
+export {
+  useMutation,
+  useQueryClient,
+  useQuery,
+  UseQueryResult,
+  QueryClient,
+  QueryClientProvider,
+} from 'react-query';
+
+export {
+  matchPath,
+  useLocation,
+  Location,
+  Link,
+  useNavigate,
+  useParams,
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useMatch,
+} from 'react-router-dom';
+
 export * from './utils';
 export * from './ui';
 export * from './hooks';

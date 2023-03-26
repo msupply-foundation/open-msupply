@@ -24,7 +24,10 @@ pub fn mock_invoice_loader_requisition1() -> RequisitionRow {
         r.store_id = mock_store_a().id;
         r.r#type = RequisitionRowType::Request;
         r.status = RequisitionRowStatus::Draft;
-        r.created_datetime = NaiveDate::from_ymd(2021, 01, 01).and_hms(0, 0, 0);
+        r.created_datetime = NaiveDate::from_ymd_opt(2021, 01, 01)
+            .unwrap()
+            .and_hms_opt(0, 0, 0)
+            .unwrap();
         r.max_months_of_stock = 1.0;
         r.min_months_of_stock = 0.9;
     })
@@ -39,7 +42,10 @@ pub fn mock_invoice_loader_invoice1() -> InvoiceRow {
         r.requisition_id = Some(mock_invoice_loader_requisition1().id);
         r.r#type = InvoiceRowType::OutboundShipment;
         r.status = InvoiceRowStatus::Picked;
-        r.created_datetime = NaiveDate::from_ymd(1970, 1, 1).and_hms_milli(12, 30, 0, 0);
+        r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 1)
+            .unwrap()
+            .and_hms_milli_opt(12, 30, 0, 0)
+            .unwrap();
     })
 }
 
@@ -51,7 +57,10 @@ pub fn mock_invoice_loader_invoice2() -> InvoiceRow {
         r.invoice_number = 1;
         r.r#type = InvoiceRowType::OutboundShipment;
         r.status = InvoiceRowStatus::Picked;
-        r.created_datetime = NaiveDate::from_ymd(1970, 1, 1).and_hms_milli(12, 30, 0, 0);
+        r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 1)
+            .unwrap()
+            .and_hms_milli_opt(12, 30, 0, 0)
+            .unwrap();
         r.linked_invoice_id = Some(mock_invoice_loader_invoice1().id);
     })
 }

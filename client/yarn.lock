@@ -5232,7 +5232,7 @@
   resolved "https://registry.yarnpkg.com/@swc/core-win32-x64-msvc/-/core-win32-x64-msvc-1.2.211.tgz#80f69828c82b6af623f5b56e1942aa8dc2e6be92"
   integrity sha512-+Ez5zjknHg4tHqcE/JluFnLlqSs8lMrD10BWz4ahOtMJ3IVOprgGcK4fPvGpcudCSm+k6Rrj9WgMExzl9tGz6w==
 
-"@swc/core@^1.2.136", "@swc/core@^1.2.152":
+"@swc/core@^1.2.152":
   version "1.2.210"
   resolved "https://registry.yarnpkg.com/@swc/core/-/core-1.2.210.tgz#eae46f29bb21c6c4a39fe7b3af27b81c799f8d4c"
   integrity sha512-euiCxnx+dCnE6iDGM04hIvcLS2LADVgIDo0OGnxqRce4SwUNHZi/KcRxIT04YtJd3BdO5v+l4K8RHIx4jvn+TA==
@@ -19174,13 +19174,6 @@ swc-loader@^0.2.0:
   version "0.2.3"
   resolved "https://registry.yarnpkg.com/swc-loader/-/swc-loader-0.2.3.tgz#6792f1c2e4c9ae9bf9b933b3e010210e270c186d"
   integrity sha512-D1p6XXURfSPleZZA/Lipb3A8pZ17fP4NObZvFCDjK/OKljroqDpPmsBdTraWhVBqUNpcWBQY1imWdoPScRlQ7A==
-
-swc-plugin-transform-import@^1.2.0:
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/swc-plugin-transform-import/-/swc-plugin-transform-import-1.2.0.tgz#ad1a049a89134baff39f11dd4be6981e5bcf24ed"
-  integrity sha512-cdayl4ByKVA4jVn5H+qL24lDUaNIuL//ZuJfWKV6xErxi+eQxiRg924njSzfAIuCOKuqLAskgOgDmrDEaw4peg==
-  dependencies:
-    "@swc/core" "^1.2.136"
 
 symbol-observable@^1.1.0:
   version "1.2.0"

@@ -7,6 +7,7 @@ pub fn mock_name_store_join_a() -> NameStoreJoinRow {
         store_id: String::from("store_a"),
         name_is_customer: true,
         name_is_supplier: false,
+        is_sync_update: false,
     }
 }
 
@@ -17,6 +18,7 @@ pub fn mock_name_store_join_b() -> NameStoreJoinRow {
         store_id: String::from("store_a"),
         name_is_customer: true,
         name_is_supplier: false,
+        is_sync_update: false,
     }
 }
 
@@ -27,6 +29,7 @@ pub fn mock_name_store_join_c() -> NameStoreJoinRow {
         store_id: String::from("store_a"),
         name_is_customer: false,
         name_is_supplier: true,
+        is_sync_update: false,
     }
 }
 
@@ -37,6 +40,7 @@ pub fn mock_name_store_join_d() -> NameStoreJoinRow {
         store_id: String::from("store_a"),
         name_is_customer: false,
         name_is_supplier: true,
+        is_sync_update: false,
     }
 }
 
@@ -47,6 +51,7 @@ pub fn mock_name_store_join_e() -> NameStoreJoinRow {
         store_id: String::from("store_c"),
         name_is_customer: false,
         name_is_supplier: true,
+        is_sync_update: false,
     }
 }
 
@@ -57,6 +62,7 @@ pub fn mock_patient_store_join() -> NameStoreJoinRow {
         store_id: String::from("store_a"),
         name_is_customer: true,
         name_is_supplier: true,
+        is_sync_update: false,
     }
 }
 
@@ -67,6 +73,7 @@ pub fn mock_patient_store_join_b() -> NameStoreJoinRow {
         store_id: String::from("store_a"),
         name_is_customer: true,
         name_is_supplier: true,
+        is_sync_update: false,
     }
 }
 

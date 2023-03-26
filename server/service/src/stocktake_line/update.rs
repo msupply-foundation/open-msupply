@@ -255,7 +255,10 @@ mod stocktake_line_test {
                 r.invoice_number = 15;
                 r.r#type = InvoiceRowType::OutboundShipment;
                 r.status = InvoiceRowStatus::New;
-                r.created_datetime = NaiveDate::from_ymd(1970, 1, 3).and_hms_milli(20, 30, 0, 0);
+                r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 3)
+                    .unwrap()
+                    .and_hms_milli_opt(20, 30, 0, 0)
+                    .unwrap();
             })
         }
 

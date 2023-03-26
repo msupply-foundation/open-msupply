@@ -23,7 +23,7 @@ serde = "1.0.126"
 serde_json = "1.0.66"
 clap = { version = "3.1.8", features = ["derive"] }
 diesel = { version = "1.4.7", default-features = false, features = ["chrono"] }
-chrono = { version = "0.4" }
+chrono = { version = "0.4.23" }
 reqwest = { version = "0.11.10" }
 tokio = { version = "1.17.0", features = ["macros"] }
 fast_log = { version = "1.5" }

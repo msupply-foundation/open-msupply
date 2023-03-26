@@ -51,7 +51,7 @@ const AdditionalInfoSection: FC = () => {
 
 export const SidePanel: FC = () => {
   const { success } = useNotification();
-  const t = useTranslation(['inventory', 'common']);
+  const t = useTranslation('inventory');
   const { data } = useStocktake.document.get();
 
   const copyToClipboard = () => {

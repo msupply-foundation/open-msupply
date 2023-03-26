@@ -125,9 +125,10 @@ const DataRowComponent = <T extends RecordWithId>({
                 >
                   {
                     <column.Cell
-                      isDisabled={isDisabled}
+                      isDisabled={isDisabled || column.getIsDisabled?.(rowData)}
                       rowData={rowData}
                       columns={columns}
+                      isError={column.getIsError?.(rowData)}
                       column={column}
                       rowKey={rowKey}
                       columnIndex={columnIndex}

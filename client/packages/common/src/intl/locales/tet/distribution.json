@@ -105,7 +105,6 @@
   "messages.click-to-return-to-requisitions": "Labele atu hetan requizisaun ho ID. Klik OK atu fila fali ba lista requizisaun",
   "messages.click-to-return-to-shipments": "Labele atu identifika remessa ho ID ida ne'e. Klik OK atu fila fali ba lista remessa",
   "messages.confirm-add-from-master-list": "Ita hakarak atu aumenta Item hotu husi Master List ida ne'e?",
-  "messages.confirm-status-as": "Konfirma estatus hanesan $t({{estatus}})?",
   "messages.supply-to-requested": "Ita certeja hakarak regula linas hotu husi kuantidade fornesimentu nian ba Iha Pedidu?",
   "messages.deleted-shipments_one": "Hamos ona {{count}} Remessa",
   "messages.deleted-shipments_other": "Hamos ona {{count}} Remessas",

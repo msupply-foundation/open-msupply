@@ -66,10 +66,10 @@ pub struct Defaults;
 
 impl Defaults {
     pub fn naive_date_time() -> NaiveDateTime {
-        Defaults::naive_date().and_hms(15, 16, 0)
+        Defaults::naive_date().and_hms_opt(15, 16, 0).unwrap()
     }
 
     pub fn naive_date() -> NaiveDate {
-        NaiveDate::from_ymd(2020, 1, 22)
+        NaiveDate::from_ymd_opt(2020, 1, 22).unwrap()
     }
 }

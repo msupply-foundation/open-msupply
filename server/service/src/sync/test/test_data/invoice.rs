@@ -112,13 +112,20 @@ fn transact_1_pull_record() -> TestSyncPullRecord {
             comment: None,
             their_reference: None,
             transport_reference: None,
-            created_datetime: NaiveDate::from_ymd(2021, 7, 30).and_hms(0, 0, 0)
+            created_datetime: NaiveDate::from_ymd_opt(2021, 7, 30)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap()
                 + Duration::seconds(47046),
             allocated_datetime: None,
             picked_datetime: None,
             shipped_datetime: None,
             delivered_datetime: Some(
-                NaiveDate::from_ymd(2021, 7, 30).and_hms(0, 0, 0) + Duration::seconds(47046),
+                NaiveDate::from_ymd_opt(2021, 7, 30)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap()
+                    + Duration::seconds(47046),
             ),
             verified_datetime: None,
             colour: None,
@@ -146,19 +153,28 @@ fn transact_1_push_record() -> TestSyncPushRecord {
             transport_reference: None,
             requisition_ID: None,
             linked_transaction_id: None,
-            entry_date: NaiveDate::from_ymd(2021, 7, 30),
-            entry_time: NaiveTime::from_hms(13, 4, 6),
+            entry_date: NaiveDate::from_ymd_opt(2021, 7, 30).unwrap(),
+            entry_time: NaiveTime::from_hms_opt(13, 4, 6).unwrap(),
             ship_date: None,
-            arrival_date_actual: Some(NaiveDate::from_ymd(2021, 7, 30)),
-            confirm_date: Some(NaiveDate::from_ymd(2021, 7, 30)),
-            confirm_time: NaiveTime::from_hms(13, 4, 6),
+            arrival_date_actual: Some(NaiveDate::from_ymd_opt(2021, 7, 30).unwrap()),
+            confirm_date: Some(NaiveDate::from_ymd_opt(2021, 7, 30).unwrap()),
+            confirm_time: NaiveTime::from_hms_opt(13, 4, 6).unwrap(),
             mode: TransactMode::Store,
-            created_datetime: Some(NaiveDate::from_ymd(2021, 7, 30).and_hms(13, 4, 6)),
+            created_datetime: Some(
+                NaiveDate::from_ymd_opt(2021, 7, 30)
+                    .unwrap()
+                    .and_hms_opt(13, 4, 6)
+                    .unwrap()
+            ),
             allocated_datetime: None,
             picked_datetime: None,
             shipped_datetime: None,
             delivered_datetime: Some(
-                NaiveDate::from_ymd(2021, 7, 30).and_hms(0, 0, 0) + Duration::seconds(47046),
+                NaiveDate::from_ymd_opt(2021, 7, 30)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap()
+                    + Duration::seconds(47046),
             ),
             verified_datetime: None,
             om_status: Some(InvoiceRowStatus::Delivered),
@@ -263,7 +279,10 @@ fn transact_2_pull_record() -> TestSyncPullRecord {
             comment: None,
             their_reference: None,
             transport_reference: Some("transport reference".to_string()),
-            created_datetime: NaiveDate::from_ymd(2021, 8, 3).and_hms(0, 0, 0)
+            created_datetime: NaiveDate::from_ymd_opt(2021, 8, 3)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap()
                 + Duration::seconds(44806),
             allocated_datetime: None,
             picked_datetime: None,
@@ -295,15 +314,19 @@ fn transact_2_push_record() -> TestSyncPushRecord {
             transport_reference: Some("transport reference".to_string()),
             requisition_ID: None,
             linked_transaction_id: None,
-            entry_date: NaiveDate::from_ymd(2021, 8, 3),
-            entry_time: NaiveTime::from_hms(12, 26, 46),
+            entry_date: NaiveDate::from_ymd_opt(2021, 8, 3).unwrap(),
+            entry_time: NaiveTime::from_hms_opt(12, 26, 46).unwrap(),
             ship_date: None,
             arrival_date_actual: None,
             confirm_date: None,
-            confirm_time: NaiveTime::from_hms(0, 0, 0),
+            confirm_time: NaiveTime::from_hms_opt(0, 0, 0).unwrap(),
             mode: TransactMode::Store,
             created_datetime: Some(
-                NaiveDate::from_ymd(2021, 8, 3).and_hms(0, 0, 0) + Duration::seconds(44806)
+                NaiveDate::from_ymd_opt(2021, 8, 3)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap()
+                    + Duration::seconds(44806)
             ),
             allocated_datetime: None,
             picked_datetime: None,
@@ -422,12 +445,40 @@ fn transact_om_fields_pull_record() -> TestSyncPullRecord {
             comment: None,
             their_reference: None,
             transport_reference: Some("transport reference".to_string()),
-            created_datetime: NaiveDate::from_ymd(2022, 8, 24).and_hms(9, 33, 0),
-            allocated_datetime: Some(NaiveDate::from_ymd(2022, 8, 25).and_hms(10, 33, 0)),
-            picked_datetime: Some(NaiveDate::from_ymd(2022, 8, 26).and_hms(11, 33, 0)),
-            shipped_datetime: Some(NaiveDate::from_ymd(2022, 8, 27).and_hms(12, 33, 0)),
-            delivered_datetime: Some(NaiveDate::from_ymd(2022, 8, 28).and_hms(13, 33, 0)),
-            verified_datetime: Some(NaiveDate::from_ymd(2022, 8, 29).and_hms(14, 33, 0)),
+            created_datetime: NaiveDate::from_ymd_opt(2022, 8, 24)
+                .unwrap()
+                .and_hms_opt(9, 33, 0)
+                .unwrap(),
+            allocated_datetime: Some(
+                NaiveDate::from_ymd_opt(2022, 8, 25)
+                    .unwrap()
+                    .and_hms_opt(10, 33, 0)
+                    .unwrap(),
+            ),
+            picked_datetime: Some(
+                NaiveDate::from_ymd_opt(2022, 8, 26)
+                    .unwrap()
+                    .and_hms_opt(11, 33, 0)
+                    .unwrap(),
+            ),
+            shipped_datetime: Some(
+                NaiveDate::from_ymd_opt(2022, 8, 27)
+                    .unwrap()
+                    .and_hms_opt(12, 33, 0)
+                    .unwrap(),
+            ),
+            delivered_datetime: Some(
+                NaiveDate::from_ymd_opt(2022, 8, 28)
+                    .unwrap()
+                    .and_hms_opt(13, 33, 0)
+                    .unwrap(),
+            ),
+            verified_datetime: Some(
+                NaiveDate::from_ymd_opt(2022, 8, 29)
+                    .unwrap()
+                    .and_hms_opt(14, 33, 0)
+                    .unwrap(),
+            ),
             colour: Some("SomeColour".to_string()),
             requisition_id: None,
             linked_invoice_id: None,
@@ -453,20 +504,50 @@ fn transact_om_fields_push_record() -> TestSyncPushRecord {
             transport_reference: Some("transport reference".to_string()),
             requisition_ID: None,
             linked_transaction_id: None,
-            entry_date: NaiveDate::from_ymd(2022, 8, 24),
-            entry_time: NaiveTime::from_hms(9, 33, 0),
-            ship_date: Some(NaiveDate::from_ymd(2022, 8, 27)),
-            arrival_date_actual: Some(NaiveDate::from_ymd(2022, 8, 28)),
-            confirm_date: Some(NaiveDate::from_ymd(2022, 8, 29)),
-            confirm_time: NaiveTime::from_hms(14, 33, 0),
+            entry_date: NaiveDate::from_ymd_opt(2022, 8, 24).unwrap(),
+            entry_time: NaiveTime::from_hms_opt(9, 33, 0).unwrap(),
+            ship_date: Some(NaiveDate::from_ymd_opt(2022, 8, 27).unwrap()),
+            arrival_date_actual: Some(NaiveDate::from_ymd_opt(2022, 8, 28).unwrap()),
+            confirm_date: Some(NaiveDate::from_ymd_opt(2022, 8, 29).unwrap()),
+            confirm_time: NaiveTime::from_hms_opt(14, 33, 0).unwrap(),
             mode: TransactMode::Store,
 
-            created_datetime: Some(NaiveDate::from_ymd(2022, 8, 24).and_hms(9, 33, 0)),
-            allocated_datetime: Some(NaiveDate::from_ymd(2022, 8, 25).and_hms(10, 33, 0)),
-            picked_datetime: Some(NaiveDate::from_ymd(2022, 8, 26).and_hms(11, 33, 0)),
-            shipped_datetime: Some(NaiveDate::from_ymd(2022, 8, 27).and_hms(12, 33, 0)),
-            delivered_datetime: Some(NaiveDate::from_ymd(2022, 8, 28).and_hms(13, 33, 0)),
-            verified_datetime: Some(NaiveDate::from_ymd(2022, 8, 29).and_hms(14, 33, 0)),
+            created_datetime: Some(
+                NaiveDate::from_ymd_opt(2022, 8, 24)
+                    .unwrap()
+                    .and_hms_opt(9, 33, 0)
+                    .unwrap()
+            ),
+            allocated_datetime: Some(
+                NaiveDate::from_ymd_opt(2022, 8, 25)
+                    .unwrap()
+                    .and_hms_opt(10, 33, 0)
+                    .unwrap()
+            ),
+            picked_datetime: Some(
+                NaiveDate::from_ymd_opt(2022, 8, 26)
+                    .unwrap()
+                    .and_hms_opt(11, 33, 0)
+                    .unwrap()
+            ),
+            shipped_datetime: Some(
+                NaiveDate::from_ymd_opt(2022, 8, 27)
+                    .unwrap()
+                    .and_hms_opt(12, 33, 0)
+                    .unwrap()
+            ),
+            delivered_datetime: Some(
+                NaiveDate::from_ymd_opt(2022, 8, 28)
+                    .unwrap()
+                    .and_hms_opt(13, 33, 0)
+                    .unwrap()
+            ),
+            verified_datetime: Some(
+                NaiveDate::from_ymd_opt(2022, 8, 29)
+                    .unwrap()
+                    .and_hms_opt(14, 33, 0)
+                    .unwrap()
+            ),
             om_status: Some(InvoiceRowStatus::Shipped),
             om_type: Some(InvoiceRowType::InventoryAddition),
             om_colour: Some("SomeColour".to_string()),
@@ -575,8 +656,16 @@ fn inventory_addition_pull_record() -> TestSyncPullRecord {
             invoice_number: 1,
             r#type: InvoiceRowType::InventoryAddition,
             status: InvoiceRowStatus::Verified,
-            created_datetime: NaiveDate::from_ymd(2023, 01, 16).and_hms(0, 0, 0),
-            verified_datetime: Some(NaiveDate::from_ymd(2023, 01, 16).and_hms(0, 0, 0)),
+            created_datetime: NaiveDate::from_ymd_opt(2023, 01, 16)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap(),
+            verified_datetime: Some(
+                NaiveDate::from_ymd_opt(2023, 01, 16)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap(),
+            ),
             comment: Some("Stocktake 1; Added stock".to_string()),
             tax: Some(0.0),
 
@@ -610,12 +699,22 @@ fn inventory_addition_push_record() -> TestSyncPushRecord {
             tax: Some(0.0),
             om_status: Some(InvoiceRowStatus::Verified),
             om_type: Some(InvoiceRowType::InventoryAddition),
-            entry_date: NaiveDate::from_ymd(2023, 01, 16),
-            entry_time: NaiveTime::from_hms(0, 0, 0),
-            confirm_date: Some(NaiveDate::from_ymd(2023, 01, 16),),
-            confirm_time: NaiveTime::from_hms(0, 0, 0),
-            created_datetime: Some(NaiveDate::from_ymd(2023, 01, 16).and_hms(0, 0, 0)),
-            verified_datetime: Some(NaiveDate::from_ymd(2023, 01, 16).and_hms(0, 0, 0)),
+            entry_date: NaiveDate::from_ymd_opt(2023, 01, 16).unwrap(),
+            entry_time: NaiveTime::from_hms_opt(0, 0, 0).unwrap(),
+            confirm_date: Some(NaiveDate::from_ymd_opt(2023, 01, 16).unwrap(),),
+            confirm_time: NaiveTime::from_hms_opt(0, 0, 0).unwrap(),
+            created_datetime: Some(
+                NaiveDate::from_ymd_opt(2023, 01, 16)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap()
+            ),
+            verified_datetime: Some(
+                NaiveDate::from_ymd_opt(2023, 01, 16)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap()
+            ),
             mode: TransactMode::Store,
             comment: Some("Stocktake 1; Added stock".to_string()),
 
@@ -735,8 +834,16 @@ fn inventory_reduction_pull_record() -> TestSyncPullRecord {
             invoice_number: 2,
             r#type: InvoiceRowType::InventoryReduction,
             status: InvoiceRowStatus::Verified,
-            created_datetime: NaiveDate::from_ymd(2023, 01, 16).and_hms(0, 0, 0),
-            verified_datetime: Some(NaiveDate::from_ymd(2023, 01, 16).and_hms(0, 0, 0)),
+            created_datetime: NaiveDate::from_ymd_opt(2023, 01, 16)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap(),
+            verified_datetime: Some(
+                NaiveDate::from_ymd_opt(2023, 01, 16)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap(),
+            ),
             comment: Some("Stocktake 2; Reduced stock".to_string()),
             tax: Some(0.0),
 
@@ -770,12 +877,22 @@ fn inventory_reduction_push_record() -> TestSyncPushRecord {
             tax: Some(0.0),
             om_status: Some(InvoiceRowStatus::Verified),
             om_type: Some(InvoiceRowType::InventoryReduction),
-            entry_date: NaiveDate::from_ymd(2023, 01, 16),
-            entry_time: NaiveTime::from_hms(0, 0, 0),
-            confirm_date: Some(NaiveDate::from_ymd(2023, 01, 16),),
-            confirm_time: NaiveTime::from_hms(0, 0, 0),
-            created_datetime: Some(NaiveDate::from_ymd(2023, 01, 16).and_hms(0, 0, 0)),
-            verified_datetime: Some(NaiveDate::from_ymd(2023, 01, 16).and_hms(0, 0, 0)),
+            entry_date: NaiveDate::from_ymd_opt(2023, 01, 16).unwrap(),
+            entry_time: NaiveTime::from_hms_opt(0, 0, 0).unwrap(),
+            confirm_date: Some(NaiveDate::from_ymd_opt(2023, 01, 16).unwrap(),),
+            confirm_time: NaiveTime::from_hms_opt(0, 0, 0).unwrap(),
+            created_datetime: Some(
+                NaiveDate::from_ymd_opt(2023, 01, 16)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap()
+            ),
+            verified_datetime: Some(
+                NaiveDate::from_ymd_opt(2023, 01, 16)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap()
+            ),
             mode: TransactMode::Store,
             comment: Some("Stocktake 2; Reduced stock".to_string()),
 

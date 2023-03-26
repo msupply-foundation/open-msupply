@@ -170,8 +170,12 @@ mod test {
                 r.stores = vec![store()];
             })
             .join(inline_edit(&stock_movement_point(), |mut u| {
-                u.invoices[0].picked_datetime =
-                    Some(NaiveDate::from_ymd(2020, 11, 02).and_hms(0, 0, 0));
+                u.invoices[0].picked_datetime = Some(
+                    NaiveDate::from_ymd_opt(2020, 11, 02)
+                        .unwrap()
+                        .and_hms_opt(0, 0, 0)
+                        .unwrap(),
+                );
                 u.invoice_lines[0].number_of_packs = 20.0;
                 u
             }))
@@ -183,16 +187,24 @@ mod test {
                 u
             }))
             .join(inline_edit(&stock_movement_point(), |mut u| {
-                u.invoices[0].picked_datetime =
-                    Some(NaiveDate::from_ymd(2020, 11, 03).and_hms(0, 0, 0));
+                u.invoices[0].picked_datetime = Some(
+                    NaiveDate::from_ymd_opt(2020, 11, 03)
+                        .unwrap()
+                        .and_hms_opt(0, 0, 0)
+                        .unwrap(),
+                );
                 u.invoice_lines[0].pack_size = 10;
                 u.invoice_lines[0].number_of_packs = 10.0;
                 u
             }))
             .join(inline_edit(&stock_movement_point(), |mut u| {
                 u.invoices[0].r#type = InvoiceRowType::InboundShipment;
-                u.invoices[0].delivered_datetime =
-                    Some(NaiveDate::from_ymd(2020, 12, 15).and_hms(0, 0, 0));
+                u.invoices[0].delivered_datetime = Some(
+                    NaiveDate::from_ymd_opt(2020, 12, 15)
+                        .unwrap()
+                        .and_hms_opt(0, 0, 0)
+                        .unwrap(),
+                );
                 u.invoice_lines[0].r#type = InvoiceLineRowType::StockIn;
                 u.invoice_lines[0].number_of_packs = 15.0;
                 u
@@ -207,16 +219,24 @@ mod test {
             }))
             .join(inline_edit(&stock_movement_point(), |mut u| {
                 u.invoices[0].r#type = InvoiceRowType::InventoryAddition;
-                u.invoices[0].verified_datetime =
-                    Some(NaiveDate::from_ymd(2021, 01, 20).and_hms(0, 0, 0));
+                u.invoices[0].verified_datetime = Some(
+                    NaiveDate::from_ymd_opt(2021, 01, 20)
+                        .unwrap()
+                        .and_hms_opt(0, 0, 0)
+                        .unwrap(),
+                );
                 u.invoice_lines[0].r#type = InvoiceLineRowType::StockIn;
                 u.invoice_lines[0].number_of_packs = 60.0;
                 u
             }))
             .join(inline_edit(&stock_movement_point(), |mut u| {
                 u.invoices[0].r#type = InvoiceRowType::InventoryReduction;
-                u.invoices[0].verified_datetime =
-                    Some(NaiveDate::from_ymd(2021, 02, 01).and_hms(0, 0, 0));
+                u.invoices[0].verified_datetime = Some(
+                    NaiveDate::from_ymd_opt(2021, 02, 01)
+                        .unwrap()
+                        .and_hms_opt(0, 0, 0)
+                        .unwrap(),
+                );
                 u.invoice_lines[0].r#type = InvoiceLineRowType::StockOut;
                 u.invoice_lines[0].number_of_packs = 50.0;
                 u
@@ -251,35 +271,50 @@ mod test {
                     item_id: mock_item_a().id,
                     store_id: store().id,
                     quantity: -20,
-                    datetime: NaiveDate::from_ymd(2020, 11, 02).and_hms(0, 0, 0)
+                    datetime: NaiveDate::from_ymd_opt(2020, 11, 02)
+                        .unwrap()
+                        .and_hms_opt(0, 0, 0)
+                        .unwrap()
                 },
                 StockMovementRow {
                     id: "n/a".to_string(),
                     item_id: mock_item_a().id,
                     store_id: store().id,
                     quantity: 10 * 10 * -1,
-                    datetime: NaiveDate::from_ymd(2020, 11, 03).and_hms(0, 0, 0)
+                    datetime: NaiveDate::from_ymd_opt(2020, 11, 03)
+                        .unwrap()
+                        .and_hms_opt(0, 0, 0)
+                        .unwrap()
                 },
                 StockMovementRow {
                     id: "n/a".to_string(),
                     item_id: mock_item_a().id,
                     store_id: store().id,
                     quantity: 15,
-                    datetime: NaiveDate::from_ymd(2020, 12, 15).and_hms(0, 0, 0)
+                    datetime: NaiveDate::from_ymd_opt(2020, 12, 15)
+                        .unwrap()
+                        .and_hms_opt(0, 0, 0)
+                        .unwrap()
                 },
                 StockMovementRow {
                     id: "n/a".to_string(),
                     item_id: mock_item_a().id,
                     store_id: store().id,
                     quantity: 60,
-                    datetime: NaiveDate::from_ymd(2021, 01, 20).and_hms(0, 0, 0)
+                    datetime: NaiveDate::from_ymd_opt(2021, 01, 20)
+                        .unwrap()
+                        .and_hms_opt(0, 0, 0)
+                        .unwrap()
                 },
                 StockMovementRow {
                     id: "n/a".to_string(),
                     item_id: mock_item_a().id,
                     store_id: store().id,
                     quantity: -50,
-                    datetime: NaiveDate::from_ymd(2021, 02, 01).and_hms(0, 0, 0)
+                    datetime: NaiveDate::from_ymd_opt(2021, 02, 01)
+                        .unwrap()
+                        .and_hms_opt(0, 0, 0)
+                        .unwrap()
                 },
             ]
         )

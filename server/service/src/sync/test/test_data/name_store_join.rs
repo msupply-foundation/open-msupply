@@ -1,8 +1,12 @@
 use crate::sync::{
-    test::TestSyncPullRecord,
-    translations::{LegacyTableName, PullDeleteRecordTable, PullUpsertRecord},
+    test::{TestSyncPullRecord, TestSyncPushRecord},
+    translations::{
+        name_store_join::LegacyNameStoreJoinRow, LegacyTableName, PullDeleteRecordTable,
+        PullUpsertRecord,
+    },
 };
 use repository::NameStoreJoinRow;
+use serde_json::json;
 
 const NAME_STORE_JOIN_1: (&'static str, &'static str) = (
     "66607B6E7F2A47E782B8AC6743F71A8A",
@@ -27,6 +31,7 @@ fn name_store_join_1_pull_record() -> TestSyncPullRecord {
             name_id: "name_store_c".to_string(),
             name_is_customer: false,
             name_is_supplier: true,
+            is_sync_update: true,
         }),
     )
 }
@@ -65,6 +70,7 @@ fn name_store_join_2_pull_record() -> TestSyncPullRecord {
             name_id: "name_store_a".to_string(),
             name_is_customer: false,
             name_is_supplier: true,
+            is_sync_update: true,
         }),
     )
 }
@@ -126,4 +132,33 @@ pub(crate) fn test_pull_delete_records() -> Vec<TestSyncPullRecord> {
 
 pub(crate) fn test_pull_upsert_inactive_records() -> Vec<TestSyncPullRecord> {
     vec![name_store_join_2_inactive_pull_record()]
+}
+
+pub(crate) fn test_push_upsert() -> Vec<TestSyncPushRecord> {
+    vec![
+        TestSyncPushRecord {
+            record_id: NAME_STORE_JOIN_1.0.to_string(),
+            table_name: LegacyTableName::NAME_STORE_JOIN.to_string(),
+            push_data: json!(LegacyNameStoreJoinRow {
+                id: NAME_STORE_JOIN_1.0.to_string(),
+                store_id: "store_a".to_string(),
+                name_id: "name_store_c".to_string(),
+                inactive: Some(false),
+                name_is_customer: Some(false),
+                name_is_supplier: Some(true),
+            }),
+        },
+        TestSyncPushRecord {
+            record_id: NAME_STORE_JOIN_2.0.to_string(),
+            table_name: LegacyTableName::NAME_STORE_JOIN.to_string(),
+            push_data: json!(LegacyNameStoreJoinRow {
+                id: NAME_STORE_JOIN_2.0.to_string(),
+                store_id: "store_b".to_string(),
+                name_id: "name_store_a".to_string(),
+                inactive: Some(false),
+                name_is_customer: Some(false),
+                name_is_supplier: Some(true),
+            }),
+        },
+    ]
 }

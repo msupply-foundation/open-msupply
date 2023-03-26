@@ -31,6 +31,14 @@ type Options = z.infer<typeof Options>;
 
 type DisplayOption = { label: string };
 
+/**
+ * Operates on a string property (like a Text control) but allows to have predefined string options
+ * depending on another Field.
+ *
+ * For example, if value of the field at `options.conditionField` is "Option1", the user can only
+ * select values from `options.conditionalValues["Option1"]`.
+ */
+
 const UIComponent = (props: ControlProps) => {
   const { core } = useJsonForms();
   const { data, handleChange, label, path } = props;

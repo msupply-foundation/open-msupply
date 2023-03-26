@@ -65,6 +65,7 @@ pub fn patient_document_updated(
             .or(Some(update_timestamp.naive_utc())), // assume there is no earlier doc version
         is_deceased: patient.is_deceased.unwrap_or(false),
         national_health_number: patient.code_2,
+        is_sync_update: false,
     })?;
     let name_repo = NameRepository::new(con);
     let name = name_repo.query_one(
@@ -82,6 +83,7 @@ pub fn patient_document_updated(
             store_id: store_id.to_string(),
             name_is_customer: true,
             name_is_supplier: false,
+            is_sync_update: false,
         })?;
     }
     Ok(())

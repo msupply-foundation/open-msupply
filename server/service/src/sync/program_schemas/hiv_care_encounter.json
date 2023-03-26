@@ -16,11 +16,7 @@
       "type": "object"
     },
     "EncounterStatus": {
-      "enum": [
-        "SCHEDULED",
-        "COMPLETED",
-        "CANCELLED"
-      ],
+      "enum": ["SCHEDULED", "COMPLETED", "CANCELLED"],
       "type": "string"
     },
     "FamilyPlanning": {
@@ -31,11 +27,7 @@
         },
         "pregnant": {
           "description": "77386006 Pregnant",
-          "enum": [
-            "Yes",
-            "No",
-            "Breastfeeding"
-          ],
+          "enum": ["Yes", "No", "Breastfeeding"],
           "type": "string"
         }
       },
@@ -47,11 +39,7 @@
           "if": {
             "properties": {
               "regimenStatus": {
-                "enum": [
-                  "START",
-                  "CHANGE",
-                  "STOP"
-                ]
+                "enum": ["START", "CHANGE", "STOP"]
               }
             }
           },
@@ -62,6 +50,9 @@
             },
             "endOfSupply": {
               "format": "date-time",
+              "type": "string"
+            },
+            "otherRegimen": {
               "type": "string"
             },
             "prophylaxisMedication": {
@@ -84,9 +75,13 @@
               },
               "type": "array"
             },
-            "quantityPrescribed": {
-              "description": "Number of pills prescribed",
+            "quantityDispensed": {
+              "description": "Number of pills dispensed in this encounter",
               "minimum": 0,
+              "type": "number"
+            },
+            "quantityPrescribed": {
+              "description": "Number of pills on hand at the end of the encounter.",
               "type": "number"
             },
             "regimen": {
@@ -122,7 +117,7 @@
                 "6b-Old",
                 "6c-New",
                 "6c-Old",
-                "Other"
+                "Other - please specify"
               ],
               "type": "string"
             },
@@ -180,12 +175,18 @@
             },
             "regimenStatus": {
               "description": "Antiretroviral treatment status",
+              "enum": ["NO", "START", "CONTINUE", "CHANGE", "STOP"],
+              "type": "string"
+            },
+            "regimenType": {
               "enum": [
-                "NO",
-                "START",
-                "CONTINUE",
-                "CHANGE",
-                "STOP"
+                "First Line - Adult",
+                "Second Line - Adult",
+                "First Line - Paeds 20-30kg",
+                "Second Line - Paeds 20-30kg",
+                "First Line - Paeds <20kg",
+                "Second Line - Paeds <20kg",
+                "Other"
               ],
               "type": "string"
             },
@@ -205,11 +206,9 @@
               "type": "number"
             }
           },
+          "required": ["regimenStatus"],
           "then": {
-            "required": [
-              "regimen",
-              "regimenChangeReason"
-            ]
+            "required": ["regimen", "regimenChangeReason"]
           },
           "type": "object"
         },
@@ -260,30 +259,17 @@
           "properties": {
             "intimatePartnerViolence": {
               "description": "Victim of intimate partner abuse 706893006",
-              "enum": [
-                "Yes",
-                "No",
-                "N/A"
-              ],
+              "enum": ["Yes", "No", "N/A"],
               "type": "string"
             },
             "postServiceProvided": {
               "description": "Post GBV Services provided?",
-              "enum": [
-                "Yes",
-                "No",
-                "Declined",
-                "N/A"
-              ],
+              "enum": ["Yes", "No", "Declined", "N/A"],
               "type": "string"
             },
             "rape": {
               "description": "Victim of rape 42085001",
-              "enum": [
-                "Yes",
-                "No",
-                "N/A"
-              ],
+              "enum": ["Yes", "No", "N/A"],
               "type": "string"
             },
             "receivedServiceType": {
@@ -297,63 +283,17 @@
             },
             "referredForExternalServices": {
               "description": "Referred for external services?",
-              "enum": [
-                "Yes",
-                "No",
-                "N/A"
-              ],
+              "enum": ["Yes", "No", "N/A"],
               "type": "string"
             },
             "screened": {
               "description": "Screened for Gender Based Violence",
-              "enum": [
-                "Positive",
-                "Negative",
-                "Declined",
-                "NotDone"
-              ],
+              "enum": ["Positive", "Negative", "Declined", "NotDone"],
               "type": "string"
             },
             "type": {
               "description": "Type of Gender Based Violence",
-              "enum": [
-                "Physical",
-                "Psychological",
-                "Sexual",
-                "N/A"
-              ],
-              "type": "string"
-            }
-          },
-          "type": "object"
-        },
-        "general": {
-          "properties": {
-            "location": {
-              "description": "Location needed if visitType is 'Refill' or 'Outreach'",
-              "type": "string"
-            },
-            "referredTo": {
-              "enum": [
-                "PMTCT",
-                "HBC",
-                "PLHA Support Group/Club",
-                "Orphan and vulnerable children group",
-                "Medical specialty",
-                "Nutritional Support",
-                "Legal",
-                "Medical Ward",
-                "TB Ward",
-                "Other"
-              ],
-              "type": "string"
-            },
-            "visitType": {
-              "enum": [
-                "Outreach",
-                "Refill",
-                "Standard"
-              ],
+              "enum": ["Physical", "Psychological", "Sexual", "N/A"],
               "type": "string"
             }
           },
@@ -379,10 +319,7 @@
               "type": "object"
             },
             "hepBSAg": {
-              "enum": [
-                "Pos",
-                "Neg"
-              ],
+              "enum": ["Pos", "Neg"],
               "type": "string"
             },
             "rbslToFbsl": {
@@ -394,10 +331,7 @@
               "type": "number"
             },
             "tpha": {
-              "enum": [
-                "Pos",
-                "Neg"
-              ],
+              "enum": ["Pos", "Neg"],
               "type": "string"
             }
           },
@@ -406,21 +340,14 @@
         "hcvCrag": {
           "properties": {
             "crAgResult": {
-              "enum": [
-                "Positive",
-                "Negative",
-                "Inc"
-              ],
+              "enum": ["Positive", "Negative", "Inc"],
               "type": "string"
             },
             "crAgTitre": {
               "type": "string"
             },
             "hcv": {
-              "enum": [
-                "Positive",
-                "Negative"
-              ],
+              "enum": ["Positive", "Negative"],
               "type": "string"
             }
           },
@@ -429,28 +356,18 @@
         "indexTesting": {
           "properties": {
             "indexTestingAccepted": {
-              "enum": [
-                "Yes",
-                "No",
-                "N/A"
-              ],
+              "enum": ["Yes", "No", "N/A"],
               "type": "string"
             },
             "indexTestingOffered": {
-              "enum": [
-                "Yes",
-                "No",
-                "Declined"
-              ],
+              "enum": ["Yes", "No", "Declined"],
               "type": "string"
             },
             "ipvRisk": {
               "$ref": "#/definitions/YesNo"
             }
           },
-          "required": [
-            "indexTestingAccepted"
-          ],
+          "required": ["indexTestingAccepted"],
           "type": "object"
         },
         "notes": {
@@ -466,18 +383,17 @@
               "description": "75367002\tBlood pressure [mmHg]",
               "properties": {
                 "diastolic": {
-                  "pattern": "^\\d{1,3}$",
+                  "maximum": 999,
+                  "minimum": 0,
                   "type": "number"
                 },
                 "systolic": {
-                  "pattern": "^\\d{1,3}$",
+                  "maximum": 999,
+                  "minimum": 0,
                   "type": "number"
                 }
               },
-              "required": [
-                "systolic",
-                "diastolic"
-              ],
+              "required": ["systolic", "diastolic"],
               "type": "object"
             },
             "bodyMassIndex": {
@@ -486,21 +402,14 @@
             },
             "height": {
               "description": "50373000\tBody height measure [m]",
-              "examples": [
-                "1.55",
-                "0.92",
-                "1.75"
-              ],
+              "examples": ["1.55", "0.92", "1.75"],
               "pattern": "^\\d\\.\\d{2}$",
               "title": "Height in m",
               "type": "string"
             },
             "midUpperArmCircumference": {
               "description": "284473002\tMid upper arm circumference (MUAC) [cm]",
-              "examples": [
-                "23.0",
-                "21.4"
-              ],
+              "examples": ["23.0", "21.4"],
               "pattern": "^\\d+\\.\\d+$",
               "title": "MUAC in cm",
               "type": "string"
@@ -509,11 +418,7 @@
               "properties": {
                 "nutritionalStatus": {
                   "description": "366364004  nutritional status",
-                  "enum": [
-                    "UNDER_NOURISHED",
-                    "WELL_NOURISHED",
-                    "OVERWEIGHT"
-                  ],
+                  "enum": ["UNDER_NOURISHED", "WELL_NOURISHED", "OVERWEIGHT"],
                   "type": "string"
                 },
                 "nutritionalSupportNeeded": {
@@ -618,10 +523,7 @@
             },
             "weight": {
               "description": "735395000\tCurrent body weight [kg]",
-              "examples": [
-                "75.1",
-                "60.0"
-              ],
+              "examples": ["75.1", "60.0"],
               "pattern": "^\\d+\\.\\d+$",
               "title": "Weight in kg",
               "type": "string"
@@ -636,6 +538,32 @@
               ],
               "title": "WHO Staging",
               "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "referral": {
+          "properties": {
+            "note": {
+              "type": "string"
+            },
+            "referredTo": {
+              "items": {
+                "enum": [
+                  "PMTCT",
+                  "HBC",
+                  "PLHA Support Group/Club",
+                  "Orphan and vulnerable children group",
+                  "Medical specialty",
+                  "Nutritional Support",
+                  "Legal",
+                  "Medical Ward",
+                  "TB Ward",
+                  "Other"
+                ],
+                "type": "string"
+              },
+              "type": "array"
             }
           },
           "type": "object"
@@ -657,38 +585,18 @@
               "type": "string"
             },
             "tbGeneXpert": {
-              "enum": [
-                "NOT_DETECTED",
-                "POSITIVE_RIF_SENSITIVE",
-                "POSITIVE_RIF_RESISTANT"
-              ],
+              "enum": ["NOT_DETECTED", "POSITIVE_RIF_SENSITIVE", "POSITIVE_RIF_RESISTANT"],
               "type": "string"
             },
             "tbScreening": {
               "$ref": "#/definitions/YesNo"
             },
             "tbSputum": {
-              "enum": [
-                "NO_AFB",
-                "POS_1",
-                "POS_2",
-                "POS_3"
-              ],
+              "enum": ["NO_AFB", "POS_1", "POS_2", "POS_3"],
               "type": "string"
             },
             "tbStatus": {
-              "enum": [
-                "TB confirmed clinically",
-                "TB confirmed by sputum",
-                "TB confirmed by X-ray",
-                "Currently on INH prophylaxis (IPT)",
-                "Not suspected / no signs or symptoms",
-                "TB suspected and referred for evaluation",
-                "TB suspected and sputums sample sent or results recorded",
-                "Currently on TB treatment",
-                "Has completed TB treatment, no signs or symptoms",
-                "Has TB (code from old CTC form)"
-              ],
+              "enum": ["CONFMC", "CONFMS", "CONFMX", "INH", "NO", "REFER", "SP", "TBRX", "TBRXC", "YES"],
               "type": "string"
             }
           },
@@ -701,10 +609,7 @@
               "type": "boolean"
             },
             "targeting": {
-              "enum": [
-                "TARGETED",
-                "SCHEDULED"
-              ],
+              "enum": ["TARGETED", "SCHEDULED"],
               "type": "string"
             },
             "tested": {
@@ -717,35 +622,32 @@
             },
             "viralLoadStatus": {
               "description": "Based on viral load result",
-              "enum": [
-                "Suppressed",
-                "Unsuppressed"
-              ],
+              "enum": ["Suppressed", "Unsuppressed"],
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "visit": {
+          "properties": {
+            "location": {
+              "description": "Location needed if visitType is 'Refill' or 'Outreach'",
+              "enum": ["9 Mile Clinic, NCD", "Angelicare Newtown", "Angelicare StopAIDS, NCD"],
+              "type": "string"
+            },
+            "visitType": {
+              "enum": ["Outreach", "Refill", "Standard"],
               "type": "string"
             }
           },
           "type": "object"
         }
       },
-      "required": [
-        "createdDatetime",
-        "startDatetime"
-      ],
+      "required": ["createdDatetime", "startDatetime"],
       "type": "object"
     },
     "HIVRiskGroup": {
-      "enum": [
-        "LRM",
-        "MSM",
-        "MSW",
-        "MSMSW",
-        "HRM",
-        "LRW",
-        "HRW",
-        "FSW",
-        "TG",
-        "TGSW"
-      ],
+      "enum": ["LRM", "MSM", "MSW", "MSMSW", "HRM", "LRW", "HRW", "FSW", "TG", "TGSW"],
       "type": "string"
     },
     "Note": {
@@ -767,12 +669,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "text",
-        "created",
-        "authorId",
-        "authorName"
-      ],
+      "required": ["text", "created", "authorId", "authorName"],
       "type": "object"
     },
     "RiskBehaviour": {
@@ -839,10 +736,7 @@
       "type": "object"
     },
     "YesNo": {
-      "enum": [
-        "Yes",
-        "No"
-      ],
+      "enum": ["Yes", "No"],
       "type": "string"
     }
   },

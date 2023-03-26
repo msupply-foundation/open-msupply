@@ -98,7 +98,7 @@ fn generate_evolution_series(
     let mut points = StockEvolutionPoints {
         historic_points: Vec::new(),
         projected_points: Vec::new(),
-        first_historic_datetime: first_historic_date.and_hms(0, 0, 0),
+        first_historic_datetime: first_historic_date.and_hms_opt(0, 0, 0).unwrap(),
         last_historic_datetime: reference_datetime,
     };
 
@@ -193,8 +193,11 @@ fn calculate_projected_stock_evolution(
 }
 
 fn within_range(within_date: NaiveDate, datetime: NaiveDateTime) -> bool {
-    within_date.and_hms(0, 0, 0) <= datetime
-        && datetime <= date_with_days_offset(&within_date, 1).and_hms(0, 0, 0)
+    within_date.and_hms_opt(0, 0, 0).unwrap() <= datetime
+        && datetime
+            <= date_with_days_offset(&within_date, 1)
+                .and_hms_opt(0, 0, 0)
+                .unwrap()
 }
 
 #[cfg(test)]
@@ -206,7 +209,10 @@ mod tests {
     fn test_generate_series() {
         assert_eq!(
             generate_evolution_series(
-                NaiveDate::from_ymd(2021, 1, 2).and_hms(12, 10, 11),
+                NaiveDate::from_ymd_opt(2021, 1, 2)
+                    .unwrap()
+                    .and_hms_opt(12, 10, 11)
+                    .unwrap(),
                 StockEvolutionOptions {
                     number_of_historic_data_points: 3,
                     number_of_projected_data_points: 4
@@ -214,18 +220,24 @@ mod tests {
             ),
             StockEvolutionPoints {
                 historic_points: vec![
-                    NaiveDate::from_ymd(2020, 12, 31),
-                    NaiveDate::from_ymd(2021, 01, 01),
-                    NaiveDate::from_ymd(2021, 01, 2),
+                    NaiveDate::from_ymd_opt(2020, 12, 31).unwrap(),
+                    NaiveDate::from_ymd_opt(2021, 01, 01).unwrap(),
+                    NaiveDate::from_ymd_opt(2021, 01, 2).unwrap(),
                 ],
                 projected_points: vec![
-                    NaiveDate::from_ymd(2021, 1, 3),
-                    NaiveDate::from_ymd(2021, 1, 4),
-                    NaiveDate::from_ymd(2021, 1, 5),
-                    NaiveDate::from_ymd(2021, 1, 6),
+                    NaiveDate::from_ymd_opt(2021, 1, 3).unwrap(),
+                    NaiveDate::from_ymd_opt(2021, 1, 4).unwrap(),
+                    NaiveDate::from_ymd_opt(2021, 1, 5).unwrap(),
+                    NaiveDate::from_ymd_opt(2021, 1, 6).unwrap(),
                 ],
-                first_historic_datetime: NaiveDate::from_ymd(2020, 12, 31).and_hms(0, 0, 0),
-                last_historic_datetime: NaiveDate::from_ymd(2021, 1, 2).and_hms(12, 10, 11)
+                first_historic_datetime: NaiveDate::from_ymd_opt(2020, 12, 31)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap(),
+                last_historic_datetime: NaiveDate::from_ymd_opt(2021, 1, 2)
+                    .unwrap()
+                    .and_hms_opt(12, 10, 11)
+                    .unwrap()
             }
         );
     }
@@ -236,50 +248,68 @@ mod tests {
             calculate_historic_stock_evolution(
                 30,
                 vec![
-                    NaiveDate::from_ymd(2020, 12, 31),
-                    NaiveDate::from_ymd(2021, 1, 1),
-                    NaiveDate::from_ymd(2021, 1, 2),
+                    NaiveDate::from_ymd_opt(2020, 12, 31).unwrap(),
+                    NaiveDate::from_ymd_opt(2021, 1, 1).unwrap(),
+                    NaiveDate::from_ymd_opt(2021, 1, 2).unwrap(),
                 ],
                 vec![
                     inline_init(|r: &mut StockMovementRow| {
                         r.quantity = 10;
-                        r.datetime = NaiveDate::from_ymd(2021, 1, 2).and_hms(10, 0, 0);
+                        r.datetime = NaiveDate::from_ymd_opt(2021, 1, 2)
+                            .unwrap()
+                            .and_hms_opt(10, 0, 0)
+                            .unwrap();
                     }),
                     inline_init(|r: &mut StockMovementRow| {
                         r.quantity = -20;
-                        r.datetime = NaiveDate::from_ymd(2021, 1, 2).and_hms(7, 0, 0);
+                        r.datetime = NaiveDate::from_ymd_opt(2021, 1, 2)
+                            .unwrap()
+                            .and_hms_opt(7, 0, 0)
+                            .unwrap();
                     }),
                     inline_init(|r: &mut StockMovementRow| {
                         r.quantity = 15;
-                        r.datetime = NaiveDate::from_ymd(2021, 1, 1).and_hms(2, 0, 0);
+                        r.datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
+                            .unwrap()
+                            .and_hms_opt(2, 0, 0)
+                            .unwrap();
                     }),
                     inline_init(|r: &mut StockMovementRow| {
                         r.quantity = 7;
-                        r.datetime = NaiveDate::from_ymd(2021, 1, 1).and_hms(2, 0, 0);
+                        r.datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
+                            .unwrap()
+                            .and_hms_opt(2, 0, 0)
+                            .unwrap();
                     }),
                     // Not counted
                     inline_init(|r: &mut StockMovementRow| {
                         r.quantity = -20;
-                        r.datetime = NaiveDate::from_ymd(2020, 12, 31).and_hms(2, 0, 0);
+                        r.datetime = NaiveDate::from_ymd_opt(2020, 12, 31)
+                            .unwrap()
+                            .and_hms_opt(2, 0, 0)
+                            .unwrap();
                     }),
                     // Not counted
                     inline_init(|r: &mut StockMovementRow| {
                         r.quantity = -100;
-                        r.datetime = NaiveDate::from_ymd(2021, 1, 3).and_hms(2, 0, 0);
+                        r.datetime = NaiveDate::from_ymd_opt(2021, 1, 3)
+                            .unwrap()
+                            .and_hms_opt(2, 0, 0)
+                            .unwrap();
                     })
                 ]
             ),
             vec![
                 StockEvolution {
-                    date: NaiveDate::from_ymd(2020, 12, 31),
+                    date: NaiveDate::from_ymd_opt(2020, 12, 31).unwrap(),
                     quantity: 18.0 // (40) - 15 - 7 = (18)
                 },
                 StockEvolution {
-                    date: NaiveDate::from_ymd(2021, 1, 1),
+                    date: NaiveDate::from_ymd_opt(2021, 1, 1).unwrap(),
                     quantity: 40.0 // 30 - 10 + 20 = (40)
                 },
                 StockEvolution {
-                    date: NaiveDate::from_ymd(2021, 1, 2),
+                    date: NaiveDate::from_ymd_opt(2021, 1, 2).unwrap(),
                     quantity: 30.0 // initial
                 }
             ]
@@ -293,29 +323,29 @@ mod tests {
                 30,
                 25.5 * NUMBER_OF_DAYS_IN_A_MONTH, // amc
                 100,
-                NaiveDate::from_ymd(2021, 1, 5),
+                NaiveDate::from_ymd_opt(2021, 1, 5).unwrap(),
                 vec![
-                    NaiveDate::from_ymd(2021, 1, 3),
-                    NaiveDate::from_ymd(2021, 1, 4),
-                    NaiveDate::from_ymd(2021, 1, 5),
-                    NaiveDate::from_ymd(2021, 1, 6),
+                    NaiveDate::from_ymd_opt(2021, 1, 3).unwrap(),
+                    NaiveDate::from_ymd_opt(2021, 1, 4).unwrap(),
+                    NaiveDate::from_ymd_opt(2021, 1, 5).unwrap(),
+                    NaiveDate::from_ymd_opt(2021, 1, 6).unwrap(),
                 ]
             ),
             vec![
                 StockEvolution {
-                    date: NaiveDate::from_ymd(2021, 1, 3),
+                    date: NaiveDate::from_ymd_opt(2021, 1, 3).unwrap(),
                     quantity: 4.5 // 30 - 25.5 - 4.5
                 },
                 StockEvolution {
-                    date: NaiveDate::from_ymd(2021, 1, 4),
+                    date: NaiveDate::from_ymd_opt(2021, 1, 4).unwrap(),
                     quantity: 0.0 // (4.5) - 25.5 = -something, but we set to (0)
                 },
                 StockEvolution {
-                    date: NaiveDate::from_ymd(2021, 1, 5),
+                    date: NaiveDate::from_ymd_opt(2021, 1, 5).unwrap(),
                     quantity: 74.5 // (0) - 25.5 + 50 = (74.5), adding suggested
                 },
                 StockEvolution {
-                    date: NaiveDate::from_ymd(2021, 1, 6),
+                    date: NaiveDate::from_ymd_opt(2021, 1, 6).unwrap(),
                     quantity: 49.0 // (74.5) - 25.5 = 49.0
                 },
             ]

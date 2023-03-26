@@ -202,9 +202,16 @@ mod test {
                 r.store_id = String::from("store_a");
                 r.r#type = InvoiceRowType::OutboundShipment;
                 r.status = InvoiceRowStatus::Allocated;
-                r.created_datetime = NaiveDate::from_ymd(1970, 1, 7).and_hms_milli(15, 30, 0, 0);
-                r.allocated_datetime =
-                    Some(NaiveDate::from_ymd(1970, 1, 7).and_hms_milli(15, 30, 0, 0));
+                r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 7)
+                    .unwrap()
+                    .and_hms_milli_opt(15, 30, 0, 0)
+                    .unwrap();
+                r.allocated_datetime = Some(
+                    NaiveDate::from_ymd_opt(1970, 1, 7)
+                        .unwrap()
+                        .and_hms_milli_opt(15, 30, 0, 0)
+                        .unwrap(),
+                );
             })
         }
 

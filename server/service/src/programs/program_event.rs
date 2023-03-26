@@ -40,7 +40,10 @@ struct StackEvent {
 /// NaiveDateTime::MAX doesn't serializes well in sqlite (+262143-12-31 23:59:59.999999999 is
 /// smaller than any other datetime)
 fn max_datetime() -> NaiveDateTime {
-    NaiveDate::from_ymd(9999, 9, 9).and_hms(9, 9, 9)
+    NaiveDate::from_ymd_opt(9999, 9, 9)
+        .unwrap()
+        .and_hms_opt(9, 9, 9)
+        .unwrap()
 }
 
 fn event_target_filter(target: &EventTarget) -> ProgramEventFilter {
@@ -255,7 +258,7 @@ mod test {
             let events = $service
                 .active_events(
                     &$ctx,
-                    NaiveDateTime::from_timestamp($at, 0),
+                    NaiveDateTime::from_timestamp_opt($at, 0).unwrap(),
                     None,
                     Some(ProgramEventFilter::new()),
                     None,
@@ -294,9 +297,9 @@ mod test {
             .upsert_events(
                 &ctx,
                 "patient2".to_string(),
-                NaiveDateTime::from_timestamp(10, 0),
+                NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
                 vec![EventInput {
-                    active_start_datetime: NaiveDateTime::from_timestamp(10, 0),
+                    active_start_datetime: NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
                     document_type: "DocType".to_string(),
                     document_name: None,
                     r#type: "status".to_string(),
@@ -314,9 +317,9 @@ mod test {
             .upsert_events(
                 &ctx,
                 "patient2".to_string(),
-                NaiveDateTime::from_timestamp(20, 0),
+                NaiveDateTime::from_timestamp_opt(20, 0).unwrap(),
                 vec![EventInput {
-                    active_start_datetime: NaiveDateTime::from_timestamp(30, 0),
+                    active_start_datetime: NaiveDateTime::from_timestamp_opt(30, 0).unwrap(),
                     document_type: "DocType".to_string(),
                     document_name: None,
                     r#type: "status".to_string(),
@@ -336,9 +339,9 @@ mod test {
             .upsert_events(
                 &ctx,
                 "patient2".to_string(),
-                NaiveDateTime::from_timestamp(25, 0),
+                NaiveDateTime::from_timestamp_opt(25, 0).unwrap(),
                 vec![EventInput {
-                    active_start_datetime: NaiveDateTime::from_timestamp(35, 0),
+                    active_start_datetime: NaiveDateTime::from_timestamp_opt(35, 0).unwrap(),
                     document_type: "DocType".to_string(),
                     document_name: None,
                     r#type: "status".to_string(),
@@ -354,9 +357,9 @@ mod test {
             .upsert_events(
                 &ctx,
                 "patient2".to_string(),
-                NaiveDateTime::from_timestamp(40, 0),
+                NaiveDateTime::from_timestamp_opt(40, 0).unwrap(),
                 vec![EventInput {
-                    active_start_datetime: NaiveDateTime::from_timestamp(40, 0),
+                    active_start_datetime: NaiveDateTime::from_timestamp_opt(40, 0).unwrap(),
                     document_type: "DocType2".to_string(),
                     document_name: None,
                     r#type: "status".to_string(),
@@ -389,9 +392,9 @@ mod test {
             .upsert_events(
                 &ctx,
                 "patient2".to_string(),
-                NaiveDateTime::from_timestamp(10, 0),
+                NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
                 vec![EventInput {
-                    active_start_datetime: NaiveDateTime::from_timestamp(10, 0),
+                    active_start_datetime: NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
                     document_type: "DocType".to_string(),
                     document_name: None,
                     r#type: "status".to_string(),
@@ -409,9 +412,9 @@ mod test {
             .upsert_events(
                 &ctx,
                 "patient2".to_string(),
-                NaiveDateTime::from_timestamp(5, 0),
+                NaiveDateTime::from_timestamp_opt(5, 0).unwrap(),
                 vec![EventInput {
-                    active_start_datetime: NaiveDateTime::from_timestamp(5, 0),
+                    active_start_datetime: NaiveDateTime::from_timestamp_opt(5, 0).unwrap(),
                     document_type: "DocType".to_string(),
                     document_name: None,
                     r#type: "status".to_string(),
@@ -441,17 +444,17 @@ mod test {
             .upsert_events(
                 &ctx,
                 "patient2".to_string(),
-                NaiveDateTime::from_timestamp(10, 0),
+                NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
                 vec![
                     EventInput {
-                        active_start_datetime: NaiveDateTime::from_timestamp(10, 0),
+                        active_start_datetime: NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
                         document_type: "DocType".to_string(),
                         document_name: None,
                         r#type: "status".to_string(),
                         name: Some("G1_1".to_string()),
                     },
                     EventInput {
-                        active_start_datetime: NaiveDateTime::from_timestamp(20, 0),
+                        active_start_datetime: NaiveDateTime::from_timestamp_opt(20, 0).unwrap(),
                         document_type: "DocType".to_string(),
                         document_name: None,
                         r#type: "status".to_string(),
@@ -472,17 +475,17 @@ mod test {
             .upsert_events(
                 &ctx,
                 "patient2".to_string(),
-                NaiveDateTime::from_timestamp(10, 0),
+                NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
                 vec![
                     EventInput {
-                        active_start_datetime: NaiveDateTime::from_timestamp(15, 0),
+                        active_start_datetime: NaiveDateTime::from_timestamp_opt(15, 0).unwrap(),
                         document_type: "DocType".to_string(),
                         document_name: None,
                         r#type: "status".to_string(),
                         name: Some("G1_3".to_string()),
                     },
                     EventInput {
-                        active_start_datetime: NaiveDateTime::from_timestamp(30, 0),
+                        active_start_datetime: NaiveDateTime::from_timestamp_opt(30, 0).unwrap(),
                         document_type: "DocType".to_string(),
                         document_name: None,
                         r#type: "status".to_string(),
@@ -506,17 +509,17 @@ mod test {
             .upsert_events(
                 &ctx,
                 "patient2".to_string(),
-                NaiveDateTime::from_timestamp(25, 0),
+                NaiveDateTime::from_timestamp_opt(25, 0).unwrap(),
                 vec![
                     EventInput {
-                        active_start_datetime: NaiveDateTime::from_timestamp(35, 0),
+                        active_start_datetime: NaiveDateTime::from_timestamp_opt(35, 0).unwrap(),
                         document_type: "DocType".to_string(),
                         document_name: None,
                         r#type: "status".to_string(),
                         name: Some("G2_1".to_string()),
                     },
                     EventInput {
-                        active_start_datetime: NaiveDateTime::from_timestamp(40, 0),
+                        active_start_datetime: NaiveDateTime::from_timestamp_opt(40, 0).unwrap(),
                         document_type: "DocType".to_string(),
                         document_name: None,
                         r#type: "status".to_string(),

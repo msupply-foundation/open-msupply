@@ -316,7 +316,7 @@ fn from_legacy_sent_datetime(
     match r#type {
         RequisitionRowType::Request => {
             if last_modified_at > 0 {
-                Some(NaiveDateTime::from_timestamp(last_modified_at, 0))
+                Some(NaiveDateTime::from_timestamp_opt(last_modified_at, 0).unwrap())
             } else {
                 None
             }
@@ -333,7 +333,7 @@ fn from_legacy_finalised_datetime(
         RequisitionRowType::Request => None,
         RequisitionRowType::Response => {
             if last_modified_at > 0 {
-                Some(NaiveDateTime::from_timestamp(last_modified_at, 0))
+                Some(NaiveDateTime::from_timestamp_opt(last_modified_at, 0).unwrap())
             } else {
                 None
             }

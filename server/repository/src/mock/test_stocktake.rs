@@ -10,7 +10,10 @@ pub fn mock_stocktake_without_lines() -> StocktakeRow {
         r.id = "stocktake_without_lines".to_string();
         r.store_id = "store_a".to_string();
         r.stocktake_number = 1;
-        r.created_datetime = NaiveDate::from_ymd(2021, 12, 14).and_hms_milli(12, 30, 0, 0);
+        r.created_datetime = NaiveDate::from_ymd_opt(2021, 12, 14)
+            .unwrap()
+            .and_hms_milli_opt(12, 30, 0, 0)
+            .unwrap();
     })
 }
 
@@ -20,8 +23,16 @@ pub fn mock_stocktake_finalised() -> StocktakeRow {
         r.store_id = "store_a".to_string();
         r.stocktake_number = 2;
         r.status = StocktakeStatus::Finalised;
-        r.created_datetime = NaiveDate::from_ymd(2021, 12, 14).and_hms_milli(12, 30, 0, 0);
-        r.finalised_datetime = Some(NaiveDate::from_ymd(2021, 12, 20).and_hms_milli(10, 15, 10, 0));
+        r.created_datetime = NaiveDate::from_ymd_opt(2021, 12, 14)
+            .unwrap()
+            .and_hms_milli_opt(12, 30, 0, 0)
+            .unwrap();
+        r.finalised_datetime = Some(
+            NaiveDate::from_ymd_opt(2021, 12, 20)
+                .unwrap()
+                .and_hms_milli_opt(10, 15, 10, 0)
+                .unwrap(),
+        );
     })
 }
 
@@ -31,8 +42,16 @@ pub fn mock_stocktake_finalised_without_lines() -> StocktakeRow {
         r.store_id = "store_a".to_string();
         r.stocktake_number = 3;
         r.status = StocktakeStatus::Finalised;
-        r.created_datetime = NaiveDate::from_ymd(2021, 12, 15).and_hms_milli(12, 30, 0, 0);
-        r.finalised_datetime = Some(NaiveDate::from_ymd(2021, 12, 21).and_hms_milli(10, 15, 10, 0));
+        r.created_datetime = NaiveDate::from_ymd_opt(2021, 12, 15)
+            .unwrap()
+            .and_hms_milli_opt(12, 30, 0, 0)
+            .unwrap();
+        r.finalised_datetime = Some(
+            NaiveDate::from_ymd_opt(2021, 12, 21)
+                .unwrap()
+                .and_hms_milli_opt(10, 15, 10, 0)
+                .unwrap(),
+        );
     })
 }
 
@@ -76,7 +95,10 @@ pub fn mock_stocktake_stock_surplus() -> StocktakeRow {
         r.id = "mock_stocktake_stock_surplus".to_string();
         r.store_id = "store_a".to_string();
         r.stocktake_number = 4;
-        r.created_datetime = NaiveDate::from_ymd(2021, 12, 22).and_hms_milli(12, 31, 0, 0);
+        r.created_datetime = NaiveDate::from_ymd_opt(2021, 12, 22)
+            .unwrap()
+            .and_hms_milli_opt(12, 31, 0, 0)
+            .unwrap();
     })
 }
 
@@ -118,7 +140,10 @@ pub fn mock_stocktake_stock_deficit() -> StocktakeRow {
         r.id = "mock_stocktake_stock_deficit".to_string();
         r.store_id = "store_a".to_string();
         r.stocktake_number = 1;
-        r.created_datetime = NaiveDate::from_ymd(2021, 12, 22).and_hms_milli(12, 31, 0, 0);
+        r.created_datetime = NaiveDate::from_ymd_opt(2021, 12, 22)
+            .unwrap()
+            .and_hms_milli_opt(12, 31, 0, 0)
+            .unwrap();
     })
 }
 
@@ -160,7 +185,10 @@ pub fn mock_stocktake_no_lines() -> StocktakeRow {
         r.id = "mock_stocktake_no_lines".to_string();
         r.store_id = "store_a".to_string();
         r.stocktake_number = 5;
-        r.created_datetime = NaiveDate::from_ymd(2022, 1, 6).and_hms_milli(15, 31, 0, 0);
+        r.created_datetime = NaiveDate::from_ymd_opt(2022, 1, 6)
+            .unwrap()
+            .and_hms_milli_opt(15, 31, 0, 0)
+            .unwrap();
     })
 }
 
@@ -171,7 +199,10 @@ pub fn mock_stocktake_no_count_change() -> StocktakeRow {
         r.id = "mock_stocktake_no_count_change".to_string();
         r.store_id = "store_a".to_string();
         r.stocktake_number = 8;
-        r.created_datetime = NaiveDate::from_ymd(2022, 1, 6).and_hms_milli(16, 31, 0, 0);
+        r.created_datetime = NaiveDate::from_ymd_opt(2022, 1, 6)
+            .unwrap()
+            .and_hms_milli_opt(16, 31, 0, 0)
+            .unwrap();
     })
 }
 
@@ -196,7 +227,10 @@ pub fn mock_stocktake_full_edit() -> StocktakeRow {
         r.stocktake_number = 6;
         r.comment = Some("comment_0".to_string());
         r.description = Some("description_0".to_string());
-        r.created_datetime = NaiveDate::from_ymd(2021, 12, 14).and_hms_milli(12, 32, 0, 0);
+        r.created_datetime = NaiveDate::from_ymd_opt(2021, 12, 14)
+            .unwrap()
+            .and_hms_milli_opt(12, 32, 0, 0)
+            .unwrap();
     })
 }
 
@@ -207,7 +241,10 @@ pub fn mock_stocktake_new_stock_line() -> StocktakeRow {
         r.id = "mock_stocktake_new_stock_line".to_string();
         r.store_id = "store_a".to_string();
         r.stocktake_number = 7;
-        r.created_datetime = NaiveDate::from_ymd(2021, 12, 14).and_hms_milli(12, 33, 0, 0);
+        r.created_datetime = NaiveDate::from_ymd_opt(2021, 12, 14)
+            .unwrap()
+            .and_hms_milli_opt(12, 33, 0, 0)
+            .unwrap();
     })
 }
 pub fn mock_stocktake_line_new_stock_line() -> StocktakeLineRow {
@@ -216,7 +253,7 @@ pub fn mock_stocktake_line_new_stock_line() -> StocktakeLineRow {
         r.stocktake_id = mock_stocktake_new_stock_line().id;
         r.counted_number_of_packs = Some(55.0);
         r.item_id = mock_item_a().id;
-        r.expiry_date = Some(NaiveDate::from_ymd(2022, 12, 14));
+        r.expiry_date = Some(NaiveDate::from_ymd_opt(2022, 12, 14).unwrap());
         r.batch = Some("batch".to_string());
         r.pack_size = Some(10);
         r.cost_price_per_pack = Some(11.0);

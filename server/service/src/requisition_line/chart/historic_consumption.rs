@@ -177,36 +177,36 @@ mod tests {
     fn test_generate_series() {
         assert_eq!(
             generate_consumption_series(
-                NaiveDate::from_ymd(2021, 1, 4),
+                NaiveDate::from_ymd_opt(2021, 1, 4).unwrap(),
                 ConsumptionHistoryOptions {
                     amc_lookback_months: 5,
                     number_of_data_points: 3
                 }
             ),
             ConsumptionHistoryPoints {
-                first_date: NaiveDate::from_ymd(2020, 7, 1),
-                last_date: NaiveDate::from_ymd(2021, 1, 31),
+                first_date: NaiveDate::from_ymd_opt(2020, 7, 1).unwrap(),
+                last_date: NaiveDate::from_ymd_opt(2021, 1, 31).unwrap(),
                 rows: vec![
                     ConsumptionHistoryPoint {
-                        reference_date: NaiveDate::from_ymd(2020, 11, 30),
-                        start_of_consumption_lookup: NaiveDate::from_ymd(2020, 11, 01),
-                        end_of_consumption_lookup: NaiveDate::from_ymd(2020, 11, 30),
-                        start_of_amc_lookup: NaiveDate::from_ymd(2020, 07, 01),
-                        end_of_amc_lookup: NaiveDate::from_ymd(2020, 11, 30),
+                        reference_date: NaiveDate::from_ymd_opt(2020, 11, 30).unwrap(),
+                        start_of_consumption_lookup: NaiveDate::from_ymd_opt(2020, 11, 01).unwrap(),
+                        end_of_consumption_lookup: NaiveDate::from_ymd_opt(2020, 11, 30).unwrap(),
+                        start_of_amc_lookup: NaiveDate::from_ymd_opt(2020, 07, 01).unwrap(),
+                        end_of_amc_lookup: NaiveDate::from_ymd_opt(2020, 11, 30).unwrap(),
                     },
                     ConsumptionHistoryPoint {
-                        reference_date: NaiveDate::from_ymd(2020, 12, 31),
-                        start_of_consumption_lookup: NaiveDate::from_ymd(2020, 12, 01),
-                        end_of_consumption_lookup: NaiveDate::from_ymd(2020, 12, 31),
-                        start_of_amc_lookup: NaiveDate::from_ymd(2020, 08, 01),
-                        end_of_amc_lookup: NaiveDate::from_ymd(2020, 12, 31),
+                        reference_date: NaiveDate::from_ymd_opt(2020, 12, 31).unwrap(),
+                        start_of_consumption_lookup: NaiveDate::from_ymd_opt(2020, 12, 01).unwrap(),
+                        end_of_consumption_lookup: NaiveDate::from_ymd_opt(2020, 12, 31).unwrap(),
+                        start_of_amc_lookup: NaiveDate::from_ymd_opt(2020, 08, 01).unwrap(),
+                        end_of_amc_lookup: NaiveDate::from_ymd_opt(2020, 12, 31).unwrap(),
                     },
                     ConsumptionHistoryPoint {
-                        reference_date: NaiveDate::from_ymd(2021, 01, 31),
-                        start_of_consumption_lookup: NaiveDate::from_ymd(2021, 01, 01),
-                        end_of_consumption_lookup: NaiveDate::from_ymd(2021, 01, 31),
-                        start_of_amc_lookup: NaiveDate::from_ymd(2020, 09, 01),
-                        end_of_amc_lookup: NaiveDate::from_ymd(2021, 01, 31),
+                        reference_date: NaiveDate::from_ymd_opt(2021, 01, 31).unwrap(),
+                        start_of_consumption_lookup: NaiveDate::from_ymd_opt(2021, 01, 01).unwrap(),
+                        end_of_consumption_lookup: NaiveDate::from_ymd_opt(2021, 01, 31).unwrap(),
+                        start_of_amc_lookup: NaiveDate::from_ymd_opt(2020, 09, 01).unwrap(),
+                        end_of_amc_lookup: NaiveDate::from_ymd_opt(2021, 01, 31).unwrap(),
                     }
                 ]
             }
@@ -218,55 +218,55 @@ mod tests {
         assert_eq!(
             calculate_consumption(
                 ConsumptionHistoryPoint {
-                    reference_date: NaiveDate::from_ymd(2021, 01, 31),
-                    start_of_consumption_lookup: NaiveDate::from_ymd(2021, 01, 01),
-                    end_of_consumption_lookup: NaiveDate::from_ymd(2021, 01, 31),
-                    start_of_amc_lookup: NaiveDate::from_ymd(2020, 10, 01),
-                    end_of_amc_lookup: NaiveDate::from_ymd(2021, 01, 31),
+                    reference_date: NaiveDate::from_ymd_opt(2021, 01, 31).unwrap(),
+                    start_of_consumption_lookup: NaiveDate::from_ymd_opt(2021, 01, 01).unwrap(),
+                    end_of_consumption_lookup: NaiveDate::from_ymd_opt(2021, 01, 31).unwrap(),
+                    start_of_amc_lookup: NaiveDate::from_ymd_opt(2020, 10, 01).unwrap(),
+                    end_of_amc_lookup: NaiveDate::from_ymd_opt(2021, 01, 31).unwrap(),
                 },
                 &vec![
                     inline_init(|r: &mut ConsumptionRow| {
-                        r.date = NaiveDate::from_ymd(2021, 02, 01);
+                        r.date = NaiveDate::from_ymd_opt(2021, 02, 01).unwrap();
                         r.quantity = 1000;
                     }),
                     inline_init(|r: &mut ConsumptionRow| {
-                        r.date = NaiveDate::from_ymd(2021, 01, 31);
+                        r.date = NaiveDate::from_ymd_opt(2021, 01, 31).unwrap();
                         r.quantity = 10;
                     }),
                     inline_init(|r: &mut ConsumptionRow| {
-                        r.date = NaiveDate::from_ymd(2021, 01, 20);
+                        r.date = NaiveDate::from_ymd_opt(2021, 01, 20).unwrap();
                         r.quantity = 10;
                     }),
                     inline_init(|r: &mut ConsumptionRow| {
-                        r.date = NaiveDate::from_ymd(2020, 12, 03);
+                        r.date = NaiveDate::from_ymd_opt(2020, 12, 03).unwrap();
                         r.quantity = 10;
                     }),
                     inline_init(|r: &mut ConsumptionRow| {
-                        r.date = NaiveDate::from_ymd(2020, 12, 02);
+                        r.date = NaiveDate::from_ymd_opt(2020, 12, 02).unwrap();
                         r.quantity = 10;
                     }),
                     inline_init(|r: &mut ConsumptionRow| {
-                        r.date = NaiveDate::from_ymd(2020, 11, 11);
+                        r.date = NaiveDate::from_ymd_opt(2020, 11, 11).unwrap();
                         r.quantity = 10;
                     }),
                     inline_init(|r: &mut ConsumptionRow| {
-                        r.date = NaiveDate::from_ymd(2020, 10, 05);
+                        r.date = NaiveDate::from_ymd_opt(2020, 10, 05).unwrap();
                         r.quantity = 10;
                     }),
                     inline_init(|r: &mut ConsumptionRow| {
-                        r.date = NaiveDate::from_ymd(2020, 10, 07);
+                        r.date = NaiveDate::from_ymd_opt(2020, 10, 07).unwrap();
                         r.quantity = 10;
                     }),
                     inline_init(|r: &mut ConsumptionRow| {
-                        r.date = NaiveDate::from_ymd(2020, 10, 01);
+                        r.date = NaiveDate::from_ymd_opt(2020, 10, 01).unwrap();
                         r.quantity = 10;
                     }),
                     inline_init(|r: &mut ConsumptionRow| {
-                        r.date = NaiveDate::from_ymd(2020, 09, 30);
+                        r.date = NaiveDate::from_ymd_opt(2020, 09, 30).unwrap();
                         r.quantity = 1000;
                     }),
                     inline_init(|r: &mut ConsumptionRow| {
-                        r.date = NaiveDate::from_ymd(2020, 02, 10);
+                        r.date = NaiveDate::from_ymd_opt(2020, 02, 10).unwrap();
                         r.quantity = 1000;
                     })
                 ]
@@ -274,10 +274,11 @@ mod tests {
             ConsumptionHistory {
                 consumption: 20,
                 average_monthly_consumption: 80 as f64
-                    / (NaiveDate::from_ymd(2021, 01, 31) - NaiveDate::from_ymd(2020, 10, 01))
-                        .num_days() as f64
+                    / (NaiveDate::from_ymd_opt(2021, 01, 31).unwrap()
+                        - NaiveDate::from_ymd_opt(2020, 10, 01).unwrap())
+                    .num_days() as f64
                     * NUMBER_OF_DAYS_IN_A_MONTH,
-                date: NaiveDate::from_ymd(2021, 1, 31)
+                date: NaiveDate::from_ymd_opt(2021, 1, 31).unwrap()
             }
         );
     }

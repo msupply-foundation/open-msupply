@@ -116,6 +116,26 @@ query stocktakeByNumber($stocktakeNumber: Int!, $storeId: String!) {
   }
 }
 
+fragment StockLineReducedBelowZeroError on StockLineReducedBelowZero {
+  __typename
+  stockLine {
+    id
+    totalNumberOfPacks
+    availableNumberOfPacks
+  }
+  description
+}
+
+fragment AdjustmentReasonNotProvidedError on AdjustmentReasonNotProvided {
+  __typename
+  description
+}
+
+fragment AdjustmentReasonNotValidError on AdjustmentReasonNotValid {
+  __typename
+  description
+}
+
 mutation upsertStocktakeLines(
   $storeId: String!
   $deleteStocktakeLines: [DeleteStocktakeLineInput!]
@@ -159,21 +179,12 @@ mutation upsertStocktakeLines(
         response {
           __typename
           ... on InsertStocktakeLineError {
-            __typename
             error {
+              __typename
               description
-              ... on CannotEditStocktake {
-                __typename
-                description
-              }
-              ... on StockLineReducedBelowZero {
-                __typename
-                description
-              }
-              ... on AdjustmentReasonNotProvided {
-                __typename
-                description
-              }
+              ...StockLineReducedBelowZeroError
+              ...AdjustmentReasonNotProvidedError
+              ...AdjustmentReasonNotValidError
             }
           }
         }
@@ -182,22 +193,14 @@ mutation upsertStocktakeLines(
         __typename
         id
         response {
+          __typename
           ... on UpdateStocktakeLineError {
-            __typename
             error {
+              __typename
               description
-              ... on CannotEditStocktake {
-                __typename
-                description
-              }
-              ... on StockLineReducedBelowZero {
-                __typename
-                description
-              }
-              ... on AdjustmentReasonNotProvided {
-                __typename
-                description
-              }
+              ...StockLineReducedBelowZeroError
+              ...AdjustmentReasonNotProvidedError
+              ...AdjustmentReasonNotValidError
             }
           }
         }
@@ -218,25 +221,38 @@ mutation deleteStocktakes($storeId: String!, $ids: [DeleteStocktakeInput!]) {
   }
 }
 
+fragment StockLinesReducedBelowZeroError on StockLinesReducedBelowZero {
+  __typename
+  errors {
+    ...StockLineReducedBelowZeroError
+  }
+  description
+}
+
+fragment SnapshotCountCurrentCountMismatchError on SnapshotCountCurrentCountMismatch {
+  lines {
+    nodes {
+      id
+    }
+  }
+}
+
 mutation updateStocktake($input: UpdateStocktakeInput!, $storeId: String!) {
   updateStocktake(input: $input, storeId: $storeId) {
+    __typename
     ... on UpdateStocktakeError {
-      __typename
       error {
+        __typename
         description
         ... on StockLinesReducedBelowZero {
-          __typename
-          description
-          stockLines {
-            nodes {
-              id
-            }
-          }
+          ...StockLinesReducedBelowZeroError
+        }
+        ... on SnapshotCountCurrentCountMismatch {
+          ...SnapshotCountCurrentCountMismatchError
         }
       }
     }
     ... on StocktakeNode {
-      __typename
       id
     }
   }

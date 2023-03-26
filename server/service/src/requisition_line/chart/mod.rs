@@ -256,7 +256,12 @@ mod test {
                 r.id = "requisition_line".to_string();
                 r.requisition_id = requisition().id;
                 r.item_id = mock_item_a().id;
-                r.snapshot_datetime = Some(NaiveDate::from_ymd(2021, 01, 02).and_hms(0, 0, 0));
+                r.snapshot_datetime = Some(
+                    NaiveDate::from_ymd_opt(2021, 01, 02)
+                        .unwrap()
+                        .and_hms_opt(0, 0, 0)
+                        .unwrap(),
+                );
                 r.average_monthly_consumption = 333;
             })
         }
@@ -297,62 +302,102 @@ mod test {
                 r.requisition_lines = vec![requisition_line()];
             })
             .join(inline_edit(&consumption_point(), |mut u| {
-                u.invoices[0].picked_datetime =
-                    Some(NaiveDate::from_ymd(2021, 01, 02).and_hms(0, 0, 0));
+                u.invoices[0].picked_datetime = Some(
+                    NaiveDate::from_ymd_opt(2021, 01, 02)
+                        .unwrap()
+                        .and_hms_opt(0, 0, 0)
+                        .unwrap(),
+                );
                 u.invoice_lines[0].number_of_packs = 20.0;
                 u
             }))
             .join(inline_edit(&consumption_point(), |mut u| {
-                u.invoices[0].picked_datetime =
-                    Some(NaiveDate::from_ymd(2020, 12, 4).and_hms(0, 0, 0));
+                u.invoices[0].picked_datetime = Some(
+                    NaiveDate::from_ymd_opt(2020, 12, 4)
+                        .unwrap()
+                        .and_hms_opt(0, 0, 0)
+                        .unwrap(),
+                );
                 u.invoice_lines[0].number_of_packs = 10.0;
                 u
             }))
             .join(inline_edit(&consumption_point(), |mut u| {
-                u.invoices[0].picked_datetime =
-                    Some(NaiveDate::from_ymd(2020, 11, 30).and_hms(0, 0, 0));
+                u.invoices[0].picked_datetime = Some(
+                    NaiveDate::from_ymd_opt(2020, 11, 30)
+                        .unwrap()
+                        .and_hms_opt(0, 0, 0)
+                        .unwrap(),
+                );
                 u.invoice_lines[0].number_of_packs = 30.0;
                 u
             }))
             .join(inline_edit(&consumption_point(), |mut u| {
-                u.invoices[0].picked_datetime =
-                    Some(NaiveDate::from_ymd(2020, 10, 10).and_hms(0, 0, 0));
+                u.invoices[0].picked_datetime = Some(
+                    NaiveDate::from_ymd_opt(2020, 10, 10)
+                        .unwrap()
+                        .and_hms_opt(0, 0, 0)
+                        .unwrap(),
+                );
                 u.invoice_lines[0].number_of_packs = 40.0;
                 u
             }))
             .join(inline_edit(&consumption_point(), |mut u| {
-                u.invoices[0].picked_datetime =
-                    Some(NaiveDate::from_ymd(2020, 10, 11).and_hms(0, 0, 0));
+                u.invoices[0].picked_datetime = Some(
+                    NaiveDate::from_ymd_opt(2020, 10, 11)
+                        .unwrap()
+                        .and_hms_opt(0, 0, 0)
+                        .unwrap(),
+                );
                 u.invoice_lines[0].number_of_packs = 5.0;
                 u
             }))
             .join(inline_edit(&consumption_point(), |mut u| {
-                u.invoices[0].picked_datetime =
-                    Some(NaiveDate::from_ymd(2020, 09, 25).and_hms(0, 0, 0));
+                u.invoices[0].picked_datetime = Some(
+                    NaiveDate::from_ymd_opt(2020, 09, 25)
+                        .unwrap()
+                        .and_hms_opt(0, 0, 0)
+                        .unwrap(),
+                );
                 u.invoice_lines[0].number_of_packs = 5.0;
                 u
             }))
             .join(inline_edit(&consumption_point(), |mut u| {
-                u.invoices[0].picked_datetime =
-                    Some(NaiveDate::from_ymd(2020, 09, 10).and_hms(0, 0, 0));
+                u.invoices[0].picked_datetime = Some(
+                    NaiveDate::from_ymd_opt(2020, 09, 10)
+                        .unwrap()
+                        .and_hms_opt(0, 0, 0)
+                        .unwrap(),
+                );
                 u.invoice_lines[0].number_of_packs = 20.0;
                 u
             }))
             .join(inline_edit(&consumption_point(), |mut u| {
-                u.invoices[0].picked_datetime =
-                    Some(NaiveDate::from_ymd(2020, 08, 07).and_hms(0, 0, 0));
+                u.invoices[0].picked_datetime = Some(
+                    NaiveDate::from_ymd_opt(2020, 08, 07)
+                        .unwrap()
+                        .and_hms_opt(0, 0, 0)
+                        .unwrap(),
+                );
                 u.invoice_lines[0].number_of_packs = 15.0;
                 u
             }))
             .join(inline_edit(&consumption_point(), |mut u| {
-                u.invoices[0].picked_datetime =
-                    Some(NaiveDate::from_ymd(2020, 07, 03).and_hms(0, 0, 0));
+                u.invoices[0].picked_datetime = Some(
+                    NaiveDate::from_ymd_opt(2020, 07, 03)
+                        .unwrap()
+                        .and_hms_opt(0, 0, 0)
+                        .unwrap(),
+                );
                 u.invoice_lines[0].number_of_packs = 40.0;
                 u
             }))
             .join(inline_edit(&consumption_point(), |mut u| {
-                u.invoices[0].picked_datetime =
-                    Some(NaiveDate::from_ymd(2020, 06, 20).and_hms(0, 0, 0));
+                u.invoices[0].picked_datetime = Some(
+                    NaiveDate::from_ymd_opt(2020, 06, 20)
+                        .unwrap()
+                        .and_hms_opt(0, 0, 0)
+                        .unwrap(),
+                );
                 u.invoice_lines[0].number_of_packs = 30.0;
                 u
             })),
@@ -385,26 +430,28 @@ mod test {
                     consumption: 30,
                     // 2020-07-01 to 2020-11-30
                     average_monthly_consumption: (30 + 40 + 5 + 5 + 20 + 15 + 40) as f64
-                        / (NaiveDate::from_ymd(2020, 11, 30) - NaiveDate::from_ymd(2020, 07, 01))
-                            .num_days() as f64
+                        / (NaiveDate::from_ymd_opt(2020, 11, 30).unwrap()
+                            - NaiveDate::from_ymd_opt(2020, 07, 01).unwrap())
+                        .num_days() as f64
                         * NUMBER_OF_DAYS_IN_A_MONTH,
-                    date: NaiveDate::from_ymd(2020, 11, 30)
+                    date: NaiveDate::from_ymd_opt(2020, 11, 30).unwrap()
                 },
                 ConsumptionHistory {
                     // 2020-12-01 to 2020-12-31
                     consumption: 10,
                     // 2020-08-01 to 2020-12-31
                     average_monthly_consumption: (10 + 30 + 40 + 5 + 5 + 20 + 15) as f64
-                        / (NaiveDate::from_ymd(2020, 12, 31) - NaiveDate::from_ymd(2020, 08, 01))
-                            .num_days() as f64
+                        / (NaiveDate::from_ymd_opt(2020, 12, 31).unwrap()
+                            - NaiveDate::from_ymd_opt(2020, 08, 01).unwrap())
+                        .num_days() as f64
                         * NUMBER_OF_DAYS_IN_A_MONTH,
-                    date: NaiveDate::from_ymd(2020, 12, 31)
+                    date: NaiveDate::from_ymd_opt(2020, 12, 31).unwrap()
                 },
                 ConsumptionHistory {
                     // This is populated by requisition line amc
                     consumption: 333,
                     average_monthly_consumption: 333.0,
-                    date: NaiveDate::from_ymd(2021, 01, 31)
+                    date: NaiveDate::from_ymd_opt(2021, 01, 31).unwrap()
                 },
             ]
         );
@@ -431,7 +478,7 @@ mod test {
                 r.id = "requisition".to_string();
                 r.store_id = store().id;
                 r.name_id = mock_name_a().id;
-                r.expected_delivery_date = Some(NaiveDate::from_ymd(2021, 1, 5));
+                r.expected_delivery_date = Some(NaiveDate::from_ymd_opt(2021, 1, 5).unwrap());
                 r.r#type = RequisitionRowType::Request;
             })
         }
@@ -441,7 +488,12 @@ mod test {
                 r.id = "requisition_line".to_string();
                 r.requisition_id = requisition().id;
                 r.item_id = mock_item_a().id;
-                r.snapshot_datetime = Some(NaiveDate::from_ymd(2021, 1, 2).and_hms(12, 10, 11));
+                r.snapshot_datetime = Some(
+                    NaiveDate::from_ymd_opt(2021, 1, 2)
+                        .unwrap()
+                        .and_hms_opt(12, 10, 11)
+                        .unwrap(),
+                );
                 r.average_monthly_consumption = 25 * NUMBER_OF_DAYS_IN_A_MONTH as i32;
                 r.available_stock_on_hand = 30;
                 r.requested_quantity = 100;
@@ -485,8 +537,12 @@ mod test {
             })
             .join(inline_edit(&consumption_point(), |mut u| {
                 // + 10 (Inbound Shipment)
-                u.invoices[0].delivered_datetime =
-                    Some(NaiveDate::from_ymd(2021, 1, 2).and_hms(10, 0, 0));
+                u.invoices[0].delivered_datetime = Some(
+                    NaiveDate::from_ymd_opt(2021, 1, 2)
+                        .unwrap()
+                        .and_hms_opt(10, 0, 0)
+                        .unwrap(),
+                );
                 u.invoices[0].r#type = InvoiceRowType::InboundShipment;
                 u.invoice_lines[0].number_of_packs = 10.0;
                 u.invoice_lines[0].r#type = InvoiceLineRowType::StockIn;
@@ -494,15 +550,23 @@ mod test {
             }))
             .join(inline_edit(&consumption_point(), |mut u| {
                 // - 20 (Outbound Shipment)
-                u.invoices[0].picked_datetime =
-                    Some(NaiveDate::from_ymd(2021, 1, 2).and_hms(7, 0, 0));
+                u.invoices[0].picked_datetime = Some(
+                    NaiveDate::from_ymd_opt(2021, 1, 2)
+                        .unwrap()
+                        .and_hms_opt(7, 0, 0)
+                        .unwrap(),
+                );
                 u.invoice_lines[0].number_of_packs = 20.0;
                 u
             }))
             .join(inline_edit(&consumption_point(), |mut u| {
                 // + 15 (Inventory Adjustment)
-                u.invoices[0].verified_datetime =
-                    Some(NaiveDate::from_ymd(2021, 1, 1).and_hms(2, 0, 0));
+                u.invoices[0].verified_datetime = Some(
+                    NaiveDate::from_ymd_opt(2021, 1, 1)
+                        .unwrap()
+                        .and_hms_opt(2, 0, 0)
+                        .unwrap(),
+                );
                 u.invoices[0].r#type = InvoiceRowType::InventoryAddition;
                 u.invoice_lines[0].number_of_packs = 15.0;
                 u.invoice_lines[0].r#type = InvoiceLineRowType::StockIn;
@@ -510,8 +574,12 @@ mod test {
             }))
             .join(inline_edit(&consumption_point(), |mut u| {
                 // + 7 (Inbound Shipment)
-                u.invoices[0].delivered_datetime =
-                    Some(NaiveDate::from_ymd(2021, 1, 1).and_hms(2, 0, 0));
+                u.invoices[0].delivered_datetime = Some(
+                    NaiveDate::from_ymd_opt(2021, 1, 1)
+                        .unwrap()
+                        .and_hms_opt(2, 0, 0)
+                        .unwrap(),
+                );
                 u.invoices[0].r#type = InvoiceRowType::InboundShipment;
                 u.invoice_lines[0].number_of_packs = 7.0;
                 u.invoice_lines[0].r#type = InvoiceLineRowType::StockIn;
@@ -519,8 +587,12 @@ mod test {
             }))
             .join(inline_edit(&consumption_point(), |mut u| {
                 // - 11 (Inventory Adjustment)
-                u.invoices[0].verified_datetime =
-                    Some(NaiveDate::from_ymd(2021, 1, 1).and_hms(2, 0, 0));
+                u.invoices[0].verified_datetime = Some(
+                    NaiveDate::from_ymd_opt(2021, 1, 1)
+                        .unwrap()
+                        .and_hms_opt(2, 0, 0)
+                        .unwrap(),
+                );
                 u.invoices[0].r#type = InvoiceRowType::InventoryReduction;
                 u.invoice_lines[0].number_of_packs = 11.0;
                 u.invoice_lines[0].r#type = InvoiceLineRowType::StockOut;
@@ -528,8 +600,12 @@ mod test {
             }))
             .join(inline_edit(&consumption_point(), |mut u| {
                 // Not Counted
-                u.invoices[0].delivered_datetime =
-                    Some(NaiveDate::from_ymd(2021, 1, 3).and_hms(2, 0, 0));
+                u.invoices[0].delivered_datetime = Some(
+                    NaiveDate::from_ymd_opt(2021, 1, 3)
+                        .unwrap()
+                        .and_hms_opt(2, 0, 0)
+                        .unwrap(),
+                );
                 u.invoices[0].r#type = InvoiceRowType::InboundShipment;
                 u.invoice_lines[0].number_of_packs = 10.0;
                 u.invoice_lines[0].r#type = InvoiceLineRowType::StockIn;
@@ -537,8 +613,12 @@ mod test {
             }))
             .join(inline_edit(&consumption_point(), |mut u| {
                 // Not Counted
-                u.invoices[0].verified_datetime =
-                    Some(NaiveDate::from_ymd(2020, 12, 31).and_hms(2, 0, 0));
+                u.invoices[0].verified_datetime = Some(
+                    NaiveDate::from_ymd_opt(2020, 12, 31)
+                        .unwrap()
+                        .and_hms_opt(2, 0, 0)
+                        .unwrap(),
+                );
                 u.invoices[0].r#type = InvoiceRowType::InventoryReduction;
                 u.invoice_lines[0].number_of_packs = 11.0;
                 u.invoice_lines[0].r#type = InvoiceLineRowType::StockOut;
@@ -570,32 +650,32 @@ mod test {
             vec![
                 // Historic
                 StockEvolution {
-                    date: NaiveDate::from_ymd(2020, 12, 31),
+                    date: NaiveDate::from_ymd_opt(2020, 12, 31).unwrap(),
                     quantity: 29.0 // (40) - 15 - 7 + 11 = (29)
                 },
                 StockEvolution {
-                    date: NaiveDate::from_ymd(2021, 1, 1),
+                    date: NaiveDate::from_ymd_opt(2021, 1, 1).unwrap(),
                     quantity: 40.0 // 30 - 10 + 20 = (40)
                 },
                 StockEvolution {
-                    date: NaiveDate::from_ymd(2021, 1, 2),
+                    date: NaiveDate::from_ymd_opt(2021, 1, 2).unwrap(),
                     quantity: 30.0 // initial
                 },
                 // Projected
                 StockEvolution {
-                    date: NaiveDate::from_ymd(2021, 1, 3),
+                    date: NaiveDate::from_ymd_opt(2021, 1, 3).unwrap(),
                     quantity: 5.0 // 30 - 25 - 5
                 },
                 StockEvolution {
-                    date: NaiveDate::from_ymd(2021, 1, 4),
+                    date: NaiveDate::from_ymd_opt(2021, 1, 4).unwrap(),
                     quantity: 0.0 // (5) - 25 = -something, but we set to (0)
                 },
                 StockEvolution {
-                    date: NaiveDate::from_ymd(2021, 1, 5),
+                    date: NaiveDate::from_ymd_opt(2021, 1, 5).unwrap(),
                     quantity: 75.0 // (0) - 25 + 50 = (75), adding suggested
                 },
                 StockEvolution {
-                    date: NaiveDate::from_ymd(2021, 1, 6),
+                    date: NaiveDate::from_ymd_opt(2021, 1, 6).unwrap(),
                     quantity: 50.0 // (75) - 25 = 50.0
                 },
             ]
