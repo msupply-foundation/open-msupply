@@ -6,12 +6,21 @@ mod test;
 mod unit_and_item;
 mod user_permission;
 
+use std::sync::{Arc, RwLock};
+
 use super::{central_server_configurations::ConfigureCentralServer, SyncRecordTester};
-use crate::sync::test::{
-    check_records_against_database,
-    integration::{
-        central_server_configurations::SiteConfiguration, init_test_context, SyncIntegrationContext,
+use crate::{
+    auth_data::AuthData,
+    login::{LoginInput, LoginService},
+    service_provider::ServiceProvider,
+    sync::test::{
+        check_records_against_database,
+        integration::{
+            central_server_configurations::SiteConfiguration, init_test_context,
+            SyncIntegrationContext,
+        },
     },
+    token_bucket::TokenBucket,
 };
 
 /// Updates central server with data specified from each step of tester
@@ -36,6 +45,7 @@ async fn test_central_sync_record(identifier: &str, tester: &dyn SyncRecordTeste
     let SyncIntegrationContext {
         connection,
         synchroniser,
+        service_provider,
         ..
     } = init_test_context(&sync_settings, &identifier).await;
 
@@ -54,6 +64,7 @@ async fn test_central_sync_record(identifier: &str, tester: &dyn SyncRecordTeste
             .await
             .expect("Problem deleting central data");
 
+        login_user(&sync_settings.url, &service_provider).await;
         synchroniser.sync().await.unwrap();
         check_records_against_database(&connection, step_data.integration_records).await;
     }
@@ -89,9 +100,29 @@ async fn test_central_sync_record(identifier: &str, tester: &dyn SyncRecordTeste
         let SyncIntegrationContext {
             connection,
             synchroniser,
+            service_provider,
             ..
         } = init_test_context(&sync_settings, &inner_identifier).await;
+        login_user(&sync_settings.url, &service_provider).await;
+
         synchroniser.sync().await.unwrap();
         check_records_against_database(&connection, step_data.integration_records).await;
     }
+}
+
+async fn login_user(url: &str, service_provider: &ServiceProvider) {
+    let input = LoginInput {
+        username: "test_user".to_string(),
+        password: "pass".to_string(),
+        central_server_url: url.to_string(),
+    };
+    let auth_data = AuthData {
+        auth_token_secret: "secret".to_string(),
+        token_bucket: Arc::new(RwLock::new(TokenBucket::new())),
+        no_ssl: true,
+        debug_no_access_control: false,
+    };
+    LoginService::login(service_provider, &auth_data, input, 100)
+        .await
+        .expect("Problem logging in user");
 }
