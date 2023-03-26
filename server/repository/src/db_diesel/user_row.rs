@@ -35,7 +35,7 @@ impl Default for Language {
     }
 }
 
-#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, Default)]
+#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, Default, AsChangeset)]
 #[table_name = "user_account"]
 pub struct UserAccountRow {
     pub id: String,
@@ -52,6 +52,25 @@ pub struct UserAccountRowRepository<'a> {
 impl<'a> UserAccountRowRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
         UserAccountRowRepository { connection }
+    }
+
+    #[cfg(feature = "postgres")]
+    pub fn upsert_one(&self, row: &UserAccountRow) -> Result<(), RepositoryError> {
+        diesel::insert_into(user_account_dsl::user_account)
+            .values(row)
+            .on_conflict(user_account_dsl::id)
+            .do_update()
+            .set(row)
+            .execute(&self.connection.connection)?;
+        Ok(())
+    }
+
+    #[cfg(not(feature = "postgres"))]
+    pub fn upsert_one(&self, row: &UserAccountRow) -> Result<(), RepositoryError> {
+        diesel::replace_into(user_account_dsl::user_account)
+            .values(row)
+            .execute(&self.connection.connection)?;
+        Ok(())
     }
 
     pub fn insert_one(&self, user_account_row: &UserAccountRow) -> Result<(), RepositoryError> {

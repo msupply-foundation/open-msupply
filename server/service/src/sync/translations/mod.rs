@@ -24,6 +24,7 @@ pub(crate) mod stocktake_line;
 pub(crate) mod store;
 pub(crate) mod store_preference;
 pub(crate) mod unit;
+pub(crate) mod user_permission;
 
 use repository::*;
 use thiserror::Error;
@@ -45,6 +46,7 @@ pub(crate) fn all_translators() -> SyncTanslators {
         Box::new(report::ReportTranslation {}),
         Box::new(inventory_adjustment_reason::InventoryAdjustmentReasonTranslation {}),
         Box::new(store_preference::StorePreferenceTranslation {}),
+        Box::new(user_permission::UserPermissionTranslation {}),
         Box::new(form_schema::FormSchemaTranslation {}),
         Box::new(document_registry::DocumentRegistryTranslation {}),
         // Remote
@@ -95,12 +97,14 @@ pub(crate) mod LegacyTableName {
     pub(crate) const NAME_STORE_JOIN: &str = "name_store_join";
     pub(crate) const CLINICIAN: &str = "clinician";
     pub(crate) const CLINICIAN_STORE_JOIN: &str = "clinician_store_join";
+    pub(crate) const USER_PERMISSION: &str = "om_user_permission";
     pub(crate) const DOCUMENT: &str = "om_document";
     pub(crate) const DOCUMENT_REGISTRY: &str = "om_document_registry";
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub(crate) enum PullUpsertRecord {
+    UserPermission(UserPermissionRow),
     Unit(UnitRow),
     Name(NameRow),
     Item(ItemRow),
@@ -137,6 +141,7 @@ pub(crate) struct PullDeleteRecord {
 #[derive(Debug, PartialEq, Clone)]
 pub(crate) enum PullDeleteRecordTable {
     // Central
+    UserPermission,
     Unit,
     Item,
     Store,
