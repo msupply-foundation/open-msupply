@@ -5,7 +5,7 @@ use crate::sync::{
     translations::{IntegrationRecords, PullDeleteRecord, PullDeleteRecordTable, PullUpsertRecord},
 };
 
-use repository::{Language, Permission, UserAccountRow, UserPermissionRow};
+use repository::{Permission, UserPermissionRow};
 use serde_json::json;
 use util::uuid::uuid;
 
@@ -62,7 +62,7 @@ impl SyncRecordTester for UserPermissionTester {
         result.push(TestStepData {
             central_upsert: json!({}),
             central_delete: json!({
-                "om_user_permission": [user_permission_row_1_json],
+                "om_user_permission": [user_permission_row_1.id],
             }),
             integration_records: IntegrationRecords::from_deletes(vec![PullDeleteRecord {
                 id: user_permission_row_1.id,
