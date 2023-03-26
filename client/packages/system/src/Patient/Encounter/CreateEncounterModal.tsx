@@ -51,6 +51,8 @@ export const CreateEncounterModal: FC = () => {
   const [draft, setDraft] = useState<Encounter | undefined>(undefined);
   const navigate = useNavigate();
   const { error } = useNotification();
+  const [startDateTimeError, setStartDateTimeError] = useState(false);
+  const [endDateTimeError, setEndDateTimeError] = useState(false);
 
   const handleSave = useEncounter.document.upsert(
     patientId,
@@ -86,11 +88,13 @@ export const CreateEncounterModal: FC = () => {
           ? EncounterNodeStatus.Scheduled
           : draft?.status,
     });
+    setStartDateTimeError(false);
   };
 
   const setEndDatetime = (date: Date | null): void => {
     const endDatetime = DateUtils.formatRFC3339(date);
     setDraft({ createdDatetime, ...draft, endDatetime });
+    setEndDateTimeError(false);
   };
 
   const setClinician = (option: ClinicianAutocompleteOption | null): void => {
@@ -103,7 +107,10 @@ export const CreateEncounterModal: FC = () => {
   };
 
   const canSubmit = () =>
-    draft !== undefined && draft.clinician && draft.startDatetime;
+    draft !== undefined &&
+    draft.startDatetime &&
+    !startDateTimeError &&
+    !endDateTimeError;
 
   return (
     <Modal
@@ -152,8 +159,9 @@ export const CreateEncounterModal: FC = () => {
                   label={t('label.visit-date')}
                   Input={
                     <DateTimePickerInput
-                      value={draft?.startDatetime}
+                      value={draft?.startDatetime ?? null}
                       onChange={setStartDatetime}
+                      onError={() => setStartDateTimeError(true)}
                     />
                   }
                 />
@@ -161,9 +169,10 @@ export const CreateEncounterModal: FC = () => {
                   label={t('label.visit-end')}
                   Input={
                     <TimePickerInput
-                      value={draft?.endDatetime}
+                      value={draft?.endDatetime ?? null}
                       disabled={draft?.startDatetime === undefined}
                       onChange={setEndDatetime}
+                      onError={() => setEndDateTimeError(true)}
                     />
                   }
                 />

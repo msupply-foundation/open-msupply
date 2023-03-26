@@ -69,8 +69,9 @@ export const DateUtils = {
   addMinutes,
   addDays,
   addYears,
-  getDateOrNull: (date?: string | null): Date | null => {
+  getDateOrNull: (date?: Date | string | null): Date | null => {
     if (!date) return null;
+    if (date instanceof Date) return date;
     const maybeDate = new Date(date);
     return isValid(maybeDate) ? maybeDate : null;
   },
