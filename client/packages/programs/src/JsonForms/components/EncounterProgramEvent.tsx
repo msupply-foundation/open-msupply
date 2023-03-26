@@ -30,7 +30,24 @@ const Options = z
      */
     at: z.enum(['before', 'start']).optional(),
     eventType: z.string(),
-    displayType: z.enum(['string', 'number']).optional(),
+    multiline: z.boolean().optional(),
+    rows: z.number().optional(),
+    /**
+     * Display option based on type.
+     */
+    display: z
+      .discriminatedUnion('type', [
+        z.object({ type: z.literal('number') }),
+        z.object({
+          type: z.literal('string'),
+          show: z.array(
+            z
+              .tuple([z.string(), z.string().optional()])
+              .rest(z.string().optional())
+          ),
+        }),
+      ])
+      .optional(),
   })
   .strict();
 type Options = z.infer<typeof Options>;
@@ -56,6 +73,21 @@ const extractAt = (encounter?: EncounterFragment, options?: Options): Date => {
       ((_: never) => {})(options.at);
   }
   return new Date();
+};
+
+const getDisplayOptions = (
+  data: string | null | undefined,
+  options?: Options
+) => {
+  let show =
+    options?.display?.type === 'string' ? options?.display?.show : null;
+
+  if (!show) {
+    return data;
+  }
+
+  let displayValue = show.find(value => value[0] === data)?.[1];
+  return displayValue ?? '';
 };
 
 const UIComponent = (props: ControlProps) => {
@@ -89,13 +121,18 @@ const UIComponent = (props: ControlProps) => {
   );
   const event = events?.nodes[0];
 
+  const multiline = options?.multiline !== false;
+  const rows = options?.rows;
+
   if (!props.visible) {
     return null;
   }
 
+  const displayOption = getDisplayOptions(event?.data, options);
+
   return (
     <>
-      {options?.displayType && options?.displayType === 'number' ? (
+      {options?.display?.type && options?.display.type === 'number' ? (
         <DetailInputWithLabelRow
           label={label}
           sx={{
@@ -121,11 +158,13 @@ const UIComponent = (props: ControlProps) => {
           label={label}
           sx={DefaultFormRowSx}
           inputProps={{
-            value: event?.data ?? '',
+            value: displayOption ?? '',
             disabled: true,
             sx: DefaultFormRowSpacing,
             error: !!errors,
             helperText: errors,
+            multiline,
+            rows,
           }}
           labelWidthPercentage={FORM_LABEL_WIDTH}
           inputAlignment={'start'}

@@ -52,6 +52,9 @@
               "format": "date-time",
               "type": "string"
             },
+            "otherRegimen": {
+              "type": "string"
+            },
             "prophylaxisMedication": {
               "items": {
                 "enum": [
@@ -72,9 +75,13 @@
               },
               "type": "array"
             },
-            "quantityPrescribed": {
-              "description": "Number of pills prescribed",
+            "quantityDispensed": {
+              "description": "Number of pills dispensed in this encounter",
               "minimum": 0,
+              "type": "number"
+            },
+            "quantityPrescribed": {
+              "description": "Number of pills on hand at the end of the encounter.",
               "type": "number"
             },
             "regimen": {
@@ -110,7 +117,7 @@
                 "6b-Old",
                 "6c-New",
                 "6c-Old",
-                "Other"
+                "Other - please specify"
               ],
               "type": "string"
             },
@@ -171,6 +178,18 @@
               "enum": ["NO", "START", "CONTINUE", "CHANGE", "STOP"],
               "type": "string"
             },
+            "regimenType": {
+              "enum": [
+                "First Line - Adult",
+                "Second Line - Adult",
+                "First Line - Paeds 20-30kg",
+                "Second Line - Paeds 20-30kg",
+                "First Line - Paeds <20kg",
+                "Second Line - Paeds <20kg",
+                "Other"
+              ],
+              "type": "string"
+            },
             "relevantCoMedication": {
               "enum": [
                 "Asthma medication",
@@ -187,6 +206,7 @@
               "type": "number"
             }
           },
+          "required": ["regimenStatus"],
           "then": {
             "required": ["regimen", "regimenChangeReason"]
           },
@@ -359,11 +379,13 @@
               "description": "75367002\tBlood pressure [mmHg]",
               "properties": {
                 "diastolic": {
-                  "pattern": "^\\d{1,3}$",
+                  "maximum": 999,
+                  "minimum": 0,
                   "type": "number"
                 },
                 "systolic": {
-                  "pattern": "^\\d{1,3}$",
+                  "maximum": 999,
+                  "minimum": 0,
                   "type": "number"
                 }
               },
@@ -575,16 +597,16 @@
             },
             "tbStatus": {
               "enum": [
-                "TB confirmed clinically",
-                "TB confirmed by sputum",
-                "TB confirmed by X-ray",
-                "Currently on INH prophylaxis (IPT)",
-                "Not suspected / no signs or symptoms",
-                "TB suspected and referred for evaluation",
-                "TB suspected and sputums sample sent or results recorded",
-                "Currently on TB treatment",
-                "Has completed TB treatment, no signs or symptoms",
-                "Has TB (code from old CTC form)"
+                "CONFMC",
+                "CONFMS",
+                "CONFMX",
+                "INH",
+                "NO",
+                "REFER",
+                "SP",
+                "TBRX",
+                "TBRXC",
+                "YES"
               ],
               "type": "string"
             }

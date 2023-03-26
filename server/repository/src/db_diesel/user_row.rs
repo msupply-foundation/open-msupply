@@ -35,7 +35,7 @@ impl Default for Language {
     }
 }
 
-#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, Default)]
+#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, Default, AsChangeset)]
 #[table_name = "user_account"]
 pub struct UserAccountRow {
     pub id: String,
