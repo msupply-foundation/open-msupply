@@ -210,21 +210,20 @@ export const getDocumentRegistryQueries = (sdk: Sdk) => ({
     },
     documentRegistries: async ({
       sortBy,
-      filter,
-    }: DocumentRegistryParams): Promise<{
-      nodes: DocumentRegistryFragment[];
-      totalCount: number;
-    }> => {
+      filterBy,
+    }: {
+      sortBy: SortBy<DocumentRegistryFragment>;
+      filterBy?: FilterBy;
+    }) => {
       const result = await sdk.documentRegistries({
-        filter,
+        filter: filterBy,
         sort: {
           key:
             (sortBy?.key as DocumentRegistrySortFieldInput) ??
             DocumentRegistrySortFieldInput.DocumentType,
-          desc: sortBy?.isDesc ?? false,
+          desc: sortBy?.isDesc,
         },
       });
-
       return result?.documentRegistries;
     },
     programRegistries: async (
