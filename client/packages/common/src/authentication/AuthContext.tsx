@@ -3,7 +3,7 @@ import { IntlUtils } from '@common/intl';
 import { AppRoute } from '@openmsupply-client/config';
 import { LocalStorage, useLocalStorage } from '../localStorage';
 import Cookies from 'js-cookie';
-import { addMinutes } from 'date-fns';
+import addMinutes from 'date-fns/addMinutes';
 import { useGql } from '../api';
 import { useGetRefreshToken } from './api/hooks';
 import { useGetAuthToken } from './api/hooks/useGetAuthToken';

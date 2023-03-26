@@ -7,7 +7,7 @@ use actix_web::{
 use chrono::{NaiveDateTime, Utc};
 use repository::{
     mock::{insert_extra_mock_data, mock_store_a, mock_store_b, MockData, MockDataInserts},
-    KeyValueStoreRow, KeyValueType, LocationRow,
+    ChangelogRepository, KeyValueStoreRow, KeyValueType, LocationRow,
 };
 use tokio::sync::Mutex;
 use util::{assert_matches, inline_edit, inline_init};
@@ -83,7 +83,8 @@ async fn sync_status() {
     );
 
     // Test PUSH and ERROR
-
+    // Clear change log
+    ChangelogRepository::new(&connection).drop_all().unwrap();
     // Insert some location rows to be pushed
     insert_extra_mock_data(
         &connection,

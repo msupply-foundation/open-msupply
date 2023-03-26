@@ -7,6 +7,33 @@
   "elements": [
     {
       "type": "Category",
+      "label": "Visit Type",
+      "options": {
+        "icon": "visit"
+      },
+      "elements": [
+        {
+          "type": "Control",
+          "label": "Visit Type:",
+          "scope": "#/properties/visit/properties/visitType"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/visit/properties/location",
+          "rule": {
+            "effect": "SHOW",
+            "condition": {
+              "scope": "#/properties/visit/properties/visitType",
+              "schema": {
+                "enum": ["Outreach", "Refill"]
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "Category",
       "label": "Physical Exam",
       "options": {
         "icon": "stethoscope"
@@ -64,18 +91,9 @@
               "scope": "#/properties/physicalExamination/properties/nutrition/properties/nutritionalStatus",
               "options": {
                 "show": [
-                  [
-                    "UNDER_NOURISHED",
-                    "Under nourished"
-                  ],
-                  [
-                    "WELL_NOURISHED",
-                    "Well nourished"
-                  ],
-                  [
-                    "OVERWEIGHT",
-                    "Overweight"
-                  ]
+                  ["UNDER_NOURISHED", "Under nourished"],
+                  ["WELL_NOURISHED", "Well nourished"],
+                  ["OVERWEIGHT", "Overweight"]
                 ]
               }
             },
@@ -100,22 +118,13 @@
           "scope": "#/properties/physicalExamination/properties/whoStaging",
           "options": {
             "show": [
-              [
-                "STAGE_1_ASYMPTOMATIC",
-                "Stage 1 - Asymptomatic"
-              ],
-              [
-                "STAGE_2_MILDLY_SYMPTOMATIC",
-                "Stage 2 - Mildly symptomatic"
-              ],
+              ["STAGE_1_ASYMPTOMATIC", "Stage 1 - Asymptomatic"],
+              ["STAGE_2_MILDLY_SYMPTOMATIC", "Stage 2 - Mildly symptomatic"],
               [
                 "STAGE_3_MODERATELY_SYMPTOMATIC",
                 "Stage 3 - Moderately symptomatic"
               ],
-              [
-                "STAGE_4_SEVERELY_SYMPTOMATIC",
-                "Stage 4 - Severely symptomatic"
-              ]
+              ["STAGE_4_SEVERELY_SYMPTOMATIC", "Stage 4 - Severely symptomatic"]
             ]
           }
         },
@@ -163,7 +172,55 @@
           "type": "EncounterProgramEvent",
           "label": "Current ARV Regimen",
           "options": {
-            "eventType": "arvMedicationRegimen"
+            "eventType": "arvMedicationRegimen",
+            "multiline": true,
+            "rows": 2,
+            "display": {
+              "type": "string",
+              "show": [
+                ["1a-New", "1a-New TDF + 3TC + DTG"],
+                ["1a-Old", "1a-Old TDF + 3TC + EFV"],
+                ["1b-New", "1b-New ABC + 3TC + DTG"],
+                ["1b-Old", "1b-Old AZT + 3TC + EFV/NVP or TDF+3TC+NVP"],
+                ["2a-New", "2a-New AZT + 3TC + LPVr"],
+                ["2a-Old", "2a-Old AZT + 3TC + LPVr"],
+                ["2b-New", "2b-New AZT + 3TC + DTG"],
+                ["2b-Old", "2b-Old TDF + 3TC + LPVr"],
+                ["2c-New", "2c-New TDF + 3TC + DTG"],
+                ["3a-New", "3a-New ABC + 3TC + DTG"],
+                ["3a-Old", "3a-Old ABC + 3TC + EFV"],
+                ["3b-New", "3b-New ABC + 3TC + LPVr"],
+                [
+                  "3b-Old",
+                  "3b-Old ABC + 3TC + NVP or AZT + 3TC + EFV/NVP or TDF + 3TC + EFV/NVP"
+                ],
+                ["3c-New", "3c-New ABC + 3TC + RAL"],
+                ["4a-New", "4a-New AZT + 3TC + LPVr"],
+                ["4a-Old", "4a-Old TDF + 3TC + LPVr"],
+                ["4b-New", "4b-New AZT + 3TC + DTG"],
+                ["4b-Old", "4b-Old ABC + 3TC + LPVr"],
+                ["4c-New", "4c-New ABC + 3TC + DTG"],
+                ["4c-Old", "4c-Old TDF + 3TC + LPVr"],
+                ["5a-New", "5a-New ABC + 3TC + LPVr"],
+                ["5a-Old", "5a-Old ABC + 3TC + LPVr or AZT + 3TC + LPVr"],
+                ["5b-New", "5b-New ABC + 3TC + RAL"],
+                ["5b-Old", "5b-Old ABC + 3TC + NVP or AZT + 3TC + NVP"],
+                ["6a-New", "6a-New ABC + 3TC + RAL"],
+                ["6a-Old", "6a-Old ABC + 3TC + NVP or AZT + 3TC + NVP"],
+                ["6b-New", "6b-New AZT + 3TC + RAL"],
+                ["6b-Old", "6b-Old AZT + 3TC + LPVr"],
+                ["6c-New", "6c-New AZT + 3TC + LPVr"],
+                ["6c-Old", "6c-Old ABC + 3TC + LPVr"]
+              ]
+            }
+          }
+        },
+        {
+          "type": "EncounterProgramEvent",
+          "scope": "#/properties/arvMedication/properties/regimenType",
+          "label": "Current Regiment Type",
+          "options": {
+            "eventType": "arvMedicationRegimenType"
           }
         },
         {
@@ -172,26 +229,11 @@
           "type": "Control",
           "options": {
             "show": [
-              [
-                "NO",
-                "No ARV"
-              ],
-              [
-                "START",
-                "Start ARV"
-              ],
-              [
-                "CONTINUE",
-                "Continue ARV"
-              ],
-              [
-                "CHANGE",
-                "Changes to ARV Regimen"
-              ],
-              [
-                "STOP",
-                "Stop ARV"
-              ]
+              ["NO", "No ARV"],
+              ["START", "Start ARV"],
+              ["CONTINUE", "Continue ARV"],
+              ["CHANGE", "Changes to ARV Regimen"],
+              ["STOP", "Stop ARV"]
             ]
           }
         },
@@ -202,30 +244,328 @@
               "scope": "#/properties/arvMedication/properties/regimen",
               "type": "Control",
               "label": "New ARV Regimen:",
+              "options": {
+                "show": [
+                  ["1a-New", "1a-New TDF + 3TC + DTG"],
+                  ["1a-Old", "1a-Old TDF + 3TC + EFV"],
+                  ["1b-New", "1b-New ABC + 3TC + DTG"],
+                  ["1b-Old", "1b-Old AZT + 3TC + EFV/NVP or TDF+3TC+NVP"],
+                  ["2a-New", "2a-New AZT + 3TC + LPVr"],
+                  ["2a-Old", "2a-Old AZT + 3TC + LPVr"],
+                  ["2b-New", "2b-New AZT + 3TC + DTG"],
+                  ["2b-Old", "2b-Old TDF + 3TC + LPVr"],
+                  ["2c-New", "2c-New TDF + 3TC + DTG"],
+                  ["3a-New", "3a-New ABC + 3TC + DTG"],
+                  ["3a-Old", "3a-Old ABC + 3TC + EFV"],
+                  ["3b-New", "3b-New ABC + 3TC + LPVr"],
+                  [
+                    "3b-Old",
+                    "3b-Old ABC + 3TC + NVP or AZT + 3TC + EFV/NVP or TDF + 3TC + EFV/NVP"
+                  ],
+                  ["3c-New", "3c-New ABC + 3TC + RAL"],
+                  ["4a-New", "4a-New AZT + 3TC + LPVr"],
+                  ["4a-Old", "4a-Old TDF + 3TC + LPVr"],
+                  ["4b-New", "4b-New AZT + 3TC + DTG"],
+                  ["4b-Old", "4b-Old ABC + 3TC + LPVr"],
+                  ["4c-New", "4c-New ABC + 3TC + DTG"],
+                  ["4c-Old", "4c-Old TDF + 3TC + LPVr"],
+                  ["5a-New", "5a-New ABC + 3TC + LPVr"],
+                  ["5a-Old", "5a-Old ABC + 3TC + LPVr or AZT + 3TC + LPVr"],
+                  ["5b-New", "5b-New ABC + 3TC + RAL"],
+                  ["5b-Old", "5b-Old ABC + 3TC + NVP or AZT + 3TC + NVP"],
+                  ["6a-New", "6a-New ABC + 3TC + RAL"],
+                  ["6a-Old", "6a-Old ABC + 3TC + NVP or AZT + 3TC + NVP"],
+                  ["6b-New", "6b-New AZT + 3TC + RAL"],
+                  ["6b-Old", "6b-Old AZT + 3TC + LPVr"],
+                  ["6c-New", "6c-New AZT + 3TC + LPVr"],
+                  ["6c-Old", "6c-Old ABC + 3TC + LPVr"]
+                ]
+              },
               "rule": {
                 "effect": "HIDE",
                 "condition": {
                   "scope": "#/properties/arvMedication/properties/regimenStatus",
                   "schema": {
-                    "enum": [
-                      "STOP"
-                    ]
+                    "enum": ["NO", "STOP"]
+                  }
+                }
+              }
+            },
+            {
+              "scope": "#/properties/arvMedication/properties/otherRegimen",
+              "type": "Control",
+              "label": "Other Regimen",
+              "rule": {
+                "effect": "SHOW",
+                "condition": {
+                  "scope": "#/properties/arvMedication/properties/regimen",
+                  "schema": {
+                    "enum": ["Other - please specify"]
+                  }
+                }
+              }
+            },
+            {
+              "type": "DecisionTree",
+              "scope": "#/properties/arvMedication/properties/regimenType",
+              "options": {
+                "basePath": "arvMedication",
+                "tree": {
+                  "root": "root",
+                  "nodes": {
+                    "root": {
+                      "branches": [
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "1a-New",
+                          "value": "First Line - Adult"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "1a-Old",
+                          "value": "First Line - Adult"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "1b-New",
+                          "value": "First Line - Adult"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "1b-Old",
+                          "value": "First Line - Adult"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "2a-New",
+                          "value": "Second Line - Adult"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "2a-Old",
+                          "value": "Second Line - Adult"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "2b-New",
+                          "value": "Second Line - Adult"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "2b-Old",
+                          "value": "Second Line - Adult"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "2c-New",
+                          "value": "Second Line - Adult"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "3a-New",
+                          "value": "First Line - Paeds 20-30kg"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "3a-Old",
+                          "value": "First Line - Paeds 20-30kg"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "3b-New",
+                          "value": "First Line - Paeds 20-30kg"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "3b-Old",
+                          "value": "First Line - Paeds 20-30kg"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "3c-New",
+                          "value": "First Line - Paeds 20-30kg"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "4a-New",
+                          "value": "Second Line - Paeds 20-30kg"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "4a-Old",
+                          "value": "Second Line - Paeds 20-30kg"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "4b-New",
+                          "value": "Second Line - Paeds 20-30kg"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "4b-Old",
+                          "value": "Second Line - Paeds 20-30kg"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "4c-New",
+                          "value": "Second Line - Paeds 20-30kg"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "4c-Old",
+                          "value": "Second Line - Paeds 20-30kg"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "5a-New",
+                          "value": "First Line - Paeds <20kg"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "5a-Old",
+                          "value": "First Line - Paeds <20kg"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "5b-New",
+                          "value": "First Line - Paeds <20kg"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "5b-Old",
+                          "value": "First Line - Paeds <20kg"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "6a-New",
+                          "value": "Second Line - Paeds <20kg"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "6a-Old",
+                          "value": "Second Line - Paeds <20kg"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "6b-New",
+                          "value": "Second Line - Paeds <20kg"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "6b-Old",
+                          "value": "Second Line - Paeds <20kg"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "6c-New",
+                          "value": "Second Line - Paeds <20kg"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "6c-Old",
+                          "value": "Second Line - Paeds <20kg"
+                        },
+                        {
+                          "dataField": "regimen",
+                          "equalTo": "Other - please specify",
+                          "value": "Other"
+                        }
+                      ]
+                    }
                   }
                 }
               }
             },
             {
               "scope": "#/properties/arvMedication/properties/regimenChangeReason",
-              "label": "Regimen Change Reason:",
+              "label": "Regimen Reason:",
               "type": "Control",
               "options": {
                 "multiColumn": true,
+                "fieldFilter": {
+                  "field": "arvMedication.regimenStatus",
+                  "mapping": {
+                    "NO": [
+                      "51",
+                      "52",
+                      "53",
+                      "54",
+                      "55",
+                      "56",
+                      "57",
+                      "58",
+                      "99"
+                    ],
+                    "START": [
+                      "101",
+                      "102",
+                      "103",
+                      "104",
+                      "105",
+                      "106",
+                      "107",
+                      "108",
+                      "109",
+                      "151"
+                    ],
+                    "CHANGE": [
+                      "110",
+                      "111",
+                      "112",
+                      "113",
+                      "114",
+                      "115",
+                      "116",
+                      "117",
+                      "118",
+                      "119",
+                      "120",
+                      "121",
+                      "122",
+                      "123",
+                      "131",
+                      "132",
+                      "141",
+                      "142",
+                      "143",
+                      "144",
+                      "145",
+                      "146",
+                      "147",
+                      "148",
+                      "149"
+                    ],
+                    "STOP": [
+                      "110",
+                      "111",
+                      "112",
+                      "113",
+                      "114",
+                      "115",
+                      "116",
+                      "117",
+                      "118",
+                      "119",
+                      "120",
+                      "121",
+                      "122",
+                      "123",
+                      "131",
+                      "132",
+                      "141",
+                      "142",
+                      "143",
+                      "144",
+                      "145",
+                      "146",
+                      "147",
+                      "148",
+                      "149"
+                    ]
+                  }
+                },
                 "show": [
-                  [
-                    "51",
-                    "51",
-                    "Patient does not fulfill criteria"
-                  ],
+                  ["51", "51", "Patient does not fulfill criteria"],
                   [
                     "52",
                     "52",
@@ -266,181 +606,41 @@
                     "99",
                     "Patient fulfils criteria but does not start for other reason"
                   ],
-                  [
-                    "101",
-                    "101",
-                    "Adult CD4 < 200"
-                  ],
-                  [
-                    "102",
-                    "102",
-                    "Adult WHO Stage IV"
-                  ],
-                  [
-                    "103",
-                    "103",
-                    "Adult WHO Stage III, if CD4 < 350"
-                  ],
-                  [
-                    "104",
-                    "104",
-                    "Children Pediatric WHO Stage III"
-                  ],
-                  [
-                    "105",
-                    "105",
-                    "Children > 18 months, CD4% < 15%"
-                  ],
-                  [
-                    "106",
-                    "106",
-                    "Infants < 18 months CD4% < 20%"
-                  ],
-                  [
-                    "107",
-                    "107",
-                    "Pregnant women for PMCT (plus)"
-                  ],
-                  [
-                    "108",
-                    "108",
-                    "Other reason to start"
-                  ],
-                  [
-                    "109",
-                    "109",
-                    "Test and Treat"
-                  ],
-                  [
-                    "110",
-                    "110",
-                    "Start TB treatment"
-                  ],
-                  [
-                    "111",
-                    "111",
-                    "Nausea / vomiting"
-                  ],
-                  [
-                    "112",
-                    "112",
-                    "Diarrhoea"
-                  ],
-                  [
-                    "113",
-                    "113",
-                    "Headache"
-                  ],
-                  [
-                    "114",
-                    "114",
-                    "Fever"
-                  ],
-                  [
-                    "115",
-                    "115",
-                    "Skin rash"
-                  ],
-                  [
-                    "116",
-                    "116",
-                    "Peripheral neuropathy"
-                  ],
-                  [
-                    "117",
-                    "117",
-                    "Hepatitis"
-                  ],
-                  [
-                    "118",
-                    "118",
-                    "Jaundice"
-                  ],
-                  [
-                    "119",
-                    "119",
-                    "Dementia"
-                  ],
-                  [
-                    "120",
-                    "120",
-                    "Anaemia"
-                  ],
-                  [
-                    "121",
-                    "121",
-                    "Pancreatitis"
-                  ],
-                  [
-                    "122",
-                    "122",
-                    "CNS adverse event"
-                  ],
-                  [
-                    "123",
-                    "123",
-                    "Other adverse event, specify"
-                  ],
-                  [
-                    "131",
-                    "131",
-                    "Treatment failure, clinical"
-                  ],
-                  [
-                    "132",
-                    "132",
-                    "Treatment failure, immunological"
-                  ],
-                  [
-                    "141",
-                    "141",
-                    "Poor adherence"
-                  ],
-                  [
-                    "142",
-                    "142",
-                    "Patient decision"
-                  ],
-                  [
-                    "143",
-                    "143",
-                    "Pregnancy"
-                  ],
-                  [
-                    "144",
-                    "144",
-                    "End of PMTCT (plus)"
-                  ],
-                  [
-                    "145",
-                    "145",
-                    "Transferred out, specify where"
-                  ],
-                  [
-                    "146",
-                    "146",
-                    "Lost to follow-up"
-                  ],
-                  [
-                    "147",
-                    "147",
-                    "Patient died"
-                  ],
-                  [
-                    "148",
-                    "148",
-                    "Stock-out"
-                  ],
-                  [
-                    "149",
-                    "149",
-                    "Other reason, specify"
-                  ],
-                  [
-                    "151",
-                    "151",
-                    "Restart ARV after 3 or months not on ARV"
-                  ]
+                  ["101", "101", "Adult CD4 < 200"],
+                  ["102", "102", "Adult WHO Stage IV"],
+                  ["103", "103", "Adult WHO Stage III, if CD4 < 350"],
+                  ["104", "104", "Children Pediatric WHO Stage III"],
+                  ["105", "105", "Children > 18 months, CD4% < 15%"],
+                  ["106", "106", "Infants < 18 months CD4% < 20%"],
+                  ["107", "107", "Pregnant women for PMCT (plus)"],
+                  ["108", "108", "Other reason to start"],
+                  ["109", "109", "Test and Treat"],
+                  ["110", "110", "Start TB treatment"],
+                  ["111", "111", "Nausea / vomiting"],
+                  ["112", "112", "Diarrhoea"],
+                  ["113", "113", "Headache"],
+                  ["114", "114", "Fever"],
+                  ["115", "115", "Skin rash"],
+                  ["116", "116", "Peripheral neuropathy"],
+                  ["117", "117", "Hepatitis"],
+                  ["118", "118", "Jaundice"],
+                  ["119", "119", "Dementia"],
+                  ["120", "120", "Anaemia"],
+                  ["121", "121", "Pancreatitis"],
+                  ["122", "122", "CNS adverse event"],
+                  ["123", "123", "Other adverse event, specify"],
+                  ["131", "131", "Treatment failure, clinical"],
+                  ["132", "132", "Treatment failure, immunological"],
+                  ["141", "141", "Poor adherence"],
+                  ["142", "142", "Patient decision"],
+                  ["143", "143", "Pregnancy"],
+                  ["144", "144", "End of PMTCT (plus)"],
+                  ["145", "145", "Transferred out, specify where"],
+                  ["146", "146", "Lost to follow-up"],
+                  ["147", "147", "Patient died"],
+                  ["148", "148", "Stock-out"],
+                  ["149", "149", "Other reason, specify"],
+                  ["151", "151", "Restart ARV after 3 or months not on ARV"]
                 ]
               }
             },
@@ -454,11 +654,7 @@
             "condition": {
               "scope": "#/properties/arvMedication/properties/regimenStatus",
               "schema": {
-                "enum": [
-                  "START",
-                  "CHANGE",
-                  "STOP"
-                ]
+                "enum": ["START", "CHANGE", "STOP"]
               }
             }
           }
@@ -472,7 +668,9 @@
           "label": "Pill Count (at last visit end)",
           "options": {
             "eventType": "arvMedicationQuantityPrescribed",
-            "displayType": "number"
+            "display": {
+              "type": "number"
+            }
           }
         },
         {
@@ -485,7 +683,10 @@
           "scope": "#",
           "label": "Adherence Score",
           "options": {
-            "previousCountField": "arvMedication.quantityPrescribed",
+            "previousCount": {
+              "source": "EncounterEvent",
+              "eventType": "arvMedicationQuantityPrescribed"
+            },
             "remainingCountField": "arvMedication.remainingPillCount",
             "countPerDay": 1,
             "targetField": "arvMedication.adherenceScore"
@@ -525,31 +726,12 @@
           "options": {
             "values": [
               {
-                "field": "arvMedication.adherenceStatus",
-                "label": "Adherence Status",
+                "field": "arvMedication.adherenceScore",
+                "label": "Adherence Score",
                 "unit": "%"
               }
             ]
           }
-        }
-      ]
-    },
-    {
-      "type": "Category",
-      "label": "Pregnancy",
-      "options": {
-        "icon": "condom"
-      },
-      "elements": [
-        {
-          "type": "Control",
-          "label": "Pregnant:",
-          "scope": "#/properties/familyPlanning/properties/pregnant"
-        },
-        {
-          "type": "Control",
-          "label": "Contraception:",
-          "scope": "#/properties/familyPlanning/properties/contraception"
         }
       ]
     },
@@ -619,14 +801,8 @@
               "label": "VL Targeting:",
               "options": {
                 "show": [
-                  [
-                    "TARGETED",
-                    "Targeted"
-                  ],
-                  [
-                    "SCHEDULED",
-                    "Scheduled"
-                  ]
+                  ["TARGETED", "Targeted"],
+                  ["SCHEDULED", "Scheduled"]
                 ]
               }
             },
@@ -803,18 +979,9 @@
           "scope": "#/properties/tuberculosis/properties/tbGeneXpert",
           "options": {
             "show": [
-              [
-                "NOT_DETECTED",
-                "Not Detected"
-              ],
-              [
-                "POSITIVE_RIF_SENSITIVE",
-                "Positive (Rif-Sensitive)"
-              ],
-              [
-                "POSITIVE_RIF_RESISTANT",
-                "Positive (Rif-Resistant)"
-              ]
+              ["NOT_DETECTED", "Not Detected"],
+              ["POSITIVE_RIF_SENSITIVE", "Positive (Rif-Sensitive)"],
+              ["POSITIVE_RIF_RESISTANT", "Positive (Rif-Resistant)"]
             ]
           }
         },
@@ -829,29 +996,34 @@
           "scope": "#/properties/tuberculosis/properties/tbSputum",
           "options": {
             "show": [
-              [
-                "NO_AFB",
-                "No AFB"
-              ],
-              [
-                "POS_1",
-                "+"
-              ],
-              [
-                "POS_2",
-                "++"
-              ],
-              [
-                "POS_3",
-                "+++"
-              ]
+              ["NO_AFB", "No AFB"],
+              ["POS_1", "+"],
+              ["POS_2", "++"],
+              ["POS_3", "+++"]
             ]
           }
         },
         {
           "type": "Control",
           "label": "TB-Status:",
-          "scope": "#/properties/tuberculosis/properties/tbStatus"
+          "scope": "#/properties/tuberculosis/properties/tbStatus",
+          "options": {
+            "show": [
+              ["CONFMC", "TB confirmed clinically"],
+              ["CONFMS", "TB confirmed by Sputum"],
+              ["CONFMX", "TB confirmed by X-ray"],
+              ["INH", "Currently on INH prophylaxis (IPT)"],
+              ["NO", "Not suspected / no signs or symptoms"],
+              ["REFER", "TB suspected and referred for evaluation"],
+              [
+                "SP",
+                "TB suspected and sputums sample sent or results recorded"
+              ],
+              ["TBRX", "Currently on TB treatment"],
+              ["TBRXC", "Has completed TB treatment, no signs or symptoms"],
+              ["YES", "Has TB (code from old CTC form)"]
+            ]
+          }
         }
       ]
     },
@@ -904,46 +1076,16 @@
     },
     {
       "type": "Category",
-      "label": "General",
-      "options": {
-        "icon": "general"
-      },
-      "elements": [
-        {
-          "type": "Control",
-          "label": "Referred to:",
-          "scope": "#/properties/general/properties/referredTo"
-        },
-        {
-          "type": "Control",
-          "label": "Visit Type:",
-          "scope": "#/properties/general/properties/visitType"
-        },
-        {
-          "type": "Control",
-          "scope": "#/properties/general/properties/location",
-          "rule": {
-            "effect": "ENABLE",
-            "condition": {
-              "scope": "#/properties/general/properties/visitType",
-              "schema": {
-                "enum": [
-                  "Outreach",
-                  "Refill"
-                ]
-              }
-            }
-          }
-        }
-      ]
-    },
-    {
-      "type": "Category",
       "label": "Risk Behaviour",
       "options": {
         "icon": "document"
       },
       "elements": [
+        {
+          "type": "Label",
+          "text": "Have you experienced any of the following in the past 12 months?",
+          "variant": "h2"
+        },
         {
           "type": "Control",
           "scope": "#/properties/riskBehaviour/properties/receivedBloodTransfusion"
@@ -970,7 +1112,8 @@
         },
         {
           "type": "Control",
-          "scope": "#/properties/riskBehaviour/properties/prostitution"
+          "scope": "#/properties/riskBehaviour/properties/prostitution",
+          "label": "Sex in exchange for money/goods/services"
         },
         {
           "type": "Control",
@@ -979,6 +1122,9 @@
         {
           "type": "Control",
           "scope": "#/properties/riskBehaviour/properties/forcedSexWithoutConsent"
+        },
+        {
+          "type": "Spacer"
         },
         {
           "type": "Control",
@@ -1147,6 +1293,29 @@
                 }
               }
             }
+          }
+        }
+      ]
+    },
+    {
+      "type": "Category",
+      "label": "Referrals",
+      "options": {
+        "icon": "referrals"
+      },
+      "elements": [
+        {
+          "type": "Control",
+          "label": "Referred to",
+          "scope": "#/properties/referral/properties/referredTo"
+        },
+        {
+          "type": "Control",
+          "label": "Note",
+          "scope": "#/properties/referral/properties/note",
+          "options": {
+            "multiline": true,
+            "rows": 5
           }
         }
       ]

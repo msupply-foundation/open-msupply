@@ -1,1 +1,1 @@
-export { TypeUtils } from './TypeUtils';
+export * from './TypeUtils';

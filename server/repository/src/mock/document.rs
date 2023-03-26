@@ -10,7 +10,10 @@ pub fn document_a() -> Document {
         name: String::from("document_a"),
         parent_ids: vec![],
         user_id: String::from("user_account_a"),
-        timestamp: DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(6000, 0), Utc),
+        timestamp: DateTime::<Utc>::from_utc(
+            NaiveDateTime::from_timestamp_opt(6000, 0).unwrap(),
+            Utc,
+        ),
         r#type: String::from("testing_document"),
         form_schema_id: None,
         data: mock_form_schema_simple().json_schema,
@@ -18,6 +21,7 @@ pub fn document_a() -> Document {
         comment: None,
         owner_name_id: None,
         context: None,
+        is_sync_update: false,
     }
 }
 

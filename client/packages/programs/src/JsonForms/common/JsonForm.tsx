@@ -50,6 +50,7 @@ import {
 } from './components/AccordionGroup';
 import { NumberField, numberTester } from './components/Number';
 import { DateTime, datetimeTester } from './components/DateTime';
+import { Header, headerTester } from './components/Header';
 
 export type JsonType = string | number | boolean | null | undefined;
 
@@ -179,6 +180,7 @@ const renderers = [
   { tester: notesTester, renderer: NotesControl },
   { tester: noteTester, renderer: Note },
   { tester: spacerTester, renderer: Spacer },
+  { tester: headerTester, renderer: Header },
   // We should be able to remove materialRenderers once we are sure we have custom components to cover all cases.
   ...materialRenderers,
 ];

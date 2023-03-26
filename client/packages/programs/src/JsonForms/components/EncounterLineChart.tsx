@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { rankWith, uiTypeIs, ControlProps } from '@jsonforms/core';
-import { withJsonFormsControlProps } from '@jsonforms/react';
+import { withJsonFormsControlProps, useJsonForms } from '@jsonforms/react';
 import { Box, FormLabel } from '@mui/material';
 import {
   Line,
@@ -19,6 +19,7 @@ import {
 } from 'recharts';
 import { useEncounter } from '../../api';
 import { z } from 'zod';
+import { get as extractProperty } from 'lodash';
 
 export const encounterLineChartTester = rankWith(
   4,
@@ -87,17 +88,18 @@ type DataType = { time: number; y: number };
 const UIComponent = (props: ControlProps) => {
   const { visible, uischema } = props;
   const { dayMonthShort } = useFormatDateTime();
-
+  const { core } = useJsonForms();
   const id = useEncounter.utils.idFromUrl();
   const { data: encounter } = useEncounter.document.byId(id);
-
+  const [data, setData] = useState([] as DataType[]);
   const { errors, options } = useZodOptionsValidation(
     Options,
     uischema.options
   );
+  // TODO support multiple lines
   const option = options?.values[0];
+  const currentData = extractProperty(core?.data ?? {}, option?.field ?? '');
 
-  const [data, setData] = useState([] as DataType[]);
   const { data: encounterFields } = useEncounter.encounterFields(
     encounter?.patient.id ?? '',
     [option?.field ?? ''],
@@ -112,8 +114,25 @@ const UIComponent = (props: ControlProps) => {
           y: d.fields[0],
         };
       }) ?? [];
+
+    // replace or add the current point
+    if (!!currentData && encounter) {
+      const currentTime = new Date(encounter.startDatetime).getTime() / 1000;
+      const currentPoint: DataType = {
+        time: currentTime,
+        y: currentData,
+      };
+      const currentIndex = data.findIndex(it => it.time === currentTime);
+      if (currentIndex === -1) {
+        data.push(currentPoint);
+        data.sort((a, b) => a.time - b.time);
+      } else {
+        data[currentIndex] = currentPoint;
+      }
+    }
+
     setData(data);
-  }, [encounterFields]);
+  }, [encounterFields, currentData]);
 
   if (errors) {
     return <FormLabel>EncounterLineChart: {errors}</FormLabel>;

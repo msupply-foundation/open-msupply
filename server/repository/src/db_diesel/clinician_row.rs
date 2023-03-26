@@ -18,6 +18,7 @@ table! {
     email -> Nullable<Text>,
     gender -> Nullable<crate::db_diesel::name_row::GenderMapping>,
     is_active -> Bool,
+    is_sync_update -> Bool,
   }
 }
 
@@ -36,6 +37,7 @@ pub struct ClinicianRow {
     pub email: Option<String>,
     pub gender: Option<Gender>,
     pub is_active: bool,
+    pub is_sync_update: bool,
 }
 
 pub struct ClinicianRowRepository<'a> {
