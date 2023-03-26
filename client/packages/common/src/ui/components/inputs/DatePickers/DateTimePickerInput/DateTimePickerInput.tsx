@@ -7,37 +7,37 @@ import { DateUtils } from '@common/intl';
 import { useDebounceCallback } from '@common/hooks';
 
 export const DateTimePickerInput: FC<
-  Omit<DateTimePickerProps<Date>, 'renderInput'>
-> = props => {
+  Omit<DateTimePickerProps<Date>, 'renderInput' | 'value'> & {
+    onChange(date: Date): void;
+    value: Date | string | null;
+  }
+> = ({ disabled, onChange, value, ...props }) => {
   const theme = useAppTheme();
-
-  const [internalValue, setInternalValue] = useState<
-    Date | string | number | null
-  >();
+  const [internalValue, setInternalValue] = useState<Date | null>(null);
 
   useEffect(() => {
-    if (props.value && props.value !== internalValue)
-      setInternalValue(props.value);
-  }, [props.value]);
+    // This sets the internal state from parent when first loading (i.e. when
+    // the internal date is still empty)
+    if (value && internalValue === null)
+      setInternalValue(DateUtils.getDateOrNull(value));
+  }, [value]);
 
-  const isInvalid = (value: Date | string | number | null | undefined) => {
-    const dateValue =
-      typeof value === 'string' ? DateUtils.getDateOrNull(value) : value;
+  const isInvalid = (value: Date | null) => {
+    const dateValue = DateUtils.getDateOrNull(value);
     return !!value && !DateUtils.isValid(dateValue);
   };
 
   const debouncedOnChange = useDebounceCallback(
     value => {
-      if (DateUtils.isValid(value)) props.onChange(value);
-      else props.onChange(null);
-      setInternalValue(value);
+      // Only run the parent onChange method when the internal date is valid
+      if (DateUtils.isValid(value)) onChange(value);
     },
-    [props.onChange]
+    [onChange]
   );
 
   return (
     <DateTimePicker
-      disabled={props.disabled}
+      disabled={disabled}
       inputFormat="dd/MM/yyyy HH:mm"
       PopperProps={{
         sx: {
@@ -76,7 +76,7 @@ export const DateTimePickerInput: FC<
         };
         return (
           <BasicTextInput
-            disabled={!!props.disabled}
+            disabled={!!disabled}
             {...textInputProps}
             error={isInvalid(internalValue)}
             sx={{ width: 250 }}
@@ -84,8 +84,11 @@ export const DateTimePickerInput: FC<
         );
       }}
       {...props}
-      onChange={debouncedOnChange}
-      value={internalValue || null}
+      onChange={(d: Date | null) => {
+        setInternalValue(d);
+        debouncedOnChange(d);
+      }}
+      value={internalValue}
     />
   );
 };
