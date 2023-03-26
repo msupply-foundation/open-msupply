@@ -43,7 +43,6 @@ pub(crate) fn all_translators() -> SyncTanslators {
         Box::new(report::ReportTranslation {}),
         Box::new(inventory_adjustment_reason::InventoryAdjustmentReasonTranslation {}),
         Box::new(store_preference::StorePreferenceTranslation {}),
-        Box::new(user_permission::UserPermissionTranslation {}),
         // Remote
         Box::new(location::LocationTranslation {}),
         Box::new(stock_line::StockLineTranslation {}),
@@ -58,6 +57,7 @@ pub(crate) fn all_translators() -> SyncTanslators {
         Box::new(clinician_store_join::ClinicianStoreJoinTranslation {}),
         // Remote-Central (site specific)
         Box::new(name_store_join::NameStoreJoinTranslation {}),
+        Box::new(user_permission::UserPermissionTranslation {}),
         // Special translations
         Box::new(special::NameToNameStoreJoinTranslation {}),
     ]
