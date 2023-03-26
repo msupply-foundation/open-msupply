@@ -7,8 +7,8 @@ use crate::programs::{
     encounter::{
         encounter_updated::update_encounter_row, validate_misc::validate_encounter_schema,
     },
-    patient::{patient_schema::SchemaPatient, patient_updated::patient_document_updated},
-    program_enrolment::program_enrolment_updated::program_enrolment_updated,
+    patient::{patient_schema::SchemaPatient, patient_updated::update_patient_row},
+    program_enrolment::program_enrolment_updated::update_program_enrolment_row,
     program_enrolment::program_schema::SchemaProgramEnrolment,
 };
 
@@ -41,7 +41,7 @@ fn update_patient(con: &StorageConnection, document: &Document) -> Result<(), Re
         RepositoryError::as_db_error(&format!("Invalid patient data: {}", err), "")
     })?;
 
-    patient_document_updated(con, &document.datetime, patient, true)
+    update_patient_row(con, &document.datetime, patient, true)
         .map_err(|err| RepositoryError::as_db_error(&format!("{:?}", err), ""))?;
     Ok(())
 }
@@ -57,7 +57,7 @@ fn update_program_enrolment(
         .map_err(|err| {
         RepositoryError::as_db_error(&format!("Invalid program enrolment data: {}", err), "")
     })?;
-    program_enrolment_updated(con, patient_id, document, program_enrolment)
+    update_program_enrolment_row(con, patient_id, document, program_enrolment)
         .map_err(|err| RepositoryError::as_db_error(&format!("{:?}", err), ""))?;
     Ok(())
 }

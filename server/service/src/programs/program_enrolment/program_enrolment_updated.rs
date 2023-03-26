@@ -7,8 +7,8 @@ use util::uuid::uuid;
 
 use super::{program_schema::SchemaProgramEnrolment, UpsertProgramEnrolmentError};
 
-/// Callback called when the document has been updated
-pub(crate) fn program_enrolment_updated(
+/// Callback called when a program enrolment document has been updated
+pub(crate) fn update_program_enrolment_row(
     con: &StorageConnection,
     patient_id: &str,
     document: &Document,
