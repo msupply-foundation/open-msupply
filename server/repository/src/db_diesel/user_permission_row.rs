@@ -110,4 +110,10 @@ impl<'a> UserPermissionRowRepository<'a> {
         .execute(&self.connection.connection)?;
         Ok(())
     }
+
+    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(user_permission_dsl::user_permission.filter(user_permission_dsl::id.eq(id)))
+            .execute(&self.connection.connection)?;
+        Ok(())
+    }
 }
