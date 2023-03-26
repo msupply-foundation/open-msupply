@@ -83,6 +83,16 @@ pub fn mock_user_permission_a2() -> UserPermissionRow {
     }
 }
 
+pub fn mock_user_permission_a3() -> UserPermissionRow {
+    UserPermissionRow {
+        id: "user_permission_a3".to_string(),
+        user_id: "user_account_a".to_string(),
+        store_id: Some("store_a".to_string()),
+        permission: Permission::DocumentQuery,
+        context: Some("program".to_string()),
+    }
+}
+
 pub fn mock_user_permission_b1() -> UserPermissionRow {
     UserPermissionRow {
         id: "user_permission_b1".to_string(),
@@ -109,6 +119,7 @@ pub fn mock_user_permissions() -> Vec<UserPermissionRow> {
     vec![
         mock_user_permission_a1(),
         mock_user_permission_a2(),
+        mock_user_permission_a3(),
         mock_user_permission_b1(),
     ]
 }
