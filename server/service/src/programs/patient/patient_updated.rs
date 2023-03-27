@@ -47,28 +47,49 @@ pub fn update_patient_row(
     patient: SchemaPatient,
     is_sync_update: bool,
 ) -> Result<(), UpdatePatientError> {
-    let contact = patient.contact_details.get(0);
-    let date_of_birth = match patient.date_of_birth {
+    let SchemaPatient {
+        id,
+        code,
+        code_2,
+        contact_details,
+        date_of_birth,
+        first_name,
+        last_name,
+        gender,
+        middle_name: _,
+        date_of_birth_is_estimated: _,
+        date_of_death: _,
+        family: _,
+        health_center: _,
+        is_deceased: _,
+        notes: _,
+        passport_number: _,
+        socio_economics: _,
+        allergies: _,
+        birth_place: _,
+    } = patient;
+    let contact = contact_details.get(0);
+    let date_of_birth = match date_of_birth {
         Some(date_of_birth) => Some(NaiveDate::from_str(&date_of_birth).map_err(|err| {
             UpdatePatientError::InternalError(format!("Invalid date of birth format: {}", err))
         })?),
         None => None,
     };
-    let address = patient.contact_details.get(0);
+    let address = contact_details.get(0);
     let name_repo = NameRowRepository::new(con);
-    let existing_name = name_repo.find_one_by_id(&patient.id)?;
+    let existing_name = name_repo.find_one_by_id(&id)?;
     let existing_name = existing_name.as_ref();
     name_repo.upsert_one(&NameRow {
-        id: patient.id.clone(),
-        name: patient_name(&patient.first_name, &patient.last_name),
-        code: patient.code.unwrap_or("".to_string()),
+        id: id.clone(),
+        name: patient_name(&first_name, &last_name),
+        code: code.unwrap_or("".to_string()),
         r#type: NameType::Patient,
         is_customer: existing_name.map(|n| n.is_customer).unwrap_or(true),
         is_supplier: existing_name.map(|n| n.is_supplier).unwrap_or(false),
         supplying_store_id: existing_name.and_then(|n| n.supplying_store_id.clone()),
-        first_name: patient.first_name,
-        last_name: patient.last_name,
-        gender: patient.gender.and_then(|g| match g {
+        first_name: first_name,
+        last_name: last_name,
+        gender: gender.and_then(|g| match g {
             SchemaGender::Female => Some(Gender::Female),
             SchemaGender::Male => Some(Gender::Male),
             SchemaGender::Transgender => Some(Gender::Transgender),
@@ -93,7 +114,7 @@ pub fn update_patient_row(
             .and_then(|n| n.created_datetime.clone())
             .or(Some(update_timestamp.naive_utc())), // assume there is no earlier doc version
         is_deceased: patient.is_deceased.unwrap_or(false),
-        national_health_number: patient.code_2,
+        national_health_number: code_2,
         is_sync_update,
     })?;
 
