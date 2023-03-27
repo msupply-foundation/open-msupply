@@ -4,5 +4,6 @@ CREATE TABLE program_enrolment (
     document_name TEXT NOT NULL,
     patient_id TEXT NOT NULL,
     enrolment_datetime TIMESTAMP NOT NULL,
-    program_enrolment_id TEXT
+    program_enrolment_id TEXT,
+    status TEXT NOT NULL
 )
