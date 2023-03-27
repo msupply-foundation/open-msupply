@@ -1,24 +1,20 @@
 use repository::{
-    ClinicianRow, EncounterFilter, EncounterRepository, EncounterRow, EncounterRowRepository,
-    EncounterStatus, EqualFilter, RepositoryError,
+    Document, EncounterFilter, EncounterRepository, EncounterRow, EncounterRowRepository,
+    EncounterStatus, EqualFilter, RepositoryError, StorageConnection,
 };
 use util::uuid::uuid;
-
-use crate::{document::raw_document::RawDocument, service_provider::ServiceContext};
 
 use super::{encounter_schema, validate_misc::ValidatedSchemaEncounter};
 
 /// Callback called when the document has been updated
 pub(crate) fn update_encounter_row(
-    ctx: &ServiceContext,
+    con: &StorageConnection,
     patient_id: &str,
     program: &str,
-    doc: &RawDocument,
+    doc: &Document,
     validated_encounter: ValidatedSchemaEncounter,
-    clinician_row: Option<ClinicianRow>,
+    clinician_id: Option<String>,
 ) -> Result<(), RepositoryError> {
-    let con = &ctx.connection;
-
     let status = if let Some(status) = validated_encounter.encounter.status {
         Some(match status {
             encounter_schema::EncounterStatus::Scheduled => EncounterStatus::Scheduled,
@@ -47,7 +43,7 @@ pub(crate) fn update_encounter_row(
         start_datetime: validated_encounter.start_datetime,
         end_datetime: validated_encounter.end_datetime,
         status,
-        clinician_id: clinician_row.map(|c| c.id),
+        clinician_id,
     };
     EncounterRowRepository::new(con).upsert_one(&row)?;
 

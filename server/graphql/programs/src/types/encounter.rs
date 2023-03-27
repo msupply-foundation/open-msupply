@@ -3,8 +3,8 @@ use chrono::{DateTime, Utc};
 use graphql_core::{
     generic_filters::EqualFilterStringInput,
     loader::{
-        ClinicianLoader, ClinicianLoaderInput, DocumentLoader, DocumentLoaderInput, NameByIdLoader,
-        NameByIdLoaderInput, ProgramEnrolmentLoader, ProgramEnrolmentLoaderInput,
+        ClinicianLoader, ClinicianLoaderInput, DocumentLoader, NameByIdLoader, NameByIdLoaderInput,
+        ProgramEnrolmentLoader, ProgramEnrolmentLoaderInput,
     },
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
@@ -183,10 +183,7 @@ impl EncounterNode {
         let loader = ctx.get_loader::<DataLoader<DocumentLoader>>();
 
         let result = loader
-            .load_one(DocumentLoaderInput {
-                store_id: self.store_id.clone(),
-                document_name: self.encounter_row.document_name.clone(),
-            })
+            .load_one(self.encounter_row.document_name.clone())
             .await?
             .map(|document| DocumentNode {
                 allowed_docs: self.allowed_docs.clone(),
