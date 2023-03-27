@@ -29,7 +29,7 @@ export const NonNegativeIntegerInput = React.forwardRef(
           sx: { ...sx, '& .MuiInput-input': { textAlign: 'right' } },
         }}
         onChange={value =>
-          value
+          value !== undefined
             ? onChange(NumUtils.constrain(Math.round(value), 0, max))
             : undefined
         }
