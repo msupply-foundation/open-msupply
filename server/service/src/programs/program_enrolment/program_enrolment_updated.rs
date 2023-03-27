@@ -1,7 +1,7 @@
 use chrono::DateTime;
 use repository::{
     ProgramEnrolmentRepository, ProgramEnrolmentRow, ProgramEnrolmentRowRepository,
-    StorageConnection,
+    ProgramEnrolmentStatus, StorageConnection,
 };
 use util::uuid::uuid;
 
@@ -31,6 +31,16 @@ pub(crate) fn program_enrolment_updated(
         Some(program_row) => program_row.id,
         None => uuid(),
     };
+
+    let status = match program.status {
+        super::program_schema::ProgramEnrolmentStatus::Active => ProgramEnrolmentStatus::Active,
+        super::program_schema::ProgramEnrolmentStatus::OptedOut => ProgramEnrolmentStatus::OptedOut,
+        super::program_schema::ProgramEnrolmentStatus::TransferredOut => {
+            ProgramEnrolmentStatus::TransferredOut
+        }
+        super::program_schema::ProgramEnrolmentStatus::Paused => ProgramEnrolmentStatus::Paused,
+    };
+
     let program_row = ProgramEnrolmentRow {
         id,
         program: document.r#type.clone(),
@@ -38,6 +48,7 @@ pub(crate) fn program_enrolment_updated(
         patient_id: patient_id.to_string(),
         enrolment_datetime,
         program_enrolment_id: program.program_enrolment_id,
+        status,
     };
     ProgramEnrolmentRowRepository::new(con).upsert_one(&program_row)?;
 
