@@ -25,7 +25,7 @@ pub fn get_requisitions(
     filter.store_id = store_id_option.map(EqualFilter::equal_to);
 
     Ok(ListResult {
-        rows: repository.query(pagination, Some(filter.clone()), sort)?,
+        rows: repository.query(Some(pagination), Some(filter.clone()), sort)?,
         count: i64_to_u32(repository.count(Some(filter))?),
     })
 }
