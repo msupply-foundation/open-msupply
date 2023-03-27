@@ -6,6 +6,7 @@ mod tests {
         patient_name_and_store_and_name_store_join::PatientNameAndStoreAndNameStoreJoinTester,
         requisition::RequisitionRecordTester, stock_line::StockLineRecordTester,
         stocktake::StocktakeRecordTester, test_remote_sync_record,
+        user_permission::UserPermissionTester,
     };
 
     #[actix_rt::test]
@@ -50,5 +51,10 @@ mod tests {
             &PatientNameAndStoreAndNameStoreJoinTester,
         )
         .await;
+    }
+
+    #[actix_rt::test]
+    async fn integration_sync_remote_user_permission() {
+        test_remote_sync_record("user_permission", &UserPermissionTester).await;
     }
 }
