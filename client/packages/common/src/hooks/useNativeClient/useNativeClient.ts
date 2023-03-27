@@ -139,7 +139,7 @@ export const useNativeClient = ({
 
     let connectToPreviousTimer: NodeJS.Timer | undefined = undefined;
 
-    if (autoconnect) {
+    if (autoconnect && !!previousServerJson) {
       connectToPreviousTimer = setTimeout(
         () =>
           setState(state => ({ ...state, connectToPreviousTimedOut: true })),

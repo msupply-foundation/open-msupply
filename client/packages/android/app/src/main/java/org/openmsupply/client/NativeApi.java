@@ -334,12 +334,13 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     // Had issues resolving local server when wifi and mobile data is off
     // getting onResolveFailed with errorCode = 0 (internal error) with no more information
     // manually adding this server should work
+    // isAdvertising will be false when running in client mode - have removed from the conditional statement
     private void addLocalServerToDiscovery() {
-        if(isAdvertising && isDiscovering && discoveredServers != null) {
+        if(isDiscovering && discoveredServers != null) {
             try {
-                NsdServiceInfo serviceInfo = createLocalServiceInfo();
-                serviceInfo.setHost(InetAddress.getByName("localhost"));
-                discoveredServers.put(serviceInfoToObject(serviceInfo));
+                NsdServiceInfo localServiceInfo = createLocalServiceInfo();
+                localServiceInfo.setHost(InetAddress.getByName("localhost"));
+                discoveredServers.put(serviceInfoToObject(localServiceInfo));
             } catch(Exception E) {
                 Log.d(OM_SUPPLY, "problem adding localhost to discovery");
             }

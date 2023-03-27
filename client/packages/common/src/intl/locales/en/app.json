@@ -50,7 +50,7 @@
   "error.site-mismatch": "Site mismatch",
   "error.site-name-not-found": "Site name not found",
   "error.unable-to-initialise": "Unable to initialise",
-  "error.unable-to-connect": "Unable to connect to server",
+  "error.unable-to-connect": "Unable to connect to server {{server}}",
   "error.unable-to-save-settings": "Unable to save settings",
   "error.unknown-sync-error": "Unknown sync error",
   "heading.password": "Password",
