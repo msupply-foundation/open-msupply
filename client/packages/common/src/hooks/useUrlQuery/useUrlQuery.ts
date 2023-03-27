@@ -1,7 +1,7 @@
 import { useSearchParams } from 'react-router-dom';
 
 interface UrlQueryObject {
-  [key: string]: string | number | boolean | string[];
+  [key: string]: string | number | boolean;
 }
 
 interface useUrlQueryProps {
@@ -43,10 +43,6 @@ const parseSearchParams = (
       if (!isNaN(Number(value))) return [key, Number(value)];
       if (value === 'true') return [key, true];
       if (value === 'false') return [key, false];
-      if (key.endsWith('[]')) {
-        // if the key ends with '[]' then the value should be an array of strings
-        return [key.replace('[]', ''), value.split(',')];
-      }
       return [key, value];
     })
   );
