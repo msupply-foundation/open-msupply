@@ -41,7 +41,6 @@ impl From<RepositoryError> for DocumentHistoryError {
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct DocumentDelete {
     pub id: String,
-    pub comment: Option<String>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -173,9 +172,9 @@ pub trait DocumentServiceTrait: Sync + Send {
         ctx.connection
             .transaction_sync(|con| {
                 let current_document = validate_document_delete(con, &input.id, allowed_docs)?;
-                let document = generate_deleted_document(input, current_document, user_id)?;
+                let document = generate_deleted_document(current_document, user_id)?;
 
-                match DocumentRepository::new(con).insert(&document) {
+                match DocumentRepository::new(con).insert(&document, false) {
                     Ok(_) => Ok(()),
                     Err(error) => Err(DocumentDeleteError::DatabaseError(error)),
                 }
@@ -197,7 +196,7 @@ pub trait DocumentServiceTrait: Sync + Send {
                 let parent_doc = validate_document_undelete(con, &input.id, allowed_docs)?;
                 let document = generate_undeleted_document(&input.id, parent_doc, user_id)?;
 
-                match DocumentRepository::new(con).insert(&document) {
+                match DocumentRepository::new(con).insert(&document, false) {
                     Ok(_) => Ok(document),
                     Err(error) => Err(DocumentUndeleteError::DatabaseError(error)),
                 }
@@ -320,7 +319,6 @@ fn validate_document_undelete(
 }
 
 fn generate_deleted_document(
-    input: DocumentDelete,
     current_document: Document,
     user_id: &str,
 ) -> Result<Document, DocumentDeleteError> {
@@ -328,12 +326,11 @@ fn generate_deleted_document(
         name: current_document.name,
         parents: vec![current_document.id.clone()],
         author: user_id.to_string(),
-        timestamp: Utc::now(),
+        datetime: Utc::now(),
         r#type: current_document.r#type,
         data: serde_json::Value::Null,
         form_schema_id: current_document.form_schema_id,
         status: DocumentStatus::Deleted,
-        comment: input.comment,
         owner_name_id: None,
         context: None,
     }
@@ -352,12 +349,11 @@ fn generate_undeleted_document(
         name: deleted_document_parent.name,
         parents: vec![id.to_string()],
         author: user_id.to_string(),
-        timestamp: Utc::now(),
+        datetime: Utc::now(),
         r#type: deleted_document_parent.r#type,
         data: deleted_document_parent.data,
         form_schema_id: deleted_document_parent.form_schema_id,
         status: DocumentStatus::Active,
-        comment: None,
         owner_name_id: deleted_document_parent.owner_name_id,
         context: deleted_document_parent.context,
     }
@@ -376,7 +372,7 @@ fn insert_document(
         .finalise()
         .map_err(|err| DocumentInsertError::InternalError(err))?;
     let repo = DocumentRepository::new(connection);
-    repo.insert(&doc)?;
+    repo.insert(&doc, false)?;
     Ok(doc)
 }
 
@@ -415,7 +411,7 @@ mod document_service_test {
                 name: doc_name.to_string(),
                 parents: vec![],
                 author: "me".to_string(),
-                timestamp: DateTime::<Utc>::from_utc(
+                datetime: DateTime::<Utc>::from_utc(
                     NaiveDateTime::from_timestamp_opt(5000, 0).unwrap(),
                     Utc,
                 ),
@@ -425,7 +421,6 @@ mod document_service_test {
                 }),
                 form_schema_id: None,
                 status: DocumentStatus::Active,
-                comment: None,
                 owner_name_id: None,
                 context: None,
             },
@@ -444,7 +439,7 @@ mod document_service_test {
                     name: doc_name.to_string(),
                     parents: vec![],
                     author: "me".to_string(),
-                    timestamp: DateTime::<Utc>::from_utc(
+                    datetime: DateTime::<Utc>::from_utc(
                         NaiveDateTime::from_timestamp_opt(5000, 0).unwrap(),
                         Utc,
                     ),
@@ -454,7 +449,6 @@ mod document_service_test {
                     }),
                     form_schema_id: None,
                     status: DocumentStatus::Active,
-                    comment: None,
                     owner_name_id: None,
                     context: None,
                 },
@@ -471,7 +465,7 @@ mod document_service_test {
                 name: doc_name.to_string(),
                 parents: vec!["invalid".to_string()],
                 author: "me".to_string(),
-                timestamp: DateTime::<Utc>::from_utc(
+                datetime: DateTime::<Utc>::from_utc(
                     NaiveDateTime::from_timestamp_opt(6000, 0).unwrap(),
                     Utc,
                 ),
@@ -481,7 +475,6 @@ mod document_service_test {
                 }),
                 form_schema_id: None,
                 status: DocumentStatus::Active,
-                comment: None,
                 owner_name_id: None,
                 context: None,
             },
@@ -497,7 +490,7 @@ mod document_service_test {
                     name: doc_name.to_string(),
                     parents: vec![v1.id.clone()],
                     author: "me".to_string(),
-                    timestamp: DateTime::<Utc>::from_utc(
+                    datetime: DateTime::<Utc>::from_utc(
                         NaiveDateTime::from_timestamp_opt(6000, 0).unwrap(),
                         Utc,
                     ),
@@ -507,7 +500,6 @@ mod document_service_test {
                     }),
                     form_schema_id: None,
                     status: DocumentStatus::Active,
-                    comment: None,
                     owner_name_id: None,
                     context: None,
                 },
@@ -527,7 +519,7 @@ mod document_service_test {
                     name: "test/noise".to_string(),
                     parents: vec![],
                     author: "me".to_string(),
-                    timestamp: DateTime::<Utc>::from_utc(
+                    datetime: DateTime::<Utc>::from_utc(
                         NaiveDateTime::from_timestamp_opt(8000, 0).unwrap(),
                         Utc,
                     ),
@@ -537,7 +529,6 @@ mod document_service_test {
                     }),
                     form_schema_id: None,
                     status: DocumentStatus::Active,
-                    comment: None,
                     owner_name_id: None,
                     context: None,
                 },
@@ -571,7 +562,7 @@ mod document_service_test {
                     name: "test/doc1".to_string(),
                     parents: vec![],
                     author: "me".to_string(),
-                    timestamp: DateTime::<Utc>::from_utc(
+                    datetime: DateTime::<Utc>::from_utc(
                         NaiveDateTime::from_timestamp_opt(5000, 0).unwrap(),
                         Utc,
                     ),
@@ -582,7 +573,6 @@ mod document_service_test {
                     }),
                     form_schema_id: Some(schema.id),
                     status: DocumentStatus::Active,
-                    comment: None,
                     owner_name_id: None,
                     context: None,
                 },
@@ -598,7 +588,7 @@ mod document_service_test {
                 name: "test/doc2".to_string(),
                 parents: vec![],
                 author: "me".to_string(),
-                timestamp: DateTime::<Utc>::from_utc(
+                datetime: DateTime::<Utc>::from_utc(
                     NaiveDateTime::from_timestamp_opt(5000, 0).unwrap(),
                     Utc,
                 ),
@@ -609,7 +599,6 @@ mod document_service_test {
                 }),
                 form_schema_id: Some(schema.id),
                 status: DocumentStatus::Active,
-                comment: None,
                 owner_name_id: None,
                 context: None,
             },
@@ -628,7 +617,7 @@ mod document_service_test {
                 name: "test/doc3".to_string(),
                 parents: vec![],
                 author: "me".to_string(),
-                timestamp: DateTime::<Utc>::from_utc(
+                datetime: DateTime::<Utc>::from_utc(
                     NaiveDateTime::from_timestamp_opt(5000, 0).unwrap(),
                     Utc,
                 ),
@@ -639,7 +628,6 @@ mod document_service_test {
                 }),
                 form_schema_id: Some(schema.id),
                 status: DocumentStatus::Active,
-                comment: None,
                 owner_name_id: None,
                 context: None,
             },
@@ -659,7 +647,7 @@ mod document_service_test {
                     name: "test/doc4".to_string(),
                     parents: vec![],
                     author: "me".to_string(),
-                    timestamp: DateTime::<Utc>::from_utc(
+                    datetime: DateTime::<Utc>::from_utc(
                         NaiveDateTime::from_timestamp_opt(5000, 0).unwrap(),
                         Utc,
                     ),
@@ -670,7 +658,6 @@ mod document_service_test {
                     }),
                     form_schema_id: Some(schema.id),
                     status: DocumentStatus::Active,
-                    comment: None,
                     owner_name_id: None,
                     context: None,
                 },
@@ -695,7 +682,6 @@ mod document_service_test {
             "",
             DocumentDelete {
                 id: "invalid".to_string(),
-                comment: None,
             },
             &vec!["SomeType".to_string()],
         );
@@ -711,7 +697,6 @@ mod document_service_test {
                 "",
                 DocumentDelete {
                     id: document_a().id,
-                    comment: Some("Testing deletion".to_string()),
                 },
                 &vec!["WrongType".to_string()],
             )
@@ -725,7 +710,6 @@ mod document_service_test {
                 "",
                 DocumentDelete {
                     id: document_a().id,
-                    comment: Some("Testing deletion".to_string()),
                 },
                 &vec![document_a().r#type],
             )
@@ -743,7 +727,6 @@ mod document_service_test {
             "",
             DocumentDelete {
                 id: document.id.clone(),
-                comment: None,
             },
             &vec![document.r#type.clone()],
         );

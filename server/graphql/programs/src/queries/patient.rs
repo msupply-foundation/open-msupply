@@ -4,7 +4,7 @@ use chrono::{Local, NaiveDate};
 use graphql_core::generic_filters::{
     DateFilterInput, EqualFilterStringInput, SimpleStringFilterInput,
 };
-use graphql_core::loader::{DocumentLoader, DocumentLoaderInput};
+use graphql_core::loader::DocumentLoader;
 use graphql_core::map_filter;
 use graphql_core::pagination::PaginationInput;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
@@ -106,16 +106,8 @@ impl PatientNode {
     pub async fn document(&self, ctx: &Context<'_>) -> Result<Option<DocumentNode>> {
         let loader = ctx.get_loader::<DataLoader<DocumentLoader>>();
 
-        let store_id = match self.patient.name_row.supplying_store_id.clone() {
-            Some(store_id) => store_id,
-            None => return Ok(None),
-        };
-
         let result = loader
-            .load_one(DocumentLoaderInput {
-                store_id,
-                document_name: main_patient_doc_name(&self.patient.name_row.id),
-            })
+            .load_one(main_patient_doc_name(&self.patient.name_row.id))
             .await?
             .map(|document| DocumentNode {
                 document,

@@ -1,11 +1,8 @@
 use async_graphql::{dataloader::DataLoader, *};
 use chrono::{DateTime, Utc};
 use graphql_core::{
-    generic_filters::EqualFilterStringInput,
-    loader::{DocumentLoader, DocumentLoaderInput},
-    pagination::PaginationInput,
-    standard_graphql_error::StandardGraphqlError,
-    ContextExt,
+    generic_filters::EqualFilterStringInput, loader::DocumentLoader, pagination::PaginationInput,
+    standard_graphql_error::StandardGraphqlError, ContextExt,
 };
 use repository::{
     EncounterFilter, EqualFilter, PaginationOption, ProgramEnrolmentRow, ProgramEnrolmentStatus,
@@ -111,10 +108,7 @@ impl ProgramEnrolmentNode {
         let loader = ctx.get_loader::<DataLoader<DocumentLoader>>();
 
         let result = loader
-            .load_one(DocumentLoaderInput {
-                store_id: self.store_id.clone(),
-                document_name: self.program_row.document_name.clone(),
-            })
+            .load_one(self.program_row.document_name.clone())
             .await?
             .map(|document| DocumentNode {
                 allowed_docs: self.allowed_docs.clone(),

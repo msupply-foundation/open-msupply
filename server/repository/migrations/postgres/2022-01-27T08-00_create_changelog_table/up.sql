@@ -20,7 +20,7 @@ CREATE TYPE row_action_type AS ENUM (
 
 CREATE TABLE changelog (
     cursor BIGSERIAL NOT NULL PRIMARY KEY,
-    -- the table name where the change happend
+    -- the table name where the change happened
     table_name changelog_table_name NOT NULL,
     -- row id of the modified row
     record_id TEXT NOT NULL,

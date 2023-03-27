@@ -56,6 +56,7 @@ pub enum ChangelogTableName {
     ClinicianStoreJoin,
     Name,
     NameStoreJoin,
+    Document,
 }
 
 #[derive(Clone, Queryable, Debug, PartialEq, Insertable)]
