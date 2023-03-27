@@ -62,7 +62,7 @@ export const useUrlQueryParams = ({
     updateQuery({ page: page === 0 ? '' : page + 1 });
   };
 
-  const updateFilterQuery = (key: string, value: string | string[]) => {
+  const updateFilterQuery = (key: string, value: string) => {
     updateQuery({ [key]: value });
   };
 
@@ -73,10 +73,8 @@ export const useUrlQueryParams = ({
     : filterKey;
 
   const filter: FilterController = {
-    onChangeStringFilterRule: (key: string, _, value: string | string[]) =>
+    onChangeStringFilterRule: (key: string, _, value: string) =>
       updateFilterQuery(key, value),
-    onChangeStringArrayFilterRule: (key: string, _, value: string[]) =>
-      updateFilterQuery(key + '[]', value),
     onChangeDateFilterRule: () => {},
     onClearFilterRule: key => updateFilterQuery(key, ''),
     filterBy: filterKeyArray.reduce<FilterBy>((prev, key) => {
