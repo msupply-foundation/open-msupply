@@ -69,8 +69,9 @@ export const DateUtils = {
   addMinutes,
   addDays,
   addYears,
-  getDateOrNull: (date?: string | null): Date | null => {
+  getDateOrNull: (date?: Date | string | null): Date | null => {
     if (!date) return null;
+    if (date instanceof Date) return date;
     const maybeDate = new Date(date);
     return isValid(maybeDate) ? maybeDate : null;
   },
@@ -93,8 +94,8 @@ export const DateUtils = {
     differenceInDays(Date.now(), dateInputHandler(date)),
   startOfDay,
   startOfYear,
-  formatRFC3339: (date: Date) =>
-    isValid(date) ? formatRFC3339(date) : undefined,
+  formatRFC3339: (date: Date | null | undefined) =>
+    isValid(date) ? formatRFC3339(date as Date) : undefined,
 
   /** Number of milliseconds in one second, i.e. SECOND = 1000*/
   SECOND,

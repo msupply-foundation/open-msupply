@@ -8,13 +8,13 @@ use util::inline_edit;
 
 // Ordered by referential constraints
 const TRANSLATION_AND_INTEGRATION_ORDER: &[&str] = &[
-    LegacyTableName::USER_PERMISSION,
     LegacyTableName::INVENTORY_ADJUSTMENT_REASON,
     LegacyTableName::NAME,
     LegacyTableName::UNIT,
     LegacyTableName::ITEM,
     LegacyTableName::STORE,
     LegacyTableName::STORE_PREFERENCE,
+    LegacyTableName::USER_PERMISSION,
     LegacyTableName::LIST_MASTER,
     LegacyTableName::LIST_MASTER_LINE,
     LegacyTableName::LIST_MASTER_NAME_JOIN,
