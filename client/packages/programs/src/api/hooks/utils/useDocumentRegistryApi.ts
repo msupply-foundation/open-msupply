@@ -1,12 +1,11 @@
 import {
   DocumentRegistryNode,
-  FilterBy,
   SortBy,
   useAuthContext,
   useGql,
 } from '@openmsupply-client/common';
-import { getDocumentRegistryQueries } from '../../api';
-import { DocumentRegistryFragment, getSdk } from '../../operations.generated';
+import { DocumentRegistryParams, getDocumentRegistryQueries } from '../../api';
+import { getSdk } from '../../operations.generated';
 
 export const useDocumentRegistryApi = () => {
   const { storeId } = useAuthContext();
@@ -15,10 +14,8 @@ export const useDocumentRegistryApi = () => {
     byDocContext: (name: string) =>
       [...keys.base(), 'docContext', name] as const,
     byDocType: (type: string) => [...keys.base(), 'docType', type] as const,
-    documentRegistries: (
-      sortBy: SortBy<DocumentRegistryFragment>,
-      filterBy?: FilterBy
-    ) => [...keys.base(), sortBy, filterBy] as const,
+    documentRegistries: (params: DocumentRegistryParams) =>
+      [...keys.base(), 'documentRegistries', params] as const,
     programRegistries: (sort?: SortBy<DocumentRegistryNode>) =>
       [...keys.base(), 'programRegistries', sort] as const,
     registriesByParents: (programs: string[]) =>
