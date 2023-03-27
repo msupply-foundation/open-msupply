@@ -9,6 +9,7 @@ import { useFormatDateTime } from '@common/intl';
 import {
   ProgramEventFragment,
   EncounterRowFragment,
+  useDocumentRegistry,
 } from '@openmsupply-client/programs';
 
 const encounterEventCellValue = (events: ProgramEventFragment[]) => {
@@ -28,6 +29,8 @@ export const useEncounterListColumns = ({
   includePatient = false,
 }: useEncounterListColumnsProps) => {
   const { localisedDate, localisedTime } = useFormatDateTime();
+  const { data: documentRegistry } =
+    useDocumentRegistry.get.documentRegistries();
   includePatient;
 
   const columnList: ColumnDescription<EncounterRowFragment>[] = [
@@ -40,6 +43,11 @@ export const useEncounterListColumns = ({
     {
       key: 'program',
       label: 'label.program',
+      accessor: ({ rowData }) => {
+        return documentRegistry?.nodes?.find(
+          node => node.documentType === rowData.program
+        )?.name;
+      },
     },
     {
       key: 'startDatetime',
