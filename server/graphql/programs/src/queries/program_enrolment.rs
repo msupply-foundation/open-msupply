@@ -34,6 +34,7 @@ pub enum ProgramEnrolmentSortFieldInput {
     PatientId,
     EnrolmentDatetime,
     ProgramEnrolmentId,
+    Status,
 }
 
 #[derive(InputObject)]
@@ -128,6 +129,7 @@ impl ProgramEnrolmentSortInput {
             ProgramEnrolmentSortFieldInput::ProgramEnrolmentId => {
                 ProgramEnrolmentSortField::ProgramEnrolmentId
             }
+            ProgramEnrolmentSortFieldInput::Status => ProgramEnrolmentSortField::Status,
         };
 
         ProgramEnrolmentSort {

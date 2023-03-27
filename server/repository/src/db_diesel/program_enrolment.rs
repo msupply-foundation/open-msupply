@@ -4,7 +4,7 @@ use super::{
 };
 
 use crate::{
-    diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort},
+    diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_no_case},
     DBType, DatetimeFilter, EqualFilter, Pagination, ProgramEnrolmentRow, ProgramEnrolmentStatus,
     RepositoryError, Sort,
 };
@@ -62,6 +62,7 @@ pub enum ProgramEnrolmentSortField {
     PatientId,
     EnrolmentDatetime,
     ProgramEnrolmentId,
+    Status,
 }
 
 pub type ProgramEnrolment = ProgramEnrolmentRow;
@@ -130,6 +131,9 @@ impl<'a> ProgramEnrolmentRepository<'a> {
                 }
                 ProgramEnrolmentSortField::ProgramEnrolmentId => {
                     apply_sort!(query, sort, program_dsl::program_enrolment_id)
+                }
+                ProgramEnrolmentSortField::Status => {
+                    apply_sort_no_case!(query, sort, program_dsl::status)
                 }
             }
         } else {
