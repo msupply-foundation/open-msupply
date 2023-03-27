@@ -167,6 +167,8 @@ const HIV_TESTING_ENCOUNTER_SCHEMA: &'static str =
     std::include_str!("./program_schemas/hiv_testing_encounter.json");
 const HIV_TESTING_ENCOUNTER_UI_SCHEMA: &'static str =
     std::include_str!("./program_schemas/hiv_testing_encounter_ui_schema.json");
+const HIV_TESTING_CONFIG: &'static str =
+    std::include_str!("./program_schemas/hiv_testing_config.json");
 
 const HIV_CARE_ENCOUNTER_SCHEMA: &'static str =
     std::include_str!("./program_schemas/hiv_care_encounter.json");
@@ -890,7 +892,7 @@ pub fn init_program_data(
         name: Some("HIV Testing Encounter".to_string()),
         parent_id: Some(hiv_testing_program_id.clone()),
         form_schema_id: Some(hiv_testing_encounter_schema_id.clone()),
-        config: None,
+        config: Some(HIV_TESTING_CONFIG.to_string()),
     })?;
 
     // hiv care program
