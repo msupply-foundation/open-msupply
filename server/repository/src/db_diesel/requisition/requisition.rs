@@ -49,7 +49,7 @@ impl<'a> RequisitionRepository<'a> {
         &self,
         filter: RequisitionFilter,
     ) -> Result<Vec<Requisition>, RepositoryError> {
-        self.query(None, Some(filter), None)
+        self.query(Pagination::new(), Some(filter), None)
     }
 
     pub fn query_one(
@@ -61,7 +61,7 @@ impl<'a> RequisitionRepository<'a> {
 
     pub fn query(
         &self,
-        pagination: Option<Pagination>,
+        pagination: Pagination,
         filter: Option<RequisitionFilter>,
         sort: Option<RequisitionSort>,
     ) -> Result<Vec<Requisition>, RepositoryError> {
@@ -104,13 +104,10 @@ impl<'a> RequisitionRepository<'a> {
             query = query.order(requisition_dsl::id.asc())
         }
 
-        if let Some(pagination) = pagination {
-            query = query
-                .offset(pagination.offset as i64)
-                .limit(pagination.limit as i64);
-        }
-
-        let result = query.load::<RequisitionJoin>(&self.connection.connection)?;
+        let result = query
+            .offset(pagination.offset as i64)
+            .limit(pagination.limit as i64)
+            .load::<RequisitionJoin>(&self.connection.connection)?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
