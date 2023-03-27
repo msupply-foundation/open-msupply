@@ -19,7 +19,7 @@ impl SyncRecordTester for UserPermissionTester {
 
         let user_permission_row_1 = UserPermissionRow {
             id: uuid(),
-            user_id: "user_account_a".to_string(),
+            user_id: "test_user".to_string(),
             store_id: Some(store_id.clone()),
             permission: Permission::DocumentMutate,
             context: Some("some program".to_string()),
@@ -29,12 +29,12 @@ impl SyncRecordTester for UserPermissionTester {
             "user_ID": user_permission_row_1.user_id,
             "store_ID": user_permission_row_1.store_id,
             "permission": "DocumentMutate",
-            "context_ID": user_permission_row_1.context,
+            "context_ID": user_permission_row_1.context
         });
 
         let user_permission_row_2 = UserPermissionRow {
             id: uuid(),
-            user_id: "user_account_a".to_string(),
+            user_id: "test_user".to_string(),
             store_id: Some(store_id),
             permission: Permission::DocumentQuery,
             context: Some("some program".to_string()),
@@ -44,12 +44,12 @@ impl SyncRecordTester for UserPermissionTester {
             "user_ID": user_permission_row_2.user_id,
             "store_ID": user_permission_row_2.store_id,
             "permission": "DocumentQuery",
-            "context_ID": user_permission_row_2.context,
+            "context_ID": user_permission_row_2.context
         });
 
         result.push(TestStepData {
             central_upsert: json!({
-                "user_permission": [user_permission_row_1_json, user_permission_row_2_json],
+                "om_user_permission": [user_permission_row_1_json, user_permission_row_2_json],
             }),
             central_delete: json!({}),
             integration_records: IntegrationRecords::from_upserts(vec![
@@ -62,7 +62,7 @@ impl SyncRecordTester for UserPermissionTester {
         result.push(TestStepData {
             central_upsert: json!({}),
             central_delete: json!({
-                "user_permission": [user_permission_row_1_json],
+                "om_user_permission": [user_permission_row_1.id],
             }),
             integration_records: IntegrationRecords::from_deletes(vec![PullDeleteRecord {
                 id: user_permission_row_1.id,

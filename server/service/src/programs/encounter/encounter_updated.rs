@@ -6,10 +6,7 @@ use util::uuid::uuid;
 
 use crate::{document::raw_document::RawDocument, service_provider::ServiceContext};
 
-use super::{
-    encounter_schema::{self},
-    validate_misc::ValidatedSchemaEncounter,
-};
+use super::{encounter_schema, validate_misc::ValidatedSchemaEncounter};
 
 /// Callback called when the document has been updated
 pub(crate) fn update_encounter_row(
