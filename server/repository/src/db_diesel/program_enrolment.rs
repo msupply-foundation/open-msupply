@@ -5,7 +5,8 @@ use super::{
 
 use crate::{
     diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort},
-    DBType, DatetimeFilter, EqualFilter, Pagination, ProgramEnrolmentRow, RepositoryError, Sort,
+    DBType, DatetimeFilter, EqualFilter, Pagination, ProgramEnrolmentRow, ProgramEnrolmentStatus,
+    RepositoryError, Sort,
 };
 
 use diesel::{dsl::IntoBoxed, prelude::*};
@@ -16,6 +17,7 @@ pub struct ProgramEnrolmentFilter {
     pub patient_id: Option<EqualFilter<String>>,
     pub enrolment_datetime: Option<DatetimeFilter>,
     pub program_enrolment_id: Option<EqualFilter<String>>,
+    pub status: Option<EqualFilter<ProgramEnrolmentStatus>>,
 }
 
 impl ProgramEnrolmentFilter {
@@ -25,6 +27,7 @@ impl ProgramEnrolmentFilter {
             program: None,
             enrolment_datetime: None,
             program_enrolment_id: None,
+            status: None,
         }
     }
 
@@ -45,6 +48,11 @@ impl ProgramEnrolmentFilter {
 
     pub fn program_enrolment_id(mut self, filter: EqualFilter<String>) -> Self {
         self.program_enrolment_id = Some(filter);
+        self
+    }
+
+    pub fn status(mut self, filter: EqualFilter<ProgramEnrolmentStatus>) -> Self {
+        self.status = Some(filter);
         self
     }
 }
@@ -74,6 +82,7 @@ fn create_filtered_query<'a>(filter: Option<ProgramEnrolmentFilter>) -> BoxedPro
             f.program_enrolment_id,
             program_dsl::program_enrolment_id
         );
+        apply_equal_filter!(query, f.status, program_dsl::status);
     }
     query
 }

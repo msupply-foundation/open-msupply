@@ -9,7 +9,7 @@
         }
       ],
       "event": {
-        "type": "HIVTestingEncounter",
+        "type": "HIVTestingEncounterResult",
         "dataField": "hivTesting.result",
         "documentType": "HIVTestingEncounter"
       }

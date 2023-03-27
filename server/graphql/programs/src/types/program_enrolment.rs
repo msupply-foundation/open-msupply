@@ -8,8 +8,8 @@ use graphql_core::{
     ContextExt,
 };
 use repository::{
-    EncounterFilter, EqualFilter, PaginationOption, ProgramEnrolmentRow, ProgramEventFilter,
-    ProgramEventSortField, Sort,
+    EncounterFilter, EqualFilter, PaginationOption, ProgramEnrolmentRow, ProgramEnrolmentStatus,
+    ProgramEventFilter, ProgramEventSortField, Sort,
 };
 
 use crate::queries::{EncounterConnector, EncounterFilterInput, EncounterSortInput};
@@ -34,6 +34,40 @@ impl ProgramEventFilterInput {
             document_type: self.document_type.map(EqualFilter::from),
             document_name: self.document_name.map(EqualFilter::from),
             r#type: self.r#type.map(EqualFilter::from),
+        }
+    }
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+pub enum ProgramEnrolmentNodeStatus {
+    Active,
+    OptedOut,
+    TransferredOut,
+    Paused,
+}
+
+impl ProgramEnrolmentNodeStatus {
+    pub fn from_domain(from: &ProgramEnrolmentStatus) -> ProgramEnrolmentNodeStatus {
+        use ProgramEnrolmentNodeStatus as to;
+        use ProgramEnrolmentStatus as from;
+
+        match from {
+            from::Active => to::Active,
+            from::OptedOut => to::OptedOut,
+            from::TransferredOut => to::TransferredOut,
+            from::Paused => to::Paused,
+        }
+    }
+
+    pub fn to_domain(self) -> ProgramEnrolmentStatus {
+        use ProgramEnrolmentNodeStatus as from;
+        use ProgramEnrolmentStatus as to;
+
+        match self {
+            from::Active => to::Active,
+            from::OptedOut => to::OptedOut,
+            from::TransferredOut => to::TransferredOut,
+            from::Paused => to::Paused,
         }
     }
 }
@@ -66,6 +100,10 @@ impl ProgramEnrolmentNode {
 
     pub async fn program_enrolment_id(&self) -> &Option<String> {
         &self.program_row.program_enrolment_id
+    }
+
+    pub async fn status(&self) -> ProgramEnrolmentNodeStatus {
+        ProgramEnrolmentNodeStatus::from_domain(&self.program_row.status)
     }
 
     /// The encounter document
