@@ -23,7 +23,8 @@ impl Migration for V1_01_07 {
                 id TEXT NOT NULL PRIMARY KEY,
                 is_active bool NOT NULL,
                 master_list_id text NOT NULL,
-                user_id text NOT NULL
+                user_id text NOT NULL,
+                FOREIGN KEY(master_list_id) REFERENCES master_list(id)
             );            
             "#
         )?;
