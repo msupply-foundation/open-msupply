@@ -1007,6 +1007,12 @@ export type EqualFilterNumberInput = {
   notEqualTo?: InputMaybe<Scalars['Int']>;
 };
 
+export type EqualFilterProgramEnrolmentStatusInput = {
+  equalAny?: InputMaybe<Array<ProgramEnrolmentNodeStatus>>;
+  equalTo?: InputMaybe<ProgramEnrolmentNodeStatus>;
+  notEqualTo?: InputMaybe<ProgramEnrolmentNodeStatus>;
+};
+
 export type EqualFilterReportContextInput = {
   equalAny?: InputMaybe<Array<ReportContext>>;
   equalTo?: InputMaybe<ReportContext>;
@@ -2808,6 +2814,7 @@ export type ProgramEnrolmentFilterInput = {
   patientId?: InputMaybe<EqualFilterStringInput>;
   program?: InputMaybe<EqualFilterStringInput>;
   programEnrolmentId?: InputMaybe<EqualFilterStringInput>;
+  status?: InputMaybe<EqualFilterProgramEnrolmentStatusInput>;
 };
 
 export type ProgramEnrolmentNode = {
@@ -2824,6 +2831,7 @@ export type ProgramEnrolmentNode = {
   /** The program type */
   program: Scalars['String'];
   programEnrolmentId?: Maybe<Scalars['String']>;
+  status: ProgramEnrolmentNodeStatus;
 };
 
 
@@ -2839,12 +2847,20 @@ export type ProgramEnrolmentNodeEventsArgs = {
   filter?: InputMaybe<ProgramEventFilterInput>;
 };
 
+export enum ProgramEnrolmentNodeStatus {
+  Active = 'ACTIVE',
+  OptedOut = 'OPTED_OUT',
+  Paused = 'PAUSED',
+  TransferredOut = 'TRANSFERRED_OUT'
+}
+
 export type ProgramEnrolmentResponse = ProgramEnrolmentConnector;
 
 export enum ProgramEnrolmentSortFieldInput {
   EnrolmentDatetime = 'enrolmentDatetime',
   PatientId = 'patientId',
   ProgramEnrolmentId = 'programEnrolmentId',
+  Status = 'status',
   Type = 'type'
 }
 
