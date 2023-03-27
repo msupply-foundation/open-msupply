@@ -24,6 +24,7 @@ pub(crate) fn upsert_document(
             DocumentRegistryFilter::new().document_type(EqualFilter::equal_to(&document.r#type)),
         )?
         .pop() else {
+        log::warn!("Received unknown document type: {}", document.r#type);
         return Ok(());
     };
 
