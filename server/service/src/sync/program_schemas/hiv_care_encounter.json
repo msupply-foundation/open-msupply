@@ -238,6 +238,10 @@
         "clinician": {
           "$ref": "#/definitions/Clinician"
         },
+        "createdBy": {
+          "$ref": "#/definitions/User",
+          "description": "User who created the encounter (could be different to \"Clinician\")"
+        },
         "createdDatetime": {
           "description": "Date time when the encounter was made, e.g. when an clinician schedule the encounter.",
           "format": "date-time",
@@ -398,17 +402,15 @@
             },
             "height": {
               "description": "50373000\tBody height measure [m]",
-              "examples": ["1.55", "0.92", "1.75"],
-              "pattern": "^\\d\\.\\d{2}$",
+              "minimum": 0,
               "title": "Height in m",
-              "type": "string"
+              "type": "number"
             },
             "midUpperArmCircumference": {
               "description": "284473002\tMid upper arm circumference (MUAC) [cm]",
-              "examples": ["23.0", "21.4"],
-              "pattern": "^\\d+\\.\\d+$",
-              "title": "MUAC in cm",
-              "type": "string"
+              "minimum": 0,
+              "title": "MUAC in cm]",
+              "type": "number"
             },
             "nutrition": {
               "properties": {
@@ -519,10 +521,9 @@
             },
             "weight": {
               "description": "735395000\tCurrent body weight [kg]",
-              "examples": ["75.1", "60.0"],
-              "pattern": "^\\d+\\.\\d+$",
+              "minimum": 0,
               "title": "Weight in kg",
-              "type": "string"
+              "type": "number"
             },
             "whoStaging": {
               "description": "420721002 Acquired immunodeficiency syndrome-associated disorder (disorder)",
@@ -581,11 +582,7 @@
               "type": "string"
             },
             "tbGeneXpert": {
-              "enum": [
-                "NOT_DETECTED",
-                "POSITIVE_RIF_SENSITIVE",
-                "POSITIVE_RIF_RESISTANT"
-              ],
+              "enum": ["NOT_DETECTED", "POSITIVE_RIF_SENSITIVE", "POSITIVE_RIF_RESISTANT"],
               "type": "string"
             },
             "tbScreening": {
@@ -596,18 +593,7 @@
               "type": "string"
             },
             "tbStatus": {
-              "enum": [
-                "CONFMC",
-                "CONFMS",
-                "CONFMX",
-                "INH",
-                "NO",
-                "REFER",
-                "SP",
-                "TBRX",
-                "TBRXC",
-                "YES"
-              ],
+              "enum": ["CONFMC", "CONFMS", "CONFMX", "INH", "NO", "REFER", "SP", "TBRX", "TBRXC", "YES"],
               "type": "string"
             }
           },
@@ -643,11 +629,7 @@
           "properties": {
             "location": {
               "description": "Location needed if visitType is 'Refill' or 'Outreach'",
-              "enum": [
-                "9 Mile Clinic, NCD",
-                "Angelicare Newtown",
-                "Angelicare StopAIDS, NCD"
-              ],
+              "enum": ["9 Mile Clinic, NCD", "Angelicare Newtown", "Angelicare StopAIDS, NCD"],
               "type": "string"
             },
             "visitType": {
@@ -662,18 +644,7 @@
       "type": "object"
     },
     "HIVRiskGroup": {
-      "enum": [
-        "LRM",
-        "MSM",
-        "MSW",
-        "MSMSW",
-        "HRM",
-        "LRW",
-        "HRW",
-        "FSW",
-        "TG",
-        "TGSW"
-      ],
+      "enum": ["LRM", "MSM", "MSW", "MSMSW", "HRM", "LRW", "HRW", "FSW", "TG", "TGSW"],
       "type": "string"
     },
     "Note": {
@@ -746,6 +717,17 @@
         "unprotectedVaginalSex": {
           "description": "Have you received any of the following in the past 12 months ?: Unprotected vaginal sex ?",
           "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "User": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
         }
       },
       "type": "object"

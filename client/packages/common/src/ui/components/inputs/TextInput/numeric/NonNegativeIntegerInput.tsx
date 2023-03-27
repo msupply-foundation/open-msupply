@@ -29,7 +29,9 @@ export const NonNegativeIntegerInput = React.forwardRef(
           sx: { ...sx, '& .MuiInput-input': { textAlign: 'right' } },
         }}
         onChange={value =>
-          onChange(NumUtils.constrain(Math.round(value), 0, max))
+          value
+            ? onChange(NumUtils.constrain(Math.round(value), 0, max))
+            : undefined
         }
         disabled={disabled}
         value={value}

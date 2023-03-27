@@ -167,8 +167,10 @@ const UIComponent = (props: ControlProps) => {
               sx: { '& .MuiInput-input': { textAlign: 'right' } },
             }}
             onChange={value => {
-              setLocalData(value);
-              onChange(value);
+              if (value !== undefined) {
+                setLocalData(value);
+                onChange(value);
+              }
             }}
             disabled={!props.enabled || baseTime === undefined}
             error={error}
@@ -206,8 +208,10 @@ const UIComponent = (props: ControlProps) => {
               sx: { '& .MuiInput-input': { textAlign: 'right' } },
             }}
             onChange={value => {
-              setLocalData(value);
-              onChange(value);
+              if (value !== undefined) {
+                setLocalData(value);
+                onChange(value);
+              }
             }}
             disabled={true}
             error={error}
