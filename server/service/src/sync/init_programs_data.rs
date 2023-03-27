@@ -815,7 +815,7 @@ fn insert_patient(
         .unwrap();
 
     service
-        .update_patient(
+        .upsert_patient(
             &ctx,
             &service_provider,
             &store_id,

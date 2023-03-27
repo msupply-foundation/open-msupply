@@ -11,34 +11,85 @@ use super::{
     UpdatePatientError,
 };
 
-/// Callback called when the document has been updated
-pub fn patient_document_updated(
+// create name_store_join if not existing
+pub fn create_patient_name_store_join(
     con: &StorageConnection,
     store_id: &str,
+    name_id: &str,
+) -> Result<(), UpdatePatientError> {
+    let name_repo = NameRepository::new(con);
+    let name = name_repo.query_one(
+        store_id,
+        NameFilter::new()
+            .is_customer(true)
+            .id(EqualFilter::equal_to(name_id)),
+    )?;
+    if name.is_none() {
+        // add name store join
+        let name_store_join_repo = NameStoreJoinRepository::new(con);
+        name_store_join_repo.upsert_one(&NameStoreJoinRow {
+            id: uuid(),
+            name_id: name_id.to_string(),
+            store_id: store_id.to_string(),
+            name_is_customer: true,
+            name_is_supplier: false,
+            is_sync_update: false,
+        })?;
+    }
+    Ok(())
+}
+
+/// Callback called when a patient document has been updated
+/// Updates the names table for the updated patient.
+pub fn update_patient_row(
+    con: &StorageConnection,
     update_timestamp: &DateTime<Utc>,
     patient: SchemaPatient,
+    is_sync_update: bool,
 ) -> Result<(), UpdatePatientError> {
-    let contact = patient.contact_details.get(0);
-    let date_of_birth = match patient.date_of_birth {
+    let SchemaPatient {
+        id,
+        code,
+        code_2,
+        contact_details,
+        date_of_birth,
+        first_name,
+        last_name,
+        gender,
+        middle_name: _,
+        date_of_birth_is_estimated: _,
+        date_of_death: _,
+        family: _,
+        health_center: _,
+        is_deceased: _,
+        notes: _,
+        passport_number: _,
+        socio_economics: _,
+        allergies: _,
+        birth_place: _,
+    } = patient;
+    let contact = contact_details.get(0);
+    let date_of_birth = match date_of_birth {
         Some(date_of_birth) => Some(NaiveDate::from_str(&date_of_birth).map_err(|err| {
             UpdatePatientError::InternalError(format!("Invalid date of birth format: {}", err))
         })?),
         None => None,
     };
-    let address = patient.contact_details.get(0);
+    let address = contact_details.get(0);
     let name_repo = NameRowRepository::new(con);
-    let existing_name = name_repo.find_one_by_id(&patient.id)?;
+    let existing_name = name_repo.find_one_by_id(&id)?;
+    let existing_name = existing_name.as_ref();
     name_repo.upsert_one(&NameRow {
-        id: patient.id.clone(),
-        name: patient_name(&patient.first_name, &patient.last_name),
-        code: patient.code.unwrap_or("".to_string()),
+        id: id.clone(),
+        name: patient_name(&first_name, &last_name),
+        code: code.unwrap_or("".to_string()),
         r#type: NameType::Patient,
-        is_customer: true,
-        is_supplier: false,
-        supplying_store_id: Some(store_id.to_string()),
-        first_name: patient.first_name,
-        last_name: patient.last_name,
-        gender: patient.gender.and_then(|g| match g {
+        is_customer: existing_name.map(|n| n.is_customer).unwrap_or(true),
+        is_supplier: existing_name.map(|n| n.is_supplier).unwrap_or(false),
+        supplying_store_id: existing_name.and_then(|n| n.supplying_store_id.clone()),
+        first_name: first_name,
+        last_name: last_name,
+        gender: gender.and_then(|g| match g {
             SchemaGender::Female => Some(Gender::Female),
             SchemaGender::Male => Some(Gender::Male),
             SchemaGender::Transgender => Some(Gender::Transgender),
@@ -48,44 +99,25 @@ pub fn patient_document_updated(
             SchemaGender::NonBinary => Some(Gender::NonBinary),
         }),
         date_of_birth,
-        charge_code: None,
-        comment: None,
+        charge_code: existing_name.and_then(|n| n.charge_code.clone()),
+        comment: existing_name.and_then(|n| n.comment.clone()),
         country: address.and_then(|a| a.country.clone()),
         address1: address.and_then(|a| a.address_1.clone()),
         address2: address.and_then(|a| a.address_2.clone()),
         phone: contact.and_then(|c| c.phone.clone().or(c.mobile.clone())),
         email: contact.and_then(|c| c.email.clone()),
         website: contact.and_then(|c| c.website.clone()),
-        is_manufacturer: false,
-        is_donor: false,
-        on_hold: false,
+        is_manufacturer: existing_name.map(|n| n.is_manufacturer).unwrap_or(false),
+        is_donor: existing_name.map(|n| n.is_donor).unwrap_or(false),
+        on_hold: existing_name.map(|n| n.on_hold).unwrap_or(false),
         created_datetime: existing_name
-            .as_ref()
             .and_then(|n| n.created_datetime.clone())
             .or(Some(update_timestamp.naive_utc())), // assume there is no earlier doc version
         is_deceased: patient.is_deceased.unwrap_or(false),
-        national_health_number: patient.code_2,
-        is_sync_update: false,
+        national_health_number: code_2,
+        is_sync_update,
     })?;
-    let name_repo = NameRepository::new(con);
-    let name = name_repo.query_one(
-        store_id,
-        NameFilter::new()
-            .is_customer(true)
-            .id(EqualFilter::equal_to(&patient.id)),
-    )?;
-    if name.is_none() {
-        // add name store join
-        let name_store_join_repo = NameStoreJoinRepository::new(con);
-        name_store_join_repo.upsert_one(&NameStoreJoinRow {
-            id: uuid(),
-            name_id: patient.id,
-            store_id: store_id.to_string(),
-            name_is_customer: true,
-            name_is_supplier: false,
-            is_sync_update: false,
-        })?;
-    }
+
     Ok(())
 }
 
@@ -160,7 +192,7 @@ mod test {
         });
 
         service
-            .update_patient(
+            .upsert_patient(
                 &ctx,
                 &service_provider,
                 "store_a",
@@ -211,7 +243,7 @@ mod test {
         );
         assert!(patient.get("customData").is_some());
         service
-            .update_patient(
+            .upsert_patient(
                 &ctx,
                 &service_provider,
                 "store_a",

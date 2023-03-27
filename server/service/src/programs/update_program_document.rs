@@ -1,11 +1,8 @@
 use chrono::{DateTime, Duration, Months, NaiveDateTime, Utc};
-use repository::{EventCondition, EventConfigEnum, EventTarget, RepositoryError};
+use repository::{Document, EventCondition, EventConfigEnum, EventTarget, RepositoryError};
 use serde_json::{Map, Value};
 
-use crate::{
-    document::raw_document::RawDocument,
-    service_provider::{ServiceContext, ServiceProvider},
-};
+use crate::service_provider::{ServiceContext, ServiceProvider};
 
 use super::program_event::EventInput;
 
@@ -18,7 +15,7 @@ fn extract_events(
     ctx: &ServiceContext,
     service_provider: &ServiceProvider,
     base_time: NaiveDateTime,
-    doc: &RawDocument,
+    doc: &Document,
     allowed_docs: &[String],
 ) -> Result<Vec<EventInput>, UpdateProgramDocumentError> {
     let Some(registry_entries) = service_provider
@@ -124,7 +121,7 @@ pub fn update_program_events(
     patient_id: &str,
     base_time: NaiveDateTime,
     previous_base_time: Option<NaiveDateTime>,
-    doc: &RawDocument,
+    doc: &Document,
     allowed_docs: &[String],
 ) -> Result<(), UpdateProgramDocumentError> {
     let event_inputs = extract_events(ctx, service_provider, base_time, &doc, allowed_docs)?;
@@ -173,19 +170,19 @@ fn is_truthy(value: &Value) -> bool {
     return true;
 }
 
-fn match_condition(condition: &EventCondition, doc: &RawDocument) -> bool {
+fn match_condition(condition: &EventCondition, doc: &Document) -> bool {
     let Some(field) = extract_value_field(&doc.data, &condition.field) else {
-        if condition.is_falsy.is_some() {
+        if condition.is_falsy.unwrap_or(false) {
             return true;
         }
         return false;
     };
-    if condition.is_set.is_some() {
+    if condition.is_set.unwrap_or(false) {
         return !field.is_null();
     }
-    if condition.is_falsy.is_some() {
+    if condition.is_falsy.unwrap_or(false) {
         return !is_truthy(&field);
-    } else if condition.is_truthy.is_some() {
+    } else if condition.is_truthy.unwrap_or(false) {
         return is_truthy(&field);
     }
 
@@ -217,7 +214,7 @@ fn match_condition(condition: &EventCondition, doc: &RawDocument) -> bool {
     false
 }
 
-fn match_all_conditions(conditions: Option<Vec<EventCondition>>, doc: &RawDocument) -> bool {
+fn match_all_conditions(conditions: Option<Vec<EventCondition>>, doc: &Document) -> bool {
     let Some(conditions) = conditions else {
         return false;
     };

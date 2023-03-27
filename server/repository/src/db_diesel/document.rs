@@ -23,12 +23,11 @@ table! {
         name -> Text,
         parent_ids -> Text,
         user_id -> Text,
-        timestamp -> Timestamp,
+        datetime -> Timestamp,
         #[sql_name = "type"] type_ -> Text,
         data -> Text,
         form_schema_id -> Nullable<Text>,
         status -> crate::db_diesel::document::DocumentStatusMapping,
-        comment -> Nullable<Text>,
         owner_name_id -> Nullable<Text>,
         context -> Nullable<Text>,
         is_sync_update -> Bool,
@@ -42,12 +41,11 @@ table! {
         name -> Text,
         parent_ids -> Text,
         user_id -> Text,
-        timestamp -> Timestamp,
+        datetime -> Timestamp,
         #[sql_name = "type"] type_ -> Text,
         data -> Text,
         form_schema_id -> Nullable<Text>,
         status -> crate::db_diesel::document::DocumentStatusMapping,
-        comment -> Nullable<Text>,
         owner_name_id -> Nullable<Text>,
         context -> Nullable<Text>,
         is_sync_update -> Bool,
@@ -79,7 +77,7 @@ pub struct DocumentRow {
     /// Id of the author who edited this document version
     pub user_id: String,
     /// The timestamp of this document version
-    pub timestamp: NaiveDateTime,
+    pub datetime: NaiveDateTime,
     /// Type of the containing data
     #[column_name = "type_"]
     pub r#type: String,
@@ -89,8 +87,6 @@ pub struct DocumentRow {
     pub form_schema_id: Option<String>,
     /// Soft deletion status
     pub status: DocumentStatus,
-    /// Deletion comment
-    pub comment: Option<String>,
     /// For example, the patient who owns the document
     pub owner_name_id: Option<String>,
     /// For example, program this document belongs to
@@ -109,17 +105,15 @@ pub struct Document {
     /// Id of the author who edited this document version
     pub user_id: String,
     /// The timestamp of this document version
-    pub timestamp: DateTime<Utc>,
+    pub datetime: DateTime<Utc>,
     /// Type of the containing data
     pub r#type: String,
     /// The actual document data
     pub data: serde_json::Value,
     pub form_schema_id: Option<String>,
     pub status: DocumentStatus,
-    pub comment: Option<String>,
     pub owner_name_id: Option<String>,
     pub context: Option<String>,
-    pub is_sync_update: bool,
 }
 
 #[derive(Clone)]
@@ -202,7 +196,7 @@ fn create_latest_filtered_query<'a>(filter: Option<DocumentFilter>) -> BoxedDocu
 
         apply_string_filter!(query, name, latest_document::dsl::name);
         apply_equal_filter!(query, r#type, latest_document::dsl::type_);
-        apply_date_time_filter!(query, datetime, latest_document::dsl::timestamp);
+        apply_date_time_filter!(query, datetime, latest_document::dsl::datetime);
         apply_equal_filter!(query, owner, latest_document::dsl::owner_name_id);
         apply_equal_filter!(query, context, latest_document::dsl::context);
         apply_simple_string_filter!(query, data, latest_document::dsl::data);
@@ -220,9 +214,9 @@ impl<'a> DocumentRepository<'a> {
     }
 
     /// Inserts a document
-    pub fn insert(&self, doc: &Document) -> Result<(), RepositoryError> {
+    pub fn insert(&self, doc: &Document, is_sync_update: bool) -> Result<(), RepositoryError> {
         diesel::insert_into(document::dsl::document)
-            .values(row_from_document(doc)?)
+            .values(doc.to_row(is_sync_update)?)
             .execute(&self.connection.connection)?;
         Ok(())
     }
@@ -235,7 +229,7 @@ impl<'a> DocumentRepository<'a> {
             .optional()?;
 
         Ok(match row {
-            Some(row) => Some(document_from_row(row)?),
+            Some(row) => Some(row.to_document()?),
             None => None,
         })
     }
@@ -270,11 +264,11 @@ impl<'a> DocumentRepository<'a> {
                     apply_sort!(query, sort, latest_document::dsl::context)
                 }
                 DocumentSortField::Datetime => {
-                    apply_sort!(query, sort, latest_document::dsl::timestamp)
+                    apply_sort!(query, sort, latest_document::dsl::datetime)
                 }
             }
         } else {
-            query = query.order(latest_document::dsl::timestamp.desc())
+            query = query.order(latest_document::dsl::datetime.desc())
         }
 
         let rows: Vec<DocumentRow> = query
@@ -284,7 +278,7 @@ impl<'a> DocumentRepository<'a> {
 
         let mut result = Vec::<Document>::new();
         for row in rows {
-            result.push(document_from_row(row)?);
+            result.push(row.to_document()?);
         }
         Ok(result)
     }
@@ -307,77 +301,93 @@ impl<'a> DocumentRepository<'a> {
 
             apply_string_filter!(query, name, document::dsl::name);
             apply_equal_filter!(query, r#type, document::dsl::type_);
-            apply_date_time_filter!(query, datetime, document::dsl::timestamp);
+            apply_date_time_filter!(query, datetime, document::dsl::datetime);
             apply_equal_filter!(query, owner, document::dsl::owner_name_id);
             apply_equal_filter!(query, context, document::dsl::context);
             apply_simple_string_filter!(query, data, document::dsl::data);
         }
         let rows: Vec<DocumentRow> = query
-            .order(document::dsl::timestamp.desc())
+            .order(document::dsl::datetime.desc())
             .load(&self.connection.connection)?;
 
         let mut result = Vec::<Document>::new();
         for row in rows {
-            result.push(document_from_row(row)?);
+            result.push(row.to_document()?);
         }
         Ok(result)
     }
 }
 
-fn document_from_row(row: DocumentRow) -> Result<Document, RepositoryError> {
-    let parents: Vec<String> =
-        serde_json::from_str(&row.parent_ids).map_err(|err| RepositoryError::DBError {
-            msg: "Invalid parents data".to_string(),
-            extra: format!("{}", err),
-        })?;
-    let data: serde_json::Value =
-        serde_json::from_str(&row.data).map_err(|err| RepositoryError::DBError {
-            msg: "Invalid data".to_string(),
-            extra: format!("{}", err),
-        })?;
+impl DocumentRow {
+    pub fn to_document(self) -> Result<Document, RepositoryError> {
+        let DocumentRow {
+            id,
+            name,
+            parent_ids,
+            user_id,
+            datetime,
+            r#type,
+            data,
+            form_schema_id,
+            status,
+            owner_name_id,
+            context,
+            is_sync_update: _,
+        } = self;
 
-    let document = Document {
-        id: row.id,
-        name: row.name,
-        parent_ids: parents,
-        user_id: row.user_id,
-        timestamp: DateTime::<Utc>::from_utc(row.timestamp, Utc),
-        r#type: row.r#type,
-        data,
-        form_schema_id: row.form_schema_id,
-        status: row.status,
-        comment: row.comment,
-        owner_name_id: row.owner_name_id,
-        context: row.context,
-        is_sync_update: row.is_sync_update,
-    };
+        let parents: Vec<String> =
+            serde_json::from_str(&parent_ids).map_err(|err| RepositoryError::DBError {
+                msg: "Invalid parents data".to_string(),
+                extra: format!("{}", err),
+            })?;
+        let data: serde_json::Value =
+            serde_json::from_str(&data).map_err(|err| RepositoryError::DBError {
+                msg: "Invalid data".to_string(),
+                extra: format!("{}", err),
+            })?;
 
-    Ok(document)
+        let document = Document {
+            id,
+            name,
+            parent_ids: parents,
+            user_id,
+            datetime: DateTime::<Utc>::from_utc(datetime, Utc),
+            r#type,
+            data,
+            form_schema_id,
+            status,
+            owner_name_id,
+            context,
+        };
+
+        Ok(document)
+    }
 }
 
-fn row_from_document(doc: &Document) -> Result<DocumentRow, RepositoryError> {
-    let parents =
-        serde_json::to_string(&doc.parent_ids).map_err(|err| RepositoryError::DBError {
-            msg: "Can't serialize parents".to_string(),
+impl Document {
+    pub fn to_row(&self, is_sync_update: bool) -> Result<DocumentRow, RepositoryError> {
+        let parents =
+            serde_json::to_string(&self.parent_ids).map_err(|err| RepositoryError::DBError {
+                msg: "Can't serialize parents".to_string(),
+                extra: format!("{}", err),
+            })?;
+        let data = serde_json::to_string(&self.data).map_err(|err| RepositoryError::DBError {
+            msg: "Can't serialize data".to_string(),
             extra: format!("{}", err),
         })?;
-    let data = serde_json::to_string(&doc.data).map_err(|err| RepositoryError::DBError {
-        msg: "Can't serialize data".to_string(),
-        extra: format!("{}", err),
-    })?;
-    Ok(DocumentRow {
-        id: doc.id.to_owned(),
-        name: doc.name.to_owned(),
-        parent_ids: parents,
-        user_id: doc.user_id.to_owned(),
-        timestamp: doc.timestamp.naive_utc(),
-        r#type: doc.r#type.to_owned(),
-        data,
-        form_schema_id: doc.form_schema_id.clone(),
-        status: doc.status.to_owned(),
-        comment: doc.comment.to_owned(),
-        owner_name_id: doc.owner_name_id.to_owned(),
-        context: doc.context.to_owned(),
-        is_sync_update: doc.is_sync_update,
-    })
+        Ok(DocumentRow {
+            id: self.id.to_owned(),
+            name: self.name.to_owned(),
+            parent_ids: parents,
+            user_id: self.user_id.to_owned(),
+            datetime: self.datetime.naive_utc(),
+            r#type: self.r#type.to_owned(),
+            data,
+            form_schema_id: self.form_schema_id.clone(),
+            status: self.status.to_owned(),
+            owner_name_id: self.owner_name_id.to_owned(),
+            context: self.context.to_owned(),
+            is_sync_update,
+        })
+    }
 }
