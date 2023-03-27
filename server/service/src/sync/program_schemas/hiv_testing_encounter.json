@@ -122,6 +122,9 @@
               },
               "type": "array"
             },
+            "partnerStatus": {
+              "$ref": "#/definitions/HIVTestingStatus"
+            },
             "postTestCounsellingDone": {
               "description": "Post-test counselling done?",
               "type": "boolean"
@@ -178,6 +181,19 @@
             "$ref": "#/definitions/Note"
           },
           "type": "array"
+        },
+        "pointOfEntry": {
+          "enum": [
+            "PE",
+            "Walk in",
+            "STI",
+            "GBV",
+            "TB",
+            "ANC",
+            "Index",
+            "Other"
+          ],
+          "type": "string"
         },
         "riskBehaviour": {
           "$ref": "#/definitions/RiskBehaviourTesting"
