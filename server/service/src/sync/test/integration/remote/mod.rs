@@ -8,6 +8,7 @@ pub(crate) mod requisition;
 pub(crate) mod stock_line;
 pub(crate) mod stocktake;
 mod test;
+pub(crate) mod user_permission;
 
 use repository::{InvoiceRowType, NameRowRepository, StorageConnection};
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;

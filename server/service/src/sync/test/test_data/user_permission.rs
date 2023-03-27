@@ -8,22 +8,22 @@ use crate::sync::{
 const USER_PERMISSION_1: (&'static str, &'static str) = (
     "user_permission_1",
     r#"{
-    "id": "user_permission_1",
-    "user_id": "user_account_a",
-    "store_id": "store_a",
+    "ID": "user_permission_1",
+    "user_ID": "user_account_a",
+    "store_ID": "store_a",
     "permission": "DocumentQuery",
-    "context": "RoutineImmunisationProgram"
+    "context_ID": "RoutineImmunisationProgram"
 }"#,
 );
 
 const USER_PERMISSION_2: (&'static str, &'static str) = (
     "user_permission_2",
     r#"{
-    "id": "user_permission_2",
-    "user_id": "user_account_a",
-    "store_id": "store_a",
+    "ID": "user_permission_2",
+    "user_ID": "user_account_a",
+    "store_ID": "store_a",
     "permission": "DocumentMutate",
-    "context": "RoutineImmunisationProgram"
+    "context_ID": "RoutineImmunisationProgram"
 }"#,
 );
 
