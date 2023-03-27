@@ -424,7 +424,7 @@ fn program_1() -> SchemaProgramEnrolment {
     SchemaProgramEnrolment {
         enrolment_datetime: Utc::now().to_rfc3339(),
         program_enrolment_id: Some("programEnrolmentId1".to_string()),
-        status: Some(ProgramEnrolmentStatus::Active),
+        status: ProgramEnrolmentStatus::Active,
     }
 }
 
