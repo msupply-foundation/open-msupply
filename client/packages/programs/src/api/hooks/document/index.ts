@@ -26,12 +26,14 @@ import { useClinicians } from './useClinicians';
 import { useProgramEvents } from './useProgramEvents';
 import { useFormSchemaByType } from './useFormSchemaByType';
 import { useDocumentRegistryByType } from './useDocumentRegistriesByType';
+import { useDocumentRegistries } from './useDocumentRegistries';
 
 export const Document = {
   useDocumentByName,
   usePatientDocument,
   useDocumentHistory,
 
+  useDocumentRegistries,
   useDocumentRegistryByContext,
   useDocumentRegistryByType,
   useProgramRegistries,
