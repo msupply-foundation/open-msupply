@@ -86,8 +86,6 @@ export const useNativeClient = ({
   const previousServerJson = localStorage.getItem(PREVIOUS_SERVER_KEY);
 
   const setMode = (mode: NativeMode) => {
-    console.log('== MODE ==>', nativeMode);
-    console.log('== NEW ==>', mode);
     setNativeMode(mode);
     setState(state => ({ ...state, mode }));
   };
