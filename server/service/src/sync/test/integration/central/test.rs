@@ -1,5 +1,3 @@
-use super::{document_registry::DocumentRegistryTester, form_schema::FormSchemaTester};
-
 #[cfg(test)]
 mod tests {
     use crate::sync::test::integration::central::{

@@ -25,7 +25,8 @@
         "show": [
           ["SCHEDULED", "Scheduled"],
           ["COMPLETED", "Completed"],
-          ["CANCELLED", "Cancelled"]
+          ["CANCELLED", "Cancelled"],
+          ["MISSED", "Missed"]
         ]
       }
     }

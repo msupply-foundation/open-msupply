@@ -34,12 +34,14 @@ mod hiv_testing_program {
     use serde::{Deserialize, Serialize};
     schemafy::schemafy!("src/sync/program_schemas/hiv_testing_program.json");
 
+    pub type SchemaProgramEnrolmentStatus = ProgramEnrolmentStatus;
+
     impl Default for HivtestingProgramEnrolment {
         fn default() -> Self {
             Self {
                 enrolment_datetime: Default::default(),
                 program_enrolment_id: Default::default(),
-                status: Default::default(),
+                status: SchemaProgramEnrolmentStatus::Active,
                 referred_from: Default::default(),
                 partner_hiv_status: Default::default(),
                 mother: Default::default(),
@@ -51,6 +53,7 @@ mod hiv_testing_program {
 mod hiv_care_program {
     use serde::{Deserialize, Serialize};
     schemafy::schemafy!("src/sync/program_schemas/hiv_care_program.json");
+    pub type SchemaProgramEnrolmentStatus = ProgramEnrolmentStatus;
 
     impl Default for HivcareProgramEnrolment {
         fn default() -> Self {
@@ -63,7 +66,7 @@ mod hiv_care_program {
                 partner_hiv_status: Default::default(),
                 prior_art: Default::default(),
                 risk_group: Default::default(),
-                status: Default::default(),
+                status: SchemaProgramEnrolmentStatus::Active,
                 treatment_supporter_is_next_of_kin: Default::default(),
                 treatment_supporter: Default::default(),
                 // note: Default::default(),
@@ -432,7 +435,7 @@ fn program_hiv_care() -> hiv_care_program::HivcareProgramEnrolment {
     inline_init(|p: &mut hiv_care_program::HivcareProgramEnrolment| {
         p.enrolment_datetime = Utc::now().to_rfc3339();
         p.program_enrolment_id = Some("STR0001".to_string());
-        p.status = Some(hiv_care_program::ProgramEnrolmentStatus::Active);
+        p.status = hiv_care_program::ProgramEnrolmentStatus::Active;
     })
 }
 
@@ -440,7 +443,7 @@ fn program_hiv_testing() -> hiv_testing_program::HivtestingProgramEnrolment {
     inline_init(|p: &mut hiv_testing_program::HivtestingProgramEnrolment| {
         p.enrolment_datetime = Utc::now().to_rfc3339();
         p.program_enrolment_id = Some("STR0002".to_string());
-        p.status = Some(hiv_testing_program::ProgramEnrolmentStatus::Active);
+        p.status = hiv_testing_program::ProgramEnrolmentStatus::Active;
     })
 }
 
