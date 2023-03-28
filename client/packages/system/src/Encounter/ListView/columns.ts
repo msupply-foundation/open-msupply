@@ -32,7 +32,7 @@ export const useEncounterListColumns = ({
   includePatient = false,
 }: useEncounterListColumnsProps) => {
   const { localisedDate, localisedTime } = useFormatDateTime();
-  const t = useTranslation('patients');
+  const t = useTranslation();
   const { data: documentRegistries } =
     useDocumentRegistry.get.documentRegistries();
   const { data: programEnrolments } =
