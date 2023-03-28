@@ -91,7 +91,7 @@ export const useEncounterListColumns = ({
       encounterEventCellValue((events as ProgramEventFragment[]) ?? []),
   });
   columnList.push({
-    key: 'events',
+    key: 'program-status',
     label: 'label.program-status',
     sortable: false,
     accessor: ({ rowData }) => {
