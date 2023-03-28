@@ -33,7 +33,7 @@ export const PositiveNumberInput = React.forwardRef(
         onChange={value =>
           onChange(
             value !== undefined
-              ? NumUtils.constrain(value, Math.max(1, min), max)
+              ? NumUtils.constrain(value, Math.max(0, min), max)
               : undefined
           )
         }
