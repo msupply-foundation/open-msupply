@@ -13,6 +13,7 @@ import {
   Stack,
   Theme,
   Typography,
+  useAuthContext,
   useNativeClient,
   useNavigate,
 } from '@openmsupply-client/common';
@@ -82,6 +83,7 @@ export const Android = () => {
   });
   const t = useTranslation('app');
   const navigate = useNavigate();
+  const { token } = useAuthContext();
   const ModeOption = ({
     label,
     mode,
@@ -122,7 +124,8 @@ export const Android = () => {
     if (mode === NativeMode.Server) {
       const localServer = servers.find(server => server.isLocal);
       if (localServer) {
-        connectToServer(localServer);
+        const path = !token ? 'login' : '';
+        connectToServer({ ...localServer, path });
       }
     }
   }, [mode, servers]);

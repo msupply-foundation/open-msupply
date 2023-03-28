@@ -39,4 +39,6 @@ export type FrontEndHost = {
   hardwareId: string;
   // This one is set by NativeClient
   isLocal: boolean;
+  // Allows specifying a path to use when connecting
+  path?: string;
 };
