@@ -1,7 +1,7 @@
 import { uniqWith } from '@common/utils';
 import { useState, useEffect } from 'react';
 import { registerPlugin, Capacitor } from '@capacitor/core';
-import { useLocalStorage } from '../../localStorage';
+// import { useLocalStorage } from '../../localStorage';
 
 const DISCOVERY_TIMEOUT = 7000;
 const DISCOVERED_SERVER_POLL = 2000;
@@ -78,13 +78,15 @@ export const useNativeClient = ({
   discovery,
 }: { discovery?: boolean; autoconnect?: boolean } = {}) => {
   const nativeAPI = getNativeAPI();
-  const [nativeMode, setNativeMode] = useLocalStorage(NATIVE_MODE_KEY);
+  // const [nativeMode, setNativeMode] = useLocalStorage(NATIVE_MODE_KEY);
   // the desktop app only supports running in client mode
-  const mode = !!window.electronNativeAPI ? NativeMode.Client : nativeMode;
+  const mode = !!window.electronNativeAPI
+    ? NativeMode.Client
+    : NativeMode.Server;
   const previousServerJson = localStorage.getItem(PREVIOUS_SERVER_KEY);
 
   const setMode = (mode: NativeMode) => {
-    setNativeMode(mode);
+    // setNativeMode(mode);
     setState(state => ({ ...state, mode }));
   };
   const [state, setState] = useState<NativeClientState>({

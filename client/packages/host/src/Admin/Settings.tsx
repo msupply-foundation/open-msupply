@@ -12,7 +12,7 @@ import {
   usePermissionCheck,
   LocalStorage,
   useInitialisationStatus,
-  NATIVE_MODE_KEY,
+  // NATIVE_MODE_KEY,
   NativeMode,
   RouteBuilder,
   Switch,
@@ -43,7 +43,8 @@ export const Settings: React.FC = () => {
   const customThemeEnabled =
     !!customTheme && Object.keys(customTheme).length > 0;
   const { data: initStatus } = useInitialisationStatus();
-  const [nativeMode, setNativeMode] = useLocalStorage(NATIVE_MODE_KEY);
+  // const [nativeMode, setNativeMode] = useLocalStorage(NATIVE_MODE_KEY);
+  const nativeMode = NativeMode.Server;
   const {
     isOn: isLogShown,
     toggleOn: showLog,
@@ -130,11 +131,11 @@ export const Settings: React.FC = () => {
   };
 
   const toggleNativeMode = () => {
-    const mode =
-      nativeMode === NativeMode.Server ? NativeMode.Client : NativeMode.Server;
+    // const mode =
+    //   nativeMode === NativeMode.Server ? NativeMode.Client : NativeMode.Server;
 
     localStorage.removeItem(PREVIOUS_SERVER_KEY);
-    setNativeMode(mode);
+    // setNativeMode(mode);
     navigate(RouteBuilder.create(AppRoute.Android).build());
   };
 
@@ -152,6 +153,7 @@ export const Settings: React.FC = () => {
                 label={t('label.client')}
                 onChange={toggleNativeMode}
                 checked={nativeMode === NativeMode.Server}
+                disabled
               />
               <Typography
                 component="div"
