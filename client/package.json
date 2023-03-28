@@ -108,6 +108,7 @@
   },
   "dependencies": {
     "@bugsnag/js": "^7.16.2",
+    "@capacitor/core": "^4.7.1",
     "@mui/x-date-pickers": "^5",
     "@types/react-dom": "^18.0.1",
     "graphql": "^16.3.0",
