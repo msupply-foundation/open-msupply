@@ -4,6 +4,7 @@ import {
   AutocompleteOptionRenderer,
   Box,
   DefaultAutocompleteItemOption,
+  ProgramEnrolmentNodeStatus,
   Typography,
   useBufferState,
 } from '@openmsupply-client/common';
@@ -43,7 +44,10 @@ export const EncounterSearchInput: FC<EncounterSearchInputProps> = ({
   const patientId = usePatient.utils.id();
   const { data: enrolmentData, isLoading: isEnrolmentDataLoading } =
     useProgramEnrolments.document.programEnrolments({
-      filterBy: { patientId: { equalTo: patientId } },
+      filterBy: {
+        patientId: { equalTo: patientId },
+        status: { equalTo: ProgramEnrolmentNodeStatus.Active },
+      },
     });
   const { data: encounterData, isLoading: isEncounterLoading } =
     useDocumentRegistry.get.encounterRegistriesByPrograms(

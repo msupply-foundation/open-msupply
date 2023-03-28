@@ -1,7 +1,4 @@
-import {
-  ProgramEnrolmentNodeStatus,
-  useQuery,
-} from '@openmsupply-client/common';
+import { useQuery } from '@openmsupply-client/common';
 import {
   DocumentRegistryFragment,
   useDocumentRegistryApi,
@@ -35,9 +32,7 @@ export const useEncounterRegistriesByPrograms = (
           result.nodes
             .map(encounter => {
               const program = programs.find(
-                p =>
-                  p.document?.documentRegistry?.id === encounter.parentId &&
-                  p.status === ProgramEnrolmentNodeStatus.Active
+                p => p.document?.documentRegistry?.id === encounter.parentId
               );
               if (!program) return undefined;
               const entry: EncounterRegistryByProgram = {
