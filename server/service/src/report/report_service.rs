@@ -161,30 +161,30 @@ fn print_html_report_to_html(
 /// Puts the document content, header and footer into a <html> template.
 /// This assumes that the document contains the html body.
 fn format_html_document(document: GeneratedReport) -> String {
+    // ensure that <html> is at the start of the text
+    // if not, the cordova printer plugin renders as text not HTML!
     format!(
-        "
-<html>
+        "<html>
     <body>
         <table class=\"paging\">
-        <thead>
-            <tr>
-            <td>{}</td>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-            <td>{}</td>
-            </tr>
-        </tbody>
-        <tfoot>
-            <tr>
-            <td>{}</td>
-            </tr>
-        </tfoot>
+            <thead>
+                <tr>
+                <td>{}</td>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                <td>{}</td>
+                </tr>
+            </tbody>
+            <tfoot>
+                <tr>
+                <td>{}</td>
+                </tr>
+            </tfoot>
         </table>
     </body>
-</html>
-",
+</html>",
         document.header.unwrap_or("".to_string()),
         document.document,
         document.footer.unwrap_or("".to_string())

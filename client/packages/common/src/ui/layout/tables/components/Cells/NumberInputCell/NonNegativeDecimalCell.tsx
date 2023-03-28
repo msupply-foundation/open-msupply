@@ -10,7 +10,8 @@ export const NonNegativeDecimalCell = <T extends RecordWithId>({
   column,
   isError,
   isDisabled = false,
-}: CellProps<T>): React.ReactElement<CellProps<T>> => {
+  max,
+}: CellProps<T> & { max?: number }): React.ReactElement<CellProps<T>> => {
   const [buffer, setBuffer] = useBufferState(
     column.accessor({ rowData }) || ''
   );
@@ -20,6 +21,7 @@ export const NonNegativeDecimalCell = <T extends RecordWithId>({
   return (
     <NonNegativeNumberInput
       disabled={isDisabled}
+      max={max}
       InputProps={{ sx: { '& .MuiInput-input': { textAlign: 'right' } } }}
       type="number"
       error={isError}

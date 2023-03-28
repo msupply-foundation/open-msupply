@@ -29,7 +29,7 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
             first_name: Some(uuid()),
             last_name: Some(uuid()),
             gender: None,
-            date_of_birth: Some(NaiveDate::from_ymd(1998, 07, 29)),
+            date_of_birth: NaiveDate::from_ymd_opt(1998, 07, 29),
             phone: Some(small_uuid()),
             charge_code: Some(small_uuid()),
             comment: Some(uuid()),
@@ -41,7 +41,9 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
             is_manufacturer: true,
             is_donor: true,
             on_hold: true,
-            created_datetime: Some(NaiveDate::from_ymd(2022, 05, 22).and_hms(0, 0, 0)),
+            created_datetime: NaiveDate::from_ymd_opt(2022, 05, 22)
+                .unwrap()
+                .and_hms_opt(0, 0, 0),
         };
         let name_json1 = json!({
             "ID": name_row1.id,
