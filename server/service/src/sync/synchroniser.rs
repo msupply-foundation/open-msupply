@@ -15,7 +15,7 @@ use super::{
         PostInitialisationError, RemoteDataSynchroniser, RemotePullError, RemotePushError,
         WaitForIntegrationError,
     },
-    settings::SyncSettings,
+    settings::{SyncSettings, SYNC_VERSION},
     sync_buffer::SyncBuffer,
     sync_status::logger::{SyncLogger, SyncLoggerError},
     translation_and_integration::{TranslationAndIntegration, TranslationAndIntegrationResults},
@@ -89,7 +89,15 @@ impl Synchroniser {
         settings: SyncSettings,
         service_provider: Arc<ServiceProvider>,
     ) -> anyhow::Result<Self> {
-        let sync_api_v5 = SyncApiV5::new(&settings, &service_provider)?;
+        Self::new_with_version(settings, service_provider, SYNC_VERSION)
+    }
+
+    pub(crate) fn new_with_version(
+        settings: SyncSettings,
+        service_provider: Arc<ServiceProvider>,
+        sync_version: u32,
+    ) -> anyhow::Result<Self> {
+        let sync_api_v5 = SyncApiV5::new(&settings, &service_provider, sync_version)?;
         Ok(Synchroniser {
             remote: RemoteDataSynchroniser {
                 sync_api_v5: sync_api_v5.clone(),

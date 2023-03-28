@@ -17,7 +17,10 @@ import {
 import { useOutbound } from '../../api';
 import { useDraftServiceLines } from './useDraftServiceLines';
 import { useServiceLineColumns } from './useServiceLineColumns';
-import { ItemRowFragment } from '@openmsupply-client/system';
+import {
+  ItemRowFragment,
+  useDefaultServiceItem,
+} from '@openmsupply-client/system';
 interface OutboundServiceLineEditProps {
   isOpen: boolean;
   onClose: () => void;
@@ -33,6 +36,7 @@ const OutboundServiceLineEditComponent = ({
   const { lines, update, add, save, isLoading } = useDraftServiceLines();
   const columns = useServiceLineColumns(update);
   const t = useTranslation('distribution');
+  const hasDefaultServiceItem = useDefaultServiceItem();
 
   return (
     <Modal
@@ -65,7 +69,7 @@ const OutboundServiceLineEditComponent = ({
             display="flex"
           >
             <ButtonWithIcon
-              disabled={isDisabled}
+              disabled={isDisabled || !hasDefaultServiceItem.defaultServiceItem}
               color="primary"
               variant="outlined"
               onClick={add}
@@ -84,6 +88,11 @@ const OutboundServiceLineEditComponent = ({
               columns={columns}
               data={lines.filter(({ isDeleted }) => !isDeleted)}
               dense
+              noDataMessage={
+                !hasDefaultServiceItem.defaultServiceItem
+                  ? t('error.no-service-charges')
+                  : t('error.no-results')
+              }
             />
           </TableProvider>
         </Box>
