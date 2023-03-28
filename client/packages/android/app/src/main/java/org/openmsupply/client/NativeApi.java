@@ -418,7 +418,11 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         }
 
         public String getUrl() {
-            return data.getString("protocol") + "://" + data.getString("ip") + ":" + data.getString("port") + "/" + data.getString("path");
+            String path = "";
+            if(data.getString("path")!=null){
+                path = "/" + data.getString("path");
+            }
+            return data.getString("protocol") + "://" + data.getString("ip") + ":" + data.getString("port") + path;
         }
 
         public boolean isLocal() {
