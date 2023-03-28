@@ -246,7 +246,6 @@ export const ArrayCommonComponent = (props: ArrayControlCustomProps) => {
                     title={t('label.remove')}
                     message={t('messages.confirm-remove-item')}
                   />
-
                   <IconButton
                     icon={isEditable ? <MinusCircleIcon /> : null}
                     label={t('label.remove')}
@@ -271,6 +270,7 @@ export const ArrayCommonComponent = (props: ArrayControlCustomProps) => {
                   path={childPath}
                   renderers={renderers}
                 />
+                {/* <p>Empty note!</p> */}
               </AccordionDetails>
             </Accordion>
           );
