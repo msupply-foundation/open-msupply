@@ -25,6 +25,8 @@ export type FrontEndHost = {
   hardwareId: string;
   // This one is set by NativeClient
   isLocal: boolean;
+  // Allows specifying a path to use when connecting
+  path?: string;
 };
 
 export interface NativeAPI {
@@ -84,6 +86,8 @@ export const useNativeClient = ({
   const previousServerJson = localStorage.getItem(PREVIOUS_SERVER_KEY);
 
   const setMode = (mode: NativeMode) => {
+    console.log('== MODE ==>', nativeMode);
+    console.log('== NEW ==>', mode);
     setNativeMode(mode);
     setState(state => ({ ...state, mode }));
   };
