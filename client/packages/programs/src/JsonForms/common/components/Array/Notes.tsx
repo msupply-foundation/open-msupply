@@ -155,6 +155,13 @@ const NotesComponent = (props: ArrayControlCustomProps) => {
       {...props}
       isElementEditable={isElementEditable}
       getItemLabel={getItemLabel}
+      checkIsError={child => {
+        console.log('Child', child);
+        if (!child) return false;
+        console.log('Author', child.authorId);
+        console.log('text', child.text);
+        return !!child.authorId && !child?.text;
+      }}
       zOptions={NotesOptions}
     />
   );
@@ -191,6 +198,7 @@ const NoteComponent = (props: ControlProps) => {
     // TO-DO: Use full name for Author name once available in database
     const authorName = config.user?.name;
     const created = data?.created ?? new Date().toISOString();
+    console.log('Updating...');
     handleChange(
       path,
       error
@@ -208,7 +216,7 @@ const NoteComponent = (props: ControlProps) => {
 
   const t = useTranslation('common');
 
-  const helperText = zErrors ?? errors;
+  // const helperText = zErrors ?? errors;
 
   if (!props.visible) {
     return null;
@@ -239,12 +247,10 @@ const NoteComponent = (props: ControlProps) => {
         onBlur={() => setEditMode(false)}
         onFocus={e => (e.target.selectionStart = text?.length ?? 0)}
         inputProps={{
-          value: text ?? '',
+          value: text,
           name: 'text',
           sx: { margin: 0.5 },
           disabled: !props.enabled,
-          error,
-          helperText,
           FormHelperTextProps: error
             ? { sx: { color: 'error.main' } }
             : undefined,
