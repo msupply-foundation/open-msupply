@@ -1356,6 +1356,11 @@
   resolved "https://registry.yarnpkg.com/@capacitor/keyboard/-/keyboard-4.1.1.tgz#36e33d0e6a82ff2a67c17f67fd7cbb756c69706a"
   integrity sha512-fdC7u2TeG4BqwC0LnPnhOdya31C4QKdhk/8pc5lxI9X5jyYAetMCN1kEkKa7KREw4DdzXotJt27B9BXxAza6og==
 
+"@capacitor/preferences@^4.0.2":
+  version "4.0.2"
+  resolved "https://registry.yarnpkg.com/@capacitor/preferences/-/preferences-4.0.2.tgz#83bee8cadb3456a4f2a89118b8351d488c20ec77"
+  integrity sha512-HgcRkMdVHSIV3TeQLZFmCaCeMWQ25wLyZZ7dA2f8Rw81Q1Nroxsi7HxTEGNqrWKSN9PNKBJD8vChr6eB2GNtZg==
+
 "@cnakazawa/watch@^1.0.3":
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/@cnakazawa/watch/-/watch-1.0.4.tgz#f864ae85004d0fcab6f50be9141c4da368d1656a"
