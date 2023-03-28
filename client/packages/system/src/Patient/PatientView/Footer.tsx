@@ -35,6 +35,8 @@ export const Footer: FC<FooterProps> = ({
   const { Modal, showDialog, hideDialog } = useDialog();
   const navigate = useNavigate();
 
+  console.log('validationError', validationError);
+
   return (
     <AppFooterPortal
       Content={
