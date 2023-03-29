@@ -25,7 +25,7 @@ export const useTranslation = (ns?: Namespace): TypedTFunction<LocaleKey> => {
       const defaultValue = typeof opts === 'string' ? opts : undefined;
       const options =
         typeof opts === 'object'
-          ? { ...opts, returnDetails: false, defaultValue }
+          ? { ...opts, returnDetails: false }
           : { returnDetails: false, defaultValue };
 
       return key ? t(key, options) : '';
