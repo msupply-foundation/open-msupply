@@ -409,7 +409,7 @@
             "midUpperArmCircumference": {
               "description": "284473002\tMid upper arm circumference (MUAC) [cm]",
               "minimum": 0,
-              "title": "MUAC in cm]",
+              "title": "MUAC in cm",
               "type": "number"
             },
             "nutrition": {
