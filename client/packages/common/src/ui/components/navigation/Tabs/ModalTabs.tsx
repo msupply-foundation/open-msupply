@@ -26,9 +26,12 @@ export const ModalTabs: FC<DetailTabsProps> = ({ sx, tabs }) => {
             <Tab
               key={value}
               value={value}
-              label={t(`label.${value.toLowerCase()}` as LocaleKey, {
-                defaultValue: value,
-              })}
+              label={t(
+                `label.${value.toLowerCase().replace(' ', '-')}` as LocaleKey,
+                {
+                  defaultValue: value,
+                }
+              )}
               tabIndex={index === 0 ? -1 : undefined}
             ></Tab>
           ))}
