@@ -17,10 +17,6 @@ export interface RequestStoreStatsProps {
 
 const MIN_MC_WIDTH_TO_SHOW_TEXT = 5;
 
-const Divider = () => (
-  <Box sx={{ backgroundColor: 'gray.dark', width: '1px', height: '45px' }} />
-);
-
 const MonthlyConsumption = ({
   month,
   flexBasis,
@@ -166,12 +162,12 @@ export const RequestStoreStats: React.FC<RequestStoreStatsProps> = ({
           </Box>
 
           <Box display="flex" alignItems="flex-start" width="100%">
-            <Divider />
             <ValueBar
               value={availableStockOnHand}
               total={targetQuantity}
               label={t('label.stock-on-hand')}
               colour="gray.main"
+              startDivider
             />
             <ValueBar
               value={suggestedQuantity}

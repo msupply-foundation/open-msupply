@@ -10,10 +10,6 @@ export interface ResponseStoreStatsProps {
   otherRequestedQuantity: number;
 }
 
-const Divider = () => (
-  <Box sx={{ backgroundColor: 'gray.dark', width: '1px', height: '45px' }} />
-);
-
 export const ResponseStoreStats: React.FC<ResponseStoreStatsProps> = ({
   stockOnHand,
   incomingStock,
@@ -54,12 +50,12 @@ export const ResponseStoreStats: React.FC<ResponseStoreStatsProps> = ({
             alignItems="flex-start"
             width={predictedStockPercent}
           >
-            <Divider />
             <ValueBar
               value={stockOnHand}
               total={predictedStockLevels}
               label={t('label.stock-on-hand')}
               colour="gray.dark"
+              startDivider
             />
             <ValueBar
               value={incomingStock}
@@ -86,12 +82,12 @@ export const ResponseStoreStats: React.FC<ResponseStoreStatsProps> = ({
       >
         <>
           <Box display="flex" alignItems="flex-start" width={requestedPercent}>
-            <Divider />
             <ValueBar
               value={requestedQuantity}
               total={totalRequested}
               label={t('label.requested-quantity')}
               colour="primary.main"
+              startDivider
             />
             <ValueBar
               value={otherRequestedQuantity}

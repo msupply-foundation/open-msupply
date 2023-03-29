@@ -14,6 +14,8 @@ interface ValueBarProps {
   total: number;
   label: string;
   colour: string;
+  startDivider?: boolean;
+  endDivider?: boolean;
 }
 
 export const ValueBar: FC<ValueBarProps> = ({
@@ -21,6 +23,8 @@ export const ValueBar: FC<ValueBarProps> = ({
   total,
   label,
   colour,
+  startDivider = false,
+  endDivider = true,
 }) => {
   const formatNumber = useFormatNumber();
   if (value === 0) return null;
@@ -29,6 +33,7 @@ export const ValueBar: FC<ValueBarProps> = ({
 
   return (
     <>
+      {startDivider ? <Divider /> : null}
       <Tooltip title={`${label}: ${formatNumber.round(value)}`} placement="top">
         <Box flexBasis={`${flexBasis}%`} flexGrow={1}>
           <Box sx={{ backgroundColor: colour, height: '20px' }} />
@@ -53,7 +58,7 @@ export const ValueBar: FC<ValueBarProps> = ({
           </Box>
         </Box>
       </Tooltip>
-      <Divider />
+      {endDivider ? <Divider /> : null}
     </>
   );
 };
