@@ -15,6 +15,7 @@ pub enum EncounterStatus {
     Scheduled,
     Completed,
     Cancelled,
+    Missed,
 }
 
 table! {

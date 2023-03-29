@@ -36,7 +36,6 @@ mod tests {
         )
         .await;
     }
-    }
 
     #[actix_rt::test]
     async fn integration_sync_central_form_schema() {
@@ -46,4 +45,5 @@ mod tests {
     #[actix_rt::test]
     async fn integration_sync_central_document_registry() {
         test_central_sync_record("document_registry", &DocumentRegistryTester).await;
+    }
 }

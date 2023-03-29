@@ -16,7 +16,7 @@
       "type": "object"
     },
     "EncounterStatus": {
-      "enum": ["SCHEDULED", "COMPLETED", "CANCELLED"],
+      "enum": ["SCHEDULED", "COMPLETED", "CANCELLED", "MISSED"],
       "type": "string"
     },
     "FamilyPlanning": {
