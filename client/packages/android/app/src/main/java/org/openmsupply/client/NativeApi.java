@@ -338,7 +338,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     // information
     // manually adding this server should work
     private void addLocalServerToDiscovery() {
-        if (isDiscovering && discoveredServers != null) {
+        if (isAdvertising && isDiscovering && discoveredServers != null) {
             try {
                 NsdServiceInfo serviceInfo = createLocalServiceInfo();
                 serviceInfo.setHost(InetAddress.getByName("localhost"));
@@ -418,10 +418,10 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         String key = data.getString("key");
         try {
 
-            SharedPreferences preferences = getContext().getSharedPreferences(CONFIGURATION_GROUP, Activity.MODE_PRIVATE);
+            SharedPreferences preferences = getContext().getSharedPreferences(CONFIGURATION_GROUP,
+                    Activity.MODE_PRIVATE);
             data.put("value", preferences.getString(key, null));
-        }
-        catch(Exception e){
+        } catch (Exception e) {
             data.put("error", e.getMessage());
         }
         call.resolve(data);
@@ -433,17 +433,16 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         String key = data.getString("key");
         String value = data.getString("value");
         try {
-            SharedPreferences preferences = getContext().getSharedPreferences(CONFIGURATION_GROUP, Activity.MODE_PRIVATE);
+            SharedPreferences preferences = getContext().getSharedPreferences(CONFIGURATION_GROUP,
+                    Activity.MODE_PRIVATE);
             SharedPreferences.Editor editor = preferences.edit();
             editor.putString(key, value);
             editor.apply();
-        }
-        catch(Exception e){
+        } catch (Exception e) {
             Log.e(OM_SUPPLY, "Unable to set preference");
             Log.d(OM_SUPPLY, "Setting key '" + key + "' to '" + value + "'");
         }
     }
-
 
     public class omSupplyServer {
         JSObject data;
