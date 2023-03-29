@@ -93,7 +93,7 @@ export const useNativeClient = ({
 
     let connectToPreviousTimer: NodeJS.Timer | undefined = undefined;
 
-    if (autoconnect && !!state.previousServer) {
+    if (autoconnect && !!state.previousServer?.ip) {
       connectToPreviousTimer = setTimeout(
         () =>
           setState(state => ({ ...state, connectToPreviousTimedOut: true })),
@@ -132,7 +132,7 @@ export const useNativeClient = ({
   useEffect(() => {
     startDiscovery();
     getPreference('previousServer', '').then(server => {
-      setState(state => ({ ...state, previousServer: server }));
+      if (!!server) setState(state => ({ ...state, previousServer: server }));
     });
   }, []);
 
