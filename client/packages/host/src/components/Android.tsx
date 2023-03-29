@@ -98,7 +98,6 @@ const ModeOption = ({
 
 export const Android = () => {
   const {
-    // mode,
     connectToPreviousTimedOut,
     previousServer,
     servers,
