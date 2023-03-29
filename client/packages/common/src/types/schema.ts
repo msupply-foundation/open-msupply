@@ -464,7 +464,6 @@ export type DatetimeFilterInput = {
 };
 
 export type DeleteDocumentInput = {
-  comment?: InputMaybe<Scalars['String']>;
   id: Scalars['String'];
 };
 

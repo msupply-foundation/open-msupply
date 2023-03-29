@@ -254,9 +254,11 @@ const UIComponent: FC<LayoutProps & AjvProps> = ({
             <ErrorStringComponent category={category} errorPaths={errorPaths} />
           </Button>
           <CategoryModal
-            sx={{'& .MuiDialogTitle-root': {
-              fontSize: '1.5em'
-            }}}
+            sx={{
+              '& .MuiDialogTitle-root': {
+                fontSize: '1.5em',
+              },
+            }}
             onClose={onClose}
             isOpen={activeCategory === idx}
             title={category.options?.['title'] ?? category.label}

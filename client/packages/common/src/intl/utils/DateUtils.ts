@@ -22,7 +22,6 @@ import {
   startOfToday,
   startOfDay,
   startOfYear,
-  formatRFC3339,
   formatRelative,
   formatDistanceToNow,
   formatRFC3339,
@@ -99,8 +98,6 @@ export const DateUtils = {
     differenceInDays(Date.now(), dateInputHandler(date)),
   startOfDay,
   startOfYear,
-  formatRFC3339: (date: Date | null | undefined) =>
-    isValid(date) ? formatRFC3339(date as Date) : undefined,
 
   /** Number of milliseconds in one second, i.e. SECOND = 1000*/
   SECOND,
