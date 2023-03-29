@@ -17,7 +17,7 @@ const UIComponent = (props: ControlProps) => {
   const { data, handleChange, label, path, errors, schema } = props;
   const [localData, setLocalData] = useState<number | undefined>(data);
   const onChange = useDebounceCallback(
-    (value: number) => handleChange(path, value),
+    (value: number | undefined) => handleChange(path, value),
     [path]
   );
   const error = !!errors;

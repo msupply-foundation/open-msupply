@@ -20,7 +20,8 @@ export const getEditableQuantityColumn = <
     const [value, setValue] = useState(quantity);
     const [error, setError] = useState(false);
 
-    const tryUpdateValue = (value: number) => {
+    const tryUpdateValue = (value: number | undefined) => {
+      if (value === undefined) return;
       const isValid = Number.isInteger(value) && value >= 0;
 
       if (isValid) {
