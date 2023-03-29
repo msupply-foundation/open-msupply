@@ -41,7 +41,7 @@
     "react-query": "^3.34.12",
     "react-router-dom": "^6.1.1",
     "react-viewport-list": "^7.0.0",
-    "recharts": "^2.1.9",
+    "recharts": "^2.5.0",
     "stylis": "^4.0.13",
     "stylis-plugin-rtl": "^2.1.1",
     "uuid": "^9.0.0",
