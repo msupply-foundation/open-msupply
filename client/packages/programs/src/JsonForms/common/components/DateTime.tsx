@@ -25,7 +25,7 @@ const Options = z
 type Options = z.infer<typeof Options>;
 
 const DateTimePickerInput: FC<
-  Omit<DateTimePickerProps<Date>, 'renderInput'> & { error: string }
+  Omit<DateTimePickerProps<Date, Date>, 'renderInput'> & { error: string }
 > = props => (
   <DateTimePicker
     disabled={props.disabled}

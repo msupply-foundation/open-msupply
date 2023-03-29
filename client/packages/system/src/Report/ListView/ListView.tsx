@@ -135,7 +135,7 @@ const ReportListComponent = ({ context }: { context: ReportContext }) => {
 };
 
 export const ReportListView = ({ context }: { context: ReportContext }) => (
-  <TableProvider createStore={createTableStore}>
+  <TableProvider createStore={createTableStore()}>
     <ReportListComponent context={context} />
   </TableProvider>
 );

@@ -35,7 +35,7 @@ const DatePickerTextInput = ({ variant, ...props }: TextFieldProps) => (
 );
 
 export const BaseDatePickerInput: FC<
-  Omit<DatePickerProps<Date>, 'renderInput'> & { error: string }
+  Omit<DatePickerProps<Date, Date>, 'renderInput'> & { error: string }
 > = props => (
   <DatePicker
     disabled={props.disabled}
@@ -49,7 +49,7 @@ export const dateTester = rankWith(5, isDateControl);
 const UIComponent = (props: ControlProps) => {
   const { data, handleChange, label, path, uischema } = props;
   const dateFormatter = useFormatDateTime().customDate;
-    const { errors: zErrors, options } = useZodOptionsValidation(
+  const { errors: zErrors, options } = useZodOptionsValidation(
     Options,
     uischema.options
   );
