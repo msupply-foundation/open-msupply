@@ -1,5 +1,5 @@
 import { RefObject } from 'react';
-import create from 'zustand';
+import { create } from 'zustand';
 import { useBoundingClientRectRef } from './../useBoundingClientRect';
 
 interface AppBarRect {

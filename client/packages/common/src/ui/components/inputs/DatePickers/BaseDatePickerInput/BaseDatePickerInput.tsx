@@ -10,7 +10,7 @@ import { DateUtils } from '@common/intl';
 import { useDebounceCallback } from '@common/hooks';
 
 export const BaseDatePickerInput: FC<
-  Omit<DatePickerProps<Date>, 'renderInput' | 'value'> & {
+  Omit<DatePickerProps<Date, Date>, 'renderInput' | 'value'> & {
     onChange(date: Date): void;
     value: Date | string | null;
   }

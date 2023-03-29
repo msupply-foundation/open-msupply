@@ -12,6 +12,10 @@ export const NumUtils = {
 
     return constrain(parsed, min, max);
   },
+  round: (value: number, dp = 0): number => {
+    const multiplier = 10 ** dp;
+    return Math.round(value * multiplier) / multiplier;
+  },
   /**
    * This constant should be used for values that are potentially send to a backend API that expects
    * an unsigned 32 bit integer and thus would reject Number.MAX_SAFE_INTEGER.

@@ -4,6 +4,7 @@ import {
   addDays,
   addYears,
   isValid,
+  differenceInMinutes,
   differenceInDays,
   differenceInMonths,
   differenceInYears,
@@ -24,6 +25,7 @@ import {
   formatRFC3339,
   formatRelative,
   formatDistanceToNow,
+  formatRFC3339,
 } from 'date-fns';
 // importing individually to reduce bundle size
 // the date-fns methods are tree shaking correctly
@@ -66,6 +68,7 @@ const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
 
 export const DateUtils = {
+  differenceInMinutes,
   addMinutes,
   addDays,
   addYears,
@@ -89,6 +92,8 @@ export const DateUtils = {
   isBefore,
   isEqual,
   isValid,
+  formatRFC3339: (date: Date | null | undefined) =>
+    isValid(date) ? formatRFC3339(date as Date) : undefined,
   age: (date: Date) => differenceInYears(startOfToday(), startOfDay(date)),
   ageInDays: (date: Date | string) =>
     differenceInDays(Date.now(), dateInputHandler(date)),

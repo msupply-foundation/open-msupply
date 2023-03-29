@@ -41,7 +41,7 @@ describe('useDialog', () => {
 
     act(() => getByRole('button', { name: 'show dialog' }).click());
 
-    const node = getByRole(/dialog/, { name: /add item/i });
+    const node = getByRole('dialog', { name: /add item/i });
     expect(node).toBeInTheDocument();
   });
 
