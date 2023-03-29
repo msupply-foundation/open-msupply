@@ -6,35 +6,27 @@ import {
   PlusCircleIcon,
   StatsPanel,
   useNotification,
-  useQuery,
   useToggle,
   Widget,
 } from '@openmsupply-client/common';
 import { useFormatNumber, useTranslation } from '@common/intl';
-import { PropsWithChildrenOnly } from '@common/types';
+import { ApiException, PropsWithChildrenOnly } from '@common/types';
 import { useInbound } from '../api';
 import { InternalSupplierSearchModal } from '@openmsupply-client/system';
 
 export const InboundShipmentWidget: React.FC<PropsWithChildrenOnly> = () => {
   const modalControl = useToggle(false);
-  const { error } = useNotification();
-  const api = useInbound.utils.api();
+  const { error: errorNotification } = useNotification();
   const t = useTranslation(['app', 'dashboard']);
-  const [hasError, setHasError] = React.useState(false);
   const formatNumber = useFormatNumber();
-  const { data, isLoading } = useQuery(
-    ['inbound-shipment', 'count'],
-    api.dashboard.shipmentCount,
-    {
-      retry: false,
-      onError: () => setHasError(true),
-    }
-  );
+  const { data, isLoading, isError, error } = useInbound.utils.counts();
 
   const { mutateAsync: onCreate } = useInbound.document.insert();
   const onError = (e: unknown) => {
     const message = (e as Error).message ?? '';
-    const errorSnack = error(`Failed to create requisition! ${message}`);
+    const errorSnack = errorNotification(
+      t('error.failed-to-create-requisition', { message })
+    );
     errorSnack();
   };
 
@@ -64,22 +56,22 @@ export const InboundShipmentWidget: React.FC<PropsWithChildrenOnly> = () => {
           flexDirection="column"
         >
           <Grid item>
-            {!hasError && (
-              <StatsPanel
-                isLoading={isLoading}
-                title={t('inbound-shipments')}
-                stats={[
-                  {
-                    label: t('label.today', { ns: 'dashboard' }),
-                    value: formatNumber.round(data?.today),
-                  },
-                  {
-                    label: t('label.this-week', { ns: 'dashboard' }),
-                    value: formatNumber.round(data?.thisWeek),
-                  },
-                ]}
-              />
-            )}
+            <StatsPanel
+              error={error as ApiException}
+              isError={isError}
+              isLoading={isLoading}
+              title={t('inbound-shipments')}
+              stats={[
+                {
+                  label: t('label.today', { ns: 'dashboard' }),
+                  value: formatNumber.round(data?.today),
+                },
+                {
+                  label: t('label.this-week', { ns: 'dashboard' }),
+                  value: formatNumber.round(data?.thisWeek),
+                },
+              ]}
+            />
           </Grid>
           <Grid
             item
