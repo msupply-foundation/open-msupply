@@ -81,7 +81,6 @@ export const setAuthCookie = (cookie: AuthCookie) => {
   Cookies.set('auth', JSON.stringify(authCookie), { expires });
 };
 
-const userHasPermission = (_permission: UserPermission) => false;
 const authControl = {
   isLoggingIn: false,
   login: (_username: string, _password: string) =>
@@ -90,7 +89,7 @@ const authControl = {
   setStore: (_store: UserStoreNodeFragment) => new Promise<void>(() => ({})),
   storeId: 'store-id',
   token: '',
-  userHasPermission,
+  userHasPermission: (_permission: UserPermission) => false,
 };
 
 const AuthContext = createContext<AuthControl>(authControl);

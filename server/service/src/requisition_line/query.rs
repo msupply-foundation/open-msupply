@@ -5,9 +5,6 @@ use repository::{
 
 use crate::{i64_to_u32, service_provider::ServiceContext, ListError, ListResult};
 
-pub const MAX_LIMIT: u32 = 2000;
-pub const MIN_LIMIT: u32 = 1;
-
 pub fn get_requisition_lines(
     ctx: &ServiceContext,
     filter: Option<RequisitionLineFilter>,
