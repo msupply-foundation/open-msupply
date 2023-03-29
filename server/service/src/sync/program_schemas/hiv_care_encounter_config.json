@@ -5,8 +5,7 @@
       "conditions": [{ "field": "arvMedication.endOfSupply", "isSet": true }],
       "config": {
         "datetimeField": "arvMedication.endOfSupply",
-        "scheduleFromNow": true,
-        "scheduleIn": { "days": 0, "minutes": 1 }
+        "scheduleIn": { "days": 28 }
       },
       "event": {
         "documentType": "HIVCareProgram",
@@ -19,8 +18,7 @@
       "conditions": [{ "field": "arvMedication.endOfSupply", "isSet": true }],
       "config": {
         "datetimeField": "arvMedication.endOfSupply",
-        "scheduleFromNow": true,
-        "scheduleIn": { "days": 0, "minutes": 3 }
+        "scheduleIn": { "days": 90 }
       },
       "event": {
         "documentType": "HIVCareProgram",

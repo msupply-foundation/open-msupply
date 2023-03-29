@@ -32,6 +32,7 @@ pub enum EncounterNodeStatus {
     Scheduled,
     Completed,
     Cancelled,
+    Missed,
 }
 
 impl EncounterNodeStatus {
@@ -40,6 +41,7 @@ impl EncounterNodeStatus {
             EncounterNodeStatus::Scheduled => EncounterStatus::Scheduled,
             EncounterNodeStatus::Completed => EncounterStatus::Completed,
             EncounterNodeStatus::Cancelled => EncounterStatus::Cancelled,
+            EncounterNodeStatus::Missed => EncounterStatus::Missed,
         }
     }
 
@@ -48,6 +50,7 @@ impl EncounterNodeStatus {
             EncounterStatus::Scheduled => EncounterNodeStatus::Scheduled,
             EncounterStatus::Completed => EncounterNodeStatus::Completed,
             EncounterStatus::Cancelled => EncounterNodeStatus::Cancelled,
+            EncounterStatus::Missed => EncounterNodeStatus::Missed,
         }
     }
 }

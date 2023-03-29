@@ -427,8 +427,8 @@ mod tests {
         mock::{mock_name_1, mock_test_name_query_store_1, mock_test_name_query_store_2},
         mock::{mock_name_2, MockDataInserts},
         test_db, NameFilter, NameRepository, NameRow, NameRowRepository, Pagination,
-        ProgramEnrolmentRow, ProgramEnrolmentRowRepository, SimpleStringFilter,
-        DEFAULT_PAGINATION_LIMIT,
+        ProgramEnrolmentRow, ProgramEnrolmentRowRepository, ProgramEnrolmentStatus,
+        SimpleStringFilter, DEFAULT_PAGINATION_LIMIT,
     };
 
     use std::convert::TryFrom;
@@ -737,6 +737,7 @@ mod tests {
                 program: "ProgramType".to_string(),
                 enrolment_datetime: Utc::now().naive_utc(),
                 program_enrolment_id: Some("program_enrolment_id".to_string()),
+                status: ProgramEnrolmentStatus::Active,
             })
             .unwrap();
         let result = repo
