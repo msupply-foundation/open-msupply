@@ -4,7 +4,6 @@ import static android.content.Context.NSD_SERVICE;
 
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
-import android.os.Environment;
 import android.util.Log;
 import android.webkit.WebView;
 
@@ -26,7 +25,6 @@ import java.net.InetAddress;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Deque;
 
 import javax.net.ssl.SSLHandshakeException;
@@ -81,6 +79,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     public String getLocalUrl() {
         return localUrl;
     }
+
     public String getServerUrl() {
         return serverUrl;
     }

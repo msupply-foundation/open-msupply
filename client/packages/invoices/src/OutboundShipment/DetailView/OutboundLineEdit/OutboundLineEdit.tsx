@@ -50,7 +50,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
 }) => {
   const t = useTranslation(['distribution']);
   const { info } = useNotification();
-  const { Modal } = useDialog({ isOpen, onClose });
+  const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const [currentItem, setCurrentItem] = useBufferState(item);
 
   const { mutate } = useOutbound.line.save();
