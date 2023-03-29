@@ -1,46 +1,23 @@
 import { Capacitor, registerPlugin } from '@capacitor/core';
-import { Preferences } from '@capacitor/preferences';
-import {
-  FrontEndHost,
-  NativeMode,
-  NATIVE_MODE_KEY,
-  PREVIOUS_SERVER_KEY,
-  NativeAPI,
-} from './types';
-
-export const getStorageKey = (key: string) => {
-  switch (key) {
-    case 'mode':
-      return NATIVE_MODE_KEY;
-    case 'previousServer':
-      return PREVIOUS_SERVER_KEY;
-    default:
-      return '';
-  }
-};
+import { FrontEndHost, NativeMode, NativeAPI } from './types';
 
 export const setPreference = async (
   key: string,
   value: NativeMode | FrontEndHost
 ) => {
-  const stringValue = JSON.stringify(value);
-  if (Capacitor.isNativePlatform()) {
-    await Preferences.set({
-      key,
-      value: stringValue,
-    });
-  } else {
-    localStorage.setItem(getStorageKey(key), stringValue);
-  }
+  const nativeAPI = getNativeAPI();
+  nativeAPI?.setPreference({ key, value: JSON.stringify(value) });
 };
 
-export const getPreference = async (key: string, defaultValue: string) => {
-  if (Capacitor.isNativePlatform()) {
-    const ret = await Preferences.get({ key });
-    return JSON.parse(ret.value ?? defaultValue);
-  } else {
-    return localStorage.getItem(getStorageKey(key));
-  }
+export const getPreference = async (key: string, defaultValue?: string) => {
+  const nativeAPI = getNativeAPI();
+  const preference = await nativeAPI?.getPreference({
+    key,
+    value: defaultValue ?? '',
+  });
+
+  const value = preference?.value ?? defaultValue;
+  return value ? JSON.parse(value) : '';
 };
 
 const androidNativeAPI = registerPlugin<NativeAPI>('NativeApi');

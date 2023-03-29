@@ -1,8 +1,11 @@
 export const DISCOVERY_TIMEOUT = 7000;
 export const DISCOVERED_SERVER_POLL = 2000;
-export const PREVIOUS_SERVER_KEY = '/discovery/previous-server';
-export const NATIVE_MODE_KEY = '/native/mode';
 
+export type Preference = {
+  key: string;
+  value: string;
+  error?: string;
+};
 export interface NativeAPI {
   // Method used in polling for found servers
   discoveredServers: () => Promise<{ servers: FrontEndHost[] }>;
@@ -17,11 +20,14 @@ export interface NativeAPI {
   startBarcodeScan: () => Promise<number[]>;
   stopBarcodeScan: () => void;
   readLog: () => Promise<{ log: string; error: string }>;
+  getPreference: (preference: Preference) => Promise<Preference>;
+  setPreference: (preference: Preference) => void;
 }
 
 export enum NativeMode {
-  Client,
-  Server,
+  None = 'none',
+  Client = 'client',
+  Server = 'server',
 }
 
 export type Protocol = 'http' | 'https';
