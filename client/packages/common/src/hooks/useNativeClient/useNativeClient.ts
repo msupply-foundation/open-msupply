@@ -12,7 +12,6 @@ import {
   FrontEndHost,
   NativeAPI,
   NativeMode,
-  PREVIOUS_SERVER_KEY,
 } from './types';
 
 declare global {
@@ -28,7 +27,6 @@ type NativeClientState = {
   // Indicate that server discovery has taken too long without finding server
   discoveryTimedOut: boolean;
   isDiscovering: boolean;
-  mode: NativeMode | null;
   previousServer: FrontEndHost | null;
   servers: FrontEndHost[];
 };
@@ -38,12 +36,6 @@ export const useNativeClient = ({
   discovery,
 }: { discovery?: boolean; autoconnect?: boolean } = {}) => {
   const nativeAPI = getNativeAPI();
-  const [nativeMode, setNativeMode] = useState(NativeMode.Client);
-  const [previousServerJson, setPreviousServerJson] = useState('');
-  getPreference('mode', '0').then(setNativeMode);
-  getPreference('previousServer', '').then(setPreviousServerJson);
-  // the desktop app only supports running in client mode
-  const mode = !!window.electronNativeAPI ? NativeMode.Client : nativeMode;
 
   const setMode = (mode: NativeMode) =>
     setPreference('mode', mode).then(() =>
@@ -55,13 +47,12 @@ export const useNativeClient = ({
     connectedServer: null,
     discoveryTimedOut: false,
     isDiscovering: false,
-    mode,
-    previousServer: previousServerJson ? JSON.parse(previousServerJson) : null,
+    previousServer: null,
     servers: [],
   });
 
   const connectToServer = (server: FrontEndHost) => {
-    localStorage.setItem(PREVIOUS_SERVER_KEY, JSON.stringify(server));
+    setPreference('previousServer', server);
     nativeAPI?.connectToServer(server);
   };
 
@@ -102,7 +93,7 @@ export const useNativeClient = ({
 
     let connectToPreviousTimer: NodeJS.Timer | undefined = undefined;
 
-    if (autoconnect && !!previousServerJson) {
+    if (autoconnect && !!state.previousServer) {
       connectToPreviousTimer = setTimeout(
         () =>
           setState(state => ({ ...state, connectToPreviousTimedOut: true })),
@@ -140,6 +131,9 @@ export const useNativeClient = ({
 
   useEffect(() => {
     startDiscovery();
+    getPreference('previousServer', '').then(server => {
+      setState(state => ({ ...state, previousServer: server }));
+    });
   }, []);
 
   // Auto connect if autoconnect=true and server found matching previousConnectedServer

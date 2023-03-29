@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 import {
   Grid,
@@ -12,13 +12,14 @@ import {
   usePermissionCheck,
   LocalStorage,
   useInitialisationStatus,
-  NATIVE_MODE_KEY,
   NativeMode,
   RouteBuilder,
   Switch,
-  PREVIOUS_SERVER_KEY,
   useToggle,
   BaseButton,
+  getPreference,
+  setPreference,
+  FrontEndHost,
 } from '@openmsupply-client/common';
 import { Capacitor } from '@capacitor/core';
 import { themeOptions } from '@common/styles';
@@ -43,7 +44,7 @@ export const Settings: React.FC = () => {
   const customThemeEnabled =
     !!customTheme && Object.keys(customTheme).length > 0;
   const { data: initStatus } = useInitialisationStatus();
-  const [nativeMode, setNativeMode] = useLocalStorage(NATIVE_MODE_KEY);
+  const [nativeMode, setNativeMode] = useState(NativeMode.None);
   const {
     isOn: isLogShown,
     toggleOn: showLog,
@@ -133,8 +134,9 @@ export const Settings: React.FC = () => {
     const mode =
       nativeMode === NativeMode.Server ? NativeMode.Client : NativeMode.Server;
 
-    localStorage.removeItem(PREVIOUS_SERVER_KEY);
-    setNativeMode(mode);
+    setPreference('previousServer', {} as FrontEndHost);
+    setPreference('mode', mode);
+
     navigate(RouteBuilder.create(AppRoute.Android).build());
   };
 
@@ -178,6 +180,10 @@ export const Settings: React.FC = () => {
         />
       </>
     ) : null;
+
+  useEffect(() => {
+    getPreference('mode', 'none').then(setNativeMode);
+  }, []);
 
   return (
     <Grid display="flex" flexDirection="column" flex={1}>

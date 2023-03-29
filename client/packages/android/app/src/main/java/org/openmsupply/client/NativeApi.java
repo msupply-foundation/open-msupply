@@ -2,6 +2,8 @@ package org.openmsupply.client;
 
 import static android.content.Context.NSD_SERVICE;
 
+import android.app.Activity;
+import android.content.SharedPreferences;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
 import android.util.Log;
@@ -34,6 +36,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     private static final String LOG_FILE_NAME = "remote_server.log";
     public static final String OM_SUPPLY = "omSupply";
     private static final String DEFAULT_URL = "https://localhost:8000/";
+    private static final String CONFIGURATION_GROUP = "omSupply_preferences";
     DiscoveryConstants discoveryConstants;
     JSArray discoveredServers;
     Deque<NsdServiceInfo> serversToResolve;
@@ -335,7 +338,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     // information
     // manually adding this server should work
     private void addLocalServerToDiscovery() {
-        if (isAdvertising && isDiscovering && discoveredServers != null) {
+        if (isDiscovering && discoveredServers != null) {
             try {
                 NsdServiceInfo serviceInfo = createLocalServiceInfo();
                 serviceInfo.setHost(InetAddress.getByName("localhost"));
@@ -408,6 +411,39 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         }
         call.resolve(response);
     }
+
+    @PluginMethod()
+    public void getPreference(PluginCall call) {
+        JSObject data = call.getData();
+        String key = data.getString("key");
+        try {
+
+            SharedPreferences preferences = getContext().getSharedPreferences(CONFIGURATION_GROUP, Activity.MODE_PRIVATE);
+            data.put("value", preferences.getString(key, null));
+        }
+        catch(Exception e){
+            data.put("error", e.getMessage());
+        }
+        call.resolve(data);
+    }
+
+    @PluginMethod()
+    public void setPreference(PluginCall call) {
+        JSObject data = call.getData();
+        String key = data.getString("key");
+        String value = data.getString("value");
+        try {
+            SharedPreferences preferences = getContext().getSharedPreferences(CONFIGURATION_GROUP, Activity.MODE_PRIVATE);
+            SharedPreferences.Editor editor = preferences.edit();
+            editor.putString(key, value);
+            editor.apply();
+        }
+        catch(Exception e){
+            Log.e(OM_SUPPLY, "Unable to set preference");
+            Log.d(OM_SUPPLY, "Setting key '" + key + "' to '" + value + "'");
+        }
+    }
+
 
     public class omSupplyServer {
         JSObject data;
