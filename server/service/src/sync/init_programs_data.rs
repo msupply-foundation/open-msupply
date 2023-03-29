@@ -114,6 +114,7 @@ mod hiv_care_encounter {
                 gender_based_violence: Default::default(),
                 physical_examination: Default::default(),
                 clinician: Default::default(),
+                created_by: Default::default(),
                 created_datetime: Default::default(),
                 start_datetime: Default::default(),
                 status: Default::default(),
@@ -457,7 +458,7 @@ fn encounter_hiv_care_1(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncou
         e.start_datetime = time.to_rfc3339();
         e.physical_examination = Some(inline_init(
             |exam: &mut HivcareEncounterPhysicalExamination| {
-                exam.weight = Some("51.00".to_string());
+                exam.weight = Some(51.00);
                 exam.blood_pressure = Some(inline_init(
                     |blood_pressure: &mut HivcareEncounterPhysicalExaminationBloodPressure| {
                         blood_pressure.systolic = 120.0;
@@ -485,7 +486,7 @@ fn encounter_hiv_care_2(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncou
         e.start_datetime = time.to_rfc3339();
         e.physical_examination = Some(inline_init(
             |exam: &mut HivcareEncounterPhysicalExamination| {
-                exam.weight = Some("52.00".to_string());
+                exam.weight = Some(52.00);
                 exam.blood_pressure = Some(inline_init(
                     |blood_pressure: &mut HivcareEncounterPhysicalExaminationBloodPressure| {
                         blood_pressure.systolic = 110.0;
@@ -514,7 +515,7 @@ fn encounter_hiv_care_3(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncou
         e.start_datetime = time.to_rfc3339();
         e.physical_examination = Some(inline_init(
             |exam: &mut HivcareEncounterPhysicalExamination| {
-                exam.weight = Some("52.50".to_string());
+                exam.weight = Some(52.50);
                 exam.blood_pressure = Some(inline_init(
                     |blood_pressure: &mut HivcareEncounterPhysicalExaminationBloodPressure| {
                         blood_pressure.systolic = 150.0;
@@ -544,7 +545,7 @@ fn encounter_hiv_care_4(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncou
         e.start_datetime = time.to_rfc3339();
         e.physical_examination = Some(inline_init(
             |exam: &mut HivcareEncounterPhysicalExamination| {
-                exam.weight = Some("51.00".to_string());
+                exam.weight = Some(51.00);
                 exam.blood_pressure = Some(inline_init(
                     |blood_pressure: &mut HivcareEncounterPhysicalExaminationBloodPressure| {
                         blood_pressure.systolic = 121.0;
@@ -566,7 +567,7 @@ fn encounter_hiv_care_5(
         e.start_datetime = time.to_rfc3339();
         e.physical_examination = Some(inline_init(
             |exam: &mut HivcareEncounterPhysicalExamination| {
-                exam.weight = Some("54.00".to_string());
+                exam.weight = Some(54.00);
                 exam.blood_pressure = Some(inline_init(
                     |blood_pressure: &mut HivcareEncounterPhysicalExaminationBloodPressure| {
                         blood_pressure.systolic = 112.0;
