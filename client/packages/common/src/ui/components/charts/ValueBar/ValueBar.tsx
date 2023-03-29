@@ -27,7 +27,7 @@ export const ValueBar: FC<ValueBarProps> = ({
   endDivider = true,
 }) => {
   const formatNumber = useFormatNumber();
-  if (value === 0) return null;
+  if (value === 0) return startDivider ? <Divider /> : null;
 
   const flexBasis = Math.min(Math.round((100 * value) / total), 100);
 
