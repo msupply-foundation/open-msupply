@@ -10,6 +10,12 @@ interface DetailTabsProps {
   sx?: SxProps<Theme>;
   tabs: TabDefinition[];
 }
+
+/**
+ * A wrapper around the MUI Tab component for use in a modal.
+ * @property {TabDefinition[]} tabs When constructing tabs - specify a LocaleKey as the value, this will be translated out of the common namespace.
+ * @return {JSX.Element}
+ **/
 export const ModalTabs: FC<DetailTabsProps> = ({ sx, tabs }) => {
   const [currentTab, setCurrentTab] = useState<string>(tabs[0]?.value ?? '');
   const t = useTranslation('common');
@@ -26,12 +32,7 @@ export const ModalTabs: FC<DetailTabsProps> = ({ sx, tabs }) => {
             <Tab
               key={value}
               value={value}
-              label={t(
-                `label.${value.toLowerCase().replace(' ', '-')}` as LocaleKey,
-                {
-                  defaultValue: value,
-                }
-              )}
+              label={t(value as LocaleKey)}
               tabIndex={index === 0 ? -1 : undefined}
             ></Tab>
           ))}
