@@ -14,6 +14,8 @@ import {
   KBarPositioner,
   KBarPortal,
   PropsWithChildrenOnly,
+  useAuthContext,
+  UserPermission,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { Action } from 'kbar/lib/types';
@@ -81,6 +83,8 @@ export const CommandK: FC<PropsWithChildrenOnly> = ({ children }) => {
   const navigate = useNavigate();
   const drawer = useDrawer();
   const t = useTranslation('app');
+  const { logout, userHasPermission } = useAuthContext();
+
   const actions = [
     {
       id: 'navigation-drawer:toggle',
@@ -228,7 +232,27 @@ export const CommandK: FC<PropsWithChildrenOnly> = ({ children }) => {
             .build()
         ),
     },
+    {
+      id: 'action:logout',
+      name: `${t('logout')}`,
+      shortcut: ['g', 'm'],
+      keywords: 'logout',
+      perform: () => {
+        logout();
+        navigate(RouteBuilder.create(AppRoute.Login).build());
+      },
+    },
   ];
+
+  if (userHasPermission(UserPermission.ServerAdmin)) {
+    actions.push({
+      id: 'navigation:admin',
+      name: `${t('admin')} (a)`,
+      shortcut: ['a'],
+      keywords: 'admin',
+      perform: () => navigate(RouteBuilder.create(AppRoute.Admin).build()),
+    });
+  }
 
   const sortedActions = actions.sort(actionSorter);
   return (
