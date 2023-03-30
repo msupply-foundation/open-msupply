@@ -100,6 +100,25 @@ Capacitor comes with cli, we mainly use `npx cap copy` (or `yarn apply-config`),
 
 `npx cap copy` or `yarn apply-config` should only be run when cordova plugins are added or updated or when updating capacitor.config.ts
 
+When adding plugins - add them to the android package; if they are not here, then `npx cap sync` does not detect them. You should see 
+
+```
+✔ Updating Android plugins in 2.09ms
+[info] Found 3 Capacitor plugins for android:
+       @capacitor-community/barcode-scanner@3.0.3
+       @capacitor/keyboard@4.1.1
+       @capacitor/preferences@4.0.2
+[info] Found 1 Cordova plugin for android:
+       cordova-plugin-printer@0.8.0
+```
+
+with the new plugin showing up under the Cordova or Capacitor plugins sections.
+If you require the plugin to be used in other packages, then you can also install in the root, or in individual packages, to make it available for use elsewhere.
+
+You can check the plugins using `npx cap ls` or the configuration generally with `npx cap doctor`
+
+If you are having gradle issues, open the project (packages/android folder) in Android Studio and then click on the "Sync Project with Gradle Files" button in the top right of Android Studio (the icon looks like an elephant). 
+
 ## Self signed cert SSL security
 
 To avoid an error being thrown by the native web view when the server certificate is self-signed, we override the web view certificate error listener and allow connection when:
