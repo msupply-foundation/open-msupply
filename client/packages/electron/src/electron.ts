@@ -6,7 +6,6 @@ import {
   FrontEndHost,
   frontEndHostUrl,
   isProtocol,
-  Preference,
 } from '@openmsupply-client/common/src/hooks/useNativeClient';
 import HID from 'node-hid';
 import ElectronStore from 'electron-store';
@@ -136,16 +135,6 @@ const start = (): void => {
   ipcMain.handle(IPC_MESSAGES.CONNECTED_SERVER, async () => connectedServer);
   ipcMain.handle(IPC_MESSAGES.START_BARCODE_SCAN, () => barcodeScanner.start());
   ipcMain.on(IPC_MESSAGES.STOP_BARCODE_SCAN, () => barcodeScanner.stop());
-  // preference method stubs: not currently implemented for electron
-  ipcMain.on(IPC_MESSAGES.GET_PREFERENCE, (_event, preference: Preference) => ({
-    ...preference,
-    value: '',
-  }));
-  ipcMain.on(
-    IPC_MESSAGES.SET_PREFERENCE,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    (_event, _preference: Preference) => {}
-  );
 
   ipcMain.handle(IPC_MESSAGES.DISCOVERED_SERVERS, async () => {
     const servers = discoveredServers;

@@ -20,8 +20,6 @@ export interface NativeAPI {
   startBarcodeScan: () => Promise<number[]>;
   stopBarcodeScan: () => void;
   readLog: () => Promise<{ log: string; error: string }>;
-  getPreference: (preference: Preference) => Promise<Preference>;
-  setPreference: (preference: Preference) => void;
 }
 
 export enum NativeMode {

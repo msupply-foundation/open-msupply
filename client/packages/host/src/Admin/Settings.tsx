@@ -19,7 +19,7 @@ import {
   BaseButton,
   getPreference,
   setPreference,
-  FrontEndHost,
+  removePreference,
 } from '@openmsupply-client/common';
 import { Capacitor } from '@capacitor/core';
 import { themeOptions } from '@common/styles';
@@ -134,10 +134,11 @@ export const Settings: React.FC = () => {
     const mode =
       nativeMode === NativeMode.Server ? NativeMode.Client : NativeMode.Server;
 
-    setPreference('previousServer', {} as FrontEndHost);
-    setPreference('mode', mode);
-
-    navigate(RouteBuilder.create(AppRoute.Android).build());
+    (async () => {
+      await removePreference('previousServer');
+      await setPreference('mode', mode);
+      navigate(RouteBuilder.create(AppRoute.Android).build());
+    })();
   };
 
   const AndroidSettings = () =>
