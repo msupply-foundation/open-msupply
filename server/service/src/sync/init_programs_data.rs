@@ -127,7 +127,7 @@ mod hiv_care_encounter {
                 viral_load: Default::default(),
                 notes: Default::default(),
                 index_testing: Default::default(),
-                hcv_crag: Default::default(),
+                hcv_cr_ag: Default::default(),
                 visit: Default::default(),
                 referral: Default::default(),
                 risk_behaviour: Default::default(),
