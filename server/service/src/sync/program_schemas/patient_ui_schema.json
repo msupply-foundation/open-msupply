@@ -595,7 +595,7 @@
                 },
                 {
                   "type": "Autocomplete",
-                  "scope": "#/properties/socioEconomics/properties/occupation",
+                  "scope": "#/properties/socioEconomics/properties/employmentStatus",
                   "options": {
                     "freeText": false,
                     "values": [
@@ -605,6 +605,10 @@
                       "Unemployed"
                     ]
                   }
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/properties/socioEconomics/properties/occupation"
                 }
               ]
             },

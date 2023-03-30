@@ -53,7 +53,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
   const { error } = useNotification();
 
   const onNext = async () => {
-    let { errorMessages } = await save();
+    const { errorMessages } = await save();
     if (errorMessages) {
       errorMessages.forEach(errorMessage => error(errorMessage)());
       return;
@@ -67,7 +67,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
   };
 
   const onOk = async () => {
-    let { errorMessages } = await save();
+    const { errorMessages } = await save();
     if (errorMessages) {
       errorMessages.forEach(errorMessage => error(errorMessage)());
       return;
@@ -88,7 +88,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
 
   return (
     <TableProvider
-      createStore={createTableStore}
+      createStore={createTableStore()}
       queryParamsStore={createQueryParamsStore({
         initialSortBy: { key: 'expiryDate' },
       })}
@@ -151,11 +151,11 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
                     <StyledTabPanel value={Tabs.Location}>
                       <StyledTabContainer>
                         <QueryParamsProvider
-                          createStore={() =>
-                            createQueryParamsStore<LocationRowFragment>({
+                          createStore={createQueryParamsStore<LocationRowFragment>(
+                            {
                               initialSortBy: { key: 'name' },
-                            })
-                          }
+                            }
+                          )}
                         >
                           <LocationTable
                             isDisabled={isDisabled}

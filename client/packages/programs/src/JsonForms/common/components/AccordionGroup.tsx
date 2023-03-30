@@ -8,7 +8,7 @@ import {
   AccordionSummary,
   Box,
   Typography,
-} from '@mui/material';
+} from '@openmsupply-client/common';
 import { FORM_LABEL_COLUMN_WIDTH } from '../styleConstants';
 import { ChevronDownIcon } from '@common/icons';
 

@@ -6,7 +6,7 @@ import { DateUtils } from '@common/intl';
 import { useDebounceCallback } from '@common/hooks';
 
 export const TimePickerInput: FC<
-  Omit<TimePickerProps<Date>, 'renderInput' | 'value'> & {
+  Omit<TimePickerProps<Date, Date>, 'renderInput' | 'value'> & {
     onChange(date: Date): void;
     value: Date | string | null;
   }

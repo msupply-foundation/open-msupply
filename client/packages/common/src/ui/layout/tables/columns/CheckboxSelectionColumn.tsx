@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import { RecordWithId } from '@common/types';
 import { Checkbox } from '@common/components';
-import { useTableStore, TableStore } from '../context';
+import { TableStore, useTableStore } from '../context';
 import { ColumnAlign, ColumnDefinition, GenericColumnKey } from './types';
 
 const useCheckbox = (rowId: string) => {
@@ -9,7 +9,7 @@ const useCheckbox = (rowId: string) => {
     (state: TableStore) => {
       return {
         rowId,
-        isSelected: state.rowState[rowId]?.isSelected,
+        isSelected: state.rowState[rowId]?.isSelected ?? false,
         toggleSelected: () => state.toggleSelected(rowId),
       };
     },
@@ -25,7 +25,10 @@ const useCheckbox = (rowId: string) => {
 
   const { isSelected, toggleSelected } = useTableStore(selector, equalityFn);
 
-  return { isSelected, toggleSelected };
+  return {
+    isSelected,
+    toggleSelected,
+  };
 };
 
 export const getCheckboxSelectionColumn = <
