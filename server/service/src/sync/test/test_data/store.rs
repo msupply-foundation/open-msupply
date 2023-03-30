@@ -60,6 +60,7 @@ fn store_1() -> TestSyncPullRecord {
             s.code = "GEN".to_string();
             s.site_id = 1;
             s.logo = Some("No logo".to_string());
+            s.store_mode = "store".to_string();
         })),
     )
 }

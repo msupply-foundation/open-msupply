@@ -11,6 +11,7 @@ table! {
         code -> Text,
         site_id -> Integer,
         logo -> Nullable<Text>,
+        store_mode -> Text,
     }
 }
 
@@ -24,6 +25,7 @@ pub struct StoreRow {
     pub code: String,
     pub site_id: i32,
     pub logo: Option<String>,
+    pub store_mode: String,
 }
 
 pub struct StoreRowRepository<'a> {
