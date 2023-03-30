@@ -337,7 +337,7 @@
           },
           "type": "object"
         },
-        "hcvCrag": {
+        "hcvCrAg": {
           "properties": {
             "crAgResult": {
               "enum": ["Positive", "Negative", "Inc"],
