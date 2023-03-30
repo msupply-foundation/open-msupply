@@ -18,6 +18,7 @@ export {
   CssBaseline,
   RTLProvider,
   Theme,
+  SxProps,
   styled,
   useAppTheme,
   useMediaQuery,

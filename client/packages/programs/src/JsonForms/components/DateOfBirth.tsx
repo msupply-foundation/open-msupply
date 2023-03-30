@@ -6,13 +6,14 @@ import {
   composePaths,
 } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import { FormLabel, Box } from '@mui/material';
 import {
   BaseDatePickerInput,
   DateUtils,
   NonNegativeIntegerInput,
   useFormatDateTime,
   useTranslation,
+  FormLabel,
+  Box,
 } from '@openmsupply-client/common';
 import {
   FORM_INPUT_COLUMN_WIDTH,

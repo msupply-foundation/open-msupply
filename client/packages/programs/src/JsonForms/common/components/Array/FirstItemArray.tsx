@@ -11,7 +11,7 @@ import {
   withJsonFormsArrayControlProps,
   JsonFormsDispatch,
 } from '@jsonforms/react';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography } from '@openmsupply-client/common';
 
 import { FORM_LABEL_COLUMN_WIDTH } from '../../styleConstants';
 import { JsonData } from '../../JsonForm';

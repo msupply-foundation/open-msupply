@@ -16,9 +16,15 @@ import {
   uiTypeIs,
 } from '@jsonforms/core';
 import { useJsonForms, withJsonFormsLayoutProps } from '@jsonforms/react';
-import { Button, Grid, Hidden, Typography } from '@mui/material';
-import { styled } from '@mui/material/styles';
-import { DialogButton, useTranslation } from '@openmsupply-client/common';
+import {
+  DialogButton,
+  useTranslation,
+  Button,
+  Grid,
+  Hidden,
+  Typography,
+  styled,
+} from '@openmsupply-client/common';
 import { ModalProps, useDialog } from '@common/hooks';
 import {
   AjvProps,

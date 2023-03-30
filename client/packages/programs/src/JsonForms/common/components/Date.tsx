@@ -1,14 +1,15 @@
 import React, { FC } from 'react';
 import { rankWith, ControlProps, isDateControl } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import { TextFieldProps } from '@mui/material';
 import {
+  TextFieldProps,
   BasicTextInput,
   DetailInputWithLabelRow,
   useFormatDateTime,
+  DatePicker,
+  DatePickerProps,
 } from '@openmsupply-client/common';
 import { FORM_LABEL_WIDTH } from '../styleConstants';
-import { DatePicker, DatePickerProps } from '@mui/x-date-pickers';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
 
