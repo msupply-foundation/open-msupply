@@ -1,4 +1,4 @@
-import { ClinicianFragment } from 'packages/programs/src';
+import { ClinicianFragment } from '@openmsupply-client/programs';
 
 export type ClinicianAutocompleteOption = {
   label: string;

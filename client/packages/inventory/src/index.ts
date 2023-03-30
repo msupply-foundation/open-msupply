@@ -1,2 +1,6 @@
-export { ListView, DetailView } from './Stocktake';
+export {
+  ListView,
+  DetailView,
+  useStocktakeLineErrorContext,
+} from './Stocktake';
 export { InventoryService } from './InventoryService';
