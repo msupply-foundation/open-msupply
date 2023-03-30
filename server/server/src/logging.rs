@@ -8,16 +8,24 @@ use fast_log::{
 use log::LevelFilter;
 use service::settings::{LogMode, LoggingSettings};
 
-pub fn logging_init(settings: Option<LoggingSettings>) {
+pub fn logging_init(
+    settings: Option<LoggingSettings>,
+    apply_config: Option<Box<dyn Fn(LogConfig) -> LogConfig>>,
+) {
     let settings = settings.unwrap_or(LoggingSettings::new(
         LogMode::Console,
         service::settings::Level::Info,
     ));
-    let config = match settings.mode {
+    let mut config = match settings.mode {
         LogMode::File => file_logger(&settings),
         LogMode::Console => LogConfig::new().console(),
         LogMode::All => file_logger(&settings).console(),
     };
+
+    if let Some(apply_config) = apply_config {
+        config = apply_config(config);
+    }
+
     fast_log::init(config.level(LevelFilter::from(settings.level.clone())))
         .expect("Unable to initialise logger");
 }

@@ -1,8 +1,5 @@
 import { getSdk } from './operations.generated';
 
-export type DashboardApi = ReturnType<typeof getDashboardQueries> & {
-  storeId: string;
-};
 export type DashboardQueries = ReturnType<typeof getSdk>;
 
 export const getDashboardQueries = (

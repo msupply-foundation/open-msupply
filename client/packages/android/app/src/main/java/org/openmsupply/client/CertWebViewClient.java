@@ -4,12 +4,14 @@ import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.net.http.SslCertificate;
 import android.net.http.SslError;
 import android.os.Bundle;
 import android.util.Base64;
 import android.util.Log;
 import android.webkit.SslErrorHandler;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 
 import androidx.annotation.Nullable;
@@ -146,8 +148,7 @@ class CertWebViewClient extends ExtendedWebViewClient {
 
     @SuppressLint("WebViewClientOnReceivedSslError")
     @Override
-    public void onReceivedSslError(WebView view, SslErrorHandler handler,
-            SslError error) {
+    public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
 
         // We are only handling self signed certificate errors (untrusted)
         if (error.getPrimaryError() != SslError.SSL_UNTRUSTED) {
@@ -190,5 +191,19 @@ class CertWebViewClient extends ExtendedWebViewClient {
 
             super.onReceivedSslError(view, handler, error);
         }
+    }
+
+
+    @Override
+    public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+        // reloading a page ( javascript: navigate(0) or window.location.reload() )
+        // will not only reload, but will open the URL in a browser tab
+        // for local URLs we don't want this to happen!
+        Uri url = request.getUrl();
+        if(url.toString().startsWith(this.nativeApi.getServerUrl())) {
+            return false;
+        }
+
+        return bridge.launchIntent(url);
     }
 }

@@ -264,6 +264,7 @@ impl SyncLogError {
             from::SiteIncorrectHardwareId => to::HardwareIdMismatch,
             from::SiteHasNoStore => to::SiteHasNoStore,
             from::SiteAuthTimeout => to::SiteAuthTimeout,
+            from::ApiVersionIncompatible => to::ApiVersionIncompatible,
             from::Other(_) => return Self::message_only(sync_error),
         };
 
@@ -299,6 +300,7 @@ mod test {
     use actix_web::http::StatusCode;
     use repository::{RepositoryError, SyncLogRowErrorCode};
     use reqwest::{Client, Url};
+    use serde_json::json;
     use url::ParseError;
     use util::format_error;
 
@@ -381,7 +383,7 @@ mod test {
                 source: ParsedError {
                     code: SyncErrorCodeV5::Other("n/a".to_string()),
                     message: "n/a".to_string(),
-                    data: Some("n/a".to_string()),
+                    data: Some(json!("n/a")),
                 },
             }),
         ));
@@ -400,7 +402,7 @@ mod test {
                 source: ParsedError {
                     code: SyncErrorCodeV5::SiteIncorrectHardwareId,
                     message: "n/a".to_string(),
-                    data: Some("n/a".to_string()),
+                    data: Some(json!("n/a")),
                 },
             }),
         ));

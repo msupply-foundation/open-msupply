@@ -2,7 +2,6 @@
 mod tests {
     use repository::{mock::MockDataInserts, StorageConnectionManager, SyncLogRowErrorCode};
     use reqwest::StatusCode;
-    use serde_json::json;
     use std::{io::Error, path::PathBuf, sync::Arc};
     use util::assert_matches;
 
@@ -10,8 +9,8 @@ mod tests {
         app_data::{AppData, AppDataServiceTrait},
         service_provider::ServiceProvider,
         sync::{
-            api::{SyncApiError, SyncApiErrorVariant},
-            remote_data_synchroniser::RemotePushError,
+            api::{ParsedError, SyncApiError, SyncApiErrorVariant, SyncErrorCodeV5},
+            remote_data_synchroniser::{PostInitialisationError, RemotePushError},
             settings::SyncSettings,
             sync_status::SyncLogError,
             synchroniser::{SyncError, Synchroniser},
@@ -119,29 +118,80 @@ mod tests {
     }
 
     #[actix_rt::test]
-    async fn integration_sync_not_parsed_error() {
-        let central_config = ConfigureCentralServer::from_env();
-
-        // Should result in an error in non standard format
-        let error = match central_config
-            .upsert_records(json!({
-                "this_one_does_not_exist": [{"should_error":  true}]
-            }))
+    async fn api_incompatible_error() {
+        let SiteConfiguration { sync_settings, .. } = ConfigureCentralServer::from_env()
+            .create_sync_site(vec![])
             .await
-        {
-            Ok(_) => panic!("Should result in error"),
-            Err(e) => e,
-        };
+            .expect("Problem creating sync site");
+
+        let ServiceTestContext {
+            service_provider,
+            service_context,
+            ..
+        } = setup_all_and_service_provider("api_incompatible_error", MockDataInserts::none()).await;
+
+        service_provider
+            .site_info_service
+            .request_and_set_site_info(&service_provider, &sync_settings)
+            .await
+            .unwrap();
+        service_provider
+            .settings
+            .update_sync_settings(&service_context, &sync_settings)
+            .unwrap();
+
+        let synchroniser =
+            Synchroniser::new_with_version(sync_settings.clone(), service_provider, 10000).unwrap();
+
+        let error = synchroniser
+            .sync()
+            .await
+            .err()
+            .expect("Should result in error");
 
         assert_matches!(
             error,
-            SyncApiError {
-                source: SyncApiErrorVariant::AsText {
-                    status: StatusCode::INTERNAL_SERVER_ERROR,
-                    ..
+            SyncError::PostInitialisationError(PostInitialisationError(SyncApiError {
+                source: SyncApiErrorVariant::ParsedError {
+                    status: StatusCode::CONFLICT,
+                    source: ParsedError {
+                        code: SyncErrorCodeV5::ApiVersionIncompatible,
+                        data: Some(_),
+                        ..
+                    }
                 },
                 ..
-            }
+            }))
         );
     }
+
+    // This test was checking for `html` type return from 4d server, this seems to be captured now
+    // and AsText variant is returned
+    //
+    // #[actix_rt::test]
+    // async fn integration_sync_not_parsed_error() {
+    //     let central_config = ConfigureCentralServer::from_env();
+
+    //     // Should result in an error in non standard format
+    //     let error = match central_config
+    //         .upsert_records(json!({
+    //             "this_one_does_not_exist": [{"should_error":  true}]
+    //         }))
+    //         .await
+    //     {
+    //         Ok(_) => panic!("Should result in error"),
+    //         Err(e) => e,
+    //     };
+
+    //     assert_matches!(
+    //         error,
+    //         SyncApiError {
+    //             source: SyncApiErrorVariant::AsText {
+    //                 status: StatusCode::INTERNAL_SERVER_ERROR,
+    //                 ..
+    //             },
+    //             ..
+    //         }
+    //     );
+    // }
 }

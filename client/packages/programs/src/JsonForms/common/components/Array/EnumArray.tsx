@@ -2,15 +2,13 @@ import React, { FC, useState } from 'react';
 import { ArrayControlProps } from '@jsonforms/core';
 
 import {
-  Box,
-  FormLabel,
-  Autocomplete,
-  AutocompleteRenderInputParams,
-} from '@mui/material';
-import {
   useTranslation,
   ConfirmationModal,
   BasicTextInput,
+  Box,
+  FormLabel,
+  AutocompleteRenderInputParams,
+  AutocompleteMui,
 } from '@openmsupply-client/common';
 import {
   FORM_LABEL_COLUMN_WIDTH,
@@ -119,7 +117,7 @@ export const EnumArrayComponent: FC<EnumArrayControlCustomProps> = ({
           <FormLabel sx={{ fontWeight: 'bold' }}>{label}:</FormLabel>
         </Box>
         <Box sx={{ width: FORM_INPUT_COLUMN_WIDTH }}>
-          <Autocomplete
+          <AutocompleteMui
             disabled={!enabled}
             multiple
             sx={{

@@ -2,7 +2,7 @@ import React from 'react';
 import { rankWith, uiTypeIs, LayoutProps, GroupLayout } from '@jsonforms/core';
 import { withJsonFormsLayoutProps } from '@jsonforms/react';
 import { MaterialLayoutRenderer } from '@jsonforms/material-renderers';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography } from '@openmsupply-client/common';
 
 export const groupTester = rankWith(4, uiTypeIs('Group'));
 

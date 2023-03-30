@@ -57,10 +57,14 @@
   "messages.create-stocktake-1": "You can create a stocktake based on items currently assigned to a location or items assigned to a master list.",
   "messages.create-stocktake-2": "To create an empty stocktake, simply click OK to continue.",
   "messages.finalised-stock-take": "This stocktake is finalised and cannot be edited",
+  "messages.no-locations": "No locations available",
+  "messages.no-master-lists": "No master lists available",
   "messages.on-hold-stock-take": "This stocktake is on hold and cannot be edited",
   "messages.select-rows-to-delete-them": "Select rows to delete them",
   "status.new": "New",
   "status.finalised": "Finalised",
   "stocktake.description-template": "Created by {{username}} on {{date}}",
+  "stocktake.comment-list-template": "Created using master list '{{list}}'",
+  "stocktake.comment-location-template": "Created using items in location '{{location}}'",
   "title.stock-line-details": "Stock Line Details"
 }
