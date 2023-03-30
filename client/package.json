@@ -40,6 +40,7 @@
     "@babel/core": "^7.21.3",
     "@babel/preset-env": "^7.18.2",
     "@capacitor/keyboard": "^4.1.1",
+    "@capacitor/preferences": "^4.0.2",
     "@graphql-codegen/cli": "^3.2.2",
     "@graphql-codegen/near-operation-file-preset": "^2.2.5",
     "@graphql-codegen/typescript": "^3.0.2",
@@ -107,6 +108,7 @@
   },
   "dependencies": {
     "@bugsnag/js": "^7.16.2",
+    "@capacitor/core": "^4.7.1",
     "@mui/x-date-pickers": "^5",
     "@types/react-dom": "^18.0.1",
     "graphql": "^16.3.0",
