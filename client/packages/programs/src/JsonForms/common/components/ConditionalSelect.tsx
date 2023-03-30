@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { rankWith, ControlProps, uiTypeIs } from '@jsonforms/core';
 import { useJsonForms, withJsonFormsControlProps } from '@jsonforms/react';
-import { FormLabel, Box } from '@mui/material';
-import { Autocomplete } from '@openmsupply-client/common';
+import { Autocomplete, FormLabel, Box } from '@openmsupply-client/common';
 import {
   FORM_LABEL_COLUMN_WIDTH,
   FORM_INPUT_COLUMN_WIDTH,

@@ -1,13 +1,15 @@
 import React, { FC } from 'react';
 import { rankWith, ControlProps, isDateTimeControl } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import { TextFieldProps, StandardTextFieldProps } from '@mui/material';
 import {
+  TextFieldProps,
+  StandardTextFieldProps,
   BasicTextInput,
   DetailInputWithLabelRow,
+  DateTimePicker,
+  DateTimePickerProps,
 } from '@openmsupply-client/common';
 import { FORM_LABEL_WIDTH } from '../styleConstants';
-import { DateTimePicker, DateTimePickerProps } from '@mui/x-date-pickers';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
 import { BaseDatePickerInput as DatePickerInput } from './Date';
