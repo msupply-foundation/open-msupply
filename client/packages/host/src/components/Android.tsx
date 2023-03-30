@@ -143,7 +143,7 @@ export const Android = () => {
   useEffect(() => {
     if (
       mode === NativeMode.Client &&
-      (!previousServer?.ip || connectToPreviousTimedOut)
+      (!previousServer || connectToPreviousTimedOut)
     ) {
       navigate(
         RouteBuilder.create(AppRoute.Discovery)

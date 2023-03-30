@@ -117,6 +117,8 @@ If you require the plugin to be used in other packages, then you can also instal
 
 You can check the plugins using `npx cap ls` or the configuration generally with `npx cap doctor`
 
+If you are having gradle issues, open the project (packages/android folder) in Android Studio and then click on the "Sync Project with Gradle Files" button in the top right of Android Studio (the icon looks like an elephant). 
+
 ## Self signed cert SSL security
 
 To avoid an error being thrown by the native web view when the server certificate is self-signed, we override the web view certificate error listener and allow connection when:

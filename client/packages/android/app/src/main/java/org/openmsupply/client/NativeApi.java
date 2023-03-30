@@ -2,8 +2,6 @@ package org.openmsupply.client;
 
 import static android.content.Context.NSD_SERVICE;
 
-import android.app.Activity;
-import android.content.SharedPreferences;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
 import android.util.Log;
@@ -411,42 +409,10 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         }
         call.resolve(response);
     }
-
-    @PluginMethod()
-    public void getPreference(PluginCall call) {
-        JSObject data = call.getData();
-        String key = data.getString("key");
-        try {
-
-            SharedPreferences preferences = getContext().getSharedPreferences(CONFIGURATION_GROUP,
-                    Activity.MODE_PRIVATE);
-            data.put("value", preferences.getString(key, null));
-        } catch (Exception e) {
-            data.put("error", e.getMessage());
-        }
-        call.resolve(data);
-    }
-
-    @PluginMethod()
-    public void setPreference(PluginCall call) {
-        JSObject data = call.getData();
-        String key = data.getString("key");
-        String value = data.getString("value");
-        try {
-            SharedPreferences preferences = getContext().getSharedPreferences(CONFIGURATION_GROUP,
-                    Activity.MODE_PRIVATE);
-            SharedPreferences.Editor editor = preferences.edit();
-            editor.putString(key, value);
-            editor.apply();
-        } catch (Exception e) {
-            Log.e(OM_SUPPLY, "Unable to set preference");
-            Log.d(OM_SUPPLY, "Setting key '" + key + "' to '" + value + "'");
-        }
-    }
-
+   
     public class omSupplyServer {
         JSObject data;
-
+        
         public omSupplyServer(JSObject data) {
             this.data = data;
         }
