@@ -20,6 +20,8 @@ export interface NativeAPI {
   startBarcodeScan: () => Promise<number[]>;
   stopBarcodeScan: () => void;
   readLog: () => Promise<{ log: string; error: string }>;
+  acquireWakeLock: () => void;
+  releaseWakeLock: () => void;
 }
 
 export enum NativeMode {

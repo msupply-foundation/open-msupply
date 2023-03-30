@@ -160,5 +160,7 @@ export const useNativeClient = ({
     stopDiscovery,
     setMode,
     readLog,
+    acquireWakeLock: nativeAPI?.acquireWakeLock ?? (() => {}),
+    releaseWakeLock: nativeAPI?.releaseWakeLock ?? (() => {}),
   };
 };
