@@ -39,6 +39,10 @@ impl UserStoreNode {
 
         Ok(name_row.name)
     }
+
+    pub async fn store_mode(&self) -> &str {
+        &self.user_store.store_row.store_mode
+    }
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]

@@ -4,7 +4,7 @@ import { GraphQLClient } from 'graphql-request';
 import * as Dom from 'graphql-request/src/types.dom';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type UserStoreNodeFragment = { __typename: 'UserStoreNode', code: string, id: string, name: string };
+export type UserStoreNodeFragment = { __typename: 'UserStoreNode', code: string, id: string, name: string, storeMode: string };
 
 export type AuthTokenQueryVariables = Types.Exact<{
   username: Types.Scalars['String'];
@@ -17,7 +17,7 @@ export type AuthTokenQuery = { __typename: 'Queries', authToken: { __typename: '
 export type MeQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
 
-export type MeQuery = { __typename: 'Queries', me: { __typename: 'UserNode', email?: string | null, language: Types.LanguageType, username: string, userId: string, defaultStore?: { __typename: 'UserStoreNode', code: string, id: string, name: string } | null, stores: { __typename: 'UserStoreConnector', totalCount: number, nodes: Array<{ __typename: 'UserStoreNode', code: string, id: string, name: string }> } } };
+export type MeQuery = { __typename: 'Queries', me: { __typename: 'UserNode', email?: string | null, language: Types.LanguageType, username: string, userId: string, defaultStore?: { __typename: 'UserStoreNode', code: string, id: string, name: string, storeMode: string } | null, stores: { __typename: 'UserStoreConnector', totalCount: number, nodes: Array<{ __typename: 'UserStoreNode', code: string, id: string, name: string, storeMode: string }> } } };
 
 export type RefreshTokenQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
@@ -36,6 +36,7 @@ export const UserStoreNodeFragmentDoc = gql`
   code
   id
   name
+  storeMode
 }
     `;
 export const AuthTokenDocument = gql`
