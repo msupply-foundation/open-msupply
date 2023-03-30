@@ -69,6 +69,14 @@
       "scope": "#/properties/riskGroup"
     },
     {
+      "type": "ProgramEvent",
+      "label": "Current Risk Group",
+      "options": {
+        "eventType": "riskGroup",
+        "documentType": "HIVCareEncounter"
+      }
+    },
+    {
       "type": "Control",
       "scope": "#/properties/partnerHIVStatus",
       "label": "Partner HIV Status:",
