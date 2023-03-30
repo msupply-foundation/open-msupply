@@ -6,7 +6,7 @@ import {
   uiTypeIs,
 } from '@jsonforms/core';
 import { withJsonFormsLayoutProps } from '@jsonforms/react';
-import { SxProps, Typography } from '@mui/material';
+import { SxProps, Typography } from '@openmsupply-client/common';
 import { RegexUtils } from '@common/utils';
 import { FORM_LABEL_COLUMN_WIDTH } from '../styleConstants';
 

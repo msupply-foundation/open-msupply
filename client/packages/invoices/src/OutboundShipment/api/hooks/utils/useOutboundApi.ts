@@ -17,6 +17,7 @@ export type ListParams = {
 export const useOutboundApi = () => {
   const keys = {
     base: () => ['outbound'] as const,
+    count: () => [...keys.base(), 'count', storeId] as const,
     detail: (id: string) => [...keys.base(), storeId, id] as const,
     list: () => [...keys.base(), storeId, 'list'] as const,
     paramList: (params: ListParams) => [...keys.list(), params] as const,

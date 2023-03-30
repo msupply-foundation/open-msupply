@@ -40,13 +40,13 @@ pub enum SyncApiErrorVariant {
 }
 
 #[derive(Error, Debug, Serialize, Deserialize)]
-#[error("code: '{code:?}' message: '{message}' data: '{data:?}")]
+#[error("code: '{code:?}' message: '{message}' data: '{}'", serde_json::to_string(data).unwrap())]
 pub struct ParsedError {
     #[serde(serialize_with = "sync_error_code_v5_se")]
     #[serde(deserialize_with = "sync_error_code_v5_de")]
     pub code: SyncErrorCodeV5,
     pub message: String,
-    pub data: Option<String>,
+    pub data: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -57,6 +57,7 @@ pub enum SyncErrorCodeV5 {
     SiteIncorrectHardwareId,
     SiteHasNoStore,
     SiteAuthTimeout,
+    ApiVersionIncompatible,
     Other(String),
 }
 
@@ -249,13 +250,12 @@ mod test {
             when.method(POST).path("/sync/v5/initialise");
             then.status(401).body(
                 r#"{
-            "error": {
-                "code": "site_incorrect_hardware_id",
-                "message": "Site hardware ID does not match",
-                "data": null,
-                "status": 401
-            }
-        }"#,
+                "error": {
+                    "code": "site_incorrect_hardware_id",
+                    "message": "Site hardware ID does not match",
+                    "data": null
+                    }
+                }"#,
             );
         });
 
@@ -272,7 +272,54 @@ mod test {
             SyncApiError {
                 source: SyncApiErrorVariant::ParsedError {
                     status: StatusCode::UNAUTHORIZED,
-                    ..
+                    source: ParsedError {
+                        code: SyncErrorCodeV5::SiteIncorrectHardwareId,
+                        data: None,
+                        ..
+                    }
+                },
+                ..
+            }
+        );
+
+        // Incorrect hardware id
+        let mock_server = MockServer::start();
+        let url = mock_server.base_url();
+
+        let mock = mock_server.mock(|when, then| {
+            when.method(POST).path("/sync/v5/initialise");
+            then.status(409).body(
+                r#"{
+                    "error": {
+                        "code": "api_version_incompatible",
+                        "message": "Api version is not compatible",
+                        "data": {
+                            "major": 1,
+                            "minor": 1
+                        }
+                    }
+                }"#,
+            );
+        });
+
+        let result = create_api(&url, "", "")
+            .post_initialise()
+            .await
+            .err()
+            .expect("Should result in error");
+
+        mock.assert();
+
+        assert_matches!(
+            result,
+            SyncApiError {
+                source: SyncApiErrorVariant::ParsedError {
+                    status: StatusCode::CONFLICT,
+                    source: ParsedError {
+                        code: SyncErrorCodeV5::ApiVersionIncompatible,
+                        data: Some(_),
+                        ..
+                    }
                 },
                 ..
             }

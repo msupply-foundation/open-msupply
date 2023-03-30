@@ -4,10 +4,10 @@ import {
   useTranslation,
   RegexUtils,
 } from '@openmsupply-client/common';
-import { usePatientApi } from 'packages/system/src/Patient/api/hooks/utils/usePatientApi';
+import { usePatient } from '@openmsupply-client/system';
 
 export const QueryValues = ['patientByCode'] as const;
-type QueryValue = typeof QueryValues[number];
+type QueryValue = (typeof QueryValues)[number];
 
 type GetDisplayElement = (result: Record<string, any>) => JSX.Element | null;
 
@@ -42,7 +42,7 @@ export const useSearchQueries = ({
 
   const t = useTranslation('programs');
 
-  const patientQueries = usePatientApi();
+  const patientQueries = usePatient.utils.api();
 
   const searchQueries: Record<QueryValue, SearchQueryOutput> = {
     patientByCode: {

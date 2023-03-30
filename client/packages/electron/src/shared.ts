@@ -6,4 +6,5 @@ export const IPC_MESSAGES = {
   START_BARCODE_SCAN: 'start-barcode-scan',
   STOP_BARCODE_SCAN: 'stop-barcode-scan',
   GO_BACK_TO_DISCOVERY: 'go-back-to-discovery',
+  READ_LOG: 'read-log',
 };

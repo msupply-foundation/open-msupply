@@ -19,8 +19,8 @@ export const DatePickerInput: FC<DatePickerInputProps> = ({
       disabled={disabled}
       inputFormat="dd/MM/yyyy"
       onChange={onChange}
+      value={value || null}
       onError={onError}
-      value={value}
     />
   );
 };

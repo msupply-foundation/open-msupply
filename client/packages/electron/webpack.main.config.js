@@ -1,3 +1,5 @@
+const path = require('path');
+
 module.exports = {
   /**
    * This is the main entry point for your application, it's the first file
@@ -10,5 +12,8 @@ module.exports = {
   },
   resolve: {
     extensions: ['.js', '.ts', '.jsx', '.tsx', '.css', '.json'],
+    alias: {
+      '@common/utils': path.resolve(__dirname, '../common/src/utils'),
+    },
   },
 };
