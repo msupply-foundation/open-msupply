@@ -22,7 +22,6 @@ export const Toolbar: FC = () => {
     useStocktake.document.fields(['isLocked', 'description', 'stocktakeDate']);
   const onDelete = useStocktake.line.deleteSelected();
   const [descriptionBuffer, setDescriptionBuffer] = useBufferState(description);
-  const [bufferedDate, setBufferedDate] = useBufferState(stocktakeDate);
   const infoMessage = isLocked
     ? t('messages.on-hold-stock-take')
     : t('messages.finalised-stock-take');
@@ -57,11 +56,9 @@ export const Toolbar: FC = () => {
             Input={
               <DatePickerInput
                 disabled={isDisabled}
-                value={bufferedDate ? new Date(bufferedDate) : null}
-                onChange={d => {
-                  const naiveDate = Formatter.naiveDate(d);
-                  setBufferedDate(naiveDate);
-                  update({ stocktakeDate: naiveDate });
+                value={stocktakeDate || null}
+                onChange={date => {
+                  update({ stocktakeDate: Formatter.naiveDate(date) });
                 }}
               />
             }

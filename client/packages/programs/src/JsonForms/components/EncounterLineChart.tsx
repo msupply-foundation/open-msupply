@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { rankWith, uiTypeIs, ControlProps } from '@jsonforms/core';
 import { withJsonFormsControlProps, useJsonForms } from '@jsonforms/react';
-import { Box, FormLabel } from '@mui/material';
 import {
   Line,
   LineChart,
   useFormatDateTime,
   XAxis,
   YAxis,
+  Box,
+  FormLabel,
 } from '@openmsupply-client/common';
 import { useZodOptionsValidation } from '../common';
 import {

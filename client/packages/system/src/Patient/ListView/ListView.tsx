@@ -99,7 +99,7 @@ const PatientListComponent: FC = () => {
 };
 
 export const PatientListView: FC = () => (
-  <TableProvider createStore={createTableStore}>
+  <TableProvider createStore={createTableStore()}>
     <PatientListComponent />
   </TableProvider>
 );

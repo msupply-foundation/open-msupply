@@ -6,7 +6,11 @@ import {
 import { TestingProvider } from '../../utils/testing';
 import { useTheme } from '@common/styles';
 import { act, renderHook } from '@testing-library/react';
-import { useQueryParamsStore } from './useQueryParamsStore';
+import {
+  QueryParamsProvider,
+  createQueryParamsStore,
+  useQueryParamsStore,
+} from './useQueryParamsStore';
 
 type TestSortBy = {
   id: string;
@@ -51,15 +55,25 @@ const getWrapper =
     return (
       <TestingProvider>
         <TestingRouterContext>
-          <ThemeChangerer
-            paginationRowHeight={paginationRowHeight}
-            dataRowHeight={dataRowHeight}
-            headerRowHeight={headerRowHeight}
-            footerHeight={footerHeight}
-            saveButtonRowHeight={saveButtonRowHeight}
+          <QueryParamsProvider
+            createStore={createQueryParamsStore({
+              initialSortBy: { key: 'id', isDesc: false },
+              initialFilterBy: {
+                comment: { equalTo: 'a' },
+                allocatedDatetime: { equalTo: '1/1/2020' },
+              },
+            })}
           >
-            {children}
-          </ThemeChangerer>
+            <ThemeChangerer
+              paginationRowHeight={paginationRowHeight}
+              dataRowHeight={dataRowHeight}
+              headerRowHeight={headerRowHeight}
+              footerHeight={footerHeight}
+              saveButtonRowHeight={saveButtonRowHeight}
+            >
+              {children}
+            </ThemeChangerer>
+          </QueryParamsProvider>
         </TestingRouterContext>
       </TestingProvider>
     );

@@ -11,6 +11,7 @@ import {
   Box,
   DateUtils,
   useTranslation,
+  FormLabel,
 } from '@openmsupply-client/common';
 import {
   FORM_INPUT_COLUMN_WIDTH,
@@ -20,7 +21,6 @@ import {
 import { z } from 'zod';
 import { EncounterFragment, useEncounter, useProgramEvents } from '../../api';
 import { get as extractProperty } from 'lodash';
-import { FormLabel } from '@mui/material';
 
 export const adherenceScoreTester = rankWith(10, uiTypeIs('AdherenceScore'));
 

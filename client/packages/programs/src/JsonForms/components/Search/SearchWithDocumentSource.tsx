@@ -11,7 +11,7 @@ import {
   FORM_LABEL_COLUMN_WIDTH,
   FORM_INPUT_COLUMN_WIDTH,
 } from '../../common/styleConstants';
-import { usePatientStore } from 'packages/programs/src/hooks';
+import { usePatientStore } from '@openmsupply-client/programs';
 import { useEncounter } from '../../../api';
 import { RegexUtils } from '@openmsupply-client/common';
 import { DocumentOptions } from './Search';

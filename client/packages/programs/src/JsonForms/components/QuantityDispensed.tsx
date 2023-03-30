@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { rankWith, ControlProps, uiTypeIs } from '@jsonforms/core';
 import { withJsonFormsControlProps, useJsonForms } from '@jsonforms/react';
-import { FormLabel, Box } from '@mui/material';
 import {
   useDebounceCallback,
   DateUtils,
   PositiveNumberInput,
   useFormatDateTime,
   useTranslation,
+  FormLabel,
+  Box,
 } from '@openmsupply-client/common';
 import {
   FORM_LABEL_COLUMN_WIDTH,

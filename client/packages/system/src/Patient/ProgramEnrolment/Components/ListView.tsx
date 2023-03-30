@@ -102,7 +102,7 @@ const ProgramListComponent: FC = () => {
 
 export const ProgramListView: FC = () => (
   <TableProvider
-    createStore={createTableStore}
+    createStore={createTableStore()}
     queryParamsStore={createQueryParamsStore<ProgramEnrolmentRowFragmentWithId>(
       {
         initialSortBy: { key: 'type' },

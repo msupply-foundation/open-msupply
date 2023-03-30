@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import { ControlProps, rankWith, uiTypeIs } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import {
-  Autocomplete as MuiAutocomplete,
+  Autocomplete as AutocompleteCommon,
   Box,
+  FormLabel,
 } from '@openmsupply-client/common';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
-import { FormLabel } from '@mui/material';
 import {
   DefaultFormRowSx,
   FORM_INPUT_COLUMN_WIDTH,
@@ -93,7 +93,7 @@ const UIComponent = (props: ControlProps) => {
         <FormLabel sx={{ fontWeight: 'bold' }}>{label}:</FormLabel>
       </Box>
       <Box flexBasis={FORM_INPUT_COLUMN_WIDTH}>
-        <MuiAutocomplete
+        <AutocompleteCommon
           sx={{ '.MuiFormControl-root': { minWidth: '100%' } }}
           options={options}
           value={{ label: localData ?? '' }}

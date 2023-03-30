@@ -18,15 +18,6 @@ export interface AlertModalControllerState extends AlertModalState {
   setImportant: (important: boolean) => void;
 }
 
-export const AlertModalContext = createContext<AlertModalControllerState>({
-  open: false,
-  message: '',
-  title: '',
-  important: false,
-  setOpen: () => {},
-  setState: () => {},
-  setMessage: () => {},
-  setTitle: () => {},
-  setOnOk: () => {},
-  setImportant: () => {},
-});
+export const AlertModalContext = createContext<AlertModalControllerState>(
+  {} as any
+);

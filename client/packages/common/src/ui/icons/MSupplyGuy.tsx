@@ -73,9 +73,7 @@ export const AnimatedMSupplyGuy = styled(SvgGuy)(({ theme, size }) => {
     }),
     '&:hover': {
       animation:
-        size === 'large'
-          ? `${spin} 1s infinite ease`
-          : `${otherSpin} 1s infinite ease`,
+        size === 'large' ? `${spin} 1s  ease` : `${otherSpin} 1s 1 ease`,
     },
   };
 

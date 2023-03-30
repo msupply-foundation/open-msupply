@@ -16,9 +16,15 @@ import {
   uiTypeIs,
 } from '@jsonforms/core';
 import { useJsonForms, withJsonFormsLayoutProps } from '@jsonforms/react';
-import { Button, Grid, Hidden, Typography } from '@mui/material';
-import { styled } from '@mui/material/styles';
-import { DialogButton, useTranslation } from '@openmsupply-client/common';
+import {
+  DialogButton,
+  useTranslation,
+  Button,
+  Grid,
+  Hidden,
+  Typography,
+  styled,
+} from '@openmsupply-client/common';
 import { ModalProps, useDialog } from '@common/hooks';
 import {
   AjvProps,
@@ -254,9 +260,11 @@ const UIComponent: FC<LayoutProps & AjvProps> = ({
             <ErrorStringComponent category={category} errorPaths={errorPaths} />
           </Button>
           <CategoryModal
-            sx={{'& .MuiDialogTitle-root': {
-              fontSize: '1.5em'
-            }}}
+            sx={{
+              '& .MuiDialogTitle-root': {
+                fontSize: '1.5em',
+              },
+            }}
             onClose={onClose}
             isOpen={activeCategory === idx}
             title={category.options?.['title'] ?? category.label}

@@ -1,4 +1,4 @@
-import { zustand } from '@openmsupply-client/common';
+import { create } from '@openmsupply-client/common';
 import { PatientRowFragment } from '../../../system/src/Patient/api';
 
 // stores the `documentName` for the currently viewed patient document
@@ -9,7 +9,7 @@ interface PatientStoreState {
   setCurrentPatient: (patient: PatientRowFragment) => void;
 }
 
-export const usePatientStore = zustand<PatientStoreState>(set => ({
+export const usePatientStore = create<PatientStoreState>(set => ({
   documentName: undefined,
   setDocumentName: (documentName: string | undefined) =>
     set(state => ({ ...state, documentName })),
