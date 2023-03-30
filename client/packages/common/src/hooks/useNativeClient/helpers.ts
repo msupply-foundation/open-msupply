@@ -3,22 +3,31 @@ import { Preferences } from '@capacitor/preferences';
 import { FrontEndHost, NativeMode, NativeAPI } from './types';
 
 export const getPreference = async (key: string, defaultValue?: string) => {
-  const result = Capacitor.isNativePlatform()
-    ? (await Preferences.get({ key }))?.value
-    : localStorage.getItem(`preference/${key}`);
-  const value = result ?? defaultValue;
-  return value ? JSON.parse(value) : '';
+  try {
+    const result = Capacitor.isNativePlatform()
+      ? (await Preferences.get({ key }))?.value
+      : localStorage.getItem(`preference/${key}`);
+    const value = result ?? defaultValue;
+
+    return value ? JSON.parse(value) : '';
+  } catch {
+    return '';
+  }
 };
 
 export const setPreference = async (
   key: string,
   obj: NativeMode | FrontEndHost
 ) => {
-  const value = JSON.stringify(obj);
-  if (Capacitor.isNativePlatform()) {
-    await Preferences.set({ key, value });
-  } else {
-    localStorage.setItem(`preference/${key}`, value);
+  try {
+    const value = JSON.stringify(obj);
+    if (Capacitor.isNativePlatform()) {
+      await Preferences.set({ key, value });
+    } else {
+      localStorage.setItem(`preference/${key}`, value);
+    }
+  } catch (e) {
+    console.log(e);
   }
 };
 
