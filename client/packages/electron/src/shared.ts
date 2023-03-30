@@ -9,4 +9,6 @@ export const IPC_MESSAGES = {
   READ_LOG: 'read-log',
   GET_PREFERENCE: 'get-preference',
   SET_PREFERENCE: 'set-preference',
+  ACQUIRE_WAKELOCK: 'acquire-wakelock',
+  RELEASE_WAKELOCK: 'release-wakelock',
 };

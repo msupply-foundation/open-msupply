@@ -6,6 +6,7 @@ import {
   ErrorWithDetailsProps,
   InitialisationStatusType,
   useInitialisationStatus,
+  useNativeClient,
 } from '@openmsupply-client/common';
 import { useHost } from '../../api/hooks';
 import { mapSyncError } from '../../api/api';
@@ -98,10 +99,12 @@ export const useInitialiseForm = () => {
   const { data: initStatus } = useInitialisationStatus(refetchInterval);
   const { data: syncStatus } = useHost.utils.syncStatus(refetchInterval);
   const { data: syncSettings } = useHost.settings.syncSettings();
+  const { acquireWakeLock, releaseWakeLock } = useNativeClient();
 
   const onInitialise = async () => {
     setSiteCredentialsError(null);
     setIsLoading(true);
+    acquireWakeLock();
     try {
       const response = await initialise({
         intervalSeconds: DEFAULT_SYNC_INTERVAL_IN_SECONDS,
@@ -117,6 +120,7 @@ export const useInitialiseForm = () => {
         return setIsLoading(false);
       }
     } catch (e) {
+      releaseWakeLock();
       // Set standard error
       setSiteCredentialsError({
         error: t('error.unable-to-initialise'),
@@ -130,6 +134,7 @@ export const useInitialiseForm = () => {
 
   const onRetry = async () => {
     setIsLoading(true);
+    acquireWakeLock();
     await manualSync();
   };
 
@@ -150,6 +155,7 @@ export const useInitialiseForm = () => {
     if (!syncStatus) return;
     // Need to be able to retry is syncStatus is erroneous
     setIsLoading(!syncStatus.error);
+    releaseWakeLock();
   }, [syncStatus]);
 
   useEffect(() => {
