@@ -11,7 +11,12 @@ import {
   FORM_LABEL_WIDTH,
   useZodOptionsValidation,
 } from '../common';
-import { EncounterFragment, useEncounter, useProgramEvents } from '../../api';
+import {
+  EncounterFragment,
+  useEncounter,
+  useProgramEnrolments,
+  useProgramEvents,
+} from '../../api';
 
 import { z } from 'zod';
 
@@ -29,6 +34,7 @@ const Options = z
      * Default: `before`
      */
     at: z.enum(['before', 'start']).optional(),
+    documentType: z.string().optional(),
     eventType: z.string(),
     multiline: z.boolean().optional(),
     rows: z.number().optional(),
@@ -91,7 +97,7 @@ const getDisplayOptions = (
 };
 
 const UIComponent = (props: ControlProps) => {
-  const { label, uischema } = props;
+  const { label, uischema, data } = props;
 
   const { errors, options } = useZodOptionsValidation(
     Options,
@@ -100,25 +106,34 @@ const UIComponent = (props: ControlProps) => {
 
   const encounterId = useEncounter.utils.idFromUrl();
   const { data: currentEncounter } = useEncounter.document.byId(encounterId);
-
-  const { data: events } = useProgramEvents.document.list(
-    {
-      at: extractAt(currentEncounter, options),
-      patientId: currentEncounter?.patient?.id ?? '',
-      filter: {
-        type: {
-          equalTo: options?.eventType,
-        },
-        documentType: {
-          equalTo: currentEncounter?.type,
+  const { data: programEnrolment } =
+    useProgramEnrolments.document.programEnrolments({
+      filterBy: {
+        programEnrolmentId: {
+          equalTo: data.programEnrolmentId,
         },
       },
-      page: {
-        first: 1,
+    });
+
+  const { data: events } = useProgramEvents.document.list({
+    at: currentEncounter ? extractAt(currentEncounter, options) : undefined,
+    patientId: currentEncounter
+      ? currentEncounter?.patient?.id
+      : programEnrolment?.nodes[0]?.patientId ?? '',
+    filter: {
+      type: {
+        equalTo: options?.eventType,
+      },
+      documentType: {
+        equalTo: currentEncounter
+          ? currentEncounter?.type
+          : options?.documentType,
       },
     },
-    !!currentEncounter
-  );
+    page: {
+      first: 1,
+    },
+  });
   const event = events?.nodes[0];
 
   const multiline = options?.multiline !== false;
