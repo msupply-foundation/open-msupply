@@ -11,12 +11,7 @@ import {
   FORM_LABEL_WIDTH,
   useZodOptionsValidation,
 } from '../common';
-import {
-  EncounterFragment,
-  useEncounter,
-  useProgramEnrolments,
-  useProgramEvents,
-} from '../../api';
+import { EncounterFragment, useEncounter, useProgramEvents } from '../../api';
 
 import { z } from 'zod';
 
@@ -97,7 +92,7 @@ const getDisplayOptions = (
 };
 
 const UIComponent = (props: ControlProps) => {
-  const { label, uischema, data } = props;
+  const { label, uischema, config } = props;
 
   const { errors, options } = useZodOptionsValidation(
     Options,
@@ -106,20 +101,13 @@ const UIComponent = (props: ControlProps) => {
 
   const encounterId = useEncounter.utils.idFromUrl();
   const { data: currentEncounter } = useEncounter.document.byId(encounterId);
-  const { data: programEnrolment } =
-    useProgramEnrolments.document.programEnrolments({
-      filterBy: {
-        programEnrolmentId: {
-          equalTo: data.programEnrolmentId,
-        },
-      },
-    });
+  const patientId = config?.documentName?.split('/')[1];
 
   const { data: events } = useProgramEvents.document.list({
     at: currentEncounter ? extractAt(currentEncounter, options) : undefined,
     patientId: currentEncounter
       ? currentEncounter?.patient?.id
-      : programEnrolment?.nodes[0]?.patientId ?? '',
+      : patientId ?? '',
     filter: {
       type: {
         equalTo: options?.eventType,
