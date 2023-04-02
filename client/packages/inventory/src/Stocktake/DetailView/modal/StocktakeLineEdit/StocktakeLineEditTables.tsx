@@ -18,6 +18,7 @@ import {
 } from '@openmsupply-client/common';
 import { DraftStocktakeLine } from './utils';
 import {
+  Adjustment,
   getLocationInputColumn,
   InventoryAdjustmentReasonRowFragment,
   InventoryAdjustmentReasonSearchInput,
@@ -103,9 +104,17 @@ const getInventoryAdjustmentReasonInputColumn = (
 
       const autoFocus = columnIndex === 0 && rowIndex === 0;
 
-      const stockReduction =
-        rowData.snapshotNumberOfPacks -
-        (rowData.countedNumberOfPacks || rowData.snapshotNumberOfPacks);
+      const getAdjustment = () => {
+        if (!rowData.countThisLine) return Adjustment.None;
+        if (typeof rowData.countedNumberOfPacks !== 'number')
+          return Adjustment.None;
+        if (rowData.snapshotNumberOfPacks == rowData.countedNumberOfPacks)
+          return Adjustment.None;
+        if (rowData.snapshotNumberOfPacks > rowData.countedNumberOfPacks)
+          return Adjustment.Reduction;
+
+        return Adjustment.Addition;
+      };
 
       const errorType = getError(rowData)?.__typename;
       const isAdjustmentReasonError =
@@ -120,7 +129,7 @@ const getInventoryAdjustmentReasonInputColumn = (
           value={value}
           width={column.width}
           onChange={onChange}
-          stockReduction={stockReduction}
+          adjustment={getAdjustment()}
           isError={isAdjustmentReasonError}
         />
       );
@@ -180,7 +189,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
 
         update({ ...patch, countThisLine: true, inventoryAdjustmentReason });
       },
-      accessor: ({ rowData }) => rowData.countedNumberOfPacks || '',
+      accessor: ({ rowData }) => rowData.countedNumberOfPacks ?? '',
     },
     [
       expiryDateColumn,
