@@ -36,7 +36,7 @@ export const InventoryAdjustmentReasonSearchInput: FC<
   const { data, isLoading } =
     useInventoryAdjustmentReason.document.listAllActive();
   const isRequired = data?.totalCount !== 0;
-  const isDisable = adjustment === Adjustment.None || !isRequired;
+  const isDisabled = adjustment === Adjustment.None || !isRequired;
   const reasonFilter = (reason: InventoryAdjustmentReasonRowFragment) => {
     if (adjustment === Adjustment.None) return false;
     if (adjustment === Adjustment.Addition)
@@ -49,7 +49,7 @@ export const InventoryAdjustmentReasonSearchInput: FC<
     <Box display="flex" flexDirection="row" width={120}>
       <Autocomplete
         autoFocus={autoFocus}
-        disabled={isDisable}
+        disabled={isDisabled}
         width={`${width}px`}
         clearable={false}
         value={
