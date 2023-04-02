@@ -417,7 +417,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     public void acquireWakeLock(PluginCall call){
         try {
             PowerManager powerManager = (PowerManager) getContext().getSystemService(POWER_SERVICE);
-            wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,"omSupply::WakelockTag");
+            wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "omSupply::WakelockTag");
             wakeLock.acquire();
         } catch (Exception e) {
             Log.e(OM_SUPPLY, "Error acquiring wakelock: " + e.getMessage() );
