@@ -135,9 +135,6 @@ const start = (): void => {
   ipcMain.handle(IPC_MESSAGES.CONNECTED_SERVER, async () => connectedServer);
   ipcMain.handle(IPC_MESSAGES.START_BARCODE_SCAN, () => barcodeScanner.start());
   ipcMain.on(IPC_MESSAGES.STOP_BARCODE_SCAN, () => barcodeScanner.stop());
-  // dummy methods - not implemented on desktop
-  ipcMain.on(IPC_MESSAGES.ACQUIRE_WAKELOCK, () => {});
-  ipcMain.on(IPC_MESSAGES.RELEASE_WAKELOCK, () => {});
 
   ipcMain.handle(IPC_MESSAGES.DISCOVERED_SERVERS, async () => {
     const servers = discoveredServers;

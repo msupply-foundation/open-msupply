@@ -99,12 +99,11 @@ export const useInitialiseForm = () => {
   const { data: initStatus } = useInitialisationStatus(refetchInterval);
   const { data: syncStatus } = useHost.utils.syncStatus(refetchInterval);
   const { data: syncSettings } = useHost.settings.syncSettings();
-  const { acquireWakeLock, releaseWakeLock } = useNativeClient();
+  const { allowSleep, keepAwake } = useNativeClient();
 
   const onInitialise = async () => {
     setSiteCredentialsError(null);
     setIsLoading(true);
-    acquireWakeLock();
     try {
       const response = await initialise({
         intervalSeconds: DEFAULT_SYNC_INTERVAL_IN_SECONDS,
@@ -120,7 +119,6 @@ export const useInitialiseForm = () => {
         return setIsLoading(false);
       }
     } catch (e) {
-      releaseWakeLock();
       // Set standard error
       setSiteCredentialsError({
         error: t('error.unable-to-initialise'),
@@ -134,28 +132,31 @@ export const useInitialiseForm = () => {
 
   const onRetry = async () => {
     setIsLoading(true);
-    acquireWakeLock();
     await manualSync();
   };
 
   useEffect(() => {
     if (!initStatus) return;
 
-    switch (initStatus.status) {
-      case InitialisationStatusType.Initialised:
-        return navigate(`/${AppRoute.Login}`, { replace: true });
-      case InitialisationStatusType.Initialising:
-        return setIsInitialising(true);
-      case InitialisationStatusType.PreInitialisation:
-        return setIsInitialising(false);
-    }
+    (async () => {
+      switch (initStatus.status) {
+        case InitialisationStatusType.Initialised:
+          await allowSleep();
+          return navigate(`/${AppRoute.Login}`, { replace: true });
+        case InitialisationStatusType.Initialising:
+          await keepAwake();
+          return setIsInitialising(true);
+        case InitialisationStatusType.PreInitialisation:
+          await allowSleep();
+          return setIsInitialising(false);
+      }
+    })();
   }, [initStatus]);
 
   useEffect(() => {
     if (!syncStatus) return;
     // Need to be able to retry is syncStatus is erroneous
     setIsLoading(!syncStatus.error);
-    releaseWakeLock();
   }, [syncStatus]);
 
   useEffect(() => {

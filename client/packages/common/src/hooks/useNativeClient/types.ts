@@ -20,10 +20,6 @@ export interface NativeAPI {
   startBarcodeScan: () => Promise<number[]>;
   stopBarcodeScan: () => void;
   readLog: () => Promise<{ log: string; error: string }>;
-  // Keeps the CPU running, when it would otherwise sleep
-  acquireWakeLock: () => void;
-  // Allows the device to go to sleep
-  releaseWakeLock: () => void;
 }
 
 export enum NativeMode {

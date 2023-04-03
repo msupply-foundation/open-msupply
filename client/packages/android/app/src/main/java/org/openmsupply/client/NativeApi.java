@@ -1,11 +1,9 @@
 package org.openmsupply.client;
 
 import static android.content.Context.NSD_SERVICE;
-import static android.content.Context.POWER_SERVICE;
 
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
-import android.os.PowerManager;
 import android.util.Log;
 import android.webkit.WebView;
 
@@ -49,7 +47,6 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     boolean isDiscovering;
     boolean isResolvingServer;
     boolean shouldRestartDiscovery;
-    PowerManager.WakeLock wakeLock;
 
     @Override
     public void load() {
@@ -411,26 +408,6 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
             response.put("error", e.getMessage());
         }
         call.resolve(response);
-    }
-
-    @PluginMethod()
-    public void acquireWakeLock(PluginCall call){
-        try {
-            PowerManager powerManager = (PowerManager) getContext().getSystemService(POWER_SERVICE);
-            wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "omSupply::WakelockTag");
-            wakeLock.acquire();
-        } catch (Exception e) {
-            Log.e(OM_SUPPLY, "Error acquiring wakelock: " + e.getMessage() );
-        }
-    }
-
-    @PluginMethod()
-    public void releaseWakeLock(PluginCall call){
-        try {
-            wakeLock.release();
-        } catch (Exception e) {
-            Log.e(OM_SUPPLY, "Error releasing wakelock: " + e.getMessage() );
-        }
     }
 
     public class omSupplyServer {
