@@ -3833,6 +3833,11 @@ export type StoreFilterInput = {
   siteId?: InputMaybe<EqualFilterNumberInput>;
 };
 
+export enum StoreModeNodeType {
+  Dispensary = 'DISPENSARY',
+  Store = 'STORE'
+}
+
 export type StoreNode = {
   __typename: 'StoreNode';
   code: Scalars['String'];
@@ -4549,7 +4554,7 @@ export type UserStoreNode = {
   code: Scalars['String'];
   id: Scalars['String'];
   name: Scalars['String'];
-  storeMode: Scalars['String'];
+  storeMode: StoreModeNodeType;
 };
 
 export type UserStorePermissionConnector = {
