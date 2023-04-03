@@ -80,14 +80,14 @@ const getDisplayOptions = (
   data: string | null | undefined,
   options?: Options
 ) => {
-  let show =
+  const show =
     options?.display?.type === 'string' ? options?.display?.show : null;
 
   if (!show) {
     return data;
   }
 
-  let displayValue = show.find(value => value[0] === data)?.[1];
+  const displayValue = show.find(value => value[0] === data)?.[1];
   return displayValue ?? '';
 };
 
