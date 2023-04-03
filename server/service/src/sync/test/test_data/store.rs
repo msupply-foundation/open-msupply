@@ -2,7 +2,7 @@ use crate::sync::{
     test::TestSyncPullRecord,
     translations::{LegacyTableName, PullDeleteRecordTable, PullUpsertRecord},
 };
-use repository::{StoreRow, SyncBufferRow};
+use repository::{StoreMode, StoreRow, SyncBufferRow};
 use util::inline_init;
 
 const STORE_1: (&'static str, &'static str) = (
@@ -60,7 +60,7 @@ fn store_1() -> TestSyncPullRecord {
             s.code = "GEN".to_string();
             s.site_id = 1;
             s.logo = Some("No logo".to_string());
-            s.store_mode = "store".to_string();
+            s.store_mode = StoreMode::Store;
         })),
     )
 }

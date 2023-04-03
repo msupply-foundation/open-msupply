@@ -4,13 +4,19 @@ use async_graphql::{
 use graphql_core::{
     loader::NameRowLoader, standard_graphql_error::StandardGraphqlError, ContextExt,
 };
-use repository::{Language, User, UserStore};
+use repository::{Language, StoreMode, User, UserStore};
 use service::permission::permissions;
 
 use super::UserStorePermissionConnector;
 
 pub struct UserStoreNode {
     user_store: UserStore,
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+pub enum StoreModeNodeType {
+    Store,
+    Dispensary,
 }
 
 #[Object]
@@ -40,8 +46,8 @@ impl UserStoreNode {
         Ok(name_row.name)
     }
 
-    pub async fn store_mode(&self) -> &str {
-        &self.user_store.store_row.store_mode
+    pub async fn store_mode(&self) -> StoreModeNodeType {
+        StoreModeNodeType::from_domain(&self.user_store.store_row.store_mode)
     }
 }
 
@@ -139,6 +145,15 @@ impl LanguageType {
             Language::Portuguese => Self::Portuguese,
             Language::Russian => Self::Russian,
             Language::Tetum => Self::Tetum,
+        }
+    }
+}
+
+impl StoreModeNodeType {
+    pub fn from_domain(from: &StoreMode) -> StoreModeNodeType {
+        match from {
+            StoreMode::Store => Self::Store,
+            StoreMode::Dispensary => Self::Dispensary,
         }
     }
 }
