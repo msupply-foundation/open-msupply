@@ -241,7 +241,7 @@ const NoteComponent = (props: ControlProps) => {
         onChange={e => onChange(e.target.value)}
         onBlur={() => {
           setEditMode(false);
-          if (text === undefined)
+          if (text === undefined || text === '')
             // Intentionally setting an invalid response so it can be
             // distinguished from a completely empty (also invalid) response for
             // the purposes of error checking
