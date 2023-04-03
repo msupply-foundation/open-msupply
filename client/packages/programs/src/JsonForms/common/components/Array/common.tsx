@@ -41,6 +41,7 @@ export interface ArrayControlCustomProps extends ArrayControlProps {
   removeItems: (path: string, toDelete: number[]) => () => void;
   data: JsonData[] | undefined;
   isElementEditable?: (child: JsonData, index: number) => boolean;
+  checkIsError?: (child: JsonData | undefined) => boolean;
   getItemLabel?: (
     child: JsonData,
     index: number,
@@ -92,6 +93,7 @@ export const ArrayCommonComponent = (props: ArrayControlCustomProps) => {
     rootSchema,
     renderers,
     getItemLabel,
+    checkIsError = () => {},
     zOptions = CommonOptions,
     isElementEditable = () => enabled,
   } = props;
@@ -199,6 +201,7 @@ export const ArrayCommonComponent = (props: ArrayControlCustomProps) => {
       </Box>
       {data
         .map((child, index) => {
+          const isError = checkIsError(child);
           const childPath = composePaths(path, `${index}`);
           const isEditable = isElementEditable(child, index);
           const isExpanded = expandedItems[index] ?? false;
@@ -214,6 +217,7 @@ export const ArrayCommonComponent = (props: ArrayControlCustomProps) => {
               sx={{
                 mt: '0 !important',
                 mb: index === data.length - 1 ? '20px !important' : 1,
+                border: isError ? '1px solid red' : '',
               }}
             >
               <AccordionSummary
@@ -240,7 +244,6 @@ export const ArrayCommonComponent = (props: ArrayControlCustomProps) => {
                     title={t('label.remove')}
                     message={t('messages.confirm-remove-item')}
                   />
-
                   <IconButton
                     icon={isEditable ? <MinusCircleIcon /> : null}
                     label={t('label.remove')}
