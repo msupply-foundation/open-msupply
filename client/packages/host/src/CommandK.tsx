@@ -83,7 +83,7 @@ export const CommandK: FC<PropsWithChildrenOnly> = ({ children }) => {
   const navigate = useNavigate();
   const drawer = useDrawer();
   const t = useTranslation('app');
-  const { storeIsMode } = useAuthContext();
+  const { store } = useAuthContext();
 
   const actions = [
     {
@@ -234,7 +234,7 @@ export const CommandK: FC<PropsWithChildrenOnly> = ({ children }) => {
     },
   ];
 
-  if (storeIsMode(StoreModeNodeType.Dispensary)) {
+  if (store?.storeMode === StoreModeNodeType.Dispensary) {
     actions.push({
       id: 'navigation:patients',
       name: `${t('cmdk.goto-patients')} (p)`,
