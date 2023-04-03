@@ -36,13 +36,11 @@ const useSync = () => {
   }, [syncStatus]);
 
   useEffect(() => {
-    (async () => {
-      if (syncStatus?.isSyncing) {
-        await keepAwake();
-      } else {
-        await allowSleep();
-      }
-    })();
+    if (syncStatus?.isSyncing) {
+      keepAwake();
+    } else {
+      allowSleep();
+    }
   }, [syncStatus?.isSyncing]);
 
   const onManualSync = async () => {
