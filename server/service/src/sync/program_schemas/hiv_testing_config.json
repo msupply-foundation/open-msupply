@@ -1,0 +1,18 @@
+{
+  "events": [
+    {
+      "type": "Field",
+      "conditions": [
+        {
+          "field": "hivTesting.result",
+          "isTruthy": true
+        }
+      ],
+      "event": {
+        "type": "HIVTestingEncounterResult",
+        "dataField": "hivTesting.result",
+        "documentType": "HIVTestingEncounter"
+      }
+    }
+  ]
+}

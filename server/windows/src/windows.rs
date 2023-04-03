@@ -58,7 +58,7 @@ mod omsupply_service {
         set_current_dir(&executable_directory).unwrap();
         let settings: Settings =
             configuration::get_configuration().expect("Failed to parse configuration settings");
-        logging_init(settings.logging.clone());
+        logging_init(settings.logging.clone(), None);
 
         panic::set_hook(Box::new(|panic_info| {
             error!("panic occurred {:?}", panic_info);

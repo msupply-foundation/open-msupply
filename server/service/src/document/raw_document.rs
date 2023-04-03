@@ -9,15 +9,13 @@ pub struct RawDocument {
     pub name: String,
     pub parents: Vec<String>,
     pub author: String,
-    pub timestamp: DateTime<Utc>,
+    pub datetime: DateTime<Utc>,
     #[serde(rename = "type")]
     pub r#type: String,
     pub data: serde_json::Value,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub form_schema_id: Option<String>,
     pub status: DocumentStatus,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub comment: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub owner_name_id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -39,12 +37,11 @@ impl RawDocument {
             name,
             parents,
             author,
-            timestamp,
+            datetime,
             r#type,
             data,
             form_schema_id,
             status,
-            comment,
             owner_name_id: owner,
             context,
         } = self;
@@ -53,15 +50,13 @@ impl RawDocument {
             name,
             parent_ids: parents,
             user_id: author,
-            timestamp,
+            datetime,
             r#type,
             data,
             form_schema_id,
             status,
-            comment,
             owner_name_id: owner,
             context,
-            is_sync_update: false,
         })
     }
 }
@@ -80,7 +75,7 @@ mod document_id_test {
             name: "name".to_string(),
             parents: vec!["p1".to_string()],
             author: "author".to_string(),
-            timestamp: Utc.timestamp_millis_opt(1000).unwrap(),
+            datetime: Utc.timestamp_millis_opt(1000).unwrap(),
             r#type: "test".to_string(),
             data: json!({
               "b": 0.3453333,
@@ -88,12 +83,11 @@ mod document_id_test {
             }),
             form_schema_id: None,
             status: DocumentStatus::Active,
-            comment: None,
             owner_name_id: None,
             context: None,
         };
         let document = raw.finalise().unwrap();
-        let expected_json_string = r#"{"author":"author","data":{"a":"avalue","b":0.3453333},"name":"name","parents":["p1"],"status":"Active","timestamp":"1970-01-01T00:00:01Z","type":"test"}"#;
+        let expected_json_string = r#"{"author":"author","data":{"a":"avalue","b":0.3453333},"datetime":"1970-01-01T00:00:01Z","name":"name","parents":["p1"],"status":"Active","type":"test"}"#;
         let expected_id = sha256(expected_json_string);
         assert_eq!(document.id, expected_id);
     }

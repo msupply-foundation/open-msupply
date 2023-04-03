@@ -42,9 +42,7 @@
           "type": "array"
         }
       },
-      "required": [
-        "drugAllergies"
-      ],
+      "required": ["drugAllergies"],
       "type": "object"
     },
     "ContactDetails": {
@@ -143,10 +141,7 @@
       "type": "string"
     },
     "Handedness": {
-      "enum": [
-        "LEFT",
-        "RIGHT"
-      ],
+      "enum": ["LEFT", "RIGHT"],
       "type": "string"
     },
     "HealthCenter": {
@@ -192,12 +187,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "text",
-        "created",
-        "authorId",
-        "authorName"
-      ],
+      "required": ["text", "created", "authorId", "authorName"],
       "type": "object"
     },
     "RelatedPerson": {
@@ -274,15 +264,16 @@
           "$ref": "#/definitions/SocioEconomics"
         }
       },
-      "required": [
-        "contactDetails"
-      ],
+      "required": ["contactDetails"],
       "type": "object"
     },
     "SocioEconomics": {
       "properties": {
         "education": {
           "description": "224293004 Education received in the past",
+          "type": "string"
+        },
+        "employmentStatus": {
           "type": "string"
         },
         "literate": {
@@ -384,10 +375,7 @@
           "$ref": "#/definitions/SocioEconomics"
         }
       },
-      "required": [
-        "contactDetails",
-        "id"
-      ],
+      "required": ["contactDetails", "id"],
       "type": "object"
     }
   },

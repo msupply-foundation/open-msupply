@@ -5,6 +5,7 @@ import {
   Box,
   DetailInputWithLabelRow,
   NumericTextInput,
+  FormLabel,
 } from '@openmsupply-client/common';
 import {
   FORM_LABEL_COLUMN_WIDTH,
@@ -15,7 +16,6 @@ import {
 } from '../common';
 import { useEncounter } from '../../api';
 import { get as extractProperty } from 'lodash';
-import { FormLabel } from '@mui/material';
 
 export const previousEncounterFieldTester = rankWith(
   10,

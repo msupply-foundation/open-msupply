@@ -5,12 +5,13 @@ import {
   LoadingButton,
   PrinterIcon,
   useTranslation,
+  ProgramEnrolmentNodeStatus,
 } from '@openmsupply-client/common';
 import React, { FC } from 'react';
 import { AddButton } from './AddButton';
 import { ReportRowFragment, ReportSelector, useReport } from '../../Report';
 import { usePatient } from '../api';
-import { JsonData } from '@openmsupply-client/programs';
+import { JsonData, useProgramEnrolments } from '@openmsupply-client/programs';
 
 export const AppBarButtons: FC = () => {
   const t = useTranslation('common');
@@ -22,11 +23,19 @@ export const AppBarButtons: FC = () => {
   ) => {
     print({ reportId: report.id, dataId: patientId, args });
   };
+  const { data: enrolmentData } =
+    useProgramEnrolments.document.programEnrolments({
+      filterBy: {
+        patientId: { equalTo: patientId },
+        status: { equalTo: ProgramEnrolmentNodeStatus.Active },
+      },
+    });
+  const disableEncounterButton = enrolmentData?.nodes?.length === 0;
 
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
-        <AddButton />
+        <AddButton disableEncounterButton={disableEncounterButton} />
         <ReportSelector context={ReportContext.Patient} onClick={printReport}>
           <LoadingButton
             variant="outlined"

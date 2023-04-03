@@ -1,6 +1,7 @@
 use async_graphql::*;
 use graphql_core::{
     generic_filters::{DatetimeFilterInput, EqualFilterStringInput},
+    map_filter,
     standard_graphql_error::validate_auth,
     ContextExt,
 };
@@ -13,7 +14,7 @@ use service::{
     usize_to_u32,
 };
 
-use crate::types::program_enrolment::ProgramEnrolmentNode;
+use crate::types::program_enrolment::{ProgramEnrolmentNode, ProgramEnrolmentNodeStatus};
 
 #[derive(SimpleObject)]
 pub struct ProgramEnrolmentConnector {
@@ -33,6 +34,7 @@ pub enum ProgramEnrolmentSortFieldInput {
     PatientId,
     EnrolmentDatetime,
     ProgramEnrolmentId,
+    Status,
 }
 
 #[derive(InputObject)]
@@ -45,11 +47,19 @@ pub struct ProgramEnrolmentSortInput {
 }
 
 #[derive(InputObject, Clone)]
+pub struct EqualFilterProgramEnrolmentStatusInput {
+    pub equal_to: Option<ProgramEnrolmentNodeStatus>,
+    pub equal_any: Option<Vec<ProgramEnrolmentNodeStatus>>,
+    pub not_equal_to: Option<ProgramEnrolmentNodeStatus>,
+}
+
+#[derive(InputObject, Clone)]
 pub struct ProgramEnrolmentFilterInput {
     pub program: Option<EqualFilterStringInput>,
     pub patient_id: Option<EqualFilterStringInput>,
     pub enrolment_datetime: Option<DatetimeFilterInput>,
     pub program_enrolment_id: Option<EqualFilterStringInput>,
+    pub status: Option<EqualFilterProgramEnrolmentStatusInput>,
 }
 impl ProgramEnrolmentFilterInput {
     pub fn to_domain_filter(self) -> ProgramEnrolmentFilter {
@@ -58,6 +68,9 @@ impl ProgramEnrolmentFilterInput {
             patient_id: self.patient_id.map(EqualFilter::from),
             enrolment_datetime: self.enrolment_datetime.map(DatetimeFilter::from),
             program_enrolment_id: self.program_enrolment_id.map(EqualFilter::from),
+            status: self
+                .status
+                .map(|s| map_filter!(s, ProgramEnrolmentNodeStatus::to_domain)),
         }
     }
 }
@@ -116,6 +129,7 @@ impl ProgramEnrolmentSortInput {
             ProgramEnrolmentSortFieldInput::ProgramEnrolmentId => {
                 ProgramEnrolmentSortField::ProgramEnrolmentId
             }
+            ProgramEnrolmentSortFieldInput::Status => ProgramEnrolmentSortField::Status,
         };
 
         ProgramEnrolmentSort {

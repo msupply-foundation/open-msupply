@@ -1,10 +1,5 @@
 import { useMemo } from 'react';
-import {
-  DateUtils,
-  LocaleKey,
-  TypedTFunction,
-  useTranslation,
-} from '@common/intl';
+import { LocaleKey, TypedTFunction, useTranslation } from '@common/intl';
 import { EncounterNodeStatus } from '@common/types';
 import { EncounterRowFragment } from '@openmsupply-client/programs';
 
@@ -22,10 +17,9 @@ const effectiveStatus = (
     case EncounterNodeStatus.Completed:
       return t('label.encounter-status-done');
     case EncounterNodeStatus.Scheduled:
-      if (DateUtils.isBefore(new Date(encounter.startDatetime), Date.now())) {
-        return t('label.encounter-status-missed');
-      }
       return t('label.encounter-status-scheduled');
+    case EncounterNodeStatus.Missed:
+      return t('label.encounter-status-missed');
     default:
       ((_: never) => {
         // exhaustive check

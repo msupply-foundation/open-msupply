@@ -34,12 +34,14 @@ mod hiv_testing_program {
     use serde::{Deserialize, Serialize};
     schemafy::schemafy!("src/sync/program_schemas/hiv_testing_program.json");
 
+    pub type SchemaProgramEnrolmentStatus = ProgramEnrolmentStatus;
+
     impl Default for HivtestingProgramEnrolment {
         fn default() -> Self {
             Self {
                 enrolment_datetime: Default::default(),
                 program_enrolment_id: Default::default(),
-                status: Default::default(),
+                status: SchemaProgramEnrolmentStatus::Active,
                 referred_from: Default::default(),
                 partner_hiv_status: Default::default(),
                 mother: Default::default(),
@@ -51,6 +53,7 @@ mod hiv_testing_program {
 mod hiv_care_program {
     use serde::{Deserialize, Serialize};
     schemafy::schemafy!("src/sync/program_schemas/hiv_care_program.json");
+    pub type SchemaProgramEnrolmentStatus = ProgramEnrolmentStatus;
 
     impl Default for HivcareProgramEnrolment {
         fn default() -> Self {
@@ -63,7 +66,7 @@ mod hiv_care_program {
                 partner_hiv_status: Default::default(),
                 prior_art: Default::default(),
                 risk_group: Default::default(),
-                status: Default::default(),
+                status: SchemaProgramEnrolmentStatus::Active,
                 treatment_supporter_is_next_of_kin: Default::default(),
                 treatment_supporter: Default::default(),
                 // note: Default::default(),
@@ -115,6 +118,7 @@ mod hiv_care_encounter {
                 gender_based_violence: Default::default(),
                 physical_examination: Default::default(),
                 clinician: Default::default(),
+                created_by: Default::default(),
                 created_datetime: Default::default(),
                 created_by: Default::default(),
                 start_datetime: Default::default(),
@@ -125,7 +129,7 @@ mod hiv_care_encounter {
                 viral_load: Default::default(),
                 notes: Default::default(),
                 index_testing: Default::default(),
-                hcv_crag: Default::default(),
+                hcv_cr_ag: Default::default(),
                 visit: Default::default(),
                 referral: Default::default(),
                 risk_behaviour: Default::default(),
@@ -190,6 +194,8 @@ const HIV_TESTING_ENCOUNTER_SCHEMA: &'static str =
     std::include_str!("./program_schemas/hiv_testing_encounter.json");
 const HIV_TESTING_ENCOUNTER_UI_SCHEMA: &'static str =
     std::include_str!("./program_schemas/hiv_testing_encounter_ui_schema.json");
+const HIV_TESTING_CONFIG: &'static str =
+    std::include_str!("./program_schemas/hiv_testing_config.json");
 
 const HIV_CARE_ENCOUNTER_SCHEMA: &'static str =
     std::include_str!("./program_schemas/hiv_care_encounter.json");
@@ -424,7 +430,7 @@ fn program_1() -> SchemaProgramEnrolment {
     SchemaProgramEnrolment {
         enrolment_datetime: Utc::now().to_rfc3339(),
         program_enrolment_id: Some("programEnrolmentId1".to_string()),
-        status: Some(ProgramEnrolmentStatus::Active),
+        status: ProgramEnrolmentStatus::Active,
     }
 }
 
@@ -432,7 +438,7 @@ fn program_hiv_care() -> hiv_care_program::HivcareProgramEnrolment {
     inline_init(|p: &mut hiv_care_program::HivcareProgramEnrolment| {
         p.enrolment_datetime = Utc::now().to_rfc3339();
         p.program_enrolment_id = Some("STR0001".to_string());
-        p.status = Some(hiv_care_program::ProgramEnrolmentStatus::Active);
+        p.status = hiv_care_program::ProgramEnrolmentStatus::Active;
     })
 }
 
@@ -440,7 +446,7 @@ fn program_hiv_testing() -> hiv_testing_program::HivtestingProgramEnrolment {
     inline_init(|p: &mut hiv_testing_program::HivtestingProgramEnrolment| {
         p.enrolment_datetime = Utc::now().to_rfc3339();
         p.program_enrolment_id = Some("STR0002".to_string());
-        p.status = Some(hiv_testing_program::ProgramEnrolmentStatus::Active);
+        p.status = hiv_testing_program::ProgramEnrolmentStatus::Active;
     })
 }
 
@@ -459,7 +465,7 @@ fn encounter_hiv_care_1(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncou
         e.start_datetime = time.to_rfc3339();
         e.physical_examination = Some(inline_init(
             |exam: &mut HivcareEncounterPhysicalExamination| {
-                exam.weight = Some("51.00".to_string());
+                exam.weight = Some(51.00);
                 exam.blood_pressure = Some(inline_init(
                     |blood_pressure: &mut HivcareEncounterPhysicalExaminationBloodPressure| {
                         blood_pressure.systolic = 120.0;
@@ -487,7 +493,7 @@ fn encounter_hiv_care_2(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncou
         e.start_datetime = time.to_rfc3339();
         e.physical_examination = Some(inline_init(
             |exam: &mut HivcareEncounterPhysicalExamination| {
-                exam.weight = Some("52.00".to_string());
+                exam.weight = Some(52.00);
                 exam.blood_pressure = Some(inline_init(
                     |blood_pressure: &mut HivcareEncounterPhysicalExaminationBloodPressure| {
                         blood_pressure.systolic = 110.0;
@@ -516,7 +522,7 @@ fn encounter_hiv_care_3(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncou
         e.start_datetime = time.to_rfc3339();
         e.physical_examination = Some(inline_init(
             |exam: &mut HivcareEncounterPhysicalExamination| {
-                exam.weight = Some("52.50".to_string());
+                exam.weight = Some(52.50);
                 exam.blood_pressure = Some(inline_init(
                     |blood_pressure: &mut HivcareEncounterPhysicalExaminationBloodPressure| {
                         blood_pressure.systolic = 150.0;
@@ -546,7 +552,7 @@ fn encounter_hiv_care_4(time: DateTime<Utc>) -> hiv_care_encounter::HivcareEncou
         e.start_datetime = time.to_rfc3339();
         e.physical_examination = Some(inline_init(
             |exam: &mut HivcareEncounterPhysicalExamination| {
-                exam.weight = Some("51.00".to_string());
+                exam.weight = Some(51.00);
                 exam.blood_pressure = Some(inline_init(
                     |blood_pressure: &mut HivcareEncounterPhysicalExaminationBloodPressure| {
                         blood_pressure.systolic = 121.0;
@@ -568,7 +574,7 @@ fn encounter_hiv_care_5(
         e.start_datetime = time.to_rfc3339();
         e.physical_examination = Some(inline_init(
             |exam: &mut HivcareEncounterPhysicalExamination| {
-                exam.weight = Some("54.00".to_string());
+                exam.weight = Some(54.00);
                 exam.blood_pressure = Some(inline_init(
                     |blood_pressure: &mut HivcareEncounterPhysicalExaminationBloodPressure| {
                         blood_pressure.systolic = 112.0;
@@ -687,7 +693,7 @@ pub fn insert_programs_permissions(connection: &StorageConnection, user_id: Stri
                 user_id: user_id.clone(),
                 store_id: Some(user_store.store_id.clone()),
                 permission: Permission::DocumentQuery,
-                context: Some("HIV Testing & Counselling".to_string()),
+                context: Some("HIVTestingProgram".to_string()),
             })
             .unwrap();
         UserPermissionRowRepository::new(&connection)
@@ -696,7 +702,7 @@ pub fn insert_programs_permissions(connection: &StorageConnection, user_id: Stri
                 user_id: user_id.clone(),
                 store_id: Some(user_store.store_id.clone()),
                 permission: Permission::DocumentMutate,
-                context: Some("HIV Testing & Counselling".to_string()),
+                context: Some("HIVTestingProgram".to_string()),
             })
             .unwrap();
         UserPermissionRowRepository::new(&connection)
@@ -725,7 +731,7 @@ pub fn insert_programs_permissions(connection: &StorageConnection, user_id: Stri
                 user_id: user_id.clone(),
                 store_id: Some(user_store.store_id.clone()),
                 permission: Permission::DocumentQuery,
-                context: Some("HIV Care & Treatment".to_string()),
+                context: Some("HIVCareProgram".to_string()),
             })
             .unwrap();
         UserPermissionRowRepository::new(&connection)
@@ -734,7 +740,7 @@ pub fn insert_programs_permissions(connection: &StorageConnection, user_id: Stri
                 user_id: user_id.clone(),
                 store_id: Some(user_store.store_id.clone()),
                 permission: Permission::DocumentMutate,
-                context: Some("HIV Care & Treatment".to_string()),
+                context: Some("HIVCareProgram".to_string()),
             })
             .unwrap();
         UserPermissionRowRepository::new(&connection)
@@ -815,7 +821,7 @@ fn insert_patient(
         .unwrap();
 
     service
-        .update_patient(
+        .upsert_patient(
             &ctx,
             &service_provider,
             &store_id,
@@ -893,9 +899,9 @@ pub fn init_program_data(
     let hiv_testing_program_id = uuid();
     DocumentRegistryRowRepository::new(connection).upsert_one(&DocumentRegistryRow {
         id: hiv_testing_program_id.clone(),
-        document_type: "HIV Testing & Counselling".to_string(),
+        document_type: "HIVTestingProgram".to_string(),
         context: DocumentContext::Program,
-        name: Some("HIV Testing Program".to_string()),
+        name: Some("HIV Testing & Counselling".to_string()),
         parent_id: None,
         form_schema_id: Some(hiv_testing_program_schema_id.clone()),
         config: None,
@@ -916,7 +922,7 @@ pub fn init_program_data(
         name: Some("HIV Testing Encounter".to_string()),
         parent_id: Some(hiv_testing_program_id.clone()),
         form_schema_id: Some(hiv_testing_encounter_schema_id.clone()),
-        config: None,
+        config: Some(HIV_TESTING_CONFIG.to_string()),
     })?;
 
     // hiv care program
@@ -930,9 +936,9 @@ pub fn init_program_data(
     let hiv_care_program_id = uuid();
     DocumentRegistryRowRepository::new(connection).upsert_one(&DocumentRegistryRow {
         id: hiv_care_program_id.clone(),
-        document_type: "HIV Care & Treatment".to_string(),
+        document_type: "HIVCareProgram".to_string(),
         context: DocumentContext::Program,
-        name: Some("HIV Care and Treatment".to_string()),
+        name: Some("HIV Care & Treatment".to_string()),
         parent_id: None,
         form_schema_id: Some(hiv_care_program_schema_id.clone()),
         config: None,
@@ -1065,12 +1071,12 @@ pub fn init_program_data(
             "no user",
             UpsertProgramEnrolment {
                 patient_id: patient_1().id,
-                r#type: "HIV Testing & Counselling".to_string(),
+                r#type: "HIVTestingProgram".to_string(),
                 data: serde_json::to_value(program_hiv_testing()).unwrap(),
                 schema_id: hiv_testing_program_schema_id,
                 parent: None,
             },
-            vec!["HIV Testing & Counselling".to_string()],
+            vec!["HIVTestingProgram".to_string()],
         )
         .unwrap();
     // hiv care program
@@ -1081,12 +1087,12 @@ pub fn init_program_data(
             "no user",
             UpsertProgramEnrolment {
                 patient_id: patient_1().id,
-                r#type: "HIV Care & Treatment".to_string(),
+                r#type: "HIVCareProgram".to_string(),
                 data: serde_json::to_value(program_hiv_care()).unwrap(),
                 schema_id: hiv_care_program_schema_id,
                 parent: None,
             },
-            vec!["HIV Care & Treatment".to_string()],
+            vec!["HIVCareProgram".to_string()],
         )
         .unwrap();
 
@@ -1103,7 +1109,7 @@ pub fn init_program_data(
                 r#type: "HIVTestingEncounter".to_string(),
                 data: serde_json::to_value(encounter_hiv_testing_1(time)).unwrap(),
                 schema_id: hiv_testing_encounter_schema_id.clone(),
-                program: "HIV Testing & Counselling".to_string(),
+                program: "HIVTestingProgram".to_string(),
                 event_datetime: time,
             },
             vec!["HIVTestingEncounter".to_string()],
@@ -1120,7 +1126,7 @@ pub fn init_program_data(
                 r#type: "HIVCareEncounter".to_string(),
                 data: serde_json::to_value(encounter_hiv_care_1(time)).unwrap(),
                 schema_id: hiv_care_encounter_schema_id.clone(),
-                program: "HIV Care & Treatment".to_string(),
+                program: "HIVCareProgram".to_string(),
                 event_datetime: Utc::now(),
             },
             vec!["HIVCareEncounter".to_string()],
@@ -1137,7 +1143,7 @@ pub fn init_program_data(
                 r#type: "HIVCareEncounter".to_string(),
                 data: serde_json::to_value(encounter_hiv_care_2(time)).unwrap(),
                 schema_id: hiv_care_encounter_schema_id.clone(),
-                program: "HIV Care & Treatment".to_string(),
+                program: "HIVCareProgram".to_string(),
                 event_datetime: time,
             },
             vec!["HIVCareEncounter".to_string()],
@@ -1154,7 +1160,7 @@ pub fn init_program_data(
                 r#type: "HIVCareEncounter".to_string(),
                 data: serde_json::to_value(encounter_hiv_care_3(time)).unwrap(),
                 schema_id: hiv_care_encounter_schema_id.clone(),
-                program: "HIV Care & Treatment".to_string(),
+                program: "HIVCareProgram".to_string(),
                 event_datetime: time,
             },
             vec!["HIVCareEncounter".to_string()],
@@ -1171,7 +1177,7 @@ pub fn init_program_data(
                 r#type: "HIVCareEncounter".to_string(),
                 data: serde_json::to_value(encounter_hiv_care_4(time)).unwrap(),
                 schema_id: hiv_care_encounter_schema_id.clone(),
-                program: "HIV Care & Treatment".to_string(),
+                program: "HIVCareProgram".to_string(),
                 event_datetime: time,
             },
             vec!["HIVCareEncounter".to_string()],
@@ -1192,7 +1198,7 @@ pub fn init_program_data(
                 ))
                 .unwrap(),
                 schema_id: hiv_care_encounter_schema_id.clone(),
-                program: "HIV Care & Treatment".to_string(),
+                program: "HIVCareProgram".to_string(),
                 event_datetime: time,
             },
             vec!["HIVCareEncounter".to_string()],
@@ -1209,7 +1215,7 @@ pub fn init_program_data(
             template: PATIENT_REPORT.to_string(),
             context: ReportContext::Dispensary,
             comment: None,
-            sub_context: Some("HIV Care & Treatment".to_string()),
+            sub_context: Some("HIVCareProgram".to_string()),
             argument_schema_id: None,
         })
         .unwrap();
@@ -1230,7 +1236,7 @@ pub fn init_program_data(
             template: ENCOUNTERS_REPORT.to_string(),
             context: ReportContext::Dispensary,
             comment: None,
-            sub_context: Some("HIV Care & Treatment".to_string()),
+            sub_context: Some("HIVCareProgram".to_string()),
             argument_schema_id: Some(encounters_arg_schema_id),
         })
         .unwrap();
@@ -1243,7 +1249,7 @@ pub fn init_program_data(
             template: VL_ELIGIBILITY_REPORT.to_string(),
             context: ReportContext::Dispensary,
             comment: None,
-            sub_context: Some("HIV Care & Treatment".to_string()),
+            sub_context: Some("HIVCareProgram".to_string()),
             argument_schema_id: None,
         })
         .unwrap();
@@ -1256,7 +1262,7 @@ pub fn init_program_data(
             template: LTFU_REPORT.to_string(),
             context: ReportContext::Dispensary,
             comment: None,
-            sub_context: Some("HIV Care & Treatment".to_string()),
+            sub_context: Some("HIVCareProgram".to_string()),
             argument_schema_id: None,
         })
         .unwrap();
@@ -1269,7 +1275,7 @@ pub fn init_program_data(
             template: GBV_REPORT.to_string(),
             context: ReportContext::Dispensary,
             comment: None,
-            sub_context: Some("HIV Care & Treatment".to_string()),
+            sub_context: Some("HIVCareProgram".to_string()),
             argument_schema_id: None,
         })
         .unwrap();

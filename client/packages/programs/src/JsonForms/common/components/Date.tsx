@@ -1,14 +1,15 @@
 import React, { FC } from 'react';
 import { rankWith, ControlProps, isDateControl } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import { TextFieldProps } from '@mui/material';
 import {
+  TextFieldProps,
   BasicTextInput,
   DetailInputWithLabelRow,
   useFormatDateTime,
+  DatePicker,
+  DatePickerProps,
 } from '@openmsupply-client/common';
 import { FORM_LABEL_WIDTH } from '../styleConstants';
-import { DatePicker, DatePickerProps } from '@mui/x-date-pickers';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
 
@@ -35,7 +36,7 @@ const DatePickerTextInput = ({ variant, ...props }: TextFieldProps) => (
 );
 
 export const BaseDatePickerInput: FC<
-  Omit<DatePickerProps<Date>, 'renderInput'> & { error: string }
+  Omit<DatePickerProps<Date, Date>, 'renderInput'> & { error: string }
 > = props => (
   <DatePicker
     disabled={props.disabled}
@@ -49,7 +50,7 @@ export const dateTester = rankWith(5, isDateControl);
 const UIComponent = (props: ControlProps) => {
   const { data, handleChange, label, path, uischema } = props;
   const dateFormatter = useFormatDateTime().customDate;
-    const { errors: zErrors, options } = useZodOptionsValidation(
+  const { errors: zErrors, options } = useZodOptionsValidation(
     Options,
     uischema.options
   );

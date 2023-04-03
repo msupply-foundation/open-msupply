@@ -274,6 +274,16 @@ pub(crate) async fn check_records_against_database(
                     "ClinicianStoreJoin"
                 )
             }
+            FormSchema(record) => {
+                check_record_by_id!(FormSchemaRowRepository, con, record, "FormSchema")
+            }
+            Document(record) => check_record_by_id!(DocumentRepository, con, record, "Document"),
+            DocumentRegistry(record) => check_record_by_id!(
+                DocumentRegistryRowRepository,
+                con,
+                record,
+                "DocumentRegistry"
+            ),
         }
     }
 

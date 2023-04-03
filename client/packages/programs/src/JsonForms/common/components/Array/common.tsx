@@ -14,8 +14,6 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
-} from '@mui/material';
-import {
   IconButton,
   PlusCircleIcon,
   MinusCircleIcon,
