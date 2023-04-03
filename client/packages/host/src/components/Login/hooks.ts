@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import create from 'zustand';
+import { create } from 'zustand';
 import { AppRoute } from '@openmsupply-client/config';
 import {
   AuthenticationError,

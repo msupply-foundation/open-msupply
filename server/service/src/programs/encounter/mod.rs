@@ -20,12 +20,12 @@ pub use self::update::*;
 
 pub mod encounter_fields;
 pub mod encounter_schema;
-mod encounter_updated;
+pub mod encounter_updated;
 pub(crate) mod extract_fields;
 mod insert;
 mod query;
 mod update;
-mod validate_misc;
+pub(crate) mod validate_misc;
 
 pub trait EncounterServiceTrait: Sync + Send {
     fn insert_encounter(

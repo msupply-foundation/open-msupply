@@ -1,15 +1,12 @@
 use async_graphql::{dataloader::DataLoader, *};
 use chrono::{DateTime, Utc};
 use graphql_core::{
-    generic_filters::EqualFilterStringInput,
-    loader::{DocumentLoader, DocumentLoaderInput},
-    pagination::PaginationInput,
-    standard_graphql_error::StandardGraphqlError,
-    ContextExt,
+    generic_filters::EqualFilterStringInput, loader::DocumentLoader, pagination::PaginationInput,
+    standard_graphql_error::StandardGraphqlError, ContextExt,
 };
 use repository::{
-    EncounterFilter, EqualFilter, PaginationOption, ProgramEnrolmentRow, ProgramEventFilter,
-    ProgramEventSortField, Sort,
+    EncounterFilter, EqualFilter, PaginationOption, ProgramEnrolmentRow, ProgramEnrolmentStatus,
+    ProgramEventFilter, ProgramEventSortField, Sort,
 };
 
 use crate::queries::{EncounterConnector, EncounterFilterInput, EncounterSortInput};
@@ -34,6 +31,40 @@ impl ProgramEventFilterInput {
             document_type: self.document_type.map(EqualFilter::from),
             document_name: self.document_name.map(EqualFilter::from),
             r#type: self.r#type.map(EqualFilter::from),
+        }
+    }
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+pub enum ProgramEnrolmentNodeStatus {
+    Active,
+    OptedOut,
+    TransferredOut,
+    Paused,
+}
+
+impl ProgramEnrolmentNodeStatus {
+    pub fn from_domain(from: &ProgramEnrolmentStatus) -> ProgramEnrolmentNodeStatus {
+        use ProgramEnrolmentNodeStatus as to;
+        use ProgramEnrolmentStatus as from;
+
+        match from {
+            from::Active => to::Active,
+            from::OptedOut => to::OptedOut,
+            from::TransferredOut => to::TransferredOut,
+            from::Paused => to::Paused,
+        }
+    }
+
+    pub fn to_domain(self) -> ProgramEnrolmentStatus {
+        use ProgramEnrolmentNodeStatus as from;
+        use ProgramEnrolmentStatus as to;
+
+        match self {
+            from::Active => to::Active,
+            from::OptedOut => to::OptedOut,
+            from::TransferredOut => to::TransferredOut,
+            from::Paused => to::Paused,
         }
     }
 }
@@ -68,15 +99,16 @@ impl ProgramEnrolmentNode {
         &self.program_row.program_enrolment_id
     }
 
+    pub async fn status(&self) -> ProgramEnrolmentNodeStatus {
+        ProgramEnrolmentNodeStatus::from_domain(&self.program_row.status)
+    }
+
     /// The encounter document
     pub async fn document(&self, ctx: &Context<'_>) -> Result<DocumentNode> {
         let loader = ctx.get_loader::<DataLoader<DocumentLoader>>();
 
         let result = loader
-            .load_one(DocumentLoaderInput {
-                store_id: self.store_id.clone(),
-                document_name: self.program_row.document_name.clone(),
-            })
+            .load_one(self.program_row.document_name.clone())
             .await?
             .map(|document| DocumentNode {
                 allowed_docs: self.allowed_docs.clone(),

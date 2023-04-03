@@ -96,7 +96,7 @@ export const Initialise = () => {
             !isInitialising /* isValid would be false if isInitialising since password is emptied out */
           }
         >
-          {/* Retry will only be shown when not loading and is initialised (when sync error occured) */}
+          {/* Retry will only be shown when not loading and is initialised (when sync error occurred) */}
           {isInitialising ? t('button.retry') : t('button.initialise')}
         </LoadingButton>
       }

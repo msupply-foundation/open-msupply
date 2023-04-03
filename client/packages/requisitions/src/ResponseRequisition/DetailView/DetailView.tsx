@@ -51,7 +51,7 @@ export const DetailView: FC = () => {
 
   return !!data ? (
     <TableProvider
-      createStore={createTableStore}
+      createStore={createTableStore()}
       queryParamsStore={createQueryParamsStore<ResponseLineFragment>({
         initialSortBy: { key: 'itemName' },
       })}

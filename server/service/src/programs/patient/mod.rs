@@ -6,10 +6,10 @@ use crate::ListResult;
 
 pub use self::query::*;
 mod query;
-pub use self::update::*;
+pub use self::upsert::*;
 pub mod patient_schema;
 pub mod patient_updated;
-mod update;
+mod upsert;
 pub use self::search::*;
 mod search;
 
@@ -42,7 +42,7 @@ pub trait PatientServiceTrait: Sync + Send {
         get_patients(ctx, store_id, pagination, filter, sort)
     }
 
-    fn update_patient(
+    fn upsert_patient(
         &self,
         ctx: &ServiceContext,
         service_provider: &ServiceProvider,
@@ -50,7 +50,7 @@ pub trait PatientServiceTrait: Sync + Send {
         user_id: &str,
         input: UpdatePatient,
     ) -> Result<Patient, UpdatePatientError> {
-        update_patient(ctx, service_provider, store_id, user_id, input)
+        upsert_patient(ctx, service_provider, store_id, user_id, input)
     }
 
     fn patient_search(

@@ -41,6 +41,10 @@ const ServiceCharges = ({ pricing, isDisabled }: PricingGroupProps) => {
   );
 
   const { updateServiceLineTax } = useOutbound.document.updateTax();
+  const disableServiceTax =
+    serviceLines
+      ?.map(line => line.totalBeforeTax)
+      .reduce((a, b) => a + b, 0) === 0;
 
   return (
     <>
@@ -73,7 +77,7 @@ const ServiceCharges = ({ pricing, isDisabled }: PricingGroupProps) => {
         <PanelLabel>{`${t('heading.tax')} ${Formatter.tax(tax)}`}</PanelLabel>
         <PanelField>
           <TaxEdit
-            disabled={!serviceLines?.length || isDisabled}
+            disabled={disableServiceTax || isDisabled}
             tax={tax}
             update={updateServiceLineTax}
           />
@@ -92,7 +96,6 @@ const ItemPrices = ({ pricing, isDisabled }: PricingGroupProps) => {
   const t = useTranslation('distribution');
   const c = useFormatCurrency();
 
-  const { data: outboundLines } = useOutbound.line.stockLines();
   const { updateInvoiceTax } = useOutbound.document.updateInvoiceTax();
 
   const { stockTotalBeforeTax, stockTotalAfterTax } = pricing;
@@ -105,6 +108,7 @@ const ItemPrices = ({ pricing, isDisabled }: PricingGroupProps) => {
     stockTotalBeforeTax,
     stockTotalAfterTax
   );
+  const disableTax = stockTotalAfterTax === 0 || isDisabled;
 
   return (
     <>
@@ -122,7 +126,7 @@ const ItemPrices = ({ pricing, isDisabled }: PricingGroupProps) => {
         <PanelLabel>{`${t('heading.tax')} ${Formatter.tax(tax)}`}</PanelLabel>
         <PanelField>
           <TaxEdit
-            disabled={!outboundLines?.length || isDisabled}
+            disabled={disableTax}
             tax={tax}
             update={updateInvoiceTax}
           />

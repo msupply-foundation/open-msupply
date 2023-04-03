@@ -8,7 +8,7 @@ use crate::{
     service_provider::{ServiceContext, ServiceProvider},
     sync::{
         api::{SiteInfoV5, SyncApiV5},
-        settings::SyncSettings,
+        settings::{SyncSettings, SYNC_VERSION},
     },
 };
 
@@ -54,7 +54,7 @@ impl SiteInfoTrait for SiteInfoService {
     ) -> Result<SiteInfoV5, RequestAndSetSiteInfoError> {
         use RequestAndSetSiteInfoError as Error;
 
-        let sync_api_v5 = SyncApiV5::new(&settings, &service_provider)?;
+        let sync_api_v5 = SyncApiV5::new(&settings, &service_provider, SYNC_VERSION)?;
         let ctx = service_provider.basic_context()?;
 
         info!("Requesting site info");

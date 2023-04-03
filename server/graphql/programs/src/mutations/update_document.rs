@@ -177,12 +177,11 @@ fn input_to_raw_document(
         name,
         parents,
         author,
-        timestamp,
+        datetime: timestamp,
         r#type: r#type.clone(),
         data,
         form_schema_id: schema_id,
         status: DocumentStatus::Active,
-        comment: None,
         owner_name_id: patient_id,
         context: Some(r#type),
     }

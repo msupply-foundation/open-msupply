@@ -100,29 +100,6 @@ Capacitor comes with cli, we mainly use `npx cap copy` (or `yarn apply-config`),
 
 `npx cap copy` or `yarn apply-config` should only be run when cordova plugins are added or updated or when updating capacitor.config.ts
 
-### Plugins
-
-When adding plugins, the standard process (`npx cap sync` or `yarn apply-config`) is not working and I've had to manually add them:
-- from the `/client` folder run `yarn add -W -D @capacitor/[plugin-name]`
-- edit `/client/packages/android/app/capacitor.build.gradle` and add 
-```
-implementation project(':capacitor-[plugin-name]')
-```
-- edit `/client/packages/android/app/src/main/assets/capacitor.plugins.json` and add the plugin:
-```
-{
-    "pkg": "@capacitor/[plugin-name]",
-    "classpath": "com.capacitorjs.plugins.[pluginClassPath]"
-}
-```
-- edit `/client/packages/android/capacitor.settings.gradle` and add 
-```
-include ':capacitor-[plugin-name]'
-project(':capacitor-[plugin-name]').projectDir = new File('../../node_modules/@capacitor/[plugin-name]/android')
-```
-- Within android studio, open the project and click on the "Sync Project with Gradle Files" button in the top right of Android Studio (the icon looks like an elephant)
-
- 
 ## Self signed cert SSL security
 
 To avoid an error being thrown by the native web view when the server certificate is self-signed, we override the web view certificate error listener and allow connection when:

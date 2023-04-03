@@ -108,7 +108,7 @@ const StockListComponent: FC = () => {
 };
 
 export const StockListView: FC = () => (
-  <TableProvider createStore={createTableStore}>
+  <TableProvider createStore={createTableStore()}>
     <StockListComponent />
   </TableProvider>
 );

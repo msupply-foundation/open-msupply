@@ -117,8 +117,8 @@ export const LoginLayout = ({
             </form>
           </Box>
         </Box>
+        <AppVersion style={{ opacity: 0.4 }} SiteInfo={SiteInfo} />
       </Box>
-      <AppVersion style={{ opacity: 0.4 }} SiteInfo={SiteInfo} />
     </Box>
   );
 };

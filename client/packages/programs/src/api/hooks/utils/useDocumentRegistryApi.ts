@@ -13,6 +13,7 @@ export const useDocumentRegistryApi = () => {
     base: () => ['patient', storeId] as const,
     byDocContext: (name: string) =>
       [...keys.base(), 'docContext', name] as const,
+    byDocType: (type: string) => [...keys.base(), 'docType', type] as const,
     documentRegistries: (params: DocumentRegistryParams) =>
       [...keys.base(), 'documentRegistries', params] as const,
     programRegistries: (sort?: SortBy<DocumentRegistryNode>) =>

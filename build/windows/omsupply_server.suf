@@ -4180,11 +4180,13 @@ end
 if hasOmsupplyInstalled then
 	local uninstallPath = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
 	local installedApps = Registry.GetKeyNames(HKEY_LOCAL_MACHINE, uninstallPath);
-	-- Remove previous versions of this app from the uninstall list
-	if (Table.Count(installedApps) &gt; 0) then
-		for index, value in pairs(installedApps) do
-			if ((String.Find(value, "omSupply Serverv", 1, false) ~= -1) and (value ~= SessionVar.Expand("omSupply Server%ProductVer%"))) then
-				Registry.DeleteKey(HKEY_LOCAL_MACHINE, uninstallPath .. "\\" .. value);
+	if (installedApps ~= nil) then	
+		-- Remove previous versions of this app from the uninstall list
+		if (Table.Count(installedApps) &gt; 0) then
+			for index, value in pairs(installedApps) do
+				if ((String.Find(value, "omSupply Serverv", 1, false) ~= -1) and (value ~= SessionVar.Expand("omSupply Server%ProductVer%"))) then
+					Registry.DeleteKey(HKEY_LOCAL_MACHINE, uninstallPath .. "\\" .. value);
+				end
 			end
 		end
 	end
@@ -4219,16 +4221,19 @@ else
 		-- Get pg installation folder
 		local pgBinPath = "";
 		local pgLibPath = "";
-		local tblPgInstalls = Registry.GetKeyNames(HKEY_LOCAL_MACHINE, "Software\\PostgreSQL\\Installations");
-		if (Table.Count(tblPgInstalls) &gt; 0) then
-			local higherPgVersion = "0.0.0";
-			for index, value in pairs(tblPgInstalls) do
-				local pgVersion = Registry.GetValue(HKEY_LOCAL_MACHINE, "Software\\PostgreSQL\\Installations\\" .. value, "CLT_Version", true);
-				if ((String.CompareFileVersions(pgVersion, "14.0.0") ~= -1) and (String.CompareFileVersions(pgVersion, higherPgVersion) ~= -1)) then
-					local pgInstallPath = Registry.GetValue(HKEY_LOCAL_MACHINE, "Software\\PostgreSQL\\Installations\\" .. value, "Base Directory", true);
-					pgBinPath = pgInstallPath .. "\\bin"
-					pgLibPath = pgInstallPath .. "\\lib"
-					higherPgVersion = pgVersion;
+		local tblPgInstalls = Registry.GetKeyNames(HKEY_LOCAL_MACHINE, "Software\\PostgreSQL\\Installations_");
+		
+		if (tblPgInstalls ~= nil) then	
+			if (Table.Count(tblPgInstalls) &gt; 0) then
+				local higherPgVersion = "0.0.0";
+				for index, value in pairs(tblPgInstalls) do
+					local pgVersion = Registry.GetValue(HKEY_LOCAL_MACHINE, "Software\\PostgreSQL\\Installations\\" .. value, "CLT_Version", true);
+					if ((String.CompareFileVersions(pgVersion, "14.0.0") ~= -1) and (String.CompareFileVersions(pgVersion, higherPgVersion) ~= -1)) then
+						local pgInstallPath = Registry.GetValue(HKEY_LOCAL_MACHINE, "Software\\PostgreSQL\\Installations\\" .. value, "Base Directory", true);
+						pgBinPath = pgInstallPath .. "\\bin"
+						pgLibPath = pgInstallPath .. "\\lib"
+						higherPgVersion = pgVersion;
+					end
 				end
 			end
 		end

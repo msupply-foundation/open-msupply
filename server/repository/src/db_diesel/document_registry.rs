@@ -5,7 +5,7 @@ use super::{
 };
 
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_sort_no_case},
+    diesel_macros::{apply_equal_filter, apply_sort, apply_sort_no_case},
     DocumentContext, DocumentRegistryConfig, DocumentRegistryRow, FormSchemaRow,
 };
 
@@ -82,7 +82,7 @@ impl<'a> DocumentRegistryRepository<'a> {
                     apply_sort_no_case!(query, sort, document_registry_dsl::document_type)
                 }
                 DocumentRegistrySortField::Context => {
-                    apply_sort_no_case!(query, sort, document_registry_dsl::context)
+                    apply_sort!(query, sort, document_registry_dsl::context)
                 }
             }
         } else {

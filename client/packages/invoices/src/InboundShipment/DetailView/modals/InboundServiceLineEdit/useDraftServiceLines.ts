@@ -46,7 +46,12 @@ export const useDraftServiceLines = () => {
   const update = (patch: RecordPatch<DraftInboundLine>) => {
     setDraftLines(currLines => {
       const newLines = currLines.map(line => {
-        if (line.id === patch.id) return { ...line, ...patch, isUpdated: true };
+        const taxAmount =
+          (patch.totalBeforeTax ?? 0) * ((patch.taxPercentage ?? 0) / 100);
+        const totalAfterTax = (patch.totalBeforeTax ?? 0) + taxAmount;
+        const newPatch = { ...patch, totalAfterTax };
+        if (line.id === patch.id)
+          return { ...line, ...newPatch, isUpdated: true };
         return line;
       });
       return newLines;

@@ -3,7 +3,7 @@ import {
   AlertIcon,
   BasicSpinner,
   Box,
-  DatePickerInput,
+  DateTimePickerInput,
   DialogButton,
   EncounterNodeStatus,
   InputWithLabelRow,
@@ -50,14 +50,12 @@ export const CreateEncounterModal: FC = () => {
     EncounterRegistryByProgram | undefined
   >();
   const [createdDatetime] = useState(new Date().toISOString());
-  const [isError, setIsError] = useState(false);
-
-  const [draft, setDraft] = useState<Encounter | undefined>({
-    createdDatetime: new Date().toISOString(),
-    createdBy: { id: user?.id ?? '', username: user?.name ?? '' },
-  });
+  const [dataError, setDataError] = useState(false);
+  const [draft, setDraft] = useState<Encounter | undefined>(undefined);
   const navigate = useNavigate();
   const { error } = useNotification();
+  const [startDateTimeError, setStartDateTimeError] = useState(false);
+  const [endDateTimeError, setEndDateTimeError] = useState(false);
 
   const handleSave = useEncounter.document.upsert(
     patientId,
@@ -69,7 +67,7 @@ export const CreateEncounterModal: FC = () => {
     selectModal(undefined);
     setEncounterRegistry(undefined);
     setDraft(undefined);
-    setIsError(false);
+    setDataError(false);
   };
 
   const { Modal } = useDialog({
@@ -78,30 +76,30 @@ export const CreateEncounterModal: FC = () => {
   });
 
   const onChangeEncounter = (entry: EncounterRegistryByProgram) => {
-    setIsError(false);
+    setDataError(false);
     setEncounterRegistry(entry);
   };
 
   const setStartDatetime = (date: Date | null): void => {
-    if (!date) return;
-
     const startDatetime = DateUtils.formatRFC3339(date);
-
-    if (startDatetime)
-      setDraft({
-        createdDatetime,
-        ...draft,
-        startDatetime,
-        status: DateUtils.isFuture(date)
+    setDraft({
+      createdDatetime,
+      ...draft,
+      startDatetime,
+      status:
+        date && DateUtils.isFuture(date)
           ? EncounterNodeStatus.Scheduled
+          : date && DateUtils.isPast(date)
+          ? EncounterNodeStatus.Missed
           : draft?.status,
-      });
+    });
+    setStartDateTimeError(false);
   };
 
   const setEndDatetime = (date: Date | null): void => {
-    const endDatetime = date ? DateUtils.formatRFC3339(date) : null;
-    if (endDatetime && draft?.startDatetime)
-      setDraft({ ...draft, endDatetime });
+    const endDatetime = DateUtils.formatRFC3339(date);
+    setDraft({ createdDatetime, ...draft, endDatetime });
+    setEndDateTimeError(false);
   };
 
   const setClinician = (option: ClinicianAutocompleteOption | null): void => {
@@ -113,6 +111,12 @@ export const CreateEncounterModal: FC = () => {
     setDraft({ createdDatetime, ...draft, clinician });
   };
 
+  const canSubmit = () =>
+    draft !== undefined &&
+    draft.startDatetime &&
+    !startDateTimeError &&
+    !endDateTimeError;
+
   return (
     <Modal
       title={t('label.new-encounter')}
@@ -120,7 +124,7 @@ export const CreateEncounterModal: FC = () => {
       okButton={
         <DialogButton
           variant={'create'}
-          disabled={draft === undefined}
+          disabled={!canSubmit()}
           onClick={async () => {
             if (encounterRegistry !== undefined) {
               const { id } = await handleSave(
@@ -151,7 +155,7 @@ export const CreateEncounterModal: FC = () => {
             }
           />
           <RenderForm
-            isError={isError}
+            isError={dataError}
             isLoading={false}
             isProgram={!!encounterRegistry}
             form={
@@ -159,22 +163,10 @@ export const CreateEncounterModal: FC = () => {
                 <InputWithLabelRow
                   label={t('label.visit-date')}
                   Input={
-                    <DatePickerInput
-                      value={DateUtils.getDateOrNull(
-                        draft?.startDatetime ?? null
-                      )}
+                    <DateTimePickerInput
+                      value={draft?.startDatetime ?? null}
                       onChange={setStartDatetime}
-                    />
-                  }
-                />
-                <InputWithLabelRow
-                  label={t('label.visit-start')}
-                  Input={
-                    <TimePickerInput
-                      value={DateUtils.getDateOrNull(
-                        draft?.startDatetime ?? null
-                      )}
-                      onChange={setStartDatetime}
+                      onError={() => setStartDateTimeError(true)}
                     />
                   }
                 />
@@ -182,11 +174,10 @@ export const CreateEncounterModal: FC = () => {
                   label={t('label.visit-end')}
                   Input={
                     <TimePickerInput
-                      value={DateUtils.getDateOrNull(
-                        draft?.endDatetime ?? null
-                      )}
+                      value={draft?.endDatetime ?? null}
                       disabled={draft?.startDatetime === undefined}
                       onChange={setEndDatetime}
+                      onError={() => setEndDateTimeError(true)}
                     />
                   }
                 />
