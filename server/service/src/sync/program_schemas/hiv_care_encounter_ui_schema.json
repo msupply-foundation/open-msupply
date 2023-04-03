@@ -737,6 +737,25 @@
     },
     {
       "type": "Category",
+      "label": "Pregnancy",
+      "options": {
+        "icon": "condom"
+      },
+      "elements": [
+        {
+          "type": "Control",
+          "label": "Pregnant:",
+          "scope": "#/properties/familyPlanning/properties/pregnant"
+        },
+        {
+          "type": "Control",
+          "label": "Contraception:",
+          "scope": "#/properties/familyPlanning/properties/contraception"
+        }
+      ]
+    },
+    {
+      "type": "Category",
       "label": "GBV",
       "options": {
         "title": "Gender Based Violence",
@@ -1061,16 +1080,16 @@
         {
           "type": "Control",
           "label": "HCV:",
-          "scope": "#/properties/hcvCrag/properties/hcv"
+          "scope": "#/properties/hcvCrAg/properties/hcv"
         },
         {
           "type": "Control",
           "label": "CrAg Result:",
-          "scope": "#/properties/hcvCrag/properties/crAgResult"
+          "scope": "#/properties/hcvCrAg/properties/crAgResult"
         },
         {
           "type": "Control",
-          "scope": "#/properties/hcvCrag/properties/crAgTitre"
+          "scope": "#/properties/hcvCrAg/properties/crAgTitre"
         }
       ]
     },

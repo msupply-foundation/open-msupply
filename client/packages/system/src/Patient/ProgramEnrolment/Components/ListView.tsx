@@ -17,14 +17,9 @@ import {
   ProgramEnrolmentRowFragmentWithId,
   usePatientModalStore,
   useProgramEnrolments,
-  ProgramEventFragment,
 } from '@openmsupply-client/programs';
 import { usePatient } from '../../api';
-
-const programEventCellValue = (events: ProgramEventFragment[]) => {
-  // just take the name of the first event
-  return events[0]?.data ?? '';
-};
+import { getStatusTranslation } from '../utils';
 
 const ProgramListComponent: FC = () => {
   const {
@@ -60,11 +55,9 @@ const ProgramListComponent: FC = () => {
         label: 'label.enrolment-patient-id',
       },
       {
-        key: 'events',
+        key: 'status',
         label: 'label.program-status',
-        formatter: events =>
-          programEventCellValue(events as ProgramEventFragment[]),
-        sortable: false,
+        accessor: row => t(getStatusTranslation(row.rowData?.status)),
       },
       {
         key: 'enrolmentDatetime',
@@ -109,7 +102,7 @@ const ProgramListComponent: FC = () => {
 
 export const ProgramListView: FC = () => (
   <TableProvider
-    createStore={createTableStore}
+    createStore={createTableStore()}
     queryParamsStore={createQueryParamsStore<ProgramEnrolmentRowFragmentWithId>(
       {
         initialSortBy: { key: 'type' },

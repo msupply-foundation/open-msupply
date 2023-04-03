@@ -4,7 +4,6 @@ import static android.content.Context.NSD_SERVICE;
 
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
-import android.os.Environment;
 import android.util.Log;
 import android.webkit.WebView;
 
@@ -22,10 +21,10 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.InetAddress;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Deque;
 
 import javax.net.ssl.SSLHandshakeException;
@@ -43,6 +42,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     boolean isDebug;
     boolean isAdvertising;
     String localUrl;
+    String serverUrl;
     boolean isDiscovering;
     boolean isResolvingServer;
     boolean shouldRestartDiscovery;
@@ -78,6 +78,10 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
 
     public String getLocalUrl() {
         return localUrl;
+    }
+
+    public String getServerUrl() {
+        return serverUrl;
     }
 
     private void sleep(int delay) {
@@ -133,6 +137,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
                 if (isServerRunning) {
                     webView.post(() -> webView.loadUrl(localUrl + "/android"));
                 } else {
+                    Log.e(OM_SUPPLY, "Server not running, displaying error page");
                     webView.post(() -> webView.loadData(ErrorPage.encodedHtml, "text/html", "base64"));
                 }
             }
@@ -159,13 +164,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         if (isAdvertising) {
             return;
         }
-        NsdServiceInfo serviceInfo = new NsdServiceInfo();
-        serviceInfo.setServiceName(discoveryConstants.SERVICE_NAME);
-        serviceInfo.setServiceType(discoveryConstants.SERVICE_TYPE);
-        serviceInfo.setPort(discoveryConstants.PORT);
-        serviceInfo.setAttribute(discoveryConstants.PROTOCOL_KEY, "https");
-        serviceInfo.setAttribute(discoveryConstants.CLIENT_VERSION_KEY, "unspecified");
-        serviceInfo.setAttribute(discoveryConstants.HARDWARE_ID_KEY, discoveryConstants.hardwareId);
+        NsdServiceInfo serviceInfo = createLocalServiceInfo();
 
         discoveryManager = (NsdManager) this.getActivity()
                 .getSystemService(NSD_SERVICE);
@@ -189,6 +188,8 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
                     }
                 });
         isAdvertising = true;
+        // See method comment
+        addLocalServerToDiscovery();
     }
 
     private void stopServerDiscovery() {
@@ -253,6 +254,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
 
         Bridge bridge = this.getBridge();
         WebView webView = bridge.getWebView();
+        this.serverUrl = url;
         // .post to run on UI thread
         webView.post(() -> webView.loadUrl(url));
     }
@@ -317,6 +319,34 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
 
     }
 
+    private NsdServiceInfo createLocalServiceInfo() {
+        NsdServiceInfo serviceInfo = new NsdServiceInfo();
+        serviceInfo.setServiceName(discoveryConstants.SERVICE_NAME);
+        serviceInfo.setServiceType(discoveryConstants.SERVICE_TYPE);
+        serviceInfo.setPort(discoveryConstants.PORT);
+        serviceInfo.setAttribute(discoveryConstants.PROTOCOL_KEY, "https");
+        serviceInfo.setAttribute(discoveryConstants.CLIENT_VERSION_KEY, "unspecified");
+        serviceInfo.setAttribute(discoveryConstants.HARDWARE_ID_KEY, discoveryConstants.hardwareId);
+       return serviceInfo;
+    }
+
+    // Had issues resolving local server when wifi and mobile data is off
+    // getting onResolveFailed with errorCode = 0 (internal error) with no more information
+    // manually adding this server should work
+    private void addLocalServerToDiscovery() {
+        if(isAdvertising && isDiscovering && discoveredServers != null) {
+            try {
+                NsdServiceInfo serviceInfo = createLocalServiceInfo();
+                serviceInfo.setHost(InetAddress.getByName("localhost"));
+                discoveredServers.put(serviceInfoToObject(serviceInfo));
+            } catch(Exception E) {
+                Log.d(OM_SUPPLY, "problem adding localhost to discovery");
+            }
+        }
+    }
+
+
+
     private String parseAttribute(NsdServiceInfo serviceInfo, String name) {
         byte[] attributeBytes = serviceInfo.getAttributes().get(name);
         if (attributeBytes == null) {
@@ -344,6 +374,8 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     @Override
     public void onDiscoveryStarted(String serviceType) {
         isDiscovering = true;
+        // See method comment
+        addLocalServerToDiscovery();
     }
 
     // NsdManager.DiscoveryListener
@@ -361,7 +393,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         StringBuilder sb = new StringBuilder();
 
         try {
-            File file = new File(MainActivity.logPath, LOG_FILE_NAME);
+            File file = new File(getContext().getFilesDir(), LOG_FILE_NAME);
             BufferedReader br = new BufferedReader(new FileReader(file));
             String line;
 

@@ -7,6 +7,8 @@ import {
   useMutation,
   useTranslation,
   BasicTextInput,
+  Button,
+  FormLabel,
 } from '@openmsupply-client/common';
 import {
   FORM_LABEL_COLUMN_WIDTH,
@@ -18,7 +20,6 @@ import {
   useProgramEnrolments,
   FORM_GAP,
 } from '@openmsupply-client/programs';
-import { Button, FormLabel } from '@mui/material';
 import { get as extractProperty } from 'lodash';
 import { z } from 'zod';
 import { useJsonForms } from '@jsonforms/react';

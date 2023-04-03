@@ -1,5 +1,4 @@
-import { Theme } from '@mui/material';
-import { SxProps } from '@mui/system';
+import { Theme, SxProps } from '@openmsupply-client/common';
 
 export const FORM_LABEL_WIDTH = 40;
 export const FORM_LABEL_COLUMN_WIDTH = `${FORM_LABEL_WIDTH}%`;

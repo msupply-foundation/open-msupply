@@ -309,6 +309,7 @@ fragment ProgramEnrolmentRow on ProgramEnrolmentNode {
   patientId
   name
   enrolmentDatetime
+  status
   document {
     documentRegistry {
       id
@@ -349,6 +350,7 @@ fragment ProgramEnrolment on ProgramEnrolmentNode {
   patientId
   name
   enrolmentDatetime
+  status
   document {
     ...Document
   }

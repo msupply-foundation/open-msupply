@@ -10,7 +10,13 @@ import {
   usePatientModalStore,
 } from '@openmsupply-client/programs';
 
-export const AddButton = () => {
+interface AddButtonProps {
+  disableEncounterButton: boolean;
+}
+
+export const AddButton: React.FC<AddButtonProps> = ({
+  disableEncounterButton,
+}) => {
   const t = useTranslation('patients');
   const { setModal: selectModal, reset } = usePatientModalStore();
   const options = [
@@ -27,7 +33,7 @@ export const AddButton = () => {
     {
       value: PatientModal.Encounter,
       label: t('button.add-encounter'),
-      isDisabled: false,
+      isDisabled: disableEncounterButton,
     },
   ];
 
