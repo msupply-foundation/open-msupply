@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { createContext, useMemo, useState, useEffect, FC } from 'react';
 import { AppRoute } from '@openmsupply-client/config';
 import { useLocalStorage } from '../localStorage';
@@ -80,19 +81,18 @@ export const setAuthCookie = (cookie: AuthCookie) => {
   Cookies.set('auth', JSON.stringify(authCookie), { expires });
 };
 
-const AuthContext = createContext<AuthControl>({
-  token: '',
+const authControl = {
   isLoggingIn: false,
-  login: () =>
-    new Promise(() => ({
-      token: '',
-    })),
+  login: (_username: string, _password: string) =>
+    new Promise<AuthenticationResponse>(() => ({ token: 'token' })),
   logout: () => {},
-  storeId: '',
-  setStore: () => new Promise(() => ({})),
-  userHasPermission: () => false,
-});
+  setStore: (_store: UserStoreNodeFragment) => new Promise<void>(() => ({})),
+  storeId: 'store-id',
+  token: '',
+  userHasPermission: (_permission: UserPermission) => false,
+};
 
+const AuthContext = createContext<AuthControl>(authControl);
 const { Provider } = AuthContext;
 
 export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {

@@ -4,7 +4,6 @@ import static android.content.Context.NSD_SERVICE;
 
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
-import android.os.Environment;
 import android.util.Log;
 import android.webkit.WebView;
 
@@ -26,7 +25,6 @@ import java.net.InetAddress;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Deque;
 
 import javax.net.ssl.SSLHandshakeException;
@@ -36,6 +34,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     private static final String LOG_FILE_NAME = "remote_server.log";
     public static final String OM_SUPPLY = "omSupply";
     private static final String DEFAULT_URL = "https://localhost:8000/";
+    private static final String CONFIGURATION_GROUP = "omSupply_preferences";
     DiscoveryConstants discoveryConstants;
     JSArray discoveredServers;
     Deque<NsdServiceInfo> serversToResolve;
@@ -81,6 +80,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     public String getLocalUrl() {
         return localUrl;
     }
+
     public String getServerUrl() {
         return serverUrl;
     }
@@ -328,25 +328,24 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         serviceInfo.setAttribute(discoveryConstants.PROTOCOL_KEY, "https");
         serviceInfo.setAttribute(discoveryConstants.CLIENT_VERSION_KEY, "unspecified");
         serviceInfo.setAttribute(discoveryConstants.HARDWARE_ID_KEY, discoveryConstants.hardwareId);
-       return serviceInfo;
+        return serviceInfo;
     }
 
     // Had issues resolving local server when wifi and mobile data is off
-    // getting onResolveFailed with errorCode = 0 (internal error) with no more information
+    // getting onResolveFailed with errorCode = 0 (internal error) with no more
+    // information
     // manually adding this server should work
     private void addLocalServerToDiscovery() {
-        if(isAdvertising && isDiscovering && discoveredServers != null) {
+        if (isAdvertising && isDiscovering && discoveredServers != null) {
             try {
                 NsdServiceInfo serviceInfo = createLocalServiceInfo();
                 serviceInfo.setHost(InetAddress.getByName("localhost"));
                 discoveredServers.put(serviceInfoToObject(serviceInfo));
-            } catch(Exception E) {
+            } catch (Exception E) {
                 Log.d(OM_SUPPLY, "problem adding localhost to discovery");
             }
         }
     }
-
-
 
     private String parseAttribute(NsdServiceInfo serviceInfo, String name) {
         byte[] attributeBytes = serviceInfo.getAttributes().get(name);
@@ -410,16 +409,20 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         }
         call.resolve(response);
     }
-
+   
     public class omSupplyServer {
         JSObject data;
-
+        
         public omSupplyServer(JSObject data) {
             this.data = data;
         }
 
         public String getUrl() {
-            return data.getString("protocol") + "://" + data.getString("ip") + ":" + data.getString("port");
+            String path = "";
+            if (data.getString("path") != null) {
+                path = "/" + data.getString("path");
+            }
+            return data.getString("protocol") + "://" + data.getString("ip") + ":" + data.getString("port") + path;
         }
 
         public boolean isLocal() {

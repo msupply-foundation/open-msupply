@@ -24,7 +24,6 @@ use self::{
 use super::{ListError, ListResult};
 use crate::service_provider::ServiceContext;
 
-use repository::PaginationOption;
 use repository::{RequisitionLine, RequisitionLineFilter};
 
 pub mod chart;
@@ -38,10 +37,9 @@ pub trait RequisitionLineServiceTrait: Sync + Send {
     fn get_requisition_lines(
         &self,
         ctx: &ServiceContext,
-        pagination: Option<PaginationOption>,
         filter: Option<RequisitionLineFilter>,
     ) -> Result<ListResult<RequisitionLine>, ListError> {
-        get_requisition_lines(ctx, pagination, filter)
+        get_requisition_lines(ctx, filter)
     }
 
     fn insert_request_requisition_line(

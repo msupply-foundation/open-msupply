@@ -5,7 +5,6 @@ use crate::{
     DBType, RequisitionRow, StorageConnection,
 };
 
-use crate::Pagination;
 use diesel::{
     dsl::{InnerJoin, IntoBoxed},
     prelude::*,
@@ -49,22 +48,18 @@ impl<'a> RequisitionLineRepository<'a> {
         &self,
         filter: RequisitionLineFilter,
     ) -> Result<Vec<RequisitionLine>, RepositoryError> {
-        self.query(Pagination::new(), Some(filter))
+        self.query(Some(filter))
     }
 
     pub fn query(
         &self,
-        pagination: Pagination,
         filter: Option<RequisitionLineFilter>,
     ) -> Result<Vec<RequisitionLine>, RepositoryError> {
         let mut query = create_filtered_query(filter)?;
 
         query = query.order(requisition_line_dsl::id.asc());
 
-        let result = query
-            .offset(pagination.offset as i64)
-            .limit(pagination.limit as i64)
-            .load::<RequisitionLineJoin>(&self.connection.connection)?;
+        let result = query.load::<RequisitionLineJoin>(&self.connection.connection)?;
 
         Ok(result
             .into_iter()

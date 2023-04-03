@@ -67,11 +67,11 @@ export const StockLineEditModal: FC<StockLineEditModalProps> = ({
   const tabs = [
     {
       Component: <StockLineForm draft={draft} onUpdate={onUpdate} />,
-      value: 'Details',
+      value: 'label.details',
     },
     {
       Component: <LogList recordId={draft?.id ?? ''} />,
-      value: 'Log',
+      value: 'label.log',
     },
   ];
 

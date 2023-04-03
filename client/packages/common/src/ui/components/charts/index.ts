@@ -29,3 +29,5 @@ export {
   XAxis,
   YAxis,
 };
+
+export * from './ValueBar';

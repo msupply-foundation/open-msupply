@@ -74,6 +74,7 @@ export function mapSyncError(
     [SyncErrorVariant.IntegrationTimeoutReached]:
       'error.integration-timeout-reached',
     [SyncErrorVariant.InvalidUrl]: 'error.invalid-url',
+    [SyncErrorVariant.ApiVersionIncompatible]: 'error.sync-api-incompatible',
     [SyncErrorVariant.Unknown]: defaultKey || 'error.unknown-sync-error',
   };
 

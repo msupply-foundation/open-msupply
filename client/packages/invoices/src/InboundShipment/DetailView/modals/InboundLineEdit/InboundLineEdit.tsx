@@ -106,7 +106,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
   const { next: nextItem, disabled: nextDisabled } = useInbound.document.next(
     currentItem?.id ?? ''
   );
-  const { Modal } = useDialog({ isOpen, onClose });
+  const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const height = useKeyboardHeightAdjustment(600);
   const { draftLines, addDraftLine, updateDraftLine, isLoading, saveLines } =
     useDraftInboundLines(currentItem);
@@ -120,7 +120,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
 
   return (
     <TableProvider
-      createStore={createTableStore}
+      createStore={createTableStore()}
       queryParamsStore={createQueryParamsStore({
         initialSortBy: { key: 'expiryDate' },
       })}

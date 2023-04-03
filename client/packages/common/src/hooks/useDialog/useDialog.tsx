@@ -33,11 +33,13 @@ export interface ModalProps {
   sx?: SxProps<Theme>;
   title: string;
 }
+
 export interface DialogProps {
   onClose?: () => void;
   isOpen?: boolean;
   animationTimeout?: number;
   disableBackdrop?: boolean;
+  disableEscapeKey?: boolean;
 }
 
 interface DialogState {
@@ -76,12 +78,28 @@ const useSlideAnimation = (isRtl: boolean, timeout: number) => {
   return { slideConfig, onTriggerSlide };
 };
 
+/**
+ * Hook to return a dialog component
+ *
+ * @param {DialogProps} dialogProps the dialog props. Properties are:
+ * @property {number} [animationTimeout=500] the timeout for the slide animation
+ * @property {boolean} [disableBackdrop=false] (optional) disable clicking the backdrop to close the modal
+ * @property {boolean} [disableEscape=false] (optional) disable pressing of the escape key to close the modal
+ * @property {boolean} isOpen (optional) is the modal open
+ * @property {function} onClose (optional) method to run on closing the modal
+ * @return {DialogState} the dialog state. Properties are:
+ * @property {function} hideDialog method to hide the dialog
+ * @property {ReactNode} Modal the modal component
+ * @property {boolean} open indicates if the modal is shown
+ * @property {function} showDialog method to show the dialog
+ */
 export const useDialog = (dialogProps?: DialogProps): DialogState => {
   const {
     onClose,
     isOpen,
     animationTimeout = 500,
-    disableBackdrop,
+    disableBackdrop = false,
+    disableEscapeKey = false,
   } = dialogProps ?? {};
   const [open, setOpen] = React.useState(false);
   const showDialog = () => setOpen(true);
@@ -92,13 +110,17 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
     if (isOpen != null) setOpen(isOpen);
   }, [isOpen]);
 
-  const handleClose = () => {
-    if (disableBackdrop) {
-      setOpen(true);
-    } else {
+  const handleClose = (_: Event, reason: 'escapeKeyDown' | 'backdropClick') => {
+    const canClose =
+      (!disableBackdrop && reason === 'backdropClick') ||
+      (!disableEscapeKey && reason === 'escapeKeyDown');
+
+    if (canClose) {
       onClose && onClose();
       hideDialog();
+      return;
     }
+    setOpen(true);
   };
 
   const ModalComponent: React.FC<ModalProps> = ({
@@ -153,6 +175,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
         height={dimensions.height}
         sx={sx}
         TransitionComponent={Transition}
+        disableEscapeKeyDown={false}
       >
         {title ? <ModalTitle title={title} /> : null}
         <DialogContent
