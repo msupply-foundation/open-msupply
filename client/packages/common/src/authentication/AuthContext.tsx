@@ -129,7 +129,6 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
   const storeIsMode = (storeMode: StoreModeNodeType) =>
     cookie?.store?.storeMode === storeMode;
 
-
   const val = useMemo(
     () => ({
       error,

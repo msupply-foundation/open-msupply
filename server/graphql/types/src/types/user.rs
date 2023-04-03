@@ -17,6 +17,7 @@ pub struct UserStoreNode {
 pub enum StoreModeNodeType {
     Store,
     Dispensary,
+    DrugRegistration,
 }
 
 #[Object]
@@ -154,6 +155,7 @@ impl StoreModeNodeType {
         match from {
             StoreMode::Store => Self::Store,
             StoreMode::Dispensary => Self::Dispensary,
+            StoreMode::DrugRegistration => Self::DrugRegistration,
         }
     }
 }

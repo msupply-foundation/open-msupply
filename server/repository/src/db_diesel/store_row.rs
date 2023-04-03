@@ -22,6 +22,7 @@ table! {
 pub enum StoreMode {
     Store,
     Dispensary,
+    DrugRegistration,
 }
 
 joinable!(store -> name (name_id));
