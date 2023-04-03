@@ -42,7 +42,7 @@ describe('AppBarContent', () => {
       <TestAppBarContent initialShow />
     );
 
-    const button = getByRole(/button/);
+    const button = getByRole('button');
 
     fireEvent.click(button);
 

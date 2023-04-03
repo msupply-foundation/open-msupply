@@ -86,6 +86,8 @@ export const CreateEncounterModal: FC = () => {
       status:
         date && DateUtils.isFuture(date)
           ? EncounterNodeStatus.Scheduled
+          : date && DateUtils.isPast(date)
+          ? EncounterNodeStatus.Missed
           : draft?.status,
     });
     setStartDateTimeError(false);

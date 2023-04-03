@@ -18,6 +18,7 @@ pub enum SyncLogRowErrorCode {
     SiteHasNoStore,
     SiteAuthTimeout,
     IntegrationTimeoutReached,
+    ApiVersionIncompatible,
 }
 
 table! {

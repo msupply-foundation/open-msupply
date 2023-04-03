@@ -5,9 +5,9 @@ use crate::sync::{
 use repository::{InventoryAdjustmentReasonRow, InventoryAdjustmentReasonType};
 
 const INVENTORY_ADJUSTMENT_REASON_1: (&'static str, &'static str) = (
-    "postive_adjustment",
+    "positive_adjustment",
     r#"{
-    "ID": "postive_adjustment",
+    "ID": "positive_adjustment",
     "type": "positiveInventoryAdjustment",
     "isActive": true,
     "title": "Found"

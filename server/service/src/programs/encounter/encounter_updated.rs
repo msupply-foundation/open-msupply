@@ -20,6 +20,7 @@ pub(crate) fn update_encounter_row(
             encounter_schema::EncounterStatus::Scheduled => EncounterStatus::Scheduled,
             encounter_schema::EncounterStatus::Completed => EncounterStatus::Completed,
             encounter_schema::EncounterStatus::Cancelled => EncounterStatus::Cancelled,
+            encounter_schema::EncounterStatus::Missed => EncounterStatus::Missed,
         })
     } else {
         None

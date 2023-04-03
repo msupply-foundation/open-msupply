@@ -1,9 +1,3 @@
-import {
-  Typography,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-} from '@mui/material';
 import { ChevronDownIcon } from '@common/icons';
 import React, { FC } from 'react';
 import ReactDiffViewer from 'react-diff-viewer';
@@ -11,6 +5,10 @@ import {
   BasicSpinner,
   Box,
   useFormatDateTime,
+  Typography,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from '@openmsupply-client/common';
 import { DocumentFragment, useDocument } from '../api';
 

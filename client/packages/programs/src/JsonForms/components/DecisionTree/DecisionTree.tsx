@@ -114,10 +114,10 @@ const matchCondition = (
   if (branch.equalTo !== undefined) {
     return branch.equalTo === fieldData;
   }
-  if (branch.greaterThan !== undefined) {
+  if (branch.greaterThan !== undefined && typeof fieldData === 'number') {
     return branch.greaterThan < fieldData;
   }
-  if (branch.lessThanOrEqualTo !== undefined) {
+  if (branch.lessThanOrEqualTo !== undefined && typeof fieldData === 'number') {
     return branch.lessThanOrEqualTo >= fieldData;
   }
   return false;

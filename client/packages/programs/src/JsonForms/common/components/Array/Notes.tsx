@@ -9,8 +9,8 @@ import {
   withJsonFormsArrayControlProps,
   withJsonFormsControlProps,
 } from '@jsonforms/react';
-import { Typography } from '@mui/material';
 import {
+  Typography,
   useTranslation,
   useFormatDateTime,
   BasicTextInput,

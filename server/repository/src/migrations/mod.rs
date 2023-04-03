@@ -3,6 +3,7 @@ mod v1_00_04;
 mod v1_01_01;
 mod v1_01_02;
 mod v1_01_03;
+mod v1_01_05;
 mod version;
 pub(crate) use self::types::*;
 use self::v1_00_04::V1_00_04;
@@ -12,7 +13,7 @@ use self::v1_01_03::V1_01_03;
 
 mod templates;
 
-pub(crate) use self::version::*;
+pub use self::version::*;
 
 use crate::{
     run_db_migrations, KeyValueStoreRepository, KeyValueType, RepositoryError, StorageConnection,
@@ -22,7 +23,9 @@ use thiserror::Error;
 
 pub(crate) trait Migration {
     fn version(&self) -> Version;
-    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()>;
+    fn migrate(&self, _: &StorageConnection) -> anyhow::Result<()> {
+        Ok(())
+    }
 }
 
 #[derive(Debug, Error)]
@@ -31,7 +34,7 @@ pub enum MigrationError {
     DatabaseVersionAboveAppVersion(Version, Version),
     #[error("Database version is pre release ({0}), it cannot be upgraded")]
     DatabaseVersionIsPreRelease(Version),
-    #[error("Migration version ({0}) is higher then app version ({1})")]
+    #[error("Migration version ({0}) is higher then app version ({1}), consider increasing app version in root package.json")]
     MigrationAboveAppVersion(Version, Version),
     #[error("Error during migration ({version})")]
     MigrationError {
@@ -60,6 +63,7 @@ pub fn migrate(
         Box::new(V1_01_01),
         Box::new(V1_01_02),
         Box::new(V1_01_03),
+        Box::new(v1_01_05::V1_01_05),
     ];
 
     // Historic diesel migrations

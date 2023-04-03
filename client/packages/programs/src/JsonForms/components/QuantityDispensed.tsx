@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { rankWith, ControlProps, uiTypeIs } from '@jsonforms/core';
 import { withJsonFormsControlProps, useJsonForms } from '@jsonforms/react';
-import { FormLabel, Box } from '@mui/material';
 import {
   useDebounceCallback,
   DateUtils,
   PositiveNumberInput,
   useFormatDateTime,
   useTranslation,
+  FormLabel,
+  Box,
 } from '@openmsupply-client/common';
 import {
   FORM_LABEL_COLUMN_WIDTH,
@@ -97,13 +98,21 @@ const UIComponent = (props: ControlProps) => {
   }, [core?.data, options]);
 
   const onChange = useDebounceCallback(
-    (value: number) => {
+    (value: number | undefined) => {
       // update events
       if (!options) {
         return;
       }
       if (baseTime === undefined) {
         throw Error('Unexpected error');
+      }
+      if (value === undefined) {
+        handleChange(path, undefined);
+        if (options.quantityPrescribedField)
+          handleChange(options.quantityPrescribedField, undefined);
+        if (options.endOfSupplyField)
+          handleChange(options.endOfSupplyField, undefined);
+        return;
       }
 
       handleChange(path, value);
@@ -206,8 +215,10 @@ const UIComponent = (props: ControlProps) => {
               sx: { '& .MuiInput-input': { textAlign: 'right' } },
             }}
             onChange={value => {
-              setLocalData(value);
-              onChange(value);
+              if (value !== undefined) {
+                setLocalData(value);
+                onChange(value);
+              }
             }}
             disabled={true}
             error={error}

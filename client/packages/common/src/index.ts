@@ -1,4 +1,4 @@
-import zustand, { UseStore, SetState } from 'zustand';
+import { create } from 'zustand';
 
 export {
   KBarProvider,
@@ -44,4 +44,4 @@ export * from './types';
 export * from './api';
 export * from './authentication';
 
-export { zustand, UseStore, SetState };
+export { create };

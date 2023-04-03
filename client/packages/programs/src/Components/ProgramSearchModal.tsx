@@ -94,11 +94,9 @@ const ProgramSearchComponent: FC<ProgramSearchProps> = ({
 
 export const ProgramSearchModal: FC<ProgramSearchProps> = props => (
   <QueryParamsProvider
-    createStore={() =>
-      createQueryParamsStore<DocumentRegistryWithChildrenFragment>({
-        initialSortBy: { key: 'documentType' },
-      })
-    }
+    createStore={createQueryParamsStore<DocumentRegistryWithChildrenFragment>({
+      initialSortBy: { key: 'documentType' },
+    })}
   >
     <ProgramSearchComponent {...props} />
   </QueryParamsProvider>
