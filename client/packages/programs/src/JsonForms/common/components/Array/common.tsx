@@ -268,7 +268,6 @@ export const ArrayCommonComponent = (props: ArrayControlCustomProps) => {
                   path={childPath}
                   renderers={renderers}
                 />
-                {/* <p>Empty note!</p> */}
               </AccordionDetails>
             </Accordion>
           );
