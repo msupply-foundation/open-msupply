@@ -15,6 +15,14 @@ rules.push({
 module.exports = {
   module: {
     rules,
+    parser: {
+      javascript: {
+        // https://github.com/webpack/webpack/issues/7378#issuecomment-1153032726
+        // https://webpack.js.org/configuration/module/#moduleparserjavascriptreexportexportspresence
+        // otherwise getting errors for re-export of types
+        reexportExportsPresence: false,
+      },
+    },
   },
   plugins: plugins,
   resolve: {

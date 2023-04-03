@@ -15,6 +15,7 @@ import {
   fromUnixTime,
   formatRelative,
   formatDistanceToNow,
+  formatRFC3339,
 } from 'date-fns';
 // importing individually to reduce bundle size
 // the date-fns methods are tree shaking correctly
@@ -52,8 +53,9 @@ const formatIfValid = (
 
 export const DateUtils = {
   differenceInMinutes,
-  getDateOrNull: (date?: string | null): Date | null => {
+  getDateOrNull: (date?: Date | string | null): Date | null => {
     if (!date) return null;
+    if (date instanceof Date) return date;
     const maybeDate = new Date(date);
     return isValid(maybeDate) ? maybeDate : null;
   },
@@ -68,6 +70,9 @@ export const DateUtils = {
   isAfter,
   isBefore,
   isEqual,
+  isValid,
+  formatRFC3339: (date: Date | null | undefined) =>
+    isValid(date) ? formatRFC3339(date as Date) : undefined,
 };
 
 const getLocale = (language: SupportedLocales) => {

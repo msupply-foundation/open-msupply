@@ -1,11 +1,12 @@
 {
 	"appId": "org.openmsupply.client",
 	"appName": "openmsupply-client",
-	"webDir": "notexistent",
+	"webDir": "../host/dist/",
 	"bundledWebRuntime": false,
 	"android": {
 		"path": "./",
-		"allowMixedContent": true
+		"allowMixedContent": true,
+		"useLegacyBridge": true
 	},
 	"server": {
 		"url": "https://localhost:8000",
