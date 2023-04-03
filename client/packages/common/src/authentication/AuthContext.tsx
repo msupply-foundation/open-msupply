@@ -7,7 +7,7 @@ import { useLogin, useGetUserPermissions, useRefreshToken } from './api/hooks';
 
 import { AuthenticationResponse } from './api';
 import { UserStoreNodeFragment } from './api/operations.generated';
-import { PropsWithChildrenOnly, UserPermission } from '@common/types';
+import { PropsWithChildrenOnly, StoreModeNodeType, UserPermission } from '@common/types';
 import { RouteBuilder } from '../utils/navigation';
 import { matchPath } from 'react-router-dom';
 import { useGql } from '../api';
@@ -57,6 +57,7 @@ interface AuthControl {
   token: string;
   user?: User;
   userHasPermission: (permission: UserPermission) => boolean;
+  storeIsMode: (storeMode: StoreModeNodeType) => boolean;
 }
 
 export const getAuthCookie = (): AuthCookie => {
@@ -125,6 +126,10 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
   const userHasPermission = (permission: UserPermission) =>
     cookie?.user?.permissions.some(p => p === permission) || false;
 
+  const storeIsMode = (storeMode: StoreModeNodeType) =>
+    cookie?.store?.storeMode === storeMode;
+
+
   const val = useMemo(
     () => ({
       error,
@@ -139,6 +144,7 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
       setStore,
       setError,
       userHasPermission,
+      storeIsMode,
     }),
     [
       login,
@@ -149,6 +155,7 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
       setStore,
       setError,
       userHasPermission,
+      storeIsMode,
     ]
   );
 
