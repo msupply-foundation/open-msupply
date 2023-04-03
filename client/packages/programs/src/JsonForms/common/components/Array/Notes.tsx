@@ -16,6 +16,7 @@ import {
   BasicTextInput,
   FlatButton,
   EditIcon,
+  ObjUtils,
 } from '@openmsupply-client/common';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../../hooks/useZodOptionsValidation';
@@ -155,6 +156,10 @@ const NotesComponent = (props: ArrayControlCustomProps) => {
       {...props}
       isElementEditable={isElementEditable}
       getItemLabel={getItemLabel}
+      checkIsError={(child: JsonData) => {
+        if (!child || !ObjUtils.isObject(child)) return false;
+        return !!child?.['invalid'] && !child?.['text'];
+      }}
       zOptions={NotesOptions}
     />
   );
@@ -191,24 +196,23 @@ const NoteComponent = (props: ControlProps) => {
     // TO-DO: Use full name for Author name once available in database
     const authorName = config.user?.name;
     const created = data?.created ?? new Date().toISOString();
-    handleChange(
-      path,
-      error
-        ? undefined
-        : {
-            text,
-            authorId,
-            authorName,
-            created,
-          }
-    );
+    if (text)
+      handleChange(
+        path,
+        error
+          ? undefined
+          : {
+              text,
+              authorId,
+              authorName,
+              created,
+            }
+      );
   };
   const { text, onChange } = useDebouncedTextInput(data.text, handleNoteChange);
   const [editMode, setEditMode] = useState(!text);
 
   const t = useTranslation('common');
-
-  const helperText = zErrors ?? errors;
 
   if (!props.visible) {
     return null;
@@ -236,15 +240,23 @@ const NoteComponent = (props: ControlProps) => {
         multiline
         rows={rows}
         onChange={e => onChange(e.target.value)}
-        onBlur={() => setEditMode(false)}
+        onBlur={() => {
+          setEditMode(false);
+          if (text === undefined || text === '')
+            // Intentionally setting an invalid response so it can be
+            // distinguished from a completely empty (also invalid) response for
+            // the purposes of error checking
+            handleChange(path, {
+              text,
+              invalid: true,
+            });
+        }}
         onFocus={e => (e.target.selectionStart = text?.length ?? 0)}
         inputProps={{
-          value: text ?? '',
+          value: text,
           name: 'text',
           sx: { margin: 0.5 },
           disabled: !props.enabled,
-          error,
-          helperText,
           FormHelperTextProps: error
             ? { sx: { color: 'error.main' } }
             : undefined,
