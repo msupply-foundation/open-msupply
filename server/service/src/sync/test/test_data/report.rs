@@ -21,7 +21,9 @@ const REPORT_1: (&'static str, &'static str) = (
         "editor": "omsupply",
         "orientation": "",
         "disabled": false,
-        "template": "template data"
+        "template": "template data",
+        "sub_context": "",
+        "form_schema_ID": ""
     }"#,
 );
 

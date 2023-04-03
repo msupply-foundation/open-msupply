@@ -122,12 +122,58 @@ fn store_2() -> TestSyncPullRecord {
     }
 }
 
+// Commented out since we're not dealing with HIS store mode right now
+// const STORE_3: (&'static str, &'static str) = (
+//     "2CD38EF518764ED79258961101100C3D",
+//     r#"{
+//     "ID": "2CD38EF518764ED79258961101100C3D",
+//     "name": "Hospital Info System",
+//     "code": "HIS",
+//     "name_ID": "",
+//     "mwks_export_mode": "",
+//     "IS_HIS": true,
+//     "sort_issues_by_status_spare": false,
+//     "disabled": false,
+//     "responsible_user_ID": "",
+//     "organisation_name": "",
+//     "address_1": "",
+//     "address_2": "",
+//     "logo": "",
+//     "sync_id_remote_site": 1,
+//     "address_3": "",
+//     "address_4": "",
+//     "address_5": "",
+//     "postal_zip_code": "",
+//     "store_mode": "his",
+//     "phone": "",
+//     "tags": "",
+//     "spare_user_1": "",
+//     "spare_user_2": "",
+//     "spare_user_3": "",
+//     "spare_user_4": "",
+//     "spare_user_5": "",
+//     "spare_user_6": "",
+//     "spare_user_7": "",
+//     "spare_user_8": "",
+//     "spare_user_9": "",
+//     "spare_user_10": "",
+//     "spare_user_11": "",
+//     "spare_user_12": "",
+//     "spare_user_13": "",
+//     "spare_user_14": "",
+//     "spare_user_15": "",
+//     "spare_user_16": "",
+//     "custom_data": null,
+//     "created_date": "2021-09-03"
+// }"#,
+// );
+
 const STORE_3: (&'static str, &'static str) = (
-    "9A3F71AA4C6D48649ADBC4B2966C5B9D",
+    "2CD38EF518764ED79258961101100C3D",
     r#"{
-    "ID": "9A3F71AA4C6D48649ADBC4B2966C5B9D",
-    "name": "Supervisor- All stores",
-    "code": "SM",
+    "ID": "2CD38EF518764ED79258961101100C3D",
+    "name": "Slytherin Clinic",
+    "code": "SLY",
     "name_ID": "",
     "mwks_export_mode": "",
     "IS_HIS": false,
@@ -143,64 +189,7 @@ const STORE_3: (&'static str, &'static str) = (
     "address_4": "",
     "address_5": "",
     "postal_zip_code": "",
-    "store_mode": "supervisor",
-    "phone": "",
-    "tags": "",
-    "spare_user_1": "",
-    "spare_user_2": "",
-    "spare_user_3": "",
-    "spare_user_4": "",
-    "spare_user_5": "",
-    "spare_user_6": "",
-    "spare_user_7": "",
-    "spare_user_8": "",
-    "spare_user_9": "",
-    "spare_user_10": "",
-    "spare_user_11": "",
-    "spare_user_12": "",
-    "spare_user_13": "",
-    "spare_user_14": "",
-    "spare_user_15": "",
-    "spare_user_16": "",
-    "custom_data": null,
-    "created_date": "0000-00-00"
-}"#,
-);
-
-fn store_3() -> TestSyncPullRecord {
-    TestSyncPullRecord {
-        translated_record: None,
-        sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-            r.table_name = LegacyTableName::STORE.to_owned();
-            r.record_id = STORE_3.0.to_owned();
-            r.data = STORE_3.1.to_owned();
-        }),
-        extra_data: None,
-    }
-}
-
-const STORE_4: (&'static str, &'static str) = (
-    "2CD38EF518764ED79258961101100C3D",
-    r#"{
-    "ID": "2CD38EF518764ED79258961101100C3D",
-    "name": "Hospital Info System",
-    "code": "HIS",
-    "name_ID": "",
-    "mwks_export_mode": "",
-    "IS_HIS": true,
-    "sort_issues_by_status_spare": false,
-    "disabled": false,
-    "responsible_user_ID": "",
-    "organisation_name": "",
-    "address_1": "",
-    "address_2": "",
-    "logo": "",
-    "sync_id_remote_site": 1,
-    "address_3": "",
-    "address_4": "",
-    "address_5": "",
-    "postal_zip_code": "",
-    "store_mode": "his",
+    "store_mode": "dispensary",
     "phone": "",
     "tags": "",
     "spare_user_1": "",
@@ -224,26 +213,26 @@ const STORE_4: (&'static str, &'static str) = (
 }"#,
 );
 
-fn store_4() -> TestSyncPullRecord {
+fn store_3() -> TestSyncPullRecord {
     TestSyncPullRecord {
         translated_record: None,
         sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
             r.table_name = LegacyTableName::STORE.to_owned();
-            r.record_id = STORE_4.0.to_owned();
-            r.data = STORE_4.1.to_owned();
+            r.record_id = STORE_3.0.to_owned();
+            r.data = STORE_3.1.to_owned();
         }),
         extra_data: None,
     }
 }
 
 pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
-    vec![store_1(), store_2(), store_3(), store_4()]
+    vec![store_1(), store_2(), store_3()]
 }
 
 pub(crate) fn test_pull_delete_records() -> Vec<TestSyncPullRecord> {
     vec![TestSyncPullRecord::new_pull_delete(
         LegacyTableName::STORE,
-        STORE_4.0,
+        STORE_3.0,
         PullDeleteRecordTable::Store,
     )]
 }

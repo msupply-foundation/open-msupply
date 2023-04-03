@@ -1,7 +1,8 @@
 CREATE TYPE store_mode AS ENUM
 (
     'STORE',
-    'DISPENSARY'
+    'DISPENSARY',
+    'DRUG_REGISTRATION'
 );
 
 ALTER TABLE store
