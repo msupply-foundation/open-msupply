@@ -22,6 +22,7 @@ import {
   useLocation,
   EnvUtils,
   UserPermission,
+  StoreModeNodeType,
 } from '@openmsupply-client/common';
 import { AppRoute, ExternalURL } from '@openmsupply-client/config';
 import {
@@ -141,7 +142,7 @@ export const AppDrawer: React.FC = () => {
   const t = useTranslation('app');
   const isMediumScreen = useIsMediumScreen();
   const drawer = useDrawer();
-  const { logout, userHasPermission, store } = useAuthContext();
+  const { logout, userHasPermission, storeIsMode } = useAuthContext();
   const location = useLocation();
 
   React.useEffect(() => {
@@ -195,7 +196,7 @@ export const AppDrawer: React.FC = () => {
           <ReplenishmentNav />
           <CatalogueNav />
           <InventoryNav />
-          <DispensaryNav visible={store?.storeMode === 'dispensary'}/>
+          <DispensaryNav visible={storeIsMode(StoreModeNodeType.Dispensary)}/>
 
           {/* <AppNavLink
             to={AppRoute.Tools}
