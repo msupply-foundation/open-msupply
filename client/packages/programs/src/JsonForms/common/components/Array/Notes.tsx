@@ -16,6 +16,7 @@ import {
   BasicTextInput,
   FlatButton,
   EditIcon,
+  ObjUtils,
 } from '@openmsupply-client/common';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../../hooks/useZodOptionsValidation';
@@ -155,9 +156,9 @@ const NotesComponent = (props: ArrayControlCustomProps) => {
       {...props}
       isElementEditable={isElementEditable}
       getItemLabel={getItemLabel}
-      checkIsError={(child: any) => {
-        if (!child) return false;
-        return child.invalid && !child?.text;
+      checkIsError={(child: JsonData) => {
+        if (!child || !ObjUtils.isObject(child)) return false;
+        return !!child?.['invalid'] && !child?.['text'];
       }}
       zOptions={NotesOptions}
     />
