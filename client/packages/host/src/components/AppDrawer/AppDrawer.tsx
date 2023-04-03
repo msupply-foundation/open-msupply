@@ -142,7 +142,7 @@ export const AppDrawer: React.FC = () => {
   const t = useTranslation('app');
   const isMediumScreen = useIsMediumScreen();
   const drawer = useDrawer();
-  const { logout, userHasPermission, storeIsMode } = useAuthContext();
+  const { logout, userHasPermission, store } = useAuthContext();
   const location = useLocation();
 
   React.useEffect(() => {
@@ -196,7 +196,7 @@ export const AppDrawer: React.FC = () => {
           <ReplenishmentNav />
           <CatalogueNav />
           <InventoryNav />
-          <DispensaryNav visible={storeIsMode(StoreModeNodeType.Dispensary)}/>
+          <DispensaryNav visible={store?.storeMode === StoreModeNodeType.Dispensary}/>
 
           {/* <AppNavLink
             to={AppRoute.Tools}
