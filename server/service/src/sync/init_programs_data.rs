@@ -45,6 +45,7 @@ mod hiv_testing_program {
                 referred_from: Default::default(),
                 partner_hiv_status: Default::default(),
                 mother: Default::default(),
+                notes: Default::default(),
             }
         }
     }
@@ -75,6 +76,7 @@ mod hiv_care_program {
                 previous_clinic_art_start_date: Default::default(),
                 date_transferred_in: Default::default(),
                 previous_clinic_id: Default::default(),
+                notes: Default::default(),
             }
         }
     }
