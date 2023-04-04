@@ -9,6 +9,8 @@ use crate::{
 };
 
 pub fn get_test_db_settings(db_name: &str) -> DatabaseSettings {
+    println!("get_test_db_settings() {}", db_name);
+
     DatabaseSettings {
         username: "postgres".to_string(),
         password: "password".to_string(),
@@ -19,7 +21,7 @@ pub fn get_test_db_settings(db_name: &str) -> DatabaseSettings {
         init_sql: None,
     }
 }
-     
+
 pub async fn setup(db_settings: &DatabaseSettings) -> StorageConnectionManager {
     setup_with_version(db_settings, None).await
 }
