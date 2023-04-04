@@ -118,6 +118,13 @@
         "mother": {
           "$ref": "#/definitions/HIVRelation"
         },
+        "notes": {
+          "description": "An overall note for additional comments about the program enrolment",
+          "items": {
+            "$ref": "#/definitions/Note"
+          },
+          "type": "array"
+        },
         "partnerHIVStatus": {
           "$ref": "#/definitions/HIVTestingStatus"
         },
@@ -215,7 +222,7 @@
           "type": "string"
         }
       },
-      "required": ["text", "created", "authorId", "authorName"],
+      "required": ["text"],
       "type": "object"
     },
     "Person": {
