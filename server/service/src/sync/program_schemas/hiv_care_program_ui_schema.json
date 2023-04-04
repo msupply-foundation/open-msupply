@@ -87,14 +87,7 @@
       "options": {
         "source": "user",
         "query": "patientByCode",
-        "saveFields": [
-          "id",
-          "code",
-          "firstName",
-          "lastName",
-          "dateOfBirth",
-          "gender"
-        ]
+        "saveFields": ["id", "code", "firstName", "lastName", "dateOfBirth", "gender"]
       }
     },
     {
@@ -195,10 +188,7 @@
               ["TRANSFER_IN", "Transfer in"],
               ["STI", "STI"],
               ["ANC", "ANC"],
-              [
-                "EXPOSED_INFANT_WELL_BABY_CLINIC",
-                "Exposed infant well baby clinic"
-              ],
+              ["EXPOSED_INFANT_WELL_BABY_CLINIC", "Exposed infant well baby clinic"],
               ["IN_PATIENT", "In patient"]
             ]
           }
@@ -250,6 +240,26 @@
                 "enum": ["TRANSFER_IN_WITH_RECORDS"]
               }
             }
+          }
+        }
+      ]
+    },
+    {
+      "type": "Group",
+      "label": "Notes",
+      "elements": [
+        {
+          "type": "Notes",
+          "label": "Patient Notes",
+          "scope": "#/properties/notes",
+          "options": {
+            "editRestrictions": {
+              "latest": true,
+              "isCurrentUser": true,
+              "maxAge": 1
+            },
+            "reverse": true,
+            "defaultExpanded": true
           }
         }
       ]
