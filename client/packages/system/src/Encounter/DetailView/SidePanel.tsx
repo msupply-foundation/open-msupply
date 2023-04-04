@@ -15,7 +15,11 @@ import {
   useAuthContext,
   BasicTextInput,
 } from '@openmsupply-client/common';
-import { EncounterFragment, useEncounter } from '@openmsupply-client/programs';
+import {
+  EncounterFragment,
+  NoteSchema,
+  useEncounter,
+} from '@openmsupply-client/programs';
 import { AppRoute } from '@openmsupply-client/config';
 
 const NUM_RECENT_ENCOUNTERS = 5;
@@ -24,9 +28,7 @@ interface SidePanelProps {
   encounter: EncounterFragment;
   onChange: (
     patch: Partial<EncounterFragment> & {
-      notes?: [
-        { authorId?: string; authorName: string; created: string; text: string }
-      ];
+      notes?: NoteSchema[];
       createdBy?: { username: string; id?: string };
     }
   ) => void;
@@ -105,10 +107,10 @@ export const SidePanel: FC<SidePanelProps> = ({ encounter, onChange }) => {
                   onChange({
                     notes: [
                       {
-                        authorId: user?.id ?? '',
-                        authorName: user?.name ?? '',
-                        created: encounter.startDatetime,
                         text: e.target.value ?? '',
+                        created: encounter.startDatetime,
+                        authorId: user?.id,
+                        authorName: user?.name,
                       } ?? null,
                     ],
                   });
