@@ -17,6 +17,12 @@ import { z } from 'zod';
 
 export const programEventTester = rankWith(10, uiTypeIs('ProgramEvent'));
 
+/**
+ * Program events work with specific encounters, or generically
+ * (by providing both a documentType and eventType). Encounters still
+ * need to be fetched from the api since some encounters
+ * require events to be filtered out by the encounter start datetime.
+ */
 const Options = z
   .object({
     /**
