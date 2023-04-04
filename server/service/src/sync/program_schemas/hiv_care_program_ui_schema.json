@@ -206,7 +206,7 @@
         {
           "type": "Control",
           "scope": "#/properties/priorART",
-          "label": "Prior ART:",
+          "label": "Prior exposure to ART:",
           "options": {
             "show": [
               ["TRANSFER_IN_WITH_RECORDS", "Transfer in with records"],
@@ -218,20 +218,39 @@
           }
         },
         {
-          "type": "Control",
-          "scope": "#/properties/clinicTransferredFrom"
-        },
-        {
-          "type": "Control",
-          "scope": "#/properties/previousClinicARTStartDate"
-        },
-        {
-          "type": "Control",
-          "scope": "#/properties/dateTransferredIn"
-        },
-        {
-          "type": "Control",
-          "scope": "#/properties/previousClinicId"
+          "type": "Group",
+          "elements": [
+            {
+              "type": "Control",
+              "scope": "#/properties/clinicTransferredFrom"
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/previousClinicARTId"
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/previousClinicARTStartDate"
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/dateTransferredIn"
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/previousClinicId",
+              "label": "Previous Program Id"
+            }
+          ],
+          "rule": {
+            "effect": "SHOW",
+            "condition": {
+              "scope": "#/properties/priorART",
+              "schema": {
+                "enum": ["TRANSFER_IN_WITH_RECORDS"]
+              }
+            }
+          }
         }
       ]
     }
