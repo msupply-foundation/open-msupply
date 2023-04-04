@@ -13,8 +13,6 @@ pub enum LegacyStoreMode {
     Store,
     #[serde(rename = "dispensary")]
     Dispensary,
-    #[serde(rename = "drug_registration")]
-    DrugRegistration,
 }
 
 #[allow(non_snake_case)]
@@ -66,7 +64,6 @@ impl SyncTranslation for StoreTranslation {
         let store_mode = match data.store_mode {
             LegacyStoreMode::Store => StoreMode::Store,
             LegacyStoreMode::Dispensary => StoreMode::Dispensary,
-            LegacyStoreMode::DrugRegistration => StoreMode::DrugRegistration,
         };
 
         let result = StoreRow {
