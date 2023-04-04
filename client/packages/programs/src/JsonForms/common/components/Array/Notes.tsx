@@ -29,6 +29,7 @@ import {
   ArrayCommonComponent,
 } from './';
 import { useDebouncedTextInput } from '../../hooks/useDebouncedTextInput';
+import { NoteSchema } from '../../../../schema_types';
 
 export const notesTester = rankWith(6, uiTypeIs('Notes'));
 
@@ -63,7 +64,7 @@ const NotesComponent = (props: ArrayControlCustomProps) => {
 
   const options = props.uischema.options;
 
-  const inputData = data ?? [];
+  const inputData = (data as unknown as NoteSchema[]) ?? [];
 
   // This injects the required details info so that the children of "Notes" will
   // be "Note" components without having to specify it specifically in the
@@ -85,15 +86,7 @@ const NotesComponent = (props: ArrayControlCustomProps) => {
   }
 
   const getItemLabel = (_: JsonData, index: number, isExpanded: boolean) => {
-    const {
-      text = '',
-      created,
-      authorName,
-    } = (inputData ? inputData[index] : {}) as {
-      text?: string;
-      created?: string;
-      authorName?: string;
-    };
+    const { text, created, authorName } = inputData[index] ?? { text: '' };
 
     return (
       <div>
@@ -203,12 +196,12 @@ const NoteComponent = (props: ControlProps) => {
         path,
         error
           ? undefined
-          : {
+          : ({
               text,
               authorId,
               authorName,
               created,
-            }
+            } as NoteSchema)
       );
   };
   const { text, onChange } = useDebouncedTextInput(data.text, handleNoteChange);
