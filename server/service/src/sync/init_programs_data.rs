@@ -120,7 +120,6 @@ mod hiv_care_encounter {
                 clinician: Default::default(),
                 created_by: Default::default(),
                 created_datetime: Default::default(),
-                created_by: Default::default(),
                 start_datetime: Default::default(),
                 status: Default::default(),
                 tuberculosis: Default::default(),
