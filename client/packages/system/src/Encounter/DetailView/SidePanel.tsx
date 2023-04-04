@@ -37,7 +37,7 @@ export const SidePanel: FC<SidePanelProps> = ({ encounter, onChange }) => {
     encounter.document.data?.notes?.[0]?.text ?? ''
   );
   const [createdBy, setCreatedBy] = useState(
-    encounter?.document?.data?.createdBy.username ?? ''
+    encounter?.document?.data?.createdBy?.username ?? ''
   );
   const { user } = useAuthContext();
   const { localisedDate } = useFormatDateTime();
@@ -69,7 +69,8 @@ export const SidePanel: FC<SidePanelProps> = ({ encounter, onChange }) => {
             <PanelField>
               <BasicTextInput
                 value={createdBy}
-                InputProps={{ sx: { fontSize: 'small' } }}
+                textAlign="right"
+                InputProps={{ sx: { fontSize: 12 } }}
                 onChange={e => {
                   setCreatedBy(e.target.value);
                   onChange({
