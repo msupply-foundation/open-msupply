@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { AppRoute } from '@openmsupply-client/config';
 import {
@@ -8,11 +8,13 @@ import {
   ErrorWithDetails,
   ExternalLinkIcon,
   getNativeAPI,
+  getPreference,
   NativeMode,
   RouteBuilder,
   Stack,
   Theme,
   Typography,
+  useAuthContext,
   useNativeClient,
   useNavigate,
 } from '@openmsupply-client/common';
@@ -67,10 +69,35 @@ const SubHeading = ({ text }: { text: string }) => (
   </Typography>
 );
 
+const ModeOption = ({
+  label,
+  mode,
+  message,
+  setMode,
+}: {
+  label: string;
+  mode: NativeMode;
+  message: string;
+  setMode: (mode: NativeMode) => void;
+}) => (
+  <Box display="flex" gap={2} alignItems="center">
+    <Box flex={0}>
+      <ButtonWithIcon
+        onClick={() => setMode(mode)}
+        Icon={<ExternalLinkIcon fontStyle="small" />}
+        label={label}
+        shouldShrink={false}
+      />
+    </Box>
+
+    <Typography component="div" sx={{ color: 'gray.main' }} flex={1}>
+      {message}
+    </Typography>
+  </Box>
+);
+
 export const Android = () => {
   const {
-    mode,
-    setMode,
     connectToPreviousTimedOut,
     previousServer,
     servers,
@@ -82,34 +109,19 @@ export const Android = () => {
   });
   const t = useTranslation('app');
   const navigate = useNavigate();
-  const ModeOption = ({
-    label,
-    mode,
-    message,
-  }: {
-    label: string;
-    mode: NativeMode;
-    message: string;
-  }) => (
-    <Box display="flex" gap={2} alignItems="center">
-      <Box flex={0}>
-        <ButtonWithIcon
-          onClick={() => setMode(mode)}
-          Icon={<ExternalLinkIcon fontStyle="small" />}
-          label={label}
-          shouldShrink={false}
-        />
-      </Box>
+  const { token } = useAuthContext();
+  const [mode, setLocalMode] = useState(NativeMode.None);
+  const { setMode } = useNativeClient();
 
-      <Typography component="div" sx={{ color: 'gray.main' }} flex={1}>
-        {message}
-      </Typography>
-    </Box>
-  );
+  const handleSetMode = (mode: NativeMode) => {
+    setMode(mode);
+    setLocalMode(mode);
+  };
 
   useEffect(() => {
     // this page is not for web users! begone!
     if (!getNativeAPI()) navigate(RouteBuilder.create(AppRoute.Login).build());
+    getPreference('mode', '"none"').then(setLocalMode);
   }, []);
 
   useEffect(() => {
@@ -122,7 +134,8 @@ export const Android = () => {
     if (mode === NativeMode.Server) {
       const localServer = servers.find(server => server.isLocal);
       if (localServer) {
-        connectToServer(localServer);
+        const path = !token ? 'login' : '';
+        connectToServer({ ...localServer, path });
       }
     }
   }, [mode, servers]);
@@ -130,7 +143,7 @@ export const Android = () => {
   useEffect(() => {
     if (
       mode === NativeMode.Client &&
-      (!previousServer || connectToPreviousTimedOut)
+      (!previousServer?.ip || connectToPreviousTimedOut)
     ) {
       navigate(
         RouteBuilder.create(AppRoute.Discovery)
@@ -140,7 +153,7 @@ export const Android = () => {
     }
   }, [mode, previousServer, connectToPreviousTimedOut]);
 
-  if (mode === null)
+  if (mode === NativeMode.None)
     return (
       <Viewport>
         <Stack
@@ -169,11 +182,13 @@ export const Android = () => {
               label={t('label.client')}
               mode={NativeMode.Client}
               message={t('messages.native-mode-client')}
+              setMode={handleSetMode}
             />
             <ModeOption
               label={t('label.server')}
               mode={NativeMode.Server}
               message={t('messages.native-mode-server')}
+              setMode={handleSetMode}
             />
           </Stack>
         </Stack>

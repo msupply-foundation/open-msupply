@@ -17,7 +17,7 @@ type Options = z.infer<typeof Options>;
 
 export const spacerTester = rankWith(3, uiTypeIs('Spacer'));
 
-const UIComponent = ({ uischema, errors }: ControlProps) => {
+const UIComponent = ({ uischema, errors, visible }: ControlProps) => {
   // Validates the option
   const { errors: zErrors, options: schemaOptions } = useZodOptionsValidation(
     Options,
@@ -37,6 +37,10 @@ const UIComponent = ({ uischema, errors }: ControlProps) => {
         </Typography>
       </>
     );
+
+  if (!visible) {
+    return null;
+  }
 
   return showDivider ? (
     <Divider margin={margin} />

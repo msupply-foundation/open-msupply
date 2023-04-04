@@ -6,7 +6,9 @@ import {
   Typography,
 } from '@mui/material';
 
-export type BasicTextInputProps = StandardTextFieldProps;
+export type BasicTextInputProps = StandardTextFieldProps & {
+  textAlign?: 'left' | 'center' | 'right';
+};
 
 /**
  * Very basic TextInput component with some simple styling applied where you can
@@ -14,14 +16,14 @@ export type BasicTextInputProps = StandardTextFieldProps;
  */
 
 export const BasicTextInput: FC<BasicTextInputProps> = React.forwardRef(
-  ({ sx, InputProps, error, required, ...props }, ref) => (
+  ({ sx, InputProps, error, required, textAlign, ...props }, ref) => (
     <Box display="flex" justifyContent="flex-end" alignItems="center">
       <TextField
         ref={ref}
         color="secondary"
         sx={{
           '& .MuiInput-underline:before': { borderBottomWidth: 0 },
-          '& .MuiInput-input': { color: 'gray.dark' },
+          '& .MuiInput-input': { color: 'gray.dark', textAlign },
           ...sx,
         }}
         variant="standard"

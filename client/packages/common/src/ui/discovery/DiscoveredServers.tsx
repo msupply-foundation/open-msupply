@@ -105,7 +105,7 @@ export const DiscoveredServers = ({
         {servers.map(server => (
           <DiscoveredServerWrapper
             key={`${server.hardwareId}${server.port}`}
-            server={server}
+            server={{ ...server, path: 'login' }}
             connect={connect}
           />
         ))}
