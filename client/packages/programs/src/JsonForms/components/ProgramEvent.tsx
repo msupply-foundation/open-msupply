@@ -15,23 +15,21 @@ import { EncounterFragment, useEncounter, useProgramEvents } from '../../api';
 
 import { z } from 'zod';
 
-/**
- *
- */
-
 export const programEventTester = rankWith(10, uiTypeIs('ProgramEvent'));
 
 const Options = z
   .object({
     /**
-     * This option should only be configured if the document is an encounter.
+     * This option should only be configured for encounters.
      * Time of the encounter event:
      * `before`: just before the current encounter
      * `at`: at the start of the current encounter
      * Default: `before`
      */
     encounterStartDatetime: z.enum(['before', 'at']).optional(),
-
+    /**
+     * Doesn't need to be specified for encounters.
+     */
     documentType: z.string().optional(),
     eventType: z.string(),
     /**
