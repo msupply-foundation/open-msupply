@@ -32,7 +32,7 @@ impl Loader<String> for RequisitionLinesByRequisitionIdLoader {
         let requisition_lines = self
             .service_provider
             .requisition_line_service
-            .get_requisition_lines(&service_context, None, Some(filter))
+            .get_requisition_lines(&service_context, Some(filter))
             .map_err(StandardGraphqlError::from_list_error)?;
 
         let mut result: HashMap<String, Vec<RequisitionLine>> = HashMap::new();
@@ -70,7 +70,7 @@ impl Loader<RequisitionAndItemId> for LinkedRequisitionLineLoader {
         let requisition_lines = self
             .service_provider
             .requisition_line_service
-            .get_requisition_lines(&service_context, None, Some(filter))
+            .get_requisition_lines(&service_context, Some(filter))
             .map_err(StandardGraphqlError::from_list_error)?;
 
         Ok(requisition_lines

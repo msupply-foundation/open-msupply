@@ -1,0 +1,1 @@
+ALTER TABLE store ADD COLUMN store_mode TEXT NOT NULL;

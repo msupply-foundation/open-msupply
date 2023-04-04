@@ -128,6 +128,9 @@
         "partnerHIVStatus": {
           "$ref": "#/definitions/HIVTestingStatus"
         },
+        "previousClinicARTId": {
+          "type": "string"
+        },
         "previousClinicARTStartDate": {
           "format": "date",
           "type": "string"
@@ -322,6 +325,9 @@
       "properties": {
         "education": {
           "description": "224293004 Education received in the past",
+          "type": "string"
+        },
+        "employmentStatus": {
           "type": "string"
         },
         "literate": {

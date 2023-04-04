@@ -155,9 +155,9 @@ async fn setup_data_migration(name: &str) -> StorageConnection {
         &connection,
         r#"
         INSERT INTO store 
-        (id, name_id, site_id, code) 
+        (id, name_id, site_id, code, store_mode) 
         VALUES 
-        ('store_id', 'name_id', 1, '');
+        ('store_id', 'name_id', 1, '', 'store');
     "#
     )
     .unwrap();
