@@ -203,6 +203,7 @@
   "log.invoice-created": "Shipment created",
   "log.user-logged-in": "User logged in",
   "log.invoic-deleted": "Shipment deleted",
+  "log.invoice-number-allocated": "Shipment number allocated",
   "log.invoice-status-allocated": "Shipment allocated",
   "log.invoice-status-picked": "Shipment picked",
   "log.invoice-status-shipped": "Shipment shipped",

@@ -63,7 +63,30 @@ impl ShipmentTransferProcessor for CreateInboundShipmentProcessor {
             return Ok(None);
         }
         // 4.
-        if linked_shipment.is_some() {
+        if let Some(inbound_shipment) = linked_shipment {
+            // If the invoice number has not been allocated by the generating store allocate it now.
+            // The name_id for the inbound_shipment is validated as
+            // belonging to a store on this site prior to processing of the record
+            if inbound_shipment.invoice_row.invoice_number == -1 {
+                let updated_invoice_row = InvoiceRow {
+                    invoice_number: next_number(
+                        connection,
+                        &NumberRowType::InboundShipment,
+                        &inbound_shipment.store_row.id,
+                    )?,
+                    ..inbound_shipment.invoice_row.clone()
+                };
+                // inbound_shipment.invoice_row.invoice_number = updated_invoice_row.invoice_number;
+
+                InvoiceRowRepository::new(connection).upsert_one(&updated_invoice_row)?;
+                system_activity_log_entry(
+                    connection,
+                    ActivityLogType::InvoiceNumberAllocated,
+                    &inbound_shipment.store_row.id,
+                    &inbound_shipment.invoice_row.id,
+                )?;
+            }
+
             return Ok(None);
         }
 

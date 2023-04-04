@@ -28,6 +28,7 @@ pub enum ActivityLogType {
     UserLoggedIn,
     InvoiceCreated,
     InvoiceDeleted,
+    InvoiceNumberAllocated,
     InvoiceStatusAllocated,
     InvoiceStatusPicked,
     InvoiceStatusShipped,
