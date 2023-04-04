@@ -4,16 +4,13 @@ import {
   Column,
   ColumnDescription,
   SortBy,
-  ProgramEnrolmentNodeStatus,
 } from '@openmsupply-client/common';
-import { useFormatDateTime, useTranslation } from '@common/intl';
+import { useFormatDateTime } from '@common/intl';
 import {
   ProgramEventFragment,
   EncounterRowFragment,
   useDocumentRegistry,
-  useProgramEnrolments,
 } from '@openmsupply-client/programs';
-import { getStatusTranslation } from '../../Patient/ProgramEnrolment/utils';
 
 const encounterEventCellValue = (events: ProgramEventFragment[]) => {
   // just take the name of the first event
@@ -32,11 +29,8 @@ export const useEncounterListColumns = ({
   includePatient = false,
 }: useEncounterListColumnsProps) => {
   const { localisedDate, localisedTime } = useFormatDateTime();
-  const t = useTranslation();
   const { data: documentRegistries } =
     useDocumentRegistry.get.documentRegistries();
-  const { data: programEnrolments } =
-    useProgramEnrolments.document.programEnrolments({});
   includePatient;
 
   const columnList: ColumnDescription<EncounterRowFragment>[] = [
@@ -89,22 +83,6 @@ export const useEncounterListColumns = ({
     sortable: false,
     formatter: events =>
       encounterEventCellValue((events as ProgramEventFragment[]) ?? []),
-  });
-  columnList.push({
-    key: 'program-status',
-    label: 'label.program-status',
-    sortable: false,
-    accessor: ({ rowData }) => {
-      const status = programEnrolments?.nodes?.find(
-        node =>
-          node.patientId === rowData.patient.id &&
-          node.program === rowData.program
-      )?.status;
-
-      return t(
-        getStatusTranslation(status ?? ProgramEnrolmentNodeStatus.Active)
-      );
-    },
   });
   columnList.push({
     key: 'effectiveStatus',
