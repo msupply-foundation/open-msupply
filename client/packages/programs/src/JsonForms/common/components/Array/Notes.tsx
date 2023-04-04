@@ -117,7 +117,9 @@ const NotesComponent = (props: ArrayControlCustomProps) => {
                 color: 'gray.dark',
               }}
             >
-              {created && `${authorName} (${localisedDateTime(created)})`}
+              {!!created && !!authorName
+                ? `${authorName} (${localisedDateTime(created)})`
+                : ''}
             </Typography>
           </Typography>
         ) : null}
