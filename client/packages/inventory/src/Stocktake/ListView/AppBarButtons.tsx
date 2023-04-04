@@ -8,6 +8,8 @@ import {
   SortBy,
   LoadingButton,
   ToggleState,
+  EnvUtils,
+  Platform,
 } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
 import { CreateStocktakeButton } from './CreateStocktakeButton';
@@ -43,6 +45,7 @@ export const AppBarButtons: FC<{
           variant="outlined"
           isLoading={isLoading}
           onClick={csvExport}
+          disabled={EnvUtils.platform === Platform.Android}
         >
           {t('button.export')}
         </LoadingButton>

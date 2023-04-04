@@ -90,24 +90,20 @@ export const useNativeClient = ({
     return result.log || noResult;
   };
 
-  const allowSleep = () => {
+  const allowSleep = async () => {
     // Currently only supported on native platforms via capacitor
     if (!Capacitor.isNativePlatform) return;
 
-    (async () => {
-      const result = await KeepAwake.isSupported();
-      if (result.isSupported) await KeepAwake.allowSleep();
-    })();
+    const result = await KeepAwake.isSupported();
+    if (result.isSupported) await KeepAwake.allowSleep();
   };
 
-  const keepAwake = () => {
+  const keepAwake = async () => {
     // Currently only supported on native platforms via capacitor
     if (!Capacitor.isNativePlatform) return;
 
-    (async () => {
-      const result = await KeepAwake.isSupported();
-      if (result.isSupported) await KeepAwake.keepAwake();
-    })();
+    const result = await KeepAwake.isSupported();
+    if (result.isSupported) await KeepAwake.keepAwake();
   };
 
   useEffect(() => {
