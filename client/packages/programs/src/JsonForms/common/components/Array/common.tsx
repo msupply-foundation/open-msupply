@@ -186,6 +186,7 @@ export const ArrayCommonComponent = (props: ArrayControlCustomProps) => {
         </Box>
         <Box width={FORM_INPUT_COLUMN_WIDTH} textAlign="right">
           <IconButton
+            disabled={!enabled}
             icon={<PlusCircleIcon />}
             label={t('label.add-another')}
             color="primary"

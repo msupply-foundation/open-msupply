@@ -38,6 +38,7 @@ const FirstItemArrayComponent = (props: FirstItemArrayControlCustomProps) => {
     schema,
     path,
     enabled,
+    visible,
     label,
     rootSchema,
     renderers,
@@ -57,6 +58,8 @@ const FirstItemArrayComponent = (props: FirstItemArrayControlCustomProps) => {
       ),
     [uischemas, schema, uischema.scope, path, uischema, rootSchema]
   );
+
+  if (!visible) return null;
 
   const childPath = composePaths(path, `${0}`);
   return (
