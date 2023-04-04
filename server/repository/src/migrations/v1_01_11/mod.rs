@@ -13,20 +13,10 @@ impl Migration for V1_01_11 {
             r#"
             CREATE TABLE store_tag (
                 id TEXT NOT NULL PRIMARY KEY,
-                name TEXT NOT NULL
-            );
-            "#
-        )?;
-
-        // Store Tag Join
-        sql!(
-            connection,
-            r#"
-            CREATE TABLE store_tag_join (
-                id TEXT NOT NULL PRIMARY KEY,
                 store_id TEXT NOT NULL REFERENCES store(id),
-                store_tag_id TEXT NOT NULL REFERENCES store_tag(id)
+                tag_name TEXT NOT NULL
             );
+            CREATE UNIQUE INDEX store_tag_store_id_tag_name ON store_tag (store_id, tag_name);
             "#
         )?;
 
@@ -73,7 +63,7 @@ impl Migration for V1_01_11 {
             r#"
             CREATE TABLE program_settings (
                 id TEXT NOT NULL PRIMARY KEY,
-                store_tag_id TEXT NOT NULL REFERENCES store_tag(id),
+                tag_name TEXT NOT NULL,
                 program_id TEXT NOT NULL REFERENCES program(id),
                 period_schedule_id TEXT NOT NULL REFERENCES period_schedule(id)
             );
@@ -116,9 +106,4 @@ async fn migration_1_10_11() {
     .await;
 
     assert_eq!(get_database_version(&connection), version);
-
-    // Repository tests should check that rows can be inserted and queried
-    // Also repository test can check for enum mapping, see sync_log_row.rs, use of EnumIter
-
-    // Data test should only be done in migrations when data is migrated
 }
