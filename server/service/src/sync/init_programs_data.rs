@@ -75,6 +75,7 @@ mod hiv_care_program {
                 previous_clinic_art_start_date: Default::default(),
                 date_transferred_in: Default::default(),
                 previous_clinic_id: Default::default(),
+                previous_clinic_art_id: Default::default(),
             }
         }
     }
@@ -90,6 +91,7 @@ mod hiv_testing_encounter {
                 end_datetime: Default::default(),
                 clinician: Default::default(),
                 created_datetime: Default::default(),
+                created_by: Default::default(),
                 start_datetime: Default::default(),
                 status: Default::default(),
                 htc_register_serial_number: None,

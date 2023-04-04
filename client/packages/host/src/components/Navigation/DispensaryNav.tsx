@@ -11,15 +11,20 @@ import {
 import { AppRoute } from '@openmsupply-client/config';
 import { useNestedNav } from './useNestedNav';
 
-export const DispensaryNav: FC = () => {
+export interface DispensaryNavProps {
+  visible?: boolean;
+}
+
+export const DispensaryNav: FC<DispensaryNavProps> = ({ visible = false }) => {
   const { isActive } = useNestedNav(
     RouteBuilder.create(AppRoute.Dispensary).addWildCard().build()
   );
   const t = useTranslation('app');
 
   return (
-    <AppNavSection isActive={isActive} to={AppRoute.Dispensary}>
+    <AppNavSection isActive={visible} to={AppRoute.Dispensary}>
       <AppNavLink
+        visible={visible}
         end={false}
         to={AppRoute.Dispensary}
         icon={<CustomersIcon color="primary" fontSize="small" />}
@@ -29,6 +34,7 @@ export const DispensaryNav: FC = () => {
       <Collapse in={isActive}>
         <List>
           <AppNavLink
+            visible={visible}
             end
             to={RouteBuilder.create(AppRoute.Dispensary)
               .addPart(AppRoute.Patients)
@@ -36,6 +42,7 @@ export const DispensaryNav: FC = () => {
             text={t('patients')}
           />
           <AppNavLink
+            visible={visible}
             end
             to={RouteBuilder.create(AppRoute.Dispensary)
               .addPart(AppRoute.Encounter)
@@ -43,6 +50,7 @@ export const DispensaryNav: FC = () => {
             text={t('encounter')}
           />
           <AppNavLink
+            visible={visible}
             end
             to={RouteBuilder.create(AppRoute.Dispensary)
               .addPart(AppRoute.Reports)

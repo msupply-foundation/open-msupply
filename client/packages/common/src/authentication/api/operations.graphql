@@ -2,6 +2,7 @@ fragment UserStoreNode on UserStoreNode {
   code
   id
   name
+  storeMode
 }
 
 query authToken($username: String!, $password: String!) {

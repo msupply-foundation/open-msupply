@@ -88,6 +88,7 @@ const UIComponent = (props: ControlProps) => {
           inputFormat="dd/MM/yyyy"
           InputProps={{ style: { width: 135 } }}
           disableFuture
+          disabled={!props.enabled}
         />
         <Box
           flex={0}

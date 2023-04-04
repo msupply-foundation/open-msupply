@@ -13,10 +13,10 @@ import {
   RouteBuilder,
   InlineSpinner,
   useAuthContext,
+  BasicTextInput,
 } from '@openmsupply-client/common';
 import { EncounterFragment, useEncounter } from '@openmsupply-client/programs';
 import { AppRoute } from '@openmsupply-client/config';
-import { getClinicianName } from '../../Clinician';
 
 const NUM_RECENT_ENCOUNTERS = 5;
 
@@ -27,6 +27,7 @@ interface SidePanelProps {
       notes?: [
         { authorId?: string; authorName: string; created: string; text: string }
       ];
+      createdBy?: { username: string; id?: string };
     }
   ) => void;
 }
@@ -34,6 +35,9 @@ interface SidePanelProps {
 export const SidePanel: FC<SidePanelProps> = ({ encounter, onChange }) => {
   const [encounterNote, setEncounterNote] = useState(
     encounter.document.data?.notes?.[0]?.text ?? ''
+  );
+  const [createdBy, setCreatedBy] = useState(
+    encounter?.document?.data?.createdBy?.username ?? ''
   );
   const { user } = useAuthContext();
   const { localisedDate } = useFormatDateTime();
@@ -61,12 +65,30 @@ export const SidePanel: FC<SidePanelProps> = ({ encounter, onChange }) => {
       <DetailPanelSection title={t('label.additional-info')}>
         <Grid container gap={0.5} key="additional-info">
           <PanelRow>
-            <PanelLabel>{t('label.clinician')}</PanelLabel>
+            <PanelLabel>{t('label.entered-by')}</PanelLabel>
             <PanelField>
-              {getClinicianName(encounter.document.data.clinician)}
+              <BasicTextInput
+                value={createdBy}
+                textAlign="right"
+                InputProps={{ sx: { fontSize: 12 } }}
+                onChange={e => {
+                  setCreatedBy(e.target.value);
+                  onChange({
+                    createdBy: {
+                      username: e.target.value,
+                      id: user?.id ?? undefined,
+                    },
+                  });
+                }}
+              />
             </PanelField>
           </PanelRow>
-
+          <PanelRow>
+            <PanelLabel>{t('label.entered-on')}</PanelLabel>
+            <PanelField>
+              {localisedDate(encounter?.document?.data?.createdDatetime)}
+            </PanelField>
+          </PanelRow>
           <PanelRow>
             <PanelLabel>{t('label.visit-date')}</PanelLabel>
             <PanelField>{localisedDate(encounter.startDatetime)}</PanelField>
@@ -110,6 +132,7 @@ export const SidePanel: FC<SidePanelProps> = ({ encounter, onChange }) => {
                     .addPart(AppRoute.Encounter)
                     .addPart(enc.id)
                     .build()}
+                  target="_blank"
                   style={enc.id === encounter.id ? { fontWeight: 'bold' } : {}}
                 >
                   {localisedDate(enc.startDatetime)}

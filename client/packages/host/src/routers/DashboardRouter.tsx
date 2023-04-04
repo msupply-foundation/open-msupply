@@ -11,8 +11,8 @@ const fullDashboardPath = RouteBuilder.create(AppRoute.Dashboard).build();
 export const DashboardRouter: FC = () => {
   if (useMatch(fullDashboardPath)) {
     return <DashboardService />;
-  } else {
-    const notFoundRoute = RouteBuilder.create(AppRoute.PageNotFound).build();
-    return <Navigate to={notFoundRoute} />;
   }
+
+  const notFoundRoute = RouteBuilder.create(AppRoute.PageNotFound).build();
+  return <Navigate to={notFoundRoute} />;
 };
