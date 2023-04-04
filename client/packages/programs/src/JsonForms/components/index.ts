@@ -7,4 +7,4 @@ export * from './IdGenerator';
 export * from './PreviousEncounterField';
 export * from './QuantityDispensed';
 export * from './Search/Search';
-export * from './EncounterProgramEvent';
+export * from './ProgramEvent';

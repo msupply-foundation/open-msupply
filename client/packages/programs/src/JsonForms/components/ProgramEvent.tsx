@@ -15,24 +15,25 @@ import { EncounterFragment, useEncounter, useProgramEvents } from '../../api';
 
 import { z } from 'zod';
 
-export const encounterProgramEventTester = rankWith(
-  10,
-  uiTypeIs('EncounterProgramEvent')
-);
+/**
+ *
+ */
+
+export const programEventTester = rankWith(10, uiTypeIs('ProgramEvent'));
 
 const Options = z
   .object({
     /**
-     * Time of the program event:
+     * This option should only be configured if the document is an encounter.
+     * Time of the encounter event:
      * `before`: just before the current encounter
-     * `start`: at the start of the current encounter
+     * `at`: at the start of the current encounter
      * Default: `before`
      */
-    at: z.enum(['before', 'start']).optional(),
+    encounterStartDatetime: z.enum(['before', 'at']).optional(),
+
     documentType: z.string().optional(),
     eventType: z.string(),
-    multiline: z.boolean().optional(),
-    rows: z.number().optional(),
     /**
      * Display option based on type.
      */
@@ -41,6 +42,8 @@ const Options = z
         z.object({ type: z.literal('number') }),
         z.object({
           type: z.literal('string'),
+          multiline: z.boolean().optional(),
+          rows: z.number().optional(),
           show: z.array(
             z
               .tuple([z.string(), z.string().optional()])
@@ -58,20 +61,20 @@ const extractAt = (encounter?: EncounterFragment, options?: Options): Date => {
     return new Date();
   }
   const beforeDate = new Date(new Date(encounter.startDatetime).getTime() - 1);
-  if (!options || !options.at) {
+  if (!options || !options.encounterStartDatetime) {
     return beforeDate;
   }
 
-  switch (options.at) {
+  switch (options.encounterStartDatetime) {
     case 'before': {
       return beforeDate;
     }
-    case 'start': {
+    case 'at': {
       return new Date(encounter.startDatetime);
     }
     default:
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      ((_: never) => {})(options.at);
+      ((_: never) => {})(options.encounterStartDatetime);
   }
   return new Date();
 };
@@ -101,21 +104,19 @@ const UIComponent = (props: ControlProps) => {
 
   const encounterId = useEncounter.utils.idFromUrl();
   const { data: currentEncounter } = useEncounter.document.byId(encounterId);
-  const patientId = config?.documentName?.split('/')[1];
+  const patientId = config?.patientId;
 
   const { data: events } = useProgramEvents.document.list({
     at: currentEncounter ? extractAt(currentEncounter, options) : undefined,
-    patientId: currentEncounter
-      ? currentEncounter?.patient?.id
-      : patientId ?? '',
+    patientId: patientId ?? '',
     filter: {
       type: {
         equalTo: options?.eventType,
       },
       documentType: {
-        equalTo: currentEncounter
-          ? currentEncounter?.type
-          : options?.documentType,
+        equalTo: options?.documentType
+          ? options?.documentType
+          : currentEncounter?.type,
       },
     },
     page: {
@@ -124,8 +125,9 @@ const UIComponent = (props: ControlProps) => {
   });
   const event = events?.nodes[0];
 
-  const multiline = options?.multiline !== false;
-  const rows = options?.rows;
+  const multiline =
+    options?.display?.type === 'string' ? options?.display?.multiline : false;
+  const rows = options?.display?.type === 'string' ? options?.display?.rows : 1;
 
   if (!props.visible) {
     return null;
@@ -180,4 +182,4 @@ const UIComponent = (props: ControlProps) => {
 /**
  * Shows a value from the program events
  */
-export const EncounterProgramEvent = withJsonFormsControlProps(UIComponent);
+export const ProgramEvent = withJsonFormsControlProps(UIComponent);
