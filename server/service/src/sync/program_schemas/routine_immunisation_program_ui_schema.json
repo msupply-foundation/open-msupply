@@ -17,8 +17,28 @@
       }
     },
     {
-      "type": "Control",
-      "scope": "#/properties/enrolmentPatientId"
+      "type": "IdGenerator",
+      "label": "Patient Program Id",
+      "scope": "#/properties/programEnrolmentId",
+      "options": {
+        "parts": [
+          {
+            "type": "StoreName",
+            "mutations": [{ "firstNChars": 3 }, { "toUpperCase": true }]
+          },
+          {
+            "type": "Number",
+            "numberName": "HIVProgram",
+            "mutations": [{ "padString": "0000" }]
+          }
+        ],
+        "allowManualEntry": true,
+        "validations": [
+          {
+            "type": "UniqueEnrolmentId"
+          }
+        ]
+      }
     },
     {
       "type": "Control",
@@ -33,8 +53,24 @@
       "scope": "#/properties/placeOfBirth"
     },
     {
-      "type": "Control",
-      "scope": "#/properties/note"
+      "type": "Group",
+      "label": "Notes",
+      "elements": [
+        {
+          "type": "Notes",
+          "label": "Patient Notes",
+          "scope": "#/properties/notes",
+          "options": {
+            "editRestrictions": {
+              "latest": true,
+              "isCurrentUser": true,
+              "maxAge": 1
+            },
+            "reverse": true,
+            "defaultExpanded": true
+          }
+        }
+      ]
     }
   ]
 }
