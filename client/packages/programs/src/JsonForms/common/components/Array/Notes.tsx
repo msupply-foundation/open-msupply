@@ -64,7 +64,7 @@ const NotesComponent = (props: ArrayControlCustomProps) => {
 
   const options = props.uischema.options;
 
-  const inputData = (data as unknown as NoteSchema[]) ?? [];
+  const inputData = (data as NoteSchema[]) ?? [];
 
   // This injects the required details info so that the children of "Notes" will
   // be "Note" components without having to specify it specifically in the
