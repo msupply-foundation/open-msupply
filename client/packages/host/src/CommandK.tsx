@@ -14,6 +14,9 @@ import {
   KBarPositioner,
   KBarPortal,
   PropsWithChildrenOnly,
+  useAuthContext,
+  UserPermission,
+  StoreModeNodeType,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { Action } from 'kbar/lib/types';
@@ -81,6 +84,8 @@ export const CommandK: FC<PropsWithChildrenOnly> = ({ children }) => {
   const navigate = useNavigate();
   const drawer = useDrawer();
   const t = useTranslation('app');
+  const { store, logout, userHasPermission } = useAuthContext();
+
   const actions = [
     {
       id: 'navigation-drawer:toggle',
@@ -169,18 +174,6 @@ export const CommandK: FC<PropsWithChildrenOnly> = ({ children }) => {
         ),
     },
     {
-      id: 'navigation:patients',
-      name: `${t('cmdk.goto-patients')} (p)`,
-      keywords: 'patient',
-      shortcut: ['p'],
-      perform: () =>
-        navigate(
-          RouteBuilder.create(AppRoute.Dispensary)
-            .addPart(AppRoute.Patients)
-            .build()
-        ),
-    },
-    {
       id: 'navigation:suppliers',
       name: `${t('cmdk.goto-suppliers')} (g+s)`,
       keywords: 'suppliers',
@@ -240,7 +233,42 @@ export const CommandK: FC<PropsWithChildrenOnly> = ({ children }) => {
             .build()
         ),
     },
+    {
+      id: 'action:logout',
+      name: `${t('logout')}`,
+      shortcut: ['g', 'm'],
+      keywords: 'logout',
+      perform: () => {
+        logout();
+        navigate(RouteBuilder.create(AppRoute.Login).build());
+      },
+    },
   ];
+
+  if (userHasPermission(UserPermission.ServerAdmin)) {
+    actions.push({
+      id: 'navigation:admin',
+      name: `${t('admin')} (a)`,
+      shortcut: ['a'],
+      keywords: 'admin',
+      perform: () => navigate(RouteBuilder.create(AppRoute.Admin).build()),
+    });
+  }
+
+  if (store?.storeMode === StoreModeNodeType.Dispensary) {
+    actions.push({
+      id: 'navigation:patients',
+      name: `${t('cmdk.goto-patients')} (p)`,
+      keywords: 'patient',
+      shortcut: ['p'],
+      perform: () =>
+        navigate(
+          RouteBuilder.create(AppRoute.Dispensary)
+            .addPart(AppRoute.Patients)
+            .build()
+        ),
+    });
+  }
 
   const sortedActions = actions.sort(actionSorter);
   return (
