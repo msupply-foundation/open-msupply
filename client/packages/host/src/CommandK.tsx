@@ -15,6 +15,7 @@ import {
   KBarPortal,
   PropsWithChildrenOnly,
   useAuthContext,
+  UserPermission,
   StoreModeNodeType,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
@@ -83,7 +84,7 @@ export const CommandK: FC<PropsWithChildrenOnly> = ({ children }) => {
   const navigate = useNavigate();
   const drawer = useDrawer();
   const t = useTranslation('app');
-  const { store } = useAuthContext();
+  const { store, logout, userHasPermission } = useAuthContext();
 
   const actions = [
     {
@@ -232,7 +233,27 @@ export const CommandK: FC<PropsWithChildrenOnly> = ({ children }) => {
             .build()
         ),
     },
+    {
+      id: 'action:logout',
+      name: `${t('logout')}`,
+      shortcut: ['g', 'm'],
+      keywords: 'logout',
+      perform: () => {
+        logout();
+        navigate(RouteBuilder.create(AppRoute.Login).build());
+      },
+    },
   ];
+
+  if (userHasPermission(UserPermission.ServerAdmin)) {
+    actions.push({
+      id: 'navigation:admin',
+      name: `${t('admin')} (a)`,
+      shortcut: ['a'],
+      keywords: 'admin',
+      perform: () => navigate(RouteBuilder.create(AppRoute.Admin).build()),
+    });
+  }
 
   if (store?.storeMode === StoreModeNodeType.Dispensary) {
     actions.push({
