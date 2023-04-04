@@ -33,6 +33,39 @@
           }
         ]
       }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/status",
+      "label": "Status:",
+      "options": {
+        "show": [
+          ["ACTIVE", "Active"],
+          ["OPTED_OUT", "Opted out"],
+          ["TRANSFERRED_OUT", "Transferred out"],
+          ["PAUSED", "Paused"]
+        ]
+      }
+    },
+    {
+      "type": "Group",
+      "label": "Notes",
+      "elements": [
+        {
+          "type": "Notes",
+          "label": "Patient Notes",
+          "scope": "#/properties/notes",
+          "options": {
+            "editRestrictions": {
+              "latest": true,
+              "isCurrentUser": true,
+              "maxAge": 1
+            },
+            "reverse": true,
+            "defaultExpanded": true
+          }
+        }
+      ]
     }
   ]
 }

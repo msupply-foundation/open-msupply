@@ -83,15 +83,7 @@
       "type": "object"
     },
     "Gender": {
-      "enum": [
-        "FEMALE",
-        "MALE",
-        "TRANSGENDER",
-        "TRANSGENDER_MALE",
-        "TRANSGENDER_FEMALE",
-        "UNKNOWN",
-        "NON_BINARY"
-      ],
+      "enum": ["FEMALE", "MALE", "TRANSGENDER", "TRANSGENDER_MALE", "TRANSGENDER_FEMALE", "UNKNOWN", "NON_BINARY"],
       "type": "string"
     },
     "HIVCareProgramEnrolment": {
@@ -118,8 +110,18 @@
         "mother": {
           "$ref": "#/definitions/HIVRelation"
         },
+        "notes": {
+          "description": "An overall note for additional comments about the program enrolment",
+          "items": {
+            "$ref": "#/definitions/Note"
+          },
+          "type": "array"
+        },
         "partnerHIVStatus": {
           "$ref": "#/definitions/HIVTestingStatus"
+        },
+        "previousClinicARTId": {
+          "type": "string"
         },
         "previousClinicARTStartDate": {
           "format": "date",
@@ -129,13 +131,7 @@
           "type": "string"
         },
         "priorART": {
-          "enum": [
-            "TRANSFER_IN_WITH_RECORDS",
-            "TRANSFER_IN_WITHOUT_RECORDS",
-            "PPTCT_PROPHYLAXIS",
-            "PEP",
-            "PrEP"
-          ],
+          "enum": ["TRANSFER_IN_WITH_RECORDS", "TRANSFER_IN_WITHOUT_RECORDS", "PPTCT_PROPHYLAXIS", "PEP", "PrEP"],
           "type": "string"
         },
         "programEnrolmentId": {
@@ -174,18 +170,7 @@
       "type": "object"
     },
     "HIVRiskGroup": {
-      "enum": [
-        "LRM",
-        "MSM",
-        "MSW",
-        "MSMSW",
-        "HRM",
-        "LRW",
-        "HRW",
-        "FSW",
-        "TG",
-        "TGSW"
-      ],
+      "enum": ["LRM", "MSM", "MSW", "MSMSW", "HRM", "LRW", "HRW", "FSW", "TG", "TGSW"],
       "type": "string"
     },
     "HIVTestType": {
@@ -215,7 +200,7 @@
           "type": "string"
         }
       },
-      "required": ["text", "created", "authorId", "authorName"],
+      "required": ["text"],
       "type": "object"
     },
     "Person": {
@@ -315,6 +300,9 @@
       "properties": {
         "education": {
           "description": "224293004 Education received in the past",
+          "type": "string"
+        },
+        "employmentStatus": {
           "type": "string"
         },
         "literate": {
