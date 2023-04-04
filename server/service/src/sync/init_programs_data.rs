@@ -90,6 +90,7 @@ mod hiv_testing_encounter {
                 end_datetime: Default::default(),
                 clinician: Default::default(),
                 created_datetime: Default::default(),
+                created_by: Default::default(),
                 start_datetime: Default::default(),
                 status: Default::default(),
                 htc_register_serial_number: None,
