@@ -14,6 +14,8 @@ import {
   KBarPositioner,
   KBarPortal,
   PropsWithChildrenOnly,
+  useAuthContext,
+  StoreModeNodeType,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { Action } from 'kbar/lib/types';
@@ -81,6 +83,8 @@ export const CommandK: FC<PropsWithChildrenOnly> = ({ children }) => {
   const navigate = useNavigate();
   const drawer = useDrawer();
   const t = useTranslation('app');
+  const { store } = useAuthContext();
+
   const actions = [
     {
       id: 'navigation-drawer:toggle',
@@ -169,18 +173,6 @@ export const CommandK: FC<PropsWithChildrenOnly> = ({ children }) => {
         ),
     },
     {
-      id: 'navigation:patients',
-      name: `${t('cmdk.goto-patients')} (p)`,
-      keywords: 'patient',
-      shortcut: ['p'],
-      perform: () =>
-        navigate(
-          RouteBuilder.create(AppRoute.Dispensary)
-            .addPart(AppRoute.Patients)
-            .build()
-        ),
-    },
-    {
       id: 'navigation:suppliers',
       name: `${t('cmdk.goto-suppliers')} (g+s)`,
       keywords: 'suppliers',
@@ -241,6 +233,21 @@ export const CommandK: FC<PropsWithChildrenOnly> = ({ children }) => {
         ),
     },
   ];
+
+  if (store?.storeMode === StoreModeNodeType.Dispensary) {
+    actions.push({
+      id: 'navigation:patients',
+      name: `${t('cmdk.goto-patients')} (p)`,
+      keywords: 'patient',
+      shortcut: ['p'],
+      perform: () =>
+        navigate(
+          RouteBuilder.create(AppRoute.Dispensary)
+            .addPart(AppRoute.Patients)
+            .build()
+        ),
+    });
+  }
 
   const sortedActions = actions.sort(actionSorter);
   return (
