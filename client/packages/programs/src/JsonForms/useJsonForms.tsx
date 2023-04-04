@@ -28,8 +28,8 @@ import {
   decisionTreeTester,
   Search,
   searchTester,
-  encounterProgramEventTester,
-  EncounterProgramEvent,
+  programEventTester,
+  ProgramEvent,
 } from './components';
 
 // https://stackoverflow.com/questions/57874879/how-to-treat-missing-undefined-properties-as-equivalent-in-lodashs-isequalwit
@@ -92,7 +92,7 @@ const additionalRenderers: JsonFormsRendererRegistryEntry[] = [
   },
   { tester: decisionTreeTester, renderer: DecisionTreeControl },
   { tester: searchTester, renderer: Search },
-  { tester: encounterProgramEventTester, renderer: EncounterProgramEvent },
+  { tester: programEventTester, renderer: ProgramEvent },
 ];
 
 /**
@@ -102,6 +102,7 @@ const additionalRenderers: JsonFormsRendererRegistryEntry[] = [
 
 export const useJsonForms = (
   docName: string | undefined,
+  patientId: string | undefined,
   options: JsonFormOptions = {},
   createDoc?: CreateDocument
 ) => {
@@ -194,6 +195,7 @@ export const useJsonForms = (
         additionalRenderers={additionalRenderers}
         config={{
           documentName: docName,
+          patientId
         }}
       />
     ),
