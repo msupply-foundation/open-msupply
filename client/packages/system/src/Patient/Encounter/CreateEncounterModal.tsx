@@ -86,6 +86,7 @@ export const CreateEncounterModal: FC = () => {
       createdDatetime,
       ...draft,
       startDatetime,
+      createdBy: { id: user?.id ?? '', username: user?.name ?? '' },
       status:
         date && DateUtils.isFuture(date)
           ? EncounterNodeStatus.Scheduled

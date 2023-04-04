@@ -20,6 +20,8 @@
   "label.visit-end": "End",
   "label.clinician": "Clinician",
   "label.additional-info": "Additional Info",
+  "label.entered-by": "Entered by",
+  "label.entered-on": "Entered on",
   "label.visit-notes": "Notes",
   "label.previous-encounters": "Previous Encounters",
   "label.more": "More...",
