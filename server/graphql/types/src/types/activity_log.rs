@@ -26,6 +26,7 @@ pub enum ActivityLogNodeType {
     UserLoggedIn,
     InvoiceCreated,
     InvoiceDeleted,
+    InvoiceNumberAllocated,
     InvoiceStatusAllocated,
     InvoiceStatusPicked,
     InvoiceStatusShipped,
@@ -141,6 +142,7 @@ impl ActivityLogNodeType {
             from::StockBatchChange => to::StockBatchChange,
             from::StockOnHold => to::StockOnHold,
             from::StockOffHold => to::StockOffHold,
+            from::InvoiceNumberAllocated => to::InvoiceNumberAllocated,
         }
     }
 
@@ -171,6 +173,7 @@ impl ActivityLogNodeType {
             from::StockBatchChange => to::StockBatchChange,
             from::StockOnHold => to::StockOnHold,
             from::StockOffHold => to::StockOffHold,
+            from::InvoiceNumberAllocated => to::InvoiceNumberAllocated,
         }
     }
 }
