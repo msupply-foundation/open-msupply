@@ -50,7 +50,7 @@ impl Migration for V1_01_11 {
                 period_schedule_id TEXT NOT NULL REFERENCES period_schedule(id),
                 name TEXT NOT NULL,
                 start_date {DATE} NOT NULL, -- `to` is a reserved word in postgres and sqlite
-                finish_date {DATE} NOT NULL -- `from` is a reserved word in postgres and sqlite
+                end_date {DATE} NOT NULL -- `from` is a reserved word in postgres and sqlite
             );
             "#
         )?;
