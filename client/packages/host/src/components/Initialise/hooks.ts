@@ -140,14 +140,16 @@ export const useInitialiseForm = () => {
 
     switch (initStatus.status) {
       case InitialisationStatusType.Initialised:
-        allowSleep();
-        return navigate(`/${AppRoute.Login}`, { replace: true });
+        allowSleep().then(() =>
+          navigate(`/${AppRoute.Login}`, { replace: true })
+        );
+        break;
       case InitialisationStatusType.Initialising:
-        keepAwake();
-        return setIsInitialising(true);
+        keepAwake().then(() => setIsInitialising(true));
+        break;
       case InitialisationStatusType.PreInitialisation:
-        allowSleep();
-        return setIsInitialising(false);
+        allowSleep().then(() => setIsInitialising(false));
+        break;
     }
   }, [initStatus]);
 
