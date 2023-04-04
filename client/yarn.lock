@@ -1316,6 +1316,11 @@
     "@zxing/browser" "^0.1.1"
     "@zxing/library" "^0.19.2"
 
+"@capacitor-community/keep-awake@^3.0.0":
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/@capacitor-community/keep-awake/-/keep-awake-3.0.0.tgz#ed48bc3fb53f703d6b524ab12b0cdc700ec22fb0"
+  integrity sha512-amK9qcQOtsLNBEQ+THXLtNRgHds6SmJUsZ5ZrxGfcqBK8NKzalljejqLUkx2wIbB4ixsKKlrtzlwByyuRGAK+w==
+
 "@capacitor/android@^4.7.1":
   version "4.7.1"
   resolved "https://registry.yarnpkg.com/@capacitor/android/-/android-4.7.1.tgz#2bee65853aa8117d2247ab0bd583ba52e08a63ba"

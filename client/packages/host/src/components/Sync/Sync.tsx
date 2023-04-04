@@ -8,6 +8,7 @@ import {
   RadioIcon,
   Typography,
   useFormatDateTime,
+  useNativeClient,
   useTranslation,
 } from '@openmsupply-client/common';
 import { useHost } from '../../api/hooks';
@@ -21,6 +22,7 @@ const useSync = () => {
     STATUS_POLLING_INTERVAL
   );
   const { mutateAsync: manualSync } = useHost.sync.manualSync();
+  const { allowSleep, keepAwake } = useNativeClient();
 
   // true by default to wait for first syncStatus api result
   const [isLoading, setIsLoading] = useState(true);
@@ -32,6 +34,14 @@ const useSync = () => {
     // When we receive syncStatus, resulting isLoading state should be = isSyncing form api result
     setIsLoading(false);
   }, [syncStatus]);
+
+  useEffect(() => {
+    if (syncStatus?.isSyncing) {
+      keepAwake();
+    } else {
+      allowSleep();
+    }
+  }, [syncStatus?.isSyncing]);
 
   const onManualSync = async () => {
     // isLoading is reset on next result of polled api query

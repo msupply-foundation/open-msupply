@@ -11,6 +11,8 @@ import {
   FileUtils,
   SortBy,
   LoadingButton,
+  EnvUtils,
+  Platform,
 } from '@openmsupply-client/common';
 import { LocationRowFragment, useLocation } from '..';
 import { locationsToCsv } from '../../utils';
@@ -46,6 +48,7 @@ export const AppBarButtons: FC<AppBarButtonsProps> = ({ onCreate, sortBy }) => {
           onClick={onCreate}
         />
         <LoadingButton
+          disabled={EnvUtils.platform === Platform.Android}
           startIcon={<DownloadIcon />}
           variant="outlined"
           isLoading={isLoading}
