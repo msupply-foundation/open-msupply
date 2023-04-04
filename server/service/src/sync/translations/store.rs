@@ -1,11 +1,19 @@
-use repository::{StorageConnection, StoreRow, SyncBufferRow};
+use repository::{StorageConnection, StoreMode, StoreRow, SyncBufferRow};
 
-use serde::{Deserialize};
 use crate::sync::sync_serde::empty_str_as_option_string;
+use serde::{Deserialize, Serialize};
 
 use super::{
     IntegrationRecords, LegacyTableName, PullDeleteRecordTable, PullUpsertRecord, SyncTranslation,
 };
+
+#[derive(Deserialize, Serialize, Debug)]
+pub enum LegacyStoreMode {
+    #[serde(rename = "store")]
+    Store,
+    #[serde(rename = "dispensary")]
+    Dispensary,
+}
 
 #[allow(non_snake_case)]
 #[derive(Deserialize)]
@@ -18,7 +26,8 @@ pub struct LegacyStoreRow {
     #[serde(rename = "sync_id_remote_site")]
     site_id: i32,
     #[serde(deserialize_with = "empty_str_as_option_string")]
-    logo: Option<String>
+    logo: Option<String>,
+    store_mode: LegacyStoreMode,
 }
 
 fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
@@ -52,12 +61,18 @@ impl SyncTranslation for StoreTranslation {
             return Ok(None);
         }
 
+        let store_mode = match data.store_mode {
+            LegacyStoreMode::Store => StoreMode::Store,
+            LegacyStoreMode::Dispensary => StoreMode::Dispensary,
+        };
+
         let result = StoreRow {
             id: data.id,
             name_id: data.name_id,
             code: data.code,
             site_id: data.site_id,
             logo: data.logo,
+            store_mode,
         };
 
         Ok(Some(IntegrationRecords::from_upsert(
