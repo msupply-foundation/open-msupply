@@ -2,3 +2,4 @@ export * from './api';
 export * from './Components';
 export * from './hooks';
 export * from './JsonForms';
+export * from './schema_types';

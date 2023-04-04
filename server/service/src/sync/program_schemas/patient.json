@@ -187,7 +187,7 @@
           "type": "string"
         }
       },
-      "required": ["text", "created", "authorId", "authorName"],
+      "required": ["text"],
       "type": "object"
     },
     "RelatedPerson": {
