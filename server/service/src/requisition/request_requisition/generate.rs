@@ -69,6 +69,8 @@ pub fn generate_requisition_lines(
                 comment: None,
                 supply_quantity: 0,
                 requested_quantity: 0,
+                approved_quantity: 0,
+                is_sync_update: false,
             }
         })
         .collect();

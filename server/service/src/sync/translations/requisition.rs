@@ -135,6 +135,14 @@ pub struct LegacyRequisitionRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(default)]
     pub om_colour: Option<String>,
+
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(rename = "authorisationStatus")]
+    pub authorisation_status: Option<String>,
+
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(rename = "programID")]
+    pub program_id: Option<String>,
 }
 
 pub(crate) struct RequisitionTranslation {}
@@ -202,6 +210,9 @@ impl SyncTranslation for RequisitionTranslation {
             min_months_of_stock: data.thresholdMOS,
             linked_requisition_id: data.linked_requisition_id,
             expected_delivery_date: data.expected_delivery_date,
+            authorisation_status: data.authorisation_status,
+            program_id: data.program_id,
+            is_sync_update: true,
         };
 
         Ok(Some(IntegrationRecords::from_upsert(
@@ -252,6 +263,9 @@ impl SyncTranslation for RequisitionTranslation {
             min_months_of_stock,
             linked_requisition_id,
             expected_delivery_date,
+            authorisation_status,
+            program_id,
+            is_sync_update: _,
         } = RequisitionRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
@@ -288,6 +302,8 @@ impl SyncTranslation for RequisitionTranslation {
             max_months_of_stock: Some(max_months_of_stock),
             om_colour: colour.clone(),
             comment,
+            authorisation_status,
+            program_id,
         };
 
         Ok(Some(vec![RemoteSyncRecordV5::new_upsert(

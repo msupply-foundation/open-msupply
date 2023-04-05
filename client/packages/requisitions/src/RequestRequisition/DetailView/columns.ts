@@ -107,6 +107,13 @@ export const useRequestColumns = () => {
         width: 150,
         getSortValue: rowData => rowData.requestedQuantity,
       },
+      // Should only be visible if linked requisition has authorisationStatus (also authorisation comment)
+      {
+        key: 'approvedQuantity',
+        label: 'label.approved-quantity',
+        accessor: ({ rowData }) =>
+          rowData.linkedRequisitionLine?.approvedQuantity,
+      },
       GenericColumnKey.Selection,
     ],
     {
