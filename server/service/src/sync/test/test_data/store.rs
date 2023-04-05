@@ -1,8 +1,11 @@
 use crate::sync::{
     test::TestSyncPullRecord,
-    translations::{LegacyTableName, PullDeleteRecordTable, PullUpsertRecord},
+    translations::{
+        IntegrationRecords, LegacyTableName, PullDeleteRecord, PullDeleteRecordTable,
+        PullUpsertRecord,
+    },
 };
-use repository::{StoreRow, SyncBufferRow};
+use repository::{StoreRow, StoreTags, SyncBufferRow};
 use util::inline_init;
 
 const STORE_1: (&'static str, &'static str) = (
@@ -28,7 +31,7 @@ const STORE_1: (&'static str, &'static str) = (
     "postal_zip_code": "",
     "store_mode": "store",
     "phone": "",
-    "tags": "",
+    "tags": "testtag1 tagwithweirdchars`$",
     "spare_user_1": "",
     "spare_user_2": "",
     "spare_user_3": "",
@@ -51,16 +54,22 @@ const STORE_1: (&'static str, &'static str) = (
 );
 
 fn store_1() -> TestSyncPullRecord {
-    TestSyncPullRecord::new_pull_upsert(
+    TestSyncPullRecord::new_pull_upserts(
         LegacyTableName::STORE,
         STORE_1,
-        PullUpsertRecord::Store(inline_init(|s: &mut StoreRow| {
-            s.id = STORE_1.0.to_owned();
-            s.name_id = "1FB32324AF8049248D929CFB35F255BA".to_string();
-            s.code = "GEN".to_string();
-            s.site_id = 1;
-            s.logo = Some("No logo".to_string());
-        })),
+        vec![
+            PullUpsertRecord::Store(inline_init(|s: &mut StoreRow| {
+                s.id = STORE_1.0.to_owned();
+                s.name_id = "1FB32324AF8049248D929CFB35F255BA".to_string();
+                s.code = "GEN".to_string();
+                s.site_id = 1;
+                s.logo = Some("No logo".to_string());
+            })),
+            PullUpsertRecord::StoreTags(StoreTags {
+                store_id: STORE_1.0.to_owned(),
+                tags: vec!["testtag1".to_string(), "tagwithweirdchars`$".to_string()],
+            }),
+        ],
     )
 }
 
@@ -144,7 +153,7 @@ const STORE_3: (&'static str, &'static str) = (
     "postal_zip_code": "",
     "store_mode": "supervisor",
     "phone": "",
-    "tags": "",
+    "tags": "program_tag1 program_tag2",
     "spare_user_1": "",
     "spare_user_2": "",
     "spare_user_3": "",
@@ -201,7 +210,7 @@ const STORE_4: (&'static str, &'static str) = (
     "postal_zip_code": "",
     "store_mode": "his",
     "phone": "",
-    "tags": "",
+    "tags": "program1",
     "spare_user_1": "",
     "spare_user_2": "",
     "spare_user_3": "",
@@ -240,9 +249,21 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
 }
 
 pub(crate) fn test_pull_delete_records() -> Vec<TestSyncPullRecord> {
-    vec![TestSyncPullRecord::new_pull_delete(
+    vec![TestSyncPullRecord::new_pull_deletes(
         LegacyTableName::STORE,
         STORE_4.0,
-        PullDeleteRecordTable::Store,
+        IntegrationRecords {
+            upserts: Vec::new(),
+            deletes: vec![
+                PullDeleteRecord {
+                    id: STORE_4.0.to_owned(),
+                    table: PullDeleteRecordTable::StoreTags,
+                },
+                PullDeleteRecord {
+                    id: STORE_4.0.to_owned(),
+                    table: PullDeleteRecordTable::Store,
+                },
+            ],
+        },
     )]
 }
