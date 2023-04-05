@@ -173,6 +173,7 @@
           "label": "Current ARV Regimen",
           "options": {
             "eventType": "arvMedicationRegimen",
+            "documentType": "HIVCareEncounter",
             "display": {
               "type": "string",
               "multiline": true,
@@ -220,7 +221,8 @@
           "scope": "#/properties/arvMedication/properties/regimenType",
           "label": "Current Regiment Type",
           "options": {
-            "eventType": "arvMedicationRegimenType"
+            "eventType": "arvMedicationRegimenType",
+            "documentType": "HIVCareEncounter"
           }
         },
         {
@@ -668,6 +670,7 @@
           "label": "Pill Count (at last visit end)",
           "options": {
             "eventType": "arvMedicationQuantityPrescribed",
+            "documentType": "HIVCareEncounter",
             "display": {
               "type": "number"
             }
