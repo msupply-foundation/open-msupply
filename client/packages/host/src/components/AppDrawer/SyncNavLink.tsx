@@ -18,8 +18,14 @@ export const SyncNavLink = () => {
     POLLING_INTERVAL_IN_MILLISECONDS
   );
 
+  const badgeContent = (
+    !numberOfRecordsInPushQueue
+      ? 0
+      : Number.parseFloat(`${numberOfRecordsInPushQueue}`)
+  ) as React.ReactNode;
+
   const badgeProps = {
-    badgeContent: numberOfRecordsInPushQueue as React.ReactNode,
+    badgeContent,
     max: 99,
     color: 'primary' as 'primary' | 'default',
   };
