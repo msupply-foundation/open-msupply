@@ -75,7 +75,7 @@ export const BaseDatePickerInput: FC<
         const textInputProps: StandardTextFieldProps = {
           ...params,
           variant: 'standard',
-          // helperText: error ?? '',
+          helperText: error ?? '',
         };
         return (
           <BasicTextInput
