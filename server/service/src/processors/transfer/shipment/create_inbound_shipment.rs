@@ -64,9 +64,7 @@ impl ShipmentTransferProcessor for CreateInboundShipmentProcessor {
         }
         // 4.
         if let Some(inbound_shipment) = linked_shipment {
-            // If the invoice number has not been allocated by the generating store allocate it now.
-            // The name_id for the inbound_shipment is validated as
-            // belonging to a store on this site prior to processing of the record
+            // If the invoice number has not been allocated by the generating store allocate it now
             if inbound_shipment.invoice_row.invoice_number == -1 {
                 let updated_invoice_row = InvoiceRow {
                     invoice_number: next_number(
